@@ -390,7 +390,8 @@ class DisplayFilterStore {
 		}
 		const generation = this.generation;
 		const revision = this.revision;
-		const content = { ...this.extraKeys, ...this.state.filters };
+		const written = this.state.filters;
+		const content = { ...this.extraKeys, ...written };
 		this.writeInFlight = true;
 		this.writeDirty = false;
 		void writeAccountData(client, DISPLAY_FILTERS_EVENT_TYPE, content).then(
@@ -401,10 +402,12 @@ class DisplayFilterStore {
 					return;
 				}
 				this.writeInFlight = false;
-				if (ok && revision === this.revision) {
-					this.confirmed = this.state.filters;
-					if (userId) {
-						writeMirror(userId, this.state.filters);
+				if (ok) {
+					// What the server holds now, whatever is queued after it:
+					// a later failure rolls back to this, not to before it.
+					this.confirmed = written;
+					if (userId && revision === this.revision) {
+						writeMirror(userId, written);
 					}
 				} else if (!ok && !this.writeDirty) {
 					// Rejected and nothing newer queued: the optimistic state

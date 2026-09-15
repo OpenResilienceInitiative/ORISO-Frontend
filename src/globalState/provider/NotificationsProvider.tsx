@@ -389,6 +389,10 @@ export function NotificationsProvider(props) {
 	);
 	const hiddenEventTypesRef = useRef(hiddenEventTypes);
 	hiddenEventTypesRef.current = hiddenEventTypes;
+	/** Whether the current total already leaves the hidden types out. */
+	const serverUnreadTotalExcludesHiddenRef = useRef(false);
+	serverUnreadTotalExcludesHiddenRef.current =
+		serverUnreadTotalExcludesHidden;
 	/** Latest feed for callbacks that must not wait for a re-render. */
 	const notificationFeedRef = useRef<NotificationFeedItem[]>([]);
 	notificationFeedRef.current = notificationFeed;
@@ -706,13 +710,14 @@ export function NotificationsProvider(props) {
 	 */
 	const markHiddenReadOnServer = useCallback(
 		async (eventTypes: ReadonlyArray<string>): Promise<boolean> => {
-			if (
-				bulkReadUnsupportedRef.current ||
-				bulkReadPendingRef.current ||
-				eventTypes.length === 0 ||
-				!getValueFromCookie('keycloak')
-			) {
+			if (bulkReadUnsupportedRef.current || eventTypes.length === 0) {
 				return true;
+			}
+			if (bulkReadPendingRef.current || !getValueFromCookie('keycloak')) {
+				// Not done: the effect runs again once the pending request has
+				// settled (`bulkReadGeneration`) and retries with the current
+				// set, so a filter changed mid-request is not skipped.
+				return false;
 			}
 			const feedEpoch = feedEpochRef.current;
 			bulkReadPendingRef.current = true;
@@ -750,7 +755,12 @@ export function NotificationsProvider(props) {
 					)
 				);
 				const updated = Number(result?.updated ?? 0);
-				if (updated > 0) {
+				// An exact total (server echoed the exclusions) never counted
+				// these rows: subtracting again would remove visible unread.
+				if (
+					updated > 0 &&
+					!serverUnreadTotalExcludesHiddenRef.current
+				) {
 					setServerUnreadTotal((value) =>
 						Math.max(0, value - updated)
 					);
@@ -786,12 +796,18 @@ export function NotificationsProvider(props) {
 		},
 		[settlePendingReads]
 	);
+	const displayFilterSynced = displayFilterState.synced;
 	useEffect(() => {
 		if (
 			!timelineDisplayFilter.autoReadHidden ||
 			hiddenEventTypes.length === 0
 		) {
 			lastBulkReadKeyRef.current = '';
+			return undefined;
+		}
+		if (!displayFilterSynced) {
+			// Before the initial sync the filter may be a stale mirror; a
+			// read is irreversible, so it waits for account data (§7.2).
 			return undefined;
 		}
 		const key = hiddenEventTypes.join(',');
@@ -819,6 +835,8 @@ export function NotificationsProvider(props) {
 			window.clearTimeout(timer);
 		};
 	}, [
+		bulkReadGeneration,
+		displayFilterSynced,
 		hiddenEventTypes,
 		markHiddenReadOnServer,
 		timelineDisplayFilter.autoReadHidden
@@ -830,6 +848,7 @@ export function NotificationsProvider(props) {
 	useEffect(() => {
 		if (
 			!timelineDisplayFilter.autoReadHidden ||
+			!displayFilterSynced ||
 			bulkReadPendingRef.current
 		) {
 			return undefined;
@@ -867,6 +886,7 @@ export function NotificationsProvider(props) {
 		}, AUTO_READ_DEBOUNCE_MS);
 		return () => window.clearTimeout(timer);
 	}, [
+		displayFilterSynced,
 		notificationFeed,
 		timelineDisplayFilter,
 		markNotificationsReadConfirmed,
@@ -898,6 +918,24 @@ export function NotificationsProvider(props) {
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
 	}, [refreshNotificationFeedSafe]);
+
+	// Slice 7: an exact total describes one exclusion set. When the set
+	// changes, the stored total is at best a bound (the v1 formula applies)
+	// until the next response for the new set: the bulk read's
+	// reconciliation fetch with auto-read on, otherwise the next poll.
+	const lastExclusionKeyRef = useRef<string | null>(null);
+	useEffect(() => {
+		const key = hiddenEventTypes.join(',');
+		if (lastExclusionKeyRef.current === null) {
+			lastExclusionKeyRef.current = key;
+			return;
+		}
+		if (key === lastExclusionKeyRef.current) {
+			return;
+		}
+		lastExclusionKeyRef.current = key;
+		setServerUnreadTotalExcludesHidden(false);
+	}, [hiddenEventTypes]);
 
 	// Safari: programmatic audio.play() is only allowed on an element that was
 	// played from a user gesture — prime one on the first pointer/keydown.
@@ -1008,9 +1046,15 @@ export function NotificationsProvider(props) {
 		if (!accessToken) {
 			return;
 		}
+		// Opening an already-read card calls this too: the totals move only
+		// on an unread → read transition of a row we know.
+		const row = notificationFeedRef.current.find((item) => item.id === id);
+		const wasUnread = !row || !row.readAt;
 		if (!id.startsWith('local-')) {
 			apiMarkEventNotificationRead(id).catch(() => undefined);
-			setServerUnreadTotal((value) => Math.max(0, value - 1));
+			if (wasUnread) {
+				setServerUnreadTotal((value) => Math.max(0, value - 1));
+			}
 		}
 		setNotificationFeed((existing) =>
 			existing.map((item) =>
@@ -1019,7 +1063,9 @@ export function NotificationsProvider(props) {
 					: item
 			)
 		);
-		setUnreadNotificationCount((value) => Math.max(0, value - 1));
+		if (wasUnread) {
+			setUnreadNotificationCount((value) => Math.max(0, value - 1));
+		}
 	}, []);
 
 	const markAllNotificationsAsRead = useCallback(() => {

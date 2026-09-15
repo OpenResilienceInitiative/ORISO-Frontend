@@ -105,7 +105,8 @@ import {
 	DisplayFilterKindOption,
 	isDisplayFilterCustomised,
 	useDisplayFilterLabels,
-	visiblePillKinds
+	visiblePillKinds,
+	reconcileActiveKind
 } from '../displayFilter';
 import {
 	applyRequestsFilter,
@@ -1781,6 +1782,24 @@ export const SessionsList = ({
 		listDisplayFilter,
 		displayFilterKinds
 	);
+	// §5.1: a chip whose kind lost its pill (or is hidden) is gone from the
+	// row, so the refinement it stood for must not keep filtering the list.
+	// Same reconciliation as the Zeitstrahl's active family.
+	useEffect(() => {
+		if (!sessionToolbarChip) {
+			return;
+		}
+		const activeKind =
+			displayFilterKinds.find(
+				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
+			)?.id ?? null;
+		if (
+			activeKind &&
+			reconcileActiveKind(listDisplayFilter, activeKind) === null
+		) {
+			setSessionToolbarChip(null);
+		}
+	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip]);
 	// Kind chips are user-gated (§5.1): pill on and unread rows, or active.
 	const hiddenKindChips = React.useMemo(() => {
 		const activeKind =

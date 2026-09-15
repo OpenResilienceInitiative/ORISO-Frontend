@@ -222,6 +222,30 @@ describe('display-filter store — review follow-ups (#1378)', () => {
 		expect(displayFilterStore.getState().writeFailed).toBe(false);
 	});
 
+	it('a failed B after a successful A rolls back to A, not to before A', async () => {
+		const client = makeClient('@a:hs', {
+			initial: DEFAULT_DISPLAY_FILTERS
+		});
+		const gates: Array<() => void> = [];
+		client.setAccountData.mockImplementation(
+			() =>
+				gates.length === 0
+					? new Promise<void>((resolve) => gates.push(resolve)) // A
+					: Promise.reject(new Error('boom')) // B
+		);
+		displayFilterStore.attachClient(client as any);
+		displayFilterStore.setSection('timeline', hideCalls); // A (in flight)
+		displayFilterStore.setSection('sessions', hideCalls); // B (queued)
+		gates[0]();
+		await flush();
+		await flush();
+		const state = displayFilterStore.getState();
+		expect(client.setAccountData).toHaveBeenCalledTimes(2);
+		expect(state.writeFailed).toBe(true);
+		expect(state.filters.sections.timeline).toEqual(hideCalls);
+		expect(state.filters.sections.sessions).toBeUndefined();
+	});
+
 	it('an account-data echo of write A does not drop queued update B', async () => {
 		const client = makeClient('@a:hs', {
 			initial: DEFAULT_DISPLAY_FILTERS,

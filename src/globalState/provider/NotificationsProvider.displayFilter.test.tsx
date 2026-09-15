@@ -13,7 +13,7 @@ import {
 	NotificationsContext,
 	NotificationsProvider
 } from './NotificationsProvider';
-import { displayFilterStore } from '../../utils/displayFilter/store';
+import { displayFilterStore, mirrorKey } from '../../utils/displayFilter/store';
 import { DEFAULT_DISPLAY_FILTERS } from '../../utils/displayFilter/model';
 
 const apiGetEventNotifications = vi.fn();
@@ -84,6 +84,9 @@ const Probe = () => {
 			</button>
 			<button onClick={() => context.clearNotificationFeed()}>
 				clear
+			</button>
+			<button onClick={() => context.markNotificationAsRead('1')}>
+				read1
 			</button>
 			<button
 				onClick={() =>
@@ -542,6 +545,156 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		patch.resolve({});
 		await new Promise((resolve) => setTimeout(resolve, 50));
 		expect(rows()).toBe('7:u');
+		expect(screen.getByTestId('server-total').textContent).toBe('1');
+	});
+
+	it('no auto-read before the store is synced: a stale mirror must not read anything', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 2
+		});
+		apiMarkEventNotificationRead.mockResolvedValue({});
+		// Mirror says "hide system, auto-read", the client has not synced.
+		displayFilterStore.resetForTests();
+		localStorage.setItem(
+			mirrorKey('@t:hs'),
+			JSON.stringify({
+				...DEFAULT_DISPLAY_FILTERS,
+				sections: { timeline: hideSystemAutoRead }
+			})
+		);
+		const handlers: Record<string, Array<(...args: any[]) => void>> = {};
+		const unsynced = {
+			getUserId: () => '@t:hs',
+			getSyncState: () => null,
+			getAccountData: () => ({
+				getContent: () => DEFAULT_DISPLAY_FILTERS
+			}),
+			setAccountData: vi.fn(() => Promise.resolve()),
+			on: (event: string, handler: (...args: any[]) => void) => {
+				(handlers[event] ||= []).push(handler);
+			},
+			removeListener: () => undefined
+		};
+		displayFilterStore.attachClient(unsynced as any);
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		expect(apiMarkEventNotificationRead).not.toHaveBeenCalled();
+		expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
+		// Account data (show everything) wins on sync: still nothing read.
+		act(() => {
+			(handlers.sync || []).forEach((h) => h('PREPARED', null));
+		});
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		expect(apiMarkEventNotificationRead).not.toHaveBeenCalled();
+	});
+
+	it('a filter changed while a bulk read is pending is not skipped: it runs once the first settles', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 40,
+			excludedEventTypes: []
+		});
+		const first = deferred<{ updated: number }>();
+		apiMarkEventNotificationsReadByTypes
+			.mockReturnValueOnce(first.promise)
+			.mockResolvedValue({ updated: 2 });
+		apiMarkEventNotificationRead.mockResolvedValue({});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() => {
+			displayFilterStore.setSection('timeline', hideSystemAutoRead);
+		});
+		await waitFor(() =>
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				1
+			)
+		);
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				kinds: {
+					system: { show: false, pill: false },
+					calls: { show: false, pill: false }
+				},
+				autoReadHidden: true
+			});
+		});
+		await new Promise((resolve) => setTimeout(resolve, 400));
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+		first.resolve({ updated: 38 });
+		await waitFor(() =>
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				2
+			)
+		);
+		expect(apiMarkEventNotificationsReadByTypes.mock.calls[1][0]).toContain(
+			'call.started'
+		);
+	});
+
+	it('an exact total is not reduced by the bulk read result', async () => {
+		apiGetEventNotifications.mockImplementation(
+			(_page: number, _perPage: number, exclude?: string[]) =>
+				Promise.resolve({
+					items: [item(1, 'message.new')],
+					unreadCount: exclude && exclude.length > 0 ? 5 : 9,
+					excludedEventTypes: exclude ? [...exclude] : []
+				})
+		);
+		const bulk = deferred<{ updated: number }>();
+		apiMarkEventNotificationsReadByTypes.mockReturnValue(bulk.promise);
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		// Exact total for "hide system" first (auto-read off).
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				...hideSystemAutoRead,
+				autoReadHidden: false
+			});
+		});
+		const { messageEventEmitter } = await import(
+			'../../services/messageEventEmitter'
+		);
+		messageEventEmitter.emit({});
+		await waitFor(() =>
+			expect(screen.getByTestId('exact').textContent).toBe('exact')
+		);
+		expect(screen.getByTestId('server-total').textContent).toBe('5');
+		// The reconciliation fetch after the bulk read never returns, so a
+		// wrong decrement would stay visible.
+		apiGetEventNotifications.mockReturnValue(new Promise(() => undefined));
+		act(() => {
+			displayFilterStore.setSection('timeline', hideSystemAutoRead);
+		});
+		await waitFor(() =>
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				1
+			)
+		);
+		bulk.resolve({ updated: 38 });
+		await new Promise((resolve) => setTimeout(resolve, 50));
+		expect(screen.getByTestId('server-total').textContent).toBe('5');
+		expect(screen.getByTestId('badge').textContent).toBe('5');
+	});
+
+	it('marking an already-read card again does not lower the total twice', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new'), item(2, 'message.new')],
+			unreadCount: 2
+		});
+		apiMarkEventNotificationRead.mockResolvedValue({});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		act(() => {
+			screen.getByText('read1').click();
+		});
+		await waitFor(() => expect(rows()).toBe('1:r,2:u'));
+		expect(screen.getByTestId('server-total').textContent).toBe('1');
+		act(() => {
+			screen.getByText('read1').click();
+		});
+		await new Promise((resolve) => setTimeout(resolve, 20));
 		expect(screen.getByTestId('server-total').textContent).toBe('1');
 	});
 
