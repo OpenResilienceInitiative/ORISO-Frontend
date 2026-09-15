@@ -51,9 +51,18 @@ $cc-motion-easing: var(
 		flex: 1;
 		font-size: 32px;
 		font-weight: 400;
+		/*
+		 * `sanitize.css` sets a global `word-break: break-word`, which chopped
+		 * "Gesprächskreis" into "Gesprächskre / is" on a phone. Break at a real
+		 * hyphenation point instead, as the consent gate already does.
+		 */
+		hyphens: auto;
 		line-height: 40px;
 		margin: 0;
 		min-width: 0;
+		/* Last resort only, so a very long word cannot overflow the column. */
+		overflow-wrap: break-word;
+		word-break: normal;
 	}
 
 	/* M3 body/large */
@@ -626,6 +635,18 @@ body.conversationCreate--active .navigation__wrapper {
 @media (prefers-reduced-motion: reduce) {
 	.formatCard__mediaContent {
 		transition: none !important;
+	}
+}
+
+/*
+ * On a phone the icon column leaves the headline about 216px. M3 headline/large
+ * does not fit "Gesprächskreis" in that width, so the headline steps down to
+ * headline/medium rather than being chopped mid-word.
+ */
+@media (width <= 480px) {
+	.conversationCreate__title {
+		font-size: 28px;
+		line-height: 36px;
 	}
 }
 
