@@ -10,6 +10,8 @@
  */
 
 export const STAGE_LAYOUT = {
+	/** Fixed desktop rail in authenticatedApp.styles.scss. */
+	NAVIGATION_WIDTH: 85,
 	/** `useResponsive().fromL` — below this the stage is single-pane. */
 	DESKTOP_MIN_WIDTH: 900,
 	/** Icon-only session list (`sessionsList__wrapper--iconOnly` min-width). */
@@ -150,7 +152,11 @@ export const maxListWidthBesidePanel = (viewportWidth: number): number => {
 		CARD_MARGIN,
 		RAIL_WIDTH
 	} = STAGE_LAYOUT;
-	const chrome = LIST_CARD_GAP - LIST_INNER_GUTTER + CARD_MARGIN;
+	const chrome =
+		STAGE_LAYOUT.NAVIGATION_WIDTH +
+		LIST_CARD_GAP -
+		LIST_INNER_GUTTER +
+		CARD_MARGIN;
 	return Math.max(
 		RAIL_WIDTH,
 		Math.floor(viewportWidth - chrome - 2 * MIN_PANE_DRAG_WIDTH)

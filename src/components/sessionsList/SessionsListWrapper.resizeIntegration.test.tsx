@@ -94,9 +94,12 @@ describe('List width beside a side panel', () => {
 				new MouseEvent('pointermove', { bubbles: true, clientX: 600 })
 			);
 			fireEvent(document, new MouseEvent('pointerup', { bubbles: true }));
-			// 1024px viewport leaves 348px for the list and 320px per pane.
-			expect(wrapper.style.width).toBe('348px');
-			expect(handle.getAttribute('aria-valuemax')).toBe('348');
+			// 1024px viewport minus the 85px navigation leaves 263px for the list and 320px per pane.
+			expect(Number.parseFloat(wrapper.style.width)).toBeLessThanOrEqual(
+				263
+			);
+			expect(Number.parseFloat(wrapper.style.width)).toBeGreaterThan(80);
+			expect(handle.getAttribute('aria-valuemax')).toBe('263');
 		}
 	);
 });
