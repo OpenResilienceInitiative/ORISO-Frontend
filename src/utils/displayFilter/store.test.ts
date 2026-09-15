@@ -166,6 +166,20 @@ describe('display-filter store — attach (rules 1–2)', () => {
 		expect(client.stored()).toEqual(DEFAULT_DISPLAY_FILTERS);
 	});
 
+	it("malformed account blob with the same user's mirror: defaults win, not the mirror", async () => {
+		localStorage.setItem(
+			mirrorKey('@a:hs'),
+			JSON.stringify(v1With({ sessions: hideCalls }))
+		);
+		const client = makeClient('@a:hs', { initial: { garbage: true } });
+		displayFilterStore.attachClient(client as any);
+		expect(displayFilterStore.getState().filters).toEqual(
+			DEFAULT_DISPLAY_FILTERS
+		);
+		await flush();
+		expect(client.stored()).toEqual(DEFAULT_DISPLAY_FILTERS);
+	});
+
 	it('"no event yet" is decided only after PREPARED/SYNCING (pre-sync cache never seeds)', async () => {
 		localStorage.setItem(
 			mirrorKey('@a:hs'),

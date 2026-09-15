@@ -20,6 +20,7 @@ import { DEFAULT_DISPLAY_FILTERS } from '../../utils/displayFilter/model';
 const apiGetEventNotifications = vi.fn();
 const apiMarkEventNotificationRead = vi.fn();
 const apiMarkEventNotificationsReadByTypes = vi.fn();
+const apiGetEventNotificationsUnreadCount = vi.fn();
 
 vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: (...args: unknown[]) =>
@@ -28,6 +29,8 @@ vi.mock('../../api/apiEventNotifications', () => ({
 		apiMarkEventNotificationRead(...args),
 	apiMarkEventNotificationsReadByTypes: (...args: unknown[]) =>
 		apiMarkEventNotificationsReadByTypes(...args),
+	apiGetEventNotificationsUnreadCount: (...args: unknown[]) =>
+		apiGetEventNotificationsUnreadCount(...args),
 	apiMarkAllEventNotificationsRead: vi.fn(),
 	apiClearEventNotifications: vi.fn(() => Promise.resolve())
 }));
@@ -76,6 +79,9 @@ const Probe = () => {
 			<div data-testid="hidden">{context.hiddenUnreadInLoadedPages}</div>
 			<div data-testid="exact">
 				{context.serverUnreadTotalExcludesHidden ? 'exact' : 'bound'}
+			</div>
+			<div data-testid="has-unread">
+				{context.hasUnreadNotifications ? 'yes' : 'no'}
 			</div>
 			<button onClick={() => void context.loadOlderNotifications()}>
 				load
@@ -161,6 +167,10 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		apiGetEventNotifications.mockReset();
 		apiMarkEventNotificationRead.mockReset();
 		apiMarkEventNotificationsReadByTypes.mockReset();
+		apiGetEventNotificationsUnreadCount.mockReset();
+		apiGetEventNotificationsUnreadCount.mockResolvedValue({
+			unreadCount: 0
+		});
 		// Older server by default: the bulk endpoint does not exist.
 		apiMarkEventNotificationsReadByTypes.mockRejectedValue({ status: 404 });
 		displayFilterStore.resetForTests();
@@ -802,10 +812,49 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 			excludedEventTypes: [...requestedA]
 		});
 		await advanceTimers(0);
-		await waitFor(() =>
-			expect(screen.getByTestId('server-total').textContent).toBe('3')
-		);
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		// The rows apply; the total for set A is dropped (it is neither exact
+		// nor a bound for B), the previous total and its exactness stay.
+		expect(screen.getByTestId('server-total').textContent).toBe('9');
 		expect(screen.getByTestId('exact').textContent).toBe('bound');
+	});
+
+	it('an exact total of 0 asks for the unfiltered total so ✓✓ stays actionable', async () => {
+		apiGetEventNotifications.mockImplementation(
+			(_page: number, _perPage: number, exclude?: string[]) =>
+				Promise.resolve({
+					items: [item(1, 'message.new', 'x')],
+					unreadCount: exclude && exclude.length > 0 ? 0 : 4,
+					excludedEventTypes: exclude ? [...exclude] : []
+				})
+		);
+		apiGetEventNotificationsUnreadCount.mockResolvedValue({
+			unreadCount: 4
+		});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:r'));
+		expect(screen.getByTestId('has-unread').textContent).toBe('yes');
+		act(() => {
+			displayFilterStore.setSection('timeline', {
+				...hideSystemAutoRead,
+				autoReadHidden: false
+			});
+		});
+		const { messageEventEmitter } = await import(
+			'../../services/messageEventEmitter'
+		);
+		messageEventEmitter.emit({});
+		await waitFor(() =>
+			expect(screen.getByTestId('exact').textContent).toBe('exact')
+		);
+		expect(screen.getByTestId('server-total').textContent).toBe('0');
+		await waitFor(() =>
+			expect(apiGetEventNotificationsUnreadCount).toHaveBeenCalledTimes(1)
+		);
+		expect(apiGetEventNotificationsUnreadCount.mock.calls[0]).toEqual([]);
+		await waitFor(() =>
+			expect(screen.getByTestId('has-unread').textContent).toBe('yes')
+		);
 	});
 
 	it('bulk read 404 marks the server as older and the per-id path still runs', async () => {

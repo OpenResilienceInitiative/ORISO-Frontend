@@ -70,6 +70,17 @@ describe('timelineKindOf / applyTimelineFilter', () => {
 		expect(isTimelineKindPartiallyHidden(filter, 'system')).toBe(true);
 		expect(isTimelineKindPartiallyHidden(filter, 'messages')).toBe(false);
 		expect(isTimelineKindPartiallyHidden(hideSystem, 'system')).toBe(false);
+		// Every type of a family hidden per type: still flagged (the kind
+		// itself is "shown", so nothing else marks the filter customised).
+		expect(
+			isTimelineKindPartiallyHidden(
+				{
+					...DEFAULT_DISPLAY_FILTER,
+					hiddenEventTypes: ['draft.created']
+				},
+				'drafts'
+			)
+		).toBe(true);
 	});
 
 	it('an unseeded type in hiddenEventTypes is ignored: "Sonstiges" stays visible', () => {

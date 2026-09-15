@@ -702,6 +702,7 @@ function AppOrisoRoutingRuntimeProviders({
 												unreadNotificationCount: 0,
 												serverUnreadTotal: 0,
 												serverUnreadTotalExcludesHidden: false,
+												hasUnreadNotifications: false,
 												timelineDisplayFilter: {
 													kinds: {},
 													autoReadHidden: false

@@ -20,6 +20,7 @@ import {
 	apiGetEventNotifications,
 	apiMarkAllEventNotificationsRead,
 	apiMarkEventNotificationRead,
+	apiGetEventNotificationsUnreadCount,
 	apiMarkEventNotificationsReadByTypes,
 	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
@@ -139,6 +140,12 @@ type FeedResponse = {
 	reconciliation: boolean;
 	/** Slice 7: `unreadCount` already excludes the hidden event types. */
 	excludesHidden: boolean;
+	/**
+	 * Slice 7: the server excluded a set the filter no longer hides (the
+	 * filter changed while this request was in flight). The rows apply; the
+	 * total is neither exact nor a bound for the current set and is dropped.
+	 */
+	staleTotal: boolean;
 };
 
 /** Two sorted lists are the same set. */
@@ -164,6 +171,11 @@ type NotificationsContextProps = {
 	 * `serverUnreadTotal` (exact badge, no "up to N hidden" hint).
 	 */
 	serverUnreadTotalExcludesHidden: boolean;
+	/**
+	 * Slice 7: true while the server holds unread rows at all, hidden kinds
+	 * on unloaded pages included ("Mark all as read" clears everything, §6.1).
+	 */
+	hasUnreadNotifications: boolean;
 	/** The effective Zeitstrahl display filter (spec §4). */
 	timelineDisplayFilter: DisplayFilter;
 	/** Visible unread for the rail badge (spec §6.3 v1 formula). */
@@ -352,6 +364,7 @@ export function NotificationsProvider(props) {
 		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
 		setServerUnreadTotalExcludesHidden(false);
+		setUnfilteredUnreadTotal(null);
 		setHasOlderNotifications(false);
 		setIsLoadingOlderNotifications(false);
 		setOlderNotificationsError(false);
@@ -396,6 +409,15 @@ export function NotificationsProvider(props) {
 	const serverUnreadTotalExcludesHiddenRef = useRef(false);
 	serverUnreadTotalExcludesHiddenRef.current =
 		serverUnreadTotalExcludesHidden;
+	/**
+	 * Slice 7: while an exact (exclusion-aware) total reads 0, the server
+	 * may still hold unread rows of hidden types on unloaded pages. "Mark
+	 * all as read" clears everything (§6.1), so it is gated by the
+	 * unfiltered total, fetched only in that state.
+	 */
+	const [unfilteredUnreadTotal, setUnfilteredUnreadTotal] = useState<
+		number | null
+	>(null);
 	/** Latest feed for callbacks that must not wait for a re-render. */
 	const notificationFeedRef = useRef<NotificationFeedItem[]>([]);
 	notificationFeedRef.current = notificationFeed;
@@ -455,9 +477,25 @@ export function NotificationsProvider(props) {
 						items.length === NOTIFICATION_FEED_MAX_ITEMS
 					);
 				}
-				setUnreadNotificationCount(unreadCount);
-				setServerUnreadTotal(unreadCount);
-				setServerUnreadTotalExcludesHidden(response.excludesHidden);
+				if (!response.staleTotal) {
+					setUnreadNotificationCount(unreadCount);
+					setServerUnreadTotal(unreadCount);
+					setServerUnreadTotalExcludesHidden(response.excludesHidden);
+					if (response.excludesHidden && unreadCount === 0) {
+						const epoch = feedEpochRef.current;
+						apiGetEventNotificationsUnreadCount()
+							.then((result) => {
+								if (epoch === feedEpochRef.current) {
+									setUnfilteredUnreadTotal(
+										Number(result?.unreadCount ?? 0)
+									);
+								}
+							})
+							.catch(() => undefined);
+					} else {
+						setUnfilteredUnreadTotal(null);
+					}
+				}
 				// A healthy feed must not keep rendering the older-page error:
 				// it was only ever cleared inside loadOlderNotifications, so a
 				// user who never retried saw the error state on every
@@ -545,7 +583,8 @@ export function NotificationsProvider(props) {
 				items,
 				unreadCount: Number(response?.unreadCount || 0),
 				reconciliation: options.reconciliation === true,
-				excludesHidden: current.length > 0 && sameList(echoed, current)
+				excludesHidden: current.length > 0 && sameList(echoed, current),
+				staleTotal: echoed.length > 0 && !sameList(echoed, current)
 			});
 		},
 		[handleFeedResponse]
@@ -1098,6 +1137,7 @@ export function NotificationsProvider(props) {
 		);
 		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
+		setUnfilteredUnreadTotal(null);
 	}, []);
 
 	const clearNotificationFeed = useCallback(() => {
@@ -1117,6 +1157,9 @@ export function NotificationsProvider(props) {
 				unreadNotificationCount,
 				serverUnreadTotal,
 				serverUnreadTotalExcludesHidden,
+				hasUnreadNotifications:
+					unreadNotificationCount > 0 ||
+					(unfilteredUnreadTotal ?? 0) > 0,
 				timelineDisplayFilter,
 				visibleUnreadCount: badge.visibleUnreadCount,
 				hiddenUnreadInLoadedPages:

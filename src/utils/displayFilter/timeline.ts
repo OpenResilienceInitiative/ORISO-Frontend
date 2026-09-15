@@ -55,8 +55,10 @@ export const applyTimelineFilter = <T extends { eventType?: string | null }>(
 ): T[] => rows.filter((row) => isTimelineRowVisible(row, filter));
 
 /**
- * True when the profile hides some (not all) event types of a shown kind:
- * the dialog renders the Show checkbox as "mixed" (§5.1).
+ * True when the profile hides event types of a shown kind (some or all of
+ * them): the dialog renders the Show checkbox as "mixed" and the filter
+ * counts as customised (§5.1). A family whose every type is hidden per type
+ * is still "shown" as a kind, so this is the only signal it gives.
  */
 export const isTimelineKindPartiallyHidden = (
 	filter: DisplayFilter,
@@ -72,8 +74,7 @@ export const isTimelineKindPartiallyHidden = (
 	const types = KNOWN_EVENT_TYPES.filter(
 		(type) => getEventDescriptor(type).family === kind
 	);
-	const hiddenCount = types.filter((type) => hidden.has(type)).length;
-	return hiddenCount > 0 && hiddenCount < types.length;
+	return types.some((type) => hidden.has(type));
 };
 
 /** Unread rows per kind (drives the pill badges, §5.1). */

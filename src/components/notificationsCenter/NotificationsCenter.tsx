@@ -253,7 +253,7 @@ export const NotificationsCenter = () => {
 	const sessions = sessionsContext?.sessions;
 	const {
 		notificationFeed,
-		unreadNotificationCount,
+		hasUnreadNotifications,
 		markNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
@@ -455,8 +455,20 @@ export const NotificationsCenter = () => {
 	// still clears everything server-side (spec §6.1): unread rows the filter
 	// hides on the loaded pages keep the action enabled.
 	const hasUnreadActivity =
-		unreadNotificationCount > 0 ||
-		notificationFeed.some((row) => !row.readAt);
+		hasUnreadNotifications || notificationFeed.some((row) => !row.readAt);
+	// §5.1: an active family whose pill the effective filter took (a profile
+	// change or another device) must not keep narrowing the feed with no
+	// chip left to clear it. Same reconciliation as the sessions lists.
+	useEffect(() => {
+		setActiveFamily((current) =>
+			current && current !== 'all'
+				? (reconcileActiveKind(
+						timelineFilter,
+						current
+					) as TimelineFamilyFilter)
+				: current
+		);
+	}, [timelineFilter]);
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
 			image: translate('notifications.center.preview.image', 'Image'),

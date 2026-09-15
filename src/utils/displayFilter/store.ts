@@ -284,16 +284,18 @@ class DisplayFilterStore {
 			}
 			return;
 		}
-		if (this.state.readOnly) {
+		const malformed = raw !== undefined && raw !== null;
+		if (this.state.readOnly && !malformed) {
 			// No event, but the mirror is from a newer app version: seeding
 			// would strip fields this client cannot parse and pin the record
 			// to our version. Stay read-only until that version writes.
 			this.setState({ synced: true });
 			return;
 		}
-		// No (parseable) event yet: the mirror or the defaults seed the
-		// account once. A malformed record is replaced by this write.
-		const seed = this.state.filters;
+		// No event yet: the mirror or the defaults seed the account once. A
+		// malformed record reads as defaults and is replaced by this write
+		// (spec §7, "malformed → defaults"), never by the mirror.
+		const seed = malformed ? DEFAULT_DISPLAY_FILTERS : this.state.filters;
 		this.extraKeys = {};
 		this.setState({
 			filters: seed,
