@@ -28,6 +28,7 @@ import {
 	SessionSearchPersonResult
 } from './sessionSearchPeople';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
+import { FilterChipRow } from '../displayFilter/FilterChipRow';
 import '../displayFilter/displayFilter.styles.scss';
 
 /** The pinned tune button at the right end of the chip row (#1377 §3). */
@@ -665,76 +666,11 @@ export const SessionsListToolbar = ({
 				)}
 			</div>
 
-			<div
-				className="filterChipRow"
+			<FilterChipRow
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
-			>
-				<div
-					className="sessionsListToolbar__chipsScroll filterChipRow__scroll"
-					data-cy="sessions-list-chips"
-				>
-					<div className="sessionsListToolbar__chipsRow">
-						{showCreateGroupChatAction && (
-							<Link
-								className={clsx('sessionsListToolbar__chip', {
-									'sessionsListToolbar__chip--active':
-										createGroupChatActive
-								})}
-								to={createGroupChatPath}
-								aria-label={translate(
-									'sessionList.createChat.buttonTitle'
-								)}
-								aria-current={
-									createGroupChatActive ? 'page' : undefined
-								}
-								data-cy="sessions-list-chip-create"
-								data-tour-target="groupchat-create-button"
-							>
-								<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-								<span className="sessionsListToolbar__chipLabel">
-									{tr(
-										'sessionList.toolbar.chips.create',
-										'Create'
-									)}
-								</span>
-							</Link>
-						)}
-						{filterChipsBeforeArchive.map(renderFilterChip)}
-						{showConsultantActions && (
-							<Link
-								className={clsx('sessionsListToolbar__chip', {
-									'sessionsListToolbar__chip--iconOnly':
-										!archiveTabActive,
-									'sessionsListToolbar__chip--active':
-										archiveTabActive
-								})}
-								data-tour-target="sessions-archive-tab"
-								to={archiveTabPath}
-								aria-label={translate(
-									'sessionList.view.archive.tab'
-								)}
-								aria-current={
-									archiveTabActive ? 'page' : undefined
-								}
-								data-cy="sessions-list-chip-archive"
-							>
-								<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
-								<span
-									className="sessionsListToolbar__chipLabel"
-									aria-hidden={!archiveTabActive}
-								>
-									{tr(
-										'sessionList.toolbar.chips.archive',
-										'Archived'
-									)}
-								</span>
-							</Link>
-						)}
-						{filterChipsAfterArchive.map(renderFilterChip)}
-					</div>
-				</div>
-				{displayFilter && (
-					<div className="filterChipRow__trailing">
+				scrollDataCy="sessions-list-chips"
+				trailing={
+					displayFilter && (
 						<DisplayFilterButton
 							label={displayFilter.label}
 							customised={displayFilter.customised}
@@ -744,9 +680,60 @@ export const SessionsListToolbar = ({
 							onClick={displayFilter.onOpen}
 							data-cy="sessions-list-display-filter"
 						/>
-					</div>
+					)
+				}
+			>
+				{showCreateGroupChatAction && (
+					<Link
+						className={clsx('sessionsListToolbar__chip', {
+							'sessionsListToolbar__chip--active':
+								createGroupChatActive
+						})}
+						to={createGroupChatPath}
+						aria-label={translate(
+							'sessionList.createChat.buttonTitle'
+						)}
+						aria-current={
+							createGroupChatActive ? 'page' : undefined
+						}
+						data-cy="sessions-list-chip-create"
+						data-tour-target="groupchat-create-button"
+					>
+						<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
+						<span className="sessionsListToolbar__chipLabel">
+							{tr('sessionList.toolbar.chips.create', 'Create')}
+						</span>
+					</Link>
 				)}
-			</div>
+				{filterChipsBeforeArchive.map(renderFilterChip)}
+				{showConsultantActions && (
+					<Link
+						className={clsx('sessionsListToolbar__chip', {
+							'sessionsListToolbar__chip--iconOnly':
+								!archiveTabActive,
+							'sessionsListToolbar__chip--active':
+								archiveTabActive
+						})}
+						data-tour-target="sessions-archive-tab"
+						to={archiveTabPath}
+						aria-label={translate('sessionList.view.archive.tab')}
+						aria-current={archiveTabActive ? 'page' : undefined}
+						data-cy="sessions-list-chip-archive"
+					>
+						<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
+						<span
+							className="sessionsListToolbar__chipLabel"
+							aria-hidden={!archiveTabActive}
+						>
+							{tr(
+								'sessionList.toolbar.chips.archive',
+								'Archived'
+							)}
+						</span>
+					</Link>
+				)}
+				{filterChipsAfterArchive.map(renderFilterChip)}
+			</FilterChipRow>
 		</div>
 	);
 };

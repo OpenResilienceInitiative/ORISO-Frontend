@@ -52,9 +52,7 @@ export const DisplayFilterKindTable = ({
 		<thead>
 			<tr>
 				<th scope="col" className="displayFilterDialog__kindHead">
-					<span className="displayFilterDialog__srOnly">
-						{labels.title}
-					</span>
+					<span className="sr-only">{labels.title}</span>
 				</th>
 				<th scope="col" className="displayFilterDialog__colHead">
 					{labels.showColumn}
