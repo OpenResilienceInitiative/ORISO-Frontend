@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
@@ -401,6 +402,7 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 							type="button"
 							className="circleSettings__createButton circleSettings__createButton--primary"
 						>
+							<AddCircleIcon aria-hidden />
 							{t('groupChat.circle.createLabel')}
 						</button>
 					</div>
