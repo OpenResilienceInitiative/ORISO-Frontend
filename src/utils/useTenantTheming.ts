@@ -1,4 +1,11 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+	useSyncExternalStore
+} from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
 import { TenantContext, useLocaleData } from '../globalState';
 import { TenantDataInterface } from '../globalState/interfaces';
@@ -7,6 +14,10 @@ import decodeHTML from './decodeHTML';
 import decodeTenantAsset from './decodeTenantAsset';
 import getSafeFaviconUrl from './getSafeFaviconUrl';
 import applyBrandingFavicon from './applyBrandingFavicon';
+import {
+	getAuthenticatedTenantId,
+	subscribeToAuthenticatedTenant
+} from './authenticatedTenant';
 import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
@@ -89,6 +100,14 @@ const useTenantTheming = () => {
 	const tenantContext = useContext(TenantContext);
 	const { locale } = useLocaleData();
 	const { subdomain } = getLocationVariables();
+	// Resolved from the access token, so it is `null` for an anonymous visitor
+	// and the user's own tenant once they sign in. The providers above the
+	// router do not remount on login, so without this the app would keep
+	// serving the tenant it resolved on the login screen.
+	const authenticatedTenantId = useSyncExternalStore(
+		subscribeToAuthenticatedTenant,
+		getAuthenticatedTenantId
+	);
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
@@ -176,7 +195,7 @@ const useTenantTheming = () => {
 			});
 		// False positive
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tenantContext?.setTenant, subdomain, locale]);
+	}, [tenantContext?.setTenant, subdomain, locale, authenticatedTenantId]);
 
 	return isLoadingTenant;
 };

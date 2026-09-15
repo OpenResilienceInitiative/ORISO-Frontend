@@ -175,6 +175,7 @@ export function NavigationStoryProviders({
 				>
 					<TenantContext.Provider
 						value={{
+							updateTenantSettings: () => {},
 							tenant: {
 								id: 1,
 								name: 'ORISO Storybook',
