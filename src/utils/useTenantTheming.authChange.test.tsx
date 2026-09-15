@@ -114,6 +114,48 @@ describe('useTenantTheming – tenant of the signed-in user', () => {
 		);
 	});
 
+	// Two resolutions can be in flight at once: the anonymous one started on the
+	// login screen and the signed-in one started by the token appearing. If the
+	// slower anonymous response is still allowed to land, it overwrites the
+	// counsellor's tenant — exactly the leakage this change exists to stop.
+	it('ignores an anonymous response that resolves after the signed-in one', async () => {
+		const deferred = <T,>() => {
+			let resolve!: (value: T) => void;
+			const promise = new Promise<T>((res) => {
+				resolve = res;
+			});
+			return { promise, resolve };
+		};
+		const anonymous = deferred<typeof SUBDOMAIN_TENANT>();
+		const signedIn = deferred<typeof USER_TENANT>();
+		mocks.apiGetTenantTheming
+			.mockReturnValueOnce(anonymous.promise)
+			.mockReturnValueOnce(signedIn.promise);
+
+		renderApp();
+
+		act(() => {
+			setValueInCookie('keycloak', tokenForTenant(14));
+		});
+		await waitFor(() =>
+			expect(mocks.apiGetTenantTheming).toHaveBeenCalledTimes(2)
+		);
+
+		// The signed-in answer arrives first, the stale anonymous one after.
+		await act(async () => {
+			signedIn.resolve(USER_TENANT);
+			await signedIn.promise;
+		});
+		await act(async () => {
+			anonymous.resolve(SUBDOMAIN_TENANT);
+			await anonymous.promise;
+		});
+
+		expect(screen.getByTestId('tenant').textContent).toBe(
+			'Blinky Fish Tenant Sep 14|false'
+		);
+	});
+
 	it('falls back to the subdomain tenant when the user signs out', async () => {
 		// Counselling agencies run shared machines: the next person at the
 		// keyboard must not inherit the previous counsellor's Träger.

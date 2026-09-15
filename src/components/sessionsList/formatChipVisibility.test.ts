@@ -34,7 +34,9 @@ describe('getFormatChipVisibility', () => {
 		).toEqual({ createGroupChat: true, groups: true, internalGroup: true });
 	});
 
-	it('follows the per-format flags the create flow already honours', () => {
+	// The create flow runs internal-only when that is the single available
+	// format, so the toolbar entry must survive the Gesprächskreis being off.
+	it('keeps the create entry while any format is still available', () => {
 		expect(
 			getFormatChipVisibility(
 				{
@@ -46,9 +48,24 @@ describe('getFormatChipVisibility', () => {
 				consultantOnMySessions
 			)
 		).toEqual({
-			createGroupChat: false,
+			createGroupChat: true,
 			groups: false,
 			internalGroup: true
+		});
+		expect(
+			getFormatChipVisibility(
+				{
+					settings: {
+						featureGroupChatV2Enabled: true,
+						featureInternalGroupChatEnabled: false
+					}
+				},
+				consultantOnMySessions
+			)
+		).toEqual({
+			createGroupChat: true,
+			groups: true,
+			internalGroup: false
 		});
 	});
 

@@ -185,14 +185,32 @@ const useTenantTheming = () => {
 			return;
 		}
 
+		// Sign-in and sign-out start a second resolution while the first may
+		// still be in flight. Whoever answers last would otherwise win: a slow
+		// anonymous response landing after the signed-in one puts the
+		// subdomain tenant back, which is the leak this hook exists to close.
+		let active = true;
+
 		apiGetTenantTheming()
-			.then(onTenantServiceResponse)
+			.then((tenant) => {
+				if (!active) {
+					return;
+				}
+				onTenantServiceResponse(tenant);
+			})
 			.catch((error) => {
 				// console.log('Theme could not be loaded', error);
 			})
 			.finally(() => {
+				if (!active) {
+					return;
+				}
 				setIsLoadingTenant(false);
 			});
+
+		return () => {
+			active = false;
+		};
 		// False positive
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [tenantContext?.setTenant, subdomain, locale, authenticatedTenantId]);

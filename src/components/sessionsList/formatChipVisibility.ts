@@ -25,7 +25,11 @@ export const getFormatChipVisibility = (
 	const availability = getConversationFormatAvailability(tenant);
 
 	return {
-		createGroupChat: showConsultantToolbarActions && availability.circle,
+		// The create flow opens straight into whichever single format is left,
+		// so the entry survives as long as one of them is available.
+		createGroupChat:
+			showConsultantToolbarActions &&
+			(availability.circle || availability.internal),
 		groups: showConsultantToolbarActions && availability.circle,
 		internalGroup: showConsultantToolbarActions && availability.internal
 	};

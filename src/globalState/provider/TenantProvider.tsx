@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { createContext, useState, useContext, useCallback } from 'react';
-import { setTenantSettings } from '../../utils/tenantSettingsHelper';
+import {
+	replaceTenantSettings,
+	setTenantSettings
+} from '../../utils/tenantSettingsHelper';
 import {
 	TenantDataInterface,
 	TenantDataSettingsInterface
@@ -15,8 +18,11 @@ export const TenantContext = createContext<{
 export function TenantProvider(props) {
 	const [tenant, setTenant] = useState<TenantDataInterface>();
 
+	// A fully resolved tenant replaces the mirror instead of merging into it:
+	// after a sign-in or sign-out this is a *different* Träger, and an optional
+	// flag the previous one set must not survive into the next session.
 	const setSettings = useCallback((tenant) => {
-		setTenantSettings(tenant.settings);
+		replaceTenantSettings(tenant?.settings);
 		setTenant(tenant);
 	}, []);
 

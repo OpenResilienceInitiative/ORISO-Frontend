@@ -15,6 +15,12 @@ export function LocaleProvider(props) {
 	const isLoading = useTenantTheming();
 	const tenant = useTenant();
 	const [initialized, setInitialized] = useState(false);
+	// Which tenant language set the current list was built from. Signing in
+	// swaps the tenant inside this provider, and the list has to follow —
+	// otherwise a counsellor keeps the languages of the login screen's tenant.
+	const [appliedLanguages, setAppliedLanguages] = useState<string | null>(
+		null
+	);
 	const [initLocale, setInitLocale] = useState(null);
 	const { informal } = useContext(InformalContext);
 	const [locales, setLocales] = useState([]);
@@ -22,10 +28,17 @@ export function LocaleProvider(props) {
 		localStorage.getItem(STORAGE_KEY_LOCALE) || null
 	);
 
+	const activeLanguagesKey = (tenant?.settings?.activeLanguages ?? []).join(
+		','
+	);
+
 	useEffect(() => {
 		// If using the tenant service we should load first the tenant because we need the
 		// active languages from the server to apply it on loading
-		if ((settings.useTenantService && isLoading) || initialized) {
+		if (settings.useTenantService && isLoading) {
+			return;
+		}
+		if (initialized && appliedLanguages === activeLanguagesKey) {
 			return;
 		}
 
@@ -48,6 +61,7 @@ export function LocaleProvider(props) {
 			settings.translation
 		).then((supportedLanguages) => {
 			setLocales(supportedLanguages);
+			setAppliedLanguages(activeLanguagesKey);
 			setInitLocale(i18n.language);
 			const locale =
 				localStorage.getItem(STORAGE_KEY_LOCALE) ||
@@ -58,13 +72,18 @@ export function LocaleProvider(props) {
 			setLocale(locale);
 			setInitialized(true);
 		});
+		// activeLanguagesKey is the stable derivation of the tenant's language
+		// array; depending on the array itself would re-init on every new
+		// object identity.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		activeLanguagesKey,
+		appliedLanguages,
 		initialized,
 		isLoading,
 		settings.i18n,
 		settings.translation,
-		settings.useTenantService,
-		tenant?.settings?.activeLanguages
+		settings.useTenantService
 	]);
 
 	const selectableLocales = useMemo(() => {
