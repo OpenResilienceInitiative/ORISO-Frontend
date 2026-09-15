@@ -6,28 +6,14 @@
  */
 export const isUndecryptedRoomEvent = (event: any): boolean => {
 	const clearContent = event?.getClearContent?.();
-	const sdkFailureBody = (clearContent || event?.getContent?.())?.body;
 
-	/*
-	 * The body sniff below is a last resort for SDK builds that report a
-	 * failure only in the text. It must never run on a plain `m.room.message`:
-	 * this is a counselling platform, and someone asking about an error they
-	 * saw ("bei mir stand: Unable to decrypt: DecryptionError") would have
-	 * their own sentence replaced by the encrypted-content placeholder — their
-	 * words silently swallowed by a diagnostic filter. An encrypted event, on
-	 * the other hand, has no user-authored body to lose.
-	 */
-	const isEncryptedEvent =
-		event?.getType?.() === 'm.room.encrypted' ||
-		event?.getWireType?.() === 'm.room.encrypted' ||
-		event?.isEncrypted?.() === true;
-
+	// Encrypted transport metadata survives successful decryption. Only the
+	// SDK failure state or an event that still lacks clear content is evidence
+	// of unavailable plaintext; diagnostic quotations can be user-authored.
 	return (
 		event?.isDecryptionFailure?.() === true ||
+		clearContent?.msgtype === 'm.bad.encrypted' ||
 		event?.getContent?.()?.msgtype === 'm.bad.encrypted' ||
-		(event?.getType?.() === 'm.room.encrypted' && !clearContent?.msgtype) ||
-		(isEncryptedEvent &&
-			typeof sdkFailureBody === 'string' &&
-			sdkFailureBody.includes('Unable to decrypt: DecryptionError'))
+		(event?.getType?.() === 'm.room.encrypted' && !clearContent?.msgtype)
 	);
 };
