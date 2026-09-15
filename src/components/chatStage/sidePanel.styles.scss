@@ -49,8 +49,10 @@
 
 		@media screen and (width <= 899px) {
 			padding-bottom: calc(
-				var(--composer-dock-height, 200px) + 24px +
-					env(safe-area-inset-bottom, 0)
+				var(
+					--composer-dock-height,
+					calc(200px + env(safe-area-inset-bottom, 0))
+				) + 24px
 			);
 		}
 	}
