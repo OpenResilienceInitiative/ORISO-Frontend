@@ -33,7 +33,7 @@ describe('isTimelineAtBottom', () => {
 });
 
 describe('shouldFollowNewMessage', () => {
-	it('always follows the reader s own message', () => {
+	it("always follows the reader's own message", () => {
 		expect(
 			shouldFollowNewMessage({
 				isOwnMessage: true,
