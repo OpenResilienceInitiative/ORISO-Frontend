@@ -71,6 +71,19 @@ export const shouldClearAtBottomAfterSuppressedFollow = ({
 }): boolean => initialScrollCompleted && !followed && atBottom;
 
 /**
+ * The first paint of a timeline is not unread: the view is about to jump
+ * there. Count only arrivals after that scroll has finished.
+ */
+export const unreadCountAfterArrival = (
+	messageCount: number,
+	baselineCount: number,
+	initialScrollCompleted: boolean
+): number =>
+	initialScrollCompleted
+		? Math.max(0, messageCount - (baselineCount || 0))
+		: 0;
+
+/**
  * "Is the reader writing?" — the composer card has focus, or it holds a
  * draft. Pure so the rule can be tested without a chat; the caller hands in
  * the composer card element and the document's active element.

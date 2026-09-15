@@ -47,6 +47,7 @@ export const useDraftMessage = (
 
 	const draftSaveTimeout = useRef(null);
 	const loadVersionRef = useRef(0);
+	const clearVersionRef = useRef(0);
 	const latestMessageRef = useRef<string>('');
 	const skipNextCleanupSaveRef = useRef(false);
 	/*
@@ -196,6 +197,7 @@ export const useDraftMessage = (
 		remoteScopeKey: string;
 		scopeKeysToTry: string[];
 		loadVersion: number;
+		clearVersion: number;
 		hasRemoteDraft: boolean;
 		encrypted: boolean;
 		isE2eeEnabled: boolean;
@@ -222,6 +224,7 @@ export const useDraftMessage = (
 			const capturedScope = ctx.remoteScopeKey;
 			const capturedKeys = ctx.scopeKeysToTry;
 			const capturedLoadVersion = ctx.loadVersion;
+			const capturedClearVersion = ctx.clearVersion;
 			const capturedHadRemote = ctx.hasRemoteDraft;
 
 			if (ctx.isE2eeEnabled && ctx.encrypted && draftMessage) {
@@ -250,6 +253,15 @@ export const useDraftMessage = (
 			 * draft (cleanup would then DELETE that scope's keys).
 			 */
 			const stillCurrent = capturedLoadVersion === loadVersionRef.current;
+			/*
+			 * Review (CodeRabbit): sending retires in-flight encrypts. A save
+			 * that started before `clearDraftMessage` must not upsert the
+			 * sent text back as a draft — that is independent of load
+			 * version, which `allowUnloaded` still needs for pre-load leave.
+			 */
+			if (capturedClearVersion !== clearVersionRef.current) {
+				return;
+			}
 
 			try {
 				if (isEmptyDraft) {
@@ -296,6 +308,7 @@ export const useDraftMessage = (
 		remoteScopeKey,
 		scopeKeysToTry,
 		loadVersion: loadVersionRef.current,
+		clearVersion: clearVersionRef.current,
 		hasRemoteDraft: false,
 		encrypted,
 		isE2eeEnabled,
@@ -317,6 +330,7 @@ export const useDraftMessage = (
 			remoteScopeKey,
 			scopeKeysToTry,
 			loadVersion: loadVersionRef.current,
+			clearVersion: clearVersionRef.current,
 			hasRemoteDraft: hasRemoteDraftRef.current,
 			encrypted,
 			isE2eeEnabled,
@@ -343,6 +357,7 @@ export const useDraftMessage = (
 		void persistDraftMessageRef.current(text, {
 			...persistContextRef.current,
 			hasRemoteDraft: hasRemoteDraftRef.current,
+			clearVersion: clearVersionRef.current,
 			allowUnloaded: pending
 		});
 	}, []);
@@ -482,6 +497,7 @@ export const useDraftMessage = (
 				remoteScopeKey,
 				scopeKeysToTry,
 				loadVersion: loadVersionRef.current,
+				clearVersion: clearVersionRef.current,
 				hasRemoteDraft: hasRemoteDraftRef.current,
 				encrypted,
 				isE2eeEnabled,
@@ -549,12 +565,6 @@ export const useDraftMessage = (
 		[loaded, saveDraftMessage]
 	);
 
-	const saveDraftMessageRef = useRef(saveDraftMessage);
-
-	useEffect(() => {
-		saveDraftMessageRef.current = saveDraftMessage;
-	}, [saveDraftMessage]);
-
 	// Review (CodeRabbit): whatever was typed while the draft was still on
 	// its way is saved as soon as saving is possible, so leaving for another
 	// conversation does not drop it.
@@ -596,11 +606,6 @@ export const useDraftMessage = (
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
 			}
-			if (skipNextCleanupSaveRef.current) {
-				skipNextCleanupSaveRef.current = false;
-				return;
-			}
-			saveDraftMessageRef.current(latestMessageRef.current).then();
 		};
 	}, []);
 
@@ -618,9 +623,12 @@ export const useDraftMessage = (
 		 * Review (CodeRabbit): sending does not wait for the draft to load.
 		 * A fetch or decryption still in flight would pass its version check
 		 * afterwards and refill the composer the reader just emptied — retire
-		 * that load and treat the scope as settled.
+		 * that load and treat the scope as settled. A persist that is already
+		 * inside encryptText keeps its captured load version; retire those
+		 * writes with a separate clear generation.
 		 */
 		loadVersionRef.current += 1;
+		clearVersionRef.current += 1;
 		setMessageRes(null);
 		setLoaded(true);
 		if (canUseRemoteApi) {

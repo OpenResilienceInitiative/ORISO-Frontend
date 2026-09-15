@@ -623,4 +623,109 @@ describe('useDraftMessage', () => {
 			)
 		).toBe(false);
 	});
+
+	it('does not resurrect a sent draft from an in-flight encrypted save', async () => {
+		mocks.e2ee.encrypted = true;
+		const encryptedWrapper = ({ children }: PropsWithChildren<{}>) => (
+			<E2EEContext.Provider
+				value={{
+					e2EEReady: true,
+					isE2eeEnabled: true,
+					key: 'test-key',
+					reloadPrivateKey: vi.fn()
+				}}
+			>
+				<ActiveSessionContext.Provider
+					value={{
+						activeSession: {
+							item: { id: 42 },
+							rid: '!room:matrix.test'
+						} as any,
+						reloadActiveSession: vi.fn(),
+						readActiveSession: vi.fn()
+					}}
+				>
+					{children}
+				</ActiveSessionContext.Provider>
+			</E2EEContext.Provider>
+		);
+
+		let releaseEncrypt: (cipher: string) => void = () => undefined;
+		mocks.encryptText.mockImplementation(
+			() =>
+				new Promise<string>((resolve) => {
+					releaseEncrypt = resolve;
+				})
+		);
+
+		const loadDraft = vi.fn();
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper: encryptedWrapper }
+		);
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		vi.useFakeTimers();
+		act(() => {
+			result.current.onChange('<p>Gesendet</p>');
+		});
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1600);
+		});
+		vi.useRealTimers();
+
+		await act(async () => {
+			await result.current.clearDraftMessage();
+		});
+
+		mocks.apiUpsertUserDraft.mockClear();
+		await act(async () => {
+			releaseEncrypt('enc.Gesendet');
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(
+				([scopeKey, payload]) =>
+					scopeKey === 'scope:session-42|thread:main' &&
+					String(payload?.text ?? '').includes('Gesendet')
+			)
+		).toBe(false);
+	});
+
+	it('writes a loaded draft only once when the conversation unmounts', async () => {
+		const loadDraft = vi.fn();
+		const { result, unmount } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper }
+		);
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		act(() => {
+			result.current.onChange('<p>Nur einmal speichern</p>');
+		});
+
+		await act(async () => {
+			unmount();
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.filter(
+				([scopeKey, payload]) =>
+					scopeKey === 'scope:session-42|thread:main' &&
+					payload?.text === '<p>Nur einmal speichern</p>'
+			)
+		).toHaveLength(1);
+	});
 });

@@ -26,7 +26,8 @@ import {
 	isComposerBusy,
 	isTimelineAtBottom,
 	shouldClearAtBottomAfterSuppressedFollow,
-	shouldFollowNewMessage
+	shouldFollowNewMessage,
+	unreadCountAfterArrival
 } from '../messageSubmitInterface/timelineFollow';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
@@ -1674,7 +1675,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setIsScrolledToBottom(false);
 			}
 
-			setNewMessages(messages.length - initMessageCount);
+			setNewMessages(
+				unreadCountAfterArrival(
+					messages.length,
+					initMessageCount,
+					initialScrollCompleted
+				)
+			);
 		}
 	}, [messages?.length]); // eslint-disable-line
 
@@ -1807,6 +1814,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setInitialScrollCompleted(true);
 			// Initial open should snap only the message container, without animated jumps.
 			scrollToEnd(0, false);
+			// Review (CodeRabbit): the first remote row can land before this
+			// flag flips, and the arrival effect would leave an unread count
+			// on a view that is about to jump to that message.
+			resetUnreadCount();
 		}
 	};
 

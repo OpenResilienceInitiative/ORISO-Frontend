@@ -5,7 +5,8 @@ import {
 	isComposerBusy,
 	isTimelineAtBottom,
 	shouldClearAtBottomAfterSuppressedFollow,
-	shouldFollowNewMessage
+	shouldFollowNewMessage,
+	unreadCountAfterArrival
 } from './timelineFollow';
 
 describe('isTimelineAtBottom', () => {
@@ -104,6 +105,16 @@ describe('shouldClearAtBottomAfterSuppressedFollow', () => {
 				atBottom: true
 			})
 		).toBe(false);
+	});
+});
+
+describe('unreadCountAfterArrival', () => {
+	it('does not count the first remote message on an empty timeline as unread', () => {
+		expect(unreadCountAfterArrival(1, 0, false)).toBe(0);
+	});
+
+	it('counts later arrivals once the initial scroll has finished', () => {
+		expect(unreadCountAfterArrival(5, 4, true)).toBe(1);
 	});
 });
 
