@@ -1025,7 +1025,7 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-body: isMatrixBackedSession
+				body: isMatrixBackedSession
 					? previewBody(railChannelPreviews?.main ?? null)
 					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
@@ -1369,7 +1369,13 @@ body: isMatrixBackedSession
 			<div
 				className={clsx(
 					'sessionsListItem__content',
-					isAnonymousChat && 'sessionsListItem__content--anonymous'
+					isAnonymousChat && 'sessionsListItem__content--anonymous',
+					/* FE#1115: hovering the card replays the magnet's
+					   search gesture, so the whole card is the target and
+					   not the 32 px glyph inside it. */
+					isAsker &&
+						!hasConsultantData &&
+						'consultantSearchLoaderHost'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={itemRef}
@@ -1500,6 +1506,10 @@ body: isMatrixBackedSession
 								/>
 							</div>
 						) : isAsker && !hasConsultantData ? (
+							/* FE#1115: the same magnet as the chat header,
+							   without the black disc — beam included. It
+							   points right, into the card's own width, so
+							   the card's corner clip never reaches it. */
 							<ConsultantSearchLoader size="32px" />
 						) : !isAsker ? (
 							// Restored username+icon linkage: the asker card
@@ -1724,13 +1734,24 @@ body: isMatrixBackedSession
 										'sessionsListItem__consultingTypeIcon--nearby'
 									)}
 								>
-									<img
-										src={mailConversationIcon}
-										alt={translate(
+									{/* Frank, 15.09.: the Mail modality carries the
+									    primary colour, icon and word alike. The
+									    source SVG has a grey fill baked in, so it
+									    is worn as a mask and the colour comes from
+									    CSS — the same technique the chat header's
+									    type glyph uses. */}
+									<span
+										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+										role="img"
+										aria-label={translate(
 											'sessionList.toolbar.chips.nearby',
 											'Mail'
 										)}
-										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+										style={
+											{
+												'--nearby-icon-url': `url("${mailConversationIcon}")`
+											} as React.CSSProperties
+										}
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 										{translate(
