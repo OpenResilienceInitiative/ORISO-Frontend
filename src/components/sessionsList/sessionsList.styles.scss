@@ -297,6 +297,16 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		opacity: 0.55;
 	}
 
+	// The hidden-active explanation as text, not only a title tooltip
+	// (keyboard, touch and screen-reader users see it too).
+	&__hiddenActiveRowHint {
+		margin: 0;
+		padding: 4px 16px 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--skin-color-secondary, #6b6b6b);
+	}
+
 	&__scrollContainer {
 		padding-top: 16px;
 		overflow: auto;

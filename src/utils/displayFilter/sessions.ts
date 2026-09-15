@@ -152,7 +152,9 @@ export interface FilteredSessions<T extends SessionPair> {
 }
 
 const pairId = (pair: SessionPair): string =>
-	String(pair.raw.session?.id ?? pair.raw.chat?.id ?? pair.extended.rid ?? '');
+	String(
+		pair.raw.session?.id ?? pair.raw.chat?.id ?? pair.extended.rid ?? ''
+	);
 
 /**
  * Gespräche: drop rows of hidden kinds, keep the active row (dimmed). Runs

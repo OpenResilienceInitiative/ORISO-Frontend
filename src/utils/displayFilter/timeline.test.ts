@@ -71,6 +71,16 @@ describe('timelineKindOf / applyTimelineFilter', () => {
 		expect(isTimelineKindPartiallyHidden(filter, 'messages')).toBe(false);
 		expect(isTimelineKindPartiallyHidden(hideSystem, 'system')).toBe(false);
 	});
+
+	it('an unseeded type in hiddenEventTypes is ignored: "Sonstiges" stays visible', () => {
+		const filter: DisplayFilter = {
+			...DEFAULT_DISPLAY_FILTER,
+			hiddenEventTypes: ['totally.unknown']
+		};
+		expect(applyTimelineFilter(feed, filter)).toHaveLength(feed.length);
+		expect(hiddenTimelineEventTypes(filter)).toEqual([]);
+		expect(hiddenUnreadServerIds(feed, filter)).toEqual([]);
+	});
 });
 
 describe('timelineUnreadByKind', () => {

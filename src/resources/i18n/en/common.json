@@ -333,7 +333,10 @@
 				"onlyMarker": "Team only",
 				"composer": { "placeholder": "Message to the team …" },
 				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
-				"empty": { "title": "Start team consultation", "text": "Write the first message to your team below." }
+				"empty": {
+					"title": "Start team consultation",
+					"text": "Write the first message to your team below."
+				}
 			}
 		},
 		"menu": {
@@ -3570,6 +3573,7 @@
 				"drafts": "Drafts",
 				"nearby": "Mail",
 				"create": "Create",
+				"group": "Filters",
 				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",

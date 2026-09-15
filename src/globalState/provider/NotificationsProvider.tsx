@@ -23,6 +23,7 @@ import {
 	apiMarkEventNotificationsReadByTypes,
 	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
+import { FETCH_ERRORS } from '../../api/fetchData';
 import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
@@ -691,14 +692,14 @@ export function NotificationsProvider(props) {
 	 * server as older and the per-id path stays the only one.
 	 */
 	const markHiddenReadOnServer = useCallback(
-		async (eventTypes: ReadonlyArray<string>) => {
+		async (eventTypes: ReadonlyArray<string>): Promise<boolean> => {
 			if (
 				bulkReadUnsupportedRef.current ||
 				bulkReadPendingRef.current ||
 				eventTypes.length === 0 ||
 				!getValueFromCookie('keycloak')
 			) {
-				return;
+				return true;
 			}
 			const feedEpoch = feedEpochRef.current;
 			bulkReadPendingRef.current = true;
@@ -707,7 +708,7 @@ export function NotificationsProvider(props) {
 				const result =
 					await apiMarkEventNotificationsReadByTypes(eventTypes);
 				if (feedEpoch !== feedEpochRef.current) {
-					return;
+					return true;
 				}
 				settlementRef.current.anySuccess = true;
 				// The server has read them: reflect it on the loaded rows and
@@ -744,13 +745,21 @@ export function NotificationsProvider(props) {
 						Math.max(0, value - updated)
 					);
 				}
+				return true;
 			} catch (error) {
+				const message = (error as { message?: string })?.message;
 				if (
-					(error as { message?: string })?.message === 'notFound' ||
+					message === FETCH_ERRORS.NO_MATCH ||
+					message === 'notFound' ||
 					(error as { status?: number })?.status === 404
 				) {
 					bulkReadUnsupportedRef.current = true;
+					return true;
 				}
+				// Anything else (500, network): not "done" — the next filter
+				// change tries again instead of leaving unloaded pages unread.
+				console.warn('Bulk hidden-read failed; will retry', error);
+				return false;
 			} finally {
 				bulkReadPendingRef.current = false;
 				pendingReadCountRef.current -= 1;
@@ -786,8 +795,13 @@ export function NotificationsProvider(props) {
 		bulkReadScheduledRef.current = true;
 		const timer = window.setTimeout(() => {
 			bulkReadScheduledRef.current = false;
-			lastBulkReadKeyRef.current = key;
-			void markHiddenReadOnServer(hiddenEventTypes);
+			// Recorded only once the request succeeded or the server is known
+			// to be older; a failed request must not count as done.
+			void markHiddenReadOnServer(hiddenEventTypes).then((done) => {
+				if (done) {
+					lastBulkReadKeyRef.current = key;
+				}
+			});
 		}, AUTO_READ_DEBOUNCE_MS);
 		return () => {
 			bulkReadScheduledRef.current = false;

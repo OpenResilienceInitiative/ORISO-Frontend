@@ -190,6 +190,81 @@ describe('display-filter store — attach (rules 1–2)', () => {
 	});
 });
 
+describe('display-filter store — review follow-ups (#1378)', () => {
+	beforeEach(() => {
+		displayFilterStore.resetForTests();
+		localStorage.clear();
+	});
+
+	it('rejected account-data write: rolls back to the confirmed record and flags it', async () => {
+		const client = makeClient('@a:hs', {
+			initial: v1With({ timeline: hideCalls })
+		});
+		client.setAccountData.mockRejectedValue(new Error('boom'));
+		displayFilterStore.attachClient(client as any);
+		expect(displayFilterStore.setSection('sessions', hideCalls)).toBe(true);
+		expect(displayFilterStore.getState().filters.sections.sessions).toEqual(
+			hideCalls
+		);
+		await flush();
+		const state = displayFilterStore.getState();
+		expect(state.writeFailed).toBe(true);
+		expect(state.filters.sections.sessions).toBeUndefined();
+		expect(state.filters.sections.timeline).toEqual(hideCalls);
+		// The mirror still holds the confirmed record, never the failed one.
+		expect(
+			JSON.parse(localStorage.getItem(mirrorKey('@a:hs'))!).sections
+				.sessions
+		).toBeUndefined();
+		// The next accepted update clears the flag.
+		client.setAccountData.mockResolvedValue(undefined);
+		displayFilterStore.setSection('requests', hideCalls);
+		expect(displayFilterStore.getState().writeFailed).toBe(false);
+	});
+
+	it('newer mirror and no account event: stays read-only, nothing seeded', () => {
+		localStorage.setItem(
+			mirrorKey('@a:hs'),
+			JSON.stringify({ ...v1With({}), version: 99, future: true })
+		);
+		const client = makeClient('@a:hs');
+		displayFilterStore.attachClient(client as any);
+		const state = displayFilterStore.getState();
+		expect(state.synced).toBe(true);
+		expect(state.readOnly).toBe(true);
+		expect(state.source).toBe('mirror');
+		expect(client.setAccountData).not.toHaveBeenCalled();
+		expect(displayFilterStore.setSection('timeline', hideCalls)).toBe(
+			false
+		);
+	});
+
+	it('same-user client replacement keeps the mirror and the state until the new client syncs', () => {
+		const first = makeClient('@a:hs', {
+			initial: v1With({ timeline: hideCalls })
+		});
+		displayFilterStore.attachClient(first as any);
+		const replacement = makeClient('@a:hs', {
+			synced: false,
+			initial: v1With({ timeline: hideCalls })
+		});
+		displayFilterStore.attachClient(replacement as any);
+		let state = displayFilterStore.getState();
+		expect(state.synced).toBe(false);
+		expect(state.filters.sections.timeline).toEqual(hideCalls);
+		expect(localStorage.getItem(mirrorKey('@a:hs'))).not.toBeNull();
+		expect(displayFilterStore.setSection('sessions', hideCalls)).toBe(
+			false
+		);
+		replacement.sync('PREPARED');
+		state = displayFilterStore.getState();
+		expect(state.synced).toBe(true);
+		expect(state.source).toBe('account');
+		expect(state.filters.sections.timeline).toEqual(hideCalls);
+		expect(replacement.setAccountData).not.toHaveBeenCalled();
+	});
+});
+
 describe('display-filter store — updates (rules 3–4, version rule)', () => {
 	beforeEach(() => {
 		displayFilterStore.resetForTests();

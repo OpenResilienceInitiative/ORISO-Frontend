@@ -1,5 +1,10 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import {
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS,
+	fetchData
+} from './fetchData';
 
 export interface EventNotificationFeedItem {
 	id: number;
@@ -58,7 +63,11 @@ export const apiGetEventNotificationsUnreadCount = async (
 		method: FETCH_METHODS.GET
 	});
 
-/** #1377 slice 7: "hidden ⇒ read" across unloaded pages. */
+/**
+ * #1377 slice 7: "hidden ⇒ read" across unloaded pages. The JSON body is
+ * parsed (`updated` drives the optimistic total), and a 404 rejects with
+ * `FETCH_ERRORS.NO_MATCH` so the caller can recognise an older server.
+ */
 export const apiMarkEventNotificationsReadByTypes = async (
 	eventTypes: ReadonlyArray<string>
 ): Promise<{ updated: number; eventTypes?: string[] }> =>
@@ -66,7 +75,8 @@ export const apiMarkEventNotificationsReadByTypes = async (
 		url: `${endpoints.eventNotifications}/read?eventTypes=${encodeURIComponent(
 			eventTypes.join(',')
 		)}`,
-		method: FETCH_METHODS.PATCH
+		method: FETCH_METHODS.PATCH,
+		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.NO_MATCH]
 	});
 
 export const apiMarkEventNotificationRead = async (

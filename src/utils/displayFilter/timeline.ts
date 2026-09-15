@@ -24,6 +24,9 @@ import { DisplayFilter } from './model';
 export { TIMELINE_KIND_ORDER, timelineKindOf };
 export type { TimelineKindId };
 
+/** Only seeded types can be hidden per type; "Sonstiges" never is (§5.1). */
+const SEEDED_EVENT_TYPES: ReadonlySet<string> = new Set(KNOWN_EVENT_TYPES);
+
 export interface TimelineFilterableRow {
 	id: string;
 	eventType?: string | null;
@@ -39,7 +42,11 @@ export const isTimelineRowVisible = (
 	if (!resolveKindSetting(filter, kind).show) {
 		return false;
 	}
-	return !(row.eventType && filter.hiddenEventTypes?.includes(row.eventType));
+	return !(
+		row.eventType &&
+		SEEDED_EVENT_TYPES.has(row.eventType) &&
+		filter.hiddenEventTypes?.includes(row.eventType)
+	);
 };
 
 export const applyTimelineFilter = <T extends { eventType?: string | null }>(
@@ -160,7 +167,11 @@ export const computeTimelineBadge = (
  * are "Sonstiges", which cannot be hidden, so they never appear here.
  */
 export const hiddenTimelineEventTypes = (filter: DisplayFilter): string[] => {
-	const hidden = new Set<string>(filter.hiddenEventTypes ?? []);
+	const hidden = new Set<string>(
+		(filter.hiddenEventTypes ?? []).filter((type) =>
+			SEEDED_EVENT_TYPES.has(type)
+		)
+	);
 	KNOWN_EVENT_TYPES.forEach((type) => {
 		if (!resolveKindSetting(filter, getEventDescriptor(type).family).show) {
 			hidden.add(type);

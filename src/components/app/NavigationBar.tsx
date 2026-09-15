@@ -371,6 +371,19 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								const unreadLabel = showUnreadNav
+									? translate(
+											'sessionList.rail.unreadCount',
+											{
+												count: unreadCount
+											}
+										)
+									: '';
+								// The Link's aria-label is its whole accessible
+								// name, so the count has to be part of it.
+								const linkLabel = showUnreadNav
+									? `${label}, ${unreadLabel}`
+									: label;
 								// Desktop rail may hyphenate/wrap; mobile bottom bar
 								// must stay single-line to avoid overlapping neighbors.
 								const visibleLabel = useFigmaSlot
@@ -454,7 +467,7 @@ export const NavigationBar = ({
 												`navigation__item--nav-${item.navSlot}`
 										)}
 										to={item.to}
-										aria-label={label}
+										aria-label={linkLabel}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -490,6 +503,7 @@ export const NavigationBar = ({
 													<NavigationUnreadIndicator
 														animate={animateNavIcon}
 														count={unreadCount}
+														label={unreadLabel}
 														variant="figma"
 														title={unreadNavTitle(
 															item.to
@@ -515,6 +529,7 @@ export const NavigationBar = ({
 											<NavigationUnreadIndicator
 												animate={animateNavIcon}
 												count={unreadCount}
+												label={unreadLabel}
 												variant="default"
 												title={unreadNavTitle(item.to)}
 											/>
@@ -829,11 +844,14 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
+	label,
 	variant = 'default',
 	title
 }: {
 	animate: boolean;
 	count: number;
+	/** Localised "{{count}} new messages" (also part of the link's name). */
+	label: string;
 	variant?: 'default' | 'figma';
 	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
 	title?: string;
@@ -859,7 +877,7 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={title ? `${count} unread, ${title}` : `${count} unread`}
+			aria-label={title ? `${label}, ${title}` : label}
 			title={title}
 		>
 			{isFigma ? (

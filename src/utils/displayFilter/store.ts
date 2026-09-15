@@ -57,6 +57,11 @@ export interface DisplayFilterStoreState {
 	synced: boolean;
 	/** True when the stored record is newer than this client can write. */
 	readOnly: boolean;
+	/**
+	 * True after an account-data write was rejected and the state rolled
+	 * back to the last confirmed record; cleared by the next accepted update.
+	 */
+	writeFailed: boolean;
 }
 
 type Listener = () => void;
@@ -119,7 +124,8 @@ const DEFAULT_STATE: DisplayFilterStoreState = {
 	filters: DEFAULT_DISPLAY_FILTERS,
 	source: 'defaults',
 	synced: false,
-	readOnly: false
+	readOnly: false,
+	writeFailed: false
 };
 
 class DisplayFilterStore {
@@ -144,6 +150,9 @@ class DisplayFilterStore {
 
 	/** Unknown top-level keys of the stored record, preserved on write. */
 	private extraKeys: Record<string, unknown> = {};
+
+	/** The last record known to be in account data (rollback target). */
+	private confirmed: OrisoDisplayFilters = DEFAULT_DISPLAY_FILTERS;
 
 	private accountDataHandler = (event: MatrixEvent): void => {
 		if (event.getType() !== DISPLAY_FILTERS_EVENT_TYPE) {
@@ -199,20 +208,37 @@ class DisplayFilterStore {
 		if (this.client === client) {
 			return;
 		}
+		const nextUserId = client.getUserId?.() ?? null;
+		if (this.client && nextUserId && nextUserId === this.userId) {
+			// Same user, new client object (token refresh): keep the mirror
+			// and the current state, only re-bind and re-await the sync.
+			// Pending writes of the old client are invalidated.
+			this.unbindClient();
+			this.invalidate();
+			this.client = client;
+			this.setState({ synced: false });
+			this.bindClient(client);
+			return;
+		}
 		this.detachClient();
 		this.invalidate();
 		this.client = client;
-		this.userId = client.getUserId?.() ?? null;
+		this.userId = nextUserId;
 		this.extraKeys = {};
+		this.confirmed = DEFAULT_DISPLAY_FILTERS;
 
 		const mirrored = this.userId ? readMirror(this.userId) : null;
 		this.setState({
 			filters: mirrored ?? DEFAULT_DISPLAY_FILTERS,
 			source: mirrored ? 'mirror' : 'defaults',
 			synced: false,
-			readOnly: mirrored ? isNewerDisplayFiltersVersion(mirrored) : false
+			readOnly: mirrored ? isNewerDisplayFiltersVersion(mirrored) : false,
+			writeFailed: false
 		});
+		this.bindClient(client);
+	}
 
+	private bindClient(client: MatrixClient): void {
 		client.on('accountData' as any, this.accountDataHandler);
 		client.on('sync' as any, this.syncHandler);
 		if (typeof window !== 'undefined') {
@@ -220,6 +246,19 @@ class DisplayFilterStore {
 		}
 		if (isPreparedSyncState(client.getSyncState?.())) {
 			this.onSynced();
+		}
+	}
+
+	private unbindClient(): void {
+		if (typeof window !== 'undefined') {
+			window.removeEventListener('storage', this.storageHandler);
+		}
+		if (this.client) {
+			this.client.removeListener(
+				'accountData' as any,
+				this.accountDataHandler
+			);
+			this.client.removeListener('sync' as any, this.syncHandler);
 		}
 	}
 
@@ -232,15 +271,24 @@ class DisplayFilterStore {
 		const stored = parseDisplayFilters(raw);
 		if (stored) {
 			this.extraKeys = unknownTopLevelKeys(raw);
+			this.confirmed = stored;
 			this.setState({
 				filters: stored,
 				source: 'account',
 				synced: true,
-				readOnly: isNewerDisplayFiltersVersion(stored)
+				readOnly: isNewerDisplayFiltersVersion(stored),
+				writeFailed: false
 			});
 			if (this.userId) {
 				writeMirror(this.userId, stored);
 			}
+			return;
+		}
+		if (this.state.readOnly) {
+			// No event, but the mirror is from a newer app version: seeding
+			// would strip fields this client cannot parse and pin the record
+			// to our version. Stay read-only until that version writes.
+			this.setState({ synced: true });
 			return;
 		}
 		// No (parseable) event yet: the mirror or the defaults seed the
@@ -263,10 +311,12 @@ class DisplayFilterStore {
 			return;
 		}
 		this.extraKeys = unknownTopLevelKeys(raw);
+		this.confirmed = stored;
 		this.setState({
 			filters: stored,
 			source: 'account',
-			readOnly: isNewerDisplayFiltersVersion(stored)
+			readOnly: isNewerDisplayFiltersVersion(stored),
+			writeFailed: false
 		});
 		if (this.userId && !this.writeInFlight) {
 			writeMirror(this.userId, stored);
@@ -278,16 +328,7 @@ class DisplayFilterStore {
 	 * user-scoped key captured at attach, pending writes invalidated (§7.5).
 	 */
 	detachClient(): void {
-		if (typeof window !== 'undefined') {
-			window.removeEventListener('storage', this.storageHandler);
-		}
-		if (this.client) {
-			this.client.removeListener(
-				'accountData' as any,
-				this.accountDataHandler
-			);
-			this.client.removeListener('sync' as any, this.syncHandler);
-		}
+		this.unbindClient();
 		if (this.userId) {
 			removeMirror(this.userId);
 		}
@@ -295,6 +336,7 @@ class DisplayFilterStore {
 		this.client = null;
 		this.userId = null;
 		this.extraKeys = {};
+		this.confirmed = DEFAULT_DISPLAY_FILTERS;
 		this.setState({ ...DEFAULT_STATE });
 	}
 
@@ -319,7 +361,7 @@ class DisplayFilterStore {
 			...mutate(this.state.filters),
 			version: DISPLAY_FILTERS_VERSION
 		};
-		this.setState({ filters: next, source: 'account' });
+		this.setState({ filters: next, source: 'account', writeFailed: false });
 		this.revision += 1;
 		this.startWrite();
 		return true;
@@ -349,8 +391,20 @@ class DisplayFilterStore {
 					return;
 				}
 				this.writeInFlight = false;
-				if (ok && userId && revision === this.revision) {
-					writeMirror(userId, this.state.filters);
+				if (ok && revision === this.revision) {
+					this.confirmed = this.state.filters;
+					if (userId) {
+						writeMirror(userId, this.state.filters);
+					}
+				} else if (!ok && !this.writeDirty) {
+					// Rejected and nothing newer queued: the optimistic state
+					// would be lost on reload or on another device, so roll
+					// back to the last confirmed record and say so. A newer
+					// queued update retries with its own content instead.
+					this.setState({
+						filters: this.confirmed,
+						writeFailed: true
+					});
 				}
 				if (this.writeDirty) {
 					this.startWrite();

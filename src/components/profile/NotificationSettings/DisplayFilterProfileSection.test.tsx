@@ -213,6 +213,29 @@ describe('DisplayFilterProfileSection', () => {
 		expect(global.timeline.kinds.liveChat).toBeUndefined();
 	});
 
+	it('"apply to other lists" with a default live-chat setting resets a customised target', () => {
+		attach({
+			...DEFAULT_DISPLAY_FILTERS,
+			global: {
+				...DEFAULT_DISPLAY_FILTERS.global,
+				requests: {
+					kinds: { liveChat: { show: false, pill: false } },
+					autoReadHidden: false
+				}
+			}
+		});
+		renderSection();
+		act(() => {
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="display-filter-profile-sessions-apply-all"]'
+				) as HTMLButtonElement
+			);
+		});
+		const { global } = displayFilterStore.getState().filters;
+		expect(global.requests.kinds.liveChat).toBeUndefined();
+	});
+
 	it('is inert before the store is synced', () => {
 		displayFilterStore.attachClient({
 			getUserId: () => '@c1:hs',

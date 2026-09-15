@@ -58,6 +58,8 @@ export interface UseDisplayFilterResult {
 	/** False before attach/sync and while the record is newer than us. */
 	canWrite: boolean;
 	readOnly: boolean;
+	/** The last write was rejected and the state rolled back (§7.4). */
+	writeFailed: boolean;
 	setSection: (value: DisplayFilterValue) => boolean;
 	resetSection: () => boolean;
 	setGlobal: (filter: DisplayFilter) => boolean;
@@ -93,6 +95,7 @@ export const useDisplayFilter = (
 		global: state.filters.global[section],
 		canWrite: state.synced && !state.readOnly,
 		readOnly: state.readOnly,
+		writeFailed: state.writeFailed,
 		setSection,
 		resetSection,
 		setGlobal

@@ -345,7 +345,10 @@
 				"onlyMarker": "Nur fürs Team",
 				"composer": { "placeholder": "Nachricht an das Team …" },
 				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
-				"empty": { "title": "Teamberatung starten", "text": "Schreiben Sie unten die erste Nachricht an Ihr Team." }
+				"empty": {
+					"title": "Teamberatung starten",
+					"text": "Schreiben Sie unten die erste Nachricht an Ihr Team."
+				}
 			}
 		},
 		"menu": {
@@ -3627,6 +3630,7 @@
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
 				"create": "Erstellen",
+				"group": "Filter",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",

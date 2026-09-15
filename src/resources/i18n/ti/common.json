@@ -334,10 +334,14 @@
 				"title": "ትሬድ"
 			},
 			"team": {
-				"title": "ምኽክር ጉጅለ", "onlyMarker": "ንጉጅለ ጥራይ",
+				"title": "ምኽክር ጉጅለ",
+				"onlyMarker": "ንጉጅለ ጥራይ",
 				"composer": { "placeholder": "ናብ ጉጅለ መልእኽቲ…" },
 				"systemNotice": "ምኽክር ጉጅለ ምስ ምኽሪ ብሓባር ይካየድ። ደላዪ ምኽሪ ኣብዚ ቻነል ኣይሳተፍን ኣይርእዮን።",
-				"empty": { "title": "ምኽክር ጉጅለ ጀምር", "text": "ኣብ ታሕቲ ናብ ጉጅለኻ ናይ መጀመርታ መልእኽቲ ጽሓፍ።" }
+				"empty": {
+					"title": "ምኽክር ጉጅለ ጀምር",
+					"text": "ኣብ ታሕቲ ናብ ጉጅለኻ ናይ መጀመርታ መልእኽቲ ጽሓፍ።"
+				}
 			}
 		},
 		"switcher": {
@@ -345,7 +349,8 @@
 			"closeMenu": "ጎድናዊ ቻናላት ሕባእ",
 			"kind": {
 				"supervision": "ሱፐርቪዥን",
-				"thread": "ትሬድ", "team": "ምኽክር ጉጅለ"
+				"thread": "ትሬድ",
+				"team": "ምኽክር ጉጅለ"
 			},
 			"mainChat": "ምኽሪ ቻት",
 			"openChannel": "{{label}} ክፈት",
@@ -355,7 +360,9 @@
 			"eyebrow": "ተወሳኺ ዝርርባት",
 			"title": "ትሬዳትን ሱፐርቪዥንን",
 			"supervisionChat": "ናይ ሱፐርቪዥን ቻት",
-			"thread": "ትሬድ #{{n}}", "teamChat": "ምኽክር ጉጅለ", "titleWithTeam": "ትሬዳት፣ ሱፐርቪዥንን ምኽክር ጉጅለን"
+			"thread": "ትሬድ #{{n}}",
+			"teamChat": "ምኽክር ጉጅለ",
+			"titleWithTeam": "ትሬዳት፣ ሱፐርቪዥንን ምኽክር ጉጅለን"
 		}
 	},
 	"chatFlyout": {
@@ -3599,6 +3606,7 @@
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
 				"create": "ፍጠር",
+				"group": "መጻረዪ",
 				"archive": "Archive",
 				"oneToOne": "1-1 ምኽሪ",
 				"liveChat": "ቀጥታዊ ዝርርብ",

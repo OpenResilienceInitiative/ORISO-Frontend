@@ -1,5 +1,12 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState
+} from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import {
 	getSessionType,
@@ -62,7 +69,8 @@ import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
 	SessionSearchPersonResult,
-	SessionsListToolbar
+	SessionsListToolbar,
+	DisplayFilterKindChip
 } from './SessionsListToolbar';
 import {
 	draftMatchesSession,
@@ -1491,72 +1499,122 @@ export const SessionsList = ({
 			a.label.localeCompare(b.label)
 		);
 	}, [sessionToolbarPairs]);
-	const isSessionListItemActive = (session: ExtendedSessionInterface) =>
-		(session?.rid && session.rid === groupIdFromParam) ||
-		(session?.item?.id !== undefined &&
-			String(session.item.id) === String(sessionIdFromParam || ''));
+	const isSessionListItemActive = useCallback(
+		(session: ExtendedSessionInterface) =>
+			(session?.rid && session.rid === groupIdFromParam) ||
+			(session?.item?.id !== undefined &&
+				String(session.item.id) === String(sessionIdFromParam || '')),
+		[groupIdFromParam, sessionIdFromParam]
+	);
 	// #1377 §5.2/§5.3: the display filter runs after `filterSessions` and
 	// before the toolbar chip, so the chip refinement composes on top. The
-	// route-active row survives (dimmed) while its kind is hidden.
+	// route-active row survives (dimmed) while its kind is hidden. All of it
+	// is memoised: unread/receipt events re-render this list often.
 	const canSupervise =
 		showConsultantToolbarActions &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
-	const displayFiltered =
-		type === SESSION_LIST_TYPES.ENQUIRY
-			? applyRequestsFilter(sessionToolbarPairs, listDisplayFilter, {
-					isActive: isSessionListItemActive
-				})
-			: type === SESSION_LIST_TYPES.MY_SESSION
-				? applySessionsFilter(sessionToolbarPairs, listDisplayFilter, {
-						currentUserId: userData?.userId,
-						canSupervise,
+	const currentUserId = userData?.userId;
+	const displayFiltered = useMemo(
+		() =>
+			type === SESSION_LIST_TYPES.ENQUIRY
+				? applyRequestsFilter(sessionToolbarPairs, listDisplayFilter, {
 						isActive: isSessionListItemActive
 					})
-				: {
-						visible: sessionToolbarPairs,
-						hiddenActiveIds: new Set<string>()
-					};
+				: type === SESSION_LIST_TYPES.MY_SESSION
+					? applySessionsFilter(
+							sessionToolbarPairs,
+							listDisplayFilter,
+							{
+								currentUserId,
+								canSupervise,
+								isActive: isSessionListItemActive
+							}
+						)
+					: {
+							visible: sessionToolbarPairs,
+							hiddenActiveIds: new Set<string>()
+						},
+		[
+			canSupervise,
+			currentUserId,
+			isSessionListItemActive,
+			listDisplayFilter,
+			sessionToolbarPairs,
+			type
+		]
+	);
 	const displayVisiblePairs = displayFiltered.visible;
 	const hiddenActiveRowIds = displayFiltered.hiddenActiveIds;
 	const displayFilterHiddenCount =
 		sessionToolbarPairs.length - displayVisiblePairs.length;
-	const toolbarMatches = ({
-		raw,
-		extended
-	}: {
-		raw: ListItemInterface;
-		extended: ExtendedSessionInterface;
-	}) =>
-		sessionMatchesToolbar(
+	const toolbarMatches = useCallback(
+		({
 			raw,
-			extended,
-			sessionToolbarSearch,
+			extended
+		}: {
+			raw: ListItemInterface;
+			extended: ExtendedSessionInterface;
+		}) =>
+			sessionMatchesToolbar(
+				raw,
+				extended,
+				sessionToolbarSearch,
+				sessionToolbarChip,
+				sessionToolbarSelectedPeople,
+				visibleUserDrafts,
+				currentUserId
+			) &&
+			sessionMatchesAgencies(
+				raw,
+				sessionToolbarSelectedAgencies.map(Number)
+			) &&
+			(!sessionToolbarSelectedTopic ||
+				String(
+					(extended?.item?.topic as TopicSessionInterface | null)
+						?.id ?? ''
+				) === sessionToolbarSelectedTopic),
+		[
+			currentUserId,
 			sessionToolbarChip,
+			sessionToolbarSearch,
+			sessionToolbarSelectedAgencies,
 			sessionToolbarSelectedPeople,
-			visibleUserDrafts,
-			userData?.userId
-		) &&
-		sessionMatchesAgencies(
-			raw,
-			sessionToolbarSelectedAgencies.map(Number)
-		) &&
-		(!sessionToolbarSelectedTopic ||
-			String(
-				(extended?.item?.topic as TopicSessionInterface | null)?.id ??
-					''
-			) === sessionToolbarSelectedTopic);
-	const sessionToolbarFilteredPairs =
-		displayVisiblePairs.filter(toolbarMatches);
-	const sortedSessions = sessionToolbarFilteredPairs
-		.map(({ extended }) => extended)
-		.sort(sortSessions);
+			sessionToolbarSelectedTopic,
+			visibleUserDrafts
+		]
+	);
+	const sessionToolbarFilteredPairs = useMemo(
+		() => displayVisiblePairs.filter(toolbarMatches),
+		[displayVisiblePairs, toolbarMatches]
+	);
+	// Sorted as pairs so the rendered row and the hidden-active lookup use
+	// the same id (`sessionPairId`), whatever `item` the extended row holds.
+	const sortedSessionPairs = useMemo(
+		() =>
+			[...sessionToolbarFilteredPairs].sort((left, right) =>
+				sortSessions(left.extended, right.extended)
+			),
+		[sessionToolbarFilteredPairs, sortSessions]
+	);
+	const sortedSessions = useMemo(
+		() => sortedSessionPairs.map(({ extended }) => extended),
+		[sortedSessionPairs]
+	);
+	const sortedSessionIds = useMemo(
+		() => sortedSessionPairs.map(sessionPairId),
+		[sortedSessionPairs]
+	);
 	// The future panel is gated by its own show-only kind, never by the row
 	// filter (§5.2): its input is the toolbar-matched set BEFORE the display
 	// filter, so hiding "Circles" does not remove the panel.
-	const futureSourceSessions = sessionToolbarPairs
-		.filter(toolbarMatches)
-		.map(({ extended }) => extended)
-		.sort(sortSessions);
+	const futureSourceSessions = useMemo(
+		() =>
+			sessionToolbarPairs
+				.filter(toolbarMatches)
+				.map(({ extended }) => extended)
+				.sort(sortSessions),
+		[sessionToolbarPairs, sortSessions, toolbarMatches]
+	);
 	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
 		setCaseHandoverSelectedIds((current) =>
 			current.includes(sessionId)
@@ -1736,7 +1794,7 @@ export const SessionsList = ({
 				activeKind
 			).map((kind) => kind.id)
 		);
-		const hidden: Partial<Record<SessionToolbarChipFilter, boolean>> = {};
+		const hidden: Partial<Record<DisplayFilterKindChip, boolean>> = {};
 		displayFilterKinds.forEach((kind) => {
 			const chip = SESSION_KIND_CHIP[kind.id];
 			if (chip && !shown.has(kind.id)) {
@@ -2115,19 +2173,22 @@ export const SessionsList = ({
 									<div
 										className={clsx(
 											hiddenActiveRowIds.has(
-												String(activeSession.item.id)
+												sortedSessionIds[index]
 											) && 'sessionsList__hiddenActiveRow'
 										)}
-										title={
-											hiddenActiveRowIds.has(
-												String(activeSession.item.id)
-											)
-												? translate(
-														'notifications.displayFilter.hiddenActiveRow'
-													)
-												: undefined
-										}
 									>
+										{hiddenActiveRowIds.has(
+											sortedSessionIds[index]
+										) && (
+											<p
+												className="sessionsList__hiddenActiveRowHint"
+												role="status"
+											>
+												{translate(
+													'notifications.displayFilter.hiddenActiveRow'
+												)}
+											</p>
+										)}
 										<SessionListItemComponent
 											defaultLanguage={defaultLanguage}
 											itemRef={(el) =>

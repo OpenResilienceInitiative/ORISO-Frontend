@@ -70,9 +70,9 @@ describe('classifySession (§5.2 order)', () => {
 		// … and the legacy fallback (no marker, owned by another consultant)
 		// stays one-to-one for the asker too.
 		const legacy = session({});
-		expect(classifySession(legacy.raw, legacy.extended, 'asker-1', false)).toBe(
-			'oneToOne'
-		);
+		expect(
+			classifySession(legacy.raw, legacy.extended, 'asker-1', false)
+		).toBe('oneToOne');
 	});
 
 	it('legacy fallback: no marker, owned by another consultant → supervision, only if eligible', () => {
@@ -108,9 +108,9 @@ describe('classifySession (§5.2 order)', () => {
 	});
 
 	it('a row without session or chat lands in "other"', () => {
-		expect(classifySession({} as any, { item: null } as any, ME, true)).toBe(
-			'other'
-		);
+		expect(
+			classifySession({} as any, { item: null } as any, ME, true)
+		).toBe('other');
 	});
 });
 
@@ -122,7 +122,8 @@ describe('applySessionsFilter', () => {
 		group('INTERNAL_GROUP', 4),
 		session({ id: 5, ...supervisedByMe })
 	];
-	const ids = (pairs: typeof rows) => pairs.map((p) => p.raw.session?.id ?? p.raw.chat?.id);
+	const ids = (pairs: typeof rows) =>
+		pairs.map((p) => p.raw.session?.id ?? p.raw.chat?.id);
 
 	it('shows everything by default', () => {
 		const result = applySessionsFilter(rows, DEFAULT_DISPLAY_FILTER, {
@@ -134,11 +135,15 @@ describe('applySessionsFilter', () => {
 	});
 
 	it('hides kinds, keeps the active row and reports it for dimming', () => {
-		const result = applySessionsFilter(rows, hide('circle', 'supervision'), {
-			currentUserId: ME,
-			canSupervise: true,
-			isActive: (extended) => extended.item?.id === 3
-		});
+		const result = applySessionsFilter(
+			rows,
+			hide('circle', 'supervision'),
+			{
+				currentUserId: ME,
+				canSupervise: true,
+				isActive: (extended) => extended.item?.id === 3
+			}
+		);
 		expect(ids(result.visible)).toEqual([1, 2, 3, 4]);
 		expect(Array.from(result.hiddenActiveIds)).toEqual(['3']);
 	});

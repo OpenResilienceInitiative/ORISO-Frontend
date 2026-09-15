@@ -39,6 +39,7 @@ import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData'
 import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	clearAuthSession,
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
@@ -327,6 +328,10 @@ export const AuthenticatedApp = ({
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLogout = useCallback(() => {
+		// Synchronously, before the async pre-logout handlers and the storage
+		// purge: a pending display-filter write must not recreate this user's
+		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
+		displayFilterStore.detachClient();
 		onLogout();
 		// Clear the React context's Matrix client reference on sign-out so a
 		// stale authenticated client cannot survive into a subsequent session

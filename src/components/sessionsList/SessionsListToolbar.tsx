@@ -42,6 +42,15 @@ export interface SessionsToolbarDisplayFilterProps {
 }
 
 export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+
+/**
+ * Chips the display filter may hide (#1377 §5.2): the kind chips only —
+ * "unread" and "drafts" are refinements, never kinds.
+ */
+export type DisplayFilterKindChip = Exclude<
+	SessionToolbarChipFilter,
+	'unread' | 'drafts'
+>;
 export type {
 	SessionSearchAgencyOption,
 	SessionSearchPersonOption,
@@ -103,7 +112,7 @@ interface SessionsListToolbarProps {
 	 * chips: pill off, or no unread rows and not active). `unread`/`drafts`
 	 * are not kinds and are never listed here.
 	 */
-	hiddenKindChips?: Partial<Record<SessionToolbarChipFilter, boolean>>;
+	hiddenKindChips?: Partial<Record<DisplayFilterKindChip, boolean>>;
 }
 
 export const IconMenuDots = () => (
@@ -415,7 +424,7 @@ export const SessionsListToolbar = ({
 	const visibleFilterChips = React.useMemo(
 		() =>
 			FILTER_CHIPS.filter((chip) => {
-				if (hiddenKindChips[chip.id]) {
+				if (hiddenKindChips[chip.id as DisplayFilterKindChip]) {
 					return false;
 				}
 				if (chip.id === 'liveChat') {
@@ -667,6 +676,7 @@ export const SessionsListToolbar = ({
 			</div>
 
 			<FilterChipRow
+				label={tr('sessionList.toolbar.chips.group', 'Filter')}
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
 				scrollDataCy="sessions-list-chips"
 				trailing={

@@ -35,6 +35,7 @@ const Harness = ({
 	readOnly?: boolean;
 	showAutoRead?: boolean;
 	onReset?: () => void;
+	canReset?: boolean;
 }) => {
 	const [value, setValue] = useState(initial);
 	return (
@@ -44,7 +45,7 @@ const Harness = ({
 			onReset={rest.onReset ?? (() => undefined)}
 			kinds={KINDS}
 			value={value}
-			canReset
+			canReset={rest.canReset ?? true}
 			labels={STORY_LABELS}
 			readOnly={rest.readOnly}
 			showAutoRead={rest.showAutoRead}
@@ -157,6 +158,14 @@ describe('DisplayFilterDialog (#1377)', () => {
 	it('omits auto-read for sections without it', () => {
 		render(<Harness onValue={() => undefined} showAutoRead={false} />);
 		expect(screen.queryByRole('switch')).toBeNull();
+	});
+
+	it('disables reset while nothing is customised', () => {
+		render(<Harness onValue={() => undefined} canReset={false} />);
+		const reset = screen.getByTestId(
+			'display-filter-reset'
+		) as HTMLButtonElement;
+		expect(reset.disabled).toBe(true);
 	});
 
 	it('inerts everything in read-only mode', () => {

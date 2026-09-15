@@ -177,18 +177,24 @@ export const DisplayFilterProfileSection = () => {
 				});
 			}
 		}
-		if (source !== 'timeline' && from.kinds.liveChat) {
+		if (source !== 'timeline') {
+			// An absent entry IS the default: the target's own customised
+			// live-chat entry is removed, not left as it was.
 			const liveChat = from.kinds.liveChat;
+			const withLiveChat = (kinds: DisplayFilter['kinds']) => {
+				const { liveChat: _dropped, ...rest } = kinds;
+				return liveChat ? { ...rest, liveChat } : rest;
+			};
 			if (source !== 'sessions') {
 				sessions.setGlobal({
 					...sessions.global,
-					kinds: { ...sessions.global.kinds, liveChat }
+					kinds: withLiveChat(sessions.global.kinds)
 				});
 			}
 			if (source !== 'requests') {
 				requests.setGlobal({
 					...requests.global,
-					kinds: { ...requests.global.kinds, liveChat }
+					kinds: withLiveChat(requests.global.kinds)
 				});
 			}
 		}

@@ -203,3 +203,30 @@ those types read locally and lowers the total by the reported count; a
 | `eslint src --max-warnings=0` · `tsc --noEmit` · `tsc --noEmit -p tsconfig.storybook.json`                                                | clean                        |
 
 No screenshots: the rail badge renders the same, only its number and hint change.
+
+## Review round — CodeRabbit full-diff review on #1378 (2026-09-15)
+
+Verified against the code and fixed (one commit): per-event-type hiding
+limited to seeded types ("Sonstiges" can never be hidden); a rejected
+account-data write rolls back to the last confirmed record and sets
+`writeFailed`; a newer mirror without an account event stays read-only
+(no seed write); a same-user client replacement (token refresh) keeps the
+mirror and the state; the store is detached synchronously in the logout
+handler; the bulk read parses its JSON and recognises `NO_MATCH`, and a
+failed bulk read is not recorded as done; the rail link's accessible name
+carries the localised unread count; "apply to other lists" propagates a
+default live-chat setting; the hidden active row explains itself in text;
+the row lookup and the filter share `sessionPairId`; the list derivations
+are memoised; `hiddenKindChips` is typed to kind chips; the sessions
+toolbar renders the shared `FilterChipRow` with a group label; the brief's
+scope line matches the branch.
+
+Not changed: the wall-clock waits in the provider tests stay real timers
+on purpose (the bulk-read race fixed in `ac457b5f` only reproduced with
+real timer/promise interleaving).
+
+| Check                                                                                                                  | Result                         |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `vitest run --project unit` over displayFilter, provider, sessionsList, app, profile, notificationsCenter, `i18n.test` | 66 files / 506 tests green     |
+| `vitest run --project storybook` over sessionsList, displayFilter, NotificationsCenter, NotificationSettings, app      | 18 files / 118 tests incl. axe |
+| `eslint --max-warnings=0` · `tsc` (app + storybook) · `stylelint` · `prettier --check`                                 | clean                          |

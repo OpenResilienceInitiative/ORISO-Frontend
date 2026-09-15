@@ -2,7 +2,7 @@
 
 - **Requested by:** Frank (product), 2026-09-14
 - **Branch:** `claude/timeline-analysis-filter-il7z7b` (based on `origin/dev` @ `31dac29b`)
-- **Scope of this task:** analysis + specification only. No behaviour change ships from this branch.
+- **Scope of this task:** analysis + specification first (this brief, `01-analysis.md`, `02-filter-spec.md`), then the display filter itself in slices 1–7 on the same branch (`03-progress-log.md`): persisted filters, the filtered Zeitstrahl/Gespräche/Anfragen lists, the profile defaults and the exact badge. Nothing else about the Timeline changes.
 - **Related:** #1200 (closed, QA lane), #592 / #594 (open: display filters), #420 (open: real chat preview), #1211 (notification matrix), ORISO-Docs PR #108 (ADR "Activity Timeline", still Proposed)
 
 ## The complaint, as stated
