@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	SupervisorDialog,
 	type SupervisorDialogCopy
@@ -101,6 +101,30 @@ const HandoverDialog = () => {
 	);
 };
 
+/**
+ * MUI puts a `data-testid` handed to `Select` on the OutlinedInput ROOT, not on
+ * the `role="combobox"` display inside it — and the menu opens from a handler on
+ * that display. Clicking the root therefore does nothing, which is what made the
+ * first version of this play function fail in CI. Address the combobox inside the
+ * test id, the way `OrisoFormControls.stories` and `OrisoSelect.test` do.
+ */
+const openSelect = async (root: HTMLElement) => {
+	await userEvent.click(within(root).getByRole('combobox'));
+};
+
+const chooseOption = async (
+	canvas: ReturnType<typeof within>,
+	name: string
+) => {
+	await userEvent.click(await canvas.findByRole('option', { name }));
+	// The menu closes through a transition and its backdrop keeps swallowing
+	// real clicks until it unmounts, so wait it out before touching the next
+	// field.
+	await waitFor(() =>
+		expect(canvas.queryByRole('listbox')).not.toBeInTheDocument()
+	);
+};
+
 export const HandoverRecipientFirst: Story = {
 	render: () => <HandoverDialog />,
 	play: async () => {
@@ -108,10 +132,13 @@ export const HandoverRecipientFirst: Story = {
 		await expect(canvas.getByRole('dialog')).toBeInTheDocument();
 		const confirm = canvas.getByTestId('supervisor-dialog-confirm');
 		await expect(confirm).toBeDisabled();
-		await userEvent.click(canvas.getByTestId('supervisor-dialog-person'));
-		await userEvent.click(await canvas.findByText('Jonas Lehmann'));
-		await userEvent.click(canvas.getByTestId('supervisor-dialog-reason'));
-		await userEvent.click(await canvas.findByText('Planned absence'));
+
+		await openSelect(canvas.getByTestId('supervisor-dialog-person'));
+		await chooseOption(canvas, 'Jonas Lehmann');
+
+		await openSelect(canvas.getByTestId('supervisor-dialog-reason'));
+		await chooseOption(canvas, 'Planned absence');
+
 		await expect(confirm).toBeEnabled();
 	}
 };
