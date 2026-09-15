@@ -869,7 +869,18 @@ body.conversationCreate--active .navigation__wrapper {
 	position: fixed;
 	z-index: 1200;
 
+	/*
+	 * Fixed-width content — the calendar grid is 304px wide — cannot stretch to
+	 * the menu, so as a flex child it would sit flush against the left edge and
+	 * pile all the spare width on the right. Centre it instead; the option rows
+	 * below keep stretching to the full width.
+	 */
+	> * {
+		align-self: center;
+	}
+
 	&__option {
+		align-self: stretch;
 		background: none;
 		border: none;
 		color: $cc-secondary;
