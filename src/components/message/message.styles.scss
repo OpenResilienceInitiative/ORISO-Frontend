@@ -273,7 +273,11 @@ $message-avatar-overlap: -19px;
 		margin-top: 0;
 		position: relative;
 		z-index: 6;
-		height: stretch;
+
+		// Stretch within this message's flex row, not the timeline's block height
+		// (`height: stretch` can resolve against that block on iOS Safari).
+		height: auto;
+		align-self: stretch;
 	}
 
 	&__sideColumn--left,
@@ -297,7 +301,6 @@ $message-avatar-overlap: -19px;
 	// viewport edge anymore.
 	&__sideColumn--right {
 		justify-content: flex-end;
-		align-self: flex-end;
 		z-index: 5;
 
 		// T30: same ring compensation as `--left`.
@@ -392,15 +395,8 @@ $message-avatar-overlap: -19px;
 		height: 32px !important;
 	}
 
-	&__kebabButton--left {
-		left: auto;
-		right: -14px;
-	}
-
-	&__kebabButton--right {
-		right: auto;
-		left: -14px;
-	}
+	// Kebab buttons stay in the side-column flow. The old left/right offsets
+	// had no effect on these statically positioned flex items.
 
 	&__actionMenu {
 		position: absolute;

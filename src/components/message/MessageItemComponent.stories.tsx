@@ -318,6 +318,112 @@ export const AndroidCompactKebabTouchZone: Story = {
 	}
 };
 
+/** #1254: the last row must not stretch its controls into composer clearance. */
+export const LastMessageSideColumn: Story = {
+	name: 'Last message — avatar and menu beside bubble — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'Incoming and outgoing messages above reserved composer space. Avatar and menu positions must follow their own message row, including after the menu opens.'
+			}
+		}
+	},
+	render: () => (
+		<div
+			data-testid="last-message-timeline"
+			style={{
+				height: 500,
+				overflowY: 'auto'
+			}}
+		>
+			<div
+				style={{
+					minHeight: 900,
+					paddingBottom: 196,
+					boxSizing: 'border-box'
+				}}
+			>
+				{[false, true].map((isMyMessage) => (
+					<MessageItemComponent
+						key={String(isMyMessage)}
+						{...mockMessageItemComponentProps({
+							_id: `side-column-${isMyMessage ? 'outgoing' : 'incoming'}`,
+							isMyMessage,
+							userId: isMyMessage
+								? MOCK_CONSULTANT_MATRIX_ID
+								: MOCK_ASKER_MATRIX_ID,
+							message: isMyMessage
+								? 'Danke, dass du dich meldest. Wir nehmen uns Zeit für deine Fragen.'
+								: 'Ich brauche Hilfe.'
+						})}
+						{...baseHandlers}
+					/>
+				))}
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		const verifyControls = () => {
+			const rows = canvasElement.querySelectorAll(
+				'.messageItem__messageWrap'
+			);
+			expect(rows.length).toBe(2);
+			rows.forEach((row) => {
+				const bubble = row.querySelector('.messageItem__message')!;
+				const column = row.querySelector('.messageItem__sideColumn')!;
+				const bubbleRect = bubble.getBoundingClientRect();
+				const rowRect = row.getBoundingClientRect();
+				const columnRect = column.getBoundingClientRect();
+				expect(
+					Math.abs(columnRect.top - rowRect.top)
+				).toBeLessThanOrEqual(1);
+				expect(
+					Math.abs(columnRect.bottom - rowRect.bottom)
+				).toBeLessThanOrEqual(1);
+				for (const selector of [
+					'.messageItem__avatar',
+					'.messageItem__kebabButton'
+				]) {
+					const control = row
+						.querySelector(selector)!
+						.getBoundingClientRect();
+					expect(control.top).toBeLessThan(bubbleRect.bottom + 40);
+					expect(control.bottom).toBeGreaterThan(bubbleRect.top - 40);
+				}
+			});
+		};
+		await waitFor(verifyControls);
+		const buttons = canvasElement.querySelectorAll<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		await userEvent.click(buttons[buttons.length - 1]);
+		await waitFor(verifyControls);
+		const lastButton = buttons[buttons.length - 1];
+		const timeline = within(canvasElement).getByTestId(
+			'last-message-timeline'
+		);
+		const menu = canvasElement.ownerDocument.querySelector<HTMLElement>(
+			'.messageItem__actionMenu'
+		)!;
+		await waitFor(() => {
+			expect(menu.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+		});
+		const buttonTop = lastButton.getBoundingClientRect().top;
+		const menuTop = menu.getBoundingClientRect().top;
+		timeline.scrollTop = 100;
+		await waitFor(() => {
+			const buttonDelta =
+				lastButton.getBoundingClientRect().top - buttonTop;
+			const menuDelta = menu.getBoundingClientRect().top - menuTop;
+			expect(buttonDelta).toBeLessThan(-20);
+			expect(Math.abs(menuDelta - buttonDelta)).toBeLessThanOrEqual(2);
+		});
+	}
+};
+
 export const GroupIncoming: Story = {
 	name: 'Group incoming (initials avatar)',
 	parameters: {
