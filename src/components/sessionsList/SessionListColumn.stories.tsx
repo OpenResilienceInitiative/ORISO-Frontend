@@ -6,7 +6,11 @@ import { expect, fireEvent, waitFor } from 'storybook/test';
 import { SessionsListToolbar } from './SessionsListToolbar';
 import { ResizableHandle } from './ResizableHandle';
 import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
-import { resolveStageLayout, STAGE_LAYOUT } from '../chatStage/stageLayout';
+import {
+	maxListWidthBesidePanel,
+	resolveStageLayout,
+	STAGE_LAYOUT
+} from '../chatStage/stageLayout';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import { SessionListCreateChat } from './SessionListCreateChat';
 import { EmptyState } from '../emptyState/EmptyState';
@@ -375,11 +379,17 @@ function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
 		panelWidth: STAGE_LAYOUT.MIN_PANE_WIDTH,
 		panelOpen
 	});
-	const rail = layout.listMode === 'rail';
-	const maxWidth = rail
-		? STAGE_LAYOUT.RAIL_WIDTH
+	// T41b (Frank, 15.09.): the snap is an offer, not a lock — the handle
+	// reaches as far as two panes at their drag floor allow, and a drag past
+	// the rail takes the column out of it.
+	const maxWidth = panelOpen
+		? Math.min(
+				SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH,
+				maxListWidthBesidePanel(RAIL_VIEWPORT)
+			)
 		: SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH;
 	const width = dragged ?? layout.listWidth;
+	const rail = width <= STAGE_LAYOUT.RAIL_WIDTH && layout.listMode === 'rail';
 	return (
 		<div style={{ display: 'flex', height: 420 }}>
 			<div
@@ -497,7 +507,7 @@ const dragRight = async (canvasElement: HTMLElement, by: number) => {
 };
 
 export const RailSnapWithPanelOpen: Story = {
-	name: 'Side pane open — column snaps to the 80 px rail (D10)',
+	name: 'Side pane open — column opens at the rail, handle stays free (D10/T41b)',
 	render: () => <SnapDemo panelOpen />,
 	play: async ({ canvasElement }) => {
 		// The rule itself: 1280 − 420 leaves no room for two 520 px panes.
@@ -519,16 +529,25 @@ export const RailSnapWithPanelOpen: Story = {
 		await expect(column.classList).toContain(
 			'sessionsList__wrapper--iconOnly'
 		);
-		// And dragging it wider is locked: the handle is capped at the rail.
+		// T41b: and the reader can pull it back out — the snap opens the
+		// column at the rail, it does not lock the handle there.
 		await dragRight(canvasElement, 200);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('[data-testid="column-width"]')
-					?.textContent
-			).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`)
+				Math.round(column.getBoundingClientRect().width)
+			).toBeGreaterThan(STAGE_LAYOUT.RAIL_WIDTH)
 		);
-		await expect(Math.round(column.getBoundingClientRect().width)).toBe(
-			STAGE_LAYOUT.RAIL_WIDTH
+		await expect(column.classList).not.toContain(
+			'sessionsList__wrapper--iconOnly'
+		);
+		// Never so far that the two panes lose their drag floor.
+		await expect(
+			Math.round(column.getBoundingClientRect().width)
+		).toBeLessThanOrEqual(
+			Math.min(
+				SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH,
+				maxListWidthBesidePanel(RAIL_VIEWPORT)
+			)
 		);
 	}
 };

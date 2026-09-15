@@ -511,7 +511,7 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 				'end'
 			)
 		);
-		expect(apiGetEventNotifications).toHaveBeenLastCalledWith(1, 50);
+		expect(apiGetEventNotifications).toHaveBeenLastCalledWith(1, 50, []);
 		const ids = screen.getByTestId('ids').textContent!.split(',');
 		expect(ids).toHaveLength(52);
 		expect(ids.slice(-3)).toEqual(['50', '51', '52']);
@@ -565,7 +565,7 @@ describe('NotificationsProvider older activity pages (#930)', () => {
 			)
 		);
 		expect(screen.getByTestId('ids').textContent).toContain('51');
-		expect(apiGetEventNotifications).toHaveBeenLastCalledWith(1, 50);
+		expect(apiGetEventNotifications).toHaveBeenLastCalledWith(1, 50, []);
 	});
 
 	it('keeps a live prepend and an overlapping older page without duplicates', async () => {

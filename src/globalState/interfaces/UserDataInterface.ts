@@ -52,6 +52,8 @@ export interface AgencyDataInterface {
 	postcode: string;
 	street?: string;
 	houseNumber?: string;
+	lat?: number | null;
+	lng?: number | null;
 	phone?: string;
 	openingHours?: string;
 	url?: string;

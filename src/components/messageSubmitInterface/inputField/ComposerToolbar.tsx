@@ -1,3 +1,4 @@
+import clsx from 'clsx';
 import * as React from 'react';
 import type { TFunction } from 'i18next';
 import { useCallback, useRef, useState } from 'react';
@@ -339,7 +340,11 @@ export const ComposerToolbar = ({
 						unread > 0 ? `${scrollLabel} – ${unread}` : scrollLabel
 					}
 					onClick={onScrollToNewest}
-					className="composerToolbar__button--scrollToNewest"
+					className={clsx(
+						'composerToolbar__button--scrollToNewest',
+						unread > 0 &&
+							'composerToolbar__button--scrollToNewest--unread'
+					)}
 					data-cy="composer-scroll-to-newest"
 				>
 					<ArrowDownwardIcon fontSize="inherit" />
