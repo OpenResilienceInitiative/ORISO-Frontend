@@ -30,7 +30,14 @@ const mocks = vi.hoisted(() => {
 		apiGetUserDraft: vi.fn<GetDraftMock>(() =>
 			Promise.reject({ message: 'EMPTY' })
 		),
-		apiUpsertUserDraft: vi.fn<UpsertDraftMock>(() => Promise.resolve())
+		apiUpsertUserDraft: vi.fn<UpsertDraftMock>(() => Promise.resolve()),
+		encryptText: vi.fn((text: string) => Promise.resolve(text)),
+		e2ee: {
+			encrypted: false,
+			key: 'test-key',
+			keyID: 'test-key-id',
+			ready: true
+		}
 	};
 });
 
@@ -68,12 +75,13 @@ vi.mock('../../globalState', async () => {
 });
 
 vi.mock('../../hooks/useE2EE', () => ({
-	useE2EE: () => ({
-		encrypted: false,
-		key: null,
-		keyID: null,
-		ready: true
-	})
+	useE2EE: () => mocks.e2ee
+}));
+
+vi.mock('../../utils/encryptionHelpers', () => ({
+	encryptText: (text: string, ...rest: unknown[]) =>
+		mocks.encryptText(text, ...rest),
+	decryptText: (text: string) => Promise.resolve(text)
 }));
 
 const wrapper = ({ children }: PropsWithChildren<{}>) => (
@@ -102,9 +110,19 @@ const wrapper = ({ children }: PropsWithChildren<{}>) => (
 
 describe('useDraftMessage', () => {
 	beforeEach(() => {
-		mocks.apiDeleteUserDraft.mockClear();
-		mocks.apiGetUserDraft.mockClear();
-		mocks.apiUpsertUserDraft.mockClear();
+		mocks.apiDeleteUserDraft.mockReset();
+		mocks.apiDeleteUserDraft.mockImplementation(() => Promise.resolve());
+		mocks.apiGetUserDraft.mockReset();
+		mocks.apiGetUserDraft.mockImplementation(() =>
+			Promise.reject({ message: 'EMPTY' })
+		);
+		mocks.apiUpsertUserDraft.mockReset();
+		mocks.apiUpsertUserDraft.mockImplementation(() => Promise.resolve());
+		mocks.encryptText.mockReset();
+		mocks.encryptText.mockImplementation((text: string) =>
+			Promise.resolve(text)
+		);
+		mocks.e2ee.encrypted = false;
 	});
 
 	afterEach(() => {
@@ -447,5 +465,162 @@ describe('useDraftMessage', () => {
 		});
 
 		expect(loadDraft).not.toHaveBeenCalled();
+	});
+
+	it('saves pre-load typing when the conversation unmounts before the draft arrives', async () => {
+		const loadDraft = vi.fn();
+		mocks.apiGetUserDraft.mockImplementation(
+			() => new Promise<DraftPayload>(() => undefined)
+		);
+
+		const { result, unmount } = renderHook(
+			() =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper }
+		);
+
+		act(() => {
+			result.current.onChange('<p>Vor dem Laden getippt</p>');
+		});
+
+		await act(async () => {
+			unmount();
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		await waitFor(() =>
+			expect(mocks.apiUpsertUserDraft).toHaveBeenCalledWith(
+				'scope:session-42|thread:main',
+				expect.objectContaining({
+					text: '<p>Vor dem Laden getippt</p>'
+				})
+			)
+		);
+	});
+
+	it('saves pre-load typing under the conversation that was left, not the one just opened', async () => {
+		const loadDraft = vi.fn();
+		mocks.apiGetUserDraft.mockImplementation(
+			() => new Promise<DraftPayload>(() => undefined)
+		);
+
+		const { result, rerender } = renderHook(
+			({ scopeKey }: { scopeKey: string }) =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: scopeKey
+				}),
+			{
+				wrapper,
+				initialProps: { scopeKey: 'scope:session-42|thread:main' }
+			}
+		);
+
+		act(() => {
+			result.current.onChange('<p>Noch im ersten Gespräch</p>');
+		});
+
+		rerender({ scopeKey: 'scope:session-42|thread:root-1' });
+
+		await waitFor(() =>
+			expect(mocks.apiUpsertUserDraft).toHaveBeenCalledWith(
+				'scope:session-42|thread:main',
+				expect.objectContaining({
+					text: '<p>Noch im ersten Gespräch</p>'
+				})
+			)
+		);
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.filter(
+				([scopeKey]) => scopeKey === 'scope:session-42|thread:root-1'
+			)
+		).toHaveLength(0);
+	});
+
+	it('does not let an in-flight encrypted save from the old conversation delete the new one', async () => {
+		mocks.e2ee.encrypted = true;
+		const encryptedWrapper = ({ children }: PropsWithChildren<{}>) => (
+			<E2EEContext.Provider
+				value={{
+					e2EEReady: true,
+					isE2eeEnabled: true,
+					key: 'test-key',
+					reloadPrivateKey: vi.fn()
+				}}
+			>
+				<ActiveSessionContext.Provider
+					value={{
+						activeSession: {
+							item: { id: 42 },
+							rid: '!room:matrix.test'
+						} as any,
+						reloadActiveSession: vi.fn(),
+						readActiveSession: vi.fn()
+					}}
+				>
+					{children}
+				</ActiveSessionContext.Provider>
+			</E2EEContext.Provider>
+		);
+
+		let releaseEncrypt: (cipher: string) => void = () => undefined;
+		mocks.encryptText.mockImplementation(
+			() =>
+				new Promise<string>((resolve) => {
+					releaseEncrypt = resolve;
+				})
+		);
+
+		const loadDraft = vi.fn();
+		const { result, rerender, unmount } = renderHook(
+			({ scopeKey }: { scopeKey: string }) =>
+				useDraftMessage(true, loadDraft, {
+					forcedScopeKey: scopeKey
+				}),
+			{
+				wrapper: encryptedWrapper,
+				initialProps: { scopeKey: 'scope:session-42|thread:main' }
+			}
+		);
+
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		vi.useFakeTimers();
+		act(() => {
+			result.current.onChange('<p>Aus dem ersten Gespräch</p>');
+		});
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1600);
+		});
+		vi.useRealTimers();
+
+		rerender({ scopeKey: 'scope:session-99|thread:main' });
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		await act(async () => {
+			releaseEncrypt('enc.from-old-scope');
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		mocks.apiDeleteUserDraft.mockClear();
+		await act(async () => {
+			unmount();
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(
+			mocks.apiDeleteUserDraft.mock.calls.filter(
+				([scopeKey]) => scopeKey === 'scope:session-99|thread:main'
+			)
+		).toHaveLength(0);
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(
+				([scopeKey]) => scopeKey === 'scope:session-99|thread:main'
+			)
+		).toBe(false);
 	});
 });

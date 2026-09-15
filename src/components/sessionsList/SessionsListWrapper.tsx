@@ -79,22 +79,6 @@ export const SessionsListWrapper = ({
 	// without a pane. The persisted width survives; dragging the list
 	// wider is locked meanwhile.
 	const viewportWidth = useViewportWidth();
-	const panelOpen = useChatStageOpenPanel() !== null;
-	const stageLayout = resolveStageLayout({
-		viewportWidth,
-		listWidth: sidebarWidth,
-		panelWidth: readPanelWidth(STAGE_LAYOUT.MIN_PANE_WIDTH),
-		panelOpen: fromL && panelOpen
-	});
-	// T41b (Frank, 15.09., "must be able to widen view"): the snap above is
-	// an OFFER, not a lock. Pulling the handle past the rail takes the offer
-	// back for as long as the reader keeps the list open; pushing it back to
-	// the rail hands it over again, so opening the next side room snaps as
-	// before.
-	const [widenedBesidePanel, setWidenedBesidePanel] = useState(false);
-	// Review (CodeRabbit): the flag belongs to ONE open panel. Setting it
-	// while nothing is open would kill the snap for the next side room the
-	// reader opens, and it must not survive the panel it was taken against.
 	const openPanel = useChatStageOpenPanel();
 	const panelOpen = openPanel !== null;
 	const stageLayout = resolveStageLayout({
@@ -111,11 +95,10 @@ export const SessionsListWrapper = ({
 	const [widenedBesidePanel, setWidenedBesidePanel] = useState(false);
 	// Review (CodeRabbit): the flag belongs to ONE open panel. Setting it
 	// while nothing is open would kill the snap for the next side room the
-	// reader opens, and it must not survive the panel it was taken against.
+	// reader opens, and it must not survive the panel it was taken against —
+	// including a team → thread switch that never goes through `null`.
 	useEffect(() => {
-		if (!openPanel) {
-			setWidenedBesidePanel(false);
-		}
+		setWidenedBesidePanel(false);
 	}, [openPanel]);
 	const railSnapped =
 		fromL &&

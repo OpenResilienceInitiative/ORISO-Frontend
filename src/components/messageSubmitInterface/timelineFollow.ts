@@ -5,7 +5,9 @@
  * einfach hinspringen. Und wenn ich was schreibe, dann [zeig] mir das halt
  * in dem Pfeil an." So: the reader who has not scrolled away and is not
  * writing gets carried along; the one who IS writing keeps their place and
- * the composer's scroll-to-newest arrow lights up instead.
+ * the composer's scroll-to-newest arrow lights up instead. A reader who
+ * scrolled up is already away from the bottom — the follow predicate
+ * leaves them there.
  */
 
 /**
@@ -51,6 +53,22 @@ export const shouldFollowNewMessage = ({
 	}
 	return atBottom && !isComposing;
 };
+
+/**
+ * After declining to follow an arrival, the "at bottom" flag is stale:
+ * appending a row fires no scroll event. Composer growth must not treat
+ * that flag as permission to scroll. Keep it during the first paint so an
+ * empty timeline can still follow the first remote message.
+ */
+export const shouldClearAtBottomAfterSuppressedFollow = ({
+	initialScrollCompleted,
+	followed,
+	atBottom
+}: {
+	initialScrollCompleted: boolean;
+	followed: boolean;
+	atBottom: boolean;
+}): boolean => initialScrollCompleted && !followed && atBottom;
 
 /**
  * "Is the reader writing?" — the composer card has focus, or it holds a

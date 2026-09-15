@@ -198,4 +198,14 @@ describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 		const wrapper = rerender('supervision');
 		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
 	});
+
+	it('re-arms the snap when switching from one open pane to another', () => {
+		const { rerender } = renderWithPanel(
+			'?channel=supervision',
+			'supervision'
+		);
+		act(() => resizeList?.(420));
+		const wrapper = rerender('thread');
+		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+	});
 });

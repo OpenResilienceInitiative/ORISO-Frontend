@@ -25,6 +25,7 @@ import { getModality, Modality } from './getModality';
 import {
 	isComposerBusy,
 	isTimelineAtBottom,
+	shouldClearAtBottomAfterSuppressedFollow,
 	shouldFollowNewMessage
 } from '../messageSubmitInterface/timelineFollow';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
@@ -1645,23 +1646,31 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 			}
 
-			if (
+			const shouldFollow =
 				initialScrollCompleted &&
 				shouldFollowNewMessage({
 					isOwnMessage,
 					atBottom: isScrolledToBottom,
 					isComposing: composing
-				})
-			) {
+				});
+			if (shouldFollow) {
 				resetUnreadCount();
 				scrollToEnd(0, true);
-			} else if (isScrolledToBottom) {
+			} else if (
+				shouldClearAtBottomAfterSuppressedFollow({
+					initialScrollCompleted,
+					followed: shouldFollow,
+					atBottom: isScrolledToBottom
+				})
+			) {
 				// Review (CodeRabbit): appending a row fires no scroll event,
 				// so the flag would still say "at the bottom" although the
 				// newest message now sits below the fold. The composer-resize
 				// observer reads that flag — a writer whose composer grows one
 				// line would be scrolled to the newest message after all,
-				// which is exactly what declining to follow avoided.
+				// which is exactly what declining to follow avoided. Do not
+				// clear during the first paint: the first remote message on
+				// an empty timeline would then stop later arrivals following.
 				setIsScrolledToBottom(false);
 			}
 

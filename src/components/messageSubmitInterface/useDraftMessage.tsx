@@ -114,7 +114,7 @@ export const useDraftMessage = (
 	);
 
 	const updateRemoteDraftIndex = useCallback(
-		async (draftText?: string) => {
+		async (draftText?: string, scopeKey: string = remoteScopeKey) => {
 			if (!canUseRemoteApi) {
 				return;
 			}
@@ -148,9 +148,9 @@ export const useDraftMessage = (
 				}
 
 				if (hasDraftContent(draftText)) {
-					indexMap[remoteScopeKey] = upsertPayload;
+					indexMap[scopeKey] = upsertPayload;
 				} else {
-					delete indexMap[remoteScopeKey];
+					delete indexMap[scopeKey];
 				}
 
 				if (Object.keys(indexMap).length === 0) {
@@ -188,6 +188,165 @@ export const useDraftMessage = (
 		]
 	);
 
+	type DraftPersistContext = {
+		enabled: boolean;
+		canUseRemoteApi: boolean;
+		loaded: boolean;
+		allowUnloaded: boolean;
+		remoteScopeKey: string;
+		scopeKeysToTry: string[];
+		loadVersion: number;
+		hasRemoteDraft: boolean;
+		encrypted: boolean;
+		isE2eeEnabled: boolean;
+		key: string | null;
+		keyID: string | null;
+		actionPath: string | null;
+		title: string | null;
+		sessionId: number | null;
+		roomRef: string | null;
+		threadRootId: string | null;
+	};
+
+	const persistDraftMessage = useCallback(
+		async (draftMessage: string, ctx: DraftPersistContext) => {
+			if (!ctx.enabled || !ctx.canUseRemoteApi) {
+				return;
+			}
+			if (!ctx.loaded && !ctx.allowUnloaded) {
+				return;
+			}
+
+			let message = draftMessage ?? '';
+			const isEmptyDraft = !hasDraftContent(message);
+			const capturedScope = ctx.remoteScopeKey;
+			const capturedKeys = ctx.scopeKeysToTry;
+			const capturedLoadVersion = ctx.loadVersion;
+			const capturedHadRemote = ctx.hasRemoteDraft;
+
+			if (ctx.isE2eeEnabled && ctx.encrypted && draftMessage) {
+				try {
+					message = await encryptText(
+						draftMessage,
+						ctx.keyID,
+						ctx.key,
+						'enc.'
+					);
+				} catch (e: any) {
+					await apiPostError({
+						name: e.name,
+						message: e.message,
+						stack: e.stack,
+						level: ERROR_LEVEL_WARN
+					});
+				}
+			}
+
+			/*
+			 * Review (CodeRabbit): encryption can outlive a conversation
+			 * switch. Write only to the captured scope, and only touch the
+			 * shared hasRemoteDraftRef when this load is still current — a
+			 * stale save must not mark the new conversation as having a
+			 * draft (cleanup would then DELETE that scope's keys).
+			 */
+			const stillCurrent = capturedLoadVersion === loadVersionRef.current;
+
+			try {
+				if (isEmptyDraft) {
+					if (!capturedHadRemote) {
+						return;
+					}
+					if (stillCurrent) {
+						hasRemoteDraftRef.current = false;
+					}
+					await Promise.allSettled(
+						capturedKeys.map((scopeKey) =>
+							apiDeleteUserDraft(scopeKey)
+						)
+					);
+				} else {
+					if (stillCurrent) {
+						hasRemoteDraftRef.current = true;
+					}
+					await apiUpsertUserDraft(capturedScope, {
+						text: message,
+						actionPath: ctx.actionPath,
+						title: ctx.title,
+						sourceSessionId: ctx.sessionId,
+						roomRef: ctx.roomRef,
+						threadRootId: ctx.threadRootId
+					});
+				}
+				await updateRemoteDraftIndex(draftMessage, capturedScope);
+			} catch {
+				// Draft autosave must never break chat input.
+			}
+		},
+		[updateRemoteDraftIndex]
+	);
+
+	const persistDraftMessageRef = useRef(persistDraftMessage);
+	persistDraftMessageRef.current = persistDraftMessage;
+
+	const persistContextRef = useRef<DraftPersistContext>({
+		enabled,
+		canUseRemoteApi,
+		loaded,
+		allowUnloaded: false,
+		remoteScopeKey,
+		scopeKeysToTry,
+		loadVersion: loadVersionRef.current,
+		hasRemoteDraft: false,
+		encrypted,
+		isE2eeEnabled,
+		key,
+		keyID,
+		actionPath: options?.actionPath || null,
+		title: options?.title || null,
+		sessionId: options?.sessionId ?? activeSession?.item?.id ?? null,
+		roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+		threadRootId: options?.threadRootId || null
+	});
+
+	useEffect(() => {
+		persistContextRef.current = {
+			enabled,
+			canUseRemoteApi,
+			loaded,
+			allowUnloaded: false,
+			remoteScopeKey,
+			scopeKeysToTry,
+			loadVersion: loadVersionRef.current,
+			hasRemoteDraft: hasRemoteDraftRef.current,
+			encrypted,
+			isE2eeEnabled,
+			key,
+			keyID,
+			actionPath: options?.actionPath || null,
+			title: options?.title || null,
+			sessionId: options?.sessionId ?? activeSession?.item?.id ?? null,
+			roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+			threadRootId: options?.threadRootId || null
+		};
+	});
+
+	const persistOutgoingDraftOnLeave = useCallback(() => {
+		if (skipNextCleanupSaveRef.current) {
+			skipNextCleanupSaveRef.current = false;
+			return;
+		}
+		const text = latestMessageRef.current;
+		const pending = pendingPreLoadSaveRef.current;
+		if (!pending && !hasDraftContent(text) && !hasRemoteDraftRef.current) {
+			return;
+		}
+		void persistDraftMessageRef.current(text, {
+			...persistContextRef.current,
+			hasRemoteDraft: hasRemoteDraftRef.current,
+			allowUnloaded: pending
+		});
+	}, []);
+
 	// Load the draft message from the api but do not show it because its encrypted
 	useEffect(() => {
 		const abortController = new AbortController();
@@ -201,6 +360,11 @@ export const useDraftMessage = (
 		 * under the *current* scope key, so carrying it over files text into a
 		 * conversation nobody typed in. Loading a draft for the new scope sets
 		 * it again below; finding none must leave it empty.
+		 *
+		 * Review (shazia-k): persist the outgoing buffer first — typing while
+		 * the previous draft was still loading used to die here, because
+		 * saveDraftMessage refused to run until `loaded` and this reset ran
+		 * before the unmount cleanup could see the text.
 		 */
 		latestMessageRef.current = '';
 		typedBeforeLoadRef.current = false;
@@ -209,6 +373,7 @@ export const useDraftMessage = (
 			setLoaded(true);
 			return () => {
 				abortController?.abort();
+				persistOutgoingDraftOnLeave();
 			};
 		}
 
@@ -242,8 +407,15 @@ export const useDraftMessage = (
 
 		return () => {
 			abortController?.abort();
+			persistOutgoingDraftOnLeave();
 		};
-	}, [enabled, canUseRemoteApi, scopeKeysToTry, setEditorWithDraftString]);
+	}, [
+		enabled,
+		canUseRemoteApi,
+		scopeKeysToTry,
+		setEditorWithDraftString,
+		persistOutgoingDraftOnLeave
+	]);
 
 	// If everything is ready for decryption, decrypt the draft message
 	useEffect(() => {
@@ -301,67 +473,27 @@ export const useDraftMessage = (
 
 	const saveDraftMessage = useCallback(
 		async (draftMessage) => {
-			if (!enabled || !loaded) {
-				return;
-			}
-			let message = draftMessage ?? '';
-			// #976: the plaintext decides — an encrypted payload is opaque.
-			const isEmptyDraft = !hasDraftContent(message);
-
-			if (isE2eeEnabled && encrypted && draftMessage) {
-				try {
-					message = await encryptText(
-						draftMessage,
-						keyID,
-						key,
-						'enc.'
-					);
-				} catch (e: any) {
-					await apiPostError({
-						name: e.name,
-						message: e.message,
-						stack: e.stack,
-						level: ERROR_LEVEL_WARN
-					});
-				}
-			}
-
-			if (canUseRemoteApi) {
-				try {
-					if (isEmptyDraft) {
-						// #976: an emptied composer must delete the draft, not
-						// store an empty one. Autosave also runs on unmount, so
-						// upserting empty text turned every merely visited
-						// conversation into a permanent drafts-badge entry that
-						// no view could open.
-						if (hasRemoteDraftRef.current) {
-							hasRemoteDraftRef.current = false;
-							await Promise.allSettled(
-								scopeKeysToTry.map((scopeKey) =>
-									apiDeleteUserDraft(scopeKey)
-								)
-							);
-						}
-					} else {
-						hasRemoteDraftRef.current = true;
-						await apiUpsertUserDraft(remoteScopeKey, {
-							text: message,
-							actionPath: options?.actionPath || null,
-							title: options?.title || null,
-							sourceSessionId:
-								options?.sessionId ??
-								activeSession?.item?.id ??
-								null,
-							roomRef:
-								options?.roomRef ?? activeSession?.rid ?? null,
-							threadRootId: options?.threadRootId || null
-						});
-					}
-					await updateRemoteDraftIndex(draftMessage);
-				} catch {
-					// Draft autosave must never break chat input.
-				}
-			}
+			await persistDraftMessage(draftMessage ?? '', {
+				...persistContextRef.current,
+				enabled,
+				canUseRemoteApi,
+				loaded,
+				allowUnloaded: false,
+				remoteScopeKey,
+				scopeKeysToTry,
+				loadVersion: loadVersionRef.current,
+				hasRemoteDraft: hasRemoteDraftRef.current,
+				encrypted,
+				isE2eeEnabled,
+				key,
+				keyID,
+				actionPath: options?.actionPath || null,
+				title: options?.title || null,
+				sessionId:
+					options?.sessionId ?? activeSession?.item?.id ?? null,
+				roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+				threadRootId: options?.threadRootId || null
+			});
 		},
 		[
 			activeSession?.item?.id,
@@ -378,9 +510,9 @@ export const useDraftMessage = (
 			options?.sessionId,
 			options?.threadRootId,
 			options?.title,
+			persistDraftMessage,
 			remoteScopeKey,
-			scopeKeysToTry,
-			updateRemoteDraftIndex
+			scopeKeysToTry
 		]
 	);
 

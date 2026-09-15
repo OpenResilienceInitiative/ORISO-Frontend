@@ -4,6 +4,7 @@ import {
 	BOTTOM_TOLERANCE_PX,
 	isComposerBusy,
 	isTimelineAtBottom,
+	shouldClearAtBottomAfterSuppressedFollow,
 	shouldFollowNewMessage
 } from './timelineFollow';
 
@@ -69,6 +70,38 @@ describe('shouldFollowNewMessage', () => {
 				isOwnMessage: false,
 				atBottom: false,
 				isComposing: false
+			})
+		).toBe(false);
+	});
+});
+
+describe('shouldClearAtBottomAfterSuppressedFollow', () => {
+	it('keeps the bottom flag during the first paint so the empty timeline can still follow', () => {
+		expect(
+			shouldClearAtBottomAfterSuppressedFollow({
+				initialScrollCompleted: false,
+				followed: false,
+				atBottom: true
+			})
+		).toBe(false);
+	});
+
+	it('clears the stale bottom flag once follow is declined after setup', () => {
+		expect(
+			shouldClearAtBottomAfterSuppressedFollow({
+				initialScrollCompleted: true,
+				followed: false,
+				atBottom: true
+			})
+		).toBe(true);
+	});
+
+	it('leaves the flag alone when the view did follow', () => {
+		expect(
+			shouldClearAtBottomAfterSuppressedFollow({
+				initialScrollCompleted: true,
+				followed: true,
+				atBottom: true
 			})
 		).toBe(false);
 	});
