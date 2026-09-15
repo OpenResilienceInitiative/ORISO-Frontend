@@ -20,4 +20,4 @@ Wir fragen dich nie per E-Mail nach deinem Passwort. Änderungen an deinem Zugan
 Datenschutz: {{privacyUrl}}
 Impressum: {{imprintUrl}}
 
-Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.
+Diese E-Mail ist ein Sicherheitshinweis und lässt sich nicht abbestellen. Bitte antworte nicht darauf.

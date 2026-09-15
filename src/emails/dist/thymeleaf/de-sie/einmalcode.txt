@@ -1,14 +1,14 @@
 Ihr Einmalcode
 ==============
 
-Geben Sie diesen Code im Anmeldefenster ein.
+Geben Sie diesen Code in [[${platformName}]] ein.
 
 Code: [[${otpCode}]]
 
-Zur Anmeldung:
+[[${platformName}]] öffnen:
 [[${loginUrl}]]
 
-Wenn Sie sich nicht anmelden wollten, ändern Sie bitte Ihr Passwort.
+Wenn Sie diesen Code nicht angefordert haben, ändern Sie bitte Ihr Passwort.
 
 ----------------------------------------------------------------
 Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Geben Sie diesen Code an niemanden weiter.
@@ -22,4 +22,4 @@ Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Geben Sie diesen Code an niem
 Datenschutz: [[${privacyUrl}]]
 Impressum: [[${imprintUrl}]]
 
-Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
+Diese E-Mail enthält einen Sicherheitscode und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
