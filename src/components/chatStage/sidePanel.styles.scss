@@ -33,16 +33,27 @@
 		flex: 1 1 auto;
 		min-height: 0;
 		overflow: hidden auto;
-		padding: 16px 16px 240px;
+
+		// T41: the panel's own composer measures itself and publishes
+		// `--composer-dock-height` on this panel (same rule as
+		// `.session__content`); the literals are the first-paint fallback.
+		padding: 16px 16px calc(var(--composer-dock-height, 240px) + 24px);
 		overscroll-behavior: contain;
 
 		@media screen and (width <= 1366px) {
-			// Tablet/laptop composer is taller (same rule as `.session__content`).
-			padding-bottom: calc(320px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(
+				var(--composer-dock-height, 320px) + 24px +
+					env(safe-area-inset-bottom, 0)
+			);
 		}
 
 		@media screen and (width <= 899px) {
-			padding-bottom: calc(200px + env(safe-area-inset-bottom, 0));
+			padding-bottom: calc(
+				var(
+					--composer-dock-height,
+					calc(200px + env(safe-area-inset-bottom, 0))
+				) + 24px
+			);
 		}
 	}
 

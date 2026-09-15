@@ -44,6 +44,7 @@ import {
 	getExplicitAudienceValues,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
+import { useComposerDock } from './useComposerDock';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -537,6 +538,13 @@ export const MessageSubmitInterfaceComponent = ({
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
 	const figmaToolbarRef = useRef<HTMLDivElement | null>(null);
+	/**
+	 * The docked wrapper (info bar + previews + composer card). Its height is
+	 * what the timeline has to keep free, and its host's height is what caps
+	 * the composer's growth — both published as CSS variables (T41).
+	 */
+	const dockedWrapperRef = useRef<HTMLDivElement | null>(null);
+	const composerHostHeight = useComposerDock(dockedWrapperRef);
 	const [emojiPickerAnchorEl, setEmojiPickerAnchorEl] =
 		useState<HTMLElement | null>(null);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
@@ -3586,9 +3594,10 @@ export const MessageSubmitInterfaceComponent = ({
 				viewportWidth: window.innerWidth,
 				viewportHeight: window.innerHeight,
 				compact: compactHeight,
-				flush: flushCorner !== undefined
+				flush: flushCorner !== undefined,
+				hostHeight: composerHostHeight
 			}),
-		[compactHeight, flushCorner]
+		[compactHeight, flushCorner, composerHostHeight]
 	);
 
 	const clampComposerHeight = useCallback(
@@ -3775,6 +3784,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	return (
 		<div
+			ref={dockedWrapperRef}
 			className={clsx(
 				className,
 				'messageSubmit__wrapper',

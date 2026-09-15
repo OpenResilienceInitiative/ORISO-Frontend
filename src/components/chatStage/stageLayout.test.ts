@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	clampPanelWidth,
+	maxListWidthBesidePanel,
 	PANEL_WIDTH_STORAGE_KEY,
 	readPanelWidth,
 	resolveStageLayout,
@@ -165,5 +166,22 @@ describe('panel width persistence', () => {
 		writePanelWidth(0, storage);
 		writePanelWidth(NaN, storage);
 		expect(readPanelWidth(400, storage)).toBe(400);
+	});
+});
+
+describe('maxListWidthBesidePanel (T41b)', () => {
+	it('leaves both panes their drag floor at 1280', () => {
+		// 1280 − 12 chrome − 24 margin − 2 × 320 = 604: wider than the list's
+		// own expanded maximum, so at this width the reader is not limited by
+		// the panel at all.
+		expect(maxListWidthBesidePanel(1280)).toBe(604);
+	});
+
+	it('shrinks with the window', () => {
+		expect(maxListWidthBesidePanel(1024)).toBe(348);
+	});
+
+	it('never goes below the rail', () => {
+		expect(maxListWidthBesidePanel(700)).toBe(STAGE_LAYOUT.RAIL_WIDTH);
 	});
 });
