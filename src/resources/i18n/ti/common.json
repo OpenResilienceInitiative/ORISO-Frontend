@@ -1949,6 +1949,10 @@
 				"title": "ናይ ጉዳይ ምትሕልላፍ ተነጺጉ",
 				"text": "ፍቓድ እቲ ተገልጋሊ ተነጺጉ። እቲ ትሕዝቶ ተዓጽዩ ይጸንሕ።"
 			},
+			"caseHandoverOfferReceived": {
+				"title": "ናይ ጉዳይ ምትሕልላፍ ሓሳብ",
+				"text": "መሳርሕትኹም ነዚ ምኽሪ ክህበኩም ይደሊ ኣሎ። ነቲ ዝርርብ ቅድሚ ምኽፋትኩም ነቲ ሕቶ ርኣይዎ።"
+			},
 			"callStarted": {
 				"title": "ጻውዒት ይካየድ ኣሎ",
 				"text": "ሕጂ ጻውዒት ይካየድ ኣሎ። ንምስታፍ ተጸምበሩ።"
@@ -3212,12 +3216,39 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "ምትሕልላፍ ጉዳይ",
+			"pending": "መሳርሕትኹም ነዚ ምኽሪ ክህበኩም ይደሊ ኣሎ።",
+			"accept": "ተቐበል",
+			"decline": "ንጸግ",
+			"awaitingClientConsent": "ተቐቢልኩም። ዓሚል ክሳብ ዝሰማማዕ ተበጻሕነት ዕጹው ይቕጽል።",
+			"declined": "ነዚ ምትሕልላፍ ነጺግኩምዎ።",
+			"denied": "እዚ ምትሕልላፍ ተነጺጉ።",
+			"clientConsentDeclined": "ዓሚል ነዚ ምትሕልላፍ ነጺጉዎ።",
+			"noContent": "እዚ ሕቶ ነቲ ዝርርብ ንምንባብ ፍቓድ ኣይህብን።",
+			"forbidden": "ነዚ ሕቶ ንምርኣይ ፍቓድ የብልኩምን።",
+			"notFound": "እዚ ሕቶ ድሕሪ ሕጂ የለን።",
+			"generic": "እቲ ሕቶ ክጽዓን ኣይከኣለን።",
+			"retry": "ደጊምካ ፈትን",
+			"open": "ምኽሪ ኣሕልፍ",
+			"loadForbidden": "ብቑዓት መሳርሕቲ ንምጽዓን ፍቓድ የብልኩምን።",
+			"loadError": "እቲ ቅጥዒ ክጽዓን ኣይከኣለን።",
+			"submitError": "እቲ ሕቶ ክለኣኽ ኣይከኣለን።",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "እቲ ዝተመርጸ መሳርሕቲ ይጽበ ኣሎ።",
+				"PENDING_CLIENT_CONSENT": "መሳርሕቲ ተቐቢሉ። ናይ ዓሚል ፍቓድ ይጽበ ኣሎ።",
+				"GRANTED": "ምትሕልላፍ ተዛዚሙ።",
+				"RECIPIENT_DECLINED": "እቲ ዝተመርጸ መሳርሕቲ ነጺጉ።",
+				"DENIED": "ምትሕልላፍ ተነጺጉ።",
+				"CLIENT_CONSENT_DECLINED": "ዓሚል ነቲ ምትሕልላፍ ነጺጉ።"
+			}
+		},
 		"copy": "እዚ ጉዳይ እዚ ከም ሜታዳታ ጥራይ እዩ ዝረአ። ናይ ምትሕልላፍ ምኽንያት ምረጹ እሞ ስለምንታይ ተበጻሕነት ከም ዘድልየኩም ግለጹ።",
 		"batch": {
 			"cancel": "ምረጻ ዕጸው",
 			"confirm": "ንዝተመርጹ ሕተት",
 			"required": "እንተወሓደ ሓደ ጉዳይ፡ ሓደ ምኽንያትን ሓደ መብርሂን ምረጹ።",
-			"result": "{{successful}} ሕቶ(ታት) ተላኢኹ፡ {{failed}} ኣይተዓወተን።",
+			"result": "{{granted}} ተላሊፉ፣ {{pending}} ይጽበ፣ {{denied}} ተነጺጉ፣ {{failed}} ኣይተዓወተን።",
 			"selectCase": "ጉዳይ ምረጽ",
 			"selectedCount": "{{count}} ተመሪጹ",
 			"start": "ብዙሓት ጉዳያት ምረጽ",
@@ -3325,6 +3356,43 @@
 			"supervisionTitle": "ምክትታል ተነቓቒሑ!",
 			"supervisionBody": "{{advisor}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።"
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "ሱፐርቪዥን ሕተት",
+			"change": "ሱፐርቫይዘር ቀይር",
+			"handover": "ምኽሪ ኣሕልፍ"
+		},
+		"description": {
+			"add": "ምኩር መሳርሕቲ ዓድም።",
+			"change": "ናይ ሕጂ ሱፐርቫይዘር ቀይር።",
+			"handover": "ነዚ ምኽሪ ንኻልእ ብቑዕ መሳርሕቲ ኣቕርብ።"
+		},
+		"currentHeading": "ናይ ሕጂ ሱፐርቪዥን",
+		"noneYet": "ሱፐርቫይዘር ኣይተመደበን።",
+		"personLabel": {
+			"add": "ሱፐርቫይዘር ምረጽ",
+			"change": "ሓድሽ ሱፐርቫይዘር ምረጽ",
+			"handover": "መሳርሕቲ ምረጽ"
+		},
+		"reasonLabel": {
+			"add": "ምኽንያት ሱፐርቪዥን",
+			"change": "ምኽንያት ለውጢ",
+			"handover": "ምኽንያት ምትሕልላፍ"
+		},
+		"reasonPlaceholder": "ምኽንያቱ ብሓጺር ግለጹ።",
+		"reasonError": "ምኽንያት ምረጹ።",
+		"reasonEmptyOption": "ምኽንያት ምረጹ…",
+		"explanation": {
+			"add": "ሱፐርቫይዘር ኣብ ፍሉይ ናይ ጉጅለ ቦታ ክድግፈኩም ይኽእል።",
+			"change": "እቲ ሓድሽ ሱፐርቫይዘር ነቲ ቀዳማይ ይትክኦ።",
+			"handover": "መጀመርታ እቲ ዝተመርጸ መሳርሕቲ ይውስን። ፖሊሲ እንተደልዩ ድሕሪኡ ዓሚል ይሕተት።"
+		},
+		"handoverPending": "እቲ ሕቶ መጀመርታ ናብ ዝተመርጸ መሳርሕቲ ይለኣኽ።",
+		"confirm": { "add": "ሕተት", "change": "ለውጢ ሕተት", "handover": "ሓሳብ ለኣኽ" },
+		"cancel": "ሰርዝ",
+		"close": "ዕጸው",
+		"emptyOption": "በጃኹም ምረጹ…"
 	},
 	"session": {
 		"waitingMiniGame": {

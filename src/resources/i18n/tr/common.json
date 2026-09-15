@@ -1949,6 +1949,10 @@
 				"title": "Vaka devri reddedildi",
 				"text": "Danışan onayı reddedildi. İçerikler kilitli kalır."
 			},
+			"caseHandoverOfferReceived": {
+				"title": "Vaka devri teklifi",
+				"text": "Bir meslektaşınız bu danışmanlığı size devretmek istiyor. Görüşmeyi açmadan önce isteği inceleyin."
+			},
 			"callStarted": {
 				"title": "Arama devam ediyor",
 				"text": "Şu anda bir arama devam ediyor. Katılmak için aramaya bağlanın."
@@ -3212,12 +3216,39 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Vaka devri",
+			"pending": "Bir meslektaşınız bu danışmanlığı size devretmek istiyor.",
+			"accept": "Kabul et",
+			"decline": "Reddet",
+			"awaitingClientConsent": "Kabul ettiniz. Danışan onay verene kadar erişim kapalı kalır.",
+			"declined": "Bu devri reddettiniz.",
+			"denied": "Bu devir reddedildi.",
+			"clientConsentDeclined": "Danışan bu devri reddetti.",
+			"noContent": "Bu istek görüşmeyi okuma izni vermiyor.",
+			"forbidden": "Bu devir isteğini görme yetkiniz yok.",
+			"notFound": "Bu devir isteği artık mevcut değil.",
+			"generic": "Devir isteği yüklenemedi.",
+			"retry": "Yeniden dene",
+			"open": "Danışmanlığı devret",
+			"loadForbidden": "Uygun meslektaşları yükleme yetkiniz yok.",
+			"loadError": "Devir formu yüklenemedi.",
+			"submitError": "Devir isteği gönderilemedi.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "Seçilen meslektaş bekleniyor.",
+				"PENDING_CLIENT_CONSENT": "Meslektaş kabul etti. Danışan onayı bekleniyor.",
+				"GRANTED": "Devir tamamlandı.",
+				"RECIPIENT_DECLINED": "Seçilen meslektaş reddetti.",
+				"DENIED": "Devir reddedildi.",
+				"CLIENT_CONSENT_DECLINED": "Danışan devri reddetti."
+			}
+		},
 		"copy": "Bu vaka yalnızca üst veri olarak görünür. Bir devir nedeni seçin ve neden erişime ihtiyaç duyduğunuzu açıklayın.",
 		"batch": {
 			"cancel": "Seçimi kapat",
 			"confirm": "Seçilenler için talep gönder",
 			"required": "En az bir vaka, bir neden ve bir açıklama seçin.",
-			"result": "{{successful}} talep gönderildi, {{failed}} tanesi başarısız oldu.",
+			"result": "{{granted}} devredildi, {{pending}} bekliyor, {{denied}} reddedildi, {{failed}} başarısız oldu.",
 			"selectCase": "Vaka seç",
 			"selectedCount": "{{count}} tanesi seçildi",
 			"start": "Birden fazla vaka seç",
@@ -3325,6 +3356,47 @@
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",
 			"supervisionBody": "{{advisor}} bu sohbete süpervizör danışman olarak eklendi."
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Süpervizyon iste",
+			"change": "Süpervizörü değiştir",
+			"handover": "Danışmanlığı devret"
+		},
+		"description": {
+			"add": "Deneyimli bir meslektaşı davet edin.",
+			"change": "Mevcut süpervizörü değiştirin.",
+			"handover": "Danışmanlığı uygun başka bir meslektaşa teklif edin."
+		},
+		"currentHeading": "Mevcut süpervizyon",
+		"noneYet": "Süpervizör atanmadı.",
+		"personLabel": {
+			"add": "Süpervizör seç",
+			"change": "Yeni süpervizör seç",
+			"handover": "Meslektaş seç"
+		},
+		"reasonLabel": {
+			"add": "Süpervizyon nedeni",
+			"change": "Değişiklik nedeni",
+			"handover": "Devir nedeni"
+		},
+		"reasonPlaceholder": "Nedeni kısaca açıklayın.",
+		"reasonError": "Bir neden seçin.",
+		"reasonEmptyOption": "Neden seçin…",
+		"explanation": {
+			"add": "Süpervizör ayrı bir ekip alanında destek olabilir.",
+			"change": "Yeni süpervizör öncekinin yerini alır.",
+			"handover": "Önce seçilen meslektaş karar verir. Politika gerektiriyorsa ardından danışana sorulur. Gerekli kararlar tamamlanana kadar sorumluluk sizdedir."
+		},
+		"handoverPending": "İstek önce seçilen meslektaşa gönderilir.",
+		"confirm": {
+			"add": "İstek gönder",
+			"change": "Değişiklik iste",
+			"handover": "Devir teklifini gönder"
+		},
+		"cancel": "İptal",
+		"close": "Kapat",
+		"emptyOption": "Lütfen seçin…"
 	},
 	"session": {
 		"waitingMiniGame": {

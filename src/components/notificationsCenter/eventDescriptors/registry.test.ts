@@ -93,6 +93,7 @@ const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'case.handover.consent.requested': 'conversation',
 	'case.handover.granted': 'conversation',
 	'case.handover.consent.declined': 'conversation',
+	'case.handover.offer.received': 'conversation',
 	'call.started': 'join',
 	'call.ended': 'conversation',
 	'call.missed': 'conversation',
@@ -126,7 +127,7 @@ describe('WP-06 event-descriptor registry', () => {
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
 		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments = 30.
-		expect(KNOWN_EVENT_TYPES.length).toBe(31);
+		expect(KNOWN_EVENT_TYPES.length).toBe(32);
 		[
 			'request.new',
 			'request.denied',
@@ -140,6 +141,7 @@ describe('WP-06 event-descriptor registry', () => {
 			'case.handover.consent.requested',
 			'case.handover.granted',
 			'case.handover.consent.declined',
+			'case.handover.offer.received',
 			'call.started',
 			'call.ended',
 			'call.missed',

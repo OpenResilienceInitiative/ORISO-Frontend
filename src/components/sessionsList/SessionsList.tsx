@@ -44,7 +44,6 @@ import {
 	apiGetCaseHandoverCandidates,
 	apiGetCaseHandoverReasons,
 	apiGetConsultantSessionList,
-	apiRequestCaseHandoverBatchAccess,
 	CaseHandoverReason,
 	FETCH_ERRORS,
 	SESSION_COUNT
@@ -98,6 +97,7 @@ import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
+import { useCaseHandoverBatch } from './useCaseHandoverBatch';
 import { getFormatChipVisibility } from './formatChipVisibility';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useDisplayFilter } from '../../hooks/useDisplayFilter';
@@ -273,10 +273,11 @@ export const SessionsList = ({
 	>([]);
 	const [caseHandoverReasonCode, setCaseHandoverReasonCode] = useState('');
 	const [caseHandoverExplanation, setCaseHandoverExplanation] = useState('');
-	const [caseHandoverBatchSubmitting, setCaseHandoverBatchSubmitting] =
-		useState(false);
 	const [caseHandoverBatchSummary, setCaseHandoverBatchSummary] =
 		useState('');
+	const caseHandoverBatch = useCaseHandoverBatch({
+		actorId: userData.userId
+	});
 	/**
 	 * Initial chip selection:
 	 *   - enquiry list: honour ?chip=liveChat in the URL (sidebar toggle
@@ -1623,12 +1624,13 @@ export const SessionsList = ({
 		);
 	}, []);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
+		caseHandoverBatch.close(caseHandoverSelectedIds, true);
 		setCaseHandoverBatchMode(false);
 		setCaseHandoverReviewOpen(false);
 		setCaseHandoverSelectedIds([]);
 		setCaseHandoverExplanation('');
 		setCaseHandoverBatchSummary('');
-	}, []);
+	}, [caseHandoverBatch, caseHandoverSelectedIds]);
 	useEffect(() => {
 		if (
 			sessionListTab === SESSION_LIST_TAB_ARCHIVE &&
@@ -1648,42 +1650,43 @@ export const SessionsList = ({
 			);
 			return;
 		}
-		setCaseHandoverBatchSubmitting(true);
 		setCaseHandoverBatchSummary('');
-		apiRequestCaseHandoverBatchAccess(
+		void caseHandoverBatch.submit(
 			caseHandoverSelectedIds,
 			caseHandoverReasonCode,
 			caseHandoverExplanation
-		)
-			.then((results) => {
-				const successful = (results || []).filter(
-					(result) => result.success
-				).length;
-				const failed = (results || []).length - successful;
-				setCaseHandoverBatchSummary(
-					translate('caseHandover.batch.result', {
-						successful,
-						failed
-					})
-				);
-				setCaseHandoverSelectedIds([]);
-				setCaseHandoverReviewOpen(false);
-				setCaseHandoverWizardStep('reason');
-				void refetchSessionList();
-			})
-			.catch(() => {
-				setCaseHandoverBatchSummary(
-					translate('caseHandover.error.failed')
-				);
-			})
-			.finally(() => setCaseHandoverBatchSubmitting(false));
+		);
 	}, [
+		caseHandoverBatch,
 		caseHandoverExplanation,
 		caseHandoverReasonCode,
 		caseHandoverSelectedIds,
-		refetchSessionList,
 		translate
 	]);
+	useEffect(() => {
+		if (!caseHandoverBatch.outcome) return;
+		const { granted, pending, denied, failed, unresolvedSessionIds } =
+			caseHandoverBatch.outcome;
+		setCaseHandoverBatchSummary(
+			translate('caseHandover.batch.result', {
+				granted,
+				pending,
+				denied,
+				failed
+			})
+		);
+		setCaseHandoverSelectedIds(unresolvedSessionIds);
+		if (unresolvedSessionIds.length === 0) {
+			setCaseHandoverReviewOpen(false);
+			setCaseHandoverWizardStep('reason');
+		}
+		if (granted > 0) void refetchSessionList();
+	}, [caseHandoverBatch.outcome, refetchSessionList, translate]);
+	useEffect(() => {
+		if (caseHandoverBatch.error) {
+			setCaseHandoverBatchSummary(translate('caseHandover.error.failed'));
+		}
+	}, [caseHandoverBatch.error, translate]);
 	const unmatchedDrafts = React.useMemo(() => {
 		if (sessionToolbarChip !== 'drafts') {
 			return [];
@@ -2143,6 +2146,9 @@ export const SessionsList = ({
 									type="button"
 									className="sessionsList__caseHandoverWizardClose"
 									onClick={() => {
+										caseHandoverBatch.close(
+											caseHandoverSelectedIds
+										);
 										setCaseHandoverReviewOpen(false);
 										setCaseHandoverWizardStep('reason');
 									}}
@@ -2155,7 +2161,7 @@ export const SessionsList = ({
 								reasons={caseHandoverReasons}
 								reasonCode={caseHandoverReasonCode}
 								explanation={caseHandoverExplanation}
-								isSubmitting={caseHandoverBatchSubmitting}
+								isSubmitting={caseHandoverBatch.submitting}
 								error={
 									caseHandoverReviewOpen &&
 									caseHandoverBatchSummary

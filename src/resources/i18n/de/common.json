@@ -1970,6 +1970,10 @@
 				"title": "Fallübergabe abgelehnt",
 				"text": "Die Klient:innen-Zustimmung wurde abgelehnt. Inhalte bleiben gesperrt."
 			},
+			"caseHandoverOfferReceived": {
+				"title": "Angebot zur Fallübergabe",
+				"text": "Eine Kolleg:in möchte diese Beratung an Sie übergeben. Prüfen Sie die Anfrage, bevor Sie das Gespräch öffnen."
+			},
 			"callStarted": {
 				"title": "Anruf läuft",
 				"text": "Ein Anruf läuft gerade. Treten Sie bei, um teilzunehmen."
@@ -3232,12 +3236,39 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Fallübergabe",
+			"pending": "Eine Kolleg:in möchte diese Beratung an Sie übergeben.",
+			"accept": "Annehmen",
+			"decline": "Ablehnen",
+			"awaitingClientConsent": "Sie haben angenommen. Der Zugriff bleibt gesperrt, bis die ratsuchende Person zugestimmt hat.",
+			"declined": "Sie haben diese Übergabe abgelehnt.",
+			"denied": "Diese Übergabe wurde abgelehnt.",
+			"clientConsentDeclined": "Die ratsuchende Person hat diese Übergabe abgelehnt.",
+			"noContent": "Diese Anfrage erlaubt Ihnen nicht, das Gespräch zu lesen.",
+			"forbidden": "Sie dürfen diese Übergabeanfrage nicht aufrufen.",
+			"notFound": "Diese Übergabeanfrage besteht nicht mehr.",
+			"generic": "Die Übergabeanfrage konnte nicht geladen werden.",
+			"retry": "Erneut versuchen",
+			"open": "Beratung übergeben",
+			"loadForbidden": "Sie dürfen die berechtigten Kolleg:innen nicht laden.",
+			"loadError": "Das Übergabeformular konnte nicht geladen werden.",
+			"submitError": "Die Übergabeanfrage konnte nicht gesendet werden.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "Warten auf die ausgewählte Kolleg:in.",
+				"PENDING_CLIENT_CONSENT": "Die Kolleg:in hat angenommen. Warten auf die Zustimmung der ratsuchenden Person.",
+				"GRANTED": "Die Übergabe wurde abgeschlossen.",
+				"RECIPIENT_DECLINED": "Die ausgewählte Kolleg:in hat abgelehnt.",
+				"DENIED": "Die Übergabe wurde abgelehnt.",
+				"CLIENT_CONSENT_DECLINED": "Die ratsuchende Person hat die Übergabe abgelehnt."
+			}
+		},
 		"copy": "Dieser Fall ist nur als Metadaten sichtbar. Wählen Sie einen Übergabegrund und erklären Sie, warum Sie Zugriff benötigen.",
 		"batch": {
 			"cancel": "Auswahl schließen",
 			"confirm": "Auswahl anfragen",
 			"required": "Wählen Sie mindestens einen Fall, einen Grund und eine Begründung.",
-			"result": "{{successful}} Anfrage(n) gesendet, {{failed}} fehlgeschlagen.",
+			"result": "{{granted}} übertragen, {{pending}} ausstehend, {{denied}} abgelehnt, {{failed}} fehlgeschlagen.",
 			"selectCase": "Fall auswählen",
 			"selectedCount": "{{count}} ausgewählt",
 			"start": "Mehrere Fälle auswählen",
@@ -3345,6 +3376,47 @@
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Supervision anfragen",
+			"change": "Supervisor:in wechseln",
+			"handover": "Beratung übergeben"
+		},
+		"description": {
+			"add": "Holen Sie eine erfahrene Kolleg:in in diesen Fall.",
+			"change": "Ersetzen Sie die aktuelle Supervision.",
+			"handover": "Bieten Sie diese Beratung einer anderen berechtigten Kolleg:in an."
+		},
+		"currentHeading": "Aktuelle Supervision",
+		"noneYet": "Es ist noch keine Supervision eingetragen.",
+		"personLabel": {
+			"add": "Supervisor:in auswählen",
+			"change": "Neue Supervisor:in auswählen",
+			"handover": "Kolleg:in auswählen"
+		},
+		"reasonLabel": {
+			"add": "Grund für die Supervision",
+			"change": "Grund für den Wechsel",
+			"handover": "Grund für die Übergabe"
+		},
+		"reasonPlaceholder": "Beschreiben Sie kurz den Grund.",
+		"reasonError": "Bitte wählen Sie einen Grund aus.",
+		"reasonEmptyOption": "Grund auswählen …",
+		"explanation": {
+			"add": "Eine Supervisor:in unterstützt Sie in einem getrennten Teambereich.",
+			"change": "Die neue Supervision ersetzt die bisherige.",
+			"handover": "Zuerst entscheidet die ausgewählte Kolleg:in. Falls die Richtlinie es verlangt, wird danach die ratsuchende Person gefragt. Bis alle nötigen Entscheidungen vorliegen, bleiben Sie zuständig."
+		},
+		"handoverPending": "Die Anfrage geht zuerst an die ausgewählte Kolleg:in. Sie wird erst nach allen erforderlichen Entscheidungen wirksam.",
+		"confirm": {
+			"add": "Supervision anfragen",
+			"change": "Wechsel anfragen",
+			"handover": "Übergabe anbieten"
+		},
+		"cancel": "Abbrechen",
+		"close": "Schließen",
+		"emptyOption": "Bitte auswählen …"
 	},
 	"session": {
 		"waitingMiniGame": {

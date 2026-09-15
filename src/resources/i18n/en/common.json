@@ -1946,6 +1946,10 @@
 				"title": "Case handover declined",
 				"text": "Client consent was declined. Content visibility remains locked."
 			},
+			"caseHandoverOfferReceived": {
+				"title": "Case handover offer",
+				"text": "A colleague wants to hand this consultation over to you. Review the request before opening the conversation."
+			},
 			"callStarted": {
 				"title": "Call ongoing",
 				"text": "A call is ongoing. Join to participate."
@@ -3172,12 +3176,39 @@
 		}
 	},
 	"caseHandover": {
+		"offer": {
+			"title": "Case handover",
+			"pending": "A colleague wants to hand this consultation over to you.",
+			"accept": "Accept",
+			"decline": "Decline",
+			"awaitingClientConsent": "You accepted. Access stays locked until the client has consented.",
+			"declined": "You declined this handover.",
+			"denied": "This handover was denied.",
+			"clientConsentDeclined": "The client declined this handover.",
+			"noContent": "This request does not give you permission to view the conversation.",
+			"forbidden": "You are not authorised to view this handover request.",
+			"notFound": "This handover request no longer exists.",
+			"generic": "The handover request could not be loaded.",
+			"retry": "Try again",
+			"open": "Hand over consultation",
+			"loadForbidden": "You are not authorised to load eligible colleagues.",
+			"loadError": "The handover form could not be loaded.",
+			"submitError": "The handover request could not be sent.",
+			"status": {
+				"PENDING_RECIPIENT_ACCEPTANCE": "Waiting for the selected colleague.",
+				"PENDING_CLIENT_CONSENT": "The colleague accepted. Waiting for client consent.",
+				"GRANTED": "The handover has been completed.",
+				"RECIPIENT_DECLINED": "The selected colleague declined.",
+				"DENIED": "The handover was denied.",
+				"CLIENT_CONSENT_DECLINED": "The client declined the handover."
+			}
+		},
 		"copy": "This case is visible as metadata only. Select a handover reason and explain why you need access.",
 		"batch": {
 			"cancel": "Close selection",
 			"confirm": "Request selected",
 			"required": "Select at least one case, one reason, and an explanation.",
-			"result": "{{successful}} request(s) sent, {{failed}} failed.",
+			"result": "{{granted}} transferred, {{pending}} pending, {{denied}} denied, {{failed}} failed.",
 			"selectCase": "Select case",
 			"selectedCount": "{{count}} selected",
 			"start": "Select multiple cases",
@@ -3285,6 +3316,47 @@
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
 		}
+	},
+	"supervisorDialog": {
+		"title": {
+			"add": "Request supervision",
+			"change": "Change supervisor",
+			"handover": "Hand over consultation"
+		},
+		"description": {
+			"add": "Invite an experienced colleague to this case.",
+			"change": "Replace the current supervisor.",
+			"handover": "Offer this consultation to another eligible colleague."
+		},
+		"currentHeading": "Current supervision",
+		"noneYet": "No supervisor has been assigned.",
+		"personLabel": {
+			"add": "Select supervisor",
+			"change": "Select new supervisor",
+			"handover": "Select colleague"
+		},
+		"reasonLabel": {
+			"add": "Reason for supervision",
+			"change": "Reason for change",
+			"handover": "Reason for handover"
+		},
+		"reasonPlaceholder": "Briefly describe the reason.",
+		"reasonError": "Select a reason.",
+		"reasonEmptyOption": "Select reason …",
+		"explanation": {
+			"add": "A supervisor can support you in a separate team space.",
+			"change": "The new supervisor replaces the previous one.",
+			"handover": "The selected colleague decides first. If policy requires it, the client is asked afterwards. Until all required decisions are complete, you remain responsible."
+		},
+		"handoverPending": "The request is sent to the selected colleague first. It takes effect only after every required decision.",
+		"confirm": {
+			"add": "Request supervision",
+			"change": "Request change",
+			"handover": "Send handover offer"
+		},
+		"cancel": "Cancel",
+		"close": "Close",
+		"emptyOption": "Please select …"
 	},
 	"session": {
 		"waitingMiniGame": {
