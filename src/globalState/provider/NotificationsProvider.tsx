@@ -127,7 +127,7 @@ const NOTIFICATION_FEED_MAX_ITEMS = 50;
 /** PATCH batch size of the auto-read pass (spec §6.1). */
 const CONFIRMED_READ_CHUNK = 50;
 /** Debounce of the auto-read pass after a feed or filter change. */
-const AUTO_READ_DEBOUNCE_MS = 300;
+export const AUTO_READ_DEBOUNCE_MS = 300;
 
 /** One feed response, numbered so stale ones can be told apart (§6.3). */
 type FeedResponse = {

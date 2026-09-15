@@ -95,3 +95,5 @@ index.d.ts
 _shots/
 !docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/
 !docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/**
+!docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/
+!docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/**

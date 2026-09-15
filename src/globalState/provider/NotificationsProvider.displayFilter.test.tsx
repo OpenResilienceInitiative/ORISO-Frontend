@@ -7,9 +7,10 @@
  */
 
 import React, { useContext } from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	AUTO_READ_DEBOUNCE_MS,
 	NotificationsContext,
 	NotificationsProvider
 } from './NotificationsProvider';
@@ -130,8 +131,33 @@ const renderProvider = () =>
 
 const rows = () => screen.getByTestId('rows').textContent;
 
+/** Advance the provider clock while React settles timer-driven updates. */
+const advanceTimers = async (milliseconds: number) => {
+	await act(async () => {
+		await vi.advanceTimersByTimeAsync(milliseconds);
+	});
+};
+
+/** RTL's real-timer polling cannot drive Vitest's fake clock. */
+const waitFor = async (assertion: () => void) => {
+	const pollingInterval = 50;
+	const timeout = 1000;
+	for (let elapsed = 0; ; elapsed += pollingInterval) {
+		try {
+			assertion();
+			return;
+		} catch (error) {
+			if (elapsed >= timeout) {
+				throw error;
+			}
+		}
+		await advanceTimers(pollingInterval);
+	}
+};
+
 describe('NotificationsProvider × display filter (#1377)', () => {
 	beforeEach(() => {
+		vi.useFakeTimers();
 		apiGetEventNotifications.mockReset();
 		apiMarkEventNotificationRead.mockReset();
 		apiMarkEventNotificationsReadByTypes.mockReset();
@@ -144,6 +170,8 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 	afterEach(() => {
 		cleanup();
 		displayFilterStore.resetForTests();
+		vi.clearAllTimers();
+		vi.useRealTimers();
 	});
 
 	it('exposes the server total and the badge operands from one snapshot', async () => {
@@ -207,7 +235,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 				2
 			)
 		);
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1);
 	});
 
@@ -286,7 +314,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		await waitFor(() =>
 			expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1)
 		);
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		// Failure → cooldown: no second PATCH and no reconciliation GET.
 		expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1);
 		expect(apiGetEventNotifications.mock.calls.length).toBe(getsBefore);
@@ -335,7 +363,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 			expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
 		);
 		await waitFor(() => expect(rows()).toBe('1:u,2:r,3:u'));
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		// … and the failed row is not re-PATCHed by it.
 		expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(2);
 		expect(apiGetEventNotifications).toHaveBeenCalledTimes(2);
@@ -499,7 +527,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 			)
 		);
 		await waitFor(() => expect(rows()).toBe('1:u,2:r'));
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		// … the same filter change does not PATCH again, and the loaded row
 		// was covered by the bulk read, not PATCHed a second time per id.
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
@@ -542,8 +570,10 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		});
 		await waitFor(() => expect(rows()).toBe('7:u'));
 		// The stale completion neither settles nor corrupts the new epoch.
-		patch.resolve({});
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		await act(async () => {
+			patch.resolve({});
+			await patch.promise;
+		});
 		expect(rows()).toBe('7:u');
 		expect(screen.getByTestId('server-total').textContent).toBe('1');
 	});
@@ -579,14 +609,14 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		displayFilterStore.attachClient(unsynced as any);
 		renderProvider();
 		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationRead).not.toHaveBeenCalled();
 		expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
 		// Account data (show everything) wins on sync: still nothing read.
 		act(() => {
 			(handlers.sync || []).forEach((h) => h('PREPARED', null));
 		});
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationRead).not.toHaveBeenCalled();
 	});
 
@@ -620,7 +650,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 				autoReadHidden: true
 			});
 		});
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
 		first.resolve({ updated: 38 });
 		await waitFor(() =>
@@ -673,7 +703,9 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 			)
 		);
 		bulk.resolve({ updated: 38 });
-		await new Promise((resolve) => setTimeout(resolve, 50));
+		await act(async () => {
+			await bulk.promise;
+		});
 		expect(screen.getByTestId('server-total').textContent).toBe('5');
 		expect(screen.getByTestId('badge').textContent).toBe('5');
 	});
@@ -694,7 +726,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		act(() => {
 			screen.getByText('read1').click();
 		});
-		await new Promise((resolve) => setTimeout(resolve, 20));
+		await advanceTimers(0);
 		expect(screen.getByTestId('server-total').textContent).toBe('1');
 	});
 
@@ -728,7 +760,7 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 				autoReadHidden: true
 			});
 		});
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
 	});
 });
