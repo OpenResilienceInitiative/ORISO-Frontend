@@ -12,10 +12,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiCreateCaseHandoverOffer,
 	apiGetCaseHandoverReasons,
+	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverRequestStatus,
 	apiGetCaseHandoverStatus
 } from '../../api/apiCaseHandover';
-import { fetchAgencyConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { resetCaseHandoverOperationStoreForTests } from '../caseHandover/caseHandoverOperationStore';
@@ -28,11 +28,9 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../api/apiCaseHandover', () => ({
 	apiCreateCaseHandoverOffer: vi.fn(),
 	apiGetCaseHandoverReasons: vi.fn(),
+	apiGetCaseHandoverRecipients: vi.fn(),
 	apiGetCaseHandoverRequestStatus: vi.fn(),
 	apiGetCaseHandoverStatus: vi.fn()
-}));
-vi.mock('../../api/apiGetAgencyConsultantList', () => ({
-	fetchAgencyConsultantList: vi.fn()
 }));
 vi.mock('../supervisorDialog/SupervisorDialog', () => ({
 	SupervisorDialog: (props: any) => (
@@ -128,21 +126,8 @@ describe('AskerInfoAssign owner handover', () => {
 				clientConsentRequired: false
 			}
 		]);
-		vi.mocked(fetchAgencyConsultantList).mockResolvedValue([
-			{
-				consultantId: 'owner-1',
-				firstName: 'Current',
-				lastName: 'Owner',
-				displayName: 'Current Owner',
-				username: 'owner'
-			},
-			{
-				consultantId: 'recipient-1',
-				firstName: 'New',
-				lastName: 'Owner',
-				displayName: 'New Owner',
-				username: 'recipient'
-			}
+		vi.mocked(apiGetCaseHandoverRecipients).mockResolvedValue([
+			{ consultantId: 'recipient-1', displayName: 'New Owner' }
 		]);
 	});
 
@@ -161,7 +146,7 @@ describe('AskerInfoAssign owner handover', () => {
 			screen.getByRole('button', { name: 'caseHandover.offer.open' })
 		);
 		await screen.findByTestId('handover-dialog');
-		expect(fetchAgencyConsultantList).toHaveBeenCalledWith('9');
+		expect(apiGetCaseHandoverRecipients).toHaveBeenCalledWith(41);
 		expect(screen.getByText('New Owner')).toBeTruthy();
 		fireEvent.click(screen.getByText('person'));
 		fireEvent.click(screen.getByText('reason'));
@@ -303,8 +288,28 @@ describe('AskerInfoAssign owner handover', () => {
 		expect(calls[1][1].operationId).not.toBe(calls[0][1].operationId);
 	});
 
+	it('offers exactly the session-eligible recipients and filters nobody itself', async () => {
+		// FE #1262: the wrong-topic colleague must never reach the picker. The
+		// server decides that — this asserts the component asks the
+		// session-scoped endpoint and then shows its answer unchanged, rather
+		// than re-deriving eligibility from the agency-wide consultant list.
+		vi.mocked(apiGetCaseHandoverRecipients).mockResolvedValue([
+			{ consultantId: 'same-topic', displayName: 'Jonas Lehmann' }
+		]);
+		renderAssign();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+		await screen.findByTestId('handover-dialog');
+
+		expect(apiGetCaseHandoverRecipients).toHaveBeenCalledWith(41);
+		expect(screen.getByText('Jonas Lehmann')).toBeTruthy();
+		expect(screen.queryByText(/Ayse Demir/)).toBeNull();
+	});
+
 	it('surfaces candidate authorization failure instead of presenting an empty agency', async () => {
-		vi.mocked(fetchAgencyConsultantList).mockRejectedValue(
+		vi.mocked(apiGetCaseHandoverRecipients).mockRejectedValue(
 			new Error('FORBIDDEN')
 		);
 		renderAssign();

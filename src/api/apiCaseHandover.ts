@@ -168,6 +168,27 @@ export const apiCreateCaseHandoverOffer = async (
 		]
 	});
 
+/**
+ * A colleague this session may actually be offered to. The server applies the
+ * same predicates `createOffer` enforces — same tenant, present, inside the
+ * session's department (agency AND an overlapping topic), neither the current
+ * owner nor a previous one — so the picker cannot show a name the offer would
+ * reject with a 403 (FE #1262).
+ */
+export interface CaseHandoverRecipient {
+	consultantId: string;
+	displayName?: string;
+}
+
+export const apiGetCaseHandoverRecipients = async (
+	sessionId: number
+): Promise<CaseHandoverRecipient[]> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/recipients`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN]
+	});
+
 export const apiGetCaseHandoverRequestStatus = async (
 	sessionId: number,
 	requestId: number

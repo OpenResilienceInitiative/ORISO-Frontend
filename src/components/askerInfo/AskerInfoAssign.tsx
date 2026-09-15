@@ -17,12 +17,12 @@ import { NotificationsContext } from '../../globalState/provider/NotificationsPr
 import {
 	apiCreateCaseHandoverOffer,
 	apiGetCaseHandoverReasons,
+	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverRequestStatus,
 	apiGetCaseHandoverStatus,
 	CaseHandoverReason,
 	CaseHandoverStatus
 } from '../../api/apiCaseHandover';
-import { fetchAgencyConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import { RequestSessionAssign } from '../sessionAssign/RequestSessionAssign';
 import { Text } from '../text/Text';
@@ -115,7 +115,7 @@ export const AskerInfoAssign = ({
 	);
 
 	const loadForm = useCallback(async () => {
-		if (!sessionId || !actorId || !activeSession?.item.agencyId) return;
+		if (!sessionId || !actorId) return;
 		const generation = generationRef.current;
 		const sequence = ++sequenceRef.current;
 		setLoading(true);
@@ -123,7 +123,7 @@ export const AskerInfoAssign = ({
 		try {
 			const [nextStatus, people, nextReasons] = await Promise.all([
 				apiGetCaseHandoverStatus(sessionId),
-				fetchAgencyConsultantList(String(activeSession.item.agencyId)),
+				apiGetCaseHandoverRecipients(sessionId),
 				apiGetCaseHandoverReasons()
 			]);
 			if (
@@ -137,15 +137,15 @@ export const AskerInfoAssign = ({
 			)
 				throw new Error('INVALID_CASE_HANDOVER_STATUS');
 			setStatus(nextStatus);
+			// The server already dropped everyone the offer would reject —
+			// other departments, other tenants, absentees, previous owners and
+			// the owner themselves (FE #1262). Do not re-filter here: a second
+			// rule in the client would drift from the one that decides.
 			setCandidates(
-				people
-					.filter((person) => person.consultantId !== actorId)
-					.map((person) => ({
-						id: person.consultantId,
-						name:
-							person.displayName ||
-							`${person.firstName} ${person.lastName}`.trim()
-					}))
+				(people || []).map((person) => ({
+					id: person.consultantId,
+					name: person.displayName || person.consultantId
+				}))
 			);
 			setReasons(nextReasons || []);
 		} catch (loadError) {
@@ -167,7 +167,7 @@ export const AskerInfoAssign = ({
 			)
 				setLoading(false);
 		}
-	}, [activeSession?.item.agencyId, actorId, sessionId, translate]);
+	}, [actorId, sessionId, translate]);
 
 	const handleOpen = () => {
 		generationRef.current += 1;

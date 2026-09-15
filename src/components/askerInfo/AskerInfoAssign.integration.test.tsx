@@ -13,9 +13,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiCreateCaseHandoverOffer,
 	apiGetCaseHandoverReasons,
+	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverStatus
 } from '../../api/apiCaseHandover';
-import { fetchAgencyConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { ActiveSessionContext, UserDataContext } from '../../globalState';
 import { resetCaseHandoverOperationStoreForTests } from '../caseHandover/caseHandoverOperationStore';
 import { AskerInfoAssign } from './AskerInfoAssign';
@@ -27,11 +27,9 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../api/apiCaseHandover', () => ({
 	apiCreateCaseHandoverOffer: vi.fn(),
 	apiGetCaseHandoverReasons: vi.fn(),
+	apiGetCaseHandoverRecipients: vi.fn(),
 	apiGetCaseHandoverRequestStatus: vi.fn(),
 	apiGetCaseHandoverStatus: vi.fn()
-}));
-vi.mock('../../api/apiGetAgencyConsultantList', () => ({
-	fetchAgencyConsultantList: vi.fn()
 }));
 
 const activeSession = {
@@ -94,21 +92,8 @@ describe('AskerInfoAssign with the real SupervisorDialog', () => {
 				clientConsentRequired: false
 			}
 		]);
-		vi.mocked(fetchAgencyConsultantList).mockResolvedValue([
-			{
-				consultantId: 'owner-1',
-				firstName: 'Current',
-				lastName: 'Owner',
-				displayName: 'Current Owner',
-				username: 'owner'
-			},
-			{
-				consultantId: 'recipient-1',
-				firstName: 'New',
-				lastName: 'Owner',
-				displayName: 'New Owner',
-				username: 'recipient'
-			}
+		vi.mocked(apiGetCaseHandoverRecipients).mockResolvedValue([
+			{ consultantId: 'recipient-1', displayName: 'New Owner' }
 		]);
 	});
 

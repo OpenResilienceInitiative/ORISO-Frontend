@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiCreateCaseHandoverOffer,
 	apiDecideCaseHandoverRecipient,
+	apiGetCaseHandoverRecipients,
 	apiGetCaseHandoverRequestStatus,
 	apiRequestCaseHandoverAccess,
 	apiRequestCaseHandoverBatchAccess
@@ -30,6 +31,16 @@ describe('apiCaseHandover mutation contracts', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(fetchData).mockResolvedValue({});
+	});
+
+	it('asks for the recipients of one session, not for an agency roster', async () => {
+		await apiGetCaseHandoverRecipients(41);
+
+		expect(fetchData).toHaveBeenCalledWith({
+			url: 'https://api.test/service/users/sessions/41/case-handover/recipients',
+			method: 'GET',
+			responseHandling: ['FORBIDDEN']
+		});
 	});
 
 	it('serializes the authoritative ownership revision and stable PULL operation identity', async () => {
