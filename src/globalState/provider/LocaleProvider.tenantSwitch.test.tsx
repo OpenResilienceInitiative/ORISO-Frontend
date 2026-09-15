@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocaleProvider } from './LocaleProvider';
 import { LocaleContext } from '../context/LocaleContext';
@@ -104,5 +104,53 @@ describe('LocaleProvider – tenant switch', () => {
 			expect(screen.getByTestId('locales').textContent).toBe('de')
 		);
 		expect(mocks.init).toHaveBeenCalledTimes(1);
+	});
+
+	// A tenant switch while an initialisation is pending: the superseded answer
+	// describes the previous Träger and must not reach the provider, and the
+	// shared i18n singleton must end up configured by the newer call.
+	it('discards an initialisation that a tenant switch superseded', async () => {
+		const pending: Array<{
+			languages: string[];
+			resolve: (value: string[]) => void;
+		}> = [];
+		mocks.init.mockImplementation(
+			(options: any) =>
+				new Promise<string[]>((resolve) => {
+					pending.push({
+						languages: options.supportedLngs ?? [],
+						resolve
+					});
+				})
+		);
+
+		const view = renderProvider();
+		await waitFor(() => expect(pending.length).toBe(1));
+
+		mocks.tenant = { settings: { activeLanguages: ['de', 'ru'] } };
+		view.rerender(
+			<LocaleProvider>
+				<Probe />
+			</LocaleProvider>
+		);
+
+		// The superseded call answers with the previous Träger's languages.
+		await act(async () => {
+			pending[0].resolve(['de']);
+		});
+		expect(screen.queryByTestId('locales')?.textContent ?? '').not.toBe(
+			'de'
+		);
+
+		// Only now does the newer initialisation reach the shared singleton.
+		await waitFor(() => expect(pending.length).toBe(2));
+		await act(async () => {
+			pending[1].resolve(['de', 'ru']);
+		});
+
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('de,ru')
+		);
+		expect(mocks.init).toHaveBeenCalledTimes(2);
 	});
 });

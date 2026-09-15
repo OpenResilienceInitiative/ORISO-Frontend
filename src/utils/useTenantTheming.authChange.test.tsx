@@ -156,6 +156,31 @@ describe('useTenantTheming – tenant of the signed-in user', () => {
 		);
 	});
 
+	// Failing closed matters more than failing pretty: if the counsellor's own
+	// tenant cannot be resolved, serving the previous one keeps exactly the
+	// data this hook exists to keep apart.
+	it('serves no tenant at all when the signed-in resolution fails', async () => {
+		mocks.apiGetTenantTheming
+			.mockResolvedValueOnce(SUBDOMAIN_TENANT)
+			.mockRejectedValueOnce(new Error('tenant service unavailable'));
+
+		renderApp();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe(
+				'caritas-berlin|true'
+			)
+		);
+
+		act(() => {
+			setValueInCookie('keycloak', tokenForTenant(14));
+		});
+
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe('unresolved')
+		);
+	});
+
 	it('falls back to the subdomain tenant when the user signs out', async () => {
 		// Counselling agencies run shared machines: the next person at the
 		// keyboard must not inherit the previous counsellor's Träger.

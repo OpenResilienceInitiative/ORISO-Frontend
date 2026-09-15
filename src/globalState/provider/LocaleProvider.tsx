@@ -10,6 +10,22 @@ import { LocaleContext, TLocaleContext } from '../context/LocaleContext';
 
 export const STORAGE_KEY_LOCALE = 'locale';
 
+/**
+ * `init` reconfigures the shared i18n singleton. A tenant switch can start a
+ * second initialisation while the first is pending, and the singleton keeps
+ * whichever finished last — so the calls are queued: the newest one is always
+ * the last to touch it.
+ */
+let i18nInitQueue: Promise<unknown> = Promise.resolve();
+
+const queueI18nInit = (
+	...args: Parameters<typeof init>
+): ReturnType<typeof init> => {
+	const run = i18nInitQueue.then(() => init(...args));
+	i18nInitQueue = run.catch(() => undefined);
+	return run;
+};
+
 export function LocaleProvider(props) {
 	const settings = useAppConfig();
 	const isLoading = useTenantTheming();
@@ -42,7 +58,11 @@ export function LocaleProvider(props) {
 			return;
 		}
 
-		init(
+		// A tenant switch supersedes a pending initialisation: its answer
+		// describes the previous Träger's languages and must not be committed.
+		let isCurrent = true;
+
+		queueI18nInit(
 			{
 				...settings.i18n,
 				...(tenant?.settings?.activeLanguages && {
@@ -60,6 +80,9 @@ export function LocaleProvider(props) {
 			},
 			settings.translation
 		).then((supportedLanguages) => {
+			if (!isCurrent) {
+				return;
+			}
 			setLocales(supportedLanguages);
 			setAppliedLanguages(activeLanguagesKey);
 			setInitLocale(i18n.language);
@@ -72,6 +95,10 @@ export function LocaleProvider(props) {
 			setLocale(locale);
 			setInitialized(true);
 		});
+
+		return () => {
+			isCurrent = false;
+		};
 		// activeLanguagesKey is the stable derivation of the tenant's language
 		// array; depending on the array itself would re-init on every new
 		// object identity.

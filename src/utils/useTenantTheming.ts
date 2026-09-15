@@ -3,6 +3,7 @@ import {
 	useContext,
 	useEffect,
 	useMemo,
+	useRef,
 	useState,
 	useSyncExternalStore
 } from 'react';
@@ -111,6 +112,9 @@ const useTenantTheming = () => {
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
+	// Which tenant the state currently in the context was resolved for. Only
+	// meaningful once a resolution has succeeded.
+	const appliedTenantId = useRef<number | null | undefined>(undefined);
 
 	const cypressTenantEnabled = useMemo(
 		() => (window as any).Cypress?.env('TENANT_ENABLED'),
@@ -190,16 +194,29 @@ const useTenantTheming = () => {
 		// anonymous response landing after the signed-in one puts the
 		// subdomain tenant back, which is the leak this hook exists to close.
 		let active = true;
+		const requestedTenantId = authenticatedTenantId;
 
 		apiGetTenantTheming()
 			.then((tenant) => {
 				if (!active) {
 					return;
 				}
+				appliedTenantId.current = requestedTenantId;
 				onTenantServiceResponse(tenant);
 			})
-			.catch((error) => {
-				// console.log('Theme could not be loaded', error);
+			.catch(() => {
+				if (!active) {
+					return;
+				}
+				// The tenant changed and the new one could not be resolved.
+				// Keeping the previous one would go on serving another
+				// Träger's branding and feature flags to this counsellor, so
+				// the app serves none: consumers read `null` and gate every
+				// tenant feature off rather than guessing.
+				if (appliedTenantId.current !== requestedTenantId) {
+					appliedTenantId.current = requestedTenantId;
+					tenantContext?.setTenant(null as any);
+				}
 			})
 			.finally(() => {
 				if (!active) {
