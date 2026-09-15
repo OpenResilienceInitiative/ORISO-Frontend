@@ -28,7 +28,13 @@ $cc-motion-easing: var(
 
 .conversationCreate {
 	background: var(--m3-surface-container-lowest, #ffffff);
-	border: 1px solid var(--m3-on-primary-container, #ffe2de);
+	/*
+	 * Outline role, like both cards inside it. The recovered commit reached for
+	 * on-primary-container here, which is a foreground colour: bound to the
+	 * theme it paints a text colour onto the edge, and on the fallback #ffe2de
+	 * barely separates from the white surface at all.
+	 */
+	border: 1px solid var(--m3-outline-variant, #c4c7c8);
 	border-radius: 32px;
 	box-sizing: border-box;
 	display: flex;
