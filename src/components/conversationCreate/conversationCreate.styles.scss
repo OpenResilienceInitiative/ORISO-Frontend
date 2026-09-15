@@ -1020,10 +1020,15 @@ body.conversationCreate--active .navigation__wrapper {
 		}
 	}
 
+	/*
+	 * Figma 8470-29945 draws the add action as a bare glyph beside the chips,
+	 * not as a bordered box — it is a quiet companion to the chip row, not a
+	 * third chip. The 48px target is kept for WCAG 2.5.5.
+	 */
 	&__add {
 		align-items: center;
 		background: none;
-		border: 1px solid $cc-outline-variant;
+		border: none;
 		border-radius: 12px;
 		color: $cc-on-surface-variant;
 		cursor: pointer;

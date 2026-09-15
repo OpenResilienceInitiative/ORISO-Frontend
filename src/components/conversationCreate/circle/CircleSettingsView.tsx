@@ -261,6 +261,7 @@ export const CircleSettingsView = ({
 				value: language,
 				label: language.toUpperCase()
 			}))}
+			valuesAreChosen={Boolean(prefill)}
 		/>
 	);
 

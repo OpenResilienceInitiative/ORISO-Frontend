@@ -76,7 +76,7 @@ const DesktopShell = ({ children }: { children: React.ReactNode }) => (
 		<div
 			style={{
 				background: '#fcf9f9',
-				borderRadius: 28,
+				borderRadius: 32,
 				margin: '0 auto',
 				maxWidth: 1100,
 				overflow: 'hidden'
@@ -92,7 +92,7 @@ const MobileShell = ({ children }: { children: React.ReactNode }) => (
 		<div
 			style={{
 				background: '#fcf9f9',
-				borderRadius: 28,
+				borderRadius: 32,
 				margin: '0 auto',
 				maxWidth: 390,
 				overflow: 'hidden'

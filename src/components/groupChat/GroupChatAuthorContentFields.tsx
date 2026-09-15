@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as TranslateIcon } from '../../resources/img/icons/translate.svg';
 import { apiTranslateGroupChatAuthorContent } from '../../api/apiGroupChatAuthorTranslation';
 import {
 	applyGroupChatAuthorTranslations,
@@ -133,7 +134,8 @@ export const GroupChatAuthorContentFields = ({
 	return (
 		<fieldset className="createChat__authorContent">
 			<legend>{t('groupChat.create.authorContent.title')}</legend>
-			<div className="createChat__languageTabs" role="tablist">
+			<div className="createChat__languageBar">
+				<div className="createChat__languageTabs" role="tablist">
 				{languages.map((language, index) => (
 					<button
 						type="button"
@@ -147,8 +149,23 @@ export const GroupChatAuthorContentFields = ({
 						onKeyDown={(event) => handleTabKeyDown(event, index)}
 					>
 						{language.toUpperCase()}
+						</button>
+					))}
+				</div>
+				{translationAvailable && (
+					<button
+						type="button"
+						className="createChat__translateButton"
+						aria-label={t(
+							'groupChat.create.authorContent.translate'
+						)}
+						title={t('groupChat.create.authorContent.translate')}
+						disabled={isTranslating}
+						onClick={translateContent}
+					>
+						<TranslateIcon aria-hidden />
 					</button>
-				))}
+				)}
 			</div>
 			<div role="tabpanel" id={panelId} aria-labelledby={tabId}>
 				<label>
@@ -165,24 +182,20 @@ export const GroupChatAuthorContentFields = ({
 				<div className="createChat__rules">
 					<span>{t('groupChat.create.authorContent.rules')}</span>
 					<RuleChipsEditor
-						rules={rules.filter((rule) => rule.trim().length > 0)}
+						/*
+						 * Hand the rules over unfiltered. Dropping the empty
+						 * ones here also swallowed the blank rule the add
+						 * button appends, so a new rule vanished the moment it
+						 * was created. Empty rules are stripped when the
+						 * request is built (buildGroupChatSeriesRequest), which
+						 * is the right place for it.
+						 */
+						rules={rules}
 						onChange={updateRules}
 						resetKey={selectedLanguage}
 					/>
 				</div>
 			</div>
-			{translationAvailable && (
-				<button
-					type="button"
-					className="button__item button__tertiary createChat__editorButton"
-					disabled={isTranslating}
-					onClick={translateContent}
-				>
-					{isTranslating
-						? t('groupChat.create.authorContent.translating')
-						: t('groupChat.create.authorContent.translate')}
-				</button>
-			)}
 			{translationError && (
 				<p role="alert">
 					{t('groupChat.create.authorContent.translationError')}

@@ -81,11 +81,51 @@ $inputSpacing: 32px;
 		}
 	}
 
+	/*
+	 * Figma 8470-29945: the language tabs and the translate action share one
+	 * row, the action pinned to the right edge as a filled icon button.
+	 */
+	&__languageBar {
+		align-items: flex-start;
+		display: flex;
+		gap: $grid-base;
+		justify-content: space-between;
+		margin-top: $grid-base-two;
+	}
+
+	&__translateButton {
+		align-items: center;
+		background: var(--m3-primary, $primary);
+		border: none;
+		border-radius: $box-border-radius;
+		color: var(--m3-on-primary, #ffffff);
+		cursor: pointer;
+		display: flex;
+		flex: 0 0 auto;
+		justify-content: center;
+		min-height: 48px;
+		min-width: 48px;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+		}
+
+		&:focus-visible {
+			outline: 3px solid var(--m3-primary, $primary);
+			outline-offset: 2px;
+		}
+	}
+
 	&__languageTabs {
 		display: flex;
 		flex-wrap: wrap;
 		gap: $grid-base;
-		margin-top: $grid-base-two;
 
 		button {
 			background: none;

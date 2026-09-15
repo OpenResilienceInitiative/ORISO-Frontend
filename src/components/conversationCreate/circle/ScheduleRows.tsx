@@ -59,6 +59,17 @@ const MAX_REPEAT = 365;
 
 type OpenRow = 'date' | 'duration' | 'repeat' | 'medium' | 'language' | null;
 
+type RowKey = 'date' | 'time' | 'duration' | 'repeat' | 'medium' | 'language';
+
+const ROW_KEYS: RowKey[] = [
+	'date',
+	'time',
+	'duration',
+	'repeat',
+	'medium',
+	'language'
+];
+
 interface ScheduleRowsProps {
 	value: GroupChatSeriesFieldsValue;
 	onChange: (value: GroupChatSeriesFieldsValue) => void;
@@ -66,6 +77,13 @@ interface ScheduleRowsProps {
 	language: string;
 	onLanguageChange: (language: string) => void;
 	languageOptions: RowMenuOption[];
+	/**
+	 * Edit mode hands over values the author chose earlier, so every row starts
+	 * in its chosen state. A fresh create starts pristine: the rows carry
+	 * defaults, but the design asks for the outline placeholder until the
+	 * author has actually settled each one (Figma 8470-29945).
+	 */
+	valuesAreChosen?: boolean;
 }
 
 export const ScheduleRows = ({
@@ -73,7 +91,8 @@ export const ScheduleRows = ({
 	onChange,
 	language,
 	onLanguageChange,
-	languageOptions
+	languageOptions,
+	valuesAreChosen = false
 }: ScheduleRowsProps) => {
 	const { t: translate } = useTranslation();
 	const [openRow, setOpenRow] = useState<OpenRow>(null);
@@ -91,6 +110,20 @@ export const ScheduleRows = ({
 	const repeatRef = useRef<HTMLDivElement | null>(null);
 	const mediumRef = useRef<HTMLDivElement | null>(null);
 	const languageRef = useRef<HTMLDivElement | null>(null);
+
+	/**
+	 * Rows the author has settled. Defaults alone never count — otherwise date,
+	 * start time and duration would always read as chosen and no row would ever
+	 * show the outline resting state the design calls for.
+	 */
+	const [touched, setTouched] = useState<Set<RowKey>>(() =>
+		valuesAreChosen ? new Set(ROW_KEYS) : new Set()
+	);
+	const markTouched = (row: RowKey) =>
+		setTouched((current) =>
+			current.has(row) ? current : new Set(current).add(row)
+		);
+	const isChosen = (row: RowKey) => touched.has(row);
 
 	const update = <Key extends keyof GroupChatSeriesFieldsValue>(
 		key: Key,
@@ -115,7 +148,10 @@ export const ScheduleRows = ({
 	 */
 	const MediumRowIcon =
 		MEDIUM_ICONS[
-			resolvePrimaryMediumIcon(value.modality, Boolean(value.modality))
+			resolvePrimaryMediumIcon(
+			isChosen('medium') ? value.modality : undefined,
+			isChosen('medium')
+		)
 		];
 
 	const variantFor = (row: Exclude<OpenRow, null>, chosen: boolean) => {
@@ -170,11 +206,11 @@ export const ScheduleRows = ({
 				fullWidth
 				icon={<Date400Icon />}
 				label={
-					value.startDate
+					isChosen('date') && value.startDate
 						? dayjs(value.startDate).format('D. MMMM YYYY')
 						: translate('groupChat.circle.rows.dateLabel')
 				}
-				variant={variantFor('date', Boolean(value.startDate))}
+				variant={variantFor('date', isChosen('date'))}
 				open={openRow === 'date'}
 				onClick={() => toggle('date')}
 				onToggleMenu={() => toggle('date')}
@@ -197,6 +233,7 @@ export const ScheduleRows = ({
 						minDate={dayjs().startOf('day')}
 						onChange={(next) => {
 							update('startDate', next.format('YYYY-MM-DD'));
+							markTouched('date');
 							setOpenRow(null);
 						}}
 					/>
@@ -207,19 +244,33 @@ export const ScheduleRows = ({
 				label={timeLabel}
 				ampm={false}
 				value={dayjs(`2000-01-01T${value.startTime || '12:00'}`)}
-				onChange={(next) =>
-					next && update('startTime', next.format('HH:mm'))
-				}
+				onChange={(next) => {
+					if (!next) {
+						return;
+					}
+					update('startTime', next.format('HH:mm'));
+					markTouched('time');
+				}}
 				renderTrigger={(openDialog) => (
 					<SplitButton
 						fullWidth
 						icon={<StartTime400Icon />}
-						label={value.startTime || timeLabel}
-						variant={value.startTime ? 'tonal' : 'outlined'}
+						label={
+							isChosen('time') && value.startTime
+								? value.startTime
+								: timeLabel
+						}
+						variant={isChosen('time') ? 'tonal' : 'outlined'}
 						onClick={openDialog}
 						mainOpensMenu={false}
-						onDecrement={() => shiftTime(-TIME_STEP_MINUTES)}
-						onIncrement={() => shiftTime(TIME_STEP_MINUTES)}
+						onDecrement={() => {
+							markTouched('time');
+							shiftTime(-TIME_STEP_MINUTES);
+						}}
+						onIncrement={() => {
+							markTouched('time');
+							shiftTime(TIME_STEP_MINUTES);
+						}}
 						decrementLabel={translate(
 							'groupChat.circle.rows.decrease',
 							{ field: timeLabel }
@@ -237,17 +288,23 @@ export const ScheduleRows = ({
 				fullWidth
 				icon={<Duration400Icon />}
 				label={
-					value.duration
+					isChosen('duration') && value.duration
 						? translate('groupChat.circle.rows.durationValue', {
 								count: value.duration / 60
 							})
 						: durationLabel
 				}
-				variant={variantFor('duration', Boolean(value.duration))}
+				variant={variantFor('duration', isChosen('duration'))}
 				open={openRow === 'duration'}
 				onClick={() => toggle('duration')}
-				onDecrement={() => shiftDuration(-1)}
-				onIncrement={() => shiftDuration(1)}
+				onDecrement={() => {
+					markTouched('duration');
+					shiftDuration(-1);
+				}}
+				onIncrement={() => {
+					markTouched('duration');
+					shiftDuration(1);
+				}}
 				decrementLabel={translate('groupChat.circle.rows.decrease', {
 					field: durationLabel
 				})}
@@ -261,6 +318,7 @@ export const ScheduleRows = ({
 					value={String(value.duration)}
 					onSelect={(next) => {
 						update('duration', Number(next));
+						markTouched('duration');
 						setOpenRow(null);
 					}}
 					anchorRef={durationRef}
@@ -272,16 +330,18 @@ export const ScheduleRows = ({
 				ref={repeatRef}
 				fullWidth
 				icon={
-					repeatMode === 'interval' ? (
-						<IntervalFilledIcon />
-					) : value.repeatCount > 1 ? (
-						<Repeat400Icon />
-					) : (
+					!isChosen('repeat') ? (
 						<Interval400Icon />
+					) : repeatMode === 'interval' ? (
+						<IntervalFilledIcon />
+					) : (
+						<Repeat400Icon />
 					)
 				}
 				label={
-					repeatMode === 'interval'
+					!isChosen('repeat')
+						? repeatLabel
+						: repeatMode === 'interval'
 						? translate(
 								`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
 								value.interval
@@ -290,18 +350,17 @@ export const ScheduleRows = ({
 								count: value.repeatCount
 							})
 				}
-				variant={variantFor(
-					'repeat',
-					repeatMode === 'interval' || value.repeatCount > 1
-				)}
+				variant={variantFor('repeat', isChosen('repeat'))}
 				open={openRow === 'repeat'}
 				onClick={() => toggle('repeat')}
 				onDecrement={() => {
 					setRepeatMode('count');
+					markTouched('repeat');
 					shiftRepeat(-1);
 				}}
 				onIncrement={() => {
 					setRepeatMode('count');
+					markTouched('repeat');
 					shiftRepeat(1);
 				}}
 				decrementLabel={translate('groupChat.circle.rows.decrease', {
@@ -324,6 +383,7 @@ export const ScheduleRows = ({
 					onSelect={(next) => {
 						update('interval', next as GroupChatInterval);
 						setRepeatMode('interval');
+						markTouched('repeat');
 						setOpenRow(null);
 					}}
 					anchorRef={repeatRef}
@@ -336,14 +396,14 @@ export const ScheduleRows = ({
 				fullWidth
 				icon={<MediumRowIcon />}
 				label={
-					value.modality
+					isChosen('medium') && value.modality
 						? translate(
 								`groupChat.create.modality.options.${value.modality.toLowerCase()}`,
 								value.modality
 							)
 						: translate('groupChat.circle.rows.mediumLabel')
 				}
-				variant={variantFor('medium', Boolean(value.modality))}
+				variant={variantFor('medium', isChosen('medium'))}
 				open={openRow === 'medium'}
 				onClick={() => toggle('medium')}
 				onToggleMenu={() => toggle('medium')}
@@ -363,6 +423,7 @@ export const ScheduleRows = ({
 					value={value.modality}
 					onSelect={(next) => {
 						update('modality', next as GroupChatModality);
+						markTouched('medium');
 						setOpenRow(null);
 					}}
 					anchorRef={mediumRef}
@@ -375,11 +436,13 @@ export const ScheduleRows = ({
 				fullWidth
 				icon={<Language400Icon />}
 				label={
-					languageOptions.find((option) => option.value === language)
-						?.label ??
+					(isChosen('language') &&
+						languageOptions.find(
+							(option) => option.value === language
+						)?.label) ||
 					translate('groupChat.circle.rows.languageLabel')
 				}
-				variant={variantFor('language', Boolean(language))}
+				variant={variantFor('language', isChosen('language'))}
 				open={openRow === 'language'}
 				onClick={() => toggle('language')}
 				onToggleMenu={() => toggle('language')}
@@ -392,6 +455,7 @@ export const ScheduleRows = ({
 					options={languageOptions}
 					value={language}
 					onSelect={(next) => {
+						markTouched('language');
 						onLanguageChange(next);
 						setOpenRow(null);
 					}}
