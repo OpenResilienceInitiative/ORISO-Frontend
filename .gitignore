@@ -66,6 +66,8 @@ docs/agent-tasks/*
 !docs/agent-tasks/2026-09-06_issue-1210-absence-banner/**
 !docs/agent-tasks/2026-09-06_issue-1206-live-session-list/
 !docs/agent-tasks/2026-09-06_issue-1206-live-session-list/**
+!docs/agent-tasks/2026-09-06_issue-1207-public-contact-link/
+!docs/agent-tasks/2026-09-06_issue-1207-public-contact-link/**
 !docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/
 !docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/**
 !docs/agent-tasks/2026-09-06_issue-1248-composer-visual-viewport/
