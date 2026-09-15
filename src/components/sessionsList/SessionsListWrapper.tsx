@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useContext, useRef, useState, useCallback } from 'react';
+import { useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { ResizableHandle } from './ResizableHandle';
 import { SESSION_TYPES } from '../session/sessionHelpers';
 import {
@@ -92,6 +92,14 @@ export const SessionsListWrapper = ({
 	// the rail hands it over again, so opening the next side room snaps as
 	// before.
 	const [widenedBesidePanel, setWidenedBesidePanel] = useState(false);
+	// Review (CodeRabbit): the flag belongs to ONE open panel. Setting it
+	// while nothing is open would kill the snap for the next side room the
+	// reader opens, and it must not survive the panel it was taken against.
+	useEffect(() => {
+		if (!panelOpen) {
+			setWidenedBesidePanel(false);
+		}
+	}, [panelOpen]);
 	const railSnapped =
 		fromL &&
 		panelOpen &&
@@ -117,12 +125,23 @@ export const SessionsListWrapper = ({
 	const handleResize = useCallback(
 		(width: number) => {
 			const next = Math.min(width, maxListWidth);
-			setWidenedBesidePanel(next > STAGE_LAYOUT.RAIL_WIDTH);
+			if (panelOpen) {
+				setWidenedBesidePanel(next > STAGE_LAYOUT.RAIL_WIDTH);
+			}
 			setSidebarWidth(next);
 			localStorage.setItem('sessionsList_width', next.toString());
 		},
-		[maxListWidth]
+		[maxListWidth, panelOpen]
 	);
+
+	// Review (CodeRabbit): a window that shrinks under a widened list would
+	// leave the chat and the panel below their drag floor — the persisted
+	// width follows the current ceiling instead.
+	useEffect(() => {
+		setSidebarWidth((current) =>
+			current > maxListWidth ? maxListWidth : current
+		);
+	}, [maxListWidth]);
 
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		return (

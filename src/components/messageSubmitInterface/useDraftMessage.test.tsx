@@ -343,4 +343,109 @@ describe('useDraftMessage', () => {
 			'<p>Ein alter Entwurf von gestern</p>'
 		);
 	});
+
+	it('saves what was typed before the draft arrived, once saving is possible', async () => {
+		const loadDraft = vi.fn();
+		let releaseDraft: (payload: DraftPayload) => void = () => undefined;
+		mocks.apiGetUserDraft.mockImplementation(
+			() =>
+				new Promise<DraftPayload>((resolve) => {
+					releaseDraft = resolve;
+				})
+		);
+
+		const { result } = renderHook(() => useDraftMessage(true, loadDraft), {
+			wrapper
+		});
+
+		act(() => {
+			result.current.onChange('<p>Ich melde mich gleich</p>');
+		});
+
+		await act(async () => {
+			releaseDraft({ text: '<p>Ein alter Entwurf von gestern</p>' });
+			await Promise.resolve();
+		});
+
+		// Without the flush the text would only have been saved by the
+		// unmount cleanup — and a conversation switch before that dropped it.
+		await waitFor(() =>
+			expect(
+				mocks.apiUpsertUserDraft.mock.calls.some(
+					([, payload]) =>
+						payload?.text === '<p>Ich melde mich gleich</p>'
+				)
+			).toBe(true)
+		);
+	});
+
+	it('does not resurrect text the reader deleted before the draft arrived', async () => {
+		const loadDraft = vi.fn();
+		let releaseDraft: (payload: DraftPayload) => void = () => undefined;
+		mocks.apiGetUserDraft.mockImplementation(
+			() =>
+				new Promise<DraftPayload>((resolve) => {
+					releaseDraft = resolve;
+				})
+		);
+
+		const { result, unmount } = renderHook(
+			() => useDraftMessage(true, loadDraft),
+			{ wrapper }
+		);
+
+		act(() => {
+			result.current.onChange('<p>Halber Satz</p>');
+			result.current.onChange('');
+		});
+
+		await act(async () => {
+			releaseDraft({ text: '<p>Ein alter Entwurf von gestern</p>' });
+			await Promise.resolve();
+		});
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+
+		mocks.apiUpsertUserDraft.mockClear();
+		await act(async () => {
+			unmount();
+			await Promise.resolve();
+		});
+
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(([, payload]) =>
+				String(payload?.text ?? '').includes('Halber Satz')
+			)
+		).toBe(false);
+	});
+
+	it('a draft still in flight cannot refill the composer after sending', async () => {
+		const loadDraft = vi.fn();
+		let releaseDraft: (payload: DraftPayload) => void = () => undefined;
+		mocks.apiGetUserDraft.mockImplementation((scopeKey: string) => {
+			// The drafts index is read by the clear path itself — only the
+			// conversation's own draft is the one left hanging here.
+			if (scopeKey === 'scope:__draft-index__|thread:main') {
+				return Promise.reject({ message: 'EMPTY' });
+			}
+			return new Promise<DraftPayload>((resolve) => {
+				releaseDraft = resolve;
+			});
+		});
+
+		const { result } = renderHook(() => useDraftMessage(true, loadDraft), {
+			wrapper
+		});
+
+		// Sending does not wait for the draft to load.
+		await act(async () => {
+			await result.current.clearDraftMessage();
+		});
+
+		await act(async () => {
+			releaseDraft({ text: '<p>Ein alter Entwurf von gestern</p>' });
+			await Promise.resolve();
+		});
+
+		expect(loadDraft).not.toHaveBeenCalled();
+	});
 });

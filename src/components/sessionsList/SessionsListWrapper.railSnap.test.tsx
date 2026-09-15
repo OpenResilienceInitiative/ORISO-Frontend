@@ -6,7 +6,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SessionsListWrapper } from './SessionsListWrapper';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { STAGE_LAYOUT } from '../chatStage/stageLayout';
-import { ChatStagePanelProvider } from '../chatStage/ChatStagePanelContext';
+import {
+	ChatStagePanelProvider,
+	useReportChatStagePanel
+} from '../chatStage/ChatStagePanelContext';
 
 /**
  * Review B2 D-4: the list column snaps to the icon rail while a side pane
@@ -65,6 +68,54 @@ const renderAt = (
 		'.sessionsList__wrapper'
 	)!;
 	return wrapper;
+};
+
+/**
+ * Like `renderAt`, but the open pane can be switched on the live tree — the
+ * provider reads `initialOpenPanel` only once, so the test reports the pane
+ * the way the chat card does (`useReportChatStagePanel`).
+ */
+const PanelSwitch = ({ panel }: { panel: 'supervision' | 'thread' | null }) => {
+	const report = useReportChatStagePanel();
+	React.useEffect(() => report(panel), [panel, report]);
+	return null;
+};
+
+const renderWithPanel = (
+	search: string,
+	openPanel: 'supervision' | 'thread' | null,
+	listWidth = LIST_WIDTH
+) => {
+	localStorage.setItem('sessionsList_width', String(listWidth));
+	const tree = (panel: 'supervision' | 'thread' | null) => (
+		<MemoryRouter
+			initialEntries={[`/sessions/consultant/sessionView/1/2${search}`]}
+		>
+			<UserDataContext.Provider
+				value={{
+					userData: { userRoles: ['consultant'] } as any,
+					setUserData: () => undefined
+				}}
+			>
+				<ChatStagePanelProvider initialOpenPanel={openPanel}>
+					<PanelSwitch panel={panel} />
+					<SessionsListWrapper sessionTypes={[] as any} />
+				</ChatStagePanelProvider>
+			</UserDataContext.Provider>
+		</MemoryRouter>
+	);
+	const utils = render(tree(openPanel));
+	const wrapperOf = () =>
+		utils.container.querySelector<HTMLElement>('.sessionsList__wrapper')!;
+	return {
+		wrapper: wrapperOf(),
+		rerender: (panel: 'supervision' | 'thread' | null) => {
+			act(() => {
+				utils.rerender(tree(panel));
+			});
+			return wrapperOf();
+		}
+	};
 };
 
 afterEach(() => {
@@ -126,5 +177,25 @@ describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 		expect(Number.parseInt(wrapper.style.width, 10)).toBeLessThanOrEqual(
 			500
 		);
+	});
+
+	// Review (CodeRabbit): widening while nothing is open must not disarm the
+	// snap for the side room the reader opens next.
+	it('keeps the snap armed when the list was widened with no pane open', () => {
+		const { rerender } = renderWithPanel('', null, STAGE_LAYOUT.RAIL_WIDTH);
+		act(() => resizeList?.(420));
+		const wrapper = rerender('supervision');
+		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+	});
+
+	it('re-arms the snap once the pane is closed again', () => {
+		const { rerender } = renderWithPanel(
+			'?channel=supervision',
+			'supervision'
+		);
+		act(() => resizeList?.(420));
+		rerender(null);
+		const wrapper = rerender('supervision');
+		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
 	});
 });

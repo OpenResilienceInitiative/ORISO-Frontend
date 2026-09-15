@@ -58,6 +58,13 @@ export const useDraftMessage = (
 	 * has lost: it is older, and the autosave replaces it anyway.
 	 */
 	const typedBeforeLoadRef = useRef(false);
+	/*
+	 * Review (CodeRabbit): text typed before the draft arrived never reached
+	 * `saveDraftMessage` — only the unmount cleanup would have saved it, and
+	 * switching conversation first cleared the buffer. Flush it once loading
+	 * finishes.
+	 */
+	const pendingPreLoadSaveRef = useRef(false);
 	// #976: whether a remote draft row is known to exist for this scope. An
 	// emptied composer only has to issue a DELETE when there is something to
 	// delete — merely opening and leaving a conversation must stay silent.
@@ -197,6 +204,7 @@ export const useDraftMessage = (
 		 */
 		latestMessageRef.current = '';
 		typedBeforeLoadRef.current = false;
+		pendingPreLoadSaveRef.current = false;
 		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
@@ -381,10 +389,15 @@ export const useDraftMessage = (
 			if (!loaded) {
 				// Ahead of the network: keep the text so the autosave has
 				// something to save, and mark the composer as the reader's,
-				// so an arriving draft cannot take it back.
+				// so an arriving draft cannot take it back. Review
+				// (CodeRabbit): buffer EVERY pre-load value — keeping only
+				// non-empty ones meant "type, then delete it all" saved the
+				// deleted text again. Ownership is what `hasDraftContent`
+				// decides; the buffer just follows the composer.
+				latestMessageRef.current = markdownMessage || '';
 				if (hasDraftContent(markdownMessage)) {
 					typedBeforeLoadRef.current = true;
-					latestMessageRef.current = markdownMessage || '';
+					pendingPreLoadSaveRef.current = true;
 				}
 				return;
 			}
@@ -409,6 +422,17 @@ export const useDraftMessage = (
 	useEffect(() => {
 		saveDraftMessageRef.current = saveDraftMessage;
 	}, [saveDraftMessage]);
+
+	// Review (CodeRabbit): whatever was typed while the draft was still on
+	// its way is saved as soon as saving is possible, so leaving for another
+	// conversation does not drop it.
+	useEffect(() => {
+		if (!loaded || !pendingPreLoadSaveRef.current) {
+			return;
+		}
+		pendingPreLoadSaveRef.current = false;
+		void saveDraftMessage(latestMessageRef.current);
+	}, [loaded, saveDraftMessage]);
 
 	const onLogout = useCallback(
 		async (args) => {
@@ -455,8 +479,18 @@ export const useDraftMessage = (
 		}
 		latestMessageRef.current = '';
 		typedBeforeLoadRef.current = false;
+		pendingPreLoadSaveRef.current = false;
 		skipNextCleanupSaveRef.current = true;
 		hasRemoteDraftRef.current = false;
+		/*
+		 * Review (CodeRabbit): sending does not wait for the draft to load.
+		 * A fetch or decryption still in flight would pass its version check
+		 * afterwards and refill the composer the reader just emptied — retire
+		 * that load and treat the scope as settled.
+		 */
+		loadVersionRef.current += 1;
+		setMessageRes(null);
+		setLoaded(true);
 		if (canUseRemoteApi) {
 			await Promise.allSettled([
 				...scopeKeysToTry.map((scopeKey) =>

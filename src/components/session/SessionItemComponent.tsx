@@ -1655,6 +1655,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			) {
 				resetUnreadCount();
 				scrollToEnd(0, true);
+			} else if (isScrolledToBottom) {
+				// Review (CodeRabbit): appending a row fires no scroll event,
+				// so the flag would still say "at the bottom" although the
+				// newest message now sits below the fold. The composer-resize
+				// observer reads that flag — a writer whose composer grows one
+				// line would be scrolled to the newest message after all,
+				// which is exactly what declining to follow avoided.
+				setIsScrolledToBottom(false);
 			}
 
 			setNewMessages(messages.length - initMessageCount);

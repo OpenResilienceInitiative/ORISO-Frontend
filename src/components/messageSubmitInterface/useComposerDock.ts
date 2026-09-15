@@ -41,11 +41,23 @@ export const useComposerDock = (
 		if (!wrapper || !host || typeof ResizeObserver === 'undefined') {
 			return undefined;
 		}
+		let observedTimeline: HTMLElement | null = null;
 		const measure = () => {
 			const dock = Math.round(wrapper.getBoundingClientRect().height);
 			const timeline = host.querySelector<HTMLElement>(
 				COMPOSER_TIMELINE_SELECTOR
 			);
+			// Review (CodeRabbit): the timeline is the number the composer's
+			// cap is derived from, and it can change on its own — a banner
+			// appearing above it shortens it while the host and the docked
+			// wrapper keep their size. Watch the thing being measured.
+			if (timeline && timeline !== observedTimeline) {
+				if (observedTimeline) {
+					observer.unobserve(observedTimeline);
+				}
+				observedTimeline = timeline;
+				observer.observe(timeline);
+			}
 			const shared = Math.round(
 				(timeline ?? host).getBoundingClientRect().height
 			);
@@ -58,8 +70,8 @@ export const useComposerDock = (
 				previous === shared ? previous : shared
 			);
 		};
+		const observer = new ResizeObserver(() => measure());
 		measure();
-		const observer = new ResizeObserver(measure);
 		observer.observe(wrapper);
 		observer.observe(host);
 		return () => {
