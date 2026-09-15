@@ -534,6 +534,112 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		await nextTick();
 		expect(screen.queryByTestId('supervision-indicator')).toBeNull();
 	});
+
+	/*
+	 * #1306. The badge above is icon-only — the word "Supervision" lives in
+	 * `title`/`aria-label` — so before this the only VISIBLE word on a
+	 * supervisor's row was "Mail", and the row read as mail counselling to the
+	 * one person it is not. Measured on dev 14.09.2026, the row rendered
+	 * "Migration | 12042 | Heute | harry_braucht_rat_sep14 | Audionachricht |
+	 * Mail" while `supervision-badge` was present.
+	 */
+	it('supervisedByMe → the modality slot reads Supervision, not Mail', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const modality = screen.getByTestId('supervision-modality');
+		expect(modality.textContent).toContain('sessionList.supervision.badge');
+		// The consulting type is not shown twice and not shown at all here —
+		// it is one panel to the right, in the client chat the supervisor
+		// reads along with.
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeNull();
+	});
+
+	it('supervisedByMe → the icon travels with the word', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		// Frank, 14.09.2026: "Hauptsache, das Icon ist dabei."
+		expect(
+			screen.getByTestId('supervision-modality').querySelector('svg')
+		).toBeTruthy();
+	});
+
+	it('supervisedByMe → the full word stays reachable when the label truncates', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		// Truncation itself is CSS (`text-overflow: ellipsis`), which jsdom
+		// does not apply — what must not regress is the `title`, because it is
+		// the only way back to the full word once the label is cut.
+		const label = screen
+			.getByTestId('supervision-modality')
+			.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			);
+		expect(label?.getAttribute('title')).toBe(
+			'sessionList.supervision.badge'
+		);
+	});
+
+	it('the OWNER of a supervised case keeps the consulting type', async () => {
+		renderItem(
+			makeSession({
+				consultantId: OWNER_USER_ID,
+				supervision: {
+					supervisedByMe: false,
+					supervisorConsultantIds: ['sup-1'],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(OWNER_USER_ID)
+		);
+		await nextTick();
+		// Only the supervisor's own row is relabelled. The owning consultant
+		// still needs to know this is mail counselling.
+		expect(screen.queryByTestId('supervision-modality')).toBeNull();
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeTruthy();
+	});
+
+	it('a row with no supervision marker at all keeps the consulting type', async () => {
+		renderItem(makeSession(), makeUserData(ME));
+		await nextTick();
+		expect(screen.queryByTestId('supervision-modality')).toBeNull();
+		expect(
+			document.querySelector(
+				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)
+		).toBeTruthy();
+	});
 });
 
 /**

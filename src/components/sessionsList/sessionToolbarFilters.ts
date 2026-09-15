@@ -196,6 +196,40 @@ export const draftMatchesSession = (
 	);
 };
 
+/**
+ * How many supervised rows have something unread — the number on the
+ * Supervision chip (#1306).
+ *
+ * Frank, 14.09.2026: the supervisor could not tell from the chip that anything
+ * had arrived. The toolbar already renders a `CountBadge` for any chip that is
+ * given a count, and `SessionsListToolbar.stories.tsx` already demonstrates
+ * `chipCounts={{ supervision: … }}`; nothing in the app ever computed the
+ * number. This is that number.
+ *
+ * It counts **unread among supervised**, not "how many cases I supervise". The
+ * complaint was about not noticing a new message, and a badge that shows a
+ * standing inventory never changes, so it stops being read after a day. This
+ * mirrors the `unread` chip, which is derived the same way.
+ *
+ * Deliberately marker-only: a row without `session.supervision` is not
+ * counted. `sessionMatchesToolbar` still falls back to the old "owned by
+ * another consultant" heuristic when filtering, because an over-broad *filter*
+ * merely shows too many rows — but an over-broad *number* tells the supervisor
+ * that something arrived when nothing did. A wrong badge is worse than none.
+ */
+export const countUnreadSupervisedSessions = (
+	pairs: ReadonlyArray<{
+		raw: ListItemInterface;
+		extended: ExtendedSessionInterface;
+	}>,
+	currentUserId?: string
+): number =>
+	pairs.filter(
+		({ raw, extended }) =>
+			getSupervisionListState(extended, currentUserId) ===
+				'supervisedByMe' && isChatItemUnread(getToolbarChatItem(raw))
+	).length;
+
 export function sessionMatchesToolbar(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface,

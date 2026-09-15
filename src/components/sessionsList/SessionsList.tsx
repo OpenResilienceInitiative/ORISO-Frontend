@@ -69,7 +69,8 @@ import {
 	isAnonymousAskerSession,
 	normalizeSessionToolbarChip,
 	sessionMatchesToolbar,
-	SessionToolbarChipFilter
+	SessionToolbarChipFilter,
+	countUnreadSupervisedSessions
 } from './sessionToolbarFilters';
 import {
 	buildSearchPeopleResults,
@@ -1571,10 +1572,23 @@ export const SessionsList = ({
 		// re-runs this memo when notification counts or receipts change.
 		return {
 			unread: countUnreadSessions(finalSessionsList),
-			drafts: visibleUserDrafts.length
+			drafts: visibleUserDrafts.length,
+			// #1306: the Supervision chip gets the same treatment as unread —
+			// the badge is how a supervisor notices that a supervised case has
+			// something new. Same `unreadVersion` dependency, same source.
+			supervision: countUnreadSupervisedSessions(
+				sessionToolbarPairs,
+				userData?.userId
+			)
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [finalSessionsList, visibleUserDrafts.length, unreadVersion]);
+	}, [
+		finalSessionsList,
+		sessionToolbarPairs,
+		userData?.userId,
+		visibleUserDrafts.length,
+		unreadVersion
+	]);
 	useEffect(() => {
 		setSessionListViewState(type, {
 			ready: !isLoading,
