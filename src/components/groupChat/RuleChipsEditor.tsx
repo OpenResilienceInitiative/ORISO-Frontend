@@ -123,9 +123,12 @@ export const RuleChipsEditor = ({
 									setEditingIndex(index);
 								}}
 							>
-								{t('groupChat.create.authorContent.ruleChip', {
-									index: index + 1
-								})}
+								{t(
+									editingIndex === index
+										? 'groupChat.create.authorContent.ruleChip'
+										: 'groupChat.create.authorContent.ruleChipShort',
+									{ index: index + 1 }
+								)}
 							</button>
 							<button
 								type="button"

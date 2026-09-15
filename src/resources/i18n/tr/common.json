@@ -841,6 +841,7 @@
 				"translate": "Etkin dillere çevir",
 				"translating": "Çevriliyor…",
 				"translationError": "Çeviri başarısız oldu. Metniniz korundu; lütfen tekrar deneyin.",
+				"ruleChipShort": "No. {{index}}",
 				"ruleChip": "Kural No. {{index}}"
 			}
 		},

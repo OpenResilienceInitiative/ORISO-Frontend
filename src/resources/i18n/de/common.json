@@ -821,6 +821,7 @@
 				"ruleEditorLabel": "Regel bearbeiten",
 				"editRule": "Regel {{index}} bearbeiten",
 				"deleteRule": "Regel {{index}} löschen",
+				"ruleChipShort": "Nr. {{index}}",
 				"ruleChip": "Regel Nr. {{index}}"
 			},
 			"listItem": {

@@ -997,15 +997,30 @@ body.conversationCreate--active .navigation__wrapper {
 		gap: 8px;
 	}
 
+	/*
+	 * One horizontal line, like the language row above it. Wrapping grew the
+	 * card as rules were added, which moved everything below it; the row
+	 * scrolls instead so the card keeps its height.
+	 */
 	&__chips {
 		display: flex;
 		flex: 1;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		gap: 8px;
 		list-style: none;
 		margin: 0;
 		min-width: 0;
+		overflow-x: auto;
 		padding: 0;
+		scrollbar-width: none;
+
+		&::-webkit-scrollbar {
+			display: none;
+		}
+	}
+
+	&__chip {
+		flex: 0 0 auto;
 	}
 
 	&__chip {

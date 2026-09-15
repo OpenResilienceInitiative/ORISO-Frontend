@@ -841,6 +841,7 @@
 				"translate": "Traduire dans les langues actives",
 				"translating": "Traduction en cours…",
 				"translationError": "La traduction a échoué. Votre texte a été conservé ; veuillez réessayer.",
+				"ruleChipShort": "N° {{index}}",
 				"ruleChip": "Règle n° {{index}}"
 			}
 		},

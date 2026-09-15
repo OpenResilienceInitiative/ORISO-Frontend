@@ -809,6 +809,7 @@
 				"ruleEditorLabel": "Edit rule",
 				"editRule": "Edit rule {{index}}",
 				"deleteRule": "Delete rule {{index}}",
+				"ruleChipShort": "No. {{index}}",
 				"ruleChip": "Rule no. {{index}}"
 			},
 			"listItem": {
