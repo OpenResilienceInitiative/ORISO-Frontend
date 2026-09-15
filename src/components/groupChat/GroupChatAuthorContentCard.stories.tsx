@@ -17,7 +17,10 @@ import '../conversationCreate/conversationCreate.styles';
  * brand palette flows through it untouched.
  * ------------------------------------------------------------------ */
 
-const emptyDraft = (languages: string[]): GroupChatAuthorContentDraft => ({
+const emptyDraft = (
+	languages: string[],
+	withRules = true
+): GroupChatAuthorContentDraft => ({
 	sourceLanguage: languages[0],
 	hintMessageTranslations: Object.fromEntries(
 		languages.map((language) => [language, ''])
@@ -25,7 +28,12 @@ const emptyDraft = (languages: string[]): GroupChatAuthorContentDraft => ({
 	groupChatRulesTranslations: Object.fromEntries(
 		languages.map((language) => [
 			language,
-			['Sprich von dir selbst, nicht über andere.', 'Was hier geteilt wird, bleibt hier.']
+			withRules
+				? [
+						'Sprich von dir selbst, nicht über andere.',
+						'Was hier geteilt wird, bleibt hier.'
+					]
+				: []
 		])
 	)
 });
@@ -37,13 +45,15 @@ const emptyDraft = (languages: string[]): GroupChatAuthorContentDraft => ({
 const Card = ({
 	languages,
 	translationAvailable = true,
-	withAction = true
+	withAction = true,
+	withRules = true
 }: {
 	languages: string[];
 	translationAvailable?: boolean;
 	withAction?: boolean;
+	withRules?: boolean;
 }) => {
-	const [draft, setDraft] = useState(() => emptyDraft(languages));
+	const [draft, setDraft] = useState(() => emptyDraft(languages, withRules));
 	return (
 		<div style={{ background: '#e9e6e6', maxWidth: 420, padding: 24 }}>
 			<div className="circleSettings__authorColumn">
@@ -139,5 +149,22 @@ export const AddingARule: Story = {
 			canvas.getByRole('button', { name: /Regel hinzufügen/i })
 		);
 		await expect(canvas.getAllByRole('listitem').length).toBe(before + 1);
+	}
+};
+
+/**
+ * A circle whose language carries no rules yet. The editor is handed the empty
+ * list unfiltered, so a placeholder entry would surface here as a real,
+ * deletable chip before the author has added anything.
+ */
+export const WithoutAnyRules: Story = {
+	args: { languages: ['de'], withRules: false },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.queryAllByRole('listitem')).toHaveLength(0);
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Regel hinzufügen/i })
+		);
+		await expect(canvas.getAllByRole('listitem')).toHaveLength(1);
 	}
 };

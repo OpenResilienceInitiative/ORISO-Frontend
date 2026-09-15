@@ -52,7 +52,13 @@ export const GroupChatAuthorContentFields = ({
 	);
 	const [isTranslating, setIsTranslating] = useState(false);
 	const [translationError, setTranslationError] = useState(false);
-	const rules = value.groupChatRulesTranslations?.[selectedLanguage] || [''];
+	/*
+	 * No placeholder entry: the editor used to be handed [''] for a language
+	 * with no rules yet, and since it now receives the list unfiltered that
+	 * blank would surface as a real, deletable chip before the author had added
+	 * anything. The add control creates the first rule.
+	 */
+	const rules = value.groupChatRulesTranslations?.[selectedLanguage] || [];
 	const inputSignature = JSON.stringify({ languages, value });
 	const latestInputSignature = useRef(inputSignature);
 	latestInputSignature.current = inputSignature;
@@ -169,7 +175,11 @@ export const GroupChatAuthorContentFields = ({
 		 * chips with a bare add glyph. No legend and no field labels — each box
 		 * states its own purpose through its placeholder.
 		 */
-		<div className="createChat__authorContent">
+		<div
+			className="createChat__authorContent"
+			role="group"
+			aria-label={t('groupChat.create.authorContent.title')}
+		>
 			<div className="createChat__languageBar">
 				<div className="createChat__languageTabs" role="tablist">
 					{languages.map((language, index) => {

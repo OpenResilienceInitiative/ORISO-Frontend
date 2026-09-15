@@ -1064,12 +1064,9 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 
 	&__chip {
-		flex: 0 0 auto;
-	}
-
-	&__chip {
 		align-items: center;
 		background: $cc-surface-container-low;
+		flex: 0 0 auto;
 		border: 1px solid $cc-outline-variant;
 		border-radius: 8px;
 		display: flex;
