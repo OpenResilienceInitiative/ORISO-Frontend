@@ -181,6 +181,45 @@ describe('useTenantTheming – tenant of the signed-in user', () => {
 		);
 	});
 
+	// Between the token appearing and the new answer arriving, the context
+	// still held the previous Träger — a window in which every consumer read
+	// the wrong branding and the wrong feature flags.
+	it('serves no tenant while the switch is still in flight', async () => {
+		let resolveSignedIn!: (value: typeof USER_TENANT) => void;
+		mocks.apiGetTenantTheming
+			.mockResolvedValueOnce(SUBDOMAIN_TENANT)
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveSignedIn = resolve;
+				})
+			);
+
+		renderApp();
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe(
+				'caritas-berlin|true'
+			)
+		);
+
+		act(() => {
+			setValueInCookie('keycloak', tokenForTenant(14));
+		});
+
+		// Still in flight: nothing of the previous Träger may show.
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe('unresolved')
+		);
+
+		await act(async () => {
+			resolveSignedIn(USER_TENANT);
+		});
+		await waitFor(() =>
+			expect(screen.getByTestId('tenant').textContent).toBe(
+				'Blinky Fish Tenant Sep 14|false'
+			)
+		);
+	});
+
 	it('falls back to the subdomain tenant when the user signs out', async () => {
 		// Counselling agencies run shared machines: the next person at the
 		// keyboard must not inherit the previous counsellor's Träger.

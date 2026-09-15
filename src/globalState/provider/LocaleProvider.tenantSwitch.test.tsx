@@ -153,4 +153,39 @@ describe('LocaleProvider – tenant switch', () => {
 		);
 		expect(mocks.init).toHaveBeenCalledTimes(2);
 	});
+
+	// A rejected initialisation used to leave the previous Träger's language
+	// list standing — and the rejection itself unhandled.
+	it('falls back to the configured languages when an initialisation fails', async () => {
+		const view = renderProvider();
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('de')
+		);
+
+		mocks.tenant = { settings: { activeLanguages: ['de', 'ru'] } };
+		view.rerender(
+			<LocaleProvider>
+				<Probe />
+			</LocaleProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('de,ru')
+		);
+
+		// Now a third Träger, whose initialisation fails.
+		mocks.init.mockRejectedValueOnce(new Error('i18n backend unavailable'));
+		mocks.tenant = { settings: { activeLanguages: ['de', 'ru', 'en'] } };
+		view.rerender(
+			<LocaleProvider>
+				<Probe />
+			</LocaleProvider>
+		);
+
+		await waitFor(() => expect(mocks.init).toHaveBeenCalledTimes(3));
+		// The previous Träger's list must not survive: fall back to what the
+		// app itself is configured for.
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('de')
+		);
+	});
 });

@@ -79,22 +79,41 @@ export function LocaleProvider(props) {
 				})
 			},
 			settings.translation
-		).then((supportedLanguages) => {
-			if (!isCurrent) {
-				return;
-			}
-			setLocales(supportedLanguages);
-			setAppliedLanguages(activeLanguagesKey);
-			setInitLocale(i18n.language);
-			const locale =
-				localStorage.getItem(STORAGE_KEY_LOCALE) ||
-				i18n.language ||
-				FALLBACK_LNG;
+		)
+			.then((supportedLanguages) => {
+				if (!isCurrent) {
+					return;
+				}
+				setLocales(supportedLanguages);
+				setAppliedLanguages(activeLanguagesKey);
+				setInitLocale(i18n.language);
+				const locale =
+					localStorage.getItem(STORAGE_KEY_LOCALE) ||
+					i18n.language ||
+					FALLBACK_LNG;
 
-			setValueInCookie('lang', locale);
-			setLocale(locale);
-			setInitialized(true);
-		});
+				setValueInCookie('lang', locale);
+				setLocale(locale);
+				setInitialized(true);
+			})
+			// A rejected initialisation must not leave the previous Träger's
+			// language list standing: the counsellor would be offered
+			// languages that belong to someone else's Träger. Fall back to
+			// what the app itself is configured for, which is the most this
+			// can honestly claim when the tenant's own list never loaded.
+			.catch(() => {
+				if (!isCurrent) {
+					return;
+				}
+				// i18next types supportedLngs as `false | readonly string[]`.
+				const configured = settings.i18n?.supportedLngs;
+				const fallbackLanguages = (
+					Array.isArray(configured) ? configured : [FALLBACK_LNG]
+				).filter((lng: string) => lng.indexOf('@informal') < 0);
+				setLocales(fallbackLanguages);
+				setAppliedLanguages(activeLanguagesKey);
+				setInitialized(true);
+			});
 
 		return () => {
 			isCurrent = false;

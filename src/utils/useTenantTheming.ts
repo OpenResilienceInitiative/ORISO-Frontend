@@ -196,6 +196,20 @@ const useTenantTheming = () => {
 		let active = true;
 		const requestedTenantId = authenticatedTenantId;
 
+		// The switch starts the moment the token changes, not when the answer
+		// arrives. Until then the context would still hand out the previous
+		// Träger's branding and feature flags, so it is emptied up front and
+		// consumers read `null` for the duration. `undefined` means "never
+		// resolved" and is left alone, so the first load still shows its
+		// loading state instead of a hard "no tenant".
+		if (
+			appliedTenantId.current !== undefined &&
+			appliedTenantId.current !== requestedTenantId
+		) {
+			setIsLoadingTenant(true);
+			tenantContext?.setTenant(null as any);
+		}
+
 		apiGetTenantTheming()
 			.then((tenant) => {
 				if (!active) {

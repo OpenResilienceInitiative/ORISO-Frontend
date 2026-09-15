@@ -15,11 +15,13 @@ interface SessionTenantSettingsState {
 	settings: Partial<TenantDataSettingsInterface>;
 	isLoading: boolean;
 	appliedSessionKey: string | number | null | undefined;
+	/** The tenant the settings above were fetched for. */
+	appliedTenantId: number | null | undefined;
 }
 
 type SessionTenantSettingsResult = Omit<
 	SessionTenantSettingsState,
-	'appliedSessionKey'
+	'appliedSessionKey' | 'appliedTenantId'
 >;
 
 /**
@@ -46,7 +48,8 @@ export const useSessionTenantSettings = (
 	const [state, setState] = useState<SessionTenantSettingsState>(() => ({
 		settings: { ...getTenantSettings() },
 		isLoading: true,
-		appliedSessionKey: undefined
+		appliedSessionKey: undefined,
+		appliedTenantId: undefined
 	}));
 
 	useEffect(() => {
@@ -54,7 +57,19 @@ export const useSessionTenantSettings = (
 		const requestedTenantId = authenticatedTenantId;
 		const isStale = () =>
 			!active || getAuthenticatedTenantId() !== requestedTenantId;
-		setState((current) => ({ ...current, isLoading: true }));
+		// The settings in hand were fetched for the previous Träger. Keeping
+		// them through the switch — or through a failed refresh afterwards —
+		// would report that Träger's permissions as this one's, so they go
+		// before the new answer is asked for.
+		setState((current) => ({
+			...current,
+			settings:
+				current.appliedTenantId === undefined ||
+				current.appliedTenantId === requestedTenantId
+					? current.settings
+					: {},
+			isLoading: true
+		}));
 
 		apiGetTenantTheming()
 			.then((tenant) => {
@@ -75,13 +90,23 @@ export const useSessionTenantSettings = (
 				setState({
 					settings: { ...settings },
 					isLoading: false,
-					appliedSessionKey: sessionKey
+					appliedSessionKey: sessionKey,
+					appliedTenantId: requestedTenantId
 				});
 			})
 			.catch(() => {
 				if (isStale()) return;
+				// A failed refresh for the same tenant keeps the last good
+				// answer. After a tenant switch there is no good answer to
+				// keep: report nothing rather than the previous Träger's
+				// permissions, and leave the tenant unapplied so a retry can
+				// still fill it in.
 				setState((current) => ({
 					...current,
+					settings:
+						current.appliedTenantId === requestedTenantId
+							? current.settings
+							: {},
 					isLoading: false,
 					appliedSessionKey: sessionKey
 				}));
