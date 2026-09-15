@@ -2250,7 +2250,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
-			teamDiscussionResolved: props.teamDiscussionResolved
+			teamDiscussionResolved: props.teamDiscussionResolved,
+			canStartTeamDiscussion:
+				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2265,6 +2267,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		activeSession.isEnquiry,
+		canOpenTeamSideRoom,
 		messages,
 		setChannelRoute
 	]);
@@ -3279,6 +3283,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
+									hideSystemMessages={
+										isConsultantUser &&
+										(isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry))
+									}
+									showFullContent={
+										isOnlyEnquiry ||
+										Boolean(activeSession.isEnquiry)
+									}
 									isMyMessage={isMyMessageMatrix}
 									isUserBanned={(username) =>
 										props.bannedUsers.includes(username)
@@ -3411,6 +3424,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
+					activeSession.isEnquiry &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
 						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
