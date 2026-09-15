@@ -90,6 +90,7 @@ import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
+import { getFormatChipVisibility } from './formatChipVisibility';
 
 const withDraftScopeParam = (path: string, draftScopeKey: string) => {
 	const [basePath, queryString = ''] = path.split('?');
@@ -1034,15 +1035,13 @@ export const SessionsList = ({
 	const showConsultantToolbarActions =
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
-	const showCreateGroupChatAction =
-		showConsultantToolbarActions &&
-		tenantData?.settings?.featureGroupChatV2Enabled === true;
-	const showGroupChip =
-		showConsultantToolbarActions &&
-		tenantData?.settings?.featureGroupChatV2Enabled === true;
-	const showInternalGroupChip =
-		showConsultantToolbarActions &&
-		tenantData?.settings?.featureSupervisionEnabled === true;
+	// One source with the create flow: the list must not offer a filter, or an
+	// entry point, for a format this Träger has switched off.
+	const {
+		createGroupChat: showCreateGroupChatAction,
+		groups: showGroupChip,
+		internalGroup: showInternalGroupChip
+	} = getFormatChipVisibility(tenantData, showConsultantToolbarActions);
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
