@@ -9,6 +9,12 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+	DEFAULT_DISPLAY_FILTERS,
+	withSectionOverride
+} from '../../utils/displayFilter/model';
+import { withDisplayFilterStore } from '../displayFilter/displayFilterStoryStore';
 
 /**
  * WP-06 Activity Timeline mock feed. Covers every seeded event family
@@ -162,6 +168,15 @@ const notificationsValue = (feed: NotificationFeedItem[]) => ({
 	notifications: [],
 	notificationFeed: feed,
 	unreadNotificationCount: feed.filter((item) => !item.readAt).length,
+	serverUnreadTotal: feed.filter(
+		(item) => !item.readAt && !item.id.startsWith('local-')
+	).length,
+	serverUnreadTotalExcludesHidden: false,
+	hasUnreadNotifications: feed.some((item) => !item.readAt),
+	timelineDisplayFilter: { kinds: {}, autoReadHidden: false },
+	visibleUnreadCount: feed.filter((item) => !item.readAt).length,
+	hiddenUnreadInLoadedPages: 0,
+	markNotificationsReadConfirmed: async () => {},
 	setNotifications: noop,
 	hasNotification: () => false,
 	addNotification: noop,
@@ -192,6 +207,24 @@ const consultantUserData = {
 	}
 } as any;
 
+/**
+ * #1377 slice 3: the display filter comes from the account-data store. The
+ * story attaches a synced fake client holding `parameters.displayFilters`
+ * so the dialog is live (writes go to the fake) and reset works.
+ */
+/** System without pill, drafts hidden: the dot is on, no System chip. */
+const customisedDisplayFilters = withSectionOverride(
+	DEFAULT_DISPLAY_FILTERS,
+	'timeline',
+	{
+		kinds: {
+			system: { show: true, pill: false },
+			drafts: { show: false, pill: false }
+		},
+		autoReadHidden: true
+	}
+);
+
 const withTimelineData =
 	(feed: NotificationFeedItem[], userData: any = consultantUserData) =>
 	(Story: React.ComponentType) => (
@@ -214,6 +247,7 @@ const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs'],
+	decorators: [withDisplayFilterStore],
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: '/notifications' },
@@ -248,6 +282,56 @@ export const ClientView: Story = {
 			grantedAuthorities: []
 		})
 	]
+};
+
+/**
+ * #1377 slice 3: a customised display filter — drafts hidden (no card, no
+ * chip), System shown without a pill (no chip although unread), the tune
+ * button carries the dot, and the dialog opens from it.
+ */
+export const WithDisplayFilter: Story = {
+	decorators: [withTimelineData(mockFeed)],
+	parameters: { displayFilters: customisedDisplayFilters },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Anzeige-Filter' })
+			).toBeVisible()
+		);
+		await expect(
+			canvas.queryByRole('button', { name: /^Entwürfe/ })
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByRole('button', { name: /^System/ })
+		).not.toBeInTheDocument();
+		await expect(
+			canvas
+				.getByRole('button', { name: 'Anzeige-Filter' })
+				.querySelector('.displayFilterButton__dot')
+		).not.toBeNull();
+	}
+};
+
+/** The dialog wired to the store: reset removes the override (dot goes). */
+export const DisplayFilterDialogOpen: Story = {
+	decorators: [withTimelineData(mockFeed)],
+	parameters: { displayFilters: customisedDisplayFilters },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Anzeige-Filter' })
+		);
+		// MUI fades the surface in; wait for the transition to settle.
+		await waitFor(() => expect(body.getByRole('dialog')).toBeVisible());
+		await expect(
+			body.getByRole('checkbox', { name: 'Anzeigen: Entwürfe' })
+		).not.toBeChecked();
+		await expect(
+			body.getByRole('checkbox', { name: 'Pille: System' })
+		).not.toBeChecked();
+	}
 };
 
 /** Empty state. */

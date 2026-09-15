@@ -146,3 +146,73 @@ describe('agency counselling modality chip (ORISO-Frontend#985)', () => {
 		expect(screen.queryByText('Nearby')).toBeNull();
 	});
 });
+
+describe('SessionsListToolbar display filter (#1377 slice 4)', () => {
+	const renderWithDisplayFilter = (
+		hiddenKindChips: Partial<Record<string, boolean>>,
+		customised = false
+	) =>
+		render(
+			<MemoryRouter>
+				<SessionsListToolbar
+					translate={(key) => key}
+					searchValue=""
+					onSearchChange={vi.fn()}
+					activeChip={null}
+					onChipToggle={vi.fn()}
+					showConsultantActions
+					showCreateGroupChatAction={false}
+					showSupervisionChip
+					showGroupChip
+					showInternalGroupChip
+					showLiveChatChip
+					createGroupChatPath="/sessions/create"
+					archiveTabPath="/sessions/archive"
+					archiveTabActive={false}
+					createGroupChatActive={false}
+					hiddenKindChips={hiddenKindChips}
+					displayFilter={{
+						label: 'Anzeige-Filter',
+						customisedLabel: 'Filter angepasst',
+						customised,
+						open: false,
+						controlsId: 'dialog-id',
+						onOpen: vi.fn()
+					}}
+				/>
+			</MemoryRouter>
+		);
+	const chip = (container: HTMLElement, id: string) =>
+		container.querySelector(`[data-cy="sessions-list-chip-${id}"]`);
+
+	it('renders the pinned tune button outside the scrolling chips', () => {
+		const { container } = renderWithDisplayFilter({}, true);
+		const button = screen.getByRole('button', { name: 'Anzeige-Filter' });
+		expect(button.getAttribute('aria-controls')).toBe('dialog-id');
+		expect(
+			container
+				.querySelector('.filterChipRow__trailing')
+				?.contains(button)
+		).toBe(true);
+		expect(
+			container
+				.querySelector('[data-cy="sessions-list-chips"]')
+				?.contains(button)
+		).toBe(false);
+		expect(
+			button.querySelector('.displayFilterButton__dot')
+		).not.toBeNull();
+	});
+
+	it('suppresses kind chips the display filter gates, never unread/drafts', () => {
+		const { container } = renderWithDisplayFilter({
+			groups: true,
+			supervision: true
+		});
+		expect(chip(container, 'groups')).toBeNull();
+		expect(chip(container, 'supervision')).toBeNull();
+		expect(chip(container, 'internal-group')).not.toBeNull();
+		expect(chip(container, 'unread')).not.toBeNull();
+		expect(chip(container, 'drafts')).not.toBeNull();
+	});
+});
