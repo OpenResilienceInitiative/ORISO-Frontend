@@ -63,6 +63,8 @@ export const ChatroomMainInteractionIcon = ({
 				`chatroomMainInteractionIcon--${type}`,
 				showAddIcon && 'chatroomMainInteractionIcon--withAdd',
 				isSearching && 'chatroomMainInteractionIcon--searching',
+				// Hovering the capsule replays the magnet's search gesture.
+				isSearching && 'consultantSearchLoaderHost',
 				className
 			)}
 		>

@@ -952,37 +952,46 @@ const expectMagnetSearchesFromInsideTheCapsule = async (
 	}
 
 	// 3. The beam is still opaque when it crosses the capsule's edge, and
-	//    spent only well outside it. Both animations are frozen and stepped
-	//    through the pulse so this is a measurement, not a lucky frame.
+	//    spent only well outside it. A pulse is an event rather than an
+	//    endless loop, so the test starts one itself, freezes both
+	//    animations and steps through the flight — a measurement, not a
+	//    lucky frame.
 	const sweep = magnet.querySelector<HTMLElement>(
 		'.consultantSearchLoader__sweep'
 	)!;
 	const beam = magnet.querySelector<HTMLElement>(
 		'.consultantSearchLoader__beam'
 	)!;
+	magnet.classList.add('consultantSearchLoader--pulsing');
 	sweep.getAnimations().forEach((animation) => animation.pause());
 	const capsuleBox = capsule.getBoundingClientRect();
+	const flight = Number(
+		beam.getAnimations()[0]!.effect!.getTiming().duration
+	);
 	const at = (fraction: number) => {
 		beam.getAnimations().forEach((animation) => {
 			animation.pause();
-			animation.currentTime = 4200 * fraction;
+			animation.currentTime = flight * fraction;
 		});
 		return {
 			box: beam.getBoundingClientRect(),
 			opacity: Number.parseFloat(getComputedStyle(beam).opacity)
 		};
 	};
-	const crossing = at(0.16);
+	const crossing = at(0.6);
 	await expect(crossing.box.right).toBeGreaterThan(capsuleBox.right);
 	await expect(crossing.opacity).toBeGreaterThan(0.8);
-	const spent = at(0.3);
+	const spent = at(1);
 	await expect(spent.box.right).toBeGreaterThan(crossing.box.right);
 	await expect(spent.opacity).toBeLessThan(0.1);
 
-	// 4. The pulse is an event, not a permanent spin: two thirds of the
-	//    cycle the beam is invisible (Frank, 15.09. — "seltener animieren").
-	await expect(at(0.6).opacity).toBe(0);
-	await expect(at(0.9).opacity).toBe(0);
+	// 4. Between two pulses the magnet is genuinely still — no permanent
+	//    spin in the header (Frank, 15.09.: "nach ein paar Mal stehen
+	//    bleiben"). The gap itself is redrawn each time, so several waiting
+	//    requests never fall into lockstep.
+	magnet.classList.remove('consultantSearchLoader--pulsing');
+	await expect(getComputedStyle(beam).animationName).toBe('none');
+	await expect(getComputedStyle(sweep).animationName).toBe('none');
 
 	return { magnet, capsule, capsuleBox };
 };

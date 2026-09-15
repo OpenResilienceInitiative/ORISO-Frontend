@@ -238,26 +238,38 @@ export const GeometryContract: Story = {
 		const beam = loader.querySelector<HTMLElement>(
 			'.consultantSearchLoader__beam'
 		)!;
+		// A pulse is an event now, not an endless loop, so the test starts
+		// one itself and steps through it. Both animations are frozen; the
+		// numbers below are therefore measurements, not lucky frames.
+		loader.classList.add('consultantSearchLoader--pulsing');
 		sweep.getAnimations().forEach((animation) => animation.pause());
-		sweep.style.transform = 'rotate(0deg)';
+		sweep.style.transform = 'rotate(90deg)';
+		const flight = Number(
+			beam.getAnimations()[0]!.effect!.getTiming().duration
+		);
 		const at = (fraction: number) => {
 			beam.getAnimations().forEach((animation) => {
 				animation.pause();
-				animation.currentTime = 4200 * fraction;
+				animation.currentTime = flight * fraction;
 			});
 			return {
 				top: beam.getBoundingClientRect().top,
+				right: beam.getBoundingClientRect().right,
 				opacity: Number.parseFloat(getComputedStyle(beam).opacity)
 			};
 		};
 		// Leaves the box while still fully opaque …
-		const leaving = at(0.15);
-		await expect(leaving.top).toBeLessThan(box.top);
+		const leaving = at(0.55);
+		await expect(leaving.right).toBeGreaterThan(box.right);
 		await expect(leaving.opacity).toBeGreaterThan(0.85);
 		// … and is spent well outside it.
-		const spent = at(0.3);
-		await expect(spent.top).toBeLessThan(leaving.top);
+		const spent = at(1);
+		await expect(spent.right).toBeGreaterThan(leaving.right);
 		await expect(spent.opacity).toBeLessThan(0.1);
+		// At rest — which is most of the time — nothing moves at all.
+		loader.classList.remove('consultantSearchLoader--pulsing');
+		await expect(getComputedStyle(beam).animationName).toBe('none');
+		await expect(getComputedStyle(sweep).animationName).toBe('none');
 		sweep.style.removeProperty('transform');
 	}
 };

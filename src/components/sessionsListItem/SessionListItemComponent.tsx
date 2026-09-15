@@ -1369,7 +1369,13 @@ export const SessionListItemComponent = ({
 			<div
 				className={clsx(
 					'sessionsListItem__content',
-					isAnonymousChat && 'sessionsListItem__content--anonymous'
+					isAnonymousChat && 'sessionsListItem__content--anonymous',
+					/* FE#1115: hovering the card replays the magnet's
+					   search gesture, so the whole card is the target and
+					   not the 32 px glyph inside it. */
+					isAsker &&
+						!hasConsultantData &&
+						'consultantSearchLoaderHost'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={itemRef}
@@ -1501,13 +1507,10 @@ export const SessionListItemComponent = ({
 							</div>
 						) : isAsker && !hasConsultantData ? (
 							/* FE#1115: the same magnet as the chat header,
-							   without the black disc. The beam stays behind
-							   — the card clips, and that clip is what gives
-							   the card its rounded corners. */
-							<ConsultantSearchLoader
-								size="32px"
-								showBeam={false}
-							/>
+							   without the black disc — beam included. It
+							   points right, into the card's own width, so
+							   the card's corner clip never reaches it. */
+							<ConsultantSearchLoader size="32px" />
 						) : !isAsker ? (
 							// Restored username+icon linkage: the asker card
 							// shows the SAME animal avatar the chat derives

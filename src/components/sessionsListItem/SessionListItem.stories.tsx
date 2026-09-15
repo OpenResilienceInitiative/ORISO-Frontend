@@ -1347,15 +1347,38 @@ export const AskerSearchingRow: Story = {
 		await expect(getComputedStyle(magnet).backgroundColor).toBe(
 			'rgba(0, 0, 0, 0)'
 		);
-		// And no beam here: the card's `overflow: hidden` is what rounds its
-		// 24 px corners, so a beam would be sliced off at the card edge. The
-		// magnet still sweeps; only the emission is left to the chat header.
-		await expect(
-			magnet.querySelector('.consultantSearchLoader__beam')
-		).toBeNull();
+
+		// The beam is here too, and it stays inside the card: it points
+		// right, into the card's own width, so the corner clip that rounds
+		// the card never reaches it. Measured at the end of the flight.
 		const card = canvasElement.querySelector<HTMLElement>(
 			'.sessionsListItem__content'
 		)!;
-		await expect(getComputedStyle(card).overflow).toBe('hidden');
+		await expect(
+			card.classList.contains('consultantSearchLoaderHost')
+		).toBe(true);
+		const sweep = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__sweep'
+		)!;
+		const beam = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__beam'
+		)!;
+		await expect(beam).toBeTruthy();
+		magnet.classList.add('consultantSearchLoader--pulsing');
+		sweep.getAnimations().forEach((animation) => animation.pause());
+		const flight = Number(
+			beam.getAnimations()[0]!.effect!.getTiming().duration
+		);
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight;
+		});
+		const beamBox = beam.getBoundingClientRect();
+		const cardBox = card.getBoundingClientRect();
+		await expect(beamBox.right).toBeGreaterThan(box.right);
+		await expect(beamBox.right).toBeLessThan(cardBox.right);
+		await expect(beamBox.top).toBeGreaterThan(cardBox.top);
+		await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
+		magnet.classList.remove('consultantSearchLoader--pulsing');
 	}
 };

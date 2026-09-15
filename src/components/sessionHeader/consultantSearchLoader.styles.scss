@@ -9,22 +9,24 @@
  * ever existed where nobody could see it.
  *
  * Now there is one drawing. It lies in the oval capsule, it is the enquiry's
- * conversation-type glyph when it stands still, and the search indicator
- * when it moves. The beam leaves the capsule on purpose: the layout box
- * stays exactly `--csl-size`, and the beam overflows it without ever taking
- * part in layout — so nothing moves when the real avatar takes over.
+ * conversation-type glyph when it rests, and the search indicator when it
+ * sweeps. The beam leaves the capsule on purpose: the layout box stays
+ * exactly `--csl-size` and the beam overflows it without ever taking part in
+ * layout, so nothing in the row moves when the search ends.
+ *
+ * WHEN a pulse runs is decided in `ConsultantSearchLoader`, not here: it
+ * redraws an irregular gap after every pulse so that several waiting
+ * requests on one screen never fall into lockstep.
  */
 
 .consultantSearchLoader {
 	--csl-size: 24px;
 
-	// How far the beam travels past the magnet's own box.
-
 	/*
 	 * How far the arc travels past the magnet's own box. The capsule raises
 	 * it (see `sessionHeader.styles.scss`): pointing right, the beam has to
-	 * cross the capsule's long axis, which is half again as far as the way
-	 * out of the naked variant.
+	 * cross the capsule's long axis, half again as far as the way out of
+	 * the naked variant.
 	 */
 	--csl-reach: calc(var(--csl-size) * 0.9);
 
@@ -35,7 +37,7 @@
 	 * Where the magnet points, and with it the beam. 0deg is up, 90deg is
 	 * right — the default, because a magnet reads as an instrument when it
 	 * points along the reading direction rather than at the ceiling. The
-	 * chat header tilts it further to send the beam down-right, into the
+	 * chat header tilts it further, to send the beam down-right into the
 	 * open space beside the capsule.
 	 */
 	--csl-aim: 90deg;
@@ -49,11 +51,19 @@
 	// Thinner than the magnet: an emitted arc, not a second object.
 	--csl-beam-stroke: max(2px, calc(var(--csl-size) * 0.1));
 
-	// One pulse, then a rest. Frank, 15.09.: "ein bisschen aktiver … und
-	// einfach ein bisschen seltener animieren" — the burst is brisk and
-	// fully outside the box, then the magnet is quiet for three seconds.
-	--csl-cycle: 4.2s;
-	--csl-burst-offset: 0.42s;
+	/*
+	 * One search gesture: the magnet swings three times and sends three
+	 * arcs along the way, then stops. Frank, 15.09.: "ganz langsam hin und
+	 * her, und dann klar nach ein paar Mal stehen bleiben."
+	 *
+	 * It runs once when the view arrives and again on every hover of the
+	 * host — never on a timer, so several waiting requests on one screen
+	 * cannot fall into lockstep.
+	 */
+	--csl-pulse: 2.6s;
+
+	// Spacing of the three arcs inside one sweep.
+	--csl-arc-gap: 0.42s;
 
 	position: relative;
 	display: inline-flex;
@@ -64,8 +74,8 @@
 	flex-shrink: 0;
 
 	// The beam leaves the magnet, the capsule and the header row. Nothing
-	// from here down may clip — see `sessionHeader.styles.scss` for the two
-	// ancestors that had to give up their `overflow: hidden`.
+	// from here down may clip — see `sessionHeader.styles.scss` for the
+	// three ancestors that had to give up their `overflow: hidden`.
 	overflow: visible;
 	pointer-events: none;
 
@@ -78,15 +88,15 @@
 		transform: rotate(var(--csl-aim));
 	}
 
-	&--animated &__sweep {
-		animation: consultantSearchLoaderSweep var(--csl-cycle) ease-in-out
-			infinite;
+	&--pulsing &__sweep {
+		animation: consultantSearchLoaderSweep var(--csl-pulse) ease-in-out 1
+			both;
 	}
 
 	/*
-	 * The magnet: a red U opening upwards, with a grey cap on each pole.
-	 * Built from one element's borders — no bar, no one-sided rounding, and
-	 * nothing that reads as a rectangle when it is 24 px tall.
+	 * The magnet: a red horseshoe opening along the aim, with a grey cap on
+	 * each pole. Built from one element's borders — no bar, no one-sided
+	 * rounding, and nothing that reads as a rectangle at 24 px.
 	 */
 	&__magnet {
 		position: absolute;
@@ -139,33 +149,45 @@
 		border-top-color: var(--csl-beam);
 		border-radius: 50%;
 		opacity: 0;
-		animation: consultantSearchLoaderBeam var(--csl-cycle) ease-out infinite;
+	}
 
-		&--trailing {
-			animation-delay: var(--csl-burst-offset);
+	// Three arcs, leaving one after the other inside the sweep.
+	&--pulsing &__beam {
+		animation: consultantSearchLoaderBeam calc(var(--csl-pulse) * 0.46)
+			ease-out 1 both;
+
+		&--second {
+			animation-delay: var(--csl-arc-gap);
+		}
+
+		&--third {
+			animation-delay: calc(var(--csl-arc-gap) * 2);
 		}
 	}
 }
 
-/*
- * The magnet sweeps while it sends, then settles and waits. Keeping the
- * rest inside the same cycle is what makes the pulse read as an event
- * rather than as a permanently spinning widget.
- */
+// Three slow passes, then the magnet settles back onto its aim and stops.
 @keyframes consultantSearchLoaderSweep {
 	0% {
+		transform: rotate(var(--csl-aim));
+	}
+
+	16% {
 		transform: rotate(calc(var(--csl-aim) - 22deg));
 	}
 
-	12% {
+	38% {
 		transform: rotate(calc(var(--csl-aim) + 22deg));
 	}
 
-	24% {
-		transform: rotate(calc(var(--csl-aim) - 11deg));
+	58% {
+		transform: rotate(calc(var(--csl-aim) - 18deg));
 	}
 
-	34%,
+	78% {
+		transform: rotate(calc(var(--csl-aim) + 13deg));
+	}
+
 	100% {
 		transform: rotate(var(--csl-aim));
 	}
@@ -175,15 +197,11 @@
  * Travel, measured from the magnet's centre, in units of `--csl-size`:
  *
  *   start  the arc sits between the poles       →  translateY  +0.06
- *   end    the arc is `--csl-reach` beyond it   →  translateY  -0.85
+ *   end    the arc is `--csl-reach` beyond it   →  translateY  -0.90
  *
  * The arc is still at full strength when it crosses the magnet's own box
  * and the capsule around it; it fades in the open. That fade is precisely
- * what the old `overflow: hidden` cut away, so it is the part that has to
- * happen outside (FE#1115).
- *
- * Everything below 30 % is the pulse; the rest of the cycle the arc waits
- * out of sight at full reach.
+ * what the old `overflow: hidden` cut away (FE#1115).
  */
 @keyframes consultantSearchLoaderBeam {
 	0% {
@@ -191,38 +209,61 @@
 		opacity: 0;
 	}
 
-	5% {
+	12% {
 		opacity: 1;
 	}
 
-	20% {
+	62% {
 		opacity: 0.95;
 	}
 
-	30%,
 	100% {
 		transform: translateY(calc(var(--csl-reach) * -1)) scale(1.25);
 		opacity: 0;
 	}
 }
 
-// House rule: an indicator may signal, it may not force motion on someone
-// who asked the system for less of it.
-@media (prefers-reduced-motion: reduce) {
-	.consultantSearchLoader--animated {
-		.consultantSearchLoader__sweep {
-			animation: none;
+/*
+ * The hover replay. A host opts in by carrying `consultantSearchLoaderHost`
+ * — the capsule in the chat header, the card in the session list — so the
+ * target is the whole surface rather than the 24 px glyph inside it.
+ *
+ * The rules live under `:hover` and nowhere else, which is what makes the
+ * gesture replay on every entry: the animation is not merely restarted, it
+ * is applied afresh each time the pointer arrives.
+ */
+.consultantSearchLoaderHost:hover {
+	.consultantSearchLoader--animated .consultantSearchLoader__sweep {
+		animation: consultantSearchLoaderSweep var(--csl-pulse) ease-in-out 1
+			both;
+	}
+
+	.consultantSearchLoader--animated .consultantSearchLoader__beam {
+		animation: consultantSearchLoaderBeam calc(var(--csl-pulse) * 0.46)
+			ease-out 1 both;
+
+		&--second {
+			animation-delay: var(--csl-arc-gap);
 		}
 
+		&--third {
+			animation-delay: calc(var(--csl-arc-gap) * 2);
+		}
+	}
+}
+
+/*
+ * House rule: an indicator may signal, it may not force motion on someone
+ * who asked the system for less of it. `ConsultantSearchLoader` never starts
+ * its timer under reduced motion, so the magnet simply rests; this is the
+ * belt for the case where the class arrives some other way.
+ */
+@media (prefers-reduced-motion: reduce) {
+	.consultantSearchLoader--pulsing,
+	.consultantSearchLoaderHost:hover .consultantSearchLoader {
+		.consultantSearchLoader__sweep,
 		.consultantSearchLoader__beam {
 			animation: none;
-			opacity: 0.9;
-			transform: translateY(calc(var(--csl-reach) * -0.7)) scale(1.1);
-
-			&--trailing {
-				opacity: 0.4;
-				transform: translateY(calc(var(--csl-reach) * -0.3)) scale(0.8);
-			}
 		}
 	}
 }
