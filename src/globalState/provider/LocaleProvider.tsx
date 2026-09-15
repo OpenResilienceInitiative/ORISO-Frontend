@@ -169,7 +169,15 @@ export function LocaleProvider(props) {
 		[locales]
 	);
 
-	if (!initialized) {
+	// `initialized` alone survives a tenant switch: the effect above bails out
+	// early while the new tenant is loading, so it never flips back to false.
+	// Without this, a counsellor would keep seeing the previous Träger's
+	// language list for the duration of the switch.
+	if (
+		!initialized ||
+		(settings.useTenantService &&
+			(isLoading || appliedLanguages !== activeLanguagesKey))
+	) {
 		return null;
 	}
 

@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => ({
 	changeLanguage: vi.fn(),
 	tenant: {
 		settings: { activeLanguages: ['de'] }
-	} as { settings: { activeLanguages: string[] } } | null
+	} as { settings: { activeLanguages: string[] } } | null,
+	isLoadingTenant: false
 }));
 
 vi.mock('../../i18n', () => ({
@@ -27,7 +28,9 @@ vi.mock('../../i18n', () => ({
 vi.mock('./TenantProvider', () => ({
 	useTenant: () => mocks.tenant
 }));
-vi.mock('../../utils/useTenantTheming', () => ({ default: () => false }));
+vi.mock('../../utils/useTenantTheming', () => ({
+	default: () => mocks.isLoadingTenant
+}));
 vi.mock('../../hooks/useAppConfig', () => ({
 	useAppConfig: () => ({
 		useTenantService: true,
@@ -56,6 +59,7 @@ describe('LocaleProvider – tenant switch', () => {
 		vi.clearAllMocks();
 		localStorage.clear();
 		mocks.tenant = { settings: { activeLanguages: ['de'] } };
+		mocks.isLoadingTenant = false;
 		// i18next reports the supported languages it settled on, deduplicated
 		// and without the informal variants the picker never offers.
 		mocks.init.mockImplementation(async (options: any) => [
@@ -186,6 +190,40 @@ describe('LocaleProvider – tenant switch', () => {
 		// app itself is configured for.
 		await waitFor(() =>
 			expect(screen.getByTestId('locales').textContent).toBe('de')
+		);
+	});
+
+	// `initialized` used to survive a tenant switch: the effect bails out
+	// early while the new tenant is loading, so a counsellor kept seeing the
+	// previous Träger's language list for the duration of the switch.
+	it('withholds the previous language list while a tenant switch is loading', async () => {
+		const view = renderProvider();
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('de')
+		);
+
+		mocks.isLoadingTenant = true;
+		mocks.tenant = null;
+		view.rerender(
+			<LocaleProvider>
+				<Probe />
+			</LocaleProvider>
+		);
+
+		// The provider renders nothing at all while the switch is in flight —
+		// there is no stale locale list left for a consumer to read.
+		await waitFor(() => expect(screen.queryByTestId('locales')).toBe(null));
+
+		mocks.isLoadingTenant = false;
+		mocks.tenant = { settings: { activeLanguages: ['de', 'ru'] } };
+		view.rerender(
+			<LocaleProvider>
+				<Probe />
+			</LocaleProvider>
+		);
+
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('de,ru')
 		);
 	});
 });
