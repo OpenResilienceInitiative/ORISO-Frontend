@@ -7,7 +7,7 @@ import {
 	CaseHandoverStatus
 } from '../../api/apiCaseHandover';
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
+import { useCaseHandoverResolutionEvents } from '../caseHandover/useCaseHandoverResolutionEvents';
 import { Loading } from '../app/Loading';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 
@@ -20,11 +20,6 @@ interface CaseHandoverOfferGateProps {
 }
 
 type OfferError = 'forbidden' | 'notFound' | 'generic';
-
-const CASE_HANDOVER_RESOLUTION_EVENTS = new Set([
-	'case.handover.granted',
-	'case.handover.consent.declined'
-]);
 
 interface ScopedOffer {
 	identity: string;
@@ -49,7 +44,6 @@ export const CaseHandoverOfferGate = ({
 	children
 }: CaseHandoverOfferGateProps) => {
 	const { t } = useTranslation();
-	const notificationsContext = React.useContext(NotificationsContext);
 	const identity = `${actorId}:${sessionId}:${requestId}`;
 	const [scopedOffer, setScopedOffer] = useState<ScopedOffer>();
 	const [error, setError] = useState<OfferError>();
@@ -59,7 +53,6 @@ export const CaseHandoverOfferGate = ({
 	const loadSequenceRef = useRef(0);
 	const decisionSequenceRef = useRef(0);
 	const decidingRef = useRef(false);
-	const handledResolutionEventIdsRef = useRef(new Set<string>());
 	const offer =
 		scopedOffer?.identity === identity ? scopedOffer.status : undefined;
 
@@ -123,35 +116,18 @@ export const CaseHandoverOfferGate = ({
 		};
 	}, [loadOffer]);
 
-	useEffect(() => {
-		if (!offer || decidingRef.current) return;
-		const notification = notificationsContext?.notificationFeed.find(
-			(item) => {
-				const eventRequestId = item.params?.caseHandoverRequestId;
-				return (
-					CASE_HANDOVER_RESOLUTION_EVENTS.has(item.eventType) &&
-					String(item.sourceSessionId) === String(sessionId) &&
-					(eventRequestId == null ||
-						String(eventRequestId) === String(requestId)) &&
-					!handledResolutionEventIdsRef.current.has(
-						`${actorId}:${item.id}`
-					)
-				);
-			}
-		);
-		if (!notification) return;
-		handledResolutionEventIdsRef.current.add(
-			`${actorId}:${notification.id}`
-		);
-		void loadOffer();
-	}, [
+	const handleResolutionEvent = useCallback(
+		() => void loadOffer(),
+		[loadOffer]
+	);
+	useCaseHandoverResolutionEvents({
 		actorId,
-		loadOffer,
-		notificationsContext?.notificationFeed,
-		offer,
+		sessionId,
 		requestId,
-		sessionId
-	]);
+		enabled: Boolean(offer),
+		pausedRef: decidingRef,
+		onResolution: handleResolutionEvent
+	});
 
 	const decide = async (approved: boolean) => {
 		const generation = generationRef.current;

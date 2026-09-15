@@ -13,7 +13,6 @@ import {
 	hasUserAuthority,
 	AUTHORITIES
 } from '../../globalState';
-import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import {
 	apiCreateCaseHandoverOffer,
 	apiGetCaseHandoverReasons,
@@ -33,6 +32,7 @@ import {
 	SupervisorDialogCopy,
 	SupervisorDialogPerson
 } from '../supervisorDialog/SupervisorDialog';
+import { useCaseHandoverResolutionEvents } from '../caseHandover/useCaseHandoverResolutionEvents';
 import {
 	activateCaseHandoverActor,
 	clearCaseHandoverOperation,
@@ -53,11 +53,6 @@ const terminalOfferStatus = (status: string) =>
 	status === 'DENIED' ||
 	status === 'CLIENT_CONSENT_DECLINED';
 
-const CASE_HANDOVER_RESOLUTION_EVENTS = new Set([
-	'case.handover.granted',
-	'case.handover.consent.declined'
-]);
-
 export const AskerInfoAssign = ({
 	title = 'userProfile.reassign.title',
 	showLegacyAssignment = true,
@@ -67,7 +62,6 @@ export const AskerInfoAssign = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
-	const notificationsContext = useContext(NotificationsContext);
 	const [open, setOpen] = useState(false);
 	const [loading, setLoading] = useState(false);
 	const [busy, setBusy] = useState(false);
@@ -81,7 +75,6 @@ export const AskerInfoAssign = ({
 	const generationRef = useRef(0);
 	const sequenceRef = useRef(0);
 	const submittingRef = useRef(false);
-	const handledResolutionEventIdsRef = useRef(new Set<string>());
 	const sessionId = activeSession?.item.id;
 	const actorId = userData?.userId;
 	const identity = useMemo(
@@ -237,43 +230,21 @@ export const AskerInfoAssign = ({
 		return () => window.removeEventListener('focus', refresh);
 	}, [offerStatus, open, refreshOfferStatus, sessionId]);
 
-	useEffect(() => {
-		const requestId = offerStatus?.requestId;
-		if (
-			!open ||
-			!sessionId ||
-			!requestId ||
-			terminalOfferStatus(offerStatus.status)
-		) {
-			return;
-		}
-		const notification = notificationsContext?.notificationFeed.find(
-			(item) => {
-				const eventRequestId = item.params?.caseHandoverRequestId;
-				return (
-					CASE_HANDOVER_RESOLUTION_EVENTS.has(item.eventType) &&
-					String(item.sourceSessionId) === String(sessionId) &&
-					(eventRequestId == null ||
-						String(eventRequestId) === String(requestId)) &&
-					!handledResolutionEventIdsRef.current.has(
-						`${actorId}:${item.id}`
-					)
-				);
-			}
-		);
-		if (!notification) return;
-		handledResolutionEventIdsRef.current.add(
-			`${actorId}:${notification.id}`
-		);
-		void refreshOfferStatus(requestId);
-	}, [
+	const pendingOfferRequestId =
+		open && offerStatus && !terminalOfferStatus(offerStatus.status)
+			? offerStatus.requestId
+			: undefined;
+	const handleResolutionEvent = useCallback(() => {
+		if (pendingOfferRequestId)
+			void refreshOfferStatus(pendingOfferRequestId);
+	}, [pendingOfferRequestId, refreshOfferStatus]);
+	useCaseHandoverResolutionEvents({
 		actorId,
-		notificationsContext?.notificationFeed,
-		offerStatus,
-		open,
-		refreshOfferStatus,
-		sessionId
-	]);
+		sessionId,
+		requestId: pendingOfferRequestId,
+		enabled: Boolean(pendingOfferRequestId),
+		onResolution: handleResolutionEvent
+	});
 
 	useEffect(
 		() => () => {
