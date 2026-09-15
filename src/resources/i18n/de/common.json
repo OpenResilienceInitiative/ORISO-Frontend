@@ -345,7 +345,10 @@
 				"onlyMarker": "Nur fürs Team",
 				"composer": { "placeholder": "Nachricht an das Team …" },
 				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
-				"empty": { "title": "Teamberatung starten", "text": "Schreiben Sie unten die erste Nachricht an Ihr Team." }
+				"empty": {
+					"title": "Teamberatung starten",
+					"text": "Schreiben Sie unten die erste Nachricht an Ihr Team."
+				}
 			}
 		},
 		"menu": {
@@ -1848,6 +1851,42 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Anzeige-Filter",
+			"buttonCustomised": "Filter angepasst",
+			"title": "Anzeige-Filter",
+			"description": "Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.",
+			"showColumn": "Anzeigen",
+			"pillColumn": "Pille",
+			"showKind": "Anzeigen: {{kind}}",
+			"pillKind": "Pille: {{kind}}",
+			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
+			"pillNotApplicable": "Keine Pille für diese Art",
+			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
+			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
+			"autoReadSessions": "Ausgeblendete Chats nicht als ungelesen zählen",
+			"autoReadSessionsDescription": "Gilt nur für diese Liste und den Zähler. Chats werden nicht als gelesen markiert, es werden keine Lesebestätigungen gesendet.",
+			"reset": "Auf meine Standards zurücksetzen",
+			"done": "Fertig",
+			"profileLink": "Standards und weitere Optionen in Profil › Benachrichtigungen",
+			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
+			"badgeHiddenHint": "bis zu {{count}} ausgeblendet",
+			"hiddenActiveRow": "Durch Ihren Anzeige-Filter ausgeblendet",
+			"profileTitle": "Anzeige-Filter",
+			"profileDescription": "Standards pro Liste, gültig auf allen Geräten. Eine Liste kann sie über ihren Filter-Knopf vorübergehend übersteuern.",
+			"overrideActive": "Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.",
+			"eventTypesTitle": "Feinsteuerung nach Ereignistyp",
+			"eventTypesDescription": "Einzelne Ereignistypen des Zeitstrahls ausblenden. Gilt auch, wenn die Liste einen eigenen Filter nutzt.",
+			"eventTypeShow": "{{type}} anzeigen",
+			"applyToAll": "Auf andere Listen übertragen",
+			"applyToAllDescription": "Überträgt „Ausgeblendetes sofort als gelesen markieren“ auf Zeitstrahl und Gespräche sowie die Live-Chat-Einstellung auf Gespräche und Anfragen.",
+			"otherKind": "Sonstiges",
+			"sections": {
+				"timeline": "Zeitstrahl",
+				"sessions": "Gespräche",
+				"requests": "Anfragen"
+			}
+		},
 		"families": {
 			"all": "Alle",
 			"requests": "Anfragen",
@@ -3591,6 +3630,7 @@
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
 				"create": "Erstellen",
+				"group": "Filter",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",

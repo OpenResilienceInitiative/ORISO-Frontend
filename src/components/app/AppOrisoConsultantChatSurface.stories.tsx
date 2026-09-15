@@ -700,6 +700,17 @@ function AppOrisoRoutingRuntimeProviders({
 												notifications: [],
 												notificationFeed: [],
 												unreadNotificationCount: 0,
+												serverUnreadTotal: 0,
+												serverUnreadTotalExcludesHidden: false,
+												hasUnreadNotifications: false,
+												timelineDisplayFilter: {
+													kinds: {},
+													autoReadHidden: false
+												},
+												visibleUnreadCount: 0,
+												hiddenUnreadInLoadedPages: 0,
+												markNotificationsReadConfirmed:
+													async () => {},
 												setNotifications:
 													notificationNoop,
 												hasNotification: () => false,

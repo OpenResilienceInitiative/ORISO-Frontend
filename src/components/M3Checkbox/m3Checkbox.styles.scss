@@ -74,4 +74,27 @@
 	&__label {
 		user-select: none;
 	}
+
+	// M3 indeterminate state (#1377): filled container with a dash, like
+	// checked, whatever the underlying `checked` value.
+	&--indeterminate &__box {
+		background: var(--m3-primary, #a5000a);
+		border-color: var(--m3-primary, #a5000a);
+
+		.m3Checkbox__check {
+			opacity: 1;
+		}
+	}
+
+	// M3 disabled state (#1377): no state layer, container at 38%.
+	&--disabled {
+		cursor: default;
+		opacity: 0.38;
+
+		.m3Checkbox__input,
+		.m3Checkbox__target:hover::before {
+			cursor: default;
+			background: transparent;
+		}
+	}
 }

@@ -279,6 +279,83 @@ export const CreateGroupChatRouteActive: Story = {
 };
 
 /** No + / archive links; calendar + filters only (asker-style strip). */
+/**
+ * #1377 slice 4: the pinned display-filter button at the right end of the
+ * chip row (dot = the effective filter is customised) and user-gated kind
+ * chips — here "Gesprächskreis" and "Supervision" are suppressed because
+ * their pill is off, while unread/drafts stay because they are not kinds.
+ */
+function ToolbarWithDisplayFilter({
+	customised = true
+}: {
+	customised?: boolean;
+}) {
+	const { t } = useTranslation();
+	const [activeChip, setActiveChip] =
+		useState<SessionToolbarChipFilter | null>(null);
+	const [open, setOpen] = useState(false);
+	return (
+		<div style={shell}>
+			<SessionsListToolbar
+				translate={t}
+				searchValue=""
+				onSearchChange={() => {}}
+				activeChip={activeChip}
+				onChipToggle={(chip) =>
+					setActiveChip((prev) => (prev === chip ? null : chip))
+				}
+				showConsultantActions
+				showCreateGroupChatAction
+				showSupervisionChip
+				showGroupChip
+				showInternalGroupChip
+				showLiveChatChip
+				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+				archiveTabActive={false}
+				createGroupChatActive={false}
+				chipCounts={{
+					unread: 4,
+					drafts: 2,
+					liveChat: 1,
+					internalGroup: 3
+				}}
+				hiddenKindChips={
+					customised ? { groups: true, supervision: true } : {}
+				}
+				displayFilter={{
+					label: t('notifications.displayFilter.button'),
+					customisedLabel: t(
+						'notifications.displayFilter.buttonCustomised'
+					),
+					customised,
+					open,
+					controlsId: 'sessions-display-filter-dialog',
+					onOpen: () => setOpen(true)
+				}}
+			/>
+		</div>
+	);
+}
+
+export const WithDisplayFilter: Story = {
+	name: 'With display filter (button + gated kind chips)',
+	render: () => <ToolbarWithDisplayFilter />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const button = canvas.getByRole('button', { name: 'Anzeige-Filter' });
+		await expect(
+			button.querySelector('.displayFilterButton__dot')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelector('[data-cy="sessions-list-chip-groups"]')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('[data-cy="sessions-list-chip-unread"]')
+		).not.toBeNull();
+	}
+};
+
 export const NoConsultantActions: Story = {
 	render: () => (
 		<SessionsListToolbarPlayground
