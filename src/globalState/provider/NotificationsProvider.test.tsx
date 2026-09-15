@@ -15,6 +15,7 @@ import {
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
 const apiGetEventNotifications = vi.fn();
+const apiMarkEventNotificationRead = vi.fn(() => Promise.resolve());
 
 const feedItem = (id: number, createdAt: string) => ({
 	id,
@@ -50,10 +51,47 @@ const PaginationProbe = () => {
 	);
 };
 
+const ReadAccountingProbe = () => {
+	const context = useContext(NotificationsContext)!;
+	return (
+		<>
+			<div data-testid="unread-count">
+				{context.unreadNotificationCount}
+			</div>
+			<div data-testid="read-state">
+				{context.notificationFeed
+					.map(
+						(item) =>
+							`${item.id}:${item.readAt ? 'read' : 'unread'}`
+					)
+					.join(',')}
+			</div>
+			<button onClick={() => context.markNotificationAsRead('1')}>
+				read-one
+			</button>
+			<button
+				onClick={() => {
+					context.markNotificationAsRead('1');
+					context.markNotificationAsRead('1');
+				}}
+			>
+				read-one-twice
+			</button>
+			<button onClick={() => context.markNotificationAsRead('2')}>
+				read-two
+			</button>
+			<button onClick={() => context.markNotificationAsRead('unknown')}>
+				read-unknown
+			</button>
+		</>
+	);
+};
+
 vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: (...args: unknown[]) =>
 		apiGetEventNotifications(...args),
-	apiMarkEventNotificationRead: vi.fn(),
+	apiMarkEventNotificationRead: (...args: unknown[]) =>
+		apiMarkEventNotificationRead(...args),
 	apiMarkAllEventNotificationsRead: vi.fn(),
 	apiClearEventNotifications: vi.fn(() => Promise.resolve())
 }));
@@ -119,6 +157,95 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 		// Give any un-debounced extra calls a chance to (wrongly) fire.
 		await new Promise((resolve) => setTimeout(resolve, 50));
 		expect(apiGetEventNotifications).toHaveBeenCalledTimes(1);
+	});
+});
+
+describe('NotificationsProvider read accounting', () => {
+	beforeEach(() => {
+		apiGetEventNotifications.mockReset();
+		apiMarkEventNotificationRead.mockClear();
+	});
+	afterEach(() => cleanup());
+
+	it('decrements once when the same unread row is marked twice in one React batch', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				feedItem(1, '2026-09-12T10:00:00.000Z'),
+				feedItem(2, '2026-09-12T09:00:00.000Z')
+			],
+			unreadCount: 2
+		});
+		render(
+			<NotificationsProvider>
+				<ReadAccountingProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('unread-count').textContent).toBe('2')
+		);
+
+		fireEvent.click(screen.getByText('read-one-twice'));
+
+		expect(screen.getByTestId('unread-count').textContent).toBe('1');
+		expect(screen.getByTestId('read-state').textContent).toBe(
+			'1:read,2:unread'
+		);
+	});
+
+	it('does not decrement for an unknown id or an already-read row', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				{
+					...feedItem(1, '2026-09-12T10:00:00.000Z'),
+					readAt: '2026-09-12T10:30:00.000Z'
+				},
+				feedItem(2, '2026-09-12T09:00:00.000Z')
+			],
+			unreadCount: 7
+		});
+		render(
+			<NotificationsProvider>
+				<ReadAccountingProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('unread-count').textContent).toBe('7')
+		);
+
+		fireEvent.click(screen.getByText('read-one'));
+		fireEvent.click(screen.getByText('read-unknown'));
+
+		expect(screen.getByTestId('unread-count').textContent).toBe('7');
+		expect(screen.getByTestId('read-state').textContent).toBe(
+			'1:read,2:unread'
+		);
+		expect(apiMarkEventNotificationRead).toHaveBeenCalledWith('unknown');
+	});
+
+	it('decrements the server total for each different unread row that transitions', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				feedItem(1, '2026-09-12T10:00:00.000Z'),
+				feedItem(2, '2026-09-12T09:00:00.000Z')
+			],
+			unreadCount: 9
+		});
+		render(
+			<NotificationsProvider>
+				<ReadAccountingProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('unread-count').textContent).toBe('9')
+		);
+
+		fireEvent.click(screen.getByText('read-one'));
+		fireEvent.click(screen.getByText('read-two'));
+
+		expect(screen.getByTestId('unread-count').textContent).toBe('7');
+		expect(screen.getByTestId('read-state').textContent).toBe(
+			'1:read,2:read'
+		);
 	});
 });
 
