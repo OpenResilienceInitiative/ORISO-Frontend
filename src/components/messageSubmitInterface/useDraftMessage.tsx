@@ -199,8 +199,8 @@ export const useDraftMessage = (
 		hasRemoteDraft: boolean;
 		encrypted: boolean;
 		isE2eeEnabled: boolean;
-		key: string | null;
-		keyID: string | null;
+		key: CryptoKey | null | undefined;
+		keyID: string | null | undefined;
 		actionPath: string | null;
 		title: string | null;
 		sessionId: number | null;
