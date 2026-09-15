@@ -72,3 +72,35 @@ detach hygiene, `storage`-event follow), `src/hooks/useDisplayFilter.ts`
 | `tsc --noEmit` (app) · `tsc --noEmit -p tsconfig.storybook.json`                                  | clean                   |
 
 No screenshots: nothing renders differently yet (slice 3 wires the lists).
+
+## Slice 3 — Zeitstrahl integration (2026-09-15)
+
+`NotificationsProvider`: numbered feed requests with per-page floors and a
+read-settled floor, pending-read parking, `markNotificationsReadConfirmed`
+(confirmed-success only, chunks of 50, local rows locally), the auto-read
+pass (debounced, skips pending and cooled-down ids), `serverUnreadTotal`
+(API only) and the §6.3 badge (`visibleUnreadCount`,
+`hiddenUnreadInLoadedPages`). `NotificationsCenter`: `visibleFeed` reduced
+once and shared by chips and list, user-gated chips through
+`FilterChipRow`/`FilterChip`, the tune button and dialog wired to the store,
+keep-paging while fewer than 10 visible rows exist, unseeded event types as
+"Sonstiges". `NavigationBar`: badge on `/notifications` with the "up to N
+hidden" tooltip. i18n key `notifications.displayFilter.badgeHiddenHint` in
+de/en/fr/ru/ti/tr.
+
+| Check                                                                                                                                                                                                                        | Result                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `vitest run --project unit src/utils/displayFilter/timeline.test.ts` (kinds, badge formula, auto-read ids)                                                                                                                   | 8 tests green             |
+| `vitest run --project unit src/globalState/provider` (incl. `NotificationsProvider.displayFilter.test.tsx`: §6.1 auto-read, parking + reconciliation, persistent failure, mixed batch, out-of-order polls, older-page total) | 3 files, 14 tests green   |
+| `vitest run --project unit src/components/notificationsCenter src/components/app src/components/displayFilter src/utils/displayFilter src/hooks`                                                                             | 39 files, 237 tests green |
+| `vitest run --project storybook src/components/notificationsCenter/NotificationsCenter.stories.tsx src/components/displayFilter` (Chromium, axe)                                                                             | 5 files, 26 stories green |
+| `eslint src --max-warnings=0` · `tsc --noEmit` · `tsc --noEmit -p tsconfig.storybook.json`                                                                                                                                   | clean                     |
+
+Screenshots (`docs/storybook/issue-1377-display-filter/`):
+
+| File                               | Proves                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `10-before-timeline-filled.png`    | Before: one chip per family present, System chip although the user may not want it, no tune button |
+| `10-after-timeline-filled.png`     | After (defaults): chips only for kinds with unread items, tune button pinned at the right          |
+| `11-after-timeline-customised.png` | Drafts hidden, System without pill: no draft card, no System chip, dot on the button               |
+| `12-after-timeline-dialog.png`     | The dialog opened from the Zeitstrahl, live against the store (reset removes the override)         |

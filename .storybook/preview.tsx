@@ -689,6 +689,15 @@ function MuiStoryShell({
 											notifications: [],
 											notificationFeed: [],
 											unreadNotificationCount: 0,
+											serverUnreadTotal: 0,
+											timelineDisplayFilter: {
+												kinds: {},
+												autoReadHidden: false
+											},
+											visibleUnreadCount: 0,
+											hiddenUnreadInLoadedPages: 0,
+											markNotificationsReadConfirmed:
+												async () => {},
 											setNotifications: () => {},
 											hasNotification: () => false,
 											addNotification: () => {},

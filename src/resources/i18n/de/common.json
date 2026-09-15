@@ -1867,6 +1867,7 @@
 			"done": "Fertig",
 			"profileLink": "Standards und weitere Optionen in Profil › Benachrichtigungen",
 			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
+			"badgeHiddenHint": "bis zu {{count}} ausgeblendet",
 			"otherKind": "Sonstiges",
 			"sections": {
 				"timeline": "Zeitstrahl",

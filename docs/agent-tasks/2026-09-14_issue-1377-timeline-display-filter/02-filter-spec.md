@@ -194,7 +194,10 @@ Rules:
 - **Sonstiges**: event types without a family mapping (today none — every
   seeded type has a family — but the registry falls back to `system` for
   unknown types, `registry.ts:99`) are classified as `other`, always shown,
-  and get their own chip when `kinds.other.pill` is on.
+  and get their own chip when `kinds.other.pill` is on. Implemented (slice 3)
+  in `timelineFilter.timelineKindOf`: the chips, the search filter and the
+  display filter share it, so an unseeded type is "Sonstiges" everywhere
+  (it used to sit under the System chip).
 - Search and the Unread toggle operate on the already-reduced feed.
 - The first-card auto-select (`NotificationsCenter.tsx:578-582`) picks from
   the reduced feed.
@@ -363,11 +366,13 @@ is rendered on the rail item. **Provider order caveat:** `ContextProvider`
 reads the client from `MatrixClientContext` (the `useNotificationSettings`
 pattern, `useNotificationSettings.ts:19-28`) would see no client there and the
 store would never hydrate from account data on routes without another
-consumer. Therefore the **store is attached to the client by a bridge mounted
-inside `MatrixClientProvider`** (a `DisplayFilterStoreBridge` next to
-`TenantThemingLoader` that calls `displayFilterStore.attachClient(client)`
-once the client exists), while `NotificationsProvider` only **subscribes** to
-the store (`useSyncExternalStore` needs no client) to compute the count. The
+consumer. Therefore the **store is attached to the client by a binding
+mounted inside `MatrixClientProvider`** — implemented (slice 2) as
+`useDisplayFilterStoreBinding()` called once in `AuthenticatedApp`, which
+is rendered inside `MatrixClientProvider` (`app.tsx:251`), follows the client
+swap on token refresh via `onClientChange` and detaches when the service is
+cleared on logout — while `NotificationsProvider` only **subscribes** to the
+store (`useSyncExternalStore` needs no client) to compute the count. The
 value shows **visible unread**:
 
 - v1 (frontend only). Operands, all from one local snapshot:

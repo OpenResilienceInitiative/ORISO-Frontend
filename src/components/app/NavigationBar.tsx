@@ -23,7 +23,8 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS,
 	TenantContext,
-	LocaleContext
+	LocaleContext,
+	NotificationsContext
 } from '../../globalState';
 import { initNavigationHandler } from './navigationHandler';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
@@ -216,10 +217,24 @@ export const NavigationBar = ({
 		}, 1000);
 	}, [isFirstVisit]);
 
+	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
+	// server total minus hidden unread rows on loaded pages, an upper bound);
+	// the tooltip says so while hidden unread rows exist in the loaded feed.
+	const notificationsContext = useContext(NotificationsContext);
+	const visibleUnreadCount = notificationsContext?.visibleUnreadCount ?? 0;
+	const hiddenUnreadInLoadedPages =
+		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
 	const pathsToShowUnreadMessageNotification = {
 		'/profile':
-			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0
+			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
+		'/notifications': visibleUnreadCount
 	};
+	const unreadNavTitle = (to: string): string | undefined =>
+		to === '/notifications' && hiddenUnreadInLoadedPages > 0
+			? translate('notifications.displayFilter.badgeHiddenHint', {
+					count: hiddenUnreadInLoadedPages
+				})
+			: undefined;
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {
 		const value = to.replace(REGEX_DASH, '-').toLowerCase().slice(1);
@@ -476,6 +491,9 @@ export const NavigationBar = ({
 														animate={animateNavIcon}
 														count={unreadCount}
 														variant="figma"
+														title={unreadNavTitle(
+															item.to
+														)}
 													/>
 												)}
 											</div>
@@ -498,6 +516,7 @@ export const NavigationBar = ({
 												animate={animateNavIcon}
 												count={unreadCount}
 												variant="default"
+												title={unreadNavTitle(item.to)}
 											/>
 										)}
 									</Link>
@@ -810,11 +829,14 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
-	variant = 'default'
+	variant = 'default',
+	title
 }: {
 	animate: boolean;
 	count: number;
 	variant?: 'default' | 'figma';
+	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
+	title?: string;
 }) => {
 	const [visible, setVisible] = useState(false);
 
@@ -837,7 +859,8 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={`${count} unread`}
+			aria-label={title ? `${count} unread, ${title}` : `${count} unread`}
+			title={title}
 		>
 			{isFigma ? (
 				<span className="navigation__item__count__sup">{display}</span>
