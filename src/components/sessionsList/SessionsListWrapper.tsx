@@ -95,11 +95,28 @@ export const SessionsListWrapper = ({
 	// Review (CodeRabbit): the flag belongs to ONE open panel. Setting it
 	// while nothing is open would kill the snap for the next side room the
 	// reader opens, and it must not survive the panel it was taken against.
+	const openPanel = useChatStageOpenPanel();
+	const panelOpen = openPanel !== null;
+	const stageLayout = resolveStageLayout({
+		viewportWidth,
+		listWidth: sidebarWidth,
+		panelWidth: readPanelWidth(STAGE_LAYOUT.MIN_PANE_WIDTH),
+		panelOpen: fromL && panelOpen
+	});
+	// T41b (Frank, 15.09., "must be able to widen view"): the snap above is
+	// an OFFER, not a lock. Pulling the handle past the rail takes the offer
+	// back for as long as the reader keeps the list open; pushing it back to
+	// the rail hands it over again, so opening the next side room snaps as
+	// before.
+	const [widenedBesidePanel, setWidenedBesidePanel] = useState(false);
+	// Review (CodeRabbit): the flag belongs to ONE open panel. Setting it
+	// while nothing is open would kill the snap for the next side room the
+	// reader opens, and it must not survive the panel it was taken against.
 	useEffect(() => {
-		if (!panelOpen) {
+		if (!openPanel) {
 			setWidenedBesidePanel(false);
 		}
-	}, [panelOpen]);
+	}, [openPanel]);
 	const railSnapped =
 		fromL &&
 		panelOpen &&
