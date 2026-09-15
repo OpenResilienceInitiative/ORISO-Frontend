@@ -1844,6 +1844,7 @@
 			"profileLink": "Defaults and more options in Profile › Notifications",
 			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
 			"badgeHiddenHint": "up to {{count}} hidden",
+			"hiddenActiveRow": "Hidden by your display filter",
 			"otherKind": "Other",
 			"sections": {
 				"timeline": "Timeline",

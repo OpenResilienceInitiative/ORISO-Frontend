@@ -1843,6 +1843,7 @@
 			"profileLink": "Valeurs par défaut et autres options dans Profil › Notifications",
 			"readOnlyHint": "Ces réglages ont été enregistrés par une version plus récente de l’application. Mettez-la à jour pour les modifier.",
 			"badgeHiddenHint": "jusqu’à {{count}} masqués",
+			"hiddenActiveRow": "Masqué par votre filtre d’affichage",
 			"otherKind": "Autres",
 			"sections": {
 				"timeline": "Chronologie",

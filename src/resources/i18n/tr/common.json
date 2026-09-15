@@ -1843,6 +1843,7 @@
 			"profileLink": "Varsayılanlar ve diğer seçenekler: Profil › Bildirimler",
 			"readOnlyHint": "Bu ayarlar daha yeni bir uygulama sürümüyle kaydedildi. Değiştirmek için lütfen uygulamayı güncelleyin.",
 			"badgeHiddenHint": "en fazla {{count}} gizli",
+			"hiddenActiveRow": "Görüntüleme filtreniz tarafından gizlendi",
 			"otherKind": "Diğer",
 			"sections": {
 				"timeline": "Zaman çizelgesi",

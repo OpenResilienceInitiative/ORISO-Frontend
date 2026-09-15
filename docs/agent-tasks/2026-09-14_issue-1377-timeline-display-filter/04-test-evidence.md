@@ -104,3 +104,45 @@ Screenshots (`docs/storybook/issue-1377-display-filter/`):
 | `10-after-timeline-filled.png`     | After (defaults): chips only for kinds with unread items, tune button pinned at the right          |
 | `11-after-timeline-customised.png` | Drafts hidden, System without pill: no draft card, no System chip, dot on the button               |
 | `12-after-timeline-dialog.png`     | The dialog opened from the Zeitstrahl, live against the store (reset removes the override)         |
+
+## Slices 4 + 5 — Gespräche and Anfragen integration (2026-09-15)
+
+`src/utils/displayFilter/sessions.ts`: `classifySession(raw, extended,
+currentUserId, canSupervise)` in the spec's order (marker-backed
+supervision → circle → internal group → live chat → legacy supervision
+fallback → one-to-one; both supervision branches only when the viewer can
+supervise, so an asker's chats stay one-to-one), `classifyRequest`,
+`applySessionsFilter` / `applyRequestsFilter` (active row kept and
+reported for dimming). `SessionsList`: the display filter runs after
+`filterSessions` and before the toolbar chip; chip counts (`unread` and
+the per-kind counts) come from the display-visible rows, so hidden chats
+are neither listed nor counted (§6.2); kind chips are user-gated through
+`hiddenKindChips` (pill on and unread rows, or active); the future panel
+is gated by its show-only kind over the set BEFORE the row filter; the
+list keeps paging while the filter hides rows and fewer than 10 are
+visible; the route-active row of a hidden kind stays, dimmed, with the
+"hidden by your display filter" tooltip. Anfragen uses the `requests`
+section (nearby / live chat / Sonstiges), without the auto-read switch.
+`SessionsListToolbar`: pinned tune button (`displayFilter` prop) and
+`hiddenKindChips`. i18n key `notifications.displayFilter.hiddenActiveRow`
+in six locales.
+
+Not in this slice: the Overview dashboard's unread count
+(`useConsultantData`) still counts every session; it has no kind context
+and is not a list badge (§6.2 names the list consumers and the rail).
+
+| Check                                                                                                                            | Result                    |
+| -------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `vitest run --project unit src/utils/displayFilter/sessions.test.ts` (§5.2 order, asker rule, filters)                           | 11 tests green            |
+| `vitest run --project unit src/components/sessionsList src/components/sessionsListItem src/utils/displayFilter src/i18n.test.ts` | 36 files, 306 tests green |
+| `vitest run --project unit src/components/sessionsList/SessionsListToolbar.test.tsx` (button placement, chip gating)             | 8 tests green             |
+| `vitest run --project storybook src/components/sessionsList/SessionsListToolbar.stories.tsx` (Chromium, axe)                     | 18 stories green          |
+| `eslint src --max-warnings=0` · `tsc --noEmit` · `tsc --noEmit -p tsconfig.storybook.json` · `stylelint`                         | clean                     |
+
+Screenshots (`docs/storybook/issue-1377-display-filter/`):
+
+| File                                       | Proves                                                                                    |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `13-before-sessions-toolbar.png`           | Before: every kind chip always present, no tune button                                    |
+| `13-after-sessions-toolbar.png`            | After (defaults): the row unchanged apart from the pinned button                          |
+| `14-after-sessions-toolbar-customised.png` | Circle and Supervision pills off: their chips gone, unread/drafts stay, dot on the button |

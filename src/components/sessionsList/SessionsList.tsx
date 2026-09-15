@@ -90,6 +90,52 @@ import { createRefreshThrottle, isRoomInSessions } from './liveListRefresh';
 import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
+import { useResponsive } from '../../hooks/useResponsive';
+import { useDisplayFilter } from '../../hooks/useDisplayFilter';
+import {
+	DisplayFilterDialog,
+	DisplayFilterKindOption,
+	isDisplayFilterCustomised,
+	useDisplayFilterLabels,
+	visiblePillKinds
+} from '../displayFilter';
+import {
+	applyRequestsFilter,
+	applySessionsFilter,
+	classifyRequest,
+	classifySession,
+	isKindShown,
+	REQUEST_KIND_ORDER,
+	SESSION_KIND_CHIP,
+	SESSION_KIND_ORDER,
+	sessionPairId
+} from '../../utils/displayFilter/sessions';
+import { isChatItemUnread } from '../../utils/sessionUnread';
+import {
+	GroupFilterIcon,
+	InternalGroupFilterIcon,
+	LiveChatFilterIcon,
+	MailFilterIcon,
+	SupervisionFilterIcon
+} from './SessionToolbarFilterIcons';
+import { ReactComponent as FutureTimelineKindIcon } from '../../resources/img/icons/calendar.svg';
+import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/display-filter-other.svg';
+
+type KindIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+/** Dialog icons of the Gespräche/Anfragen kinds (#1377 §5.2/§5.3). */
+const SESSION_KIND_ICONS: Record<string, KindIcon> = {
+	oneToOne: MailFilterIcon as unknown as KindIcon,
+	nearby: MailFilterIcon as unknown as KindIcon,
+	liveChat: LiveChatFilterIcon as unknown as KindIcon,
+	internalGroup: InternalGroupFilterIcon as unknown as KindIcon,
+	circle: GroupFilterIcon as unknown as KindIcon,
+	supervision: SupervisionFilterIcon as unknown as KindIcon,
+	futureTimeline: FutureTimelineKindIcon,
+	other: OtherKindIcon
+};
+/** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
+const MIN_VISIBLE_SESSION_ROWS = 10;
+const SESSIONS_DISPLAY_FILTER_DIALOG_ID = 'sessions-display-filter-dialog';
 
 const withDraftScopeParam = (path: string, draftScopeKey: string) => {
 	const [basePath, queryString = ''] = path.split('?');
@@ -310,6 +356,20 @@ export const SessionsList = ({
 	 * The flag is also read inside apiGetConsultantSessionList itself.
 	 */
 	const [liveChatAvailable] = useLiveChatAvailable();
+	// #1377 slices 4/5: the user's display filter for this list.
+	const displayFilterSection =
+		type === SESSION_LIST_TYPES.ENQUIRY ? 'requests' : 'sessions';
+	const {
+		effective: listDisplayFilter,
+		override: listDisplayOverride,
+		canWrite: canEditDisplayFilter,
+		readOnly: displayFilterReadOnly,
+		setSection: setListDisplayOverride,
+		resetSection: resetListDisplayOverride
+	} = useDisplayFilter(displayFilterSection);
+	const displayFilterLabels = useDisplayFilterLabels(displayFilterSection);
+	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
+	const { untilM } = useResponsive();
 
 	const fetchEnquirySessionsWithAutoPage = useCallback(
 		(
@@ -1448,28 +1508,70 @@ export const SessionsList = ({
 			a.label.localeCompare(b.label)
 		);
 	}, [sessionToolbarPairs]);
-	const sessionToolbarFilteredPairs = sessionToolbarPairs.filter(
-		({ raw, extended }) =>
-			sessionMatchesToolbar(
-				raw,
-				extended,
-				sessionToolbarSearch,
-				sessionToolbarChip,
-				sessionToolbarSelectedPeople,
-				visibleUserDrafts,
-				userData?.userId
-			) &&
-			sessionMatchesAgencies(
-				raw,
-				sessionToolbarSelectedAgencies.map(Number)
-			) &&
-			(!sessionToolbarSelectedTopic ||
-				String(
-					(extended?.item?.topic as TopicSessionInterface | null)
-						?.id ?? ''
-				) === sessionToolbarSelectedTopic)
-	);
+	const isSessionListItemActive = (session: ExtendedSessionInterface) =>
+		(session?.rid && session.rid === groupIdFromParam) ||
+		(session?.item?.id !== undefined &&
+			String(session.item.id) === String(sessionIdFromParam || ''));
+	// #1377 §5.2/§5.3: the display filter runs after `filterSessions` and
+	// before the toolbar chip, so the chip refinement composes on top. The
+	// route-active row survives (dimmed) while its kind is hidden.
+	const canSupervise =
+		showConsultantToolbarActions &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const displayFiltered =
+		type === SESSION_LIST_TYPES.ENQUIRY
+			? applyRequestsFilter(sessionToolbarPairs, listDisplayFilter, {
+					isActive: isSessionListItemActive
+				})
+			: type === SESSION_LIST_TYPES.MY_SESSION
+				? applySessionsFilter(sessionToolbarPairs, listDisplayFilter, {
+						currentUserId: userData?.userId,
+						canSupervise,
+						isActive: isSessionListItemActive
+					})
+				: {
+						visible: sessionToolbarPairs,
+						hiddenActiveIds: new Set<string>()
+					};
+	const displayVisiblePairs = displayFiltered.visible;
+	const hiddenActiveRowIds = displayFiltered.hiddenActiveIds;
+	const displayFilterHiddenCount =
+		sessionToolbarPairs.length - displayVisiblePairs.length;
+	const toolbarMatches = ({
+		raw,
+		extended
+	}: {
+		raw: ListItemInterface;
+		extended: ExtendedSessionInterface;
+	}) =>
+		sessionMatchesToolbar(
+			raw,
+			extended,
+			sessionToolbarSearch,
+			sessionToolbarChip,
+			sessionToolbarSelectedPeople,
+			visibleUserDrafts,
+			userData?.userId
+		) &&
+		sessionMatchesAgencies(
+			raw,
+			sessionToolbarSelectedAgencies.map(Number)
+		) &&
+		(!sessionToolbarSelectedTopic ||
+			String(
+				(extended?.item?.topic as TopicSessionInterface | null)?.id ??
+					''
+			) === sessionToolbarSelectedTopic);
+	const sessionToolbarFilteredPairs =
+		displayVisiblePairs.filter(toolbarMatches);
 	const sortedSessions = sessionToolbarFilteredPairs
+		.map(({ extended }) => extended)
+		.sort(sortSessions);
+	// The future panel is gated by its own show-only kind, never by the row
+	// filter (§5.2): its input is the toolbar-matched set BEFORE the display
+	// filter, so hiding "Circles" does not remove the panel.
+	const futureSourceSessions = sessionToolbarPairs
+		.filter(toolbarMatches)
 		.map(({ extended }) => extended)
 		.sort(sortSessions);
 	const handleCaseHandoverSelect = useCallback((sessionId: number) => {
@@ -1566,15 +1668,158 @@ export const SessionsList = ({
 		visibleUserDrafts
 	]);
 	const visibleListItemCount = sortedSessions.length + unmatchedDrafts.length;
+	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
+	// excluded from the chip counts", §6.2 "don't count hidden chats").
+	const unreadByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		displayVisiblePairs.forEach(({ raw, extended }) => {
+			if (hiddenActiveRowIds.has(sessionPairId({ raw, extended }))) {
+				return;
+			}
+			if (!isChatItemUnread(raw.chat ?? raw.session)) {
+				return;
+			}
+			const kind =
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? classifyRequest(raw, extended)
+					: classifySession(
+							raw,
+							extended,
+							userData?.userId,
+							canSupervise
+						);
+			counts[kind] = (counts[kind] ?? 0) + 1;
+		});
+		return counts;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		displayVisiblePairs,
+		hiddenActiveRowIds,
+		type,
+		userData?.userId,
+		canSupervise,
+		unreadVersion
+	]);
+	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
+		const order =
+			type === SESSION_LIST_TYPES.ENQUIRY
+				? REQUEST_KIND_ORDER
+				: SESSION_KIND_ORDER;
+		const listed = (kind: string): boolean => {
+			switch (kind) {
+				case 'liveChat':
+					return liveChatAvailable;
+				case 'internalGroup':
+					return showInternalGroupChip;
+				case 'circle':
+				case 'futureTimeline':
+					return showGroupChip;
+				case 'supervision':
+					return canSupervise;
+				default:
+					return true;
+			}
+		};
+		const label = (kind: string): string => {
+			switch (kind) {
+				case 'other':
+					return translate('notifications.displayFilter.otherKind');
+				case 'futureTimeline':
+					return translate('groupChat.futureTimeline.ariaLabel');
+				case 'circle':
+					return translate('sessionList.toolbar.chips.groups');
+				default:
+					return translate(`sessionList.toolbar.chips.${kind}`);
+			}
+		};
+		return order.filter(listed).map((kind) => ({
+			id: kind,
+			label: label(kind),
+			icon: SESSION_KIND_ICONS[kind],
+			unreadCount: unreadByKind[kind] ?? 0,
+			showOnly: kind === 'futureTimeline'
+		}));
+	}, [
+		canSupervise,
+		liveChatAvailable,
+		showGroupChip,
+		showInternalGroupChip,
+		translate,
+		type,
+		unreadByKind
+	]);
+	const displayFilterCustomised = isDisplayFilterCustomised(
+		listDisplayFilter,
+		displayFilterKinds
+	);
+	// Kind chips are user-gated (§5.1): pill on and unread rows, or active.
+	const hiddenKindChips = React.useMemo(() => {
+		const activeKind =
+			displayFilterKinds.find(
+				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
+			)?.id ?? null;
+		const shown = new Set(
+			visiblePillKinds(
+				listDisplayFilter,
+				displayFilterKinds,
+				activeKind
+			).map((kind) => kind.id)
+		);
+		const hidden: Partial<Record<SessionToolbarChipFilter, boolean>> = {};
+		displayFilterKinds.forEach((kind) => {
+			const chip = SESSION_KIND_CHIP[kind.id];
+			if (chip && !shown.has(kind.id)) {
+				hidden[chip] = true;
+			}
+		});
+		return hidden;
+	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip]);
 	const toolbarChipCounts = React.useMemo(() => {
 		// Unread is derived from the Matrix client (#1147); `unreadVersion`
 		// re-runs this memo when notification counts or receipts change.
-		return {
-			unread: countUnreadSessions(finalSessionsList),
+		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
+			unread: countUnreadSessions(displayVisiblePairs.map((p) => p.raw)),
 			drafts: visibleUserDrafts.length
 		};
+		Object.entries(unreadByKind).forEach(([kind, count]) => {
+			const chip = SESSION_KIND_CHIP[kind];
+			if (chip) {
+				counts[chip] = (counts[chip] ?? 0) + count;
+			}
+		});
+		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [finalSessionsList, visibleUserDrafts.length, unreadVersion]);
+	}, [
+		displayVisiblePairs,
+		unreadByKind,
+		visibleUserDrafts.length,
+		unreadVersion
+	]);
+	// A page can be entirely hidden (§5.2): keep paging until enough shows.
+	useEffect(() => {
+		if (
+			!showMySessionToolbar ||
+			displayFilterHiddenCount === 0 ||
+			displayVisiblePairs.length >= MIN_VISIBLE_SESSION_ROWS ||
+			isLoading ||
+			isRequestInProgress ||
+			isReloadButtonVisible ||
+			totalItems <= currentOffset + SESSION_COUNT
+		) {
+			return;
+		}
+		loadMoreSessions();
+	}, [
+		currentOffset,
+		displayFilterHiddenCount,
+		displayVisiblePairs.length,
+		isLoading,
+		isReloadButtonVisible,
+		isRequestInProgress,
+		loadMoreSessions,
+		showMySessionToolbar,
+		totalItems
+	]);
 	useEffect(() => {
 		setSessionListViewState(type, {
 			ready: !isLoading,
@@ -1617,13 +1862,9 @@ export const SessionsList = ({
 		showMySessionToolbar &&
 		finalSessionsList.length > 0 &&
 		visibleListItemCount === 0;
-	const isSessionListItemActive = (session: ExtendedSessionInterface) =>
-		(session?.rid && session.rid === groupIdFromParam) ||
-		(session?.item?.id !== undefined &&
-			String(session.item.id) === String(sessionIdFromParam || ''));
 	const futureTimelineSeries = React.useMemo(
 		() =>
-			sortedSessions
+			futureSourceSessions
 				.filter(
 					(session) =>
 						session.isGroup &&
@@ -1637,7 +1878,8 @@ export const SessionsList = ({
 							? session.item.topic
 							: session.item.topic?.name || 'Group chat'
 				})),
-		[sortedSessions, userData]
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[futureSourceSessions, userData]
 	);
 	const handleDuplicateOccurrence = React.useCallback(
 		(occurrence: ChatOccurrence, topic: string) => {
@@ -1701,6 +1943,16 @@ export const SessionsList = ({
 					}
 					createGroupChatActive={isCreateChatActive}
 					chipCounts={toolbarChipCounts}
+					hiddenKindChips={hiddenKindChips}
+					displayFilter={{
+						label: displayFilterLabels.buttonLabel,
+						customisedLabel:
+							displayFilterLabels.buttonCustomisedLabel,
+						customised: displayFilterCustomised,
+						open: displayFilterOpen,
+						controlsId: SESSIONS_DISPLAY_FILTER_DIALOG_ID,
+						onOpen: () => setDisplayFilterOpen(true)
+					}}
 					searchAgencyResults={toolbarSearchAgencyResults}
 					selectedAgencyIds={sessionToolbarSelectedAgencies}
 					onSelectedAgencyIdsChange={
@@ -1756,14 +2008,37 @@ export const SessionsList = ({
 					}
 				/>
 			)}
-			{showMySessionToolbar && futureTimelineSeries.length > 0 && (
-				<FutureTimelinePanel
-					series={futureTimelineSeries}
-					consultantId={userData.userId}
-					includeAppointments={sessionToolbarChip === null}
-					onDuplicateOccurrence={handleDuplicateOccurrence}
+			{showMySessionToolbar && (
+				<DisplayFilterDialog
+					id={SESSIONS_DISPLAY_FILTER_DIALOG_ID}
+					open={displayFilterOpen}
+					fullScreen={untilM}
+					onClose={() => setDisplayFilterOpen(false)}
+					kinds={displayFilterKinds}
+					value={listDisplayFilter}
+					canReset={listDisplayOverride !== null}
+					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
+					showAutoRead={type === SESSION_LIST_TYPES.MY_SESSION}
+					onChange={setListDisplayOverride}
+					onReset={resetListDisplayOverride}
+					onOpenProfile={() => {
+						setDisplayFilterOpen(false);
+						navigate('/profile/notifications/browser');
+					}}
+					labels={displayFilterLabels.dialogLabels}
 				/>
 			)}
+			{showMySessionToolbar &&
+				futureTimelineSeries.length > 0 &&
+				(type !== SESSION_LIST_TYPES.MY_SESSION ||
+					isKindShown(listDisplayFilter, 'futureTimeline')) && (
+					<FutureTimelinePanel
+						series={futureTimelineSeries}
+						consultantId={userData.userId}
+						includeAppointments={sessionToolbarChip === null}
+						onDuplicateOccurrence={handleDuplicateOccurrence}
+					/>
+				)}
 			{showCaseHandoverBatchUi &&
 				caseHandoverBatchMode &&
 				caseHandoverBatchSummary &&
@@ -1866,51 +2141,71 @@ export const SessionsList = ({
 									key={activeSession.item.id}
 									activeSession={activeSession}
 								>
-									<SessionListItemComponent
-										defaultLanguage={defaultLanguage}
-										itemRef={(el) =>
-											(ref_list_array.current[index] = el)
-										}
-										handleKeyDownLisItemContent={(e) =>
-											handleKeyDownLisItemContent(
-												e,
-												index
-											)
-										}
-										index={index}
-										isBeforeActive={
-											!!sortedSessions[index + 1] &&
-											isSessionListItemActive(
-												sortedSessions[index + 1]
-											)
-										}
-										isAfterActive={
-											!!sortedSessions[index - 1] &&
-											isSessionListItemActive(
-												sortedSessions[index - 1]
-											)
-										}
-										caseHandoverBatchMode={
-											caseHandoverBatchMode
-										}
-										caseHandoverSelected={caseHandoverSelectedIds.includes(
-											activeSession.item.id
+									<div
+										className={clsx(
+											hiddenActiveRowIds.has(
+												String(activeSession.item.id)
+											) && 'sessionsList__hiddenActiveRow'
 										)}
-										onCaseHandoverSelect={
-											handleCaseHandoverSelect
+										title={
+											hiddenActiveRowIds.has(
+												String(activeSession.item.id)
+											)
+												? translate(
+														'notifications.displayFilter.hiddenActiveRow'
+													)
+												: undefined
 										}
-										onCaseHandoverBatchStart={() => {
-											setCaseHandoverBatchMode(true);
-											setCaseHandoverReviewOpen(false);
-											setCaseHandoverBatchSummary('');
-										}}
-										onCaseHandoverBatchConfirm={() =>
-											setCaseHandoverReviewOpen(true)
-										}
-										onCaseHandoverBatchClose={
-											handleCloseCaseHandoverBatch
-										}
-									/>
+									>
+										<SessionListItemComponent
+											defaultLanguage={defaultLanguage}
+											itemRef={(el) =>
+												(ref_list_array.current[index] =
+													el)
+											}
+											handleKeyDownLisItemContent={(e) =>
+												handleKeyDownLisItemContent(
+													e,
+													index
+												)
+											}
+											index={index}
+											isBeforeActive={
+												!!sortedSessions[index + 1] &&
+												isSessionListItemActive(
+													sortedSessions[index + 1]
+												)
+											}
+											isAfterActive={
+												!!sortedSessions[index - 1] &&
+												isSessionListItemActive(
+													sortedSessions[index - 1]
+												)
+											}
+											caseHandoverBatchMode={
+												caseHandoverBatchMode
+											}
+											caseHandoverSelected={caseHandoverSelectedIds.includes(
+												activeSession.item.id
+											)}
+											onCaseHandoverSelect={
+												handleCaseHandoverSelect
+											}
+											onCaseHandoverBatchStart={() => {
+												setCaseHandoverBatchMode(true);
+												setCaseHandoverReviewOpen(
+													false
+												);
+												setCaseHandoverBatchSummary('');
+											}}
+											onCaseHandoverBatchConfirm={() =>
+												setCaseHandoverReviewOpen(true)
+											}
+											onCaseHandoverBatchClose={
+												handleCloseCaseHandoverBatch
+											}
+										/>
+									</div>
 								</ActiveSessionProvider>
 							)
 						)}

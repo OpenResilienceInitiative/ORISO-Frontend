@@ -292,6 +292,11 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// #1377 §5.2: the route-active row stays while its kind is hidden.
+	&__hiddenActiveRow {
+		opacity: 0.55;
+	}
+
 	&__scrollContainer {
 		padding-top: 16px;
 		overflow: auto;

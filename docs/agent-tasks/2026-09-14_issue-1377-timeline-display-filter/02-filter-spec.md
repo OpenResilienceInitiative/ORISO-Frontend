@@ -219,7 +219,10 @@ Rules:
 Rules:
 
 - A kind that the tenant does not enable is not listed (same gating as the
-  chips, `SessionsListToolbar.tsx:392-415`).
+  chips, `SessionsListToolbar.tsx:392-415`). Implemented (slice 4) in
+  `SessionsList.displayFilterKinds`: live chat needs the availability
+  toggle, internal groups the supervision feature, circles and the future
+  timeline the group-chat feature, supervision the viewer eligibility.
 - The active session is never hidden while it is open: hiding "Circles" while
   a circle is the active route keeps that one row visible and dims it, with the
   tooltip "Hidden by your display filter". Leaving the room removes it. This

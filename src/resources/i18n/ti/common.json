@@ -1843,6 +1843,7 @@
 			"profileLink": "ቀዋሚ ኣቐምጣታትን ተወሳኺ ኣማራጺታትን ኣብ መግለጺ › መፍለጢታት",
 			"readOnlyHint": "እዞም ኣቐምጣታት ብሓድሽ ስሪት መተግበሪ ተዓቂቦም። ንምቕያር በጃኹም መተግበሪ ኣሐድሱ።",
 			"badgeHiddenHint": "ክሳብ {{count}} ተሓቢኡ",
+			"hiddenActiveRow": "ብናይ ምርኣይ መጻረዪኹም ተሓቢኡ",
 			"otherKind": "ካልእ",
 			"sections": {
 				"timeline": "መስመር ግዜ",

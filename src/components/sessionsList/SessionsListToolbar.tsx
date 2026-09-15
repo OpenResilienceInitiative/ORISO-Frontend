@@ -27,6 +27,18 @@ import {
 	filterSearchPeople,
 	SessionSearchPersonResult
 } from './sessionSearchPeople';
+import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
+import '../displayFilter/displayFilter.styles.scss';
+
+/** The pinned tune button at the right end of the chip row (#1377 §3). */
+export interface SessionsToolbarDisplayFilterProps {
+	label: string;
+	customisedLabel: string;
+	customised: boolean;
+	open: boolean;
+	controlsId: string;
+	onOpen: () => void;
+}
 
 export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 export type {
@@ -83,6 +95,14 @@ interface SessionsListToolbarProps {
 	/** Create-group-chat route is open. */
 	createGroupChatActive: boolean;
 	chipCounts?: Partial<Record<SessionToolbarChipFilter, number>>;
+	/** Renders the display-filter button when given (#1377 slice 4/5). */
+	displayFilter?: SessionsToolbarDisplayFilterProps;
+	/**
+	 * Kind chips the display filter suppresses (#1377 §5.1 user-gated
+	 * chips: pill off, or no unread rows and not active). `unread`/`drafts`
+	 * are not kinds and are never listed here.
+	 */
+	hiddenKindChips?: Partial<Record<SessionToolbarChipFilter, boolean>>;
 }
 
 export const IconMenuDots = () => (
@@ -284,7 +304,9 @@ export const SessionsListToolbar = ({
 	archiveTabPath,
 	archiveTabActive,
 	createGroupChatActive,
-	chipCounts = {}
+	chipCounts = {},
+	displayFilter,
+	hiddenKindChips = {}
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -392,6 +414,9 @@ export const SessionsListToolbar = ({
 	const visibleFilterChips = React.useMemo(
 		() =>
 			FILTER_CHIPS.filter((chip) => {
+				if (hiddenKindChips[chip.id]) {
+					return false;
+				}
 				if (chip.id === 'liveChat') {
 					return showLiveChatChip;
 				}
@@ -407,6 +432,7 @@ export const SessionsListToolbar = ({
 				return true;
 			}),
 		[
+			hiddenKindChips,
 			showGroupChip,
 			showInternalGroupChip,
 			showLiveChatChip,
@@ -640,67 +666,86 @@ export const SessionsListToolbar = ({
 			</div>
 
 			<div
-				className="sessionsListToolbar__chipsScroll"
-				data-cy="sessions-list-chips"
+				className="filterChipRow"
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
 			>
-				<div className="sessionsListToolbar__chipsRow">
-					{showCreateGroupChatAction && (
-						<Link
-							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--active':
-									createGroupChatActive
-							})}
-							to={createGroupChatPath}
-							aria-label={translate(
-								'sessionList.createChat.buttonTitle'
-							)}
-							aria-current={
-								createGroupChatActive ? 'page' : undefined
-							}
-							data-cy="sessions-list-chip-create"
-							data-tour-target="groupchat-create-button"
-						>
-							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span className="sessionsListToolbar__chipLabel">
-								{tr(
-									'sessionList.toolbar.chips.create',
-									'Create'
+				<div
+					className="sessionsListToolbar__chipsScroll filterChipRow__scroll"
+					data-cy="sessions-list-chips"
+				>
+					<div className="sessionsListToolbar__chipsRow">
+						{showCreateGroupChatAction && (
+							<Link
+								className={clsx('sessionsListToolbar__chip', {
+									'sessionsListToolbar__chip--active':
+										createGroupChatActive
+								})}
+								to={createGroupChatPath}
+								aria-label={translate(
+									'sessionList.createChat.buttonTitle'
 								)}
-							</span>
-						</Link>
-					)}
-					{filterChipsBeforeArchive.map(renderFilterChip)}
-					{showConsultantActions && (
-						<Link
-							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--iconOnly':
-									!archiveTabActive,
-								'sessionsListToolbar__chip--active':
-									archiveTabActive
-							})}
-							data-tour-target="sessions-archive-tab"
-							to={archiveTabPath}
-							aria-label={translate(
-								'sessionList.view.archive.tab'
-							)}
-							aria-current={archiveTabActive ? 'page' : undefined}
-							data-cy="sessions-list-chip-archive"
-						>
-							<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span
-								className="sessionsListToolbar__chipLabel"
-								aria-hidden={!archiveTabActive}
+								aria-current={
+									createGroupChatActive ? 'page' : undefined
+								}
+								data-cy="sessions-list-chip-create"
+								data-tour-target="groupchat-create-button"
 							>
-								{tr(
-									'sessionList.toolbar.chips.archive',
-									'Archived'
+								<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
+								<span className="sessionsListToolbar__chipLabel">
+									{tr(
+										'sessionList.toolbar.chips.create',
+										'Create'
+									)}
+								</span>
+							</Link>
+						)}
+						{filterChipsBeforeArchive.map(renderFilterChip)}
+						{showConsultantActions && (
+							<Link
+								className={clsx('sessionsListToolbar__chip', {
+									'sessionsListToolbar__chip--iconOnly':
+										!archiveTabActive,
+									'sessionsListToolbar__chip--active':
+										archiveTabActive
+								})}
+								data-tour-target="sessions-archive-tab"
+								to={archiveTabPath}
+								aria-label={translate(
+									'sessionList.view.archive.tab'
 								)}
-							</span>
-						</Link>
-					)}
-					{filterChipsAfterArchive.map(renderFilterChip)}
+								aria-current={
+									archiveTabActive ? 'page' : undefined
+								}
+								data-cy="sessions-list-chip-archive"
+							>
+								<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
+								<span
+									className="sessionsListToolbar__chipLabel"
+									aria-hidden={!archiveTabActive}
+								>
+									{tr(
+										'sessionList.toolbar.chips.archive',
+										'Archived'
+									)}
+								</span>
+							</Link>
+						)}
+						{filterChipsAfterArchive.map(renderFilterChip)}
+					</div>
 				</div>
+				{displayFilter && (
+					<div className="filterChipRow__trailing">
+						<DisplayFilterButton
+							label={displayFilter.label}
+							customised={displayFilter.customised}
+							customisedLabel={displayFilter.customisedLabel}
+							open={displayFilter.open}
+							controlsId={displayFilter.controlsId}
+							onClick={displayFilter.onOpen}
+							data-cy="sessions-list-display-filter"
+						/>
+					</div>
+				)}
 			</div>
 		</div>
 	);
