@@ -666,6 +666,8 @@ export const NotificationsCenter = () => {
 		[
 			visibleFeed,
 			activeFamily,
+			timelineFilter,
+			timelineKinds,
 			searchQuery,
 			unreadOnly,
 			translate,
