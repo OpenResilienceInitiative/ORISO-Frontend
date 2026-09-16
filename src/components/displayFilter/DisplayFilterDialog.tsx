@@ -1,11 +1,14 @@
 import * as React from 'react';
 import { useId } from 'react';
 import TuneIcon from '@mui/icons-material/Tune';
+import clsx from 'clsx';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import {
+	ChipView,
 	DisplayFilterKindOption,
-	DisplayFilterValue
+	DisplayFilterValue,
+	resolveChipPresentation
 } from './displayFilterTypes';
 import { DisplayFilterKindTable } from './DisplayFilterKindTable';
 import './displayFilter.styles.scss';
@@ -32,6 +35,15 @@ export interface DisplayFilterDialogLabels {
 	profileLink: string;
 	/** Shown instead of the rows' controls when the store is read-only (newer version). */
 	readOnlyHint: string;
+	/** "Ansicht der Pillen" — legend of the view radio group. */
+	viewTitle: string;
+	viewIcons: string;
+	viewText: string;
+	/** "Ungelesenes nach links sortieren" */
+	autoSort: string;
+	autoSortDescription: string;
+	/** Row hint of a kind the Träger switched off while rows still exist. */
+	deactivatedHint: string;
 }
 
 export interface DisplayFilterDialogProps {
@@ -84,6 +96,8 @@ export const DisplayFilterDialog = ({
 }: DisplayFilterDialogProps) => {
 	const generatedId = useId();
 	const dialogId = id ?? generatedId;
+	const presentation = resolveChipPresentation(value);
+	const setView = (view: ChipView) => onChange({ ...value, view });
 
 	return (
 		<M3Dialog
@@ -126,6 +140,73 @@ export const DisplayFilterDialog = ({
 				labels={labels}
 				idPrefix={dialogId}
 			/>
+
+			<fieldset
+				className="displayFilterDialog__view"
+				data-cy="display-filter-view"
+			>
+				<legend className="displayFilterDialog__viewTitle">
+					{labels.viewTitle}
+				</legend>
+				<div
+					className="displayFilterDialog__viewOptions"
+					role="radiogroup"
+					aria-label={labels.viewTitle}
+				>
+					{(['icons', 'text'] as ChipView[]).map((view) => (
+						<label
+							key={view}
+							className={clsx(
+								'displayFilterDialog__viewOption',
+								presentation.view === view &&
+									'displayFilterDialog__viewOption--selected'
+							)}
+						>
+							<input
+								type="radio"
+								name={`${dialogId}-view`}
+								value={view}
+								checked={presentation.view === view}
+								disabled={readOnly}
+								onChange={() => setView(view)}
+								data-cy={`display-filter-view-${view}`}
+							/>
+							<span>
+								{view === 'icons'
+									? labels.viewIcons
+									: labels.viewText}
+							</span>
+						</label>
+					))}
+				</div>
+			</fieldset>
+
+			<div className="displayFilterDialog__autoRead">
+				<div className="displayFilterDialog__autoReadText">
+					<span
+						className="displayFilterDialog__autoReadTitle"
+						id={`${dialogId}-autosort`}
+					>
+						{labels.autoSort}
+					</span>
+					<span
+						className="displayFilterDialog__autoReadDescription"
+						id={`${dialogId}-autosort-desc`}
+					>
+						{labels.autoSortDescription}
+					</span>
+				</div>
+				<Switch
+					checked={presentation.autoSort}
+					disabled={readOnly}
+					aria-labelledby={`${dialogId}-autosort`}
+					aria-describedby={`${dialogId}-autosort-desc`}
+					data-cy="display-filter-autosort"
+					onChange={(checked) =>
+						onChange({ ...value, autoSort: checked })
+					}
+				/>
+			</div>
 
 			{showAutoRead && (
 				<div className="displayFilterDialog__autoRead">

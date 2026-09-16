@@ -20,6 +20,8 @@ export interface DisplayFilterKindTableLabels {
 	pillKind: (kindLabel: string) => string;
 	otherFixed: string;
 	pillNotApplicable: string;
+	/** Row hint of a kind the Träger switched off while rows still exist. */
+	deactivatedHint: string;
 }
 
 export interface DisplayFilterKindTableProps {
@@ -66,13 +68,23 @@ export const DisplayFilterKindTable = ({
 			{kinds.map((kind) => {
 				const setting = resolveKindSetting(value, kind.id);
 				const isOther = kind.id === OTHER_KIND_ID;
+				// Träger switched the format off, rows still exist: keep the
+				// kind visible and its controls locked so nothing vanishes
+				// silently; the hint explains and the chip's click does too.
+				const deactivated = kind.availability === 'deactivated';
+				const hintId = isOther
+					? `${idPrefix}-other-fixed`
+					: deactivated
+						? `${idPrefix}-${kind.id}-deactivated`
+						: undefined;
 				const Icon = kind.icon;
 				return (
 					<tr
 						key={kind.id}
 						className={clsx(
 							'displayFilterDialog__row',
-							!setting.show && 'displayFilterDialog__row--hidden'
+							!setting.show && 'displayFilterDialog__row--hidden',
+							deactivated && 'displayFilterDialog__row--deactivated'
 						)}
 						data-cy={`${dataCyPrefix}-row-${kind.id}`}
 					>
@@ -93,6 +105,14 @@ export const DisplayFilterKindTable = ({
 										{labels.otherFixed}
 									</span>
 								)}
+								{deactivated && !isOther && (
+									<span
+										className="displayFilterDialog__kindHint"
+										id={`${idPrefix}-${kind.id}-deactivated`}
+									>
+										{labels.deactivatedHint}
+									</span>
+								)}
 							</span>
 						</th>
 						<td className="displayFilterDialog__cell">
@@ -101,12 +121,8 @@ export const DisplayFilterKindTable = ({
 								indeterminate={Boolean(
 									setting.show && kind.partial
 								)}
-								disabled={readOnly || isOther}
-								describedBy={
-									isOther
-										? `${idPrefix}-other-fixed`
-										: undefined
-								}
+								disabled={readOnly || isOther || deactivated}
+								describedBy={hintId}
 								hideLabel
 								label={labels.showKind(kind.label)}
 								dataCy={`${dataCyPrefix}-show-${kind.id}`}
@@ -135,7 +151,9 @@ export const DisplayFilterKindTable = ({
 							) : (
 								<M3Checkbox
 									checked={setting.pill}
-									disabled={readOnly || !setting.show}
+									disabled={
+										readOnly || !setting.show || deactivated
+									}
 									hideLabel
 									label={labels.pillKind(kind.label)}
 									dataCy={`${dataCyPrefix}-pill-${kind.id}`}

@@ -57,7 +57,15 @@ export const useDisplayFilterLabels = (
 				done: t('notifications.displayFilter.done'),
 				close: t('app.close'),
 				profileLink: t('notifications.displayFilter.profileLink'),
-				readOnlyHint: t('notifications.displayFilter.readOnlyHint')
+				readOnlyHint: t('notifications.displayFilter.readOnlyHint'),
+				viewTitle: t('notifications.displayFilter.viewTitle'),
+				viewIcons: t('notifications.displayFilter.viewIcons'),
+				viewText: t('notifications.displayFilter.viewText'),
+				autoSort: t('notifications.displayFilter.autoSort'),
+				autoSortDescription: t(
+					'notifications.displayFilter.autoSortDescription'
+				),
+				deactivatedHint: t('notifications.displayFilter.deactivatedHint')
 			}
 		}),
 		[section, t]

@@ -57,5 +57,13 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	profileLink:
 		'Standards und weitere Optionen in Profil › Benachrichtigungen',
 	readOnlyHint:
-		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.'
+		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.',
+	viewTitle: 'Ansicht der Pillen',
+	viewIcons: 'Icons',
+	viewText: 'Text',
+	autoSort: 'Ungelesenes nach links sortieren',
+	autoSortDescription:
+		'Pillen mit ungelesenen Einträgen rücken an den Anfang der Reihe.',
+	deactivatedHint:
+		'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.'
 };

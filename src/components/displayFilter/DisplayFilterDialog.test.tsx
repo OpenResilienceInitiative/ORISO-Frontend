@@ -95,7 +95,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 		expect(document.getElementById(hintId as string)?.textContent).toBe(
 			STORY_LABELS.otherFixed
 		);
-		const autoRead = screen.getByRole('switch');
+		const autoRead = screen.getByRole('switch', { name: STORY_LABELS.autoRead });
 		// The scope/privacy qualification is programmatically attached.
 		const descId = autoRead.getAttribute('aria-describedby');
 		expect(descId).not.toBeNull();
@@ -157,7 +157,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 
 	it('omits auto-read for sections without it', () => {
 		render(<Harness onValue={() => undefined} showAutoRead={false} />);
-		expect(screen.queryByRole('switch')).toBeNull();
+		expect(screen.queryByRole('switch', { name: STORY_LABELS.autoRead })).toBeNull();
 	});
 
 	it('disables reset while nothing is customised', () => {
@@ -183,5 +183,72 @@ describe('DisplayFilterDialog (#1377)', () => {
 			'display-filter-reset'
 		) as HTMLButtonElement;
 		expect(reset.disabled).toBe(true);
+	});
+});
+
+describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-16)', () => {
+	afterEach(cleanup);
+
+	it('lets the user pick the chip view and auto-sort, stored on the section value', () => {
+		const onValue = vi.fn();
+		render(<Harness onValue={onValue} />);
+		const textView = screen.getByRole('radio', { name: 'Text' });
+		const iconsView = screen.getByRole('radio', { name: 'Icons' });
+		expect((iconsView as HTMLInputElement).checked).toBe(true);
+		fireEvent.click(textView);
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).view
+		).toBe('text');
+		const autoSort = screen.getByRole('switch', {
+			name: 'Ungelesenes nach links sortieren'
+		});
+		expect((autoSort as HTMLInputElement).checked).toBe(true);
+		fireEvent.click(autoSort);
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).autoSort
+		).toBe(false);
+	});
+
+	it('locks a deactivated kind (format off, rows exist) and explains why', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[
+					{ id: 'oneToOne', label: 'Mail', unreadCount: 0 },
+					{
+						id: 'circle',
+						label: 'Gesprächskreis',
+						unreadCount: 2,
+						availability: 'deactivated'
+					}
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				onChange={() => undefined}
+			/>
+		);
+		const show = screen.getByRole('checkbox', {
+			name: 'Anzeigen: Gesprächskreis'
+		}) as HTMLInputElement;
+		const pill = screen.getByRole('checkbox', {
+			name: 'Pille: Gesprächskreis'
+		}) as HTMLInputElement;
+		expect(show.disabled).toBe(true);
+		expect(show.checked).toBe(true);
+		expect(pill.disabled).toBe(true);
+		const hint = screen.getByText(
+			'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.'
+		);
+		expect(show.getAttribute('aria-describedby')).toBe(hint.id);
+		// The available kind next to it is untouched.
+		expect(
+			(
+				screen.getByRole('checkbox', {
+					name: 'Anzeigen: Mail'
+				}) as HTMLInputElement
+			).disabled
+		).toBe(false);
 	});
 });
