@@ -35,7 +35,7 @@ describe('displayFilterTypes (#1377)', () => {
 		});
 	});
 
-	it('drops the pill when a kind is hidden, and restores it independently', () => {
+	it('reports no pill while a kind is hidden, and brings the pill back when it is shown again', () => {
 		const hidden = setKindSetting(EMPTY_DISPLAY_FILTER, 'drafts', {
 			show: false
 		});
@@ -43,12 +43,25 @@ describe('displayFilterTypes (#1377)', () => {
 			show: false,
 			pill: false
 		});
+		// hide → show is a round trip: nothing else changed for the user.
+		const shownAgain = setKindSetting(hidden, 'drafts', { show: true });
+		expect(resolveKindSetting(shownAgain, 'drafts')).toEqual({
+			show: true,
+			pill: true
+		});
+		expect(isDisplayFilterCustomised(shownAgain, ['drafts'])).toBe(false);
+	});
+
+	it('keeps a pill switched off across hide → show', () => {
+		const pillOff = setKindSetting(EMPTY_DISPLAY_FILTER, 'drafts', {
+			pill: false
+		});
+		const hidden = setKindSetting(pillOff, 'drafts', { show: false });
 		const shownAgain = setKindSetting(hidden, 'drafts', { show: true });
 		expect(resolveKindSetting(shownAgain, 'drafts')).toEqual({
 			show: true,
 			pill: false
 		});
-		expect(isDisplayFilterCustomised(shownAgain, ['drafts'])).toBe(true);
 	});
 
 	it('counts profile-owned partial hiding as customised', () => {
@@ -84,10 +97,16 @@ describe('displayFilterTypes (#1377)', () => {
 			show: false
 		});
 		expect(isDisplayFilterCustomised(hidden, [kind])).toBe(true);
-		// hide → show leaves `pill: false` behind; it has no effect here.
 		const shownAgain = setKindSetting(hidden, kind.id, { show: true });
 		expect(isDisplayFilterCustomised(shownAgain, [kind])).toBe(false);
-		expect(isDisplayFilterCustomised(shownAgain, [kind.id])).toBe(true);
+		// A stale `pill: false` written by an older client must not count
+		// for a show-only kind either.
+		const stale = {
+			kinds: { [kind.id]: { show: true, pill: false } },
+			autoReadHidden: false
+		};
+		expect(isDisplayFilterCustomised(stale, [kind])).toBe(false);
+		expect(isDisplayFilterCustomised(stale, [kind.id])).toBe(true);
 	});
 
 	it('marks auto-read alone as customised', () => {
