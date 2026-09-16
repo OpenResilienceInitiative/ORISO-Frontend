@@ -138,3 +138,27 @@ controls. TDD red → green per slice; Storybook play tests green (55),
   (preview + menu), B: on/off per row + one tone select for the list. Not
   implemented yet; waiting for Frank's pick. Today `KindSetting.sound` is a
   boolean mute; A would turn it into a `SoundId | false`.
+
+### 2026-09-16, fifth round (Frank picked proposal A)
+
+- **Tone per kind** in Gespräche/Anfragen: `KindOptionPicker` (the
+  `SplitButton` in a new `size="small"` 32 px form + MUI menu) — main
+  segment previews the tone, arrow opens the menu: area default, ring tone,
+  Ton 1–12, muted. `KindSetting.sound` is a `SoundId` now (`'none'` = muted;
+  legacy boolean `false` parses to `'none'`). `NotificationsProvider` passes
+  `soundOverrideForEvent` into `playNotificationSound(…, override)`.
+- **Live-chat pill modes** (same picker in the Anzeigen column): dynamic
+  (follows availability, default), pinned (`KindSetting.fixed`), off. Live
+  chat is always listed now; the toolbar shows the chip when available OR
+  pinned.
+- **Archiv** is a pill-only kind in Gespräche whose pill drives the Archiv
+  link (`showArchiveChip`); **Termine** is a greyed placeholder row
+  ("Kommt bald.").
+- **Wording**: button "Ansicht einstellen" / "Ansicht angepasst", dialog
+  title "Ansicht · <Liste>", description mentions tones. The button in the
+  search field shows the list's own icon (inbox / chats / activity).
+- All pickers in a column share one width (128 px) and truncate.
+- Separate branch by a sub-agent: `fix/live-chat-active-session-lost`
+  (route-active row survives the chip axis; live-chat chip visible while a
+  live chat is open) — see its commit message; the rail button's toggle vs.
+  navigate behaviour is left as a product decision.
