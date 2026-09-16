@@ -633,8 +633,14 @@ body.conversationCreate--active .navigation__wrapper {
 	}
 }
 
-/* Visible keyboard focus across the flow. */
+/*
+ * Visible keyboard focus across the flow. The rule editor is listed in its own
+ * right because it is also mounted outside the panel — on its own card, and in
+ * its story — where an ancestor selector would leave it on the browser's
+ * default ring.
+ */
 .conversationCreate button:focus-visible,
+.ruleChipsEditor button:focus-visible,
 .personSelectMenu__row:focus-visible,
 .personChipGrid__remove:focus-visible {
 	outline: 3px solid $cc-primary;
