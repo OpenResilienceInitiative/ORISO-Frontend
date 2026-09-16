@@ -162,10 +162,28 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			@include list-item-active-menu-border($important: true);
 		}
 
-		// Keep the trigger geometry stable when its menu opens.
+		/*
+		 * The open trigger carries the primary role, its dots the
+		 * on-primary-container role (Frank, 15.09.2026). Geometry stays put
+		 * so the card does not twitch when the menu opens.
+		 */
 		.sessionsListItem__menuIcon {
 			@include list-item-active-menu-border;
-			color: $session-active-border;
+
+			background-color: var(--m3-primary, $primary);
+			border-color: var(--m3-primary, $primary);
+			color: var(--m3-on-primary-container, #ffe2de);
+		}
+
+		/*
+		 * One focused thing at a time. The menu is what the user just
+		 * opened and what the keyboard is in, so the card underneath drops
+		 * its ring instead of drawing a second one around the whole row.
+		 */
+		.sessionsListItem__content:focus-visible,
+		.sessionsListItem__content:focus {
+			outline: none;
+			box-shadow: none;
 		}
 
 		.sessionsListItem__topic {
@@ -253,15 +271,22 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-color: #ffd8d4;
 	}
 
-	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		// Keep selected primary border; layer keyboard halo (#596 / WP-06)
+	&.sessionsListItem--active:not(.sessionsListItem--menuOpen)
+		.sessionsListItem__content:focus-visible {
+		// Keep selected primary border; layer keyboard halo (#596 / WP-06).
+		// Suppressed while the menu is open — the menu owns the focus then,
+		// and two rings at once is the thing this was meant to avoid.
 		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
 	&__row {
 		display: flex;
-		gap: 10px;
+
+		// Frank, 15.09.2026: the name sits 12 px from the avatar. It used to
+		// be 32 — this gap plus 22 px of padding inside `__username`, which
+		// read as dead space in the middle of the card.
+		gap: 12px;
 		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
@@ -363,8 +388,12 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		width: 44px;
-		height: 44px;
+
+		// Frank, 15.09.2026: the trigger is a horizontal pill and stays one.
+		// The 44x44 circle came in with the merged 09.09. branch; `dev` has
+		// always had 48x32 here.
+		width: 48px;
+		height: 32px;
 		padding: 0;
 		flex-shrink: 0;
 		position: relative;
@@ -405,7 +434,15 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 		overflow: auto;
-		z-index: 99999 !important;
+
+		/*
+		 * Above its own backdrop. `MenuBackdrop` is mounted at 999998 by
+		 * `SessionListItemMenu`, and the component asks for 999999 inline —
+		 * but this `!important` was one digit short and won, so the menu
+		 * rendered UNDER the white veil meant for everything else. Keep the
+		 * two in step if either moves.
+		 */
+		z-index: 999999 !important;
 		display: flex !important;
 		flex-direction: column;
 		padding: 8px;
@@ -784,7 +821,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__username {
 		font-weight: $font-weight-medium;
-		padding: 8px 22px;
+
+		// Horizontal padding removed: the distance to the avatar is the
+		// row's 12 px gap and nothing else (Frank, 15.09.2026).
+		padding: 8px 0;
 		margin-right: auto;
 		white-space: nowrap;
 		overflow: hidden;

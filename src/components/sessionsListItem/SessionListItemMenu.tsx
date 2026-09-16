@@ -1,6 +1,7 @@
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
+import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import type { TFunction } from 'i18next';
 import { MenuVerticalIcon } from '../../resources/img/icons';
@@ -16,6 +17,12 @@ import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvide
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
 	menuIconRef: React.RefObject<HTMLButtonElement>;
+	/**
+	 * The card the trigger sits in. The menu opens BESIDE it and never on
+	 * top of it — without this the menu is only placed beside the button,
+	 * which is still inside the card (Frank, 15.09.2026).
+	 */
+	surfaceRef?: React.RefObject<HTMLElement>;
 	dropdownRef: React.RefObject<HTMLDivElement>;
 	dropdownId: string;
 	dropdownLabel: string;
@@ -38,8 +45,8 @@ export interface SessionListItemMenuProps {
 
 export const SessionListItemMenu = ({
 	flyoutOpen,
-
 	menuIconRef,
+	surfaceRef,
 	dropdownRef,
 	dropdownId,
 	dropdownLabel,
@@ -62,8 +69,10 @@ export const SessionListItemMenu = ({
 	const menuPosition = useChatMenuPosition({
 		open: flyoutOpen,
 		anchorRef: menuIconRef,
-		menuRef: dropdownRef
+		menuRef: dropdownRef,
+		surfaceRef
 	});
+	const placement = menuPosition['--chat-menu-placement'];
 	return (
 		<>
 			<MenuBackdrop
@@ -77,7 +86,10 @@ export const SessionListItemMenu = ({
 			<button
 				type="button"
 				ref={menuIconRef}
-				className="sessionsListItem__menuIcon"
+				className={clsx(
+					'sessionsListItem__menuIcon',
+					flyoutOpen && 'sessionsListItem__menuIcon--open'
+				)}
 				onClick={onMenuClick}
 				onKeyDown={onMenuKeyDown}
 				aria-label={dropdownLabel}
@@ -93,6 +105,7 @@ export const SessionListItemMenu = ({
 						id={dropdownId}
 						ref={dropdownRef}
 						className="sessionsListItem__dropdown"
+						data-placement={placement}
 						onKeyDown={onDropdownKeyDown}
 						role="dialog"
 						aria-label={dropdownLabel}

@@ -2,9 +2,12 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
+import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
+import { ReactComponent as ThreadGlyphIcon } from '../../resources/img/icons/fab-menu-thread.svg';
+import MicIcon from '@mui/icons-material/Mic';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
@@ -1303,5 +1306,794 @@ export const SupervisedByOthers: Story = {
 				canvasElement.querySelector('[data-testid="supervision-badge"]')
 			).toBeNull();
 		});
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * The chat-room menu — Figma 7086-57413
+ * ------------------------------------------------------------------ */
+
+/**
+ * Frank, 15.09.2026: "Es soll kein Overlap da sein, sondern ein
+ * Nebeneinander. Wer hat gesagt, dass ein Menü immer oben drüber oder unten
+ * drunter öffnen muss?"
+ *
+ * The menu is measured against the **card**, not against the three-dot
+ * trigger inside it — anchored to the button, "beside" still lands on the
+ * card. Beside is the normal case; below and above are the escape routes
+ * for a viewport that has no room beside, which is every phone.
+ */
+const openTheMenu = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLButtonElement>(
+			'.sessionsListItem__menuIcon'
+		);
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	await userEvent.click(trigger);
+	const menu = await waitFor(() => {
+		const element = document.querySelector<HTMLElement>(
+			'.sessionsListItem__dropdown'
+		);
+		expect(element).toBeTruthy();
+		expect(element!.getBoundingClientRect().width).toBeGreaterThan(0);
+		return element!;
+	});
+	const card = canvasElement.querySelector<HTMLElement>(
+		'.sessionsListItem__content'
+	)!;
+	return { trigger, menu, card };
+};
+
+/** The card's shadow with nothing focused — its resting design, not a ring. */
+const restingCardShadow = (canvasElement: HTMLElement) =>
+	getComputedStyle(
+		canvasElement.querySelector<HTMLElement>('.sessionsListItem__content')!
+	).boxShadow;
+
+const expectNoOverlap = async (menu: HTMLElement, card: HTMLElement) => {
+	const m = menu.getBoundingClientRect();
+	const c = card.getBoundingClientRect();
+	const apart =
+		m.right <= c.left + 0.5 ||
+		m.left >= c.right - 0.5 ||
+		m.bottom <= c.top + 0.5 ||
+		m.top >= c.bottom - 0.5;
+	await expect(apart).toBe(true);
+};
+
+/**
+ * Desktop: the menu stands beside the card and the card stays readable.
+ * Also the point where the single focus ring is checked — the trigger is
+ * what the user just operated, so the card must not draw a second ring.
+ */
+export const MenuBesideTheCard: Story = {
+	name: 'Menü — daneben statt darüber (Figma 7086-57413)',
+	globals: { viewport: { value: 'desktop1440' } },
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		const atRest = restingCardShadow(canvasElement);
+		const { trigger, menu, card } = await openTheMenu(canvasElement);
+
+		// 1. No overlap. This is the whole point.
+		await expectNoOverlap(menu, card);
+		await expect(menu.dataset.placement).toBe('right');
+		// Every coordinate is a real number. `{ ...domRect }` yields an
+		// empty object — the properties are on the prototype — which turned
+		// every coordinate into NaN and placed the menu at the viewport
+		// edge. Unit tests pass plain objects and cannot see this.
+		await expect(menu.style.left).toMatch(/^\d/);
+		await expect(menu.style.top).toMatch(/^\d/);
+
+		// 2. The trigger carries the primary role while its menu is open,
+		//    and its dots the on-primary-container role.
+		await expect(
+			trigger.classList.contains('sessionsListItem__menuIcon--open')
+		).toBe(true);
+		// Read after the 160 ms cross-fade: `getComputedStyle` returns the
+		// value the transition is currently at, not the one it is heading
+		// for, so an immediate read sees the old white.
+		await waitFor(() => {
+			const style = getComputedStyle(trigger);
+			expect(style.backgroundColor).toBe('rgb(165, 0, 10)');
+			expect(style.color).toBe('rgb(255, 226, 222)');
+		});
+
+		// 3. Exactly one focus ring. The card is inside `--menuOpen`, so its
+		//    own focus treatment is suppressed while the menu owns focus.
+		const row =
+			canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
+		await expect(row.classList.contains('sessionsListItem--menuOpen')).toBe(
+			true
+		);
+		// Focusing the card while the menu is open must not add anything to
+		// what it already carries at rest — the card's own soft shadow is
+		// part of its design, the keyboard halo is not.
+		card.focus();
+		await expect(getComputedStyle(card).boxShadow).toBe(atRest);
+		await expect(getComputedStyle(card).outlineStyle).toBe('none');
+
+		// 4. The menu is above its own backdrop. The SCSS carried
+		//    `z-index: 99999 !important` against the component's inline
+		//    999999, so the veil meant for the rest of the page washed the
+		//    menu out as well.
+		const backdrop =
+			document.querySelector<HTMLElement>('.orisoMenuBackdrop');
+		if (backdrop) {
+			await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
+				Number(getComputedStyle(backdrop).zIndex)
+			);
+		}
+
+		// 5. The trigger keeps its shape — a horizontal pill, not a circle
+		//    and not a rotation (Frank, 15.09.2026).
+		const shape = trigger.getBoundingClientRect();
+		await expect(shape.width).toBeGreaterThan(shape.height);
+	}
+};
+
+/**
+ * Phone (390 px): there is no "beside" at 390 px, so the menu falls to the
+ * escape route rather than squeezing into a gap that does not exist. The
+ * placement is asserted so a future change to the chain shows up here
+ * instead of on someone's phone.
+ */
+export const MenuOnThePhone: Story = {
+	name: 'Menü — 390 px, Ausweichweg statt Quetschung',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		const { menu } = await openTheMenu(canvasElement);
+		// Beside is impossible here; below or above is the honest answer.
+		await expect(['below', 'above']).toContain(menu.dataset.placement);
+		// And it stays inside the viewport either way.
+		const box = menu.getBoundingClientRect();
+		await expect(box.left).toBeGreaterThanOrEqual(11.5);
+		await expect(box.right).toBeLessThanOrEqual(window.innerWidth - 11.5);
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Avatar size trial — Frank, 15.09.2026
+ * ------------------------------------------------------------------ */
+
+/**
+ * "Wie sieht das Icon vom Usernamen bei 40 Pixeln und bei 48 Pixeln aus?"
+ *
+ * Built from the real pieces — `MessageAvatar` and the card's own `__row` /
+ * `__icon` / `__username` classes — so what is on screen here is what the
+ * card would look like, not an impression of it. `MessageAvatar` already
+ * renders without a ring, so the only variable is the size.
+ *
+ * The name sits 12 px from the avatar in every row: the row's `gap`, with
+ * no padding of its own inside `__username`.
+ */
+export const AvatarSizeTrial: Story = {
+	name: 'Avatar-Größe — 32 / 40 / 48 px, mit und ohne Outline',
+	render: () => (
+		<div style={{ ...listShell, maxWidth: 760, padding: 16 }}>
+			{/*
+			 * The outline is hardcoded in `AnimalAvatar.tsx:56` —
+			 * `border: 2px solid #c4c7c8` plus a drop shadow, with no way to
+			 * switch it off. `UserAvatar` has a `ring` prop and
+			 * `MessageAvatar` already sets it to `false`; the border is
+			 * re-added one level below that. Suppressed here for the
+			 * comparison only, so the choice can be made by looking.
+			 */}
+			<style>{`
+				.avatarTrial--bare [data-testid="user-avatar"] > div {
+					border-color: transparent !important;
+					box-shadow: none !important;
+				}
+			`}</style>
+			{[
+				{ bare: false, label: 'mit Outline (heute)' },
+				{ bare: true, label: 'ohne Outline' }
+			].map((variant) => (
+				<div
+					key={variant.label}
+					className={variant.bare ? 'avatarTrial--bare' : undefined}
+				>
+					<p
+						style={{
+							margin: '8px 4px',
+							fontSize: 12,
+							fontWeight: 600,
+							opacity: 0.7
+						}}
+					>
+						{variant.label}
+					</p>
+					{[32, 40, 48].map((size) => (
+						<div
+							key={size}
+							className="sessionsListItem__content"
+							style={{ minHeight: 0, marginBottom: 8 }}
+						>
+							<div
+								className="sessionsListItem__row"
+								style={{ padding: '12px 16px' }}
+							>
+								<div
+									className="sessionsListItem__icon"
+									style={{
+										width: size,
+										height: size,
+										minWidth: size
+									}}
+								>
+									<MessageAvatar
+										isGroup={false}
+										isSystemNotification={false}
+										userId="asker-4401"
+										username="ruhiges-yak-kim@example.invalid"
+										displayName="ruhiges Yak Kim"
+										size={size}
+									/>
+								</div>
+								<span className="sessionsListItem__username">
+									ruhiges Yak Kim
+								</span>
+								<span
+									style={{
+										fontSize: 11,
+										opacity: 0.5,
+										alignSelf: 'center'
+									}}
+								>
+									{size} px
+								</span>
+							</div>
+						</div>
+					))}
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		// The 12 px is the promise; measure it rather than trust the gap.
+		const rows = canvasElement.querySelectorAll<HTMLElement>(
+			'.sessionsListItem__row'
+		);
+		await expect(rows.length).toBe(6);
+		for (const row of Array.from(rows)) {
+			const icon = row.querySelector<HTMLElement>(
+				'.sessionsListItem__icon'
+			)!;
+			const name = row.querySelector<HTMLElement>(
+				'.sessionsListItem__username'
+			)!;
+			await expect(
+				Math.round(
+					name.getBoundingClientRect().left -
+						icon.getBoundingClientRect().right
+				)
+			).toBe(12);
+		}
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Card layout proposals — Frank, 15.09.2026
+ * ------------------------------------------------------------------ */
+
+const PREVIEW_THREE_LINES =
+	'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter.';
+
+/** Three lines instead of one — the only rule the proposals add. */
+const threeLines: React.CSSProperties = {
+	whiteSpace: 'normal',
+	display: '-webkit-box',
+	WebkitLineClamp: 3,
+	WebkitBoxOrient: 'vertical',
+	overflow: 'hidden'
+} as React.CSSProperties;
+
+const TopRow = () => (
+	<div className="sessionsListItem__row">
+		<div className="sessionsListItem__rowLeft">
+			<div className="sessionsListItem__topicPostcodeGroup">
+				<div className="sessionsListItem__topic">Familienberatung</div>
+				<div className="sessionsListItem__postcode">12345</div>
+			</div>
+		</div>
+		<div className="sessionsListItem__rowRight">
+			<div className="sessionsListItem__date">18.3.2026</div>
+			<button type="button" className="sessionsListItem__menuIcon">
+				<MenuVerticalIcon />
+			</button>
+		</div>
+	</div>
+);
+
+const MailRow = ({ preview }: { preview?: boolean }) => (
+	<div className="sessionsListItem__row">
+		{preview && (
+			<span className="sessionsListItem__subject">Anfrage gesendet</span>
+		)}
+		<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
+			{/*
+			 * The plain <img>, as this branch renders it. The masked variant
+			 * that takes its colour from `--m3-primary` lives on the FE#1115
+			 * branch; using its markup here produced an invisible square,
+			 * because the mask rule does not exist on this branch.
+			 */}
+			<img
+				src={mailConversationIcon}
+				alt="Mail"
+				className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+			/>
+			<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+				Mail
+			</span>
+		</div>
+	</div>
+);
+
+const Avatar = ({ size }: { size: number }) => (
+	<div
+		className="sessionsListItem__icon"
+		style={{ width: size, height: size, minWidth: size }}
+	>
+		<MessageAvatar
+			isGroup={false}
+			isSystemNotification={false}
+			userId="asker-4401"
+			username="ruhiges-yak-kim@example.invalid"
+			displayName="ruhiges Yak Kim"
+			size={size}
+		/>
+	</div>
+);
+
+const Proposal = ({
+	title,
+	note,
+	children
+}: {
+	title: string;
+	note: string;
+	children: React.ReactNode;
+}) => (
+	<div style={{ marginBottom: 20 }}>
+		<p style={{ margin: '0 4px 6px', fontSize: 12, fontWeight: 600 }}>
+			{title}
+		</p>
+		<div className="sessionsListItem__content" style={{ minHeight: 0 }}>
+			{children}
+		</div>
+		<p
+			style={{
+				margin: '6px 4px 0',
+				fontSize: 11,
+				opacity: 0.6,
+				lineHeight: 1.5
+			}}
+		>
+			{note}
+		</p>
+	</div>
+);
+
+/**
+ * Four arrangements of the same card. Nothing about the design changes —
+ * same chips, same date, same trigger, same Mail row, same colours and
+ * classes. What moves is where the avatar, the name and the preview sit,
+ * and the preview runs to three lines instead of one.
+ *
+ * Frank, 15.09.2026: "eine vierziger Icon-Größe und eine 48er und dann den
+ * Namen kurz daneben und dann ein 3-zeiliger Text, aber das Design was wir
+ * haben, natürlich total gleich bleibt. Du bist quasi umarrangierst."
+ */
+export const CardLayoutProposals: Story = {
+	name: 'Karte — vier Umarrangierungen (40 / 48 px, 3 Zeilen)',
+	render: () => (
+		<div style={{ ...listShell, maxWidth: 480, padding: 16 }}>
+			<Proposal
+				title="A — 40 px, Name daneben, Text darunter über die volle Breite"
+				note="Der Name bleibt eine eigene Zeile. Der Text beginnt links am Kartenrand und hat die meiste Breite von allen vier."
+			>
+				<TopRow />
+				<div
+					className="sessionsListItem__row"
+					style={{ padding: '0 16px' }}
+				>
+					<Avatar size={40} />
+					<span className="sessionsListItem__username">
+						ruhiges Yak Kim
+					</span>
+				</div>
+				<div
+					className="sessionsListItem__row"
+					style={{ padding: '8px 16px 0' }}
+				>
+					<span
+						className="sessionsListItem__subject"
+						style={threeLines}
+					>
+						{PREVIEW_THREE_LINES}
+					</span>
+				</div>
+				<MailRow />
+			</Proposal>
+
+			<Proposal
+				title="B — 48 px, Avatar trägt Name und Text"
+				note="Der Avatar steht links neben einem Block aus Name und Text. Ergibt die ruhigste Kante, kostet aber 60 px Textbreite."
+			>
+				<TopRow />
+				<div
+					className="sessionsListItem__row"
+					style={{ padding: '0 16px', alignItems: 'flex-start' }}
+				>
+					<Avatar size={48} />
+					<div style={{ minWidth: 0, flex: 1 }}>
+						<span
+							className="sessionsListItem__username"
+							style={{ display: 'block', padding: 0 }}
+						>
+							ruhiges Yak Kim
+						</span>
+						<span
+							className="sessionsListItem__subject"
+							style={{ ...threeLines, marginTop: 2 }}
+						>
+							{PREVIEW_THREE_LINES}
+						</span>
+					</div>
+				</div>
+				<MailRow />
+			</Proposal>
+
+			<Proposal
+				title="C — 40 px, Avatar trägt Name und Text"
+				note="Wie B, nur mit dem kleineren Avatar. Der Text gewinnt 8 px, der Avatar verliert an Gewicht gegenüber dem Namen."
+			>
+				<TopRow />
+				<div
+					className="sessionsListItem__row"
+					style={{ padding: '0 16px', alignItems: 'flex-start' }}
+				>
+					<Avatar size={40} />
+					<div style={{ minWidth: 0, flex: 1 }}>
+						<span
+							className="sessionsListItem__username"
+							style={{ display: 'block', padding: 0 }}
+						>
+							ruhiges Yak Kim
+						</span>
+						<span
+							className="sessionsListItem__subject"
+							style={{ ...threeLines, marginTop: 2 }}
+						>
+							{PREVIEW_THREE_LINES}
+						</span>
+					</div>
+				</div>
+				<MailRow />
+			</Proposal>
+
+			<Proposal
+				title="D — 48 px, Name daneben, Text unter dem Namen eingerückt"
+				note="Der Avatar steht frei, Name und Text fluchten auf derselben Kante. Die Einrückung macht den Avatar zum Anker der ganzen Karte."
+			>
+				<TopRow />
+				<div
+					className="sessionsListItem__row"
+					style={{ padding: '0 16px' }}
+				>
+					<Avatar size={48} />
+					<span className="sessionsListItem__username">
+						ruhiges Yak Kim
+					</span>
+				</div>
+				<div
+					className="sessionsListItem__row"
+					style={{ padding: '4px 16px 0 76px' }}
+				>
+					<span
+						className="sessionsListItem__subject"
+						style={threeLines}
+					>
+						{PREVIEW_THREE_LINES}
+					</span>
+				</div>
+				<MailRow />
+			</Proposal>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		// Every proposal keeps the 12 px between avatar and name, and every
+		// preview really runs to three lines rather than being cut at one.
+		const avatars = canvasElement.querySelectorAll<HTMLElement>(
+			'.sessionsListItem__icon'
+		);
+		await expect(avatars.length).toBe(4);
+		const previews = canvasElement.querySelectorAll<HTMLElement>(
+			'.sessionsListItem__subject'
+		);
+		for (const preview of Array.from(previews)) {
+			if (preview.textContent!.length < 40) continue;
+			const lineHeight = Number.parseFloat(
+				getComputedStyle(preview).lineHeight
+			);
+			await expect(
+				Math.round(preview.getBoundingClientRect().height / lineHeight)
+			).toBe(3);
+		}
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Text flow around avatar and Mail — Frank, 16.09.2026
+ * ------------------------------------------------------------------ */
+
+/*
+ * "Warum machst du da nicht den Text enger? Dann müssen wir nicht die Höhe
+ * der einzelnen Dinger auch noch wieder erweitern." — plus his green outline:
+ * the preview wraps AROUND the 48 px avatar at the top and AROUND the Mail
+ * mark at the bottom, so the card keeps its 160 px minimum.
+ *
+ * That is text flow, and the only CSS tool that does it is `float`: the
+ * avatar floats left, a zero-width spacer floats right to push the Mail mark
+ * down to the bottom edge, and the name and the preview flow around both.
+ * The body has a fixed height — the card's minimum — so a short preview
+ * leaves the Mail mark where it is instead of pulling it up.
+ */
+/*
+ * The arithmetic that keeps the card at its 160 px minimum: the body below
+ * the chip row has 96 px. With the card's 16 px inset at the bottom and 4 px
+ * above, 76 px remain — the 24 px name plus exactly THREE 16 px preview
+ * lines. Three lines is therefore not a style choice, it is what fits.
+ *
+ * The Mail mark is taken out of the flow and positioned on the last line;
+ * an invisible copy of it floats in the flow to reserve its width. That way
+ * the clip can sit exactly on the third line's bottom edge — a padded clip
+ * would let a fourth line peek through the padding.
+ */
+const FLOW_BODY_HEIGHT = 96;
+const FLOW_NAME = 24;
+const FLOW_LINE = 16;
+const FLOW_LINES = 3;
+const FLOW_CLIP = FLOW_NAME + FLOW_LINE * FLOW_LINES; // 72
+const FLOW_TOP = 4;
+const FLOW_MAIL_HEIGHT = 24;
+
+const flowPreviews: Array<{
+	key: string;
+	label: string;
+	prefix?: React.ReactNode;
+	text: string;
+}> = [
+	{
+		key: 'long',
+		label: 'Langer Text',
+		text: 'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter. Können wir morgen telefonieren?'
+	},
+	{
+		key: 'short',
+		label: 'Kurzer Text — die Karte bleibt gleich hoch',
+		text: 'Anfrage gesendet'
+	},
+	{
+		key: 'thread',
+		label: 'Antwort in einem Thread',
+		prefix: (
+			<>
+				<ThreadGlyphIcon
+					aria-hidden="true"
+					className="flowPreview__glyph"
+				/>
+				<strong>Thread:</strong>{' '}
+			</>
+		),
+		text: 'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen.'
+	},
+	{
+		key: 'voice',
+		label: 'Sprachnachricht',
+		prefix: (
+			<>
+				<MicIcon aria-hidden="true" className="flowPreview__glyph" />
+				<strong>Sprachnachricht</strong>
+			</>
+		),
+		text: ' · 0:42'
+	}
+];
+
+const flowCss = `
+.flowPreview__body {
+	position: relative;
+	box-sizing: border-box;
+	height: ${FLOW_BODY_HEIGHT}px;
+	padding: ${FLOW_TOP}px 16px 0;
+}
+.flowPreview__clip {
+	height: ${FLOW_CLIP}px;
+	overflow: hidden;
+}
+.flowPreview__avatar {
+	float: left;
+	margin: 0 12px 0 0;
+}
+.flowPreview__spacer {
+	float: right;
+	width: 0;
+	height: ${FLOW_CLIP - FLOW_LINE}px;
+}
+/* Reserves the Mail mark's width on the last line and nothing else. */
+.flowPreview__mailSlot {
+	float: right;
+	clear: right;
+	height: ${FLOW_LINE}px;
+	margin-left: 12px;
+	visibility: hidden;
+}
+.flowPreview__mail {
+	position: absolute;
+	right: 16px;
+	/* centred on the last preview line */
+	top: ${FLOW_TOP + FLOW_CLIP - FLOW_LINE / 2 - FLOW_MAIL_HEIGHT / 2}px;
+	height: ${FLOW_MAIL_HEIGHT}px;
+	padding-right: 0 !important;
+}
+.flowPreview__name.sessionsListItem__username {
+	display: block;
+	padding: 0;
+	line-height: ${FLOW_NAME}px;
+}
+/* The card's preview class is one clipped line (nowrap + overflow hidden)
+   and carries align-content: center. Each of overflow: hidden and a
+   non-normal align-content turns the block into its own formatting context
+   — and such a block AVOIDS floats instead of flowing around them, which
+   squeezed the preview into a narrow column between avatar and Mail. */
+.flowPreview__text.sessionsListItem__subject {
+	display: block;
+	white-space: normal;
+	overflow: visible;
+	text-overflow: clip;
+	align-content: normal;
+	line-height: ${FLOW_LINE}px;
+}
+.flowPreview__glyph {
+	width: 14px;
+	height: 14px;
+	vertical-align: -2px;
+	margin-right: 4px;
+	fill: currentColor;
+	color: var(--m3-secondary, #4c555f);
+}
+`;
+
+const MailMark = ({ className }: { className?: string }) => (
+	<div
+		className={`${className ?? ''} sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby`}
+	>
+		<img
+			src={mailConversationIcon}
+			alt="Mail"
+			className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+		/>
+		<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+			Mail
+		</span>
+	</div>
+);
+
+const FlowCard = ({
+	prefix,
+	text
+}: {
+	prefix?: React.ReactNode;
+	text: string;
+}) => (
+	<div className="sessionsListItem__content" style={{ minHeight: 160 }}>
+		<TopRow />
+		<div className="flowPreview__body">
+			<div className="flowPreview__clip">
+				<div className="flowPreview__avatar">
+					<Avatar size={48} />
+				</div>
+				<div className="flowPreview__spacer" aria-hidden="true" />
+				<div className="flowPreview__mailSlot" aria-hidden="true">
+					<MailMark />
+				</div>
+				<span className="flowPreview__name sessionsListItem__username">
+					ruhiges Yak Kim
+				</span>
+				<div className="flowPreview__text sessionsListItem__subject">
+					{prefix}
+					{text}
+				</div>
+			</div>
+			<MailMark className="flowPreview__mail" />
+		</div>
+	</div>
+);
+
+export const CardTextFlow: Story = {
+	name: 'Karte — Text umfließt Avatar und Mail (48 px)',
+	render: () => (
+		<div style={{ ...listShell, maxWidth: 480, padding: 16 }}>
+			<style>{flowCss}</style>
+			{flowPreviews.map((preview) => (
+				<div key={preview.key} style={{ marginBottom: 18 }}>
+					<p
+						style={{
+							margin: '0 4px 6px',
+							fontSize: 12,
+							fontWeight: 600
+						}}
+					>
+						{preview.label}
+					</p>
+					<FlowCard prefix={preview.prefix} text={preview.text} />
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const cards = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>(
+				'.sessionsListItem__content'
+			)
+		);
+		await expect(cards.length).toBe(4);
+
+		// 1. Every card keeps the same height, long preview or short.
+		const heights = cards.map((card) =>
+			Math.round(card.getBoundingClientRect().height)
+		);
+		await expect(new Set(heights).size).toBe(1);
+
+		// 2. The long preview really flows: its first line starts beside the
+		//    avatar, a later line starts at the card's left edge, and the
+		//    last visible line stops before the Mail mark.
+		const long = cards[0];
+		const clip = long
+			.querySelector<HTMLElement>('.flowPreview__clip')!
+			.getBoundingClientRect();
+		const avatar = long
+			.querySelector<HTMLElement>('.flowPreview__avatar')!
+			.getBoundingClientRect();
+		const mail = long
+			.querySelector<HTMLElement>('.flowPreview__mail')!
+			.getBoundingClientRect();
+		const range = document.createRange();
+		range.selectNodeContents(
+			long.querySelector<HTMLElement>('.flowPreview__text')!
+		);
+		const lines = Array.from(range.getClientRects()).filter(
+			(rect) => rect.width > 0 && rect.top < clip.bottom - 0.5
+		);
+		// Exactly three preview lines are visible — what fits in 160 px.
+		await expect(lines.length).toBe(3);
+		// Nothing of a fourth line peeks out below the clip.
+		await expect(lines[2].bottom).toBeLessThanOrEqual(clip.bottom + 0.5);
+		await expect(lines[0].left).toBeGreaterThanOrEqual(avatar.right);
+		await expect(lines[2].left).toBeLessThan(avatar.right - 1);
+		await expect(lines[2].right).toBeLessThanOrEqual(mail.left + 0.5);
+		// The Mail mark is centred on that last line …
+		await expect(
+			Math.abs(
+				(mail.top + mail.bottom) / 2 -
+					(lines[2].top + lines[2].bottom) / 2
+			)
+		).toBeLessThanOrEqual(1);
+		// … and keeps the card's 16 px inset at the bottom, measured from
+		// the inside of the card's 1 px border.
+		const card = long.getBoundingClientRect();
+		const border = Number.parseFloat(
+			getComputedStyle(long).borderBottomWidth
+		);
+		await expect(Math.round(card.bottom - border - mail.bottom)).toBe(16);
 	}
 };

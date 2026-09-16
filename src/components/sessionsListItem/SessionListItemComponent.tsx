@@ -188,6 +188,20 @@ export const SessionListItemComponent = ({
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
+	// FE#1115 follow-up: `itemRef` is an optional prop, but the menu always
+	// needs the card it must not cover. Keep our own and feed both.
+	const cardRef = React.useRef<HTMLDivElement>(null);
+	const setCardRef = React.useCallback(
+		(node: HTMLDivElement | null) => {
+			cardRef.current = node;
+			if (typeof itemRef === 'function') {
+				itemRef(node);
+			} else if (itemRef) {
+				itemRef.current = node;
+			}
+		},
+		[itemRef]
+	);
 	const menuIconRef = React.useRef<HTMLButtonElement>(null);
 	const dropdownRef = React.useRef<HTMLDivElement>(null);
 	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
@@ -1139,7 +1153,7 @@ export const SessionListItemComponent = ({
 						isChatActive && 'sessionsListItem__content--active'
 					)}
 					onKeyDown={(e) => handleKeyDownListItem(e)}
-					ref={itemRef}
+					ref={setCardRef}
 					tabIndex={index === 0 ? 0 : -1}
 					role="tab"
 					aria-selected={isChatActive}
@@ -1168,6 +1182,7 @@ export const SessionListItemComponent = ({
 								<SessionListItemMenu
 									flyoutOpen={flyoutOpen}
 									menuIconRef={menuIconRef}
+									surfaceRef={cardRef}
 									dropdownRef={dropdownRef}
 									dropdownId={dropdownId}
 									dropdownLabel={dropdownLabel}
@@ -1339,7 +1354,7 @@ export const SessionListItemComponent = ({
 					isAnonymousChat && 'sessionsListItem__content--anonymous'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
-				ref={itemRef}
+				ref={setCardRef}
 				tabIndex={index === 0 ? 0 : -1}
 				role="tab"
 				aria-selected={isChatActive}
@@ -1400,6 +1415,7 @@ export const SessionListItemComponent = ({
 							<SessionListItemMenu
 								flyoutOpen={flyoutOpen}
 								menuIconRef={menuIconRef}
+								surfaceRef={cardRef}
 								dropdownRef={dropdownRef}
 								dropdownId={dropdownId}
 								dropdownLabel={dropdownLabel}
