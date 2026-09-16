@@ -360,14 +360,30 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			);
 			const accept = buttons[0].getBoundingClientRect();
 			const team = buttons[1].getBoundingClientRect();
-			if (width >= 900)
+			const footer = buttons[1].closest('.session__acceptance');
+			const footerRect = footer.getBoundingClientRect();
+			const win = buttons[1].ownerDocument.defaultView;
+			expect(
+				win.getComputedStyle(buttons[1], '::after').content,
+				'visible right arrow'
+			).to.contain('→');
+			if (width >= 900) {
 				expect(team.top, 'desktop actions share a row').to.equal(
 					accept.top
 				);
-			else
+				expect(
+					footerRect.right - team.right,
+					'comfortable right inset'
+				).to.be.closeTo(32, 1);
+			} else {
 				expect(team.top, 'mobile actions stack').to.be.at.least(
 					accept.bottom
 				);
+				expect(
+					(team.left + team.right) / 2,
+					'mobile team action centered'
+				).to.be.closeTo((footerRect.left + footerRect.right) / 2, 1);
+			}
 		});
 		cy.screenshot(`enquiry-main-after-close-${width}`, {
 			capture: 'viewport',

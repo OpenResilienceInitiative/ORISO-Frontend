@@ -180,6 +180,11 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		justify-content: center;
 		gap: $grid-base-two;
 		padding-inline: $grid-base-two;
+
+		@include breakpoint($fromLarge) {
+			justify-content: flex-end;
+			padding-inline: $grid-base-four;
+		}
 	}
 
 	&__teamDiscussionAction .button__secondary {
@@ -190,6 +195,12 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		color: var(--m3-on-secondary, $white);
 		background-color: var(--m3-secondary, $secondary);
 		border-color: var(--m3-secondary, $secondary);
+
+		&::after {
+			content: '\2192';
+			font-size: $grid-base-three;
+			line-height: 1;
+		}
 
 		&:hover {
 			background-color: var(--m3-secondary-hover, $secondary);
