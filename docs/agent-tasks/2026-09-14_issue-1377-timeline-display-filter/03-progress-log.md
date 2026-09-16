@@ -118,3 +118,23 @@ controls. TDD red → green per slice; Storybook play tests green (55),
   hiding ("In der Liste"). Per-session fine-tuning is the next stage, not in
   this branch.
 - Column wording: "In der Liste" / "Als Pille" / "Ton".
+
+### 2026-09-16, fourth round (Frank's review of the design canvas)
+
+- **Filter button lives in the search field** (leading slot, where the
+  functionless kebab sat), in Gespräche, Anfragen and the Zeitstrahl
+  (`ListSearchField.leading`); the chip row has no trailing button any more.
+  While the search panel is open the slot shows the close button as before.
+- **Text view is denser**: 4 px gap, 28 px pills with 10 px padding, filter
+  button as a bare glyph (`DisplayFilterButton.compact`).
+- **Dialog hero icon = the list's icon** (`DisplayFilterDialog.icon`: inbox,
+  chats, activity).
+- **Future timeline panel keeps a switch** in sound mode (`In der Liste:
+  Zukünftige Termine`), the table row is gone.
+- Pill column caption is **"Anzeigen"** (Frank), show column stays "In der
+  Liste" (Zeitstrahl only).
+- **Sound choice per kind** (Frank: "den Ton auswählen, nicht nur an/aus"):
+  two proposals on the design canvas — A: small split button per row
+  (preview + menu), B: on/off per row + one tone select for the list. Not
+  implemented yet; waiting for Frank's pick. Today `KindSetting.sound` is a
+  boolean mute; A would turn it into a `SoundId | false`.
