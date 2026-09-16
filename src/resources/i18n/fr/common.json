@@ -834,12 +834,14 @@
 				"sourceLanguage": "Langue source",
 				"welcome": "Message d'accueil (120 caractères maximum)",
 				"rules": "Règles du groupe",
-				"rule": "Règle",
+				"rule": "Règle n° 1 (120 caractères maximum)",
 				"addRule": "Ajouter une règle",
+				"removeLanguage": "Supprimer la langue {{language}}",
 				"removeRule": "Supprimer",
 				"translate": "Traduire dans les langues actives",
 				"translating": "Traduction en cours…",
 				"translationError": "La traduction a échoué. Votre texte a été conservé ; veuillez réessayer.",
+				"ruleChipShort": "N° {{index}}",
 				"ruleChip": "Règle n° {{index}}"
 			}
 		},

@@ -70,9 +70,22 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		white-space: nowrap;
 	}
 
+	/*
+	 * Figma 9281:69460: the glyph sits at the row's 24px inset and the label
+	 * takes the rest, centred in its own space. Centring icon and label as one
+	 * group instead let the glyph drift with the label's length, so the icons
+	 * down the card never lined up.
+	 */
 	&--fullWidth &__main {
 		flex: 1;
+		justify-content: flex-start;
 		min-width: 0;
+	}
+
+	&--fullWidth &__label {
+		flex: 1;
+		min-width: 0;
+		text-align: center;
 	}
 
 	/* Menu selections become the label; long names truncate, never wrap. */
