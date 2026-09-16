@@ -8,7 +8,7 @@ Goal: both public and authenticated footers identify the bundle independently of
 
 - [x] CI injects the actual checkout full commit.
 - [x] Both footer locations share formatting and expose the full commit.
-- [x] Runtime overrides cannot replace baked identity; absent/malformed identity stays unknown.
+- [x] Runtime overrides cannot replace baked identity; an absent or malformed commit renders as unknown only when a release is present, while missing both release and commit returns `null`.
 - [x] Focused tests, full unit/script lint/style lint/build checks are recorded.
 - [ ] Root supplies browser evidence and separate review.
 

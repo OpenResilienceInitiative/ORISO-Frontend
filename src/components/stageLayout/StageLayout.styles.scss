@@ -1,4 +1,6 @@
 .stageLayout {
+	$registration-footer-clearance: 120px;
+
 	// Login (design 2e): below the stage breakpoint the content sits in a white
 	// sheet that overlaps the red head by 28px. The head itself is rendered by
 	// StageLayout; everything here is the sheet it slides under.
@@ -351,7 +353,7 @@
 
 		// Add more bottom padding on mobile to prevent overlapping with fixed registration buttons (96px height)
 		@media screen and (width <= 899px) {
-			padding-bottom: 120px; // Account for 96px button bar + extra spacing
+			padding-bottom: $registration-footer-clearance; // Account for 96px button bar + extra spacing
 			margin-top: -60px;
 			display: none;
 		}
@@ -380,7 +382,7 @@
 
 	&--registration &__footer--withIdentity {
 		// The identity now shares the fixed bar's column on desktop too.
-		padding-bottom: 120px;
+		padding-bottom: $registration-footer-clearance;
 	}
 
 	.stageLayout__header > * {
