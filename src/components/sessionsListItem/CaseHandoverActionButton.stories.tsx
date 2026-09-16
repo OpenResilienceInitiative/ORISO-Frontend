@@ -264,13 +264,29 @@ export const MenuBesideTheCard: Story = {
 		// 3. The placement is exposed for styling, like the chat-room menu.
 		await expect(menu.dataset.placement).toBe('right');
 		// 4. The menu stays above its own backdrop (999998 vs. 999999).
-		const backdrop =
-			document.querySelector<HTMLElement>('.orisoMenuBackdrop');
-		if (backdrop) {
-			await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
-				Number(getComputedStyle(backdrop).zIndex)
-			);
-		}
+		const backdrop = await waitFor(() => {
+			const element =
+				document.querySelector<HTMLElement>('.orisoMenuBackdrop');
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
+			Number(getComputedStyle(backdrop).zIndex)
+		);
+		// 5. The veil leaves the card uncovered, the page around it not.
+		await waitFor(() =>
+			expect(
+				surface.contains(
+					document.elementFromPoint(
+						cardBox.left + 12,
+						cardBox.top + 12
+					)
+				)
+			).toBe(true)
+		);
+		await expect(
+			document.elementFromPoint(cardBox.left - 12, cardBox.top + 12)
+		).toBe(backdrop);
 	}
 };
 

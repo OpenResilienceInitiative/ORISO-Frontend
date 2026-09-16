@@ -273,6 +273,7 @@ export const CaseHandoverActionButton = ({
 		>
 			<MenuBackdrop
 				open={menuOpen}
+				spotlightRef={surfaceRef}
 				onClose={() => {
 					setMenuOpen(false);
 					toggleRef.current?.focus();

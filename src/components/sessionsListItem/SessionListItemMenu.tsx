@@ -77,6 +77,7 @@ export const SessionListItemMenu = ({
 		<>
 			<MenuBackdrop
 				open={flyoutOpen}
+				spotlightRef={surfaceRef}
 				onClose={() => {
 					onClose();
 					menuIconRef.current?.focus();

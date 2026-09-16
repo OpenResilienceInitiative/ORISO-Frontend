@@ -1433,13 +1433,40 @@ export const MenuBesideTheCard: Story = {
 		//    `z-index: 99999 !important` against the component's inline
 		//    999999, so the veil meant for the rest of the page washed the
 		//    menu out as well.
-		const backdrop =
-			document.querySelector<HTMLElement>('.orisoMenuBackdrop');
-		if (backdrop) {
-			await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
-				Number(getComputedStyle(backdrop).zIndex)
-			);
-		}
+		const backdrop = await waitFor(() => {
+			const element =
+				document.querySelector<HTMLElement>('.orisoMenuBackdrop');
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
+			Number(getComputedStyle(backdrop).zIndex)
+		);
+
+		// 4b. …and the veil leaves the card itself uncovered: the card sits
+		//     beside its menu, and the primary trigger has to be seen, not
+		//     washed pink. Hit-testing follows what is painted on top.
+		const hit = (x: number, y: number) => document.elementFromPoint(x, y);
+		const pill = trigger.getBoundingClientRect();
+		await waitFor(() =>
+			expect(
+				trigger.contains(
+					hit(
+						(pill.left + pill.right) / 2,
+						(pill.top + pill.bottom) / 2
+					)
+				)
+			).toBe(true)
+		);
+		const cardBox = card.getBoundingClientRect();
+		await expect(
+			card.contains(hit(cardBox.left + 40, cardBox.bottom - 20))
+		).toBe(true);
+		// The rest of the page is still under the veil.
+		await expect(hit(cardBox.left - 20, cardBox.top + 20)).toBe(backdrop);
+		await expect(hit(cardBox.left + 40, cardBox.bottom + 20)).toBe(
+			backdrop
+		);
 
 		// 5. The trigger keeps its shape — a horizontal pill, not a circle
 		//    and not a rotation (Frank, 15.09.2026).
