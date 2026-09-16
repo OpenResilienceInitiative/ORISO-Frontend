@@ -119,14 +119,13 @@ const openTheKebab = async (canvasElement: HTMLElement) => {
 			'.sessionMenu__icon--desktop'
 		)!
 	);
+	// The flyout is portalled to <body> since the #1348 menu rescue.
 	await waitFor(() =>
 		expect(
-			canvasElement.querySelector('.sessionMenu__content--open')
+			document.querySelector('.sessionMenu__content--open')
 		).not.toBeNull()
 	);
-	return canvasElement.querySelector<HTMLElement>(
-		'.sessionMenu__content--open'
-	)!;
+	return document.querySelector<HTMLElement>('.sessionMenu__content--open')!;
 };
 
 const withStage = (Story: React.ComponentType) => (
