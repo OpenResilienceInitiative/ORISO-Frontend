@@ -87,7 +87,7 @@
 		/* 40px rows (was 48): with the view/auto-sort controls below the
 		   table the dialog must still fit a 700px-high desktop window
 		   (Frank's Safari, 2026-09-16) without hidden scrolling. */
-		min-height: 40px;
+		min-height: 36px;
 		padding: 2px 0;
 		font-size: 14px;
 		font-weight: 400;
@@ -376,4 +376,24 @@
 	display: inline-flex;
 	gap: 8px;
 	align-items: baseline;
+}
+
+/* The filter dialog is a settings sheet, not a confirm: let it use more of a
+   short desktop window (Frank's ~700px Safari) before the body scrolls. */
+.displayFilterDialog .m3Dialog__surface {
+	max-height: min(820px, 100vh - 48px);
+	margin: 24px 32px;
+}
+
+.displayFilterDialog .displayFilterDialog__view {
+	margin-top: 8px;
+}
+
+.displayFilterDialog .displayFilterDialog__autoRead {
+	margin-top: 8px;
+	padding-top: 8px;
+}
+
+.displayFilterDialog .displayFilterDialog__footerLine {
+	margin-top: 8px;
 }

@@ -78,134 +78,144 @@ export const DisplayFilterKindTable = ({
 			</tr>
 		</thead>
 		<tbody>
-			{kinds.map((kind) => {
-				const setting = resolveKindSetting(value, kind.id);
-				const isOther = kind.id === OTHER_KIND_ID;
-				// Träger switched the format off, rows still exist: keep the
-				// kind visible and its controls locked so nothing vanishes
-				// silently; the hint explains and the chip's click does too.
-				const deactivated = kind.availability === 'deactivated';
-				const hintId = isOther
-					? `${idPrefix}-other-fixed`
-					: deactivated
-						? `${idPrefix}-${kind.id}-deactivated`
-						: undefined;
-				const Icon = kind.icon;
-				return (
-					<tr
-						key={kind.id}
-						className={clsx(
-							'displayFilterDialog__row',
-							!setting.show && 'displayFilterDialog__row--hidden',
-							deactivated &&
-								'displayFilterDialog__row--deactivated'
-						)}
-						data-cy={`${dataCyPrefix}-row-${kind.id}`}
-					>
-						<th scope="row" className="displayFilterDialog__kind">
-							{Icon && (
-								<Icon
-									className="displayFilterDialog__kindIcon"
-									aria-hidden="true"
-								/>
+			{kinds
+				// A show-only kind gates a panel: without the show column it has
+				// no control left, so the row is omitted (Gespräche/Anfragen).
+				.filter((kind) => columns.show || !kind.showOnly)
+				.map((kind) => {
+					const setting = resolveKindSetting(value, kind.id);
+					const isOther = kind.id === OTHER_KIND_ID;
+					// Träger switched the format off, rows still exist: keep the
+					// kind visible and its controls locked so nothing vanishes
+					// silently; the hint explains and the chip's click does too.
+					const deactivated = kind.availability === 'deactivated';
+					const hintId = isOther
+						? `${idPrefix}-other-fixed`
+						: deactivated
+							? `${idPrefix}-${kind.id}-deactivated`
+							: undefined;
+					const Icon = kind.icon;
+					return (
+						<tr
+							key={kind.id}
+							className={clsx(
+								'displayFilterDialog__row',
+								!setting.show &&
+									'displayFilterDialog__row--hidden',
+								deactivated &&
+									'displayFilterDialog__row--deactivated'
 							)}
-							<span className="displayFilterDialog__kindText">
-								<span>{kind.label}</span>
-								{isOther && (
-									<span
-										className="displayFilterDialog__kindHint"
-										id={`${idPrefix}-other-fixed`}
-									>
-										{labels.otherFixed}
-									</span>
-								)}
-								{deactivated && !isOther && (
-									<span
-										className="displayFilterDialog__kindHint"
-										id={`${idPrefix}-${kind.id}-deactivated`}
-									>
-										{labels.deactivatedHint}
-									</span>
-								)}
-							</span>
-						</th>
-						{columns.sound && (
-							<td className="displayFilterDialog__cell">
-								<M3Checkbox
-									checked={!isKindMuted(value, kind.id)}
-									disabled={readOnly || deactivated}
-									hideLabel
-									label={labels.soundKind(kind.label)}
-									dataCy={`${dataCyPrefix}-sound-${kind.id}`}
-									onChange={(checked) =>
-										onChange(
-											setKindSetting(value, kind.id, {
-												sound: checked
-											})
-										)
-									}
-								/>
-							</td>
-						)}
-						{columns.show && (
-							<td className="displayFilterDialog__cell">
-								<M3Checkbox
-									checked={setting.show}
-									indeterminate={Boolean(
-										setting.show && kind.partial
-									)}
-									disabled={
-										readOnly || isOther || deactivated
-									}
-									describedBy={hintId}
-									hideLabel
-									label={labels.showKind(kind.label)}
-									dataCy={`${dataCyPrefix}-show-${kind.id}`}
-									onChange={(checked) =>
-										onChange(
-											setKindSetting(value, kind.id, {
-												show: checked
-											})
-										)
-									}
-								/>
-							</td>
-						)}
-						<td className="displayFilterDialog__cell">
-							{kind.showOnly ? (
-								<>
-									<span
-										className="displayFilterDialog__noPill"
+							data-cy={`${dataCyPrefix}-row-${kind.id}`}
+						>
+							<th
+								scope="row"
+								className="displayFilterDialog__kind"
+							>
+								{Icon && (
+									<Icon
+										className="displayFilterDialog__kindIcon"
 										aria-hidden="true"
-									>
-										–
-									</span>
-									<span className="sr-only">
-										{labels.pillNotApplicable}
-									</span>
-								</>
-							) : (
-								<M3Checkbox
-									checked={setting.pill}
-									disabled={
-										readOnly || !setting.show || deactivated
-									}
-									hideLabel
-									label={labels.pillKind(kind.label)}
-									dataCy={`${dataCyPrefix}-pill-${kind.id}`}
-									onChange={(checked) =>
-										onChange(
-											setKindSetting(value, kind.id, {
-												pill: checked
-											})
-										)
-									}
-								/>
+									/>
+								)}
+								<span className="displayFilterDialog__kindText">
+									<span>{kind.label}</span>
+									{isOther && (
+										<span
+											className="displayFilterDialog__kindHint"
+											id={`${idPrefix}-other-fixed`}
+										>
+											{labels.otherFixed}
+										</span>
+									)}
+									{deactivated && !isOther && (
+										<span
+											className="displayFilterDialog__kindHint"
+											id={`${idPrefix}-${kind.id}-deactivated`}
+										>
+											{labels.deactivatedHint}
+										</span>
+									)}
+								</span>
+							</th>
+							{columns.sound && (
+								<td className="displayFilterDialog__cell">
+									<M3Checkbox
+										checked={!isKindMuted(value, kind.id)}
+										disabled={readOnly || deactivated}
+										hideLabel
+										label={labels.soundKind(kind.label)}
+										dataCy={`${dataCyPrefix}-sound-${kind.id}`}
+										onChange={(checked) =>
+											onChange(
+												setKindSetting(value, kind.id, {
+													sound: checked
+												})
+											)
+										}
+									/>
+								</td>
 							)}
-						</td>
-					</tr>
-				);
-			})}
+							{columns.show && (
+								<td className="displayFilterDialog__cell">
+									<M3Checkbox
+										checked={setting.show}
+										indeterminate={Boolean(
+											setting.show && kind.partial
+										)}
+										disabled={
+											readOnly || isOther || deactivated
+										}
+										describedBy={hintId}
+										hideLabel
+										label={labels.showKind(kind.label)}
+										dataCy={`${dataCyPrefix}-show-${kind.id}`}
+										onChange={(checked) =>
+											onChange(
+												setKindSetting(value, kind.id, {
+													show: checked
+												})
+											)
+										}
+									/>
+								</td>
+							)}
+							<td className="displayFilterDialog__cell">
+								{kind.showOnly ? (
+									<>
+										<span
+											className="displayFilterDialog__noPill"
+											aria-hidden="true"
+										>
+											–
+										</span>
+										<span className="sr-only">
+											{labels.pillNotApplicable}
+										</span>
+									</>
+								) : (
+									<M3Checkbox
+										checked={setting.pill}
+										disabled={
+											readOnly ||
+											!setting.show ||
+											deactivated
+										}
+										hideLabel
+										label={labels.pillKind(kind.label)}
+										dataCy={`${dataCyPrefix}-pill-${kind.id}`}
+										onChange={(checked) =>
+											onChange(
+												setKindSetting(value, kind.id, {
+													pill: checked
+												})
+											)
+										}
+									/>
+								)}
+							</td>
+						</tr>
+					);
+				})}
 		</tbody>
 	</table>
 );

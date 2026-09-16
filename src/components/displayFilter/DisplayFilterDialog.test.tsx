@@ -310,6 +310,33 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		expect(screen.getByRole('columnheader', { name: 'Ton' })).toBeTruthy();
 	});
 
+	it('omits show-only kinds in the sound-column mode — nothing to mute, nothing to hide', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[
+					{ id: 'oneToOne', label: 'Mail', unreadCount: 0 },
+					{
+						id: 'futureTimeline',
+						label: 'Zukünftige Termine',
+						unreadCount: 0,
+						showOnly: true
+					}
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={{ show: false, sound: true }}
+				onChange={() => undefined}
+			/>
+		);
+		expect(screen.queryByText('Zukünftige Termine')).toBeNull();
+		expect(
+			screen.getByRole('checkbox', { name: 'Ton: Mail' })
+		).toBeTruthy();
+	});
+
 	it('keeps the In der Liste column by default (Zeitstrahl)', () => {
 		render(<Harness onValue={() => undefined} />);
 		expect(
