@@ -23,6 +23,10 @@ import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
 import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
 import {
+	AUTO_FOCUS_ATTRIBUTE,
+	focusComposerAutomatically
+} from './timelineFollow';
+import {
 	buildSessionChannelPath,
 	resolveComposerChannel,
 	type SideRoomChannelKind
@@ -471,6 +475,20 @@ export const MessageSubmitInterfaceComponent = ({
 	const location = useLocation();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
+	const composerCardRef = useRef<HTMLDivElement>(null);
+	// A click or a keystroke makes the focus the reader's own; leaving the
+	// card ends it. Either way the automatic-focus mark goes.
+	const clearAutoFocusMark = useCallback(() => {
+		composerCardRef.current?.removeAttribute(AUTO_FOCUS_ATTRIBUTE);
+	}, []);
+	const handleComposerCardBlur = useCallback(
+		(event: React.FocusEvent<HTMLDivElement>) => {
+			if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+				clearAutoFocusMark();
+			}
+		},
+		[clearAutoFocusMark]
+	);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
 	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -1243,8 +1261,12 @@ export const MessageSubmitInterfaceComponent = ({
 			if (isFocusProtected(document.activeElement)) {
 				return;
 			}
-			composerRef.current?.runAction('alignLeft');
-			focusEditorInput();
+			// Frank (16.09.): this cursor is the app's, not the reader's —
+			// the card is marked so it does not count as writing.
+			focusComposerAutomatically(composerCardRef.current, () => {
+				composerRef.current?.runAction('alignLeft');
+				focusEditorInput();
+			});
 		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
@@ -3890,8 +3912,12 @@ export const MessageSubmitInterfaceComponent = ({
 							accent !== 'default' &&
 								`textarea__wrapper-send-message--${accent}`
 						)}
+						ref={composerCardRef}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
+						onPointerDownCapture={clearAutoFocusMark}
+						onKeyDownCapture={clearAutoFocusMark}
+						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
