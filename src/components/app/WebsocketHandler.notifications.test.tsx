@@ -38,7 +38,10 @@ const bridge = vi.hoisted(() => {
 });
 
 vi.mock('../../services/matrixLiveEventBridge', () => ({
-	matrixLiveEventBridge: bridge
+	matrixLiveEventBridge: bridge,
+	// P2 feed-update signal (ADR-020): feedUpdateSignalBridge reads these.
+	FEED_UPDATE_EVENT_TYPE: 'org.oriso.feed.updated',
+	FEED_UPDATE_BRIDGE_EVENT: 'feedUpdated'
 }));
 vi.mock('../../services/messageEventEmitter', () => ({
 	messageEventEmitter: { emit: vi.fn() }
