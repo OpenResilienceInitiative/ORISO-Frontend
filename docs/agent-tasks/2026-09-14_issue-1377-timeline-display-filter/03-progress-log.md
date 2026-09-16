@@ -100,3 +100,21 @@ controls. TDD red → green per slice; Storybook play tests green (55),
 - Pre-dev: two containerd instances on the host; only `k3s ctr -n k8s.io
   images import` reaches the cluster store (see memory note). Storybook of
   the branch runs on `https://predev.oriso.org/storybook-frontend/`.
+
+### 2026-09-16, third round (Frank's review of the pre-dev Storybook)
+
+- **Bundle chip is "Weitere"** (dialog row stays "Sonstiges" for unmapped
+  events) and appears **only** while a kind is bundled or unmapped items are
+  unread — all pills on ⇒ no extra chip.
+- **One footer line**: "Diese Liste weicht von deinen Standards ab ·
+  Zurücksetzen" while an override exists, plus "Standards bearbeiten"
+  (profile). "Fertig" is the only dialog action; the separate reset button
+  is gone.
+- **"Ton" replaces "In der Liste" in Gespräche and Anfragen** (`columns`
+  prop, `SESSION_COLUMNS`): a kind can be muted (`KindSetting.sound === false`)
+  on top of the area sound settings. `SessionsList` publishes session → kind
+  into `sessionKindRegistry`; `NotificationsProvider.maybePlaySoundForNewEvent`
+  skips the sound when `isEventMutedByKind` says so. The Zeitstrahl keeps
+  hiding ("In der Liste"). Per-session fine-tuning is the next stage, not in
+  this branch.
+- Column wording: "In der Liste" / "Als Pille" / "Ton".
