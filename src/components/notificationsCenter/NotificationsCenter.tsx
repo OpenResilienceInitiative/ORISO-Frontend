@@ -47,6 +47,7 @@ import {
 	reconcileActiveKind,
 	orderChipKinds,
 	resolveChipPresentation,
+	kindsUnderOther,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -648,7 +649,15 @@ export const NotificationsCenter = () => {
 		() =>
 			filterTimelineItems(
 				visibleFeed,
-				{ family: activeFamily, query: searchQuery, unreadOnly },
+				{
+					family: activeFamily,
+					query: searchQuery,
+					unreadOnly,
+					bundledUnderOther: kindsUnderOther(
+						timelineFilter,
+						timelineKinds
+					)
+				},
 				(item) => {
 					const { title, text } = describeItem(item, translate);
 					return `${title} ${visiblePreview(item.id)?.text || text}`;

@@ -22,7 +22,8 @@ export type SessionToolbarChipFilter =
 	| 'liveChat'
 	| 'internalGroup'
 	| 'groups'
-	| 'supervision';
+	| 'supervision'
+	| 'other';
 
 export type SessionToolbarGroupSession = {
 	isGroup?: boolean;
@@ -45,6 +46,8 @@ export const normalizeSessionToolbarChip = (
 			return 'nearby';
 		case 'drafts':
 			return 'drafts';
+		case 'other':
+			return 'other';
 		case 'liveChat':
 			return 'liveChat';
 		case 'internal':

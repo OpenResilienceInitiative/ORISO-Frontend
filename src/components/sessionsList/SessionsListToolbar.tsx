@@ -28,6 +28,7 @@ import {
 	SessionSearchPersonResult
 } from './sessionSearchPeople';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
+import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/display-filter-other.svg';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
 import { FilterChip as MenuChip } from '../displayFilter/FilterChip';
 import { ChipView, orderChipKinds } from '../displayFilter/displayFilterTypes';
@@ -128,6 +129,8 @@ interface SessionsListToolbarProps {
 	chipView?: ChipView;
 	/** Chips with unread items float to the left of the row. */
 	chipAutoSort?: boolean;
+	/** Offer the Sonstiges chip (lists that classify their rows, #1377). */
+	showOtherChip?: boolean;
 }
 
 export const IconMenuDots = () => (
@@ -180,6 +183,14 @@ export const IconCheck = () => (
 			fill="#ffffff"
 		/>
 	</svg>
+);
+
+/** Sonstiges: the catch-all chip, bundles kinds without their own pill. */
+const OtherFilterIcon = ({ className }: SessionToolbarFilterIconProps) => (
+	<OtherKindIcon
+		className={clsx(className, 'sessionsListToolbar__chipIconSvg--asset')}
+		aria-hidden="true"
+	/>
 );
 
 type FilterChipConfig = {
@@ -239,6 +250,13 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		fallback: 'Conversation circle',
 		Icon: GroupFilterIcon,
 		dataCy: 'sessions-list-chip-groups'
+	},
+	{
+		id: 'other',
+		labelKey: 'sessionList.toolbar.chips.other',
+		fallback: 'Other',
+		Icon: OtherFilterIcon,
+		dataCy: 'sessions-list-chip-other'
 	}
 ];
 
@@ -327,7 +345,8 @@ export const SessionsListToolbar = ({
 	deactivatedChipLabel,
 	onDeactivatedChipClick,
 	chipView = 'icons',
-	chipAutoSort = false
+	chipAutoSort = false,
+	showOtherChip = false
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -454,6 +473,9 @@ export const SessionsListToolbar = ({
 			if (chip.id === 'internalGroup') {
 				return showInternalGroupChip;
 			}
+			if (chip.id === 'other') {
+				return showOtherChip;
+			}
 			return true;
 		});
 		// Drafts are a count, not unread: they never float.
@@ -474,6 +496,7 @@ export const SessionsListToolbar = ({
 		showGroupChip,
 		showInternalGroupChip,
 		showLiveChatChip,
+		showOtherChip,
 		showSupervisionChip
 	]);
 	const archiveInsertIndex = Math.max(

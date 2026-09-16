@@ -336,4 +336,21 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 				?.getAttribute('aria-hidden')
 		).not.toBe('true');
 	});
+
+	it('renders a Sonstiges chip when the list offers it, with the bundled count', () => {
+		const onChipToggle = vi.fn();
+		renderMenu({
+			onChipToggle,
+			showOtherChip: true,
+			chipCounts: { unread: 0, drafts: 0, nearby: 2, other: 7 }
+		});
+		const other = screen.getByRole('button', { name: 'Other (7)' });
+		other.click();
+		expect(onChipToggle).toHaveBeenCalledWith('other');
+	});
+
+	it('omits the Sonstiges chip unless the list offers it', () => {
+		renderMenu({});
+		expect(screen.queryByRole('button', { name: /^Other/ })).toBeNull();
+	});
 });

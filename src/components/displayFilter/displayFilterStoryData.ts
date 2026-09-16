@@ -41,8 +41,8 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	title: 'Anzeige-Filter · Zeitstrahl',
 	description:
 		'Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.',
-	showColumn: 'Anzeigen',
-	pillColumn: 'Pille',
+	showColumn: 'In der Liste',
+	pillColumn: 'Als Pille',
 	showKind: (kind) => `Anzeigen: ${kind}`,
 	pillKind: (kind) => `Pille: ${kind}`,
 	otherFixed:

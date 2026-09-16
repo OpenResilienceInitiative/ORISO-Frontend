@@ -9,7 +9,9 @@ import {
 	visiblePillKinds,
 	orderChipKinds,
 	resolveKindAvailability,
-	listedKinds
+	listedKinds,
+	kindsUnderOther,
+	matchesOtherChip
 } from './displayFilterTypes';
 
 describe('displayFilterTypes (#1377)', () => {
@@ -211,5 +213,59 @@ describe('kind availability under the Träger feature switch (Frank 2026-09-16)'
 			'oneToOne',
 			'circle'
 		]);
+	});
+});
+
+describe('Sonstiges bundles the kinds without their own pill (Frank 2026-09-16)', () => {
+	const kinds = [
+		{ id: 'requests', label: 'Anfragen', unreadCount: 2 },
+		{ id: 'messages', label: 'Nachrichten', unreadCount: 5 },
+		{ id: 'drafts', label: 'Entwürfe', unreadCount: 1 },
+		{
+			id: 'futureTimeline',
+			label: 'Termine',
+			unreadCount: 0,
+			showOnly: true
+		},
+		{ id: OTHER_KIND_ID, label: 'Sonstiges', unreadCount: 3 }
+	];
+
+	it('lists the shown kinds whose pill is off, never show-only or hidden ones', () => {
+		let value = setKindSetting(EMPTY_DISPLAY_FILTER, 'messages', {
+			pill: false
+		});
+		value = setKindSetting(value, 'drafts', { pill: false });
+		value = setKindSetting(value, 'drafts', { show: false });
+		expect(kindsUnderOther(value, kinds)).toEqual(['messages']);
+		expect(kindsUnderOther(EMPTY_DISPLAY_FILTER, kinds)).toEqual([]);
+	});
+
+	it('adds their unread items to the Sonstiges chip', () => {
+		const value = setKindSetting(EMPTY_DISPLAY_FILTER, 'messages', {
+			pill: false
+		});
+		const chips = visiblePillKinds(value, kinds, null);
+		const other = chips.find((k) => k.id === OTHER_KIND_ID)!;
+		expect(other.unreadCount).toBe(8);
+		expect(chips.map((k) => k.id)).toEqual([
+			'requests',
+			'drafts',
+			OTHER_KIND_ID
+		]);
+		// nothing bundled → the plain count
+		expect(
+			visiblePillKinds(EMPTY_DISPLAY_FILTER, kinds, null).find(
+				(k) => k.id === OTHER_KIND_ID
+			)!.unreadCount
+		).toBe(3);
+	});
+
+	it('tells whether a row kind belongs to the active Sonstiges chip', () => {
+		const value = setKindSetting(EMPTY_DISPLAY_FILTER, 'messages', {
+			pill: false
+		});
+		expect(matchesOtherChip(value, kinds, 'messages')).toBe(true);
+		expect(matchesOtherChip(value, kinds, OTHER_KIND_ID)).toBe(true);
+		expect(matchesOtherChip(value, kinds, 'requests')).toBe(false);
 	});
 });

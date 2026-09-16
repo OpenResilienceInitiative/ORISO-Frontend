@@ -110,7 +110,9 @@ import {
 	reconcileActiveKind,
 	listedKinds,
 	resolveKindAvailability,
-	resolveChipPresentation
+	resolveChipPresentation,
+	kindsUnderOther,
+	matchesOtherChip
 } from '../displayFilter';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
@@ -365,6 +367,9 @@ export const SessionsList = ({
 		resetSection: resetListDisplayOverride
 	} = useDisplayFilter(displayFilterSection);
 	const displayFilterLabels = useDisplayFilterLabels(displayFilterSection);
+	// The kind options are built further down (they need the unread counts);
+	// the toolbar predicate above them reads the latest list through a ref.
+	const displayFilterKindsForOther = useRef<DisplayFilterKindOption[]>([]);
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	const { untilL } = useResponsive();
 
@@ -1551,6 +1556,9 @@ export const SessionsList = ({
 	const hiddenActiveRowIds = displayFiltered.hiddenActiveIds;
 	const displayFilterHiddenCount =
 		sessionToolbarPairs.length - displayVisiblePairs.length;
+	// Sonstiges chip (Frank 2026-09-16): rows of unmapped kind plus rows of
+	// every kind whose own pill is off. Classified here — the chip predicate
+	// in `sessionMatchesToolbar` knows nothing about kinds.
 	const toolbarMatches = useCallback(
 		({
 			raw,
@@ -1559,11 +1567,24 @@ export const SessionsList = ({
 			raw: ListItemInterface;
 			extended: ExtendedSessionInterface;
 		}) =>
+			(sessionToolbarChip !== 'other' ||
+				matchesOtherChip(
+					listDisplayFilter,
+					displayFilterKindsForOther.current,
+					type === SESSION_LIST_TYPES.ENQUIRY
+						? classifyRequest(raw, extended)
+						: classifySession(
+								raw,
+								extended,
+								currentUserId,
+								canSupervise
+							)
+				)) &&
 			sessionMatchesToolbar(
 				raw,
 				extended,
 				sessionToolbarSearch,
-				sessionToolbarChip,
+				sessionToolbarChip === 'other' ? null : sessionToolbarChip,
 				sessionToolbarSelectedPeople,
 				visibleUserDrafts,
 				currentUserId
@@ -1578,12 +1599,15 @@ export const SessionsList = ({
 						?.id ?? ''
 				) === sessionToolbarSelectedTopic),
 		[
+			canSupervise,
 			currentUserId,
+			listDisplayFilter,
 			sessionToolbarChip,
 			sessionToolbarSearch,
 			sessionToolbarSelectedAgencies,
 			sessionToolbarSelectedPeople,
 			sessionToolbarSelectedTopic,
+			type,
 			visibleUserDrafts
 		]
 	);
@@ -1823,6 +1847,7 @@ export const SessionsList = ({
 		type,
 		unreadByKind
 	]);
+	displayFilterKindsForOther.current = displayFilterKinds;
 	const chipPresentation = resolveChipPresentation(listDisplayFilter);
 	// Chips of kinds the Träger switched off while rows exist: locked, the
 	// click explains (snackbar) instead of filtering.
@@ -1922,12 +1947,19 @@ export const SessionsList = ({
 				counts[chip] = (counts[chip] ?? 0) + count;
 			}
 		});
+		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
+		kindsUnderOther(
+			listDisplayFilter,
+			displayFilterKindsForOther.current
+		).forEach((kind) => {
+			counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
+		});
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		displayVisiblePairs,
 		hiddenActiveRowIds,
-		listDisplayFilter.autoReadHidden,
+		listDisplayFilter,
 		sessionToolbarPairs,
 		type,
 		unreadByKind,
@@ -2095,6 +2127,7 @@ export const SessionsList = ({
 					onDeactivatedChipClick={handleDeactivatedChipClick}
 					chipView={chipPresentation.view}
 					chipAutoSort={chipPresentation.autoSort}
+					showOtherChip
 					displayFilter={{
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:

@@ -65,7 +65,8 @@ export const SESSION_KIND_CHIP: Partial<
 	liveChat: 'liveChat',
 	internalGroup: 'internalGroup',
 	circle: 'groups',
-	supervision: 'supervision'
+	supervision: 'supervision',
+	[OTHER_KIND_ID]: 'other'
 };
 
 const isSupervisedByMe = (

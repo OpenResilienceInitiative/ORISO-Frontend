@@ -194,10 +194,53 @@ export const visiblePillKinds = <T extends DisplayFilterKindOption>(
 	value: DisplayFilterValue,
 	kinds: ReadonlyArray<T>,
 	_activeKindId: string | null = null
-): T[] =>
-	kinds.filter(
-		(kind) => !kind.showOnly && resolveKindSetting(value, kind.id).pill
-	);
+): T[] => {
+	const bundled = kindsUnderOther(value, kinds);
+	const bundledUnread = kinds
+		.filter((kind) => bundled.includes(kind.id))
+		.reduce((sum, kind) => sum + (kind.unreadCount ?? 0), 0);
+	return kinds
+		.filter(
+			(kind) => !kind.showOnly && resolveKindSetting(value, kind.id).pill
+		)
+		.map((kind) =>
+			kind.id === OTHER_KIND_ID && bundledUnread > 0
+				? {
+						...kind,
+						unreadCount: (kind.unreadCount ?? 0) + bundledUnread
+					}
+				: kind
+		);
+};
+
+/**
+ * Sonstiges bundles every shown kind whose own pill is off (Frank
+ * 2026-09-16): their unread items count on the Sonstiges chip and the
+ * Sonstiges chip filters to them. Hidden and show-only kinds are not part
+ * of it, nor is Sonstiges itself.
+ */
+export const kindsUnderOther = (
+	value: DisplayFilterValue,
+	kinds: ReadonlyArray<DisplayFilterKindOption>
+): string[] =>
+	kinds
+		.filter((kind) => {
+			if (kind.id === OTHER_KIND_ID || kind.showOnly) {
+				return false;
+			}
+			const setting = resolveKindSetting(value, kind.id);
+			return setting.show && !setting.pill;
+		})
+		.map((kind) => kind.id);
+
+/** True when a row of `rowKind` belongs to the active Sonstiges chip. */
+export const matchesOtherChip = (
+	value: DisplayFilterValue,
+	kinds: ReadonlyArray<DisplayFilterKindOption>,
+	rowKind: string
+): boolean =>
+	rowKind === OTHER_KIND_ID ||
+	kindsUnderOther(value, kinds).includes(rowKind);
 
 export interface ChipOrderOptions {
 	/** Kinds with unread items float to the left; order is stable otherwise. */

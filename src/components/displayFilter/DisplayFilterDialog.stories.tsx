@@ -29,7 +29,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Per-section display filter. "Anzeigen" decides whether a kind appears in the list at all; "Pille" whether it gets a chip while it has unread items. "Sonstiges" is the catch-all and can never be hidden. Presentational — the store (slice 2) owns the value.'
+					'Per-section display filter. "In der Liste" decides whether a kind appears in the list at all; "Als Pille" whether it gets a chip (kinds without a pill are bundled under Sonstiges). "Sonstiges" is the catch-all and can never be hidden. Presentational — the store (slice 2) owns the value.'
 			}
 		}
 	},
@@ -104,7 +104,7 @@ export const Customised: Story = {
 	}
 };
 
-/** Unticking "Anzeigen" greys out the pill switch of that kind at once. */
+/** Unticking "In der Liste" greys out the pill switch of that kind at once. */
 export const HideAKind: Story = {
 	render: (args) => <Controlled {...args} />,
 	play: async ({ canvasElement }) => {

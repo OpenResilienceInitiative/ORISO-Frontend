@@ -235,6 +235,31 @@ export const TextCompact: Story = {
 	}
 };
 
+/** Pill off for Supervision → its unread item travels to the Sonstiges chip (1 → 2). */
+export const SonstigesBundlesPillOffKinds: Story = {
+	args: {
+		kinds: SESSION_KINDS.map((kind) =>
+			kind.id === 'supervision'
+				? { ...kind, unreadCount: 1 }
+				: kind.id === OTHER_KIND_ID
+					? { ...kind, unreadCount: 1 }
+					: kind
+		),
+		initialValue: setKindSetting(EMPTY_DISPLAY_FILTER, 'supervision', {
+			pill: false
+		})
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.queryByRole('button', { name: /^Supervision/ })
+		).toBeNull();
+		await expect(
+			canvas.getByRole('button', { name: 'Sonstiges (2)' })
+		).toBeTruthy();
+	}
+};
+
 /** Pill switched off in the filter: the chip is gone, the rest stays. */
 export const PillOffRemovesChip: Story = {
 	args: {
