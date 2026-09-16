@@ -24,6 +24,9 @@ import { DisplayFilter } from './model';
 
 /** Gespräche kinds (§5.2). `futureTimeline` gates the panel, not rows. */
 export type SessionKindId =
+	| 'create'
+	| 'unread'
+	| 'drafts'
 	| 'oneToOne'
 	| 'liveChat'
 	| 'internalGroup'
@@ -39,6 +42,11 @@ export type RequestKindId = 'nearby' | 'liveChat' | typeof OTHER_KIND_ID;
 
 /** Dialog order for Gespräche. */
 export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
+	// Frank 2026-09-16: every toolbar chip is a dialog row, in toolbar
+	// order. Erstellen/Ungelesen/Entwürfe are pill-only (no rows of their own).
+	'create',
+	'unread',
+	'drafts',
 	'oneToOne',
 	'liveChat',
 	'internalGroup',
@@ -59,13 +67,24 @@ export const REQUEST_KIND_ORDER: ReadonlyArray<RequestKindId> = [
 	OTHER_KIND_ID
 ];
 
+/** Kinds that only own a chip, never a row (Frank 2026-09-16). */
+export const PILL_ONLY_SESSION_KINDS: ReadonlyArray<SessionKindId> = [
+	'create',
+	'unread',
+	'drafts',
+	'archive'
+];
+
 /**
  * The toolbar chip that stands for a kind (the chip filter and the display
- * filter share the classification below). `unread`/`drafts` are not kinds.
+ * filter share the classification below). `unread`/`drafts` are refinement
+ * chips, not row kinds — they map so their pill can be switched like the rest.
  */
 export const SESSION_KIND_CHIP: Partial<
 	Record<SessionKindId | RequestKindId, SessionToolbarChipFilter>
 > = {
+	unread: 'unread',
+	drafts: 'drafts',
 	oneToOne: 'nearby',
 	nearby: 'nearby',
 	liveChat: 'liveChat',

@@ -459,6 +459,9 @@
 .displayFilterDialog__colHead--picker {
 	width: 136px;
 	text-align: left;
+	/* Frank 2026-09-16: the column titles line up with the pickers' text
+	   (main segment padding) and keep clear of the first row. */
+	padding: 0 0 8px 12px;
 }
 
 .displayFilterDialog__cell--picker {

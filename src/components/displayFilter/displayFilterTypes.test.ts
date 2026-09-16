@@ -13,7 +13,9 @@ import {
 	kindsUnderOther,
 	matchesOtherChip,
 	isKindMuted,
-	kindSoundOverride
+	kindSoundOverride,
+	kindPillMode,
+	isKindPinned
 } from './displayFilterTypes';
 
 describe('displayFilterTypes (#1377)', () => {
@@ -232,6 +234,24 @@ describe('Sonstiges bundles the kinds without their own pill (Frank 2026-09-16)'
 		{ id: OTHER_KIND_ID, label: 'Sonstiges', unreadCount: 3 }
 	];
 
+	it('never bundles a pill-only kind (Archiv, Erstellen, Ungelesen, Entwürfe): they have no rows to hold', () => {
+		const kinds = [
+			{ id: 'oneToOne', label: 'Mail' },
+			{ id: 'archive', label: 'Archiviert', pillOnly: true },
+			{ id: 'create', label: 'Chat erstellen', pillOnly: true },
+			{ id: OTHER_KIND_ID, label: 'Sonstiges' }
+		];
+		let value = setKindSetting(EMPTY_DISPLAY_FILTER, 'archive', {
+			pill: false
+		});
+		value = setKindSetting(value, 'create', { pill: false });
+		expect(kindsUnderOther(value, kinds)).toEqual([]);
+		// so the bundle chip stays away as well
+		expect(visiblePillKinds(value, kinds).map((kind) => kind.id)).toEqual([
+			'oneToOne'
+		]);
+	});
+
 	it('lists the shown kinds whose pill is off, never show-only or hidden ones', () => {
 		let value = setKindSetting(EMPTY_DISPLAY_FILTER, 'messages', {
 			pill: false
@@ -330,16 +350,31 @@ describe('sound per kind (Frank 2026-09-16: Ton statt In der Liste)', () => {
 		expect(
 			kindSoundOverride(EMPTY_DISPLAY_FILTER, 'oneToOne')
 		).toBeUndefined();
-		// Frank 2026-09-16: the live-chat pill can be pinned ("fest") instead of following availability
+		// Frank 2026-09-16: the live-chat pill has modes — dynamic (default,
+		// only stored when it differs), "bei Sitzung", or pinned ("fest")
 		const pinned = setKindSetting(EMPTY_DISPLAY_FILTER, 'liveChat', {
-			fixed: true
+			pillMode: 'fixed'
 		});
 		expect(pinned.kinds.liveChat).toEqual({
 			show: true,
 			pill: true,
-			fixed: true
+			pillMode: 'fixed'
 		});
+		expect(kindPillMode(pinned, 'liveChat')).toBe('fixed');
+		expect(isKindPinned(pinned, 'liveChat')).toBe(true);
 		expect(isDisplayFilterCustomised(pinned, ['liveChat'])).toBe(true);
+		const session = setKindSetting(pinned, 'liveChat', {
+			pillMode: 'session'
+		});
+		expect(kindPillMode(session, 'liveChat')).toBe('session');
+		expect(isKindPinned(session, 'liveChat')).toBe(false);
+		expect(isDisplayFilterCustomised(session, ['liveChat'])).toBe(true);
+		const dynamic = setKindSetting(session, 'liveChat', {
+			pillMode: 'dynamic'
+		});
+		expect(dynamic.kinds.liveChat).toEqual({ show: true, pill: true });
+		expect(kindPillMode(dynamic, 'liveChat')).toBe('dynamic');
+		expect(kindPillMode(EMPTY_DISPLAY_FILTER, 'liveChat')).toBe('dynamic');
 		expect(isKindMuted(muted, 'liveChat')).toBe(false);
 		// a mute counts as customised (the button dot)
 		expect(isDisplayFilterCustomised(muted, ['oneToOne'])).toBe(true);

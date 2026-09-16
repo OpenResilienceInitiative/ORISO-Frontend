@@ -343,7 +343,9 @@
 			"team": {
 				"title": "Teamberatung",
 				"onlyMarker": "Nur fürs Team",
-				"composer": { "placeholder": "Nachricht an das Team …" },
+				"composer": {
+					"placeholder": "Nachricht an das Team …"
+				},
 				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
 				"empty": {
 					"title": "Teamberatung starten",
@@ -1885,7 +1887,7 @@
 			"resetShort": "Zurücksetzen",
 			"otherChip": "Weitere",
 			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
-			"viewTitle": "Ansicht der Pillen",
+			"viewTitle": "Filter-Button Anzeige-Optionen",
 			"viewIcons": "Icons",
 			"viewLabels": "Icons + Text",
 			"viewText": "Text",
@@ -1909,7 +1911,8 @@
 				"timeline": "Zeitstrahl",
 				"sessions": "Gespräche",
 				"requests": "Anfragen"
-			}
+			},
+			"liveChatSession": "Bei Sitzung"
 		},
 		"families": {
 			"all": "Alle",
@@ -3657,12 +3660,13 @@
 				"create": "Erstellen",
 				"group": "Filter",
 				"archive": "Archiviert",
-				"oneToOne": "1-1 Beratung",
+				"oneToOne": "Mail-Beratung",
 				"liveChat": "Live-Chat",
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Chat erstellen"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."

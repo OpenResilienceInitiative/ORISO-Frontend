@@ -52,10 +52,8 @@ export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
  * Chips the display filter may hide (#1377 §5.2): the kind chips only —
  * "unread" and "drafts" are refinements, never kinds.
  */
-export type DisplayFilterKindChip = Exclude<
-	SessionToolbarChipFilter,
-	'unread' | 'drafts'
->;
+/** Every chip a display-filter row can switch (Frank 2026-09-16: all of them). */
+export type DisplayFilterKindChip = SessionToolbarChipFilter;
 export type {
 	SessionSearchAgencyOption,
 	SessionSearchPersonOption,
@@ -135,6 +133,8 @@ interface SessionsListToolbarProps {
 	showOtherChip?: boolean;
 	/** The Archiv link (Gespräche); the display filter's Archiv pill drives it. */
 	showArchiveChip?: boolean;
+	/** Pill of the Erstellen row (display filter); the Träger gate stays `showCreateGroupChatAction`. */
+	showCreateChip?: boolean;
 }
 
 export const IconMenuDots = () => (
@@ -351,7 +351,8 @@ export const SessionsListToolbar = ({
 	chipView = 'icons',
 	chipAutoSort = false,
 	showOtherChip = false,
-	showArchiveChip = true
+	showArchiveChip = true,
+	showCreateChip = true
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -778,7 +779,7 @@ export const SessionsListToolbar = ({
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
 				scrollDataCy="sessions-list-chips"
 			>
-				{showCreateGroupChatAction && (
+				{showCreateGroupChatAction && showCreateChip && (
 					<Link
 						className={clsx('sessionsListToolbar__chip', {
 							'sessionsListToolbar__chip--active':

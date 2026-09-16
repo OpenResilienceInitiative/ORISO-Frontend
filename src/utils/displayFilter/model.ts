@@ -13,6 +13,8 @@ import {
 	DEFAULT_KIND_SETTING,
 	DisplayFilterValue,
 	KindSetting,
+	LIVE_CHAT_PILL_MODES,
+	LiveChatPillMode,
 	OTHER_KIND_ID
 } from '../../components/displayFilter/displayFilterTypes';
 
@@ -112,8 +114,15 @@ const parseKindSetting = (raw: unknown): KindSetting | null => {
 	) {
 		setting.sound = raw.sound as SoundId;
 	}
-	if (raw.fixed === true) {
-		setting.fixed = true;
+	if (
+		typeof raw.pillMode === 'string' &&
+		LIVE_CHAT_PILL_MODES.includes(raw.pillMode as LiveChatPillMode) &&
+		raw.pillMode !== 'dynamic'
+	) {
+		setting.pillMode = raw.pillMode as LiveChatPillMode;
+	} else if (raw.fixed === true) {
+		// legacy boolean pin (pre-dev builds of 2026-09-16)
+		setting.pillMode = 'fixed';
 	}
 	return setting;
 };

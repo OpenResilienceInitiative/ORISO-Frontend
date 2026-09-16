@@ -50,6 +50,7 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
@@ -115,7 +116,7 @@ import {
 	matchesOtherChip,
 	OTHER_KIND_ID,
 	SESSION_COLUMNS,
-	isKindPinned,
+	kindPillMode,
 	resolveKindSetting
 } from '../displayFilter';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
@@ -129,7 +130,9 @@ import {
 	isKindShown,
 	REQUEST_KIND_ORDER,
 	SESSION_KIND_CHIP,
+	PILL_ONLY_SESSION_KINDS,
 	SESSION_KIND_ORDER,
+	SessionKindId,
 	sessionPairId
 } from '../../utils/displayFilter/sessions';
 import { isChatItemUnread } from '../../utils/sessionUnread';
@@ -1593,7 +1596,11 @@ export const SessionsList = ({
 				sessionToolbarChip === 'other' ? null : sessionToolbarChip,
 				sessionToolbarSelectedPeople,
 				visibleUserDrafts,
-				currentUserId
+				currentUserId,
+				/* #1404: never let the chip hide the conversation that is
+				   open — the same route-active exception the display filter
+				   already makes one layer earlier. */
+				isSessionListItemActive(extended)
 			) &&
 			sessionMatchesAgencies(
 				raw,
@@ -1608,6 +1615,7 @@ export const SessionsList = ({
 			canSupervise,
 			currentUserId,
 			listDisplayFilter,
+			isSessionListItemActive,
 			sessionToolbarChip,
 			sessionToolbarSearch,
 			sessionToolbarSelectedAgencies,
@@ -1805,6 +1813,33 @@ export const SessionsList = ({
 		canSupervise,
 		unreadVersion
 	]);
+	// #1404 / Frank 2026-09-16: availability decides whether NEW live chats
+	// are routed to me — the Live-Chat row's pill mode decides when the chip
+	// is in the row (dynamic / bei Sitzung / fest); the open live chat never
+	// loses its chip.
+	const hasLiveChatRow = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(({ raw, extended }) =>
+				isAnonymousAskerSession(raw, extended)
+			),
+		[sessionToolbarPairs]
+	);
+	const activeIsLiveChat = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(
+				({ raw, extended }) =>
+					isSessionListItemActive(extended) &&
+					isAnonymousAskerSession(raw, extended)
+			),
+		[isSessionListItemActive, sessionToolbarPairs]
+	);
+	const showLiveChatChip = isLiveChatChipVisible({
+		mode: kindPillMode(listDisplayFilter, 'liveChat'),
+		available: liveChatAvailable,
+		hasLiveChatRow,
+		unreadCount: unreadByKind.liveChat ?? 0,
+		activeIsLiveChat
+	});
 	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
 		const order =
 			type === SESSION_LIST_TYPES.ENQUIRY
@@ -1817,6 +1852,14 @@ export const SessionsList = ({
 					// Always listed (Frank 2026-09-16): the pill has modes
 					// (dynamic / pinned / off); availability only drives "dynamic".
 					return true;
+				case 'create':
+					// Träger gate of the create flow: off → no row (absent).
+					return (
+						type === SESSION_LIST_TYPES.MY_SESSION &&
+						showCreateGroupChatAction
+					);
+				case 'unread':
+				case 'drafts':
 				case 'archive':
 				case 'appointments':
 					return type === SESSION_LIST_TYPES.MY_SESSION;
@@ -1854,7 +1897,9 @@ export const SessionsList = ({
 					unreadCount: unreadByKind[kind] ?? 0,
 					showOnly: kind === 'futureTimeline',
 					modes: kind === 'liveChat',
-					pillOnly: kind === 'archive',
+					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
+						kind as SessionKindId
+					),
 					placeholder: kind === 'appointments',
 					availability:
 						formatEnabled === null
@@ -1869,6 +1914,7 @@ export const SessionsList = ({
 	}, [
 		canSupervise,
 		rowsByKind,
+		showCreateGroupChatAction,
 		showGroupChip,
 		showInternalGroupChip,
 		translate,
@@ -2110,12 +2156,12 @@ export const SessionsList = ({
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
-					showLiveChatChip={
-						liveChatAvailable ||
-						isKindPinned(listDisplayFilter, 'liveChat')
-					}
+					showLiveChatChip={showLiveChatChip}
 					showArchiveChip={
 						resolveKindSetting(listDisplayFilter, 'archive').pill
+					}
+					showCreateChip={
+						resolveKindSetting(listDisplayFilter, 'create').pill
 					}
 				/>
 			)} */}
@@ -2138,12 +2184,12 @@ export const SessionsList = ({
 					   availability toggle is ON — it narrows the
 					   my-sessions list to anonymous-asker chats using the
 					   same username-prefix filter as the Anfragen chip. */
-					showLiveChatChip={
-						liveChatAvailable ||
-						isKindPinned(listDisplayFilter, 'liveChat')
-					}
+					showLiveChatChip={showLiveChatChip}
 					showArchiveChip={
 						resolveKindSetting(listDisplayFilter, 'archive').pill
+					}
+					showCreateChip={
+						resolveKindSetting(listDisplayFilter, 'create').pill
 					}
 					createGroupChatPath={buildCreateGroupChatPath(
 						sessionListTab || undefined

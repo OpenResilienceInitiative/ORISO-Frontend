@@ -55,6 +55,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	pillOn: 'An',
 	pillOff: 'Aus',
 	liveChatDynamic: 'Dynamisch',
+	liveChatSession: 'Bei Sitzung',
 	liveChatFixed: 'Fest',
 	placeholderHint: 'Kommt bald.',
 	pillKind: (kind) => `Pille: ${kind}`,
@@ -72,7 +73,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	resetShort: 'Zurücksetzen',
 	readOnlyHint:
 		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.',
-	viewTitle: 'Ansicht der Pillen',
+	viewTitle: 'Filter-Button Anzeige-Optionen',
 	viewIcons: 'Icons',
 	viewLabels: 'Icons + Text',
 	viewText: 'Text',

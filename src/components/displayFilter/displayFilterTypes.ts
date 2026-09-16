@@ -22,11 +22,20 @@ export interface KindSetting {
 	 */
 	sound?: SoundId;
 	/**
-	 * Live chat only (Frank 2026-09-16): the pill follows the consultant's
-	 * availability toggle ("dynamisch", default) or stays pinned ("fest").
+	 * Live chat only (Frank 2026-09-16): when the pill is in the row.
+	 * `dynamic` (default, not stored) = availability on or an asker wrote
+	 * something new; `session` = also while any live chat is in the list,
+	 * new messages or not; `fixed` = always.
 	 */
-	fixed?: boolean;
+	pillMode?: LiveChatPillMode;
 }
+
+export type LiveChatPillMode = 'dynamic' | 'session' | 'fixed';
+export const LIVE_CHAT_PILL_MODES: ReadonlyArray<LiveChatPillMode> = [
+	'dynamic',
+	'session',
+	'fixed'
+];
 
 /**
  * How the chip row draws its chips (Figma 1139:45736 / 9947:31377):
@@ -165,11 +174,17 @@ export const isKindMuted = (
 	kindId: string
 ): boolean => value.kinds[kindId]?.sound === 'none';
 
+/** The live-chat pill mode of a kind; missing reads as `dynamic`. */
+export const kindPillMode = (
+	value: DisplayFilterValue,
+	kindId: string
+): LiveChatPillMode => value.kinds[kindId]?.pillMode ?? 'dynamic';
+
 /** Live-chat pill pinned regardless of availability ("fest"). */
 export const isKindPinned = (
 	value: DisplayFilterValue,
 	kindId: string
-): boolean => value.kinds[kindId]?.fixed === true;
+): boolean => kindPillMode(value, kindId) === 'fixed';
 
 /**
  * Kinds accepted by {@link isDisplayFilterCustomised}: plain ids, or the
@@ -204,7 +219,7 @@ export const isDisplayFilterCustomised = (
 			!setting.show ||
 			(!showOnly && !setting.pill) ||
 			kindSoundOverride(value, kindId) !== undefined ||
-			isKindPinned(value, kindId)
+			kindPillMode(value, kindId) !== 'dynamic'
 		);
 	});
 
@@ -230,8 +245,8 @@ export const setKindSetting = (
 	if (next.sound === undefined) {
 		delete next.sound;
 	}
-	if (!next.fixed) {
-		delete next.fixed;
+	if (!next.pillMode || next.pillMode === 'dynamic') {
+		delete next.pillMode;
 	}
 	return { ...value, kinds: { ...value.kinds, [kindId]: next } };
 };
@@ -292,7 +307,9 @@ export const kindsUnderOther = (
 ): string[] =>
 	kinds
 		.filter((kind) => {
-			if (kind.id === OTHER_KIND_ID || kind.showOnly) {
+			// A pill-only kind (Archiv, Erstellen, Ungelesen, Entwürfe) has
+			// no rows of its own: nothing to bundle.
+			if (kind.id === OTHER_KIND_ID || kind.showOnly || kind.pillOnly) {
 				return false;
 			}
 			const setting = resolveKindSetting(value, kind.id);

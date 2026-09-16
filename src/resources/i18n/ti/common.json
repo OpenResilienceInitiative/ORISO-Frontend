@@ -336,7 +336,9 @@
 			"team": {
 				"title": "ምኽክር ጉጅለ",
 				"onlyMarker": "ንጉጅለ ጥራይ",
-				"composer": { "placeholder": "ናብ ጉጅለ መልእኽቲ…" },
+				"composer": {
+					"placeholder": "ናብ ጉጅለ መልእኽቲ…"
+				},
 				"systemNotice": "ምኽክር ጉጅለ ምስ ምኽሪ ብሓባር ይካየድ። ደላዪ ምኽሪ ኣብዚ ቻነል ኣይሳተፍን ኣይርእዮን።",
 				"empty": {
 					"title": "ምኽክር ጉጅለ ጀምር",
@@ -1864,7 +1866,7 @@
 			"resetShort": "ዳግም ኣቐምጥ",
 			"otherChip": "ተወሳኺ",
 			"readOnlyHint": "እዞም ኣቐምጣታት ብሓድሽ ስሪት መተግበሪ ተዓቂቦም። ንምቕያር በጃኹም መተግበሪ ኣሐድሱ።",
-			"viewTitle": "ኣቀማምጣ መጻረዪታት",
+			"viewTitle": "ኣማራጺታት ምርኣይ መጻረዪ ቁልፊ",
 			"viewIcons": "ምልክታት",
 			"viewLabels": "ምልክታት + ጽሑፍ",
 			"viewText": "ጽሑፍ",
@@ -1888,7 +1890,8 @@
 				"timeline": "መስመር ግዜ",
 				"sessions": "ዕላላት",
 				"requests": "ሕቶታት"
-			}
+			},
+			"liveChatSession": "ኣብ ክፉት"
 		},
 		"families": {
 			"all": "ኩሉ",
@@ -3638,7 +3641,8 @@
 				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
 				"groups": "ናይ ዝርርብ ክበብ",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "ዕላል ፍጠር"
 			},
 			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
 			"draftMetadataOnly": "ዘይተላእከ መልእኽቲ ተዓቂቡ።"

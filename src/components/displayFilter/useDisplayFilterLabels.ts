@@ -77,6 +77,9 @@ export const useDisplayFilterLabels = (
 				liveChatDynamic: t(
 					'notifications.displayFilter.liveChatDynamic'
 				),
+				liveChatSession: t(
+					'notifications.displayFilter.liveChatSession'
+				),
 				liveChatFixed: t('notifications.displayFilter.liveChatFixed'),
 				placeholderHint: t(
 					'notifications.displayFilter.placeholderHint'

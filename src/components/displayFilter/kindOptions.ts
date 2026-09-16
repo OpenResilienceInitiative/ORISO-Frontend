@@ -18,11 +18,14 @@ import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/displ
 import { ReactComponent as FutureTimelineKindIcon } from '../../resources/img/icons/calendar.svg';
 import {
 	ArchiveFilterIcon,
+	CreateChatFilterIcon,
+	DraftFilterIcon,
 	GroupFilterIcon,
 	InternalGroupFilterIcon,
 	LiveChatFilterIcon,
 	MailFilterIcon,
-	SupervisionFilterIcon
+	SupervisionFilterIcon,
+	UnreadFilterIcon
 } from '../sessionsList/SessionToolbarFilterIcons';
 
 export type KindIcon = React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -41,6 +44,9 @@ export const TIMELINE_KIND_ICONS: Record<string, KindIcon> = {
 
 /** Gespräche/Anfragen kinds: the toolbar's own chip icons. */
 export const SESSION_KIND_ICONS: Record<string, KindIcon> = {
+	create: CreateChatFilterIcon as unknown as KindIcon,
+	unread: UnreadFilterIcon as unknown as KindIcon,
+	drafts: DraftFilterIcon as unknown as KindIcon,
 	oneToOne: MailFilterIcon as unknown as KindIcon,
 	nearby: MailFilterIcon as unknown as KindIcon,
 	liveChat: LiveChatFilterIcon as unknown as KindIcon,
@@ -70,6 +76,8 @@ export const sessionKindLabel = (t: Translate, kind: string): string => {
 			return t('sessionList.toolbar.chips.groups');
 		case 'archive':
 			return t('sessionList.toolbar.chips.archive');
+		case 'create':
+			return t('sessionList.toolbar.chips.createRow');
 		case 'appointments':
 			return t('notifications.families.appointments');
 		default:

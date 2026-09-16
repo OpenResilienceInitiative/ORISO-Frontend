@@ -336,7 +336,9 @@
 			"team": {
 				"title": "Ekip danışmanlığı",
 				"onlyMarker": "Yalnızca ekip için",
-				"composer": { "placeholder": "Ekibe mesaj…" },
+				"composer": {
+					"placeholder": "Ekibe mesaj…"
+				},
 				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
 				"empty": {
 					"title": "Ekip danışmanlığını başlat",
@@ -1864,7 +1866,7 @@
 			"resetShort": "Sıfırla",
 			"otherChip": "Diğer",
 			"readOnlyHint": "Bu ayarlar daha yeni bir uygulama sürümüyle kaydedildi. Değiştirmek için lütfen uygulamayı güncelleyin.",
-			"viewTitle": "Filtre görünümü",
+			"viewTitle": "Filtre düğmesi görünüm seçenekleri",
 			"viewIcons": "Simgeler",
 			"viewLabels": "Simge + metin",
 			"viewText": "Metin",
@@ -1888,7 +1890,8 @@
 				"timeline": "Zaman çizelgesi",
 				"sessions": "Görüşmeler",
 				"requests": "Talepler"
-			}
+			},
+			"liveChatSession": "Açıkken"
 		},
 		"families": {
 			"all": "Tümü",
@@ -3638,7 +3641,8 @@
 				"internalGroup": "Dahili grup sohbeti",
 				"groups": "Sohbet çevresi",
 				"supervision": "Süpervizyon",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Sohbet oluştur"
 			},
 			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
 			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."

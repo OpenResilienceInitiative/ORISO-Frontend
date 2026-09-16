@@ -214,6 +214,8 @@ describe('sound per kind round-trip', () => {
 			kinds: {
 				oneToOne: { sound: false },
 				liveChat: { show: true, fixed: true },
+				nearby: { pillMode: 'session' },
+				supervision: { pillMode: 'bogus' },
 				circle: { sound: 'ton-4' },
 				drafts: { sound: 'bogus' }
 			}
@@ -224,11 +226,19 @@ describe('sound per kind round-trip', () => {
 			pill: true,
 			sound: 'none'
 		});
+		// legacy `fixed: true` (pre-dev builds of 2026-09-16) reads as the pinned mode
 		expect(parsed.kinds.liveChat).toEqual({
 			show: true,
 			pill: true,
-			fixed: true
+			pillMode: 'fixed'
 		});
+		expect(parsed.kinds.nearby).toEqual({
+			show: true,
+			pill: true,
+			pillMode: 'session'
+		});
+		// an unknown mode falls back to dynamic (not stored)
+		expect(parsed.kinds.supervision).toEqual({ show: true, pill: true });
 		expect(parsed.kinds.circle).toEqual({
 			show: true,
 			pill: true,

@@ -39,6 +39,7 @@ export interface DisplayFilterDialogLabels {
 	pillOn: string;
 	pillOff: string;
 	liveChatDynamic: string;
+	liveChatSession: string;
 	liveChatFixed: string;
 	/** Row hint of an announced, not yet wired kind (Termine). */
 	placeholderHint: string;

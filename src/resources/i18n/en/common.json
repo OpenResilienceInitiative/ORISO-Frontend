@@ -331,7 +331,9 @@
 			"team": {
 				"title": "Team consultation",
 				"onlyMarker": "Team only",
-				"composer": { "placeholder": "Message to the team …" },
+				"composer": {
+					"placeholder": "Message to the team …"
+				},
 				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
 				"empty": {
 					"title": "Start team consultation",
@@ -1861,7 +1863,7 @@
 			"resetShort": "Reset",
 			"otherChip": "More",
 			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
-			"viewTitle": "Chip view",
+			"viewTitle": "Filter button display options",
 			"viewIcons": "Icons",
 			"viewLabels": "Icons + text",
 			"viewText": "Text",
@@ -1885,7 +1887,8 @@
 				"timeline": "Timeline",
 				"sessions": "Conversations",
 				"requests": "Requests"
-			}
+			},
+			"liveChatSession": "While open"
 		},
 		"families": {
 			"all": "All",
@@ -3605,7 +3608,8 @@
 				"internalGroup": "Internal group chat",
 				"groups": "Conversation circle",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Create chat"
 			},
 			"emptyFilterResult": "No consultations match your search or filters.",
 			"draftMetadataOnly": "Unsent message saved."

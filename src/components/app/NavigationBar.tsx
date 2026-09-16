@@ -54,6 +54,7 @@ import {
 	LiveChatToggleActiveIcon,
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
+import { resolveLiveChatRailTarget } from './liveChatRailTarget';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -150,13 +151,16 @@ export const NavigationBar = ({
 		const nextActive = !liveChatAvailable;
 		try {
 			await setLiveChatAvailable(nextActive);
-			if (nextActive) {
-				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+			// Frank 2026-09-16 (Variante 1): with a live chat already open the
+			// button leads back into that conversation, not the empty queue.
+			const target = resolveLiveChatRailTarget({ nextActive, sessions });
+			if (target) {
+				navigate(target);
 			}
 		} catch {
 			// The hook retains the acknowledged state and exposes a localized error.
 		}
-	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
+	}, [liveChatAvailable, navigate, sessions, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
 	/**

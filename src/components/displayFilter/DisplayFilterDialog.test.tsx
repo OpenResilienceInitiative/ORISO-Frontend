@@ -410,8 +410,17 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		expect(next.kinds.liveChat).toEqual({
 			show: true,
 			pill: true,
-			fixed: true
+			pillMode: 'fixed'
 		});
+		// the third mode: chip while any live chat is open (Frank 2026-09-16)
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anzeige wählen: Live-Chat' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Bei Sitzung' }));
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).kinds
+				.liveChat
+		).toEqual({ show: true, pill: true, pillMode: 'session' });
 		expect(
 			screen.getByRole('button', { name: 'Pille: Archiviert' })
 		).toBeTruthy();

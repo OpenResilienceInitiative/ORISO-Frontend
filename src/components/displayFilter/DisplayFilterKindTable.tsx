@@ -6,13 +6,16 @@ import {
 	DisplayFilterValue,
 	OTHER_KIND_ID,
 	isKindMuted,
-	isKindPinned,
+	kindPillMode,
 	kindSoundOverride,
 	resolveKindSetting,
 	setKindSetting
 } from './displayFilterTypes';
 import { KindOptionPicker } from './KindOptionPicker';
 import { NOTIFICATION_TONE_IDS } from '../../utils/notificationSettings/model';
+
+/** Tones offered per kind (Frank 2026-09-16: 15 entries were too many). */
+const KIND_TONE_MENU_SIZE = 6;
 import type { SoundId } from '../../utils/notificationSettings/model';
 import { previewNotificationSound } from '../../utils/notificationSettings/soundPlayback';
 import { ReactComponent as PlayIcon } from '../../resources/img/icons/play-circle.svg';
@@ -39,6 +42,7 @@ export interface DisplayFilterKindTableLabels {
 	pillOn: string;
 	pillOff: string;
 	liveChatDynamic: string;
+	liveChatSession: string;
 	liveChatFixed: string;
 	/** Tooltip of the Sonstiges row (it can never be hidden). */
 	otherFixed: string;
@@ -142,9 +146,7 @@ export const DisplayFilterKindTable = ({
 					const pillValue = !setting.pill
 						? 'off'
 						: kind.modes
-							? isKindPinned(value, kind.id)
-								? 'fixed'
-								: 'dynamic'
+							? kindPillMode(value, kind.id)
 							: 'on';
 					return (
 						<tr
@@ -215,6 +217,8 @@ export const DisplayFilterKindTable = ({
 													id: 'ring',
 													label: labels.soundRing
 												},
+												// Frank 2026-09-16: a shorter menu — the first
+												// six tones, plus whatever is already stored.
 												...NOTIFICATION_TONE_IDS.map(
 													(id, index) => ({
 														id,
@@ -222,6 +226,11 @@ export const DisplayFilterKindTable = ({
 															index + 1
 														)
 													})
+												).filter(
+													(option, index) =>
+														index <
+															KIND_TONE_MENU_SIZE ||
+														option.id === tone
 												),
 												{
 													id: 'none',
@@ -317,6 +326,10 @@ export const DisplayFilterKindTable = ({
 															label: labels.liveChatDynamic
 														},
 														{
+															id: 'session',
+															label: labels.liveChatSession
+														},
+														{
 															id: 'fixed',
 															label: labels.liveChatFixed
 														},
@@ -346,7 +359,11 @@ export const DisplayFilterKindTable = ({
 											onChange(
 												setKindSetting(value, kind.id, {
 													pill: id !== 'off',
-													fixed: id === 'fixed'
+													pillMode:
+														id === 'session' ||
+														id === 'fixed'
+															? id
+															: 'dynamic'
 												})
 											)
 										}
