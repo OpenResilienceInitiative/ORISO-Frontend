@@ -5,9 +5,6 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
-import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
-import { ReactComponent as ThreadGlyphIcon } from '../../resources/img/icons/fab-menu-thread.svg';
-import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
@@ -1476,718 +1473,193 @@ export const MenuOnThePhone: Story = {
 };
 
 /* ------------------------------------------------------------------ *
- * Avatar size trial — Frank, 15.09.2026
- * ------------------------------------------------------------------ */
-
-/**
- * "Wie sieht das Icon vom Usernamen bei 40 Pixeln und bei 48 Pixeln aus?"
- *
- * Built from the real pieces — `MessageAvatar` and the card's own `__row` /
- * `__icon` / `__username` classes — so what is on screen here is what the
- * card would look like, not an impression of it. `MessageAvatar` already
- * renders without a ring, so the only variable is the size.
- *
- * The name sits 12 px from the avatar in every row: the row's `gap`, with
- * no padding of its own inside `__username`.
- */
-export const AvatarSizeTrial: Story = {
-	name: 'Avatar-Größe — 32 / 40 / 48 px, mit und ohne Outline',
-	render: () => (
-		<div style={{ ...listShell, maxWidth: 760, padding: 16 }}>
-			{/*
-			 * The outline is hardcoded in `AnimalAvatar.tsx:56` —
-			 * `border: 2px solid #c4c7c8` plus a drop shadow, with no way to
-			 * switch it off. `UserAvatar` has a `ring` prop and
-			 * `MessageAvatar` already sets it to `false`; the border is
-			 * re-added one level below that. Suppressed here for the
-			 * comparison only, so the choice can be made by looking.
-			 */}
-			<style>{`
-				.avatarTrial--bare [data-testid="user-avatar"] > div {
-					border-color: transparent !important;
-					box-shadow: none !important;
-				}
-			`}</style>
-			{[
-				{ bare: false, label: 'mit Outline (heute)' },
-				{ bare: true, label: 'ohne Outline' }
-			].map((variant) => (
-				<div
-					key={variant.label}
-					className={variant.bare ? 'avatarTrial--bare' : undefined}
-				>
-					<p
-						style={{
-							margin: '8px 4px',
-							fontSize: 12,
-							fontWeight: 600,
-							opacity: 0.7
-						}}
-					>
-						{variant.label}
-					</p>
-					{[32, 40, 48].map((size) => (
-						<div
-							key={size}
-							className="sessionsListItem__content"
-							style={{ minHeight: 0, marginBottom: 8 }}
-						>
-							<div
-								className="sessionsListItem__row"
-								style={{ padding: '12px 16px' }}
-							>
-								<div
-									className="sessionsListItem__icon"
-									style={{
-										width: size,
-										height: size,
-										minWidth: size
-									}}
-								>
-									<MessageAvatar
-										isGroup={false}
-										isSystemNotification={false}
-										userId="asker-4401"
-										username="ruhiges-yak-kim@example.invalid"
-										displayName="ruhiges Yak Kim"
-										size={size}
-									/>
-								</div>
-								<span className="sessionsListItem__username">
-									ruhiges Yak Kim
-								</span>
-								<span
-									style={{
-										fontSize: 11,
-										opacity: 0.5,
-										alignSelf: 'center'
-									}}
-								>
-									{size} px
-								</span>
-							</div>
-						</div>
-					))}
-				</div>
-			))}
-		</div>
-	),
-	play: async ({ canvasElement }) => {
-		// The 12 px is the promise; measure it rather than trust the gap.
-		const rows = canvasElement.querySelectorAll<HTMLElement>(
-			'.sessionsListItem__row'
-		);
-		await expect(rows.length).toBe(6);
-		for (const row of Array.from(rows)) {
-			const icon = row.querySelector<HTMLElement>(
-				'.sessionsListItem__icon'
-			)!;
-			const name = row.querySelector<HTMLElement>(
-				'.sessionsListItem__username'
-			)!;
-			await expect(
-				Math.round(
-					name.getBoundingClientRect().left -
-						icon.getBoundingClientRect().right
-				)
-			).toBe(12);
-		}
-	}
-};
-
-/* ------------------------------------------------------------------ *
- * Card layout proposals — Frank, 15.09.2026
- * ------------------------------------------------------------------ */
-
-const PREVIEW_THREE_LINES =
-	'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter.';
-
-/** Three lines instead of one — the only rule the proposals add. */
-const threeLines: React.CSSProperties = {
-	whiteSpace: 'normal',
-	display: '-webkit-box',
-	WebkitLineClamp: 3,
-	WebkitBoxOrient: 'vertical',
-	overflow: 'hidden'
-} as React.CSSProperties;
-
-const TopRow = () => (
-	<div className="sessionsListItem__row">
-		<div className="sessionsListItem__rowLeft">
-			<div className="sessionsListItem__topicPostcodeGroup">
-				<div className="sessionsListItem__topic">Familienberatung</div>
-				<div className="sessionsListItem__postcode">12345</div>
-			</div>
-		</div>
-		<div className="sessionsListItem__rowRight">
-			<div className="sessionsListItem__date">18.3.2026</div>
-			<button type="button" className="sessionsListItem__menuIcon">
-				<MenuVerticalIcon />
-			</button>
-		</div>
-	</div>
-);
-
-const MailRow = ({ preview }: { preview?: boolean }) => (
-	<div className="sessionsListItem__row">
-		{preview && (
-			<span className="sessionsListItem__subject">Anfrage gesendet</span>
-		)}
-		<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-			{/*
-			 * The plain <img>, as this branch renders it. The masked variant
-			 * that takes its colour from `--m3-primary` lives on the FE#1115
-			 * branch; using its markup here produced an invisible square,
-			 * because the mask rule does not exist on this branch.
-			 */}
-			<img
-				src={mailConversationIcon}
-				alt="Mail"
-				className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-			/>
-			<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-				Mail
-			</span>
-		</div>
-	</div>
-);
-
-const Avatar = ({ size }: { size: number }) => (
-	<div
-		className="sessionsListItem__icon"
-		style={{ width: size, height: size, minWidth: size }}
-	>
-		<MessageAvatar
-			isGroup={false}
-			isSystemNotification={false}
-			userId="asker-4401"
-			username="ruhiges-yak-kim@example.invalid"
-			displayName="ruhiges Yak Kim"
-			size={size}
-		/>
-	</div>
-);
-
-const Proposal = ({
-	title,
-	note,
-	children
-}: {
-	title: string;
-	note: string;
-	children: React.ReactNode;
-}) => (
-	<div style={{ marginBottom: 20 }}>
-		<p style={{ margin: '0 4px 6px', fontSize: 12, fontWeight: 600 }}>
-			{title}
-		</p>
-		<div className="sessionsListItem__content" style={{ minHeight: 0 }}>
-			{children}
-		</div>
-		<p
-			style={{
-				margin: '6px 4px 0',
-				fontSize: 11,
-				opacity: 0.6,
-				lineHeight: 1.5
-			}}
-		>
-			{note}
-		</p>
-	</div>
-);
-
-/**
- * Four arrangements of the same card. Nothing about the design changes —
- * same chips, same date, same trigger, same Mail row, same colours and
- * classes. What moves is where the avatar, the name and the preview sit,
- * and the preview runs to three lines instead of one.
- *
- * Frank, 15.09.2026: "eine vierziger Icon-Größe und eine 48er und dann den
- * Namen kurz daneben und dann ein 3-zeiliger Text, aber das Design was wir
- * haben, natürlich total gleich bleibt. Du bist quasi umarrangierst."
- */
-export const CardLayoutProposals: Story = {
-	name: 'Karte — vier Umarrangierungen (40 / 48 px, 3 Zeilen)',
-	render: () => (
-		<div style={{ ...listShell, maxWidth: 480, padding: 16 }}>
-			<Proposal
-				title="A — 40 px, Name daneben, Text darunter über die volle Breite"
-				note="Der Name bleibt eine eigene Zeile. Der Text beginnt links am Kartenrand und hat die meiste Breite von allen vier."
-			>
-				<TopRow />
-				<div
-					className="sessionsListItem__row"
-					style={{ padding: '0 16px' }}
-				>
-					<Avatar size={40} />
-					<span className="sessionsListItem__username">
-						ruhiges Yak Kim
-					</span>
-				</div>
-				<div
-					className="sessionsListItem__row"
-					style={{ padding: '8px 16px 0' }}
-				>
-					<span
-						className="sessionsListItem__subject"
-						style={threeLines}
-					>
-						{PREVIEW_THREE_LINES}
-					</span>
-				</div>
-				<MailRow />
-			</Proposal>
-
-			<Proposal
-				title="B — 48 px, Avatar trägt Name und Text"
-				note="Der Avatar steht links neben einem Block aus Name und Text. Ergibt die ruhigste Kante, kostet aber 60 px Textbreite."
-			>
-				<TopRow />
-				<div
-					className="sessionsListItem__row"
-					style={{ padding: '0 16px', alignItems: 'flex-start' }}
-				>
-					<Avatar size={48} />
-					<div style={{ minWidth: 0, flex: 1 }}>
-						<span
-							className="sessionsListItem__username"
-							style={{ display: 'block', padding: 0 }}
-						>
-							ruhiges Yak Kim
-						</span>
-						<span
-							className="sessionsListItem__subject"
-							style={{ ...threeLines, marginTop: 2 }}
-						>
-							{PREVIEW_THREE_LINES}
-						</span>
-					</div>
-				</div>
-				<MailRow />
-			</Proposal>
-
-			<Proposal
-				title="C — 40 px, Avatar trägt Name und Text"
-				note="Wie B, nur mit dem kleineren Avatar. Der Text gewinnt 8 px, der Avatar verliert an Gewicht gegenüber dem Namen."
-			>
-				<TopRow />
-				<div
-					className="sessionsListItem__row"
-					style={{ padding: '0 16px', alignItems: 'flex-start' }}
-				>
-					<Avatar size={40} />
-					<div style={{ minWidth: 0, flex: 1 }}>
-						<span
-							className="sessionsListItem__username"
-							style={{ display: 'block', padding: 0 }}
-						>
-							ruhiges Yak Kim
-						</span>
-						<span
-							className="sessionsListItem__subject"
-							style={{ ...threeLines, marginTop: 2 }}
-						>
-							{PREVIEW_THREE_LINES}
-						</span>
-					</div>
-				</div>
-				<MailRow />
-			</Proposal>
-
-			<Proposal
-				title="D — 48 px, Name daneben, Text unter dem Namen eingerückt"
-				note="Der Avatar steht frei, Name und Text fluchten auf derselben Kante. Die Einrückung macht den Avatar zum Anker der ganzen Karte."
-			>
-				<TopRow />
-				<div
-					className="sessionsListItem__row"
-					style={{ padding: '0 16px' }}
-				>
-					<Avatar size={48} />
-					<span className="sessionsListItem__username">
-						ruhiges Yak Kim
-					</span>
-				</div>
-				<div
-					className="sessionsListItem__row"
-					style={{ padding: '4px 16px 0 76px' }}
-				>
-					<span
-						className="sessionsListItem__subject"
-						style={threeLines}
-					>
-						{PREVIEW_THREE_LINES}
-					</span>
-				</div>
-				<MailRow />
-			</Proposal>
-		</div>
-	),
-	play: async ({ canvasElement }) => {
-		// Every proposal keeps the 12 px between avatar and name, and every
-		// preview really runs to three lines rather than being cut at one.
-		const avatars = canvasElement.querySelectorAll<HTMLElement>(
-			'.sessionsListItem__icon'
-		);
-		await expect(avatars.length).toBe(4);
-		const previews = canvasElement.querySelectorAll<HTMLElement>(
-			'.sessionsListItem__subject'
-		);
-		for (const preview of Array.from(previews)) {
-			if (preview.textContent!.length < 40) continue;
-			const lineHeight = Number.parseFloat(
-				getComputedStyle(preview).lineHeight
-			);
-			await expect(
-				Math.round(preview.getBoundingClientRect().height / lineHeight)
-			).toBe(3);
-		}
-	}
-};
-
-/* ------------------------------------------------------------------ *
- * Text flow around avatar and Mail, v4 — Frank, 16.09.2026
+ * The session card — Frank, 15./16.09.2026
  * ------------------------------------------------------------------ */
 
 /*
- * The card as Frank sketched it over four passes:
+ * The card's geometry, as Frank signed it off on the v4 plate, now asserted
+ * on the real `SessionListItemComponent`:
  *
- *  - tag at the TOP of the chip row, not centred on the 32 px menu trigger;
- *  - avatar/name/preview block 10 px under the tag;
- *  - the preview's left edge is a steady diagonal — beside the avatar, a
- *    step further left, another step further left — instead of jumping
- *    back to the card's edge on the third line ("zu krass nach links
- *    auswandernd"); the area under the avatar stays empty;
- *  - from the second line on, the right edge steps in for the Mail column;
- *  - Mail sits beside the third line, its word ending exactly under the
- *    right edge of the white menu pill; the card closes 16 px below it;
- *  - the preview is truncated with an ellipsis after the third line;
- *  - thread and voice are marked by their existing icons alone.
- *
- * How:
- *
- *  - The left edge is a `shape-outside` polygon on the avatar float, one
- *    step per line box: 60 px (name and first line, the float's margin
- *    box), 51 px (the circle's edge at the second line's glyph band plus
- *    the 12 px gap), and the third-line value under comparison. The float
- *    carries a bottom margin so its area reaches the third line.
- *  - The ellipsis is `-webkit-line-clamp`. Chrome lays a vertical
- *    `-webkit-box` out as `flow-root`, so the floats keep working inside the
- *    clamp — measured. Everything sits in one inner block for engines that
- *    treat `-webkit-box` as a legacy flexbox. Safari is NOT verified: there
- *    is no WebKit build on this machine.
- *  - The avatar's ring (2 px grey border + shadow, hardcoded in
- *    `AnimalAvatar.tsx`, out of reach of the `ring` prop) is suppressed —
- *    it is what made flush text look 2 px too far left.
- *  - Measured on this card: chip row 1–49, menu pill 379–427, card 448 wide.
+ *  - the tag sits at the top of the chip row, level with the menu pill;
+ *  - the avatar is 48 px, without the grey outline, and the name starts
+ *    12 px beside it;
+ *  - the preview flows around the avatar on a diagonal — 60 / 51 / 42 px
+ *    from the avatar's left edge, the third line on "Woche" in preview 5 —
+ *    and never falls back to the card's edge;
+ *  - it stops after three lines with an ellipsis;
+ *  - from the second line on it keeps clear of the Mail column; Mail is
+ *    centred on the third line and its word ends exactly under the white
+ *    menu pill; the card closes 16 px below it, 142 px high;
+ *  - a thread reply and a voice message are marked by their glyphs alone,
+ *    a voice message with its length.
  */
-const V4_ROW_BOTTOM = 49;
-const V4_BORDER = 1;
-const V4_AVATAR = 48;
-const V4_GAP = 12;
-const V4_NAME = 24;
-const V4_LINE = 16;
-const V4_LINES = 3;
-const V4_INK = 3; // glyph band starts this far into a 16 px line box
-const V4_CLIP = V4_NAME + V4_LINE * V4_LINES; // 72
-const V4_INSET = 16;
-/*
- * Mail's word ends exactly under the white menu pill (Frank: "rechtsbündig
- * von dem weißen Außenkreis"). The pill is NOT at the card's 16 px inset:
- * `.sessionsListItem__rowRight` adds `padding-right: 10px`, and only 4 px
- * below 900 px viewport width. Mail and its reserved column follow the same
- * rule through one custom property, so they cannot drift apart — the first
- * cut used a fixed 20 px, which matched at 560 px and missed by 6 px at
- * 1200 px.
- */
-const V4_TRAILING_WIDE = 10; // mirrors `__rowRight` padding-right
-const V4_TRAILING_NARROW = 4; // mirrors `__rowRight` below 900 px
-const V4_MAIL = 24;
-const V4_BODY = V4_CLIP + (V4_MAIL - V4_LINE) / 2 + V4_INSET; // 92
-const V4_CARD = V4_ROW_BOTTOM + V4_BODY + V4_BORDER; // 142
-
-const v4Radius = V4_AVATAR / 2;
-const v4Line1X = V4_AVATAR + V4_GAP; // 60
-const v4Line2Top = V4_NAME + V4_LINE; // 40
-const v4Line3Top = V4_NAME + V4_LINE * 2; // 56
-const v4Line2X = Math.round(
-	v4Radius +
-		Math.sqrt(v4Radius ** 2 - (v4Line2Top + V4_INK - v4Radius) ** 2) +
-		V4_GAP
-); // 51
-
-/*
- * The two third-line indents under comparison, content-relative:
- *  - 42 px continues the 9 px step (60 → 51 → 42) and lands on "Woche" in
- *    preview 5 — 59 px from the card's edge;
- *  - 35 px is "ein ganz bisschen mehr nach links" — 52 px from the edge.
- */
-const V4_LINE3 = { onWoche: v4Line2X - (v4Line1X - v4Line2X), left: 35 };
-type Line3Choice = keyof typeof V4_LINE3;
-
-const v4Shape = (line3X: number) =>
-	`polygon(0 0, ${v4Line1X}px 0, ${v4Line1X}px ${v4Line2Top}px, ${v4Line2X}px ${v4Line2Top}px, ${v4Line2X}px ${v4Line3Top}px, ${line3X}px ${v4Line3Top}px, ${line3X}px ${V4_CLIP}px, 0 ${V4_CLIP}px)`;
-
-type V4Preview = {
-	key: string;
-	label: string;
-	glyph?: 'thread' | 'voice';
-	text: string;
-	/** true / false are asserted; undefined means "depends on the indent". */
-	truncated?: boolean;
-	line3: Line3Choice;
-};
+const CARD_HEIGHT = 142;
+const CARD_BORDER = 1;
+const CARD_INSET = 16;
+const CARD_AVATAR = 48;
+const CARD_GAP = 12;
+const CARD_CHIP_ROW = 48;
+const CARD_NAME = 24;
+const CARD_LINE = 16;
+const CARD_LINES = 3;
+/** Where each preview line starts, measured from the avatar's left edge. */
+const CARD_LINE_LEFT = [60, 51, 42];
+/** The text keeps this far clear of the Mail column from line 2 on. */
+const CARD_MAIL_CLEARANCE = 24;
 
 const TEXT_TWO_AND_HALF =
 	'Guten Morgen, ich habe gestern mit meiner Schwester gesprochen und wir würden gerne gemeinsam zu einem Gespräch kommen.';
 const TEXT_THREE =
 	'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter.';
 
-const v4Comparison: V4Preview[] = [
+type CardPreview = {
+	key: string;
+	label: string;
+	content: Record<string, unknown>;
+	text: string;
+	glyphs?: Array<'thread' | 'voice'>;
+	/** true / false are asserted at desktop width; undefined is not. */
+	truncated?: boolean;
+};
+
+const textMessage = (body: string, thread = false) => ({
+	msgtype: 'm.text',
+	body,
+	...(thread
+		? { 'm.relates_to': { rel_type: 'm.thread', event_id: '$root' } }
+		: {})
+});
+
+const cardPreviews: CardPreview[] = [
 	{
-		key: 'c4a',
-		label: '4 — zweieinhalb Zeilen · Zeile 3 bei 59 px (auf „Woche")',
-		text: TEXT_TWO_AND_HALF,
-		line3: 'onWoche'
+		key: 'word',
+		label: '1 — ein Wort',
+		content: textMessage('Danke!'),
+		text: 'Danke!',
+		truncated: false
 	},
 	{
-		key: 'c4b',
-		label: '4 — zweieinhalb Zeilen · Zeile 3 bei 52 px (etwas weiter links)',
-		text: TEXT_TWO_AND_HALF,
-		line3: 'left'
+		key: 'short',
+		label: '2 — eine kurze Zeile',
+		content: textMessage('Anfrage gesendet'),
+		text: 'Anfrage gesendet',
+		truncated: false
 	},
 	{
-		key: 'c5a',
-		label: '5 — drei Zeilen und mehr · Zeile 3 bei 59 px (auf „Woche")',
+		key: 'oneAndHalf',
+		label: '3 — anderthalb Zeilen',
+		content: textMessage(
+			'Hallo, hätten Sie nächste Woche einen Termin für mich? 🙂'
+		),
+		text: 'Hallo, hätten Sie nächste Woche einen Termin für mich? 🙂',
+		truncated: false
+	},
+	{
+		key: 'twoAndHalf',
+		label: '4 — zweieinhalb Zeilen',
+		content: textMessage(TEXT_TWO_AND_HALF),
+		text: TEXT_TWO_AND_HALF
+	},
+	{
+		key: 'three',
+		label: '5 — drei Zeilen und mehr',
+		content: textMessage(TEXT_THREE),
 		text: TEXT_THREE,
-		truncated: true,
-		line3: 'onWoche'
+		truncated: true
 	},
 	{
-		key: 'c5b',
-		label: '5 — drei Zeilen und mehr · Zeile 3 bei 52 px (etwas weiter links)',
-		text: TEXT_THREE,
-		truncated: true,
-		line3: 'left'
+		key: 'long',
+		label: '6 — viel länger als drei Zeilen',
+		content: textMessage(
+			`${TEXT_THREE} Mein Vater trinkt wieder mehr und meine Mutter sagt dazu nichts. Ich weiß nicht, wem ich das sonst erzählen soll.`
+		),
+		text: `${TEXT_THREE} Mein Vater trinkt wieder mehr und meine Mutter sagt dazu nichts. Ich weiß nicht, wem ich das sonst erzählen soll.`,
+		truncated: true
+	},
+	{
+		key: 'unbroken',
+		label: '7 — ein langes Wort ohne Leerzeichen (Link)',
+		content: textMessage(
+			'https://www.beispiel-beratung.de/termine/familienberatung/2026/september/buchung?ref=abcdefghijklmnopqrstuvwxyz'
+		),
+		text: 'https://www.beispiel-beratung.de/termine/familienberatung/2026/september/buchung?ref=abcdefghijklmnopqrstuvwxyz'
+	},
+	{
+		key: 'thread',
+		label: 'Thread — nur das Symbol',
+		content: textMessage(
+			'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen, wenn Sie Zeit haben. Am Donnerstag kann ich leider erst ab 16 Uhr.',
+			true
+		),
+		text: 'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen, wenn Sie Zeit haben. Am Donnerstag kann ich leider erst ab 16 Uhr.',
+		glyphs: ['thread'],
+		truncated: true
+	},
+	{
+		key: 'voice',
+		label: 'Sprachnachricht — nur das Symbol, mit Dauer',
+		content: {
+			'msgtype': 'm.audio',
+			'body': 'voice-message.ogg',
+			'info': { duration: 42_300, mimetype: 'audio/ogg' },
+			'org.matrix.msc3245.voice': {}
+		},
+		text: '0:42',
+		glyphs: ['voice'],
+		truncated: false
 	}
 ];
 
-const v4All: V4Preview[] = (
-	[
-		{
-			key: 'word',
-			label: '1 — ein Wort',
-			text: 'Danke!',
-			truncated: false
-		},
-		{
-			key: 'short',
-			label: '2 — eine kurze Zeile',
-			text: 'Anfrage gesendet',
-			truncated: false
-		},
-		{
-			key: 'oneAndHalf',
-			label: '3 — anderthalb Zeilen',
-			text: 'Hallo, hätten Sie nächste Woche einen Termin für mich? 🙂',
-			truncated: false
-		},
-		{
-			key: 'twoAndHalf',
-			label: '4 — zweieinhalb Zeilen',
-			text: TEXT_TWO_AND_HALF
-		},
-		{
-			key: 'three',
-			label: '5 — drei Zeilen und mehr',
-			text: TEXT_THREE,
-			truncated: true
-		},
-		{
-			key: 'long',
-			label: '6 — viel länger als drei Zeilen',
-			text: 'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter. Mein Vater trinkt wieder mehr und meine Mutter sagt dazu nichts. Ich weiß nicht, wem ich das sonst erzählen soll.',
-			truncated: true
-		},
-		{
-			key: 'unbroken',
-			label: '7 — ein langes Wort ohne Leerzeichen (Link)',
-			text: 'https://www.beispiel-beratung.de/termine/familienberatung/2026/september/buchung?ref=abcdefghijklmnopqrstuvwxyz'
-		},
-		{
-			key: 'thread',
-			label: 'Thread — nur das Symbol',
-			glyph: 'thread',
-			text: 'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen, wenn Sie Zeit haben. Am Donnerstag kann ich leider erst ab 16 Uhr.',
-			truncated: true
-		},
-		{
-			key: 'voice',
-			label: 'Sprachnachricht — nur das Symbol, mit Dauer',
-			glyph: 'voice',
-			text: '0:42',
-			truncated: false
+const cardRoomId = (key: string) => `!storybook-card-${key}:oriso.example`;
+
+/** Each card reads its own room; the newest event is its preview. */
+const seedCardPreviews = () => {
+	setMatrixClientServiceRef({
+		getClient: () => null,
+		getRoom: () => ({ getUnreadNotificationCount: () => 0 }),
+		getRoomMessages: (roomId: string) => {
+			const preview = cardPreviews.find(
+				(candidate) => cardRoomId(candidate.key) === roomId
+			);
+			return preview
+				? [
+						{
+							getType: () => 'm.room.message',
+							getClearContent: () => preview.content,
+							getContent: () => preview.content,
+							getSender: () => '@asker-4401:oriso.example',
+							getTs: () => 1_773_822_900_000
+						}
+					]
+				: [];
 		}
-	] satisfies Array<Omit<V4Preview, 'line3'>>
-).map((preview) => ({ ...preview, line3: 'onWoche' as Line3Choice }));
+	} as any);
+};
 
-const v4Css = `
-.flowV4 {
-	--flow-trailing: ${V4_TRAILING_WIDE}px;
-}
-@media screen and (width <= 899px) {
-	.flowV4 {
-		--flow-trailing: ${V4_TRAILING_NARROW}px;
-	}
-}
-.flowV4 .sessionsListItem__rowLeft {
-	align-items: flex-start;
-}
-.flowV4 .sessionsListItem__topicPostcodeGroup {
-	align-self: flex-start;
-}
-.flowV4 [data-testid="user-avatar"] > div {
-	border-color: transparent !important;
-	box-shadow: none !important;
-}
-.flowV4__body {
-	position: relative;
-	box-sizing: border-box;
-	height: ${V4_BODY}px;
-	padding: 0 ${V4_INSET}px;
-}
-.flowV4__clip {
-	display: -webkit-box;
-	-webkit-box-orient: vertical;
-	-webkit-line-clamp: ${V4_LINES};
-	height: ${V4_CLIP}px;
-	overflow: hidden;
-}
-.flowV4__inner {
-	display: block;
-}
-.flowV4__avatar {
-	float: left;
-	/* the bottom margin lets the float's area reach the third line */
-	margin: 0 ${V4_GAP}px ${V4_CLIP - V4_AVATAR}px 0;
-}
-/* Keeps the first preview line full-width … */
-.flowV4__spacer {
-	float: right;
-	width: 0;
-	height: ${V4_NAME + V4_LINE}px;
-}
-/* … and from the second line on reserves the Mail column, where Mail
-   really is: the menu pill's trailing offset further in than the inset. */
-.flowV4__mailSlot {
-	float: right;
-	clear: right;
-	height: ${V4_LINE * (V4_LINES - 1)}px;
-	margin-left: ${V4_GAP}px;
-	margin-right: var(--flow-trailing);
-	visibility: hidden;
-}
-.flowV4__mail {
-	position: absolute;
-	right: calc(${V4_INSET}px + var(--flow-trailing));
-	bottom: ${V4_INSET}px;
-	height: ${V4_MAIL}px;
-	padding-right: 0 !important;
-}
-.flowV4__name.sessionsListItem__username {
-	display: block;
-	padding: 0;
-	line-height: ${V4_NAME}px;
-}
-/* The card's preview class is one clipped line (nowrap + overflow hidden)
-   and carries align-content: center. Each of overflow: hidden and a
-   non-normal align-content turns the block into its own formatting context
-   — and such a block AVOIDS floats instead of flowing around them. */
-.flowV4__text.sessionsListItem__subject {
-	display: block;
-	white-space: normal;
-	overflow: visible;
-	text-overflow: clip;
-	align-content: normal;
-	overflow-wrap: anywhere;
-	line-height: ${V4_LINE}px;
-}
-.flowV4__glyph {
-	width: 14px;
-	height: 14px;
-	vertical-align: -2px;
-	margin-right: 6px;
-	color: var(--m3-secondary, #4c555f);
-}
-.flowV4__glyph path {
-	fill: currentColor;
-}
-`;
-
-const V4Glyph = ({ kind }: { kind: 'thread' | 'voice' }) =>
-	kind === 'thread' ? (
-		<ThreadGlyphIcon
-			className="flowV4__glyph"
-			role="img"
-			aria-label="Thread"
-		/>
-	) : (
-		<AudioOnIcon
-			className="flowV4__glyph"
-			role="img"
-			aria-label="Sprachnachricht"
-		/>
-	);
-
-const V4MailMark = ({ className }: { className?: string }) => (
-	<div
-		className={`${className ?? ''} sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby`}
-	>
-		<img
-			src={mailConversationIcon}
-			alt="Mail"
-			className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-		/>
-		<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-			Mail
-		</span>
-	</div>
-);
-
-const V4Card = ({ preview }: { preview: V4Preview }) => (
-	<div
-		className="sessionsListItem__content flowV4"
-		style={{ minHeight: 0 }}
-		data-preview={preview.key}
-	>
-		<TopRow />
-		<div className="flowV4__body">
-			<div className="flowV4__clip">
-				<div className="flowV4__inner">
-					<div
-						className="flowV4__avatar"
-						style={{
-							shapeOutside: v4Shape(V4_LINE3[preview.line3])
-						}}
-					>
-						<Avatar size={V4_AVATAR} />
-					</div>
-					<div className="flowV4__spacer" aria-hidden="true" />
-					<div className="flowV4__mailSlot" aria-hidden="true">
-						<V4MailMark />
-					</div>
-					<span className="flowV4__name sessionsListItem__username">
-						ruhiges Yak Kim
-					</span>
-					<div className="flowV4__text sessionsListItem__subject">
-						{preview.glyph && <V4Glyph kind={preview.glyph} />}
-						{preview.text}
-					</div>
-				</div>
-			</div>
-			<V4MailMark className="flowV4__mail" />
-		</div>
+const CardGallery = () => (
+	<div style={{ maxWidth: 440, margin: '0 auto' }}>
+		{cardPreviews.map((preview) => (
+			<section
+				key={preview.key}
+				data-preview={preview.key}
+				style={{ marginBottom: 12 }}
+			>
+				<p
+					style={{
+						margin: '0 12px 4px',
+						fontSize: 12,
+						fontWeight: 600
+					}}
+				>
+					{preview.label}
+				</p>
+				<RuntimeSessionListItem
+					sessionOverrides={{
+						matrixRoomId: cardRoomId(preview.key)
+					}}
+				/>
+			</section>
+		))}
 	</div>
 );
 
@@ -2209,154 +1681,205 @@ const mergeLineRects = (rects: DOMRect[]) =>
 		return merged;
 	}, []);
 
-const V4Section = ({
-	title,
-	previews
-}: {
-	title: string;
-	previews: V4Preview[];
-}) => (
-	<section style={{ marginBottom: 28 }}>
-		<h3 style={{ margin: '0 4px 12px', fontSize: 14 }}>{title}</h3>
-		{previews.map((preview) => (
-			<div key={preview.key} style={{ marginBottom: 16 }}>
-				<p
-					style={{
-						margin: '0 4px 6px',
-						fontSize: 12,
-						fontWeight: 600
-					}}
-				>
-					{preview.label}
-				</p>
-				<V4Card preview={preview} />
-			</div>
-		))}
-	</section>
-);
+const expectCardLayout = async (
+	canvasElement: HTMLElement,
+	{
+		checkTruncation,
+		selected
+	}: {
+		checkTruncation: boolean;
+		/** Selected cards carry a 2 px border instead of 1 px. */
+		selected: boolean;
+	}
+) => {
+	const sections = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>('section[data-preview]')
+		);
+		expect(found).toHaveLength(cardPreviews.length);
+		// Every preview has arrived from its room before anything is measured.
+		for (const [index, section] of found.entries()) {
+			expect(
+				section.querySelector('.sessionsListItem__subject')?.textContent
+			).toBe(cardPreviews[index].text);
+		}
+		return found;
+	});
 
-const v4Rendered = [...v4Comparison, ...v4All];
+	for (const [index, section] of sections.entries()) {
+		const preview = cardPreviews[index];
+		const card = section.querySelector<HTMLElement>(
+			'.sessionsListItem__content'
+		)!;
+		const box = card.getBoundingClientRect();
+		const at = (selector: string) => {
+			const element = card.querySelector<HTMLElement>(selector);
+			expect(element, `${preview.key}: ${selector}`).not.toBeNull();
+			return element!.getBoundingClientRect();
+		};
 
-export const CardTextFlow: Story = {
-	name: 'Karte — Umfluss v4: schräger Einzug, Mail unter dem Knopf',
-	render: () => (
-		<div style={{ ...listShell, maxWidth: 480, padding: 16 }}>
-			<style>{v4Css}</style>
-			<V4Section
-				title="Vergleich — wo beginnt Zeile 3?"
-				previews={v4Comparison}
-			/>
-			<V4Section
-				title="Alle Texte — Zeile 3 bei 59 px"
-				previews={v4All}
-			/>
-		</div>
-	),
-	play: async ({ canvasElement }) => {
-		const cards = Array.from(
-			canvasElement.querySelectorAll<HTMLElement>(
-				'.sessionsListItem__content'
+		// Compact and uniform — selected or not.
+		await expect(Math.round(box.height)).toBe(CARD_HEIGHT);
+		await expect(
+			section
+				.querySelector('.sessionsListItem')!
+				.classList.contains('sessionsListItem--active')
+		).toBe(selected);
+
+		// The tag sits level with the menu pill at the top of the chip row.
+		const tag = at('.sessionsListItem__topic');
+		const menu = at('.sessionsListItem__menuIcon');
+		await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
+
+		// 48 px avatar straight under the chip row, without its outline.
+		const avatar = at('.sessionsListItem__icon');
+		await expect(Math.round(avatar.width)).toBe(CARD_AVATAR);
+		await expect(Math.round(avatar.top - box.top)).toBe(
+			CARD_BORDER + CARD_CHIP_ROW
+		);
+		await expect(Math.round(avatar.left - box.left)).toBe(
+			CARD_BORDER + CARD_INSET
+		);
+		const circle = card.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"] > div'
+		)!;
+		await expect(getComputedStyle(circle).borderTopWidth).toBe('0px');
+		await expect(getComputedStyle(circle).boxShadow).toBe('none');
+
+		// The name, 12 px beside the avatar, on the first line.
+		const name = at('.sessionsListItem__username');
+		await expect(Math.round(name.left - avatar.right)).toBe(CARD_GAP);
+		await expect(Math.round(name.top)).toBe(Math.round(avatar.top));
+		await expect(Math.round(name.height)).toBe(CARD_NAME);
+
+		// Mail: its word ends under the pill's right edge, centred on the
+		// third line, 16 px above the card's bottom edge.
+		const clip = at('.sessionsListItem__flow');
+		const mail = at(
+			'.sessionsListItem__trailing .sessionsListItem__consultingTypeIcon--nearby'
+		);
+		const labelRange = document.createRange();
+		labelRange.selectNodeContents(
+			card.querySelector(
+				'.sessionsListItem__trailing .sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)!
+		);
+		await expect(
+			Math.abs(labelRange.getBoundingClientRect().right - menu.right)
+		).toBeLessThan(0.5);
+		const thirdLineCentre =
+			clip.top + CARD_NAME + CARD_LINE * 2 + CARD_LINE / 2;
+		await expect(
+			Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
+		).toBeLessThanOrEqual(1);
+		await expect(Math.round(box.bottom - CARD_BORDER - mail.bottom)).toBe(
+			CARD_INSET
+		);
+
+		// The left edge: a steady diagonal, never back to the card's edge.
+		const subject = card.querySelector<HTMLElement>(
+			'.sessionsListItem__subject'
+		)!;
+		const range = document.createRange();
+		range.selectNodeContents(subject);
+		const allLines = mergeLineRects(
+			Array.from(range.getClientRects()).filter((rect) => rect.width > 0)
+		);
+		const lines = allLines.filter((rect) => rect.top < clip.bottom - 0.5);
+		await expect(lines.length).toBeGreaterThan(0);
+		await expect(lines.length).toBeLessThanOrEqual(CARD_LINES);
+		for (const [lineIndex, line] of lines.entries()) {
+			await expect(Math.round(line.left - avatar.left)).toBe(
+				CARD_LINE_LEFT[lineIndex]
+			);
+			await expect(line.bottom).toBeLessThanOrEqual(clip.bottom + 0.5);
+		}
+		// From the second line on: clear of the Mail column.
+		for (const line of lines.slice(1)) {
+			await expect(line.right).toBeLessThanOrEqual(
+				mail.left - CARD_MAIL_CLEARANCE + 0.5
+			);
+		}
+
+		// Thread and voice: the glyph, and no word for it.
+		const glyphs = Array.from(
+			subject.querySelectorAll<SVGElement>(
+				'.sessionsListItem__previewGlyph'
 			)
 		);
-		await expect(cards.length).toBe(v4Rendered.length);
-
-		for (const [index, card] of cards.entries()) {
-			const preview = v4Rendered[index];
-			const box = card.getBoundingClientRect();
-			const at = (selector: string) =>
-				card
-					.querySelector<HTMLElement>(selector)!
-					.getBoundingClientRect();
-
-			// Compact and uniform.
-			await expect(Math.round(box.height)).toBe(V4_CARD);
-
-			// Tag at the top of the chip row, block 10 px under it.
-			const tag = at('.sessionsListItem__topicPostcodeGroup');
-			const menu = at('.sessionsListItem__menuIcon');
-			await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
-			const avatar = at('.flowV4__avatar');
-			await expect(Math.round(avatar.top - tag.bottom)).toBe(10);
-
-			// No ring: the disc's visible edge is its box edge.
-			const disc = card.querySelector<HTMLElement>(
-				'[data-testid="user-avatar"] > div'
-			)!;
-			await expect(getComputedStyle(disc).boxShadow).toBe('none');
-			await expect(getComputedStyle(disc).borderTopColor).toBe(
-				'rgba(0, 0, 0, 0)'
-			);
-
-			// Mail: its word ends exactly under the white pill's right edge,
-			// it is centred on the third line, and 16 px from the bottom.
-			const clip = at('.flowV4__clip');
-			const mail = at('.flowV4__mail');
-			const labelRange = document.createRange();
-			labelRange.selectNodeContents(
-				card.querySelector(
-					'.flowV4__mail .sessionsListItem__consultingTypeIcon--nearbyLabel'
-				)!
-			);
-			await expect(
-				Math.abs(labelRange.getBoundingClientRect().right - menu.right)
-			).toBeLessThan(0.5);
-			const thirdLineCentre = clip.top + v4Line3Top + V4_LINE / 2;
-			await expect(
-				Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
-			).toBeLessThanOrEqual(1);
-			await expect(Math.round(box.bottom - V4_BORDER - mail.bottom)).toBe(
-				V4_INSET
-			);
-
-			// The left edge: a steady diagonal, never back to the card edge.
-			const name = at('.flowV4__name');
-			const range = document.createRange();
-			range.selectNodeContents(
-				card.querySelector<HTMLElement>('.flowV4__text')!
-			);
-			const allLines = mergeLineRects(
-				Array.from(range.getClientRects()).filter(
-					(rect) => rect.width > 0
+		await expect(
+			glyphs.map((glyph) =>
+				glyph.classList.contains(
+					'sessionsListItem__previewGlyph--thread'
 				)
+					? 'thread'
+					: 'voice'
+			)
+		).toEqual(preview.glyphs ?? []);
+		for (const glyph of glyphs) {
+			await expect(glyph.getAttribute('aria-label')).toBeTruthy();
+			// The Figma export's fixed-id <mask> made a glyph vanish as soon
+			// as a second copy was on the page. It is gone from the asset.
+			await expect(glyph.querySelector('mask, [mask]')).toBeNull();
+			await expect(glyph.getBoundingClientRect().width).toBeGreaterThan(
+				0
 			);
-			const lines = allLines.filter(
-				(rect) => rect.top < clip.bottom - 0.5
-			);
-			await expect(lines.length).toBeGreaterThan(0);
-			await expect(lines.length).toBeLessThanOrEqual(V4_LINES);
-			await expect(Math.abs(lines[0].left - name.left)).toBeLessThan(1);
-			const expectedLeft = [v4Line1X, v4Line2X, V4_LINE3[preview.line3]];
-			for (const [lineIndex, line] of lines.entries()) {
-				await expect(Math.round(line.left - avatar.left)).toBe(
-					expectedLeft[lineIndex]
-				);
-				await expect(line.bottom).toBeLessThanOrEqual(
-					clip.bottom + 0.5
-				);
-			}
-			// From the second line on: 12 px clear of the Mail column.
-			for (const line of lines.slice(1)) {
-				await expect(line.right).toBeLessThanOrEqual(
-					mail.left - V4_GAP + 0.5
-				);
-			}
+		}
 
-			// Truncation: the clamp hides lines rather than removing them, so
-			// counting all line boxes shows whether the text runs past three.
-			await expect(
-				getComputedStyle(
-					card.querySelector<HTMLElement>('.flowV4__clip')!
-				).getPropertyValue('-webkit-line-clamp')
-			).toBe(String(V4_LINES));
-			if (preview.truncated === true) {
-				await expect(lines.length).toBe(V4_LINES);
-				await expect(allLines.length).toBeGreaterThan(V4_LINES);
-			}
-			if (preview.truncated === false) {
-				await expect(allLines.length).toBeLessThanOrEqual(V4_LINES);
-			}
+		// Truncation: the clamp hides lines rather than removing them, so
+		// counting all line boxes shows whether the text runs past three.
+		await expect(
+			getComputedStyle(
+				card.querySelector<HTMLElement>('.sessionsListItem__flow')!
+			).getPropertyValue('-webkit-line-clamp')
+		).toBe(String(CARD_LINES));
+		if (checkTruncation && preview.truncated === true) {
+			await expect(lines.length).toBe(CARD_LINES);
+			await expect(allLines.length).toBeGreaterThan(CARD_LINES);
+		}
+		if (checkTruncation && preview.truncated === false) {
+			await expect(allLines.length).toBeLessThanOrEqual(CARD_LINES);
 		}
 	}
+};
+
+export const CardLayout: Story = {
+	name: 'Karte — Umfluss um den Avatar, drei Zeilen, Mail unter dem Knopf',
+	render: () => {
+		seedCardPreviews();
+		return <CardGallery />;
+	},
+	play: async ({ canvasElement }) =>
+		expectCardLayout(canvasElement, {
+			checkTruncation: true,
+			selected: true
+		})
+};
+
+/**
+ * The same cards at 390 px, resting instead of selected. Below 900 px the
+ * menu pill moves 6 px further out (`__rowRight` pads 4 px instead of 10),
+ * and Mail follows it.
+ */
+export const CardLayoutOnThePhone: Story = {
+	name: 'Karte — 390 px, Mail folgt dem Knopf',
+	globals: { viewport: { value: 'phone390' } },
+	// Another route, so these cards rest (1 px border) where the desktop
+	// story's are selected (2 px) — the height must not care.
+	parameters: {
+		router: {
+			initialPath: '/sessions/consultant/sessionView'
+		}
+	},
+	render: () => {
+		seedCardPreviews();
+		return <CardGallery />;
+	},
+	play: async ({ canvasElement }) =>
+		expectCardLayout(canvasElement, {
+			checkTruncation: false,
+			selected: false
+		})
 };
 
 /**
@@ -2378,9 +1901,13 @@ export const AskerSearchingRow: Story = {
 			expect(element).toBeTruthy();
 			return element!;
 		});
-		// The slot it stands in is the avatar slot, at the avatar's size.
+		// It stands in the 48 px avatar slot at the naked size, 40 px.
 		const box = magnet.getBoundingClientRect();
-		await expect(Math.round(box.width)).toBe(32);
+		await expect(Math.round(box.width)).toBe(40);
+		const slot = canvasElement
+			.querySelector<HTMLElement>('.sessionsListItem__icon')!
+			.getBoundingClientRect();
+		await expect(Math.round(slot.width)).toBe(48);
 		// No black disc any more — nothing is painted behind the magnet.
 		await expect(getComputedStyle(magnet).backgroundColor).toBe(
 			'rgba(0, 0, 0, 0)'

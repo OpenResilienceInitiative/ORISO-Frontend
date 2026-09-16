@@ -26,6 +26,37 @@ $case-handover-status-muted: var(--m3-on-surface-variant, #667280);
 $case-handover-denied-bg: var(--m3-error-container, #f7d7d7);
 $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
+// The session card body (Frank, 15./16.09.2026, plates v1–v4). The preview
+// flows around a 48 px avatar in 16 px lines — `--session-preview-line-height`
+// is one constant in mui-variables-mapping.scss, and the diagonal below is
+// computed for it.
+$card-inset: 16px;
+$card-avatar: 48px;
+$card-gap: 12px;
+$card-name-line: 24px;
+$card-preview-line: 16px;
+$card-preview-lines: 3;
+$card-mark: 24px;
+$card-action: 40px; // the case-handover split button
+$card-clip: $card-name-line + $card-preview-line * $card-preview-lines; // 72px
+
+// The third line's centre is where the trailing marks sit; the card closes
+// one inset below them.
+$card-body: $card-clip + ($card-mark - $card-preview-line) * 0.5 + $card-inset; // 92px
+$card-chip-row: 48px;
+
+$card-border: 1px;
+$card-border-grow: $list-item-selected-border-width - $card-border;
+$card-height: $card-chip-row + $card-body + 2 * $card-border; // 142px
+
+// The menu pill does not sit on the inset: `__rowRight` pads it further in.
+// The trailing marks end under the pill, so both read these two values.
+$card-trailing-wide: 10px;
+$card-trailing-narrow: 4px;
+
+// Text keeps this far clear of the trailing marks from the second line on.
+$card-trailing-clearance: 24px;
+
 .sessionsListItem {
 	&__groupModalityIcon {
 		width: $grid-base-two;
@@ -330,9 +361,177 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	&__rowLeft {
+	// A resting card has a 1 px border, a selected one 2 px (#597). The card
+	// keeps its height either way — the rows give the extra pixel back, so
+	// selecting a card moves nothing in the list.
+	&__content--flow {
+		height: $card-height;
+		min-height: $card-height;
+	}
+
+	&--active &__content--flow {
+		> .sessionsListItem__row:first-child {
+			margin: (-$card-border-grow) (-$card-border-grow) 0;
+		}
+
+		> .sessionsListItem__body {
+			margin: 0 (-$card-border-grow) (-$card-border-grow);
+		}
+	}
+
+	&__body {
+		--card-trailing: #{$card-trailing-wide};
+
+		position: relative;
+		box-sizing: border-box;
+		height: $card-body;
+		padding: 0 $card-inset;
+
+		@media screen and (width <= 899px) {
+			--card-trailing: #{$card-trailing-narrow};
+		}
+	}
+
+	// The clamp. Chrome lays a vertical -webkit-box out as flow-root, so the
+	// floats inside keep shaping the lines and the ellipsis still appears
+	// after the third one (measured, 16.09.2026).
+	&__flow {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: $card-preview-lines;
+		height: $card-clip;
+		overflow: hidden;
+	}
+
+	// One plain block around everything, for engines that still treat
+	// -webkit-box as a legacy flexbox.
+	&__flowInner {
+		display: block;
+	}
+
+	&__body &__icon {
+		float: left;
+		width: $card-avatar;
+		height: $card-avatar;
+		min-width: $card-avatar;
+
+		// The bottom margin lets the float's area reach the third line.
+		margin: 0 $card-gap ($card-clip - $card-avatar) 0;
+
+		// One step per line box, measured from the avatar's left edge:
+		// 60 px for the name and the first line (the margin box), 51 px for
+		// the second (where the circle's edge meets its glyph band, plus the
+		// gap), 42 px for the third (the same step again — on "Woche" in
+		// Frank's preview 5). `circle()` would barely move the second line:
+		// a line box is pushed by the widest part of the shape it overlaps.
+		shape-outside: polygon(
+			0 0,
+			60px 0,
+			60px 40px,
+			51px 40px,
+			51px 56px,
+			42px 56px,
+			42px $card-clip,
+			0 $card-clip
+		);
+	}
+
+	// Keeps the first preview line full width …
+	&__flowSpacer {
+		float: right;
+		width: 0;
+		height: $card-name-line + $card-preview-line;
+	}
+
+	// … and from the second line on holds the trailing marks' column. Its
+	// width is measured (`useReservedTrailingWidth`): the marks are
+	// translated and some arrive late.
+	&__flowReserve {
+		float: right;
+		clear: right;
+		width: var(--card-trailing-width, 0px);
+		height: $card-preview-line * ($card-preview-lines - 1);
+		margin-left: $card-trailing-clearance;
+		margin-right: var(--card-trailing);
+	}
+
+	&__body &__username {
+		display: block;
+		padding: 0;
+		line-height: $card-name-line;
+	}
+
+	// The preview's own rule is one clipped line — nowrap, overflow hidden
+	// and `align-content: center`. Overflow hidden and a non-normal
+	// align-content each make the block its own formatting context, and such
+	// a block avoids floats instead of flowing around them.
+	&__body &__subject {
+		display: block;
+		white-space: normal;
+		overflow: visible;
+		text-overflow: clip;
+		align-content: normal;
+		overflow-wrap: anywhere;
+	}
+
+	&__previewGlyph {
+		width: 14px;
+		height: 14px;
+		margin-right: 6px;
+		vertical-align: -2px;
+		color: var(--m3-secondary, #4c555f);
+
+		// `audio-on.svg` is drawn in white for the composer's red button.
+		path {
+			fill: currentcolor;
+		}
+	}
+
+	// Mail and the other marks: centred on the third line, ending under the
+	// white menu pill.
+	&__trailing {
+		position: absolute;
+		right: calc(#{$card-inset} + var(--card-trailing));
+		bottom: $card-inset;
 		display: flex;
 		align-items: center;
+		gap: 8px;
+		height: $card-mark;
+
+		.sessionsListItem__consultingTypeIcon {
+			height: auto;
+			margin-left: 0;
+			padding-right: 0;
+		}
+
+		.sessionsListItem__supervisionIndicator {
+			margin-left: 0;
+		}
+	}
+
+	// The case-handover action takes the preview's place (Figma 115): beside
+	// the avatar, centred on the same line as the trailing marks.
+	&__bodyAction {
+		position: absolute;
+		left: $card-inset + $card-avatar + $card-gap;
+		right: calc(
+			#{$card-inset} + var(--card-trailing) +
+				var(--card-trailing-width, 0px) + #{$card-gap}
+		);
+		bottom: $card-inset - ($card-action - $card-mark) * 0.5;
+		display: flex;
+
+		.sessionsListItem__handoverAction {
+			margin: 0;
+		}
+	}
+
+	&__rowLeft {
+		display: flex;
+
+		// Frank, 16.09.2026: the tag sits at the top of the chip row, level
+		// with the menu pill, not centred on it.
+		align-items: flex-start;
 		gap: 8px;
 		flex: 1;
 		min-width: 0;
@@ -344,7 +543,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__rowRight {
-		padding-right: 10px;
+		padding-right: $card-trailing-wide;
 		display: flex;
 		align-items: center;
 		gap: 8px;
@@ -355,7 +554,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		@media screen and (width <= 899px) {
 			// On narrow devices, let the right cluster compress first
 			// so topic tags keep more readable space.
-			padding-right: 4px;
+			padding-right: $card-trailing-narrow;
 			gap: 4px;
 			min-width: 0;
 			flex-shrink: 1;
@@ -669,7 +868,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		align-self: center;
+		align-self: flex-start;
 		min-width: 0;
 		max-width: 100%;
 		flex: 0 1 auto;
