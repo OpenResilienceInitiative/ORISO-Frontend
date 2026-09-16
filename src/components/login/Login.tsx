@@ -41,7 +41,11 @@ import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
-import { resolveLoginError } from './loginErrorResolution';
+import {
+	describeLoginTransport,
+	resolveLoginError
+} from './loginErrorResolution';
+import { recordLoginFailure } from '../../utils/observability/loginFailureTracker';
 import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -351,9 +355,21 @@ export const Login = () => {
 			.catch((error) => {
 				const resolution = resolveLoginError(error, Boolean(otp));
 
+				if (resolution.kind !== 'none') {
+					recordLoginFailure({
+						outcome: resolution.outcome,
+						transport: describeLoginTransport(error),
+						stage: otp ? 'otp' : 'password'
+					});
+				}
+
 				if (resolution.kind === 'message') {
 					setShowLoginError(translate(resolution.messageKey));
-					setLabelState(VALIDITY_INVALID);
+					// Only a credential problem marks the fields; an outage is
+					// not the user's input being wrong.
+					if (resolution.outcome !== 'unavailable') {
+						setLabelState(VALIDITY_INVALID);
+					}
 				} else if (resolution.kind === 'otpRequired') {
 					setTwoFactorType(resolution.otpType);
 					setIsOtpRequired(true);
