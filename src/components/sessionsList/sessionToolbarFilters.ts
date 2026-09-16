@@ -203,7 +203,15 @@ export function sessionMatchesToolbar(
 	chip: SessionToolbarChipFilter | null,
 	selectedPersonIds: string[],
 	drafts: IUserDraftItem[],
-	currentUserId?: string
+	currentUserId?: string,
+	/**
+	 * The row the route currently has open. The display filter already keeps
+	 * the open conversation visible (§5.2, `applySessionsFilter`); the chip
+	 * axis runs after it and used to drop the very session the consultant is
+	 * chatting in as soon as the chip flipped — an accepted live chat vanished
+	 * behind the "Chats" chip and could not be reopened (#1404).
+	 */
+	isRouteActive: boolean = false
 ): boolean {
 	const chatItem = getToolbarChatItem(raw);
 
@@ -215,35 +223,37 @@ export function sessionMatchesToolbar(
 	 * Runs client-side against the /enquiries/registered feed because this
 	 * install doesn't populate registration_type=ANONYMOUS in the DB.
 	 */
+	const effectiveChip = isRouteActive ? null : chip;
+
 	const isAnonymous = isAnonymousAskerSession(raw, extended);
-	if (chip === 'liveChat' && !isAnonymous) {
+	if (effectiveChip === 'liveChat' && !isAnonymous) {
 		return false;
 	}
-	if (chip === 'nearby' && (isAnonymous || extended.isGroup)) {
+	if (effectiveChip === 'nearby' && (isAnonymous || extended.isGroup)) {
 		return false;
 	}
 
-	if (chip === 'unread') {
+	if (effectiveChip === 'unread') {
 		// Derived from the Matrix client (#1147) — the DTO's `messagesRead`
 		// is hard-coded to true by the backend and must not be consulted.
 		if (!isChatItemUnread(chatItem)) {
 			return false;
 		}
-	} else if (chip === 'drafts') {
+	} else if (effectiveChip === 'drafts') {
 		if (
 			!drafts.some((draft) => draftMatchesSession(draft, raw, extended))
 		) {
 			return false;
 		}
-	} else if (chip === 'internalGroup') {
+	} else if (effectiveChip === 'internalGroup') {
 		if (!isInternalGroupChatSession(extended)) {
 			return false;
 		}
-	} else if (chip === 'groups') {
+	} else if (effectiveChip === 'groups') {
 		if (!isConversationCircleSession(extended)) {
 			return false;
 		}
-	} else if (chip === 'supervision') {
+	} else if (effectiveChip === 'supervision') {
 		if (hasSupervisionMarker(extended)) {
 			// ADR-008 list marker: the backend says whether I supervise this row.
 			if (

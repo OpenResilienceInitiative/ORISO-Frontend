@@ -50,6 +50,7 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
@@ -1562,7 +1563,11 @@ export const SessionsList = ({
 				sessionToolbarChip,
 				sessionToolbarSelectedPeople,
 				visibleUserDrafts,
-				currentUserId
+				currentUserId,
+				/* #1404: never let the chip hide the conversation that is
+				   open — the same route-active exception the display filter
+				   already makes one layer earlier. */
+				isSessionListItemActive(extended)
 			) &&
 			sessionMatchesAgencies(
 				raw,
@@ -1575,6 +1580,7 @@ export const SessionsList = ({
 				) === sessionToolbarSelectedTopic),
 		[
 			currentUserId,
+			isSessionListItemActive,
 			sessionToolbarChip,
 			sessionToolbarSearch,
 			sessionToolbarSelectedAgencies,
@@ -1741,6 +1747,21 @@ export const SessionsList = ({
 		canSupervise,
 		unreadVersion
 	]);
+	// #1404: availability decides whether NEW live chats are routed to me —
+	// never whether an EXISTING one stays reachable. While the list holds a
+	// live chat, the chip stays even after the rail toggle (or the lease) went
+	// off, so the consultant can navigate back into the conversation.
+	const hasLiveChatRow = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(({ raw, extended }) =>
+				isAnonymousAskerSession(raw, extended)
+			),
+		[sessionToolbarPairs]
+	);
+	const showLiveChatChip = isLiveChatChipVisible({
+		available: liveChatAvailable,
+		hasLiveChatRow
+	});
 	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
 		const order =
 			type === SESSION_LIST_TYPES.ENQUIRY
@@ -1749,7 +1770,7 @@ export const SessionsList = ({
 		const listed = (kind: string): boolean => {
 			switch (kind) {
 				case 'liveChat':
-					return liveChatAvailable;
+					return showLiveChatChip;
 				case 'internalGroup':
 					return showInternalGroupChip;
 				case 'circle':
@@ -1770,7 +1791,7 @@ export const SessionsList = ({
 		}));
 	}, [
 		canSupervise,
-		liveChatAvailable,
+		showLiveChatChip,
 		showGroupChip,
 		showInternalGroupChip,
 		translate,
@@ -1975,7 +1996,7 @@ export const SessionsList = ({
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
-					showLiveChatChip={liveChatAvailable}
+					showLiveChatChip={showLiveChatChip}
 				/>
 			)} */}
 			{showMySessionToolbar && (
@@ -1997,7 +2018,7 @@ export const SessionsList = ({
 					   availability toggle is ON — it narrows the
 					   my-sessions list to anonymous-asker chats using the
 					   same username-prefix filter as the Anfragen chip. */
-					showLiveChatChip={liveChatAvailable}
+					showLiveChatChip={showLiveChatChip}
 					createGroupChatPath={buildCreateGroupChatPath(
 						sessionListTab || undefined
 					)}
