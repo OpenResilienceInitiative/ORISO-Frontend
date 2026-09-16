@@ -10,6 +10,7 @@ import {
 	isNewerDisplayFiltersVersion,
 	parseDisplayFilter,
 	parseDisplayFilters,
+	resolveChipPresentation,
 	resolveEffective,
 	withGlobalFilter,
 	withSectionOverride,
@@ -155,5 +156,40 @@ describe('resolveEffective (§4)', () => {
 			hiddenEventTypes: ['x']
 		});
 		expect(sessions.global.sessions.hiddenEventTypes).toBeUndefined();
+	});
+});
+
+describe('chip presentation (view + auto-sort, Frank 2026-09-16)', () => {
+	it('defaults to icons with auto-sort on', () => {
+		expect(resolveChipPresentation(DEFAULT_DISPLAY_FILTER)).toEqual({
+			view: 'icons',
+			autoSort: true
+		});
+	});
+
+	it('parses valid values and drops malformed ones', () => {
+		expect(
+			parseDisplayFilter({ kinds: {}, view: 'text', autoSort: false })
+		).toEqual({ kinds: {}, autoReadHidden: false, view: 'text', autoSort: false });
+		expect(
+			parseDisplayFilter({ kinds: {}, view: 'huge', autoSort: 'yes' })
+		).toEqual({ kinds: {}, autoReadHidden: false });
+	});
+
+	it('override wins, global fills the gaps', () => {
+		const withGlobal = withGlobalFilter(DEFAULT_DISPLAY_FILTERS, 'requests', {
+			kinds: {},
+			autoReadHidden: false,
+			view: 'text'
+		});
+		const withOverride = withSectionOverride(withGlobal, 'requests', {
+			kinds: {},
+			autoReadHidden: false,
+			autoSort: false
+		});
+		expect(resolveChipPresentation(resolveEffective(withOverride, 'requests'))).toEqual({
+			view: 'text',
+			autoSort: false
+		});
 	});
 });

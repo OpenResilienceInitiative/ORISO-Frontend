@@ -14,12 +14,39 @@ export interface KindSetting {
 	pill: boolean;
 }
 
+/** How the chip row draws its chips (Figma 1139:45736 / 9947:31377). */
+export type ChipView = 'icons' | 'text';
+
+export interface ChipPresentation {
+	/** `icons`: icon pills, the active one expands with its label. `text`: compact text pills. */
+	view: ChipView;
+	/** Kinds with unread items float to the left of the row. */
+	autoSort: boolean;
+}
+
+export const DEFAULT_CHIP_PRESENTATION: ChipPresentation = {
+	view: 'icons',
+	autoSort: true
+};
+
 export interface DisplayFilterValue {
 	/** Per kind id; a missing entry means {@link DEFAULT_KIND_SETTING}. */
 	kinds: Partial<Record<string, KindSetting>>;
 	/** "Hide ⇒ read" (spec §6). Ignored by sections without auto-read. */
 	autoReadHidden: boolean;
+	/** Chip row view; missing means {@link DEFAULT_CHIP_PRESENTATION}. */
+	view?: ChipView;
+	/** Chip row auto-sort; missing means {@link DEFAULT_CHIP_PRESENTATION}. */
+	autoSort?: boolean;
 }
+
+/** Effective chip presentation of one value, defaults filled in. */
+export const resolveChipPresentation = (
+	value: Pick<DisplayFilterValue, 'view' | 'autoSort'>
+): ChipPresentation => ({
+	view: value.view ?? DEFAULT_CHIP_PRESENTATION.view,
+	autoSort: value.autoSort ?? DEFAULT_CHIP_PRESENTATION.autoSort
+});
 
 /** What the dialog needs to render one kind row. Labels arrive translated. */
 export interface DisplayFilterKindOption {

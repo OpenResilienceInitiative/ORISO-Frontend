@@ -7,11 +7,44 @@
  */
 
 import {
+	ChipView,
 	DEFAULT_KIND_SETTING,
 	DisplayFilterValue,
 	KindSetting,
 	OTHER_KIND_ID
 } from '../../components/displayFilter/displayFilterTypes';
+
+export { resolveChipPresentation } from '../../components/displayFilter/displayFilterTypes';
+
+const CHIP_VIEWS: ReadonlyArray<ChipView> = ['icons', 'text'];
+
+/** The optional chip-presentation fields of a value, only when valid. */
+const presentationFields = (
+	raw: Record<string, unknown>
+): Pick<DisplayFilterValue, 'view' | 'autoSort'> => {
+	const fields: Pick<DisplayFilterValue, 'view' | 'autoSort'> = {};
+	if (CHIP_VIEWS.includes(raw.view as ChipView)) {
+		fields.view = raw.view as ChipView;
+	}
+	if (typeof raw.autoSort === 'boolean') {
+		fields.autoSort = raw.autoSort;
+	}
+	return fields;
+};
+
+/** Copies `view`/`autoSort` from `source` onto `target` when set. */
+const carryPresentation = <T extends DisplayFilterValue>(
+	target: T,
+	source: Pick<DisplayFilterValue, 'view' | 'autoSort'>
+): T => {
+	if (source.view !== undefined) {
+		target.view = source.view;
+	}
+	if (source.autoSort !== undefined) {
+		target.autoSort = source.autoSort;
+	}
+	return target;
+};
 
 export type DisplayFilterSection = 'timeline' | 'sessions' | 'requests';
 
@@ -94,10 +127,10 @@ export const parseDisplayFilter = (raw: unknown): DisplayFilter => {
 			}
 		});
 	}
-	const filter: DisplayFilter = {
-		kinds,
-		autoReadHidden: raw.autoReadHidden === true
-	};
+	const filter: DisplayFilter = carryPresentation(
+		{ kinds, autoReadHidden: raw.autoReadHidden === true },
+		presentationFields(raw)
+	);
 	if (Array.isArray(raw.hiddenEventTypes)) {
 		filter.hiddenEventTypes = raw.hiddenEventTypes.filter(
 			(type): type is string => typeof type === 'string'
@@ -161,10 +194,13 @@ export const resolveEffective = (
 	if (!override) {
 		return global;
 	}
-	const effective: DisplayFilter = {
-		kinds: override.kinds,
-		autoReadHidden: override.autoReadHidden
-	};
+	const effective: DisplayFilter = carryPresentation(
+		{ kinds: override.kinds, autoReadHidden: override.autoReadHidden },
+		{
+			view: override.view ?? global.view,
+			autoSort: override.autoSort ?? global.autoSort
+		}
+	);
 	if (global.hiddenEventTypes) {
 		effective.hiddenEventTypes = global.hiddenEventTypes;
 	}
@@ -174,10 +210,11 @@ export const resolveEffective = (
 /** The dialog-editable part of a filter (never `hiddenEventTypes`). */
 export const toDisplayFilterValue = (
 	filter: DisplayFilter
-): DisplayFilterValue => ({
-	kinds: filter.kinds,
-	autoReadHidden: filter.autoReadHidden
-});
+): DisplayFilterValue =>
+	carryPresentation(
+		{ kinds: filter.kinds, autoReadHidden: filter.autoReadHidden },
+		filter
+	);
 
 /**
  * Immutable writers. Each returns a new record with `version` pinned to the
@@ -192,7 +229,10 @@ export const withSectionOverride = (
 	...filters,
 	sections: {
 		...filters.sections,
-		[section]: { kinds: value.kinds, autoReadHidden: value.autoReadHidden }
+		[section]: carryPresentation(
+			{ kinds: value.kinds, autoReadHidden: value.autoReadHidden },
+			value
+		)
 	}
 });
 
@@ -210,10 +250,10 @@ export const withGlobalFilter = (
 	section: DisplayFilterSection,
 	filter: DisplayFilter
 ): OrisoDisplayFilters => {
-	const next: DisplayFilter = {
-		kinds: filter.kinds,
-		autoReadHidden: filter.autoReadHidden
-	};
+	const next: DisplayFilter = carryPresentation(
+		{ kinds: filter.kinds, autoReadHidden: filter.autoReadHidden },
+		filter
+	);
 	// Only the timeline carries per-event-type hiding (§7).
 	if (section === 'timeline' && filter.hiddenEventTypes) {
 		next.hiddenEventTypes = filter.hiddenEventTypes;
