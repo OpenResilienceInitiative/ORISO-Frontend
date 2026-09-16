@@ -7,7 +7,9 @@ import {
 	resolveKindSetting,
 	setKindSetting,
 	visiblePillKinds,
-	orderChipKinds
+	orderChipKinds,
+	resolveKindAvailability,
+	listedKinds
 } from './displayFilterTypes';
 
 describe('displayFilterTypes (#1377)', () => {
@@ -165,5 +167,37 @@ describe('displayFilterTypes (#1377)', () => {
 		});
 		expect(reconcileActiveKind(hidden, 'messages')).toBeNull();
 		expect(reconcileActiveKind(hidden, null)).toBeNull();
+	});
+});
+
+describe('kind availability under the Träger feature switch (Frank 2026-09-16)', () => {
+	it('is available while the format is enabled', () => {
+		expect(
+			resolveKindAvailability({ formatEnabled: true, rowCount: 0 })
+		).toBe('available');
+	});
+
+	it('is absent when the format is off and nothing of that kind exists', () => {
+		expect(
+			resolveKindAvailability({ formatEnabled: false, rowCount: 0 })
+		).toBe('absent');
+	});
+
+	it('is deactivated when the format is off but rows still exist — nothing may vanish silently', () => {
+		expect(
+			resolveKindAvailability({ formatEnabled: false, rowCount: 3 })
+		).toBe('deactivated');
+	});
+
+	it('lists available and deactivated kinds, drops absent ones', () => {
+		const kinds = [
+			{ id: 'oneToOne', label: 'Mail', availability: 'available' as const },
+			{ id: 'circle', label: 'Gesprächskreis', availability: 'deactivated' as const },
+			{ id: 'internalGroup', label: 'Intern', availability: 'absent' as const }
+		];
+		expect(listedKinds(kinds).map((k) => k.id)).toEqual([
+			'oneToOne',
+			'circle'
+		]);
 	});
 });

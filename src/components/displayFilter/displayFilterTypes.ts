@@ -66,7 +66,41 @@ export interface DisplayFilterKindOption {
 	 * {@link visiblePillKinds} never yields it.
 	 */
 	showOnly?: boolean;
+	/**
+	 * Träger feature switch (Frank 2026-09-16): `deactivated` kinds stay
+	 * listed with their controls locked and a notice, `absent` kinds are not
+	 * listed at all. Missing means `available`.
+	 */
+	availability?: KindAvailability;
 }
+
+/**
+ * What the Träger's feature switch means for one kind of this list:
+ * - `available`: the format is on.
+ * - `deactivated`: the format is off but rows of that kind still exist —
+ *   they stay visible, the chip and the dialog row are shown locked, and a
+ *   snackbar explains. Nothing vanishes silently.
+ * - `absent`: the format is off and nothing of that kind exists → not listed.
+ */
+export type KindAvailability = 'available' | 'deactivated' | 'absent';
+
+export const resolveKindAvailability = ({
+	formatEnabled,
+	rowCount
+}: {
+	formatEnabled: boolean;
+	rowCount: number;
+}): KindAvailability => {
+	if (formatEnabled) {
+		return 'available';
+	}
+	return rowCount > 0 ? 'deactivated' : 'absent';
+};
+
+/** The kinds a dialog/chip row lists: everything but `absent`. */
+export const listedKinds = <T extends Pick<DisplayFilterKindOption, 'availability'>>(
+	kinds: ReadonlyArray<T>
+): T[] => kinds.filter((kind) => kind.availability !== 'absent');
 
 export const DEFAULT_KIND_SETTING: KindSetting = { show: true, pill: true };
 
