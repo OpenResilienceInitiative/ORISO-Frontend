@@ -1,6 +1,6 @@
 import '../../polyfill';
 import * as React from 'react';
-import { ComponentType, useState, lazy, Suspense, useContext } from 'react';
+import { ComponentType, useState, Suspense, useContext } from 'react';
 import {
 	BrowserRouter as Router,
 	Routes,
@@ -38,40 +38,41 @@ import { MatrixClientProvider } from '../../globalState/context/MatrixClientCont
 import { FloatingCallWidget } from '../call/FloatingCallWidget';
 import { GroupCallWidget } from '../call/GroupCallWidget';
 import { legacyVideoAppointmentRoutes } from '../legacyVideoAppointment/LegacyVideoAppointmentRoutes';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 
-const Login = lazy(() =>
+const Login = lazyWithReload(() =>
 	import('../login/Login').then((m) => ({ default: m.Login }))
 );
-const AuthenticatedApp = lazy(() =>
+const AuthenticatedApp = lazyWithReload(() =>
 	import('./AuthenticatedApp').then((m) => ({ default: m.AuthenticatedApp }))
 );
-const InviteLink = lazy(() =>
+const InviteLink = lazyWithReload(() =>
 	import('../invite/InviteLink').then((m) => ({
 		default: m.InviteLink
 	}))
 );
-const DpaSign = lazy(() =>
+const DpaSign = lazyWithReload(() =>
 	import('../dpaSign/DpaSign').then((m) => ({
 		default: m.DpaSign
 	}))
 );
-const RequestPasswordReset = lazy(() =>
+const RequestPasswordReset = lazyWithReload(() =>
 	import('../passwordResetRequest/RequestPasswordReset').then((m) => ({
 		default: m.RequestPasswordReset
 	}))
 );
-const SetNewPassword = lazy(() =>
+const SetNewPassword = lazyWithReload(() =>
 	import('../passwordResetRequest/SetNewPassword').then((m) => ({
 		default: m.SetNewPassword
 	}))
 );
-const AccountInviteAcceptance = lazy(() =>
+const AccountInviteAcceptance = lazyWithReload(() =>
 	import('../accountInvite/AccountInviteAcceptance').then((m) => ({
 		default: m.AccountInviteAcceptance
 	}))
 );
 
-const VideoCall = lazy(() => import('../videoCall/VideoCall'));
+const VideoCall = lazyWithReload(() => import('../videoCall/VideoCall'));
 
 type TExtraRoute = {
 	route: { path: string | string[] };

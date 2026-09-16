@@ -6,10 +6,10 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	lazy,
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 import {
 	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
 	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
@@ -223,7 +223,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
-const MessageSubmitInterfaceComponent = lazy(() =>
+const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
 	)
