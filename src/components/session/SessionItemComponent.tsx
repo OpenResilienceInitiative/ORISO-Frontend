@@ -63,6 +63,8 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
+import { Button, BUTTON_TYPES } from '../button/Button';
+import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -2726,6 +2728,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
+	const showEnquiryTeamAction =
+		type === SESSION_LIST_TYPES.ENQUIRY &&
+		activeSession.isEnquiry &&
+		!shouldBlockAnonymousInquiryChat &&
+		!isAnonymousAskerExperience &&
+		canOpenTeamSideRoom &&
+		!canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat
+		});
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
@@ -3427,7 +3440,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					activeSession.isEnquiry &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
-						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+						<AcceptAssign
+							btnLabel={'enquiry.acceptButton.known'}
+							secondaryAction={
+								showEnquiryTeamAction && openPanel === null ? (
+									<Button
+										item={{
+											type: BUTTON_TYPES.SECONDARY,
+											label: 'enquiry.teamDiscussion.open',
+											icon: (
+												<TeamActionGlyph aria-hidden="true" />
+											)
+										}}
+										className="session__teamDiscussionAction"
+										testingAttribute="enquiry-open-team"
+										buttonHandle={() =>
+											selectChannelFromFab(
+												channelId({ kind: 'team' })
+											)
+										}
+									/>
+								) : undefined
+							}
+						/>
 					)}
 
 				{shouldShowPseudonymGate && !pseudonymConfirmed && (
@@ -3630,7 +3665,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
 			    channels) and, on the phone, while the composer has focus. */}
-				{otherChannels.length > 0 && (
+				{otherChannels.some(
+					(channel) =>
+						!showEnquiryTeamAction || channel.kind !== 'team'
+				) && (
 					<ChannelSwitcherFab
 						channels={secondaryChannels}
 						activeChannelId={shownChannelId}

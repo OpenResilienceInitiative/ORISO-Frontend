@@ -575,6 +575,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "ናይ ጉጅለ ዘተ ክፈት" },
 		"acceptButton": {
 			"anonymous": "ዕላል ጀምር",
 			"known": "ሕቶ ተቐበል"

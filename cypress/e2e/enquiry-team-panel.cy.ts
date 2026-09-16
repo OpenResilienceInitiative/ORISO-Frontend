@@ -350,11 +350,34 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 
 		cy.get('.encryption-recovery-notice').should('be.visible');
 
+		cy.get('[data-cy="enquiry-open-team"]')
+			.should('be.visible')
+			.and('contain.text', 'Teambesprechung öffnen');
+		cy.get('.session__acceptance button').should((buttons) => {
+			expect(buttons).to.have.length(2);
+			expect(buttons[0].getBoundingClientRect().height).to.equal(
+				buttons[1].getBoundingClientRect().height
+			);
+			const accept = buttons[0].getBoundingClientRect();
+			const team = buttons[1].getBoundingClientRect();
+			if (width >= 900)
+				expect(team.top, 'desktop actions share a row').to.equal(
+					accept.top
+				);
+			else
+				expect(team.top, 'mobile actions stack').to.be.at.least(
+					accept.bottom
+				);
+		});
 		cy.screenshot(`enquiry-main-after-close-${width}`, {
 			capture: 'viewport',
 			scale: true,
 			disableTimersAndAnimations: false
 		});
+		cy.get('[data-cy="enquiry-open-team"]').click();
+		cy.get('[data-cy="stage-panel"]').should('be.visible');
+		cy.get(closeControl).click();
+		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		cy.reload();
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');

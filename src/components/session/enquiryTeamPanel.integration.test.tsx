@@ -410,6 +410,17 @@ it('keeps an explicit close when the same enquiry is opened again', async () => 
 	await waitFor(() => expect(reopened.container.textContent).toContain(TEXT));
 	expect(reopened.container.querySelector('.sidePanel')).toBeNull();
 	expect(boundary.open).toHaveBeenCalledTimes(calls);
+	const teamAction = screen.getByRole('button', {
+		name: 'enquiry.teamDiscussion.open'
+	});
+	expect(teamAction.classList.contains('button__secondary')).toBe(true);
+	expect(
+		reopened.container.querySelector('[data-cy="channel-switcher-fab"]')
+	).toBeNull();
+	fireEvent.click(teamAction);
+	await waitFor(() =>
+		expect(reopened.container.querySelector('.sidePanel')).not.toBeNull()
+	);
 }, 20000);
 
 it('keeps the original enquiry available after an opening error and retries into the same side panel', async () => {

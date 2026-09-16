@@ -558,6 +558,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Open team discussion" },
 		"acceptButton": {
 			"anonymous": "Start chat",
 			"known": "Accept request"

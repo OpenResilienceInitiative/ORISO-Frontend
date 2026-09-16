@@ -35,9 +35,14 @@ import {
 interface AcceptAssignProps {
 	assigned?: boolean;
 	btnLabel: string;
+	secondaryAction?: React.ReactNode;
 }
 
-export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
+export const AcceptAssign = ({
+	assigned,
+	btnLabel,
+	secondaryAction
+}: AcceptAssignProps) => {
 	const { t: translate } = useTranslation();
 	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const navigate = useNavigate();
@@ -254,13 +259,16 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 	return (
 		<>
-			<div className="session__acceptance messageItem">
+			<div
+				className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
+			>
 				<Button
 					item={buttonItem}
 					buttonHandle={() =>
 						handleButtonClick(activeSession.item.id)
 					}
 				/>
+				{secondaryAction}
 			</div>
 
 			{requestOverlayVisible && (

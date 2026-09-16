@@ -173,6 +173,36 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		margin: $grid-base-four 0;
 	}
 
+	&__acceptance--withTeamAction.messageItem {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: $grid-base-two;
+		padding-inline: $grid-base-two;
+	}
+
+	&__teamDiscussionAction .button__secondary {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: $grid-base;
+		color: var(--m3-on-secondary, $white);
+		background-color: var(--m3-secondary, $secondary);
+		border-color: var(--m3-secondary, $secondary);
+
+		&:hover {
+			background-color: var(--m3-secondary-hover, $secondary);
+			border-color: var(--m3-secondary-hover, $secondary);
+		}
+
+		svg {
+			width: $grid-base-three;
+			height: $grid-base-three;
+			fill: currentColor;
+		}
+	}
+
 	&__content {
 		position: absolute;
 		top: 0;
