@@ -165,7 +165,12 @@ export const TextCompact: Story = {
 		const active = canvas.getByRole('button', { name: 'Supervision' });
 		await expect(active).toHaveAttribute('aria-pressed', 'true');
 		await expect(active.className).toContain('sessionsListToolbar__chip--text');
-		await expect(canvasElement.querySelectorAll('.sessionsListToolbar__chipIconSvg').length).toBe(0);
+		// Only the pinned tune button keeps an icon; the kind chips are text.
+		await expect(
+			canvasElement.querySelectorAll(
+				'.sessionsListToolbar__chipsRow .sessionsListToolbar__chipIconSvg'
+			).length
+		).toBe(0);
 	}
 };
 

@@ -29,6 +29,11 @@ import {
 } from './sessionSearchPeople';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
+import { FilterChip as MenuChip } from '../displayFilter/FilterChip';
+import {
+	ChipView,
+	orderChipKinds
+} from '../displayFilter/displayFilterTypes';
 import '../displayFilter/displayFilter.styles.scss';
 
 /** The pinned tune button at the right end of the chip row (#1377 §3). */
@@ -113,6 +118,19 @@ interface SessionsListToolbarProps {
 	 * are not kinds and are never listed here.
 	 */
 	hiddenKindChips?: Partial<Record<DisplayFilterKindChip, boolean>>;
+	/**
+	 * Kind chips whose format the Träger switched off while rows still exist
+	 * (Frank 2026-09-16): rendered locked regardless of the module gate, a
+	 * click goes to `onDeactivatedChipClick`.
+	 */
+	deactivatedKindChips?: Partial<Record<DisplayFilterKindChip, boolean>>;
+	/** Accessible name of a locked chip, e.g. "Gesprächskreis (1) (vom Träger abgeschaltet)". */
+	deactivatedChipLabel?: (chipName: string) => string;
+	onDeactivatedChipClick?: (chip: DisplayFilterKindChip) => void;
+	/** Chip menu view from the display filter: icon pills or compact text pills. */
+	chipView?: ChipView;
+	/** Chips with unread items float to the left of the row. */
+	chipAutoSort?: boolean;
 }
 
 export const IconMenuDots = () => (
@@ -244,42 +262,45 @@ const FilterChip = ({
 	active,
 	count,
 	label,
-	onClick
+	onClick,
+	view,
+	deactivated,
+	deactivatedLabel,
+	onDeactivatedClick
 }: {
 	chip: FilterChipConfig;
 	active: boolean;
 	count?: number;
 	label: string;
 	onClick: () => void;
+	view: ChipView;
+	deactivated: boolean;
+	deactivatedLabel?: string;
+	onDeactivatedClick?: () => void;
 }) => {
-	const Icon = chip.Icon;
-
+	// The toolbar icons take `hasIndicator` (the unread dot); the shared
+	// chip only knows an SVG component, so bind the indicator here.
+	const indicator = chip.id === 'unread' && Boolean(count && count > 0);
+	const Icon = React.useMemo(
+		() =>
+			({ className }: React.SVGProps<SVGSVGElement>) => (
+				<chip.Icon className={className} hasIndicator={indicator} />
+			),
+		[chip, indicator]
+	);
 	return (
-		<button
-			type="button"
-			className={clsx('sessionsListToolbar__chip', {
-				'sessionsListToolbar__chip--active': active,
-				'sessionsListToolbar__chip--iconOnly': !active
-			})}
+		<MenuChip
+			label={label}
+			icon={Icon}
+			active={active}
+			count={count}
+			view={view}
+			deactivated={deactivated}
+			deactivatedLabel={deactivatedLabel}
 			onClick={onClick}
-			aria-pressed={active}
-			aria-label={label}
+			onDeactivatedClick={onDeactivatedClick}
 			data-cy={chip.dataCy}
-		>
-			<Icon
-				className="sessionsListToolbar__chipIconSvg"
-				hasIndicator={
-					chip.id === 'unread' && Boolean(count && count > 0)
-				}
-			/>
-			<span
-				className="sessionsListToolbar__chipLabel"
-				aria-hidden={!active}
-			>
-				{label}
-			</span>
-			<CountBadge count={count} />
-		</button>
+		/>
 	);
 };
 
@@ -316,7 +337,12 @@ export const SessionsListToolbar = ({
 	createGroupChatActive,
 	chipCounts = {},
 	displayFilter,
-	hiddenKindChips = {}
+	hiddenKindChips = {},
+	deactivatedKindChips = {},
+	deactivatedChipLabel,
+	onDeactivatedChipClick,
+	chipView = 'icons',
+	chipAutoSort = false
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -421,11 +447,15 @@ export const SessionsListToolbar = ({
 		};
 	}, []);
 
-	const visibleFilterChips = React.useMemo(
-		() =>
-			FILTER_CHIPS.filter((chip) => {
+	const visibleFilterChips = React.useMemo(() => {
+		const listed = FILTER_CHIPS.filter((chip) => {
 				if (hiddenKindChips[chip.id as DisplayFilterKindChip]) {
 					return false;
+				}
+				// Träger switched the format off but rows still exist: the
+				// chip stays (locked) although the module gate below is off.
+				if (deactivatedKindChips[chip.id as DisplayFilterKindChip]) {
+					return true;
 				}
 				if (chip.id === 'liveChat') {
 					return showLiveChatChip;
@@ -440,15 +470,26 @@ export const SessionsListToolbar = ({
 					return showInternalGroupChip;
 				}
 				return true;
-			}),
-		[
-			hiddenKindChips,
-			showGroupChip,
-			showInternalGroupChip,
-			showLiveChatChip,
-			showSupervisionChip
-		]
-	);
+			});
+		// Drafts are a count, not unread: they never float.
+		return orderChipKinds(
+			listed.map((chip) => ({
+				...chip,
+				label: chip.fallback,
+				unreadCount: chip.id === 'drafts' ? 0 : chipCounts[chip.id] ?? 0
+			})),
+			{ autoSort: chipAutoSort }
+		);
+	}, [
+		chipAutoSort,
+		chipCounts,
+		deactivatedKindChips,
+		hiddenKindChips,
+		showGroupChip,
+		showInternalGroupChip,
+		showLiveChatChip,
+		showSupervisionChip
+	]);
 	const archiveInsertIndex = Math.max(
 		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),
 		0
@@ -459,16 +500,33 @@ export const SessionsListToolbar = ({
 	const filterChipsAfterArchive = showConsultantActions
 		? visibleFilterChips.slice(archiveInsertIndex)
 		: [];
-	const renderFilterChip = (chip: FilterChipConfig) => (
-		<FilterChip
-			key={chip.id}
-			chip={chip}
-			active={activeChip === chip.id}
-			count={chipCounts[chip.id]}
-			label={tr(chip.labelKey, chip.fallback)}
-			onClick={() => onChipToggle(chip.id)}
-		/>
-	);
+	const renderFilterChip = (chip: FilterChipConfig) => {
+		const deactivated = Boolean(
+			deactivatedKindChips[chip.id as DisplayFilterKindChip]
+		);
+		const count = chipCounts[chip.id];
+		const label = tr(chip.labelKey, chip.fallback);
+		const named =
+			count && count > 0 ? `${label} (${count > 99 ? '99+' : count})` : label;
+		return (
+			<FilterChip
+				key={chip.id}
+				chip={chip}
+				active={activeChip === chip.id}
+				count={count}
+				label={label}
+				view={chipView}
+				deactivated={deactivated}
+				deactivatedLabel={
+					deactivated ? deactivatedChipLabel?.(named) : undefined
+				}
+				onDeactivatedClick={() =>
+					onDeactivatedChipClick?.(chip.id as DisplayFilterKindChip)
+				}
+				onClick={() => onChipToggle(chip.id)}
+			/>
+		);
+	};
 
 	return (
 		<div className="sessionsListToolbar" data-cy="sessions-list-toolbar">

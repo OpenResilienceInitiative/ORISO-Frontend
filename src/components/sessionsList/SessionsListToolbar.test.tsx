@@ -216,3 +216,78 @@ describe('SessionsListToolbar display filter (#1377 slice 4)', () => {
 		expect(chip(container, 'drafts')).not.toBeNull();
 	});
 });
+
+describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
+	const renderMenu = (
+		props: Partial<React.ComponentProps<typeof SessionsListToolbar>>
+	) =>
+		render(
+			<MemoryRouter>
+				<SessionsListToolbar
+					translate={(key, fallback) => fallback ?? key}
+					searchValue=""
+					onSearchChange={vi.fn()}
+					activeChip={null}
+					onChipToggle={vi.fn()}
+					showConsultantActions
+					showCreateGroupChatAction={false}
+					showSupervisionChip
+					showGroupChip={false}
+					showInternalGroupChip
+					showLiveChatChip
+					createGroupChatPath="/sessions/create"
+					archiveTabPath="/sessions/archive"
+					archiveTabActive={false}
+					createGroupChatActive={false}
+					chipCounts={{ unread: 0, drafts: 3, nearby: 2, groups: 1 }}
+					{...props}
+				/>
+			</MemoryRouter>
+		);
+	const chipNames = (container: HTMLElement) =>
+		Array.from(
+			container.querySelectorAll('[data-cy^="sessions-list-chip-"]')
+		).map((el) => el.getAttribute('data-cy')!.replace('sessions-list-chip-', ''));
+
+	it('shows a Träger-deactivated kind chip locked even though its module is off, and routes its click to the notice', () => {
+		const onChipToggle = vi.fn();
+		const onDeactivatedChipClick = vi.fn();
+		const { container } = renderMenu({
+			onChipToggle,
+			deactivatedKindChips: { groups: true },
+			deactivatedChipLabel: (name) => `${name} (vom Träger abgeschaltet)`,
+			onDeactivatedChipClick
+		});
+		const groups = screen.getByRole('button', {
+			name: 'Conversation circle (1) (vom Träger abgeschaltet)'
+		});
+		expect(groups.getAttribute('aria-disabled')).toBe('true');
+		groups.click();
+		expect(onChipToggle).not.toHaveBeenCalled();
+		expect(onDeactivatedChipClick).toHaveBeenCalledWith('groups');
+		expect(chipNames(container)).toContain('groups');
+	});
+
+	it('floats chips with unread items left when auto-sort is on; drafts never count as unread', () => {
+		const { container } = renderMenu({
+			chipAutoSort: true,
+			chipCounts: { unread: 0, drafts: 3, nearby: 2, supervision: 1 }
+		});
+		// nearby (2) and supervision (1) first, then the rest in toolbar order
+		expect(chipNames(container).slice(0, 2)).toEqual(['nearby', 'supervision']);
+		expect(chipNames(container)).toContain('drafts');
+		expect(chipNames(container).indexOf('drafts')).toBeGreaterThan(1);
+	});
+
+	it('renders compact text chips without icons in the text view', () => {
+		const { container } = renderMenu({ chipView: 'text' });
+		const mail = screen.getByRole('button', { name: 'Mail (2)' });
+		expect(mail.className).toContain('sessionsListToolbar__chip--text');
+		expect(mail.textContent).toContain('Mail');
+		expect(
+			container.querySelectorAll(
+				'[data-cy="sessions-list-chips"] .sessionsListToolbar__chipIconSvg'
+			).length
+		).toBe(0);
+	});
+});
