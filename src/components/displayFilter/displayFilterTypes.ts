@@ -115,24 +115,44 @@ export const setKindSetting = (
 };
 
 /**
- * Which kinds get a chip right now: pill enabled, and either unread items
- * present or the chip is the active one (spec §5.1).
+ * Which kinds get a chip: every shown kind whose pill is on. A chip is a
+ * menu entry (Frank, 2026-09-16, replaces spec §5.1 "chip only while
+ * unread"): unread items are shown as a marker/count badge on the chip, the
+ * chip itself never comes and goes with the count. Show-only kinds gate a
+ * panel, not rows, and never get a chip. `activeKindId` is accepted for
+ * call-site compatibility; the active chip is a shown kind by construction
+ * (see {@link reconcileActiveKind}).
  */
 export const visiblePillKinds = <T extends DisplayFilterKindOption>(
 	value: DisplayFilterValue,
 	kinds: ReadonlyArray<T>,
-	activeKindId: string | null
+	_activeKindId: string | null = null
 ): T[] =>
-	kinds.filter((kind) => {
-		if (kind.showOnly) {
-			return false;
-		}
-		const setting = resolveKindSetting(value, kind.id);
-		if (!setting.pill) {
-			return false;
-		}
-		return (kind.unreadCount ?? 0) > 0 || kind.id === activeKindId;
-	});
+	kinds.filter(
+		(kind) => !kind.showOnly && resolveKindSetting(value, kind.id).pill
+	);
+
+export interface ChipOrderOptions {
+	/** Kinds with unread items float to the left; order is stable otherwise. */
+	autoSort: boolean;
+}
+
+/**
+ * Display order of the chips. With auto-sort on, kinds that have unread
+ * items come first (in section order among themselves), then the rest in
+ * section order. Off: the section order as given.
+ */
+export const orderChipKinds = <T extends DisplayFilterKindOption>(
+	kinds: ReadonlyArray<T>,
+	{ autoSort }: ChipOrderOptions
+): T[] => {
+	if (!autoSort) {
+		return [...kinds];
+	}
+	const unread = kinds.filter((kind) => (kind.unreadCount ?? 0) > 0);
+	const rest = kinds.filter((kind) => (kind.unreadCount ?? 0) === 0);
+	return [...unread, ...rest];
+};
 
 /**
  * The active chip must never outlive its pill: when the user hides a kind or

@@ -6,7 +6,8 @@ import {
 	reconcileActiveKind,
 	resolveKindSetting,
 	setKindSetting,
-	visiblePillKinds
+	visiblePillKinds,
+	orderChipKinds
 } from './displayFilterTypes';
 
 describe('displayFilterTypes (#1377)', () => {
@@ -114,7 +115,7 @@ describe('displayFilterTypes (#1377)', () => {
 		).toBe(true);
 	});
 
-	it('renders a pill only with unread items or when active', () => {
+	it('renders a chip for every shown kind whose pill is on (Frank 2026-09-16: the chip is a menu entry, unread is a badge)', () => {
 		const kinds = [
 			{ id: 'requests', label: 'Anfragen', unreadCount: 2 },
 			{ id: 'messages', label: 'Nachrichten', unreadCount: 0 },
@@ -123,12 +124,32 @@ describe('displayFilterTypes (#1377)', () => {
 		const value = setKindSetting(EMPTY_DISPLAY_FILTER, 'drafts', {
 			pill: false
 		});
+		// 0 unread keeps the chip; a switched-off pill removes it.
 		expect(visiblePillKinds(value, kinds, null).map((k) => k.id)).toEqual([
-			'requests'
+			'requests',
+			'messages'
 		]);
-		expect(
-			visiblePillKinds(value, kinds, 'messages').map((k) => k.id)
-		).toEqual(['requests', 'messages']);
+		// A hidden kind has no chip either.
+		const hidden = setKindSetting(value, 'messages', { show: false });
+		expect(visiblePillKinds(hidden, kinds, null).map((k) => k.id)).toEqual(
+			['requests']
+		);
+	});
+
+	it('auto-sort floats kinds with unread items to the left, otherwise keeps the section order', () => {
+		const kinds = [
+			{ id: 'unread', label: 'Ungelesen', unreadCount: 0 },
+			{ id: 'nearby', label: 'Mail', unreadCount: 2 },
+			{ id: 'liveChat', label: 'Live-Chat', unreadCount: 0 },
+			{ id: 'circle', label: 'Gesprächskreis', unreadCount: 1 }
+		];
+		expect(orderChipKinds(kinds, { autoSort: false }).map((k) => k.id)).toEqual(
+			['unread', 'nearby', 'liveChat', 'circle']
+		);
+		// Stable among the unread ones and among the rest.
+		expect(orderChipKinds(kinds, { autoSort: true }).map((k) => k.id)).toEqual(
+			['nearby', 'circle', 'unread', 'liveChat']
+		);
 	});
 
 	it('clears the active kind once its pill is gone', () => {
