@@ -175,3 +175,9 @@ controls. TDD red → green per slice; Storybook play tests green (55),
 - The dialog is 560 px wide everywhere (the pickers need the room).
 - Storybook build of 4abad6e2 had failed on a story fixture (`sound: false`
   → `'none'`); fixed in ee1424bd.
+
+### Round 6 verification (2026-09-16, pre-dev `app.6bbd0536.js`, images `1377-pill-menu-3907fd00`)
+
+- Storybook play tests: 4 locators were stale after the rename (button "Ansicht einstellen", tone/pill pickers instead of checkboxes) → fixed in c0df86cc, 68/68 green.
+- Live check as consultant bart.simpson on pre-dev: title "Ansicht · Gespräche", columns Ton / Anzeigen, a picker in both columns for every kind (Live-Chat: Dynamisch), Archiv row pill-only, Termine greyed, Sonstiges compact (tooltip + sr-only text), no row borders (`border-bottom: 0px`), dialog 560 px. Screenshots `predev6-01-dialog.png`, `predev6-03-dialog-900.png` (scratchpad). At 760 px viewport the body scrolls (accepted).
+- Storybook image on pre-dev needed the usual `imagePullPolicy: IfNotPresent` patch after `predev-pin set`.
