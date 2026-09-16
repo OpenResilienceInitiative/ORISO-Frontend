@@ -1774,6 +1774,23 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": { "audio": "Audioanruf", "video": "Videoanruf" },
+			"state": {
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"description": {
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			}
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
@@ -4142,6 +4159,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",

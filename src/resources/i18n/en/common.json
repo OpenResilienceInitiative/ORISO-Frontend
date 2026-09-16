@@ -1759,6 +1759,20 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": { "audio": "Audio call", "video": "Video call" },
+			"state": {
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"description": {
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"participants": { "current": "In the call", "attended": "Attended" }
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
@@ -4084,6 +4098,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",
