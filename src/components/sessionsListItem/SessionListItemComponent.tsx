@@ -101,8 +101,8 @@ import {
 	getLatestTimedMatrixRoomPreview,
 	getPreviewLastMessageType,
 	getRoomPreviewsByChannel,
-	MatrixRoomPreview,
-	TimedRoomPreview
+	TimedRoomPreview,
+	toListPreviewLine
 } from './matrixRoomPreview';
 import {
 	isCaseHandoverAccessControlled,
@@ -319,6 +319,19 @@ export const SessionListItemComponent = ({
 		[visibleSupervisionPreviewEvents]
 	);
 
+	// Frank, 16.09.2026: thread and voice are marked by their glyphs, not by
+	// words; "Supervision:" keeps its prefix. See `toListPreviewLine`.
+	const matrixPreviewLine = useMemo(
+		() =>
+			isMatrixBackedSession
+				? toListPreviewLine(
+						matrixSessionPreview,
+						translate as (key: string, fallback?: string) => string
+					)
+				: null,
+		[isMatrixBackedSession, matrixSessionPreview, translate]
+	);
+
 	useEffect(() => {
 		if (caseHandoverContentLocked) {
 			setPlainTextLastMessage(
@@ -327,34 +340,10 @@ export const SessionListItemComponent = ({
 			return;
 		}
 
-		if (isMatrixBackedSession) {
-			const formatPreview = (preview: MatrixRoomPreview | null) => {
-				if (!preview || preview.kind === 'encrypted') {
-					return translate('e2ee.message.encryption.text');
-				}
-				const text =
-					preview.kind === 'text'
-						? preview.text || ''
-						: translate(
-								`sessionList.preview.${preview.kind}`,
-								preview.kind
-							);
-				// B2 / T24 (Frank): "Thread: …" / "Supervision: …" when the
-				// newest message came from a secondary channel.
-				return preview.channel
-					? `${translate(
-							`sessionList.preview.channel.${preview.channel}`
-						)} ${text}`
-					: text;
-			};
-			setPlainTextLastMessage(formatPreview(matrixSessionPreview));
+		if (matrixPreviewLine) {
+			setPlainTextLastMessage(matrixPreviewLine.text);
 		}
-	}, [
-		caseHandoverContentLocked,
-		isMatrixBackedSession,
-		matrixSessionPreview,
-		translate
-	]);
+	}, [caseHandoverContentLocked, matrixPreviewLine, translate]);
 
 	useEffect(() => {
 		if (caseHandoverContentLocked || isMatrixBackedSession) {
@@ -1555,6 +1544,11 @@ export const SessionListItemComponent = ({
 											'caseHandover.list.hiddenPreview'
 										)
 									: displayLastMessage
+							}
+							glyphs={
+								caseHandoverContentLocked
+									? undefined
+									: matrixPreviewLine?.glyphs
 							}
 							lastMessageType={
 								caseHandoverContentLocked
