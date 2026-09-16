@@ -162,3 +162,16 @@ controls. TDD red → green per slice; Storybook play tests green (55),
   (route-active row survives the chip axis; live-chat chip visible while a
   live chat is open) — see its commit message; the rail button's toggle vs.
   navigate behaviour is left as a product decision.
+
+### 2026-09-16, sixth round (Frank's review of the tone picker on pre-dev)
+
+- The split-button picker is used for **every** Anzeigen cell (An / Aus;
+  live chat Dynamisch / Fest / Aus), not only for live chat — one look for
+  the whole column. Labels: `pillMenu`, `pillOn`, `pillOff` (the former
+  `liveChatModeMenu`/`liveChatOff` keys were renamed).
+- No divider lines between kinds; rows get 6 px air instead.
+- The Sonstiges explanation is no longer a five-line text in the row: it is
+  a tooltip plus sr-only text linked from the locked checkbox.
+- The dialog is 560 px wide everywhere (the pickers need the room).
+- Storybook build of 4abad6e2 had failed on a story fixture (`sound: false`
+  → `'none'`); fixed in ee1424bd.
