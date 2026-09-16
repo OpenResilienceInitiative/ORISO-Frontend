@@ -181,3 +181,22 @@ controls. TDD red → green per slice; Storybook play tests green (55),
 - Storybook play tests: 4 locators were stale after the rename (button "Ansicht einstellen", tone/pill pickers instead of checkboxes) → fixed in c0df86cc, 68/68 green.
 - Live check as consultant bart.simpson on pre-dev: title "Ansicht · Gespräche", columns Ton / Anzeigen, a picker in both columns for every kind (Live-Chat: Dynamisch), Archiv row pill-only, Termine greyed, Sonstiges compact (tooltip + sr-only text), no row borders (`border-bottom: 0px`), dialog 560 px. Screenshots `predev6-01-dialog.png`, `predev6-03-dialog-900.png` (scratchpad). At 760 px viewport the body scrolls (accepted).
 - Storybook image on pre-dev needed the usual `imagePullPolicy: IfNotPresent` patch after `predev-pin set`.
+
+### Round 7 (2026-09-16, Frank's review of round six)
+
+Decisions: rail Live-Chat button = Variante 1 (turning on with an open live chat returns into it); Live-Chat pill
+gets a third mode "Bei Sitzung" (chip while any live chat is in the list, new messages or not) between
+"Dynamisch" (availability or something new) and "Fest"; tone menu shortened; ADR for the Träger cascade; in the
+Gespräche dialog every toolbar chip is a row (Chat erstellen, Ungelesen, Entwürfe added as pill-only rows),
+"1-1 Beratung" → "Mail-Beratung", legend "Ansicht der Pillen" → "Filter-Button Anzeige-Optionen", column titles
+aligned over the pickers (assumption for the circled headers: alignment, not removal).
+
+Built (ccdbce8d, 95f5eee4): `KindSetting.pillMode` (`dynamic | session | fixed`, legacy `fixed: true` parses as
+`fixed`), `isLiveChatChipVisible(mode, available, hasLiveChatRow, unreadCount, activeIsLiveChat)`, the open live
+chat never loses its chip (#1404 cherry-picked from `fix/live-chat-active-session-lost`, route-active row survives
+the chip filter), `resolveLiveChatRailTarget` in `NavigationBar`, `PILL_ONLY_SESSION_KINDS` (never bundled under
+Weitere — was a latent bug for Archiv), `showCreateChip` on the toolbar, six tones + stored one in the tone
+picker, `docs/architecture/adr-020-traeger-format-cascade.md`. Unit 515/515, Storybook 83/83.
+
+Not in this round: Anfragen dialog keeps its three rows (Ungelesen/Entwürfe rows only in Gespräche); the rail
+button only shows when the consultant enabled it in the profile ("über die Menüleiste steuern").

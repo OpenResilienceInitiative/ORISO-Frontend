@@ -801,3 +801,18 @@ Additional product input that changed the spec (same conversation):
    unread-count with exclusions.
 
 Each slice is a separate PR with Storybook before/after screenshots.
+
+
+### Amendment 2026-09-16 (round 7)
+
+- **Gespräche rows = toolbar chips.** Chat erstellen, Ungelesen, Entwürfe, Mail-Beratung, Live-Chat, Interner
+  Gruppenchat, Gesprächskreis, Supervision, Archiviert, Termine (placeholder), Sonstiges. Erstellen/Ungelesen/
+  Entwürfe/Archiviert are pill-only: no rows of their own, no tone, never bundled under "Weitere". The Erstellen
+  row is absent when the Träger has the create flow off.
+- **Live-Chat pill modes** (`KindSetting.pillMode`): `dynamic` (default) = availability on or an asker wrote
+  something new; `session` = also while any live chat is in the list; `fixed` = always. The open live chat keeps
+  its chip in every mode.
+- **Rail Live-Chat button**: turning availability on while a live chat is open navigates into that conversation;
+  otherwise into the queue with the chip active (unchanged). Turning off never navigates.
+- **Tone picker**: Standard, Klingelton, Ton 1–6 (plus the stored tone if outside), Stumm.
+- **Legend**: "Filter-Button Anzeige-Optionen".
