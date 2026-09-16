@@ -329,8 +329,8 @@ export const DisplayFilterDialogOpen: Story = {
 			body.getByRole('checkbox', { name: 'In der Liste: Entwürfe' })
 		).not.toBeChecked();
 		await expect(
-			body.getByRole('checkbox', { name: 'Pille: System' })
-		).not.toBeChecked();
+			body.getByRole('button', { name: 'Pille: System' })
+		).toHaveTextContent('Aus');
 	}
 };
 

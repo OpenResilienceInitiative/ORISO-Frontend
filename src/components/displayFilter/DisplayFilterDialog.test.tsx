@@ -71,10 +71,11 @@ describe('DisplayFilterDialog (#1377)', () => {
 		const showDrafts = screen.getByRole('checkbox', {
 			name: 'In der Liste: Entwürfe'
 		}) as HTMLInputElement;
-		const pillDrafts = screen.getByRole('checkbox', {
+		const pillDrafts = screen.getByRole('button', {
 			name: 'Pille: Entwürfe'
-		}) as HTMLInputElement;
+		}) as HTMLButtonElement;
 		expect(pillDrafts.disabled).toBe(false);
+		expect(pillDrafts.textContent).toContain('An');
 		fireEvent.click(showDrafts);
 		const last = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
 		expect(resolveKindSetting(last, 'drafts')).toEqual({
@@ -82,7 +83,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			pill: false
 		});
 		expect(pillDrafts.disabled).toBe(true);
-		expect(pillDrafts.checked).toBe(false);
+		expect(pillDrafts.textContent).toContain('Aus');
 	});
 
 	it('keeps "Sonstiges" fixed on and toggles auto-read', () => {
@@ -263,9 +264,9 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 		const show = screen.getByRole('checkbox', {
 			name: 'In der Liste: Gesprächskreis'
 		}) as HTMLInputElement;
-		const pill = screen.getByRole('checkbox', {
+		const pill = screen.getByRole('button', {
 			name: 'Pille: Gesprächskreis'
-		}) as HTMLInputElement;
+		}) as HTMLButtonElement;
 		expect(show.disabled).toBe(true);
 		expect(show.checked).toBe(true);
 		expect(pill.disabled).toBe(true);
@@ -412,16 +413,16 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 			fixed: true
 		});
 		expect(
-			screen.getByRole('checkbox', { name: 'Pille: Archiviert' })
+			screen.getByRole('button', { name: 'Pille: Archiviert' })
 		).toBeTruthy();
 		expect(
 			screen.queryByRole('button', { name: 'Ton anhören: Archiviert' })
 		).toBeNull();
 		expect(
 			(
-				screen.getByRole('checkbox', {
+				screen.getByRole('button', {
 					name: 'Pille: Termine'
-				}) as HTMLInputElement
+				}) as HTMLButtonElement
 			).disabled
 		).toBe(true);
 		expect(screen.getByText('Kommt bald.')).toBeTruthy();

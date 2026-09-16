@@ -89,7 +89,7 @@ export const Customised: Story = {
 	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />,
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
-		const draftsPill = dialog.getByRole('checkbox', {
+		const draftsPill = dialog.getByRole('button', {
 			name: 'Pille: Entwürfe'
 		});
 		await expect(draftsPill).toBeDisabled();
@@ -112,14 +112,14 @@ export const HideAKind: Story = {
 		const showCalls = dialog.getByRole('checkbox', {
 			name: 'In der Liste: Anrufe'
 		});
-		const pillCalls = dialog.getByRole('checkbox', {
+		const pillCalls = dialog.getByRole('button', {
 			name: 'Pille: Anrufe'
 		});
 		await expect(pillCalls).toBeEnabled();
 		await userEvent.click(showCalls);
 		await expect(showCalls).not.toBeChecked();
 		await expect(pillCalls).toBeDisabled();
-		await expect(pillCalls).not.toBeChecked();
+		await expect(pillCalls).toHaveTextContent('Aus');
 	}
 };
 

@@ -70,13 +70,14 @@ export const useDisplayFilterLabels = (
 				soundTone: (number: number) =>
 					t('profile.notifications.config.tone', { number }),
 				soundMuted: t('profile.notifications.config.noSound'),
-				liveChatModeMenu: (kind: string) =>
-					t('notifications.displayFilter.liveChatModeMenu', { kind }),
+				pillMenu: (kind: string) =>
+					t('notifications.displayFilter.pillMenu', { kind }),
+				pillOn: t('notifications.displayFilter.pillOn'),
+				pillOff: t('notifications.displayFilter.pillOff'),
 				liveChatDynamic: t(
 					'notifications.displayFilter.liveChatDynamic'
 				),
 				liveChatFixed: t('notifications.displayFilter.liveChatFixed'),
-				liveChatOff: t('notifications.displayFilter.liveChatOff'),
 				placeholderHint: t(
 					'notifications.displayFilter.placeholderHint'
 				),

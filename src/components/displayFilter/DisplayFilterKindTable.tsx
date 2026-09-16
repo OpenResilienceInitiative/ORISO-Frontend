@@ -34,10 +34,13 @@ export interface DisplayFilterKindTableLabels {
 	soundRing: string;
 	soundTone: (number: number) => string;
 	soundMuted: string;
-	liveChatModeMenu: (kindLabel: string) => string;
+	/** Anzeigen picker menu, e.g. "Anzeige wählen: Mail". */
+	pillMenu: (kindLabel: string) => string;
+	pillOn: string;
+	pillOff: string;
 	liveChatDynamic: string;
 	liveChatFixed: string;
-	liveChatOff: string;
+	/** Tooltip of the Sonstiges row (it can never be hidden). */
 	otherFixed: string;
 	pillNotApplicable: string;
 	deactivatedHint: string;
@@ -63,11 +66,11 @@ const AREA_DEFAULT = '__default';
 
 /**
  * One row per kind (#1377 spec §3, reshaped 2026-09-16 with Frank): the
- * Zeitstrahl offers **In der Liste** + **Anzeigen** (pill); Gespräche and
- * Anfragen offer **Ton** (a tone picker per kind) + **Anzeigen**. The
- * live-chat pill has modes (dynamic / pinned / off), Archiv is pill-only,
- * Termine is a greyed placeholder. Shared by the list dialog and the profile
- * page (slice 6).
+ * Zeitstrahl offers **In der Liste** + **Anzeigen**; Gespräche and Anfragen
+ * offer **Ton** + **Anzeigen**. Both Ton and Anzeigen are small split-button
+ * pickers of one width (An/Aus; live chat Dynamisch/Fest/Aus; tones). Archiv
+ * is pill-only, Termine a greyed placeholder, Sonstiges explains itself in a
+ * tooltip. No divider lines — the rows breathe instead.
  */
 export const DisplayFilterKindTable = ({
 	kinds,
@@ -100,10 +103,7 @@ export const DisplayFilterKindTable = ({
 				)}
 				<th
 					scope="col"
-					className={clsx(
-						'displayFilterDialog__colHead',
-						columns.sound && 'displayFilterDialog__colHead--picker'
-					)}
+					className="displayFilterDialog__colHead displayFilterDialog__colHead--picker"
 				>
 					{labels.pillColumn}
 				</th>
@@ -123,24 +123,29 @@ export const DisplayFilterKindTable = ({
 					const deactivated = kind.availability === 'deactivated';
 					const placeholder = Boolean(kind.placeholder);
 					const locked = readOnly || deactivated || placeholder;
-					const hint = isOther
-						? labels.otherFixed
-						: deactivated
-							? labels.deactivatedHint
-							: placeholder
-								? labels.placeholderHint
-								: null;
+					const hint = deactivated
+						? labels.deactivatedHint
+						: placeholder
+							? labels.placeholderHint
+							: null;
+					// Sonstiges keeps its explanation for assistive tech (sr-only,
+					// linked from the locked checkbox) and as a tooltip; visually
+					// the row stays one line (Frank 2026-09-16: compact).
 					const hintId = hint
 						? `${idPrefix}-${kind.id}-hint`
-						: undefined;
+						: isOther
+							? `${idPrefix}-other-fixed`
+							: undefined;
 					const Icon = kind.icon;
 					const tone = kindSoundOverride(value, kind.id);
 					const muted = isKindMuted(value, kind.id);
 					const pillValue = !setting.pill
 						? 'off'
-						: isKindPinned(value, kind.id)
-							? 'fixed'
-							: 'dynamic';
+						: kind.modes
+							? isKindPinned(value, kind.id)
+								? 'fixed'
+								: 'dynamic'
+							: 'on';
 					return (
 						<tr
 							key={kind.id}
@@ -166,13 +171,26 @@ export const DisplayFilterKindTable = ({
 									/>
 								)}
 								<span className="displayFilterDialog__kindText">
-									<span>{kind.label}</span>
+									<span
+										title={
+											isOther
+												? labels.otherFixed
+												: undefined
+										}
+									>
+										{kind.label}
+									</span>
 									{hint && (
 										<span
 											className="displayFilterDialog__kindHint"
 											id={hintId}
 										>
 											{hint}
+										</span>
+									)}
+									{isOther && (
+										<span className="sr-only" id={hintId}>
+											{labels.otherFixed}
 										</span>
 									)}
 								</span>
@@ -276,47 +294,8 @@ export const DisplayFilterKindTable = ({
 									/>
 								</td>
 							)}
-							<td
-								className={clsx(
-									'displayFilterDialog__cell',
-									columns.sound &&
-										'displayFilterDialog__cell--picker'
-								)}
-							>
-								{kind.modes ? (
-									<KindOptionPicker
-										options={[
-											{
-												id: 'dynamic',
-												label: labels.liveChatDynamic
-											},
-											{
-												id: 'fixed',
-												label: labels.liveChatFixed
-											},
-											{
-												id: 'off',
-												label: labels.liveChatOff
-											}
-										]}
-										selected={pillValue}
-										mainLabel={labels.pillKind(kind.label)}
-										menuLabel={labels.liveChatModeMenu(
-											kind.label
-										)}
-										disabled={locked || !setting.show}
-										className="displayFilterDialog__picker"
-										dataCy={`${dataCyPrefix}-mode-${kind.id}`}
-										onSelect={(id) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													pill: id !== 'off',
-													fixed: id === 'fixed'
-												})
-											)
-										}
-									/>
-								) : kind.showOnly ? (
+							<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
+								{kind.showOnly ? (
 									<>
 										<span
 											className="displayFilterDialog__noPill"
@@ -329,19 +308,45 @@ export const DisplayFilterKindTable = ({
 										</span>
 									</>
 								) : (
-									<M3Checkbox
-										checked={setting.pill}
-										disabled={locked || !setting.show}
-										describedBy={
-											!isOther ? hintId : undefined
+									<KindOptionPicker
+										options={
+											kind.modes
+												? [
+														{
+															id: 'dynamic',
+															label: labels.liveChatDynamic
+														},
+														{
+															id: 'fixed',
+															label: labels.liveChatFixed
+														},
+														{
+															id: 'off',
+															label: labels.pillOff
+														}
+													]
+												: [
+														{
+															id: 'on',
+															label: labels.pillOn
+														},
+														{
+															id: 'off',
+															label: labels.pillOff
+														}
+													]
 										}
-										hideLabel
-										label={labels.pillKind(kind.label)}
+										selected={pillValue}
+										mainLabel={labels.pillKind(kind.label)}
+										menuLabel={labels.pillMenu(kind.label)}
+										disabled={locked || !setting.show}
+										className="displayFilterDialog__picker"
 										dataCy={`${dataCyPrefix}-pill-${kind.id}`}
-										onChange={(checked) =>
+										onSelect={(id) =>
 											onChange(
 												setKindSetting(value, kind.id, {
-													pill: checked
+													pill: id !== 'off',
+													fixed: id === 'fixed'
 												})
 											)
 										}

@@ -480,3 +480,18 @@
 	color: var(--m3-on-surface-variant, #444748);
 	opacity: 0.5;
 }
+
+/* Frank 2026-09-16: no divider lines between kinds, a little more air,
+   pickers in both columns. */
+.displayFilterDialog__row {
+	border-top: 0;
+}
+
+.displayFilterDialog__row .displayFilterDialog__kind {
+	min-height: 32px;
+	padding: 6px 0;
+}
+
+.displayFilterDialog__row .displayFilterDialog__cell {
+	padding: 6px 0 6px 8px;
+}

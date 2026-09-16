@@ -34,11 +34,12 @@ export interface DisplayFilterDialogLabels {
 	soundRing: string;
 	soundTone: (number: number) => string;
 	soundMuted: string;
-	/** Live-chat pill mode picker (Frank 2026-09-16). */
-	liveChatModeMenu: (kindLabel: string) => string;
+	/** Anzeigen picker (Frank 2026-09-16): every kind picks An/Aus, live chat Dynamisch/Fest/Aus. */
+	pillMenu: (kindLabel: string) => string;
+	pillOn: string;
+	pillOff: string;
 	liveChatDynamic: string;
 	liveChatFixed: string;
-	liveChatOff: string;
 	/** Row hint of an announced, not yet wired kind (Termine). */
 	placeholderHint: string;
 	/** Accessible name of one show checkbox, e.g. "Anzeigen: Anfragen". */
@@ -164,7 +165,7 @@ export const DisplayFilterDialog = ({
 			closeLabel={labels.close}
 			// The tone/mode pickers need room: 560 px in the sound mode (Frank:
 			// "auf dem Desktop breiter ist überhaupt nicht schlimm").
-			width={columns.sound ? 560 : 480}
+			width={560}
 			fullScreen={fullScreen}
 			className="displayFilterDialog"
 			id={dialogId}

@@ -114,8 +114,8 @@ export const DisplayFilters: Story = {
 			canvas.getByRole('checkbox', { name: 'In der Liste: System' })
 		).toHaveAttribute('aria-checked', 'mixed');
 		await expect(
-			canvas.getByRole('checkbox', { name: 'Pille: Entwürfe' })
-		).not.toBeChecked();
+			canvas.getByRole('button', { name: 'Pille: Entwürfe' })
+		).toHaveTextContent('Aus');
 		await expect(
 			canvas.getByText(
 				'Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.'

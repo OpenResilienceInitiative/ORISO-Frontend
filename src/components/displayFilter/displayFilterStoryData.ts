@@ -51,10 +51,11 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	soundRing: 'Klingelton',
 	soundTone: (number) => `Ton ${number}`,
 	soundMuted: 'Stumm',
-	liveChatModeMenu: (kind) => `Anzeige wählen: ${kind}`,
+	pillMenu: (kind) => `Anzeige wählen: ${kind}`,
+	pillOn: 'An',
+	pillOff: 'Aus',
 	liveChatDynamic: 'Dynamisch',
 	liveChatFixed: 'Fest',
-	liveChatOff: 'Aus',
 	placeholderHint: 'Kommt bald.',
 	pillKind: (kind) => `Pille: ${kind}`,
 	otherFixed:
