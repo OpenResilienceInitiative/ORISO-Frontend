@@ -230,7 +230,7 @@ export const SessionsWithSoundColumn: Story = {
 				kinds: { liveChat: { show: true, pill: true, sound: 'none' } },
 				autoReadHidden: false
 			}}
-			labels={{ ...STORY_LABELS, title: 'Anzeige-Filter · Gespräche' }}
+			labels={{ ...STORY_LABELS, title: 'Ansicht · Gespräche' }}
 			columns={{ show: false, sound: true }}
 			showAutoRead={false}
 			onChange={() => undefined}
@@ -244,9 +244,16 @@ export const SessionsWithSoundColumn: Story = {
 		await expect(
 			canvas.queryByRole('columnheader', { name: 'In der Liste' })
 		).toBeNull();
-		const live = canvas.getByRole('checkbox', {
-			name: 'Ton: Live-Chat'
-		}) as HTMLInputElement;
-		await expect(live.checked).toBe(false);
+		// Tone is a picker per kind (proposal A): the main segment previews,
+		// the menu segment opens the choice. Live-Chat is muted in the fixture.
+		await expect(
+			canvas.getByRole('button', { name: 'Ton anhören: Live-Chat' })
+		).toHaveTextContent('Stumm');
+		await expect(
+			canvas.getByRole('button', { name: 'Ton anhören: Mail' })
+		).toHaveTextContent('Standard');
+		await expect(
+			canvas.getByRole('button', { name: 'Ton wählen: Live-Chat' })
+		).toBeTruthy();
 	}
 };

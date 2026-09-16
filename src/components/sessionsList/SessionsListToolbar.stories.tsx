@@ -343,7 +343,7 @@ export const WithDisplayFilter: Story = {
 	render: () => <ToolbarWithDisplayFilter />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const button = canvas.getByRole('button', { name: 'Anzeige-Filter' });
+		const button = canvas.getByRole('button', { name: 'Ansicht einstellen' });
 		await expect(
 			button.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
@@ -720,7 +720,7 @@ function ToolbarChipMenuPreset({
 					)
 				}
 				displayFilter={{
-					label: 'Anzeige-Filter',
+					label: 'Ansicht einstellen',
 					customisedLabel: 'Filter angepasst',
 					customised: false,
 					open: false,
