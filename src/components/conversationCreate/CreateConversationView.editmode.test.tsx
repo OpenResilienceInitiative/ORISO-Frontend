@@ -29,14 +29,19 @@ vi.mock('react-i18next', () => ({
 // The globalState barrel pulls lottie-web (crashes in jsdom): stub the parts
 // the flow reads. Contexts are created inside the factory (hoisted) and read
 // back through the mocked module below.
-vi.mock('../../globalState', () => {
+vi.mock('../../globalState', async () => {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const react = require('react');
+	// The real user-data context: the agency-settings hook reads it through
+	// its direct module path, so the flow and the hook must share it.
+	const { UserDataContext } = await vi.importActual<any>(
+		'../../globalState/context/UserDataContext'
+	);
 	const tenant = {
 		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] }
 	};
 	return {
-		UserDataContext: react.createContext(null),
+		UserDataContext,
 		SessionsDataContext: react.createContext({ dispatch: () => {} }),
 		UPDATE_SESSIONS: 'UPDATE_SESSIONS',
 		useTenant: () => tenant,

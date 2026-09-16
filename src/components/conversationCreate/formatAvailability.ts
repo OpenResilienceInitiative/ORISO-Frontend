@@ -7,9 +7,10 @@ import { AgencySettingsInterface } from '../../globalState/interfaces/UserDataIn
  * enabled for the agency. If only one format is available the picker screen
  * is skipped; if none is available the create entry is hidden entirely.
  *
- * Each format has its own flag (featureInternalGroupChatEnabled,
- * featureSelfHelpGroupsEnabled); where one is missing it falls back to the
- * general featureGroupChatV2Enabled flag. A Beratungsstelle can only restrict
+ * featureGroupChatV2Enabled is the master switch: false turns both formats
+ * off. Each format also has its own flag (featureInternalGroupChatEnabled,
+ * featureSelfHelpGroupsEnabled) that refines an enabled v2; where one is
+ * missing it follows the master switch. A Beratungsstelle can only restrict
  * what the Träger allows (#1440).
  */
 
@@ -52,10 +53,16 @@ const FORMAT_FLAG: Record<
 	circle: 'featureSelfHelpGroupsEnabled'
 };
 
+// Master switch on every level: featureGroupChatV2Enabled === false turns
+// both formats off whatever the format flags say; the format flags only
+// refine an enabled v2.
 const tenantAvailability = (
 	tenant?: { settings?: FormatSettings } | null
 ): ConversationFormatAvailability => {
 	const settings = settingsOf(tenant);
+	if (settings.featureGroupChatV2Enabled === false) {
+		return { internal: false, circle: false };
+	}
 	const groupChatEnabled = settings.featureGroupChatV2Enabled === true;
 	return {
 		internal: settings.featureInternalGroupChatEnabled ?? groupChatEnabled,
@@ -63,16 +70,16 @@ const tenantAvailability = (
 	};
 };
 
-// Per-format flag first, then the general group-chat flag, then "no
-// restriction" — an agency whose values are not known yet (or null) never
-// hides a format the Träger allows.
+// Same master switch for the agency; below it the per-format flag, and a
+// missing or null value means "no restriction" — an agency whose values are
+// not known yet never hides a format the Träger allows.
 const agencyAllows = (
 	agency: AgencyFormatSource,
 	format: ConversationFormat
 ): boolean =>
-	agency.settings?.[FORMAT_FLAG[format]] ??
-	agency.settings?.featureGroupChatV2Enabled ??
-	true;
+	agency.settings?.featureGroupChatV2Enabled === false
+		? false
+		: (agency.settings?.[FORMAT_FLAG[format]] ?? true);
 
 /**
  * The agencies of the counsellor that offer `format`: the Träger must allow

@@ -35,16 +35,21 @@ const tenantState = vi.hoisted(() => ({
 		| undefined
 }));
 
-vi.mock('../../globalState', () => {
+vi.mock('../../globalState', async () => {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const react = require('react');
+	// The real user-data context: the agency-settings hook reads it through
+	// its direct module path, so the flow and the hook must share it.
+	const { UserDataContext } = await vi.importActual<any>(
+		'../../globalState/context/UserDataContext'
+	);
 	const tenant = {
 		get settings() {
 			return tenantState.settings;
 		}
 	};
 	return {
-		UserDataContext: react.createContext(null),
+		UserDataContext,
 		SessionsDataContext: react.createContext({ dispatch: () => {} }),
 		UPDATE_SESSIONS: 'UPDATE_SESSIONS',
 		useTenant: () => tenant,

@@ -30,14 +30,21 @@ describe('getConversationFormatAvailability', () => {
 				} as any
 			})
 		).toEqual({ internal: true, circle: false });
+	});
+
+	// Master switch: featureGroupChatV2Enabled === false turns both formats
+	// off on its level, whatever the format flags say. Format flags only
+	// refine an enabled v2.
+	it('lets featureGroupChatV2Enabled === false switch both formats off', () => {
 		expect(
 			getConversationFormatAvailability({
 				settings: {
 					featureGroupChatV2Enabled: false,
-					featureInternalGroupChatEnabled: true
+					featureInternalGroupChatEnabled: true,
+					featureSelfHelpGroupsEnabled: true
 				} as any
 			})
-		).toEqual({ internal: true, circle: false });
+		).toEqual({ internal: false, circle: false });
 	});
 
 	it('treats a missing tenant as nothing enabled', () => {
@@ -187,17 +194,37 @@ describe('getConversationFormatAvailability with the counsellor’s agencies', (
 				{ id: 1, settings: { featureGroupChatV2Enabled: false } }
 			])
 		).toEqual({ internal: false, circle: false });
+	});
+
+	it('lets an agency’s featureGroupChatV2Enabled === false switch both formats off', () => {
 		expect(
 			getConversationFormatAvailability(tenantAllowsBoth, [
 				{
 					id: 1,
 					settings: {
 						featureGroupChatV2Enabled: false,
-						featureInternalGroupChatEnabled: true
+						featureInternalGroupChatEnabled: true,
+						featureSelfHelpGroupsEnabled: true
 					}
 				}
 			])
-		).toEqual({ internal: true, circle: false });
+		).toEqual({ internal: false, circle: false });
+		expect(
+			getAgenciesOfferingFormat(
+				tenantAllowsBoth,
+				[
+					{
+						id: 1,
+						settings: {
+							featureGroupChatV2Enabled: false,
+							featureInternalGroupChatEnabled: true
+						}
+					},
+					{ id: 2, settings: { featureGroupChatV2Enabled: null } }
+				],
+				'internal'
+			)
+		).toEqual([2]);
 	});
 
 	it('offers a format as long as one of several agencies allows it', () => {

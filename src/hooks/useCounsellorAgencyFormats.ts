@@ -6,7 +6,7 @@ import {
 	useSyncExternalStore
 } from 'react';
 import { apiGetAgenciesByIds } from '../api/apiGetAgenciesByIds';
-import { UserDataContext } from '../globalState';
+import { UserDataContext } from '../globalState/context/UserDataContext';
 import { AgencySettingsInterface } from '../globalState/interfaces';
 import type { AgencyFormatSource } from '../components/conversationCreate/formatAvailability';
 import {
