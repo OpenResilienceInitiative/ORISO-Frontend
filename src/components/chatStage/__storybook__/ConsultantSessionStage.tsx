@@ -1122,7 +1122,7 @@ export function ConsultantSessionStage({
 							)
 						) : (
 							<div
-								className="session"
+								className="session chatStage__card"
 								tabIndex={-1}
 								onMouseDown={focusSessionChromeOnPointerDown}
 							>
