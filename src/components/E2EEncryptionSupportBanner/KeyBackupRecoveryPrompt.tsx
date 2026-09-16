@@ -21,6 +21,7 @@ import {
 } from '../../services/recoveryReminderState';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import { ReactComponent as RecoverySafeIcon } from '../../resources/img/icons/recovery-safe.svg';
 import './E2EEncryptionSupportBanner.styles.scss';
 
@@ -148,6 +149,22 @@ export const KeyBackupRecoveryDialog = ({
 	);
 };
 
+/*
+ * Below 900 px (`$fromLarge`) the app shows its navigation bar at the bottom
+ * edge (72 px); the snackbar rests above it instead of covering it. MUI only
+ * centres a snackbar from 600 px up, so the phone width is centred here.
+ */
+const recoverySnackbarPlacement = {
+	bottom: {
+		xs: 'calc(88px + env(safe-area-inset-bottom, 0px))',
+		md: 24
+	},
+	left: { xs: '50%' },
+	right: { xs: 'auto' },
+	transform: { xs: 'translateX(-50%)' },
+	width: { xs: 'calc(100% - 16px)' }
+} as const;
+
 /** Recovery is available inline; opening the restore dialog is always explicit. */
 export const KeyBackupRecoveryPrompt = () => {
 	const { t } = useTranslation();
@@ -164,24 +181,51 @@ export const KeyBackupRecoveryPrompt = () => {
 		() => null
 	);
 	const [openedFor, setOpenedFor] = useState<string | null>(null);
+	/* Dismissal lives in component state on purpose: the notice comes back on
+	   every reload and every login until the history is readable, but it never
+	   blocks the screen while somebody is working. Keyed by status so a new
+	   state (e.g. password recovery failing) is shown again. */
+	const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 	const showRecovery = openedFor === userId;
 	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
+	const dismissKey = `${userId}:${status}`;
 	return (
 		<>
-			<aside
-				className="encryption-recovery-notice"
-				aria-live="polite"
-				data-cy="key-backup-recovery-action"
-			>
-				{eligible && <p>{t('encryption.saveReminder.unavailable')}</p>}
-				<span>{t('encryption.passwordRecovery.' + status)}</span>
-				<button type="button" onClick={() => setOpenedFor(userId)}>
-					{t('encryption.keyBackup.dialog.openVault')}
-				</button>
-				<Link to="/profile/einstellungen/sicherheit">
-					{t('encryption.passwordRecovery.settings')}
-				</Link>
-			</aside>
+			{dismissedFor !== dismissKey && !showRecovery && (
+				<M3Snackbar
+					role="status"
+					testId="key-backup-recovery-action"
+					message={
+						<>
+							{eligible && (
+								<span>
+									{t(
+										'encryption.saveReminder.unavailable'
+									)}{' '}
+								</span>
+							)}
+							<span>
+								{t('encryption.passwordRecovery.' + status)}
+							</span>{' '}
+							<Link
+								to="/profile/einstellungen/sicherheit"
+								className="encryption-recovery-snackbar__link"
+							>
+								{t('encryption.passwordRecovery.settings')}
+							</Link>
+						</>
+					}
+					action={{
+						label: t('encryption.keyBackup.dialog.openVault'),
+						onClick: () => setOpenedFor(userId),
+						testId: 'key-backup-recovery-open'
+					}}
+					actionOnOwnLine
+					onClose={() => setDismissedFor(dismissKey)}
+					closeLabel={t('encryption.keyBackup.snackbar.close')}
+					containerSx={recoverySnackbarPlacement}
+				/>
+			)}
 			{showRecovery && (
 				<KeyBackupRecoveryDialog
 					onClose={() => setOpenedFor(null)}

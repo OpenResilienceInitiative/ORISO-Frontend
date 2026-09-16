@@ -110,6 +110,12 @@ export interface M3SnackbarProps {
 	role?: 'alert' | 'status';
 	/** Layout only. Paint belongs to the roles above. */
 	sx?: SxProps<Theme>;
+	/**
+	 * Floating only. Layout of the fixed container — for a screen that has its
+	 * own chrome at the bottom edge (the phone navigation bar) and needs the
+	 * snackbar to rest above it.
+	 */
+	containerSx?: SxProps<Theme>;
 	testId?: string;
 }
 
@@ -144,6 +150,7 @@ export const M3Snackbar = ({
 	anchorOrigin = { vertical: 'bottom', horizontal: 'center' },
 	role = 'alert',
 	sx,
+	containerSx,
 	testId = 'm3-snackbar'
 }: M3SnackbarProps) => {
 	const actionButton = action && (
@@ -287,7 +294,10 @@ export const M3Snackbar = ({
 				}
 				onClose?.();
 			}}
-			sx={{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' }}
+			sx={[
+				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' },
+				...(Array.isArray(containerSx) ? containerSx : [containerSx])
+			]}
 		>
 			{surface}
 		</Snackbar>

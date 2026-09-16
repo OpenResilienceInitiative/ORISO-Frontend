@@ -4818,6 +4818,9 @@
 				"later": "Plus tard",
 				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
+			},
+			"snackbar": {
+				"close": "Fermer la notification"
 			}
 		},
 		"saveReminder": {

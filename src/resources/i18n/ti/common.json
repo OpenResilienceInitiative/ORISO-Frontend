@@ -4818,6 +4818,9 @@
 				"later": "ደሓር",
 				"openVault": "ካዝና ክፈት",
 				"restoring": "ይምለስ ኣሎ …"
+			},
+			"snackbar": {
+				"close": "መዘኻኸሪ ዕጸው"
 			}
 		},
 		"saveReminder": {
