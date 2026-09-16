@@ -35,7 +35,7 @@ describe('displayFilterTypes (#1377)', () => {
 		});
 	});
 
-	it('drops the pill when a kind is hidden, and restores it independently', () => {
+	it('drops the pill while a kind is hidden and brings it back on re-show', () => {
 		const hidden = setKindSetting(EMPTY_DISPLAY_FILTER, 'drafts', {
 			show: false
 		});
@@ -43,12 +43,26 @@ describe('displayFilterTypes (#1377)', () => {
 			show: false,
 			pill: false
 		});
+		// Frank, 2026-09-16: hide → show must be a no-op for the pill. The
+		// user never touched the Pille switch, so it must not stay off.
+		const shownAgain = setKindSetting(hidden, 'drafts', { show: true });
+		expect(resolveKindSetting(shownAgain, 'drafts')).toEqual({
+			show: true,
+			pill: true
+		});
+		expect(isDisplayFilterCustomised(shownAgain, ['drafts'])).toBe(false);
+	});
+
+	it('keeps a pill the user switched off across hide → show', () => {
+		const pillOff = setKindSetting(EMPTY_DISPLAY_FILTER, 'drafts', {
+			pill: false
+		});
+		const hidden = setKindSetting(pillOff, 'drafts', { show: false });
 		const shownAgain = setKindSetting(hidden, 'drafts', { show: true });
 		expect(resolveKindSetting(shownAgain, 'drafts')).toEqual({
 			show: true,
 			pill: false
 		});
-		expect(isDisplayFilterCustomised(shownAgain, ['drafts'])).toBe(true);
 	});
 
 	it('counts profile-owned partial hiding as customised', () => {
@@ -84,10 +98,11 @@ describe('displayFilterTypes (#1377)', () => {
 			show: false
 		});
 		expect(isDisplayFilterCustomised(hidden, [kind])).toBe(true);
-		// hide → show leaves `pill: false` behind; it has no effect here.
+		// hide → show keeps the pill intent, so nothing is left behind —
+		// neither for the show-only option nor for the bare id.
 		const shownAgain = setKindSetting(hidden, kind.id, { show: true });
 		expect(isDisplayFilterCustomised(shownAgain, [kind])).toBe(false);
-		expect(isDisplayFilterCustomised(shownAgain, [kind.id])).toBe(true);
+		expect(isDisplayFilterCustomised(shownAgain, [kind.id])).toBe(false);
 	});
 
 	it('marks auto-read alone as customised', () => {

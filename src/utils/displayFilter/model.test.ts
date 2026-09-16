@@ -17,6 +17,20 @@ import {
 } from './model';
 
 describe('parseDisplayFilter', () => {
+	it('round-trips the pill intent of a hidden kind (#1377 re-show fix)', () => {
+		const parsed = parseDisplayFilters({
+			version: 1,
+			global: {},
+			sections: {
+				timeline: { kinds: { drafts: { show: false, pill: true } } }
+			}
+		});
+		expect(parsed?.sections.timeline?.kinds.drafts).toEqual({
+			show: false,
+			pill: true
+		});
+	});
+
 	it('malformed → defaults; unknown kinds kept; unknown keys ignored', () => {
 		expect(parseDisplayFilter(undefined)).toEqual(DEFAULT_DISPLAY_FILTER);
 		expect(parseDisplayFilter('x')).toEqual(DEFAULT_DISPLAY_FILTER);
@@ -29,7 +43,8 @@ describe('parseDisplayFilter', () => {
 			autoReadHidden: 'yes',
 			somethingNew: 1
 		});
-		expect(parsed.kinds.calls).toEqual({ show: false, pill: false });
+		// The stored pill is the user's intent; hiding masks it on read only.
+		expect(parsed.kinds.calls).toEqual({ show: false, pill: true });
 		expect(parsed.kinds.futureKind).toEqual({ show: true, pill: false });
 		expect(parsed.kinds.junk).toBeUndefined();
 		expect(parsed.autoReadHidden).toBe(false);
@@ -72,7 +87,7 @@ describe('parseDisplayFilters', () => {
 		});
 		expect(parsed?.global.timeline.kinds.drafts).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(parsed?.global.sessions).toEqual(DEFAULT_DISPLAY_FILTER);
 		expect(parsed?.global.requests).toEqual(DEFAULT_DISPLAY_FILTER);

@@ -92,19 +92,24 @@ export const isDisplayFilterCustomised = (
 		return partial || !setting.show || (!showOnly && !setting.pill);
 	});
 
-/** Immutable update of one kind; hiding a kind also drops its pill. */
+/**
+ * Immutable update of one kind. The stored `pill` is the user's intent and
+ * survives hide → show untouched; {@link resolveKindSetting} masks it while
+ * the kind is hidden. (Before 2026-09-16 hiding overwrote the intent, so a
+ * re-shown kind came back without its pill — Frank's "nothing happens".)
+ */
 export const setKindSetting = (
 	value: DisplayFilterValue,
 	kindId: string,
 	patch: Partial<KindSetting>
 ): DisplayFilterValue => {
-	const current = resolveKindSetting(value, kindId);
+	const current: KindSetting = {
+		...DEFAULT_KIND_SETTING,
+		...(value.kinds[kindId] || {})
+	};
 	const next: KindSetting = { ...current, ...patch };
 	if (kindId === OTHER_KIND_ID) {
 		next.show = true;
-	}
-	if (!next.show) {
-		next.pill = false;
 	}
 	return { ...value, kinds: { ...value.kinds, [kindId]: next } };
 };
