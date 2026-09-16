@@ -10,8 +10,14 @@ export const OTHER_KIND_ID = 'other';
 export interface KindSetting {
 	/** Rows of this kind appear in the list. Forced true for `other`. */
 	show: boolean;
-	/** A chip renders while the kind has unread items. Requires `show`. */
+	/** The kind has a chip in the row (a menu entry). Requires `show`. */
 	pill: boolean;
+	/**
+	 * Notification sound for items of this kind (Frank 2026-09-16, "Ton"):
+	 * `false` mutes the kind on top of the area sound settings. Missing means
+	 * on. Kept out of {@link resolveKindSetting} — read via {@link isKindMuted}.
+	 */
+	sound?: boolean;
 }
 
 /**
@@ -130,6 +136,10 @@ export const resolveKindSetting = (
 	return { show, pill: show && raw.pill };
 };
 
+/** True when the user muted this kind's notification sound. */
+export const isKindMuted = (value: DisplayFilterValue, kindId: string): boolean =>
+	value.kinds[kindId]?.sound === false;
+
 /**
  * Kinds accepted by {@link isDisplayFilterCustomised}: plain ids, or the
  * rendered options so profile-owned partial hiding (spec §5.1) counts too.
@@ -158,7 +168,12 @@ export const isDisplayFilterCustomised = (
 		const setting = resolveKindSetting(value, kindId);
 		// A show-only kind has no pill (spec §5.2), so a stale `pill: false`
 		// left behind by hide → show must not count as customised.
-		return partial || !setting.show || (!showOnly && !setting.pill);
+		return (
+			partial ||
+			!setting.show ||
+			(!showOnly && !setting.pill) ||
+			isKindMuted(value, kindId)
+		);
 	});
 
 /**
@@ -179,6 +194,9 @@ export const setKindSetting = (
 	const next: KindSetting = { ...current, ...patch };
 	if (kindId === OTHER_KIND_ID) {
 		next.show = true;
+	}
+	if (next.sound !== false) {
+		delete next.sound;
 	}
 	return { ...value, kinds: { ...value.kinds, [kindId]: next } };
 };

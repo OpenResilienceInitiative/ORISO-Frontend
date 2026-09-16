@@ -11,7 +11,8 @@ import {
 	resolveKindAvailability,
 	listedKinds,
 	kindsUnderOther,
-	matchesOtherChip
+	matchesOtherChip,
+	isKindMuted
 } from './displayFilterTypes';
 
 describe('displayFilterTypes (#1377)', () => {
@@ -300,5 +301,18 @@ describe('Sonstiges bundles the kinds without their own pill (Frank 2026-09-16)'
 			null
 		).find((k) => k.id === OTHER_KIND_ID)!;
 		expect(other.chipLabel).toBe('Weitere');
+	});
+});
+
+describe('sound per kind (Frank 2026-09-16: Ton statt In der Liste)', () => {
+	it('defaults to sound on and stores a mute independently of show/pill', () => {
+		expect(isKindMuted(EMPTY_DISPLAY_FILTER, 'oneToOne')).toBe(false);
+		const muted = setKindSetting(EMPTY_DISPLAY_FILTER, 'oneToOne', { sound: false });
+		expect(muted.kinds.oneToOne).toEqual({ show: true, pill: true, sound: false });
+		expect(resolveKindSetting(muted, 'oneToOne')).toEqual({ show: true, pill: true });
+		expect(isKindMuted(muted, 'oneToOne')).toBe(true);
+		expect(isKindMuted(muted, 'liveChat')).toBe(false);
+		// a mute counts as customised (the button dot)
+		expect(isDisplayFilterCustomised(muted, ['oneToOne'])).toBe(true);
 	});
 });

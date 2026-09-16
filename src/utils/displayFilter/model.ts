@@ -101,7 +101,11 @@ const parseKindSetting = (raw: unknown): KindSetting | null => {
 		typeof raw.pill === 'boolean' ? raw.pill : DEFAULT_KIND_SETTING.pill;
 	// `pill` is the user's intent; the effective value is resolved on read
 	// (`resolveKindSetting`), so a hidden kind keeps its pill for re-show.
-	return { show, pill };
+	const setting: KindSetting = { show, pill };
+	if (raw.sound === false) {
+		setting.sound = false;
+	}
+	return setting;
 };
 
 /**

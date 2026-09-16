@@ -207,3 +207,13 @@ describe('chip presentation (view + auto-sort, Frank 2026-09-16)', () => {
 		});
 	});
 });
+
+describe('sound per kind round-trip', () => {
+	it('keeps a stored mute and defaults missing ones to sound on', () => {
+		const parsed = parseDisplayFilter({
+			kinds: { oneToOne: { sound: false }, liveChat: { show: true } }
+		});
+		expect(parsed.kinds.oneToOne).toEqual({ show: true, pill: true, sound: false });
+		expect(parsed.kinds.liveChat).toEqual({ show: true, pill: true });
+	});
+});
