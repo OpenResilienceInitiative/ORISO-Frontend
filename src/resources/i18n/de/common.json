@@ -1805,6 +1805,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht",
+			"targetLabel": "Ziel: Thread",
 			"listToggle": "Threads",
 			"replies": "{{count}} Antworten",
 			"title": "Thread",
