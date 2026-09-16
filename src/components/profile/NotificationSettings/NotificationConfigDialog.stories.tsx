@@ -71,6 +71,19 @@ export const DialogMobile: DialogStory = {
 		await expect(body.scrollHeight).toBeGreaterThan(body.clientHeight);
 		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
 		await expect(getComputedStyle(body).overflowY).toBe('auto');
+		const soundSelect = body.querySelector<HTMLSelectElement>(
+			'.notifConfig__select'
+		)!;
+		const soundSelectWrap = soundSelect.closest<HTMLElement>(
+			'.notifConfig__selectWrap'
+		)!;
+		soundSelect.focus();
+		await expect(getComputedStyle(soundSelectWrap).outlineStyle).toBe(
+			'solid'
+		);
+		await expect(getComputedStyle(soundSelectWrap).outlineWidth).toBe(
+			'2px'
+		);
 		body.scrollTop = body.scrollHeight;
 		await expect(body.scrollTop).toBeGreaterThan(0);
 		await expect(body.contains(footer)).toBe(false);

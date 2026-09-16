@@ -115,6 +115,11 @@
 		padding: 0 12px;
 		height: 48px;
 		flex: 1;
+
+		&:focus-within {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 1px;
+		}
 	}
 
 	// State icon INSIDE the field (left), per the Figma.
