@@ -197,14 +197,18 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-color: var(--m3-secondary, $secondary);
 
 		&::after {
-			content: '\2192';
-			font-size: $grid-base-three;
-			line-height: 1;
+			content: '';
+			width: $grid-base-three;
+			height: $grid-base-three;
+			flex-shrink: 0;
+			background-color: currentColor;
+			mask: url('../../resources/img/icons/arrow_right_24px.svg') center /
+				contain no-repeat;
 		}
 
 		&:hover {
-			background-color: var(--m3-secondary-hover, $secondary);
-			border-color: var(--m3-secondary-hover, $secondary);
+			background-color: var(--m3-secondary, $secondary);
+			border-color: var(--m3-secondary, $secondary);
 		}
 
 		svg {

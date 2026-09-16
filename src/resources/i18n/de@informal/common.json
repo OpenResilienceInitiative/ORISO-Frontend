@@ -173,7 +173,6 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Teambesprechung öffnen" },
 		"anonymous": {
 			"infoLabel": {
 				"start": "Starte nun den Chat mit "

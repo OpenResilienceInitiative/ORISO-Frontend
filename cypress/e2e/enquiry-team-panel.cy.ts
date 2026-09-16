@@ -363,10 +363,15 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			const footer = buttons[1].closest('.session__acceptance');
 			const footerRect = footer.getBoundingClientRect();
 			const win = buttons[1].ownerDocument.defaultView;
-			expect(
-				win.getComputedStyle(buttons[1], '::after').content,
-				'visible right arrow'
-			).to.contain('→');
+			const arrow = win.getComputedStyle(buttons[1], '::after');
+			expect(arrow.maskImage, 'supplied SVG arrow mask').to.contain(
+				'arrow_right_24px'
+			);
+			expect(arrow.width, 'arrow width').to.equal('24px');
+			expect(arrow.height, 'arrow height').to.equal('24px');
+			expect(arrow.content, 'decorative arrow has no text').to.equal(
+				'""'
+			);
 			if (width >= 900) {
 				expect(team.top, 'desktop actions share a row').to.equal(
 					accept.top

@@ -21,3 +21,11 @@ The user requested a right-aligned desktop action group and a visible arrow indi
 - `05-after-mobile-arrow-390.png`: updated mobile, 390 × 844; both actions remain centered and stacked with the arrow visible.
 
 The same local-fixture evidence boundary applies. Cypress checks right inset, desktop shared row, mobile stacking/centering and the visible arrow in addition to the existing panel open/close flow.
+
+## Supplied SVG follow-up
+
+The final arrow uses the exact `arrow_right_24px.svg` supplied by Frank, tinted with the button's foreground colour. It replaces the Unicode arrow without changing panel behaviour or desktop/mobile alignment.
+
+The CI failures from the preceding comfort change also exposed an unsupported `--m3-secondary-hover` reference and a redundant informal German translation. The button now uses the supported secondary token and the informal catalogue inherits the shared German label. These corrections preserve the intended appearance.
+
+Validation for this follow-up: 37 i18n and 55 theme-contract tests pass, as does scoped lint. The new desktop/mobile browser proof remains pending; the first desktop attempt timed out during a local rebuild. Images 04/05 show the preceding Unicode-arrow version and must not be treated as evidence for this SVG change.
