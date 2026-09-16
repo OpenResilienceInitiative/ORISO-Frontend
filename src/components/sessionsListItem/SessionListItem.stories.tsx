@@ -1462,6 +1462,20 @@ export const MenuBesideTheCard: Story = {
 		await expect(
 			card.contains(hit(cardBox.left + 40, cardBox.bottom - 20))
 		).toBe(true);
+		// Hit-testing alone is not enough: Chromium honoured the hole for
+		// clicks but still painted the veil over it while the clip path's
+		// outer rectangle ran to ±100000 px (measured, 17.09.2026). The
+		// path has to stay in the viewport's coordinate range.
+		const pathNumbers = (
+			getComputedStyle(backdrop).clipPath.match(/-?\d+(\.\d+)?/g) ?? []
+		).map(Number);
+		await expect(pathNumbers.length).toBeGreaterThan(8);
+		for (const value of pathNumbers) {
+			await expect(value).toBeGreaterThanOrEqual(0);
+			await expect(value).toBeLessThanOrEqual(
+				Math.max(window.innerWidth, window.innerHeight)
+			);
+		}
 		// The rest of the page is still under the veil.
 		await expect(hit(cardBox.left - 20, cardBox.top + 20)).toBe(backdrop);
 		await expect(hit(cardBox.left + 40, cardBox.bottom + 20)).toBe(

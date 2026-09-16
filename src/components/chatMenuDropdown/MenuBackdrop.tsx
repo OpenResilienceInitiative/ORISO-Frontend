@@ -8,33 +8,41 @@ type Hole = {
 	right: number;
 	bottom: number;
 	radius: number;
+	/** The veil covers the viewport; its clip path is drawn in its size. */
+	viewportWidth: number;
+	viewportHeight: number;
 };
-
-/** Far outside any viewport, so the veil never needs to know its size. */
-const VEIL_EDGE = 100000;
 
 /**
  * The veil as a clip path with one rounded hole — the element the menu
- * belongs to. `evenodd` keeps the hole transparent to paint and to clicks.
+ * belongs to. `evenodd` keeps the hole transparent to paint and to clicks;
+ * the hole also runs against the outer rectangle, so it stays a hole under
+ * either fill rule.
+ *
+ * The outer rectangle is the viewport and nothing larger: with an outer
+ * rectangle at ±100000 px Chromium still honoured the hole for clicks but
+ * painted the veil over it (measured, 17.09.2026).
  */
 export const spotlightClipPath = ({
 	left,
 	top,
 	right,
 	bottom,
-	radius
+	radius,
+	viewportWidth,
+	viewportHeight
 }: Hole): string => {
 	const r = Math.max(
 		0,
 		Math.min(radius, (right - left) / 2, (bottom - top) / 2)
 	);
-	const arc = (x: number, y: number) => `A${r} ${r} 0 0 1 ${x} ${y}`;
+	const arc = (x: number, y: number) => `A${r} ${r} 0 0 0 ${x} ${y}`;
 	return (
-		`path(evenodd, "M${-VEIL_EDGE} ${-VEIL_EDGE}H${VEIL_EDGE}V${VEIL_EDGE}H${-VEIL_EDGE}Z` +
-		`M${left + r} ${top}H${right - r}${arc(right, top + r)}` +
-		`V${bottom - r}${arc(right - r, bottom)}` +
-		`H${left + r}${arc(left, bottom - r)}` +
-		`V${top + r}${arc(left + r, top)}Z")`
+		`path(evenodd, "M0 0H${viewportWidth}V${viewportHeight}H0Z` +
+		`M${left + r} ${top}${arc(left, top + r)}` +
+		`V${bottom - r}${arc(left + r, bottom)}` +
+		`H${right - r}${arc(right, bottom - r)}` +
+		`V${top + r}${arc(right - r, top)}Z")`
 	);
 };
 
@@ -47,7 +55,9 @@ const readHole = (element: HTMLElement): Hole => {
 		bottom: box.bottom,
 		radius:
 			Number.parseFloat(getComputedStyle(element).borderTopLeftRadius) ||
-			0
+			0,
+		viewportWidth: window.innerWidth,
+		viewportHeight: window.innerHeight
 	};
 };
 
