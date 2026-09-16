@@ -1341,7 +1341,10 @@
 		"fileName": "bell-off.svg",
 		"sourcePath": "src/resources/img/icons/bell-off.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/NavigationBar.tsx"],
+		"usageFiles": [
+			"src/components/app/NavigationBar.tsx",
+			"src/components/displayFilter/DisplayFilterKindTable.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -3440,6 +3443,7 @@
 		"sourcePath": "src/resources/img/icons/play-circle.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/displayFilter/DisplayFilterKindTable.tsx",
 			"src/components/profile/NotificationSettings/NotificationConfigDialog.tsx"
 		],
 		"usage": "app-used"

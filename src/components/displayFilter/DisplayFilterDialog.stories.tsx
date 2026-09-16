@@ -227,7 +227,7 @@ export const SessionsWithSoundColumn: Story = {
 				{ id: 'other', label: 'Sonstiges', unreadCount: 0 }
 			]}
 			value={{
-				kinds: { liveChat: { show: true, pill: true, sound: false } },
+				kinds: { liveChat: { show: true, pill: true, sound: 'none' } },
 				autoReadHidden: false
 			}}
 			labels={{ ...STORY_LABELS, title: 'Anzeige-Filter · Gespräche' }}

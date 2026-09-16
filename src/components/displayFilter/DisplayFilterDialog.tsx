@@ -162,7 +162,9 @@ export const DisplayFilterDialog = ({
 			description={labels.description}
 			icon={icon ?? <TuneIcon />}
 			closeLabel={labels.close}
-			width={480}
+			// The tone/mode pickers need room: 560 px in the sound mode (Frank:
+			// "auf dem Desktop breiter ist überhaupt nicht schlimm").
+			width={columns.sound ? 560 : 480}
 			fullScreen={fullScreen}
 			className="displayFilterDialog"
 			id={dialogId}
