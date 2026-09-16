@@ -1567,6 +1567,7 @@
 			"src/components/message/VideoChatDetails/index.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/containers/bookings/components/Event/LocationType/index.tsx"
 		],
@@ -2665,8 +2666,8 @@
 		"fileName": "inbox_outline.svg",
 		"sourcePath": "src/resources/img/icons/inbox_outline.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": ["src/components/sessionMenu/SessionMenu.tsx"],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:inbox:base",
@@ -2679,7 +2680,6 @@
 		"sourcePath": "src/resources/img/icons/inbox.svg",
 		"exportNames": ["InboxIcon"],
 		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -3033,7 +3033,10 @@
 		"fileName": "modality-video.svg",
 		"sourcePath": "src/resources/img/icons/modality-video.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usageFiles": [
+			"src/components/icons/conversationCreateIcons.ts",
+			"src/components/sessionMenu/SessionMenu.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -3535,7 +3538,8 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/app/navigationSidebarIcons.tsx",
-			"src/components/app/RouterConfig.tsx"
+			"src/components/app/RouterConfig.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -4009,7 +4013,8 @@
 		"sourcePath": "src/resources/img/icons/timeline-add-call.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},

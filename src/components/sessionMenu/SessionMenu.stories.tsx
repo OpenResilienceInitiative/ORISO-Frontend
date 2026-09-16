@@ -219,6 +219,41 @@ export const CallsInTheKebabMenu: Story = {
 				expect(document.activeElement).toBe(row);
 			});
 		}
+		await expect(
+			video.querySelector('[data-icon-id="ui-icon:modality-video:base"]')
+		).not.toBeNull();
+		await expect(
+			audio.querySelector(
+				'[data-icon-id="ui-icon:timeline-add-call:base"]'
+			)
+		).not.toBeNull();
+
+		const rowNamed = (label: string) =>
+			Array.from(
+				flyout.querySelectorAll<HTMLElement>(
+					'.sessionMenu__item.chatMenuDropdown__item'
+				)
+			).find((row) => row.textContent?.includes(label));
+		await expect(
+			rowNamed('Ratsuchendenprofil')?.querySelector(
+				'[data-icon-id="sidebar-icon:profil:outline"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Benachrichtigungen einstellen')?.querySelector(
+				'[data-icon-id="ui-icon:notification-settings:base"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Archivieren')?.querySelector(
+				'[data-icon-id="sidebar-icon:inbox:outline"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Löschen')?.querySelector(
+				'[data-icon-id="ui-icon:trash:base"]'
+			)
+		).not.toBeNull();
 	}
 };
 
