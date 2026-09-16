@@ -1828,11 +1828,20 @@ const expectCardLayout = async (
 
 		// Truncation: the clamp hides lines rather than removing them, so
 		// counting all line boxes shows whether the text runs past three.
+		const flow = card.querySelector<HTMLElement>(
+			'.sessionsListItem__flow'
+		)!;
 		await expect(
-			getComputedStyle(
-				card.querySelector<HTMLElement>('.sessionsListItem__flow')!
-			).getPropertyValue('-webkit-line-clamp')
+			getComputedStyle(flow).getPropertyValue('-webkit-line-clamp')
 		).toBe(String(CARD_LINES));
+		// Only preview lines may sit inside the clamp. WebKit counts the
+		// name as the first of the three lines (Chromium does not, because
+		// the name is its own formatting context) and put the ellipsis on
+		// the second preview line while still showing the third — measured
+		// in Playwright WebKit 26.5, 17.09.2026.
+		await expect(
+			flow.querySelector('.sessionsListItem__username')
+		).toBeNull();
 		if (checkTruncation && preview.truncated === true) {
 			await expect(lines.length).toBe(CARD_LINES);
 			await expect(allLines.length).toBeGreaterThan(CARD_LINES);

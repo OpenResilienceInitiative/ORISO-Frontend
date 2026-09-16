@@ -395,11 +395,16 @@ $card-trailing-clearance: 24px;
 	// The clamp. Chrome lays a vertical -webkit-box out as flow-root, so the
 	// floats inside keep shaping the lines and the ellipsis still appears
 	// after the third one (measured, 16.09.2026).
+	// The name is not inside the clamp: WebKit counts it as the first of the
+	// three lines, Chromium does not (measured, 17.09.2026). The name sits
+	// on top of this padding instead, so both count preview lines only.
 	&__flow {
 		display: -webkit-box;
 		-webkit-box-orient: vertical;
 		-webkit-line-clamp: $card-preview-lines;
+		box-sizing: border-box;
 		height: $card-clip;
+		padding-top: $card-name-line;
 		overflow: hidden;
 	}
 
@@ -415,24 +420,31 @@ $card-trailing-clearance: 24px;
 		height: $card-avatar;
 		min-width: $card-avatar;
 
-		// The bottom margin lets the float's area reach the third line.
-		margin: 0 $card-gap ($card-clip - $card-avatar) 0;
+		// The float stands beside the three preview lines; the avatar is
+		// drawn one name line higher, level with the name. Relative
+		// positioning moves the paint only, so the wrap is untouched — a
+		// negative top margin did the same in Chromium, but WebKit then
+		// ignored the float for the first line (measured, 17.09.2026).
+		position: relative;
+		top: -$card-name-line;
+		margin: 0 $card-gap 0 0;
 
-		// One step per line box, measured from the avatar's left edge:
-		// 60 px for the name and the first line (the margin box), 51 px for
-		// the second (where the circle's edge meets its glyph band, plus the
+		// One step per preview line, measured from the avatar's left edge
+		// and from the first preview line's top (the margin box starts
+		// there): 60 px for the first line (the margin box), 51 px for the
+		// second (where the circle's edge meets its glyph band, plus the
 		// gap), 42 px for the third (the same step again — on "Woche" in
 		// Frank's preview 5). `circle()` would barely move the second line:
 		// a line box is pushed by the widest part of the shape it overlaps.
 		shape-outside: polygon(
 			0 0,
 			60px 0,
-			60px 40px,
-			51px 40px,
-			51px 56px,
-			42px 56px,
-			42px $card-clip,
-			0 $card-clip
+			60px $card-preview-line,
+			51px $card-preview-line,
+			51px $card-preview-line * 2,
+			42px $card-preview-line * 2,
+			42px $card-preview-line * 3,
+			0 $card-preview-line * 3
 		);
 	}
 
@@ -440,7 +452,7 @@ $card-trailing-clearance: 24px;
 	&__flowSpacer {
 		float: right;
 		width: 0;
-		height: $card-name-line + $card-preview-line;
+		height: $card-preview-line;
 	}
 
 	// … and from the second line on holds the trailing marks' column. Its
@@ -456,6 +468,10 @@ $card-trailing-clearance: 24px;
 	}
 
 	&__body &__username {
+		position: absolute;
+		top: 0;
+		left: $card-inset + $card-avatar + $card-gap;
+		right: $card-inset;
 		display: block;
 		padding: 0;
 		line-height: $card-name-line;

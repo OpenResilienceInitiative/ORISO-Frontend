@@ -1445,6 +1445,24 @@ export const SessionListItemComponent = ({
 				    lines, and keeps clear of the trailing marks (Mail …), which sit
 				    on its third line under the menu pill. */}
 				<div className="sessionsListItem__body" ref={cardBodyRef}>
+					<div
+						className={clsx(
+							'sessionsListItem__username',
+							!isItemUnread &&
+								'sessionsListItem__username--readLabel'
+						)}
+					>
+						{activeSession.isGroup &&
+							activeSession.item.modality && (
+								<GroupModalityIcon
+									className="sessionsListItem__groupModalityIcon"
+									aria-label={translate(
+										`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
+									)}
+								/>
+							)}
+						{sessionTopic}
+					</div>
 					<div className="sessionsListItem__flow">
 						<div className="sessionsListItem__flowInner">
 							<div className="sessionsListItem__icon">
@@ -1538,24 +1556,6 @@ export const SessionListItemComponent = ({
 								className="sessionsListItem__flowReserve"
 								aria-hidden="true"
 							/>
-							<div
-								className={clsx(
-									'sessionsListItem__username',
-									!isItemUnread &&
-										'sessionsListItem__username--readLabel'
-								)}
-							>
-								{activeSession.isGroup &&
-									activeSession.item.modality && (
-										<GroupModalityIcon
-											className="sessionsListItem__groupModalityIcon"
-											aria-label={translate(
-												`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
-											)}
-										/>
-									)}
-								{sessionTopic}
-							</div>
 							{/* Figma nodes 115/1139/312: when the case-handover action
 							    button is shown it takes the place of the last-message
 							    preview (the text sits "under" the button). Without a
