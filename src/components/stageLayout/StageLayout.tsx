@@ -25,7 +25,12 @@ import { registrationMotion } from '../registration/registrationDesign/registrat
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
-import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
+import {
+	getBuildCommit,
+	getPlatformVersion
+} from '../../resources/scripts/runtimeConfig';
+
+import { BuildIdentity, useBuildIdentityOwner } from '../app/BuildIdentity';
 
 interface StageLayoutProps {
 	className?: string;
@@ -80,6 +85,8 @@ export const StageLayout = ({
 	const registrationRoute = toSameOriginRoute(resolvedRegistrationUrl);
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
 	const platformVersion = getPlatformVersion();
+	const identityOwner = useBuildIdentityOwner();
+	const showIdentity = Boolean(platformVersion || getBuildCommit());
 
 	return (
 		<div className={clsx('stageLayout', className)}>
@@ -281,8 +288,12 @@ export const StageLayout = ({
 					{children}
 				</Box>
 
-				{(showLegalLinks || platformVersion) && (
-					<div className="stageLayout__footer">
+				{(showLegalLinks || showIdentity) && (
+					<div
+						className={clsx('stageLayout__footer', {
+							'stageLayout__footer--withIdentity': showIdentity
+						})}
+					>
 						{showLegalLinks && (
 							<div className={`stageLayout__legalLinks`}>
 								<LegalLinks
@@ -307,13 +318,12 @@ export const StageLayout = ({
 								</LegalLinks>
 							</div>
 						)}
-						{platformVersion && (
-							<Text
-								className="stageLayout__platformVersion"
-								type="infoSmall"
-								text={platformVersion}
-							/>
-						)}
+						{showIdentity &&
+							(identityOwner ? (
+								<div ref={identityOwner.setStageTarget} />
+							) : (
+								<BuildIdentity variant="stage" />
+							))}
 					</div>
 				)}
 			</Box>

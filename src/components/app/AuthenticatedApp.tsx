@@ -36,7 +36,7 @@ import {
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
-import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
+import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
 import { displayFilterStore } from '../../utils/displayFilter/store';
@@ -357,7 +357,6 @@ export const AuthenticatedApp = ({
 			setShowPostRegLoader(false);
 		}
 	}, [handoverEntered, appReady]);
-	const platformVersion = getPlatformVersion();
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
@@ -373,17 +372,12 @@ export const AuthenticatedApp = ({
 
 	if (appReady) {
 		return (
-			<>
+			<AuthenticatedBuildIdentityBoundary>
 				<E2EEncryptionSupportBanner />
 				<KeyBackupRecoveryPrompt />
 				<RecoveryKeySaveReminder />
 				<Routing logout={handleLogout} />
-				{platformVersion && (
-					<div className="app__platformVersion">
-						{platformVersion}
-					</div>
-				)}
-			</>
+			</AuthenticatedBuildIdentityBoundary>
 		);
 	} else if (loading) {
 		return <Loading />;
