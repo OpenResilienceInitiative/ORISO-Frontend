@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AgencySpecificContext, LocaleContext } from '../../globalState';
 import { StageLayout } from './StageLayout';
 
@@ -29,8 +29,15 @@ vi.mock('../registration/infoDrawer/InfoDrawer', () => ({
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 
+afterEach(() => vi.unstubAllEnvs());
+
 describe('StageLayout registration invitation continuity', () => {
 	it('uses the invitation-aware registration URL supplied by Login', () => {
+		vi.stubEnv('REACT_APP_PLATFORM_VERSION', 'v2.0.6');
+		vi.stubEnv(
+			'REACT_APP_BUILD_COMMIT',
+			'4e9f0b00dec34f64b0a1ce49f187054f6b7d51dd'
+		);
 		render(
 			<MemoryRouter>
 				<LocaleContext.Provider
@@ -50,6 +57,12 @@ describe('StageLayout registration invitation continuity', () => {
 				</LocaleContext.Provider>
 			</MemoryRouter>
 		);
+
+		expect(
+			screen
+				.getByText('v2.0.6 - 4e9f0b0')
+				.getAttribute('data-build-commit')
+		).toBe('4e9f0b00dec34f64b0a1ce49f187054f6b7d51dd');
 
 		expect(
 			screen.getByRole('link', { name: /register/i }).getAttribute('href')
