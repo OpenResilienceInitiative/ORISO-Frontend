@@ -409,7 +409,11 @@ export const LastMessageSideColumn: Story = {
 			'.messageItem__actionMenu'
 		)!;
 		await waitFor(() => {
-			expect(menu.getBoundingClientRect().top).toBeGreaterThanOrEqual(0);
+			const menuRect = menu.getBoundingClientRect();
+			const viewportHeight =
+				canvasElement.ownerDocument.defaultView!.innerHeight;
+			expect(menuRect.top).toBeGreaterThanOrEqual(0);
+			expect(menuRect.bottom).toBeLessThanOrEqual(viewportHeight);
 		});
 		const buttonTop = lastButton.getBoundingClientRect().top;
 		const menuTop = menu.getBoundingClientRect().top;
