@@ -39,6 +39,7 @@ import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData'
 import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { useAccountInactivityActivity } from '../../hooks/useAccountInactivityActivity';
 import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	clearAuthSession,
@@ -67,6 +68,7 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	useAccountInactivityActivity();
 	// #1377: the display-filter store follows the published client (and
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
