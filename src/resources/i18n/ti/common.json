@@ -1784,6 +1784,7 @@
 		},
 		"thread": {
 			"unknownRoot": "ቀዳማይ መልእኽቲ",
+			"targetLabel": "መዓላማ፦ ትሬድ",
 			"listToggle": "ትሬዳት",
 			"replies": "{{count}} መልስታት",
 			"title": "ትሬድ",

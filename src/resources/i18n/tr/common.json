@@ -1784,6 +1784,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Önceki mesaj",
+			"targetLabel": "Hedef: Konu",
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
 			"title": "Konu",
