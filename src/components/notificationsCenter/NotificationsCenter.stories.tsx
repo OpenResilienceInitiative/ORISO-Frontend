@@ -326,7 +326,7 @@ export const DisplayFilterDialogOpen: Story = {
 		// MUI fades the surface in; wait for the transition to settle.
 		await waitFor(() => expect(body.getByRole('dialog')).toBeVisible());
 		await expect(
-			body.getByRole('checkbox', { name: 'Anzeigen: Entwürfe' })
+			body.getByRole('checkbox', { name: 'In der Liste: Entwürfe' })
 		).not.toBeChecked();
 		await expect(
 			body.getByRole('checkbox', { name: 'Pille: System' })

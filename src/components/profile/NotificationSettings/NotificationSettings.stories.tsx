@@ -111,7 +111,7 @@ export const DisplayFilters: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(
-			canvas.getByRole('checkbox', { name: 'Anzeigen: System' })
+			canvas.getByRole('checkbox', { name: 'In der Liste: System' })
 		).toHaveAttribute('aria-checked', 'mixed');
 		await expect(
 			canvas.getByRole('checkbox', { name: 'Pille: Entwürfe' })

@@ -143,7 +143,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Icons, auto-sort on: Mail (2) and Gesprächskreis (1) lead the row. */
+/** Icons, auto-sort on: Mail (2) and Gesprächskreis (1) lead the row; no Weitere chip while nothing is bundled. */
 export const IconsAutoSorted: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
@@ -151,13 +151,13 @@ export const IconsAutoSorted: Story = {
 			.getAllByRole('button')
 			.map((b) => b.getAttribute('aria-label'))
 			.filter((name) => name !== 'Anzeige-Filter');
+		// No bundle chip: every kind has its own pill and nothing unmapped is unread.
 		await expect(chips).toEqual([
 			'Mail (2)',
 			'Gesprächskreis (1)',
 			'Live-Chat',
 			'Interner Gruppenchat',
-			'Supervision',
-			'Sonstiges'
+			'Supervision'
 		]);
 	}
 };
