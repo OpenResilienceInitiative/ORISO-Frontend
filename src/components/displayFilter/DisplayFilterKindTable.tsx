@@ -13,14 +13,14 @@ import {
 } from './displayFilterTypes';
 import { KindOptionPicker } from './KindOptionPicker';
 import { NOTIFICATION_TONE_IDS } from '../../utils/notificationSettings/model';
-
-/** Tones offered per kind (Frank 2026-09-16: 15 entries were too many). */
-const KIND_TONE_MENU_SIZE = 6;
 import type { SoundId } from '../../utils/notificationSettings/model';
 import { previewNotificationSound } from '../../utils/notificationSettings/soundPlayback';
 import { ReactComponent as PlayIcon } from '../../resources/img/icons/play-circle.svg';
 import { ReactComponent as MutedIcon } from '../../resources/img/icons/bell-off.svg';
 import './displayFilter.styles.scss';
+
+/** Tones offered per kind (Frank 2026-09-16: 15 entries were too many). */
+const KIND_TONE_MENU_SIZE = 6;
 
 /** The strings of the kind table, already translated. */
 export interface DisplayFilterKindTableLabels {
