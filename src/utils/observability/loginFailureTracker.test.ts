@@ -22,7 +22,11 @@ describe('loginFailureTracker', () => {
 		resetLoginFailureTrackerForTests();
 	});
 
-	it('does not touch the meter at import time (provider may not exist yet)', () => {
+	it('does not touch the meter at import time (provider may not exist yet)', async () => {
+		// The static import above already ran before beforeEach cleared the
+		// mocks, so evaluate the module afresh to make the assertion observable.
+		vi.resetModules();
+		await import('./loginFailureTracker');
 		expect(mocks.getMeter).not.toHaveBeenCalled();
 	});
 
