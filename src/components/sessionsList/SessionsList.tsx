@@ -1868,7 +1868,6 @@ export const SessionsList = ({
 		);
 	}, [
 		canSupervise,
-		liveChatAvailable,
 		rowsByKind,
 		showGroupChip,
 		showInternalGroupChip,
