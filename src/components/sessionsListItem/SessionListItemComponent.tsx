@@ -1634,6 +1634,7 @@ export const SessionListItemComponent = ({
 							}}
 							state={caseHandoverActionState}
 							active={isChatActive}
+							surfaceRef={cardRef}
 							batchMode={caseHandoverBatchMode}
 							selected={caseHandoverSelected}
 							disabled={

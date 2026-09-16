@@ -1182,12 +1182,14 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	// #1158: portalled to document.body (same pattern as __dropdown) so the
-	// card's `overflow: hidden` cannot clip it. `top`/`left` are set inline
-	// from the toggle's getBoundingClientRect; the width is mirrored by
-	// HANDOVER_MENU_WIDTH in sessionDropdownPosition.ts.
+	// card's `overflow: hidden` cannot clip it. Position, width and
+	// max-height are set inline by `useChatMenuPosition` (beside the card
+	// first); the width is mirrored by HANDOVER_MENU_WIDTH in
+	// CaseHandoverActionButton.tsx. The z-index sits above the 999998
+	// `MenuBackdrop` the button mounts — keep the two in step.
 	&__handoverActionMenu {
 		position: fixed;
-		z-index: 99999;
+		z-index: 999999;
 		width: 236px;
 		max-width: calc(100vw - 16px);
 		padding: 6px;
