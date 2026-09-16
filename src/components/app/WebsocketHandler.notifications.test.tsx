@@ -13,11 +13,7 @@ import React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebsocketHandler } from './WebsocketHandler';
-import {
-	AppConfigContext,
-	NotificationsContext,
-	WebsocketConnectionDeactivatedContext
-} from '../../globalState';
+import { AppConfigContext, NotificationsContext } from '../../globalState';
 import { setAppConfig } from '../../utils/appConfig';
 import { saveBrowserNotificationsSettings } from '../../utils/notificationHelpers';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
@@ -46,23 +42,6 @@ vi.mock('../../services/matrixLiveEventBridge', () => ({
 }));
 vi.mock('../../services/messageEventEmitter', () => ({
 	messageEventEmitter: { emit: vi.fn() }
-}));
-// A stub transport: `connect` never fires its callback, so nothing subscribes
-// and the component's own Matrix listener is all that drives the test.
-vi.mock('@stomp/stompjs', () => ({
-	Stomp: {
-		over: () => ({
-			debug: () => {},
-			reconnect_delay: 0,
-			connect: () => {},
-			disconnect: () => {},
-			deactivate: () => {}
-		})
-	}
-}));
-vi.mock('sockjs-client', () => ({ default: class SockJSStub {} }));
-vi.mock('../incomingVideoCall/IncomingVideoCall', () => ({
-	NOTIFICATION_TYPE_CALL: 'call'
 }));
 // Pulled in transitively by the notifications provider; lottie-web touches a
 // canvas jsdom does not implement.
@@ -99,18 +78,12 @@ const renderHandler = () =>
 			<NotificationsContext.Provider
 				value={{ addNotification: () => {} } as any}
 			>
-				<WebsocketConnectionDeactivatedContext.Provider
-					value={
-						{ setWebsocketConnectionDeactivated: () => {} } as any
-					}
-				>
-					<WebsocketHandler disconnect={false} />
-				</WebsocketConnectionDeactivatedContext.Provider>
+				<WebsocketHandler />
 			</NotificationsContext.Provider>
 		</AppConfigContext.Provider>
 	);
 
-/** What LiveService/Matrix delivers when someone else writes a message. */
+/** What the Matrix bridge delivers when someone else writes a message. */
 const receiveDirectMessage = () =>
 	act(() => {
 		bridge.emit('directMessage', {
@@ -143,6 +116,14 @@ describe('WebsocketHandler → new message notification', () => {
 	it('registers a Matrix directMessage listener', () => {
 		renderHandler();
 		expect(bridge.listenerCount('directMessage')).toBe(1);
+	});
+
+	// #1429: the handler is unmounted on logout; the next login must not
+	// end up with two listeners and two popups per message.
+	it('removes its listener on unmount', () => {
+		const { unmount } = renderHandler();
+		unmount();
+		expect(bridge.listenerCount('directMessage')).toBe(0);
 	});
 
 	// The regression: this is the exact path that stayed silent.
