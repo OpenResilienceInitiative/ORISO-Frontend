@@ -28,4 +28,6 @@ The final arrow uses the exact `arrow_right_24px.svg` supplied by Frank, tinted 
 
 The CI failures from the preceding comfort change also exposed an unsupported `--m3-secondary-hover` reference and a redundant informal German translation. The button now uses the supported secondary token and the informal catalogue inherits the shared German label. These corrections preserve the intended appearance.
 
-Validation for this follow-up: 37 i18n and 55 theme-contract tests pass, as does scoped lint. The new desktop/mobile browser proof remains pending; the first desktop attempt timed out during a local rebuild. Images 04/05 show the preceding Unicode-arrow version and must not be treated as evidence for this SVG change.
+Validation for this follow-up: 37 i18n and 55 theme-contract tests pass, as does scoped lint. Desktop Cypress passes (1/1), including the SVG mask, dimensions, alignment and panel interaction. The first attempt timed out during a local rebuild; the clean rerun passed. Mobile has not been rerun for this SVG change. Images 04/05 show the preceding Unicode-arrow version.
+
+- `06-after-desktop-svg-1440.png`: final supplied SVG, actual application with local service fixtures, 1440 × 1000. This is local browser evidence, not a Dev deployment or real-account recovery test.
