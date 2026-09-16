@@ -105,7 +105,10 @@ Two independent switches per kind (Frank, 2026-09-14):
   re-showing the kind brings its chip back. The row's **view** (icon pills
   that expand when active, or compact text pills) and **auto-sort** (kinds
   with unread items float left) are two further per-section settings edited
-  in this dialog (`view`, `autoSort`; defaults icons + on).
+  in this dialog (`view`: `icons` | `labels` | `text`, `autoSort`; defaults
+  icons + on). A kind whose pill is off is **bundled under Sonstiges**: its
+  unread items count on the Sonstiges chip and that chip filters to those
+  rows. Column captions are "In der Liste" and "Als Pille".
 - **Sonstiges (other)** — the catch-all for every kind/event the section does
   not map explicitly (new backend event types, future families). It is
   **always shown** (switch fixed on) so nothing can silently vanish, and it

@@ -82,3 +82,21 @@ Code: `displayFilterTypes.ts` (`orderChipKinds`, `resolveChipPresentation`,
 order). Dialog rows 48 → 40 px so the dialog fits 700 px with the new
 controls. TDD red → green per slice; Storybook play tests green (55),
 `test:unit` green.
+
+### 2026-09-16, second round (Frank's review of the pre-dev build)
+
+- **Three chip views**, not two: `icons` (only the active pill shows its
+  label), `labels` (icon + label on every pill), `text` (compact text pills).
+  In the text view the Create and Archive links are text pills too, so no
+  large icon sits next to small text.
+- **Column wording**: "Anzeigen" → **"In der Liste"**, "Pille" → **"Als
+  Pille"** (Frank: the old word did not say what happens).
+- **Sonstiges bundles**: a shown kind whose pill is off travels with the
+  Sonstiges chip — its unread items count there
+  (`visiblePillKinds` adds them), the Sonstiges chip filters to those rows
+  (`matchesOtherChip`; Zeitstrahl via `TimelineFilterState.bundledUnderOther`,
+  Gespräche/Anfragen via the new `other` toolbar chip). Nothing leaves the
+  chip row silently any more.
+- Pre-dev: two containerd instances on the host; only `k3s ctr -n k8s.io
+  images import` reaches the cluster store (see memory note). Storybook of
+  the branch runs on `https://predev.oriso.org/storybook-frontend/`.
