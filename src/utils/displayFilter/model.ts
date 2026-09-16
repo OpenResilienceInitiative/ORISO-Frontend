@@ -6,6 +6,7 @@
  * override). No transport here; see `store.ts`.
  */
 
+import { SOUND_IDS, SoundId } from '../notificationSettings/model';
 import {
 	CHIP_VIEWS,
 	ChipView,
@@ -103,7 +104,16 @@ const parseKindSetting = (raw: unknown): KindSetting | null => {
 	// (`resolveKindSetting`), so a hidden kind keeps its pill for re-show.
 	const setting: KindSetting = { show, pill };
 	if (raw.sound === false) {
-		setting.sound = false;
+		// legacy boolean mute (pre-dev builds of 2026-09-16)
+		setting.sound = 'none';
+	} else if (
+		typeof raw.sound === 'string' &&
+		SOUND_IDS.includes(raw.sound as SoundId)
+	) {
+		setting.sound = raw.sound as SoundId;
+	}
+	if (raw.fixed === true) {
+		setting.fixed = true;
 	}
 	return setting;
 };

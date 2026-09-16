@@ -12,7 +12,8 @@ import {
 	listedKinds,
 	kindsUnderOther,
 	matchesOtherChip,
-	isKindMuted
+	isKindMuted,
+	kindSoundOverride
 } from './displayFilterTypes';
 
 describe('displayFilterTypes (#1377)', () => {
@@ -307,10 +308,38 @@ describe('Sonstiges bundles the kinds without their own pill (Frank 2026-09-16)'
 describe('sound per kind (Frank 2026-09-16: Ton statt In der Liste)', () => {
 	it('defaults to sound on and stores a mute independently of show/pill', () => {
 		expect(isKindMuted(EMPTY_DISPLAY_FILTER, 'oneToOne')).toBe(false);
-		const muted = setKindSetting(EMPTY_DISPLAY_FILTER, 'oneToOne', { sound: false });
-		expect(muted.kinds.oneToOne).toEqual({ show: true, pill: true, sound: false });
-		expect(resolveKindSetting(muted, 'oneToOne')).toEqual({ show: true, pill: true });
+		const muted = setKindSetting(EMPTY_DISPLAY_FILTER, 'oneToOne', {
+			sound: 'none'
+		});
+		expect(muted.kinds.oneToOne).toEqual({
+			show: true,
+			pill: true,
+			sound: 'none'
+		});
+		expect(resolveKindSetting(muted, 'oneToOne')).toEqual({
+			show: true,
+			pill: true
+		});
 		expect(isKindMuted(muted, 'oneToOne')).toBe(true);
+		// a chosen tone is an override, not a mute; undefined = area default
+		const toned = setKindSetting(EMPTY_DISPLAY_FILTER, 'oneToOne', {
+			sound: 'ton-3'
+		});
+		expect(kindSoundOverride(toned, 'oneToOne')).toBe('ton-3');
+		expect(isKindMuted(toned, 'oneToOne')).toBe(false);
+		expect(
+			kindSoundOverride(EMPTY_DISPLAY_FILTER, 'oneToOne')
+		).toBeUndefined();
+		// Frank 2026-09-16: the live-chat pill can be pinned ("fest") instead of following availability
+		const pinned = setKindSetting(EMPTY_DISPLAY_FILTER, 'liveChat', {
+			fixed: true
+		});
+		expect(pinned.kinds.liveChat).toEqual({
+			show: true,
+			pill: true,
+			fixed: true
+		});
+		expect(isDisplayFilterCustomised(pinned, ['liveChat'])).toBe(true);
 		expect(isKindMuted(muted, 'liveChat')).toBe(false);
 		// a mute counts as customised (the button dot)
 		expect(isDisplayFilterCustomised(muted, ['oneToOne'])).toBe(true);

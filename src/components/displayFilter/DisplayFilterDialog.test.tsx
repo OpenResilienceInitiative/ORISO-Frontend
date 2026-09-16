@@ -11,6 +11,10 @@ import {
 } from './displayFilterTypes';
 import { STORY_LABELS } from './displayFilterStoryData';
 
+vi.mock('../../utils/notificationSettings/soundPlayback', () => ({
+	previewNotificationSound: vi.fn(),
+	soundAssetFor: () => null
+}));
 vi.mock('@mui/icons-material/Tune', () => ({
 	default: () => <svg data-testid="tune-icon" />
 }));
@@ -300,13 +304,23 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		expect(
 			screen.queryByRole('checkbox', { name: 'In der Liste: Mail' })
 		).toBeNull();
-		const sound = screen.getByRole('checkbox', {
-			name: 'Ton: Mail'
-		}) as HTMLInputElement;
-		expect(sound.checked).toBe(true);
-		fireEvent.click(sound);
-		const next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
-		expect(next.kinds.oneToOne?.sound).toBe(false);
+		// tone picker: main = preview, arrow = menu with default / ring / tones / muted
+		expect(
+			screen.getByRole('button', { name: 'Ton anhören: Mail' })
+				.textContent
+		).toContain('Standard');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Ton wählen: Mail' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Ton 3' }));
+		let next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.oneToOne?.sound).toBe('ton-3');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Ton wählen: Mail' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Stumm' }));
+		next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.oneToOne?.sound).toBe('none');
 		expect(screen.getByRole('columnheader', { name: 'Ton' })).toBeTruthy();
 	});
 
@@ -339,7 +353,7 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		}) as HTMLInputElement;
 		expect(panel.checked).toBe(true);
 		expect(
-			screen.getByRole('checkbox', { name: 'Ton: Mail' })
+			screen.getByRole('button', { name: 'Ton anhören: Mail' })
 		).toBeTruthy();
 	});
 
@@ -349,5 +363,67 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 			screen.getByRole('checkbox', { name: 'In der Liste: Nachrichten' })
 		).toBeTruthy();
 		expect(screen.queryByRole('checkbox', { name: /^Ton:/ })).toBeNull();
+	});
+
+	it('offers dynamic / pinned / off for the live-chat pill, a pill-only Archiv row and a greyed Termine placeholder', () => {
+		const onValue = vi.fn();
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[
+					{
+						id: 'liveChat',
+						label: 'Live-Chat',
+						unreadCount: 0,
+						modes: true
+					},
+					{
+						id: 'archive',
+						label: 'Archiviert',
+						unreadCount: 0,
+						pillOnly: true
+					},
+					{
+						id: 'appointments',
+						label: 'Termine',
+						unreadCount: 0,
+						placeholder: true
+					}
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={{ show: false, sound: true }}
+				onChange={onValue}
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Pille: Live-Chat' }).textContent
+		).toContain('Dynamisch');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anzeige wählen: Live-Chat' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Fest' }));
+		const next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.liveChat).toEqual({
+			show: true,
+			pill: true,
+			fixed: true
+		});
+		expect(
+			screen.getByRole('checkbox', { name: 'Pille: Archiviert' })
+		).toBeTruthy();
+		expect(
+			screen.queryByRole('button', { name: 'Ton anhören: Archiviert' })
+		).toBeNull();
+		expect(
+			(
+				screen.getByRole('checkbox', {
+					name: 'Pille: Termine'
+				}) as HTMLInputElement
+			).disabled
+		).toBe(true);
+		expect(screen.getByText('Kommt bald.')).toBeTruthy();
 	});
 });

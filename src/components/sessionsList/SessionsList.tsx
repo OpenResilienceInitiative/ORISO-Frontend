@@ -114,7 +114,9 @@ import {
 	kindsUnderOther,
 	matchesOtherChip,
 	OTHER_KIND_ID,
-	SESSION_COLUMNS
+	SESSION_COLUMNS,
+	isKindPinned,
+	resolveKindSetting
 } from '../displayFilter';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
 import { NavChatsIcon, NavInboxIcon } from '../app/navigationSidebarIcons';
@@ -1812,7 +1814,12 @@ export const SessionsList = ({
 		const listed = (kind: string): boolean => {
 			switch (kind) {
 				case 'liveChat':
-					return liveChatAvailable;
+					// Always listed (Frank 2026-09-16): the pill has modes
+					// (dynamic / pinned / off); availability only drives "dynamic".
+					return true;
+				case 'archive':
+				case 'appointments':
+					return type === SESSION_LIST_TYPES.MY_SESSION;
 				case 'futureTimeline':
 					return showGroupChip;
 				case 'supervision':
@@ -1846,6 +1853,9 @@ export const SessionsList = ({
 					icon: SESSION_KIND_ICONS[kind],
 					unreadCount: unreadByKind[kind] ?? 0,
 					showOnly: kind === 'futureTimeline',
+					modes: kind === 'liveChat',
+					pillOnly: kind === 'archive',
+					placeholder: kind === 'appointments',
 					availability:
 						formatEnabled === null
 							? ('available' as const)
@@ -2101,7 +2111,13 @@ export const SessionsList = ({
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
-					showLiveChatChip={liveChatAvailable}
+					showLiveChatChip={
+						liveChatAvailable ||
+						isKindPinned(listDisplayFilter, 'liveChat')
+					}
+					showArchiveChip={
+						resolveKindSetting(listDisplayFilter, 'archive').pill
+					}
 				/>
 			)} */}
 			{showMySessionToolbar && (
@@ -2123,7 +2139,13 @@ export const SessionsList = ({
 					   availability toggle is ON — it narrows the
 					   my-sessions list to anonymous-asker chats using the
 					   same username-prefix filter as the Anfragen chip. */
-					showLiveChatChip={liveChatAvailable}
+					showLiveChatChip={
+						liveChatAvailable ||
+						isKindPinned(listDisplayFilter, 'liveChat')
+					}
+					showArchiveChip={
+						resolveKindSetting(listDisplayFilter, 'archive').pill
+					}
 					createGroupChatPath={buildCreateGroupChatPath(
 						sessionListTab || undefined
 					)}
@@ -2148,6 +2170,12 @@ export const SessionsList = ({
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
 					displayFilter={{
+						icon:
+							type === SESSION_LIST_TYPES.ENQUIRY ? (
+								<NavInboxIcon className="sessionsListToolbar__chipIconSvg" />
+							) : (
+								<NavChatsIcon className="sessionsListToolbar__chipIconSvg" />
+							),
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
 							displayFilterLabels.buttonCustomisedLabel,

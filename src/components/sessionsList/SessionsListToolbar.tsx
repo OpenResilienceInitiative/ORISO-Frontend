@@ -36,6 +36,8 @@ import '../displayFilter/displayFilter.styles.scss';
 
 /** The pinned tune button at the right end of the chip row (#1377 §3). */
 export interface SessionsToolbarDisplayFilterProps {
+	/** Section icon shown in the search field's leading slot (Frank 2026-09-16). */
+	icon?: React.ReactNode;
 	label: string;
 	customisedLabel: string;
 	customised: boolean;
@@ -131,6 +133,8 @@ interface SessionsListToolbarProps {
 	chipAutoSort?: boolean;
 	/** Offer the Sonstiges chip (lists that classify their rows, #1377). */
 	showOtherChip?: boolean;
+	/** The Archiv link (Gespräche); the display filter's Archiv pill drives it. */
+	showArchiveChip?: boolean;
 }
 
 export const IconMenuDots = () => (
@@ -346,7 +350,8 @@ export const SessionsListToolbar = ({
 	onDeactivatedChipClick,
 	chipView = 'icons',
 	chipAutoSort = false,
-	showOtherChip = false
+	showOtherChip = false,
+	showArchiveChip = true
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -577,6 +582,7 @@ export const SessionsListToolbar = ({
 					) : (
 						<span className="sessionsListToolbar__iconButton sessionsListToolbar__iconButton--filter">
 							<DisplayFilterButton
+								icon={displayFilter.icon}
 								label={displayFilter.label}
 								customised={displayFilter.customised}
 								customisedLabel={displayFilter.customisedLabel}
@@ -801,7 +807,7 @@ export const SessionsListToolbar = ({
 					</Link>
 				)}
 				{filterChipsBeforeArchive.map(renderFilterChip)}
-				{showConsultantActions && (
+				{showConsultantActions && showArchiveChip && (
 					<Link
 						className={clsx('sessionsListToolbar__chip', {
 							'sessionsListToolbar__chip--iconOnly':

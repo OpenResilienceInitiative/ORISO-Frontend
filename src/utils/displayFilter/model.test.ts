@@ -211,9 +211,29 @@ describe('chip presentation (view + auto-sort, Frank 2026-09-16)', () => {
 describe('sound per kind round-trip', () => {
 	it('keeps a stored mute and defaults missing ones to sound on', () => {
 		const parsed = parseDisplayFilter({
-			kinds: { oneToOne: { sound: false }, liveChat: { show: true } }
+			kinds: {
+				oneToOne: { sound: false },
+				liveChat: { show: true, fixed: true },
+				circle: { sound: 'ton-4' },
+				drafts: { sound: 'bogus' }
+			}
 		});
-		expect(parsed.kinds.oneToOne).toEqual({ show: true, pill: true, sound: false });
-		expect(parsed.kinds.liveChat).toEqual({ show: true, pill: true });
+		// legacy boolean mute reads as the 'none' tone
+		expect(parsed.kinds.oneToOne).toEqual({
+			show: true,
+			pill: true,
+			sound: 'none'
+		});
+		expect(parsed.kinds.liveChat).toEqual({
+			show: true,
+			pill: true,
+			fixed: true
+		});
+		expect(parsed.kinds.circle).toEqual({
+			show: true,
+			pill: true,
+			sound: 'ton-4'
+		});
+		expect(parsed.kinds.drafts).toEqual({ show: true, pill: true });
 	});
 });

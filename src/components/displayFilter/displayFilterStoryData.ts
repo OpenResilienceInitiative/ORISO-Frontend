@@ -38,14 +38,24 @@ export const TIMELINE_KINDS: DisplayFilterKindOption[] = [
 ];
 
 export const STORY_LABELS: DisplayFilterDialogLabels = {
-	title: 'Anzeige-Filter · Zeitstrahl',
+	title: 'Ansicht · Zeitstrahl',
 	description:
-		'Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.',
+		'Welche Arten diese Liste zeigt, welche eine Pille bekommen und wie sie klingen.',
 	showColumn: 'In der Liste',
 	pillColumn: 'Anzeigen',
 	showKind: (kind) => `In der Liste: ${kind}`,
 	soundColumn: 'Ton',
-	soundKind: (kind) => `Ton: ${kind}`,
+	soundKind: (kind) => `Ton anhören: ${kind}`,
+	soundMenu: (kind) => `Ton wählen: ${kind}`,
+	soundDefault: 'Standard',
+	soundRing: 'Klingelton',
+	soundTone: (number) => `Ton ${number}`,
+	soundMuted: 'Stumm',
+	liveChatModeMenu: (kind) => `Anzeige wählen: ${kind}`,
+	liveChatDynamic: 'Dynamisch',
+	liveChatFixed: 'Fest',
+	liveChatOff: 'Aus',
+	placeholderHint: 'Kommt bald.',
 	pillKind: (kind) => `Pille: ${kind}`,
 	otherFixed:
 		'Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.',

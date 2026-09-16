@@ -25,6 +25,8 @@ export interface DisplayFilterButtonProps {
 	 * 16px glyph without the pill circle, so the compact row stays compact.
 	 */
 	'compact'?: boolean;
+	/** The list's own icon instead of the generic tune glyph (Frank 2026-09-16). */
+	'icon'?: React.ReactNode;
 	'data-cy'?: string;
 }
 
@@ -42,6 +44,7 @@ export const DisplayFilterButton = ({
 	onClick,
 	controlsId,
 	compact = false,
+	icon,
 	'data-cy': dataCy = 'display-filter-button'
 }: DisplayFilterButtonProps) => {
 	const stateId = useId();
@@ -63,7 +66,7 @@ export const DisplayFilterButton = ({
 			aria-describedby={describe ? stateId : undefined}
 			data-cy={dataCy}
 		>
-			<TuneIcon className="sessionsListToolbar__chipIconSvg" />
+			{icon ?? <TuneIcon className="sessionsListToolbar__chipIconSvg" />}
 			{customised && (
 				<span className="displayFilterButton__dot" aria-hidden="true" />
 			)}

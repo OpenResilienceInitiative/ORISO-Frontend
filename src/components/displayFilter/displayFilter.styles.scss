@@ -453,3 +453,30 @@
 		}
 	}
 }
+
+/* Per-kind pickers share one width so the column stays aligned; the label
+   truncates instead (Frank 2026-09-16). */
+.displayFilterDialog__colHead--picker {
+	width: 136px;
+	text-align: left;
+}
+
+.displayFilterDialog__cell--picker {
+	text-align: left;
+	padding-right: 8px;
+}
+
+.displayFilterDialog__picker {
+	width: 128px;
+
+	.splitButton__main {
+		flex: 1 1 auto;
+		min-width: 0;
+		justify-content: flex-start;
+	}
+}
+
+.displayFilterDialog__row--placeholder .displayFilterDialog__kind {
+	color: var(--m3-on-surface-variant, #444748);
+	opacity: 0.5;
+}

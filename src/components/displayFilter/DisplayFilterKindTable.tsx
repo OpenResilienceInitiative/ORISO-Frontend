@@ -6,9 +6,17 @@ import {
 	DisplayFilterValue,
 	OTHER_KIND_ID,
 	isKindMuted,
+	isKindPinned,
+	kindSoundOverride,
 	resolveKindSetting,
 	setKindSetting
 } from './displayFilterTypes';
+import { KindOptionPicker } from './KindOptionPicker';
+import { NOTIFICATION_TONE_IDS } from '../../utils/notificationSettings/model';
+import type { SoundId } from '../../utils/notificationSettings/model';
+import { previewNotificationSound } from '../../utils/notificationSettings/soundPlayback';
+import { ReactComponent as PlayIcon } from '../../resources/img/icons/play-circle.svg';
+import { ReactComponent as MutedIcon } from '../../resources/img/icons/bell-off.svg';
 import './displayFilter.styles.scss';
 
 /** The strings of the kind table, already translated. */
@@ -19,12 +27,22 @@ export interface DisplayFilterKindTableLabels {
 	pillColumn: string;
 	soundColumn: string;
 	showKind: (kindLabel: string) => string;
-	soundKind: (kindLabel: string) => string;
 	pillKind: (kindLabel: string) => string;
+	soundKind: (kindLabel: string) => string;
+	soundMenu: (kindLabel: string) => string;
+	soundDefault: string;
+	soundRing: string;
+	soundTone: (number: number) => string;
+	soundMuted: string;
+	liveChatModeMenu: (kindLabel: string) => string;
+	liveChatDynamic: string;
+	liveChatFixed: string;
+	liveChatOff: string;
 	otherFixed: string;
 	pillNotApplicable: string;
-	/** Row hint of a kind the Träger switched off while rows still exist. */
 	deactivatedHint: string;
+	/** Row hint of an announced, not yet wired kind. */
+	placeholderHint: string;
 }
 
 export interface DisplayFilterKindTableProps {
@@ -41,10 +59,15 @@ export interface DisplayFilterKindTableProps {
 	columns?: { show: boolean; sound: boolean };
 }
 
+const AREA_DEFAULT = '__default';
+
 /**
- * One row per kind with the two independent switches — **show** and
- * **pill** (#1377 spec §3). Shared by the list dialog (edits the section
- * override) and the profile page (edits the per-section defaults, slice 6).
+ * One row per kind (#1377 spec §3, reshaped 2026-09-16 with Frank): the
+ * Zeitstrahl offers **In der Liste** + **Anzeigen** (pill); Gespräche and
+ * Anfragen offer **Ton** (a tone picker per kind) + **Anzeigen**. The
+ * live-chat pill has modes (dynamic / pinned / off), Archiv is pill-only,
+ * Termine is a greyed placeholder. Shared by the list dialog and the profile
+ * page (slice 6).
  */
 export const DisplayFilterKindTable = ({
 	kinds,
@@ -68,11 +91,20 @@ export const DisplayFilterKindTable = ({
 					</th>
 				)}
 				{columns.sound && (
-					<th scope="col" className="displayFilterDialog__colHead">
+					<th
+						scope="col"
+						className="displayFilterDialog__colHead displayFilterDialog__colHead--picker"
+					>
 						{labels.soundColumn}
 					</th>
 				)}
-				<th scope="col" className="displayFilterDialog__colHead">
+				<th
+					scope="col"
+					className={clsx(
+						'displayFilterDialog__colHead',
+						columns.sound && 'displayFilterDialog__colHead--picker'
+					)}
+				>
 					{labels.pillColumn}
 				</th>
 			</tr>
@@ -89,12 +121,26 @@ export const DisplayFilterKindTable = ({
 					// kind visible and its controls locked so nothing vanishes
 					// silently; the hint explains and the chip's click does too.
 					const deactivated = kind.availability === 'deactivated';
-					const hintId = isOther
-						? `${idPrefix}-other-fixed`
+					const placeholder = Boolean(kind.placeholder);
+					const locked = readOnly || deactivated || placeholder;
+					const hint = isOther
+						? labels.otherFixed
 						: deactivated
-							? `${idPrefix}-${kind.id}-deactivated`
-							: undefined;
+							? labels.deactivatedHint
+							: placeholder
+								? labels.placeholderHint
+								: null;
+					const hintId = hint
+						? `${idPrefix}-${kind.id}-hint`
+						: undefined;
 					const Icon = kind.icon;
+					const tone = kindSoundOverride(value, kind.id);
+					const muted = isKindMuted(value, kind.id);
+					const pillValue = !setting.pill
+						? 'off'
+						: isKindPinned(value, kind.id)
+							? 'fixed'
+							: 'dynamic';
 					return (
 						<tr
 							key={kind.id}
@@ -103,7 +149,9 @@ export const DisplayFilterKindTable = ({
 								!setting.show &&
 									'displayFilterDialog__row--hidden',
 								deactivated &&
-									'displayFilterDialog__row--deactivated'
+									'displayFilterDialog__row--deactivated',
+								placeholder &&
+									'displayFilterDialog__row--placeholder'
 							)}
 							data-cy={`${dataCyPrefix}-row-${kind.id}`}
 						>
@@ -119,40 +167,91 @@ export const DisplayFilterKindTable = ({
 								)}
 								<span className="displayFilterDialog__kindText">
 									<span>{kind.label}</span>
-									{isOther && (
+									{hint && (
 										<span
 											className="displayFilterDialog__kindHint"
-											id={`${idPrefix}-other-fixed`}
+											id={hintId}
 										>
-											{labels.otherFixed}
-										</span>
-									)}
-									{deactivated && !isOther && (
-										<span
-											className="displayFilterDialog__kindHint"
-											id={`${idPrefix}-${kind.id}-deactivated`}
-										>
-											{labels.deactivatedHint}
+											{hint}
 										</span>
 									)}
 								</span>
 							</th>
 							{columns.sound && (
-								<td className="displayFilterDialog__cell">
-									<M3Checkbox
-										checked={!isKindMuted(value, kind.id)}
-										disabled={readOnly || deactivated}
-										hideLabel
-										label={labels.soundKind(kind.label)}
-										dataCy={`${dataCyPrefix}-sound-${kind.id}`}
-										onChange={(checked) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													sound: checked
-												})
-											)
-										}
-									/>
+								<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
+									{kind.pillOnly || kind.showOnly ? (
+										<span
+											className="displayFilterDialog__noPill"
+											aria-hidden="true"
+										>
+											–
+										</span>
+									) : (
+										<KindOptionPicker
+											options={[
+												{
+													id: AREA_DEFAULT,
+													label: labels.soundDefault
+												},
+												{
+													id: 'ring',
+													label: labels.soundRing
+												},
+												...NOTIFICATION_TONE_IDS.map(
+													(id, index) => ({
+														id,
+														label: labels.soundTone(
+															index + 1
+														)
+													})
+												),
+												{
+													id: 'none',
+													label: labels.soundMuted
+												}
+											]}
+											selected={tone ?? AREA_DEFAULT}
+											icon={
+												muted ? (
+													<MutedIcon />
+												) : (
+													<PlayIcon />
+												)
+											}
+											mainLabel={labels.soundKind(
+												kind.label
+											)}
+											menuLabel={labels.soundMenu(
+												kind.label
+											)}
+											disabled={locked}
+											className="displayFilterDialog__picker"
+											dataCy={`${dataCyPrefix}-sound-${kind.id}`}
+											onMain={() =>
+												previewNotificationSound(
+													(tone && tone !== 'none'
+														? tone
+														: 'default') as SoundId,
+													0.8
+												)
+											}
+											onSelect={(id) =>
+												onChange(
+													setKindSetting(
+														value,
+														kind.id,
+														{
+															sound:
+																id ===
+																AREA_DEFAULT
+																	? undefined
+																	: (id as SoundId)
+														}
+													)
+												)
+											}
+										/>
+									)}
 								</td>
 							)}
 							{columns.show && (
@@ -162,9 +261,7 @@ export const DisplayFilterKindTable = ({
 										indeterminate={Boolean(
 											setting.show && kind.partial
 										)}
-										disabled={
-											readOnly || isOther || deactivated
-										}
+										disabled={locked || isOther}
 										describedBy={hintId}
 										hideLabel
 										label={labels.showKind(kind.label)}
@@ -179,8 +276,47 @@ export const DisplayFilterKindTable = ({
 									/>
 								</td>
 							)}
-							<td className="displayFilterDialog__cell">
-								{kind.showOnly ? (
+							<td
+								className={clsx(
+									'displayFilterDialog__cell',
+									columns.sound &&
+										'displayFilterDialog__cell--picker'
+								)}
+							>
+								{kind.modes ? (
+									<KindOptionPicker
+										options={[
+											{
+												id: 'dynamic',
+												label: labels.liveChatDynamic
+											},
+											{
+												id: 'fixed',
+												label: labels.liveChatFixed
+											},
+											{
+												id: 'off',
+												label: labels.liveChatOff
+											}
+										]}
+										selected={pillValue}
+										mainLabel={labels.pillKind(kind.label)}
+										menuLabel={labels.liveChatModeMenu(
+											kind.label
+										)}
+										disabled={locked || !setting.show}
+										className="displayFilterDialog__picker"
+										dataCy={`${dataCyPrefix}-mode-${kind.id}`}
+										onSelect={(id) =>
+											onChange(
+												setKindSetting(value, kind.id, {
+													pill: id !== 'off',
+													fixed: id === 'fixed'
+												})
+											)
+										}
+									/>
+								) : kind.showOnly ? (
 									<>
 										<span
 											className="displayFilterDialog__noPill"
@@ -195,10 +331,9 @@ export const DisplayFilterKindTable = ({
 								) : (
 									<M3Checkbox
 										checked={setting.pill}
-										disabled={
-											readOnly ||
-											!setting.show ||
-											deactivated
+										disabled={locked || !setting.show}
+										describedBy={
+											!isOther ? hintId : undefined
 										}
 										hideLabel
 										label={labels.pillKind(kind.label)}

@@ -353,4 +353,15 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 		renderMenu({});
 		expect(screen.queryByRole('button', { name: /^More/ })).toBeNull();
 	});
+
+	it('hides the Archiv link when the display filter switches its pill off', () => {
+		const { container } = renderMenu({ showArchiveChip: false });
+		expect(
+			container.querySelector('[data-cy="sessions-list-chip-archive"]')
+		).toBeNull();
+		const { container: on } = renderMenu({});
+		expect(
+			on.querySelector('[data-cy="sessions-list-chip-archive"]')
+		).not.toBeNull();
+	});
 });

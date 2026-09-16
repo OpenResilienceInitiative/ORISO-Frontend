@@ -4,6 +4,8 @@
  * produces a `DisplayFilterValue`, the dialog edits it, the lists read it.
  */
 
+import type { SoundId } from '../../utils/notificationSettings/model';
+
 /** The catch-all kind every section carries. Always shown (spec §3). */
 export const OTHER_KIND_ID = 'other';
 
@@ -13,11 +15,17 @@ export interface KindSetting {
 	/** The kind has a chip in the row (a menu entry). Requires `show`. */
 	pill: boolean;
 	/**
-	 * Notification sound for items of this kind (Frank 2026-09-16, "Ton"):
-	 * `false` mutes the kind on top of the area sound settings. Missing means
-	 * on. Kept out of {@link resolveKindSetting} — read via {@link isKindMuted}.
+	 * Notification tone for items of this kind (Frank 2026-09-16, "Ton"):
+	 * a `SoundId` overrides the area tone, `'none'` mutes the kind, missing
+	 * means the area default. Kept out of {@link resolveKindSetting} — read
+	 * via {@link kindSoundOverride} / {@link isKindMuted}.
 	 */
-	sound?: boolean;
+	sound?: SoundId;
+	/**
+	 * Live chat only (Frank 2026-09-16): the pill follows the consultant's
+	 * availability toggle ("dynamisch", default) or stays pinned ("fest").
+	 */
+	fixed?: boolean;
 }
 
 /**
@@ -84,6 +92,15 @@ export interface DisplayFilterKindOption {
 	 * listed at all. Missing means `available`.
 	 */
 	availability?: KindAvailability;
+	/**
+	 * The pill has modes instead of on/off (live chat: follows availability,
+	 * pinned, off) — the dialog renders a picker in the Anzeigen column.
+	 */
+	modes?: boolean;
+	/** The kind has no rows and no tone, only a pill (Archiv chip). */
+	pillOnly?: boolean;
+	/** Announced but not wired yet (Termine): greyed row, controls disabled. */
+	placeholder?: boolean;
 }
 
 /**
@@ -136,9 +153,23 @@ export const resolveKindSetting = (
 	return { show, pill: show && raw.pill };
 };
 
+/** The kind's tone override, or undefined for the area default. */
+export const kindSoundOverride = (
+	value: DisplayFilterValue,
+	kindId: string
+): SoundId | undefined => value.kinds[kindId]?.sound;
+
 /** True when the user muted this kind's notification sound. */
-export const isKindMuted = (value: DisplayFilterValue, kindId: string): boolean =>
-	value.kinds[kindId]?.sound === false;
+export const isKindMuted = (
+	value: DisplayFilterValue,
+	kindId: string
+): boolean => value.kinds[kindId]?.sound === 'none';
+
+/** Live-chat pill pinned regardless of availability ("fest"). */
+export const isKindPinned = (
+	value: DisplayFilterValue,
+	kindId: string
+): boolean => value.kinds[kindId]?.fixed === true;
 
 /**
  * Kinds accepted by {@link isDisplayFilterCustomised}: plain ids, or the
@@ -172,7 +203,8 @@ export const isDisplayFilterCustomised = (
 			partial ||
 			!setting.show ||
 			(!showOnly && !setting.pill) ||
-			isKindMuted(value, kindId)
+			kindSoundOverride(value, kindId) !== undefined ||
+			isKindPinned(value, kindId)
 		);
 	});
 
@@ -195,8 +227,11 @@ export const setKindSetting = (
 	if (kindId === OTHER_KIND_ID) {
 		next.show = true;
 	}
-	if (next.sound !== false) {
+	if (next.sound === undefined) {
 		delete next.sound;
+	}
+	if (!next.fixed) {
+		delete next.fixed;
 	}
 	return { ...value, kinds: { ...value.kinds, [kindId]: next } };
 };

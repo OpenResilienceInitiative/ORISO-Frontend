@@ -29,6 +29,8 @@ export type SessionKindId =
 	| 'internalGroup'
 	| 'circle'
 	| 'supervision'
+	| 'archive'
+	| 'appointments'
 	| 'futureTimeline'
 	| typeof OTHER_KIND_ID;
 
@@ -42,6 +44,10 @@ export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
 	'internalGroup',
 	'circle',
 	'supervision',
+	// Frank 2026-09-16: the Archiv chip is configurable (pill only, no rows
+	// of its own); Termine is announced but not wired yet (placeholder).
+	'archive',
+	'appointments',
 	'futureTimeline',
 	OTHER_KIND_ID
 ];

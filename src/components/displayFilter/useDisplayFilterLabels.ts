@@ -63,6 +63,23 @@ export const useDisplayFilterLabels = (
 				soundColumn: t('notifications.displayFilter.soundColumn'),
 				soundKind: (kind: string) =>
 					t('notifications.displayFilter.soundKind', { kind }),
+				soundMenu: (kind: string) =>
+					t('notifications.displayFilter.soundMenu', { kind }),
+				soundDefault: t('notifications.displayFilter.soundDefault'),
+				soundRing: t('profile.notifications.config.ringTone'),
+				soundTone: (number: number) =>
+					t('profile.notifications.config.tone', { number }),
+				soundMuted: t('profile.notifications.config.noSound'),
+				liveChatModeMenu: (kind: string) =>
+					t('notifications.displayFilter.liveChatModeMenu', { kind }),
+				liveChatDynamic: t(
+					'notifications.displayFilter.liveChatDynamic'
+				),
+				liveChatFixed: t('notifications.displayFilter.liveChatFixed'),
+				liveChatOff: t('notifications.displayFilter.liveChatOff'),
+				placeholderHint: t(
+					'notifications.displayFilter.placeholderHint'
+				),
 				viewTitle: t('notifications.displayFilter.viewTitle'),
 				viewIcons: t('notifications.displayFilter.viewIcons'),
 				viewLabels: t('notifications.displayFilter.viewLabels'),

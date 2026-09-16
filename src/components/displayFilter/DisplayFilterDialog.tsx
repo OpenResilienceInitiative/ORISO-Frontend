@@ -25,8 +25,22 @@ export interface DisplayFilterDialogLabels {
 	pillColumn: string;
 	/** "Ton" — the sound column (Gespräche/Anfragen). */
 	soundColumn: string;
-	/** Accessible name of one sound checkbox, e.g. "Ton: Mail". */
+	/** Accessible name of the tone preview, e.g. "Ton anhören: Mail". */
 	soundKind: (kindLabel: string) => string;
+	/** Accessible name of the tone menu, e.g. "Ton wählen: Mail". */
+	soundMenu: (kindLabel: string) => string;
+	/** Tone options: area default, ring tone, numbered tones, muted. */
+	soundDefault: string;
+	soundRing: string;
+	soundTone: (number: number) => string;
+	soundMuted: string;
+	/** Live-chat pill mode picker (Frank 2026-09-16). */
+	liveChatModeMenu: (kindLabel: string) => string;
+	liveChatDynamic: string;
+	liveChatFixed: string;
+	liveChatOff: string;
+	/** Row hint of an announced, not yet wired kind (Termine). */
+	placeholderHint: string;
 	/** Accessible name of one show checkbox, e.g. "Anzeigen: Anfragen". */
 	showKind: (kindLabel: string) => string;
 	pillKind: (kindLabel: string) => string;

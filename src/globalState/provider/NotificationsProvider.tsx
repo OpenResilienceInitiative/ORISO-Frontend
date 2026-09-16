@@ -37,7 +37,10 @@ import {
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 import { displayFilterStore } from '../../utils/displayFilter/store';
-import { isEventMutedByKind } from '../../utils/displayFilter/soundMask';
+import {
+	isEventMutedByKind,
+	soundOverrideForEvent
+} from '../../utils/displayFilter/soundMask';
 import {
 	DisplayFilter,
 	resolveEffective
@@ -457,7 +460,12 @@ export function NotificationsProvider(props) {
 				device,
 				family,
 				announce.eventType,
-				isMention
+				isMention,
+				Date.now(),
+				soundOverrideForEvent(
+					displayFilterStore.getState().filters,
+					announce.sourceSessionId
+				)
 			);
 		},
 		[]

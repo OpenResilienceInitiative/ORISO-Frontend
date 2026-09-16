@@ -960,6 +960,9 @@ export const NotificationsCenter = () => {
 					<ListSearchField
 						leading={
 							<DisplayFilterButton
+								icon={
+									<NavActivityIcon className="sessionsListToolbar__chipIconSvg" />
+								}
 								label={displayFilterLabels.buttonLabel}
 								customised={displayFilterCustomised}
 								customisedLabel={
