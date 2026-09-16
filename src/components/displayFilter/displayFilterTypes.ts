@@ -14,11 +14,15 @@ export interface KindSetting {
 	pill: boolean;
 }
 
-/** How the chip row draws its chips (Figma 1139:45736 / 9947:31377). */
-export type ChipView = 'icons' | 'text';
+/**
+ * How the chip row draws its chips (Figma 1139:45736 / 9947:31377):
+ * `icons` = icon pills, only the active one shows its label; `labels` =
+ * icon + label on every pill; `text` = compact text pills, no icons.
+ */
+export type ChipView = 'icons' | 'labels' | 'text';
+export const CHIP_VIEWS: ReadonlyArray<ChipView> = ['icons', 'labels', 'text'];
 
 export interface ChipPresentation {
-	/** `icons`: icon pills, the active one expands with its label. `text`: compact text pills. */
 	view: ChipView;
 	/** Kinds with unread items float to the left of the row. */
 	autoSort: boolean;

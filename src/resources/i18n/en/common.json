@@ -1850,6 +1850,7 @@
 			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
 			"viewTitle": "Chip view",
 			"viewIcons": "Icons",
+			"viewLabels": "Icons + text",
 			"viewText": "Text",
 			"autoSort": "Move unread to the left",
 			"autoSortDescription": "Chips with unread items move to the start of the row.",

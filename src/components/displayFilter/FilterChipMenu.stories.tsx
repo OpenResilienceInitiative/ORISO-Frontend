@@ -191,6 +191,24 @@ export const IconsSectionOrder: Story = {
 	}
 };
 
+/** Icons + labels on every pill (the second of Frank's three views). */
+export const IconsWithLabels: Story = {
+	args: {
+		initialValue: { ...EMPTY_DISPLAY_FILTER, view: 'labels' },
+		initialActive: 'oneToOne'
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const live = canvas.getByRole('button', { name: 'Live-Chat' });
+		await expect(live.className).toContain(
+			'sessionsListToolbar__chip--labelled'
+		);
+		await expect(
+			live.querySelector('.sessionsListToolbar__chipLabel')
+		).not.toHaveAttribute('aria-hidden', 'true');
+	}
+};
+
 /** Compact text pills (Figma 9947:31377), active one filled. */
 export const TextCompact: Story = {
 	args: {

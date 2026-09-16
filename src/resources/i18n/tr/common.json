@@ -1853,6 +1853,7 @@
 			"readOnlyHint": "Bu ayarlar daha yeni bir uygulama sürümüyle kaydedildi. Değiştirmek için lütfen uygulamayı güncelleyin.",
 			"viewTitle": "Filtre görünümü",
 			"viewIcons": "Simgeler",
+			"viewLabels": "Simge + metin",
 			"viewText": "Metin",
 			"autoSort": "Okunmamışları sola al",
 			"autoSortDescription": "Okunmamış öğesi olan filtreler satırın başına taşınır.",

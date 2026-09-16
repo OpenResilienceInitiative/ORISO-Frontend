@@ -128,4 +128,28 @@ describe('FilterChipMenu (#1377, Frank 2026-09-16)', () => {
 		expect(active.className).toContain('sessionsListToolbar__chip--active');
 		expect(active.textContent).toContain('Live-Chat');
 	});
+
+	it('renders icon and label for every chip in the labels view', () => {
+		render(
+			<FilterChipMenu
+				kinds={KINDS}
+				value={{ ...EMPTY_DISPLAY_FILTER, view: 'labels' }}
+				activeKindId={null}
+				labels={LABELS}
+				onToggle={() => undefined}
+				onDeactivatedClick={() => undefined}
+			/>
+		);
+		const mail = screen.getByRole('button', { name: 'Mail (2)' });
+		expect(mail.className).toContain('sessionsListToolbar__chip--labelled');
+		expect(mail.className).not.toContain(
+			'sessionsListToolbar__chip--iconOnly'
+		);
+		expect(mail.querySelector('[data-testid="chip-icon"]')).not.toBeNull();
+		expect(
+			mail
+				.querySelector('.sessionsListToolbar__chipLabel')
+				?.getAttribute('aria-hidden')
+		).not.toBe('true');
+	});
 });

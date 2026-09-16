@@ -60,6 +60,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.',
 	viewTitle: 'Ansicht der Pillen',
 	viewIcons: 'Icons',
+	viewLabels: 'Icons + Text',
 	viewText: 'Text',
 	autoSort: 'Ungelesenes nach links sortieren',
 	autoSortDescription:

@@ -14,9 +14,10 @@ export interface FilterChipProps {
 	'assetIcon'?: boolean;
 	/**
 	 * `icons` (default): icon pill, expands with its label when active.
-	 * `text`: compact text pill without icon (Figma 9947:31377).
+	 * `labels`: icon + label on every pill. `text`: compact text pill
+	 * without icon (Figma 9947:31377).
 	 */
-	'view'?: 'icons' | 'text';
+	'view'?: 'icons' | 'labels' | 'text';
 	/**
 	 * The Träger switched this format off while rows still exist (Frank
 	 * 2026-09-16): the chip stays, looks locked (`aria-disabled`) and a click
@@ -60,6 +61,8 @@ export const FilterChip = ({
 	const accessibleName =
 		deactivated && deactivatedLabel ? deactivatedLabel : named;
 	const isText = view === 'text';
+	const isLabelled = view === 'labels';
+	const labelVisible = active || isText || isLabelled;
 	return (
 		<button
 			type="button"
@@ -72,8 +75,10 @@ export const FilterChip = ({
 			data-cy={dataCy}
 			className={clsx('sessionsListToolbar__chip', {
 				'sessionsListToolbar__chip--active': active,
-				'sessionsListToolbar__chip--iconOnly': !active && !isText,
+				'sessionsListToolbar__chip--iconOnly':
+					!active && !isText && !isLabelled,
 				'sessionsListToolbar__chip--text': isText,
+				'sessionsListToolbar__chip--labelled': isLabelled,
 				'sessionsListToolbar__chip--deactivated': deactivated
 			})}
 		>
@@ -87,7 +92,7 @@ export const FilterChip = ({
 			)}
 			<span
 				className="sessionsListToolbar__chipLabel"
-				aria-hidden={!active && !isText}
+				aria-hidden={!labelVisible}
 			>
 				{label}
 			</span>

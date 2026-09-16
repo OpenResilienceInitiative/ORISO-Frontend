@@ -743,7 +743,11 @@ export const SessionsListToolbar = ({
 					<Link
 						className={clsx('sessionsListToolbar__chip', {
 							'sessionsListToolbar__chip--active':
-								createGroupChatActive
+								createGroupChatActive,
+							'sessionsListToolbar__chip--text':
+								chipView === 'text',
+							'sessionsListToolbar__chip--labelled':
+								chipView === 'labels'
 						})}
 						to={createGroupChatPath}
 						aria-label={translate(
@@ -755,7 +759,9 @@ export const SessionsListToolbar = ({
 						data-cy="sessions-list-chip-create"
 						data-tour-target="groupchat-create-button"
 					>
-						<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
+						{chipView !== 'text' && (
+							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
+						)}
 						<span className="sessionsListToolbar__chipLabel">
 							{tr('sessionList.toolbar.chips.create', 'Create')}
 						</span>
@@ -766,9 +772,13 @@ export const SessionsListToolbar = ({
 					<Link
 						className={clsx('sessionsListToolbar__chip', {
 							'sessionsListToolbar__chip--iconOnly':
-								!archiveTabActive,
+								!archiveTabActive && chipView === 'icons',
 							'sessionsListToolbar__chip--active':
-								archiveTabActive
+								archiveTabActive,
+							'sessionsListToolbar__chip--text':
+								chipView === 'text',
+							'sessionsListToolbar__chip--labelled':
+								chipView === 'labels'
 						})}
 						data-tour-target="sessions-archive-tab"
 						to={archiveTabPath}
@@ -776,10 +786,14 @@ export const SessionsListToolbar = ({
 						aria-current={archiveTabActive ? 'page' : undefined}
 						data-cy="sessions-list-chip-archive"
 					>
-						<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
+						{chipView !== 'text' && (
+							<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
+						)}
 						<span
 							className="sessionsListToolbar__chipLabel"
-							aria-hidden={!archiveTabActive}
+							aria-hidden={
+								!archiveTabActive && chipView === 'icons'
+							}
 						>
 							{tr(
 								'sessionList.toolbar.chips.archive',

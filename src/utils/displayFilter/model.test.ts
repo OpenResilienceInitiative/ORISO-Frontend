@@ -176,6 +176,9 @@ describe('chip presentation (view + auto-sort, Frank 2026-09-16)', () => {
 			view: 'text',
 			autoSort: false
 		});
+		expect(parseDisplayFilter({ kinds: {}, view: 'labels' }).view).toBe(
+			'labels'
+		);
 		expect(
 			parseDisplayFilter({ kinds: {}, view: 'huge', autoSort: 'yes' })
 		).toEqual({ kinds: {}, autoReadHidden: false });

@@ -7,6 +7,7 @@
  */
 
 import {
+	CHIP_VIEWS,
 	ChipView,
 	DEFAULT_KIND_SETTING,
 	DisplayFilterValue,
@@ -15,8 +16,6 @@ import {
 } from '../../components/displayFilter/displayFilterTypes';
 
 export { resolveChipPresentation } from '../../components/displayFilter/displayFilterTypes';
-
-const CHIP_VIEWS: ReadonlyArray<ChipView> = ['icons', 'text'];
 
 /** The optional chip-presentation fields of a value, only when valid. */
 const presentationFields = (

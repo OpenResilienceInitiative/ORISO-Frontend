@@ -5,6 +5,7 @@ import clsx from 'clsx';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { Switch } from '../Switch';
 import {
+	CHIP_VIEWS,
 	ChipView,
 	DisplayFilterKindOption,
 	DisplayFilterValue,
@@ -38,6 +39,7 @@ export interface DisplayFilterDialogLabels {
 	/** "Ansicht der Pillen" — legend of the view radio group. */
 	viewTitle: string;
 	viewIcons: string;
+	viewLabels: string;
 	viewText: string;
 	/** "Ungelesenes nach links sortieren" */
 	autoSort: string;
@@ -153,7 +155,7 @@ export const DisplayFilterDialog = ({
 					role="radiogroup"
 					aria-label={labels.viewTitle}
 				>
-					{(['icons', 'text'] as ChipView[]).map((view) => (
+					{CHIP_VIEWS.map((view) => (
 						<label
 							key={view}
 							className={clsx(
@@ -174,7 +176,9 @@ export const DisplayFilterDialog = ({
 							<span>
 								{view === 'icons'
 									? labels.viewIcons
-									: labels.viewText}
+									: view === 'labels'
+										? labels.viewLabels
+										: labels.viewText}
 							</span>
 						</label>
 					))}

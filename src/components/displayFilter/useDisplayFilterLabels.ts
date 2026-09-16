@@ -60,6 +60,7 @@ export const useDisplayFilterLabels = (
 				readOnlyHint: t('notifications.displayFilter.readOnlyHint'),
 				viewTitle: t('notifications.displayFilter.viewTitle'),
 				viewIcons: t('notifications.displayFilter.viewIcons'),
+				viewLabels: t('notifications.displayFilter.viewLabels'),
 				viewText: t('notifications.displayFilter.viewText'),
 				autoSort: t('notifications.displayFilter.autoSort'),
 				autoSortDescription: t(

@@ -295,4 +295,45 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 			).length
 		).toBe(0);
 	});
+
+	it('turns the Create and Archive links into text pills in the text view', () => {
+		const { container } = renderMenu({
+			chipView: 'text',
+			showCreateGroupChatAction: true
+		});
+		const create = container.querySelector(
+			'[data-cy="sessions-list-chip-create"]'
+		)!;
+		const archive = container.querySelector(
+			'[data-cy="sessions-list-chip-archive"]'
+		)!;
+		expect(create.className).toContain('sessionsListToolbar__chip--text');
+		expect(archive.className).toContain('sessionsListToolbar__chip--text');
+		expect(create.querySelector('svg')).toBeNull();
+		expect(archive.querySelector('svg')).toBeNull();
+		expect(create.textContent).toContain('Create');
+		expect(archive.textContent).toContain('Archived');
+	});
+
+	it('shows icon and label on every pill in the labels view', () => {
+		const { container } = renderMenu({
+			chipView: 'labels',
+			showCreateGroupChatAction: true
+		});
+		const mail = screen.getByRole('button', { name: 'Mail (2)' });
+		expect(mail.className).toContain('sessionsListToolbar__chip--labelled');
+		const archive = container.querySelector(
+			'[data-cy="sessions-list-chip-archive"]'
+		)!;
+		expect(archive.className).toContain(
+			'sessionsListToolbar__chip--labelled'
+		);
+		// icon (mocked as a span) + visible label
+		expect(archive.children.length).toBe(2);
+		expect(
+			archive
+				.querySelector('.sessionsListToolbar__chipLabel')
+				?.getAttribute('aria-hidden')
+		).not.toBe('true');
+	});
 });

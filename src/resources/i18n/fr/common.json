@@ -1853,6 +1853,7 @@
 			"readOnlyHint": "Ces réglages ont été enregistrés par une version plus récente de l’application. Mettez-la à jour pour les modifier.",
 			"viewTitle": "Affichage des pastilles",
 			"viewIcons": "Icônes",
+			"viewLabels": "Icônes + texte",
 			"viewText": "Texte",
 			"autoSort": "Placer les non lus à gauche",
 			"autoSortDescription": "Les pastilles avec des éléments non lus passent en tête de ligne.",
