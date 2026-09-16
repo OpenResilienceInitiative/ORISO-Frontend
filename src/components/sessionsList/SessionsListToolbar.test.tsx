@@ -185,13 +185,13 @@ describe('SessionsListToolbar display filter (#1377 slice 4)', () => {
 	const chip = (container: HTMLElement, id: string) =>
 		container.querySelector(`[data-cy="sessions-list-chip-${id}"]`);
 
-	it('renders the pinned tune button outside the scrolling chips', () => {
+	it('renders the tune button in the search field, not among the scrolling chips', () => {
 		const { container } = renderWithDisplayFilter({}, true);
 		const button = screen.getByRole('button', { name: 'Anzeige-Filter' });
 		expect(button.getAttribute('aria-controls')).toBe('dialog-id');
 		expect(
 			container
-				.querySelector('.filterChipRow__trailing')
+				.querySelector('.sessionsListToolbar__search')
 				?.contains(button)
 		).toBe(true);
 		expect(

@@ -1859,7 +1859,7 @@
 			"title": "Anzeige-Filter",
 			"description": "Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.",
 			"showColumn": "In der Liste",
-			"pillColumn": "Als Pille",
+			"pillColumn": "Anzeigen",
 			"soundColumn": "Ton",
 			"soundKind": "Ton: {{kind}}",
 			"showKind": "In der Liste: {{kind}}",

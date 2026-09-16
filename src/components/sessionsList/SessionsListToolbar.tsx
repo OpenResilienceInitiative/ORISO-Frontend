@@ -548,24 +548,46 @@ export const SessionsListToolbar = ({
 							showSearchDropdown
 					})}
 				>
-					<button
-						type="button"
-						className="sessionsListToolbar__iconButton"
-						aria-label={
-							showSearchDropdown
-								? tr(
-										'sessionList.toolbar.search.close',
-										'Close search'
-									)
-								: tr(
-										'sessionList.toolbar.search.toggle',
-										'Open or close search results'
-									)
-						}
-						onClick={() => setIsSearchViewOpen((prev) => !prev)}
-					>
-						{showSearchDropdown ? <IconClose /> : <IconMenuDots />}
-					</button>
+					{/* Frank 2026-09-16: the display-filter button lives in the
+					    search field's leading slot (the kebab had no function of
+					    its own); while the search panel is open the slot closes it. */}
+					{showSearchDropdown || !displayFilter ? (
+						<button
+							type="button"
+							className="sessionsListToolbar__iconButton"
+							aria-label={
+								showSearchDropdown
+									? tr(
+											'sessionList.toolbar.search.close',
+											'Close search'
+										)
+									: tr(
+											'sessionList.toolbar.search.toggle',
+											'Open or close search results'
+										)
+							}
+							onClick={() => setIsSearchViewOpen((prev) => !prev)}
+						>
+							{showSearchDropdown ? (
+								<IconClose />
+							) : (
+								<IconMenuDots />
+							)}
+						</button>
+					) : (
+						<span className="sessionsListToolbar__iconButton sessionsListToolbar__iconButton--filter">
+							<DisplayFilterButton
+								label={displayFilter.label}
+								customised={displayFilter.customised}
+								customisedLabel={displayFilter.customisedLabel}
+								open={displayFilter.open}
+								controlsId={displayFilter.controlsId}
+								onClick={displayFilter.onOpen}
+								compact
+								data-cy="sessions-list-display-filter"
+							/>
+						</span>
+					)}
 					<div className="sessionsListToolbar__searchFieldWrap">
 						{selectedPeople.length > 0 && (
 							<div className="sessionsListToolbar__searchInlinePills">
@@ -746,21 +768,9 @@ export const SessionsListToolbar = ({
 
 			<FilterChipRow
 				label={tr('sessionList.toolbar.chips.group', 'Filter')}
+				className={clsx(chipView === 'text' && 'filterChipRow--dense')}
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
 				scrollDataCy="sessions-list-chips"
-				trailing={
-					displayFilter && (
-						<DisplayFilterButton
-							label={displayFilter.label}
-							customised={displayFilter.customised}
-							customisedLabel={displayFilter.customisedLabel}
-							open={displayFilter.open}
-							controlsId={displayFilter.controlsId}
-							onClick={displayFilter.onOpen}
-							data-cy="sessions-list-display-filter"
-						/>
-					)
-				}
 			>
 				{showCreateGroupChatAction && (
 					<Link

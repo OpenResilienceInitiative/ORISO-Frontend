@@ -310,7 +310,7 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 		expect(screen.getByRole('columnheader', { name: 'Ton' })).toBeTruthy();
 	});
 
-	it('omits show-only kinds in the sound-column mode — nothing to mute, nothing to hide', () => {
+	it('turns a show-only kind into a plain switch in the sound-column mode', () => {
 		render(
 			<DisplayFilterDialog
 				open
@@ -331,7 +331,13 @@ describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
 				onChange={() => undefined}
 			/>
 		);
-		expect(screen.queryByText('Zukünftige Termine')).toBeNull();
+		expect(
+			screen.queryByRole('checkbox', { name: /Zukünftige Termine/ })
+		).toBeNull();
+		const panel = screen.getByRole('switch', {
+			name: 'In der Liste: Zukünftige Termine'
+		}) as HTMLInputElement;
+		expect(panel.checked).toBe(true);
 		expect(
 			screen.getByRole('checkbox', { name: 'Ton: Mail' })
 		).toBeTruthy();

@@ -2,6 +2,7 @@ import {
 	parseChannel,
 	rewriteLegacyChannelPath
 } from '../../utils/channelRoute';
+import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
 	useCallback,
@@ -957,6 +958,20 @@ export const NotificationsCenter = () => {
 			>
 				<div className="sessionsListToolbar notificationsCenter__toolbar">
 					<ListSearchField
+						leading={
+							<DisplayFilterButton
+								label={displayFilterLabels.buttonLabel}
+								customised={displayFilterCustomised}
+								customisedLabel={
+									displayFilterLabels.buttonCustomisedLabel
+								}
+								open={displayFilterOpen}
+								controlsId={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
+								onClick={() => setDisplayFilterOpen(true)}
+								compact
+								data-cy="timeline-display-filter"
+							/>
+						}
 						value={searchQuery}
 						onChange={setSearchQuery}
 						placeholder={translate(
@@ -978,20 +993,6 @@ export const NotificationsCenter = () => {
 								'notifications.center.title',
 								'Notifications'
 							)}
-							trailing={
-								<DisplayFilterButton
-									label={displayFilterLabels.buttonLabel}
-									customised={displayFilterCustomised}
-									customisedLabel={
-										displayFilterLabels.buttonCustomisedLabel
-									}
-									open={displayFilterOpen}
-									controlsId={
-										TIMELINE_DISPLAY_FILTER_DIALOG_ID
-									}
-									onClick={() => setDisplayFilterOpen(true)}
-								/>
-							}
 						>
 							{pillKinds.map((kind) => (
 								<FilterChip
@@ -1053,6 +1054,9 @@ export const NotificationsCenter = () => {
 					)}
 				</div>
 				<DisplayFilterDialog
+					icon={
+						<NavActivityIcon className="displayFilterDialog__heroIcon" />
+					}
 					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
 					open={displayFilterOpen}
 					fullScreen={untilL}

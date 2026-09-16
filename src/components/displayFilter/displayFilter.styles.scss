@@ -397,3 +397,59 @@
 .displayFilterDialog .displayFilterDialog__footerLine {
 	margin-top: 8px;
 }
+
+/* Text view (Frank 2026-09-16): the filter button is a bare 16px glyph, and
+   the compact pills sit closer together. */
+.displayFilterButton--compact {
+	min-height: 28px;
+	min-width: 28px;
+	max-width: 28px;
+	border-color: transparent;
+	background: transparent;
+	box-shadow: none;
+
+	.sessionsListToolbar__chipIconSvg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.displayFilterButton__dot {
+		right: 2px;
+		top: 2px;
+		width: 6px;
+		height: 6px;
+	}
+}
+
+.filterChipRow--dense .sessionsListToolbar__chipsRow {
+	gap: 4px;
+}
+
+.filterChipRow--dense .sessionsListToolbar__chip--text {
+	padding: 0 10px;
+}
+
+.displayFilterDialog__heroIcon {
+	width: 32px;
+	height: 32px;
+	display: block;
+}
+
+/* Filter button in the search field's leading slot (all views). */
+.sessionsListToolbar__iconButton--filter {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	.displayFilterButton--compact {
+		min-height: 40px;
+		min-width: 40px;
+		max-width: 40px;
+		color: var(--m3-secondary, #4c555f);
+
+		.sessionsListToolbar__chipIconSvg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+}

@@ -42,7 +42,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	description:
 		'Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.',
 	showColumn: 'In der Liste',
-	pillColumn: 'Als Pille',
+	pillColumn: 'Anzeigen',
 	showKind: (kind) => `In der Liste: ${kind}`,
 	soundColumn: 'Ton',
 	soundKind: (kind) => `Ton: ${kind}`,

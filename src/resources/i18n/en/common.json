@@ -1835,7 +1835,7 @@
 			"title": "Display filter",
 			"description": "Which kinds appear in this list and which get a pill.",
 			"showColumn": "In the list",
-			"pillColumn": "As chip",
+			"pillColumn": "Show",
 			"soundColumn": "Sound",
 			"soundKind": "Sound: {{kind}}",
 			"showKind": "In the list: {{kind}}",

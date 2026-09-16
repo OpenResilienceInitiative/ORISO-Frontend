@@ -117,6 +117,7 @@ import {
 	SESSION_COLUMNS
 } from '../displayFilter';
 import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
+import { NavChatsIcon, NavInboxIcon } from '../app/navigationSidebarIcons';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	applyRequestsFilter,
@@ -2224,6 +2225,13 @@ export const SessionsList = ({
 				<DisplayFilterDialog
 					id={SESSIONS_DISPLAY_FILTER_DIALOG_ID}
 					columns={SESSION_COLUMNS}
+					icon={
+						type === SESSION_LIST_TYPES.ENQUIRY ? (
+							<NavInboxIcon className="displayFilterDialog__heroIcon" />
+						) : (
+							<NavChatsIcon className="displayFilterDialog__heroIcon" />
+						)
+					}
 					open={displayFilterOpen}
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}

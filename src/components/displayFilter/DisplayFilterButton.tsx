@@ -20,6 +20,11 @@ export interface DisplayFilterButtonProps {
 	'onClick': () => void;
 	/** id of the dialog for `aria-controls`. */
 	'controlsId'?: string;
+	/**
+	 * Text view of the chip row (Frank 2026-09-16): the button is a bare
+	 * 16px glyph without the pill circle, so the compact row stays compact.
+	 */
+	'compact'?: boolean;
 	'data-cy'?: string;
 }
 
@@ -36,6 +41,7 @@ export const DisplayFilterButton = ({
 	open,
 	onClick,
 	controlsId,
+	compact = false,
 	'data-cy': dataCy = 'display-filter-button'
 }: DisplayFilterButtonProps) => {
 	const stateId = useId();
@@ -45,7 +51,8 @@ export const DisplayFilterButton = ({
 			type="button"
 			className={clsx(
 				'sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly displayFilterButton',
-				customised && 'displayFilterButton--customised'
+				customised && 'displayFilterButton--customised',
+				compact && 'displayFilterButton--compact'
 			)}
 			onClick={onClick}
 			title={label}

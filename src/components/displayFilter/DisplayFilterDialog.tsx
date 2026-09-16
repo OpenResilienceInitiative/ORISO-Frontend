@@ -9,7 +9,9 @@ import {
 	ChipView,
 	DisplayFilterKindOption,
 	DisplayFilterValue,
-	resolveChipPresentation
+	resolveChipPresentation,
+	resolveKindSetting,
+	setKindSetting
 } from './displayFilterTypes';
 import { DisplayFilterKindTable } from './DisplayFilterKindTable';
 import './displayFilter.styles.scss';
@@ -86,6 +88,8 @@ export interface DisplayFilterDialogProps {
 	 * them ("Ton") instead. "Als Pille" is always there.
 	 */
 	columns?: DisplayFilterColumns;
+	/** Hero icon of the dialog: the list's own icon (Frank 2026-09-16), default `tune`. */
+	icon?: React.ReactNode;
 }
 
 export interface DisplayFilterColumns {
@@ -123,8 +127,14 @@ export const DisplayFilterDialog = ({
 	canReset = false,
 	fullScreen = false,
 	id,
-	columns = TIMELINE_COLUMNS
+	columns = TIMELINE_COLUMNS,
+	icon
 }: DisplayFilterDialogProps) => {
+	// Show-only kinds (the future timeline panel) have no row in the sound
+	// mode table; they keep a plain switch so the panel stays toggleable.
+	const panelKinds = columns.show
+		? []
+		: kinds.filter((kind) => kind.showOnly);
 	const generatedId = useId();
 	const dialogId = id ?? generatedId;
 	const presentation = resolveChipPresentation(value);
@@ -136,7 +146,7 @@ export const DisplayFilterDialog = ({
 			onClose={onClose}
 			title={labels.title}
 			description={labels.description}
-			icon={<TuneIcon />}
+			icon={icon ?? <TuneIcon />}
 			closeLabel={labels.close}
 			width={480}
 			fullScreen={fullScreen}
@@ -235,6 +245,32 @@ export const DisplayFilterDialog = ({
 					}
 				/>
 			</div>
+
+			{panelKinds.map((kind) => (
+				<div className="displayFilterDialog__autoRead" key={kind.id}>
+					<div className="displayFilterDialog__autoReadText">
+						<span
+							className="displayFilterDialog__autoReadTitle"
+							id={`${dialogId}-panel-${kind.id}`}
+						>
+							{labels.showKind(kind.label)}
+						</span>
+					</div>
+					<Switch
+						checked={resolveKindSetting(value, kind.id).show}
+						disabled={readOnly}
+						aria-labelledby={`${dialogId}-panel-${kind.id}`}
+						data-cy={`display-filter-panel-${kind.id}`}
+						onChange={(checked) =>
+							onChange(
+								setKindSetting(value, kind.id, {
+									show: checked
+								})
+							)
+						}
+					/>
+				</div>
+			))}
 
 			{showAutoRead && (
 				<div className="displayFilterDialog__autoRead">
