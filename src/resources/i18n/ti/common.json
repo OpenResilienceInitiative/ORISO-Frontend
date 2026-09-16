@@ -845,12 +845,14 @@
 				"sourceLanguage": "መበቆላዊ ቋንቋ",
 				"welcome": "ናይ እንቋዕ ደሓን መጻእኩም መልእኽቲ (እንተበዝሐ 120 ፊደላት)",
 				"rules": "ሕግታት ጉጅለ",
-				"rule": "ሕጊ",
+				"rule": "ሕጊ ቁ. 1 (እንተበዝሐ 120 ፊደላት)",
 				"addRule": "ሕጊ ወስኽ",
+				"removeLanguage": "ቋንቋ {{language}} ኣወግድ",
 				"removeRule": "ኣወግድ",
 				"translate": "ናብ ንጡፋት ቋንቋታት ተርጉም",
 				"translating": "ይትርጎም ኣሎ…",
 				"translationError": "ትርጉም ኣይተዓወተን። ጽሑፍኩም ተዓቂቡ ኣሎ፤ በጃኹም ደጊምኩም ፈትኑ።",
+				"ruleChipShort": "ቁ. {{index}}",
 				"ruleChip": "ሕጊ ቁ. {{index}}"
 			}
 		},
