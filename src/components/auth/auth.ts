@@ -1,4 +1,4 @@
-import { logout } from '../logout/logout';
+import { logout, teardownLocalSession } from '../logout/logout';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import {
 	getTokenExpiryFromLocalStorage,
@@ -116,8 +116,13 @@ export const handleTokenRefresh = (redirect: boolean = true): Promise<void> => {
 			tokenExpiry.refreshTokenValidUntilTime - currentTime;
 
 		if (refreshTokenValidInMs <= 0 && accessTokenValidInMs <= 0) {
-			// access token and refresh token no longer valid, logout
-			logout(redirect, appConfig.urls.toLogin);
+			// Access and refresh token are gone. Tear the local session down
+			// *now*, before the caller renders the login form: `logout()`
+			// first awaits its pre-logout handlers, and in that window the
+			// leftover cookies kept the notification poller and the Matrix
+			// client alive next to the login form (dev, 2026-09-16).
+			teardownLocalSession();
+			void logout(redirect, appConfig.urls.toLogin);
 			reject();
 		} else if (accessTokenValidInMs <= 0) {
 			// access token no longer valid but refresh token still valid, refresh tokens

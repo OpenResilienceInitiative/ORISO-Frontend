@@ -12,7 +12,7 @@ import {
 	getTokenExpiryFromLocalStorage,
 	setTokenExpiryInLocalStorage
 } from '../sessionCookie/accessSessionLocalStorage';
-import { logout } from '../logout/logout';
+import { logout, teardownLocalSession } from '../logout/logout';
 import { refreshKeycloakAccessToken } from '../sessionCookie/refreshKeycloakAccessToken';
 
 vi.mock('../sessionCookie/accessSessionCookie', () => ({
@@ -25,7 +25,8 @@ vi.mock('../sessionCookie/accessSessionLocalStorage', () => ({
 }));
 
 vi.mock('../logout/logout', () => ({
-	logout: vi.fn()
+	logout: vi.fn(),
+	teardownLocalSession: vi.fn()
 }));
 
 vi.mock('../sessionCookie/refreshKeycloakAccessToken', () => ({
@@ -124,6 +125,28 @@ describe('auth helpers', () => {
 		await expect(handleTokenRefresh(false)).rejects.toBeUndefined();
 
 		expect(logout).toHaveBeenCalledWith(false, '/login');
+	});
+
+	it('tears the local session down before the caller can show the login form', async () => {
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date('2026-09-16T10:00:00.000Z'));
+		vi.mocked(getTokenExpiryFromLocalStorage).mockReturnValue({
+			accessTokenValidUntilTime: Date.now() - 1,
+			refreshTokenValidUntilTime: Date.now() - 26 * 60_000
+		});
+		const order: string[] = [];
+		vi.mocked(teardownLocalSession).mockImplementation(() => {
+			order.push('teardown');
+		});
+		vi.mocked(logout).mockImplementation(async () => {
+			order.push('logout');
+		});
+
+		await expect(handleTokenRefresh(false)).rejects.toBeUndefined();
+
+		// Synchronous, and ahead of the async logout: no leftover cookie may
+		// survive into the render that shows the login form.
+		expect(order).toEqual(['teardown', 'logout']);
 	});
 
 	it('refreshes tokens when only the access token is expired', async () => {
