@@ -1,6 +1,18 @@
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import { MatrixRTCSession } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 
+/**
+ * P2 feed-update signal (ADR-020). UserService emits this content-free Matrix
+ * event to a recipient whenever a row is persisted into the Activity-Timeline
+ * feed. It carries no notification content — it only says "your feed changed",
+ * so the client refreshes now instead of on the next 15 s poll. The feed
+ * contents keep coming exclusively from the authenticated REST feed endpoint.
+ */
+export const FEED_UPDATE_EVENT_TYPE = 'org.oriso.feed.updated';
+
+/** Bridge-level event name consumers subscribe to via `bridge.on(...)`. */
+export const FEED_UPDATE_BRIDGE_EVENT = 'feedUpdated';
+
 type CallManagerModule = typeof import('./CallManager');
 
 const getCallManager = (): CallManagerModule['callManager'] => {
@@ -32,6 +44,11 @@ export class MatrixLiveEventBridge {
 	private initialized: boolean = false;
 	private processedCallInvites: Set<string> = new Set(); // Track processed call IDs
 	private activeCallRecoveryScans = 0;
+	// One incoming to-device message can reach us twice: matrix-js-sdk v38 emits
+	// the deprecated `toDeviceEvent` AND `receivedToDeviceMessage` for the same
+	// message, synchronously. We listen to both so an older SDK still works, and
+	// collapse the pair with a per-tick guard.
+	private feedSignalHandledInTick = false;
 	private pendingEncryptedEvents = new Map<
 		MatrixEvent,
 		{
@@ -57,6 +74,8 @@ export class MatrixLiveEventBridge {
 		if (this.client && this.client !== client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
+			this.client.removeAllListeners('receivedToDeviceMessage' as any);
+			this.client.removeAllListeners('toDeviceEvent' as any);
 			this.clearPendingEncryptedEvents();
 		}
 
@@ -89,6 +108,26 @@ export class MatrixLiveEventBridge {
 				this.dispatchTimelineEvent(event, room);
 			}
 		);
+
+		// Listen to to-device messages. The P2 feed-update signal travels as a
+		// to-device message: it needs no room, is never written to any room
+		// timeline, and reaches every logged-in device of the recipient.
+		this.client.on(
+			'receivedToDeviceMessage' as any,
+			(payload: { message?: { type?: string } }) => {
+				if (payload?.message?.type === FEED_UPDATE_EVENT_TYPE) {
+					this.handleFeedUpdateSignal();
+				}
+			}
+		);
+
+		// Deprecated in matrix-js-sdk v38 but the only to-device channel in older
+		// versions. Guarded against double-handling by handleFeedUpdateSignal.
+		this.client.on('toDeviceEvent' as any, (event: MatrixEvent) => {
+			if (event?.getType?.() === FEED_UPDATE_EVENT_TYPE) {
+				this.handleFeedUpdateSignal();
+			}
+		});
 
 		// Listen to sync state changes
 		this.client.on(
@@ -206,6 +245,12 @@ export class MatrixLiveEventBridge {
 				this.handleCallHangup(event, room);
 				break;
 
+			case FEED_UPDATE_EVENT_TYPE:
+				// Accepted from the timeline too, so a future room-based sender
+				// needs no frontend change. Content is ignored either way.
+				this.handleFeedUpdateSignal();
+				break;
+
 			default:
 				break;
 		}
@@ -260,6 +305,33 @@ export class MatrixLiveEventBridge {
 			clearTimeout(timeout);
 		});
 		this.pendingEncryptedEvents.clear();
+	}
+
+	/**
+	 * Handle the content-free feed-update signal.
+	 *
+	 * Deliberately carries nothing but a local timestamp: the recipient is
+	 * implicit (the signal was addressed to this account), and the notification
+	 * itself is read from the persisted feed over the authenticated REST API.
+	 */
+	private handleFeedUpdateSignal(): void {
+		if (this.feedSignalHandledInTick) {
+			return;
+		}
+		this.feedSignalHandledInTick = true;
+		// Released on the next microtask: the duplicate pair arrives in the same
+		// synchronous stack, a genuinely later signal does not.
+		queueMicrotask(() => {
+			this.feedSignalHandledInTick = false;
+		});
+
+		// Breadcrumb so "did this refresh come from the signal or from the 15 s
+		// poll?" is answerable in a browser console. Deliberately carries no
+		// sender, no room and no content.
+		// eslint-disable-next-line no-console
+		console.debug('[oriso] feed signal received');
+
+		this.triggerEvent(FEED_UPDATE_BRIDGE_EVENT, { timestamp: Date.now() });
 	}
 
 	/**
@@ -521,6 +593,8 @@ export class MatrixLiveEventBridge {
 		if (this.client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
+			this.client.removeAllListeners('receivedToDeviceMessage' as any);
+			this.client.removeAllListeners('toDeviceEvent' as any);
 		}
 		this.clearPendingEncryptedEvents();
 		this.processedCallInvites.clear();

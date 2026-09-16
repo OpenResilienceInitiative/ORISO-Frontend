@@ -5,6 +5,7 @@ import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { bindFeedUpdateSignal } from '../../services/feedUpdateSignalBridge';
 
 /**
  * Bridges real-time Matrix events into the app-wide message event emitter
@@ -37,11 +38,19 @@ export const WebsocketHandler = () => {
 
 		matrixLiveEventBridge.on('directMessage', handleMatrixDirectMessage);
 
+		// P2 feed-update signal (ADR-020): UserService nudges this client over
+		// Matrix whenever a row lands in its Activity-Timeline feed, so the feed
+		// refreshes now instead of on the next 15 s poll. Content-free — no
+		// notification data rides on the signal, and the rows are still read
+		// from the authenticated REST feed endpoint.
+		const unbindFeedUpdateSignal = bindFeedUpdateSignal();
+
 		return () => {
 			matrixLiveEventBridge.off(
 				'directMessage',
 				handleMatrixDirectMessage
 			);
+			unbindFeedUpdateSignal();
 		};
 	}, []);
 
