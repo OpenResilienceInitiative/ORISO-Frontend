@@ -44,6 +44,11 @@ export class MatrixLiveEventBridge {
 	private initialized: boolean = false;
 	private processedCallInvites: Set<string> = new Set(); // Track processed call IDs
 	private activeCallRecoveryScans = 0;
+	// One incoming to-device message can reach us twice: matrix-js-sdk v38 emits
+	// the deprecated `toDeviceEvent` AND `receivedToDeviceMessage` for the same
+	// message, synchronously. We listen to both so an older SDK still works, and
+	// collapse the pair with a per-tick guard.
+	private feedSignalHandledInTick = false;
 	private pendingEncryptedEvents = new Map<
 		MatrixEvent,
 		{
@@ -70,6 +75,7 @@ export class MatrixLiveEventBridge {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
 			this.client.removeAllListeners('receivedToDeviceMessage' as any);
+			this.client.removeAllListeners('toDeviceEvent' as any);
 			this.clearPendingEncryptedEvents();
 		}
 
@@ -114,6 +120,14 @@ export class MatrixLiveEventBridge {
 				}
 			}
 		);
+
+		// Deprecated in matrix-js-sdk v38 but the only to-device channel in older
+		// versions. Guarded against double-handling by handleFeedUpdateSignal.
+		this.client.on('toDeviceEvent' as any, (event: MatrixEvent) => {
+			if (event?.getType?.() === FEED_UPDATE_EVENT_TYPE) {
+				this.handleFeedUpdateSignal();
+			}
+		});
 
 		// Listen to sync state changes
 		this.client.on(
@@ -301,6 +315,22 @@ export class MatrixLiveEventBridge {
 	 * itself is read from the persisted feed over the authenticated REST API.
 	 */
 	private handleFeedUpdateSignal(): void {
+		if (this.feedSignalHandledInTick) {
+			return;
+		}
+		this.feedSignalHandledInTick = true;
+		// Released on the next microtask: the duplicate pair arrives in the same
+		// synchronous stack, a genuinely later signal does not.
+		queueMicrotask(() => {
+			this.feedSignalHandledInTick = false;
+		});
+
+		// Breadcrumb so "did this refresh come from the signal or from the 15 s
+		// poll?" is answerable in a browser console. Deliberately carries no
+		// sender, no room and no content.
+		// eslint-disable-next-line no-console
+		console.debug('[oriso] feed signal received');
+
 		this.triggerEvent(FEED_UPDATE_BRIDGE_EVENT, { timestamp: Date.now() });
 	}
 
@@ -564,6 +594,7 @@ export class MatrixLiveEventBridge {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
 			this.client.removeAllListeners('receivedToDeviceMessage' as any);
+			this.client.removeAllListeners('toDeviceEvent' as any);
 		}
 		this.clearPendingEncryptedEvents();
 		this.processedCallInvites.clear();

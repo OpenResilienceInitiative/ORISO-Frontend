@@ -192,10 +192,111 @@ describe('MatrixLiveEventBridge — feed update signal (P2)', () => {
 		expect(directMessage).not.toHaveBeenCalled();
 	});
 
-	it('detaches the to-device listener again', () => {
+	it('detaches both to-device listeners again', () => {
 		bridge.initialize(client as any);
 		bridge.detach();
 
 		expect(client.listenerCount('receivedToDeviceMessage')).toBe(0);
+		expect(client.listenerCount('toDeviceEvent')).toBe(0);
+	});
+
+	// --- deprecated `toDeviceEvent` fallback (older matrix-js-sdk) ---------
+
+	const makeToDeviceEvent = (type: string) => ({
+		getType: () => type,
+		getContent: () => ({}),
+		getSender: () => ADMIN_USER_ID
+	});
+
+	it('attaches the deprecated toDeviceEvent listener as an SDK-version fallback', () => {
+		bridge.initialize(client as any);
+
+		expect(client.listenerCount('toDeviceEvent')).toBe(1);
+	});
+
+	it('emits for the deprecated toDeviceEvent when it is the only channel', () => {
+		bridge.initialize(client as any);
+		const callback = vi.fn();
+		bridge.on(FEED_UPDATE_BRIDGE_EVENT, callback);
+
+		client.emit('toDeviceEvent', makeToDeviceEvent(FEED_UPDATE_EVENT_TYPE));
+
+		expect(callback).toHaveBeenCalledTimes(1);
+	});
+
+	it('ignores unrelated deprecated toDeviceEvent types', () => {
+		bridge.initialize(client as any);
+		const callback = vi.fn();
+		bridge.on(FEED_UPDATE_BRIDGE_EVENT, callback);
+
+		client.emit('toDeviceEvent', makeToDeviceEvent('m.room_key'));
+
+		expect(callback).not.toHaveBeenCalled();
+	});
+
+	it('handles one message once when the SDK emits BOTH events for it', () => {
+		// matrix-js-sdk v38 emits the deprecated `toDeviceEvent` and then
+		// `receivedToDeviceMessage` for the SAME message, synchronously.
+		bridge.initialize(client as any);
+		const callback = vi.fn();
+		bridge.on(FEED_UPDATE_BRIDGE_EVENT, callback);
+
+		client.emit('toDeviceEvent', makeToDeviceEvent(FEED_UPDATE_EVENT_TYPE));
+		client.emit('receivedToDeviceMessage', {
+			message: {
+				type: FEED_UPDATE_EVENT_TYPE,
+				sender: ADMIN_USER_ID,
+				content: {}
+			}
+		});
+
+		expect(callback).toHaveBeenCalledTimes(1);
+	});
+
+	it('handles a later, genuinely separate signal again', async () => {
+		bridge.initialize(client as any);
+		const callback = vi.fn();
+		bridge.on(FEED_UPDATE_BRIDGE_EVENT, callback);
+
+		client.emit('toDeviceEvent', makeToDeviceEvent(FEED_UPDATE_EVENT_TYPE));
+		client.emit('receivedToDeviceMessage', {
+			message: { type: FEED_UPDATE_EVENT_TYPE, content: {} }
+		});
+		// A new sync batch is a new tick.
+		await Promise.resolve();
+		client.emit('receivedToDeviceMessage', {
+			message: { type: FEED_UPDATE_EVENT_TYPE, content: {} }
+		});
+
+		expect(callback).toHaveBeenCalledTimes(2);
+	});
+
+	// --- observability ----------------------------------------------------
+
+	it('leaves one content-free breadcrumb so "signal vs poll" is visible', () => {
+		const debug = vi
+			.spyOn(console, 'debug')
+			.mockImplementation(() => undefined);
+		try {
+			bridge.initialize(client as any);
+			client.emit('receivedToDeviceMessage', {
+				message: {
+					type: FEED_UPDATE_EVENT_TYPE,
+					sender: ADMIN_USER_ID,
+					content: {}
+				}
+			});
+
+			expect(debug).toHaveBeenCalledTimes(1);
+			const logged = debug.mock.calls[0].join(' ');
+			expect(logged).toContain('feed signal received');
+			// No content, no identifiers.
+			expect(logged).not.toContain(ADMIN_USER_ID);
+			expect(logged).not.toContain(MY_USER_ID);
+			expect(logged).not.toContain('@');
+			expect(logged).not.toContain('!');
+		} finally {
+			debug.mockRestore();
+		}
 	});
 });
