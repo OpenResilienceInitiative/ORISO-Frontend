@@ -43,6 +43,7 @@ const Harness = ({
 			open
 			onClose={() => undefined}
 			onReset={rest.onReset ?? (() => undefined)}
+			onOpenProfile={() => undefined}
 			kinds={KINDS}
 			value={value}
 			canReset={rest.canReset ?? true}
@@ -164,12 +165,34 @@ describe('DisplayFilterDialog (#1377)', () => {
 		).toBeNull();
 	});
 
-	it('disables reset while nothing is customised', () => {
-		render(<Harness onValue={() => undefined} canReset={false} />);
-		const reset = screen.getByTestId(
-			'display-filter-reset'
-		) as HTMLButtonElement;
-		expect(reset.disabled).toBe(true);
+	it('shows one footer line: the standards link, plus the reset only while this list deviates', () => {
+		const onReset = vi.fn();
+		const { rerender } = render(
+			<Harness
+				onValue={() => undefined}
+				canReset={false}
+				onReset={onReset}
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Standards bearbeiten' })
+		).toBeTruthy();
+		expect(screen.queryByTestId('display-filter-reset')).toBeNull();
+		expect(
+			screen.queryByText('Diese Liste weicht von deinen Standards ab.')
+		).toBeNull();
+		// Only "Fertig" remains as a dialog action.
+		expect(
+			screen.queryByRole('button', { name: /zurücksetzen/i })
+		).toBeNull();
+		rerender(
+			<Harness onValue={() => undefined} canReset onReset={onReset} />
+		);
+		expect(
+			screen.getByText('Diese Liste weicht von deinen Standards ab.')
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('display-filter-reset'));
+		expect(onReset).toHaveBeenCalled();
 	});
 
 	it('inerts everything in read-only mode', () => {

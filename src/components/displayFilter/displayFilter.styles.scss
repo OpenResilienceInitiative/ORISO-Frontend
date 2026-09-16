@@ -351,3 +351,29 @@
 	position: static;
 	margin-left: 6px;
 }
+
+/* One footer line: deviation notice + reset while an override exists, and
+   the link to the standards. */
+.displayFilterDialog__footerLine {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-top: 16px;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--m3-on-surface-variant, #444748);
+
+	.displayFilterDialog__profileLink {
+		margin-top: 0;
+		font-size: 12px;
+		line-height: 16px;
+	}
+}
+
+.displayFilterDialog__override {
+	display: inline-flex;
+	gap: 8px;
+	align-items: baseline;
+}

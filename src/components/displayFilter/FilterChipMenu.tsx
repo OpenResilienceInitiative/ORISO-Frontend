@@ -89,7 +89,7 @@ export const FilterChipMenu = ({
 				return (
 					<FilterChip
 						key={kind.id}
-						label={kind.label}
+						label={kind.chipLabel ?? kind.label}
 						icon={kind.icon!}
 						assetIcon={assetIcons}
 						view={view}
@@ -97,7 +97,10 @@ export const FilterChipMenu = ({
 						active={activeKindId === kind.id}
 						deactivated={deactivated}
 						deactivatedLabel={labels.deactivated(
-							badgeName(kind.label, kind.unreadCount)
+							badgeName(
+								kind.chipLabel ?? kind.label,
+								kind.unreadCount
+							)
 						)}
 						onClick={() => onToggle(kind.id)}
 						onDeactivatedClick={() => onDeactivatedClick(kind.id)}

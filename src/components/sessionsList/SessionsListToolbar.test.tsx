@@ -344,13 +344,13 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 			showOtherChip: true,
 			chipCounts: { unread: 0, drafts: 0, nearby: 2, other: 7 }
 		});
-		const other = screen.getByRole('button', { name: 'Other (7)' });
+		const other = screen.getByRole('button', { name: 'More (7)' });
 		other.click();
 		expect(onChipToggle).toHaveBeenCalledWith('other');
 	});
 
 	it('omits the Sonstiges chip unless the list offers it', () => {
 		renderMenu({});
-		expect(screen.queryByRole('button', { name: /^Other/ })).toBeNull();
+		expect(screen.queryByRole('button', { name: /^More/ })).toBeNull();
 	});
 });

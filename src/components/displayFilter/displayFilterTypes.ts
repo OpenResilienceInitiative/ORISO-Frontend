@@ -56,6 +56,8 @@ export const resolveChipPresentation = (
 export interface DisplayFilterKindOption {
 	id: string;
 	label: string;
+	/** Chip caption when it differs from the dialog row label (Sonstiges row → "Weitere" chip). */
+	chipLabel?: string;
 	icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 	/** Unread items of this kind in the loaded feed (drives the pill badge). */
 	unreadCount?: number;
@@ -199,18 +201,30 @@ export const visiblePillKinds = <T extends DisplayFilterKindOption>(
 	const bundledUnread = kinds
 		.filter((kind) => bundled.includes(kind.id))
 		.reduce((sum, kind) => sum + (kind.unreadCount ?? 0), 0);
-	return kinds
-		.filter(
-			(kind) => !kind.showOnly && resolveKindSetting(value, kind.id).pill
-		)
-		.map((kind) =>
-			kind.id === OTHER_KIND_ID && bundledUnread > 0
-				? {
-						...kind,
-						unreadCount: (kind.unreadCount ?? 0) + bundledUnread
-					}
-				: kind
-		);
+	return (
+		kinds
+			.filter(
+				(kind) =>
+					!kind.showOnly && resolveKindSetting(value, kind.id).pill
+			)
+			// The bundle chip only when it has something to hold: bundled kinds
+			// or unread unmapped items (Frank 2026-09-16: "alle Arten an → kein
+			// Sonstiges").
+			.filter(
+				(kind) =>
+					kind.id !== OTHER_KIND_ID ||
+					bundled.length > 0 ||
+					(kind.unreadCount ?? 0) > 0
+			)
+			.map((kind) =>
+				kind.id === OTHER_KIND_ID && bundledUnread > 0
+					? {
+							...kind,
+							unreadCount: (kind.unreadCount ?? 0) + bundledUnread
+						}
+					: kind
+			)
+	);
 };
 
 /**

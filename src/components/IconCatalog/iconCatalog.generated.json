@@ -2160,7 +2160,8 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/displayFilter/displayFilterStoryData.ts",
-			"src/components/displayFilter/kindOptions.ts"
+			"src/components/displayFilter/kindOptions.ts",
+			"src/components/sessionsList/SessionsListToolbar.tsx"
 		],
 		"usage": "app-used"
 	},

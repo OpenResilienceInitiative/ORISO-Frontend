@@ -152,4 +152,30 @@ describe('FilterChipMenu (#1377, Frank 2026-09-16)', () => {
 				?.getAttribute('aria-hidden')
 		).not.toBe('true');
 	});
+
+	it('names the bundle chip by its chip label', () => {
+		render(
+			<FilterChipMenu
+				kinds={[
+					...KINDS,
+					{
+						id: 'other',
+						label: 'Sonstiges',
+						chipLabel: 'Weitere',
+						icon: Icon,
+						unreadCount: 4
+					}
+				]}
+				value={{ ...EMPTY_DISPLAY_FILTER, autoSort: false }}
+				activeKindId={null}
+				labels={LABELS}
+				onToggle={() => undefined}
+				onDeactivatedClick={() => undefined}
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Weitere (4)' })
+		).toBeTruthy();
+		expect(screen.queryByRole('button', { name: /Sonstiges/ })).toBeNull();
+	});
 });

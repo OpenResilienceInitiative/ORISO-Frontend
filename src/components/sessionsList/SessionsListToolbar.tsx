@@ -254,7 +254,7 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 	{
 		id: 'other',
 		labelKey: 'sessionList.toolbar.chips.other',
-		fallback: 'Other',
+		fallback: 'More',
 		Icon: OtherFilterIcon,
 		dataCy: 'sessions-list-chip-other'
 	}

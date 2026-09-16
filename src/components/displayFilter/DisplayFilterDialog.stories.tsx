@@ -98,7 +98,7 @@ export const Customised: Story = {
 		).toBeDisabled();
 		await expect(
 			dialog.getByRole('button', {
-				name: 'Auf meine Standards zurücksetzen'
+				name: 'Zurücksetzen'
 			})
 		).toBeEnabled();
 	}

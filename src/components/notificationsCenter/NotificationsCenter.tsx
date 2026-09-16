@@ -419,6 +419,10 @@ export const NotificationsCenter = () => {
 			id: kind,
 			label: timelineKindLabel(translate, kind),
 			icon: TIMELINE_KIND_ICONS[kind],
+			chipLabel:
+				kind === 'other'
+					? translate('notifications.displayFilter.otherChip')
+					: undefined,
 			unreadCount: unread[kind] ?? 0,
 			partial: isTimelineKindPartiallyHidden(timelineFilter, kind)
 		}));

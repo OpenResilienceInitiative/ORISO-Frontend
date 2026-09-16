@@ -54,8 +54,9 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	reset: 'Auf meine Standards zurücksetzen',
 	done: 'Fertig',
 	close: 'Schließen',
-	profileLink:
-		'Standards und weitere Optionen in Profil › Benachrichtigungen',
+	profileLink: 'Standards bearbeiten',
+	overrideNotice: 'Diese Liste weicht von deinen Standards ab.',
+	resetShort: 'Zurücksetzen',
 	readOnlyHint:
 		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.',
 	viewTitle: 'Ansicht der Pillen',

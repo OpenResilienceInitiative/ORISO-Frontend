@@ -268,4 +268,37 @@ describe('Sonstiges bundles the kinds without their own pill (Frank 2026-09-16)'
 		expect(matchesOtherChip(value, kinds, OTHER_KIND_ID)).toBe(true);
 		expect(matchesOtherChip(value, kinds, 'requests')).toBe(false);
 	});
+
+	it('shows the bundle chip only when something is bundled or unmapped items are unread', () => {
+		const quiet = kinds.map((k) =>
+			k.id === OTHER_KIND_ID ? { ...k, unreadCount: 0 } : k
+		);
+		// nothing bundled, no unread unmapped → no Sonstiges chip
+		expect(
+			visiblePillKinds(EMPTY_DISPLAY_FILTER, quiet, null).map((k) => k.id)
+		).not.toContain(OTHER_KIND_ID);
+		// unread unmapped items → chip
+		expect(
+			visiblePillKinds(EMPTY_DISPLAY_FILTER, kinds, null).map((k) => k.id)
+		).toContain(OTHER_KIND_ID);
+		// something bundled → chip, even with 0 unmapped unread
+		const value = setKindSetting(EMPTY_DISPLAY_FILTER, 'requests', {
+			pill: false
+		});
+		expect(visiblePillKinds(value, quiet, null).map((k) => k.id)).toContain(
+			OTHER_KIND_ID
+		);
+	});
+
+	it('uses the chip label for the bundle chip when given', () => {
+		const labelled = kinds.map((k) =>
+			k.id === OTHER_KIND_ID ? { ...k, chipLabel: 'Weitere' } : k
+		);
+		const other = visiblePillKinds(
+			EMPTY_DISPLAY_FILTER,
+			labelled,
+			null
+		).find((k) => k.id === OTHER_KIND_ID)!;
+		expect(other.chipLabel).toBe('Weitere');
+	});
 });

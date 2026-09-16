@@ -57,6 +57,8 @@ export const useDisplayFilterLabels = (
 				done: t('notifications.displayFilter.done'),
 				close: t('app.close'),
 				profileLink: t('notifications.displayFilter.profileLink'),
+				overrideNotice: t('notifications.displayFilter.overrideNotice'),
+				resetShort: t('notifications.displayFilter.resetShort'),
 				readOnlyHint: t('notifications.displayFilter.readOnlyHint'),
 				viewTitle: t('notifications.displayFilter.viewTitle'),
 				viewIcons: t('notifications.displayFilter.viewIcons'),

@@ -112,7 +112,8 @@ import {
 	resolveKindAvailability,
 	resolveChipPresentation,
 	kindsUnderOther,
-	matchesOtherChip
+	matchesOtherChip,
+	OTHER_KIND_ID
 } from '../displayFilter';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
@@ -1824,6 +1825,10 @@ export const SessionsList = ({
 				return {
 					id: kind,
 					label: sessionKindLabel(translate, kind),
+					chipLabel:
+						kind === OTHER_KIND_ID
+							? translate('notifications.displayFilter.otherChip')
+							: undefined,
 					icon: SESSION_KIND_ICONS[kind],
 					unreadCount: unreadByKind[kind] ?? 0,
 					showOnly: kind === 'futureTimeline',

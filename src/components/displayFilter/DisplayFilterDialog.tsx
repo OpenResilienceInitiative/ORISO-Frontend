@@ -31,6 +31,10 @@ export interface DisplayFilterDialogLabels {
 	autoRead: string;
 	autoReadDescription: string;
 	reset: string;
+	/** Footer: "Diese Liste weicht von deinen Standards ab." */
+	overrideNotice: string;
+	/** Footer reset action, short: "Zurücksetzen". */
+	resetShort: string;
 	done: string;
 	close: string;
 	profileLink: string;
@@ -115,12 +119,6 @@ export const DisplayFilterDialog = ({
 			id={dialogId}
 			data-testid={dialogId}
 			actions={[
-				{
-					label: labels.reset,
-					onClick: onReset,
-					disabled: readOnly || !canReset,
-					testId: 'display-filter-reset'
-				},
 				{
 					label: labels.done,
 					onClick: onClose,
@@ -241,16 +239,36 @@ export const DisplayFilterDialog = ({
 				</div>
 			)}
 
-			{onOpenProfile && (
-				<button
-					type="button"
-					className="displayFilterDialog__profileLink"
-					onClick={onOpenProfile}
-					data-cy="display-filter-profile-link"
-				>
-					{labels.profileLink}
-				</button>
-			)}
+			{/* One footer line (Frank 2026-09-16): the deviation notice with
+			    its reset while this list overrides the standards, and the link
+			    to the standards. No second dialog action. */}
+			<div className="displayFilterDialog__footerLine">
+				{canReset && (
+					<span className="displayFilterDialog__override">
+						<span>{labels.overrideNotice}</span>
+						<button
+							type="button"
+							className="displayFilterDialog__profileLink"
+							onClick={onReset}
+							disabled={readOnly}
+							data-cy="display-filter-reset"
+							data-testid="display-filter-reset"
+						>
+							{labels.resetShort}
+						</button>
+					</span>
+				)}
+				{onOpenProfile && (
+					<button
+						type="button"
+						className="displayFilterDialog__profileLink"
+						onClick={onOpenProfile}
+						data-cy="display-filter-profile-link"
+					>
+						{labels.profileLink}
+					</button>
+				)}
+			</div>
 		</M3Dialog>
 	);
 };
