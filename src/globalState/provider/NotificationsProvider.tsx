@@ -30,6 +30,10 @@ import { EventActionParams } from '../../components/notificationsCenter/eventDes
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
+	listRefreshForFeedItems,
+	pickUnseenFeedItems
+} from './feedListRefresh';
+import {
 	installAudioUnlock,
 	playNotificationSound,
 	selectEventToAnnounce
@@ -327,6 +331,12 @@ export function NotificationsProvider(props) {
 	// only announces a genuinely newer event (not every poll, and never on the
 	// backlog surfaced when an event above it is read).
 	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+	// #1206/#1429: ids of the page-0 rows already applied. `null` until the
+	// first page-0 response seeded it, so mounting never refetches the
+	// session lists that were fetched a moment ago. Rows not in the set are
+	// new to this client; those that change list membership (new request,
+	// accepted enquiry, finished conversation) make the lists refetch.
+	const knownFeedIdsRef = useRef<Set<string> | null>(null);
 
 	// --- Request ordering and pending-read serialisation (spec §6.3) --------
 	// Every feed request carries a number from one counter. Rows are applied
@@ -369,6 +379,7 @@ export function NotificationsProvider(props) {
 		setIsLoadingOlderNotifications(false);
 		setOlderNotificationsError(false);
 		highestLoadedPageRef.current = 0;
+		knownFeedIdsRef.current = null;
 		pageFloorsRef.current = new Map();
 		readSettledFloorRef.current = 0;
 		parkedPageZeroRef.current = null;
@@ -463,6 +474,23 @@ export function NotificationsProvider(props) {
 			pageFloorsRef.current.set(page, seq);
 			if (page === 0) {
 				maybePlaySoundForNewEvent(items);
+				const knownIds = knownFeedIdsRef.current;
+				if (knownIds === null) {
+					knownFeedIdsRef.current = new Set(
+						items.map((item) => String(item.id))
+					);
+				} else {
+					const unseen = pickUnseenFeedItems(items, knownIds);
+					unseen.forEach((item) => knownIds.add(String(item.id)));
+					// A reconciliation fetch surfaces the backlog below a row
+					// that was just read; those rows are old, not new.
+					const listRefresh = reconciliation
+						? null
+						: listRefreshForFeedItems(unseen);
+					if (listRefresh) {
+						messageEventEmitter.emit(listRefresh);
+					}
+				}
 				setNotificationFeed((existing) =>
 					// Page 0 is authoritative for its own window, so a row the
 					// server dropped disappears here instead of surviving
@@ -1005,7 +1033,16 @@ export function NotificationsProvider(props) {
 	// a burst of events collapses into a single refetch.
 	useEffect(() => {
 		let debounceTimer: number | undefined;
-		const onLiveEvent = () => {
+		const onLiveEvent = (event: {
+			refreshEnquiryList?: boolean;
+			refreshSessionList?: boolean;
+		}) => {
+			// List-refresh flags originate from this provider's own feed
+			// reconciliation (or its retired STOMP predecessor); refetching
+			// the feed for them would only loop once for nothing.
+			if (event?.refreshEnquiryList || event?.refreshSessionList) {
+				return;
+			}
 			window.clearTimeout(debounceTimer);
 			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
 		};

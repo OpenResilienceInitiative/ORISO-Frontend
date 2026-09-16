@@ -122,6 +122,126 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 	});
 });
 
+describe('NotificationsProvider feed → session-list refresh (#1206, #1429)', () => {
+	const typedItem = (id: number, eventType: string) => ({
+		...feedItem(id, `2026-09-16T10:00:0${id}.000Z`),
+		eventType
+	});
+
+	const mountAndSettle = async () => {
+		render(
+			<NotificationsProvider>
+				<div />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalled()
+		);
+		// Let the first page-0 response apply (it seeds the known ids).
+		await new Promise((resolve) => setTimeout(resolve, 20));
+	};
+
+	beforeEach(() => {
+		apiGetEventNotifications.mockReset();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
+	});
+
+	afterEach(() => cleanup());
+
+	it('does not refetch the lists for rows present on the first load', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [typedItem(1, 'inquiry.accepted')],
+			unreadCount: 1
+		});
+		const listener = vi.fn();
+		messageEventEmitter.on(listener);
+
+		await mountAndSettle();
+
+		expect(listener).not.toHaveBeenCalled();
+		messageEventEmitter.off(listener);
+	});
+
+	it('asks both lists to refetch when an accepted enquiry arrives on a later poll', async () => {
+		await mountAndSettle();
+		const listener = vi.fn();
+		messageEventEmitter.on(listener);
+
+		apiGetEventNotifications.mockResolvedValue({
+			items: [typedItem(2, 'inquiry.accepted')],
+			unreadCount: 1
+		});
+		// Stand-in for the 15s poll: any live signal refetches the feed.
+		messageEventEmitter.emit({});
+
+		await waitFor(() =>
+			expect(listener).toHaveBeenCalledWith({
+				refreshEnquiryList: true,
+				refreshSessionList: true
+			})
+		);
+		messageEventEmitter.off(listener);
+	});
+
+	it('asks only the request list to refetch for a new request', async () => {
+		await mountAndSettle();
+		const listener = vi.fn();
+		messageEventEmitter.on(listener);
+
+		apiGetEventNotifications.mockResolvedValue({
+			items: [typedItem(3, 'request.new')],
+			unreadCount: 1
+		});
+		messageEventEmitter.emit({});
+
+		await waitFor(() =>
+			expect(listener).toHaveBeenCalledWith({
+				refreshEnquiryList: true,
+				refreshSessionList: false
+			})
+		);
+		messageEventEmitter.off(listener);
+	});
+
+	it('stays quiet for a new row that only touches an existing session', async () => {
+		await mountAndSettle();
+		const listener = vi.fn();
+		messageEventEmitter.on(listener);
+
+		apiGetEventNotifications.mockResolvedValue({
+			items: [typedItem(4, 'message.new')],
+			unreadCount: 1
+		});
+		messageEventEmitter.emit({});
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
+		);
+		await new Promise((resolve) => setTimeout(resolve, 50));
+
+		const refreshCalls = listener.mock.calls.filter(
+			([event]) => event?.refreshEnquiryList || event?.refreshSessionList
+		);
+		expect(refreshCalls).toHaveLength(0);
+		messageEventEmitter.off(listener);
+	});
+
+	it('does not refetch the feed for its own list-refresh flags', async () => {
+		await mountAndSettle();
+		apiGetEventNotifications.mockClear();
+
+		messageEventEmitter.emit({
+			refreshEnquiryList: true,
+			refreshSessionList: true
+		});
+		await new Promise((resolve) => setTimeout(resolve, 500));
+
+		expect(apiGetEventNotifications).not.toHaveBeenCalled();
+	});
+});
+
 describe('NotificationsProvider older activity pages (#930)', () => {
 	beforeEach(() => apiGetEventNotifications.mockReset());
 	afterEach(() => cleanup());
