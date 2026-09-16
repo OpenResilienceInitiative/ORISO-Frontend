@@ -45,8 +45,12 @@ import {
 import { GroupChatSeriesFieldsValue } from '../groupChat/GroupChatSeriesFields';
 import { normalizeGroupChatLanguages } from '../groupChat/groupChatAuthorContent';
 import { useSession } from '../../hooks/useSession';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import {
+	AgencyFormatSource,
+	ConversationFormat,
 	CreateStep,
+	getAgenciesOfferingFormat,
 	getAvailableFormats,
 	getConversationFormatAvailability,
 	isGroupChatTranslationAvailable,
@@ -75,14 +79,23 @@ import './conversationCreate.styles.scss';
 /**
  * Create-conversation flow (Figma "Flow Self Help Group", node 8482-30552).
  *
- * Step 1 "Gesprächsformat wählen" offers the formats the Träger admins
- * enabled for this agency; with a single available format the picker is
- * skipped. "Interna besprechen" is completed entirely inside its card;
+ * Step 1 "Gesprächsformat wählen" offers the formats the Träger allows and
+ * at least one of the counsellor's Beratungsstellen allows (#1440); with a
+ * single available format the picker is skipped. Inside a format, the agency
+ * choice lists only the Beratungsstellen that offer that format.
+ * "Interna besprechen" is completed entirely inside its card;
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
  */
 
-const CreateConversationFlow = () => {
+interface CreateConversationFlowProps {
+	/** The counsellor's agencies with their effective group-chat settings. */
+	agencyFormats: AgencyFormatSource[];
+}
+
+const CreateConversationFlow = ({
+	agencyFormats
+}: CreateConversationFlowProps) => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
 	const location = useLocation();
@@ -119,8 +132,26 @@ const CreateConversationFlow = () => {
 		} | null
 	)?.duplicateOccurrence;
 
-	const availability = getConversationFormatAvailability(tenantData);
+	const availability = getConversationFormatAvailability(
+		tenantData,
+		agencyFormats
+	);
 	const availableFormats = getAvailableFormats(availability);
+	const agencyIdsOffering = useMemo(
+		() => ({
+			internal: getAgenciesOfferingFormat(
+				tenantData,
+				agencyFormats,
+				'internal'
+			),
+			circle: getAgenciesOfferingFormat(
+				tenantData,
+				agencyFormats,
+				'circle'
+			)
+		}),
+		[tenantData, agencyFormats]
+	);
 
 	// Turn the loaded series into a fully-populated prefill. Prefilling every
 	// field (schedule AND author content) is the overwrite guard: the backend
@@ -251,12 +282,23 @@ const CreateConversationFlow = () => {
 		};
 	}, []);
 
+	// The format whose agency choice is on screen: the circle settings on the
+	// circle step, otherwise the internal card (the picker's only agency
+	// choice). Edit mode keeps the persisted agency.
+	const agencyChoiceFormat: ConversationFormat =
+		step === 'circle' ? 'circle' : 'internal';
+	const offeringAgencyIds = agencyIdsOffering[agencyChoiceFormat];
 	useEffect(() => {
-		const onlyOneAgencyAvailable = agencies?.length === 1;
-		if (onlyOneAgencyAvailable) {
-			setSelectedAgency(agencies[0].id);
+		if (isEditMode) {
+			return;
 		}
-	}, [agencies]);
+		setSelectedAgency((current) => {
+			if (current !== null && offeringAgencyIds.includes(current)) {
+				return current;
+			}
+			return offeringAgencyIds.length === 1 ? offeringAgencyIds[0] : null;
+		});
+	}, [isEditMode, offeringAgencyIds]);
 
 	// People for the internal card: agency colleagues without the current
 	// user, deduplicated by consultantId.
@@ -317,13 +359,18 @@ const CreateConversationFlow = () => {
 		loadTopics();
 	}, [loadTopics]);
 
-	const agencyOptions = useMemo(
-		() =>
-			agencies.map(({ id, name }) => ({
-				value: id.toString(),
-				label: name
-			})),
-		[agencies]
+	const agencyOptionsFor = useCallback(
+		(format: ConversationFormat) =>
+			agencies
+				.filter(
+					({ id }) =>
+						isEditMode || agencyIdsOffering[format].includes(id)
+				)
+				.map(({ id, name }) => ({
+					value: id.toString(),
+					label: name
+				})),
+		[agencies, agencyIdsOffering, isEditMode]
 	);
 
 	const people = useMemo(
@@ -418,7 +465,7 @@ const CreateConversationFlow = () => {
 				onDraftChange={setInternalDraft}
 				onCreate={handleInternalCreate}
 				isSubmitting={isSubmitting}
-				agencyOptions={agencyOptions}
+				agencyOptions={agencyOptionsFor('internal')}
 				selectedAgency={selectedAgency?.toString()}
 				onAgencyChange={handleInternalAgencyChange}
 			/>
@@ -590,7 +637,7 @@ const CreateConversationFlow = () => {
 					<Loading />
 				) : (
 					<CircleSettingsView
-						agencyOptions={agencyOptions}
+						agencyOptions={agencyOptionsFor('circle')}
 						selectedAgency={selectedAgency}
 						onAgencyChange={setSelectedAgency}
 						activeLanguages={activeLanguages}
@@ -630,15 +677,26 @@ const CreateConversationFlow = () => {
 
 export const CreateConversationView = () => {
 	const { tenant: tenantData, isLoading } = useTenantState();
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats();
+	// Wait once for current agency settings; a later refresh (e.g. the
+	// session list mounting) must not unmount a flow with a draft in it.
+	const agencyFormatsReady = useRef(false);
+	if (!agencyFormatsLoading) {
+		agencyFormatsReady.current = true;
+	}
 
-	if (isLoading) {
+	if (isLoading || !agencyFormatsReady.current) {
 		return <Loading />;
 	}
 
-	const availability = getConversationFormatAvailability(tenantData);
+	const availability = getConversationFormatAvailability(
+		tenantData,
+		agencyFormats
+	);
 	if (!availability.internal && !availability.circle) {
 		return <Navigate to="/sessions/consultant/sessionView" replace />;
 	}
 
-	return <CreateConversationFlow />;
+	return <CreateConversationFlow agencyFormats={agencyFormats} />;
 };

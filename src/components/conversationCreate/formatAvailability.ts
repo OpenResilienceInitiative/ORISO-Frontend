@@ -1,4 +1,5 @@
 import { TenantDataSettingsInterface } from '../../globalState/interfaces/TenantDataInterface';
+import { AgencySettingsInterface } from '../../globalState/interfaces/UserDataInterface';
 
 /**
  * Which conversation formats a counsellor may create (Figma flow 8482-30552):
@@ -6,9 +7,10 @@ import { TenantDataSettingsInterface } from '../../globalState/interfaces/Tenant
  * enabled for the agency. If only one format is available the picker screen
  * is skipped; if none is available the create entry is hidden entirely.
  *
- * Dedicated per-format admin flags do not exist in the tenant settings yet —
- * until the backend adds them, both formats fall back to the existing
- * featureGroupChatV2Enabled flag so behaviour matches today's gate.
+ * Each format has its own flag (featureInternalGroupChatEnabled,
+ * featureSelfHelpGroupsEnabled); where one is missing it falls back to the
+ * general featureGroupChatV2Enabled flag. A Beratungsstelle can only restrict
+ * what the Träger allows (#1440).
  */
 
 type FormatSettings = Partial<TenantDataSettingsInterface> & {
@@ -28,7 +30,29 @@ const settingsOf = (
 	tenant?: { settings?: FormatSettings } | null
 ): FormatSettings => tenant?.settings ?? {};
 
-export const getConversationFormatAvailability = (
+/**
+ * The group-chat settings of one Beratungsstelle, as the public agency
+ * response (`GET /service/agencies/{ids}`) delivers them: already the
+ * effective values, i.e. Träger AND Beratungsstelle combined. A missing or
+ * `null` value means "this agency adds no restriction".
+ */
+export type AgencyFormatSettings = AgencySettingsInterface;
+
+/** One of the counsellor's agencies; `settings` is absent until loaded. */
+export interface AgencyFormatSource {
+	id: number;
+	settings?: AgencyFormatSettings | null;
+}
+
+const FORMAT_FLAG: Record<
+	ConversationFormat,
+	'featureInternalGroupChatEnabled' | 'featureSelfHelpGroupsEnabled'
+> = {
+	internal: 'featureInternalGroupChatEnabled',
+	circle: 'featureSelfHelpGroupsEnabled'
+};
+
+const tenantAvailability = (
 	tenant?: { settings?: FormatSettings } | null
 ): ConversationFormatAvailability => {
 	const settings = settingsOf(tenant);
@@ -36,6 +60,59 @@ export const getConversationFormatAvailability = (
 	return {
 		internal: settings.featureInternalGroupChatEnabled ?? groupChatEnabled,
 		circle: settings.featureSelfHelpGroupsEnabled ?? groupChatEnabled
+	};
+};
+
+// Per-format flag first, then the general group-chat flag, then "no
+// restriction" — an agency whose values are not known yet (or null) never
+// hides a format the Träger allows.
+const agencyAllows = (
+	agency: AgencyFormatSource,
+	format: ConversationFormat
+): boolean =>
+	agency.settings?.[FORMAT_FLAG[format]] ??
+	agency.settings?.featureGroupChatV2Enabled ??
+	true;
+
+/**
+ * The agencies of the counsellor that offer `format`: the Träger must allow
+ * it, and the agency must not have switched it off. Used to narrow the
+ * agency choice inside a format's create screen.
+ */
+export const getAgenciesOfferingFormat = (
+	tenant: { settings?: FormatSettings } | null | undefined,
+	agencies: AgencyFormatSource[],
+	format: ConversationFormat
+): number[] =>
+	tenantAvailability(tenant)[format]
+		? agencies
+				.filter((agency) => agencyAllows(agency, format))
+				.map((agency) => agency.id)
+		: [];
+
+/**
+ * A format is offered when the Träger allows it AND at least one of the
+ * counsellor's agencies allows it. With `targetAgencyId` only that agency
+ * counts (a chat created for one specific Beratungsstelle). Without any known
+ * agency the Träger's answer stands.
+ */
+export const getConversationFormatAvailability = (
+	tenant?: { settings?: FormatSettings } | null,
+	agencies: AgencyFormatSource[] = [],
+	targetAgencyId?: number | null
+): ConversationFormatAvailability => {
+	const tenantResult = tenantAvailability(tenant);
+	const relevant =
+		targetAgencyId == null
+			? agencies
+			: agencies.filter((agency) => agency.id === targetAgencyId);
+	const offered = (format: ConversationFormat) =>
+		tenantResult[format] &&
+		(relevant.length === 0 ||
+			relevant.some((agency) => agencyAllows(agency, format)));
+	return {
+		internal: offered('internal'),
+		circle: offered('circle')
 	};
 };
 

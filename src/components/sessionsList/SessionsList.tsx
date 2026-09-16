@@ -99,6 +99,7 @@ import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
 import { getFormatChipVisibility } from './formatChipVisibility';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useDisplayFilter } from '../../hooks/useDisplayFilter';
 import {
@@ -243,6 +244,9 @@ export const SessionsList = ({
 
 	const { userData } = useContext(UserDataContext);
 	const tenantData = useTenant();
+	const { agencies: agencyFormats } = useCounsellorAgencyFormats(
+		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+	);
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
@@ -1088,12 +1092,17 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// One source with the create flow: the list must not offer a filter, or an
-	// entry point, for a format this Träger has switched off.
+	// entry point, for a format this Träger — or every one of the counsellor's
+	// Beratungsstellen — has switched off.
 	const {
 		createGroupChat: showCreateGroupChatAction,
 		groups: showGroupChip,
 		internalGroup: showInternalGroupChip
-	} = getFormatChipVisibility(tenantData, showConsultantToolbarActions);
+	} = getFormatChipVisibility(
+		tenantData,
+		showConsultantToolbarActions,
+		agencyFormats
+	);
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;

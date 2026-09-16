@@ -1,9 +1,18 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useSession } from '../../hooks/useSession';
+import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
+import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
 
@@ -62,6 +71,10 @@ vi.mock('../../resources/img/icons/group-chat-avatar.svg', () => ({
 vi.mock('../../resources/img/illustrations/Team.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
+}));
+// The counsellor's Beratungsstellen and their effective settings (#1440).
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn()
 }));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])
@@ -174,14 +187,16 @@ vi.mock('react-router-dom', async () => {
 const CIRCLE_CARD = 'groupChat.circle.title';
 const INTERNAL_CARD = 'groupChat.internal.title';
 
-const renderCreateFlow = () =>
+const renderCreateFlow = (
+	agencies: { id: number; name: string }[] = [{ id: 5, name: 'Agency Five' }]
+) =>
 	render(
 		<MemoryRouter>
 			<UserDataContext.Provider
 				value={{
 					userData: {
 						userId: 'me',
-						agencies: [{ id: 5, name: 'Agency Five' }]
+						agencies
 					}
 				}}
 			>
@@ -207,6 +222,8 @@ describe('CreateConversationView – formats the Träger has switched off', () =
 			read: vi.fn(),
 			ready: true
 		} as any);
+		// Agencies without known settings add no restriction.
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([]);
 	});
 
 	it('offers both cards when the Träger has group chats enabled', async () => {
@@ -260,5 +277,146 @@ describe('CreateConversationView – formats the Träger has switched off', () =
 
 		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
 		expect(screen.queryByText(INTERNAL_CARD)).toBeNull();
+	});
+});
+
+describe('CreateConversationView – formats the Beratungsstelle has switched off', () => {
+	afterEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+	});
+
+	beforeEach(() => {
+		routerState.params = {};
+		tenantState.settings = {
+			featureGroupChatV2Enabled: true,
+			activeLanguages: ['de']
+		};
+		vi.mocked(useSession).mockReturnValue({
+			session: null,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: true
+		} as any);
+	});
+
+	const agencyResponse = (
+		id: number,
+		settings: Record<string, boolean | null>
+	) => ({ id, name: `Agency ${id}`, settings }) as any;
+
+	it('offers only the internal conversation when the agency switched circles off', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(5, {
+				featureGroupChatV2Enabled: true,
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: false
+			})
+		]);
+
+		renderCreateFlow();
+
+		expect(await screen.findByText(INTERNAL_CARD)).toBeTruthy();
+		expect(screen.queryByText(CIRCLE_CARD)).toBeNull();
+		expect(apiGetAgenciesByIds).toHaveBeenCalledWith([5]);
+	});
+
+	it('offers no format when the agency switched both off', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(5, {
+				featureGroupChatV2Enabled: true,
+				featureInternalGroupChatEnabled: false,
+				featureSelfHelpGroupsEnabled: false
+			})
+		]);
+
+		renderCreateFlow();
+
+		await waitFor(() => expect(apiGetAgenciesByIds).toHaveBeenCalled());
+		await waitFor(() =>
+			expect(screen.queryByText(INTERNAL_CARD)).toBeNull()
+		);
+		expect(screen.queryByText(CIRCLE_CARD)).toBeNull();
+	});
+
+	it('keeps every format while the agency values are still null', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(5, {
+				featureGroupChatV2Enabled: null,
+				featureInternalGroupChatEnabled: null,
+				featureSelfHelpGroupsEnabled: null
+			})
+		]);
+
+		renderCreateFlow();
+
+		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
+		expect(screen.getByText(INTERNAL_CARD)).toBeTruthy();
+	});
+
+	it('falls back to the Träger’s answer when the agency settings fail to load', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockRejectedValue(new Error('boom'));
+
+		renderCreateFlow();
+
+		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
+		expect(screen.getByText(INTERNAL_CARD)).toBeTruthy();
+	});
+
+	it('offers a format only for the agencies that allow it', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(1, {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: false
+			}),
+			agencyResponse(2, {
+				featureInternalGroupChatEnabled: false,
+				featureSelfHelpGroupsEnabled: true
+			}),
+			agencyResponse(3, {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: true
+			})
+		]);
+
+		renderCreateFlow([
+			{ id: 1, name: 'Agency One' },
+			{ id: 2, name: 'Agency Two' },
+			{ id: 3, name: 'Agency Three' }
+		]);
+
+		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
+		fireEvent.mouseDown(await screen.findByRole('combobox'));
+		const options = within(await screen.findByRole('listbox'))
+			.getAllByRole('option')
+			.map((option) => option.textContent);
+		expect(options).toEqual(['Agency One', 'Agency Three']);
+	});
+
+	it('preselects the single agency that offers the internal conversation', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(1, {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: false
+			}),
+			agencyResponse(2, {
+				featureInternalGroupChatEnabled: false,
+				featureSelfHelpGroupsEnabled: true
+			})
+		]);
+
+		renderCreateFlow([
+			{ id: 1, name: 'Agency One' },
+			{ id: 2, name: 'Agency Two' }
+		]);
+
+		expect(await screen.findByText(CIRCLE_CARD)).toBeTruthy();
+		expect(screen.getByText(INTERNAL_CARD)).toBeTruthy();
+		// No agency choice: Agency One is the only one, and it is already
+		// picked — the colleague list loads for it.
+		expect(screen.queryByRole('combobox')).toBeNull();
+		await waitFor(() =>
+			expect(apiGetTenantConsultantList).toHaveBeenCalled()
+		);
 	});
 });

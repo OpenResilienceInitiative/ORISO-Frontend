@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	getAgenciesOfferingFormat,
 	getAvailableFormats,
 	getConversationFormatAvailability,
 	isGroupChatTranslationAvailable,
@@ -104,5 +105,196 @@ describe('resolveInitialStep', () => {
 		expect(resolveInitialStep(both, ['internal', 'circle'], false)).toBe(
 			'picker'
 		);
+	});
+});
+
+// #1440: a Beratungsstelle can only restrict what the Träger allows. The
+// agency settings come from the public agency response and already carry the
+// effective values (Träger AND Beratungsstelle combined).
+describe('getConversationFormatAvailability with the counsellor’s agencies', () => {
+	const tenantAllowsBoth = {
+		settings: { featureGroupChatV2Enabled: true } as any
+	};
+
+	it('drops the circle format when the only agency switched circles off', () => {
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{
+					id: 1,
+					settings: {
+						featureGroupChatV2Enabled: true,
+						featureInternalGroupChatEnabled: true,
+						featureSelfHelpGroupsEnabled: false
+					}
+				}
+			])
+		).toEqual({ internal: true, circle: false });
+	});
+
+	it('treats null agency values as no restriction', () => {
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{
+					id: 1,
+					settings: {
+						featureGroupChatV2Enabled: null,
+						featureInternalGroupChatEnabled: null,
+						featureSelfHelpGroupsEnabled: null
+					}
+				}
+			])
+		).toEqual({ internal: true, circle: true });
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{ id: 1, settings: null },
+				{ id: 2 }
+			])
+		).toEqual({ internal: true, circle: true });
+	});
+
+	it('never lets an agency enable what the Träger switched off', () => {
+		expect(
+			getConversationFormatAvailability(
+				{
+					settings: {
+						featureGroupChatV2Enabled: true,
+						featureSelfHelpGroupsEnabled: false
+					} as any
+				},
+				[
+					{
+						id: 1,
+						settings: {
+							featureGroupChatV2Enabled: true,
+							featureInternalGroupChatEnabled: true,
+							featureSelfHelpGroupsEnabled: true
+						}
+					}
+				]
+			)
+		).toEqual({ internal: true, circle: false });
+		expect(
+			getConversationFormatAvailability(
+				{ settings: { featureGroupChatV2Enabled: false } as any },
+				[{ id: 1, settings: { featureGroupChatV2Enabled: true } }]
+			)
+		).toEqual({ internal: false, circle: false });
+	});
+
+	it('falls back to the agency’s featureGroupChatV2Enabled per format', () => {
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{ id: 1, settings: { featureGroupChatV2Enabled: false } }
+			])
+		).toEqual({ internal: false, circle: false });
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{
+					id: 1,
+					settings: {
+						featureGroupChatV2Enabled: false,
+						featureInternalGroupChatEnabled: true
+					}
+				}
+			])
+		).toEqual({ internal: true, circle: false });
+	});
+
+	it('offers a format as long as one of several agencies allows it', () => {
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{
+					id: 1,
+					settings: {
+						featureInternalGroupChatEnabled: true,
+						featureSelfHelpGroupsEnabled: false
+					}
+				},
+				{
+					id: 2,
+					settings: {
+						featureInternalGroupChatEnabled: false,
+						featureSelfHelpGroupsEnabled: true
+					}
+				}
+			])
+		).toEqual({ internal: true, circle: true });
+	});
+
+	it('offers nothing when every agency switched both formats off', () => {
+		const off = {
+			featureInternalGroupChatEnabled: false,
+			featureSelfHelpGroupsEnabled: false
+		};
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, [
+				{ id: 1, settings: off },
+				{ id: 2, settings: off }
+			])
+		).toEqual({ internal: false, circle: false });
+	});
+
+	it('offers only the target agency’s formats when one is given', () => {
+		const agencies = [
+			{
+				id: 1,
+				settings: {
+					featureInternalGroupChatEnabled: true,
+					featureSelfHelpGroupsEnabled: false
+				}
+			},
+			{
+				id: 2,
+				settings: {
+					featureInternalGroupChatEnabled: false,
+					featureSelfHelpGroupsEnabled: true
+				}
+			}
+		];
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, agencies, 1)
+		).toEqual({ internal: true, circle: false });
+		expect(
+			getConversationFormatAvailability(tenantAllowsBoth, agencies, 2)
+		).toEqual({ internal: false, circle: true });
+	});
+});
+
+describe('getAgenciesOfferingFormat', () => {
+	const agencies = [
+		{
+			id: 1,
+			settings: {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: false
+			}
+		},
+		{ id: 2, settings: { featureSelfHelpGroupsEnabled: true } },
+		{ id: 3 }
+	];
+
+	it('lists the agencies that allow a format, keeping unknown ones', () => {
+		const tenant = { settings: { featureGroupChatV2Enabled: true } as any };
+		expect(getAgenciesOfferingFormat(tenant, agencies, 'circle')).toEqual([
+			2, 3
+		]);
+		expect(getAgenciesOfferingFormat(tenant, agencies, 'internal')).toEqual(
+			[1, 2, 3]
+		);
+	});
+
+	it('lists none when the Träger switched the format off', () => {
+		expect(
+			getAgenciesOfferingFormat(
+				{
+					settings: {
+						featureGroupChatV2Enabled: true,
+						featureSelfHelpGroupsEnabled: false
+					} as any
+				},
+				agencies,
+				'circle'
+			)
+		).toEqual([]);
 	});
 });

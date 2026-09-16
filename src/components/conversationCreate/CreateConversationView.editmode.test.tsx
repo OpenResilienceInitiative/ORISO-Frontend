@@ -64,6 +64,10 @@ vi.mock('../../resources/img/illustrations/Team.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
 }));
+// The create view waits for the agencies' settings (#1440); none known here.
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
+}));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])
 }));
@@ -359,7 +363,7 @@ describe('CreateConversationView internal card (finding 2)', () => {
 		]);
 
 		// Pick the first agency so the consultant list loads.
-		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
 		fireEvent.click(
 			await screen.findByRole('option', { name: 'Agency One' })
 		);
