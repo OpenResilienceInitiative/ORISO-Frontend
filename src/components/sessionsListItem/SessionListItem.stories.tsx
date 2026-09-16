@@ -7,7 +7,7 @@ import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import mailConversationIcon from '../../resources/img/icons/chatroom/mail_conv_type_200.svg';
 import { ReactComponent as ThreadGlyphIcon } from '../../resources/img/icons/fab-menu-thread.svg';
-import MicIcon from '@mui/icons-material/Mic';
+import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
@@ -1832,148 +1832,173 @@ export const CardLayoutProposals: Story = {
 };
 
 /* ------------------------------------------------------------------ *
- * Text flow around avatar and Mail — Frank, 16.09.2026
+ * Text flow around avatar and Mail, v2 — Frank, 16.09.2026
  * ------------------------------------------------------------------ */
 
 /*
- * "Warum machst du da nicht den Text enger? Dann müssen wir nicht die Höhe
- * der einzelnen Dinger auch noch wieder erweitern." — plus his green outline:
- * the preview wraps AROUND the 48 px avatar at the top and AROUND the Mail
- * mark at the bottom, so the card keeps its 160 px minimum.
+ * Frank's second sketch:
  *
- * That is text flow, and the only CSS tool that does it is `float`: the
- * avatar floats left, a zero-width spacer floats right to push the Mail mark
- * down to the bottom edge, and the name and the preview flow around both.
- * The body has a fixed height — the card's minimum — so a short preview
- * leaves the Mail mark where it is instead of pulling it up.
- */
-/*
- * The arithmetic that keeps the card at its 160 px minimum: the body below
- * the chip row has 96 px. With the card's 16 px inset at the bottom and 4 px
- * above, 76 px remain — the 24 px name plus exactly THREE 16 px preview
- * lines. Three lines is therefore not a style choice, it is what fits.
+ *  - the topic tag sits at the TOP of the chip row, not centred on the
+ *    32 px menu trigger — that alone frees vertical room;
+ *  - the avatar/name/preview block moves up into it, 10 px under the tag
+ *    instead of 23;
+ *  - the preview is indented beside the avatar for two lines and runs
+ *    under it from the third, and from the second line on its right edge
+ *    steps in so the Mail mark keeps its own column;
+ *  - Mail stays where the design has it today: bottom right, 16 px inset.
  *
- * The Mail mark is taken out of the flow and positioned on the last line;
- * an invisible copy of it floats in the flow to reserve its width. That way
- * the clip can sit exactly on the third line's bottom edge — a padded clip
- * would let a fourth line peek through the padding.
+ * Measured on the current card: chip row 1–49, tag 22–44 (22 px, centred),
+ * body 63–159. The numbers below are those measurements, not guesses.
+ *
+ * Thread and voice are marked by their icons alone — no word. Frank: "Das
+ * Wort … passt nicht in unser Designsystem … einfach die Icons benutzen, die
+ * wir haben." The voice icon is `audio-on.svg`, the one the composer's record
+ * button already uses; the thread icon is `fab-menu-thread.svg`, the one the
+ * collapsed rail already uses.
  */
-const FLOW_BODY_HEIGHT = 96;
-const FLOW_NAME = 24;
-const FLOW_LINE = 16;
-const FLOW_LINES = 3;
-const FLOW_CLIP = FLOW_NAME + FLOW_LINE * FLOW_LINES; // 72
-const FLOW_TOP = 4;
-const FLOW_MAIL_HEIGHT = 24;
+const V2_ROW_BOTTOM = 49; // card-relative, measured
+const V2_BODY_HEIGHT = 110; // 49 → 159, the card's inner bottom
+const V2_NAME = 24;
+const V2_LINE = 16;
+const V2_LINES = 3;
+const V2_CLIP = V2_NAME + V2_LINE * V2_LINES; // 72
+const V2_INSET = 16;
 
-const flowPreviews: Array<{
+const v2Previews: Array<{
 	key: string;
 	label: string;
-	prefix?: React.ReactNode;
+	glyph?: 'thread' | 'voice';
 	text: string;
 }> = [
+	{ key: 'word', label: '1 — ein Wort', text: 'Danke!' },
+	{ key: 'short', label: '2 — eine kurze Zeile', text: 'Anfrage gesendet' },
 	{
-		key: 'long',
-		label: 'Langer Text',
-		text: 'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter. Können wir morgen telefonieren?'
+		key: 'oneAndHalf',
+		label: '3 — anderthalb Zeilen',
+		text: 'Hallo, hätten Sie nächste Woche einen Termin für mich? 🙂'
 	},
 	{
-		key: 'short',
-		label: 'Kurzer Text — die Karte bleibt gleich hoch',
-		text: 'Anfrage gesendet'
+		key: 'twoAndHalf',
+		label: '4 — zweieinhalb Zeilen',
+		text: 'Guten Morgen, ich habe gestern mit meiner Schwester gesprochen und wir würden gerne gemeinsam zu einem Gespräch kommen, wenn das geht.'
+	},
+	{
+		key: 'three',
+		label: '5 — genau drei Zeilen',
+		text: 'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter.'
+	},
+	{
+		key: 'long',
+		label: '6 — viel länger als drei Zeilen',
+		text: 'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter. Mein Vater trinkt wieder mehr und meine Mutter sagt dazu nichts. Ich weiß nicht, wem ich das sonst erzählen soll, und ich habe Angst, dass es noch schlimmer wird, wenn ich etwas sage.'
+	},
+	{
+		key: 'unbroken',
+		label: '7 — ein langes Wort ohne Leerzeichen (Link)',
+		text: 'https://www.beispiel-beratung.de/termine/familienberatung/2026/september/buchung?ref=abcdefghijklmnopqrstuvwxyz'
 	},
 	{
 		key: 'thread',
-		label: 'Antwort in einem Thread',
-		prefix: (
-			<>
-				<ThreadGlyphIcon
-					aria-hidden="true"
-					className="flowPreview__glyph"
-				/>
-				<strong>Thread:</strong>{' '}
-			</>
-		),
+		label: 'Thread — nur das Symbol',
+		glyph: 'thread',
 		text: 'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen.'
 	},
 	{
 		key: 'voice',
-		label: 'Sprachnachricht',
-		prefix: (
-			<>
-				<MicIcon aria-hidden="true" className="flowPreview__glyph" />
-				<strong>Sprachnachricht</strong>
-			</>
-		),
-		text: ' · 0:42'
+		label: 'Sprachnachricht — nur das Symbol, mit Dauer',
+		glyph: 'voice',
+		text: '0:42'
 	}
 ];
 
-const flowCss = `
-.flowPreview__body {
+const v2Css = `
+.flowV2 .sessionsListItem__rowLeft {
+	align-items: flex-start;
+}
+.flowV2 .sessionsListItem__topicPostcodeGroup {
+	align-self: flex-start;
+}
+.flowV2__body {
 	position: relative;
 	box-sizing: border-box;
-	height: ${FLOW_BODY_HEIGHT}px;
-	padding: ${FLOW_TOP}px 16px 0;
+	height: ${V2_BODY_HEIGHT}px;
+	padding: 0 ${V2_INSET}px;
 }
-.flowPreview__clip {
-	height: ${FLOW_CLIP}px;
+.flowV2__clip {
+	height: ${V2_CLIP}px;
 	overflow: hidden;
 }
-.flowPreview__avatar {
+.flowV2__avatar {
 	float: left;
 	margin: 0 12px 0 0;
 }
-.flowPreview__spacer {
+/* Keeps the first preview line full-width … */
+.flowV2__spacer {
 	float: right;
 	width: 0;
-	height: ${FLOW_CLIP - FLOW_LINE}px;
+	height: ${V2_NAME + V2_LINE}px;
 }
-/* Reserves the Mail mark's width on the last line and nothing else. */
-.flowPreview__mailSlot {
+/* … and from the second line on reserves the Mail column. */
+.flowV2__mailSlot {
 	float: right;
 	clear: right;
-	height: ${FLOW_LINE}px;
+	height: ${V2_LINE * (V2_LINES - 1)}px;
 	margin-left: 12px;
 	visibility: hidden;
 }
-.flowPreview__mail {
+.flowV2__mail {
 	position: absolute;
-	right: 16px;
-	/* centred on the last preview line */
-	top: ${FLOW_TOP + FLOW_CLIP - FLOW_LINE / 2 - FLOW_MAIL_HEIGHT / 2}px;
-	height: ${FLOW_MAIL_HEIGHT}px;
+	right: ${V2_INSET}px;
+	bottom: ${V2_INSET}px;
+	height: 24px;
 	padding-right: 0 !important;
 }
-.flowPreview__name.sessionsListItem__username {
+.flowV2__name.sessionsListItem__username {
 	display: block;
 	padding: 0;
-	line-height: ${FLOW_NAME}px;
+	line-height: ${V2_NAME}px;
 }
 /* The card's preview class is one clipped line (nowrap + overflow hidden)
    and carries align-content: center. Each of overflow: hidden and a
    non-normal align-content turns the block into its own formatting context
-   — and such a block AVOIDS floats instead of flowing around them, which
-   squeezed the preview into a narrow column between avatar and Mail. */
-.flowPreview__text.sessionsListItem__subject {
+   — and such a block AVOIDS floats instead of flowing around them. */
+.flowV2__text.sessionsListItem__subject {
 	display: block;
 	white-space: normal;
 	overflow: visible;
 	text-overflow: clip;
 	align-content: normal;
-	line-height: ${FLOW_LINE}px;
+	overflow-wrap: anywhere;
+	line-height: ${V2_LINE}px;
 }
-.flowPreview__glyph {
+.flowV2__glyph {
 	width: 14px;
 	height: 14px;
 	vertical-align: -2px;
-	margin-right: 4px;
-	fill: currentColor;
+	margin-right: 6px;
 	color: var(--m3-secondary, #4c555f);
+}
+.flowV2__glyph path {
+	fill: currentColor;
 }
 `;
 
-const MailMark = ({ className }: { className?: string }) => (
+const V2Glyph = ({ kind }: { kind: 'thread' | 'voice' }) =>
+	kind === 'thread' ? (
+		<ThreadGlyphIcon
+			className="flowV2__glyph"
+			role="img"
+			aria-label="Thread"
+		/>
+	) : (
+		<AudioOnIcon
+			className="flowV2__glyph"
+			role="img"
+			aria-label="Sprachnachricht"
+		/>
+	);
+
+const V2MailMark = ({ className }: { className?: string }) => (
 	<div
 		className={`${className ?? ''} sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby`}
 	>
@@ -1988,44 +2013,47 @@ const MailMark = ({ className }: { className?: string }) => (
 	</div>
 );
 
-const FlowCard = ({
-	prefix,
+const V2Card = ({
+	glyph,
 	text
 }: {
-	prefix?: React.ReactNode;
+	glyph?: 'thread' | 'voice';
 	text: string;
 }) => (
-	<div className="sessionsListItem__content" style={{ minHeight: 160 }}>
+	<div
+		className="sessionsListItem__content flowV2"
+		style={{ minHeight: 160 }}
+	>
 		<TopRow />
-		<div className="flowPreview__body">
-			<div className="flowPreview__clip">
-				<div className="flowPreview__avatar">
+		<div className="flowV2__body">
+			<div className="flowV2__clip">
+				<div className="flowV2__avatar">
 					<Avatar size={48} />
 				</div>
-				<div className="flowPreview__spacer" aria-hidden="true" />
-				<div className="flowPreview__mailSlot" aria-hidden="true">
-					<MailMark />
+				<div className="flowV2__spacer" aria-hidden="true" />
+				<div className="flowV2__mailSlot" aria-hidden="true">
+					<V2MailMark />
 				</div>
-				<span className="flowPreview__name sessionsListItem__username">
+				<span className="flowV2__name sessionsListItem__username">
 					ruhiges Yak Kim
 				</span>
-				<div className="flowPreview__text sessionsListItem__subject">
-					{prefix}
+				<div className="flowV2__text sessionsListItem__subject">
+					{glyph && <V2Glyph kind={glyph} />}
 					{text}
 				</div>
 			</div>
-			<MailMark className="flowPreview__mail" />
+			<V2MailMark className="flowV2__mail" />
 		</div>
 	</div>
 );
 
 export const CardTextFlow: Story = {
-	name: 'Karte — Text umfließt Avatar und Mail (48 px)',
+	name: 'Karte — Umfluss v2: Kachel oben, Block höher, 9 Texte',
 	render: () => (
 		<div style={{ ...listShell, maxWidth: 480, padding: 16 }}>
-			<style>{flowCss}</style>
-			{flowPreviews.map((preview) => (
-				<div key={preview.key} style={{ marginBottom: 18 }}>
+			<style>{v2Css}</style>
+			{v2Previews.map((preview) => (
+				<div key={preview.key} style={{ marginBottom: 16 }}>
 					<p
 						style={{
 							margin: '0 4px 6px',
@@ -2035,7 +2063,7 @@ export const CardTextFlow: Story = {
 					>
 						{preview.label}
 					</p>
-					<FlowCard prefix={preview.prefix} text={preview.text} />
+					<V2Card glyph={preview.glyph} text={preview.text} />
 				</div>
 			))}
 		</div>
@@ -2046,54 +2074,82 @@ export const CardTextFlow: Story = {
 				'.sessionsListItem__content'
 			)
 		);
-		await expect(cards.length).toBe(4);
+		await expect(cards.length).toBe(v2Previews.length);
 
-		// 1. Every card keeps the same height, long preview or short.
-		const heights = cards.map((card) =>
-			Math.round(card.getBoundingClientRect().height)
-		);
-		await expect(new Set(heights).size).toBe(1);
+		for (const card of cards) {
+			const box = card.getBoundingClientRect();
+			const border = Number.parseFloat(
+				getComputedStyle(card).borderBottomWidth
+			);
+			const at = (selector: string) =>
+				card
+					.querySelector<HTMLElement>(selector)!
+					.getBoundingClientRect();
 
-		// 2. The long preview really flows: its first line starts beside the
-		//    avatar, a later line starts at the card's left edge, and the
-		//    last visible line stops before the Mail mark.
-		const long = cards[0];
-		const clip = long
-			.querySelector<HTMLElement>('.flowPreview__clip')!
-			.getBoundingClientRect();
-		const avatar = long
-			.querySelector<HTMLElement>('.flowPreview__avatar')!
-			.getBoundingClientRect();
-		const mail = long
-			.querySelector<HTMLElement>('.flowPreview__mail')!
-			.getBoundingClientRect();
-		const range = document.createRange();
-		range.selectNodeContents(
-			long.querySelector<HTMLElement>('.flowPreview__text')!
-		);
-		const lines = Array.from(range.getClientRects()).filter(
-			(rect) => rect.width > 0 && rect.top < clip.bottom - 0.5
-		);
-		// Exactly three preview lines are visible — what fits in 160 px.
-		await expect(lines.length).toBe(3);
-		// Nothing of a fourth line peeks out below the clip.
-		await expect(lines[2].bottom).toBeLessThanOrEqual(clip.bottom + 0.5);
-		await expect(lines[0].left).toBeGreaterThanOrEqual(avatar.right);
-		await expect(lines[2].left).toBeLessThan(avatar.right - 1);
-		await expect(lines[2].right).toBeLessThanOrEqual(mail.left + 0.5);
-		// The Mail mark is centred on that last line …
-		await expect(
-			Math.abs(
-				(mail.top + mail.bottom) / 2 -
-					(lines[2].top + lines[2].bottom) / 2
-			)
-		).toBeLessThanOrEqual(1);
-		// … and keeps the card's 16 px inset at the bottom, measured from
-		// the inside of the card's 1 px border.
-		const card = long.getBoundingClientRect();
-		const border = Number.parseFloat(
-			getComputedStyle(long).borderBottomWidth
-		);
-		await expect(Math.round(card.bottom - border - mail.bottom)).toBe(16);
+			// Every card is exactly as tall as today, whatever the text.
+			await expect(Math.round(box.height)).toBe(160);
+
+			// The tag is at the top of the chip row, not centred on the menu.
+			const tag = at('.sessionsListItem__topicPostcodeGroup');
+			const menu = at('.sessionsListItem__menuIcon');
+			await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
+
+			// The block sits 10 px under the tag.
+			const avatar = at('.flowV2__avatar');
+			await expect(Math.round(avatar.top - tag.bottom)).toBe(10);
+
+			// Mail keeps the design's bottom-right position.
+			const mail = at('.flowV2__mail');
+			await expect(Math.round(box.bottom - border - mail.bottom)).toBe(
+				V2_INSET
+			);
+
+			// The preview: at most three lines, nothing peeking below the
+			// clip, the first line indented beside the avatar, and from the
+			// second line on nothing runs into the Mail column.
+			const clip = at('.flowV2__clip');
+			const range = document.createRange();
+			range.selectNodeContents(
+				card.querySelector<HTMLElement>('.flowV2__text')!
+			);
+			const lines = Array.from(range.getClientRects())
+				.filter(
+					(rect) => rect.width > 0 && rect.top < clip.bottom - 0.5
+				)
+				// merge the glyph's box and the text on the same line
+				.reduce<DOMRect[]>((merged, rect) => {
+					const last = merged[merged.length - 1];
+					if (last && Math.abs(last.top - rect.top) < 4) {
+						merged[merged.length - 1] = new DOMRect(
+							Math.min(last.left, rect.left),
+							last.top,
+							Math.max(last.right, rect.right) -
+								Math.min(last.left, rect.left),
+							last.height
+						);
+					} else {
+						merged.push(rect);
+					}
+					return merged;
+				}, []);
+			await expect(lines.length).toBeGreaterThan(0);
+			await expect(lines.length).toBeLessThanOrEqual(V2_LINES);
+			await expect(lines[0].left).toBeGreaterThanOrEqual(avatar.right);
+			for (const line of lines) {
+				await expect(line.bottom).toBeLessThanOrEqual(
+					clip.bottom + 0.5
+				);
+				await expect(line.right).toBeLessThanOrEqual(
+					box.right - border - V2_INSET + 0.5
+				);
+			}
+			for (const line of lines.slice(1)) {
+				await expect(line.right).toBeLessThanOrEqual(mail.left + 0.5);
+			}
+			if (lines.length === V2_LINES) {
+				// the third line runs under the avatar
+				await expect(lines[2].left).toBeLessThan(avatar.right - 1);
+			}
+		}
 	}
 };
