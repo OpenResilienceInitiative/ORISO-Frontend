@@ -1,143 +1,55 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
-import { resolveStompListRefresh } from './stompListRefresh';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stomp } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
-import { endpoints } from '../../resources/scripts/endpoints';
-import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
-import {
-	NOTIFICATION_TYPE_CALL,
-	VideoCallRequestProps
-} from '../incomingVideoCall/IncomingVideoCall';
-import {
-	NotificationsContext,
-	NOTIFICATION_TYPE_SUCCESS,
-	WebsocketConnectionDeactivatedContext
-} from '../../globalState';
 import { sendNotification } from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
-interface WebsocketHandlerProps {
-	disconnect: boolean;
-}
-
-export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
-	const liveWebsocketDisabled =
-		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
+/**
+ * Bridges real-time Matrix events into the app-wide message event emitter
+ * and the browser notification.
+ *
+ * The STOMP/SockJS connection to the retired LiveService used to live here.
+ * That service is gone from the platform (no chart, no ingress), so the
+ * socket only ever hit the SPA fallback: `/service/live/info` answered with
+ * `index.html`, SockJS threw `SyntaxError: Unexpected token '<'`, the
+ * transports 404ed and the client gave up after two attempts. The remaining
+ * LiveService event types (`newAnonymousEnquiry`, `anonymousConversation-
+ * Finished`, `videoCallRequest`) had no sender any more; their Matrix-side
+ * replacements are tracked separately.
+ */
+export const WebsocketHandler = () => {
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const [newStompDirectMessage, setNewStompDirectMessage] =
-		useState<boolean>(false);
-	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
-		useState<boolean>(false);
-	const [
-		newStompAnonymousConversationFinished,
-		setNewStompAnonymousConversationFinished
-	] = useState<boolean>(false);
-	const [
-		newStompAnonymousEnquiryAccepted,
-		setNewStompAnonymousEnquiryAccepted
-	] = useState<boolean>(false);
-	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
-		useState<VideoCallRequestProps>();
-	const { addNotification } = useContext(NotificationsContext);
-	const { setWebsocketConnectionDeactivated } = useContext(
-		WebsocketConnectionDeactivatedContext
-	);
-
-	const stompClient = React.useMemo(
-		() =>
-			liveWebsocketDisabled
-				? undefined
-				: Stomp.over(function () {
-						return new SockJS(endpoints.liveservice);
-					}),
-		[liveWebsocketDisabled]
-	);
-
-	let reconnectAttemptCount = 0;
-	const RECONNECT_ATTEMPT_LIMIT = 2;
-	const RECONNECT_DELAY = 5000;
-
-	// DEV-NOTE: comment next line to activate debug mode (stomp logging) for development
-	if (stompClient) {
-		stompClient.debug = () => {};
-	}
+	const [newDirectMessage, setNewDirectMessage] = useState<boolean>(false);
 
 	useEffect(() => {
-		if (!stompClient) {
-			return;
-		}
-
-		// STOMP WebSocket setup (for LiveService)
-		stompClient.beforeConnect = () => {
-			stompClient.connectHeaders = {
-				accessToken: getValueFromCookie('keycloak')
-			};
-			reconnectAttemptCount++;
-
-			if (reconnectAttemptCount >= RECONNECT_ATTEMPT_LIMIT) {
-				stompClient.deactivate();
-				setWebsocketConnectionDeactivated(true);
-			}
-		};
-
-		stompClient.onConnect = () => {};
-
-		stompConnect();
-
-		stompClient.onWebSocketClose = (message) => {
-			// console.log('Closed', message);
-		};
-
-		stompClient.onWebSocketError = (error) => {
-			// console.log('Error', error);
-		};
-
-		// MATRIX EVENT BRIDGE SETUP (for real-time Matrix events)
-		// Listen to Matrix 'directMessage' events
 		const handleMatrixDirectMessage = (event: any) => {
-			// console.log('📬 Matrix directMessage event received:', event);
 			messageEventEmitter.emit({
 				roomId: event?.roomId,
 				timestamp: event?.timestamp
 			});
 			if (!event?.isOwnMessage) {
-				setNewStompDirectMessage(true);
+				setNewDirectMessage(true);
 			}
 		};
 
-		// Register Matrix event listeners
 		matrixLiveEventBridge.on('directMessage', handleMatrixDirectMessage);
 
-		// console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
-
-		// Cleanup function
 		return () => {
-			// Unregister Matrix event listeners
 			matrixLiveEventBridge.off(
 				'directMessage',
 				handleMatrixDirectMessage
 			);
-			// console.log('🧹 WebsocketHandler: Event listeners cleaned up');
 		};
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
-		if (disconnect) {
-			stompClient?.disconnect();
-		}
-	}, [stompClient, disconnect]);
+		if (newDirectMessage) {
+			setNewDirectMessage(false);
 
-	useEffect(() => {
-		if (newStompDirectMessage) {
-			setNewStompDirectMessage(false);
-
-			// CRITICAL: Emit event to refresh open sessions
-			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
+			// Refresh open sessions
 			messageEventEmitter.emit({});
 
 			// Whether the user wants this popup is `sendNotification`'s call
@@ -154,105 +66,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 				}
 			});
 		}
-	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		if (newStompAnonymousEnquiry) {
-			setNewStompAnonymousEnquiry(false);
-			messageEventEmitter.emit({ refreshEnquiryList: true });
-		}
-	}, [newStompAnonymousEnquiry]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		if (newStompAnonymousEnquiryAccepted) {
-			setNewStompAnonymousEnquiryAccepted(false);
-			const refresh = resolveStompListRefresh('anonymousEnquiryAccepted');
-			if (refresh) {
-				messageEventEmitter.emit(refresh);
-			}
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate('profile.notifications.inquiryAccepted.title'),
-				text: translate(
-					'profile.notifications.inquiryAccepted.description'
-				)
-			});
-		}
-	}, [newStompAnonymousEnquiryAccepted]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		if (newStompAnonymousConversationFinished) {
-			setNewStompAnonymousConversationFinished(false);
-			messageEventEmitter.emit({
-				refreshEnquiryList: true,
-				refreshSessionList: true
-			});
-			messageEventEmitter.emit({});
-			addNotification({
-				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate(
-					'profile.notifications.conversationFinished.title'
-				),
-				text: translate(
-					'profile.notifications.conversationFinished.description'
-				)
-			});
-		}
-	}, [newStompAnonymousConversationFinished]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => {
-		if (newStompVideoCallRequest) {
-			addNotification({
-				id: newStompVideoCallRequest.matrixRoomId,
-				notificationType: NOTIFICATION_TYPE_CALL,
-				videoCall: newStompVideoCallRequest
-			});
-		}
-	}, [newStompVideoCallRequest]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	const stompConnect = () => {
-		if (!stompClient) {
-			return;
-		}
-
-		stompClient.reconnect_delay = RECONNECT_DELAY;
-		stompClient.connect({}, (frame) => {
-			reconnectAttemptCount = 0;
-			stompClient.subscribe('/user/events', function (message) {
-				const stompMessageBody = JSON.parse(message.body);
-				const stompEventType = String(
-					stompMessageBody['eventType'] ?? ''
-				);
-				if (stompEventType === 'directMessage') {
-					setNewStompDirectMessage(true);
-				} else if (
-					stompEventType === 'newAnonymousEnquiry' ||
-					stompEventType === 'NEWANONYMOUSENQUIRY'
-				) {
-					setNewStompAnonymousEnquiry(true);
-				} else if (
-					stompEventType === 'anonymousEnquiryAccepted' ||
-					stompEventType === 'ANONYMOUSENQUIRYACCEPTED'
-				) {
-					// #1206: an accepted enquiry leaves every counsellor's
-					// request list and enters the assignee's conversation
-					// list. This branch used to raise the toast only, so both
-					// lists stayed stale until a hard reload.
-					setNewStompAnonymousEnquiryAccepted(true);
-				} else if (
-					stompEventType === 'anonymousConversationFinished' ||
-					stompEventType === 'ANONYMOUSCONVERSATIONFINISHED'
-				) {
-					setNewStompAnonymousConversationFinished(true);
-				} else if (stompEventType === 'videoCallRequest') {
-					const stompEventContent: VideoCallRequestProps =
-						stompMessageBody['eventContent'];
-					setNewStompVideoCallRequest(stompEventContent);
-				}
-				message.ack({ 'message-id': message.headers.id });
-			});
-		});
-	};
+	}, [newDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	return <></>;
 };
