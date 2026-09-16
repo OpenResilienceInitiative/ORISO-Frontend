@@ -2,7 +2,9 @@
 	"chatStage": {
 		"panel": {
 			"team": {
-				"empty": { "text": "Schreibe unten die erste Nachricht an dein Team." }
+				"empty": {
+					"text": "Schreibe unten die erste Nachricht an dein Team."
+				}
 			}
 		}
 	},

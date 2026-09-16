@@ -334,10 +334,14 @@
 				"title": "Mesaj dizisi"
 			},
 			"team": {
-				"title": "Ekip danışmanlığı", "onlyMarker": "Yalnızca ekip için",
+				"title": "Ekip danışmanlığı",
+				"onlyMarker": "Yalnızca ekip için",
 				"composer": { "placeholder": "Ekibe mesaj…" },
 				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
-				"empty": { "title": "Ekip danışmanlığını başlat", "text": "Aşağıdan ekibinize ilk mesajı yazın." }
+				"empty": {
+					"title": "Ekip danışmanlığını başlat",
+					"text": "Aşağıdan ekibinize ilk mesajı yazın."
+				}
 			}
 		},
 		"switcher": {
@@ -345,7 +349,8 @@
 			"closeMenu": "Yan kanalları gizle",
 			"kind": {
 				"supervision": "Süpervizyon",
-				"thread": "Mesaj dizisi", "team": "Ekip danışmanlığı"
+				"thread": "Mesaj dizisi",
+				"team": "Ekip danışmanlığı"
 			},
 			"mainChat": "Danışma sohbeti",
 			"openChannel": "{{label}} aç",
@@ -355,7 +360,9 @@
 			"eyebrow": "Diğer görüşmeler",
 			"title": "Konular ve süpervizyon",
 			"supervisionChat": "Süpervizyon sohbeti",
-			"thread": "Mesaj dizisi #{{n}}", "teamChat": "Ekip danışmanlığı", "titleWithTeam": "Konular, süpervizyon ve ekip danışmanlığı"
+			"thread": "Mesaj dizisi #{{n}}",
+			"teamChat": "Ekip danışmanlığı",
+			"titleWithTeam": "Konular, süpervizyon ve ekip danışmanlığı"
 		}
 	},
 	"chatFlyout": {
@@ -827,12 +834,14 @@
 				"sourceLanguage": "Kaynak dil",
 				"welcome": "Karşılama (en fazla 120 karakter)",
 				"rules": "Grup kuralları",
-				"rule": "Kural",
+				"rule": "1. kural (en fazla 120 karakter)",
 				"addRule": "Kural ekle",
+				"removeLanguage": "{{language}} dilini kaldır",
 				"removeRule": "Kaldır",
 				"translate": "Etkin dillere çevir",
 				"translating": "Çevriliyor…",
 				"translationError": "Çeviri başarısız oldu. Metniniz korundu; lütfen tekrar deneyin.",
+				"ruleChipShort": "{{index}}. kural",
 				"ruleChip": "Kural No. {{index}}"
 			}
 		},
@@ -1823,6 +1832,42 @@
 		"warning": "Uyarı"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Görünüm filtresi",
+			"buttonCustomised": "Filtre özelleştirildi",
+			"title": "Görünüm filtresi",
+			"description": "Bu listede hangi türlerin görüneceği ve hangilerinin etiket alacağı.",
+			"showColumn": "Göster",
+			"pillColumn": "Etiket",
+			"showKind": "Göster: {{kind}}",
+			"pillKind": "Etiket: {{kind}}",
+			"otherFixed": "„Diğer“ her zaman gösterilir, böylece hiçbir şey fark edilmeden kaybolmaz.",
+			"pillNotApplicable": "Bu tür için etiket yok",
+			"autoRead": "Gizlenenleri hemen okundu olarak işaretle",
+			"autoReadDescription": "Yalnızca bu liste için geçerlidir. Sohbetlere okundu bilgisi gönderilmez.",
+			"autoReadSessions": "Gizlenen sohbetleri okunmamış sayma",
+			"autoReadSessionsDescription": "Yalnızca bu liste ve sayacı için geçerlidir. Sohbetler okundu olarak işaretlenmez, okundu bilgisi gönderilmez.",
+			"reset": "Varsayılanlarıma sıfırla",
+			"done": "Bitti",
+			"profileLink": "Varsayılanlar ve diğer seçenekler: Profil › Bildirimler",
+			"readOnlyHint": "Bu ayarlar daha yeni bir uygulama sürümüyle kaydedildi. Değiştirmek için lütfen uygulamayı güncelleyin.",
+			"badgeHiddenHint": "en fazla {{count}} gizli",
+			"hiddenActiveRow": "Görüntüleme filtreniz tarafından gizlendi",
+			"profileTitle": "Görüntüleme filtreleri",
+			"profileDescription": "Liste başına varsayılanlar, tüm cihazlarda geçerli. Bir liste bunları filtre düğmesiyle geçici olarak değiştirebilir.",
+			"overrideActive": "Bu liste şu anda kendi filtresini kullanıyor; varsayılanlar sıfırlanınca geçerli olur.",
+			"eventTypesTitle": "Etkinlik türüne göre ince ayar",
+			"eventTypesDescription": "Zaman çizelgesinin tek tek etkinlik türlerini gizle. Liste kendi filtresini kullanırken de geçerlidir.",
+			"eventTypeShow": "{{type}} göster",
+			"applyToAll": "Diğer listelere uygula",
+			"applyToAllDescription": "“Gizlenenleri okundu olarak işaretle” ayarını Zaman çizelgesi ve Sohbetler’e, canlı sohbet ayarını Sohbetler ve Talepler’e kopyalar.",
+			"otherKind": "Diğer",
+			"sections": {
+				"timeline": "Zaman çizelgesi",
+				"sessions": "Görüşmeler",
+				"requests": "Talepler"
+			}
+		},
 		"families": {
 			"all": "Tümü",
 			"requests": "Talepler",
@@ -3563,6 +3608,7 @@
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
 				"create": "Oluştur",
+				"group": "Filtreler",
 				"archive": "Arşivlendi",
 				"oneToOne": "Bire bir danışmanlık",
 				"liveChat": "Canlı sohbet",

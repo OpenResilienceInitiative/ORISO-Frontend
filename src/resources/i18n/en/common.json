@@ -333,7 +333,10 @@
 				"onlyMarker": "Team only",
 				"composer": { "placeholder": "Message to the team …" },
 				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
-				"empty": { "title": "Start team consultation", "text": "Write the first message to your team below." }
+				"empty": {
+					"title": "Start team consultation",
+					"text": "Write the first message to your team below."
+				}
 			}
 		},
 		"menu": {
@@ -792,10 +795,11 @@
 			"authorContent": {
 				"title": "Welcome and group rules",
 				"sourceLanguage": "Source language",
-				"welcome": "Welcome message (maximum 120 characters)",
+				"welcome": "Welcome text max. 120 characters",
 				"rules": "Group rules",
-				"rule": "Rule",
+				"rule": "Rule no. 1, max. 120 characters",
 				"addRule": "Add rule",
+				"removeLanguage": "Remove language {{language}}",
 				"removeRule": "Remove",
 				"translate": "Translate into active languages",
 				"translating": "Translating…",
@@ -805,6 +809,7 @@
 				"ruleEditorLabel": "Edit rule",
 				"editRule": "Edit rule {{index}}",
 				"deleteRule": "Delete rule {{index}}",
+				"ruleChipShort": "No. {{index}}",
 				"ruleChip": "Rule no. {{index}}"
 			},
 			"listItem": {
@@ -1824,6 +1829,42 @@
 		"warning": "Warning"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Display filter",
+			"buttonCustomised": "Filter customised",
+			"title": "Display filter",
+			"description": "Which kinds appear in this list and which get a pill.",
+			"showColumn": "Show",
+			"pillColumn": "Pill",
+			"showKind": "Show: {{kind}}",
+			"pillKind": "Pill: {{kind}}",
+			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
+			"pillNotApplicable": "No pill for this kind",
+			"autoRead": "Mark hidden items as read immediately",
+			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
+			"autoReadSessions": "Don't count hidden chats as unread",
+			"autoReadSessionsDescription": "Applies to this list and its counter only. Chats are not marked read and no read receipts are sent.",
+			"reset": "Reset to my defaults",
+			"done": "Done",
+			"profileLink": "Defaults and more options in Profile › Notifications",
+			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
+			"badgeHiddenHint": "up to {{count}} hidden",
+			"hiddenActiveRow": "Hidden by your display filter",
+			"profileTitle": "Display filters",
+			"profileDescription": "Defaults per list, valid on every device. A list can temporarily override them through its filter button.",
+			"overrideActive": "This list currently uses its own filter; the defaults apply once it is reset.",
+			"eventTypesTitle": "Fine-tune by event type",
+			"eventTypesDescription": "Hide single event types of the timeline. Also applies while the list uses its own filter.",
+			"eventTypeShow": "Show {{type}}",
+			"applyToAll": "Apply to other lists",
+			"applyToAllDescription": "Copies \"mark hidden items as read\" to Timeline and Conversations and the live-chat setting to Conversations and Requests.",
+			"otherKind": "Other",
+			"sections": {
+				"timeline": "Timeline",
+				"sessions": "Conversations",
+				"requests": "Requests"
+			}
+		},
 		"families": {
 			"all": "All",
 			"requests": "Requests",
@@ -3534,6 +3575,7 @@
 				"drafts": "Drafts",
 				"nearby": "Mail",
 				"create": "Create",
+				"group": "Filters",
 				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
