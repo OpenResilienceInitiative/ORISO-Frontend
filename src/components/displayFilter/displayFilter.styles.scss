@@ -232,3 +232,36 @@
 		align-items: center;
 	}
 }
+
+/* Chip menu variants (#1377, Frank 2026-09-16; Figma 9947:31377 text pills,
+   1139:45736 icon pills). The base pill lives in sessionsList.styles.scss. */
+.sessionsListToolbar__chip--text {
+	min-height: 28px;
+	min-width: 0;
+	padding: 0 12px;
+	max-width: 220px;
+
+	.sessionsListToolbar__chipLabel {
+		max-width: 200px;
+		margin-left: 0;
+		opacity: 1;
+		transform: none;
+	}
+
+	.sessionsListToolbar__chipBadge {
+		position: static;
+		margin-left: 6px;
+	}
+}
+
+/* Träger switched the format off, rows still exist: locked look, still
+   focusable so the click can explain (the chip is not `disabled`). */
+.sessionsListToolbar__chip--deactivated {
+	border-style: dashed;
+	color: var(--m3-on-surface-variant, #444748);
+	opacity: 0.62;
+
+	&.sessionsListToolbar__chip--active {
+		opacity: 0.8;
+	}
+}

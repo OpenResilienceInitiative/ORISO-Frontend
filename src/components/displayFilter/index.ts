@@ -2,6 +2,11 @@ export * from './displayFilterTypes';
 export { FilterChip } from './FilterChip';
 export type { FilterChipProps } from './FilterChip';
 export { FilterChipRow } from './FilterChipRow';
+export { FilterChipMenu } from './FilterChipMenu';
+export type {
+	FilterChipMenuLabels,
+	FilterChipMenuProps
+} from './FilterChipMenu';
 export type { FilterChipRowProps } from './FilterChipRow';
 export { DisplayFilterButton } from './DisplayFilterButton';
 export type { DisplayFilterButtonProps } from './DisplayFilterButton';
