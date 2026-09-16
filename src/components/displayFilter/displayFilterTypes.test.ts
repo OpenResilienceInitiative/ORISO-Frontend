@@ -133,9 +133,9 @@ describe('displayFilterTypes (#1377)', () => {
 		]);
 		// A hidden kind has no chip either.
 		const hidden = setKindSetting(value, 'messages', { show: false });
-		expect(visiblePillKinds(hidden, kinds, null).map((k) => k.id)).toEqual(
-			['requests']
-		);
+		expect(visiblePillKinds(hidden, kinds, null).map((k) => k.id)).toEqual([
+			'requests'
+		]);
 	});
 
 	it('auto-sort floats kinds with unread items to the left, otherwise keeps the section order', () => {
@@ -145,13 +145,13 @@ describe('displayFilterTypes (#1377)', () => {
 			{ id: 'liveChat', label: 'Live-Chat', unreadCount: 0 },
 			{ id: 'circle', label: 'Gesprächskreis', unreadCount: 1 }
 		];
-		expect(orderChipKinds(kinds, { autoSort: false }).map((k) => k.id)).toEqual(
-			['unread', 'nearby', 'liveChat', 'circle']
-		);
+		expect(
+			orderChipKinds(kinds, { autoSort: false }).map((k) => k.id)
+		).toEqual(['unread', 'nearby', 'liveChat', 'circle']);
 		// Stable among the unread ones and among the rest.
-		expect(orderChipKinds(kinds, { autoSort: true }).map((k) => k.id)).toEqual(
-			['nearby', 'circle', 'unread', 'liveChat']
-		);
+		expect(
+			orderChipKinds(kinds, { autoSort: true }).map((k) => k.id)
+		).toEqual(['nearby', 'circle', 'unread', 'liveChat']);
 	});
 
 	it('clears the active kind once its pill is gone', () => {
@@ -191,9 +191,21 @@ describe('kind availability under the Träger feature switch (Frank 2026-09-16)'
 
 	it('lists available and deactivated kinds, drops absent ones', () => {
 		const kinds = [
-			{ id: 'oneToOne', label: 'Mail', availability: 'available' as const },
-			{ id: 'circle', label: 'Gesprächskreis', availability: 'deactivated' as const },
-			{ id: 'internalGroup', label: 'Intern', availability: 'absent' as const }
+			{
+				id: 'oneToOne',
+				label: 'Mail',
+				availability: 'available' as const
+			},
+			{
+				id: 'circle',
+				label: 'Gesprächskreis',
+				availability: 'deactivated' as const
+			},
+			{
+				id: 'internalGroup',
+				label: 'Intern',
+				availability: 'absent' as const
+			}
 		];
 		expect(listedKinds(kinds).map((k) => k.id)).toEqual([
 			'oneToOne',

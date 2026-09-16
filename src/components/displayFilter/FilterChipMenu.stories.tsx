@@ -19,12 +19,42 @@ import '../sessionsList/sessionsList.styles.scss';
 
 /** Gespräche kinds as the consultant sees them (Figma 1139:45736 order). */
 const SESSION_KINDS: DisplayFilterKindOption[] = [
-	{ id: 'oneToOne', label: 'Mail', icon: SESSION_KIND_ICONS.oneToOne, unreadCount: 2 },
-	{ id: 'liveChat', label: 'Live-Chat', icon: SESSION_KIND_ICONS.liveChat, unreadCount: 0 },
-	{ id: 'internalGroup', label: 'Interner Gruppenchat', icon: SESSION_KIND_ICONS.internalGroup, unreadCount: 0 },
-	{ id: 'circle', label: 'Gesprächskreis', icon: SESSION_KIND_ICONS.circle, unreadCount: 1 },
-	{ id: 'supervision', label: 'Supervision', icon: SESSION_KIND_ICONS.supervision, unreadCount: 0 },
-	{ id: OTHER_KIND_ID, label: 'Sonstiges', icon: SESSION_KIND_ICONS.other, unreadCount: 0 }
+	{
+		id: 'oneToOne',
+		label: 'Mail',
+		icon: SESSION_KIND_ICONS.oneToOne,
+		unreadCount: 2
+	},
+	{
+		id: 'liveChat',
+		label: 'Live-Chat',
+		icon: SESSION_KIND_ICONS.liveChat,
+		unreadCount: 0
+	},
+	{
+		id: 'internalGroup',
+		label: 'Interner Gruppenchat',
+		icon: SESSION_KIND_ICONS.internalGroup,
+		unreadCount: 0
+	},
+	{
+		id: 'circle',
+		label: 'Gesprächskreis',
+		icon: SESSION_KIND_ICONS.circle,
+		unreadCount: 1
+	},
+	{
+		id: 'supervision',
+		label: 'Supervision',
+		icon: SESSION_KIND_ICONS.supervision,
+		unreadCount: 0
+	},
+	{
+		id: OTHER_KIND_ID,
+		label: 'Sonstiges',
+		icon: SESSION_KIND_ICONS.other,
+		unreadCount: 0
+	}
 ];
 
 const LABELS: FilterChipMenuLabels = {
@@ -48,7 +78,10 @@ const Menu = ({
 	const [active, setActive] = useState<string | null>(initialActive);
 	const [notice, setNotice] = useState<string | null>(null);
 	return (
-		<div className="sessionsListToolbar" style={{ maxWidth: 520, padding: 16 }}>
+		<div
+			className="sessionsListToolbar"
+			style={{ maxWidth: 520, padding: 16 }}
+		>
 			<FilterChipMenu
 				kinds={kinds}
 				value={initialValue}
@@ -57,7 +90,9 @@ const Menu = ({
 				assetIcons
 				onToggle={(kindId) => {
 					onToggle?.(kindId);
-					setActive((current) => (current === kindId ? null : kindId));
+					setActive((current) =>
+						current === kindId ? null : kindId
+					);
 				}}
 				onDeactivatedClick={(kindId) => {
 					onDeactivatedClick?.(kindId);
@@ -136,7 +171,9 @@ export const ActiveChipExpands: Story = {
 		await userEvent.click(mail);
 		await expect(args.onToggle).toHaveBeenCalledWith('oneToOne');
 		await expect(mail).toHaveAttribute('aria-pressed', 'true');
-		await expect(mail.className).toContain('sessionsListToolbar__chip--active');
+		await expect(mail.className).toContain(
+			'sessionsListToolbar__chip--active'
+		);
 	}
 };
 
@@ -157,14 +194,20 @@ export const IconsSectionOrder: Story = {
 /** Compact text pills (Figma 9947:31377), active one filled. */
 export const TextCompact: Story = {
 	args: {
-		initialValue: { ...EMPTY_DISPLAY_FILTER, view: 'text', autoSort: false },
+		initialValue: {
+			...EMPTY_DISPLAY_FILTER,
+			view: 'text',
+			autoSort: false
+		},
 		initialActive: 'supervision'
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const active = canvas.getByRole('button', { name: 'Supervision' });
 		await expect(active).toHaveAttribute('aria-pressed', 'true');
-		await expect(active.className).toContain('sessionsListToolbar__chip--text');
+		await expect(active.className).toContain(
+			'sessionsListToolbar__chip--text'
+		);
 		// Only the pinned tune button keeps an icon; the kind chips are text.
 		await expect(
 			canvasElement.querySelectorAll(
@@ -177,12 +220,18 @@ export const TextCompact: Story = {
 /** Pill switched off in the filter: the chip is gone, the rest stays. */
 export const PillOffRemovesChip: Story = {
 	args: {
-		initialValue: setKindSetting(EMPTY_DISPLAY_FILTER, 'supervision', { pill: false })
+		initialValue: setKindSetting(EMPTY_DISPLAY_FILTER, 'supervision', {
+			pill: false
+		})
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.queryByRole('button', { name: 'Supervision' })).toBeNull();
-		await expect(canvas.getByRole('button', { name: 'Live-Chat' })).toBeTruthy();
+		await expect(
+			canvas.queryByRole('button', { name: 'Supervision' })
+		).toBeNull();
+		await expect(
+			canvas.getByRole('button', { name: 'Live-Chat' })
+		).toBeTruthy();
 	}
 };
 
@@ -201,7 +250,9 @@ export const DeactivatedByTraeger: Story = {
 	},
 	play: async ({ canvasElement, args }) => {
 		const canvas = within(canvasElement);
-		await expect(canvas.queryByRole('button', { name: 'Interner Gruppenchat' })).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: 'Interner Gruppenchat' })
+		).toBeNull();
 		const locked = canvas.getByRole('button', {
 			name: 'Gesprächskreis (1) (vom Träger abgeschaltet)'
 		});

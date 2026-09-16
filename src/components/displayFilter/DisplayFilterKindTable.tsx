@@ -84,7 +84,8 @@ export const DisplayFilterKindTable = ({
 						className={clsx(
 							'displayFilterDialog__row',
 							!setting.show && 'displayFilterDialog__row--hidden',
-							deactivated && 'displayFilterDialog__row--deactivated'
+							deactivated &&
+								'displayFilterDialog__row--deactivated'
 						)}
 						data-cy={`${dataCyPrefix}-row-${kind.id}`}
 					>

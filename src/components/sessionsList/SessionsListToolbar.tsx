@@ -30,10 +30,7 @@ import {
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
 import { FilterChipRow } from '../displayFilter/FilterChipRow';
 import { FilterChip as MenuChip } from '../displayFilter/FilterChip';
-import {
-	ChipView,
-	orderChipKinds
-} from '../displayFilter/displayFilterTypes';
+import { ChipView, orderChipKinds } from '../displayFilter/displayFilterTypes';
 import '../displayFilter/displayFilter.styles.scss';
 
 /** The pinned tune button at the right end of the chip row (#1377 §3). */
@@ -245,18 +242,6 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 	}
 ];
 
-const CountBadge = ({ count }: { count?: number }) => {
-	if (!count || count <= 0) {
-		return null;
-	}
-
-	return (
-		<span className="sessionsListToolbar__chipBadge">
-			{count > 99 ? '99+' : count}
-		</span>
-	);
-};
-
 const FilterChip = ({
 	chip,
 	active,
@@ -449,34 +434,35 @@ export const SessionsListToolbar = ({
 
 	const visibleFilterChips = React.useMemo(() => {
 		const listed = FILTER_CHIPS.filter((chip) => {
-				if (hiddenKindChips[chip.id as DisplayFilterKindChip]) {
-					return false;
-				}
-				// Träger switched the format off but rows still exist: the
-				// chip stays (locked) although the module gate below is off.
-				if (deactivatedKindChips[chip.id as DisplayFilterKindChip]) {
-					return true;
-				}
-				if (chip.id === 'liveChat') {
-					return showLiveChatChip;
-				}
-				if (chip.id === 'supervision') {
-					return showSupervisionChip;
-				}
-				if (chip.id === 'groups') {
-					return showGroupChip;
-				}
-				if (chip.id === 'internalGroup') {
-					return showInternalGroupChip;
-				}
+			if (hiddenKindChips[chip.id as DisplayFilterKindChip]) {
+				return false;
+			}
+			// Träger switched the format off but rows still exist: the
+			// chip stays (locked) although the module gate below is off.
+			if (deactivatedKindChips[chip.id as DisplayFilterKindChip]) {
 				return true;
-			});
+			}
+			if (chip.id === 'liveChat') {
+				return showLiveChatChip;
+			}
+			if (chip.id === 'supervision') {
+				return showSupervisionChip;
+			}
+			if (chip.id === 'groups') {
+				return showGroupChip;
+			}
+			if (chip.id === 'internalGroup') {
+				return showInternalGroupChip;
+			}
+			return true;
+		});
 		// Drafts are a count, not unread: they never float.
 		return orderChipKinds(
 			listed.map((chip) => ({
 				...chip,
 				label: chip.fallback,
-				unreadCount: chip.id === 'drafts' ? 0 : chipCounts[chip.id] ?? 0
+				unreadCount:
+					chip.id === 'drafts' ? 0 : (chipCounts[chip.id] ?? 0)
 			})),
 			{ autoSort: chipAutoSort }
 		);
@@ -507,7 +493,9 @@ export const SessionsListToolbar = ({
 		const count = chipCounts[chip.id];
 		const label = tr(chip.labelKey, chip.fallback);
 		const named =
-			count && count > 0 ? `${label} (${count > 99 ? '99+' : count})` : label;
+			count && count > 0
+				? `${label} (${count > 99 ? '99+' : count})`
+				: label;
 		return (
 			<FilterChip
 				key={chip.id}

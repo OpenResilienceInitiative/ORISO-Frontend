@@ -247,7 +247,9 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 	const chipNames = (container: HTMLElement) =>
 		Array.from(
 			container.querySelectorAll('[data-cy^="sessions-list-chip-"]')
-		).map((el) => el.getAttribute('data-cy')!.replace('sessions-list-chip-', ''));
+		).map((el) =>
+			el.getAttribute('data-cy')!.replace('sessions-list-chip-', '')
+		);
 
 	it('shows a Träger-deactivated kind chip locked even though its module is off, and routes its click to the notice', () => {
 		const onChipToggle = vi.fn();
@@ -274,7 +276,10 @@ describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
 			chipCounts: { unread: 0, drafts: 3, nearby: 2, supervision: 1 }
 		});
 		// nearby (2) and supervision (1) first, then the rest in toolbar order
-		expect(chipNames(container).slice(0, 2)).toEqual(['nearby', 'supervision']);
+		expect(chipNames(container).slice(0, 2)).toEqual([
+			'nearby',
+			'supervision'
+		]);
 		expect(chipNames(container)).toContain('drafts');
 		expect(chipNames(container).indexOf('drafts')).toBeGreaterThan(1);
 	});

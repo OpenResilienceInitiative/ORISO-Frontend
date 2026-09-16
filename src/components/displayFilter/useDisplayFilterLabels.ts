@@ -65,7 +65,9 @@ export const useDisplayFilterLabels = (
 				autoSortDescription: t(
 					'notifications.displayFilter.autoSortDescription'
 				),
-				deactivatedHint: t('notifications.displayFilter.deactivatedHint')
+				deactivatedHint: t(
+					'notifications.displayFilter.deactivatedHint'
+				)
 			}
 		}),
 		[section, t]

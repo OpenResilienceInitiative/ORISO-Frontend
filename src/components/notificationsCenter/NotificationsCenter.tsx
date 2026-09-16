@@ -45,6 +45,8 @@ import {
 	FilterChipRow,
 	isDisplayFilterCustomised,
 	reconcileActiveKind,
+	orderChipKinds,
+	resolveChipPresentation,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -420,9 +422,14 @@ export const NotificationsCenter = () => {
 			partial: isTimelineKindPartiallyHidden(timelineFilter, kind)
 		}));
 	}, [notificationFeed, timelineFilter, translate, visibleFeed]);
+	const chipPresentation = resolveChipPresentation(timelineFilter);
 	const pillKinds = useMemo(
-		() => visiblePillKinds(timelineFilter, timelineKinds, activeFamily),
-		[activeFamily, timelineFilter, timelineKinds]
+		() =>
+			orderChipKinds(
+				visiblePillKinds(timelineFilter, timelineKinds, activeFamily),
+				{ autoSort: chipPresentation.autoSort }
+			),
+		[activeFamily, chipPresentation.autoSort, timelineFilter, timelineKinds]
 	);
 	const displayFilterCustomised = isDisplayFilterCustomised(
 		timelineFilter,
@@ -977,6 +984,7 @@ export const NotificationsCenter = () => {
 									label={kind.label}
 									icon={kind.icon!}
 									assetIcon
+									view={chipPresentation.view}
 									count={kind.unreadCount}
 									active={activeFamily === kind.id}
 									onClick={() =>

@@ -107,8 +107,12 @@ import {
 	isDisplayFilterCustomised,
 	useDisplayFilterLabels,
 	visiblePillKinds,
-	reconcileActiveKind
+	reconcileActiveKind,
+	listedKinds,
+	resolveKindAvailability,
+	resolveChipPresentation
 } from '../displayFilter';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	applyRequestsFilter,
 	applySessionsFilter,
@@ -1709,6 +1713,25 @@ export const SessionsList = ({
 		visibleUserDrafts
 	]);
 	const visibleListItemCount = sortedSessions.length + unmatchedDrafts.length;
+	// Rows per kind over ALL loaded rows (before the display filter): the
+	// Träger switch decides between "deactivated" (rows still exist) and
+	// "absent" (nothing of that kind) by this count (Frank 2026-09-16).
+	const rowsByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		sessionToolbarPairs.forEach(({ raw, extended }) => {
+			const kind =
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? classifyRequest(raw, extended)
+					: classifySession(
+							raw,
+							extended,
+							userData?.userId,
+							canSupervise
+						);
+			counts[kind] = (counts[kind] ?? 0) + 1;
+		});
+		return counts;
+	}, [canSupervise, sessionToolbarPairs, type, userData?.userId]);
 	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
 	// excluded from the chip counts", §6.2 "don't count hidden chats").
 	const unreadByKind = React.useMemo(() => {
@@ -1746,13 +1769,11 @@ export const SessionsList = ({
 			type === SESSION_LIST_TYPES.ENQUIRY
 				? REQUEST_KIND_ORDER
 				: SESSION_KIND_ORDER;
+		// Role/availability gates (not Träger switches): listed or not.
 		const listed = (kind: string): boolean => {
 			switch (kind) {
 				case 'liveChat':
 					return liveChatAvailable;
-				case 'internalGroup':
-					return showInternalGroupChip;
-				case 'circle':
 				case 'futureTimeline':
 					return showGroupChip;
 				case 'supervision':
@@ -1761,22 +1782,76 @@ export const SessionsList = ({
 					return true;
 			}
 		};
-		return order.filter(listed).map((kind) => ({
-			id: kind,
-			label: sessionKindLabel(translate, kind),
-			icon: SESSION_KIND_ICONS[kind],
-			unreadCount: unreadByKind[kind] ?? 0,
-			showOnly: kind === 'futureTimeline'
-		}));
+		// Träger feature switches: off + rows → deactivated (listed, locked),
+		// off + no rows → absent (not listed). Frank 2026-09-16.
+		const traegerSwitch = (kind: string): boolean | null => {
+			switch (kind) {
+				case 'internalGroup':
+					return showInternalGroupChip;
+				case 'circle':
+					return showGroupChip;
+				default:
+					return null;
+			}
+		};
+		return listedKinds(
+			order.filter(listed).map((kind) => {
+				const formatEnabled = traegerSwitch(kind);
+				return {
+					id: kind,
+					label: sessionKindLabel(translate, kind),
+					icon: SESSION_KIND_ICONS[kind],
+					unreadCount: unreadByKind[kind] ?? 0,
+					showOnly: kind === 'futureTimeline',
+					availability:
+						formatEnabled === null
+							? ('available' as const)
+							: resolveKindAvailability({
+									formatEnabled,
+									rowCount: rowsByKind[kind] ?? 0
+								})
+				};
+			})
+		);
 	}, [
 		canSupervise,
 		liveChatAvailable,
+		rowsByKind,
 		showGroupChip,
 		showInternalGroupChip,
 		translate,
 		type,
 		unreadByKind
 	]);
+	const chipPresentation = resolveChipPresentation(listDisplayFilter);
+	// Chips of kinds the Träger switched off while rows exist: locked, the
+	// click explains (snackbar) instead of filtering.
+	const deactivatedKindChips = React.useMemo(() => {
+		const locked: Partial<Record<DisplayFilterKindChip, boolean>> = {};
+		displayFilterKinds.forEach((kind) => {
+			const chip = SESSION_KIND_CHIP[kind.id];
+			if (chip && kind.availability === 'deactivated') {
+				locked[chip] = true;
+			}
+		});
+		return locked;
+	}, [displayFilterKinds]);
+	const [deactivatedNotice, setDeactivatedNotice] = useState<string | null>(
+		null
+	);
+	const handleDeactivatedChipClick = useCallback(
+		(chip: DisplayFilterKindChip) => {
+			const kind = displayFilterKinds.find(
+				(candidate) => SESSION_KIND_CHIP[candidate.id] === chip
+			);
+			setDeactivatedNotice(
+				translate('notifications.displayFilter.deactivatedNotice', {
+					kind: kind?.label ?? ''
+				})
+			);
+		},
+		[displayFilterKinds, translate]
+	);
 	const displayFilterCustomised = isDisplayFilterCustomised(
 		listDisplayFilter,
 		displayFilterKinds
@@ -2008,6 +2083,18 @@ export const SessionsList = ({
 					createGroupChatActive={isCreateChatActive}
 					chipCounts={toolbarChipCounts}
 					hiddenKindChips={hiddenKindChips}
+					deactivatedKindChips={deactivatedKindChips}
+					deactivatedChipLabel={(name) =>
+						translate(
+							'notifications.displayFilter.deactivatedChip',
+							{
+								kind: name
+							}
+						)
+					}
+					onDeactivatedChipClick={handleDeactivatedChipClick}
+					chipView={chipPresentation.view}
+					chipAutoSort={chipPresentation.autoSort}
 					displayFilter={{
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
@@ -2070,6 +2157,16 @@ export const SessionsList = ({
 								: '/sessions/consultant/sessionView'
 						)
 					}
+				/>
+			)}
+			{showMySessionToolbar && (
+				<M3Snackbar
+					open={deactivatedNotice !== null}
+					message={deactivatedNotice}
+					role="status"
+					onClose={() => setDeactivatedNotice(null)}
+					closeLabel={displayFilterLabels.dialogLabels.close}
+					testId="display-filter-deactivated-notice"
 				/>
 			)}
 			{showMySessionToolbar && (

@@ -95,7 +95,9 @@ describe('DisplayFilterDialog (#1377)', () => {
 		expect(document.getElementById(hintId as string)?.textContent).toBe(
 			STORY_LABELS.otherFixed
 		);
-		const autoRead = screen.getByRole('switch', { name: STORY_LABELS.autoRead });
+		const autoRead = screen.getByRole('switch', {
+			name: STORY_LABELS.autoRead
+		});
 		// The scope/privacy qualification is programmatically attached.
 		const descId = autoRead.getAttribute('aria-describedby');
 		expect(descId).not.toBeNull();
@@ -157,7 +159,9 @@ describe('DisplayFilterDialog (#1377)', () => {
 
 	it('omits auto-read for sections without it', () => {
 		render(<Harness onValue={() => undefined} showAutoRead={false} />);
-		expect(screen.queryByRole('switch', { name: STORY_LABELS.autoRead })).toBeNull();
+		expect(
+			screen.queryByRole('switch', { name: STORY_LABELS.autoRead })
+		).toBeNull();
 	});
 
 	it('disables reset while nothing is customised', () => {

@@ -57,7 +57,9 @@ describe('FilterChipMenu (#1377, Frank 2026-09-16)', () => {
 			'Ungelesen',
 			'Live-Chat'
 		]);
-		expect(screen.getByRole('group', { name: 'Anfragen filtern' })).toBeTruthy();
+		expect(
+			screen.getByRole('group', { name: 'Anfragen filtern' })
+		).toBeTruthy();
 	});
 
 	it('keeps the section order when auto-sort is off and hides a kind whose pill is off', () => {

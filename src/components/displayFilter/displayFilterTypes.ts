@@ -98,7 +98,9 @@ export const resolveKindAvailability = ({
 };
 
 /** The kinds a dialog/chip row lists: everything but `absent`. */
-export const listedKinds = <T extends Pick<DisplayFilterKindOption, 'availability'>>(
+export const listedKinds = <
+	T extends Pick<DisplayFilterKindOption, 'availability'>
+>(
 	kinds: ReadonlyArray<T>
 ): T[] => kinds.filter((kind) => kind.availability !== 'absent');
 
