@@ -5,6 +5,13 @@ interface AnimalAvatarProps {
 	avatar: Avatar;
 	/** Outer circle size in px (Figma default = 108) */
 	size?: number;
+	/**
+	 * The 2 px grey outline and its drop shadow. Defaults to `true`. Pass
+	 * `false` where the avatar has to sit flush with text beside it — the
+	 * outline would otherwise read as a 2 px gap (session list card,
+	 * Frank, 16.09.2026). The circle keeps its size either way.
+	 */
+	outline?: boolean;
 }
 
 /**
@@ -13,10 +20,11 @@ interface AnimalAvatarProps {
  */
 export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	avatar,
-	size = 108
+	size = 108,
+	outline = true
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
-	const borderWidth = 2;
+	const borderWidth = outline ? 2 : 0;
 	const minPadding = size >= 60 ? 8 : 2;
 	const padding = Math.max(minPadding, Math.round(size * 0.12));
 	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
@@ -53,8 +61,8 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 				width: size,
 				height: size,
 				boxSizing: 'border-box',
-				border: `${borderWidth}px solid #c4c7c8`,
-				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',
+				border: outline ? `${borderWidth}px solid #c4c7c8` : 0,
+				boxShadow: outline ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
 				overflow: 'hidden',
 				flexShrink: 0
 			}}
