@@ -4,9 +4,7 @@ import {
 	CHUNK_RELOAD_AT_KEY,
 	CHUNK_RELOAD_GUARD_MS,
 	RELOAD_FALLBACK_MS,
-	isChunkLoadError,
-	loadChunk,
-	reloadOnceForNewBuild
+	isChunkLoadError
 } from './chunkLoadRecovery';
 
 const mockAdd = vi.fn();
@@ -56,9 +54,13 @@ describe('isChunkLoadError', () => {
 
 describe('stale build recovery', () => {
 	let reload: ReturnType<typeof vi.fn>;
+	// The pending-reload flag is module state, so every test gets a fresh module.
+	let recovery: typeof import('./chunkLoadRecovery');
 	const originalLocation = window.location;
 
-	beforeEach(() => {
+	beforeEach(async () => {
+		vi.resetModules();
+		recovery = await import('./chunkLoadRecovery');
 		window.sessionStorage.clear();
 		mockAdd.mockClear();
 		reload = vi.fn();
@@ -81,7 +83,7 @@ describe('stale build recovery', () => {
 		it('reloads and remembers when it did', () => {
 			vi.spyOn(Date, 'now').mockReturnValue(1_000_000);
 
-			expect(reloadOnceForNewBuild()).toBe(true);
+			expect(recovery.reloadOnceForNewBuild()).toBe(true);
 			expect(reload).toHaveBeenCalledTimes(1);
 			expect(window.sessionStorage.getItem(CHUNK_RELOAD_AT_KEY)).toBe(
 				'1000000'
@@ -96,7 +98,7 @@ describe('stale build recovery', () => {
 				String(1_000_000 - CHUNK_RELOAD_GUARD_MS + 1)
 			);
 
-			expect(reloadOnceForNewBuild()).toBe(false);
+			expect(recovery.reloadOnceForNewBuild()).toBe(false);
 			expect(reload).not.toHaveBeenCalled();
 			expect(mockAdd).not.toHaveBeenCalled();
 		});
@@ -108,7 +110,23 @@ describe('stale build recovery', () => {
 				String(1_000_000 - CHUNK_RELOAD_GUARD_MS - 1)
 			);
 
-			expect(reloadOnceForNewBuild()).toBe(true);
+			expect(recovery.reloadOnceForNewBuild()).toBe(true);
+			expect(reload).toHaveBeenCalledTimes(1);
+		});
+
+		it('treats a second failure during the same reload as recovery in progress', () => {
+			expect(recovery.reloadOnceForNewBuild()).toBe(true);
+			expect(recovery.reloadOnceForNewBuild()).toBe(true);
+			expect(reload).toHaveBeenCalledTimes(1);
+		});
+
+		it('gives up once a reload the browser swallowed has had its time', () => {
+			vi.useFakeTimers();
+			expect(recovery.reloadOnceForNewBuild()).toBe(true);
+
+			vi.advanceTimersByTime(RELOAD_FALLBACK_MS);
+
+			expect(recovery.reloadOnceForNewBuild()).toBe(false);
 			expect(reload).toHaveBeenCalledTimes(1);
 		});
 
@@ -117,7 +135,7 @@ describe('stale build recovery', () => {
 				throw new Error('SecurityError');
 			});
 
-			expect(reloadOnceForNewBuild()).toBe(false);
+			expect(recovery.reloadOnceForNewBuild()).toBe(false);
 			expect(reload).not.toHaveBeenCalled();
 		});
 	});
@@ -126,7 +144,7 @@ describe('stale build recovery', () => {
 		it('returns the module when the import succeeds', async () => {
 			const factory = vi.fn().mockResolvedValue({ Login: 'component' });
 
-			await expect(loadChunk(factory)).resolves.toEqual({
+			await expect(recovery.loadChunk(factory)).resolves.toEqual({
 				Login: 'component'
 			});
 			expect(factory).toHaveBeenCalledTimes(1);
@@ -140,7 +158,7 @@ describe('stale build recovery', () => {
 				.mockRejectedValueOnce(webpackChunkError())
 				.mockResolvedValueOnce({ Login: 'component' });
 
-			const result = loadChunk(factory);
+			const result = recovery.loadChunk(factory);
 			await vi.runAllTimersAsync();
 
 			await expect(result).resolves.toEqual({ Login: 'component' });
@@ -154,7 +172,7 @@ describe('stale build recovery', () => {
 			const factory = vi.fn().mockRejectedValue(webpackChunkError());
 
 			let settled = false;
-			loadChunk(factory).then(
+			recovery.loadChunk(factory).then(
 				() => (settled = true),
 				() => (settled = true)
 			);
@@ -167,6 +185,28 @@ describe('stale build recovery', () => {
 			expect(settled).toBe(false);
 		});
 
+		it('lets two chunks that fail together share one reload, and neither reaches the error page', async () => {
+			vi.useFakeTimers();
+			const settled: string[] = [];
+			recovery
+				.loadChunk(vi.fn().mockRejectedValue(webpackChunkError()))
+				.then(
+					() => settled.push('route'),
+					() => settled.push('route')
+				);
+			recovery
+				.loadChunk(vi.fn().mockRejectedValue(webpackChunkError()))
+				.then(
+					() => settled.push('composer'),
+					() => settled.push('composer')
+				);
+
+			await vi.advanceTimersByTimeAsync(1_000);
+
+			expect(reload).toHaveBeenCalledTimes(1);
+			expect(settled).toEqual([]);
+		});
+
 		it('gives the error to the ErrorBoundary when a reload already happened moments ago', async () => {
 			vi.useFakeTimers();
 			window.sessionStorage.setItem(
@@ -176,7 +216,7 @@ describe('stale build recovery', () => {
 			const error = webpackChunkError();
 			const factory = vi.fn().mockRejectedValue(error);
 
-			const result = loadChunk(factory);
+			const result = recovery.loadChunk(factory);
 			result.catch(() => undefined);
 			await vi.runAllTimersAsync();
 
@@ -189,7 +229,7 @@ describe('stale build recovery', () => {
 			const error = webpackChunkError();
 			const factory = vi.fn().mockRejectedValue(error);
 
-			const result = loadChunk(factory);
+			const result = recovery.loadChunk(factory);
 			result.catch(() => undefined);
 			await vi.advanceTimersByTimeAsync(1_000);
 			expect(reload).toHaveBeenCalledTimes(1);
@@ -203,7 +243,7 @@ describe('stale build recovery', () => {
 			const error = new TypeError('x is not a function');
 			const factory = vi.fn().mockRejectedValue(error);
 
-			const result = loadChunk(factory);
+			const result = recovery.loadChunk(factory);
 			result.catch(() => undefined);
 			await vi.runAllTimersAsync();
 

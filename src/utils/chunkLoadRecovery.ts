@@ -77,12 +77,21 @@ export const isChunkLoadError = (error: unknown): boolean => {
 	return CHUNK_ERROR_PATTERNS.some((pattern) => message.includes(pattern));
 };
 
+// Set while our own reload is on its way. A second chunk that fails in that
+// moment belongs to the same stale build: it waits for the reload instead of
+// reaching the error page. The sessionStorage timestamp only guards the
+// document that the reload brings up.
+let reloadPending = false;
+
 /**
  * Reloads the page unless we already did so within the guard window.
- * Returns whether a reload was started. Without sessionStorage (Safari private
- * mode, blocked storage) nothing could stop a loop, so it never reloads.
+ * Returns whether a reload was started or is already under way. Without
+ * sessionStorage (Safari private mode, blocked storage) nothing could stop a
+ * loop, so it never reloads.
  */
 export const reloadOnceForNewBuild = (): boolean => {
+	if (reloadPending) return true;
+
 	const now = Date.now();
 	try {
 		const lastReloadAt = Number(
@@ -96,6 +105,11 @@ export const reloadOnceForNewBuild = (): boolean => {
 		return false;
 	}
 
+	reloadPending = true;
+	// A reload the browser swallowed must not hold recovery forever.
+	window.setTimeout(() => {
+		reloadPending = false;
+	}, RELOAD_FALLBACK_MS);
 	countOutcome('reload');
 	window.location.reload();
 	return true;

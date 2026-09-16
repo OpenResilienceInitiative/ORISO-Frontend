@@ -3,6 +3,7 @@ import * as React from 'react';
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import ErrorBoundary from './ErrorBoundary';
+import { RELOAD_FALLBACK_MS } from '../../utils/chunkLoadRecovery';
 
 const mockRedirectToErrorPage = vi.fn();
 const mockApiPostError = vi.fn(() => Promise.resolve());
@@ -64,6 +65,24 @@ describe('ErrorBoundary', () => {
 		expect(mockReloadOnceForNewBuild).toHaveBeenCalledTimes(1);
 		expect(mockRedirectToErrorPage).not.toHaveBeenCalled();
 		expect(mockApiPostError).not.toHaveBeenCalled();
+	});
+
+	it('shows the error page after all when the browser swallowed the reload', async () => {
+		vi.useFakeTimers();
+		mockReloadOnceForNewBuild.mockReturnValue(true);
+
+		render(
+			<ErrorBoundary>
+				<Throws error={chunkError()} />
+			</ErrorBoundary>
+		);
+		expect(mockRedirectToErrorPage).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(RELOAD_FALLBACK_MS);
+
+		expect(mockReportChunkLoadGaveUp).toHaveBeenCalledTimes(1);
+		expect(mockRedirectToErrorPage).toHaveBeenCalledWith(500);
+		vi.useRealTimers();
 	});
 
 	it('still shows the error page when a reload did not help', async () => {

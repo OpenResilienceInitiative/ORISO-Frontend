@@ -9,6 +9,7 @@ import { Loading } from './Loading';
 import { STORAGE_KEY_ERROR_BOUNDARY } from '../devToolbar/DevToolbar';
 import {
 	isChunkLoadError,
+	RELOAD_FALLBACK_MS,
 	reloadOnceForNewBuild,
 	reportChunkLoadGaveUp
 } from '../../utils/chunkLoadRecovery';
@@ -52,10 +53,22 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 		// server error: one reload fetches the new build. Most lazy components
 		// already recover in lazyWithReload; this catches any other import().
 		if (isChunkLoadError(error)) {
-			if (reloadOnceForNewBuild()) return;
+			if (reloadOnceForNewBuild()) {
+				// Normally the page is gone long before this fires. If the
+				// browser swallowed the reload, the error page beats a spinner.
+				setTimeout(() => {
+					reportChunkLoadGaveUp();
+					this.reportAndRedirect(error, info);
+				}, RELOAD_FALLBACK_MS);
+				return;
+			}
 			reportChunkLoadGaveUp();
 		}
 
+		this.reportAndRedirect(error, info);
+	}
+
+	reportAndRedirect(error, info) {
 		const { window } = this.state;
 
 		const isNewError =
