@@ -60,6 +60,9 @@ export const useDisplayFilterLabels = (
 				overrideNotice: t('notifications.displayFilter.overrideNotice'),
 				resetShort: t('notifications.displayFilter.resetShort'),
 				readOnlyHint: t('notifications.displayFilter.readOnlyHint'),
+				soundColumn: t('notifications.displayFilter.soundColumn'),
+				soundKind: (kind: string) =>
+					t('notifications.displayFilter.soundKind', { kind }),
 				viewTitle: t('notifications.displayFilter.viewTitle'),
 				viewIcons: t('notifications.displayFilter.viewIcons'),
 				viewLabels: t('notifications.displayFilter.viewLabels'),

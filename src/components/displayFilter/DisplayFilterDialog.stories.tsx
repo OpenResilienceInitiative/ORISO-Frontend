@@ -94,7 +94,7 @@ export const Customised: Story = {
 		});
 		await expect(draftsPill).toBeDisabled();
 		await expect(
-			dialog.getByRole('checkbox', { name: 'Anzeigen: Sonstiges' })
+			dialog.getByRole('checkbox', { name: 'In der Liste: Sonstiges' })
 		).toBeDisabled();
 		await expect(
 			dialog.getByRole('button', {
@@ -110,7 +110,7 @@ export const HideAKind: Story = {
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
 		const showCalls = dialog.getByRole('checkbox', {
-			name: 'Anzeigen: Anrufe'
+			name: 'In der Liste: Anrufe'
 		});
 		const pillCalls = dialog.getByRole('checkbox', {
 			name: 'Pille: Anrufe'
@@ -154,7 +154,7 @@ export const PartiallyHidden: Story = {
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
 		await expect(
-			dialog.getByRole('checkbox', { name: 'Anzeigen: System' })
+			dialog.getByRole('checkbox', { name: 'In der Liste: System' })
 		).toHaveAttribute('aria-checked', 'mixed');
 	}
 };
@@ -209,5 +209,44 @@ export const PhoneLandscape: Story = {
 		await expect(done.getBoundingClientRect().bottom).toBeLessThanOrEqual(
 			doc.defaultView!.innerHeight
 		);
+	}
+};
+
+/** Gespräche/Anfragen: "Ton" instead of "In der Liste" — mute a kind, keep it listed. */
+export const SessionsWithSoundColumn: Story = {
+	render: () => (
+		<DisplayFilterDialog
+			open
+			onClose={() => undefined}
+			onReset={() => undefined}
+			onOpenProfile={() => undefined}
+			kinds={[
+				{ id: 'oneToOne', label: 'Mail', unreadCount: 2 },
+				{ id: 'liveChat', label: 'Live-Chat', unreadCount: 0 },
+				{ id: 'circle', label: 'Gesprächskreis', unreadCount: 1 },
+				{ id: 'other', label: 'Sonstiges', unreadCount: 0 }
+			]}
+			value={{
+				kinds: { liveChat: { show: true, pill: true, sound: false } },
+				autoReadHidden: false
+			}}
+			labels={{ ...STORY_LABELS, title: 'Anzeige-Filter · Gespräche' }}
+			columns={{ show: false, sound: true }}
+			showAutoRead={false}
+			onChange={() => undefined}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement.ownerDocument.body);
+		await expect(
+			canvas.getByRole('columnheader', { name: 'Ton' })
+		).toBeTruthy();
+		await expect(
+			canvas.queryByRole('columnheader', { name: 'In der Liste' })
+		).toBeNull();
+		const live = canvas.getByRole('checkbox', {
+			name: 'Ton: Live-Chat'
+		}) as HTMLInputElement;
+		await expect(live.checked).toBe(false);
 	}
 };

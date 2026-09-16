@@ -113,8 +113,10 @@ import {
 	resolveChipPresentation,
 	kindsUnderOther,
 	matchesOtherChip,
-	OTHER_KIND_ID
+	OTHER_KIND_ID,
+	SESSION_COLUMNS
 } from '../displayFilter';
+import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	applyRequestsFilter,
@@ -1741,10 +1743,10 @@ export const SessionsList = ({
 	// Rows per kind over ALL loaded rows (before the display filter): the
 	// Träger switch decides between "deactivated" (rows still exist) and
 	// "absent" (nothing of that kind) by this count (Frank 2026-09-16).
-	const rowsByKind = React.useMemo(() => {
-		const counts: Record<string, number> = {};
+	const kindsBySessionId = React.useMemo(() => {
+		const kinds: Record<string, string> = {};
 		sessionToolbarPairs.forEach(({ raw, extended }) => {
-			const kind =
+			kinds[sessionPairId({ raw, extended })] =
 				type === SESSION_LIST_TYPES.ENQUIRY
 					? classifyRequest(raw, extended)
 					: classifySession(
@@ -1753,10 +1755,21 @@ export const SessionsList = ({
 							userData?.userId,
 							canSupervise
 						);
+		});
+		return kinds;
+	}, [canSupervise, sessionToolbarPairs, type, userData?.userId]);
+	// The sound gate in NotificationsProvider looks the event's session up
+	// here (#1377 "Ton" column, Frank 2026-09-16).
+	useEffect(() => {
+		sessionKindRegistry.publish(displayFilterSection, kindsBySessionId);
+	}, [displayFilterSection, kindsBySessionId]);
+	const rowsByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		Object.values(kindsBySessionId).forEach((kind) => {
 			counts[kind] = (counts[kind] ?? 0) + 1;
 		});
 		return counts;
-	}, [canSupervise, sessionToolbarPairs, type, userData?.userId]);
+	}, [kindsBySessionId]);
 	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
 	// excluded from the chip counts", §6.2 "don't count hidden chats").
 	const unreadByKind = React.useMemo(() => {
@@ -2210,6 +2223,7 @@ export const SessionsList = ({
 			{showMySessionToolbar && (
 				<DisplayFilterDialog
 					id={SESSIONS_DISPLAY_FILTER_DIALOG_ID}
+					columns={SESSION_COLUMNS}
 					open={displayFilterOpen}
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}

@@ -1839,6 +1839,8 @@
 			"description": "Quels types apparaissent dans cette liste et lesquels reçoivent une pastille.",
 			"showColumn": "Afficher",
 			"pillColumn": "Pastille",
+			"soundColumn": "Son",
+			"soundKind": "Son : {{kind}}",
 			"showKind": "Afficher : {{kind}}",
 			"pillKind": "Pastille : {{kind}}",
 			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",

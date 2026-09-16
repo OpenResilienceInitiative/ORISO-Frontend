@@ -65,7 +65,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 		const onValue = vi.fn();
 		render(<Harness onValue={onValue} />);
 		const showDrafts = screen.getByRole('checkbox', {
-			name: 'Anzeigen: Entwürfe'
+			name: 'In der Liste: Entwürfe'
 		}) as HTMLInputElement;
 		const pillDrafts = screen.getByRole('checkbox', {
 			name: 'Pille: Entwürfe'
@@ -85,7 +85,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 		const onValue = vi.fn();
 		render(<Harness onValue={onValue} />);
 		const showOther = screen.getByRole('checkbox', {
-			name: 'Anzeigen: Sonstiges'
+			name: 'In der Liste: Sonstiges'
 		}) as HTMLInputElement;
 		expect(showOther.disabled).toBe(true);
 		expect(showOther.checked).toBe(true);
@@ -126,7 +126,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			/>
 		);
 		const showSystem = screen.getByRole('checkbox', {
-			name: 'Anzeigen: System'
+			name: 'In der Liste: System'
 		}) as HTMLInputElement;
 		expect(showSystem.getAttribute('aria-checked')).toBe('mixed');
 		expect(showSystem.indeterminate).toBe(true);
@@ -149,7 +149,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			/>
 		);
 		expect(
-			screen.getByRole('checkbox', { name: 'Anzeigen: Zukunft' })
+			screen.getByRole('checkbox', { name: 'In der Liste: Zukunft' })
 		).not.toBeNull();
 		expect(
 			screen.queryByRole('checkbox', { name: 'Pille: Zukunft' })
@@ -257,7 +257,7 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 			/>
 		);
 		const show = screen.getByRole('checkbox', {
-			name: 'Anzeigen: Gesprächskreis'
+			name: 'In der Liste: Gesprächskreis'
 		}) as HTMLInputElement;
 		const pill = screen.getByRole('checkbox', {
 			name: 'Pille: Gesprächskreis'
@@ -273,9 +273,48 @@ describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-
 		expect(
 			(
 				screen.getByRole('checkbox', {
-					name: 'Anzeigen: Mail'
+					name: 'In der Liste: Mail'
 				}) as HTMLInputElement
 			).disabled
 		).toBe(false);
+	});
+});
+
+describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
+	afterEach(cleanup);
+
+	it('shows a Ton column instead of In der Liste when configured, and stores the mute', () => {
+		const onValue = vi.fn();
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[{ id: 'oneToOne', label: 'Mail', unreadCount: 0 }]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={{ show: false, sound: true }}
+				onChange={onValue}
+			/>
+		);
+		expect(
+			screen.queryByRole('checkbox', { name: 'In der Liste: Mail' })
+		).toBeNull();
+		const sound = screen.getByRole('checkbox', {
+			name: 'Ton: Mail'
+		}) as HTMLInputElement;
+		expect(sound.checked).toBe(true);
+		fireEvent.click(sound);
+		const next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.oneToOne?.sound).toBe(false);
+		expect(screen.getByRole('columnheader', { name: 'Ton' })).toBeTruthy();
+	});
+
+	it('keeps the In der Liste column by default (Zeitstrahl)', () => {
+		render(<Harness onValue={() => undefined} />);
+		expect(
+			screen.getByRole('checkbox', { name: 'In der Liste: Nachrichten' })
+		).toBeTruthy();
+		expect(screen.queryByRole('checkbox', { name: /^Ton:/ })).toBeNull();
 	});
 });

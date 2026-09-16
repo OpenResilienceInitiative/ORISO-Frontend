@@ -1839,6 +1839,8 @@
 			"description": "ኣብዚ ዝርዝር እዚ ኣየኖት ዓይነታት ከም ዝርኣዩን ኣየኖት ምልክት ከም ዝወስዱን።",
 			"showColumn": "ኣርኢ",
 			"pillColumn": "ምልክት",
+			"soundColumn": "ድምጺ",
+			"soundKind": "ድምጺ፦ {{kind}}",
 			"showKind": "ኣርኢ: {{kind}}",
 			"pillKind": "ምልክት: {{kind}}",
 			"otherFixed": "“ካልእ” ዋላ ሓንቲ ከይተፈልጠት ከይትጠፍእ ኩሉ ግዜ ይርአ።",

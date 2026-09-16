@@ -5,6 +5,7 @@ import {
 	DisplayFilterKindOption,
 	DisplayFilterValue,
 	OTHER_KIND_ID,
+	isKindMuted,
 	resolveKindSetting,
 	setKindSetting
 } from './displayFilterTypes';
@@ -16,7 +17,9 @@ export interface DisplayFilterKindTableLabels {
 	title: string;
 	showColumn: string;
 	pillColumn: string;
+	soundColumn: string;
 	showKind: (kindLabel: string) => string;
+	soundKind: (kindLabel: string) => string;
 	pillKind: (kindLabel: string) => string;
 	otherFixed: string;
 	pillNotApplicable: string;
@@ -34,6 +37,8 @@ export interface DisplayFilterKindTableProps {
 	idPrefix: string;
 	/** Namespaces the `data-cy` hooks when several tables share a page. */
 	dataCyPrefix?: string;
+	/** Which per-kind columns to render; default: show + pill (Zeitstrahl). */
+	columns?: { show: boolean; sound: boolean };
 }
 
 /**
@@ -48,7 +53,8 @@ export const DisplayFilterKindTable = ({
 	readOnly = false,
 	labels,
 	idPrefix,
-	dataCyPrefix = 'display-filter'
+	dataCyPrefix = 'display-filter',
+	columns = { show: true, sound: false }
 }: DisplayFilterKindTableProps) => (
 	<table className="displayFilterDialog__table">
 		<thead>
@@ -56,9 +62,16 @@ export const DisplayFilterKindTable = ({
 				<th scope="col" className="displayFilterDialog__kindHead">
 					<span className="sr-only">{labels.title}</span>
 				</th>
-				<th scope="col" className="displayFilterDialog__colHead">
-					{labels.showColumn}
-				</th>
+				{columns.show && (
+					<th scope="col" className="displayFilterDialog__colHead">
+						{labels.showColumn}
+					</th>
+				)}
+				{columns.sound && (
+					<th scope="col" className="displayFilterDialog__colHead">
+						{labels.soundColumn}
+					</th>
+				)}
 				<th scope="col" className="displayFilterDialog__colHead">
 					{labels.pillColumn}
 				</th>
@@ -116,26 +129,48 @@ export const DisplayFilterKindTable = ({
 								)}
 							</span>
 						</th>
-						<td className="displayFilterDialog__cell">
-							<M3Checkbox
-								checked={setting.show}
-								indeterminate={Boolean(
-									setting.show && kind.partial
-								)}
-								disabled={readOnly || isOther || deactivated}
-								describedBy={hintId}
-								hideLabel
-								label={labels.showKind(kind.label)}
-								dataCy={`${dataCyPrefix}-show-${kind.id}`}
-								onChange={(checked) =>
-									onChange(
-										setKindSetting(value, kind.id, {
-											show: checked
-										})
-									)
-								}
-							/>
-						</td>
+						{columns.sound && (
+							<td className="displayFilterDialog__cell">
+								<M3Checkbox
+									checked={!isKindMuted(value, kind.id)}
+									disabled={readOnly || deactivated}
+									hideLabel
+									label={labels.soundKind(kind.label)}
+									dataCy={`${dataCyPrefix}-sound-${kind.id}`}
+									onChange={(checked) =>
+										onChange(
+											setKindSetting(value, kind.id, {
+												sound: checked
+											})
+										)
+									}
+								/>
+							</td>
+						)}
+						{columns.show && (
+							<td className="displayFilterDialog__cell">
+								<M3Checkbox
+									checked={setting.show}
+									indeterminate={Boolean(
+										setting.show && kind.partial
+									)}
+									disabled={
+										readOnly || isOther || deactivated
+									}
+									describedBy={hintId}
+									hideLabel
+									label={labels.showKind(kind.label)}
+									dataCy={`${dataCyPrefix}-show-${kind.id}`}
+									onChange={(checked) =>
+										onChange(
+											setKindSetting(value, kind.id, {
+												show: checked
+											})
+										)
+									}
+								/>
+							</td>
+						)}
 						<td className="displayFilterDialog__cell">
 							{kind.showOnly ? (
 								<>

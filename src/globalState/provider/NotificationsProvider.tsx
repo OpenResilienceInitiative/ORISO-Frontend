@@ -37,6 +37,7 @@ import {
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 import { displayFilterStore } from '../../utils/displayFilter/store';
+import { isEventMutedByKind } from '../../utils/displayFilter/soundMask';
 import {
 	DisplayFilter,
 	resolveEffective
@@ -436,6 +437,16 @@ export function NotificationsProvider(props) {
 			);
 			lastAnnouncedEventIdRef.current = nextMarker;
 			if (!announce) {
+				return;
+			}
+			// #1377 "Ton": the user muted this kind of session in the list's
+			// display filter → no sound, whatever the area settings say.
+			if (
+				isEventMutedByKind(
+					displayFilterStore.getState().filters,
+					announce.sourceSessionId
+				)
+			) {
 				return;
 			}
 			const { settings, device } = notificationSettingsStore.getState();

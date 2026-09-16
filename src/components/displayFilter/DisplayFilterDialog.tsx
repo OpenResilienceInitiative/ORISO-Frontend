@@ -21,6 +21,10 @@ export interface DisplayFilterDialogLabels {
 	description: string;
 	showColumn: string;
 	pillColumn: string;
+	/** "Ton" — the sound column (Gespräche/Anfragen). */
+	soundColumn: string;
+	/** Accessible name of one sound checkbox, e.g. "Ton: Mail". */
+	soundKind: (kindLabel: string) => string;
 	/** Accessible name of one show checkbox, e.g. "Anzeigen: Anfragen". */
 	showKind: (kindLabel: string) => string;
 	pillKind: (kindLabel: string) => string;
@@ -76,7 +80,27 @@ export interface DisplayFilterDialogProps {
 	fullScreen?: boolean;
 	/** DOM id of the dialog surface, referenced by the button's `aria-controls`. */
 	id?: string;
+	/**
+	 * Which per-kind columns the table offers (Frank 2026-09-16): the
+	 * Zeitstrahl hides kinds ("In der Liste"), Gespräche and Anfragen mute
+	 * them ("Ton") instead. "Als Pille" is always there.
+	 */
+	columns?: DisplayFilterColumns;
 }
+
+export interface DisplayFilterColumns {
+	show: boolean;
+	sound: boolean;
+}
+
+export const TIMELINE_COLUMNS: DisplayFilterColumns = {
+	show: true,
+	sound: false
+};
+export const SESSION_COLUMNS: DisplayFilterColumns = {
+	show: false,
+	sound: true
+};
 
 /**
  * The display-filter dialog (#1377, spec §3): one row per kind with two
@@ -98,7 +122,8 @@ export const DisplayFilterDialog = ({
 	labels,
 	canReset = false,
 	fullScreen = false,
-	id
+	id,
+	columns = TIMELINE_COLUMNS
 }: DisplayFilterDialogProps) => {
 	const generatedId = useId();
 	const dialogId = id ?? generatedId;
@@ -139,6 +164,7 @@ export const DisplayFilterDialog = ({
 				readOnly={readOnly}
 				labels={labels}
 				idPrefix={dialogId}
+				columns={columns}
 			/>
 
 			<fieldset

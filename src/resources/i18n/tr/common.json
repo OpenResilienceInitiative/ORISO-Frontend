@@ -1839,6 +1839,8 @@
 			"description": "Bu listede hangi türlerin görüneceği ve hangilerinin etiket alacağı.",
 			"showColumn": "Göster",
 			"pillColumn": "Etiket",
+			"soundColumn": "Ses",
+			"soundKind": "Ses: {{kind}}",
 			"showKind": "Göster: {{kind}}",
 			"pillKind": "Etiket: {{kind}}",
 			"otherFixed": "„Diğer“ her zaman gösterilir, böylece hiçbir şey fark edilmeden kaybolmaz.",
