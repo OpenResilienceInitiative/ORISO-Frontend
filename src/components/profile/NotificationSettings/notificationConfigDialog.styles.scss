@@ -7,19 +7,19 @@
 	&__intro {
 		margin: 0;
 		font-size: 15px;
-		color: #1a1a1a;
+		color: var(--m3-on-surface, #211a1a);
 	}
 
 	&__emailNote {
 		margin: 0 0 8px;
 		font-size: 13px;
-		color: #6b7280;
+		color: var(--m3-on-surface-variant, #534343);
 	}
 
 	&__tabs {
 		display: flex;
 		gap: 24px;
-		border-bottom: 1px solid #e5e7eb;
+		border-bottom: 1px solid var(--m3-outline-variant, #d8c2c1);
 		margin-bottom: 16px;
 	}
 
@@ -28,7 +28,7 @@
 		border: none;
 		padding: 8px 2px;
 		font-size: 15px;
-		color: #6b7280;
+		color: var(--m3-on-surface-variant, #534343);
 		cursor: pointer;
 		border-bottom: 2px solid transparent;
 
@@ -58,7 +58,7 @@
 
 	&__label {
 		font-size: 12px;
-		color: #6b7280;
+		color: var(--m3-on-surface-variant, #534343);
 		padding-left: 4px;
 	}
 
@@ -95,7 +95,7 @@
 		}
 
 		&:hover:not(:disabled) {
-			color: #000;
+			color: var(--m3-on-surface, #211a1a);
 		}
 
 		&:disabled {
@@ -109,8 +109,9 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		border: 1px solid #cfd4da;
+		border: 1px solid var(--m3-outline-variant, #d8c2c1);
 		border-radius: 8px;
+		background: var(--m3-surface-container, #f0edee);
 		padding: 0 12px;
 		height: 48px;
 		flex: 1;
@@ -141,7 +142,7 @@
 
 		// No tone → the crossed-out (muted) icon, not interactive.
 		&--mute {
-			color: #9aa1a9;
+			color: var(--m3-on-surface-variant, #534343);
 		}
 	}
 
@@ -152,7 +153,7 @@
 		font-size: 15px;
 		height: 100%;
 		outline: none;
-		color: #1a1a1a;
+		color: var(--m3-on-surface, #211a1a);
 	}
 
 	// Channel row: banner mode select + M3 email checkbox
@@ -168,16 +169,16 @@
 		align-items: center;
 		gap: 8px;
 		font-size: 14px;
-		color: #1a1a1a;
+		color: var(--m3-on-surface, #211a1a);
 	}
 
 	&__bannerSelect {
-		border: 1px solid #cfd4da;
+		border: 1px solid var(--m3-outline-variant, #d8c2c1);
 		border-radius: 6px;
-		background: #fff;
+		background: var(--m3-surface-container, #f0edee);
 		font-size: 13px;
 		padding: 4px 8px;
-		color: #1a1a1a;
+		color: var(--m3-on-surface, #211a1a);
 
 		&:focus-visible {
 			outline: 2px solid var(--m3-primary, #a5000a);
@@ -189,15 +190,15 @@
 	&__signalCard {
 		margin-top: 20px;
 		padding: 14px 16px;
-		border: 1px dashed #cfd4da;
+		border: 1px dashed var(--m3-outline-variant, #d8c2c1);
 		border-radius: 10px;
-		background: #fafafa;
+		background: var(--m3-surface-container, #f0edee);
 	}
 
 	&__signalTitle {
 		display: block;
 		font-size: 14px;
-		color: #1a1a1a;
+		color: var(--m3-on-surface, #211a1a);
 		margin-bottom: 4px;
 	}
 
@@ -220,49 +221,20 @@
 	}
 
 	&__signalVote {
-		border: 1px solid #cfd4da;
+		border: 1px solid var(--m3-outline-variant, #d8c2c1);
 		border-radius: 8px;
-		background: #fff;
+		background: var(--m3-surface-container-low, #f6f3f3);
+		color: var(--m3-on-surface, #211a1a);
 		padding: 8px 14px;
 		font-size: 13px;
 		cursor: pointer;
 
 		&:hover {
-			background: #f4f5f6;
+			background: var(--m3-surface-container-highest, #e4e2e2);
 		}
-	}
-
-	&__footer {
-		display: flex;
-		gap: 12px;
-		margin-top: 24px;
-		align-items: center;
-	}
-
-	&__cancel {
-		width: 48px;
-		height: 44px;
-		border-radius: 8px;
-		border: none;
-		background: #cfd4da;
-		color: #fff;
-		font-size: 16px;
-		cursor: pointer;
-	}
-
-	&__confirm {
-		flex: 1;
-		height: 44px;
-		border-radius: 8px;
-		border: none;
-		background: var(--m3-secondary, #4c555f);
-		color: #fff;
-		font-size: 15px;
-		cursor: pointer;
 	}
 }
 
-// Mobile: footer buttons keep the row layout from the Figma mobile mockup.
 @media (width <= 575px) {
 	.notifConfig__tabs {
 		gap: 16px;
