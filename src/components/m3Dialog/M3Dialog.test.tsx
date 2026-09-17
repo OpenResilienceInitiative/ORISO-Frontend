@@ -174,4 +174,19 @@ describe('M3Dialog', () => {
 			screen.getByText('Wer die Plattform betreibt.').getAttribute('id')
 		);
 	});
+
+	it('renders full-screen with a DOM id when asked (#1377)', () => {
+		render(
+			<M3Dialog
+				title="Filter"
+				id="filter-dialog"
+				fullScreen
+				onClose={() => undefined}
+			/>
+		);
+		const surface = document.getElementById('filter-dialog');
+		expect(surface).not.toBeNull();
+		expect(surface?.className).toContain('m3Dialog__surface');
+		expect(document.querySelector('.m3Dialog--fullScreen')).not.toBeNull();
+	});
 });

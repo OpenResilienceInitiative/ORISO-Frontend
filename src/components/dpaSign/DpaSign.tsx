@@ -23,7 +23,7 @@ import {
 	DpaSignPreviewResponse,
 	DPA_SIGN_ERRORS
 } from '../../api/apiDpaSignature';
-import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
+import { LegalTextReader } from '../legalContent/LegalTextReader';
 
 type SubmitState = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -321,8 +321,12 @@ export const DpaSign = () => {
 									pr: 1
 								}}
 							>
-								<LegalContentRenderer
+								<LegalTextReader
 									content={preview.content}
+									label={t(
+										'dpaSign.contractHeading',
+										'Vertragsunterlagen'
+									)}
 									language={formState.language}
 								/>
 							</Box>

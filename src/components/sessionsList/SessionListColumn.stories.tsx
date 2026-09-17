@@ -2,17 +2,29 @@ import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useTranslation } from 'react-i18next';
+import { expect, fireEvent, waitFor } from 'storybook/test';
 import { SessionsListToolbar } from './SessionsListToolbar';
+import { ResizableHandle } from './ResizableHandle';
+import { SESSIONS_LIST_RESIZE } from './sessionsListResize.constants';
+import {
+	maxListWidthBesidePanel,
+	resolveStageLayout,
+	STAGE_LAYOUT
+} from '../chatStage/stageLayout';
 import type { SessionToolbarChipFilter } from './sessionToolbarFilters';
 import { SessionListCreateChat } from './SessionListCreateChat';
 import { EmptyState } from '../emptyState/EmptyState';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
+import { UserAvatar } from '../message/UserAvatar';
+import { SessionRailPill } from './SessionRailPill';
+import { getSessionRailMarks } from './sessionRailState';
 import { formatMessagePersonName } from '../message/messageNameUtils';
 import teamImage from '../../resources/img/illustrations/Team.svg';
 import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
 import './sessionsList.styles.scss';
 import '../sessionsListItem/sessionsListItem.styles.scss';
+import './sessionRailPill.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=316-17725&t=XHH5HQNmA8DUWl2U-0';
@@ -308,4 +320,258 @@ function EmptyColumn() {
 
 export const EmptyWithSideHairlines: Story = {
 	render: () => <EmptyColumn />
+};
+
+/*
+ * ---------------------------------------------------------------------------
+ * D10 (Frank, 05.09.2026): while a side pane is open the list column snaps to
+ * the 80 px icon rail, because a 1280 px screen cannot host a 420 px list plus
+ * two 520 px chat panes. `SessionsListWrapper` wires it in three lines
+ * (`resolveStageLayout` → width → the handle's `maxWidth`); until 07.09. the
+ * behaviour was only visible in `Templates/ConsultantSessionStage` "(a)"/"(c)"
+ * and in `SessionsListWrapper.railSnap.test.tsx`.
+ *
+ * These two stories drive the SAME pure rule and the SAME `ResizableHandle`
+ * the wrapper uses. What they cannot show is the wrapper itself: `SessionsList`
+ * pulls the session/consultant APIs, so a story of the wired column would sit
+ * behind the "needs live data" panel. The wrapper's own guard therefore stays
+ * covered by its unit test.
+ * ---------------------------------------------------------------------------
+ */
+
+const RAIL_VIEWPORT = 1280;
+const PERSISTED_LIST_WIDTH = 420;
+
+/**
+ * Rail rows for the snap stories. Labels are existing catalogue copy passed as
+ * props — the pill never looks a key up (i18n guard, drift budget 0).
+ */
+const RAIL_DEMO_COPY = {
+	thread: 'Thread',
+	supervision: 'Supervision',
+	mail: 'Mail',
+	unread: 'Ungelesen'
+};
+
+const RAIL_DEMO_ROWS = [
+	{
+		user: 'sonnenblume_47',
+		marks: getSessionRailMarks({ modality: 'AGENCY_COUNSELLING' })
+	},
+	{
+		user: 'stiller_fuchs_ali',
+		marks: getSessionRailMarks({
+			modality: 'AGENCY_COUNSELLING',
+			previewChannel: 'thread',
+			unread: true
+		})
+	}
+];
+
+function SnapDemo({ panelOpen }: { panelOpen: boolean }) {
+	const { t } = useTranslation();
+	const [dragged, setDragged] = useState<number | null>(null);
+	// The three lines of `SessionsListWrapper`: ask the rule, take its width,
+	// cap the handle with it.
+	const layout = resolveStageLayout({
+		viewportWidth: RAIL_VIEWPORT,
+		listWidth: PERSISTED_LIST_WIDTH,
+		panelWidth: STAGE_LAYOUT.MIN_PANE_WIDTH,
+		panelOpen
+	});
+	// T41b (Frank, 15.09.): the snap is an offer, not a lock — the handle
+	// reaches as far as two panes at their drag floor allow, and a drag past
+	// the rail takes the column out of it.
+	const maxWidth = panelOpen
+		? Math.min(
+				SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH,
+				maxListWidthBesidePanel(RAIL_VIEWPORT)
+			)
+		: SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH;
+	const width = dragged ?? layout.listWidth;
+	const rail = width <= STAGE_LAYOUT.RAIL_WIDTH && layout.listMode === 'rail';
+	return (
+		<div style={{ display: 'flex', height: 420 }}>
+			<div
+				className={`sessionsList__wrapper${
+					width < SESSIONS_LIST_RESIZE.ICON_ONLY_THRESHOLD
+						? ' sessionsList__wrapper--iconOnly'
+						: ''
+				}`}
+				// `.sessionsList__wrapper` carries `flex: 1`; the app's shell is
+				// not a flex row, so the story pins the basis instead.
+				style={{
+					flex: '0 0 auto',
+					width,
+					position: 'relative',
+					background: '#fff'
+				}}
+				data-cy="snap-column"
+				data-list-mode={rail ? 'rail' : 'expanded'}
+			>
+				<SessionsListToolbar
+					translate={t}
+					searchValue=""
+					onSearchChange={() => {}}
+					activeChip={null}
+					onChipToggle={() => {}}
+					showConsultantActions
+					showCreateGroupChatAction
+					showSupervisionChip
+					createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+					archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+					archiveTabActive={false}
+					createGroupChatActive={false}
+				/>
+				<CardScroll>
+					{/* The rail is not this column with its text hidden — it
+					    renders its own row (Frank, 09.09.2026). Same switch
+					    the wrapper uses, so the story shows what the app
+					    shows on both sides of the threshold. */}
+					{rail ? (
+						<ul className="sessionRailList">
+							{RAIL_DEMO_ROWS.map((row) => (
+								<li key={row.user}>
+									<SessionRailPill
+										name={row.user}
+										avatar={
+											<UserAvatar
+												userId={row.user}
+												username={row.user}
+												displayName={row.user}
+												size="32px"
+												ring={false}
+											/>
+										}
+										marks={row.marks}
+										markLabels={RAIL_DEMO_COPY}
+									/>
+								</li>
+							))}
+						</ul>
+					) : (
+						<>
+							<DemoCard
+								topic="Schuldnerberatung"
+								postcode="55116"
+								user="sonnenblume_47"
+								subject="Mein Vertrag läuft im Oktober aus."
+							/>
+							<DemoCard
+								topic="Suchtberatung"
+								postcode="80331"
+								user="stiller_fuchs_ali"
+								subject="Ich habe die Unterlagen jetzt zusammen."
+							/>
+						</>
+					)}
+				</CardScroll>
+				<ResizableHandle
+					currentWidth={width}
+					onResize={setDragged}
+					maxWidth={maxWidth}
+				/>
+			</div>
+			<div
+				style={{
+					flex: 1,
+					margin: `0 ${STAGE_LAYOUT.CARD_MARGIN}px`,
+					background: '#fff',
+					borderRadius: 16,
+					display: 'grid',
+					placeItems: 'center',
+					font: '13px system-ui'
+				}}
+			>
+				<code data-testid="column-width">{width}px</code>
+			</div>
+		</div>
+	);
+}
+
+/** Drag the handle 200 px to the right; return the width it settled at. */
+const dragRight = async (canvasElement: HTMLElement, by: number) => {
+	const handle = canvasElement.querySelector<HTMLElement>(
+		'.sessionsList__resizeHandle'
+	)!;
+	const rect = handle.getBoundingClientRect();
+	const at = {
+		pointerId: 1,
+		button: 0,
+		clientX: rect.left + 12,
+		clientY: rect.top + 40
+	};
+	await fireEvent.pointerDown(handle, at);
+	await fireEvent.pointerMove(document, { ...at, clientX: at.clientX + by });
+	await fireEvent.pointerUp(document, { ...at, clientX: at.clientX + by });
+};
+
+export const RailSnapWithPanelOpen: Story = {
+	name: 'Side pane open — column opens at the rail, handle stays free (D10/T41b)',
+	render: () => <SnapDemo panelOpen />,
+	play: async ({ canvasElement }) => {
+		// The rule itself: 1280 − 420 leaves no room for two 520 px panes.
+		const layout = resolveStageLayout({
+			viewportWidth: RAIL_VIEWPORT,
+			listWidth: PERSISTED_LIST_WIDTH,
+			panelWidth: STAGE_LAYOUT.MIN_PANE_WIDTH,
+			panelOpen: true
+		});
+		await expect(layout.listMode).toBe('rail');
+		await expect(layout.listWidth).toBe(STAGE_LAYOUT.RAIL_WIDTH);
+		// What the column does with it.
+		const column = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="snap-column"]'
+		)!;
+		await expect(Math.round(column.getBoundingClientRect().width)).toBe(
+			STAGE_LAYOUT.RAIL_WIDTH
+		);
+		await expect(column.classList).toContain(
+			'sessionsList__wrapper--iconOnly'
+		);
+		// T41b: and the reader can pull it back out — the snap opens the
+		// column at the rail, it does not lock the handle there.
+		await dragRight(canvasElement, 200);
+		await waitFor(() =>
+			expect(
+				Math.round(column.getBoundingClientRect().width)
+			).toBeGreaterThan(STAGE_LAYOUT.RAIL_WIDTH)
+		);
+		await expect(column.classList).not.toContain(
+			'sessionsList__wrapper--iconOnly'
+		);
+		// Never so far that the two panes lose their drag floor.
+		await expect(
+			Math.round(column.getBoundingClientRect().width)
+		).toBeLessThanOrEqual(
+			Math.min(
+				SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH,
+				maxListWidthBesidePanel(RAIL_VIEWPORT)
+			)
+		);
+	}
+};
+
+export const ExpandedWithPanelClosed: Story = {
+	name: 'No side pane — column keeps its persisted width',
+	render: () => <SnapDemo panelOpen={false} />,
+	play: async ({ canvasElement }) => {
+		const column = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="snap-column"]'
+		)!;
+		await expect(Math.round(column.getBoundingClientRect().width)).toBe(
+			PERSISTED_LIST_WIDTH
+		);
+		await expect(column.classList).not.toContain(
+			'sessionsList__wrapper--iconOnly'
+		);
+		// Here the handle may widen the column, up to the expanded maximum.
+		await dragRight(canvasElement, 200);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('[data-testid="column-width"]')
+					?.textContent
+			).toBe(`${SESSIONS_LIST_RESIZE.EXPANDED_MAX_WIDTH}px`)
+		);
+	}
 };

@@ -1,6 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
 import { TenantDataSettingsInterface } from '../globalState/interfaces';
+import { TenantContext } from '../globalState/provider/TenantProvider';
+import {
+	getAuthenticatedTenantId,
+	subscribeToAuthenticatedTenant
+} from '../utils/authenticatedTenant';
 import {
 	getTenantSettings,
 	setTenantSettings
@@ -10,11 +15,13 @@ interface SessionTenantSettingsState {
 	settings: Partial<TenantDataSettingsInterface>;
 	isLoading: boolean;
 	appliedSessionKey: string | number | null | undefined;
+	/** The tenant the settings above were fetched for. */
+	appliedTenantId: number | null | undefined;
 }
 
 type SessionTenantSettingsResult = Omit<
 	SessionTenantSettingsState,
-	'appliedSessionKey'
+	'appliedSessionKey' | 'appliedTenantId'
 >;
 
 /**
@@ -25,31 +32,81 @@ type SessionTenantSettingsResult = Omit<
 export const useSessionTenantSettings = (
 	sessionKey: string | number | null | undefined
 ): SessionTenantSettingsResult => {
+	// The updater alone, not the whole context value: the value object is
+	// recreated on every provider render, and depending on it would refetch in
+	// a loop. `updateTenantSettings` is stable for the provider's lifetime.
+	const updateTenantSettings =
+		useContext(TenantContext)?.updateTenantSettings;
+	// Signing in or out swaps the Träger under this hook. The refresh is
+	// fetched for whoever was signed in when it started, so it also has to be
+	// re-run for the new one — and the in-flight answer for the old one
+	// dropped.
+	const authenticatedTenantId = useSyncExternalStore(
+		subscribeToAuthenticatedTenant,
+		getAuthenticatedTenantId
+	);
 	const [state, setState] = useState<SessionTenantSettingsState>(() => ({
 		settings: { ...getTenantSettings() },
 		isLoading: true,
-		appliedSessionKey: undefined
+		appliedSessionKey: undefined,
+		appliedTenantId: undefined
 	}));
 
 	useEffect(() => {
 		let active = true;
-		setState((current) => ({ ...current, isLoading: true }));
+		const requestedTenantId = authenticatedTenantId;
+		const isStale = () =>
+			!active || getAuthenticatedTenantId() !== requestedTenantId;
+		// The settings in hand were fetched for the previous Träger. Keeping
+		// them through the switch — or through a failed refresh afterwards —
+		// would report that Träger's permissions as this one's, so they go
+		// before the new answer is asked for.
+		setState((current) => ({
+			...current,
+			settings:
+				current.appliedTenantId === undefined ||
+				current.appliedTenantId === requestedTenantId
+					? current.settings
+					: {},
+			isLoading: true
+		}));
 
 		apiGetTenantTheming()
 			.then((tenant) => {
-				if (!active) return;
+				if (isStale()) return;
 				const settings = tenant?.settings ?? getTenantSettings();
-				if (tenant?.settings) setTenantSettings(tenant.settings);
+				// Publish into the shared tenant state, so every `useTenant()`
+				// consumer sees the refreshed permissions instead of the
+				// snapshot taken when the tenant was first resolved.
+				if (tenant?.settings) {
+					// Older test/story providers build the context value by
+					// hand and may not carry the updater.
+					if (updateTenantSettings) {
+						updateTenantSettings(tenant.settings);
+					} else {
+						setTenantSettings(tenant.settings);
+					}
+				}
 				setState({
 					settings: { ...settings },
 					isLoading: false,
-					appliedSessionKey: sessionKey
+					appliedSessionKey: sessionKey,
+					appliedTenantId: requestedTenantId
 				});
 			})
 			.catch(() => {
-				if (!active) return;
+				if (isStale()) return;
+				// A failed refresh for the same tenant keeps the last good
+				// answer. After a tenant switch there is no good answer to
+				// keep: report nothing rather than the previous Träger's
+				// permissions, and leave the tenant unapplied so a retry can
+				// still fill it in.
 				setState((current) => ({
 					...current,
+					settings:
+						current.appliedTenantId === requestedTenantId
+							? current.settings
+							: {},
 					isLoading: false,
 					appliedSessionKey: sessionKey
 				}));
@@ -58,7 +115,7 @@ export const useSessionTenantSettings = (
 		return () => {
 			active = false;
 		};
-	}, [sessionKey]);
+	}, [sessionKey, updateTenantSettings, authenticatedTenantId]);
 
 	return {
 		settings: state.settings,

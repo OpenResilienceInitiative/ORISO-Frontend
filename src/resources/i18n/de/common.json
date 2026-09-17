@@ -311,6 +311,55 @@
 			"ready": "Textausschnitt zur Antwort hinzugefügt"
 		}
 	},
+	"chatStage": {
+		"switcher": {
+			"openMenu": "Nebenkanäle anzeigen",
+			"closeMenu": "Nebenkanäle ausblenden",
+			"openChannel": "{{label}} öffnen",
+			"backToMain": "Zurück zum Beratungschat",
+			"mainChat": "Beratungschat",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread",
+				"team": "Teamberatung"
+			}
+		},
+		"participants": {
+			"label": "Beteiligte: {{names}}",
+			"more": "{{count}} weitere Beteiligte",
+			"more_one": "1 weitere Person"
+		},
+		"panel": {
+			"channelOptions": "Kanal wechseln",
+			"channelOptionsEmpty": "Keine weiteren Kanäle",
+			"participantCount": "{{count}} Beteiligte",
+			"participantCount_one": "1 Person",
+			"close": "Nebenraum schließen",
+			"back": "Zurück zum Beratungschat",
+			"region": "Nebenraum: {{title}}",
+			"thread": {
+				"title": "Thread"
+			},
+			"team": {
+				"title": "Teamberatung",
+				"onlyMarker": "Nur fürs Team",
+				"composer": { "placeholder": "Nachricht an das Team …" },
+				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
+				"empty": {
+					"title": "Teamberatung starten",
+					"text": "Schreiben Sie unten die erste Nachricht an Ihr Team."
+				}
+			}
+		},
+		"menu": {
+			"eyebrow": "Weitere Gespräche",
+			"title": "Threads und Supervision",
+			"supervisionChat": "Supervisionschat",
+			"thread": "Thread #{{n}}",
+			"teamChat": "Teamberatung",
+			"titleWithTeam": "Threads, Supervision und Teamberatung"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archivieren",
 		"archiveDescription": "Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht.",
@@ -1757,7 +1806,8 @@
 			"listToggle": "Threads",
 			"replies": "{{count}} Antworten",
 			"title": "Thread",
-			"placeholder": "Im Thread antworten"
+			"placeholder": "Im Thread antworten",
+			"open": "Thread öffnen"
 		},
 		"deliveryStatus": {
 			"sent": "Gesendet"
@@ -1801,6 +1851,42 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Anzeige-Filter",
+			"buttonCustomised": "Filter angepasst",
+			"title": "Anzeige-Filter",
+			"description": "Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.",
+			"showColumn": "Anzeigen",
+			"pillColumn": "Pille",
+			"showKind": "Anzeigen: {{kind}}",
+			"pillKind": "Pille: {{kind}}",
+			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
+			"pillNotApplicable": "Keine Pille für diese Art",
+			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
+			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
+			"autoReadSessions": "Ausgeblendete Chats nicht als ungelesen zählen",
+			"autoReadSessionsDescription": "Gilt nur für diese Liste und den Zähler. Chats werden nicht als gelesen markiert, es werden keine Lesebestätigungen gesendet.",
+			"reset": "Auf meine Standards zurücksetzen",
+			"done": "Fertig",
+			"profileLink": "Standards und weitere Optionen in Profil › Benachrichtigungen",
+			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
+			"badgeHiddenHint": "bis zu {{count}} ausgeblendet",
+			"hiddenActiveRow": "Durch Ihren Anzeige-Filter ausgeblendet",
+			"profileTitle": "Anzeige-Filter",
+			"profileDescription": "Standards pro Liste, gültig auf allen Geräten. Eine Liste kann sie über ihren Filter-Knopf vorübergehend übersteuern.",
+			"overrideActive": "Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.",
+			"eventTypesTitle": "Feinsteuerung nach Ereignistyp",
+			"eventTypesDescription": "Einzelne Ereignistypen des Zeitstrahls ausblenden. Gilt auch, wenn die Liste einen eigenen Filter nutzt.",
+			"eventTypeShow": "{{type}} anzeigen",
+			"applyToAll": "Auf andere Listen übertragen",
+			"applyToAllDescription": "Überträgt „Ausgeblendetes sofort als gelesen markieren“ auf Zeitstrahl und Gespräche sowie die Live-Chat-Einstellung auf Gespräche und Anfragen.",
+			"otherKind": "Sonstiges",
+			"sections": {
+				"timeline": "Zeitstrahl",
+				"sessions": "Gespräche",
+				"requests": "Anfragen"
+			}
+		},
 		"families": {
 			"all": "Alle",
 			"requests": "Anfragen",
@@ -3479,7 +3565,11 @@
 			"image": "Bild",
 			"video": "Video",
 			"file": "Datei",
-			"first_response": "Erstantwort"
+			"first_response": "Erstantwort",
+			"channel": {
+				"thread": "Thread:",
+				"supervision": "Supervision:"
+			}
 		},
 		"reloadButton": {
 			"label": "Erneut laden"
@@ -3540,6 +3630,7 @@
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
 				"create": "Erstellen",
+				"group": "Filter",
 				"archive": "Archiviert",
 				"oneToOne": "1-1 Beratung",
 				"liveChat": "Live-Chat",
@@ -3554,8 +3645,17 @@
 		"anonymous": {
 			"tag": "Anonymous"
 		},
+		"supervision": {
+			"badge": "Supervision – Sie lesen in diesem Chat mit",
+			"supervisedBy": "Supervision: {{name}}"
+		},
 		"resizeHandle": {
+			"ariaLabel": "Breite der Gesprächsliste ändern: ziehen zum Verändern, gedrückt halten oder doppelt klicken zum Ein- und Ausklappen, Pfeil hoch/runter blättert die Liste.",
 			"scrollAriaLabel": "Zum Scrollen der Liste ziehen."
+		},
+		"rail": {
+			"unreadCount": "{{count}} neue Nachrichten",
+			"unreadCount_one": "{{count}} neue Nachricht"
 		}
 	},
 	"statusOverlay": {
@@ -4498,6 +4598,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "Supervision durch {{name}} ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Beratung"
+			},
+			"privacyHint": "Dieser Kanal ist für Ratsuchende nie sichtbar.",
+			"close": "Supervision schließen",
+			"collapse": "Supervision minimieren",
+			"dragHandle": "Supervisionsfenster verschieben – Pfeiltasten verschieben, Umschalt + Pfeiltasten ändern die Größe",
+			"unread": "{{count}} ungelesene Nachrichten",
+			"unread_one": "1 ungelesene Nachricht",
+			"empty": {
+				"title": "Noch keine Nachrichten",
+				"hint": "Hier sprechen Sie vertraulich mit {{name}} über diese Beratung."
+			},
+			"composer": {
+				"placeholder": "Nachricht an {{name}} …",
+				"send": "Senden",
+				"failed": "Senden fehlgeschlagen – bitte erneut versuchen."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			},
+			"mini": {
+				"expand": "{{kind}} öffnen",
+				"newMessage": "Neue Nachricht",
+				"dragHandle": "Miniatur verschieben – Pfeiltasten"
+			},
+			"stage": {
+				"divider": "Trennlinie – Pfeiltasten ändern die Breite der Supervision, Pos1 und Ende setzen Minimum und Maximum",
+				"mainPane": "Beratungschat",
+				"secondaryPane": "Nebenraum"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team-Besprechung",
 		"startHint": "Besprechung starten",
@@ -4597,7 +4737,8 @@
 			"headline": "Ihr angezeigter Name",
 			"body": "Im Gespräch erscheinen Sie unter einem zufällig erzeugten Namen. Sie können ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
-		}
+		},
+		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
 	},
 	"dpaSign": {
 		"title": "Vertragsunterlagen unterzeichnen",
@@ -4631,6 +4772,37 @@
 				"openVault": "Tresor öffnen",
 				"restoring": "Wird wiederhergestellt …"
 			}
+		},
+		"saveReminder": {
+			"title": "Wiederherstellungsschlüssel zusätzlich sichern",
+			"pending": "Ihre Anfrage wurde gesendet. Die Schlüsselsicherung wird noch eingerichtet.",
+			"unavailable": "Ihre Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit.",
+			"show": "Schlüssel anzeigen",
+			"later": "Später",
+			"confirm": "Ich habe den Schlüssel sicher gespeichert",
+			"retry": "Sicherung in den Sicherheitseinstellungen prüfen",
+			"busy": "Die Anfrage wurde erfolgreich gesendet. Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet."
+		},
+		"passwordRecovery": {
+			"ready": "Wiederherstellung mit dem Login-Passwort ist eingerichtet. Ein zusätzlich gespeicherter Schlüssel bleibt ebenfalls gültig.",
+			"needs-password": "Die Wiederherstellung mit dem Login-Passwort wurde in dieser Sitzung noch nicht bestätigt. Melden Sie sich erneut an oder richten Sie sie mit Ihrem vorhandenen Wiederherstellungsschlüssel ein.",
+			"needs-recovery-key": "Ihr bisheriger Verlauf benötigt auf diesem Gerät Ihren Wiederherstellungsschlüssel.",
+			"retryable-failure": "Die Schlüsselsicherung konnte nicht abgeschlossen werden. Sie können Ihre Anfrage trotzdem schreiben und die Sicherung in den Sicherheitseinstellungen erneut prüfen.",
+			"settings": "Sicherheitseinstellungen",
+			"reauthenticate": "Abmelden und erneut anmelden",
+			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfen Sie das alte Passwort und stellen Sie gegebenenfalls zuerst Ihren Gesprächsverlauf mit dem Wiederherstellungsschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
+			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfen Sie Passwort und gegebenenfalls Einmalcode und versuchen Sie es erneut.",
+			"enrollmentExplanation": "Schützen Sie Ihren vorhandenen Wiederherstellungsschlüssel zusätzlich mit Ihrem aktuellen Login-Passwort. Ihr gespeicherter Schlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
+			"loginPassword": "Aktuelles Login-Passwort",
+			"repeatPassword": "Login-Passwort wiederholen",
+			"otp": "Einmalcode",
+			"enroll": "Passwort bestätigen und Wiederherstellung einrichten",
+			"device-ready": "Dieses Gerät kann die vorhandenen Schlüssel verwenden. Die Passwort-Wiederherstellung wird bei der nächsten Passwort-Anmeldung geprüft.",
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Ihr Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich.",
+			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
+			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
+			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
+			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert."
 		}
 	},
 	"accountInvite": {

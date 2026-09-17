@@ -316,6 +316,55 @@
 			"ready": "Extrait de texte ajouté à votre réponse"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Participants : {{names}}",
+			"more": "{{count}} autres participants",
+			"more_one": "1 autre personne"
+		},
+		"panel": {
+			"channelOptions": "Changer de canal",
+			"channelOptionsEmpty": "Aucun autre canal",
+			"participantCount": "{{count}} personnes",
+			"participantCount_one": "1 personne",
+			"back": "Retour au chat de conseil",
+			"close": "Fermer le panneau latéral",
+			"region": "Panneau latéral : {{title}}",
+			"thread": {
+				"title": "Fil"
+			},
+			"team": {
+				"title": "Consultation d’équipe",
+				"onlyMarker": "Réservé à l’équipe",
+				"composer": { "placeholder": "Message à l’équipe…" },
+				"systemNotice": "La consultation d’équipe se déroule en parallèle du conseil. La personne conseillée n’y participe pas et ne peut pas voir ce canal.",
+				"empty": {
+					"title": "Démarrer la consultation d’équipe",
+					"text": "Écrivez ci-dessous le premier message à votre équipe."
+				}
+			}
+		},
+		"switcher": {
+			"backToMain": "Retour au chat de conseil",
+			"closeMenu": "Masquer les canaux secondaires",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil",
+				"team": "Consultation d’équipe"
+			},
+			"mainChat": "Chat de conseil",
+			"openChannel": "Ouvrir {{label}}",
+			"openMenu": "Afficher les canaux secondaires"
+		},
+		"menu": {
+			"eyebrow": "Autres conversations",
+			"title": "Fils et supervision",
+			"supervisionChat": "Chat de supervision",
+			"thread": "Fil #{{n}}",
+			"teamChat": "Consultation d’équipe",
+			"titleWithTeam": "Fils, supervision et consultation d’équipe"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archiver",
 		"archiveDescription": "Les notifications sont désactivées pour les chats archivés. Le chat sera supprimé dans 12 mois.",
@@ -1736,7 +1785,8 @@
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
 			"title": "Fil de discussion",
-			"placeholder": "Répondre dans le fil"
+			"placeholder": "Répondre dans le fil",
+			"open": "Ouvrir le fil"
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"
@@ -1780,6 +1830,42 @@
 		"warning": "Avertissement"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Filtre d’affichage",
+			"buttonCustomised": "Filtre personnalisé",
+			"title": "Filtre d’affichage",
+			"description": "Quels types apparaissent dans cette liste et lesquels reçoivent une pastille.",
+			"showColumn": "Afficher",
+			"pillColumn": "Pastille",
+			"showKind": "Afficher : {{kind}}",
+			"pillKind": "Pastille : {{kind}}",
+			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
+			"pillNotApplicable": "Pas de pastille pour ce type",
+			"autoRead": "Marquer immédiatement les éléments masqués comme lus",
+			"autoReadDescription": "Ne concerne que cette liste. Aucun accusé de lecture n’est envoyé aux discussions.",
+			"autoReadSessions": "Ne pas compter les discussions masquées comme non lues",
+			"autoReadSessionsDescription": "Ne concerne que cette liste et son compteur. Les discussions ne sont pas marquées comme lues, aucun accusé de lecture n’est envoyé.",
+			"reset": "Rétablir mes valeurs par défaut",
+			"done": "Terminé",
+			"profileLink": "Valeurs par défaut et autres options dans Profil › Notifications",
+			"readOnlyHint": "Ces réglages ont été enregistrés par une version plus récente de l’application. Mettez-la à jour pour les modifier.",
+			"badgeHiddenHint": "jusqu’à {{count}} masqués",
+			"hiddenActiveRow": "Masqué par votre filtre d’affichage",
+			"profileTitle": "Filtres d’affichage",
+			"profileDescription": "Réglages par liste, valables sur tous les appareils. Une liste peut les remplacer temporairement via son bouton de filtre.",
+			"overrideActive": "Cette liste utilise actuellement son propre filtre ; les réglages s’appliquent dès qu’il est réinitialisé.",
+			"eventTypesTitle": "Réglage fin par type d’événement",
+			"eventTypesDescription": "Masquer certains types d’événements de la chronologie. S’applique aussi quand la liste utilise son propre filtre.",
+			"eventTypeShow": "Afficher {{type}}",
+			"applyToAll": "Appliquer aux autres listes",
+			"applyToAllDescription": "Copie « marquer les éléments masqués comme lus » vers Chronologie et Conversations et le réglage du chat en direct vers Conversations et Demandes.",
+			"otherKind": "Autres",
+			"sections": {
+				"timeline": "Chronologie",
+				"sessions": "Échanges",
+				"requests": "Demandes"
+			}
+		},
 		"families": {
 			"all": "Toutes",
 			"requests": "Demandes",
@@ -3453,6 +3539,10 @@
 			"video": "Vidéo",
 			"file": "Fichier",
 			"first_response": "Première réponse",
+			"channel": {
+				"thread": "Fil :",
+				"supervision": "Supervision :"
+			},
 			"registered": {
 				"tab": "Premières demandes"
 			}
@@ -3516,6 +3606,7 @@
 				"drafts": "Brouillons",
 				"nearby": "Mail",
 				"create": "Créer",
+				"group": "Filtres",
 				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
 				"liveChat": "Chat en direct",
@@ -3537,8 +3628,17 @@
 				"internal": "Échange interne"
 			}
 		},
+		"supervision": {
+			"badge": "Supervision – vous suivez cette conversation",
+			"supervisedBy": "Supervision : {{name}}"
+		},
 		"resizeHandle": {
+			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste.",
 			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
+		},
+		"rail": {
+			"unreadCount": "{{count}} nouveaux messages",
+			"unreadCount_one": "{{count}} nouveau message"
 		}
 	},
 	"statusOverlay": {
@@ -4476,6 +4576,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "La supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Conseil"
+			},
+			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
+			"close": "Fermer la supervision",
+			"collapse": "Réduire la supervision",
+			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
+			"unread": "{{count}} messages non lus",
+			"unread_one": "1 message non lu",
+			"empty": {
+				"title": "Pas encore de messages",
+				"hint": "Échangez ici en toute confidentialité avec {{name}} au sujet de cet accompagnement."
+			},
+			"composer": {
+				"placeholder": "Message à {{name}} …",
+				"send": "Envoyer",
+				"failed": "Échec de l’envoi – veuillez réessayer."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil de discussion"
+			},
+			"mini": {
+				"expand": "Ouvrir {{kind}}",
+				"newMessage": "Nouveau message",
+				"dragHandle": "Déplacer la miniature – touches fléchées"
+			},
+			"stage": {
+				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
+				"mainPane": "Chat de conseil",
+				"secondaryPane": "Salle annexe"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Réunion d'équipe",
 		"startHint": "Démarrer la réunion",
@@ -4575,7 +4715,8 @@
 			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
 			"email": "Envoyez-moi un e-mail",
 			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
-		}
+		},
+		"unavailableInRoom": "Première réponse – non disponible dans cet espace."
 	},
 	"legal": {
 		"notice": {
@@ -4639,6 +4780,37 @@
 				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
 			}
+		},
+		"saveReminder": {
+			"title": "Enregistrer une clé de récupération supplémentaire",
+			"pending": "Votre demande a été envoyée. La sauvegarde des clés est en cours de configuration.",
+			"unavailable": "Votre demande a été envoyée. La sauvegarde supplémentaire des clés n’est pas encore prête.",
+			"show": "Afficher la clé",
+			"later": "Plus tard",
+			"confirm": "J’ai conservé la clé en lieu sûr",
+			"retry": "Vérifier la sauvegarde dans les paramètres de sécurité",
+			"busy": "Votre demande a été envoyée avec succès. La récupération est en cours dans un autre onglet ou en arrière-plan."
+		},
+		"passwordRecovery": {
+			"ready": "La récupération avec votre mot de passe de connexion est configurée. Une clé de récupération enregistrée reste également valide.",
+			"needs-password": "La récupération par mot de passe n’a pas encore été vérifiée dans cette session. Reconnectez-vous ou configurez-la avec votre clé de récupération existante.",
+			"needs-recovery-key": "Votre historique nécessite votre clé de récupération sur cet appareil.",
+			"retryable-failure": "La sauvegarde des clés n’a pas pu être terminée. Vous pouvez continuer à rédiger votre demande et vérifier la sauvegarde dans les paramètres de sécurité.",
+			"settings": "Paramètres de sécurité",
+			"reauthenticate": "Se déconnecter et se reconnecter",
+			"passwordChangeFailed": "Le mot de passe n’a pas pu être modifié en toute sécurité. Vérifiez l’ancien mot de passe et, si nécessaire, restaurez d’abord votre historique avec la clé de récupération. Après une perte de connexion, le mot de passe peut déjà avoir été modifié.",
+			"enrollmentFailed": "La configuration n’a pas pu être terminée. Vérifiez votre mot de passe et votre code à usage unique si nécessaire, puis réessayez.",
+			"enrollmentExplanation": "Protégez votre clé de récupération existante avec votre mot de passe de connexion actuel. Votre clé enregistrée reste valide. Une sauvegarde chiffrée volée peut être ouverte avec le mot de passe sans second facteur.",
+			"loginPassword": "Mot de passe de connexion actuel",
+			"repeatPassword": "Répéter le mot de passe de connexion",
+			"otp": "Code à usage unique",
+			"enroll": "Confirmer le mot de passe et configurer la récupération",
+			"device-ready": "Cet appareil peut utiliser ses clés existantes. La récupération par mot de passe sera vérifiée lors de la prochaine connexion avec le mot de passe.",
+			"repairBlocked": "Les sauvegardes protégées par mot de passe ne peuvent pas être remplacées ici en toute sécurité. Votre historique reste accessible avec la clé de récupération. La configuration avec un nouveau mot de passe est actuellement indisponible.",
+			"idle": "L’état de la récupération n’a pas encore été vérifié.",
+			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
+			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
+			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié."
 		}
 	},
 	"accountInvite": {

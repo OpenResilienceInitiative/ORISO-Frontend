@@ -1,3 +1,4 @@
+import { clearSecretStorageKeys } from './matrixKeyBackupService';
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
@@ -860,6 +861,7 @@ export class MatrixClientService {
 	}
 
 	private teardownClient(): void {
+		if (this.client) clearSecretStorageKeys(this.client);
 		this.clearRefreshTimer();
 
 		if (this.client) {

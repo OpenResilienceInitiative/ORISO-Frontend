@@ -22,7 +22,7 @@ import {
 import { chatTransportService } from '../../services/chatTransportService';
 import { getMatrixClientService } from '../../services/matrixClientRegistry';
 import { UserDataContext } from '../../globalState';
-import { invalidateTeamDiscussionCache } from './TeamDiscussionBadge';
+import { invalidateTeamDiscussionCache } from '../../services/teamDiscussionCache';
 import {
 	mapTimelineToDiscussionMessages,
 	TeamDiscussionMessage
