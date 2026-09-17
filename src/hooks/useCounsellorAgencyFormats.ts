@@ -118,8 +118,8 @@ export interface CounsellorAgencyFormats {
 }
 
 /**
- * @param enabled `false` skips the request (e.g. for askers, whose session
- * list has no create entry); the agencies are then reported without settings.
+ * @param enabled `false` skips fetching agency settings (e.g. for askers); the hook still returns
+ * the agencies, using any `settings` already present in user data or from a previous fetch.
  */
 export const useCounsellorAgencyFormats = (
 	enabled = true
