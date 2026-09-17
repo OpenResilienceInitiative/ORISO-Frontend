@@ -336,7 +336,9 @@
 			"team": {
 				"title": "Ekip danışmanlığı",
 				"onlyMarker": "Yalnızca ekip için",
-				"composer": { "placeholder": "Ekibe mesaj…" },
+				"composer": {
+					"placeholder": "Ekibe mesaj…"
+				},
 				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
 				"empty": {
 					"title": "Ekip danışmanlığını başlat",
@@ -575,6 +577,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Ekip görüşmesini aç" },
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
 			"known": "Sorguyu kabul et"
@@ -1558,6 +1561,7 @@
 					}
 				},
 				"accountDeleted": "Bu hesap silindi ve artık kullanılamıyor. Danışmanlık hizmetini kullanmaya devam etmek isterseniz, istediğiniz zaman yeniden kayıt olabilirsiniz.",
+				"unavailable": "Şu anda giriş yapılamıyor. Lütfen birkaç dakika sonra tekrar deneyin.",
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
@@ -1836,9 +1840,19 @@
 			"button": "Görünüm filtresi",
 			"buttonCustomised": "Filtre özelleştirildi",
 			"title": "Görünüm filtresi",
-			"description": "Bu listede hangi türlerin görüneceği ve hangilerinin etiket alacağı.",
+			"description": "Bu listede hangi türlerin görüneceği, hangilerinin etiket alacağı ve nasıl ses vereceği.",
 			"showColumn": "Göster",
 			"pillColumn": "Etiket",
+			"soundColumn": "Ses",
+			"soundKind": "Sesi dinle: {{kind}}",
+			"soundMenu": "Ses seç: {{kind}}",
+			"soundDefault": "Varsayılan",
+			"pillMenu": "Görünüm seç: {{kind}}",
+			"liveChatDynamic": "Dinamik",
+			"liveChatFixed": "Sabit",
+			"pillOff": "Kapalı",
+			"pillOn": "Açık",
+			"placeholderHint": "Yakında.",
 			"showKind": "Göster: {{kind}}",
 			"pillKind": "Etiket: {{kind}}",
 			"otherFixed": "„Diğer“ her zaman gösterilir, böylece hiçbir şey fark edilmeden kaybolmaz.",
@@ -1849,8 +1863,20 @@
 			"autoReadSessionsDescription": "Yalnızca bu liste ve sayacı için geçerlidir. Sohbetler okundu olarak işaretlenmez, okundu bilgisi gönderilmez.",
 			"reset": "Varsayılanlarıma sıfırla",
 			"done": "Bitti",
-			"profileLink": "Varsayılanlar ve diğer seçenekler: Profil › Bildirimler",
+			"profileLink": "Standartları düzenle",
+			"overrideNotice": "Bu liste standartlarınızdan sapıyor.",
+			"resetShort": "Sıfırla",
+			"otherChip": "Diğer",
 			"readOnlyHint": "Bu ayarlar daha yeni bir uygulama sürümüyle kaydedildi. Değiştirmek için lütfen uygulamayı güncelleyin.",
+			"viewTitle": "Filtre düğmesi görünüm seçenekleri",
+			"viewIcons": "Simgeler",
+			"viewLabels": "Simge + metin",
+			"viewText": "Metin",
+			"autoSort": "Okunmamışları sola al",
+			"autoSortDescription": "Okunmamış öğesi olan filtreler satırın başına taşınır.",
+			"deactivatedHint": "Kurumunuz tarafından kapatıldı. Mevcut görüşmeler arşivlenene kadar görünür kalır.",
+			"deactivatedChip": "{{kind}} (kurumunuz tarafından kapatıldı)",
+			"deactivatedNotice": "{{kind}} kurumunuz için kapatıldı. Mevcut görüşmeler arşivlenene kadar görünür kalır; yenisi oluşturulamaz.",
 			"badgeHiddenHint": "en fazla {{count}} gizli",
 			"hiddenActiveRow": "Görüntüleme filtreniz tarafından gizlendi",
 			"profileTitle": "Görüntüleme filtreleri",
@@ -1866,7 +1892,8 @@
 				"timeline": "Zaman çizelgesi",
 				"sessions": "Görüşmeler",
 				"requests": "Talepler"
-			}
+			},
+			"liveChatSession": "Açıkken"
 		},
 		"families": {
 			"all": "Tümü",
@@ -3607,6 +3634,7 @@
 				"unread": "Okunmamış",
 				"drafts": "Taslaklar",
 				"nearby": "Mail",
+				"other": "Diğer",
 				"create": "Oluştur",
 				"group": "Filtreler",
 				"archive": "Arşivlendi",
@@ -3615,7 +3643,8 @@
 				"internalGroup": "Dahili grup sohbeti",
 				"groups": "Sohbet çevresi",
 				"supervision": "Süpervizyon",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Sohbet oluştur"
 			},
 			"emptyFilterResult": "Aramanız veya filtrelerinize uyan istişare yok.",
 			"draftMetadataOnly": "Gönderilmemiş mesaj kaydedildi."

@@ -9,7 +9,9 @@ import {
 	applyRequestsFilter,
 	applySessionsFilter,
 	classifyRequest,
-	classifySession
+	classifySession,
+	hiddenRequestKinds,
+	reconcileActiveRequestKind
 } from './sessions';
 
 const ME = 'consultant-me';
@@ -165,5 +167,53 @@ describe('Anfragen (§5.3)', () => {
 		expect(classifyRequest(nearby.raw, nearby.extended)).toBe('nearby');
 		const result = applyRequestsFilter([live, nearby], hide('liveChat'));
 		expect(result.visible.map((p) => p.raw.session.id)).toEqual([8]);
+	});
+});
+
+describe('Anfragen chips are tabs, not pills (§5.3)', () => {
+	const kinds = [{ id: 'nearby' }, { id: 'liveChat' }, { id: 'other' }];
+	const filterWith = (
+		kindsSetting: Record<string, { show: boolean; pill: boolean }>
+	) => ({ kinds: kindsSetting, autoReadHidden: false });
+
+	it('hides a request chip only when its kind is hidden', () => {
+		expect(hiddenRequestKinds(filterWith({}), kinds)).toEqual([]);
+		expect(
+			hiddenRequestKinds(
+				filterWith({ nearby: { show: true, pill: false } }),
+				kinds
+			)
+		).toEqual([]);
+		expect(
+			hiddenRequestKinds(
+				filterWith({ nearby: { show: false, pill: false } }),
+				kinds
+			).map((kind) => kind.id)
+		).toEqual(['nearby']);
+	});
+
+	it('keeps the active tab while its kind is shown, whatever the pill says', () => {
+		expect(
+			reconcileActiveRequestKind(
+				filterWith({ nearby: { show: true, pill: false } }),
+				'nearby'
+			)
+		).toBe('nearby');
+		expect(
+			reconcileActiveRequestKind(
+				filterWith({ nearby: { show: false, pill: false } }),
+				'nearby'
+			)
+		).toBeNull();
+		expect(reconcileActiveRequestKind(filterWith({}), null)).toBeNull();
+	});
+
+	it('brings the Mail tab back after hide → show (the 2026-09 regression)', () => {
+		const hidden = filterWith({ nearby: { show: false, pill: true } });
+		const shownAgain = filterWith({ nearby: { show: true, pill: true } });
+		expect(hiddenRequestKinds(hidden, kinds).map((k) => k.id)).toEqual([
+			'nearby'
+		]);
+		expect(hiddenRequestKinds(shownAgain, kinds)).toEqual([]);
 	});
 });

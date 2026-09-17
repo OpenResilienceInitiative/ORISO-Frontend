@@ -8,6 +8,8 @@ import {
 import '../sessionsList/sessionsList.styles';
 
 export interface ListSearchFieldProps {
+	/** Replaces the leading kebab button (e.g. the display-filter button). */
+	leading?: React.ReactNode;
 	value: string;
 	onChange: (value: string) => void;
 	placeholder: string;
@@ -37,6 +39,7 @@ export interface ListSearchFieldProps {
  * Purely controlled: filtering/search semantics live with the caller.
  */
 export const ListSearchField = ({
+	leading,
 	value,
 	onChange,
 	placeholder,
@@ -50,14 +53,18 @@ export const ListSearchField = ({
 	return (
 		<div className={`sessionsListToolbar__search ${className || ''}`}>
 			<div className="sessionsListToolbar__searchInner">
-				<button
-					type="button"
-					className="sessionsListToolbar__iconButton"
-					aria-label={menuLabel || placeholder}
-					onClick={onMenuClick || (() => inputRef.current?.focus())}
-				>
-					<IconMenuDots />
-				</button>
+				{leading ?? (
+					<button
+						type="button"
+						className="sessionsListToolbar__iconButton"
+						aria-label={menuLabel || placeholder}
+						onClick={
+							onMenuClick || (() => inputRef.current?.focus())
+						}
+					>
+						<IconMenuDots />
+					</button>
+				)}
 				<div className="sessionsListToolbar__searchFieldWrap">
 					<input
 						type="search"

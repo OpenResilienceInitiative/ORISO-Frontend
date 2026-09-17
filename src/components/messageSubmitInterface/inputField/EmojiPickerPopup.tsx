@@ -11,10 +11,11 @@ import {
 import type { Placement } from '@floating-ui/dom';
 import type { Theme } from 'emoji-picker-react';
 import type { MenuDirection } from './menuDirection';
+import { lazyWithReload } from '../../../utils/chunkLoadRecovery';
 import './emojiPickerPopup.styles.scss';
 
 // emoji-picker-react is ~200KB of emoji data — load it only when opened.
-const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
+const EmojiPicker = lazyWithReload(() => import('emoji-picker-react'));
 
 /** Keep light chrome even when the OS prefers dark (avoids #835 dark clip). */
 const LIGHT_THEME = 'light' as Theme;
