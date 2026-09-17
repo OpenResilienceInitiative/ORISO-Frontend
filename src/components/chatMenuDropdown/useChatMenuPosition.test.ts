@@ -65,26 +65,43 @@ describe('chat menu placement', () => {
 		).toMatchObject({ left: 191, placement: 'left' });
 	});
 
-	it('drops below the card when neither side fits', () => {
+	/*
+	 * Frank, 17.09.2026, on the phone: the menu hung below the whole card,
+	 * far from the button that opened it — "Mit dem riesen Abstand, das
+	 * sollte natürlich nicht sein. Das muss natürlich dann rechts im Corner
+	 * sein." With no room beside the card, the menu hangs from the trigger's
+	 * corner: right edges flush, just below (or above) the trigger.
+	 */
+	it("hangs from the trigger's corner when neither side of the card fits", () => {
 		expect(
 			getChatMenuPosition(
-				{ left: 60, right: 108, top: 80 },
+				{ left: 280, right: 328, top: 86, bottom: 118 },
 				{ width: 340, height: 900 },
 				menu,
 				{ left: 12, right: 328, top: 70, bottom: 230 }
 			)
-		).toMatchObject({ placement: 'below', top: 238 });
+		).toMatchObject({
+			placement: 'below',
+			top: 126,
+			left: 27,
+			transformOrigin: 'right top'
+		});
 	});
 
-	it('rises above the card when there is no room below either', () => {
+	it("rises from the trigger's corner when there is no room below it", () => {
 		expect(
 			getChatMenuPosition(
-				{ left: 60, right: 108, top: 480 },
+				{ left: 280, right: 328, top: 476, bottom: 508 },
 				{ width: 340, height: 900 },
 				menu,
 				{ left: 12, right: 328, top: 460, bottom: 620 }
 			)
-		).toMatchObject({ placement: 'above', top: 52 });
+		).toMatchObject({
+			placement: 'above',
+			top: 68,
+			left: 27,
+			transformOrigin: 'right bottom'
+		});
 	});
 
 	it('constrains both dimensions on a narrow short viewport', () => {

@@ -3,8 +3,8 @@ import { CSSProperties, RefObject, useLayoutEffect, useState } from 'react';
 
 export type ChatMenuPlacement = 'right' | 'left' | 'below' | 'above';
 
-type Rect = Pick<DOMRect, 'left' | 'right' | 'top'>;
-type SurfaceRect = Rect & Pick<DOMRect, 'bottom'>;
+type Rect = Pick<DOMRect, 'left' | 'right' | 'top'> & { bottom?: number };
+type SurfaceRect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
 
 const MARGIN = 12;
 const GAP = 8;
@@ -49,10 +49,25 @@ export const getChatMenuPosition = (
 	const maxHeight = Math.max(0, viewport.height - MARGIN * 2);
 	const height = Math.min(menu.height, maxHeight);
 
+	/*
+	 * Where a stacked menu hangs from. Without a surface that is the old
+	 * behaviour. With one, a menu that cannot sit beside the card hangs from
+	 * the trigger's corner — Frank, 17.09.2026, on the phone: below the
+	 * whole card it was "mit dem riesen Abstand" from its button; "das muss
+	 * natürlich dann rechts im Corner sein".
+	 */
+	const stack = surface
+		? {
+				right: anchor.right,
+				top: anchor.top,
+				bottom: anchor.bottom ?? anchor.top
+			}
+		: bounds;
+
 	const fitsRight = bounds.right + GAP + width <= viewport.width - MARGIN;
 	const fitsLeft = bounds.left - GAP - width >= MARGIN;
-	const fitsBelow = bounds.bottom + GAP + height <= viewport.height - MARGIN;
-	const fitsAbove = bounds.top - GAP - height >= MARGIN;
+	const fitsBelow = stack.bottom + GAP + height <= viewport.height - MARGIN;
+	const fitsAbove = stack.top - GAP - height >= MARGIN;
 
 	const placement: ChatMenuPlacement = fitsRight
 		? 'right'
@@ -74,23 +89,26 @@ export const getChatMenuPosition = (
 			? bounds.right + GAP
 			: placement === 'left'
 				? bounds.left - GAP - width
-				: // Stacked: hang the menu off the surface's trailing edge.
-					bounds.right - width
+				: // Stacked: right edges flush with the trigger.
+					stack.right - width
 	);
 	const top = clampTop(
 		placement === 'below'
-			? bounds.bottom + GAP
+			? stack.bottom + GAP
 			: placement === 'above'
-				? bounds.top - GAP - height
+				? stack.top - GAP - height
 				: anchor.top
 	);
 
 	// The reveal grows out of the trigger, whichever side the menu landed on.
+	const stackedOrigin = surface
+		? 'right'
+		: `${Math.max(0, anchor.left - left)}px`;
 	const transformOrigin =
 		placement === 'below'
-			? `${Math.max(0, anchor.left - left)}px top`
+			? `${stackedOrigin} top`
 			: placement === 'above'
-				? `${Math.max(0, anchor.left - left)}px bottom`
+				? `${stackedOrigin} bottom`
 				: `${placement === 'right' ? 'left' : 'right'} ${Math.max(0, anchor.top - top)}px`;
 
 	return { left, top, width, maxHeight, placement, transformOrigin };

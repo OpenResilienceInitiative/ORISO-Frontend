@@ -1364,6 +1364,22 @@ const restingCardShadow = (canvasElement: HTMLElement) =>
 		canvasElement.querySelector<HTMLElement>('.sessionsListItem__content')!
 	).boxShadow;
 
+/**
+ * Frank, 17.09.2026: while the menu is open, only the menu carries the red
+ * ring — the selected card behind it drops its red border. The stories open
+ * the menu on a selected card, so the check is not vacuous.
+ */
+const expectOnlyTheMenuRinged = async (canvasElement: HTMLElement) => {
+	const row = canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
+	await expect(row.classList.contains('sessionsListItem--active')).toBe(true);
+	const card = row.querySelector<HTMLElement>('.sessionsListItem__content')!;
+	await waitFor(() =>
+		expect(getComputedStyle(card).borderTopColor).toBe('rgb(255, 255, 255)')
+	);
+	// The border keeps its width, so nothing in the list moves.
+	await expect(getComputedStyle(card).borderTopWidth).toBe('2px');
+};
+
 const expectNoOverlap = async (menu: HTMLElement, card: HTMLElement) => {
 	const m = menu.getBoundingClientRect();
 	const c = card.getBoundingClientRect();
@@ -1482,6 +1498,8 @@ export const MenuBesideTheCard: Story = {
 			backdrop
 		);
 
+		await expectOnlyTheMenuRinged(canvasElement);
+
 		// 5. The trigger keeps its shape — a horizontal pill, not a circle
 		//    and not a rotation (Frank, 15.09.2026).
 		const shape = trigger.getBoundingClientRect();
@@ -1503,9 +1521,16 @@ export const MenuOnThePhone: Story = {
 		return <RuntimeSessionListItem />;
 	},
 	play: async ({ canvasElement }) => {
-		const { menu } = await openTheMenu(canvasElement);
+		const { menu, trigger } = await openTheMenu(canvasElement);
 		// Beside is impossible here; below or above is the honest answer.
 		await expect(['below', 'above']).toContain(menu.dataset.placement);
+		// …and it hangs from the trigger's corner, not from the card's
+		// bottom edge (Frank, 17.09.2026: "rechts im Corner").
+		const pill = trigger.getBoundingClientRect();
+		const hung = menu.getBoundingClientRect();
+		await expect(Math.abs(hung.right - pill.right)).toBeLessThan(1);
+		await expect(Math.round(hung.top - pill.bottom)).toBe(8);
+		await expectOnlyTheMenuRinged(canvasElement);
 		// And it stays inside the viewport either way.
 		const box = menu.getBoundingClientRect();
 		await expect(box.left).toBeGreaterThanOrEqual(11.5);

@@ -196,10 +196,22 @@ $card-trailing-clearance: 24px;
 	}
 
 	&--menuOpen {
+		/*
+		 * Frank, 17.09.2026: while the menu is open, the menu carries the red
+		 * ring and the card behind it does not — neither its selected border
+		 * nor a menu-open one. The border keeps the 2 px of a selected card,
+		 * and `__content--flow` gives that pixel back, so nothing moves.
+		 */
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
+			border: $list-item-active-menu-border-width solid
+				$session-light-border !important;
+		}
 
-			@include list-item-active-menu-border($important: true);
+		.sessionsListItem__content:hover,
+		.sessionsListItem__content:focus,
+		.sessionsListItem__content:active {
+			border-color: $session-light-border !important;
 		}
 
 		/*
@@ -361,15 +373,17 @@ $card-trailing-clearance: 24px;
 		}
 	}
 
-	// A resting card has a 1 px border, a selected one 2 px (#597). The card
-	// keeps its height either way — the rows give the extra pixel back, so
-	// selecting a card moves nothing in the list.
+	// A resting card has a 1 px border, a selected one — or one whose menu is
+	// open — 2 px (#597). The card keeps its height either way: the rows give
+	// the extra pixel back, so selecting a card or opening its menu moves
+	// nothing in the list.
 	&__content--flow {
 		height: $card-height;
 		min-height: $card-height;
 	}
 
-	&--active &__content--flow {
+	&--active &__content--flow,
+	&--menuOpen &__content--flow {
 		> .sessionsListItem__row:first-child {
 			margin: (-$card-border-grow) (-$card-border-grow) 0;
 		}
