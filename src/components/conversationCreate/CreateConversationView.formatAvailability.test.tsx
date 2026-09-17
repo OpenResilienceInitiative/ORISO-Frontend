@@ -15,6 +15,10 @@ import { apiGetAgenciesByIds } from '../../api/apiGetAgenciesByIds';
 import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import {
+	resetCounsellorAgencyFormatsForTests,
+	useCounsellorAgencyFormats
+} from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
 vi.mock('react-i18next', () => ({
@@ -192,6 +196,11 @@ vi.mock('react-router-dom', async () => {
 const CIRCLE_CARD = 'groupChat.circle.title';
 const INTERNAL_CARD = 'groupChat.internal.title';
 
+const CounsellorAgencyFormatsProbe = () => {
+	useCounsellorAgencyFormats();
+	return null;
+};
+
 const renderCreateFlow = (
 	agencies: { id: number; name: string }[] = [{ id: 5, name: 'Agency Five' }]
 ) =>
@@ -215,6 +224,7 @@ const renderCreateFlow = (
 describe('CreateConversationView – formats the Träger has switched off', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -288,6 +298,7 @@ describe('CreateConversationView – formats the Träger has switched off', () =
 describe('CreateConversationView – formats the Beratungsstelle has switched off', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -423,5 +434,94 @@ describe('CreateConversationView – formats the Beratungsstelle has switched of
 		await waitFor(() =>
 			expect(apiGetTenantConsultantList).toHaveBeenCalled()
 		);
+	});
+
+	it('clears selected colleagues when a settings refresh changes the agency', async () => {
+		vi.mocked(apiGetTenantConsultantList).mockResolvedValue([
+			{ consultantId: 'p1', firstName: 'Pat', lastName: 'One' }
+		] as any);
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(1, {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: true
+			}),
+			agencyResponse(2, {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: true
+			})
+		]);
+
+		const { rerender } = render(
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={{
+						userData: {
+							userId: 'me',
+							agencies: [
+								{ id: 1, name: 'Agency One' },
+								{ id: 2, name: 'Agency Two' }
+							]
+						}
+					}}
+				>
+					<SessionsDataContext.Provider value={{ dispatch: vi.fn() }}>
+						<CreateConversationView />
+					</SessionsDataContext.Provider>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		);
+
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency One' })
+		);
+		await waitFor(() =>
+			expect(apiGetTenantConsultantList).toHaveBeenCalled()
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.internal.togglePersonList'
+			})
+		);
+		fireEvent.click((await screen.findAllByRole('option'))[0]);
+		await screen.findByText('groupChat.internal.personCount');
+
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValue([
+			agencyResponse(1, {
+				featureInternalGroupChatEnabled: false,
+				featureSelfHelpGroupsEnabled: true
+			}),
+			agencyResponse(2, {
+				featureInternalGroupChatEnabled: true,
+				featureSelfHelpGroupsEnabled: true
+			})
+		]);
+		rerender(
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={{
+						userData: {
+							userId: 'me',
+							agencies: [
+								{ id: 1, name: 'Agency One' },
+								{ id: 2, name: 'Agency Two' }
+							]
+						}
+					}}
+				>
+					<SessionsDataContext.Provider value={{ dispatch: vi.fn() }}>
+						<CreateConversationView />
+						<CounsellorAgencyFormatsProbe />
+					</SessionsDataContext.Provider>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByText('groupChat.internal.personCount')
+			).toBeNull()
+		);
+		expect(screen.getByText('groupChat.internal.addPerson')).toBeTruthy();
 	});
 });

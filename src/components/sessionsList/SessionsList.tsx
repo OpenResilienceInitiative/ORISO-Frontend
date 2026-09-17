@@ -259,9 +259,10 @@ export const SessionsList = ({
 
 	const { userData } = useContext(UserDataContext);
 	const tenantData = useTenant();
-	const { agencies: agencyFormats } = useCounsellorAgencyFormats(
-		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
-	);
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(
+			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+		);
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
@@ -1159,7 +1160,7 @@ export const SessionsList = ({
 		internalGroup: showInternalGroupChip
 	} = getFormatChipVisibility(
 		tenantData,
-		showConsultantToolbarActions,
+		showConsultantToolbarActions && !agencyFormatsLoading,
 		agencyFormats
 	);
 	const showCaseHandoverBatchUi =

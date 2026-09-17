@@ -285,6 +285,24 @@ describe('getConversationFormatAvailability with the counsellor’s agencies', (
 			getConversationFormatAvailability(tenantAllowsBoth, agencies, 2)
 		).toEqual({ internal: false, circle: true });
 	});
+
+	it('offers nothing when the target agency is missing from a non-empty source', () => {
+		expect(
+			getConversationFormatAvailability(
+				tenantAllowsBoth,
+				[
+					{
+						id: 1,
+						settings: {
+							featureInternalGroupChatEnabled: true,
+							featureSelfHelpGroupsEnabled: true
+						}
+					}
+				],
+				99
+			)
+		).toEqual({ internal: false, circle: false });
+	});
 });
 
 describe('getAgenciesOfferingFormat', () => {

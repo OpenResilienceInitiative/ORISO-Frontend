@@ -17,6 +17,7 @@ import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
 vi.mock('react-i18next', () => ({
@@ -216,6 +217,7 @@ const renderInUserContext = (
 describe('CreateConversationView edit mode (finding 1)', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -327,6 +329,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 describe('CreateConversationView internal card (finding 2)', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 

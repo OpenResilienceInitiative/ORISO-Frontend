@@ -82,8 +82,9 @@ import './conversationCreate.styles.scss';
  * Step 1 "Gesprächsformat wählen" offers the formats the Träger allows and
  * at least one of the counsellor's Beratungsstellen allows (#1440); with a
  * single available format the picker is skipped. Inside a format, the agency
- * choice lists only the Beratungsstellen that offer that format (except in edit mode).
- * "Interna besprechen" is completed entirely inside its card;
+ * choice lists only the Beratungsstellen that offer that format. Edit
+ * mode also keeps the persisted agency so the existing assignment stays
+ * selectable. "Interna besprechen" is completed entirely inside its card;
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
  */
@@ -200,6 +201,37 @@ const CreateConversationFlow = ({
 					Boolean(duplicateOccurrence)
 				)
 	);
+
+	useEffect(() => {
+		if (isEditMode) {
+			return;
+		}
+		const nextAvailability = {
+			internal: availability.internal,
+			circle: availability.circle
+		};
+		setStep((current) => {
+			const stillValid =
+				(current === 'internal' && nextAvailability.internal) ||
+				(current === 'circle' && nextAvailability.circle) ||
+				(current === 'picker' &&
+					nextAvailability.internal &&
+					nextAvailability.circle);
+			if (stillValid) {
+				return current;
+			}
+			return resolveInitialStep(
+				nextAvailability,
+				getAvailableFormats(nextAvailability),
+				Boolean(duplicateOccurrence)
+			);
+		});
+	}, [
+		availability.circle,
+		availability.internal,
+		duplicateOccurrence,
+		isEditMode
+	]);
 	const [circlePrefill, setCirclePrefill] = useState<
 		CircleSettingsPrefill | undefined
 	>(() =>
@@ -293,10 +325,20 @@ const CreateConversationFlow = ({
 			return;
 		}
 		setSelectedAgency((current) => {
-			if (current !== null && offeringAgencyIds.includes(current)) {
-				return current;
+			const next =
+				current !== null && offeringAgencyIds.includes(current)
+					? current
+					: offeringAgencyIds.length === 1
+						? offeringAgencyIds[0]
+						: null;
+			if (next !== current) {
+				setInternalDraft((draft) =>
+					draft.selectedIds.length === 0
+						? draft
+						: { ...draft, selectedIds: [] }
+				);
 			}
-			return offeringAgencyIds.length === 1 ? offeringAgencyIds[0] : null;
+			return next;
 		});
 	}, [isEditMode, offeringAgencyIds]);
 
@@ -364,13 +406,14 @@ const CreateConversationFlow = ({
 			agencies
 				.filter(
 					({ id }) =>
-						isEditMode || agencyIdsOffering[format].includes(id)
+						agencyIdsOffering[format].includes(id) ||
+						(isEditMode && id === editPrefill?.agencyId)
 				)
 				.map(({ id, name }) => ({
 					value: id.toString(),
 					label: name
 				})),
-		[agencies, agencyIdsOffering, isEditMode]
+		[agencies, agencyIdsOffering, editPrefill?.agencyId, isEditMode]
 	);
 
 	const people = useMemo(
@@ -679,14 +722,15 @@ export const CreateConversationView = () => {
 	const { tenant: tenantData, isLoading } = useTenantState();
 	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
 		useCounsellorAgencyFormats();
-	// Wait once for current agency settings; a later refresh (e.g. the
-	// session list mounting) must not unmount a flow with a draft in it.
-	const agencyFormatsReady = useRef(false);
+	// Wait for the current agency-id set. A later refresh of the same set
+	// (e.g. the session list mounting) must not unmount a flow with a draft.
+	const agencyFormatsKey = agencyFormats.map(({ id }) => id).join(',');
+	const agencyFormatsReadyFor = useRef<string | null>(null);
 	if (!agencyFormatsLoading) {
-		agencyFormatsReady.current = true;
+		agencyFormatsReadyFor.current = agencyFormatsKey;
 	}
 
-	if (isLoading || !agencyFormatsReady.current) {
+	if (isLoading || agencyFormatsReadyFor.current !== agencyFormatsKey) {
 		return <Loading />;
 	}
 

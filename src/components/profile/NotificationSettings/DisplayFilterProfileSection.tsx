@@ -64,10 +64,14 @@ export const DisplayFilterProfileSection = () => {
 	// The circle and internal-chat kinds follow the same answer as the
 	// create entry: the Träger AND at least one of the counsellor's
 	// Beratungsstellen must allow the format (#1440).
-	const { agencies: agencyFormats } =
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
 		useCounsellorAgencyFormats(canSupervise);
-	const { circle: showGroups, internal: showInternalGroups } =
-		getConversationFormatAvailability(tenant, agencyFormats);
+	const availability = getConversationFormatAvailability(
+		tenant,
+		agencyFormats
+	);
+	const showGroups = !agencyFormatsLoading && availability.circle;
+	const showInternalGroups = !agencyFormatsLoading && availability.internal;
 
 	const timeline = useDisplayFilter('timeline');
 	const sessions = useDisplayFilter('sessions');

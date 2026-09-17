@@ -100,8 +100,9 @@ export const getAgenciesOfferingFormat = (
 /**
  * A format is offered when the Träger allows it AND at least one of the
  * counsellor's agencies allows it. With `targetAgencyId` only that agency
- * counts (a chat created for one specific Beratungsstelle). Without any known
- * agency the Träger's answer stands.
+ * counts (a chat created for one specific Beratungsstelle). A target that is
+ * not in `agencies` offers nothing. Without any known agency the Träger's
+ * answer stands.
  */
 export const getConversationFormatAvailability = (
 	tenant?: { settings?: FormatSettings } | null,
@@ -115,7 +116,7 @@ export const getConversationFormatAvailability = (
 			: agencies.filter((agency) => agency.id === targetAgencyId);
 	const offered = (format: ConversationFormat) =>
 		tenantResult[format] &&
-		(relevant.length === 0 ||
+		(agencies.length === 0 ||
 			relevant.some((agency) => agencyAllows(agency, format)));
 	return {
 		internal: offered('internal'),

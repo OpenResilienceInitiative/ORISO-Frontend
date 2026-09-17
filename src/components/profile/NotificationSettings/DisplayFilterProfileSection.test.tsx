@@ -23,6 +23,7 @@ import {
 import { UserDataContext } from '../../../globalState/context/UserDataContext';
 import { AUTHORITIES } from '../../../globalState/helpers/stateHelpers';
 import { apiGetAgenciesByIds } from '../../../api/apiGetAgenciesByIds';
+import { resetCounsellorAgencyFormatsForTests } from '../../../hooks/useCounsellorAgencyFormats';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -102,6 +103,7 @@ describe('DisplayFilterProfileSection', () => {
 	afterEach(() => {
 		cleanup();
 		displayFilterStore.resetForTests();
+		resetCounsellorAgencyFormatsForTests();
 	});
 
 	it('renders the three sections with their kinds and no auto-read for Anfragen', () => {

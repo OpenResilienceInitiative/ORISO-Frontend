@@ -31,15 +31,19 @@ interface AgencySettingsSnapshot {
 	byId: Record<number, AgencySettingsInterface | null>;
 	/** How many requests per `${tenantId}|${ids}` key have settled. */
 	settled: Record<string, number>;
+	/** Request keys that currently have a fetch in flight. */
+	inflight: Record<string, true>;
 }
 
 let snapshot: AgencySettingsSnapshot = {
 	tenantId: undefined,
 	byId: {},
-	settled: {}
+	settled: {},
+	inflight: {}
 };
 const listeners = new Set<() => void>();
 const inFlight = new Map<string, Promise<void>>();
+const generationByTenant = new Map<number | null, number>();
 
 const subscribe = (listener: () => void) => {
 	listeners.add(listener);
@@ -51,6 +55,15 @@ const publish = (next: AgencySettingsSnapshot) => {
 	listeners.forEach((listener) => listener());
 };
 
+const emptySnapshot = (
+	tenantId: number | null | undefined
+): AgencySettingsSnapshot => ({
+	tenantId,
+	byId: {},
+	settled: {},
+	inflight: {}
+});
+
 const requestKey = (tenantId: number | null, ids: number[]) =>
 	`${tenantId}|${ids.join(',')}`;
 
@@ -59,11 +72,13 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 	if (inFlight.has(key)) {
 		return;
 	}
-	const isStale = () => getAuthenticatedTenantId() !== tenantId;
+	const generation = (generationByTenant.get(tenantId) ?? 0) + 1;
+	generationByTenant.set(tenantId, generation);
+	const isStale = () =>
+		getAuthenticatedTenantId() !== tenantId ||
+		generationByTenant.get(tenantId) !== generation;
 	const base = (): AgencySettingsSnapshot =>
-		snapshot.tenantId === tenantId
-			? snapshot
-			: { tenantId, byId: {}, settled: {} };
+		snapshot.tenantId === tenantId ? snapshot : emptySnapshot(tenantId);
 	const settle = (
 		answers: Record<number, AgencySettingsInterface | null>
 	) => {
@@ -77,15 +92,23 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 				delete byId[id];
 			}
 		});
+		const inflight = { ...current.inflight };
+		delete inflight[key];
 		publish({
 			tenantId,
 			byId,
 			settled: {
 				...current.settled,
 				[key]: (current.settled[key] ?? 0) + 1
-			}
+			},
+			inflight
 		});
 	};
+
+	publish({
+		...base(),
+		inflight: { ...base().inflight, [key]: true }
+	});
 
 	const request = apiGetAgenciesByIds(ids)
 		.then((agencies) => {
@@ -102,6 +125,11 @@ const refreshAgencySettings = (tenantId: number | null, ids: number[]) => {
 		.catch(() => settle({}))
 		.finally(() => {
 			inFlight.delete(key);
+			if (snapshot.inflight[key]) {
+				const inflight = { ...snapshot.inflight };
+				delete inflight[key];
+				publish({ ...snapshot, inflight });
+			}
 		});
 	inFlight.set(key, request);
 };
@@ -112,7 +140,8 @@ export interface CounsellorAgencyFormats {
 	/**
 	 * True until an answer for the current agencies has arrived that was
 	 * requested after this component started asking — an admin may have
-	 * changed a Beratungsstelle since an older answer.
+	 * changed a Beratungsstelle since an older answer. Also true while a
+	 * shared refresh for this agency set is in flight.
 	 */
 	isLoading: boolean;
 }
@@ -169,7 +198,18 @@ export const useCounsellorAgencyFormats = (
 		waitingFrom.current = { key, count: settledCount };
 	}
 	const isLoading =
-		enabled && ids.length > 0 && settledCount <= waitingFrom.current.count;
+		enabled &&
+		ids.length > 0 &&
+		(Boolean(current.inflight[key]) ||
+			settledCount <= waitingFrom.current.count);
 
 	return { agencies, isLoading };
+};
+
+/** Clears the shared cache between tests. */
+export const resetCounsellorAgencyFormatsForTests = () => {
+	snapshot = emptySnapshot(undefined);
+	inFlight.clear();
+	generationByTenant.clear();
+	listeners.forEach((listener) => listener());
 };
