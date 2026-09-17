@@ -3,14 +3,25 @@ import { useMemo } from 'react';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 import { formatMessagePersonName } from './messageNameUtils';
+import { CounsellorAvatar } from './CounsellorAvatar';
+import {
+	type CounsellorAvatarChoice,
+	hasCounsellorAvatar
+} from '../../utils/counsellorAvatar';
 
-interface UserAvatarProps {
+interface UserAvatarProps extends CounsellorAvatarChoice {
 	username: string;
 	displayName?: string;
 	firstName?: string;
 	lastName?: string;
 	userId: string;
 	size?: string;
+	/**
+	 * Name the INITIALS are read from, when it differs from `displayName`.
+	 * Some call sites label the avatar with the session topic or a rail
+	 * caption; initials taken from those would spell the wrong person.
+	 */
+	avatarDisplayName?: string;
 	/**
 	 * Wraps the avatar in a white circle (per design, all user icons must have
 	 * a white circle around them). Defaults to `true`. Pass `false` where the
@@ -20,10 +31,12 @@ interface UserAvatarProps {
 }
 
 /**
- * User avatar: the deterministic animal icon derived from the user id
- * (#1193 Job 4). The former letter-monogram fallback is gone — every user,
- * client or counsellor, gets the same animal wherever they appear, so a
- * person is recognisable across header, list, chat and profile.
+ * User avatar, and the single choke point for the counsellor avatar (#1047).
+ *
+ * A counsellor who CHOSE an avatar (`avatarKind` ICON or INITIALS) renders that
+ * choice, tinted to the tenant's brand. Everyone else — every advice seeker,
+ * and every counsellor who never chose — keeps the deterministic animal icon
+ * derived from the user id (#1193 Job 4), so nothing regresses.
  */
 export const UserAvatar: React.FC<UserAvatarProps> = ({
 	username,
@@ -32,7 +45,10 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	lastName,
 	userId,
 	size = '32px',
-	ring = true
+	ring = true,
+	avatarKind,
+	avatarId,
+	avatarDisplayName
 }) => {
 	const resolvedName = formatMessagePersonName(
 		displayName,
@@ -49,6 +65,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	const totalSize = parseInt(size, 10) || 32;
 	const ringWidth = Math.max(3, Math.round(totalSize * 0.125));
 	const innerSize = ring ? totalSize - ringWidth * 2 : totalSize;
+	const chosenByCounsellor = hasCounsellorAvatar({ avatarKind, avatarId });
 
 	return (
 		<span
@@ -71,7 +88,19 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				flexShrink: 0
 			}}
 		>
-			<AnimalAvatar avatar={avatar} size={innerSize} />
+			{chosenByCounsellor ? (
+				<CounsellorAvatar
+					avatarKind={avatarKind}
+					avatarId={avatarId}
+					displayName={avatarDisplayName ?? displayName}
+					firstName={firstName}
+					lastName={lastName}
+					username={username}
+					size={innerSize}
+				/>
+			) : (
+				<AnimalAvatar avatar={avatar} size={innerSize} />
+			)}
 		</span>
 	);
 };

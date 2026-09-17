@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { UserAvatar } from './UserAvatar';
+import type { CounsellorAvatarChoice } from '../../utils/counsellorAvatar';
 
-export interface MessageAvatarProps {
+export interface MessageAvatarProps extends CounsellorAvatarChoice {
 	/** Kept for API stability; since #1193 groups use the same animal avatar. */
 	isGroup: boolean;
 	isSystemNotification: boolean;
@@ -25,7 +26,9 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 	displayName,
 	firstName,
 	lastName,
-	size = 32
+	size = 32,
+	avatarKind,
+	avatarId
 }) => {
 	if (isSystemNotification) {
 		return null;
@@ -40,6 +43,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 			userId={userId}
 			size={`${size}px`}
 			ring={false}
+			avatarKind={avatarKind}
+			avatarId={avatarId}
 		/>
 	);
 };

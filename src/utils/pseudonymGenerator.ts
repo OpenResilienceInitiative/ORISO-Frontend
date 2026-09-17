@@ -46,3 +46,30 @@ export async function renderAvatarSvg(avatar: Avatar): Promise<string> {
 
 	return recolorSvg(svg, avatar.iconColor);
 }
+
+/**
+ * Loads a CHOSEN counsellor motif (#1047) and recolours it to `currentColor`,
+ * so the render site's `color` — the tenant's `--m3-on-primary-container` —
+ * drives the glyph. Deliberately NOT `renderAvatarSvg`: that one bakes in a
+ * concrete hex from the anonymous-name engine's colour hash, which is exactly
+ * the behaviour the counsellor avatar replaces. Shares the same SVG cache.
+ *
+ * @param file animal SVG file name, e.g. `fox.svg`
+ */
+export async function loadCounsellorMotifSvg(file: string): Promise<string> {
+	const url = `${baseUrl}/${file}`;
+	let svg = svgCache.get(url);
+
+	if (!svg) {
+		const response = await fetch(url);
+		const contentType = response.headers.get('content-type') || '';
+		if (!response.ok || !contentType.toLowerCase().includes('image/svg')) {
+			throw new Error(`Failed to load counsellor motif: ${file}`);
+		}
+		svg = await response.text();
+		assertValidSvg(svg, file);
+		svgCache.set(url, svg);
+	}
+
+	return recolorSvg(svg, 'currentColor');
+}

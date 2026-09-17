@@ -23,6 +23,9 @@ export interface UserDataInterface {
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
+	/** The counsellor's own chosen avatar (#1046/#1047); absent for advice seekers. */
+	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	avatarId?: string | null;
 	publicSlug?: string;
 	pendingPublicSlug?: string;
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';

@@ -16,8 +16,14 @@ export interface StackParticipant {
 	displayName: string;
 	firstName?: string;
 	lastName?: string;
-	/** Advice seeker → animal avatar; everyone else → monogram / photo. */
+	/**
+	 * Advice seeker → the deterministic animal avatar. A counsellor renders
+	 * their CHOSEN avatar when they made one (#1047), otherwise the same animal.
+	 */
 	isAsker?: boolean;
+	/** The counsellor's chosen avatar (#1046/#1047); absent = no choice made. */
+	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	avatarId?: string | null;
 	/** Timestamp (ms) of the participant's last message, if known. */
 	lastActivity?: number;
 }

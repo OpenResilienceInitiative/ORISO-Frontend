@@ -34,6 +34,13 @@ export interface SessionConsultantInterface {
 	firstName?: string;
 	lastName?: string;
 	id?: string;
+	/**
+	 * The counsellor's CHOSEN avatar (#1046/#1047) — the public face an advice
+	 * seeker sees. Absent for counsellors who never chose; the deterministic
+	 * animal is then rendered as before.
+	 */
+	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	avatarId?: string | null;
 }
 
 export const STATUS_EMPTY = 0;

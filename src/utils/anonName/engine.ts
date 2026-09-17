@@ -264,7 +264,13 @@ export function generateAvatar(lang = 'de'): Avatar {
 	return avatarFor(pick(pick(dataFor(lang).groups).animals).svg);
 }
 
-const ALL_ANIMAL_FILES = [
+/**
+ * Every animal SVG file name the app ships, deduplicated across languages.
+ * Exported since #1047: the counsellor avatar resolves a CHOSEN motif id
+ * against this list, so an id that is not in the set falls back to initials
+ * instead of fetch-404ing into an empty circle.
+ */
+export const ALL_ANIMAL_FILES = [
 	...new Set(
 		Object.values(LANGUAGE_DATA)
 			.flatMap((lang) => lang.groups)
@@ -290,7 +296,9 @@ export function generateAvatarForUser(userId: string): Avatar {
 	// (a shifted hash slice so it doesn't track the bg index).
 	const candidates = iconCandidates(bg);
 	const iconColor =
-		candidates[Math.floor(absHash / AVATAR_COLORS.length) % candidates.length];
+		candidates[
+			Math.floor(absHash / AVATAR_COLORS.length) % candidates.length
+		];
 	const animalFile =
 		ALL_ANIMAL_FILES[absHash % ALL_ANIMAL_FILES.length] ??
 		ALL_ANIMAL_FILES[0];
