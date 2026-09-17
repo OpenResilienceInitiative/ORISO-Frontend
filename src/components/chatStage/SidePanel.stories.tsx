@@ -314,6 +314,7 @@ function ThreadSideRoom({ onBack }: { onBack?: () => void }) {
 				<MessageSubmitInterfaceComponent
 					placeholder={t('message.thread.placeholder')}
 					threadRootId={THREAD_ROOT_ID}
+					threadParentPreview={root.message}
 					onSendButton={noop}
 					isTyping={noop}
 					language="de"
@@ -570,6 +571,46 @@ export const Thread: Story = {
 		await expect(
 			panel.querySelector('.panelHeader')!.textContent
 		).not.toMatch(/Antworten auf|Replies to/);
+		const target = panel.querySelector<HTMLElement>(
+			'[data-cy="composer-target"]'
+		)!;
+		await expect(target).toBeVisible();
+		const editor = panel.querySelector<HTMLElement>(
+			'[contenteditable="true"]'
+		)!;
+		await userEvent.click(editor);
+		await userEvent.click(
+			within(panel).getByRole('button', { name: 'Editor vergrößern' })
+		);
+		const expanded = await waitFor(() => {
+			const node = document.querySelector<HTMLElement>(
+				'.textarea__wrapper-send-message--expanded'
+			);
+			if (!node) {
+				throw new Error('thread composer did not maximise');
+			}
+			return node;
+		});
+		const overlay = document.querySelector<HTMLElement>(
+			'.messageSubmit__wrapper--expanded'
+		)!;
+		await waitFor(() => {
+			const editorBox = expanded.getBoundingClientRect();
+			const viewportBox = overlay.getBoundingClientRect();
+			expect(editorBox.top).toBeGreaterThanOrEqual(viewportBox.top - 1);
+			expect(editorBox.bottom).toBeLessThanOrEqual(
+				viewportBox.bottom + 1
+			);
+			expect(Math.round(viewportBox.width)).toBe(
+				Math.round(document.documentElement.clientWidth)
+			);
+		});
+		await expect(target.textContent).toContain('Thread');
+		await expect(target.textContent).toContain(
+			mainChatMessages().find(
+				(message) => message._id === THREAD_ROOT_ID
+			)!.message
+		);
 	}
 };
 

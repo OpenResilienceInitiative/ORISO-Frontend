@@ -1787,6 +1787,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",
+			"targetLabel": "Destination: Thread",
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
 			"title": "Thread",

@@ -1788,6 +1788,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Message précédent",
+			"targetLabel": "Destination : Fil de discussion",
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
 			"title": "Fil de discussion",

@@ -1789,6 +1789,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Предыдущее сообщение",
+			"targetLabel": "Назначение: Тема",
 			"listToggle": "Темы",
 			"replies": "Ответов: {{count}}",
 			"title": "Тема",
