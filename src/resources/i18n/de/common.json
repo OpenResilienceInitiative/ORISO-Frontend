@@ -343,7 +343,9 @@
 			"team": {
 				"title": "Teamberatung",
 				"onlyMarker": "Nur fürs Team",
-				"composer": { "placeholder": "Nachricht an das Team …" },
+				"composer": {
+					"placeholder": "Nachricht an das Team …"
+				},
 				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
 				"empty": {
 					"title": "Teamberatung starten",
@@ -5036,6 +5038,13 @@
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Verbindung unterbrochen",
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen"
 		}
 	}
 }

@@ -336,7 +336,9 @@
 			"team": {
 				"title": "Ekip danışmanlığı",
 				"onlyMarker": "Yalnızca ekip için",
-				"composer": { "placeholder": "Ekibe mesaj…" },
+				"composer": {
+					"placeholder": "Ekibe mesaj…"
+				},
 				"systemNotice": "Ekip danışmanlığı, danışmanlık görüşmesine paralel yürütülür. Danışan kişi bu kanalda yer almaz ve kanalı göremez.",
 				"empty": {
 					"title": "Ekip danışmanlığını başlat",
@@ -5044,6 +5046,13 @@
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Bağlantı kesildi",
+			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene"
 		}
 	}
 }

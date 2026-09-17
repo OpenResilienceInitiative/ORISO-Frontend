@@ -331,7 +331,9 @@
 			"team": {
 				"title": "Team consultation",
 				"onlyMarker": "Team only",
-				"composer": { "placeholder": "Message to the team …" },
+				"composer": {
+					"placeholder": "Message to the team …"
+				},
 				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
 				"empty": {
 					"title": "Start team consultation",
@@ -4955,6 +4957,13 @@
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connection interrupted",
+			"message": "Your session could not be loaded. Please try again.",
+			"retry": "Try again"
 		}
 	}
 }
