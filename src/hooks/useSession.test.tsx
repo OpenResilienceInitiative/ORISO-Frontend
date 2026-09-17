@@ -13,7 +13,7 @@ import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import { useSession } from './useSession';
 
 vi.mock('../api', () => ({
-	FETCH_ERRORS: { ABORT: 'ABORT' }
+	FETCH_ERRORS: { ABORT: 'ABORT', EMPTY: 'EMPTY' }
 }));
 
 vi.mock('../api/apiGetSessionRooms', () => ({
@@ -202,4 +202,19 @@ describe('useSession', () => {
 			expect(chatTransportService.markRoomAsRead).not.toHaveBeenCalled();
 		});
 	});
+});
+
+it('reloads an eligible accepted session by id when the room lookup has no content', async () => {
+	const raw = { session: { id: 109, status: 2 } };
+	const extended = { item: raw.session, isEnquiry: false };
+	vi.mocked(apiGetSessionRoomsByRoomIds).mockRejectedValue(
+		new Error('EMPTY')
+	);
+	vi.mocked(apiGetSessionRoomBySessionId).mockResolvedValue({
+		sessions: [raw]
+	} as any);
+	vi.mocked(buildExtendedSession).mockReturnValue(extended as any);
+	const { result } = renderHook(() => useSession('!room:test', 109));
+	await waitFor(() => expect(result.current.ready).toBe(true));
+	expect(result.current.session).toBe(extended);
 });

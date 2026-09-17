@@ -572,6 +572,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Teambesprechung öffnen" },
 		"acceptButton": {
 			"anonymous": "Chat starten",
 			"known": "Anfrage annehmen"
@@ -1576,6 +1577,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."

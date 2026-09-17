@@ -171,14 +171,14 @@ describe('panel width persistence', () => {
 
 describe('maxListWidthBesidePanel (T41b)', () => {
 	it('leaves both panes their drag floor at 1280', () => {
-		// 1280 − 12 chrome − 24 margin − 2 × 320 = 604: wider than the list's
+		// 1280 − 85 navigation − 12 chrome − 24 margin − 2 × 320 = 519: wider than the list's
 		// own expanded maximum, so at this width the reader is not limited by
 		// the panel at all.
-		expect(maxListWidthBesidePanel(1280)).toBe(604);
+		expect(maxListWidthBesidePanel(1280)).toBe(519);
 	});
 
 	it('shrinks with the window', () => {
-		expect(maxListWidthBesidePanel(1024)).toBe(348);
+		expect(maxListWidthBesidePanel(1024)).toBe(263);
 	});
 
 	it('never goes below the rail', () => {

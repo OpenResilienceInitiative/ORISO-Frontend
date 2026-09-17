@@ -560,6 +560,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Open team discussion" },
 		"acceptButton": {
 			"anonymous": "Start chat",
 			"known": "Accept request"
@@ -1561,6 +1562,7 @@
 					}
 				},
 				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
+				"unavailable": "Signing in is not possible right now. Please try again in a few minutes.",
 				"email": {
 					"otp": {
 						"missing": "Please enter the code from your email for two-factor authentication."
