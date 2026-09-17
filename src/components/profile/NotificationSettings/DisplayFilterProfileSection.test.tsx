@@ -11,7 +11,8 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { DisplayFilterProfileSection } from './DisplayFilterProfileSection';
 import { displayFilterStore } from '../../../utils/displayFilter/store';
@@ -21,6 +22,8 @@ import {
 } from '../../../utils/displayFilter/model';
 import { UserDataContext } from '../../../globalState/context/UserDataContext';
 import { AUTHORITIES } from '../../../globalState/helpers/stateHelpers';
+import { apiGetAgenciesByIds } from '../../../api/apiGetAgenciesByIds';
+import { resetCounsellorAgencyFormatsForTests } from '../../../hooks/useCounsellorAgencyFormats';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -47,6 +50,11 @@ vi.mock('../../../globalState/provider/TenantProvider', () => ({
 	})
 }));
 
+// The counsellor's Beratungsstellen and their effective settings (#1440).
+vi.mock('../../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
+}));
+
 const consultant = {
 	userId: 'c1',
 	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT]
@@ -67,11 +75,11 @@ const attach = (initial: any) => {
 	} as any);
 };
 
-const renderSection = () =>
+const renderSection = (userData: any = consultant) =>
 	render(
 		<UserDataContext.Provider
 			value={{
-				userData: consultant,
+				userData,
 				setUserData: () => undefined,
 				reloadUserData: async () => null as any
 			}}
@@ -95,6 +103,7 @@ describe('DisplayFilterProfileSection', () => {
 	afterEach(() => {
 		cleanup();
 		displayFilterStore.resetForTests();
+		resetCounsellorAgencyFormatsForTests();
 	});
 
 	it('renders the three sections with their kinds and no auto-read for Anfragen', () => {
@@ -141,9 +150,10 @@ describe('DisplayFilterProfileSection', () => {
 			);
 		});
 		const { filters } = displayFilterStore.getState();
+		// Hiding keeps the pill intent (re-show brings the chip back).
 		expect(filters.global.sessions.kinds.circle).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(filters.sections.sessions).toEqual({
 			kinds: { liveChat: { show: false, pill: false } },
@@ -207,7 +217,7 @@ describe('DisplayFilterProfileSection', () => {
 		expect(global.requests.autoReadHidden).toBe(false);
 		expect(global.requests.kinds.liveChat).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(global.requests.kinds.circle).toBeUndefined();
 		expect(global.timeline.kinds.liveChat).toBeUndefined();
@@ -249,5 +259,68 @@ describe('DisplayFilterProfileSection', () => {
 		expect(
 			checkbox('display-filter-profile-timeline-show-system').disabled
 		).toBe(true);
+	});
+
+	// #1440: the circle and internal-chat kinds follow what the Träger AND at
+	// least one of the counsellor's Beratungsstellen allow, like the create
+	// entry does.
+	it('hides the circle kinds when the counsellor’s Beratungsstelle switched circles off', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValueOnce([
+			{
+				id: 7,
+				name: 'Agency Seven',
+				settings: {
+					featureGroupChatV2Enabled: true,
+					featureInternalGroupChatEnabled: true,
+					featureSelfHelpGroupsEnabled: false
+				}
+			} as any
+		]);
+		attach(DEFAULT_DISPLAY_FILTERS);
+		renderSection({
+			...consultant,
+			agencies: [{ id: 7, name: 'Agency Seven' }]
+		});
+
+		await waitFor(() =>
+			expect(
+				checkbox('display-filter-profile-sessions-show-circle')
+			).toBeFalsy()
+		);
+		expect(
+			checkbox('display-filter-profile-sessions-show-futureTimeline')
+		).toBeFalsy();
+		expect(
+			checkbox('display-filter-profile-sessions-show-internalGroup')
+		).toBeTruthy();
+		expect(apiGetAgenciesByIds).toHaveBeenCalledWith([7]);
+	});
+
+	it('hides both kinds when the Beratungsstelle’s master switch is off', async () => {
+		vi.mocked(apiGetAgenciesByIds).mockResolvedValueOnce([
+			{
+				id: 7,
+				name: 'Agency Seven',
+				settings: {
+					featureGroupChatV2Enabled: false,
+					featureInternalGroupChatEnabled: true,
+					featureSelfHelpGroupsEnabled: true
+				}
+			} as any
+		]);
+		attach(DEFAULT_DISPLAY_FILTERS);
+		renderSection({
+			...consultant,
+			agencies: [{ id: 7, name: 'Agency Seven' }]
+		});
+
+		await waitFor(() =>
+			expect(
+				checkbox('display-filter-profile-sessions-show-internalGroup')
+			).toBeFalsy()
+		);
+		expect(
+			checkbox('display-filter-profile-sessions-show-circle')
+		).toBeFalsy();
 	});
 });

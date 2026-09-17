@@ -57,7 +57,44 @@ export const useDisplayFilterLabels = (
 				done: t('notifications.displayFilter.done'),
 				close: t('app.close'),
 				profileLink: t('notifications.displayFilter.profileLink'),
-				readOnlyHint: t('notifications.displayFilter.readOnlyHint')
+				overrideNotice: t('notifications.displayFilter.overrideNotice'),
+				resetShort: t('notifications.displayFilter.resetShort'),
+				readOnlyHint: t('notifications.displayFilter.readOnlyHint'),
+				soundColumn: t('notifications.displayFilter.soundColumn'),
+				soundKind: (kind: string) =>
+					t('notifications.displayFilter.soundKind', { kind }),
+				soundMenu: (kind: string) =>
+					t('notifications.displayFilter.soundMenu', { kind }),
+				soundDefault: t('notifications.displayFilter.soundDefault'),
+				soundRing: t('profile.notifications.config.ringTone'),
+				soundTone: (number: number) =>
+					t('profile.notifications.config.tone', { number }),
+				soundMuted: t('profile.notifications.config.noSound'),
+				pillMenu: (kind: string) =>
+					t('notifications.displayFilter.pillMenu', { kind }),
+				pillOn: t('notifications.displayFilter.pillOn'),
+				pillOff: t('notifications.displayFilter.pillOff'),
+				liveChatDynamic: t(
+					'notifications.displayFilter.liveChatDynamic'
+				),
+				liveChatSession: t(
+					'notifications.displayFilter.liveChatSession'
+				),
+				liveChatFixed: t('notifications.displayFilter.liveChatFixed'),
+				placeholderHint: t(
+					'notifications.displayFilter.placeholderHint'
+				),
+				viewTitle: t('notifications.displayFilter.viewTitle'),
+				viewIcons: t('notifications.displayFilter.viewIcons'),
+				viewLabels: t('notifications.displayFilter.viewLabels'),
+				viewText: t('notifications.displayFilter.viewText'),
+				autoSort: t('notifications.displayFilter.autoSort'),
+				autoSortDescription: t(
+					'notifications.displayFilter.autoSortDescription'
+				),
+				deactivatedHint: t(
+					'notifications.displayFilter.deactivatedHint'
+				)
 			}
 		}),
 		[section, t]

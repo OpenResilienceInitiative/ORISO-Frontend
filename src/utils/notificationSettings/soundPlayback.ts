@@ -208,7 +208,9 @@ export const playNotificationSound = (
 	family: EventFamily,
 	eventType: string,
 	isMention: boolean,
-	now: number = Date.now()
+	now: number = Date.now(),
+	/** Per-kind tone from the list's display filter (#1377 "Ton"). */
+	override?: SoundId
 ): void => {
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
@@ -221,7 +223,7 @@ export const playNotificationSound = (
 		eventType,
 		isMention
 	);
-	const asset = soundAssetFor(kindConfig.sound);
+	const asset = soundAssetFor(override ?? kindConfig.sound);
 	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {
 		return;
