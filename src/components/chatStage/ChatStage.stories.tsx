@@ -2990,8 +2990,10 @@ export const NewMessagesLightTheArrowWhileWriting: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		// Let the stage settle first: both composers mounted, the panel done
-		// animating. Typing into a composer that is still being laid out
-		// loses characters to the re-render.
+		// animating. Both composers schedule an initial focus once their
+		// draft has loaded; the panel's must not pull focus out of the main
+		// editor mid-word (`isTypingElsewhere`), which used to cut the draft
+		// down to its first letters.
 		await expectStageParts(canvasElement, {
 			composers: 2,
 			bubblesAtLeast: 6

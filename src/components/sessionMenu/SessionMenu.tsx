@@ -59,10 +59,13 @@ import { ReactComponent as GroupChatInfoIcon } from '../../resources/img/icons/i
 import { ReactComponent as StopGroupChatIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as EditGroupChatIcon } from '../../resources/img/icons/gear.svg';
 import { ReactComponent as MenuVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
-import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
+import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox_outline.svg';
 import { ReactComponent as AdviceRequestIcon } from '../../resources/img/icons/persons-two.svg';
 import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as NotificationSettingsIcon } from '../../resources/img/icons/notification_settings.svg';
+import { ReactComponent as ProfileIcon } from '../../resources/img/icons/profil_outline.svg';
+import { ReactComponent as MenuVideoCallIcon } from '../../resources/img/icons/modality-video.svg';
+import { ReactComponent as MenuAudioCallIcon } from '../../resources/img/icons/timeline-add-call.svg';
 import { NotificationConfigDialog } from '../profile/NotificationSettings/NotificationConfigDialog';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import { LegalLinkMenuIcon } from '../legalLinks/LegalLinkMenuIcon';
@@ -641,7 +644,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												data-cy="session-menu-start-video-call"
 											>
 												<SessionMenuItemContent
-													icon={<VideoCallHeaderIcon />}
+													icon={
+														<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
+													}
 													title={translate(
 														'videoCall.button.startVideoCall'
 													)}
@@ -659,7 +664,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												data-cy="session-menu-start-call"
 											>
 												<SessionMenuItemContent
-													icon={<AudioCallHeaderIcon />}
+													icon={
+														<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
+													}
 													title={translate(
 														'videoCall.button.startCall'
 													)}
@@ -675,8 +682,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									to={userProfileLink}
 								>
 									<SessionMenuItemContent
-										icon={<GroupChatInfoIcon />}
-										title={translate('chatFlyout.askerProfil')}
+										icon={
+											<ProfileIcon data-icon-id="sidebar-icon:profil:outline" />
+										}
+										title={translate(
+											'chatFlyout.askerProfil'
+										)}
 										shortcut="⇧P"
 									/>
 								</Link>
@@ -702,7 +713,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								data-cy="session-menu-notification-config"
 							>
 								<SessionMenuItemContent
-									icon={<NotificationSettingsIcon />}
+									icon={
+										<NotificationSettingsIcon data-icon-id="ui-icon:notification-settings:base" />
+									}
 									title={translate(
 										'profile.notifications.config.title'
 									)}
@@ -728,8 +741,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									data-cy="session-menu-supervision-panel"
 								>
 									<SessionMenuItemContent
-										icon={<SupervisionIcon />}
-										title={translate('supervision.panel.title')}
+										icon={
+											<SupervisionIcon data-icon-id="ui-icon:supervision-nocirc:400" />
+										}
+										title={translate(
+											'supervision.panel.title'
+										)}
 										disabled={!supervisionPanel.available}
 										shortcut={
 											supervisionPanel.unreadCount > 0
@@ -778,7 +795,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 											: ''
 									}`}
 									onClick={() => {
-										if (props.mobileEndAnonymousChatDisabled) {
+										if (
+											props.mobileEndAnonymousChatDisabled
+										) {
 											return;
 										}
 										closeMenu();
@@ -847,7 +866,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									data-cy="session-menu-request-advice"
 								>
 									<SessionMenuItemContent
-										icon={<AdviceRequestIcon />}
+										icon={
+											<AdviceRequestIcon data-icon-id="ui-icon:persons-two:base" />
+										}
 										title={translate(
 											'sessionMenu.requestAdvice'
 										)}
@@ -882,7 +903,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												className="sessionMenu__item chatMenuDropdown__item"
 											>
 												<SessionMenuItemContent
-													icon={<ArchiveIcon />}
+													icon={
+														<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
+													}
 													title={translate(
 														'chatFlyout.archive'
 													)}
@@ -909,7 +932,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												className="sessionMenu__item chatMenuDropdown__item"
 											>
 												<SessionMenuItemContent
-													icon={<ArchiveIcon />}
+													icon={
+														<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
+													}
 													title={translate(
 														'chatFlyout.dearchive'
 													)}
@@ -955,7 +980,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												className="sessionMenu__item chatMenuDropdown__item"
 											>
 												<SessionMenuItemContent
-													icon={<TrashIcon />}
+													icon={
+														<TrashIcon data-icon-id="ui-icon:trash:base" />
+													}
 													title={translate(
 														'chatFlyout.remove'
 													)}

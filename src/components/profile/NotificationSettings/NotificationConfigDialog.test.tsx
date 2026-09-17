@@ -12,7 +12,10 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { NotificationConfigView } from './NotificationConfigDialog';
+import {
+	NotificationConfigDialog,
+	NotificationConfigView
+} from './NotificationConfigDialog';
 import { DEFAULT_NOTIFICATION_CONFIG } from '../../../utils/notificationSettings/notificationConfig';
 
 // The component tags nodes with data-cy (Cypress convention); make getByTestId use it.
@@ -49,6 +52,39 @@ const baseProps = {
 	onChange: vi.fn(),
 	onPreview: vi.fn()
 };
+
+describe('NotificationConfigDialog', () => {
+	afterEach(cleanup);
+
+	it('keeps the actions outside the keyboard-scrollable dialog body', () => {
+		const onConfirm = vi.fn();
+		const { baseElement } = render(
+			<NotificationConfigDialog
+				open
+				config={DEFAULT_NOTIFICATION_CONFIG}
+				onConfirm={onConfirm}
+				onClose={vi.fn()}
+			/>
+		);
+
+		const surface = baseElement.querySelector('.m3Dialog__surface');
+		const body = surface?.querySelector('.m3Dialog__body');
+		const footer = surface?.querySelector('.m3Dialog__footer');
+
+		expect(surface).toBeTruthy();
+		expect(body?.getAttribute('tabindex')).toBe('0');
+		expect(body?.querySelector('[data-cy="notif-config"]')).toBeTruthy();
+		expect(footer).toBeTruthy();
+		expect(body?.contains(footer ?? null)).toBe(false);
+
+		fireEvent.click(
+			surface?.querySelector(
+				'[data-testid="notif-confirm"]'
+			) as HTMLElement
+		);
+		expect(onConfirm).toHaveBeenCalledWith(DEFAULT_NOTIFICATION_CONFIG);
+	});
+});
 
 describe('NotificationConfigView', () => {
 	afterEach(cleanup);

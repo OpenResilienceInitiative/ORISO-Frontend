@@ -21,7 +21,11 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
+import {
+	isFocusProtected,
+	isTypingElsewhere,
+	scheduleComposerAutoFocus
+} from './focusGuards';
 import {
 	buildSessionChannelPath,
 	resolveComposerChannel,
@@ -654,16 +658,7 @@ export const MessageSubmitInterfaceComponent = ({
 		if (isFocusProtected(activeElement)) {
 			return;
 		}
-		const activeTagName = activeElement?.tagName?.toLowerCase();
-		const isTypingInAnotherInput =
-			!!activeElement &&
-			!inputElement.contains(activeElement) &&
-			(activeElement.isContentEditable ||
-				activeTagName === 'input' ||
-				activeTagName === 'textarea' ||
-				activeTagName === 'select');
-
-		if (isTypingInAnotherInput) {
+		if (isTypingElsewhere(activeElement, inputElement)) {
 			return;
 		}
 
@@ -1241,6 +1236,17 @@ export const MessageSubmitInterfaceComponent = ({
 			// alignLeft chain below focuses the editor on its own, so the
 			// check has to come first.
 			if (isFocusProtected(document.activeElement)) {
+				return;
+			}
+			// Nor off another editor the person is typing in: chat card and
+			// side panel each run this once their draft has loaded, and the
+			// later one used to pull focus out mid-word.
+			if (
+				isTypingElsewhere(
+					document.activeElement,
+					textareaInputRef.current
+				)
+			) {
 				return;
 			}
 			composerRef.current?.runAction('alignLeft');

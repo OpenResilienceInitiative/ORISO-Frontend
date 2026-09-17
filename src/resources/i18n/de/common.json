@@ -349,7 +349,9 @@
 			"team": {
 				"title": "Teamberatung",
 				"onlyMarker": "Nur fürs Team",
-				"composer": { "placeholder": "Nachricht an das Team …" },
+				"composer": {
+					"placeholder": "Nachricht an das Team …"
+				},
 				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
 				"empty": {
 					"title": "Teamberatung starten",
@@ -576,6 +578,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Teambesprechung öffnen" },
 		"acceptButton": {
 			"anonymous": "Chat starten",
 			"known": "Anfrage annehmen"
@@ -1598,6 +1601,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
@@ -1878,13 +1882,23 @@
 	},
 	"notifications": {
 		"displayFilter": {
-			"button": "Anzeige-Filter",
-			"buttonCustomised": "Filter angepasst",
-			"title": "Anzeige-Filter",
-			"description": "Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.",
-			"showColumn": "Anzeigen",
-			"pillColumn": "Pille",
-			"showKind": "Anzeigen: {{kind}}",
+			"button": "Ansicht einstellen",
+			"buttonCustomised": "Ansicht angepasst",
+			"title": "Ansicht",
+			"description": "Welche Arten diese Liste zeigt, welche eine Pille bekommen und wie sie klingen.",
+			"showColumn": "In der Liste",
+			"pillColumn": "Anzeigen",
+			"soundColumn": "Ton",
+			"soundKind": "Ton anhören: {{kind}}",
+			"soundMenu": "Ton wählen: {{kind}}",
+			"soundDefault": "Standard",
+			"pillMenu": "Anzeige wählen: {{kind}}",
+			"liveChatDynamic": "Dynamisch",
+			"liveChatFixed": "Fest",
+			"pillOff": "Aus",
+			"pillOn": "An",
+			"placeholderHint": "Kommt bald.",
+			"showKind": "In der Liste: {{kind}}",
 			"pillKind": "Pille: {{kind}}",
 			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
 			"pillNotApplicable": "Keine Pille für diese Art",
@@ -1894,8 +1908,20 @@
 			"autoReadSessionsDescription": "Gilt nur für diese Liste und den Zähler. Chats werden nicht als gelesen markiert, es werden keine Lesebestätigungen gesendet.",
 			"reset": "Auf meine Standards zurücksetzen",
 			"done": "Fertig",
-			"profileLink": "Standards und weitere Optionen in Profil › Benachrichtigungen",
+			"profileLink": "Standards bearbeiten",
+			"overrideNotice": "Diese Liste weicht von Ihren Standards ab.",
+			"resetShort": "Zurücksetzen",
+			"otherChip": "Weitere",
 			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
+			"viewTitle": "Filter-Button Anzeige-Optionen",
+			"viewIcons": "Icons",
+			"viewLabels": "Icons + Text",
+			"viewText": "Text",
+			"autoSort": "Ungelesenes nach links sortieren",
+			"autoSortDescription": "Pillen mit ungelesenen Einträgen rücken an den Anfang der Reihe.",
+			"deactivatedHint": "Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.",
+			"deactivatedChip": "{{kind}} (vom Träger abgeschaltet)",
+			"deactivatedNotice": "{{kind}} ist für Ihren Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind; neue können nicht angelegt werden.",
 			"badgeHiddenHint": "bis zu {{count}} ausgeblendet",
 			"hiddenActiveRow": "Durch Ihren Anzeige-Filter ausgeblendet",
 			"profileTitle": "Anzeige-Filter",
@@ -1911,7 +1937,8 @@
 				"timeline": "Zeitstrahl",
 				"sessions": "Gespräche",
 				"requests": "Anfragen"
-			}
+			},
+			"liveChatSession": "Bei Sitzung"
 		},
 		"families": {
 			"all": "Alle",
@@ -3655,15 +3682,17 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
+				"other": "Weitere",
 				"create": "Erstellen",
 				"group": "Filter",
 				"archive": "Archiviert",
-				"oneToOne": "1-1 Beratung",
+				"oneToOne": "Mail-Beratung",
 				"liveChat": "Live-Chat",
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Chat erstellen"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."

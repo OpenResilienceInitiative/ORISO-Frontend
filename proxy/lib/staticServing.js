@@ -14,6 +14,17 @@ const path = require('path');
  * The SPA fallback (registerSpaFallback) is registered separately, AFTER the
  * API proxy middlewares, exactly as before the extraction.
  */
+
+const SPA_SHELL = 'beratung-hilfe.html';
+
+// The shell references chunks by content hash. A cached shell after a deploy
+// points at chunks the server no longer has, so the browser must revalidate
+// it on every load; "no-cache" still allows a cheap 304 via ETag.
+const setShellCacheHeader = (res, filePath) => {
+	if (filePath.endsWith('.html')) {
+		res.setHeader('Cache-Control', 'no-cache');
+	}
+};
 const registerBuildAssetRoutes = async (app, buildPath) => {
 	const serveStatic = (await import('serve-static')).default;
 
@@ -43,7 +54,10 @@ const registerBuildAssetRoutes = async (app, buildPath) => {
 	// route or the stage composition stayed broken until the next deploy.
 	// A 404 is not cached: one reload heals the session.
 	app.use('/static', (req, res) => {
-		res.status(404).type('txt').send('Not found');
+		res.status(404)
+			.set('Cache-Control', 'no-store')
+			.type('txt')
+			.send('Not found');
 	});
 
 	app.get(
@@ -54,12 +68,19 @@ const registerBuildAssetRoutes = async (app, buildPath) => {
 		/.(?:svgz?|ttf|ttc|otf|eot|woff2?)$/,
 		serveStatic(buildPath, { maxAge: '1d' })
 	);
-	app.use(serveStatic(buildPath, { index: 'beratung-hilfe.html' }));
+	app.use(
+		serveStatic(buildPath, {
+			index: SPA_SHELL,
+			setHeaders: setShellCacheHeader
+		})
+	);
 };
 
 const registerSpaFallback = (app, buildPath) => {
 	app.get('*', (req, res) => {
-		res.sendFile(path.join(buildPath, 'beratung-hilfe.html'));
+		res.sendFile(path.join(buildPath, SPA_SHELL), {
+			headers: { 'Cache-Control': 'no-cache' }
+		});
 	});
 };
 

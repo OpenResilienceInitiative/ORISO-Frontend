@@ -24,11 +24,16 @@ import { DisplayFilter } from './model';
 
 /** Gespräche kinds (§5.2). `futureTimeline` gates the panel, not rows. */
 export type SessionKindId =
+	| 'create'
+	| 'unread'
+	| 'drafts'
 	| 'oneToOne'
 	| 'liveChat'
 	| 'internalGroup'
 	| 'circle'
 	| 'supervision'
+	| 'archive'
+	| 'appointments'
 	| 'futureTimeline'
 	| typeof OTHER_KIND_ID;
 
@@ -37,11 +42,20 @@ export type RequestKindId = 'nearby' | 'liveChat' | typeof OTHER_KIND_ID;
 
 /** Dialog order for Gespräche. */
 export const SESSION_KIND_ORDER: ReadonlyArray<SessionKindId> = [
+	// Frank 2026-09-16: every toolbar chip is a dialog row, in toolbar
+	// order. Erstellen/Ungelesen/Entwürfe are pill-only (no rows of their own).
+	'create',
+	'unread',
+	'drafts',
 	'oneToOne',
 	'liveChat',
 	'internalGroup',
 	'circle',
 	'supervision',
+	// Frank 2026-09-16: the Archiv chip is configurable (pill only, no rows
+	// of its own); Termine is announced but not wired yet (placeholder).
+	'archive',
+	'appointments',
 	'futureTimeline',
 	OTHER_KIND_ID
 ];
@@ -53,19 +67,31 @@ export const REQUEST_KIND_ORDER: ReadonlyArray<RequestKindId> = [
 	OTHER_KIND_ID
 ];
 
+/** Kinds that only own a chip, never a row (Frank 2026-09-16). */
+export const PILL_ONLY_SESSION_KINDS: ReadonlyArray<SessionKindId> = [
+	'create',
+	'unread',
+	'drafts',
+	'archive'
+];
+
 /**
  * The toolbar chip that stands for a kind (the chip filter and the display
- * filter share the classification below). `unread`/`drafts` are not kinds.
+ * filter share the classification below). `unread`/`drafts` are refinement
+ * chips, not row kinds — they map so their pill can be switched like the rest.
  */
 export const SESSION_KIND_CHIP: Partial<
 	Record<SessionKindId | RequestKindId, SessionToolbarChipFilter>
 > = {
+	unread: 'unread',
+	drafts: 'drafts',
 	oneToOne: 'nearby',
 	nearby: 'nearby',
 	liveChat: 'liveChat',
 	internalGroup: 'internalGroup',
 	circle: 'groups',
-	supervision: 'supervision'
+	supervision: 'supervision',
+	[OTHER_KIND_ID]: 'other'
 };
 
 const isSupervisedByMe = (
@@ -127,6 +153,34 @@ export const classifyRequest = (
 	}
 	return isAnonymousAskerSession(raw, extended) ? 'liveChat' : 'nearby';
 };
+
+/**
+ * Anfragen (§5.3): the Mail / Live-Chat chips are TABS over two disjoint
+ * feeds, not unread pills. The list opens on "Mail" by default and a tab
+ * must stay reachable while its kind is shown, unread rows or not. So the
+ * pill rule of §5.1 (`visiblePillKinds`) does not apply here: a request
+ * chip is hidden exactly when its kind is hidden.
+ *
+ * Until 2026-09 the request chips went through the pill rule: hiding Mail
+ * dropped the active chip, and with zero unread requests the chip never
+ * came back - not after showing Mail again, not after a reset.
+ */
+export const hiddenRequestKinds = <T extends { id: string }>(
+	filter: DisplayFilter,
+	kinds: ReadonlyArray<T>
+): T[] => kinds.filter((kind) => !resolveKindSetting(filter, kind.id).show);
+
+/**
+ * The active request tab survives everything except its kind being hidden.
+ * Returns the kind to keep, or `null` when the tab must be cleared.
+ */
+export const reconcileActiveRequestKind = (
+	filter: DisplayFilter,
+	activeKindId: string | null
+): string | null =>
+	activeKindId && resolveKindSetting(filter, activeKindId).show
+		? activeKindId
+		: null;
 
 export const isKindShown = (
 	filter: DisplayFilter,
