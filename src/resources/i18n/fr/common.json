@@ -835,12 +835,14 @@
 				"sourceLanguage": "Langue source",
 				"welcome": "Message d'accueil (120 caractères maximum)",
 				"rules": "Règles du groupe",
-				"rule": "Règle",
+				"rule": "Règle n° 1 (120 caractères maximum)",
 				"addRule": "Ajouter une règle",
+				"removeLanguage": "Supprimer la langue {{language}}",
 				"removeRule": "Supprimer",
 				"translate": "Traduire dans les langues actives",
 				"translating": "Traduction en cours…",
 				"translationError": "La traduction a échoué. Votre texte a été conservé ; veuillez réessayer.",
+				"ruleChipShort": "N° {{index}}",
 				"ruleChip": "Règle n° {{index}}"
 			}
 		},
@@ -1557,6 +1559,7 @@
 					}
 				},
 				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
+				"unavailable": "La connexion n'est pas possible pour le moment. Veuillez réessayer dans quelques minutes.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."

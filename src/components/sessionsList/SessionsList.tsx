@@ -118,6 +118,8 @@ import {
 	REQUEST_KIND_ORDER,
 	SESSION_KIND_CHIP,
 	SESSION_KIND_ORDER,
+	hiddenRequestKinds,
+	reconcileActiveRequestKind,
 	sessionPairId
 } from '../../utils/displayFilter/sessions';
 import { isChatItemUnread } from '../../utils/sessionUnread';
@@ -553,6 +555,8 @@ export const SessionsList = ({
 	/*
 	 * Re-run the enquiry fetch when switching Nearby ↔ Live Chat so auto-paging
 	 * scans for the right session type instead of only re-filtering stale pages.
+	 * The same applies when the tab is cleared (all kinds): the page that was
+	 * auto-paged for one type is not a complete first page for both.
 	 */
 	useEffect(() => {
 		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
@@ -560,7 +564,8 @@ export const SessionsList = ({
 		}
 		if (
 			sessionToolbarChip !== 'liveChat' &&
-			sessionToolbarChip !== 'nearby'
+			sessionToolbarChip !== 'nearby' &&
+			sessionToolbarChip !== null
 		) {
 			return;
 		}
@@ -1831,15 +1836,42 @@ export const SessionsList = ({
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
 			)?.id ?? null;
-		if (
-			activeKind &&
-			reconcileActiveKind(listDisplayFilter, activeKind) === null
-		) {
-			setSessionToolbarChip(null);
+		if (!activeKind) {
+			return;
 		}
-	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip]);
-	// Kind chips are user-gated (§5.1): pill on and unread rows, or active.
+		// Anfragen chips are tabs (§5.3): only a hidden kind clears the tab.
+		const reconciled =
+			type === SESSION_LIST_TYPES.ENQUIRY
+				? reconcileActiveRequestKind(listDisplayFilter, activeKind)
+				: reconcileActiveKind(listDisplayFilter, activeKind);
+		if (reconciled === null) {
+			// Through the toggle so `?chip=…` clears with the state; otherwise a
+			// reload or the URL-sync effect restores the hidden tab.
+			handleToolbarChipToggle(sessionToolbarChip);
+		}
+	}, [
+		displayFilterKinds,
+		handleToolbarChipToggle,
+		listDisplayFilter,
+		sessionToolbarChip,
+		type
+	]);
+	// Gespräche kind chips are user-gated pills (§5.1): pill on and unread
+	// rows, or active. Anfragen chips are tabs (§5.3): hidden only when the
+	// kind is hidden, so the default "Mail" tab can always be reached.
 	const hiddenKindChips = React.useMemo(() => {
+		const hidden: Partial<Record<DisplayFilterKindChip, boolean>> = {};
+		if (type === SESSION_LIST_TYPES.ENQUIRY) {
+			hiddenRequestKinds(listDisplayFilter, displayFilterKinds).forEach(
+				(kind) => {
+					const chip = SESSION_KIND_CHIP[kind.id];
+					if (chip) {
+						hidden[chip] = true;
+					}
+				}
+			);
+			return hidden;
+		}
 		const activeKind =
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
@@ -1851,7 +1883,6 @@ export const SessionsList = ({
 				activeKind
 			).map((kind) => kind.id)
 		);
-		const hidden: Partial<Record<DisplayFilterKindChip, boolean>> = {};
 		displayFilterKinds.forEach((kind) => {
 			const chip = SESSION_KIND_CHIP[kind.id];
 			if (chip && !shown.has(kind.id)) {
@@ -1859,7 +1890,7 @@ export const SessionsList = ({
 			}
 		});
 		return hidden;
-	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip]);
+	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip, type]);
 	const toolbarChipCounts = React.useMemo(() => {
 		// Unread is derived from the Matrix client (#1147); `unreadVersion`
 		// re-runs this memo when notification counts or receipts change.

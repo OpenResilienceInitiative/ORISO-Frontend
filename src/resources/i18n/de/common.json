@@ -808,10 +808,11 @@
 			"authorContent": {
 				"title": "Begrüßung und Gruppenregeln",
 				"sourceLanguage": "Ausgangssprache",
-				"welcome": "Begrüßung (maximal 120 Zeichen)",
+				"welcome": "Begrüßungstext max. 120 Zeichen",
 				"rules": "Gruppenregeln",
-				"rule": "Regel",
+				"rule": "Regel Nr. 1 auf max. 120 Zeichen",
 				"addRule": "Regel hinzufügen",
+				"removeLanguage": "Sprache {{language}} entfernen",
 				"removeRule": "Entfernen",
 				"translate": "In aktive Sprachen übersetzen",
 				"translating": "Wird übersetzt…",
@@ -821,6 +822,7 @@
 				"ruleEditorLabel": "Regel bearbeiten",
 				"editRule": "Regel {{index}} bearbeiten",
 				"deleteRule": "Regel {{index}} löschen",
+				"ruleChipShort": "Nr. {{index}}",
 				"ruleChip": "Regel Nr. {{index}}"
 			},
 			"listItem": {
@@ -1573,6 +1575,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
