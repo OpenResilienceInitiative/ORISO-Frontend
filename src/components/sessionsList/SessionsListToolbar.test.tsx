@@ -185,13 +185,13 @@ describe('SessionsListToolbar display filter (#1377 slice 4)', () => {
 	const chip = (container: HTMLElement, id: string) =>
 		container.querySelector(`[data-cy="sessions-list-chip-${id}"]`);
 
-	it('renders the pinned tune button outside the scrolling chips', () => {
+	it('renders the tune button in the search field, not among the scrolling chips', () => {
 		const { container } = renderWithDisplayFilter({}, true);
 		const button = screen.getByRole('button', { name: 'Anzeige-Filter' });
 		expect(button.getAttribute('aria-controls')).toBe('dialog-id');
 		expect(
 			container
-				.querySelector('.filterChipRow__trailing')
+				.querySelector('.sessionsListToolbar__search')
 				?.contains(button)
 		).toBe(true);
 		expect(
@@ -214,5 +214,154 @@ describe('SessionsListToolbar display filter (#1377 slice 4)', () => {
 		expect(chip(container, 'internal-group')).not.toBeNull();
 		expect(chip(container, 'unread')).not.toBeNull();
 		expect(chip(container, 'drafts')).not.toBeNull();
+	});
+});
+
+describe('SessionsListToolbar chip menu (Frank 2026-09-16)', () => {
+	const renderMenu = (
+		props: Partial<React.ComponentProps<typeof SessionsListToolbar>>
+	) =>
+		render(
+			<MemoryRouter>
+				<SessionsListToolbar
+					translate={(key, fallback) => fallback ?? key}
+					searchValue=""
+					onSearchChange={vi.fn()}
+					activeChip={null}
+					onChipToggle={vi.fn()}
+					showConsultantActions
+					showCreateGroupChatAction={false}
+					showSupervisionChip
+					showGroupChip={false}
+					showInternalGroupChip
+					showLiveChatChip
+					createGroupChatPath="/sessions/create"
+					archiveTabPath="/sessions/archive"
+					archiveTabActive={false}
+					createGroupChatActive={false}
+					chipCounts={{ unread: 0, drafts: 3, nearby: 2, groups: 1 }}
+					{...props}
+				/>
+			</MemoryRouter>
+		);
+	const chipNames = (container: HTMLElement) =>
+		Array.from(
+			container.querySelectorAll('[data-cy^="sessions-list-chip-"]')
+		).map((el) =>
+			el.getAttribute('data-cy')!.replace('sessions-list-chip-', '')
+		);
+
+	it('shows a Träger-deactivated kind chip locked even though its module is off, and routes its click to the notice', () => {
+		const onChipToggle = vi.fn();
+		const onDeactivatedChipClick = vi.fn();
+		const { container } = renderMenu({
+			onChipToggle,
+			deactivatedKindChips: { groups: true },
+			deactivatedChipLabel: (name) => `${name} (vom Träger abgeschaltet)`,
+			onDeactivatedChipClick
+		});
+		const groups = screen.getByRole('button', {
+			name: 'Conversation circle (1) (vom Träger abgeschaltet)'
+		});
+		expect(groups.getAttribute('aria-disabled')).toBe('true');
+		groups.click();
+		expect(onChipToggle).not.toHaveBeenCalled();
+		expect(onDeactivatedChipClick).toHaveBeenCalledWith('groups');
+		expect(chipNames(container)).toContain('groups');
+	});
+
+	it('floats chips with unread items left when auto-sort is on; drafts never count as unread', () => {
+		const { container } = renderMenu({
+			chipAutoSort: true,
+			chipCounts: { unread: 0, drafts: 3, nearby: 2, supervision: 1 }
+		});
+		// nearby (2) and supervision (1) first, then the rest in toolbar order
+		expect(chipNames(container).slice(0, 2)).toEqual([
+			'nearby',
+			'supervision'
+		]);
+		expect(chipNames(container)).toContain('drafts');
+		expect(chipNames(container).indexOf('drafts')).toBeGreaterThan(1);
+	});
+
+	it('renders compact text chips without icons in the text view', () => {
+		const { container } = renderMenu({ chipView: 'text' });
+		const mail = screen.getByRole('button', { name: 'Mail (2)' });
+		expect(mail.className).toContain('sessionsListToolbar__chip--text');
+		expect(mail.textContent).toContain('Mail');
+		expect(
+			container.querySelectorAll(
+				'[data-cy="sessions-list-chips"] .sessionsListToolbar__chipIconSvg'
+			).length
+		).toBe(0);
+	});
+
+	it('turns the Create and Archive links into text pills in the text view', () => {
+		const { container } = renderMenu({
+			chipView: 'text',
+			showCreateGroupChatAction: true
+		});
+		const create = container.querySelector(
+			'[data-cy="sessions-list-chip-create"]'
+		)!;
+		const archive = container.querySelector(
+			'[data-cy="sessions-list-chip-archive"]'
+		)!;
+		expect(create.className).toContain('sessionsListToolbar__chip--text');
+		expect(archive.className).toContain('sessionsListToolbar__chip--text');
+		expect(create.querySelector('svg')).toBeNull();
+		expect(archive.querySelector('svg')).toBeNull();
+		expect(create.textContent).toContain('Create');
+		expect(archive.textContent).toContain('Archived');
+	});
+
+	it('shows icon and label on every pill in the labels view', () => {
+		const { container } = renderMenu({
+			chipView: 'labels',
+			showCreateGroupChatAction: true
+		});
+		const mail = screen.getByRole('button', { name: 'Mail (2)' });
+		expect(mail.className).toContain('sessionsListToolbar__chip--labelled');
+		const archive = container.querySelector(
+			'[data-cy="sessions-list-chip-archive"]'
+		)!;
+		expect(archive.className).toContain(
+			'sessionsListToolbar__chip--labelled'
+		);
+		// icon (mocked as a span) + visible label
+		expect(archive.children.length).toBe(2);
+		expect(
+			archive
+				.querySelector('.sessionsListToolbar__chipLabel')
+				?.getAttribute('aria-hidden')
+		).not.toBe('true');
+	});
+
+	it('renders a Sonstiges chip when the list offers it, with the bundled count', () => {
+		const onChipToggle = vi.fn();
+		renderMenu({
+			onChipToggle,
+			showOtherChip: true,
+			chipCounts: { unread: 0, drafts: 0, nearby: 2, other: 7 }
+		});
+		const other = screen.getByRole('button', { name: 'More (7)' });
+		other.click();
+		expect(onChipToggle).toHaveBeenCalledWith('other');
+	});
+
+	it('omits the Sonstiges chip unless the list offers it', () => {
+		renderMenu({});
+		expect(screen.queryByRole('button', { name: /^More/ })).toBeNull();
+	});
+
+	it('hides the Archiv link when the display filter switches its pill off', () => {
+		const { container } = renderMenu({ showArchiveChip: false });
+		expect(
+			container.querySelector('[data-cy="sessions-list-chip-archive"]')
+		).toBeNull();
+		const { container: on } = renderMenu({});
+		expect(
+			on.querySelector('[data-cy="sessions-list-chip-archive"]')
+		).not.toBeNull();
 	});
 });

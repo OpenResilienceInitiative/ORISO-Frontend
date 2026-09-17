@@ -69,6 +69,9 @@ test('a missing hashed chunk is a hard 404, never the SPA shell', async () => {
 		!response.text.includes('<!doctype'),
 		'must not serve the SPA shell as JavaScript'
 	);
+	// Nothing may keep this answer: right after the rollout the same URL can
+	// exist again (the request hit an old pod), and the client retries it.
+	assert.match(response.headers['cache-control'], /no-store/);
 });
 
 test('a missing static css/media asset is a hard 404 too', async () => {
@@ -89,6 +92,26 @@ test('SPA routes outside /static still get the shell', async () => {
 		const response = await request(app).get(url);
 		assert.equal(response.status, 200, url);
 		assert.equal(response.text, INDEX_HTML, url);
+	}
+});
+
+/**
+ * The shell names every chunk by content hash, so an old shell in the browser
+ * cache means old chunk names — which the redeployed server no longer has.
+ * "no-cache" makes the browser revalidate it on every load (a cheap 304 when
+ * nothing changed). Same contract as ORISO-Admin's nginx.conf.
+ */
+test('the SPA shell is revalidated on every load', async () => {
+	const app = await createApp();
+	for (const url of [
+		'/',
+		'/beratung-hilfe.html',
+		'/login',
+		'/sessions/some/deep/route'
+	]) {
+		const response = await request(app).get(url);
+		assert.equal(response.status, 200, url);
+		assert.match(response.headers['cache-control'], /no-cache/, url);
 	}
 });
 
