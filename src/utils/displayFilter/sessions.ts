@@ -128,6 +128,34 @@ export const classifyRequest = (
 	return isAnonymousAskerSession(raw, extended) ? 'liveChat' : 'nearby';
 };
 
+/**
+ * Anfragen (§5.3): the Mail / Live-Chat chips are TABS over two disjoint
+ * feeds, not unread pills. The list opens on "Mail" by default and a tab
+ * must stay reachable while its kind is shown, unread rows or not. So the
+ * pill rule of §5.1 (`visiblePillKinds`) does not apply here: a request
+ * chip is hidden exactly when its kind is hidden.
+ *
+ * Until 2026-09 the request chips went through the pill rule: hiding Mail
+ * dropped the active chip, and with zero unread requests the chip never
+ * came back - not after showing Mail again, not after a reset.
+ */
+export const hiddenRequestKinds = <T extends { id: string }>(
+	filter: DisplayFilter,
+	kinds: ReadonlyArray<T>
+): T[] => kinds.filter((kind) => !resolveKindSetting(filter, kind.id).show);
+
+/**
+ * The active request tab survives everything except its kind being hidden.
+ * Returns the kind to keep, or `null` when the tab must be cleared.
+ */
+export const reconcileActiveRequestKind = (
+	filter: DisplayFilter,
+	activeKindId: string | null
+): string | null =>
+	activeKindId && resolveKindSetting(filter, activeKindId).show
+		? activeKindId
+		: null;
+
 export const isKindShown = (
 	filter: DisplayFilter,
 	kind: SessionKindId | RequestKindId
