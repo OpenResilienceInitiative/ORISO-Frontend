@@ -1443,7 +1443,11 @@ export const SessionListItemComponent = ({
 				{/* Frank, 15./16.09.2026: one block under the chip row. The preview
 				    flows around the 48 px avatar on a diagonal, stops after three
 				    lines, and keeps clear of the trailing marks (Mail …), which sit
-				    on its third line under the menu pill. */}
+				    on its third line under the menu pill.
+				    Storybook (geometry asserted):
+				    https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout
+				    https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout-on-the-phone
+				    Preview host: predev.oriso.org/storybook-frontend (same ids). */}
 				<div className="sessionsListItem__body" ref={cardBodyRef}>
 					<div
 						className={clsx(

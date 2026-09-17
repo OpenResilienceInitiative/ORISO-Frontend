@@ -9,6 +9,15 @@ type SurfaceRect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
 const MARGIN = 12;
 const GAP = 8;
 
+/*
+ * The chat-room menu's own spacing, measured by Frank on 17.09.2026: at most
+ * 6 px between the ⋮ trigger and a menu beside it ("max 6px"), and on a
+ * phone 2 px below the trigger with the right edge pulled 4 px in.
+ */
+const HUG_BESIDE_GAP = 6;
+const HUG_STACK_GAP = 2;
+const HUG_STACK_INSET = 4;
+
 /**
  * Where the menu goes.
  *
@@ -17,6 +26,10 @@ const GAP = 8;
  * button inside it. Frank, 15.09.2026: "Es soll kein Overlap da sein,
  * sondern ein Nebeneinander. Wer hat gesagt, dass ein Menü immer oben drüber
  * oder unten drunter öffnen muss?"
+ *
+ * Seen in Storybook:
+ * https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
+ * https://dev.oriso.org/storybook-frontend/?path=/story/organisms-casehandover-casehandoveractionbutton--menu-beside-the-card
  *
  * Beside comes first, because that is the arrangement that keeps the card
  * readable while the menu is open. Below and above are the escape routes for
@@ -34,8 +47,19 @@ export const getChatMenuPosition = (
 	 * yields an empty object there and every coordinate becomes `NaN`. Unit
 	 * tests pass plain objects and never see it; a Storybook play test does.
 	 */
-	surface?: SurfaceRect
+	surface?: SurfaceRect,
+	/**
+	 * `hugTrigger`: the menu keeps close to its trigger — beside it at
+	 * `HUG_BESIDE_GAP` (covering the card's empty trailing strip if the
+	 * trigger sits there), stacked at `HUG_STACK_GAP` with its right edge
+	 * `HUG_STACK_INSET` inside the trigger's. Needs a surface.
+	 */
+	options: { hugTrigger?: boolean } = {}
 ) => {
+	const hug = Boolean(options.hugTrigger && surface);
+	const besideGap = hug ? HUG_BESIDE_GAP : GAP;
+	const stackGap = hug ? HUG_STACK_GAP : GAP;
+	const stackInset = hug ? HUG_STACK_INSET : 0;
 	const bounds: SurfaceRect = surface ?? {
 		left: anchor.left,
 		right: anchor.right,
@@ -64,10 +88,15 @@ export const getChatMenuPosition = (
 			}
 		: bounds;
 
-	const fitsRight = bounds.right + GAP + width <= viewport.width - MARGIN;
-	const fitsLeft = bounds.left - GAP - width >= MARGIN;
-	const fitsBelow = stack.bottom + GAP + height <= viewport.height - MARGIN;
-	const fitsAbove = stack.top - GAP - height >= MARGIN;
+	// Beside on the right starts from the trigger when hugging it, from the
+	// card otherwise; on the left the card is in the way either way.
+	const rightEdge = hug ? anchor.right : bounds.right;
+
+	const fitsRight = rightEdge + besideGap + width <= viewport.width - MARGIN;
+	const fitsLeft = bounds.left - besideGap - width >= MARGIN;
+	const fitsBelow =
+		stack.bottom + stackGap + height <= viewport.height - MARGIN;
+	const fitsAbove = stack.top - stackGap - height >= MARGIN;
 
 	const placement: ChatMenuPlacement = fitsRight
 		? 'right'
@@ -86,17 +115,17 @@ export const getChatMenuPosition = (
 
 	const left = clampLeft(
 		placement === 'right'
-			? bounds.right + GAP
+			? rightEdge + besideGap
 			: placement === 'left'
-				? bounds.left - GAP - width
-				: // Stacked: right edges flush with the trigger.
-					stack.right - width
+				? bounds.left - besideGap - width
+				: // Stacked: right edge at the trigger's (inset when hugging).
+					stack.right - stackInset - width
 	);
 	const top = clampTop(
 		placement === 'below'
-			? stack.bottom + GAP
+			? stack.bottom + stackGap
 			: placement === 'above'
-				? stack.top - GAP - height
+				? stack.top - stackGap - height
 				: anchor.top
 	);
 
@@ -120,7 +149,8 @@ export const useChatMenuPosition = ({
 	anchorRef,
 	menuRef,
 	surfaceRef,
-	width = 301
+	width = 301,
+	hugTrigger = false
 }: {
 	open: boolean;
 	anchorRef: RefObject<HTMLElement | null>;
@@ -132,6 +162,8 @@ export const useChatMenuPosition = ({
 	 */
 	surfaceRef?: RefObject<HTMLElement | null>;
 	width?: number;
+	/** See `getChatMenuPosition` — the chat-room menu's tight spacing. */
+	hugTrigger?: boolean;
 }): CSSProperties & { '--chat-menu-placement'?: ChatMenuPlacement } => {
 	const { motionEnabled } = useMenuEffects();
 	const [position, setPosition] = useState<ReturnType<
@@ -165,7 +197,8 @@ export const useChatMenuPosition = ({
 							menu.offsetHeight -
 							menu.clientHeight
 					},
-					surface ? surface.getBoundingClientRect() : undefined
+					surface ? surface.getBoundingClientRect() : undefined,
+					{ hugTrigger }
 				);
 				setPosition((previous) =>
 					JSON.stringify(previous) === JSON.stringify(next)
@@ -185,10 +218,15 @@ export const useChatMenuPosition = ({
 			}
 			window.addEventListener('resize', update);
 			window.addEventListener('scroll', update, true);
+			// Transforms move the trigger without resizing anything: a menu
+			// opened while its row still scales in (the list's entrance)
+			// was left behind. Re-measure whenever an animation ends.
+			window.addEventListener('animationend', update, true);
 			cleanup = () => {
 				observer?.disconnect();
 				window.removeEventListener('resize', update);
 				window.removeEventListener('scroll', update, true);
+				window.removeEventListener('animationend', update, true);
 			};
 		};
 		attach();
@@ -196,7 +234,7 @@ export const useChatMenuPosition = ({
 			cancelAnimationFrame(frame);
 			cleanup();
 		};
-	}, [open, anchorRef, menuRef, surfaceRef, width]);
+	}, [open, anchorRef, menuRef, surfaceRef, width, hugTrigger]);
 	const { placement, ...box } = position ?? {};
 	return {
 		'animation':

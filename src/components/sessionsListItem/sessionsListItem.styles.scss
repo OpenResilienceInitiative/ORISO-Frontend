@@ -225,6 +225,12 @@ $card-trailing-clearance: 24px;
 			background-color: var(--m3-primary, $primary);
 			border-color: var(--m3-primary, $primary);
 			color: var(--m3-on-primary-container, #ffe2de);
+
+			// The resting hover tint comes later in this file and would win;
+			// on the open trigger it turned the light dots invisible.
+			&:hover {
+				background-color: var(--m3-primary, $primary);
+			}
 		}
 
 		/*
@@ -462,10 +468,12 @@ $card-trailing-clearance: 24px;
 		);
 	}
 
-	// Keeps the first preview line full width …
+	// Keeps the first preview line clear of the menu's column: like Mail and
+	// the name, it ends at the menu pill's right edge — a menu opened 6 px
+	// beside the pill then covers no text (Frank, 17.09.2026) …
 	&__flowSpacer {
 		float: right;
-		width: 0;
+		width: var(--card-trailing);
 		height: $card-preview-line;
 	}
 
@@ -485,7 +493,7 @@ $card-trailing-clearance: 24px;
 		position: absolute;
 		top: 0;
 		left: $card-inset + $card-avatar + $card-gap;
-		right: $card-inset;
+		right: calc(#{$card-inset} + var(--card-trailing));
 		display: block;
 		padding: 0;
 		line-height: $card-name-line;

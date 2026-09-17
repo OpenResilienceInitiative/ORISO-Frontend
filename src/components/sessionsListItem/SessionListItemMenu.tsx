@@ -14,6 +14,15 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { ChatroomSettingsMenuVisibility } from './chatroomSettingsMenu';
 import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvider';
 
+/**
+ * The chat-room menu of a session card (Figma 7086-57413). It opens 6 px
+ * beside the ⋮ trigger, or hangs 2 px below it on a phone; while it is open
+ * only the menu carries the red ring and the veil spares the card.
+ *
+ * Storybook (asserted):
+ * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
+ * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-on-the-phone
+ */
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
 	menuIconRef: React.RefObject<HTMLButtonElement>;
@@ -70,7 +79,8 @@ export const SessionListItemMenu = ({
 		open: flyoutOpen,
 		anchorRef: menuIconRef,
 		menuRef: dropdownRef,
-		surfaceRef
+		surfaceRef,
+		hugTrigger: true
 	});
 	const placement = menuPosition['--chat-menu-placement'];
 	return (

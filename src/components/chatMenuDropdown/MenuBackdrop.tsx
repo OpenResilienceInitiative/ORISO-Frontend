@@ -76,6 +76,9 @@ const useHole = (
 		update();
 		window.addEventListener('scroll', update, true);
 		window.addEventListener('resize', update);
+		// The element may still be scaling in (list entrance); transforms
+		// resize nothing, so follow it once an animation ends.
+		window.addEventListener('animationend', update, true);
 		const observer =
 			typeof ResizeObserver === 'undefined'
 				? null
@@ -84,6 +87,7 @@ const useHole = (
 		return () => {
 			window.removeEventListener('scroll', update, true);
 			window.removeEventListener('resize', update);
+			window.removeEventListener('animationend', update, true);
 			observer?.disconnect();
 		};
 	}, [active, element]);
@@ -98,6 +102,8 @@ const useHole = (
  * trigger shows the primary colour while the menu is open). The element
  * cannot simply be lifted above the veil: the list's containers form their
  * own stacking contexts.
+ *
+ * Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
  */
 export const MenuBackdrop = ({
 	open,

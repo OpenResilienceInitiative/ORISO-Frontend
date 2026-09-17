@@ -113,4 +113,61 @@ describe('chat menu placement', () => {
 			)
 		).toMatchObject({ left: 12, top: 12, width: 256, maxHeight: 376 });
 	});
+	/*
+	 * Frank, 17.09.2026, measured on the chat-room menu: beside the card the
+	 * menu sits at most 6 px from the ⋮ trigger (it may cover the card's
+	 * empty trailing strip); stacked on a phone it hangs 2 px below the
+	 * trigger with its right edge pulled 4 px in. `hugTrigger` opts in.
+	 */
+	describe('hugging the trigger (chat-room menu)', () => {
+		const hug = { hugTrigger: true };
+
+		it("opens 6 px beside the trigger, over the card's empty strip", () => {
+			expect(
+				getChatMenuPosition(
+					{ left: 372, right: 420, top: 80, bottom: 112 },
+					{ width: 1000, height: 800 },
+					menu,
+					card,
+					hug
+				)
+			).toMatchObject({ left: 426, top: 80, placement: 'right' });
+		});
+
+		it('keeps 6 px to the card on the left side', () => {
+			expect(
+				getChatMenuPosition(
+					{ left: 852, right: 900, top: 80, bottom: 112 },
+					{ width: 1000, height: 800 },
+					menu,
+					{ left: 500, right: 900, top: 70, bottom: 230 },
+					hug
+				)
+			).toMatchObject({ left: 193, placement: 'left' });
+		});
+
+		it('hangs 2 px below the trigger, 4 px in from its right edge', () => {
+			expect(
+				getChatMenuPosition(
+					{ left: 280, right: 328, top: 86, bottom: 118 },
+					{ width: 340, height: 900 },
+					menu,
+					{ left: 12, right: 328, top: 70, bottom: 230 },
+					hug
+				)
+			).toMatchObject({ placement: 'below', top: 120, left: 23 });
+		});
+
+		it('rises 2 px above the trigger when there is no room below', () => {
+			expect(
+				getChatMenuPosition(
+					{ left: 280, right: 328, top: 476, bottom: 508 },
+					{ width: 340, height: 900 },
+					menu,
+					{ left: 12, right: 328, top: 460, bottom: 620 },
+					hug
+				)
+			).toMatchObject({ placement: 'above', top: 74, left: 23 });
+		});
+	});
 });

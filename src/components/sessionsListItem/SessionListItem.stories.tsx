@@ -1335,6 +1335,20 @@ export const SupervisedByOthers: Story = {
  * card. Beside is the normal case; below and above are the escape routes
  * for a viewport that has no room beside, which is every phone.
  */
+/**
+ * Every row fades and scales in (`appearSessionListItem`, 0.98 → 1 after a
+ * short stagger). A measurement taken mid-animation reads a scaled box — CI
+ * measured the 142 px card at 139 px. Geometry is asserted on the settled
+ * card, so the entrance is finished first.
+ */
+const settleCardEntrance = (canvasElement: HTMLElement) => {
+	canvasElement
+		.querySelectorAll<HTMLElement>('.sessionsListItem')
+		.forEach((row) =>
+			row.getAnimations().forEach((animation) => animation.finish())
+		);
+};
+
 const openTheMenu = async (canvasElement: HTMLElement) => {
 	const trigger = await waitFor(() => {
 		const element = canvasElement.querySelector<HTMLButtonElement>(
@@ -1380,15 +1394,43 @@ const expectOnlyTheMenuRinged = async (canvasElement: HTMLElement) => {
 	await expect(getComputedStyle(card).borderTopWidth).toBe('2px');
 };
 
-const expectNoOverlap = async (menu: HTMLElement, card: HTMLElement) => {
+/**
+ * The menu covers nothing the card shows. Since Frank's 6 px (17.09.2026)
+ * it may lie over the card's empty trailing strip right of the ⋮ trigger,
+ * but never over the trigger, the date, the name, the preview or Mail.
+ */
+const expectMenuClearOfCardContent = async (
+	menu: HTMLElement,
+	card: HTMLElement
+) => {
 	const m = menu.getBoundingClientRect();
-	const c = card.getBoundingClientRect();
-	const apart =
-		m.right <= c.left + 0.5 ||
-		m.left >= c.right - 0.5 ||
-		m.bottom <= c.top + 0.5 ||
-		m.top >= c.bottom - 0.5;
-	await expect(apart).toBe(true);
+	for (const selector of [
+		'.sessionsListItem__menuIcon',
+		'.sessionsListItem__date',
+		'.sessionsListItem__topic',
+		'.sessionsListItem__username',
+		'.sessionsListItem__subject',
+		'.sessionsListItem__trailing'
+	]) {
+		const element = card.querySelector(selector);
+		await expect(element, selector).not.toBeNull();
+		// Text is measured as ink (its line boxes), not as its block.
+		const range = document.createRange();
+		range.selectNodeContents(element!);
+		const rects = element!.matches(
+			'.sessionsListItem__username, .sessionsListItem__subject'
+		)
+			? Array.from(range.getClientRects())
+			: [element!.getBoundingClientRect()];
+		for (const r of rects) {
+			const apart =
+				m.right <= r.left + 0.5 ||
+				m.left >= r.right - 0.5 ||
+				m.bottom <= r.top + 0.5 ||
+				m.top >= r.bottom - 0.5;
+			await expect(apart, selector).toBe(true);
+		}
+	}
 };
 
 /**
@@ -1407,8 +1449,8 @@ export const MenuBesideTheCard: Story = {
 		const atRest = restingCardShadow(canvasElement);
 		const { trigger, menu, card } = await openTheMenu(canvasElement);
 
-		// 1. No overlap. This is the whole point.
-		await expectNoOverlap(menu, card);
+		// 1. Beside, not on top: nothing the card shows is covered.
+		await expectMenuClearOfCardContent(menu, card);
 		await expect(menu.dataset.placement).toBe('right');
 		// Every coordinate is a real number. `{ ...domRect }` yields an
 		// empty object — the properties are on the prototype — which turned
@@ -1500,6 +1542,29 @@ export const MenuBesideTheCard: Story = {
 
 		await expectOnlyTheMenuRinged(canvasElement);
 
+		// 4c. At most 6 px between the trigger and the menu (Frank,
+		//     17.09.2026) — the menu may cover the card's empty strip. The
+		//     menu opened while the row was still scaling in; once the
+		//     entrance ends it has to follow the trigger to its final place.
+		settleCardEntrance(canvasElement);
+		await waitFor(() =>
+			expect(
+				Math.round(
+					menu.getBoundingClientRect().left -
+						trigger.getBoundingClientRect().right
+				)
+			).toBe(6)
+		);
+
+		// 4d. Hovering the open trigger keeps it primary with light dots;
+		//     the resting hover tint made the dots vanish.
+		await userEvent.hover(trigger);
+		await waitFor(() => {
+			const style = getComputedStyle(trigger);
+			expect(style.backgroundColor).toBe('rgb(165, 0, 10)');
+			expect(style.color).toBe('rgb(255, 226, 222)');
+		});
+
 		// 5. The trigger keeps its shape — a horizontal pill, not a circle
 		//    and not a rotation (Frank, 15.09.2026).
 		const shape = trigger.getBoundingClientRect();
@@ -1528,8 +1593,9 @@ export const MenuOnThePhone: Story = {
 		// bottom edge (Frank, 17.09.2026: "rechts im Corner").
 		const pill = trigger.getBoundingClientRect();
 		const hung = menu.getBoundingClientRect();
-		await expect(Math.abs(hung.right - pill.right)).toBeLessThan(1);
-		await expect(Math.round(hung.top - pill.bottom)).toBe(8);
+		// Frank, 17.09.2026: 2 px below, right edge 4 px in.
+		await expect(Math.round(pill.right - hung.right)).toBe(4);
+		await expect(Math.round(hung.top - pill.bottom)).toBe(2);
 		await expectOnlyTheMenuRinged(canvasElement);
 		// And it stays inside the viewport either way.
 		const box = menu.getBoundingClientRect();
@@ -1747,20 +1813,6 @@ const mergeLineRects = (rects: DOMRect[]) =>
 		return merged;
 	}, []);
 
-/**
- * Every row fades and scales in (`appearSessionListItem`, 0.98 → 1 after a
- * short stagger). A measurement taken mid-animation reads a scaled box — CI
- * measured the 142 px card at 139 px. Geometry is asserted on the settled
- * card, so the entrance is finished first.
- */
-const settleCardEntrance = (canvasElement: HTMLElement) => {
-	canvasElement
-		.querySelectorAll<HTMLElement>('.sessionsListItem')
-		.forEach((row) =>
-			row.getAnimations().forEach((animation) => animation.finish())
-		);
-};
-
 const expectCardLayout = async (
 	canvasElement: HTMLElement,
 	{
@@ -1875,6 +1927,12 @@ const expectCardLayout = async (
 			);
 			await expect(line.bottom).toBeLessThanOrEqual(clip.bottom + 0.5);
 		}
+		// Every line — and the name — ends at the pill's right edge at the
+		// latest, so a menu 6 px beside the pill covers no text.
+		for (const line of lines) {
+			await expect(line.right).toBeLessThanOrEqual(menu.right + 0.5);
+		}
+		await expect(name.right).toBeLessThanOrEqual(menu.right + 0.5);
 		// From the second line on: clear of the Mail column.
 		for (const line of lines.slice(1)) {
 			await expect(line.right).toBeLessThanOrEqual(
