@@ -141,9 +141,11 @@ describe('DisplayFilterProfileSection', () => {
 			);
 		});
 		const { filters } = displayFilterStore.getState();
+		// The pill preference survives hiding (masked on read by
+		// resolveKindSetting), so hide → show is a round trip.
 		expect(filters.global.sessions.kinds.circle).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(filters.sections.sessions).toEqual({
 			kinds: { liveChat: { show: false, pill: false } },
@@ -207,7 +209,7 @@ describe('DisplayFilterProfileSection', () => {
 		expect(global.requests.autoReadHidden).toBe(false);
 		expect(global.requests.kinds.liveChat).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(global.requests.kinds.circle).toBeUndefined();
 		expect(global.timeline.kinds.liveChat).toBeUndefined();
