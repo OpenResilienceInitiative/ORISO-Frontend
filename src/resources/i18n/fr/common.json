@@ -336,7 +336,9 @@
 			"team": {
 				"title": "Consultation d’équipe",
 				"onlyMarker": "Réservé à l’équipe",
-				"composer": { "placeholder": "Message à l’équipe…" },
+				"composer": {
+					"placeholder": "Message à l’équipe…"
+				},
 				"systemNotice": "La consultation d’équipe se déroule en parallèle du conseil. La personne conseillée n’y participe pas et ne peut pas voir ce canal.",
 				"empty": {
 					"title": "Démarrer la consultation d’équipe",
@@ -575,6 +577,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Ouvrir la discussion d’équipe" },
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
 			"known": "Accepter la demande"
@@ -834,12 +837,14 @@
 				"sourceLanguage": "Langue source",
 				"welcome": "Message d'accueil (120 caractères maximum)",
 				"rules": "Règles du groupe",
-				"rule": "Règle",
+				"rule": "Règle n° 1 (120 caractères maximum)",
 				"addRule": "Ajouter une règle",
+				"removeLanguage": "Supprimer la langue {{language}}",
 				"removeRule": "Supprimer",
 				"translate": "Traduire dans les langues actives",
 				"translating": "Traduction en cours…",
 				"translationError": "La traduction a échoué. Votre texte a été conservé ; veuillez réessayer.",
+				"ruleChipShort": "N° {{index}}",
 				"ruleChip": "Règle n° {{index}}"
 			}
 		},
@@ -1556,6 +1561,7 @@
 					}
 				},
 				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
+				"unavailable": "La connexion n'est pas possible pour le moment. Veuillez réessayer dans quelques minutes.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
@@ -1834,9 +1840,19 @@
 			"button": "Filtre d’affichage",
 			"buttonCustomised": "Filtre personnalisé",
 			"title": "Filtre d’affichage",
-			"description": "Quels types apparaissent dans cette liste et lesquels reçoivent une pastille.",
+			"description": "Quels types apparaissent dans cette liste, lesquels reçoivent une pastille et quel son ils émettent.",
 			"showColumn": "Afficher",
 			"pillColumn": "Pastille",
+			"soundColumn": "Son",
+			"soundKind": "Écouter le son : {{kind}}",
+			"soundMenu": "Choisir le son : {{kind}}",
+			"soundDefault": "Par défaut",
+			"pillMenu": "Choisir l’affichage : {{kind}}",
+			"liveChatDynamic": "Dynamique",
+			"liveChatFixed": "Fixe",
+			"pillOff": "Désactivé",
+			"pillOn": "Activé",
+			"placeholderHint": "Bientôt disponible.",
 			"showKind": "Afficher : {{kind}}",
 			"pillKind": "Pastille : {{kind}}",
 			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
@@ -1847,8 +1863,20 @@
 			"autoReadSessionsDescription": "Ne concerne que cette liste et son compteur. Les discussions ne sont pas marquées comme lues, aucun accusé de lecture n’est envoyé.",
 			"reset": "Rétablir mes valeurs par défaut",
 			"done": "Terminé",
-			"profileLink": "Valeurs par défaut et autres options dans Profil › Notifications",
+			"profileLink": "Modifier les standards",
+			"overrideNotice": "Cette liste s’écarte de vos standards.",
+			"resetShort": "Réinitialiser",
+			"otherChip": "Autres",
 			"readOnlyHint": "Ces réglages ont été enregistrés par une version plus récente de l’application. Mettez-la à jour pour les modifier.",
+			"viewTitle": "Options d'affichage du bouton filtre",
+			"viewIcons": "Icônes",
+			"viewLabels": "Icônes + texte",
+			"viewText": "Texte",
+			"autoSort": "Placer les non lus à gauche",
+			"autoSortDescription": "Les pastilles avec des éléments non lus passent en tête de ligne.",
+			"deactivatedHint": "Désactivé par votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage.",
+			"deactivatedChip": "{{kind}} (désactivé par votre organisme)",
+			"deactivatedNotice": "{{kind}} est désactivé pour votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage ; aucune nouvelle ne peut être créée.",
 			"badgeHiddenHint": "jusqu’à {{count}} masqués",
 			"hiddenActiveRow": "Masqué par votre filtre d’affichage",
 			"profileTitle": "Filtres d’affichage",
@@ -1864,7 +1892,8 @@
 				"timeline": "Chronologie",
 				"sessions": "Échanges",
 				"requests": "Demandes"
-			}
+			},
+			"liveChatSession": "Si ouvert"
 		},
 		"families": {
 			"all": "Toutes",
@@ -3605,6 +3634,7 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
+				"other": "Autres",
 				"create": "Créer",
 				"group": "Filtres",
 				"archive": "Archivé",
@@ -3613,7 +3643,8 @@
 				"internalGroup": "Discussion de groupe interne",
 				"groups": "Cercle de discussion",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Créer un chat"
 			},
 			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres.",
 			"draftMetadataOnly": "Message non envoyé enregistré."

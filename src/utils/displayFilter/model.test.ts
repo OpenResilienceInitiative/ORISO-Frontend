@@ -10,6 +10,7 @@ import {
 	isNewerDisplayFiltersVersion,
 	parseDisplayFilter,
 	parseDisplayFilters,
+	resolveChipPresentation,
 	resolveEffective,
 	withGlobalFilter,
 	withSectionOverride,
@@ -17,6 +18,20 @@ import {
 } from './model';
 
 describe('parseDisplayFilter', () => {
+	it('round-trips the pill intent of a hidden kind (#1377 re-show fix)', () => {
+		const parsed = parseDisplayFilters({
+			version: 1,
+			global: {},
+			sections: {
+				timeline: { kinds: { drafts: { show: false, pill: true } } }
+			}
+		});
+		expect(parsed?.sections.timeline?.kinds.drafts).toEqual({
+			show: false,
+			pill: true
+		});
+	});
+
 	it('malformed → defaults; unknown kinds kept; unknown keys ignored', () => {
 		expect(parseDisplayFilter(undefined)).toEqual(DEFAULT_DISPLAY_FILTER);
 		expect(parseDisplayFilter('x')).toEqual(DEFAULT_DISPLAY_FILTER);
@@ -29,7 +44,8 @@ describe('parseDisplayFilter', () => {
 			autoReadHidden: 'yes',
 			somethingNew: 1
 		});
-		expect(parsed.kinds.calls).toEqual({ show: false, pill: false });
+		// The stored pill is the user's intent; hiding masks it on read only.
+		expect(parsed.kinds.calls).toEqual({ show: false, pill: true });
 		expect(parsed.kinds.futureKind).toEqual({ show: true, pill: false });
 		expect(parsed.kinds.junk).toBeUndefined();
 		expect(parsed.autoReadHidden).toBe(false);
@@ -70,9 +86,11 @@ describe('parseDisplayFilters', () => {
 				bogus: { kinds: {} }
 			}
 		});
+		// A missing pill defaults to true and is stored as such even while
+		// hidden; `resolveKindSetting` masks it on read.
 		expect(parsed?.global.timeline.kinds.drafts).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(parsed?.global.sessions).toEqual(DEFAULT_DISPLAY_FILTER);
 		expect(parsed?.global.requests).toEqual(DEFAULT_DISPLAY_FILTER);
@@ -140,5 +158,103 @@ describe('resolveEffective (§4)', () => {
 			hiddenEventTypes: ['x']
 		});
 		expect(sessions.global.sessions.hiddenEventTypes).toBeUndefined();
+	});
+});
+
+describe('chip presentation (view + auto-sort, Frank 2026-09-16)', () => {
+	it('defaults to icons with auto-sort on', () => {
+		expect(resolveChipPresentation(DEFAULT_DISPLAY_FILTER)).toEqual({
+			view: 'icons',
+			autoSort: true
+		});
+	});
+
+	it('parses valid values and drops malformed ones', () => {
+		expect(
+			parseDisplayFilter({ kinds: {}, view: 'text', autoSort: false })
+		).toEqual({
+			kinds: {},
+			autoReadHidden: false,
+			view: 'text',
+			autoSort: false
+		});
+		expect(parseDisplayFilter({ kinds: {}, view: 'labels' }).view).toBe(
+			'labels'
+		);
+		expect(
+			parseDisplayFilter({ kinds: {}, view: 'huge', autoSort: 'yes' })
+		).toEqual({ kinds: {}, autoReadHidden: false });
+	});
+
+	it('override wins, global fills the gaps', () => {
+		const withGlobal = withGlobalFilter(
+			DEFAULT_DISPLAY_FILTERS,
+			'requests',
+			{
+				kinds: {},
+				autoReadHidden: false,
+				view: 'text'
+			}
+		);
+		const withOverride = withSectionOverride(withGlobal, 'requests', {
+			kinds: {},
+			autoReadHidden: false,
+			autoSort: false
+		});
+		expect(
+			resolveChipPresentation(resolveEffective(withOverride, 'requests'))
+		).toEqual({
+			view: 'text',
+			autoSort: false
+		});
+	});
+});
+
+describe('sound per kind round-trip', () => {
+	it('keeps a stored mute and defaults missing ones to sound on', () => {
+		const parsed = parseDisplayFilter({
+			kinds: {
+				oneToOne: { sound: false },
+				liveChat: { show: true, fixed: true },
+				nearby: { pillMode: 'session' },
+				supervision: { pillMode: 'bogus' },
+				circle: { sound: 'ton-4' },
+				drafts: { sound: 'bogus' }
+			}
+		});
+		// legacy boolean mute reads as the 'none' tone
+		expect(parsed.kinds.oneToOne).toEqual({
+			show: true,
+			pill: true,
+			sound: 'none'
+		});
+		// legacy `fixed: true` (pre-dev builds of 2026-09-16) reads as the pinned mode
+		expect(parsed.kinds.liveChat).toEqual({
+			show: true,
+			pill: true,
+			pillMode: 'fixed'
+		});
+		expect(parsed.kinds.nearby).toEqual({
+			show: true,
+			pill: true,
+			pillMode: 'session'
+		});
+		// an unknown mode falls back to dynamic (not stored)
+		expect(parsed.kinds.supervision).toEqual({ show: true, pill: true });
+		// Sonstiges keeps its tone (only `show` is forced) — CodeRabbit on #1457
+		const other = parseDisplayFilter({
+			kinds: { other: { show: false, pill: false, sound: 'ton-2' } }
+		});
+		expect(other.kinds.other).toEqual({
+			show: true,
+			pill: false,
+			sound: 'ton-2'
+		});
+		expect(parsed.kinds.circle).toEqual({
+			show: true,
+			pill: true,
+			sound: 'ton-4'
+		});
+		expect(parsed.kinds.drafts).toEqual({ show: true, pill: true });
 	});
 });

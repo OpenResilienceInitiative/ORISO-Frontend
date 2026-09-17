@@ -30,6 +30,7 @@ import {
 } from '../../../utils/displayFilter/model';
 import {
 	REQUEST_KIND_ORDER,
+	PILL_ONLY_SESSION_KINDS,
 	SESSION_KIND_ORDER
 } from '../../../utils/displayFilter/sessions';
 import {
@@ -84,6 +85,8 @@ export const DisplayFilterProfileSection = () => {
 		() =>
 			SESSION_KIND_ORDER.filter((kind) => {
 				switch (kind) {
+					case 'create':
+						return showGroups || showInternalGroups;
 					case 'internalGroup':
 						return showInternalGroups;
 					case 'circle':
@@ -98,7 +101,10 @@ export const DisplayFilterProfileSection = () => {
 				id: kind,
 				label: sessionKindLabel(t, kind),
 				icon: SESSION_KIND_ICONS[kind],
-				showOnly: kind === 'futureTimeline'
+				showOnly: kind === 'futureTimeline',
+				modes: kind === 'liveChat',
+				pillOnly: PILL_ONLY_SESSION_KINDS.includes(kind),
+				placeholder: kind === 'appointments'
 			})),
 		[canSupervise, showGroups, showInternalGroups, t]
 	);

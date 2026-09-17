@@ -55,4 +55,20 @@ describe('DisplayFilterButton (#1377)', () => {
 		).toBe('Filter angepasst');
 		expect(button.getAttribute('aria-label')).toBe('Anzeige-Filter');
 	});
+
+	it('renders as a bare glyph in the compact form', () => {
+		render(
+			<DisplayFilterButton
+				label="Anzeige-Filter"
+				customised
+				customisedLabel="Filter angepasst"
+				open={false}
+				onClick={() => undefined}
+				compact
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Anzeige-Filter' }).className
+		).toContain('displayFilterButton--compact');
+	});
 });
