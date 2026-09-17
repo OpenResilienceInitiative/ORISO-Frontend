@@ -82,7 +82,7 @@ import './conversationCreate.styles.scss';
  * Step 1 "Gesprächsformat wählen" offers the formats the Träger allows and
  * at least one of the counsellor's Beratungsstellen allows (#1440); with a
  * single available format the picker is skipped. Inside a format, the agency
- * choice lists only the Beratungsstellen that offer that format.
+ * choice lists only the Beratungsstellen that offer that format (except in edit mode).
  * "Interna besprechen" is completed entirely inside its card;
  * "Gesprächskreis" continues to the settings screen after a topic was
  * chosen on its card.
