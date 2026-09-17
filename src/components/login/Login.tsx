@@ -345,36 +345,55 @@ export const Login = () => {
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
+		const handleAutoLoginFailure = (error: unknown) => {
+			const resolution = resolveLoginError(
+				error as Parameters<typeof resolveLoginError>[0],
+				Boolean(otp)
+			);
+
+			// Only terminal failures count; the OTP challenge is the normal
+			// second step of a login whose password was accepted.
+			if (resolution.kind === 'message') {
+				recordLoginFailure({
+					outcome: resolution.outcome,
+					transport: describeLoginTransport(
+						error as Parameters<typeof describeLoginTransport>[0]
+					),
+					stage: otp ? 'otp' : 'password'
+				});
+				setShowLoginError(translate(resolution.messageKey));
+				// Only a credential problem marks the fields; an outage is
+				// not the user's input being wrong, and must not leave a
+				// stale mark from an earlier attempt behind.
+				setLabelState(
+					resolution.outcome === 'unavailable'
+						? null
+						: VALIDITY_INVALID
+				);
+			} else if (resolution.kind === 'otpRequired') {
+				setTwoFactorType(resolution.otpType);
+				setIsOtpRequired(true);
+			}
+		};
+
 		autoLogin({
 			username: username,
 			password: password,
 			tenantData: tenant,
 			...(otp ? { otp } : {})
 		})
-			.then(postLogin)
-			.catch((error) => {
-				const resolution = resolveLoginError(error, Boolean(otp));
-
-				if (resolution.kind !== 'none') {
-					recordLoginFailure({
-						outcome: resolution.outcome,
-						transport: describeLoginTransport(error),
-						stage: otp ? 'otp' : 'password'
-					});
-				}
-
-				if (resolution.kind === 'message') {
-					setShowLoginError(translate(resolution.messageKey));
-					// Only a credential problem marks the fields; an outage is
-					// not the user's input being wrong.
-					if (resolution.outcome !== 'unavailable') {
-						setLabelState(VALIDITY_INVALID);
-					}
-				} else if (resolution.kind === 'otpRequired') {
-					setTwoFactorType(resolution.otpType);
-					setIsOtpRequired(true);
-				}
-
+			// Two rejection paths on purpose: only `autoLogin` failures are
+			// login failures. `postLogin` reports its own problems (e.g. the
+			// consultant-blocked message) before it throws, and those must
+			// neither be overwritten nor counted.
+			.then(
+				() =>
+					postLogin().catch(() => {
+						/* message already shown by postLogin */
+					}),
+				handleAutoLoginFailure
+			)
+			.finally(() => {
 				setIsRequestInProgress(false);
 			});
 	};

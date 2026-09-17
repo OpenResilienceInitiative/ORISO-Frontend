@@ -105,21 +105,19 @@ describe('resolveLoginError', () => {
 		});
 	});
 
-	it('still maps a 401 onto the credentials message', () => {
-		expect(
-			resolveLoginError({ message: FETCH_ERRORS.UNAUTHORIZED }, false)
-		).toEqual({
-			kind: 'message',
-			messageKey: LOGIN_ERROR_KEYS.UNAUTHORIZED,
-			outcome: 'credentials'
-		});
-		expect(
-			resolveLoginError({ message: FETCH_ERRORS.UNAUTHORIZED }, true)
-		).toEqual({
-			kind: 'message',
-			messageKey: LOGIN_ERROR_KEYS.UNAUTHORIZED_OTP,
-			outcome: 'credentials'
-		});
+	it('maps a 401 onto the unavailable message (never sent for wrong credentials)', () => {
+		[false, true].forEach((hasOtp) =>
+			expect(
+				resolveLoginError(
+					{ message: FETCH_ERRORS.UNAUTHORIZED },
+					hasOtp
+				)
+			).toEqual({
+				kind: 'message',
+				messageKey: LOGIN_ERROR_KEYS.UNAVAILABLE,
+				outcome: 'unavailable'
+			})
+		);
 	});
 
 	it('tells the user the login is unavailable for a bad request that is not about credentials', () => {

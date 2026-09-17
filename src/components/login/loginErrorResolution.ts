@@ -120,7 +120,10 @@ export const resolveLoginError = (
 	}
 
 	if (error.message === FETCH_ERRORS.UNAUTHORIZED) {
-		return credentialsMessage(hasOtp);
+		// Keycloak never answers wrong credentials with 401; `autoLogin` uses
+		// this code for a misconfigured client and for a tenant mismatch.
+		// Neither is something the user can fix by retyping.
+		return unavailableMessage();
 	}
 
 	if (error.message !== FETCH_ERRORS.BAD_REQUEST) {
