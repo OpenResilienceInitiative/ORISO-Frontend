@@ -190,3 +190,41 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		transition: none !important;
 	}
 }
+
+/* Small variant (#1377): 32px control for dense table rows. */
+.splitButton--small {
+	.splitButton__segment {
+		height: 32px;
+	}
+
+	.splitButton__main {
+		border-radius: 16px 2px 2px 16px;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		padding: 0 10px;
+		gap: 6px;
+	}
+
+	.splitButton__label {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.splitButton__trailing,
+	.splitButton__step {
+		width: 28px;
+	}
+
+	.splitButton__trailing {
+		border-radius: 2px 16px 16px 2px;
+	}
+
+	.splitButton__icon svg,
+	.splitButton__chevron {
+		width: 16px;
+		height: 16px;
+	}
+}

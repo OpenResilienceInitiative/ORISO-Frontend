@@ -331,7 +331,9 @@
 			"team": {
 				"title": "Team consultation",
 				"onlyMarker": "Team only",
-				"composer": { "placeholder": "Message to the team …" },
+				"composer": {
+					"placeholder": "Message to the team …"
+				},
 				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
 				"empty": {
 					"title": "Start team consultation",
@@ -1832,13 +1834,23 @@
 	},
 	"notifications": {
 		"displayFilter": {
-			"button": "Display filter",
-			"buttonCustomised": "Filter customised",
-			"title": "Display filter",
-			"description": "Which kinds appear in this list and which get a pill.",
-			"showColumn": "Show",
-			"pillColumn": "Pill",
-			"showKind": "Show: {{kind}}",
+			"button": "List settings",
+			"buttonCustomised": "List settings changed",
+			"title": "View",
+			"description": "Which kinds this list shows, which get a chip and how they sound.",
+			"showColumn": "In the list",
+			"pillColumn": "Show",
+			"soundColumn": "Sound",
+			"soundKind": "Play tone: {{kind}}",
+			"soundMenu": "Choose tone: {{kind}}",
+			"soundDefault": "Default",
+			"pillMenu": "Choose display: {{kind}}",
+			"liveChatDynamic": "Dynamic",
+			"liveChatFixed": "Pinned",
+			"pillOff": "Off",
+			"pillOn": "On",
+			"placeholderHint": "Coming soon.",
+			"showKind": "In the list: {{kind}}",
 			"pillKind": "Pill: {{kind}}",
 			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
 			"pillNotApplicable": "No pill for this kind",
@@ -1848,8 +1860,20 @@
 			"autoReadSessionsDescription": "Applies to this list and its counter only. Chats are not marked read and no read receipts are sent.",
 			"reset": "Reset to my defaults",
 			"done": "Done",
-			"profileLink": "Defaults and more options in Profile › Notifications",
+			"profileLink": "Edit standards",
+			"overrideNotice": "This list deviates from your standards.",
+			"resetShort": "Reset",
+			"otherChip": "More",
 			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
+			"viewTitle": "Filter button display options",
+			"viewIcons": "Icons",
+			"viewLabels": "Icons + text",
+			"viewText": "Text",
+			"autoSort": "Move unread to the left",
+			"autoSortDescription": "Chips with unread items move to the start of the row.",
+			"deactivatedHint": "Switched off by your organisation. Existing conversations stay visible until they are archived.",
+			"deactivatedChip": "{{kind}} (switched off by your organisation)",
+			"deactivatedNotice": "{{kind}} is switched off for your organisation. Existing conversations stay visible until they are archived; new ones cannot be created.",
 			"badgeHiddenHint": "up to {{count}} hidden",
 			"hiddenActiveRow": "Hidden by your display filter",
 			"profileTitle": "Display filters",
@@ -1865,7 +1889,8 @@
 				"timeline": "Timeline",
 				"sessions": "Conversations",
 				"requests": "Requests"
-			}
+			},
+			"liveChatSession": "While open"
 		},
 		"families": {
 			"all": "All",
@@ -3576,6 +3601,7 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
+				"other": "More",
 				"create": "Create",
 				"group": "Filters",
 				"archive": "Archived",
@@ -3584,7 +3610,8 @@
 				"internalGroup": "Internal group chat",
 				"groups": "Conversation circle",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Create chat"
 			},
 			"emptyFilterResult": "No consultations match your search or filters.",
 			"draftMetadataOnly": "Unsent message saved."

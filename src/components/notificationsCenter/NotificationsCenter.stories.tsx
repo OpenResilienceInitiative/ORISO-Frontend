@@ -296,7 +296,7 @@ export const WithDisplayFilter: Story = {
 		const canvas = within(canvasElement);
 		await waitFor(() =>
 			expect(
-				canvas.getByRole('button', { name: 'Anzeige-Filter' })
+				canvas.getByRole('button', { name: 'Ansicht einstellen' })
 			).toBeVisible()
 		);
 		await expect(
@@ -307,7 +307,7 @@ export const WithDisplayFilter: Story = {
 		).not.toBeInTheDocument();
 		await expect(
 			canvas
-				.getByRole('button', { name: 'Anzeige-Filter' })
+				.getByRole('button', { name: 'Ansicht einstellen' })
 				.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
 	}
@@ -321,16 +321,16 @@ export const DisplayFilterDialogOpen: Story = {
 		const canvas = within(canvasElement);
 		const body = within(canvasElement.ownerDocument.body);
 		await userEvent.click(
-			canvas.getByRole('button', { name: 'Anzeige-Filter' })
+			canvas.getByRole('button', { name: 'Ansicht einstellen' })
 		);
 		// MUI fades the surface in; wait for the transition to settle.
 		await waitFor(() => expect(body.getByRole('dialog')).toBeVisible());
 		await expect(
-			body.getByRole('checkbox', { name: 'Anzeigen: Entwürfe' })
+			body.getByRole('checkbox', { name: 'In der Liste: Entwürfe' })
 		).not.toBeChecked();
 		await expect(
-			body.getByRole('checkbox', { name: 'Pille: System' })
-		).not.toBeChecked();
+			body.getByRole('button', { name: 'Pille: System' })
+		).toHaveTextContent('Aus');
 	}
 };
 

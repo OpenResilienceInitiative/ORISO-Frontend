@@ -4,27 +4,83 @@
  * produces a `DisplayFilterValue`, the dialog edits it, the lists read it.
  */
 
+import type { SoundId } from '../../utils/notificationSettings/model';
+
 /** The catch-all kind every section carries. Always shown (spec §3). */
 export const OTHER_KIND_ID = 'other';
 
 export interface KindSetting {
 	/** Rows of this kind appear in the list. Forced true for `other`. */
 	show: boolean;
-	/** A chip renders while the kind has unread items. Requires `show`. */
+	/** The kind has a chip in the row (a menu entry). Requires `show`. */
 	pill: boolean;
+	/**
+	 * Notification tone for items of this kind (Frank 2026-09-16, "Ton"):
+	 * a `SoundId` overrides the area tone, `'none'` mutes the kind, missing
+	 * means the area default. Kept out of {@link resolveKindSetting} — read
+	 * via {@link kindSoundOverride} / {@link isKindMuted}.
+	 */
+	sound?: SoundId;
+	/**
+	 * Live chat only (Frank 2026-09-16): when the pill is in the row.
+	 * `dynamic` (default, not stored) = availability on or an asker wrote
+	 * something new; `session` = also while any live chat is in the list,
+	 * new messages or not; `fixed` = always.
+	 */
+	pillMode?: LiveChatPillMode;
 }
+
+export type LiveChatPillMode = 'dynamic' | 'session' | 'fixed';
+export const LIVE_CHAT_PILL_MODES: ReadonlyArray<LiveChatPillMode> = [
+	'dynamic',
+	'session',
+	'fixed'
+];
+
+/**
+ * How the chip row draws its chips (Figma 1139:45736 / 9947:31377):
+ * `icons` = icon pills, only the active one shows its label; `labels` =
+ * icon + label on every pill; `text` = compact text pills, no icons.
+ */
+export type ChipView = 'icons' | 'labels' | 'text';
+export const CHIP_VIEWS: ReadonlyArray<ChipView> = ['icons', 'labels', 'text'];
+
+export interface ChipPresentation {
+	view: ChipView;
+	/** Kinds with unread items float to the left of the row. */
+	autoSort: boolean;
+}
+
+export const DEFAULT_CHIP_PRESENTATION: ChipPresentation = {
+	view: 'icons',
+	autoSort: true
+};
 
 export interface DisplayFilterValue {
 	/** Per kind id; a missing entry means {@link DEFAULT_KIND_SETTING}. */
 	kinds: Partial<Record<string, KindSetting>>;
 	/** "Hide ⇒ read" (spec §6). Ignored by sections without auto-read. */
 	autoReadHidden: boolean;
+	/** Chip row view; missing means {@link DEFAULT_CHIP_PRESENTATION}. */
+	view?: ChipView;
+	/** Chip row auto-sort; missing means {@link DEFAULT_CHIP_PRESENTATION}. */
+	autoSort?: boolean;
 }
+
+/** Effective chip presentation of one value, defaults filled in. */
+export const resolveChipPresentation = (
+	value: Pick<DisplayFilterValue, 'view' | 'autoSort'>
+): ChipPresentation => ({
+	view: value.view ?? DEFAULT_CHIP_PRESENTATION.view,
+	autoSort: value.autoSort ?? DEFAULT_CHIP_PRESENTATION.autoSort
+});
 
 /** What the dialog needs to render one kind row. Labels arrive translated. */
 export interface DisplayFilterKindOption {
 	id: string;
 	label: string;
+	/** Chip caption when it differs from the dialog row label (Sonstiges row → "Weitere" chip). */
+	chipLabel?: string;
 	icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 	/** Unread items of this kind in the loaded feed (drives the pill badge). */
 	unreadCount?: number;
@@ -39,7 +95,52 @@ export interface DisplayFilterKindOption {
 	 * {@link visiblePillKinds} never yields it.
 	 */
 	showOnly?: boolean;
+	/**
+	 * Träger feature switch (Frank 2026-09-16): `deactivated` kinds stay
+	 * listed with their controls locked and a notice, `absent` kinds are not
+	 * listed at all. Missing means `available`.
+	 */
+	availability?: KindAvailability;
+	/**
+	 * The pill has modes instead of on/off (live chat: follows availability,
+	 * pinned, off) — the dialog renders a picker in the Anzeigen column.
+	 */
+	modes?: boolean;
+	/** The kind has no rows and no tone, only a pill (Archiv chip). */
+	pillOnly?: boolean;
+	/** Announced but not wired yet (Termine): greyed row, controls disabled. */
+	placeholder?: boolean;
 }
+
+/**
+ * What the Träger's feature switch means for one kind of this list:
+ * - `available`: the format is on.
+ * - `deactivated`: the format is off but rows of that kind still exist —
+ *   they stay visible, the chip and the dialog row are shown locked, and a
+ *   snackbar explains. Nothing vanishes silently.
+ * - `absent`: the format is off and nothing of that kind exists → not listed.
+ */
+export type KindAvailability = 'available' | 'deactivated' | 'absent';
+
+export const resolveKindAvailability = ({
+	formatEnabled,
+	rowCount
+}: {
+	formatEnabled: boolean;
+	rowCount: number;
+}): KindAvailability => {
+	if (formatEnabled) {
+		return 'available';
+	}
+	return rowCount > 0 ? 'deactivated' : 'absent';
+};
+
+/** The kinds a dialog/chip row lists: everything but `absent`. */
+export const listedKinds = <
+	T extends Pick<DisplayFilterKindOption, 'availability'>
+>(
+	kinds: ReadonlyArray<T>
+): T[] => kinds.filter((kind) => kind.availability !== 'absent');
 
 export const DEFAULT_KIND_SETTING: KindSetting = { show: true, pill: true };
 
@@ -60,6 +161,30 @@ export const resolveKindSetting = (
 	const show = kindId === OTHER_KIND_ID ? true : raw.show;
 	return { show, pill: show && raw.pill };
 };
+
+/** The kind's tone override, or undefined for the area default. */
+export const kindSoundOverride = (
+	value: DisplayFilterValue,
+	kindId: string
+): SoundId | undefined => value.kinds[kindId]?.sound;
+
+/** True when the user muted this kind's notification sound. */
+export const isKindMuted = (
+	value: DisplayFilterValue,
+	kindId: string
+): boolean => value.kinds[kindId]?.sound === 'none';
+
+/** The live-chat pill mode of a kind; missing reads as `dynamic`. */
+export const kindPillMode = (
+	value: DisplayFilterValue,
+	kindId: string
+): LiveChatPillMode => value.kinds[kindId]?.pillMode ?? 'dynamic';
+
+/** Live-chat pill pinned regardless of availability ("fest"). */
+export const isKindPinned = (
+	value: DisplayFilterValue,
+	kindId: string
+): boolean => kindPillMode(value, kindId) === 'fixed';
 
 /**
  * Kinds accepted by {@link isDisplayFilterCustomised}: plain ids, or the
@@ -89,48 +214,139 @@ export const isDisplayFilterCustomised = (
 		const setting = resolveKindSetting(value, kindId);
 		// A show-only kind has no pill (spec §5.2), so a stale `pill: false`
 		// left behind by hide → show must not count as customised.
-		return partial || !setting.show || (!showOnly && !setting.pill);
+		return (
+			partial ||
+			!setting.show ||
+			(!showOnly && !setting.pill) ||
+			kindSoundOverride(value, kindId) !== undefined ||
+			kindPillMode(value, kindId) !== 'dynamic'
+		);
 	});
 
 /**
- * Immutable update of one kind. The stored pill preference survives hiding:
- * {@link resolveKindSetting} reports `pill: false` while the kind is hidden,
- * and the preference comes back untouched when the kind is shown again.
- * (Until 2026-09 hiding overwrote the pill with `false`, so hide → show
- * silently left the pill switched off and the kind's chip never returned.)
+ * Immutable update of one kind. The stored `pill` is the user's intent and
+ * survives hide → show untouched; {@link resolveKindSetting} masks it while
+ * the kind is hidden. (Before 2026-09-16 hiding overwrote the intent, so a
+ * re-shown kind came back without its pill — Frank's "nothing happens".)
  */
 export const setKindSetting = (
 	value: DisplayFilterValue,
 	kindId: string,
 	patch: Partial<KindSetting>
 ): DisplayFilterValue => {
-	const stored = { ...DEFAULT_KIND_SETTING, ...(value.kinds[kindId] || {}) };
-	const next: KindSetting = { ...stored, ...patch };
+	const current: KindSetting = {
+		...DEFAULT_KIND_SETTING,
+		...(value.kinds[kindId] || {})
+	};
+	const next: KindSetting = { ...current, ...patch };
 	if (kindId === OTHER_KIND_ID) {
 		next.show = true;
+	}
+	if (next.sound === undefined) {
+		delete next.sound;
+	}
+	if (!next.pillMode || next.pillMode === 'dynamic') {
+		delete next.pillMode;
 	}
 	return { ...value, kinds: { ...value.kinds, [kindId]: next } };
 };
 
 /**
- * Which kinds get a chip right now: pill enabled, and either unread items
- * present or the chip is the active one (spec §5.1).
+ * Which kinds get a chip: every shown kind whose pill is on. A chip is a
+ * menu entry (Frank, 2026-09-16, replaces spec §5.1 "chip only while
+ * unread"): unread items are shown as a marker/count badge on the chip, the
+ * chip itself never comes and goes with the count. Show-only kinds gate a
+ * panel, not rows, and never get a chip. `activeKindId` is accepted for
+ * call-site compatibility; the active chip is a shown kind by construction
+ * (see {@link reconcileActiveKind}).
  */
 export const visiblePillKinds = <T extends DisplayFilterKindOption>(
 	value: DisplayFilterValue,
 	kinds: ReadonlyArray<T>,
-	activeKindId: string | null
-): T[] =>
-	kinds.filter((kind) => {
-		if (kind.showOnly) {
-			return false;
-		}
-		const setting = resolveKindSetting(value, kind.id);
-		if (!setting.pill) {
-			return false;
-		}
-		return (kind.unreadCount ?? 0) > 0 || kind.id === activeKindId;
-	});
+	_activeKindId: string | null = null
+): T[] => {
+	const bundled = kindsUnderOther(value, kinds);
+	const bundledUnread = kinds
+		.filter((kind) => bundled.includes(kind.id))
+		.reduce((sum, kind) => sum + (kind.unreadCount ?? 0), 0);
+	return (
+		kinds
+			.filter(
+				(kind) =>
+					!kind.showOnly && resolveKindSetting(value, kind.id).pill
+			)
+			// The bundle chip only when it has something to hold: bundled kinds
+			// or unread unmapped items (Frank 2026-09-16: "alle Arten an → kein
+			// Sonstiges").
+			.filter(
+				(kind) =>
+					kind.id !== OTHER_KIND_ID ||
+					bundled.length > 0 ||
+					(kind.unreadCount ?? 0) > 0
+			)
+			.map((kind) =>
+				kind.id === OTHER_KIND_ID && bundledUnread > 0
+					? {
+							...kind,
+							unreadCount: (kind.unreadCount ?? 0) + bundledUnread
+						}
+					: kind
+			)
+	);
+};
+
+/**
+ * Sonstiges bundles every shown kind whose own pill is off (Frank
+ * 2026-09-16): their unread items count on the Sonstiges chip and the
+ * Sonstiges chip filters to them. Hidden and show-only kinds are not part
+ * of it, nor is Sonstiges itself.
+ */
+export const kindsUnderOther = (
+	value: DisplayFilterValue,
+	kinds: ReadonlyArray<DisplayFilterKindOption>
+): string[] =>
+	kinds
+		.filter((kind) => {
+			// A pill-only kind (Archiv, Erstellen, Ungelesen, Entwürfe) has
+			// no rows of its own: nothing to bundle.
+			if (kind.id === OTHER_KIND_ID || kind.showOnly || kind.pillOnly) {
+				return false;
+			}
+			const setting = resolveKindSetting(value, kind.id);
+			return setting.show && !setting.pill;
+		})
+		.map((kind) => kind.id);
+
+/** True when a row of `rowKind` belongs to the active Sonstiges chip. */
+export const matchesOtherChip = (
+	value: DisplayFilterValue,
+	kinds: ReadonlyArray<DisplayFilterKindOption>,
+	rowKind: string
+): boolean =>
+	rowKind === OTHER_KIND_ID ||
+	kindsUnderOther(value, kinds).includes(rowKind);
+
+export interface ChipOrderOptions {
+	/** Kinds with unread items float to the left; order is stable otherwise. */
+	autoSort: boolean;
+}
+
+/**
+ * Display order of the chips. With auto-sort on, kinds that have unread
+ * items come first (in section order among themselves), then the rest in
+ * section order. Off: the section order as given.
+ */
+export const orderChipKinds = <T extends DisplayFilterKindOption>(
+	kinds: ReadonlyArray<T>,
+	{ autoSort }: ChipOrderOptions
+): T[] => {
+	if (!autoSort) {
+		return [...kinds];
+	}
+	const unread = kinds.filter((kind) => (kind.unreadCount ?? 0) > 0);
+	const rest = kinds.filter((kind) => (kind.unreadCount ?? 0) === 0);
+	return [...unread, ...rest];
+};
 
 /**
  * The active chip must never outlive its pill: when the user hides a kind or

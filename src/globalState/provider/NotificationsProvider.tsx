@@ -39,6 +39,10 @@ import { notificationSettingsStore } from '../../utils/notificationSettings/stor
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
+	isEventMutedByKind,
+	soundOverrideForEvent
+} from '../../utils/displayFilter/soundMask';
+import {
 	DisplayFilter,
 	resolveEffective
 } from '../../utils/displayFilter/model';
@@ -470,16 +474,34 @@ export function NotificationsProvider(props) {
 				continue;
 			const descriptor = getEventDescriptor(event.eventType);
 			const mentioned = event.params?.mentioned === true;
-			try {
-				playNotificationSound(
-					settings,
-					device,
-					descriptor.family,
-					event.eventType,
-					mentioned
-				);
-			} catch {
-				// Device audio support must not prevent feed or banner delivery.
+			// #1377 "Ton": the user muted this kind of session in the list's
+			// display filter → no sound, whatever the area settings say. Before
+			// the account data is synced the store already holds the local
+			// mirror of the last known filters, so a mute is honoured from the
+			// first poll; waiting for `synced` would silence every sound while
+			// account data is unreachable. The banner is unaffected.
+			const displayFilter = displayFilterStore.getState();
+			const mutedByKind = isEventMutedByKind(
+				displayFilter.filters,
+				event.sourceSessionId
+			);
+			if (!mutedByKind) {
+				try {
+					playNotificationSound(
+						settings,
+						device,
+						descriptor.family,
+						event.eventType,
+						mentioned,
+						Date.now(),
+						soundOverrideForEvent(
+							displayFilter.filters,
+							event.sourceSessionId
+						)
+					);
+				} catch {
+					// Device audio support must not prevent feed or banner delivery.
+				}
 			}
 			// OS surfaces contain only the generic localized event title. Never
 			// copy server text or decrypted counselling content to the lock screen.
