@@ -171,6 +171,19 @@ describe('LegalTextReader', () => {
 					chip('Datenschutzerklärung').getAttribute('aria-pressed')
 				).toBe('true')
 			);
+
+			mockedScrollHeight = 401;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+			host.scrollTop = 1;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
 		} finally {
 			scrollHeight.mockRestore();
 			clientHeight.mockRestore();

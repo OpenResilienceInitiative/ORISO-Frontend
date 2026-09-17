@@ -401,7 +401,8 @@ const LegalReaderBody = ({
 			// an earlier heading is still nearest the top measurement line.
 			if (
 				scroller &&
-				scroller.scrollHeight - scroller.clientHeight > 1 &&
+				scroller.scrollHeight - scroller.clientHeight > 0 &&
+				scroller.scrollTop > 0 &&
 				scroller.scrollTop + scroller.clientHeight >=
 					scroller.scrollHeight - 1
 			) {
