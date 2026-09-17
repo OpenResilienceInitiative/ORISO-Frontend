@@ -1,4 +1,3 @@
-import { lazy } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { SessionsListWrapper } from '../sessionsList/SessionsListWrapper';
 import {
@@ -46,16 +45,17 @@ import { BookingEvents } from '../../containers/bookings/components/BookingEvent
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 
-const GroupEntryRoom = lazy(() =>
+const GroupEntryRoom = lazyWithReload(() =>
 	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
 		default: m.GroupEntryRoom
 	}))
 );
-const SessionView = lazy(() =>
+const SessionView = lazyWithReload(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
 );
-const WriteEnquiry = lazy(() =>
+const WriteEnquiry = lazyWithReload(() =>
 	import('../enquiry/WriteEnquiry').then((m) => ({ default: m.WriteEnquiry }))
 );
 
