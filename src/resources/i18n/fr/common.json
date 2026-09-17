@@ -4782,6 +4782,7 @@
 	"dpaSign": {
 		"title": "Signer le contrat de sous-traitance",
 		"subtitle": "Veuillez lire le contrat dans son intégralité, puis confirmez les informations concernant la personne signataire.",
+		"signerName": "Nom complet",
 		"loadingContract": "Chargement du contrat...",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
 		"signingFor": "Vous signez au nom de :",
