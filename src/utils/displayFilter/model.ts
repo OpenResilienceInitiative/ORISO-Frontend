@@ -67,7 +67,9 @@ const parseKindSetting = (raw: unknown): KindSetting | null => {
 		typeof raw.show === 'boolean' ? raw.show : DEFAULT_KIND_SETTING.show;
 	const pill =
 		typeof raw.pill === 'boolean' ? raw.pill : DEFAULT_KIND_SETTING.pill;
-	return { show, pill: show && pill };
+	// The pill PREFERENCE is stored as-is even while the kind is hidden;
+	// `resolveKindSetting` is where "hidden ⇒ no pill" is applied on read.
+	return { show, pill };
 };
 
 /**
