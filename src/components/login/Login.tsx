@@ -347,6 +347,16 @@ export const Login = () => {
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
 		const handleAutoLoginFailure = (error: unknown) => {
+			// autoLogin itself refuses a consultant token while the consultant
+			// block is on: that has its own message and is not a login failure.
+			if (
+				(error as Error | null)?.message ===
+				CONSULTANT_LOGIN_BLOCKED_ERROR
+			) {
+				showConsultantLoginBlockedError();
+				return;
+			}
+
 			const resolution = resolveLoginError(
 				error as Parameters<typeof resolveLoginError>[0],
 				Boolean(otp)
