@@ -1806,9 +1806,17 @@ export const SessionsList = ({
 				? reconcileActiveRequestKind(listDisplayFilter, activeKind)
 				: reconcileActiveKind(listDisplayFilter, activeKind);
 		if (reconciled === null) {
-			setSessionToolbarChip(null);
+			// Through the toggle so `?chip=…` clears with the state; otherwise a
+			// reload or the URL-sync effect restores the hidden tab.
+			handleToolbarChipToggle(sessionToolbarChip);
 		}
-	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip, type]);
+	}, [
+		displayFilterKinds,
+		handleToolbarChipToggle,
+		listDisplayFilter,
+		sessionToolbarChip,
+		type
+	]);
 	// Gespräche kind chips are user-gated pills (§5.1): pill on and unread
 	// rows, or active. Anfragen chips are tabs (§5.3): hidden only when the
 	// kind is hidden, so the default "Mail" tab can always be reached.
