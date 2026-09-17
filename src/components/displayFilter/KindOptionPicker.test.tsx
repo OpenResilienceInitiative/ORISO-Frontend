@@ -30,9 +30,7 @@ describe('KindOptionPicker (#1377 small split button with menu)', () => {
 		expect(main.textContent).toContain('Ton 3');
 		fireEvent.click(main);
 		expect(onMain).toHaveBeenCalled();
-		fireEvent.click(
-			screen.getByRole('button', { name: 'Ton wählen: Mail' })
-		);
+		fireEvent.click(screen.getByRole('button', { name: 'Ton wählen: Mail' }));
 		fireEvent.click(screen.getByRole('menuitem', { name: 'Kein Ton' }));
 		expect(onSelect).toHaveBeenCalledWith('none');
 	});
