@@ -200,3 +200,10 @@ picker, `docs/architecture/adr-020-traeger-format-cascade.md`. Unit 515/515, Sto
 
 Not in this round: Anfragen dialog keeps its three rows (Ungelesen/Entwürfe rows only in Gespräche); the rail
 button only shows when the consultant enabled it in the profile ("über die Menüleiste steuern").
+
+### Delivery (2026-09-17)
+
+- Draft PR #1457 against `dev` (Frank marked it ready himself), tracking issue #1458 (Feature, Urgent, v2.0.4, In review), Slack #oriso-asap.
+- #1427 was merged into `dev` overnight; `dev` merged back into this branch (25dedcdb). Its Anfragen "chips are tabs" rule is superseded by the uniform pill-intent model (chip = menu entry in every list); the helpers stay in `sessions.ts`.
+- CodeRabbit round 1 (10 findings) addressed in 1bda8883: cell order, muted preview disabled + Standard previews `chime`, optional chip icon, route-active row survives the Weitere chip, kind options computed before the toolbar filter (ref removed), no sound before the store is synced, Sonstiges keeps sound/pillMode on parse, registry reset on logout, "Ihren Standards", fr/ru/ti/tr descriptions. Unit 520/520, Storybook 78/78.
+- pre-dev still runs bfb2720c (before review fixes and merge).
