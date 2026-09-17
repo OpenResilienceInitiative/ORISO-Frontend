@@ -84,8 +84,12 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		min-height: 48px;
-		padding: 4px 0;
+		/* 40px, not 48: on a ~700px-high window the M3 sheet is capped at
+		   100vh - 128px and the body scrolls; with three kinds and the profile
+		   link the "other" row and the link fell below the fold and looked
+		   like an empty row (2026-09). Checkboxes keep their 40px target. */
+		min-height: 40px;
+		padding: 2px 0;
 		font-size: 14px;
 		font-weight: 400;
 		line-height: 20px;
@@ -157,7 +161,7 @@
 	}
 
 	&__profileLink {
-		margin-top: 16px;
+		margin-top: 12px;
 		padding: 0;
 		border: 0;
 		background: transparent;

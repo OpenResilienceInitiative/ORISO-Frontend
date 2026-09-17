@@ -29,7 +29,8 @@ describe('parseDisplayFilter', () => {
 			autoReadHidden: 'yes',
 			somethingNew: 1
 		});
-		expect(parsed.kinds.calls).toEqual({ show: false, pill: false });
+		// The pill preference is kept while hidden; resolveKindSetting masks it.
+		expect(parsed.kinds.calls).toEqual({ show: false, pill: true });
 		expect(parsed.kinds.futureKind).toEqual({ show: true, pill: false });
 		expect(parsed.kinds.junk).toBeUndefined();
 		expect(parsed.autoReadHidden).toBe(false);
@@ -70,9 +71,11 @@ describe('parseDisplayFilters', () => {
 				bogus: { kinds: {} }
 			}
 		});
+		// A missing pill defaults to true and is stored as such even while
+		// hidden; `resolveKindSetting` masks it on read.
 		expect(parsed?.global.timeline.kinds.drafts).toEqual({
 			show: false,
-			pill: false
+			pill: true
 		});
 		expect(parsed?.global.sessions).toEqual(DEFAULT_DISPLAY_FILTER);
 		expect(parsed?.global.requests).toEqual(DEFAULT_DISPLAY_FILTER);
