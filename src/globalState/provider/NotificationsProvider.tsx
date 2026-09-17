@@ -475,17 +475,16 @@ export function NotificationsProvider(props) {
 			const descriptor = getEventDescriptor(event.eventType);
 			const mentioned = event.params?.mentioned === true;
 			// #1377 "Ton": the user muted this kind of session in the list's
-			// display filter → no sound, whatever the area settings say. Until
-			// the account data is synced the store holds defaults or the mirror,
-			// which may not know a mute yet: stay silent rather than ring
-			// against a filter the user did not set. The banner is unaffected.
+			// display filter → no sound, whatever the area settings say. Before
+			// the account data is synced the store already holds the local
+			// mirror of the last known filters, so a mute is honoured from the
+			// first poll; waiting for `synced` would silence every sound while
+			// account data is unreachable. The banner is unaffected.
 			const displayFilter = displayFilterStore.getState();
-			const mutedByKind =
-				!displayFilter.synced ||
-				isEventMutedByKind(
-					displayFilter.filters,
-					event.sourceSessionId
-				);
+			const mutedByKind = isEventMutedByKind(
+				displayFilter.filters,
+				event.sourceSessionId
+			);
 			if (!mutedByKind) {
 				try {
 					playNotificationSound(
