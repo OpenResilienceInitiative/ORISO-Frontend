@@ -138,6 +138,10 @@ export const Login = () => {
 		useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
+	// Identity of the latest sign-in attempt: a late answer of an earlier
+	// attempt (fields stay editable, the resend-mail path retries) must not
+	// write its message or field marks over newer input.
+	const loginAttemptRef = useRef(0);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
 	const [isSecurityExplainerOpen, setIsSecurityExplainerOpen] =
@@ -346,7 +350,13 @@ export const Login = () => {
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
+		loginAttemptRef.current += 1;
+		const attempt = loginAttemptRef.current;
+		const isLatestAttempt = () => attempt === loginAttemptRef.current;
 		const handleAutoLoginFailure = (error: unknown) => {
+			if (!isLatestAttempt()) {
+				return;
+			}
 			// autoLogin itself refuses a consultant token while the consultant
 			// block is on: that has its own message and is not a login failure.
 			if (
@@ -408,8 +418,9 @@ export const Login = () => {
 						// leave the form silent. Not a login failure, so it is
 						// not counted.
 						if (
+							isLatestAttempt() &&
 							(error as Error | null)?.message !==
-							CONSULTANT_LOGIN_BLOCKED_ERROR
+								CONSULTANT_LOGIN_BLOCKED_ERROR
 						) {
 							setShowLoginError(
 								translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
@@ -419,7 +430,9 @@ export const Login = () => {
 				handleAutoLoginFailure
 			)
 			.finally(() => {
-				setIsRequestInProgress(false);
+				if (isLatestAttempt()) {
+					setIsRequestInProgress(false);
+				}
 			});
 	};
 
