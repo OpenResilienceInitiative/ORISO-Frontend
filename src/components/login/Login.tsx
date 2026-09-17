@@ -41,7 +41,12 @@ import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
-import { resolveLoginError } from './loginErrorResolution';
+import {
+	describeLoginTransport,
+	LOGIN_ERROR_KEYS,
+	resolveLoginError
+} from './loginErrorResolution';
+import { recordLoginFailure } from '../../utils/observability/loginFailureTracker';
 import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -133,6 +138,10 @@ export const Login = () => {
 		useState<string>('');
 	const [isRequestInProgress, setIsRequestInProgress] =
 		useState<boolean>(false);
+	// Identity of the latest sign-in attempt: a late answer of an earlier
+	// attempt (fields stay editable, the resend-mail path retries) must not
+	// write its message or field marks over newer input.
+	const loginAttemptRef = useRef(0);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
 	const [isSecurityExplainerOpen, setIsSecurityExplainerOpen] =
@@ -341,25 +350,89 @@ export const Login = () => {
 
 	const tryLogin = (otp?: string) => {
 		setIsRequestInProgress(true);
+		loginAttemptRef.current += 1;
+		const attempt = loginAttemptRef.current;
+		const isLatestAttempt = () => attempt === loginAttemptRef.current;
+		const handleAutoLoginFailure = (error: unknown) => {
+			if (!isLatestAttempt()) {
+				return;
+			}
+			// autoLogin itself refuses a consultant token while the consultant
+			// block is on: that has its own message and is not a login failure.
+			if (
+				(error as Error | null)?.message ===
+				CONSULTANT_LOGIN_BLOCKED_ERROR
+			) {
+				showConsultantLoginBlockedError();
+				return;
+			}
+
+			const resolution = resolveLoginError(
+				error as Parameters<typeof resolveLoginError>[0],
+				Boolean(otp)
+			);
+
+			// Only terminal failures count; the OTP challenge is the normal
+			// second step of a login whose password was accepted.
+			if (resolution.kind === 'message') {
+				recordLoginFailure({
+					outcome: resolution.outcome,
+					transport: describeLoginTransport(
+						error as Parameters<typeof describeLoginTransport>[0]
+					),
+					// The resend-mail path retries without a code while the OTP
+					// step is active; the stage is the step, not the payload.
+					stage: isOtpRequired || otp ? 'otp' : 'password'
+				});
+				setShowLoginError(translate(resolution.messageKey));
+				// Only a credential problem marks the fields; an outage is
+				// not the user's input being wrong, and must not leave a
+				// stale mark from an earlier attempt behind.
+				setLabelState(
+					resolution.outcome === 'unavailable'
+						? null
+						: VALIDITY_INVALID
+				);
+			} else if (resolution.kind === 'otpRequired') {
+				setTwoFactorType(resolution.otpType);
+				setIsOtpRequired(true);
+			}
+		};
+
 		autoLogin({
 			username: username,
 			password: password,
 			tenantData: tenant,
 			...(otp ? { otp } : {})
 		})
-			.then(postLogin)
-			.catch((error) => {
-				const resolution = resolveLoginError(error, Boolean(otp));
-
-				if (resolution.kind === 'message') {
-					setShowLoginError(translate(resolution.messageKey));
-					setLabelState(VALIDITY_INVALID);
-				} else if (resolution.kind === 'otpRequired') {
-					setTwoFactorType(resolution.otpType);
-					setIsOtpRequired(true);
+			// Two rejection paths on purpose: only `autoLogin` failures are
+			// login failures. `postLogin` reports its own problems (e.g. the
+			// consultant-blocked message) before it throws, and those must
+			// neither be overwritten nor counted.
+			.then(
+				() =>
+					postLogin().catch((error: unknown) => {
+						// The consultant block shows its own message before it
+						// throws; anything else (e.g. the user-data reload
+						// failing after a successful token) would otherwise
+						// leave the form silent. Not a login failure, so it is
+						// not counted.
+						if (
+							isLatestAttempt() &&
+							(error as Error | null)?.message !==
+								CONSULTANT_LOGIN_BLOCKED_ERROR
+						) {
+							setShowLoginError(
+								translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
+							);
+						}
+					}),
+				handleAutoLoginFailure
+			)
+			.finally(() => {
+				if (isLatestAttempt()) {
+					setIsRequestInProgress(false);
 				}
-
-				setIsRequestInProgress(false);
 			});
 	};
 

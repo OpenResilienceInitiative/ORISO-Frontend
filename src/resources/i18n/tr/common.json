@@ -1558,6 +1558,7 @@
 					}
 				},
 				"accountDeleted": "Bu hesap silindi ve artık kullanılamıyor. Danışmanlık hizmetini kullanmaya devam etmek isterseniz, istediğiniz zaman yeniden kayıt olabilirsiniz.",
+				"unavailable": "Şu anda giriş yapılamıyor. Lütfen birkaç dakika sonra tekrar deneyin.",
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
