@@ -9,7 +9,7 @@ import { config, routePathNames } from './resources/scripts/config';
 import { ThemeProvider } from '@mui/material';
 import { UrlParamsProvider } from './globalState/provider/UrlParamsProvider';
 import { RegistrationProvider } from './globalState';
-import { lazy, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
 import { createAppTheme } from './resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
@@ -21,6 +21,7 @@ import { Imprint } from './components/legalInformationLinks/Imprint';
 import { initMeterProvider } from './utils/observability/meterProvider';
 import { initWebVitals } from './utils/observability/webVitals';
 import { initUtdTracking } from './utils/observability/utdTracker';
+import { lazyWithReload } from './utils/chunkLoadRecovery';
 
 // OBS-P8 (ORISO-Helm#62): browser-side Real User Monitoring. Register the
 // MeterProvider before anything else gets a chance to call
@@ -34,13 +35,13 @@ initWebVitals();
 // failure tracking for encrypted counselling conversations.
 initUtdTracking();
 
-const ThemeDemo = lazy(() =>
+const ThemeDemo = lazyWithReload(() =>
 	import('./components/themeDemo/ThemeDemo').then((m) => ({
 		default: m.ThemeDemo
 	}))
 );
 
-const Registration = lazy(() =>
+const Registration = lazyWithReload(() =>
 	import('./components/registration/Registration').then((m) => ({
 		default: m.Registration
 	}))

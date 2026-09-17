@@ -11,6 +11,10 @@ import {
 } from './displayFilterTypes';
 import { STORY_LABELS } from './displayFilterStoryData';
 
+vi.mock('../../utils/notificationSettings/soundPlayback', () => ({
+	previewNotificationSound: vi.fn(),
+	soundAssetFor: () => null
+}));
 vi.mock('@mui/icons-material/Tune', () => ({
 	default: () => <svg data-testid="tune-icon" />
 }));
@@ -43,6 +47,7 @@ const Harness = ({
 			open
 			onClose={() => undefined}
 			onReset={rest.onReset ?? (() => undefined)}
+			onOpenProfile={() => undefined}
 			kinds={KINDS}
 			value={value}
 			canReset={rest.canReset ?? true}
@@ -64,12 +69,13 @@ describe('DisplayFilterDialog (#1377)', () => {
 		const onValue = vi.fn();
 		render(<Harness onValue={onValue} />);
 		const showDrafts = screen.getByRole('checkbox', {
-			name: 'Anzeigen: Entwürfe'
+			name: 'In der Liste: Entwürfe'
 		}) as HTMLInputElement;
-		const pillDrafts = screen.getByRole('checkbox', {
+		const pillDrafts = screen.getByRole('button', {
 			name: 'Pille: Entwürfe'
-		}) as HTMLInputElement;
+		}) as HTMLButtonElement;
 		expect(pillDrafts.disabled).toBe(false);
+		expect(pillDrafts.textContent).toContain('An');
 		fireEvent.click(showDrafts);
 		const last = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
 		expect(resolveKindSetting(last, 'drafts')).toEqual({
@@ -77,14 +83,14 @@ describe('DisplayFilterDialog (#1377)', () => {
 			pill: false
 		});
 		expect(pillDrafts.disabled).toBe(true);
-		expect(pillDrafts.checked).toBe(false);
+		expect(pillDrafts.textContent).toContain('Aus');
 	});
 
 	it('keeps "Sonstiges" fixed on and toggles auto-read', () => {
 		const onValue = vi.fn();
 		render(<Harness onValue={onValue} />);
 		const showOther = screen.getByRole('checkbox', {
-			name: 'Anzeigen: Sonstiges'
+			name: 'In der Liste: Sonstiges'
 		}) as HTMLInputElement;
 		expect(showOther.disabled).toBe(true);
 		expect(showOther.checked).toBe(true);
@@ -95,7 +101,9 @@ describe('DisplayFilterDialog (#1377)', () => {
 		expect(document.getElementById(hintId as string)?.textContent).toBe(
 			STORY_LABELS.otherFixed
 		);
-		const autoRead = screen.getByRole('switch');
+		const autoRead = screen.getByRole('switch', {
+			name: STORY_LABELS.autoRead
+		});
 		// The scope/privacy qualification is programmatically attached.
 		const descId = autoRead.getAttribute('aria-describedby');
 		expect(descId).not.toBeNull();
@@ -123,7 +131,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			/>
 		);
 		const showSystem = screen.getByRole('checkbox', {
-			name: 'Anzeigen: System'
+			name: 'In der Liste: System'
 		}) as HTMLInputElement;
 		expect(showSystem.getAttribute('aria-checked')).toBe('mixed');
 		expect(showSystem.indeterminate).toBe(true);
@@ -146,7 +154,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			/>
 		);
 		expect(
-			screen.getByRole('checkbox', { name: 'Anzeigen: Zukunft' })
+			screen.getByRole('checkbox', { name: 'In der Liste: Zukunft' })
 		).not.toBeNull();
 		expect(
 			screen.queryByRole('checkbox', { name: 'Pille: Zukunft' })
@@ -157,15 +165,39 @@ describe('DisplayFilterDialog (#1377)', () => {
 
 	it('omits auto-read for sections without it', () => {
 		render(<Harness onValue={() => undefined} showAutoRead={false} />);
-		expect(screen.queryByRole('switch')).toBeNull();
+		expect(
+			screen.queryByRole('switch', { name: STORY_LABELS.autoRead })
+		).toBeNull();
 	});
 
-	it('disables reset while nothing is customised', () => {
-		render(<Harness onValue={() => undefined} canReset={false} />);
-		const reset = screen.getByTestId(
-			'display-filter-reset'
-		) as HTMLButtonElement;
-		expect(reset.disabled).toBe(true);
+	it('shows one footer line: the standards link, plus the reset only while this list deviates', () => {
+		const onReset = vi.fn();
+		const { rerender } = render(
+			<Harness
+				onValue={() => undefined}
+				canReset={false}
+				onReset={onReset}
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Standards bearbeiten' })
+		).toBeTruthy();
+		expect(screen.queryByTestId('display-filter-reset')).toBeNull();
+		expect(
+			screen.queryByText('Diese Liste weicht von Ihren Standards ab.')
+		).toBeNull();
+		// Only "Fertig" remains as a dialog action.
+		expect(
+			screen.queryByRole('button', { name: /zurücksetzen/i })
+		).toBeNull();
+		rerender(
+			<Harness onValue={() => undefined} canReset onReset={onReset} />
+		);
+		expect(
+			screen.getByText('Diese Liste weicht von Ihren Standards ab.')
+		).toBeTruthy();
+		fireEvent.click(screen.getByTestId('display-filter-reset'));
+		expect(onReset).toHaveBeenCalled();
 	});
 
 	it('inerts everything in read-only mode', () => {
@@ -183,5 +215,225 @@ describe('DisplayFilterDialog (#1377)', () => {
 			'display-filter-reset'
 		) as HTMLButtonElement;
 		expect(reset.disabled).toBe(true);
+	});
+});
+
+describe('DisplayFilterDialog chip presentation + Träger switch (Frank 2026-09-16)', () => {
+	afterEach(cleanup);
+
+	it('lets the user pick the chip view and auto-sort, stored on the section value', () => {
+		const onValue = vi.fn();
+		render(<Harness onValue={onValue} />);
+		const textView = screen.getByRole('radio', { name: 'Text' });
+		const iconsView = screen.getByRole('radio', { name: 'Icons' });
+		expect((iconsView as HTMLInputElement).checked).toBe(true);
+		fireEvent.click(textView);
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).view
+		).toBe('text');
+		const autoSort = screen.getByRole('switch', {
+			name: 'Ungelesenes nach links sortieren'
+		});
+		expect((autoSort as HTMLInputElement).checked).toBe(true);
+		fireEvent.click(autoSort);
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).autoSort
+		).toBe(false);
+	});
+
+	it('locks a deactivated kind (format off, rows exist) and explains why', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[
+					{ id: 'oneToOne', label: 'Mail', unreadCount: 0 },
+					{
+						id: 'circle',
+						label: 'Gesprächskreis',
+						unreadCount: 2,
+						availability: 'deactivated'
+					}
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				onChange={() => undefined}
+			/>
+		);
+		const show = screen.getByRole('checkbox', {
+			name: 'In der Liste: Gesprächskreis'
+		}) as HTMLInputElement;
+		const pill = screen.getByRole('button', {
+			name: 'Pille: Gesprächskreis'
+		}) as HTMLButtonElement;
+		expect(show.disabled).toBe(true);
+		expect(show.checked).toBe(true);
+		expect(pill.disabled).toBe(true);
+		const hint = screen.getByText(
+			'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.'
+		);
+		expect(show.getAttribute('aria-describedby')).toBe(hint.id);
+		// The available kind next to it is untouched.
+		expect(
+			(
+				screen.getByRole('checkbox', {
+					name: 'In der Liste: Mail'
+				}) as HTMLInputElement
+			).disabled
+		).toBe(false);
+	});
+});
+
+describe('DisplayFilterDialog Ton column (Frank 2026-09-16)', () => {
+	afterEach(cleanup);
+
+	it('shows a Ton column instead of In der Liste when configured, and stores the mute', () => {
+		const onValue = vi.fn();
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[{ id: 'oneToOne', label: 'Mail', unreadCount: 0 }]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={{ show: false, sound: true }}
+				onChange={onValue}
+			/>
+		);
+		expect(
+			screen.queryByRole('checkbox', { name: 'In der Liste: Mail' })
+		).toBeNull();
+		// tone picker: main = preview, arrow = menu with default / ring / tones / muted
+		expect(
+			screen.getByRole('button', { name: 'Ton anhören: Mail' })
+				.textContent
+		).toContain('Standard');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Ton wählen: Mail' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Ton 3' }));
+		let next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.oneToOne?.sound).toBe('ton-3');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Ton wählen: Mail' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Stumm' }));
+		next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.oneToOne?.sound).toBe('none');
+		expect(screen.getByRole('columnheader', { name: 'Ton' })).toBeTruthy();
+	});
+
+	it('turns a show-only kind into a plain switch in the sound-column mode', () => {
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[
+					{ id: 'oneToOne', label: 'Mail', unreadCount: 0 },
+					{
+						id: 'futureTimeline',
+						label: 'Zukünftige Termine',
+						unreadCount: 0,
+						showOnly: true
+					}
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={{ show: false, sound: true }}
+				onChange={() => undefined}
+			/>
+		);
+		expect(
+			screen.queryByRole('checkbox', { name: /Zukünftige Termine/ })
+		).toBeNull();
+		const panel = screen.getByRole('switch', {
+			name: 'In der Liste: Zukünftige Termine'
+		}) as HTMLInputElement;
+		expect(panel.checked).toBe(true);
+		expect(
+			screen.getByRole('button', { name: 'Ton anhören: Mail' })
+		).toBeTruthy();
+	});
+
+	it('keeps the In der Liste column by default (Zeitstrahl)', () => {
+		render(<Harness onValue={() => undefined} />);
+		expect(
+			screen.getByRole('checkbox', { name: 'In der Liste: Nachrichten' })
+		).toBeTruthy();
+		expect(screen.queryByRole('checkbox', { name: /^Ton:/ })).toBeNull();
+	});
+
+	it('offers dynamic / pinned / off for the live-chat pill, a pill-only Archiv row and a greyed Termine placeholder', () => {
+		const onValue = vi.fn();
+		render(
+			<DisplayFilterDialog
+				open
+				onClose={() => undefined}
+				onReset={() => undefined}
+				kinds={[
+					{
+						id: 'liveChat',
+						label: 'Live-Chat',
+						unreadCount: 0,
+						modes: true
+					},
+					{
+						id: 'archive',
+						label: 'Archiviert',
+						unreadCount: 0,
+						pillOnly: true
+					},
+					{
+						id: 'appointments',
+						label: 'Termine',
+						unreadCount: 0,
+						placeholder: true
+					}
+				]}
+				value={EMPTY_DISPLAY_FILTER}
+				labels={STORY_LABELS}
+				columns={{ show: false, sound: true }}
+				onChange={onValue}
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Pille: Live-Chat' }).textContent
+		).toContain('Dynamisch');
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anzeige wählen: Live-Chat' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Fest' }));
+		const next = onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue;
+		expect(next.kinds.liveChat).toEqual({
+			show: true,
+			pill: true,
+			pillMode: 'fixed'
+		});
+		// the third mode: chip while any live chat is open (Frank 2026-09-16)
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anzeige wählen: Live-Chat' })
+		);
+		fireEvent.click(screen.getByRole('menuitem', { name: 'Bei Sitzung' }));
+		expect(
+			(onValue.mock.calls.at(-1)?.[0] as DisplayFilterValue).kinds
+				.liveChat
+		).toEqual({ show: true, pill: true, pillMode: 'session' });
+		expect(
+			screen.getByRole('button', { name: 'Pille: Archiviert' })
+		).toBeTruthy();
+		expect(
+			screen.queryByRole('button', { name: 'Ton anhören: Archiviert' })
+		).toBeNull();
+		expect(
+			(
+				screen.getByRole('button', {
+					name: 'Pille: Termine'
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+		expect(screen.getByText('Kommt bald.')).toBeTruthy();
 	});
 });

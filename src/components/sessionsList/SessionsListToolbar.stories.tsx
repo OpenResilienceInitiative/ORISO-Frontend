@@ -343,7 +343,7 @@ export const WithDisplayFilter: Story = {
 	render: () => <ToolbarWithDisplayFilter />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const button = canvas.getByRole('button', { name: 'Anzeige-Filter' });
+		const button = canvas.getByRole('button', { name: 'Ansicht einstellen' });
 		await expect(
 			button.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
@@ -662,3 +662,77 @@ export const SupervisionChipMobile390: Story = {
 		);
 	}
 };
+
+/** Frank 2026-09-16: compact text pills, auto-sort puts Mail (2) first. */
+export const TextViewAutoSorted: Story = {
+	render: () => <ToolbarChipMenuPreset view="text" />
+};
+
+/**
+ * The Träger switched Gesprächskreise off while one still exists: the
+ * groups chip stays as a locked pill; its click reports to the list.
+ */
+export const TraegerDeactivatedCircle: Story = {
+	render: () => <ToolbarChipMenuPreset deactivatedGroups />
+};
+
+function ToolbarChipMenuPreset({
+	view = 'icons',
+	deactivatedGroups = false
+}: {
+	view?: 'icons' | 'text';
+	deactivatedGroups?: boolean;
+}) {
+	const { t } = useTranslation();
+	const [search, setSearch] = useState('');
+	const [activeChip, setActiveChip] =
+		useState<SessionToolbarChipFilter | null>(null);
+	const [notice, setNotice] = useState<string | null>(null);
+	return (
+		<div style={shell}>
+			<SessionsListToolbar
+				translate={t}
+				searchValue={search}
+				onSearchChange={setSearch}
+				activeChip={activeChip}
+				onChipToggle={(chip) =>
+					setActiveChip((p) => (p === chip ? null : chip))
+				}
+				showConsultantActions
+				showCreateGroupChatAction
+				showSupervisionChip
+				showGroupChip={!deactivatedGroups}
+				showInternalGroupChip
+				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+				archiveTabActive={false}
+				createGroupChatActive={false}
+				chipCounts={{ unread: 3, drafts: 1, nearby: 2, groups: 1 }}
+				chipView={view}
+				chipAutoSort
+				deactivatedKindChips={deactivatedGroups ? { groups: true } : {}}
+				deactivatedChipLabel={(name) =>
+					`${name} (vom Träger abgeschaltet)`
+				}
+				onDeactivatedChipClick={() =>
+					setNotice(
+						'Gesprächskreis ist für Ihren Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind; neue können nicht angelegt werden.'
+					)
+				}
+				displayFilter={{
+					label: 'Ansicht einstellen',
+					customisedLabel: 'Filter angepasst',
+					customised: false,
+					open: false,
+					controlsId: 'sessions-display-filter-dialog',
+					onOpen: () => undefined
+				}}
+			/>
+			{notice && (
+				<p role="status" style={{ margin: '12px 16px', fontSize: 14 }}>
+					{notice}
+				</p>
+			)}
+		</div>
+	);
+}
