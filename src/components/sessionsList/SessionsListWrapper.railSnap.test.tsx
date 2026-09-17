@@ -31,9 +31,10 @@ vi.mock('./ResizableHandle', () => ({
 vi.mock('../../hooks/useResponsive', () => ({
 	useResponsive: () => ({ fromL: true })
 }));
+let viewportWidth = 1280;
 vi.mock('../chatStage/useViewportWidth', () => ({
 	// 1280 − 420 − 36 < 2 × 520: with a pane open the list must go to the rail.
-	useViewportWidth: () => 1280
+	useViewportWidth: () => viewportWidth
 }));
 vi.mock('./sessionsList.styles', () => ({}));
 // The session helpers transitively pull in lottie-web, which needs a canvas
@@ -120,6 +121,7 @@ const renderWithPanel = (
 
 afterEach(() => {
 	cleanup();
+	viewportWidth = 1280;
 	localStorage.clear();
 });
 
@@ -186,6 +188,19 @@ describe('SessionsListWrapper rail snap (review B2 D-4)', () => {
 		act(() => resizeList?.(420));
 		const wrapper = rerender('supervision');
 		expect(wrapper.style.width).toBe(`${STAGE_LAYOUT.RAIL_WIDTH}px`);
+	});
+
+	it('clamps a widened list on shrink and restores its saved width on growth', () => {
+		const { rerender } = renderWithPanel(
+			'?channel=supervision',
+			'supervision'
+		);
+		act(() => resizeList?.(500));
+		viewportWidth = 1024;
+		expect(rerender('supervision').style.width).toBe('263px');
+		expect(localStorage.getItem('sessionsList_width')).toBe('500');
+		viewportWidth = 1280;
+		expect(rerender('supervision').style.width).toBe('500px');
 	});
 
 	it('re-arms the snap once the pane is closed again', () => {

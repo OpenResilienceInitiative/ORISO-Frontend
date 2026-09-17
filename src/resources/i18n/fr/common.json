@@ -575,6 +575,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Ouvrir la discussion d’équipe" },
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
 			"known": "Accepter la demande"

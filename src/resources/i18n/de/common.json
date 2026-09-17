@@ -570,6 +570,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Teambesprechung öffnen" },
 		"acceptButton": {
 			"anonymous": "Chat starten",
 			"known": "Anfrage annehmen"

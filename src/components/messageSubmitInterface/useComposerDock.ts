@@ -70,11 +70,21 @@ export const useComposerDock = (
 				previous === shared ? previous : shared
 			);
 		};
-		const observer = new ResizeObserver(() => measure());
+		// CSS variables and React state resize the observed composer itself.
+		// Apply those writes in the next frame, outside observer delivery.
+		let frame = 0;
+		const observer = new ResizeObserver(() => {
+			if (frame) return;
+			frame = window.requestAnimationFrame(() => {
+				frame = 0;
+				measure();
+			});
+		});
 		measure();
 		observer.observe(wrapper);
 		observer.observe(host);
 		return () => {
+			window.cancelAnimationFrame(frame);
 			observer.disconnect();
 			host.style.removeProperty('--composer-dock-height');
 			host.style.removeProperty('--composer-host-height');
