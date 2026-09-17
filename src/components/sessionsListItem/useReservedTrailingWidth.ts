@@ -20,17 +20,22 @@ export const useReservedTrailingWidth = (enabled: boolean) => {
 		if (!enabled || !body || !trailing) {
 			return undefined;
 		}
-		const reserve = () => {
-			body.style.setProperty(
-				'--card-trailing-width',
-				`${trailing.getBoundingClientRect().width}px`
-			);
+		const reserve = (width: number) => {
+			body.style.setProperty('--card-trailing-width', `${width}px`);
 		};
-		reserve();
+		// Layout widths only. The list scales every row in on arrival
+		// (0.98 → 1); a painted width read during that entrance is ~2 %
+		// short, and nothing re-measures when the scale ends, so the text
+		// crept up to the marks. `offsetWidth` ignores transforms; the
+		// observer then refines it to the fractional border-box size.
+		reserve(trailing.offsetWidth);
 		if (typeof ResizeObserver === 'undefined') {
 			return undefined;
 		}
-		const observer = new ResizeObserver(reserve);
+		const observer = new ResizeObserver(([entry]) => {
+			const size = entry?.borderBoxSize?.[0];
+			reserve(size ? size.inlineSize : trailing.offsetWidth);
+		});
 		observer.observe(trailing);
 		return () => observer.disconnect();
 	}, [enabled]);

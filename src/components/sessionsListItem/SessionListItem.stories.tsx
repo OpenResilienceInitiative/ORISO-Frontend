@@ -1722,6 +1722,20 @@ const mergeLineRects = (rects: DOMRect[]) =>
 		return merged;
 	}, []);
 
+/**
+ * Every row fades and scales in (`appearSessionListItem`, 0.98 → 1 after a
+ * short stagger). A measurement taken mid-animation reads a scaled box — CI
+ * measured the 142 px card at 139 px. Geometry is asserted on the settled
+ * card, so the entrance is finished first.
+ */
+const settleCardEntrance = (canvasElement: HTMLElement) => {
+	canvasElement
+		.querySelectorAll<HTMLElement>('.sessionsListItem')
+		.forEach((row) =>
+			row.getAnimations().forEach((animation) => animation.finish())
+		);
+};
+
 const expectCardLayout = async (
 	canvasElement: HTMLElement,
 	{
@@ -1746,6 +1760,7 @@ const expectCardLayout = async (
 		}
 		return found;
 	});
+	settleCardEntrance(canvasElement);
 
 	for (const [index, section] of sections.entries()) {
 		const preview = cardPreviews[index];
@@ -1952,6 +1967,7 @@ export const AskerSearchingRow: Story = {
 			return element!;
 		});
 		// It stands in the 48 px avatar slot at the naked size, 40 px.
+		settleCardEntrance(canvasElement);
 		const box = magnet.getBoundingClientRect();
 		await expect(Math.round(box.width)).toBe(40);
 		const slot = canvasElement
