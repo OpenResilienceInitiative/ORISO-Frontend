@@ -148,8 +148,7 @@ describe('DisplayFilterProfileSection', () => {
 			);
 		});
 		const { filters } = displayFilterStore.getState();
-		// The pill preference survives hiding (masked on read by
-		// resolveKindSetting), so hide → show is a round trip.
+		// Hiding keeps the pill intent (re-show brings the chip back).
 		expect(filters.global.sessions.kinds.circle).toEqual({
 			show: false,
 			pill: true

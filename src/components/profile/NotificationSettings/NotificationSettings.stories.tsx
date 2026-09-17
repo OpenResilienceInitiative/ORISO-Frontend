@@ -111,11 +111,26 @@ export const DisplayFilters: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await expect(
-			canvas.getByRole('checkbox', { name: 'Anzeigen: System' })
+			canvas.getByRole('checkbox', { name: 'In der Liste: System' })
 		).toHaveAttribute('aria-checked', 'mixed');
+		// Entwürfe is a row in the Zeitstrahl AND the Gespräche section
+		// (Frank 2026-09-16: every chip a row), so scope to the timeline.
+		const timeline = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="display-filter-profile-timeline"]'
+			)!
+		);
 		await expect(
-			canvas.getByRole('checkbox', { name: 'Pille: Entwürfe' })
-		).not.toBeChecked();
+			timeline.getByRole('button', { name: 'Pille: Entwürfe' })
+		).toHaveTextContent('Aus');
+		const sessions = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="display-filter-profile-sessions"]'
+			)!
+		);
+		await expect(
+			sessions.getByRole('button', { name: 'Pille: Ungelesen' })
+		).toHaveTextContent('An');
 		await expect(
 			canvas.getByText(
 				'Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.'

@@ -38,12 +38,26 @@ export const TIMELINE_KINDS: DisplayFilterKindOption[] = [
 ];
 
 export const STORY_LABELS: DisplayFilterDialogLabels = {
-	title: 'Anzeige-Filter · Zeitstrahl',
+	title: 'Ansicht · Zeitstrahl',
 	description:
-		'Welche Arten in dieser Liste erscheinen und welche eine Pille bekommen.',
-	showColumn: 'Anzeigen',
-	pillColumn: 'Pille',
-	showKind: (kind) => `Anzeigen: ${kind}`,
+		'Welche Arten diese Liste zeigt, welche eine Pille bekommen und wie sie klingen.',
+	showColumn: 'In der Liste',
+	pillColumn: 'Anzeigen',
+	showKind: (kind) => `In der Liste: ${kind}`,
+	soundColumn: 'Ton',
+	soundKind: (kind) => `Ton anhören: ${kind}`,
+	soundMenu: (kind) => `Ton wählen: ${kind}`,
+	soundDefault: 'Standard',
+	soundRing: 'Klingelton',
+	soundTone: (number) => `Ton ${number}`,
+	soundMuted: 'Stumm',
+	pillMenu: (kind) => `Anzeige wählen: ${kind}`,
+	pillOn: 'An',
+	pillOff: 'Aus',
+	liveChatDynamic: 'Dynamisch',
+	liveChatSession: 'Bei Sitzung',
+	liveChatFixed: 'Fest',
+	placeholderHint: 'Kommt bald.',
 	pillKind: (kind) => `Pille: ${kind}`,
 	otherFixed:
 		'Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.',
@@ -54,8 +68,18 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	reset: 'Auf meine Standards zurücksetzen',
 	done: 'Fertig',
 	close: 'Schließen',
-	profileLink:
-		'Standards und weitere Optionen in Profil › Benachrichtigungen',
+	profileLink: 'Standards bearbeiten',
+	overrideNotice: 'Diese Liste weicht von Ihren Standards ab.',
+	resetShort: 'Zurücksetzen',
 	readOnlyHint:
-		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.'
+		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.',
+	viewTitle: 'Filter-Button Anzeige-Optionen',
+	viewIcons: 'Icons',
+	viewLabels: 'Icons + Text',
+	viewText: 'Text',
+	autoSort: 'Ungelesenes nach links sortieren',
+	autoSortDescription:
+		'Pillen mit ungelesenen Einträgen rücken an den Anfang der Reihe.',
+	deactivatedHint:
+		'Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.'
 };
