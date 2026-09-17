@@ -5,6 +5,7 @@ Source: https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1378#dis
 Replace five wall-clock sleeps in notification display-filter tests with controlled timers, preserving the assertions about retries and reconciliation.
 
 Acceptance criteria:
+
 - [x] All five sleeps use an act-wrapped fake-clock advance.
 - [x] Tests use the provider debounce constant and restore real timers during cleanup.
 - [ ] Targeted provider tests and relevant repository validation pass.

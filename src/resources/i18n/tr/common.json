@@ -575,6 +575,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Ekip görüşmesini aç" },
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
 			"known": "Sorguyu kabul et"

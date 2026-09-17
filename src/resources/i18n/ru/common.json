@@ -576,6 +576,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Открыть обсуждение команды" },
 		"acceptButton": {
 			"anonymous": "Начать общение",
 			"known": "Принять запрос"
