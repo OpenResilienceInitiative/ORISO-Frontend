@@ -211,6 +211,25 @@ try {
 			}
 		);
 	}
+	for (const unavailableStatus of [404, 405, 501]) {
+		await scenario(
+			`HTTP ${unavailableStatus} (endpoint not deployed) throttles like a success`,
+			async ({ page, requests, setStatus }) => {
+				setStatus(unavailableStatus);
+				await expectReport(page, () =>
+					page.getByRole('textbox').click()
+				);
+				await page.keyboard.press('a');
+				await page.getByRole('textbox').click();
+				await page.waitForTimeout(500);
+				assert.equal(
+					requests.length,
+					1,
+					'A missing endpoint must not be hit on every gesture'
+				);
+			}
+		);
+	}
 	await scenario(
 		'logout stops reporting and unmount removes listeners',
 		async ({ page, requests }) => {

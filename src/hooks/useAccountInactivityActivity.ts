@@ -4,9 +4,11 @@ import { reportAccountInactivityActivity } from '../api/apiReportAccountInactivi
 import { parseJwt } from '../utils/parseJWT';
 
 const REPORT_INTERVAL_MS = 60_000;
+// The endpoint is not deployed (yet): wait like after a success instead of retrying on every gesture.
+const ENDPOINT_UNAVAILABLE = new Set([404, 405, 501]);
 interface AccountReportState {
 	subject: string;
-	lastSuccess: number | null;
+	throttledAt: number | null;
 	pending?: AbortController;
 }
 
@@ -31,21 +33,23 @@ export const useAccountInactivityActivity = () => {
 			}
 			if (account?.subject !== subject) {
 				account?.pending?.abort();
-				account = { subject, lastSuccess: null };
+				account = { subject, throttledAt: null };
 			}
 			if (
 				account.pending ||
-				(account.lastSuccess !== null &&
-					Date.now() - account.lastSuccess < REPORT_INTERVAL_MS)
+				(account.throttledAt !== null &&
+					Date.now() - account.throttledAt < REPORT_INTERVAL_MS)
 			)
 				return;
 			const currentAccount = account;
 			const controller = new AbortController();
 			currentAccount.pending = controller;
 			reportAccountInactivityActivity(token, controller.signal)
-				.then((success) => {
-					if (success && !disposed && account === currentAccount)
-						currentAccount.lastSuccess = Date.now();
+				.then((status) => {
+					const throttle =
+						status === 204 || ENDPOINT_UNAVAILABLE.has(status);
+					if (throttle && !disposed && account === currentAccount)
+						currentAccount.throttledAt = Date.now();
 				})
 				.catch(() => undefined)
 				.finally(() => {

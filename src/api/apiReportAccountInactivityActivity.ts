@@ -5,7 +5,7 @@ import { generateCsrfToken } from '../utils/generateCsrfToken';
 export const reportAccountInactivityActivity = async (
 	token: string,
 	signal: AbortSignal
-): Promise<boolean> => {
+): Promise<number> => {
 	const csrfToken = generateCsrfToken();
 	const localHeaders =
 		process.env.NODE_ENV === 'development'
@@ -30,5 +30,5 @@ export const reportAccountInactivityActivity = async (
 			...localHeaders
 		}
 	});
-	return response.status === 204;
+	return response.status;
 };
