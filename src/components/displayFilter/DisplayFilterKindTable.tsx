@@ -197,6 +197,28 @@ export const DisplayFilterKindTable = ({
 									)}
 								</span>
 							</th>
+							{columns.show && (
+								<td className="displayFilterDialog__cell">
+									<M3Checkbox
+										checked={setting.show}
+										indeterminate={Boolean(
+											setting.show && kind.partial
+										)}
+										disabled={locked || isOther}
+										describedBy={hintId}
+										hideLabel
+										label={labels.showKind(kind.label)}
+										dataCy={`${dataCyPrefix}-show-${kind.id}`}
+										onChange={(checked) =>
+											onChange(
+												setKindSetting(value, kind.id, {
+													show: checked
+												})
+											)
+										}
+									/>
+								</td>
+							)}
 							{columns.sound && (
 								<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
 									{kind.pillOnly || kind.showOnly ? (
@@ -254,11 +276,15 @@ export const DisplayFilterKindTable = ({
 											disabled={locked}
 											className="displayFilterDialog__picker"
 											dataCy={`${dataCyPrefix}-sound-${kind.id}`}
+											mainDisabled={muted}
 											onMain={() =>
 												previewNotificationSound(
-													(tone && tone !== 'none'
-														? tone
-														: 'default') as SoundId,
+													// "Standard" inherits the area
+													// sound, which this table cannot
+													// resolve: preview the built-in
+													// notification sound instead.
+													(tone ??
+														'chime') as SoundId,
 													0.8
 												)
 											}
@@ -279,28 +305,6 @@ export const DisplayFilterKindTable = ({
 											}
 										/>
 									)}
-								</td>
-							)}
-							{columns.show && (
-								<td className="displayFilterDialog__cell">
-									<M3Checkbox
-										checked={setting.show}
-										indeterminate={Boolean(
-											setting.show && kind.partial
-										)}
-										disabled={locked || isOther}
-										describedBy={hintId}
-										hideLabel
-										label={labels.showKind(kind.label)}
-										dataCy={`${dataCyPrefix}-show-${kind.id}`}
-										onChange={(checked) =>
-											onChange(
-												setKindSetting(value, kind.id, {
-													show: checked
-												})
-											)
-										}
-									/>
 								</td>
 							)}
 							<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">

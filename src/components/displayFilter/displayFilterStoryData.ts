@@ -69,7 +69,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	done: 'Fertig',
 	close: 'Schließen',
 	profileLink: 'Standards bearbeiten',
-	overrideNotice: 'Diese Liste weicht von deinen Standards ab.',
+	overrideNotice: 'Diese Liste weicht von Ihren Standards ab.',
 	resetShort: 'Zurücksetzen',
 	readOnlyHint:
 		'Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.',

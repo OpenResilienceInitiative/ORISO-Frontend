@@ -1838,7 +1838,7 @@
 			"button": "Filtre d’affichage",
 			"buttonCustomised": "Filtre personnalisé",
 			"title": "Filtre d’affichage",
-			"description": "Quels types apparaissent dans cette liste et lesquels reçoivent une pastille.",
+			"description": "Quels types apparaissent dans cette liste, lesquels reçoivent une pastille et quel son ils émettent.",
 			"showColumn": "Afficher",
 			"pillColumn": "Pastille",
 			"soundColumn": "Son",

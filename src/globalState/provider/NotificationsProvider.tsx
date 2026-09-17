@@ -444,9 +444,14 @@ export function NotificationsProvider(props) {
 			}
 			// #1377 "Ton": the user muted this kind of session in the list's
 			// display filter → no sound, whatever the area settings say.
+			// Until the account data is synced the store holds defaults or the
+			// mirror, which may not know a mute yet: stay silent rather than
+			// ring against a filter the user did not set.
+			const displayFilter = displayFilterStore.getState();
 			if (
+				!displayFilter.synced ||
 				isEventMutedByKind(
-					displayFilterStore.getState().filters,
+					displayFilter.filters,
 					announce.sourceSessionId
 				)
 			) {

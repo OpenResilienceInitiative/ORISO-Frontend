@@ -90,7 +90,7 @@ export const FilterChipMenu = ({
 					<FilterChip
 						key={kind.id}
 						label={kind.chipLabel ?? kind.label}
-						icon={kind.icon!}
+						icon={kind.icon}
 						assetIcon={assetIcons}
 						view={view}
 						count={kind.unreadCount}

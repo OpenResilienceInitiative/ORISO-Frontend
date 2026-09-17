@@ -20,6 +20,8 @@ export interface KindOptionPickerProps {
 	mainLabel: string;
 	menuLabel: string;
 	disabled?: boolean;
+	/** Only the main segment is inert (e.g. nothing to preview); the menu stays usable. */
+	mainDisabled?: boolean;
 	className?: string;
 	dataCy?: string;
 }
@@ -39,12 +41,14 @@ export const KindOptionPicker = ({
 	mainLabel,
 	menuLabel,
 	disabled = false,
+	mainDisabled = false,
 	className,
 	dataCy
 }: KindOptionPickerProps) => {
 	const [open, setOpen] = useState(false);
 	const anchor = useRef<HTMLDivElement>(null);
-	const current = options.find((option) => option.id === selected) ?? options[0];
+	const current =
+		options.find((option) => option.id === selected) ?? options[0];
 	return (
 		<>
 			<SplitButton
@@ -56,6 +60,7 @@ export const KindOptionPicker = ({
 				mainLabel={mainLabel}
 				icon={icon}
 				disabled={disabled}
+				mainDisabled={mainDisabled}
 				mainOpensMenu={!onMain}
 				onClick={onMain ?? (() => setOpen(true))}
 				onToggleMenu={() => setOpen((value) => !value)}
@@ -67,7 +72,7 @@ export const KindOptionPicker = ({
 				anchorEl={anchor.current}
 				open={open}
 				onClose={() => setOpen(false)}
-				MenuListProps={{ dense: true, 'aria-label': menuLabel }}
+				MenuListProps={{ 'dense': true, 'aria-label': menuLabel }}
 			>
 				{options.map((option) => (
 					<MenuItem

@@ -1838,7 +1838,7 @@
 			"button": "Görünüm filtresi",
 			"buttonCustomised": "Filtre özelleştirildi",
 			"title": "Görünüm filtresi",
-			"description": "Bu listede hangi türlerin görüneceği ve hangilerinin etiket alacağı.",
+			"description": "Bu listede hangi türlerin görüneceği, hangilerinin etiket alacağı ve nasıl ses vereceği.",
 			"showColumn": "Göster",
 			"pillColumn": "Etiket",
 			"soundColumn": "Ses",

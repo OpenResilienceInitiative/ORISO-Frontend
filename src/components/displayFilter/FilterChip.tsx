@@ -4,7 +4,8 @@ import clsx from 'clsx';
 export interface FilterChipProps {
 	/** Already translated; used as visible label (when active), tooltip and accessible name. */
 	'label': string;
-	'icon': React.ComponentType<React.SVGProps<SVGSVGElement>>;
+	/** Optional: a kind without an icon renders as a text pill in every view. */
+	'icon'?: React.ComponentType<React.SVGProps<SVGSVGElement>>;
 	'active'?: boolean;
 	/** Unread/new items behind this chip; rendered as a badge when > 0. */
 	'count'?: number;

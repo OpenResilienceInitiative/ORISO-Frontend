@@ -184,7 +184,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 		).toBeTruthy();
 		expect(screen.queryByTestId('display-filter-reset')).toBeNull();
 		expect(
-			screen.queryByText('Diese Liste weicht von deinen Standards ab.')
+			screen.queryByText('Diese Liste weicht von Ihren Standards ab.')
 		).toBeNull();
 		// Only "Fertig" remains as a dialog action.
 		expect(
@@ -194,7 +194,7 @@ describe('DisplayFilterDialog (#1377)', () => {
 			<Harness onValue={() => undefined} canReset onReset={onReset} />
 		);
 		expect(
-			screen.getByText('Diese Liste weicht von deinen Standards ab.')
+			screen.getByText('Diese Liste weicht von Ihren Standards ab.')
 		).toBeTruthy();
 		fireEvent.click(screen.getByTestId('display-filter-reset'));
 		expect(onReset).toHaveBeenCalled();

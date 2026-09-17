@@ -144,7 +144,7 @@ export const parseDisplayFilter = (raw: unknown): DisplayFilter => {
 			if (parsed) {
 				kinds[kindId] =
 					kindId === OTHER_KIND_ID
-						? { show: true, pill: parsed.pill }
+						? { ...parsed, show: true }
 						: parsed;
 			}
 		});

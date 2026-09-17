@@ -378,7 +378,6 @@ export const SessionsList = ({
 	const displayFilterLabels = useDisplayFilterLabels(displayFilterSection);
 	// The kind options are built further down (they need the unread counts);
 	// the toolbar predicate above them reads the latest list through a ref.
-	const displayFilterKindsForOther = useRef<DisplayFilterKindOption[]>([]);
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	const { untilL } = useResponsive();
 
@@ -1565,6 +1564,173 @@ export const SessionsList = ({
 	const hiddenActiveRowIds = displayFiltered.hiddenActiveIds;
 	const displayFilterHiddenCount =
 		sessionToolbarPairs.length - displayVisiblePairs.length;
+	const kindsBySessionId = React.useMemo(() => {
+		const kinds: Record<string, string> = {};
+		sessionToolbarPairs.forEach(({ raw, extended }) => {
+			kinds[sessionPairId({ raw, extended })] =
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? classifyRequest(raw, extended)
+					: classifySession(
+							raw,
+							extended,
+							userData?.userId,
+							canSupervise
+						);
+		});
+		return kinds;
+	}, [canSupervise, sessionToolbarPairs, type, userData?.userId]);
+	// The sound gate in NotificationsProvider looks the event's session up
+	// here (#1377 "Ton" column, Frank 2026-09-16).
+	useEffect(() => {
+		sessionKindRegistry.publish(displayFilterSection, kindsBySessionId);
+	}, [displayFilterSection, kindsBySessionId]);
+	const rowsByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		Object.values(kindsBySessionId).forEach((kind) => {
+			counts[kind] = (counts[kind] ?? 0) + 1;
+		});
+		return counts;
+	}, [kindsBySessionId]);
+	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
+	// excluded from the chip counts", §6.2 "don't count hidden chats").
+	const unreadByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		displayVisiblePairs.forEach(({ raw, extended }) => {
+			if (hiddenActiveRowIds.has(sessionPairId({ raw, extended }))) {
+				return;
+			}
+			if (!isChatItemUnread(raw.chat ?? raw.session)) {
+				return;
+			}
+			const kind =
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? classifyRequest(raw, extended)
+					: classifySession(
+							raw,
+							extended,
+							userData?.userId,
+							canSupervise
+						);
+			counts[kind] = (counts[kind] ?? 0) + 1;
+		});
+		return counts;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		displayVisiblePairs,
+		hiddenActiveRowIds,
+		type,
+		userData?.userId,
+		canSupervise,
+		unreadVersion
+	]);
+	// #1404 / Frank 2026-09-16: availability decides whether NEW live chats
+	// are routed to me — the Live-Chat row's pill mode decides when the chip
+	// is in the row (dynamic / bei Sitzung / fest); the open live chat never
+	// loses its chip.
+	const hasLiveChatRow = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(({ raw, extended }) =>
+				isAnonymousAskerSession(raw, extended)
+			),
+		[sessionToolbarPairs]
+	);
+	const activeIsLiveChat = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(
+				({ raw, extended }) =>
+					isSessionListItemActive(extended) &&
+					isAnonymousAskerSession(raw, extended)
+			),
+		[isSessionListItemActive, sessionToolbarPairs]
+	);
+	const showLiveChatChip = isLiveChatChipVisible({
+		mode: kindPillMode(listDisplayFilter, 'liveChat'),
+		available: liveChatAvailable,
+		hasLiveChatRow,
+		unreadCount: unreadByKind.liveChat ?? 0,
+		activeIsLiveChat
+	});
+	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
+		const order =
+			type === SESSION_LIST_TYPES.ENQUIRY
+				? REQUEST_KIND_ORDER
+				: SESSION_KIND_ORDER;
+		// Role/availability gates (not Träger switches): listed or not.
+		const listed = (kind: string): boolean => {
+			switch (kind) {
+				case 'liveChat':
+					// Always listed (Frank 2026-09-16): the pill has modes
+					// (dynamic / pinned / off); availability only drives "dynamic".
+					return true;
+				case 'create':
+					// Träger gate of the create flow: off → no row (absent).
+					return (
+						type === SESSION_LIST_TYPES.MY_SESSION &&
+						showCreateGroupChatAction
+					);
+				case 'unread':
+				case 'drafts':
+				case 'archive':
+				case 'appointments':
+					return type === SESSION_LIST_TYPES.MY_SESSION;
+				case 'futureTimeline':
+					return showGroupChip;
+				case 'supervision':
+					return canSupervise;
+				default:
+					return true;
+			}
+		};
+		// Träger feature switches: off + rows → deactivated (listed, locked),
+		// off + no rows → absent (not listed). Frank 2026-09-16.
+		const traegerSwitch = (kind: string): boolean | null => {
+			switch (kind) {
+				case 'internalGroup':
+					return showInternalGroupChip;
+				case 'circle':
+					return showGroupChip;
+				default:
+					return null;
+			}
+		};
+		return listedKinds(
+			order.filter(listed).map((kind) => {
+				const formatEnabled = traegerSwitch(kind);
+				return {
+					id: kind,
+					label: sessionKindLabel(translate, kind),
+					chipLabel:
+						kind === OTHER_KIND_ID
+							? translate('notifications.displayFilter.otherChip')
+							: undefined,
+					icon: SESSION_KIND_ICONS[kind],
+					unreadCount: unreadByKind[kind] ?? 0,
+					showOnly: kind === 'futureTimeline',
+					modes: kind === 'liveChat',
+					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
+						kind as SessionKindId
+					),
+					placeholder: kind === 'appointments',
+					availability:
+						formatEnabled === null
+							? ('available' as const)
+							: resolveKindAvailability({
+									formatEnabled,
+									rowCount: rowsByKind[kind] ?? 0
+								})
+				};
+			})
+		);
+	}, [
+		canSupervise,
+		rowsByKind,
+		showCreateGroupChatAction,
+		showGroupChip,
+		showInternalGroupChip,
+		translate,
+		type,
+		unreadByKind
+	]);
 	// Sonstiges chip (Frank 2026-09-16): rows of unmapped kind plus rows of
 	// every kind whose own pill is off. Classified here — the chip predicate
 	// in `sessionMatchesToolbar` knows nothing about kinds.
@@ -1577,9 +1743,11 @@ export const SessionsList = ({
 			extended: ExtendedSessionInterface;
 		}) =>
 			(sessionToolbarChip !== 'other' ||
+				// the open conversation stays whatever the bundle says
+				isSessionListItemActive(extended) ||
 				matchesOtherChip(
 					listDisplayFilter,
-					displayFilterKindsForOther.current,
+					displayFilterKinds,
 					type === SESSION_LIST_TYPES.ENQUIRY
 						? classifyRequest(raw, extended)
 						: classifySession(
@@ -1754,174 +1922,6 @@ export const SessionsList = ({
 	// Rows per kind over ALL loaded rows (before the display filter): the
 	// Träger switch decides between "deactivated" (rows still exist) and
 	// "absent" (nothing of that kind) by this count (Frank 2026-09-16).
-	const kindsBySessionId = React.useMemo(() => {
-		const kinds: Record<string, string> = {};
-		sessionToolbarPairs.forEach(({ raw, extended }) => {
-			kinds[sessionPairId({ raw, extended })] =
-				type === SESSION_LIST_TYPES.ENQUIRY
-					? classifyRequest(raw, extended)
-					: classifySession(
-							raw,
-							extended,
-							userData?.userId,
-							canSupervise
-						);
-		});
-		return kinds;
-	}, [canSupervise, sessionToolbarPairs, type, userData?.userId]);
-	// The sound gate in NotificationsProvider looks the event's session up
-	// here (#1377 "Ton" column, Frank 2026-09-16).
-	useEffect(() => {
-		sessionKindRegistry.publish(displayFilterSection, kindsBySessionId);
-	}, [displayFilterSection, kindsBySessionId]);
-	const rowsByKind = React.useMemo(() => {
-		const counts: Record<string, number> = {};
-		Object.values(kindsBySessionId).forEach((kind) => {
-			counts[kind] = (counts[kind] ?? 0) + 1;
-		});
-		return counts;
-	}, [kindsBySessionId]);
-	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
-	// excluded from the chip counts", §6.2 "don't count hidden chats").
-	const unreadByKind = React.useMemo(() => {
-		const counts: Record<string, number> = {};
-		displayVisiblePairs.forEach(({ raw, extended }) => {
-			if (hiddenActiveRowIds.has(sessionPairId({ raw, extended }))) {
-				return;
-			}
-			if (!isChatItemUnread(raw.chat ?? raw.session)) {
-				return;
-			}
-			const kind =
-				type === SESSION_LIST_TYPES.ENQUIRY
-					? classifyRequest(raw, extended)
-					: classifySession(
-							raw,
-							extended,
-							userData?.userId,
-							canSupervise
-						);
-			counts[kind] = (counts[kind] ?? 0) + 1;
-		});
-		return counts;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		displayVisiblePairs,
-		hiddenActiveRowIds,
-		type,
-		userData?.userId,
-		canSupervise,
-		unreadVersion
-	]);
-	// #1404 / Frank 2026-09-16: availability decides whether NEW live chats
-	// are routed to me — the Live-Chat row's pill mode decides when the chip
-	// is in the row (dynamic / bei Sitzung / fest); the open live chat never
-	// loses its chip.
-	const hasLiveChatRow = React.useMemo(
-		() =>
-			sessionToolbarPairs.some(({ raw, extended }) =>
-				isAnonymousAskerSession(raw, extended)
-			),
-		[sessionToolbarPairs]
-	);
-	const activeIsLiveChat = React.useMemo(
-		() =>
-			sessionToolbarPairs.some(
-				({ raw, extended }) =>
-					isSessionListItemActive(extended) &&
-					isAnonymousAskerSession(raw, extended)
-			),
-		[isSessionListItemActive, sessionToolbarPairs]
-	);
-	const showLiveChatChip = isLiveChatChipVisible({
-		mode: kindPillMode(listDisplayFilter, 'liveChat'),
-		available: liveChatAvailable,
-		hasLiveChatRow,
-		unreadCount: unreadByKind.liveChat ?? 0,
-		activeIsLiveChat
-	});
-	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
-		const order =
-			type === SESSION_LIST_TYPES.ENQUIRY
-				? REQUEST_KIND_ORDER
-				: SESSION_KIND_ORDER;
-		// Role/availability gates (not Träger switches): listed or not.
-		const listed = (kind: string): boolean => {
-			switch (kind) {
-				case 'liveChat':
-					// Always listed (Frank 2026-09-16): the pill has modes
-					// (dynamic / pinned / off); availability only drives "dynamic".
-					return true;
-				case 'create':
-					// Träger gate of the create flow: off → no row (absent).
-					return (
-						type === SESSION_LIST_TYPES.MY_SESSION &&
-						showCreateGroupChatAction
-					);
-				case 'unread':
-				case 'drafts':
-				case 'archive':
-				case 'appointments':
-					return type === SESSION_LIST_TYPES.MY_SESSION;
-				case 'futureTimeline':
-					return showGroupChip;
-				case 'supervision':
-					return canSupervise;
-				default:
-					return true;
-			}
-		};
-		// Träger feature switches: off + rows → deactivated (listed, locked),
-		// off + no rows → absent (not listed). Frank 2026-09-16.
-		const traegerSwitch = (kind: string): boolean | null => {
-			switch (kind) {
-				case 'internalGroup':
-					return showInternalGroupChip;
-				case 'circle':
-					return showGroupChip;
-				default:
-					return null;
-			}
-		};
-		return listedKinds(
-			order.filter(listed).map((kind) => {
-				const formatEnabled = traegerSwitch(kind);
-				return {
-					id: kind,
-					label: sessionKindLabel(translate, kind),
-					chipLabel:
-						kind === OTHER_KIND_ID
-							? translate('notifications.displayFilter.otherChip')
-							: undefined,
-					icon: SESSION_KIND_ICONS[kind],
-					unreadCount: unreadByKind[kind] ?? 0,
-					showOnly: kind === 'futureTimeline',
-					modes: kind === 'liveChat',
-					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
-						kind as SessionKindId
-					),
-					placeholder: kind === 'appointments',
-					availability:
-						formatEnabled === null
-							? ('available' as const)
-							: resolveKindAvailability({
-									formatEnabled,
-									rowCount: rowsByKind[kind] ?? 0
-								})
-				};
-			})
-		);
-	}, [
-		canSupervise,
-		rowsByKind,
-		showCreateGroupChatAction,
-		showGroupChip,
-		showInternalGroupChip,
-		translate,
-		type,
-		unreadByKind
-	]);
-	displayFilterKindsForOther.current = displayFilterKinds;
 	const chipPresentation = resolveChipPresentation(listDisplayFilter);
 	// Chips of kinds the Träger switched off while rows exist: locked, the
 	// click explains (snackbar) instead of filtering.
@@ -2022,12 +2022,11 @@ export const SessionsList = ({
 			}
 		});
 		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
-		kindsUnderOther(
-			listDisplayFilter,
-			displayFilterKindsForOther.current
-		).forEach((kind) => {
-			counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
-		});
+		kindsUnderOther(listDisplayFilter, displayFilterKinds).forEach(
+			(kind) => {
+				counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
+			}
+		);
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
