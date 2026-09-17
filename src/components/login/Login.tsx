@@ -370,7 +370,9 @@ export const Login = () => {
 					transport: describeLoginTransport(
 						error as Parameters<typeof describeLoginTransport>[0]
 					),
-					stage: otp ? 'otp' : 'password'
+					// The resend-mail path retries without a code while the OTP
+					// step is active; the stage is the step, not the payload.
+					stage: isOtpRequired || otp ? 'otp' : 'password'
 				});
 				setShowLoginError(translate(resolution.messageKey));
 				// Only a credential problem marks the fields; an outage is
