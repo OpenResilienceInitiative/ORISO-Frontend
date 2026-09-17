@@ -43,6 +43,7 @@ import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
 import {
 	describeLoginTransport,
+	LOGIN_ERROR_KEYS,
 	resolveLoginError
 } from './loginErrorResolution';
 import { recordLoginFailure } from '../../utils/observability/loginFailureTracker';
@@ -388,8 +389,20 @@ export const Login = () => {
 			// neither be overwritten nor counted.
 			.then(
 				() =>
-					postLogin().catch(() => {
-						/* message already shown by postLogin */
+					postLogin().catch((error: unknown) => {
+						// The consultant block shows its own message before it
+						// throws; anything else (e.g. the user-data reload
+						// failing after a successful token) would otherwise
+						// leave the form silent. Not a login failure, so it is
+						// not counted.
+						if (
+							(error as Error | null)?.message !==
+							CONSULTANT_LOGIN_BLOCKED_ERROR
+						) {
+							setShowLoginError(
+								translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
+							);
+						}
 					}),
 				handleAutoLoginFailure
 			)
