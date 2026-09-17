@@ -86,6 +86,8 @@ describe('parseDisplayFilters', () => {
 				bogus: { kinds: {} }
 			}
 		});
+		// A missing pill defaults to true and is stored as such even while
+		// hidden; `resolveKindSetting` masks it on read.
 		expect(parsed?.global.timeline.kinds.drafts).toEqual({
 			show: false,
 			pill: true
@@ -239,6 +241,15 @@ describe('sound per kind round-trip', () => {
 		});
 		// an unknown mode falls back to dynamic (not stored)
 		expect(parsed.kinds.supervision).toEqual({ show: true, pill: true });
+		// Sonstiges keeps its tone (only `show` is forced) — CodeRabbit on #1457
+		const other = parseDisplayFilter({
+			kinds: { other: { show: false, pill: false, sound: 'ton-2' } }
+		});
+		expect(other.kinds.other).toEqual({
+			show: true,
+			pill: false,
+			sound: 'ton-2'
+		});
 		expect(parsed.kinds.circle).toEqual({
 			show: true,
 			pill: true,

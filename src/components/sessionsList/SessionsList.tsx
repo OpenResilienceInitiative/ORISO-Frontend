@@ -527,6 +527,8 @@ export const SessionsList = ({
 	/*
 	 * Re-run the enquiry fetch when switching Nearby ↔ Live Chat so auto-paging
 	 * scans for the right session type instead of only re-filtering stale pages.
+	 * The same applies when the tab is cleared (all kinds): the page that was
+	 * auto-paged for one type is not a complete first page for both.
 	 */
 	useEffect(() => {
 		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
@@ -534,7 +536,8 @@ export const SessionsList = ({
 		}
 		if (
 			sessionToolbarChip !== 'liveChat' &&
-			sessionToolbarChip !== 'nearby'
+			sessionToolbarChip !== 'nearby' &&
+			sessionToolbarChip !== null
 		) {
 			return;
 		}
@@ -1782,6 +1785,7 @@ export const SessionsList = ({
 		[
 			canSupervise,
 			currentUserId,
+			displayFilterKinds,
 			listDisplayFilter,
 			isSessionListItemActive,
 			sessionToolbarChip,
@@ -1966,15 +1970,28 @@ export const SessionsList = ({
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
 			)?.id ?? null;
-		if (
-			activeKind &&
-			reconcileActiveKind(listDisplayFilter, activeKind) === null
-		) {
-			setSessionToolbarChip(null);
+		if (!activeKind) {
+			return;
 		}
-	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip]);
-	// Kind chips are user-gated (§5.1): pill on and unread rows, or active.
+		// Frank 2026-09-16: a chip is a menu entry in every list — Anfragen
+		// included (supersedes #1427's "tabs" rule: the Anzeigen picker of the
+		// Anfragen dialog switches the chip, hiding is not offered there).
+		if (reconcileActiveKind(listDisplayFilter, activeKind) === null) {
+			// Through the toggle so `?chip=…` clears with the state; otherwise a
+			// reload or the URL-sync effect restores the hidden tab.
+			handleToolbarChipToggle(sessionToolbarChip);
+		}
+	}, [
+		displayFilterKinds,
+		handleToolbarChipToggle,
+		listDisplayFilter,
+		sessionToolbarChip,
+		type
+	]);
+	// Kind chips are menu entries (Frank 2026-09-16): pill on → chip, in
+	// Gespräche and Anfragen alike; unread is a badge on the chip.
 	const hiddenKindChips = React.useMemo(() => {
+		const hidden: Partial<Record<DisplayFilterKindChip, boolean>> = {};
 		const activeKind =
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
@@ -1986,7 +2003,6 @@ export const SessionsList = ({
 				activeKind
 			).map((kind) => kind.id)
 		);
-		const hidden: Partial<Record<DisplayFilterKindChip, boolean>> = {};
 		displayFilterKinds.forEach((kind) => {
 			const chip = SESSION_KIND_CHIP[kind.id];
 			if (chip && !shown.has(kind.id)) {

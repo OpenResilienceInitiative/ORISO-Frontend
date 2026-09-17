@@ -112,6 +112,14 @@ describe('displayFilterTypes (#1377)', () => {
 		const shownAgain = setKindSetting(hidden, kind.id, { show: true });
 		expect(isDisplayFilterCustomised(shownAgain, [kind])).toBe(false);
 		expect(isDisplayFilterCustomised(shownAgain, [kind.id])).toBe(false);
+		// A stale `pill: false` written by an older client must not count
+		// for a show-only kind either.
+		const stale = {
+			kinds: { [kind.id]: { show: true, pill: false } },
+			autoReadHidden: false
+		};
+		expect(isDisplayFilterCustomised(stale, [kind])).toBe(false);
+		expect(isDisplayFilterCustomised(stale, [kind.id])).toBe(true);
 	});
 
 	it('marks auto-read alone as customised', () => {
