@@ -590,7 +590,9 @@ export const SessionsList = ({
 		}
 
 		setIsLoading(true);
-		getConsultantSessionList(0)
+		const request = getConsultantSessionList(0);
+		const controller = abortController.current;
+		request
 			.then(({ sessions }) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -599,7 +601,14 @@ export const SessionsList = ({
 				});
 			})
 			.catch(() => {})
-			.finally(() => setIsLoading(false));
+			.finally(() => {
+				if (
+					abortController.current === controller &&
+					!controller.signal.aborted
+				) {
+					setIsLoading(false);
+				}
+			});
 	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
 
 	const scrollIntoView = useCallback(() => {
@@ -758,7 +767,9 @@ export const SessionsList = ({
 		} else {
 			// Fetch consulting sessionsData
 			// console.log('🔍 CONSULTANT: Fetching sessions, type:', type);
-			getConsultantSessionList(0, initialId.current)
+			const request = getConsultantSessionList(0, initialId.current);
+			const controller = abortController.current;
+			request
 				.then(({ sessions }) => {
 					// console.log('📦 CONSULTANT: Got', sessions?.length, 'sessions');
 					dispatch({
@@ -768,12 +779,14 @@ export const SessionsList = ({
 					});
 					return refreshLoadedSessionsWithRoomState(sessions);
 				})
-				.catch((error) => {
-					// console.error('❌ CONSULTANT: Error fetching sessions:', error);
-					setIsLoading(false);
-				})
-				.then(() => setIsLoading(false))
 				.then(() => {
+					if (
+						abortController.current !== controller ||
+						controller.signal.aborted
+					) {
+						return;
+					}
+					setIsLoading(false);
 					if (initialId.current) {
 						setTimeout(() => {
 							scrollIntoView();
@@ -781,7 +794,11 @@ export const SessionsList = ({
 					}
 				})
 				.catch((error) => {
-					if (error.message === FETCH_ERRORS.ABORT) {
+					if (
+						abortController.current !== controller ||
+						controller.signal.aborted ||
+						error.message === FETCH_ERRORS.ABORT
+					) {
 						// No action necessary. Just make sure to NOT set
 						// `isLoading` to false or `isReloadButtonVisible` to true.
 						return;
