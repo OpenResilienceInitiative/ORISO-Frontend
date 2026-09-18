@@ -1788,6 +1788,7 @@
 		},
 		"thread": {
 			"unknownRoot": "ቀዳማይ መልእኽቲ",
+			"targetLabel": "መዓላማ፦ ትሬድ",
 			"listToggle": "ትሬዳት",
 			"replies": "{{count}} መልስታት",
 			"title": "ትሬድ",
@@ -4782,6 +4783,7 @@
 	"dpaSign": {
 		"title": "ውዕል ኣሰራርሓ ዳታ ፈርም",
 		"subtitle": "በጃኹም ነቲ ውዕል ብምሉኡ ኣንብቡ እሞ ብድሕሪኡ ናይታ እትፍርም ሰብ ሓበሬታ ኣረጋግጹ።",
+		"signerName": "ምሉእ ስም",
 		"loadingContract": "እቲ ውዕል ይጽዕን ኣሎ...",
 		"signerHeading": "መረጋገጺ ናይታ ወኪል ክትከውን ስልጣን ዘለዋ ሰብ",
 		"signingFor": "ብስም እዚ ኢኹም እትፍርሙ፦",
