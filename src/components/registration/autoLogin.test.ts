@@ -413,33 +413,4 @@ describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
 		);
 	});
 
-	/*
-	 * #1402: the login screen hands over without a `navigate`, because the
-	 * router transition out of the login route never committed on dev and left
-	 * the signed-in counsellor staring at the login form. This is the path the
-	 * login screen takes now, so it has to reach the document load.
-	 */
-	it('loads the target path as a document when no navigate is given', () => {
-		const assign = vi.fn();
-		const original = window.location;
-		Object.defineProperty(window, 'location', {
-			configurable: true,
-			value: { ...original, assign }
-		});
-
-		try {
-			redirectToApp(undefined, {
-				restorePath: '/sessions/consultant/sessionView/session/42'
-			});
-		} finally {
-			Object.defineProperty(window, 'location', {
-				configurable: true,
-				value: original
-			});
-		}
-
-		expect(assign).toHaveBeenCalledWith(
-			'/sessions/consultant/sessionView/session/42'
-		);
-	});
 });

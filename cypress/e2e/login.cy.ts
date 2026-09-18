@@ -22,6 +22,8 @@ describe('Login', () => {
 	it('should be able to login', () => {
 		cy.login();
 
+		cy.location('pathname').should('not.eq', '/login');
+		cy.get('.loginForm').should('not.exist');
 		cy.get('#appRoot').should('exist');
 	});
 

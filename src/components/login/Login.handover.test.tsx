@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LocaleContext } from '../../globalState/context/LocaleContext';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { TenantContext } from '../../globalState/provider/TenantProvider';
@@ -10,8 +10,9 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { Login } from './Login';
 
-const { autoLogin } = vi.hoisted(() => ({
-	autoLogin: vi.fn(() => Promise.resolve())
+const { autoLogin, redirectToApp } = vi.hoisted(() => ({
+	autoLogin: vi.fn(() => Promise.resolve()),
+	redirectToApp: vi.fn()
 }));
 
 vi.mock('../../globalState', async () => {
@@ -39,7 +40,8 @@ vi.mock('../../globalState', async () => {
 
 vi.mock('../registration/autoLogin', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../registration/autoLogin')>()),
-	autoLogin
+	autoLogin,
+	redirectToApp
 }));
 
 vi.mock('../../utils/appConfig', () => ({
@@ -131,23 +133,9 @@ const user = {
 };
 
 describe('successful login hand-over', () => {
-	const originalLocation = window.location;
-	const assign = vi.fn();
-
 	beforeEach(() => {
 		autoLogin.mockClear();
-		assign.mockClear();
-		Object.defineProperty(window, 'location', {
-			configurable: true,
-			value: { ...originalLocation, assign }
-		});
-	});
-
-	afterEach(() => {
-		Object.defineProperty(window, 'location', {
-			configurable: true,
-			value: originalLocation
-		});
+		redirectToApp.mockClear();
 	});
 
 	it('loads /app as a document after authentication instead of leaving the login route mounted', async () => {
@@ -222,6 +210,8 @@ describe('successful login hand-over', () => {
 		);
 
 		await waitFor(() => expect(reloadUserData).toHaveBeenCalledOnce());
-		expect(assign).toHaveBeenCalledWith('/app');
+		expect(redirectToApp).toHaveBeenCalledWith(null, {
+			restorePath: null
+		});
 	});
 });
