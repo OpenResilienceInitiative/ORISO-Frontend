@@ -36,6 +36,7 @@ vi.mock('../../api/apiEventNotifications', () => ({
 }));
 
 vi.mock('../../components/sessionCookie/accessSessionCookie', () => ({
+	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
 	getValueFromCookie: () => 'fake-token'
 }));
 

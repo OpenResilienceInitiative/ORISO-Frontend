@@ -27,7 +27,10 @@ import {
 	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
+import {
+	AUTH_SESSION_CHANGE_EVENT,
+	getValueFromCookie
+} from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
@@ -1053,6 +1056,22 @@ export function NotificationsProvider(props) {
 		refreshNotificationFeedSafe();
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
+	}, [refreshNotificationFeedSafe]);
+
+	// This provider lives above the router, so it outlives the session. When
+	// the auth session is torn down (sign-out, expired refresh token) the
+	// feed is reset at once and in-flight responses are dropped through the
+	// epoch, instead of polling on with a leftover token until the next tick.
+	useEffect(() => {
+		window.addEventListener(
+			AUTH_SESSION_CHANGE_EVENT,
+			refreshNotificationFeedSafe
+		);
+		return () =>
+			window.removeEventListener(
+				AUTH_SESSION_CHANGE_EVENT,
+				refreshNotificationFeedSafe
+			);
 	}, [refreshNotificationFeedSafe]);
 
 	// Slice 7: an exact total describes one exclusion set. When the set
