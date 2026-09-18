@@ -777,9 +777,9 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(2);
 	});
 
-	it('a response for a previous exclusion set never makes the new set exact', async () => {
+	it('discards an old exclusion response without removing visible rows and refreshes the current set', async () => {
 		apiGetEventNotifications.mockResolvedValue({
-			items: [item(1, 'message.new')],
+			items: [item(1, 'supervisor.added')],
 			unreadCount: 9,
 			excludedEventTypes: []
 		});
@@ -787,37 +787,99 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		await waitFor(() => expect(rows()).toBe('1:u'));
 		const late = deferred<unknown>();
 		apiGetEventNotifications.mockReturnValueOnce(late.promise);
-		act(() => {
+		act(() =>
 			displayFilterStore.setSection('timeline', {
 				...hideSystemAutoRead,
 				autoReadHidden: false
-			});
-		});
+			})
+		);
 		const { messageEventEmitter } = await import(
 			'../../services/messageEventEmitter'
 		);
-		messageEventEmitter.emit({}); // request for set A, still in flight
+		act(() => messageEventEmitter.emit({}));
+		await advanceTimers(400);
 		const requestedA = apiGetEventNotifications.mock.calls.at(-1)![2];
-		act(() => {
+		expect(requestedA).toContain('supervisor.added');
+		act(() =>
 			displayFilterStore.setSection('timeline', {
 				kinds: {
-					system: { show: false, pill: false },
+					system: { show: true, pill: true },
 					calls: { show: false, pill: false }
 				},
 				autoReadHidden: false
-			}); // set B
+			})
+		);
+		const fresh = deferred<unknown>();
+		apiGetEventNotifications.mockReturnValueOnce(fresh.promise);
+		const before = apiGetEventNotifications.mock.calls.length;
+		await act(async () =>
+			late.resolve({
+				items: [],
+				unreadCount: 3,
+				excludedEventTypes: [...requestedA]
+			})
+		);
+		expect(rows()).toBe('1:u');
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(before + 1)
+		);
+		const requestedB = apiGetEventNotifications.mock.calls.at(-1)![2];
+		expect(requestedB).not.toContain('supervisor.added');
+		await act(async () =>
+			fresh.resolve({
+				items: [item(2, 'message.new')],
+				unreadCount: 4,
+				excludedEventTypes: requestedB
+			})
+		);
+		expect(rows()).toBe('2:u');
+		expect(screen.getByTestId('server-total').textContent).toBe('4');
+		expect(screen.getByTestId('exact').textContent).toBe('exact');
+	});
+
+	it('rechecks a parked response against a filter changed before failed reads settle', async () => {
+		apiGetEventNotifications.mockResolvedValueOnce({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 2
 		});
-		late.resolve({
-			items: [item(1, 'message.new')],
-			unreadCount: 3,
-			excludedEventTypes: [...requestedA]
+		const patch = deferred<unknown>();
+		apiMarkEventNotificationRead.mockReturnValue(patch.promise);
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await waitFor(() =>
+			expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1)
+		);
+		apiGetEventNotifications.mockResolvedValueOnce({
+			items: [],
+			unreadCount: 0
 		});
+		act(() => screen.getByText('refresh').click());
 		await advanceTimers(0);
-		await waitFor(() => expect(rows()).toBe('1:u'));
-		// The rows apply; the total for set A is dropped (it is neither exact
-		// nor a bound for B), the previous total and its exactness stay.
-		expect(screen.getByTestId('server-total').textContent).toBe('9');
-		expect(screen.getByTestId('exact').textContent).toBe('bound');
+		expect(rows()).toBe('1:u,2:u');
+		act(() =>
+			displayFilterStore.setSection('timeline', {
+				kinds: { system: { show: true, pill: true } },
+				autoReadHidden: false
+			})
+		);
+		const fresh = deferred<unknown>();
+		apiGetEventNotifications.mockReturnValueOnce(fresh.promise);
+		const before = apiGetEventNotifications.mock.calls.length;
+		await act(async () => patch.reject(new Error('offline')));
+		expect(rows()).toBe('1:u,2:u');
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(before + 1)
+		);
+		await act(async () =>
+			fresh.resolve({
+				items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+				unreadCount: 2
+			})
+		);
+		expect(rows()).toBe('1:u,2:u');
 	});
 
 	it('an exact total of 0 asks for the unfiltered total so ✓✓ stays actionable', async () => {
