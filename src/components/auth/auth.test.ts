@@ -149,6 +149,29 @@ describe('auth helpers', () => {
 		expect(order).toEqual(['teardown', 'logout']);
 	});
 
+	it('settles refresh failures without tearing the local session down', async () => {
+		vi.mocked(getTokenExpiryFromLocalStorage).mockReturnValue({
+			accessTokenValidUntilTime: Date.now() - 1,
+			refreshTokenValidUntilTime: Date.now() + 60_000
+		});
+		vi.mocked(refreshKeycloakAccessToken).mockRejectedValue(
+			new Error('keycloakLogin')
+		);
+
+		let rejection: unknown;
+		void handleTokenRefresh().catch((error) => {
+			rejection = error;
+		});
+		for (let index = 0; index < 5; index += 1) {
+			await Promise.resolve();
+		}
+
+		expect(rejection).toMatchObject({
+			name: 'TokenRefreshUnavailableError'
+		});
+		expect(teardownLocalSession).not.toHaveBeenCalled();
+	});
+
 	it('refreshes tokens when only the access token is expired', async () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-29T00:00:00.000Z'));

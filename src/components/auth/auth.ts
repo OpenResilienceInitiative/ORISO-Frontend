@@ -9,6 +9,22 @@ import { appConfig } from '../../utils/appConfig';
 
 export const RENEW_BEFORE_EXPIRY_IN_MS = 10 * 1000; // seconds
 
+export class TokenRefreshUnavailableError extends Error {
+	constructor(cause?: unknown) {
+		super('Token refresh temporarily unavailable');
+		this.name = 'TokenRefreshUnavailableError';
+		Object.setPrototypeOf(this, TokenRefreshUnavailableError.prototype);
+		if (cause !== undefined) {
+			(this as Error & { cause?: unknown }).cause = cause;
+		}
+	}
+}
+
+export const isTokenRefreshUnavailableError = (
+	error: unknown
+): error is TokenRefreshUnavailableError =>
+	error instanceof TokenRefreshUnavailableError;
+
 export const isInviteRoute = (): boolean =>
 	/^\/invite(?:\/|$)/.test(window.location.pathname);
 
@@ -88,7 +104,7 @@ const startTimers = ({
 	// just a sanity check so that we don't accidentally register an endless loop
 	if (accessTokenRefreshIntervalInMs > 0) {
 		refreshInterval = window.setInterval(() => {
-			refreshTokens();
+			void refreshTokens().catch(() => undefined);
 		}, accessTokenRefreshIntervalInMs);
 	}
 
@@ -126,13 +142,17 @@ export const handleTokenRefresh = (redirect: boolean = true): Promise<void> => {
 			reject();
 		} else if (accessTokenValidInMs <= 0) {
 			// access token no longer valid but refresh token still valid, refresh tokens
-			refreshTokens().then(() => {
-				startTimers({
-					accessTokenValidInMs,
-					refreshTokenValidInMs
+			refreshTokens()
+				.then(() => {
+					startTimers({
+						accessTokenValidInMs,
+						refreshTokenValidInMs
+					});
+					resolve();
+				})
+				.catch((error) => {
+					reject(new TokenRefreshUnavailableError(error));
 				});
-				resolve();
-			});
 		} else {
 			// access token and refresh token still valid, just start the timers
 			startTimers({

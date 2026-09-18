@@ -40,6 +40,7 @@ vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: getFeed
 }));
 vi.mock('../sessionCookie/accessSessionCookie', () => ({
+	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
 	getValueFromCookie: () => 'test-token'
 }));
 // A stub transport: `connect` never fires its callback, so nothing subscribes

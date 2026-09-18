@@ -20,7 +20,10 @@ import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import { groupEntryRoomPath } from '../groupChat/entryRoom/GroupEntryRoom';
-import { handleTokenRefresh } from '../auth/auth';
+import {
+	handleTokenRefresh,
+	isTokenRefreshUnavailableError
+} from '../auth/auth';
 import { logout, teardownLocalSession } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
@@ -316,7 +319,15 @@ export const AuthenticatedApp = ({
 							abandonSession();
 						});
 				})
-				.catch(() => {
+				.catch((error) => {
+					if (isTokenRefreshUnavailableError(error)) {
+						window.setTimeout(() => {
+							if (mounted.current) {
+								setUserDataRequested(false);
+							}
+						}, 2_000);
+						return;
+					}
 					abandonSession();
 				});
 		}

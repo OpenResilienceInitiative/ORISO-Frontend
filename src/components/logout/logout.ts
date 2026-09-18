@@ -39,6 +39,7 @@ const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 ] as const;
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';
+export const LOGOUT_REQUEST_TIMEOUT_MS = 5_000;
 
 /**
  * Upper bound for the pre-logout handlers (draft flush, anonymous session
@@ -50,18 +51,34 @@ export const PRE_LOGOUT_HANDLERS_TIMEOUT_MS = 5_000;
 let isRequestInProgress = false;
 
 const runPreLogoutHandlers = async (): Promise<boolean> => {
+	const controller = new AbortController();
 	try {
-		return Boolean(
-			await withTimeout(
-				Promise.resolve(callEventListeners(EVENT_PRE_LOGOUT)),
-				PRE_LOGOUT_HANDLERS_TIMEOUT_MS,
-				'pre-logout handlers timed out'
-			)
+		const result = await withTimeout(
+			Promise.resolve(
+				callEventListeners(EVENT_PRE_LOGOUT, controller.signal)
+			),
+			PRE_LOGOUT_HANDLERS_TIMEOUT_MS,
+			'pre-logout handlers timed out'
 		);
+		return result === true;
 	} catch {
+		controller.abort();
 		// A failed or hanging draft flush is no reason to stay signed in.
 		return false;
 	}
+};
+
+const runBoundedLogoutRequest = <Value>(
+	request: (signal: AbortSignal) => Promise<Value>
+): Promise<Value> => {
+	const controller = new AbortController();
+	const timeout = window.setTimeout(
+		() => controller.abort(),
+		LOGOUT_REQUEST_TIMEOUT_MS
+	);
+	return request(controller.signal).finally(() =>
+		window.clearTimeout(timeout)
+	);
 };
 
 export const logout = async (
@@ -85,38 +102,35 @@ export const logout = async (
 		isRequestInProgress = false;
 		return;
 	}
-
 	clearLoginRecoveryPassword();
 	clearSecretStorageKeys();
 	clearRecoveryRuntimeState();
 	const { featureAppointmentsEnabled, featureToolsEnabled } =
 		getTenantSettings();
 
-	/* Drop live-chat availability while the access token is still valid, so the
-	 * anonymous availability count decreases immediately on logout. */
-	try {
-		if (hasSession) {
-			await apiSetLiveChatAvailability(false);
+	const serverRequests: Promise<unknown>[] = [];
+	if (hasSession) {
+		serverRequests.push(
+			runBoundedLogoutRequest((signal) =>
+				apiSetLiveChatAvailability(false, signal)
+			),
+			runBoundedLogoutRequest((signal) => apiKeycloakLogout(signal))
+		);
+		if (featureAppointmentsEnabled) {
+			serverRequests.push(
+				runBoundedLogoutRequest((signal) => calcomLogout(signal))
+			);
 		}
-	} catch {
-		// Logout must continue even when the availability store is unavailable.
-	} finally {
-		// Prevent this or another tab from continuing to present/refresh stale state.
-		clearLiveChatAvailabilityPreference();
+		if (featureToolsEnabled) {
+			serverRequests.push(
+				runBoundedLogoutRequest((signal) => budibaseLogout(signal))
+			);
+		}
 	}
-
-	// The server-side sign-outs read the tokens synchronously when they are
-	// issued, so the local session can be torn down right away instead of
-	// after their responses. Waiting for them left a window in which this tab
-	// still held valid cookies while the login form was already showing.
-	const serverLogout = Promise.allSettled([
-		apiKeycloakLogout(),
-		featureAppointmentsEnabled && calcomLogout(),
-		featureToolsEnabled && budibaseLogout()
-	]);
+	clearLiveChatAvailabilityPreference();
 	teardownLocalSession();
 
-	void serverLogout.then(() => {
+	void Promise.allSettled(serverRequests).then(() => {
 		if (withRedirect) {
 			redirectAfterLogout(redirectUrl);
 			return;
