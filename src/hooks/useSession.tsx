@@ -86,9 +86,18 @@ export const useSession = (
 				abortController.current.signal
 			);
 		} else if (rid) {
-			promise = apiGetSessionRoomsByRoomIds(
-				[rid],
-				abortController.current.signal
+			const signal = abortController.current.signal;
+			promise = apiGetSessionRoomsByRoomIds([rid], signal).catch(
+				(error) => {
+					// A colleague may retain session access after it leaves their room list.
+					if (
+						error.message === FETCH_ERRORS.EMPTY &&
+						sessionId != null
+					) {
+						return apiGetSessionRoomBySessionId(sessionId, signal);
+					}
+					throw error;
+				}
 			);
 		} else if (sessionId !== undefined && sessionId !== null) {
 			// console.log('🔍 useSession: Loading by sessionId:', sessionId);

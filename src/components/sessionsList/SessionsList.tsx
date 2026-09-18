@@ -50,6 +50,7 @@ import {
 	SESSION_COUNT
 } from '../../api';
 import { useLiveChatAvailable } from '../../utils/liveChatToggle';
+import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
@@ -99,6 +100,7 @@ import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
 import { getFormatChipVisibility } from './formatChipVisibility';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useDisplayFilter } from '../../hooks/useDisplayFilter';
 import {
@@ -107,8 +109,20 @@ import {
 	isDisplayFilterCustomised,
 	useDisplayFilterLabels,
 	visiblePillKinds,
-	reconcileActiveKind
+	reconcileActiveKind,
+	listedKinds,
+	resolveKindAvailability,
+	resolveChipPresentation,
+	kindsUnderOther,
+	matchesOtherChip,
+	OTHER_KIND_ID,
+	SESSION_COLUMNS,
+	kindPillMode,
+	resolveKindSetting
 } from '../displayFilter';
+import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
+import { NavChatsIcon, NavInboxIcon } from '../app/navigationSidebarIcons';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import {
 	applyRequestsFilter,
 	applySessionsFilter,
@@ -117,9 +131,9 @@ import {
 	isKindShown,
 	REQUEST_KIND_ORDER,
 	SESSION_KIND_CHIP,
+	PILL_ONLY_SESSION_KINDS,
 	SESSION_KIND_ORDER,
-	hiddenRequestKinds,
-	reconcileActiveRequestKind,
+	SessionKindId,
 	sessionPairId
 } from '../../utils/displayFilter/sessions';
 import { isChatItemUnread } from '../../utils/sessionUnread';
@@ -245,6 +259,10 @@ export const SessionsList = ({
 
 	const { userData } = useContext(UserDataContext);
 	const tenantData = useTenant();
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(
+			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+		);
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
@@ -363,6 +381,8 @@ export const SessionsList = ({
 		resetSection: resetListDisplayOverride
 	} = useDisplayFilter(displayFilterSection);
 	const displayFilterLabels = useDisplayFilterLabels(displayFilterSection);
+	// The kind options are built further down (they need the unread counts);
+	// the toolbar predicate above them reads the latest list through a ref.
 	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
 	const { untilL } = useResponsive();
 
@@ -452,22 +472,46 @@ export const SessionsList = ({
 				abortController.current.abort();
 			}
 
-			abortController.current = new AbortController();
+			const controller = new AbortController();
+			abortController.current = controller;
 
 			return fetchEnquirySessionsWithAutoPage(
 				offset,
 				initialID,
 				count,
-				abortController.current.signal
-			).then(({ sessions, total }) => {
-				const pageSize = count ?? SESSION_COUNT;
-				const lastLoadedOffset =
-					offset + Math.max(0, sessions.length - pageSize);
-				setCurrentOffset(lastLoadedOffset);
-				setTotalItems(total);
-				setIsRequestInProgress(false);
-				return { sessions, total };
-			});
+				controller.signal
+			)
+				.then(({ sessions, total }) => {
+					// A superseded transport may still resolve after abort. Do not
+					// let its pagination state or rows reach the caller.
+					if (
+						controller.signal.aborted ||
+						abortController.current !== controller
+					) {
+						throw new Error(FETCH_ERRORS.ABORT);
+					}
+					const pageSize = count ?? SESSION_COUNT;
+					const lastLoadedOffset =
+						offset + Math.max(0, sessions.length - pageSize);
+					setCurrentOffset(lastLoadedOffset);
+					setTotalItems(total);
+					return { sessions, total };
+				})
+				.catch((error) => {
+					// Replaced requests no longer own the caller's error UI either.
+					if (
+						controller.signal.aborted ||
+						abortController.current !== controller
+					) {
+						throw new Error(FETCH_ERRORS.ABORT);
+					}
+					throw error;
+				})
+				.finally(() => {
+					if (abortController.current === controller) {
+						setIsRequestInProgress(false);
+					}
+				});
 		},
 		[fetchEnquirySessionsWithAutoPage]
 	);
@@ -477,8 +521,20 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		setIsRequestInProgress(true);
+		abortController.current?.abort();
+		const controller = new AbortController();
+		abortController.current = controller;
 		return refetchEnquiryListState({
-			fetchPage: () => fetchEnquirySessionsWithAutoPage(0),
+			signal: controller.signal,
+			fetchPage: () =>
+				fetchEnquirySessionsWithAutoPage(
+					0,
+					undefined,
+					currentOffset + SESSION_COUNT,
+					controller.signal
+				),
+			pageSize: SESSION_COUNT,
 			replaceSessions: (sessions) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -488,8 +544,15 @@ export const SessionsList = ({
 			},
 			setTotalItems,
 			setCurrentOffset
+		}).finally(() => {
+			// A live refresh takes ownership from pending pagination, including
+			// its loading indicator. Older completions cannot unlock a newer request.
+			if (abortController.current === controller) {
+				setIsRequestInProgress(false);
+				setIsLoading(false);
+			}
 		});
-	}, [dispatch, fetchEnquirySessionsWithAutoPage, type]);
+	}, [currentOffset, dispatch, fetchEnquirySessionsWithAutoPage, type]);
 
 	const refetchSessionList = useCallback(() => {
 		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
@@ -1014,17 +1077,13 @@ export const SessionsList = ({
 	]);
 
 	/*
-	 * Legacy invite-link enquiries do not emit newAnonymousEnquiry over STOMP.
-	 * Poll while Live Chat is selected (without aborting the main list fetch).
+	 * Reconcile submissions and acceptance even without an incoming Matrix message.
+	 * Keep the existing bounded polling interval for every enquiry filter.
 	 */
 	useEffect(() => {
 		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
 			return;
 		}
-		if (sessionToolbarChip !== 'liveChat') {
-			return;
-		}
-
 		const intervalId = window.setInterval(() => {
 			refetchEnquiryList();
 		}, 15000);
@@ -1093,12 +1152,17 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// One source with the create flow: the list must not offer a filter, or an
-	// entry point, for a format this Träger has switched off.
+	// entry point, for a format this Träger — or every one of the counsellor's
+	// Beratungsstellen — has switched off.
 	const {
 		createGroupChat: showCreateGroupChatAction,
 		groups: showGroupChip,
 		internalGroup: showInternalGroupChip
-	} = getFormatChipVisibility(tenantData, showConsultantToolbarActions);
+	} = getFormatChipVisibility(
+		tenantData,
+		showConsultantToolbarActions && !agencyFormatsLoading,
+		agencyFormats
+	);
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;
@@ -1552,6 +1616,176 @@ export const SessionsList = ({
 	const hiddenActiveRowIds = displayFiltered.hiddenActiveIds;
 	const displayFilterHiddenCount =
 		sessionToolbarPairs.length - displayVisiblePairs.length;
+	const kindsBySessionId = React.useMemo(() => {
+		const kinds: Record<string, string> = {};
+		sessionToolbarPairs.forEach(({ raw, extended }) => {
+			kinds[sessionPairId({ raw, extended })] =
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? classifyRequest(raw, extended)
+					: classifySession(
+							raw,
+							extended,
+							userData?.userId,
+							canSupervise
+						);
+		});
+		return kinds;
+	}, [canSupervise, sessionToolbarPairs, type, userData?.userId]);
+	// The sound gate in NotificationsProvider looks the event's session up
+	// here (#1377 "Ton" column, Frank 2026-09-16).
+	useEffect(() => {
+		sessionKindRegistry.publish(displayFilterSection, kindsBySessionId);
+	}, [displayFilterSection, kindsBySessionId]);
+	const rowsByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		Object.values(kindsBySessionId).forEach((kind) => {
+			counts[kind] = (counts[kind] ?? 0) + 1;
+		});
+		return counts;
+	}, [kindsBySessionId]);
+	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
+	// excluded from the chip counts", §6.2 "don't count hidden chats").
+	const unreadByKind = React.useMemo(() => {
+		const counts: Record<string, number> = {};
+		displayVisiblePairs.forEach(({ raw, extended }) => {
+			if (hiddenActiveRowIds.has(sessionPairId({ raw, extended }))) {
+				return;
+			}
+			if (!isChatItemUnread(raw.chat ?? raw.session)) {
+				return;
+			}
+			const kind =
+				type === SESSION_LIST_TYPES.ENQUIRY
+					? classifyRequest(raw, extended)
+					: classifySession(
+							raw,
+							extended,
+							userData?.userId,
+							canSupervise
+						);
+			counts[kind] = (counts[kind] ?? 0) + 1;
+		});
+		return counts;
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		displayVisiblePairs,
+		hiddenActiveRowIds,
+		type,
+		userData?.userId,
+		canSupervise,
+		unreadVersion
+	]);
+	// #1404 / Frank 2026-09-16: availability decides whether NEW live chats
+	// are routed to me — the Live-Chat row's pill mode decides when the chip
+	// is in the row (dynamic / bei Sitzung / fest); the open live chat never
+	// loses its chip.
+	const hasLiveChatRow = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(({ raw, extended }) =>
+				isAnonymousAskerSession(raw, extended)
+			),
+		[sessionToolbarPairs]
+	);
+	const activeIsLiveChat = React.useMemo(
+		() =>
+			sessionToolbarPairs.some(
+				({ raw, extended }) =>
+					isSessionListItemActive(extended) &&
+					isAnonymousAskerSession(raw, extended)
+			),
+		[isSessionListItemActive, sessionToolbarPairs]
+	);
+	const showLiveChatChip = isLiveChatChipVisible({
+		mode: kindPillMode(listDisplayFilter, 'liveChat'),
+		available: liveChatAvailable,
+		hasLiveChatRow,
+		unreadCount: unreadByKind.liveChat ?? 0,
+		activeIsLiveChat
+	});
+	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
+		const order =
+			type === SESSION_LIST_TYPES.ENQUIRY
+				? REQUEST_KIND_ORDER
+				: SESSION_KIND_ORDER;
+		// Role/availability gates (not Träger switches): listed or not.
+		const listed = (kind: string): boolean => {
+			switch (kind) {
+				case 'liveChat':
+					// Always listed (Frank 2026-09-16): the pill has modes
+					// (dynamic / pinned / off); availability only drives "dynamic".
+					return true;
+				case 'create':
+					// Träger gate of the create flow: off → no row (absent).
+					return (
+						type === SESSION_LIST_TYPES.MY_SESSION &&
+						showCreateGroupChatAction
+					);
+				case 'unread':
+				case 'drafts':
+				case 'archive':
+				case 'appointments':
+					return type === SESSION_LIST_TYPES.MY_SESSION;
+				case 'futureTimeline':
+					return showGroupChip;
+				case 'supervision':
+					return canSupervise;
+				default:
+					return true;
+			}
+		};
+		// Träger feature switches: off + rows → deactivated (listed, locked),
+		// off + no rows → absent (not listed). Frank 2026-09-16.
+		const traegerSwitch = (kind: string): boolean | null => {
+			switch (kind) {
+				case 'internalGroup':
+					return showInternalGroupChip;
+				case 'circle':
+					return showGroupChip;
+				default:
+					return null;
+			}
+		};
+		return listedKinds(
+			order.filter(listed).map((kind) => {
+				const formatEnabled = traegerSwitch(kind);
+				return {
+					id: kind,
+					label: sessionKindLabel(translate, kind),
+					chipLabel:
+						kind === OTHER_KIND_ID
+							? translate('notifications.displayFilter.otherChip')
+							: undefined,
+					icon: SESSION_KIND_ICONS[kind],
+					unreadCount: unreadByKind[kind] ?? 0,
+					showOnly: kind === 'futureTimeline',
+					modes: kind === 'liveChat',
+					pillOnly: PILL_ONLY_SESSION_KINDS.includes(
+						kind as SessionKindId
+					),
+					placeholder: kind === 'appointments',
+					availability:
+						formatEnabled === null
+							? ('available' as const)
+							: resolveKindAvailability({
+									formatEnabled,
+									rowCount: rowsByKind[kind] ?? 0
+								})
+				};
+			})
+		);
+	}, [
+		canSupervise,
+		rowsByKind,
+		showCreateGroupChatAction,
+		showGroupChip,
+		showInternalGroupChip,
+		translate,
+		type,
+		unreadByKind
+	]);
+	// Sonstiges chip (Frank 2026-09-16): rows of unmapped kind plus rows of
+	// every kind whose own pill is off. Classified here — the chip predicate
+	// in `sessionMatchesToolbar` knows nothing about kinds.
 	const toolbarMatches = useCallback(
 		({
 			raw,
@@ -1560,14 +1794,33 @@ export const SessionsList = ({
 			raw: ListItemInterface;
 			extended: ExtendedSessionInterface;
 		}) =>
+			(sessionToolbarChip !== 'other' ||
+				// the open conversation stays whatever the bundle says
+				isSessionListItemActive(extended) ||
+				matchesOtherChip(
+					listDisplayFilter,
+					displayFilterKinds,
+					type === SESSION_LIST_TYPES.ENQUIRY
+						? classifyRequest(raw, extended)
+						: classifySession(
+								raw,
+								extended,
+								currentUserId,
+								canSupervise
+							)
+				)) &&
 			sessionMatchesToolbar(
 				raw,
 				extended,
 				sessionToolbarSearch,
-				sessionToolbarChip,
+				sessionToolbarChip === 'other' ? null : sessionToolbarChip,
 				sessionToolbarSelectedPeople,
 				visibleUserDrafts,
-				currentUserId
+				currentUserId,
+				/* #1404: never let the chip hide the conversation that is
+				   open — the same route-active exception the display filter
+				   already makes one layer earlier. */
+				isSessionListItemActive(extended)
 			) &&
 			sessionMatchesAgencies(
 				raw,
@@ -1579,12 +1832,17 @@ export const SessionsList = ({
 						?.id ?? ''
 				) === sessionToolbarSelectedTopic),
 		[
+			canSupervise,
 			currentUserId,
+			displayFilterKinds,
+			listDisplayFilter,
+			isSessionListItemActive,
 			sessionToolbarChip,
 			sessionToolbarSearch,
 			sessionToolbarSelectedAgencies,
 			sessionToolbarSelectedPeople,
 			sessionToolbarSelectedTopic,
+			type,
 			visibleUserDrafts
 		]
 	);
@@ -1714,74 +1972,38 @@ export const SessionsList = ({
 		visibleUserDrafts
 	]);
 	const visibleListItemCount = sortedSessions.length + unmatchedDrafts.length;
-	// Unread per kind over the display-VISIBLE rows (§5.2 "hidden kinds are
-	// excluded from the chip counts", §6.2 "don't count hidden chats").
-	const unreadByKind = React.useMemo(() => {
-		const counts: Record<string, number> = {};
-		displayVisiblePairs.forEach(({ raw, extended }) => {
-			if (hiddenActiveRowIds.has(sessionPairId({ raw, extended }))) {
-				return;
+	// Rows per kind over ALL loaded rows (before the display filter): the
+	// Träger switch decides between "deactivated" (rows still exist) and
+	// "absent" (nothing of that kind) by this count (Frank 2026-09-16).
+	const chipPresentation = resolveChipPresentation(listDisplayFilter);
+	// Chips of kinds the Träger switched off while rows exist: locked, the
+	// click explains (snackbar) instead of filtering.
+	const deactivatedKindChips = React.useMemo(() => {
+		const locked: Partial<Record<DisplayFilterKindChip, boolean>> = {};
+		displayFilterKinds.forEach((kind) => {
+			const chip = SESSION_KIND_CHIP[kind.id];
+			if (chip && kind.availability === 'deactivated') {
+				locked[chip] = true;
 			}
-			if (!isChatItemUnread(raw.chat ?? raw.session)) {
-				return;
-			}
-			const kind =
-				type === SESSION_LIST_TYPES.ENQUIRY
-					? classifyRequest(raw, extended)
-					: classifySession(
-							raw,
-							extended,
-							userData?.userId,
-							canSupervise
-						);
-			counts[kind] = (counts[kind] ?? 0) + 1;
 		});
-		return counts;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [
-		displayVisiblePairs,
-		hiddenActiveRowIds,
-		type,
-		userData?.userId,
-		canSupervise,
-		unreadVersion
-	]);
-	const displayFilterKinds = React.useMemo<DisplayFilterKindOption[]>(() => {
-		const order =
-			type === SESSION_LIST_TYPES.ENQUIRY
-				? REQUEST_KIND_ORDER
-				: SESSION_KIND_ORDER;
-		const listed = (kind: string): boolean => {
-			switch (kind) {
-				case 'liveChat':
-					return liveChatAvailable;
-				case 'internalGroup':
-					return showInternalGroupChip;
-				case 'circle':
-				case 'futureTimeline':
-					return showGroupChip;
-				case 'supervision':
-					return canSupervise;
-				default:
-					return true;
-			}
-		};
-		return order.filter(listed).map((kind) => ({
-			id: kind,
-			label: sessionKindLabel(translate, kind),
-			icon: SESSION_KIND_ICONS[kind],
-			unreadCount: unreadByKind[kind] ?? 0,
-			showOnly: kind === 'futureTimeline'
-		}));
-	}, [
-		canSupervise,
-		liveChatAvailable,
-		showGroupChip,
-		showInternalGroupChip,
-		translate,
-		type,
-		unreadByKind
-	]);
+		return locked;
+	}, [displayFilterKinds]);
+	const [deactivatedNotice, setDeactivatedNotice] = useState<string | null>(
+		null
+	);
+	const handleDeactivatedChipClick = useCallback(
+		(chip: DisplayFilterKindChip) => {
+			const kind = displayFilterKinds.find(
+				(candidate) => SESSION_KIND_CHIP[candidate.id] === chip
+			);
+			setDeactivatedNotice(
+				translate('notifications.displayFilter.deactivatedNotice', {
+					kind: kind?.label ?? ''
+				})
+			);
+		},
+		[displayFilterKinds, translate]
+	);
 	const displayFilterCustomised = isDisplayFilterCustomised(
 		listDisplayFilter,
 		displayFilterKinds
@@ -1800,12 +2022,10 @@ export const SessionsList = ({
 		if (!activeKind) {
 			return;
 		}
-		// Anfragen chips are tabs (§5.3): only a hidden kind clears the tab.
-		const reconciled =
-			type === SESSION_LIST_TYPES.ENQUIRY
-				? reconcileActiveRequestKind(listDisplayFilter, activeKind)
-				: reconcileActiveKind(listDisplayFilter, activeKind);
-		if (reconciled === null) {
+		// Frank 2026-09-16: a chip is a menu entry in every list — Anfragen
+		// included (supersedes #1427's "tabs" rule: the Anzeigen picker of the
+		// Anfragen dialog switches the chip, hiding is not offered there).
+		if (reconcileActiveKind(listDisplayFilter, activeKind) === null) {
 			// Through the toggle so `?chip=…` clears with the state; otherwise a
 			// reload or the URL-sync effect restores the hidden tab.
 			handleToolbarChipToggle(sessionToolbarChip);
@@ -1817,22 +2037,10 @@ export const SessionsList = ({
 		sessionToolbarChip,
 		type
 	]);
-	// Gespräche kind chips are user-gated pills (§5.1): pill on and unread
-	// rows, or active. Anfragen chips are tabs (§5.3): hidden only when the
-	// kind is hidden, so the default "Mail" tab can always be reached.
+	// Kind chips are menu entries (Frank 2026-09-16): pill on → chip, in
+	// Gespräche and Anfragen alike; unread is a badge on the chip.
 	const hiddenKindChips = React.useMemo(() => {
 		const hidden: Partial<Record<DisplayFilterKindChip, boolean>> = {};
-		if (type === SESSION_LIST_TYPES.ENQUIRY) {
-			hiddenRequestKinds(listDisplayFilter, displayFilterKinds).forEach(
-				(kind) => {
-					const chip = SESSION_KIND_CHIP[kind.id];
-					if (chip) {
-						hidden[chip] = true;
-					}
-				}
-			);
-			return hidden;
-		}
 		const activeKind =
 			displayFilterKinds.find(
 				(kind) => SESSION_KIND_CHIP[kind.id] === sessionToolbarChip
@@ -1851,7 +2059,7 @@ export const SessionsList = ({
 			}
 		});
 		return hidden;
-	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip, type]);
+	}, [displayFilterKinds, listDisplayFilter, sessionToolbarChip]);
 	const toolbarChipCounts = React.useMemo(() => {
 		// Unread is derived from the Matrix client (#1147); `unreadVersion`
 		// re-runs this memo when notification counts or receipts change.
@@ -1878,12 +2086,18 @@ export const SessionsList = ({
 				counts[chip] = (counts[chip] ?? 0) + count;
 			}
 		});
+		// Sonstiges bundles the kinds without their own pill (Frank 2026-09-16).
+		kindsUnderOther(listDisplayFilter, displayFilterKinds).forEach(
+			(kind) => {
+				counts.other = (counts.other ?? 0) + (unreadByKind[kind] ?? 0);
+			}
+		);
 		return counts;
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		displayVisiblePairs,
 		hiddenActiveRowIds,
-		listDisplayFilter.autoReadHidden,
+		listDisplayFilter,
 		sessionToolbarPairs,
 		type,
 		unreadByKind,
@@ -2006,7 +2220,13 @@ export const SessionsList = ({
 					translate={translate}
 					activeChip={sessionToolbarChip}
 					onChipToggle={handleToolbarChipToggle}
-					showLiveChatChip={liveChatAvailable}
+					showLiveChatChip={showLiveChatChip}
+					showArchiveChip={
+						resolveKindSetting(listDisplayFilter, 'archive').pill
+					}
+					showCreateChip={
+						resolveKindSetting(listDisplayFilter, 'create').pill
+					}
 				/>
 			)} */}
 			{showMySessionToolbar && (
@@ -2028,7 +2248,13 @@ export const SessionsList = ({
 					   availability toggle is ON — it narrows the
 					   my-sessions list to anonymous-asker chats using the
 					   same username-prefix filter as the Anfragen chip. */
-					showLiveChatChip={liveChatAvailable}
+					showLiveChatChip={showLiveChatChip}
+					showArchiveChip={
+						resolveKindSetting(listDisplayFilter, 'archive').pill
+					}
+					showCreateChip={
+						resolveKindSetting(listDisplayFilter, 'create').pill
+					}
 					createGroupChatPath={buildCreateGroupChatPath(
 						sessionListTab || undefined
 					)}
@@ -2039,7 +2265,26 @@ export const SessionsList = ({
 					createGroupChatActive={isCreateChatActive}
 					chipCounts={toolbarChipCounts}
 					hiddenKindChips={hiddenKindChips}
+					deactivatedKindChips={deactivatedKindChips}
+					deactivatedChipLabel={(name) =>
+						translate(
+							'notifications.displayFilter.deactivatedChip',
+							{
+								kind: name
+							}
+						)
+					}
+					onDeactivatedChipClick={handleDeactivatedChipClick}
+					chipView={chipPresentation.view}
+					chipAutoSort={chipPresentation.autoSort}
+					showOtherChip
 					displayFilter={{
+						icon:
+							type === SESSION_LIST_TYPES.ENQUIRY ? (
+								<NavInboxIcon className="sessionsListToolbar__chipIconSvg" />
+							) : (
+								<NavChatsIcon className="sessionsListToolbar__chipIconSvg" />
+							),
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
 							displayFilterLabels.buttonCustomisedLabel,
@@ -2104,8 +2349,26 @@ export const SessionsList = ({
 				/>
 			)}
 			{showMySessionToolbar && (
+				<M3Snackbar
+					open={deactivatedNotice !== null}
+					message={deactivatedNotice}
+					role="status"
+					onClose={() => setDeactivatedNotice(null)}
+					closeLabel={displayFilterLabels.dialogLabels.close}
+					testId="display-filter-deactivated-notice"
+				/>
+			)}
+			{showMySessionToolbar && (
 				<DisplayFilterDialog
 					id={SESSIONS_DISPLAY_FILTER_DIALOG_ID}
+					columns={SESSION_COLUMNS}
+					icon={
+						type === SESSION_LIST_TYPES.ENQUIRY ? (
+							<NavInboxIcon className="displayFilterDialog__heroIcon" />
+						) : (
+							<NavChatsIcon className="displayFilterDialog__heroIcon" />
+						)
+					}
 					open={displayFilterOpen}
 					fullScreen={untilL}
 					onClose={() => setDisplayFilterOpen(false)}

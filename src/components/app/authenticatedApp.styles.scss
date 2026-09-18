@@ -53,6 +53,23 @@ a {
 }
 
 .app {
+	// Recovery notices share the viewport with the application, rather than
+	// adding their height above a full-height conversation and its controls.
+	&:has(> .encryption-recovery-notice) {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+
+		> .encryption-recovery-notice {
+			flex-shrink: 0;
+		}
+
+		> .app__wrapper {
+			flex: 1;
+			min-height: 0;
+		}
+	}
+
 	&--blur {
 		> *:not(.notifications) {
 			filter: blur(5px);
