@@ -6,10 +6,10 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	lazy,
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 import {
 	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
 	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
@@ -63,6 +63,8 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
+import { Button, BUTTON_TYPES } from '../button/Button';
+import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -223,7 +225,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
-const MessageSubmitInterfaceComponent = lazy(() =>
+const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
 	)
@@ -2250,7 +2252,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
-			teamDiscussionResolved: props.teamDiscussionResolved
+			teamDiscussionResolved: props.teamDiscussionResolved,
+			canStartTeamDiscussion:
+				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2265,6 +2269,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		activeSession.isEnquiry,
+		canOpenTeamSideRoom,
 		messages,
 		setChannelRoute
 	]);
@@ -2722,6 +2728,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
+	const showEnquiryTeamAction =
+		type === SESSION_LIST_TYPES.ENQUIRY &&
+		activeSession.isEnquiry &&
+		!shouldBlockAnonymousInquiryChat &&
+		!isAnonymousAskerExperience &&
+		canOpenTeamSideRoom &&
+		!canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat
+		});
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
@@ -3279,6 +3296,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
+									hideSystemMessages={
+										isConsultantUser &&
+										(isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry))
+									}
+									showFullContent={
+										isOnlyEnquiry ||
+										Boolean(activeSession.isEnquiry)
+									}
 									isMyMessage={isMyMessageMatrix}
 									isUserBanned={(username) =>
 										props.bannedUsers.includes(username)
@@ -3411,9 +3437,32 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				</div>
 
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
+					activeSession.isEnquiry &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
-						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+						<AcceptAssign
+							btnLabel={'enquiry.acceptButton.known'}
+							secondaryAction={
+								showEnquiryTeamAction && openPanel === null ? (
+									<Button
+										item={{
+											type: BUTTON_TYPES.SECONDARY,
+											label: 'enquiry.teamDiscussion.open',
+											icon: (
+												<TeamActionGlyph aria-hidden="true" />
+											)
+										}}
+										className="session__teamDiscussionAction"
+										testingAttribute="enquiry-open-team"
+										buttonHandle={() =>
+											selectChannelFromFab(
+												channelId({ kind: 'team' })
+											)
+										}
+									/>
+								) : undefined
+							}
+						/>
 					)}
 
 				{shouldShowPseudonymGate && !pseudonymConfirmed && (
@@ -3616,7 +3665,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
 			    channels) and, on the phone, while the composer has focus. */}
-				{otherChannels.length > 0 && (
+				{otherChannels.some(
+					(channel) =>
+						!showEnquiryTeamAction || channel.kind !== 'team'
+				) && (
 					<ChannelSwitcherFab
 						channels={secondaryChannels}
 						activeChannelId={shownChannelId}

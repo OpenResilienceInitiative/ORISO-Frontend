@@ -18,6 +18,8 @@ import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 import {
 	TextMessageContentOptions,
+	type MessageRelationOptions,
+	buildMessageRelationContent,
 	buildTextMessageContent,
 	buildEditContent,
 	buildReactionContent
@@ -44,7 +46,7 @@ type RefreshableRustCrypto = {
 	};
 };
 
-export interface MatrixFileMessageOptions {
+export interface MatrixFileMessageOptions extends MessageRelationOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
 }
@@ -66,8 +68,10 @@ const getMatrixFileMessageType = (file: File): string => {
 export const buildMatrixFileMessageContent = (
 	file: File,
 	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file'],
-	dimensions?: { w: number; h: number } | null
+	dimensions?: { w: number; h: number } | null,
+	options?: MessageRelationOptions
 ): Record<string, unknown> => ({
+	...buildMessageRelationContent(options),
 	body: file.name,
 	filename: file.name,
 	msgtype: getMatrixFileMessageType(file),
@@ -915,7 +919,8 @@ export class MatrixClientService {
 				...encryptedAttachment.file,
 				url: uploadResponse.content_uri
 			},
-			dimensions
+			dimensions,
+			options
 		);
 	}
 
