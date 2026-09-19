@@ -577,7 +577,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Ouvrir la discussion d’équipe" },
+		"teamDiscussion": {
+			"open": "Ouvrir la discussion d’équipe"
+		},
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
 			"known": "Accepter la demande"
@@ -4002,7 +4004,11 @@
 				"label": "Votre deuxième facteur"
 			}
 		},
-		"title": "Authentification à deux facteurs"
+		"title": "Authentification à deux facteurs",
+		"required": {
+			"copy": "Veuillez configurer maintenant un deuxième facteur (application ou e-mail). Ce n'est qu'ensuite que votre compte n'appartient qu'à vous et que vous pouvez commencer les consultations.",
+			"title": "Deuxième facteur requis"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4843,7 +4849,8 @@
 			"idle": "L’état de la récupération n’a pas encore été vérifié.",
 			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
 			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
-			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié."
+			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié.",
+			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste."
 		}
 	},
 	"accountInvite": {
@@ -5081,6 +5088,17 @@
 			"title": "Connexion interrompue",
 			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
 			"retry": "Réessayer"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Votre accès a été créé par une administratrice ou un administrateur, qui a également défini votre premier mot de passe et le connaît toujours. Veuillez le remplacer maintenant par un mot de passe que vous seul connaissez. Vous configurerez ensuite votre deuxième facteur.",
+			"title": "Veuillez choisir votre propre mot de passe"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Se déconnecter"
 		}
 	}
 }
