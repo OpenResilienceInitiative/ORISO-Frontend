@@ -238,6 +238,24 @@ describe('InviteLink queue entries', () => {
 		expect(redeemInviteLink).not.toHaveBeenCalled();
 	});
 
+	it('retries only the session lookup after a transient failure', async () => {
+		localStorage.setItem('oriso.invite.session.token-123', '41');
+		vi.mocked(apiGetAnonymousEnquiryDetails)
+			.mockRejectedValueOnce(new Error('TIMEOUT'))
+			.mockResolvedValue({ numAvailableConsultants: 1, status: 'NEW' });
+		renderInvite();
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Erneut versuchen' })
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room 41'
+			)
+		);
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+	});
+
 	it('redeems a fresh session once the remembered one is over', async () => {
 		localStorage.setItem('oriso.invite.session.token-123', '41');
 		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({

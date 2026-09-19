@@ -3823,6 +3823,36 @@ export const MessageSubmitInterfaceComponent = ({
 			style={expandedComposerStyle}
 		>
 			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{threadRootId && (
+				<div
+					className="messageSubmit__target"
+					data-cy="composer-target"
+					role="status"
+				>
+					<strong className="messageSubmit__targetLabel">
+						{translate(
+							'message.thread.targetLabel',
+							'Ziel: Thread'
+						)}
+					</strong>
+					<span
+						className="messageSubmit__targetPreview"
+						title={
+							threadParentPreview ||
+							translate(
+								'message.thread.unknownRoot',
+								'Frühere Nachricht'
+							)
+						}
+					>
+						{threadParentPreview ||
+							translate(
+								'message.thread.unknownRoot',
+								'Frühere Nachricht'
+							)}
+					</span>
+				</div>
+			)}
 			{highlightedSnippet && (
 				<div className="textarea__snippetInfo">
 					{translate('chat.highlightSnippet.ready', {

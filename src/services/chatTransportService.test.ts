@@ -665,6 +665,33 @@ describe('chatTransportService team attachment notifications', () => {
 			expect.objectContaining({ roomId: ROOM_ID, teamDiscussion: true })
 		);
 	});
+
+	it('forwards the thread root to the Matrix file sender', async () => {
+		const sendFileMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$file' })
+		);
+		setMatrixClientServiceRef({
+			getClient: () => ({}),
+			sendFileMessage
+		} as any);
+
+		await chatTransportService.sendFileMessage(
+			ROOM_ID,
+			new File(['x'], 'photo.png', { type: 'image/png' }),
+			{
+				threadRootId: '$thread-root:oriso.org',
+				postMessageEventNotification: vi.fn(() => Promise.resolve({}))
+			}
+		);
+
+		expect(sendFileMessage).toHaveBeenCalledWith(
+			ROOM_ID,
+			expect.any(File),
+			expect.objectContaining({
+				threadRootId: '$thread-root:oriso.org'
+			})
+		);
+	});
 });
 
 describe('chatTransportService markRoomAsRead', () => {
