@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -9,6 +9,7 @@ import {
 	shift,
 	size
 } from '@floating-ui/dom';
+import { ModalContext } from '../../../globalState';
 import type { MenuDirection } from './menuDirection';
 
 export interface ToolbarMenuItem {
@@ -54,6 +55,22 @@ export const ToolbarMenu = ({
 	const [maxHeight, setMaxHeight] = useState<number | null>(null);
 	const [placedDirection, setPlacedDirection] =
 		useState<MenuDirection>(direction);
+
+	// #458: the menu is portalled to `document.body`, same as any app overlay
+	// (Overlay.tsx portals to a sibling `#overlay` node) — so a screen
+	// transition to an overlay (chat-ended, token-expiry, ...) does not
+	// unmount this menu, and without this it paints back on top since it was
+	// the later DOM sibling. `ModalContext.overlays` is the app's existing
+	// global registry of active overlays (Overlay.tsx registers into it on
+	// mount); closing as soon as one exists covers every overlay, not just
+	// the call site that reproduced the bug.
+	const modalContext = useContext(ModalContext);
+	const activeOverlayCount = modalContext?.overlays?.length ?? 0;
+	useEffect(() => {
+		if (activeOverlayCount > 0) {
+			onClose();
+		}
+	}, [activeOverlayCount, onClose]);
 
 	useEffect(() => {
 		const menuEl = menuRef.current;
