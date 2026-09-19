@@ -60,18 +60,10 @@ export const IncomingCall: Story = {
 };
 
 /**
- * Setting up / connecting — token fetch held open so the connecting popup
- * stays visible (setupElementCall never completes).
+ * Setting up / connecting — room membership remains invited and the
+ * Storybook-only join never resolves, so the real host stays connecting.
  */
 export const Connecting: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	args: { mode: 'connecting' },
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
@@ -90,14 +82,6 @@ export const Connecting: Story = {
  * (non-resolving host; blank iframe frame is expected).
  */
 export const ActiveCall: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	args: { mode: 'active' },
 	play: async ({ canvasElement }) => {
 		await waitFor(
@@ -106,9 +90,13 @@ export const ActiveCall: Story = {
 					'.element-call-iframe'
 				) as HTMLIFrameElement | null;
 				expect(iframe).toBeTruthy();
-				expect(iframe?.getAttribute('src') || '').toMatch(
-					/^https:\/\/call\.storybook\.test\/room\/#/
+				const iframeUrl = new URL(iframe?.getAttribute('src') || '');
+				expect(iframeUrl.origin).toBe('https://call.storybook.test');
+				expect(iframeUrl.pathname).toBe('/room');
+				expect(iframeUrl.hash).toContain(
+					'roomId=%21sb-element-call%3Amatrix.storybook.test'
 				);
+				expect(iframeUrl.hash).not.toContain('accessToken');
 				expect(
 					canvasElement.querySelector(
 						'button.element-call-fullscreen[aria-label]'
