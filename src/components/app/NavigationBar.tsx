@@ -23,7 +23,8 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS,
 	TenantContext,
-	LocaleContext
+	LocaleContext,
+	NotificationsContext
 } from '../../globalState';
 import { initNavigationHandler } from './navigationHandler';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
@@ -53,6 +54,7 @@ import {
 	LiveChatToggleActiveIcon,
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
+import { resolveLiveChatRailTarget } from './liveChatRailTarget';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -149,13 +151,16 @@ export const NavigationBar = ({
 		const nextActive = !liveChatAvailable;
 		try {
 			await setLiveChatAvailable(nextActive);
-			if (nextActive) {
-				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+			// Frank 2026-09-16 (Variante 1): with a live chat already open the
+			// button leads back into that conversation, not the empty queue.
+			const target = resolveLiveChatRailTarget({ nextActive, sessions });
+			if (target) {
+				navigate(target);
 			}
 		} catch {
 			// The hook retains the acknowledged state and exposes a localized error.
 		}
-	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
+	}, [liveChatAvailable, navigate, sessions, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
 	/**
@@ -216,10 +221,24 @@ export const NavigationBar = ({
 		}, 1000);
 	}, [isFirstVisit]);
 
+	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
+	// server total minus hidden unread rows on loaded pages, an upper bound);
+	// the tooltip says so while hidden unread rows exist in the loaded feed.
+	const notificationsContext = useContext(NotificationsContext);
+	const visibleUnreadCount = notificationsContext?.visibleUnreadCount ?? 0;
+	const hiddenUnreadInLoadedPages =
+		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
 	const pathsToShowUnreadMessageNotification = {
 		'/profile':
-			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0
+			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
+		'/notifications': visibleUnreadCount
 	};
+	const unreadNavTitle = (to: string): string | undefined =>
+		to === '/notifications' && hiddenUnreadInLoadedPages > 0
+			? translate('notifications.displayFilter.badgeHiddenHint', {
+					count: hiddenUnreadInLoadedPages
+				})
+			: undefined;
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {
 		const value = to.replace(REGEX_DASH, '-').toLowerCase().slice(1);
@@ -356,6 +375,19 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								const unreadLabel = showUnreadNav
+									? translate(
+											'sessionList.rail.unreadCount',
+											{
+												count: unreadCount
+											}
+										)
+									: '';
+								// The Link's aria-label is its whole accessible
+								// name, so the count has to be part of it.
+								const linkLabel = showUnreadNav
+									? `${label}, ${unreadLabel}`
+									: label;
 								// Desktop rail may hyphenate/wrap; mobile bottom bar
 								// must stay single-line to avoid overlapping neighbors.
 								const visibleLabel = useFigmaSlot
@@ -439,7 +471,7 @@ export const NavigationBar = ({
 												`navigation__item--nav-${item.navSlot}`
 										)}
 										to={item.to}
-										aria-label={label}
+										aria-label={linkLabel}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -475,7 +507,11 @@ export const NavigationBar = ({
 													<NavigationUnreadIndicator
 														animate={animateNavIcon}
 														count={unreadCount}
+														label={unreadLabel}
 														variant="figma"
+														title={unreadNavTitle(
+															item.to
+														)}
 													/>
 												)}
 											</div>
@@ -497,7 +533,9 @@ export const NavigationBar = ({
 											<NavigationUnreadIndicator
 												animate={animateNavIcon}
 												count={unreadCount}
+												label={unreadLabel}
 												variant="default"
+												title={unreadNavTitle(item.to)}
 											/>
 										)}
 									</Link>
@@ -810,11 +848,17 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
-	variant = 'default'
+	label,
+	variant = 'default',
+	title
 }: {
 	animate: boolean;
 	count: number;
+	/** Localised "{{count}} new messages" (also part of the link's name). */
+	label: string;
 	variant?: 'default' | 'figma';
+	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
+	title?: string;
 }) => {
 	const [visible, setVisible] = useState(false);
 
@@ -837,7 +881,8 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={`${count} unread`}
+			aria-label={title ? `${label}, ${title}` : label}
+			title={title}
 		>
 			{isFigma ? (
 				<span className="navigation__item__count__sup">{display}</span>

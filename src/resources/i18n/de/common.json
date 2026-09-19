@@ -343,9 +343,14 @@
 			"team": {
 				"title": "Teamberatung",
 				"onlyMarker": "Nur fürs Team",
-				"composer": { "placeholder": "Nachricht an das Team …" },
+				"composer": {
+					"placeholder": "Nachricht an das Team …"
+				},
 				"systemNotice": "Die Teamberatung läuft parallel zur Beratung. Die ratsuchende Person ist hier nicht dabei und sieht davon nichts.",
-				"empty": { "title": "Teamberatung starten", "text": "Schreiben Sie unten die erste Nachricht an Ihr Team." }
+				"empty": {
+					"title": "Teamberatung starten",
+					"text": "Schreiben Sie unten die erste Nachricht an Ihr Team."
+				}
 			}
 		},
 		"menu": {
@@ -567,6 +572,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "Teambesprechung öffnen" },
 		"acceptButton": {
 			"anonymous": "Chat starten",
 			"known": "Anfrage annehmen"
@@ -804,10 +810,11 @@
 			"authorContent": {
 				"title": "Begrüßung und Gruppenregeln",
 				"sourceLanguage": "Ausgangssprache",
-				"welcome": "Begrüßung (maximal 120 Zeichen)",
+				"welcome": "Begrüßungstext max. 120 Zeichen",
 				"rules": "Gruppenregeln",
-				"rule": "Regel",
+				"rule": "Regel Nr. 1 auf max. 120 Zeichen",
 				"addRule": "Regel hinzufügen",
+				"removeLanguage": "Sprache {{language}} entfernen",
 				"removeRule": "Entfernen",
 				"translate": "In aktive Sprachen übersetzen",
 				"translating": "Wird übersetzt…",
@@ -817,6 +824,7 @@
 				"ruleEditorLabel": "Regel bearbeiten",
 				"editRule": "Regel {{index}} bearbeiten",
 				"deleteRule": "Regel {{index}} löschen",
+				"ruleChipShort": "Nr. {{index}}",
 				"ruleChip": "Regel Nr. {{index}}"
 			},
 			"listItem": {
@@ -1569,6 +1577,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
 						"missing": "Bitte geben Sie den Code aus Ihrer E-Mail für die Zwei-Faktor-Authentifizierung ein."
@@ -1800,6 +1809,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht",
+			"targetLabel": "Ziel: Thread",
 			"listToggle": "Threads",
 			"replies": "{{count}} Antworten",
 			"title": "Thread",
@@ -1848,6 +1858,65 @@
 		"warning": "Warnung"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Ansicht einstellen",
+			"buttonCustomised": "Ansicht angepasst",
+			"title": "Ansicht",
+			"description": "Welche Arten diese Liste zeigt, welche eine Pille bekommen und wie sie klingen.",
+			"showColumn": "In der Liste",
+			"pillColumn": "Anzeigen",
+			"soundColumn": "Ton",
+			"soundKind": "Ton anhören: {{kind}}",
+			"soundMenu": "Ton wählen: {{kind}}",
+			"soundDefault": "Standard",
+			"pillMenu": "Anzeige wählen: {{kind}}",
+			"liveChatDynamic": "Dynamisch",
+			"liveChatFixed": "Fest",
+			"pillOff": "Aus",
+			"pillOn": "An",
+			"placeholderHint": "Kommt bald.",
+			"showKind": "In der Liste: {{kind}}",
+			"pillKind": "Pille: {{kind}}",
+			"otherFixed": "Sonstiges wird immer angezeigt, damit nichts unbemerkt verschwindet.",
+			"pillNotApplicable": "Keine Pille für diese Art",
+			"autoRead": "Ausgeblendetes sofort als gelesen markieren",
+			"autoReadDescription": "Gilt nur für diese Liste. An Chats werden keine Lesebestätigungen gesendet.",
+			"autoReadSessions": "Ausgeblendete Chats nicht als ungelesen zählen",
+			"autoReadSessionsDescription": "Gilt nur für diese Liste und den Zähler. Chats werden nicht als gelesen markiert, es werden keine Lesebestätigungen gesendet.",
+			"reset": "Auf meine Standards zurücksetzen",
+			"done": "Fertig",
+			"profileLink": "Standards bearbeiten",
+			"overrideNotice": "Diese Liste weicht von Ihren Standards ab.",
+			"resetShort": "Zurücksetzen",
+			"otherChip": "Weitere",
+			"readOnlyHint": "Diese Einstellungen stammen aus einer neueren App-Version. Zum Ändern bitte die App aktualisieren.",
+			"viewTitle": "Filter-Button Anzeige-Optionen",
+			"viewIcons": "Icons",
+			"viewLabels": "Icons + Text",
+			"viewText": "Text",
+			"autoSort": "Ungelesenes nach links sortieren",
+			"autoSortDescription": "Pillen mit ungelesenen Einträgen rücken an den Anfang der Reihe.",
+			"deactivatedHint": "Vom Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind.",
+			"deactivatedChip": "{{kind}} (vom Träger abgeschaltet)",
+			"deactivatedNotice": "{{kind}} ist für Ihren Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind; neue können nicht angelegt werden.",
+			"badgeHiddenHint": "bis zu {{count}} ausgeblendet",
+			"hiddenActiveRow": "Durch Ihren Anzeige-Filter ausgeblendet",
+			"profileTitle": "Anzeige-Filter",
+			"profileDescription": "Standards pro Liste, gültig auf allen Geräten. Eine Liste kann sie über ihren Filter-Knopf vorübergehend übersteuern.",
+			"overrideActive": "Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.",
+			"eventTypesTitle": "Feinsteuerung nach Ereignistyp",
+			"eventTypesDescription": "Einzelne Ereignistypen des Zeitstrahls ausblenden. Gilt auch, wenn die Liste einen eigenen Filter nutzt.",
+			"eventTypeShow": "{{type}} anzeigen",
+			"applyToAll": "Auf andere Listen übertragen",
+			"applyToAllDescription": "Überträgt „Ausgeblendetes sofort als gelesen markieren“ auf Zeitstrahl und Gespräche sowie die Live-Chat-Einstellung auf Gespräche und Anfragen.",
+			"otherKind": "Sonstiges",
+			"sections": {
+				"timeline": "Zeitstrahl",
+				"sessions": "Gespräche",
+				"requests": "Anfragen"
+			},
+			"liveChatSession": "Bei Sitzung"
+		},
 		"families": {
 			"all": "Alle",
 			"requests": "Anfragen",
@@ -3590,14 +3659,17 @@
 				"unread": "Ungelesen",
 				"drafts": "Entwürfe",
 				"nearby": "Mail",
+				"other": "Weitere",
 				"create": "Erstellen",
+				"group": "Filter",
 				"archive": "Archiviert",
-				"oneToOne": "1-1 Beratung",
+				"oneToOne": "Mail-Beratung",
 				"liveChat": "Live-Chat",
 				"internalGroup": "Interner Gruppenchat",
 				"groups": "Gesprächskreis",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Chat erstellen"
 			},
 			"emptyFilterResult": "Keine Beratung entspricht Ihrer Suche oder den Filtern.",
 			"draftMetadataOnly": "Ungesendete Nachricht gespeichert."
@@ -4701,13 +4773,14 @@
 		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
 	},
 	"dpaSign": {
-		"title": "Vertragsunterlagen unterzeichnen",
-		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.",
+		"title": "Vertragsunterlagen prüfen und bestätigen",
+		"subtitle": "Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.",
+		"signerName": "Vollständiger Name",
 		"loadingContract": "Vertragsunterlagen werden geladen...",
 		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
-		"signingFor": "Sie unterzeichnen im Namen von:",
+		"signingFor": "Sie handeln im Namen von:",
 		"accept": "Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.",
-		"submit": "Verbindlich bestätigen",
+		"submit": "Bestätigung absenden",
 		"submitting": "Speichern...",
 		"success": "Die Bestätigung der Vertragsunterlagen wurde gespeichert.",
 		"error": {
@@ -4993,6 +5066,13 @@
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Verbindung unterbrochen",
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen"
 		}
 	}
 }

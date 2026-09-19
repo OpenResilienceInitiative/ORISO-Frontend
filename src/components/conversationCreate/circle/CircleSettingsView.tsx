@@ -5,6 +5,7 @@ import { ReactComponent as CircleIcon } from '../../../resources/img/icons/self-
 import { ReactComponent as CategorySearchIcon } from '../../../resources/img/icons/category-search.svg';
 import { OrisoSelect } from '../../form/OrisoSelect';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
+import { ReactComponent as AddCircleIcon } from '../../../resources/img/icons/add-circle.svg';
 import { GroupChatAuthorContentFields } from '../../groupChat/GroupChatAuthorContentFields';
 import {
 	GroupChatAuthorContentDraft,
@@ -248,6 +249,11 @@ export const CircleSettingsView = ({
 
 	const scheduleRows = (
 		<ScheduleRows
+			/*
+			 * Switching agency replaces seriesFields with the new defaults, so
+			 * the rows must forget which of them the author had settled.
+			 */
+			key={selectedAgency ?? 'no-agency'}
 			value={seriesFields}
 			onChange={setSeriesFields}
 			language={authorContent.sourceLanguage}
@@ -261,6 +267,8 @@ export const CircleSettingsView = ({
 				value: language,
 				label: language.toUpperCase()
 			}))}
+			valuesAreChosen={Boolean(prefill)}
+			isEditMode={isEditMode}
 		/>
 	);
 
@@ -423,6 +431,12 @@ export const CircleSettingsView = ({
 				</FormatCard>
 				<div className="circleSettings__authorColumn">
 					<GroupChatAuthorContentFields
+						/*
+						 * Same reason as the schedule rows: a new agency brings
+						 * a new draft, so a language dropped from the old one
+						 * must not stay hidden.
+						 */
+						key={selectedAgency ?? 'no-agency'}
 						activeLanguages={activeLanguages}
 						value={authorContent}
 						onChange={setAuthorContent}
@@ -450,6 +464,7 @@ export const CircleSettingsView = ({
 						disabled={!isReady}
 						onClick={handleCreate}
 					>
+						<AddCircleIcon aria-hidden />
 						{translate(
 							isEditMode
 								? 'groupChat.circle.saveLabel'

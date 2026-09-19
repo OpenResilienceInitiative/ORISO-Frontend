@@ -2,7 +2,9 @@
 	"chatStage": {
 		"panel": {
 			"team": {
-				"empty": { "text": "Schreibe unten die erste Nachricht an dein Team." }
+				"empty": {
+					"text": "Schreibe unten die erste Nachricht an dein Team."
+				}
 			}
 		}
 	},
@@ -2217,13 +2219,13 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Vertragsunterlagen unterzeichnen",
-		"subtitle": "Bitte lies die Vertragsunterlagen vollständig und bestätige anschließend die Angaben zur unterzeichnenden Person.",
+		"title": "Vertragsunterlagen prüfen und bestätigen",
+		"subtitle": "Bitte lies die Vertragsunterlagen vollständig, mache Angaben zur Person und bestätige sie anschließend.",
 		"loadingContract": "Vertragsunterlagen werden geladen...",
 		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
-		"signingFor": "Du unterzeichnest im Namen von:",
+		"signingFor": "Du handelst im Namen von:",
 		"accept": "Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.",
-		"submit": "Verbindlich bestätigen",
+		"submit": "Bestätigung absenden",
 		"submitting": "Speichern...",
 		"success": "Die Bestätigung der Vertragsunterlagen wurde gespeichert.",
 		"error": {
@@ -2389,6 +2391,11 @@
 					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuche es erneut."
 		}
 	}
 }

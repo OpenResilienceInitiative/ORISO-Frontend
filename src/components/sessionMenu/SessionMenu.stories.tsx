@@ -6,8 +6,12 @@ import { SessionMenu } from './SessionMenu';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import { ChatStageProviders } from '../chatStage/__storybook__/ChatStageProviders';
-import { stageRoute } from '../chatStage/__storybook__/chatStageFixtures';
+import {
+	stageRoute,
+	stageSession
+} from '../chatStage/__storybook__/chatStageFixtures';
 import { phone390Globals } from '../message/messageStoryShell';
+import { SupervisionPanelContext } from '../supervisionPanel/SupervisionPanelContext';
 import './sessionMenu.styles.scss';
 
 const hasUserInitiatedStopOrLeaveRequest = {
@@ -129,11 +133,35 @@ const openTheKebab = async (canvasElement: HTMLElement) => {
 	)!;
 };
 
+const stageFrame = (Story: React.ComponentType) => (
+	<div style={{ position: 'relative', padding: 24, minHeight: 520 }}>
+		<Story />
+	</div>
+);
+
 const withStage = (Story: React.ComponentType) => (
+	<ChatStageProviders>{stageFrame(Story)}</ChatStageProviders>
+);
+
+const withGroupStage = (Story: React.ComponentType) => (
+	<ChatStageProviders activeSession={{ ...stageSession(), isGroup: true }}>
+		{stageFrame(Story)}
+	</ChatStageProviders>
+);
+
+const withSupervisionStage = (Story: React.ComponentType) => (
 	<ChatStageProviders>
-		<div style={{ position: 'relative', padding: 24, minHeight: 520 }}>
-			<Story />
-		</div>
+		<SupervisionPanelContext.Provider
+			value={{
+				visible: true,
+				available: true,
+				isExpanded: false,
+				unreadCount: 0,
+				expand: () => {}
+			}}
+		>
+			{stageFrame(Story)}
+		</SupervisionPanelContext.Provider>
 	</ChatStageProviders>
 );
 
@@ -219,6 +247,91 @@ export const CallsInTheKebabMenu: Story = {
 				expect(document.activeElement).toBe(row);
 			});
 		}
+		await expect(
+			video.querySelector('[data-icon-id="ui-icon:modality-video:base"]')
+		).not.toBeNull();
+		await expect(
+			audio.querySelector(
+				'[data-icon-id="ui-icon:timeline-add-call:base"]'
+			)
+		).not.toBeNull();
+
+		const rowNamed = (label: string) =>
+			Array.from(
+				flyout.querySelectorAll<HTMLElement>(
+					'.sessionMenu__item.chatMenuDropdown__item'
+				)
+			).find((row) => row.textContent?.includes(label));
+		await expect(
+			rowNamed('Ratsuchendenprofil')?.querySelector(
+				'[data-icon-id="sidebar-icon:profil:outline"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Benachrichtigungen einstellen')?.querySelector(
+				'[data-icon-id="ui-icon:notification-settings:base"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Rat einholen')?.querySelector(
+				'[data-icon-id="ui-icon:persons-two:base"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Archivieren')?.querySelector(
+				'[data-icon-id="sidebar-icon:inbox:outline"]'
+			)
+		).not.toBeNull();
+		await expect(
+			rowNamed('Löschen')?.querySelector(
+				'[data-icon-id="ui-icon:trash:base"]'
+			)
+		).not.toBeNull();
+	}
+};
+
+/** Group menus must not expose the one-to-one advice action. */
+export const GroupOmitsOneToOneAdvice: Story = {
+	name: 'Group — no one-to-one advice row',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true
+	},
+	decorators: [withGroupStage],
+	play: async ({ canvasElement }) => {
+		const flyout = await openTheKebab(canvasElement);
+		await expect(
+			flyout.querySelector('[data-cy="session-menu-request-advice"]')
+		).toBeNull();
+		await expect(
+			flyout.querySelector('[data-icon-id="ui-icon:persons-two:base"]')
+		).toBeNull();
+	}
+};
+
+/** The parallel supervision row uses the catalogued supervision glyph. */
+export const SupervisionUsesCatalogIcon: Story = {
+	name: 'Supervision — catalog icon',
+	tags: ['autodocs', '!needs-data'],
+	parameters: { router: { initialPath: stageRoute } },
+	args: {
+		hasUserInitiatedStopOrLeaveRequest,
+		isAskerInfoAvailable: true
+	},
+	decorators: [withSupervisionStage],
+	play: async ({ canvasElement }) => {
+		const flyout = await openTheKebab(canvasElement);
+		const supervision = flyout.querySelector<HTMLElement>(
+			'[data-cy="session-menu-supervision-panel"]'
+		)!;
+		await expect(supervision).not.toBeNull();
+		await expect(
+			supervision.querySelector(
+				'[data-icon-id="ui-icon:supervision-nocirc:400"]'
+			)
+		).not.toBeNull();
 	}
 };
 

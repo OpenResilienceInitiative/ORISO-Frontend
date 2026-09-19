@@ -20,8 +20,11 @@ import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import { groupEntryRoomPath } from '../groupChat/entryRoom/GroupEntryRoom';
-import { handleTokenRefresh } from '../auth/auth';
-import { logout } from '../logout/logout';
+import {
+	handleTokenRefresh,
+	isTokenRefreshUnavailableError
+} from '../auth/auth';
+import { logout, teardownLocalSession } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
@@ -36,8 +39,10 @@ import {
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
-import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
+import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	clearAuthSession,
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
@@ -65,6 +70,9 @@ export const AuthenticatedApp = ({
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	// #1377: the display-filter store follows the published client (and
+	// detaches on logout, before the storage hygiene runs).
+	useDisplayFilterStoreBinding();
 	const recoveryClients = useRef(new WeakSet<object>());
 	const recoveryMode = userData?.chatRecoveryMode;
 	const recoveryRevision = userData?.chatRecoveryPolicyRevision;
@@ -126,6 +134,17 @@ export const AuthenticatedApp = ({
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	/* Every path that ends in `<Navigate to="/login">` below goes through
+	   here: the old session is torn down *before* the login form renders,
+	   so no provider above the router (notification poller, Matrix client)
+	   keeps running on leftover cookies, and the next sign-in starts from a
+	   clean Matrix registry instead of inheriting the old device. */
+	const abandonSession = useCallback(() => {
+		displayFilterStore.detachClient();
+		setMatrixClientService(null);
+		teardownLocalSession();
+		setLoading(false);
+	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
 	// Freshly-registered askers get a welcome loading animation bridging the
 	// bootstrap below (one-shot flag set just before the post-registration redirect).
@@ -297,11 +316,19 @@ export const AuthenticatedApp = ({
 								'Authenticated app bootstrap failed',
 								error
 							);
-							setLoading(false);
+							abandonSession();
 						});
 				})
-				.catch(() => {
-					setLoading(false);
+				.catch((error) => {
+					if (isTokenRefreshUnavailableError(error)) {
+						window.setTimeout(() => {
+							if (mounted.current) {
+								setUserDataRequested(false);
+							}
+						}, 2_000);
+						return;
+					}
+					abandonSession();
 				});
 		}
 		// callContext is deliberately omitted: the CallProvider context value is
@@ -309,6 +336,7 @@ export const AuthenticatedApp = ({
 		// effect; it is only mirrored to window.callContext here.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		abandonSession,
 		locale,
 		setConsultingTypes,
 		setInformal,
@@ -323,6 +351,10 @@ export const AuthenticatedApp = ({
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLogout = useCallback(() => {
+		// Synchronously, before the async pre-logout handlers and the storage
+		// purge: a pending display-filter write must not recreate this user's
+		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
+		displayFilterStore.detachClient();
 		onLogout();
 		// Clear the React context's Matrix client reference on sign-out so a
 		// stale authenticated client cannot survive into a subsequent session
@@ -348,7 +380,6 @@ export const AuthenticatedApp = ({
 			setShowPostRegLoader(false);
 		}
 	}, [handoverEntered, appReady]);
-	const platformVersion = getPlatformVersion();
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
@@ -364,17 +395,12 @@ export const AuthenticatedApp = ({
 
 	if (appReady) {
 		return (
-			<>
+			<AuthenticatedBuildIdentityBoundary>
 				<E2EEncryptionSupportBanner />
 				<KeyBackupRecoveryPrompt />
 				<RecoveryKeySaveReminder />
 				<Routing logout={handleLogout} />
-				{platformVersion && (
-					<div className="app__platformVersion">
-						{platformVersion}
-					</div>
-				)}
-			</>
+			</AuthenticatedBuildIdentityBoundary>
 		);
 	} else if (loading) {
 		return <Loading />;

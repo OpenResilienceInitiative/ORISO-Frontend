@@ -11,7 +11,14 @@
  */
 
 import { EventFamily } from './eventDescriptors/types';
-import { getEventDescriptor } from './eventDescriptors/registry';
+import {
+	getEventDescriptor,
+	isKnownEventType
+} from './eventDescriptors/registry';
+
+/** The catch-all kind for event types without a seeded family (#1377 §5.1). */
+export const OTHER_TIMELINE_KIND = 'other';
+export type TimelineKindId = EventFamily | typeof OTHER_TIMELINE_KIND;
 
 /**
  * The active family chip: one real family, `all`, or `null`. No chip selected
@@ -19,7 +26,7 @@ import { getEventDescriptor } from './eventDescriptors/registry';
  * compatibility but is no longer rendered as its own chip (design feedback
  * 2026-07-12: the default state IS "all"; a dedicated chip only duplicates it).
  */
-export type TimelineFamilyFilter = 'all' | EventFamily | null;
+export type TimelineFamilyFilter = 'all' | TimelineKindId | null;
 
 /**
  * Canonical chip order. Mirrors the registry families; `appointments` is
@@ -45,6 +52,11 @@ export interface TimelineFilterState {
 	 * chips act as refinements on top of the search, not as modes).
 	 */
 	unreadOnly?: boolean;
+	/**
+	 * Kinds whose own pill is off and that therefore travel with the
+	 * Sonstiges chip (Frank 2026-09-16, `kindsUnderOther`).
+	 */
+	bundledUnderOther?: ReadonlyArray<string>;
 }
 
 /** Minimal shape the filter needs from a feed item. */
@@ -53,15 +65,40 @@ export interface TimelineFilterableItem {
 	readAt?: string | null;
 }
 
-const familyOf = (item: TimelineFilterableItem): EventFamily =>
-	getEventDescriptor(item?.eventType).family;
+/**
+ * The kind of a row: its seeded family, or "Sonstiges" for an unseeded event
+ * type (#1377 §5.1 — the registry renders such a row as a generic system
+ * card, but the filter must never let it vanish under "System").
+ */
+export const timelineKindOf = (item: TimelineFilterableItem): TimelineKindId =>
+	isKnownEventType(item?.eventType)
+		? getEventDescriptor(item.eventType).family
+		: OTHER_TIMELINE_KIND;
+
+/** Chip/dialog order: the families, then the catch-all. */
+export const TIMELINE_KIND_ORDER: ReadonlyArray<TimelineKindId> = [
+	...TIMELINE_FAMILY_ORDER,
+	OTHER_TIMELINE_KIND
+];
+
+const familyOf = timelineKindOf;
 
 const normalize = (value: string): string => value.trim().toLowerCase();
 
 const matchesFamily = (
 	item: TimelineFilterableItem,
-	family: TimelineFamilyFilter
-): boolean => family === null || family === 'all' || familyOf(item) === family;
+	family: TimelineFamilyFilter,
+	bundledUnderOther: ReadonlyArray<string> = []
+): boolean => {
+	if (family === null || family === 'all') {
+		return true;
+	}
+	const kind = familyOf(item);
+	if (family === OTHER_TIMELINE_KIND) {
+		return kind === OTHER_TIMELINE_KIND || bundledUnderOther.includes(kind);
+	}
+	return kind === family;
+};
 
 /**
  * The families actually present in the feed, in canonical order. Used to render
@@ -69,9 +106,9 @@ const matchesFamily = (
  */
 export const getFamiliesInFeed = (
 	items: ReadonlyArray<TimelineFilterableItem>
-): EventFamily[] => {
+): TimelineKindId[] => {
 	const present = new Set(items.map(familyOf));
-	return TIMELINE_FAMILY_ORDER.filter((family) => present.has(family));
+	return TIMELINE_KIND_ORDER.filter((family) => present.has(family));
 };
 
 /**
@@ -86,7 +123,7 @@ export const filterTimelineItems = <T extends TimelineFilterableItem>(
 ): T[] => {
 	const query = normalize(state.query || '');
 	return items.filter((item) => {
-		if (!matchesFamily(item, state.family)) {
+		if (!matchesFamily(item, state.family, state.bundledUnderOther)) {
 			return false;
 		}
 		if (state.unreadOnly && item.readAt) {

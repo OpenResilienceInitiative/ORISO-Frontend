@@ -1,32 +1,37 @@
 name: Reusable Node validation and build steps
 
 inputs:
-  node_version:
-    required: true
+    node_version:
+        required: true
 
 runs:
-  using: 'composite'
-  steps:
-  - name: Set up Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: ${{ inputs.node_version }}
-      cache: npm
+    using: 'composite'
+    steps:
+        - name: Set up Node.js
+          uses: actions/setup-node@v4
+          with:
+              node-version: ${{ inputs.node_version }}
+              cache: npm
 
-  - name: Install dependencies
-    shell: bash
-    run: npm ci --ignore-scripts --legacy-peer-deps
+        - name: Install dependencies
+          shell: bash
+          run: npm ci --ignore-scripts --legacy-peer-deps
 
-  - name: Lint scripts and type-check
-    shell: bash
-    run: npm run lint:scripts
+        - name: Lint scripts and type-check
+          shell: bash
+          run: npm run lint:scripts
 
-  - name: Run unit tests
-    shell: bash
-    # Runs before the Docker image is built/published so a red test blocks
-    # the (previously untested) :dev image on pushes to dev/main.
-    run: npm run test:unit
+        - name: Run unit tests
+          shell: bash
+          # Runs before the Docker image is built/published so a red test blocks
+          # the (previously untested) :dev image on pushes to dev/main.
+          run: npm run test:unit
 
-  - name: Build app
-    shell: bash
-    run: CI=false npm run build
+        - name: Build app
+          shell: bash
+          run: |
+              set -euo pipefail
+              # Build the actual checkout, which can differ from the event SHA.
+              export REACT_APP_BUILD_COMMIT="$(git rev-parse --verify HEAD^{commit})"
+              [[ "$REACT_APP_BUILD_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+              CI=false npm run build

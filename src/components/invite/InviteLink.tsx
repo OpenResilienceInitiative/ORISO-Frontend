@@ -33,6 +33,11 @@ import {
 	mintInviteGuestCredentials,
 	rerollInviteGuestUsername
 } from './inviteLinkIdentity';
+import {
+	InviteSessionResumeError,
+	rememberInviteSession,
+	resolveReusableInviteSession
+} from './inviteSessionReuse';
 import { StageLayout } from '../stageLayout/StageLayout';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { OrisoTextField } from '../form/OrisoTextField';
@@ -76,6 +81,8 @@ export const InviteLink = () => {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const hasRunRef = useRef(false);
+	const [resumeAttempt, setResumeAttempt] = useState(0);
+	const [resumeFailed, setResumeFailed] = useState(false);
 
 	useEffect(() => {
 		if (!token) {
@@ -88,6 +95,20 @@ export const InviteLink = () => {
 
 		(async () => {
 			try {
+				/* A reload must not cost a second place in the queue. Redeem
+				   mints a fresh anonymous account and a fresh queue entry
+				   every time it is called — right for a second guest, wrong
+				   for the same guest coming back, who then waits behind
+				   their own abandoned entry (#1404). If this browser already
+				   holds a live session for this link, walk back into it. */
+				const reusableSessionId =
+					await resolveReusableInviteSession(token);
+				if (reusableSessionId !== null) {
+					setRoomSessionId(reusableSessionId);
+					setStatus('room');
+					return;
+				}
+
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
@@ -96,6 +117,7 @@ export const InviteLink = () => {
 					   The room hands over to the session itself once a
 					   counsellor has accepted and consent is given. */
 					applyRedeemSessionCredentials(data);
+					rememberInviteSession(token, data.sessionId);
 					/* A courtesy name before anyone can look: without it
 					   the counsellor's queue shows `anon_N` (#1216). Not
 					   awaited — there is no page load to race any more, and
@@ -115,6 +137,7 @@ export const InviteLink = () => {
 				setPassword(minted.password);
 				setStatus('identity');
 			} catch (err: unknown) {
+				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
 				setErrorMessage(
 					err instanceof Error
@@ -123,7 +146,7 @@ export const InviteLink = () => {
 				);
 			}
 		})();
-	}, [token, locale]);
+	}, [token, locale, resumeAttempt]);
 
 	const handleReroll = useCallback(() => {
 		if (!identity) return;
@@ -332,11 +355,37 @@ export const InviteLink = () => {
 					<div>
 						<h3>
 							{t(
-								'inviteLink.error.title',
-								'This invite link can no longer be used'
+								resumeFailed
+									? 'inviteLink.resume.title'
+									: 'inviteLink.error.title',
+								resumeFailed
+									? 'Verbindung unterbrochen'
+									: 'This invite link can no longer be used'
 							)}
 						</h3>
-						<p>{errorMessage}</p>
+						<p>
+							{resumeFailed
+								? t(
+										'inviteLink.resume.message',
+										'Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.'
+									)
+								: errorMessage}
+						</p>
+						{resumeFailed && (
+							<Button
+								onClick={() => {
+									hasRunRef.current = false;
+									setResumeFailed(false);
+									setStatus('loading');
+									setResumeAttempt((attempt) => attempt + 1);
+								}}
+							>
+								{t(
+									'inviteLink.resume.retry',
+									'Erneut versuchen'
+								)}
+							</Button>
+						)}
 					</div>
 				)}
 			</Box>

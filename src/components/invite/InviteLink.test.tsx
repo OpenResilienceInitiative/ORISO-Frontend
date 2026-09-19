@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { redeemInviteLink } from '../../api/apiRedeemInviteLink';
@@ -14,6 +20,7 @@ import {
 	assignInviteSessionDisplayName,
 	redirectToInviteSession
 } from './inviteLinkHelpers';
+import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 
 vi.mock('../../api/apiRedeemInviteLink', async () => {
 	const actual = await vi.importActual<
@@ -27,6 +34,10 @@ vi.mock('../../api/apiRedeemInviteLink', async () => {
 
 vi.mock('../../api/apiPostRegistration', () => ({
 	apiPostRegistration: vi.fn()
+}));
+
+vi.mock('../../api/apiGetAnonymousEnquiryDetails', () => ({
+	apiGetAnonymousEnquiryDetails: vi.fn()
 }));
 
 vi.mock('../registration/autoLogin', () => ({
@@ -187,5 +198,91 @@ describe('InviteLink legacy identity', () => {
 		expect(redirectToInviteSession).not.toHaveBeenCalled();
 		expect(apiPostRegistration).not.toHaveBeenCalled();
 		expect(screen.queryByLabelText('User-ID')).toBeNull();
+	});
+});
+
+describe('InviteLink queue entries', () => {
+	beforeEach(() => {
+		/* The suite has no global auto-cleanup, so the rooms rendered by the
+		   previous describe would still be in the document. */
+		cleanup();
+		vi.clearAllMocks();
+		localStorage.clear();
+		vi.mocked(assignInviteSessionDisplayName).mockResolvedValue(null);
+		vi.mocked(redeemInviteLink).mockResolvedValue({
+			sessionId: 42,
+			userName: 'anon_1',
+			accessToken: 'access-token',
+			refreshToken: 'refresh-token',
+			expiresIn: 300,
+			refreshExpiresIn: 600
+		});
+	});
+
+	it('walks the guest back into the session they already have, instead of taking a second place in the queue', async () => {
+		/* What a reload looks like: the browser still holds the session the
+		   first visit opened, and the server still has it waiting. */
+		localStorage.setItem('oriso.invite.session.token-123', '42');
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
+			numAvailableConsultants: 1,
+			status: 'NEW'
+		});
+
+		renderInvite();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room 42'
+			)
+		);
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+	});
+
+	it('retries only the session lookup after a transient failure', async () => {
+		localStorage.setItem('oriso.invite.session.token-123', '41');
+		vi.mocked(apiGetAnonymousEnquiryDetails)
+			.mockRejectedValueOnce(new Error('TIMEOUT'))
+			.mockResolvedValue({ numAvailableConsultants: 1, status: 'NEW' });
+		renderInvite();
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'Erneut versuchen' })
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room 41'
+			)
+		);
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+	});
+
+	it('redeems a fresh session once the remembered one is over', async () => {
+		localStorage.setItem('oriso.invite.session.token-123', '41');
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
+			numAvailableConsultants: 0,
+			status: 'DONE'
+		});
+
+		renderInvite();
+
+		await waitFor(() => expect(redeemInviteLink).toHaveBeenCalled());
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room 42'
+			)
+		);
+	});
+
+	it('remembers the session a fresh redeem opened, so the next visit can reuse it', async () => {
+		renderInvite();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room 42'
+			)
+		);
+		expect(localStorage.getItem('oriso.invite.session.token-123')).toBe(
+			'42'
+		);
 	});
 });

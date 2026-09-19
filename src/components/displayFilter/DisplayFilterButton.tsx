@@ -1,0 +1,80 @@
+import * as React from 'react';
+import { useId } from 'react';
+import clsx from 'clsx';
+import TuneIcon from '@mui/icons-material/Tune';
+import './displayFilter.styles.scss';
+
+export interface DisplayFilterButtonProps {
+	/** Already translated; tooltip and accessible name. */
+	'label': string;
+	/** True when the effective filter differs from "show everything" → dot. */
+	'customised': boolean;
+	/**
+	 * Already translated; announced as the accessible description while
+	 * `customised` (the dot itself is decorative). Required so the customised
+	 * state can never be visual-only.
+	 */
+	'customisedLabel': string;
+	/** Whether the dialog it controls is open (`aria-expanded`). */
+	'open': boolean;
+	'onClick': () => void;
+	/** id of the dialog for `aria-controls`. */
+	'controlsId'?: string;
+	/**
+	 * Text view of the chip row (Frank 2026-09-16): the button is a bare
+	 * 16px glyph without the pill circle, so the compact row stays compact.
+	 */
+	'compact'?: boolean;
+	/** The list's own icon instead of the generic tune glyph (Frank 2026-09-16). */
+	'icon'?: React.ReactNode;
+	'data-cy'?: string;
+}
+
+/**
+ * The minimalist entry point to the display filter (#1377, spec §3): an
+ * icon-only pill at the right end of the chip row, `tune` glyph, with a small
+ * dot while the section's filter is customised. Same pill primitive as
+ * `MarkAllReadButton` so the row reads as one family.
+ */
+export const DisplayFilterButton = ({
+	label,
+	customised,
+	customisedLabel,
+	open,
+	onClick,
+	controlsId,
+	compact = false,
+	icon,
+	'data-cy': dataCy = 'display-filter-button'
+}: DisplayFilterButtonProps) => {
+	const stateId = useId();
+	const describe = customised;
+	return (
+		<button
+			type="button"
+			className={clsx(
+				'sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly displayFilterButton',
+				customised && 'displayFilterButton--customised',
+				compact && 'displayFilterButton--compact'
+			)}
+			onClick={onClick}
+			title={label}
+			aria-label={label}
+			aria-haspopup="dialog"
+			aria-expanded={open}
+			aria-controls={controlsId}
+			aria-describedby={describe ? stateId : undefined}
+			data-cy={dataCy}
+		>
+			{icon ?? <TuneIcon className="sessionsListToolbar__chipIconSvg" />}
+			{customised && (
+				<span className="displayFilterButton__dot" aria-hidden="true" />
+			)}
+			{describe && (
+				<span id={stateId} className="sr-only">
+					{customisedLabel}
+				</span>
+			)}
+		</button>
+	);
+};

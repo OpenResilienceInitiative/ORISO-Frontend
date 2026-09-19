@@ -52,6 +52,8 @@ export interface AgencyDataInterface {
 	postcode: string;
 	street?: string;
 	houseNumber?: string;
+	lat?: number | null;
+	lng?: number | null;
 	phone?: string;
 	openingHours?: string;
 	url?: string;
@@ -72,6 +74,19 @@ export interface AgencyDataInterface {
 	 * AgencyService #90 - older backends simply never send it.
 	 */
 	departments?: AgencyDepartmentDataInterface[];
+	/**
+	 * The agency's feature settings from the public agency response. The
+	 * group-chat flags are the effective values (Träger AND Beratungsstelle
+	 * combined, AgencyService #293); `null` means no restriction from this
+	 * agency. Older backends omit them.
+	 */
+	settings?: AgencySettingsInterface | null;
+}
+
+export interface AgencySettingsInterface {
+	featureGroupChatV2Enabled?: boolean | null;
+	featureInternalGroupChatEnabled?: boolean | null;
+	featureSelfHelpGroupsEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {
