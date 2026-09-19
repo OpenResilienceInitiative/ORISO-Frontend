@@ -96,7 +96,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
  * Who receives each mail.
  *
  * This is not decoration: mails to `asker` must never carry message content, a
- * real name or the counselling centre — see the anonymity rule in ADR-019.
+ * real name or the counselling centre — see the anonymity rule in ADR-024.
  * `beraterin-kontakt` and `termin` are the two exceptions, and only because the
  * recipient asked for that information themselves.
  *
@@ -131,7 +131,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 	};
 
 /**
- * Switchability class, from ADR-019.
+ * Switchability class, from ADR-024.
  *
  * The footer of a `security` or `legal` mail must not offer an unsubscribe
  * link: there is no switch behind it, and sending the recipient to a settings

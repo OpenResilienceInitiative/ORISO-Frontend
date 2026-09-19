@@ -20,4 +20,4 @@ ${platformName!''} is a service provided by ${orgName!''}.
 Privacy: ${privacyUrl!''}
 Imprint: ${imprintUrl!''}
 
-This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.
+This is a security notice and cannot be unsubscribed from. Please do not reply to it.

@@ -20,4 +20,4 @@ Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Änderungen an Ihrem Zugang m
 Datenschutz: {{privacyUrl}}
 Impressum: {{imprintUrl}}
 
-Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
+Diese E-Mail ist ein Sicherheitshinweis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
