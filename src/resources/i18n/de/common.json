@@ -4019,7 +4019,12 @@
 				"label": "Ihr zweiter Faktor"
 			}
 		},
-		"title": "Zwei-Faktor-Authentifizierung"
+		"title": "Zwei-Faktor-Authentifizierung",
+		"required": {
+			"copy": "Ihr Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch Ihr erstes Passwort vergeben hat. Bitte hinterlegen Sie jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört Ihr Konto allein Ihnen und Sie können mit der Beratung beginnen.",
+			"logout": "Abmelden",
+			"title": "Zweiter Faktor erforderlich"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {

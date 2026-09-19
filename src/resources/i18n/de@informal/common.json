@@ -1674,6 +1674,11 @@
 			"type": {
 				"label": "Dein zweiter Faktor"
 			}
+		},
+		"required": {
+			"copy": "Dein Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch dein erstes Passwort vergeben hat. Bitte hinterlege jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört dein Konto allein dir und du kannst mit der Beratung beginnen.",
+			"logout": "Abmelden",
+			"title": "Zweiter Faktor erforderlich"
 		}
 	},
 	"userProfile": {

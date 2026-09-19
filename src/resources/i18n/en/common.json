@@ -3961,7 +3961,12 @@
 				"label": "Your second factor"
 			}
 		},
-		"title": "Two-factor authentication"
+		"title": "Two-factor authentication",
+		"required": {
+			"copy": "Your account was created by an administrator, who also chose your first password. Please set up a second factor (app or e-mail) now. Only then is the account yours alone and you can start counselling.",
+			"logout": "Log out",
+			"title": "Second factor required"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {

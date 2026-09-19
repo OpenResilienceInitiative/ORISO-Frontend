@@ -1,0 +1,17 @@
+.mandatorySecondFactorGate {
+	display: flex;
+	justify-content: center;
+	min-height: 100vh;
+	padding: $grid-base-four $grid-base-three;
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		gap: $grid-base-three;
+		max-width: 640px;
+
+		// The setup dialog sits on top of this screen; the text underneath is
+		// what a screen reader and a dismissed-dialog state still explain.
+		margin: 0 auto;
+	}
+}

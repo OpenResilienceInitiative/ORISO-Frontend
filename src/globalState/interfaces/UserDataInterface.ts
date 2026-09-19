@@ -111,6 +111,12 @@ export interface ConsultingTypeDataInterface {
 export interface TwoFactorAuthInterface {
 	isEnabled: boolean;
 	isActive: boolean;
+	/**
+	 * The account may not be used until a factor is active. Set by the
+	 * UserService for counsellors whose login an administrator provisioned.
+	 * Optional: backends predating the flag simply never send it.
+	 */
+	isRequired?: boolean;
 	secret: string;
 	qrCode: string;
 	isShown: boolean;
