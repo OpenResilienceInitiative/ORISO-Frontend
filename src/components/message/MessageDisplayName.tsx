@@ -50,17 +50,17 @@ export const MessageDisplayName = ({
 	const trimmedSubtitle = (subtitle || '').trim();
 
 	return (
-		<>
+		<div className="messageItem__senderIdentity">
 			<div
 				className={`messageItem__username messageItem__username--${type}`}
 			>
 				{getUsernameWithPrefix()}
 			</div>
-			{trimmedSubtitle && (
+			{type === 'consultant' && trimmedSubtitle && (
 				<div className="messageItem__usernameSubtitle">
 					{trimmedSubtitle}
 				</div>
 			)}
-		</>
+		</div>
 	);
 };
