@@ -5075,5 +5075,12 @@
 				}
 			}
 		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Bağlantı kesildi",
+			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene"
+		}
 	}
 }

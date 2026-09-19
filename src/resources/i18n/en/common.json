@@ -4986,5 +4986,12 @@
 				}
 			}
 		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connection interrupted",
+			"message": "Your session could not be loaded. Please try again.",
+			"retry": "Try again"
+		}
 	}
 }

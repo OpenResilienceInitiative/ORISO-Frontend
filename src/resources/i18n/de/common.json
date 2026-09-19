@@ -5067,5 +5067,12 @@
 				}
 			}
 		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Verbindung unterbrochen",
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen"
+		}
 	}
 }

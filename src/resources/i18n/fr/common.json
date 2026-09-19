@@ -5075,5 +5075,12 @@
 				}
 			}
 		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
+		}
 	}
 }

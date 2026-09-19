@@ -32,6 +32,10 @@ import { EntryRoomShell } from './EntryRoomShell';
 import { LiveChatAccess } from './LiveChatAccess';
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 import { LiveChatClosed } from './LiveChatClosed';
+import {
+	readConfirmedEntryName,
+	rememberConfirmedEntryName
+} from './entryRoomIdentity';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session the invite link redeemed. Tokens are already set. */
@@ -106,7 +110,11 @@ const rollGuestNames = (locale: string): GuestName[] => {
  * slides in) → hand-over. `closed` is a view of `waiting` while no
  * counsellor is available; it steps back the moment one is.
  */
-export const LiveChatEntryRoom = ({
+export const LiveChatEntryRoom = (props: LiveChatEntryRoomProps) => (
+	<LiveChatEntryRoomContent key={props.sessionId} {...props} />
+);
+
+const LiveChatEntryRoomContent = ({
 	sessionId,
 	topicSlug
 }: LiveChatEntryRoomProps) => {
@@ -121,7 +129,13 @@ export const LiveChatEntryRoom = ({
 		[t]
 	);
 
-	const [stage, setStage] = useState<'access' | 'waiting'>('access');
+	const [confirmedName] = useState(() => readConfirmedEntryName(sessionId));
+	const [stage, setStage] = useState<'access' | 'waiting'>(() =>
+		confirmedName ? 'waiting' : 'access'
+	);
+	useEffect(() => {
+		if (confirmedName) rememberConfirmedEntryName(sessionId, confirmedName);
+	}, [confirmedName, sessionId]);
 	const [names, setNames] = useState<GuestName[]>(() =>
 		rollGuestNames(locale)
 	);
@@ -258,8 +272,7 @@ export const LiveChatEntryRoom = ({
 				displayName: chosen.userId
 			});
 			await apiPatchUserData({ displayName: chosen.userId });
-			mark('pseudonym');
-			mark('pseudonym-name', chosen.userId);
+			rememberConfirmedEntryName(sessionId, chosen.userId);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
 			/* Without this the door swallowed the failure: the stage stayed on

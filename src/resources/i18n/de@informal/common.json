@@ -2392,5 +2392,10 @@
 				}
 			}
 		}
+	},
+	"inviteLink": {
+		"resume": {
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuche es erneut."
+		}
 	}
 }
