@@ -176,10 +176,10 @@ export const Login = () => {
 		// If we're authenticated and have a gcid, redirect to app
 		if (gcid && getValueFromCookie('keycloak')) {
 			apiGetUserData([FETCH_ERRORS.CATCH_ALL])
-				.then(() => redirectToApp(gcid, { navigate }))
+				.then(() => redirectToApp(gcid))
 				.catch(() => null); // do nothing
 		}
-	}, [consultant, gcid, navigate, reloadUserData, userData]);
+	}, [consultant, gcid, reloadUserData, userData]);
 
 	useEffect(() => {
 		setShowLoginError('');
@@ -286,7 +286,20 @@ export const Login = () => {
 					)
 						? readLastOpenSession(userData.userId)
 						: null;
-					return redirectToApp(gcid, { navigate, restorePath });
+					/*
+					 * #1402: the hand-over into the authenticated app is a
+					 * document load, not a router navigation. Measured on
+					 * dev.oriso.org (build cfb38b8): after a successful sign-in
+					 * the client-side `navigate` pushed `/app` into the history
+					 * but the router never committed the new route, so the
+					 * login form stayed on screen for good. A `popstate` or a
+					 * reload rendered the session list immediately - proof that
+					 * the session was fine and only the transition was stuck.
+					 * The app shell has to boot against the fresh session
+					 * anyway (Matrix client, websocket, tenant theming), so a
+					 * full load costs nothing here.
+					 */
+					return redirectToApp(gcid, { restorePath });
 				}
 			}),
 		[
@@ -295,7 +308,6 @@ export const Login = () => {
 			initLocale,
 			consultant,
 			gcid,
-			navigate,
 			showConsultantLoginBlockedError
 		]
 	);

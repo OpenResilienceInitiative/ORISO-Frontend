@@ -412,4 +412,5 @@ describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
 			'/sessions/consultant/sessionView/session/42'
 		);
 	});
+
 });
