@@ -120,6 +120,52 @@ jobs:
           fetch-depth: 0
           token: ${{ github.token }}
 
+      - name: Refresh the knowledge graph from the published channel
+        if: steps.guard.outputs.run == 'true'
+        id: ua_graph
+        # The graph committed in this repository is refreshed by hand and has
+        # been months behind before. The review prompt below calls it mandatory
+        # context, so a stale copy makes the reviewer reason confidently about
+        # code that no longer exists — silently, because nothing says how old it
+        # is. ORISO-Docs rebuilds the graph daily and publishes it here; this
+        # step overwrites only the generated files with the current generation.
+        #
+        # Deliberately fail-soft (no `set -e`): a missing asset, a CDN hiccup or
+        # a replacement window mid-publish must degrade to the committed copy,
+        # never fail a review. The outcome is reported either way so a reviewer
+        # comment can always be traced to a known graph revision.
+        env:
+          UA_CHANNEL: https://github.com/OpenResilienceInitiative/ORISO-Docs/releases/download/ua-graph-latest
+        run: |
+          set -uo pipefail
+          repo="${GITHUB_REPOSITORY##*/}"
+          work="$(mktemp -d)"
+          state="committed copy (no refresh)"
+
+          if curl -fsSL --retry 3 --retry-delay 2 --max-time 180 \
+               "${UA_CHANNEL}/${repo}.tar.gz" -o "${work}/graph.tar.gz" \
+             && tar -xzf "${work}/graph.tar.gz" -C "${work}"; then
+            fresh="${work}/${repo}/.understand-anything"
+            if [ -d "${fresh}" ]; then
+              mkdir -p .understand-anything
+              # Copy, do not replace the directory: ARCHITECTURE.md, ONBOARDING.md
+              # and the other prose in here are hand-written and are not part of
+              # the generation.
+              cp -f "${fresh}"/* .understand-anything/
+              state="$(python3 -c 'import json;m=json.load(open(".understand-anything/meta.json"));print(m["gitCommitHash"][:12], m["lastAnalyzedAt"])' 2>/dev/null || echo "refreshed")"
+              behind="$(git rev-list --count "${state%% *}..HEAD" 2>/dev/null || echo "?")"
+              state="built from ${state} (${behind} commits behind this branch)"
+            else
+              echo "::warning::Published asset for ${repo} has an unexpected layout."
+            fi
+          else
+            echo "::warning::Could not fetch the current graph for ${repo}; using the committed copy, which may be far behind."
+          fi
+
+          rm -rf "${work}"
+          echo "state=${state}" >> "$GITHUB_OUTPUT"
+          echo "Knowledge graph: ${state}" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Configure git author
         if: steps.guard.outputs.run == 'true'
         run: |
@@ -156,6 +202,9 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF: ${{ github.base_ref }}
           CURSOR_MODEL: ${{ vars.CURSOR_MODEL }}
+          # Interpolated into the prompt so the reviewer is told how current its
+          # index is instead of assuming it matches the branch under review.
+          UA_GRAPH_STATE: ${{ steps.ua_graph.outputs.state }}
         run: |
           set -euo pipefail
 
@@ -176,6 +225,10 @@ jobs:
           - Use .understand-anything/README.md, .understand-anything/ARCHITECTURE.md,
             .understand-anything/ORISO-ECOSYSTEM.md, and .understand-anything/knowledge-graph.json
             when they help you understand the code quickly.
+            That graph is ${UA_GRAPH_STATE}. It is an index, not the truth: read the
+            actual file before reporting anything based on it, and never report a
+            finding whose evidence is only in the graph. Any summary marked
+            "[Dated orientation; ...]" is unverified prose — treat it as a hint.
           - Compare this PR against origin/${BASE_REF:-dev}.
 
           Review focus:
