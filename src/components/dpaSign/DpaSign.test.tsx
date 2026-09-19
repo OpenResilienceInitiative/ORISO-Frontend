@@ -96,7 +96,7 @@ describe('DpaSign', () => {
 		expect(screen.getAllByText('Träger Nord').length).toBe(2);
 		expect(
 			screen.getByRole('heading', {
-				name: 'Vertragsunterlagen unterzeichnen'
+				name: 'Vertragsunterlagen prüfen und bestätigen'
 			})
 		).toBeDefined();
 		expect(
@@ -121,7 +121,7 @@ describe('DpaSign', () => {
 			'Dieser konkrete Vertragstext ist verbindlich.'
 		);
 
-		fireEvent.change(screen.getByLabelText('Name *'), {
+		fireEvent.change(screen.getByLabelText('Vollständiger Name *'), {
 			target: { value: 'Marge Simpson' }
 		});
 		fireEvent.change(screen.getByLabelText('Position *'), {
@@ -139,7 +139,7 @@ describe('DpaSign', () => {
 			})
 		);
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Verbindlich bestätigen' })
+			screen.getByRole('button', { name: 'Bestätigung absenden' })
 		);
 
 		await waitFor(() =>
@@ -148,7 +148,8 @@ describe('DpaSign', () => {
 				expect.objectContaining({
 					signerName: 'Marge Simpson',
 					signerEmail: 'marge.simpson@dreambau.com',
-					accepted: true
+					accepted: true,
+					language: 'de'
 				})
 			)
 		);
@@ -168,9 +169,7 @@ describe('DpaSign', () => {
 		// The link is scoped to exactly one Träger, so the organisation is
 		// stated — not retyped into a field that could contradict it.
 		expect(screen.queryByLabelText('Organisation *')).toBeNull();
-		expect(
-			screen.getByText(/Sie unterzeichnen im Namen von/)
-		).toBeDefined();
+		expect(screen.getByText(/Sie handeln im Namen von/)).toBeDefined();
 		expect(screen.getAllByText('Träger Nord').length).toBeGreaterThan(1);
 	});
 
@@ -180,7 +179,7 @@ describe('DpaSign', () => {
 			'Dieser konkrete Vertragstext ist verbindlich.'
 		);
 
-		fireEvent.change(screen.getByLabelText('Name *'), {
+		fireEvent.change(screen.getByLabelText('Vollständiger Name *'), {
 			target: { value: 'Marge Simpson' }
 		});
 		fireEvent.change(screen.getByLabelText('Position *'), {
@@ -195,7 +194,7 @@ describe('DpaSign', () => {
 			})
 		);
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Verbindlich bestätigen' })
+			screen.getByRole('button', { name: 'Bestätigung absenden' })
 		);
 
 		await waitFor(() =>
@@ -243,30 +242,37 @@ describe('DpaSign', () => {
 		expect(document.activeElement?.tagName).toBe('H2');
 	});
 
-	it('renders its chrome in the selected signature language, not the ambient app locale', async () => {
-		// Regression: on pre-dev the public page came up entirely in Russian
-		// for a German browser (stale `locale` in localStorage / navigator
-		// order) while the Sprache select said "Deutsch". The chrome must
-		// follow the select — German on first load, and switch with it.
+	it('renders its default signature-language chrome without exposing a language field', async () => {
+		// The public legal page ignores a previously persisted app locale. Its
+		// hidden signature language remains explicit in the submitted request.
 		renderPage();
 		await screen.findByText(
 			'Dieser konkrete Vertragstext ist verbindlich.'
 		);
 
-		// First load: fixed to the select's default 'de', ambient 'ru' ignored.
 		expect(getFixedT).toHaveBeenCalledWith('de');
 		expect(
 			screen.getByRole('heading', {
-				name: 'Vertragsunterlagen unterzeichnen'
+				name: 'Vertragsunterlagen prüfen und bestätigen'
 			})
 		).toBeDefined();
 		expect(screen.queryByText(/^ambient:/)).toBeNull();
+		expect(screen.queryByLabelText('Sprache *')).toBeNull();
+	});
 
-		// Switching the signature language re-renders the chrome with it.
-		fireEvent.mouseDown(screen.getByLabelText('Sprache *'));
-		fireEvent.click(await screen.findByRole('option', { name: 'English' }));
+	it('keeps the default chrome language when its initial language load fails', async () => {
+		loadLanguages.mockRejectedValueOnce(new Error('network down'));
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+
+		await waitFor(() => expect(loadLanguages).toHaveBeenCalledWith('de'));
+		expect(getFixedT).toHaveBeenCalledWith('de');
 		expect(
-			await screen.findByRole('heading', { name: 'en:dpaSign.title' })
+			screen.getByRole('heading', {
+				name: 'Vertragsunterlagen prüfen und bestätigen'
+			})
 		).toBeDefined();
 	});
 
@@ -281,51 +287,7 @@ describe('DpaSign', () => {
 				'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.'
 			)
 		).toBeDefined();
-		expect(screen.queryByLabelText('Name *')).toBeNull();
+		expect(screen.queryByLabelText('Vollständiger Name *')).toBeNull();
 		expect(confirmMock).not.toHaveBeenCalled();
-	});
-
-	it('does not refetch the contract preview when only the language selector changes', async () => {
-		// Regression: the preview effect used to depend on `t`, which gets a
-		// new identity every time `chromeLanguage` changes. Switching
-		// "Sprache" then re-fetched and reloaded the whole contract preview
-		// for no reason — the preview itself carries every language already.
-		renderPage();
-		await screen.findByText(
-			'Dieser konkrete Vertragstext ist verbindlich.'
-		);
-		expect(previewMock).toHaveBeenCalledTimes(1);
-
-		fireEvent.mouseDown(screen.getByLabelText('Sprache *'));
-		fireEvent.click(await screen.findByRole('option', { name: 'English' }));
-		await screen.findByRole('heading', { name: 'en:dpaSign.title' });
-
-		expect(previewMock).toHaveBeenCalledTimes(1);
-	});
-
-	it('keeps the current chrome language when loading the new one is rejected', async () => {
-		// Regression: a rejected `loadLanguages` was swallowed and
-		// `chromeLanguage` still got set to the new, unloaded language,
-		// leaving the page chrome inconsistent (some strings rendered in a
-		// language i18next never actually finished loading).
-		renderPage();
-		await screen.findByText(
-			'Dieser konkrete Vertragstext ist verbindlich.'
-		);
-		getFixedT.mockClear();
-
-		loadLanguages.mockRejectedValueOnce(new Error('network down'));
-		fireEvent.mouseDown(screen.getByLabelText('Sprache *'));
-		fireEvent.click(await screen.findByRole('option', { name: 'English' }));
-
-		await waitFor(() => expect(loadLanguages).toHaveBeenCalledWith('en'));
-		// The chrome must stay on the language it already had — it must
-		// never re-derive `t` for the language that failed to load.
-		expect(getFixedT).not.toHaveBeenCalledWith('en');
-		expect(
-			screen.getByRole('heading', {
-				name: 'Vertragsunterlagen unterzeichnen'
-			})
-		).toBeDefined();
 	});
 });

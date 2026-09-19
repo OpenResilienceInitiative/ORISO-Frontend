@@ -20,8 +20,11 @@ import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import { groupEntryRoomPath } from '../groupChat/entryRoom/GroupEntryRoom';
-import { handleTokenRefresh } from '../auth/auth';
-import { logout } from '../logout/logout';
+import {
+	handleTokenRefresh,
+	isTokenRefreshUnavailableError
+} from '../auth/auth';
+import { logout, teardownLocalSession } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
@@ -131,6 +134,17 @@ export const AuthenticatedApp = ({
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	/* Every path that ends in `<Navigate to="/login">` below goes through
+	   here: the old session is torn down *before* the login form renders,
+	   so no provider above the router (notification poller, Matrix client)
+	   keeps running on leftover cookies, and the next sign-in starts from a
+	   clean Matrix registry instead of inheriting the old device. */
+	const abandonSession = useCallback(() => {
+		displayFilterStore.detachClient();
+		setMatrixClientService(null);
+		teardownLocalSession();
+		setLoading(false);
+	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
 	// Freshly-registered askers get a welcome loading animation bridging the
 	// bootstrap below (one-shot flag set just before the post-registration redirect).
@@ -302,11 +316,19 @@ export const AuthenticatedApp = ({
 								'Authenticated app bootstrap failed',
 								error
 							);
-							setLoading(false);
+							abandonSession();
 						});
 				})
-				.catch(() => {
-					setLoading(false);
+				.catch((error) => {
+					if (isTokenRefreshUnavailableError(error)) {
+						window.setTimeout(() => {
+							if (mounted.current) {
+								setUserDataRequested(false);
+							}
+						}, 2_000);
+						return;
+					}
+					abandonSession();
 				});
 		}
 		// callContext is deliberately omitted: the CallProvider context value is
@@ -314,6 +336,7 @@ export const AuthenticatedApp = ({
 		// effect; it is only mirrored to window.callContext here.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		abandonSession,
 		locale,
 		setConsultingTypes,
 		setInformal,

@@ -35,12 +35,12 @@ const catalogues: [string, Record<string, string>][] = [
 
 describe('dpaSign wording', () => {
 	it.each(catalogues)(
-		'%s: the page title says Vertragsunterlagen unterzeichnen',
+		'%s: the page title says Vertragsunterlagen prüfen und bestätigen',
 		(locale, values) => {
 			expect(values.title).toBe(
 				locale === 'en'
-					? 'Sign contract documents'
-					: 'Vertragsunterlagen unterzeichnen'
+					? 'Review and confirm contract documents'
+					: 'Vertragsunterlagen prüfen und bestätigen'
 			);
 		}
 	);

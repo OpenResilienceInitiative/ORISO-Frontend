@@ -11,6 +11,8 @@ import {
 	useSyncExternalStore
 } from 'react';
 import { v4 as uuid } from 'uuid';
+import { t } from 'i18next';
+import { sendNotification } from '../../utils/notificationHelpers';
 import {
 	IncomingVideoCallProps,
 	NotificationTypeCall
@@ -25,18 +27,24 @@ import {
 	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
+import {
+	AUTH_SESSION_CHANGE_EVENT,
+	getValueFromCookie
+} from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import {
 	installAudioUnlock,
-	playNotificationSound,
-	selectEventToAnnounce
+	playNotificationSound
 } from '../../utils/notificationSettings/soundPlayback';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { getEventDescriptor } from '../../components/notificationsCenter/eventDescriptors';
 import { displayFilterStore } from '../../utils/displayFilter/store';
+import {
+	isEventMutedByKind,
+	soundOverrideForEvent
+} from '../../utils/displayFilter/soundMask';
 import {
 	DisplayFilter,
 	resolveEffective
@@ -132,6 +140,8 @@ export const AUTO_READ_DEBOUNCE_MS = 300;
 
 /** One feed response, numbered so stale ones can be told apart (§6.3). */
 type FeedResponse = {
+	/** Filter snapshot at request time, retained while responses are parked. */
+	requestedExclusions: string[];
 	page: number;
 	seq: number;
 	items: NotificationFeedItem[];
@@ -141,9 +151,9 @@ type FeedResponse = {
 	/** Slice 7: `unreadCount` already excludes the hidden event types. */
 	excludesHidden: boolean;
 	/**
-	 * Slice 7: the server excluded a set the filter no longer hides (the
-	 * filter changed while this request was in flight). The rows apply; the
-	 * total is neither exact nor a bound for the current set and is dropped.
+	 * The server echoed exclusions different from the current request set.
+	 * Rows may still apply, but its total is unusable. Responses requested
+	 * for an old filter are discarded entirely before reaching this check.
 	 */
 	staleTotal: boolean;
 };
@@ -309,8 +319,12 @@ export function NotificationsProvider(props) {
 	const [notificationFeed, setNotificationFeed] = useState<
 		NotificationFeedItem[]
 	>([]);
-	const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 	const [serverUnreadTotal, setServerUnreadTotal] = useState(0);
+	// Local rows survive polling and never enter the server total.
+	const unreadNotificationCount =
+		serverUnreadTotal +
+		notificationFeed.filter((item) => isLocalItem(item) && !item.readAt)
+			.length;
 	const [
 		serverUnreadTotalExcludesHidden,
 		setServerUnreadTotalExcludesHidden
@@ -323,10 +337,12 @@ export function NotificationsProvider(props) {
 	const highestLoadedPageRef = useRef(0);
 	const loadingOlderRef = useRef(false);
 	const feedEpochRef = useRef(0);
-	// #576: id of the newest event slot we already reconciled, so a feed refresh
-	// only announces a genuinely newer event (not every poll, and never on the
-	// backlog surfaced when an event above it is read).
-	const lastAnnouncedEventIdRef = useRef<string | null>(null);
+	// Keep the initial backlog silent and observe every subsequently new id,
+	// including requests sorted beneath another event in the same feed page.
+	const observedEventIdsRef = useRef<Set<string> | null>(null);
+	const pendingLiveEventIdsRef = useRef(new Set<string>());
+	const initialFeedTimeRef = useRef(Number.NEGATIVE_INFINITY);
+	const observedRequestIdsRef = useRef<Set<string> | null>(null);
 
 	// --- Request ordering and pending-read serialisation (spec §6.3) --------
 	// Every feed request carries a number from one counter. Rows are applied
@@ -360,8 +376,11 @@ export function NotificationsProvider(props) {
 
 	const resetFeedState = useCallback(() => {
 		loadingOlderRef.current = false;
+		observedEventIdsRef.current = null;
+		pendingLiveEventIdsRef.current.clear();
+		observedRequestIdsRef.current = null;
+		initialFeedTimeRef.current = Number.NEGATIVE_INFINITY;
 		setNotificationFeed([]);
-		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
 		setServerUnreadTotalExcludesHidden(false);
 		setUnfilteredUnreadTotal(null);
@@ -403,6 +422,8 @@ export function NotificationsProvider(props) {
 		() => hiddenTimelineEventTypes(timelineDisplayFilter),
 		[timelineDisplayFilter]
 	);
+	const [exclusionRefreshGeneration, setExclusionRefreshGeneration] =
+		useState(0);
 	const hiddenEventTypesRef = useRef(hiddenEventTypes);
 	hiddenEventTypesRef.current = hiddenEventTypes;
 	/** Whether the current total already leaves the hidden types out. */
@@ -424,33 +445,90 @@ export function NotificationsProvider(props) {
 	// Bumped when a bulk read settles so the per-id pass re-evaluates.
 	const [bulkReadGeneration, setBulkReadGeneration] = useState(0);
 
-	// #576: play the configured sound for a genuinely new, unread top event —
-	// decoupled from the OS popup, so it also sounds with the tab focused. The
-	// sound routes through the single suppression gate (DND, per-conversation
-	// level, mute, family-off) inside playNotificationSound.
-	const maybePlaySoundForNewEvent = useCallback(
-		(feed: NotificationFeedItem[]) => {
-			const { announce, nextMarker } = selectEventToAnnounce(
-				feed,
-				lastAnnouncedEventIdRef.current
+	// One event-observation path owns sound and OS banners. Initial history is
+	// silent; repeated polls and read-state changes cannot re-announce a row.
+	const announceNewEvents = useCallback((feed: NotificationFeedItem[]) => {
+		if (observedEventIdsRef.current === null) {
+			observedEventIdsRef.current = new Set(
+				feed
+					.filter(
+						(item) =>
+							!pendingLiveEventIdsRef.current.has(
+								item.params?.matrixEventId
+							)
+					)
+					.map((item) => item.id)
 			);
-			lastAnnouncedEventIdRef.current = nextMarker;
-			if (!announce) {
-				return;
+			initialFeedTimeRef.current = Math.max(
+				Number.NEGATIVE_INFINITY,
+				...feed.map((item) => new Date(item.createdAt).getTime())
+			);
+		}
+		const observed = observedEventIdsRef.current;
+		const { settings, device } = notificationSettingsStore.getState();
+		for (const event of feed) {
+			if (observed.has(event.id)) continue;
+			observed.add(event.id);
+			const pendingLive = pendingLiveEventIdsRef.current.delete(
+				event.params?.matrixEventId
+			);
+			if (
+				event.readAt ||
+				(!pendingLive &&
+					new Date(event.createdAt).getTime() <
+						initialFeedTimeRef.current)
+			)
+				continue;
+			const descriptor = getEventDescriptor(event.eventType);
+			const mentioned = event.params?.mentioned === true;
+			// #1377 "Ton": the user muted this kind of session in the list's
+			// display filter → no sound, whatever the area settings say. Before
+			// the account data is synced the store already holds the local
+			// mirror of the last known filters, so a mute is honoured from the
+			// first poll; waiting for `synced` would silence every sound while
+			// account data is unreachable. The banner is unaffected.
+			const displayFilter = displayFilterStore.getState();
+			const mutedByKind = isEventMutedByKind(
+				displayFilter.filters,
+				event.sourceSessionId
+			);
+			if (!mutedByKind) {
+				try {
+					playNotificationSound(
+						settings,
+						device,
+						descriptor.family,
+						event.eventType,
+						mentioned,
+						Date.now(),
+						soundOverrideForEvent(
+							displayFilter.filters,
+							event.sourceSessionId
+						)
+					);
+				} catch {
+					// Device audio support must not prevent feed or banner delivery.
+				}
 			}
-			const { settings, device } = notificationSettingsStore.getState();
-			const family = getEventDescriptor(announce.eventType).family;
-			const isMention = announce.params?.mentioned === true;
-			playNotificationSound(
-				settings,
-				device,
-				family,
-				announce.eventType,
-				isMention
-			);
-		},
-		[]
-	);
+			// OS surfaces contain only the generic localized event title. Never
+			// copy server text or decrypted counselling content to the lock screen.
+			try {
+				sendNotification(
+					t(descriptor.titleTemplate, { senderDisplayName: '' }),
+					{
+						family: descriptor.family,
+						eventType: event.eventType,
+						mentioned,
+						showAlways: descriptor.family === 'requests',
+						onclick: () => window.focus()
+					}
+				);
+			} catch {
+				// Some browsers expose Notification but reject its constructor.
+				// The feed remains available and polling continues normally.
+			}
+		}
+	}, []);
 
 	/** Applies a response, or discards it when a floor says it is stale. */
 	const applyFeedResponse = useCallback(
@@ -460,9 +538,37 @@ export function NotificationsProvider(props) {
 			if (seq <= pageFloor || seq <= readSettledFloorRef.current) {
 				return false;
 			}
+			if (
+				!sameList(
+					response.requestedExclusions,
+					hiddenEventTypesRef.current
+				)
+			) {
+				// A filter switch also invalidates parked rows, not only their total.
+				// React batches discarded parked pages into one current-set refresh.
+				setExclusionRefreshGeneration((value) => value + 1);
+				return false;
+			}
 			pageFloorsRef.current.set(page, seq);
 			if (page === 0) {
-				maybePlaySoundForNewEvent(items);
+				const requests = items.filter(
+					(item) => item.eventType === 'request.new'
+				);
+				const observed = observedRequestIdsRef.current;
+				const hasNewRequest =
+					observed !== null &&
+					requests.some((item) => !observed.has(item.id));
+				observedRequestIdsRef.current ??= new Set();
+				requests.forEach((item) =>
+					observedRequestIdsRef.current.add(item.id)
+				);
+				if (hasNewRequest) {
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						source: 'notification-feed'
+					});
+				}
+				announceNewEvents(items);
 				setNotificationFeed((existing) =>
 					// Page 0 is authoritative for its own window, so a row the
 					// server dropped disappears here instead of surviving
@@ -478,7 +584,6 @@ export function NotificationsProvider(props) {
 					);
 				}
 				if (!response.staleTotal) {
-					setUnreadNotificationCount(unreadCount);
 					setServerUnreadTotal(unreadCount);
 					setServerUnreadTotalExcludesHidden(response.excludesHidden);
 					if (response.excludesHidden && unreadCount === 0) {
@@ -524,7 +629,7 @@ export function NotificationsProvider(props) {
 			}
 			return true;
 		},
-		[maybePlaySoundForNewEvent]
+		[announceNewEvents]
 	);
 
 	/** Parks the response while confirmed reads are pending, else applies. */
@@ -557,7 +662,7 @@ export function NotificationsProvider(props) {
 			requestSeqRef.current += 1;
 			const seq = requestSeqRef.current;
 			const feedEpoch = feedEpochRef.current;
-			const excluded = hiddenEventTypesRef.current;
+			const excluded = [...hiddenEventTypesRef.current];
 			const response = await apiGetEventNotifications(
 				page,
 				NOTIFICATION_FEED_MAX_ITEMS,
@@ -578,6 +683,7 @@ export function NotificationsProvider(props) {
 				: [];
 			const current = hiddenEventTypesRef.current;
 			return handleFeedResponse({
+				requestedExclusions: excluded,
 				page,
 				seq,
 				items,
@@ -724,9 +830,6 @@ export function NotificationsProvider(props) {
 								setServerUnreadTotal((value) =>
 									Math.max(0, value - 1)
 								);
-								setUnreadNotificationCount((value) =>
-									Math.max(0, value - 1)
-								);
 								settlementRef.current.anySuccess = true;
 							})
 							.catch(() => {
@@ -814,9 +917,6 @@ export function NotificationsProvider(props) {
 					!serverUnreadTotalExcludesHiddenRef.current
 				) {
 					setServerUnreadTotal((value) =>
-						Math.max(0, value - updated)
-					);
-					setUnreadNotificationCount((value) =>
 						Math.max(0, value - updated)
 					);
 				}
@@ -972,6 +1072,22 @@ export function NotificationsProvider(props) {
 		refreshNotificationFeedSafe();
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
+	}, [refreshNotificationFeedSafe, exclusionRefreshGeneration]);
+
+	// This provider lives above the router, so it outlives the session. When
+	// the auth session is torn down (sign-out, expired refresh token) the
+	// feed is reset at once and in-flight responses are dropped through the
+	// epoch, instead of polling on with a leftover token until the next tick.
+	useEffect(() => {
+		window.addEventListener(
+			AUTH_SESSION_CHANGE_EVENT,
+			refreshNotificationFeedSafe
+		);
+		return () =>
+			window.removeEventListener(
+				AUTH_SESSION_CHANGE_EVENT,
+				refreshNotificationFeedSafe
+			);
 	}, [refreshNotificationFeedSafe]);
 
 	// Slice 7: an exact total describes one exclusion set. When the set
@@ -1005,7 +1121,15 @@ export function NotificationsProvider(props) {
 	// a burst of events collapses into a single refetch.
 	useEffect(() => {
 		let debounceTimer: number | undefined;
-		const onLiveEvent = () => {
+		const onLiveEvent = (event) => {
+			if (event.source === 'notification-feed') return;
+			if (
+				observedEventIdsRef.current === null &&
+				event.matrixEventId &&
+				event.isOwnMessage === false
+			) {
+				pendingLiveEventIdsRef.current.add(event.matrixEventId);
+			}
 			window.clearTimeout(debounceTimer);
 			debounceTimer = window.setTimeout(refreshNotificationFeedSafe, 400);
 		};
@@ -1071,8 +1195,6 @@ export function NotificationsProvider(props) {
 			setNotificationFeed((existing) =>
 				mergeNotificationFeed([feedItem], existing)
 			);
-			// Local rows never enter `serverUnreadTotal` (spec §6.3).
-			setUnreadNotificationCount((value) => value + 1);
 		},
 		[]
 	);
@@ -1104,7 +1226,13 @@ export function NotificationsProvider(props) {
 		// Opening an already-read card calls this too: the totals move only
 		// on an unread → read transition of a row we know.
 		const row = notificationFeedRef.current.find((item) => item.id === id);
-		const wasUnread = !row || !row.readAt;
+		const wasUnread = !!row && !row.readAt;
+		// Update the callback snapshot synchronously: repeated reads in one
+		// React batch must decrement the badge only once.
+		const now = new Date().toISOString();
+		notificationFeedRef.current = notificationFeedRef.current.map((item) =>
+			item.id === id && !item.readAt ? { ...item, readAt: now } : item
+		);
 		if (!id.startsWith('local-')) {
 			apiMarkEventNotificationRead(id).catch(() => undefined);
 			if (wasUnread) {
@@ -1118,9 +1246,6 @@ export function NotificationsProvider(props) {
 					: item
 			)
 		);
-		if (wasUnread) {
-			setUnreadNotificationCount((value) => Math.max(0, value - 1));
-		}
 	}, []);
 
 	const markAllNotificationsAsRead = useCallback(() => {
@@ -1135,7 +1260,6 @@ export function NotificationsProvider(props) {
 				item.readAt ? item : { ...item, readAt: now }
 			)
 		);
-		setUnreadNotificationCount(0);
 		setServerUnreadTotal(0);
 		setUnfilteredUnreadTotal(null);
 	}, []);

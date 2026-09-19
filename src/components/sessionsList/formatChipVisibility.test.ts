@@ -81,4 +81,57 @@ describe('getFormatChipVisibility', () => {
 			internalGroup: false
 		});
 	});
+
+	// #1440: the Beratungsstelle's settings narrow what the Träger allows.
+	it('follows the counsellor’s agencies within what the Träger allows', () => {
+		const tenant = { settings: { featureGroupChatV2Enabled: true } };
+		expect(
+			getFormatChipVisibility(tenant, consultantOnMySessions, [
+				{ id: 1, settings: { featureSelfHelpGroupsEnabled: false } }
+			])
+		).toEqual({
+			createGroupChat: true,
+			groups: false,
+			internalGroup: true
+		});
+		expect(
+			getFormatChipVisibility(tenant, consultantOnMySessions, [
+				{
+					id: 1,
+					settings: {
+						featureSelfHelpGroupsEnabled: false,
+						featureInternalGroupChatEnabled: false
+					}
+				}
+			])
+		).toEqual({
+			createGroupChat: false,
+			groups: false,
+			internalGroup: false
+		});
+	});
+
+	it('keeps a format one of several agencies still allows', () => {
+		expect(
+			getFormatChipVisibility(
+				{ settings: { featureGroupChatV2Enabled: true } },
+				consultantOnMySessions,
+				[
+					{ id: 1, settings: { featureGroupChatV2Enabled: false } },
+					{
+						id: 2,
+						settings: {
+							featureGroupChatV2Enabled: null,
+							featureSelfHelpGroupsEnabled: true,
+							featureInternalGroupChatEnabled: false
+						}
+					}
+				]
+			)
+		).toEqual({
+			createGroupChat: true,
+			groups: true,
+			internalGroup: false
+		});
+	});
 });

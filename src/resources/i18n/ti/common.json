@@ -336,7 +336,9 @@
 			"team": {
 				"title": "ምኽክር ጉጅለ",
 				"onlyMarker": "ንጉጅለ ጥራይ",
-				"composer": { "placeholder": "ናብ ጉጅለ መልእኽቲ…" },
+				"composer": {
+					"placeholder": "ናብ ጉጅለ መልእኽቲ…"
+				},
 				"systemNotice": "ምኽክር ጉጅለ ምስ ምኽሪ ብሓባር ይካየድ። ደላዪ ምኽሪ ኣብዚ ቻነል ኣይሳተፍን ኣይርእዮን።",
 				"empty": {
 					"title": "ምኽክር ጉጅለ ጀምር",
@@ -575,6 +577,7 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": { "open": "ናይ ጉጅለ ዘተ ክፈት" },
 		"acceptButton": {
 			"anonymous": "ዕላል ጀምር",
 			"known": "ሕቶ ተቐበል"
@@ -1553,6 +1556,7 @@
 					}
 				},
 				"accountDeleted": "እዚ ኣካውንት ተደምሲሱ እዩ እሞ ደጊም ኣይርከብን። ነቲ ምኽሪ ክትቅጽልዎ እንተደሊኹም፡ ኣብ ዝኾነ ግዜ ዳግም ክትምዝገቡ ትኽእሉ።",
+				"unavailable": "ሕጂ ምእታው ኣይከኣልን። በጃኹም ድሕሪ ቁሩብ ደቓይቕ ደጊምኩም ፈትኑ።",
 				"email": {
 					"otp": {
 						"missing": "ንኽልተ ረቛሒታት ንምርግጋጽ በጃኹም ነቲ ኮድ ካብ ኢመይልኩም ኣእትዉ።"
@@ -1784,6 +1788,7 @@
 		},
 		"thread": {
 			"unknownRoot": "ቀዳማይ መልእኽቲ",
+			"targetLabel": "መዓላማ፦ ትሬድ",
 			"listToggle": "ትሬዳት",
 			"replies": "{{count}} መልስታት",
 			"title": "ትሬድ",
@@ -1836,9 +1841,19 @@
 			"button": "መጻረዪ ምርኣይ",
 			"buttonCustomised": "መጻረዪ ተመዓራርዩ",
 			"title": "መጻረዪ ምርኣይ",
-			"description": "ኣብዚ ዝርዝር እዚ ኣየኖት ዓይነታት ከም ዝርኣዩን ኣየኖት ምልክት ከም ዝወስዱን።",
+			"description": "ኣብዚ ዝርዝር እዚ ኣየኖት ዓይነታት ከም ዝርኣዩ፡ ኣየኖት ምልክት ከም ዝወስዱን ከመይ ከም ዝድመጹን።",
 			"showColumn": "ኣርኢ",
 			"pillColumn": "ምልክት",
+			"soundColumn": "ድምጺ",
+			"soundKind": "ድምጺ ስማዕ፦ {{kind}}",
+			"soundMenu": "ድምጺ ምረጽ፦ {{kind}}",
+			"soundDefault": "ልሙድ",
+			"pillMenu": "ኣቀማምጣ ምረጽ፦ {{kind}}",
+			"liveChatDynamic": "ተለዋዋጢ",
+			"liveChatFixed": "ቀዋሚ",
+			"pillOff": "ዝተዓጽወ",
+			"pillOn": "ዝተኸፈተ",
+			"placeholderHint": "ኣብ ቀረባ ግዜ።",
 			"showKind": "ኣርኢ: {{kind}}",
 			"pillKind": "ምልክት: {{kind}}",
 			"otherFixed": "“ካልእ” ዋላ ሓንቲ ከይተፈልጠት ከይትጠፍእ ኩሉ ግዜ ይርአ።",
@@ -1849,8 +1864,20 @@
 			"autoReadSessionsDescription": "ነዚ ዝርዝር እዝን ቆጻሪኡን ጥራይ ይምልከት። ዕላላት ከም ዝተነበቡ ኣይምልከቱን፣ ናይ ምንባብ መረጋገጺ ኣይለኣኽን።",
 			"reset": "ናብ ናተይ ቀዋሚ ኣቐምጣ ምለስ",
 			"done": "ተወዲኡ",
-			"profileLink": "ቀዋሚ ኣቐምጣታትን ተወሳኺ ኣማራጺታትን ኣብ መግለጺ › መፍለጢታት",
+			"profileLink": "መደባት ኣርም",
+			"overrideNotice": "እዛ ዝርዝር ካብ መደባትካ ትፍለ።",
+			"resetShort": "ዳግም ኣቐምጥ",
+			"otherChip": "ተወሳኺ",
 			"readOnlyHint": "እዞም ኣቐምጣታት ብሓድሽ ስሪት መተግበሪ ተዓቂቦም። ንምቕያር በጃኹም መተግበሪ ኣሐድሱ።",
+			"viewTitle": "ኣማራጺታት ምርኣይ መጻረዪ ቁልፊ",
+			"viewIcons": "ምልክታት",
+			"viewLabels": "ምልክታት + ጽሑፍ",
+			"viewText": "ጽሑፍ",
+			"autoSort": "ዘይተነበቡ ንጸጋም ኣቐምጥ",
+			"autoSortDescription": "ዘይተነበቡ ነገራት ዘለዎም መጻረዪታት ናብ መጀመርታ መስርዕ ይግዕዙ።",
+			"deactivatedHint": "ብትካልኩም ተዓጽዩ። ዘለዉ ዝርርባት ክሳብ ዝተኣከቡ ይረኣዩ።",
+			"deactivatedChip": "{{kind}} (ብትካልኩም ተዓጽዩ)",
+			"deactivatedNotice": "{{kind}} ንትካልኩም ተዓጽዩ ኣሎ። ዘለዉ ዝርርባት ክሳብ ዝተኣከቡ ይረኣዩ፤ ሓደስቲ ክፍጠሩ ኣይክእሉን።",
 			"badgeHiddenHint": "ክሳብ {{count}} ተሓቢኡ",
 			"hiddenActiveRow": "ብናይ ምርኣይ መጻረዪኹም ተሓቢኡ",
 			"profileTitle": "ናይ ምርኣይ መጻረዪታት",
@@ -1866,7 +1893,8 @@
 				"timeline": "መስመር ግዜ",
 				"sessions": "ዕላላት",
 				"requests": "ሕቶታት"
-			}
+			},
+			"liveChatSession": "ኣብ ክፉት"
 		},
 		"families": {
 			"all": "ኩሉ",
@@ -3607,6 +3635,7 @@
 				"unread": "ዘይተነበበ",
 				"drafts": "ንድፍታት",
 				"nearby": "Mail",
+				"other": "ተወሳኺ",
 				"create": "ፍጠር",
 				"group": "መጻረዪ",
 				"archive": "Archive",
@@ -3615,7 +3644,8 @@
 				"internalGroup": "ውሽጣዊ ናይ ጉጅለ ዝርርብ",
 				"groups": "ናይ ዝርርብ ክበብ",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "ዕላል ፍጠር"
 			},
 			"emptyFilterResult": "ናብ ምድላይ ወይ ፊልተራትካ ዝሰማማዕ ምኽሪ የለን።",
 			"draftMetadataOnly": "ዘይተላእከ መልእኽቲ ተዓቂቡ።"
@@ -4753,6 +4783,7 @@
 	"dpaSign": {
 		"title": "ውዕል ኣሰራርሓ ዳታ ፈርም",
 		"subtitle": "በጃኹም ነቲ ውዕል ብምሉኡ ኣንብቡ እሞ ብድሕሪኡ ናይታ እትፍርም ሰብ ሓበሬታ ኣረጋግጹ።",
+		"signerName": "ምሉእ ስም",
 		"loadingContract": "እቲ ውዕል ይጽዕን ኣሎ...",
 		"signerHeading": "መረጋገጺ ናይታ ወኪል ክትከውን ስልጣን ዘለዋ ሰብ",
 		"signingFor": "ብስም እዚ ኢኹም እትፍርሙ፦",
@@ -5043,6 +5074,13 @@
 					"text": "ናይ መለለዪ ተጠቃሚኹም ጥራይ እዩ ዝርአ። ድሕሪ 48 ሰዓታት ኩሉ ይድምሰስ።"
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "ርክብ ተቋሪጹ",
+			"message": "እቲ ክፍለ ግዜ ሕጂ ክጽዓን ኣይከኣለን። በጃኹም እንደገና ፈትኑ።",
+			"retry": "እንደገና ፈትኑ"
 		}
 	}
 }
