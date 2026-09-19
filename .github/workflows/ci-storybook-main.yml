@@ -11,6 +11,12 @@ env:
   REGISTRY: ghcr.io
   ORG: openresilienceinitiative
 
+# A publishing run must finish: cancelling one halfway is worse
+# than paying for it.
+concurrency:
+  group: frontend-storybook-main-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: lint, type-check, build and publish Storybook image
