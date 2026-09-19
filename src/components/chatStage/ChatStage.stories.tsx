@@ -108,6 +108,18 @@ const expectStageParts = async (
 	);
 };
 
+const expectFabClearsComposer = async (
+	fab: HTMLElement,
+	composer: HTMLElement
+) => {
+	await waitFor(() => {
+		const clearance =
+			composer.getBoundingClientRect().top -
+			fab.getBoundingClientRect().bottom;
+		expect(clearance).toBeGreaterThanOrEqual(15);
+	});
+};
+
 const paneWidths = (canvasElement: HTMLElement) => ({
 	main:
 		canvasElement
@@ -1926,6 +1938,25 @@ export const PhoneMainChatWithFab: Story = {
 			'[data-cy="channel-switcher"]'
 		);
 		await expect(root?.getAttribute('data-variant')).toBe('attention');
+		const fab = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="channel-switcher-fab"]'
+		)!;
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .textarea__wrapper-send-message'
+		)!;
+		// #1302: the switcher belongs above the movable composer. It must keep
+		// the 16 px FAB gap instead of falling back to the viewport bottom and
+		// covering the input field.
+		await expectFabClearsComposer(fab, composer);
+		const initialFabTop = fab.getBoundingClientRect().top;
+		composer.style.height = `${composer.getBoundingClientRect().height + 64}px`;
+		await waitFor(() => {
+			expect(fab.getBoundingClientRect().top).toBeLessThanOrEqual(
+				initialFabTop - 63
+			);
+		});
+		await expectFabClearsComposer(fab, composer);
+		composer.style.removeProperty('height');
 		await expect(
 			canvasElement.querySelector('.sessionsListItem')
 		).toBeNull();
@@ -2111,6 +2142,10 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 		const fab = canvasElement.querySelector<HTMLButtonElement>(
 			'[data-cy="channel-switcher-fab"]'
 		)!;
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .textarea__wrapper-send-message'
+		)!;
+		await expectFabClearsComposer(fab, composer);
 		await expect(fab.getAttribute('aria-label')).toMatch(
 			/Beratungschat|counselling/i
 		);
