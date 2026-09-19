@@ -2396,6 +2396,11 @@
 			}
 		}
 	},
+	"inviteLink": {
+		"resume": {
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuche es erneut."
+		}
+	},
 	"passwordChange": {
 		"required": {
 			"copy": "Dein Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch dein erstes Passwort vergeben hat und es weiterhin kennt. Bitte ersetze es jetzt durch ein Passwort, das nur du kennst. Danach richtest du deinen zweiten Faktor ein.",

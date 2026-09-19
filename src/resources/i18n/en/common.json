@@ -560,7 +560,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Open team discussion" },
+		"teamDiscussion": {
+			"open": "Open team discussion"
+		},
 		"acceptButton": {
 			"anonymous": "Start chat",
 			"known": "Accept request"
@@ -4989,6 +4991,13 @@
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connection interrupted",
+			"message": "Your session could not be loaded. Please try again.",
+			"retry": "Try again"
 		}
 	},
 	"passwordChange": {

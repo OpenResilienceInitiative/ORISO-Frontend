@@ -5082,6 +5082,13 @@
 			}
 		}
 	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
+		}
+	},
 	"passwordChange": {
 		"required": {
 			"copy": "Votre accès a été créé par une administratrice ou un administrateur, qui a également défini votre premier mot de passe et le connaît toujours. Veuillez le remplacer maintenant par un mot de passe que vous seul connaissez. Vous configurerez ensuite votre deuxième facteur.",

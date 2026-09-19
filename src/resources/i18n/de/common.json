@@ -572,7 +572,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Teambesprechung öffnen" },
+		"teamDiscussion": {
+			"open": "Teambesprechung öffnen"
+		},
 		"acceptButton": {
 			"anonymous": "Chat starten",
 			"known": "Anfrage annehmen"
@@ -5070,6 +5072,13 @@
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Verbindung unterbrochen",
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen"
 		}
 	},
 	"passwordChange": {

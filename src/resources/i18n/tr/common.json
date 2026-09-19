@@ -5082,6 +5082,13 @@
 			}
 		}
 	},
+	"inviteLink": {
+		"resume": {
+			"title": "Bağlantı kesildi",
+			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene"
+		}
+	},
 	"passwordChange": {
 		"required": {
 			"copy": "Erişiminiz, ilk şifrenizi de belirleyen ve onu hâlâ bilen bir yönetici tarafından oluşturuldu. Lütfen şimdi onu yalnızca sizin bildiğiniz bir şifreyle değiştirin. Ardından ikinci faktörünüzü tanımlayacaksınız.",
