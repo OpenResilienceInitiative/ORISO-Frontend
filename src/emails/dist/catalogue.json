@@ -683,6 +683,93 @@
 					"preheader": "Sending via {{smtpHost}} works."
 				}
 			}
+		},
+		"anruf-erinnerung": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{callUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Eine Sitzung beginnt bald",
+					"preheader": "Melden Sie sich an, um die Details zu sehen."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Eine Sitzung beginnt bald",
+					"preheader": "Melde dich an, um die Details zu sehen."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "A session is starting soon",
+					"preheader": "Sign in to see the details."
+				}
+			}
+		},
+		"anruf-einladung": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{callUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Sie wurden zu einer Sitzung eingeladen",
+					"preheader": "Die Einladung liegt geschützt in Ihrem Zugang bereit."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Du wurdest zu einer Sitzung eingeladen",
+					"preheader": "Die Einladung liegt geschützt in deinem Zugang bereit."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "You have been invited to a session",
+					"preheader": "The invitation is waiting securely in your account."
+				}
+			}
+		},
+		"anruf-verpasst": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{callUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Sie haben einen Anruf verpasst",
+					"preheader": "Melden Sie sich an, um den geschützten Verlauf zu öffnen."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Du hast einen Anruf verpasst",
+					"preheader": "Melde dich an, um den geschützten Verlauf zu öffnen."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "You missed a call",
+					"preheader": "Sign in to open the protected history."
+				}
+			}
 		}
 	}
 }

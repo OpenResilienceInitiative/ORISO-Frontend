@@ -41,7 +41,12 @@ export const EMAIL_IDS = [
 
 	// Team and platform operations (#868).
 	'team-aenderung',
-	'smtp-test'
+	'smtp-test',
+
+	// Privacy-neutral audio/video call lifecycle notifications.
+	'anruf-erinnerung',
+	'anruf-einladung',
+	'anruf-verpasst'
 ] as const;
 
 export type EmailId = (typeof EMAIL_IDS)[number];
@@ -89,7 +94,10 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'einladung-fachkraft': 'Einladung für eine Fachkraft',
 	'avv-unterschrift': 'AVV zur Unterschrift',
 	'team-aenderung': 'Änderung im Team',
-	'smtp-test': 'SMTP-Test'
+	'smtp-test': 'SMTP-Test',
+	'anruf-erinnerung': 'Anruf-Erinnerung',
+	'anruf-einladung': 'Anruf-Einladung',
+	'anruf-verpasst': 'Verpasster Anruf'
 };
 
 /**
@@ -127,7 +135,10 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'einladung-fachkraft': 'consultant',
 		'avv-unterschrift': 'admin',
 		'team-aenderung': 'consultant',
-		'smtp-test': 'admin'
+		'smtp-test': 'admin',
+		'anruf-erinnerung': 'asker',
+		'anruf-einladung': 'asker',
+		'anruf-verpasst': 'asker'
 	};
 
 /**
@@ -162,7 +173,10 @@ export const EMAIL_CLASS: Record<
 	'einladung-fachkraft': 'security',
 	'avv-unterschrift': 'legal',
 	'team-aenderung': 'operational',
-	'smtp-test': 'service'
+	'smtp-test': 'service',
+	'anruf-erinnerung': 'personal',
+	'anruf-einladung': 'personal',
+	'anruf-verpasst': 'personal'
 };
 
 /** Mails whose footer carries no unsubscribe link, because nothing switches them off. */
