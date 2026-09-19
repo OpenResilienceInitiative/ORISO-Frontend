@@ -825,7 +825,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	);
 
 	// Without Matrix members (enquiry, offline) the header still shows the
-	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
+	// contact: the asker as animal, a counsellor as their chosen avatar when
+	// they picked one (#1047), otherwise the same animal as before.
 	const headerParticipants: StackParticipant[] =
 		visibleRoomParticipants.length > 0
 			? visibleRoomParticipants
@@ -842,7 +843,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							isAsker: !hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
-							)
+							),
+							// For an advice seeker the contact IS the counsellor,
+							// so their chosen avatar belongs on the header too.
+							avatarKind: activeSession.consultant?.avatarKind,
+							avatarId: activeSession.consultant?.avatarId
 						}
 					]
 				: [];

@@ -1711,6 +1711,20 @@ export const MessageItemComponent = ({
 					firstName: consultantMatch?.firstName || undefined,
 					lastName: consultantMatch?.lastName || undefined
 				};
+	/**
+	 * The counsellor avatar on a message row (#1047). Incoming: only when the
+	 * VIEWER is the advice seeker, because only then is the author certainly
+	 * this session's counsellor — in a group or team room the author may be
+	 * someone else entirely, and borrowing the session consultant's avatar
+	 * would put the wrong face on their message. Own: the counsellor's own
+	 * choice from `/service/users/data`.
+	 */
+	const incomingCounsellorAvatar = askerIncomingConsultantName
+		? {
+				avatarKind: activeSession?.consultant?.avatarKind,
+				avatarId: activeSession?.consultant?.avatarId
+			}
+		: {};
 	const ownConsultantName =
 		isMyMessage && !isUserMessage()
 			? resolveOwnConsultantName({
@@ -2633,6 +2647,12 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
+										avatarKind={
+											incomingCounsellorAvatar.avatarKind
+										}
+										avatarId={
+											incomingCounsellorAvatar.avatarId
+										}
 										displayName={
 											resolvedIncomingDisplayName
 										}
@@ -2792,6 +2812,16 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
+										avatarKind={
+											ownConsultantName
+												? userData?.avatarKind
+												: undefined
+										}
+										avatarId={
+											ownConsultantName
+												? userData?.avatarId
+												: undefined
+										}
 										displayName={
 											ownConsultantName?.displayName ??
 											displayName
