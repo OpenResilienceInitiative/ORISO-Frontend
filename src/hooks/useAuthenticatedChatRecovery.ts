@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react';
 import type { MatrixClientService } from '../services/matrixClientService';
 import { startAuthenticatedChatRecovery } from '../services/authenticatedChatRecovery';
 import { clearLoginRecoveryPassword } from '../services/loginRecoveryHandoff';
-import { setRecoveryRuntimeStatus } from '../services/recoveryReminderState';
+import {
+	getRecoveryRuntimeStatus,
+	setRecoveryRuntimeStatus
+} from '../services/recoveryReminderState';
 import {
 	AUTHORITIES,
 	hasUserAuthority
@@ -59,7 +62,7 @@ export const useAuthenticatedChatRecovery = (
 				return;
 			}
 			try {
-				void startAuthenticatedChatRecovery(
+				const recovery = startAuthenticatedChatRecovery(
 					client,
 					{
 						chatRecoveryMode: recoveryMode,
@@ -68,7 +71,23 @@ export const useAuthenticatedChatRecovery = (
 					recoveryClients.current,
 					() => cancelled
 				);
+				/* `initializeChatRecovery` sets the status to 'pending' and
+				   arms its own 45 s deadline BEFORE its try block, so a throw
+				   in that window rejects this promise with the deadline never
+				   armed — nothing would move the status off 'pending' again,
+				   and the rejection would go unhandled. Every failure that
+				   reaches its try IS handled there and resolves with a status
+				   of its own, so this handler defers to whatever is already
+				   recorded rather than flattening a better answer. */
+				void recovery?.catch(() => {
+					if (cancelled) return;
+					const status = getRecoveryRuntimeStatus(userId);
+					if (status === 'idle' || status === 'pending')
+						setRecoveryRuntimeStatus(userId, 'retryable-failure');
+				});
 			} catch {
+				/* Synchronous — the policy could not even be read, so nothing
+				   of this run's has been recorded yet. */
 				setRecoveryRuntimeStatus(userId, 'retryable-failure');
 			}
 		});

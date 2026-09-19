@@ -86,6 +86,11 @@ export const setRecoveryRuntimeStatus = (
 	statuses.set(userId, status);
 	notifyRecoveryState();
 };
+/** The current status, for callers outside React that must not overwrite a
+ *  more specific one they did not produce. */
+export const getRecoveryRuntimeStatus = (
+	userId: string
+): RecoveryRuntimeStatus => statuses.get(userId) ?? 'idle';
 export const clearRecoveryRuntimeState = (): void => {
 	statuses.clear();
 	notifyRecoveryState();
@@ -95,7 +100,7 @@ export const useRecoveryRuntimeStatus = (
 ): RecoveryRuntimeStatus =>
 	useSyncExternalStore(
 		subscribeRecoveryState,
-		() => statuses.get(userId) ?? 'idle',
+		() => getRecoveryRuntimeStatus(userId),
 		() => 'idle'
 	);
 

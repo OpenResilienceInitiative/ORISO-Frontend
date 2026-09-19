@@ -1,7 +1,7 @@
 import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
@@ -22,7 +22,6 @@ import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
-import { groupEntryRoomPath } from '../groupChat/entryRoom/GroupEntryRoom';
 import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
@@ -33,7 +32,7 @@ import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
 import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRecovery';
-import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
+import { usePendingGroupChatJoin } from '../../hooks/usePendingGroupChatJoin';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
@@ -69,8 +68,6 @@ export const AuthenticatedApp = ({
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { locale, setLocale } = useContext(LocaleContext);
 	const { setInformal } = useContext(InformalContext);
-	const { joinGroupChat, tenantReady } = useJoinGroupChat();
-	const navigate = useNavigate();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
@@ -78,6 +75,7 @@ export const AuthenticatedApp = ({
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
 	useAuthenticatedChatRecovery(matrixClientService, userData);
+	usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
@@ -135,39 +133,6 @@ export const AuthenticatedApp = ({
 		// console.log('🧹 Clearing all old notifications on app mount...');
 		setNotifications([]);
 	}, [setNotifications]);
-
-	/* The group-chat id from the link (`?gcid=`) is read once, at mount. It
-	   used to be re-read from `window.location` inside an effect that ran
-	   again when the tenant arrived — by then the router had already
-	   replaced the URL and the id was gone, so the assignment never fired
-	   (#974, #1216). Now: keep the id, wait for the tenant, assign, then
-	   open the group's entry room. */
-	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
-		() => new URLSearchParams(window.location.search).get('gcid')
-	);
-	useEffect(() => {
-		if (!pendingGroupChatId || !tenantReady) {
-			return;
-		}
-		// Joining assigns the account to the chat server-side, so it must wait
-		// until the account is the counsellor's own. The pending id is kept
-		// rather than cleared: the deep link still has to work once it is.
-		if (isAccountSetupPending(userData)) {
-			return;
-		}
-		const gcid = pendingGroupChatId;
-		setPendingGroupChatId(null);
-		joinGroupChat(gcid)
-			.then((assigned) => {
-				if (assigned) {
-					navigate(groupEntryRoomPath(gcid), { replace: true });
-				}
-			})
-			.catch(() => {
-				/* Already assigned (409) or gone — the entry room says so. */
-				navigate(groupEntryRoomPath(gcid), { replace: true });
-			});
-	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate, userData]);
 
 	useEffect(() => {
 		if (
