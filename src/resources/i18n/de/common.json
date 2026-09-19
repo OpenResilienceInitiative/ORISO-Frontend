@@ -4841,7 +4841,8 @@
 			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
 			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
-			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert."
+			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert.",
+			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt."
 		}
 	},
 	"accountInvite": {

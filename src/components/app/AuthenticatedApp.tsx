@@ -1,6 +1,4 @@
 import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
-import { startAuthenticatedChatRecovery } from '../../services/authenticatedChatRecovery';
-import { setRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
@@ -34,6 +32,7 @@ import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
+import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRecovery';
 import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
@@ -78,56 +77,20 @@ export const AuthenticatedApp = ({
 	// #1377: the display-filter store follows the published client (and
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
-	const recoveryClients = useRef(new WeakSet<object>());
-	const recoveryMode = userData?.chatRecoveryMode;
-	const recoveryRevision = userData?.chatRecoveryPolicyRevision;
-	const recoveryAnonymous =
-		!!userData && hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData);
-	const recoveryUserLoaded = !!userData;
-	useEffect(() => {
-		if (!matrixClientService || !recoveryUserLoaded) return;
-		let cancelled = false;
-		const unsubscribe = matrixClientService.onSyncStateChange((state) => {
-			if (state !== 'PREPARED' && state !== 'SYNCING') return;
-			const client = matrixClientService.getClient();
-			const userId = client?.getUserId();
-			if (!client || !userId || recoveryClients.current.has(client))
-				return;
-			if (recoveryAnonymous) {
-				clearLoginRecoveryPassword();
-				return;
-			}
-			try {
-				void startAuthenticatedChatRecovery(
-					client,
-					{
-						chatRecoveryMode: recoveryMode,
-						chatRecoveryPolicyRevision: recoveryRevision
-					},
-					recoveryClients.current,
-					() => cancelled
-				);
-			} catch {
-				setRecoveryRuntimeStatus(userId, 'retryable-failure');
-			}
-		});
-		return () => {
-			cancelled = true;
-			unsubscribe();
-		};
-	}, [
-		matrixClientService,
-		recoveryUserLoaded,
-		recoveryAnonymous,
-		recoveryMode,
-		recoveryRevision
-	]);
+	useAuthenticatedChatRecovery(matrixClientService, userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
 	// the browser's permission dialog for anonymous visitors (owner report,
-	// 2026-08-19).
-	useNotificationPermission();
+	// 2026-08-19). Withheld until the profile says the account is the
+	// counsellor's own, for the same reason as its sibling
+	// `requestPermissions()` below: an account that still owes its password or
+	// its second factor takes no calls, and the dialog would land over the
+	// setup gate. Unknown counts as pending here — unlike
+	// `isAccountSetupPending`, which must stay fail-open so a frontend ahead
+	// of its backend does not lock everyone out; postponing a prompt costs
+	// nothing.
+	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
 	useEffect(
 		() => () => {
@@ -286,13 +249,22 @@ export const AuthenticatedApp = ({
 											(window as any).callContext =
 												callContext;
 
-											// The client itself stays: the gate's password
-											// step rotates Matrix key-backup material
-											// through it. Live-event processing does not
-											// — it would deliver counselling content to an
-											// account that is not yet the counsellor's own.
-											// The gate reloads the document once setup is
-											// settled, which boots this properly.
+											// Deliberately NOT gated: `initializeClient`
+											// has already started the client, so the
+											// account's rooms sync into this browser even
+											// while the gate is up. That is not a leak the
+											// gate can close — whoever holds the
+											// administrator-chosen password can sign in and
+											// sync anyway, which is precisely why the gate
+											// demands a new one — and the password step
+											// needs a PREPARED client whenever there IS
+											// key-backup material to rotate
+											// (`getReadyClient`). What IS withheld is
+											// everything that acts on the content:
+											// live-event processing, notifications and the
+											// group-chat deep link. The gate reloads the
+											// document once setup is settled, which boots
+											// those properly.
 											if (
 												isAccountSetupPending(
 													userProfileData

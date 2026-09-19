@@ -13,8 +13,14 @@ import { onFirstUserGesture } from '../utils/onFirstUserGesture';
  * timer: Safari only honours `Notification.requestPermission` from inside a
  * user gesture, and Chromium down-ranks sites that prompt without one
  * (#576 Safari review).
+ *
+ * `enabled` withholds the request without unmounting the hook: an account
+ * still owed its own password and a second factor cannot receive calls yet, so
+ * the dialog would land over the account-setup gate — the screen that exists
+ * to say the account is not usable. The reported status stays truthful
+ * meanwhile; only the asking waits (#1481).
  */
-export const useNotificationPermission = () => {
+export const useNotificationPermission = (enabled = true) => {
 	const [permissionStatus, setPermissionStatus] =
 		useState<NotificationPermission>('default');
 
@@ -26,13 +32,13 @@ export const useNotificationPermission = () => {
 			return;
 		}
 		setPermissionStatus(Notification.permission);
-		if (Notification.permission !== PERMISSION_DEFAULT) {
+		if (!enabled || Notification.permission !== PERMISSION_DEFAULT) {
 			return;
 		}
 		return onFirstUserGesture(() => {
 			requestNotificationPermissionSafe().then(setPermissionStatus);
 		});
-	}, []);
+	}, [enabled]);
 
 	return permissionStatus;
 };

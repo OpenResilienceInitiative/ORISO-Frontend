@@ -4849,7 +4849,8 @@
 			"idle": "L’état de la récupération n’a pas encore été vérifié.",
 			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
 			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
-			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié."
+			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié.",
+			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste."
 		}
 	},
 	"accountInvite": {

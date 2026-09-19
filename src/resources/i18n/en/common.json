@@ -4760,7 +4760,8 @@
 			"idle": "Recovery status has not been checked yet.",
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
-			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed."
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed.",
+			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
 		}
 	},
 	"accountInvite": {
