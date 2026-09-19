@@ -4021,8 +4021,7 @@
 		},
 		"title": "Zwei-Faktor-Authentifizierung",
 		"required": {
-			"copy": "Ihr Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch Ihr erstes Passwort vergeben hat. Bitte hinterlegen Sie jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört Ihr Konto allein Ihnen und Sie können mit der Beratung beginnen.",
-			"logout": "Abmelden",
+			"copy": "Bitte hinterlegen Sie jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört Ihr Konto allein Ihnen und Sie können mit der Beratung beginnen.",
 			"title": "Zweiter Faktor erforderlich"
 		}
 	},
@@ -5071,6 +5070,17 @@
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Ihr Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch Ihr erstes Passwort vergeben hat und es weiterhin kennt. Bitte ersetzen Sie es jetzt durch ein Passwort, das nur Sie kennen. Danach richten Sie Ihren zweiten Faktor ein.",
+			"title": "Bitte vergeben Sie Ihr eigenes Passwort"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Abmelden"
 		}
 	}
 }

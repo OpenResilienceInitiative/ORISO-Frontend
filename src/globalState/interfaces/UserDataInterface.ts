@@ -28,6 +28,12 @@ export interface UserDataInterface {
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 	preferredLanguage: string;
 	twoFactorAuth?: TwoFactorAuthInterface;
+	/**
+	 * The account still carries the password its administrator chose, so it
+	 * must be replaced before the account is used. Optional: backends
+	 * predating the flag simply never send it.
+	 */
+	passwordChangeRequired?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];

@@ -3963,8 +3963,7 @@
 		},
 		"title": "Two-factor authentication",
 		"required": {
-			"copy": "Your account was created by an administrator, who also chose your first password. Please set up a second factor (app or e-mail) now. Only then is the account yours alone and you can start counselling.",
-			"logout": "Log out",
+			"copy": "Please set up a second factor (app or e-mail) now. Only then is the account yours alone and you can start counselling.",
 			"title": "Second factor required"
 		}
 	},
@@ -4990,6 +4989,17 @@
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
 			}
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Your account was created by an administrator, who chose your first password and still knows it. Please replace it now with a password only you know. Your second factor comes next.",
+			"title": "Please choose your own password"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Log out"
 		}
 	}
 }

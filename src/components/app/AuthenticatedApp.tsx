@@ -6,8 +6,8 @@ import * as React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
-import { MandatorySecondFactorGate } from '../twoFactorAuth/MandatorySecondFactorGate';
-import { requiresSecondFactorSetup } from '../twoFactorAuth/mandatorySecondFactor';
+import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
+import { resolveAccountSetupStep } from '../twoFactorAuth/accountSetupStep';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -396,16 +396,17 @@ export const AuthenticatedApp = ({
 	}
 
 	if (appReady) {
-		// The second factor comes before the app, not on top of it. A counsellor
-		// whose login an administrator provisioned received their first password
-		// from someone else, so the account is not yet theirs alone — until a
-		// factor is confirmed, the only ways on are setting one up or logging
-		// out. Replacing the routed app is what makes that true: the dismissible
-		// nag leaves everything underneath reachable (#841).
-		if (requiresSecondFactorSetup(userData)) {
+		// Account setup comes before the app, not on top of it. A counsellor whose
+		// login an administrator provisioned received their first password from
+		// someone else, so the account is not yet theirs alone — their own
+		// password and then a second factor are owed first, and until both are
+		// settled the only ways on are completing them or logging out. Replacing
+		// the routed app is what makes that true: the dismissible nag leaves
+		// everything underneath reachable (#841).
+		if (resolveAccountSetupStep(userData) !== null) {
 			return (
 				<AuthenticatedBuildIdentityBoundary>
-					<MandatorySecondFactorGate onLogout={handleLogout} />
+					<AccountSetupGate onLogout={handleLogout} />
 				</AuthenticatedBuildIdentityBoundary>
 			);
 		}
