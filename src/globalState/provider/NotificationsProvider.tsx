@@ -27,7 +27,10 @@ import {
 	type EventNotificationFeedItem
 } from '../../api/apiEventNotifications';
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { getValueFromCookie } from '../../components/sessionCookie/accessSessionCookie';
+import {
+	AUTH_SESSION_CHANGE_EVENT,
+	getValueFromCookie
+} from '../../components/sessionCookie/accessSessionCookie';
 import { EventActionParams } from '../../components/notificationsCenter/eventDescriptors';
 import { parseEventActionParams } from '../../components/notificationsCenter/notificationActionTarget';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
@@ -137,6 +140,8 @@ export const AUTO_READ_DEBOUNCE_MS = 300;
 
 /** One feed response, numbered so stale ones can be told apart (§6.3). */
 type FeedResponse = {
+	/** Filter snapshot at request time, retained while responses are parked. */
+	requestedExclusions: string[];
 	page: number;
 	seq: number;
 	items: NotificationFeedItem[];
@@ -146,9 +151,9 @@ type FeedResponse = {
 	/** Slice 7: `unreadCount` already excludes the hidden event types. */
 	excludesHidden: boolean;
 	/**
-	 * Slice 7: the server excluded a set the filter no longer hides (the
-	 * filter changed while this request was in flight). The rows apply; the
-	 * total is neither exact nor a bound for the current set and is dropped.
+	 * The server echoed exclusions different from the current request set.
+	 * Rows may still apply, but its total is unusable. Responses requested
+	 * for an old filter are discarded entirely before reaching this check.
 	 */
 	staleTotal: boolean;
 };
@@ -417,6 +422,8 @@ export function NotificationsProvider(props) {
 		() => hiddenTimelineEventTypes(timelineDisplayFilter),
 		[timelineDisplayFilter]
 	);
+	const [exclusionRefreshGeneration, setExclusionRefreshGeneration] =
+		useState(0);
 	const hiddenEventTypesRef = useRef(hiddenEventTypes);
 	hiddenEventTypesRef.current = hiddenEventTypes;
 	/** Whether the current total already leaves the hidden types out. */
@@ -529,6 +536,17 @@ export function NotificationsProvider(props) {
 			const { page, seq, items, unreadCount, reconciliation } = response;
 			const pageFloor = pageFloorsRef.current.get(page) ?? 0;
 			if (seq <= pageFloor || seq <= readSettledFloorRef.current) {
+				return false;
+			}
+			if (
+				!sameList(
+					response.requestedExclusions,
+					hiddenEventTypesRef.current
+				)
+			) {
+				// A filter switch also invalidates parked rows, not only their total.
+				// React batches discarded parked pages into one current-set refresh.
+				setExclusionRefreshGeneration((value) => value + 1);
 				return false;
 			}
 			pageFloorsRef.current.set(page, seq);
@@ -644,7 +662,7 @@ export function NotificationsProvider(props) {
 			requestSeqRef.current += 1;
 			const seq = requestSeqRef.current;
 			const feedEpoch = feedEpochRef.current;
-			const excluded = hiddenEventTypesRef.current;
+			const excluded = [...hiddenEventTypesRef.current];
 			const response = await apiGetEventNotifications(
 				page,
 				NOTIFICATION_FEED_MAX_ITEMS,
@@ -665,6 +683,7 @@ export function NotificationsProvider(props) {
 				: [];
 			const current = hiddenEventTypesRef.current;
 			return handleFeedResponse({
+				requestedExclusions: excluded,
 				page,
 				seq,
 				items,
@@ -1053,6 +1072,22 @@ export function NotificationsProvider(props) {
 		refreshNotificationFeedSafe();
 		const interval = window.setInterval(refreshNotificationFeedSafe, 15000);
 		return () => window.clearInterval(interval);
+	}, [refreshNotificationFeedSafe, exclusionRefreshGeneration]);
+
+	// This provider lives above the router, so it outlives the session. When
+	// the auth session is torn down (sign-out, expired refresh token) the
+	// feed is reset at once and in-flight responses are dropped through the
+	// epoch, instead of polling on with a leftover token until the next tick.
+	useEffect(() => {
+		window.addEventListener(
+			AUTH_SESSION_CHANGE_EVENT,
+			refreshNotificationFeedSafe
+		);
+		return () =>
+			window.removeEventListener(
+				AUTH_SESSION_CHANGE_EVENT,
+				refreshNotificationFeedSafe
+			);
 	}, [refreshNotificationFeedSafe]);
 
 	// Slice 7: an exact total describes one exclusion set. When the set

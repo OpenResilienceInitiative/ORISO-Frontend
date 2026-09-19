@@ -4,20 +4,26 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { ActiveSessionContext, E2EEContext } from '../../globalState';
 import { useDraftMessage } from './useDraftMessage';
+import { getEventListeners } from '../../utils/eventHandler';
+import { EVENT_PRE_LOGOUT } from '../logout/logout';
 
 type DraftPayload = {
 	text?: string;
 	[key: string]: unknown;
 };
 
-type DeleteDraftMock = (scopeKey: string) => Promise<void>;
+type DeleteDraftMock = (
+	scopeKey: string,
+	signal?: AbortSignal
+) => Promise<void>;
 type GetDraftMock = (
 	scopeKey: string,
 	signal?: AbortSignal
 ) => Promise<DraftPayload>;
 type UpsertDraftMock = (
 	scopeKey: string,
-	payload: DraftPayload
+	payload: DraftPayload,
+	signal?: AbortSignal
 ) => Promise<void>;
 
 const mocks = vi.hoisted(() => {
@@ -42,12 +48,20 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('../../api', () => ({
-	apiDeleteUserDraft: (scopeKey: string) =>
-		mocks.apiDeleteUserDraft(scopeKey),
+	apiDeleteUserDraft: (scopeKey: string, signal?: AbortSignal) =>
+		signal
+			? mocks.apiDeleteUserDraft(scopeKey, signal)
+			: mocks.apiDeleteUserDraft(scopeKey),
 	apiGetUserDraft: (scopeKey: string, signal?: AbortSignal) =>
 		mocks.apiGetUserDraft(scopeKey, signal),
-	apiUpsertUserDraft: (scopeKey: string, payload: DraftPayload) =>
-		mocks.apiUpsertUserDraft(scopeKey, payload),
+	apiUpsertUserDraft: (
+		scopeKey: string,
+		payload: DraftPayload,
+		signal?: AbortSignal
+	) =>
+		signal
+			? mocks.apiUpsertUserDraft(scopeKey, payload, signal)
+			: mocks.apiUpsertUserDraft(scopeKey, payload),
 	FETCH_ERRORS: { EMPTY: 'EMPTY' }
 }));
 
@@ -727,5 +741,29 @@ describe('useDraftMessage', () => {
 					payload?.text === '<p>Nur einmal speichern</p>'
 			)
 		).toHaveLength(1);
+	});
+
+	it('does not start a draft write after logout cancellation', async () => {
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, vi.fn(), {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper }
+		);
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		vi.useFakeTimers();
+		act(() => result.current.onChange('<p>Do not write after logout</p>'));
+		// Ignore setup/load bookkeeping: this assertion is specifically about
+		// work started by the cancelled pre-logout handler.
+		mocks.apiUpsertUserDraft.mockClear();
+
+		const controller = new AbortController();
+		controller.abort();
+		const listener = getEventListeners(EVENT_PRE_LOGOUT).at(-1);
+		expect(listener).toBeDefined();
+		await listener?.handler(controller.signal);
+
+		expect(mocks.apiUpsertUserDraft).not.toHaveBeenCalled();
 	});
 });

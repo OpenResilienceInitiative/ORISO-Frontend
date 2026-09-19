@@ -1788,6 +1788,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Önceki mesaj",
+			"targetLabel": "Hedef: Konu",
 			"listToggle": "Konular",
 			"replies": "{{count}} yanıt",
 			"title": "Konu",
@@ -4782,6 +4783,7 @@
 	"dpaSign": {
 		"title": "Veri işleme sözleşmesini imzala",
 		"subtitle": "Lütfen sözleşmeyi tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
+		"signerName": "Ad soyad",
 		"loadingContract": "Sözleşme yükleniyor...",
 		"signerHeading": "Temsile yetkili kişinin onayı",
 		"signingFor": "Şunun adına imzalıyorsunuz:",
@@ -5072,6 +5074,13 @@
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Bağlantı kesildi",
+			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene"
 		}
 	}
 }

@@ -101,7 +101,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			messageEventEmitter.emit({
 				roomId: event?.roomId,
 				matrixEventId: event?.eventId,
-				isOwnMessage: event?.isOwnMessage,
+				isOwnMessage: event?.isOwnMessage === true,
 				timestamp: event?.timestamp
 			});
 			if (!event?.isOwnMessage) {

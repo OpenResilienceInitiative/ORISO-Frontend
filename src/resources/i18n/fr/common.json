@@ -1788,6 +1788,7 @@
 		},
 		"thread": {
 			"unknownRoot": "Message précédent",
+			"targetLabel": "Destination : Fil de discussion",
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
 			"title": "Fil de discussion",
@@ -4782,6 +4783,7 @@
 	"dpaSign": {
 		"title": "Signer le contrat de sous-traitance",
 		"subtitle": "Veuillez lire le contrat dans son intégralité, puis confirmez les informations concernant la personne signataire.",
+		"signerName": "Nom complet",
 		"loadingContract": "Chargement du contrat...",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
 		"signingFor": "Vous signez au nom de :",
@@ -5072,6 +5074,13 @@
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
 		}
 	}
 }

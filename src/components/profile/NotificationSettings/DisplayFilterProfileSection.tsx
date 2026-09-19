@@ -12,6 +12,8 @@ import {
 } from '../../../globalState/helpers/stateHelpers';
 import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { useDisplayFilter } from '../../../hooks/useDisplayFilter';
+import { useCounsellorAgencyFormats } from '../../../hooks/useCounsellorAgencyFormats';
+import { getConversationFormatAvailability } from '../../conversationCreate/formatAvailability';
 import {
 	DisplayFilterKindOption,
 	DisplayFilterValue
@@ -59,9 +61,17 @@ export const DisplayFilterProfileSection = () => {
 		!!userData &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
-	const showGroups = tenant?.settings?.featureGroupChatV2Enabled === true;
-	const showInternalGroups =
-		tenant?.settings?.featureSupervisionEnabled === true;
+	// The circle and internal-chat kinds follow the same answer as the
+	// create entry: the Träger AND at least one of the counsellor's
+	// Beratungsstellen must allow the format (#1440).
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(canSupervise);
+	const availability = getConversationFormatAvailability(
+		tenant,
+		agencyFormats
+	);
+	const showGroups = !agencyFormatsLoading && availability.circle;
+	const showInternalGroups = !agencyFormatsLoading && availability.internal;
 
 	const timeline = useDisplayFilter('timeline');
 	const sessions = useDisplayFilter('sessions');

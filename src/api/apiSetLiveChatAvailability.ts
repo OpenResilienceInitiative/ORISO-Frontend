@@ -12,12 +12,16 @@ import {
  * The promise rejects when Redis-backed availability was not acknowledged. Callers
  * must not present or persist the requested state before this resolves.
  */
-export const apiSetLiveChatAvailability = (available: boolean): Promise<void> =>
+export const apiSetLiveChatAvailability = (
+	available: boolean,
+	signal?: AbortSignal
+): Promise<void> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailability,
 		method: FETCH_METHODS.PUT,
 		bodyData: JSON.stringify({ available }),
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		...(signal && { signal })
 	}).then(() => undefined);
 
 export const apiGetLiveChatAvailability = (): Promise<boolean> =>
