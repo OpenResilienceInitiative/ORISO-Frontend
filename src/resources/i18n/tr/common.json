@@ -4006,7 +4006,7 @@
 		},
 		"title": "İki faktörlü kimlik doğrulama",
 		"required": {
-			"copy": "Lütfen şimdi bir ikinci faktör (uygulama veya e-posta) tanımlayın. Ancak bundan sonra hesabınız yalnızca size ait olur ve danışmanlığa başlayabilirsiniz.",
+			"copy": "Lütfen şimdi ikinci bir faktör (uygulama veya e-posta) tanımlayın. Ancak bundan sonra hesabınız yalnızca size ait olur ve danışmanlığa başlayabilirsiniz.",
 			"title": "İkinci faktör gerekli"
 		}
 	},
