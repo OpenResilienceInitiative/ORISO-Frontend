@@ -39,20 +39,31 @@ const humanizeTechnicalName = (value: string) => {
 	return words.join(' ') || value;
 };
 
+/**
+ * Which name a person is published under (#1486).
+ *
+ * ADR-002 §2: the published identity is the public display name. A
+ * counsellor's legal name is staff data, not an identity the platform shows —
+ * it used to be checked first here, so wherever `firstName`/`lastName` reached
+ * this function the bubble overrode the display name the counsellor publishes
+ * and named them to the advice seeker.
+ *
+ * The order is therefore:
+ *   1. the public display name,
+ *   2. the identity anchor — the Matrix/User-ID the chat header and the
+ *      session list already show,
+ *   3. the real name, and only when the person has neither of the above, so
+ *      the line is never blank.
+ *
+ * Callers on advice-seeker-facing surfaces must not supply the real name at
+ * all; see `MessageItemComponent`.
+ */
 const resolvePreferredName = (
 	rawDisplayName?: string,
 	rawUsername?: string,
 	firstName?: string,
 	lastName?: string
 ) => {
-	const normalizedFirstName = (firstName || '').trim();
-	const normalizedLastName = (lastName || '').trim();
-	const combinedRealName =
-		`${normalizedFirstName} ${normalizedLastName}`.trim();
-	if (combinedRealName) {
-		return combinedRealName;
-	}
-
 	const normalizedDisplayName = normalizeMatrixLikeValue(rawDisplayName);
 	if (normalizedDisplayName) {
 		return humanizeTechnicalName(normalizedDisplayName);
@@ -67,8 +78,14 @@ const resolvePreferredName = (
 	if (isAnonymousMatrixUsername(normalizedUsername)) {
 		return normalizedUsername;
 	}
+	if (normalizedUsername) {
+		return humanizeTechnicalName(normalizedUsername);
+	}
 
-	return humanizeTechnicalName(normalizedUsername);
+	// Last resort only: no published name and no identity anchor at all.
+	const normalizedFirstName = (firstName || '').trim();
+	const normalizedLastName = (lastName || '').trim();
+	return `${normalizedFirstName} ${normalizedLastName}`.trim();
 };
 
 export const formatMessagePersonName = (
@@ -91,8 +108,8 @@ export type IncomingConsultantNameForAsker = {
  * When that public name is set, omit first/last so `formatMessagePersonName`
  * cannot prefer the legal name. Fallback: Matrix name → event name → username.
  *
- * Does not change `resolvePreferredName`; consultant-internal surfaces keep
- * legal-name-first behaviour.
+ * Since #1486 `resolvePreferredName` no longer prefers the legal name either;
+ * this helper keeps it from being supplied at all on the asker-facing path.
  */
 export const resolveIncomingConsultantNameForAsker = ({
 	sessionConsultantDisplayName,
@@ -137,8 +154,9 @@ export type OwnConsultantName = {
  * first/last so `formatMessagePersonName` cannot prefer the legal name.
  * Fallback: firstName + lastName → username.
  *
- * Does not change `resolvePreferredName`; consultant-internal surfaces keep
- * legal-name-first behaviour.
+ * Since #1486 the legal name is the last resort in `resolvePreferredName` as
+ * well, so a counsellor without a public display name is shown under their
+ * User-ID — the same name the chat header and the session list show.
  */
 export const resolveOwnConsultantName = ({
 	displayName,
