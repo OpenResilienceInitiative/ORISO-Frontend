@@ -91,37 +91,42 @@ delivery rules"). Summary:
 
 ## Writing issues and pull requests
 
-Binding for every AI agent. These rules govern *where* text goes and *whose*
+Binding for every AI agent. These rules govern _where_ text goes and _whose_
 text may be changed. They do not relax the delivery rules above.
 
-- **Machine detail belongs in fenced code blocks.** Scanner output, dependency
-  trees, stack traces, failing job logs, resolved versions, config excerpts: put
-  them inside a fenced block. A human skimming the ticket must be able to skip
-  the block and still understand the point. Prose outside the block stays short
-  and in plain language.
+- **Machine detail belongs in fenced code blocks, and gets redacted first.**
+  Scanner output, dependency trees, stack traces, failing job logs, resolved
+  versions, config excerpts: put them inside a fenced block. Strip credentials,
+  tokens, connection strings, personal data and anything else sensitive before
+  pasting — a fenced block controls formatting, not disclosure. A human skimming
+  the ticket must be able to skip the block and still understand the point.
+  Prose outside the block stays short and in plain language.
 - **Write findings into the description, not into another comment.** A comment
   is for a decision or a question that needs a person. Analysis, cause, status
   and evidence belong in the issue or pull request description, where the next
   reader finds them without scrolling a thread. Prefer updating the description
   over adding a third, fourth, fifth comment.
+  The visual-proof rule above is the one exception: screenshots go in the pull
+  request body _and_ as an issue comment, because that is where reviewers look
+  for them.
 - **Lead with the business or end-user effect.** Before any technical detail,
   two or three plain sentences: what does not work for whom, and what that
   costs. Write it so a non-engineer stakeholder can act on it. English, short.
 - **You may edit descriptions — but not everyone's.**
 
-  | Description author | May an agent rewrite it? |
-  | --- | --- |
-  | `Storypapst`, `kiodreambau` | Yes — rewrite, restructure, correct, extend |
-  | `BjoernLudwig`, `HelenaSKloeckner`, any other human | No — leave their wording untouched; append a clearly separated section below it |
+    | Description author                                  | May an agent rewrite it?                                                        |
+    | --------------------------------------------------- | ------------------------------------------------------------------------------- |
+    | `Storypapst`, `kiodreambau`                         | Yes — rewrite, restructure, correct, extend                                     |
+    | `BjoernLudwig`, `HelenaSKloeckner`, any other human | No — leave their wording untouched; append a clearly separated section below it |
 
 - **Adding an analysis to someone's bug report** — the ticket says "X is
   broken" and you found out why:
-  1. Keep the original report as written.
-  2. Add the plain-language cause, two or three sentences.
-  3. Put the technical evidence under it, in a code block.
-  4. Link the pull request, run or ticket that proves it.
-  If the description was corrected rather than extended, say so in one line so
-  the change is not silent.
+    1. Keep the original report as written.
+    2. Add the plain-language cause, two or three sentences.
+    3. Put the technical evidence under it, in a code block.
+    4. Link the pull request, run or ticket that proves it.
+       If the description was corrected rather than extended, say so in one line
+       so the change is not silent.
 - **Link the ticket you found.** If an issue already covers the problem,
   reference it rather than restating it, and add your findings there.
 - **Duplicates: decide, never leave both drifting.** Name in the description
