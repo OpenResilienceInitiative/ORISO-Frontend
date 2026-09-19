@@ -6,6 +6,7 @@ import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { PasswordReset } from '../passwordReset/PasswordReset';
+import { reloadDocument } from '../../utils/reloadDocument';
 import { TwoFactorSetupDialog } from './TwoFactorSetupDialog';
 import {
 	ACCOUNT_SETUP_STEPS,
@@ -37,13 +38,17 @@ interface AccountSetupGateProps {
  */
 export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 	const { t: translate } = useTranslation();
-	const { userData, reloadUserData } = useContext(UserDataContext);
+	const { userData } = useContext(UserDataContext);
 
-	// Re-reading the profile is what opens the gate: the server decides whether
-	// a step is settled, the client never flips its own flag.
-	const handleSetupComplete = useCallback(async () => {
-		await reloadUserData();
-	}, [reloadUserData]);
+	// A document load, not an in-app refresh. The bootstrap ran while setup was
+	// still pending and deliberately skipped live-event processing and the
+	// group-chat deep link, so a settled account needs a clean boot to get them.
+	// It also removes the stale-profile trap: an in-app refresh that fails
+	// leaves the gate shut on an account that is in fact settled, and the
+	// setup dialog swallows that failure.
+	const handleSetupComplete = useCallback(() => {
+		reloadDocument();
+	}, []);
 
 	const step = resolveAccountSetupStep(userData);
 	const isPasswordStep = step === ACCOUNT_SETUP_STEPS.PASSWORD;

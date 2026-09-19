@@ -7,7 +7,10 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
-import { resolveAccountSetupStep } from '../twoFactorAuth/accountSetupStep';
+import {
+	isAccountSetupPending,
+	resolveAccountSetupStep
+} from '../twoFactorAuth/accountSetupStep';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -183,6 +186,12 @@ export const AuthenticatedApp = ({
 		if (!pendingGroupChatId || !tenantReady) {
 			return;
 		}
+		// Joining assigns the account to the chat server-side, so it must wait
+		// until the account is the counsellor's own. The pending id is kept
+		// rather than cleared: the deep link still has to work once it is.
+		if (isAccountSetupPending(userData)) {
+			return;
+		}
 		const gcid = pendingGroupChatId;
 		setPendingGroupChatId(null);
 		joinGroupChat(gcid)
@@ -195,12 +204,13 @@ export const AuthenticatedApp = ({
 				/* Already assigned (409) or gone — the entry room says so. */
 				navigate(groupEntryRoomPath(gcid), { replace: true });
 			});
-	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate]);
+	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate, userData]);
 
 	useEffect(() => {
 		if (
 			!releaseToggles?.enableNewNotifications &&
 			userData &&
+			!isAccountSetupPending(userData) &&
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		) {
 			requestPermissions();
@@ -275,6 +285,21 @@ export const AuthenticatedApp = ({
 											);
 											(window as any).callContext =
 												callContext;
+
+											// The client itself stays: the gate's password
+											// step rotates Matrix key-backup material
+											// through it. Live-event processing does not
+											// — it would deliver counselling content to an
+											// account that is not yet the counsellor's own.
+											// The gate reloads the document once setup is
+											// settled, which boots this properly.
+											if (
+												isAccountSetupPending(
+													userProfileData
+												)
+											) {
+												return;
+											}
 
 											const { matrixLiveEventBridge } =
 												await import(

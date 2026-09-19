@@ -577,7 +577,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Ekip görüşmesini aç" },
+		"teamDiscussion": {
+			"open": "Ekip görüşmesini aç"
+		},
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
 			"known": "Sorguyu kabul et"
@@ -4002,7 +4004,11 @@
 				"label": "İkinci faktörünüz"
 			}
 		},
-		"title": "İki faktörlü kimlik doğrulama"
+		"title": "İki faktörlü kimlik doğrulama",
+		"required": {
+			"copy": "Lütfen şimdi bir ikinci faktör (uygulama veya e-posta) tanımlayın. Ancak bundan sonra hesabınız yalnızca size ait olur ve danışmanlığa başlayabilirsiniz.",
+			"title": "İkinci faktör gerekli"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -5074,6 +5080,17 @@
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Erişiminiz, ilk şifrenizi de belirleyen ve onu hâlâ bilen bir yönetici tarafından oluşturuldu. Lütfen şimdi onu yalnızca sizin bildiğiniz bir şifreyle değiştirin. Ardından ikinci faktörünüzü tanımlayacaksınız.",
+			"title": "Lütfen kendi şifrenizi belirleyin"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Çıkış yap"
 		}
 	}
 }

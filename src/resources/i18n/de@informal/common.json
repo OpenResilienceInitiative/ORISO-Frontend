@@ -1676,8 +1676,7 @@
 			}
 		},
 		"required": {
-			"copy": "Bitte hinterlege jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört dein Konto allein dir und du kannst mit der Beratung beginnen.",
-			"title": "Zweiter Faktor erforderlich"
+			"copy": "Bitte hinterlege jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört dein Konto allein dir und du kannst mit der Beratung beginnen."
 		}
 	},
 	"userProfile": {
@@ -2401,11 +2400,6 @@
 		"required": {
 			"copy": "Dein Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch dein erstes Passwort vergeben hat und es weiterhin kennt. Bitte ersetze es jetzt durch ein Passwort, das nur du kennst. Danach richtest du deinen zweiten Faktor ein.",
 			"title": "Bitte vergib dein eigenes Passwort"
-		}
-	},
-	"accountSetup": {
-		"required": {
-			"logout": "Abmelden"
 		}
 	}
 }

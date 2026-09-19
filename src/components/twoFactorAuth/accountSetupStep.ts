@@ -41,3 +41,17 @@ export const resolveAccountSetupStep = (
 
 	return null;
 };
+
+/**
+ * Whether anything is still owed, for the side effects that run before the app
+ * renders anything at all.
+ *
+ * The gate replaces the screen, which stops the counsellor seeing the app — it
+ * does not stop the bootstrap that already ran: joining a group chat from a
+ * deep link mutates assignment server-side, and live-event processing starts
+ * delivering counselling content. Both have to consult the same fact the gate
+ * does, or the gate only hides a session that already has chat access.
+ */
+export const isAccountSetupPending = (
+	userData?: Partial<UserDataInterface>
+): boolean => resolveAccountSetupStep(userData) !== null;

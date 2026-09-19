@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	ACCOUNT_SETUP_STEPS,
+	isAccountSetupPending,
 	resolveAccountSetupStep
 } from './accountSetupStep';
 
@@ -104,5 +105,34 @@ describe('resolveAccountSetupStep', () => {
 				})
 			)
 		).toBe(ACCOUNT_SETUP_STEPS.PASSWORD);
+	});
+});
+
+// The side effects the app boots before it renders anything — joining a group
+// chat from a deep link, starting live-event processing, asking for
+// notification permission — have to consult the same fact the gate does, or the
+// gate only hides a session that already has chat access.
+describe('isAccountSetupPending', () => {
+	it('is true while any step is owed', () => {
+		expect(isAccountSetupPending(owesBoth)).toBe(true);
+		expect(
+			isAccountSetupPending(account({ passwordChangeRequired: true }))
+		).toBe(true);
+		expect(
+			isAccountSetupPending(
+				account({
+					twoFactorAuth: { isRequired: true, isActive: false }
+				})
+			)
+		).toBe(true);
+	});
+
+	it('is false once nothing is owed', () => {
+		expect(isAccountSetupPending(account())).toBe(false);
+	});
+
+	it('is false when the backend sends neither flag', () => {
+		expect(isAccountSetupPending({} as any)).toBe(false);
+		expect(isAccountSetupPending(undefined)).toBe(false);
 	});
 });

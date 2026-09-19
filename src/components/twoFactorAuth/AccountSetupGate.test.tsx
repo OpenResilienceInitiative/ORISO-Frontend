@@ -29,8 +29,12 @@ vi.mock('../passwordReset/PasswordReset', () => ({
 	PasswordReset: () => <div data-testid="password-form" />
 }));
 
+const reloadDocument = vi.hoisted(() => vi.fn());
+vi.mock('../../utils/reloadDocument', () => ({ reloadDocument }));
+
 const renderGate = (userData: any, onLogout = vi.fn()) => {
 	const reloadUserData = vi.fn().mockResolvedValue(undefined);
+	reloadDocument.mockClear();
 
 	render(
 		<UserDataContext.Provider value={{ userData, reloadUserData } as any}>
@@ -103,12 +107,16 @@ describe('AccountSetupGate', () => {
 			expect(dialogProps.current.email).toBe('counsellor@example.com');
 		});
 
-		it('re-reads the profile after setup so the server decides it counts', async () => {
-			const { reloadUserData } = renderGate(owesSecondFactor);
+		// A document load, not an in-app refresh: the bootstrap that starts live
+		// event processing ran with setup still pending and skipped it, so the
+		// account needs a clean boot once it is settled. It also removes the
+		// stale-profile trap — there is no refresh left to fail silently.
+		it('reloads the document after setup so the app boots for a settled account', async () => {
+			renderGate(owesSecondFactor);
 
 			await dialogProps.current.onSetupComplete();
 
-			expect(reloadUserData).toHaveBeenCalled();
+			expect(reloadDocument).toHaveBeenCalled();
 		});
 	});
 
