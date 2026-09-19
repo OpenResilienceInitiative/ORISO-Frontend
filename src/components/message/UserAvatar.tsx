@@ -17,6 +17,8 @@ interface UserAvatarProps {
 	 * surrounding container already provides the white ring (e.g. chat messages).
 	 */
 	ring?: boolean;
+	/** The animal circle's own grey outline; see `AnimalAvatar`. */
+	outline?: boolean;
 }
 
 /**
@@ -32,7 +34,8 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	lastName,
 	userId,
 	size = '32px',
-	ring = true
+	ring = true,
+	outline = true
 }) => {
 	const resolvedName = formatMessagePersonName(
 		displayName,
@@ -71,7 +74,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				flexShrink: 0
 			}}
 		>
-			<AnimalAvatar avatar={avatar} size={innerSize} />
+			<AnimalAvatar avatar={avatar} size={innerSize} outline={outline} />
 		</span>
 	);
 };

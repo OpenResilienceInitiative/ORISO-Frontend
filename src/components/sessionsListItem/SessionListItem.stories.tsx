@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -687,7 +687,8 @@ function RuntimeSessionListItem({
 	lastMessage = runtimeSession.session.lastMessage,
 	sessionOverrides = {},
 	consultantId = runtimeSession.consultant.id,
-	viewerId = runtimeUserData.userId
+	viewerId = runtimeUserData.userId,
+	asSearchingAsker = false
 }: {
 	lastMessage?: string;
 	/** Extra `session` DTO fields, e.g. the ADR-008 `supervision` marker. */
@@ -696,14 +697,21 @@ function RuntimeSessionListItem({
 	consultantId?: string;
 	/** Logged-in consultant. */
 	viewerId?: string;
+	/**
+	 * FE#1115 — the advice seeker's own row while nobody has accepted:
+	 * no consultant on the session, so the avatar slot holds the magnet.
+	 */
+	asSearchingAsker?: boolean;
 } = {}) {
 	const storySession: ListItemInterface = {
 		...runtimeSession,
-		consultant: {
-			...runtimeSession.consultant,
-			consultantId,
-			id: consultantId
-		},
+		consultant: asSearchingAsker
+			? undefined
+			: {
+					...runtimeSession.consultant,
+					consultantId,
+					id: consultantId
+				},
 		session: {
 			...runtimeSession.session,
 			lastMessage,
@@ -711,7 +719,14 @@ function RuntimeSessionListItem({
 		}
 	};
 	const activeSession = buildExtendedSession(storySession, '');
-	const userData = { ...runtimeUserData, userId: viewerId };
+	const userData = asSearchingAsker
+		? {
+				...runtimeUserData,
+				userId: 'asker-4401',
+				grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+				userRoles: ['USER']
+			}
+		: { ...runtimeUserData, userId: viewerId };
 
 	return (
 		<div style={listShell}>
@@ -1303,5 +1318,781 @@ export const SupervisedByOthers: Story = {
 				canvasElement.querySelector('[data-testid="supervision-badge"]')
 			).toBeNull();
 		});
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * The chat-room menu — Figma 7086-57413
+ * ------------------------------------------------------------------ */
+
+/**
+ * Frank, 15.09.2026: "Es soll kein Overlap da sein, sondern ein
+ * Nebeneinander. Wer hat gesagt, dass ein Menü immer oben drüber oder unten
+ * drunter öffnen muss?"
+ *
+ * The menu is measured against the **card**, not against the three-dot
+ * trigger inside it — anchored to the button, "beside" still lands on the
+ * card. Beside is the normal case; below and above are the escape routes
+ * for a viewport that has no room beside, which is every phone.
+ */
+/**
+ * Every row fades and scales in (`appearSessionListItem`, 0.98 → 1 after a
+ * short stagger). A measurement taken mid-animation reads a scaled box — CI
+ * measured the 142 px card at 139 px. Geometry is asserted on the settled
+ * card, so the entrance is finished first.
+ */
+const settleCardEntrance = (canvasElement: HTMLElement) => {
+	canvasElement
+		.querySelectorAll<HTMLElement>('.sessionsListItem')
+		.forEach((row) =>
+			row.getAnimations().forEach((animation) => animation.finish())
+		);
+};
+
+const openTheMenu = async (canvasElement: HTMLElement) => {
+	const trigger = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLButtonElement>(
+			'.sessionsListItem__menuIcon'
+		);
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	await userEvent.click(trigger);
+	const menu = await waitFor(() => {
+		const element = document.querySelector<HTMLElement>(
+			'.sessionsListItem__dropdown'
+		);
+		expect(element).toBeTruthy();
+		expect(element!.getBoundingClientRect().width).toBeGreaterThan(0);
+		return element!;
+	});
+	const card = canvasElement.querySelector<HTMLElement>(
+		'.sessionsListItem__content'
+	)!;
+	return { trigger, menu, card };
+};
+
+/** The card's shadow with nothing focused — its resting design, not a ring. */
+const restingCardShadow = (canvasElement: HTMLElement) =>
+	getComputedStyle(
+		canvasElement.querySelector<HTMLElement>('.sessionsListItem__content')!
+	).boxShadow;
+
+/**
+ * Frank, 17.09.2026: while the menu is open, only the menu carries the red
+ * ring — the selected card behind it drops its red border. The stories open
+ * the menu on a selected card, so the check is not vacuous.
+ */
+const expectOnlyTheMenuRinged = async (canvasElement: HTMLElement) => {
+	const row = canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
+	await expect(row.classList.contains('sessionsListItem--active')).toBe(true);
+	const card = row.querySelector<HTMLElement>('.sessionsListItem__content')!;
+	await waitFor(() =>
+		expect(getComputedStyle(card).borderTopColor).toBe('rgb(255, 255, 255)')
+	);
+	// The border keeps its width, so nothing in the list moves.
+	await expect(getComputedStyle(card).borderTopWidth).toBe('2px');
+};
+
+/**
+ * The menu covers nothing the card shows. Since Frank's 6 px (17.09.2026)
+ * it may lie over the card's empty trailing strip right of the ⋮ trigger,
+ * but never over the trigger, the date, the name, the preview or Mail.
+ */
+const expectMenuClearOfCardContent = async (
+	menu: HTMLElement,
+	card: HTMLElement
+) => {
+	const m = menu.getBoundingClientRect();
+	for (const selector of [
+		'.sessionsListItem__menuIcon',
+		'.sessionsListItem__date',
+		'.sessionsListItem__topic',
+		'.sessionsListItem__username',
+		'.sessionsListItem__subject',
+		'.sessionsListItem__trailing'
+	]) {
+		const element = card.querySelector(selector);
+		await expect(element, selector).not.toBeNull();
+		// Text is measured as ink (its line boxes), not as its block.
+		const range = document.createRange();
+		range.selectNodeContents(element!);
+		const rects = element!.matches(
+			'.sessionsListItem__username, .sessionsListItem__subject'
+		)
+			? Array.from(range.getClientRects())
+			: [element!.getBoundingClientRect()];
+		for (const r of rects) {
+			const apart =
+				m.right <= r.left + 0.5 ||
+				m.left >= r.right - 0.5 ||
+				m.bottom <= r.top + 0.5 ||
+				m.top >= r.bottom - 0.5;
+			await expect(apart, selector).toBe(true);
+		}
+	}
+};
+
+/**
+ * Desktop: the menu stands beside the card and the card stays readable.
+ * Also the point where the single focus ring is checked — the trigger is
+ * what the user just operated, so the card must not draw a second ring.
+ */
+export const MenuBesideTheCard: Story = {
+	name: 'Menü — daneben statt darüber (Figma 7086-57413)',
+	globals: { viewport: { value: 'desktop1440' } },
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		const atRest = restingCardShadow(canvasElement);
+		const { trigger, menu, card } = await openTheMenu(canvasElement);
+
+		// 1. Beside, not on top: nothing the card shows is covered.
+		await expectMenuClearOfCardContent(menu, card);
+		await expect(menu.dataset.placement).toBe('right');
+		// Every coordinate is a real number. `{ ...domRect }` yields an
+		// empty object — the properties are on the prototype — which turned
+		// every coordinate into NaN and placed the menu at the viewport
+		// edge. Unit tests pass plain objects and cannot see this.
+		await expect(menu.style.left).toMatch(/^\d/);
+		await expect(menu.style.top).toMatch(/^\d/);
+
+		// 2. The trigger carries the primary role while its menu is open,
+		//    and its dots the on-primary-container role.
+		await expect(
+			trigger.classList.contains('sessionsListItem__menuIcon--open')
+		).toBe(true);
+		// Read after the 160 ms cross-fade: `getComputedStyle` returns the
+		// value the transition is currently at, not the one it is heading
+		// for, so an immediate read sees the old white.
+		await waitFor(() => {
+			const style = getComputedStyle(trigger);
+			expect(style.backgroundColor).toBe('rgb(165, 0, 10)');
+			expect(style.color).toBe('rgb(255, 226, 222)');
+		});
+
+		// 3. Exactly one focus ring. The card is inside `--menuOpen`, so its
+		//    own focus treatment is suppressed while the menu owns focus.
+		const row =
+			canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
+		await expect(row.classList.contains('sessionsListItem--menuOpen')).toBe(
+			true
+		);
+		// Focusing the card while the menu is open must not add anything to
+		// what it already carries at rest — the card's own soft shadow is
+		// part of its design, the keyboard halo is not.
+		card.focus();
+		await expect(getComputedStyle(card).boxShadow).toBe(atRest);
+		await expect(getComputedStyle(card).outlineStyle).toBe('none');
+
+		// 4. The menu is above its own backdrop. The SCSS carried
+		//    `z-index: 99999 !important` against the component's inline
+		//    999999, so the veil meant for the rest of the page washed the
+		//    menu out as well.
+		const backdrop = await waitFor(() => {
+			const element =
+				document.querySelector<HTMLElement>('.orisoMenuBackdrop');
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
+			Number(getComputedStyle(backdrop).zIndex)
+		);
+
+		// 4b. …and the veil leaves the card itself uncovered: the card sits
+		//     beside its menu, and the primary trigger has to be seen, not
+		//     washed pink. Hit-testing follows what is painted on top.
+		const hit = (x: number, y: number) => document.elementFromPoint(x, y);
+		const pill = trigger.getBoundingClientRect();
+		await waitFor(() =>
+			expect(
+				trigger.contains(
+					hit(
+						(pill.left + pill.right) / 2,
+						(pill.top + pill.bottom) / 2
+					)
+				)
+			).toBe(true)
+		);
+		const cardBox = card.getBoundingClientRect();
+		await expect(
+			card.contains(hit(cardBox.left + 40, cardBox.bottom - 20))
+		).toBe(true);
+		// Hit-testing alone is not enough: Chromium honoured the hole for
+		// clicks but still painted the veil over it while the clip path's
+		// outer rectangle ran to ±100000 px (measured, 17.09.2026). The
+		// path has to stay in the viewport's coordinate range.
+		const pathNumbers = (
+			getComputedStyle(backdrop).clipPath.match(/-?\d+(\.\d+)?/g) ?? []
+		).map(Number);
+		await expect(pathNumbers.length).toBeGreaterThan(8);
+		for (const value of pathNumbers) {
+			await expect(value).toBeGreaterThanOrEqual(0);
+			await expect(value).toBeLessThanOrEqual(
+				Math.max(window.innerWidth, window.innerHeight)
+			);
+		}
+		// The rest of the page is still under the veil.
+		await expect(hit(cardBox.left - 20, cardBox.top + 20)).toBe(backdrop);
+		await expect(hit(cardBox.left + 40, cardBox.bottom + 20)).toBe(
+			backdrop
+		);
+
+		await expectOnlyTheMenuRinged(canvasElement);
+
+		// 4c. At most 6 px between the trigger and the menu (Frank,
+		//     17.09.2026) — the menu may cover the card's empty strip. The
+		//     menu opened while the row was still scaling in; once the
+		//     entrance ends it has to follow the trigger to its final place.
+		settleCardEntrance(canvasElement);
+		await waitFor(() =>
+			expect(
+				Math.round(
+					menu.getBoundingClientRect().left -
+						trigger.getBoundingClientRect().right
+				)
+			).toBe(6)
+		);
+
+		// 4d. Hovering the open trigger keeps it primary with light dots;
+		//     the resting hover tint made the dots vanish.
+		await userEvent.hover(trigger);
+		await waitFor(() => {
+			const style = getComputedStyle(trigger);
+			expect(style.backgroundColor).toBe('rgb(165, 0, 10)');
+			expect(style.color).toBe('rgb(255, 226, 222)');
+		});
+
+		// 5. The trigger keeps its shape — a horizontal pill, not a circle
+		//    and not a rotation (Frank, 15.09.2026).
+		const shape = trigger.getBoundingClientRect();
+		await expect(shape.width).toBeGreaterThan(shape.height);
+	}
+};
+
+/**
+ * Phone (390 px): there is no "beside" at 390 px, so the menu falls to the
+ * escape route rather than squeezing into a gap that does not exist. The
+ * placement is asserted so a future change to the chain shows up here
+ * instead of on someone's phone.
+ */
+export const MenuOnThePhone: Story = {
+	name: 'Menü — 390 px, Ausweichweg statt Quetschung',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		const { menu, trigger } = await openTheMenu(canvasElement);
+		// Beside is impossible here; below or above is the honest answer.
+		await expect(['below', 'above']).toContain(menu.dataset.placement);
+		// …and it hangs from the trigger's corner, not from the card's
+		// bottom edge (Frank, 17.09.2026: "rechts im Corner").
+		const pill = trigger.getBoundingClientRect();
+		const hung = menu.getBoundingClientRect();
+		// Frank, 17.09.2026: 2 px below, right edge 4 px in.
+		await expect(Math.round(pill.right - hung.right)).toBe(4);
+		await expect(Math.round(hung.top - pill.bottom)).toBe(2);
+		await expectOnlyTheMenuRinged(canvasElement);
+		// And it stays inside the viewport either way.
+		const box = menu.getBoundingClientRect();
+		await expect(box.left).toBeGreaterThanOrEqual(11.5);
+		await expect(box.right).toBeLessThanOrEqual(window.innerWidth - 11.5);
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * The session card — Frank, 15./16.09.2026
+ * ------------------------------------------------------------------ */
+
+/*
+ * The card's geometry, as Frank signed it off on the v4 plate, now asserted
+ * on the real `SessionListItemComponent`:
+ *
+ *  - the tag sits at the top of the chip row, level with the menu pill;
+ *  - the avatar is 48 px, without the grey outline, and the name starts
+ *    12 px beside it;
+ *  - the preview flows around the avatar on a diagonal — 60 / 51 / 42 px
+ *    from the avatar's left edge, the third line on "Woche" in preview 5 —
+ *    and never falls back to the card's edge;
+ *  - it stops after three lines with an ellipsis;
+ *  - from the second line on it keeps clear of the Mail column; Mail is
+ *    centred on the third line and its word ends exactly under the white
+ *    menu pill; the card closes 16 px below it, 142 px high;
+ *  - a thread reply and a voice message are marked by their glyphs alone,
+ *    a voice message with its length.
+ */
+const CARD_HEIGHT = 142;
+const CARD_BORDER = 1;
+const CARD_INSET = 16;
+const CARD_AVATAR = 48;
+const CARD_GAP = 12;
+const CARD_CHIP_ROW = 48;
+const CARD_NAME = 24;
+const CARD_LINE = 16;
+const CARD_LINES = 3;
+/** Where each preview line starts, measured from the avatar's left edge. */
+const CARD_LINE_LEFT = [60, 51, 42];
+/** The text keeps this far clear of the Mail column from line 2 on. */
+const CARD_MAIL_CLEARANCE = 24;
+
+const TEXT_TWO_AND_HALF =
+	'Guten Morgen, ich habe gestern mit meiner Schwester gesprochen und wir würden gerne gemeinsam zu einem Gespräch kommen.';
+const TEXT_THREE =
+	'Hallo, ich wollte fragen ob wir noch einmal über die Situation zu Hause sprechen können. Seit letzter Woche ist es wieder schwieriger geworden und ich weiß gerade nicht weiter.';
+
+type CardPreview = {
+	key: string;
+	label: string;
+	content: Record<string, unknown>;
+	text: string;
+	glyphs?: Array<'thread' | 'voice'>;
+	/** true / false are asserted at desktop width; undefined is not. */
+	truncated?: boolean;
+};
+
+const textMessage = (body: string, thread = false) => ({
+	msgtype: 'm.text',
+	body,
+	...(thread
+		? { 'm.relates_to': { rel_type: 'm.thread', event_id: '$root' } }
+		: {})
+});
+
+const cardPreviews: CardPreview[] = [
+	{
+		key: 'word',
+		label: '1 — ein Wort',
+		content: textMessage('Danke!'),
+		text: 'Danke!',
+		truncated: false
+	},
+	{
+		key: 'short',
+		label: '2 — eine kurze Zeile',
+		content: textMessage('Anfrage gesendet'),
+		text: 'Anfrage gesendet',
+		truncated: false
+	},
+	{
+		key: 'oneAndHalf',
+		label: '3 — anderthalb Zeilen',
+		content: textMessage(
+			'Hallo, hätten Sie nächste Woche einen Termin für mich? 🙂'
+		),
+		text: 'Hallo, hätten Sie nächste Woche einen Termin für mich? 🙂',
+		truncated: false
+	},
+	{
+		key: 'twoAndHalf',
+		label: '4 — zweieinhalb Zeilen',
+		content: textMessage(TEXT_TWO_AND_HALF),
+		text: TEXT_TWO_AND_HALF
+	},
+	{
+		key: 'three',
+		label: '5 — drei Zeilen und mehr',
+		content: textMessage(TEXT_THREE),
+		text: TEXT_THREE,
+		truncated: true
+	},
+	{
+		key: 'long',
+		label: '6 — viel länger als drei Zeilen',
+		content: textMessage(
+			`${TEXT_THREE} Mein Vater trinkt wieder mehr und meine Mutter sagt dazu nichts. Ich weiß nicht, wem ich das sonst erzählen soll.`
+		),
+		text: `${TEXT_THREE} Mein Vater trinkt wieder mehr und meine Mutter sagt dazu nichts. Ich weiß nicht, wem ich das sonst erzählen soll.`,
+		truncated: true
+	},
+	{
+		key: 'unbroken',
+		label: '7 — ein langes Wort ohne Leerzeichen (Link)',
+		content: textMessage(
+			'https://www.beispiel-beratung.de/termine/familienberatung/2026/september/buchung?ref=abcdefghijklmnopqrstuvwxyz'
+		),
+		text: 'https://www.beispiel-beratung.de/termine/familienberatung/2026/september/buchung?ref=abcdefghijklmnopqrstuvwxyz'
+	},
+	{
+		key: 'thread',
+		label: 'Thread — nur das Symbol',
+		content: textMessage(
+			'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen, wenn Sie Zeit haben. Am Donnerstag kann ich leider erst ab 16 Uhr.',
+			true
+		),
+		text: 'Ja, das passt mir gut. Ich schicke Ihnen vorher noch die Unterlagen vom Jugendamt, dann können wir die gemeinsam durchgehen, wenn Sie Zeit haben. Am Donnerstag kann ich leider erst ab 16 Uhr.',
+		glyphs: ['thread'],
+		truncated: true
+	},
+	{
+		key: 'voice',
+		label: 'Sprachnachricht — nur das Symbol, mit Dauer',
+		content: {
+			'msgtype': 'm.audio',
+			'body': 'voice-message.ogg',
+			'info': { duration: 42_300, mimetype: 'audio/ogg' },
+			'org.matrix.msc3245.voice': {}
+		},
+		text: '0:42',
+		glyphs: ['voice'],
+		truncated: false
+	}
+];
+
+const cardRoomId = (key: string) => `!storybook-card-${key}:oriso.example`;
+
+/** Each card reads its own room; the newest event is its preview. */
+const seedCardPreviews = () => {
+	setMatrixClientServiceRef({
+		getClient: () => null,
+		getRoom: () => ({ getUnreadNotificationCount: () => 0 }),
+		getRoomMessages: (roomId: string) => {
+			const preview = cardPreviews.find(
+				(candidate) => cardRoomId(candidate.key) === roomId
+			);
+			return preview
+				? [
+						{
+							getType: () => 'm.room.message',
+							getClearContent: () => preview.content,
+							getContent: () => preview.content,
+							getSender: () => '@asker-4401:oriso.example',
+							getTs: () => 1_773_822_900_000
+						}
+					]
+				: [];
+		}
+	} as any);
+};
+
+const CardGallery = () => (
+	<div style={{ maxWidth: 440, margin: '0 auto' }}>
+		{cardPreviews.map((preview) => (
+			<section
+				key={preview.key}
+				data-preview={preview.key}
+				style={{ marginBottom: 12 }}
+			>
+				<p
+					style={{
+						margin: '0 12px 4px',
+						fontSize: 12,
+						fontWeight: 600
+					}}
+				>
+					{preview.label}
+				</p>
+				<RuntimeSessionListItem
+					sessionOverrides={{
+						matrixRoomId: cardRoomId(preview.key)
+					}}
+				/>
+			</section>
+		))}
+	</div>
+);
+
+/** Glyph box and text on one line count as one line. */
+const mergeLineRects = (rects: DOMRect[]) =>
+	rects.reduce<DOMRect[]>((merged, rect) => {
+		const last = merged[merged.length - 1];
+		if (last && Math.abs(last.top - rect.top) < 4) {
+			const left = Math.min(last.left, rect.left);
+			merged[merged.length - 1] = new DOMRect(
+				left,
+				last.top,
+				Math.max(last.right, rect.right) - left,
+				last.height
+			);
+		} else {
+			merged.push(rect);
+		}
+		return merged;
+	}, []);
+
+const expectCardLayout = async (
+	canvasElement: HTMLElement,
+	{
+		checkTruncation,
+		selected
+	}: {
+		checkTruncation: boolean;
+		/** Selected cards carry a 2 px border instead of 1 px. */
+		selected: boolean;
+	}
+) => {
+	const sections = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>('section[data-preview]')
+		);
+		expect(found).toHaveLength(cardPreviews.length);
+		// Every preview has arrived from its room before anything is measured.
+		for (const [index, section] of found.entries()) {
+			expect(
+				section.querySelector('.sessionsListItem__subject')?.textContent
+			).toBe(cardPreviews[index].text);
+		}
+		return found;
+	});
+	settleCardEntrance(canvasElement);
+
+	for (const [index, section] of sections.entries()) {
+		const preview = cardPreviews[index];
+		const card = section.querySelector<HTMLElement>(
+			'.sessionsListItem__content'
+		)!;
+		const box = card.getBoundingClientRect();
+		const at = (selector: string) => {
+			const element = card.querySelector<HTMLElement>(selector);
+			expect(element, `${preview.key}: ${selector}`).not.toBeNull();
+			return element!.getBoundingClientRect();
+		};
+
+		// Compact and uniform — selected or not.
+		await expect(Math.round(box.height)).toBe(CARD_HEIGHT);
+		await expect(
+			section
+				.querySelector('.sessionsListItem')!
+				.classList.contains('sessionsListItem--active')
+		).toBe(selected);
+
+		// The tag sits level with the menu pill at the top of the chip row.
+		const tag = at('.sessionsListItem__topic');
+		const menu = at('.sessionsListItem__menuIcon');
+		await expect(Math.round(tag.top)).toBe(Math.round(menu.top));
+
+		// 48 px avatar straight under the chip row, without its outline.
+		const avatar = at('.sessionsListItem__icon');
+		await expect(Math.round(avatar.width)).toBe(CARD_AVATAR);
+		await expect(Math.round(avatar.top - box.top)).toBe(
+			CARD_BORDER + CARD_CHIP_ROW
+		);
+		await expect(Math.round(avatar.left - box.left)).toBe(
+			CARD_BORDER + CARD_INSET
+		);
+		const circle = card.querySelector<HTMLElement>(
+			'[data-testid="user-avatar"] > div'
+		)!;
+		await expect(getComputedStyle(circle).borderTopWidth).toBe('0px');
+		await expect(getComputedStyle(circle).boxShadow).toBe('none');
+
+		// The name, 12 px beside the avatar, on the first line.
+		const name = at('.sessionsListItem__username');
+		await expect(Math.round(name.left - avatar.right)).toBe(CARD_GAP);
+		await expect(Math.round(name.top)).toBe(Math.round(avatar.top));
+		await expect(Math.round(name.height)).toBe(CARD_NAME);
+
+		// Mail: its word ends under the pill's right edge, centred on the
+		// third line, 16 px above the card's bottom edge.
+		const clip = at('.sessionsListItem__flow');
+		const mail = at(
+			'.sessionsListItem__trailing .sessionsListItem__consultingTypeIcon--nearby'
+		);
+		const labelRange = document.createRange();
+		labelRange.selectNodeContents(
+			card.querySelector(
+				'.sessionsListItem__trailing .sessionsListItem__consultingTypeIcon--nearbyLabel'
+			)!
+		);
+		await expect(
+			Math.abs(labelRange.getBoundingClientRect().right - menu.right)
+		).toBeLessThan(0.5);
+		const thirdLineCentre =
+			clip.top + CARD_NAME + CARD_LINE * 2 + CARD_LINE / 2;
+		await expect(
+			Math.abs((mail.top + mail.bottom) / 2 - thirdLineCentre)
+		).toBeLessThanOrEqual(1);
+		await expect(Math.round(box.bottom - CARD_BORDER - mail.bottom)).toBe(
+			CARD_INSET
+		);
+
+		// The left edge: a steady diagonal, never back to the card's edge.
+		const subject = card.querySelector<HTMLElement>(
+			'.sessionsListItem__subject'
+		)!;
+		const range = document.createRange();
+		range.selectNodeContents(subject);
+		const allLines = mergeLineRects(
+			Array.from(range.getClientRects()).filter((rect) => rect.width > 0)
+		);
+		const lines = allLines.filter((rect) => rect.top < clip.bottom - 0.5);
+		await expect(lines.length).toBeGreaterThan(0);
+		await expect(lines.length).toBeLessThanOrEqual(CARD_LINES);
+		for (const [lineIndex, line] of lines.entries()) {
+			await expect(Math.round(line.left - avatar.left)).toBe(
+				CARD_LINE_LEFT[lineIndex]
+			);
+			await expect(line.bottom).toBeLessThanOrEqual(clip.bottom + 0.5);
+		}
+		// Every line — and the name — ends at the pill's right edge at the
+		// latest, so a menu 6 px beside the pill covers no text.
+		for (const line of lines) {
+			await expect(line.right).toBeLessThanOrEqual(menu.right + 0.5);
+		}
+		await expect(name.right).toBeLessThanOrEqual(menu.right + 0.5);
+		// From the second line on: clear of the Mail column.
+		for (const line of lines.slice(1)) {
+			await expect(line.right).toBeLessThanOrEqual(
+				mail.left - CARD_MAIL_CLEARANCE + 0.5
+			);
+		}
+
+		// Thread and voice: the glyph, and no word for it.
+		const glyphs = Array.from(
+			subject.querySelectorAll<SVGElement>(
+				'.sessionsListItem__previewGlyph'
+			)
+		);
+		await expect(
+			glyphs.map((glyph) =>
+				glyph.classList.contains(
+					'sessionsListItem__previewGlyph--thread'
+				)
+					? 'thread'
+					: 'voice'
+			)
+		).toEqual(preview.glyphs ?? []);
+		for (const glyph of glyphs) {
+			await expect(glyph.getAttribute('aria-label')).toBeTruthy();
+			// The Figma export's fixed-id <mask> made a glyph vanish as soon
+			// as a second copy was on the page. It is gone from the asset.
+			await expect(glyph.querySelector('mask, [mask]')).toBeNull();
+			await expect(glyph.getBoundingClientRect().width).toBeGreaterThan(
+				0
+			);
+		}
+
+		// Truncation: the clamp hides lines rather than removing them, so
+		// counting all line boxes shows whether the text runs past three.
+		const flow = card.querySelector<HTMLElement>(
+			'.sessionsListItem__flow'
+		)!;
+		await expect(
+			getComputedStyle(flow).getPropertyValue('-webkit-line-clamp')
+		).toBe(String(CARD_LINES));
+		// Only preview lines may sit inside the clamp. WebKit counts the
+		// name as the first of the three lines (Chromium does not, because
+		// the name is its own formatting context) and put the ellipsis on
+		// the second preview line while still showing the third — measured
+		// in Playwright WebKit 26.5, 17.09.2026.
+		await expect(
+			flow.querySelector('.sessionsListItem__username')
+		).toBeNull();
+		if (checkTruncation && preview.truncated === true) {
+			await expect(lines.length).toBe(CARD_LINES);
+			await expect(allLines.length).toBeGreaterThan(CARD_LINES);
+		}
+		if (checkTruncation && preview.truncated === false) {
+			await expect(allLines.length).toBeLessThanOrEqual(CARD_LINES);
+		}
+	}
+};
+
+export const CardLayout: Story = {
+	name: 'Karte — Umfluss um den Avatar, drei Zeilen, Mail unter dem Knopf',
+	render: () => {
+		seedCardPreviews();
+		return <CardGallery />;
+	},
+	play: async ({ canvasElement }) =>
+		expectCardLayout(canvasElement, {
+			checkTruncation: true,
+			selected: true
+		})
+};
+
+/**
+ * The same cards at 390 px, resting instead of selected. Below 900 px the
+ * menu pill moves 6 px further out (`__rowRight` pads 4 px instead of 10),
+ * and Mail follows it.
+ */
+export const CardLayoutOnThePhone: Story = {
+	name: 'Karte — 390 px, Mail folgt dem Knopf',
+	globals: { viewport: { value: 'phone390' } },
+	// Another route, so these cards rest (1 px border) where the desktop
+	// story's are selected (2 px) — the height must not care.
+	parameters: {
+		router: {
+			initialPath: '/sessions/consultant/sessionView'
+		}
+	},
+	render: () => {
+		seedCardPreviews();
+		return <CardGallery />;
+	},
+	play: async ({ canvasElement }) =>
+		expectCardLayout(canvasElement, {
+			checkTruncation: false,
+			selected: false
+		})
+};
+
+/**
+ * FE#1115 — the advice seeker's own row while the platform is still looking
+ * for a counsellor. The avatar slot holds the magnet, naked: no black disc
+ * any more, and nothing in the row clips its beam.
+ */
+export const AskerSearchingRow: Story = {
+	name: 'Ratsuchende wartet — Magnet im Avatar-Platz (FE#1115)',
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem asSearchingAsker />;
+	},
+	play: async ({ canvasElement }) => {
+		const magnet = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.consultantSearchLoader'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		// It stands in the 48 px avatar slot at the naked size, 40 px.
+		settleCardEntrance(canvasElement);
+		const box = magnet.getBoundingClientRect();
+		await expect(Math.round(box.width)).toBe(40);
+		const slot = canvasElement
+			.querySelector<HTMLElement>('.sessionsListItem__icon')!
+			.getBoundingClientRect();
+		await expect(Math.round(slot.width)).toBe(48);
+		// No black disc any more — nothing is painted behind the magnet.
+		await expect(getComputedStyle(magnet).backgroundColor).toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+
+		// The beam is here too, and it stays inside the card: it points
+		// right, into the card's own width, so the corner clip that rounds
+		// the card never reaches it. Measured at the end of the flight.
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.sessionsListItem__content'
+		)!;
+		await expect(
+			card.classList.contains('consultantSearchLoaderHost')
+		).toBe(true);
+		const sweep = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__sweep'
+		)!;
+		const beam = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__beam'
+		)!;
+		await expect(beam).toBeTruthy();
+		magnet.classList.add('consultantSearchLoader--pulsing');
+		sweep.getAnimations().forEach((animation) => animation.pause());
+		const flight = Number(
+			beam.getAnimations()[0]!.effect!.getTiming().duration
+		);
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight;
+		});
+		const beamBox = beam.getBoundingClientRect();
+		const cardBox = card.getBoundingClientRect();
+		await expect(beamBox.right).toBeGreaterThan(box.right);
+		await expect(beamBox.right).toBeLessThan(cardBox.right);
+		await expect(beamBox.top).toBeGreaterThan(cardBox.top);
+		await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
+		magnet.classList.remove('consultantSearchLoader--pulsing');
 	}
 };

@@ -11,6 +11,8 @@ export interface MessageAvatarProps {
 	firstName?: string;
 	lastName?: string;
 	size?: number;
+	/** The animal circle's grey outline; see `AnimalAvatar`. */
+	outline?: boolean;
 }
 
 /**
@@ -25,7 +27,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 	displayName,
 	firstName,
 	lastName,
-	size = 32
+	size = 32,
+	outline = true
 }) => {
 	if (isSystemNotification) {
 		return null;
@@ -40,6 +43,7 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 			userId={userId}
 			size={`${size}px`}
 			ring={false}
+			outline={outline}
 		/>
 	);
 };

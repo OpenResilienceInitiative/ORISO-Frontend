@@ -1,4 +1,7 @@
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
+import clsx from 'clsx';
 import { createPortal } from 'react-dom';
 import type { TFunction } from 'i18next';
 import { MenuVerticalIcon } from '../../resources/img/icons';
@@ -11,14 +14,29 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { ChatroomSettingsMenuVisibility } from './chatroomSettingsMenu';
 import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvider';
 
+/**
+ * The chat-room menu of a session card (Figma 7086-57413). It opens 6 px
+ * beside the ⋮ trigger, or hangs 2 px below it on a phone; while it is open
+ * only the menu carries the red ring and the veil spares the card.
+ *
+ * Storybook (asserted):
+ * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
+ * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-on-the-phone
+ */
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
-	dropdownPosition: { top: number; left: number };
 	menuIconRef: React.RefObject<HTMLButtonElement>;
+	/**
+	 * The card the trigger sits in. The menu opens BESIDE it and never on
+	 * top of it — without this the menu is only placed beside the button,
+	 * which is still inside the card (Frank, 15.09.2026).
+	 */
+	surfaceRef?: React.RefObject<HTMLElement>;
 	dropdownRef: React.RefObject<HTMLDivElement>;
 	dropdownId: string;
 	dropdownLabel: string;
 	translate: TFunction<['common'], undefined>;
+	onClose: () => void;
 	onMenuClick: (e: React.MouseEvent) => void;
 	onMenuKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
 	onDropdownKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void;
@@ -36,13 +54,14 @@ export interface SessionListItemMenuProps {
 
 export const SessionListItemMenu = ({
 	flyoutOpen,
-	dropdownPosition,
 	menuIconRef,
+	surfaceRef,
 	dropdownRef,
 	dropdownId,
 	dropdownLabel,
 	translate,
 	onMenuClick,
+	onClose,
 	onMenuKeyDown,
 	onDropdownKeyDown,
 	isAsker,
@@ -56,12 +75,32 @@ export const SessionListItemMenu = ({
 	agencyId,
 	onLegalLinkClick
 }: SessionListItemMenuProps) => {
+	const menuPosition = useChatMenuPosition({
+		open: flyoutOpen,
+		anchorRef: menuIconRef,
+		menuRef: dropdownRef,
+		surfaceRef,
+		hugTrigger: true
+	});
+	const placement = menuPosition['--chat-menu-placement'];
 	return (
 		<>
+			<MenuBackdrop
+				open={flyoutOpen}
+				spotlightRef={surfaceRef}
+				onClose={() => {
+					onClose();
+					menuIconRef.current?.focus();
+				}}
+				zIndex={999998}
+			/>
 			<button
 				type="button"
 				ref={menuIconRef}
-				className="sessionsListItem__menuIcon"
+				className={clsx(
+					'sessionsListItem__menuIcon',
+					flyoutOpen && 'sessionsListItem__menuIcon--open'
+				)}
 				onClick={onMenuClick}
 				onKeyDown={onMenuKeyDown}
 				aria-label={dropdownLabel}
@@ -77,21 +116,11 @@ export const SessionListItemMenu = ({
 						id={dropdownId}
 						ref={dropdownRef}
 						className="sessionsListItem__dropdown"
+						data-placement={placement}
 						onKeyDown={onDropdownKeyDown}
 						role="dialog"
 						aria-label={dropdownLabel}
-						style={{
-							top:
-								dropdownPosition.top > 0
-									? `${dropdownPosition.top}px`
-									: '40px',
-							left:
-								dropdownPosition.left > 0
-									? `${dropdownPosition.left}px`
-									: 'auto',
-							right: 'auto',
-							zIndex: 999999
-						}}
+						style={{ ...menuPosition, zIndex: 999999 }}
 					>
 						<div className="sessionsListItem__dropdownHeader">
 							<p className="sessionsListItem__dropdownSubtitle">

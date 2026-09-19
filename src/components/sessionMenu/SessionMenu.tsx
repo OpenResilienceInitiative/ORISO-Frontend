@@ -1,9 +1,13 @@
+import { createPortal } from 'react-dom';
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
 import {
 	MouseEventHandler,
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState
 } from 'react';
 import { generatePath, Link, Navigate, useNavigate } from 'react-router-dom';
@@ -136,6 +140,35 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
+	const menuTriggerRef = useRef<HTMLButtonElement | null>(null);
+	const menuRef = useRef<HTMLDivElement>(null);
+	const closeMenu = useCallback(() => {
+		setFlyoutOpen(false);
+		menuTriggerRef.current?.focus();
+	}, []);
+	const menuPosition = useChatMenuPosition({
+		open: Boolean(flyoutOpen),
+		anchorRef: menuTriggerRef,
+		menuRef
+	});
+	useEffect(() => {
+		if (!flyoutOpen) return;
+		const closeIfTriggerHidden = () => {
+			// Desktop and mobile use separate triggers. A breakpoint change
+			// can hide the anchor, so close instead of positioning at its zero rect.
+			if (menuTriggerRef.current?.getClientRects().length === 0) {
+				closeMenu();
+			}
+		};
+		window.addEventListener('resize', closeIfTriggerHidden);
+		return () => window.removeEventListener('resize', closeIfTriggerHidden);
+	}, [flyoutOpen, closeMenu]);
+	const handleOpenGroupChatInfo = () => {
+		closeMenu();
+		// The dialog restores focus here after closing, rather than to its
+		// now-hidden menu item. Remember the actual desktop/mobile trigger.
+		menuTriggerRef.current?.focus();
+	};
 	// #576 harmonised model: quick access to the notification config from the
 	// conversation menu — same component as in the profile settings, wrapped
 	// in the dialog so the user is NOT thrown out of the current room.
@@ -165,32 +198,64 @@ export const SessionMenu = (props: SessionMenuProps) => {
 		!activeSession.isGroup &&
 		!props.isSupervisor;
 
-	const handleClick = useCallback(
-		(e) => {
-			const menuIconH = document.getElementById('iconH');
-			const menuIconV = document.getElementById('iconV');
-			const flyoutMenu = document.getElementById('flyout');
-
-			const dropdown = document.querySelector('.sessionMenu__content');
-			if (dropdown && flyoutOpen) {
-				if (
-					!menuIconH?.contains(e.target) &&
-					!menuIconV?.contains(e.target)
-				) {
-					if (flyoutMenu && !flyoutMenu.contains(e.target)) {
-						setFlyoutOpen(!flyoutOpen);
-					}
-				}
+	useEffect(() => {
+		if (!flyoutOpen || menuPosition.visibility !== 'visible') return;
+		const menu = menuRef.current;
+		menu?.querySelector<HTMLElement>(
+			'a[href], button:not(:disabled), [tabindex="0"]'
+		)?.focus();
+		const outside = (event: MouseEvent) => {
+			if (
+				!menu?.contains(event.target as Node) &&
+				!menuTriggerRef.current?.contains(event.target as Node)
+			) {
+				event.preventDefault();
+				closeMenu();
 			}
-		},
-		[flyoutOpen]
-	);
+		};
+		const keydown = (event: KeyboardEvent) => {
+			if (
+				menu?.contains(event.target as Node) &&
+				['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+			) {
+				const items = Array.from(
+					menu.querySelectorAll<HTMLElement>(
+						'a[href], button:not(:disabled), [tabindex="0"]'
+					)
+				);
+				const index = items.indexOf(
+					document.activeElement as HTMLElement
+				);
+				const next =
+					event.key === 'Home'
+						? 0
+						: event.key === 'End'
+							? items.length - 1
+							: (index +
+									(event.key === 'ArrowDown' ? 1 : -1) +
+									items.length) %
+								items.length;
+				event.preventDefault();
+				items[next]?.focus();
+			}
+
+			if (event.key === 'Escape') {
+				event.preventDefault();
+				closeMenu();
+			}
+		};
+		document.addEventListener('mousedown', outside);
+		document.addEventListener('keydown', keydown);
+		return () => {
+			document.removeEventListener('mousedown', outside);
+			document.removeEventListener('keydown', keydown);
+		};
+	}, [flyoutOpen, menuPosition.visibility, closeMenu]);
 
 	const [appointmentFeatureEnabled, setAppointmentFeatureEnabled] =
 		useState(false);
 
 	useEffect(() => {
-		document.addEventListener('mousedown', (e) => handleClick(e));
 		if (!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
 			const { appointmentFeatureEnabled } = userData;
 			setAppointmentFeatureEnabled(appointmentFeatureEnabled);
@@ -199,13 +264,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 			// do not get group members for a chat that has not been started and user is not subscribed
 			return;
 		}
-	}, [handleClick, activeSession, userData]);
+	}, [activeSession, userData]);
 
 	const handleBookingButton = () => {
 		navigate('/booking/');
 	};
 
 	const handleStopGroupChat = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
 		stopGroupChatSecurityOverlayItem.copy =
 			getModality(activeSession) === Modality.SELF_HELP
 				? translate('groupChat.stopChat.securityOverlay.copyRepeat')
@@ -215,11 +282,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	};
 
 	const handleLeaveGroupChat = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
 		setOverlayItem(leaveGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
 	};
 
 	const handleArchiveSession = () => {
+		closeMenu();
+		menuTriggerRef.current?.focus();
 		setOverlayItem(archiveSessionSuccessOverlayItem);
 		setOverlayActive(true);
 	};
@@ -238,7 +309,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						mobileListView();
 						navigate(listPath);
 					}
-					setFlyoutOpen(false);
+					closeMenu();
 				}, 1000);
 			})
 			.catch((error) => {
@@ -314,7 +385,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setOverlayActive(false);
 					setOverlayItem(null);
 					setIsRequestInProgress(false);
-					setFlyoutOpen(false);
+					closeMenu();
 				});
 		} else if (buttonFunction === 'GOTO_MANUAL') {
 			navigate('/profile/hilfe/videoCall');
@@ -426,6 +497,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	return (
 		<div className="sessionMenu__wrapper">
+			<MenuBackdrop
+				open={Boolean(flyoutOpen) && !legalModal}
+				onClose={() => {
+					closeMenu();
+					menuTriggerRef.current?.focus();
+				}}
+			/>
 			{sessionMenuOwnsCallControls(activeSession.isGroup) &&
 				!isLoadingTenantSettings &&
 				hasVideoCallFeatures() &&
@@ -470,7 +548,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					<button
 						type="button"
 						id="iconH"
-						onClick={() => setFlyoutOpen(!flyoutOpen)}
+						onClick={(event) => {
+							menuTriggerRef.current = event.currentTarget;
+							setFlyoutOpen(!flyoutOpen);
+						}}
 						className="sessionMenu__icon sessionMenu__icon--desktop"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
@@ -484,7 +565,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					<button
 						type="button"
 						id="iconV"
-						onClick={() => setFlyoutOpen(!flyoutOpen)}
+						onClick={(event) => {
+							menuTriggerRef.current = event.currentTarget;
+							setFlyoutOpen(!flyoutOpen);
+						}}
 						className="sessionMenu__icon sessionMenu__icon--mobile"
 						aria-expanded={Boolean(flyoutOpen)}
 						aria-controls="flyout"
@@ -496,407 +580,484 @@ export const SessionMenu = (props: SessionMenuProps) => {
 						/>
 					</button>
 
-					<ChatMenuDropdown
-						id="flyout"
-						className={`sessionMenu__content${
-							flyoutOpen ? ' sessionMenu__content--open' : ''
-						}`}
-						style={legalModal ? { display: 'none' } : undefined}
-						ariaLabel={translate(
-							'groupChat.info.settings.headline',
-							'Chatraum Einstellungen'
-						)}
-					>
-						<ChatMenuDropdownHeader
-							subtitle={translate(
-								'groupChat.info.settings.subtitle',
-								'Jeder Raum individuell anpassbar'
-							)}
-							title={translate(
+					{/* Escape the header stacking context so the menu remains above its backdrop. */}
+					{createPortal(
+						<ChatMenuDropdown
+							id="flyout"
+							ref={menuRef}
+							className={`sessionMenu__content${
+								flyoutOpen ? ' sessionMenu__content--open' : ''
+							}`}
+							style={{
+								...menuPosition,
+								...(legalModal ? { display: 'none' } : {})
+							}}
+							onKeyDown={(event) => {
+								if (event.key === 'Escape') {
+									closeMenu();
+									menuTriggerRef.current?.focus();
+								}
+							}}
+							ariaLabel={translate(
 								'groupChat.info.settings.headline',
 								'Chatraum Einstellungen'
 							)}
-						/>
-						<ChatMenuDropdownDivider />
-						{/* D8 (05.09.2026): with `callsInMenu` the call buttons
-						    are rows of this menu instead of header buttons —
-						    the organism's rows (icon · title), same handlers
-						    as the buttons, same feature gates. */}
-						{props.callsInMenu &&
-							sessionMenuOwnsCallControls(
-								activeSession.isGroup
-							) &&
-							!isLoadingTenantSettings &&
-							hasVideoCallFeatures() &&
-							!props.isSupervisor && (
-								<>
-									{/* Review v10: real controls — native buttons
-									    (role button, keyboard by default) inside the
-									    organism's `role="dialog"` card; the visible
-									    title is the accessible name. A `menuitem`
-									    role needs the organism's container to be a
-									    `role="menu"` — that is the organism-wide
-									    keyboard ticket, not this row. */}
-									{isVideoCallsEnabled && (
-										<button
-											type="button"
-											className="sessionMenu__item chatMenuDropdown__item"
-											onClick={() => {
-												setFlyoutOpen(false);
-												handleStartVideoCall(true);
-											}}
-											data-cy="session-menu-start-video-call"
-										>
-											<SessionMenuItemContent
-												icon={
-													<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
-												}
-												title={translate(
-													'videoCall.button.startVideoCall'
-												)}
-											/>
-										</button>
-									)}
-									{isAudioCallsEnabled && (
-										<button
-											type="button"
-											className="sessionMenu__item chatMenuDropdown__item"
-											onClick={() => {
-												setFlyoutOpen(false);
-												handleStartVideoCall(false);
-											}}
-											data-cy="session-menu-start-call"
-										>
-											<SessionMenuItemContent
-												icon={
-													<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
-												}
-												title={translate(
-													'videoCall.button.startCall'
-												)}
-											/>
-										</button>
-									)}
-								</>
-							)}
-
-						{props.isAskerInfoAvailable && (
-							<Link
-								className="sessionMenu__item chatMenuDropdown__item"
-								to={userProfileLink}
-							>
-								<SessionMenuItemContent
-									icon={
-										<ProfileIcon data-icon-id="sidebar-icon:profil:outline" />
-									}
-									title={translate('chatFlyout.askerProfil')}
-									shortcut="⇧P"
-								/>
-							</Link>
-						)}
-
-						<div
-							className="sessionMenu__item chatMenuDropdown__item"
-							onClick={() => {
-								setFlyoutOpen(false);
-								setNotifConfigOpen(true);
-							}}
-							data-cy="session-menu-notification-config"
 						>
-							<SessionMenuItemContent
-								icon={
-									<NotificationSettingsIcon data-icon-id="ui-icon:notification-settings:base" />
-								}
+							<ChatMenuDropdownHeader
+								subtitle={translate(
+									'groupChat.info.settings.subtitle',
+									'Jeder Raum individuell anpassbar'
+								)}
 								title={translate(
-									'profile.notifications.config.title'
+									'groupChat.info.settings.headline',
+									'Chatraum Einstellungen'
 								)}
 							/>
-						</div>
+							<ChatMenuDropdownDivider />
+							{/* D8 (05.09.2026): with `callsInMenu` the call buttons
+							    are rows of this menu instead of header buttons —
+							    the organism's rows (icon · title), same handlers
+							    as the buttons, same feature gates. */}
+							{props.callsInMenu &&
+								sessionMenuOwnsCallControls(
+									activeSession.isGroup
+								) &&
+								!isLoadingTenantSettings &&
+								hasVideoCallFeatures() &&
+								!props.isSupervisor && (
+									<>
+										{/* Review v10: real controls — native buttons
+										    (role button, keyboard by default) inside the
+										    organism's `role="dialog"` card; the visible
+										    title is the accessible name. A `menuitem`
+										    role needs the organism's container to be a
+										    `role="menu"` — that is the organism-wide
+										    keyboard ticket, not this row. */}
+										{isVideoCallsEnabled && (
+											<button
+												type="button"
+												className="sessionMenu__item chatMenuDropdown__item"
+												onClick={() => {
+													setFlyoutOpen(false);
+													handleStartVideoCall(true);
+												}}
+												data-cy="session-menu-start-video-call"
+											>
+												<SessionMenuItemContent
+													icon={
+														<MenuVideoCallIcon data-icon-id="ui-icon:modality-video:base" />
+													}
+													title={translate(
+														'videoCall.button.startVideoCall'
+													)}
+												/>
+											</button>
+										)}
+										{isAudioCallsEnabled && (
+											<button
+												type="button"
+												className="sessionMenu__item chatMenuDropdown__item"
+												onClick={() => {
+													setFlyoutOpen(false);
+													handleStartVideoCall(false);
+												}}
+												data-cy="session-menu-start-call"
+											>
+												<SessionMenuItemContent
+													icon={
+														<MenuAudioCallIcon data-icon-id="ui-icon:timeline-add-call:base" />
+													}
+													title={translate(
+														'videoCall.button.startCall'
+													)}
+												/>
+											</button>
+										)}
+									</>
+								)}
 
-						{supervisionPanel?.visible && (
-							<button
-								type="button"
-								className={`sessionMenu__item chatMenuDropdown__item ${
-									!supervisionPanel.available
-										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
-										: ''
-								}`}
-								onClick={() => {
-									if (!supervisionPanel.available) {
-										return;
-									}
-									setFlyoutOpen(false);
-									supervisionPanel.expand();
-								}}
-								disabled={!supervisionPanel.available}
-								data-cy="session-menu-supervision-panel"
-							>
-								<SessionMenuItemContent
-									icon={
-										<SupervisionIcon data-icon-id="ui-icon:supervision-nocirc:400" />
-									}
-									title={translate('supervision.panel.title')}
-									disabled={!supervisionPanel.available}
-									shortcut={
-										supervisionPanel.unreadCount > 0
-											? supervisionPanel.unreadCount
-											: undefined
-									}
-								/>
-							</button>
-						)}
-
-						{props.showMobileSupervisionAction && (
-							<div
-								className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
-								onClick={() => {
-									setFlyoutOpen(false);
-									props.onMobileSupervisionAction?.();
-								}}
-							>
-								<SessionMenuItemContent
-									icon={<GroupChatInfoIcon />}
-									title={translate(
-										'sessionHeader.supervisor.modal.title',
-										'Supervisor verwalten'
-									)}
-									shortcut="⇧S"
-								/>
-							</div>
-						)}
-
-						{props.showMobileEndAnonymousChatAction && (
-							<div
-								className={`sessionMenu__item chatMenuDropdown__item ${
-									props.mobileEndAnonymousChatDisabled
-										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
-										: ''
-								}`}
-								onClick={() => {
-									if (props.mobileEndAnonymousChatDisabled) {
-										return;
-									}
-									setFlyoutOpen(false);
-									props.onMobileEndAnonymousChatAction?.();
-								}}
-								data-cy="session-menu-end-anonymous-chat"
-							>
-								<SessionMenuItemContent
-									icon={<StopGroupChatIcon />}
-									title={translate(
-										'sessionHeader.anonymous.endChat.label',
-										'End chat'
-									)}
-									disabled={
-										props.mobileEndAnonymousChatDisabled
-									}
-									shortcut="⇧E"
-								/>
-							</div>
-						)}
-
-						{props.showMobileDeleteAnonymousAccountAction && (
-							<div
-								className={`sessionMenu__item chatMenuDropdown__item ${
-									props.mobileDeleteAnonymousAccountDisabled
-										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
-										: ''
-								}`}
-								onClick={() => {
-									if (
-										props.mobileDeleteAnonymousAccountDisabled
-									) {
-										return;
-									}
-									setFlyoutOpen(false);
-									props.onMobileDeleteAnonymousAccountAction?.();
-								}}
-							>
-								<SessionMenuItemContent
-									icon={<TrashIcon />}
-									title={translate(
-										'sessionHeader.anonymous.deleteAccount.label',
-										'Konto löschen'
-									)}
-									disabled={
-										props.mobileDeleteAnonymousAccountDisabled
-									}
-									shortcut="Shift+D"
-								/>
-							</div>
-						)}
-
-						{showRequestAdvice && (
-							<div
-								className={`sessionMenu__item chatMenuDropdown__item ${
-									!ADVICE_REQUEST_ENABLED
-										? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
-										: ''
-								}`}
-								onClick={() => {
-									if (!ADVICE_REQUEST_ENABLED) {
-										return;
-									}
-									setFlyoutOpen(false);
-								}}
-								data-cy="session-menu-request-advice"
-							>
-								<SessionMenuItemContent
-									icon={
-										<AdviceRequestIcon data-icon-id="ui-icon:persons-two:base" />
-									}
-									title={translate(
-										'sessionMenu.requestAdvice'
-									)}
-									disabled={!ADVICE_REQUEST_ENABLED}
-								/>
-							</div>
-						)}
-
-						{!hasUserAuthority(
-							AUTHORITIES.ASKER_DEFAULT,
-							userData
-						) &&
-							type !== SESSION_LIST_TYPES.ENQUIRY &&
-							activeSession.isSession &&
-							!props.isSupervisor && (
-								<>
-									{sessionListTab !==
-									SESSION_LIST_TAB_ARCHIVE ? (
-										<div
-											onClick={handleArchiveSession}
-											className="sessionMenu__item chatMenuDropdown__item"
-										>
-											<SessionMenuItemContent
-												icon={
-													<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
-												}
-												title={translate(
-													'chatFlyout.archive'
-												)}
-												description={translate(
-													'chatFlyout.archiveDescription',
-													'Der Chat wird in das Archiv verschoben.'
-												)}
-												shortcut="⇧A"
-											/>
-										</div>
-									) : (
-										<div
-											onClick={handleDearchiveSession}
-											className="sessionMenu__item chatMenuDropdown__item"
-										>
-											<SessionMenuItemContent
-												icon={
-													<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
-												}
-												title={translate(
-													'chatFlyout.dearchive'
-												)}
-												description={translate(
-													'chatFlyout.dearchiveDescription',
-													'Der Chat wird wieder in die aktive Liste verschoben.'
-												)}
-												shortcut="⇧A"
-											/>
-										</div>
-									)}
-								</>
-							)}
-
-						{hasUserAuthority(
-							AUTHORITIES.CONSULTANT_DEFAULT,
-							userData
-						) &&
-							type !== SESSION_LIST_TYPES.ENQUIRY &&
-							activeSession.isSession &&
-							!props.isSupervisor && (
-								<DeleteSession
-									chatId={activeSession.item.id}
-									onSuccess={onSuccessDeleteSession}
+							{props.isAskerInfoAvailable && (
+								<Link
+									className="sessionMenu__item chatMenuDropdown__item"
+									to={userProfileLink}
 								>
-									{(onClick) => (
-										<div
-											onClick={onClick}
-											className="sessionMenu__item chatMenuDropdown__item"
-										>
-											<SessionMenuItemContent
-												icon={
-													<TrashIcon data-icon-id="ui-icon:trash:base" />
-												}
-												title={translate(
-													'chatFlyout.remove'
-												)}
-												description={translate(
-													'chatFlyout.removeDescription',
-													'Der Chat und Nutzer werden in 48h gelöscht.'
-												)}
-												shortcut="⇧D"
-											/>
-										</div>
-									)}
-								</DeleteSession>
+									<SessionMenuItemContent
+										icon={
+											<ProfileIcon data-icon-id="sidebar-icon:profil:outline" />
+										}
+										title={translate(
+											'chatFlyout.askerProfil'
+										)}
+										shortcut="⇧P"
+									/>
+								</Link>
 							)}
 
-						{activeSession.isGroup && (
-							<SessionMenuFlyoutGroup
-								editGroupChatSettingsLink={
-									editGroupChatSettingsLink
-								}
-								groupChatInfoLink={groupChatInfoLink}
-								handleLeaveGroupChat={handleLeaveGroupChat}
-								handleStopGroupChat={handleStopGroupChat}
-								bannedUsers={props.bannedUsers}
-							/>
-						)}
-
-						<div className="legalInformationLinks--menu">
-							<LegalLinks
-								legalLinks={legalLinks}
-								params={{ aid: activeSession?.agency?.id }}
-							>
-								{(label, url, rawLabel) => {
-									const kind = getLegalLinkKind(
-										label,
-										url,
-										rawLabel
-									);
-									return (
-										<button
-											type="button"
-											className="sessionMenu__item chatMenuDropdown__item"
-											onClick={() => {
-												setFlyoutOpen(false);
-												setLegalModal({
-													title: label,
-													url
-												});
-											}}
-										>
-											<SessionMenuItemContent
-												icon={
-													<LegalLinkMenuIcon
-														title={label}
-														url={url}
-														rawLabel={rawLabel}
-													/>
-												}
-												title={label}
-												description={
-													kind === 'privacy'
-														? translate(
-																'chatFlyout.privacyPolicyDescription',
-																'Lese wie diese Beratungsstelle deine Daten verarbeitet.'
-															)
-														: undefined
-												}
-											/>
-										</button>
-									);
+							<div
+								role="button"
+								tabIndex={0}
+								onKeyDown={(event) => {
+									if (
+										event.key === 'Enter' ||
+										event.key === ' '
+									) {
+										event.preventDefault();
+										event.currentTarget.click();
+									}
 								}}
-							</LegalLinks>
-						</div>
-					</ChatMenuDropdown>
+								className="sessionMenu__item chatMenuDropdown__item"
+								onClick={() => {
+									closeMenu();
+									setNotifConfigOpen(true);
+								}}
+								data-cy="session-menu-notification-config"
+							>
+								<SessionMenuItemContent
+									icon={
+										<NotificationSettingsIcon data-icon-id="ui-icon:notification-settings:base" />
+									}
+									title={translate(
+										'profile.notifications.config.title'
+									)}
+								/>
+							</div>
+
+							{supervisionPanel?.visible && (
+								<button
+									type="button"
+									className={`sessionMenu__item chatMenuDropdown__item ${
+										!supervisionPanel.available
+											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+											: ''
+									}`}
+									onClick={() => {
+										if (!supervisionPanel.available) {
+											return;
+										}
+										setFlyoutOpen(false);
+										supervisionPanel.expand();
+									}}
+									disabled={!supervisionPanel.available}
+									data-cy="session-menu-supervision-panel"
+								>
+									<SessionMenuItemContent
+										icon={
+											<SupervisionIcon data-icon-id="ui-icon:supervision-nocirc:400" />
+										}
+										title={translate(
+											'supervision.panel.title'
+										)}
+										disabled={!supervisionPanel.available}
+										shortcut={
+											supervisionPanel.unreadCount > 0
+												? supervisionPanel.unreadCount
+												: undefined
+										}
+									/>
+								</button>
+							)}
+
+							{props.showMobileSupervisionAction && (
+								<div
+									role="button"
+									tabIndex={0}
+									onKeyDown={(event) => {
+										if (
+											event.key === 'Enter' ||
+											event.key === ' '
+										) {
+											event.preventDefault();
+											event.currentTarget.click();
+										}
+									}}
+									className="sessionMenu__item chatMenuDropdown__item sessionMenu__item--mobile"
+									onClick={() => {
+										closeMenu();
+										props.onMobileSupervisionAction?.();
+									}}
+								>
+									<SessionMenuItemContent
+										icon={<GroupChatInfoIcon />}
+										title={translate(
+											'sessionHeader.supervisor.modal.title',
+											'Supervisor verwalten'
+										)}
+										shortcut="⇧S"
+									/>
+								</div>
+							)}
+
+							{props.showMobileEndAnonymousChatAction && (
+								<div
+									className={`sessionMenu__item chatMenuDropdown__item ${
+										props.mobileEndAnonymousChatDisabled
+											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+											: ''
+									}`}
+									onClick={() => {
+										if (
+											props.mobileEndAnonymousChatDisabled
+										) {
+											return;
+										}
+										closeMenu();
+										props.onMobileEndAnonymousChatAction?.();
+									}}
+									data-cy="session-menu-end-anonymous-chat"
+								>
+									<SessionMenuItemContent
+										icon={<StopGroupChatIcon />}
+										title={translate(
+											'sessionHeader.anonymous.endChat.label',
+											'End chat'
+										)}
+										disabled={
+											props.mobileEndAnonymousChatDisabled
+										}
+										shortcut="⇧E"
+									/>
+								</div>
+							)}
+
+							{props.showMobileDeleteAnonymousAccountAction && (
+								<div
+									className={`sessionMenu__item chatMenuDropdown__item ${
+										props.mobileDeleteAnonymousAccountDisabled
+											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+											: ''
+									}`}
+									onClick={() => {
+										if (
+											props.mobileDeleteAnonymousAccountDisabled
+										) {
+											return;
+										}
+										closeMenu();
+										props.onMobileDeleteAnonymousAccountAction?.();
+									}}
+								>
+									<SessionMenuItemContent
+										icon={<TrashIcon />}
+										title={translate(
+											'sessionHeader.anonymous.deleteAccount.label',
+											'Konto löschen'
+										)}
+										disabled={
+											props.mobileDeleteAnonymousAccountDisabled
+										}
+										shortcut="Shift+D"
+									/>
+								</div>
+							)}
+
+							{showRequestAdvice && (
+								<div
+									className={`sessionMenu__item chatMenuDropdown__item ${
+										!ADVICE_REQUEST_ENABLED
+											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
+											: ''
+									}`}
+									onClick={() => {
+										if (!ADVICE_REQUEST_ENABLED) {
+											return;
+										}
+										closeMenu();
+									}}
+									data-cy="session-menu-request-advice"
+								>
+									<SessionMenuItemContent
+										icon={
+											<AdviceRequestIcon data-icon-id="ui-icon:persons-two:base" />
+										}
+										title={translate(
+											'sessionMenu.requestAdvice'
+										)}
+										disabled={!ADVICE_REQUEST_ENABLED}
+									/>
+								</div>
+							)}
+
+							{!hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								activeSession.isSession &&
+								!props.isSupervisor && (
+									<>
+										{sessionListTab !==
+										SESSION_LIST_TAB_ARCHIVE ? (
+											<div
+												onClick={handleArchiveSession}
+												role="button"
+												tabIndex={0}
+												onKeyDown={(event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														event.currentTarget.click();
+													}
+												}}
+												className="sessionMenu__item chatMenuDropdown__item"
+											>
+												<SessionMenuItemContent
+													icon={
+														<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
+													}
+													title={translate(
+														'chatFlyout.archive'
+													)}
+													description={translate(
+														'chatFlyout.archiveDescription',
+														'Der Chat wird in das Archiv verschoben.'
+													)}
+												/>
+											</div>
+										) : (
+											<div
+												onClick={handleDearchiveSession}
+												role="button"
+												tabIndex={0}
+												onKeyDown={(event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														event.currentTarget.click();
+													}
+												}}
+												className="sessionMenu__item chatMenuDropdown__item"
+											>
+												<SessionMenuItemContent
+													icon={
+														<ArchiveIcon data-icon-id="sidebar-icon:inbox:outline" />
+													}
+													title={translate(
+														'chatFlyout.dearchive'
+													)}
+													description={translate(
+														'chatFlyout.dearchiveDescription',
+														'Der Chat wird wieder in die aktive Liste verschoben.'
+													)}
+												/>
+											</div>
+										)}
+									</>
+								)}
+
+							{hasUserAuthority(
+								AUTHORITIES.CONSULTANT_DEFAULT,
+								userData
+							) &&
+								type !== SESSION_LIST_TYPES.ENQUIRY &&
+								activeSession.isSession &&
+								!props.isSupervisor && (
+									<DeleteSession
+										chatId={activeSession.item.id}
+										onSuccess={onSuccessDeleteSession}
+									>
+										{(onClick) => (
+											<div
+												onClick={() => {
+													closeMenu();
+													menuTriggerRef.current?.focus();
+													onClick();
+												}}
+												role="button"
+												tabIndex={0}
+												onKeyDown={(event) => {
+													if (
+														event.key === 'Enter' ||
+														event.key === ' '
+													) {
+														event.preventDefault();
+														event.currentTarget.click();
+													}
+												}}
+												className="sessionMenu__item chatMenuDropdown__item"
+											>
+												<SessionMenuItemContent
+													icon={
+														<TrashIcon data-icon-id="ui-icon:trash:base" />
+													}
+													title={translate(
+														'chatFlyout.remove'
+													)}
+													description={translate(
+														'chatFlyout.removeDescription',
+														'Der Chat und Nutzer werden in 48h gelöscht.'
+													)}
+												/>
+											</div>
+										)}
+									</DeleteSession>
+								)}
+
+							{activeSession.isGroup && (
+								<SessionMenuFlyoutGroup
+									editGroupChatSettingsLink={
+										editGroupChatSettingsLink
+									}
+									groupChatInfoLink={groupChatInfoLink}
+									onOpenInfo={handleOpenGroupChatInfo}
+									handleLeaveGroupChat={handleLeaveGroupChat}
+									handleStopGroupChat={handleStopGroupChat}
+									bannedUsers={props.bannedUsers}
+								/>
+							)}
+
+							<div className="legalInformationLinks--menu">
+								<LegalLinks
+									legalLinks={legalLinks}
+									params={{ aid: activeSession?.agency?.id }}
+								>
+									{(label, url, rawLabel) => {
+										const kind = getLegalLinkKind(
+											label,
+											url,
+											rawLabel
+										);
+										return (
+											<button
+												type="button"
+												className="sessionMenu__item chatMenuDropdown__item"
+												onClick={() => {
+													closeMenu();
+													setLegalModal({
+														title: label,
+														url
+													});
+												}}
+											>
+												<SessionMenuItemContent
+													icon={
+														<LegalLinkMenuIcon
+															title={label}
+															url={url}
+															rawLabel={rawLabel}
+														/>
+													}
+													title={label}
+													description={
+														kind === 'privacy'
+															? translate(
+																	'chatFlyout.privacyPolicyDescription',
+																	'Lese wie diese Beratungsstelle deine Daten verarbeitet.'
+																)
+															: undefined
+													}
+												/>
+											</button>
+										);
+									}}
+								</LegalLinks>
+							</div>
+						</ChatMenuDropdown>,
+						document.body
+					)}
 				</>
 			)}
 			{legalModal && (
@@ -927,12 +1088,14 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 const SessionMenuFlyoutGroup = ({
 	groupChatInfoLink,
+	onOpenInfo,
 	editGroupChatSettingsLink,
 	handleLeaveGroupChat,
 	handleStopGroupChat,
 	bannedUsers
 }: {
 	groupChatInfoLink: string;
+	onOpenInfo: () => void;
 	editGroupChatSettingsLink: string;
 	handleStopGroupChat: MouseEventHandler;
 	handleLeaveGroupChat: MouseEventHandler;
@@ -951,24 +1114,33 @@ const SessionMenuFlyoutGroup = ({
 				moderators.length > 1 && (
 					<div
 						onClick={handleLeaveGroupChat}
+						role="button"
+						tabIndex={0}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								event.currentTarget.click();
+							}
+						}}
 						className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"
 					>
 						<SessionMenuItemContent
 							icon={<LeaveChatIcon />}
 							title={translate('chatFlyout.leaveGroupChat')}
-							shortcut="⇧L"
 						/>
 					</div>
 				)}
-			{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+			{(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+				(activeSession.item.subscribed &&
+					!bannedUsers?.includes(userData.userName))) && (
 				<Link
 					to={groupChatInfoLink}
+					onClick={onOpenInfo}
 					className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"
 				>
 					<SessionMenuItemContent
 						icon={<GroupChatInfoIcon />}
 						title={translate('chatFlyout.groupChatInfo')}
-						shortcut="⇧I"
 					/>
 				</Link>
 			)}
@@ -977,12 +1149,19 @@ const SessionMenuFlyoutGroup = ({
 				canModerateGroupChat(activeSession, userData) && (
 					<div
 						onClick={handleStopGroupChat}
+						role="button"
+						tabIndex={0}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter' || event.key === ' ') {
+								event.preventDefault();
+								event.currentTarget.click();
+							}
+						}}
 						className="sessionMenu__item chatMenuDropdown__item sessionMenu__button"
 					>
 						<SessionMenuItemContent
 							icon={<StopGroupChatIcon />}
 							title={translate('chatFlyout.stopGroupChat')}
-							shortcut="⇧E"
 						/>
 					</div>
 				)}
@@ -999,7 +1178,6 @@ const SessionMenuFlyoutGroup = ({
 						<SessionMenuItemContent
 							icon={<EditGroupChatIcon />}
 							title={translate('chatFlyout.editGroupChat')}
-							shortcut="⇧G"
 						/>
 					</Link>
 				)}

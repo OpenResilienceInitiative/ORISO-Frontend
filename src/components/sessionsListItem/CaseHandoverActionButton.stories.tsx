@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	CaseHandoverActionButton,
 	CaseHandoverActionLabels,
@@ -136,7 +136,8 @@ export const MenuOpenDefault: Story = {
 		const menuItem = await body.findByRole('menuitem', {
 			name: new RegExp(labels.selectMultipleTitle)
 		});
-		await expect(menuItem).toBeVisible();
+		// The shared menu reveal fades in from opacity 0 (160 ms).
+		await waitFor(() => expect(menuItem).toBeVisible());
 		await expect(menuItem.closest('[role="menu"]')?.parentElement).toBe(
 			document.body
 		);
@@ -164,16 +165,128 @@ export const MenuOpenBatch: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: labels.menuLabel })
 		);
-		await expect(
-			await body.findByRole('menuitem', {
-				name: new RegExp(labels.confirmSelectionTitle)
-			})
-		).toBeVisible();
+		const confirmItem = await body.findByRole('menuitem', {
+			name: new RegExp(labels.confirmSelectionTitle)
+		});
+		// The shared menu reveal fades in from opacity 0 (160 ms).
+		await waitFor(() => expect(confirmItem).toBeVisible());
 		await expect(
 			body.getByRole('menuitem', {
 				name: new RegExp(labels.deselectTitle)
 			})
 		).toBeVisible();
+	}
+};
+
+/**
+ * The menu opens BESIDE the card it sits in, not on top of it — the same
+ * rule as the chat-room menu of the session card (Frank, 15.09.2026: "Es
+ * soll kein Overlap da sein, sondern ein Nebeneinander."). The card is
+ * passed as `surfaceRef`; without it the menu only avoids the chevron and
+ * still covers the conversation text underneath.
+ */
+function MenuBesideCardDemo() {
+	const cardRef = useRef<HTMLDivElement>(null);
+	return (
+		<div
+			style={{ ...shell, display: 'block' }}
+			className="sessionsListItem"
+		>
+			<div
+				ref={cardRef}
+				data-testid="case-handover-card-surface"
+				style={{
+					display: 'flex',
+					flexDirection: 'column',
+					gap: 8,
+					minHeight: 128,
+					padding: 16,
+					borderRadius: 24,
+					background: '#ffffff'
+				}}
+			>
+				<strong>Beratungsfall 4711</strong>
+				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+					<CaseHandoverActionButton
+						labels={labels}
+						state="requestAccess"
+						surfaceRef={cardRef}
+						onSelectMultiple={() => {}}
+					/>
+				</div>
+				<p style={{ margin: 0 }}>
+					Letzte Nachricht: Danke für das Gespräch gestern.
+				</p>
+			</div>
+		</div>
+	);
+}
+
+export const MenuBesideTheCard: Story = {
+	name: 'Menü — neben der Karte statt darüber',
+	render: () => <MenuBesideCardDemo />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: labels.menuLabel })
+		);
+		const menu = await within(document.body).findByRole('menu', {
+			name: labels.menuLabel
+		});
+		await waitFor(() => expect(menu).toBeVisible());
+		const surface = canvas.getByTestId('case-handover-card-surface');
+
+		// DOMRect fields live on the prototype, so read them one by one.
+		const m = menu.getBoundingClientRect();
+		const c = surface.getBoundingClientRect();
+		const menuBox = {
+			left: m.left,
+			right: m.right,
+			top: m.top,
+			bottom: m.bottom
+		};
+		const cardBox = {
+			left: c.left,
+			right: c.right,
+			top: c.top,
+			bottom: c.bottom
+		};
+
+		// 1. Beside the card, with a visible gap — there is room on the right.
+		await expect(menuBox.left).toBeGreaterThanOrEqual(cardBox.right + 4);
+		// 2. No overlap at all, whatever the side.
+		const apart =
+			menuBox.right <= cardBox.left + 0.5 ||
+			menuBox.left >= cardBox.right - 0.5 ||
+			menuBox.bottom <= cardBox.top + 0.5 ||
+			menuBox.top >= cardBox.bottom - 0.5;
+		await expect(apart).toBe(true);
+		// 3. The placement is exposed for styling, like the chat-room menu.
+		await expect(menu.dataset.placement).toBe('right');
+		// 4. The menu stays above its own backdrop (999998 vs. 999999).
+		const backdrop = await waitFor(() => {
+			const element =
+				document.querySelector<HTMLElement>('.orisoMenuBackdrop');
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(Number(getComputedStyle(menu).zIndex)).toBeGreaterThan(
+			Number(getComputedStyle(backdrop).zIndex)
+		);
+		// 5. The veil leaves the card uncovered, the page around it not.
+		await waitFor(() =>
+			expect(
+				surface.contains(
+					document.elementFromPoint(
+						cardBox.left + 12,
+						cardBox.top + 12
+					)
+				)
+			).toBe(true)
+		);
+		await expect(
+			document.elementFromPoint(cardBox.left - 12, cardBox.top + 12)
+		).toBe(backdrop);
 	}
 };
 

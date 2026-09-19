@@ -238,6 +238,13 @@ export const RouterConfigUser = (
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],
+		dialogRoutes: [
+			{
+				path: '/sessions/user/view/:groupId/:sessionId/groupChatInfo',
+				component: GroupChatInfo,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			}
+		],
 		profileRoutes: [
 			{
 				path: '/notifications',
@@ -406,7 +413,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				path: '/sessions/consultant/sessionView/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
-			},
+			}
+		],
+		dialogRoutes: [
 			{
 				path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
 				component: GroupChatInfo,

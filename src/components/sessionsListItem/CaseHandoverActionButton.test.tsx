@@ -65,8 +65,8 @@ describe('CaseHandoverActionButton menu', () => {
 		expect(screen.getByRole('menu').parentElement).toBe(document.body);
 	});
 
-	it('anchors the menu with viewport coordinates from the toggle', () => {
-		anchorToggleAt({ right: 400, bottom: 140 });
+	it('anchors the menu with viewport coordinates beside the toggle', () => {
+		anchorToggleAt({ left: 380, right: 400, top: 120, bottom: 140 });
 		window.innerWidth = 1024;
 
 		render(
@@ -75,8 +75,45 @@ describe('CaseHandoverActionButton menu', () => {
 		openMenu();
 
 		const menu = screen.getByRole('menu');
-		expect(menu.style.top).toBe('148px');
-		expect(menu.style.left).toBe('164px');
+		// Without a card the chevron is the surface: right of it, 8 px gap.
+		expect(menu.style.left).toBe('408px');
+		expect(menu.style.top).toBe('120px');
+		expect(menu.style.width).toBe('236px');
+		expect(menu.dataset.placement).toBe('right');
+	});
+
+	it('opens beside the card when the card is passed as surface', () => {
+		anchorToggleAt({ left: 380, right: 400, top: 120, bottom: 140 });
+		window.innerWidth = 1024;
+		const card = document.createElement('div');
+		vi.spyOn(card, 'getBoundingClientRect').mockReturnValue({
+			x: 100,
+			y: 100,
+			top: 100,
+			left: 100,
+			width: 320,
+			height: 128,
+			right: 420,
+			bottom: 228,
+			toJSON: () => ({})
+		} as DOMRect);
+		document.body.appendChild(card);
+
+		render(
+			<CaseHandoverActionButton
+				labels={labels}
+				state="requestAccess"
+				surfaceRef={{ current: card }}
+			/>,
+			{ container: card }
+		);
+		openMenu();
+
+		const menu = screen.getByRole('menu');
+		// Card right edge 420 + 8 px gap — not the chevron's 400.
+		expect(menu.style.left).toBe('428px');
+		expect(menu.style.top).toBe('120px');
+		expect(menu.dataset.placement).toBe('right');
 	});
 
 	it('still closes on an outside click once portalled', () => {

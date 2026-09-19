@@ -317,6 +317,10 @@ class ChatTransportService {
 		);
 	}
 
+	public hasMatrixRoom(matrixRoomId: string): boolean {
+		return Boolean(this.getMatrixRoom(matrixRoomId));
+	}
+
 	public getMatrixRoomMessages(
 		matrixRoomId: string,
 		limit: number

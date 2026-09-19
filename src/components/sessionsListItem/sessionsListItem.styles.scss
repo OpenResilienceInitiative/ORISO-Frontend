@@ -26,6 +26,37 @@ $case-handover-status-muted: var(--m3-on-surface-variant, #667280);
 $case-handover-denied-bg: var(--m3-error-container, #f7d7d7);
 $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
+// The session card body (Frank, 15./16.09.2026, plates v1–v4). The preview
+// flows around a 48 px avatar in 16 px lines — `--session-preview-line-height`
+// is one constant in mui-variables-mapping.scss, and the diagonal below is
+// computed for it.
+$card-inset: 16px;
+$card-avatar: 48px;
+$card-gap: 12px;
+$card-name-line: 24px;
+$card-preview-line: 16px;
+$card-preview-lines: 3;
+$card-mark: 24px;
+$card-action: 40px; // the case-handover split button
+$card-clip: $card-name-line + $card-preview-line * $card-preview-lines; // 72px
+
+// The third line's centre is where the trailing marks sit; the card closes
+// one inset below them.
+$card-body: $card-clip + ($card-mark - $card-preview-line) * 0.5 + $card-inset; // 92px
+$card-chip-row: 48px;
+
+$card-border: 1px;
+$card-border-grow: $list-item-selected-border-width - $card-border;
+$card-height: $card-chip-row + $card-body + 2 * $card-border; // 142px
+
+// The menu pill does not sit on the inset: `__rowRight` pads it further in.
+// The trailing marks end under the pill, so both read these two values.
+$card-trailing-wide: 10px;
+$card-trailing-narrow: 4px;
+
+// Text keeps this far clear of the trailing marks from the second line on.
+$card-trailing-clearance: 24px;
+
 .sessionsListItem {
 	&__groupModalityIcon {
 		width: $grid-base-two;
@@ -122,8 +153,17 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			color: #da5248 !important;
 		}
 
+		// Mail keeps the primary colour in the active state too — it is the
+		// modality's colour, not a selection highlight (Frank, 15.09.).
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
-			color: #da5248 !important;
+			color: var(--m3-primary, $primary) !important;
+		}
+
+		.sessionsListItem__consultingTypeIcon--nearbyIcon {
+			// The mask already paints it; the black-to-red filter the other
+			// modalities use would double up on it.
+			filter: none;
+			background-color: var(--m3-primary, $primary);
 		}
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
@@ -156,19 +196,52 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&--menuOpen {
+		/*
+		 * Frank, 17.09.2026: while the menu is open, the menu carries the red
+		 * ring and the card behind it does not — neither its selected border
+		 * nor a menu-open one. The border keeps the 2 px of a selected card,
+		 * and `__content--flow` gives that pixel back, so nothing moves.
+		 */
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
-
-			@include list-item-active-menu-border($important: true);
+			border: $list-item-active-menu-border-width solid
+				$session-light-border !important;
 		}
 
-		// Flyout open: vertical pill (height > width) + 2px primary-container
-		.sessionsListItem__menuIcon {
-			width: 32px;
-			height: 48px;
+		.sessionsListItem__content:hover,
+		.sessionsListItem__content:focus,
+		.sessionsListItem__content:active {
+			border-color: $session-light-border !important;
+		}
 
+		/*
+		 * The open trigger carries the primary role, its dots the
+		 * on-primary-container role (Frank, 15.09.2026). Geometry stays put
+		 * so the card does not twitch when the menu opens.
+		 */
+		.sessionsListItem__menuIcon {
 			@include list-item-active-menu-border;
-			color: $session-active-border;
+
+			background-color: var(--m3-primary, $primary);
+			border-color: var(--m3-primary, $primary);
+			color: var(--m3-on-primary-container, #ffe2de);
+
+			// The resting hover tint comes later in this file and would win;
+			// on the open trigger it turned the light dots invisible.
+			&:hover {
+				background-color: var(--m3-primary, $primary);
+			}
+		}
+
+		/*
+		 * One focused thing at a time. The menu is what the user just
+		 * opened and what the keyboard is in, so the card underneath drops
+		 * its ring instead of drawing a second one around the whole row.
+		 */
+		.sessionsListItem__content:focus-visible,
+		.sessionsListItem__content:focus {
+			outline: none;
+			box-shadow: none;
 		}
 
 		.sessionsListItem__topic {
@@ -256,15 +329,22 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-color: #ffd8d4;
 	}
 
-	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		// Keep selected primary border; layer keyboard halo (#596 / WP-06)
+	&.sessionsListItem--active:not(.sessionsListItem--menuOpen)
+		.sessionsListItem__content:focus-visible {
+		// Keep selected primary border; layer keyboard halo (#596 / WP-06).
+		// Suppressed while the menu is open — the menu owns the focus then,
+		// and two rings at once is the thing this was meant to avoid.
 		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
 	&__row {
 		display: flex;
-		gap: 10px;
+
+		// Frank, 15.09.2026: the name sits 12 px from the avatar. It used to
+		// be 32 — this gap plus 22 px of padding inside `__username`, which
+		// read as dead space in the middle of the card.
+		gap: 12px;
 		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
@@ -299,9 +379,197 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
-	&__rowLeft {
+	// A resting card has a 1 px border, a selected one — or one whose menu is
+	// open — 2 px (#597). The card keeps its height either way: the rows give
+	// the extra pixel back, so selecting a card or opening its menu moves
+	// nothing in the list.
+	&__content--flow {
+		height: $card-height;
+		min-height: $card-height;
+	}
+
+	&--active &__content--flow,
+	&--menuOpen &__content--flow {
+		> .sessionsListItem__row:first-child {
+			margin: (-$card-border-grow) (-$card-border-grow) 0;
+		}
+
+		> .sessionsListItem__body {
+			margin: 0 (-$card-border-grow) (-$card-border-grow);
+		}
+	}
+
+	&__body {
+		--card-trailing: #{$card-trailing-wide};
+
+		position: relative;
+		box-sizing: border-box;
+		height: $card-body;
+		padding: 0 $card-inset;
+
+		@media screen and (width <= 899px) {
+			--card-trailing: #{$card-trailing-narrow};
+		}
+	}
+
+	// The clamp. Chrome lays a vertical -webkit-box out as flow-root, so the
+	// floats inside keep shaping the lines and the ellipsis still appears
+	// after the third one (measured, 16.09.2026).
+	// The name is not inside the clamp: WebKit counts it as the first of the
+	// three lines, Chromium does not (measured, 17.09.2026). The name sits
+	// on top of this padding instead, so both count preview lines only.
+	&__flow {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: $card-preview-lines;
+		box-sizing: border-box;
+		height: $card-clip;
+		padding-top: $card-name-line;
+		overflow: hidden;
+	}
+
+	// One plain block around everything, for engines that still treat
+	// -webkit-box as a legacy flexbox.
+	&__flowInner {
+		display: block;
+	}
+
+	&__body &__icon {
+		float: left;
+		width: $card-avatar;
+		height: $card-avatar;
+		min-width: $card-avatar;
+
+		// The float stands beside the three preview lines; the avatar is
+		// drawn one name line higher, level with the name. Relative
+		// positioning moves the paint only, so the wrap is untouched — a
+		// negative top margin did the same in Chromium, but WebKit then
+		// ignored the float for the first line (measured, 17.09.2026).
+		position: relative;
+		top: -$card-name-line;
+		margin: 0 $card-gap 0 0;
+
+		// One step per preview line, measured from the avatar's left edge
+		// and from the first preview line's top (the margin box starts
+		// there): 60 px for the first line (the margin box), 51 px for the
+		// second (where the circle's edge meets its glyph band, plus the
+		// gap), 42 px for the third (the same step again — on "Woche" in
+		// Frank's preview 5). `circle()` would barely move the second line:
+		// a line box is pushed by the widest part of the shape it overlaps.
+		shape-outside: polygon(
+			0 0,
+			60px 0,
+			60px $card-preview-line,
+			51px $card-preview-line,
+			51px $card-preview-line * 2,
+			42px $card-preview-line * 2,
+			42px $card-preview-line * 3,
+			0 $card-preview-line * 3
+		);
+	}
+
+	// Keeps the first preview line clear of the menu's column: like Mail and
+	// the name, it ends at the menu pill's right edge — a menu opened 6 px
+	// beside the pill then covers no text (Frank, 17.09.2026) …
+	&__flowSpacer {
+		float: right;
+		width: var(--card-trailing);
+		height: $card-preview-line;
+	}
+
+	// … and from the second line on holds the trailing marks' column. Its
+	// width is measured (`useReservedTrailingWidth`): the marks are
+	// translated and some arrive late.
+	&__flowReserve {
+		float: right;
+		clear: right;
+		width: var(--card-trailing-width, 0px);
+		height: $card-preview-line * ($card-preview-lines - 1);
+		margin-left: $card-trailing-clearance;
+		margin-right: var(--card-trailing);
+	}
+
+	&__body &__username {
+		position: absolute;
+		top: 0;
+		left: $card-inset + $card-avatar + $card-gap;
+		right: calc(#{$card-inset} + var(--card-trailing));
+		display: block;
+		padding: 0;
+		line-height: $card-name-line;
+	}
+
+	// The preview's own rule is one clipped line — nowrap, overflow hidden
+	// and `align-content: center`. Overflow hidden and a non-normal
+	// align-content each make the block its own formatting context, and such
+	// a block avoids floats instead of flowing around them.
+	&__body &__subject {
+		display: block;
+		white-space: normal;
+		overflow: visible;
+		text-overflow: clip;
+		align-content: normal;
+		overflow-wrap: anywhere;
+	}
+
+	&__previewGlyph {
+		width: 14px;
+		height: 14px;
+		margin-right: 6px;
+		vertical-align: -2px;
+		color: var(--m3-secondary, #4c555f);
+
+		// `audio-on.svg` is drawn in white for the composer's red button.
+		path {
+			fill: currentcolor;
+		}
+	}
+
+	// Mail and the other marks: centred on the third line, ending under the
+	// white menu pill.
+	&__trailing {
+		position: absolute;
+		right: calc(#{$card-inset} + var(--card-trailing));
+		bottom: $card-inset;
 		display: flex;
 		align-items: center;
+		gap: 8px;
+		height: $card-mark;
+
+		.sessionsListItem__consultingTypeIcon {
+			height: auto;
+			margin-left: 0;
+			padding-right: 0;
+		}
+
+		.sessionsListItem__supervisionIndicator {
+			margin-left: 0;
+		}
+	}
+
+	// The case-handover action takes the preview's place (Figma 115): beside
+	// the avatar, centred on the same line as the trailing marks.
+	&__bodyAction {
+		position: absolute;
+		left: $card-inset + $card-avatar + $card-gap;
+		right: calc(
+			#{$card-inset} + var(--card-trailing) +
+				var(--card-trailing-width, 0px) + #{$card-gap}
+		);
+		bottom: $card-inset - ($card-action - $card-mark) * 0.5;
+		display: flex;
+
+		.sessionsListItem__handoverAction {
+			margin: 0;
+		}
+	}
+
+	&__rowLeft {
+		display: flex;
+
+		// Frank, 16.09.2026: the tag sits at the top of the chip row, level
+		// with the menu pill, not centred on it.
+		align-items: flex-start;
 		gap: 8px;
 		flex: 1;
 		min-width: 0;
@@ -313,7 +581,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__rowRight {
-		padding-right: 10px;
+		padding-right: $card-trailing-wide;
 		display: flex;
 		align-items: center;
 		gap: 8px;
@@ -324,7 +592,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		@media screen and (width <= 899px) {
 			// On narrow devices, let the right cluster compress first
 			// so topic tags keep more readable space.
-			padding-right: 4px;
+			padding-right: $card-trailing-narrow;
 			gap: 4px;
 			min-width: 0;
 			flex-shrink: 1;
@@ -366,6 +634,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
+
+		// Frank, 15.09.2026: the trigger is a horizontal pill and stays one.
+		// The 44x44 circle came in with the merged 09.09. branch; `dev` has
+		// always had 48x32 here.
 		width: 48px;
 		height: 32px;
 		padding: 0;
@@ -379,8 +651,6 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 		transition:
-			width 160ms ease,
-			height 160ms ease,
 			border-color 160ms ease,
 			background-color 160ms ease;
 
@@ -410,7 +680,15 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 		overflow: auto;
-		z-index: 99999 !important;
+
+		/*
+		 * Above its own backdrop. `MenuBackdrop` is mounted at 999998 by
+		 * `SessionListItemMenu`, and the component asks for 999999 inline —
+		 * but this `!important` was one digit short and won, so the menu
+		 * rendered UNDER the white veil meant for everything else. Keep the
+		 * two in step if either moves.
+		 */
+		z-index: 999999 !important;
 		display: flex !important;
 		flex-direction: column;
 		padding: 8px;
@@ -628,7 +906,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		align-self: center;
+		align-self: flex-start;
 		min-width: 0;
 		max-width: 100%;
 		flex: 0 1 auto;
@@ -789,7 +1067,10 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__username {
 		font-weight: $font-weight-medium;
-		padding: 8px 22px;
+
+		// Horizontal padding removed: the distance to the avatar is the
+		// row's 12 px gap and nothing else (Frank, 15.09.2026).
+		padding: 8px 0;
 		margin-right: auto;
 		white-space: nowrap;
 		overflow: hidden;
@@ -929,21 +1210,44 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			margin-right: 0;
 			padding-right: 12px;
 			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
+
+			/*
+			 * Frank, 15.09.: the word sat 2 px below the envelope. The base
+			 * rule aligns on `end`, so icon and label hung from a shared
+			 * bottom edge rather than being centred on each other — and the
+			 * fixed 38 px height left 14 px of dead space above them. With
+			 * the height dropped, the row's own `flex-end` keeps the group
+			 * exactly where it was and the two children centre on each
+			 * other instead.
+			 */
+			align-items: center;
 		}
 
+		// Frank, 15.09.: the Mail modality reads in the primary colour —
+		// the envelope and the word together. The asset has its grey fill
+		// baked in, so it is worn as a mask and the colour comes from here.
 		&--nearbyIcon {
 			width: 24px !important;
 			height: 24px !important;
 			flex-shrink: 0;
+			display: block;
+			background-color: var(--m3-primary, $primary);
+			mask-image: var(--nearby-icon-url);
+			mask-size: contain;
+			mask-position: center;
+			mask-repeat: no-repeat;
+			-webkit-mask-image: var(--nearby-icon-url);
+			-webkit-mask-size: contain;
+			-webkit-mask-position: center;
+			-webkit-mask-repeat: no-repeat;
 		}
 
 		&--nearbyLabel {
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
 			font-weight: 600;
-			color: var(--m3-secondary, #4b515a);
+			color: var(--m3-primary, $primary);
 			line-height: 20px;
 			letter-spacing: 0;
 		}
@@ -1115,12 +1419,14 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	// #1158: portalled to document.body (same pattern as __dropdown) so the
-	// card's `overflow: hidden` cannot clip it. `top`/`left` are set inline
-	// from the toggle's getBoundingClientRect; the width is mirrored by
-	// HANDOVER_MENU_WIDTH in sessionDropdownPosition.ts.
+	// card's `overflow: hidden` cannot clip it. Position, width and
+	// max-height are set inline by `useChatMenuPosition` (beside the card
+	// first); the width is mirrored by HANDOVER_MENU_WIDTH in
+	// CaseHandoverActionButton.tsx. The z-index sits above the 999998
+	// `MenuBackdrop` the button mounts — keep the two in step.
 	&__handoverActionMenu {
 		position: fixed;
-		z-index: 99999;
+		z-index: 999999;
 		width: 236px;
 		max-width: calc(100vw - 16px);
 		padding: 6px;
