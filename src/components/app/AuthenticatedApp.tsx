@@ -80,14 +80,9 @@ export const AuthenticatedApp = ({
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
 	// the browser's permission dialog for anonymous visitors (owner report,
-	// 2026-08-19). Withheld until the profile says the account is the
-	// counsellor's own, for the same reason as its sibling
-	// `requestPermissions()` below: an account that still owes its password or
-	// its second factor takes no calls, and the dialog would land over the
-	// setup gate. Unknown counts as pending here — unlike
-	// `isAccountSetupPending`, which must stay fail-open so a frontend ahead
-	// of its backend does not lock everyone out; postponing a prompt costs
-	// nothing.
+	// 2026-08-19). Withheld until the profile says the account is the counsellor's
+	// own: an account that still owes its password or second factor takes no calls,
+	// and the dialog would land over the setup gate. Unknown counts as pending here.
 	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
 	useEffect(
@@ -214,22 +209,12 @@ export const AuthenticatedApp = ({
 											(window as any).callContext =
 												callContext;
 
-											// Deliberately NOT gated: `initializeClient`
-											// has already started the client, so the
-											// account's rooms sync into this browser even
-											// while the gate is up. That is not a leak the
-											// gate can close — whoever holds the
-											// administrator-chosen password can sign in and
-											// sync anyway, which is precisely why the gate
-											// demands a new one — and the password step
-											// needs a PREPARED client whenever there IS
-											// key-backup material to rotate
-											// (`getReadyClient`). What IS withheld is
-											// everything that acts on the content:
-											// live-event processing, notifications and the
-											// group-chat deep link. The gate reloads the
-											// document once setup is settled, which boots
-											// those properly.
+											// Deliberately NOT gated: the client has
+											// already started, and the password step needs
+											// a PREPARED client whenever there is
+											// key-backup material to rotate. What IS
+											// withheld is everything acting on the content:
+											// live events, notifications, the deep link.
 											if (
 												isAccountSetupPending(
 													userProfileData
@@ -358,13 +343,9 @@ export const AuthenticatedApp = ({
 	}
 
 	if (appReady) {
-		// Account setup comes before the app, not on top of it. A counsellor whose
-		// login an administrator provisioned received their first password from
-		// someone else, so the account is not yet theirs alone — their own
-		// password and then a second factor are owed first, and until both are
-		// settled the only ways on are completing them or logging out. Replacing
-		// the routed app is what makes that true: the dismissible nag leaves
-		// everything underneath reachable (#841).
+		// Account setup comes before the app, not on top of it: until the counsellor's
+		// own password and a second factor are settled, the only ways on are completing
+		// them or logging out. Replacing the routed app is what makes that true.
 		if (resolveAccountSetupStep(userData) !== null) {
 			return (
 				<AuthenticatedBuildIdentityBoundary>

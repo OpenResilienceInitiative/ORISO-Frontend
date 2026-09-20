@@ -14,11 +14,9 @@ import { onFirstUserGesture } from '../utils/onFirstUserGesture';
  * user gesture, and Chromium down-ranks sites that prompt without one
  * (#576 Safari review).
  *
- * `enabled` withholds the request without unmounting the hook: an account
- * still owed its own password and a second factor cannot receive calls yet, so
- * the dialog would land over the account-setup gate — the screen that exists
- * to say the account is not usable. The reported status stays truthful
- * meanwhile; only the asking waits (#1481).
+ * `enabled` withholds the request without unmounting the hook: an account still owed its password
+ * and a second factor cannot receive calls, so the dialog would land over the setup gate. The
+ * reported status stays truthful; only the asking waits.
  */
 export const useNotificationPermission = (enabled = true) => {
 	const [permissionStatus, setPermissionStatus] =

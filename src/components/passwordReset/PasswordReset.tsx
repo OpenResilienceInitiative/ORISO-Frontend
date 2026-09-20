@@ -45,11 +45,8 @@ import {
 class ChatRecoveryUnavailableError extends Error {}
 
 /**
- * The Matrix client, or `null` when there is none to be had — no chat identity
- * was ever provisioned (ORISO-UserService leaves `matrixUserId` null when
- * Synapse is unreachable during consultant creation, deliberately and
- * non-fatally), the homeserver is down, or the client never finished syncing.
- * The caller decides what that means; it is not the same answer everywhere.
+ * The Matrix client, or `null` when there is none to be had — no chat identity, the homeserver
+ * down, or the client never finished syncing. The caller decides what that means.
  */
 const getReadyRecoveryClient = async () => {
 	try {

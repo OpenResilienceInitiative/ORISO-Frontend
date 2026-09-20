@@ -16,21 +16,13 @@ import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupS
 /**
  * Set the signed-in account's chat recovery up once its client has synced.
  *
- * Two accounts are held back, for the same reason in different words: nothing
- * may be derived from a credential that is not the account holder's alone.
+ * Two accounts are held back, because nothing may be derived from a credential that is not the
+ * account holder's alone: an anonymous session has no durable identity, and an account still
+ * behind the setup gate signed in with the administrator's password. In LOGIN_PASSWORD mode the
+ * recovery key would be sealed under that password and is never rotated afterwards, so it is
+ * dropped instead and the next sign-in sets recovery up properly.
  *
- * - An anonymous session has no durable identity to recover.
- * - An account still behind the setup gate signed in with the password its
- *   administrator chose. In LOGIN_PASSWORD mode `initializeChatRecovery`
- *   would create the Megolm key backup and seal its recovery key under
- *   exactly that password. Unlike the password itself, that key is never
- *   rotated: a secret the gate exists to retire within minutes would buy
- *   permanent access to the counsellor's encrypted history. The handed-off
- *   password is dropped instead, and the next sign-in — the first with a
- *   password only the counsellor knows — sets recovery up properly.
- *
- * Lives in a hook of its own so the conditions that decide whether it may run
- * at all are testable without mounting the whole authenticated app.
+ * A hook of its own so the conditions are testable without mounting the authenticated app.
  */
 export const useAuthenticatedChatRecovery = (
 	matrixClientService: MatrixClientService | null,

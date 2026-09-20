@@ -6,16 +6,11 @@ import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupS
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
 
 /**
- * Follow a `?gcid=` group-chat deep link once the session may act on it.
+ * Follow a `?gcid=` group-chat deep link once the session may act on it. The id is read once, at
+ * mount, because the router replaces the URL before the tenant arrives. Keep it, wait until the
+ * join is allowed, assign, then open the entry room.
  *
- * The id is read once, at mount. It used to be re-read from
- * `window.location` inside an effect that ran again when the tenant arrived —
- * by then the router had already replaced the URL and the id was gone, so the
- * assignment never fired (#974, #1216). Now: keep the id, wait until it is
- * allowed to be used, assign, then open the group's entry room.
- *
- * Lives in a hook of its own so the conditions that release the join are
- * testable without mounting the whole authenticated app.
+ * A hook of its own so the conditions are testable without mounting the authenticated app.
  */
 export const usePendingGroupChatJoin = (
 	userData: Partial<UserDataInterface> | undefined
