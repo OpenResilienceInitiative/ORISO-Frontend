@@ -12,6 +12,7 @@ $cc-on-surface-variant: var(--m3-on-surface-variant, #444748);
 $cc-secondary: var(--m3-secondary, #4c555f);
 $cc-secondary-container: var(--m3-secondary-container, #646d78);
 $cc-surface-container-lowest: var(--m3-surface-container-lowest, #ffffff);
+
 /* The 10% on-surface wash M3 puts under a disabled filled control. */
 $cc-disabled-surface: rgba(27, 27, 28, 0.1);
 $cc-elevation-1:
@@ -31,6 +32,7 @@ $cc-motion-easing: var(
 
 .conversationCreate {
 	background: $cc-surface-container-lowest;
+
 	/*
 	 * Outline role, like both cards inside it. The recovered commit reached for
 	 * on-primary-container here, which is a foreground colour: bound to the
@@ -60,6 +62,7 @@ $cc-motion-easing: var(
 		flex: 1;
 		font-size: 32px;
 		font-weight: 400;
+
 		/*
 		 * `sanitize.css` sets a global `word-break: break-word`, which chopped
 		 * "Gesprächskreis" into "Gesprächskre / is" on a phone. Break at a real
@@ -69,6 +72,7 @@ $cc-motion-easing: var(
 		line-height: 40px;
 		margin: 0;
 		min-width: 0;
+
 		/* Last resort only, so a very long word cannot overflow the column. */
 		overflow-wrap: break-word;
 		word-break: normal;
@@ -536,6 +540,7 @@ body.conversationCreate--active .navigation__wrapper {
 	 */
 	&__authorColumn {
 		background: $cc-surface-container-low;
+
 		/* The node draws an outline around the whole card, not just the boxes. */
 		border: 1px solid $cc-outline-variant;
 		border-radius: 28px;
@@ -587,11 +592,13 @@ body.conversationCreate--active .navigation__wrapper {
 
 	&__createButton {
 		align-items: center;
+
 		/*
 		 * Figma 8467-27977 seats the action inside the card, full width, rather
 		 * than floating it at the outer edge.
 		 */
 		align-self: stretch;
+
 		/*
 		 * Node values: a fully rounded 100px pill on a 10% on-surface wash,
 		 * 24/16 padding, an 8px gap to the 24px glyph, title-medium label.

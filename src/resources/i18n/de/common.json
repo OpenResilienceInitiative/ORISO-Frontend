@@ -572,7 +572,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Teambesprechung öffnen" },
+		"teamDiscussion": {
+			"open": "Teambesprechung öffnen"
+		},
 		"acceptButton": {
 			"anonymous": "Chat starten",
 			"known": "Anfrage annehmen"
@@ -4019,7 +4021,11 @@
 				"label": "Ihr zweiter Faktor"
 			}
 		},
-		"title": "Zwei-Faktor-Authentifizierung"
+		"title": "Zwei-Faktor-Authentifizierung",
+		"required": {
+			"copy": "Bitte hinterlegen Sie jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört Ihr Konto allein Ihnen und Sie können mit der Beratung beginnen.",
+			"title": "Zweiter Faktor erforderlich"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4835,7 +4841,8 @@
 			"idle": "Der Wiederherstellungsstatus wurde noch nicht geprüft.",
 			"pending": "Die Wiederherstellung wird geprüft. Die App kann weiter genutzt werden.",
 			"busy": "Die Wiederherstellung wird gerade in einem anderen Tab oder im Hintergrund bearbeitet. Bitte später erneut versuchen.",
-			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert."
+			"repairRequired": "Vor der Passwortänderung muss die Chat-Wiederherstellung in den Sicherheitseinstellungen repariert werden. Das Login-Passwort wurde nicht geändert.",
+			"chatUnavailable": "Die Chat-Verbindung steht gerade nicht zur Verfügung, deshalb kann Ihr Passwort nicht sicher geändert werden. Ihr Passwort wurde nicht geändert. Bitte versuchen Sie es später erneut und wenden Sie sich an Ihre Administration, wenn es weiterhin nicht klappt."
 		}
 	},
 	"accountInvite": {
@@ -5066,6 +5073,24 @@
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Verbindung unterbrochen",
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Ihr Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch Ihr erstes Passwort vergeben hat und es weiterhin kennt. Bitte ersetzen Sie es jetzt durch ein Passwort, das nur Sie kennen. Danach richten Sie Ihren zweiten Faktor ein.",
+			"title": "Bitte vergeben Sie Ihr eigenes Passwort"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Abmelden"
 		}
 	}
 }

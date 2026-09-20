@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
+	AUTO_FOCUS_ATTRIBUTE,
 	BOTTOM_TOLERANCE_PX,
+	focusComposerAutomatically,
 	isComposerBusy,
 	isTimelineAtBottom,
 	shouldClearAtBottomAfterSuppressedFollow,
@@ -148,5 +150,61 @@ describe('isComposerBusy', () => {
 
 	it('is quiet when there is no composer at all (read-only session)', () => {
 		expect(isComposerBusy(null, null)).toBe(false);
+	});
+
+	/**
+	 * Frank (16.09.): only a click or typing counts as writing. On desktop
+	 * the app puts the cursor into the composer by itself when a chat
+	 * opens; a reader who has not touched it is still just reading.
+	 */
+	it('is quiet while the focus is the one the app placed by itself', () => {
+		const el = card('<div class="tiptap" tabindex="0"><p></p></div>');
+		el.setAttribute(AUTO_FOCUS_ATTRIBUTE, '');
+		expect(isComposerBusy(el, el.querySelector('.tiptap'))).toBe(false);
+	});
+
+	it('stays busy with a draft even when the focus was placed automatically', () => {
+		const el = card('<div class="tiptap"><p>halber Satz</p></div>');
+		el.setAttribute(AUTO_FOCUS_ATTRIBUTE, '');
+		expect(isComposerBusy(el, el.querySelector('.tiptap'))).toBe(true);
+	});
+});
+
+describe('focusComposerAutomatically', () => {
+	const setUp = () => {
+		document.body.innerHTML =
+			'<div id="card"><div id="editor" tabindex="0"></div></div><button id="elsewhere">x</button>';
+		return {
+			card: document.getElementById('card')!,
+			editor: document.getElementById('editor')!,
+			elsewhere: document.getElementById('elsewhere')!
+		};
+	};
+
+	it('marks the card when it moves the cursor there itself', () => {
+		const { card, editor } = setUp();
+		focusComposerAutomatically(card, () => editor.focus());
+		expect(document.activeElement).toBe(editor);
+		expect(card.hasAttribute(AUTO_FOCUS_ATTRIBUTE)).toBe(true);
+	});
+
+	it('does not mark a focus the person already placed', () => {
+		const { card, editor } = setUp();
+		editor.focus();
+		focusComposerAutomatically(card, () => editor.focus());
+		expect(card.hasAttribute(AUTO_FOCUS_ATTRIBUTE)).toBe(false);
+	});
+
+	it('leaves no mark when the focus did not land in the card', () => {
+		const { card, elsewhere } = setUp();
+		elsewhere.focus();
+		focusComposerAutomatically(card, () => undefined);
+		expect(card.hasAttribute(AUTO_FOCUS_ATTRIBUTE)).toBe(false);
+	});
+
+	it('does nothing without a card', () => {
+		const focus = vi.fn();
+		focusComposerAutomatically(null, focus);
+		expect(focus).toHaveBeenCalledTimes(1);
 	});
 });

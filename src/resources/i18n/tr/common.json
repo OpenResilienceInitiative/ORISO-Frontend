@@ -577,7 +577,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Ekip görüşmesini aç" },
+		"teamDiscussion": {
+			"open": "Ekip görüşmesini aç"
+		},
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
 			"known": "Sorguyu kabul et"
@@ -4002,7 +4004,11 @@
 				"label": "İkinci faktörünüz"
 			}
 		},
-		"title": "İki faktörlü kimlik doğrulama"
+		"title": "İki faktörlü kimlik doğrulama",
+		"required": {
+			"copy": "Lütfen şimdi ikinci bir faktör (uygulama veya e-posta) tanımlayın. Ancak bundan sonra hesabınız yalnızca size ait olur ve danışmanlığa başlayabilirsiniz.",
+			"title": "İkinci faktör gerekli"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4843,7 +4849,8 @@
 			"idle": "Kurtarma durumu henüz kontrol edilmedi.",
 			"pending": "Kurtarma kontrol ediliyor. Uygulamayı kullanmaya devam edebilirsiniz.",
 			"busy": "Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor. Lütfen daha sonra tekrar deneyin.",
-			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi."
+			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi.",
+			"chatUnavailable": "Sohbet bağlantısı şu anda kullanılamıyor, bu nedenle şifreniz güvenli bir şekilde değiştirilemiyor. Şifreniz değiştirilmedi. Lütfen daha sonra tekrar deneyin; sorun devam ederse yöneticinizle iletişime geçin."
 		}
 	},
 	"accountInvite": {
@@ -5074,6 +5081,24 @@
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Bağlantı kesildi",
+			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Erişiminiz, ilk şifrenizi de belirleyen ve onu hâlâ bilen bir yönetici tarafından oluşturuldu. Lütfen şimdi onu yalnızca sizin bildiğiniz bir şifreyle değiştirin. Ardından ikinci faktörünüzü tanımlayacaksınız.",
+			"title": "Lütfen kendi şifrenizi belirleyin"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Çıkış yap"
 		}
 	}
 }

@@ -13,8 +13,10 @@ import { PasswordReset } from './PasswordReset';
 const state = vi.hoisted(() => ({
 	userData: {
 		chatRecoveryMode: 'LOGIN_PASSWORD',
-		chatRecoveryPolicyRevision: 1
+		chatRecoveryPolicyRevision: 1,
+		passwordChangeRequired: false
 	},
+	clientService: null as any,
 	update: vi.fn(),
 	change: vi.fn(),
 	RepairRequiredError: class extends Error {},
@@ -44,9 +46,7 @@ vi.mock('../../services/matrixPasswordRecoveryService', () => ({
 	PasswordRecoveryWorkLimitError: state.WorkLimitError
 }));
 vi.mock('../../services/matrixClientRegistry', () => ({
-	getMatrixClientService: () => ({
-		getReadyClient: async () => ({ getUserId: () => '@synthetic:test' })
-	})
+	getMatrixClientService: () => state.clientService
 }));
 vi.mock('../logout/logout', () => ({ logout: state.logout }));
 vi.mock('../../utils/tenantSettingsHelper', () => ({
@@ -90,6 +90,10 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	localStorage.clear();
 	state.userData.chatRecoveryMode = 'LOGIN_PASSWORD';
+	state.userData.passwordChangeRequired = false;
+	state.clientService = {
+		getReadyClient: async () => ({ getUserId: () => '@synthetic:test' })
+	};
 });
 afterEach(cleanup);
 const submit = () => {
@@ -164,4 +168,70 @@ it.each<[new () => Error, string]>([
 	expect(await screen.findByText(message)).toBeTruthy();
 	expect(state.update).not.toHaveBeenCalled();
 	expect(state.logout).not.toHaveBeenCalled();
+});
+
+/**
+ * The account-setup gate shows this form to a counsellor whose login an
+ * administrator provisioned. `passwordChangeRequired` is only ever set at that
+ * provisioning, so the gate's step is always the account's FIRST password
+ * change: nothing of the counsellor's own is sealed under the old password,
+ * and there is nothing to rotate. The gate offers no other way on than logging
+ * out, so a submit that can only fail strands the account.
+ */
+it('changes the password without a chat client while the account still owes its first one', async () => {
+	state.clientService = null;
+	state.userData.passwordChangeRequired = true;
+	state.update.mockResolvedValue(undefined);
+
+	submit();
+
+	await waitFor(() => expect(state.logout).toHaveBeenCalled());
+	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+	expect(state.change).not.toHaveBeenCalled();
+});
+
+it('finishes the first password change when the chat client never becomes ready', async () => {
+	state.clientService = {
+		getReadyClient: async () => {
+			throw new Error('Matrix client not initialized');
+		}
+	};
+	state.userData.passwordChangeRequired = true;
+	state.update.mockResolvedValue(undefined);
+
+	submit();
+
+	await waitFor(() => expect(state.logout).toHaveBeenCalled());
+	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+});
+
+it('finishes the first password change when there is no enrolment to rotate', async () => {
+	state.userData.passwordChangeRequired = true;
+	state.change.mockRejectedValue(new state.RepairRequiredError());
+	state.update.mockResolvedValue(undefined);
+
+	submit();
+
+	await waitFor(() => expect(state.logout).toHaveBeenCalled());
+	expect(state.update).toHaveBeenCalledWith('old-synthetic', 'new-synthetic');
+});
+
+/**
+ * An established account DOES have material sealed under the old password.
+ * Changing it without rotating that envelope leaves the counsellor's encrypted
+ * history reachable only with a recovery key they may never have saved, so the
+ * change is refused — and the message says what is wrong and what to do,
+ * rather than blaming the old password.
+ */
+it('refuses an established account’s change when the chat client is unavailable, and says why', async () => {
+	state.clientService = null;
+
+	submit();
+
+	expect(
+		await screen.findByText('encryption.passwordRecovery.chatUnavailable')
+	).toBeTruthy();
+	expect(state.update).not.toHaveBeenCalled();
+	expect(state.logout).not.toHaveBeenCalled();
+	expect(state.change).not.toHaveBeenCalled();
 });
