@@ -560,7 +560,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Open team discussion" },
+		"teamDiscussion": {
+			"open": "Open team discussion"
+		},
 		"acceptButton": {
 			"anonymous": "Start chat",
 			"known": "Accept request"
@@ -3961,7 +3963,11 @@
 				"label": "Your second factor"
 			}
 		},
-		"title": "Two-factor authentication"
+		"title": "Two-factor authentication",
+		"required": {
+			"copy": "Please set up a second factor (app or e-mail) now. Only then is the account yours alone and you can start counselling.",
+			"title": "Second factor required"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4754,7 +4760,8 @@
 			"idle": "Recovery status has not been checked yet.",
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
-			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed."
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed.",
+			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
 		}
 	},
 	"accountInvite": {
@@ -4992,6 +4999,17 @@
 			"title": "Connection interrupted",
 			"message": "Your session could not be loaded. Please try again.",
 			"retry": "Try again"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Your account was created by an administrator, who chose your first password and still knows it. Please replace it now with a password only you know. Your second factor comes next.",
+			"title": "Please choose your own password"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Log out"
 		}
 	}
 }

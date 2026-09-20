@@ -28,6 +28,11 @@ export interface UserDataInterface {
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 	preferredLanguage: string;
 	twoFactorAuth?: TwoFactorAuthInterface;
+	/**
+	 * The account still carries the password its administrator chose. Optional: backends
+	 * predating the flag never send it.
+	 */
+	passwordChangeRequired?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];
@@ -111,6 +116,11 @@ export interface ConsultingTypeDataInterface {
 export interface TwoFactorAuthInterface {
 	isEnabled: boolean;
 	isActive: boolean;
+	/**
+	 * The account may not be used until a factor is active. Optional: backends predating the
+	 * flag never send it.
+	 */
+	isRequired?: boolean;
 	secret: string;
 	qrCode: string;
 	isShown: boolean;
