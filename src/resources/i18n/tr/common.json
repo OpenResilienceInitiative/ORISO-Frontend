@@ -1112,6 +1112,17 @@
 				"durationValue": "{{count}} sa",
 				"repeatValue_one": "{{count}} kez",
 				"repeatValue_other": "{{count}} kez"
+			},
+			"noModeratorAvailable": "Uygun kişi yok",
+			"moderatorHelp": "Yardım",
+			"moderatorHelpDialog": {
+				"title": "Yardımcı moderatörleri sonra davet edin",
+				"description": "Şu anda kuruluşunuzdan başka bir uzman seçilemiyor. Yine de çemberi oluşturabilir ve yardımcı moderatörleri daha sonra ekleyebilirsiniz.",
+				"step1": "Listenizde çemberi açın ve ardından “Sohbet bilgileri”ni açın.",
+				"step2": "“Sohbet ayarları” altında “Düzenle”yi seçin.",
+				"step3": "“Ek moderasyon” altında meslektaşlarınızı ekleyin ve kaydedin.",
+				"note": "Çemberi yalnızca onu oluşturan kişi düzenleyebilir ve yalnızca çember devam etmiyorken. Kuruluşunuzun tüm aktif uzmanları seçilebilir.",
+				"close": "Anladım"
 			}
 		},
 		"entry": {
@@ -1125,6 +1136,27 @@
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
 			"backToCountdown": "Geri sayıma dön"
+		},
+		"shareDialog": {
+			"title_text": "Çember oluşturuldu",
+			"title_audio": "Sesli görüşme oluşturuldu",
+			"title_video": "Görüntülü görüşme oluşturuldu",
+			"description": "Bu bağlantıyı katılımcılarla paylaşın. Oturum başlayana kadar onları bekleme odasına götürür.",
+			"linkLabel": "Davet bağlantısı",
+			"copy": "Bağlantıyı kopyala",
+			"copied": "Kopyalandı",
+			"detailsHeadline": "Oturum",
+			"topic": "Konu",
+			"date": "Tarih",
+			"start": "Başlangıç",
+			"timeValue": "saat {{time}}",
+			"duration": "Süre",
+			"repeats": "Tekrarlar",
+			"repeatValue": "{{count}} oturum, {{interval}}",
+			"format": "Biçim",
+			"language": "Dil",
+			"done": "Tamam",
+			"durationValue": "{{value}} sa"
 		}
 	},
 	"help": {

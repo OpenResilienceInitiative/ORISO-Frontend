@@ -337,6 +337,13 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} mal",
 				"repeatValue_other": "{{count}} mal"
+			},
+			"moderatorHelpDialog": {
+				"description": "Gerade kann keine weitere Fachkraft deines Trägers ausgewählt werden. Du kannst den Gesprächskreis trotzdem erstellen und Co-Moderator:innen danach hinzufügen.",
+				"step1": "Öffne den Gesprächskreis in deiner Liste und dort die Chat-Info.",
+				"step2": "Wähle unter „Chatraum Einstellungen“ die Schaltfläche „Bearbeiten“.",
+				"step3": "Füge unter „Weitere Moderation“ Kolleg:innen hinzu und speichere.",
+				"note": "Bearbeiten kann nur, wer den Gesprächskreis erstellt hat, und nur solange er gerade nicht läuft. Zur Auswahl stehen alle aktiven Fachkräfte deines Trägers."
 			}
 		},
 		"create": {
@@ -369,6 +376,9 @@
 					}
 				}
 			}
+		},
+		"shareDialog": {
+			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt."
 		}
 	},
 	"help": {

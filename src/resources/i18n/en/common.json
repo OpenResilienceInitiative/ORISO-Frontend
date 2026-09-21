@@ -889,6 +889,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} time",
 				"repeatValue_other": "{{count}} times"
+			},
+			"noModeratorAvailable": "No person available",
+			"moderatorHelp": "Help",
+			"moderatorHelpDialog": {
+				"title": "Invite co-moderators later",
+				"description": "Right now no other professional of your organisation can be selected. You can still create the circle and add co-moderators afterwards.",
+				"step1": "Open the circle in your list and open its Chat-Info.",
+				"step2": "Under “Chatroom Settings”, choose “Edit”.",
+				"step3": "Add colleagues under “Additional moderation” and save.",
+				"note": "Only the person who created the circle can edit it, and only while it is not running. All active professionals of your organisation can be selected.",
+				"close": "Got it"
 			}
 		},
 		"createError": {
@@ -1102,6 +1113,27 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown"
+		},
+		"shareDialog": {
+			"title_text": "Circle created",
+			"title_audio": "Audio call created",
+			"title_video": "Video call created",
+			"description": "Share this link with the participants. It takes them to the waiting room until the session starts.",
+			"linkLabel": "Invitation link",
+			"copy": "Copy link",
+			"copied": "Copied",
+			"detailsHeadline": "Session",
+			"topic": "Topic",
+			"date": "Date",
+			"start": "Start",
+			"timeValue": "{{time}}",
+			"duration": "Duration",
+			"repeats": "Repetitions",
+			"repeatValue": "{{count}} sessions, {{interval}}",
+			"format": "Format",
+			"language": "Language",
+			"done": "Done",
+			"durationValue": "{{value}} h"
 		}
 	},
 	"help": {

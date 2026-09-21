@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useEffect, useRef } from 'react';
 import { ReactComponent as CheckIcon } from '../../../resources/img/icons/check.svg';
 import { ReactComponent as CloseIcon } from '../../../resources/img/icons/close.svg';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import { MenuPortal, useAnchoredMenuLayout } from '../anchoredMenu';
 import { resolveListboxKey } from '../listboxKeyboard';
 
@@ -33,6 +34,14 @@ interface PersonSelectMenuProps {
 	toggleLabel: (label: string, selected: boolean) => string;
 	/** Spelt-out state for people who have left the agency. */
 	vacatedHint: string;
+	/**
+	 * Empty state (#1499): with nobody to pick, the menu still opens and says
+	 * so in a disabled line instead of showing an empty frame.
+	 */
+	emptyLabel?: string;
+	/** Optional help entry shown under the empty line; opens an explanation. */
+	helpLabel?: string;
+	onHelp?: () => void;
 }
 
 const PREFERRED_MENU_HEIGHT = 420;
@@ -44,13 +53,18 @@ export const PersonSelectMenu = ({
 	onClose,
 	labelledBy,
 	toggleLabel,
-	vacatedHint
+	vacatedHint,
+	emptyLabel,
+	helpLabel,
+	onHelp
 }: PersonSelectMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
+	const isEmpty = options.length === 0;
+	const showHelp = isEmpty && Boolean(helpLabel && onHelp);
 	const { direction, style } = useAnchoredMenuLayout(
 		anchorRef,
 		PREFERRED_MENU_HEIGHT,
-		options.length
+		isEmpty ? 1 + (showHelp ? 1 : 0) : options.length
 	);
 
 	useEffect(() => {
@@ -124,6 +138,37 @@ export const PersonSelectMenu = ({
 				aria-labelledby={labelledBy}
 				onKeyDown={handleKeyDown}
 			>
+				{isEmpty && emptyLabel && (
+					<div
+						role="option"
+						aria-selected={false}
+						aria-disabled
+						className="personSelectMenu__row personSelectMenu__row--empty"
+					>
+						<span className="personSelectMenu__name">
+							{emptyLabel}
+						</span>
+					</div>
+				)}
+				{showHelp && (
+					<button
+						type="button"
+						role="option"
+						aria-selected={false}
+						className="personSelectMenu__row personSelectMenu__row--help"
+						onClick={() => {
+							onClose();
+							onHelp?.();
+						}}
+					>
+						<span className="personSelectMenu__name">
+							{helpLabel}
+						</span>
+						<span className="personSelectMenu__toggle" aria-hidden>
+							<HelpOutlineOutlinedIcon />
+						</span>
+					</button>
+				)}
 				{options.map((option) => {
 					const stateClass = option.vacated
 						? 'personSelectMenu__row--vacated'

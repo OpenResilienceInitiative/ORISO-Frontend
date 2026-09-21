@@ -22,6 +22,7 @@ import { ScreenIntro } from '../ScreenIntro';
 import { TopicMedia } from '../TopicMedia';
 import { RowMenu } from '../RowMenu';
 import { ScheduleRows } from './ScheduleRows';
+import { CoModeratorHelpDialog } from './CoModeratorHelpDialog';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { InternalChatPerson } from '../internal/InternalChatCreateCard';
 import { PersonChipGrid } from '../internal/PersonChipGrid';
@@ -132,6 +133,7 @@ export const CircleSettingsView = ({
 		() => prefill?.consultantIds ?? []
 	);
 	const [moderatorMenuOpen, setModeratorMenuOpen] = useState(false);
+	const [moderatorHelpOpen, setModeratorHelpOpen] = useState(false);
 	const moderatorButtonRef = useRef<HTMLDivElement | null>(null);
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 	const topicButtonRef = useRef<HTMLDivElement | null>(null);
@@ -416,6 +418,13 @@ export const CircleSettingsView = ({
 									vacatedHint={translate(
 										'groupChat.internal.vacatedHint'
 									)}
+									emptyLabel={translate(
+										'groupChat.circle.noModeratorAvailable'
+									)}
+									helpLabel={translate(
+										'groupChat.circle.moderatorHelp'
+									)}
+									onHelp={() => setModeratorHelpOpen(true)}
 									toggleLabel={(label, selected) =>
 										translate(
 											selected
@@ -427,6 +436,10 @@ export const CircleSettingsView = ({
 								/>
 							)}
 						</div>
+						<CoModeratorHelpDialog
+							open={moderatorHelpOpen}
+							onClose={() => setModeratorHelpOpen(false)}
+						/>
 					</div>
 				</FormatCard>
 				<div className="circleSettings__authorColumn">

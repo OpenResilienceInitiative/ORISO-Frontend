@@ -6,7 +6,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../resources/scripts/endpoints', () => ({
-	endpoints: { agencyConsultants: '/service/users/consultants' }
+	endpoints: {
+		agencyConsultants: '/service/users/consultants',
+		chatSeriesBase: '/service/users/chat-series/'
+	}
 }));
 
 const fetchDataMock = vi.fn();
@@ -58,5 +61,18 @@ describe('agency consultant list', () => {
 		const { apiGetAgencyConsultantList } = await importModule();
 
 		await expect(apiGetAgencyConsultantList('42')).resolves.toEqual([]);
+	});
+
+	it('reads a 204 (nobody else in the Träger) as an empty list (#1499)', async () => {
+		// fetchData resolves a 204 as `{}`; the co-moderator menu must get [].
+		fetchDataMock.mockResolvedValue({});
+		const { apiGetTenantConsultantList } = await importModule();
+
+		await expect(apiGetTenantConsultantList()).resolves.toEqual([]);
+		expect(fetchDataMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: '/service/users/chat-series/consultants'
+			})
+		);
 	});
 });

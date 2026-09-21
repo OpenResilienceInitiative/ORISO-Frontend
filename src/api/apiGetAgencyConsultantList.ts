@@ -39,13 +39,21 @@ export const apiGetAgencyConsultantList = async (
 	}
 };
 
+/**
+ * The Träger's other active consultants, for the co-moderator and Interna
+ * pickers. UserService answers 204 when there are none, which `fetchData`
+ * resolves as `{}` — normalised to `[]` here so "nobody to pick" is an empty
+ * list and not a crash in the caller's `reduce` that then reads as a failed
+ * load (#1499).
+ */
 export const apiGetTenantConsultantList = async (): Promise<Consultant[]> => {
 	try {
-		return await fetchData({
+		const consultants = await fetchData({
 			url: `${endpoints.chatSeriesBase}consultants`,
 			method: FETCH_METHODS.GET,
 			responseHandling: [FETCH_ERRORS.CATCH_ALL]
 		});
+		return Array.isArray(consultants) ? consultants : [];
 	} catch {
 		return [];
 	}

@@ -1,0 +1,192 @@
+/* Share dialog after a circle / call has been created (#1499, item 5).
+   Lives inside the M3Dialog body; only M3 role tokens, each with the static
+   fallback the sweep test asks for. */
+
+.groupChatShareDialog {
+	&__link {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		margin-bottom: 16px;
+	}
+
+	&__linkLabel {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		line-height: 16px;
+	}
+
+	&__linkRow {
+		align-items: stretch;
+		display: flex;
+		gap: 8px;
+	}
+
+	/* M3 outlined text field, read-only: the link is selectable in one tap. */
+	&__linkField {
+		background: var(--m3-surface-container-lowest, #ffffff);
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 4px;
+		box-sizing: border-box;
+		color: var(--m3-on-surface, #1b1b1c);
+		flex: 1 1 auto;
+		font-family: inherit;
+		font-size: 16px;
+		letter-spacing: 0.5px;
+		line-height: 24px;
+		min-height: 56px;
+		min-width: 0;
+		padding: 16px;
+		text-overflow: ellipsis;
+
+		&:focus-visible {
+			border-color: var(--m3-primary, #a5000a);
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: -2px;
+		}
+	}
+
+	/* M3 filled tonal button: the one action inside the body. */
+	&__copy {
+		align-items: center;
+		background: var(--m3-secondary-container, #646d78);
+		border: 0;
+		border-radius: 100px;
+		color: var(--m3-on-secondary-container, #e7effc);
+		cursor: pointer;
+		display: inline-flex;
+		flex: 0 0 auto;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 500;
+		gap: 8px;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		min-height: 56px;
+		padding: 0 20px 0 16px;
+
+		svg {
+			height: 20px;
+			width: 20px;
+		}
+
+		&:hover {
+			box-shadow: 0 1px 2px rgba(12, 12, 13, 0.3);
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		&--done {
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
+		}
+	}
+
+	&__status {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		letter-spacing: 0.4px;
+		line-height: 16px;
+		margin: 0;
+		min-height: 16px;
+	}
+
+	&__detailsHeadline {
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 14px;
+		font-weight: 500;
+		letter-spacing: 0.1px;
+		line-height: 20px;
+		margin: 0 0 8px;
+	}
+
+	/*
+	 * M3 list, two-line items (icon | label over value). The 1px gap over an
+	 * outline-variant fill draws the dividers, so the same markup works as one
+	 * column on phones and two columns in the desktop dialog.
+	 */
+	&__details {
+		background: var(--m3-outline-variant, #c4c7c8);
+		border-radius: 16px;
+		display: grid;
+		gap: 1px;
+		grid-template-columns: 1fr 1fr;
+		margin: 0;
+		overflow: hidden;
+	}
+
+	&__detail {
+		align-content: center;
+		align-items: center;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		column-gap: 16px;
+		display: grid;
+		grid-template-areas:
+			'icon label'
+			'icon value';
+		grid-template-columns: 24px 1fr;
+		min-height: 56px;
+		padding: 8px 16px;
+
+		/* An odd last item spans the row instead of leaving a hole. */
+		&:last-child:nth-child(odd) {
+			grid-column: 1 / -1;
+		}
+
+		dt {
+			color: var(--m3-on-surface-variant, #444748);
+			font-size: 12px;
+			grid-area: label;
+			letter-spacing: 0.4px;
+			line-height: 16px;
+		}
+
+		dd {
+			color: var(--m3-on-surface, #1b1b1c);
+			font-size: 16px;
+			grid-area: value;
+			letter-spacing: 0.5px;
+			line-height: 24px;
+			margin: 0;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	&__detailIcon {
+		color: var(--m3-on-surface-variant, #444748);
+		display: inline-flex;
+		grid-area: icon;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+	}
+
+	/* Phones: the copy button drops under the field, full width. */
+	@media (width <= 575px) {
+		&__linkRow {
+			flex-direction: column;
+		}
+
+		&__copy {
+			justify-content: center;
+			min-height: 48px;
+		}
+
+		&__details {
+			grid-template-columns: 1fr;
+		}
+
+		/* Tighter rows so the whole list fits a 390x844 phone unscrolled. */
+		&__detail {
+			min-height: 48px;
+			padding: 4px 16px;
+		}
+	}
+}
