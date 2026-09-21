@@ -24,6 +24,17 @@ describe('OrbitalTrails', () => {
 		).toBe(4);
 	});
 
+	it('draws one centred system that fills the canvas for the single loader', () => {
+		const systems = createOrbitalSystems(17, 'single');
+
+		expect(systems).toHaveLength(1);
+		expect(systems[0].center).toEqual([240, 240]);
+		const outer = Math.max(...systems[0].radii);
+		/* Fills the canvas, and the outer orbit still fits inside it. */
+		expect(outer).toBeGreaterThan(200);
+		expect(240 + outer).toBeLessThanOrEqual(480);
+	});
+
 	it('keeps every orbit moving without exceeding the intended speed range', () => {
 		const systems = createOrbitalSystems(29);
 		const increments = systems.flatMap((system) => system.increments);

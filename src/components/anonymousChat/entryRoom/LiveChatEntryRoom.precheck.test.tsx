@@ -31,8 +31,16 @@ vi.mock('../../legalLinks/LegalLinks', () => ({
 vi.mock('lottie-react', () => ({ default: () => null }));
 /* jsdom has no canvas. */
 vi.mock('../../orbitalTrails/OrbitalTrails', () => ({
-	OrbitalTrails: ({ label }: { label: string }) => (
-		<div data-testid="orbital-trails">{label}</div>
+	OrbitalTrails: ({
+		label,
+		variant
+	}: {
+		label: string;
+		variant?: string;
+	}) => (
+		<div data-testid="orbital-trails" data-variant={variant}>
+			{label}
+		</div>
 	)
 }));
 vi.mock('../../../api/apiGetConsultantAvailability', () => ({
@@ -88,6 +96,10 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(screen.getByTestId('orbital-trails').textContent).toMatch(
 			/wer gerade live ist/
 		);
+		/* One orbit, not the grid of four (Frank, 2026-09-21). */
+		expect(
+			screen.getByTestId('orbital-trails').getAttribute('data-variant')
+		).toBe('single');
 		expect(apiGetConsultantAvailability).toHaveBeenCalledWith(3, 1);
 		expect(nameCards()).toHaveLength(0);
 		expect(redeem).not.toHaveBeenCalled();

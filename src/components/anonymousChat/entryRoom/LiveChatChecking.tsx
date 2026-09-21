@@ -28,8 +28,15 @@ export const LiveChatChecking = ({ text }: LiveChatCheckingProps) => (
 			px: 2
 		}}
 	>
-		<Box sx={{ width: { xs: 160, lg: 200 } }}>
-			<OrbitalTrails label={text} palette="brand" warmupFrames={40} />
+		{/* One orbit, about a third larger than the grid of four used to be
+		    (Frank, 2026-09-21: 160/200 → 208/260). */}
+		<Box sx={{ width: { xs: 208, lg: 260 } }}>
+			<OrbitalTrails
+				label={text}
+				palette="brand"
+				variant="single"
+				warmupFrames={40}
+			/>
 		</Box>
 		<Typography
 			aria-hidden="true"

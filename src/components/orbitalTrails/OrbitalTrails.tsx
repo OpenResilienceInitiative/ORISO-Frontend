@@ -12,12 +12,19 @@ const CENTERS = [
 	[360, 360],
 	[120, 360]
 ] as const;
+/* The single loader: one system in the middle, its orbits doubled so it
+   fills the same canvas the grid of four does. */
+const SINGLE_CENTER = [240, 240] as const;
+const SINGLE_RADII = RADII.map((radius) => radius * 2);
 const MAX_FRAMES = 1200;
 
 export type OrbitalPalette = 'brand' | 'mixed' | 'neutral';
+/** `grid`: four systems, the original sketch. `single`: one, centred. */
+export type OrbitalVariant = 'grid' | 'single';
 
 export interface OrbitalSystem {
 	center: readonly [number, number];
+	radii: readonly number[];
 	angles: [number, number, number];
 	increments: [number, number, number];
 }
@@ -25,6 +32,7 @@ export interface OrbitalSystem {
 export interface OrbitalTrailsProps {
 	label: string;
 	palette?: OrbitalPalette;
+	variant?: OrbitalVariant;
 	seed?: number;
 	/** Pre-renders the animation so snapshot stories can show a developed state. */
 	warmupFrames?: number;
@@ -41,12 +49,27 @@ const seededRandom = (seed: number) => {
 	};
 };
 
-export const createOrbitalSystems = (seed: number): OrbitalSystem[] => {
+export const createOrbitalSystems = (
+	seed: number,
+	variant: OrbitalVariant = 'grid'
+): OrbitalSystem[] => {
 	const random = seededRandom(seed);
+	const layout: {
+		center: readonly [number, number];
+		radii: readonly number[];
+	}[] =
+		variant === 'single'
+			? [{ center: SINGLE_CENTER, radii: SINGLE_RADII }]
+			: CENTERS.map((center) => ({ center, radii: RADII }));
 
-	return CENTERS.map((center) => ({
+	return layout.map(({ center, radii }) => ({
 		center,
-		angles: [random() * TWO_PI, random() * TWO_PI, random() * TWO_PI],
+		radii,
+		angles: [random() * TWO_PI, random() * TWO_PI, random() * TWO_PI] as [
+			number,
+			number,
+			number
+		],
 		increments: [0, 1, 2].map(() => {
 			const magnitude = 0.012 + random() * 0.053;
 			return random() < 0.5 ? -magnitude : magnitude;
@@ -69,7 +92,7 @@ const drawFrame = (
 ) => {
 	systems.forEach((system, systemIndex) => {
 		const color = colors[systemIndex % colors.length];
-		const points = RADII.map((radius, orbitIndex) => ({
+		const points = system.radii.map((radius, orbitIndex) => ({
 			x: system.center[0] + radius * Math.cos(system.angles[orbitIndex]),
 			y: system.center[1] + radius * Math.sin(system.angles[orbitIndex])
 		}));
@@ -91,14 +114,14 @@ const drawFrame = (
 
 	systems.forEach((system, systemIndex) => {
 		const color = colors[systemIndex % colors.length];
-		const points = RADII.map((radius, orbitIndex) => ({
+		const points = system.radii.map((radius, orbitIndex) => ({
 			x: system.center[0] + radius * Math.cos(system.angles[orbitIndex]),
 			y: system.center[1] + radius * Math.sin(system.angles[orbitIndex])
 		}));
 		context.strokeStyle = color;
 		context.lineWidth = 0.75;
 
-		RADII.forEach((radius, orbitIndex) => {
+		system.radii.forEach((radius, orbitIndex) => {
 			context.globalAlpha = 0.48;
 			context.beginPath();
 			context.arc(system.center[0], system.center[1], radius, 0, TWO_PI);
@@ -127,6 +150,7 @@ const drawFrame = (
 export const OrbitalTrails = ({
 	label,
 	palette = 'brand',
+	variant = 'grid',
 	seed = 17,
 	warmupFrames = 0,
 	paused = false,
@@ -168,7 +192,7 @@ export const OrbitalTrails = ({
 		trailsContext.fillStyle = background;
 		trailsContext.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
-		const systems = createOrbitalSystems(seed);
+		const systems = createOrbitalSystems(seed, variant);
 		const initialFrames = Math.min(Math.max(warmupFrames, 0), MAX_FRAMES);
 		for (let frame = 0; frame < initialFrames; frame += 1) {
 			drawFrame(context, trailsContext, trailsCanvas, systems, colors);
@@ -227,7 +251,7 @@ export const OrbitalTrails = ({
 			observer.disconnect();
 			window.cancelAnimationFrame(animationFrame);
 		};
-	}, [palette, paused, seed, warmupFrames]);
+	}, [palette, paused, seed, variant, warmupFrames]);
 
 	return (
 		<div
