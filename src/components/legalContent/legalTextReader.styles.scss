@@ -128,7 +128,11 @@
 			   `LegalTextReader` on the chapter that is current, which is the
 			   only way the line also shows after a MOUSE click on a chip (a
 			   programmatic focus after a click is not "visible" focus) and while
-			   the reader simply scrolls. */
+			   the reader simply scrolls.
+
+			   A freshly opened document shows NO line: the component marks
+			   nothing until the reader has moved, so the cue is a position, not
+			   decoration (owner call 2026-09-21). */
 			&:focus-visible,
 			&[data-legal-active='true'] {
 				outline: none;

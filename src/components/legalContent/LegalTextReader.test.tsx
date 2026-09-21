@@ -111,8 +111,9 @@ describe('LegalTextReader', () => {
 	it('marks the picked chapter heading and unmarks the previous one', () => {
 		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
 
-		// Before anything is picked, the reader is in the first chapter.
-		expect(markedHeadingId()).toBe('datenschutzerklarung');
+		// A freshly opened document shows no line at all: the cue is a position
+		// the reader navigated to, not decoration on the first heading.
+		expect(markedHeadingId()).toBeNull();
 
 		fireEvent.click(chip('2. Ihre Rechte'));
 
@@ -186,6 +187,10 @@ describe('LegalTextReader', () => {
 				</div>
 			);
 			const host = document.querySelector('.scroll-host') as HTMLElement;
+
+			// The measurement that runs on open reports where the reader already
+			// is. It is not a move, so it marks nothing.
+			expect(markedHeadingId()).toBeNull();
 
 			host.scrollTop = 250;
 			fireEvent.scroll(host);
