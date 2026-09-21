@@ -43,6 +43,17 @@ describe('live-chat availability API', () => {
 		);
 	});
 
+	it('lets the caller abort a heartbeat', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ available: true });
+		const controller = new AbortController();
+
+		await apiHeartbeatLiveChatAvailability(controller.signal);
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({ signal: controller.signal })
+		);
+	});
+
 	it('uses the refresh-only heartbeat endpoint', async () => {
 		vi.mocked(fetchData).mockResolvedValueOnce({ available: false });
 

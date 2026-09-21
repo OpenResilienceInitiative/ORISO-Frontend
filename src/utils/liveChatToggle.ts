@@ -223,6 +223,12 @@ export const useLiveChatAvailabilityHeartbeat = (
 		if (!enabled || !active) return;
 		let leaseWatchdog = 0;
 		let beatsInFlight = 0;
+		// Unmounting (logout above all) ends this session's heartbeat: the
+		// request is aborted, and an answer that arrives anyway must not
+		// write an acknowledgement, a loss or a timer for a session that is
+		// gone — the next consultant would inherit it.
+		let disposed = false;
+		const inFlight = new AbortController();
 		const armLeaseWatchdog = (
 			delay = LIVE_CHAT_LEASE_MS,
 			waitedForBeat = false
@@ -274,11 +280,12 @@ export const useLiveChatAvailabilityHeartbeat = (
 			const renewedSinceSent = () =>
 				readLastLiveChatHeartbeatAcknowledged() > sentAt;
 			beatsInFlight += 1;
-			void apiHeartbeatLiveChatAvailability()
+			void apiHeartbeatLiveChatAvailability(inFlight.signal)
 				.finally(() => {
 					beatsInFlight -= 1;
 				})
 				.then((leaseActive) => {
+					if (disposed) return;
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (leaseActive) {
 						leaseKnown = true;
@@ -288,6 +295,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 						dropLiveChatAvailability('leaseLost');
 				})
 				.catch((error: unknown) => {
+					if (disposed) return;
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (renewedSinceSent()) return;
 					const refusal = heartbeatRefusalReason(error);
@@ -313,6 +321,8 @@ export const useLiveChatAvailabilityHeartbeat = (
 			LIVE_CHAT_HEARTBEAT_INTERVAL_MS
 		);
 		return () => {
+			disposed = true;
+			inFlight.abort();
 			window.clearInterval(heartbeat);
 			window.clearTimeout(firstBeatRetry);
 			window.clearTimeout(leaseWatchdog);

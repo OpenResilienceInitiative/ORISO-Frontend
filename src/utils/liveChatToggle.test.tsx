@@ -5,6 +5,7 @@ import {
 	useLiveChatAvailable,
 	useLiveChatAvailabilityHeartbeat
 } from './liveChatToggle';
+import { clearLiveChatAvailabilityPreference } from './liveChatAvailabilityStorage';
 import {
 	apiGetLiveChatAvailability,
 	apiHeartbeatLiveChatAvailability,
@@ -17,6 +18,25 @@ vi.mock('../api/apiSetLiveChatAvailability', () => ({
 	apiHeartbeatLiveChatAvailability: vi.fn(),
 	apiSetLiveChatAvailability: vi.fn()
 }));
+
+type Settle = {
+	resolve: (available: boolean) => void;
+	reject: (message: string) => void;
+};
+/** The next heartbeat stays pending until the test settles it. */
+const pendingHeartbeat = (): Settle => {
+	const settle: Settle = {
+		resolve: () => undefined,
+		reject: () => undefined
+	};
+	vi.mocked(apiHeartbeatLiveChatAvailability).mockReturnValueOnce(
+		new Promise((resolve, reject) => {
+			settle.resolve = resolve;
+			settle.reject = (message) => reject(new Error(message));
+		})
+	);
+	return settle;
+};
 
 describe('live-chat availability state', () => {
 	beforeEach(() => {
@@ -824,6 +844,70 @@ describe('live-chat availability state', () => {
 		await act(async () => Promise.resolve());
 
 		await act(async () => vi.advanceTimersByTimeAsync(20_000));
+
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
+	});
+
+	// #1485 review: logout unmounts the navigation shell while a beat may be
+	// in flight. Its late answer belongs to a session that is gone.
+	it('aborts a pending heartbeat when the shell unmounts', async () => {
+		vi.useFakeTimers();
+		const { unmount } = renderHook(() =>
+			useLiveChatAvailabilityHeartbeat(true, true)
+		);
+		const [signal] = vi.mocked(apiHeartbeatLiveChatAvailability).mock
+			.calls[0] as unknown as [AbortSignal];
+
+		unmount();
+
+		expect(signal).toBeInstanceOf(AbortSignal);
+		expect(signal.aborted).toBe(true);
+	});
+
+	it.each([
+		['a late success', (settle: Settle) => settle.resolve(true)],
+		['a late "no lease"', (settle: Settle) => settle.resolve(false)],
+		['a late refusal', (settle: Settle) => settle.reject('FORBIDDEN')]
+	])('ignores %s that arrives after logout', async (_label, answer) => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		const settle = pendingHeartbeat();
+		const { unmount } = renderHook(() =>
+			useLiveChatAvailabilityHeartbeat(true, true)
+		);
+
+		unmount();
+		clearLiveChatAvailabilityPreference();
+		await act(async () => answer(settle));
+		await act(async () => vi.advanceTimersByTimeAsync(200_000));
+
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityAck')
+		).toBeNull();
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityLoss')
+		).toBeNull();
+	});
+
+	it('gives the next consultant only the unknown-lease window after a logout mid-beat', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		const settle = pendingHeartbeat();
+		const first = renderHook(() =>
+			useLiveChatAvailabilityHeartbeat(true, true)
+		);
+		first.unmount();
+		clearLiveChatAvailabilityPreference();
+		await act(async () => settle.resolve(true));
+
+		// The next consultant signs in; the server holds a lease of unknown age.
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new Error('TIMEOUT')
+		);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+		await act(async () => vi.advanceTimersByTimeAsync(15_000));
 
 		expect(result.current[0]).toBe(false);
 		expect(result.current[2].lostReason).toBe('connectionLost');
