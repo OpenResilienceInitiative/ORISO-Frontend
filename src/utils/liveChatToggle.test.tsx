@@ -1066,6 +1066,68 @@ describe('live-chat availability state', () => {
 		expect(result.current[2].lostReason).toBe('connectionLost');
 	});
 
+	// #1485 review: another tab must never see the fresh preference without
+	// the fresh acknowledgement that makes its own stale "no" ignorable.
+	it('writes the acknowledgement before it publishes the enabled preference', async () => {
+		const setItem = vi.spyOn(Storage.prototype, 'setItem');
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+		setItem.mockClear();
+
+		await act(async () => result.current[1](true));
+
+		const keys = setItem.mock.calls.map(([key]) => key);
+		expect(keys.indexOf('oriso_liveChatAvailabilityAck')).toBeGreaterThan(
+			-1
+		);
+		expect(keys.indexOf('oriso_liveChatAvailabilityAck')).toBeLessThan(
+			keys.indexOf('oriso_liveChatAvailability')
+		);
+		setItem.mockRestore();
+	});
+
+	// #1485 review: an enable or a beat still in flight when the session is
+	// torn down must not write the session's keys back afterwards.
+	it('does not revive the session keys when an enable answers after teardown', async () => {
+		let answer: () => void = () => undefined;
+		vi.mocked(apiSetLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = () => resolve(undefined);
+			})
+		);
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+
+		let enabled: Promise<void> = Promise.resolve();
+		act(() => {
+			enabled = result.current[1](true);
+		});
+		clearLiveChatAvailabilityPreference();
+		await act(async () => {
+			answer();
+			await enabled.catch(() => undefined);
+		});
+
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBeNull();
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityAck')
+		).toBeNull();
+	});
+
+	it('does not write an acknowledgement when a beat answers after teardown', async () => {
+		vi.useFakeTimers();
+		const settle = pendingHeartbeat();
+		renderHook(() => useLiveChatAvailabilityHeartbeat(true, true));
+
+		// Teardown without the shell unmounting (an auth failure in place).
+		clearLiveChatAvailabilityPreference();
+		await act(async () => settle.resolve(true));
+
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityAck')
+		).toBeNull();
+	});
+
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {
 		const { result } = renderHook(() => useLiveChatAvailable());
 		await waitFor(() => expect(result.current[2].loading).toBe(false));

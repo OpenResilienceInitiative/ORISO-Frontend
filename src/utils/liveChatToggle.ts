@@ -15,6 +15,7 @@ import {
 	persistLiveChatAvailabilityPreference,
 	readLastLiveChatHeartbeatAcknowledged,
 	readLiveChatAvailabilityPreference,
+	readLiveChatSessionEpoch,
 	recordLiveChatHeartbeatAcknowledged
 } from './liveChatAvailabilityStorage';
 
@@ -54,14 +55,25 @@ export const isLiveChatAvailable = (): boolean => {
 	return readLiveChatAvailabilityPreference();
 };
 
-export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
+/**
+ * Resolves `false` when the session was torn down while the request was in
+ * flight: its answer then writes nothing and changes no state.
+ */
+export const setLiveChatAvailable = async (
+	active: boolean
+): Promise<boolean> => {
+	const epoch = readLiveChatSessionEpoch();
 	const sentAt = Date.now();
 	await apiSetLiveChatAvailability(active);
+	if (epoch !== readLiveChatSessionEpoch()) return false;
 	availabilityRevision += 1;
-	persistLiveChatAvailabilityPreference(active);
 	// An acknowledged enable starts a fresh lease, like a heartbeat — no
-	// earlier than the request was sent, so it is counted from there.
+	// earlier than the request was sent, so it is counted from there. It is
+	// written before the preference, so another tab never sees the new
+	// preference without the acknowledgement that outdates its old checks.
 	if (active) recordLiveChatHeartbeatAcknowledged(sentAt);
+	persistLiveChatAvailabilityPreference(active);
+	return true;
 };
 
 /**
@@ -191,7 +203,7 @@ export const useLiveChatAvailable = (): [
 		setPending(true);
 		setError(false);
 		try {
-			await setLiveChatAvailable(nextActive);
+			if (!(await setLiveChatAvailable(nextActive))) return;
 			setActive(nextActive);
 			setLostReason(null);
 		} catch (updateError) {
@@ -300,6 +312,10 @@ export const useLiveChatAvailabilityHeartbeat = (
 		const beat = () => {
 			const requestedAtRevision = availabilityRevision;
 			const sentAt = Date.now();
+			const epoch = readLiveChatSessionEpoch();
+			// A torn-down session (logout, auth failure) writes nothing,
+			// even when the shell above this hook stays mounted.
+			const sessionEnded = () => epoch !== readLiveChatSessionEpoch();
 			// A negative answer describes the lease when it was sent. If any
 			// tab had an enable or heartbeat acknowledged since, the lease
 			// was renewed after that; its storage event may simply not have
@@ -312,7 +328,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 					inFlight.delete(request);
 				})
 				.then((leaseActive) => {
-					if (disposed) return;
+					if (disposed || sessionEnded()) return;
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (leaseActive) {
 						leaseKnown = true;
@@ -322,7 +338,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 						dropLiveChatAvailability('leaseLost');
 				})
 				.catch((error: unknown) => {
-					if (disposed) return;
+					if (disposed || sessionEnded()) return;
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (renewedSinceSent()) return;
 					const refusal = heartbeatRefusalReason(error);

@@ -27,9 +27,11 @@
 		color: $white;
 		cursor: pointer;
 
+		/* The shared focus treatment, like every other control. */
 		&:focus-visible {
-			outline: 2px solid $white;
+			outline: $focus-outline;
 			outline-offset: 2px;
+			border-radius: 2px;
 		}
 
 		svg {

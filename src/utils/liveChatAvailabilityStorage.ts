@@ -27,11 +27,24 @@ export interface LiveChatAcknowledgement {
 	ackedAt: number;
 }
 
+/**
+ * Bumped whenever the session's live-chat keys are cleared (logout, any
+ * teardown). A request sent in an older session must not write them back.
+ */
+let liveChatSessionEpoch = 0;
+export const readLiveChatSessionEpoch = (): number => liveChatSessionEpoch;
+
 export const recordLiveChatHeartbeatAcknowledged = (sentAt: number): void => {
 	try {
+		// Monotonic: an older renewal answering last never moves the lease
+		// back, and the answer time only ever advances.
+		const last = readLastLiveChatHeartbeatAcknowledged();
 		localStorage.setItem(
 			LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
-			JSON.stringify({ sentAt, ackedAt: Date.now() })
+			JSON.stringify({
+				sentAt: Math.max(last.sentAt, sentAt),
+				ackedAt: Math.max(last.ackedAt, Date.now())
+			})
 		);
 	} catch {
 		/* Without storage each tab falls back to its own acknowledgements. */
@@ -151,6 +164,8 @@ export const persistLiveChatAvailabilityPreference = (
 	);
 };
 
+/** Ends the session's live-chat state: logout and every teardown. */
 export const clearLiveChatAvailabilityPreference = (): void => {
+	liveChatSessionEpoch += 1;
 	persistLiveChatAvailabilityPreference(false);
 };
