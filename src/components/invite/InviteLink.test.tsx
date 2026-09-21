@@ -22,6 +22,7 @@ import {
 } from './inviteLinkHelpers';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
 import { setTokenExpiryInLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 
 vi.mock('../../api/apiRedeemInviteLink', async () => {
@@ -61,6 +62,9 @@ vi.mock('../anonymousChat/entryRoom/LiveChatEntryRoom', () => ({
 }));
 /* Without a context the page falls back to redeeming on arrival, which is
    what the older describes below exercise. */
+vi.mock('../../api/apiFinishAnonymousConversation', () => ({
+	apiFinishAnonymousConversation: vi.fn(() => Promise.resolve())
+}));
 vi.mock('../../api/apiGetInviteLinkContext', () => ({
 	apiGetInviteLinkContext: vi.fn(() => Promise.reject(new Error('none')))
 }));
@@ -496,6 +500,12 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 
 		await expect(pending).rejects.toThrow();
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		/* The POST already created the guest and its queue entry: finish it
+		   with the guest's own token, so no phantom waits in the queue. */
+		expect(apiFinishAnonymousConversation).toHaveBeenCalledWith(
+			42,
+			'guest-access'
+		);
 		await screen.findByText(/als Beraterin angemeldet/);
 	});
 
@@ -523,6 +533,34 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 
 		await screen.findByText(/als Beraterin angemeldet/);
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		expect(apiFinishAnonymousConversation).toHaveBeenCalledWith(
+			42,
+			'guest-access'
+		);
+	});
+
+	/* The remembered-session lookup can take a moment too; a counsellor who
+	   signed in meanwhile must see the lock, not a guest room running under
+	   her credentials. */
+	it('checks again after walking back into a remembered session', async () => {
+		localStorage.setItem('oriso.invite.session.token-123', '41');
+		let answer: (value: unknown) => void = () => undefined;
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockReturnValue(
+			new Promise((resolve) => {
+				answer = resolve;
+			}) as never
+		);
+		renderInvite();
+		await waitFor(() =>
+			expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalled()
+		);
+
+		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', 600);
+		answer({ numAvailableConsultants: 1, status: 'NEW' });
+
+		await screen.findByText(/als Beraterin angemeldet/);
+		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
 	});
 
 	/* A link consumed or withdrawn while the guest picked a name can never

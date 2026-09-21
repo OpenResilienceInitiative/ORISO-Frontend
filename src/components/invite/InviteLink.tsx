@@ -22,6 +22,7 @@ import {
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
 import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
 import { isConsultantAccessToken } from '../auth/consultantLoginBlock';
 import { hasActiveAuthSession } from '../auth/auth';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
@@ -66,6 +67,21 @@ import type { Pseudonym } from '../../utils/anonName/engine';
 const holdsCounsellorSession = (): boolean =>
 	hasActiveAuthSession() &&
 	isConsultantAccessToken(getValueFromCookie('keycloak'));
+
+/**
+ * A redeem whose response is discarded because a counsellor signed in while it
+ * ran: the POST already created the guest and a queue entry. Finish that
+ * session with the guest's own token — never the counsellor's, and without
+ * storing the guest's anywhere — so no phantom waits in the queue.
+ */
+const withdrawDiscardedGuest = (data: {
+	sessionId: number;
+	accessToken: string;
+}) => {
+	void apiFinishAnonymousConversation(data.sessionId, data.accessToken).catch(
+		() => undefined
+	);
+};
 
 export const InviteLink = () => {
 	const { t } = useTranslation();
@@ -136,6 +152,12 @@ export const InviteLink = () => {
 				const reusableSessionId =
 					await resolveReusableInviteSession(token);
 				if (reusableSessionId !== null) {
+					/* The lookup can take a moment; a counsellor who signed in
+					   meanwhile gets the lock, not a guest room under her login. */
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
 					setRoomSessionId(reusableSessionId);
 					setStatus('room');
 					return;
@@ -173,6 +195,7 @@ export const InviteLink = () => {
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
 					if (holdsCounsellorSession()) {
+						withdrawDiscardedGuest(data);
 						setStatus('staff');
 						return;
 					}
@@ -242,6 +265,7 @@ export const InviteLink = () => {
 		/* And once more after the POST returns: it takes time, and the guest's
 		   tokens must not land over a counsellor who signed in meanwhile. */
 		if (holdsCounsellorSession()) {
+			withdrawDiscardedGuest(data);
 			setStatus('staff');
 			throw new Error(
 				'A counsellor signed in while the invite was redeemed'
