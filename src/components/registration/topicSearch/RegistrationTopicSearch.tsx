@@ -79,10 +79,12 @@ export const RegistrationTopicSearch = ({
 		[entryById, index, query]
 	);
 
-	const close = () => {
+	const close = (restoreFocus = true) => {
 		setOpen(false);
 		setQuery('');
-		window.setTimeout(() => buttonRef.current?.focus(), 0);
+		if (restoreFocus) {
+			window.setTimeout(() => buttonRef.current?.focus(), 0);
+		}
 	};
 
 	if (!open) {
@@ -127,8 +129,9 @@ export const RegistrationTopicSearch = ({
 
 	return (
 		<ClickAwayListener
-			// On the phone the open field covers language + login.
-			onClickAway={close}
+			// On the phone the open field covers language + login. Focus stays
+			// on whatever was clicked.
+			onClickAway={() => close(false)}
 		>
 			<Box
 				className="registrationTopicSearch"
@@ -293,7 +296,7 @@ export const RegistrationTopicSearch = ({
 											aria-label={t(
 												'registration.topic.search.close'
 											)}
-											onClick={close}
+											onClick={() => close()}
 										>
 											<CloseRoundedIcon fontSize="small" />
 										</IconButton>
