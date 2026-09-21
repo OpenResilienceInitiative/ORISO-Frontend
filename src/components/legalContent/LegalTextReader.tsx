@@ -22,6 +22,15 @@ import {
 } from '../../resources/img/icons';
 import './legalTextReader.styles.scss';
 
+/**
+ * Marks the heading of the chapter the reader is currently in.
+ *
+ * The stylesheet draws the chapter underline off this AND off `:focus-visible`,
+ * so the cue is there whether the chapter was reached with the keyboard, with a
+ * mouse click on a chip, or by plain scrolling.
+ */
+export const ACTIVE_HEADING_ATTRIBUTE = 'data-legal-active';
+
 export interface LegalTextReaderProps {
 	/**
 	 * Raw legal content: plain HTML, or the language→HTML map the tenant
@@ -467,6 +476,44 @@ const LegalReaderBody = ({
 		// fight the reader's own scrolling.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFullscreen]);
+
+	// The "you are reading this chapter" line cannot ride on `:focus-visible`.
+	// A chip activated with the MOUSE does move focus to the heading, but a
+	// programmatic focus after a click is not "visible" focus to the browser, so
+	// the cue appeared for keyboard readers and for nobody else — and scrolling,
+	// which changes the chapter without touching focus at all, never showed it.
+	//
+	// So the active heading carries the marker itself. Deliberately an attribute
+	// toggled on the node rather than React state: the headings are not rendered
+	// by this component at all (they are sanitized HTML that
+	// `LegalContentRenderer` puts in the DOM), and routing the active chapter
+	// through state would re-render the whole reader on every scroll frame.
+	// `stampHeadingAnchors` only ever writes `id` and `tabindex`, so a restamp
+	// leaves the marker untouched.
+	const markedRef = useRef<HTMLElement | null>(null);
+	useLayoutEffect(() => {
+		const heading = activeId
+			? findHeadingById(textRef.current, activeId)
+			: null;
+		if (markedRef.current === heading) {
+			return;
+		}
+		markedRef.current?.removeAttribute(ACTIVE_HEADING_ATTRIBUTE);
+		heading?.setAttribute(ACTIVE_HEADING_ATTRIBUTE, 'true');
+		markedRef.current = heading;
+		// `anchors`, not `anchorIds`: a re-render can replace the heading NODES
+		// while their ids stay the same (a translation swap, an edited heading),
+		// and the marker would otherwise stay on the node that was thrown away.
+	}, [activeId, anchors]);
+
+	// Leaving the marker behind would strand it on a node a host may keep.
+	useEffect(
+		() => () => {
+			markedRef.current?.removeAttribute(ACTIVE_HEADING_ATTRIBUTE);
+			markedRef.current = null;
+		},
+		[]
+	);
 
 	const selectAnchor = useCallback((anchorId: string) => {
 		const heading = findHeadingById(textRef.current, anchorId);
