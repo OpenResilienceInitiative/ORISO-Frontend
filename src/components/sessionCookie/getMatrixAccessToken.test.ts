@@ -309,6 +309,8 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'second-token',
 			userId: '@consultant:matrix.example.test',
@@ -346,6 +348,8 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'second-token',
 			userId: '@consultant:matrix.example.test',
@@ -366,6 +370,60 @@ describe('getMatrixAccessToken', () => {
 		);
 	});
 
+	/**
+	 * Sign-out can run while this request is in flight. The late answer must
+	 * not write credentials back into a browser that was just cleared, and the
+	 * token it carries is revoked, not left alive (#1504 review).
+	 */
+	it('commits nothing and revokes the new token when the session ended meanwhile', async () => {
+		const client = createMatrixClient({
+			accessToken: 'first-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockImplementation(async () => {
+			localStorage.clear(); // sign-out tore the session down meanwhile
+			return {
+				accessToken: 'late-token',
+				userId: '@consultant:matrix.example.test',
+				deviceId: 'ORISO_WEB_TEST_DEVICE',
+				uiaPassword: 'current-password'
+			};
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } });
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(localStorage.getItem('matrix_access_token')).toBeNull();
+		expect(makeRequest).toHaveBeenCalledOnce();
+		expect(revoke).toHaveBeenCalledWith(
+			'https://matrix.example.test/_matrix/client/v3/logout',
+			expect.objectContaining({
+				method: 'POST',
+				headers: expect.objectContaining({
+					Authorization: 'Bearer late-token'
+				})
+			})
+		);
+		vi.unstubAllGlobals();
+	});
+
 	it('refuses a login the server bound to another account or device', async () => {
 		const client = createMatrixClient({
 			accessToken: 'first-token',
@@ -375,6 +433,8 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'foreign-token',
 			userId: '@consultant:matrix.example.test',

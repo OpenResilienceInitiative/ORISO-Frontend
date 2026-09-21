@@ -111,6 +111,18 @@ const fetchCurrentUiaPassword = async (
 			"Matrix login did not return this device's credentials"
 		);
 	}
+	// Sign-out may have cleared this session while the request was in flight: commit nothing, and
+	// revoke the token just issued rather than leave it alive in a browser that was signed out.
+	if (
+		localStorage.getItem(MATRIX_ACCESS_TOKEN_STORAGE_KEY) !==
+		client.getAccessToken()
+	) {
+		void fetch(`${loginData.homeserverUrl}/_matrix/client/v3/logout`, {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${response.accessToken}` }
+		}).catch(() => undefined);
+		throw new Error('Matrix session ended during device-signing auth');
+	}
 	client.setAccessToken(response.accessToken);
 	persistMatrixLoginData({
 		...loginData,
