@@ -1,6 +1,13 @@
 export const LIVE_CHAT_AVAILABILITY_STORAGE_KEY = 'oriso_liveChatAvailability';
 export const LIVE_CHAT_AVAILABILITY_CHANGE_EVENT =
 	'oriso:liveChatAvailabilityChange';
+/**
+ * Why the last automatic switch-off happened, for the counsellor's other tabs
+ * (#1485). Only read from `storage` events, never on load, so an old reason
+ * cannot resurface; removed when she switches on or off herself.
+ */
+export const LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY =
+	'oriso_liveChatAvailabilityLoss';
 
 /**
  * Keys written by builds before the Caritas fork was renamed (FE-H05, #178).
@@ -23,6 +30,26 @@ export type LiveChatAvailabilityLossReason =
 	| 'leaseLost'
 	/** No heartbeat was acknowledged for longer than the lease lives. */
 	| 'connectionLost';
+
+const LOSS_REASONS: readonly LiveChatAvailabilityLossReason[] = [
+	'refused',
+	'sessionExpired',
+	'leaseLost',
+	'connectionLost'
+];
+
+/** Reads the reason another tab recorded; anything unexpected reads as none. */
+export const parseLiveChatAvailabilityLoss = (
+	value: string | null
+): LiveChatAvailabilityLossReason | null => {
+	if (!value) return null;
+	try {
+		const reason = (JSON.parse(value) as { reason?: unknown })?.reason;
+		return LOSS_REASONS.find((known) => known === reason) ?? null;
+	} catch {
+		return null;
+	}
+};
 
 /** This is a desired preference only; visible active state comes from the API. */
 export const readLiveChatAvailabilityPreference = (): boolean => {
@@ -48,6 +75,16 @@ export const persistLiveChatAvailabilityPreference = (
 			localStorage.removeItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY);
 		}
 		localStorage.removeItem(LEGACY_LIVE_CHAT_AVAILABILITY_STORAGE_KEY);
+		if (reason) {
+			// The timestamp makes every loss a new value, so other tabs get
+			// a `storage` event even when the reason repeats.
+			localStorage.setItem(
+				LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY,
+				JSON.stringify({ reason, at: Date.now() })
+			);
+		} else {
+			localStorage.removeItem(LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY);
+		}
 	} catch {
 		/* Storage errors do not change the backend-acknowledged state. */
 	}

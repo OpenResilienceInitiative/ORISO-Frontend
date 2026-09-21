@@ -336,6 +336,138 @@ describe('live-chat availability state', () => {
 		expect(result.current[2].lostReason).toBe('leaseLost');
 	});
 
+	// #1485 review: two consumers reconcile at once; the loss one of them
+	// persists must invalidate the other's older, still-pending "true".
+	it('does not let an older reconcile revive a consumer after another one recorded the loss', async () => {
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		const pendingGets: Array<(available: boolean) => void> = [];
+		vi.mocked(apiGetLiveChatAvailability).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					pendingGets.push(resolve);
+				})
+		);
+		const { result } = renderHook(() => ({
+			navigation: useLiveChatAvailable(),
+			sessionsList: useLiveChatAvailable()
+		}));
+		expect(pendingGets).toHaveLength(2);
+
+		await act(async () => pendingGets[0](false));
+		await act(async () => pendingGets[1](true));
+
+		expect(result.current.navigation[0]).toBe(false);
+		expect(result.current.sessionsList[0]).toBe(false);
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBeNull();
+	});
+
+	// #1485 review: the loss is recorded in one tab; every other tab of the
+	// same counsellor has to say why it went off too.
+	it('records why it switched off so other tabs can tell the counsellor', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new Error('FORBIDDEN')
+		);
+		renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(45_000));
+
+		expect(
+			JSON.parse(
+				localStorage.getItem('oriso_liveChatAvailabilityLoss') ?? '{}'
+			)
+		).toEqual(expect.objectContaining({ reason: 'refused' }));
+	});
+
+	it('shows the reason another tab recorded when it switched off', async () => {
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[0]).toBe(true));
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(false);
+
+		// What the other tab's write looks like from here.
+		const loss = JSON.stringify({ reason: 'refused', at: Date.now() });
+		localStorage.setItem('oriso_liveChatAvailabilityLoss', loss);
+		localStorage.removeItem('oriso_liveChatAvailability');
+		act(() => {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailabilityLoss',
+					newValue: loss
+				})
+			);
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailability',
+					oldValue: '1',
+					newValue: null
+				})
+			);
+		});
+
+		await waitFor(() => expect(result.current[0]).toBe(false));
+		expect(result.current[2].lostReason).toBe('refused');
+	});
+
+	it('withdraws the reason when another tab switches live chat on again', async () => {
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+		act(() => {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailabilityLoss',
+					newValue: JSON.stringify({ reason: 'leaseLost', at: 1 })
+				})
+			);
+		});
+		expect(result.current[2].lostReason).toBe('leaseLost');
+
+		act(() => {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailabilityLoss',
+					newValue: null
+				})
+			);
+		});
+
+		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	it('clears the recorded reason once the counsellor switches on again', async () => {
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityLoss',
+			JSON.stringify({ reason: 'refused', at: 1 })
+		);
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+
+		await act(async () => result.current[1](true));
+
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityLoss')
+		).toBeNull();
+	});
+
+	it('does not resurface an old recorded reason on a later load', async () => {
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityLoss',
+			JSON.stringify({ reason: 'refused', at: 1 })
+		);
+
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+
+		expect(result.current[2].lostReason).toBeNull();
+	});
+
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {
 		const { result } = renderHook(() => useLiveChatAvailable());
 		await waitFor(() => expect(result.current[2].loading).toBe(false));

@@ -7,8 +7,10 @@ import {
 } from '../api/apiSetLiveChatAvailability';
 import {
 	LIVE_CHAT_AVAILABILITY_CHANGE_EVENT,
+	LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY,
 	LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
 	LiveChatAvailabilityLossReason,
+	parseLiveChatAvailabilityLoss,
 	persistLiveChatAvailabilityPreference,
 	readLiveChatAvailabilityPreference
 } from './liveChatAvailabilityStorage';
@@ -45,6 +47,14 @@ export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
 	persistLiveChatAvailabilityPreference(active);
 };
 
+/** The server no longer counts this consultant: switch off everywhere. */
+const dropLiveChatAvailability = (
+	reason: LiveChatAvailabilityLossReason
+): void => {
+	availabilityRevision += 1;
+	persistLiveChatAvailabilityPreference(false, reason);
+};
+
 export interface LiveChatAvailabilityState {
 	loading: boolean;
 	pending: boolean;
@@ -73,15 +83,14 @@ export const useLiveChatAvailable = (): [
 			try {
 				const backendActive = await apiGetLiveChatAvailability();
 				if (mounted && requestedAtRevision === availabilityRevision) {
-					setActive(backendActive);
-					setError(false);
 					// #1485: a stored "live" the server does not back is dropped
 					// here, and the consultant is told, instead of left to linger.
+					// Dropping bumps the revision, so another consumer's older,
+					// still-pending "true" cannot revive the switch afterwards.
 					if (!backendActive && readLiveChatAvailabilityPreference())
-						persistLiveChatAvailabilityPreference(
-							false,
-							'leaseLost'
-						);
+						dropLiveChatAvailability('leaseLost');
+					setActive(backendActive);
+					setError(false);
 				}
 			} catch {
 				if (mounted && requestedAtRevision === availabilityRevision) {
@@ -109,6 +118,16 @@ export const useLiveChatAvailable = (): [
 		const onStorage = (event: StorageEvent) => {
 			if (event.key === LIVE_CHAT_AVAILABILITY_STORAGE_KEY)
 				void reconcile();
+			if (event.key === LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY) {
+				// Another tab switched off on its own (#1485): say why here
+				// too, and keep this tab's in-flight answers from reviving it.
+				const reason = parseLiveChatAvailabilityLoss(event.newValue);
+				if (reason) {
+					availabilityRevision += 1;
+					setActive(false);
+				}
+				setLostReason(reason);
+			}
 		};
 		void reconcile();
 		window.addEventListener(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, onChange);
@@ -154,14 +173,6 @@ const heartbeatRefusalReason = (
 	if (error.message === FETCH_ERRORS.UNAUTHORIZED) return 'sessionExpired';
 	if (error.message === FETCH_ERRORS.FORBIDDEN) return 'refused';
 	return null;
-};
-
-/** The server no longer counts this consultant: switch off everywhere. */
-const dropLiveChatAvailability = (
-	reason: LiveChatAvailabilityLossReason
-): void => {
-	availabilityRevision += 1;
-	persistLiveChatAvailabilityPreference(false, reason);
 };
 
 /** Mirrors `consultant.availability.activeWindowMs` in ORISO-UserService. */
