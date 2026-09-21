@@ -162,6 +162,13 @@ export const InviteLink = () => {
 					return;
 				}
 
+				/* The lookups above can take seconds; a counsellor may have signed
+				   in in another tab meanwhile. Same check as before the room's
+				   redeem, so no path overwrites her. */
+				if (holdsCounsellorSession()) {
+					setStatus('staff');
+					return;
+				}
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {

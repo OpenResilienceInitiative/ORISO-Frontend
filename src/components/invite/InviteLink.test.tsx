@@ -446,6 +446,28 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 		await screen.findByText(/als Beraterin angemeldet/);
 	});
 
+	/* The fallback (no usable context) redeems on arrival. A counsellor may
+	   sign in in another tab while the context lookup is still pending — up to
+	   its timeout — so the fallback must check again too. */
+	it('checks again before the on-arrival fallback redeems', async () => {
+		let failContext: (reason: Error) => void = () => undefined;
+		vi.mocked(apiGetInviteLinkContext).mockReturnValue(
+			new Promise((_resolve, reject) => {
+				failContext = reject;
+			})
+		);
+		renderInvite();
+		await waitFor(() => expect(apiGetInviteLinkContext).toHaveBeenCalled());
+
+		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', 600);
+		failContext(new Error('timeout'));
+
+		await screen.findByText(/als Beraterin angemeldet/);
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+	});
+
 	/* A link consumed or withdrawn while the guest picked a name can never
 	   succeed on retry: it is an unusable invite, not a name that failed to
 	   save — the same error page the on-arrival flow showed. */
