@@ -102,30 +102,32 @@ export const ActionOpensVault: Story = {
 	}
 };
 
+/** Another floating snackbar, as the sessions list's display-filter note. */
+const withAnotherSnackbar: NonNullable<Story['decorators']> = [
+	(Story) => {
+		const [open, setOpen] = React.useState(true);
+		return (
+			<>
+				<Story />
+				<M3Snackbar
+					open={open}
+					role="status"
+					message="Dieser Filter ist für Ihre Beratungsstelle deaktiviert."
+					onClose={() => setOpen(false)}
+					closeLabel="Hinweis schließen"
+					testId="other-snackbar"
+				/>
+			</>
+		);
+	}
+];
+
 /**
- * M3 shows one snackbar at a time: while a transient note (here: the sessions
- * list's display-filter note) is open, the recovery notice steps aside and
- * comes back once that note is closed.
+ * M3 shows one snackbar at a time: while a transient note is open, the
+ * recovery notice steps aside instead of sitting underneath it.
  */
 export const StepsAsideForAnotherSnackbar: Story = {
-	decorators: [
-		(Story) => {
-			const [open, setOpen] = React.useState(true);
-			return (
-				<>
-					<Story />
-					<M3Snackbar
-						open={open}
-						role="status"
-						message="Dieser Filter ist für Ihre Beratungsstelle deaktiviert."
-						onClose={() => setOpen(false)}
-						closeLabel="Schließen"
-						testId="other-snackbar"
-					/>
-				</>
-			);
-		}
-	],
+	decorators: withAnotherSnackbar,
 	play: async () => {
 		const page = within(document.body);
 		await page.findByTestId('other-snackbar');
@@ -134,8 +136,21 @@ export const StepsAsideForAnotherSnackbar: Story = {
 				page.queryByTestId('key-backup-recovery-action')
 			).not.toBeInTheDocument()
 		);
-		await userEvent.click(page.getByRole('button', { name: 'Schließen' }));
+	}
+};
+
+/** …and it comes back once that note is closed. */
+export const ReturnsWhenOtherSnackbarCloses: Story = {
+	decorators: withAnotherSnackbar,
+	play: async () => {
+		const page = within(document.body);
+		await userEvent.click(
+			await page.findByRole('button', { name: 'Hinweis schließen' })
+		);
 		const recovery = await page.findByTestId('key-backup-recovery-action');
 		await waitFor(() => expect(recovery).toBeVisible());
+		await waitFor(() =>
+			expect(page.queryByTestId('other-snackbar')).not.toBeInTheDocument()
+		);
 	}
 };
