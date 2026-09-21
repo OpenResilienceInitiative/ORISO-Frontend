@@ -169,8 +169,9 @@ export const LiveChatClosed = ({
 			<RegistrationFooter
 				secondary={{
 					label: tr('wait', 'Ich warte'),
+					/* Never the round close icon, even on a phone: this keeps
+					   the page open, and an X would say the opposite. */
 					compact: true,
-					round: narrow,
 					onClick: onLater
 				}}
 				primary={{

@@ -189,6 +189,23 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(nameCards().length).toBeGreaterThan(0);
 	});
 
+	/* The endpoint's contract: a rejection is unknown and must not block the
+	   person. An outage that persists therefore opens the door as it did before
+	   the pre-check — the waiting room's own poll takes over from there. */
+	it('opens the names after repeated failed lookups instead of spinning forever', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockRejectedValue(
+			new Error('503')
+		);
+		renderInvite();
+		await flush(4000);
+		expect(nameCards()).toHaveLength(0);
+
+		await flush(8000);
+		expect(nameCards().length).toBeGreaterThan(0);
+		expect(closedHeadline()).toBeNull();
+		expect(redeem).not.toHaveBeenCalled();
+	});
+
 	it('does not let a failure between two zeros stand in for the second look', async () => {
 		vi.mocked(apiGetConsultantAvailability)
 			.mockResolvedValueOnce(live(0))

@@ -67,6 +67,10 @@ const CLOSED_CONFIRMATION_POLLS = 2;
 /* Before a name the loader is on screen anyway, so the confirming second look
    comes after a second rather than a full poll: closed has to feel immediate. */
 const CLOSED_CONFIRMATION_MS = 1000;
+/* A rejection is unknown and must not block the person (the endpoint's own
+   contract). An outage that persists this many samples opens the door as it
+   was before the pre-check; the waiting room's poll takes over from there. */
+const UNKNOWN_FALLBACK_FAILURES = 3;
 
 /** How many names the door offers at once (Frank: „drei vier varianten"). */
 const NAME_CHOICES = 4;
@@ -175,6 +179,7 @@ const LiveChatEntryRoomContent = ({
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
+	const [availabilityUnknown, setAvailabilityUnknown] = useState(false);
 	const [consecutiveUnavailablePolls, setConsecutiveUnavailablePolls] =
 		useState(0);
 	const [accepted, setAccepted] = useState(false);
@@ -341,6 +346,7 @@ const LiveChatEntryRoomContent = ({
 		let stop = false;
 		let timer: number | undefined;
 		let zeros = 0;
+		let failures = 0;
 		const sample = (): Promise<number | null> =>
 			apiGetConsultantAvailability(topicId, consultingTypeId).then(
 				(d) =>
@@ -352,7 +358,13 @@ const LiveChatEntryRoomContent = ({
 		const run = async () => {
 			const next = await sample();
 			if (stop) return;
-			if (next !== null) {
+			if (next === null) {
+				failures += 1;
+				if (failures === UNKNOWN_FALLBACK_FAILURES)
+					setAvailabilityUnknown(true);
+			} else {
+				failures = 0;
+				setAvailabilityUnknown(false);
 				zeros = next > 0 ? 0 : zeros + 1;
 				setAvailable(next);
 				setConsecutiveUnavailablePolls(zeros);
@@ -369,11 +381,14 @@ const LiveChatEntryRoomContent = ({
 		};
 	}, [sessionId, topicId, consultingTypeId]);
 
-	/* Somebody is live: the names step in. */
+	/* Somebody is live — or nobody can tell — : the names step in. */
 	useEffect(() => {
-		if (stage === 'checking' && available !== null && available > 0)
+		if (
+			stage === 'checking' &&
+			((available !== null && available > 0) || availabilityUnknown)
+		)
 			setStage('access');
-	}, [stage, available]);
+	}, [stage, available, availabilityUnknown]);
 
 	/* B: the queue, every 4 s — same endpoint and cadence the session used. */
 	useEffect(() => {
