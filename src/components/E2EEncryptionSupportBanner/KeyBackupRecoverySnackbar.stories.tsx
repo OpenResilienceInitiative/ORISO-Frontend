@@ -65,11 +65,15 @@ export const NeedsRecoveryKey: Story = {
 	}
 };
 
+/* Storybook 10 reads the viewport from globals; `phone390` is registered in .storybook/preview.tsx. */
 export const NeedsRecoveryKeyMobile: Story = {
-	...NeedsRecoveryKey,
-	parameters: {
-		layout: 'fullscreen',
-		viewport: { defaultViewport: 'mobile1' }
+	globals: { viewport: { value: 'phone390' } },
+	play: async (context) => {
+		// Guards that the navigation-bar gap check in NeedsRecoveryKey actually runs.
+		await expect(window.matchMedia('(max-width: 899px)').matches).toBe(
+			true
+		);
+		await NeedsRecoveryKey.play!(context);
 	}
 };
 
