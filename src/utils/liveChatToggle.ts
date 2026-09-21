@@ -62,6 +62,15 @@ export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
 	if (active) recordLiveChatHeartbeatAcknowledged();
 };
 
+/**
+ * Did any tab have an enable or heartbeat acknowledged after `since`? Every
+ * decision to switch off checks this first: evidence older than the latest
+ * renewal (another tab's, whose storage event may not have arrived yet)
+ * describes a lease that has since been renewed.
+ */
+const renewedSince = (since: number): boolean =>
+	readLastLiveChatHeartbeatAcknowledged() > since;
+
 /** The server no longer counts this consultant: switch off everywhere. */
 const dropLiveChatAvailability = (
 	reason: LiveChatAvailabilityLossReason
@@ -95,9 +104,17 @@ export const useLiveChatAvailable = (): [
 		let mounted = true;
 		const reconcile = async () => {
 			const requestedAtRevision = availabilityRevision;
+			const sentAt = Date.now();
 			try {
 				const backendActive = await apiGetLiveChatAvailability();
-				if (mounted && requestedAtRevision === availabilityRevision) {
+				// A "no" older than another tab's acknowledged enable is
+				// stale; that tab's storage event will reconcile again.
+				const staleNo = !backendActive && renewedSince(sentAt);
+				if (
+					mounted &&
+					requestedAtRevision === availabilityRevision &&
+					!staleNo
+				) {
 					// #1485: a stored "live" the server does not back is dropped
 					// here, and the consultant is told, instead of left to linger.
 					// Dropping bumps the revision, so another consumer's older,
@@ -201,9 +218,10 @@ export const LIVE_CHAT_HEARTBEAT_INTERVAL_MS = 45_000;
 /**
  * With no acknowledgement on record the lease has an unknown remainder (the
  * GET only says one exists). The first beat gets one quick retry, and "live"
- * is claimed only this long unless some tab renews the lease meanwhile.
+ * is claimed only this long, plus the watchdog's final request-timeout grace
+ * (15 s in all), unless some tab renews the lease meanwhile.
  */
-export const LIVE_CHAT_UNKNOWN_LEASE_MS = 15_000;
+export const LIVE_CHAT_UNKNOWN_LEASE_MS = 10_000;
 export const LIVE_CHAT_FIRST_BEAT_RETRY_MS = 2_000;
 
 /**
@@ -222,7 +240,6 @@ export const useLiveChatAvailabilityHeartbeat = (
 	useEffect(() => {
 		if (!enabled || !active) return;
 		let leaseWatchdog = 0;
-		let beatsInFlight = 0;
 		// Unmounting (logout above all) ends this session's heartbeat: the
 		// request is aborted, and an answer that arrives anyway must not
 		// write an acknowledgement, a loss or a timer for a session that is
@@ -249,10 +266,11 @@ export const useLiveChatAvailabilityHeartbeat = (
 				// always armed, so judge again after a short window.
 				else if (armedAtRevision !== availabilityRevision)
 					armLeaseWatchdog(LIVE_CHAT_UNKNOWN_LEASE_MS);
-				// A renewal still in flight may be the one that keeps the
-				// lease, so its answer decides — once, and no longer than
-				// the request itself may take.
-				else if (beatsInFlight > 0 && !waitedForBeat)
+				// A renewal still in flight — this tab's or another's, which
+				// this tab cannot see — may be the one that keeps the lease:
+				// wait once for as long as a request may take, then read the
+				// shared acknowledgement again.
+				else if (!waitedForBeat)
 					armLeaseWatchdog(LIVE_CHAT_HEARTBEAT_TIMEOUT_MS, true);
 				else dropLiveChatAvailability('connectionLost');
 			}, delay);
@@ -282,13 +300,8 @@ export const useLiveChatAvailabilityHeartbeat = (
 			// tab had an enable or heartbeat acknowledged since, the lease
 			// was renewed after that; its storage event may simply not have
 			// reached this tab yet, so the tab-local revision cannot tell.
-			const renewedSinceSent = () =>
-				readLastLiveChatHeartbeatAcknowledged() > sentAt;
-			beatsInFlight += 1;
+			const renewedSinceSent = () => renewedSince(sentAt);
 			void apiHeartbeatLiveChatAvailability(inFlight.signal)
-				.finally(() => {
-					beatsInFlight -= 1;
-				})
 				.then((leaseActive) => {
 					if (disposed) return;
 					if (requestedAtRevision !== availabilityRevision) return;
