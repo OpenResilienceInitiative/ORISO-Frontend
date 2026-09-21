@@ -663,6 +663,49 @@ describe('live-chat availability state', () => {
 		expect(result.current[2].lostReason).toBeNull();
 	});
 
+	// #1485 review: tab B switched on again while this tab's heartbeat was
+	// in flight. Its answer describes the lease before B's enable, and B's
+	// storage event may not have arrived yet, so the tab-local revision
+	// cannot tell; the shared acknowledgement time can.
+	it.each([
+		['"no lease"', () => Promise.resolve(false)],
+		['a refusal', () => Promise.reject(new Error('FORBIDDEN'))]
+	])(
+		'discards %s sent before another tab switched live chat on again',
+		async (_label, staleAnswer) => {
+			vi.useFakeTimers();
+			localStorage.setItem('oriso_liveChatAvailability', '1');
+			vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+			let answer: () => void = () => undefined;
+			vi.mocked(apiHeartbeatLiveChatAvailability).mockReturnValueOnce(
+				new Promise((resolve, reject) => {
+					answer = () => void staleAnswer().then(resolve, reject);
+				})
+			);
+			const { result } = renderHook(() => {
+				const availability = useLiveChatAvailable();
+				useLiveChatAvailabilityHeartbeat(true, availability[0]);
+				return availability;
+			});
+			await act(async () => Promise.resolve());
+			expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+
+			// Tab B's acknowledged enable, before its storage event arrives.
+			await act(async () => vi.advanceTimersByTimeAsync(1_000));
+			localStorage.setItem(
+				'oriso_liveChatAvailabilityAck',
+				String(Date.now())
+			);
+			await act(async () => answer());
+
+			expect(localStorage.getItem('oriso_liveChatAvailability')).toBe(
+				'1'
+			);
+			expect(result.current[0]).toBe(true);
+			expect(result.current[2].lostReason).toBeNull();
+		}
+	);
+
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {
 		const { result } = renderHook(() => useLiveChatAvailable());
 		await waitFor(() => expect(result.current[2].loading).toBe(false));

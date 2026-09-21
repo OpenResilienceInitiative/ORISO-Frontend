@@ -244,16 +244,25 @@ export const useLiveChatAvailabilityHeartbeat = (
 		);
 		const beat = () => {
 			const requestedAtRevision = availabilityRevision;
+			const sentAt = Date.now();
+			// A negative answer describes the lease when it was sent. If any
+			// tab had an enable or heartbeat acknowledged since, the lease
+			// was renewed after that; its storage event may simply not have
+			// reached this tab yet, so the tab-local revision cannot tell.
+			const renewedSinceSent = () =>
+				readLastLiveChatHeartbeatAcknowledged() > sentAt;
 			void apiHeartbeatLiveChatAvailability()
 				.then((leaseActive) => {
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (leaseActive) {
 						recordLiveChatHeartbeatAcknowledged();
 						armLeaseWatchdog();
-					} else dropLiveChatAvailability('leaseLost');
+					} else if (!renewedSinceSent())
+						dropLiveChatAvailability('leaseLost');
 				})
 				.catch((error: unknown) => {
 					if (requestedAtRevision !== availabilityRevision) return;
+					if (renewedSinceSent()) return;
 					const refusal = heartbeatRefusalReason(error);
 					if (refusal) dropLiveChatAvailability(refusal);
 					// Otherwise transient: the next beat is the retry, and the
