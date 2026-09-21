@@ -308,6 +308,11 @@ describe('live-chat availability state', () => {
 
 	it('stops claiming live once no heartbeat was acknowledged for longer than the lease', async () => {
 		vi.useFakeTimers();
+		// Acknowledged just now (an enable or a beat): the lease is known.
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now())
+		);
 		localStorage.setItem('oriso_liveChatAvailability', '1');
 		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
 		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
@@ -541,6 +546,11 @@ describe('live-chat availability state', () => {
 	// tabs renews the lease, so one offline tab must not switch all off.
 	it('stays live while another tab keeps the lease acknowledged', async () => {
 		vi.useFakeTimers();
+		// Acknowledged just now (an enable or a beat): the lease is known.
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now())
+		);
 		localStorage.setItem('oriso_liveChatAvailability', '1');
 		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
 		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
@@ -705,6 +715,69 @@ describe('live-chat availability state', () => {
 			expect(result.current[2].lostReason).toBeNull();
 		}
 	);
+
+	// #1485 review: with no acknowledgement on record (first load after this
+	// ships, or one older than a lease) the GET only says a lease exists, not
+	// how long it has left. A failed first renewal must not buy a full lease.
+	const mountWithUnknownLease = () => {
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		return renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+	};
+
+	it('stops claiming live soon when the lease is unknown and renewing it fails', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new Error('TIMEOUT')
+		);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+		expect(result.current[0]).toBe(true);
+
+		await act(async () => vi.advanceTimersByTimeAsync(15_000));
+
+		// The immediate beat and one quick retry, then it gives up.
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
+	});
+
+	it('stays live when the quick retry renews an unknown lease', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiHeartbeatLiveChatAvailability)
+			.mockRejectedValueOnce(new Error('TIMEOUT'))
+			.mockResolvedValue(true);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(119_000));
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	it('stays live on an unknown lease when another tab renews it meanwhile', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new Error('TIMEOUT')
+		);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(3_000));
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now())
+		);
+		await act(async () => vi.advanceTimersByTimeAsync(60_000));
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
+	});
 
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {
 		const { result } = renderHook(() => useLiveChatAvailable());

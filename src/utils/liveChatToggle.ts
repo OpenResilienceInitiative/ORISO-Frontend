@@ -197,6 +197,13 @@ const heartbeatRefusalReason = (
 /** Mirrors `consultant.availability.activeWindowMs` in ORISO-UserService. */
 export const LIVE_CHAT_LEASE_MS = 120_000;
 export const LIVE_CHAT_HEARTBEAT_INTERVAL_MS = 45_000;
+/**
+ * With no acknowledgement on record the lease has an unknown remainder (the
+ * GET only says one exists). The first beat gets one quick retry, and "live"
+ * is claimed only this long unless some tab renews the lease meanwhile.
+ */
+export const LIVE_CHAT_UNKNOWN_LEASE_MS = 15_000;
+export const LIVE_CHAT_FIRST_BEAT_RETRY_MS = 5_000;
 
 /**
  * Mounted exactly once by the consultant navigation shell.
@@ -233,15 +240,20 @@ export const useLiveChatAvailabilityHeartbeat = (
 		// it does not renew it. So the watchdog counts from the last
 		// acknowledgement any tab saw, and one beat goes out at once so a
 		// reloaded tab renews the lease instead of waiting a full interval.
-		// A record older than a lease cannot be what keeps the lease alive
-		// (another device must be), so it falls back to a full lease.
+		// Without a record younger than a lease (first load after this
+		// shipped, or a long-closed session) the remainder is unknown: a
+		// failed first renewal must not buy a full lease, so "live" is only
+		// claimed for a short window unless a beat or another tab renews it.
 		const leaseLeftAtStart =
 			readLastLiveChatHeartbeatAcknowledged() +
 			LIVE_CHAT_LEASE_MS -
 			Date.now();
+		let leaseKnown = leaseLeftAtStart > 0;
 		armLeaseWatchdog(
-			leaseLeftAtStart > 0 ? leaseLeftAtStart : LIVE_CHAT_LEASE_MS
+			leaseKnown ? leaseLeftAtStart : LIVE_CHAT_UNKNOWN_LEASE_MS
 		);
+		let firstBeatRetry = 0;
+		let firstBeatRetried = false;
 		const beat = () => {
 			const requestedAtRevision = availabilityRevision;
 			const sentAt = Date.now();
@@ -255,6 +267,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 				.then((leaseActive) => {
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (leaseActive) {
+						leaseKnown = true;
 						recordLiveChatHeartbeatAcknowledged();
 						armLeaseWatchdog();
 					} else if (!renewedSinceSent())
@@ -264,9 +277,20 @@ export const useLiveChatAvailabilityHeartbeat = (
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (renewedSinceSent()) return;
 					const refusal = heartbeatRefusalReason(error);
-					if (refusal) dropLiveChatAvailability(refusal);
+					if (refusal) {
+						dropLiveChatAvailability(refusal);
+						return;
+					}
 					// Otherwise transient: the next beat is the retry, and the
 					// watchdog bounds how long "live" may be claimed without one.
+					// An unknown lease cannot wait a full interval for it.
+					if (!leaseKnown && !firstBeatRetried) {
+						firstBeatRetried = true;
+						firstBeatRetry = window.setTimeout(
+							beat,
+							LIVE_CHAT_FIRST_BEAT_RETRY_MS
+						);
+					}
 				});
 		};
 		beat();
@@ -276,6 +300,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 		);
 		return () => {
 			window.clearInterval(heartbeat);
+			window.clearTimeout(firstBeatRetry);
 			window.clearTimeout(leaseWatchdog);
 		};
 	}, [active, enabled]);
