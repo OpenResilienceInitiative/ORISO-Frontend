@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../globalState';
@@ -78,8 +84,31 @@ describe('AccountSetupGate', () => {
 			renderGate(owesPassword);
 
 			expect(
-				screen.getByText('passwordChange.required.title')
-			).not.toBeNull();
+				screen.getAllByText('passwordChange.required.title').length
+			).toBeGreaterThan(0);
+		});
+
+		it('asks for it in a dialog that Escape does not close', () => {
+			renderGate(owesPassword);
+
+			const dialog = screen.getByRole('dialog');
+			expect(within(dialog).getByTestId('password-form')).not.toBeNull();
+
+			fireEvent.keyDown(dialog, { key: 'Escape' });
+
+			expect(screen.queryByRole('dialog')).not.toBeNull();
+		});
+
+		it('keeps logging out reachable from inside the modal dialog', () => {
+			const { onLogout } = renderGate(owesPassword);
+
+			fireEvent.click(
+				within(screen.getByRole('dialog')).getByRole('button', {
+					name: 'accountSetup.required.logout'
+				})
+			);
+
+			expect(onLogout).toHaveBeenCalledTimes(1);
 		});
 	});
 

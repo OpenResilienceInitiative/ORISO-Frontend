@@ -2335,6 +2335,7 @@
 						"headline": "Vous avez modifié votre mot de passe avec succès. Vous allez maintenant être redirigé vers le login."
 					},
 					"same": "Votre mot de passe est identique.",
+					"sameAsOld": "Veuillez choisir un nouveau mot de passe – celui-ci est votre mot de passe actuel.",
 					"secure": "Votre mot de passe est sécurisé.",
 					"subtitle": "Si vous le souhaitez, vous pouvez modifier votre mot de passe ici. Saisissez d'abord votre mot de passe actuel avant d'en définir un nouveau.",
 					"title": "Mot de passe"

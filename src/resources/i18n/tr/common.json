@@ -2335,6 +2335,7 @@
 						"headline": "Şifrenizi başarıyla değiştirdiniz. Şimdi giriş sayfasına yönlendirileceksiniz."
 					},
 					"same": "Şifreniz aynı.",
+					"sameAsOld": "Lütfen yeni bir şifre seçin – bu mevcut şifreniz.",
 					"secure": "Şifreniz güvende.",
 					"subtitle": "Dilerseniz şifrenizi buradan değiştirebilirsiniz. Yeni bir şifre belirlemek için önce mevcut şifrenizi girin.",
 					"title": "şifre"
