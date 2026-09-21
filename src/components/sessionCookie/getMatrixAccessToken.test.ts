@@ -311,6 +311,10 @@ describe('getMatrixAccessToken', () => {
 		client.setAccessToken = vi.fn();
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'second-token',
 			userId: '@consultant:matrix.example.test',
@@ -350,6 +354,10 @@ describe('getMatrixAccessToken', () => {
 		client.setAccessToken = vi.fn();
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'second-token',
 			userId: '@consultant:matrix.example.test',
@@ -390,6 +398,10 @@ describe('getMatrixAccessToken', () => {
 			'matrix_user_id',
 			'@consultant:matrix.example.test'
 		);
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
 		const revoke = vi.fn(async () => new Response('{}'));
 		vi.stubGlobal('fetch', revoke);
 		vi.mocked(fetchData).mockImplementation(async () => {
@@ -424,6 +436,118 @@ describe('getMatrixAccessToken', () => {
 		vi.unstubAllGlobals();
 	});
 
+	const liveClient = (token = 'first-token') => {
+		const client = createMatrixClient({
+			accessToken: token,
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.getAccessToken = () => token;
+		return client;
+	};
+	const uiaChallenge = () =>
+		vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockResolvedValueOnce(undefined);
+
+	/**
+	 * A token refresh or another tab of the same account stored a newer token
+	 * meanwhile. That session is alive: a logout here would delete the shared
+	 * device. Use the token in this client, leave the newer one in storage
+	 * (#1504 review).
+	 */
+	it('neither revokes nor overwrites a newer token of the same account', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'newer-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'uia-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: 'current-password'
+		});
+		const makeRequest = uiaChallenge();
+
+		await getDeviceSigningAuth(client)!(makeRequest);
+
+		expect(revoke).not.toHaveBeenCalled();
+		expect(client.setAccessToken).toHaveBeenCalledWith('uia-token');
+		expect(localStorage.getItem('matrix_access_token')).toBe('newer-token');
+		expect(makeRequest).toHaveBeenLastCalledWith(
+			expect.objectContaining({ password: 'current-password' })
+		);
+		vi.unstubAllGlobals();
+	});
+
+	it('revokes a token issued for another device before rejecting it', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'foreign-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_OTHER_DEVICE',
+			uiaPassword: 'current-password'
+		});
+
+		await expect(
+			getDeviceSigningAuth(client)!(uiaChallenge())
+		).rejects.toThrow();
+
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(revoke).toHaveBeenCalledWith(
+			'https://matrix.example.test/_matrix/client/v3/logout',
+			expect.objectContaining({
+				headers: expect.objectContaining({
+					Authorization: 'Bearer foreign-token'
+				})
+			})
+		);
+		vi.unstubAllGlobals();
+	});
+
+	it('keeps this device authorised when the login carries no password', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: ''
+		});
+
+		await expect(
+			getDeviceSigningAuth(client)!(uiaChallenge())
+		).rejects.toThrow();
+
+		expect(revoke).not.toHaveBeenCalled();
+		expect(client.setAccessToken).toHaveBeenCalledWith('second-token');
+		expect(localStorage.getItem('matrix_access_token')).toBe(
+			'second-token'
+		);
+		vi.unstubAllGlobals();
+	});
+
 	it('refuses a login the server bound to another account or device', async () => {
 		const client = createMatrixClient({
 			accessToken: 'first-token',
@@ -435,6 +559,10 @@ describe('getMatrixAccessToken', () => {
 		client.setAccessToken = vi.fn();
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'foreign-token',
 			userId: '@consultant:matrix.example.test',

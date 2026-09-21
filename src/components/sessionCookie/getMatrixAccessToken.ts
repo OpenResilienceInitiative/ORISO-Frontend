@@ -86,10 +86,17 @@ const matrixTokenUrl = (deviceId: string): string =>
 		endpoints.matrixAccessToken.includes('?') ? '&' : '?'
 	}deviceId=${encodeURIComponent(deviceId)}`;
 
+/** Ends the session behind a token. Matrix logout deletes that token's device, so only use it on a
+ * token of another device or after this browser was signed out. */
+const revokeMatrixToken = (homeserverUrl: string, accessToken: string) =>
+	void fetch(`${homeserverUrl}/_matrix/client/v3/logout`, {
+		method: 'POST',
+		headers: { Authorization: `Bearer ${accessToken}` }
+	}).catch(() => undefined);
+
 /**
  * The account's Matrix password as of now, for one device-signing UIA. The same call signs this
- * device in again; the running client moves onto that token so it stays authorised and logout
- * revokes it.
+ * device in again; the client moves onto that token so it stays authorised and logout revokes it.
  */
 const fetchCurrentUiaPassword = async (
 	client: MatrixClient,
@@ -101,34 +108,39 @@ const fetchCurrentUiaPassword = async (
 		responseHandling: [FETCH_ERRORS.CATCH_ALL],
 		recoverOnPublicAuthRoute: false
 	});
+	const token: string | undefined = response?.accessToken;
 	if (
-		!response?.uiaPassword ||
-		!response.accessToken ||
-		response.userId !== loginData.userId ||
-		response.deviceId !== loginData.deviceId
+		response?.userId !== loginData.userId ||
+		response?.deviceId !== loginData.deviceId
 	) {
-		throw new Error(
-			"Matrix login did not return this device's credentials"
-		);
+		if (token) revokeMatrixToken(loginData.homeserverUrl, token);
+		throw new Error('Matrix login was bound to another account or device');
 	}
-	// Sign-out may have cleared this session while the request was in flight: commit nothing, and
-	// revoke the token just issued rather than leave it alive in a browser that was signed out.
+	if (!token) {
+		throw new Error('Matrix login returned no access token');
+	}
+	const storedToken = localStorage.getItem(MATRIX_ACCESS_TOKEN_STORAGE_KEY);
 	if (
-		localStorage.getItem(MATRIX_ACCESS_TOKEN_STORAGE_KEY) !==
-		client.getAccessToken()
+		!storedToken ||
+		localStorage.getItem(MATRIX_USER_ID_STORAGE_KEY) !== loginData.userId
 	) {
-		void fetch(`${loginData.homeserverUrl}/_matrix/client/v3/logout`, {
-			method: 'POST',
-			headers: { Authorization: `Bearer ${response.accessToken}` }
-		}).catch(() => undefined);
+		// Signed out while the request was in flight: commit nothing, end the session just issued.
+		revokeMatrixToken(loginData.homeserverUrl, token);
 		throw new Error('Matrix session ended during device-signing auth');
 	}
-	client.setAccessToken(response.accessToken);
-	persistMatrixLoginData({
-		...loginData,
-		accessToken: response.accessToken,
-		expiresInMs: response.expiresInMs
-	});
+	// A newer token of this account in storage (refresh, other tab) stays; it is alive too.
+	const ownsStorage = storedToken === client.getAccessToken();
+	client.setAccessToken(token);
+	if (ownsStorage) {
+		persistMatrixLoginData({
+			...loginData,
+			accessToken: token,
+			expiresInMs: response.expiresInMs
+		});
+	}
+	if (!response.uiaPassword) {
+		throw new Error('Matrix login returned no UIA password');
+	}
 	return response.uiaPassword;
 };
 
