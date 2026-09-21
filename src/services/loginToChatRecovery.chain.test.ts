@@ -11,13 +11,13 @@ import { beforeEach, expect, it, vi } from 'vitest';
 // Stands in for IndexedDB: held by the test file, so it outlives a document load like the real one.
 const keys = vi.hoisted(() => new Map<string, CryptoKey>());
 vi.mock('./loginHandoffKeyStore', () => ({
-	putHandoffKey: async (key: CryptoKey) => void keys.set('k', key),
-	takeHandoffKey: async () => {
-		const key = keys.get('k') ?? null;
-		keys.delete('k');
+	putHandoffKey: async (id: string, key: CryptoKey) => void keys.set(id, key),
+	takeHandoffKey: async (id: string) => {
+		const key = keys.get(id) ?? null;
+		keys.delete(id);
 		return key;
 	},
-	dropHandoffKey: () => void keys.delete('k')
+	dropHandoffKey: (id: string) => void keys.delete(id)
 }));
 
 const status = vi.hoisted(() => vi.fn());
