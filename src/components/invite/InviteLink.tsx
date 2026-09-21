@@ -172,6 +172,10 @@ export const InviteLink = () => {
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
 					/* Tokens first, then the entry room on this very page —
 					   no hard redirect into the session's gates any more.
 					   The room hands over to the session itself once a
@@ -234,6 +238,14 @@ export const InviteLink = () => {
 			);
 			setStatus('error');
 			throw err;
+		}
+		/* And once more after the POST returns: it takes time, and the guest's
+		   tokens must not land over a counsellor who signed in meanwhile. */
+		if (holdsCounsellorSession()) {
+			setStatus('staff');
+			throw new Error(
+				'A counsellor signed in while the invite was redeemed'
+			);
 		}
 		applyRedeemSessionCredentials(data);
 		rememberInviteSession(token, data.sessionId);

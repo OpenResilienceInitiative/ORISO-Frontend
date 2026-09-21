@@ -131,6 +131,36 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(42);
 	});
 
+	/* The last positive sample can be seconds old. Right before an account and
+	   a queue entry are created, ask once more. */
+	it('asks once more on continue, and does not redeem when nobody is live any more', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		renderInvite();
+		await flush();
+		expect(nameCards().length).toBeGreaterThan(0);
+
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+
+		expect(redeem).not.toHaveBeenCalled();
+		expect(closedHeadline()).not.toBeNull();
+	});
+
+	it('still redeems on continue when that last look cannot be answered', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		renderInvite();
+		await flush();
+
+		vi.mocked(apiGetConsultantAvailability).mockRejectedValue(
+			new Error('timeout')
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+
+		expect(redeem).toHaveBeenCalledTimes(1);
+	});
+
 	it('shows closed straight away — after a quick second look, not after a name', async () => {
 		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
 		renderInvite();

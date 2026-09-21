@@ -75,6 +75,34 @@ const UNKNOWN_FALLBACK_FAILURES = 3;
    each one for fetchData's 30 s default, and the fallback above by minutes. */
 const AVAILABILITY_SAMPLE_TIMEOUT_MS = 5000;
 
+/**
+ * One answer to "who is live for this topic": the number, or `null` when the
+ * request failed or timed out — unknown, which never counts as closed.
+ */
+const askWhoIsLive = (
+	topicId: number,
+	consultingTypeId: number | undefined,
+	request: AbortController
+): Promise<number | null> => {
+	const deadline = window.setTimeout(
+		() => request.abort(),
+		AVAILABILITY_SAMPLE_TIMEOUT_MS
+	);
+	return apiGetConsultantAvailability(
+		topicId,
+		consultingTypeId,
+		request.signal
+	)
+		.finally(() => window.clearTimeout(deadline))
+		.then(
+			(d) =>
+				typeof d?.numAvailableConsultants === 'number'
+					? d.numAvailableConsultants
+					: 0,
+			() => null
+		);
+};
+
 /** How many names the door offers at once (Frank: „drei vier varianten"). */
 const NAME_CHOICES = 4;
 
@@ -315,6 +343,24 @@ const LiveChatEntryRoomContent = ({
 			let id = sessionId;
 			if (id === null) {
 				if (!invite) return;
+				/* The last positive sample can be seconds old. Ask once more
+				   right before an account and a queue entry are created; an
+				   answered zero is closed, an unknown answer does not block. */
+				if (invite.topicId !== undefined) {
+					const liveNow = await askWhoIsLive(
+						invite.topicId,
+						invite.consultingTypeId,
+						new AbortController()
+					);
+					if (cancelled.current) return;
+					if (liveNow === 0) {
+						setAvailable(0);
+						setConsecutiveUnavailablePolls(
+							CLOSED_CONFIRMATION_POLLS
+						);
+						return;
+					}
+				}
 				id = await invite.redeem();
 				if (cancelled.current) return;
 				setSessionId(id);
@@ -353,24 +399,7 @@ const LiveChatEntryRoomContent = ({
 		let inFlight: AbortController | undefined;
 		const sample = (): Promise<number | null> => {
 			inFlight = new AbortController();
-			const request = inFlight;
-			const deadline = window.setTimeout(
-				() => request.abort(),
-				AVAILABILITY_SAMPLE_TIMEOUT_MS
-			);
-			return apiGetConsultantAvailability(
-				topicId,
-				consultingTypeId,
-				request.signal
-			)
-				.finally(() => window.clearTimeout(deadline))
-				.then(
-					(d) =>
-						typeof d?.numAvailableConsultants === 'number'
-							? d.numAvailableConsultants
-							: 0,
-					() => null
-				);
+			return askWhoIsLive(topicId, consultingTypeId, inFlight);
 		};
 		const run = async () => {
 			const next = await sample();

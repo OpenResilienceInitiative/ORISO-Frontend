@@ -468,6 +468,63 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
 	});
 
+	/* The redeem POST itself takes time: a counsellor signing in during it
+	   must not get the guest's tokens written over hers when it returns. */
+	it('does not apply the guest tokens when a counsellor signed in while the redeem was pending', async () => {
+		let finishRedeem: (value: unknown) => void = () => undefined;
+		vi.mocked(redeemInviteLink).mockReturnValue(
+			new Promise((resolve) => {
+				finishRedeem = resolve;
+			}) as never
+		);
+		renderInvite();
+		await waitFor(() =>
+			expect(roomProps.current?.invite?.topicId).toBe(20)
+		);
+
+		const pending = roomProps.current.invite.redeem();
+		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', 600);
+		finishRedeem({
+			sessionId: 42,
+			userName: 'anon_1',
+			accessToken: 'guest-access',
+			refreshToken: 'guest-refresh',
+			expiresIn: 300,
+			refreshExpiresIn: 600
+		});
+
+		await expect(pending).rejects.toThrow();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		await screen.findByText(/als Beraterin angemeldet/);
+	});
+
+	it('does not apply the guest tokens on the fallback path either, when a counsellor signed in during the POST', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockRejectedValue(new Error('none'));
+		let finishRedeem: (value: unknown) => void = () => undefined;
+		vi.mocked(redeemInviteLink).mockReturnValue(
+			new Promise((resolve) => {
+				finishRedeem = resolve;
+			}) as never
+		);
+		renderInvite();
+		await waitFor(() => expect(redeemInviteLink).toHaveBeenCalled());
+
+		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', 600);
+		finishRedeem({
+			sessionId: 42,
+			userName: 'anon_1',
+			accessToken: 'guest-access',
+			refreshToken: 'guest-refresh',
+			expiresIn: 300,
+			refreshExpiresIn: 600
+		});
+
+		await screen.findByText(/als Beraterin angemeldet/);
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+	});
+
 	/* A link consumed or withdrawn while the guest picked a name can never
 	   succeed on retry: it is an unusable invite, not a name that failed to
 	   save — the same error page the on-arrival flow showed. */
