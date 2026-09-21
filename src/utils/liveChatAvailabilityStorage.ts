@@ -19,13 +19,34 @@ export const LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY =
 /**
  * An acknowledged renewal (enable or heartbeat), in epoch ms. The server
  * started the lease no earlier than `sentAt`, so the lease is counted from
- * there; `ackedAt` is when the answer arrived, which tells whether other
- * evidence was gathered before the renewal took effect.
+ * there; `ackedAt` is when the answer arrived. `generation` goes up with
+ * every recorded acknowledgement, so "recorded after this request was sent"
+ * holds even within one millisecond.
  */
 export interface LiveChatAcknowledgement {
 	sentAt: number;
 	ackedAt: number;
+	generation: number;
 }
+
+/**
+ * This tab's own copy, merged with the shared record on every read (newest
+ * field wins): with Web Storage disabled or full, the tab still counts the
+ * lease its own renewals started.
+ */
+let ownAcknowledgement: LiveChatAcknowledgement = {
+	sentAt: 0,
+	ackedAt: 0,
+	generation: 0
+};
+/** Forget the lease times (switched off, session over); generations only rise. */
+const forgetOwnAcknowledgement = (): void => {
+	ownAcknowledgement = {
+		sentAt: 0,
+		ackedAt: 0,
+		generation: ownAcknowledgement.generation
+	};
+};
 
 /**
  * Changes whenever the session's live-chat keys are cleared (logout, any
@@ -45,46 +66,70 @@ export const readLiveChatSessionEpoch = (): string => {
 };
 
 export const recordLiveChatHeartbeatAcknowledged = (sentAt: number): void => {
+	// Monotonic: an older renewal answering last never moves the lease back,
+	// and the answer time and generation only ever advance.
+	const last = readLastLiveChatHeartbeatAcknowledged();
+	ownAcknowledgement = {
+		sentAt: Math.max(last.sentAt, sentAt),
+		ackedAt: Math.max(last.ackedAt, Date.now()),
+		generation: last.generation + 1
+	};
 	try {
-		// Monotonic: an older renewal answering last never moves the lease
-		// back, and the answer time only ever advances.
-		const last = readLastLiveChatHeartbeatAcknowledged();
 		localStorage.setItem(
 			LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
-			JSON.stringify({
-				sentAt: Math.max(last.sentAt, sentAt),
-				ackedAt: Math.max(last.ackedAt, Date.now())
-			})
+			JSON.stringify(ownAcknowledgement)
 		);
 	} catch {
 		/* Without storage each tab falls back to its own acknowledgements. */
 	}
 };
 
-const NO_ACKNOWLEDGEMENT: LiveChatAcknowledgement = { sentAt: 0, ackedAt: 0 };
+const NO_ACKNOWLEDGEMENT: LiveChatAcknowledgement = {
+	sentAt: 0,
+	ackedAt: 0,
+	generation: 0
+};
 
-/** The last acknowledgement in any tab; zeros when there is none. */
+const readSharedAcknowledgement = (): LiveChatAcknowledgement => {
+	try {
+		const raw = localStorage.getItem(
+			LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY
+		);
+		if (!raw) return NO_ACKNOWLEDGEMENT;
+		const parsed: unknown = JSON.parse(raw);
+		// A bare number (the first format) is both times at once.
+		if (typeof parsed === 'number' && Number.isFinite(parsed))
+			return { sentAt: parsed, ackedAt: parsed, generation: 0 };
+		const { sentAt, ackedAt, generation } = (parsed ?? {}) as Record<
+			string,
+			unknown
+		>;
+		if (Number.isFinite(sentAt) && Number.isFinite(ackedAt))
+			return {
+				sentAt: sentAt as number,
+				ackedAt: ackedAt as number,
+				generation: Number.isFinite(generation)
+					? (generation as number)
+					: 0
+			};
+		return NO_ACKNOWLEDGEMENT;
+	} catch {
+		return NO_ACKNOWLEDGEMENT;
+	}
+};
+
+/** The newest acknowledgement this tab knows of, its own or any tab's. */
 export const readLastLiveChatHeartbeatAcknowledged =
 	(): LiveChatAcknowledgement => {
-		try {
-			const raw = localStorage.getItem(
-				LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY
-			);
-			if (!raw) return NO_ACKNOWLEDGEMENT;
-			const parsed: unknown = JSON.parse(raw);
-			// A bare number (the first format) is both times at once.
-			if (typeof parsed === 'number' && Number.isFinite(parsed))
-				return { sentAt: parsed, ackedAt: parsed };
-			const { sentAt, ackedAt } = (parsed ?? {}) as Record<
-				string,
-				unknown
-			>;
-			if (Number.isFinite(sentAt) && Number.isFinite(ackedAt))
-				return { sentAt: sentAt as number, ackedAt: ackedAt as number };
-			return NO_ACKNOWLEDGEMENT;
-		} catch {
-			return NO_ACKNOWLEDGEMENT;
-		}
+		const shared = readSharedAcknowledgement();
+		return {
+			sentAt: Math.max(shared.sentAt, ownAcknowledgement.sentAt),
+			ackedAt: Math.max(shared.ackedAt, ownAcknowledgement.ackedAt),
+			generation: Math.max(
+				shared.generation,
+				ownAcknowledgement.generation
+			)
+		};
 	};
 
 /**
@@ -151,6 +196,7 @@ export const persistLiveChatAvailabilityPreference = (
 			localStorage.setItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY, '1');
 		} else {
 			localStorage.removeItem(LIVE_CHAT_AVAILABILITY_STORAGE_KEY);
+			forgetOwnAcknowledgement();
 			localStorage.removeItem(LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY);
 		}
 		localStorage.removeItem(LEGACY_LIVE_CHAT_AVAILABILITY_STORAGE_KEY);
@@ -177,6 +223,7 @@ export const persistLiveChatAvailabilityPreference = (
 /** Ends the session's live-chat state: logout and every teardown. */
 export const clearLiveChatAvailabilityPreference = (): void => {
 	liveChatSessionEpoch += 1;
+	forgetOwnAcknowledgement();
 	try {
 		localStorage.setItem(
 			LIVE_CHAT_SESSION_EPOCH_STORAGE_KEY,

@@ -5,7 +5,10 @@ import {
 	useLiveChatAvailable,
 	useLiveChatAvailabilityHeartbeat
 } from './liveChatToggle';
-import { clearLiveChatAvailabilityPreference } from './liveChatAvailabilityStorage';
+import {
+	clearLiveChatAvailabilityPreference,
+	recordLiveChatHeartbeatAcknowledged
+} from './liveChatAvailabilityStorage';
 import {
 	apiGetLiveChatAvailability,
 	apiHeartbeatLiveChatAvailability,
@@ -40,6 +43,10 @@ const pendingHeartbeat = (): Settle => {
 
 describe('live-chat availability state', () => {
 	beforeEach(() => {
+		localStorage.clear();
+		// Ends the previous test's session, as logout does: the module keeps
+		// its own copy of the lease acknowledgement.
+		clearLiveChatAvailabilityPreference();
 		localStorage.clear();
 		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(false);
 		vi.mocked(apiSetLiveChatAvailability).mockResolvedValue(undefined);
@@ -608,17 +615,24 @@ describe('live-chat availability state', () => {
 
 	it('shares when its own heartbeat was last acknowledged', async () => {
 		vi.useFakeTimers();
+		const readAck = () =>
+			JSON.parse(
+				localStorage.getItem('oriso_liveChatAvailabilityAck') ?? '{}'
+			);
 		renderHook(() => useLiveChatAvailabilityHeartbeat(true, true));
+		await act(async () => vi.advanceTimersByTimeAsync(0));
+		const afterFirstBeat = readAck();
 
 		await act(async () => vi.advanceTimersByTimeAsync(45_000));
 
-		// When the renewal was sent (the lease is counted from there) and when
-		// it was answered; both are now under fake timers.
-		expect(
-			JSON.parse(
-				localStorage.getItem('oriso_liveChatAvailabilityAck') ?? '{}'
-			)
-		).toEqual({ sentAt: Date.now(), ackedAt: Date.now() });
+		// When the renewal was sent (the lease is counted from there), when it
+		// was answered (both now under fake timers), and one generation per
+		// acknowledged beat. Generations only rise, so compare, not count.
+		expect(readAck()).toEqual({
+			sentAt: Date.now(),
+			ackedAt: Date.now(),
+			generation: afterFirstBeat.generation + 1
+		});
 	});
 
 	// #1485 review: after a reload the availability GET only reads whether a
@@ -1210,6 +1224,55 @@ describe('live-chat availability state', () => {
 		});
 
 		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	// #1485 review: with Web Storage disabled the shared record cannot be
+	// written; the tab must still count the lease its own renewals started.
+	it('stays live on acknowledged heartbeats when storage cannot be written', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		const setItem = vi
+			.spyOn(Storage.prototype, 'setItem')
+			.mockImplementation(() => {
+				throw new DOMException('disabled', 'SecurityError');
+			});
+		try {
+			const { result } = renderHook(() => {
+				const availability = useLiveChatAvailable();
+				useLiveChatAvailabilityHeartbeat(true, availability[0]);
+				return availability;
+			});
+			await act(async () => Promise.resolve());
+
+			await act(async () => vi.advanceTimersByTimeAsync(200_000));
+
+			expect(result.current[0]).toBe(true);
+			expect(result.current[2].lostReason).toBeNull();
+		} finally {
+			setItem.mockRestore();
+		}
+	});
+
+	// #1485 review: a renewal acknowledged in the same millisecond the check
+	// was sent is still newer than that check.
+	it('treats an acknowledgement in the same millisecond as newer than the check', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		let answer: (available: boolean) => void = () => undefined;
+		vi.mocked(apiGetLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = resolve;
+			})
+		);
+		const { result } = renderHook(() => useLiveChatAvailable());
+
+		// Another consumer's enable is acknowledged; the clock has not moved.
+		recordLiveChatHeartbeatAcknowledged(Date.now());
+		await act(async () => answer(false));
+
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBe('1');
 		expect(result.current[2].lostReason).toBeNull();
 	});
 

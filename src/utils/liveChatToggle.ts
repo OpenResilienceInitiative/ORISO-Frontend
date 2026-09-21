@@ -82,8 +82,21 @@ export const setLiveChatAvailable = async (
  * renewal (another tab's, whose storage event may not have arrived yet)
  * describes a lease that has since been renewed.
  */
-const renewedSince = (since: number): boolean =>
-	readLastLiveChatHeartbeatAcknowledged().ackedAt > since;
+export interface RenewalMark {
+	at: number;
+	generation: number;
+}
+/** Taken when a request is sent: which acknowledgements it predates. */
+const markRenewals = (): RenewalMark => ({
+	at: Date.now(),
+	generation: readLastLiveChatHeartbeatAcknowledged().generation
+});
+const renewedSince = (mark: RenewalMark): boolean => {
+	const last = readLastLiveChatHeartbeatAcknowledged();
+	// The generation orders acknowledgements even within one millisecond;
+	// the answer time covers a record written before generations existed.
+	return last.generation > mark.generation || last.ackedAt > mark.at;
+};
 
 /** Ms left of the lease the latest acknowledgement (any tab) started. */
 const leaseLeftNow = (): number =>
@@ -135,12 +148,12 @@ export const useLiveChatAvailable = (): [
 		let mounted = true;
 		const reconcile = async () => {
 			const requestedAtRevision = availabilityRevision;
-			const sentAt = Date.now();
+			const sent = markRenewals();
 			try {
 				const backendActive = await apiGetLiveChatAvailability();
 				// A "no" older than another tab's acknowledged enable is
 				// stale; that tab's storage event will reconcile again.
-				const staleNo = !backendActive && renewedSince(sentAt);
+				const staleNo = !backendActive && renewedSince(sent);
 				if (
 					mounted &&
 					requestedAtRevision === availabilityRevision &&
@@ -335,7 +348,8 @@ export const useLiveChatAvailabilityHeartbeat = (
 			// tab had an enable or heartbeat acknowledged since, the lease
 			// was renewed after that; its storage event may simply not have
 			// reached this tab yet, so the tab-local revision cannot tell.
-			const renewedSinceSent = () => renewedSince(sentAt);
+			const sent = markRenewals();
+			const renewedSinceSent = () => renewedSince(sent);
 			const request = new AbortController();
 			inFlight.add(request);
 			void apiHeartbeatLiveChatAvailability(request.signal)
