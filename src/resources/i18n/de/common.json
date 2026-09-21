@@ -946,7 +946,8 @@
 			},
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
-				"headline": "Teilnehmende"
+				"headline": "Teilnehmende",
+				"menuLabel": "Optionen für {{name}}"
 			},
 			"gallery": {
 				"back": "Zurück zum Countdown",
@@ -971,6 +972,10 @@
 					}
 				},
 				"upcoming": "Nächste Termine"
+			},
+			"status": {
+				"active": "Läuft gerade",
+				"planned": "Geplant"
 			}
 		},
 		"join": {
@@ -993,6 +998,9 @@
 					"flipHint": "klicken zum Umdrehen",
 					"greetingLabel": "Begrüßung Ihrer Beratung",
 					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
+					"moderatorHeadline": "Der Gesprächskreis beginnt {{eta}}.",
+					"moderatorOverdueHeadline": "Die Gruppe wartet.",
+					"moderatorSubtitle": "Sie können den Chat starten, sobald Sie bereit sind.",
 					"netiquetteLabel": "Netiquette · Regel {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",

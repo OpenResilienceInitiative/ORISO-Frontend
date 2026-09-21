@@ -893,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
-				"headline": "Katılımcılar"
+				"headline": "Katılımcılar",
+				"menuLabel": "{{name}} için seçenekler"
 			},
 			"gallery": {
 				"back": "Geri sayıma dön",
@@ -918,6 +919,10 @@
 					}
 				},
 				"upcoming": "Sonraki randevular"
+			},
+			"status": {
+				"active": "Şu anda sürüyor",
+				"planned": "Planlandı"
 			}
 		},
 		"join": {
@@ -940,6 +945,9 @@
 					"flipHint": "çevirmek için tıklayın",
 					"greetingLabel": "Danışmanınızdan karşılama mesajı",
 					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
+					"moderatorHeadline": "Grup görüşmesi {{eta}} başlıyor.",
+					"moderatorOverdueHeadline": "Grup bekliyor.",
+					"moderatorSubtitle": "Hazır olduğunuzda sohbeti başlatabilirsiniz.",
 					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
 					"netiquetteTitle": "Sohbet kuralları",
 					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",

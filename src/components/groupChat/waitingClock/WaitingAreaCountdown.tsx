@@ -136,6 +136,74 @@ const fitClockSize = (
 	return FIT_MIN_SIZE;
 };
 
+/**
+ * "Animation abschalten" — the waiting room's motion switch. Exported so a
+ * screen that hides the built-in one (`hideMotionToggle`) can place the same
+ * control elsewhere, e.g. in its footer next to the main action (#1499).
+ */
+export const WaitingAreaMotionToggle = ({
+	label,
+	checked,
+	disabled = false,
+	onChange
+}: {
+	label: string;
+	checked: boolean;
+	disabled?: boolean;
+	onChange: (checked: boolean) => void;
+}) => (
+	<label
+		style={{
+			display: 'flex',
+			alignItems: 'center',
+			gap: 10,
+			fontSize: 12,
+			color: MUTED,
+			cursor: disabled ? 'default' : 'pointer',
+			opacity: disabled ? 0.6 : 1
+		}}
+	>
+		{label}
+		<button
+			type="button"
+			role="switch"
+			aria-checked={checked}
+			aria-label={label}
+			disabled={disabled}
+			onClick={() => onChange(!checked)}
+			style={{
+				width: 46,
+				height: 26,
+				borderRadius: 13,
+				border: checked
+					? `2px solid ${RED}`
+					: '2px solid var(--m3-outline, #747878)',
+				background: checked
+					? RED
+					: 'var(--m3-surface-container-high, #eae7e8)',
+				position: 'relative',
+				cursor: disabled ? 'default' : 'pointer',
+				padding: 0,
+				transition: 'all .25s',
+				flexShrink: 0
+			}}
+		>
+			<span
+				style={{
+					position: 'absolute',
+					top: checked ? 1 : 3,
+					left: checked ? 21 : 3,
+					width: checked ? 20 : 16,
+					height: checked ? 20 : 16,
+					borderRadius: '50%',
+					background: checked ? '#fff' : MUTED,
+					transition: 'all .25s'
+				}}
+			/>
+		</button>
+	</label>
+);
+
 export interface WaitingAreaCountdownProps {
 	/** When the group chat is scheduled to start. */
 	plannedStart: Date;
@@ -203,6 +271,12 @@ export interface WaitingAreaCountdownProps {
 	 * set, the parent owns the switch so siblings (rules) can pause too (#1293).
 	 */
 	animationOff?: boolean;
+	/**
+	 * Who is waiting. `moderator` is the counsellor who opens the room: she
+	 * gets her own headline and subline instead of the participants' "we'll be
+	 * with you in a moment" (#1499). Default `participant`.
+	 */
+	audience?: 'participant' | 'moderator';
 	onAnimationOffChange?: (off: boolean) => void;
 	/**
 	 * Vertical gap between headline, clock and the rest, in px. Default 26.
@@ -249,6 +323,7 @@ export const WaitingAreaCountdown = ({
 	labelsOutside = false,
 	hideMotionToggle = false,
 	animationOff: animationOffProp,
+	audience = 'participant',
 	onAnimationOffChange,
 	gap = 26,
 	nowMs,
@@ -434,56 +509,12 @@ export const WaitingAreaCountdown = ({
 
 	const toggleLabel = tr('toggleLabel', 'Animation abschalten');
 	const toggle = (
-		<label
-			style={{
-				display: 'flex',
-				alignItems: 'center',
-				gap: 10,
-				fontSize: 12,
-				color: MUTED,
-				cursor: forcedMotionless ? 'default' : 'pointer',
-				opacity: forcedMotionless ? 0.6 : 1
-			}}
-		>
-			{toggleLabel}
-			<button
-				type="button"
-				role="switch"
-				aria-checked={motionless}
-				aria-label={toggleLabel}
-				disabled={forcedMotionless}
-				onClick={() => setAnimOff(!animOff)}
-				style={{
-					width: 46,
-					height: 26,
-					borderRadius: 13,
-					border: motionless
-						? `2px solid ${RED}`
-						: '2px solid var(--m3-outline, #747878)',
-					background: motionless
-						? RED
-						: 'var(--m3-surface-container-high, #eae7e8)',
-					position: 'relative',
-					cursor: forcedMotionless ? 'default' : 'pointer',
-					padding: 0,
-					transition: 'all .25s',
-					flexShrink: 0
-				}}
-			>
-				<span
-					style={{
-						position: 'absolute',
-						top: motionless ? 1 : 3,
-						left: motionless ? 21 : 3,
-						width: motionless ? 20 : 16,
-						height: motionless ? 20 : 16,
-						borderRadius: '50%',
-						background: motionless ? '#fff' : MUTED,
-						transition: 'all .25s'
-					}}
-				/>
-			</button>
-		</label>
+		<WaitingAreaMotionToggle
+			label={toggleLabel}
+			checked={motionless}
+			disabled={forcedMotionless}
+			onChange={setAnimOff}
+		/>
 	);
 
 	const eta =
@@ -500,23 +531,35 @@ export const WaitingAreaCountdown = ({
 						? tr('etaMinute', 'in einer Minute')
 						: tr('etaMinutes', `in ${m} Minuten`, { count: m })
 					: tr('etaSoon', 'gleich');
-	const headline = isOverdue
-		? tr('overdueHeadline', 'Wir sind gleich für dich da.')
-		: tr('headline', `Dein Gruppen-Chat beginnt ${eta}.`, { eta });
+	const moderator = audience === 'moderator';
+	const headline = moderator
+		? isOverdue
+			? tr('moderatorOverdueHeadline', 'Die Gruppe wartet.')
+			: tr('moderatorHeadline', `Der Gesprächskreis beginnt ${eta}.`, {
+					eta
+				})
+		: isOverdue
+			? tr('overdueHeadline', 'Wir sind gleich für dich da.')
+			: tr('headline', `Dein Gruppen-Chat beginnt ${eta}.`, { eta });
 	// Frank, 2026-09-07: "statt zu sagen hey dieser Bindestrich ist quasi,
 	// kannst auch ein Komma machen" — and nobody clicks "a number" any more,
 	// there is one card now. Short enough to hold one line at 375 px.
-	const subtitle = isOverdue
+	const subtitle = moderator
 		? tr(
-				'overdueSubtitle',
-				'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
+				'moderatorSubtitle',
+				'Sie können den Chat starten, sobald Sie bereit sind.'
 			)
-		: canFlip
+		: isOverdue
 			? tr(
-					'subtitleCard',
-					'Uhr antippen, dahinter Begrüßung und Netiquette.'
+					'overdueSubtitle',
+					'Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.'
 				)
-			: '';
+			: canFlip
+				? tr(
+						'subtitleCard',
+						'Uhr antippen, dahinter Begrüßung und Netiquette.'
+					)
+				: '';
 	// The still view keeps the clock's footprint, so the row under it and the
 	// bar never move when someone flips the switch (Frank, 2026-09-04: "er
 	// sollte auf jeden Fall nicht springen").

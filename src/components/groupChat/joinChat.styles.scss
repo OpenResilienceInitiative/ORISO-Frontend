@@ -113,6 +113,49 @@
 
 	&__button-container {
 		text-align: center;
-		padding: $grid-base-six $grid-base-four;
+		padding: $grid-base-two $grid-base-two $grid-base-three;
+
+		@include breakpoint($fromLarge) {
+			padding: $grid-base-two $grid-base-four $grid-base-three;
+		}
+	}
+
+	// Footer row (#1499): calendar | main button | motion switch on desktop,
+	// main button first and the two secondary controls under it on a phone.
+	&__actions {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			'main'
+			'start'
+			'end';
+		gap: $grid-base-two;
+		align-items: center;
+		justify-items: center;
+
+		@include breakpoint($fromLarge) {
+			grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+			grid-template-areas: 'start main end';
+		}
+	}
+
+	&__actionsStart {
+		grid-area: start;
+
+		@include breakpoint($fromLarge) {
+			justify-self: start;
+		}
+	}
+
+	&__actionsMain {
+		grid-area: main;
+	}
+
+	&__actionsEnd {
+		grid-area: end;
+
+		@include breakpoint($fromLarge) {
+			justify-self: end;
+		}
 	}
 }

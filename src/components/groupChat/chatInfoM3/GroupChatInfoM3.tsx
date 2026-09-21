@@ -28,16 +28,18 @@ import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded';
 import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
 import ChatBubbleOutlineRoundedIcon from '@mui/icons-material/ChatBubbleOutlineRounded';
+import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 
 /**
- * #1499 item 2 — design proposal, not wired into the app yet.
+ * #1499 item 2 — the group Chat-Info (approved by Frank, 22.09.2026).
  *
  * The group "Chat-Info" rebuilt as a Material 3 surface that lives inside the
  * white chat card: a top bar with back action, a hero with the room's topic and
  * schedule, and three section cards (participants, team roles, room settings)
- * as M3 lists with leading icons. It is purely presentational — the existing
- * `GroupChatInfo` keeps fetching and deciding; once Frank approves the look it
- * maps its data onto these props.
+ * as M3 lists with leading icons. It is purely presentational — the route
+ * component `GroupChatInfo` fetches, decides and maps its data onto these
+ * props.
  *
  * Only M3 custom properties are used for colour (muted ORISO scheme), so the
  * scheme switcher and dark/contrast variants carry over without hand-picked
@@ -51,7 +53,9 @@ export type GroupChatInfoSettingKey =
 	| 'duration'
 	| 'repetition'
 	| 'agency'
-	| 'hint';
+	| 'hint'
+	| 'creator'
+	| 'createDate';
 
 export interface GroupChatInfoSetting {
 	key: GroupChatInfoSettingKey;
@@ -62,8 +66,12 @@ export interface GroupChatInfoSetting {
 export interface GroupChatInfoParticipant {
 	id: string;
 	name: string;
+	/** Login name, when it differs from the display name (ban API). */
+	username?: string;
 	/** Moderators cannot be banned, so they get no overflow menu. */
 	isModerator?: boolean;
+	/** A short state under the name, e.g. "Gebannt"; also hides the menu. */
+	statusLabel?: string;
 }
 
 export type GroupChatTeamRole = 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
@@ -96,6 +104,14 @@ export interface GroupChatInfoM3Props {
 	onShowQrCode?: () => void;
 	onCopyInviteLink?: () => void;
 	teamRoles?: GroupChatInfoTeamMember[];
+	/**
+	 * Replaces the read-only `teamRoles` list with interactive content (the
+	 * app passes `GroupChatRoleManager`). The section card and its heading
+	 * stay; render nothing to hide the section.
+	 */
+	teamRolesSlot?: React.ReactNode;
+	/** An extra action in the hero, e.g. "Chat beenden" while the room runs. */
+	primaryAction?: React.ReactNode;
 	settings: GroupChatInfoSetting[];
 	onEdit?: () => void;
 	onBack?: () => void;
@@ -109,7 +125,9 @@ const SETTING_ICONS: Record<GroupChatInfoSettingKey, React.ElementType> = {
 	duration: TimerOutlinedIcon,
 	repetition: RepeatRoundedIcon,
 	agency: ApartmentOutlinedIcon,
-	hint: ChatBubbleOutlineRoundedIcon
+	hint: ChatBubbleOutlineRoundedIcon,
+	creator: PersonOutlineRoundedIcon,
+	createDate: HistoryRoundedIcon
 };
 
 const initialsOf = (name: string) =>
@@ -213,6 +231,8 @@ export const GroupChatInfoM3 = ({
 	onShowQrCode,
 	onCopyInviteLink,
 	teamRoles = [],
+	teamRolesSlot,
+	primaryAction,
 	settings,
 	onEdit,
 	onBack,
@@ -362,15 +382,19 @@ export const GroupChatInfoM3 = ({
 								</Box>
 							)}
 						</Box>
-						{calendarAction && (
+						{(calendarAction || primaryAction) && (
 							<Box
 								sx={{
 									'flex': '0 0 auto',
+									'display': 'flex',
+									'flexWrap': 'wrap',
+									'gap': 1,
 									'@container (max-width: 559px)': {
 										flexBasis: '100%'
 									}
 								}}
 							>
+								{primaryAction}
 								{calendarAction}
 							</Box>
 						)}
@@ -472,7 +496,8 @@ export const GroupChatInfoM3 = ({
 												sx={listItemSx}
 												secondaryAction={
 													canModerate &&
-													!participant.isModerator ? (
+													!participant.isModerator &&
+													!participant.statusLabel ? (
 														<IconButton
 															edge="end"
 															aria-label={participantMenuLabel(
@@ -505,6 +530,15 @@ export const GroupChatInfoM3 = ({
 												</ListItemAvatar>
 												<ListItemText
 													primary={participant.name}
+													secondary={
+														participant.statusLabel
+													}
+													secondaryTypographyProps={{
+														sx: {
+															...type.labelMedium,
+															color: 'var(--m3-error)'
+														}
+													}}
 													primaryTypographyProps={{
 														sx: {
 															...type.bodyLarge,
@@ -521,7 +555,7 @@ export const GroupChatInfoM3 = ({
 							</Box>
 
 							{/* Team roles */}
-							{teamRoles.length > 0 && (
+							{(teamRolesSlot ?? teamRoles.length > 0) && (
 								<Box
 									component="section"
 									aria-labelledby={ids.roles}
@@ -530,45 +564,47 @@ export const GroupChatInfoM3 = ({
 									<SectionHeading id={ids.roles}>
 										{translate('groupChat.roles.headline')}
 									</SectionHeading>
-									<List disablePadding>
-										{teamRoles.map((member) => (
-											<ListItem
-												key={member.id}
-												sx={listItemSx}
-											>
-												<ListItemAvatar>
-													<Avatar
-														sx={avatarSx}
-														aria-hidden="true"
-													>
-														{initialsOf(
-															member.name
+									{teamRolesSlot ?? (
+										<List disablePadding>
+											{teamRoles.map((member) => (
+												<ListItem
+													key={member.id}
+													sx={listItemSx}
+												>
+													<ListItemAvatar>
+														<Avatar
+															sx={avatarSx}
+															aria-hidden="true"
+														>
+															{initialsOf(
+																member.name
+															)}
+														</Avatar>
+													</ListItemAvatar>
+													<ListItemText
+														primary={member.name}
+														secondary={translate(
+															`groupChat.roles.${member.role}`
 														)}
-													</Avatar>
-												</ListItemAvatar>
-												<ListItemText
-													primary={member.name}
-													secondary={translate(
-														`groupChat.roles.${member.role}`
-													)}
-													primaryTypographyProps={{
-														sx: {
-															...type.bodyLarge,
-															color: onSurface,
-															overflowWrap:
-																'anywhere'
-														}
-													}}
-													secondaryTypographyProps={{
-														sx: {
-															...type.bodyMedium,
-															color: onSurfaceVariant
-														}
-													}}
-												/>
-											</ListItem>
-										))}
-									</List>
+														primaryTypographyProps={{
+															sx: {
+																...type.bodyLarge,
+																color: onSurface,
+																overflowWrap:
+																	'anywhere'
+															}
+														}}
+														secondaryTypographyProps={{
+															sx: {
+																...type.bodyMedium,
+																color: onSurfaceVariant
+															}
+														}}
+													/>
+												</ListItem>
+											))}
+										</List>
+									)}
 								</Box>
 							)}
 						</Box>

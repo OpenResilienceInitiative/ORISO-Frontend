@@ -894,7 +894,8 @@
 			},
 			"subscribers": {
 				"empty": "Нет участников",
-				"headline": "Участники"
+				"headline": "Участники",
+				"menuLabel": "Действия для {{name}}"
 			},
 			"gallery": {
 				"back": "Назад к обратному отсчёту",
@@ -919,6 +920,10 @@
 					}
 				},
 				"upcoming": "Ближайшие встречи"
+			},
+			"status": {
+				"active": "Идёт сейчас",
+				"planned": "Запланировано"
 			}
 		},
 		"join": {
@@ -941,6 +946,9 @@
 					"flipHint": "нажмите, чтобы перевернуть",
 					"greetingLabel": "Приветствие вашего консультанта",
 					"headline": "Ваш групповой чат начнётся {{eta}}.",
+					"moderatorHeadline": "Групповая встреча начнётся {{eta}}.",
+					"moderatorOverdueHeadline": "Группа ждёт.",
+					"moderatorSubtitle": "Вы можете начать чат, как только будете готовы.",
 					"netiquetteLabel": "Нетикет · правило {{no}}",
 					"netiquetteTitle": "Нетикет",
 					"overdueCaption": "Ожидание становится немного неловким …",

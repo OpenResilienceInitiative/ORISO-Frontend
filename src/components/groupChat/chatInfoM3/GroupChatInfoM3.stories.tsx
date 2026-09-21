@@ -19,9 +19,9 @@ import {
 } from '../../message/messageStoryShell';
 
 /**
- * #1499 item 2 — design proposal for the group "Chat-Info" in Material 3,
- * inside the white chat card. Not wired into the app: Frank approves the look
- * first, then `GroupChatInfo` maps its data onto these props.
+ * #1499 item 2 — the group "Chat-Info" in Material 3, inside the white chat
+ * card. Frank approved this design on 22.09.2026; `GroupChatInfo` renders it
+ * in the app (see `Chat info/Group (app)` for the wired route).
  *
  * Content is the one from Frank's screenshot of 21.09.2026 (self-help group
  * "HIV und Aids", before start).
@@ -105,7 +105,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'#1499 item 2 — design proposal: the self-help group\'s "Chat-Info" as a Material 3 surface inside the white chat card. Top bar with back action; hero with topic, status and schedule plus "Zum Kalender hinzufügen"; section cards for participants (QR code, invite link, per-person menu for moderators), roles in the counselling team, and the room settings as an M3 list with leading icons. Two columns from a 720 px wide card, one column below. Colours only from the M3 custom properties. Not wired into the app yet.'
+					'#1499 item 2 — the self-help group\'s "Chat-Info" as a Material 3 surface inside the white chat card. Top bar with back action; hero with topic, status and schedule plus "Zum Kalender hinzufügen"; section cards for participants (QR code, invite link, per-person menu for moderators), roles in the counselling team, and the room settings as an M3 list with leading icons. Two columns from a 720 px wide card, one column below. Colours only from the M3 custom properties. Wired into the app via `GroupChatInfo`.'
 			}
 		}
 	}

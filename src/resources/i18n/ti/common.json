@@ -893,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "ተሳተፍቲ የለን",
-				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ"
+				"headline": "ተሳተፍቲ ምዃኖም ይፍለጥ",
+				"menuLabel": "ን{{name}} ዝኸውን ምርጫታት"
 			},
 			"gallery": {
 				"back": "ናብቲ ቆጻሪ ተመለስ",
@@ -918,6 +919,10 @@
 					}
 				},
 				"upcoming": "ዝቕጽሉ ቆጸራታት"
+			},
+			"status": {
+				"active": "ሕጂ ይካየድ ኣሎ",
+				"planned": "ዝተመደበ"
 			}
 		},
 		"join": {
@@ -940,6 +945,9 @@
 					"flipHint": "ንምግልባጥ ጠውቕ",
 					"greetingLabel": "ሰላምታ ካብ ኣማኻሪኻ",
 					"headline": "ጉጅለ ቻትካ {{eta}} ክጅምር እዩ።",
+					"moderatorHeadline": "ናይ ጉጅለ ርክብ {{eta}} ክጅምር እዩ።",
+					"moderatorOverdueHeadline": "ጉጅለ ይጽበ ኣሎ።",
+					"moderatorSubtitle": "ድሉዋት ምስ ኮንኩም ነቲ ቻት ክትጅምርዎ ትኽእሉ ኢኹም።",
 					"netiquetteLabel": "ሕጊ ዝርርብ · ሕጊ {{no}}",
 					"netiquetteTitle": "ሕግታት ዝርርብ",
 					"overdueCaption": "እቲ ምጽባይ ቁሩብ ዘሕፍር ይኸውን ኣሎ …",
