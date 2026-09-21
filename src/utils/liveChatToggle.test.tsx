@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	useLiveChatAvailable,
@@ -26,6 +26,9 @@ describe('live-chat availability state', () => {
 	});
 
 	afterEach(() => {
+		// Unmount every consumer, so none of them answers the next test's
+		// storage events.
+		cleanup();
 		vi.clearAllMocks();
 		vi.useRealTimers();
 	});
@@ -354,6 +357,7 @@ describe('live-chat availability state', () => {
 		expect(pendingGets).toHaveLength(2);
 
 		await act(async () => pendingGets[0](false));
+		expect(pendingGets).toHaveLength(2);
 		await act(async () => pendingGets[1](true));
 
 		expect(result.current.navigation[0]).toBe(false);
@@ -466,6 +470,111 @@ describe('live-chat availability state', () => {
 		await waitFor(() => expect(result.current[2].loading).toBe(false));
 
 		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	// #1485 review: tab B's check was sent before tab A switched on; its late
+	// "no" must not remove A's fresh preference or raise a loss notice.
+	it('discards a check sent before another tab switched live chat on', async () => {
+		const pendingGets: Array<(available: boolean) => void> = [];
+		vi.mocked(apiGetLiveChatAvailability).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					pendingGets.push(resolve);
+				})
+		);
+		const { result } = renderHook(() => useLiveChatAvailable());
+		expect(pendingGets).toHaveLength(1);
+
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		act(() => {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailability',
+					newValue: '1'
+				})
+			);
+		});
+		await act(async () => pendingGets[0](false));
+
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBe('1');
+		expect(result.current[2].lostReason).toBeNull();
+
+		expect(pendingGets).toHaveLength(2);
+		await act(async () => pendingGets[1](true));
+		expect(result.current[0]).toBe(true);
+	});
+
+	it('lets every consumer in the tab follow a change another tab made', async () => {
+		const pendingGets: Array<(available: boolean) => void> = [];
+		vi.mocked(apiGetLiveChatAvailability).mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					pendingGets.push(resolve);
+				})
+		);
+		const { result } = renderHook(() => ({
+			navigation: useLiveChatAvailable(),
+			sessionsList: useLiveChatAvailable()
+		}));
+		await act(async () => pendingGets.splice(0).forEach((r) => r(false)));
+
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		act(() => {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailability',
+					newValue: '1'
+				})
+			);
+		});
+		await act(async () => pendingGets.splice(0).forEach((r) => r(true)));
+
+		expect(result.current.navigation[0]).toBe(true);
+		expect(result.current.sessionsList[0]).toBe(true);
+	});
+
+	// #1485 review: the server counts the consultant as long as any of her
+	// tabs renews the lease, so one offline tab must not switch all off.
+	it('stays live while another tab keeps the lease acknowledged', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new TypeError('Failed to fetch')
+		);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(100_000));
+		// The other tab's heartbeat was acknowledged just now.
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now())
+		);
+
+		await act(async () => vi.advanceTimersByTimeAsync(119_000));
+		expect(result.current[0]).toBe(true);
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBe('1');
+
+		// Nothing acknowledged anywhere for a whole lease: now it is gone.
+		await act(async () => vi.advanceTimersByTimeAsync(1_000));
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
+	});
+
+	it('shares when its own heartbeat was last acknowledged', async () => {
+		vi.useFakeTimers();
+		renderHook(() => useLiveChatAvailabilityHeartbeat(true, true));
+
+		await act(async () => vi.advanceTimersByTimeAsync(45_000));
+
+		expect(localStorage.getItem('oriso_liveChatAvailabilityAck')).toBe(
+			String(Date.now())
+		);
 	});
 
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {

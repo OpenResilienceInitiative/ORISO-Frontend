@@ -1,7 +1,8 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	NOTIFICATION_TYPE_WARNING,
+	NotificationDefaultType,
 	NotificationsContext
 } from '../../globalState/provider/NotificationsProvider';
 import { LiveChatAvailabilityLossReason } from '../../utils/liveChatAvailabilityStorage';
@@ -29,23 +30,38 @@ export const useLiveChatAvailabilityLossNotice = (
 	const { t: translate } = useTranslation();
 	// Null outside the provider (Storybook shells render NavigationBar bare).
 	const notifications = useContext(NotificationsContext);
+	// The state setter is stable; add/removeNotification change identity with
+	// every notification and would re-run this effect on each of them.
+	const setNotifications = notifications?.setNotifications;
+	const shownReason = useRef<LiveChatAvailabilityLossReason | null>(null);
 
 	useEffect(() => {
+		const reasonChanged = shownReason.current !== lostReason;
+		shownReason.current = lostReason;
+		const isNotice = (item: NotificationDefaultType) =>
+			item.id === NOTICE_ID &&
+			item.notificationType === NOTIFICATION_TYPE_WARNING;
 		if (!lostReason) {
-			notifications?.removeNotification(
-				NOTICE_ID,
-				NOTIFICATION_TYPE_WARNING
-			);
+			if (reasonChanged)
+				setNotifications?.((list: NotificationDefaultType[]) =>
+					list.filter((item) => !isNotice(item))
+				);
 			return;
 		}
-		notifications?.addNotification({
+		const notice: NotificationDefaultType = {
 			id: NOTICE_ID,
 			notificationType: NOTIFICATION_TYPE_WARNING,
 			closeable: true,
 			title: translate('profile.functions.liveChat.lost.title'),
 			text: translate(LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[lostReason])
+		};
+		// The provider has no update call and `addNotification` skips an id it
+		// already shows, so the notice is replaced in place. A new reason opens
+		// it (again); a language switch only rewords one that is still open.
+		setNotifications?.((list: NotificationDefaultType[]) => {
+			if (list.some(isNotice))
+				return list.map((item) => (isNotice(item) ? notice : item));
+			return reasonChanged ? [...list, notice] : list;
 		});
-		// Context callbacks change identity with every notification; the
-		// notice follows the reason only.
-	}, [lostReason]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [lostReason, translate, setNotifications]);
 };

@@ -12,7 +12,9 @@ import {
 	LiveChatAvailabilityLossReason,
 	parseLiveChatAvailabilityLoss,
 	persistLiveChatAvailabilityPreference,
-	readLiveChatAvailabilityPreference
+	readLastLiveChatHeartbeatAcknowledged,
+	readLiveChatAvailabilityPreference,
+	recordLiveChatHeartbeatAcknowledged
 } from './liveChatAvailabilityStorage';
 
 /**
@@ -36,6 +38,16 @@ const SIDEBAR_CHANGE_EVENT = 'oriso:liveChatViaSidebarChange';
 /** Written by pre-rename builds (FE-H05, #178); read once, then dropped. */
 const LEGACY_SIDEBAR_STORAGE_KEY = 'caritas_liveChatViaSidebar';
 let availabilityRevision = 0;
+/**
+ * Every consumer in the tab receives the same `storage` event; only the first
+ * may invalidate, or each would discard the requests the others just sent.
+ */
+let lastInvalidatingStorageEvent: StorageEvent | null = null;
+const invalidateForStorageChange = (event: StorageEvent): void => {
+	if (lastInvalidatingStorageEvent === event) return;
+	lastInvalidatingStorageEvent = event;
+	availabilityRevision += 1;
+};
 
 export const isLiveChatAvailable = (): boolean => {
 	return readLiveChatAvailabilityPreference();
@@ -116,14 +128,19 @@ export const useLiveChatAvailable = (): [
 			}
 		};
 		const onStorage = (event: StorageEvent) => {
-			if (event.key === LIVE_CHAT_AVAILABILITY_STORAGE_KEY)
+			if (event.key === LIVE_CHAT_AVAILABILITY_STORAGE_KEY) {
+				// Another tab changed the preference: an answer to a request
+				// sent before that change describes the old state, so it is
+				// discarded instead of undoing the change (#1485).
+				invalidateForStorageChange(event);
 				void reconcile();
+			}
 			if (event.key === LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY) {
 				// Another tab switched off on its own (#1485): say why here
 				// too, and keep this tab's in-flight answers from reviving it.
 				const reason = parseLiveChatAvailabilityLoss(event.newValue);
 				if (reason) {
-					availabilityRevision += 1;
+					invalidateForStorageChange(event);
 					setActive(false);
 				}
 				setLostReason(reason);
@@ -184,8 +201,9 @@ export const LIVE_CHAT_HEARTBEAT_INTERVAL_MS = 45_000;
  *
  * A refusal or a server answer of "no lease" switches off at once. A transient
  * failure (no response, timeout, 5xx) is retried quietly on the next beat, but
- * once nothing was acknowledged for longer than the lease the server has
- * stopped counting this consultant, so the client stops claiming "live" too.
+ * once no tab had a heartbeat acknowledged for longer than the lease the
+ * server has stopped counting this consultant, so the client stops claiming
+ * "live" too.
  */
 export const useLiveChatAvailabilityHeartbeat = (
 	enabled: boolean,
@@ -196,13 +214,20 @@ export const useLiveChatAvailabilityHeartbeat = (
 		// `active` only turns true once the backend acknowledged it, so the
 		// lease is fresh when this effect starts.
 		let leaseWatchdog = 0;
-		const armLeaseWatchdog = () => {
+		const armLeaseWatchdog = (delay = LIVE_CHAT_LEASE_MS) => {
 			window.clearTimeout(leaseWatchdog);
 			const armedAtRevision = availabilityRevision;
 			leaseWatchdog = window.setTimeout(() => {
 				if (armedAtRevision !== availabilityRevision) return;
-				dropLiveChatAvailability('connectionLost');
-			}, LIVE_CHAT_LEASE_MS);
+				// Another tab may still be renewing the lease; the server
+				// counts the consultant until a lease after its last ack.
+				const leaseLeft =
+					readLastLiveChatHeartbeatAcknowledged() +
+					LIVE_CHAT_LEASE_MS -
+					Date.now();
+				if (leaseLeft > 0) armLeaseWatchdog(leaseLeft);
+				else dropLiveChatAvailability('connectionLost');
+			}, delay);
 		};
 		armLeaseWatchdog();
 		const heartbeat = window.setInterval(() => {
@@ -210,8 +235,10 @@ export const useLiveChatAvailabilityHeartbeat = (
 			void apiHeartbeatLiveChatAvailability()
 				.then((leaseActive) => {
 					if (requestedAtRevision !== availabilityRevision) return;
-					if (leaseActive) armLeaseWatchdog();
-					else dropLiveChatAvailability('leaseLost');
+					if (leaseActive) {
+						recordLiveChatHeartbeatAcknowledged();
+						armLeaseWatchdog();
+					} else dropLiveChatAvailability('leaseLost');
 				})
 				.catch((error: unknown) => {
 					if (requestedAtRevision !== availabilityRevision) return;
