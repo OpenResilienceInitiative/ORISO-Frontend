@@ -61,6 +61,7 @@ export const RegistrationTopicSearch = ({
 	const { t } = useTranslation();
 	const [open, setOpen] = useState(defaultOpen);
 	const [query, setQuery] = useState(defaultQuery);
+	const [listOpen, setListOpen] = useState(true);
 	const buttonRef = useRef<HTMLButtonElement>(null);
 	const onPrimary = tone === 'onPrimary';
 
@@ -159,7 +160,10 @@ export const RegistrationTopicSearch = ({
 				}}
 			>
 				<Autocomplete<Suggestion, false, true, false>
-					open={query.trim().length >= MIN_QUERY_LENGTH}
+					open={listOpen && query.trim().length >= MIN_QUERY_LENGTH}
+					// Tab out closes the list; typing or focusing opens it again.
+					onOpen={() => setListOpen(true)}
+					onClose={() => setListOpen(false)}
 					options={suggestions}
 					filterOptions={(options) => options}
 					getOptionLabel={(option) => option.title}
@@ -167,7 +171,9 @@ export const RegistrationTopicSearch = ({
 					value={null}
 					inputValue={query}
 					onInputChange={(_, value, reason) => {
-						if (reason !== 'reset') setQuery(value);
+						if (reason === 'reset') return;
+						setQuery(value);
+						setListOpen(true);
 					}}
 					onChange={(_, option) => {
 						if (!option) return;

@@ -138,3 +138,21 @@ export const OpenTypePick: Story = {
 		).toBeInTheDocument();
 	}
 };
+
+export const TabOutClosesList: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const body = within(canvasElement.ownerDocument.body);
+
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Thema suchen' })
+		);
+		await userEvent.type(await canvas.findByRole('combobox'), 'mahnung');
+		await body.findByRole('listbox');
+
+		await userEvent.tab();
+		await waitFor(() =>
+			expect(body.queryByRole('listbox')).not.toBeInTheDocument()
+		);
+	}
+};
