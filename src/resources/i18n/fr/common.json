@@ -3053,8 +3053,7 @@
 				"placeholder": "Rechercher un thème ou un mot-clé",
 				"close": "Fermer la recherche",
 				"noResults": "Aucun thème correspondant. Essayez un autre mot.",
-				"matchedBy": "correspond à « {{term}} »",
-				"suggestions": "Suggestions"
+				"matchedBy": "correspond à « {{term}} »"
 			}
 		},
 		"account": {

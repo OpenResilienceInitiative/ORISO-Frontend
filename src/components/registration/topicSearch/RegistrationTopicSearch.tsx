@@ -127,9 +127,8 @@ export const RegistrationTopicSearch = ({
 
 	return (
 		<ClickAwayListener
-			onClickAway={() => {
-				if (!query) close();
-			}}
+			// On the phone the open field covers language + login.
+			onClickAway={close}
 		>
 			<Box
 				className="registrationTopicSearch"

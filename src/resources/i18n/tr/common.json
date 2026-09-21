@@ -3062,8 +3062,7 @@
 				"placeholder": "Konu veya anahtar kelime ara",
 				"close": "Aramayı kapat",
 				"noResults": "Uygun konu bulunamadı. Başka bir kelime deneyin.",
-				"matchedBy": "“{{term}}” ile eşleşiyor",
-				"suggestions": "Öneriler"
+				"matchedBy": "“{{term}}” ile eşleşiyor"
 			}
 		},
 		"account": {

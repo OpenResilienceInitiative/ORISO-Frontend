@@ -3195,8 +3195,7 @@
 				"placeholder": "Thema oder Stichwort suchen",
 				"close": "Suche schließen",
 				"noResults": "Kein passendes Thema gefunden. Versuchen Sie ein anderes Wort.",
-				"matchedBy": "passt zu „{{term}}“",
-				"suggestions": "Vorschläge"
+				"matchedBy": "passt zu „{{term}}“"
 			}
 		},
 		"zipcode": {

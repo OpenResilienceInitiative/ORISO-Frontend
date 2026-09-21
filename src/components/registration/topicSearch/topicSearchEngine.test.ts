@@ -109,4 +109,12 @@ describe('searchTopics', () => {
 			'u25-suicide-prevention'
 		);
 	});
+
+	it.each([
+		['ich habe schulden', 'debt'],
+		['ungewollt schwanger was tun', 'pregnancy'],
+		['probleme mit alkohol', 'sucht']
+	])('finds a topic inside a sentence: %s → %s', (query, key) => {
+		expect(topKey(query)).toBe(key);
+	});
 });

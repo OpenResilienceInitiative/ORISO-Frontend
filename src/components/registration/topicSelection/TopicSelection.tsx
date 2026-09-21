@@ -272,8 +272,14 @@ export const TopicSelection: FC<{
 			)
 		);
 
+		// Grouped view: a topic without a placement cannot be selected.
+		const searchable =
+			listView || !topicGroups?.length
+				? topics
+				: topics.filter(({ id }) => groupsByTopicId.has(id));
+
 		return {
-			entries: topics.map((topic) => ({
+			entries: searchable.map((topic) => ({
 				topicId: topic.id,
 				title: getRegistrationTopicDisplay(topic, locale).title,
 				category: groupsByTopicId.get(topic.id)?.[0]?.name,
@@ -281,7 +287,7 @@ export const TopicSelection: FC<{
 			})),
 			index: buildTopicSearchIndex(
 				buildTopicSearchDocuments(
-					topics.map((topic) => ({
+					searchable.map((topic) => ({
 						id: topic.id,
 						key: getRegistrationTopicKey(topic),
 						extraTitles: [
@@ -294,10 +300,12 @@ export const TopicSelection: FC<{
 				)
 			)
 		};
-	}, [locale, topicGroups, topics]);
+	}, [listView, locale, topicGroups, topics]);
 	// Avoids re-registering the search on every group expand.
 	const selectTopicFromSearchRef = useRef(selectTopicFromSearch);
-	selectTopicFromSearchRef.current = selectTopicFromSearch;
+	useEffect(() => {
+		selectTopicFromSearchRef.current = selectTopicFromSearch;
+	}, [selectTopicFromSearch]);
 	useEffect(() => {
 		if (!topicSearchData) {
 			registerTopicSearch(null);

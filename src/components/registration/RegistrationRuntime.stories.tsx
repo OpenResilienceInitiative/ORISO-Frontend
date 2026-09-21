@@ -8,6 +8,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { registrationSessionStorageKey } from '../../globalState/provider/RegistrationProvider';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../stage/stage';
+import { desktop1440Globals } from '../message/messageStoryShell';
 import {
 	APP_ORISO_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
@@ -129,6 +130,7 @@ export const TopicSelectionRoute: Story = {
  * band under it; breaks if `.stageLayout__contentWrapper` shrinks.
  */
 export const LongTopicListKeepsStepHeader: Story = {
+	globals: desktop1440Globals,
 	// Storybook's root grows with its content; the app root is one viewport tall.
 	render: () => (
 		<div style={{ height: '100vh' }}>
@@ -184,6 +186,7 @@ export const LongTopicListKeepsStepHeader: Story = {
 
 /** A picked search suggestion selects the topic and enables "Weiter". */
 export const HeaderSearchSelectsTopic: Story = {
+	globals: desktop1440Globals,
 	render: () => (
 		<div style={{ height: '100vh' }}>
 			<RegistrationRuntimeStory />

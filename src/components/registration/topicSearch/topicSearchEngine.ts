@@ -140,6 +140,7 @@ export const searchTopics = (
 
 		terms.forEach((term) => {
 			let total = 0;
+			let matchedWords = 0;
 			let bestWord: IndexedWord | undefined;
 			let bestWordScore = 0;
 
@@ -154,9 +155,14 @@ export const searchTopics = (
 					}
 				});
 				total += wordBest;
+				if (wordBest > 0) matchedWords++;
 			});
 
-			const score = (total / queryWords.length) * KIND_WEIGHT[term.kind];
+			// Filler words ("ich habe …") must not drown a real match.
+			const score =
+				(total / Math.max(matchedWords, 1)) *
+				(0.85 + (0.15 * matchedWords) / queryWords.length) *
+				KIND_WEIGHT[term.kind];
 			if (score >= MIN_SCORE && (!best || score > best.score)) {
 				best = {
 					topicId,

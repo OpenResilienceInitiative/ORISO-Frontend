@@ -443,9 +443,8 @@
 		justify-content: flex-end;
 		align-items: center;
 
-		// Never flexed: the step band pins at exactly 72px below this row.
+		// Height comes from StageLayout's sx (72px); the step band pins below it.
 		flex: 0 0 auto;
-		height: $header-height;
 		width: 100%;
 		padding: 0 $grid-base-three;
 
