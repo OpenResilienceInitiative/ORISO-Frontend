@@ -2296,12 +2296,6 @@ export const SessionsList = ({
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
 					displayFilter={{
-						icon:
-							type === SESSION_LIST_TYPES.ENQUIRY ? (
-								<NavInboxIcon className="sessionsListToolbar__chipIconSvg" />
-							) : (
-								<NavChatsIcon className="sessionsListToolbar__chipIconSvg" />
-							),
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
 							displayFilterLabels.buttonCustomisedLabel,

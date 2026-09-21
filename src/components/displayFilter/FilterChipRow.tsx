@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { CSSProperties, ReactNode } from 'react';
+import { CSSProperties, ReactNode, useEffect, useRef } from 'react';
 import clsx from 'clsx';
+import { findActiveChip, revealChip } from './chipRowReveal';
 import './displayFilter.styles.scss';
 
 export interface FilterChipRowProps {
@@ -37,20 +38,65 @@ export const FilterChipRow = ({
 	className,
 	style,
 	scrollDataCy
-}: FilterChipRowProps) => (
-	<div className={clsx('filterChipRow', className)} style={style}>
-		<div
-			className="sessionsListToolbar__chipsScroll filterChipRow__scroll"
-			data-cy={scrollDataCy}
-		>
+}: FilterChipRowProps) => {
+	const scrollRef = useRef<HTMLDivElement>(null);
+
+	// A chip that becomes active scrolls itself into view (Frank 2026-09-21):
+	// otherwise a half-hidden chip expands off-screen and the click looks dead.
+	// Re-run after its width transition, which is what pushes it out.
+	useEffect(() => {
+		const scroller = scrollRef.current;
+		if (!scroller || typeof MutationObserver === 'undefined') return;
+		// Only a change of the active chip scrolls, so badge updates never
+		// yank a row the user scrolled by hand.
+		let revealed: HTMLElement | null = null;
+		const onMutation = () => {
+			const chip = findActiveChip(scroller);
+			if (chip === revealed) return;
+			revealed = chip;
+			if (chip) revealChip(scroller, chip);
+		};
+		const onTransitionEnd = (event: TransitionEvent) => {
+			if (
+				revealed &&
+				event.target === revealed &&
+				event.propertyName === 'max-width'
+			)
+				revealChip(scroller, revealed);
+		};
+		const observer = new MutationObserver(onMutation);
+		observer.observe(scroller, {
+			subtree: true,
+			childList: true,
+			attributes: true,
+			attributeFilter: ['aria-pressed', 'aria-current', 'class']
+		});
+		scroller.addEventListener('transitionend', onTransitionEnd);
+		onMutation();
+		return () => {
+			observer.disconnect();
+			scroller.removeEventListener('transitionend', onTransitionEnd);
+		};
+	}, []);
+
+	return (
+		<div className={clsx('filterChipRow', className)} style={style}>
 			<div
-				className="sessionsListToolbar__chipsRow"
-				role={label ? 'group' : undefined}
-				aria-label={label}
+				ref={scrollRef}
+				className="sessionsListToolbar__chipsScroll filterChipRow__scroll"
+				data-cy={scrollDataCy}
 			>
-				{children}
+				<div
+					className="sessionsListToolbar__chipsRow"
+					role={label ? 'group' : undefined}
+					aria-label={label}
+				>
+					{children}
+				</div>
 			</div>
+			{trailing && (
+				<div className="filterChipRow__trailing">{trailing}</div>
+			)}
 		</div>
-		{trailing && <div className="filterChipRow__trailing">{trailing}</div>}
-	</div>
-);
+	);
+};

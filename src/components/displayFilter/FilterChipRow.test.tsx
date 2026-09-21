@@ -50,4 +50,32 @@ describe('FilterChipRow / FilterChip (#1377)', () => {
 			screen.getByRole('button', { name: 'System (99+)' }).textContent
 		).toContain('99+');
 	});
+
+	it('scrolls a chip that becomes active into view (Frank 2026-09-21)', async () => {
+		const row = (active: boolean) => (
+			<FilterChipRow label="Filter" scrollDataCy="chips">
+				<FilterChip label="Alle" icon={Icon} count={0} />
+				<FilterChip
+					label="Supervision"
+					icon={Icon}
+					count={0}
+					active={active}
+				/>
+			</FilterChipRow>
+		);
+		const { rerender, container } = render(row(false));
+		const scroller =
+			container.querySelector<HTMLElement>('[data-cy="chips"]')!;
+		Object.defineProperty(scroller, 'clientWidth', { value: 520 });
+		scroller.getBoundingClientRect = () =>
+			({ left: 0, width: 520 }) as DOMRect;
+		screen.getByRole('button', {
+			name: 'Supervision'
+		}).getBoundingClientRect = () => ({ left: 460, width: 140 }) as DOMRect;
+
+		rerender(row(true));
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(scroller.scrollLeft).toBe(600 + 12 - 520);
+	});
 });

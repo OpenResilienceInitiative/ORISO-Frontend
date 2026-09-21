@@ -343,7 +343,9 @@ export const WithDisplayFilter: Story = {
 	render: () => <ToolbarWithDisplayFilter />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const button = canvas.getByRole('button', { name: 'Ansicht einstellen' });
+		const button = canvas.getByRole('button', {
+			name: 'Ansicht einstellen'
+		});
 		await expect(
 			button.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
@@ -656,6 +658,20 @@ export const SupervisionChipMobile390: Story = {
 		)!;
 		await waitFor(() =>
 			expect(label.getBoundingClientRect().width).toBeGreaterThan(0)
+		);
+		// Frank 2026-09-21: the selected chip scrolls itself fully into view.
+		const scroller = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="sessions-list-chips"]'
+		)!;
+		await waitFor(
+			() => {
+				const box = scroller.getBoundingClientRect();
+				const rect = chip.getBoundingClientRect();
+				// 1px slack for sub-pixel chip widths.
+				expect(rect.left).toBeGreaterThanOrEqual(box.left - 1);
+				expect(rect.right).toBeLessThanOrEqual(box.right + 1);
+			},
+			{ timeout: 2000 }
 		);
 		await expect(demoRowNames(canvasElement).length).toBe(
 			SUPERVISED_BY_ME_COUNT
