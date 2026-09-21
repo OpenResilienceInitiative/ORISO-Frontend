@@ -614,7 +614,6 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		// the side margins pushed the hairline 12px past the column edge.
 		width: auto;
 		margin: 0 6px;
-		border-right: 1px solid #fff;
 
 		// Desktop: the hairline runs through the resize handle's centre
 		// (same formula as `&__resizeHandle--end`), so the pill sits on it.
@@ -634,6 +633,17 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			max-width: unset;
 			line-height: $grid-base-three;
 		}
+	}
+}
+
+// The list↔chat divider (the empty list's white hairline) only while BOTH
+// panes are empty, desktop only (Frank 2026-09-21): next to an open chat or
+// the create card there is no line. Outside the `.sessionsList, .session`
+// block on purpose — inside it would also draw on the chat pane's empty state.
+@include breakpoint($fromLarge) {
+	.contentWrapper:has(.contentWrapper__detail .session--empty)
+		.sessionsList__emptyState {
+		border-right: 1px solid #fff;
 	}
 }
 

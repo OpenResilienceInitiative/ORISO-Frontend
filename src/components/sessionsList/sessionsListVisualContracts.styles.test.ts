@@ -72,8 +72,13 @@ describe('session list visual contracts', () => {
 			'src/components/sessionsList/sessionsList.styles.scss'
 		);
 
+		// Frank 2026-09-21: the divider only while list AND chat pane are
+		// empty — never next to an open chat, never on phone/tablet.
 		expect(css).toMatch(
-			/\.sessionsList__emptyState[^{}]*\{[^}]*border-right:\s*1px solid #fff;/s
+			/\.contentWrapper:has\(\.contentWrapper__detail \.session--empty\) \.sessionsList__emptyState\s*\{[^}]*border-right:\s*1px solid #fff;/s
+		);
+		expect(css).not.toMatch(
+			/(^|\})\s*\.sessionsList__emptyState\s*\{[^}]*border-right/s
 		);
 		expect(css).toMatch(
 			/\.sessionsList__resizeHandle[^{}]*\{[^}]*width:\s*24px;/s
