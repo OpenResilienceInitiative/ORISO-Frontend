@@ -396,6 +396,18 @@
 		min-height: 100%;
 
 		/*
+		 * `.stageLayout` is the scroll container and a flex column. An explicit
+		 * min-height switches off the flex item's `min-height: auto`, so with
+		 * the default shrink the wrapper stayed exactly one viewport tall while
+		 * a long step (an opened topic group) overflowed it. The sticky header
+		 * row lives in this box and can only stick inside it: past one
+		 * viewport of scrolling it left the screen, the step band kept pinning
+		 * at 72px, and list rows scrolled through the empty 72px above it.
+		 * The wrapper has to grow with its content.
+		 */
+		flex-shrink: 0;
+
+		/*
 		 * From the stage breakpoint up, the content column is only 60vw wide
 		 * but this wrapper still spans the whole width — so it lies on top of
 		 * the red stage and swallows every pointer event over it. Measured:
@@ -414,7 +426,10 @@
 		@media screen and (width <= #{$fromXLarge - 1px}) {
 			position: relative;
 			z-index: 2;
-			flex: 1;
+
+			// Fill the space under the hero, never shrink below the content
+			// (see `flex-shrink` above).
+			flex: 1 0 auto;
 			margin-top: -28px;
 			border-radius: 28px 28px 0 0;
 			background: var(--m3-surface-container-lowest, $white);
@@ -436,7 +451,11 @@
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
-		flex-basis: $header-height;
+
+		// Own height, never flexed: a 96px basis used to beat the 72px row
+		// height StageLayout sets from `lg`, and only the (now fixed) shrinking
+		// wrapper squeezed it back — the registration step band pins at 72px.
+		flex: 0 0 auto;
 		height: $header-height;
 		width: 100%;
 		padding: 0 $grid-base-three;
