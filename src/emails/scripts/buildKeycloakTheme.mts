@@ -32,6 +32,7 @@ import {
 	renderEmailHtml,
 	renderEmailText
 } from '../kit/emailTemplate';
+import { emailLogoCell } from '../kit/emailAtoms';
 import { emailDefaultBrand } from '../kit/emailTokens';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -229,6 +230,18 @@ const finish = (
 	freemarkerEscape: boolean
 ): string => {
 	let out = source;
+	if (freemarkerEscape) {
+		// Only a configured HTTPS image from the application's own origin may
+		// appear. Drop the complete cell so an absent logo leaves no gap.
+		const logo = themeLookup('logoUrl');
+		const app = themeLookup('appUrl');
+		const cell = emailLogoCell(emailDefaultBrand);
+		out = out
+			.split(cell)
+			.join(
+				`<#if (${app})?starts_with("https://") && (${logo})?starts_with((${app}) + "/")>${cell}</#if>`
+			);
+	}
 
 	// Kit placeholder → the expression Keycloak actually provides.
 	for (const [placeholder, expression] of Object.entries(variables)) {
