@@ -612,6 +612,37 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 		);
 	});
 
+	it('withdraws the guest when the page was left after "Zum Warteraum", during the redeem', async () => {
+		let finishRedeem: (value: unknown) => void = () => undefined;
+		vi.mocked(redeemInviteLink).mockReturnValue(
+			new Promise((resolve) => {
+				finishRedeem = resolve;
+			}) as never
+		);
+		const { unmount } = renderInvite();
+		await waitFor(() =>
+			expect(roomProps.current?.invite?.topicId).toBe(20)
+		);
+
+		const pending = roomProps.current.invite.redeem();
+		unmount();
+		finishRedeem({
+			sessionId: 42,
+			userName: 'anon_1',
+			accessToken: 'guest-access',
+			refreshToken: 'guest-refresh',
+			expiresIn: 300,
+			refreshExpiresIn: 600
+		});
+
+		await expect(pending).rejects.toThrow();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		expect(apiFinishAnonymousConversation).toHaveBeenCalledWith(
+			42,
+			'guest-access'
+		);
+	});
+
 	/* A link consumed or withdrawn while the guest picked a name can never
 	   succeed on retry: it is an unusable invite, not a name that failed to
 	   save — the same error page the on-arrival flow showed. */

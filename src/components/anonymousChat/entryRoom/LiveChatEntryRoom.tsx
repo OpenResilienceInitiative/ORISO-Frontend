@@ -95,10 +95,12 @@ const askWhoIsLive = (
 	)
 		.finally(() => window.clearTimeout(deadline))
 		.then(
+			/* Only a reported count is an answer; an empty or odd body says
+			   nothing about who is live. */
 			(d) =>
 				typeof d?.numAvailableConsultants === 'number'
 					? d.numAvailableConsultants
-					: 0,
+					: null,
 			() => null
 		);
 };
@@ -364,6 +366,8 @@ const LiveChatEntryRoomContent = ({
 					}
 					if (cancelled.current) return;
 					if (liveNow === 0) {
+						/* Say so — also after "Ich warte", which had dismissed it. */
+						setClosedDismissed(false);
 						setAvailable(0);
 						setConsecutiveUnavailablePolls(
 							CLOSED_CONFIRMATION_POLLS

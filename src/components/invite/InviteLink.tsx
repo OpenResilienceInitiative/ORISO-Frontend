@@ -280,6 +280,12 @@ export const InviteLink = () => {
 			setStatus('error');
 			throw err;
 		}
+		/* Left the page after "Zum Warteraum" while the POST ran: the guest
+		   exists now, so withdraw it rather than install it on another page. */
+		if (!mountedRef.current) {
+			withdrawDiscardedGuest(data);
+			throw new Error('The invite page was left while the redeem ran');
+		}
 		/* And once more after the POST returns: it takes time, and the guest's
 		   tokens must not land over a counsellor who signed in meanwhile. */
 		if (holdsCounsellorSession()) {

@@ -275,6 +275,39 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(nameCards().length).toBeGreaterThan(0);
 	});
 
+	/* An answer without the number says nothing about who is live. */
+	it('treats an answer without a count as unknown, not as zero', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue({} as never);
+		renderInvite();
+		await flush(1000);
+		await flush(4000);
+
+		expect(closedHeadline()).toBeNull();
+	});
+
+	/* After "Ich warte" the closed view is dismissed; if the outage fallback
+	   then offers names and the door confirms nobody is live, the guest must be
+	   told so — not see the button merely re-enable. */
+	it('shows closed again when the door confirms it after "Ich warte"', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		renderInvite();
+		await flush(1000);
+		fireEvent.click(screen.getByRole('button', { name: 'Ich warte' }));
+
+		vi.mocked(apiGetConsultantAvailability).mockRejectedValue(
+			new Error('503')
+		);
+		await flush(4000 * 3);
+		expect(nameCards().length).toBeGreaterThan(0);
+
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush(1000);
+
+		expect(redeem).not.toHaveBeenCalled();
+		expect(closedHeadline()).not.toBeNull();
+	});
+
 	it('does not let a failure between two zeros stand in for the second look', async () => {
 		vi.mocked(apiGetConsultantAvailability)
 			.mockResolvedValueOnce(live(0))
