@@ -33,6 +33,12 @@ export const apiGetLiveChatAvailability = (): Promise<boolean> =>
 	);
 
 /**
+ * A heartbeat that has not answered by then counts as failed (`TIMEOUT`), so
+ * the client can retry, or give up, well inside the 120 s lease (#1485).
+ */
+export const LIVE_CHAT_HEARTBEAT_TIMEOUT_MS = 5_000;
+
+/**
  * Refreshes an existing backend lease and can never enable availability.
  *
  * A 403 rejects with `FETCH_ERRORS.FORBIDDEN` and a 401 with
@@ -43,7 +49,8 @@ export const apiHeartbeatLiveChatAvailability = (): Promise<boolean> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 		method: FETCH_METHODS.POST,
-		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN],
+		timeout: LIVE_CHAT_HEARTBEAT_TIMEOUT_MS
 	}).then((response: { available?: boolean }) =>
 		Boolean(response?.available)
 	);

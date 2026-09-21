@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FETCH_ERRORS } from '../api/fetchData';
 import {
+	LIVE_CHAT_HEARTBEAT_TIMEOUT_MS,
 	apiGetLiveChatAvailability,
 	apiHeartbeatLiveChatAvailability,
 	apiSetLiveChatAvailability
@@ -203,7 +204,7 @@ export const LIVE_CHAT_HEARTBEAT_INTERVAL_MS = 45_000;
  * is claimed only this long unless some tab renews the lease meanwhile.
  */
 export const LIVE_CHAT_UNKNOWN_LEASE_MS = 15_000;
-export const LIVE_CHAT_FIRST_BEAT_RETRY_MS = 5_000;
+export const LIVE_CHAT_FIRST_BEAT_RETRY_MS = 2_000;
 
 /**
  * Mounted exactly once by the consultant navigation shell.
@@ -221,7 +222,11 @@ export const useLiveChatAvailabilityHeartbeat = (
 	useEffect(() => {
 		if (!enabled || !active) return;
 		let leaseWatchdog = 0;
-		const armLeaseWatchdog = (delay = LIVE_CHAT_LEASE_MS) => {
+		let beatsInFlight = 0;
+		const armLeaseWatchdog = (
+			delay = LIVE_CHAT_LEASE_MS,
+			waitedForBeat = false
+		) => {
 			window.clearTimeout(leaseWatchdog);
 			const armedAtRevision = availabilityRevision;
 			leaseWatchdog = window.setTimeout(() => {
@@ -233,6 +238,11 @@ export const useLiveChatAvailabilityHeartbeat = (
 					LIVE_CHAT_LEASE_MS -
 					Date.now();
 				if (leaseLeft > 0) armLeaseWatchdog(leaseLeft);
+				// A renewal still in flight may be the one that keeps the
+				// lease, so its answer decides — once, and no longer than
+				// the request itself may take.
+				else if (beatsInFlight > 0 && !waitedForBeat)
+					armLeaseWatchdog(LIVE_CHAT_HEARTBEAT_TIMEOUT_MS, true);
 				else dropLiveChatAvailability('connectionLost');
 			}, delay);
 		};
@@ -263,7 +273,11 @@ export const useLiveChatAvailabilityHeartbeat = (
 			// reached this tab yet, so the tab-local revision cannot tell.
 			const renewedSinceSent = () =>
 				readLastLiveChatHeartbeatAcknowledged() > sentAt;
+			beatsInFlight += 1;
 			void apiHeartbeatLiveChatAvailability()
+				.finally(() => {
+					beatsInFlight -= 1;
+				})
 				.then((leaseActive) => {
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (leaseActive) {

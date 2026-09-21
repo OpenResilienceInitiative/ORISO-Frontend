@@ -12,6 +12,7 @@ import {
 } from '../api/apiSetLiveChatAvailability';
 
 vi.mock('../api/apiSetLiveChatAvailability', () => ({
+	LIVE_CHAT_HEARTBEAT_TIMEOUT_MS: 5_000,
 	apiGetLiveChatAvailability: vi.fn(),
 	apiHeartbeatLiveChatAvailability: vi.fn(),
 	apiSetLiveChatAvailability: vi.fn()
@@ -777,6 +778,55 @@ describe('live-chat availability state', () => {
 
 		expect(result.current[0]).toBe(true);
 		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	// #1485 review: a renewal still in flight when the watchdog is due may be
+	// the one that keeps the lease; its answer decides, within its timeout.
+	it('waits for a first beat still pending when the unknown-lease window closes', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => setTimeout(() => resolve(true), 18_000))
+		);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(30_000));
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBe('1');
+	});
+
+	it('keeps its own renewal that answers just after the known lease ran out', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now() - 118_000)
+		);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => setTimeout(() => resolve(true), 3_000))
+		);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(10_000));
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	it('does not wait for a pending beat longer than its request timeout', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockReturnValue(
+			new Promise(() => undefined)
+		);
+		const { result } = mountWithUnknownLease();
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(20_000));
+
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
 	});
 
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {

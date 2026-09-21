@@ -50,7 +50,10 @@ describe('live-chat availability API', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 			method: FETCH_METHODS.POST,
-			responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN]
+			responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN],
+			// #1485 review: a hung beat has to fail well inside the 15 s
+			// unknown-lease window, not after fetchData's 30 s default.
+			timeout: 5_000
 		});
 	});
 });
