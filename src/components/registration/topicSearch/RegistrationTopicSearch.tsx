@@ -280,7 +280,14 @@ export const RegistrationTopicSearch = ({
 									>
 										<SearchRoundedIcon
 											sx={{
-												color: 'var(--m3-on-surface-variant, #444748)'
+												'color':
+													'var(--m3-on-surface, #1b1b1c)',
+												// Theme hover paints IconButtons white.
+												'&:hover': {
+													color: 'var(--m3-on-surface, #1b1b1c)',
+													backgroundColor:
+														'rgba(0, 0, 0, 0.06)'
+												}
 											}}
 										/>
 									</InputAdornment>
@@ -290,7 +297,14 @@ export const RegistrationTopicSearch = ({
 										<IconButton
 											size="small"
 											sx={{
-												color: 'var(--m3-on-surface-variant, #444748)'
+												'color':
+													'var(--m3-on-surface, #1b1b1c)',
+												// Theme hover paints IconButtons white.
+												'&:hover': {
+													color: 'var(--m3-on-surface, #1b1b1c)',
+													backgroundColor:
+														'rgba(0, 0, 0, 0.06)'
+												}
 											}}
 											aria-label={t(
 												'registration.topic.search.close'
