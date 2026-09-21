@@ -347,11 +347,21 @@ const LiveChatEntryRoomContent = ({
 				   right before an account and a queue entry are created; an
 				   answered zero is closed, an unknown answer does not block. */
 				if (invite.topicId !== undefined) {
-					const liveNow = await askWhoIsLive(
-						invite.topicId,
-						invite.consultingTypeId,
-						new AbortController()
-					);
+					const ask = () =>
+						askWhoIsLive(
+							invite.topicId as number,
+							invite.consultingTypeId,
+							new AbortController()
+						);
+					let liveNow = await ask();
+					/* One zero may be the server's own failed lookup: here too it
+					   takes a second one, a second later, to turn somebody away. */
+					if (liveNow === 0 && !cancelled.current) {
+						await new Promise((resolve) =>
+							window.setTimeout(resolve, CLOSED_CONFIRMATION_MS)
+						);
+						liveNow = await ask();
+					}
 					if (cancelled.current) return;
 					if (liveNow === 0) {
 						setAvailable(0);

@@ -141,10 +141,27 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 
 		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
 		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
-		await flush();
+		await flush(1000);
 
 		expect(redeem).not.toHaveBeenCalled();
 		expect(closedHeadline()).not.toBeNull();
+	});
+
+	/* One zero may be the server's own failed lookup: at the door too, it
+	   takes a second zero to turn somebody away. */
+	it('does not turn the guest away on a single zero at the door', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		renderInvite();
+		await flush();
+
+		vi.mocked(apiGetConsultantAvailability)
+			.mockResolvedValueOnce(live(0))
+			.mockResolvedValue(live(1));
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush(1000);
+
+		expect(closedHeadline()).toBeNull();
+		expect(redeem).toHaveBeenCalledTimes(1);
 	});
 
 	it('still redeems on continue when that last look cannot be answered', async () => {

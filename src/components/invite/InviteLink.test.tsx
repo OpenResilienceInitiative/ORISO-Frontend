@@ -563,6 +563,55 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
 	});
 
+	/* Leaving the page while the context lookup is pending must not let the
+	   fallback create a guest and a queue entry behind the person's back. */
+	it('does not redeem after the page was left while the context was loading', async () => {
+		let failContext: (reason: Error) => void = () => undefined;
+		vi.mocked(apiGetInviteLinkContext).mockReturnValue(
+			new Promise((_resolve, reject) => {
+				failContext = reject;
+			})
+		);
+		const { unmount } = renderInvite();
+		await waitFor(() => expect(apiGetInviteLinkContext).toHaveBeenCalled());
+
+		unmount();
+		failContext(new Error('timeout'));
+		await new Promise((resolve) => setTimeout(resolve, 20));
+
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+	});
+
+	it('withdraws the guest instead of installing it when the page was left during the redeem', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockRejectedValue(new Error('none'));
+		let finishRedeem: (value: unknown) => void = () => undefined;
+		vi.mocked(redeemInviteLink).mockReturnValue(
+			new Promise((resolve) => {
+				finishRedeem = resolve;
+			}) as never
+		);
+		const { unmount } = renderInvite();
+		await waitFor(() => expect(redeemInviteLink).toHaveBeenCalled());
+
+		unmount();
+		finishRedeem({
+			sessionId: 42,
+			userName: 'anon_1',
+			accessToken: 'guest-access',
+			refreshToken: 'guest-refresh',
+			expiresIn: 300,
+			refreshExpiresIn: 600
+		});
+		await new Promise((resolve) => setTimeout(resolve, 20));
+
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		expect(apiFinishAnonymousConversation).toHaveBeenCalledWith(
+			42,
+			'guest-access'
+		);
+	});
+
 	/* A link consumed or withdrawn while the guest picked a name can never
 	   succeed on retry: it is an unusable invite, not a name that failed to
 	   save — the same error page the on-arrival flow showed. */

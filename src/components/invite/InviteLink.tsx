@@ -117,6 +117,17 @@ export const InviteLink = () => {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const hasRunRef = useRef(false);
+	/* Whether the page is still on screen. The lookups before a redeem can take
+	   seconds; leaving meanwhile must not create a guest behind the person's
+	   back. A ref (not the effect's own cleanup) so React's development
+	   double-mount, which reruns nothing because of `hasRunRef`, keeps going. */
+	const mountedRef = useRef(true);
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+		};
+	}, []);
 	const [resumeAttempt, setResumeAttempt] = useState(0);
 	const [resumeFailed, setResumeFailed] = useState(false);
 
@@ -187,6 +198,7 @@ export const InviteLink = () => {
 				/* The lookups above can take seconds; a counsellor may have signed
 				   in in another tab meanwhile. Same check as before the room's
 				   redeem, so no path overwrites her. */
+				if (!mountedRef.current) return;
 				if (holdsCounsellorSession()) {
 					setStatus('staff');
 					return;
@@ -194,6 +206,12 @@ export const InviteLink = () => {
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
+					/* Left the page while the POST ran: the guest exists now, so
+					   withdraw it rather than install it on another page. */
+					if (!mountedRef.current) {
+						withdrawDiscardedGuest(data);
+						return;
+					}
 					if (holdsCounsellorSession()) {
 						withdrawDiscardedGuest(data);
 						setStatus('staff');
