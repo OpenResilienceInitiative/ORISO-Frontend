@@ -13,28 +13,46 @@ const deviceSigningAuthByClient = new WeakMap<
 /** Resolves the account's current Matrix password; each call may rotate it server-side. */
 export type UiaPasswordSource = () => Promise<string>;
 
-/** Password UIA for the device-signing upload, matching Matrix's two-step flow. */
+/**
+ * Password UIA for the device-signing upload, matching Matrix's two-step flow. With `retry`, a
+ * password Synapse rejects inside the UIA session is replaced once by a fresh one: another tab or
+ * device may have rotated it between fetching and submitting.
+ */
 export const createPasswordUiAuth =
 	(
 		userId: string,
-		password: string | UiaPasswordSource
+		password: string | UiaPasswordSource,
+		retry?: UiaPasswordSource
 	): UIAuthCallback<void> =>
 	async (makeRequest) => {
+		let session: string | undefined;
 		try {
 			return await makeRequest(null);
 		} catch (error) {
-			const session = (error as MatrixUiAuthError)?.data?.session;
+			session = (error as MatrixUiAuthError)?.data?.session;
 			if (!session) {
 				throw error;
 			}
-			return makeRequest({
+		}
+		const submit = (secret: string) =>
+			makeRequest({
 				type: 'm.login.password',
 				identifier: { type: 'm.id.user', user: userId },
-				// Resolved only now: a password captured earlier is stale once any other sign-in rotated it.
-				password:
-					typeof password === 'string' ? password : await password(),
+				password: secret,
 				session
 			});
+		const source =
+			retry ?? (typeof password === 'string' ? undefined : password);
+		try {
+			// Resolved only now: a password captured earlier is stale once any other sign-in rotated it.
+			return await submit(
+				typeof password === 'string' ? password : await password()
+			);
+		} catch (error) {
+			if (!source || !(error as MatrixUiAuthError)?.data?.session) {
+				throw error;
+			}
+			return submit(await source());
 		}
 	};
 
@@ -64,7 +82,7 @@ export const registerDeviceSigningPassword = (
 	deviceSigningPasswordByClient.set(client, { userId, currentPassword });
 	registerDeviceSigningAuth(
 		client,
-		createPasswordUiAuth(userId, currentPassword)
+		createPasswordUiAuth(userId, currentPassword, currentPassword)
 	);
 };
 
@@ -77,5 +95,9 @@ export const prepareDeviceSigningAuth = async (
 ): Promise<UIAuthCallback<void> | undefined> => {
 	const source = deviceSigningPasswordByClient.get(client);
 	if (!source) return getDeviceSigningAuth(client);
-	return createPasswordUiAuth(source.userId, await source.currentPassword());
+	return createPasswordUiAuth(
+		source.userId,
+		await source.currentPassword(),
+		source.currentPassword
+	);
 };

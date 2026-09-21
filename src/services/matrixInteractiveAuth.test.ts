@@ -71,6 +71,56 @@ describe('createPasswordUiAuth', () => {
 		expect(currentPassword).not.toHaveBeenCalled();
 	});
 
+	/**
+	 * Another tab or device can rotate the password between fetching it and
+	 * submitting it; Synapse then rejects it inside the same UIA session. The
+	 * reset has already deleted state at that point, so it must not fail on a
+	 * race it can recover from (#1504 review).
+	 */
+	it('retries once with a fresh password when Synapse rejects the one it had', async () => {
+		const rejected = { data: { session: 'uia', errcode: 'M_FORBIDDEN' } };
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockRejectedValueOnce(rejected)
+			.mockResolvedValueOnce(undefined);
+		const currentPassword = vi.fn().mockResolvedValue('rotated-again');
+
+		await createPasswordUiAuth(
+			'@u:example.org',
+			'settled',
+			currentPassword
+		)(makeRequest);
+
+		expect(currentPassword).toHaveBeenCalledOnce();
+		expect(makeRequest).toHaveBeenCalledTimes(3);
+		expect(makeRequest).toHaveBeenLastCalledWith(
+			expect.objectContaining({
+				password: 'rotated-again',
+				session: 'uia'
+			})
+		);
+	});
+
+	it('gives up after one fresh retry', async () => {
+		const rejected = { data: { session: 'uia', errcode: 'M_FORBIDDEN' } };
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockRejectedValueOnce(rejected)
+			.mockRejectedValueOnce(rejected);
+		const currentPassword = vi.fn().mockResolvedValue('rotated-again');
+
+		await expect(
+			createPasswordUiAuth(
+				'@u:example.org',
+				'settled',
+				currentPassword
+			)(makeRequest)
+		).rejects.toBe(rejected);
+		expect(makeRequest).toHaveBeenCalledTimes(3);
+	});
+
 	it('does not send the password after a non-UIA failure', async () => {
 		const failure = new Error('network failed');
 		const makeRequest = vi.fn().mockRejectedValueOnce(failure);
