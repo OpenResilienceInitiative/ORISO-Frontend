@@ -11,7 +11,10 @@ import {
 	CryptoUnavailableError,
 	RecoverySetupPhaseError
 } from './matrixKeyBackupService';
-import { registerDeviceSigningAuth } from './matrixInteractiveAuth';
+import {
+	registerDeviceSigningAuth,
+	registerDeviceSigningPassword
+} from './matrixInteractiveAuth';
 
 vi.mock('./matrixRecoveryAccountData', async (original) => ({
 	...(await original<any>()),
@@ -327,6 +330,50 @@ describe('matrixKeyBackupService (#437)', () => {
 			const crypto = buildCrypto();
 			await resetCryptoIdentity(buildClient(crypto));
 			expect(crypto.resetEncryption).toHaveBeenCalled();
+		});
+
+		/**
+		 * resetEncryption deletes the key backup and secret storage BEFORE it
+		 * needs the password. A stale password therefore left the account
+		 * half-reset on dev (21.09.): backup gone, no new identity.
+		 */
+		it('leaves the account untouched when no current password can be had', async () => {
+			const crypto = buildCrypto();
+			const client = buildClient(crypto);
+			registerDeviceSigningPassword(client, '@synthetic:test', () =>
+				Promise.reject(new Error('token endpoint down'))
+			);
+
+			await expect(resetCryptoIdentity(client)).rejects.toThrow();
+
+			expect(crypto.resetEncryption).not.toHaveBeenCalled();
+		});
+
+		it('signs the new identity with the password current at the start of the reset', async () => {
+			const makeRequest = vi
+				.fn()
+				.mockRejectedValueOnce({ data: { session: 'uia' } })
+				.mockResolvedValueOnce(undefined);
+			const crypto = buildCrypto({
+				resetEncryption: vi.fn(async (auth: any) => auth(makeRequest))
+			});
+			const client = buildClient(crypto);
+			const currentPassword = vi
+				.fn()
+				.mockResolvedValueOnce('current')
+				.mockResolvedValue('rotated-again');
+			registerDeviceSigningPassword(
+				client,
+				'@synthetic:test',
+				currentPassword
+			);
+
+			await resetCryptoIdentity(client);
+
+			expect(currentPassword).toHaveBeenCalledOnce();
+			expect(makeRequest).toHaveBeenLastCalledWith(
+				expect.objectContaining({ password: 'current' })
+			);
 		});
 	});
 });

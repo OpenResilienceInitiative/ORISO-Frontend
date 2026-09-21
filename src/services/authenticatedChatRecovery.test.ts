@@ -237,3 +237,92 @@ it('retries corrected immutable policy on the same client without losing its pas
 	expect(recover).toHaveBeenCalledOnce();
 	expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBeNull();
 });
+
+describe('LOGIN_PASSWORD recovery on a later sign-in', () => {
+	/**
+	 * An admin-provisioned counsellor finishes the setup gate without a password in hand (#1481),
+	 * so recovery is set up silently and the key waits on that device. Its next password sign-in
+	 * there must seal it — otherwise no other device can ever restore history.
+	 */
+	it('seals the key waiting on this device at the next password sign-in', async () => {
+		const { savePendingRecoveryKey } = await import(
+			'./pendingRecoveryKeyStore'
+		);
+		const c = client();
+		c.secretStorage.getKey.mockResolvedValue(['root', {}]);
+		status.mockResolvedValue(healthy);
+		savePendingRecoveryKey('@synthetic:test', 'waiting-key');
+
+		await initializeChatRecovery(
+			c,
+			{ mode: 'LOGIN_PASSWORD', revision: 9 },
+			'own-password'
+		);
+
+		expect(setup).not.toHaveBeenCalled();
+		expect(enroll).toHaveBeenCalledWith(
+			c,
+			'own-password',
+			'waiting-key',
+			9
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'ready'
+		);
+	});
+
+	it('asks for the recovery key on a device without it, instead of creating a second identity', async () => {
+		const c = client();
+		c.secretStorage.getKey.mockResolvedValue(['root', {}]);
+		status.mockResolvedValue(healthy);
+
+		await initializeChatRecovery(
+			c,
+			{ mode: 'LOGIN_PASSWORD', revision: 9 },
+			'own-password'
+		);
+
+		expect(setup).not.toHaveBeenCalled();
+		expect(enroll).not.toHaveBeenCalled();
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'needs-recovery-key'
+		);
+	});
+
+	it('reports a device that holds the keys but no password as ready for now, not as broken', async () => {
+		const c = client();
+		c.secretStorage.getKey.mockResolvedValue(['root', {}]);
+		status.mockResolvedValue(healthy);
+
+		await initializeChatRecovery(
+			c,
+			{ mode: 'LOGIN_PASSWORD', revision: 9 },
+			null
+		);
+
+		expect(enroll).not.toHaveBeenCalled();
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'device-ready'
+		);
+	});
+
+	it('does not seal under a password the restore just rejected', async () => {
+		const { savePendingRecoveryKey } = await import(
+			'./pendingRecoveryKeyStore'
+		);
+		recover.mockResolvedValue({ kind: 'needs-recovery-key' });
+		savePendingRecoveryKey('@synthetic:test', 'waiting-key');
+
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 9 },
+			'rejected-password'
+		);
+
+		expect(enroll).not.toHaveBeenCalled();
+		expect(setup).not.toHaveBeenCalled();
+	});
+});

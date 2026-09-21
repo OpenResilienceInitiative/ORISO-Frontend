@@ -294,4 +294,64 @@ describe('getMatrixAccessToken', () => {
 		});
 		expect(getDeviceSigningAuth(client)).toBeTypeOf('function');
 	});
+
+	/**
+	 * Every token fetch rotates the Matrix password, so the one handed out
+	 * with this client is stale once another tab or device signs in. On dev
+	 * (21.09.) that made "Verschlüsselung zurücksetzen" fail half-way.
+	 */
+	it('asks the server for the current password when device signing needs one', async () => {
+		const client = createMatrixClient({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		});
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: 'current-password'
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockResolvedValueOnce(undefined);
+
+		await getDeviceSigningAuth(client)!(makeRequest);
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: expect.stringContaining('deviceId=ORISO_WEB_TEST_DEVICE')
+			})
+		);
+		expect(makeRequest).toHaveBeenLastCalledWith(
+			expect.objectContaining({ password: 'current-password' })
+		);
+	});
+
+	it('refuses to authenticate when the server hands out no password', async () => {
+		const client = createMatrixClient({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		});
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: ''
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } });
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+		expect(makeRequest).toHaveBeenCalledOnce();
+	});
 });

@@ -13,7 +13,10 @@ import {
 	decodeRecoveryKey,
 	CrossSigningKey
 } from 'matrix-js-sdk/lib/crypto-api';
-import { getDeviceSigningAuth } from './matrixInteractiveAuth';
+import {
+	getDeviceSigningAuth,
+	prepareDeviceSigningAuth
+} from './matrixInteractiveAuth';
 
 /**
  * #437 Key backup + recovery UX — thin service layer over matrix-js-sdk's
@@ -389,7 +392,8 @@ export const resetCryptoIdentity = async (
 	client: MatrixClient
 ): Promise<void> => {
 	const crypto = getCryptoOrThrow(client);
-	const authUploadDeviceSigningKeys = getDeviceSigningAuth(client);
+	// resetEncryption deletes backup and secret storage before it authenticates: settle the password first.
+	const authUploadDeviceSigningKeys = await prepareDeviceSigningAuth(client);
 	if (!authUploadDeviceSigningKeys) {
 		throw new Error('Matrix device-signing authentication is unavailable');
 	}

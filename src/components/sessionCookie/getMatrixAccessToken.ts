@@ -13,10 +13,7 @@ import {
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
-import {
-	createPasswordUiAuth,
-	registerDeviceSigningAuth
-} from '../../services/matrixInteractiveAuth';
+import { registerDeviceSigningPassword } from '../../services/matrixInteractiveAuth';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -84,6 +81,25 @@ const getOrCreateRequestedDeviceId = (): string => {
 	return deviceId;
 };
 
+const matrixTokenUrl = (deviceId: string): string =>
+	`${endpoints.matrixAccessToken}${
+		endpoints.matrixAccessToken.includes('?') ? '&' : '?'
+	}deviceId=${encodeURIComponent(deviceId)}`;
+
+/** The account's Matrix password as of now, for one device-signing UIA. */
+const fetchCurrentUiaPassword = async (deviceId: string): Promise<string> => {
+	const response = await fetchData({
+		url: matrixTokenUrl(deviceId),
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		recoverOnPublicAuthRoute: false
+	});
+	if (!response?.uiaPassword) {
+		throw new Error('Matrix login did not return a UIA password');
+	}
+	return response.uiaPassword;
+};
+
 export const getMatrixAccessToken = (
 	_username?: string,
 	_password?: string
@@ -93,14 +109,8 @@ export const getMatrixAccessToken = (
 	}
 
 	const requestedDeviceId = getOrCreateRequestedDeviceId();
-	const querySeparator = endpoints.matrixAccessToken.includes('?')
-		? '&'
-		: '?';
-	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
-		requestedDeviceId
-	)}`;
 	return fetchData({
-		url: tokenUrl,
+		url: matrixTokenUrl(requestedDeviceId),
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_ERRORS.CATCH_ALL],
 		recoverOnPublicAuthRoute: false
@@ -180,9 +190,9 @@ export const createMatrixClient = (
 	});
 
 	if (loginData.uiaPassword) {
-		registerDeviceSigningAuth(
-			client,
-			createPasswordUiAuth(loginData.userId, loginData.uiaPassword)
+		// Every token fetch rotates the password, so the one in loginData goes stale; ask anew.
+		registerDeviceSigningPassword(client, loginData.userId, () =>
+			fetchCurrentUiaPassword(loginData.deviceId)
 		);
 	}
 
