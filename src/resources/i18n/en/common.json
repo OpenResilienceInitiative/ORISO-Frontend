@@ -2293,6 +2293,13 @@
 				"viaSidebar": {
 					"label": "Activate Live Chat via the menu bar",
 					"description": "When enabled, you switch your Live Chat availability on and off from the menu bar (sidebar) instead of here. The availability toggle above is then disabled, and the Live Chat icon stays permanently visible in the sidebar — clicking it only changes its state, it never disappears. When disabled, Live Chat is controlled here in My Profile as before."
+				},
+				"lost": {
+					"title": "You are no longer reachable in live chat",
+					"refused": "The server refused your availability. Switch live chat on again. If that does not work, sign in again.",
+					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
+					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
+					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
 				}
 			},
 			"masterKey": {

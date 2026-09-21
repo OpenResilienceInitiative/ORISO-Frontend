@@ -32,12 +32,18 @@ export const apiGetLiveChatAvailability = (): Promise<boolean> =>
 		Boolean(response?.available)
 	);
 
-/** Refreshes an existing backend lease and can never enable availability. */
+/**
+ * Refreshes an existing backend lease and can never enable availability.
+ *
+ * A 403 rejects with `FETCH_ERRORS.FORBIDDEN` and a 401 with
+ * `FETCH_ERRORS.UNAUTHORIZED`, so the caller can tell a refusal from a
+ * transient failure (#1485).
+ */
 export const apiHeartbeatLiveChatAvailability = (): Promise<boolean> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 		method: FETCH_METHODS.POST,
-		responseHandling: [FETCH_SUCCESS.CONTENT]
+		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN]
 	}).then((response: { available?: boolean }) =>
 		Boolean(response?.available)
 	);

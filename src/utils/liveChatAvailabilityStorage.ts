@@ -10,6 +10,20 @@ export const LIVE_CHAT_AVAILABILITY_CHANGE_EVENT =
 export const LEGACY_LIVE_CHAT_AVAILABILITY_STORAGE_KEY =
 	'caritas_liveChatAvailability';
 
+/**
+ * Why the client stopped claiming "live" without the consultant switching off
+ * (#1485). Carried on the change event so every consumer can say why.
+ */
+export type LiveChatAvailabilityLossReason =
+	/** The heartbeat was answered with 403. */
+	| 'refused'
+	/** The heartbeat was answered with 401: the sign-in has expired. */
+	| 'sessionExpired'
+	/** The server answered, but no longer holds a lease for this consultant. */
+	| 'leaseLost'
+	/** No heartbeat was acknowledged for longer than the lease lives. */
+	| 'connectionLost';
+
 /** This is a desired preference only; visible active state comes from the API. */
 export const readLiveChatAvailabilityPreference = (): boolean => {
 	try {
@@ -24,7 +38,8 @@ export const readLiveChatAvailabilityPreference = (): boolean => {
 };
 
 export const persistLiveChatAvailabilityPreference = (
-	active: boolean
+	active: boolean,
+	reason?: LiveChatAvailabilityLossReason
 ): void => {
 	try {
 		if (active) {
@@ -38,7 +53,7 @@ export const persistLiveChatAvailabilityPreference = (
 	}
 	window.dispatchEvent(
 		new CustomEvent(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, {
-			detail: { active }
+			detail: { active, reason }
 		})
 	);
 };

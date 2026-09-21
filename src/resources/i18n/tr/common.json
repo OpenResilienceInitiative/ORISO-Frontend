@@ -2297,6 +2297,13 @@
 				"viaSidebar": {
 					"label": "Canlı sohbeti menü çubuğundan etkinleştir",
 					"description": "Etkinleştirildiğinde, canlı sohbet uygunluğunuzu burası yerine menü çubuğundan (yan menü) açıp kapatırsınız. Yukarıdaki uygunluk düğmesi o zaman devre dışı kalır ve canlı sohbet simgesi yan menüde kalıcı olarak görünür – tıklamak yalnızca simgenin durumunu değiştirir, simge kaybolmaz. Bu seçenek kapalıyken canlı sohbet eskisi gibi yalnızca burada, Profilim bölümünde yönetilir."
+				},
+				"lost": {
+					"title": "Canlı sohbette artık ulaşılamıyorsunuz",
+					"refused": "Sunucu uygunluğunuzu reddetti. Canlı sohbeti yeniden açın. Bu işe yaramazsa yeniden giriş yapın.",
+					"sessionExpired": "Oturumunuzun süresi doldu. Yeniden giriş yapın, ardından canlı sohbeti tekrar açın.",
+					"leaseLost": "Sunucu sizi artık uygun olarak göstermiyor. Ulaşılabilir olmak için canlı sohbeti yeniden açın.",
+					"connectionLost": "Sunucuyla bağlantı iki dakikadan uzun süre kesildi. Bağlantı yeniden kurulunca canlı sohbeti tekrar açın."
 				}
 			},
 			"masterKey": {

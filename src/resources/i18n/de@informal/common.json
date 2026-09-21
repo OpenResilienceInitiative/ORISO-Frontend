@@ -730,7 +730,14 @@
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
 				"description": "Aktiviere Deine Verfügbarkeit und sieh in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anonymen Ratsuchenden.",
-				"toggleLabel": "Bin verfügbar"
+				"toggleLabel": "Bin verfügbar",
+				"lost": {
+					"title": "Du bist im Live-Chat nicht mehr erreichbar",
+					"refused": "Der Server hat Deine Verfügbarkeit abgelehnt. Schalte den Live-Chat wieder ein. Klappt das nicht, melde Dich neu an.",
+					"sessionExpired": "Deine Anmeldung ist abgelaufen. Melde Dich neu an und schalte den Live-Chat danach wieder ein.",
+					"leaseLost": "Der Server führt Dich nicht mehr als verfügbar. Schalte den Live-Chat wieder ein, um erreichbar zu sein.",
+					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalte den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				}
 			},
 			"masterKey": {
 				"saveError": "Beim Ändern des Passworts ist ein Problem aufgetaucht. Bitte versuche es erneut."

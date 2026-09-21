@@ -2318,6 +2318,13 @@
 				"viaSidebar": {
 					"label": "Live Chat über Menü Leiste aktivieren",
 					"description": "Wenn aktiviert, schalten Sie Ihre Live-Chat-Verfügbarkeit über die Menü-Leiste (Seitenleiste) statt hier ein und aus. Der Verfügbarkeits-Schalter oben wird dann deaktiviert und das Live-Chat-Symbol bleibt dauerhaft in der Seitenleiste sichtbar – ein Klick ändert nur seinen Status, das Symbol verschwindet nicht. Ist diese Option aus, wird der Live Chat wie bisher nur hier in Mein Profil gesteuert."
+				},
+				"lost": {
+					"title": "Sie sind im Live-Chat nicht mehr erreichbar",
+					"refused": "Der Server hat Ihre Verfügbarkeit abgelehnt. Schalten Sie den Live-Chat wieder ein. Klappt das nicht, melden Sie sich neu an.",
+					"sessionExpired": "Ihre Anmeldung ist abgelaufen. Melden Sie sich neu an und schalten Sie den Live-Chat danach wieder ein.",
+					"leaseLost": "Der Server führt Sie nicht mehr als verfügbar. Schalten Sie den Live-Chat wieder ein, um erreichbar zu sein.",
+					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalten Sie den Live-Chat wieder ein, sobald die Verbindung wieder steht."
 				}
 			},
 			"masterKey": {

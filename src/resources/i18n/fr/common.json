@@ -2297,6 +2297,13 @@
 				"viaSidebar": {
 					"label": "Activer le Live-Chat depuis la barre de menu",
 					"description": "Lorsque cette option est activée, vous activez et désactivez votre disponibilité Live-Chat depuis la barre de menu (barre latérale) au lieu de le faire ici. L'interrupteur de disponibilité ci-dessus est alors désactivé et l'icône du Live-Chat reste visible en permanence dans la barre latérale – un clic ne change que son état, l'icône ne disparaît pas. Si cette option est désactivée, le Live-Chat se pilote comme auparavant uniquement ici, dans Mon profil."
+				},
+				"lost": {
+					"title": "Vous n'êtes plus joignable par chat en direct",
+					"refused": "Le serveur a refusé votre disponibilité. Réactivez le chat en direct. Si cela ne fonctionne pas, reconnectez-vous.",
+					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
+					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
+					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
 				}
 			},
 			"masterKey": {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { FETCH_ERRORS } from '../api/fetchData';
 import {
 	apiGetLiveChatAvailability,
 	apiHeartbeatLiveChatAvailability,
@@ -7,6 +8,7 @@ import {
 import {
 	LIVE_CHAT_AVAILABILITY_CHANGE_EVENT,
 	LIVE_CHAT_AVAILABILITY_STORAGE_KEY,
+	LiveChatAvailabilityLossReason,
 	persistLiveChatAvailabilityPreference,
 	readLiveChatAvailabilityPreference
 } from './liveChatAvailabilityStorage';
@@ -47,6 +49,8 @@ export interface LiveChatAvailabilityState {
 	loading: boolean;
 	pending: boolean;
 	error: boolean;
+	/** Set when the client switched off on its own; cleared by the next toggle. */
+	lostReason: LiveChatAvailabilityLossReason | null;
 }
 
 /** Hook: visible state always starts from and reconciles with the backend. */
@@ -59,6 +63,8 @@ export const useLiveChatAvailable = (): [
 	const [loading, setLoading] = useState(true);
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState(false);
+	const [lostReason, setLostReason] =
+		useState<LiveChatAvailabilityLossReason | null>(null);
 
 	useEffect(() => {
 		let mounted = true;
@@ -69,6 +75,13 @@ export const useLiveChatAvailable = (): [
 				if (mounted && requestedAtRevision === availabilityRevision) {
 					setActive(backendActive);
 					setError(false);
+					// #1485: a stored "live" the server does not back is dropped
+					// here, and the consultant is told, instead of left to linger.
+					if (!backendActive && readLiveChatAvailabilityPreference())
+						persistLiveChatAvailabilityPreference(
+							false,
+							'leaseLost'
+						);
 				}
 			} catch {
 				if (mounted && requestedAtRevision === availabilityRevision) {
@@ -81,11 +94,16 @@ export const useLiveChatAvailable = (): [
 		};
 		const onChange = (event: Event) => {
 			const detail = (
-				event as CustomEvent<{ active: boolean; error?: boolean }>
+				event as CustomEvent<{
+					active: boolean;
+					error?: boolean;
+					reason?: LiveChatAvailabilityLossReason;
+				}>
 			).detail;
 			if (detail) {
 				setActive(detail.active);
 				setError(Boolean(detail.error));
+				setLostReason(detail.reason ?? null);
 			}
 		};
 		const onStorage = (event: StorageEvent) => {
@@ -111,6 +129,7 @@ export const useLiveChatAvailable = (): [
 		try {
 			await setLiveChatAvailable(nextActive);
 			setActive(nextActive);
+			setLostReason(null);
 		} catch (updateError) {
 			setError(true);
 			throw updateError;
@@ -119,37 +138,82 @@ export const useLiveChatAvailable = (): [
 		}
 	}, []);
 
-	return [active, update, { loading, pending, error }];
+	return [active, update, { loading, pending, error, lostReason }];
 };
 
-/** Mounted exactly once by the consultant navigation shell. */
+/**
+ * The server answered, and the answer was "no": the session is not allowed to
+ * refresh the lease (403) or is no longer signed in (401). Retrying the same
+ * request cannot change that, so the client must stop claiming "live" (#1485).
+ * Anything else is treated as transient.
+ */
+const heartbeatRefusalReason = (
+	error: unknown
+): LiveChatAvailabilityLossReason | null => {
+	if (!(error instanceof Error)) return null;
+	if (error.message === FETCH_ERRORS.UNAUTHORIZED) return 'sessionExpired';
+	if (error.message === FETCH_ERRORS.FORBIDDEN) return 'refused';
+	return null;
+};
+
+/** The server no longer counts this consultant: switch off everywhere. */
+const dropLiveChatAvailability = (
+	reason: LiveChatAvailabilityLossReason
+): void => {
+	availabilityRevision += 1;
+	persistLiveChatAvailabilityPreference(false, reason);
+};
+
+/** Mirrors `consultant.availability.activeWindowMs` in ORISO-UserService. */
+export const LIVE_CHAT_LEASE_MS = 120_000;
+export const LIVE_CHAT_HEARTBEAT_INTERVAL_MS = 45_000;
+
+/**
+ * Mounted exactly once by the consultant navigation shell.
+ *
+ * A refusal or a server answer of "no lease" switches off at once. A transient
+ * failure (no response, timeout, 5xx) is retried quietly on the next beat, but
+ * once nothing was acknowledged for longer than the lease the server has
+ * stopped counting this consultant, so the client stops claiming "live" too.
+ */
 export const useLiveChatAvailabilityHeartbeat = (
 	enabled: boolean,
 	active: boolean
 ): void => {
 	useEffect(() => {
 		if (!enabled || !active) return;
+		// `active` only turns true once the backend acknowledged it, so the
+		// lease is fresh when this effect starts.
+		let leaseWatchdog = 0;
+		const armLeaseWatchdog = () => {
+			window.clearTimeout(leaseWatchdog);
+			const armedAtRevision = availabilityRevision;
+			leaseWatchdog = window.setTimeout(() => {
+				if (armedAtRevision !== availabilityRevision) return;
+				dropLiveChatAvailability('connectionLost');
+			}, LIVE_CHAT_LEASE_MS);
+		};
+		armLeaseWatchdog();
 		const heartbeat = window.setInterval(() => {
 			const requestedAtRevision = availabilityRevision;
 			void apiHeartbeatLiveChatAvailability()
 				.then((leaseActive) => {
 					if (requestedAtRevision !== availabilityRevision) return;
-					if (!leaseActive) {
-						availabilityRevision += 1;
-						persistLiveChatAvailabilityPreference(false);
-					}
+					if (leaseActive) armLeaseWatchdog();
+					else dropLiveChatAvailability('leaseLost');
 				})
-				.catch(() => {
+				.catch((error: unknown) => {
 					if (requestedAtRevision !== availabilityRevision) return;
-					availabilityRevision += 1;
-					window.dispatchEvent(
-						new CustomEvent(LIVE_CHAT_AVAILABILITY_CHANGE_EVENT, {
-							detail: { active: false, error: true }
-						})
-					);
+					const refusal = heartbeatRefusalReason(error);
+					if (refusal) dropLiveChatAvailability(refusal);
+					// Otherwise transient: the next beat is the retry, and the
+					// watchdog bounds how long "live" may be claimed without one.
 				});
-		}, 45_000);
-		return () => window.clearInterval(heartbeat);
+		}, LIVE_CHAT_HEARTBEAT_INTERVAL_MS);
+		return () => {
+			window.clearInterval(heartbeat);
+			window.clearTimeout(leaseWatchdog);
+		};
 	}, [active, enabled]);
 };
 
