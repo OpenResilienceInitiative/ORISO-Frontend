@@ -3029,6 +3029,14 @@
 					"title": "Offender Support",
 					"description": "Support for questions around offending, restart, and daily life."
 				}
+			},
+			"search": {
+				"open": "Search topics",
+				"placeholder": "Search a topic or keyword",
+				"close": "Close search",
+				"noResults": "No matching topic found. Try another word.",
+				"matchedBy": "matches “{{term}}”",
+				"suggestions": "Suggestions"
 			}
 		},
 		"account": {

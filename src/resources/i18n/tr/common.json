@@ -3056,6 +3056,14 @@
 					"title": "Suç ve yeniden başlangıç",
 					"description": "Suç, yeniden başlangıç ve günlük yaşamla ilgili sorularda destek."
 				}
+			},
+			"search": {
+				"open": "Konu ara",
+				"placeholder": "Konu veya anahtar kelime ara",
+				"close": "Aramayı kapat",
+				"noResults": "Uygun konu bulunamadı. Başka bir kelime deneyin.",
+				"matchedBy": "“{{term}}” ile eşleşiyor",
+				"suggestions": "Öneriler"
 			}
 		},
 		"account": {

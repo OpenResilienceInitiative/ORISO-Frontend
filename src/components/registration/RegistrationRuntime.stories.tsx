@@ -6,7 +6,7 @@ import { Registration } from './Registration';
 import { AgencySpecificContext, RegistrationProvider } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { registrationSessionStorageKey } from '../../globalState/provider/RegistrationProvider';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../stage/stage';
 import {
 	APP_ORISO_FIGMA_URL,
@@ -116,7 +116,13 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const TopicSelectionRoute: Story = {
-	render: () => <RegistrationRuntimeStory />
+	// One viewport tall like the app root, so `.stageLayout` scrolls and the
+	// sticky header behaves as in the app.
+	render: () => (
+		<div style={{ height: '100vh' }}>
+			<RegistrationRuntimeStory />
+		</div>
+	)
 };
 
 /**
@@ -182,5 +188,50 @@ export const LongTopicListKeepsStepHeader: Story = {
 			expect(header.height).toBe(72);
 			expect(band.top).toBe(header.bottom);
 		});
+	}
+};
+
+/**
+ * Header search, end to end in the wired step: open the magnifier next to
+ * language + login, type an everyday word, pick the suggestion. The topic is
+ * then selected in the list (its group opens) and "Weiter" is enabled.
+ */
+export const HeaderSearchSelectsTopic: Story = {
+	render: () => (
+		<div style={{ height: '100vh' }}>
+			<RegistrationRuntimeStory />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		const header = await waitFor(() => {
+			const row = canvasElement.ownerDocument.querySelector<HTMLElement>(
+				'.stageLayout__header'
+			);
+			expect(row).not.toBeNull();
+			return within(row!);
+		});
+
+		await userEvent.click(
+			await header.findByRole('button', { name: 'Thema suchen' })
+		);
+		await userEvent.type(await header.findByRole('combobox'), 'schulden');
+		const option = await body.findByRole('option', { name: /Schulden/ });
+		await userEvent.click(option);
+
+		await waitFor(() => {
+			const checked = canvasElement.ownerDocument.querySelector(
+				'[data-cy="topic-radio-group"] input[type="radio"]:checked'
+			);
+			expect(checked).not.toBeNull();
+			expect(
+				checked!.closest(
+					'[role="radio"], li, label, .MuiListItemButton-root'
+				)?.textContent
+			).toMatch(/Schulden/);
+		});
+		await waitFor(() =>
+			expect(body.getByRole('button', { name: /Weiter/ })).toBeEnabled()
+		);
 	}
 };

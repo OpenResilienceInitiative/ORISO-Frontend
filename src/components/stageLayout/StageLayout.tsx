@@ -52,6 +52,12 @@ interface StageLayoutProps {
 	 * caller places it in the column.
 	 */
 	headerStart?: ReactNode;
+	/**
+	 * An extra round control before the language switch — the registration
+	 * topic search. Rendered twice: in the desktop header row (`surface`) and
+	 * in the red mobile brand bar (`onPrimary`); CSS shows one of them.
+	 */
+	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => ReactNode;
 }
 
 export const StageLayout = ({
@@ -65,7 +71,8 @@ export const StageLayout = ({
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
-	headerStart
+	headerStart,
+	renderHeaderAction
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -92,6 +99,7 @@ export const StageLayout = ({
 		<div className={clsx('stageLayout', className)}>
 			<StageMobileHero
 				variant={mobileHero}
+				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
 					showLoginLink && (
 						<IconButton
@@ -163,6 +171,14 @@ export const StageLayout = ({
 							}}
 						>
 							{headerStart}
+						</Box>
+					)}
+					{renderHeaderAction && (
+						<Box
+							className="stageLayout__headerAction"
+							sx={{ display: { xs: 'none', lg: 'block' } }}
+						>
+							{renderHeaderAction('surface')}
 						</Box>
 					)}
 					{selectableLocales.length > 1 && (

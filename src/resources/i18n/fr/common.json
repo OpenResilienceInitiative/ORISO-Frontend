@@ -3047,6 +3047,14 @@
 					"title": "Délinquance et réinsertion",
 					"description": "Accompagnement pour les questions de délinquance, de nouveau départ et de quotidien."
 				}
+			},
+			"search": {
+				"open": "Rechercher un thème",
+				"placeholder": "Rechercher un thème ou un mot-clé",
+				"close": "Fermer la recherche",
+				"noResults": "Aucun thème correspondant. Essayez un autre mot.",
+				"matchedBy": "correspond à « {{term}} »",
+				"suggestions": "Suggestions"
 			}
 		},
 		"account": {
