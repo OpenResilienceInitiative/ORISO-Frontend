@@ -12,11 +12,7 @@
  * before they have even registered.
  */
 
-export type TopicSearchTermKind =
-	| 'title'
-	| 'related'
-	| 'description'
-	| 'category';
+export type TopicSearchTermKind = 'title' | 'related' | 'description';
 
 export interface TopicSearchTerm {
 	text: string;
@@ -54,8 +50,7 @@ export interface TopicSearchIndex {
 const KIND_WEIGHT: Record<TopicSearchTermKind, number> = {
 	title: 1,
 	related: 0.95,
-	description: 0.75,
-	category: 0.6
+	description: 0.75
 };
 
 /** Below this a suggestion is more likely noise than help. */

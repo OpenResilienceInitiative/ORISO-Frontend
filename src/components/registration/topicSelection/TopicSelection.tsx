@@ -287,9 +287,6 @@ export const TopicSelection: FC<{
 					topics.map((topic) => ({
 						id: topic.id,
 						key: getRegistrationTopicKey(topic),
-						categoryIds: groupsByTopicId
-							.get(topic.id)
-							?.map(({ categoryId }) => categoryId),
 						extraTitles: [
 							topic.name,
 							topic.titles?.long,

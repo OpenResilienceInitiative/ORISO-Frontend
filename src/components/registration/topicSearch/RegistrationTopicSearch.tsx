@@ -191,10 +191,20 @@ export const RegistrationTopicSearch = ({
 					disableClearable
 					noOptionsText={t('registration.topic.search.noResults')}
 					slotProps={{
-						popper: {
-							placement: 'bottom-end',
-							sx: { minWidth: 320, zIndex: 1400 }
-						},
+						popper: onPrimary
+							? {
+									// Opened, the field spans the bar (12px each
+									// side); the list matches it.
+									placement: 'bottom-start',
+									sx: {
+										width: 'calc(100vw - 24px) !important',
+										zIndex: 1400
+									}
+								}
+							: {
+									placement: 'bottom-end',
+									sx: { minWidth: 320, zIndex: 1400 }
+								},
 						paper: {
 							sx: {
 								mt: 1,

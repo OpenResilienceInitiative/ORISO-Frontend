@@ -100,4 +100,15 @@ describe('searchTopics', () => {
 		);
 		expect(keys[results[0].topicId]).toBe('parents-and-family');
 	});
+
+	it('does not suggest a topic just because its group name matches', () => {
+		// "Kinder, Jugend, Erwachsene, Schwangerschaft und Familie" holds
+		// U25 and general social counselling too — "schwanger" must not
+		// surface them.
+		const [first, ...rest] = searchTopics(index, 'schwanger');
+		expect(keys[first.topicId]).toBe('pregnancy');
+		expect(rest.map(({ topicId }) => keys[topicId])).not.toContain(
+			'u25-suicide-prevention'
+		);
+	});
 });
