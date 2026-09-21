@@ -225,6 +225,7 @@ export const KeyBackupRecoveryPrompt = () => {
 					onClose={() => setDismissedFor(dismissKey)}
 					closeLabel={t('encryption.keyBackup.snackbar.close')}
 					containerSx={recoverySnackbarPlacement}
+					yieldToOthers
 				/>
 			)}
 			{showRecovery && (

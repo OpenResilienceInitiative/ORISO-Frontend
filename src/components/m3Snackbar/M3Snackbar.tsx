@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -116,8 +116,25 @@ export interface M3SnackbarProps {
 	 * snackbar to rest above it.
 	 */
 	containerSx?: SxProps<Theme>;
+	/**
+	 * Floating only. A standing notice steps aside while another floating snackbar is open — M3
+	 * shows one at a time, and both would share the same spot — and returns when it closes.
+	 */
+	yieldToOthers?: boolean;
 	testId?: string;
 }
+
+/* Floating snackbars that are open and do not yield. */
+const openSnackbars = new Set<string>();
+const openSnackbarListeners = new Set<() => void>();
+const notifyOpenSnackbars = () => openSnackbarListeners.forEach((l) => l());
+const subscribeOpenSnackbars = (listener: () => void) => {
+	openSnackbarListeners.add(listener);
+	return () => {
+		openSnackbarListeners.delete(listener);
+	};
+};
+const anotherSnackbarOpen = () => openSnackbars.size > 0;
 
 /**
  * The ORISO snackbar.
@@ -151,8 +168,26 @@ export const M3Snackbar = ({
 	role = 'alert',
 	sx,
 	containerSx,
+	yieldToOthers = false,
 	testId = 'm3-snackbar'
 }: M3SnackbarProps) => {
+	const id = useId();
+	const registers = placement === 'floating' && open && !yieldToOthers;
+	useEffect(() => {
+		if (!registers) return;
+		openSnackbars.add(id);
+		notifyOpenSnackbars();
+		return () => {
+			openSnackbars.delete(id);
+			notifyOpenSnackbars();
+		};
+	}, [id, registers]);
+	const othersOpen = useSyncExternalStore(
+		subscribeOpenSnackbars,
+		anotherSnackbarOpen,
+		() => false
+	);
+	const shown = open && !(yieldToOthers && othersOpen);
 	const actionButton = action && (
 		<Button
 			variant="text"
@@ -282,7 +317,7 @@ export const M3Snackbar = ({
 
 	return (
 		<Snackbar
-			open={open}
+			open={shown}
 			autoHideDuration={autoHideDuration}
 			anchorOrigin={anchorOrigin}
 			/* A click anywhere else on the page is not a dismissal. MUI's
