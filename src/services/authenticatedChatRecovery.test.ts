@@ -211,7 +211,7 @@ it('retries corrected immutable policy on the same client without losing its pas
 		await import('./loginRecoveryHandoff');
 	const c = client();
 	const claimed = new WeakSet<object>();
-	stageLoginRecoveryPassword('@synthetic:test', 'synthetic-password');
+	await stageLoginRecoveryPassword('@synthetic:test', 'synthetic-password');
 	expect(() =>
 		startAuthenticatedChatRecovery(
 			c,
@@ -235,5 +235,5 @@ it('retries corrected immutable policy on the same client without losing its pas
 		claimed
 	);
 	expect(recover).toHaveBeenCalledOnce();
-	expect(consumeLoginRecoveryPassword('@synthetic:test')).toBeNull();
+	expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBeNull();
 });

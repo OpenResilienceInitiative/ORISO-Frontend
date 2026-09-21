@@ -126,10 +126,7 @@ export const startAuthenticatedChatRecovery = (
 		return;
 	const policy = getChatRecoveryPolicy(account);
 	claimedClients.add(client);
-	return initializeChatRecovery(
-		client,
-		policy,
-		consumeLoginRecoveryPassword(client.getUserId()!),
-		cancelled
+	return consumeLoginRecoveryPassword(client.getUserId()!).then((password) =>
+		initializeChatRecovery(client, policy, password, cancelled)
 	);
 };
