@@ -308,6 +308,58 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(closedHeadline()).not.toBeNull();
 	});
 
+	/* The outage fallback opened the names; once the door gets a real answer
+	   ("nobody"), that fallback is over — "Ich warte" must wait again. */
+	it('waits again after "Ich warte" once the door has confirmed closed', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockRejectedValue(
+			new Error('503')
+		);
+		renderInvite();
+		await flush(4000 * 3);
+		expect(nameCards().length).toBeGreaterThan(0);
+
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush(1000);
+		expect(closedHeadline()).not.toBeNull();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Ich warte' }));
+		await flush();
+
+		expect(nameCards()).toHaveLength(0);
+		expect(screen.getByTestId('orbital-trails')).toBeTruthy();
+	});
+
+	/* Zeros counted before the redeem describe the door, not the session the
+	   guest now has: they must not show that session as closed. */
+	it('does not show a freshly redeemed session as closed from pre-redeem zeros', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockRejectedValue(
+			new Error('details down')
+		);
+		let finishRedeem: (id: number) => void = () => undefined;
+		redeem = vi.fn(
+			() =>
+				new Promise<number>((resolve) => {
+					finishRedeem = resolve;
+				})
+		);
+		renderInvite();
+		await flush();
+
+		fireEvent.click(screen.getByRole('button', { name: 'Zum Warteraum' }));
+		await flush();
+		/* While the redeem runs, the door sampler sees nobody twice. */
+		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(0));
+		await flush(4000);
+		await flush(1000);
+
+		finishRedeem(42);
+		await flush();
+
+		expect(closedHeadline()).toBeNull();
+	});
+
 	it('does not let a failure between two zeros stand in for the second look', async () => {
 		vi.mocked(apiGetConsultantAvailability)
 			.mockResolvedValueOnce(live(0))

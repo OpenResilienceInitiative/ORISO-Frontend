@@ -368,6 +368,9 @@ const LiveChatEntryRoomContent = ({
 					if (liveNow === 0) {
 						/* Say so — also after "Ich warte", which had dismissed it. */
 						setClosedDismissed(false);
+						/* A real answer ends the outage fallback: "Ich warte" waits
+						   for the next one instead of reopening the names. */
+						setAvailabilityUnknown(false);
 						setAvailable(0);
 						setConsecutiveUnavailablePolls(
 							CLOSED_CONFIRMATION_POLLS
@@ -378,6 +381,10 @@ const LiveChatEntryRoomContent = ({
 				id = await invite.redeem();
 				if (cancelled.current) return;
 				setSessionId(id);
+				/* Door samples describe the door, not this session: from here
+				   only the session's own enquiry details may call it closed. */
+				setAvailable(null);
+				setConsecutiveUnavailablePolls(0);
 			}
 			/* One name, everywhere: the counsellor's queue shows the same
 			   string the guest just picked. */
