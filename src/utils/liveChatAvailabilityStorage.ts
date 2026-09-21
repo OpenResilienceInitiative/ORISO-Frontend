@@ -16,28 +16,53 @@ export const LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY =
 export const LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY =
 	'oriso_liveChatAvailabilityAck';
 
-export const recordLiveChatHeartbeatAcknowledged = (): void => {
+/**
+ * An acknowledged renewal (enable or heartbeat), in epoch ms. The server
+ * started the lease no earlier than `sentAt`, so the lease is counted from
+ * there; `ackedAt` is when the answer arrived, which tells whether other
+ * evidence was gathered before the renewal took effect.
+ */
+export interface LiveChatAcknowledgement {
+	sentAt: number;
+	ackedAt: number;
+}
+
+export const recordLiveChatHeartbeatAcknowledged = (sentAt: number): void => {
 	try {
 		localStorage.setItem(
 			LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY,
-			String(Date.now())
+			JSON.stringify({ sentAt, ackedAt: Date.now() })
 		);
 	} catch {
 		/* Without storage each tab falls back to its own acknowledgements. */
 	}
 };
 
-/** Epoch ms of the last acknowledgement in any tab, or 0 when unknown. */
-export const readLastLiveChatHeartbeatAcknowledged = (): number => {
-	try {
-		const value = Number(
-			localStorage.getItem(LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY)
-		);
-		return Number.isFinite(value) ? value : 0;
-	} catch {
-		return 0;
-	}
-};
+const NO_ACKNOWLEDGEMENT: LiveChatAcknowledgement = { sentAt: 0, ackedAt: 0 };
+
+/** The last acknowledgement in any tab; zeros when there is none. */
+export const readLastLiveChatHeartbeatAcknowledged =
+	(): LiveChatAcknowledgement => {
+		try {
+			const raw = localStorage.getItem(
+				LIVE_CHAT_AVAILABILITY_ACK_STORAGE_KEY
+			);
+			if (!raw) return NO_ACKNOWLEDGEMENT;
+			const parsed: unknown = JSON.parse(raw);
+			// A bare number (the first format) is both times at once.
+			if (typeof parsed === 'number' && Number.isFinite(parsed))
+				return { sentAt: parsed, ackedAt: parsed };
+			const { sentAt, ackedAt } = (parsed ?? {}) as Record<
+				string,
+				unknown
+			>;
+			if (Number.isFinite(sentAt) && Number.isFinite(ackedAt))
+				return { sentAt: sentAt as number, ackedAt: ackedAt as number };
+			return NO_ACKNOWLEDGEMENT;
+		} catch {
+			return NO_ACKNOWLEDGEMENT;
+		}
+	};
 
 /**
  * Keys written by builds before the Caritas fork was renamed (FE-H05, #178).

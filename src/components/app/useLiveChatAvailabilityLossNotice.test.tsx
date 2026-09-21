@@ -173,6 +173,8 @@ describe('live-chat availability loss notice (#1485)', () => {
 					id: 'liveChatAvailabilityLost',
 					notificationType: 'warning',
 					closeable: true,
+					// Announced at once: she is no longer reachable.
+					announce: 'alert',
 					title: 'profile.functions.liveChat.lost.title',
 					text: `profile.functions.liveChat.lost.${reason}`
 				})

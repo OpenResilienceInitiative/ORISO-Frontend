@@ -52,6 +52,8 @@ export const useLiveChatAvailabilityLossNotice = (
 			id: NOTICE_ID,
 			notificationType: NOTIFICATION_TYPE_WARNING,
 			closeable: true,
+			// She is no longer reachable: announce it at once.
+			announce: 'alert',
 			title: translate('profile.functions.liveChat.lost.title'),
 			text: translate(LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[lostReason])
 		};

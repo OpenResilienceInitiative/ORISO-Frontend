@@ -132,6 +132,7 @@ const NotificationDefault = ({
 	return (
 		<div
 			className={`notification notification--${notification.notificationType}`}
+			role={notification.announce}
 		>
 			<div className="notification__header">
 				{icon && <div className="notification__icon">{icon}</div>}

@@ -53,6 +53,54 @@ const renderNotice = (closeable: boolean) => {
 
 // #1485 review: the live-chat loss notice stays until closed, so it has to
 // be closable without a mouse.
+// #1485 review: an automatic switch-off must be announced, without making
+// every notification interrupt a screen-reader user.
+describe('notification announcement', () => {
+	afterEach(cleanup);
+
+	it('is an alert when the notification asks to be announced as one', () => {
+		render(
+			<NotificationsContext.Provider value={{} as any}>
+				<Notification
+					notification={
+						{
+							id: 'lost',
+							notificationType: 'warning',
+							announce: 'alert',
+							title: 'Live chat is off',
+							text: 'Switch it on again.'
+						} as any
+					}
+				/>
+			</NotificationsContext.Provider>
+		);
+
+		expect(screen.getByRole('alert').textContent).toContain(
+			'Live chat is off'
+		);
+	});
+
+	it('stays silent otherwise', () => {
+		render(
+			<NotificationsContext.Provider value={{} as any}>
+				<Notification
+					notification={
+						{
+							id: 'saved',
+							notificationType: 'success',
+							title: 'Saved',
+							text: ''
+						} as any
+					}
+				/>
+			</NotificationsContext.Provider>
+		);
+
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(screen.queryByRole('status')).toBeNull();
+	});
+});
+
 describe('notification close control', () => {
 	afterEach(cleanup);
 

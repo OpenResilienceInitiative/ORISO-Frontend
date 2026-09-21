@@ -609,9 +609,13 @@ describe('live-chat availability state', () => {
 
 		await act(async () => vi.advanceTimersByTimeAsync(45_000));
 
-		expect(localStorage.getItem('oriso_liveChatAvailabilityAck')).toBe(
-			String(Date.now())
-		);
+		// When the renewal was sent (the lease is counted from there) and when
+		// it was answered; both are now under fake timers.
+		expect(
+			JSON.parse(
+				localStorage.getItem('oriso_liveChatAvailabilityAck') ?? '{}'
+			)
+		).toEqual({ sentAt: Date.now(), ackedAt: Date.now() });
 	});
 
 	// #1485 review: after a reload the availability GET only reads whether a
@@ -867,6 +871,22 @@ describe('live-chat availability state', () => {
 		expect(signal.aborted).toBe(true);
 	});
 
+	// #1485 review: fetchData adds an abort listener to the signal it is given
+	// and never removes it, so one signal shared by every beat would collect
+	// a listener every 45 s.
+	it('gives every heartbeat its own abort signal', async () => {
+		vi.useFakeTimers();
+		renderHook(() => useLiveChatAvailabilityHeartbeat(true, true));
+
+		await act(async () => vi.advanceTimersByTimeAsync(90_000));
+
+		const signals = vi
+			.mocked(apiHeartbeatLiveChatAvailability)
+			.mock.calls.map(([signal]) => signal);
+		expect(signals).toHaveLength(3);
+		expect(new Set(signals).size).toBe(3);
+	});
+
 	it.each([
 		['a late success', (settle: Settle) => settle.resolve(true)],
 		['a late "no lease"', (settle: Settle) => settle.resolve(false)],
@@ -1010,6 +1030,40 @@ describe('live-chat availability state', () => {
 			localStorage.getItem('oriso_liveChatAvailabilityAck')
 		).not.toBeNull();
 		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	// #1485 review: the server started the lease no earlier than the enable
+	// was sent, so a slow answer must not stretch the lease the client claims.
+	it("counts an enable's lease from when it was sent, not answered", async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiSetLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) =>
+				setTimeout(() => resolve(undefined), 10_000)
+			)
+		);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new Error('TIMEOUT')
+		);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+
+		let enabled: Promise<void> = Promise.resolve();
+		act(() => {
+			enabled = result.current[1](true);
+		});
+		await act(async () => vi.advanceTimersByTimeAsync(10_000));
+		await act(async () => enabled);
+		expect(result.current[0]).toBe(true);
+
+		// Sent at 0 s: a lease plus the 5 s grace ends at 125 s, not 135 s.
+		await act(async () => vi.advanceTimersByTimeAsync(116_000));
+
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
 	});
 
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {

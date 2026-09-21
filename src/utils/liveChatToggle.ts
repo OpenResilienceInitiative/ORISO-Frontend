@@ -55,11 +55,13 @@ export const isLiveChatAvailable = (): boolean => {
 };
 
 export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
+	const sentAt = Date.now();
 	await apiSetLiveChatAvailability(active);
 	availabilityRevision += 1;
 	persistLiveChatAvailabilityPreference(active);
-	// An acknowledged enable starts a fresh lease, like a heartbeat.
-	if (active) recordLiveChatHeartbeatAcknowledged();
+	// An acknowledged enable starts a fresh lease, like a heartbeat — no
+	// earlier than the request was sent, so it is counted from there.
+	if (active) recordLiveChatHeartbeatAcknowledged(sentAt);
 };
 
 /**
@@ -69,7 +71,13 @@ export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
  * describes a lease that has since been renewed.
  */
 const renewedSince = (since: number): boolean =>
-	readLastLiveChatHeartbeatAcknowledged() > since;
+	readLastLiveChatHeartbeatAcknowledged().ackedAt > since;
+
+/** Ms left of the lease the latest acknowledgement (any tab) started. */
+const leaseLeftNow = (): number =>
+	readLastLiveChatHeartbeatAcknowledged().sentAt +
+	LIVE_CHAT_LEASE_MS -
+	Date.now();
 
 /** The server no longer counts this consultant: switch off everywhere. */
 const dropLiveChatAvailability = (
@@ -245,7 +253,9 @@ export const useLiveChatAvailabilityHeartbeat = (
 		// write an acknowledgement, a loss or a timer for a session that is
 		// gone — the next consultant would inherit it.
 		let disposed = false;
-		const inFlight = new AbortController();
+		// One controller per request: fetchData never removes the abort
+		// listener it adds, so a shared signal would collect one per beat.
+		const inFlight = new Set<AbortController>();
 		const armLeaseWatchdog = (
 			delay = LIVE_CHAT_LEASE_MS,
 			waitedForBeat = false
@@ -255,10 +265,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 			leaseWatchdog = window.setTimeout(() => {
 				// Another tab may still be renewing the lease; the server
 				// counts the consultant until a lease after its last ack.
-				const leaseLeft =
-					readLastLiveChatHeartbeatAcknowledged() +
-					LIVE_CHAT_LEASE_MS -
-					Date.now();
+				const leaseLeft = leaseLeftNow();
 				if (leaseLeft > 0) armLeaseWatchdog(leaseLeft);
 				// The state changed since this was armed (e.g. a second
 				// enable while already live, which does not restart this
@@ -283,10 +290,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 		// shipped, or a long-closed session) the remainder is unknown: a
 		// failed first renewal must not buy a full lease, so "live" is only
 		// claimed for a short window unless a beat or another tab renews it.
-		const leaseLeftAtStart =
-			readLastLiveChatHeartbeatAcknowledged() +
-			LIVE_CHAT_LEASE_MS -
-			Date.now();
+		const leaseLeftAtStart = leaseLeftNow();
 		let leaseKnown = leaseLeftAtStart > 0;
 		armLeaseWatchdog(
 			leaseKnown ? leaseLeftAtStart : LIVE_CHAT_UNKNOWN_LEASE_MS
@@ -301,13 +305,18 @@ export const useLiveChatAvailabilityHeartbeat = (
 			// was renewed after that; its storage event may simply not have
 			// reached this tab yet, so the tab-local revision cannot tell.
 			const renewedSinceSent = () => renewedSince(sentAt);
-			void apiHeartbeatLiveChatAvailability(inFlight.signal)
+			const request = new AbortController();
+			inFlight.add(request);
+			void apiHeartbeatLiveChatAvailability(request.signal)
+				.finally(() => {
+					inFlight.delete(request);
+				})
 				.then((leaseActive) => {
 					if (disposed) return;
 					if (requestedAtRevision !== availabilityRevision) return;
 					if (leaseActive) {
 						leaseKnown = true;
-						recordLiveChatHeartbeatAcknowledged();
+						recordLiveChatHeartbeatAcknowledged(sentAt);
 						armLeaseWatchdog();
 					} else if (!renewedSinceSent())
 						dropLiveChatAvailability('leaseLost');
@@ -340,7 +349,8 @@ export const useLiveChatAvailabilityHeartbeat = (
 		);
 		return () => {
 			disposed = true;
-			inFlight.abort();
+			inFlight.forEach((request) => request.abort());
+			inFlight.clear();
 			window.clearInterval(heartbeat);
 			window.clearTimeout(firstBeatRetry);
 			window.clearTimeout(leaseWatchdog);
