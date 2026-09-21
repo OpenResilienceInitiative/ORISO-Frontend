@@ -913,6 +913,41 @@ describe('live-chat availability state', () => {
 		expect(result.current[2].lostReason).toBe('connectionLost');
 	});
 
+	// #1485 review: the rail toggle and the profile switch can both submit
+	// "on". The second acknowledged enable bumps the revision without
+	// restarting the heartbeat (the state stays active); the watchdog armed
+	// by the first must not simply stand down. Invariant: while active, a
+	// watchdog is armed, so a lost connection always ends in "off".
+	it('keeps the watchdog armed after a second enable while already live', async () => {
+		vi.useFakeTimers();
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new Error('TIMEOUT')
+		);
+		const { result } = renderHook(() => {
+			const rail = useLiveChatAvailable();
+			const profile = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, rail[0]);
+			return { rail, profile };
+		});
+		await act(async () => Promise.resolve());
+
+		await act(async () => result.current.rail[1](true));
+		await act(async () => vi.advanceTimersByTimeAsync(10_000));
+		await act(async () => result.current.profile[1](true));
+		expect(result.current.rail[0]).toBe(true);
+
+		// The first enable's watchdog is due at 120 s; the lease from the
+		// second enable (at 10 s) still runs, so still live...
+		await act(async () => vi.advanceTimersByTimeAsync(111_000));
+		expect(result.current.rail[0]).toBe(true);
+
+		// ...and a lease after the last acknowledgement it goes off.
+		await act(async () => vi.advanceTimersByTimeAsync(15_000));
+		expect(result.current.rail[0]).toBe(false);
+		expect(result.current.rail[2].lostReason).toBe('connectionLost');
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBeNull();
+	});
+
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {
 		const { result } = renderHook(() => useLiveChatAvailable());
 		await waitFor(() => expect(result.current[2].loading).toBe(false));

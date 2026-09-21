@@ -236,7 +236,6 @@ export const useLiveChatAvailabilityHeartbeat = (
 			window.clearTimeout(leaseWatchdog);
 			const armedAtRevision = availabilityRevision;
 			leaseWatchdog = window.setTimeout(() => {
-				if (armedAtRevision !== availabilityRevision) return;
 				// Another tab may still be renewing the lease; the server
 				// counts the consultant until a lease after its last ack.
 				const leaseLeft =
@@ -244,6 +243,12 @@ export const useLiveChatAvailabilityHeartbeat = (
 					LIVE_CHAT_LEASE_MS -
 					Date.now();
 				if (leaseLeft > 0) armLeaseWatchdog(leaseLeft);
+				// The state changed since this was armed (e.g. a second
+				// enable while already live, which does not restart this
+				// effect). Never stand down: while active, a watchdog is
+				// always armed, so judge again after a short window.
+				else if (armedAtRevision !== availabilityRevision)
+					armLeaseWatchdog(LIVE_CHAT_UNKNOWN_LEASE_MS);
 				// A renewal still in flight may be the one that keeps the
 				// lease, so its answer decides — once, and no longer than
 				// the request itself may take.
