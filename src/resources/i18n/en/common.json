@@ -4998,6 +4998,10 @@
 			"checking": {
 				"text": "Checking who is live right now …",
 				"waiting": "Waiting with you until someone is live …"
+			},
+			"staff": {
+				"headline": "You are signed in as a counsellor.",
+				"text": "This link would sign you out here and you would no longer be live. To test it, please open it in a private window."
 			}
 		}
 	},

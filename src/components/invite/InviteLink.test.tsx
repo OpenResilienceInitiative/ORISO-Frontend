@@ -9,7 +9,7 @@ import {
 	waitFor
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { redeemInviteLink } from '../../api/apiRedeemInviteLink';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
 import { LocaleContext, TenantContext } from '../../globalState';
@@ -367,5 +367,57 @@ describe('InviteLink asks who is live before anything is created', () => {
 			)
 		);
 		expect(screen.queryByText('Registrierung läuft...')).toBeNull();
+	});
+});
+
+describe('InviteLink never takes over a counsellor who is signed in', () => {
+	const jwt = (roles: string[]) =>
+		[
+			btoa(JSON.stringify({ alg: 'none' })),
+			btoa(JSON.stringify({ realm_access: { roles } })),
+			'sig'
+		].join('.');
+	const signIn = (roles: string[]) => {
+		document.cookie = `keycloak=${jwt(roles)}; path=/`;
+	};
+
+	beforeEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+		localStorage.clear();
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValue({
+			tenantId: 1,
+			agencyId: null,
+			consultingTypeId: 1,
+			topicId: 20,
+			chatType: 'LIVE_CHAT'
+		});
+	});
+	afterEach(() => {
+		document.cookie =
+			'keycloak=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+	});
+
+	/* Redeeming writes the guest's tokens where the counsellor's are. Her next
+	   heartbeat then goes out as the guest and is refused, and she drops out of
+	   the live count without anything on her screen saying so (Dev, 2026-09-21). */
+	it('does not redeem, and says why, when this browser holds a counsellor session', async () => {
+		signIn(['consultant', 'user']);
+		renderInvite();
+
+		await screen.findByText(/als Beraterin angemeldet/);
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
+	});
+
+	it('lets a guest who already holds a guest session through as before', async () => {
+		signIn(['user']);
+		renderInvite();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room')).toBeTruthy()
+		);
+		expect(screen.queryByText(/als Beraterin angemeldet/)).toBeNull();
 	});
 });

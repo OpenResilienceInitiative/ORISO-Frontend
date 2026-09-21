@@ -5087,6 +5087,10 @@
 			"checking": {
 				"text": "Şu anda kimin çevrimiçi olduğuna bakıyoruz …",
 				"waiting": "Biri çevrimiçi olana kadar sizinle bekliyoruz …"
+			},
+			"staff": {
+				"headline": "Danışman olarak oturum açtınız.",
+				"text": "Bu bağlantı sizi burada oturumdan çıkarır ve artık çevrimiçi olmazsınız. Test etmek için lütfen gizli bir pencerede açın."
 			}
 		}
 	},

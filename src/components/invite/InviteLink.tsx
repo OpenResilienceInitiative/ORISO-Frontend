@@ -22,6 +22,8 @@ import {
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
 import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import { isConsultantAccessToken } from '../auth/consultantLoginBlock';
+import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { redirectToApp } from '../registration/autoLogin';
@@ -72,7 +74,13 @@ export const InviteLink = () => {
 	const tenant = tenantContext?.tenant;
 	const locale = localeContext?.locale ?? 'de';
 	const [status, setStatus] = useState<
-		'loading' | 'identity' | 'registering' | 'error' | 'room' | 'invite'
+		| 'loading'
+		| 'identity'
+		| 'registering'
+		| 'error'
+		| 'room'
+		| 'invite'
+		| 'staff'
 	>('loading');
 	/* A live-chat link the room opens before it is redeemed. */
 	const [liveTopic, setLiveTopic] = useState<{
@@ -98,6 +106,15 @@ export const InviteLink = () => {
 		}
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
+
+		/* A counsellor signed in in this browser must not be turned into a guest.
+		   Redeeming writes the guest's tokens where hers are; her next heartbeat
+		   then goes out as the guest, is refused, and she silently drops out of
+		   the live count while her switch still reads live (Dev, 2026-09-21). */
+		if (isConsultantAccessToken(getValueFromCookie('keycloak'))) {
+			setStatus('staff');
+			return;
+		}
 
 		(async () => {
 			try {
@@ -262,6 +279,25 @@ export const InviteLink = () => {
 			showRegistrationLink={false}
 		>
 			<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
+				{status === 'staff' && (
+					<Box role="alert" data-cy="invite-staff-session">
+						<Typography
+							component="h1"
+							sx={{ mb: 1, ...registrationScreenTitleSx }}
+						>
+							{t(
+								'liveChat.entry.staff.headline',
+								'Sie sind als Beraterin angemeldet.'
+							)}
+						</Typography>
+						<Typography sx={registrationScreenIntroSx}>
+							{t(
+								'liveChat.entry.staff.text',
+								'Dieser Link würde Sie hier abmelden und Sie wären nicht mehr live. Öffnen Sie ihn zum Testen bitte in einem privaten Fenster.'
+							)}
+						</Typography>
+					</Box>
+				)}
 				{status === 'registering' && (
 					<p>
 						{t(

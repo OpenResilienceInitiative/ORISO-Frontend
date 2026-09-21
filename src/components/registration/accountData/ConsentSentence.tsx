@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { FC, useContext, useMemo } from 'react';
 import { Typography } from '@mui/material';
-import parse, { DOMNode, Element } from 'html-react-parser';
 import { useTranslation } from 'react-i18next';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../../legalLinks/LegalLinkButton';
+import { useLegalHtmlWithDialogs } from '../../legalLinks/useLegalHtmlWithDialogs';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { ConsentTextData } from '../../../api/apiGetConsentText';
 import {
@@ -77,55 +77,13 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({
 		topicName: topic?.name
 	});
 
-	/* Which raw i18n key belongs to a given anchor href — the modal needs this
-	   to decide imprint vs privacy in a language-safe way. Match on href by
-	   pushing every configured legal-link URL (with the same params the anchors
-	   were rendered with) through `getUrl`. */
-	const rawLabelForHref = useMemo(() => {
-		const byUrl = new Map<string, string>();
-		legalLinks.forEach((link) => {
-			byUrl.set(link.getUrl({ aid: null }), link.label);
-		});
-		return (href: string | undefined) =>
-			href ? byUrl.get(href) : undefined;
-	}, [legalLinks]);
-
-	/* Parse the Träger sentence HTML and swap the platform's legal anchors
-	   (`{{legal_links}}` substitutions) for `LegalLinkButton` so they open the
-	   shared M3 dialog instead of a new tab. Anchors the sanitizer let through
-	   whose href does not match a known legal link (a Träger-authored link) are
-	   left as plain `<a>` — that is not our decision to override. */
-	const renderTraegerHtml = (html: string) =>
-		parse(html, {
-			replace: (domNode: DOMNode) => {
-				const tag = domNode as Element;
-				if (
-					tag.type !== 'tag' ||
-					tag.name !== 'a' ||
-					typeof tag.attribs !== 'object'
-				) {
-					return undefined;
-				}
-				const href = tag.attribs.href;
-				const rawLabel = rawLabelForHref(href);
-				if (!rawLabel) {
-					return undefined;
-				}
-				const label =
-					(tag.children?.[0] as { data?: string })?.data ?? href;
-				return (
-					<LegalLinkButton
-						variant="inline"
-						label={label}
-						rawLabel={rawLabel}
-						url={href}
-						scope="agency"
-						agencyId={agency?.id}
-						topicId={topic?.id}
-					/>
-				);
-			}
-		});
+	/* The Träger sentence's platform legal anchors (`{{legal_links}}`
+	   substitutions) open the shared M3 dialog instead of a new tab. */
+	const renderTraegerHtml = useLegalHtmlWithDialogs({
+		scope: 'agency',
+		agencyId: agency?.id,
+		topicId: topic?.id
+	});
 
 	/* Platform wording applies only when no Träger text is configured. A
 	   configured text that cannot be rendered is a fault, not a reason to show

@@ -213,6 +213,9 @@ const LiveChatEntryRoomContent = ({
 				<LegalLinks
 					legalLinks={legalLinks}
 					filter={(l) => l.registration}
+					/* The parameters the dialog lookup uses, so every legal
+					   anchor in the sentence is recognised as one. */
+					params={{ aid: null }}
 					/* Without it the two links glue into
 					   "DatenschutzerklärungImpressum" — the sanitizer
 					   drops `class`, so a CSS separator cannot survive.
@@ -537,7 +540,13 @@ const LiveChatEntryRoomContent = ({
 						);
 
 	return (
-		<EntryRoomShell kicker={kicker} statusLine={statusLine}>
+		<EntryRoomShell
+			kicker={kicker}
+			statusLine={statusLine}
+			/* Gate 2 (ADR-022): once a centre has taken the conversation its
+			   department governs — before, the platform does. */
+			department={accepted ? department : null}
+		>
 			{/* One view at a time slides in; the frame and the stage stay. */}
 			<EntryRoomView key={closed ? 'closed' : stage}>
 				{stage === 'checking' && !closed && (
@@ -595,6 +604,7 @@ const LiveChatEntryRoomContent = ({
 					   owns that distinction. */
 						accepted={consent.readable && accepted}
 						consentHtml={consent.html}
+						department={department}
 						busy={busy}
 						leaveFailed={leaveFailed}
 						onAccept={() => {

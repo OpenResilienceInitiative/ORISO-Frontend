@@ -5079,6 +5079,10 @@
 			"checking": {
 				"text": "Wir schauen, wer gerade live ist …",
 				"waiting": "Wir warten mit Ihnen, bis jemand live ist …"
+			},
+			"staff": {
+				"headline": "Sie sind als Beraterin angemeldet.",
+				"text": "Dieser Link würde Sie hier abmelden und Sie wären nicht mehr live. Öffnen Sie ihn zum Testen bitte in einem privaten Fenster."
 			}
 		}
 	},

@@ -11,6 +11,8 @@ export interface EntryRoomShellProps {
 	/** Line 2 — what is happening right now, or who has taken the conversation. */
 	statusLine: string;
 	showLoginLink?: boolean;
+	/** The accepting centre's department, once known — the footer legal links open its documents. */
+	department?: { agencyId: number; topicId: number } | null;
 	children: React.ReactNode;
 }
 
@@ -29,6 +31,7 @@ export const EntryRoomShell = ({
 	kicker,
 	statusLine,
 	showLoginLink = false,
+	department,
 	children
 }: EntryRoomShellProps) => {
 	const { Stage } = useContext(GlobalComponentContext);
@@ -65,6 +68,7 @@ export const EntryRoomShell = ({
 		<StageLayout
 			className="stageLayout--registration"
 			showLegalLinks={true}
+			legalDepartment={department}
 			showLoginLink={showLoginLink}
 			showRegistrationLink={false}
 			stage={<Stage hasAnimation={false} isReady={true} />}
