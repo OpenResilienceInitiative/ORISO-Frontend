@@ -147,9 +147,9 @@ export const TopicSelection: FC<{
 			const prefersReducedMotion =
 				typeof window.matchMedia === 'function' &&
 				window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-			if (prefersReducedMotion) {
-				return;
-			}
+			const behavior: ScrollBehavior = prefersReducedMotion
+				? 'auto'
+				: 'smooth';
 
 			const rect = node.getBoundingClientRect();
 			const stickyStepper = document.querySelector<HTMLElement>(
@@ -177,11 +177,11 @@ export const TopicSelection: FC<{
 				scrollRoot &&
 				scrollRoot.scrollHeight > scrollRoot.clientHeight
 			) {
-				scrollRoot.scrollTo({ top, behavior: 'smooth' });
+				scrollRoot.scrollTo({ top, behavior });
 				return;
 			}
 
-			window.scrollTo({ top, behavior: 'smooth' });
+			window.scrollTo({ top, behavior });
 		}, 160);
 	}, []);
 

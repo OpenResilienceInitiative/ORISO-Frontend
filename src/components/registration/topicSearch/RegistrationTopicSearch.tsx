@@ -253,7 +253,7 @@ export const RegistrationTopicSearch = ({
 								'data-cy': 'registration-topic-search-input'
 							}}
 							onKeyDown={(event) => {
-								if (event.key === 'Escape' && !query) close();
+								if (event.key === 'Escape') close();
 							}}
 							InputProps={{
 								...params.InputProps,

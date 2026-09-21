@@ -117,4 +117,9 @@ describe('searchTopics', () => {
 	])('finds a topic inside a sentence: %s → %s', (query, key) => {
 		expect(topKey(query)).toBe(key);
 	});
+
+	it('treats Turkish dotless ı like i', () => {
+		expect(topKey('bagimlilik')).toBe('sucht');
+		expect(normalizeSearchText('Bağımlılık İ')).toBe('bagimlilik i');
+	});
 });

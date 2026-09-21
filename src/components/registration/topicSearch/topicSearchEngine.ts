@@ -51,6 +51,7 @@ export const normalizeSearchText = (text: string) =>
 	text
 		.toLowerCase()
 		.replace(/ß/g, 'ss')
+		.replace(/ı/g, 'i')
 		.normalize('NFKD')
 		.replace(/\p{M}/gu, '')
 		.replace(/[^\p{L}\p{N}]+/gu, ' ')
