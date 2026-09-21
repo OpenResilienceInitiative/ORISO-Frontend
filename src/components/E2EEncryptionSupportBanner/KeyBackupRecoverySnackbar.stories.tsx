@@ -7,6 +7,7 @@ import {
 	clearRecoveryRuntimeState,
 	setRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
 
 const USER_ID = '@recovery-snackbar-story:example.test';
@@ -98,5 +99,43 @@ export const ActionOpensVault: Story = {
 		);
 		const dialog = await page.findByRole('dialog');
 		await waitFor(() => expect(dialog).toBeVisible());
+	}
+};
+
+/**
+ * M3 shows one snackbar at a time: while a transient note (here: the sessions
+ * list's display-filter note) is open, the recovery notice steps aside and
+ * comes back once that note is closed.
+ */
+export const StepsAsideForAnotherSnackbar: Story = {
+	decorators: [
+		(Story) => {
+			const [open, setOpen] = React.useState(true);
+			return (
+				<>
+					<Story />
+					<M3Snackbar
+						open={open}
+						role="status"
+						message="Dieser Filter ist für Ihre Beratungsstelle deaktiviert."
+						onClose={() => setOpen(false)}
+						closeLabel="Schließen"
+						testId="other-snackbar"
+					/>
+				</>
+			);
+		}
+	],
+	play: async () => {
+		const page = within(document.body);
+		await page.findByTestId('other-snackbar');
+		await waitFor(() =>
+			expect(
+				page.queryByTestId('key-backup-recovery-action')
+			).not.toBeInTheDocument()
+		);
+		await userEvent.click(page.getByRole('button', { name: 'Schließen' }));
+		const recovery = await page.findByTestId('key-backup-recovery-action');
+		await waitFor(() => expect(recovery).toBeVisible());
 	}
 };
