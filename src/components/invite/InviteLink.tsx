@@ -62,6 +62,11 @@ import type { Pseudonym } from '../../utils/anonName/engine';
  * Legacy agency links: redeem returns agency/consultingType; guest confirms a
  * rolled User-ID, then we register an asker and redirect into the app.
  */
+/** A counsellor session this browser still holds — expired cookies do not count. */
+const holdsCounsellorSession = (): boolean =>
+	hasActiveAuthSession() &&
+	isConsultantAccessToken(getValueFromCookie('keycloak'));
+
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -115,10 +120,7 @@ export const InviteLink = () => {
 		/* Only a session that is still alive: the invite route runs outside the
 		   app that tears an expired one down, and a stale cookie signs nobody
 		   out, so it must not lock anyone out either. */
-		if (
-			hasActiveAuthSession() &&
-			isConsultantAccessToken(getValueFromCookie('keycloak'))
-		) {
+		if (holdsCounsellorSession()) {
 			setStatus('staff');
 			return;
 		}
@@ -201,9 +203,30 @@ export const InviteLink = () => {
 
 	const redeemForRoom = useCallback(async (): Promise<number> => {
 		if (!token) throw new Error('Missing token');
-		const data = await redeemInviteLink(token);
-		if (!isRedeemInviteLinkSessionResponse(data)) {
-			throw new Error('Invite link did not open a live-chat session');
+		/* Again here, not only on arrival: cookies are shared across tabs, and a
+		   counsellor may have signed in elsewhere while this tab waited. */
+		if (holdsCounsellorSession()) {
+			setStatus('staff');
+			throw new Error('A counsellor is signed in in this browser');
+		}
+		let data;
+		try {
+			data = await redeemInviteLink(token);
+			if (!isRedeemInviteLinkSessionResponse(data)) {
+				throw new Error('Invite link did not open a live-chat session');
+			}
+		} catch (err) {
+			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
+			   the name cannot fix that, so this is the unusable-invite page the
+			   on-arrival flow showed, not the room's "name not saved". */
+			setResumeFailed(false);
+			setErrorMessage(
+				err instanceof Error
+					? err.message
+					: 'Invite link could not be used'
+			);
+			setStatus('error');
+			throw err;
 		}
 		applyRedeemSessionCredentials(data);
 		rememberInviteSession(token, data.sessionId);

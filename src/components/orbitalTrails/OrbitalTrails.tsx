@@ -226,6 +226,12 @@ export const OrbitalTrails = ({
 			   loader that waits indefinitely ("Ich warte") must not keep waking
 			   the main thread at the refresh rate for nothing. */
 			if (drawnFrames >= MAX_FRAMES) return;
+			/* Off screen nothing is drawn, so the budget is never reached either:
+			   stop here and let the observer restart the loop on the way back. */
+			if (!isVisible) {
+				animationFrame = 0;
+				return;
+			}
 			if (
 				isVisible &&
 				document.visibilityState !== 'hidden' &&
@@ -251,6 +257,14 @@ export const OrbitalTrails = ({
 			typeof IntersectionObserver === 'function'
 				? new IntersectionObserver(([entry]) => {
 						isVisible = entry.isIntersecting;
+						if (
+							isVisible &&
+							animationFrame === 0 &&
+							drawnFrames < MAX_FRAMES
+						) {
+							animationFrame =
+								window.requestAnimationFrame(animate);
+						}
 					})
 				: null;
 		observer?.observe(root);

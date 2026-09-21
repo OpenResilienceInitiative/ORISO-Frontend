@@ -428,6 +428,42 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 		expect(screen.queryByText(/als Beraterin angemeldet/)).toBeNull();
 	});
 
+	/* Cookies and token expiry are shared across tabs: a counsellor who signs
+	   in elsewhere while this tab sits on the closed or name view must still
+	   not be overwritten when the guest presses "Zum Warteraum". */
+	it('checks again right before redeeming, and never overwrites a counsellor who signed in meanwhile', async () => {
+		renderInvite();
+		await waitFor(() =>
+			expect(roomProps.current?.invite?.topicId).toBe(20)
+		);
+
+		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', 600);
+		await expect(roomProps.current.invite.redeem()).rejects.toThrow();
+
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		await screen.findByText(/als Beraterin angemeldet/);
+	});
+
+	/* A link consumed or withdrawn while the guest picked a name can never
+	   succeed on retry: it is an unusable invite, not a name that failed to
+	   save — the same error page the on-arrival flow showed. */
+	it('shows an unusable invite, not a name error, when the redeem itself fails', async () => {
+		vi.mocked(redeemInviteLink).mockRejectedValue(
+			new Error('Redeem failed (HTTP 410)')
+		);
+		renderInvite();
+		await waitFor(() =>
+			expect(roomProps.current?.invite?.topicId).toBe(20)
+		);
+
+		await expect(roomProps.current.invite.redeem()).rejects.toThrow();
+
+		await screen.findByText('This invite link can no longer be used');
+		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
+	});
+
 	it('lets a guest who already holds a guest session through as before', async () => {
 		signIn(['user']);
 		renderInvite();

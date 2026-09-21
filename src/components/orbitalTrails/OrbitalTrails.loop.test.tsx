@@ -56,3 +56,27 @@ it('still animates where IntersectionObserver does not exist', () => {
 	expect(() => render(<OrbitalTrails label="Lädt" />)).not.toThrow();
 	expect(frames.length).toBeGreaterThan(0);
 });
+
+it('stops asking for frames while off screen, and resumes when back', () => {
+	let report: (entries: { isIntersecting: boolean }[]) => void = () =>
+		undefined;
+	vi.stubGlobal(
+		'IntersectionObserver',
+		class {
+			constructor(cb: typeof report) {
+				report = cb;
+			}
+			observe() {}
+			disconnect() {}
+		}
+	);
+	render(<OrbitalTrails label="Lädt" />);
+	expect(frames).toHaveLength(1);
+
+	report([{ isIntersecting: false }]);
+	frames.shift()!(1000);
+	expect(frames).toHaveLength(0);
+
+	report([{ isIntersecting: true }]);
+	expect(frames).toHaveLength(1);
+});
