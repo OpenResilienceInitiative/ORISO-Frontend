@@ -115,12 +115,13 @@ describe('live-chat availability state', () => {
 			useLiveChatAvailabilityHeartbeat(true, true)
 		);
 
+		// One beat at once, then one per interval.
 		await act(async () => vi.advanceTimersByTimeAsync(45_000));
-		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
 
 		unmount();
 		await act(async () => vi.advanceTimersByTimeAsync(90_000));
-		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
 	});
 
 	it('does not heartbeat when the acknowledged state is inactive', async () => {
@@ -138,17 +139,19 @@ describe('live-chat availability state', () => {
 			{ initialProps: { active: true } }
 		);
 		await act(async () => vi.advanceTimersByTimeAsync(45_000));
-		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
 
 		rerender({ active: false });
 		await act(async () => vi.advanceTimersByTimeAsync(90_000));
-		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
 	});
 
 	it('deactivates all consumers when the backend reports an expired heartbeat lease', async () => {
 		vi.useFakeTimers();
 		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
-		vi.mocked(apiHeartbeatLiveChatAvailability).mockResolvedValue(false);
+		vi.mocked(apiHeartbeatLiveChatAvailability)
+			.mockResolvedValueOnce(true)
+			.mockResolvedValue(false);
 		const { result } = renderHook(() => {
 			const availability = useLiveChatAvailable();
 			useLiveChatAvailabilityHeartbeat(true, availability[0]);
@@ -195,9 +198,9 @@ describe('live-chat availability state', () => {
 			vi.useFakeTimers();
 			localStorage.setItem('oriso_liveChatAvailability', '1');
 			vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
-			vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
-				new Error(refusal)
-			);
+			vi.mocked(apiHeartbeatLiveChatAvailability)
+				.mockResolvedValueOnce(true)
+				.mockRejectedValue(new Error(refusal));
 			const { result } = renderHook(() => {
 				const availability = useLiveChatAvailable();
 				useLiveChatAvailabilityHeartbeat(true, availability[0]);
@@ -276,6 +279,7 @@ describe('live-chat availability state', () => {
 			localStorage.setItem('oriso_liveChatAvailability', '1');
 			vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
 			vi.mocked(apiHeartbeatLiveChatAvailability)
+				.mockResolvedValueOnce(true)
 				.mockRejectedValueOnce(failure)
 				.mockResolvedValue(true);
 			const { result } = renderHook(() => {
@@ -293,7 +297,7 @@ describe('live-chat availability state', () => {
 			);
 
 			await act(async () => vi.advanceTimersByTimeAsync(45_000));
-			expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
+			expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(3);
 			expect(result.current[0]).toBe(true);
 
 			// Acknowledged again at 90 s, so the lease is good well past 120 s.
@@ -317,7 +321,7 @@ describe('live-chat availability state', () => {
 		await act(async () => Promise.resolve());
 
 		await act(async () => vi.advanceTimersByTimeAsync(119_000));
-		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(2);
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(3);
 		expect(result.current[0]).toBe(true);
 
 		await act(async () => vi.advanceTimersByTimeAsync(1_000));
@@ -575,6 +579,88 @@ describe('live-chat availability state', () => {
 		expect(localStorage.getItem('oriso_liveChatAvailabilityAck')).toBe(
 			String(Date.now())
 		);
+	});
+
+	// #1485 review: after a reload the availability GET only reads whether a
+	// lease exists; it does not renew it. The lease ends a lease after the last
+	// acknowledged heartbeat, not a lease after the page loaded.
+	it('checks the lease at once when it becomes active', async () => {
+		vi.useFakeTimers();
+		renderHook(() => useLiveChatAvailabilityHeartbeat(true, true));
+
+		await act(async () => vi.advanceTimersByTimeAsync(0));
+
+		expect(apiHeartbeatLiveChatAvailability).toHaveBeenCalledTimes(1);
+	});
+
+	it('stops claiming live a lease after the last acknowledgement, not after the reload', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		// Acknowledged 100 s before this page loaded.
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now() - 100_000)
+		);
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new TypeError('Failed to fetch')
+		);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+		expect(result.current[0]).toBe(true);
+
+		await act(async () => vi.advanceTimersByTimeAsync(20_000));
+
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
+	});
+
+	it('keeps a reloaded tab live when its first heartbeat renews the lease', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now() - 100_000)
+		);
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+
+		await act(async () => vi.advanceTimersByTimeAsync(119_000));
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
+	});
+
+	it('does not let an old acknowledgement switch off a fresh enable', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now() - 3_600_000)
+		);
+		vi.mocked(apiHeartbeatLiveChatAvailability).mockRejectedValue(
+			new TypeError('Failed to fetch')
+		);
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+
+		await act(async () => result.current[1](true));
+		await act(async () => vi.advanceTimersByTimeAsync(60_000));
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
 	});
 
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {

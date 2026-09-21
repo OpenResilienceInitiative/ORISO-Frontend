@@ -149,12 +149,17 @@ const NotificationDefault = ({
 					</div>
 				)}
 				{notification.closeable && (
-					<div
+					// A native button: focusable, and Enter/Space close it too,
+					// so a notice without a timeout can be dismissed by keyboard.
+					<button
+						type="button"
 						className="notification__close"
 						onClick={closeNotification}
+						aria-label={translate('app.close')}
+						title={translate('app.close')}
 					>
-						<CloseIcon />
-					</div>
+						<CloseIcon aria-hidden="true" focusable="false" />
+					</button>
 				)}
 			</div>
 			{typeof notification.text === 'string' ? (

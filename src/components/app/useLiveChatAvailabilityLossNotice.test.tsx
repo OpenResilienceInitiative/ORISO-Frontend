@@ -29,7 +29,7 @@ vi.mock('react-i18next', () => ({
 const renderNoticeWithState = (lostReason: string | null) => {
 	let current: any[] = [];
 	let setList: (next: any) => void = () => undefined;
-	const wrapper = ({ children }: { children: React.ReactNode }) => {
+	const Wrapper = ({ children }: { children: React.ReactNode }) => {
 		const [notifications, setNotifications] = useState<any[]>([]);
 		current = notifications;
 		setList = setNotifications;
@@ -58,7 +58,7 @@ const renderNoticeWithState = (lostReason: string | null) => {
 	};
 	const view = renderHook(
 		({ reason }) => useLiveChatAvailabilityLossNotice(reason as any),
-		{ wrapper, initialProps: { reason: lostReason } }
+		{ wrapper: Wrapper, initialProps: { reason: lostReason } }
 	);
 	return {
 		...view,

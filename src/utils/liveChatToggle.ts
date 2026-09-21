@@ -57,6 +57,8 @@ export const setLiveChatAvailable = async (active: boolean): Promise<void> => {
 	await apiSetLiveChatAvailability(active);
 	availabilityRevision += 1;
 	persistLiveChatAvailabilityPreference(active);
+	// An acknowledged enable starts a fresh lease, like a heartbeat.
+	if (active) recordLiveChatHeartbeatAcknowledged();
 };
 
 /** The server no longer counts this consultant: switch off everywhere. */
@@ -211,8 +213,6 @@ export const useLiveChatAvailabilityHeartbeat = (
 ): void => {
 	useEffect(() => {
 		if (!enabled || !active) return;
-		// `active` only turns true once the backend acknowledged it, so the
-		// lease is fresh when this effect starts.
 		let leaseWatchdog = 0;
 		const armLeaseWatchdog = (delay = LIVE_CHAT_LEASE_MS) => {
 			window.clearTimeout(leaseWatchdog);
@@ -229,8 +229,20 @@ export const useLiveChatAvailabilityHeartbeat = (
 				else dropLiveChatAvailability('connectionLost');
 			}, delay);
 		};
-		armLeaseWatchdog();
-		const heartbeat = window.setInterval(() => {
+		// The GET that made `active` true only reads whether a lease exists;
+		// it does not renew it. So the watchdog counts from the last
+		// acknowledgement any tab saw, and one beat goes out at once so a
+		// reloaded tab renews the lease instead of waiting a full interval.
+		// A record older than a lease cannot be what keeps the lease alive
+		// (another device must be), so it falls back to a full lease.
+		const leaseLeftAtStart =
+			readLastLiveChatHeartbeatAcknowledged() +
+			LIVE_CHAT_LEASE_MS -
+			Date.now();
+		armLeaseWatchdog(
+			leaseLeftAtStart > 0 ? leaseLeftAtStart : LIVE_CHAT_LEASE_MS
+		);
+		const beat = () => {
 			const requestedAtRevision = availabilityRevision;
 			void apiHeartbeatLiveChatAvailability()
 				.then((leaseActive) => {
@@ -247,7 +259,12 @@ export const useLiveChatAvailabilityHeartbeat = (
 					// Otherwise transient: the next beat is the retry, and the
 					// watchdog bounds how long "live" may be claimed without one.
 				});
-		}, LIVE_CHAT_HEARTBEAT_INTERVAL_MS);
+		};
+		beat();
+		const heartbeat = window.setInterval(
+			beat,
+			LIVE_CHAT_HEARTBEAT_INTERVAL_MS
+		);
 		return () => {
 			window.clearInterval(heartbeat);
 			window.clearTimeout(leaseWatchdog);

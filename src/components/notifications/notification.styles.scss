@@ -16,7 +16,19 @@
 	}
 
 	&__close {
+		display: flex;
+		align-items: flex-start;
+		padding: 0;
+		border: 0;
+		background: none;
 		color: $white;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid $white;
+			outline-offset: 2px;
+		}
+
 		svg {
 			width: 14px;
 			height: 14px;
