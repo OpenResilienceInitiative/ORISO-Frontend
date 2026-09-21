@@ -307,7 +307,8 @@ describe('getMatrixAccessToken', () => {
 			homeserverUrl: 'https://matrix.example.test',
 			uiaPassword: 'stale-password',
 			userId: '@consultant:matrix.example.test'
-		});
+		}) as any;
+		client.setAccessToken = vi.fn();
 		vi.mocked(fetchData).mockResolvedValue({
 			accessToken: 'second-token',
 			userId: '@consultant:matrix.example.test',
@@ -329,6 +330,66 @@ describe('getMatrixAccessToken', () => {
 		expect(makeRequest).toHaveBeenLastCalledWith(
 			expect.objectContaining({ password: 'current-password' })
 		);
+	});
+
+	/**
+	 * The call that yields the current password also signs the device in again
+	 * and hands out a new access token. The running client must carry that
+	 * token, so the session stays authorised and logout revokes it (#1504 review).
+	 */
+	it('moves the running client onto the access token issued with the password', async () => {
+		const client = createMatrixClient({
+			accessToken: 'first-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: 'current-password',
+			expiresInMs: 60000
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockResolvedValueOnce(undefined);
+
+		await getDeviceSigningAuth(client)!(makeRequest);
+
+		expect(client.setAccessToken).toHaveBeenCalledWith('second-token');
+		expect(localStorage.getItem('matrix_access_token')).toBe(
+			'second-token'
+		);
+	});
+
+	it('refuses a login the server bound to another account or device', async () => {
+		const client = createMatrixClient({
+			accessToken: 'first-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'foreign-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_OTHER_DEVICE',
+			uiaPassword: 'current-password'
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } });
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(makeRequest).toHaveBeenCalledOnce();
 	});
 
 	it('refuses to authenticate when the server hands out no password', async () => {

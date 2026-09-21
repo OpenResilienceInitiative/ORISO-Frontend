@@ -86,17 +86,37 @@ const matrixTokenUrl = (deviceId: string): string =>
 		endpoints.matrixAccessToken.includes('?') ? '&' : '?'
 	}deviceId=${encodeURIComponent(deviceId)}`;
 
-/** The account's Matrix password as of now, for one device-signing UIA. */
-const fetchCurrentUiaPassword = async (deviceId: string): Promise<string> => {
+/**
+ * The account's Matrix password as of now, for one device-signing UIA. The same call signs this
+ * device in again; the running client moves onto that token so it stays authorised and logout
+ * revokes it.
+ */
+const fetchCurrentUiaPassword = async (
+	client: MatrixClient,
+	loginData: MatrixLoginData
+): Promise<string> => {
 	const response = await fetchData({
-		url: matrixTokenUrl(deviceId),
+		url: matrixTokenUrl(loginData.deviceId),
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_ERRORS.CATCH_ALL],
 		recoverOnPublicAuthRoute: false
 	});
-	if (!response?.uiaPassword) {
-		throw new Error('Matrix login did not return a UIA password');
+	if (
+		!response?.uiaPassword ||
+		!response.accessToken ||
+		response.userId !== loginData.userId ||
+		response.deviceId !== loginData.deviceId
+	) {
+		throw new Error(
+			"Matrix login did not return this device's credentials"
+		);
 	}
+	client.setAccessToken(response.accessToken);
+	persistMatrixLoginData({
+		...loginData,
+		accessToken: response.accessToken,
+		expiresInMs: response.expiresInMs
+	});
 	return response.uiaPassword;
 };
 
@@ -192,7 +212,7 @@ export const createMatrixClient = (
 	if (loginData.uiaPassword) {
 		// Every token fetch rotates the password, so the one in loginData goes stale; ask anew.
 		registerDeviceSigningPassword(client, loginData.userId, () =>
-			fetchCurrentUiaPassword(loginData.deviceId)
+			fetchCurrentUiaPassword(client, loginData)
 		);
 	}
 
