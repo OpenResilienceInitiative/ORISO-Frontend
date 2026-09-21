@@ -455,15 +455,18 @@ describe('live-chat availability state', () => {
 	it('withdraws the reason when another tab switches live chat on again', async () => {
 		const { result } = renderHook(() => useLiveChatAvailable());
 		await waitFor(() => expect(result.current[2].loading).toBe(false));
+		const loss = JSON.stringify({ reason: 'leaseLost', at: 1 });
+		localStorage.setItem('oriso_liveChatAvailabilityLoss', loss);
 		act(() => {
 			window.dispatchEvent(
 				new StorageEvent('storage', {
 					key: 'oriso_liveChatAvailabilityLoss',
-					newValue: JSON.stringify({ reason: 'leaseLost', at: 1 })
+					newValue: loss
 				})
 			);
 		});
 		expect(result.current[2].lostReason).toBe('leaseLost');
+		localStorage.removeItem('oriso_liveChatAvailabilityLoss');
 
 		act(() => {
 			window.dispatchEvent(
@@ -1126,6 +1129,88 @@ describe('live-chat availability state', () => {
 		expect(
 			localStorage.getItem('oriso_liveChatAvailabilityAck')
 		).toBeNull();
+	});
+
+	// #1485 review: a renewal's lease runs from when it was sent; a slow
+	// answer must not give the watchdog a fresh lease from the answer.
+	it('re-arms from when a slow heartbeat was sent, not answered', async () => {
+		vi.useFakeTimers();
+		localStorage.setItem('oriso_liveChatAvailability', '1');
+		localStorage.setItem(
+			'oriso_liveChatAvailabilityAck',
+			String(Date.now())
+		);
+		vi.mocked(apiGetLiveChatAvailability).mockResolvedValue(true);
+		vi.mocked(apiHeartbeatLiveChatAvailability)
+			.mockReturnValueOnce(
+				new Promise((resolve) => setTimeout(() => resolve(true), 4_000))
+			)
+			.mockRejectedValue(new Error('TIMEOUT'));
+		const { result } = renderHook(() => {
+			const availability = useLiveChatAvailable();
+			useLiveChatAvailabilityHeartbeat(true, availability[0]);
+			return availability;
+		});
+		await act(async () => Promise.resolve());
+
+		// Sent at 0 s: a lease plus the 5 s grace ends at 125 s, not 129 s.
+		await act(async () => vi.advanceTimersByTimeAsync(126_000));
+
+		expect(result.current[0]).toBe(false);
+		expect(result.current[2].lostReason).toBe('connectionLost');
+	});
+
+	// #1485 review: tab A's logout ends the session for every tab; tab B's
+	// enable still in flight must not write the keys back afterwards.
+	it('does not revive the session keys when another tab logged out meanwhile', async () => {
+		let answer: () => void = () => undefined;
+		vi.mocked(apiSetLiveChatAvailability).mockReturnValueOnce(
+			new Promise((resolve) => {
+				answer = () => resolve(undefined);
+			})
+		);
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+
+		let enabled: Promise<void> = Promise.resolve();
+		act(() => {
+			enabled = result.current[1](true);
+		});
+		// What tab A's teardown leaves in the shared storage.
+		localStorage.setItem('oriso_liveChatSessionEpoch', 'tab-a-logout');
+		await act(async () => {
+			answer();
+			await enabled.catch(() => undefined);
+		});
+
+		expect(localStorage.getItem('oriso_liveChatAvailability')).toBeNull();
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityAck')
+		).toBeNull();
+		expect(result.current[0]).toBe(false);
+	});
+
+	// #1485 review: a loss another tab recorded can be delivered here after
+	// this tab switched on again (which removed the loss record).
+	it('ignores a queued loss from another tab that storage no longer holds', async () => {
+		const { result } = renderHook(() => useLiveChatAvailable());
+		await waitFor(() => expect(result.current[2].loading).toBe(false));
+		await act(async () => result.current[1](true));
+		expect(
+			localStorage.getItem('oriso_liveChatAvailabilityLoss')
+		).toBeNull();
+
+		act(() => {
+			window.dispatchEvent(
+				new StorageEvent('storage', {
+					key: 'oriso_liveChatAvailabilityLoss',
+					newValue: JSON.stringify({ reason: 'refused', at: 1 })
+				})
+			);
+		});
+
+		expect(result.current[0]).toBe(true);
+		expect(result.current[2].lostReason).toBeNull();
 	});
 
 	it('does not raise a loss notice on load when nothing claimed "live"', async () => {

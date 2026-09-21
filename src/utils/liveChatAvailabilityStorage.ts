@@ -28,11 +28,21 @@ export interface LiveChatAcknowledgement {
 }
 
 /**
- * Bumped whenever the session's live-chat keys are cleared (logout, any
- * teardown). A request sent in an older session must not write them back.
+ * Changes whenever the session's live-chat keys are cleared (logout, any
+ * teardown), in this tab and — through localStorage — in every other tab. A
+ * request sent in an older session must not write the keys back.
  */
+export const LIVE_CHAT_SESSION_EPOCH_STORAGE_KEY = 'oriso_liveChatSessionEpoch';
 let liveChatSessionEpoch = 0;
-export const readLiveChatSessionEpoch = (): number => liveChatSessionEpoch;
+export const readLiveChatSessionEpoch = (): string => {
+	let shared: string | null = null;
+	try {
+		shared = localStorage.getItem(LIVE_CHAT_SESSION_EPOCH_STORAGE_KEY);
+	} catch {
+		/* Without storage the tab-local counter still guards this tab. */
+	}
+	return `${shared ?? ''}#${liveChatSessionEpoch}`;
+};
 
 export const recordLiveChatHeartbeatAcknowledged = (sentAt: number): void => {
 	try {
@@ -167,5 +177,13 @@ export const persistLiveChatAvailabilityPreference = (
 /** Ends the session's live-chat state: logout and every teardown. */
 export const clearLiveChatAvailabilityPreference = (): void => {
 	liveChatSessionEpoch += 1;
+	try {
+		localStorage.setItem(
+			LIVE_CHAT_SESSION_EPOCH_STORAGE_KEY,
+			`${Date.now()}-${Math.random().toString(36).slice(2)}`
+		);
+	} catch {
+		/* The tab-local counter above still ends this tab's session. */
+	}
 	persistLiveChatAvailabilityPreference(false);
 };

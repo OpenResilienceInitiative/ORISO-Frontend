@@ -91,6 +91,17 @@ const leaseLeftNow = (): number =>
 	LIVE_CHAT_LEASE_MS -
 	Date.now();
 
+const isCurrentLossRecord = (value: string | null): boolean => {
+	try {
+		return (
+			localStorage.getItem(LIVE_CHAT_AVAILABILITY_LOSS_STORAGE_KEY) ===
+			value
+		);
+	} catch {
+		return true;
+	}
+};
+
 /** The server no longer counts this consultant: switch off everywhere. */
 const dropLiveChatAvailability = (
 	reason: LiveChatAvailabilityLossReason
@@ -179,6 +190,10 @@ export const useLiveChatAvailable = (): [
 				// Another tab switched off on its own (#1485): say why here
 				// too, and keep this tab's in-flight answers from reviving it.
 				const reason = parseLiveChatAvailabilityLoss(event.newValue);
+				// A queued event can arrive after this tab switched on again,
+				// which removed the record: only the record storage still
+				// holds may switch this tab off.
+				if (reason && !isCurrentLossRecord(event.newValue)) return;
 				if (reason) {
 					invalidateForStorageChange(event);
 					setActive(false);
@@ -333,7 +348,8 @@ export const useLiveChatAvailabilityHeartbeat = (
 					if (leaseActive) {
 						leaseKnown = true;
 						recordLiveChatHeartbeatAcknowledged(sentAt);
-						armLeaseWatchdog();
+						// The lease runs from when the renewal was sent.
+						armLeaseWatchdog(leaseLeftNow());
 					} else if (!renewedSinceSent())
 						dropLiveChatAvailability('leaseLost');
 				})
