@@ -152,11 +152,8 @@ export type OwnConsultantName = {
  *
  * Prefer the chosen public `displayName` from userData. When it is set, omit
  * first/last so `formatMessagePersonName` cannot prefer the legal name.
- * Fallback: firstName + lastName → username.
- *
- * Since #1486 the legal name is the last resort in `resolvePreferredName` as
- * well, so a counsellor without a public display name is shown under their
- * User-ID — the same name the chat header and the session list show.
+ * Fallback: username → firstName + lastName, so a counsellor without a public
+ * display name reads the same in the bubble, the chat header and the session list.
  */
 export const resolveOwnConsultantName = ({
 	displayName,
@@ -174,17 +171,19 @@ export const resolveOwnConsultantName = ({
 		return { displayName: publicDisplayName };
 	}
 
-	const normalizedFirstName = (firstName || '').trim();
-	const normalizedLastName = (lastName || '').trim();
-	if (normalizedFirstName || normalizedLastName) {
-		return {
-			firstName: normalizedFirstName || undefined,
-			lastName: normalizedLastName || undefined
-		};
+	const fallbackUsername = (username || '').trim();
+	if (fallbackUsername) {
+		return { displayName: fallbackUsername };
 	}
 
-	const fallbackUsername = (username || '').trim();
-	return fallbackUsername ? { displayName: fallbackUsername } : {};
+	const normalizedFirstName = (firstName || '').trim();
+	const normalizedLastName = (lastName || '').trim();
+	return normalizedFirstName || normalizedLastName
+		? {
+				firstName: normalizedFirstName || undefined,
+				lastName: normalizedLastName || undefined
+			}
+		: {};
 };
 
 /**

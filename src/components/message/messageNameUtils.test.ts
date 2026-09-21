@@ -143,19 +143,21 @@ describe('resolveOwnConsultantName', () => {
 		).toBe('Beratende Person Kim');
 	});
 
-	it('falls back to firstName and lastName, then username', () => {
+	it('falls back to the username before the legal name', () => {
 		expect(
 			resolveOwnConsultantName({
 				firstName: 'Karina',
 				lastName: 'P',
 				username: 'karina.p'
 			})
-		).toEqual({ firstName: 'Karina', lastName: 'P' });
-		expect(
-			resolveOwnConsultantName({
-				username: 'karina.p'
-			})
 		).toEqual({ displayName: 'karina.p' });
+	});
+
+	it('uses the legal name only when nothing else is known', () => {
+		expect(
+			resolveOwnConsultantName({ firstName: 'Karina', lastName: 'P' })
+		).toEqual({ firstName: 'Karina', lastName: 'P' });
+		expect(resolveOwnConsultantName({})).toEqual({});
 	});
 });
 
