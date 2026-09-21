@@ -21,6 +21,7 @@ import {
 	redirectToInviteSession
 } from './inviteLinkHelpers';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
 
 vi.mock('../../api/apiRedeemInviteLink', async () => {
 	const actual = await vi.importActual<
@@ -44,10 +45,23 @@ vi.mock('../registration/autoLogin', () => ({
 	redirectToApp: vi.fn()
 }));
 
+/* The room owns the pre-session flow; here only what it is handed matters. */
+const roomProps = vi.hoisted(() => ({ current: null as any }));
 vi.mock('../anonymousChat/entryRoom/LiveChatEntryRoom', () => ({
-	LiveChatEntryRoom: ({ sessionId }: { sessionId: number }) => (
-		<div data-testid="live-chat-entry-room">room {sessionId}</div>
-	)
+	LiveChatEntryRoom: (props: any) => {
+		roomProps.current = props;
+		return (
+			<div data-testid="live-chat-entry-room">
+				room{' '}
+				{props.sessionId ?? `invite ${props.invite?.topicId ?? '?'}`}
+			</div>
+		);
+	}
+}));
+/* Without a context the page falls back to redeeming on arrival, which is
+   what the older describes below exercise. */
+vi.mock('../../api/apiGetInviteLinkContext', () => ({
+	apiGetInviteLinkContext: vi.fn(() => Promise.reject(new Error('none')))
 }));
 vi.mock('./inviteLinkHelpers', () => ({
 	applyRedeemSessionCredentials: vi.fn(),
@@ -284,5 +298,74 @@ describe('InviteLink queue entries', () => {
 		expect(localStorage.getItem('oriso.invite.session.token-123')).toBe(
 			'42'
 		);
+	});
+});
+
+describe('InviteLink asks who is live before anything is created', () => {
+	beforeEach(() => {
+		cleanup();
+		vi.clearAllMocks();
+		localStorage.clear();
+		roomProps.current = null;
+		vi.mocked(apiGetInviteLinkContext).mockResolvedValue({
+			tenantId: 1,
+			agencyId: null,
+			consultingTypeId: 1,
+			topicId: 3,
+			chatType: 'LIVE_CHAT'
+		});
+		vi.mocked(redeemInviteLink).mockResolvedValue({
+			sessionId: 42,
+			userName: 'anon_1',
+			accessToken: 'access-token',
+			refreshToken: 'refresh-token',
+			expiresIn: 300,
+			refreshExpiresIn: 600
+		});
+	});
+
+	it("opens the room on the link's topic without redeeming it", async () => {
+		renderInvite();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room invite 3'
+			)
+		);
+		expect(roomProps.current.invite.consultingTypeId).toBe(1);
+		expect(redeemInviteLink).not.toHaveBeenCalled();
+		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
+		expect(
+			localStorage.getItem('oriso.invite.session.token-123')
+		).toBeNull();
+	});
+
+	it('hands the room a redeem that sets the tokens and remembers the session', async () => {
+		renderInvite();
+		await waitFor(() => expect(roomProps.current?.invite?.topicId).toBe(3));
+
+		await expect(roomProps.current.invite.redeem()).resolves.toBe(42);
+
+		expect(redeemInviteLink).toHaveBeenCalledWith('token-123');
+		expect(applyRedeemSessionCredentials).toHaveBeenCalled();
+		expect(localStorage.getItem('oriso.invite.session.token-123')).toBe(
+			'42'
+		);
+		/* The guest names themselves before the redeem now; no courtesy name. */
+		expect(assignInviteSessionDisplayName).not.toHaveBeenCalled();
+	});
+
+	it('shows the live-chat loader, not the bare registration text, while it looks', async () => {
+		vi.mocked(apiGetInviteLinkContext).mockReturnValue(
+			new Promise(() => undefined)
+		);
+		renderInvite();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room').textContent).toBe(
+				'room invite ?'
+			)
+		);
+		expect(screen.queryByText('Registrierung läuft...')).toBeNull();
 	});
 });

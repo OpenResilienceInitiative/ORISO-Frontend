@@ -5027,7 +5027,9 @@
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
 				"accepted": "Une conseillère a pris votre conversation",
-				"closed": "Fermé pour le moment"
+				"closed": "Fermé pour le moment",
+				"checking": "Qui est en ligne ?",
+				"waitingForLive": "En attente de quelqu'un en ligne"
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
@@ -5065,7 +5067,8 @@
 				"later": "Plus tard",
 				"mail": "Écrire une demande à un centre de conseil",
 				"mailShort": "Écrire une demande",
-				"closedDay": "fermé"
+				"closedDay": "fermé",
+				"wait": "J'attends"
 			},
 			"steps": {
 				"wait": {
@@ -5080,6 +5083,10 @@
 					"title": "Anonyme, puis effacé",
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
+			},
+			"checking": {
+				"text": "Nous regardons qui est en ligne …",
+				"waiting": "Nous attendons avec vous que quelqu'un soit en ligne …"
 			}
 		}
 	},

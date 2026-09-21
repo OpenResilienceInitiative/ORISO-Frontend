@@ -2393,6 +2393,9 @@
 				"anonymous": {
 					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
+			},
+			"checking": {
+				"waiting": "Wir warten mit dir, bis jemand live ist …"
 			}
 		}
 	},

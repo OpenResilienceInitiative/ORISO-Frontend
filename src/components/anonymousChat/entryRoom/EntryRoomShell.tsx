@@ -82,6 +82,9 @@ export const EntryRoomShell = ({
 					},
 					display: 'flex',
 					flexDirection: 'column',
+					/* A view slides in from beyond the column's edge; clip, so
+					   the page never gains a scrollbar for it. */
+					overflowX: 'clip',
 					px: { xs: 2.5, sm: 5 },
 					pt: { xs: 3, sm: 4 },
 					pb: '104px'

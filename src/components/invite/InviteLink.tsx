@@ -21,6 +21,7 @@ import {
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
+import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { redirectToApp } from '../registration/autoLogin';
@@ -71,8 +72,13 @@ export const InviteLink = () => {
 	const tenant = tenantContext?.tenant;
 	const locale = localeContext?.locale ?? 'de';
 	const [status, setStatus] = useState<
-		'loading' | 'identity' | 'registering' | 'error' | 'room'
+		'loading' | 'identity' | 'registering' | 'error' | 'room' | 'invite'
 	>('loading');
+	/* A live-chat link the room opens before it is redeemed. */
+	const [liveTopic, setLiveTopic] = useState<{
+		topicId: number;
+		consultingTypeId?: number;
+	} | null>(null);
 	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [legacyRedeem, setLegacyRedeem] =
@@ -106,6 +112,27 @@ export const InviteLink = () => {
 				if (reusableSessionId !== null) {
 					setRoomSessionId(reusableSessionId);
 					setStatus('room');
+					return;
+				}
+
+				/* Who is live is asked before anything is created: the room
+				   gets the link's topic, offers names only if somebody is
+				   there, and redeems once a name is chosen. The context is
+				   public and redeems nothing. Without it — a link kind that
+				   has none, or a failed lookup — the page redeems on arrival
+				   as before, rather than leave the guest at a dead door. */
+				const context = await apiGetInviteLinkContext(token).catch(
+					() => null
+				);
+				if (
+					context?.chatType === 'LIVE_CHAT' &&
+					typeof context.topicId === 'number'
+				) {
+					setLiveTopic({
+						topicId: context.topicId,
+						consultingTypeId: context.consultingTypeId ?? undefined
+					});
+					setStatus('invite');
 					return;
 				}
 
@@ -147,6 +174,17 @@ export const InviteLink = () => {
 			}
 		})();
 	}, [token, locale, resumeAttempt]);
+
+	const redeemForRoom = useCallback(async (): Promise<number> => {
+		if (!token) throw new Error('Missing token');
+		const data = await redeemInviteLink(token);
+		if (!isRedeemInviteLinkSessionResponse(data)) {
+			throw new Error('Invite link did not open a live-chat session');
+		}
+		applyRedeemSessionCredentials(data);
+		rememberInviteSession(token, data.sessionId);
+		return data.sessionId;
+	}, [token]);
 
 	const handleReroll = useCallback(() => {
 		if (!identity) return;
@@ -192,6 +230,22 @@ export const InviteLink = () => {
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName', 'Name ändern');
 
+	/* While it looks, and for a live-chat link after that, the room itself is
+	   on screen — the same element throughout, so on a desktop the stage stays
+	   and only the column changes. */
+	if (status === 'loading' || status === 'invite') {
+		return (
+			<LiveChatEntryRoom
+				invite={{
+					topicId: liveTopic?.topicId,
+					consultingTypeId: liveTopic?.consultingTypeId,
+					redeem: redeemForRoom
+				}}
+				topicSlug={topicSlug}
+			/>
+		);
+	}
+
 	if (status === 'room' && roomSessionId !== null) {
 		return (
 			<LiveChatEntryRoom
@@ -208,7 +262,7 @@ export const InviteLink = () => {
 			showRegistrationLink={false}
 		>
 			<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
-				{(status === 'loading' || status === 'registering') && (
+				{status === 'registering' && (
 					<p>
 						{t(
 							'registration.registering',

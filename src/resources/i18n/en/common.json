@@ -4938,7 +4938,9 @@
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
 				"accepted": "A counsellor has taken your conversation",
-				"closed": "Closed right now"
+				"closed": "Closed right now",
+				"checking": "Who is live right now?",
+				"waitingForLive": "Waiting until someone is live"
 			},
 			"access": {
 				"headline": "Your name for today.",
@@ -4976,7 +4978,8 @@
 				"later": "Later",
 				"mail": "Write a request to a counselling centre",
 				"mailShort": "Write a request",
-				"closedDay": "closed"
+				"closedDay": "closed",
+				"wait": "I'll wait"
 			},
 			"steps": {
 				"wait": {
@@ -4991,6 +4994,10 @@
 					"title": "Anonymous, and gone afterwards",
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
+			},
+			"checking": {
+				"text": "Checking who is live right now …",
+				"waiting": "Waiting with you until someone is live …"
 			}
 		}
 	},

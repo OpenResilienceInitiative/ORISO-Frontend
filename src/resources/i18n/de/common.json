@@ -5019,7 +5019,9 @@
 				"access": "Ihr Zugang für dieses Gespräch",
 				"waiting": "Warteraum — freie Beraterin wird gesucht",
 				"accepted": "Eine Beraterin hat Ihr Gespräch angenommen",
-				"closed": "Gerade geschlossen"
+				"closed": "Gerade geschlossen",
+				"checking": "Wer ist gerade live?",
+				"waitingForLive": "Wir warten, bis jemand live ist"
 			},
 			"access": {
 				"headline": "Ihr Name für heute.",
@@ -5057,7 +5059,8 @@
 				"later": "Später",
 				"mail": "Anfrage an eine Beratungsstelle schreiben",
 				"mailShort": "Anfrage schreiben",
-				"closedDay": "geschlossen"
+				"closedDay": "geschlossen",
+				"wait": "Ich warte"
 			},
 			"steps": {
 				"wait": {
@@ -5072,6 +5075,10 @@
 					"title": "Anonym, und danach weg",
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
+			},
+			"checking": {
+				"text": "Wir schauen, wer gerade live ist …",
+				"waiting": "Wir warten mit Ihnen, bis jemand live ist …"
 			}
 		}
 	},
