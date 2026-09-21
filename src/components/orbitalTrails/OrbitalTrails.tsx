@@ -222,6 +222,10 @@ export const OrbitalTrails = ({
 		let isVisible = true;
 
 		const animate = (time: number) => {
+			/* The budget is drawn: the canvas is complete and stays as it is. A
+			   loader that waits indefinitely ("Ich warte") must not keep waking
+			   the main thread at the refresh rate for nothing. */
+			if (drawnFrames >= MAX_FRAMES) return;
 			if (
 				isVisible &&
 				document.visibilityState !== 'hidden' &&
@@ -241,14 +245,19 @@ export const OrbitalTrails = ({
 			animationFrame = window.requestAnimationFrame(animate);
 		};
 
-		const observer = new IntersectionObserver(([entry]) => {
-			isVisible = entry.isIntersecting;
-		});
-		observer.observe(root);
+		/* Pausing off-screen is an optimisation, not a requirement: where the
+		   API is missing the loader simply keeps drawing. */
+		const observer =
+			typeof IntersectionObserver === 'function'
+				? new IntersectionObserver(([entry]) => {
+						isVisible = entry.isIntersecting;
+					})
+				: null;
+		observer?.observe(root);
 		animationFrame = window.requestAnimationFrame(animate);
 
 		return () => {
-			observer.disconnect();
+			observer?.disconnect();
 			window.cancelAnimationFrame(animationFrame);
 		};
 	}, [palette, paused, seed, variant, warmupFrames]);

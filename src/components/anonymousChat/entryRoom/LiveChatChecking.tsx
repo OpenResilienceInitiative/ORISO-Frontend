@@ -11,8 +11,9 @@ export interface LiveChatCheckingProps {
 /**
  * The room while it finds out who is live — before a name is offered, and
  * again after "Ich warte" on the closed view. Centred in the white column,
- * the orbital loader above one sentence. The loader carries the live region;
- * the visible sentence is the same words, so a screen reader hears them once.
+ * the orbital loader above one sentence. The sentence is what changes ("wir
+ * schauen" → "wir warten"), so it is the live region; the animation says
+ * nothing and is hidden from assistive technology.
  */
 export const LiveChatChecking = ({ text }: LiveChatCheckingProps) => (
 	<Box
@@ -30,7 +31,7 @@ export const LiveChatChecking = ({ text }: LiveChatCheckingProps) => (
 	>
 		{/* One orbit, about a third larger than the grid of four used to be
 		    (Frank, 2026-09-21: 160/200 → 208/260). */}
-		<Box sx={{ width: { xs: 208, lg: 260 } }}>
+		<Box aria-hidden="true" sx={{ width: { xs: 208, lg: 260 } }}>
 			<OrbitalTrails
 				label={text}
 				palette="brand"
@@ -39,7 +40,8 @@ export const LiveChatChecking = ({ text }: LiveChatCheckingProps) => (
 			/>
 		</Box>
 		<Typography
-			aria-hidden="true"
+			role="status"
+			aria-live="polite"
 			sx={{
 				fontSize: 16,
 				fontWeight: 500,

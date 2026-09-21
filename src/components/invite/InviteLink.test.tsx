@@ -22,6 +22,7 @@ import {
 } from './inviteLinkHelpers';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
 import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import { setTokenExpiryInLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 
 vi.mock('../../api/apiRedeemInviteLink', async () => {
 	const actual = await vi.importActual<
@@ -403,12 +404,28 @@ describe('InviteLink never takes over a counsellor who is signed in', () => {
 	   the live count without anything on her screen saying so (Dev, 2026-09-21). */
 	it('does not redeem, and says why, when this browser holds a counsellor session', async () => {
 		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', 600);
 		renderInvite();
 
 		await screen.findByText(/als Beraterin angemeldet/);
 		expect(redeemInviteLink).not.toHaveBeenCalled();
 		expect(applyRedeemSessionCredentials).not.toHaveBeenCalled();
 		expect(screen.queryByTestId('live-chat-entry-room')).toBeNull();
+	});
+
+	/* A counsellor who signed out long ago may still have the cookie: the
+	   invite route runs outside the app that would tear it down. An expired
+	   session signs nobody out, so it must not block anyone either. */
+	it('does not block on a counsellor session that has expired', async () => {
+		signIn(['consultant', 'user']);
+		setTokenExpiryInLocalStorage('auth.access_token_valid_until', -60);
+		setTokenExpiryInLocalStorage('auth.refresh_token_valid_until', -60);
+		renderInvite();
+
+		await waitFor(() =>
+			expect(screen.getByTestId('live-chat-entry-room')).toBeTruthy()
+		);
+		expect(screen.queryByText(/als Beraterin angemeldet/)).toBeNull();
 	});
 
 	it('lets a guest who already holds a guest session through as before', async () => {

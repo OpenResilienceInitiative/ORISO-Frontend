@@ -23,6 +23,7 @@ import {
 } from '../../api/apiRedeemInviteLink';
 import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
 import { isConsultantAccessToken } from '../auth/consultantLoginBlock';
+import { hasActiveAuthSession } from '../auth/auth';
 import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
@@ -111,7 +112,13 @@ export const InviteLink = () => {
 		   Redeeming writes the guest's tokens where hers are; her next heartbeat
 		   then goes out as the guest, is refused, and she silently drops out of
 		   the live count while her switch still reads live (Dev, 2026-09-21). */
-		if (isConsultantAccessToken(getValueFromCookie('keycloak'))) {
+		/* Only a session that is still alive: the invite route runs outside the
+		   app that tears an expired one down, and a stale cookie signs nobody
+		   out, so it must not lock anyone out either. */
+		if (
+			hasActiveAuthSession() &&
+			isConsultantAccessToken(getValueFromCookie('keycloak'))
+		) {
 			setStatus('staff');
 			return;
 		}

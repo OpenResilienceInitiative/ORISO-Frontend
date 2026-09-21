@@ -330,8 +330,10 @@ const LiveChatEntryRoomContent = ({
 	}, [busy, names, selectedIndex, sessionId, invite]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	/* Before any session: who is live for this topic, on the public endpoint
-	   that needs no account. It too reports a failed lookup as nobody, and a
-	   rejection is unknown — both count as a zero that needs a second look. */
+	   that needs no account. An answered zero needs a second look, because the
+	   server reports its own failed lookup as nobody. A rejected request is
+	   unknown and changes nothing — the waiting room's poll has always ignored
+	   rejections — so the room keeps looking rather than calling it closed. */
 	const topicId = invite?.topicId;
 	const consultingTypeId = invite?.consultingTypeId;
 	useEffect(() => {
@@ -339,20 +341,22 @@ const LiveChatEntryRoomContent = ({
 		let stop = false;
 		let timer: number | undefined;
 		let zeros = 0;
-		const sample = () =>
+		const sample = (): Promise<number | null> =>
 			apiGetConsultantAvailability(topicId, consultingTypeId).then(
 				(d) =>
 					typeof d?.numAvailableConsultants === 'number'
 						? d.numAvailableConsultants
 						: 0,
-				() => 0
+				() => null
 			);
 		const run = async () => {
 			const next = await sample();
 			if (stop) return;
-			zeros = next > 0 ? 0 : zeros + 1;
-			setAvailable(next);
-			setConsecutiveUnavailablePolls(zeros);
+			if (next !== null) {
+				zeros = next > 0 ? 0 : zeros + 1;
+				setAvailable(next);
+				setConsecutiveUnavailablePolls(zeros);
+			}
 			timer = window.setTimeout(
 				run,
 				zeros === 1 ? CLOSED_CONFIRMATION_MS : POLL_MS

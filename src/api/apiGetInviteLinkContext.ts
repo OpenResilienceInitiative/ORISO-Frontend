@@ -1,5 +1,5 @@
 import { apiUrl } from '../resources/scripts/endpoints';
-import { FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
 
 /**
  * What an invite link leads to, readable without redeeming it — public, no
@@ -13,16 +13,18 @@ export interface InviteLinkContext {
 	chatType: string | null;
 }
 
-export const apiGetInviteLinkContext = async (
+/* The page waits on this before it either opens the live-chat room or falls
+   back to redeeming on arrival, so a server that never answers must not hold
+   every invite on the loader. */
+const CONTEXT_TIMEOUT_MS = 8_000;
+
+export const apiGetInviteLinkContext = (
 	token: string
-): Promise<InviteLinkContext> => {
-	const url = `${apiUrl}/service/users/invitelinks/${encodeURIComponent(token)}/context`;
-	const response = await fetch(url, {
+): Promise<InviteLinkContext> =>
+	fetchData({
+		url: `${apiUrl}/service/users/invitelinks/${encodeURIComponent(token)}/context`,
 		method: FETCH_METHODS.GET,
-		headers: { Accept: 'application/json' }
+		skipAuth: true,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		timeout: CONTEXT_TIMEOUT_MS
 	});
-	if (!response.ok) {
-		throw new Error(`Invite context failed (HTTP ${response.status})`);
-	}
-	return response.json();
-};

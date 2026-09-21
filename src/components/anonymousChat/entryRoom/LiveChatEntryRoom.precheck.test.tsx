@@ -172,17 +172,34 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(nameCards().length).toBeGreaterThan(0);
 	});
 
-	it('treats a failed lookup as unknown: closed, and keeps asking', async () => {
+	/* A rejected request says nothing about who is live — the waiting room's
+	   poll has always ignored rejections. Only an answered zero counts. */
+	it('keeps looking through failed lookups, never calling them closed', async () => {
 		vi.mocked(apiGetConsultantAvailability).mockRejectedValue(
 			new Error('offline')
 		);
 		renderInvite();
 		await flush(1000);
-		expect(closedHeadline()).not.toBeNull();
+		await flush(4000);
+		expect(closedHeadline()).toBeNull();
+		expect(screen.getByTestId('orbital-trails')).toBeTruthy();
 
 		vi.mocked(apiGetConsultantAvailability).mockResolvedValue(live(1));
 		await flush(4000);
 		expect(nameCards().length).toBeGreaterThan(0);
+	});
+
+	it('does not let a failure between two zeros stand in for the second look', async () => {
+		vi.mocked(apiGetConsultantAvailability)
+			.mockResolvedValueOnce(live(0))
+			.mockRejectedValueOnce(new Error('timeout'))
+			.mockResolvedValue(live(0));
+		renderInvite();
+		await flush(1000);
+		expect(closedHeadline()).toBeNull();
+
+		await flush(4000);
+		expect(closedHeadline()).not.toBeNull();
 	});
 
 	it('leaves a session the guest already has alone (#1404)', async () => {
