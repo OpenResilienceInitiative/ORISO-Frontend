@@ -610,11 +610,18 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 		// Align the hairlines with the card gutter: 6px on mobile, 12px on
 		// desktop (matches the scrollContainer margins above).
+		// `width: auto`: the base `.emptyState` is `width: 100%`, which with
+		// the side margins pushed the hairline 12px past the column edge.
+		width: auto;
 		margin: 0 6px;
 		border-right: 1px solid #fff;
 
+		// Desktop: the hairline runs through the resize handle's centre
+		// (same formula as `&__resizeHandle--end`), so the pill sits on it.
 		@include breakpoint($fromLarge) {
-			margin: 0 12px;
+			margin: 0
+				calc(var(--pane-inner-gutter, 0px) - var(--pane-gap, 0px) / 2) 0
+				12px;
 		}
 	}
 
