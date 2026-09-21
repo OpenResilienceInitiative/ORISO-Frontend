@@ -193,3 +193,103 @@ export const EditorSingleLanguageTenant: Story = {
 		await expect(languageTabs(canvasElement)).toHaveLength(1);
 	}
 };
+
+/*
+ * Backend stand-in for the wired create flow: the create POST answers with a
+ * room, the session refresh returns the Series behind it. Installed per story
+ * on top of the preview's own fetch mock and removed again afterwards.
+ */
+const mockCreateBackend = () => {
+	const previous = globalThis.fetch;
+	const calls: string[] = [];
+	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+		const url = String(input instanceof Request ? input.url : input);
+		const method = (init?.method || 'GET').toUpperCase();
+		const json = (body: unknown) =>
+			new Response(JSON.stringify(body), {
+				status: 201,
+				headers: { 'content-type': 'application/json' }
+			});
+		if (
+			method === 'POST' &&
+			/\/service\/users\/chat\/(v2\/)?new/.test(url)
+		) {
+			calls.push('create');
+			return json({ matrixRoomId: '!story-room:matrix.storybook.test' });
+		}
+		if (url.includes('/service/users/sessions/room')) {
+			calls.push('refresh');
+			return new Response(
+				JSON.stringify({
+					sessions: [
+						{
+							chat: {
+								id: 4711,
+								matrixRoomId:
+									'!story-room:matrix.storybook.test'
+							}
+						}
+					]
+				}),
+				{ status: 200, headers: { 'content-type': 'application/json' } }
+			);
+		}
+		return previous(input, init);
+	};
+	return {
+		calls,
+		restore: () => {
+			globalThis.fetch = previous;
+		}
+	};
+};
+
+const createAndOpenShareDialog = async (canvasElement: HTMLElement) => {
+	const create = within(canvasElement).getByRole('button', {
+		name: 'Erstellen'
+	});
+	await waitFor(() => expect(create).toBeEnabled());
+	await userEvent.click(create);
+	const dialog = await page(canvasElement).findByRole('dialog', {
+		name: 'Gesprächskreis angelegt'
+	});
+	await waitFor(() => expect(dialog).toBeVisible());
+	return dialog;
+};
+
+/**
+ * #1499 item 5, wired: "Erstellen" on the real form creates the circle and
+ * the share dialog opens with the invite link on THIS host (window.location
+ * origin, never a configured production URL). The story stops with the
+ * dialog open.
+ */
+export const CreateOpensShareDialog: Story = {
+	name: 'Create → share dialog (wired) · 1440',
+	globals: desktop1440Globals,
+	args: { layout: 'desktop', people: COLLEAGUES },
+	beforeEach: () => mockCreateBackend().restore,
+	play: async ({ canvasElement }) => {
+		const dialog = await createAndOpenShareDialog(canvasElement);
+		await expect(
+			within(dialog).getByLabelText('Einladungs-Link')
+		).toHaveValue(`${window.location.origin}/login?gcid=4711`);
+		await expect(within(dialog).getByText('Sucht')).toBeVisible();
+	}
+};
+
+/** The dialog stays until "Fertig"; closing it ends the create flow. */
+export const CreateThenCloseShareDialog: Story = {
+	name: 'Create → share dialog → Fertig (wired) · 1440',
+	globals: desktop1440Globals,
+	args: { layout: 'desktop', people: COLLEAGUES },
+	beforeEach: () => mockCreateBackend().restore,
+	play: async ({ canvasElement }) => {
+		const dialog = await createAndOpenShareDialog(canvasElement);
+		await userEvent.click(
+			within(dialog).getByRole('button', { name: 'Fertig' })
+		);
+		await waitFor(() =>
+			expect(page(canvasElement).queryByRole('dialog')).toBeNull()
+		);
+	}
+};

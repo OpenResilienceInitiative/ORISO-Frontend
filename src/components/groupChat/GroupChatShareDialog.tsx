@@ -79,10 +79,10 @@ const formatLanguage = (code: string, locale: string) => {
  * item 5): the shareable invite link with a copy action, and every detail the
  * author just chose, so they can pass both on without opening Chat-Info.
  *
- * Design proposal for Frank's approval — not yet wired. The natural seam is
- * `CircleSettingsView.handleCreate` → `useCreateChatSubmit`'s `onSuccess`,
- * which already receives the created series (`chatLinkData`), before the
- * navigation to the session view.
+ * Wired in `CircleSettingsView`: after every successful create (all formats,
+ * not on edit) `useCreateChatSubmit` holds the navigation, this dialog opens
+ * with the link for the current host, and closing it leaves for the session
+ * view.
  */
 export const GroupChatShareDialog = ({
 	open,

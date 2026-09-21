@@ -10,21 +10,26 @@ import {
 	COLLEAGUES
 } from '../conversationCreate/circle/circleSettingsStage';
 import { GroupChatShareDialog } from './GroupChatShareDialog';
+import { buildGroupChatInviteLinkForOrigin } from './groupChatInviteLink';
 
 /**
- * #1499 item 5 — design proposal, not yet wired.
+ * #1499 item 5. Wired in `CircleSettingsView` after every successful create;
+ * the wired flow is the `Create → share dialog` story on the settings stage.
  *
- * After "Erstellen" on a Gesprächskreis / call there is no confirmation today:
- * `useCreateChatSubmit` refreshes the list and navigates away. This dialog
- * shows the invite link (the existing `/login?gcid=<seriesId>` link that
+ * After "Erstellen" on a Gesprächskreis / call this dialog shows the invite link (the existing `/login?gcid=<seriesId>` link that
  * `GroupChatCopyLinks` also copies) with a copy action and every detail the
  * author just chose. Desktop: M3 basic dialog over the create stage. Phone:
  * M3 full-screen dialog; the copy button drops under the field.
  *
- * No native share button: the repo has no `navigator.share` pattern yet.
+ * No QR code and no native share button (Frank, #1499 round 2).
  */
 
-const LINK = 'https://app.oriso.org/login?gcid=4711';
+/* A neutral dev-looking host: the real link is built from the host the app
+   runs on (`currentHostGroupChatInviteLink`), never a production URL. */
+const LINK = buildGroupChatInviteLinkForOrigin(
+	'https://dev.oriso.example',
+	4711
+);
 
 const VIDEO_DETAILS = {
 	topic: 'Sucht',
