@@ -187,6 +187,12 @@ export const KeyBackupRecoveryPrompt = () => {
 	   blocks the screen while somebody is working. Keyed by status so a new
 	   state (e.g. password recovery failing) is shown again. */
 	const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+	// Any status change forgets the dismissal, even via 'pending' back to the same status.
+	const [observed, setObserved] = useState(`${userId}:${status}`);
+	if (observed !== `${userId}:${status}`) {
+		setObserved(`${userId}:${status}`);
+		setDismissedFor(null);
+	}
 	const showRecovery = openedFor === userId;
 	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
 	const dismissKey = `${userId}:${status}`;

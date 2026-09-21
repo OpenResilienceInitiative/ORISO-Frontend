@@ -182,6 +182,17 @@ it('shows the snackbar again when the recovery status changes after a dismissal'
 	).toBeTruthy();
 });
 
+// A retry passes through 'pending' and can land on the same status again; the notice is still owed.
+it('shows the snackbar again when a retry returns to the status that was dismissed', () => {
+	setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+	render(view());
+	fireEvent.click(screen.getByTestId('key-backup-recovery-action-close'));
+	expect(screen.queryByTestId('key-backup-recovery-action')).toBeNull();
+	act(() => setRecoveryRuntimeStatus(userId, 'pending'));
+	act(() => setRecoveryRuntimeStatus(userId, 'needs-recovery-key'));
+	expect(screen.getByTestId('key-backup-recovery-action')).toBeTruthy();
+});
+
 it('opens the restore dialog from the snackbar action', () => {
 	setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
 	render(view());
