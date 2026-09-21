@@ -111,12 +111,22 @@
 				margin-top: 0;
 			}
 
-			/* The chips move focus here. A focus ring on a heading is unusual, so
-			   it is a soft tint rather than an outline box. */
+			/* The chips move focus here, and the cue says "you are in this
+			   chapter". It has to stay INSIDE the heading's own box: an
+			   `outline` with `outline-offset` is painted OUTSIDE it, and the
+			   scrollport clips whatever leaves the content column — what a
+			   reader saw was half a rounded box hanging under the heading, cut
+			   off left and right. An inset box-shadow cannot leave the box, so
+			   there is nothing left to clip: a plain accent line under the
+			   heading, no ring, no corners. The padding keeps the line off the
+			   descenders and is taken straight back off the bottom margin, so
+			   focusing a heading never moves the text below it. */
 			&:focus-visible {
-				outline: 2px solid var(--m3-primary, #a5000a);
-				outline-offset: 4px;
-				border-radius: 4px;
+				outline: none;
+				border-radius: 0;
+				box-shadow: inset 0 -2px 0 var(--m3-primary, #a5000a);
+				margin-bottom: 5px;
+				padding-bottom: 3px;
 			}
 		}
 
