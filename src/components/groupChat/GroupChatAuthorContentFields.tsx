@@ -220,23 +220,20 @@ export const GroupChatAuthorContentFields = ({
 								{!isSelected &&
 									language !== value.sourceLanguage &&
 									languages.length > 1 && (
-										<button
-											type="button"
-											className="createChat__languageChipRemove"
-											aria-label={t(
-												'groupChat.create.authorContent.removeLanguage',
-												{
-													language:
-														language.toUpperCase()
-												}
-											)}
-											onClick={() =>
-												removeLanguage(language)
-											}
-										>
-											<CloseIcon aria-hidden />
-										</button>
-									)}
+									<button
+										type="button"
+										className="createChat__languageChipRemove"
+										aria-label={t(
+											'groupChat.create.authorContent.removeLanguage',
+											{ language: language.toUpperCase() }
+										)}
+										onClick={() =>
+											removeLanguage(language)
+										}
+									>
+										<CloseIcon aria-hidden />
+									</button>
+								)}
 							</span>
 						);
 					})}
@@ -274,9 +271,7 @@ export const GroupChatAuthorContentFields = ({
 					maxLength={120}
 					aria-label={t('groupChat.create.authorContent.welcome')}
 					placeholder={t('groupChat.create.authorContent.welcome')}
-					value={
-						value.hintMessageTranslations?.[selectedLanguage] || ''
-					}
+					value={value.hintMessageTranslations?.[selectedLanguage] || ''}
 					onChange={(event) => updateHint(event.target.value)}
 				/>
 				<RuleChipsEditor
