@@ -1,0 +1,20 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+----------------------------------------------------------------
+Wir fragen dich nie per E-Mail nach deinem Passwort. Gib diesen Link an niemanden weiter.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+
+Diese E-Mail gehört zu deiner Einladung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.

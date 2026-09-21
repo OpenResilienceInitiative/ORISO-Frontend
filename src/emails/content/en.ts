@@ -394,6 +394,23 @@ export const en: Record<EmailId, EmailContent> = {
 		footer: legalFooter
 	},
 
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email is part of your invitation and cannot be unsubscribed from. Please do not reply to it.'
+		}
+	},
+
 	'team-aenderung': {
 		subject: 'A change in your team',
 		preheader: 'Your responsibilities have changed.',

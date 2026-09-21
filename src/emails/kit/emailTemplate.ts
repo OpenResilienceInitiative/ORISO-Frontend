@@ -12,6 +12,7 @@ import { emailDocument } from './emailDocument';
 import {
 	EmailFooterContent,
 	emailAssurance,
+	emailAuthoredProse,
 	emailCallToAction,
 	emailCodePanel,
 	emailDataPanel,
@@ -39,6 +40,19 @@ export interface EmailContent {
 	headline: string;
 	/** One or more body paragraphs, in reading order. */
 	paragraphs: string[];
+	/**
+	 * Body copy the sender supplies already rendered, instead of `paragraphs`:
+	 * a mail whose text an operator wrote (the free-text invite). `html` is
+	 * inserted unescaped — the sender sanitises it — and `text` is its
+	 * plain-text twin. Both are placeholders in a template file.
+	 */
+	authoredBody?: { html: string; text: string };
+	/**
+	 * A placeholder the sender expands into the whole action block (button and
+	 * copy-link fallback), or into nothing when the mail has no action. Takes
+	 * the place of `cta` for a mail whose action is optional at send time.
+	 */
+	actionSlot?: string;
 	/** Optional tinted label/value panel between the copy and the button. */
 	panel?: EmailDataRow[];
 	/**
@@ -76,10 +90,13 @@ export const renderEmailHtml = (
 ): string => {
 	const cardRows =
 		emailTitleGroup(content.headline, brand) +
-		emailProse(content.paragraphs) +
+		(content.authoredBody
+			? emailAuthoredProse(content.authoredBody.html)
+			: emailProse(content.paragraphs)) +
 		(content.panel ? emailDataPanel(content.panel) : '') +
 		(content.code ? emailCodePanel(content.code) : '') +
 		(content.cta ? emailCallToAction(content.cta, brand) : '') +
+		(content.actionSlot ?? '') +
 		(content.secondaryAction
 			? emailSecondaryAction(content.secondaryAction, brand)
 			: '') +
@@ -100,6 +117,9 @@ export const renderEmailHtml = (
 	});
 };
 
+/** Width of the plain-text divider under the body. */
+const RULE_WIDTH = 64;
+
 /** Strips the `<br>` a panel value may carry, for the plain-text twin. */
 const flatten = (value: string): string =>
 	value.replace(/<br\s*\/?>/gi, ', ').replace(/<[^>]+>/g, '');
@@ -115,9 +135,13 @@ export const renderEmailText = (
 ): string => {
 	const lines: string[] = [
 		content.headline,
-		'='.repeat(content.headline.length),
+		// An authored mail's headline is the sender's subject, whose length
+		// is unknown here, so its rule takes the divider's width instead.
+		'='.repeat(content.authoredBody ? RULE_WIDTH : content.headline.length),
 		'',
-		...content.paragraphs.flatMap((p) => [p, ''])
+		...(content.authoredBody
+			? [content.authoredBody.text, '']
+			: content.paragraphs.flatMap((p) => [p, '']))
 	];
 
 	if (content.panel) {
@@ -135,6 +159,10 @@ export const renderEmailText = (
 		lines.push(`${content.cta.label}:`, content.cta.href, '');
 	}
 
+	if (content.actionSlot) {
+		lines.push(content.actionSlot, '');
+	}
+
 	if (content.secondaryAction) {
 		lines.push(
 			`${content.secondaryAction.label}:`,
@@ -147,7 +175,7 @@ export const renderEmailText = (
 	}
 
 	lines.push(
-		'-'.repeat(64),
+		'-'.repeat(RULE_WIDTH),
 		content.assurance,
 		'',
 		brand.orgName,

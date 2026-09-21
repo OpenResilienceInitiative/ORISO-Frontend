@@ -57,6 +57,20 @@ export const emailProse = (paragraphs: string[]): string =>
 		.join('');
 
 /**
+ * Body copy the sender supplies as sanitised HTML, in one cell.
+ *
+ * Inserted unescaped: the markup is the point. The bottom gap is 12px rather
+ * than prose's 28px because the authored body arrives wrapped in `<p>`
+ * elements whose own bottom margin stacks on the cell padding — 12px plus that
+ * margin lands on the same distance to the button as `emailProse` does.
+ */
+export const emailAuthoredProse = (html: string): string =>
+	emailBlock(html, {
+		padding: [0, G, 12, G],
+		style: emailBodyTextStyle()
+	});
+
+/**
  * The tinted label/value panel: appointment details, the assigned request, the
  * user name to keep. Stacks to one column below the mobile breakpoint.
  */

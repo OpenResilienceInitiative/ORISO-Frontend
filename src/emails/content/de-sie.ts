@@ -410,6 +410,23 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer: legalFooter
 	},
 
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail gehört zu Ihrer Einladung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
+	},
+
 	'team-aenderung': {
 		subject: 'Änderung in Ihrem Team',
 		preheader: 'Ihre Zuständigkeiten haben sich geändert.',

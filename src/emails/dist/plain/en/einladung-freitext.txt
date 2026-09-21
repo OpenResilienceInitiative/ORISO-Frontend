@@ -1,0 +1,20 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+----------------------------------------------------------------
+We will never ask for your password by email. Do not pass this link on to anyone.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} is a service provided by {{orgName}}.
+
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+
+This email is part of your invitation and cannot be unsubscribed from. Please do not reply to it.

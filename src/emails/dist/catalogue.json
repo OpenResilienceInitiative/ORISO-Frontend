@@ -620,6 +620,36 @@
 				}
 			}
 		},
+		"einladung-freitext": {
+			"audience": "admin",
+			"class": "security",
+			"unsubscribable": false,
+			"placeholders": [
+				"{{subject}}",
+				"{{preheader}}",
+				"{{bodyHtml}}",
+				"{{ctaBlock}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"en": {
+					"lang": "en",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				}
+			}
+		},
 		"team-aenderung": {
 			"audience": "consultant",
 			"class": "operational",

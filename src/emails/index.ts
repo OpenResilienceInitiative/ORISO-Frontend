@@ -18,12 +18,17 @@ import {
 	toEmailDialectHtml,
 	toEmailDialectText
 } from './kit/emailDialect';
+import { emailCallToAction, emailFootnote } from './kit/emailMolecules';
 import {
 	EmailContent,
 	renderEmailHtml,
 	renderEmailText
 } from './kit/emailTemplate';
-import { EmailBrand, emailDefaultBrand } from './kit/emailTokens';
+import {
+	EmailBrand,
+	emailDefaultBrand,
+	emailSampleBrand
+} from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
 export * from './kit/emailDialect';
@@ -146,6 +151,30 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	dpaUrl: 'https://beratung.example.org/avv/2026-0044',
 	dpaProvidedAt: '3. August 2026',
 	dpaExpiresAt: '17. August 2026, 23:59',
+
+	// The invite an operator writes themselves. UserService fills these: the
+	// sanitised body, its text twin, and the action block it builds from the
+	// kit's button and a copy-link fallback.
+	subject: 'Einladung zur Beratung in Mainz-Neustadt',
+	preheader:
+		'Wir laden Sie ein, unser Team in der Online-Beratung zu verstärken.',
+	bodyHtml:
+		'<p style="margin:0 0 16px 0;">Guten Tag,</p>' +
+		'<p style="margin:0 0 16px 0;">wir laden Sie ein, unser Team in der Online-Beratung der Beratungsstelle Mainz-Neustadt zu verstärken.</p>' +
+		'<p style="margin:0 0 16px 0;">Mit freundlichen Grüßen<br>K. Reuter</p>',
+	bodyText:
+		'Guten Tag,\n\nwir laden Sie ein, unser Team in der Online-Beratung der Beratungsstelle Mainz-Neustadt zu verstärken.\n\nMit freundlichen Grüßen\nK. Reuter',
+	ctaBlock:
+		emailCallToAction(
+			{
+				label: 'Einladung annehmen',
+				href: 'https://beratung.example.org/einladung?token=1c9d'
+			},
+			emailSampleBrand
+		) +
+		emailFootnote(
+			'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser: https://beratung.example.org/einladung?token=1c9d'
+		),
 
 	// Team and platform operations.
 	teamChangeStatement:
