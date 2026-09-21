@@ -3,15 +3,24 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 
 // Stands in for IndexedDB. Held by the test file, so it outlives the module
 // reloads below exactly as a browser's IndexedDB outlives a document load.
-const keys = vi.hoisted(() => new Map<string, CryptoKey>());
+// `beforePut` lets a test hold or fail a key write.
+const { keys, hooks } = vi.hoisted(() => ({
+	keys: new Map<string, CryptoKey>(),
+	hooks: { beforePut: undefined as undefined | (() => Promise<void>) }
+}));
 vi.mock('./loginHandoffKeyStore', () => ({
-	putHandoffKey: async (key: CryptoKey) => void keys.set('k', key),
-	takeHandoffKey: async () => {
-		const key = keys.get('k') ?? null;
-		keys.delete('k');
+	putHandoffKey: async (id: string, key: CryptoKey) => {
+		const before = hooks.beforePut;
+		hooks.beforePut = undefined;
+		await before?.();
+		keys.set(id, key);
+	},
+	takeHandoffKey: async (id: string) => {
+		const key = keys.get(id) ?? null;
+		keys.delete(id);
 		return key;
 	},
-	dropHandoffKey: () => void keys.delete('k')
+	dropHandoffKey: (id: string) => void keys.delete(id)
 }));
 
 type Handoff = typeof import('./loginRecoveryHandoff');
@@ -25,6 +34,7 @@ const documentLoad = async () => {
 beforeEach(async () => {
 	sessionStorage.clear();
 	keys.clear();
+	hooks.beforePut = undefined;
 	handoff = await import('./loginRecoveryHandoff');
 });
 afterEach(() => {
@@ -94,4 +104,100 @@ it('does not carry an expired, foreign or cleared handoff across a load', async 
 	expect(sessionStorage.length).toBe(0);
 	expect(keys.size).toBe(0);
 	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
+});
+
+/** Everything queued behind the crypto and key-store awaits has run. */
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+
+// A logout (or any clear) while the seal is still encrypting must win: the
+// seal may not write its key and ciphertext afterwards.
+it('does not let a seal in flight outlive a clear', async () => {
+	const staging = handoff.stageLoginRecoveryPassword('@a:test', 'synthetic');
+	handoff.clearLoginRecoveryPassword();
+	await staging;
+	await settle();
+	expect(sessionStorage.length).toBe(0);
+	expect(keys.size).toBe(0);
+	await documentLoad();
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
+});
+
+it('does not let a seal in flight outlive the one read', async () => {
+	const staging = handoff.stageLoginRecoveryPassword('@a:test', 'synthetic');
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBe(
+		'synthetic'
+	);
+	await staging;
+	await settle();
+	expect(sessionStorage.length).toBe(0);
+	expect(keys.size).toBe(0);
+	await documentLoad();
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
+});
+
+it('does not let a stale seal failure delete the newer handoff', async () => {
+	let fail!: () => void;
+	hooks.beforePut = () =>
+		new Promise<void>((_, reject) => {
+			fail = () => reject(new Error('synthetic put failure'));
+		});
+	const first = handoff.stageLoginRecoveryPassword('@a:test', 'first');
+	await settle();
+	await handoff.stageLoginRecoveryPassword('@a:test', 'second');
+	fail();
+	await first;
+	await settle();
+	await documentLoad();
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBe(
+		'second'
+	);
+});
+
+// IndexedDB is shared by every tab of the origin, session storage is not.
+it('keeps the handoffs of two tabs logging in at once apart', async () => {
+	const tab = async (userId: string, password: string) => {
+		sessionStorage.clear();
+		await documentLoad();
+		await handoff.stageLoginRecoveryPassword(userId, password);
+		const storage = { ...sessionStorage };
+		sessionStorage.clear();
+		return storage;
+	};
+	const load = async (storage: Record<string, string>) => {
+		sessionStorage.clear();
+		Object.entries(storage).forEach(([k, v]) =>
+			sessionStorage.setItem(k, v)
+		);
+		await documentLoad();
+	};
+	const tabA = await tab('@a:test', 'synthetic-a');
+	const tabB = await tab('@b:test', 'synthetic-b');
+
+	await load(tabA);
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBe(
+		'synthetic-a'
+	);
+	await load(tabB);
+	expect(await handoff.consumeLoginRecoveryPassword('@b:test')).toBe(
+		'synthetic-b'
+	);
+	expect(keys.size).toBe(0);
+});
+
+it('drops only its own key when a tab clears', async () => {
+	await handoff.stageLoginRecoveryPassword('@b:test', 'synthetic-b');
+	const tabB = { ...sessionStorage };
+	sessionStorage.clear();
+	await documentLoad();
+	await handoff.stageLoginRecoveryPassword('@a:test', 'synthetic-a');
+	await documentLoad();
+	handoff.clearLoginRecoveryPassword();
+	expect(keys.size).toBe(1);
+
+	sessionStorage.clear();
+	Object.entries(tabB).forEach(([k, v]) => sessionStorage.setItem(k, v));
+	await documentLoad();
+	expect(await handoff.consumeLoginRecoveryPassword('@b:test')).toBe(
+		'synthetic-b'
+	);
 });
