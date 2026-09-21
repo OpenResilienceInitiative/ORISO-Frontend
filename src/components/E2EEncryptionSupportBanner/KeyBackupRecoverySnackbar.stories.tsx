@@ -55,6 +55,12 @@ export const NeedsRecoveryKey: Story = {
 		await expect(
 			page.getByRole('link', { name: 'Sicherheitseinstellungen' })
 		).toHaveAttribute('href', '/profile/einstellungen/sicherheit');
+		// Below 900 px the app's 72 px navigation bar sits at the bottom edge; never cover it.
+		if (window.matchMedia('(max-width: 899px)').matches) {
+			const gap =
+				window.innerHeight - snackbar.getBoundingClientRect().bottom;
+			await expect(gap).toBeGreaterThanOrEqual(72);
+		}
 	}
 };
 

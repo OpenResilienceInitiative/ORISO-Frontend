@@ -155,14 +155,15 @@ export const KeyBackupRecoveryDialog = ({
  * centres a snackbar from 600 px up, so the phone width is centred here.
  */
 const recoverySnackbarPlacement = {
-	bottom: {
-		xs: 'calc(88px + env(safe-area-inset-bottom, 0px))',
-		md: 24
+	// A media query, not a plain value or the `md` key: MUI's own `sm` rule would win over a plain
+	// value, and this theme puts md at 600 px while the navigation bar stays until 900 px.
+	'@media (max-width: 899.98px)': {
+		bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))'
 	},
-	left: { xs: '50%' },
-	right: { xs: 'auto' },
-	transform: { xs: 'translateX(-50%)' },
-	width: { xs: 'calc(100% - 16px)' }
+	'left': { xs: '50%' },
+	'right': { xs: 'auto' },
+	'transform': { xs: 'translateX(-50%)' },
+	'width': { xs: 'calc(100% - 16px)' }
 } as const;
 
 /** Recovery is available inline; opening the restore dialog is always explicit. */
