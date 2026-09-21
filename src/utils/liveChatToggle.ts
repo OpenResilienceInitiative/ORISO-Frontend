@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { apiPatchUserData } from '../api/apiPatchUserData';
+import { UserDataContext } from '../globalState/context/UserDataContext';
 import {
 	apiGetLiveChatAvailability,
 	apiHeartbeatLiveChatAvailability,
@@ -21,11 +23,17 @@ import {
  * without threading another context through the app.
  */
 /**
- * Separate, UI-only preference: whether the consultant drives their Live Chat
+ * Separate placement preference: whether the consultant drives their Live Chat
  * availability from the navigation rail ("Live Chat über Menü Leiste
  * aktivieren") instead of the My-Profile toggle. When on, the profile toggle is
- * disabled and a persistent Live Chat toggle appears in the rail. This is a
- * placement preference — it never calls the availability backend by itself.
+ * disabled and a persistent Live Chat toggle appears in the rail (desktop and
+ * mobile alike). It never calls the availability backend by itself.
+ *
+ * Source of truth is the consultant's profile (UserService
+ * `liveChatViaSidebar` on GET/PATCH /users/data), so it follows the consultant
+ * across browsers and devices. The localStorage keys below are only read for
+ * the one-time migration and as a fallback for a backend that does not return
+ * the field yet.
  */
 const SIDEBAR_STORAGE_KEY = 'oriso_liveChatViaSidebar';
 const SIDEBAR_CHANGE_EVENT = 'oriso:liveChatViaSidebarChange';
@@ -153,7 +161,7 @@ export const useLiveChatAvailabilityHeartbeat = (
 	}, [active, enabled]);
 };
 
-export const isLiveChatViaSidebar = (): boolean => {
+const readLocalLiveChatViaSidebar = (): boolean => {
 	try {
 		return (
 			localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1' ||
@@ -164,7 +172,7 @@ export const isLiveChatViaSidebar = (): boolean => {
 	}
 };
 
-export const setLiveChatViaSidebar = (active: boolean): void => {
+const writeLocalLiveChatViaSidebar = (active: boolean): void => {
 	try {
 		if (active) {
 			localStorage.setItem(SIDEBAR_STORAGE_KEY, '1');
@@ -175,17 +183,70 @@ export const setLiveChatViaSidebar = (active: boolean): void => {
 	} catch {
 		/* storage errors are non-fatal — the preference just won't persist */
 	}
+};
+
+const clearLocalLiveChatViaSidebar = (): void => {
+	try {
+		localStorage.removeItem(SIDEBAR_STORAGE_KEY);
+		localStorage.removeItem(LEGACY_SIDEBAR_STORAGE_KEY);
+	} catch {
+		/* non-fatal */
+	}
+};
+
+/** In-tab change event, kept so listeners outside React stay informed. */
+const notifyLiveChatViaSidebarChange = (active: boolean): void => {
 	window.dispatchEvent(
 		new CustomEvent(SIDEBAR_CHANGE_EVENT, { detail: { active } })
 	);
 };
 
-/** Hook: keeps UI in sync with the "control from the rail" preference. */
-export const useLiveChatViaSidebar = (): [boolean, (v: boolean) => void] => {
-	const [active, setActive] = useState<boolean>(() => isLiveChatViaSidebar());
+/**
+ * One migration per page load, shared by every mounted consumer (rail and
+ * profile both use the hook). A failed PATCH is not retried until the next
+ * load; the local value stays in place meanwhile.
+ */
+let sidebarMigration: Promise<void> | null = null;
+let sidebarMigrationFailed = false;
+
+/** Test-only: simulates a fresh page load for the migration state. */
+export const resetLiveChatViaSidebarMigrationForTests = (): void => {
+	sidebarMigration = null;
+	sidebarMigrationFailed = false;
+};
+
+/**
+ * Hook: the "control from the rail" preference, read from and written to the
+ * consultant's profile via UserDataContext, so the NavigationBar and the
+ * My-Profile checkbox always agree.
+ *
+ * - Profile returns a boolean → it is authoritative. A leftover browser "on"
+ *   is migrated once (PATCH true, then the local keys are removed).
+ * - Profile does not return the field (UserService without
+ *   `liveChatViaSidebar`, i.e. before that backend change is deployed) → fall
+ *   back to the browser value, exactly like before, so nothing regresses.
+ *
+ * The setter updates the context optimistically and rolls back (and rejects)
+ * when the PATCH fails.
+ */
+export const useLiveChatViaSidebar = (): [
+	boolean,
+	(active: boolean) => Promise<void>
+] => {
+	const userDataContext = useContext(UserDataContext);
+	const userData = userDataContext?.userData;
+	const setUserData = userDataContext?.setUserData;
+	const userDataRef = useRef(userData);
+	userDataRef.current = userData;
+
+	const profileValue = userData?.liveChatViaSidebar;
+	const profileHasField = typeof profileValue === 'boolean';
+	const [localValue, setLocalValue] = useState<boolean>(() =>
+		readLocalLiveChatViaSidebar()
+	);
 
 	useEffect(() => {
-		const onChange = () => setActive(isLiveChatViaSidebar());
+		const onChange = () => setLocalValue(readLocalLiveChatViaSidebar());
 		window.addEventListener(SIDEBAR_CHANGE_EVENT, onChange);
 		window.addEventListener('storage', onChange);
 		return () => {
@@ -194,5 +255,66 @@ export const useLiveChatViaSidebar = (): [boolean, (v: boolean) => void] => {
 		};
 	}, []);
 
-	return [active, setLiveChatViaSidebar];
+	useEffect(() => {
+		if (!profileHasField || !readLocalLiveChatViaSidebar()) return;
+		if (profileValue) {
+			clearLocalLiveChatViaSidebar();
+			notifyLiveChatViaSidebarChange(true);
+			return;
+		}
+		if (sidebarMigration || sidebarMigrationFailed) return;
+		sidebarMigration = apiPatchUserData({ liveChatViaSidebar: true })
+			.then(() => {
+				clearLocalLiveChatViaSidebar();
+				if (userDataRef.current && setUserData) {
+					setUserData({
+						...userDataRef.current,
+						liveChatViaSidebar: true
+					});
+				}
+				notifyLiveChatViaSidebarChange(true);
+			})
+			.catch(() => {
+				sidebarMigrationFailed = true;
+			})
+			.finally(() => {
+				sidebarMigration = null;
+			});
+	}, [profileHasField, profileValue, setUserData]);
+
+	// While a browser-only "on" waits for (or failed) its migration, keep
+	// showing it — the consultant chose it and must not lose the rail toggle.
+	const active = profileHasField
+		? Boolean(profileValue) || localValue
+		: localValue;
+
+	const update = useCallback(
+		async (next: boolean) => {
+			const previous = userDataRef.current;
+			const backendKnowsField =
+				typeof previous?.liveChatViaSidebar === 'boolean';
+			if (!backendKnowsField) {
+				// Older UserService: keep the browser-only behaviour, but still
+				// send the PATCH so the value lands once the backend supports it.
+				writeLocalLiveChatViaSidebar(next);
+				notifyLiveChatViaSidebarChange(next);
+				await apiPatchUserData({ liveChatViaSidebar: next }).catch(
+					() => undefined
+				);
+				return;
+			}
+			setUserData?.({ ...previous, liveChatViaSidebar: next });
+			try {
+				await apiPatchUserData({ liveChatViaSidebar: next });
+				clearLocalLiveChatViaSidebar();
+				notifyLiveChatViaSidebarChange(next);
+			} catch (error) {
+				setUserData?.(previous);
+				throw error;
+			}
+		},
+		[setUserData]
+	);
+
+	return [active, update];
 };
