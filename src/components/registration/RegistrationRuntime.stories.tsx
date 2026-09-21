@@ -116,8 +116,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const TopicSelectionRoute: Story = {
-	// One viewport tall like the app root, so `.stageLayout` scrolls and the
-	// sticky header behaves as in the app.
+	// One viewport tall like the app root, so `.stageLayout` is the scroller.
 	render: () => (
 		<div style={{ height: '100vh' }}>
 			<RegistrationRuntimeStory />
@@ -126,18 +125,11 @@ export const TopicSelectionRoute: Story = {
 };
 
 /**
- * Regression guard for the step header on long steps (desktop, `lg`).
- *
- * The header row (language + login) and the step band are two sticky boxes:
- * the row at 0, the band at 72px under it. A sticky box only sticks inside its
- * parent. When `.stageLayout__contentWrapper` shrank to one viewport while an
- * opened topic group overflowed it, the row scrolled away after one screen and
- * list rows showed through the empty 72px above the band. Scroll to the very
- * end: the row must still sit at 0, 72px tall, with the band right under it.
+ * Regression guard: on a long step the sticky header row stays at 0 with the
+ * band under it; breaks if `.stageLayout__contentWrapper` shrinks.
  */
 export const LongTopicListKeepsStepHeader: Story = {
-	// The app root is one viewport tall, which makes `.stageLayout` the
-	// scroll container. Storybook's root grows with its content instead.
+	// Storybook's root grows with its content; the app root is one viewport tall.
 	render: () => (
 		<div style={{ height: '100vh' }}>
 			<RegistrationRuntimeStory />
@@ -153,8 +145,7 @@ export const LongTopicListKeepsStepHeader: Story = {
 			expect(query('.registrationStepperSticky')).not.toBeNull();
 		});
 
-		// Open every collapsed topic group so the step is taller than the
-		// viewport, as it is with a real tenant's topic list.
+		// Make the step taller than the viewport.
 		await waitFor(() =>
 			expect(
 				doc.querySelectorAll('.stageLayout__content [aria-expanded]')
@@ -191,11 +182,7 @@ export const LongTopicListKeepsStepHeader: Story = {
 	}
 };
 
-/**
- * Header search, end to end in the wired step: open the magnifier next to
- * language + login, type an everyday word, pick the suggestion. The topic is
- * then selected in the list (its group opens) and "Weiter" is enabled.
- */
+/** A picked search suggestion selects the topic and enables "Weiter". */
 export const HeaderSearchSelectsTopic: Story = {
 	render: () => (
 		<div style={{ height: '100vh' }}>

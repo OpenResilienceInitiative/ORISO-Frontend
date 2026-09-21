@@ -52,11 +52,7 @@ interface StageLayoutProps {
 	 * caller places it in the column.
 	 */
 	headerStart?: ReactNode;
-	/**
-	 * An extra round control before the language switch — the registration
-	 * topic search. Rendered twice: in the desktop header row (`surface`) and
-	 * in the red mobile brand bar (`onPrimary`); CSS shows one of them.
-	 */
+	/** Control before the language switch; rendered per tone, CSS shows one. */
 	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => ReactNode;
 }
 

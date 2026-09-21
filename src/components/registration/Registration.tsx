@@ -123,8 +123,7 @@ export const Registration = () => {
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
-	// The topic step registers its topics here while it is mounted; the
-	// header renders the search magnifier from it (next to language + login).
+	// Set by the topic step while mounted; the header shows the search only then.
 	const [topicSearch, setTopicSearch] =
 		useState<RegistrationTopicSearchApi | null>(null);
 	const [clearSelectionVersion, setClearSelectionVersion] =

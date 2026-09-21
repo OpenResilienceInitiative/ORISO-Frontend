@@ -3,21 +3,15 @@ import { topicSearchRelatedTerms } from './topicSearchRelatedTerms';
 import type { TopicSearchDocument, TopicSearchTerm } from './topicSearchEngine';
 
 export interface TopicSearchSource {
-	/** The id the selection uses (the API topic id). */
 	id: number;
-	/** Registration topic key (slug), e.g. `sucht`. */
 	key?: string;
-	/** Tenant wording from the API (name, titles, description). */
 	extraTitles?: string[];
 	extraDescription?: string;
 }
 
 /**
- * One search document per offered topic: its title and description in every
- * shipped language, the everyday words that point to it, and whatever wording
- * the tenant gave it. Group names are left out on purpose: a group like
- * "Kinder, Jugend, Erwachsene, Schwangerschaft und Familie" also holds U25
- * and general social counselling, so "schwanger" would surface them.
+ * Group names are left out on purpose: mixed groups would make "schwanger"
+ * surface unrelated topics such as U25.
  */
 export const buildTopicSearchDocuments = (
 	sources: TopicSearchSource[]

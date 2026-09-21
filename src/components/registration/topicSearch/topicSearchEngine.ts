@@ -1,15 +1,6 @@
 /**
- * Client-side topic search for the registration flow.
- *
- * Every word is turned into a vector of its character trigrams and compared
- * by cosine similarity, on top of exact / prefix / compound matches. That
- * makes it tolerant of typos ("alkohl"), of typing in progress ("schwang")
- * and of German compounds ("spielsucht" contains "sucht"), and it works the
- * same for every script the platform ships (Latin, Cyrillic, Ge'ez).
- *
- * It deliberately runs in the browser without a model or a server call: what
- * someone types here ("suizid", "abtreibung") must not leave the device
- * before they have even registered.
+ * Topic search by trigram cosine similarity plus exact/prefix/compound hits.
+ * Runs on-device on purpose: sensitive queries never leave the browser.
  */
 
 export type TopicSearchTermKind = 'title' | 'related' | 'description';
@@ -27,7 +18,6 @@ export interface TopicSearchDocument {
 export interface TopicSearchResult {
 	topicId: number;
 	score: number;
-	/** The term that matched best, as written in the catalogue. */
 	matchedTerm: string;
 	matchedKind: TopicSearchTermKind;
 }
@@ -108,14 +98,12 @@ const cosine = (a: IndexedWord, b: IndexedWord) => {
 const wordScore = (query: IndexedWord, word: IndexedWord, kind: string) => {
 	const q = query.word;
 	const w = word.word;
-	// Descriptions are long running text: two letters would prefix-match
-	// half of it.
+	// Short prefixes would match half of any long description.
 	const minPrefix = kind === 'description' ? 3 : 2;
 
 	if (w === q) return 1;
 	if (q.length >= minPrefix && w.startsWith(q)) {
-		// Above a related-word hit (0.95 weight) so a title that starts with
-		// the query wins over an everyday word that equals it.
+		// Above related words (0.95): a title prefix beats an exact everyday word.
 		return 0.95 + 0.05 * (q.length / w.length);
 	}
 	if (q.length >= 4 && w.includes(q)) return 0.85;

@@ -6,7 +6,6 @@ import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 export interface StageMobileHeroProps {
 	/** Optional trailing action, e.g. the "to login" icon button. */
 	action?: ReactNode;
-	/** Optional control before the language switch (registration topic search). */
 	leadingAction?: ReactNode;
 	/**
 	 * `hero` (default) is the 230px head of the login screens (design 2e):

@@ -1,13 +1,6 @@
 /**
- * Everyday words people type when they look for a topic, keyed by the
- * registration topic key. Topic titles and descriptions in every shipped
- * language come from the i18n catalogue already; this list only adds what a
- * title never says — "Alkohol" for addiction, "Mahnung" for debt.
- *
- * German and English only for now: the other languages match through their
- * translated titles and descriptions. A wrong synonym sends someone to the
- * wrong counselling service, so add terms only when the topic clearly owns
- * them.
+ * Everyday words a title never says ("Alkohol" → sucht). A wrong synonym
+ * misroutes someone, so add a term only when the topic clearly owns it.
  */
 export const topicSearchRelatedTerms: Record<string, string[]> = {
 	'general-social-counselling': [

@@ -200,10 +200,7 @@ export const TopicSelection: FC<{
 		[expandedTopicGroupIds, scrollTopicGroupIntoView]
 	);
 
-	/* Header search (magnifier next to language + login). A pick there takes
-	   the same path as a click on the topic's row: the value, the group and
-	   the placement are set, the group opens and scrolls into view, and the
-	   effect below unlocks "Weiter". */
+	// A header-search pick takes the same path as a click on the topic's row.
 	const registerTopicSearch = useContext(RegistrationTopicSearchContext);
 	const selectTopicFromSearch = useCallback(
 		(topicId: number) => {
@@ -298,7 +295,7 @@ export const TopicSelection: FC<{
 			)
 		};
 	}, [locale, topicGroups, topics]);
-	// The latest select callback without re-registering on every expand.
+	// Avoids re-registering the search on every group expand.
 	const selectTopicFromSearchRef = useRef(selectTopicFromSearch);
 	selectTopicFromSearchRef.current = selectTopicFromSearch;
 	useEffect(() => {

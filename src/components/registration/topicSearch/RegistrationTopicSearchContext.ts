@@ -6,15 +6,10 @@ import type { RegistrationTopicSearchEntry } from './RegistrationTopicSearch';
 export interface RegistrationTopicSearchApi {
 	entries: RegistrationTopicSearchEntry[];
 	index: TopicSearchIndex;
-	/** Selects the topic in the list exactly as a click on its row would. */
 	select: (topicId: number) => void;
 }
 
-/**
- * The search lives in the StageLayout header, the topics and their selection
- * state in the topic step. The step registers itself here; the header renders
- * the magnifier only while something is registered.
- */
+/** Bridges the header (search) and the topic step (topics, selection state). */
 export const RegistrationTopicSearchContext = createContext<
 	(api: RegistrationTopicSearchApi | null) => void
 >(() => {});

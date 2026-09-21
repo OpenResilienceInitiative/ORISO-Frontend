@@ -1,14 +1,7 @@
 #!/usr/bin/env node
 /**
- * Builds the multilingual topic search catalogue for the registration topic
- * search (header magnifier). It copies only the topic wording out
- * of every bundled `common.json`, so the search can match a topic in any
- * language the platform ships without loading six full catalogues (~1.2 MB)
- * into the registration bundle.
- *
- * Run after changing `registration.topic.catalog` in any locale:
- *   node scripts/generate-topic-search-catalog.mjs
- * `topicSearchCatalog.test.ts` fails when the generated file is stale.
+ * Copies only the topic wording out of every `common.json` so the search
+ * needn't bundle all locales. Rerun after changing `registration.topic.catalog`.
  */
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';

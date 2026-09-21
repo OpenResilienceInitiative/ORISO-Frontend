@@ -23,9 +23,7 @@ import {
 
 export interface RegistrationTopicSearchEntry {
 	topicId: number;
-	/** Title in the current language. */
 	title: string;
-	/** Group name in the current language. */
 	category?: string;
 	icon?: string;
 }
@@ -34,11 +32,7 @@ export interface RegistrationTopicSearchProps {
 	entries: RegistrationTopicSearchEntry[];
 	index: TopicSearchIndex;
 	onSelect: (topicId: number) => void;
-	/**
-	 * `surface` — the desktop header row, next to the language pill and the
-	 * login button. `onPrimary` — the red mobile brand bar; opened, the field
-	 * lays itself over the whole bar.
-	 */
+	/** `surface`: desktop header row. `onPrimary`: red mobile bar. */
 	tone?: 'surface' | 'onPrimary';
 	/** Stories only: start opened. */
 	defaultOpen?: boolean;
@@ -49,21 +43,13 @@ type Suggestion = TopicSearchResult & RegistrationTopicSearchEntry;
 
 const MIN_QUERY_LENGTH = 2;
 
-/* Say why a suggestion came up unless its own visible title explains it —
-   e.g. a related word ("Alkohol" → Sucht) or a title in another language
-   ("зависимость" → Sucht). */
+// Show the matched term unless the visible title already explains the hit.
 const showsMatchedTerm = (option: Suggestion) =>
 	option.matchedKind !== 'title' ||
 	normalizeSearchText(option.matchedTerm) !==
 		normalizeSearchText(option.title);
 
-/**
- * Header magnifier for the registration topic step. Closed it is one round
- * button beside the language and login controls; opened it grows into a
- * search field that suggests topics while typing (Google-style). Picking a
- * suggestion selects that topic in the list below, so "Weiter" works as if it
- * had been clicked there.
- */
+/** Header topic search; a pick selects the topic as a row click would. */
 export const RegistrationTopicSearch = ({
 	entries,
 	index,
@@ -193,8 +179,7 @@ export const RegistrationTopicSearch = ({
 					slotProps={{
 						popper: onPrimary
 							? {
-									// Opened, the field spans the bar (12px each
-									// side); the list matches it.
+									// Match the open field's width across the bar.
 									placement: 'bottom-start',
 									sx: {
 										width: 'calc(100vw - 24px) !important',

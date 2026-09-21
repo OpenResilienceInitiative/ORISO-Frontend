@@ -133,7 +133,6 @@ export const OpenTypePick: Story = {
 		await waitFor(() =>
 			expect(args.onSelect).toHaveBeenCalledWith(keys.indexOf('debt'))
 		);
-		// Closed again, ready for the next search.
 		await expect(
 			canvas.getByRole('button', { name: 'Thema suchen' })
 		).toBeInTheDocument();
