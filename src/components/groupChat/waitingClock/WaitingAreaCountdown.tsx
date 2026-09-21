@@ -101,9 +101,15 @@ const clockGeometry = (size: number, tight: boolean, compact = false) => {
 	};
 };
 
-/** Width the overdue "+" and the flex gaps around it take from the two groups. */
+/**
+ * Width the overdue "+" and the flex gaps around it take from the two groups.
+ * The phone "+" (34 px, weight 300) renders 22 px wide, not 20; budgeting 20
+ * let the fit land exactly on the column width, sub-pixel rounding wrapped the
+ * seconds group onto a second row and it painted over the caption below the
+ * fixed-height card (#1499, 390 px). 24 px plus 2 px slack keeps one row.
+ */
 const overdueSignWidth = (compact: boolean) =>
-	compact ? 20 + 2 * 10 : 28 + 2 * 28;
+	compact ? 24 + 2 * 10 + 2 : 28 + 2 * 28;
 
 /**
  * The largest mini-clock that still lets the whole clock fit the given box.
