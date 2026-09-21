@@ -100,7 +100,11 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(
 			screen.getByTestId('orbital-trails').getAttribute('data-variant')
 		).toBe('single');
-		expect(apiGetConsultantAvailability).toHaveBeenCalledWith(3, 1);
+		expect(apiGetConsultantAvailability).toHaveBeenCalledWith(
+			3,
+			1,
+			expect.any(AbortSignal)
+		);
 		expect(nameCards()).toHaveLength(0);
 		expect(redeem).not.toHaveBeenCalled();
 	});
@@ -204,6 +208,24 @@ describe('LiveChatEntryRoom — who is live, before anything is created', () => 
 		expect(nameCards().length).toBeGreaterThan(0);
 		expect(closedHeadline()).toBeNull();
 		expect(redeem).not.toHaveBeenCalled();
+	});
+
+	/* A server that accepts the connection and never answers would otherwise
+	   hold each sample for fetchData's 30 s default — about a minute and a
+	   half on the loader before the fallback. Each sample is bounded instead. */
+	it('bounds each sample, so a silent server still opens the names within half a minute', async () => {
+		vi.mocked(apiGetConsultantAvailability).mockImplementation(
+			(_topic, _type, signal) =>
+				new Promise((_resolve, reject) =>
+					signal?.addEventListener('abort', () =>
+						reject(new Error('aborted'))
+					)
+				)
+		);
+		renderInvite();
+		await flush(25_000);
+
+		expect(nameCards().length).toBeGreaterThan(0);
 	});
 
 	it('does not let a failure between two zeros stand in for the second look', async () => {

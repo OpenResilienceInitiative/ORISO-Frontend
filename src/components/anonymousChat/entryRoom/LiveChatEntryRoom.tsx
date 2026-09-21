@@ -71,6 +71,9 @@ const CLOSED_CONFIRMATION_MS = 1000;
    contract). An outage that persists this many samples opens the door as it
    was before the pre-check; the waiting room's poll takes over from there. */
 const UNKNOWN_FALLBACK_FAILURES = 3;
+/* Per sample. A server that accepts and never answers would otherwise hold
+   each one for fetchData's 30 s default, and the fallback above by minutes. */
+const AVAILABILITY_SAMPLE_TIMEOUT_MS = 5000;
 
 /** How many names the door offers at once (Frank: „drei vier varianten"). */
 const NAME_CHOICES = 4;
@@ -347,14 +350,28 @@ const LiveChatEntryRoomContent = ({
 		let timer: number | undefined;
 		let zeros = 0;
 		let failures = 0;
-		const sample = (): Promise<number | null> =>
-			apiGetConsultantAvailability(topicId, consultingTypeId).then(
-				(d) =>
-					typeof d?.numAvailableConsultants === 'number'
-						? d.numAvailableConsultants
-						: 0,
-				() => null
+		let inFlight: AbortController | undefined;
+		const sample = (): Promise<number | null> => {
+			inFlight = new AbortController();
+			const request = inFlight;
+			const deadline = window.setTimeout(
+				() => request.abort(),
+				AVAILABILITY_SAMPLE_TIMEOUT_MS
 			);
+			return apiGetConsultantAvailability(
+				topicId,
+				consultingTypeId,
+				request.signal
+			)
+				.finally(() => window.clearTimeout(deadline))
+				.then(
+					(d) =>
+						typeof d?.numAvailableConsultants === 'number'
+							? d.numAvailableConsultants
+							: 0,
+					() => null
+				);
+		};
 		const run = async () => {
 			const next = await sample();
 			if (stop) return;
@@ -378,6 +395,7 @@ const LiveChatEntryRoomContent = ({
 		return () => {
 			stop = true;
 			window.clearTimeout(timer);
+			inFlight?.abort();
 		};
 	}, [sessionId, topicId, consultingTypeId]);
 
