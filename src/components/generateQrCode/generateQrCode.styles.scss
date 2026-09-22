@@ -3,7 +3,7 @@
 		white-space: nowrap;
 		border: none;
 		background-color: transparent;
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		font-size: $font-size-tertiary;
 		cursor: pointer;
 		display: flex;

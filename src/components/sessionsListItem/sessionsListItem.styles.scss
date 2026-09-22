@@ -265,7 +265,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	&__row {
 		display: flex;
 		gap: 10px;
-		color: var(--m3-primary, $secondary);
+		color: var(--oriso-primary-text, var(--m3-primary, $secondary));
 		min-width: 0;
 
 		&:first-child {
@@ -487,7 +487,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -504,7 +504,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.sessionsListItem__dropdownOptionDescription {

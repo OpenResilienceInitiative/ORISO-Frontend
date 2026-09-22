@@ -1427,14 +1427,20 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 				&:hover {
 					* {
-						fill: var(--m3-primary, $primary);
+						fill: var(
+							--oriso-primary-text,
+							var(--m3-primary, $primary)
+						);
 					}
 				}
 			}
 
 			&--active {
 				svg * {
-					fill: var(--m3-primary, $primary);
+					fill: var(
+						--oriso-primary-text,
+						var(--m3-primary, $primary)
+					);
 				}
 			}
 		}
@@ -1486,7 +1492,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 				&--active {
 					svg * {
-						color: var(--m3-primary, $primary);
+						color: var(
+							--oriso-primary-text,
+							var(--m3-primary, $primary)
+						);
 					}
 				}
 			}
@@ -1548,7 +1557,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			&:hover {
 				svg {
 					* {
-						fill: var(--m3-primary, $primary);
+						fill: var(
+							--oriso-primary-text,
+							var(--m3-primary, $primary)
+						);
 					}
 				}
 			}
@@ -1583,7 +1595,10 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 
 			&:hover {
 				* {
-					fill: var(--m3-primary, $primary);
+					fill: var(
+						--oriso-primary-text,
+						var(--m3-primary, $primary)
+					);
 				}
 			}
 		}
@@ -1888,7 +1903,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 			}
 
 			svg {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 				position: relative;
 				left: 50%;
 				top: 50%;
@@ -2173,7 +2188,7 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
 	}
 
 	.messageSubmit__editPreviewQuote {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	.messageSubmit__editPreviewCancel {

@@ -8,7 +8,7 @@
 		background: none;
 		border: none;
 		border-bottom: 1px solid $line-grey;
-		color: var(--m3-primary, $secondary);
+		color: var(--oriso-primary-text, var(--m3-primary, $secondary));
 
 		&--empty {
 			color: var(--m3-on-surface-variant, $tertiary);
@@ -95,7 +95,7 @@
 
 	&__label--invalid {
 		.text {
-			color: var(--m3-primary, $form-error);
+			color: var(--oriso-primary-text, var(--m3-primary, $form-error));
 		}
 	}
 

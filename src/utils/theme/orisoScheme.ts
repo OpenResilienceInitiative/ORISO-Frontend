@@ -83,6 +83,8 @@ const clampTone = (tone: number): number => Math.min(100, Math.max(0, tone));
 interface BrandFamily {
 	role: string;
 	onRole: string;
+	/** The role as a text/icon colour on light surfaces; always AA. */
+	text: string;
 	container: string;
 	onContainer: string;
 	inverse: string;
@@ -95,10 +97,10 @@ interface BrandFamily {
 }
 
 /**
- * Lightest tone the role may have: AA on the darkest light surface that
- * carries primary-coloured text. Floored so hex rounding cannot dip below.
+ * Lightest tone brand-coloured text may have: AA on the darkest light
+ * surface that carries it. Floored so hex rounding cannot dip below.
  */
-const MAX_LEGIBLE_ROLE_TONE = Math.floor(
+const MAX_LEGIBLE_TEXT_TONE = Math.floor(
 	Contrast.darker(PRIMARY_TEXT_SURFACE_TONE, CONTRAST_AA)
 );
 
@@ -107,10 +109,6 @@ const MAX_LEGIBLE_ROLE_TONE = Math.floor(
  * brand fidelity over stock-M3 tone snapping — and the container sits
  * just above it. Contrast of the on-colours is guaranteed by
  * construction (white only when it reaches AA, dark text otherwise).
- *
- * The role is also a text colour on light surfaces, so a seed too light
- * to be read there (e.g. a pastel) steps down its own tonal palette to the
- * lightest legible tone; hue and chroma stay the Träger's (#1499).
  */
 const lightBrandFamily = (seedHex: string): BrandFamily => {
 	const argb = argbFromHex(seedHex);
@@ -121,31 +119,33 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		hct.chroma * CONTAINER_CHROMA_FACTOR
 	);
 
-	const isLegible = hct.tone <= MAX_LEGIBLE_ROLE_TONE;
-	const roleTone = isLegible ? hct.tone : MAX_LEGIBLE_ROLE_TONE;
-	const role = isLegible ? seedHex : hex(palette.tone(roleTone));
-
 	const onRole =
-		Contrast.ratioOfTones(100, roleTone) >= CONTRAST_AA
+		Contrast.ratioOfTones(100, hct.tone) >= CONTRAST_AA
 			? '#ffffff'
 			: hex(palette.tone(10));
 
 	const containerTone = clampTone(
-		Math.round(roleTone) + CONTAINER_TONE_SHIFT
+		Math.round(hct.tone) + CONTAINER_TONE_SHIFT
 	);
 	const onContainerTone = Math.round(
 		DynamicColor.foregroundTone(containerTone, CONTRAST_AA)
 	);
 
 	return {
-		role,
+		role: seedHex,
 		onRole,
+		// Fills keep the seed; text drawn IN the brand colour steps down the
+		// seed's own palette when the seed is too light to read (#1499).
+		text:
+			hct.tone <= MAX_LEGIBLE_TEXT_TONE
+				? seedHex
+				: hex(palette.tone(MAX_LEGIBLE_TEXT_TONE)),
 		container: hex(boosted.tone(containerTone)),
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
 		tint: hex(boosted.tone(40)),
 		hover: hex(
-			palette.tone(clampTone(Math.round(roleTone) + HOVER_TONE_SHIFT))
+			palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT))
 		),
 		// Fixed roles keep the same tones in every scheme (M3 spec).
 		fixed: hex(palette.tone(90)),
@@ -161,6 +161,7 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 	return {
 		role: hex(palette.tone(DARK_BRAND_TONES.role)),
 		onRole: hex(palette.tone(DARK_BRAND_TONES.onRole)),
+		text: hex(palette.tone(DARK_BRAND_TONES.role)),
 		container: hex(palette.tone(DARK_BRAND_TONES.container)),
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
@@ -322,6 +323,7 @@ export const computeOrisoPalette = (
 		'--m3-primary-container': brand.container,
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
+		'--oriso-primary-text': brand.text,
 		'--m3-hover-layer': scheme === 'light' ? '#f9eff0' : '#331f21',
 		'--m3-selected-layer': scheme === 'light' ? '#f5e6e7' : '#4a292c',
 		'--m3-primary-fixed': brand.fixed,
@@ -412,7 +414,7 @@ export const computeOrisoPalette = (
 		'--hover-primary': brand.hover,
 		'--skin-color-primary': brand.role,
 		'--skin-color-primary-hover': brand.hover,
-		'--skin-color-primary-contrast-safe': brand.role,
+		'--skin-color-primary-contrast-safe': brand.text,
 		'--skin-color-secondary': secondary.role,
 		'--skin-color-secondary-contrast-safe': secondary.role,
 		'--skin-color-default': secondary.role

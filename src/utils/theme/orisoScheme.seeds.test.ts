@@ -102,25 +102,12 @@ describe('signal seed drives the error family (Test #8)', () => {
 	const SIGNAL = '#c75300'; // a custom warning orange
 
 	it('the signal seed becomes the error role (brand-fidelity recipe)', () => {
-		const LEGIBLE_SIGNAL = '#a84500';
-		const { tokens } = computeOrisoPalette(
-			{ primary: PRIMARY, signal: LEGIBLE_SIGNAL },
-			'light'
-		);
-		expect(tokens['--m3-error']).toBe(LEGIBLE_SIGNAL);
-		expect(tokens['--m3-error']).not.toBe('#b1005e');
-	});
-
-	it('a signal seed too light for error text steps down its own hue (#1499)', () => {
-		// #c75300 reads at 4.3:1 on the surface — below AA for error text.
 		const { tokens } = computeOrisoPalette(
 			{ primary: PRIMARY, signal: SIGNAL },
 			'light'
 		);
-		expect(tokens['--m3-error']).not.toBe(SIGNAL);
-		expect(
-			hueDistance(hueOf(tokens['--m3-error']), hueOf(SIGNAL))
-		).toBeLessThan(5);
+		expect(tokens['--m3-error']).toBe('#c75300');
+		expect(tokens['--m3-error']).not.toBe('#b1005e');
 	});
 
 	it('error container and on-colours follow the generic container recipe', () => {

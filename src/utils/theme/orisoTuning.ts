@@ -39,9 +39,8 @@ export const CONTRAST_AA = 4.5;
 
 /**
  * The darkest light surface brand-coloured text sits on
- * (surface-container-highest). The primary role must reach CONTRAST_AA on
- * it, because text buttons, links and icons use `--m3-primary` as their
- * colour (#1499: a light-blue Träger seed gave 1.2:1).
+ * (surface-container-highest). `--oriso-primary-text` must reach
+ * CONTRAST_AA on it (#1499: a light-blue Träger seed gave 1.2:1).
  */
 export const PRIMARY_TEXT_SURFACE_TONE = 90;
 

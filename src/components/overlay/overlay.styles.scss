@@ -135,7 +135,7 @@ $overlay-illustration-height-large: 100%;
 		margin: 0 auto 36px;
 
 		.text {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			text-transform: uppercase;
 			display: none;
 
@@ -170,7 +170,7 @@ $overlay-illustration-height-large: 100%;
 		svg {
 			width: $overlay-icon-size-xs;
 			height: $overlay-icon-size-xs;
-			fill: var(--m3-primary, $primary);
+			fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 
 		.text {

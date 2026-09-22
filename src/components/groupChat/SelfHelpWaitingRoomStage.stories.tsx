@@ -248,8 +248,8 @@ export const RunningChatInfoMenu390: Story = {
 
 /**
  * Dev test of #1499 with Träger 2's light-blue brand colour (#b4ddee): the
- * palette darkens a brand colour too light for text, so the filled "Chat
- * starten" and the clock stay readable on a phone.
+ * filled "Chat starten" keeps the Träger's pastel with a dark on-primary
+ * label on top (Frank: no dark re-colouring of filled areas).
  */
 export const LightBrandColour390: Story = {
 	name: 'Light brand colour (Träger 2) · 390 mobile',
@@ -265,6 +265,9 @@ export const LightBrandColour390: Story = {
 					effectiveBackground(start)
 				)
 			).toBeGreaterThanOrEqual(4.5)
+		);
+		await expect(getComputedStyle(start).backgroundColor).toBe(
+			'rgb(180, 221, 238)'
 		);
 	}
 };

@@ -140,7 +140,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({
 				sx={{
 					'display': 'block',
 					'& a': {
-						color: 'primary.main',
+						color: 'var(--oriso-primary-text, var(--m3-primary))',
 						textDecoration: 'underline'
 					}
 				}}

@@ -170,8 +170,10 @@ const textContrast = (element: HTMLElement) =>
 
 /**
  * Dev test of #1499: with Träger 2's light-blue brand colour the text
- * button "Fertig" read at ~1.2:1. The palette now darkens a brand colour
- * that is too light for text, so it reaches WCAG AA (4.5:1).
+ * button "Fertig" read at ~1.2:1. Text drawn in the brand colour now uses
+ * the legible `--oriso-primary-text`; "Link kopieren" is a filled primary
+ * button (brand colour with on-primary label) instead of the tonal pair
+ * that measured 4.46:1 for every Träger.
  */
 export const LightBrandColour1440: Story = {
 	name: 'Light brand colour (Träger 2) · 1440',
@@ -183,6 +185,26 @@ export const LightBrandColour1440: Story = {
 		);
 		await expect(
 			textContrast(dialog.getByRole('button', { name: 'Fertig' }))
+		).toBeGreaterThanOrEqual(4.5);
+		const copy = dialog.getByRole('button', { name: 'Link kopieren' });
+		await expect(textContrast(copy)).toBeGreaterThanOrEqual(4.5);
+		// The fill keeps the Träger's own colour.
+		await expect(getComputedStyle(copy).backgroundColor).toBe(
+			'rgb(180, 221, 238)'
+		);
+	}
+};
+
+/** Default Träger: "Link kopieren" is the filled primary button. */
+export const CopyButtonPrimary1440: Story = {
+	name: 'Link kopieren as primary button · 1440',
+	globals: desktop1440Globals,
+	play: async ({ canvasElement }) => {
+		const dialog = within(
+			await openDialog(canvasElement, 'Video-Call angelegt')
+		);
+		await expect(
+			textContrast(dialog.getByRole('button', { name: 'Link kopieren' }))
 		).toBeGreaterThanOrEqual(4.5);
 	}
 };

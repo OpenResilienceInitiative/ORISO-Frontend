@@ -33,7 +33,7 @@
 		border-bottom: 2px solid transparent;
 
 		&--active {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			border-bottom-color: var(--m3-primary, #a5000a);
 			font-weight: 600;
 		}
@@ -141,7 +141,7 @@
 		&--play {
 			border: none;
 			background: transparent;
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			cursor: pointer;
 		}
 
@@ -216,7 +216,7 @@
 	&__signalThanks {
 		margin: 0;
 		font-size: 13px;
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		font-weight: 600;
 	}
 

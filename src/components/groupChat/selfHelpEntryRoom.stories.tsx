@@ -303,8 +303,8 @@ export const WaitingAreaMobile: StoryObj = {
 /**
  * Dev test of #1499: Träger 2's light-blue brand colour (#b4ddee) made
  * "Zum Kalender hinzufügen" and "Mehr erfahren" unreadable (~1.4:1 on
- * white). The palette now darkens a brand colour that is too light for
- * text, keeping its hue.
+ * white). Their labels now use the legible brand text tone; filled areas
+ * such as the stage keep the Träger's pastel.
  */
 export const WaitingAreaLightBrandColour: StoryObj = {
 	name: '1b — Wartebereich, helle Trägerfarbe (Träger 2) · 1440',
@@ -315,11 +315,16 @@ export const WaitingAreaLightBrandColour: StoryObj = {
 		const calendar = within(canvasElement).getByRole('button', {
 			name: /Zum Kalender hinzufügen/
 		});
-		await expect(
-			wcagContrast(
-				getComputedStyle(calendar).color,
-				effectiveBackground(calendar)
-			)
-		).toBeGreaterThanOrEqual(4.5);
+		const more = within(canvasElement).getByRole('button', {
+			name: /Mehr erfahren/
+		});
+		for (const button of [calendar, more]) {
+			await expect(
+				wcagContrast(
+					getComputedStyle(button).color,
+					effectiveBackground(button)
+				)
+			).toBeGreaterThanOrEqual(4.5);
+		}
 	}
 };

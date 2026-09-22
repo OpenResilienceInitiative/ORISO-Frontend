@@ -188,7 +188,7 @@ const avatarSx: SxProps<Theme> = {
 const outlinedActionSx: SxProps<Theme> = {
 	borderRadius: '20px',
 	borderColor: 'var(--m3-outline)',
-	color: 'var(--m3-primary)',
+	color: 'var(--oriso-primary-text, var(--m3-primary))',
 	textTransform: 'none',
 	fontSize: 14,
 	lineHeight: '20px',

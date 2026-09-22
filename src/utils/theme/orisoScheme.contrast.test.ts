@@ -1,8 +1,9 @@
 /**
- * #1499: Träger 2 on Dev uses the light-blue seed #b4ddee. The engine used
- * the seed verbatim as `--m3-primary`, and every text button, link and icon
- * drawn in that role read at ~1.2:1. Any light brand colour must still give
- * a primary that meets WCAG AA as text on the light surfaces.
+ * #1499: Träger 2 on Dev uses the light-blue seed #b4ddee. Text buttons,
+ * links and icons drawn in the brand colour read at ~1.2:1. Frank's
+ * decision: filled areas keep the Träger's colour (pastel stays pastel,
+ * with a dark on-primary on top); only text/icons IN the brand colour get
+ * a legible tone, `--oriso-primary-text`.
  */
 import { Hct, argbFromHex } from '@material/material-color-utilities';
 import { describe, expect, it } from 'vitest';
@@ -12,7 +13,7 @@ import { wcagContrast } from './wcagContrast';
 const TRAEGER_2_SEED = '#b4ddee';
 const LIGHT_SEEDS = [TRAEGER_2_SEED, '#ffd700', '#4eb3a0', '#f7c6d9'];
 
-/** The light surfaces primary-coloured text sits on. */
+/** The light surfaces brand-coloured text sits on. */
 const TEXT_SURFACES = [
 	'--m3-surface',
 	'--m3-surface-container-lowest',
@@ -24,54 +25,64 @@ const TEXT_SURFACES = [
 
 const hueOf = (colour: string) => Hct.fromInt(argbFromHex(colour)).hue;
 
-describe('primary stays legible for light Träger seeds (#1499)', () => {
+describe('brand text stays legible for light Träger seeds (#1499)', () => {
 	it.each(LIGHT_SEEDS)(
-		'%s: primary text reaches 4.5:1 on every light surface',
+		'%s: brand text reaches 4.5:1 on white and every light surface',
 		(seed) => {
 			const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
-			for (const surface of TEXT_SURFACES) {
-				expect(
-					wcagContrast(tokens['--m3-primary'], tokens[surface])
-				).toBeGreaterThanOrEqual(4.5);
+			const text = tokens['--oriso-primary-text'];
+			expect(text).toBeDefined();
+			for (const surface of ['#ffffff', ...TEXT_SURFACES]) {
+				const background = surface.startsWith('#')
+					? surface
+					: tokens[surface];
+				expect(wcagContrast(text, background)).toBeGreaterThanOrEqual(
+					4.5
+				);
 			}
-			expect(
-				wcagContrast(tokens['--m3-primary'], '#ffffff')
-			).toBeGreaterThanOrEqual(4.5);
+			// The legacy alias finally is what its name says.
+			expect(tokens['--skin-color-primary-contrast-safe']).toBe(text);
 		}
 	);
 
-	it.each(LIGHT_SEEDS)('%s: on-primary and on-container stay AA', (seed) => {
-		const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
-		expect(
-			wcagContrast(tokens['--m3-on-primary'], tokens['--m3-primary'])
-		).toBeGreaterThanOrEqual(4.5);
-		expect(
-			wcagContrast(
-				tokens['--m3-on-primary-container'],
-				tokens['--m3-primary-container']
-			)
-		).toBeGreaterThanOrEqual(4.5);
-	});
+	it.each(LIGHT_SEEDS)(
+		'%s: the filled-area colour stays the Träger seed',
+		(seed) => {
+			const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
+			expect(tokens['--m3-primary']).toBe(seed);
+			expect(tokens['--oriso-app-action']).toBe(seed);
+		}
+	);
 
-	it('keeps the Träger hue when it darkens the role', () => {
+	it.each(LIGHT_SEEDS)(
+		'%s: on-primary is dark and readable on the filled brand colour',
+		(seed) => {
+			const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
+			expect(
+				wcagContrast(tokens['--m3-on-primary'], tokens['--m3-primary'])
+			).toBeGreaterThanOrEqual(4.5);
+			expect(tokens['--m3-on-primary']).not.toBe('#ffffff');
+		}
+	);
+
+	it('keeps the Träger hue in the text tone', () => {
 		const { tokens } = computeOrisoPalette(
 			{ primary: TRAEGER_2_SEED },
 			'light'
 		);
-		expect(tokens['--m3-primary']).not.toBe(TRAEGER_2_SEED);
+		expect(tokens['--oriso-primary-text']).not.toBe(TRAEGER_2_SEED);
 		expect(
-			Math.abs(hueOf(tokens['--m3-primary']) - hueOf(TRAEGER_2_SEED))
+			Math.abs(
+				hueOf(tokens['--oriso-primary-text']) - hueOf(TRAEGER_2_SEED)
+			)
 		).toBeLessThan(5);
-		// The legacy "contrast-safe" alias finally is.
-		expect(tokens['--skin-color-primary-contrast-safe']).toBe(
-			tokens['--m3-primary']
-		);
 	});
 
-	it('leaves a seed that is already legible untouched (brand fidelity)', () => {
+	it('a seed that is already legible is its own text colour', () => {
 		for (const seed of ['#a5000a', '#a50202', '#0b5394']) {
 			const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
 			expect(tokens['--m3-primary']).toBe(seed);
+			expect(tokens['--oriso-primary-text']).toBe(seed);
 		}
 	});
 });

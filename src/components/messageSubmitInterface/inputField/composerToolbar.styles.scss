@@ -161,7 +161,7 @@
 	// disappears. `primary-fixed` (#ffdad5) is the light tint of the same
 	// role, so the arrow stays the loud thing on the strip.
 	&__button--scrollToNewest--unread {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		background: var(--m3-primary-fixed, #ffdad5);
 		box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
 
