@@ -2,15 +2,32 @@
 import * as React from 'react';
 import { createRef } from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 
-afterEach(() => cleanup());
-
 // TipTap's focus command lands in a requestAnimationFrame, not in the call.
+// Frames are queued and flushed by hand so the test does not ride on
+// jsdom's frame timer.
+const frames: FrameRequestCallback[] = [];
+
+beforeEach(() => {
+	frames.length = 0;
+	vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+		frames.push(callback);
+		return frames.length;
+	});
+	vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+});
+
+afterEach(() => {
+	cleanup();
+	vi.restoreAllMocks();
+});
+
 const nextFrames = async (count = 2) => {
 	for (let i = 0; i < count; i += 1) {
-		await new Promise((resolve) => requestAnimationFrame(resolve));
+		frames.splice(0).forEach((callback) => callback(0));
+		await Promise.resolve();
 	}
 };
 
@@ -38,6 +55,11 @@ describe('TipTapComposer focus ownership', () => {
 		const ref = renderBesideAnInput();
 		await waitFor(() => expect(ref.current).toBeTruthy());
 		const elsewhere = screen.getByTestId('elsewhere');
+		// A plain paragraph already counts as left; start from centre so a
+		// no-op reset cannot pass.
+		ref.current!.runAction('alignCenter');
+		await nextFrames();
+		expect(ref.current!.isActionActive('alignCenter')).toBe(true);
 		elsewhere.focus();
 
 		ref.current!.resetTextAlign();
