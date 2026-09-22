@@ -139,6 +139,8 @@ export const isMatrixOneTimeKeyConflictLog = (messages: unknown[]): boolean => {
 	);
 };
 
+const HELD_CRYPTO_OPERATION_MAX_WAIT_MS = 60_000;
+
 export class MatrixClientService {
 	private client: MatrixClient | null = null;
 	private loginData: MatrixLoginData | null = null;
@@ -310,7 +312,15 @@ export class MatrixClientService {
 	 * recovery). A token refresh replaces the client and rotates the Matrix password, so it waits.
 	 * Stale-device recovery is not held: callers retry on the client it produces.
 	 */
-	public holdTokenRefreshDuring<T>(operation: () => Promise<T>): Promise<T> {
+	public async holdTokenRefreshDuring<T>(
+		operation: () => Promise<T>
+	): Promise<T> {
+		// First let a due or in-flight refresh finish, so the operation starts on the current client.
+		await this.ensureFreshToken().catch(() => undefined);
+		while (this.refreshingToken) {
+			await this.refreshingToken.catch(() => undefined);
+		}
+		// No await between the check above and registering: no refresh can slip in.
 		const run = operation();
 		const settled = run.then(
 			() => undefined,
@@ -321,9 +331,16 @@ export class MatrixClientService {
 		return run;
 	}
 
+	/** Bounded, so an operation that itself needs a refresh cannot deadlock the client. */
 	private async heldCryptoOperationsSettled(): Promise<void> {
-		while (this.heldCryptoOperations.size > 0) {
-			await Promise.all([...this.heldCryptoOperations]);
+		const deadline = Date.now() + HELD_CRYPTO_OPERATION_MAX_WAIT_MS;
+		while (this.heldCryptoOperations.size > 0 && Date.now() < deadline) {
+			await Promise.race([
+				Promise.all([...this.heldCryptoOperations]),
+				new Promise((resolve) =>
+					globalThis.setTimeout(resolve, deadline - Date.now())
+				)
+			]);
 		}
 	}
 

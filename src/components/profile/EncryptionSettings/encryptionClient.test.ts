@@ -198,5 +198,11 @@ describe('executeWithReadyEncryptionClient holds token refresh (#1504)', () => {
 		).resolves.toBe('done');
 
 		expect(order).toEqual(['hold', 'action', 'release']);
+		// The client is resolved inside the hold, i.e. after any refresh in flight.
+		expect(
+			service.getReadyClient.mock.invocationCallOrder[0]
+		).toBeGreaterThan(
+			service.holdTokenRefreshDuring.mock.invocationCallOrder[0]
+		);
 	});
 });

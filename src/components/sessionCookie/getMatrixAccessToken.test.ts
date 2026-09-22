@@ -431,6 +431,8 @@ describe('getMatrixAccessToken', () => {
 			'https://matrix.example.test/_matrix/client/v3/logout',
 			expect.objectContaining({
 				method: 'POST',
+				// Must survive the sign-out redirect that usually follows.
+				keepalive: true,
 				headers: expect.objectContaining({
 					Authorization: 'Bearer late-token'
 				})

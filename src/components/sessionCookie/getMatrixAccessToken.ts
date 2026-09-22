@@ -91,6 +91,8 @@ const matrixTokenUrl = (deviceId: string): string =>
 const revokeMatrixToken = (homeserverUrl: string, accessToken: string) =>
 	void fetch(`${homeserverUrl}/_matrix/client/v3/logout`, {
 		method: 'POST',
+		// Survives the navigation that usually follows sign-out.
+		keepalive: true,
 		headers: { Authorization: `Bearer ${accessToken}` }
 	}).catch(() => undefined);
 

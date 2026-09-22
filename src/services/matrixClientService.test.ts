@@ -233,9 +233,18 @@ describe('MatrixClientService', () => {
 		});
 		const service = new MatrixClientService();
 		let finishReset: (() => void) | undefined;
-		const reset = service.holdTokenRefreshDuring(
-			() => new Promise<void>((resolve) => (finishReset = resolve))
+		let resetStarted: (() => void) | undefined;
+		const started = new Promise<void>(
+			(resolve) => (resetStarted = resolve)
 		);
+		const reset = service.holdTokenRefreshDuring(
+			() =>
+				new Promise<void>((resolve) => {
+					finishReset = resolve;
+					resetStarted?.();
+				})
+		);
+		await started;
 
 		const refresh = service.refreshMatrixToken();
 		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
@@ -245,6 +254,35 @@ describe('MatrixClientService', () => {
 		await reset;
 		await refresh;
 		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
+	/**
+	 * The other direction: a refresh already in flight (e.g. after
+	 * M_UNKNOWN_TOKEN) must finish before the crypto operation starts, or it
+	 * replaces the client under the reset (#1504 review).
+	 */
+	it('starts a crypto operation only after a refresh already in flight', async () => {
+		let finishLogin: ((value: unknown) => void) | undefined;
+		vi.mocked(getMatrixAccessToken).mockReturnValueOnce(
+			new Promise((resolve) => (finishLogin = resolve)) as any
+		);
+		const service = new MatrixClientService();
+		const refresh = service.refreshMatrixToken();
+		const operation = vi.fn(async () => 'done');
+
+		const held = service.holdTokenRefreshDuring(operation);
+		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+		expect(operation).not.toHaveBeenCalled();
+
+		finishLogin?.({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		await refresh;
+		await expect(held).resolves.toBe('done');
+		expect(operation).toHaveBeenCalledOnce();
 	});
 
 	it('still refreshes after a held crypto operation failed', async () => {
