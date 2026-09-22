@@ -285,6 +285,69 @@ describe('MatrixClientService', () => {
 		expect(operation).toHaveBeenCalledOnce();
 	});
 
+	/**
+	 * No escape hatch: a slow homeserver can keep a reset busy for minutes, and
+	 * a refresh that gives up waiting would replace the client under it
+	 * (#1504 review). Deadlock is ruled out instead: inside a held operation,
+	 * ensureFreshToken neither starts nor awaits a refresh.
+	 */
+	it('keeps a refresh waiting for as long as the crypto operation runs', async () => {
+		vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+		try {
+			vi.mocked(getMatrixAccessToken).mockResolvedValue({
+				userId: '@alice:matrix.localhost',
+				accessToken: 'replacement-token',
+				deviceId: 'DEVICE_ONE',
+				homeserverUrl: 'http://matrix.localhost:18008'
+			});
+			const service = new MatrixClientService();
+			let finishReset: (() => void) | undefined;
+			let resetStarted: (() => void) | undefined;
+			const started = new Promise<void>(
+				(resolve) => (resetStarted = resolve)
+			);
+			const reset = service.holdTokenRefreshDuring(
+				() =>
+					new Promise<void>((resolve) => {
+						finishReset = resolve;
+						resetStarted?.();
+					})
+			);
+			await started;
+
+			const refresh = service.refreshMatrixToken();
+			await vi.advanceTimersByTimeAsync(10 * 60_000);
+			expect(getMatrixAccessToken).not.toHaveBeenCalled();
+
+			finishReset?.();
+			await reset;
+			await refresh;
+			expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('does not deadlock when a held operation checks its token', async () => {
+		const service = new MatrixClientService();
+
+		const result = await service.holdTokenRefreshDuring(async () => {
+			// The token has expired by the time the operation checks it.
+			vi.stubGlobal('localStorage', {
+				getItem: vi.fn((key: string) =>
+					key === 'matrix_token_expires_at'
+						? String(Date.now() - 1)
+						: null
+				)
+			});
+			await service.ensureFreshToken();
+			return 'finished';
+		});
+
+		expect(result).toBe('finished');
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
+	});
+
 	it('still refreshes after a held crypto operation failed', async () => {
 		vi.mocked(getMatrixAccessToken).mockResolvedValue({
 			userId: '@alice:matrix.localhost',

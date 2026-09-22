@@ -139,8 +139,6 @@ export const isMatrixOneTimeKeyConflictLog = (messages: unknown[]): boolean => {
 	);
 };
 
-const HELD_CRYPTO_OPERATION_MAX_WAIT_MS = 60_000;
-
 export class MatrixClientService {
 	private client: MatrixClient | null = null;
 	private loginData: MatrixLoginData | null = null;
@@ -320,27 +318,23 @@ export class MatrixClientService {
 		while (this.refreshingToken) {
 			await this.refreshingToken.catch(() => undefined);
 		}
-		// No await between the check above and registering: no refresh can slip in.
-		const run = operation();
-		const settled = run.then(
-			() => undefined,
-			() => undefined
-		);
+		// Registered before the operation starts, with no await since the check above: its own first
+		// token check already sees the hold, and no refresh can slip in.
+		let release: () => void = () => undefined;
+		const settled = new Promise<void>((resolve) => (release = resolve));
 		this.heldCryptoOperations.add(settled);
-		void settled.then(() => this.heldCryptoOperations.delete(settled));
-		return run;
+		try {
+			return await operation();
+		} finally {
+			this.heldCryptoOperations.delete(settled);
+			release();
+		}
 	}
 
-	/** Bounded, so an operation that itself needs a refresh cannot deadlock the client. */
+	/** Unbounded on purpose: giving up would replace the client under a running reset. */
 	private async heldCryptoOperationsSettled(): Promise<void> {
-		const deadline = Date.now() + HELD_CRYPTO_OPERATION_MAX_WAIT_MS;
-		while (this.heldCryptoOperations.size > 0 && Date.now() < deadline) {
-			await Promise.race([
-				Promise.all([...this.heldCryptoOperations]),
-				new Promise((resolve) =>
-					globalThis.setTimeout(resolve, deadline - Date.now())
-				)
-			]);
+		while (this.heldCryptoOperations.size > 0) {
+			await Promise.all([...this.heldCryptoOperations]);
 		}
 	}
 
@@ -469,6 +463,10 @@ export class MatrixClientService {
 	public async ensureFreshToken(): Promise<void> {
 		if (this.staleDeviceRecovery) {
 			await this.staleDeviceRecovery;
+		}
+		// A held crypto operation keeps its token: a refresh now would wait for that very operation.
+		if (this.heldCryptoOperations.size > 0) {
+			return;
 		}
 
 		const expiresAt = this.getStoredTokenExpiresAt();
