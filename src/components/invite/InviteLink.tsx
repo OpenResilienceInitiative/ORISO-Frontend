@@ -21,6 +21,11 @@ import {
 	redeemInviteLink,
 	RedeemInviteLinkLegacyResponse
 } from '../../api/apiRedeemInviteLink';
+import { apiGetInviteLinkContext } from '../../api/apiGetInviteLinkContext';
+import { apiFinishAnonymousConversation } from '../../api/apiFinishAnonymousConversation';
+import { isConsultantAccessToken } from '../auth/consultantLoginBlock';
+import { hasActiveAuthSession } from '../auth/auth';
+import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { redirectToApp } from '../registration/autoLogin';
@@ -58,6 +63,26 @@ import type { Pseudonym } from '../../utils/anonName/engine';
  * Legacy agency links: redeem returns agency/consultingType; guest confirms a
  * rolled User-ID, then we register an asker and redirect into the app.
  */
+/** A counsellor session this browser still holds — expired cookies do not count. */
+const holdsCounsellorSession = (): boolean =>
+	hasActiveAuthSession() &&
+	isConsultantAccessToken(getValueFromCookie('keycloak'));
+
+/**
+ * A redeem whose response is discarded because a counsellor signed in while it
+ * ran: the POST already created the guest and a queue entry. Finish that
+ * session with the guest's own token — never the counsellor's, and without
+ * storing the guest's anywhere — so no phantom waits in the queue.
+ */
+const withdrawDiscardedGuest = (data: {
+	sessionId: number;
+	accessToken: string;
+}) => {
+	void apiFinishAnonymousConversation(data.sessionId, data.accessToken).catch(
+		() => undefined
+	);
+};
+
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -71,8 +96,19 @@ export const InviteLink = () => {
 	const tenant = tenantContext?.tenant;
 	const locale = localeContext?.locale ?? 'de';
 	const [status, setStatus] = useState<
-		'loading' | 'identity' | 'registering' | 'error' | 'room'
+		| 'loading'
+		| 'identity'
+		| 'registering'
+		| 'error'
+		| 'room'
+		| 'invite'
+		| 'staff'
 	>('loading');
+	/* A live-chat link the room opens before it is redeemed. */
+	const [liveTopic, setLiveTopic] = useState<{
+		topicId: number;
+		consultingTypeId?: number;
+	} | null>(null);
 	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
 	const [errorMessage, setErrorMessage] = useState('');
 	const [legacyRedeem, setLegacyRedeem] =
@@ -81,6 +117,17 @@ export const InviteLink = () => {
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
 	const hasRunRef = useRef(false);
+	/* Whether the page is still on screen. The lookups before a redeem can take
+	   seconds; leaving meanwhile must not create a guest behind the person's
+	   back. A ref (not the effect's own cleanup) so React's development
+	   double-mount, which reruns nothing because of `hasRunRef`, keeps going. */
+	const mountedRef = useRef(true);
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+		};
+	}, []);
 	const [resumeAttempt, setResumeAttempt] = useState(0);
 	const [resumeFailed, setResumeFailed] = useState(false);
 
@@ -93,6 +140,18 @@ export const InviteLink = () => {
 		if (hasRunRef.current) return;
 		hasRunRef.current = true;
 
+		/* A counsellor signed in in this browser must not be turned into a guest.
+		   Redeeming writes the guest's tokens where hers are; her next heartbeat
+		   then goes out as the guest, is refused, and she silently drops out of
+		   the live count while her switch still reads live (Dev, 2026-09-21). */
+		/* Only a session that is still alive: the invite route runs outside the
+		   app that tears an expired one down, and a stale cookie signs nobody
+		   out, so it must not lock anyone out either. */
+		if (holdsCounsellorSession()) {
+			setStatus('staff');
+			return;
+		}
+
 		(async () => {
 			try {
 				/* A reload must not cost a second place in the queue. Redeem
@@ -104,14 +163,60 @@ export const InviteLink = () => {
 				const reusableSessionId =
 					await resolveReusableInviteSession(token);
 				if (reusableSessionId !== null) {
+					/* The lookup can take a moment; a counsellor who signed in
+					   meanwhile gets the lock, not a guest room under her login. */
+					if (holdsCounsellorSession()) {
+						setStatus('staff');
+						return;
+					}
 					setRoomSessionId(reusableSessionId);
 					setStatus('room');
 					return;
 				}
 
+				/* Who is live is asked before anything is created: the room
+				   gets the link's topic, offers names only if somebody is
+				   there, and redeems once a name is chosen. The context is
+				   public and redeems nothing. Without it — a link kind that
+				   has none, or a failed lookup — the page redeems on arrival
+				   as before, rather than leave the guest at a dead door. */
+				const context = await apiGetInviteLinkContext(token).catch(
+					() => null
+				);
+				if (
+					context?.chatType === 'LIVE_CHAT' &&
+					typeof context.topicId === 'number'
+				) {
+					setLiveTopic({
+						topicId: context.topicId,
+						consultingTypeId: context.consultingTypeId ?? undefined
+					});
+					setStatus('invite');
+					return;
+				}
+
+				/* The lookups above can take seconds; a counsellor may have signed
+				   in in another tab meanwhile. Same check as before the room's
+				   redeem, so no path overwrites her. */
+				if (!mountedRef.current) return;
+				if (holdsCounsellorSession()) {
+					setStatus('staff');
+					return;
+				}
 				const data = await redeemInviteLink(token);
 
 				if (isRedeemInviteLinkSessionResponse(data)) {
+					/* Left the page while the POST ran: the guest exists now, so
+					   withdraw it rather than install it on another page. */
+					if (!mountedRef.current) {
+						withdrawDiscardedGuest(data);
+						return;
+					}
+					if (holdsCounsellorSession()) {
+						withdrawDiscardedGuest(data);
+						setStatus('staff');
+						return;
+					}
 					/* Tokens first, then the entry room on this very page —
 					   no hard redirect into the session's gates any more.
 					   The room hands over to the session itself once a
@@ -147,6 +252,53 @@ export const InviteLink = () => {
 			}
 		})();
 	}, [token, locale, resumeAttempt]);
+
+	const redeemForRoom = useCallback(async (): Promise<number> => {
+		if (!token) throw new Error('Missing token');
+		/* Again here, not only on arrival: cookies are shared across tabs, and a
+		   counsellor may have signed in elsewhere while this tab waited. */
+		if (holdsCounsellorSession()) {
+			setStatus('staff');
+			throw new Error('A counsellor is signed in in this browser');
+		}
+		let data;
+		try {
+			data = await redeemInviteLink(token);
+			if (!isRedeemInviteLinkSessionResponse(data)) {
+				throw new Error('Invite link did not open a live-chat session');
+			}
+		} catch (err) {
+			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
+			   the name cannot fix that, so this is the unusable-invite page the
+			   on-arrival flow showed, not the room's "name not saved". */
+			setResumeFailed(false);
+			setErrorMessage(
+				err instanceof Error
+					? err.message
+					: 'Invite link could not be used'
+			);
+			setStatus('error');
+			throw err;
+		}
+		/* Left the page after "Zum Warteraum" while the POST ran: the guest
+		   exists now, so withdraw it rather than install it on another page. */
+		if (!mountedRef.current) {
+			withdrawDiscardedGuest(data);
+			throw new Error('The invite page was left while the redeem ran');
+		}
+		/* And once more after the POST returns: it takes time, and the guest's
+		   tokens must not land over a counsellor who signed in meanwhile. */
+		if (holdsCounsellorSession()) {
+			withdrawDiscardedGuest(data);
+			setStatus('staff');
+			throw new Error(
+				'A counsellor signed in while the invite was redeemed'
+			);
+		}
+		applyRedeemSessionCredentials(data);
+		rememberInviteSession(token, data.sessionId);
+		return data.sessionId;
+	}, [token]);
 
 	const handleReroll = useCallback(() => {
 		if (!identity) return;
@@ -192,6 +344,22 @@ export const InviteLink = () => {
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName', 'Name ändern');
 
+	/* While it looks, and for a live-chat link after that, the room itself is
+	   on screen — the same element throughout, so on a desktop the stage stays
+	   and only the column changes. */
+	if (status === 'loading' || status === 'invite') {
+		return (
+			<LiveChatEntryRoom
+				invite={{
+					topicId: liveTopic?.topicId,
+					consultingTypeId: liveTopic?.consultingTypeId,
+					redeem: redeemForRoom
+				}}
+				topicSlug={topicSlug}
+			/>
+		);
+	}
+
 	if (status === 'room' && roomSessionId !== null) {
 		return (
 			<LiveChatEntryRoom
@@ -208,7 +376,26 @@ export const InviteLink = () => {
 			showRegistrationLink={false}
 		>
 			<Box sx={{ maxWidth: 480, mx: 'auto', my: '40px', px: 2 }}>
-				{(status === 'loading' || status === 'registering') && (
+				{status === 'staff' && (
+					<Box role="alert" data-cy="invite-staff-session">
+						<Typography
+							component="h1"
+							sx={{ mb: 1, ...registrationScreenTitleSx }}
+						>
+							{t(
+								'liveChat.entry.staff.headline',
+								'Sie sind als Beraterin angemeldet.'
+							)}
+						</Typography>
+						<Typography sx={registrationScreenIntroSx}>
+							{t(
+								'liveChat.entry.staff.text',
+								'Dieser Link würde Sie hier abmelden und Sie wären nicht mehr live. Öffnen Sie ihn zum Testen bitte in einem privaten Fenster.'
+							)}
+						</Typography>
+					</Box>
+				)}
+				{status === 'registering' && (
 					<p>
 						{t(
 							'registration.registering',

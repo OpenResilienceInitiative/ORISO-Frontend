@@ -2396,6 +2396,13 @@
 				"anonymous": {
 					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
+			},
+			"checking": {
+				"waiting": "Wir warten mit dir, bis jemand live ist …"
+			},
+			"staff": {
+				"headline": "Du bist als Beraterin angemeldet.",
+				"text": "Dieser Link würde dich hier abmelden und du wärst nicht mehr live. Öffne ihn zum Testen bitte in einem privaten Fenster."
 			}
 		}
 	},
