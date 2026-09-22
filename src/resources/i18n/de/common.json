@@ -901,6 +901,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} mal",
 				"repeatValue_other": "{{count}} mal"
+			},
+			"noModeratorAvailable": "Keine Person verfügbar",
+			"moderatorHelp": "Hilfe",
+			"moderatorHelpDialog": {
+				"title": "Co-Moderation später einladen",
+				"description": "Gerade kann keine weitere Fachkraft Ihres Trägers ausgewählt werden. Sie können den Gesprächskreis trotzdem erstellen und Co-Moderator:innen danach hinzufügen.",
+				"step1": "Öffnen Sie den Gesprächskreis in Ihrer Liste und dort die Chat-Info.",
+				"step2": "Wählen Sie unter „Chatraum Einstellungen“ die Schaltfläche „Bearbeiten“.",
+				"step3": "Fügen Sie unter „Weitere Moderation“ Kolleg:innen hinzu und speichern Sie.",
+				"note": "Bearbeiten kann nur, wer den Gesprächskreis erstellt hat, und nur solange er gerade nicht läuft. Zur Auswahl stehen alle aktiven Fachkräfte Ihres Trägers.",
+				"close": "Verstanden"
 			}
 		},
 		"createError": {
@@ -1128,6 +1139,28 @@
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
 			"backToCountdown": "Zurück zum Countdown"
+		},
+		"shareDialog": {
+			"title_text": "Gesprächskreis angelegt",
+			"title_audio": "Audio-Call angelegt",
+			"title_video": "Video-Call angelegt",
+			"description": "Teilen Sie diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
+			"linkLabel": "Einladungs-Link",
+			"copy": "Link kopieren",
+			"copied": "Kopiert",
+			"detailsHeadline": "Termin",
+			"topic": "Thema",
+			"date": "Datum",
+			"start": "Beginn",
+			"timeValue": "{{time}} Uhr",
+			"duration": "Dauer",
+			"repeats": "Wiederholungen",
+			"repeatValue": "{{count}} Termine, {{interval}}",
+			"format": "Format",
+			"language": "Sprache",
+			"done": "Fertig",
+			"durationValue": "{{value}} Std.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuchen Sie es erneut."
 		}
 	},
 	"help": {

@@ -22,6 +22,12 @@ import { ScreenIntro } from '../ScreenIntro';
 import { TopicMedia } from '../TopicMedia';
 import { RowMenu } from '../RowMenu';
 import { ScheduleRows } from './ScheduleRows';
+import { CoModeratorHelpDialog } from './CoModeratorHelpDialog';
+import {
+	GroupChatShareDetails,
+	GroupChatShareDialog
+} from '../../groupChat/GroupChatShareDialog';
+import { currentHostGroupChatInviteLink } from '../../groupChat/groupChatInviteLink';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { InternalChatPerson } from '../internal/InternalChatCreateCard';
 import { PersonChipGrid } from '../internal/PersonChipGrid';
@@ -108,8 +114,16 @@ export const CircleSettingsView = ({
 	compact = false
 }: CircleSettingsViewProps) => {
 	const { t: translate } = useTranslation();
-	const { submit, isSubmitting, hasError, clearError } =
+	const { submit, leave, isSubmitting, hasError, clearError } =
 		useCreateChatSubmit();
+	/*
+	 * #1499 item 5: after a successful create the share dialog stays open
+	 * until it is closed; only then does the flow leave for the session view.
+	 */
+	const [created, setCreated] = useState<{
+		link: string;
+		details: GroupChatShareDetails;
+	} | null>(null);
 	const isEditMode = editChatId != null;
 	const storedDefaults = useMemo(
 		() => loadCircleDefaults(selectedAgency),
@@ -132,6 +146,7 @@ export const CircleSettingsView = ({
 		() => prefill?.consultantIds ?? []
 	);
 	const [moderatorMenuOpen, setModeratorMenuOpen] = useState(false);
+	const [moderatorHelpOpen, setModeratorHelpOpen] = useState(false);
 	const moderatorButtonRef = useRef<HTMLDivElement | null>(null);
 	const [topicMenuOpen, setTopicMenuOpen] = useState(false);
 	const topicButtonRef = useRef<HTMLDivElement | null>(null);
@@ -233,6 +248,28 @@ export const CircleSettingsView = ({
 			}),
 			{
 				groupChatId: editChatId ?? undefined,
+				// Create only: an edit keeps its link and leaves as before. A
+				// refresh that did not return the Series has no link to share,
+				// so that case also leaves as before.
+				holdAfterSuccess: ({ seriesId }) => {
+					if (isEditMode || seriesId == null) {
+						return false;
+					}
+					setCreated({
+						link: currentHostGroupChatInviteLink(seriesId),
+						details: {
+							topic: topic.trim(),
+							startDate: seriesFields.startDate,
+							startTime: seriesFields.startTime,
+							duration: seriesFields.duration,
+							repeatCount: seriesFields.repeatCount,
+							interval: seriesFields.interval,
+							modality: seriesFields.modality,
+							language: authorContent.sourceLanguage
+						}
+					});
+					return true;
+				},
 				onSuccess: () =>
 					saveCircleDefaults(selectedAgency, {
 						series: {
@@ -416,6 +453,13 @@ export const CircleSettingsView = ({
 									vacatedHint={translate(
 										'groupChat.internal.vacatedHint'
 									)}
+									emptyLabel={translate(
+										'groupChat.circle.noModeratorAvailable'
+									)}
+									helpLabel={translate(
+										'groupChat.circle.moderatorHelp'
+									)}
+									onHelp={() => setModeratorHelpOpen(true)}
 									toggleLabel={(label, selected) =>
 										translate(
 											selected
@@ -427,6 +471,10 @@ export const CircleSettingsView = ({
 								/>
 							)}
 						</div>
+						<CoModeratorHelpDialog
+							open={moderatorHelpOpen}
+							onClose={() => setModeratorHelpOpen(false)}
+						/>
 					</div>
 				</FormatCard>
 				<div className="circleSettings__authorColumn">
@@ -473,6 +521,18 @@ export const CircleSettingsView = ({
 					</button>
 				</div>
 			</div>
+			{created && (
+				<GroupChatShareDialog
+					open
+					link={created.link}
+					details={created.details}
+					fullScreen={compact}
+					onClose={() => {
+						setCreated(null);
+						leave();
+					}}
+				/>
+			)}
 		</div>
 	);
 };

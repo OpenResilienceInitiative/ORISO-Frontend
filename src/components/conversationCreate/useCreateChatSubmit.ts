@@ -23,7 +23,16 @@ interface SubmitOptions {
 	onSuccess?: () => void;
 	/** When set, the payload updates this existing chat instead of creating one. */
 	groupChatId?: number;
+	/**
+	 * Called once the session list has been refreshed, with the Series id of
+	 * the chat just saved (null when the refresh did not return it). Return
+	 * `true` to stay on the screen — e.g. to show the share dialog (#1499) —
+	 * and call `leave()` when done; otherwise the hook navigates as before.
+	 */
+	holdAfterSuccess?: (saved: { seriesId: number | null }) => boolean;
 }
+
+const SESSION_VIEW_PATH = '/sessions/consultant/sessionView';
 
 export const useCreateChatSubmit = () => {
 	const navigate = useNavigate();
@@ -39,7 +48,7 @@ export const useCreateChatSubmit = () => {
 	const submit = useCallback(
 		(
 			payload: groupChatSettings,
-			{ onSuccess, groupChatId }: SubmitOptions = {}
+			{ onSuccess, groupChatId, holdAfterSuccess }: SubmitOptions = {}
 		) => {
 			if (inFlightRef.current) {
 				return;
@@ -54,19 +63,29 @@ export const useCreateChatSubmit = () => {
 			request
 				.then((response) => {
 					onSuccess?.();
+					let seriesId: number | null = null;
 					return apiGetSessionRoomsByRoomIds([response.matrixRoomId])
 						.then(({ sessions }) => {
 							dispatch({
 								type: UPDATE_SESSIONS,
 								sessions: sessions
 							});
+							const saved = sessions?.find(
+								(session) =>
+									session.chat?.matrixRoomId ===
+									response.matrixRoomId
+							);
+							seriesId = saved?.chat?.id ?? null;
 						})
 						.catch(() => {
 							// The chat was created — a failed list refresh must
 							// not strand the user on the create screen.
 						})
 						.finally(() => {
-							navigate('/sessions/consultant/sessionView');
+							if (holdAfterSuccess?.({ seriesId })) {
+								return;
+							}
+							navigate(SESSION_VIEW_PATH);
 						});
 				})
 				.catch(() => {
@@ -82,6 +101,8 @@ export const useCreateChatSubmit = () => {
 
 	return {
 		submit,
+		/** Leave the create screen after a held success (see holdAfterSuccess). */
+		leave: () => navigate(SESSION_VIEW_PATH),
 		isSubmitting,
 		hasError,
 		clearError: () => setHasError(false)
