@@ -1192,7 +1192,10 @@
 		"topic": {
 			"headline": "Zu welchem Thema suchst Du Beratung?",
 			"subline": "Wähle ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Dein Thema:"
+			"summary": "Dein Thema:",
+			"search": {
+				"noResults": "Kein passendes Thema gefunden. Versuch es mit einem anderen Wort."
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Deinen Wohnort kennen",
@@ -2400,6 +2403,13 @@
 				"anonymous": {
 					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
+			},
+			"checking": {
+				"waiting": "Wir warten mit dir, bis jemand live ist …"
+			},
+			"staff": {
+				"headline": "Du bist als Beraterin angemeldet.",
+				"text": "Dieser Link würde dich hier abmelden und du wärst nicht mehr live. Öffne ihn zum Testen bitte in einem privaten Fenster."
 			}
 		}
 	},
