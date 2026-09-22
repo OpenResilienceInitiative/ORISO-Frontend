@@ -3,9 +3,12 @@
 // The ok/error greens and magentas are literal: they are the approved
 // artboards' values, and the tenant-themed --m3-error/--m3-success roles
 // resolve to different hues.
+// The artboards' disabled fill is #b9bdc3 under white, which is 1.9:1. The
+// pair below keeps the same muted weight at 4.4:1.
 $setup-ok: #1d6b3a;
 $setup-error: #a3195b;
-$setup-disabled: #b9bdc3;
+$setup-disabled: #e3e1e2;
+$setup-disabled-text: #5f6368;
 
 .twoFactorSetupDialog {
 	&__backdrop {
@@ -162,7 +165,6 @@ $setup-disabled: #b9bdc3;
 	}
 
 	&__copy,
-	&__hint,
 	&__manualLabel,
 	&__fallback,
 	&__helper,
@@ -180,14 +182,10 @@ $setup-disabled: #b9bdc3;
 		letter-spacing: 0 !important;
 	}
 
-	&__hint,
-	&__helper {
-		font-size: 13px !important;
-		line-height: 18px !important;
-	}
-
 	&__helper {
 		color: $setup-ok !important;
+		font-size: 13px !important;
+		line-height: 18px !important;
 	}
 
 	&__error {
@@ -206,7 +204,7 @@ $setup-disabled: #b9bdc3;
 		flex-direction: column;
 		align-items: center;
 		gap: 8px;
-		flex: 1 1 auto;
+		flex: 1 1 0;
 		min-width: 0;
 	}
 
@@ -256,12 +254,11 @@ $setup-disabled: #b9bdc3;
 			Arial,
 			sans-serif
 		) !important;
-		font-size: 11px !important;
+		font-size: 12px !important;
 		font-weight: 600 !important;
 		line-height: 16px !important;
 		letter-spacing: 0 !important;
 		text-align: center;
-		white-space: nowrap;
 
 		&--active {
 			color: var(--m3-primary, #a5000a);
@@ -513,7 +510,7 @@ $setup-disabled: #b9bdc3;
 
 		&.Mui-disabled {
 			background-color: $setup-disabled !important;
-			color: var(--m3-on-secondary, #ffffff) !important;
+			color: $setup-disabled-text !important;
 		}
 	}
 
@@ -529,13 +526,28 @@ $setup-disabled: #b9bdc3;
 	// The only other way on, so it stays a plain centred text link rather than
 	// a second button competing with the primary action.
 	&__logout {
-		align-self: center !important;
+		align-self: center;
 		padding: 0 !important;
 		color: var(--m3-secondary, #4c555f) !important;
 		font-size: 14px !important;
 		font-weight: 600 !important;
 		line-height: 44px !important;
 		text-transform: none !important;
+	}
+
+	// A phone gives each of the five steps about 60px; the labels shrink and
+	// wrap there rather than overflowing the paper.
+	@media (width <= 520px) {
+		&__stepper {
+			column-gap: 4px;
+		}
+
+		&__stepLabel {
+			font-size: 9px !important;
+			line-height: 12px !important;
+			white-space: normal;
+			overflow-wrap: anywhere;
+		}
 	}
 
 	@media (width >= 768px) {
@@ -545,14 +557,6 @@ $setup-disabled: #b9bdc3;
 			max-height: calc(100vh - 64px);
 			margin: 32px !important;
 			padding: 44px;
-		}
-
-		&__stepLabel {
-			font-size: 12px !important;
-		}
-
-		&__stepUnit {
-			flex-basis: 0;
 		}
 
 		&__body {

@@ -32,6 +32,13 @@
 		&--ok {
 			border: 2px solid #1d6b3a;
 		}
+
+		// The control's own outline is off, so the box carries the focus ring —
+		// outside the border, which keeps the error and ok states readable.
+		&:focus-within {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
 	}
 
 	&__control {

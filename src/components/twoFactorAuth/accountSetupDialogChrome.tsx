@@ -58,12 +58,14 @@ export const PendingDotIcon = ({ size = 16 }: { size?: number }) => (
 
 const HEADER_ICONS = {
 	key: <path d="M11 12l9-9M16 7l3 3M14 9l2 2" />,
-	phone: <path d="M11 18.5h2" />
+	phone: <path d="M11 18.5h2" />,
+	envelope: <path d="M3 7l9 6 9-6" />
 };
 
 const HEADER_ICON_FRAMES = {
 	key: <circle cx="8" cy="15" r="4" />,
-	phone: <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+	phone: <rect x="7" y="2.5" width="10" height="19" rx="2.5" />,
+	envelope: <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
 };
 
 export type AccountSetupHeaderIcon = keyof typeof HEADER_ICONS;
@@ -208,6 +210,15 @@ export const AccountSetupField = ({
 	value
 }: AccountSetupFieldProps) => {
 	const state = errorMessage ? 'error' : successMessage ? 'ok' : '';
+	// The hint explains what belongs in the field, so it stays while the
+	// message below says whether what is in there works.
+	const describedBy = [
+		hint && `${id}-hint`,
+		errorMessage && `${id}-error`,
+		!errorMessage && successMessage && `${id}-ok`
+	]
+		.filter(Boolean)
+		.join(' ');
 
 	return (
 		<div className="setupField">
@@ -223,6 +234,8 @@ export const AccountSetupField = ({
 					.join(' ')}
 			>
 				<input
+					aria-describedby={describedBy || undefined}
+					aria-invalid={state === 'error' || undefined}
 					autoComplete={autoComplete}
 					autoFocus={autoFocus}
 					className="setupField__control"
@@ -237,10 +250,15 @@ export const AccountSetupField = ({
 				/>
 				{adornment}
 			</div>
-			{state === '' && hint && <p className="setupField__hint">{hint}</p>}
+			{hint && (
+				<p className="setupField__hint" id={`${id}-hint`}>
+					{hint}
+				</p>
+			)}
 			{errorMessage && (
 				<p
 					className="setupField__message setupField__message--error"
+					id={`${id}-error`}
 					role="alert"
 				>
 					<AlertIcon />
@@ -248,7 +266,10 @@ export const AccountSetupField = ({
 				</p>
 			)}
 			{!errorMessage && successMessage && (
-				<p className="setupField__message setupField__message--ok">
+				<p
+					className="setupField__message setupField__message--ok"
+					id={`${id}-ok`}
+				>
 					<CheckMarkIcon size={16} />
 					<span>{successMessage}</span>
 				</p>

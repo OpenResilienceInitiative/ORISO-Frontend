@@ -138,17 +138,17 @@ const STEP_HEADERS: Record<
 		copyKey: 'twoFactorAuth.setupDialog.app.success.title'
 	},
 	'email-select': {
-		icon: 'phone',
+		icon: 'envelope',
 		titleKey: 'twoFactorAuth.setupDialog.email.select.title',
 		copyKey: 'twoFactorAuth.setupDialog.email.select.copy'
 	},
 	'email-connect': {
-		icon: 'phone',
+		icon: 'envelope',
 		titleKey: 'twoFactorAuth.setupDialog.email.connect.title',
 		copyKey: 'twoFactorAuth.setupDialog.email.connect.copy'
 	},
 	'email-success': {
-		icon: 'phone',
+		icon: 'envelope',
 		titleKey: 'twoFactorAuth.setupDialog.success.title',
 		copyKey: 'twoFactorAuth.setupDialog.email.success.title'
 	}

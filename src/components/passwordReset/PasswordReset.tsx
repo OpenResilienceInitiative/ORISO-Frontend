@@ -432,32 +432,33 @@ export const PasswordReset = ({
 		window.location.href = settings.urls.toLogin;
 	};
 
-	// Live checklist: each rule turns green as the typed password meets it.
-	const criteria = validatePasswordCriteria(newPassword);
-	const criteriaItems = [
-		{
-			key: 'mixedCase',
-			isMet: criteria.hasUpperLowerCase,
-			labelKey: 'profile.functions.password.reset.criteria.mixedCase'
-		},
-		{
-			key: 'number',
-			isMet: criteria.hasNumber,
-			labelKey: 'profile.functions.password.reset.criteria.number'
-		},
-		{
-			key: 'specialChar',
-			isMet: criteria.hasSpecialChar,
-			labelKey: 'profile.functions.password.reset.criteria.specialChar'
-		},
-		{
-			key: 'minLength',
-			isMet: criteria.hasMinLength,
-			labelKey: 'profile.functions.password.reset.criteria.minLength'
-		}
-	];
-
 	if (variant === 'dialog') {
+		// Live checklist: each rule turns green as the typed password meets it.
+		const criteria = validatePasswordCriteria(newPassword);
+		const criteriaItems = [
+			{
+				key: 'mixedCase',
+				isMet: criteria.hasUpperLowerCase,
+				labelKey: 'profile.functions.password.reset.criteria.mixedCase'
+			},
+			{
+				key: 'number',
+				isMet: criteria.hasNumber,
+				labelKey: 'profile.functions.password.reset.criteria.number'
+			},
+			{
+				key: 'specialChar',
+				isMet: criteria.hasSpecialChar,
+				labelKey:
+					'profile.functions.password.reset.criteria.specialChar'
+			},
+			{
+				key: 'minLength',
+				isMet: criteria.hasMinLength,
+				labelKey: 'profile.functions.password.reset.criteria.minLength'
+			}
+		];
+
 		return (
 			<div
 				id="passwordReset"

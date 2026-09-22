@@ -135,16 +135,6 @@ vi.mock('@mui/material', async () => {
 	};
 });
 
-vi.mock('../../resources/img/icons/two-factor/otp_app_graphic.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
-		<svg aria-hidden="true" {...props} />
-	)
-}));
-vi.mock('../../resources/img/icons/two-factor/email_code_graphic.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
-		<svg aria-hidden="true" {...props} />
-	)
-}));
 vi.mock('../../resources/img/icons/two-factor/decision_400.svg', () => ({
 	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg aria-hidden="true" {...props} />

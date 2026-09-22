@@ -88,7 +88,23 @@ export const PasswordEmpty: Story = {
 		const host = await dialog();
 		const progress = within(host).getByRole('group');
 
-		await expect(within(progress).getAllByText(/./)).not.toHaveLength(0);
+		// Both steps are named, and the password one is where the user is.
+		const [password, secondFactor] = Array.from(
+			progress.querySelectorAll('.twoFactorSetupDialog__progressStep')
+		);
+		await expect(password.textContent).toMatch(
+			/eigenes passwort|own password/i
+		);
+		await expect(password.className).toContain(
+			'twoFactorSetupDialog__progressStep--active'
+		);
+		await expect(secondFactor.textContent).toMatch(
+			/zweiter faktor|second factor/i
+		);
+		await expect(secondFactor.className).not.toContain(
+			'twoFactorSetupDialog__progressStep--'
+		);
+
 		await expect(saveButton(host)).toBeDisabled();
 
 		await userEvent.keyboard('{Escape}');

@@ -15,7 +15,22 @@ const wideStyles = (scss: string) =>
 	scss.slice(scss.indexOf('@media (width >= 768px)'));
 
 const baseStyles = (scss: string) =>
-	scss.slice(0, scss.indexOf('@media (width >= 768px)'));
+	scss.slice(0, scss.indexOf('@media (width <= 520px)'));
+
+const phoneStyles = (scss: string) =>
+	scss.slice(
+		scss.indexOf('@media (width <= 520px)'),
+		scss.indexOf('@media (width >= 768px)')
+	);
+
+const fieldStyles = () =>
+	fs.readFileSync(
+		path.join(
+			process.cwd(),
+			'src/components/twoFactorAuth/accountSetupField.styles.scss'
+		),
+		'utf8'
+	);
 
 describe('two-factor setup dialog paper', () => {
 	// The artboards are a 366px phone board and a 650px desktop board, so the
@@ -50,10 +65,8 @@ describe('two-factor setup dialog paper', () => {
 	it('grows the container, not the type, from tablet width up', () => {
 		const wide = wideStyles(dialogStyles());
 
-		// The one exception is the five-step label, which the artboards set to
-		// 11px on the phone and 12px on the desktop board.
-		expect(wide.match(/font-size/g)).toHaveLength(1);
-		expect(wide).toMatch(/&__stepLabel\s*\{[^}]*font-size:\s*12px/);
+		expect(wide).toMatch(/&__paper\s*\{[^}]*width:\s*min\(650px,/);
+		expect(wide).not.toMatch(/font-size/);
 	});
 });
 
@@ -118,7 +131,18 @@ describe('two-factor setup dialog actions', () => {
 
 	it('keeps the logout a centred text link, not a third button', () => {
 		expect(dialogStyles()).toMatch(
-			/&__logout\s*\{[\s\S]*?align-self:\s*center\s*!important;[\s\S]*?line-height:\s*44px\s*!important;/
+			/&__logout\s*\{[\s\S]*?align-self:\s*center;[\s\S]*?line-height:\s*44px\s*!important;/
+		);
+	});
+
+	// White on the artboards' #b9bdc3 is 1.9:1, which nothing can read.
+	it('keeps the disabled primary action legible', () => {
+		const scss = dialogStyles();
+
+		expect(scss).toMatch(/\$setup-disabled:\s*#e3e1e2;/);
+		expect(scss).toMatch(/\$setup-disabled-text:\s*#5f6368;/);
+		expect(scss).toMatch(
+			/&\.Mui-disabled\s*\{[^}]*color:\s*\$setup-disabled-text\s*!important;/
 		);
 	});
 });
@@ -137,5 +161,46 @@ describe('two-factor setup dialog success step', () => {
 		expect(successIcon).toContain('height: 120px !important;');
 		expect(successIcon).not.toContain('--m3-success');
 		expect(successIcon).not.toContain('#0a882f');
+	});
+});
+
+// The five steps share about 60px each on a phone. At a fixed 11px nowrap the
+// Russian labels — and every German one at 320px — left the paper.
+describe('two-factor setup dialog stepper on a phone', () => {
+	it('scopes the compact, wrapping labels to the mobile stepper', () => {
+		const scss = dialogStyles();
+
+		expect(baseStyles(scss)).toMatch(
+			/&__stepLabel\s*\{[\s\S]*?font-size:\s*12px\s*!important;/
+		);
+		expect(baseStyles(scss)).not.toMatch(
+			/&__stepLabel\s*\{[^}]*white-space:\s*nowrap;/
+		);
+		expect(phoneStyles(scss)).toMatch(
+			/&__stepLabel\s*\{[^}]*font-size:\s*9px\s*!important;[^}]*line-height:\s*12px\s*!important;[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/
+		);
+	});
+
+	it('gives every step the same share of the row', () => {
+		expect(baseStyles(dialogStyles())).toMatch(
+			/&__stepUnit\s*\{[\s\S]*?flex:\s*1 1 0;/
+		);
+	});
+});
+
+describe('account-setup field', () => {
+	// The control's own outline is off, so without this the field would take
+	// focus with nothing on screen to show for it.
+	it('rings the box on focus, outside its state border', () => {
+		expect(fieldStyles()).toMatch(
+			/&:focus-within\s*\{[^}]*outline:\s*2px solid var\(--m3-primary, #a5000a\);[^}]*outline-offset:\s*2px;/
+		);
+	});
+
+	it('keeps the error and ok borders on their own', () => {
+		const scss = fieldStyles();
+
+		expect(scss).toMatch(/&--error\s*\{[^}]*border:\s*2px solid #a3195b;/);
+		expect(scss).toMatch(/&--ok\s*\{[^}]*border:\s*2px solid #1d6b3a;/);
 	});
 });
