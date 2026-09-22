@@ -86,6 +86,41 @@ export const clearLoginRecoveryPassword = (): void => {
 	dropOwnKeys(takeSealed());
 };
 
+/** Reads the sealed entry without taking it. */
+const peekSealed = (): Sealed | null => {
+	try {
+		const raw = sessionStorage.getItem(STORAGE_KEY);
+		return raw ? (JSON.parse(raw) as Sealed) : null;
+	} catch {
+		return null;
+	}
+};
+
+/**
+ * The staging document's expiry timer dies with the navigation, while the
+ * sealed entry and its key survive it. So every document re-arms the expiry
+ * of a handoff it finds on load: one already past its time is dropped at
+ * once, the rest when its time is up. The timer is bound to that entry's key
+ * id, so it never ends a newer handoff staged later.
+ */
+const armSealedExpiry = (): void => {
+	const sealed = peekSealed();
+	if (!sealed) return;
+	const endIfStill = () => {
+		if (peekSealed()?.keyId === sealed.keyId) clearLoginRecoveryPassword();
+	};
+	const left =
+		typeof sealed.expiresAt === 'number'
+			? sealed.expiresAt - Date.now()
+			: 0;
+	if (left <= 0) {
+		endIfStill();
+		return;
+	}
+	setTimeout(endIfStill, left);
+};
+armSealedExpiry();
+
 const seal = async (
 	keyId: string,
 	userId: string,

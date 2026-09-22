@@ -25,8 +25,13 @@ vi.mock('./loginHandoffKeyStore', () => ({
 
 type Handoff = typeof import('./loginRecoveryHandoff');
 let handoff: Handoff;
-/** A full document load: module memory is gone, browser storage is not. */
+/**
+ * A full document load: module memory is gone, browser storage is not — and
+ * so are the old document's timers, which is why the expiry cannot live only
+ * in the document that staged the handoff.
+ */
 const documentLoad = async () => {
+	if (vi.isFakeTimers()) vi.clearAllTimers();
 	vi.resetModules();
 	handoff = await import('./loginRecoveryHandoff');
 };
@@ -82,6 +87,38 @@ it('never leaves the password readable in session storage', async () => {
 	expect(stored).not.toBe('');
 	expect(stored).not.toContain('synthetic-secret');
 	expect(stored).not.toContain(btoa('synthetic-secret'));
+});
+
+/* Review (CodeRabbit): the staging document's timer dies with it. If the next
+   document never reads the handoff, it must still end after 120 s — not stay
+   in session storage and IndexedDB until the tab closes. */
+it('ends the handoff after 120 s in the next document even when nobody reads it', async () => {
+	vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+	await handoff.stageLoginRecoveryPassword('@a:test', 'synthetic');
+	await documentLoad();
+	vi.advanceTimersByTime(119000);
+	expect(sessionStorage.length).toBe(1);
+
+	vi.advanceTimersByTime(1000);
+	expect(sessionStorage.length).toBe(0);
+	expect(keys.size).toBe(0);
+});
+
+it('drops a handoff that has already expired when the next document loads', async () => {
+	await handoff.stageLoginRecoveryPassword('@a:test', 'synthetic');
+	/* The entry as a later document finds it once its time is up. */
+	const sealed = JSON.parse(
+		sessionStorage.getItem('oriso.loginRecoveryHandoff') as string
+	);
+	sessionStorage.setItem(
+		'oriso.loginRecoveryHandoff',
+		JSON.stringify({ ...sealed, expiresAt: Date.now() - 1 })
+	);
+	await documentLoad();
+
+	expect(sessionStorage.length).toBe(0);
+	expect(keys.size).toBe(0);
+	expect(await handoff.consumeLoginRecoveryPassword('@a:test')).toBeNull();
 });
 
 it('does not carry an expired, foreign or cleared handoff across a load', async () => {
