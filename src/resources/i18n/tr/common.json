@@ -4873,6 +4873,9 @@
 				"later": "Daha sonra",
 				"openVault": "Kasayı aç",
 				"restoring": "Geri getiriliyor …"
+			},
+			"snackbar": {
+				"close": "Bildirimi kapat"
 			}
 		},
 		"saveReminder": {

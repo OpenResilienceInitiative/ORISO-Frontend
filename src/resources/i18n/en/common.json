@@ -4784,6 +4784,9 @@
 				"later": "Later",
 				"openVault": "Open vault",
 				"restoring": "Restoring…"
+			},
+			"snackbar": {
+				"close": "Dismiss notice"
 			}
 		},
 		"saveReminder": {
