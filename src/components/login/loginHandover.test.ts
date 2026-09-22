@@ -20,8 +20,7 @@ const loginSource = readFileSync(
  *
  * Leaving `navigate` off makes the handover a document load, which is what
  * the reload was doing by hand and what login did before the client-side nav
- * change. Registration is different: it passes `navigate` deliberately and
- * covers the gap with its handover animation.
+ * change. Registration does the same (registrationHandover.test.ts).
  */
 describe('the login screen hands over to the app with a document load', () => {
 	const redirectCalls = [
