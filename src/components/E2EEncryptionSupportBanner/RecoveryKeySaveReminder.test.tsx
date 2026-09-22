@@ -12,6 +12,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
 import { RecoveryKeySaveReminder } from './RecoveryKeySaveReminder';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
+import { UserDataContext } from '../../globalState';
 import {
 	getPendingRecoveryKey,
 	savePendingRecoveryKey
@@ -211,4 +212,37 @@ it('opens the restore dialog from the snackbar action', () => {
 	render(view());
 	fireEvent.click(screen.getByTestId('key-backup-recovery-open'));
 	expect(screen.getByRole('dialog')).toBeTruthy();
+const passwordModeView = () => (
+	<UserDataContext.Provider
+		value={{ userData: { chatRecoveryMode: 'LOGIN_PASSWORD' } } as any}
+	>
+		{view()}
+	</UserDataContext.Provider>
+);
+
+it('stays silent in password mode once the login password protects the key, keeping it for Sicherheit', () => {
+	markEnquiryFinalized(userId, 12);
+	savePendingRecoveryKey(userId, 'synthetic-key');
+	setRecoveryRuntimeStatus(userId, 'ready');
+	render(passwordModeView());
+	expect(screen.queryByRole('complementary')).toBeNull();
+	expect(getPendingRecoveryKey(userId)).toBe('synthetic-key');
+	act(() => setRecoveryRuntimeStatus(userId, 'device-ready'));
+	expect(screen.queryByRole('complementary')).toBeNull();
+});
+
+it('still asks for action in password mode when the password could not protect the key', () => {
+	markEnquiryFinalized(userId, 12);
+	savePendingRecoveryKey(userId, 'synthetic-key');
+	setRecoveryRuntimeStatus(userId, 'needs-password');
+	render(passwordModeView());
+	expect(screen.getByText('encryption.saveReminder.show')).toBeTruthy();
+});
+
+it('keeps the key reminder outside password mode, where the key is the only way back', () => {
+	markEnquiryFinalized(userId, 12);
+	savePendingRecoveryKey(userId, 'synthetic-key');
+	setRecoveryRuntimeStatus(userId, 'ready');
+	render(view());
+	expect(screen.getByText('encryption.saveReminder.show')).toBeTruthy();
 });
