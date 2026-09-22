@@ -6,8 +6,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import { apiUrl } from '../../resources/scripts/endpoints';
 import { useCallback } from 'react';
-import { FETCH_METHODS, fetchData } from '../../api';
 import { decryptMatrixAttachment } from '../../utils/matrixEncryptedAttachment';
+import {
+	fetchAuthenticatedMatrixMedia,
+	useAuthenticatedMatrixMediaUrl
+} from '../../utils/matrixAuthenticatedMedia';
 import {
 	downloadScannedEncryptedMedia,
 	isMediaContentScannerEnabled
@@ -70,7 +73,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		'blocked' | 'error' | null
 	>(null);
 	const decryptFile = useCallback(
-		async (url: string) => {
+		async () => {
 			if (
 				attachmentStatus === IS_DECRYPTING ||
 				attachmentStatus === DECRYPTION_ERROR
@@ -109,14 +112,42 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 				return;
 			}
 
-			const data = await fetchData({
-				url: url,
-				method: FETCH_METHODS.GET,
-				responseHandling: [],
-				headersData: {
-					'Content-Type': ''
-				}
+			// Authenticated media (#1487). This used to go through fetchData(),
+			// which attaches the *Keycloak* access token from the `keycloak`
+			// cookie (src/api/fetchData.ts) — a token Synapse has no reason to
+			// accept. It only ever worked because the legacy endpoint ignored
+			// authorization entirely. With E2EE permanently on this is the path
+			// almost every attachment takes, so it was broken twice over: wrong
+			// endpoint and wrong token. Both are fixed here, in one helper.
+			const ciphertextUri = matrixEncryptedFile?.url;
+			if (!ciphertextUri) {
+				setAttachmentStatus(DECRYPTION_ERROR);
+				return;
+			}
+
+			const data = await fetchAuthenticatedMatrixMedia(
+				ciphertextUri
+			).catch((error) => {
+				setAttachmentStatus(DECRYPTION_ERROR);
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: translate('e2ee.attachment.error.title'),
+					text: translate('e2ee.attachment.error.text'),
+					closeable: true,
+					timeout: 60000
+				});
+				apiPostError({
+					name: error?.name,
+					message: error?.message,
+					stack: error?.stack,
+					level: ERROR_LEVEL_WARN
+				}).then();
+				return null;
 			});
+
+			if (!data) {
+				return;
+			}
 
 			const skipDecryption = !isMatrixEncryptedAttachment;
 			let blobUrl;
@@ -202,7 +233,6 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		props.file.type?.startsWith('image/') ||
 		props.attachment.type === 'image';
 	const isAudio = props.file.type?.startsWith('audio/');
-	const imageUrl = isImage ? buildUrl(props.attachment.downloadUrl) : null;
 
 	const [revealed, setRevealed] = React.useState(false);
 	const mediaCheckState = props.mediaCheckState ?? 'safe';
@@ -218,6 +248,30 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 		isImage && effectiveMediaState === 'unchecked' && !revealed;
 	const attachmentDimensions = props.attachment;
 
+	// Authenticated media (#1487): unencrypted homeserver media has no URL a
+	// browser can use on its own — `<img src>`, `<a href>` and an audio source
+	// cannot carry a bearer token. The bytes are fetched with the Matrix access
+	// token and handed on as an object URL instead. `null` while the media must
+	// not be requested at all: an unrevealed guest image, withheld media, or an
+	// encrypted attachment (whose ciphertext goes through decryptFile).
+	const needsAuthenticatedMedia =
+		Boolean(props.attachment.mxcUrl) && !isEncryptedAttachment;
+	const authenticatedMediaUrl = useAuthenticatedMatrixMediaUrl(
+		needsAuthenticatedMedia &&
+			!isAwaitingReveal &&
+			effectiveMediaState !== 'blocked' &&
+			effectiveMediaState !== 'error'
+			? props.attachment.mxcUrl
+			: null,
+		props.file.type
+	);
+	// One resolved source for every plain consumer below: the image preview,
+	// the download anchor and the voice player.
+	const plainMediaUrl = needsAuthenticatedMedia
+		? (authenticatedMediaUrl ?? '')
+		: buildUrl(props.attachment.downloadUrl);
+	const imageUrl = isImage ? plainMediaUrl : null;
+
 	// An encrypted attachment cannot be shown before the scanner has judged it,
 	// so the verdict is fetched as soon as the attachment renders rather than
 	// behind a click. Not while an image is still waiting to be revealed — that
@@ -231,22 +285,20 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 			scanVerdict === null &&
 			!isAwaitingReveal
 		) {
-			void decryptFile(buildUrl(props.attachment.downloadUrl));
+			void decryptFile();
 		}
 	}, [
 		attachmentStatus,
-		buildUrl,
 		decryptFile,
 		isAwaitingReveal,
 		isMatrixEncryptedAttachment,
-		props.attachment.downloadUrl,
 		scanVerdict
 	]);
 
 	const revealUncheckedImage = () => {
 		setRevealed(true);
 		if (isEncryptedAttachment && attachmentStatus === ENCRYPTED) {
-			void decryptFile(buildUrl(props.attachment.downloadUrl));
+			void decryptFile();
 		}
 	};
 
@@ -279,7 +331,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	);
 
 	// For non-encrypted files, wrap in download link
-	const downloadUrl = buildUrl(props.attachment.downloadUrl);
+	const downloadUrl = plainMediaUrl;
 
 	const getVoiceDurationFromFileName = useCallback((): number | null => {
 		const name = props.file?.name || props.attachment?.title || '';
@@ -375,11 +427,19 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 					renderVoiceAttachment(downloadUrl)
 				) : (
 					<AttachmentCard
-						action={{
-							kind: 'download',
-							href: downloadUrl,
-							fileName: props.file.name
-						}}
+						action={
+							// Authenticated media (#1487): until the bytes have
+							// been fetched there is no URL to link to, and an
+							// empty href would navigate the page. The card stays
+							// unlinked instead of pretending to be downloadable.
+							downloadUrl
+								? {
+										kind: 'download',
+										href: downloadUrl,
+										fileName: props.file.name
+									}
+								: { kind: 'none' }
+						}
 						icon={
 							!showImagePreview &&
 							getAttachmentIcon(props.file.type)
@@ -429,12 +489,7 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 						kind: 'unlock',
 						onUnlock:
 							attachmentStatus === ENCRYPTED
-								? () =>
-										decryptFile(
-											buildUrl(
-												props.attachment.downloadUrl
-											)
-										)
+								? () => decryptFile()
 								: undefined,
 						busy: attachmentStatus === IS_DECRYPTING
 					}}

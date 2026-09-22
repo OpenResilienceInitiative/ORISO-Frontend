@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PasswordReset } from './PasswordReset';
 const state = vi.hoisted(() => ({
 	userData: {
@@ -234,4 +234,70 @@ it('refuses an established account’s change when the chat client is unavailabl
 	expect(state.update).not.toHaveBeenCalled();
 	expect(state.logout).not.toHaveBeenCalled();
 	expect(state.change).not.toHaveBeenCalled();
+});
+
+describe('when the new password is the current one', () => {
+	const fill = (oldValue: string, newValue: string) => {
+		render(
+			<MemoryRouter>
+				<PasswordReset />
+			</MemoryRouter>
+		);
+		fireEvent.change(screen.getByLabelText('passwordResetOld'), {
+			target: { value: oldValue }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetNew'), {
+			target: { value: newValue }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetConfirm'), {
+			target: { value: newValue }
+		});
+	};
+
+	it('says so, keeps the button disabled and never calls the password API', () => {
+		fill('same-synthetic', 'same-synthetic');
+
+		expect(
+			screen.getByText(/profile\.functions\.password\.reset\.sameAsOld/)
+		).not.toBeNull();
+		const save = screen.getByText('save-password') as HTMLButtonElement;
+		expect(save.disabled).toBe(true);
+
+		fireEvent.click(save);
+		expect(state.update).not.toHaveBeenCalled();
+		expect(state.change).not.toHaveBeenCalled();
+	});
+
+	it('notices it too when the current password is typed last', () => {
+		render(
+			<MemoryRouter>
+				<PasswordReset />
+			</MemoryRouter>
+		);
+		fireEvent.change(screen.getByLabelText('passwordResetNew'), {
+			target: { value: 'same-synthetic' }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetConfirm'), {
+			target: { value: 'same-synthetic' }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetOld'), {
+			target: { value: 'same-synthetic' }
+		});
+
+		expect(
+			(screen.getByText('save-password') as HTMLButtonElement).disabled
+		).toBe(true);
+	});
+
+	it('leaves the intro out inside the account-setup dialog', () => {
+		render(
+			<MemoryRouter>
+				<PasswordReset hideIntro />
+			</MemoryRouter>
+		);
+
+		expect(
+			screen.queryByText('profile.functions.password.reset.subtitle')
+		).toBeNull();
+	});
 });

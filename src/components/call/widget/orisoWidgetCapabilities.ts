@@ -31,7 +31,14 @@ export const ALLOWED_TO_DEVICE_EVENT_TYPES: ReadonlySet<string> = new Set([
 
 const ALLOWED_PLAIN_CAPABILITIES: ReadonlySet<string> = new Set([
 	'org.matrix.msc4157.send.delayed_event',
-	'org.matrix.msc4157.update_delayed_event'
+	'org.matrix.msc4157.update_delayed_event',
+	// MSC4039: lets the widget ask us to fetch media it cannot fetch itself,
+	// because it holds no access token. Granting the capability does not grant
+	// access to arbitrary media — `OrisoWidgetDriver.downloadFile` confines
+	// every request to avatars of the active call room. Note we deliberately do
+	// NOT allow `org.matrix.msc4039.upload_file`: a call widget has no reason
+	// to put anything into the media repository.
+	'org.matrix.msc4039.download_file'
 ]);
 
 const ROOM_EVENT_PREFIXES = [

@@ -127,7 +127,6 @@ export const logout = async (
 			);
 		}
 	}
-	clearLiveChatAvailabilityPreference();
 	teardownLocalSession();
 
 	void Promise.allSettled(serverRequests).then(() => {
@@ -164,6 +163,10 @@ export const teardownLocalSession = (): void => {
 	// #1377 "Ton": the session → kind map is user-scoped; the next user must
 	// not inherit mute/tone decisions from the previous one.
 	sessionKindRegistry.reset();
+	// #1485: the live-chat preference, the shared lease acknowledgement and
+	// the loss record are session-bound; an auth or bootstrap failure that
+	// tears down without logout() must not hand them to the next counsellor.
+	clearLiveChatAvailabilityPreference();
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

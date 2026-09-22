@@ -13,10 +13,7 @@ import {
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
-import {
-	createPasswordUiAuth,
-	registerDeviceSigningAuth
-} from '../../services/matrixInteractiveAuth';
+import { registerDeviceSigningPassword } from '../../services/matrixInteractiveAuth';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -84,6 +81,77 @@ const getOrCreateRequestedDeviceId = (): string => {
 	return deviceId;
 };
 
+const matrixTokenUrl = (deviceId: string): string =>
+	`${endpoints.matrixAccessToken}${
+		endpoints.matrixAccessToken.includes('?') ? '&' : '?'
+	}deviceId=${encodeURIComponent(deviceId)}`;
+
+/** Ends the session behind a token. Matrix logout deletes that token's device, so only use it on a
+ * token of another device or after this browser was signed out. */
+const revokeMatrixToken = (homeserverUrl: string, accessToken: string) =>
+	void fetch(`${homeserverUrl}/_matrix/client/v3/logout`, {
+		method: 'POST',
+		// Survives the navigation that usually follows sign-out.
+		keepalive: true,
+		headers: { Authorization: `Bearer ${accessToken}` }
+	}).catch(() => undefined);
+
+/**
+ * The account's Matrix password as of now, for one device-signing UIA. The same call signs this
+ * device in again; the client moves onto that token so it stays authorised and logout revokes it.
+ */
+const fetchCurrentUiaPassword = async (
+	client: MatrixClient,
+	loginData: MatrixLoginData
+): Promise<string> => {
+	const response = await fetchData({
+		url: matrixTokenUrl(loginData.deviceId),
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		recoverOnPublicAuthRoute: false
+	});
+	const token: string | undefined = response?.accessToken;
+	if (
+		response?.userId !== loginData.userId ||
+		response?.deviceId !== loginData.deviceId
+	) {
+		if (token) revokeMatrixToken(loginData.homeserverUrl, token);
+		throw new Error('Matrix login was bound to another account or device');
+	}
+	if (!token) {
+		throw new Error('Matrix login returned no access token');
+	}
+	const storedToken = localStorage.getItem(MATRIX_ACCESS_TOKEN_STORAGE_KEY);
+	if (
+		!storedToken ||
+		localStorage.getItem(MATRIX_USER_ID_STORAGE_KEY) !== loginData.userId
+	) {
+		// Signed out while the request was in flight: commit nothing, end the session just issued.
+		revokeMatrixToken(loginData.homeserverUrl, token);
+		throw new Error('Matrix session ended during device-signing auth');
+	}
+	// Replaced by a same-tab refresh (stopped): the session lives on in the new client, touch nothing.
+	if (!client.clientRunning) {
+		throw new Error(
+			'Matrix client was replaced during device-signing auth'
+		);
+	}
+	// A newer token of this account in storage (refresh, other tab) stays; it is alive too.
+	const ownsStorage = storedToken === client.getAccessToken();
+	client.setAccessToken(token);
+	if (ownsStorage) {
+		persistMatrixLoginData({
+			...loginData,
+			accessToken: token,
+			expiresInMs: response.expiresInMs
+		});
+	}
+	if (!response.uiaPassword) {
+		throw new Error('Matrix login returned no UIA password');
+	}
+	return response.uiaPassword;
+};
+
 export const getMatrixAccessToken = (
 	_username?: string,
 	_password?: string
@@ -93,14 +161,8 @@ export const getMatrixAccessToken = (
 	}
 
 	const requestedDeviceId = getOrCreateRequestedDeviceId();
-	const querySeparator = endpoints.matrixAccessToken.includes('?')
-		? '&'
-		: '?';
-	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
-		requestedDeviceId
-	)}`;
 	return fetchData({
-		url: tokenUrl,
+		url: matrixTokenUrl(requestedDeviceId),
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_ERRORS.CATCH_ALL],
 		recoverOnPublicAuthRoute: false
@@ -180,9 +242,9 @@ export const createMatrixClient = (
 	});
 
 	if (loginData.uiaPassword) {
-		registerDeviceSigningAuth(
-			client,
-			createPasswordUiAuth(loginData.userId, loginData.uiaPassword)
+		// Every token fetch rotates the password, so the one in loginData goes stale; ask anew.
+		registerDeviceSigningPassword(client, loginData.userId, () =>
+			fetchCurrentUiaPassword(client, loginData)
 		);
 	}
 
