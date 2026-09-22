@@ -52,6 +52,8 @@ interface StageLayoutProps {
 	 * caller places it in the column.
 	 */
 	headerStart?: ReactNode;
+	/** Control before the language switch; rendered per tone, CSS shows one. */
+	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => ReactNode;
 }
 
 export const StageLayout = ({
@@ -65,7 +67,8 @@ export const StageLayout = ({
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
-	headerStart
+	headerStart,
+	renderHeaderAction
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -92,6 +95,7 @@ export const StageLayout = ({
 		<div className={clsx('stageLayout', className)}>
 			<StageMobileHero
 				variant={mobileHero}
+				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
 					showLoginLink && (
 						<IconButton
@@ -163,6 +167,14 @@ export const StageLayout = ({
 							}}
 						>
 							{headerStart}
+						</Box>
+					)}
+					{renderHeaderAction && (
+						<Box
+							className="stageLayout__headerAction"
+							sx={{ display: { xs: 'none', lg: 'block' } }}
+						>
+							{renderHeaderAction('surface')}
 						</Box>
 					)}
 					{selectableLocales.length > 1 && (
