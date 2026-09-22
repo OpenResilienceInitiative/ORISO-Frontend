@@ -768,6 +768,7 @@
 						"headline": "Du hast Dein Passwort erfolgreich geändert. Du wirst nun zum Login weitergeleitet."
 					},
 					"same": "Dein Passwort ist identisch.",
+					"sameAsOld": "Bitte wähle ein neues Passwort – dieses ist dein bisheriges.",
 					"secure": "Dein Passwort ist sicher.",
 					"subtitle": "Wenn Du möchtest, kannst Du hier Dein Passwort ändern. Gebe erst Dein aktuelles Passwort ein, um ein Neues festzulegen."
 				}
