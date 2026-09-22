@@ -70,6 +70,7 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 
 const buildClient = (crypto: unknown) => {
 	const client = {
+		clientRunning: true,
 		getCrypto: () => crypto,
 		getUserId: () => '@synthetic:test',
 		getDeviceId: () => 'synthetic-device',
@@ -349,6 +350,29 @@ describe('matrixKeyBackupService (#437)', () => {
 			expect(crypto.resetEncryption).not.toHaveBeenCalled();
 		});
 
+		/**
+		 * A same-tab token refresh can stop this client while the password is
+		 * being settled. The reset must not start its destructive steps on the
+		 * detached client (#1504 review).
+		 */
+		it('does not start on a client that was replaced while the password was settled', async () => {
+			const crypto = buildCrypto();
+			const client = buildClient(crypto);
+			client.clientRunning = true;
+			registerDeviceSigningPassword(
+				client,
+				'@synthetic:test',
+				async () => {
+					client.clientRunning = false;
+					return 'current';
+				}
+			);
+
+			await expect(resetCryptoIdentity(client)).rejects.toThrow();
+
+			expect(crypto.resetEncryption).not.toHaveBeenCalled();
+		});
+
 		it('signs the new identity with the password current at the start of the reset', async () => {
 			const makeRequest = vi
 				.fn()
@@ -358,6 +382,7 @@ describe('matrixKeyBackupService (#437)', () => {
 				resetEncryption: vi.fn(async (auth: any) => auth(makeRequest))
 			});
 			const client = buildClient(crypto);
+			client.clientRunning = true;
 			const currentPassword = vi
 				.fn()
 				.mockResolvedValueOnce('current')

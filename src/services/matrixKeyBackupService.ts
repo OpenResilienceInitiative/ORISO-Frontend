@@ -397,5 +397,9 @@ export const resetCryptoIdentity = async (
 	if (!authUploadDeviceSigningKeys) {
 		throw new Error('Matrix device-signing authentication is unavailable');
 	}
+	// Checked with no await before the call: a same-tab refresh may have replaced this client meanwhile.
+	if (!client.clientRunning) {
+		throw new Error('Matrix client was replaced before the reset');
+	}
 	await crypto.resetEncryption(authUploadDeviceSigningKeys);
 };
