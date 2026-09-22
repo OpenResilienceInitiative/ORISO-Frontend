@@ -247,7 +247,13 @@ export const Profile = () => {
 											userData.displayName ||
 											userData.userName
 										}
+										firstName={userData.firstName}
+										lastName={userData.lastName}
 										userId={ownAvatarUserId}
+										// A counsellor sees the avatar they chose
+										// themselves, not a hashed animal (#1047).
+										avatarKind={userData.avatarKind}
+										avatarId={userData.avatarId}
 										size="56px"
 									/>
 								</div>

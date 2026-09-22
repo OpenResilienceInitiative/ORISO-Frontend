@@ -1025,7 +1025,7 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-body: isMatrixBackedSession
+				body: isMatrixBackedSession
 					? previewBody(railChannelPreviews?.main ?? null)
 					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
@@ -1085,7 +1085,20 @@ body: isMatrixBackedSession
 			<UserAvatar
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
-				userId={activeSession.consultant?.id || 'unknown'}
+				firstName={activeSession.consultant?.firstName}
+				lastName={activeSession.consultant?.lastName}
+				// `id` is optional on the DTO while `consultantId` is required —
+				// without the fallback every such consultant shared one animal.
+				userId={
+					activeSession.consultant?.id ||
+					activeSession.consultant?.consultantId ||
+					'unknown'
+				}
+				avatarKind={activeSession.consultant?.avatarKind}
+				avatarId={activeSession.consultant?.avatarId}
+				// The label above is the rail caption, not the counsellor —
+				// the initials must spell the counsellor's public name.
+				avatarDisplayName={activeSession.consultant?.displayName}
 				size="40px"
 				ring={false}
 			/>
@@ -1523,8 +1536,19 @@ body: isMatrixBackedSession
 									activeSession.consultant?.username || 'User'
 								}
 								displayName={sessionTopic}
+								firstName={activeSession.consultant?.firstName}
+								lastName={activeSession.consultant?.lastName}
 								userId={
-									activeSession.consultant?.id || 'unknown'
+									activeSession.consultant?.id ||
+									activeSession.consultant?.consultantId ||
+									'unknown'
+								}
+								avatarKind={
+									activeSession.consultant?.avatarKind
+								}
+								avatarId={activeSession.consultant?.avatarId}
+								avatarDisplayName={
+									activeSession.consultant?.displayName
 								}
 								size="32px"
 							/>

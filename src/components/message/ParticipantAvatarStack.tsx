@@ -142,6 +142,8 @@ export const ParticipantAvatarStack = ({
 								displayName={participant.displayName}
 								firstName={participant.firstName}
 								lastName={participant.lastName}
+								avatarKind={participant.avatarKind}
+								avatarId={participant.avatarId}
 								size={size}
 							/>
 						</span>
