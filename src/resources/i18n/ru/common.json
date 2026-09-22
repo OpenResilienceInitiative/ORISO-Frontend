@@ -5198,7 +5198,7 @@
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Выйти"
+			"logout": "Выйти вместо этого"
 		},
 		"progress": {
 			"label": "Настройка в два шага",

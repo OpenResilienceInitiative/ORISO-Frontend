@@ -21,7 +21,7 @@ import {
 	validatePasswordCriteria
 } from '../../utils/validateInputValue';
 import {
-	AlertIcon,
+	AccountSetupField,
 	CheckMarkIcon,
 	PendingDotIcon
 } from '../twoFactorAuth/accountSetupDialogChrome';
@@ -100,6 +100,7 @@ interface DialogPasswordFieldProps {
 	value: string;
 }
 
+/** The shared dialog field plus the show/hide toggle only a password needs. */
 const DialogPasswordField = ({
 	errorMessage,
 	hint,
@@ -112,59 +113,33 @@ const DialogPasswordField = ({
 }: DialogPasswordFieldProps) => {
 	const { t: translate } = useTranslation();
 	const [isVisible, setIsVisible] = useState(false);
-	const state = errorMessage ? 'error' : successMessage ? 'ok' : '';
 
 	return (
-		<div className="passwordReset__field">
-			<label className="passwordReset__label" htmlFor={id}>
-				{label}
-			</label>
-			<div
-				className={[
-					'passwordReset__inputBox',
-					state && `passwordReset__inputBox--${state}`
-				]
-					.filter(Boolean)
-					.join(' ')}
-			>
-				<input
-					autoComplete="off"
-					className="passwordReset__inputControl"
-					id={id}
-					name={name}
-					onChange={onChange}
-					type={isVisible ? 'text' : 'password'}
-					value={value}
-				/>
+		<AccountSetupField
+			adornment={
 				<button
 					aria-label={translate(
 						isVisible
 							? 'login.password.hide'
 							: 'login.password.show'
 					)}
-					className="passwordReset__visibility"
+					className="setupField__adornment"
 					onClick={() => setIsVisible(!isVisible)}
 					type="button"
 				>
 					{isVisible ? <HidePasswordIcon /> : <ShowPasswordIcon />}
 				</button>
-			</div>
-			{state === '' && hint && (
-				<p className="passwordReset__fieldHint">{hint}</p>
-			)}
-			{errorMessage && (
-				<p className="passwordReset__fieldMessage passwordReset__fieldMessage--error">
-					<AlertIcon />
-					<span>{errorMessage}</span>
-				</p>
-			)}
-			{!errorMessage && successMessage && (
-				<p className="passwordReset__fieldMessage passwordReset__fieldMessage--ok">
-					<CheckMarkIcon size={16} />
-					<span>{successMessage}</span>
-				</p>
-			)}
-		</div>
+			}
+			errorMessage={errorMessage}
+			hint={hint}
+			id={id}
+			label={label}
+			name={name}
+			onChange={onChange}
+			successMessage={successMessage}
+			type={isVisible ? 'text' : 'password'}
+			value={value}
+		/>
 	);
 };
 

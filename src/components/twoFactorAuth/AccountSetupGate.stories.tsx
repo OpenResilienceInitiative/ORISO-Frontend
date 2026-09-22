@@ -116,8 +116,7 @@ export const PasswordRefused: Story = {
 
 		// The refusal, not the field label that carries the same word.
 		await expect(
-			host.querySelector('.passwordReset__fieldMessage--error')
-				.textContent
+			host.querySelector('.setupField__message--error').textContent
 		).toMatch(/bisheriges|current one/i);
 		await expect(saveButton(host)).toBeDisabled();
 	}
@@ -227,7 +226,9 @@ export const SecondFactorVerify: Story = {
 	decorators: [owesSecondFactor],
 	play: async () => {
 		const host = await reachVerify();
-		const code = await within(host).findByRole('textbox');
+		const code = await within(host).findByLabelText(
+			/einmal-code|one-?time/i
+		);
 
 		await expect(
 			within(host).getByRole('button', {
@@ -266,7 +267,7 @@ export const SecondFactorSuccess: Story = {
 		const host = await reachVerify();
 
 		await userEvent.type(
-			await within(host).findByRole('textbox'),
+			await within(host).findByLabelText(/einmal-code|one-?time/i),
 			'123456'
 		);
 		await userEvent.click(

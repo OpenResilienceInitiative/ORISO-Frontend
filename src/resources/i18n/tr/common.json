@@ -5190,7 +5190,7 @@
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Çıkış yap"
+			"logout": "Bunun yerine çıkış yap"
 		},
 		"progress": {
 			"label": "İki adımda kurulum",

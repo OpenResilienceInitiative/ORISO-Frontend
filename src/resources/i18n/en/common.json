@@ -5101,7 +5101,7 @@
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Log out"
+			"logout": "Log out instead"
 		},
 		"progress": {
 			"label": "Setup in two steps",

@@ -438,18 +438,6 @@ $setup-disabled: #b9bdc3;
 		line-height: 18px !important;
 	}
 
-	&__input {
-		.MuiOutlinedInput-root {
-			border-radius: 10px;
-			background: var(--m3-surface-container-lowest, #ffffff);
-		}
-
-		.MuiInputBase-input {
-			min-height: 24px;
-			font-size: 16px;
-		}
-	}
-
 	&__resend {
 		display: grid;
 		justify-items: start;

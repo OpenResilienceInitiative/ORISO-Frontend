@@ -5190,7 +5190,7 @@
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Se déconnecter"
+			"logout": "Se déconnecter à la place"
 		},
 		"progress": {
 			"label": "Configuration en deux étapes",

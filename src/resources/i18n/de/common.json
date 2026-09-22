@@ -5182,7 +5182,7 @@
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Abmelden"
+			"logout": "Stattdessen abmelden"
 		},
 		"progress": {
 			"label": "Einrichtung in zwei Schritten",

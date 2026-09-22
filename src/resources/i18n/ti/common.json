@@ -5190,7 +5190,7 @@
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "ውጻእ"
+			"logout": "ኣብ ክንድኡ ውጻእ"
 		},
 		"progress": {
 			"label": "ኣብ ክልተ ስጕምቲ ምድላው",

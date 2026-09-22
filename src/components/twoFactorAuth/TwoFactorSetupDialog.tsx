@@ -15,7 +15,6 @@ import {
 	Fade,
 	IconButton,
 	Link,
-	TextField,
 	Tooltip,
 	Typography
 } from '@mui/material';
@@ -54,6 +53,7 @@ import {
 } from './twoFactorAuthConstants';
 import { useTranslation } from 'react-i18next';
 import {
+	AccountSetupField,
 	AccountSetupHeader,
 	AccountSetupHeaderIcon,
 	AccountSetupProgress
@@ -527,6 +527,13 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 		setIsSecretCopied(true);
 	}, [encodedSecret]);
 
+	// These steps show the error on the field itself, so the body must not
+	// repeat it further down the dialog.
+	const stepHasField =
+		step === 'app-verify' ||
+		step === 'email-connect' ||
+		step === 'email-select';
+
 	const isPrimaryDisabled =
 		isRequestInProgress ||
 		(step === 'email-select' && !isStringValidEmail(email)) ||
@@ -704,44 +711,46 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	);
 
 	const renderOtpInput = (labelKey: string) => (
-		<TextField
+		<AccountSetupField
 			key={`otp-${labelKey}`}
 			autoFocus
-			className="twoFactorSetupDialog__input"
-			error={Boolean(errorKey)}
-			fullWidth
-			inputProps={{
-				inputMode: 'numeric',
-				maxLength: OTP_LENGTH,
-				pattern: '[0-9]*'
-			}}
+			errorMessage={errorKey ? translate(errorKey) : ''}
+			id="two-factor-setup-otp"
+			inputMode="numeric"
 			label={translate(labelKey)}
+			maxLength={OTP_LENGTH}
+			name="two-factor-setup-otp"
 			onChange={handleOtpChange}
+			pattern="[0-9]*"
 			value={otp}
 		/>
 	);
 
 	const renderEmailSelect = () => (
 		<div key="email-select" className="twoFactorSetupDialog__emailSelect">
-			<TextField
+			<AccountSetupField
 				key="tfa-email-select-input"
 				autoFocus
-				className="twoFactorSetupDialog__input"
-				error={
-					Boolean(errorKey) ||
-					(email.length > 0 && !isStringValidEmail(email))
+				errorMessage={
+					errorKey
+						? translate(errorKey)
+						: email.length > 0 && !isStringValidEmail(email)
+							? translate(
+									'twoFactorAuth.setupDialog.error.invalidEmail'
+								)
+							: ''
 				}
-				fullWidth
+				hint={translate('twoFactorAuth.setupDialog.email.select.hint')}
+				id="two-factor-setup-email"
+				inputMode="email"
 				label={translate(
 					'twoFactorAuth.setupDialog.email.select.input'
 				)}
+				name="two-factor-setup-email"
 				onChange={handleEmailChange}
 				type="email"
 				value={email}
 			/>
-			<Typography className="twoFactorSetupDialog__hint">
-				{translate('twoFactorAuth.setupDialog.email.select.hint')}
-			</Typography>
 		</div>
 	);
 
@@ -856,7 +865,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			<FlowStepper activeStep={step} selectedMethod={selectedMethod} />
 			<Box className="twoFactorSetupDialog__body">
 				{renderStep()}
-				{errorKey && (
+				{errorKey && !stepHasField && (
 					<Typography
 						className="twoFactorSetupDialog__error"
 						role="alert"

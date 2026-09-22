@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import './accountSetupField.styles.scss';
 
 /**
  * The chrome both account-setup dialogs share: the two-step progress row at the
@@ -165,3 +166,93 @@ export const AccountSetupHeader = ({
 		</div>
 	</div>
 );
+
+interface AccountSetupFieldProps {
+	/** Rendered inside the box, after the input — the password eye toggle. */
+	adornment?: React.ReactNode;
+	autoComplete?: string;
+	autoFocus?: boolean;
+	errorMessage?: string;
+	hint?: string;
+	id: string;
+	inputMode?: 'email' | 'numeric' | 'text';
+	label: string;
+	maxLength?: number;
+	name: string;
+	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	pattern?: string;
+	successMessage?: string;
+	type?: string;
+	value: string;
+}
+
+/**
+ * Every text input in the account-setup dialogs: label above the box, the
+ * state in the border, and the reason underneath it.
+ */
+export const AccountSetupField = ({
+	adornment,
+	autoComplete = 'off',
+	autoFocus,
+	errorMessage,
+	hint,
+	id,
+	inputMode,
+	label,
+	maxLength,
+	name,
+	onChange,
+	pattern,
+	successMessage,
+	type = 'text',
+	value
+}: AccountSetupFieldProps) => {
+	const state = errorMessage ? 'error' : successMessage ? 'ok' : '';
+
+	return (
+		<div className="setupField">
+			<label className="setupField__label" htmlFor={id}>
+				{label}
+			</label>
+			<div
+				className={[
+					'setupField__box',
+					state && `setupField__box--${state}`
+				]
+					.filter(Boolean)
+					.join(' ')}
+			>
+				<input
+					autoComplete={autoComplete}
+					autoFocus={autoFocus}
+					className="setupField__control"
+					id={id}
+					inputMode={inputMode}
+					maxLength={maxLength}
+					name={name}
+					onChange={onChange}
+					pattern={pattern}
+					type={type}
+					value={value}
+				/>
+				{adornment}
+			</div>
+			{state === '' && hint && <p className="setupField__hint">{hint}</p>}
+			{errorMessage && (
+				<p
+					className="setupField__message setupField__message--error"
+					role="alert"
+				>
+					<AlertIcon />
+					<span>{errorMessage}</span>
+				</p>
+			)}
+			{!errorMessage && successMessage && (
+				<p className="setupField__message setupField__message--ok">
+					<CheckMarkIcon size={16} />
+					<span>{successMessage}</span>
+				</p>
+			)}
+		</div>
+	);
+};
