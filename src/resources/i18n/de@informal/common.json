@@ -1185,7 +1185,10 @@
 		"topic": {
 			"headline": "Zu welchem Thema suchst Du Beratung?",
 			"subline": "Wähle ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Dein Thema:"
+			"summary": "Dein Thema:",
+			"search": {
+				"noResults": "Kein passendes Thema gefunden. Versuch es mit einem anderen Wort."
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Deinen Wohnort kennen",

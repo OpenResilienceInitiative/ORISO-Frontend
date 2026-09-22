@@ -3189,6 +3189,13 @@
 					"title": "Straffälligkeit",
 					"description": "Begleitung bei Fragen zu Straffälligkeit, Neustart und Alltag."
 				}
+			},
+			"search": {
+				"open": "Thema suchen",
+				"placeholder": "Thema oder Stichwort suchen",
+				"close": "Suche schließen",
+				"noResults": "Kein passendes Thema gefunden. Versuchen Sie ein anderes Wort.",
+				"matchedBy": "passt zu „{{term}}“"
 			}
 		},
 		"zipcode": {
