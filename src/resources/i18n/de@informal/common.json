@@ -762,7 +762,8 @@
 						"same": "Dein Passwort ist nicht identisch."
 					},
 					"old": {
-						"incorrect": "Dein Passwort ist nicht korrekt."
+						"incorrect": "Dein Passwort ist nicht korrekt.",
+						"hint": "Das Passwort, mit dem Du Dich gerade angemeldet hast."
 					},
 					"overlay": {
 						"headline": "Du hast Dein Passwort erfolgreich geändert. Du wirst nun zum Login weitergeleitet."
@@ -770,7 +771,10 @@
 					"same": "Dein Passwort ist identisch.",
 					"sameAsOld": "Bitte wähle ein neues Passwort – dieses ist dein bisheriges.",
 					"secure": "Dein Passwort ist sicher.",
-					"subtitle": "Wenn Du möchtest, kannst Du hier Dein Passwort ändern. Gebe erst Dein aktuelles Passwort ein, um ein Neues festzulegen."
+					"subtitle": "Wenn Du möchtest, kannst Du hier Dein Passwort ändern. Gebe erst Dein aktuelles Passwort ein, um ein Neues festzulegen.",
+					"criteria": {
+						"title": "Dein neues Passwort braucht"
+					}
 				}
 			},
 			"spokenLanguages": {
@@ -1628,7 +1632,7 @@
 				},
 				"install": {
 					"android": "Download im Google Play Store",
-					"copy": "Installiere Google Authenticator oder Microsoft Authenticator auf Deinem Smartphone oder Tablet. Beide Apps unterstützen den Sicherheitscode für die Online-Beratung.",
+					"copy": "Du brauchst eine der beiden Apps auf Deinem Smartphone oder Tablet. Schon installiert? Dann direkt weiter.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -1689,8 +1693,7 @@
 				"install": "Installieren",
 				"select": "Auswählen",
 				"verify": "Prüfen"
-			},
-			"title": "Welche Verbindung möchtest Du verwenden?"
+			}
 		},
 		"subtitle": "Nutze neben Deinem Passwort einen zweiten Faktor für die Anmeldung. Dadurch wird Dein Konto zusätzlich abgesichert.",
 		"switch": {
@@ -2433,8 +2436,8 @@
 	},
 	"passwordChange": {
 		"required": {
-			"copy": "Dein Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch dein erstes Passwort vergeben hat und es weiterhin kennt. Bitte ersetze es jetzt durch ein Passwort, das nur du kennst. Danach richtest du deinen zweiten Faktor ein.",
-			"title": "Bitte vergib dein eigenes Passwort"
+			"copy": "Dein Zugang wurde für Dich angelegt – das erste Passwort kennt deshalb noch jemand anderes. Vergib jetzt eines, das nur Du kennst.",
+			"title": "Dein eigenes Passwort"
 		}
 	}
 }
