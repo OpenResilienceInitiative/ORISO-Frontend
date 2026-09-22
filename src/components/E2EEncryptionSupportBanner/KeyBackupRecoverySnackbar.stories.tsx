@@ -1,0 +1,160 @@
+import * as React from 'react';
+import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
+import type { MatrixClientService } from '../../services/matrixClientService';
+import {
+	clearRecoveryRuntimeState,
+	setRecoveryRuntimeStatus
+} from '../../services/recoveryReminderState';
+import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
+import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
+
+const USER_ID = '@recovery-snackbar-story:example.test';
+const service = {
+	getClient: () => ({ getUserId: () => USER_ID })
+} as unknown as MatrixClientService;
+
+/**
+ * The login-time recovery notice as an M3 snackbar. It used to be a strip
+ * pinned above the app shell; now it floats bottom-centre, carries one action
+ * ("Tresor öffnen") and a ✕, comes back on every reload and login until the
+ * history is readable, and never pushes the layout.
+ */
+const meta = {
+	title: 'Organisms/KeyBackupRecoverySnackbar',
+	component: KeyBackupRecoveryPrompt,
+	parameters: { layout: 'fullscreen' },
+	decorators: [
+		(Story) => (
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService: service,
+					setMatrixClientService: () => undefined
+				}}
+			>
+				<div style={{ minHeight: 480 }}>
+					<Story />
+				</div>
+			</MatrixClientContext.Provider>
+		)
+	],
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(USER_ID, 'needs-recovery-key');
+		return () => clearRecoveryRuntimeState();
+	}
+} satisfies Meta<typeof KeyBackupRecoveryPrompt>;
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const NeedsRecoveryKey: Story = {
+	play: async () => {
+		const page = within(document.body);
+		const snackbar = await page.findByTestId('key-backup-recovery-action');
+		await waitFor(() => expect(snackbar).toBeVisible());
+		await expect(snackbar).toHaveTextContent('Ersatzschlüssel');
+		await expect(
+			page.getByRole('link', { name: 'Sicherheitseinstellungen' })
+		).toHaveAttribute('href', '/profile/einstellungen/sicherheit');
+		// Below 900 px the app's 72 px navigation bar sits at the bottom edge; never cover it.
+		if (window.matchMedia('(max-width: 899px)').matches) {
+			const gap =
+				window.innerHeight - snackbar.getBoundingClientRect().bottom;
+			await expect(gap).toBeGreaterThanOrEqual(72);
+		}
+	}
+};
+
+/* Storybook 10 reads the viewport from globals; `phone390` is registered in .storybook/preview.tsx. */
+export const NeedsRecoveryKeyMobile: Story = {
+	globals: { viewport: { value: 'phone390' } },
+	play: async (context) => {
+		// Guards that the navigation-bar gap check in NeedsRecoveryKey actually runs.
+		await expect(window.matchMedia('(max-width: 899px)').matches).toBe(
+			true
+		);
+		await NeedsRecoveryKey.play!(context);
+	}
+};
+
+export const NeedsPassword: Story = {
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(USER_ID, 'needs-password');
+	}
+};
+
+export const DismissHidesIt: Story = {
+	play: async () => {
+		const page = within(document.body);
+		await userEvent.click(
+			await page.findByTestId('key-backup-recovery-action-close')
+		);
+		await expect(
+			page.queryByTestId('key-backup-recovery-action')
+		).not.toBeInTheDocument();
+	}
+};
+
+export const ActionOpensVault: Story = {
+	play: async () => {
+		const page = within(document.body);
+		await userEvent.click(
+			await page.findByTestId('key-backup-recovery-open')
+		);
+		const dialog = await page.findByRole('dialog');
+		await waitFor(() => expect(dialog).toBeVisible());
+	}
+};
+
+/** Another floating snackbar, as the sessions list's display-filter note. */
+const withAnotherSnackbar: NonNullable<Story['decorators']> = [
+	(Story) => {
+		const [open, setOpen] = React.useState(true);
+		return (
+			<>
+				<Story />
+				<M3Snackbar
+					open={open}
+					role="status"
+					message="Dieser Filter ist für Ihre Beratungsstelle deaktiviert."
+					onClose={() => setOpen(false)}
+					closeLabel="Hinweis schließen"
+					testId="other-snackbar"
+				/>
+			</>
+		);
+	}
+];
+
+/**
+ * M3 shows one snackbar at a time: while a transient note is open, the
+ * recovery notice steps aside instead of sitting underneath it.
+ */
+export const StepsAsideForAnotherSnackbar: Story = {
+	decorators: withAnotherSnackbar,
+	play: async () => {
+		const page = within(document.body);
+		await page.findByTestId('other-snackbar');
+		await waitFor(() =>
+			expect(
+				page.queryByTestId('key-backup-recovery-action')
+			).not.toBeInTheDocument()
+		);
+	}
+};
+
+/** …and it comes back once that note is closed. */
+export const ReturnsWhenOtherSnackbarCloses: Story = {
+	decorators: withAnotherSnackbar,
+	play: async () => {
+		const page = within(document.body);
+		await userEvent.click(
+			await page.findByRole('button', { name: 'Hinweis schließen' })
+		);
+		const recovery = await page.findByTestId('key-backup-recovery-action');
+		await waitFor(() => expect(recovery).toBeVisible());
+		await waitFor(() =>
+			expect(page.queryByTestId('other-snackbar')).not.toBeInTheDocument()
+		);
+	}
+};
