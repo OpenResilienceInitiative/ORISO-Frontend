@@ -599,6 +599,8 @@
 				"{{dpaProvidedAt}}",
 				"{{dpaExpiresAt}}",
 				"{{dpaUrl}}",
+				"{{tenantNameDative}}",
+				"{{offeringName}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
 			],
@@ -606,17 +608,17 @@
 				"de-sie": {
 					"lang": "de",
 					"subject": "Vertragsunterlagen für {{tenantName}}",
-					"preheader": "Der AVV für {{tenantName}} liegt bereit."
+					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
 				},
 				"de-du": {
 					"lang": "de",
 					"subject": "Vertragsunterlagen für {{tenantName}}",
-					"preheader": "Der AVV für {{tenantName}} liegt bereit."
+					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
 				},
 				"en": {
 					"lang": "en",
 					"subject": "Contract documents for {{tenantName}}",
-					"preheader": "The agreement for {{tenantName}} is ready."
+					"preheader": "The contract documents for {{tenantName}} are ready."
 				}
 			}
 		},

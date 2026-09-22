@@ -46,4 +46,82 @@ describe('avv-unterschrift', () => {
 			expect(text).not.toContain(COPY_HINT['de-sie']);
 		}
 	);
+
+	// Frank, 2026-09-23: the mail says "Vertragsunterlagen" / "contract
+	// documents", never "AVV" or "Auftragsverarbeitungsvertrag".
+	it.each(EMAIL_LOCALES)(
+		'%s never says AVV or Auftragsverarbeitungsvertrag',
+		(locale) => {
+			const mail = buildEmail('avv-unterschrift', locale, {
+				dialect: 'plain'
+			});
+			for (const part of [
+				mail.subject,
+				mail.preheader,
+				mail.html,
+				mail.text
+			]) {
+				expect(part).not.toMatch(
+					/AVV|Auftragsverarbeitungsvertrag|data processing agreement/i
+				);
+			}
+		}
+	);
+
+	it.each([
+		[
+			'de-sie',
+			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.'
+		],
+		[
+			'de-du',
+			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.'
+		],
+		[
+			'en',
+			'Without signed contract documents, counselling stays blocked for this organisation.'
+		]
+	] as const)('%s keeps the blocked-counselling line', (locale, line) => {
+		const { html, text } = buildEmail('avv-unterschrift', locale, {
+			dialect: 'plain'
+		});
+		expect(html).toContain(line);
+		expect(text).toContain(line);
+	});
+
+	// The Träger brands the header (`platformName`), but "X ist ein Angebot
+	// von Y" describes the platform — X must be a value no sender overlays
+	// with a Träger name.
+	it.each(EMAIL_LOCALES)(
+		'%s names the platform, not the header brand, in the offered-by line',
+		(locale) => {
+			const { html, text } = buildEmail('avv-unterschrift', locale, {
+				dialect: 'plain'
+			});
+			const offeredBy =
+				locale === 'en'
+					? '{{offeringName}} is a service provided by {{orgName}}.'
+					: '{{offeringName}} ist ein Angebot von {{orgName}}.';
+			expect(html).toContain(offeredBy);
+			expect(text).toContain(offeredBy);
+			expect(html).not.toMatch(
+				/\{\{platformName\}\} (ist ein Angebot|is a service)/
+			);
+		}
+	);
+
+	// "zwischen … und" takes the dative: a sender without a Träger name
+	// writes "Ihrer Organisation" there, while the subject keeps "für Ihre".
+	it.each(['de-sie', 'de-du'] as const)(
+		'%s names the Träger in the dative in the fine print',
+		(locale) => {
+			const { html, text } = buildEmail('avv-unterschrift', locale, {
+				dialect: 'plain'
+			});
+			const finePrint =
+				'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.';
+			expect(html).toContain(finePrint);
+			expect(text).toContain(finePrint);
+		}
+	);
 });

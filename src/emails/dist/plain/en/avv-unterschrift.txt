@@ -1,18 +1,18 @@
-The agreement is ready for signature
-====================================
+The contract documents are ready for signature
+==============================================
 
-A data processing agreement has been prepared for {{tenantName}}.
+Contract documents have been prepared for {{tenantName}}.
 
-Please review the agreement and sign it digitally.
+Please review the documents and sign them digitally.
 
 Organisation: {{tenantName}}
 Provided on: {{dpaProvidedAt}}
 To be signed by: {{dpaExpiresAt}}
 
-Open agreement:
+Open contract:
 {{dpaUrl}}
 
-Counselling stays blocked for this organisation until the agreement is signed.
+Without signed contract documents, counselling stays blocked for this organisation.
 
 ----------------------------------------------------------------
 This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.
@@ -21,7 +21,7 @@ This email is part of the contractual relationship between {{orgName}} and {{ten
 {{orgAddress}}
 {{contactLine}}
 
-{{platformName}} is a service provided by {{orgName}}.
+{{offeringName}} is a service provided by {{orgName}}.
 
 Privacy: {{privacyUrl}}
 Imprint: {{imprintUrl}}

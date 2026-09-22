@@ -35,8 +35,11 @@ const securityFooter = {
 		'Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };
 
+// The Träger may brand the header (`platformName`); the offered-by line names
+// the platform, so it takes `offeringName`, which no sender overlays.
 const legalFooter = {
 	...securityFooter,
+	offeredBy: '{{offeringName}} ist ein Angebot von {{orgName}}.',
 	automatedNote:
 		'Diese E-Mail gehört zum Vertragsverhältnis und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };
@@ -53,8 +56,10 @@ const codeAssurance =
 const accountAssurance =
 	'Wir fragen dich nie per E-Mail nach deinem Passwort. Änderungen an deinem Zugang melden wir dir immer.';
 
+// "zwischen … und" takes the dative, so the Träger has its own placeholder
+// here: a sender without a Träger name fills "deiner Organisation".
 const legalAssurance =
-	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantName}}.';
+	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.';
 
 export const deDu: Record<EmailId, EmailContent> = {
 	'neue-nachricht': {
@@ -380,11 +385,11 @@ export const deDu: Record<EmailId, EmailContent> = {
 
 	'avv-unterschrift': {
 		subject: 'Vertragsunterlagen für {{tenantName}}',
-		preheader: 'Der AVV für {{tenantName}} liegt bereit.',
-		headline: 'Der AVV liegt zur Unterschrift bereit',
+		preheader: 'Die Vertragsunterlagen für {{tenantName}} liegen bereit.',
+		headline: 'Die Vertragsunterlagen liegen zur Unterschrift bereit',
 		paragraphs: [
-			'Für {{tenantName}} wurde ein Auftragsverarbeitungsvertrag erstellt.',
-			'Bitte prüf den Vertrag und zeichne ihn digital.'
+			'Für {{tenantName}} wurden Vertragsunterlagen erstellt.',
+			'Bitte prüf die Unterlagen und zeichne sie digital.'
 		],
 		panel: [
 			{ label: 'Träger', value: '{{tenantName}}' },
@@ -398,7 +403,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 				'Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:'
 		},
 		footnote:
-			'Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.',
+			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.',
 		assurance: legalAssurance,
 		footer: legalFooter
 	},
