@@ -856,6 +856,11 @@ const preview: Preview = {
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
 				},
+				desktop1280: {
+					name: 'Desktop 1280',
+					styles: { width: '1280px', height: '800px' },
+					type: 'desktop'
+				},
 				desktop1440: {
 					name: 'Desktop 1440',
 					styles: { width: '1440px', height: '900px' },

@@ -893,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
-				"headline": "Katılımcılar"
+				"headline": "Katılımcılar",
+				"menuLabel": "{{name}} için seçenekler"
 			},
 			"gallery": {
 				"back": "Geri sayıma dön",
@@ -918,6 +919,10 @@
 					}
 				},
 				"upcoming": "Sonraki randevular"
+			},
+			"status": {
+				"active": "Şu anda sürüyor",
+				"planned": "Planlandı"
 			}
 		},
 		"join": {
@@ -940,6 +945,9 @@
 					"flipHint": "çevirmek için tıklayın",
 					"greetingLabel": "Danışmanınızdan karşılama mesajı",
 					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
+					"moderatorHeadline": "Grup görüşmesi {{eta}} başlıyor.",
+					"moderatorOverdueHeadline": "Grup bekliyor.",
+					"moderatorSubtitle": "Hazır olduğunuzda sohbeti başlatabilirsiniz.",
 					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
 					"netiquetteTitle": "Sohbet kuralları",
 					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
@@ -1112,6 +1120,17 @@
 				"durationValue": "{{count}} sa",
 				"repeatValue_one": "{{count}} kez",
 				"repeatValue_other": "{{count}} kez"
+			},
+			"noModeratorAvailable": "Uygun kişi yok",
+			"moderatorHelp": "Yardım",
+			"moderatorHelpDialog": {
+				"title": "Yardımcı moderatörleri sonra davet edin",
+				"description": "Şu anda kuruluşunuzdan başka bir uzman seçilemiyor. Yine de çemberi oluşturabilir ve yardımcı moderatörleri daha sonra ekleyebilirsiniz.",
+				"step1": "Listenizde çemberi açın ve ardından “Sohbet bilgileri”ni açın.",
+				"step2": "“Sohbet ayarları” altında “Düzenle”yi seçin.",
+				"step3": "“Ek moderasyon” altında meslektaşlarınızı ekleyin ve kaydedin.",
+				"note": "Çemberi yalnızca onu oluşturan kişi düzenleyebilir ve yalnızca çember devam etmiyorken. Kuruluşunuzun tüm aktif uzmanları seçilebilir.",
+				"close": "Anladım"
 			}
 		},
 		"entry": {
@@ -1125,6 +1144,28 @@
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
 			"backToCountdown": "Geri sayıma dön"
+		},
+		"shareDialog": {
+			"title_text": "Çember oluşturuldu",
+			"title_audio": "Sesli görüşme oluşturuldu",
+			"title_video": "Görüntülü görüşme oluşturuldu",
+			"description": "Bu bağlantıyı katılımcılarla paylaşın. Oturum başlayana kadar onları bekleme odasına götürür.",
+			"linkLabel": "Davet bağlantısı",
+			"copy": "Bağlantıyı kopyala",
+			"copied": "Kopyalandı",
+			"detailsHeadline": "Oturum",
+			"topic": "Konu",
+			"date": "Tarih",
+			"start": "Başlangıç",
+			"timeValue": "saat {{time}}",
+			"duration": "Süre",
+			"repeats": "Tekrarlar",
+			"repeatValue": "{{count}} oturum, {{interval}}",
+			"format": "Biçim",
+			"language": "Dil",
+			"done": "Tamam",
+			"durationValue": "{{value}} sa",
+			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
 		}
 	},
 	"help": {
@@ -2297,6 +2338,13 @@
 				"viaSidebar": {
 					"label": "Canlı sohbeti menü çubuğundan etkinleştir",
 					"description": "Etkinleştirildiğinde, canlı sohbet uygunluğunuzu burası yerine menü çubuğundan (yan menü) açıp kapatırsınız. Yukarıdaki uygunluk düğmesi o zaman devre dışı kalır ve canlı sohbet simgesi yan menüde kalıcı olarak görünür – tıklamak yalnızca simgenin durumunu değiştirir, simge kaybolmaz. Bu seçenek kapalıyken canlı sohbet eskisi gibi yalnızca burada, Profilim bölümünde yönetilir."
+				},
+				"lost": {
+					"title": "Canlı sohbette artık ulaşılamıyorsunuz",
+					"refused": "Sunucu uygunluğunuzu reddetti. Canlı sohbeti yeniden açın. Bu işe yaramazsa yeniden giriş yapın.",
+					"sessionExpired": "Oturumunuzun süresi doldu. Yeniden giriş yapın, ardından canlı sohbeti tekrar açın.",
+					"leaseLost": "Sunucu sizi artık uygun olarak göstermiyor. Ulaşılabilir olmak için canlı sohbeti yeniden açın.",
+					"connectionLost": "Sunucuyla bağlantı iki dakikadan uzun süre kesildi. Bağlantı yeniden kurulunca canlı sohbeti tekrar açın."
 				}
 			},
 			"masterKey": {
@@ -3057,6 +3105,13 @@
 					"title": "Suç ve yeniden başlangıç",
 					"description": "Suç, yeniden başlangıç ve günlük yaşamla ilgili sorularda destek."
 				}
+			},
+			"search": {
+				"open": "Konu ara",
+				"placeholder": "Konu veya anahtar kelime ara",
+				"close": "Aramayı kapat",
+				"noResults": "Uygun konu bulunamadı. Başka bir kelime deneyin.",
+				"matchedBy": "“{{term}}” ile eşleşiyor"
 			}
 		},
 		"account": {
@@ -4819,6 +4874,9 @@
 				"later": "Daha sonra",
 				"openVault": "Kasayı aç",
 				"restoring": "Geri getiriliyor …"
+			},
+			"snackbar": {
+				"close": "Bildirimi kapat"
 			}
 		},
 		"saveReminder": {
@@ -5028,7 +5086,9 @@
 				"access": "Bu görüşme için erişiminiz",
 				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
 				"accepted": "Bir danışman görüşmenizi kabul etti",
-				"closed": "Şu anda kapalı"
+				"closed": "Şu anda kapalı",
+				"checking": "Şu anda kim çevrimiçi?",
+				"waitingForLive": "Biri çevrimiçi olana kadar bekleniyor"
 			},
 			"access": {
 				"headline": "Bugünkü adınız.",
@@ -5066,7 +5126,8 @@
 				"later": "Sonra",
 				"mail": "Bir danışma merkezine talep yazın",
 				"mailShort": "Talep yaz",
-				"closedDay": "kapalı"
+				"closedDay": "kapalı",
+				"wait": "Bekliyorum"
 			},
 			"steps": {
 				"wait": {
@@ -5081,6 +5142,14 @@
 					"title": "Anonim ve sonra silinir",
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
+			},
+			"checking": {
+				"text": "Şu anda kimin çevrimiçi olduğuna bakıyoruz …",
+				"waiting": "Biri çevrimiçi olana kadar sizinle bekliyoruz …"
+			},
+			"staff": {
+				"headline": "Danışman olarak oturum açtınız.",
+				"text": "Bu bağlantı sizi burada oturumdan çıkarır ve artık çevrimiçi olmazsınız. Test etmek için lütfen gizli bir pencerede açın."
 			}
 		}
 	},
