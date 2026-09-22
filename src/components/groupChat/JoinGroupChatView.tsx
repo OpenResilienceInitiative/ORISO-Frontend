@@ -32,7 +32,11 @@ import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { WaitingAreaRules } from './WaitingAreaRules';
-import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
+import {
+	WaitingAreaCountdown,
+	WaitingAreaMotionToggle
+} from './waitingClock/WaitingAreaCountdown';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
@@ -273,6 +277,17 @@ export const JoinGroupChatView = ({
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
 	const [animationOff, setAnimationOff] = useState(false);
+	const prefersReducedMotion = usePrefersReducedMotion();
+	// The counsellor who opens the room gets her own waiting text (#1499).
+	const canStartChat =
+		hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&
+		!activeSession.item.active;
+	// Calendar action and motion switch sit in the footer next to the main
+	// button, not above and below the clock: every row stacked around the
+	// clock is height the LED clock cannot have (#1499, Frank: the effect only
+	// works when the clock is big — make room before shrinking it).
+	const showCalendar =
+		showCountdown && !!plannedStart && plannedStart.getTime() > Date.now();
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -310,15 +325,10 @@ export const JoinGroupChatView = ({
 							rules={groupChatRules}
 							animationOff={animationOff}
 							onAnimationOffChange={setAnimationOff}
-							calendarSlot={
-								<GroupChatCalendarMenu
-									start={plannedStart}
-									durationMinutes={
-										activeSession.item.duration
-									}
-									eventId={activeSession.item.id}
-								/>
+							audience={
+								canStartChat ? 'moderator' : 'participant'
 							}
+							hideMotionToggle
 						/>
 					</div>
 				)}
@@ -348,11 +358,37 @@ export const JoinGroupChatView = ({
 							)}
 						</p>
 					)}
-				<Button
-					item={buttonItem}
-					buttonHandle={handleButtonClick}
-					disabled={isButtonDisabled}
-				/>
+				<div className="joinChat__actions">
+					{showCalendar && (
+						<div className="joinChat__actionsStart">
+							<GroupChatCalendarMenu
+								start={plannedStart}
+								durationMinutes={activeSession.item.duration}
+								eventId={activeSession.item.id}
+							/>
+						</div>
+					)}
+					<div className="joinChat__actionsMain">
+						<Button
+							item={buttonItem}
+							buttonHandle={handleButtonClick}
+							disabled={isButtonDisabled}
+						/>
+					</div>
+					{showCountdown && plannedStart && (
+						<div className="joinChat__actionsEnd">
+							<WaitingAreaMotionToggle
+								label={tr(
+									'groupChat.join.waitingArea.countdown.toggleLabel',
+									'Animation abschalten'
+								)}
+								checked={animationOff || prefersReducedMotion}
+								disabled={prefersReducedMotion}
+								onChange={setAnimationOff}
+							/>
+						</div>
+					)}
+				</div>
 			</div>
 
 			{requestOverlayVisible && (

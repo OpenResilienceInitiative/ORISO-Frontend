@@ -1,12 +1,7 @@
 import * as React from 'react';
 import { useEffect, useContext, useState, useCallback } from 'react';
-import {
-	Link,
-	Navigate,
-	useParams,
-	useNavigate,
-	useLocation
-} from 'react-router-dom';
+import { Navigate, useParams, useNavigate } from 'react-router-dom';
+import { Button as MuiButton, Menu, MenuItem } from '@mui/material';
 import {
 	AUTHORITIES,
 	SessionTypeContext,
@@ -17,17 +12,14 @@ import {
 	ActiveSessionProvider
 } from '../../globalState';
 import { isUserModerator, SESSION_LIST_TAB } from '../session/sessionHelpers';
-import { Alert, Box, Button, Chip, Stack, Typography } from '@mui/material';
-import { BUTTON_TYPES } from '../button/Button';
-import { M3Dialog } from '../m3Dialog/M3Dialog';
-import { getModality, Modality } from '../session/getModality';
-import { GroupChatInfoDialog } from './GroupChatInfoDialog';
-import { OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
+import { ButtonItem, BUTTON_TYPES } from '../button/Button';
+import { OVERLAY_FUNCTIONS, Overlay, OverlayItem } from '../overlay/Overlay';
 import {
 	apiGetGroupChatInfo,
 	apiPutGroupChat,
 	GROUP_CHAT_API
 } from '../../api';
+import { apiPostBanUser } from '../../api/apiPostBanUser';
 import {
 	canModerateGroupChat,
 	isGroupChatOwner,
@@ -41,13 +33,28 @@ import {
 	stopGroupChatSuccessOverlayItem
 } from '../sessionMenu/sessionMenuHelpers';
 import { logout } from '../logout/logout';
+import {
+	mobileListView,
+	mobileDetailView,
+	desktopView
+} from '../app/navigationHandler';
 import { decodeUsername } from '../../utils/encryptionHelpers';
-import { CompactActionMenu } from '../chatMenuDropdown/CompactActionMenu';
+import './groupChatInfo.styles';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { BanUser } from '../banUser/BanUser';
+import { BanUserOverlay } from '../banUser/BanUser';
+import { useResponsive } from '../../hooks/useResponsive';
 import { useSession } from '../../hooks/useSession';
 import { useSearchParam } from '../../hooks/useSearchParams';
-import { GroupChatCopyLinks } from './GroupChatCopyLinks';
+import { useGroupChatInviteLink } from './GroupChatCopyLinks';
+import { GenerateQrCode } from '../generateQrCode/GenerateQrCode';
+import {
+	GroupChatInfoM3,
+	type GroupChatInfoM3Props,
+	type GroupChatInfoParticipant,
+	type GroupChatInfoSetting,
+	type GroupChatInfoSettingKey
+} from './chatInfoM3/GroupChatInfoM3';
+import '../session/session.styles.scss';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useTranslation } from 'react-i18next';
 import { getPrettyDateFromMessageDate } from '../../utils/dateHelpers';
@@ -60,11 +67,16 @@ export const GroupChatInfo = () => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
-	const location = useLocation();
 	const tenantData = useTenant();
 	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const featureGroupChatV2Enabled =
 		tenantData?.settings?.featureGroupChatV2Enabled;
+
+	const stopChatButtonSet: ButtonItem = {
+		label: translate('groupChat.stopChat.securityOverlay.button1Label'),
+		function: OVERLAY_FUNCTIONS.CLOSE,
+		type: BUTTON_TYPES.PRIMARY
+	};
 
 	const { userData } = useContext(UserDataContext);
 	const { path: listPath } = useContext(SessionTypeContext);
@@ -80,6 +92,17 @@ export const GroupChatInfo = () => {
 
 	const getSessionListTab = () =>
 		`${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`;
+
+	const { fromL } = useResponsive();
+	useEffect(() => {
+		if (!fromL) {
+			mobileDetailView();
+			return () => {
+				mobileListView();
+			};
+		}
+		desktopView();
+	}, [fromL]);
 
 	useEffect(() => {
 		if (!ready) {
@@ -99,12 +122,7 @@ export const GroupChatInfo = () => {
 	}, [activeSession, navigate, listPath, ready, sessionListTab]);
 
 	const handleStopGroupChatButton = () => {
-		setOverlayItem({
-			...stopGroupChatSecurityOverlayItem,
-			copy: activeSession.item.repetitive
-				? 'groupChat.stopChat.securityOverlay.copyRepeat'
-				: 'groupChat.stopChat.securityOverlay.copySingle'
-		});
+		setOverlayItem(stopGroupChatSecurityOverlayItem);
 		setOverlayActive(true);
 	};
 
@@ -145,7 +163,7 @@ export const GroupChatInfo = () => {
 				.filter(
 					(item) =>
 						parseInt(item.value) === activeSession.item.duration
-				)[0]?.label,
+				)[0].label,
 		[activeSession?.item.duration, translate]
 	);
 
@@ -184,10 +202,7 @@ export const GroupChatInfo = () => {
 	const preparedSettings: Array<{ label: string; value: string }> = [
 		{
 			label: translate('groupChat.info.settings.topic'),
-			value:
-				typeof activeSession.item.topic === 'string'
-					? activeSession.item.topic
-					: activeSession.item.topic?.name || ''
+			value: activeSession.item.topic as string
 		},
 		{
 			label: translate('groupChat.info.settings.startDate'),
@@ -236,238 +251,273 @@ export const GroupChatInfo = () => {
 		});
 	}
 
-	const sessionUrl =
-		location.pathname.replace(/\/groupChatInfo\/?$/, '') + location.search;
-	const closeInfo = () => navigate(sessionUrl, { replace: true });
-	if (showCreator)
-		preparedSettings.push({
-			label: translate('groupChat.info.settings.creator'),
-			value: activeSession.consultant.displayName
-		});
-	if (showCreateDate)
-		preparedSettings.push({
-			label: translate('groupChat.info.settings.createDate'),
-			value: getCreationDate(new Date(activeSession.item.createdAt))
-		});
+	const chatPath = `${listPath}/${activeSession.item.matrixRoomId}/${
+		activeSession.item.id
+	}${getSessionListTab()}`;
+	const editPath = `${listPath}/${activeSession.item.matrixRoomId}/${
+		activeSession.item.id
+	}/editGroupChat${getSessionListTab()}`;
+	const topic =
+		typeof activeSession.item.topic === 'string'
+			? activeSession.item.topic
+			: activeSession.item.topic?.name || '';
+
+	// Keys give each row its icon in the M3 list; order is the old one.
+	const settingKeys: GroupChatInfoSettingKey[] = [
+		'topic',
+		'date',
+		'time',
+		'duration',
+		'repetition',
+		'agency',
+		'hint'
+	];
+	const m3Settings: GroupChatInfoSetting[] = [
+		...(showCreator
+			? [
+					{
+						key: 'creator' as const,
+						label: translate('groupChat.info.settings.creator'),
+						value: activeSession.consultant.displayName
+					}
+				]
+			: []),
+		...(showCreateDate
+			? [
+					{
+						key: 'createDate' as const,
+						label: translate('groupChat.info.settings.createDate'),
+						value: getCreationDate(
+							new Date(activeSession.item.createdAt)
+						)
+					}
+				]
+			: []),
+		...preparedSettings.map((item, index) => ({
+			key: settingKeys[index],
+			label: item.label,
+			value: item.value
+		}))
+	];
+	const scheduleSummary = [
+		preparedSettings[1]?.value,
+		preparedSettings[2]?.value,
+		preparedSettings[3]?.value
+	]
+		.filter(Boolean)
+		.join(' · ');
+
 	return (
 		<ActiveSessionProvider activeSession={activeSession}>
-			<GroupChatInfoDialog
-				isOwner={isGroupChatOwner(activeSession, userData)}
-				kind={
-					getModality(activeSession) === Modality.SELF_HELP
-						? 'circle'
-						: 'team'
-				}
-				active={activeSession.item.active}
-				title={
-					typeof activeSession.item.topic === 'string'
-						? activeSession.item.topic
-						: activeSession.item.topic?.name || ''
-				}
-				onClose={closeInfo}
-				settings={preparedSettings}
-				participants={
-					<>
-						<SubscriberList
-							isCurrentUserModerator={isCurrentUserModerator}
-						/>
-						{activeSession.item.participants?.length &&
-						userData?.userId ? (
-							<GroupChatRoleManager
-								seriesId={activeSession.item.id}
-								currentUserId={userData.userId}
-								participants={activeSession.item.participants}
-							/>
-						) : null}
-					</>
-				}
-				invitation={
-					featureGroupChatV2Enabled && isV2GroupChat ? (
-						<GroupChatCopyLinks seriesId={activeSession.item.id} />
-					) : null
-				}
-				actions={
-					<>
-						{calendarStart && (
+			{/* #1499: the Chat-Info lives in the white chat card like the
+			    chat itself, drawn by the M3 surface Frank approved in
+			    Storybook (`Chat info/Group`). */}
+			<div className="session groupChatInfo__card">
+				<GroupChatInfoM3Connected
+					topic={topic}
+					scheduleSummary={scheduleSummary}
+					statusLabel={translate(
+						activeSession.item.active
+							? 'groupChat.info.status.active'
+							: 'groupChat.info.status.planned'
+					)}
+					active={!!activeSession.item.active}
+					calendarAction={
+						calendarStart ? (
 							<GroupChatCalendarMenu
 								start={calendarStart}
 								durationMinutes={activeSession.item.duration}
 								eventId={activeSession.item.id}
 							/>
-						)}
-						{canModerateGroupChat(activeSession, userData) &&
-							activeSession.item.active &&
-							activeSession.item.subscribed && (
-								<Button
-									color="error"
-									variant="text"
-									onClick={handleStopGroupChatButton}
-								>
-									{translate(
-										'groupChat.stopChat.securityOverlay.button1Label'
-									)}
-								</Button>
-							)}
-					</>
-				}
-				editAction={
-					isGroupChatOwner(activeSession, userData) &&
-					!activeSession.item.active ? (
-						<Button
-							component={Link}
-							to={`${listPath}/${encodeURIComponent(activeSession.item.matrixRoomId)}/${activeSession.item.id}/editGroupChat${getSessionListTab()}`}
-							state={{ isEditMode: true, prevIsInfoPage: true }}
-							variant="outlined"
-						>
-							{translate('groupChat.info.settings.edit')}
-						</Button>
-					) : null
-				}
-			/>
-			{overlayActive && (
-				<M3Dialog
-					title={translate(overlayItem.headline)}
-					description={
-						overlayItem.copy
-							? translate(overlayItem.copy)
+						) : undefined
+					}
+					primaryAction={
+						canModerateGroupChat(activeSession, userData) &&
+						activeSession.item.active &&
+						activeSession.item.subscribed ? (
+							<MuiButton
+								variant="outlined"
+								onClick={handleStopGroupChatButton}
+								sx={{
+									borderRadius: '20px',
+									textTransform: 'none',
+									borderColor: 'var(--m3-outline)',
+									color: 'var(--m3-error)'
+								}}
+							>
+								{stopChatButtonSet.label}
+							</MuiButton>
+						) : undefined
+					}
+					isCurrentUserModerator={isCurrentUserModerator}
+					showInviteActions={
+						!!featureGroupChatV2Enabled && isV2GroupChat
+					}
+					teamRolesSlot={
+						activeSession.item.participants?.length &&
+						userData?.userId ? (
+							<GroupChatRoleManager
+								seriesId={activeSession.item.id}
+								currentUserId={userData.userId}
+								participants={activeSession.item.participants}
+								hideHeadline
+							/>
+						) : undefined
+					}
+					settings={m3Settings}
+					onEdit={
+						isGroupChatOwner(activeSession, userData) &&
+						!activeSession.item.active
+							? () =>
+									navigate(editPath, {
+										state: {
+											isEditMode: true,
+											prevIsInfoPage: true
+										}
+									})
 							: undefined
 					}
-					onClose={() => {
-						if (!isRequestInProgress)
-							handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE);
-					}}
-					closeLabel={translate('app.close')}
-					actions={overlayItem.buttonSet?.map((button) => ({
-						label: translate(button.label),
-						onClick: () => handleOverlayAction(button.function),
-						primary: button.type === BUTTON_TYPES.PRIMARY,
-						disabled: isRequestInProgress
-					}))}
+					onBack={() => navigate(chatPath)}
 				/>
-			)}
+				{overlayActive ? (
+					<Overlay
+						item={overlayItem}
+						handleOverlay={handleOverlayAction}
+					/>
+				) : null}
+			</div>
 		</ActiveSessionProvider>
 	);
 };
 
-const SubscriberList = ({
-	isCurrentUserModerator
-}: {
+/**
+ * The M3 Chat-Info with the parts that need the active-session context:
+ * room members from Matrix, bans, the QR code and the invite link.
+ */
+const GroupChatInfoM3Connected = ({
+	isCurrentUserModerator,
+	showInviteActions,
+	...props
+}: Omit<
+	GroupChatInfoM3Props,
+	| 'participants'
+	| 'canModerate'
+	| 'onParticipantMenu'
+	| 'participantMenuLabel'
+	| 'onShowQrCode'
+	| 'onCopyInviteLink'
+> & {
 	isCurrentUserModerator: boolean;
+	showInviteActions: boolean;
 }) => {
 	const { t: translate } = useTranslation();
-
 	const { activeSession } = useContext(ActiveSessionContext);
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const users = matrixRoomUsersContext?.users || [];
 	const moderators = matrixRoomUsersContext?.moderators || [];
-
-	const [banFailed, setBanFailed] = useState(false);
-	const [bannedName, setBannedName] = useState<string | null>(null);
 	const [bannedUsers, setBannedUsers] = useState<string[]>([]);
+	const [menu, setMenu] = useState<{
+		anchor: HTMLElement;
+		participant: GroupChatInfoParticipant;
+	} | null>(null);
+	const [bannedOverlayName, setBannedOverlayName] = useState<string | null>(
+		null
+	);
+	const [qrOpen, setQrOpen] = useState(false);
+	const { url, copyRegistrationLink } = useGroupChatInviteLink(
+		activeSession.item.id
+	);
 
 	useEffect(() => {
 		if (activeSession.item.active) {
 			apiGetGroupChatInfo(activeSession.item.id).then((response) => {
-				if (response.bannedUsers) {
-					const decryptedBannedUsers =
-						response.bannedUsers.map(decodeUsername);
-					setBannedUsers(decryptedBannedUsers);
-				} else {
-					setBannedUsers([]);
-				}
+				setBannedUsers(
+					response.bannedUsers
+						? response.bannedUsers.map(decodeUsername)
+						: []
+				);
 			});
 		}
 	}, [activeSession.item.active, activeSession.item.id]);
 
+	const participants: GroupChatInfoParticipant[] = users.map(
+		(subscriber) => ({
+			id: subscriber._id,
+			// The ban API and the ban list speak the login name.
+			username: decodeUsername(subscriber.username),
+			name: subscriber.displayName
+				? decodeUsername(subscriber.displayName)
+				: decodeUsername(subscriber.username),
+			isModerator: moderators.includes(subscriber._id),
+			statusLabel:
+				isCurrentUserModerator &&
+				bannedUsers.includes(subscriber.username)
+					? translate('banUser.is.banned')
+					: undefined
+		})
+	);
+
+	const banSelected = () => {
+		if (!menu) {
+			return;
+		}
+		const { participant } = menu;
+		setMenu(null);
+		apiPostBanUser({
+			matrixUserId: participant.id,
+			chatId: activeSession.item.id
+		}).then(() => {
+			setBannedUsers((current) => [
+				...current,
+				participant.username ?? participant.name
+			]);
+			setBannedOverlayName(participant.username ?? participant.name);
+		});
+	};
+
 	return (
-		<Stack spacing={1}>
-			{banFailed && (
-				<Alert severity="error" onClose={() => setBanFailed(false)}>
-					{translate('groupChat.roles.removeError')}
-				</Alert>
-			)}
-			{users.length ? (
-				users.map((subscriber) => {
-					const name = decodeUsername(
-						subscriber.displayName || subscriber.username
-					);
-					const username = decodeUsername(subscriber.username);
-					const banned = bannedUsers.includes(username);
-					return (
-						<Box
-							key={subscriber._id}
-							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'space-between',
-								gap: 1,
-								minWidth: 0
-							}}
-						>
-							<Typography
-								variant="body2"
-								sx={{ overflowWrap: 'anywhere', minWidth: 0 }}
-							>
-								{name}
-							</Typography>
-							{isCurrentUserModerator &&
-								!moderators.includes(subscriber._id) &&
-								!banned && (
-									<CompactActionMenu
-										label={`${translate('app.menu')}: ${name}`}
-									>
-										{(close) => (
-											<BanUser
-												onSelect={() => {
-													setBanFailed(false);
-													close();
-												}}
-												onBanFailed={() =>
-													setBanFailed(true)
-												}
-												userName={username}
-												matrixUserId={subscriber._id}
-												chatId={activeSession.item.id}
-												handleUserBan={(username) => {
-													setBannedUsers(
-														(current) => [
-															...current,
-															username
-														]
-													);
-													setBannedName(username);
-												}}
-											/>
-										)}
-									</CompactActionMenu>
-								)}
-							{isCurrentUserModerator && banned && (
-								<Chip
-									size="small"
-									label={translate('banUser.is.banned')}
-								/>
-							)}
-						</Box>
-					);
-				})
-			) : (
-				<Typography variant="body2" color="text.secondary">
-					{translate('groupChat.info.subscribers.empty')}
-				</Typography>
-			)}
-			{bannedName !== null && (
-				<M3Dialog
-					title={`${translate('banUser.ban.info.1')}${bannedName}${translate('banUser.ban.info.2')}`}
-					onClose={() => setBannedName(null)}
-					closeLabel={translate('app.close')}
-					actions={[
-						{
-							label: translate('banUser.ban.overlay.close'),
-							onClick: () => setBannedName(null)
-						}
-					]}
+		<>
+			<GroupChatInfoM3
+				{...props}
+				participants={participants}
+				canModerate={isCurrentUserModerator}
+				participantMenuLabel={(name) =>
+					translate('groupChat.info.subscribers.menuLabel', { name })
+				}
+				onParticipantMenu={(participant, anchor) =>
+					setMenu({ participant, anchor })
+				}
+				onShowQrCode={
+					showInviteActions ? () => setQrOpen(true) : undefined
+				}
+				onCopyInviteLink={
+					showInviteActions ? copyRegistrationLink : undefined
+				}
+			/>
+			<Menu
+				anchorEl={menu?.anchor ?? null}
+				open={!!menu}
+				onClose={() => setMenu(null)}
+			>
+				<MenuItem onClick={banSelected}>
+					{translate('banUser.ban.trigger')}
+				</MenuItem>
+			</Menu>
+			{showInviteActions && (
+				<GenerateQrCode
+					url={url}
+					headline={translate('groupChat.qrCode.headline')}
+					text={translate('groupChat.qrCode.text')}
+					filename={`group-chat-${activeSession.item.id}`}
+					open={qrOpen}
+					onOpenChange={setQrOpen}
 				/>
 			)}
-		</Stack>
+			<BanUserOverlay
+				overlayActive={bannedOverlayName !== null}
+				userName={bannedOverlayName ?? ''}
+				handleOverlay={() => setBannedOverlayName(null)}
+			/>
+		</>
 	);
 };

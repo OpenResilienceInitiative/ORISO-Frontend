@@ -32,6 +32,29 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { apiUpdatePasswordAppointments } from '../../api/apiUpdatePasswordAppointments';
+import {
+	ACCOUNT_SETUP_STEPS,
+	resolveAccountSetupStep
+} from '../twoFactorAuth/accountSetupStep';
+
+/**
+ * The chat identity this password change would have to rotate key-backup
+ * material through is not reachable. Distinct from a rejected password: the
+ * credentials were never tried, and nothing changed.
+ */
+class ChatRecoveryUnavailableError extends Error {}
+
+/**
+ * The Matrix client, or `null` when there is none to be had — no chat identity, the homeserver
+ * down, or the client never finished syncing. The caller decides what that means.
+ */
+const getReadyRecoveryClient = async () => {
+	try {
+		return (await getMatrixClientService()?.getReadyClient()) ?? null;
+	} catch {
+		return null;
+	}
+};
 
 const passwordChangeErrorKey = (
 	error: unknown,
@@ -43,6 +66,8 @@ const passwordChangeErrorKey = (
 		return 'encryption.passwordRecovery.repairBlocked';
 	if (error instanceof PasswordRecoveryWorkLimitError)
 		return 'encryption.passwordRecovery.retryable-failure';
+	if (error instanceof ChatRecoveryUnavailableError)
+		return 'encryption.passwordRecovery.chatUnavailable';
 	return passwordRecoveryEnabled
 		? 'encryption.passwordRecovery.passwordChangeFailed'
 		: 'profile.functions.password.reset.old.incorrect';
@@ -229,21 +254,54 @@ export const PasswordReset = () => {
 				);
 				if (policy.mode === 'RECOVERY_KEY')
 					return apiUpdatePassword(oldPassword, newPassword);
-				const client = await getMatrixClientService()?.getReadyClient();
+				/* The account-setup gate's own step. `passwordChangeRequired`
+				   is set exactly once — when an administrator provisions the
+				   account — so this is the account's FIRST password change:
+				   the old password is the administrator's, nothing of the
+				   counsellor's own is sealed under it, and there is no
+				   key-backup material of theirs to rotate. The gate offers no
+				   way on but logging out, so this step must not be able to
+				   dead-end (#1481). */
+				const firstChange =
+					resolveAccountSetupStep(userData) ===
+					ACCOUNT_SETUP_STEPS.PASSWORD;
+				const client = await getReadyRecoveryClient();
 				const id = client?.getUserId();
-				if (!client || !id)
-					throw new Error('Recovery client unavailable');
-				await withRecoverySetupLock(id, () =>
-					changePasswordWithRecovery(
-						client,
-						oldPassword,
-						newPassword,
-						() => apiUpdatePassword(oldPassword, newPassword),
-						(error) =>
-							error instanceof Error &&
-							error.message === FETCH_ERRORS.BAD_REQUEST
+				if (!client || !id) {
+					/* Nothing was ever sealed, so a plain update loses
+					   nothing. For an established account it would: the
+					   envelope would stay sealed under the old password and
+					   the counsellor's history would need a recovery key they
+					   may never have saved. Refuse, and say so. */
+					if (firstChange)
+						return apiUpdatePassword(oldPassword, newPassword);
+					throw new ChatRecoveryUnavailableError();
+				}
+				try {
+					await withRecoverySetupLock(id, () =>
+						changePasswordWithRecovery(
+							client,
+							oldPassword,
+							newPassword,
+							() => apiUpdatePassword(oldPassword, newPassword),
+							(error) =>
+								error instanceof Error &&
+								error.message === FETCH_ERRORS.BAD_REQUEST
+						)
+					);
+				} catch (error) {
+					/* No envelope exists at all — thrown before the password
+					   API is ever called, so there is no double change to
+					   fear. Outside the gate this points at the security
+					   settings; behind it those are unreachable, and there is
+					   still nothing to rotate. */
+					if (
+						firstChange &&
+						error instanceof PasswordRecoveryRepairRequiredError
 					)
-				);
+						return apiUpdatePassword(oldPassword, newPassword);
+					throw error;
+				}
 			})()
 				.then(async () => {
 					// Must complete BEFORE logout clears the auth cookies —

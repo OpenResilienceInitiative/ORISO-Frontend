@@ -1,6 +1,15 @@
 import * as React from 'react';
-import { Alert, Box, Button, Chip, TextField, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import {
+	Avatar,
+	Box,
+	Button,
+	List,
+	ListItem,
+	ListItemAvatar,
+	NativeSelect,
+	Typography
+} from '@mui/material';
 import {
 	apiChangeGroupChatParticipantRole,
 	apiRemoveGroupChatParticipant,
@@ -12,7 +21,35 @@ interface GroupChatRoleManagerProps {
 	seriesId: number;
 	currentUserId: string;
 	participants: UserService.Schemas.GroupChatParticipantDTO[];
+	/** Chat-Info M3 draws the heading on its section card (#1499). */
+	hideHeadline?: boolean;
 }
+
+const avatarSx = {
+	width: 40,
+	height: 40,
+	fontSize: 16,
+	fontWeight: 500,
+	bgcolor: 'var(--m3-surface-container-highest)',
+	color: 'var(--m3-on-surface-variant)'
+};
+
+const textActionSx = {
+	textTransform: 'none',
+	borderRadius: '20px',
+	fontSize: 14,
+	lineHeight: '20px',
+	fontWeight: 500,
+	color: 'var(--m3-primary)'
+} as const;
+
+const initialsOf = (name: string) =>
+	name
+		.split(/[\s_.-]+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map((part) => part[0]?.toUpperCase() ?? '')
+		.join('');
 
 const EDITABLE_ROLES: GroupChatParticipantRole[] = [
 	'CO_MODERATOR',
@@ -22,7 +59,8 @@ const EDITABLE_ROLES: GroupChatParticipantRole[] = [
 export const GroupChatRoleManager = ({
 	seriesId,
 	currentUserId,
-	participants
+	participants,
+	hideHeadline = false
 }: GroupChatRoleManagerProps) => {
 	const { t: translate } = useTranslation();
 	const [items, setItems] = React.useState(participants);
@@ -115,142 +153,177 @@ export const GroupChatRoleManager = ({
 	}
 
 	return (
-		<Box sx={{ display: 'grid', gap: 2 }}>
-			<Typography component="h3" variant="subtitle1">
-				{translate('groupChat.roles.headline')}
-			</Typography>
-			{items.map((participant) => {
-				const isSelf = participant.consultantId === currentUserId;
-				const canManageParticipant =
-					currentUserIsOwner &&
-					!isSelf &&
-					participant.role !== 'OWNER';
-				const canEditRole = canManageParticipant;
-				const canRemove = canManageParticipant;
-				return (
-					<Box
-						sx={{
-							display: 'flex',
-							flexWrap: 'wrap',
-							alignItems: 'center',
-							gap: 1.5,
-							py: 1.5,
-							borderBottom: '1px solid',
-							borderColor: 'divider'
-						}}
-						key={participant.consultantId}
-					>
-						<Typography
-							sx={{ flex: '1 1 120px', overflowWrap: 'anywhere' }}
+		<div className="groupChatInfo__roles">
+			{!hideHeadline && <h4>{translate('groupChat.roles.headline')}</h4>}
+			<List disablePadding>
+				{items.map((participant) => {
+					const isSelf = participant.consultantId === currentUserId;
+					const canManageParticipant =
+						currentUserIsOwner &&
+						!isSelf &&
+						participant.role !== 'OWNER';
+					const canTransfer = currentUserIsOwner && !isSelf;
+					return (
+						<ListItem
+							className="groupChatInfo__roleRow"
+							key={participant.consultantId}
+							sx={{
+								px: 2,
+								minHeight: 56,
+								alignItems: 'flex-start',
+								flexWrap: 'wrap'
+							}}
 						>
-							{participant.displayName}
-						</Typography>
-						{canEditRole ? (
-							<>
-								<TextField
-									select
-									size="small"
+							<ListItemAvatar sx={{ mt: 0.5 }}>
+								<Avatar sx={avatarSx} aria-hidden="true">
+									{initialsOf(participant.displayName)}
+								</Avatar>
+							</ListItemAvatar>
+							<Box
+								sx={{
+									flex: '1 1 160px',
+									minWidth: 0,
+									my: 0.75
+								}}
+							>
+								<Typography
+									component="span"
 									sx={{
-										'minWidth': 0,
-										'maxWidth': '100%',
-										'flex': '1 1 180px',
-										'& .MuiInputBase-root': {
-											minHeight: 44
-										}
+										display: 'block',
+										fontSize: 16,
+										lineHeight: '24px',
+										color: 'var(--m3-on-surface)',
+										overflowWrap: 'anywhere'
 									}}
-									SelectProps={{ native: true }}
-									inputProps={{
-										'aria-label': translate(
-											'groupChat.roles.roleLabel',
-											{ name: participant.displayName }
-										)
-									}}
-									value={participant.role}
-									disabled={pendingId !== null}
-									onChange={(event) =>
-										void updateRole(
-											participant.consultantId,
-											event.target
-												.value as GroupChatParticipantRole
-										)
-									}
 								>
-									{EDITABLE_ROLES.map((role) => (
-										<option value={role} key={role}>
-											{translate(
-												`groupChat.roles.${role}`
+									{participant.displayName}
+								</Typography>
+								{canManageParticipant ? (
+									<NativeSelect
+										disableUnderline
+										value={participant.role}
+										disabled={pendingId !== null}
+										inputProps={{
+											'aria-label': translate(
+												'groupChat.roles.roleLabel',
+												{
+													name: participant.displayName
+												}
+											)
+										}}
+										onChange={(event) =>
+											void updateRole(
+												participant.consultantId,
+												event.target
+													.value as GroupChatParticipantRole
+											)
+										}
+										sx={{
+											fontSize: 14,
+											lineHeight: '20px',
+											color: 'var(--m3-on-surface-variant)'
+										}}
+									>
+										{EDITABLE_ROLES.map((role) => (
+											<option value={role} key={role}>
+												{translate(
+													`groupChat.roles.${role}`
+												)}
+											</option>
+										))}
+									</NativeSelect>
+								) : (
+									<Typography
+										component="span"
+										sx={{
+											display: 'block',
+											fontSize: 14,
+											lineHeight: '20px',
+											color: 'var(--m3-on-surface-variant)'
+										}}
+									>
+										{translate(
+											`groupChat.roles.${participant.role}`
+										)}
+									</Typography>
+								)}
+							</Box>
+							{(canTransfer || canManageParticipant) && (
+								<Box
+									sx={{
+										display: 'flex',
+										flexWrap: 'wrap',
+										gap: 0.5,
+										pl: 7,
+										width: '100%'
+									}}
+								>
+									{canTransfer && (
+										<Button
+											variant="text"
+											size="small"
+											disabled={pendingId !== null}
+											onClick={() =>
+												void transferOwnership(
+													participant.consultantId
+												)
+											}
+											aria-label={translate(
+												'groupChat.roles.transferLabel',
+												{
+													name: participant.displayName
+												}
 											)}
-										</option>
-									))}
-								</TextField>
-							</>
-						) : (
-							<Chip
-								size="small"
-								label={translate(
-									`groupChat.roles.${participant.role}`
-								)}
-							/>
-						)}
-						{currentUserIsOwner && !isSelf && (
-							<Button
-								variant="text"
-								sx={{
-									textTransform: 'none',
-									minHeight: 44,
-									whiteSpace: 'normal',
-									lineHeight: 1.4,
-									maxWidth: '100%'
-								}}
-								size="small"
-								type="button"
-								disabled={pendingId !== null}
-								onClick={() =>
-									void transferOwnership(
-										participant.consultantId
-									)
-								}
-								aria-label={translate(
-									'groupChat.roles.transferLabel',
-									{ name: participant.displayName }
-								)}
-							>
-								{translate('groupChat.roles.transfer')}
-							</Button>
-						)}
-						{canRemove && (
-							<Button
-								variant="text"
-								sx={{
-									textTransform: 'none',
-									minHeight: 44,
-									whiteSpace: 'normal',
-									lineHeight: 1.4,
-									maxWidth: '100%'
-								}}
-								size="small"
-								type="button"
-								disabled={pendingId !== null}
-								onClick={() =>
-									void removeParticipant(
-										participant.consultantId
-									)
-								}
-								aria-label={`${translate(
-									'groupChat.roles.remove'
-								)} ${participant.displayName}`}
-							>
-								{translate('groupChat.roles.remove')}
-							</Button>
-						)}
-					</Box>
-				);
-			})}
+											sx={textActionSx}
+										>
+											{translate(
+												'groupChat.roles.transfer'
+											)}
+										</Button>
+									)}
+									{canManageParticipant && (
+										<Button
+											variant="text"
+											size="small"
+											disabled={pendingId !== null}
+											onClick={() =>
+												void removeParticipant(
+													participant.consultantId
+												)
+											}
+											aria-label={`${translate(
+												'groupChat.roles.remove'
+											)} ${participant.displayName}`}
+											sx={{
+												...textActionSx,
+												color: 'var(--m3-error)'
+											}}
+										>
+											{translate(
+												'groupChat.roles.remove'
+											)}
+										</Button>
+									)}
+								</Box>
+							)}
+						</ListItem>
+					);
+				})}
+			</List>
 			{error && (
-				<Alert severity="error">
+				<Typography
+					role="alert"
+					sx={{
+						px: 2,
+						py: 1,
+						fontSize: 14,
+						lineHeight: '20px',
+						color: 'var(--m3-error)'
+					}}
+				>
 					{translate(`groupChat.roles.${error}Error`)}
-				</Alert>
+				</Typography>
 			)}
-		</Box>
+		</div>
 	);
 };

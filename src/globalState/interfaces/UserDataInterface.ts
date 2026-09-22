@@ -28,6 +28,11 @@ export interface UserDataInterface {
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 	preferredLanguage: string;
 	twoFactorAuth?: TwoFactorAuthInterface;
+	/**
+	 * The account still carries the password its administrator chose. Optional: backends
+	 * predating the flag never send it.
+	 */
+	passwordChangeRequired?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];
@@ -74,6 +79,19 @@ export interface AgencyDataInterface {
 	 * AgencyService #90 - older backends simply never send it.
 	 */
 	departments?: AgencyDepartmentDataInterface[];
+	/**
+	 * The agency's feature settings from the public agency response. The
+	 * group-chat flags are the effective values (Träger AND Beratungsstelle
+	 * combined, AgencyService #293); `null` means no restriction from this
+	 * agency. Older backends omit them.
+	 */
+	settings?: AgencySettingsInterface | null;
+}
+
+export interface AgencySettingsInterface {
+	featureGroupChatV2Enabled?: boolean | null;
+	featureInternalGroupChatEnabled?: boolean | null;
+	featureSelfHelpGroupsEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {
@@ -98,6 +116,11 @@ export interface ConsultingTypeDataInterface {
 export interface TwoFactorAuthInterface {
 	isEnabled: boolean;
 	isActive: boolean;
+	/**
+	 * The account may not be used until a factor is active. Optional: backends predating the
+	 * flag never send it.
+	 */
+	isRequired?: boolean;
 	secret: string;
 	qrCode: string;
 	isShown: boolean;

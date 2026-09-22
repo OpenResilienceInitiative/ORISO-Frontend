@@ -84,6 +84,7 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
+
 		/* 40px rows (was 48): with the view/auto-sort controls below the
 		   table the dialog must still fit a 700px-high desktop window
 		   (Frank's Safari, 2026-09-16) without hidden scrolling. */
@@ -459,6 +460,7 @@
 .displayFilterDialog__colHead--picker {
 	width: 136px;
 	text-align: left;
+
 	/* Frank 2026-09-16: the column titles line up with the pickers' text
 	   (main segment padding) and keep clear of the first row. */
 	padding: 0 0 8px 12px;

@@ -108,6 +108,18 @@ const expectStageParts = async (
 	);
 };
 
+const expectFabClearsComposer = async (
+	fab: HTMLElement,
+	composer: HTMLElement
+) => {
+	await waitFor(() => {
+		const clearance =
+			composer.getBoundingClientRect().top -
+			fab.getBoundingClientRect().bottom;
+		expect(clearance).toBeGreaterThanOrEqual(15);
+	});
+};
+
 const paneWidths = (canvasElement: HTMLElement) => ({
 	main:
 		canvasElement
@@ -1927,6 +1939,25 @@ export const PhoneMainChatWithFab: Story = {
 			'[data-cy="channel-switcher"]'
 		);
 		await expect(root?.getAttribute('data-variant')).toBe('attention');
+		const fab = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="channel-switcher-fab"]'
+		)!;
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .textarea__wrapper-send-message'
+		)!;
+		// #1302: the switcher belongs above the movable composer. It must keep
+		// the 16 px FAB gap instead of falling back to the viewport bottom and
+		// covering the input field.
+		await expectFabClearsComposer(fab, composer);
+		const initialFabTop = fab.getBoundingClientRect().top;
+		composer.style.height = `${composer.getBoundingClientRect().height + 64}px`;
+		await waitFor(() => {
+			expect(fab.getBoundingClientRect().top).toBeLessThanOrEqual(
+				initialFabTop - 63
+			);
+		});
+		await expectFabClearsComposer(fab, composer);
+		composer.style.removeProperty('height');
 		await expect(
 			canvasElement.querySelector('.sessionsListItem')
 		).toBeNull();
@@ -2112,6 +2143,10 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 		const fab = canvasElement.querySelector<HTMLButtonElement>(
 			'[data-cy="channel-switcher-fab"]'
 		)!;
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .textarea__wrapper-send-message'
+		)!;
+		await expectFabClearsComposer(fab, composer);
 		await expect(fab.getAttribute('aria-label')).toMatch(
 			/Beratungschat|counselling/i
 		);
@@ -2971,6 +3006,110 @@ export const NewMessagesFollowWhileWatching: Story = {
 		// Nothing waits below the fold, so the arrow stays the quiet one.
 		await expect(scrollArrow(canvasElement).className).not.toContain(
 			'composerToolbar__button--scrollToNewest--unread'
+		);
+	}
+};
+
+/** The main composer card and whether the app placed its cursor itself. */
+const mainComposerCard = (canvasElement: HTMLElement) =>
+	canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-main"] .textarea__wrapper-send-message'
+	)!;
+
+const waitForAutomaticCursor = async (canvasElement: HTMLElement) => {
+	await expectStageParts(canvasElement, {
+		composers: 1,
+		bubblesAtLeast: 6
+	});
+	const card = mainComposerCard(canvasElement);
+	await waitFor(() => {
+		expect(card.hasAttribute('data-auto-focused')).toBe(true);
+		expect(card.contains(document.activeElement)).toBe(true);
+	});
+	const timeline = mainTimeline(canvasElement);
+	await waitFor(() =>
+		expect(
+			timeline.scrollHeight - (timeline.scrollTop + timeline.clientHeight)
+		).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+	);
+	return { card, timeline };
+};
+
+/**
+ * (q2) Frank, 16.09.: "Erst beim Klicken oder Tippen zählt es als
+ * schreiben." On desktop the app puts the cursor into the composer by
+ * itself when the chat opens. The reader has not touched it, so they are
+ * still only reading: new messages carry the view along.
+ */
+export const NewMessagesFollowWithTheAppsOwnCursor: Story = {
+	name: '(q2) New messages — cursor placed by the app: the timeline still follows',
+	globals: desktop1280Globals,
+	args: {
+		panel: null,
+		arrivals: ARRIVALS
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const { card, timeline } = await waitForAutomaticCursor(canvasElement);
+		for (const body of ARRIVALS) {
+			// `.click()`, not `userEvent.click`: a real click on the story's
+			// delivery button would move the cursor out of the composer.
+			// A message from the client arrives without touching the page.
+			deliverNext(canvasElement).click();
+			await canvas.findByText(body);
+			// The stage lands on the end twice (next frame + 350 ms, while
+			// the row animates in). A message that arrives in between finds
+			// the view "not at the bottom" — wait for the second landing.
+			await new Promise((resolve) => setTimeout(resolve, 400));
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
+		}
+		// The cursor is still the app's, still in the composer.
+		await expect(card.hasAttribute('data-auto-focused')).toBe(true);
+		await expect(card.contains(document.activeElement)).toBe(true);
+		await waitFor(() =>
+			expect(
+				timeline.scrollHeight -
+					(timeline.scrollTop + timeline.clientHeight)
+			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+		);
+		await expect(scrollArrow(canvasElement).className).not.toContain(
+			'composerToolbar__button--scrollToNewest--unread'
+		);
+	}
+};
+
+/**
+ * (q3) Frank, 16.09.: a click into the composer counts as writing, even
+ * before the first letter. The view keeps its place and the arrow lights up.
+ */
+export const NewMessagesLightTheArrowAfterAClick: Story = {
+	name: '(q3) New messages — clicked into the composer: the arrow lights up',
+	globals: desktop1280Globals,
+	args: {
+		panel: null,
+		arrivals: ARRIVALS
+	},
+	play: async ({ canvasElement }) => {
+		const { card, timeline } = await waitForAutomaticCursor(canvasElement);
+		await userEvent.click(card.querySelector<HTMLElement>('.tiptap')!);
+		await expect(card.hasAttribute('data-auto-focused')).toBe(false);
+		const restingTop = timeline.scrollTop;
+		// Arrives without touching the page (see q2).
+		deliverNext(canvasElement).click();
+		await waitFor(() =>
+			expect(scrollArrow(canvasElement).className).toContain(
+				'composerToolbar__button--scrollToNewest--unread'
+			)
+		);
+		await expect(timeline.scrollTop).toBe(restingTop);
+		// Nothing was typed — the click alone made it writing.
+		await expect(card.querySelector('.tiptap')!.textContent?.trim()).toBe(
+			''
 		);
 	}
 };
