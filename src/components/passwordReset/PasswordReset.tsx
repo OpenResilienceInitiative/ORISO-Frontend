@@ -73,7 +73,13 @@ const passwordChangeErrorKey = (
 		: 'profile.functions.password.reset.old.incorrect';
 };
 
-export const PasswordReset = () => {
+interface PasswordResetProps {
+	/** Inside the account-setup dialog the surrounding dialog already carries the title and the
+	 *  reason, and "if you like, you can change your password" would contradict it. */
+	hideIntro?: boolean;
+}
+
+export const PasswordReset = ({ hideIntro = false }: PasswordResetProps) => {
 	const { t: translate } = useTranslation();
 	const { featureAppointmentsEnabled } = getTenantSettings();
 	const { userData } = useContext(UserDataContext);
@@ -180,6 +186,7 @@ export const PasswordReset = () => {
 	const handleInputOldChange = (event) => {
 		setOldPasswordErrorMessage('');
 		setOldPassword(event.target.value);
+		validateNewPassword(newPassword, event.target.value);
 	};
 
 	const handleInputNewChange = (event) => {
@@ -193,9 +200,19 @@ export const PasswordReset = () => {
 		setConfirmPassword(event.target.value);
 	};
 
-	const validateNewPassword = (newPassword: string) => {
+	const validateNewPassword = (
+		newPassword: string,
+		currentPassword: string = oldPassword
+	) => {
 		let passwordStrength = strengthIndicator(newPassword);
-		if (newPassword.length >= 1 && passwordStrength < 4) {
+		if (newPassword.length >= 1 && newPassword === currentPassword) {
+			// A "change" to the same password would leave the account on the one its
+			// administrator knows. The server refuses it too; this says so before the round trip.
+			setNewPasswordSuccessMessage('');
+			setNewPasswordErrorMessage(
+				translate('profile.functions.password.reset.sameAsOld')
+			);
+		} else if (newPassword.length >= 1 && passwordStrength < 4) {
 			setNewPasswordSuccessMessage('');
 			setNewPasswordErrorMessage(
 				translate('profile.functions.password.reset.insecure')
@@ -350,19 +367,23 @@ export const PasswordReset = () => {
 
 	return (
 		<div id="passwordReset" className="passwordReset">
-			<div className="profile__content__title">
-				<Headline
-					text={translate('profile.functions.password.reset.title')}
-					semanticLevel="5"
-				/>
-				<Text
-					text={translate(
-						'profile.functions.password.reset.subtitle'
-					)}
-					type="standard"
-					className="tertiary"
-				/>
-			</div>
+			{!hideIntro && (
+				<div className="profile__content__title">
+					<Headline
+						text={translate(
+							'profile.functions.password.reset.title'
+						)}
+						semanticLevel="5"
+					/>
+					<Text
+						text={translate(
+							'profile.functions.password.reset.subtitle'
+						)}
+						type="standard"
+						className="tertiary"
+					/>
+				</div>
+			)}
 			<div className="generalInformation">
 				{repairRequired && (
 					<p role="alert">

@@ -147,7 +147,8 @@ export const autoLogin = async ({
 		// client (that produced a second orphan sync loop that was never torn
 		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
-		stageLoginRecoveryPassword(matrixLoginData.userId, password);
+		// Awaited: the caller leaves this document right after autoLogin resolves.
+		await stageLoginRecoveryPassword(matrixLoginData.userId, password);
 	} catch (error) {
 		// Continue without Matrix login data - the app boots and shows the
 		// session list; chat features recover on the next successful login.

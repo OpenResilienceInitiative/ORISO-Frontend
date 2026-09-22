@@ -1672,7 +1672,21 @@ export const MessageItemComponent = ({
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
-	const isAskerViewer = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	/**
+	 * Who counts as an advice seeker reading this thread (#1486).
+	 *
+	 * `ASKER_DEFAULT` alone missed the anonymous Live Chat guest, who is
+	 * granted `ANONYMOUS_DEFAULT` instead — so the asker-facing name
+	 * resolution never ran for them and the bubble fell through to the
+	 * counsellor's legal name from the consultant list. This is the same test
+	 * `SessionHeaderComponent` already applies, so the bubble and the chat
+	 * header now agree on who is reading.
+	 */
+	const isAskerViewer =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('USER') ||
+		(userData?.userRoles || []).includes('ANONYMOUS');
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -1683,6 +1697,17 @@ export const MessageItemComponent = ({
 					username
 				})
 			: null;
+	/**
+	 * An incoming message is published under a display name or, failing that,
+	 * the User-ID — never a real name (#1486).
+	 *
+	 * The bubble used to hand `consultantMatch.firstName`/`lastName` from the
+	 * consultant list to `formatMessagePersonName`, which preferred them, so a
+	 * counsellor's legal name appeared above their bubble and overrode the
+	 * identity they publish. Display name + User-ID are the only two sources
+	 * the bubble, the chat header and the session list have in common, so the
+	 * bubble now uses exactly those and passes no name parts at all.
+	 */
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
@@ -1690,27 +1715,6 @@ export const MessageItemComponent = ({
 				roomUser?.displayName ||
 				displayName
 			: displayName;
-	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
-	const incomingNameParts = normalizedIncomingName
-		.split(/\s+/)
-		.filter(Boolean);
-	const resolvedIncomingNameParts = askerIncomingConsultantName
-		? {
-				firstName: askerIncomingConsultantName.firstName,
-				lastName: askerIncomingConsultantName.lastName
-			}
-		: incomingNameParts.length >= 2
-			? {
-					firstName:
-						consultantMatch?.firstName || incomingNameParts[0],
-					lastName:
-						consultantMatch?.lastName ||
-						incomingNameParts.slice(1).join(' ')
-				}
-			: {
-					firstName: consultantMatch?.firstName || undefined,
-					lastName: consultantMatch?.lastName || undefined
-				};
 	const ownConsultantName =
 		isMyMessage && !isUserMessage()
 			? resolveOwnConsultantName({
@@ -1723,16 +1727,18 @@ export const MessageItemComponent = ({
 	const formattedName = formatMessagePersonName(
 		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
 		username,
+		// Own messages may still fall back to the viewer's own name — it is
+		// their own screen. Incoming messages never carry one (#1486).
 		ownConsultantName
 			? ownConsultantName.firstName
 			: isMyMessage
 				? userData?.firstName
-				: resolvedIncomingNameParts.firstName,
+				: undefined,
 		ownConsultantName
 			? ownConsultantName.lastName
 			: isMyMessage
 				? userData?.lastName
-				: resolvedIncomingNameParts.lastName
+				: undefined
 	);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
@@ -2044,12 +2050,6 @@ export const MessageItemComponent = ({
 										username={username}
 										displayName={
 											resolvedIncomingDisplayName
-										}
-										firstName={
-											resolvedIncomingNameParts.firstName
-										}
-										lastName={
-											resolvedIncomingNameParts.lastName
 										}
 									/>
 								)}
@@ -2635,12 +2635,6 @@ export const MessageItemComponent = ({
 										username={username}
 										displayName={
 											resolvedIncomingDisplayName
-										}
-										firstName={
-											resolvedIncomingNameParts.firstName
-										}
-										lastName={
-											resolvedIncomingNameParts.lastName
 										}
 										size={48}
 									/>

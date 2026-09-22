@@ -14,4 +14,35 @@
 		// what a screen reader and a dismissed-dialog state still explain.
 		margin: 0 auto;
 	}
+
+	// The password form brings the profile page's spacing with it; inside the
+	// dialog the dialog's own rhythm applies, and a long form must scroll
+	// rather than push the dialog off a small screen.
+	&__dialogLogout {
+		margin-top: 20px;
+
+		// The link button centres itself with side padding; here it lines up
+		// with the form above it, like the logout in the second-factor step.
+		.button__item {
+			padding-left: 0;
+			padding-right: 0;
+			margin-left: 0;
+		}
+	}
+
+	&__passwordPaper {
+		overflow-y: auto !important;
+
+		// The paper is a flex column with a max-height: without this its
+		// children shrink instead of the paper scrolling, and the logout ends
+		// up on top of the form on a phone.
+		> * {
+			flex-shrink: 0;
+		}
+
+		.passwordReset .generalInformation {
+			margin: 0;
+			padding: 0;
+		}
+	}
 }
