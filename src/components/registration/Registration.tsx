@@ -62,6 +62,11 @@ import {
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import {
+	clearRegistrationSubmitting,
+	isRegistrationSubmitting,
+	markRegistrationSubmitting
+} from './registrationSubmission';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -122,7 +127,14 @@ export const Registration = () => {
 	const { locale } = useContext(LocaleContext);
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
-	const [isRegistering, setIsRegistering] = useState<boolean>(false);
+	/* Seeded from the submission module, not from `false`: this screen is
+	   remounted while the account is being created (see
+	   `registrationSubmission`), and starting over at `false` puts the account
+	   form — password and all — back in front of someone who has already
+	   registered. */
+	const [isRegistering, setIsRegistering] = useState<boolean>(
+		isRegistrationSubmitting
+	);
 	// Set by the topic step while mounted; the header shows the search only then.
 	const [topicSearch, setTopicSearch] =
 		useState<RegistrationTopicSearchApi | null>(null);
@@ -536,6 +548,7 @@ export const Registration = () => {
 				REGISTRATION_DATA_VALIDATION[item].validation(data[item])
 			)
 		) {
+			markRegistrationSubmitting();
 			setIsRegistering(true);
 			apiPostRegistration(
 				endpoints.registerAsker,
@@ -577,6 +590,7 @@ export const Registration = () => {
 				})
 				.catch((error) => {
 					// console.error('Registration failed:', error);
+					clearRegistrationSubmitting();
 					setIsRegistering(false);
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
@@ -587,6 +601,7 @@ export const Registration = () => {
 					});
 				});
 		} else {
+			clearRegistrationSubmitting();
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: t('registration.errors.ups.title'),
