@@ -114,9 +114,11 @@ export const PasswordRefused: Story = {
 		await userEvent.type(next, 'Storybook!Example1');
 		await userEvent.type(confirm, 'Storybook!Example1');
 
+		// The refusal, not the field label that carries the same word.
 		await expect(
-			within(host).getByText(/bisheriges|current one/i)
-		).toBeInTheDocument();
+			host.querySelector('.passwordReset__fieldMessage--error')
+				.textContent
+		).toMatch(/bisheriges|current one/i);
 		await expect(saveButton(host)).toBeDisabled();
 	}
 };
