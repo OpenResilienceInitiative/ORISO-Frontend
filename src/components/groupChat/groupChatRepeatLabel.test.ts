@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getGroupChatRepeatLabel } from './groupChatRepeatLabel';
+import {
+	getGroupChatIntervalLabel,
+	getGroupChatRepeatLabel
+} from './groupChatRepeatLabel';
 
 // Identity translator that also shows the interpolation, so the assertions
 // see which key and which values were used.
@@ -39,6 +42,14 @@ describe('getGroupChatRepeatLabel (Chat-Info + share dialog, #1499)', () => {
 	it('falls back to weekly for a legacy repetitive chat without an interval', () => {
 		expect(getGroupChatRepeatLabel({ repetitive: true }, translate)).toBe(
 			'groupChat.info.settings.repetition.weekly'
+		);
+	});
+});
+
+describe('getGroupChatIntervalLabel (create form repeat row, #1499)', () => {
+	it('names the interval with the same key the menu uses', () => {
+		expect(getGroupChatIntervalLabel('QUARTERLY', translate)).toBe(
+			'groupChat.create.interval.options.quarterly'
 		);
 	});
 });

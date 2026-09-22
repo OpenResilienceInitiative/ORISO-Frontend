@@ -13,7 +13,6 @@ import {
 	IntervalFilledIcon,
 	Language400Icon,
 	Medium400Icon,
-	Repeat400Icon,
 	StartTime400Icon,
 	Video400Icon,
 	VideoFilledIcon
@@ -27,6 +26,10 @@ import {
 	GroupChatModality
 } from '../../groupChat/createChatHelpers';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
+import {
+	getGroupChatIntervalLabel,
+	getGroupChatRepeatLabel
+} from '../../groupChat/groupChatRepeatLabel';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { RowMenu, RowMenuOption } from '../RowMenu';
 
@@ -36,7 +39,8 @@ import { RowMenu, RowMenuOption } from '../RowMenu';
  * segment opens the field's picker or option list, chosen values switch the
  * row to the tonal state, and the row that currently owns an open menu is
  * elevated. Time, duration and repetitions additionally carry the down/up
- * stepper pair from the design.
+ * stepper pair from the design. The repetition row shows both halves of a
+ * series at once: the number of dates large, the interval small below it.
  *
  * The value shape is `GroupChatSeriesFieldsValue`, unchanged, so
  * `buildGroupChatSeriesRequest` and its tests remain the submit seam.
@@ -85,9 +89,9 @@ interface ScheduleRowsProps {
 	 */
 	valuesAreChosen?: boolean;
 	/**
-	 * Editing an existing series: its stored interval is a real decision, so the
-	 * repetition row opens on the frequency rather than the count. A creation
-	 * prefill also sets `valuesAreChosen`, which is why this is its own flag.
+	 * Editing an existing series: its stored interval is a real decision. A
+	 * creation prefill also sets `valuesAreChosen`, which is why this is its
+	 * own flag.
 	 */
 	isEditMode?: boolean;
 }
@@ -103,16 +107,12 @@ export const ScheduleRows = ({
 }: ScheduleRowsProps) => {
 	const { t: translate } = useTranslation();
 	const [openRow, setOpenRow] = useState<OpenRow>(null);
-	/**
-	 * The repetition row carries two independent controls: the stepper sets a
-	 * number of dates, the menu sets a fixed frequency. The control the author
-	 * touched last owns the label, so choosing "Wöchentlich" no longer leaves
-	 * a stale "34 mal" on the button.
+	/*
+	 * A one-off group's stored interval is only the form default, so it is not
+	 * named until the author picks one; "10 mal" alone was ambiguous.
 	 */
-	// A one-off group has no frequency to show; its stored interval is only
-	// the form default.
-	const [repeatMode, setRepeatMode] = useState<'count' | 'interval'>(
-		isEditMode && value.repeatCount > 1 ? 'interval' : 'count'
+	const [intervalPicked, setIntervalPicked] = useState(
+		isEditMode && value.repeatCount > 1
 	);
 	const dateRef = useRef<HTMLDivElement | null>(null);
 	const durationRef = useRef<HTMLDivElement | null>(null);
@@ -207,6 +207,38 @@ export const ScheduleRows = ({
 	const durationLabel = translate('groupChat.circle.rows.durationLabel');
 	const repeatLabel = translate('groupChat.circle.rows.repeatLabel');
 	const timeLabel = translate('groupChat.circle.rows.timeLabel');
+
+	/*
+	 * One control for "how often": the count is the value, the interval its
+	 * unit ("10 mal" over "Wöchentlich" = ten dates, one a week). A single
+	 * date reads "einmalig" and the interval stays visible but inactive.
+	 */
+	const isSeries = value.repeatCount > 1;
+	const intervalInactive = !isSeries;
+	const intervalNamed = isSeries || intervalPicked;
+	const repeatValue = (
+		<span className="scheduleRows__repeatValue">
+			<span className="scheduleRows__repeatCount">
+				{isSeries
+					? translate('groupChat.circle.rows.repeatValue', {
+							count: value.repeatCount
+						})
+					: getGroupChatRepeatLabel({ repeatCount: 1 }, translate)}
+			</span>
+			<span
+				className={`scheduleRows__repeatInterval${
+					intervalInactive
+						? ' scheduleRows__repeatInterval--inactive'
+						: ''
+				}`}
+				aria-hidden={intervalNamed ? undefined : true}
+			>
+				{intervalNamed
+					? getGroupChatIntervalLabel(value.interval, translate)
+					: translate('groupChat.create.interval.label')}
+			</span>
+		</span>
+	);
 
 	return (
 		<div className="scheduleRows">
@@ -337,38 +369,24 @@ export const ScheduleRows = ({
 
 			<SplitButton
 				ref={repeatRef}
+				className="scheduleRows__repeat"
 				fullWidth
 				icon={
-					!isChosen('repeat') ? (
-						<Interval400Icon />
-					) : repeatMode === 'interval' ? (
+					isChosen('repeat') ? (
 						<IntervalFilledIcon />
 					) : (
-						<Repeat400Icon />
+						<Interval400Icon />
 					)
 				}
-				label={
-					!isChosen('repeat')
-						? repeatLabel
-						: repeatMode === 'interval'
-							? translate(
-									`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
-									value.interval
-								)
-							: translate('groupChat.circle.rows.repeatValue', {
-									count: value.repeatCount
-								})
-				}
+				label={isChosen('repeat') ? repeatValue : repeatLabel}
 				variant={variantFor('repeat', isChosen('repeat'))}
 				open={openRow === 'repeat'}
 				onClick={() => toggle('repeat')}
 				onDecrement={() => {
-					setRepeatMode('count');
 					markTouched('repeat');
 					shiftRepeat(-1);
 				}}
 				onIncrement={() => {
-					setRepeatMode('count');
 					markTouched('repeat');
 					shiftRepeat(1);
 				}}
@@ -383,15 +401,12 @@ export const ScheduleRows = ({
 				<RowMenu
 					options={INTERVALS.map((interval) => ({
 						value: interval,
-						label: translate(
-							`groupChat.create.interval.options.${interval.toLowerCase()}`,
-							interval
-						)
+						label: getGroupChatIntervalLabel(interval, translate)
 					}))}
 					value={value.interval}
 					onSelect={(next) => {
 						update('interval', next as GroupChatInterval);
-						setRepeatMode('interval');
+						setIntervalPicked(true);
 						markTouched('repeat');
 						setOpenRow(null);
 					}}

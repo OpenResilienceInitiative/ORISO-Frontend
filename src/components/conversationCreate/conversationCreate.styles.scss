@@ -979,6 +979,40 @@ body.conversationCreate--active .navigation__wrapper {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
+
+	/* Two lines in the 56px row: count on top, interval as its unit below. */
+	&__repeat .splitButton__main {
+		padding-block: 8px;
+	}
+
+	&__repeatValue {
+		align-items: center;
+		display: flex;
+		flex-direction: column;
+	}
+
+	&__repeatCount,
+	&__repeatInterval {
+		max-width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	&__repeatCount {
+		line-height: 20px;
+	}
+
+	&__repeatInterval {
+		font-size: 12px;
+		font-weight: 500;
+		letter-spacing: 0.5px;
+		line-height: 16px;
+
+		/* Shown, not hidden: a single date has no interval yet. */
+		&--inactive {
+			opacity: 0.6;
+		}
+	}
 }
 
 .rowMenu {
@@ -1081,18 +1115,22 @@ body.conversationCreate--active .navigation__wrapper {
 		gap: 0;
 	}
 
+	/*
+	 * The two cards read as one: square where they meet and the same width.
+	 * The stacked-layout cap of 400px applied to the upper card only.
+	 */
 	.circleSettings__card {
 		border-bottom-left-radius: 0;
 		border-bottom-right-radius: 0;
 		border-bottom-width: 0;
+		max-width: none;
 		width: 100%;
 	}
 
 	.circleSettings__authorColumn {
 		background: $cc-surface-container-low;
 		border: 1px solid $cc-outline-variant;
-		border-bottom-left-radius: 28px;
-		border-bottom-right-radius: 28px;
+		border-radius: 0 0 28px 28px;
 		border-top-width: 0;
 		padding: 12px;
 	}

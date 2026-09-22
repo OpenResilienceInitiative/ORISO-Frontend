@@ -319,7 +319,11 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			screen.queryByText('groupChat.create.interval.options.weekly')
 		).toBeNull();
 		expect(
-			screen.getByText('groupChat.circle.rows.repeatValue')
+			screen.getByText('groupChat.info.settings.repetition.single')
+		).toBeTruthy();
+		// The interval slot stays visible, unnamed, until a second date exists.
+		expect(
+			screen.getByText('groupChat.create.interval.label')
 		).toBeTruthy();
 	});
 
@@ -334,6 +338,10 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			chatInterval: 'BIWEEKLY'
 		});
 
+		// Count and interval in one control: three dates, every two weeks.
+		expect(
+			screen.getByText('groupChat.circle.rows.repeatValue')
+		).toBeTruthy();
 		expect(
 			screen.getByText('groupChat.create.interval.options.biweekly')
 		).toBeTruthy();

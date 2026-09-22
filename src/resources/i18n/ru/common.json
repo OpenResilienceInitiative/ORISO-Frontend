@@ -885,7 +885,7 @@
 				"hintMessage": "Подсказка",
 				"repetition": {
 					"label": "Повторы",
-					"single": "уникальный",
+					"single": "однократно",
 					"weekly": "Еженедельник"
 				},
 				"startDate": "дата",

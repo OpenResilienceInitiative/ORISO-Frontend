@@ -884,7 +884,7 @@
 				"hintMessage": "İpucu",
 				"repetition": {
 					"label": "Tekrarlar",
-					"single": "benzersiz",
+					"single": "bir kez",
 					"weekly": "haftalık"
 				},
 				"startDate": "Tarih",

@@ -934,7 +934,7 @@
 				"hintMessage": "Hint",
 				"repetition": {
 					"label": "Repetitions",
-					"single": "unique",
+					"single": "once",
 					"weekly": "weekly"
 				},
 				"startDate": "Date",
