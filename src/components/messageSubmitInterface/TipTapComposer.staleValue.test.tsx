@@ -107,4 +107,51 @@ describe('TipTapComposer — a value that lags behind the editor', () => {
 
 		expect(mocks.editor.html).toBe('<p>Gespeicherter Entwurf</p>');
 	});
+
+	/* A conversation switch keeps the composer mounted: a draft loaded later
+	   can equal something typed here minutes ago. Once the parent has caught
+	   up with the editor, that earlier state is no longer an echo. */
+	it('applies an earlier state again once the parent has caught up', () => {
+		const onChange = vi.fn();
+		const view = render(
+			<TipTapComposer {...props} value="" onChange={onChange} />
+		);
+		const renderWith = (value: string) =>
+			view.rerender(
+				<TipTapComposer {...props} value={value} onChange={onChange} />
+			);
+
+		type('<p>Hallo</p>');
+		renderWith('<p>Hallo</p>');
+		type('<p>Hallo, wie geht es?</p>');
+		renderWith('<p>Hallo, wie geht es?</p>');
+		renderWith('<p>Hallo</p>');
+
+		expect(mocks.editor.html).toBe('<p>Hallo</p>');
+	});
+});
+
+describe('TipTapComposer — typing past maxLength', () => {
+	/* TipTap's setContent emits an update by default, so the truncation
+	   already reports the shortened text through a nested onUpdate. */
+	it('reports the shortened text once, not twice', () => {
+		const onChange = vi.fn();
+		mocks.editor.commands.setContent.mockImplementationOnce((next: string) => {
+			mocks.editor.html = next;
+			mocks.options.onUpdate({ editor: mocks.editor });
+		});
+		render(
+			<TipTapComposer
+				{...props}
+				value=""
+				maxLength={5}
+				onChange={onChange}
+			/>
+		);
+
+		type('<p>Hallo Welt</p>');
+
+		expect(onChange).toHaveBeenCalledTimes(1);
+		expect(onChange).toHaveBeenCalledWith('Hallo');
+	});
 });

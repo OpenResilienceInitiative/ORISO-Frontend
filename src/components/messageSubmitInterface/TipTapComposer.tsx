@@ -384,7 +384,11 @@ export const TipTapComposer = forwardRef<
 				) {
 					return;
 				}
-				enforceEditorMaxLength(currentEditor, maxLength);
+				// The truncating setContent emits its own update, which already
+				// reports the shortened text.
+				if (enforceEditorMaxLength(currentEditor, maxLength)) {
+					return;
+				}
 				emit(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
@@ -430,6 +434,8 @@ export const TipTapComposer = forwardRef<
 			}
 			const current = editor.getHTML();
 			if (normalizedValue === current) {
+				// The parent has caught up: nothing earlier can still be an echo.
+				ownStates.current = [];
 				return;
 			}
 			if (
