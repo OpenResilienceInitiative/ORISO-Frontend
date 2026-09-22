@@ -198,6 +198,50 @@ export const emailLogoLockup = (brand: EmailBrand): string =>
 	)};">${emailEscape(brand.platformName)}</td>` +
 	'</tr></table>';
 
+/** Class the broken-image rule in `emailLogoMarkFallbackCss` hooks onto. */
+export const EMAIL_LOGO_MARK_CLASS = 'oriso-logo';
+
+const logoMarkType = (brand: EmailBrand, line: number): string =>
+	font(emailType.brand.size, line, {
+		weight: emailType.brand.weight,
+		tracking: emailType.brand.tracking,
+		color: brand.primaryColor
+	});
+
+/**
+ * The logo on its own, for a logo that carries the brand's name itself (the
+ * Träger's detailed logo). Its alt text is the brand name, styled like the
+ * wordmark in the brand colour, so a client that cannot show the image shows
+ * the name — and the name never appears twice.
+ */
+export const emailLogoMark = (brand: EmailBrand): string => {
+	const size = emailLayout.logoMarkSize;
+	return (
+		'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td valign="middle">' +
+		`<img class="${EMAIL_LOGO_MARK_CLASS}" src="${emailEscape(
+			brand.logoUrl
+		)}" width="${size}" height="${size}" alt="${emailEscape(
+			brand.platformName
+		)}" ` +
+		`style="display:block;width:${size}px;height:${size}px;border:0;border-radius:${
+			emailRadius.logo
+		}px;${logoMarkType(brand, emailType.brand.line)};"></td></tr></table>`
+	);
+};
+
+/**
+ * Head CSS for `emailLogoMark`. Chrome and Firefox draw `::after` only on an
+ * image that failed to load, so this covers their grey broken-image box with
+ * the alt text on the canvas colour. The native alt text stays on one line and
+ * the padding covers its tail, which starts after the broken-image icon. Other
+ * clients show the styled alt text.
+ */
+export const emailLogoMarkFallbackCss = (brand: EmailBrand): string =>
+	`img.${EMAIL_LOGO_MARK_CLASS}{position:relative;overflow:visible;white-space:nowrap}` +
+	`img.${EMAIL_LOGO_MARK_CLASS}::after{content:attr(alt);position:absolute;top:0;left:0;` +
+	`min-width:100%;height:100%;padding-right:32px;white-space:nowrap;background-color:${emailColor.canvas};` +
+	`${logoMarkType(brand, emailLayout.logoMarkSize)}}`;
+
 /**
  * The hidden preview line most clients show next to the subject.
  * Must be the first node inside `<body>`.

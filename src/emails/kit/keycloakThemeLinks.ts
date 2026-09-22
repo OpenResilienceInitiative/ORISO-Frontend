@@ -31,6 +31,25 @@ export const keycloakLinkProperties = (): Record<string, string> =>
 		])
 	);
 
+/**
+ * The container env var holding the platform logo for recipients without a
+ * Träger (Helm: the app origin's `/service/tenant/public/branding/logo`).
+ * Empty or unset means no image: the header shows the text wordmark.
+ */
+export const LOGO_URL_ENV = 'ORISO_LOGO_URL';
+
+/** theme.properties line for the platform logo; `:` gives an empty default. */
+export const keycloakLogoProperty = (): Record<string, string> => ({
+	orisoLogoUrl: `\${env.${LOGO_URL_ENV}:}`
+});
+
+/**
+ * TenantService's public route for a Träger's detailed logo (Admin →
+ * Appearance → Logo), pinned by id so no cookie or host decides the tenant.
+ */
+export const TENANT_LOGO_PATH = (tenantIdExpression: string): string =>
+	`"/service/tenant/public/branding/" + ${tenantIdExpression} + "/logo"`;
+
 const PRODUCTION_HOST = /oriso\.org/;
 // `!'https://…'` (FreeMarker default) or `key=https://…` (literal property).
 const URL_DEFAULT = /!\s*['"]https?:\/\/|=\s*https?:\/\//;
