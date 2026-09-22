@@ -83,8 +83,7 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					maxWidth={false}
 					open
 					PaperProps={{
-						className:
-							'twoFactorSetupDialog__paper accountSetupGate__passwordPaper'
+						className: 'twoFactorSetupDialog__paper'
 					}}
 				>
 					<AccountSetupProgress active="password" />
