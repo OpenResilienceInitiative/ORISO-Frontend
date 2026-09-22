@@ -1250,9 +1250,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		return scheduleComposerAutoFocus(() => {
 			// Review v6: never pull focus off an open menu or a
-			// `data-keeps-focus` region (the side-panel header) — the
-			// alignLeft chain below focuses the editor on its own, so the
-			// check has to come first.
+			// `data-keeps-focus` region (the side-panel header).
 			if (isFocusProtected(document.activeElement)) {
 				return;
 			}
@@ -1270,7 +1268,9 @@ export const MessageSubmitInterfaceComponent = ({
 			// Frank (16.09.): this cursor is the app's, not the reader's —
 			// the card is marked so it does not count as writing.
 			focusComposerAutomatically(composerCardRef.current, () => {
-				composerRef.current?.runAction('alignLeft');
+				// Not runAction('alignLeft'): its focus lands a frame later,
+				// past the checks above, and took the other composer's focus.
+				composerRef.current?.resetTextAlign();
 				focusEditorInput();
 			});
 		}, autoFocusEditor);

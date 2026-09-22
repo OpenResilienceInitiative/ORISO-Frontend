@@ -64,6 +64,8 @@ export interface TipTapComposerRef {
 	setInsertionMarker: (visible: boolean) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
+	/** Left-aligns without focusing: `runAction` focuses a frame later. */
+	resetTextAlign: () => void;
 	isActionActive: (action: string) => boolean;
 }
 
@@ -509,6 +511,12 @@ export const TipTapComposer = forwardRef<
 					.unsetHighlight()
 					.insertContent(anchorMeta)
 					.run();
+			},
+			resetTextAlign: () => {
+				if (!isEditorReady(editor)) {
+					return;
+				}
+				editor.chain().setTextAlign('left').run();
 			},
 			runAction: (action: string) => {
 				if (!isEditorReady(editor)) {
