@@ -1,11 +1,14 @@
 import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
-import { startAuthenticatedChatRecovery } from '../../services/authenticatedChatRecovery';
-import { setRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
+import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
+import {
+	isAccountSetupPending,
+	resolveAccountSetupStep
+} from '../twoFactorAuth/accountSetupStep';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -19,7 +22,6 @@ import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
-import { groupEntryRoomPath } from '../groupChat/entryRoom/GroupEntryRoom';
 import {
 	handleTokenRefresh,
 	isTokenRefreshUnavailableError
@@ -29,7 +31,8 @@ import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
-import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
+import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRecovery';
+import { usePendingGroupChatJoin } from '../../hooks/usePendingGroupChatJoin';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
@@ -65,64 +68,22 @@ export const AuthenticatedApp = ({
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { locale, setLocale } = useContext(LocaleContext);
 	const { setInformal } = useContext(InformalContext);
-	const { joinGroupChat, tenantReady } = useJoinGroupChat();
-	const navigate = useNavigate();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
 	const { matrixClientService, setMatrixClientService } = useMatrixClient();
 	// #1377: the display-filter store follows the published client (and
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
-	const recoveryClients = useRef(new WeakSet<object>());
-	const recoveryMode = userData?.chatRecoveryMode;
-	const recoveryRevision = userData?.chatRecoveryPolicyRevision;
-	const recoveryAnonymous =
-		!!userData && hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData);
-	const recoveryUserLoaded = !!userData;
-	useEffect(() => {
-		if (!matrixClientService || !recoveryUserLoaded) return;
-		let cancelled = false;
-		const unsubscribe = matrixClientService.onSyncStateChange((state) => {
-			if (state !== 'PREPARED' && state !== 'SYNCING') return;
-			const client = matrixClientService.getClient();
-			const userId = client?.getUserId();
-			if (!client || !userId || recoveryClients.current.has(client))
-				return;
-			if (recoveryAnonymous) {
-				clearLoginRecoveryPassword();
-				return;
-			}
-			try {
-				void startAuthenticatedChatRecovery(
-					client,
-					{
-						chatRecoveryMode: recoveryMode,
-						chatRecoveryPolicyRevision: recoveryRevision
-					},
-					recoveryClients.current,
-					() => cancelled
-				);
-			} catch {
-				setRecoveryRuntimeStatus(userId, 'retryable-failure');
-			}
-		});
-		return () => {
-			cancelled = true;
-			unsubscribe();
-		};
-	}, [
-		matrixClientService,
-		recoveryUserLoaded,
-		recoveryAnonymous,
-		recoveryMode,
-		recoveryRevision
-	]);
+	useAuthenticatedChatRecovery(matrixClientService, userData);
+	usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
 	// the browser's permission dialog for anonymous visitors (owner report,
-	// 2026-08-19).
-	useNotificationPermission();
+	// 2026-08-19). Withheld until the profile says the account is the counsellor's
+	// own: an account that still owes its password or second factor takes no calls,
+	// and the dialog would land over the setup gate. Unknown counts as pending here.
+	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
 	useEffect(
 		() => () => {
@@ -168,37 +129,11 @@ export const AuthenticatedApp = ({
 		setNotifications([]);
 	}, [setNotifications]);
 
-	/* The group-chat id from the link (`?gcid=`) is read once, at mount. It
-	   used to be re-read from `window.location` inside an effect that ran
-	   again when the tenant arrived — by then the router had already
-	   replaced the URL and the id was gone, so the assignment never fired
-	   (#974, #1216). Now: keep the id, wait for the tenant, assign, then
-	   open the group's entry room. */
-	const [pendingGroupChatId, setPendingGroupChatId] = useState<string | null>(
-		() => new URLSearchParams(window.location.search).get('gcid')
-	);
-	useEffect(() => {
-		if (!pendingGroupChatId || !tenantReady) {
-			return;
-		}
-		const gcid = pendingGroupChatId;
-		setPendingGroupChatId(null);
-		joinGroupChat(gcid)
-			.then((assigned) => {
-				if (assigned) {
-					navigate(groupEntryRoomPath(gcid), { replace: true });
-				}
-			})
-			.catch(() => {
-				/* Already assigned (409) or gone — the entry room says so. */
-				navigate(groupEntryRoomPath(gcid), { replace: true });
-			});
-	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate]);
-
 	useEffect(() => {
 		if (
 			!releaseToggles?.enableNewNotifications &&
 			userData &&
+			!isAccountSetupPending(userData) &&
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		) {
 			requestPermissions();
@@ -273,6 +208,20 @@ export const AuthenticatedApp = ({
 											);
 											(window as any).callContext =
 												callContext;
+
+											// Deliberately NOT gated: the client has
+											// already started, and the password step needs
+											// a PREPARED client whenever there is
+											// key-backup material to rotate. What IS
+											// withheld is everything acting on the content:
+											// live events, notifications, the deep link.
+											if (
+												isAccountSetupPending(
+													userProfileData
+												)
+											) {
+												return;
+											}
 
 											const { matrixLiveEventBridge } =
 												await import(
@@ -394,6 +343,17 @@ export const AuthenticatedApp = ({
 	}
 
 	if (appReady) {
+		// Account setup comes before the app, not on top of it: until the counsellor's
+		// own password and a second factor are settled, the only ways on are completing
+		// them or logging out. Replacing the routed app is what makes that true.
+		if (resolveAccountSetupStep(userData) !== null) {
+			return (
+				<AuthenticatedBuildIdentityBoundary>
+					<AccountSetupGate onLogout={handleLogout} />
+				</AuthenticatedBuildIdentityBoundary>
+			);
+		}
+
 		return (
 			<AuthenticatedBuildIdentityBoundary>
 				<E2EEncryptionSupportBanner />

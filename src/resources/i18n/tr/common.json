@@ -577,7 +577,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Ekip görüşmesini aç" },
+		"teamDiscussion": {
+			"open": "Ekip görüşmesini aç"
+		},
 		"acceptButton": {
 			"anonymous": "Sohbet başlat",
 			"known": "Sorguyu kabul et"
@@ -891,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "Mevcut katılımcı yok",
-				"headline": "Katılımcılar"
+				"headline": "Katılımcılar",
+				"menuLabel": "{{name}} için seçenekler"
 			},
 			"gallery": {
 				"back": "Geri sayıma dön",
@@ -916,6 +919,10 @@
 					}
 				},
 				"upcoming": "Sonraki randevular"
+			},
+			"status": {
+				"active": "Şu anda sürüyor",
+				"planned": "Planlandı"
 			}
 		},
 		"join": {
@@ -938,6 +945,9 @@
 					"flipHint": "çevirmek için tıklayın",
 					"greetingLabel": "Danışmanınızdan karşılama mesajı",
 					"headline": "Grup sohbetiniz {{eta}} başlıyor.",
+					"moderatorHeadline": "Grup görüşmesi {{eta}} başlıyor.",
+					"moderatorOverdueHeadline": "Grup bekliyor.",
+					"moderatorSubtitle": "Hazır olduğunuzda sohbeti başlatabilirsiniz.",
 					"netiquetteLabel": "Sohbet kuralları · kural {{no}}",
 					"netiquetteTitle": "Sohbet kuralları",
 					"overdueCaption": "Bekleyiş biraz tuhaflaşmaya başladı …",
@@ -1110,6 +1120,17 @@
 				"durationValue": "{{count}} sa",
 				"repeatValue_one": "{{count}} kez",
 				"repeatValue_other": "{{count}} kez"
+			},
+			"noModeratorAvailable": "Uygun kişi yok",
+			"moderatorHelp": "Yardım",
+			"moderatorHelpDialog": {
+				"title": "Yardımcı moderatörleri sonra davet edin",
+				"description": "Şu anda kuruluşunuzdan başka bir uzman seçilemiyor. Yine de çemberi oluşturabilir ve yardımcı moderatörleri daha sonra ekleyebilirsiniz.",
+				"step1": "Listenizde çemberi açın ve ardından “Sohbet bilgileri”ni açın.",
+				"step2": "“Sohbet ayarları” altında “Düzenle”yi seçin.",
+				"step3": "“Ek moderasyon” altında meslektaşlarınızı ekleyin ve kaydedin.",
+				"note": "Çemberi yalnızca onu oluşturan kişi düzenleyebilir ve yalnızca çember devam etmiyorken. Kuruluşunuzun tüm aktif uzmanları seçilebilir.",
+				"close": "Anladım"
 			}
 		},
 		"entry": {
@@ -1123,6 +1144,28 @@
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
 			"backToCountdown": "Geri sayıma dön"
+		},
+		"shareDialog": {
+			"title_text": "Çember oluşturuldu",
+			"title_audio": "Sesli görüşme oluşturuldu",
+			"title_video": "Görüntülü görüşme oluşturuldu",
+			"description": "Bu bağlantıyı katılımcılarla paylaşın. Oturum başlayana kadar onları bekleme odasına götürür.",
+			"linkLabel": "Davet bağlantısı",
+			"copy": "Bağlantıyı kopyala",
+			"copied": "Kopyalandı",
+			"detailsHeadline": "Oturum",
+			"topic": "Konu",
+			"date": "Tarih",
+			"start": "Başlangıç",
+			"timeValue": "saat {{time}}",
+			"duration": "Süre",
+			"repeats": "Tekrarlar",
+			"repeatValue": "{{count}} oturum, {{interval}}",
+			"format": "Biçim",
+			"language": "Dil",
+			"done": "Tamam",
+			"durationValue": "{{value}} sa",
+			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
 		}
 	},
 	"help": {
@@ -2295,6 +2338,13 @@
 				"viaSidebar": {
 					"label": "Canlı sohbeti menü çubuğundan etkinleştir",
 					"description": "Etkinleştirildiğinde, canlı sohbet uygunluğunuzu burası yerine menü çubuğundan (yan menü) açıp kapatırsınız. Yukarıdaki uygunluk düğmesi o zaman devre dışı kalır ve canlı sohbet simgesi yan menüde kalıcı olarak görünür – tıklamak yalnızca simgenin durumunu değiştirir, simge kaybolmaz. Bu seçenek kapalıyken canlı sohbet eskisi gibi yalnızca burada, Profilim bölümünde yönetilir."
+				},
+				"lost": {
+					"title": "Canlı sohbette artık ulaşılamıyorsunuz",
+					"refused": "Sunucu uygunluğunuzu reddetti. Canlı sohbeti yeniden açın. Bu işe yaramazsa yeniden giriş yapın.",
+					"sessionExpired": "Oturumunuzun süresi doldu. Yeniden giriş yapın, ardından canlı sohbeti tekrar açın.",
+					"leaseLost": "Sunucu sizi artık uygun olarak göstermiyor. Ulaşılabilir olmak için canlı sohbeti yeniden açın.",
+					"connectionLost": "Sunucuyla bağlantı iki dakikadan uzun süre kesildi. Bağlantı yeniden kurulunca canlı sohbeti tekrar açın."
 				}
 			},
 			"masterKey": {
@@ -2312,7 +2362,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Yeni şifreyi onayla"
+						"label": "Yeni şifreyi onayla",
+						"dialogLabel": "Yeni şifreyi tekrarlayın"
 					},
 					"insecure": "Şifreniz güvenli değil.",
 					"instructions": "<span class=\"text--bold\">Korumalı bir danışmayı garanti etmek için şifreniz aşağıdaki kriterleri karşılamalıdır:</span><ul class=\"pl--2 my--1\"><li>büyük ve küçük harf</li><li>en az bir sayı</li><li>en az bir özel karakter (örneğin: ?, !, +, #, &, ...)</li><li>en az 9 karakter</li></ul>",
@@ -2324,7 +2375,9 @@
 					},
 					"old": {
 						"incorrect": "Şifreniz yanlış.",
-						"label": "Geçerli şifre"
+						"label": "Geçerli şifre",
+						"hint": "Az önce oturum açarken kullandığınız şifre.",
+						"dialogLabel": "Önceki şifre"
 					},
 					"overlay": {
 						"button": {
@@ -2333,9 +2386,19 @@
 						"headline": "Şifrenizi başarıyla değiştirdiniz. Şimdi giriş sayfasına yönlendirileceksiniz."
 					},
 					"same": "Şifreniz aynı.",
+					"sameAsOld": "Lütfen yeni bir şifre seçin – bu mevcut şifreniz.",
 					"secure": "Şifreniz güvende.",
 					"subtitle": "Dilerseniz şifrenizi buradan değiştirebilirsiniz. Yeni bir şifre belirlemek için önce mevcut şifrenizi girin.",
-					"title": "şifre"
+					"title": "şifre",
+					"criteria": {
+						"title": "Yeni şifreniz şunları içermeli",
+						"mixedCase": "büyük ve küçük harfler",
+						"number": "en az bir rakam",
+						"specialChar": "bir özel karakter (?, !, +, # …)",
+						"minLength": "en az 9 karakter",
+						"met": "karşılandı"
+					},
+					"submitAndContinue": "Şifreyi kaydet ve devam et"
 				}
 			},
 			"security": {
@@ -3054,6 +3117,13 @@
 					"title": "Suç ve yeniden başlangıç",
 					"description": "Suç, yeniden başlangıç ve günlük yaşamla ilgili sorularda destek."
 				}
+			},
+			"search": {
+				"open": "Konu ara",
+				"placeholder": "Konu veya anahtar kelime ara",
+				"close": "Aramayı kapat",
+				"noResults": "Uygun konu bulunamadı. Başka bir kelime deneyin.",
+				"matchedBy": "“{{term}}” ile eşleşiyor"
 			}
 		},
 		"account": {
@@ -3913,11 +3983,12 @@
 					"missingQr": "QR kodu şu anda kullanılamıyor. Manuel anahtarı kullanın.",
 					"missingSecret": "Anahtar şu anda kullanılamıyor.",
 					"or": "veya",
-					"qrAlt": "Kimlik doğrulama uygulaması için QR kodu"
+					"qrAlt": "Kimlik doğrulama uygulaması için QR kodu",
+					"title": "Uygulamayı ORISO’ya bağlayın"
 				},
 				"install": {
 					"android": "Google Play Store'dan indirin",
-					"copy": "Akıllı telefonunuza veya tabletinize Google Authenticator ya da Microsoft Authenticator uygulamasını yükleyin. Her iki uygulama da Çevrimiçi Danışmanlık için güvenlik kodunu destekler.",
+					"copy": "Akıllı telefonunuzda veya tabletinizde bu iki uygulamadan birine ihtiyacınız var. Zaten yüklü mü? O hâlde doğrudan devam edin.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -3928,20 +3999,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Kimlik doğrulama uygulamasını yükleyin",
+					"note": "ücretsiz, hesap gerekmeden kullanılabilir",
+					"done": "Uygulama yüklendi – devam"
 				},
 				"success": {
 					"title": "Uygulama ile kimlik doğrulama başarıyla kuruldu."
 				},
 				"verify": {
 					"copy": "Kurulumu tamamlamak için uygulamadaki altı haneli kodu girin.",
-					"input": "Tek kullanımlık kod"
+					"input": "Tek kullanımlık kod",
+					"title": "Kodu doğrulayın"
 				}
 			},
 			"decision": {
 				"app": "Uygulama ile güvenli şekilde bağlan",
 				"copy": "Hesabınızı ikinci bir faktörle koruyun. Kimlik doğrulama uygulaması daha güvenli seçenektir; alternatif olarak kodları e-posta ile de alabilirsiniz.",
-				"email": "E-posta kodu kullan (daha az güvenli)"
+				"email": "E-posta kodu kullan (daha az güvenli)",
+				"title": "İkinci faktörü seçin"
 			},
 			"email": {
 				"connect": {
@@ -3949,12 +4025,14 @@
 					"input": "Tek kullanımlık kod",
 					"resend": "Yeni kod gönder",
 					"resendTitle": "İşe yaramadı mı?",
-					"sent": "Yeni kod gönderildi."
+					"sent": "Yeni kod gönderildi.",
+					"title": "Kodu doğrulayın"
 				},
 				"select": {
 					"copy": "Güvenlik kodunuzu göndermemizi istediğiniz e-posta adresini girin.",
 					"hint": "E-posta adresini değiştirirseniz, bundan sonra bildirimleri de bu adrese alırsınız.",
-					"input": "E-posta adresi"
+					"input": "E-posta adresi",
+					"title": "İkinci faktörü e-posta ile kurun"
 				},
 				"success": {
 					"title": "E-posta ile kimlik doğrulama başarıyla kuruldu."
@@ -3979,7 +4057,9 @@
 				"select": "Seç",
 				"verify": "Doğrula"
 			},
-			"title": "Hangi bağlantıyı kullanmak istersiniz?"
+			"success": {
+				"title": "İkinci faktör kuruldu"
+			}
 		},
 		"overlayButton": {
 			"back": "Geri",
@@ -4002,7 +4082,11 @@
 				"label": "İkinci faktörünüz"
 			}
 		},
-		"title": "İki faktörlü kimlik doğrulama"
+		"title": "İki faktörlü kimlik doğrulama",
+		"required": {
+			"copy": "Lütfen şimdi ikinci bir faktör (uygulama veya e-posta) tanımlayın. Ancak bundan sonra hesabınız yalnızca size ait olur ve danışmanlığa başlayabilirsiniz.",
+			"title": "İkinci faktör gerekli"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4812,6 +4896,9 @@
 				"later": "Daha sonra",
 				"openVault": "Kasayı aç",
 				"restoring": "Geri getiriliyor …"
+			},
+			"snackbar": {
+				"close": "Bildirimi kapat"
 			}
 		},
 		"saveReminder": {
@@ -4843,7 +4930,8 @@
 			"idle": "Kurtarma durumu henüz kontrol edilmedi.",
 			"pending": "Kurtarma kontrol ediliyor. Uygulamayı kullanmaya devam edebilirsiniz.",
 			"busy": "Kurtarma işlemi başka bir sekmede veya arka planda devam ediyor. Lütfen daha sonra tekrar deneyin.",
-			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi."
+			"repairRequired": "Parolanızı değiştirmeden önce güvenlik ayarlarında sohbet kurtarmayı onarmanız gerekir. Giriş parolanız değiştirilmedi.",
+			"chatUnavailable": "Sohbet bağlantısı şu anda kullanılamıyor, bu nedenle şifreniz güvenli bir şekilde değiştirilemiyor. Şifreniz değiştirilmedi. Lütfen daha sonra tekrar deneyin; sorun devam ederse yöneticinizle iletişime geçin."
 		}
 	},
 	"accountInvite": {
@@ -5020,7 +5108,9 @@
 				"access": "Bu görüşme için erişiminiz",
 				"waiting": "Bekleme odası — müsait bir danışman aranıyor",
 				"accepted": "Bir danışman görüşmenizi kabul etti",
-				"closed": "Şu anda kapalı"
+				"closed": "Şu anda kapalı",
+				"checking": "Şu anda kim çevrimiçi?",
+				"waitingForLive": "Biri çevrimiçi olana kadar bekleniyor"
 			},
 			"access": {
 				"headline": "Bugünkü adınız.",
@@ -5058,7 +5148,8 @@
 				"later": "Sonra",
 				"mail": "Bir danışma merkezine talep yazın",
 				"mailShort": "Talep yaz",
-				"closedDay": "kapalı"
+				"closedDay": "kapalı",
+				"wait": "Bekliyorum"
 			},
 			"steps": {
 				"wait": {
@@ -5073,6 +5164,14 @@
 					"title": "Anonim ve sonra silinir",
 					"text": "Yalnızca kullanıcı kimliğiniz görünür. 48 saat sonra her şey silinir."
 				}
+			},
+			"checking": {
+				"text": "Şu anda kimin çevrimiçi olduğuna bakıyoruz …",
+				"waiting": "Biri çevrimiçi olana kadar sizinle bekliyoruz …"
+			},
+			"staff": {
+				"headline": "Danışman olarak oturum açtınız.",
+				"text": "Bu bağlantı sizi burada oturumdan çıkarır ve artık çevrimiçi olmazsınız. Test etmek için lütfen gizli bir pencerede açın."
 			}
 		}
 	},
@@ -5081,6 +5180,23 @@
 			"title": "Bağlantı kesildi",
 			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
 			"retry": "Tekrar dene"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Erişiminiz sizin için oluşturuldu; bu nedenle ilk şifreyi hâlâ başka biri biliyor. Şimdi yalnızca sizin bildiğiniz bir şifre belirleyin.",
+			"title": "Kendi şifreniz"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Bunun yerine çıkış yap"
+		},
+		"progress": {
+			"label": "İki adımda kurulum",
+			"password": "Kendi şifreniz",
+			"twoFactor": "İkinci faktör",
+			"done": "tamamlandı"
 		}
 	}
 }
