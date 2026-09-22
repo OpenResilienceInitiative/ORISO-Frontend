@@ -23,6 +23,9 @@ const withUser =
 		</UserDataContext.Provider>
 	);
 
+const STORY_QR_PNG =
+	'iVBORw0KGgoAAAANSUhEUgAAAJYAAACWCAAAAAAZai4+AAABUklEQVR42u3aQQ7DIBBD0dz/0lTqqlUVas+QSMGfVRdJeCwKjOE45DbezX1mfLTjigYL1kasMW1zlkL5/T3vCxasZNa8SwW9dniwYMGas9xpAhYsWGtZtekAFixYOstdYvXS9Na9PCxYj2WtSnWUpfqSfAsWrIezRqPp3dtfhgUrjFVbqs8QOk4aEixYMSwlANLjpE5A/PUMLFiRLLczd9nWBw8LViarXy26G2ij0IUFK5hVu77TOao5fRcWrBhWLRJSStPaAGDBSmbpgZE7KehbcClzggVrU5YbvLr0/pYaFqwcVufSgPuuEQfDghXDKl4FMC8TKNEwLFjJrCvuxfW/AwtWJks/OFl1/CkNAxasSJbepb4tbhWxsGDBEv78etSrV9JGVQ0LFix5c/znOHM+AFiwIln6FKCHRO6RanEvDwvWFiz3ikAnfup/Exas7VgvwSyN3XsHaRgAAAAASUVORK5CYII=';
+
 const counsellor = {
 	userId: 'storybook-counsellor',
 	userName: 'beraterin.sonnenblume',
@@ -45,7 +48,8 @@ const owesSecondFactor = withUser({
 		isEnabled: true,
 		isRequired: true,
 		isActive: false,
-		qrCode: '',
+		// A synthetic module grid, so the connect step shows a QR image instead of the fallback.
+		qrCode: STORY_QR_PNG,
 		secret: 'STORYBOOKEXAMPLESECRET'
 	}
 });
