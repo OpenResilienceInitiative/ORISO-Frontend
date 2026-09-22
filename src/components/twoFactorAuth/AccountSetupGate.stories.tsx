@@ -202,9 +202,13 @@ export const SecondFactorConnect: Story = {
 	play: async () => {
 		const host = await reachConnect();
 
+		// No QR code in this story, so the manual key has to carry the step.
 		await expect(
-			await within(host).findByText(/STORYBOOK/i)
+			await within(host).findByText(/manueller schlüssel|manual key/i)
 		).toBeInTheDocument();
+		await expect(
+			host.querySelector('.twoFactorSetupDialog__secret').textContent
+		).toMatch(/^[A-Z2-7]{8,}$/);
 	}
 };
 
@@ -268,7 +272,9 @@ export const SecondFactorSuccess: Story = {
 		);
 
 		await expect(
-			await within(host).findByText(/eingerichtet|set up/i)
+			await within(host).findByRole('heading', {
+				name: /eingerichtet|set up/i
+			})
 		).toBeInTheDocument();
 	}
 };
