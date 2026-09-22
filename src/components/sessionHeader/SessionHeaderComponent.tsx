@@ -1099,16 +1099,18 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
-						/* FE#1115: while nobody has accepted, the capsule's
-						   own magnet sweeps and sends its beam — there is no
-						   second element beside it any more. The avatar
-						   stack keeps its place either way, so the row does
-						   not move when a counsellor takes the case. */
+						/* FE#1115: an enquiry nobody has accepted yet — the
+						   capsule's magnet sweeps. Only the enquiry: an empty
+						   one or a waiting live chat keeps its avatar stack.
+						   The stack appears on accept, so the title moves by
+						   its width then (no empty slot, Frank's design). */
 						const isSearchingForConsultant =
+							sessionHeaderConversationIconType === 'inquiry' &&
 							hasUserAuthority(
 								AUTHORITIES.ASKER_DEFAULT,
 								userData
-							) && !activeSession.consultant;
+							) &&
+							!activeSession.consultant;
 						return (
 							<div className="sessionInfo__memberStack sessionInfo__memberStack--single">
 								<ChatroomMainInteractionIcon

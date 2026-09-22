@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -1064,6 +1064,11 @@ export const RuntimeComponent: Story = {
 				)
 			).toBe(false);
 		});
+		// Review of #1418: "Mail" is read out once — the envelope beside the
+		// visible word is decoration, not a second name.
+		const canvas = within(canvasElement);
+		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
+		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
 	}
 };
 
