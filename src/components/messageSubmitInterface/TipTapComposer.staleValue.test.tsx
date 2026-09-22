@@ -136,10 +136,12 @@ describe('TipTapComposer — typing past maxLength', () => {
 	   already reports the shortened text through a nested onUpdate. */
 	it('reports the shortened text once, not twice', () => {
 		const onChange = vi.fn();
-		mocks.editor.commands.setContent.mockImplementationOnce((next: string) => {
-			mocks.editor.html = next;
-			mocks.options.onUpdate({ editor: mocks.editor });
-		});
+		mocks.editor.commands.setContent.mockImplementationOnce(
+			(next: string) => {
+				mocks.editor.html = next;
+				mocks.options.onUpdate({ editor: mocks.editor });
+			}
+		);
 		render(
 			<TipTapComposer
 				{...props}
