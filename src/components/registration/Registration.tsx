@@ -582,16 +582,22 @@ export const Registration = () => {
 			   below decides that. Everything after it is tidying up and
 			   leaving; a failure there must never be reported as a failed
 			   registration, or the form comes back and invites a second
-			   account for a person who already has one (CodeRabbit on #1514). */
+			   account for a person who already has one (CodeRabbit on #1514).
+			   The automatic login is part of that "everything after": it runs
+			   inside `apiPostRegistration`, after the account was created, and
+			   shares its promise — which is why the account is marked through
+			   the callback rather than in `then`, one step too late. */
 			let accountCreated = false;
 			apiPostRegistration(
 				endpoints.registerAsker,
 				data,
 				settings.multitenancyWithSingleDomainEnabled,
-				tenant
+				tenant,
+				() => {
+					accountCreated = true;
+				}
 			)
 				.then(async () => {
-					accountCreated = true;
 					/* Best-effort, every one of them: Web Storage throws when
 					   it is disabled or full (Safari's private mode is the
 					   classic), and none of this is worth not arriving in the

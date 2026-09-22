@@ -25,15 +25,16 @@ import { clearRegistrationSubmitting } from './registrationSubmission';
  * test settles it, which is the state under test. Hoisted with the `vi.mock`
  * calls below, which run before this file's own imports are evaluated.
  */
-const { pendingRegistration, settle } = vi.hoisted(() => {
+const { pendingRegistration, redirectToApp, settle } = vi.hoisted(() => {
 	const settle: {
 		resolve?: () => void;
 		reject?: (error: Error) => void;
 	} = {};
 	return {
 		settle,
+		redirectToApp: vi.fn(),
 		pendingRegistration: vi.fn(
-			() =>
+			(..._args: unknown[]) =>
 				new Promise<void>((resolve, reject) => {
 					settle.resolve = resolve;
 					settle.reject = reject;
@@ -51,11 +52,19 @@ vi.mock('../../components/stageLayout/StageLayout', () => ({
 	)
 }));
 
+/* The real one leaves the document, which a test cannot come back from — and
+   it is the end of the successful path, so it is what the test waits for. */
+vi.mock('./autoLogin', async (importOriginal) => {
+	const actual = await importOriginal<Record<string, unknown>>();
+	return { ...actual, redirectToApp };
+});
+
 vi.mock('../../api', async (importOriginal) => {
 	const actual = await importOriginal<Record<string, unknown>>();
 	return {
 		...actual,
-		apiPostRegistration: () => pendingRegistration(),
+		apiPostRegistration: (...args: unknown[]) =>
+			pendingRegistration(...args),
 		apiGetAskerSessionList: vi.fn(async () => ({ sessions: [] }))
 	};
 });
@@ -156,6 +165,7 @@ const form = () => document.querySelector('[data-cy="registration-form"]');
 beforeEach(() => {
 	clearRegistrationSubmitting();
 	pendingRegistration.mockClear();
+	redirectToApp.mockClear();
 	settle.reject = undefined;
 	settle.resolve = undefined;
 });
@@ -239,9 +249,11 @@ describe('registration — a submit that is already in flight', () => {
 				await Promise.resolve();
 			});
 
-			await act(async () => {
-				await new Promise((resolve) => setTimeout(resolve, 10));
-			});
+			/* The successful path ends in the redirect, so waiting for it is
+			   what says the tidy-up and the session lookup are done — a fixed
+			   delay would only say that some time has passed
+			   (CodeRabbit on #1514). */
+			await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
 
 			expect(
 				form(),
@@ -251,6 +263,36 @@ describe('registration — a submit that is already in flight', () => {
 		} finally {
 			setItem.mockRestore();
 		}
+	});
+
+	it('keeps the handover when the account exists and the auto-login fails', async () => {
+		/* `apiPostRegistration` posts the registration *and then* logs in, and
+		   resolves only when both have worked. An auto-login that fails after
+		   the account was created would otherwise arrive in the same `catch`
+		   as a registration that never happened — form back, second account
+		   offered to someone who already has one (CodeRabbit on #1514). */
+		renderAccountStep();
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		const onAccountCreated = pendingRegistration.mock.calls[0]?.[4];
+		expect(
+			typeof onAccountCreated,
+			'the screen has to be told the account exists before the auto-login can fail'
+		).toBe('function');
+
+		await act(async () => {
+			(onAccountCreated as () => void)();
+			settle.reject?.(new Error('auto-login failed'));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(
+			form(),
+			'the account exists — the form must not come back'
+		).toBeNull();
+		expect(handover()).toBeTruthy();
 	});
 
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {
