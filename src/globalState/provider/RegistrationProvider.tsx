@@ -348,17 +348,31 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 
 	/* The same rule as the age/state reset above, for the subject area: a pick
 	   is void once the centre it was made for is gone. Only a PROVEN mismatch
-	   clears it (see `agencyExcludesTopic`) — a centre whose topic list we could
+	   acts on it (see `agencyExcludesTopic`) — a centre whose topic list we could
 	   not read never costs the advice seeker a valid selection.
 
-	   A subject area that came from the URL is exempt: there the caller named it
-	   on purpose, the restore effect above has already dropped the conflicting
-	   centre, and clearing it here would only fight the direct-link effect that
-	   re-applies it. */
+	   Which of the two gives way is the same question the restore effect above
+	   answers, and it has to be answered here too: the URL topic is not resolved
+	   yet while that effect runs, so a centre restored from storage meets its
+	   `tid` topic only now. A topic the caller named in the URL therefore clears
+	   the CENTRE; any other topic clears itself. Exempting the URL topic without
+	   touching the centre — as this effect first did — left exactly the pair
+	   this whole change exists to prevent. */
 	useEffect(() => {
 		const agency = registrationData?.agency;
 		const mainTopic = registrationData?.mainTopic;
 		const topic = registrationData?.topic;
+		const urlNamedConflict =
+			(preselectedTopic?.id === mainTopic?.id &&
+				agencyExcludesTopic(agency, mainTopic)) ||
+			(preselectedTopic?.id === topic?.id &&
+				agencyExcludesTopic(agency, topic));
+
+		if (urlNamedConflict) {
+			updateRegistrationData({ agency: undefined, agencyId: undefined });
+			return;
+		}
+
 		const clearMainTopic =
 			preselectedTopic?.id !== mainTopic?.id &&
 			agencyExcludesTopic(agency, mainTopic);
@@ -370,9 +384,19 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			return;
 		}
 
+		/* Clearing the pick also retires the step it belonged to — the same set
+		   the chip's own ✕ clears (`onClearSelection`, Registration.tsx). Leaving
+		   `topicGroupId` behind would still steer the placement preselect, and
+		   leaving the Next button enabled would let the advice seeker walk past a
+		   step that no longer has an answer. */
+		setDisabledNextButton(true);
 		updateRegistrationData({
 			...(clearMainTopic
-				? { mainTopic: undefined, mainTopicId: undefined }
+				? {
+						mainTopic: undefined,
+						mainTopicId: undefined,
+						topicGroupId: undefined
+					}
 				: {}),
 			...(clearTopic ? { topic: undefined, topicId: undefined } : {})
 		});

@@ -51,6 +51,7 @@ const apiGetAgencyByIdMock = vi.mocked(apiGetAgencyById);
 const apiGetConsultingTypeMock = vi.mocked(apiGetConsultingType);
 
 const CARRIED_OVER_TOPIC_ID = 99;
+const URL_TOPIC_ID = 42;
 const AGENCY_ID = 5;
 
 const Probe = () => {
@@ -71,7 +72,7 @@ const Probe = () => {
 	);
 };
 
-const renderProvider = () =>
+const renderProvider = (urlTopic: { id: number } | null = null) =>
 	render(
 		<UrlParamsContext.Provider
 			value={{
@@ -79,7 +80,7 @@ const renderProvider = () =>
 				agency: null,
 				consultingType: null,
 				consultant: null,
-				topic: null,
+				topic: urlTopic,
 				slugFallback: undefined,
 				zipcode: undefined
 			}}
@@ -151,6 +152,49 @@ describe('RegistrationProvider — restoring a subject area at another centre', 
 		await waitFor(() =>
 			expect(screen.getByTestId('main-topic').textContent).toBe(
 				String(CARRIED_OVER_TOPIC_ID)
+			)
+		);
+		expect(screen.getByTestId('agency').textContent).toBe(
+			String(AGENCY_ID)
+		);
+	});
+
+	it('drops the stored centre when the URL names a subject area it does not offer', async () => {
+		/* The restore effect cannot settle this one: the URL topic is not
+		   resolved while it runs, so it compares the centre against the STORED
+		   topic — which the centre does offer — and keeps both. The direct-link
+		   effect then applies the URL topic, and the pair (centre, URL topic) is
+		   the mismatch this whole change exists to prevent. The centre gives way,
+		   because the caller named the subject area on purpose. */
+		givenStoredRegistration([CARRIED_OVER_TOPIC_ID]);
+		getUrlParameterMock.mockImplementation((name: string) =>
+			name === 'tid' ? String(URL_TOPIC_ID) : null
+		);
+
+		renderProvider({ id: URL_TOPIC_ID });
+
+		// Wait on the centre, not on the topic: the centre is dropped one effect
+		// pass AFTER the URL topic lands, so waiting on the topic can observe the
+		// intermediate state and pass while the mismatch is still on screen.
+		await waitFor(() =>
+			expect(screen.getByTestId('agency').textContent).toBe('none')
+		);
+		expect(screen.getByTestId('main-topic').textContent).toBe(
+			String(URL_TOPIC_ID)
+		);
+	});
+
+	it('keeps the stored centre when it does offer the URL subject area', async () => {
+		givenStoredRegistration([CARRIED_OVER_TOPIC_ID, URL_TOPIC_ID]);
+		getUrlParameterMock.mockImplementation((name: string) =>
+			name === 'tid' ? String(URL_TOPIC_ID) : null
+		);
+
+		renderProvider({ id: URL_TOPIC_ID });
+
+		await waitFor(() =>
+			expect(screen.getByTestId('main-topic').textContent).toBe(
+				String(URL_TOPIC_ID)
 			)
 		);
 		expect(screen.getByTestId('agency').textContent).toBe(
