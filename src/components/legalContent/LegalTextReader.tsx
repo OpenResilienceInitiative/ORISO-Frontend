@@ -395,6 +395,20 @@ const LegalReaderBody = ({
 		let frame = 0;
 		const update = () => {
 			frame = 0;
+			// The final heading cannot always reach the sticky row: once the
+			// scrollport is at its maximum, there may be too little content below
+			// it. In that state the reader has reached the final chapter, even if
+			// an earlier heading is still nearest the top measurement line.
+			if (
+				scroller &&
+				scroller.scrollHeight - scroller.clientHeight > 0 &&
+				scroller.scrollTop > 0 &&
+				scroller.scrollTop + scroller.clientHeight >=
+					scroller.scrollHeight - 1
+			) {
+				setActiveId(headings[headings.length - 1].id);
+				return;
+			}
 			const top = scroller ? scroller.getBoundingClientRect().top : 0;
 			// A heading counts as reached once its top is at or above the line
 			// just under the sticky chip row, with a little tolerance so the

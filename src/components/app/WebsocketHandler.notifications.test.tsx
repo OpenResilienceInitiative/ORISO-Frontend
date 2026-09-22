@@ -40,6 +40,7 @@ vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: getFeed
 }));
 vi.mock('../sessionCookie/accessSessionCookie', () => ({
+	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
 	getValueFromCookie: () => 'test-token'
 }));
 // A stub transport: `connect` never fires its callback, so nothing subscribes
@@ -135,38 +136,41 @@ afterEach(() => {
 });
 
 describe('WebsocketHandler → new message notification', () => {
-	it('preserves a matching incoming Matrix event while the initial feed is pending', async () => {
-		saveBrowserNotificationsSettings({ enabled: true });
-		let resolveFeed!: (value: unknown) => void;
-		getFeed.mockReturnValueOnce(
-			new Promise((resolve) => {
-				resolveFeed = resolve;
-			})
-		);
-		renderHandler();
-		act(() =>
-			bridge.emit('directMessage', {
-				roomId: '!room:oriso',
-				eventId: '$live',
-				isOwnMessage: false
-			})
-		);
-		await act(async () =>
-			resolveFeed({
-				items: [
-					{
-						id: 1,
-						eventType: 'message.new',
-						createdAt: '2026-09-14T12:00:00Z',
-						readAt: null,
-						params: { matrixEventId: '$live' }
-					}
-				],
-				unreadCount: 1
-			})
-		);
-		await waitFor(() => expect(constructed).toHaveLength(1));
-	});
+	it.each([false, undefined])(
+		'preserves a matching incoming Matrix event while the initial feed is pending (own=%s)',
+		async (isOwnMessage) => {
+			saveBrowserNotificationsSettings({ enabled: true });
+			let resolveFeed!: (value: unknown) => void;
+			getFeed.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveFeed = resolve;
+				})
+			);
+			renderHandler();
+			act(() =>
+				bridge.emit('directMessage', {
+					roomId: '!room:oriso',
+					eventId: '$live',
+					...(isOwnMessage === undefined ? {} : { isOwnMessage })
+				})
+			);
+			await act(async () =>
+				resolveFeed({
+					items: [
+						{
+							id: 1,
+							eventType: 'message.new',
+							createdAt: '2026-09-14T12:00:00Z',
+							readAt: null,
+							params: { matrixEventId: '$live' }
+						}
+					],
+					unreadCount: 1
+				})
+			);
+			await waitFor(() => expect(constructed).toHaveLength(1));
+		}
+	);
 
 	it('registers a Matrix directMessage listener', () => {
 		renderHandler();

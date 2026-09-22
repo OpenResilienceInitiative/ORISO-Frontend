@@ -263,6 +263,7 @@
 				"countdown": {
 					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
+					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
 					"overdueHeadline": "Wir sind gleich für dich da.",
 					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
@@ -337,6 +338,13 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} mal",
 				"repeatValue_other": "{{count}} mal"
+			},
+			"moderatorHelpDialog": {
+				"description": "Gerade kann keine weitere Fachkraft deines Trägers ausgewählt werden. Du kannst den Gesprächskreis trotzdem erstellen und Co-Moderator:innen danach hinzufügen.",
+				"step1": "Öffne den Gesprächskreis in deiner Liste und dort die Chat-Info.",
+				"step2": "Wähle unter „Chatraum Einstellungen“ die Schaltfläche „Bearbeiten“.",
+				"step3": "Füge unter „Weitere Moderation“ Kolleg:innen hinzu und speichere.",
+				"note": "Bearbeiten kann nur, wer den Gesprächskreis erstellt hat, und nur solange er gerade nicht läuft. Zur Auswahl stehen alle aktiven Fachkräfte deines Trägers."
 			}
 		},
 		"create": {
@@ -369,6 +377,10 @@
 					}
 				}
 			}
+		},
+		"shareDialog": {
+			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
 		}
 	},
 	"help": {
@@ -730,7 +742,14 @@
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
 				"description": "Aktiviere Deine Verfügbarkeit und sieh in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anonymen Ratsuchenden.",
-				"toggleLabel": "Bin verfügbar"
+				"toggleLabel": "Bin verfügbar",
+				"lost": {
+					"title": "Du bist im Live-Chat nicht mehr erreichbar",
+					"refused": "Der Server hat Deine Verfügbarkeit abgelehnt. Schalte den Live-Chat wieder ein. Klappt das nicht, melde Dich neu an.",
+					"sessionExpired": "Deine Anmeldung ist abgelaufen. Melde Dich neu an und schalte den Live-Chat danach wieder ein.",
+					"leaseLost": "Der Server führt Dich nicht mehr als verfügbar. Schalte den Live-Chat wieder ein, um erreichbar zu sein.",
+					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalte den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				}
 			},
 			"masterKey": {
 				"saveError": "Beim Ändern des Passworts ist ein Problem aufgetaucht. Bitte versuche es erneut."
@@ -967,18 +986,18 @@
 		},
 		"encryption": {
 			"title": "Verschlüsselung & Wiederherstellung",
-			"description": "Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Wiederherstellungsschlüssel kannst du deinen Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.",
+			"description": "Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Ersatzschlüssel kannst du deinen Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.",
 			"loading": "Wird geladen …",
 			"unavailable": "Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte lade die Seite neu.",
 			"setup": {
 				"busy": "Dein Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warte einen Moment und lade die Seite neu.",
 				"error": "Die Einrichtung ist fehlgeschlagen. Bitte versuche es erneut.",
-				"explainer": "Richte einmalig einen Wiederherstellungsschlüssel ein. Bewahre ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Dein Verlauf bei Geräteverlust nicht wiederherstellbar.",
-				"cta": "Wiederherstellungsschlüssel einrichten"
+				"explainer": "Richte einmalig einen Ersatzschlüssel ein. Bewahre ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Dein Verlauf bei Geräteverlust nicht wiederherstellbar.",
+				"cta": "Ersatzschlüssel einrichten"
 			},
 			"showKey": {
-				"silentExplainer": "Dein Tresor wurde beim Anmelden automatisch eingerichtet. Das ist dein Wiederherstellungsschlüssel — speichere ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
-				"explainer": "Das ist dein Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichere ihn jetzt an einem sicheren Ort.",
+				"silentExplainer": "Dein Tresor wurde beim Anmelden automatisch eingerichtet. Das ist dein Ersatzschlüssel — speichere ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
+				"explainer": "Das ist dein Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichere ihn jetzt an einem sicheren Ort.",
 				"copy": "Schlüssel kopieren",
 				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert."
 			},
@@ -986,19 +1005,19 @@
 				"ok": "✓ Schlüsselsicherung ist aktiv. Dein Verlauf bleibt auf neuen Geräten lesbar."
 			},
 			"changeKey": {
-				"cta": "Wiederherstellungsschlüssel ändern"
+				"cta": "Ersatzschlüssel ändern"
 			},
 			"outOfSync": {
-				"warning": "Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Gib deinen Wiederherstellungsschlüssel ein, damit dein Verlauf hier lesbar wird."
+				"warning": "Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Gib deinen Ersatzschlüssel ein, damit dein Verlauf hier lesbar wird."
 			},
 			"recover": {
-				"inputLabel": "Wiederherstellungsschlüssel",
-				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfe die Eingabe.",
+				"inputLabel": "Ersatzschlüssel",
+				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfe die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuche es erneut.",
 				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt."
 			},
 			"reset": {
-				"explainer": "Wiederherstellungsschlüssel vergessen? Du kannst deine Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
+				"explainer": "Ersatzschlüssel vergessen? Du kannst deine Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
 				"cta": "Verschlüsselung zurücksetzen",
 				"confirmWarning": "Bist du sicher? Das Zurücksetzen erstellt eine neue Verschlüsselungsidentität. Nachrichten, die nur mit der alten Sicherung lesbar waren, bleiben dauerhaft unlesbar.",
 				"confirmCta": "Ja, zurücksetzen",
@@ -1185,7 +1204,10 @@
 		"topic": {
 			"headline": "Zu welchem Thema suchst Du Beratung?",
 			"subline": "Wähle ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Dein Thema:"
+			"summary": "Dein Thema:",
+			"search": {
+				"noResults": "Kein passendes Thema gefunden. Versuch es mit einem anderen Wort."
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Deinen Wohnort kennen",
@@ -1674,6 +1696,9 @@
 			"type": {
 				"label": "Dein zweiter Faktor"
 			}
+		},
+		"required": {
+			"copy": "Bitte hinterlege jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört dein Konto allein dir und du kannst mit der Beratung beginnen."
 		}
 	},
 	"userProfile": {
@@ -2219,13 +2244,13 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Vertragsunterlagen unterzeichnen",
-		"subtitle": "Bitte lies die Vertragsunterlagen vollständig und bestätige anschließend die Angaben zur unterzeichnenden Person.",
+		"title": "Vertragsunterlagen prüfen und bestätigen",
+		"subtitle": "Bitte lies die Vertragsunterlagen vollständig, mache Angaben zur Person und bestätige sie anschließend.",
 		"loadingContract": "Vertragsunterlagen werden geladen...",
 		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
-		"signingFor": "Du unterzeichnest im Namen von:",
+		"signingFor": "Du handelst im Namen von:",
 		"accept": "Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.",
-		"submit": "Verbindlich bestätigen",
+		"submit": "Bestätigung absenden",
 		"submitting": "Speichern...",
 		"success": "Die Bestätigung der Vertragsunterlagen wurde gespeichert.",
 		"error": {
@@ -2240,12 +2265,12 @@
 	"encryption": {
 		"keyBackup": {
 			"dialog": {
-				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfe die Eingabe.",
+				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfe die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuche es erneut.",
 				"recoveryTitle": "Schön, dass du wieder da bist",
 				"recoveryCopy": "Du bist auf einem neuen Gerät angemeldet. Dein bisheriger Gesprächsverlauf liegt sicher verschlossen in deinem Tresor.",
-				"recoveryInstruction": "Gib deinen Wiederherstellungsschlüssel ein, um deine Nachrichten hier weiterzulesen.",
-				"keyLabel": "Wiederherstellungsschlüssel",
+				"recoveryInstruction": "Gib deinen Ersatzschlüssel ein, um deine Nachrichten hier weiterzulesen.",
+				"keyLabel": "Ersatzschlüssel",
 				"later": "Später",
 				"openVault": "Tresor öffnen"
 			}
@@ -2255,13 +2280,13 @@
 			"unavailable": "Deine Anfrage wurde gesendet. Die zusätzliche Schlüsselsicherung ist noch nicht bereit."
 		},
 		"passwordRecovery": {
-			"needs-password": "Die Wiederherstellung mit dem Login-Passwort wurde in dieser Sitzung noch nicht bestätigt. Melde dich erneut an oder richte sie mit deinem vorhandenen Wiederherstellungsschlüssel ein.",
-			"needs-recovery-key": "Dein bisheriger Verlauf benötigt auf diesem Gerät deinen Wiederherstellungsschlüssel.",
+			"needs-password": "Die Wiederherstellung mit dem Login-Passwort wurde in dieser Sitzung noch nicht bestätigt. Melde dich erneut an oder richte sie mit deinem vorhandenen Ersatzschlüssel ein.",
+			"needs-recovery-key": "Dein bisheriger Verlauf benötigt auf diesem Gerät deinen Ersatzschlüssel.",
 			"retryable-failure": "Die Schlüsselsicherung konnte nicht abgeschlossen werden. Du kannst deine Anfrage trotzdem schreiben und die Sicherung in den Sicherheitseinstellungen erneut prüfen.",
-			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Wiederherstellungsschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
+			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
 			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
-			"enrollmentExplanation": "Schütze deinen vorhandenen Wiederherstellungsschlüssel zusätzlich mit deinem aktuellen Login-Passwort. Dein gespeicherter Schlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
-			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Wiederherstellungsschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
+			"enrollmentExplanation": "Schütze deinen vorhandenen Ersatzschlüssel zusätzlich mit deinem aktuellen Login-Passwort. Dein gespeicherter Schlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
 		}
 	},
 	"accountInvite": {
@@ -2390,7 +2415,25 @@
 				"anonymous": {
 					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
+			},
+			"checking": {
+				"waiting": "Wir warten mit dir, bis jemand live ist …"
+			},
+			"staff": {
+				"headline": "Du bist als Beraterin angemeldet.",
+				"text": "Dieser Link würde dich hier abmelden und du wärst nicht mehr live. Öffne ihn zum Testen bitte in einem privaten Fenster."
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuche es erneut."
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Dein Zugang wurde von einer Administratorin oder einem Administrator angelegt, die oder der auch dein erstes Passwort vergeben hat und es weiterhin kennt. Bitte ersetze es jetzt durch ein Passwort, das nur du kennst. Danach richtest du deinen zweiten Faktor ein.",
+			"title": "Bitte vergib dein eigenes Passwort"
 		}
 	}
 }

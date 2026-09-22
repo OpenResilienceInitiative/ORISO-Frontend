@@ -19,6 +19,9 @@ import { __resetSoundThrottlesForTests } from '../../utils/notificationSettings/
 
 const apiGetEventNotifications = vi.fn();
 const apiMarkEventNotificationRead = vi.fn(() => Promise.resolve());
+const authSession = vi.hoisted(() => ({
+	token: 'fake-token' as string | null
+}));
 
 const feedItem = (id: number, createdAt: string) => ({
 	id,
@@ -124,16 +127,40 @@ vi.mock('../../api/apiEventNotifications', () => ({
 }));
 
 vi.mock('../../components/sessionCookie/accessSessionCookie', () => ({
-	getValueFromCookie: () => 'fake-token'
+	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
+	getValueFromCookie: () => authSession.token
 }));
 
 describe('NotificationsProvider real-time refresh (#473)', () => {
 	beforeEach(() => {
+		authSession.token = 'fake-token';
 		apiGetEventNotifications.mockReset();
 		apiGetEventNotifications.mockResolvedValue({
 			items: [],
 			unreadCount: 0
 		});
+	});
+
+	it('drops the feed immediately when the auth session is cleared', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [feedItem(1, '2026-09-17T10:00:00Z')],
+			unreadCount: 1
+		});
+		render(
+			<NotificationsProvider>
+				<PaginationProbe />
+			</NotificationsProvider>
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('1')
+		);
+
+		authSession.token = null;
+		window.dispatchEvent(new Event('oriso:auth-session-change'));
+
+		await waitFor(() =>
+			expect(screen.getByTestId('ids').textContent).toBe('')
+		);
 	});
 
 	// The provider subscribes to a singleton emitter — unmount it between cases so

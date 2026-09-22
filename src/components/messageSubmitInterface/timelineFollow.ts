@@ -84,9 +84,38 @@ export const unreadCountAfterArrival = (
 		: 0;
 
 /**
- * "Is the reader writing?" — the composer card has focus, or it holds a
- * draft. Pure so the rule can be tested without a chat; the caller hands in
- * the composer card element and the document's active element.
+ * Set on the composer card while its focus is the one the app placed by
+ * itself (the desktop autofocus when a chat opens). A click, a keystroke or
+ * leaving the card removes it.
+ */
+export const AUTO_FOCUS_ATTRIBUTE = 'data-auto-focused';
+
+/**
+ * Run the app's own focus call and mark the card if that call is what put
+ * the cursor there. A focus the person already placed stays unmarked.
+ */
+export const focusComposerAutomatically = (
+	composerCard: Element | null | undefined,
+	focus: () => void
+): void => {
+	const hadFocus =
+		!!composerCard && composerCard.contains(document.activeElement);
+	focus();
+	if (
+		composerCard &&
+		!hadFocus &&
+		composerCard.contains(document.activeElement)
+	) {
+		composerCard.setAttribute(AUTO_FOCUS_ATTRIBUTE, '');
+	}
+};
+
+/**
+ * "Is the reader writing?" — they clicked or typed into the composer card
+ * (it has focus the app did not place by itself), or it holds a draft.
+ * Frank (16.09.): the automatic cursor alone is not writing. Pure so the
+ * rule can be tested without a chat; the caller hands in the composer card
+ * element and the document's active element.
  */
 export const isComposerBusy = (
 	composerCard: Element | null | undefined,
@@ -95,7 +124,11 @@ export const isComposerBusy = (
 	if (!composerCard) {
 		return false;
 	}
-	if (activeElement && composerCard.contains(activeElement)) {
+	if (
+		activeElement &&
+		composerCard.contains(activeElement) &&
+		!composerCard.hasAttribute(AUTO_FOCUS_ATTRIBUTE)
+	) {
 		return true;
 	}
 	const editor = composerCard.querySelector(

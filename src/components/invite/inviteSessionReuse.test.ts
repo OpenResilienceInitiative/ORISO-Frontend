@@ -97,6 +97,23 @@ describe('inviteSessionReuse', () => {
 		expect(readRememberedInviteSession('tok')).toBeNull();
 	});
 
+	it.each(['CATCH_ALL', 'TIMEOUT', 'ABORT', 'NetworkError'])(
+		'preserves the session on transient %s and retries the read',
+		async (message) => {
+			rememberInviteSession('tok', 4711);
+			details.mockRejectedValueOnce(new Error(message));
+			await expect(resolveReusableInviteSession('tok')).rejects.toThrow();
+			expect(readRememberedInviteSession('tok')).toBe(4711);
+			details.mockResolvedValue({
+				numAvailableConsultants: 1,
+				status: 'NEW'
+			});
+			await expect(resolveReusableInviteSession('tok')).resolves.toBe(
+				4711
+			);
+		}
+	);
+
 	it('asks the server nothing when no session is remembered', async () => {
 		await expect(resolveReusableInviteSession('tok')).resolves.toBeNull();
 		expect(details).not.toHaveBeenCalled();

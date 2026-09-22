@@ -16,7 +16,8 @@ type GroupChatCopyLinksProps = {
 	seriesId: number;
 };
 
-export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
+/** Invite URL of a group series plus the copy action with its snackbar. */
+export const useGroupChatInviteLink = (seriesId: number) => {
 	const settings = useAppConfig();
 	const url = buildGroupChatInviteLink(settings.urls.toLogin, seriesId);
 	const { addNotification } = useContext(NotificationsContext);
@@ -32,6 +33,13 @@ export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
 			});
 		});
 	}, [url, addNotification, translate]);
+
+	return { url, copyRegistrationLink };
+};
+
+export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
+	const { t: translate } = useTranslation();
+	const { url, copyRegistrationLink } = useGroupChatInviteLink(seriesId);
 
 	return (
 		<div className="GroupChatCopyLinks">
