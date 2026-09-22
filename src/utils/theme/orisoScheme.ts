@@ -32,6 +32,7 @@ import {
 	LIGHT_NEUTRAL_TONES,
 	NEUTRAL,
 	NEUTRAL_VARIANT,
+	PRIMARY_TEXT_SURFACE_TONE,
 	SECONDARY_TONES,
 	SLATE,
 	SUCCESS_ANCHOR,
@@ -94,10 +95,22 @@ interface BrandFamily {
 }
 
 /**
+ * Lightest tone the role may have: AA on the darkest light surface that
+ * carries primary-coloured text. Floored so hex rounding cannot dip below.
+ */
+const MAX_LEGIBLE_ROLE_TONE = Math.floor(
+	Contrast.darker(PRIMARY_TEXT_SURFACE_TONE, CONTRAST_AA)
+);
+
+/**
  * The Oriso brand recipe (light): the seed itself is the role colour —
  * brand fidelity over stock-M3 tone snapping — and the container sits
  * just above it. Contrast of the on-colours is guaranteed by
  * construction (white only when it reaches AA, dark text otherwise).
+ *
+ * The role is also a text colour on light surfaces, so a seed too light
+ * to be read there (e.g. a pastel) steps down its own tonal palette to the
+ * lightest legible tone; hue and chroma stay the Träger's (#1499).
  */
 const lightBrandFamily = (seedHex: string): BrandFamily => {
 	const argb = argbFromHex(seedHex);
@@ -108,27 +121,31 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		hct.chroma * CONTAINER_CHROMA_FACTOR
 	);
 
+	const isLegible = hct.tone <= MAX_LEGIBLE_ROLE_TONE;
+	const roleTone = isLegible ? hct.tone : MAX_LEGIBLE_ROLE_TONE;
+	const role = isLegible ? seedHex : hex(palette.tone(roleTone));
+
 	const onRole =
-		Contrast.ratioOfTones(100, hct.tone) >= CONTRAST_AA
+		Contrast.ratioOfTones(100, roleTone) >= CONTRAST_AA
 			? '#ffffff'
 			: hex(palette.tone(10));
 
 	const containerTone = clampTone(
-		Math.round(hct.tone) + CONTAINER_TONE_SHIFT
+		Math.round(roleTone) + CONTAINER_TONE_SHIFT
 	);
 	const onContainerTone = Math.round(
 		DynamicColor.foregroundTone(containerTone, CONTRAST_AA)
 	);
 
 	return {
-		role: seedHex,
+		role,
 		onRole,
 		container: hex(boosted.tone(containerTone)),
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
 		tint: hex(boosted.tone(40)),
 		hover: hex(
-			palette.tone(clampTone(Math.round(hct.tone) + HOVER_TONE_SHIFT))
+			palette.tone(clampTone(Math.round(roleTone) + HOVER_TONE_SHIFT))
 		),
 		// Fixed roles keep the same tones in every scheme (M3 spec).
 		fixed: hex(palette.tone(90)),

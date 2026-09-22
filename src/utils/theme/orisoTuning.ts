@@ -37,6 +37,14 @@ export const SUCCESS_ANCHOR = '#0a882f';
 /** WCAG-AA body-text contrast; drives every on-colour decision. */
 export const CONTRAST_AA = 4.5;
 
+/**
+ * The darkest light surface brand-coloured text sits on
+ * (surface-container-highest). The primary role must reach CONTRAST_AA on
+ * it, because text buttons, links and icons use `--m3-primary` as their
+ * colour (#1499: a light-blue Träger seed gave 1.2:1).
+ */
+export const PRIMARY_TEXT_SURFACE_TONE = 90;
+
 /** Tone recipes for the secondary/tertiary families (light scheme). */
 export const SECONDARY_TONES = { role: 36, container: 46, onContainer: 94 };
 export const TERTIARY_TONES = { role: 40, container: 67, onContainer: 24 };

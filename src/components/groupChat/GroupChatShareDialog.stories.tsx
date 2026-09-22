@@ -11,6 +11,10 @@ import {
 } from '../conversationCreate/circle/circleSettingsStage';
 import { GroupChatShareDialog } from './GroupChatShareDialog';
 import { buildGroupChatInviteLinkForOrigin } from './groupChatInviteLink';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
 
 /**
  * #1499 item 5. Wired in `CircleSettingsView` after every successful create;
@@ -155,5 +159,30 @@ export const TextCircleOnce: Story = {
 		);
 		await expect(within(dialog).getByText('einmalig')).toBeVisible();
 		await expect(within(dialog).getByText('Text')).toBeVisible();
+	}
+};
+
+/** Träger 2 on Dev: a light-blue brand colour (#1499 Dev test). */
+const TRAEGER_2_SEED = '#b4ddee';
+
+const textContrast = (element: HTMLElement) =>
+	wcagContrast(getComputedStyle(element).color, effectiveBackground(element));
+
+/**
+ * Dev test of #1499: with Träger 2's light-blue brand colour the text
+ * button "Fertig" read at ~1.2:1. The palette now darkens a brand colour
+ * that is too light for text, so it reaches WCAG AA (4.5:1).
+ */
+export const LightBrandColour1440: Story = {
+	name: 'Light brand colour (Träger 2) · 1440',
+	globals: desktop1440Globals,
+	parameters: { orisoSeed: TRAEGER_2_SEED },
+	play: async ({ canvasElement }) => {
+		const dialog = within(
+			await openDialog(canvasElement, 'Video-Call angelegt')
+		);
+		await expect(
+			textContrast(dialog.getByRole('button', { name: 'Fertig' }))
+		).toBeGreaterThanOrEqual(4.5);
 	}
 };
