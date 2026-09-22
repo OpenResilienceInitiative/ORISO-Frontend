@@ -2374,7 +2374,8 @@
 					},
 					"old": {
 						"incorrect": "Şifreniz yanlış.",
-						"label": "Geçerli şifre"
+						"label": "Geçerli şifre",
+						"hint": "Az önce oturum açarken kullandığınız şifre."
 					},
 					"overlay": {
 						"button": {
@@ -2386,7 +2387,16 @@
 					"sameAsOld": "Lütfen yeni bir şifre seçin – bu mevcut şifreniz.",
 					"secure": "Şifreniz güvende.",
 					"subtitle": "Dilerseniz şifrenizi buradan değiştirebilirsiniz. Yeni bir şifre belirlemek için önce mevcut şifrenizi girin.",
-					"title": "şifre"
+					"title": "şifre",
+					"criteria": {
+						"title": "Yeni şifreniz şunları içermeli",
+						"mixedCase": "büyük ve küçük harfler",
+						"number": "en az bir rakam",
+						"specialChar": "bir özel karakter (?, !, +, # …)",
+						"minLength": "en az 9 karakter",
+						"met": "karşılandı"
+					},
+					"submitAndContinue": "Şifreyi kaydet ve devam et"
 				}
 			},
 			"security": {
@@ -3971,11 +3981,12 @@
 					"missingQr": "QR kodu şu anda kullanılamıyor. Manuel anahtarı kullanın.",
 					"missingSecret": "Anahtar şu anda kullanılamıyor.",
 					"or": "veya",
-					"qrAlt": "Kimlik doğrulama uygulaması için QR kodu"
+					"qrAlt": "Kimlik doğrulama uygulaması için QR kodu",
+					"title": "Uygulamayı ORISO’ya bağlayın"
 				},
 				"install": {
 					"android": "Google Play Store'dan indirin",
-					"copy": "Akıllı telefonunuza veya tabletinize Google Authenticator ya da Microsoft Authenticator uygulamasını yükleyin. Her iki uygulama da Çevrimiçi Danışmanlık için güvenlik kodunu destekler.",
+					"copy": "Akıllı telefonunuzda veya tabletinizde bu iki uygulamadan birine ihtiyacınız var. Zaten yüklü mü? O hâlde doğrudan devam edin.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -3986,20 +3997,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Kimlik doğrulama uygulamasını yükleyin",
+					"note": "ücretsiz, hesap gerekmeden kullanılabilir",
+					"done": "Uygulama yüklendi – devam"
 				},
 				"success": {
 					"title": "Uygulama ile kimlik doğrulama başarıyla kuruldu."
 				},
 				"verify": {
 					"copy": "Kurulumu tamamlamak için uygulamadaki altı haneli kodu girin.",
-					"input": "Tek kullanımlık kod"
+					"input": "Tek kullanımlık kod",
+					"title": "Kodu doğrulayın"
 				}
 			},
 			"decision": {
 				"app": "Uygulama ile güvenli şekilde bağlan",
 				"copy": "Hesabınızı ikinci bir faktörle koruyun. Kimlik doğrulama uygulaması daha güvenli seçenektir; alternatif olarak kodları e-posta ile de alabilirsiniz.",
-				"email": "E-posta kodu kullan (daha az güvenli)"
+				"email": "E-posta kodu kullan (daha az güvenli)",
+				"title": "İkinci faktörü seçin"
 			},
 			"email": {
 				"connect": {
@@ -4007,12 +4023,14 @@
 					"input": "Tek kullanımlık kod",
 					"resend": "Yeni kod gönder",
 					"resendTitle": "İşe yaramadı mı?",
-					"sent": "Yeni kod gönderildi."
+					"sent": "Yeni kod gönderildi.",
+					"title": "Kodu doğrulayın"
 				},
 				"select": {
 					"copy": "Güvenlik kodunuzu göndermemizi istediğiniz e-posta adresini girin.",
 					"hint": "E-posta adresini değiştirirseniz, bundan sonra bildirimleri de bu adrese alırsınız.",
-					"input": "E-posta adresi"
+					"input": "E-posta adresi",
+					"title": "İkinci faktörü e-posta ile kurun"
 				},
 				"success": {
 					"title": "E-posta ile kimlik doğrulama başarıyla kuruldu."
@@ -4037,7 +4055,9 @@
 				"select": "Seç",
 				"verify": "Doğrula"
 			},
-			"title": "Hangi bağlantıyı kullanmak istersiniz?"
+			"success": {
+				"title": "İkinci faktör kuruldu"
+			}
 		},
 		"overlayButton": {
 			"back": "Geri",
@@ -5162,13 +5182,19 @@
 	},
 	"passwordChange": {
 		"required": {
-			"copy": "Erişiminiz, ilk şifrenizi de belirleyen ve onu hâlâ bilen bir yönetici tarafından oluşturuldu. Lütfen şimdi onu yalnızca sizin bildiğiniz bir şifreyle değiştirin. Ardından ikinci faktörünüzü tanımlayacaksınız.",
-			"title": "Lütfen kendi şifrenizi belirleyin"
+			"copy": "Erişiminiz sizin için oluşturuldu; bu nedenle ilk şifreyi hâlâ başka biri biliyor. Şimdi yalnızca sizin bildiğiniz bir şifre belirleyin.",
+			"title": "Kendi şifreniz"
 		}
 	},
 	"accountSetup": {
 		"required": {
 			"logout": "Çıkış yap"
+		},
+		"progress": {
+			"label": "İki adımda kurulum",
+			"password": "Kendi şifreniz",
+			"twoFactor": "İkinci faktör",
+			"done": "tamamlandı"
 		}
 	}
 }

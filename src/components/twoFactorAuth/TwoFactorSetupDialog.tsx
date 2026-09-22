@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 import clsx from 'clsx';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import AndroidIcon from '@mui/icons-material/Android';
@@ -54,8 +53,11 @@ import {
 	TwoFactorType
 } from './twoFactorAuthConstants';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as AppGraphic } from '../../resources/img/icons/two-factor/otp_app_graphic.svg';
-import { ReactComponent as EmailGraphic } from '../../resources/img/icons/two-factor/email_code_graphic.svg';
+import {
+	AccountSetupHeader,
+	AccountSetupHeaderIcon,
+	AccountSetupProgress
+} from './accountSetupDialogChrome';
 import { ReactComponent as DecisionIcon } from '../../resources/img/icons/two-factor/decision_400.svg';
 import { ReactComponent as DecisionFilledIcon } from '../../resources/img/icons/two-factor/decision_filled.svg';
 import { ReactComponent as InstallIcon } from '../../resources/img/icons/two-factor/install_400.svg';
@@ -105,6 +107,53 @@ const APP_DOWNLOADS = [
 	}
 ];
 
+/** Every step names itself; one shared dialog title told nobody where they were. */
+const STEP_HEADERS: Record<
+	TwoFactorSetupStep,
+	{ icon: AccountSetupHeaderIcon; titleKey: string; copyKey: string }
+> = {
+	'decision': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.decision.title',
+		copyKey: 'twoFactorAuth.setupDialog.decision.copy'
+	},
+	'app-install': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.app.install.title',
+		copyKey: 'twoFactorAuth.setupDialog.app.install.copy'
+	},
+	'app-connect': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.app.connect.title',
+		copyKey: 'twoFactorAuth.setupDialog.app.connect.copy'
+	},
+	'app-verify': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.app.verify.title',
+		copyKey: 'twoFactorAuth.setupDialog.app.verify.copy'
+	},
+	'app-success': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.success.title',
+		copyKey: 'twoFactorAuth.setupDialog.app.success.title'
+	},
+	'email-select': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.email.select.title',
+		copyKey: 'twoFactorAuth.setupDialog.email.select.copy'
+	},
+	'email-connect': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.email.connect.title',
+		copyKey: 'twoFactorAuth.setupDialog.email.connect.copy'
+	},
+	'email-success': {
+		icon: 'phone',
+		titleKey: 'twoFactorAuth.setupDialog.success.title',
+		copyKey: 'twoFactorAuth.setupDialog.email.success.title'
+	}
+};
+
 interface TwoFactorSetupDialogProps {
 	open: boolean;
 	canClose: boolean;
@@ -120,6 +169,8 @@ interface TwoFactorSetupDialogProps {
 	onDisable: () => Promise<void> | void;
 	onSetupAborted?: () => void;
 	onSetupComplete: () => Promise<void> | void;
+	/** Account setup only: this dialog is step 2 of 2, and says so at the top. */
+	showAccountProgress?: boolean;
 }
 
 interface StepperProps {
@@ -191,7 +242,8 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	onClose,
 	onDisable,
 	onSetupAborted,
-	onSetupComplete
+	onSetupComplete,
+	showAccountProgress = false
 }) => {
 	const { t: translate } = useTranslation();
 	const { overlays, addOverlay, removeOverlay } = useContext(ModalContext);
@@ -214,11 +266,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const isTopOverlay =
 		overlays.findIndex((overlay) => overlay.id === modalId.current) === 0;
-	const isAppFlow = selectedMethod === TWO_FACTOR_TYPES.APP;
 	const isSuccess = step === 'app-success' || step === 'email-success';
-	const activeGraphic = isAppFlow ? AppGraphic : EmailGraphic;
-	const ActiveGraphic =
-		step === 'decision' ? DecisionFilledIcon : activeGraphic;
 	const encodedSecret = useMemo(
 		() => (secret ? encode(secret).replace(/={1,8}$/, '') : ''),
 		[secret]
@@ -486,17 +534,16 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			!isOtpValid(otp));
 
 	const primaryLabelKey =
-		step === 'app-verify' || step === 'email-connect'
-			? 'twoFactorAuth.setupDialog.action.confirm'
-			: isSuccess
-				? 'twoFactorAuth.setupDialog.action.close'
-				: 'twoFactorAuth.setupDialog.action.next';
+		step === 'app-install'
+			? 'twoFactorAuth.setupDialog.app.install.done'
+			: step === 'app-verify' || step === 'email-connect'
+				? 'twoFactorAuth.setupDialog.action.confirm'
+				: isSuccess
+					? 'twoFactorAuth.setupDialog.action.close'
+					: 'twoFactorAuth.setupDialog.action.next';
 
 	const renderDecision = () => (
 		<div className="twoFactorSetupDialog__decision">
-			<Typography className="twoFactorSetupDialog__copy">
-				{translate('twoFactorAuth.setupDialog.decision.copy')}
-			</Typography>
 			<Button
 				className="twoFactorSetupDialog__choiceButton"
 				disabled={
@@ -546,32 +593,23 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderInstall = () => (
 		<div className="twoFactorSetupDialog__install">
-			<Typography className="twoFactorSetupDialog__copy">
-				{translate('twoFactorAuth.setupDialog.app.install.copy')}
-			</Typography>
 			<div className="twoFactorSetupDialog__downloadGrid">
 				{APP_DOWNLOADS.map((app) => (
 					<div
-						className="twoFactorSetupDialog__downloadCard"
+						className="twoFactorSetupDialog__card twoFactorSetupDialog__downloadCard"
 						key={app.titleKey}
 					>
-						<Typography className="twoFactorSetupDialog__downloadTitle">
-							{translate(app.titleKey)}
-						</Typography>
+						<div className="twoFactorSetupDialog__downloadText">
+							<Typography className="twoFactorSetupDialog__downloadTitle">
+								{translate(app.titleKey)}
+							</Typography>
+							<Typography className="twoFactorSetupDialog__downloadNote">
+								{translate(
+									'twoFactorAuth.setupDialog.app.install.note'
+								)}
+							</Typography>
+						</div>
 						<div className="twoFactorSetupDialog__storeBadges">
-							<Link
-								className="twoFactorSetupDialog__storeBadge"
-								href={translate(app.androidKey)}
-								target="_blank"
-								rel="noreferrer"
-								underline="none"
-								aria-label={`${translate(app.titleKey)} – ${translate(
-									'twoFactorAuth.setupDialog.app.install.android'
-								)}`}
-							>
-								<AndroidIcon fontSize="small" />
-								Google Play
-							</Link>
 							<Link
 								className="twoFactorSetupDialog__storeBadge"
 								href={translate(app.iosKey)}
@@ -585,6 +623,19 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 								<AppleIcon fontSize="small" />
 								App Store
 							</Link>
+							<Link
+								className="twoFactorSetupDialog__storeBadge"
+								href={translate(app.androidKey)}
+								target="_blank"
+								rel="noreferrer"
+								underline="none"
+								aria-label={`${translate(app.titleKey)} – ${translate(
+									'twoFactorAuth.setupDialog.app.install.android'
+								)}`}
+							>
+								<AndroidIcon fontSize="small" />
+								Google Play
+							</Link>
 						</div>
 					</div>
 				))}
@@ -594,9 +645,6 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderAppConnect = () => (
 		<div className="twoFactorSetupDialog__connect">
-			<Typography className="twoFactorSetupDialog__copy">
-				{translate('twoFactorAuth.setupDialog.app.connect.copy')}
-			</Typography>
 			<div className="twoFactorSetupDialog__qrSection">
 				{qrCode ? (
 					<img
@@ -616,7 +664,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 				<Typography className="twoFactorSetupDialog__divider">
 					{translate('twoFactorAuth.setupDialog.app.connect.or')}
 				</Typography>
-				<div className="twoFactorSetupDialog__manualKey">
+				<div className="twoFactorSetupDialog__card twoFactorSetupDialog__manualKey">
 					<Typography className="twoFactorSetupDialog__manualLabel">
 						{translate(
 							'twoFactorAuth.setupDialog.app.connect.manual'
@@ -675,9 +723,6 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderEmailSelect = () => (
 		<div key="email-select" className="twoFactorSetupDialog__emailSelect">
-			<Typography className="twoFactorSetupDialog__copy">
-				{translate('twoFactorAuth.setupDialog.email.select.copy')}
-			</Typography>
 			<TextField
 				key="tfa-email-select-input"
 				autoFocus
@@ -702,13 +747,8 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 
 	const renderEmailConnect = () => (
 		<div key="email-connect" className="twoFactorSetupDialog__emailCode">
-			<Typography className="twoFactorSetupDialog__copy">
-				{translate('twoFactorAuth.setupDialog.email.connect.copy', {
-					email
-				})}
-			</Typography>
 			{renderOtpInput('twoFactorAuth.setupDialog.email.connect.input')}
-			<div className="twoFactorSetupDialog__resend">
+			<div className="twoFactorSetupDialog__card twoFactorSetupDialog__resend">
 				<Typography className="twoFactorSetupDialog__resendTitle">
 					{translate(
 						'twoFactorAuth.setupDialog.email.connect.resendTitle'
@@ -731,13 +771,6 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	const renderSuccess = () => (
 		<div className="twoFactorSetupDialog__success">
 			<CheckAnimation className="twoFactorSetupDialog__successIcon" />
-			<Typography className="twoFactorSetupDialog__successTitle">
-				{translate(
-					isAppFlow
-						? 'twoFactorAuth.setupDialog.app.success.title'
-						: 'twoFactorAuth.setupDialog.email.success.title'
-				)}
-			</Typography>
 		</div>
 	);
 
@@ -750,17 +783,8 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			case 'app-connect':
 				return renderAppConnect();
 			case 'app-verify':
-				return (
-					<>
-						<Typography className="twoFactorSetupDialog__copy">
-							{translate(
-								'twoFactorAuth.setupDialog.app.verify.copy'
-							)}
-						</Typography>
-						{renderOtpInput(
-							'twoFactorAuth.setupDialog.app.verify.input'
-						)}
-					</>
+				return renderOtpInput(
+					'twoFactorAuth.setupDialog.app.verify.input'
 				);
 			case 'email-select':
 				return renderEmailSelect();
@@ -816,24 +840,21 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 					</IconButton>
 				</Tooltip>
 			)}
-			<Box className="twoFactorSetupDialog__header">
-				<ActiveGraphic
-					aria-hidden="true"
-					className="twoFactorSetupDialog__graphic"
-				/>
-				<Typography
-					className="twoFactorSetupDialog__title"
-					id="two-factor-setup-title"
-					variant="h2"
-				>
-					{translate('twoFactorAuth.setupDialog.title')}
-				</Typography>
-			</Box>
+			{showAccountProgress && <AccountSetupProgress active="twoFactor" />}
+			<AccountSetupHeader
+				descriptionId="two-factor-setup-description"
+				icon={STEP_HEADERS[step].icon}
+				subtitle={translate(
+					STEP_HEADERS[step].copyKey,
+					// Only the sent-to line names an address; the rest would
+					// carry an unused interpolation.
+					step === 'email-connect' ? { email } : {}
+				)}
+				title={translate(STEP_HEADERS[step].titleKey)}
+				titleId="two-factor-setup-title"
+			/>
 			<FlowStepper activeStep={step} selectedMethod={selectedMethod} />
-			<Box
-				className="twoFactorSetupDialog__body"
-				id="two-factor-setup-description"
-			>
+			<Box className="twoFactorSetupDialog__body">
 				{renderStep()}
 				{errorKey && (
 					<Typography
@@ -849,71 +870,73 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 					</Typography>
 				)}
 			</Box>
-			{step !== 'decision' && (
-				<div
-					className={clsx('twoFactorSetupDialog__actions', {
-						// Success hides both icon buttons, so the remaining
-						// close action gets its own right-aligned single row.
-						'twoFactorSetupDialog__actions--single': isSuccess
-					})}
-				>
-					{canClose && !isSuccess && (
-						<Tooltip
-							title={translate(
-								'twoFactorAuth.setupDialog.action.close'
-							)}
-						>
-							<IconButton
-								aria-label={translate(
+			<div className="twoFactorSetupDialog__actionBlock">
+				{step !== 'decision' && (
+					<div
+						className={clsx('twoFactorSetupDialog__actions', {
+							// Success hides both icon buttons, so the
+							// remaining close action gets its own
+							// right-aligned single row.
+							'twoFactorSetupDialog__actions--single': isSuccess
+						})}
+					>
+						{canClose && !isSuccess && (
+							<Tooltip
+								title={translate(
 									'twoFactorAuth.setupDialog.action.close'
 								)}
-								className="twoFactorSetupDialog__iconAction twoFactorSetupDialog__iconAction--muted"
-								disabled={isRequestInProgress}
-								onClick={closeDialog}
 							>
-								<CloseRoundedIcon />
-							</IconButton>
-						</Tooltip>
-					)}
-					{!isSuccess && (
-						<Tooltip
-							title={translate(
-								'twoFactorAuth.setupDialog.action.back'
-							)}
-						>
-							<IconButton
-								aria-label={translate(
+								<IconButton
+									aria-label={translate(
+										'twoFactorAuth.setupDialog.action.close'
+									)}
+									className="twoFactorSetupDialog__iconAction twoFactorSetupDialog__iconAction--muted"
+									disabled={isRequestInProgress}
+									onClick={closeDialog}
+								>
+									<CloseRoundedIcon />
+								</IconButton>
+							</Tooltip>
+						)}
+						{!isSuccess && (
+							<Tooltip
+								title={translate(
 									'twoFactorAuth.setupDialog.action.back'
 								)}
-								className="twoFactorSetupDialog__iconAction"
-								disabled={isRequestInProgress}
-								onClick={goBack}
 							>
-								<ArrowBackRoundedIcon />
-							</IconButton>
-						</Tooltip>
-					)}
+								<IconButton
+									aria-label={translate(
+										'twoFactorAuth.setupDialog.action.back'
+									)}
+									className="twoFactorSetupDialog__iconAction"
+									disabled={isRequestInProgress}
+									onClick={goBack}
+								>
+									<ArrowBackRoundedIcon />
+								</IconButton>
+							</Tooltip>
+						)}
+						<Button
+							className="twoFactorSetupDialog__primaryAction"
+							disabled={isPrimaryDisabled}
+							onClick={handlePrimaryAction}
+							variant="contained"
+						>
+							{translate(primaryLabelKey)}
+						</Button>
+					</div>
+				)}
+				{onLogout && !isSuccess && (
 					<Button
-						className="twoFactorSetupDialog__primaryAction"
-						disabled={isPrimaryDisabled}
-						onClick={handlePrimaryAction}
-						startIcon={isSuccess ? undefined : <CheckRoundedIcon />}
-						variant="contained"
+						className="twoFactorSetupDialog__logout"
+						disabled={isRequestInProgress}
+						onClick={onLogout}
+						variant="text"
 					>
-						{translate(primaryLabelKey)}
+						{translate('accountSetup.required.logout')}
 					</Button>
-				</div>
-			)}
-			{onLogout && !isSuccess && (
-				<Button
-					className="twoFactorSetupDialog__textButton twoFactorSetupDialog__logout"
-					disabled={isRequestInProgress}
-					onClick={onLogout}
-					variant="text"
-				>
-					{translate('accountSetup.required.logout')}
-				</Button>
-			)}
+				)}
+			</div>
 		</Dialog>
 	);
 };

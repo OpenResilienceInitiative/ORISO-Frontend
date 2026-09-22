@@ -1,3 +1,12 @@
+// The approved artboards for the account-setup flow. Mobile first: the base
+// block is the 366px phone board, the 768px block the 650px desktop one.
+// The ok/error greens and magentas are literal: they are the approved
+// artboards' values, and the tenant-themed --m3-error/--m3-success roles
+// resolve to different hues.
+$setup-ok: #1d6b3a;
+$setup-error: #a3195b;
+$setup-disabled: #b9bdc3;
+
 .twoFactorSetupDialog {
 	&__backdrop {
 		background-color: rgba(64, 64, 68, 0.48) !important;
@@ -5,16 +14,41 @@
 	}
 
 	&__paper {
-		width: min(500px, calc(100vw - 32px));
-		min-height: 492px;
-		max-height: calc(100vh - 32px);
-		padding: 32px;
-		border: 1px solid var(--m3-outline-variant, #d9d9d9);
-		border-radius: 24px !important;
-		background: var(--m3-surface-container-high, #eae7e8) !important;
-		box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22) !important;
-		overflow: visible;
 		position: relative;
+		width: min(366px, calc(100vw - 24px)) !important;
+		max-width: calc(100vw - 24px) !important;
+		max-height: calc(100vh - 24px);
+		margin: 12px !important;
+		padding: 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+		border-radius: 24px !important;
+		background: var(--m3-surface, #fcf9f9) !important;
+		box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28) !important;
+
+		// Taller than the window: the paper itself scrolls, rather than
+		// squeezing the action row and the logout out of reach.
+		overflow-y: auto;
+
+		> * {
+			flex-shrink: 0;
+		}
+	}
+
+	&__srOnly {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	&__strokeIcon {
+		flex-shrink: 0;
 	}
 
 	&__close {
@@ -24,17 +58,90 @@
 		color: var(--m3-on-surface, #1b1b1c) !important;
 	}
 
-	&__header {
-		display: grid;
-		grid-template-columns: 100px 1fr;
+	// Two steps, so the password dialog does not read as the whole of setup.
+	&__progress {
+		display: flex;
 		align-items: center;
-		gap: 24px;
-		margin-bottom: 28px;
+		gap: 12px;
 	}
 
-	&__graphic {
-		width: 100px;
-		height: 100px;
+	&__progressRule {
+		flex-grow: 1;
+		height: 1.5px;
+		background: var(--m3-outline-variant, #c9c5c7);
+	}
+
+	&__progressStep {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-width: 0;
+	}
+
+	&__progressMarker {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		width: 24px;
+		height: 24px;
+		flex-shrink: 0;
+		border: 1.5px solid var(--m3-outline-variant, #c9c5c7);
+		border-radius: 12px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+		color: var(--m3-secondary, #4c555f);
+		font-size: 12px;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	&__progressLabel {
+		color: var(--m3-secondary, #4c555f);
+		font-size: 13px;
+		font-weight: 600;
+		line-height: 18px;
+	}
+
+	&__progressStep--active {
+		.twoFactorSetupDialog__progressMarker {
+			border-color: var(--m3-primary, #a5000a);
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
+		}
+
+		.twoFactorSetupDialog__progressLabel {
+			color: var(--m3-on-surface, #1b1b1c);
+		}
+	}
+
+	&__progressStep--done .twoFactorSetupDialog__progressMarker {
+		border-color: var(--m3-primary, #a5000a);
+		color: var(--m3-primary, #a5000a);
+	}
+
+	&__header {
+		display: flex;
+		align-items: flex-start;
+		gap: 16px;
+	}
+
+	&__headerTile {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 56px;
+		height: 56px;
+		flex-shrink: 0;
+		border-radius: 16px;
+		background: var(--m3-selected-layer, #f6dfe0);
+		color: var(--m3-primary, #a5000a);
+	}
+
+	&__headerText {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		min-width: 0;
 	}
 
 	&__title {
@@ -48,99 +155,8 @@
 		) !important;
 		font-size: 24px !important;
 		font-weight: 700 !important;
-		line-height: 1.2 !important;
+		line-height: 30px !important;
 		letter-spacing: 0 !important;
-	}
-
-	&__stepper {
-		display: grid;
-		grid-auto-flow: column;
-		grid-auto-columns: minmax(60px, 1fr);
-		align-items: flex-start;
-		column-gap: 8px;
-		margin-bottom: 28px;
-		overflow: hidden;
-	}
-
-	&__stepUnit {
-		position: relative;
-		display: grid;
-		justify-items: center;
-		gap: 8px;
-		min-width: 0;
-
-		&::after {
-			content: '';
-			position: absolute;
-			top: 16px;
-			left: calc(50% + 22px);
-			right: calc(-50% + 22px);
-			border-top: 3px dotted var(--m3-on-surface-variant, #646d78);
-		}
-
-		&:last-child::after {
-			display: none;
-		}
-	}
-
-	&__stepCircle {
-		z-index: 1;
-		display: grid;
-		place-items: center;
-		width: 34px;
-		height: 34px;
-		border: 1.5px solid var(--m3-on-surface-variant, #646d78);
-		border-radius: 999px;
-		background: var(--m3-surface-container-high, #eae7e8);
-
-		svg {
-			width: 22px;
-			height: 22px;
-		}
-
-		path {
-			fill: var(--m3-on-surface-variant, #4c555f);
-		}
-
-		&--active,
-		&--done {
-			border-color: var(--m3-primary, #a5000a);
-		}
-
-		&--active {
-			background: var(--m3-primary, #a5000a);
-
-			path {
-				fill: var(--m3-on-primary, #ffffff);
-			}
-		}
-	}
-
-	&__stepLabel {
-		color: var(--m3-on-surface-variant, #4c555f);
-		font-family: var(
-			--font-family-sans-serif,
-			Inter,
-			Arial,
-			sans-serif
-		) !important;
-		font-size: 12px !important;
-		font-weight: 600 !important;
-		line-height: 16px !important;
-		letter-spacing: 0 !important;
-		text-align: center;
-		white-space: nowrap;
-
-		&--active {
-			color: var(--m3-primary, #a5000a);
-		}
-	}
-
-	&__body {
-		min-height: 160px;
-		display: flex;
-		flex-direction: column;
-		gap: 18px;
 	}
 
 	&__copy,
@@ -149,7 +165,8 @@
 	&__fallback,
 	&__helper,
 	&__error {
-		color: var(--m3-on-surface, #1b1b1c);
+		margin: 0 !important;
+		color: var(--m3-secondary, #4c555f);
 		font-family: var(
 			--font-family-sans-serif,
 			Inter,
@@ -163,15 +180,106 @@
 
 	&__hint,
 	&__helper {
-		color: var(--m3-on-surface-variant, #444748);
-		font-size: 14px !important;
-		line-height: 20px !important;
+		font-size: 13px !important;
+		line-height: 18px !important;
+	}
+
+	&__helper {
+		color: $setup-ok;
 	}
 
 	&__error {
-		color: var(--m3-error, #ba1a1a);
-		font-size: 14px !important;
-		line-height: 20px !important;
+		color: $setup-error;
+		font-size: 13px !important;
+		line-height: 18px !important;
+	}
+
+	&__stepper {
+		display: flex;
+		gap: 4px;
+	}
+
+	&__stepUnit {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 8px;
+		flex-basis: 0;
+		flex-grow: 1;
+		min-width: 0;
+	}
+
+	&__stepCircle {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		width: 32px;
+		height: 32px;
+		border: 1.5px solid var(--m3-outline-variant, #c9c5c7);
+		border-radius: 16px;
+		background: var(--m3-surface-container-lowest, #ffffff);
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		path {
+			fill: var(--m3-secondary, #4c555f);
+		}
+
+		&--active,
+		&--done {
+			border-color: var(--m3-primary, #a5000a);
+		}
+
+		&--done path {
+			fill: var(--m3-primary, #a5000a);
+		}
+
+		&--active {
+			background: var(--m3-primary, #a5000a);
+
+			path {
+				fill: var(--m3-on-primary, #ffffff);
+			}
+		}
+	}
+
+	&__stepLabel {
+		color: var(--m3-secondary, #4c555f);
+		font-family: var(
+			--font-family-sans-serif,
+			Inter,
+			Arial,
+			sans-serif
+		) !important;
+		font-size: 11px !important;
+		font-weight: 600 !important;
+		line-height: 16px !important;
+		letter-spacing: 0 !important;
+		text-align: center;
+
+		&--active {
+			color: var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__body {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	// The tint that groups related content — download cards, the manual key.
+	&__card {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding: 16px;
+		border-radius: 12px;
+		background: var(--m3-surface-container, #f1edee);
 	}
 
 	&__decision {
@@ -181,9 +289,11 @@
 
 	&__choiceButton {
 		min-height: 56px !important;
-		border-radius: 8px !important;
+		border-radius: 10px !important;
 		background-color: var(--m3-secondary, #4c555f) !important;
 		color: var(--m3-on-secondary, #ffffff) !important;
+		font-size: 16px !important;
+		font-weight: 600 !important;
 		text-transform: none !important;
 
 		&--secondary {
@@ -202,21 +312,40 @@
 	}
 
 	&__downloadGrid {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
 	}
 
 	&__downloadCard {
-		display: grid;
-		gap: 12px;
-		align-content: start;
+		align-items: flex-start;
+	}
+
+	&__downloadText {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		flex-grow: 1;
+		min-width: 0;
+	}
+
+	&__downloadTitle {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 16px !important;
+		font-weight: 700 !important;
+		line-height: 22px !important;
+	}
+
+	&__downloadNote {
+		color: var(--m3-secondary, #4c555f);
+		font-size: 13px !important;
+		line-height: 18px !important;
 	}
 
 	&__storeBadges {
 		display: flex;
-		flex-wrap: wrap;
 		gap: 8px;
+		width: 100%;
 	}
 
 	// Drawn here rather than loaded from the stores: a remote badge image would
@@ -224,12 +353,14 @@
 	&__storeBadge {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
-		min-height: 36px;
-		padding: 0 12px;
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 8px;
-		background: var(--m3-surface, #ffffff);
+		justify-content: center;
+		gap: 8px;
+		box-sizing: border-box;
+		height: 44px;
+		padding: 0 16px;
+		border: 1px solid var(--m3-outline-variant, #c9c5c7);
+		border-radius: 10px;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		color: var(--m3-on-surface, #1b1b1c) !important;
 		font-size: 14px;
 		font-weight: 600;
@@ -242,24 +373,18 @@
 		}
 	}
 
-	&__downloadTitle,
-	&__resendTitle,
-	&__successTitle {
-		color: var(--m3-on-surface, #1b1b1c);
-		font-weight: 700 !important;
-	}
-
 	&__connect,
 	&__emailSelect,
 	&__emailCode,
 	&__install {
-		display: grid;
-		gap: 18px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
 	}
 
 	&__qrSection {
-		display: grid;
-		grid-template-columns: minmax(120px, 1fr) auto minmax(160px, 1fr);
+		display: flex;
+		flex-direction: column;
 		align-items: center;
 		gap: 16px;
 	}
@@ -267,22 +392,27 @@
 	&__qr {
 		width: 126px;
 		height: 126px;
-		justify-self: center;
-		background: var(--m3-surface, #ffffff);
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border-radius: 4px;
 	}
 
 	&__divider {
-		color: var(--m3-on-surface-variant, #444748);
+		color: var(--m3-secondary, #4c555f);
 		font-size: 12px !important;
 		font-weight: 700 !important;
 		text-transform: uppercase;
 	}
 
 	&__manualKey {
-		display: grid;
-		gap: 8px;
+		width: 100%;
 		min-width: 0;
+		gap: 8px;
+	}
+
+	&__manualLabel {
+		font-size: 13px !important;
+		font-weight: 600 !important;
+		line-height: 18px !important;
 	}
 
 	&__secretRow {
@@ -291,8 +421,9 @@
 		align-items: center;
 		gap: 8px;
 		padding: 8px 10px;
-		border: 1px solid var(--m3-outline, #747878);
-		border-radius: 8px;
+		border: 1px solid var(--m3-outline-variant, #c9c5c7);
+		border-radius: 10px;
+		background: var(--m3-surface-container-lowest, #ffffff);
 	}
 
 	&__secret {
@@ -305,7 +436,8 @@
 
 	&__input {
 		.MuiOutlinedInput-root {
-			border-radius: 4px;
+			border-radius: 10px;
+			background: var(--m3-surface-container-lowest, #ffffff);
 		}
 
 		.MuiInputBase-input {
@@ -320,23 +452,23 @@
 		gap: 2px;
 	}
 
+	&__resendTitle {
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 13px !important;
+		font-weight: 700 !important;
+		line-height: 18px !important;
+	}
+
 	&__textButton {
 		padding: 0 !important;
 		color: var(--m3-primary, #a5000a) !important;
 		text-transform: none !important;
 	}
 
-	&__logout {
-		align-self: flex-start;
-		margin-top: 20px !important;
-	}
-
 	&__success {
-		min-height: 220px;
 		display: grid;
 		place-items: center;
-		align-content: center;
-		gap: 24px;
+		gap: 16px;
 		text-align: center;
 	}
 
@@ -349,145 +481,105 @@
 		flex: none;
 	}
 
-	&__successTitle {
-		font-size: 20px !important;
-		line-height: 28px !important;
+	&__actionBlock {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
 	}
 
-	// Flex, not fixed tracks: the forced setup hides the close button, and in a
-	// 72px 72px 1fr grid the primary action then slid into a 72px track.
 	&__actions {
 		display: flex;
 		gap: 10px;
-		margin-top: 28px;
 	}
 
-	// Success step: the two icon buttons are gone, so the lone close action
-	// must not inherit the 72px icon track (it wrapped mid-word there).
+	// Success step: the back and close buttons are gone, so the lone action
+	// must not stretch across the whole row.
 	&__actions--single {
 		justify-content: flex-end;
 	}
 
 	&__iconAction,
 	&__primaryAction {
+		height: 56px !important;
 		min-height: 56px !important;
-		border-radius: 8px !important;
+		border-radius: 10px !important;
 		background-color: var(--m3-secondary, #4c555f) !important;
 		color: var(--m3-on-secondary, #ffffff) !important;
 	}
 
 	&__iconAction {
-		flex: 0 0 72px !important;
-		width: 72px;
+		flex: 0 0 64px !important;
+		width: 64px;
 	}
 
 	&__primaryAction {
 		flex: 1 1 auto;
+		font-size: 16px !important;
+		font-weight: 600 !important;
+		text-transform: none !important;
+		white-space: nowrap !important;
+
+		&.Mui-disabled {
+			background-color: $setup-disabled !important;
+			color: var(--m3-on-secondary, #ffffff) !important;
+		}
 	}
 
 	&__actions--single &__primaryAction {
 		flex: 0 0 auto;
+		min-width: 160px !important;
 	}
 
 	&__iconAction--muted {
 		background-color: var(--m3-tertiary-container, #9ba4b0) !important;
 	}
 
-	&__primaryAction {
-		text-transform: none !important;
+	// The only other way on, so it stays a plain centred text link rather than
+	// a second button competing with the primary action.
+	&__logout {
+		align-self: center !important;
+		padding: 0 !important;
+		color: var(--m3-secondary, #4c555f) !important;
+		font-size: 14px !important;
 		font-weight: 600 !important;
-		white-space: nowrap !important;
+		line-height: 44px !important;
+		text-transform: none !important;
 	}
 
-	&__actions--single &__primaryAction {
-		min-width: 160px !important;
-	}
-
-	@media (width <= 520px) {
+	@media (width >= 768px) {
 		&__paper {
-			width: min(368px, calc(100vw - 22px)) !important;
-			max-width: calc(100vw - 22px) !important;
-			margin: 11px !important;
-			padding: 32px 28px;
-		}
-
-		&__header {
-			grid-template-columns: 84px 1fr;
-			gap: 16px;
-		}
-
-		&__graphic {
-			width: 84px;
-			height: 84px;
-		}
-
-		&__stepper {
-			grid-auto-columns: 56px;
-			column-gap: 8px;
-			overflow-x: auto;
-			padding-bottom: 4px;
-		}
-
-		&__stepUnit::after {
-			left: calc(50% + 18px);
-			right: calc(-50% + 10px);
+			width: min(650px, calc(100vw - 64px)) !important;
+			max-width: calc(100vw - 64px) !important;
+			max-height: calc(100vh - 64px);
+			margin: 32px !important;
+			padding: 44px;
 		}
 
 		&__stepLabel {
-			font-size: 9px !important;
-			line-height: 12px !important;
-			white-space: normal;
-			overflow-wrap: anywhere;
-		}
-
-		&__downloadGrid,
-		&__qrSection {
-			grid-template-columns: 1fr;
-		}
-
-		&__divider {
-			justify-self: center;
-		}
-
-		&__iconAction {
-			flex-basis: 64px !important;
-			width: 64px;
-		}
-	}
-
-	// Tablet and desktop: about 30 % more room in every direction. Only the
-	// container grows — type sizes stay as they are.
-	@media (width >= 768px) {
-		&__paper {
-			width: min(650px, calc(100vw - 64px));
-
-			// Never taller than the window: on a short one the paper scrolls
-			// instead of pushing its actions and the logout out of reach.
-			min-height: min(640px, calc(100vh - 64px));
-			max-height: calc(100vh - 64px);
-			padding: 44px;
-			overflow-y: auto;
-		}
-
-		&__header {
-			gap: 32px;
-			margin-bottom: 36px;
-		}
-
-		&__stepper {
-			margin-bottom: 36px;
+			font-size: 12px !important;
 		}
 
 		&__body {
 			gap: 24px;
 		}
 
-		&__downloadGrid {
-			gap: 28px;
+		&__downloadCard {
+			flex-direction: row;
+			align-items: center;
 		}
 
-		&__actions {
-			margin-top: 36px;
+		&__storeBadges {
+			width: auto;
+		}
+
+		&__qrSection {
+			flex-direction: row;
+			justify-content: space-between;
+		}
+
+		&__manualKey {
+			width: auto;
+			flex: 1 1 auto;
 		}
 	}
 }

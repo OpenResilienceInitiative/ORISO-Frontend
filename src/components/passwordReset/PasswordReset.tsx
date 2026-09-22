@@ -17,8 +17,16 @@ import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import {
 	inputValuesFit,
-	strengthIndicator
+	strengthIndicator,
+	validatePasswordCriteria
 } from '../../utils/validateInputValue';
+import {
+	AlertIcon,
+	CheckMarkIcon,
+	PendingDotIcon
+} from '../twoFactorAuth/accountSetupDialogChrome';
+import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
+import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
 import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import './passwordReset.styles';
 import { Headline } from '../headline/Headline';
@@ -77,9 +85,93 @@ interface PasswordResetProps {
 	/** Inside the account-setup dialog the surrounding dialog already carries the title and the
 	 *  reason, and "if you like, you can change your password" would contradict it. */
 	hideIntro?: boolean;
+	/** `dialog` is the account-setup presentation; the profile page keeps its own form. */
+	variant?: 'profile' | 'dialog';
 }
 
-export const PasswordReset = ({ hideIntro = false }: PasswordResetProps) => {
+interface DialogPasswordFieldProps {
+	errorMessage?: string;
+	hint?: string;
+	id: string;
+	label: string;
+	name: string;
+	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	successMessage?: string;
+	value: string;
+}
+
+const DialogPasswordField = ({
+	errorMessage,
+	hint,
+	id,
+	label,
+	name,
+	onChange,
+	successMessage,
+	value
+}: DialogPasswordFieldProps) => {
+	const { t: translate } = useTranslation();
+	const [isVisible, setIsVisible] = useState(false);
+	const state = errorMessage ? 'error' : successMessage ? 'ok' : '';
+
+	return (
+		<div className="passwordReset__field">
+			<label className="passwordReset__label" htmlFor={id}>
+				{label}
+			</label>
+			<div
+				className={[
+					'passwordReset__inputBox',
+					state && `passwordReset__inputBox--${state}`
+				]
+					.filter(Boolean)
+					.join(' ')}
+			>
+				<input
+					autoComplete="off"
+					className="passwordReset__inputControl"
+					id={id}
+					name={name}
+					onChange={onChange}
+					type={isVisible ? 'text' : 'password'}
+					value={value}
+				/>
+				<button
+					aria-label={translate(
+						isVisible
+							? 'login.password.hide'
+							: 'login.password.show'
+					)}
+					className="passwordReset__visibility"
+					onClick={() => setIsVisible(!isVisible)}
+					type="button"
+				>
+					{isVisible ? <HidePasswordIcon /> : <ShowPasswordIcon />}
+				</button>
+			</div>
+			{state === '' && hint && (
+				<p className="passwordReset__fieldHint">{hint}</p>
+			)}
+			{errorMessage && (
+				<p className="passwordReset__fieldMessage passwordReset__fieldMessage--error">
+					<AlertIcon />
+					<span>{errorMessage}</span>
+				</p>
+			)}
+			{!errorMessage && successMessage && (
+				<p className="passwordReset__fieldMessage passwordReset__fieldMessage--ok">
+					<CheckMarkIcon size={16} />
+					<span>{successMessage}</span>
+				</p>
+			)}
+		</div>
+	);
+};
+
+export const PasswordReset = ({
+	hideIntro = false,
+	variant = 'profile'
+}: PasswordResetProps) => {
 	const { t: translate } = useTranslation();
 	const { featureAppointmentsEnabled } = getTenantSettings();
 	const { userData } = useContext(UserDataContext);
@@ -364,6 +456,136 @@ export const PasswordReset = ({ hideIntro = false }: PasswordResetProps) => {
 	const handleSuccess = () => {
 		window.location.href = settings.urls.toLogin;
 	};
+
+	// Live checklist: each rule turns green as the typed password meets it.
+	const criteria = validatePasswordCriteria(newPassword);
+	const criteriaItems = [
+		{
+			key: 'mixedCase',
+			isMet: criteria.hasUpperLowerCase,
+			labelKey: 'profile.functions.password.reset.criteria.mixedCase'
+		},
+		{
+			key: 'number',
+			isMet: criteria.hasNumber,
+			labelKey: 'profile.functions.password.reset.criteria.number'
+		},
+		{
+			key: 'specialChar',
+			isMet: criteria.hasSpecialChar,
+			labelKey: 'profile.functions.password.reset.criteria.specialChar'
+		},
+		{
+			key: 'minLength',
+			isMet: criteria.hasMinLength,
+			labelKey: 'profile.functions.password.reset.criteria.minLength'
+		}
+	];
+
+	if (variant === 'dialog') {
+		return (
+			<div
+				id="passwordReset"
+				className="passwordReset passwordReset--dialog"
+			>
+				{repairRequired && (
+					<p className="passwordReset__error" role="alert">
+						{translate(
+							'encryption.passwordRecovery.repairRequired'
+						)}{' '}
+						<Link to="/profile/einstellungen/sicherheit">
+							{translate('encryption.passwordRecovery.settings')}
+						</Link>
+					</p>
+				)}
+				<DialogPasswordField
+					errorMessage={oldPasswordErrorMessage}
+					hint={translate(
+						'profile.functions.password.reset.old.hint'
+					)}
+					id="passwordResetOld"
+					label={translate(
+						'profile.functions.password.reset.old.label'
+					)}
+					name="passwordResetOld"
+					onChange={handleInputOldChange}
+					successMessage={oldPasswordSuccessMessage}
+					value={oldPassword}
+				/>
+				<div className="passwordReset__fieldPair">
+					<DialogPasswordField
+						errorMessage={newPasswordErrorMessage}
+						id="passwordResetNew"
+						label={translate(
+							'profile.functions.password.reset.new.label'
+						)}
+						name="passwordResetNew"
+						onChange={handleInputNewChange}
+						successMessage={newPasswordSuccessMessage}
+						value={newPassword}
+					/>
+					<DialogPasswordField
+						errorMessage={confirmPasswordErrorMessage}
+						id="passwordResetConfirm"
+						label={translate(
+							'profile.functions.password.reset.confirm.label'
+						)}
+						name="passwordResetConfirm"
+						onChange={handleInputConfirmChange}
+						successMessage={confirmPasswordSuccessMessage}
+						value={confirmPassword}
+					/>
+				</div>
+				<div className="passwordReset__criteria">
+					<p className="passwordReset__criteriaTitle">
+						{translate(
+							'profile.functions.password.reset.criteria.title'
+						)}
+					</p>
+					<ul className="passwordReset__criteriaList">
+						{criteriaItems.map((item) => (
+							<li
+								className={[
+									'passwordReset__criterion',
+									item.isMet &&
+										'passwordReset__criterion--met'
+								]
+									.filter(Boolean)
+									.join(' ')}
+								key={item.key}
+							>
+								{item.isMet ? (
+									<CheckMarkIcon size={16} />
+								) : (
+									<PendingDotIcon />
+								)}
+								<span>{translate(item.labelKey)}</span>
+								{item.isMet && (
+									<span className="twoFactorSetupDialog__srOnly">
+										{` ${translate('profile.functions.password.reset.criteria.met')}`}
+									</span>
+								)}
+							</li>
+						))}
+					</ul>
+				</div>
+				<Button
+					item={{
+						label: translate(
+							'profile.functions.password.reset.submitAndContinue'
+						),
+						type: BUTTON_TYPES.PRIMARY
+					}}
+					buttonHandle={handleSubmit}
+					className="passwordReset__submit"
+					disabled={!isValid}
+				/>
+				{overlayActive ? (
+					<Overlay item={overlayItem} handleOverlay={handleSuccess} />
+				) : null}
+			</div>
+		);
+	}
 
 	return (
 		<div id="passwordReset" className="passwordReset">

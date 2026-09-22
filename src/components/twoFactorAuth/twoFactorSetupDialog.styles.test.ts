@@ -11,24 +11,114 @@ const dialogStyles = () =>
 		'utf8'
 	);
 
-describe('two-factor setup dialog responsive layout', () => {
-	it('scopes compact columns, connectors, and wrapping to the mobile stepper', () => {
-		const scss = dialogStyles();
-		const mobileStyles = scss.slice(
-			scss.indexOf('@media (width <= 520px)')
-		);
+const wideStyles = (scss: string) =>
+	scss.slice(scss.indexOf('@media (width >= 768px)'));
 
-		expect(mobileStyles).toMatch(
-			/&__paper\s*\{[^}]*width:\s*min\(368px, calc\(100vw - 22px\)\)\s*!important;[^}]*max-width:\s*calc\(100vw - 22px\)\s*!important;[^}]*margin:\s*11px\s*!important;/
+const baseStyles = (scss: string) =>
+	scss.slice(0, scss.indexOf('@media (width >= 768px)'));
+
+describe('two-factor setup dialog paper', () => {
+	// The artboards are a 366px phone board and a 650px desktop board, so the
+	// base block is the phone one and the media query grows it.
+	it('is the phone board by default and the desktop board from 768px up', () => {
+		const scss = dialogStyles();
+
+		expect(baseStyles(scss)).toMatch(
+			/&__paper\s*\{[^}]*width:\s*min\(366px, calc\(100vw - 24px\)\)\s*!important;[^}]*max-width:\s*calc\(100vw - 24px\)\s*!important;[^}]*margin:\s*12px\s*!important;[^}]*padding:\s*24px;/
 		);
-		expect(mobileStyles).toMatch(
-			/&__stepper\s*\{[^}]*grid-auto-columns:\s*56px;[^}]*column-gap:\s*8px;/
+		expect(wideStyles(scss)).toMatch(
+			/&__paper\s*\{[^}]*width:\s*min\(650px, calc\(100vw - 64px\)\)\s*!important;[^}]*padding:\s*44px;/
 		);
-		expect(mobileStyles).toMatch(
-			/&__stepUnit::after\s*\{[^}]*left:\s*calc\(50% \+ 18px\);[^}]*right:\s*calc\(-50% \+ 10px\);/
+	});
+
+	// A short window must scroll the paper rather than push the action row and
+	// the logout link out of reach.
+	it('never grows past the window and scrolls instead', () => {
+		const scss = dialogStyles();
+
+		expect(baseStyles(scss)).toMatch(
+			/&__paper\s*\{[^}]*max-height:\s*calc\(100vh - 24px\);/
 		);
-		expect(mobileStyles).toMatch(
-			/&__stepLabel\s*\{[^}]*font-size:\s*9px\s*!important;[^}]*line-height:\s*12px\s*!important;[^}]*white-space:\s*normal;[^}]*overflow-wrap:\s*anywhere;/
+		expect(baseStyles(scss)).toMatch(
+			/&__paper\s*\{[\s\S]*?overflow-y:\s*auto;/
+		);
+		expect(wideStyles(scss)).toMatch(
+			/&__paper\s*\{[^}]*max-height:\s*calc\(100vh - 64px\);/
+		);
+	});
+
+	it('grows the container, not the type, from tablet width up', () => {
+		const wide = wideStyles(dialogStyles());
+
+		// The one exception is the five-step label, which the artboards set to
+		// 11px on the phone and 12px on the desktop board.
+		expect(wide.match(/font-size/g)).toHaveLength(1);
+		expect(wide).toMatch(/&__stepLabel\s*\{[^}]*font-size:\s*12px/);
+	});
+});
+
+describe('two-factor setup dialog chrome', () => {
+	it('draws the two-step progress row from the artboards', () => {
+		const scss = dialogStyles();
+
+		expect(scss).toMatch(
+			/&__progressMarker\s*\{[\s\S]*?width:\s*24px;[\s\S]*?border:\s*1\.5px solid var\(--m3-outline-variant, #c9c5c7\);/
+		);
+		expect(scss).toMatch(
+			/&__progressStep--active\s*\{[\s\S]*?background:\s*var\(--m3-primary, #a5000a\);/
+		);
+	});
+
+	it('gives the header a 56px tile with a 16px radius', () => {
+		const scss = dialogStyles();
+
+		expect(scss).toMatch(
+			/&__headerTile\s*\{[\s\S]*?width:\s*56px;[\s\S]*?height:\s*56px;[\s\S]*?border-radius:\s*16px;/
+		);
+		expect(scss).toMatch(/&__title\s*\{[\s\S]*?font-size:\s*24px/);
+	});
+
+	it('tints grouped content with the card surface', () => {
+		expect(dialogStyles()).toMatch(
+			/&__card\s*\{[\s\S]*?border-radius:\s*12px;[\s\S]*?background:\s*var\(--m3-surface-container, #f1edee\);/
+		);
+	});
+
+	it('sizes the five-step stepper circles at 32px', () => {
+		expect(dialogStyles()).toMatch(
+			/&__stepCircle\s*\{[\s\S]*?width:\s*32px;[\s\S]*?height:\s*32px;/
+		);
+	});
+});
+
+describe('two-factor setup dialog actions', () => {
+	it('pairs a 64px back button with a 56px primary action', () => {
+		const scss = dialogStyles();
+
+		expect(scss).toMatch(
+			/&__iconAction,\s*\n\s*&__primaryAction\s*\{[\s\S]*?height:\s*56px\s*!important;/
+		);
+		expect(scss).toMatch(
+			/&__iconAction\s*\{[^}]*flex:\s*0 0 64px\s*!important;/
+		);
+	});
+
+	// The forced setup hides the close button. With fixed 72px 72px 1fr tracks
+	// the primary action landed in a 72px track and was cut off.
+	it('gives the primary action the remaining width however many icon buttons precede it', () => {
+		const scss = dialogStyles();
+
+		expect(scss).not.toMatch(/grid-template-columns:\s*72px 72px 1fr/);
+		expect(scss).toMatch(/&__actions\s*\{[^}]*display:\s*flex;/);
+		expect(scss).toMatch(/&__primaryAction\s*\{[^}]*flex:\s*1 1 auto;/);
+		expect(scss).toMatch(
+			/&__actions--single\s*\{[^}]*justify-content:\s*flex-end;/
+		);
+	});
+
+	it('keeps the logout a centred text link, not a third button', () => {
+		expect(dialogStyles()).toMatch(
+			/&__logout\s*\{[\s\S]*?align-self:\s*center\s*!important;[\s\S]*?line-height:\s*44px\s*!important;/
 		);
 	});
 });
@@ -47,35 +137,5 @@ describe('two-factor setup dialog success step', () => {
 		expect(successIcon).toContain('height: 120px !important;');
 		expect(successIcon).not.toContain('--m3-success');
 		expect(successIcon).not.toContain('#0a882f');
-	});
-
-	it('keeps the lone close action on one right-aligned row', () => {
-		const scss = dialogStyles();
-
-		expect(scss).toMatch(
-			/&__actions--single\s*\{[^}]*justify-content:\s*flex-end;/
-		);
-		expect(scss).toMatch(
-			/&__primaryAction\s*\{[^}]*white-space:\s*nowrap\s*!important;/
-		);
-	});
-
-	it('gives the primary action the remaining width however many icon buttons precede it', () => {
-		const scss = dialogStyles();
-
-		// The forced setup hides the close button. With fixed 72px 72px 1fr
-		// tracks the primary action then landed in a 72px track and was cut off.
-		expect(scss).not.toMatch(/grid-template-columns:\s*72px 72px 1fr/);
-		expect(scss).toMatch(/&__actions\s*\{[^}]*display:\s*flex;/);
-		expect(scss).toMatch(/&__primaryAction\s*\{[^}]*flex:\s*1 1 auto;/);
-	});
-
-	it('grows the container, not the type, from tablet width up', () => {
-		const scss = dialogStyles();
-		const wide = scss.slice(scss.indexOf('@media (width >= 768px)'));
-
-		expect(wide).toMatch(/&__paper\s*\{[^}]*width:\s*min\(650px,/);
-		expect(wide).toMatch(/&__paper\s*\{[^}]*padding:\s*44px;/);
-		expect(wide).not.toMatch(/font-size/);
 	});
 });
