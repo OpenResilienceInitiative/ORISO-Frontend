@@ -309,6 +309,7 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
 		localStorage.setItem(
@@ -352,6 +353,7 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
 		localStorage.setItem(
@@ -392,6 +394,7 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
 		localStorage.setItem(
@@ -445,6 +448,7 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
 		client.getAccessToken = () => token;
 		return client;
 	};
@@ -460,6 +464,45 @@ describe('getMatrixAccessToken', () => {
 	 * device. Use the token in this client, leave the newer one in storage
 	 * (#1504 review).
 	 */
+	/**
+	 * A same-tab token refresh replaces the client and stops this one. Carrying
+	 * on would let a reset run destructive steps on a detached client the app
+	 * no longer uses (#1504 review). Abort, touch nothing: the session lives on
+	 * in the replacement client.
+	 */
+	it('aborts without touching anything once this client was replaced', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'replacement-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockImplementation(async () => {
+			client.clientRunning = false; // replaced while the request was in flight
+			return {
+				accessToken: 'uia-token',
+				userId: '@consultant:matrix.example.test',
+				deviceId: 'ORISO_WEB_TEST_DEVICE',
+				uiaPassword: 'current-password'
+			};
+		});
+		const makeRequest = uiaChallenge();
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(revoke).not.toHaveBeenCalled();
+		expect(localStorage.getItem('matrix_access_token')).toBe(
+			'replacement-token'
+		);
+		expect(makeRequest).toHaveBeenCalledOnce();
+		vi.unstubAllGlobals();
+	});
+
 	it('neither revokes nor overwrites a newer token of the same account', async () => {
 		const client = liveClient();
 		localStorage.setItem('matrix_access_token', 'newer-token');
@@ -557,6 +600,7 @@ describe('getMatrixAccessToken', () => {
 			userId: '@consultant:matrix.example.test'
 		}) as any;
 		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
 		client.getAccessToken = () => 'first-token';
 		localStorage.setItem('matrix_access_token', 'first-token');
 		localStorage.setItem(

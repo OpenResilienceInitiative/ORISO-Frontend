@@ -128,6 +128,12 @@ const fetchCurrentUiaPassword = async (
 		revokeMatrixToken(loginData.homeserverUrl, token);
 		throw new Error('Matrix session ended during device-signing auth');
 	}
+	// Replaced by a same-tab refresh (stopped): the session lives on in the new client, touch nothing.
+	if (!client.clientRunning) {
+		throw new Error(
+			'Matrix client was replaced during device-signing auth'
+		);
+	}
 	// A newer token of this account in storage (refresh, other tab) stays; it is alive too.
 	const ownsStorage = storedToken === client.getAccessToken();
 	client.setAccessToken(token);
