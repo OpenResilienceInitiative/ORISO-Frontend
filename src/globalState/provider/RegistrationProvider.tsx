@@ -27,6 +27,7 @@ import {
 	filterRegistrationStepsForDirectLink,
 	getConsultantDirectLinkTopicIds
 } from '../../components/registration/registrationSteps';
+import { agencyExcludesTopic } from '../../components/registration/agencyTopicMatch';
 
 export const RegistrationContext = createContext<RegistrationContextInterface>(
 	{}
@@ -197,6 +198,46 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 					registrationData.topicId
 				);
 			}
+
+			/* A subject area belongs to the counselling centre it was chosen
+			   for. Restoring both by id alone is how a pick made at one centre
+			   reached the registration of another (#1524) — and it does not
+			   fail loudly: the (centre x subject area) legal lookup answers 404,
+			   which legitimately reads as "this centre has no own wording, the
+			   platform wording applies", so the advice seeker would consent to
+			   the fallback text with nothing on screen saying so.
+
+			   Which side is stale depends on who asked. A `tid` in the URL is
+			   the caller's explicit choice, so there the restored CENTRE gives
+			   way; otherwise the restored subject area does. It is read here
+			   rather than closed over because this effect deliberately runs
+			   once, and the URL at that moment is the question being asked. */
+			const urlNamesTopic = !!getUrlParameter('tid');
+			// Every one of these keys is absent on a first visit, so the stored
+			// object is a partial however it is typed. Saying so is what lets a
+			// stale entry be REMOVED rather than overwritten with a value that
+			// would read back as a deliberate choice.
+			const restored: Partial<RegistrationData> = registrationData;
+
+			if (urlNamesTopic) {
+				if (
+					agencyExcludesTopic(restored.agency, restored.mainTopic) ||
+					agencyExcludesTopic(restored.agency, restored.topic)
+				) {
+					delete restored.agency;
+					delete restored.agencyId;
+				}
+			} else {
+				if (agencyExcludesTopic(restored.agency, restored.mainTopic)) {
+					delete restored.mainTopic;
+					delete restored.mainTopicId;
+				}
+				if (agencyExcludesTopic(restored.agency, restored.topic)) {
+					delete restored.topic;
+					delete restored.topicId;
+				}
+			}
+
 			setRegistrationData(registrationData);
 			setLoading(false);
 		})();
@@ -302,6 +343,44 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		registrationData?.agency?.id,
 		registrationData?.age,
 		registrationData?.state,
+		updateRegistrationData
+	]);
+
+	/* The same rule as the age/state reset above, for the subject area: a pick
+	   is void once the centre it was made for is gone. Only a PROVEN mismatch
+	   clears it (see `agencyExcludesTopic`) — a centre whose topic list we could
+	   not read never costs the advice seeker a valid selection.
+
+	   A subject area that came from the URL is exempt: there the caller named it
+	   on purpose, the restore effect above has already dropped the conflicting
+	   centre, and clearing it here would only fight the direct-link effect that
+	   re-applies it. */
+	useEffect(() => {
+		const agency = registrationData?.agency;
+		const mainTopic = registrationData?.mainTopic;
+		const topic = registrationData?.topic;
+		const clearMainTopic =
+			preselectedTopic?.id !== mainTopic?.id &&
+			agencyExcludesTopic(agency, mainTopic);
+		const clearTopic =
+			preselectedTopic?.id !== topic?.id &&
+			agencyExcludesTopic(agency, topic);
+
+		if (!clearMainTopic && !clearTopic) {
+			return;
+		}
+
+		updateRegistrationData({
+			...(clearMainTopic
+				? { mainTopic: undefined, mainTopicId: undefined }
+				: {}),
+			...(clearTopic ? { topic: undefined, topicId: undefined } : {})
+		});
+	}, [
+		preselectedTopic?.id,
+		registrationData?.agency,
+		registrationData?.mainTopic,
+		registrationData?.topic,
 		updateRegistrationData
 	]);
 
