@@ -303,12 +303,37 @@ export class MatrixClientService {
 		};
 	}
 
+	private readonly heldCryptoOperations = new Set<Promise<void>>();
+
+	/**
+	 * Runs a crypto operation that must finish on the client it started on (reset, setup,
+	 * recovery). A token refresh replaces the client and rotates the Matrix password, so it waits.
+	 * Stale-device recovery is not held: callers retry on the client it produces.
+	 */
+	public holdTokenRefreshDuring<T>(operation: () => Promise<T>): Promise<T> {
+		const run = operation();
+		const settled = run.then(
+			() => undefined,
+			() => undefined
+		);
+		this.heldCryptoOperations.add(settled);
+		void settled.then(() => this.heldCryptoOperations.delete(settled));
+		return run;
+	}
+
+	private async heldCryptoOperationsSettled(): Promise<void> {
+		while (this.heldCryptoOperations.size > 0) {
+			await Promise.all([...this.heldCryptoOperations]);
+		}
+	}
+
 	public async refreshMatrixToken(): Promise<void> {
 		if (this.refreshingToken) {
 			return this.refreshingToken;
 		}
 
-		this.refreshingToken = getMatrixAccessToken()
+		this.refreshingToken = this.heldCryptoOperationsSettled()
+			.then(() => getMatrixAccessToken())
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag

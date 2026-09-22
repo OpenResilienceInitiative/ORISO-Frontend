@@ -4,7 +4,8 @@ import type { MatrixClientService } from '../../../services/matrixClientService'
 type ReadyMatrixClientService = Pick<
 	MatrixClientService,
 	'getReadyClient' | 'getStaleDeviceRecoveryVersion'
->;
+> &
+	Partial<Pick<MatrixClientService, 'holdTokenRefreshDuring'>>;
 
 export type EncryptionClientReadinessStage =
 	| 'initial-readiness'
@@ -56,9 +57,14 @@ export const executeWithReadyEncryptionClient = async <T>(
 		return null;
 	}
 	const recoveryVersion = service?.getStaleDeviceRecoveryVersion() ?? 0;
+	// A token refresh would replace the client mid-operation and rotate the password: hold it.
+	const run = (client: MatrixClient) =>
+		service?.holdTokenRefreshDuring
+			? service.holdTokenRefreshDuring(() => action(client))
+			: action(client);
 
 	try {
-		return await action(initialClient);
+		return await run(initialClient);
 	} catch (initialError) {
 		if (clientOverride !== undefined || !service) {
 			throw initialError;
@@ -80,6 +86,6 @@ export const executeWithReadyEncryptionClient = async <T>(
 			throw initialError;
 		}
 
-		return action(recoveredClient);
+		return run(recoveredClient);
 	}
 };

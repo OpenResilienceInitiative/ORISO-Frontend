@@ -218,6 +218,52 @@ describe('MatrixClientService', () => {
 		expect(service.getClient()).toBeNull();
 	});
 
+	/**
+	 * A crypto reset spans deleting the backup, the UIA round-trip and new
+	 * keys. A token refresh in that window stops the client under it and
+	 * rotates the password, which leaves the account half-reset (#1504 review).
+	 * The refresh waits until the operation has settled.
+	 */
+	it('holds a token refresh until a crypto operation on the client has settled', async () => {
+		vi.mocked(getMatrixAccessToken).mockResolvedValue({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		let finishReset: (() => void) | undefined;
+		const reset = service.holdTokenRefreshDuring(
+			() => new Promise<void>((resolve) => (finishReset = resolve))
+		);
+
+		const refresh = service.refreshMatrixToken();
+		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
+
+		finishReset?.();
+		await reset;
+		await refresh;
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
+	it('still refreshes after a held crypto operation failed', async () => {
+		vi.mocked(getMatrixAccessToken).mockResolvedValue({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		const failed = service.holdTokenRefreshDuring(() =>
+			Promise.reject(new Error('reset failed'))
+		);
+
+		await expect(failed).rejects.toThrow('reset failed');
+		await service.refreshMatrixToken();
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
 	it('waits for replacement-client crypto initialization during token refresh', async () => {
 		let resolveCrypto: (() => void) | undefined;
 		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(

@@ -171,3 +171,32 @@ describe('executeWithReadyEncryptionClient (#839)', () => {
 		expect(action).toHaveBeenCalledOnce();
 	});
 });
+
+describe('executeWithReadyEncryptionClient holds token refresh (#1504)', () => {
+	it('runs the crypto action while token refresh is held on the service', async () => {
+		const client = { deviceId: 'DEVICE_ONE' };
+		const order: string[] = [];
+		const service = {
+			getReadyClient: vi.fn().mockResolvedValue(client),
+			getStaleDeviceRecoveryVersion: vi.fn().mockReturnValue(0),
+			holdTokenRefreshDuring: vi.fn(
+				async (operation: () => Promise<unknown>) => {
+					order.push('hold');
+					const result = await operation();
+					order.push('release');
+					return result;
+				}
+			)
+		};
+		const action = vi.fn(async () => {
+			order.push('action');
+			return 'done';
+		});
+
+		await expect(
+			executeWithReadyEncryptionClient(undefined, service as any, action)
+		).resolves.toBe('done');
+
+		expect(order).toEqual(['hold', 'action', 'release']);
+	});
+});
