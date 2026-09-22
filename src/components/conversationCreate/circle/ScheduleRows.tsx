@@ -109,8 +109,10 @@ export const ScheduleRows = ({
 	 * touched last owns the label, so choosing "Wöchentlich" no longer leaves
 	 * a stale "34 mal" on the button.
 	 */
+	// A one-off group has no frequency to show; its stored interval is only
+	// the form default.
 	const [repeatMode, setRepeatMode] = useState<'count' | 'interval'>(
-		isEditMode ? 'interval' : 'count'
+		isEditMode && value.repeatCount > 1 ? 'interval' : 'count'
 	);
 	const dateRef = useRef<HTMLDivElement | null>(null);
 	const durationRef = useRef<HTMLDivElement | null>(null);
@@ -156,9 +158,9 @@ export const ScheduleRows = ({
 	const MediumRowIcon =
 		MEDIUM_ICONS[
 			resolvePrimaryMediumIcon(
-			isChosen('medium') ? value.modality : undefined,
-			isChosen('medium')
-		)
+				isChosen('medium') ? value.modality : undefined,
+				isChosen('medium')
+			)
 		];
 
 	const variantFor = (row: Exclude<OpenRow, null>, chosen: boolean) => {
@@ -349,13 +351,13 @@ export const ScheduleRows = ({
 					!isChosen('repeat')
 						? repeatLabel
 						: repeatMode === 'interval'
-						? translate(
-								`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
-								value.interval
-							)
-						: translate('groupChat.circle.rows.repeatValue', {
-								count: value.repeatCount
-							})
+							? translate(
+									`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
+									value.interval
+								)
+							: translate('groupChat.circle.rows.repeatValue', {
+									count: value.repeatCount
+								})
 				}
 				variant={variantFor('repeat', isChosen('repeat'))}
 				open={openRow === 'repeat'}
