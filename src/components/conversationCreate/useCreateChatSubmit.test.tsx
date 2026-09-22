@@ -99,4 +99,68 @@ describe('useCreateChatSubmit', () => {
 		});
 		expect(apiCreateGroupChat).toHaveBeenCalledTimes(2);
 	});
+
+	it('hands the saved Series id over and stays put when asked to (#1499)', async () => {
+		vi.mocked(apiCreateGroupChat).mockResolvedValue({ matrixRoomId: 'r1' });
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: [
+				{ chat: { id: 9, matrixRoomId: 'other' } },
+				{ chat: { id: 4711, matrixRoomId: 'r1' } }
+			]
+		} as any);
+		const hold = vi.fn(() => true);
+		const { result } = renderHook(() => useCreateChatSubmit(), { wrapper });
+
+		act(() => {
+			result.current.submit(payload, { holdAfterSuccess: hold });
+		});
+
+		await waitFor(() =>
+			expect(hold).toHaveBeenCalledWith({ seriesId: 4711 })
+		);
+		expect(navigate).not.toHaveBeenCalled();
+
+		act(() => result.current.leave());
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/consultant/sessionView'
+		);
+	});
+
+	it('still navigates straight away when nothing holds it', async () => {
+		vi.mocked(apiCreateGroupChat).mockResolvedValue({ matrixRoomId: 'r1' });
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockRejectedValue(
+			new Error('x')
+		);
+		const hold = vi.fn(() => false);
+		const { result } = renderHook(() => useCreateChatSubmit(), { wrapper });
+
+		act(() => {
+			result.current.submit(payload, { holdAfterSuccess: hold });
+		});
+
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/consultant/sessionView'
+			)
+		);
+		expect(hold).toHaveBeenCalledWith({ seriesId: null });
+	});
+
+	it('does not invent a Series id from an unrelated session (#1499)', async () => {
+		vi.mocked(apiCreateGroupChat).mockResolvedValue({ matrixRoomId: 'r1' });
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: [{ chat: { id: 9, matrixRoomId: 'other' } }]
+		} as any);
+		const hold = vi.fn(() => true);
+		const { result } = renderHook(() => useCreateChatSubmit(), { wrapper });
+
+		act(() => {
+			result.current.submit(payload, { holdAfterSuccess: hold });
+		});
+
+		await waitFor(() =>
+			expect(hold).toHaveBeenCalledWith({ seriesId: null })
+		);
+		expect(navigate).not.toHaveBeenCalled();
+	});
 });

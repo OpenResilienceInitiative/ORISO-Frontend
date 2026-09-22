@@ -1120,6 +1120,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} fois",
 				"repeatValue_other": "{{count}} fois"
+			},
+			"noModeratorAvailable": "Aucune personne disponible",
+			"moderatorHelp": "Aide",
+			"moderatorHelpDialog": {
+				"title": "Inviter une co-modération plus tard",
+				"description": "Pour l’instant, aucun·e autre professionnel·le de votre organisme ne peut être sélectionné·e. Vous pouvez tout de même créer le cercle et ajouter une co-modération ensuite.",
+				"step1": "Ouvrez le cercle dans votre liste, puis « Infos sur le chat ».",
+				"step2": "Sous « Paramètres de chat », choisissez « Modifier ».",
+				"step3": "Ajoutez des collègues sous « Modération supplémentaire » et enregistrez.",
+				"note": "Seule la personne qui a créé le cercle peut le modifier, et uniquement lorsqu’il n’est pas en cours. Tous les professionnel·les actifs de votre organisme peuvent être sélectionné·es.",
+				"close": "Compris"
 			}
 		},
 		"entry": {
@@ -1133,6 +1144,28 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours"
+		},
+		"shareDialog": {
+			"title_text": "Cercle créé",
+			"title_audio": "Appel audio créé",
+			"title_video": "Appel vidéo créé",
+			"description": "Partagez ce lien avec les participant·es. Il les mène à la salle d’attente jusqu’au début de la séance.",
+			"linkLabel": "Lien d’invitation",
+			"copy": "Copier le lien",
+			"copied": "Copié",
+			"detailsHeadline": "Séance",
+			"topic": "Sujet",
+			"date": "Jour",
+			"start": "Début",
+			"timeValue": "à {{time}}",
+			"duration": "Durée",
+			"repeats": "Répétitions",
+			"repeatValue": "{{count}} séances, {{interval}}",
+			"format": "Format",
+			"language": "Langue",
+			"done": "Terminé",
+			"durationValue": "{{value}} h",
+			"copyFailed": "La copie a échoué. Veuillez réessayer."
 		}
 	},
 	"help": {
