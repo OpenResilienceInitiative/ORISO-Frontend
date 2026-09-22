@@ -107,52 +107,45 @@ describe('findHardcodedUrls', () => {
  * ORISO-Keycloak's OtpEmailThemeTest renders the same files with FreeMarker;
  * this file pins the shape the generator must emit.
  *
- * The header shows the recipient's Träger logo (Admin → Appearance → Logo),
- * which TenantService serves at `/service/tenant/public/branding/{id}/logo`
- * on the app origin. Without a Träger it shows the operator's platform logo
- * (`ORISO_LOGO_URL`), and without either only the text wordmark — never an
- * `<img src="">`, which mail clients draw as a broken image.
+ * The header shows the logo and the brand name beside it. The logo is the
+ * recipient's Träger logo (Admin → Appearance → Logo), which TenantService
+ * serves at `/service/tenant/public/branding/{id}/logo` on the app origin;
+ * without a Träger the operator's platform logo (`ORISO_LOGO_URL`); without
+ * either no `<img>` at all, only the name. The logo is decorative next to the
+ * name (`alt=""`), so a logo that fails to load leaves nothing in its place.
  */
 
 const htmlDir = path.resolve(__dirname, 'dist/keycloak/email/html');
 const read = (name: string) => readFileSync(path.join(htmlDir, name), 'utf8');
 
-const LOGO_BRANCHES =
-	/<#if orisoLogoSrc\?has_content>([\s\S]*?)<#else>([\s\S]*?)<\/#if>/;
+const LOGO_BRANCH = /<#if orisoLogoSrc\?has_content>([\s\S]*?)<\/#if>/;
+const NAME_CELL = />\$\{\(properties\.orisoPlatformName\)[^}]*\}<\/td>/;
 
 describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 	'Keycloak theme %s',
 	(name) => {
 		const template = read(name);
 
-		it('shows either the logo or the text wordmark, never both', () => {
-			const [, logo, wordmark] = template.match(LOGO_BRANCHES) ?? [];
+		it('shows the logo and the name side by side', () => {
+			const [branch, logo] = template.match(LOGO_BRANCH) ?? [];
 			expect(logo).toContain('<img');
-			expect(logo).not.toContain('padding-right:12px');
-			expect(logo).not.toMatch(
-				/>\$\{\(properties\.orisoPlatformName\)[^}]*\}<\/td>/
-			);
-			expect(wordmark).not.toContain('<img');
-			expect(wordmark).toMatch(
-				/>\$\{\(properties\.orisoPlatformName\)[^}]*\}<\/td>/
+			expect(logo).not.toMatch(NAME_CELL);
+			// The name cell follows the optional logo cell, outside the branch.
+			const after = template.slice(template.indexOf(branch ?? '#'));
+			expect(after.slice((branch ?? '').length)).toMatch(
+				new RegExp(`^<td [^>]*${NAME_CELL.source}`)
 			);
 			expect(template.match(/<img /g)).toHaveLength(1);
+			expect(template).not.toContain('src=""');
 		});
 
-		it('references the logo by the resolved URL with a styled alt text', () => {
+		it('marks the logo decorative: empty alt, fixed size, no border', () => {
 			const img = template.match(/<img [^>]*>/)?.[0] ?? '';
 			expect(img).toContain('src="${orisoLogoSrc}"');
-			expect(img).toContain('class="oriso-logo"');
-			expect(img).toContain('width="56" height="56"');
-			expect(img).toContain(
-				'alt="${(properties.orisoPlatformName)!\'Online-Beratung\'}"'
-			);
-			expect(img).toContain('font-family:Inter');
-			expect(img).toContain('font-size:16px');
-			expect(img).toContain('font-weight:600');
-			expect(img).toContain(
-				"color:${(properties.orisoPrimaryColor)!'#a5000a'}"
-			);
+			expect(img).toContain(' alt=""');
+			expect(img).toContain('width="36" height="36"');
+			expect(img).toContain('border:0');
+			expect(img).not.toContain('font-family');
 		});
 
 		it("builds the Träger logo URL from the recipient's tenantId on the app origin", () => {
@@ -173,9 +166,10 @@ describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 			);
 		});
 
-		it('covers a broken-image icon with the brand name', () => {
-			expect(template).toContain(
-				'img.oriso-logo::after{content:attr(alt);'
+		it('hides a failed logo instead of naming it again', () => {
+			expect(template).not.toContain('content:attr(alt)');
+			expect(template).toMatch(
+				/img\[alt=""\]::after\{content:"";[^}]*background-color:#f2efef/
 			);
 		});
 	}

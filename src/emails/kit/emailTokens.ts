@@ -93,9 +93,7 @@ export const emailLayout = {
 	width: 600,
 	/** Below this width the stacking media query kicks in. */
 	mobileBreakpoint: 620,
-	logoSize: 36,
-	/** A logo that stands alone, without the text wordmark beside it. */
-	logoMarkSize: 56
+	logoSize: 36
 } as const;
 
 /** Brand values a tenant can override per send. */

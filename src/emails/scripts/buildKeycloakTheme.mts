@@ -33,9 +33,9 @@ import {
 	renderEmailText
 } from '../kit/emailTemplate';
 import {
-	emailLogoLockup,
-	emailLogoMark,
-	emailLogoMarkFallbackCss
+	emailLogoCell,
+	emailLogoCellFallbackCss,
+	emailLogoLockup
 } from '../kit/emailAtoms';
 import { emailDefaultBrand } from '../kit/emailTokens';
 import {
@@ -239,8 +239,8 @@ const messages = (
 };
 
 /**
- * The header: the recipient's Träger logo, else the platform logo, else the
- * text wordmark alone.
+ * The header: the logo beside the brand name. The logo is the recipient's
+ * Träger logo, else the platform logo, else absent, and the name stands alone.
  *
  * Keycloak hands every template the recipient as `user`; `user.attributes`
  * holds the first value of each user attribute, among them UserService's
@@ -248,8 +248,8 @@ const messages = (
  * anything else must not reach a URL. Mail clients block `data:` images, so
  * the logo is always an absolute URL, and only one beneath the HTTPS app
  * origin — a foreign host would learn who opened the mail and when. Whether
- * the image then loads is up to TenantService; if it does not, the alt text
- * (the brand name, styled like the wordmark) takes its place.
+ * the image then loads is up to TenantService; the name is already there, so
+ * the logo is decorative (`alt=""`) and a failed one leaves nothing behind.
  */
 const logoHeader = (): string => {
 	const app = 'properties.orisoAppUrl';
@@ -264,13 +264,17 @@ const logoHeader = (): string => {
 		`<#elseif ${platformLogo}?starts_with(${app} + "/")>` +
 		`<#assign orisoLogoSrc = ${platformLogo}>` +
 		'</#if></#if>';
-	const mark = emailLogoMark({
+	const cell = emailLogoCell({
 		...emailDefaultBrand,
 		// eslint-disable-next-line no-template-curly-in-string -- FreeMarker, not JS
 		logoUrl: '${orisoLogoSrc}'
 	});
-	const wordmark = emailLogoLockup({ ...emailDefaultBrand, logoUrl: '' });
-	return `${resolve}<#if orisoLogoSrc?has_content>${mark}<#else>${wordmark}</#if>`;
+	return (
+		resolve +
+		emailLogoLockup(emailDefaultBrand)
+			.split(emailLogoCell(emailDefaultBrand))
+			.join(`<#if orisoLogoSrc?has_content>${cell}</#if>`)
+	);
 };
 
 const withLogoHeader = (html: string): string => {
@@ -285,10 +289,7 @@ const withLogoHeader = (html: string): string => {
 	return html
 		.split(lockup)
 		.join(logoHeader())
-		.replace(
-			headEnd,
-			`  ${emailLogoMarkFallbackCss(emailDefaultBrand)}\n${headEnd}`
-		);
+		.replace(headEnd, `  ${emailLogoCellFallbackCss()}\n${headEnd}`);
 };
 
 /** Turns kit placeholders and copy markers into what Keycloak understands. */

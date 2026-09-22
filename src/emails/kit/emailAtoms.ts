@@ -169,6 +169,10 @@ export const emailDivider = (): string =>
  * a broken-image icon in most clients — worse than no logo at all. So a blank
  * URL yields no cell, and the text wordmark carries the header alone.
  *
+ * The brand name always stands in the next cell, so the image is decorative:
+ * `alt=""`. A logo that fails to load must leave nothing behind, not repeat
+ * the name beside itself.
+ *
  * The plain dialect replaces this exact fragment with a `{{logoCell}}` token
  * (see `emailDialect`), because a template file cannot express the conditional:
  * UserService's renderer makes the same present-or-absent decision at send
@@ -180,10 +184,10 @@ export const emailLogoCell = (brand: EmailBrand): string =>
 		: `<td width="${emailLayout.logoSize}" valign="middle" style="width:${emailLayout.logoSize}px;padding-right:12px;">` +
 			`<img src="${emailEscape(brand.logoUrl)}" width="${emailLayout.logoSize}" height="${
 				emailLayout.logoSize
-			}" alt="${emailEscape(brand.platformName)}" ` +
+			}" alt="" ` +
 			`style="display:block;width:${emailLayout.logoSize}px;height:${emailLayout.logoSize}px;border:0;border-radius:${emailRadius.logo}px;"></td>`;
 
-/** Logo plus wordmark. The logo is decorative next to the name, hence `alt`. */
+/** Logo plus wordmark. The name is text, so the logo beside it is decorative. */
 export const emailLogoLockup = (brand: EmailBrand): string =>
 	'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
 	emailLogoCell(brand) +
@@ -198,49 +202,18 @@ export const emailLogoLockup = (brand: EmailBrand): string =>
 	)};">${emailEscape(brand.platformName)}</td>` +
 	'</tr></table>';
 
-/** Class the broken-image rule in `emailLogoMarkFallbackCss` hooks onto. */
-export const EMAIL_LOGO_MARK_CLASS = 'oriso-logo';
-
-const logoMarkType = (brand: EmailBrand, line: number): string =>
-	font(emailType.brand.size, line, {
-		weight: emailType.brand.weight,
-		tracking: emailType.brand.tracking,
-		color: brand.primaryColor
-	});
-
 /**
- * The logo on its own, for a logo that carries the brand's name itself (the
- * Träger's detailed logo). Its alt text is the brand name, styled like the
- * wordmark in the brand colour, so a client that cannot show the image shows
- * the name — and the name never appears twice.
+ * Head CSS that hides a header logo that failed to load. Only Chromium draws
+ * `::after` on an `<img>`, and only on one that failed, so this paints the
+ * broken-image icon over with the canvas the header sits on; a loaded logo is
+ * untouched. Gecko and WebKit ignore it and draw a faint empty frame, Outlook
+ * its own placeholder box. The header's logo is the only image with an empty
+ * `alt`, which is what the selector keys on.
  */
-export const emailLogoMark = (brand: EmailBrand): string => {
-	const size = emailLayout.logoMarkSize;
-	return (
-		'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td valign="middle">' +
-		`<img class="${EMAIL_LOGO_MARK_CLASS}" src="${emailEscape(
-			brand.logoUrl
-		)}" width="${size}" height="${size}" alt="${emailEscape(
-			brand.platformName
-		)}" ` +
-		`style="display:block;width:${size}px;height:${size}px;border:0;border-radius:${
-			emailRadius.logo
-		}px;${logoMarkType(brand, emailType.brand.line)};"></td></tr></table>`
-	);
-};
-
-/**
- * Head CSS for `emailLogoMark`. Chrome and Firefox draw `::after` only on an
- * image that failed to load, so this covers their grey broken-image box with
- * the alt text on the canvas colour. The native alt text stays on one line and
- * the padding covers its tail, which starts after the broken-image icon. Other
- * clients show the styled alt text.
- */
-export const emailLogoMarkFallbackCss = (brand: EmailBrand): string =>
-	`img.${EMAIL_LOGO_MARK_CLASS}{position:relative;overflow:visible;white-space:nowrap}` +
-	`img.${EMAIL_LOGO_MARK_CLASS}::after{content:attr(alt);position:absolute;top:0;left:0;` +
-	`min-width:100%;height:100%;padding-right:32px;white-space:nowrap;background-color:${emailColor.canvas};` +
-	`${logoMarkType(brand, emailLayout.logoMarkSize)}}`;
+export const emailLogoCellFallbackCss = (): string =>
+	'img[alt=""]{position:relative}' +
+	'img[alt=""]::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;' +
+	`background-color:${emailColor.canvas}}`;
 
 /**
  * The hidden preview line most clients show next to the subject.
