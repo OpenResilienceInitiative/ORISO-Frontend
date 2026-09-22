@@ -1,12 +1,18 @@
 import { getValidTimeFormatForSelectedTime } from '../groupChat/createChatHelpers';
 
 export const getChatDate = (startDate, startTime) => {
+	// Read the calendar day from the string: new Date('YYYY-MM-DD') is UTC
+	// midnight, the previous day west of Greenwich (#1499).
+	const [year, month, day] = String(startDate)
+		.slice(0, 10)
+		.split('-')
+		.map(Number);
 	return new Date(
-		new Date(startDate).getFullYear(),
-		new Date(startDate).getMonth(),
-		new Date(startDate).getDate(),
-		startTime.slice(0, 2),
-		startTime.slice(3, 5)
+		year,
+		month - 1,
+		day,
+		Number(startTime.slice(0, 2)),
+		Number(startTime.slice(3, 5))
 	);
 };
 
