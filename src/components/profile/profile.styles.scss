@@ -687,3 +687,41 @@ $profile-footer-justify-content: center !default;
 		color: #6b7280;
 	}
 }
+
+// #878: `cards` layout of the settings tab. Columns instead of floats, so
+// cards of different height stack without gaps and reading order stays top-down.
+.profile__cards {
+	padding: $grid-base-two 0;
+
+	@include breakpoint($fromLarge) {
+		columns: 2;
+		column-gap: $grid-base-three;
+		padding: $grid-base-three;
+	}
+
+	.profile__card {
+		display: grid;
+		grid-template-columns: 24px minmax(0, 1fr);
+		column-gap: $grid-base-two;
+		align-items: start;
+		float: none;
+		width: auto;
+		margin: 0 0 $grid-base-three;
+		padding: 20px $grid-base-three;
+		border-radius: 24px;
+		background: var(--m3-surface-container-low);
+		break-inside: avoid;
+		box-sizing: border-box;
+	}
+
+	.profile__card__icon {
+		width: 24px;
+		height: 24px;
+		margin-top: 2px;
+		color: var(--m3-on-surface-variant);
+	}
+
+	.profile__card__body {
+		min-width: 0;
+	}
+}

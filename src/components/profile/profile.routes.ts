@@ -272,6 +272,7 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.settings.title',
 			url: '/einstellungen',
+			layout: 'cards',
 			elements: profileRoutesSettings(selectableLocales, settings)
 		},
 		{
