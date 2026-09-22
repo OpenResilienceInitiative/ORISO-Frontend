@@ -309,7 +309,7 @@ const run = async () => {
 Generated — do not edit by hand. Run \`npm run emails:mailservice\`.
 
 Mounted over the upstream Online-Beratung mail service's \`templates/\`
-directory; see ADR-020 for why an override rather than a fork.
+directory; see ADR-025 for why this path is replaced rather than forked.
 
 German is \`<name>.html\`, English \`<name>.en.html\`, matching upstream's layout.
 
