@@ -2358,7 +2358,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirm new password"
+						"label": "Confirm new password",
+						"dialogLabel": "Repeat the new password"
 					},
 					"insecure": "Your password is not secure.",
 					"instructions": "<span class=\"text--bold\">Your password must meet the following criteria to guarantee a protected consultation:</span><ul class=\"pl--2 my--1\"><li>upper/lower case</li><li>min. one number</li><li>min. one special character (e.g.: ?, !, +, #, &, ...)</li><li>min. 9 characters</li></ul>",
@@ -2371,7 +2372,8 @@
 					"old": {
 						"incorrect": "Your password is not correct.",
 						"label": "Current password",
-						"hint": "The password you have just signed in with."
+						"hint": "The password you have just signed in with.",
+						"dialogLabel": "Previous password"
 					},
 					"overlay": {
 						"button": {

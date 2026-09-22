@@ -47,8 +47,10 @@ $setup-disabled: #b9bdc3;
 		white-space: nowrap;
 	}
 
-	&__strokeIcon {
+	&__strokeIcon,
+	&__headerTile svg {
 		flex-shrink: 0;
+		fill: none;
 	}
 
 	&__close {
@@ -185,11 +187,11 @@ $setup-disabled: #b9bdc3;
 	}
 
 	&__helper {
-		color: $setup-ok;
+		color: $setup-ok !important;
 	}
 
 	&__error {
-		color: $setup-error;
+		color: $setup-error !important;
 		font-size: 13px !important;
 		line-height: 18px !important;
 	}
@@ -204,8 +206,7 @@ $setup-disabled: #b9bdc3;
 		flex-direction: column;
 		align-items: center;
 		gap: 8px;
-		flex-basis: 0;
-		flex-grow: 1;
+		flex: 1 1 auto;
 		min-width: 0;
 	}
 
@@ -260,6 +261,7 @@ $setup-disabled: #b9bdc3;
 		line-height: 16px !important;
 		letter-spacing: 0 !important;
 		text-align: center;
+		white-space: nowrap;
 
 		&--active {
 			color: var(--m3-primary, #a5000a);
@@ -397,6 +399,8 @@ $setup-disabled: #b9bdc3;
 	}
 
 	&__divider {
+		flex-shrink: 0;
+		white-space: nowrap;
 		color: var(--m3-secondary, #4c555f);
 		font-size: 12px !important;
 		font-weight: 700 !important;
@@ -557,6 +561,10 @@ $setup-disabled: #b9bdc3;
 
 		&__stepLabel {
 			font-size: 12px !important;
+		}
+
+		&__stepUnit {
+			flex-basis: 0;
 		}
 
 		&__body {

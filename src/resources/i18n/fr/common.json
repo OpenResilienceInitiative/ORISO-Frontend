@@ -2362,7 +2362,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirmer le nouveau mot de passe"
+						"label": "Confirmer le nouveau mot de passe",
+						"dialogLabel": "Répéter le nouveau mot de passe"
 					},
 					"insecure": "Votre mot de passe n'est pas sécurisé.",
 					"instructions": "<span class=\"text--bold\">Votre mot de passe doit répondre aux critères suivants afin de garantir une consultation protégée:</span><ul class=\"pl--2 my--1\"><li>majuscules et minuscules</li><li>au moins un chiffre</li><li>au moins un caractère spécial (par ex. : ?, !, +, #, &, ...)</li><li>au moins 9 caractères</li></ul>",
@@ -2375,7 +2376,8 @@
 					"old": {
 						"incorrect": "Votre mot de passe n'est pas correct.",
 						"label": "Mot de passe actuel",
-						"hint": "Le mot de passe avec lequel vous venez de vous connecter."
+						"hint": "Le mot de passe avec lequel vous venez de vous connecter.",
+						"dialogLabel": "Mot de passe précédent"
 					},
 					"overlay": {
 						"button": {

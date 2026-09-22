@@ -505,7 +505,7 @@ export const PasswordReset = ({
 					)}
 					id="passwordResetOld"
 					label={translate(
-						'profile.functions.password.reset.old.label'
+						'profile.functions.password.reset.old.dialogLabel'
 					)}
 					name="passwordResetOld"
 					onChange={handleInputOldChange}
@@ -528,7 +528,7 @@ export const PasswordReset = ({
 						errorMessage={confirmPasswordErrorMessage}
 						id="passwordResetConfirm"
 						label={translate(
-							'profile.functions.password.reset.confirm.label'
+							'profile.functions.password.reset.confirm.dialogLabel'
 						)}
 						name="passwordResetConfirm"
 						onChange={handleInputConfirmChange}

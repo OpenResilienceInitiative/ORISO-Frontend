@@ -330,9 +330,9 @@ describe('inside the account-setup dialog', () => {
 		renderDialog();
 
 		expect(screen.getByText(`${K}old.hint`)).not.toBeNull();
-		expect(screen.getByLabelText(`${K}old.label`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}old.dialogLabel`)).not.toBeNull();
 		expect(screen.getByLabelText(`${K}new.label`)).not.toBeNull();
-		expect(screen.getByLabelText(`${K}confirm.label`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}confirm.dialogLabel`)).not.toBeNull();
 	});
 
 	// The checklist is the only feedback while the password is still being
@@ -372,9 +372,9 @@ describe('inside the account-setup dialog', () => {
 	it('refuses the administrator’s password here too', () => {
 		const { type } = renderDialog();
 
-		type(`${K}old.label`, 'same-synthetic');
+		type(`${K}old.dialogLabel`, 'same-synthetic');
 		type(`${K}new.label`, 'same-synthetic');
-		type(`${K}confirm.label`, 'same-synthetic');
+		type(`${K}confirm.dialogLabel`, 'same-synthetic');
 
 		expect(screen.getByText(`${K}sameAsOld`)).not.toBeNull();
 		expect(

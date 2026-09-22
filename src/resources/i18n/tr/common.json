@@ -2362,7 +2362,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Yeni şifreyi onayla"
+						"label": "Yeni şifreyi onayla",
+						"dialogLabel": "Yeni şifreyi tekrarlayın"
 					},
 					"insecure": "Şifreniz güvenli değil.",
 					"instructions": "<span class=\"text--bold\">Korumalı bir danışmayı garanti etmek için şifreniz aşağıdaki kriterleri karşılamalıdır:</span><ul class=\"pl--2 my--1\"><li>büyük ve küçük harf</li><li>en az bir sayı</li><li>en az bir özel karakter (örneğin: ?, !, +, #, &, ...)</li><li>en az 9 karakter</li></ul>",
@@ -2375,7 +2376,8 @@
 					"old": {
 						"incorrect": "Şifreniz yanlış.",
 						"label": "Geçerli şifre",
-						"hint": "Az önce oturum açarken kullandığınız şifre."
+						"hint": "Az önce oturum açarken kullandığınız şifre.",
+						"dialogLabel": "Önceki şifre"
 					},
 					"overlay": {
 						"button": {
