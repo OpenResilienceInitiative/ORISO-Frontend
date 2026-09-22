@@ -75,4 +75,18 @@ describe('agency consultant list', () => {
 			})
 		);
 	});
+
+	it('lets a rejected tenant consultant request propagate', async () => {
+		fetchDataMock.mockRejectedValue(new Error('CATCH_ALL'));
+		const { apiGetTenantConsultantList } = await importModule();
+
+		await expect(apiGetTenantConsultantList()).rejects.toThrow('CATCH_ALL');
+	});
+
+	it('rejects an unexpected non-array 200 payload instead of treating it as empty', async () => {
+		fetchDataMock.mockResolvedValue({ consultants: [{ id: 1 }] });
+		const { apiGetTenantConsultantList } = await importModule();
+
+		await expect(apiGetTenantConsultantList()).rejects.toThrow('CATCH_ALL');
+	});
 });

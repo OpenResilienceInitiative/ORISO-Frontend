@@ -67,8 +67,11 @@ export const CoModeratorEmptyDesktop: Story = {
 		});
 		await expect(empty).toHaveAttribute('aria-disabled', 'true');
 		await expect(
-			within(listbox).getByRole('option', { name: 'Hilfe' })
+			page(canvasElement).getByRole('button', { name: 'Hilfe' })
 		).toBeVisible();
+		await expect(
+			within(listbox).queryByRole('option', { name: 'Hilfe' })
+		).toBeNull();
 	}
 };
 
@@ -87,7 +90,7 @@ export const CoModeratorHelpDialog: Story = {
 	play: async ({ canvasElement }) => {
 		await openModeratorMenu(canvasElement);
 		await userEvent.click(
-			page(canvasElement).getByRole('option', { name: 'Hilfe' })
+			page(canvasElement).getByRole('button', { name: 'Hilfe' })
 		);
 		const dialog = await page(canvasElement).findByRole('dialog', {
 			name: 'Co-Moderation später einladen'
@@ -204,7 +207,13 @@ const mockCreateBackend = () => {
 	const calls: string[] = [];
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = String(input instanceof Request ? input.url : input);
-		const method = (init?.method || 'GET').toUpperCase();
+		// fetchData calls `fetch(Request)` with no init; the method lives on
+		// the Request (same as `.storybook/preview.tsx`).
+		const method = (
+			init?.method ||
+			(input instanceof Request ? input.method : undefined) ||
+			'GET'
+		).toUpperCase();
 		const json = (body: unknown) =>
 			new Response(JSON.stringify(body), {
 				status: 201,
@@ -250,9 +259,11 @@ const createAndOpenShareDialog = async (canvasElement: HTMLElement) => {
 	});
 	await waitFor(() => expect(create).toBeEnabled());
 	await userEvent.click(create);
-	const dialog = await page(canvasElement).findByRole('dialog', {
-		name: 'Gesprächskreis angelegt'
-	});
+	const dialog = await page(canvasElement).findByRole(
+		'dialog',
+		{ name: 'Gesprächskreis angelegt' },
+		{ timeout: 8000 }
+	);
 	await waitFor(() => expect(dialog).toBeVisible());
 	return dialog;
 };

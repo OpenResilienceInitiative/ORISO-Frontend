@@ -1165,7 +1165,8 @@
 			"format": "Формат",
 			"language": "Язык",
 			"done": "Готово",
-			"durationValue": "{{value}} ч"
+			"durationValue": "{{value}} ч",
+			"copyFailed": "Не удалось скопировать. Попробуйте ещё раз."
 		}
 	},
 	"help": {

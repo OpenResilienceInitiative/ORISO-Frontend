@@ -70,12 +70,11 @@ export const useCreateChatSubmit = () => {
 								type: UPDATE_SESSIONS,
 								sessions: sessions
 							});
-							const saved =
-								sessions?.find(
-									(session) =>
-										session.chat?.matrixRoomId ===
-										response.matrixRoomId
-								) ?? sessions?.[0];
+							const saved = sessions?.find(
+								(session) =>
+									session.chat?.matrixRoomId ===
+									response.matrixRoomId
+							);
 							seriesId = saved?.chat?.id ?? null;
 						})
 						.catch(() => {

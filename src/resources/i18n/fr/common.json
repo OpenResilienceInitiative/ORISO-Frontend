@@ -1164,7 +1164,8 @@
 			"format": "Format",
 			"language": "Langue",
 			"done": "Terminé",
-			"durationValue": "{{value}} h"
+			"durationValue": "{{value}} h",
+			"copyFailed": "La copie a échoué. Veuillez réessayer."
 		}
 	},
 	"help": {

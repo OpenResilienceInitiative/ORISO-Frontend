@@ -1141,7 +1141,8 @@
 			"format": "Format",
 			"language": "Language",
 			"done": "Done",
-			"durationValue": "{{value}} h"
+			"durationValue": "{{value}} h",
+			"copyFailed": "Copying failed. Please try again."
 		}
 	},
 	"help": {

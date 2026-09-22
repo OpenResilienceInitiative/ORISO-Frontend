@@ -145,4 +145,22 @@ describe('useCreateChatSubmit', () => {
 		);
 		expect(hold).toHaveBeenCalledWith({ seriesId: null });
 	});
+
+	it('does not invent a Series id from an unrelated session (#1499)', async () => {
+		vi.mocked(apiCreateGroupChat).mockResolvedValue({ matrixRoomId: 'r1' });
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: [{ chat: { id: 9, matrixRoomId: 'other' } }]
+		} as any);
+		const hold = vi.fn(() => true);
+		const { result } = renderHook(() => useCreateChatSubmit(), { wrapper });
+
+		act(() => {
+			result.current.submit(payload, { holdAfterSuccess: hold });
+		});
+
+		await waitFor(() =>
+			expect(hold).toHaveBeenCalledWith({ seriesId: null })
+		);
+		expect(navigate).not.toHaveBeenCalled();
+	});
 });

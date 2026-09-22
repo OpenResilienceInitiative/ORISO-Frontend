@@ -1164,7 +1164,8 @@
 			"format": "Biçim",
 			"language": "Dil",
 			"done": "Tamam",
-			"durationValue": "{{value}} sa"
+			"durationValue": "{{value}} sa",
+			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
 		}
 	},
 	"help": {

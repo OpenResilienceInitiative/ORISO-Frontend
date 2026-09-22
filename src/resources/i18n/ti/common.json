@@ -1164,7 +1164,8 @@
 			"format": "ቅርጺ",
 			"language": "ቋንቋ",
 			"done": "ተወዲኡ",
-			"durationValue": "{{value}} ሰዓት"
+			"durationValue": "{{value}} ሰዓት",
+			"copyFailed": "ምቅዳድ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
 		}
 	},
 	"help": {

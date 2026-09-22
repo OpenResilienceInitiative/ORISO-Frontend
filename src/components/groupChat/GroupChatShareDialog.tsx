@@ -50,6 +50,12 @@ export interface GroupChatShareDialogProps {
 	onCopy?: (link: string) => void | Promise<void>;
 }
 
+/**
+ * i18next tags like `de@informal` are not BCP-47; `Intl` throws RangeError
+ * on them (same strip as `GroupInfoGallery`).
+ */
+const intlLocale = (language: string) => language.split('@')[0] || 'de';
+
 const formatDate = (isoDate: string, locale: string) => {
 	const [year, month, day] = isoDate.split('-').map(Number);
 	if (!year || !month || !day) {
@@ -93,18 +99,34 @@ export const GroupChatShareDialog = ({
 	onCopy = (value) => copyTextToClipboard(value)
 }: GroupChatShareDialogProps) => {
 	const { t: translate, i18n } = useTranslation();
-	const locale = i18n.resolvedLanguage || i18n.language || 'de';
+	const locale = intlLocale(i18n.resolvedLanguage || i18n.language || 'de');
 	const [copied, setCopied] = useState(false);
+	const [copying, setCopying] = useState(false);
+	const [copyFailed, setCopyFailed] = useState(false);
 
 	useEffect(() => {
 		if (!open) {
 			setCopied(false);
+			setCopying(false);
+			setCopyFailed(false);
 		}
 	}, [open]);
 
 	const handleCopy = async () => {
-		await onCopy(link);
-		setCopied(true);
+		if (copying) {
+			return;
+		}
+		setCopying(true);
+		setCopyFailed(false);
+		try {
+			await onCopy(link);
+			setCopied(true);
+		} catch {
+			setCopied(false);
+			setCopyFailed(true);
+		} finally {
+			setCopying(false);
+		}
 	};
 
 	const MediumIcon =
@@ -220,6 +242,7 @@ export const GroupChatShareDialog = ({
 							copied ? ' groupChatShareDialog__copy--done' : ''
 						}`}
 						onClick={handleCopy}
+						disabled={copying}
 					>
 						{copied ? (
 							<CheckOutlinedIcon aria-hidden />
@@ -238,7 +261,9 @@ export const GroupChatShareDialog = ({
 				<p className="groupChatShareDialog__status" aria-live="polite">
 					{copied
 						? translate('groupChat.copy.link.notification.text')
-						: ''}
+						: copyFailed
+							? translate('groupChat.shareDialog.copyFailed')
+							: ''}
 				</p>
 			</div>
 			<h3 className="groupChatShareDialog__detailsHeadline">

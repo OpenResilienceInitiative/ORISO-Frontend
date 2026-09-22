@@ -1159,7 +1159,8 @@
 			"format": "Format",
 			"language": "Sprache",
 			"done": "Fertig",
-			"durationValue": "{{value}} Std."
+			"durationValue": "{{value}} Std.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuchen Sie es erneut."
 		}
 	},
 	"help": {

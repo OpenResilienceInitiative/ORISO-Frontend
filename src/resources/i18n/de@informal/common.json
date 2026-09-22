@@ -379,7 +379,8 @@
 			}
 		},
 		"shareDialog": {
-			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt."
+			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
 		}
 	},
 	"help": {
