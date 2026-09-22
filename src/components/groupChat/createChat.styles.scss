@@ -188,6 +188,7 @@ $inputSpacing: 32px;
 		&--selected {
 			background: var(--m3-secondary-container, #646d78);
 			border-color: var(--m3-secondary-container, #646d78);
+
 			/* Globe leads, so the tighter padding moves to the left. */
 			padding: 6px 12px 6px 8px;
 

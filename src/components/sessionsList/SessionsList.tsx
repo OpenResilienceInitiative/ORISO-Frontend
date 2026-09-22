@@ -100,6 +100,7 @@ import { countUnreadSessions } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { useSessionListRail } from './SessionListRailContext';
 import { getFormatChipVisibility } from './formatChipVisibility';
+import { useCounsellorAgencyFormats } from '../../hooks/useCounsellorAgencyFormats';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useDisplayFilter } from '../../hooks/useDisplayFilter';
 import {
@@ -258,6 +259,10 @@ export const SessionsList = ({
 
 	const { userData } = useContext(UserDataContext);
 	const tenantData = useTenant();
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(
+			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
+		);
 
 	const [isLoading, setIsLoading] = useState(true);
 	const [currentOffset, setCurrentOffset] = useState(0);
@@ -590,7 +595,9 @@ export const SessionsList = ({
 		}
 
 		setIsLoading(true);
-		getConsultantSessionList(0)
+		const request = getConsultantSessionList(0);
+		const controller = abortController.current;
+		request
 			.then(({ sessions }) => {
 				dispatch({
 					type: SET_SESSIONS,
@@ -599,7 +606,14 @@ export const SessionsList = ({
 				});
 			})
 			.catch(() => {})
-			.finally(() => setIsLoading(false));
+			.finally(() => {
+				if (
+					abortController.current === controller &&
+					!controller.signal.aborted
+				) {
+					setIsLoading(false);
+				}
+			});
 	}, [dispatch, getConsultantSessionList, sessionToolbarChip, type]);
 
 	const scrollIntoView = useCallback(() => {
@@ -758,7 +772,9 @@ export const SessionsList = ({
 		} else {
 			// Fetch consulting sessionsData
 			// console.log('🔍 CONSULTANT: Fetching sessions, type:', type);
-			getConsultantSessionList(0, initialId.current)
+			const request = getConsultantSessionList(0, initialId.current);
+			const controller = abortController.current;
+			request
 				.then(({ sessions }) => {
 					// console.log('📦 CONSULTANT: Got', sessions?.length, 'sessions');
 					dispatch({
@@ -768,12 +784,14 @@ export const SessionsList = ({
 					});
 					return refreshLoadedSessionsWithRoomState(sessions);
 				})
-				.catch((error) => {
-					// console.error('❌ CONSULTANT: Error fetching sessions:', error);
-					setIsLoading(false);
-				})
-				.then(() => setIsLoading(false))
 				.then(() => {
+					if (
+						abortController.current !== controller ||
+						controller.signal.aborted
+					) {
+						return;
+					}
+					setIsLoading(false);
 					if (initialId.current) {
 						setTimeout(() => {
 							scrollIntoView();
@@ -781,7 +799,11 @@ export const SessionsList = ({
 					}
 				})
 				.catch((error) => {
-					if (error.message === FETCH_ERRORS.ABORT) {
+					if (
+						abortController.current !== controller ||
+						controller.signal.aborted ||
+						error.message === FETCH_ERRORS.ABORT
+					) {
 						// No action necessary. Just make sure to NOT set
 						// `isLoading` to false or `isReloadButtonVisible` to true.
 						return;
@@ -1147,12 +1169,17 @@ export const SessionsList = ({
 		type === SESSION_LIST_TYPES.MY_SESSION &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
 	// One source with the create flow: the list must not offer a filter, or an
-	// entry point, for a format this Träger has switched off.
+	// entry point, for a format this Träger — or every one of the counsellor's
+	// Beratungsstellen — has switched off.
 	const {
 		createGroupChat: showCreateGroupChatAction,
 		groups: showGroupChip,
 		internalGroup: showInternalGroupChip
-	} = getFormatChipVisibility(tenantData, showConsultantToolbarActions);
+	} = getFormatChipVisibility(
+		tenantData,
+		showConsultantToolbarActions && !agencyFormatsLoading,
+		agencyFormats
+	);
 	const showCaseHandoverBatchUi =
 		showConsultantToolbarActions &&
 		sessionListTab !== SESSION_LIST_TAB_ARCHIVE;

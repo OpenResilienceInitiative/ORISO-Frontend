@@ -176,10 +176,13 @@ export const Login = () => {
 		// If we're authenticated and have a gcid, redirect to app
 		if (gcid && getValueFromCookie('keycloak')) {
 			apiGetUserData([FETCH_ERRORS.CATCH_ALL])
-				.then(() => redirectToApp(gcid, { navigate }))
+				/* Deliberately no `navigate`: see postLogin below -- entering
+				   the authenticated app from the login screen is a cold start
+				   and must be a document load. */
+				.then(() => redirectToApp(gcid))
 				.catch(() => null); // do nothing
 		}
-	}, [consultant, gcid, navigate, reloadUserData, userData]);
+	}, [consultant, gcid, reloadUserData, userData]);
 
 	useEffect(() => {
 		setShowLoginError('');
@@ -286,7 +289,17 @@ export const Login = () => {
 					)
 						? readLastOpenSession(userData.userId)
 						: null;
-					return redirectToApp(gcid, { navigate, restorePath });
+					/* #1402: hand over with a document load, not a
+					   client-side navigate. `navigate` swaps the route under
+					   a React transition, so React keeps the *login screen*
+					   painted while the lazy AuthenticatedApp chunk resolves
+					   -- and when that handover does not complete, the URL
+					   reads /app while the login form is still on screen, with
+					   a perfectly valid session behind it. That is the bug
+					   users work around by reloading. Registration keeps its
+					   client-side nav; it has a handover animation to cover
+					   the gap, and login does not. */
+					return redirectToApp(gcid, { restorePath });
 				}
 			}),
 		[
@@ -295,7 +308,6 @@ export const Login = () => {
 			initLocale,
 			consultant,
 			gcid,
-			navigate,
 			showConsultantLoginBlockedError
 		]
 	);

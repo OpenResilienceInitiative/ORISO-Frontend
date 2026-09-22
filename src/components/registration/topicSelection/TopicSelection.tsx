@@ -42,6 +42,7 @@ import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvide
 import {
 	buildRegistrationTopicPresentationGroups,
 	getRegistrationTopicDisplay,
+	getRegistrationTopicKey,
 	getRegistrationTopicIcon,
 	registrationMd3,
 	registrationMotion,
@@ -49,6 +50,9 @@ import {
 	registrationScreenTitleSx,
 	RegistrationTopicPresentationGroup
 } from '../registrationDesign/registrationDesign';
+import { RegistrationTopicSearchContext } from '../topicSearch/RegistrationTopicSearchContext';
+import { buildTopicSearchIndex } from '../topicSearch/topicSearchEngine';
+import { buildTopicSearchDocuments } from '../topicSearch/topicSearchDocuments';
 
 export const TopicSelection: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -143,9 +147,9 @@ export const TopicSelection: FC<{
 			const prefersReducedMotion =
 				typeof window.matchMedia === 'function' &&
 				window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-			if (prefersReducedMotion) {
-				return;
-			}
+			const behavior: ScrollBehavior = prefersReducedMotion
+				? 'auto'
+				: 'smooth';
 
 			const rect = node.getBoundingClientRect();
 			const stickyStepper = document.querySelector<HTMLElement>(
@@ -173,11 +177,11 @@ export const TopicSelection: FC<{
 				scrollRoot &&
 				scrollRoot.scrollHeight > scrollRoot.clientHeight
 			) {
-				scrollRoot.scrollTo({ top, behavior: 'smooth' });
+				scrollRoot.scrollTo({ top, behavior });
 				return;
 			}
 
-			window.scrollTo({ top, behavior: 'smooth' });
+			window.scrollTo({ top, behavior });
 		}, 160);
 	}, []);
 
@@ -195,6 +199,125 @@ export const TopicSelection: FC<{
 		},
 		[expandedTopicGroupIds, scrollTopicGroupIntoView]
 	);
+
+	// A header-search pick takes the same path as a click on the topic's row.
+	const registerTopicSearch = useContext(RegistrationTopicSearchContext);
+	const selectTopicFromSearch = useCallback(
+		(topicId: number) => {
+			const topic = topics?.find(({ id }) => id === topicId);
+			if (!topic) {
+				return;
+			}
+
+			if (listView || !topicGroups?.length) {
+				setValue(topic.id);
+				setTopicGroupId(undefined);
+				setSelectedPlacementId(`list/${topic.id}`);
+				onChange({ mainTopic: topic, topicGroupId: undefined });
+				return;
+			}
+
+			const placements = topicGroups.flatMap(
+				(topicGroup) => topicGroup.topics
+			);
+			const placement =
+				placements.find(
+					(candidate) =>
+						candidate.topic.id === topicId &&
+						expandedTopicGroupIds.includes(candidate.topicGroupId)
+				) ||
+				placements.find((candidate) => candidate.topic.id === topicId);
+			if (!placement) {
+				return;
+			}
+
+			setValue(topic.id);
+			setTopicGroupId(placement.topicGroupId);
+			setSelectedPlacementId(placement.placementId);
+			onChange({
+				mainTopic: placement.topic,
+				topicGroupId: placement.topicGroupId
+			});
+			setExpandedTopicGroupIds((currentIds) =>
+				currentIds.includes(placement.topicGroupId)
+					? currentIds
+					: [...currentIds, placement.topicGroupId]
+			);
+			scrollTopicGroupIntoView(placement.topicGroupId);
+		},
+		[
+			expandedTopicGroupIds,
+			listView,
+			onChange,
+			scrollTopicGroupIntoView,
+			topicGroups,
+			topics
+		]
+	);
+	const topicSearchData = useMemo(() => {
+		if (!topics || topics.length < 2) {
+			return null;
+		}
+
+		const groupsByTopicId = new Map<
+			number,
+			RegistrationTopicPresentationGroup[]
+		>();
+		(topicGroups || []).forEach((topicGroup) =>
+			topicGroup.topicIds.forEach((id) =>
+				groupsByTopicId.set(id, [
+					...(groupsByTopicId.get(id) || []),
+					topicGroup
+				])
+			)
+		);
+
+		// Grouped view: a topic without a placement cannot be selected.
+		const searchable =
+			listView || !topicGroups?.length
+				? topics
+				: topics.filter(({ id }) => groupsByTopicId.has(id));
+
+		return {
+			entries: searchable.map((topic) => ({
+				topicId: topic.id,
+				title: getRegistrationTopicDisplay(topic, locale).title,
+				category: groupsByTopicId.get(topic.id)?.[0]?.name,
+				icon: getRegistrationTopicIcon(topic)
+			})),
+			index: buildTopicSearchIndex(
+				buildTopicSearchDocuments(
+					searchable.map((topic) => ({
+						id: topic.id,
+						key: getRegistrationTopicKey(topic),
+						extraTitles: [
+							topic.name,
+							topic.titles?.long,
+							topic.titles?.short
+						].filter(Boolean),
+						extraDescription: topic.description
+					}))
+				)
+			)
+		};
+	}, [listView, locale, topicGroups, topics]);
+	// Avoids re-registering the search on every group expand.
+	const selectTopicFromSearchRef = useRef(selectTopicFromSearch);
+	useEffect(() => {
+		selectTopicFromSearchRef.current = selectTopicFromSearch;
+	}, [selectTopicFromSearch]);
+	useEffect(() => {
+		if (!topicSearchData) {
+			registerTopicSearch(null);
+			return;
+		}
+
+		registerTopicSearch({
+			...topicSearchData,
+			select: (topicId) => selectTopicFromSearchRef.current(topicId)
+		});
+		return () => registerTopicSearch(null);
+	}, [registerTopicSearch, topicSearchData]);
 
 	useEffect(() => {
 		if (!topicGroups?.length) {

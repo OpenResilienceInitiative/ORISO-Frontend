@@ -24,7 +24,7 @@ export const refreshKeycloakAccessToken = (): Promise<LoginData> =>
 				if (response.status === 200) {
 					const data = response.json();
 					resolve(data);
-				} else if (response.status === 401) {
+				} else {
 					reject(new Error('keycloakLogin'));
 				}
 			})

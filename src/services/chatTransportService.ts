@@ -83,7 +83,6 @@ export interface RedactMessageOptions {
 }
 
 export interface SendFileMessageOptions extends MatrixFileMessageOptions {
-	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
@@ -288,7 +287,9 @@ class ChatTransportService {
 			file,
 			{
 				abortController: options.abortController,
-				uploadProgress: options.uploadProgress
+				uploadProgress: options.uploadProgress,
+				threadRootId: options.threadRootId,
+				replyToEventId: options.replyToEventId
 			}
 		);
 
