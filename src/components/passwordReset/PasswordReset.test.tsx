@@ -58,7 +58,10 @@ vi.mock('../../hooks/useAppConfig', () => ({
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
-vi.mock('../../utils/validateInputValue', () => ({
+vi.mock('../../utils/validateInputValue', async (importOriginal) => ({
+	// The live criteria checklist reads the real rules; only the overall
+	// strength verdict is pinned so the recovery paths stay the subject here.
+	...((await importOriginal()) as Record<string, unknown>),
 	strengthIndicator: () => 4,
 	inputValuesFit: (a: string, b: string) => a === b
 }));
@@ -299,5 +302,84 @@ describe('when the new password is the current one', () => {
 		expect(
 			screen.queryByText('profile.functions.password.reset.subtitle')
 		).toBeNull();
+	});
+});
+
+describe('inside the account-setup dialog', () => {
+	const K = 'profile.functions.password.reset.';
+
+	const renderDialog = () => {
+		render(
+			<MemoryRouter>
+				<PasswordReset hideIntro variant="dialog" />
+			</MemoryRouter>
+		);
+
+		return {
+			type: (label: string, value: string) =>
+				fireEvent.change(screen.getByLabelText(label), {
+					target: { value }
+				})
+		};
+	};
+
+	const criterion = (labelKey: string) =>
+		screen.getByText(labelKey).closest('li') as HTMLLIElement;
+
+	it('names the field the user just signed in with', () => {
+		renderDialog();
+
+		expect(screen.getByText(`${K}old.hint`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}old.dialogLabel`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}new.label`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}confirm.dialogLabel`)).not.toBeNull();
+	});
+
+	// The checklist is the only feedback while the password is still being
+	// typed, so each rule has to answer for itself, not for the whole verdict.
+	it('ticks each criterion off as the typed password meets it', () => {
+		const { type } = renderDialog();
+		const met = () =>
+			[
+				`${K}criteria.mixedCase`,
+				`${K}criteria.number`,
+				`${K}criteria.specialChar`,
+				`${K}criteria.minLength`
+			].map((key) =>
+				criterion(key).className.includes(
+					'passwordReset__criterion--met'
+				)
+			);
+
+		expect(met()).toEqual([false, false, false, false]);
+
+		type(`${K}new.label`, 'ab');
+		expect(met()).toEqual([false, false, false, false]);
+
+		type(`${K}new.label`, 'aB');
+		expect(met()).toEqual([true, false, false, false]);
+
+		type(`${K}new.label`, 'aB3');
+		expect(met()).toEqual([true, true, false, false]);
+
+		type(`${K}new.label`, 'aB3!');
+		expect(met()).toEqual([true, true, true, false]);
+
+		type(`${K}new.label`, 'aB3!aB3!aB');
+		expect(met()).toEqual([true, true, true, true]);
+	});
+
+	it('refuses the administrator’s password here too', () => {
+		const { type } = renderDialog();
+
+		type(`${K}old.dialogLabel`, 'same-synthetic');
+		type(`${K}new.label`, 'same-synthetic');
+		type(`${K}confirm.dialogLabel`, 'same-synthetic');
+
+		expect(screen.getByText(`${K}sameAsOld`)).not.toBeNull();
+		expect(
+			(screen.getByText('save-password') as HTMLButtonElement).disabled
+		).toBe(true);
+		expect(state.update).not.toHaveBeenCalled();
 	});
 });

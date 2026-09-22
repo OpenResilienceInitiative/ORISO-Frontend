@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Dialog, Fade, Typography } from '@mui/material';
+import { Box, Button as MuiButton, Dialog, Fade } from '@mui/material';
 import { UserDataContext } from '../../globalState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
@@ -13,7 +13,10 @@ import {
 	ACCOUNT_SETUP_STEPS,
 	resolveAccountSetupStep
 } from './accountSetupStep';
-import { ReactComponent as PasswordGraphic } from '../../resources/img/icons/two-factor/otp_app_graphic.svg';
+import {
+	AccountSetupHeader,
+	AccountSetupProgress
+} from './accountSetupDialogChrome';
 import './accountSetupGate.styles';
 import './twoFactorSetupDialog.styles';
 
@@ -80,44 +83,29 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					maxWidth={false}
 					open
 					PaperProps={{
-						className:
-							'twoFactorSetupDialog__paper accountSetupGate__passwordPaper'
+						className: 'twoFactorSetupDialog__paper'
 					}}
 				>
-					<Box className="twoFactorSetupDialog__header">
-						<PasswordGraphic
-							aria-hidden="true"
-							className="twoFactorSetupDialog__graphic"
-						/>
-						<Typography
-							className="twoFactorSetupDialog__title"
-							id="account-setup-password-title"
-							variant="h2"
-						>
-							{translate('passwordChange.required.title')}
-						</Typography>
-					</Box>
+					<AccountSetupProgress active="password" />
+					<AccountSetupHeader
+						descriptionId="account-setup-password-description"
+						icon="key"
+						subtitle={translate('passwordChange.required.copy')}
+						title={translate('passwordChange.required.title')}
+						titleId="account-setup-password-title"
+					/>
 					<Box className="twoFactorSetupDialog__body">
-						<Typography
-							className="twoFactorSetupDialog__copy"
-							id="account-setup-password-description"
-						>
-							{translate('passwordChange.required.copy')}
-						</Typography>
-						<PasswordReset hideIntro />
+						<PasswordReset hideIntro variant="dialog" />
 					</Box>
-					{/* The dialog is modal, so the logout underneath it is out of reach. */}
-					<div className="accountSetupGate__dialogLogout">
-						<Button
-							buttonHandle={onLogout}
-							item={{
-								label: translate(
-									'accountSetup.required.logout'
-								),
-								type: BUTTON_TYPES.LINK
-							}}
-						/>
-					</div>
+					{/* The dialog is modal, so the logout underneath it is out of
+					    reach — and it is the same link as in the second step. */}
+					<MuiButton
+						className="twoFactorSetupDialog__logout"
+						onClick={onLogout}
+						variant="text"
+					>
+						{translate('accountSetup.required.logout')}
+					</MuiButton>
 				</Dialog>
 			)}
 			{!isPasswordStep && (
@@ -133,6 +121,7 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					open
 					qrCode={userData?.twoFactorAuth?.qrCode}
 					secret={userData?.twoFactorAuth?.secret}
+					showAccountProgress
 				/>
 			)}
 		</div>
