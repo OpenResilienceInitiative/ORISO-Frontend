@@ -55,6 +55,10 @@ import {
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
 import { resolveLiveChatRailTarget } from './liveChatRailTarget';
+import {
+	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
+	useLiveChatAvailabilityLossNotice
+} from './useLiveChatAvailabilityLossNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -114,7 +118,8 @@ export const NavigationBar = ({
 		{
 			loading: liveChatLoading,
 			pending: liveChatPending,
-			error: liveChatError
+			error: liveChatError,
+			lostReason: liveChatLostReason
 		}
 	] = useLiveChatAvailable();
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
@@ -126,6 +131,8 @@ export const NavigationBar = ({
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
+	// #1485: the one heartbeat owner is also the one that says why it stopped.
+	useLiveChatAvailabilityLossNotice(liveChatLostReason);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -617,11 +624,17 @@ export const NavigationBar = ({
 							aria-busy={liveChatPending}
 							disabled={liveChatLoading || liveChatPending}
 							title={
-								liveChatError
+								liveChatLostReason
 									? translate(
-											'error.statusCodes.500.description'
+											LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[
+												liveChatLostReason
+											]
 										)
-									: undefined
+									: liveChatError
+										? translate(
+												'error.statusCodes.500.description'
+											)
+										: undefined
 							}
 							onClick={handleLiveChatToggle}
 						>
