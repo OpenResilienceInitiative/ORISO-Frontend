@@ -193,6 +193,19 @@ it('shows the snackbar again when a retry returns to the status that was dismiss
 	expect(screen.getByTestId('key-backup-recovery-action')).toBeTruthy();
 });
 
+// Both changes can land in one React batch, so the component never renders 'pending' in between.
+it('shows the snackbar again when a retry returns to the dismissed status within one batch', () => {
+	setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+	render(view());
+	fireEvent.click(screen.getByTestId('key-backup-recovery-action-close'));
+	expect(screen.queryByTestId('key-backup-recovery-action')).toBeNull();
+	act(() => {
+		setRecoveryRuntimeStatus(userId, 'pending');
+		setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
+	});
+	expect(screen.getByTestId('key-backup-recovery-action')).toBeTruthy();
+});
+
 it('opens the restore dialog from the snackbar action', () => {
 	setRecoveryRuntimeStatus(userId, 'needs-recovery-key');
 	render(view());

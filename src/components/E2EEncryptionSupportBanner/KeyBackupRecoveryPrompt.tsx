@@ -17,6 +17,7 @@ import {
 	subscribeRecoveryState,
 	isActionableRecoveryStatus,
 	useRecoveryRuntimeStatus,
+	useRecoveryRuntimeRevision,
 	setRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
@@ -175,6 +176,7 @@ export const KeyBackupRecoveryPrompt = () => {
 		'LOGIN_PASSWORD';
 	const userId = matrixClientService?.getClient()?.getUserId() ?? '';
 	const status = useRecoveryRuntimeStatus(userId);
+	const revision = useRecoveryRuntimeRevision(userId);
 	const eligible = useRecoveryReminder(userId);
 	const key = useSyncExternalStore(
 		subscribeRecoveryState,
@@ -184,18 +186,12 @@ export const KeyBackupRecoveryPrompt = () => {
 	const [openedFor, setOpenedFor] = useState<string | null>(null);
 	/* Dismissal lives in component state on purpose: the notice comes back on
 	   every reload and every login until the history is readable, but it never
-	   blocks the screen while somebody is working. Keyed by status so a new
-	   state (e.g. password recovery failing) is shown again. */
+	   blocks the screen while somebody is working. */
 	const [dismissedFor, setDismissedFor] = useState<string | null>(null);
-	// Any status change forgets the dismissal, even via 'pending' back to the same status.
-	const [observed, setObserved] = useState(`${userId}:${status}`);
-	if (observed !== `${userId}:${status}`) {
-		setObserved(`${userId}:${status}`);
-		setDismissedFor(null);
-	}
 	const showRecovery = openedFor === userId;
 	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
-	const dismissKey = `${userId}:${status}`;
+	// Scoped to the status revision: any change, even via 'pending' back to the same status, reshows it.
+	const dismissKey = `${userId}:${revision}`;
 	return (
 		<>
 			{dismissedFor !== dismissKey && !showRecovery && (
