@@ -1,6 +1,12 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
+import {
+	expectCaptionClear,
+	expectHandsVisible,
+	expectOverdueClockOnOneRow
+} from './waitingClockStoryChecks';
+import { computeOrisoPalette } from '../../../utils/theme/orisoScheme';
 import { phone375Globals } from '../../message/messageStoryShell';
 
 const WELCOME =
@@ -94,6 +100,92 @@ export const Overdue4b: Story = {
 		plannedStart: new Date(Date.now() - 252 * 1000),
 		welcomeText: WELCOME,
 		rules: RULES
+	}
+};
+
+/**
+ * #1499. Past 99 minutes the minutes group grows a third digit — it used to
+ * draw "99" while the timer label said the truth. The extra digit is paid for
+ * with a smaller mini-clock, never with a second row: the row sits in a flip
+ * card that is exactly one group tall, so anything that wraps lands on the
+ * caption below it.
+ */
+export const Overdue3Digits: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const Overdue3DigitsMobile: Story = {
+	args: {
+		...Overdue3Digits.args,
+		labelsOutside: true,
+		hideMotionToggle: true,
+		gap: 12
+	},
+	globals: phone375Globals,
+	parameters: { phoneFrame: true },
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+/**
+ * The same clock under a light Träger brand (#b4ddee, Träger 2 on Dev).
+ *
+ * Every face and hand used to be a hand-picked grey or pink, so the clock
+ * stayed Caritas red on a blue Träger. Faces are surfaces and the brand's pale
+ * tint now, hands and "+" are the brand's dark ink — `expectHandsVisible`
+ * measures that the strokes still clear 3:1 on every face (#1499).
+ */
+const LightBrand = ({ children }: { children: React.ReactNode }) => {
+	const { tokens } = computeOrisoPalette({ primary: '#b4ddee' }, 'light');
+	return <div style={tokens as React.CSSProperties}>{children}</div>;
+};
+
+export const LightBrandOverdue: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	decorators: [
+		(Story) => (
+			<LightBrand>
+				<Story />
+			</LightBrand>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const LightBrandFuture: Story = {
+	args: {
+		plannedStart: new Date(
+			Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
+		),
+		welcomeText: WELCOME,
+		rules: RULES
+	},
+	decorators: LightBrandOverdue.decorators,
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
 	}
 };
 

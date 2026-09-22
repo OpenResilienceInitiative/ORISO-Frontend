@@ -12,6 +12,10 @@ import {
 	desktop1440Globals,
 	phone390Globals
 } from '../message/messageStoryShell';
+import {
+	expectCaptionClear,
+	expectOverdueClockOnOneRow
+} from './waitingClock/waitingClockStoryChecks';
 import './joinChat.styles';
 
 /**
@@ -30,6 +34,10 @@ import './joinChat.styles';
  */
 
 const OVERDUE_SECONDS = -252;
+/* #1499 bug A: past 99 minutes the minutes group needs a third digit cell.
+   On Dev every freshly created group is there within minutes, because
+   UserService stores the start two hours early. */
+const OVERDUE_3_DIGIT_SECONDS = -(140 * 60 + 7);
 const FUTURE_SECONDS = 2 * 86400 + 3 * 3600 + 21 * 60 + 50;
 
 const desktop1280Globals = { viewport: { value: 'desktop1280' } };
@@ -132,6 +140,8 @@ export const Overdue1440: Story = {
 	render: () => <Stage layout="desktop" deltaSeconds={OVERDUE_SECONDS} />,
 	play: async ({ canvasElement, canvas }) => {
 		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement);
+		await expectCaptionClear(canvasElement);
 		await expect(
 			canvas.getByRole('button', { name: 'Chat starten' })
 		).toBeVisible();
@@ -164,9 +174,42 @@ export const Overdue390: Story = {
 	render: () => <Stage layout="mobile" deltaSeconds={OVERDUE_SECONDS} />,
 	play: async ({ canvasElement, canvas }) => {
 		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement);
+		await expectCaptionClear(canvasElement);
 		await expect(
 			canvas.getByRole('button', { name: 'Chat starten' })
 		).toBeVisible();
+	}
+};
+
+/**
+ * #1499 bug A on the counsellor's side: the same group 140 minutes late. The
+ * minutes group draws three digits, minutes and seconds stay on one row, and
+ * the caption below stays clear.
+ */
+export const Overdue3Digits1440: Story = {
+	name: 'Overdue 140 min · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<Stage layout="desktop" deltaSeconds={OVERDUE_3_DIGIT_SECONDS} />
+	),
+	play: async ({ canvasElement }) => {
+		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+export const Overdue3Digits390: Story = {
+	name: 'Overdue 140 min · 390 mobile',
+	globals: phone390Globals,
+	render: () => (
+		<Stage layout="mobile" deltaSeconds={OVERDUE_3_DIGIT_SECONDS} />
+	),
+	play: async ({ canvasElement }) => {
+		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
 	}
 };
 

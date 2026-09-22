@@ -1,26 +1,55 @@
 // Shared visuals for the "clock made of clocks" waiting area
 // (ClockDigits + WaitingAreaCountdown). Size-dependent geometry stays inline
 // in the components; the static look lives here on the M3 tokens.
+
+/*
+ * Colour of the clock, in one place (#1499).
+ *
+ * Every face and every hand used to be a hand-picked grey or pink, so on a
+ * Träger with a light brand the clock stayed Caritas red while the rest of the
+ * page turned. The faces are now neutral surfaces and the warm "overdue" face
+ * is the brand's own pale tint; the hands and the "+" are the brand's dark ink.
+ *
+ * `--m3-on-primary-fixed-variant` is the token that is dark in *every* brand,
+ * which is what a stroke on a pale face needs. Measured against the faces
+ * below, for the seeds #a5000a (ORISO red), #cc1e1c (Dev red), #b4ddee
+ * (Träger 2), #2e7d32 and #ffd54f: 7.2:1 on the tinted face, 7.6:1 on the
+ * neutral one, 9.3:1 at the light end of the gradient. The literal
+ * `--m3-on-primary` cannot be used here: for a dark brand it resolves to
+ * #ffffff (1.2:1 on these faces — an invisible clock).
+ */
+$clock-face-top: var(--m3-surface-container-high, #eae7e8);
+$clock-face-bottom: var(--m3-surface-container-lowest, #fff);
+$clock-face-tint-top: var(--m3-primary-fixed, #ffdad5);
+$clock-face-tint-shadow: var(--m3-primary-fixed-dim, #ffb4aa);
+$clock-ink: var(--m3-on-primary-fixed-variant, #930008);
+
 .waitingClock {
 	&__cell {
 		position: relative;
 		flex-shrink: 0;
 		box-sizing: border-box;
 
-		// Part of the fixed neumorphic look (like the gradients below) — not a
-		// themed surface role.
-		border: 1.5px solid #fff;
+		border: 1.5px solid $clock-face-bottom;
 		border-radius: 50%;
-		background: linear-gradient(225deg, #dcdcdc 10%, #fff);
+		background: linear-gradient(
+			225deg,
+			$clock-face-top 10%,
+			$clock-face-bottom
+		);
 		box-shadow:
-			-2px 2px 5px #dcdcdc,
-			2px -2px 5px #fff;
+			-2px 2px 5px $clock-face-top,
+			2px -2px 5px $clock-face-bottom;
 
 		&--tint {
-			background: linear-gradient(225deg, #f4c9c9 10%, #fff);
+			background: linear-gradient(
+				225deg,
+				$clock-face-tint-top 10%,
+				$clock-face-bottom
+			);
 			box-shadow:
-				-2px 2px 5px #efc5c5,
-				2px -2px 5px #fff;
+				-2px 2px 5px $clock-face-tint-shadow,
+				2px -2px 5px $clock-face-bottom;
 		}
 
 		&--pop {
@@ -36,7 +65,7 @@
 		position: absolute;
 		left: 50%;
 		border-radius: 99px;
-		background: var(--m3-primary-container, #cc1e1c);
+		background: $clock-ink;
 		transform-origin: 0% 50%;
 	}
 
@@ -61,12 +90,19 @@
 		}
 	}
 
-	// Overdue state: the "+" and both groups wrap on narrow screens.
+	// Overdue state: "+", minutes and seconds are one row and stay one row.
+	// They used to be allowed to wrap, and when the fit was a few pixels out
+	// the seconds group dropped onto a second row — inside a flip card with a
+	// fixed one-group height, so it painted over the caption below it (#1499).
+	// The component sizes the mini-clocks so the row fits; if a viewport is
+	// narrower than even the smallest clock, a few pixels of overflow are a
+	// far better failure than digits on top of a sentence.
 	&__timerOverdue {
 		display: flex;
-		flex-wrap: wrap;
+		flex-wrap: nowrap;
 		gap: 10px;
 		justify-content: center;
+		align-items: center;
 
 		@include breakpoint($fromMedium) {
 			gap: 28px;
@@ -74,15 +110,24 @@
 	}
 
 	// Frank, 2026-09-07: "Das Plus kann auch irgendwie sehr viel kleiner sein."
+	// The box is pinned, not left to the glyph: `overdueSignWidth` in
+	// WaitingAreaCountdown.tsx reserves exactly these widths, and a font whose
+	// "+" is wider or narrower than expected must not move the row (#1499).
+	// Keep both numbers in step with `PLUS_BOX` there.
 	&__plus {
 		align-self: center;
+		box-sizing: border-box;
+		flex-shrink: 0;
+		width: 24px;
+		text-align: center;
 		font-size: 34px;
 		font-weight: 300;
 		line-height: 1;
 		padding-bottom: 6px;
-		color: var(--m3-primary-container, #cc1e1c);
+		color: $clock-ink;
 
 		@include breakpoint($fromMedium) {
+			width: 44px;
 			font-size: 64px;
 			padding-bottom: 24px;
 		}
@@ -228,18 +273,26 @@
 		aspect-ratio: 1 / 1;
 		box-sizing: border-box;
 		padding: 8px;
-		border: 1.5px solid #fff;
+		border: 1.5px solid $clock-face-bottom;
 		border-radius: 28px;
-		background: linear-gradient(225deg, #dcdcdc 10%, #fff);
+		background: linear-gradient(
+			225deg,
+			$clock-face-top 10%,
+			$clock-face-bottom
+		);
 		box-shadow:
-			-4px 4px 12px #dcdcdc,
-			4px -4px 12px #fff;
+			-4px 4px 12px $clock-face-top,
+			4px -4px 12px $clock-face-bottom;
 
 		&--tint {
-			background: linear-gradient(225deg, #f4c9c9 10%, #fff);
+			background: linear-gradient(
+				225deg,
+				$clock-face-tint-top 10%,
+				$clock-face-bottom
+			);
 			box-shadow:
-				-4px 4px 12px #efc5c5,
-				4px -4px 12px #fff;
+				-4px 4px 12px $clock-face-tint-shadow,
+				4px -4px 12px $clock-face-bottom;
 		}
 	}
 
@@ -265,7 +318,7 @@
 		font-size: clamp(26px, 7vw, 40px);
 		font-weight: 300;
 		line-height: 1;
-		color: var(--m3-primary-container, #cc1e1c);
+		color: $clock-ink;
 	}
 
 	/* The still view shows the same one card as the moving view — it just
