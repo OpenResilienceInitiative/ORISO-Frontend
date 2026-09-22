@@ -141,9 +141,10 @@ const token = (element: HTMLElement, name: string) => {
 
 /**
  * The clock hands stand out from the faces they are drawn on, whatever the
- * Träger's brand colour is. The hands are `--m3-on-primary-fixed-variant`, the
- * faces are a gradient from a surface (or the brand's pale tint) to the
- * lightest surface, so both ends of both gradients have to clear 3:1 (#1499).
+ * Träger's brand colour is. The hands are the brand colour
+ * (`--oriso-primary-text`, falling back to `--m3-primary`), the faces are a
+ * gradient from a surface (or the brand's pale tint) to the lightest surface,
+ * so both ends of both gradients have to clear 3:1 (#1499).
  */
 export const expectHandsVisible = async (root: HTMLElement, minimum = 3) => {
 	const hand = root.querySelector<HTMLElement>('.waitingClock__hand');
@@ -165,6 +166,23 @@ export const expectHandsVisible = async (root: HTMLElement, minimum = 3) => {
 			);
 		}
 	}
+};
+
+/** The weakest hand-to-face contrast in the clock, for stories that report it. */
+export const handContrast = (root: HTMLElement) => {
+	const hand = root.querySelector<HTMLElement>('.waitingClock__hand');
+	if (!hand) {
+		return fail('no .waitingClock__hand rendered');
+	}
+	const ink =
+		root.ownerDocument.defaultView!.getComputedStyle(hand).backgroundColor;
+	return Math.min(
+		...[
+			'--m3-surface-container-high',
+			'--m3-surface-container-lowest',
+			'--m3-primary-fixed'
+		].map((face) => contrast(ink, token(root, face)))
+	);
 };
 
 /** Nothing of the clock is drawn on top of the caption below it. */

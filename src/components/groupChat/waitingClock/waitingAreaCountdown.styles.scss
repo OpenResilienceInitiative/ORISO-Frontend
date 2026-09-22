@@ -7,22 +7,22 @@
  *
  * Every face and every hand used to be a hand-picked grey or pink, so on a
  * Träger with a light brand the clock stayed Caritas red while the rest of the
- * page turned. The faces are now neutral surfaces and the warm "overdue" face
- * is the brand's own pale tint; the hands and the "+" are the brand's dark ink.
+ * page turned. The faces are neutral surfaces and, when overdue, the brand's
+ * own pale tint. The hands and the "+" are the brand colour (Frank, 23.09.:
+ * "nutze anstatt on-primary bitte einfach primary").
  *
- * `--m3-on-primary-fixed-variant` is the token that is dark in *every* brand,
- * which is what a stroke on a pale face needs. Measured against the faces
- * below, for the seeds #a5000a (ORISO red), #cc1e1c (Dev red), #b4ddee
- * (Träger 2), #2e7d32 and #ffd54f: 7.2:1 on the tinted face, 7.6:1 on the
- * neutral one, 9.3:1 at the light end of the gradient. The literal
- * `--m3-on-primary` cannot be used here: for a dark brand it resolves to
- * #ffffff (1.2:1 on these faces — an invisible clock).
+ * `--oriso-primary-text` (#1528) is the Träger primary when it is readable and
+ * a darker tone of the same hue when the brand is too light — #b4ddee becomes
+ * #416977. Until #1528 is merged the plain `--m3-primary` stands in, which is
+ * fine for dark brands and too pale for light ones. Measured hand vs. face:
+ * #cc1e1c 4.6:1 (4.3:1 fallback), #a5000a 6.2:1, #2e7d32 4.6:1 (4.0:1
+ * fallback), #b4ddee 4.6:1 with #1528, 1.1:1 on the fallback alone.
  */
 $clock-face-top: var(--m3-surface-container-high, #eae7e8);
 $clock-face-bottom: var(--m3-surface-container-lowest, #fff);
 $clock-face-tint-top: var(--m3-primary-fixed, #ffdad5);
 $clock-face-tint-shadow: var(--m3-primary-fixed-dim, #ffb4aa);
-$clock-ink: var(--m3-on-primary-fixed-variant, #930008);
+$clock-ink: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 
 .waitingClock {
 	&__cell {
