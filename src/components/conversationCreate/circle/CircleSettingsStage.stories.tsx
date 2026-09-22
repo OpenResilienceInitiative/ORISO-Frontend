@@ -202,9 +202,14 @@ export const EditorSingleLanguageTenant: Story = {
  * room, the session refresh returns the Series behind it. Installed per story
  * on top of the preview's own fetch mock and removed again afterwards.
  */
+/** Body of the last create POST, for stories that check what was sent. */
+let lastCreateBody: { groupChatRulesTranslations?: Record<string, string[]> } =
+	{};
+
 const mockCreateBackend = () => {
 	const previous = globalThis.fetch;
 	const calls: string[] = [];
+	lastCreateBody = {};
 	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 		const url = String(input instanceof Request ? input.url : input);
 		// fetchData calls `fetch(Request)` with no init; the method lives on
@@ -224,6 +229,11 @@ const mockCreateBackend = () => {
 			/\/service\/users\/chat\/(v2\/)?new/.test(url)
 		) {
 			calls.push('create');
+			const body =
+				input instanceof Request
+					? await input.clone().text()
+					: String(init?.body ?? '');
+			lastCreateBody = body ? JSON.parse(body) : {};
 			return json({ matrixRoomId: '!story-room:matrix.storybook.test' });
 		}
 		if (url.includes('/service/users/sessions/room')) {
@@ -302,5 +312,57 @@ export const CreateThenCloseShareDialog: Story = {
 		await waitFor(() =>
 			expect(page(canvasElement).queryByRole('dialog')).toBeNull()
 		);
+	}
+};
+
+const TYPED_RULE = 'Handys bleiben während des Treffens stumm.';
+
+/** Types a rule into the rule field and leaves it there — no "+". */
+const typeRuleWithoutPlus = async (canvasElement: HTMLElement) => {
+	const input = within(canvasElement).getByRole('textbox', {
+		name: 'Regel bearbeiten'
+	});
+	input.scrollIntoView({ block: 'center' });
+	await userEvent.type(input, TYPED_RULE);
+	// Visible straight away as the third chip, not only after "+".
+	await expect(
+		within(canvasElement).getByRole('button', {
+			name: 'Regel 3 bearbeiten'
+		})
+	).toBeVisible();
+};
+
+/**
+ * Dev test of #1499: a rule typed into the field but not confirmed with "+"
+ * was dropped on "Erstellen" without a word. Typing now writes the rule
+ * through, and its chip appears while it is being written.
+ */
+export const RuleTypedWithoutPlus1440: Story = {
+	name: 'Rule typed without "+" · 1440',
+	globals: desktop1440Globals,
+	args: { layout: 'desktop', people: COLLEAGUES },
+	play: async ({ canvasElement }) => typeRuleWithoutPlus(canvasElement)
+};
+
+export const RuleTypedWithoutPlus390: Story = {
+	name: 'Rule typed without "+" · 390',
+	globals: phone390Globals,
+	args: { layout: 'mobile', people: COLLEAGUES },
+	play: async ({ canvasElement }) => typeRuleWithoutPlus(canvasElement)
+};
+
+/** Wired: the typed rule is in the create request "Erstellen" sends. */
+export const RuleTypedWithoutPlusIsCreated: Story = {
+	name: 'Rule typed without "+" → Erstellen sends it (wired) · 1440',
+	globals: desktop1440Globals,
+	args: { layout: 'desktop', people: COLLEAGUES },
+	beforeEach: () => mockCreateBackend().restore,
+	play: async ({ canvasElement }) => {
+		await typeRuleWithoutPlus(canvasElement);
+		await createAndOpenShareDialog(canvasElement);
+		const sent = Object.values(
+			lastCreateBody.groupChatRulesTranslations || {}
+		).flat();
+		await expect(sent).toContain(TYPED_RULE);
 	}
 };
