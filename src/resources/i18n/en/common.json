@@ -932,7 +932,8 @@
 			},
 			"subscribers": {
 				"empty": "no participants available",
-				"headline": "Participants"
+				"headline": "Participants",
+				"menuLabel": "Options for {{name}}"
 			},
 			"gallery": {
 				"back": "Back to the countdown",
@@ -957,6 +958,10 @@
 					}
 				},
 				"upcoming": "Next dates"
+			},
+			"status": {
+				"active": "Running now",
+				"planned": "Scheduled"
 			}
 		},
 		"join": {
@@ -979,6 +984,9 @@
 					"flipHint": "click to flip",
 					"greetingLabel": "A welcome from your counsellor",
 					"headline": "Your group chat starts {{eta}}.",
+					"moderatorHeadline": "The group session starts {{eta}}.",
+					"moderatorOverdueHeadline": "The group is waiting.",
+					"moderatorSubtitle": "You can start the chat whenever you are ready.",
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
@@ -2293,6 +2301,13 @@
 				"viaSidebar": {
 					"label": "Activate Live Chat via the menu bar",
 					"description": "When enabled, you switch your Live Chat availability on and off from the menu bar (sidebar) instead of here. The availability toggle above is then disabled, and the Live Chat icon stays permanently visible in the sidebar — clicking it only changes its state, it never disappears. When disabled, Live Chat is controlled here in My Profile as before."
+				},
+				"lost": {
+					"title": "You are no longer reachable in live chat",
+					"refused": "The server refused your availability. Switch live chat on again. If that does not work, sign in again.",
+					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
+					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
+					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
 				}
 			},
 			"masterKey": {
@@ -3029,6 +3044,13 @@
 					"title": "Offender Support",
 					"description": "Support for questions around offending, restart, and daily life."
 				}
+			},
+			"search": {
+				"open": "Search topics",
+				"placeholder": "Search a topic or keyword",
+				"close": "Close search",
+				"noResults": "No matching topic found. Try another word.",
+				"matchedBy": "matches “{{term}}”"
 			}
 		},
 		"account": {
@@ -4941,7 +4963,9 @@
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
 				"accepted": "A counsellor has taken your conversation",
-				"closed": "Closed right now"
+				"closed": "Closed right now",
+				"checking": "Who is live right now?",
+				"waitingForLive": "Waiting until someone is live"
 			},
 			"access": {
 				"headline": "Your name for today.",
@@ -4979,7 +5003,8 @@
 				"later": "Later",
 				"mail": "Write a request to a counselling centre",
 				"mailShort": "Write a request",
-				"closedDay": "closed"
+				"closedDay": "closed",
+				"wait": "I'll wait"
 			},
 			"steps": {
 				"wait": {
@@ -4994,6 +5019,14 @@
 					"title": "Anonymous, and gone afterwards",
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
+			},
+			"checking": {
+				"text": "Checking who is live right now …",
+				"waiting": "Waiting with you until someone is live …"
+			},
+			"staff": {
+				"headline": "You are signed in as a counsellor.",
+				"text": "This link would sign you out here and you would no longer be live. To test it, please open it in a private window."
 			}
 		}
 	},

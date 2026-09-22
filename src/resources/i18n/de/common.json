@@ -946,7 +946,8 @@
 			},
 			"subscribers": {
 				"empty": "keine Teilnehmenden vorhanden",
-				"headline": "Teilnehmende"
+				"headline": "Teilnehmende",
+				"menuLabel": "Optionen für {{name}}"
 			},
 			"gallery": {
 				"back": "Zurück zum Countdown",
@@ -971,6 +972,10 @@
 					}
 				},
 				"upcoming": "Nächste Termine"
+			},
+			"status": {
+				"active": "Läuft gerade",
+				"planned": "Geplant"
 			}
 		},
 		"join": {
@@ -993,6 +998,9 @@
 					"flipHint": "klicken zum Umdrehen",
 					"greetingLabel": "Begrüßung Ihrer Beratung",
 					"headline": "Ihr Gruppen-Chat beginnt {{eta}}.",
+					"moderatorHeadline": "Der Gesprächskreis beginnt {{eta}}.",
+					"moderatorOverdueHeadline": "Die Gruppe wartet.",
+					"moderatorSubtitle": "Sie können den Chat starten, sobald Sie bereit sind.",
 					"netiquetteLabel": "Netiquette · Regel {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "Das Warten wird langsam etwas unangenehm …",
@@ -2318,6 +2326,13 @@
 				"viaSidebar": {
 					"label": "Live Chat über Menü Leiste aktivieren",
 					"description": "Wenn aktiviert, schalten Sie Ihre Live-Chat-Verfügbarkeit über die Menü-Leiste (Seitenleiste) statt hier ein und aus. Der Verfügbarkeits-Schalter oben wird dann deaktiviert und das Live-Chat-Symbol bleibt dauerhaft in der Seitenleiste sichtbar – ein Klick ändert nur seinen Status, das Symbol verschwindet nicht. Ist diese Option aus, wird der Live Chat wie bisher nur hier in Mein Profil gesteuert."
+				},
+				"lost": {
+					"title": "Sie sind im Live-Chat nicht mehr erreichbar",
+					"refused": "Der Server hat Ihre Verfügbarkeit abgelehnt. Schalten Sie den Live-Chat wieder ein. Klappt das nicht, melden Sie sich neu an.",
+					"sessionExpired": "Ihre Anmeldung ist abgelaufen. Melden Sie sich neu an und schalten Sie den Live-Chat danach wieder ein.",
+					"leaseLost": "Der Server führt Sie nicht mehr als verfügbar. Schalten Sie den Live-Chat wieder ein, um erreichbar zu sein.",
+					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalten Sie den Live-Chat wieder ein, sobald die Verbindung wieder steht."
 				}
 			},
 			"masterKey": {
@@ -3189,6 +3204,13 @@
 					"title": "Straffälligkeit",
 					"description": "Begleitung bei Fragen zu Straffälligkeit, Neustart und Alltag."
 				}
+			},
+			"search": {
+				"open": "Thema suchen",
+				"placeholder": "Thema oder Stichwort suchen",
+				"close": "Suche schließen",
+				"noResults": "Kein passendes Thema gefunden. Versuchen Sie ein anderes Wort.",
+				"matchedBy": "passt zu „{{term}}“"
 			}
 		},
 		"zipcode": {
@@ -5022,7 +5044,9 @@
 				"access": "Ihr Zugang für dieses Gespräch",
 				"waiting": "Warteraum — freie Beraterin wird gesucht",
 				"accepted": "Eine Beraterin hat Ihr Gespräch angenommen",
-				"closed": "Gerade geschlossen"
+				"closed": "Gerade geschlossen",
+				"checking": "Wer ist gerade live?",
+				"waitingForLive": "Wir warten, bis jemand live ist"
 			},
 			"access": {
 				"headline": "Ihr Name für heute.",
@@ -5060,7 +5084,8 @@
 				"later": "Später",
 				"mail": "Anfrage an eine Beratungsstelle schreiben",
 				"mailShort": "Anfrage schreiben",
-				"closedDay": "geschlossen"
+				"closedDay": "geschlossen",
+				"wait": "Ich warte"
 			},
 			"steps": {
 				"wait": {
@@ -5075,6 +5100,14 @@
 					"title": "Anonym, und danach weg",
 					"text": "Nur Ihre User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
 				}
+			},
+			"checking": {
+				"text": "Wir schauen, wer gerade live ist …",
+				"waiting": "Wir warten mit Ihnen, bis jemand live ist …"
+			},
+			"staff": {
+				"headline": "Sie sind als Beraterin angemeldet.",
+				"text": "Dieser Link würde Sie hier abmelden und Sie wären nicht mehr live. Öffnen Sie ihn zum Testen bitte in einem privaten Fenster."
 			}
 		}
 	},

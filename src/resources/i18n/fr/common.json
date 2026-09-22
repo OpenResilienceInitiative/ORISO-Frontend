@@ -893,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "pas de participants disponibles",
-				"headline": "Personnes participantes"
+				"headline": "Personnes participantes",
+				"menuLabel": "Options pour {{name}}"
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
@@ -918,6 +919,10 @@
 					}
 				},
 				"upcoming": "Prochaines dates"
+			},
+			"status": {
+				"active": "En cours",
+				"planned": "Prévu"
 			}
 		},
 		"join": {
@@ -940,6 +945,9 @@
 					"flipHint": "cliquer pour retourner",
 					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
 					"headline": "Votre chat de groupe commence {{eta}}.",
+					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
+					"moderatorOverdueHeadline": "Le groupe vous attend.",
+					"moderatorSubtitle": "Vous pouvez lancer le chat dès que vous êtes prêt·e.",
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
@@ -2297,6 +2305,13 @@
 				"viaSidebar": {
 					"label": "Activer le Live-Chat depuis la barre de menu",
 					"description": "Lorsque cette option est activée, vous activez et désactivez votre disponibilité Live-Chat depuis la barre de menu (barre latérale) au lieu de le faire ici. L'interrupteur de disponibilité ci-dessus est alors désactivé et l'icône du Live-Chat reste visible en permanence dans la barre latérale – un clic ne change que son état, l'icône ne disparaît pas. Si cette option est désactivée, le Live-Chat se pilote comme auparavant uniquement ici, dans Mon profil."
+				},
+				"lost": {
+					"title": "Vous n'êtes plus joignable par chat en direct",
+					"refused": "Le serveur a refusé votre disponibilité. Réactivez le chat en direct. Si cela ne fonctionne pas, reconnectez-vous.",
+					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
+					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
+					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
 				}
 			},
 			"masterKey": {
@@ -3047,6 +3062,13 @@
 					"title": "Délinquance et réinsertion",
 					"description": "Accompagnement pour les questions de délinquance, de nouveau départ et de quotidien."
 				}
+			},
+			"search": {
+				"open": "Rechercher un thème",
+				"placeholder": "Rechercher un thème ou un mot-clé",
+				"close": "Fermer la recherche",
+				"noResults": "Aucun thème correspondant. Essayez un autre mot.",
+				"matchedBy": "correspond à « {{term}} »"
 			}
 		},
 		"account": {
@@ -5030,7 +5052,9 @@
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
 				"accepted": "Une conseillère a pris votre conversation",
-				"closed": "Fermé pour le moment"
+				"closed": "Fermé pour le moment",
+				"checking": "Qui est en ligne ?",
+				"waitingForLive": "En attente de quelqu'un en ligne"
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
@@ -5068,7 +5092,8 @@
 				"later": "Plus tard",
 				"mail": "Écrire une demande à un centre de conseil",
 				"mailShort": "Écrire une demande",
-				"closedDay": "fermé"
+				"closedDay": "fermé",
+				"wait": "J'attends"
 			},
 			"steps": {
 				"wait": {
@@ -5083,6 +5108,14 @@
 					"title": "Anonyme, puis effacé",
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
+			},
+			"checking": {
+				"text": "Nous regardons qui est en ligne …",
+				"waiting": "Nous attendons avec vous que quelqu'un soit en ligne …"
+			},
+			"staff": {
+				"headline": "Vous êtes connectée en tant que conseillère.",
+				"text": "Ce lien vous déconnecterait ici et vous ne seriez plus en ligne. Pour le tester, ouvrez-le dans une fenêtre privée."
 			}
 		}
 	},
