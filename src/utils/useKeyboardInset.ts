@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useVisualViewport } from '../hooks/useVisualViewport';
 
 /**
  * Anything smaller than this is the browser's own chrome — the collapsing URL
@@ -24,69 +24,15 @@ const KEYBOARD_MIN_PX = 120;
  * next, which is exactly when a person needs to be told (Frank, 2026-09-22:
  * "dann weiß ich nämlich, was ich als nächstes machen muss").
  *
- * `window.visualViewport` reports the part of the page that is actually
- * visible. What the layout viewport has and the visual one does not — minus
- * whatever is merely scrolled out of sight above it — is the keyboard.
+ * The measurement itself is `useVisualViewport`, which the maximised composer
+ * already uses for the same reason (#1248): what the layout viewport has and
+ * the visual one does not, minus whatever is merely scrolled out of sight
+ * above it. All this adds is the judgement of what counts as a keyboard, which
+ * a bar that has to *move* needs and a panel that only sizes itself does not.
  */
 export const useKeyboardInset = (): number => {
-	const [inset, setInset] = useState(0);
+	const viewport = useVisualViewport();
+	const covered = viewport?.bottomInset ?? 0;
 
-	useEffect(() => {
-		const viewport =
-			typeof window !== 'undefined' ? window.visualViewport : undefined;
-
-		if (!viewport) {
-			return undefined;
-		}
-
-		let frame: number | null = null;
-
-		const read = () => {
-			frame = null;
-			/* `visualViewport.height` is the visible area in *its own* CSS
-			   pixels, so pinch zoom halves it at 2x even with no keyboard in
-			   sight. Multiplying by the scale puts it back into the layout
-			   viewport's pixels, which is the space `bottom` is measured in —
-			   without it, a 2x zoom at the top of the page reports the whole
-			   lower half as covered and parks the bar in mid-screen
-			   (CodeRabbit on #1514). `offsetTop` is already in layout pixels. */
-			const scale = viewport.scale || 1;
-			const covered =
-				window.innerHeight -
-				viewport.height * scale -
-				viewport.offsetTop;
-			setInset(covered > KEYBOARD_MIN_PX ? Math.round(covered) : 0);
-		};
-
-		/* The keyboard animates in, so both events fire many times per second
-		   while it does. Coalescing them into one read per frame keeps the bar
-		   travelling with the keyboard instead of ahead of a layout queue. */
-		const schedule = () => {
-			if (frame !== null) {
-				return;
-			}
-			frame =
-				typeof window.requestAnimationFrame === 'function'
-					? window.requestAnimationFrame(read)
-					: (window.setTimeout(read, 16) as unknown as number);
-		};
-
-		read();
-		viewport.addEventListener('resize', schedule);
-		viewport.addEventListener('scroll', schedule);
-
-		return () => {
-			if (frame !== null) {
-				if (typeof window.cancelAnimationFrame === 'function') {
-					window.cancelAnimationFrame(frame);
-				} else {
-					window.clearTimeout(frame);
-				}
-			}
-			viewport.removeEventListener('resize', schedule);
-			viewport.removeEventListener('scroll', schedule);
-		};
-	}, []);
-
-	return inset;
+	return covered > KEYBOARD_MIN_PX ? covered : 0;
 };

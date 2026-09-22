@@ -10,7 +10,10 @@ import { useKeyboardInset } from './useKeyboardInset';
  * software keyboard does not change that viewport — so the bar ends up behind
  * the keyboard on the very screens that have a field in them. This hook is the
  * measurement that lets the bar move; these tests pin down what it must
- * measure and, just as importantly, what it must not react to.
+ * measure and, just as importantly, what it must not react to. The reading of
+ * `window.visualViewport` itself lives in the shared `useVisualViewport`, which
+ * has its own tests; what is pinned here is the judgement laid on top of it —
+ * what counts as a keyboard, and what is merely the browser's own chrome.
  */
 
 type FakeViewport = {
@@ -62,7 +65,7 @@ const setLayoutHeight = (height: number) =>
 		writable: true
 	});
 
-/** The hook coalesces reads into one animation frame; run them. */
+/** The reads happen in an effect; let it run before asserting. */
 const flushFrames = async () =>
 	act(async () => {
 		await new Promise((resolve) => setTimeout(resolve, 32));
