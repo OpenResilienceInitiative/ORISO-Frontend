@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from 'vitest';
 import { buildAppointmentIcs } from './appointmentIcs';
 
@@ -142,6 +143,17 @@ describe('buildAppointmentIcs', () => {
 			const uidLine = lines(ics).find((l) => l.startsWith('UID:'));
 			expect(uidLine).toBeTruthy();
 			expect(uidLine).toContain('@');
+		});
+
+		it('generates the uid on the host the app runs on, not a fixed domain', () => {
+			const { uid, ...rest } = baseInput;
+			const uidLine = lines(buildAppointmentIcs(rest)).find((l) =>
+				l.startsWith('UID:')
+			);
+			expect(uidLine).toMatch(
+				new RegExp(`@${window.location.hostname}$`)
+			);
+			expect(uidLine).not.toContain('oriso.org');
 		});
 
 		it('generates a stable uid for identical input', () => {

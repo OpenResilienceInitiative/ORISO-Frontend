@@ -48,7 +48,7 @@ describe('AccountInviteAcceptance', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		vi.mocked(getAccountInvite).mockResolvedValue({
-			recipientEmail: 'lisa.simpson@oriso.org',
+			recipientEmail: 'lisa.simpson@example.org',
 			firstName: 'Lisa',
 			lastName: 'Simpson',
 			targetRole: 'COUNSELLOR',
@@ -68,7 +68,7 @@ describe('AccountInviteAcceptance', () => {
 		renderAcceptance();
 
 		const email = await screen.findByLabelText('E-Mail-Adresse');
-		expect(email.getAttribute('value')).toBe('lisa.simpson@oriso.org');
+		expect(email.getAttribute('value')).toBe('lisa.simpson@example.org');
 		expect(email).toHaveProperty('disabled', true);
 
 		fireEvent.change(screen.getByLabelText('Benutzername'), {

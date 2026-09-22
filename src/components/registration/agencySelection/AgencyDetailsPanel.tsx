@@ -20,6 +20,7 @@ import { getDepartmentForTopic } from '../../departmentLegal/getDepartmentForTop
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinkButton } from '../../legalLinks/LegalLinkButton';
 import { getLegalLinkKind } from '../../legalLinks/useLegalLinkContent';
+import { agencyWebsiteHref } from './agencyWebsiteUrl';
 
 interface AgencyDetailsPanelProps {
 	agency: AgencyDataInterface;
@@ -60,23 +61,6 @@ function nativeNavHref(
 		return `geo:${details.lat},${details.lng}?q=${details.lat},${details.lng}(${label})`;
 	}
 	return osmLink(details);
-}
-
-function safeWebUrl(url: string | undefined): string | undefined {
-	if (!url) {
-		return undefined;
-	}
-
-	try {
-		const parsed = new URL(url, 'https://oriso.org');
-		if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-			return undefined;
-		}
-
-		return parsed.href;
-	} catch {
-		return undefined;
-	}
 }
 
 const mapActionSx = {
@@ -194,7 +178,7 @@ export const AgencyDetailsPanel = ({
 		[agency.name, details]
 	);
 	const safeDetailsUrl = useMemo(
-		() => safeWebUrl(details.url),
+		() => agencyWebsiteHref(details.url),
 		[details.url]
 	);
 

@@ -2246,7 +2246,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * The audience selector no longer uses it: it splits an id on
 	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:oriso.org` yields `oriso` — a token every account on the
+	 * `@consultant42:example.org` yields `example` — a token every account on the
 	 * homeserver shares. As an identity test that is worthless, which is why
 	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
 	 *
@@ -2469,7 +2469,7 @@ export const MessageSubmitInterfaceComponent = ({
 		 * Strict identity throughout: both "is this me?" and "have I already
 		 * got this person?" used to run through `getComparableAudienceIds`,
 		 * whose 4+ character tokens include the homeserver — so every account
-		 * on `oriso.org` matched every other one. See #894.
+		 * on `example.org` matched every other one. See #894.
 		 */
 		const audience = createAudienceCollector([
 			getCurrentMatrixUserId(),
@@ -2917,7 +2917,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * This used to re-derive the roles here with `getComparableAudienceIds`,
 	 * whose 4+ character tokens include the homeserver name — every
-	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * participant on `example.org` shares the token `example`, so one supervisor in
 	 * the room could pull unrelated people into the moderator section, and the
 	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
 	 */

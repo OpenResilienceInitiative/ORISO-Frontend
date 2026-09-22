@@ -215,8 +215,8 @@ class CallManager {
 
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
-			// call.oriso.site where each call lives in its own Matrix room with
-			// appropriate power levels.
+			// a standalone Element Call deployment, where each call lives in its
+			// own Matrix room with appropriate power levels.
 			elementCallRoomId = await this.createElementCallRoom(roomId);
 
 			this.currentCall = {

@@ -11,8 +11,8 @@ import {
 	withRecoverySetupLock
 } from './pendingRecoveryKeyStore';
 
-const USER = '@abe.simpson:oriso.org';
-const OTHER_USER = '@lisa.simpson:oriso.org';
+const USER = '@abe.simpson:example.org';
+const OTHER_USER = '@lisa.simpson:example.org';
 const KEY = 'EsTc 1234 5678 90ab cdef';
 
 describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
