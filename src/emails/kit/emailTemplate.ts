@@ -32,7 +32,7 @@ export interface EmailAction {
 	href: string;
 }
 
-export interface EmailContent {
+interface EmailContentBase {
 	/** Inbox subject line. */
 	subject: string;
 	/** Hidden preview text shown next to the subject. */
@@ -72,10 +72,32 @@ export interface EmailContent {
 	secondaryAction?: EmailAction;
 	/** The reassuring line under the actions. */
 	footnote?: string;
-	/** Closing fine print inside the card. */
-	assurance: string;
 	footer: EmailFooterContent;
 }
+
+/**
+ * The closing fine print inside the card: either a fixed line, or — for a
+ * mail whose action is optional at send time — a placeholder the sender
+ * expands into the whole fine-print row (divider plus line) or into nothing.
+ * The free-text frame needs the second form: its line warns the recipient
+ * not to pass the link on, which is wrong in a mail that has no link.
+ */
+type EmailAssuranceContent =
+	| {
+			/** Closing fine print inside the card. */
+			assurance: string;
+			assuranceSlot?: never;
+	  }
+	| {
+			assurance?: never;
+			/**
+			 * Placeholder the sender expands into what `emailAssurance` would
+			 * render, or into nothing. Pairs with `actionSlot`.
+			 */
+			assuranceSlot: string;
+	  };
+
+export type EmailContent = EmailContentBase & EmailAssuranceContent;
 
 export interface EmailRenderOptions {
 	brand: EmailBrand;
@@ -101,7 +123,9 @@ export const renderEmailHtml = (
 			? emailSecondaryAction(content.secondaryAction, brand)
 			: '') +
 		(content.footnote ? emailFootnote(content.footnote) : '') +
-		emailAssurance(content.assurance);
+		(content.assuranceSlot !== undefined
+			? content.assuranceSlot
+			: emailAssurance(content.assurance));
 
 	const body = emailShell(
 		emailHeaderBar(brand) +
@@ -176,7 +200,9 @@ export const renderEmailText = (
 
 	lines.push(
 		'-'.repeat(RULE_WIDTH),
-		content.assurance,
+		content.assuranceSlot !== undefined
+			? content.assuranceSlot
+			: content.assurance,
 		'',
 		brand.orgName,
 		brand.orgAddress,

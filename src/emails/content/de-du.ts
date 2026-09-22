@@ -407,12 +407,12 @@ export const deDu: Record<EmailId, EmailContent> = {
 		paragraphs: [],
 		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
 		actionSlot: '{{ctaBlock}}',
-		assurance: securityAssurance,
-		footer: {
-			...securityFooter,
-			automatedNote:
-				'Diese E-Mail gehört zu deiner Einladung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
-		}
+		// Both depend on whether the mail has an action, which only the sender
+		// knows: with one, UserService fills the "never pass this link on"
+		// line and the invitation note; without one (a plain notice such as
+		// "contract signed") the line is dropped and the note is neutral.
+		assuranceSlot: '{{assuranceBlock}}',
+		footer: { ...securityFooter, automatedNote: '{{footerNote}}' }
 	},
 
 	'team-aenderung': {

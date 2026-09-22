@@ -13,7 +13,9 @@ import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
  * invite mail.
  *
  * The fixtures are the UserService files verbatim, from
- * `feat/invite-mail-oriso-frame` @ 4316ba37.
+ * `fix/freitext-mail-neutral-without-action` @ 86a4a06c — the frame whose fine print
+ * (`{{assuranceBlock}}`) and footer note (`{{footerNote}}`) UserService fills
+ * according to whether the mail has an action.
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -28,18 +30,6 @@ const fixture = (locale: string, ext: 'html' | 'txt'): string =>
 		'utf8'
 	);
 
-/**
- * The one known difference, and it is on the UserService side: its copy was
- * cut from templates synced before kit commit a6aa2b31 dropped the doubled
- * semicolon after the body-text style. The kit does not reintroduce the typo;
- * the next sync removes it from UserService (together with the same fix in
- * every other synced template).
- */
-const withoutStaleDoubleSemicolon = (html: string): string =>
-	html
-		.split('mso-line-height-rule:exactly;;"')
-		.join('mso-line-height-rule:exactly;"');
-
 const dist = (dialect: string, locale: string, file: string): string =>
 	path.join(here, 'dist', dialect, locale, file);
 
@@ -51,7 +41,7 @@ describe('einladung-freitext', () => {
 	describe.each([...EMAIL_LOCALES])('%s', (locale) => {
 		it('renders the html part UserService ships', () => {
 			expect(buildEmail('einladung-freitext', locale).html).toBe(
-				withoutStaleDoubleSemicolon(fixture(locale, 'html'))
+				fixture(locale, 'html')
 			);
 		});
 

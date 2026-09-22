@@ -629,8 +629,10 @@
 				"{{preheader}}",
 				"{{bodyHtml}}",
 				"{{ctaBlock}}",
+				"{{assuranceBlock}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}"
+				"{{imprintUrl}}",
+				"{{footerNote}}"
 			],
 			"tones": {
 				"de-sie": {

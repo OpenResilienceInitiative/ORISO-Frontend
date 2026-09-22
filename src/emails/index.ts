@@ -18,7 +18,11 @@ import {
 	toEmailDialectHtml,
 	toEmailDialectText
 } from './kit/emailDialect';
-import { emailCallToAction, emailFootnote } from './kit/emailMolecules';
+import {
+	emailAssurance,
+	emailCallToAction,
+	emailFootnote
+} from './kit/emailMolecules';
 import {
 	EmailContent,
 	renderEmailHtml,
@@ -175,6 +179,14 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 		emailFootnote(
 			'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser: https://beratung.example.org/einladung?token=1c9d'
 		),
+	// The previewed invite has an action, so the fine print and the footer
+	// note are the invitation's. Without one, UserService leaves
+	// {{assuranceBlock}} empty and sends a neutral "sent automatically" note.
+	assuranceBlock: emailAssurance(
+		'Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Geben Sie diesen Link an niemanden weiter.'
+	),
+	footerNote:
+		'Diese E-Mail gehört zu Ihrer Einladung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.',
 
 	// Team and platform operations.
 	teamChangeStatement:

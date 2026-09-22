@@ -16,7 +16,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The ORISO frame around an invitation the operator wrote themselves. Subject and body are theirs; UserService inserts the sanitised body into {{bodyHtml}} and expands {{ctaBlock}} into the "Einladung annehmen" button plus a copy-link fallback. Ships in the plain dialect only.'
+					'The ORISO frame around an invitation the operator wrote themselves. Subject and body are theirs; UserService inserts the sanitised body into {{bodyHtml}} and expands {{ctaBlock}} into the "Einladung annehmen" button plus a copy-link fallback. {{assuranceBlock}} (the "never pass this link on" fine print) and {{footerNote}} depend on the same action: without one — a plain notice such as "contract signed" — the fine print is left out and the footer note is a neutral "sent automatically". Ships in the plain dialect only.'
 			}
 		}
 	}
