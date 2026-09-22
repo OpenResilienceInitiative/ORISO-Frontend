@@ -48,7 +48,7 @@ const policy = {
 	chatRecoveryMode: 'LOGIN_PASSWORD' as const,
 	chatRecoveryPolicyRevision: 9
 };
-const client = { getUserId: () => USER } as any;
+const client = { clientRunning: true, getUserId: () => USER } as any;
 
 /** A full document load: module memory is gone, browser storage is not. */
 const nextDocument = async () => {

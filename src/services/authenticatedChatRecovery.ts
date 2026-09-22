@@ -120,13 +120,23 @@ export const startAuthenticatedChatRecovery = (
 	client: MatrixClient,
 	account: Parameters<typeof getChatRecoveryPolicy>[0],
 	claimedClients: WeakSet<object>,
-	cancelled: () => boolean = () => false
+	cancelled: () => boolean = () => false,
+	holdTokenRefresh: <T>(operation: () => Promise<T>) => Promise<T> = (
+		operation
+	) => operation()
 ): Promise<void> | undefined => {
 	if (claimedClients.has(client) || !client.getUserId() || cancelled())
 		return;
 	const policy = getChatRecoveryPolicy(account);
+	// Claimed synchronously, before the hold may wait: a second sync must not start it again.
 	claimedClients.add(client);
-	return consumeLoginRecoveryPassword(client.getUserId()!).then((password) =>
-		initializeChatRecovery(client, policy, password, cancelled)
-	);
+	// Held: a token refresh would replace the client while keys are imported or bootstrapped.
+	return holdTokenRefresh(async () => {
+		// Replaced by a refresh while waiting: the replacement client runs its own recovery.
+		if (!client.clientRunning) return;
+		const password = await consumeLoginRecoveryPassword(
+			client.getUserId()!
+		);
+		await initializeChatRecovery(client, policy, password, cancelled);
+	});
 };

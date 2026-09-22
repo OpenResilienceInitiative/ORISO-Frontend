@@ -41,6 +41,7 @@ const healthy = {
 };
 const client = () =>
 	({
+		clientRunning: true,
 		getUserId: () => '@synthetic:test',
 		secretStorage: { getKey: vi.fn(async () => null) }
 	}) as any;
@@ -324,5 +325,85 @@ describe('LOGIN_PASSWORD recovery on a later sign-in', () => {
 
 		expect(enroll).not.toHaveBeenCalled();
 		expect(setup).not.toHaveBeenCalled();
+	});
+});
+
+describe('automatic recovery runs with token refresh held (#1504)', () => {
+	/**
+	 * Recovery after sign-in imports keys or bootstraps a new identity. A
+	 * token refresh in that window would replace the client under it, so it
+	 * runs inside the same hold as the settings actions.
+	 */
+	it('runs the recovery inside the hold it is given', async () => {
+		const order: string[] = [];
+		const hold = vi.fn(async <T>(operation: () => Promise<T>) => {
+			order.push('hold');
+			const result = await operation();
+			order.push('release');
+			return result;
+		});
+		setup.mockImplementation(async () => {
+			order.push('setup');
+			return 'synthetic-key';
+		});
+
+		await startAuthenticatedChatRecovery(
+			client(),
+			{ chatRecoveryMode: 'RECOVERY_KEY' },
+			new WeakSet(),
+			() => false,
+			hold
+		);
+
+		expect(order).toEqual(['hold', 'setup', 'release']);
+	});
+
+	it('claims the client before waiting, so a second sync does not start it twice', async () => {
+		const c = client();
+		const claimed = new WeakSet<object>();
+		let releaseHold: (() => void) | undefined;
+		const hold = <T>(operation: () => Promise<T>) =>
+			new Promise<void>((resolve) => (releaseHold = resolve)).then(
+				operation
+			);
+
+		const first = startAuthenticatedChatRecovery(
+			c,
+			{ chatRecoveryMode: 'RECOVERY_KEY' },
+			claimed,
+			() => false,
+			hold
+		);
+		const second = startAuthenticatedChatRecovery(
+			c,
+			{ chatRecoveryMode: 'RECOVERY_KEY' },
+			claimed,
+			() => false,
+			hold
+		);
+		releaseHold?.();
+		await first;
+
+		expect(second).toBeUndefined();
+		expect(setup).toHaveBeenCalledOnce();
+	});
+
+	it('skips a client that a refresh replaced while it waited', async () => {
+		const c = client();
+		const hold = async <T>(operation: () => Promise<T>) => {
+			c.clientRunning = false; // the in-flight refresh replaced it
+			return operation();
+		};
+
+		await startAuthenticatedChatRecovery(
+			c,
+			{ chatRecoveryMode: 'RECOVERY_KEY' },
+			new WeakSet(),
+			() => false,
+			hold
+		);
+
+		expect(setup).not.toHaveBeenCalled();
+		expect(status).not.toHaveBeenCalled();
 	});
 });
