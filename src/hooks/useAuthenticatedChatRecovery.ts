@@ -61,7 +61,9 @@ export const useAuthenticatedChatRecovery = (
 						chatRecoveryPolicyRevision: recoveryRevision
 					},
 					recoveryClients.current,
-					() => cancelled
+					() => cancelled,
+					(operation) =>
+						matrixClientService.holdTokenRefreshDuring(operation)
 				);
 				/* `initializeChatRecovery` sets the status to 'pending' and
 				   arms its own 45 s deadline BEFORE its try block, so a throw

@@ -10,6 +10,7 @@ import {
 	useLiveChatAvailable,
 	useLiveChatViaSidebar
 } from '../../utils/liveChatToggle';
+import { LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS } from '../app/useLiveChatAvailabilityLossNotice';
 
 export const LiveChatAvailability = () => {
 	const { t: translate } = useTranslation();
@@ -17,7 +18,7 @@ export const LiveChatAvailability = () => {
 	const [
 		liveChatAvailable,
 		setLiveChatAvailable,
-		{ loading, pending, error }
+		{ loading, pending, error, lostReason }
 	] = useLiveChatAvailable();
 	const [liveChatViaSidebar, setLiveChatViaSidebar] = useLiveChatViaSidebar();
 
@@ -70,13 +71,24 @@ export const LiveChatAvailability = () => {
 						)}
 						type="standard"
 					/>
-					{error && (
+					{lostReason ? (
 						<Text
 							text={translate(
-								'error.statusCodes.500.description'
+								LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[
+									lostReason
+								]
 							)}
 							type="standard"
 						/>
+					) : (
+						error && (
+							<Text
+								text={translate(
+									'error.statusCodes.500.description'
+								)}
+								type="standard"
+							/>
+						)
 					)}
 				</div>
 				{/* New preference: move the availability control into the nav

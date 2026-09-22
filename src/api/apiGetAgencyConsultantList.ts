@@ -39,14 +39,30 @@ export const apiGetAgencyConsultantList = async (
 	}
 };
 
+/**
+ * The Träger's other active consultants, for the co-moderator and Interna
+ * pickers. UserService answers 204 when there are none, which `fetchData`
+ * resolves as `{}` — normalised to `[]` here so "nobody to pick" is an empty
+ * list and not a crash in the caller's `reduce`. Real request failures and
+ * unexpected 200 shapes are left to reject, so the create flow can show its
+ * retry instead of "Keine Person verfügbar" (#1499).
+ */
 export const apiGetTenantConsultantList = async (): Promise<Consultant[]> => {
-	try {
-		return await fetchData({
-			url: `${endpoints.chatSeriesBase}consultants`,
-			method: FETCH_METHODS.GET,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
-		});
-	} catch {
+	const consultants = await fetchData({
+		url: `${endpoints.chatSeriesBase}consultants`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+	});
+	if (Array.isArray(consultants)) {
+		return consultants;
+	}
+	// 204 no-content is the documented empty tenant, not a contract mismatch.
+	if (
+		consultants &&
+		typeof consultants === 'object' &&
+		Object.keys(consultants).length === 0
+	) {
 		return [];
 	}
+	throw new Error(FETCH_ERRORS.CATCH_ALL);
 };
