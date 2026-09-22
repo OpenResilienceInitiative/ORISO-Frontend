@@ -16,17 +16,23 @@ import { useKeyboardInset } from './useKeyboardInset';
 type FakeViewport = {
 	height: number;
 	offsetTop: number;
+	scale: number;
 	addEventListener: (type: string, listener: () => void) => void;
 	removeEventListener: (type: string, listener: () => void) => void;
 	emit: (type: string) => void;
 	listeners: Record<string, Array<() => void>>;
 };
 
-const installViewport = (height: number, offsetTop = 0): FakeViewport => {
+const installViewport = (
+	height: number,
+	offsetTop = 0,
+	scale = 1
+): FakeViewport => {
 	const listeners: Record<string, Array<() => void>> = {};
 	const viewport: FakeViewport = {
 		height,
 		offsetTop,
+		scale,
 		listeners,
 		addEventListener: (type, listener) => {
 			listeners[type] = [...(listeners[type] ?? []), listener];
@@ -121,6 +127,28 @@ describe('useKeyboardInset', () => {
 		});
 
 		expect(result.current).toBe(0);
+	});
+
+	it('does not mistake pinch zoom for a keyboard', async () => {
+		setLayoutHeight(844);
+		// Zoomed 2x at the very top of the page: the visible area halves, but
+		// nothing is covering the screen. Measuring it in its own pixels would
+		// report 422 px of "keyboard" and park the bar in mid-screen.
+		const viewport = installViewport(422, 0, 2);
+
+		const { result } = renderHook(() => useKeyboardInset());
+		await flushFrames();
+
+		expect(result.current).toBe(0);
+
+		// Zoomed *and* a keyboard up: 844 - 254x2 = 336 px really are covered.
+		viewport.height = 254;
+		await act(async () => {
+			viewport.emit('resize');
+			await new Promise((resolve) => setTimeout(resolve, 32));
+		});
+
+		expect(result.current).toBe(336);
 	});
 
 	it('does not count what is merely scrolled out of sight above', async () => {

@@ -6,6 +6,7 @@ import {
 	useContext,
 	useCallback,
 	useMemo,
+	useSyncExternalStore,
 	FormEvent
 } from 'react';
 import {
@@ -65,7 +66,8 @@ import { clearAccountDataDraft } from './accountData/accountDataDraft';
 import {
 	clearRegistrationSubmitting,
 	isRegistrationSubmitting,
-	markRegistrationSubmitting
+	markRegistrationSubmitting,
+	subscribeRegistrationSubmitting
 } from './registrationSubmission';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
@@ -127,12 +129,18 @@ export const Registration = () => {
 	const { locale } = useContext(LocaleContext);
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
-	/* Seeded from the submission module, not from `false`: this screen is
-	   remounted while the account is being created (see
-	   `registrationSubmission`), and starting over at `false` puts the account
-	   form — password and all — back in front of someone who has already
-	   registered. */
-	const [isRegistering, setIsRegistering] = useState<boolean>(
+	/* Read from the submission module, not held here: this screen is remounted
+	   while the account is being created (see `registrationSubmission`), and
+	   local state starts over at `false` — putting the account form, password
+	   and all, back in front of someone who has already registered.
+
+	   Subscribed rather than sampled once, because the submit can also *fail*
+	   after such a remount: the `catch` then runs in the closure of the screen
+	   that is gone, and a screen holding a stale `true` would keep the handover
+	   up with no way back to the form. */
+	const isRegistering = useSyncExternalStore(
+		subscribeRegistrationSubmitting,
+		isRegistrationSubmitting,
 		isRegistrationSubmitting
 	);
 	// Set by the topic step while mounted; the header shows the search only then.
@@ -549,7 +557,6 @@ export const Registration = () => {
 			)
 		) {
 			markRegistrationSubmitting();
-			setIsRegistering(true);
 			apiPostRegistration(
 				endpoints.registerAsker,
 				data,
@@ -591,7 +598,6 @@ export const Registration = () => {
 				.catch((error) => {
 					// console.error('Registration failed:', error);
 					clearRegistrationSubmitting();
-					setIsRegistering(false);
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),

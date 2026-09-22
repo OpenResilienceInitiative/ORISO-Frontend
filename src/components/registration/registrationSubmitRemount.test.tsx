@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	waitFor
+} from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Registration } from './Registration';
@@ -15,13 +21,22 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { clearRegistrationSubmitting } from './registrationSubmission';
 
 /**
- * Never settles: the submit stays in flight, which is the state under test.
- * Hoisted with the `vi.mock` calls below, which run before this file's own
- * imports are evaluated.
+ * The registration request, controlled by each test. It stays in flight until a
+ * test settles it, which is the state under test. Hoisted with the `vi.mock`
+ * calls below, which run before this file's own imports are evaluated.
  */
-const { pendingRegistration } = vi.hoisted(() => ({
-	pendingRegistration: vi.fn(() => new Promise<void>(() => undefined))
-}));
+const { pendingRegistration, settle } = vi.hoisted(() => {
+	const settle: { reject?: (error: Error) => void } = {};
+	return {
+		settle,
+		pendingRegistration: vi.fn(
+			() =>
+				new Promise<void>((_resolve, reject) => {
+					settle.reject = reject;
+				})
+		)
+	};
+});
 
 /** Lottie touches a canvas 2d context at module load; jsdom has none. */
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -137,6 +152,7 @@ const form = () => document.querySelector('[data-cy="registration-form"]');
 beforeEach(() => {
 	clearRegistrationSubmitting();
 	pendingRegistration.mockClear();
+	settle.reject = undefined;
 });
 
 afterEach(() => {
@@ -169,6 +185,31 @@ describe('registration — a submit that is already in flight', () => {
 			pendingRegistration,
 			'and the account must not be registered a second time'
 		).toHaveBeenCalledTimes(1);
+	});
+
+	it('gives the form back when the submit fails after the remount', async () => {
+		/* The `catch` runs in the closure of the screen that is already gone.
+		   If the new screen had only sampled the flag at mount, it would sit on
+		   the handover for ever with no way back (CodeRabbit on #1514). */
+		const first = renderAccountStep();
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		first.unmount();
+		renderAccountStep();
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		await act(async () => {
+			settle.reject?.(new Error('username already taken'));
+			await Promise.resolve();
+		});
+
+		await waitFor(() => expect(form()).toBeTruthy());
+		expect(
+			handover(),
+			'the handover gives way once the submit has failed'
+		).toBeNull();
 	});
 
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {

@@ -43,8 +43,18 @@ export const useKeyboardInset = (): number => {
 
 		const read = () => {
 			frame = null;
+			/* `visualViewport.height` is the visible area in *its own* CSS
+			   pixels, so pinch zoom halves it at 2x even with no keyboard in
+			   sight. Multiplying by the scale puts it back into the layout
+			   viewport's pixels, which is the space `bottom` is measured in —
+			   without it, a 2x zoom at the top of the page reports the whole
+			   lower half as covered and parks the bar in mid-screen
+			   (CodeRabbit on #1514). `offsetTop` is already in layout pixels. */
+			const scale = viewport.scale || 1;
 			const covered =
-				window.innerHeight - viewport.height - viewport.offsetTop;
+				window.innerHeight -
+				viewport.height * scale -
+				viewport.offsetTop;
 			setInset(covered > KEYBOARD_MIN_PX ? Math.round(covered) : 0);
 		};
 
