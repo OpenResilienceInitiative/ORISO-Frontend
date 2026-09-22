@@ -1,4 +1,5 @@
 import React, {
+	useCallback,
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
@@ -213,12 +214,15 @@ export const TipTapComposer = forwardRef<
 		   leaving "Wir besrechen"). Only a value the editor never produced —
 		   a draft, a reset — is news. */
 		const ownStates = useRef<string[]>([]);
-		const emit = (html: string) => {
-			ownStates.current.push(html);
-			if (ownStates.current.length > OWN_STATES_KEPT)
-				ownStates.current.shift();
-			onChange(html);
-		};
+		const emit = useCallback(
+			(html: string) => {
+				ownStates.current.push(html);
+				if (ownStates.current.length > OWN_STATES_KEPT)
+					ownStates.current.shift();
+				onChange(html);
+			},
+			[onChange]
+		);
 
 		const { handleComposerKeyDown } = useChatComposerShortcuts({
 			onSend: onSubmitShortcut,
@@ -452,7 +456,7 @@ export const TipTapComposer = forwardRef<
 			} finally {
 				isSyncingFromValue.current = false;
 			}
-		}, [editor, maxLength, onChange, value]);
+		}, [editor, emit, maxLength, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
