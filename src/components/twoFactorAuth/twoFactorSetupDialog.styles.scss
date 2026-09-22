@@ -211,13 +211,34 @@
 		display: grid;
 		gap: 12px;
 		align-content: start;
+	}
 
-		a {
-			display: inline-flex;
-			align-items: center;
-			gap: 8px;
-			color: var(--m3-primary, #a5000a);
-			font-weight: 600;
+	&__storeBadges {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+
+	// Drawn here rather than loaded from the stores: a remote badge image would
+	// tell Apple and Google that someone is setting up a counselling account.
+	&__storeBadge {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		min-height: 36px;
+		padding: 0 12px;
+		border: 1px solid var(--m3-outline, #747878);
+		border-radius: 8px;
+		background: var(--m3-surface, #ffffff);
+		color: var(--m3-on-surface, #1b1b1c) !important;
+		font-size: 14px;
+		font-weight: 600;
+		line-height: 20px;
+		white-space: nowrap;
+
+		&:hover,
+		&:focus-visible {
+			border-color: var(--m3-on-surface, #1b1b1c);
 		}
 	}
 
@@ -305,6 +326,11 @@
 		text-transform: none !important;
 	}
 
+	&__logout {
+		align-self: flex-start;
+		margin-top: 20px !important;
+	}
+
 	&__success {
 		min-height: 220px;
 		display: grid;
@@ -328,9 +354,10 @@
 		line-height: 28px !important;
 	}
 
+	// Flex, not fixed tracks: the forced setup hides the close button, and in a
+	// 72px 72px 1fr grid the primary action then slid into a 72px track.
 	&__actions {
-		display: grid;
-		grid-template-columns: 72px 72px 1fr;
+		display: flex;
 		gap: 10px;
 		margin-top: 28px;
 	}
@@ -338,8 +365,7 @@
 	// Success step: the two icon buttons are gone, so the lone close action
 	// must not inherit the 72px icon track (it wrapped mid-word there).
 	&__actions--single {
-		grid-template-columns: 1fr;
-		justify-items: end;
+		justify-content: flex-end;
 	}
 
 	&__iconAction,
@@ -348,6 +374,19 @@
 		border-radius: 8px !important;
 		background-color: var(--m3-secondary, #4c555f) !important;
 		color: var(--m3-on-secondary, #ffffff) !important;
+	}
+
+	&__iconAction {
+		flex: 0 0 72px !important;
+		width: 72px;
+	}
+
+	&__primaryAction {
+		flex: 1 1 auto;
+	}
+
+	&__actions--single &__primaryAction {
+		flex: 0 0 auto;
 	}
 
 	&__iconAction--muted {
@@ -410,12 +449,45 @@
 			justify-self: center;
 		}
 
-		&__actions {
-			grid-template-columns: 64px 64px 1fr;
+		&__iconAction {
+			flex-basis: 64px !important;
+			width: 64px;
+		}
+	}
+
+	// Tablet and desktop: about 30 % more room in every direction. Only the
+	// container grows — type sizes stay as they are.
+	@media (width >= 768px) {
+		&__paper {
+			width: min(650px, calc(100vw - 64px));
+
+			// Never taller than the window: on a short one the paper scrolls
+			// instead of pushing its actions and the logout out of reach.
+			min-height: min(640px, calc(100vh - 64px));
+			max-height: calc(100vh - 64px);
+			padding: 44px;
+			overflow-y: auto;
 		}
 
-		&__actions--single {
-			grid-template-columns: 1fr;
+		&__header {
+			gap: 32px;
+			margin-bottom: 36px;
+		}
+
+		&__stepper {
+			margin-bottom: 36px;
+		}
+
+		&__body {
+			gap: 24px;
+		}
+
+		&__downloadGrid {
+			gap: 28px;
+		}
+
+		&__actions {
+			margin-top: 36px;
 		}
 	}
 }

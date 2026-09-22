@@ -24,7 +24,8 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import AndroidIcon from '@mui/icons-material/Android';
+import AppleIcon from '@mui/icons-material/Apple';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import SmartphoneRoundedIcon from '@mui/icons-material/SmartphoneRounded';
 import {
@@ -108,6 +109,9 @@ interface TwoFactorSetupDialogProps {
 	open: boolean;
 	canClose: boolean;
 	canDisable: boolean;
+	/** Forced setup only: the dialog is modal and cannot be closed, so logging out — the one other
+	 *  way on — has to be offered inside it. */
+	onLogout?: () => void;
 	currentType?: TwoFactorType;
 	email?: string;
 	qrCode?: string;
@@ -179,6 +183,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 	open,
 	canClose,
 	canDisable,
+	onLogout,
 	currentType = TWO_FACTOR_TYPES.NONE,
 	email: initialEmail = '',
 	qrCode,
@@ -553,26 +558,34 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 						<Typography className="twoFactorSetupDialog__downloadTitle">
 							{translate(app.titleKey)}
 						</Typography>
-						<Link
-							href={translate(app.androidKey)}
-							target="_blank"
-							rel="noreferrer"
-						>
-							<DownloadRoundedIcon fontSize="small" />
-							{translate(
-								'twoFactorAuth.setupDialog.app.install.android'
-							)}
-						</Link>
-						<Link
-							href={translate(app.iosKey)}
-							target="_blank"
-							rel="noreferrer"
-						>
-							<DownloadRoundedIcon fontSize="small" />
-							{translate(
-								'twoFactorAuth.setupDialog.app.install.ios'
-							)}
-						</Link>
+						<div className="twoFactorSetupDialog__storeBadges">
+							<Link
+								className="twoFactorSetupDialog__storeBadge"
+								href={translate(app.androidKey)}
+								target="_blank"
+								rel="noreferrer"
+								underline="none"
+								aria-label={`${translate(app.titleKey)} – ${translate(
+									'twoFactorAuth.setupDialog.app.install.android'
+								)}`}
+							>
+								<AndroidIcon fontSize="small" />
+								Google Play
+							</Link>
+							<Link
+								className="twoFactorSetupDialog__storeBadge"
+								href={translate(app.iosKey)}
+								target="_blank"
+								rel="noreferrer"
+								underline="none"
+								aria-label={`${translate(app.titleKey)} – ${translate(
+									'twoFactorAuth.setupDialog.app.install.ios'
+								)}`}
+							>
+								<AppleIcon fontSize="small" />
+								App Store
+							</Link>
+						</div>
 					</div>
 				))}
 			</div>
@@ -776,8 +789,7 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 			aria-labelledby="two-factor-setup-title"
 			className="twoFactorSetupDialog"
 			disableEscapeKeyDown={!canClose}
-			fullWidth
-			maxWidth="sm"
+			maxWidth={false}
 			onClose={(_, reason) => {
 				if (reason === 'escapeKeyDown' || reason === 'backdropClick') {
 					closeDialog();
@@ -891,6 +903,16 @@ export const TwoFactorSetupDialog: React.FC<TwoFactorSetupDialogProps> = ({
 						{translate(primaryLabelKey)}
 					</Button>
 				</div>
+			)}
+			{onLogout && !isSuccess && (
+				<Button
+					className="twoFactorSetupDialog__textButton twoFactorSetupDialog__logout"
+					disabled={isRequestInProgress}
+					onClick={onLogout}
+					variant="text"
+				>
+					{translate('accountSetup.required.logout')}
+				</Button>
 			)}
 		</Dialog>
 	);
