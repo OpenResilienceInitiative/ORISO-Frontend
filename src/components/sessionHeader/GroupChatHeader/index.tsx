@@ -28,7 +28,11 @@ import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
-import { shouldShowGroupChatMenu } from './groupChatHeaderMenu';
+import {
+	shouldShowGroupChatMenu,
+	shouldShowWaitingRoomPhoneMenu
+} from './groupChatHeaderMenu';
+import { useResponsive } from '../../../hooks/useResponsive';
 import { getModality, Modality } from '../../session/getModality';
 import { isSystemMatrixUser } from '../../../utils/systemMatrixUsers';
 
@@ -165,6 +169,9 @@ export const GroupChatHeader = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
+	// untilM (< 900 px) is the complement of the `$fromLarge` switch that
+	// shows the desktop-only "Chat-Info" link.
+	const { untilM: isPhone } = useResponsive();
 
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {
@@ -436,10 +443,16 @@ export const GroupChatHeader = ({
 						</div>
 					)}
 
-				{shouldShowGroupChatMenu({
+				{(shouldShowGroupChatMenu({
 					isActive,
 					isJoinGroupChatView
-				}) && (
+				}) ||
+					shouldShowWaitingRoomPhoneMenu({
+						isActive,
+						isJoinGroupChatView,
+						isConsultant,
+						isPhone
+					})) && (
 					<SessionMenu
 						hasUserInitiatedStopOrLeaveRequest={
 							hasUserInitiatedStopOrLeaveRequest

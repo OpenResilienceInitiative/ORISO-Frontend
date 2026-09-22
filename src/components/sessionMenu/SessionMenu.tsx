@@ -944,9 +944,14 @@ const SessionMenuFlyoutGroup = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
+	// Leave/stop only mean something in a running group; the waiting room
+	// shows this menu on phones too (#1499).
+	const isRunning = Boolean(activeSession.item.active);
+
 	return (
 		<>
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
 				moderators.length > 1 && (
 					<div
@@ -972,7 +977,8 @@ const SessionMenuFlyoutGroup = ({
 					/>
 				</Link>
 			)}
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 				canModerateGroupChat(activeSession, userData) && (
 					<div
