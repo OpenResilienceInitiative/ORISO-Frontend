@@ -2991,17 +2991,19 @@ export const NewMessagesFollowWhileWatching: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		const timeline = mainTimeline(canvasElement);
 		for (const body of ARRIVALS) {
 			await userEvent.click(deliverNext(canvasElement));
 			await canvas.findByText(body);
+			// The stage lands a frame after each arrival; delivering sooner
+			// measures the timeline mid-landing and reads "scrolled up".
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
 		}
-		const timeline = mainTimeline(canvasElement);
-		await waitFor(() =>
-			expect(
-				timeline.scrollHeight -
-					(timeline.scrollTop + timeline.clientHeight)
-			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
-		);
 		// Nothing waits below the fold, so the arrow stays the quiet one.
 		await expect(scrollArrow(canvasElement).className).not.toContain(
 			'composerToolbar__button--scrollToNewest--unread'
