@@ -605,17 +605,17 @@
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
+					"subject": "Vertragsunterlagen für {{tenantName}}",
 					"preheader": "Der AVV für {{tenantName}} liegt bereit."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
+					"subject": "Vertragsunterlagen für {{tenantName}}",
 					"preheader": "Der AVV für {{tenantName}} liegt bereit."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "Data processing agreement ready for signature",
+					"subject": "Contract documents for {{tenantName}}",
 					"preheader": "The agreement for {{tenantName}} is ready."
 				}
 			}

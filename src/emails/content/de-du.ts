@@ -379,7 +379,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Auftragsverarbeitungsvertrag zur Unterschrift',
+		subject: 'Vertragsunterlagen für {{tenantName}}',
 		preheader: 'Der AVV für {{tenantName}} liegt bereit.',
 		headline: 'Der AVV liegt zur Unterschrift bereit',
 		paragraphs: [
@@ -391,7 +391,12 @@ export const deDu: Record<EmailId, EmailContent> = {
 			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' },
 			{ label: 'Zu unterschreiben bis', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Vertrag öffnen', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Vertrag öffnen',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:'
+		},
 		footnote:
 			'Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.',
 		assurance: legalAssurance,

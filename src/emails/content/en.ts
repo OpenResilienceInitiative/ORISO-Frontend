@@ -375,7 +375,7 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Data processing agreement ready for signature',
+		subject: 'Contract documents for {{tenantName}}',
 		preheader: 'The agreement for {{tenantName}} is ready.',
 		headline: 'The agreement is ready for signature',
 		paragraphs: [
@@ -387,7 +387,12 @@ export const en: Record<EmailId, EmailContent> = {
 			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
 			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Open agreement', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Open agreement',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'If the button does not work, copy this link into your browser:'
+		},
 		footnote:
 			'Counselling stays blocked for this organisation until the agreement is signed.',
 		assurance: legalAssurance,
