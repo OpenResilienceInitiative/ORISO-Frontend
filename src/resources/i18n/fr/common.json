@@ -893,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "pas de participants disponibles",
-				"headline": "Personnes participantes"
+				"headline": "Personnes participantes",
+				"menuLabel": "Options pour {{name}}"
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
@@ -918,6 +919,10 @@
 					}
 				},
 				"upcoming": "Prochaines dates"
+			},
+			"status": {
+				"active": "En cours",
+				"planned": "Prévu"
 			}
 		},
 		"join": {
@@ -940,6 +945,9 @@
 					"flipHint": "cliquer pour retourner",
 					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
 					"headline": "Votre chat de groupe commence {{eta}}.",
+					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
+					"moderatorOverdueHeadline": "Le groupe vous attend.",
+					"moderatorSubtitle": "Vous pouvez lancer le chat dès que vous êtes prêt·e.",
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",

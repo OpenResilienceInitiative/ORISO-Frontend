@@ -932,7 +932,8 @@
 			},
 			"subscribers": {
 				"empty": "no participants available",
-				"headline": "Participants"
+				"headline": "Participants",
+				"menuLabel": "Options for {{name}}"
 			},
 			"gallery": {
 				"back": "Back to the countdown",
@@ -957,6 +958,10 @@
 					}
 				},
 				"upcoming": "Next dates"
+			},
+			"status": {
+				"active": "Running now",
+				"planned": "Scheduled"
 			}
 		},
 		"join": {
@@ -979,6 +984,9 @@
 					"flipHint": "click to flip",
 					"greetingLabel": "A welcome from your counsellor",
 					"headline": "Your group chat starts {{eta}}.",
+					"moderatorHeadline": "The group session starts {{eta}}.",
+					"moderatorOverdueHeadline": "The group is waiting.",
+					"moderatorSubtitle": "You can start the chat whenever you are ready.",
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
