@@ -15,26 +15,6 @@
 		margin: 0 auto;
 	}
 
-	// Centred text link, like the logout in the second-factor step: the one
-	// other way on, not a second button competing with "save and continue".
-	&__dialogLogout {
-		margin-top: 4px;
-
-		.button__wrapper,
-		.button__item {
-			margin: 0 auto;
-			padding: 0;
-		}
-
-		.button__item {
-			display: block;
-			color: var(--m3-secondary, #4c555f);
-			font-size: 14px;
-			font-weight: 600;
-			line-height: 44px;
-		}
-	}
-
 	&__passwordPaper {
 		.passwordReset .generalInformation {
 			margin: 0;

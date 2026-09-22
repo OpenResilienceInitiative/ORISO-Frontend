@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Box, Dialog, Fade } from '@mui/material';
+import { Box, Button as MuiButton, Dialog, Fade } from '@mui/material';
 import { UserDataContext } from '../../globalState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
@@ -98,18 +98,15 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					<Box className="twoFactorSetupDialog__body">
 						<PasswordReset hideIntro variant="dialog" />
 					</Box>
-					{/* The dialog is modal, so the logout underneath it is out of reach. */}
-					<div className="accountSetupGate__dialogLogout">
-						<Button
-							buttonHandle={onLogout}
-							item={{
-								label: translate(
-									'accountSetup.required.logout'
-								),
-								type: BUTTON_TYPES.LINK
-							}}
-						/>
-					</div>
+					{/* The dialog is modal, so the logout underneath it is out of
+					    reach — and it is the same link as in the second step. */}
+					<MuiButton
+						className="twoFactorSetupDialog__logout"
+						onClick={onLogout}
+						variant="text"
+					>
+						{translate('accountSetup.required.logout')}
+					</MuiButton>
 				</Dialog>
 			)}
 			{!isPasswordStep && (
