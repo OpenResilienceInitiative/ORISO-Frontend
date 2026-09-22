@@ -2404,6 +2404,7 @@
 						"headline": "Sie haben Ihr Passwort erfolgreich geändert. Sie werden nun zum Login weitergeleitet."
 					},
 					"same": "Ihr Passwort ist identisch.",
+					"sameAsOld": "Bitte wählen Sie ein neues Passwort – dieses ist Ihr bisheriges.",
 					"secure": "Ihr Passwort ist sicher.",
 					"subtitle": "Wenn Sie möchten, können Sie hier Ihr Passwort ändern. Geben Sie erst Ihr aktuelles Passwort ein, um ein Neues festzulegen.",
 					"title": "Passwort"

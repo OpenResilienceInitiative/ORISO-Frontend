@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Box, Dialog, Fade, Typography } from '@mui/material';
 import { UserDataContext } from '../../globalState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
@@ -12,7 +13,9 @@ import {
 	ACCOUNT_SETUP_STEPS,
 	resolveAccountSetupStep
 } from './accountSetupStep';
+import { ReactComponent as PasswordGraphic } from '../../resources/img/icons/two-factor/otp_app_graphic.svg';
 import './accountSetupGate.styles';
+import './twoFactorSetupDialog.styles';
 
 interface AccountSetupGateProps {
 	onLogout: () => void;
@@ -23,7 +26,8 @@ interface AccountSetupGateProps {
  *
  * An admin-provisioned account starts with a password its administrator chose, so two things are
  * owed: the user's own password, then a second factor. This replaces the routed app rather than
- * covering it.
+ * covering it. Both steps are the same non-dismissable dialog, so setup reads as one flow; the text
+ * underneath is what a screen reader reaches behind it.
  *
  * The password step reuses the profile's password change unchanged, including its logout — for
  * LOGIN_PASSWORD chat recovery that change rotates Matrix key-backup material, and routing around
@@ -54,7 +58,6 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					type="standard"
 					text={translate(`${copyKey}.required.copy`)}
 				/>
-				{isPasswordStep && <PasswordReset />}
 				<Button
 					buttonHandle={onLogout}
 					item={{
@@ -63,6 +66,60 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					}}
 				/>
 			</div>
+			{isPasswordStep && (
+				<Dialog
+					BackdropProps={{
+						className: 'twoFactorSetupDialog__backdrop'
+					}}
+					TransitionComponent={Fade}
+					TransitionProps={{ timeout: 180 }}
+					aria-describedby="account-setup-password-description"
+					aria-labelledby="account-setup-password-title"
+					className="twoFactorSetupDialog"
+					disableEscapeKeyDown
+					maxWidth={false}
+					open
+					PaperProps={{
+						className:
+							'twoFactorSetupDialog__paper accountSetupGate__passwordPaper'
+					}}
+				>
+					<Box className="twoFactorSetupDialog__header">
+						<PasswordGraphic
+							aria-hidden="true"
+							className="twoFactorSetupDialog__graphic"
+						/>
+						<Typography
+							className="twoFactorSetupDialog__title"
+							id="account-setup-password-title"
+							variant="h2"
+						>
+							{translate('passwordChange.required.title')}
+						</Typography>
+					</Box>
+					<Box className="twoFactorSetupDialog__body">
+						<Typography
+							className="twoFactorSetupDialog__copy"
+							id="account-setup-password-description"
+						>
+							{translate('passwordChange.required.copy')}
+						</Typography>
+						<PasswordReset hideIntro />
+					</Box>
+					{/* The dialog is modal, so the logout underneath it is out of reach. */}
+					<div className="accountSetupGate__dialogLogout">
+						<Button
+							buttonHandle={onLogout}
+							item={{
+								label: translate(
+									'accountSetup.required.logout'
+								),
+								type: BUTTON_TYPES.LINK
+							}}
+						/>
+					</div>
+				</Dialog>
+			)}
 			{!isPasswordStep && (
 				<TwoFactorSetupDialog
 					canClose={false}
@@ -71,6 +128,7 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					email={userData?.email}
 					onClose={() => undefined}
 					onDisable={() => undefined}
+					onLogout={onLogout}
 					onSetupComplete={handleSetupComplete}
 					open
 					qrCode={userData?.twoFactorAuth?.qrCode}

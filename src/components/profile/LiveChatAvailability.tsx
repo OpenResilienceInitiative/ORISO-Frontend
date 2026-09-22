@@ -105,9 +105,13 @@ export const LiveChatAvailability = () => {
 							'profile.functions.liveChat.viaSidebar.description'
 						)}
 						checked={liveChatViaSidebar}
-						checkboxHandle={() =>
-							setLiveChatViaSidebar(!liveChatViaSidebar)
-						}
+						checkboxHandle={() => {
+							// Saved in the profile; on failure the hook rolls
+							// the checkbox back to the stored value.
+							setLiveChatViaSidebar(!liveChatViaSidebar).catch(
+								() => undefined
+							);
+						}}
 					/>
 				</div>
 			</div>

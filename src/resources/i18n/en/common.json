@@ -2379,6 +2379,7 @@
 						"headline": "You have successfully changed your password. You will now be redirected to the login."
 					},
 					"same": "Your password is identical.",
+					"sameAsOld": "Please choose a new password – this is your current one.",
 					"secure": "Your password is safe.",
 					"subtitle": "If you wish, you can change your password here. First enter your current password to set a new one.",
 					"title": "Password"
