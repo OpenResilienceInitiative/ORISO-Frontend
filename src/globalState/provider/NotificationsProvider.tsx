@@ -98,6 +98,11 @@ export type NotificationDefaultType = NotificationType & {
 	title: ReactNode;
 	text: ReactNode;
 	closeable?: boolean;
+	/**
+	 * Live-region role for a notice a screen-reader user must hear at once
+	 * (e.g. live chat switched off, #1485). Unset notifications stay silent.
+	 */
+	announce?: 'alert' | 'status';
 	onClose?: (notification: NotificationDefaultType) => void;
 	actionPath?: string;
 	actionLabel?: string;

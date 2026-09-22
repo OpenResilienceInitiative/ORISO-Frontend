@@ -49,6 +49,11 @@ import { getUrlParameter } from '../../utils/getUrlParameter';
 import { resolveRegistrationConsultingType } from './resolveRegistrationConsultingType';
 import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
+import { RegistrationTopicSearch } from './topicSearch/RegistrationTopicSearch';
+import {
+	RegistrationTopicSearchApi,
+	RegistrationTopicSearchContext
+} from './topicSearch/RegistrationTopicSearchContext';
 import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import {
@@ -118,6 +123,9 @@ export const Registration = () => {
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
 	const [isRegistering, setIsRegistering] = useState<boolean>(false);
+	// Set by the topic step while mounted; the header shows the search only then.
+	const [topicSearch, setTopicSearch] =
+		useState<RegistrationTopicSearchApi | null>(null);
 	const [clearSelectionVersion, setClearSelectionVersion] =
 		useState<number>(0);
 
@@ -556,9 +564,15 @@ export const Registration = () => {
 					} catch {
 						sessionId = undefined;
 					}
+					/* Document load, not a client-side navigate (same cause as
+					   #1402): under a React transition the registration form
+					   stays painted while the URL already reads the app route,
+					   and the user is stuck on a form whose User-ID is now
+					   taken. The welcome animation survives the load via
+					   POST_REGISTRATION_LOADER_KEY. */
 					redirectToApp(
 						getPostRegistrationGroupChatId(location.search),
-						{ navigate, sessionId }
+						{ sessionId }
 					);
 				})
 				.catch((error) => {
@@ -593,8 +607,7 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search,
-		navigate
+		location.search
 	]);
 
 	const handleSubmit = useCallback(
@@ -627,23 +640,36 @@ export const Registration = () => {
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				showRegistrationInfoDrawer={true}
 				mobileHero="bar"
+				renderHeaderAction={
+					topicSearch
+						? (tone) => (
+								<RegistrationTopicSearch
+									tone={tone}
+									entries={topicSearch.entries}
+									index={topicSearch.index}
+									onSelect={topicSearch.select}
+								/>
+							)
+						: undefined
+				}
 			>
-				<Box
-					sx={{
-						// Top of the chain: `.stageLayout__content` is already a
-						// flex column filling the viewport, so the growth starts
-						// being passed on here.
-						flex: 1,
-						minHeight: 0,
-						display: 'flex',
-						flexDirection: 'column',
-						boxSizing: 'border-box',
-						width: '100%',
-						maxWidth: '100%'
-					}}
-				>
-					{isRegistering ? (
-						/* The account is being created and auto-login is running.
+				<RegistrationTopicSearchContext.Provider value={setTopicSearch}>
+					<Box
+						sx={{
+							// Top of the chain: `.stageLayout__content` is already a
+							// flex column filling the viewport, so the growth starts
+							// being passed on here.
+							flex: 1,
+							minHeight: 0,
+							display: 'flex',
+							flexDirection: 'column',
+							boxSizing: 'border-box',
+							width: '100%',
+							maxWidth: '100%'
+						}}
+					>
+						{isRegistering ? (
+							/* The account is being created and auto-login is running.
 						   That wait used to show nothing but a disabled button,
 						   and the handover screen only appeared after the hard
 						   reload in `redirectToApp` — so it read as a separate
@@ -661,169 +687,245 @@ export const Registration = () => {
 						   in `onRegisterClick` resets `isRegistering`, which
 						   takes this branch away and puts the form back with its
 						   error notification. */
-						<RegistrationHandover
-							ready={false}
-							forcedState="preparing"
-							variant="inline"
-							onEnter={() => undefined}
-						/>
-					) : activeStep ? (
-						<>
-							<Helmet>
-								<meta name="robots" content="noindex"></meta>
-							</Helmet>
-							<form
-								onSubmit={handleSubmit}
-								// Part of the same chain: a plain block form
-								// would swallow the growth again.
-								style={{
-									flex: 1,
-									minHeight: 0,
-									display: 'flex',
-									flexDirection: 'column'
-								}}
-								data-cy="registration-form"
-								data-cy-step={step}
-								data-cy-steps={availableSteps
-									.map(({ name }) => name)
-									.join(',')}
-							>
-								<Box
-									sx={{
-										// The stage column is a flex column that
-										// fills the viewport, but every box below
-										// it defaulted to `flex: 0 1 auto`, so the
-										// step body stopped at its own height and
-										// the leftover space was dead. Passing the
-										// growth down lets a step centre itself in
-										// what is actually left (see the postcode
-										// step) without anyone computing a height.
+							<RegistrationHandover
+								ready={false}
+								forcedState="preparing"
+								variant="inline"
+								onEnter={() => undefined}
+							/>
+						) : activeStep ? (
+							<>
+								<Helmet>
+									<meta
+										name="robots"
+										content="noindex"
+									></meta>
+								</Helmet>
+								<form
+									onSubmit={handleSubmit}
+									// Part of the same chain: a plain block form
+									// would swallow the growth again.
+									style={{
 										flex: 1,
 										minHeight: 0,
 										display: 'flex',
-										flexDirection: 'column',
-										marginBottom: {
-											xs: '144px',
-											sm: '112px'
-										}
+										flexDirection: 'column'
 									}}
+									data-cy="registration-form"
+									data-cy-step={step}
+									data-cy-steps={availableSteps
+										.map(({ name }) => name)
+										.join(',')}
 								>
-									<PreselectionBox hasDrawer={false} />
-									<RegistrationHeader
-										currentStepName={step}
-										visibleStepNames={availableSteps.map(
-											({ name }) => name
-										)}
-										clickableStepNames={
-											clickableStepperStepNames
-										}
-										onStepClick={onStepperClick}
-										chips={headerChips}
-										fullBleed
-									/>
-
 									<Box
 										sx={{
-											'flex': 1,
-											'minHeight': 0,
-											'display': 'flex',
-											'flexDirection': 'column',
-											'width': '100%',
-											'maxWidth': '780px',
-											'mx': 'auto',
-											'px': { xs: 2, sm: 3, lg: 4 },
-											// The band above is opaque and sits
-											// flush; without this the first line of
-											// every step starts hard against its
-											// lower edge.
-											'pt': 1.5,
-											'& > *': { minHeight: 0 }
+											// The stage column is a flex column that
+											// fills the viewport, but every box below
+											// it defaulted to `flex: 0 1 auto`, so the
+											// step body stopped at its own height and
+											// the leftover space was dead. Passing the
+											// growth down lets a step centre itself in
+											// what is actually left (see the postcode
+											// step) without anyone computing a height.
+											flex: 1,
+											minHeight: 0,
+											display: 'flex',
+											flexDirection: 'column',
+											marginBottom: {
+												xs: '144px',
+												sm: '112px'
+											}
 										}}
 									>
-										{(() => {
-											const StepComponent =
-												activeStep.component;
-											return (
-												<StepComponent
-													key={`${activeStep.name}-${clearSelectionVersion}`}
-													onChange={setStepData}
-													onNextClick={onNextClick}
-													nextStepUrl={nextStepUrl}
-													temporary={temporaryJoin}
-												/>
-											);
-										})()}
+										<PreselectionBox hasDrawer={false} />
+										<RegistrationHeader
+											currentStepName={step}
+											visibleStepNames={availableSteps.map(
+												({ name }) => name
+											)}
+											clickableStepNames={
+												clickableStepperStepNames
+											}
+											onStepClick={onStepperClick}
+											chips={headerChips}
+											fullBleed
+										/>
+
+										<Box
+											sx={{
+												'flex': 1,
+												'minHeight': 0,
+												'display': 'flex',
+												'flexDirection': 'column',
+												'width': '100%',
+												'maxWidth': '780px',
+												'mx': 'auto',
+												'px': { xs: 2, sm: 3, lg: 4 },
+												// The band above is opaque and sits
+												// flush; without this the first line of
+												// every step starts hard against its
+												// lower edge.
+												'pt': 1.5,
+												'& > *': { minHeight: 0 }
+											}}
+										>
+											{(() => {
+												const StepComponent =
+													activeStep.component;
+												return (
+													<StepComponent
+														key={`${activeStep.name}-${clearSelectionVersion}`}
+														onChange={setStepData}
+														onNextClick={
+															onNextClick
+														}
+														nextStepUrl={
+															nextStepUrl
+														}
+														temporary={
+															temporaryJoin
+														}
+													/>
+												);
+											})()}
+										</Box>
 									</Box>
-								</Box>
-								{/* The bar itself — fixed, translucent, hairline,
+									{/* The bar itself — fixed, translucent, hairline,
 								    safe-area — is `RegistrationFooter`. This
 								    screen hands in its whole navigation as
 								    children and takes no `primary`: the wide
 								    layout's next button and the compact step
 								    nav below already are the way on. */}
-								<RegistrationFooter animateIn>
-									<Box
-										sx={{
-											width: '100%',
-											maxWidth: '780px',
-											minWidth: 0,
-											// The bar spans the content column;
-											// auto margins keep this centred in
-											// it, as the bar's own
-											// `justifyContent` used to.
-											mx: 'auto'
-										}}
-									>
+									<RegistrationFooter animateIn>
 										<Box
 											sx={{
-												display: {
-													xs: 'none',
-													sm: 'grid'
-												},
-												gridTemplateColumns:
-													'auto minmax(0, 1fr) auto',
-												alignItems: 'center',
-												columnGap: { sm: 2.5, md: 3 },
-												rowGap: 1
+												width: '100%',
+												maxWidth: '780px',
+												minWidth: 0,
+												// The bar spans the content column;
+												// auto margins keep this centred in
+												// it, as the bar's own
+												// `justifyContent` used to.
+												mx: 'auto'
 											}}
 										>
-											<RegistrationFooterBackLink
-												to={prevStepUrl}
-												onClick={onPrevClick}
-												label={t('registration.back')}
-											/>
-											<RegistrationFooterChips
-												chips={footerChips}
-												selectedPrefix={selectedPrefix}
-												emptyLabel={footerEmptyLabel}
-											/>
 											<Box
 												sx={{
-													display: 'flex',
+													display: {
+														xs: 'none',
+														sm: 'grid'
+													},
+													gridTemplateColumns:
+														'auto minmax(0, 1fr) auto',
 													alignItems: 'center',
-													gap: 2,
-													minWidth: 0
+													columnGap: {
+														sm: 2.5,
+														md: 3
+													},
+													rowGap: 1
 												}}
 											>
-												{canJoinTemporarily && (
-													<TemporaryJoinToggle
-														label={
-															temporaryToggleLabel
+												<RegistrationFooterBackLink
+													to={prevStepUrl}
+													onClick={onPrevClick}
+													label={t(
+														'registration.back'
+													)}
+												/>
+												<RegistrationFooterChips
+													chips={footerChips}
+													selectedPrefix={
+														selectedPrefix
+													}
+													emptyLabel={
+														footerEmptyLabel
+													}
+												/>
+												<Box
+													sx={{
+														display: 'flex',
+														alignItems: 'center',
+														gap: 2,
+														minWidth: 0
+													}}
+												>
+													{canJoinTemporarily && (
+														<TemporaryJoinToggle
+															label={
+																temporaryToggleLabel
+															}
+															onClick={
+																toggleTemporaryJoin
+															}
+															disabled={
+																isRegistering
+															}
+														/>
+													)}
+													<RegistrationFooterPrimaryButton
+														nextStepUrl={
+															nextStepUrl
 														}
-														onClick={
-															toggleTemporaryJoin
+														disabledNextButton={
+															disabledNextButton
 														}
-														disabled={isRegistering}
+														isRegistering={
+															isRegistering
+														}
+														registerLabel={
+															primaryActionLabel
+														}
+														registeringLabel={t(
+															'registration.registering',
+															'Registering...'
+														)}
+														nextLabel={t(
+															'registration.next'
+														)}
 													/>
+												</Box>
+											</Box>
+											<Box
+												sx={{
+													display: {
+														xs: 'block',
+														sm: 'none'
+													}
+												}}
+											>
+												{/* F3: the picks live in the
+											    header chip row on mobile, so
+											    the footer is navigation only. */}
+												{canJoinTemporarily && (
+													<Box sx={{ mb: 1.25 }}>
+														<TemporaryJoinToggle
+															label={
+																temporaryToggleLabel
+															}
+															onClick={
+																toggleTemporaryJoin
+															}
+															disabled={
+																isRegistering
+															}
+															fullWidth
+														/>
+													</Box>
 												)}
-												<RegistrationFooterPrimaryButton
+												<RegistrationStepNav
+													prevStepUrl={
+														currStepIndex === 0
+															? null
+															: prevStepUrl
+													}
+													onPrevClick={onPrevClick}
+													backLabel={t(
+														'registration.back'
+													)}
 													nextStepUrl={nextStepUrl}
-													disabledNextButton={
-														disabledNextButton
-													}
-													isRegistering={
-														isRegistering
-													}
+													nextLabel={t(
+														'registration.next'
+													)}
 													registerLabel={
 														primaryActionLabel
 													}
@@ -831,72 +933,23 @@ export const Registration = () => {
 														'registration.registering',
 														'Registering...'
 													)}
-													nextLabel={t(
-														'registration.next'
-													)}
+													disabledNext={
+														disabledNextButton
+													}
+													isRegistering={
+														isRegistering
+													}
 												/>
 											</Box>
 										</Box>
-										<Box
-											sx={{
-												display: {
-													xs: 'block',
-													sm: 'none'
-												}
-											}}
-										>
-											{/* F3: the picks live in the
-											    header chip row on mobile, so
-											    the footer is navigation only. */}
-											{canJoinTemporarily && (
-												<Box sx={{ mb: 1.25 }}>
-													<TemporaryJoinToggle
-														label={
-															temporaryToggleLabel
-														}
-														onClick={
-															toggleTemporaryJoin
-														}
-														disabled={isRegistering}
-														fullWidth
-													/>
-												</Box>
-											)}
-											<RegistrationStepNav
-												prevStepUrl={
-													currStepIndex === 0
-														? null
-														: prevStepUrl
-												}
-												onPrevClick={onPrevClick}
-												backLabel={t(
-													'registration.back'
-												)}
-												nextStepUrl={nextStepUrl}
-												nextLabel={t(
-													'registration.next'
-												)}
-												registerLabel={
-													primaryActionLabel
-												}
-												registeringLabel={t(
-													'registration.registering',
-													'Registering...'
-												)}
-												disabledNext={
-													disabledNextButton
-												}
-												isRegistering={isRegistering}
-											/>
-										</Box>
-									</Box>
-								</RegistrationFooter>
-							</form>
-						</>
-					) : (
-						<Navigate to={firstStepUrl} replace />
-					)}
-				</Box>
+									</RegistrationFooter>
+								</form>
+							</>
+						) : (
+							<Navigate to={firstStepUrl} replace />
+						)}
+					</Box>
+				</RegistrationTopicSearchContext.Provider>
 			</StageLayout>
 		</>
 	);
