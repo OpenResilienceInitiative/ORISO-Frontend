@@ -577,7 +577,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Ouvrir la discussion d’équipe" },
+		"teamDiscussion": {
+			"open": "Ouvrir la discussion d’équipe"
+		},
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
 			"known": "Accepter la demande"
@@ -891,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "pas de participants disponibles",
-				"headline": "Personnes participantes"
+				"headline": "Personnes participantes",
+				"menuLabel": "Options pour {{name}}"
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
@@ -916,6 +919,10 @@
 					}
 				},
 				"upcoming": "Prochaines dates"
+			},
+			"status": {
+				"active": "En cours",
+				"planned": "Prévu"
 			}
 		},
 		"join": {
@@ -938,6 +945,9 @@
 					"flipHint": "cliquer pour retourner",
 					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
 					"headline": "Votre chat de groupe commence {{eta}}.",
+					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
+					"moderatorOverdueHeadline": "Le groupe vous attend.",
+					"moderatorSubtitle": "Vous pouvez lancer le chat dès que vous êtes prêt·e.",
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
@@ -1110,6 +1120,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} fois",
 				"repeatValue_other": "{{count}} fois"
+			},
+			"noModeratorAvailable": "Aucune personne disponible",
+			"moderatorHelp": "Aide",
+			"moderatorHelpDialog": {
+				"title": "Inviter une co-modération plus tard",
+				"description": "Pour l’instant, aucun·e autre professionnel·le de votre organisme ne peut être sélectionné·e. Vous pouvez tout de même créer le cercle et ajouter une co-modération ensuite.",
+				"step1": "Ouvrez le cercle dans votre liste, puis « Infos sur le chat ».",
+				"step2": "Sous « Paramètres de chat », choisissez « Modifier ».",
+				"step3": "Ajoutez des collègues sous « Modération supplémentaire » et enregistrez.",
+				"note": "Seule la personne qui a créé le cercle peut le modifier, et uniquement lorsqu’il n’est pas en cours. Tous les professionnel·les actifs de votre organisme peuvent être sélectionné·es.",
+				"close": "Compris"
 			}
 		},
 		"entry": {
@@ -1123,6 +1144,28 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours"
+		},
+		"shareDialog": {
+			"title_text": "Cercle créé",
+			"title_audio": "Appel audio créé",
+			"title_video": "Appel vidéo créé",
+			"description": "Partagez ce lien avec les participant·es. Il les mène à la salle d’attente jusqu’au début de la séance.",
+			"linkLabel": "Lien d’invitation",
+			"copy": "Copier le lien",
+			"copied": "Copié",
+			"detailsHeadline": "Séance",
+			"topic": "Sujet",
+			"date": "Jour",
+			"start": "Début",
+			"timeValue": "à {{time}}",
+			"duration": "Durée",
+			"repeats": "Répétitions",
+			"repeatValue": "{{count}} séances, {{interval}}",
+			"format": "Format",
+			"language": "Langue",
+			"done": "Terminé",
+			"durationValue": "{{value}} h",
+			"copyFailed": "La copie a échoué. Veuillez réessayer."
 		}
 	},
 	"help": {
@@ -2295,6 +2338,13 @@
 				"viaSidebar": {
 					"label": "Activer le Live-Chat depuis la barre de menu",
 					"description": "Lorsque cette option est activée, vous activez et désactivez votre disponibilité Live-Chat depuis la barre de menu (barre latérale) au lieu de le faire ici. L'interrupteur de disponibilité ci-dessus est alors désactivé et l'icône du Live-Chat reste visible en permanence dans la barre latérale – un clic ne change que son état, l'icône ne disparaît pas. Si cette option est désactivée, le Live-Chat se pilote comme auparavant uniquement ici, dans Mon profil."
+				},
+				"lost": {
+					"title": "Vous n'êtes plus joignable par chat en direct",
+					"refused": "Le serveur a refusé votre disponibilité. Réactivez le chat en direct. Si cela ne fonctionne pas, reconnectez-vous.",
+					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
+					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
+					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
 				}
 			},
 			"masterKey": {
@@ -3045,6 +3095,13 @@
 					"title": "Délinquance et réinsertion",
 					"description": "Accompagnement pour les questions de délinquance, de nouveau départ et de quotidien."
 				}
+			},
+			"search": {
+				"open": "Rechercher un thème",
+				"placeholder": "Rechercher un thème ou un mot-clé",
+				"close": "Fermer la recherche",
+				"noResults": "Aucun thème correspondant. Essayez un autre mot.",
+				"matchedBy": "correspond à « {{term}} »"
 			}
 		},
 		"account": {
@@ -4002,7 +4059,11 @@
 				"label": "Votre deuxième facteur"
 			}
 		},
-		"title": "Authentification à deux facteurs"
+		"title": "Authentification à deux facteurs",
+		"required": {
+			"copy": "Veuillez configurer maintenant un deuxième facteur (application ou e-mail). Ce n'est qu'ensuite que votre compte n'appartient qu'à vous et que vous pouvez commencer les consultations.",
+			"title": "Deuxième facteur requis"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4812,6 +4873,9 @@
 				"later": "Plus tard",
 				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
+			},
+			"snackbar": {
+				"close": "Fermer la notification"
 			}
 		},
 		"saveReminder": {
@@ -4843,7 +4907,8 @@
 			"idle": "L’état de la récupération n’a pas encore été vérifié.",
 			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
 			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
-			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié."
+			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié.",
+			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste."
 		}
 	},
 	"accountInvite": {
@@ -5020,7 +5085,9 @@
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
 				"accepted": "Une conseillère a pris votre conversation",
-				"closed": "Fermé pour le moment"
+				"closed": "Fermé pour le moment",
+				"checking": "Qui est en ligne ?",
+				"waitingForLive": "En attente de quelqu'un en ligne"
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
@@ -5058,7 +5125,8 @@
 				"later": "Plus tard",
 				"mail": "Écrire une demande à un centre de conseil",
 				"mailShort": "Écrire une demande",
-				"closedDay": "fermé"
+				"closedDay": "fermé",
+				"wait": "J'attends"
 			},
 			"steps": {
 				"wait": {
@@ -5073,7 +5141,33 @@
 					"title": "Anonyme, puis effacé",
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
+			},
+			"checking": {
+				"text": "Nous regardons qui est en ligne …",
+				"waiting": "Nous attendons avec vous que quelqu'un soit en ligne …"
+			},
+			"staff": {
+				"headline": "Vous êtes connectée en tant que conseillère.",
+				"text": "Ce lien vous déconnecterait ici et vous ne seriez plus en ligne. Pour le tester, ouvrez-le dans une fenêtre privée."
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Votre accès a été créé par une administratrice ou un administrateur, qui a également défini votre premier mot de passe et le connaît toujours. Veuillez le remplacer maintenant par un mot de passe que vous seul connaissez. Vous configurerez ensuite votre deuxième facteur.",
+			"title": "Veuillez choisir votre propre mot de passe"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Se déconnecter"
 		}
 	}
 }

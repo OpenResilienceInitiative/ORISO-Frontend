@@ -560,7 +560,9 @@
 		}
 	},
 	"enquiry": {
-		"teamDiscussion": { "open": "Open team discussion" },
+		"teamDiscussion": {
+			"open": "Open team discussion"
+		},
 		"acceptButton": {
 			"anonymous": "Start chat",
 			"known": "Accept request"
@@ -887,6 +889,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} time",
 				"repeatValue_other": "{{count}} times"
+			},
+			"noModeratorAvailable": "No person available",
+			"moderatorHelp": "Help",
+			"moderatorHelpDialog": {
+				"title": "Invite co-moderators later",
+				"description": "Right now no other professional of your organisation can be selected. You can still create the circle and add co-moderators afterwards.",
+				"step1": "Open the circle in your list and open its Chat-Info.",
+				"step2": "Under “Chatroom Settings”, choose “Edit”.",
+				"step3": "Add colleagues under “Additional moderation” and save.",
+				"note": "Only the person who created the circle can edit it, and only while it is not running. All active professionals of your organisation can be selected.",
+				"close": "Got it"
 			}
 		},
 		"createError": {
@@ -930,7 +943,8 @@
 			},
 			"subscribers": {
 				"empty": "no participants available",
-				"headline": "Participants"
+				"headline": "Participants",
+				"menuLabel": "Options for {{name}}"
 			},
 			"gallery": {
 				"back": "Back to the countdown",
@@ -955,6 +969,10 @@
 					}
 				},
 				"upcoming": "Next dates"
+			},
+			"status": {
+				"active": "Running now",
+				"planned": "Scheduled"
 			}
 		},
 		"join": {
@@ -977,6 +995,9 @@
 					"flipHint": "click to flip",
 					"greetingLabel": "A welcome from your counsellor",
 					"headline": "Your group chat starts {{eta}}.",
+					"moderatorHeadline": "The group session starts {{eta}}.",
+					"moderatorOverdueHeadline": "The group is waiting.",
+					"moderatorSubtitle": "You can start the chat whenever you are ready.",
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
@@ -1100,6 +1121,28 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown"
+		},
+		"shareDialog": {
+			"title_text": "Circle created",
+			"title_audio": "Audio call created",
+			"title_video": "Video call created",
+			"description": "Share this link with the participants. It takes them to the waiting room until the session starts.",
+			"linkLabel": "Invitation link",
+			"copy": "Copy link",
+			"copied": "Copied",
+			"detailsHeadline": "Session",
+			"topic": "Topic",
+			"date": "Date",
+			"start": "Start",
+			"timeValue": "{{time}}",
+			"duration": "Duration",
+			"repeats": "Repetitions",
+			"repeatValue": "{{count}} sessions, {{interval}}",
+			"format": "Format",
+			"language": "Language",
+			"done": "Done",
+			"durationValue": "{{value}} h",
+			"copyFailed": "Copying failed. Please try again."
 		}
 	},
 	"help": {
@@ -2291,6 +2334,13 @@
 				"viaSidebar": {
 					"label": "Activate Live Chat via the menu bar",
 					"description": "When enabled, you switch your Live Chat availability on and off from the menu bar (sidebar) instead of here. The availability toggle above is then disabled, and the Live Chat icon stays permanently visible in the sidebar — clicking it only changes its state, it never disappears. When disabled, Live Chat is controlled here in My Profile as before."
+				},
+				"lost": {
+					"title": "You are no longer reachable in live chat",
+					"refused": "The server refused your availability. Switch live chat on again. If that does not work, sign in again.",
+					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
+					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
+					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
 				}
 			},
 			"masterKey": {
@@ -3027,6 +3077,13 @@
 					"title": "Offender Support",
 					"description": "Support for questions around offending, restart, and daily life."
 				}
+			},
+			"search": {
+				"open": "Search topics",
+				"placeholder": "Search a topic or keyword",
+				"close": "Close search",
+				"noResults": "No matching topic found. Try another word.",
+				"matchedBy": "matches “{{term}}”"
 			}
 		},
 		"account": {
@@ -3961,7 +4018,11 @@
 				"label": "Your second factor"
 			}
 		},
-		"title": "Two-factor authentication"
+		"title": "Two-factor authentication",
+		"required": {
+			"copy": "Please set up a second factor (app or e-mail) now. Only then is the account yours alone and you can start counselling.",
+			"title": "Second factor required"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4723,6 +4784,9 @@
 				"later": "Later",
 				"openVault": "Open vault",
 				"restoring": "Restoring…"
+			},
+			"snackbar": {
+				"close": "Dismiss notice"
 			}
 		},
 		"saveReminder": {
@@ -4754,7 +4818,8 @@
 			"idle": "Recovery status has not been checked yet.",
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
-			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed."
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed.",
+			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
 		}
 	},
 	"accountInvite": {
@@ -4931,7 +4996,9 @@
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
 				"accepted": "A counsellor has taken your conversation",
-				"closed": "Closed right now"
+				"closed": "Closed right now",
+				"checking": "Who is live right now?",
+				"waitingForLive": "Waiting until someone is live"
 			},
 			"access": {
 				"headline": "Your name for today.",
@@ -4969,7 +5036,8 @@
 				"later": "Later",
 				"mail": "Write a request to a counselling centre",
 				"mailShort": "Write a request",
-				"closedDay": "closed"
+				"closedDay": "closed",
+				"wait": "I'll wait"
 			},
 			"steps": {
 				"wait": {
@@ -4984,7 +5052,33 @@
 					"title": "Anonymous, and gone afterwards",
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
+			},
+			"checking": {
+				"text": "Checking who is live right now …",
+				"waiting": "Waiting with you until someone is live …"
+			},
+			"staff": {
+				"headline": "You are signed in as a counsellor.",
+				"text": "This link would sign you out here and you would no longer be live. To test it, please open it in a private window."
 			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"title": "Connection interrupted",
+			"message": "Your session could not be loaded. Please try again.",
+			"retry": "Try again"
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Your account was created by an administrator, who chose your first password and still knows it. Please replace it now with a password only you know. Your second factor comes next.",
+			"title": "Please choose your own password"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Log out"
 		}
 	}
 }
