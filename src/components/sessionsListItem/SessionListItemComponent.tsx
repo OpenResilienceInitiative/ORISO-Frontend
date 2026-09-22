@@ -1742,11 +1742,8 @@ export const SessionListItemComponent = ({
 									    type glyph uses. */}
 									<span
 										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-										role="img"
-										aria-label={translate(
-											'sessionList.toolbar.chips.nearby',
-											'Mail'
-										)}
+										// The visible word next to it is the name.
+										aria-hidden="true"
 										style={
 											{
 												'--nearby-icon-url': `url("${mailConversationIcon}")`

@@ -520,7 +520,9 @@ export const mockActiveConversationManyParticipants = () => ({
  * accepted. `consultant` is deliberately absent, which is what puts
  * `ConsultantSearchLoader` into the member stack.
  */
-const buildSearchingSession = (): ExtendedSessionInterface =>
+const buildSearchingSession = (
+	status: typeof STATUS_ENQUIRY | typeof STATUS_EMPTY = STATUS_ENQUIRY
+): ExtendedSessionInterface =>
 	buildExtendedSession(
 		{
 			user: {
@@ -543,7 +545,7 @@ const buildSearchingSession = (): ExtendedSessionInterface =>
 				messagesRead: true,
 				postcode: 12345,
 				registrationType: REGISTRATION_TYPE_REGISTERED,
-				status: STATUS_ENQUIRY,
+				status,
 				videoCallMessageDTO: null,
 				topic: {
 					id: 1,
@@ -558,6 +560,14 @@ const buildSearchingSession = (): ExtendedSessionInterface =>
 // 10. Request stage seen by the advice seeker — the search indicator.
 export const mockRequestStageSearching = () => ({
 	session: buildSearchingSession(),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 10b. The asker's own EMPTY enquiry (nothing sent yet): also no counsellor,
+// but not a request being searched for — review of #1418 (Riccardo).
+export const mockAskerEmptyEnquiry = () => ({
+	session: buildSearchingSession(STATUS_EMPTY),
 	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
 	userData: storyAskerUserData
 });
@@ -1028,6 +1038,40 @@ export const RequestStageSearchingPhone: Story = {
 	render: () => renderSessionHeader(mockRequestStageSearching()),
 	play: async ({ canvasElement }) => {
 		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/**
+ * Review of #1418 (Riccardo, 17.09.2026): only an enquiry is searched for.
+ * The asker's empty enquiry has no counsellor either, but its capsule is the
+ * waiting clock — no magnet, and the avatar stack stays where it was.
+ */
+export const RequestStageEmptyEnquiry: Story = {
+	name: 'Request stage — own empty enquiry: no magnet, stack stays (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockAskerEmptyEnquiry()),
+	play: async ({ canvasElement }) => {
+		const capsule = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.chatroomMainInteractionIcon'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--waiting')
+		).toBe(true);
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--searching')
+		).toBe(false);
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-participants"]'
+			)
+		).toBeTruthy();
 	}
 };
 
