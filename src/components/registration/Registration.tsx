@@ -88,6 +88,27 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 
 const registrationMaxStepSessionStorageKey = 'registrationMaxStepReached';
 
+/**
+ * Clears what the finished registration left behind and asks the app for the
+ * welcome animation. Every write is best-effort: Web Storage throws when it is
+ * disabled or full, and the account exists either way — a person must not be
+ * held back from their counselling session because a browser refused to forget
+ * a draft. The in-memory draft is cleared outside the guard; it cannot throw.
+ */
+const forgetRegistrationDraft = () => {
+	clearAccountDataDraft();
+	try {
+		sessionStorage.removeItem(registrationSessionStorageKey);
+		sessionStorage.removeItem(registrationMaxStepSessionStorageKey);
+		// Skip the manual "registration successful" overlay: flag the app to
+		// play the welcome loading animation and go straight into the chat
+		// room (autoLogin already ran inside apiPostRegistration).
+		sessionStorage.setItem(POST_REGISTRATION_LOADER_KEY, 'true');
+	} catch {
+		/* non-fatal — the app still opens, just without the animation */
+	}
+};
+
 export const Registration = () => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const settings = useAppConfig();
@@ -557,6 +578,12 @@ export const Registration = () => {
 			)
 		) {
 			markRegistrationSubmitting();
+			/* The account either exists or it does not, and only the request
+			   below decides that. Everything after it is tidying up and
+			   leaving; a failure there must never be reported as a failed
+			   registration, or the form comes back and invites a second
+			   account for a person who already has one (CodeRabbit on #1514). */
+			let accountCreated = false;
 			apiPostRegistration(
 				endpoints.registerAsker,
 				data,
@@ -564,18 +591,13 @@ export const Registration = () => {
 				tenant
 			)
 				.then(async () => {
-					sessionStorage.removeItem(registrationSessionStorageKey);
-					sessionStorage.removeItem(
-						registrationMaxStepSessionStorageKey
-					);
-					clearAccountDataDraft();
-					// Skip the manual "registration successful" overlay: flag the app
-					// to play the welcome loading animation and go straight into the
-					// chat room (autoLogin already ran inside apiPostRegistration).
-					sessionStorage.setItem(
-						POST_REGISTRATION_LOADER_KEY,
-						'true'
-					);
+					accountCreated = true;
+					/* Best-effort, every one of them: Web Storage throws when
+					   it is disabled or full (Safari's private mode is the
+					   classic), and none of this is worth not arriving in the
+					   app for. The welcome animation is the only thing lost,
+					   and only if its key is the one that failed. */
+					forgetRegistrationDraft();
 					let sessionId: string | undefined;
 					try {
 						sessionId = getPostRegistrationSessionId(
@@ -597,6 +619,13 @@ export const Registration = () => {
 				})
 				.catch((error) => {
 					// console.error('Registration failed:', error);
+					if (accountCreated) {
+						/* The account is real; the redirect is what failed.
+						   Putting the form back here would offer a second
+						   registration to someone who already has one, which
+						   is the very thing this screen exists to prevent. */
+						return;
+					}
 					clearRegistrationSubmitting();
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,

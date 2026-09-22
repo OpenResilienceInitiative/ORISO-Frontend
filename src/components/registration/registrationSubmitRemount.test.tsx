@@ -26,12 +26,16 @@ import { clearRegistrationSubmitting } from './registrationSubmission';
  * calls below, which run before this file's own imports are evaluated.
  */
 const { pendingRegistration, settle } = vi.hoisted(() => {
-	const settle: { reject?: (error: Error) => void } = {};
+	const settle: {
+		resolve?: () => void;
+		reject?: (error: Error) => void;
+	} = {};
 	return {
 		settle,
 		pendingRegistration: vi.fn(
 			() =>
-				new Promise<void>((_resolve, reject) => {
+				new Promise<void>((resolve, reject) => {
+					settle.resolve = resolve;
 					settle.reject = reject;
 				})
 		)
@@ -153,6 +157,7 @@ beforeEach(() => {
 	clearRegistrationSubmitting();
 	pendingRegistration.mockClear();
 	settle.reject = undefined;
+	settle.resolve = undefined;
 });
 
 afterEach(() => {
@@ -210,6 +215,42 @@ describe('registration — a submit that is already in flight', () => {
 			handover(),
 			'the handover gives way once the submit has failed'
 		).toBeNull();
+	});
+
+	it('keeps the handover when the account exists and only the tidy-up fails', async () => {
+		/* Web Storage throws when it is disabled or full. That happens *after*
+		   the account was created, so reporting it as a failed registration
+		   would put the form back and invite a second account for someone who
+		   already has one (CodeRabbit on #1514). */
+		const setItem = vi
+			.spyOn(Storage.prototype, 'setItem')
+			.mockImplementation(() => {
+				throw new Error('storage is disabled');
+			});
+
+		try {
+			renderAccountStep();
+			fireEvent.click(registerButton());
+			await waitFor(() => expect(handover()).toBeTruthy());
+
+			await act(async () => {
+				settle.resolve?.();
+				await Promise.resolve();
+				await Promise.resolve();
+			});
+
+			await act(async () => {
+				await new Promise((resolve) => setTimeout(resolve, 10));
+			});
+
+			expect(
+				form(),
+				'the account exists — the form must not come back'
+			).toBeNull();
+			expect(handover()).toBeTruthy();
+		} finally {
+			setItem.mockRestore();
+		}
 	});
 
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {
