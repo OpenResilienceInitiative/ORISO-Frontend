@@ -630,6 +630,8 @@
 				"{{bodyHtml}}",
 				"{{ctaBlock}}",
 				"{{assuranceBlock}}",
+				"{{offeringName}}",
+				"{{operatorName}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}",
 				"{{footerNote}}"

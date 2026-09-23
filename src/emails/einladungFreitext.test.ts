@@ -13,9 +13,10 @@ import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
  * invite mail.
  *
  * The fixtures are the UserService files verbatim, from
- * `fix/freitext-mail-neutral-without-action` @ d59b9cd3 — the frame whose fine print
- * (`{{assuranceBlock}}`) and footer note (`{{footerNote}}`) UserService fills
- * according to whether the mail has an action.
+ * `feat/mail-footer-org-from-tenant` @ 8ca0d787 (the merge-order tip, which
+ * contains #1233 and #1238) — the frame whose fine print (`{{assuranceBlock}}`)
+ * and footer note (`{{footerNote}}`) UserService fills according to whether
+ * the mail has an action.
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -49,6 +50,23 @@ describe('einladung-freitext', () => {
 			expect(buildEmail('einladung-freitext', locale).text).toBe(
 				fixture(locale, 'txt')
 			);
+		});
+
+		// Frank, 2026-09-23: "X ist ein Angebot von Y" names the platform and
+		// its operator. A Träger may brand the header and overlay the sender
+		// block, so neither `platformName` nor `orgName` may stand here.
+		it('names the platform and its operator in the offered-by line', () => {
+			const offeredBy =
+				locale === 'en'
+					? '{{offeringName}} is a service provided by {{operatorName}}.'
+					: '{{offeringName}} ist ein Angebot von {{operatorName}}.';
+			const { html, text } = buildEmail('einladung-freitext', locale);
+			for (const part of [html, text]) {
+				expect(part).toContain(offeredBy);
+				expect(part).not.toMatch(
+					/\{\{(platformName|orgName)\}\} (ist ein Angebot|is a service)|(ist ein Angebot von|is a service provided by) \{\{orgName\}\}/
+				);
+			}
 		});
 
 		it('is in the committed plain build output', () => {

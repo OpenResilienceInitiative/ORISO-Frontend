@@ -32,6 +32,12 @@ const securityFooter = {
 		'This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} is a service provided by {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
 	automatedNote:
@@ -408,7 +414,11 @@ export const en: Record<EmailId, EmailContent> = {
 		// line and the invitation note; without one (a plain notice such as
 		// "contract signed") the line is dropped and the note is neutral.
 		assuranceSlot: '{{assuranceBlock}}',
-		footer: { ...securityFooter, automatedNote: '{{footerNote}}' }
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {

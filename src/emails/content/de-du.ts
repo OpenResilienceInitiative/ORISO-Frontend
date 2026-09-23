@@ -35,6 +35,12 @@ const securityFooter = {
 		'Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} ist ein Angebot von {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
 	automatedNote:
@@ -412,7 +418,11 @@ export const deDu: Record<EmailId, EmailContent> = {
 		// line and the invitation note; without one (a plain notice such as
 		// "contract signed") the line is dropped and the note is neutral.
 		assuranceSlot: '{{assuranceBlock}}',
-		footer: { ...securityFooter, automatedNote: '{{footerNote}}' }
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {
