@@ -2362,7 +2362,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirmer le nouveau mot de passe"
+						"label": "Confirmer le nouveau mot de passe",
+						"dialogLabel": "Répéter le nouveau mot de passe"
 					},
 					"insecure": "Votre mot de passe n'est pas sécurisé.",
 					"instructions": "<span class=\"text--bold\">Votre mot de passe doit répondre aux critères suivants afin de garantir une consultation protégée:</span><ul class=\"pl--2 my--1\"><li>majuscules et minuscules</li><li>au moins un chiffre</li><li>au moins un caractère spécial (par ex. : ?, !, +, #, &, ...)</li><li>au moins 9 caractères</li></ul>",
@@ -2374,7 +2375,9 @@
 					},
 					"old": {
 						"incorrect": "Votre mot de passe n'est pas correct.",
-						"label": "Mot de passe actuel"
+						"label": "Mot de passe actuel",
+						"hint": "Le mot de passe avec lequel vous venez de vous connecter.",
+						"dialogLabel": "Mot de passe précédent"
 					},
 					"overlay": {
 						"button": {
@@ -2386,7 +2389,16 @@
 					"sameAsOld": "Veuillez choisir un nouveau mot de passe – celui-ci est votre mot de passe actuel.",
 					"secure": "Votre mot de passe est sécurisé.",
 					"subtitle": "Si vous le souhaitez, vous pouvez modifier votre mot de passe ici. Saisissez d'abord votre mot de passe actuel avant d'en définir un nouveau.",
-					"title": "Mot de passe"
+					"title": "Mot de passe",
+					"criteria": {
+						"title": "Votre nouveau mot de passe doit contenir",
+						"mixedCase": "des majuscules et des minuscules",
+						"number": "au moins un chiffre",
+						"specialChar": "un caractère spécial (?, !, +, # …)",
+						"minLength": "au moins 9 caractères",
+						"met": "rempli"
+					},
+					"submitAndContinue": "Enregistrer le mot de passe et continuer"
 				}
 			},
 			"security": {
@@ -3971,11 +3983,12 @@
 					"missingQr": "Le code QR n'est pas disponible pour le moment. Utilisez la clé manuelle.",
 					"missingSecret": "La clé n'est pas disponible pour le moment.",
 					"or": "ou",
-					"qrAlt": "Code QR pour l'application d'authentification"
+					"qrAlt": "Code QR pour l'application d'authentification",
+					"title": "Connecter l’application à ORISO"
 				},
 				"install": {
 					"android": "Télécharger sur le Google Play Store",
-					"copy": "Installez Google Authenticator ou Microsoft Authenticator sur votre smartphone ou votre tablette. Les deux applications prennent en charge le code de sécurité de la consultation en ligne.",
+					"copy": "Vous avez besoin de l’une de ces deux applications sur votre smartphone ou votre tablette. Déjà installée ? Continuez directement.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -3986,20 +3999,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Installer une application d’authentification",
+					"note": "gratuite, utilisable sans compte",
+					"done": "L’application est installée – continuer"
 				},
 				"success": {
 					"title": "L'authentification par application a bien été configurée."
 				},
 				"verify": {
 					"copy": "Saisissez le code à six chiffres affiché dans l'application pour terminer la configuration.",
-					"input": "Code à usage unique"
+					"input": "Code à usage unique",
+					"title": "Vérifier le code"
 				}
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
-				"email": "Utiliser un code par e-mail (moins sûr)"
+				"email": "Utiliser un code par e-mail (moins sûr)",
+				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
 				"connect": {
@@ -4007,12 +4025,14 @@
 					"input": "Code à usage unique",
 					"resend": "Envoyer un nouveau code",
 					"resendTitle": "Cela n'a pas fonctionné ?",
-					"sent": "Nouveau code envoyé."
+					"sent": "Nouveau code envoyé.",
+					"title": "Vérifier le code"
 				},
 				"select": {
 					"copy": "Saisissez l'adresse e-mail à laquelle nous devons envoyer votre code de sécurité.",
 					"hint": "Si vous modifiez l'adresse e-mail, vous recevrez également vos prochaines notifications à cette adresse.",
-					"input": "Adresse e-mail"
+					"input": "Adresse e-mail",
+					"title": "Configurer le deuxième facteur par e-mail"
 				},
 				"success": {
 					"title": "L'authentification par e-mail a bien été configurée."
@@ -4037,7 +4057,9 @@
 				"select": "Sélectionner",
 				"verify": "Vérifier"
 			},
-			"title": "Quelle méthode de connexion souhaitez-vous utiliser ?"
+			"success": {
+				"title": "Deuxième facteur configuré"
+			}
 		},
 		"overlayButton": {
 			"back": "Retour",
@@ -5162,13 +5184,19 @@
 	},
 	"passwordChange": {
 		"required": {
-			"copy": "Votre accès a été créé par une administratrice ou un administrateur, qui a également défini votre premier mot de passe et le connaît toujours. Veuillez le remplacer maintenant par un mot de passe que vous seul connaissez. Vous configurerez ensuite votre deuxième facteur.",
-			"title": "Veuillez choisir votre propre mot de passe"
+			"copy": "Votre accès a été créé pour vous – quelqu’un d’autre connaît donc encore le premier mot de passe. Choisissez-en un maintenant que vous seul connaissez.",
+			"title": "Votre propre mot de passe"
 		}
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Se déconnecter"
+			"logout": "Se déconnecter à la place"
+		},
+		"progress": {
+			"label": "Configuration en deux étapes",
+			"password": "Mot de passe personnel",
+			"twoFactor": "Deuxième facteur",
+			"done": "terminé"
 		}
 	}
 }

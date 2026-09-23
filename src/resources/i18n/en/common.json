@@ -2358,7 +2358,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirm new password"
+						"label": "Confirm new password",
+						"dialogLabel": "Repeat the new password"
 					},
 					"insecure": "Your password is not secure.",
 					"instructions": "<span class=\"text--bold\">Your password must meet the following criteria to guarantee a protected consultation:</span><ul class=\"pl--2 my--1\"><li>upper/lower case</li><li>min. one number</li><li>min. one special character (e.g.: ?, !, +, #, &, ...)</li><li>min. 9 characters</li></ul>",
@@ -2370,7 +2371,9 @@
 					},
 					"old": {
 						"incorrect": "Your password is not correct.",
-						"label": "Current password"
+						"label": "Current password",
+						"hint": "The password you have just signed in with.",
+						"dialogLabel": "Previous password"
 					},
 					"overlay": {
 						"button": {
@@ -2382,7 +2385,16 @@
 					"sameAsOld": "Please choose a new password – this is your current one.",
 					"secure": "Your password is safe.",
 					"subtitle": "If you wish, you can change your password here. First enter your current password to set a new one.",
-					"title": "Password"
+					"title": "Password",
+					"criteria": {
+						"title": "Your new password needs",
+						"mixedCase": "upper and lower case letters",
+						"number": "at least one number",
+						"specialChar": "one special character (?, !, +, # …)",
+						"minLength": "at least 9 characters",
+						"met": "met"
+					},
+					"submitAndContinue": "Save password and continue"
 				}
 			},
 			"security": {
@@ -3930,11 +3942,12 @@
 					"missingQr": "The QR code is currently unavailable. Use the manual key instead.",
 					"missingSecret": "The key is currently unavailable.",
 					"or": "or",
-					"qrAlt": "QR code for the authenticator app"
+					"qrAlt": "QR code for the authenticator app",
+					"title": "Connect the app to ORISO"
 				},
 				"install": {
 					"android": "Download from Google Play Store",
-					"copy": "Install Google Authenticator or Microsoft Authenticator on your smartphone or tablet. Both apps support the security code for Online-Beratung.",
+					"copy": "You need one of these two apps on your smartphone or tablet. Already installed? Then go straight on.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/us/app/google-authenticator/id388497605",
@@ -3945,20 +3958,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/us/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Install an authenticator app",
+					"note": "free of charge, usable without an account",
+					"done": "The app is installed – continue"
 				},
 				"success": {
 					"title": "App authentication successfully set up."
 				},
 				"verify": {
 					"copy": "Enter the six-digit code from the app to complete setup.",
-					"input": "One-time code"
+					"input": "One-time code",
+					"title": "Check the code"
 				}
 			},
 			"decision": {
 				"app": "Connect securely via app",
 				"copy": "Protect your account with a second factor. The authenticator app is the more secure option; alternatively you can receive codes by email.",
-				"email": "Use email code (less secure)"
+				"email": "Use email code (less secure)",
+				"title": "Choose your second factor"
 			},
 			"email": {
 				"connect": {
@@ -3966,12 +3984,14 @@
 					"input": "One-time code",
 					"resend": "Send new code",
 					"resendTitle": "Did it not work?",
-					"sent": "New code sent."
+					"sent": "New code sent.",
+					"title": "Check the code"
 				},
 				"select": {
 					"copy": "Enter the email address where we should send your security code.",
 					"hint": "If you change the email address, future notifications will also be sent to this address.",
-					"input": "Email address"
+					"input": "Email address",
+					"title": "Set up the second factor by email"
 				},
 				"success": {
 					"title": "Email authentication successfully set up."
@@ -3996,7 +4016,9 @@
 				"select": "Select",
 				"verify": "Verify"
 			},
-			"title": "What connection do you prefer?"
+			"success": {
+				"title": "Second factor set up"
+			}
 		},
 		"overlayButton": {
 			"back": "Back",
@@ -5073,13 +5095,19 @@
 	},
 	"passwordChange": {
 		"required": {
-			"copy": "Your account was created by an administrator, who chose your first password and still knows it. Please replace it now with a password only you know. Your second factor comes next.",
-			"title": "Please choose your own password"
+			"copy": "Your account was set up for you, so someone else still knows the first password. Choose one now that only you know.",
+			"title": "Your own password"
 		}
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Log out"
+			"logout": "Log out instead"
+		},
+		"progress": {
+			"label": "Setup in two steps",
+			"password": "Your own password",
+			"twoFactor": "Second factor",
+			"done": "done"
 		}
 	}
 }
