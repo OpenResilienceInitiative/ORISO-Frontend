@@ -32,8 +32,15 @@ const securityFooter = {
 		'This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} is a service provided by {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'This email is part of the contractual relationship and cannot be unsubscribed from. Please do not reply to it.'
 };
@@ -375,23 +382,49 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Data processing agreement ready for signature',
-		preheader: 'The agreement for {{tenantName}} is ready.',
-		headline: 'The agreement is ready for signature',
+		subject: 'Contract documents for {{tenantName}}',
+		preheader: 'The contract documents for {{tenantName}} are ready.',
+		headline: 'The contract documents are ready for signature',
 		paragraphs: [
-			'A data processing agreement has been prepared for {{tenantName}}.',
-			'Please review the agreement and sign it digitally.'
+			'Contract documents have been prepared for {{tenantName}}.',
+			'Please review the documents and sign them digitally.'
 		],
 		panel: [
 			{ label: 'Organisation', value: '{{tenantName}}' },
 			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
 			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Open agreement', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Open contract',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'If the button does not work, copy this link into your browser:'
+		},
 		footnote:
-			'Counselling stays blocked for this organisation until the agreement is signed.',
+			'Without signed contract documents, counselling stays blocked for this organisation.',
 		assurance: legalAssurance,
 		footer: legalFooter
+	},
+
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		// Both depend on whether the mail has an action, which only the sender
+		// knows: with one, UserService fills the "never pass this link on"
+		// line and the invitation note; without one (a plain notice such as
+		// "contract signed") the line is dropped and the note is neutral.
+		assuranceSlot: '{{assuranceBlock}}',
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {

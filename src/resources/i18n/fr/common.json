@@ -2568,7 +2568,7 @@
 				"alwaysSent": {
 					"title": "Vous recevez toujours ces e-mails :",
 					"security": "Connexion et accès – réinitialisation du mot de passe, lien de connexion, code à usage unique, modifications de votre accès.",
-					"legal": "Questions contractuelles – par exemple un contrat de sous-traitance à signer.",
+					"legal": "Questions contractuelles – par exemple des documents contractuels à signer.",
 					"outage": "Pannes de la plateforme."
 				}
 			},
@@ -4865,20 +4865,20 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Signer le contrat de sous-traitance",
-		"subtitle": "Veuillez lire le contrat dans son intégralité, puis confirmez les informations concernant la personne signataire.",
+		"title": "Vérifier et confirmer les documents contractuels",
+		"subtitle": "Veuillez lire les documents contractuels dans leur intégralité, puis confirmez les informations concernant la personne signataire.",
 		"signerName": "Nom complet",
-		"loadingContract": "Chargement du contrat...",
+		"loadingContract": "Chargement des documents contractuels...",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
 		"signingFor": "Vous signez au nom de :",
-		"accept": "J'ai lu le contrat affiché ci-dessus et je le confirme de manière contraignante.",
+		"accept": "J'ai lu les documents contractuels affichés ci-dessus et je les confirme de manière contraignante.",
 		"submit": "Confirmer de manière contraignante",
 		"submitting": "Enregistrement...",
-		"success": "La confirmation du contrat de sous-traitance a été enregistrée.",
+		"success": "La confirmation des documents contractuels a été enregistrée.",
 		"error": {
 			"missingToken": "Le lien de signature est incomplet.",
-			"previewRequired": "Le contrat doit être entièrement chargé avant que vous puissiez le confirmer.",
-			"acceptRequired": "Veuillez confirmer le contrat.",
+			"previewRequired": "Les documents contractuels doivent être entièrement chargés avant que vous puissiez les confirmer.",
+			"acceptRequired": "Veuillez confirmer les documents contractuels.",
 			"generic": "La signature n'a pas pu être enregistrée pour le moment.",
 			"invalidToken": "Ce lien de signature n'est pas valide, a expiré ou a déjà été utilisé.",
 			"invalidRequest": "Les informations n'ont pas pu être enregistrées. Veuillez vérifier le formulaire."

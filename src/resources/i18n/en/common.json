@@ -2582,7 +2582,7 @@
 				"alwaysSent": {
 					"title": "You always receive these emails:",
 					"security": "Signing in and access — password reset, sign-in link, one-time code, changes to your account.",
-					"legal": "Contractual matters — for example a data processing agreement to sign.",
+					"legal": "Contractual matters — for example contract documents to sign.",
 					"outage": "Platform outages."
 				}
 			}
