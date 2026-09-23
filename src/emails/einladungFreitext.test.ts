@@ -13,7 +13,7 @@ import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
  * invite mail.
  *
  * The fixtures are the UserService files verbatim, from
- * `fix/freitext-mail-neutral-without-action` @ 86a4a06c — the frame whose fine print
+ * `fix/freitext-mail-neutral-without-action` @ d59b9cd3 — the frame whose fine print
  * (`{{assuranceBlock}}`) and footer note (`{{footerNote}}`) UserService fills
  * according to whether the mail has an action.
  */

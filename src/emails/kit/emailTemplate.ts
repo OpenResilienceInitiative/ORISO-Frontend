@@ -92,7 +92,8 @@ type EmailAssuranceContent =
 			assurance?: never;
 			/**
 			 * Placeholder the sender expands into what `emailAssurance` would
-			 * render, or into nothing. Pairs with `actionSlot`.
+			 * render (text part: the rule plus the line), or into nothing.
+			 * Pairs with `actionSlot`.
 			 */
 			assuranceSlot: string;
 	  };
@@ -199,10 +200,11 @@ export const renderEmailText = (
 	}
 
 	lines.push(
-		'-'.repeat(RULE_WIDTH),
-		content.assuranceSlot !== undefined
-			? content.assuranceSlot
-			: content.assurance,
+		// A slot carries its own rule, like the HTML row it stands for, so a
+		// mail without the fine print keeps no orphan divider either.
+		...(content.assuranceSlot !== undefined
+			? [content.assuranceSlot]
+			: ['-'.repeat(RULE_WIDTH), content.assurance]),
 		'',
 		brand.orgName,
 		brand.orgAddress,
