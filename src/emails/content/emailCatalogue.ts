@@ -39,6 +39,10 @@ export const EMAIL_IDS = [
 	'einladung-fachkraft',
 	'avv-unterschrift',
 
+	// The invite an operator writes themselves, in the ORISO frame. Rendered by
+	// UserService's InviteFrameMailRenderer.
+	'einladung-freitext',
+
 	// Team and platform operations (#868).
 	'team-aenderung',
 	'smtp-test'
@@ -87,7 +91,8 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'email-geaendert': 'E-Mail-Adresse geändert',
 	'einladung-traeger': 'Einladung für einen Träger',
 	'einladung-fachkraft': 'Einladung für eine Fachkraft',
-	'avv-unterschrift': 'AVV zur Unterschrift',
+	'avv-unterschrift': 'Vertragsunterlagen zur Unterschrift',
+	'einladung-freitext': 'Einladung mit eigenem Text',
 	'team-aenderung': 'Änderung im Team',
 	'smtp-test': 'SMTP-Test'
 };
@@ -126,6 +131,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'einladung-traeger': 'admin',
 		'einladung-fachkraft': 'consultant',
 		'avv-unterschrift': 'admin',
+		'einladung-freitext': 'admin',
 		'team-aenderung': 'consultant',
 		'smtp-test': 'admin'
 	};
@@ -161,6 +167,7 @@ export const EMAIL_CLASS: Record<
 	'einladung-traeger': 'security',
 	'einladung-fachkraft': 'security',
 	'avv-unterschrift': 'legal',
+	'einladung-freitext': 'security',
 	'team-aenderung': 'operational',
 	'smtp-test': 'service'
 };
@@ -168,3 +175,18 @@ export const EMAIL_CLASS: Record<
 /** Mails whose footer carries no unsubscribe link, because nothing switches them off. */
 export const emailIsUnsubscribable = (id: EmailId): boolean =>
 	EMAIL_CLASS[id] !== 'security' && EMAIL_CLASS[id] !== 'legal';
+
+/**
+ * Mails that ship in the `plain` dialect only.
+ *
+ * `einladung-freitext` carries sender-rendered HTML in `{{bodyHtml}}` and
+ * `{{ctaBlock}}`. The engine dialects escape every placeholder (`[[${x}]]`,
+ * `?html`), so their copy of this mail would print the authored markup as
+ * text. No engine sends it; emitting a broken file that looks send-ready is
+ * worse than emitting none.
+ */
+const PLAIN_ONLY: ReadonlySet<EmailId> = new Set(['einladung-freitext']);
+
+/** Whether the build emits this mail for the given placeholder dialect. */
+export const emailShipsInDialect = (id: EmailId, dialect: string): boolean =>
+	dialect === 'plain' || !PLAIN_ONLY.has(id);
