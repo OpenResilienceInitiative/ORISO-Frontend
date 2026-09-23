@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
@@ -209,6 +210,8 @@ export interface NotificationConfigViewProps {
 		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
+	/** Called when the email link leaves the dialog. */
+	onNavigate?: () => void;
 }
 
 export const NotificationConfigView = ({
@@ -216,7 +219,8 @@ export const NotificationConfigView = ({
 	activeArea,
 	onAreaChange,
 	onChange,
-	onPreview
+	onPreview,
+	onNavigate
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -225,12 +229,16 @@ export const NotificationConfigView = ({
 				{t('profile.notifications.config.intro')}
 			</p>
 			<p className="notifConfig__emailNote">
-				<a href="/profile/einstellungen#email-notifications">
+				{/* The group route exists on desktop and mobile; the bare tab is a menu on mobile. */}
+				<Link
+					to="/profile/einstellungen/email#email-notifications"
+					onClick={onNavigate}
+				>
 					{t(
 						'profile.notifications.title',
 						'E-Mail-Benachrichtigungen'
 					)}
-				</a>
+				</Link>
 			</p>
 
 			<div className="notifConfig__tabs" role="tablist">
@@ -398,6 +406,7 @@ export const NotificationConfigDialog = ({
 				activeArea={activeArea}
 				onAreaChange={setActiveArea}
 				onChange={handleChange}
+				onNavigate={onClose}
 				onPreview={handlePreview}
 			/>
 		</M3Dialog>
