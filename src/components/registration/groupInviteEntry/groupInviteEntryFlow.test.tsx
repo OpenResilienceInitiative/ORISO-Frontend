@@ -247,6 +247,20 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(body.groupChatId).toBe(19);
 	});
 
+	it('hands the invite token from the link on with the group', async () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.groupChatId).toBe(19);
+		expect(body.groupChatInviteToken).toBe('q2Vx8mK4TzJ1bR7n');
+	});
+
 	it('does not name the group when the person registers at another agency', async () => {
 		renderAt('?gcid=19', {
 			agency: { ...agency, id: 7 },

@@ -68,7 +68,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
 import {
-	getGroupJoinChatId,
+	getGroupJoin,
 	resolveGroupInviteEntry
 } from './groupInviteEntry/groupInviteEntryState';
 
@@ -549,7 +549,7 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
-		const groupJoinChatId = getGroupJoinChatId({
+		const groupJoin = getGroupJoin({
 			gcid: groupChatId,
 			aid: inviteAgencyId,
 			agencyId: mergedData.agency?.id
@@ -573,8 +573,13 @@ export const Registration = () => {
 				: {}),
 			/* Joining a self-help group is not a request for counselling: the
 			   backend assigns the group and opens no enquiry. */
-			...(groupJoinChatId !== undefined
-				? { groupChatId: groupJoinChatId }
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
 				: {})
 		};
 

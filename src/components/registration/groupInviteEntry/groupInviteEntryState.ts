@@ -1,3 +1,4 @@
+import { parseGroupChatInviteId } from '../../groupChat/groupChatInviteLink';
 /**
  * Self-help group invite entry (#1499, FE#1289): `/login?gcid=<id>&aid=<agency>`
  * brings a newcomer to the designed entry screen (Storybook "0a — Eintritt:
@@ -89,10 +90,12 @@ export const resolveGroupInviteEntry = ({
 
 /**
  * The group a registration joins instead of opening a counselling enquiry
- * (#1499). Only when the person registers at the agency the link names; an
- * agency picked in the steps is an ordinary counselling registration.
+ * (#1499), with the invite token its link carries (`gcid=<id>.<token>`,
+ * ORISO-UserService#1237). Only when the person registers at the agency the
+ * link names; an agency picked in the steps is an ordinary counselling
+ * registration.
  */
-export const getGroupJoinChatId = ({
+export const getGroupJoin = ({
 	gcid,
 	aid,
 	agencyId
@@ -100,10 +103,12 @@ export const getGroupJoinChatId = ({
 	gcid?: string | null;
 	aid?: string | null;
 	agencyId?: string | number | null;
-}): number | undefined => {
-	const chatId = gcid?.trim();
-	if (!chatId || !/^\d+$/.test(chatId) || !present(aid)) {
+}): { chatId: number; inviteToken?: string } | undefined => {
+	const invite = parseGroupChatInviteId(gcid);
+	if (!invite || !present(aid) || String(agencyId ?? '') !== aid.trim()) {
 		return undefined;
 	}
-	return String(agencyId ?? '') === aid.trim() ? Number(chatId) : undefined;
+	return invite.inviteToken
+		? { chatId: Number(invite.seriesId), inviteToken: invite.inviteToken }
+		: { chatId: Number(invite.seriesId) };
 };
