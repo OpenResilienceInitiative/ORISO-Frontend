@@ -154,7 +154,11 @@ export const RegistrationStepper = ({
 				sx={{
 					'display': 'flex',
 					'alignItems': 'flex-start',
-					'overflowX': { xs: 'auto', md: 'visible' },
+					// Scroll on every viewport, not only on phones: a flow with all
+					// seven steps needs ~976px, more than this 780px row, and with
+					// nothing allowed to shrink it spilled out of the column on
+					// desktop. The active step is scrolled into view (effect above).
+					'overflowX': 'auto',
 					'pb': { xs: 0.5, md: 0 },
 					'scrollbarWidth': 'none',
 					'width': '100%',
@@ -276,9 +280,19 @@ export const RegistrationStepper = ({
 								<Box
 									aria-hidden
 									sx={{
+										/* The connector fills the space between two steps, but only
+										   up to a stepper's worth of gap. Growing without a cap made
+										   its length whatever the steps left over: fine at four or
+										   five steps, but a direct agency link drops the postcode and
+										   agency steps, and the one connector left between "Choose a
+										   topic" and "Register" became a ~550px red bar across the
+										   whole column. On desktop the cap is one step's width, above
+										   the ~103px four steps produce, so the full postcode flow
+										   looks exactly as before. */
 										flexGrow: 1,
 										flexShrink: 0,
 										minWidth: { xs: 18, md: 24 },
+										maxWidth: { xs: 48, md: 112 },
 										mt: { xs: '17px', md: '21px' },
 										mx: 0.5,
 										borderTop: done
