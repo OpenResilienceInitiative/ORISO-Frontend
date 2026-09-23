@@ -1,9 +1,48 @@
+/**
+ * `aid` is the group's Beratungsstelle. Before login a newcomer cannot look the
+ * group up, so without it registration falls back to topic → postcode → agency,
+ * where the group's own agency is often not listed (#1499, gcid=19 on dev).
+ */
+/**
+ * `gcid` is `<seriesId>.<inviteToken>` (ORISO-UserService#1237). The number alone
+ * is guessable, so the server only lets someone join who also holds the token.
+ * It rides inside `gcid` so login, registration and the post-login redirect,
+ * which already pass `gcid` along, carry it without knowing about it.
+ */
+export const formatGroupChatInviteId = (
+	seriesId: number | string,
+	inviteToken?: string | null
+) => (inviteToken ? `${seriesId}.${inviteToken}` : String(seriesId));
+
+const INVITE_ID = /^(\d+)(?:\.([A-Za-z0-9_-]+))?$/;
+
+/** The group number and token of a `gcid`, or null when it is not one. */
+export const parseGroupChatInviteId = (
+	gcid?: string | null
+): { seriesId: string; inviteToken?: string } | null => {
+	const match = INVITE_ID.exec(gcid?.trim() ?? '');
+	if (!match) {
+		return null;
+	}
+	return match[2]
+		? { seriesId: match[1], inviteToken: match[2] }
+		: { seriesId: match[1] };
+};
+
 export const buildGroupChatInviteLink = (
 	loginUrl: string,
-	seriesId: number
+	seriesId: number,
+	agencyId?: number | null,
+	inviteToken?: string | null
 ) => {
 	const url = new URL(loginUrl);
-	url.searchParams.set('gcid', String(seriesId));
+	url.searchParams.set(
+		'gcid',
+		formatGroupChatInviteId(seriesId, inviteToken)
+	);
+	if (agencyId != null) {
+		url.searchParams.set('aid', String(agencyId));
+	}
 	return url.toString();
 };
 
@@ -17,8 +56,25 @@ export const buildGroupChatInviteLink = (
  */
 export const buildGroupChatInviteLinkForOrigin = (
 	origin: string,
-	seriesId: number
-) => buildGroupChatInviteLink(`${origin.replace(/\/+$/, '')}/login`, seriesId);
+	seriesId: number,
+	agencyId?: number | null,
+	inviteToken?: string | null
+) =>
+	buildGroupChatInviteLink(
+		`${origin.replace(/\/+$/, '')}/login`,
+		seriesId,
+		agencyId,
+		inviteToken
+	);
 
-export const currentHostGroupChatInviteLink = (seriesId: number) =>
-	buildGroupChatInviteLinkForOrigin(window.location.origin, seriesId);
+export const currentHostGroupChatInviteLink = (
+	seriesId: number,
+	agencyId?: number | null,
+	inviteToken?: string | null
+) =>
+	buildGroupChatInviteLinkForOrigin(
+		window.location.origin,
+		seriesId,
+		agencyId,
+		inviteToken
+	);

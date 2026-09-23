@@ -57,6 +57,20 @@ describe('usePendingGroupChatJoin', () => {
 		);
 	});
 
+	it('opens the entry room of the group number, not of the whole invite id (#1237)', async () => {
+		withDeepLink('19.Ab3_x-Yz');
+		renderHook(() => usePendingGroupChatJoin(settled));
+
+		await waitFor(() =>
+			expect(joinGroupChat).toHaveBeenCalledWith('19.Ab3_x-Yz')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith('/group/19', {
+				replace: true
+			})
+		);
+	});
+
 	it('waits for the tenant before assigning anything', () => {
 		tenant.ready = false;
 
