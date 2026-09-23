@@ -46,6 +46,8 @@ interface StageLayoutProps {
 	showLoginLink?: boolean;
 	showRegistrationLink?: boolean;
 	loginParams?: string;
+	/** Router state for the login link (the invite entry marks a chosen login). */
+	loginState?: unknown;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
 	/** Mobile head presentation — `bar` is the slim 8a brand row. */
@@ -71,6 +73,7 @@ export const StageLayout = ({
 	showLoginLink,
 	showRegistrationLink,
 	loginParams,
+	loginState,
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
@@ -109,7 +112,8 @@ export const StageLayout = ({
 							{...(loginRoute && routerContext
 								? {
 										component: RouterLink,
-										to: loginRoute
+										to: loginRoute,
+										state: loginState
 									}
 								: { href: loginRoute || loginUrl })}
 							color="inherit"
@@ -199,7 +203,8 @@ export const StageLayout = ({
 								{...(loginRoute && routerContext
 									? {
 											component: RouterLink,
-											to: loginRoute
+											to: loginRoute,
+											state: loginState
 										}
 									: {
 											component: 'a',

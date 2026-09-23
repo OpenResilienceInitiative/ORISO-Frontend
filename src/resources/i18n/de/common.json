@@ -1161,6 +1161,11 @@
 			"done": "Fertig",
 			"durationValue": "{{value}} Std.",
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuchen Sie es erneut."
+		},
+		"notMember": {
+			"headline": "Sie sind nicht Teil dieses Gesprächskreises.",
+			"body": "Diesen Gesprächskreis öffnet nur die Moderation und wen sie dazuholt. Wenn Sie mitmoderieren sollen, bitten Sie die Moderation, Sie hinzuzufügen.",
+			"back": "Zu meinen Gesprächen"
 		}
 	},
 	"help": {
@@ -3120,6 +3125,7 @@
 			},
 			"temporary": {
 				"join": "Beitreten",
+				"joinGroup": "Der Gruppe beitreten",
 				"toggleOff": "Konto anlegen",
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",

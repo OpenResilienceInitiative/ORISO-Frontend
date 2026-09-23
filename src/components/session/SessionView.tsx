@@ -5,7 +5,9 @@ import { Loading } from '../app/Loading';
 import {
 	SessionTypeContext,
 	UserDataContext,
-	ActiveSessionProvider
+	ActiveSessionProvider,
+	AUTHORITIES,
+	hasUserAuthority
 } from '../../globalState';
 import {
 	desktopView,
@@ -25,6 +27,8 @@ import { useSetAtom } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 import { rememberLastOpenSession } from '../../utils/lastOpenSession';
+import { useGroupChatAccess } from '../groupChat/useGroupChatAccess';
+import { GroupChatNotMember } from '../groupChat/GroupChatNotMember';
 
 export const SessionView = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
@@ -53,13 +57,28 @@ export const SessionView = () => {
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
+	// #1499: a counsellor can reach a group she is not part of through its
+	// invite link; the server refuses her the group, the room list does not.
+	const groupAccess = useGroupChatAccess({
+		chatId: activeSession?.item?.id,
+		isGroup: Boolean(activeSession?.isGroup),
+		subscribed: activeSession?.item?.subscribed,
+		isConsultant: hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	});
+
 	// #1193 Job 3: remember the session the counsellor is looking at so the next
 	// sign-in resumes it. The helper only accepts consultant session routes.
 	useEffect(() => {
-		if (activeSessionReady && activeSession) {
+		if (activeSessionReady && activeSession && groupAccess === 'member') {
 			rememberLastOpenSession(userData?.userId, pathname);
 		}
-	}, [activeSessionReady, activeSession, pathname, userData?.userId]);
+	}, [
+		activeSessionReady,
+		activeSession,
+		groupAccess,
+		pathname,
+		userData?.userId
+	]);
 
 	const { fromL } = useResponsive();
 	useEffect(() => {
@@ -155,8 +174,24 @@ export const SessionView = () => {
 		};
 	}, [activeSession?.item?.agencyId, setAgencyLogo]);
 
-	if (loading || !activeSession) {
+	if (loading || !activeSession || groupAccess === 'checking') {
 		return <Loading />;
+	}
+
+	if (groupAccess === 'notMember') {
+		return (
+			<GroupChatNotMember
+				onBack={() =>
+					navigate(
+						listPath +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: ''),
+						{ replace: true }
+					)
+				}
+			/>
+		);
 	}
 
 	if (
