@@ -12,6 +12,8 @@ import {
 	emailButton,
 	emailCaptionStyle,
 	emailCodeMarkup,
+	emailCopyLink,
+	emailCopyLinkStyle,
 	emailDataRowMarkup,
 	emailDivider,
 	emailEscape,
@@ -93,14 +95,28 @@ export const emailCodePanel = (row: EmailDataRow): string =>
 
 /** The primary action. Left-aligned on desktop, full width on phones. */
 export const emailCallToAction = (
-	cta: { href: string; label: string },
+	cta: { href: string; label: string; fallbackHint?: string },
 	brand: EmailBrand
 ): string =>
 	emailBlock(emailButton(cta, brand), {
 		padding: [20, G, 0, G],
 		className: 'btn',
 		align: 'left'
-	});
+	}) + (cta.fallbackHint ? emailCopyLinkFallback(cta, brand) : '');
+
+/**
+ * The button's URL spelled out under it, for mail clients that break the
+ * button. Only for links the recipient cannot find again anywhere else — a
+ * single-use contract link, not a link into the app.
+ */
+export const emailCopyLinkFallback = (
+	{ href, fallbackHint }: { href: string; fallbackHint?: string },
+	brand: EmailBrand
+): string =>
+	emailBlock(
+		`${emailEscape(fallbackHint ?? '')}<br>${emailCopyLink(href, brand)}`,
+		{ padding: [16, G, 0, G], style: emailCopyLinkStyle() }
+	);
 
 /** An optional second, lower-weight action directly under the button. */
 export const emailSecondaryAction = (
