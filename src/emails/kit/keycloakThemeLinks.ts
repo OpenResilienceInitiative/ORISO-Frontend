@@ -51,10 +51,11 @@ export const TENANT_LOGO_PATH = (tenantIdExpression: string): string =>
 	`"/service/tenant/public/branding/" + ${tenantIdExpression} + "/logo"`;
 
 const PRODUCTION_HOST = /oriso\.org/;
-// `!'https://…'` (FreeMarker default) or `key=https://…` (literal property).
-const URL_DEFAULT = /!\s*['"]https?:\/\/|=\s*https?:\/\//;
+// A scheme followed by a host, wherever it stands: a default, a property
+// value, a quoted attribute. A bare `"https://"` (a prefix check) has no host.
+const LITERAL_URL = /https?:\/\/[\w-]/i;
 
-/** Every line that names the production host or defaults a URL. */
+/** Every line that names the production host or any literal URL. */
 export const findHardcodedUrls = (
 	files: { name: string; content: string }[]
 ): string[] =>
@@ -64,7 +65,7 @@ export const findHardcodedUrls = (
 			.map((line, index) => ({ line, index }))
 			.filter(
 				({ line }) =>
-					PRODUCTION_HOST.test(line) || URL_DEFAULT.test(line)
+					PRODUCTION_HOST.test(line) || LITERAL_URL.test(line)
 			)
 			.map(({ index }) => `${name}:${index + 1}`)
 	);

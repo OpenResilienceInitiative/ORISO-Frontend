@@ -89,6 +89,30 @@ describe('findHardcodedUrls', () => {
 		).toHaveLength(1);
 	});
 
+	it('flags a literal URL on any host inside a quoted attribute', () => {
+		expect(
+			findHardcodedUrls([
+				{
+					name: 'html/otp-email.ftl',
+					content:
+						'<a href="https://other.example.org/login">Login</a>'
+				}
+			])
+		).toEqual(['html/otp-email.ftl:1']);
+	});
+
+	it('accepts a bare scheme used as a comparison prefix', () => {
+		expect(
+			findHardcodedUrls([
+				{
+					name: 'html/otp-email.ftl',
+					content:
+						'<#if (properties.orisoAppUrl)?starts_with("https://")>'
+				}
+			])
+		).toEqual([]);
+	});
+
 	it('accepts env-derived links', () => {
 		expect(
 			findHardcodedUrls([
