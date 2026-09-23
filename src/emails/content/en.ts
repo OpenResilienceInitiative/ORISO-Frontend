@@ -40,6 +40,7 @@ const platformOfferedBy =
 
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'This email is part of the contractual relationship and cannot be unsubscribed from. Please do not reply to it.'
 };
@@ -381,21 +382,26 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Data processing agreement ready for signature',
-		preheader: 'The agreement for {{tenantName}} is ready.',
-		headline: 'The agreement is ready for signature',
+		subject: 'Contract documents for {{tenantName}}',
+		preheader: 'The contract documents for {{tenantName}} are ready.',
+		headline: 'The contract documents are ready for signature',
 		paragraphs: [
-			'A data processing agreement has been prepared for {{tenantName}}.',
-			'Please review the agreement and sign it digitally.'
+			'Contract documents have been prepared for {{tenantName}}.',
+			'Please review the documents and sign them digitally.'
 		],
 		panel: [
 			{ label: 'Organisation', value: '{{tenantName}}' },
 			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
 			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Open agreement', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Open contract',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'If the button does not work, copy this link into your browser:'
+		},
 		footnote:
-			'Counselling stays blocked for this organisation until the agreement is signed.',
+			'Without signed contract documents, counselling stays blocked for this organisation.',
 		assurance: legalAssurance,
 		footer: legalFooter
 	},

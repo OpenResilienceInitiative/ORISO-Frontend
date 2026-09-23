@@ -149,6 +149,7 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 
 	// Invitations and the DPA.
 	tenantName: 'Caritasverband Mainz',
+	tenantNameDative: 'Caritasverband Mainz',
 	// The offered-by line names the platform, never the Träger…
 	offeringName: 'Online-Beratung',
 	// …and its operator (Admin → Dokument-Stammdaten → Betreiber), never the Träger.

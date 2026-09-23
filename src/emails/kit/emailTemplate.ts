@@ -30,6 +30,13 @@ export interface EmailAction {
 	label: string;
 	/** Usually a `{{placeholder}}`; a literal URL only in previews. */
 	href: string;
+	/**
+	 * Lead-in for the URL spelled out under the button (HTML part only; the
+	 * text part already prints the URL on its own line). Set it where the link
+	 * is single-use and cannot be found again, so a broken button is not a
+	 * dead end.
+	 */
+	fallbackHint?: string;
 }
 
 interface EmailContentBase {
