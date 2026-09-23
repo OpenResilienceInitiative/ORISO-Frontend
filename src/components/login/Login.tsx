@@ -41,6 +41,7 @@ import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
+import { useGroupInviteEntryRedirect } from '../registration/groupInviteEntry/useGroupInviteEntryRedirect';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
@@ -106,6 +107,7 @@ export const Login = () => {
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
 	const inviteAgencyId = useSearchParam<string>('aid');
+	const openingGroupInviteEntry = useGroupInviteEntryRedirect();
 	const registrationUrl = buildRegistrationLink(
 		settings.urls.toRegistration,
 		gcid,
@@ -515,6 +517,10 @@ export const Login = () => {
 	const onPasswordResetClick = () => {
 		navigate('/password-reset');
 	};
+
+	if (openingGroupInviteEntry) {
+		return null;
+	}
 
 	return (
 		<>
