@@ -381,6 +381,16 @@
 		"shareDialog": {
 			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"joinHandover": {
+			"status": {
+				"ready": "Alles bereit — du kannst zur Gruppe"
+			}
+		},
+		"consent": {
+			"headline": "Bevor du schreibst",
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen."
 		}
 	},
 	"help": {

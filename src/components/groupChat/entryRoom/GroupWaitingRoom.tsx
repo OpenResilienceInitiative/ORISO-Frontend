@@ -13,12 +13,19 @@ import { registrationMd3 } from '../../registration/registrationDesign/registrat
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { Stage } from '../../stage/stage';
 import { translateWithFallback } from '../../../utils/translationFallback';
+import { GroupLegalMenu } from './GroupLegalMenu';
+import { useGroupDepartment } from '../consent/useGroupDepartment';
 
 export interface GroupWaitingRoomProps {
 	/** The group's topic, shown small above the name. */
 	topicName?: string;
 	/** Who runs the group — the agency the chat is assigned to. */
 	agencyName?: string;
+	/**
+	 * That agency's id. Its documents are what the legal links open —
+	 * Datenschutz and Impressum of the Beratungsstelle that runs the group.
+	 */
+	agencyId?: number | null;
 	/** When the group starts; `null` for a group without a fixed time. */
 	plannedStart: Date | null;
 	durationMinutes?: number;
@@ -52,6 +59,7 @@ export interface GroupWaitingRoomProps {
 export const GroupWaitingRoom = ({
 	topicName,
 	agencyName,
+	agencyId,
 	plannedStart,
 	durationMinutes = 60,
 	eventId,
@@ -76,6 +84,9 @@ export const GroupWaitingRoom = ({
 		null
 	);
 	const clockHeight = useClockHeight();
+	const departmentState = useGroupDepartment(agencyId);
+	const legalDepartment =
+		departmentState.status === 'ready' ? departmentState.department : null;
 	const phone = useMediaQuery('(max-width:599px)');
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
@@ -169,11 +180,19 @@ export const GroupWaitingRoom = ({
 			<StageLayout
 				className="stageLayout--registration"
 				showLegalLinks={true}
+				legalDepartment={legalDepartment}
 				showLoginLink={showLoginLink}
 				showRegistrationLink={false}
 				stage={<Stage hasAnimation={false} />}
 				mobileHero="bar"
 				headerStart={groupHeading}
+				/* The desktop stage prints the legal links; the phone bar
+				   gets them as a menu, like every chat room (#1499). */
+				renderHeaderAction={(tone) =>
+					tone === 'onPrimary' ? (
+						<GroupLegalMenu department={legalDepartment} />
+					) : null
+				}
 			>
 				<Box
 					sx={{

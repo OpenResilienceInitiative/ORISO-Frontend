@@ -48,6 +48,8 @@ export interface RegistrationHandoverProps {
 		subline?: string;
 		encryption?: string;
 		cta?: string;
+		/** The gate button's status line per state; unset states keep theirs. */
+		status?: Partial<Record<HandoverGateState, string>>;
 		steps?: HandoverStep[];
 	};
 }
@@ -429,6 +431,7 @@ export const RegistrationHandover = ({
 						state={state}
 						onEnter={handleEnter}
 						label={copy?.cta}
+						status={copy?.status?.[state]}
 					/>
 				</Box>
 			</Box>

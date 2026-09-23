@@ -196,6 +196,7 @@ export const GroupEntryRoom = () => {
 			<GroupWaitingRoom
 				topicName={topicName}
 				agencyName={agencyName}
+				agencyId={item.assignedAgencies?.[0]?.id}
 				plannedStart={plannedStart}
 				upcomingDates={upcomingDates}
 				durationMinutes={item.duration}
