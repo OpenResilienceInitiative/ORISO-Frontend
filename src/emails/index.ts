@@ -143,6 +143,8 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	tenantNameDative: 'Caritasverband Mainz',
 	// The offered-by line of a contract mail: the platform, never the Träger.
 	offeringName: 'Online-Beratung',
+	// …and its operator (Admin → Dokument-Stammdaten → Betreiber), never the Träger.
+	operatorName: 'Sunflower Care e.V.',
 	agencyName: 'Beratungsstelle Mainz-Neustadt',
 	inviteUrl: 'https://beratung.example.org/einladung?token=1c9d',
 	inviteExpiresAt: '10. August 2026, 23:59',

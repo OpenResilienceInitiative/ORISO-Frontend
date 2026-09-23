@@ -32,11 +32,15 @@ const securityFooter = {
 		'This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.'
 };
 
-// The Träger may brand the header (`platformName`); the offered-by line names
-// the platform, so it takes `offeringName`, which no sender overlays.
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} is a service provided by {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
-	offeredBy: '{{offeringName}} is a service provided by {{orgName}}.',
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'This email is part of the contractual relationship and cannot be unsubscribed from. Please do not reply to it.'
 };

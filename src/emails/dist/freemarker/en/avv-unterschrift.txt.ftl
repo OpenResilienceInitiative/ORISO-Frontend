@@ -21,7 +21,7 @@ ${orgName!''}
 ${orgAddress!''}
 ${contactLine!''}
 
-${offeringName!''} is a service provided by ${orgName!''}.
+${offeringName!''} is a service provided by ${operatorName!''}.
 
 Privacy: ${privacyUrl!''}
 Imprint: ${imprintUrl!''}

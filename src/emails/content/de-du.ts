@@ -35,11 +35,15 @@ const securityFooter = {
 		'Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };
 
-// The Träger may brand the header (`platformName`); the offered-by line names
-// the platform, so it takes `offeringName`, which no sender overlays.
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} ist ein Angebot von {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
-	offeredBy: '{{offeringName}} ist ein Angebot von {{orgName}}.',
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'Diese E-Mail gehört zum Vertragsverhältnis und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };

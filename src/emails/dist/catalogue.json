@@ -601,6 +601,7 @@
 				"{{dpaUrl}}",
 				"{{tenantNameDative}}",
 				"{{offeringName}}",
+				"{{operatorName}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
 			],

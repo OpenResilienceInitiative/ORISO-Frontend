@@ -89,24 +89,29 @@ describe('avv-unterschrift', () => {
 		expect(text).toContain(line);
 	});
 
-	// The Träger brands the header (`platformName`), but "X ist ein Angebot
-	// von Y" describes the platform — X must be a value no sender overlays
-	// with a Träger name.
+	// The Träger brands the header (`platformName`) and may overlay the sender
+	// block (`orgName`), but "X ist ein Angebot von Y" describes the platform
+	// and its operator (Frank, 2026-09-23) — both must be values no sender
+	// overlays with a Träger name.
 	it.each(EMAIL_LOCALES)(
-		'%s names the platform, not the header brand, in the offered-by line',
+		'%s names the platform and its operator, not the Träger, in the offered-by line',
 		(locale) => {
 			const { html, text } = buildEmail('avv-unterschrift', locale, {
 				dialect: 'plain'
 			});
 			const offeredBy =
 				locale === 'en'
-					? '{{offeringName}} is a service provided by {{orgName}}.'
-					: '{{offeringName}} ist ein Angebot von {{orgName}}.';
-			expect(html).toContain(offeredBy);
-			expect(text).toContain(offeredBy);
-			expect(html).not.toMatch(
-				/\{\{platformName\}\} (ist ein Angebot|is a service)/
-			);
+					? '{{offeringName}} is a service provided by {{operatorName}}.'
+					: '{{offeringName}} ist ein Angebot von {{operatorName}}.';
+			for (const part of [html, text]) {
+				expect(part).toContain(offeredBy);
+				expect(part).not.toMatch(
+					/\{\{platformName\}\} (ist ein Angebot|is a service)/
+				);
+				expect(part).not.toMatch(
+					/(ist ein Angebot von|is a service provided by) \{\{orgName\}\}/
+				);
+			}
 		}
 	);
 

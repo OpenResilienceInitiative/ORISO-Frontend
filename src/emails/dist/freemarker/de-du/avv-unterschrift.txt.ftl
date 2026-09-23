@@ -21,7 +21,7 @@ ${orgName!''}
 ${orgAddress!''}
 ${contactLine!''}
 
-${offeringName!''} ist ein Angebot von ${orgName!''}.
+${offeringName!''} ist ein Angebot von ${operatorName!''}.
 
 Datenschutz: ${privacyUrl!''}
 Impressum: ${imprintUrl!''}
