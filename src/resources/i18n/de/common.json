@@ -3170,6 +3170,7 @@
 			},
 			"temporary": {
 				"join": "Beitreten",
+				"joinGroup": "Der Gruppe beitreten",
 				"toggleOff": "Konto anlegen",
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",

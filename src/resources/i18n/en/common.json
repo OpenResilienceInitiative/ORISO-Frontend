@@ -3198,6 +3198,7 @@
 			},
 			"temporary": {
 				"join": "Join",
+				"joinGroup": "Join the group",
 				"toggleOff": "Create an account",
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",

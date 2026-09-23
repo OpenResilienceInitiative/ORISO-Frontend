@@ -4,6 +4,10 @@ import { cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // `vi.mock` is hoisted above this import, so the hook still gets the doubles.
 import { usePendingGroupChatJoin } from './usePendingGroupChatJoin';
+import {
+	forgetGroupInviteToken,
+	groupInviteTokenFor
+} from '../components/groupChat/groupInviteTokenMemory';
 
 const joinGroupChat = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
@@ -68,6 +72,20 @@ describe('usePendingGroupChatJoin', () => {
 		);
 		await waitFor(() =>
 			expect(navigate).toHaveBeenCalledWith('/group/gc-synthetic', {
+				replace: true
+			})
+		);
+	});
+
+	it('opens the entry room of the group number, not of the whole invite id (#1237)', async () => {
+		withDeepLink('19.Ab3_x-Yz');
+		renderHook(() => usePendingGroupChatJoin(settled));
+
+		await waitFor(() =>
+			expect(joinGroupChat).toHaveBeenCalledWith('19.Ab3_x-Yz')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith('/group/19', {
 				replace: true
 			})
 		);
@@ -189,6 +207,34 @@ describe('usePendingGroupChatJoin', () => {
 					{ replace: true }
 				)
 			);
+		});
+
+		/* Knock to join (#1499 item 14) needs the link's token; she carries
+		   it from the login redirect into her session view. */
+		it('opens the group of an invite id with token and keeps the token for a knock', async () => {
+			forgetGroupInviteToken(42);
+			withDeepLink('42.tok_EN-9');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+			expect(groupInviteTokenFor(42)).toBe('tok_EN-9');
+			expect(joinGroupChat).not.toHaveBeenCalled();
+		});
+
+		it('keeps no token for a link without one', async () => {
+			forgetGroupInviteToken(42);
+			withDeepLink('42');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() => expect(navigate).toHaveBeenCalled());
+			expect(groupInviteTokenFor(42)).toBeUndefined();
 		});
 
 		// The id comes from the address bar; only a chat id becomes a route.

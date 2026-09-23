@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJoinGroupChat } from './useJoinGroupChat';
 import { groupEntryRoomPath } from '../components/groupChat/entryRoom/GroupEntryRoom';
+import { parseGroupChatInviteId } from '../components/groupChat/groupChatInviteLink';
+import { rememberGroupInviteToken } from '../components/groupChat/groupInviteTokenMemory';
 import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupStep';
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
 import {
@@ -52,29 +54,41 @@ export const usePendingGroupChatJoin = (
 		}
 		const gcid = pendingGroupChatId;
 		setPendingGroupChatId(null);
+		/* `gcid` may carry the invite token as well (#1237); the room is the number. */
+		const invite = parseGroupChatInviteId(gcid);
+		const entryRoom = groupEntryRoomPath(invite?.seriesId ?? gcid);
 		/* #1499: the assignment is a client action (404 for a counsellor) and
 		   the entry room is the client's room. Whether she may see the group
-		   is decided in the session view, which shows "not part of it". */
+		   is decided in the session view, which shows "not part of it" — and,
+		   with the link's token, lets her knock (item 14). */
 		if (
 			hasUserAuthority(
 				AUTHORITIES.CONSULTANT_DEFAULT,
 				userData as UserDataInterface
 			)
 		) {
-			if (isGroupChatId(gcid)) {
-				navigate(consultantGroupChatPath(gcid), { replace: true });
+			if (invite && isGroupChatId(invite.seriesId)) {
+				if (invite.inviteToken) {
+					rememberGroupInviteToken(
+						invite.seriesId,
+						invite.inviteToken
+					);
+				}
+				navigate(consultantGroupChatPath(invite.seriesId), {
+					replace: true
+				});
 			}
 			return;
 		}
 		joinGroupChat(gcid)
 			.then((assigned) => {
 				if (assigned) {
-					navigate(groupEntryRoomPath(gcid), { replace: true });
+					navigate(entryRoom, { replace: true });
 				}
 			})
 			.catch(() => {
-				/* Already assigned (409) or gone — the entry room says so. */
-				navigate(groupEntryRoomPath(gcid), { replace: true });
+				/* Already assigned (409), link refused (403) or gone — the entry room says so. */
+				navigate(entryRoom, { replace: true });
 			});
 	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate, userData]);
 };
