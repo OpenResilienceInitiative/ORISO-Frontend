@@ -234,6 +234,41 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(redirectToApp).toHaveBeenCalledWith('19', { sessionId: '211' });
 	});
 
+	it('joining names the group, so the registration opens no counselling enquiry', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.groupChatId).toBe(19);
+	});
+
+	it('does not name the group when the person registers at another agency', async () => {
+		renderAt('?gcid=19', {
+			agency: { ...agency, id: 7 },
+			mainTopic: grief,
+			zipcode: '10115',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.agencyId).toBe('7');
+		expect(body).not.toHaveProperty('groupChatId');
+	});
+
 	it('keeps the four steps when the topic cannot be told from the agency', () => {
 		renderAt('?gcid=19&aid=19', {
 			agency: { ...agency, topicIds: [17, 18] }

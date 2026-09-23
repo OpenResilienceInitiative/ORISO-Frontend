@@ -86,3 +86,24 @@ export const resolveGroupInviteEntry = ({
 	}
 	return mainTopic?.id === topicId ? 'entry' : 'pending';
 };
+
+/**
+ * The group a registration joins instead of opening a counselling enquiry
+ * (#1499). Only when the person registers at the agency the link names; an
+ * agency picked in the steps is an ordinary counselling registration.
+ */
+export const getGroupJoinChatId = ({
+	gcid,
+	aid,
+	agencyId
+}: {
+	gcid?: string | null;
+	aid?: string | null;
+	agencyId?: string | number | null;
+}): number | undefined => {
+	const chatId = gcid?.trim();
+	if (!chatId || !/^\d+$/.test(chatId) || !present(aid)) {
+		return undefined;
+	}
+	return String(agencyId ?? '') === aid.trim() ? Number(chatId) : undefined;
+};
