@@ -23,7 +23,7 @@
  * shape of a Keycloak theme's email directory, so it can be copied in whole.
  */
 
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
@@ -33,6 +33,12 @@ import {
 	renderEmailText
 } from '../kit/emailTemplate';
 import { emailDefaultBrand } from '../kit/emailTokens';
+import {
+	APP_BASE_URL_ENV,
+	KEYCLOAK_LINK_PATHS,
+	findHardcodedUrls,
+	keycloakLinkProperties
+} from '../kit/keycloakThemeLinks';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist/keycloak/email');
@@ -45,6 +51,10 @@ const outDir = path.resolve(here, '../dist/keycloak/email');
  * be able to set a logo and an imprint link without editing a generated file,
  * and `${properties.x}` reading from `theme.properties` is Keycloak's own
  * mechanism for exactly that.
+ *
+ * Links are not brand values: they point at this environment's app, so they
+ * come from the container's `ORISO_APP_BASE_URL` (see keycloakThemeLinks). A
+ * host written here would be every environment's host (ORISO-Helm#366).
  */
 const themeDefaults: Record<string, string> = {
 	orisoPlatformName: 'Online-Beratung',
@@ -53,13 +63,7 @@ const themeDefaults: Record<string, string> = {
 	orisoContactLine: '',
 	orisoLogoUrl: '',
 	orisoPrimaryColor: '#a5000a',
-	orisoAccentColor: '#cc1e1c',
-	orisoPrivacyUrl: 'https://app.oriso.org/datenschutz',
-	orisoImprintUrl: 'https://app.oriso.org/impressum',
-	orisoSettingsUrl: 'https://app.oriso.org/profile/settings',
-	orisoUnsubscribeUrl: 'https://app.oriso.org/profile/settings/notifications',
-	orisoLoginUrl: 'https://app.oriso.org/login',
-	orisoAppUrl: 'https://app.oriso.org'
+	orisoAccentColor: '#cc1e1c'
 };
 
 const themeProperty = (placeholder: string) =>
@@ -73,9 +77,15 @@ const themeProperty = (placeholder: string) =>
  * that depended on it would render a button with an empty `background-color` —
  * that is, no button. The parentheses matter too: `${properties.x!''}` defaults
  * only the last step and dies if `properties` itself is missing.
+ *
+ * Links are the exception: they get no default, so a theme without its
+ * properties fails to render instead of linking to some other environment.
  */
 const themeLookup = (placeholder: string): string => {
 	const key = themeProperty(placeholder);
+	if (key in KEYCLOAK_LINK_PATHS) {
+		return `properties.${key}`;
+	}
 	const fallback = (themeDefaults[key] ?? '').replace(/'/g, "\\'");
 	return `(properties.${key})!'${fallback}'`;
 };
@@ -420,15 +430,48 @@ const run = async () => {
 	await writeFile(
 		path.join(outDir, 'theme.properties'),
 		'parent=base\n' +
-			'# Generated defaults from the ORISO e-mail design system.\n' +
-			'# An operator may override any of these per realm.\n' +
+			'# Generated from the ORISO e-mail design system — do not edit by hand.\n' +
+			'# Brand defaults; an operator may override them in the image.\n' +
 			Object.entries(themeDefaults)
+				.map(([key, value]) => `${key}=${value}`)
+				.join('\n') +
+			'\n' +
+			`# Links: Keycloak substitutes \${env.${APP_BASE_URL_ENV}} from the container\n` +
+			'# environment. No default on purpose; the image refuses to start without it.\n' +
+			Object.entries(keycloakLinkProperties())
 				.map(([key, value]) => `${key}=${value}`)
 				.join('\n') +
 			'\n',
 		'utf8'
 	);
 	written += 1;
+
+	// Last line of defence for the rule above: a host or URL default in the
+	// output fails the build instead of shipping to every environment.
+	const outputFiles = ['theme.properties'].concat(
+		...(await Promise.all(
+			['html', 'text', 'messages'].map(async (dir) =>
+				(await readdir(path.join(outDir, dir))).map((name) =>
+					path.join(dir, name)
+				)
+			)
+		))
+	);
+	const violations = findHardcodedUrls(
+		await Promise.all(
+			outputFiles.map(async (name) => ({
+				name,
+				content: await readFile(path.join(outDir, name), 'utf8')
+			}))
+		)
+	);
+	if (violations.length > 0) {
+		throw new Error(
+			'Keycloak theme: generated output names the production host or a literal URL ' +
+				`(${violations.join(', ')}). Links must derive from ` +
+				`${APP_BASE_URL_ENV}.`
+		);
+	}
 
 	// eslint-disable-next-line no-console
 	console.log(

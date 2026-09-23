@@ -599,24 +599,27 @@
 				"{{dpaProvidedAt}}",
 				"{{dpaExpiresAt}}",
 				"{{dpaUrl}}",
+				"{{tenantNameDative}}",
+				"{{offeringName}}",
+				"{{operatorName}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
-					"preheader": "Der AVV für {{tenantName}} liegt bereit."
+					"subject": "Vertragsunterlagen für {{tenantName}}",
+					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
-					"preheader": "Der AVV für {{tenantName}} liegt bereit."
+					"subject": "Vertragsunterlagen für {{tenantName}}",
+					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "Data processing agreement ready for signature",
-					"preheader": "The agreement for {{tenantName}} is ready."
+					"subject": "Contract documents for {{tenantName}}",
+					"preheader": "The contract documents for {{tenantName}} are ready."
 				}
 			}
 		},
