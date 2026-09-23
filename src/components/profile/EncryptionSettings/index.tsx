@@ -36,7 +36,8 @@ import {
 } from '../../../services/matrixKeyBackupService';
 import {
 	clearPendingRecoveryKey,
-	getPendingRecoveryKey,
+	loadPendingRecoveryKey,
+	markPendingRecoveryKeyPasswordProtected,
 	RecoverySetupBusyError,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
@@ -145,7 +146,7 @@ export const EncryptionSettingsPanel = ({
 			const currentUserId = client.getUserId();
 			setUserId(currentUserId);
 			const pendingKey = currentUserId
-				? getPendingRecoveryKey(currentUserId)
+				? await loadPendingRecoveryKey(currentUserId)
 				: null;
 			// The background setup had no dialog to show the key in, so this
 			// panel is where the user finally gets to see and save it.
@@ -483,6 +484,9 @@ export const EncryptionSettingsPanel = ({
 											recoveryKeyToShow,
 											policy.revision
 										)
+									);
+									markPendingRecoveryKeyPasswordProtected(
+										userId
 									);
 									setRecoveryRuntimeStatus(userId, 'ready');
 								} catch (error) {

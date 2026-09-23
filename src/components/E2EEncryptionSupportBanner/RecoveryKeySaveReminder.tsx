@@ -1,18 +1,17 @@
 import './E2EEncryptionSupportBanner.styles.scss';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
-import { useContext, useState, useSyncExternalStore } from 'react';
+import { useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
 	clearPendingRecoveryKey,
-	getPendingRecoveryKey
+	usePendingRecoveryKey
 } from '../../services/pendingRecoveryKeyStore';
 import {
 	dismissRecoveryReminder,
 	isActionableRecoveryStatus,
-	subscribeRecoveryState,
 	useRecoveryReminder,
 	useRecoveryRuntimeStatus
 } from '../../services/recoveryReminderState';
@@ -27,11 +26,7 @@ export const RecoveryKeySaveReminder = () => {
 	const passwordMode =
 		useContext(UserDataContext)?.userData?.chatRecoveryMode ===
 		'LOGIN_PASSWORD';
-	const key = useSyncExternalStore(
-		subscribeRecoveryState,
-		() => (userId ? getPendingRecoveryKey(userId) : null),
-		() => null
-	);
+	const key = usePendingRecoveryKey(userId);
 	const [shownFor, setShownFor] = useState<string | null>(null);
 	const [hiddenFor, setHiddenFor] = useState<string | null>(null);
 	const showKey = shownFor === userId;

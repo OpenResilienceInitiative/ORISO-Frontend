@@ -1,7 +1,7 @@
 import { UserDataContext } from '../../globalState';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
-import { useCallback, useContext, useState, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -9,12 +9,11 @@ import {
 	recoverWithKey
 } from '../../services/matrixKeyBackupService';
 import {
-	getPendingRecoveryKey,
+	usePendingRecoveryKey,
 	savePendingRecoveryKey
 } from '../../services/pendingRecoveryKeyStore';
 import {
 	useRecoveryReminder,
-	subscribeRecoveryState,
 	isActionableRecoveryStatus,
 	useRecoveryRuntimeStatus,
 	useRecoveryRuntimeRevision,
@@ -178,11 +177,7 @@ export const KeyBackupRecoveryPrompt = () => {
 	const status = useRecoveryRuntimeStatus(userId);
 	const revision = useRecoveryRuntimeRevision(userId);
 	const eligible = useRecoveryReminder(userId);
-	const key = useSyncExternalStore(
-		subscribeRecoveryState,
-		() => (userId ? getPendingRecoveryKey(userId) : null),
-		() => null
-	);
+	const key = usePendingRecoveryKey(userId);
 	const [openedFor, setOpenedFor] = useState<string | null>(null);
 	/* Dismissal lives in component state on purpose: the notice comes back on
 	   every reload and every login until the history is readable, but it never

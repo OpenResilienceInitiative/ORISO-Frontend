@@ -15,6 +15,7 @@ import { MatrixClientContext } from '../../globalState/context/MatrixClientConte
 import { UserDataContext } from '../../globalState';
 import {
 	getPendingRecoveryKey,
+	resetPendingRecoveryKeyCacheForTests,
 	savePendingRecoveryKey
 } from '../../services/pendingRecoveryKeyStore';
 import {
@@ -53,6 +54,7 @@ const view = (id = userId) => (
 beforeEach(() => {
 	sessionStorage.clear();
 	localStorage.clear();
+	resetPendingRecoveryKeyCacheForTests();
 });
 afterEach(() => {
 	cleanup();
@@ -212,6 +214,8 @@ it('opens the restore dialog from the snackbar action', () => {
 	render(view());
 	fireEvent.click(screen.getByTestId('key-backup-recovery-open'));
 	expect(screen.getByRole('dialog')).toBeTruthy();
+});
+
 const passwordModeView = () => (
 	<UserDataContext.Provider
 		value={{ userData: { chatRecoveryMode: 'LOGIN_PASSWORD' } } as any}
