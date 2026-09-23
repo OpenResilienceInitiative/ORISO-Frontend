@@ -467,7 +467,7 @@ const run = async () => {
 	);
 	if (violations.length > 0) {
 		throw new Error(
-			'Keycloak theme: generated output names the production host or defaults a URL ' +
+			'Keycloak theme: generated output names the production host or a literal URL ' +
 				`(${violations.join(', ')}). Links must derive from ` +
 				`${APP_BASE_URL_ENV}.`
 		);
