@@ -1138,7 +1138,8 @@
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ sind Sie im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
-			"backToCountdown": "Zurück zum Countdown"
+			"backToCountdown": "Zurück zum Countdown",
+			"legalMenu": "Rechtliches"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -1161,6 +1162,22 @@
 			"done": "Fertig",
 			"durationValue": "{{value}} Std.",
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuchen Sie es erneut."
+		},
+		"joinHandover": {
+			"badge": "Gesprächskreis",
+			"subline": "So läuft es in der Gruppe:",
+			"encryption": "Verschlüsselt: Was in der Gruppe geschrieben wird, sehen nur ihre Mitglieder.",
+			"cta": "Zur Gruppe",
+			"status": {
+				"preparing": "Gruppenraum wird vorbereitet …",
+				"ready": "Alles bereit — Sie können zur Gruppe",
+				"slow": "Das dauert länger als gewohnt",
+				"entering": "Der Gruppenraum wird geöffnet …"
+			}
+		},
+		"consent": {
+			"headline": "Bevor Sie schreiben",
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben."
 		}
 	},
 	"help": {

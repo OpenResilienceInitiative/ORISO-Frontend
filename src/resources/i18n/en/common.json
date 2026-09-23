@@ -1120,7 +1120,8 @@
 			"moreOpen": "The moderator has opened the group. “Join” takes you into the conversation.",
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
-			"backToCountdown": "Back to the countdown"
+			"backToCountdown": "Back to the countdown",
+			"legalMenu": "Legal"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1143,6 +1144,22 @@
 			"done": "Done",
 			"durationValue": "{{value}} h",
 			"copyFailed": "Copying failed. Please try again."
+		},
+		"joinHandover": {
+			"badge": "Group",
+			"subline": "How the group works:",
+			"encryption": "Encrypted: only the group's members see what is written in the group.",
+			"cta": "To the group",
+			"status": {
+				"preparing": "Preparing the group room …",
+				"ready": "All set — you can go to the group",
+				"slow": "This is taking longer than usual",
+				"entering": "Opening the group room …"
+			}
+		},
+		"consent": {
+			"headline": "Before you write",
+			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group."
 		}
 	},
 	"help": {

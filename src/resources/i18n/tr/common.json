@@ -1143,7 +1143,8 @@
 			"moreOpen": "Moderatör grubu açtı. “Katıl” sizi görüşmeye götürür.",
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
-			"backToCountdown": "Geri sayıma dön"
+			"backToCountdown": "Geri sayıma dön",
+			"legalMenu": "Yasal bilgiler"
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1166,6 +1167,22 @@
 			"done": "Tamam",
 			"durationValue": "{{value}} sa",
 			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
+		},
+		"joinHandover": {
+			"badge": "Sohbet grubu",
+			"subline": "Grup nasıl işler:",
+			"encryption": "Şifreli: Grupta yazılanları yalnızca grubun üyeleri görür.",
+			"cta": "Gruba git",
+			"status": {
+				"preparing": "Grup odası hazırlanıyor …",
+				"ready": "Her şey hazır — gruba geçebilirsiniz",
+				"slow": "Bu, her zamankinden uzun sürüyor",
+				"entering": "Grup odası açılıyor …"
+			}
+		},
+		"consent": {
+			"headline": "Yazmadan önce",
+			"description": "Bu grup bir danışma merkezi tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin."
 		}
 	},
 	"help": {

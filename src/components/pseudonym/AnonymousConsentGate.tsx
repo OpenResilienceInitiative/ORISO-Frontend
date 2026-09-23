@@ -20,6 +20,12 @@ interface AnonymousConsentGateProps {
 	onAccept: () => void;
 	/** `true` while the accept request is in flight. */
 	busy?: boolean;
+	/**
+	 * Already translated. Default: the live chat's words. A self-help group
+	 * passes its own — no counsellor is about to start a chat there (#1499).
+	 */
+	headline?: string;
+	description?: string;
 }
 
 /** Shield-with-person icon from Figma (70x78 within a 100x100 box). */
@@ -86,7 +92,9 @@ const DESCRIPTION_ID = 'anonymousConsentGateDescription';
 export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 	consentLabelHtml,
 	onAccept,
-	busy = false
+	busy = false,
+	headline,
+	description
 }) => {
 	const { t } = useTranslation();
 	const [rejected, setRejected] = useState(false);
@@ -171,10 +179,11 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 							className="anonymousConsentGate__title"
 							id={TITLE_ID}
 						>
-							{t(
-								'anonymousConsent.headline',
-								'Herzlich Willkommen'
-							)}
+							{headline ??
+								t(
+									'anonymousConsent.headline',
+									'Herzlich Willkommen'
+								)}
 						</h2>
 					</div>
 
@@ -182,10 +191,11 @@ export const AnonymousConsentGate: React.FC<AnonymousConsentGateProps> = ({
 						className="anonymousConsentGate__body"
 						id={DESCRIPTION_ID}
 					>
-						{t(
-							'anonymousConsent.description',
-							'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.'
-						)}
+						{description ??
+							t(
+								'anonymousConsent.description',
+								'Danach kann eine beratende Person einen Chat mit Ihnen beginnen.'
+							)}
 					</p>
 
 					<p className="anonymousConsentGate__consent">

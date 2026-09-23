@@ -1143,7 +1143,8 @@
 			"moreOpen": "La modération a ouvert le groupe. « Rejoindre » vous amène dans la conversation.",
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
-			"backToCountdown": "Retour au compte à rebours"
+			"backToCountdown": "Retour au compte à rebours",
+			"legalMenu": "Mentions légales"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1166,6 +1167,22 @@
 			"done": "Terminé",
 			"durationValue": "{{value}} h",
 			"copyFailed": "La copie a échoué. Veuillez réessayer."
+		},
+		"joinHandover": {
+			"badge": "Groupe de parole",
+			"subline": "Comment se déroule le groupe :",
+			"encryption": "Chiffré : seuls les membres du groupe voient ce qui y est écrit.",
+			"cta": "Vers le groupe",
+			"status": {
+				"preparing": "Préparation de l'espace du groupe …",
+				"ready": "Tout est prêt — vous pouvez rejoindre le groupe",
+				"slow": "Cela prend plus de temps que d'habitude",
+				"entering": "Ouverture de l'espace du groupe …"
+			}
+		},
+		"consent": {
+			"headline": "Avant d'écrire",
+			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe."
 		}
 	},
 	"help": {
