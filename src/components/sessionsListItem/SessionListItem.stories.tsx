@@ -1,21 +1,7 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
-import { MenuVerticalIcon } from '../../resources/img/icons';
-import { MessageAvatar } from '../message/MessageAvatar';
-import { formatMessagePersonName } from '../message/messageNameUtils';
-import { ReactComponent as ArchiveIcon } from '../../resources/img/icons/inbox.svg';
-import { ReactComponent as BellOffIcon } from '../../resources/img/icons/bell-off.svg';
-import { ReactComponent as HelpIcon } from '../../resources/img/icons/i.svg';
-import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus.svg';
-import { ReactComponent as PackageIcon } from '../../resources/img/icons/documents.svg';
-import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_conv_type_200.svg';
-import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
-import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
-import teamImage from '../../resources/img/illustrations/Team.svg';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -29,6 +15,7 @@ import {
 } from '../../globalState';
 import type {
 	ConsultingTypeInterface,
+	GroupChatItemInterface,
 	ListItemInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
@@ -53,23 +40,36 @@ const listShell: React.CSSProperties = {
 	padding: '4px 8px'
 };
 
-const runtimeTopic: TopicsDataInterface = {
-	id: 1,
-	name: 'Familienberatung',
-	slug: 'familienberatung',
+const storyTopic = (
+	id: number,
+	slug: string,
+	name: string
+): TopicsDataInterface => ({
+	id,
+	name,
+	slug,
 	description: 'Storybook runtime topic.',
-	internalIdentifier: 'familienberatung',
+	internalIdentifier: slug,
 	status: 'active',
 	createDate: '2026-03-01T00:00:00.000Z',
 	updateDate: '2026-03-01T00:00:00.000Z',
 	fallbackUrl: '',
 	titles: {
-		short: 'Familie',
-		long: 'Familienberatung',
-		registrationDropdown: 'Familienberatung',
-		welcome: 'Familienberatung'
+		short: name,
+		long: name,
+		registrationDropdown: name,
+		welcome: name
 	}
-};
+});
+
+const runtimeTopic = storyTopic(1, 'familienberatung', 'Familienberatung');
+const longTopic = storyTopic(
+	2,
+	'familienberatung-lang',
+	'Familienberatung mit sehr langem Themenlabel'
+);
+const addictionTopic = storyTopic(3, 'sucht', 'Sucht');
+const runtimeTopics = [runtimeTopic, longTopic, addictionTopic];
 
 const runtimeConsultingType: ConsultingTypeInterface = {
 	id: 1,
@@ -157,566 +157,170 @@ const runtimeUserData = {
 	}
 } as any;
 
-function MockAvatar({ letter, bg }: { letter: string; bg: string }) {
-	return (
-		<div className="sessionsListItem__icon">
-			<div
-				style={{
-					width: 32,
-					height: 32,
-					borderRadius: '50%',
-					background: bg,
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center',
-					fontWeight: 600,
-					fontSize: 14,
-					color: '#333'
-				}}
-			>
-				{letter}
-			</div>
-		</div>
-	);
-}
-
-function DropdownOptionMock({
-	Icon,
-	title,
-	description,
-	shortcut,
-	disabled = false
+/** A group chat owned by the viewer, so its row offers the settings menu. */
+const runtimeGroupChat = ({
+	id,
+	name,
+	lastMessage = '',
+	repetitive = false,
+	conversationType
 }: {
-	Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-	title: string;
-	description: string;
-	shortcut: string;
-	disabled?: boolean;
+	id: number;
+	name: string;
+	lastMessage?: string;
+	repetitive?: boolean;
+	conversationType?: GroupChatItemInterface['conversationType'];
+}): ListItemInterface => ({
+	consultant: runtimeSession.consultant,
+	chat: {
+		id,
+		topic: name,
+		conversationType,
+		repetitive,
+		active: false,
+		consultingType: 1,
+		matrixRoomId: `storybook-group-${id}`,
+		lastMessage,
+		messageDate: 1773736500,
+		messagesRead: true,
+		moderators: [],
+		assignedAgencies: [],
+		attachment: null,
+		duration: 60,
+		hintMessage: '',
+		e2eLastMessage: null,
+		startDate: '2026-03-17',
+		startTime: '10:00',
+		subscribed: true,
+		createdAt: '2026-03-17T10:00:00.000Z'
+	} as GroupChatItemInterface
+});
+
+/** The real row inside the providers it reads; no list shell of its own. */
+function RuntimeCard({
+	item,
+	userData = runtimeUserData,
+	index = 0,
+	isBeforeActive = false,
+	isAfterActive = false
+}: {
+	item: ListItemInterface;
+	userData?: any;
+	index?: number;
+	isBeforeActive?: boolean;
+	isAfterActive?: boolean;
 }) {
-	return (
-		<button
-			className={[
-				'sessionsListItem__dropdownOption',
-				disabled && 'sessionsListItem__dropdownOption--disabled'
-			]
-				.filter(Boolean)
-				.join(' ')}
-			type="button"
-			disabled={disabled}
-		>
-			<Icon
-				className={[
-					'sessionsListItem__dropdownOptionIcon',
-					disabled && 'sessionsListItem__dropdownOptionIcon--disabled'
-				]
-					.filter(Boolean)
-					.join(' ')}
-			/>
-			<div className="sessionsListItem__dropdownOptionCenter">
-				<div className="sessionsListItem__dropdownOptionTitleRow">
-					<span
-						className={[
-							'sessionsListItem__dropdownOptionTitle',
-							disabled &&
-								'sessionsListItem__dropdownOptionTitle--disabled'
-						]
-							.filter(Boolean)
-							.join(' ')}
-					>
-						{title}
-					</span>
-					<kbd className="sessionsListItem__dropdownOptionShortcut">
-						{shortcut}
-					</kbd>
-				</div>
-				<p
-					className={[
-						'sessionsListItem__dropdownOptionDescription',
-						disabled &&
-							'sessionsListItem__dropdownOptionDescription--disabled'
-					]
-						.filter(Boolean)
-						.join(' ')}
-				>
-					{description}
-				</p>
-			</div>
-		</button>
-	);
-}
-
-function SessionMenuMock({ onClose }: { onClose: () => void }) {
-	const menuRef = React.useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		const animationFrame = window.requestAnimationFrame(() => {
-			const firstFocusable = menuRef.current?.querySelector<
-				HTMLButtonElement | HTMLAnchorElement
-			>(
-				'button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])'
-			);
-			firstFocusable?.focus();
-		});
-
-		return () => window.cancelAnimationFrame(animationFrame);
-	}, []);
+	const activeSession = buildExtendedSession(item, '');
 
 	return (
-		<div
-			id="storybook-session-menu"
-			ref={menuRef}
-			className="sessionsListItem__dropdown"
-			style={{ top: 88, right: 12 }}
-			onKeyDown={(event) => {
-				if (event.key === 'Tab') {
-					event.preventDefault();
-					event.stopPropagation();
-					onClose();
-					document
-						.querySelector<HTMLButtonElement>(
-							'.sessionsListItem__menuIcon'
-						)
-						?.focus();
-				}
-
-				if (event.key === 'Escape') {
-					event.stopPropagation();
-					onClose();
-					document
-						.querySelector<HTMLButtonElement>(
-							'.sessionsListItem__menuIcon'
-						)
-						?.focus();
-				}
+		<UserDataContext.Provider
+			value={{
+				userData,
+				setUserData: () => {},
+				reloadUserData: async () => userData
 			}}
-			role="dialog"
-			aria-label="Chatraum Einstellungen"
-			data-testid="session-menu"
 		>
-			<div className="sessionsListItem__dropdownHeader">
-				<p className="sessionsListItem__dropdownSubtitle">
-					Jeder Raum individuell anpassbar
-				</p>
-				<h1 className="sessionsListItem__dropdownTitle">
-					Chatraum Einstellungen
-				</h1>
-			</div>
-			<div className="sessionsListItem__dropdownDivider" />
-			<div className="sessionsListItem__dropdownContent">
-				<DropdownOptionMock
-					Icon={ArchiveIcon}
-					title="Archiviere Chat"
-					description="Bei archivierten Chats sind Benachrichtigungen inaktiv. Der Chat wird in 12 Monaten gelöscht."
-					shortcut="⇧A"
-				/>
-				<DropdownOptionMock
-					Icon={BellOffIcon}
-					title="Benachrichtigungen"
-					description="Konfiguriere Sie für diesen Chat individuell."
-					shortcut="⇧Ö"
-				/>
-				<DropdownOptionMock
-					Icon={HelpIcon}
-					title="Supervision anfragen"
-					description="Fragen Sie individuell Hilfe nach für Fälle."
-					shortcut="⇧Ä"
-					disabled
-				/>
-			</div>
-			<div className="sessionsListItem__dropdownDivider" />
-			<div className="sessionsListItem__dropdownContent">
-				<DropdownOptionMock
-					Icon={PlusIcon}
-					title="Personen hinzufügen"
-					description="Fügen Sie ein oder mehrere Personen hinzu."
-					shortcut="⇧I"
-				/>
-				<DropdownOptionMock
-					Icon={PackageIcon}
-					title="Chatanfrage teilen"
-					description="Spare Zeit, mit Hilfe unseres Datenschutzkonformen Workflows."
-					shortcut="⇧Ü"
-				/>
-			</div>
-		</div>
-	);
-}
-
-/** Mirrors registered Mail row layout (topic + PLZ, menu pill, Mail meta). */
-function ConsultantCardMock({
-	active = false,
-	beforeActive = false,
-	afterActive = false,
-	menuOpen = false,
-	onMenuToggle,
-	onCardKeyboardNavigate,
-	topic = 'Familienberatung',
-	postcode = '12345',
-	user = 'testuser@example.invalid',
-	subject = 'So geht es weiter'
-}: {
-	active?: boolean;
-	beforeActive?: boolean;
-	afterActive?: boolean;
-	menuOpen?: boolean;
-	onMenuToggle?: () => void;
-	onCardKeyboardNavigate?: () => void;
-	topic?: string;
-	postcode?: string;
-	user?: string;
-	subject?: string;
-}) {
-	return (
-		<div
-			className={[
-				'sessionsListItem',
-				active && 'sessionsListItem--active',
-				menuOpen && 'sessionsListItem--menuOpen',
-				beforeActive && 'sessionsListItem--beforeActive',
-				afterActive && 'sessionsListItem--afterActive'
-			]
-				.filter(Boolean)
-				.join(' ')}
-		>
-			<div
-				className="sessionsListItem__content"
-				role="tab"
-				tabIndex={0}
-				aria-selected={active}
-				data-testid="session-card-content"
-				onKeyDown={(event) => {
-					const target = event.target as HTMLElement;
-					if (
-						target.closest(
-							'.sessionsListItem__menuIcon, .sessionsListItem__dropdown'
-						)
-					) {
-						return;
-					}
-
-					if (event.key === 'Enter' || event.key === ' ') {
-						event.preventDefault();
-						onCardKeyboardNavigate?.();
-					}
+			<SessionTypeContext.Provider
+				value={{
+					type: SESSION_LIST_TYPES.MY_SESSION,
+					path: '/sessions/consultant/sessionView'
 				}}
 			>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__rowLeft">
-						<div className="sessionsListItem__topicPostcodeGroup">
-							<div className="sessionsListItem__topic">
-								{topic}
-							</div>
-							<div className="sessionsListItem__postcode">
-								{postcode}
-							</div>
-						</div>
-					</div>
-					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">18.3.2026</div>
-						<button
-							type="button"
-							className="sessionsListItem__menuIcon"
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								onMenuToggle?.();
+				<ConsultingTypesContext.Provider
+					value={{
+						consultingTypes: [runtimeConsultingType],
+						setConsultingTypes: () => {}
+					}}
+				>
+					<TopicsContext.Provider
+						value={{
+							topics: runtimeTopics,
+							refreshTopics: () => {}
+						}}
+					>
+						<SessionsDataContext.Provider
+							value={{
+								ready: true,
+								sessions: [item],
+								dispatch: () => {}
 							}}
-							onKeyDown={(e) => {
-								e.stopPropagation();
-								if (e.key === 'Escape' && menuOpen) {
-									onMenuToggle?.();
-								}
-							}}
-							aria-label="Chatraum Einstellungen"
-							aria-haspopup="dialog"
-							aria-expanded={menuOpen}
-							aria-controls={
-								menuOpen ? 'storybook-session-menu' : undefined
-							}
 						>
-							<MenuVerticalIcon />
-						</button>
-						{menuOpen
-							? createPortal(
-									<SessionMenuMock
-										onClose={() => onMenuToggle?.()}
-									/>,
-									document.body
-								)
-							: null}
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__icon">
-						<MessageAvatar
-							isGroup={false}
-							isSystemNotification={false}
-							userId={user}
-							username={user}
-							displayName={formatMessagePersonName(
-								undefined,
-								user
-							)}
-							size={32}
-						/>
-					</div>
-					<div className="sessionsListItem__username">
-						{formatMessagePersonName(undefined, user)}
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__subject sessionsListItem__subject--aliasMessage">
-						<em>{subject}</em>
-					</div>
-					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-						<img
-							src={nearbyConversationIcon}
-							alt="Mail"
-							className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-						/>
-						<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-							Mail
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
+							<E2EEContext.Provider
+								value={{
+									key: '',
+									reloadPrivateKey: () => {},
+									isE2eeEnabled: false,
+									e2EEReady: true
+								}}
+							>
+								<LegalLinksContext.Provider value={[]}>
+									<ActiveSessionContext.Provider
+										value={{
+											activeSession,
+											reloadActiveSession: () => {},
+											readActiveSession: () => {}
+										}}
+									>
+										<SessionListItemComponent
+											defaultLanguage="de"
+											handleKeyDownLisItemContent={() => {}}
+											index={index}
+											isBeforeActive={isBeforeActive}
+											isAfterActive={isAfterActive}
+										/>
+									</ActiveSessionContext.Provider>
+								</LegalLinksContext.Provider>
+							</E2EEContext.Provider>
+						</SessionsDataContext.Provider>
+					</TopicsContext.Provider>
+				</ConsultingTypesContext.Provider>
+			</SessionTypeContext.Provider>
+		</UserDataContext.Provider>
 	);
 }
 
-function InteractiveMenuPlayground() {
-	const [menuOpen, setMenuOpen] = useState(true);
-	const [navigationCount, setNavigationCount] = useState(0);
-
-	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
-			const target = event.target as HTMLElement;
-			if (
-				!target.closest('.sessionsListItem__menuIcon') &&
-				!target.closest('.sessionsListItem__dropdown')
-			) {
-				setMenuOpen(false);
-			}
-		};
-
-		document.addEventListener('mousedown', handleClickOutside);
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, []);
-
-	useEffect(() => {
-		const handleMenuDocumentKeyDown = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') {
-				setMenuOpen(false);
-			}
-
-			if (
-				event.key === 'Tab' &&
-				event.target instanceof Node &&
-				document
-					.querySelector('.sessionsListItem__dropdown')
-					?.contains(event.target)
-			) {
-				event.preventDefault();
-				setMenuOpen(false);
-				document
-					.querySelector<HTMLButtonElement>(
-						'.sessionsListItem__menuIcon'
-					)
-					?.focus();
-			}
-		};
-
-		document.addEventListener('keydown', handleMenuDocumentKeyDown);
-		return () => {
-			document.removeEventListener('keydown', handleMenuDocumentKeyDown);
-		};
-	}, []);
-
-	return (
-		<div style={{ ...listShell, minHeight: 420, position: 'relative' }}>
-			<div
-				data-testid="keyboard-navigation-count"
-				style={{
-					position: 'absolute',
-					left: -9999,
-					width: 1,
-					height: 1,
-					overflow: 'hidden'
-				}}
-			>
-				{navigationCount}
-			</div>
-			<ConsultantCardMock
-				menuOpen={menuOpen}
-				onMenuToggle={() => setMenuOpen((open) => !open)}
-				onCardKeyboardNavigate={() =>
-					setNavigationCount((count) => count + 1)
-				}
-				topic="Familienberatung mit sehr langem Themenlabel"
-				postcode="12345"
-				user="ruhiges Yak Kim"
-				subject="Anfrage Gesendet"
-			/>
-			<ConsultantCardMock
-				afterActive
-				topic="Sucht"
-				postcode="99322"
-				user="Ludwig Bonn..."
-				subject="Hubi, schau dir das mal an!"
-			/>
-		</div>
-	);
-}
-
-/** Group-style top row (topic chip only) + team meta. */
-function GroupCardMock({
-	active = false,
-	beforeActive = false,
-	afterActive = false
-}: {
-	active?: boolean;
-	beforeActive?: boolean;
-	afterActive?: boolean;
-}) {
-	return (
-		<div
-			className={[
-				'sessionsListItem',
-				active && 'sessionsListItem--active',
-				beforeActive && 'sessionsListItem--beforeActive',
-				afterActive && 'sessionsListItem--afterActive'
-			]
-				.filter(Boolean)
-				.join(' ')}
-		>
-			<div className="sessionsListItem__content">
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__rowLeft">
-						<div className="sessionsListItem__topic">
-							kein Thema gewählt
-						</div>
-						<div className="sessionsListItem__consultingType" />
-					</div>
-					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">17.3.2026</div>
-						<button
-							type="button"
-							className="sessionsListItem__menuIcon"
-							aria-label="Chatraum Einstellungen"
-						>
-							<MenuVerticalIcon />
-						</button>
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<MockAvatar letter="N" bg="#c8e6c9" />
-					<div className="sessionsListItem__username">
-						New Redeploy
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__subject">
-						Sie haben den Chat erstellt.
-					</div>
-					<div className="sessionsListItem__consultingTypeIcon">
-						<img
-							src={teamImage}
-							alt=""
-							className="sessionsListItem__consultingTypeIcon--team"
-						/>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-/** Postcode only (no topic) — standalone PLZ pill. */
-function PostcodeOnlyCardMock() {
-	return (
-		<div className="sessionsListItem">
-			<div className="sessionsListItem__content">
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__rowLeft">
-						<div className="sessionsListItem__consultingType">
-							<div className="sessionsListItem__postcode sessionsListItem__postcode--standalone">
-								99322
-							</div>
-						</div>
-					</div>
-					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">1.4.2026</div>
-						<button
-							type="button"
-							className="sessionsListItem__menuIcon"
-							aria-label="Chatraum Einstellungen"
-						>
-							<MenuVerticalIcon />
-						</button>
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<MockAvatar letter="O" bg="#90caf9" />
-					<div className="sessionsListItem__username">
-						user@example.org
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__subject">
-						Letzte Nachricht …
-					</div>
-					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
-						<img
-							src={nearbyConversationIcon}
-							alt="Mail"
-							className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-						/>
-						<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-							Mail
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function RuntimeSessionListItem({
-	lastMessage = runtimeSession.session.lastMessage,
-	sessionOverrides = {},
-	consultantId = runtimeSession.consultant.id,
-	viewerId = runtimeUserData.userId,
-	asSearchingAsker = false
-}: {
+type RuntimeSessionOptions = {
 	lastMessage?: string;
 	/** Extra `session` DTO fields, e.g. the ADR-008 `supervision` marker. */
 	sessionOverrides?: Partial<ListItemInterface['session']>;
+	/** Extra `user` fields, e.g. a live-chat guest's animal name. */
+	userOverrides?: Partial<ListItemInterface['user']>;
 	/** Owning consultant of the row (defaults to the viewer = own session). */
 	consultantId?: string;
 	/** Logged-in consultant. */
 	viewerId?: string;
 	/** FE#1115: the advice seeker's unaccepted row; no consultant, so the avatar slot holds the magnet. */
 	asSearchingAsker?: boolean;
-} = {}) {
-	const storySession: ListItemInterface = {
-		...runtimeSession,
-		consultant: asSearchingAsker
-			? undefined
-			: {
-					...runtimeSession.consultant,
-					consultantId,
-					id: consultantId
-				},
-		session: {
-			...runtimeSession.session,
-			lastMessage,
-			...sessionOverrides
-		}
-	};
-	const activeSession = buildExtendedSession(storySession, '');
-	const userData = asSearchingAsker
+};
+
+const runtimeSessionItem = ({
+	lastMessage = runtimeSession.session.lastMessage,
+	sessionOverrides = {},
+	userOverrides = {},
+	consultantId = runtimeSession.consultant.id,
+	asSearchingAsker = false
+}: RuntimeSessionOptions = {}): ListItemInterface => ({
+	...runtimeSession,
+	user: { ...runtimeSession.user, ...userOverrides },
+	consultant: asSearchingAsker
+		? undefined
+		: {
+				...runtimeSession.consultant,
+				consultantId,
+				id: consultantId
+			},
+	session: {
+		...runtimeSession.session,
+		lastMessage,
+		...sessionOverrides
+	}
+});
+
+const runtimeViewer = ({
+	viewerId = runtimeUserData.userId,
+	asSearchingAsker = false
+}: RuntimeSessionOptions = {}) =>
+	asSearchingAsker
 		? {
 				...runtimeUserData,
 				userId: 'asker-4401',
@@ -725,271 +329,13 @@ function RuntimeSessionListItem({
 			}
 		: { ...runtimeUserData, userId: viewerId };
 
+function RuntimeSessionListItem(options: RuntimeSessionOptions = {}) {
 	return (
 		<div style={listShell}>
-			<UserDataContext.Provider
-				value={{
-					userData,
-					setUserData: () => {},
-					reloadUserData: async () => userData
-				}}
-			>
-				<SessionTypeContext.Provider
-					value={{
-						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: '/sessions/consultant/sessionView'
-					}}
-				>
-					<ConsultingTypesContext.Provider
-						value={{
-							consultingTypes: [runtimeConsultingType],
-							setConsultingTypes: () => {}
-						}}
-					>
-						<TopicsContext.Provider
-							value={{
-								topics: [runtimeTopic],
-								refreshTopics: () => {}
-							}}
-						>
-							<SessionsDataContext.Provider
-								value={{
-									ready: true,
-									sessions: [storySession],
-									dispatch: () => {}
-								}}
-							>
-								<E2EEContext.Provider
-									value={{
-										key: '',
-										reloadPrivateKey: () => {},
-										isE2eeEnabled: false,
-										e2EEReady: true
-									}}
-								>
-									<LegalLinksContext.Provider value={[]}>
-										<ActiveSessionContext.Provider
-											value={{
-												activeSession,
-												reloadActiveSession: () => {},
-												readActiveSession: () => {}
-											}}
-										>
-											<SessionListItemComponent
-												defaultLanguage="de"
-												handleKeyDownLisItemContent={() => {}}
-												index={0}
-											/>
-										</ActiveSessionContext.Provider>
-									</LegalLinksContext.Provider>
-								</E2EEContext.Provider>
-							</SessionsDataContext.Provider>
-						</TopicsContext.Provider>
-					</ConsultingTypesContext.Provider>
-				</SessionTypeContext.Provider>
-			</UserDataContext.Provider>
-		</div>
-	);
-}
-
-/** Overlapping initials circles for group rows (Interna / Gesprächskreis). */
-function StackedAvatarsMock({ initials }: { initials: string[] }) {
-	const palette = ['#c8e6c9', '#bbdefb', '#e8b4f0'];
-	const visible = initials.slice(0, 2);
-	const overflow = initials.length - visible.length;
-
-	return (
-		<div className="sessionsListItem__stackedAvatars">
-			{visible.map((label, index) => (
-				<div key={index} className="sessionsListItem__avatarWrapper">
-					<div
-						style={{
-							width: 32,
-							height: 32,
-							borderRadius: '50%',
-							background: palette[index % palette.length],
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							fontWeight: 600,
-							fontSize: 12,
-							color: '#333'
-						}}
-					>
-						{label}
-					</div>
-				</div>
-			))}
-			{overflow > 0 ? (
-				<div className="sessionsListItem__avatarWrapper sessionsListItem__avatarWrapper--plus">
-					<div className="sessionsListItem__plusAvatar">
-						+{overflow}
-					</div>
-				</div>
-			) : null}
-		</div>
-	);
-}
-
-/**
- * Internal counsellor group chat (Figma 98-20465).
- * Stacked initials avatars + group name + sender-prefixed preview, the
- * consulting-type tag "Interna", and the "Interna" chat-type icon on the right.
- */
-function InternalCounsellorCardMock() {
-	return (
-		<div className="sessionsListItem sessionsListItem--groupChat">
-			<div className="sessionsListItem__content">
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__rowLeft">
-						<div className="sessionsListItem__topic">Interna</div>
-					</div>
-					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">now</div>
-						<button
-							type="button"
-							className="sessionsListItem__menuIcon"
-							aria-label="Chatraum Einstellungen"
-						>
-							<MenuVerticalIcon />
-						</button>
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<StackedAvatarsMock initials={['MK', 'AB', 'CD']} />
-					<div className="sessionsListItem__username">
-						Anfragenkoordinierung
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__subject">
-						Mario K: Das ist schon komisch mit di…
-					</div>
-					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--internal">
-						<img
-							src={internalConversationIcon}
-							alt="Interna"
-							className="sessionsListItem__consultingTypeIcon--internalIcon"
-						/>
-						<span className="sessionsListItem__consultingTypeIcon--internalLabel">
-							Interna
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-/**
- * Anonymous live chat (Figma 287-23471).
- * Animal pseudonym as the display name, no postcode pill, and the "Live Chat"
- * chat-type icon + label on the right.
- */
-function LiveChatCardMock() {
-	return (
-		<div className="sessionsListItem sessionsListItem--anonymous">
-			<div className="sessionsListItem__content sessionsListItem__content--anonymous">
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__rowLeft">
-						<div className="sessionsListItem__topic">
-							Familienberatung
-						</div>
-						<div className="sessionsListItem__consultingType" />
-					</div>
-					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">now</div>
-						<button
-							type="button"
-							className="sessionsListItem__menuIcon"
-							aria-label="Chatraum Einstellungen"
-						>
-							<MenuVerticalIcon />
-						</button>
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<MockAvatar letter="Y" bg="#ffe0b2" />
-					<div className="sessionsListItem__username">
-						ruhiges Yak Kim
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__subject">
-						Das soll aber einzigartig
-					</div>
-					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--liveChat">
-						<svg
-							width="22"
-							height="19"
-							viewBox="0 0 22 19"
-							fill="none"
-							xmlns="http://www.w3.org/2000/svg"
-							aria-hidden="true"
-						>
-							<path
-								d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
-								fill="#4B515A"
-							/>
-						</svg>
-						<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
-							Live Chat
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
-	);
-}
-
-/**
- * Guided self-help group / Gesprächskreis (Figma 115-28318).
- * Stacked initials avatars + group name, the consulting-type tag
- * "Gesprächskreis", and the "Gesprächskreis" chat-type icon on the right.
- */
-function SelfHelpCardMock() {
-	return (
-		<div className="sessionsListItem sessionsListItem--groupChat">
-			<div className="sessionsListItem__content">
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__rowLeft">
-						<div className="sessionsListItem__topic">
-							Gesprächskreis
-						</div>
-					</div>
-					<div className="sessionsListItem__rowRight">
-						<div className="sessionsListItem__date">now</div>
-						<button
-							type="button"
-							className="sessionsListItem__menuIcon"
-							aria-label="Chatraum Einstellungen"
-						>
-							<MenuVerticalIcon />
-						</button>
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<StackedAvatarsMock initials={['MO', 'JS', 'GF', 'LK']} />
-					<div className="sessionsListItem__username">
-						Montagsrunde
-					</div>
-				</div>
-				<div className="sessionsListItem__row">
-					<div className="sessionsListItem__subject">
-						Das soll aber einzigartig
-					</div>
-					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--selfHelp">
-						<img
-							src={selfHelpIcon}
-							alt="Gesprächskreis"
-							className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
-						/>
-						<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
-							Gesprächskreis
-						</span>
-					</div>
-				</div>
-			</div>
+			<RuntimeCard
+				item={runtimeSessionItem(options)}
+				userData={runtimeViewer(options)}
+			/>
 		</div>
 	);
 }
@@ -1018,10 +364,9 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Runtime story plus visual reference states for session list rows. ' +
-					'#597: `ConsultantSelected` shows `2px solid var(--m3-primary)`; ' +
-					'`ConsultantMenuOpen` shows vertical 32×48 menu trigger + active menu borders. ' +
-					'`RuntimeComponent` mounts the real `SessionListItemComponent` with fixture providers.'
+					'Every story mounts the real `SessionListItemComponent` with fixture providers. ' +
+					'The route in `parameters.router` decides which card is selected; ' +
+					'`ConsultantSelected` shows the #597 ring `2px solid var(--m3-primary)`.'
 			}
 		}
 	}
@@ -1124,115 +469,6 @@ export const RuntimeComponentRead: Story = {
 			).toBe(true);
 		});
 	}
-};
-
-export const ConsultantUnselected: Story = {
-	render: () => (
-		<div style={listShell}>
-			<ConsultantCardMock />
-		</div>
-	)
-};
-
-export const ConsultantSelected: Story = {
-	render: () => (
-		<div style={listShell}>
-			<ConsultantCardMock active />
-		</div>
-	)
-};
-
-/** #597: menu open → vertical 32×48 trigger + 2px primary-container borders. */
-export const ConsultantMenuOpen: Story = {
-	render: () => (
-		<div style={listShell}>
-			<ConsultantCardMock active menuOpen />
-		</div>
-	)
-};
-
-/** Middle card selected with stacked neighbours (no extra gap). */
-export const StackedListWithSelection: Story = {
-	render: () => (
-		<div style={listShell}>
-			<GroupCardMock beforeActive />
-			<ConsultantCardMock active />
-			<GroupCardMock afterActive />
-		</div>
-	)
-};
-
-export const GroupChatRow: Story = {
-	render: () => (
-		<div style={listShell}>
-			<GroupCardMock />
-		</div>
-	)
-};
-
-export const PostcodeOnly: Story = {
-	render: () => (
-		<div style={listShell}>
-			<PostcodeOnlyCardMock />
-		</div>
-	)
-};
-
-export const InteractiveMenuAndLongContent: Story = {
-	parameters: {
-		viewport: {
-			defaultViewport: 'mobile1'
-		}
-	},
-	render: () => <InteractiveMenuPlayground />
-};
-
-/* ------------------------------------------------------------------ *
- * Figma-node stories (self-contained visual mocks)
- * ------------------------------------------------------------------ */
-
-/**
- * Internal counsellor chat (Figma 98-20465).
- * Stacked avatars + group name + sender-prefixed preview, consulting-type tag
- * "Interna", and no chat-type icon on the right.
- */
-export const InternalCounsellorChat: Story = {
-	render: () => (
-		<div style={listShell}>
-			<InternalCounsellorCardMock />
-		</div>
-	)
-};
-
-// ZipTopicSelection (Mail, Figma 98-20505) is intentionally NOT a separate
-// story: its layout (topic tag + postcode pill + "Mail" chat-type icon) is
-// already covered by `ConsultantUnselected` (ConsultantCardMock). Adding it
-// again would just duplicate that story, so it is skipped per the refactor.
-
-/**
- * Anonymous live chat (Figma 287-23471).
- * Animal pseudonym as the display name, no postcode, "Live Chat" chat-type
- * icon + label.
- */
-export const LiveChat: Story = {
-	render: () => (
-		<div style={listShell}>
-			<LiveChatCardMock />
-		</div>
-	)
-};
-
-/**
- * Guided self-help group / Gesprächskreis (Figma 115-28318).
- * Stacked avatars + group name, consulting-type tag "Gesprächskreis", and no
- * chat-type icon on the right (Kreis icon not yet implemented — see mock TODO).
- */
-export const GuidedSelfHelpGroup: Story = {
-	render: () => (
-		<div style={listShell}>
-			<SelfHelpCardMock />
-		</div>
-	)
 };
 
 /* ------------------------------------------------------------------
@@ -2013,5 +1249,473 @@ export const AskerSearchingRow: Story = {
 		await expect(beamBox.top).toBeGreaterThan(cardBox.top);
 		await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
 		magnet.classList.remove('consultantSearchLoader--pulsing');
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Card states — each one the real component, selected by route and data
+ * ------------------------------------------------------------------ */
+
+const PRIMARY = 'rgb(165, 0, 10)';
+const PRIMARY_CONTAINER = 'rgb(204, 30, 28)';
+const WHITE = 'rgb(255, 255, 255)';
+
+/** Waits for the row to render and ends its entrance, so colours are read settled. */
+const settledRows = async (canvasElement: HTMLElement, count = 1) => {
+	const rows = await waitFor(() => {
+		const found = Array.from(
+			canvasElement.querySelectorAll<HTMLElement>('.sessionsListItem')
+		);
+		expect(found).toHaveLength(count);
+		return found;
+	});
+	settleCardEntrance(canvasElement);
+	return rows;
+};
+
+const part = (row: HTMLElement, selector: string) => {
+	const element = row.querySelector<HTMLElement>(selector);
+	expect(element, selector).not.toBeNull();
+	return element!;
+};
+
+/** Group rows: the "no topic" chip, two placeholder avatars and a "+1" circle. */
+const expectGroupRow = async (row: HTMLElement, name: string) => {
+	await expect(row.classList.contains('sessionsListItem--groupChat')).toBe(
+		true
+	);
+	await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
+		'kein Thema gewählt'
+	);
+	const stack = part(row, '.sessionsListItem__stackedAvatars');
+	await expect(
+		stack.querySelectorAll(
+			'.sessionsListItem__avatarWrapper:not(.sessionsListItem__avatarWrapper--plus)'
+		)
+	).toHaveLength(2);
+	await expect(part(stack, '.sessionsListItem__plusAvatar').textContent).toBe(
+		'+1'
+	);
+	await expect(part(row, '.sessionsListItem__username').textContent).toBe(
+		name
+	);
+};
+
+/** Resting consultant card: topic and postcode as one pill, Mail, alias preview in italics. */
+export const ConsultantUnselected: Story = {
+	name: 'Beratung — nicht ausgewählt',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<RuntimeSessionListItem
+				sessionOverrides={{ lastMessageType: 'FURTHER_STEPS' }}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.classList.contains('sessionsListItem--active')).toBe(
+			false
+		);
+		const card = part(row, '.sessionsListItem__content');
+		await expect(getComputedStyle(card).borderTopWidth).toBe('1px');
+		const group = part(row, '.sessionsListItem__topicPostcodeGroup');
+		await expect(part(group, '.sessionsListItem__topic').textContent).toBe(
+			'Familienberatung'
+		);
+		await expect(
+			part(group, '.sessionsListItem__postcode').textContent
+		).toBe('12345');
+		await expect(
+			part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
+				.textContent
+		).toBe('Mail');
+		const subject = part(row, '.sessionsListItem__subject');
+		await expect(
+			subject.classList.contains(
+				'sessionsListItem__subject--aliasMessage'
+			)
+		).toBe(true);
+		await expect(subject.textContent).toBe('So geht es weiter');
+		await expect(getComputedStyle(subject).fontStyle).toBe('italic');
+	}
+};
+
+/** #597: the selected card carries a 2 px primary ring; its chips turn primary-container. */
+export const ConsultantSelected: Story = {
+	name: 'Beratung — ausgewählt (#597)',
+	render: () => {
+		seedMatrixRoom(2);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.classList.contains('sessionsListItem--active')).toBe(
+			true
+		);
+		const card = getComputedStyle(part(row, '.sessionsListItem__content'));
+		await waitFor(() => expect(card.borderTopColor).toBe(PRIMARY));
+		await expect(card.borderTopWidth).toBe('2px');
+		const topic = getComputedStyle(part(row, '.sessionsListItem__topic'));
+		await expect(topic.backgroundColor).toBe(PRIMARY_CONTAINER);
+		await expect(topic.color).toBe(WHITE);
+		const postcode = getComputedStyle(
+			part(row, '.sessionsListItem__postcode')
+		);
+		await expect(postcode.borderTopColor).toBe(PRIMARY_CONTAINER);
+		await expect(postcode.color).toBe(PRIMARY_CONTAINER);
+		await expect(
+			getComputedStyle(
+				part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
+			).color
+		).toBe(PRIMARY);
+	}
+};
+
+/** #597: the open menu takes the ring; the selected card keeps its 2 px as a white border. */
+export const ConsultantMenuOpen: Story = {
+	name: 'Beratung — Menü offen (#597)',
+	render: () => {
+		seedMatrixRoom(2);
+		return <RuntimeSessionListItem />;
+	},
+	play: async ({ canvasElement }) => {
+		const { trigger, menu } = await openTheMenu(canvasElement);
+		const row =
+			canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
+		await expect(row.classList.contains('sessionsListItem--menuOpen')).toBe(
+			true
+		);
+		await expect(trigger.getAttribute('aria-expanded')).toBe('true');
+		await expect(menu.getAttribute('role')).toBe('dialog');
+		await expectOnlyTheMenuRinged(canvasElement);
+		await expect(
+			getComputedStyle(part(row, '.sessionsListItem__topic'))
+				.backgroundColor
+		).toBe(PRIMARY_CONTAINER);
+		// The 32 × 48 pill, wider than tall.
+		const pill = trigger.getBoundingClientRect();
+		await expect(Math.round(pill.width)).toBe(48);
+		await expect(Math.round(pill.height)).toBe(32);
+	}
+};
+
+/** The selected card between two group rows, which learn they sit before and after it. */
+export const StackedListWithSelection: Story = {
+	name: 'Liste — Auswahl zwischen zwei Gruppen',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					index={0}
+					isBeforeActive
+					item={runtimeGroupChat({ id: 5501, name: 'New Redeploy' })}
+				/>
+				<RuntimeCard index={1} item={runtimeSessionItem()} />
+				<RuntimeCard
+					index={2}
+					isAfterActive
+					item={runtimeGroupChat({ id: 5502, name: 'Teamrunde' })}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [before, selected, after] = await settledRows(canvasElement, 3);
+		await expect(
+			[before, selected, after].map((row) =>
+				row.classList.contains('sessionsListItem--active')
+			)
+		).toEqual([false, true, false]);
+		await expect(
+			before.classList.contains('sessionsListItem--beforeActive')
+		).toBe(true);
+		await expect(
+			after.classList.contains('sessionsListItem--afterActive')
+		).toBe(true);
+		// No extra gap: the 24 px card spacing holds on both sides of the selection.
+		const box = (row: HTMLElement) =>
+			part(row, '.sessionsListItem__content').getBoundingClientRect();
+		await expect(Math.round(box(selected).top - box(before).bottom)).toBe(
+			24
+		);
+		await expect(Math.round(box(after).top - box(selected).bottom)).toBe(
+			24
+		);
+	}
+};
+
+/** A group chat the backend types as neither Interna nor Gesprächskreis falls back to the team icon. */
+export const GroupChatRow: Story = {
+	name: 'Gruppe — ohne Gruppen-Typ (Team-Symbol)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5501,
+						name: 'New Redeploy',
+						conversationType: 'AGENCY_COUNSELLING'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'New Redeploy');
+		// Own chat without a message yet.
+		await expect(part(row, '.sessionsListItem__subject').textContent).toBe(
+			'Sie haben den Chat erstellt.'
+		);
+		await expect(
+			part(row, '.sessionsListItem__consultingTypeIcon--team')
+		).toBeTruthy();
+		await expect(
+			row.querySelector('.sessionsListItem__menuIcon')
+		).not.toBeNull();
+	}
+};
+
+/** No topic chosen: the postcode stands alone as a full pill. */
+export const PostcodeOnly: Story = {
+	name: 'Beratung — nur Postleitzahl',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<RuntimeSessionListItem
+				sessionOverrides={{ topic: undefined, postcode: 99322 }}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(row.querySelector('.sessionsListItem__topic')).toBeNull();
+		const postcode = part(row, '.sessionsListItem__postcode--standalone');
+		await expect(postcode.textContent).toBe('99322');
+		await expect(getComputedStyle(postcode).borderLeftWidth).toBe('1px');
+		await expect(
+			part(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
+				.textContent
+		).toBe('Mail');
+	}
+};
+
+/** 390 px: a long topic truncates, the menu closes on Escape and Tab, Enter opens the chat. */
+export const InteractiveMenuAndLongContent: Story = {
+	name: 'Beratung — 390 px, langes Thema, Menü per Tastatur',
+	globals: { viewport: { value: 'phone390' } },
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					index={0}
+					item={runtimeSessionItem({
+						lastMessage: 'Anfrage gesendet',
+						sessionOverrides: { topic: longTopic }
+					})}
+				/>
+				<RuntimeCard
+					index={1}
+					item={runtimeSessionItem({
+						lastMessage: 'Hubi, schau dir das mal an!',
+						sessionOverrides: {
+							id: 4402,
+							matrixRoomId: 'storybook-runtime-room-4402',
+							topic: addictionTopic,
+							postcode: 99322
+						},
+						userOverrides: {
+							username: 'ludwig-bonn@example.invalid',
+							displayName: 'Ludwig Bonn'
+						}
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [first, second] = await settledRows(canvasElement, 2);
+
+		// The long topic is cut with an ellipsis instead of pushing the menu out.
+		const topic = part(first, '.sessionsListItem__topic');
+		await expect(topic.textContent).toBe(longTopic.name);
+		await expect(getComputedStyle(topic).textOverflow).toBe('ellipsis');
+		await expect(topic.scrollWidth).toBeGreaterThan(topic.clientWidth);
+		const card = part(first, '.sessionsListItem__content');
+		await expect(
+			part(first, '.sessionsListItem__menuIcon').getBoundingClientRect()
+				.right
+		).toBeLessThanOrEqual(card.getBoundingClientRect().right);
+
+		// Escape closes the menu and gives the keyboard back to the trigger.
+		const { trigger } = await openTheMenu(canvasElement);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => {
+			expect(
+				document.querySelector('.sessionsListItem__dropdown')
+			).toBeNull();
+			expect(document.activeElement).toBe(trigger);
+		});
+
+		// So does Tab from inside the menu.
+		await openTheMenu(canvasElement);
+		await waitFor(() =>
+			expect(
+				document
+					.querySelector('.sessionsListItem__dropdown')
+					?.contains(document.activeElement)
+			).toBe(true)
+		);
+		await userEvent.keyboard('{Tab}');
+		await waitFor(() => {
+			expect(
+				document.querySelector('.sessionsListItem__dropdown')
+			).toBeNull();
+			expect(document.activeElement).toBe(trigger);
+		});
+
+		// Enter on the card opens that chat, which selects it and only it.
+		card.focus();
+		await userEvent.keyboard('{Enter}');
+		await waitFor(() =>
+			expect(first.classList.contains('sessionsListItem--active')).toBe(
+				true
+			)
+		);
+		await expect(
+			second.classList.contains('sessionsListItem--active')
+		).toBe(false);
+	}
+};
+
+/** Internal counsellor group (Figma 98-20465): stacked avatars and the Interna mark. */
+export const InternalCounsellorChat: Story = {
+	name: 'Gruppe — Interna (Figma 98-20465)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5503,
+						name: 'Anfragenkoordinierung',
+						lastMessage: 'Das ist schon komisch mit dieser Anfrage.'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Anfragenkoordinierung');
+		await expect(part(row, '.sessionsListItem__subject').textContent).toBe(
+			'Das ist schon komisch mit dieser Anfrage.'
+		);
+		await expect(
+			part(row, '.sessionsListItem__consultingTypeIcon--internalLabel')
+				.textContent
+		).toBe('Interna');
+		await expect(
+			part(
+				row,
+				'.sessionsListItem__consultingTypeIcon--internalIcon'
+			).getAttribute('alt')
+		).toBe('Interna');
+	}
+};
+
+// ZipTopicSelection (Mail, Figma 98-20505) has no story of its own: topic,
+// postcode and Mail are `ConsultantUnselected`.
+
+/** Anonymous live chat (Figma 287-23471): animal name, no postcode, the Live Chat mark. */
+export const LiveChat: Story = {
+	name: 'Live-Chat — anonym (Figma 287-23471)',
+	parameters: {
+		router: { initialPath: '/sessions/consultant/sessionView' }
+	},
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<RuntimeSessionListItem
+				lastMessage="Das soll aber einzigartig"
+				sessionOverrides={{ registrationType: 'ANONYMOUS' as any }}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expect(
+			row.classList.contains('sessionsListItem--anonymous')
+		).toBe(true);
+		await expect(
+			part(row, '.sessionsListItem__content').classList.contains(
+				'sessionsListItem__content--anonymous'
+			)
+		).toBe(true);
+		await expect(part(row, '.sessionsListItem__topic').textContent).toBe(
+			'Familienberatung'
+		);
+		await expect(
+			row.querySelector('.sessionsListItem__postcode')
+		).toBeNull();
+		await expect(part(row, '.sessionsListItem__username').textContent).toBe(
+			'ruhiges Yak Kim'
+		);
+		const mark = part(
+			row,
+			'.sessionsListItem__consultingTypeIcon--liveChat'
+		);
+		await expect(mark.querySelector('svg')).not.toBeNull();
+		await expect(
+			part(mark, '.sessionsListItem__consultingTypeIcon--liveChatLabel')
+				.textContent
+		).toBe('Live Chat');
+	}
+};
+
+/** Guided self-help group (Figma 115-28318): a recurring group reads as Gesprächskreis. */
+export const GuidedSelfHelpGroup: Story = {
+	name: 'Gruppe — Gesprächskreis (Figma 115-28318)',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={listShell}>
+				<RuntimeCard
+					item={runtimeGroupChat({
+						id: 5504,
+						name: 'Montagsrunde',
+						repetitive: true,
+						lastMessage: 'Das soll aber einzigartig'
+					})}
+				/>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [row] = await settledRows(canvasElement);
+		await expectGroupRow(row, 'Montagsrunde');
+		await expect(
+			part(row, '.sessionsListItem__consultingTypeIcon--selfHelpLabel')
+				.textContent
+		).toBe('Gesprächskreis');
+		await expect(
+			part(
+				row,
+				'.sessionsListItem__consultingTypeIcon--selfHelpIcon'
+			).getAttribute('alt')
+		).toBe('Gesprächskreis');
 	}
 };
