@@ -14,6 +14,14 @@ import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEn
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { GroupConsentGate } from './consent/GroupConsentGate';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
+import { JoinGroupChatView } from './JoinGroupChatView';
+import {
+	buildGroupStageListItem,
+	GROUP_STAGE_CHAT_ID,
+	GROUP_STAGE_ROOM_ID,
+	GroupChatStage
+} from './groupChatStageStoryShell';
+import './joinChat.styles';
 import { ChatStageProviders } from '../chatStage/__storybook__/ChatStageProviders';
 import {
 	stageRoute,
@@ -152,10 +160,12 @@ export const JoiningAfter390: Story = {
    --------------------------------------------------------------------------- */
 
 /**
- * The gate as the room shows it: in place of the conversation, the composer
- * hidden. Storybook has no agency service, so the sentence is the platform's
- * — the fallback the gate uses when the group's department cannot be told.
- * With a department that has its own wording, that wording stands here.
+ * The gate over the real group room: navigation, list column and the group's
+ * room behind the dialog's scrim, as the other #1499 stages frame it. The
+ * room behind is the waiting-room stage fixture. Storybook has no agency
+ * service, so the sentence is the platform's — the fallback when the group's
+ * department cannot be told; with a department that has its own wording, that
+ * wording stands here.
  */
 /* Plain labels: the gate renders its sentence with `renderToString`, outside
    the story's locale provider, so i18n keys would come out in English. */
@@ -172,52 +182,69 @@ const gateLegalLinks: TProvidedLegalLink[] = [
 	} as TProvidedLegalLink
 ];
 
-const GateInRoom = () => (
-	<LegalLinksContext.Provider value={gateLegalLinks}>
-		<Box
-			sx={{
-				minHeight: '100vh',
-				display: 'flex',
-				bgcolor: 'var(--m3-surface-container, #eceaea)'
-			}}
-		>
-			<Box
-				className="session__content session__content--consentGate"
-				sx={{
-					flex: 1,
-					display: 'flex',
-					m: { xs: 0, md: 3 },
-					borderRadius: { xs: 0, md: '24px' },
-					bgcolor: '#fff'
-				}}
-			>
+const groupRoomRoute = {
+	router: {
+		initialPath: `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}`
+	}
+};
+
+const GateOverGroupRoom = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
+	const listItem = React.useMemo(() => buildGroupStageListItem(-252), []);
+	return (
+		<GroupChatStage listItem={listItem} layout={layout}>
+			<JoinGroupChatView />
+			<LegalLinksContext.Provider value={gateLegalLinks}>
 				<GroupConsentGate
 					agencyId={null}
 					onAccepted={() => undefined}
 				/>
-			</Box>
-		</Box>
-	</LegalLinksContext.Provider>
-);
+			</LegalLinksContext.Provider>
+		</GroupChatStage>
+	);
+};
 
 const expectGate = async (canvasElement: HTMLElement) => {
-	const canvas = within(canvasElement);
-	await expect(await canvas.findByRole('dialog')).toBeVisible();
-	await expect(canvas.getByText('Bevor Sie schreiben')).toBeVisible();
-	await expect(canvas.queryByText(/beratende Person einen Chat/)).toBeNull();
+	const body = within(canvasElement.ownerDocument.body);
+	const dialog = await body.findByRole('dialog');
+	await expect(dialog).toBeVisible();
+	await expect(body.getByText('Bevor Sie schreiben')).toBeVisible();
+	await expect(body.queryByText(/beratende Person einen Chat/)).toBeNull();
+	// The app's font, not the legacy dialog's Helvetica/Arial stack.
+	await expect(getComputedStyle(dialog).fontFamily).toMatch(/Inter/);
+	// Full-size actions, and the sentence at normal weight.
+	for (const name of ['Ablehnen', 'Einverstanden']) {
+		const button = body.getByRole('button', { name });
+		await expect(
+			button.getBoundingClientRect().height
+		).toBeGreaterThanOrEqual(40);
+	}
+	const sentence = canvasElement.ownerDocument.querySelector(
+		'.groupConsentGate__sentence'
+	) as HTMLElement;
+	await expect(Number(getComputedStyle(sentence).fontWeight)).toBeLessThan(
+		500
+	);
+	// No focus outline drawn around the whole viewport.
+	const active = canvasElement.ownerDocument.activeElement as HTMLElement;
+	const outline = getComputedStyle(active);
+	await expect(
+		outline.outlineStyle === 'none' || outline.outlineWidth === '0px'
+	).toBe(true);
 };
 
 export const PrivacyGate1440: Story = {
 	name: '1a · Group room — privacy gate before the first message · 1440',
+	parameters: groupRoomRoute,
 	globals: desktop1440Globals,
-	render: () => <GateInRoom />,
+	render: () => <GateOverGroupRoom layout="desktop" />,
 	play: async ({ canvasElement }) => expectGate(canvasElement)
 };
 
 export const PrivacyGate390: Story = {
 	name: '1a · Group room — privacy gate before the first message · 390',
+	parameters: groupRoomRoute,
 	globals: phone390Globals,
-	render: () => <GateInRoom />,
+	render: () => <GateOverGroupRoom layout="mobile" />,
 	play: async ({ canvasElement }) => expectGate(canvasElement)
 };
 

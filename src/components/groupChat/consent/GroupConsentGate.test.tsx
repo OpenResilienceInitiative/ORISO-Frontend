@@ -28,8 +28,7 @@ vi.mock('../../../api/apiGetConsentText', () => ({
 
 const apiPatchUserData = vi.fn(() => Promise.resolve());
 vi.mock('../../../api/apiPatchUserData', () => ({
-	apiPatchUserData: (...args: unknown[]) =>
-		(apiPatchUserData as any)(...args)
+	apiPatchUserData: (...args: unknown[]) => (apiPatchUserData as any)(...args)
 }));
 
 /**
@@ -79,7 +78,7 @@ describe('GroupConsentGate', () => {
 			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
 		);
 
-		fireEvent.click(screen.getByText('Ich bin einverstanden'));
+		fireEvent.click(screen.getByRole('button', { name: 'Einverstanden' }));
 
 		await waitFor(() => expect(onAccepted).toHaveBeenCalled());
 		expect(apiPatchUserData).toHaveBeenCalledWith({
@@ -98,7 +97,7 @@ describe('GroupConsentGate', () => {
 			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
 		);
 
-		fireEvent.click(screen.getByText('Ich bin einverstanden'));
+		fireEvent.click(screen.getByRole('button', { name: 'Einverstanden' }));
 
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalled());
 		expect(onAccepted).not.toHaveBeenCalled();

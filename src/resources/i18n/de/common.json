@@ -1177,7 +1177,10 @@
 		},
 		"consent": {
 			"headline": "Bevor Sie schreiben",
-			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben."
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.",
+			"reject": "Ablehnen",
+			"accept": "Einverstanden",
+			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen."
 		}
 	},
 	"help": {

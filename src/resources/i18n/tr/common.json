@@ -1182,7 +1182,10 @@
 		},
 		"consent": {
 			"headline": "Yazmadan önce",
-			"description": "Bu grup bir danışma merkezi tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin."
+			"description": "Bu grup bir danışma merkezi tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin.",
+			"reject": "Reddet",
+			"accept": "Kabul ediyorum",
+			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz."
 		}
 	},
 	"help": {

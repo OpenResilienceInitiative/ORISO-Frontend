@@ -1182,7 +1182,10 @@
 		},
 		"consent": {
 			"headline": "Avant d'écrire",
-			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe."
+			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
+			"reject": "Refuser",
+			"accept": "J'accepte",
+			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment."
 		}
 	},
 	"help": {

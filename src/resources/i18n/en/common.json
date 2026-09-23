@@ -1159,7 +1159,10 @@
 		},
 		"consent": {
 			"headline": "Before you write",
-			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group."
+			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group.",
+			"reject": "Decline",
+			"accept": "Agree",
+			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later."
 		}
 	},
 	"help": {

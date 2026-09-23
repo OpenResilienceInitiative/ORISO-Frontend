@@ -1,8 +1,13 @@
 import * as React from 'react';
+import './groupConsentGate.styles.scss';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { renderToString } from 'react-dom/server';
 import { useTranslation } from 'react-i18next';
-import { AnonymousConsentGate } from '../../pseudonym/AnonymousConsentGate';
+import { useMediaQuery } from '@mui/material';
+import { M3Dialog } from '../../m3Dialog/M3Dialog';
+import { GdprIcon } from '../../../resources/img/icons';
+import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
+import htmlParser from '../../../resources/scripts/util/htmlParser';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { apiGetConsentText } from '../../../api/apiGetConsentText';
@@ -47,6 +52,8 @@ export const GroupConsentGate = ({
 	const [departmentConsent, setDepartmentConsent] =
 		useState<DepartmentConsentState>({ status: 'idle' });
 	const [busy, setBusy] = useState(false);
+	const [rejected, setRejected] = useState(false);
+	const phone = useMediaQuery('(max-width:599px)');
 
 	useEffect(() => {
 		if (!department) return undefined;
@@ -113,16 +120,56 @@ export const GroupConsentGate = ({
 			.catch(() => setBusy(false));
 	}, [busy, consent.readable, onAccepted]);
 
+	/* The sentence becomes Träger-authored text (ADR-021 decision 4), so it
+	   goes through the shared consent sanitizer, never into a raw sink. */
+	const sentence = useMemo(
+		() => htmlParser(sanitizeConsentHtml(consent.html)),
+		[consent.html]
+	);
+
+	/* The house M3 dialog (icon, title, supporting text, text actions), full
+	   screen on a phone like the group's share dialog. No close: agreeing is
+	   the way into the group, and "Ablehnen" says so instead of hiding it. */
 	return (
-		<AnonymousConsentGate
-			consentLabelHtml={consent.html}
-			onAccept={handleAccept}
-			busy={busy || !consent.readable}
-			headline={t('groupChat.consent.headline', 'Bevor Sie schreiben')}
+		<M3Dialog
+			open
+			onClose={() => undefined}
+			closable={false}
+			fullScreen={phone}
+			width={560}
+			icon={<GdprIcon />}
+			title={t('groupChat.consent.headline', 'Bevor Sie schreiben')}
 			description={t(
 				'groupChat.consent.description',
 				'Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.'
 			)}
-		/>
+			className="groupConsentGate"
+			data-testid="group-consent-gate"
+			actions={[
+				{
+					label: t('groupChat.consent.reject', 'Ablehnen'),
+					onClick: () => setRejected(true),
+					disabled: busy,
+					testId: 'group-consent-reject'
+				},
+				{
+					label: t('groupChat.consent.accept', 'Einverstanden'),
+					onClick: handleAccept,
+					primary: true,
+					disabled: busy || !consent.readable,
+					testId: 'group-consent-accept'
+				}
+			]}
+		>
+			<p className="groupConsentGate__sentence">{sentence}</p>
+			{rejected && (
+				<p className="groupConsentGate__rejected" role="alert">
+					{t(
+						'groupChat.consent.rejected',
+						'Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.'
+					)}
+				</p>
+			)}
+		</M3Dialog>
 	);
 };
