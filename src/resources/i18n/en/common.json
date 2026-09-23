@@ -1146,8 +1146,53 @@
 		},
 		"notMember": {
 			"headline": "You are not part of this group.",
-			"body": "Only the group's moderators and the people they add can open it. If you are meant to co-moderate, ask the moderator to add you.",
-			"back": "Back to my conversations"
+			"body": "Only the moderators open this group, together with the people they bring in. If you are meant to co-moderate, ask the moderators to add you.",
+			"back": "To my conversations",
+			"knockBody": "You can ask the moderators to let you in. Until then you will not see anything from this group.",
+			"request": "Ask to join",
+			"requestFailed": "The request could not be sent. Please try again.",
+			"pendingHeadline": "Request sent – the moderators are being notified.",
+			"pendingBody": "As soon as a moderator lets you in, you can continue here. Just keep this page open.",
+			"cancel": "Withdraw request",
+			"admittedHeadline": "You are in.",
+			"admittedBody": "The moderators have let you into the group.",
+			"openGroup": "Open group",
+			"declinedHeadline": "It did not work out this time.",
+			"declinedBody": "The moderators did not accept your request. If you have questions, contact the person who sent you the link."
+		},
+		"joinRequest": {
+			"knocks": "would like to join “{{group}}”",
+			"announcement": "{{name}} would like to join “{{group}}”.",
+			"role": "Counsellor",
+			"viaInviteLink": "via the invite link",
+			"justNow": "just now",
+			"minutesAgo": "{{count}} min ago",
+			"details": "Details",
+			"admit": "Let in",
+			"decline": "Decline",
+			"otherAgency": "other counselling centre",
+			"otherTenant": "other organisation",
+			"unknown": "unknown",
+			"admitted": "{{name}} is now in the group.",
+			"admittedAsCoModerator": "{{name}} now co-moderates.",
+			"declined": "Request from {{name}} declined.",
+			"failed": "That did not work. Please try again.",
+			"dialog": {
+				"title": "{{name}} would like to join",
+				"description": "Decide whether {{name}} joins “{{group}}”.",
+				"roleLabel": "Role",
+				"agencyLabel": "Counselling centre",
+				"tenantLabel": "Organisation",
+				"wayLabel": "Way in",
+				"timeLabel": "Requested",
+				"timeValue": "{{time}}",
+				"admitAs": "Let in as",
+				"asParticipant": "Participant",
+				"asCoModerator": "Co-moderator",
+				"coModeratorOwnerOnly": "Only the group lead can grant co-moderation.",
+				"coModeratorSameTenant": "Co-moderation is reserved for professionals of your own organisation.",
+				"privacy": "Until you decide, {{name}} sees nothing of this group."
+			}
 		}
 	},
 	"help": {
@@ -5113,6 +5158,13 @@
 			"password": "Your own password",
 			"twoFactor": "Second factor",
 			"done": "done"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "Notifications",
+			"more": "Show {{count}} more",
+			"less": "Show less"
 		}
 	}
 }

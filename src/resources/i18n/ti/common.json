@@ -1168,9 +1168,54 @@
 			"copyFailed": "ምቅዳድ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
 		},
 		"notMember": {
-			"headline": "ናይዚ ጉጅለ ዝርርብ ኣባል ኣይኮንኩምን።",
-			"body": "ነዚ ጉጅለ ክኸፍቶ ዝኽእሉ ኣወሃሃድቲ ጥራይን ንሳቶም ዝወሰኽዎም ሰባትን እዮም። ብሓባር ከተወሃህዱ እንተ ኮይንኩም፡ ኣወሃሃዲ ክውስኸኩም ሕተቱ።",
-			"back": "ናብ ዝርርባተይ ተመለስ"
+			"headline": "ኣባል ናይዚ ጉጅለ ዘተ ኣይኮንኩምን።",
+			"body": "ነዚ ጉጅለ ዘተ ዝኸፍቶ ኣወሃሃዲ ጥራይ እዩ፣ ምስቶም ዝዕድሞም ሰባት። ብሓባር ከተወሃህዱ እንተ ኾይንኩም፡ ኣወሃሃዲ ክውስኹኹም ሕተቱ።",
+			"back": "ናብ ዝርርባተይ",
+			"knockBody": "ኣወሃሃዲ ክኣትዉኹም ክትሓቱ ትኽእሉ ኢኹም። ክሳብ ሽዑ ካብዚ ጉጅለ ዘተ ዋላ ሓንቲ ኣይትርእዩን።",
+			"request": "ምጽንባር ሕተት",
+			"requestFailed": "እቲ ሕቶ ክለኣኽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"pendingHeadline": "ሕቶ ተላኢኹ – ኣወሃሃዲ ይሕበሩ ኣለዉ።",
+			"pendingBody": "ሓደ ኣወሃሃዲ ምስ ኣእተወኩም፡ ኣብዚ ክትቅጽሉ ትኽእሉ ኢኹም። ነዚ ገጽ ክፉት ግደፍዎ።",
+			"cancel": "ሕቶ ምልሱ",
+			"admittedHeadline": "ኣቲኹም ኣለኹም።",
+			"admittedBody": "ኣወሃሃዲ ናብቲ ጉጅለ ዘተ ኣእትዮምኹም።",
+			"openGroup": "ጉጅለ ዘተ ክፈት",
+			"declinedHeadline": "ሎሚ ኣይሰለጠን።",
+			"declinedBody": "ኣወሃሃዲ ሕቶኹም ኣይተቐበሉን። ሕቶ እንተሃልዩኩም፡ ነቲ ሊንክ ዝለኣኸልኩም ሰብ ተወከሱ።"
+		},
+		"joinRequest": {
+			"knocks": "ናብ «{{group}}» ክጽንበር ይደሊ",
+			"announcement": "{{name}} ናብ «{{group}}» ክጽንበር ይደሊ።",
+			"role": "ኣማኻሪ",
+			"viaInviteLink": "ብሊንክ ዕድመ",
+			"justNow": "ሕጂ",
+			"minutesAgo": "ቅድሚ {{count}} ደቒቕ",
+			"details": "ዝርዝር",
+			"admit": "ኣእቱ",
+			"decline": "ኣይትቐበል",
+			"otherAgency": "ካልእ ማእከል ምኽሪ",
+			"otherTenant": "ካልእ ትካል",
+			"unknown": "ዘይፍለጥ",
+			"admitted": "{{name}} ሕጂ ኣብቲ ጉጅለ ዘተ ኣሎ።",
+			"admittedAsCoModerator": "{{name}} ሕጂ ብሓባር የወሃህድ።",
+			"declined": "ሕቶ {{name}} ተነጺጉ።",
+			"failed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
+			"dialog": {
+				"title": "{{name}} ክጽንበር ይደሊ",
+				"description": "{{name}} ናብ «{{group}}» ይጽንበር እንተ ኾይኑ ወስኑ።",
+				"roleLabel": "ተራ",
+				"agencyLabel": "ማእከል ምኽሪ",
+				"tenantLabel": "ትካል",
+				"wayLabel": "መእተዊ",
+				"timeLabel": "ዝተሓተተሉ",
+				"timeValue": "ሰዓት {{time}}",
+				"admitAs": "ከም እዚ ኣእቱ",
+				"asParticipant": "ተሳታፊ",
+				"asCoModerator": "ብሓባር ኣወሃሃዲ",
+				"coModeratorOwnerOnly": "ብሓባር ምውህሃድ ክህብ ዝኽእል መራሒ ጉጅለ ጥራይ እዩ።",
+				"coModeratorSameTenant": "ብሓባር ምውህሃድ ንሞያውያን ናይ ገዛእ ትካልኩም ጥራይ እዩ።",
+				"privacy": "ክሳብ ትውስኑ፡ {{name}} ካብዚ ጉጅለ ዘተ ዋላ ሓንቲ ኣይርእን።"
+			}
 		}
 	},
 	"help": {
@@ -5202,6 +5247,13 @@
 			"password": "ናይ ባዕልኹም መሕለፊ ቃል",
 			"twoFactor": "ካልኣይ ረቛሒ",
 			"done": "ተዛዚሙ"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "መፍለጢታት",
+			"more": "ካልኦት {{count}} ኣርኢ",
+			"less": "ውሑድ ኣርኢ"
 		}
 	}
 }

@@ -1165,7 +1165,52 @@
 		"notMember": {
 			"headline": "Sie sind nicht Teil dieses Gesprächskreises.",
 			"body": "Diesen Gesprächskreis öffnet nur die Moderation und wen sie dazuholt. Wenn Sie mitmoderieren sollen, bitten Sie die Moderation, Sie hinzuzufügen.",
-			"back": "Zu meinen Gesprächen"
+			"back": "Zu meinen Gesprächen",
+			"knockBody": "Sie können die Moderation bitten, Sie hereinzulassen. Bis dahin sehen Sie nichts aus diesem Gesprächskreis.",
+			"request": "Beitritt anfragen",
+			"requestFailed": "Die Anfrage konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+			"pendingHeadline": "Anfrage gesendet – die Moderation wird benachrichtigt.",
+			"pendingBody": "Sobald jemand aus der Moderation Sie hereinlässt, geht es hier weiter. Lassen Sie diese Seite dafür einfach offen.",
+			"cancel": "Anfrage zurückziehen",
+			"admittedHeadline": "Sie sind dabei.",
+			"admittedBody": "Die Moderation hat Sie in den Gesprächskreis gelassen.",
+			"openGroup": "Gesprächskreis öffnen",
+			"declinedHeadline": "Diesmal hat es nicht geklappt.",
+			"declinedBody": "Die Moderation hat Ihre Anfrage nicht angenommen. Bei Fragen wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+		},
+		"joinRequest": {
+			"knocks": "möchte in „{{group}}“ dazukommen",
+			"announcement": "{{name}} möchte in „{{group}}“ dazukommen.",
+			"role": "Berater:in",
+			"viaInviteLink": "über den Einladungslink",
+			"justNow": "gerade eben",
+			"minutesAgo": "vor {{count}} Min.",
+			"details": "Details",
+			"admit": "Reinlassen",
+			"decline": "Ablehnen",
+			"otherAgency": "andere Beratungsstelle",
+			"otherTenant": "anderer Träger",
+			"unknown": "nicht bekannt",
+			"admitted": "{{name}} ist jetzt im Gesprächskreis.",
+			"admittedAsCoModerator": "{{name}} moderiert jetzt mit.",
+			"declined": "Anfrage von {{name}} abgelehnt.",
+			"failed": "Das hat nicht geklappt. Bitte versuchen Sie es erneut.",
+			"dialog": {
+				"title": "{{name}} möchte dazukommen",
+				"description": "Entscheiden Sie, ob {{name}} in „{{group}}“ dazukommt.",
+				"roleLabel": "Rolle",
+				"agencyLabel": "Beratungsstelle",
+				"tenantLabel": "Träger",
+				"wayLabel": "Weg",
+				"timeLabel": "Angefragt",
+				"timeValue": "{{time}} Uhr",
+				"admitAs": "Hereinlassen als",
+				"asParticipant": "Teilnehmende:r",
+				"asCoModerator": "Co-Moderation",
+				"coModeratorOwnerOnly": "Co-Moderation vergibt nur die Leitung des Gesprächskreises.",
+				"coModeratorSameTenant": "Co-Moderation ist Fachkräften des eigenen Trägers vorbehalten.",
+				"privacy": "Bis Sie entscheiden, sieht {{name}} nichts aus diesem Gesprächskreis."
+			}
 		}
 	},
 	"help": {
@@ -5194,6 +5239,13 @@
 			"password": "Eigenes Passwort",
 			"twoFactor": "Zweiter Faktor",
 			"done": "erledigt"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "Benachrichtigungen",
+			"more": "{{count}} weitere anzeigen",
+			"less": "Weniger anzeigen"
 		}
 	}
 }

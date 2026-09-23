@@ -137,6 +137,38 @@ const subscribeOpenSnackbars = (listener: () => void) => {
 const anotherSnackbarOpen = () => openSnackbars.size > 0;
 
 /**
+ * Tells standing notices (`yieldToOthers`) that something else now occupies the
+ * snackbar spot. Every floating snackbar calls it; the stacked host
+ * (`M3SnackbarHost`) calls it while it holds anything, so the two systems can
+ * never paint over each other.
+ */
+export const useFloatingSnackbarPresence = (active: boolean) => {
+	const id = useId();
+	useEffect(() => {
+		if (!active) return;
+		openSnackbars.add(id);
+		notifyOpenSnackbars();
+		return () => {
+			openSnackbars.delete(id);
+			notifyOpenSnackbars();
+		};
+	}, [id, active]);
+};
+
+/**
+ * Where a floating snackbar rests on a phone: above the bottom navigation bar
+ * plus the home-indicator inset. A media query rather than the `md` key: MUI's
+ * own `sm` rule would win over a plain value, and this theme puts `md` at
+ * 600 px while the navigation bar stays until 900 px.
+ */
+export const M3_SNACKBAR_PHONE_MEDIA = '@media (max-width: 899.98px)';
+export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM =
+	'calc(88px + env(safe-area-inset-bottom, 0px))';
+
+/** For surfaces that share the snackbar's role but not its anatomy (the join request). */
+export const M3_SNACKBAR_ELEVATION = elevation3;
+
+/**
  * The ORISO snackbar.
  *
  * **Why it exists.** There was none — every transient notice in this app was
@@ -171,17 +203,9 @@ export const M3Snackbar = ({
 	yieldToOthers = false,
 	testId = 'm3-snackbar'
 }: M3SnackbarProps) => {
-	const id = useId();
-	const registers = placement === 'floating' && open && !yieldToOthers;
-	useEffect(() => {
-		if (!registers) return;
-		openSnackbars.add(id);
-		notifyOpenSnackbars();
-		return () => {
-			openSnackbars.delete(id);
-			notifyOpenSnackbars();
-		};
-	}, [id, registers]);
+	useFloatingSnackbarPresence(
+		placement === 'floating' && open && !yieldToOthers
+	);
 	const othersOpen = useSyncExternalStore(
 		subscribeOpenSnackbars,
 		anotherSnackbarOpen,
