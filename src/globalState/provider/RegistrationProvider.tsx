@@ -11,6 +11,7 @@ import {
 	useState
 } from 'react';
 import * as React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AgencyDataInterface, TopicsDataInterface } from '../interfaces';
 import { ConsultingTypeInterface } from '../interfaces/ConsultingTypeInterface';
 import { UrlParamsContext } from './UrlParamsProvider';
@@ -27,6 +28,7 @@ import {
 	filterRegistrationStepsForDirectLink,
 	getConsultantDirectLinkTopicIds
 } from '../../components/registration/registrationSteps';
+import { getGroupInviteTopicId } from '../../components/registration/groupInviteEntry/groupInviteEntryState';
 
 export const RegistrationContext = createContext<RegistrationContextInterface>(
 	{}
@@ -337,6 +339,39 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		preselectedConsultant,
 		preselectedTopic,
 		registrationData?.agency,
+		registrationData?.mainTopic?.id,
+		updateRegistrationData
+	]);
+
+	/* A self-help group link (#1499) skips the topic step: the group's agency
+	   has one topic, and that is the group's. Several topics → steps as before. */
+	const [searchParams] = useSearchParams();
+	const inviteGroupChatId = searchParams.get('gcid');
+	useEffect(() => {
+		if (!inviteGroupChatId?.trim() || !preselectedAgency) {
+			return;
+		}
+		const topicId = getGroupInviteTopicId(preselectedAgency);
+		if (topicId == null || registrationData?.mainTopic?.id === topicId) {
+			return;
+		}
+
+		let cancelled = false;
+
+		apiGetTopicById(topicId)
+			.then((mainTopic) => {
+				if (!cancelled && mainTopic) {
+					updateRegistrationData({ mainTopic });
+				}
+			})
+			.catch(() => undefined);
+
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		inviteGroupChatId,
+		preselectedAgency,
 		registrationData?.mainTopic?.id,
 		updateRegistrationData
 	]);

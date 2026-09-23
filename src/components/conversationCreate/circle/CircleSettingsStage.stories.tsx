@@ -283,7 +283,7 @@ export const CreateOpensShareDialog: Story = {
 		const dialog = await createAndOpenShareDialog(canvasElement);
 		await expect(
 			within(dialog).getByLabelText('Einladungs-Link')
-		).toHaveValue(`${window.location.origin}/login?gcid=4711`);
+		).toHaveValue(`${window.location.origin}/login?gcid=4711&aid=101`);
 		await expect(within(dialog).getByText('Sucht')).toBeVisible();
 	}
 };

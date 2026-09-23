@@ -3166,6 +3166,7 @@
 			},
 			"temporary": {
 				"join": "Rejoindre",
+				"joinGroup": "Rejoindre le groupe",
 				"toggleOff": "Créer un compte",
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
