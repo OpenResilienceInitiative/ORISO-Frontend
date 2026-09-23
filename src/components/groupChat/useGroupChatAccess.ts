@@ -8,6 +8,8 @@ interface GroupChatAccessInput {
 	isGroup: boolean;
 	subscribed?: boolean;
 	isConsultant: boolean;
+	/** Bump to ask again — after a moderator let her in (#1499, knock). */
+	revision?: number;
 }
 
 /**
@@ -22,11 +24,13 @@ export const useGroupChatAccess = ({
 	chatId,
 	isGroup,
 	subscribed,
-	isConsultant
+	isConsultant,
+	revision = 0
 }: GroupChatAccessInput): GroupChatAccess => {
 	const needsCheck = isGroup && isConsultant && !subscribed && !!chatId;
 	const [result, setResult] = useState<{
 		chatId?: number;
+		revision?: number;
 		access: GroupChatAccess;
 	}>({ access: 'member' });
 
@@ -44,16 +48,18 @@ export const useGroupChatAccess = ({
 			)
 			.then((access) => {
 				if (!cancelled) {
-					setResult({ chatId, access });
+					setResult({ chatId, revision, access });
 				}
 			});
 		return () => {
 			cancelled = true;
 		};
-	}, [needsCheck, chatId]);
+	}, [needsCheck, chatId, revision]);
 
 	if (!needsCheck) {
 		return 'member';
 	}
-	return result.chatId === chatId ? result.access : 'checking';
+	return result.chatId === chatId && result.revision === revision
+		? result.access
+		: 'checking';
 };

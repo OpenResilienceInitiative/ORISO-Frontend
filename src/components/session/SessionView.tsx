@@ -29,6 +29,8 @@ import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 import { rememberLastOpenSession } from '../../utils/lastOpenSession';
 import { useGroupChatAccess } from '../groupChat/useGroupChatAccess';
 import { GroupChatNotMember } from '../groupChat/GroupChatNotMember';
+import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 
 export const SessionView = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
@@ -59,12 +61,28 @@ export const SessionView = () => {
 
 	// #1499: a counsellor can reach a group she is not part of through its
 	// invite link; the server refuses her the group, the room list does not.
+	const [accessRevision, setAccessRevision] = useState(0);
 	const groupAccess = useGroupChatAccess({
 		chatId: activeSession?.item?.id,
 		isGroup: Boolean(activeSession?.isGroup),
 		subscribed: activeSession?.item?.subscribed,
-		isConsultant: hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+		isConsultant: hasUserAuthority(
+			AUTHORITIES.CONSULTANT_DEFAULT,
+			userData
+		),
+		revision: accessRevision
 	});
+	// …and may knock; once a moderator lets her in, the group is asked again.
+	const joinRequest = useOwnJoinRequest(
+		groupAccess === 'notMember' ? activeSession?.item?.id : undefined,
+		httpJoinRequestTransport,
+		{
+			onOpenGroup: () => {
+				reloadActiveSession?.();
+				setAccessRevision((revision) => revision + 1);
+			}
+		}
+	);
 
 	// #1193 Job 3: remember the session the counsellor is looking at so the next
 	// sign-in resumes it. The helper only accepts consultant session routes.
@@ -181,6 +199,7 @@ export const SessionView = () => {
 	if (groupAccess === 'notMember') {
 		return (
 			<GroupChatNotMember
+				joinRequest={joinRequest}
 				onBack={() =>
 					navigate(
 						listPath +
