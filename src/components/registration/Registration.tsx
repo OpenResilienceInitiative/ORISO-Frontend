@@ -190,7 +190,7 @@ export const Registration = () => {
 	   while the registration runs, not the counselling enquiry's (#1499). */
 	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 	const joinsTheGroup =
-		getGroupJoinChatId({
+		getGroupJoin({
 			gcid: groupChatId,
 			aid: inviteAgencyId,
 			agencyId: registrationData?.agency?.id
