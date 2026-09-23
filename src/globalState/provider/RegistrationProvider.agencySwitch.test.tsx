@@ -202,6 +202,28 @@ describe('RegistrationProvider — restoring a subject area at another centre', 
 		);
 	});
 
+	it('keeps a stored centre that offers the URL subject area but not the stored one', async () => {
+		/* The stored subject area is replaced by the URL one, so it is no
+		   reason to drop the centre. Judged against it, a centre that offers
+		   exactly what the link asks for was thrown away, and the advice seeker
+		   had to pick it again. */
+		givenStoredRegistration([URL_TOPIC_ID]);
+		getUrlParameterMock.mockImplementation((name: string) =>
+			name === 'tid' ? String(URL_TOPIC_ID) : null
+		);
+
+		renderProvider({ id: URL_TOPIC_ID });
+
+		await waitFor(() =>
+			expect(screen.getByTestId('main-topic').textContent).toBe(
+				String(URL_TOPIC_ID)
+			)
+		);
+		expect(screen.getByTestId('agency').textContent).toBe(
+			String(AGENCY_ID)
+		);
+	});
+
 	it('keeps a stored subject area when the centre has no readable topic list', async () => {
 		givenStoredRegistration(undefined as never);
 

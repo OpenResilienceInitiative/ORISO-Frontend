@@ -220,10 +220,10 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			const restored: Partial<RegistrationData> = registrationData;
 
 			if (urlNamesTopic) {
-				if (
-					agencyExcludesTopic(restored.agency, restored.mainTopic) ||
-					agencyExcludesTopic(restored.agency, restored.topic)
-				) {
+				// The stored mainTopic is about to be replaced by the URL one, so
+				// it is no reason to drop the centre; the clearing effect below
+				// checks the centre against the URL topic once it is resolved.
+				if (agencyExcludesTopic(restored.agency, restored.topic)) {
 					delete restored.agency;
 					delete restored.agencyId;
 				}
