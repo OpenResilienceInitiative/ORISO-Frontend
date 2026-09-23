@@ -46,6 +46,9 @@ vi.mock('../passwordReset/PasswordReset', stub('PasswordReset'));
 vi.mock('../twoFactorAuth/TwoFactorAuth', stub('TwoFactorAuth'));
 vi.mock('./EncryptionSettings', stub('EncryptionSettingsPanel'));
 vi.mock('./ConsultantNotifications', stub('ConsultantNotifications'));
+// Mounted here by #1538; mocked so this test survives that merge.
+vi.mock('./EmailNotifications', stub('EmailNotification'));
+vi.mock('./NotificationSettings', stub('NotificationSettingsPanel'));
 vi.mock('./BrowserNotifications', stub('BrowserNotification'));
 vi.mock('./DeleteAccount', stub('DeleteAccount'));
 vi.mock('./Locale', stub('Locale'));
