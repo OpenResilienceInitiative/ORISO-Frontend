@@ -29,7 +29,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Per-section display filter. "Anzeigen" decides whether a kind appears in the list at all; "Pille" whether it gets a chip while it has unread items. "Sonstiges" is the catch-all and can never be hidden. Presentational — the store (slice 2) owns the value.'
+					'Per-section display filter. "In der Liste" decides whether a kind appears in the list at all; "Als Pille" whether it gets a chip (kinds without a pill are bundled under Sonstiges). "Sonstiges" is the catch-all and can never be hidden. Presentational — the store (slice 2) owns the value.'
 			}
 		}
 	},
@@ -89,37 +89,37 @@ export const Customised: Story = {
 	render: (args) => <Controlled {...args} initialValue={CUSTOMISED} />,
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
-		const draftsPill = dialog.getByRole('checkbox', {
+		const draftsPill = dialog.getByRole('button', {
 			name: 'Pille: Entwürfe'
 		});
 		await expect(draftsPill).toBeDisabled();
 		await expect(
-			dialog.getByRole('checkbox', { name: 'Anzeigen: Sonstiges' })
+			dialog.getByRole('checkbox', { name: 'In der Liste: Sonstiges' })
 		).toBeDisabled();
 		await expect(
 			dialog.getByRole('button', {
-				name: 'Auf meine Standards zurücksetzen'
+				name: 'Zurücksetzen'
 			})
 		).toBeEnabled();
 	}
 };
 
-/** Unticking "Anzeigen" greys out the pill switch of that kind at once. */
+/** Unticking "In der Liste" greys out the pill switch of that kind at once. */
 export const HideAKind: Story = {
 	render: (args) => <Controlled {...args} />,
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
 		const showCalls = dialog.getByRole('checkbox', {
-			name: 'Anzeigen: Anrufe'
+			name: 'In der Liste: Anrufe'
 		});
-		const pillCalls = dialog.getByRole('checkbox', {
+		const pillCalls = dialog.getByRole('button', {
 			name: 'Pille: Anrufe'
 		});
 		await expect(pillCalls).toBeEnabled();
 		await userEvent.click(showCalls);
 		await expect(showCalls).not.toBeChecked();
 		await expect(pillCalls).toBeDisabled();
-		await expect(pillCalls).not.toBeChecked();
+		await expect(pillCalls).toHaveTextContent('Aus');
 	}
 };
 
@@ -154,7 +154,7 @@ export const PartiallyHidden: Story = {
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
 		await expect(
-			dialog.getByRole('checkbox', { name: 'Anzeigen: System' })
+			dialog.getByRole('checkbox', { name: 'In der Liste: System' })
 		).toHaveAttribute('aria-checked', 'mixed');
 	}
 };
@@ -209,5 +209,51 @@ export const PhoneLandscape: Story = {
 		await expect(done.getBoundingClientRect().bottom).toBeLessThanOrEqual(
 			doc.defaultView!.innerHeight
 		);
+	}
+};
+
+/** Gespräche/Anfragen: "Ton" instead of "In der Liste" — mute a kind, keep it listed. */
+export const SessionsWithSoundColumn: Story = {
+	render: () => (
+		<DisplayFilterDialog
+			open
+			onClose={() => undefined}
+			onReset={() => undefined}
+			onOpenProfile={() => undefined}
+			kinds={[
+				{ id: 'oneToOne', label: 'Mail', unreadCount: 2 },
+				{ id: 'liveChat', label: 'Live-Chat', unreadCount: 0 },
+				{ id: 'circle', label: 'Gesprächskreis', unreadCount: 1 },
+				{ id: 'other', label: 'Sonstiges', unreadCount: 0 }
+			]}
+			value={{
+				kinds: { liveChat: { show: true, pill: true, sound: 'none' } },
+				autoReadHidden: false
+			}}
+			labels={{ ...STORY_LABELS, title: 'Ansicht · Gespräche' }}
+			columns={{ show: false, sound: true }}
+			showAutoRead={false}
+			onChange={() => undefined}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement.ownerDocument.body);
+		await expect(
+			canvas.getByRole('columnheader', { name: 'Ton' })
+		).toBeTruthy();
+		await expect(
+			canvas.queryByRole('columnheader', { name: 'In der Liste' })
+		).toBeNull();
+		// Tone is a picker per kind (proposal A): the main segment previews,
+		// the menu segment opens the choice. Live-Chat is muted in the fixture.
+		await expect(
+			canvas.getByRole('button', { name: 'Ton anhören: Live-Chat' })
+		).toHaveTextContent('Stumm');
+		await expect(
+			canvas.getByRole('button', { name: 'Ton anhören: Mail' })
+		).toHaveTextContent('Standard');
+		await expect(
+			canvas.getByRole('button', { name: 'Ton wählen: Live-Chat' })
+		).toBeTruthy();
 	}
 };

@@ -84,8 +84,11 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
-		min-height: 48px;
-		padding: 4px 0;
+		/* 40px rows (was 48): with the view/auto-sort controls below the
+		   table the dialog must still fit a 700px-high desktop window
+		   (Frank's Safari, 2026-09-16) without hidden scrolling. */
+		min-height: 36px;
+		padding: 2px 0;
 		font-size: 14px;
 		font-weight: 400;
 		line-height: 20px;
@@ -157,7 +160,7 @@
 	}
 
 	&__profileLink {
-		margin-top: 16px;
+		margin-top: 12px;
 		padding: 0;
 		border: 0;
 		background: transparent;
@@ -231,4 +234,267 @@
 		display: flex;
 		align-items: center;
 	}
+}
+
+/* Chip menu variants (#1377, Frank 2026-09-16; Figma 9947:31377 text pills,
+   1139:45736 icon pills). The base pill lives in sessionsList.styles.scss. */
+.sessionsListToolbar__chip--text {
+	min-height: 28px;
+	min-width: 0;
+	padding: 0 12px;
+	max-width: 220px;
+
+	.sessionsListToolbar__chipLabel {
+		max-width: 200px;
+		margin-left: 0;
+		opacity: 1;
+		transform: none;
+	}
+
+	.sessionsListToolbar__chipBadge {
+		position: static;
+		margin-left: 6px;
+	}
+}
+
+/* Träger switched the format off, rows still exist: locked look, still
+   focusable so the click can explain (the chip is not `disabled`). */
+.sessionsListToolbar__chip--deactivated {
+	border-style: dashed;
+	color: var(--m3-on-surface-variant, #444748);
+	opacity: 0.62;
+
+	&.sessionsListToolbar__chip--active {
+		opacity: 0.8;
+	}
+}
+
+/* View picker (Icons | Text) — an M3 segmented-button look on native radios. */
+.displayFilterDialog__view {
+	margin: 12px 0 0;
+	padding: 0;
+	border: 0;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.displayFilterDialog__viewTitle {
+	padding: 0;
+	font-size: 14px;
+	line-height: 20px;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.displayFilterDialog__viewOptions {
+	display: inline-flex;
+	border: 1px solid var(--m3-outline, #74777f);
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.displayFilterDialog__viewOption {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	min-height: 32px;
+	padding: 0 14px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+	letter-spacing: 0.5px;
+	color: var(--m3-on-surface, #1b1b1c);
+	cursor: pointer;
+
+	& + & {
+		border-left: 1px solid var(--m3-outline, #74777f);
+	}
+
+	input {
+		position: absolute;
+		inset: 0;
+		margin: 0;
+		opacity: 0;
+		cursor: pointer;
+	}
+
+	&--selected {
+		background: var(--m3-secondary-container, #e4e2e2);
+		color: var(--m3-on-secondary-container, #1b1b1c);
+	}
+
+	&:has(input:focus-visible) {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: -2px;
+	}
+
+	&:has(input:disabled) {
+		opacity: 0.38;
+		cursor: default;
+	}
+}
+
+.displayFilterDialog__row--deactivated .displayFilterDialog__kind {
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+/* Icons + labels view: every pill shows icon and label, no expand animation. */
+.sessionsListToolbar__chip--labelled .sessionsListToolbar__chipLabel {
+	max-width: 180px;
+	margin-left: 8px;
+	opacity: 1;
+	transform: none;
+}
+
+.sessionsListToolbar__chip--labelled .sessionsListToolbar__chipBadge {
+	position: static;
+	margin-left: 6px;
+}
+
+/* One footer line: deviation notice + reset while an override exists, and
+   the link to the standards. */
+.displayFilterDialog__footerLine {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 8px 16px;
+	margin-top: 16px;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--m3-on-surface-variant, #444748);
+
+	.displayFilterDialog__profileLink {
+		margin-top: 0;
+		font-size: 12px;
+		line-height: 16px;
+	}
+}
+
+.displayFilterDialog__override {
+	display: inline-flex;
+	gap: 8px;
+	align-items: baseline;
+}
+
+/* The filter dialog is a settings sheet, not a confirm: let it use more of a
+   short desktop window (Frank's ~700px Safari) before the body scrolls. */
+.displayFilterDialog .m3Dialog__surface {
+	max-height: min(820px, 100vh - 48px);
+	margin: 24px 32px;
+}
+
+.displayFilterDialog .displayFilterDialog__view {
+	margin-top: 8px;
+}
+
+.displayFilterDialog .displayFilterDialog__autoRead {
+	margin-top: 8px;
+	padding-top: 8px;
+}
+
+.displayFilterDialog .displayFilterDialog__footerLine {
+	margin-top: 8px;
+}
+
+/* Text view (Frank 2026-09-16): the filter button is a bare 16px glyph, and
+   the compact pills sit closer together. */
+.displayFilterButton--compact {
+	min-height: 28px;
+	min-width: 28px;
+	max-width: 28px;
+	border-color: transparent;
+	background: transparent;
+	box-shadow: none;
+
+	.sessionsListToolbar__chipIconSvg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.displayFilterButton__dot {
+		right: 2px;
+		top: 2px;
+		width: 6px;
+		height: 6px;
+	}
+}
+
+.filterChipRow--dense .sessionsListToolbar__chipsRow {
+	gap: 4px;
+}
+
+.filterChipRow--dense .sessionsListToolbar__chip--text {
+	padding: 0 10px;
+}
+
+.displayFilterDialog__heroIcon {
+	width: 32px;
+	height: 32px;
+	display: block;
+}
+
+/* Filter button in the search field's leading slot (all views). */
+.sessionsListToolbar__iconButton--filter {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+
+	.displayFilterButton--compact {
+		min-height: 40px;
+		min-width: 40px;
+		max-width: 40px;
+		color: var(--m3-secondary, #4c555f);
+
+		.sessionsListToolbar__chipIconSvg {
+			width: 20px;
+			height: 20px;
+		}
+	}
+}
+
+/* Per-kind pickers share one width so the column stays aligned; the label
+   truncates instead (Frank 2026-09-16). */
+.displayFilterDialog__colHead--picker {
+	width: 136px;
+	text-align: left;
+	/* Frank 2026-09-16: the column titles line up with the pickers' text
+	   (main segment padding) and keep clear of the first row. */
+	padding: 0 0 8px 12px;
+}
+
+.displayFilterDialog__cell--picker {
+	text-align: left;
+	padding-right: 8px;
+}
+
+.displayFilterDialog__picker {
+	width: 128px;
+
+	.splitButton__main {
+		flex: 1 1 auto;
+		min-width: 0;
+		justify-content: flex-start;
+	}
+}
+
+.displayFilterDialog__row--placeholder .displayFilterDialog__kind {
+	color: var(--m3-on-surface-variant, #444748);
+	opacity: 0.5;
+}
+
+/* Frank 2026-09-16: no divider lines between kinds, a little more air,
+   pickers in both columns. */
+.displayFilterDialog__row {
+	border-top: 0;
+}
+
+.displayFilterDialog__row .displayFilterDialog__kind {
+	min-height: 32px;
+	padding: 6px 0;
+}
+
+.displayFilterDialog__row .displayFilterDialog__cell {
+	padding: 6px 0 6px 8px;
 }

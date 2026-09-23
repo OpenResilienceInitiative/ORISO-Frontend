@@ -7,7 +7,6 @@ import {
 	CircularProgress,
 	Divider,
 	FormControlLabel,
-	MenuItem,
 	Paper,
 	TextField,
 	Typography
@@ -52,16 +51,14 @@ export const DpaSign = () => {
 	const { i18n } = useTranslation();
 	const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
 	/*
-	 * The page chrome follows the "Sprache" select, not the app-wide locale.
+	 * The page chrome follows the signature language, not the app-wide locale.
 	 *
 	 * This is a public one-shot page: the global i18n language comes from the
 	 * browser's navigator order — or from a `locale` this browser persisted in
 	 * an earlier app session — and a signer has no profile switcher here to
-	 * correct it. Seen on pre-dev: chrome entirely in Russian while the select
-	 * said "Deutsch". Binding the chrome to the selected signature language
-	 * keeps every visible word in the same language as the contract being
-	 * signed, starting in German like the select itself. `getFixedT` scopes
-	 * this to the page — the app-wide language is left untouched.
+	 * correct it. Binding the chrome to the signature language keeps every
+	 * visible word in the same language as the contract being signed. `getFixedT`
+	 * scopes this to the page — the app-wide language is left untouched.
 	 */
 	const [chromeLanguage, setChromeLanguage] = useState(
 		INITIAL_FORM_STATE.language
@@ -69,9 +66,7 @@ export const DpaSign = () => {
 	useEffect(() => {
 		let active = true;
 		// The `.then` runs only on a resolved load, so a rejected
-		// `loadLanguages` leaves `chromeLanguage` exactly where it was —
-		// applying the new language here regardless of the outcome would
-		// point the page chrome at a locale i18next never finished loading.
+		// `loadLanguages` leaves `chromeLanguage` exactly where it was.
 		i18n.loadLanguages(formState.language)
 			.then(() => {
 				if (active) {
@@ -229,12 +224,15 @@ export const DpaSign = () => {
 			>
 				<Box>
 					<Typography variant="h4" component="h1" gutterBottom>
-						{t('dpaSign.title', 'Vertragsunterlagen unterzeichnen')}
+						{t(
+							'dpaSign.title',
+							'Vertragsunterlagen prüfen und bestätigen'
+						)}
 					</Typography>
 					<Typography color="text.secondary">
 						{t(
 							'dpaSign.subtitle',
-							'Bitte lesen Sie die Vertragsunterlagen vollständig und bestätigen Sie anschließend die Angaben zur unterzeichnenden Person.'
+							'Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.'
 						)}
 					</Typography>
 				</Box>
@@ -283,8 +281,7 @@ export const DpaSign = () => {
 							component="section"
 							aria-labelledby="dpa-contract-heading"
 							sx={{
-								background:
-									'var(--m3-surface-container-low, #f3f1f0)',
+								background: 'var(--m3-surface, #ffffff)',
 								border: '1px solid var(--m3-outline-variant, #d7d3d1)',
 								borderRadius: 2,
 								p: { xs: 2, sm: 3 }
@@ -316,9 +313,12 @@ export const DpaSign = () => {
 							<Divider sx={{ my: 2 }} />
 							<Box
 								sx={{
-									maxHeight: { xs: 300, md: 520 },
-									overflowY: 'auto',
-									pr: 1
+									'maxHeight': { xs: 300, md: 520 },
+									'overflowY': 'auto',
+									'pr': 1,
+									'& .legalTextReader__nav': {
+										background: 'var(--m3-surface, #ffffff)'
+									}
 								}}
 							>
 								<LegalTextReader
@@ -357,7 +357,10 @@ export const DpaSign = () => {
 							) : (
 								<>
 									<TextField
-										label={t('dpaSign.signerName', 'Name')}
+										label={t(
+											'dpaSign.signerName',
+											'Vollständiger Name'
+										)}
 										value={formState.signerName}
 										onChange={(event) =>
 											updateField(
@@ -428,22 +431,6 @@ export const DpaSign = () => {
 										}
 										fullWidth
 									/>
-									<TextField
-										label={t('dpaSign.language', 'Sprache')}
-										value={formState.language}
-										onChange={(event) =>
-											updateField(
-												'language',
-												event.target.value
-											)
-										}
-										required
-										fullWidth
-										select
-									>
-										<MenuItem value="de">Deutsch</MenuItem>
-										<MenuItem value="en">English</MenuItem>
-									</TextField>
 									{/* Ticking the box IS the signature, so the
 									    legal entity it binds must be readable at
 									    the act itself — not only in the contract
@@ -454,7 +441,7 @@ export const DpaSign = () => {
 									>
 										{t(
 											'dpaSign.signingFor',
-											'Sie unterzeichnen im Namen von:'
+											'Sie handeln im Namen von:'
 										)}{' '}
 										<Box
 											component="strong"
@@ -501,7 +488,7 @@ export const DpaSign = () => {
 												)
 											: t(
 													'dpaSign.submit',
-													'Verbindlich bestätigen'
+													'Bestätigung absenden'
 												)}
 									</Button>
 								</>

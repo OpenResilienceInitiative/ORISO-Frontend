@@ -7,6 +7,7 @@ import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailab
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { budibaseLogout } from '../budibase/budibaseLogout';
 import { removeAllCookies } from '../sessionCookie/accessSessionCookie';
+import { sessionKindRegistry } from '../../utils/displayFilter/sessionKindRegistry';
 import { removeTokenExpiryFromLocalStorage } from '../sessionCookie/accessSessionLocalStorage';
 import { appConfig } from '../../utils/appConfig';
 import { calcomLogout } from './calcomLogout';
@@ -86,6 +87,9 @@ const invalidateCookies = (
 	// authenticated client cannot survive sign-out (the React context state is
 	// reset separately in the logout flow / via the post-logout reload).
 	setMatrixClientServiceRef(null);
+	// #1377 "Ton": the session → kind map is user-scoped; the next user must
+	// not inherit mute/tone decisions from the previous one.
+	sessionKindRegistry.reset();
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

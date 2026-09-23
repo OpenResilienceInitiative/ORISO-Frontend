@@ -98,6 +98,99 @@ describe('LegalTextReader', () => {
 		);
 	});
 
+	it('keeps the final chapter selected when the scrollport reaches its maximum', async () => {
+		let mockedScrollHeight = 700;
+		let mockedClientHeight = 400;
+		const scrollHeight = vi
+			.spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host')
+					? mockedScrollHeight
+					: 0;
+			});
+		const clientHeight = vi
+			.spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host')
+					? mockedClientHeight
+					: 0;
+			});
+		const bounds = vi
+			.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+			.mockImplementation(function () {
+				const chapterTops: Record<string, number> = {
+					'datenschutzerklarung': 0,
+					'1-verantwortlich': 200,
+					'2-ihre-rechte': 500
+				};
+				const host = document.querySelector(
+					'.scroll-host'
+				) as HTMLElement;
+				const top =
+					(chapterTops[this.id] ?? 0) - (host?.scrollTop ?? 0);
+				return {
+					top,
+					bottom: top,
+					left: 0,
+					right: 0,
+					width: 0,
+					height: 0,
+					x: 0,
+					y: top,
+					toJSON: () => ({})
+				};
+			});
+
+		try {
+			render(
+				<div className="scroll-host" style={{ overflowY: 'auto' }}>
+					<LegalTextReader content={POLICY} label="Datenschutz" />
+				</div>
+			);
+			const host = document.querySelector('.scroll-host') as HTMLElement;
+			const last = chip('2. Ihre Rechte');
+
+			fireEvent.click(last);
+			host.scrollTop = 300;
+			fireEvent.scroll(host);
+
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
+
+			// Responsive/content changes can remove the overflow after this host
+			// was captured as the scroll parent. Zero scrollable distance is the
+			// top of the document, not the bottom of its final chapter.
+			mockedScrollHeight = 400;
+			mockedClientHeight = 400;
+			host.scrollTop = 0;
+			fireEvent.scroll(host);
+
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+
+			mockedScrollHeight = 401;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+			host.scrollTop = 1;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
+		} finally {
+			scrollHeight.mockRestore();
+			clientHeight.mockRestore();
+			bounds.mockRestore();
+		}
+	});
+
 	it('opens and closes the fullscreen reading mode', () => {
 		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
 		expect(screen.queryByTestId('legal-reader-fullscreen')).toBeNull();

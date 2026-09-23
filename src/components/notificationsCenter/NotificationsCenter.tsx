@@ -2,6 +2,7 @@ import {
 	parseChannel,
 	rewriteLegacyChannelPath
 } from '../../utils/channelRoute';
+import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
 	useCallback,
@@ -45,6 +46,9 @@ import {
 	FilterChipRow,
 	isDisplayFilterCustomised,
 	reconcileActiveKind,
+	orderChipKinds,
+	resolveChipPresentation,
+	kindsUnderOther,
 	useDisplayFilterLabels,
 	visiblePillKinds
 } from '../displayFilter';
@@ -416,13 +420,22 @@ export const NotificationsCenter = () => {
 			id: kind,
 			label: timelineKindLabel(translate, kind),
 			icon: TIMELINE_KIND_ICONS[kind],
+			chipLabel:
+				kind === 'other'
+					? translate('notifications.displayFilter.otherChip')
+					: undefined,
 			unreadCount: unread[kind] ?? 0,
 			partial: isTimelineKindPartiallyHidden(timelineFilter, kind)
 		}));
 	}, [notificationFeed, timelineFilter, translate, visibleFeed]);
+	const chipPresentation = resolveChipPresentation(timelineFilter);
 	const pillKinds = useMemo(
-		() => visiblePillKinds(timelineFilter, timelineKinds, activeFamily),
-		[activeFamily, timelineFilter, timelineKinds]
+		() =>
+			orderChipKinds(
+				visiblePillKinds(timelineFilter, timelineKinds, activeFamily),
+				{ autoSort: chipPresentation.autoSort }
+			),
+		[activeFamily, chipPresentation.autoSort, timelineFilter, timelineKinds]
 	);
 	const displayFilterCustomised = isDisplayFilterCustomised(
 		timelineFilter,
@@ -641,7 +654,15 @@ export const NotificationsCenter = () => {
 		() =>
 			filterTimelineItems(
 				visibleFeed,
-				{ family: activeFamily, query: searchQuery, unreadOnly },
+				{
+					family: activeFamily,
+					query: searchQuery,
+					unreadOnly,
+					bundledUnderOther: kindsUnderOther(
+						timelineFilter,
+						timelineKinds
+					)
+				},
 				(item) => {
 					const { title, text } = describeItem(item, translate);
 					return `${title} ${visiblePreview(item.id)?.text || text}`;
@@ -650,6 +671,8 @@ export const NotificationsCenter = () => {
 		[
 			visibleFeed,
 			activeFamily,
+			timelineFilter,
+			timelineKinds,
 			searchQuery,
 			unreadOnly,
 			translate,
@@ -935,6 +958,23 @@ export const NotificationsCenter = () => {
 			>
 				<div className="sessionsListToolbar notificationsCenter__toolbar">
 					<ListSearchField
+						leading={
+							<DisplayFilterButton
+								icon={
+									<NavActivityIcon className="sessionsListToolbar__chipIconSvg" />
+								}
+								label={displayFilterLabels.buttonLabel}
+								customised={displayFilterCustomised}
+								customisedLabel={
+									displayFilterLabels.buttonCustomisedLabel
+								}
+								open={displayFilterOpen}
+								controlsId={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
+								onClick={() => setDisplayFilterOpen(true)}
+								compact
+								data-cy="timeline-display-filter"
+							/>
+						}
 						value={searchQuery}
 						onChange={setSearchQuery}
 						placeholder={translate(
@@ -956,20 +996,6 @@ export const NotificationsCenter = () => {
 								'notifications.center.title',
 								'Notifications'
 							)}
-							trailing={
-								<DisplayFilterButton
-									label={displayFilterLabels.buttonLabel}
-									customised={displayFilterCustomised}
-									customisedLabel={
-										displayFilterLabels.buttonCustomisedLabel
-									}
-									open={displayFilterOpen}
-									controlsId={
-										TIMELINE_DISPLAY_FILTER_DIALOG_ID
-									}
-									onClick={() => setDisplayFilterOpen(true)}
-								/>
-							}
 						>
 							{pillKinds.map((kind) => (
 								<FilterChip
@@ -977,6 +1003,7 @@ export const NotificationsCenter = () => {
 									label={kind.label}
 									icon={kind.icon!}
 									assetIcon
+									view={chipPresentation.view}
 									count={kind.unreadCount}
 									active={activeFamily === kind.id}
 									onClick={() =>
@@ -1030,6 +1057,9 @@ export const NotificationsCenter = () => {
 					)}
 				</div>
 				<DisplayFilterDialog
+					icon={
+						<NavActivityIcon className="displayFilterDialog__heroIcon" />
+					}
 					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
 					open={displayFilterOpen}
 					fullScreen={untilL}

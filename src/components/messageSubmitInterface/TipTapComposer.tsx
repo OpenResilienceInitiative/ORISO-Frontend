@@ -3,8 +3,7 @@ import React, {
 	useEffect,
 	useImperativeHandle,
 	useMemo,
-	useRef,
-	useState
+	useRef
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Mark } from '@tiptap/core';
@@ -201,7 +200,7 @@ export const TipTapComposer = forwardRef<
 		},
 		ref
 	) => {
-		const [isSyncingFromValue, setIsSyncingFromValue] = useState(false);
+		const isSyncingFromValue = useRef(false);
 
 		const { handleComposerKeyDown } = useChatComposerShortcuts({
 			onSend: onSubmitShortcut,
@@ -357,7 +356,10 @@ export const TipTapComposer = forwardRef<
 				// (send, clear, draft switch) drops it.
 			},
 			onUpdate: ({ editor: currentEditor }) => {
-				if (isSyncingFromValue || !isEditorReady(currentEditor)) {
+				if (
+					isSyncingFromValue.current ||
+					!isEditorReady(currentEditor)
+				) {
 					return;
 				}
 				if (enforceEditorMaxLength(currentEditor, maxLength)) {
@@ -411,7 +413,7 @@ export const TipTapComposer = forwardRef<
 			if (normalizedValue === current) {
 				return;
 			}
-			setIsSyncingFromValue(true);
+			isSyncingFromValue.current = true;
 			try {
 				clearInsertionMarker(editor);
 				editor.commands.setContent(normalizedValue);
@@ -425,8 +427,9 @@ export const TipTapComposer = forwardRef<
 				} catch {
 					// Ignore — a corrupt stored draft must never break the composer.
 				}
+			} finally {
+				isSyncingFromValue.current = false;
 			}
-			setTimeout(() => setIsSyncingFromValue(false), 0);
 		}, [editor, maxLength, onChange, value]);
 
 		useImperativeHandle(ref, () => ({

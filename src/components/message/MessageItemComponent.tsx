@@ -339,6 +339,9 @@ export interface MessageItem {
 
 interface MessageItemComponentProps extends MessageItem {
 	isOnlyEnquiry?: boolean;
+	/** Keep the complete enquiry visible while deciding whether to accept it. */
+	showFullContent?: boolean;
+	hideSystemMessages?: boolean;
 	isMyMessage: boolean;
 	clientName: string;
 	isUserBanned: boolean;
@@ -392,6 +395,8 @@ export const MessageItemComponent = ({
 	messageDate,
 	messageTime,
 	isMyMessage,
+	showFullContent = false,
+	hideSystemMessages = false,
 	displayName,
 	username,
 	askerMatrixUserId,
@@ -2190,6 +2195,7 @@ export const MessageItemComponent = ({
 											''
 										);
 									const isLongMessage =
+										!showFullContent &&
 										textContent.length > MESSAGE_CHAR_LIMIT;
 
 									// Helper function to safely truncate HTML while preserving structure
@@ -2497,6 +2503,13 @@ export const MessageItemComponent = ({
 				return null;
 			}
 		}
+	}
+
+	if (
+		hideSystemMessages &&
+		(isSystemNotification || Boolean(alias?.messageType))
+	) {
+		return null;
 	}
 
 	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event

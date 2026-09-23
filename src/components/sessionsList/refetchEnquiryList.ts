@@ -5,6 +5,8 @@ type EnquiryListPage<T> = {
 
 type RefetchEnquiryListStateOptions<T> = {
 	fetchPage: () => Promise<EnquiryListPage<T>>;
+	pageSize?: number;
+	signal?: AbortSignal;
 	replaceSessions: (sessions: T[]) => void;
 	setTotalItems: (total: number) => void;
 	setCurrentOffset: (offset: number) => void;
@@ -17,16 +19,25 @@ type RefetchEnquiryListStateOptions<T> = {
  */
 export const refetchEnquiryListState = async <T>({
 	fetchPage,
+	pageSize,
+	signal,
 	replaceSessions,
 	setTotalItems,
 	setCurrentOffset
 }: RefetchEnquiryListStateOptions<T>): Promise<void> => {
 	try {
 		const { sessions, total } = await fetchPage();
+		if (signal?.aborted) return;
 		replaceSessions(sessions);
 		setTotalItems(total);
-		setCurrentOffset(0);
+		setCurrentOffset(
+			pageSize
+				? Math.max(0, Math.ceil(sessions.length / pageSize) - 1) *
+						pageSize
+				: 0
+		);
 	} catch (error) {
+		if (signal?.aborted) return;
 		if (!(error instanceof Error) || error.message !== 'EMPTY') {
 			return;
 		}
