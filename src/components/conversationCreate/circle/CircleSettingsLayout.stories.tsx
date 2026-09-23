@@ -13,9 +13,9 @@ import { CircleSettingsStage, COLLEAGUES } from './circleSettingsStage';
  * - Phones (< 900px): the schedule card and the welcome/rules card read as
  *   one card — no rounded corners between them, same width, same insets.
  * - The repetition row is one control: the number of dates is the big value,
- *   the interval sits under it in small type ("10 mal" / "Wöchentlich" = ten
- *   dates, one per week). One date reads "einmalig" and the interval line
- *   turns inactive.
+ *   the interval sits under it in small type ("10 Termine" / "Wöchentlich" =
+ *   ten dates, one per week). One date reads "einmalig"; ▲ from one to two
+ *   opens the interval menu (component: `Molecules/RepeatCountField`).
  */
 
 const meta = {
@@ -91,19 +91,20 @@ export const CardsTablet: Story = {
 };
 
 const repeatRow = (canvasElement: HTMLElement) =>
-	canvasElement.querySelector('.scheduleRows__repeat') as HTMLElement;
+	canvasElement.querySelector('.repeatCountField') as HTMLElement;
 
 const repeatLines = (canvasElement: HTMLElement) => {
 	const row = repeatRow(canvasElement);
 	return {
-		count: row.querySelector('.scheduleRows__repeatCount')?.textContent,
-		interval: row.querySelector('.scheduleRows__repeatInterval')
-			?.textContent,
-		intervalInactive: Boolean(
-			row.querySelector('.scheduleRows__repeatInterval--inactive')
-		)
+		count: row.querySelector('.repeatCountField__count')?.textContent,
+		interval:
+			row.querySelector('.repeatCountField__interval')?.textContent ??
+			null
 	};
 };
+
+const body = (canvasElement: HTMLElement) =>
+	within(canvasElement.ownerDocument.body);
 
 const step = async (canvasElement: HTMLElement, direction: 'up' | 'down') =>
 	userEvent.click(
@@ -118,9 +119,7 @@ const pickInterval = async (canvasElement: HTMLElement, label: string) => {
 			'.splitButton__main'
 		) as HTMLElement
 	);
-	const listbox = await within(canvasElement.ownerDocument.body).findByRole(
-		'listbox'
-	);
+	const listbox = await body(canvasElement).findByRole('listbox');
 	await userEvent.click(within(listbox).getByRole('option', { name: label }));
 };
 
@@ -131,15 +130,14 @@ const seriesPlay = async ({
 }) => {
 	repeatRow(canvasElement).scrollIntoView({ block: 'center' });
 	await expect(repeatLines(canvasElement)).toEqual({
-		count: '10 mal',
-		interval: 'Wöchentlich',
-		intervalInactive: false
+		count: '10 Termine',
+		interval: 'Wöchentlich'
 	});
 
 	// A step changes the number of dates, never the interval.
 	await step(canvasElement, 'up');
 	await waitFor(() =>
-		expect(repeatLines(canvasElement).count).toBe('11 mal')
+		expect(repeatLines(canvasElement).count).toBe('11 Termine')
 	);
 	await expect(repeatLines(canvasElement).interval).toBe('Wöchentlich');
 
@@ -148,7 +146,7 @@ const seriesPlay = async ({
 	await waitFor(() =>
 		expect(repeatLines(canvasElement).interval).toBe('Monatlich')
 	);
-	await expect(repeatLines(canvasElement).count).toBe('11 mal');
+	await expect(repeatLines(canvasElement).count).toBe('11 Termine');
 };
 
 export const RepeatSeriesDesktop: Story = {
@@ -174,40 +172,33 @@ const oneOffPlay = async ({
 	canvasElement: HTMLElement;
 }) => {
 	repeatRow(canvasElement).scrollIntoView({ block: 'center' });
-	// One date: "einmalig", and the interval slot is shown but inactive.
 	await expect(repeatLines(canvasElement)).toEqual({
 		count: 'einmalig',
-		interval: 'Intervall',
-		intervalInactive: true
+		interval: null
 	});
 
+	// 1 → 2 asks for the interval at once, without "einmalig".
 	await step(canvasElement, 'up');
-	await waitFor(() => expect(repeatLines(canvasElement).count).toBe('2 mal'));
-	await expect(repeatLines(canvasElement)).toMatchObject({
-		interval: 'Wöchentlich',
-		intervalInactive: false
-	});
-
-	await step(canvasElement, 'down');
+	const listbox = await body(canvasElement).findByRole('listbox');
+	await expect(
+		within(listbox).queryByRole('option', { name: 'einmalig' })
+	).toBeNull();
+	await userEvent.click(
+		within(listbox).getByRole('option', { name: 'Monatlich' })
+	);
 	await waitFor(() =>
-		expect(repeatLines(canvasElement).count).toBe('einmalig')
+		expect(repeatLines(canvasElement)).toEqual({
+			count: '2 Termine',
+			interval: 'Monatlich'
+		})
 	);
 
-	// The interval can be chosen first; it waits, inactive, for a second date.
-	await pickInterval(canvasElement, 'Monatlich');
+	// "einmalig" from the menu goes back to one date.
+	await pickInterval(canvasElement, 'einmalig');
 	await waitFor(() =>
 		expect(repeatLines(canvasElement)).toEqual({
 			count: 'einmalig',
-			interval: 'Monatlich',
-			intervalInactive: true
-		})
-	);
-	await step(canvasElement, 'up');
-	await waitFor(() =>
-		expect(repeatLines(canvasElement)).toEqual({
-			count: '2 mal',
-			interval: 'Monatlich',
-			intervalInactive: false
+			interval: null
 		})
 	);
 };
@@ -224,4 +215,29 @@ export const RepeatOneOffMobile: Story = {
 	globals: phone390Globals,
 	args: { layout: 'mobile', prefill: { repeatCount: 1, interval: 'WEEKLY' } },
 	play: oneOffPlay
+};
+
+/** Screenshot state: the menu the ▲ press opened on the real form. */
+const autoOpenPlay = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	repeatRow(canvasElement).scrollIntoView({ block: 'center' });
+	await step(canvasElement, 'up');
+	await body(canvasElement).findByRole('listbox');
+};
+
+export const RepeatAutoOpenDesktop: Story = {
+	name: 'Repeat · 1 → 2 opens the interval menu · 1440',
+	globals: desktop1440Globals,
+	args: { prefill: { repeatCount: 1, interval: 'WEEKLY' } },
+	play: autoOpenPlay
+};
+
+export const RepeatAutoOpenMobile: Story = {
+	name: 'Repeat · 1 → 2 opens the interval menu · 390',
+	globals: phone390Globals,
+	args: { layout: 'mobile', prefill: { repeatCount: 1, interval: 'WEEKLY' } },
+	play: autoOpenPlay
 };

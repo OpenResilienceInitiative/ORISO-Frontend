@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	getGroupChatIntervalLabel,
+	getGroupChatRepeatCountLabel,
 	getGroupChatRepeatLabel
 } from './groupChatRepeatLabel';
 
@@ -50,6 +51,20 @@ describe('getGroupChatIntervalLabel (create form repeat row, #1499)', () => {
 	it('names the interval with the same key the menu uses', () => {
 		expect(getGroupChatIntervalLabel('QUARTERLY', translate)).toBe(
 			'groupChat.create.interval.options.quarterly'
+		);
+	});
+});
+
+describe('getGroupChatRepeatCountLabel (create form repeat row, #1499)', () => {
+	it('counts dates for a series', () => {
+		expect(getGroupChatRepeatCountLabel(10, translate)).toBe(
+			'groupChat.circle.rows.repeatDates({"count":10})'
+		);
+	});
+
+	it('calls a single date "einmalig", like Chat-Info', () => {
+		expect(getGroupChatRepeatCountLabel(1, translate)).toBe(
+			getGroupChatRepeatLabel({ repeatCount: 1 }, translate)
 		);
 	});
 });

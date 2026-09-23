@@ -979,40 +979,6 @@ body.conversationCreate--active .navigation__wrapper {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
-
-	/* Two lines in the 56px row: count on top, interval as its unit below. */
-	&__repeat .splitButton__main {
-		padding-block: 8px;
-	}
-
-	&__repeatValue {
-		align-items: center;
-		display: flex;
-		flex-direction: column;
-	}
-
-	&__repeatCount,
-	&__repeatInterval {
-		max-width: 100%;
-		overflow: hidden;
-		text-overflow: ellipsis;
-	}
-
-	&__repeatCount {
-		line-height: 20px;
-	}
-
-	&__repeatInterval {
-		font-size: 12px;
-		font-weight: 500;
-		letter-spacing: 0.5px;
-		line-height: 16px;
-
-		/* Shown, not hidden: a single date has no interval yet. */
-		&--inactive {
-			opacity: 0.6;
-		}
-	}
 }
 
 .rowMenu {

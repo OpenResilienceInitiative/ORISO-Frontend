@@ -1119,8 +1119,7 @@
 				"decrease": "Уменьшить: {{field}}",
 				"openList": "Выбрать: {{field}}",
 				"durationValue": "{{count}} ч",
-				"repeatValue_one": "{{count}} раз",
-				"repeatValue_other": "{{count}} раз"
+				"repeatDates": "Встреч: {{count}}"
 			},
 			"noModeratorAvailable": "Нет доступных сотрудников",
 			"moderatorHelp": "Помощь",

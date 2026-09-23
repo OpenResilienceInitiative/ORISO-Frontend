@@ -899,8 +899,7 @@
 				"decrease": "{{field}} verringern",
 				"openList": "{{field}} auswählen",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} mal",
-				"repeatValue_other": "{{count}} mal"
+				"repeatDates": "{{count}} Termine"
 			},
 			"noModeratorAvailable": "Keine Person verfügbar",
 			"moderatorHelp": "Hilfe",

@@ -71,10 +71,21 @@ export const RowMenu = ({
 			) ?? []
 		);
 
+	/*
+	 * The menu mounts hidden until it is measured, and a hidden button cannot
+	 * take focus; so focus the first option once the menu is visible.
+	 */
+	const focusedRef = useRef(false);
 	useEffect(() => {
-		optionButtons()[0]?.focus();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		if (focusedRef.current || style.visibility === 'hidden') {
+			return;
+		}
+		const first = optionButtons()[0];
+		if (first) {
+			first.focus();
+			focusedRef.current = true;
+		}
+	}, [style]);
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
 		const buttons = optionButtons();

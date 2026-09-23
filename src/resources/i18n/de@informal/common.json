@@ -335,9 +335,7 @@
 				"increase": "{{field}} erhöhen",
 				"decrease": "{{field}} verringern",
 				"openList": "{{field}} auswählen",
-				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} mal",
-				"repeatValue_other": "{{count}} mal"
+				"durationValue": "{{count}} h"
 			},
 			"moderatorHelpDialog": {
 				"description": "Gerade kann keine weitere Fachkraft deines Trägers ausgewählt werden. Du kannst den Gesprächskreis trotzdem erstellen und Co-Moderator:innen danach hinzufügen.",

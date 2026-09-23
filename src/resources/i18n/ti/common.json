@@ -1118,8 +1118,7 @@
 				"decrease": "{{field}} ኣጉድል",
 				"openList": "{{field}} ምረጽ",
 				"durationValue": "{{count}} ሰዓት",
-				"repeatValue_one": "{{count}} ግዜ",
-				"repeatValue_other": "{{count}} ግዜ"
+				"repeatDates": "{{count}} ግዜያት"
 			},
 			"noModeratorAvailable": "ዝርከብ ሰብ የለን",
 			"moderatorHelp": "ሓገዝ",
