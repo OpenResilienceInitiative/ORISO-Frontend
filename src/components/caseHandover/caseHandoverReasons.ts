@@ -14,15 +14,29 @@ export type CaseHandoverReasonCode =
 
 const KNOWN_CODES = new Set<string>(CASE_HANDOVER_REASON_CODES);
 
-// Pre-PLAN-E1 codes. Unmigrated tenants still send them, and their server
-// labels read as health statements, so they must never reach the screen.
+// Pre-PLAN-E1 codes read as health statements; never show their server
+// wording. Same successor mapping as UserService CaseHandoverReasonCodes.
+const RETIRED_TO_NEUTRAL: Record<string, CaseHandoverReasonCode> = {
+	COUNSELLOR_ASKED_FOR_ADVICE: 'ADVICE_REQUESTED',
+	COUNSELLOR_ON_HOLIDAY: 'PLANNED_ABSENCE',
+	COUNSELLOR_IS_ILL: 'UNPLANNED_ABSENCE',
+	COUNSELLOR_LEFT: 'ASSIGNMENT_ENDED'
+};
+
+// Retired without successor.
 const RETIRED_CODES = new Set<string>([
-	'COUNSELLOR_IS_ILL',
-	'COUNSELLOR_ON_HOLIDAY',
-	'OTHER_EMERGENCY',
-	'COUNSELLOR_LEFT',
-	'COUNSELLOR_ASKED_FOR_ADVICE'
+	...Object.keys(RETIRED_TO_NEUTRAL),
+	'OTHER_EMERGENCY'
 ]);
+
+// Seeded English labels of the retired codes; legacy chat notices carry only these.
+const RETIRED_LABEL_TO_NEUTRAL: Record<string, CaseHandoverReasonCode> = {
+	'counsellor asked for advice': 'ADVICE_REQUESTED',
+	'counsellor is on holiday': 'PLANNED_ABSENCE',
+	'counsellor is ill': 'UNPLANNED_ABSENCE',
+	'counsellor does not work here anymore': 'ASSIGNMENT_ENDED',
+	"counsellor doesn't work here anymore": 'ASSIGNMENT_ENDED'
+};
 
 export const isRetiredCaseHandoverReasonCode = (code?: string): boolean =>
 	Boolean(code) && RETIRED_CODES.has(code);
@@ -46,8 +60,11 @@ export const caseHandoverReasonLabel = (
 	if (isKnownCaseHandoverReasonCode(code)) {
 		return translate(`caseHandover.reason.${code}`);
 	}
+	if (RETIRED_TO_NEUTRAL[code]) {
+		return translate(`caseHandover.reason.${RETIRED_TO_NEUTRAL[code]}`);
+	}
 	if (isRetiredCaseHandoverReasonCode(code)) {
-		// Checked before the fallback, which would show the health wording.
+		// Checked before the fallback, which would show the server wording.
 		return translate('caseHandover.reason.retired');
 	}
 	return serverLabel ?? code;
@@ -58,15 +75,22 @@ export const caseHandoverReasonLabelOf = (
 	reason: Pick<CaseHandoverReason, 'code' | 'label'>
 ): string => caseHandoverReasonLabel(translate, reason.code, reason.label);
 
-/**
- * Label for the counsellor's own reason picker. Retired codes keep their
- * server wording here: dev still serves only those, and one shared neutral
- * label would leave identical choices.
- */
+/** Label for the counsellor's own reason picker; never blank. */
 export const caseHandoverReasonOptionLabel = (
 	translate: TFunction,
 	reason: Pick<CaseHandoverReason, 'code' | 'label'>
 ): string =>
-	isKnownCaseHandoverReasonCode(reason.code)
-		? translate(`caseHandover.reason.${reason.code}`)
-		: reason.label || reason.code;
+	caseHandoverReasonLabel(
+		translate,
+		reason.code,
+		reason.label || reason.code
+	);
+
+/** Label from a legacy chat notice (no code): retired wording becomes neutral. */
+export const neutralLegacyReasonLabel = (
+	translate: TFunction,
+	label: string
+): string => {
+	const successor = RETIRED_LABEL_TO_NEUTRAL[label.trim().toLowerCase()];
+	return successor ? translate(`caseHandover.reason.${successor}`) : label;
+};

@@ -48,9 +48,8 @@ describe('CaseHandoverCurtainView reason list', () => {
 		expect(screen.queryByText('Counsellor is on holiday')).toBeNull();
 	});
 
-	// Dev still serves only the five retired codes; collapsing them into one
-	// neutral label would leave five identical radio options.
-	it('keeps retired codes distinguishable in the picker', () => {
+	// An unmigrated tenant may still send retired codes: neutral and distinct.
+	it('shows retired codes as distinct neutral successors', () => {
 		render(
 			<CaseHandoverCurtainView
 				step="reason"
@@ -77,8 +76,12 @@ describe('CaseHandoverCurtainView reason list', () => {
 			/>
 		);
 
-		expect(screen.getByText('Counsellor is ill')).toBeTruthy();
-		expect(screen.getByText('Counsellor is on holiday')).toBeTruthy();
-		expect(screen.queryByText('t:caseHandover.reason.retired')).toBeNull();
+		expect(
+			screen.getByText('t:caseHandover.reason.UNPLANNED_ABSENCE')
+		).toBeTruthy();
+		expect(
+			screen.getByText('t:caseHandover.reason.PLANNED_ABSENCE')
+		).toBeTruthy();
+		expect(screen.queryByText('Counsellor is ill')).toBeNull();
 	});
 });

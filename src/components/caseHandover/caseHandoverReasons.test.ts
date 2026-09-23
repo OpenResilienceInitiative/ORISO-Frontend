@@ -4,7 +4,8 @@ import {
 	caseHandoverReasonLabel,
 	caseHandoverReasonLabelOf,
 	caseHandoverReasonOptionLabel,
-	isKnownCaseHandoverReasonCode
+	isKnownCaseHandoverReasonCode,
+	neutralLegacyReasonLabel
 } from './caseHandoverReasons';
 
 /** Stand-in for i18next's `t`: echoes the key it was asked for. */
@@ -67,21 +68,33 @@ describe('caseHandoverReasons', () => {
 		).toBe('t:caseHandover.reason.PLANNED_ABSENCE');
 	});
 
-	// PLAN E1 removed these codes because their server labels read as health
-	// statements. A tenant whose policy rows are not migrated still sends them,
-	// and the unknown-code fallback would have rendered the server's wording.
+	// Retired codes read as health statements; show the neutral successor the
+	// backend maps them to (UserService CaseHandoverReasonCodes), never the
+	// server wording.
 	it.each([
-		'COUNSELLOR_IS_ILL',
-		'COUNSELLOR_ON_HOLIDAY',
-		'OTHER_EMERGENCY',
-		'COUNSELLOR_LEFT',
-		'COUNSELLOR_ASKED_FOR_ADVICE'
-	])('never renders the server label for the retired code %s', (code) => {
+		['COUNSELLOR_IS_ILL', 'UNPLANNED_ABSENCE'],
+		['COUNSELLOR_ON_HOLIDAY', 'PLANNED_ABSENCE'],
+		['COUNSELLOR_LEFT', 'ASSIGNMENT_ENDED'],
+		['COUNSELLOR_ASKED_FOR_ADVICE', 'ADVICE_REQUESTED']
+	])(
+		'shows the neutral successor for the retired code %s',
+		(code, successor) => {
+			expect(
+				caseHandoverReasonLabel(
+					translate as never,
+					code,
+					'Beraterin ist krank'
+				)
+			).toBe(`t:caseHandover.reason.${successor}`);
+		}
+	);
+
+	it('shows "not specified" for a retired code without successor', () => {
 		expect(
 			caseHandoverReasonLabel(
 				translate as never,
-				code,
-				'Beraterin ist krank'
+				'OTHER_EMERGENCY',
+				'Other emergency'
 			)
 		).toBe('t:caseHandover.reason.retired');
 	});
@@ -106,13 +119,13 @@ describe('caseHandoverReasons', () => {
 			).toBe('t:caseHandover.reason.ADVICE_REQUESTED');
 		});
 
-		it('keeps the server label of a retired code so choices stay distinct', () => {
+		it('shows a retired code as its neutral successor', () => {
 			expect(
 				caseHandoverReasonOptionLabel(translate, {
 					code: 'COUNSELLOR_IS_ILL',
 					label: 'Counsellor is ill'
 				})
-			).toBe('Counsellor is ill');
+			).toBe('t:caseHandover.reason.UNPLANNED_ABSENCE');
 		});
 
 		it('falls back to the code when the server sent no label', () => {
@@ -122,6 +135,29 @@ describe('caseHandoverReasons', () => {
 					label: ''
 				})
 			).toBe('TENANT_SPECIFIC');
+		});
+	});
+
+	// Legacy CASE_HANDOVER_GRANTED chat notices carry only the label.
+	describe('legacy notice label', () => {
+		it.each([
+			['Counsellor is ill', 'UNPLANNED_ABSENCE'],
+			['  counsellor IS ILL ', 'UNPLANNED_ABSENCE'],
+			['Counsellor is on holiday', 'PLANNED_ABSENCE'],
+			['Counsellor asked for advice', 'ADVICE_REQUESTED'],
+			['Counsellor does not work here anymore', 'ASSIGNMENT_ENDED'],
+			["Counsellor doesn't work here anymore", 'ASSIGNMENT_ENDED']
+		])('replaces the retired label "%s"', (label, successor) => {
+			expect(neutralLegacyReasonLabel(translate, label)).toBe(
+				`t:caseHandover.reason.${successor}`
+			);
+		});
+
+		it('keeps any other label', () => {
+			expect(
+				neutralLegacyReasonLabel(translate, 'Unplanned absence')
+			).toBe('Unplanned absence');
+			expect(neutralLegacyReasonLabel(translate, '')).toBe('');
 		});
 	});
 });

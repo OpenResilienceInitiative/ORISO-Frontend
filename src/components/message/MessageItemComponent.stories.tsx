@@ -434,6 +434,15 @@ export const CaseHandoverGranted: Story = {
 			message: mockCaseHandoverGrantedMessage
 		}),
 		...baseHandlers
+	},
+	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		// Rendered inside the collapsed details panel.
+		await expect(
+			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
+		).toBeInTheDocument();
+		await expect(canvas.queryByText(/is ill|erkrankt/i)).toBeNull();
 	}
 };
 

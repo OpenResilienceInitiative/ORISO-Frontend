@@ -78,6 +78,7 @@ import {
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
+import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -1163,8 +1164,10 @@ export const MessageItemComponent = ({
 	const systemNotificationDescription =
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
-	const systemNotificationReasonLabel =
-		parsedMessage.systemNotificationReasonLabel;
+	const systemNotificationReasonLabel = neutralLegacyReasonLabel(
+		translate,
+		parsedMessage.systemNotificationReasonLabel
+	);
 	const systemNotificationExplanation =
 		parsedMessage.systemNotificationExplanation;
 	const visibleCaseHandoverInternalDetails =
