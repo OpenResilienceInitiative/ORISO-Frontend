@@ -11,11 +11,11 @@ import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
 import { EncryptionSettingsPanel } from './EncryptionSettings';
 // import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
-import { BrowserNotification } from './BrowserNotifications';
-import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
 import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
+import { BrowserNotification } from './BrowserNotifications';
+import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
