@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router-dom';
 import { UserDataContext } from '../../globalState';
 import { ConsultingTypesContext } from '../../globalState/provider/ConsultingTypesProvider';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
+import { SessionsDataContext } from '../../globalState/provider/SessionsDataProvider';
 import { Profile } from './Profile';
 
 /**
@@ -36,6 +37,8 @@ const consultant = {
 		isActive: true,
 		type: 'APP'
 	},
+	languages: ['de'],
+	displayName: 'Blinky Stinky',
 	emailToggles: [
 		{ name: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER', state: true }
 	],
@@ -56,9 +59,13 @@ const withStage =
 			<ConsultingTypesContext.Provider
 				value={{ consultingTypes: [], setConsultingTypes: () => {} }}
 			>
-				<ModalProvider>
-					<Story />
-				</ModalProvider>
+				<SessionsDataContext.Provider
+					value={{ sessions: [], ready: true, dispatch: () => {} }}
+				>
+					<ModalProvider>
+						<Story />
+					</ModalProvider>
+				</SessionsDataContext.Provider>
 			</ConsultingTypesContext.Provider>
 		</UserDataContext.Provider>
 	);
@@ -113,5 +120,45 @@ export const AskerMobile390Security: Story = {
 	globals: phone390,
 	parameters: {
 		router: { initialPath: '/profile/einstellungen/sicherheit' }
+	}
+};
+
+/** #1540: the other tabs share the card layout. */
+export const ConsultantGeneral1440: Story = {
+	decorators: [withStage(consultant)],
+	globals: desktop1440,
+	parameters: { router: { initialPath: '/profile/allgemeines' } }
+};
+
+export const AskerGeneral1440: Story = {
+	decorators: [withStage(asker)],
+	globals: desktop1440,
+	parameters: { router: { initialPath: '/profile/allgemeines' } }
+};
+
+export const ConsultantActivities1440: Story = {
+	decorators: [withStage(consultant)],
+	globals: desktop1440,
+	parameters: { router: { initialPath: '/profile/aktivitaeten' } }
+};
+
+export const ConsultantHelp1440: Story = {
+	decorators: [withStage(consultant)],
+	globals: desktop1440,
+	parameters: { router: { initialPath: '/profile/hilfe' } }
+};
+
+/** Mobile keeps the tab list and the sub-menu per tab. */
+export const AskerMobile390Menu: Story = {
+	decorators: [withStage(asker)],
+	globals: phone390,
+	parameters: { router: { initialPath: '/profile/einstellungen' } }
+};
+
+export const ConsultantMobile390Keyboard: Story = {
+	decorators: [withStage(consultant)],
+	globals: phone390,
+	parameters: {
+		router: { initialPath: '/profile/einstellungen/tastatur' }
 	}
 };

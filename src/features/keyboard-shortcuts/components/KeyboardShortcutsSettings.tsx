@@ -5,6 +5,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import UndoRoundedIcon from '@mui/icons-material/UndoRounded';
 import { Headline } from '../../../components/headline/Headline';
 import { Text } from '../../../components/text/Text';
 import { OrisoSelect } from '../../../components/form/OrisoSelect';
@@ -250,15 +251,18 @@ export const KeyboardShortcutsSettings = () => {
 						{translate('shortcuts.lockedNewline')}
 					</span>
 				)}
-				{def.canDisable && (
-					<button
-						type="button"
-						className="keyboardShortcutsSettings__reset"
-						onClick={() => handleResetAction(def.id)}
-					>
-						{translate('shortcuts.resetAction')}
-					</button>
-				)}
+				{def.canDisable &&
+					!bindingsEqual(current, def.defaultBinding, platform) && (
+						<button
+							type="button"
+							className="keyboardShortcutsSettings__reset"
+							onClick={() => handleResetAction(def.id)}
+							aria-label={translate('shortcuts.resetAction')}
+							title={translate('shortcuts.resetAction')}
+						>
+							<UndoRoundedIcon aria-hidden="true" />
+						</button>
+					)}
 			</div>
 		);
 	};

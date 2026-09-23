@@ -688,8 +688,8 @@ $profile-footer-justify-content: center !default;
 	}
 }
 
-// #878: `cards` layout of the settings tab. Columns instead of floats, so
-// cards of different height stack without gaps and reading order stays top-down.
+// #878/#1540: `cards` layout. Columns instead of floats, so cards of
+// different height stack without gaps; each card leads with a centred icon.
 .profile__cards {
 	padding: $grid-base-two 0;
 
@@ -700,28 +700,91 @@ $profile-footer-justify-content: center !default;
 	}
 
 	.profile__card {
-		display: grid;
-		grid-template-columns: 24px minmax(0, 1fr);
-		column-gap: $grid-base-two;
-		align-items: start;
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		gap: 10px;
 		float: none;
 		width: auto;
 		margin: 0 0 $grid-base-three;
-		padding: 20px $grid-base-three;
-		border-radius: 24px;
-		background: var(--m3-surface-container-low);
+		padding: 28px 28px $grid-base-three;
+		border-radius: 28px;
+		background: var(--m3-surface-container-low, #f6f3f3);
 		break-inside: avoid;
 		box-sizing: border-box;
 	}
 
+	.profile__card--bare {
+		float: none;
+		width: auto;
+		margin: 0 0 $grid-base-three;
+		padding: 0;
+		break-inside: avoid;
+	}
+
 	.profile__card__icon {
-		width: 24px;
-		height: 24px;
-		margin-top: 2px;
-		color: var(--m3-on-surface-variant);
+		align-self: center;
+		width: 36px;
+		height: 36px;
+		color: var(--m3-secondary, #4d5660);
 	}
 
 	.profile__card__body {
 		min-width: 0;
+	}
+
+	// The section's own title block becomes the card header.
+	.profile__card__body > * > * > .profile__content__title:first-child,
+	.profile__card__body > * > .profile__content__title:first-child,
+	.profile__card__body > .profile__content__title:first-child {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		text-align: center;
+		margin-bottom: 20px;
+
+		> div:first-child {
+			width: 100%;
+			justify-content: center;
+		}
+
+		// Edit pencils and similar actions stay reachable in the top right.
+		> div:first-child > :not(.headline) {
+			position: absolute;
+			top: 0;
+			right: 0;
+		}
+
+		.headline {
+			margin: 0;
+			padding: 0;
+			font-size: 24px;
+			font-weight: 400;
+			line-height: 32px;
+		}
+
+		.text {
+			max-width: 460px;
+			margin-top: 8px;
+		}
+	}
+}
+
+// Inside cards, option labels read as body text, not as brand-red links.
+.profile__cards .checkbox__label {
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.profile__cards .additionalEnquiry {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	.button__item {
+		width: auto;
+		min-width: 0;
+		padding: 0 24px;
+		white-space: nowrap;
 	}
 }

@@ -1,0 +1,53 @@
+.avatarPicker {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+	gap: 14px 10px;
+	justify-items: center;
+	max-height: 260px;
+	overflow-y: auto;
+	padding: 8px 4px;
+
+	&--consultant {
+		color: var(--m3-on-primary-container, #ffe2de);
+	}
+
+	&__tile {
+		position: relative;
+		padding: 0;
+		border: none;
+		border-radius: 50%;
+		background: transparent;
+		color: inherit;
+		cursor: pointer;
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, #a5000a);
+			outline-offset: 3px;
+		}
+
+		&--selected {
+			box-shadow:
+				0 0 0 3px var(--m3-surface-container-low, #f6f3f3),
+				0 0 0 5px var(--m3-primary, #a5000a);
+		}
+	}
+
+	&__check {
+		position: absolute;
+		right: -4px;
+		bottom: -4px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 22px;
+		height: 22px;
+		border-radius: 50%;
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #ffffff);
+
+		svg {
+			width: 16px;
+			height: 16px;
+		}
+	}
+}

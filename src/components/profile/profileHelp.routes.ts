@@ -6,6 +6,8 @@ import {
 } from '../../utils/tabsHelper';
 import { Help } from '../help/Help';
 import { Documentation } from './Documentation';
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 
 export const profileRoutesHelp = (
 	settings: AppSettingsInterface
@@ -16,6 +18,7 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: Help,
+				icon: VideocamOutlinedIcon,
 				column: COLUMN_LEFT,
 				condition: () => !settings?.documentationEnabled
 			}
@@ -28,6 +31,7 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: Documentation,
+				icon: MenuBookOutlinedIcon,
 				column: COLUMN_LEFT,
 				condition: () => !!settings?.documentationEnabled
 			}
