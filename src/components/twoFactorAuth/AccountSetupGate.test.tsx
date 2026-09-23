@@ -99,6 +99,25 @@ describe('AccountSetupGate', () => {
 			expect(screen.queryByRole('dialog')).not.toBeNull();
 		});
 
+		// Setup is two steps; a dialog that only says "password" reads as the
+		// whole of it, and the second factor then arrives as a surprise.
+		it('shows both setup steps, with the password one active', () => {
+			renderGate(owesPassword);
+
+			const dialog = screen.getByRole('dialog');
+			const progress = within(dialog).getByRole('group', {
+				name: 'accountSetup.progress.label'
+			});
+
+			expect(
+				within(progress).getByText('accountSetup.progress.password')
+					.parentElement.className
+			).toContain('twoFactorSetupDialog__progressStep--active');
+			expect(
+				within(progress).getByText('accountSetup.progress.twoFactor')
+			).not.toBeNull();
+		});
+
 		it('keeps logging out reachable from inside the modal dialog', () => {
 			const { onLogout } = renderGate(owesPassword);
 
@@ -126,6 +145,12 @@ describe('AccountSetupGate', () => {
 			expect(dialogProps.current.open).toBe(true);
 			expect(dialogProps.current.canClose).toBe(false);
 			expect(dialogProps.current.canDisable).toBe(false);
+		});
+
+		it('tells the second-factor dialog it is step two of two', () => {
+			renderGate(owesSecondFactor);
+
+			expect(dialogProps.current.showAccountProgress).toBe(true);
 		});
 
 		it('passes the enrolment material through to the dialog', () => {

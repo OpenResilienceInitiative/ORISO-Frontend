@@ -2362,7 +2362,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "ሓድሽ ምልክት ቃል ኣረጋግጽ"
+						"label": "ሓድሽ ምልክት ቃል ኣረጋግጽ",
+						"dialogLabel": "ሓድሽ መሕለፊ ቃል ደግሙ"
 					},
 					"insecure": "ፓስዎርድካ ውሑስ ኣይኮነን።",
 					"instructions": "<span class=\"text--bold\">መሕለፊ ቃልካ ንዝተሓለወ ምኽሪ ንምርግጋጽ ነዞም ዝስዕቡ ረቛሒታት ከማልእ ኣለዎ፡</span><ul class=\"pl--2 my--1\"><li>ዓበይትን ናኣሽቱን ፊደላት</li><li>ብውሑዱ ሓደ ቁጽሪ</li><li>ብውሑዱ ሓደ ፍሉይ ፊደል (ንኣብነት: ?, !, +, #, &, ...)</li><li>ብውሑዱ 9 ፊደላት</li></ul>",
@@ -2374,7 +2375,9 @@
 					},
 					"old": {
 						"incorrect": "ፓስዎርድካ ጌጋ እዩ።",
-						"label": "ናይ ሕጂ ምልክት ቃል"
+						"label": "ናይ ሕጂ ምልክት ቃል",
+						"hint": "እቲ ሕጂ ዝኣተኹምሉ መሕለፊ ቃል።",
+						"dialogLabel": "ናይ ቅድሚ ሕጂ መሕለፊ ቃል"
 					},
 					"overlay": {
 						"button": {
@@ -2386,7 +2389,16 @@
 					"sameAsOld": "በጃኻ ሓድሽ መሕለፊ ቃል ምረጽ – እዚ እቲ ሕጂ ዘለካ እዩ።",
 					"secure": "ፓስዎርድካ ውሑስ እዩ።",
 					"subtitle": "እንተደሊኹም ኣብዚ ፓስዎርድኩም ክትቅይሩ ትኽእሉ ኢኹም። ሓድሽ ንምቕማጥ መጀመርታ ናይ ሕጂ ፓስዎርድካ ኣእቱ።",
-					"title": "መሕለፊ ቓል"
+					"title": "መሕለፊ ቓል",
+					"criteria": {
+						"title": "ሓድሽ መሕለፊ ቃልኩም እዚ የድልዮ",
+						"mixedCase": "ዓበይትን ናእሽቱን ፊደላት",
+						"number": "ብውሑዱ ሓደ ቁጽሪ",
+						"specialChar": "ሓደ ፍሉይ ምልክት (?, !, +, # …)",
+						"minLength": "ብውሑዱ 9 ፊደላት",
+						"met": "ተማሊኡ"
+					},
+					"submitAndContinue": "መሕለፊ ቃል ኣቐምጡን ቀጽሉን"
 				}
 			},
 			"security": {
@@ -3971,11 +3983,12 @@
 					"missingQr": "እቲ QR ኮድ ኣብዚ እዋን ኣይርከብን። ነቲ ብኢድ ዝኣቱ መፍትሕ ተጠቐሙ።",
 					"missingSecret": "እቲ መፍትሕ ኣብዚ እዋን ኣይርከብን።",
 					"or": "ወይ",
-					"qrAlt": "QR ኮድ ናይታ Authenticator ኣፕ"
+					"qrAlt": "QR ኮድ ናይታ Authenticator ኣፕ",
+					"title": "ነታ ኣፕ ምስ ORISO ኣራኽብዋ"
 				},
 				"install": {
 					"android": "ኣብ Google Play Store ኣውርድ",
-					"copy": "Google Authenticator ወይ Microsoft Authenticator ኣብ ስማርትፎንኩም ወይ ታብሌትኩም ኣእትዉ። ክልቲኤን ኣፕታት ነቲ ናይ ኦንላይን ምኽሪ ናይ ድሕነት ኮድ ይድግፋ።",
+					"copy": "ካብዘን ክልተ ኣፕታት ሓንቲ ኣብ ስማርትፎንኩም ወይ ታብሌትኩም የድልየኩም። ድሮ ኣእቲኹማ ዲኹም? እምበኣር ብቐጥታ ቀጽሉ።",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -3986,20 +3999,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Authenticator ኣፕ ኣእትዉ",
+					"note": "ብናጻ፡ ብዘይ ኣካውንት ክትጥቀሙላ ትኽእሉ",
+					"done": "እታ ኣፕ ተኣትያ ኣላ – ቀጽሉ"
 				},
 				"success": {
 					"title": "ናይ ኣፕ ምርግጋጽ ብዓወት ተዳልዩ።"
 				},
 				"verify": {
 					"copy": "ነቲ ምድላው ንምዝዛም፡ ነቲ ሽዱሽተ ኣሃዝ ዘለዎ ኮድ ካብታ ኣፕ ኣእትዉ።",
-					"input": "ናይ ሓደ ግዜ ኮድ"
+					"input": "ናይ ሓደ ግዜ ኮድ",
+					"title": "ነቲ ኮድ መርምርዎ"
 				}
 			},
 			"decision": {
 				"app": "ብኣፕ ብውሑስ ተራኸቡ",
 				"copy": "ንኣካውንትኩም ብካልኣይ ረቛሒ ሓልውዎ። እታ Authenticator ኣፕ ዝያዳ ውሕስቲ እያ፤ ከም ኣማራጺ ድማ ኮድ ብኢመይል ክትቅበሉ ትኽእሉ።",
-				"email": "ናይ ኢመይል ኮድ ተጠቐሙ (ውሕስነቱ ትሑት)"
+				"email": "ናይ ኢመይል ኮድ ተጠቐሙ (ውሕስነቱ ትሑት)",
+				"title": "ካልኣይ ረቛሒ ምረጹ"
 			},
 			"email": {
 				"connect": {
@@ -4007,12 +4025,14 @@
 					"input": "ናይ ሓደ ግዜ ኮድ",
 					"resend": "ሓድሽ ኮድ ስደድ",
 					"resendTitle": "ኣይሰርሐን ድዩ?",
-					"sent": "ሓድሽ ኮድ ተላኢኹ።"
+					"sent": "ሓድሽ ኮድ ተላኢኹ።",
+					"title": "ነቲ ኮድ መርምርዎ"
 				},
 				"select": {
 					"copy": "ናይ ድሕነት ኮድኩም ክንሰደሉ ዘለና ኢመይል ኣድራሻ ኣእትዉ።",
 					"hint": "ነቲ ኢመይል ኣድራሻ እንተቐዪርኩምዎ፡ ንመጻኢ መፍለጢታት እውን ናብዚ ኣድራሻ እዚ ክመጹኹም እዮም።",
-					"input": "ኢመይል ኣድራሻ"
+					"input": "ኢመይል ኣድራሻ",
+					"title": "ካልኣይ ረቛሒ ብኢመይል ኣዳልዉ"
 				},
 				"success": {
 					"title": "ናይ ኢመይል ምርግጋጽ ብዓወት ተዳልዩ።"
@@ -4037,7 +4057,9 @@
 				"select": "ምረጽ",
 				"verify": "መርምር"
 			},
-			"title": "ኣየናይ መራኸቢ ክትጥቀሙ ትደልዩ?"
+			"success": {
+				"title": "ካልኣይ ረቛሒ ተዳልዩ"
+			}
 		},
 		"overlayButton": {
 			"back": "ዝባን",
@@ -5162,13 +5184,19 @@
 	},
 	"passwordChange": {
 		"required": {
-			"copy": "መእተዊኹም ብኣመሓዳሪ እዩ ተፈጢሩ፡ ንሱ ድማ ናይ መጀመርታ መሕለፊ ቃልኩም ኣቐሚጡ ክሳብ ሕጂ ይፈልጦ እዩ። በጃኹም ሕጂ ብእትፈልጥዎ በይንኹም መሕለፊ ቃል ተክእዎ። ድሕሪኡ ካልኣይ መረጋገጺኹም ተዳልዉ።",
-			"title": "በጃኹም ናይ ባዕልኹም መሕለፊ ቃል ኣእትዉ"
+			"copy": "መእተዊኹም ንዓኹም ተባሂሉ እዩ ተፈጢሩ፤ ስለዚ ነቲ ናይ መጀመርታ መሕለፊ ቃል ካልእ ሰብ ይፈልጦ እዩ። ሕጂ በይንኹም እትፈልጥዎ መሕለፊ ቃል ኣቐምጡ።",
+			"title": "ናይ ባዕልኹም መሕለፊ ቃል"
 		}
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "ውጻእ"
+			"logout": "ኣብ ክንድኡ ውጻእ"
+		},
+		"progress": {
+			"label": "ኣብ ክልተ ስጕምቲ ምድላው",
+			"password": "ናይ ባዕልኹም መሕለፊ ቃል",
+			"twoFactor": "ካልኣይ ረቛሒ",
+			"done": "ተዛዚሙ"
 		}
 	}
 }
