@@ -160,7 +160,8 @@ describe('RepeatCountField (#1499)', () => {
 		expect(countLine()).toBe(`${DATES}:2`);
 		expect(optionLabels()).not.toContain(ONCE);
 		expect(optionLabels()).toHaveLength(6);
-		expect(document.activeElement?.getAttribute('role')).toBe('option');
+		// Focus sits on the kept interval, not on the first entry.
+		expect(document.activeElement?.textContent).toBe(option('weekly'));
 	});
 
 	it('dismissing the auto-opened menu keeps the last interval', () => {

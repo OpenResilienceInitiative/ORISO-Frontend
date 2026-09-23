@@ -1031,9 +1031,29 @@ body.conversationCreate--active .navigation__wrapper {
 			font-weight: 700;
 		}
 
+		/*
+		 * M3 focus state: a 10% state layer plus a rounded ring inside the
+		 * row, following the menu's curve. Only for keyboard use — a menu
+		 * opened by tap moves focus by script and must not look like a
+		 * second selection.
+		 */
+		position: relative;
+
 		&:focus-visible {
-			outline: 3px solid $cc-primary;
-			outline-offset: -3px;
+			outline: none;
+		}
+	}
+
+	&--keyboard &__option:focus-visible {
+		background-color: color-mix(in srgb, $cc-on-surface 10%, transparent);
+
+		&::after {
+			border: 2px solid $cc-secondary;
+			border-radius: 20px;
+			content: '';
+			inset: 2px 8px;
+			pointer-events: none;
+			position: absolute;
 		}
 	}
 }

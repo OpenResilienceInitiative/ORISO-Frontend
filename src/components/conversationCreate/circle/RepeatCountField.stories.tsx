@@ -141,10 +141,14 @@ export const OneToTwoOpensMenu: Story = {
 			'Vierteljährlich',
 			'Jährlich'
 		]);
-		// The last interval is marked, so closing without a pick is visible.
-		await expect(
-			within(listbox).getByRole('option', { name: 'Wöchentlich' })
-		).toHaveAttribute('aria-selected', 'true');
+		// The last interval is marked and focused, so closing without a pick
+		// is visible; a pointer-opened menu draws no focus ring.
+		const kept = within(listbox).getByRole('option', {
+			name: 'Wöchentlich'
+		});
+		await expect(kept).toHaveAttribute('aria-selected', 'true');
+		await waitFor(() => expect(document.activeElement).toBe(kept));
+		await expect(listbox).not.toHaveClass('rowMenu--keyboard');
 		await userEvent.click(
 			within(listbox).getByRole('option', { name: 'Monatlich' })
 		);
@@ -203,14 +207,17 @@ export const KeyboardFocusAndEscape: Story = {
 		stepButton(canvasElement, 'up').focus();
 		await userEvent.keyboard('{Enter}');
 		const listbox = await body(canvasElement).findByRole('listbox');
+		// Focus starts on the chosen interval, not on the first entry.
 		await waitFor(() =>
 			expect(document.activeElement).toBe(
-				within(listbox).getByRole('option', { name: 'Täglich' })
+				within(listbox).getByRole('option', { name: 'Wöchentlich' })
 			)
 		);
+		// Keyboard use shows the M3 focus ring.
+		await expect(listbox).toHaveClass('rowMenu--keyboard');
 		await userEvent.keyboard('{ArrowDown}');
 		await expect(document.activeElement).toBe(
-			within(listbox).getByRole('option', { name: 'Wöchentlich' })
+			within(listbox).getByRole('option', { name: 'Alle zwei Wochen' })
 		);
 		await userEvent.keyboard('{Escape}');
 		await waitFor(() => expect(listbox).not.toBeInTheDocument());
