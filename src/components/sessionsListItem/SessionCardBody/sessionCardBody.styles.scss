@@ -1,0 +1,124 @@
+// Numbers come from `sessionCardGeometry.ts` as custom properties.
+// `--card-trailing` is set by the list: the menu pill's inset (10 / 4 px).
+.sessionCard {
+	--card-clip: calc(
+		var(--card-name-line) + var(--card-preview-line) *
+			var(--card-preview-lines)
+	);
+
+	position: relative;
+	box-sizing: border-box;
+	height: var(--card-body);
+	padding: 0 var(--card-inset);
+
+	// Above the clamp: WebKit counts a line inside it towards the three.
+	&__name {
+		position: absolute;
+		top: 0;
+		left: calc(var(--card-inset) + var(--card-avatar) + var(--card-gap));
+		right: calc(var(--card-inset) + var(--card-trailing, 0px));
+		line-height: var(--card-name-line);
+	}
+
+	// Two classes deep, so the list item's own rules for its slot content
+	// lose regardless of which stylesheet loads last.
+	& &__name > * {
+		display: block;
+		padding: 0;
+		line-height: inherit;
+	}
+
+	// Chrome lays a vertical -webkit-box out as flow-root, so the floats keep
+	// shaping the lines and the ellipsis still lands on the last one.
+	&__flow {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: var(--card-preview-lines);
+		box-sizing: border-box;
+		height: var(--card-clip);
+		padding-top: var(--card-name-line);
+		overflow: hidden;
+	}
+
+	// For engines that treat -webkit-box as a legacy flexbox.
+	&__flowInner {
+		display: block;
+	}
+
+	// Relative, not a negative margin: WebKit ignores a float lifted by
+	// margin for the first line. The shape is set inline from the geometry.
+	&__avatar {
+		position: relative;
+		top: calc(var(--card-name-line) * -1);
+		float: left;
+		width: var(--card-avatar);
+		height: var(--card-avatar);
+		margin: 0 var(--card-gap) 0 0;
+	}
+
+	& &__avatar > * {
+		width: 100%;
+		min-width: 0;
+		height: 100%;
+	}
+
+	// The first line ends at the pill, so a menu beside the pill covers no text.
+	&__spacer {
+		float: right;
+		width: var(--card-trailing, 0px);
+		height: var(--card-preview-line);
+	}
+
+	// From the second line on: the marks' measured column plus clearance.
+	&__reserve {
+		float: right;
+		clear: right;
+		width: var(--card-trailing-width, 0px);
+		height: calc(
+			var(--card-preview-line) * (var(--card-preview-lines) - 1)
+		);
+		margin-left: var(--card-trailing-clearance);
+		margin-right: var(--card-trailing, 0px);
+	}
+
+	// overflow: hidden or a non-normal align-content would make the text a
+	// formatting context of its own, which avoids floats instead of wrapping.
+	& &__preview > * {
+		display: block;
+		white-space: normal;
+		overflow: visible;
+		text-overflow: clip;
+		align-content: normal;
+		overflow-wrap: anywhere;
+		line-height: var(--card-preview-line);
+	}
+
+	&__trailing,
+	&__action {
+		position: absolute;
+		bottom: var(--card-inset);
+		display: flex;
+		align-items: center;
+		height: var(--card-mark);
+	}
+
+	& &__trailing > *,
+	& &__action > * {
+		height: auto;
+		margin: 0;
+		padding-right: 0;
+	}
+
+	&__trailing {
+		right: calc(var(--card-inset) + var(--card-trailing, 0px));
+		gap: 8px;
+	}
+
+	&__action {
+		left: calc(var(--card-inset) + var(--card-avatar) + var(--card-gap));
+		right: calc(
+			var(--card-inset) + var(--card-trailing, 0px) +
+				var(--card-trailing-width, 0px) + var(--card-gap)
+		);
+	}
+}

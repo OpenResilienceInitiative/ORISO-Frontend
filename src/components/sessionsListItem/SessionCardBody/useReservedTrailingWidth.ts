@@ -8,16 +8,15 @@ import * as React from 'react';
  * width to the stylesheet as `--card-trailing-width` on the card body, and
  * keeps it current when the group changes size.
  *
- * `enabled` is false for the rail and group-chat renders, which have no body.
  */
-export const useReservedTrailingWidth = (enabled: boolean) => {
+export const useReservedTrailingWidth = () => {
 	const bodyRef = React.useRef<HTMLDivElement>(null);
 	const trailingRef = React.useRef<HTMLDivElement>(null);
 
 	React.useLayoutEffect(() => {
 		const body = bodyRef.current;
 		const trailing = trailingRef.current;
-		if (!enabled || !body || !trailing) {
+		if (!body || !trailing) {
 			return undefined;
 		}
 		const reserve = (width: number) => {
@@ -38,7 +37,7 @@ export const useReservedTrailingWidth = (enabled: boolean) => {
 		});
 		observer.observe(trailing);
 		return () => observer.disconnect();
-	}, [enabled]);
+	}, []);
 
 	return { bodyRef, trailingRef };
 };

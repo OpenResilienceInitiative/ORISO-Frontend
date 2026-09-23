@@ -1415,7 +1415,7 @@ const expectMenuClearOfCardContent = async (
 		'.sessionsListItem__topic',
 		'.sessionsListItem__username',
 		'.sessionsListItem__subject',
-		'.sessionsListItem__trailing'
+		'.sessionCard__trailing'
 	]) {
 		const element = card.querySelector(selector);
 		await expect(element, selector).not.toBeNull();
@@ -1892,14 +1892,14 @@ const expectCardLayout = async (
 
 		// Mail: its word ends under the pill's right edge, centred on the
 		// third line, 16 px above the card's bottom edge.
-		const clip = at('.sessionsListItem__flow');
+		const clip = at('.sessionCard__flow');
 		const mail = at(
-			'.sessionsListItem__trailing .sessionsListItem__consultingTypeIcon--nearby'
+			'.sessionCard__trailing .sessionsListItem__consultingTypeIcon--nearby'
 		);
 		const labelRange = document.createRange();
 		labelRange.selectNodeContents(
 			card.querySelector(
-				'.sessionsListItem__trailing .sessionsListItem__consultingTypeIcon--nearbyLabel'
+				'.sessionCard__trailing .sessionsListItem__consultingTypeIcon--nearbyLabel'
 			)!
 		);
 		await expect(
@@ -1972,9 +1972,7 @@ const expectCardLayout = async (
 
 		// Truncation: the clamp hides lines rather than removing them, so
 		// counting all line boxes shows whether the text runs past three.
-		const flow = card.querySelector<HTMLElement>(
-			'.sessionsListItem__flow'
-		)!;
+		const flow = card.querySelector<HTMLElement>('.sessionCard__flow')!;
 		await expect(
 			getComputedStyle(flow).getPropertyValue('-webkit-line-clamp')
 		).toBe(String(CARD_LINES));

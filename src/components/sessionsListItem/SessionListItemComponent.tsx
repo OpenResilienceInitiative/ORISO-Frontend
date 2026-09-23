@@ -104,7 +104,7 @@ import {
 	TimedRoomPreview,
 	toListPreviewLine
 } from './matrixRoomPreview';
-import { useReservedTrailingWidth } from './useReservedTrailingWidth';
+import { SessionCardBody } from './SessionCardBody/SessionCardBody';
 import {
 	isCaseHandoverAccessControlled,
 	isCaseHandoverCandidate,
@@ -203,8 +203,6 @@ export const SessionListItemComponent = ({
 		},
 		[itemRef]
 	);
-	const { bodyRef: cardBodyRef, trailingRef: cardTrailingRef } =
-		useReservedTrailingWidth(!isRail && !activeSession?.isGroup);
 	const menuIconRef = React.useRef<HTMLButtonElement>(null);
 	const dropdownRef = React.useRef<HTMLDivElement>(null);
 	// FE#781: the delete confirmation must outlive the menu. `DeleteSession` is
@@ -1448,118 +1446,113 @@ export const SessionListItemComponent = ({
 				    https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout
 				    https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout-on-the-phone
 				    Preview host: predev.oriso.org/storybook-frontend (same ids). */}
-				<div className="sessionsListItem__body" ref={cardBodyRef}>
-					<div
-						className={clsx(
-							'sessionsListItem__username',
-							!isItemUnread &&
-								'sessionsListItem__username--readLabel'
-						)}
-					>
-						{activeSession.isGroup &&
-							activeSession.item.modality && (
-								<GroupModalityIcon
-									className="sessionsListItem__groupModalityIcon"
-									aria-label={translate(
-										`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
-									)}
-								/>
+				<SessionCardBody
+					name={
+						<div
+							className={clsx(
+								'sessionsListItem__username',
+								!isItemUnread &&
+									'sessionsListItem__username--readLabel'
 							)}
-						{sessionTopic}
-					</div>
-					<div className="sessionsListItem__flow">
-						<div className="sessionsListItem__flowInner">
-							<div className="sessionsListItem__icon">
-								{isSupervisedByMe ? (
-									<div
-										className="sessionsListItem__supervisionBadge"
-										data-testid="supervision-badge"
-										role="img"
-										title={translate(
-											'sessionList.supervision.badge',
-											'Supervision'
-										)}
+						>
+							{activeSession.isGroup &&
+								activeSession.item.modality && (
+									<GroupModalityIcon
+										className="sessionsListItem__groupModalityIcon"
 										aria-label={translate(
-											'sessionList.supervision.badge',
-											'Supervision'
+											`groupChat.create.modality.options.${activeSession.item.modality.toLowerCase()}`
 										)}
-									>
-										<SupervisionIcon
-											aria-hidden="true"
-											focusable="false"
-										/>
-									</div>
-								) : showSilentMemberEye ? (
-									<div
+									/>
+								)}
+							{sessionTopic}
+						</div>
+					}
+					avatar={
+						<div className="sessionsListItem__icon">
+							{isSupervisedByMe ? (
+								<div
+									className="sessionsListItem__supervisionBadge"
+									data-testid="supervision-badge"
+									role="img"
+									title={translate(
+										'sessionList.supervision.badge',
+										'Supervision'
+									)}
+									aria-label={translate(
+										'sessionList.supervision.badge',
+										'Supervision'
+									)}
+								>
+									<SupervisionIcon
+										aria-hidden="true"
+										focusable="false"
+									/>
+								</div>
+							) : showSilentMemberEye ? (
+								<div
+									style={{
+										width: '48px',
+										height: '48px',
+										borderRadius: '50%',
+										backgroundColor: '#fde8e8',
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center'
+									}}
+								>
+									<ShowPasswordIcon
 										style={{
-											width: '48px',
-											height: '48px',
-											borderRadius: '50%',
-											backgroundColor: '#fde8e8',
-											display: 'flex',
-											alignItems: 'center',
-											justifyContent: 'center'
+											width: '24px',
+											height: '24px',
+											color: '#c62828'
 										}}
-									>
-										<ShowPasswordIcon
-											style={{
-												width: '24px',
-												height: '24px',
-												color: '#c62828'
-											}}
-										/>
-									</div>
-								) : isAsker && !hasConsultantData ? (
-									/* FE#1115: the same magnet as the chat header,
+									/>
+								</div>
+							) : isAsker && !hasConsultantData ? (
+								/* FE#1115: the same magnet as the chat header,
 									   without the black disc — beam included. It
 									   points right, into the card's own width, so
 									   the card's corner clip never reaches it. */
-									<ConsultantSearchLoader size="40px" />
-								) : !isAsker ? (
-									// Restored username+icon linkage: the asker card
-									// shows the SAME animal avatar the chat derives
-									// from the rc user id (generateAvatarForUser).
-									<MessageAvatar
-										isGroup={!!activeSession.isGroup}
-										isSystemNotification={false}
-										userId={
-											activeSession.item
-												.askerMatrixUserId ||
-											activeSession.user?.username ||
-											'unknown'
-										}
-										username={
-											activeSession.user?.username || ''
-										}
-										displayName={sessionTopic}
-										size={48}
-										outline={false}
-									/>
-								) : (
-									<UserAvatar
-										username={
-											activeSession.consultant
-												?.username || 'User'
-										}
-										displayName={sessionTopic}
-										userId={
-											activeSession.consultant?.id ||
-											'unknown'
-										}
-										size="48px"
-										ring={false}
-										outline={false}
-									/>
-								)}
-							</div>
-							<div
-								className="sessionsListItem__flowSpacer"
-								aria-hidden="true"
-							/>
-							<div
-								className="sessionsListItem__flowReserve"
-								aria-hidden="true"
-							/>
+								<ConsultantSearchLoader size="40px" />
+							) : !isAsker ? (
+								// Restored username+icon linkage: the asker card
+								// shows the SAME animal avatar the chat derives
+								// from the rc user id (generateAvatarForUser).
+								<MessageAvatar
+									isGroup={!!activeSession.isGroup}
+									isSystemNotification={false}
+									userId={
+										activeSession.item.askerMatrixUserId ||
+										activeSession.user?.username ||
+										'unknown'
+									}
+									username={
+										activeSession.user?.username || ''
+									}
+									displayName={sessionTopic}
+									size={48}
+									outline={false}
+								/>
+							) : (
+								<UserAvatar
+									username={
+										activeSession.consultant?.username ||
+										'User'
+									}
+									displayName={sessionTopic}
+									userId={
+										activeSession.consultant?.id ||
+										'unknown'
+									}
+									size="48px"
+									ring={false}
+									outline={false}
+								/>
+							)}
+						</div>
+					}
+					preview={
+						<>
 							{/* Figma nodes 115/1139/312: when the case-handover action
 							    button is shown it takes the place of the last-message
 							    preview (the text sits "under" the button). Without a
@@ -1620,10 +1613,10 @@ export const SessionListItemComponent = ({
 										}
 									/>
 								)}
-						</div>
-					</div>
-					{canShowCaseHandoverAction && (
-						<div className="sessionsListItem__bodyAction">
+						</>
+					}
+					action={
+						canShowCaseHandoverAction ? (
 							<CaseHandoverActionButton
 								labels={{
 									requestAccess: translate(
@@ -1682,164 +1675,167 @@ export const SessionListItemComponent = ({
 								onConfirmSelection={onCaseHandoverBatchConfirm}
 								onDeselectAndClose={onCaseHandoverBatchClose}
 							/>
-						</div>
-					)}
-					<div
-						className="sessionsListItem__trailing"
-						ref={cardTrailingRef}
-					>
-						{/* ADR-008: the owning consultant sees who supervises the
+						) : undefined
+					}
+					trailing={
+						<>
+							{/* ADR-008: the owning consultant sees who supervises the
 						    session (supervisor sits read-only in the room). */}
-						{supervisorNames.length > 0 && (
-							<span
-								className="sessionsListItem__supervisionIndicator"
-								data-testid="supervision-indicator"
-								aria-label={translate(
-									'sessionList.supervision.supervisedBy',
-									{
-										name: supervisorNames.join(', ')
-									}
-								)}
-								title={translate(
-									'sessionList.supervision.supervisedBy',
-									{
-										name: supervisorNames.join(', ')
-									}
-								)}
-							>
-								<SupervisionIcon
-									aria-hidden="true"
-									focusable="false"
-								/>
-								<span className="sessionsListItem__supervisionIndicatorName">
-									{supervisorNames.join(', ')}
+							{supervisorNames.length > 0 && (
+								<span
+									className="sessionsListItem__supervisionIndicator"
+									data-testid="supervision-indicator"
+									aria-label={translate(
+										'sessionList.supervision.supervisedBy',
+										{
+											name: supervisorNames.join(', ')
+										}
+									)}
+									title={translate(
+										'sessionList.supervision.supervisedBy',
+										{
+											name: supervisorNames.join(', ')
+										}
+									)}
+								>
+									<SupervisionIcon
+										aria-hidden="true"
+										focusable="false"
+									/>
+									<span className="sessionsListItem__supervisionIndicatorName">
+										{supervisorNames.join(', ')}
+									</span>
 								</span>
-							</span>
-						)}
-						{/* Consulting-type modality icon (Mail / Live Chat / Interna
+							)}
+							{/* Consulting-type modality icon (Mail / Live Chat / Interna
 						    / Gesprächskreis) — always shown, including alongside the
 						    case-handover action button (Figma node 115). */}
-						{
-							<>
-								{modality === Modality.LIVE_CHAT && (
-									<div
-										className={clsx(
-											'sessionsListItem__consultingTypeIcon',
-											'sessionsListItem__consultingTypeIcon--liveChat'
-										)}
-									>
-										<svg
-											width="22"
-											height="19"
-											viewBox="0 0 22 19"
-											fill="none"
-											xmlns="http://www.w3.org/2000/svg"
-											aria-hidden="true"
-										>
-											<path
-												d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
-												fill="#4B515A"
-											/>
-										</svg>
-										<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
-											{translate(
-												'sessionList.item.sessionType.liveChat',
-												'Live Chat'
+							{
+								<>
+									{modality === Modality.LIVE_CHAT && (
+										<div
+											className={clsx(
+												'sessionsListItem__consultingTypeIcon',
+												'sessionsListItem__consultingTypeIcon--liveChat'
 											)}
-										</span>
-									</div>
-								)}
-								{modality === Modality.AGENCY_COUNSELLING && (
-									<div
-										className={clsx(
-											'sessionsListItem__consultingTypeIcon',
-											'sessionsListItem__consultingTypeIcon--nearby'
-										)}
-									>
-										{/* Frank, 15.09.: the Mail modality carries the
+										>
+											<svg
+												width="22"
+												height="19"
+												viewBox="0 0 22 19"
+												fill="none"
+												xmlns="http://www.w3.org/2000/svg"
+												aria-hidden="true"
+											>
+												<path
+													d="M0 18V6L8 0L14.95 5.19175C14.55 5.20842 14.1639 5.25008 13.7917 5.31675C13.4194 5.38342 13.0527 5.47783 12.6917 5.6L8 2.08325L1.66675 6.83325V16.3333H8.11675C8.25558 16.6444 8.41525 16.9361 8.59575 17.2083C8.77642 17.4806 8.97225 17.7445 9.18325 18H0ZM10.8333 17.5833C10.2056 16.9832 9.71533 16.2847 9.3625 15.4875C9.00967 14.6903 8.83325 13.8612 8.83325 13C8.83325 11.2278 9.44992 9.72925 10.6832 8.50425C11.9166 7.27925 13.4111 6.66675 15.1667 6.66675C16.9389 6.66675 18.4375 7.27925 19.6625 8.50425C20.8875 9.72925 21.5 11.2278 21.5 13C21.5 13.8612 21.3306 14.6876 20.9918 15.4792C20.6528 16.2709 20.1638 16.9639 19.525 17.5583L18.7 16.7332C19.2388 16.2499 19.6458 15.6861 19.9207 15.0418C20.1957 14.3973 20.3333 13.7167 20.3333 13C20.3333 11.5555 19.8333 10.3332 18.8333 9.33325C17.8333 8.33325 16.6111 7.83325 15.1667 7.83325C13.7389 7.83325 12.5208 8.33325 11.5125 9.33325C10.5042 10.3332 10 11.5555 10 13C10 13.7167 10.1431 14.3986 10.4292 15.0457C10.7153 15.6931 11.1249 16.2584 11.6582 16.7417L10.8333 17.5833ZM12.6083 15.7917C12.2083 15.4306 11.8958 15.0083 11.6708 14.525C11.4458 14.0417 11.3333 13.5333 11.3333 13C11.3333 11.9278 11.7083 11.0209 12.4583 10.2793C13.2083 9.53758 14.1111 9.16675 15.1667 9.16675C16.2389 9.16675 17.1458 9.53758 17.8875 10.2793C18.6292 11.0209 19 11.9278 19 13C19 13.5278 18.8958 14.0362 18.6875 14.525C18.4792 15.0138 18.1722 15.4388 17.7667 15.8L16.925 14.9832C17.2138 14.7277 17.4374 14.4277 17.5958 14.0832C17.7541 13.7389 17.8333 13.3778 17.8333 13C17.8333 12.2555 17.5749 11.6249 17.0583 11.1082C16.5416 10.5916 15.9111 10.3333 15.1667 10.3333C14.4334 10.3333 13.8056 10.5916 13.2833 11.1082C12.7611 11.6249 12.5 12.2555 12.5 13C12.5 13.3778 12.5833 13.7362 12.75 14.075C12.9167 14.4138 13.1389 14.7111 13.4167 14.9668L12.6083 15.7917ZM14.5833 19V13.9168C14.4332 13.8056 14.3124 13.6708 14.2208 13.5125C14.1291 13.3542 14.0833 13.1833 14.0833 13C14.0833 12.6945 14.1888 12.4376 14.4 12.2292C14.6112 12.0209 14.8667 11.9167 15.1667 11.9167C15.4722 11.9167 15.7292 12.0209 15.9375 12.2292C16.1458 12.4376 16.25 12.6945 16.25 13C16.25 13.1833 16.2097 13.3556 16.1292 13.5168C16.0486 13.6778 15.9222 13.8111 15.75 13.9168V19H14.5833Z"
+													fill="#4B515A"
+												/>
+											</svg>
+											<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
+												{translate(
+													'sessionList.item.sessionType.liveChat',
+													'Live Chat'
+												)}
+											</span>
+										</div>
+									)}
+									{modality ===
+										Modality.AGENCY_COUNSELLING && (
+										<div
+											className={clsx(
+												'sessionsListItem__consultingTypeIcon',
+												'sessionsListItem__consultingTypeIcon--nearby'
+											)}
+										>
+											{/* Frank, 15.09.: the Mail modality carries the
 										    primary colour, icon and word alike. The
 										    source SVG has a grey fill baked in, so it
 										    is worn as a mask and the colour comes from
 										    CSS — the same technique the chat header's
 										    type glyph uses. */}
-										<span
-											className="sessionsListItem__consultingTypeIcon--nearbyIcon"
-											// The visible word next to it is the name.
-											aria-hidden="true"
-											style={
-												{
-													'--nearby-icon-url': `url("${mailConversationIcon}")`
-												} as React.CSSProperties
-											}
-										/>
-										<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
-											{translate(
-												'sessionList.toolbar.chips.nearby',
-												'Mail'
-											)}
-										</span>
-									</div>
-								)}
-								{modality === Modality.INTERNAL_GROUP && (
-									<div
-										className={clsx(
-											'sessionsListItem__consultingTypeIcon',
-											'sessionsListItem__consultingTypeIcon--internal'
-										)}
-									>
-										<img
-											src={internalConversationIcon}
-											alt={translate(
-												'sessionList.item.sessionType.internal',
-												'Interna'
-											)}
-											className="sessionsListItem__consultingTypeIcon--internalIcon"
-										/>
-										<span className="sessionsListItem__consultingTypeIcon--internalLabel">
-											{translate(
-												'sessionList.item.sessionType.internal',
-												'Interna'
-											)}
-										</span>
-									</div>
-								)}
-								{/* FE#514: team-only discussion exists on this
-								    enquiry (consultants only, ADR-016). */}
-								{!isAsker &&
-									activeSession.isEnquiry &&
-									modality === Modality.AGENCY_COUNSELLING &&
-									activeSession.item?.id && (
-										<TeamDiscussionBadge
-											sessionId={activeSession.item.id}
-										/>
+											<span
+												className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+												// The visible word next to it is the name.
+												aria-hidden="true"
+												style={
+													{
+														'--nearby-icon-url': `url("${mailConversationIcon}")`
+													} as React.CSSProperties
+												}
+											/>
+											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+												{translate(
+													'sessionList.toolbar.chips.nearby',
+													'Mail'
+												)}
+											</span>
+										</div>
 									)}
-								{modality === Modality.SELF_HELP && (
-									<div
-										className={clsx(
-											'sessionsListItem__consultingTypeIcon',
-											'sessionsListItem__consultingTypeIcon--selfHelp'
+									{modality === Modality.INTERNAL_GROUP && (
+										<div
+											className={clsx(
+												'sessionsListItem__consultingTypeIcon',
+												'sessionsListItem__consultingTypeIcon--internal'
+											)}
+										>
+											<img
+												src={internalConversationIcon}
+												alt={translate(
+													'sessionList.item.sessionType.internal',
+													'Interna'
+												)}
+												className="sessionsListItem__consultingTypeIcon--internalIcon"
+											/>
+											<span className="sessionsListItem__consultingTypeIcon--internalLabel">
+												{translate(
+													'sessionList.item.sessionType.internal',
+													'Interna'
+												)}
+											</span>
+										</div>
+									)}
+									{/* FE#514: team-only discussion exists on this
+								    enquiry (consultants only, ADR-016). */}
+									{!isAsker &&
+										activeSession.isEnquiry &&
+										modality ===
+											Modality.AGENCY_COUNSELLING &&
+										activeSession.item?.id && (
+											<TeamDiscussionBadge
+												sessionId={
+													activeSession.item.id
+												}
+											/>
 										)}
-									>
-										<img
-											src={selfHelpIcon}
-											alt={translate(
-												'sessionList.item.sessionType.selfHelp',
-												'Gesprächskreis'
+									{modality === Modality.SELF_HELP && (
+										<div
+											className={clsx(
+												'sessionsListItem__consultingTypeIcon',
+												'sessionsListItem__consultingTypeIcon--selfHelp'
 											)}
-											className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
-										/>
-										<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
-											{translate(
-												'sessionList.item.sessionType.selfHelp',
-												'Gesprächskreis'
-											)}
-										</span>
-									</div>
-								)}
-							</>
-						}
-					</div>
-				</div>
+										>
+											<img
+												src={selfHelpIcon}
+												alt={translate(
+													'sessionList.item.sessionType.selfHelp',
+													'Gesprächskreis'
+												)}
+												className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
+											/>
+											<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
+												{translate(
+													'sessionList.item.sessionType.selfHelp',
+													'Gesprächskreis'
+												)}
+											</span>
+										</div>
+									)}
+								</>
+							}
+						</>
+					}
+				/>
 			</div>
 			{overlayActive && overlayItem && (
 				<Overlay
