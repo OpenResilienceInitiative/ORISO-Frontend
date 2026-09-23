@@ -5,6 +5,8 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	browserNotificationsSettings,
+	optInToBrowserNotifications,
 	requestNotificationPermissionSafe,
 	saveBrowserNotificationsSettings,
 	sendNotification
@@ -292,5 +294,31 @@ describe('requestNotificationPermissionSafe', () => {
 		await expect(requestNotificationPermissionSafe()).resolves.toBe(
 			'denied'
 		);
+	});
+});
+
+describe('optInToBrowserNotifications (#1551)', () => {
+	it('records the opt-in once the browser grants permission', async () => {
+		stubNotification('default');
+		await optInToBrowserNotifications();
+		expect(browserNotificationsSettings().enabled).toBe(true);
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(true);
+	});
+
+	it('records nothing when the browser refuses', async () => {
+		vi.stubGlobal(
+			'Notification',
+			class {
+				static permission = 'default';
+				static requestPermission() {
+					return Promise.resolve('denied');
+				}
+			}
+		);
+		await optInToBrowserNotifications();
+		expect(browserNotificationsSettings().enabled).toBe(false);
 	});
 });
