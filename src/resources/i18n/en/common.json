@@ -1143,6 +1143,11 @@
 			"done": "Done",
 			"durationValue": "{{value}} h",
 			"copyFailed": "Copying failed. Please try again."
+		},
+		"notMember": {
+			"headline": "You are not part of this group.",
+			"body": "Only the group's moderators and the people they add can open it. If you are meant to co-moderate, ask the moderator to add you.",
+			"back": "Back to my conversations"
 		}
 	},
 	"help": {
