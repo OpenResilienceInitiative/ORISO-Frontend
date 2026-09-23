@@ -95,7 +95,7 @@ the opposite of the direction the platform took.
 
 | Action | Who | Server rule |
 | --- | --- | --- |
-| Knock | any consultant with the link, any Träger | 409 if she already has access (participant, or shares an agency with the group); idempotent while PENDING |
+| Knock | any consultant with the link, any Träger — **self-help groups only** | 400 for an internal team chat (the app never offers the knock there: `knockableGroupId`); 409 if she already has access; idempotent while PENDING |
 | See own request | the knocking counsellor | status only — no title, members, times of the group |
 | List open requests | OWNER and CO_MODERATOR of that group | only groups with a participant row of the caller in one of these roles |
 | Admit as participant | OWNER, CO_MODERATOR | 403 for PARTICIPANT or unrelated consultants; 409 unless PENDING |

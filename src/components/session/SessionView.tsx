@@ -31,6 +31,7 @@ import { useGroupChatAccess } from '../groupChat/useGroupChatAccess';
 import { GroupChatNotMember } from '../groupChat/GroupChatNotMember';
 import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
 import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
 
 export const SessionView = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
@@ -72,9 +73,10 @@ export const SessionView = () => {
 		),
 		revision: accessRevision
 	});
-	// …and may knock; once a moderator lets her in, the group is asked again.
+	// …and may knock on a self-help group (never a team chat); once a
+	// moderator lets her in, the group is asked again.
 	const joinRequest = useOwnJoinRequest(
-		groupAccess === 'notMember' ? activeSession?.item?.id : undefined,
+		knockableGroupId(activeSession, groupAccess),
 		httpJoinRequestTransport,
 		{
 			onOpenGroup: () => {
