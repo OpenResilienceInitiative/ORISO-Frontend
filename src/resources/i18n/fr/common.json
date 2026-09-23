@@ -1166,6 +1166,11 @@
 			"done": "Terminé",
 			"durationValue": "{{value}} h",
 			"copyFailed": "La copie a échoué. Veuillez réessayer."
+		},
+		"notMember": {
+			"headline": "Vous ne faites pas partie de ce groupe de parole.",
+			"body": "Seule la modération et les personnes qu'elle ajoute peuvent ouvrir ce groupe. Si vous devez co-animer, demandez à la modération de vous ajouter.",
+			"back": "Retour à mes conversations"
 		}
 	},
 	"help": {

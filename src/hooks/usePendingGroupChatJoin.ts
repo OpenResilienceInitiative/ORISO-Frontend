@@ -5,11 +5,20 @@ import { groupEntryRoomPath } from '../components/groupChat/entryRoom/GroupEntry
 import { parseGroupChatInviteId } from '../components/groupChat/groupChatInviteLink';
 import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupStep';
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
+import {
+	AUTHORITIES,
+	hasUserAuthority
+} from '../globalState/helpers/stateHelpers';
+import {
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../components/groupChat/consultantGroupChatPath';
 
 /**
  * Follow a `?gcid=` group-chat deep link once the session may act on it. The id is read once, at
  * mount, because the router replaces the URL before the tenant arrives. Keep it, wait until the
- * join is allowed, assign, then open the entry room.
+ * join is allowed, assign, then open the entry room. A counsellor is not assigned: she opens the
+ * group in her own session view (#1499).
  *
  * A hook of its own so the conditions are testable without mounting the authenticated app.
  */
@@ -45,9 +54,22 @@ export const usePendingGroupChatJoin = (
 		const gcid = pendingGroupChatId;
 		setPendingGroupChatId(null);
 		/* `gcid` may carry the invite token as well (#1237); the room is the number. */
-		const entryRoom = groupEntryRoomPath(
-			parseGroupChatInviteId(gcid)?.seriesId ?? gcid
-		);
+		const seriesId = parseGroupChatInviteId(gcid)?.seriesId;
+		const entryRoom = groupEntryRoomPath(seriesId ?? gcid);
+		/* #1499: the assignment is a client action (404 for a counsellor) and
+		   the entry room is the client's room. Whether she may see the group
+		   is decided in the session view, which shows "not part of it". */
+		if (
+			hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData as UserDataInterface
+			)
+		) {
+			if (isGroupChatId(seriesId)) {
+				navigate(consultantGroupChatPath(seriesId), { replace: true });
+			}
+			return;
+		}
 		joinGroupChat(gcid)
 			.then((assigned) => {
 				if (assigned) {

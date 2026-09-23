@@ -26,12 +26,15 @@ interface EmptyStateProps {
 	headline: string;
 	variant: EmptyStateVariant;
 	className?: string;
+	/** Below the headline: an explanation or a way on. */
+	children?: React.ReactNode;
 }
 
 export const EmptyState = ({
 	headline,
 	variant,
-	className = ''
+	className = '',
+	children
 }: EmptyStateProps) => (
 	<div
 		aria-live="polite"
@@ -44,5 +47,6 @@ export const EmptyState = ({
 			variant={variant}
 		/>
 		<p className="emptyState__headline">{headline}</p>
+		{children}
 	</div>
 );
