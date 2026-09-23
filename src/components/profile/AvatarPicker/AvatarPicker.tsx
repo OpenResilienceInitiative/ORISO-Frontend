@@ -25,8 +25,9 @@ interface AvatarPickerProps {
 
 /**
  * Grid of the app's animal avatars (#1540). Advice seekers pick an animal on
- * a pastel ground; counsellors always appear on the brand pair, so their tiles
- * share one colour and differ only by the animal.
+ * a pastel ground; counsellors always appear on primary / on-primary, so
+ * their tiles share one colour. Counsellors will use their own motif set
+ * (US#1046) once it reaches the app; the animals stand in until then.
  */
 export const AvatarPicker = ({
 	role,
@@ -39,10 +40,10 @@ export const AvatarPicker = ({
 		() =>
 			files.map((file, i) => {
 				if (role === 'consultant') {
-					// Same pair as CounsellorAvatar (#1468); the glyph takes the tile colour.
+					// Brand pair per US#1046; the glyph takes the tile colour.
 					return {
 						file,
-						bg: 'var(--m3-primary-container)',
+						bg: 'var(--m3-primary)',
 						iconColor: 'currentColor'
 					};
 				}
