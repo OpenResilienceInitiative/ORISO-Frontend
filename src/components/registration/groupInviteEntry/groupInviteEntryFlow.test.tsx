@@ -283,6 +283,57 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(body).not.toHaveProperty('groupChatId');
 	});
 
+	it('while joining, the screen speaks about the group, not about a counselling enquiry', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="registration-handover"]')
+			).not.toBeNull()
+		);
+		const handover = document.querySelector(
+			'[data-cy="registration-handover"]'
+		) as HTMLElement;
+		const text = handover.textContent ?? '';
+		expect(text).toContain('Bitte nur mit Alias');
+		expect(text).not.toContain('Antwort in 2 Arbeitstagen');
+		expect(text).not.toContain('Anfrage schreiben');
+		expect(text).not.toContain('Beratungsraum');
+	});
+
+	it('joining through the steps also speaks about the group while it registers', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="registration-handover"]')
+			).not.toBeNull()
+		);
+		const text =
+			document.querySelector('[data-cy="registration-handover"]')
+				?.textContent ?? '';
+		expect(text).toContain('Bitte nur mit Alias');
+		expect(text).not.toContain('Antwort in 2 Arbeitstagen');
+	});
+
 	it('keeps the four steps when the topic cannot be told from the agency', () => {
 		renderAt('?gcid=19&aid=19', {
 			agency: { ...agency, topicIds: [17, 18] }
