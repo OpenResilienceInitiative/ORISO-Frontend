@@ -49,7 +49,7 @@ export const createFakeJoinRequestTransport = (
 		pendingListeners.forEach((listener) => listener(pending));
 
 	const fake = {
-		knocks: [] as number[],
+		knocks: [] as Array<{ seriesId: number; inviteToken: string }>,
 		cancellations: [] as number[],
 		admissions: [] as Array<{
 			requestId: number;
@@ -78,10 +78,10 @@ export const createFakeJoinRequestTransport = (
 	};
 
 	const transport: JoinRequestTransport = {
-		knock: async (seriesId) => {
+		knock: async (seriesId, inviteToken) => {
 			await latency();
 			fail('knock');
-			fake.knocks.push(seriesId);
+			fake.knocks.push({ seriesId, inviteToken });
 			const status: GroupChatJoinRequestOwnStatus = {
 				id: ++nextId,
 				status: 'PENDING',

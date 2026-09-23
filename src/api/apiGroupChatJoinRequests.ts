@@ -29,11 +29,13 @@ const base = (seriesId: number) =>
 const orNull = <T extends { id?: number }>(value: T): T | null =>
 	value && typeof value.id === 'number' ? value : null;
 
+/** `inviteToken` is the secret part of the invite link (ORISO-UserService#1248). */
 export const apiKnockOnGroupChat = (
-	seriesId: number
+	seriesId: number,
+	inviteToken: string
 ): Promise<GroupChatJoinRequestOwnStatus> =>
 	fetchData({
-		url: base(seriesId),
+		url: `${base(seriesId)}?inviteToken=${encodeURIComponent(inviteToken)}`,
 		method: FETCH_METHODS.POST,
 		responseHandling: handled
 	});

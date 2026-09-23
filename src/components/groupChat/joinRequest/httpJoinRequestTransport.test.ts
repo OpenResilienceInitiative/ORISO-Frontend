@@ -115,6 +115,16 @@ describe('HTTP join-request transport', () => {
 		);
 	});
 
+	it('knocks with the link’s token', async () => {
+		const api = fakeApi();
+		api.knock.mockResolvedValue({ id: 1, status: 'PENDING' });
+		const transport = createHttpJoinRequestTransport({ api });
+
+		await transport.knock(7, 'tok_EN-9');
+
+		expect(api.knock).toHaveBeenCalledWith(7, 'tok_EN-9');
+	});
+
 	it('sends admit and decline for the request’s own group', async () => {
 		const api = fakeApi();
 		const transport = createHttpJoinRequestTransport({ api });

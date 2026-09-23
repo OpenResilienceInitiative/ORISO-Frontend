@@ -18,7 +18,10 @@ import {
 } from './joinRequestTransport';
 
 export interface JoinRequestApi {
-	knock: (seriesId: number) => Promise<GroupChatJoinRequestOwnStatus>;
+	knock: (
+		seriesId: number,
+		inviteToken: string
+	) => Promise<GroupChatJoinRequestOwnStatus>;
 	getMine: (
 		seriesId: number
 	) => Promise<GroupChatJoinRequestOwnStatus | null>;
@@ -119,7 +122,7 @@ export const createHttpJoinRequestTransport = ({
 	mineIntervalMs?: number;
 	pendingIntervalMs?: number;
 } = {}): JoinRequestTransport => ({
-	knock: (seriesId) => api.knock(seriesId),
+	knock: (seriesId, inviteToken) => api.knock(seriesId, inviteToken),
 	getMine: (seriesId) =>
 		api.getMine(seriesId).catch((error) => {
 			throw isUnavailable(error)

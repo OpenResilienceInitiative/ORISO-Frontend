@@ -10,8 +10,14 @@ import {
  * from a story's fake — see `docs/architecture/knock-to-join.md`.
  */
 export interface JoinRequestTransport {
-	/** Knocks. Resolves with her own request (no group data). */
-	knock: (seriesId: number) => Promise<GroupChatJoinRequestOwnStatus>;
+	/**
+	 * Knocks with the token of the invite link she came with (the server
+	 * refuses a knock without it, 403). Resolves with her own request only.
+	 */
+	knock: (
+		seriesId: number,
+		inviteToken: string
+	) => Promise<GroupChatJoinRequestOwnStatus>;
 	/**
 	 * Her newest request for this group, `null` if none. Rejects with
 	 * `JoinRequestsUnavailableError` where the server has no knock endpoints.

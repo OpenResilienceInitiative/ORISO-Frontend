@@ -173,9 +173,14 @@ export const KnockFlow: Story = {
 		knockFlowTransport.setMine(KNOCK_SERIES_ID, null);
 	},
 	render: function KnockFlowStory(args) {
-		const request = useOwnJoinRequest(KNOCK_SERIES_ID, knockFlowTransport, {
-			onOpenGroup: args.onBack
-		});
+		const request = useOwnJoinRequest(
+			KNOCK_SERIES_ID,
+			'sb-invite-token',
+			knockFlowTransport,
+			{
+				onOpenGroup: args.onBack
+			}
+		);
 		return (
 			<GroupChatNotMember onBack={args.onBack} joinRequest={request} />
 		);

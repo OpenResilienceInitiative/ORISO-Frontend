@@ -18,13 +18,17 @@ const isSelfHelp = (chat: GroupChatItemInterface) =>
 
 /**
  * The group a counsellor may knock on, or `undefined`. Only self-help groups
- * (Gesprächskreise) take knocks, never an internal team chat.
+ * (Gesprächskreise) take knocks, never an internal team chat — and only
+ * with the invite link's token ("wenn sie den Link haben"). Typing the
+ * route by hand shows the plain notice.
  */
 export const knockableGroupId = (
 	session: ExtendedSessionInterface | undefined,
-	access: GroupChatAccess
+	access: GroupChatAccess,
+	inviteToken: string | undefined
 ): number | undefined =>
 	access === 'notMember' &&
+	!!inviteToken &&
 	session?.isGroup &&
 	session.item &&
 	isSelfHelp(session.item as GroupChatItemInterface)

@@ -26,11 +26,13 @@ const viewStateOf = (
 
 /**
  * The knocking counsellor's side of #1499: what the not-a-member notice
- * shows and does. `undefined` while loading and wherever the server offers
- * no knocking — the notice then stays what #1534 shipped.
+ * shows and does. `undefined` while loading, without the invite link's token
+ * and wherever the server offers no knocking — the notice then stays what
+ * #1534 shipped.
  */
 export const useOwnJoinRequest = (
 	seriesId: number | undefined,
+	inviteToken: string | undefined,
 	transport: JoinRequestTransport,
 	{ onOpenGroup }: { onOpenGroup: () => void }
 ): GroupChatJoinRequestView | undefined => {
@@ -61,13 +63,13 @@ export const useOwnJoinRequest = (
 	}, [seriesId, transport]);
 
 	const onRequest = useCallback(() => {
-		if (!seriesId) return;
+		if (!seriesId || !inviteToken) return;
 		setState('sending');
 		transport
-			.knock(seriesId)
+			.knock(seriesId, inviteToken)
 			.then((status) => setState(viewStateOf(status)))
 			.catch(() => setState('error'));
-	}, [seriesId, transport]);
+	}, [seriesId, inviteToken, transport]);
 
 	const onCancel = useCallback(() => {
 		if (!seriesId) return;
@@ -78,6 +80,6 @@ export const useOwnJoinRequest = (
 			.catch(() => setState('pending'));
 	}, [seriesId, transport]);
 
-	if (!seriesId || state === null) return undefined;
+	if (!seriesId || !inviteToken || state === null) return undefined;
 	return { state, onRequest, onCancel, onOpenGroup };
 };

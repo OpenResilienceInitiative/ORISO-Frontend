@@ -69,7 +69,9 @@ describe('useOwnJoinRequest — the counsellor who knocks', () => {
 		const transport = createFakeJoinRequestTransport();
 		transport.setMine(SERIES, mine);
 		const hook = renderHook(() =>
-			useOwnJoinRequest(SERIES, transport, { onOpenGroup: vi.fn() })
+			useOwnJoinRequest(SERIES, 'tok_EN-9', transport, {
+				onOpenGroup: vi.fn()
+			})
 		);
 		return { transport, hook };
 	};
@@ -97,7 +99,9 @@ describe('useOwnJoinRequest — the counsellor who knocks', () => {
 		act(() => hook.result.current!.onRequest());
 
 		await waitFor(() => expect(hook.result.current?.state).toBe('pending'));
-		expect(transport.knocks).toEqual([SERIES]);
+		expect(transport.knocks).toEqual([
+			{ seriesId: SERIES, inviteToken: 'tok_EN-9' }
+		]);
 	});
 
 	it('says so when the knock could not be sent', async () => {
@@ -159,7 +163,9 @@ describe('useOwnJoinRequest — the counsellor who knocks', () => {
 		const transport = createFakeJoinRequestTransport();
 		transport.setUnavailable(true);
 		const hook = renderHook(() =>
-			useOwnJoinRequest(SERIES, transport, { onOpenGroup: vi.fn() })
+			useOwnJoinRequest(SERIES, 'tok_EN-9', transport, {
+				onOpenGroup: vi.fn()
+			})
 		);
 
 		await waitFor(() => expect(transport.getMineCalls).toBe(1));
