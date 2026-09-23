@@ -123,7 +123,7 @@ const openTheKebab = async (canvasElement: HTMLElement) => {
 			'.sessionMenu__icon--desktop'
 		)!
 	);
-	// The flyout is portalled to <body> since the #1348 menu rescue.
+	// The flyout is portalled to <body>, outside the canvas.
 	await waitFor(() =>
 		expect(
 			document.querySelector('.sessionMenu__content--open')

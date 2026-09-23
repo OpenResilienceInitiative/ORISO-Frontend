@@ -1099,11 +1099,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
-						/* FE#1115: an enquiry nobody has accepted yet — the
-						   capsule's magnet sweeps. Only the enquiry: an empty
-						   one or a waiting live chat keeps its avatar stack.
-						   The stack appears on accept, so the title moves by
-						   its width then (no empty slot, Frank's design). */
+						/* FE#1115: only an unaccepted enquiry sweeps; empty ones and waiting
+						   live chats keep their avatar stack. No empty slot is reserved. */
 						const isSearchingForConsultant =
 							sessionHeaderConversationIconType === 'inquiry' &&
 							hasUserAuthority(

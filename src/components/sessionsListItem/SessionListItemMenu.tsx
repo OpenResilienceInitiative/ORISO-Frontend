@@ -44,13 +44,9 @@ export interface SessionListItemMenuProps {
 }
 
 /**
- * The chat-room menu of a session card (Figma 7086-57413). It opens 6 px
- * beside the ⋮ trigger, or hangs 2 px below it on a phone; while it is open
- * only the menu carries the red ring and the veil spares the card.
- *
- * Storybook (asserted):
- * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
- * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-on-the-phone
+ * The session card's chat-room menu (Figma 7086-57413); while open, only the menu carries
+ * the red ring and the veil spares the card.
+ * Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
  */
 export const SessionListItemMenu = ({
 	flyoutOpen,

@@ -12,7 +12,7 @@ interface SessionListItemLastMessageProps {
 	language?: string;
 	lastMessage: string | null;
 	lastMessageType?: string | null;
-	/** Thread / voice marks drawn before the text (Frank, 16.09.2026). */
+	/** Thread / voice marks drawn before the text. */
 	glyphs?: ListPreviewGlyph[];
 }
 

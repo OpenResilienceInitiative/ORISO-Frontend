@@ -178,13 +178,7 @@ export const MenuOpenBatch: Story = {
 	}
 };
 
-/**
- * The menu opens BESIDE the card it sits in, not on top of it — the same
- * rule as the chat-room menu of the session card (Frank, 15.09.2026: "Es
- * soll kein Overlap da sein, sondern ein Nebeneinander."). The card is
- * passed as `surfaceRef`; without it the menu only avoids the chevron and
- * still covers the conversation text underneath.
- */
+/** Proves the menu opens beside the card passed as `surfaceRef`, never on top of it. */
 function MenuBesideCardDemo() {
 	const cardRef = useRef<HTMLDivElement>(null);
 	return (

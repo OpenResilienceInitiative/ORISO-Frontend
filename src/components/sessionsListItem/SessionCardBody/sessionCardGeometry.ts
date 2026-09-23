@@ -1,7 +1,4 @@
-/**
- * The session card body's geometry — the single source for its numbers.
- * The stylesheet reads them as custom properties set by `SessionCardBody`.
- */
+/** Single source for the card body's numbers; the stylesheet reads them as custom properties. */
 export interface SessionCardGeometry {
 	avatar: number;
 	gap: number;
@@ -30,9 +27,8 @@ export const SESSION_CARD_GEOMETRY: SessionCardGeometry = {
 };
 
 /**
- * Left edge of each preview line, from the avatar's left edge: the avatar
- * plus gap, then where the circle meets the second line's glyph band, then
- * the same step again (Frank, 16.09.2026: never back to the card's edge).
+ * Left edge of each preview line from the avatar's: avatar plus gap, then where the circle
+ * meets line two's glyph band, then the same step again, never back to the card's edge.
  */
 export const sessionCardPreviewIndents = (g: SessionCardGeometry): number[] => {
 	const r = g.avatar / 2;

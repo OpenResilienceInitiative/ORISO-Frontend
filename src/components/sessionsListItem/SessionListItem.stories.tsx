@@ -697,10 +697,7 @@ function RuntimeSessionListItem({
 	consultantId?: string;
 	/** Logged-in consultant. */
 	viewerId?: string;
-	/**
-	 * FE#1115 — the advice seeker's own row while nobody has accepted:
-	 * no consultant on the session, so the avatar slot holds the magnet.
-	 */
+	/** FE#1115: the advice seeker's unaccepted row; no consultant, so the avatar slot holds the magnet. */
 	asSearchingAsker?: boolean;
 } = {}) {
 	const storySession: ListItemInterface = {
@@ -1064,8 +1061,7 @@ export const RuntimeComponent: Story = {
 				)
 			).toBe(false);
 		});
-		// Review of #1418: "Mail" is read out once — the envelope beside the
-		// visible word is decoration, not a second name.
+		// #1418: "Mail" is read out once; the envelope beside the word is decoration.
 		const canvas = within(canvasElement);
 		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
 		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
@@ -1330,22 +1326,7 @@ export const SupervisedByOthers: Story = {
  * The chat-room menu — Figma 7086-57413
  * ------------------------------------------------------------------ */
 
-/**
- * Frank, 15.09.2026: "Es soll kein Overlap da sein, sondern ein
- * Nebeneinander. Wer hat gesagt, dass ein Menü immer oben drüber oder unten
- * drunter öffnen muss?"
- *
- * The menu is measured against the **card**, not against the three-dot
- * trigger inside it — anchored to the button, "beside" still lands on the
- * card. Beside is the normal case; below and above are the escape routes
- * for a viewport that has no room beside, which is every phone.
- */
-/**
- * Every row fades and scales in (`appearSessionListItem`, 0.98 → 1 after a
- * short stagger). A measurement taken mid-animation reads a scaled box — CI
- * measured the 142 px card at 139 px. Geometry is asserted on the settled
- * card, so the entrance is finished first.
- */
+/** Rows scale in (0.98 → 1); finish the entrance so geometry is read on the settled card. */
 const settleCardEntrance = (canvasElement: HTMLElement) => {
 	canvasElement
 		.querySelectorAll<HTMLElement>('.sessionsListItem')
@@ -1383,11 +1364,7 @@ const restingCardShadow = (canvasElement: HTMLElement) =>
 		canvasElement.querySelector<HTMLElement>('.sessionsListItem__content')!
 	).boxShadow;
 
-/**
- * Frank, 17.09.2026: while the menu is open, only the menu carries the red
- * ring — the selected card behind it drops its red border. The stories open
- * the menu on a selected card, so the check is not vacuous.
- */
+/** Only the menu carries the red ring; asserted on a selected card so the check is not vacuous. */
 const expectOnlyTheMenuRinged = async (canvasElement: HTMLElement) => {
 	const row = canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
 	await expect(row.classList.contains('sessionsListItem--active')).toBe(true);
@@ -1399,11 +1376,7 @@ const expectOnlyTheMenuRinged = async (canvasElement: HTMLElement) => {
 	await expect(getComputedStyle(card).borderTopWidth).toBe('2px');
 };
 
-/**
- * The menu covers nothing the card shows. Since Frank's 6 px (17.09.2026)
- * it may lie over the card's empty trailing strip right of the ⋮ trigger,
- * but never over the trigger, the date, the name, the preview or Mail.
- */
+/** The menu may cover the card's empty strip right of the trigger, but nothing the card shows. */
 const expectMenuClearOfCardContent = async (
 	menu: HTMLElement,
 	card: HTMLElement
@@ -1438,11 +1411,7 @@ const expectMenuClearOfCardContent = async (
 	}
 };
 
-/**
- * Desktop: the menu stands beside the card and the card stays readable.
- * Also the point where the single focus ring is checked — the trigger is
- * what the user just operated, so the card must not draw a second ring.
- */
+/** Proves the menu opens beside the card, which stays readable and draws no second focus ring. */
 export const MenuBesideTheCard: Story = {
 	name: 'Menü — daneben statt darüber (Figma 7086-57413)',
 	globals: { viewport: { value: 'desktop1440' } },
@@ -1457,45 +1426,34 @@ export const MenuBesideTheCard: Story = {
 		// 1. Beside, not on top: nothing the card shows is covered.
 		await expectMenuClearOfCardContent(menu, card);
 		await expect(menu.dataset.placement).toBe('right');
-		// Every coordinate is a real number. `{ ...domRect }` yields an
-		// empty object — the properties are on the prototype — which turned
-		// every coordinate into NaN and placed the menu at the viewport
-		// edge. Unit tests pass plain objects and cannot see this.
+		// Real numbers: spreading a live DOMRect yields `{}` (fields are on the prototype),
+		// which unit tests with plain objects cannot catch.
 		await expect(menu.style.left).toMatch(/^\d/);
 		await expect(menu.style.top).toMatch(/^\d/);
 
-		// 2. The trigger carries the primary role while its menu is open,
-		//    and its dots the on-primary-container role.
+		// 2. The open trigger is primary with on-primary-container dots.
 		await expect(
 			trigger.classList.contains('sessionsListItem__menuIcon--open')
 		).toBe(true);
-		// Read after the 160 ms cross-fade: `getComputedStyle` returns the
-		// value the transition is currently at, not the one it is heading
-		// for, so an immediate read sees the old white.
+		// Wait out the 160 ms cross-fade: `getComputedStyle` returns the in-transition value.
 		await waitFor(() => {
 			const style = getComputedStyle(trigger);
 			expect(style.backgroundColor).toBe('rgb(165, 0, 10)');
 			expect(style.color).toBe('rgb(255, 226, 222)');
 		});
 
-		// 3. Exactly one focus ring. The card is inside `--menuOpen`, so its
-		//    own focus treatment is suppressed while the menu owns focus.
+		// 3. Exactly one focus ring: `--menuOpen` suppresses the card's own.
 		const row =
 			canvasElement.querySelector<HTMLElement>('.sessionsListItem')!;
 		await expect(row.classList.contains('sessionsListItem--menuOpen')).toBe(
 			true
 		);
-		// Focusing the card while the menu is open must not add anything to
-		// what it already carries at rest — the card's own soft shadow is
-		// part of its design, the keyboard halo is not.
+		// Focusing the card adds nothing to its resting shadow.
 		card.focus();
 		await expect(getComputedStyle(card).boxShadow).toBe(atRest);
 		await expect(getComputedStyle(card).outlineStyle).toBe('none');
 
-		// 4. The menu is above its own backdrop. The SCSS carried
-		//    `z-index: 99999 !important` against the component's inline
-		//    999999, so the veil meant for the rest of the page washed the
-		//    menu out as well.
+		// 4. The menu is above its own backdrop.
 		const backdrop = await waitFor(() => {
 			const element =
 				document.querySelector<HTMLElement>('.orisoMenuBackdrop');
@@ -1506,9 +1464,7 @@ export const MenuBesideTheCard: Story = {
 			Number(getComputedStyle(backdrop).zIndex)
 		);
 
-		// 4b. …and the veil leaves the card itself uncovered: the card sits
-		//     beside its menu, and the primary trigger has to be seen, not
-		//     washed pink. Hit-testing follows what is painted on top.
+		// 4b. The veil leaves the card uncovered; hit-testing follows what is painted on top.
 		const hit = (x: number, y: number) => document.elementFromPoint(x, y);
 		const pill = trigger.getBoundingClientRect();
 		await waitFor(() =>
@@ -1525,10 +1481,8 @@ export const MenuBesideTheCard: Story = {
 		await expect(
 			card.contains(hit(cardBox.left + 40, cardBox.bottom - 20))
 		).toBe(true);
-		// Hit-testing alone is not enough: Chromium honoured the hole for
-		// clicks but still painted the veil over it while the clip path's
-		// outer rectangle ran to ±100000 px (measured, 17.09.2026). The
-		// path has to stay in the viewport's coordinate range.
+		// Chromium honours the hole for clicks but paints the veil over it if the path
+		// exceeds the viewport, so the path must stay in viewport coordinates.
 		const pathNumbers = (
 			getComputedStyle(backdrop).clipPath.match(/-?\d+(\.\d+)?/g) ?? []
 		).map(Number);
@@ -1547,10 +1501,7 @@ export const MenuBesideTheCard: Story = {
 
 		await expectOnlyTheMenuRinged(canvasElement);
 
-		// 4c. At most 6 px between the trigger and the menu (Frank,
-		//     17.09.2026) — the menu may cover the card's empty strip. The
-		//     menu opened while the row was still scaling in; once the
-		//     entrance ends it has to follow the trigger to its final place.
+		// 4c. 6 px beside the trigger, also after the row's entrance scale has ended.
 		settleCardEntrance(canvasElement);
 		await waitFor(() =>
 			expect(
@@ -1561,8 +1512,7 @@ export const MenuBesideTheCard: Story = {
 			).toBe(6)
 		);
 
-		// 4d. Hovering the open trigger keeps it primary with light dots;
-		//     the resting hover tint made the dots vanish.
+		// 4d. Hovering the open trigger keeps it primary with light dots.
 		await userEvent.hover(trigger);
 		await waitFor(() => {
 			const style = getComputedStyle(trigger);
@@ -1570,19 +1520,13 @@ export const MenuBesideTheCard: Story = {
 			expect(style.color).toBe('rgb(255, 226, 222)');
 		});
 
-		// 5. The trigger keeps its shape — a horizontal pill, not a circle
-		//    and not a rotation (Frank, 15.09.2026).
+		// 5. The trigger stays a horizontal pill.
 		const shape = trigger.getBoundingClientRect();
 		await expect(shape.width).toBeGreaterThan(shape.height);
 	}
 };
 
-/**
- * Phone (390 px): there is no "beside" at 390 px, so the menu falls to the
- * escape route rather than squeezing into a gap that does not exist. The
- * placement is asserted so a future change to the chain shows up here
- * instead of on someone's phone.
- */
+/** Proves that at 390 px the menu hangs below or above the trigger instead of squeezing beside. */
 export const MenuOnThePhone: Story = {
 	name: 'Menü — 390 px, Ausweichweg statt Quetschung',
 	globals: { viewport: { value: 'phone390' } },
@@ -1592,13 +1536,10 @@ export const MenuOnThePhone: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const { menu, trigger } = await openTheMenu(canvasElement);
-		// Beside is impossible here; below or above is the honest answer.
 		await expect(['below', 'above']).toContain(menu.dataset.placement);
-		// …and it hangs from the trigger's corner, not from the card's
-		// bottom edge (Frank, 17.09.2026: "rechts im Corner").
+		// It hangs from the trigger's corner: 2 px below, right edge 4 px in.
 		const pill = trigger.getBoundingClientRect();
 		const hung = menu.getBoundingClientRect();
-		// Frank, 17.09.2026: 2 px below, right edge 4 px in.
 		await expect(Math.round(pill.right - hung.right)).toBe(4);
 		await expect(Math.round(hung.top - pill.bottom)).toBe(2);
 		await expectOnlyTheMenuRinged(canvasElement);
@@ -1610,26 +1551,10 @@ export const MenuOnThePhone: Story = {
 };
 
 /* ------------------------------------------------------------------ *
- * The session card — Frank, 15./16.09.2026
+ * The session card
  * ------------------------------------------------------------------ */
 
-/*
- * The card's geometry, as Frank signed it off on the v4 plate, now asserted
- * on the real `SessionListItemComponent`:
- *
- *  - the tag sits at the top of the chip row, level with the menu pill;
- *  - the avatar is 48 px, without the grey outline, and the name starts
- *    12 px beside it;
- *  - the preview flows around the avatar on a diagonal — 60 / 51 / 42 px
- *    from the avatar's left edge, the third line on "Woche" in preview 5 —
- *    and never falls back to the card's edge;
- *  - it stops after three lines with an ellipsis;
- *  - from the second line on it keeps clear of the Mail column; Mail is
- *    centred on the third line and its word ends exactly under the white
- *    menu pill; the card closes 16 px below it, 142 px high;
- *  - a thread reply and a voice message are marked by their glyphs alone,
- *    a voice message with its length.
- */
+// The signed-off v4 card geometry, asserted on the real `SessionListItemComponent`.
 const CARD_HEIGHT = 142;
 const CARD_BORDER = 1;
 const CARD_INSET = 16;
@@ -1962,8 +1887,7 @@ const expectCardLayout = async (
 		).toEqual(preview.glyphs ?? []);
 		for (const glyph of glyphs) {
 			await expect(glyph.getAttribute('aria-label')).toBeTruthy();
-			// The Figma export's fixed-id <mask> made a glyph vanish as soon
-			// as a second copy was on the page. It is gone from the asset.
+			// A fixed-id <mask> in the SVG hides every copy after the first on a page.
 			await expect(glyph.querySelector('mask, [mask]')).toBeNull();
 			await expect(glyph.getBoundingClientRect().width).toBeGreaterThan(
 				0
@@ -1976,11 +1900,8 @@ const expectCardLayout = async (
 		await expect(
 			getComputedStyle(flow).getPropertyValue('-webkit-line-clamp')
 		).toBe(String(CARD_LINES));
-		// Only preview lines may sit inside the clamp. WebKit counts the
-		// name as the first of the three lines (Chromium does not, because
-		// the name is its own formatting context) and put the ellipsis on
-		// the second preview line while still showing the third — measured
-		// in Playwright WebKit 26.5, 17.09.2026.
+		// Only preview lines may sit inside the clamp: WebKit counts the name as one of the
+		// three lines (Chromium does not) and misplaces the ellipsis.
 		await expect(
 			flow.querySelector('.sessionsListItem__username')
 		).toBeNull();
@@ -2033,11 +1954,7 @@ export const CardLayoutOnThePhone: Story = {
 		})
 };
 
-/**
- * FE#1115 — the advice seeker's own row while the platform is still looking
- * for a counsellor. The avatar slot holds the magnet, naked: no black disc
- * any more, and nothing in the row clips its beam.
- */
+/** FE#1115: the advice seeker's unaccepted row holds the bare magnet, and nothing clips its beam. */
 export const AskerSearchingRow: Story = {
 	name: 'Ratsuchende wartet — Magnet im Avatar-Platz (FE#1115)',
 	render: () => {
@@ -2060,14 +1977,13 @@ export const AskerSearchingRow: Story = {
 			.querySelector<HTMLElement>('.sessionsListItem__icon')!
 			.getBoundingClientRect();
 		await expect(Math.round(slot.width)).toBe(48);
-		// No black disc any more — nothing is painted behind the magnet.
+		// Nothing is painted behind the magnet.
 		await expect(getComputedStyle(magnet).backgroundColor).toBe(
 			'rgba(0, 0, 0, 0)'
 		);
 
-		// The beam is here too, and it stays inside the card: it points
-		// right, into the card's own width, so the corner clip that rounds
-		// the card never reaches it. Measured at the end of the flight.
+		// The beam points right into the card, so its corner clip never reaches it.
+		// Measured at the end of the flight.
 		const card = canvasElement.querySelector<HTMLElement>(
 			'.sessionsListItem__content'
 		)!;

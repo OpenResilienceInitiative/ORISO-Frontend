@@ -30,18 +30,11 @@ describe('chat menu placement', () => {
 			)
 		).toMatchObject({ top: 388, transformOrigin: 'right 312px' });
 	});
-	/*
-	 * FE#1115 follow-up — Frank, 15.09.2026: "Es soll kein Overlap da sein,
-	 * sondern ein Nebeneinander." Passing the card as the surface is what
-	 * makes "beside" mean beside the CARD rather than beside the button
-	 * that sits inside it.
-	 */
+	// FE#1115: the card as surface makes "beside" mean beside the card, not its button.
 	const card = { left: 60, right: 460, top: 70, bottom: 230 };
 
 	it('opens beside the card, not beside the trigger inside it', () => {
-		// The trigger sits at the card's right edge. Anchored to the button
-		// the menu would start at 428 — on top of the card. Anchored to the
-		// card it clears it.
+		// Anchored to the button the menu would start at 428, on top of the card.
 		expect(
 			getChatMenuPosition(
 				{ left: 372, right: 420, top: 80 },
@@ -65,13 +58,8 @@ describe('chat menu placement', () => {
 		).toMatchObject({ left: 191, placement: 'left' });
 	});
 
-	/*
-	 * Frank, 17.09.2026, on the phone: the menu hung below the whole card,
-	 * far from the button that opened it — "Mit dem riesen Abstand, das
-	 * sollte natürlich nicht sein. Das muss natürlich dann rechts im Corner
-	 * sein." With no room beside the card, the menu hangs from the trigger's
-	 * corner: right edges flush, just below (or above) the trigger.
-	 */
+	// With no room beside the card, the menu hangs from the trigger's corner:
+	// right edges flush, just below (or above) the trigger, not below the card.
 	it("hangs from the trigger's corner when neither side of the card fits", () => {
 		expect(
 			getChatMenuPosition(
@@ -113,12 +101,8 @@ describe('chat menu placement', () => {
 			)
 		).toMatchObject({ left: 12, top: 12, width: 256, maxHeight: 376 });
 	});
-	/*
-	 * Frank, 17.09.2026, measured on the chat-room menu: beside the card the
-	 * menu sits at most 6 px from the ⋮ trigger (it may cover the card's
-	 * empty trailing strip); stacked on a phone it hangs 2 px below the
-	 * trigger with its right edge pulled 4 px in. `hugTrigger` opts in.
-	 */
+	// `hugTrigger`: beside the trigger at most 6 px (may cover the card's empty strip);
+	// stacked 2 px below it, right edge 4 px in.
 	describe('hugging the trigger (chat-room menu)', () => {
 		const hug = { hugTrigger: true };
 

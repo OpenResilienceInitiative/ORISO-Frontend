@@ -189,8 +189,7 @@ export const SessionListItemComponent = ({
 
 	// Dropdown menu state
 	const [flyoutOpen, setFlyoutOpen] = useState(false);
-	// FE#1115 follow-up: `itemRef` is an optional prop, but the menu always
-	// needs the card it must not cover. Keep our own and feed both.
+	// `itemRef` is optional, but the menu always needs the card it must not cover.
 	const cardRef = React.useRef<HTMLDivElement>(null);
 	const setCardRef = React.useCallback(
 		(node: HTMLDivElement | null) => {
@@ -320,8 +319,6 @@ export const SessionListItemComponent = ({
 		[visibleSupervisionPreviewEvents]
 	);
 
-	// Frank, 16.09.2026: thread and voice are marked by their glyphs, not by
-	// words; "Supervision:" keeps its prefix. See `toListPreviewLine`.
 	const matrixPreviewLine = useMemo(
 		() =>
 			isMatrixBackedSession
@@ -1343,9 +1340,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem__content',
 					'sessionsListItem__content--flow',
 					isAnonymousChat && 'sessionsListItem__content--anonymous',
-					/* FE#1115: hovering the card replays the magnet's
-					   search gesture, so the whole card is the target and
-					   not the 32 px glyph inside it. */
+					/* The whole card, not the glyph, replays the magnet on hover. */
 					isAsker &&
 						!hasConsultantData &&
 						'consultantSearchLoaderHost'
@@ -1438,14 +1433,7 @@ export const SessionListItemComponent = ({
 						)}
 					</div>
 				</div>
-				{/* Frank, 15./16.09.2026: one block under the chip row. The preview
-				    flows around the 48 px avatar on a diagonal, stops after three
-				    lines, and keeps clear of the trailing marks (Mail …), which sit
-				    on its third line under the menu pill.
-				    Storybook (geometry asserted):
-				    https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout
-				    https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout-on-the-phone
-				    Preview host: predev.oriso.org/storybook-frontend (same ids). */}
+				{/* Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--card-layout */}
 				<SessionCardBody
 					name={
 						<div
@@ -1509,10 +1497,7 @@ export const SessionListItemComponent = ({
 									/>
 								</div>
 							) : isAsker && !hasConsultantData ? (
-								/* FE#1115: the same magnet as the chat header,
-									   without the black disc — beam included. It
-									   points right, into the card's own width, so
-									   the card's corner clip never reaches it. */
+								/* Points right, into the card's width, so the card's corner clip never cuts the beam. */
 								<ConsultantSearchLoader size="40px" />
 							) : !isAsker ? (
 								// Restored username+icon linkage: the asker card
@@ -1748,12 +1733,8 @@ export const SessionListItemComponent = ({
 												'sessionsListItem__consultingTypeIcon--nearby'
 											)}
 										>
-											{/* Frank, 15.09.: the Mail modality carries the
-										    primary colour, icon and word alike. The
-										    source SVG has a grey fill baked in, so it
-										    is worn as a mask and the colour comes from
-										    CSS — the same technique the chat header's
-										    type glyph uses. */}
+											{/* The SVG has a grey fill baked in, so it is worn as a mask
+											    and takes the primary colour from CSS. */}
 											<span
 												className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 												// The visible word next to it is the name.

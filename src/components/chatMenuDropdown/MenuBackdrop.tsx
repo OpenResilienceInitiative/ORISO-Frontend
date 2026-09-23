@@ -15,14 +15,8 @@ type Hole = {
 };
 
 /**
- * The veil as a clip path with one rounded hole — the element the menu
- * belongs to. `evenodd` keeps the hole transparent to paint and to clicks;
- * the hole also runs against the outer rectangle, so it stays a hole under
- * either fill rule.
- *
- * The outer rectangle is the viewport and nothing larger: with an outer
- * rectangle at ±100000 px Chromium still honoured the hole for clicks but
- * painted the veil over it (measured, 17.09.2026).
+ * The veil as a clip path with one rounded hole, transparent to paint and clicks.
+ * The outer rect must not exceed the viewport: Chromium then paints the veil over the hole.
  */
 export const spotlightClipPath = ({
 	left,
@@ -81,14 +75,8 @@ const useHole = (
 };
 
 /**
- * Decorative scrim; the menu remains responsible for keyboard/focus handling.
- *
- * `spotlightRef` leaves one element uncovered — the card a menu opens beside
- * (Frank, 15.09.2026: the card stays visible next to its menu, and its
- * trigger shows the primary colour while the menu is open). The element
- * cannot simply be lifted above the veil: the list's containers form their
- * own stacking contexts.
- *
+ * Decorative scrim; the menu owns keyboard/focus handling. `spotlightRef` stays
+ * uncovered via a clip-path hole, since the list's stacking contexts forbid lifting it.
  * Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
  */
 export const MenuBackdrop = ({

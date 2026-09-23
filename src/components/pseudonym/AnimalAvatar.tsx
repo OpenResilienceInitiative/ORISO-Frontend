@@ -6,10 +6,8 @@ interface AnimalAvatarProps {
 	/** Outer circle size in px (Figma default = 108) */
 	size?: number;
 	/**
-	 * The 2 px grey outline and its drop shadow. Defaults to `true`. Pass
-	 * `false` where the avatar has to sit flush with text beside it — the
-	 * outline would otherwise read as a 2 px gap (session list card,
-	 * Frank, 16.09.2026). The circle keeps its size either way.
+	 * The 2 px outline and shadow. `false` where the avatar sits flush with text,
+	 * as the outline would read as a 2 px gap. The circle keeps its size.
 	 */
 	outline?: boolean;
 }

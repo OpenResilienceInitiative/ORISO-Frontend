@@ -86,9 +86,8 @@ export const useMatrixRoomUsers = (): {
 		refreshMembers();
 		attachMembersListener();
 
-		// The Matrix client can exist before this room has reached its local
-		// sync store. Keep retrying until both the listener and the room are
-		// available; otherwise the first empty read remains on screen forever.
+		// The client can exist before the room reaches its sync store; retry until both
+		// exist, or the first empty read stays on screen forever.
 		retryTimer = window.setInterval(async () => {
 			if (!detachMembersListener) attachMembersListener();
 			const roomAvailable = await refreshMembers();

@@ -181,11 +181,8 @@ $room-header-gap-top: 2px;
 			margin: 0;
 		}
 
-		// On mobile, keep the inset and ensure proper overflow handling.
-		// FE#1115: the row itself no longer clips — the h3 and the profile
-		// link above already clip themselves (`overflow: hidden` +
-		// `text-overflow: ellipsis`), and the row-level clip additionally
-		// cut the search indicator's beam off at the row edge.
+		// On mobile, keep the inset. No row-level clip: the h3 and profile link clip
+		// themselves, and a row clip would cut the search beam (FE#1115).
 		@media screen and (width < 900px) {
 			gap: $stack-title-inset;
 			min-width: 0;
@@ -746,25 +743,16 @@ $room-header-gap-top: 2px;
 		}
 	}
 
-	// FE#1115: `--inquiry` used to draw its own magnet here — a bar with
-	// `border-radius: 6px 0 0 6px` plus two grey stripes cut out of a
-	// gradient — while a second, animated magnet sat in a black disc next to
-	// it. The capsule now renders `ConsultantSearchLoader` instead, so both
-	// states are one drawing.
 	&--searching {
-		// The beam leaves the capsule. This is the clip that would otherwise
-		// cut it off at the capsule's own edge.
+		// The search beam leaves the capsule; a clip here would cut it off.
 		overflow: visible;
 
-		// Frank, 15.09.: in the header the magnet points down-right, so the
-		// beam travels into the open corner below the title rather than at
-		// the row above it.
+		// Down-right: the beam travels into the open corner below the title, not the row above.
 		.consultantSearchLoader {
 			--csl-aim: 122deg;
 
-			// Down-right crosses the capsule's long axis — 29 px from the
-			// magnet's centre instead of 20 — so the arc needs the longer
-			// run to fade in the open rather than on the capsule's edge.
+			// Down-right crosses the capsule's long axis, so the arc needs a longer run
+			// to fade in the open rather than on the capsule's edge.
 			--csl-reach: calc(var(--csl-size) * 1.75);
 		}
 	}

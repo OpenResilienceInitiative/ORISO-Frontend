@@ -128,8 +128,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			color: #da5248 !important;
 		}
 
-		// Mail keeps the primary colour in the active state too — it is the
-		// modality's colour, not a selection highlight (Frank, 15.09.).
+		// Mail keeps the primary colour when active: it is the modality's colour, not a highlight.
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
 			color: var(--m3-primary, $primary) !important;
 		}
@@ -171,12 +170,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	}
 
 	&--menuOpen {
-		/*
-		 * Frank, 17.09.2026: while the menu is open, the menu carries the red
-		 * ring and the card behind it does not — neither its selected border
-		 * nor a menu-open one. The border keeps the 2 px of a selected card,
-		 * and `__content--flow` gives that pixel back, so nothing moves.
-		 */
+		// Only the open menu carries the red ring. The border keeps a selected card's 2 px,
+		// which `__content--flow` gives back, so nothing moves.
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
 			border: $list-item-active-menu-border-width solid
@@ -189,11 +184,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			border-color: $session-light-border !important;
 		}
 
-		/*
-		 * The open trigger carries the primary role, its dots the
-		 * on-primary-container role (Frank, 15.09.2026). Geometry stays put
-		 * so the card does not twitch when the menu opens.
-		 */
+		// Geometry stays put so the card does not twitch when the menu opens.
 		.sessionsListItem__menuIcon {
 			@include list-item-active-menu-border;
 
@@ -201,18 +192,13 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			border-color: var(--m3-primary, $primary);
 			color: var(--m3-on-primary-container, #ffe2de);
 
-			// The resting hover tint comes later in this file and would win;
-			// on the open trigger it turned the light dots invisible.
+			// The resting hover tint comes later in this file and would hide the light dots.
 			&:hover {
 				background-color: var(--m3-primary, $primary);
 			}
 		}
 
-		/*
-		 * One focused thing at a time. The menu is what the user just
-		 * opened and what the keyboard is in, so the card underneath drops
-		 * its ring instead of drawing a second one around the whole row.
-		 */
+		// One focus ring at a time: the menu holds the keyboard, so the card drops its ring.
 		.sessionsListItem__content:focus-visible,
 		.sessionsListItem__content:focus {
 			outline: none;
@@ -307,8 +293,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&.sessionsListItem--active:not(.sessionsListItem--menuOpen)
 		.sessionsListItem__content:focus-visible {
 		// Keep selected primary border; layer keyboard halo (#596 / WP-06).
-		// Suppressed while the menu is open — the menu owns the focus then,
-		// and two rings at once is the thing this was meant to avoid.
+		// Not while the menu is open: the menu owns the focus then.
 		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
@@ -316,9 +301,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&__row {
 		display: flex;
 
-		// Frank, 15.09.2026: the name sits 12 px from the avatar. It used to
-		// be 32 — this gap plus 22 px of padding inside `__username`, which
-		// read as dead space in the middle of the card.
 		gap: 12px;
 		color: var(--m3-primary, $secondary);
 		min-width: 0;
@@ -393,8 +375,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&__rowLeft {
 		display: flex;
 
-		// Frank, 16.09.2026: the tag sits at the top of the chip row, level
-		// with the menu pill, not centred on it.
+		// The tag sits level with the menu pill at the top of the row, not centred on it.
 		align-items: flex-start;
 		gap: 8px;
 		flex: 1;
@@ -461,9 +442,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		justify-content: center;
 		cursor: pointer;
 
-		// Frank, 15.09.2026: the trigger is a horizontal pill and stays one.
-		// The 44x44 circle came in with the merged 09.09. branch; `dev` has
-		// always had 48x32 here.
 		width: 48px;
 		height: 32px;
 		padding: 0;
@@ -886,8 +864,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&__username {
 		font-weight: $font-weight-medium;
 
-		// Horizontal padding removed: the distance to the avatar is the
-		// row's 12 px gap and nothing else (Frank, 15.09.2026).
+		// No horizontal padding: the distance to the avatar is the row's 12 px gap alone.
 		padding: 8px 0;
 		margin-right: auto;
 		white-space: nowrap;
@@ -1030,21 +1007,12 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			gap: 8px;
 			white-space: nowrap;
 
-			/*
-			 * Frank, 15.09.: the word sat 2 px below the envelope. The base
-			 * rule aligns on `end`, so icon and label hung from a shared
-			 * bottom edge rather than being centred on each other — and the
-			 * fixed 38 px height left 14 px of dead space above them. With
-			 * the height dropped, the row's own `flex-end` keeps the group
-			 * exactly where it was and the two children centre on each
-			 * other instead.
-			 */
+			// Centre icon and word on each other; the base rule's `end` hangs them
+			// from a shared bottom edge.
 			align-items: center;
 		}
 
-		// Frank, 15.09.: the Mail modality reads in the primary colour —
-		// the envelope and the word together. The asset has its grey fill
-		// baked in, so it is worn as a mask and the colour comes from here.
+		// The asset has a grey fill baked in, so it is worn as a mask coloured here.
 		&--nearbyIcon {
 			width: 24px !important;
 			height: 24px !important;

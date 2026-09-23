@@ -61,13 +61,8 @@ export const formatVoiceDuration = (durationMs: number): string => {
 };
 
 /**
- * What the list card writes for the newest message.
- *
- * Frank, 16.09.2026: a thread reply and a voice message are marked by the
- * glyphs the chat already uses — "Sprachnachricht" as a word does not fit the
- * design system, and "Thread:" in front of the text crowds the line. A voice
- * message therefore reads as its glyph and its length; everything else keeps
- * its words, including the "Supervision:" channel prefix.
+ * The list card's preview line: thread and voice use the chat's glyphs, since a word prefix
+ * crowds the line; voice reads as glyph plus length, other channels keep their word prefix.
  */
 export const toListPreviewLine = (
 	preview: MatrixRoomPreview | null,

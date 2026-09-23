@@ -12,11 +12,7 @@ import {
 const FIGMA_SESSION_LIST =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=7086-57413';
 
-/**
- * The body of a session card, on its own: avatar, name, a preview clamped to
- * three lines on a diagonal, and marks on the last line. The list item
- * (`SessionListItem`) fills these slots; the geometry lives here only.
- */
+/** The session card body alone: preview clamped to three diagonal lines, marks on the last. */
 const meta = {
 	title: 'Components/Session/List/SessionCardBody',
 	component: SessionCardBody,

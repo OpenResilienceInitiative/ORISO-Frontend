@@ -331,7 +331,7 @@ describe('channel of the latest preview (B2 / T24 list prefix)', () => {
 	});
 });
 
-describe('preview line of the list card (Frank, 16.09.: icons, not words)', () => {
+describe('preview line of the list card: glyphs, not words', () => {
 	const translate = (key: string) =>
 		({
 			'e2ee.message.encryption.text': 'Verschlüsselte Nachricht',

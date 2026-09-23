@@ -12,10 +12,8 @@ interface ConsultantSearchLoaderProps {
 }
 
 /**
- * The magnet: the enquiry's conversation-type glyph and the "looking for a
- * counsellor" indicator. It sends once on arrival and on every hover of a
- * `consultantSearchLoaderHost`, never on a timer, so several waiting
- * requests cannot pulse in lockstep.
+ * The enquiry glyph and "looking for a counsellor" indicator. Sends on arrival and on
+ * hover of a `consultantSearchLoaderHost`, never on a timer, so requests never pulse in lockstep.
  */
 export const ConsultantSearchLoader: React.FC<ConsultantSearchLoaderProps> = ({
 	size = '24px',

@@ -57,9 +57,8 @@ interface CaseHandoverActionButtonProps {
 	/** Batch mode: card cannot be selected (already granted/pending). */
 	disabled?: boolean;
 	/**
-	 * The card the button sits in. The menu opens BESIDE it and never on top
-	 * of it, like the chat-room menu of the same card. Without it the menu
-	 * only avoids the chevron (Frank, 15.09.2026).
+	 * The card the button sits in; the menu opens beside it, never on top.
+	 * Without it the menu only avoids the chevron.
 	 */
 	surfaceRef?: React.RefObject<HTMLElement | null>;
 	onRequestAccess?: () => void;

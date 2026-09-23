@@ -1884,7 +1884,7 @@ const expectPhoneHeaderRules = async (
 			'.sessionMenu__icon--mobile'
 		)!;
 		await userEvent.click(kebab);
-		// Since the #1348 menu rescue the flyout is portalled to <body>.
+		// The flyout is portalled to <body>, outside the canvas.
 		await waitFor(() =>
 			expect(
 				document.querySelector('.sessionMenu__content--open')

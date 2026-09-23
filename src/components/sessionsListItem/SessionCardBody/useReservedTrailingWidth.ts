@@ -1,13 +1,8 @@
 import * as React from 'react';
 
 /**
- * The session card's preview wraps around a float that keeps its lines clear
- * of the trailing marks (Mail, Live Chat, a supervision chip, the team
- * badge …). Those marks are translated and some arrive late, so their width
- * is not known to CSS. This hook measures the trailing group and hands the
- * width to the stylesheet as `--card-trailing-width` on the card body, and
- * keeps it current when the group changes size.
- *
+ * Measures the trailing marks into `--card-trailing-width`: they are translated and
+ * some arrive late, so CSS cannot know their width.
  */
 export const useReservedTrailingWidth = () => {
 	const bodyRef = React.useRef<HTMLDivElement>(null);
@@ -22,11 +17,8 @@ export const useReservedTrailingWidth = () => {
 		const reserve = (width: number) => {
 			body.style.setProperty('--card-trailing-width', `${width}px`);
 		};
-		// Layout widths only. The list scales every row in on arrival
-		// (0.98 → 1); a painted width read during that entrance is ~2 %
-		// short, and nothing re-measures when the scale ends, so the text
-		// crept up to the marks. `offsetWidth` ignores transforms; the
-		// observer then refines it to the fractional border-box size.
+		// Layout widths only: rows scale in on arrival, so a painted width would be ~2 % short.
+		// `offsetWidth` ignores transforms; the observer refines to the fractional size.
 		reserve(trailing.offsetWidth);
 		if (typeof ResizeObserver === 'undefined') {
 			return undefined;

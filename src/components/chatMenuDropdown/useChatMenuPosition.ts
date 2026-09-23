@@ -10,7 +10,7 @@ type SurfaceRect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
 const MARGIN = 12;
 const GAP = 8;
 
-// Chat-room menu spacing (Figma review 17.09.): beside the trigger, stacked below it.
+// Chat-room menu spacing: tight beside the trigger, and when stacked below it.
 const HUG_BESIDE_GAP = 6;
 const HUG_STACK_GAP = 2;
 const HUG_STACK_INSET = 4;
@@ -18,11 +18,8 @@ const HUG_STACK_INSET = 4;
 type Size = { width: number; height: number };
 
 /**
- * Where the menu goes. `anchor` is the trigger; `surface` is what the menu
- * must not cover (the card, not the button inside it). Beside the card comes
- * first so the card stays readable; below/above are the fallback when there
- * is no room beside, as on a phone.
- *
+ * Beside `surface` (the card, not its trigger) first so the card stays readable;
+ * below/above only when there is no room beside, as on a phone.
  * Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
  */
 export const getChatMenuPosition = (

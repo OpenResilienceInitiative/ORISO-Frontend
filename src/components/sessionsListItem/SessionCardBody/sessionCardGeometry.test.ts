@@ -6,9 +6,8 @@ import {
 	sessionCardShapeOutside
 } from './sessionCardGeometry';
 
-// Frank's signed-off v4 card (16./17.09.2026), measured in the browser:
-// preview lines start 60 / 51 / 42 px from the avatar's left edge, the body
-// is 92 px (card 142 px with the 48 px chip row and 2 px of border).
+// Signed-off v4 card, measured in the browser: lines start 60 / 51 / 42 px from the
+// avatar's left edge; body 92 px (card 142 px with 48 px chip row and 2 px border).
 describe('session card geometry', () => {
 	it('steps the preview in on a diagonal around the 48 px avatar', () => {
 		expect(sessionCardPreviewIndents(SESSION_CARD_GEOMETRY)).toEqual([

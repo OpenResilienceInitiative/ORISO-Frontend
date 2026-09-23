@@ -20,10 +20,8 @@ interface ChatroomMainInteractionIconProps {
 	showAddIcon?: boolean;
 	type: ChatroomConversationIconType;
 	/**
-	 * FE#1115 — no counsellor has accepted yet. The enquiry's magnet starts
-	 * sweeping and sends its beam out of the capsule. It is the same drawing
-	 * either way, so nothing in the row changes size or place when the
-	 * search ends.
+	 * FE#1115: no counsellor has accepted yet, so the magnet sweeps. Same drawing
+	 * either way, so nothing in the row moves when the search ends.
 	 */
 	isSearching?: boolean;
 }
@@ -105,9 +103,8 @@ export const ChatroomMainInteractionIcon = ({
 						}
 					/>
 				)}
-				{/* FE#1115: the enquiry's glyph IS the magnet — the same
-				    drawing the search indicator animates, so the capsule
-				    never holds two versions of one object. */}
+				{/* The enquiry glyph is the magnet itself, so the capsule never
+				    holds two versions of one object. */}
 				{!iconSource && type === 'inquiry' && (
 					<ConsultantSearchLoader animated={isSearching} />
 				)}

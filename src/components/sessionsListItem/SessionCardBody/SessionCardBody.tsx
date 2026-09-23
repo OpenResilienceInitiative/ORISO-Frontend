@@ -22,9 +22,7 @@ export interface SessionCardBodyProps {
 }
 
 /**
- * The body of a session card under its chip row (Frank, 15.–17.09.2026).
- * It owns the geometry only; the list item fills the slots.
- *
+ * The session card body under its chip row: owns the geometry, the list item fills the slots.
  * Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessioncardbody--all-previews
  */
 export const SessionCardBody = ({

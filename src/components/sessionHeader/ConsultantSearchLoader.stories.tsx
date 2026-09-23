@@ -9,17 +9,8 @@ const FIGMA_ROOM_HEADER =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1320-38281';
 
 /**
- * The magnet — one drawing with two states.
- *
- * Standing still it is the conversation-type glyph of an enquiry. Sweeping
- * it is the "we are looking for a counsellor for you" indicator, and its
- * beam leaves whatever container it sits in.
- *
- * FE#1115 replaced two separate hand-built magnets with this one: the
- * capsule used to draw its own (a bar with `border-radius: 6px 0 0 6px`
- * plus two grey stripes out of a gradient), and a second, animated one sat
- * beside it inside a black disc whose `overflow: hidden` cut the beam off
- * at its own edge — so the fade-out never became visible.
+ * One drawing, two states: at rest the enquiry glyph, sweeping the search indicator
+ * whose beam leaves its container (FE#1115).
  */
 const meta = {
 	title: 'Components/Session/ConsultantSearchLoader',
@@ -92,10 +83,7 @@ const Plate: React.FC<{
 	</div>
 );
 
-/**
- * Where it ships: inside the oval capsule of the chat header. Left the
- * enquiry at rest, right the same capsule while the search is running.
- */
+/** The chat-header capsule, at rest and while searching. */
 export const InTheCapsule: Story = {
 	name: 'In der Kapsel — Ruhe und Suche',
 	render: () => (
@@ -127,10 +115,7 @@ export const InTheCapsule: Story = {
 	)
 };
 
-/**
- * The naked magnet — no capsule, no disc, no background of any kind.
- * This is the variant for the conversation history at ~40 px.
- */
+/** Without capsule or background, as in the conversation history at ~40 px. */
 export const Naked: Story = {
 	name: 'Nackt, ohne Hintergrund (Chat-Historie, 40 px)',
 	render: () => (
@@ -172,10 +157,7 @@ export const Sizes: Story = {
 	)
 };
 
-/**
- * The geometry contract, asserted rather than eyeballed — this is what
- * FE#1115 actually bought.
- */
+/** Proves the geometry contract: fixed box, no clipping, outline horseshoe, beam fades outside. */
 export const GeometryContract: Story = {
 	name: 'Geometrie-Vertrag (FE#1115)',
 	args: { size: '40px' },
@@ -188,8 +170,7 @@ export const GeometryContract: Story = {
 			return element!;
 		});
 
-		// 1. The layout box is exactly `size` — the beam is not part of it,
-		//    so replacing the indicator cannot move anything.
+		// 1. The layout box is exactly `size`; the beam is not part of it.
 		const box = loader.getBoundingClientRect();
 		await expect(Math.round(box.width)).toBe(40);
 		await expect(Math.round(box.height)).toBe(40);
@@ -201,10 +182,7 @@ export const GeometryContract: Story = {
 			ancestor = ancestor.parentElement;
 		}
 
-		// 3. It is a horseshoe drawn as an outline, not a filled bar. Both
-		//    of the drawings this replaced were bars — a rectangle with
-		//    `border-radius: 6px 0 0 6px`, rounded on one side and square on
-		//    the other, which is exactly what read as a rectangle at 24 px.
+		// 3. An outlined horseshoe, not a filled bar (which reads as a rectangle at 24 px).
 		const magnet = loader.querySelector<HTMLElement>(
 			'.consultantSearchLoader__magnet'
 		)!;
@@ -221,26 +199,21 @@ export const GeometryContract: Story = {
 			thickness
 		);
 		await expect(magnetStyle.backgroundColor).toBe('rgba(0, 0, 0, 0)');
-		// The drawing itself stays inside the layout box; only the beam
-		// leaves it.
+		// Only the beam leaves the layout box.
 		const magnetBox = magnet.getBoundingClientRect();
 		await expect(magnetBox.left).toBeGreaterThanOrEqual(box.left - 0.5);
 		await expect(magnetBox.right).toBeLessThanOrEqual(box.right + 0.5);
 		await expect(magnetBox.top).toBeGreaterThanOrEqual(box.top - 0.5);
 		await expect(magnetBox.bottom).toBeLessThanOrEqual(box.bottom + 0.5);
 
-		// 4. The beam is still at full strength when it leaves the box, and
-		//    it fades outside it. Both animations are frozen and stepped
-		//    through the pulse, so this is measured, not eyeballed.
+		// 4. The beam leaves the box at full strength and fades outside it.
 		const sweep = loader.querySelector<HTMLElement>(
 			'.consultantSearchLoader__sweep'
 		)!;
 		const beam = loader.querySelector<HTMLElement>(
 			'.consultantSearchLoader__beam'
 		)!;
-		// A pulse is an event now, not an endless loop, so the test starts
-		// one itself and steps through it. Both animations are frozen; the
-		// numbers below are therefore measurements, not lucky frames.
+		// The pulse is one-shot, so start it here and step frozen animations through it.
 		loader.classList.add('consultantSearchLoader--pulsing');
 		sweep.getAnimations().forEach((animation) => animation.pause());
 		sweep.style.transform = 'rotate(90deg)';
@@ -266,7 +239,7 @@ export const GeometryContract: Story = {
 		const spent = at(1);
 		await expect(spent.right).toBeGreaterThan(leaving.right);
 		await expect(spent.opacity).toBeLessThan(0.1);
-		// At rest — which is most of the time — nothing moves at all.
+		// At rest nothing moves.
 		loader.classList.remove('consultantSearchLoader--pulsing');
 		await expect(getComputedStyle(beam).animationName).toBe('none');
 		await expect(getComputedStyle(sweep).animationName).toBe('none');
