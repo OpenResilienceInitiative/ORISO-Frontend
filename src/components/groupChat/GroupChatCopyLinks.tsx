@@ -15,18 +15,21 @@ import { buildGroupChatInviteLink } from './groupChatInviteLink';
 type GroupChatCopyLinksProps = {
 	seriesId: number;
 	agencyId?: number | null;
+	inviteToken?: string | null;
 };
 
 /** Invite URL of a group series plus the copy action with its snackbar. */
 export const useGroupChatInviteLink = (
 	seriesId: number,
-	agencyId?: number | null
+	agencyId?: number | null,
+	inviteToken?: string | null
 ) => {
 	const settings = useAppConfig();
 	const url = buildGroupChatInviteLink(
 		settings.urls.toLogin,
 		seriesId,
-		agencyId
+		agencyId,
+		inviteToken
 	);
 	const { addNotification } = useContext(NotificationsContext);
 	const { t: translate } = useTranslation();
@@ -47,12 +50,14 @@ export const useGroupChatInviteLink = (
 
 export const GroupChatCopyLinks = ({
 	seriesId,
-	agencyId
+	agencyId,
+	inviteToken
 }: GroupChatCopyLinksProps) => {
 	const { t: translate } = useTranslation();
 	const { url, copyRegistrationLink } = useGroupChatInviteLink(
 		seriesId,
-		agencyId
+		agencyId,
+		inviteToken
 	);
 
 	return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJoinGroupChat } from './useJoinGroupChat';
 import { groupEntryRoomPath } from '../components/groupChat/entryRoom/GroupEntryRoom';
+import { parseGroupChatInviteId } from '../components/groupChat/groupChatInviteLink';
 import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupStep';
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
 
@@ -43,15 +44,19 @@ export const usePendingGroupChatJoin = (
 		}
 		const gcid = pendingGroupChatId;
 		setPendingGroupChatId(null);
+		/* `gcid` may carry the invite token as well (#1237); the room is the number. */
+		const entryRoom = groupEntryRoomPath(
+			parseGroupChatInviteId(gcid)?.seriesId ?? gcid
+		);
 		joinGroupChat(gcid)
 			.then((assigned) => {
 				if (assigned) {
-					navigate(groupEntryRoomPath(gcid), { replace: true });
+					navigate(entryRoom, { replace: true });
 				}
 			})
 			.catch(() => {
-				/* Already assigned (409) or gone — the entry room says so. */
-				navigate(groupEntryRoomPath(gcid), { replace: true });
+				/* Already assigned (409), link refused (403) or gone — the entry room says so. */
+				navigate(entryRoom, { replace: true });
 			});
 	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate, userData]);
 };

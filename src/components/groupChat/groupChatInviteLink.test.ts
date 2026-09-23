@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	buildGroupChatInviteLink,
 	buildGroupChatInviteLinkForOrigin,
-	currentHostGroupChatInviteLink
+	currentHostGroupChatInviteLink,
+	parseGroupChatInviteId
 } from './groupChatInviteLink';
 
 describe('buildGroupChatInviteLink', () => {
@@ -66,4 +67,39 @@ describe('invite link for the current host (#1499)', () => {
 			buildGroupChatInviteLinkForOrigin('https://dev.oriso.org', 19, 19)
 		).toBe('https://dev.oriso.org/login?gcid=19&aid=19');
 	});
+});
+
+/* ORISO-UserService#1237: the group number alone is guessable, so anybody could
+   join any self-help group. The link now also carries the group's secret invite
+   token. It rides inside `gcid` so every place that already passes `gcid` along
+   (login, registration, redirect) keeps working unchanged. */
+describe('invite token in the link (#1237)', () => {
+	it('puts the token next to the group number in gcid', () => {
+		expect(
+			buildGroupChatInviteLink(
+				'https://dev.oriso.org/login',
+				19,
+				19,
+				'Ab3_x-Yz'
+			)
+		).toBe('https://dev.oriso.org/login?gcid=19.Ab3_x-Yz&aid=19');
+	});
+
+	it('reads the group number and the token back out of gcid', () => {
+		expect(parseGroupChatInviteId('19.Ab3_x-Yz')).toEqual({
+			seriesId: '19',
+			inviteToken: 'Ab3_x-Yz'
+		});
+	});
+
+	it('still reads an old link that only has the number', () => {
+		expect(parseGroupChatInviteId(' 19 ')).toEqual({ seriesId: '19' });
+	});
+
+	it.each([null, undefined, '', 'abc', '19.', '19.to ken', '.tok'])(
+		'rejects what is not an invite id (%s)',
+		(gcid) => {
+			expect(parseGroupChatInviteId(gcid)).toBeNull();
+		}
+	);
 });

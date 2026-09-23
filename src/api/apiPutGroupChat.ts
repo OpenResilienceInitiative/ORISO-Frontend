@@ -14,9 +14,11 @@ export const GROUP_CHAT_API = {
 
 export const apiPutGroupChat = async (
 	groupChatId: number | string,
-	groupChatApi: string
+	groupChatApi: string,
+	query?: Record<string, string>
 ): Promise<any> => {
-	const url = endpoints.groupChatBase + groupChatId + groupChatApi;
+	const search = query ? `?${new URLSearchParams(query).toString()}` : '';
+	const url = endpoints.groupChatBase + groupChatId + groupChatApi + search;
 
 	return fetchData({
 		url: url,
