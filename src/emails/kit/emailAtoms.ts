@@ -119,6 +119,12 @@ export const emailFootnoteStyle = (): string =>
 		color: emailColor.onSurfaceVariant
 	});
 
+/** The spelled-out link under a button: muted, and allowed to wrap anywhere. */
+export const emailCopyLinkStyle = (): string =>
+	`${font(emailType.copyLink.size, emailType.copyLink.line, {
+		color: emailColor.onSurfaceVariant
+	})};word-break:break-word`;
+
 /** Fine print: the encryption assurance and the footer. */
 export const emailCaptionStyle = (): string =>
 	font(emailType.caption.size, emailType.caption.line, {
@@ -156,6 +162,15 @@ export const emailTextLink = (
 	`<a href="${emailEscape(href)}" style="color:${
 		brand.primaryColor
 	};text-decoration:underline;">${emailEscape(label)}</a>`;
+
+/**
+ * A URL shown as its own link text, so it can be copied. Breaks anywhere,
+ * because a long token would otherwise push the card wider than the screen.
+ */
+export const emailCopyLink = (href: string, brand: EmailBrand): string =>
+	`<a href="${emailEscape(href)}" style="color:${
+		brand.primaryColor
+	};text-decoration:underline;word-break:break-all;">${emailEscape(href)}</a>`;
 
 export const emailDivider = (): string =>
 	'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +

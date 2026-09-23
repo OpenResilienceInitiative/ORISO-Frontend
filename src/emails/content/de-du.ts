@@ -35,8 +35,15 @@ const securityFooter = {
 		'Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} ist ein Angebot von {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'Diese E-Mail gehört zum Vertragsverhältnis und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
 };
@@ -53,8 +60,10 @@ const codeAssurance =
 const accountAssurance =
 	'Wir fragen dich nie per E-Mail nach deinem Passwort. Änderungen an deinem Zugang melden wir dir immer.';
 
+// "zwischen … und" takes the dative, so the Träger has its own placeholder
+// here: a sender without a Träger name fills "deiner Organisation".
 const legalAssurance =
-	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantName}}.';
+	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.';
 
 export const deDu: Record<EmailId, EmailContent> = {
 	'neue-nachricht': {
@@ -379,21 +388,26 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Auftragsverarbeitungsvertrag zur Unterschrift',
-		preheader: 'Der AVV für {{tenantName}} liegt bereit.',
-		headline: 'Der AVV liegt zur Unterschrift bereit',
+		subject: 'Vertragsunterlagen für {{tenantName}}',
+		preheader: 'Die Vertragsunterlagen für {{tenantName}} liegen bereit.',
+		headline: 'Die Vertragsunterlagen liegen zur Unterschrift bereit',
 		paragraphs: [
-			'Für {{tenantName}} wurde ein Auftragsverarbeitungsvertrag erstellt.',
-			'Bitte prüf den Vertrag und zeichne ihn digital.'
+			'Für {{tenantName}} wurden Vertragsunterlagen erstellt.',
+			'Bitte prüf die Unterlagen und zeichne sie digital.'
 		],
 		panel: [
 			{ label: 'Träger', value: '{{tenantName}}' },
 			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' },
 			{ label: 'Zu unterschreiben bis', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Vertrag öffnen', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Vertrag öffnen',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:'
+		},
 		footnote:
-			'Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.',
+			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.',
 		assurance: legalAssurance,
 		footer: legalFooter
 	},
