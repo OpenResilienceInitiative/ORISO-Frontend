@@ -37,6 +37,9 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
+import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
+import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
@@ -360,6 +363,10 @@ export const AuthenticatedApp = ({
 				<KeyBackupRecoveryPrompt />
 				<RecoveryKeySaveReminder />
 				<Routing logout={handleLogout} />
+				<M3SnackbarHost />
+				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+					<JoinRequestCenter transport={httpJoinRequestTransport} />
+				)}
 			</AuthenticatedBuildIdentityBoundary>
 		);
 	} else if (loading) {

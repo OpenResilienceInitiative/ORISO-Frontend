@@ -22,7 +22,11 @@ import {
 } from '../../services/recoveryReminderState';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
-import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
+import {
+	M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM,
+	M3_SNACKBAR_PHONE_MEDIA,
+	M3Snackbar
+} from '../m3Snackbar/M3Snackbar';
 import { ReactComponent as RecoverySafeIcon } from '../../resources/img/icons/recovery-safe.svg';
 import './E2EEncryptionSupportBanner.styles.scss';
 
@@ -156,15 +160,14 @@ export const KeyBackupRecoveryDialog = ({
  * centres a snackbar from 600 px up, so the phone width is centred here.
  */
 const recoverySnackbarPlacement = {
-	// A media query, not a plain value or the `md` key: MUI's own `sm` rule would win over a plain
-	// value, and this theme puts md at 600 px while the navigation bar stays until 900 px.
-	'@media (max-width: 899.98px)': {
-		bottom: 'calc(88px + env(safe-area-inset-bottom, 0px))'
+	// Shared with the stacked host, so both rest at the same height above the bar.
+	[M3_SNACKBAR_PHONE_MEDIA]: {
+		bottom: M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM
 	},
-	'left': { xs: '50%' },
-	'right': { xs: 'auto' },
-	'transform': { xs: 'translateX(-50%)' },
-	'width': { xs: 'calc(100% - 16px)' }
+	left: { xs: '50%' },
+	right: { xs: 'auto' },
+	transform: { xs: 'translateX(-50%)' },
+	width: { xs: 'calc(100% - 16px)' }
 } as const;
 
 /** Recovery is available inline; opening the restore dialog is always explicit. */

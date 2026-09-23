@@ -1166,6 +1166,57 @@
 			"done": "Terminé",
 			"durationValue": "{{value}} h",
 			"copyFailed": "La copie a échoué. Veuillez réessayer."
+		},
+		"notMember": {
+			"headline": "Vous ne faites pas partie de ce groupe de parole.",
+			"body": "Seule la modération ouvre ce groupe de parole, avec les personnes qu’elle y invite. Si vous devez co-modérer, demandez à la modération de vous ajouter.",
+			"back": "Vers mes conversations",
+			"knockBody": "Vous pouvez demander à la modération de vous laisser entrer. D’ici là, vous ne voyez rien de ce groupe de parole.",
+			"request": "Demander à rejoindre",
+			"requestFailed": "La demande n’a pas pu être envoyée. Veuillez réessayer.",
+			"pendingHeadline": "Demande envoyée – la modération est prévenue.",
+			"pendingBody": "Dès qu’une personne de la modération vous laisse entrer, vous pourrez continuer ici. Laissez simplement cette page ouverte.",
+			"cancel": "Retirer la demande",
+			"admittedHeadline": "Vous y êtes.",
+			"admittedBody": "La modération vous a laissé entrer dans le groupe de parole.",
+			"openGroup": "Ouvrir le groupe de parole",
+			"declinedHeadline": "Cette fois, cela n’a pas fonctionné.",
+			"declinedBody": "La modération n’a pas accepté votre demande. Pour toute question, adressez-vous à la personne qui vous a envoyé le lien.",
+			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération."
+		},
+		"joinRequest": {
+			"knocks": "souhaite rejoindre « {{group}} »",
+			"announcement": "{{name}} souhaite rejoindre « {{group}} ».",
+			"role": "Conseiller·ère",
+			"viaInviteLink": "via le lien d’invitation",
+			"justNow": "à l’instant",
+			"minutesAgo": "il y a {{count}} min",
+			"details": "Détails",
+			"admit": "Laisser entrer",
+			"decline": "Refuser",
+			"otherAgency": "autre centre de conseil",
+			"otherTenant": "autre organisme",
+			"unknown": "inconnu",
+			"admitted": "{{name}} fait maintenant partie du groupe de parole.",
+			"admittedAsCoModerator": "{{name}} co-modère désormais.",
+			"declined": "Demande de {{name}} refusée.",
+			"failed": "Cela n’a pas fonctionné. Veuillez réessayer.",
+			"dialog": {
+				"title": "{{name}} souhaite rejoindre le groupe",
+				"description": "Décidez si {{name}} rejoint « {{group}} ».",
+				"roleLabel": "Rôle",
+				"agencyLabel": "Centre de conseil",
+				"tenantLabel": "Organisme",
+				"wayLabel": "Accès",
+				"timeLabel": "Demandé",
+				"timeValue": "à {{time}}",
+				"admitAs": "Laisser entrer en tant que",
+				"asParticipant": "Participant·e",
+				"asCoModerator": "Co-modération",
+				"coModeratorOwnerOnly": "Seule la direction du groupe de parole peut attribuer la co-modération.",
+				"coModeratorSameTenant": "La co-modération est réservée aux professionnel·les de votre propre organisme.",
+				"privacy": "Tant que vous n’avez pas décidé, {{name}} ne voit rien de ce groupe de parole."
+			}
 		}
 	},
 	"help": {
@@ -3166,6 +3217,7 @@
 			},
 			"temporary": {
 				"join": "Rejoindre",
+				"joinGroup": "Rejoindre le groupe",
 				"toggleOff": "Créer un compte",
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",
@@ -5197,6 +5249,13 @@
 			"password": "Mot de passe personnel",
 			"twoFactor": "Deuxième facteur",
 			"done": "terminé"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "Notifications",
+			"more": "Afficher {{count}} de plus",
+			"less": "Afficher moins"
 		}
 	}
 }

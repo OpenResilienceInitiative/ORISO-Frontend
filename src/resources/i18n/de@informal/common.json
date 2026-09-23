@@ -381,6 +381,24 @@
 		"shareDialog": {
 			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"notMember": {
+			"headline": "Du bist nicht Teil dieses Gesprächskreises.",
+			"body": "Diesen Gesprächskreis öffnet nur die Moderation und wen sie dazuholt. Wenn du mitmoderieren sollst, bitte die Moderation, dich hinzuzufügen.",
+			"knockBody": "Du kannst die Moderation bitten, dich hereinzulassen. Bis dahin siehst du nichts aus diesem Gesprächskreis.",
+			"requestFailed": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"pendingBody": "Sobald jemand aus der Moderation dich hereinlässt, geht es hier weiter. Lass diese Seite dafür einfach offen.",
+			"admittedHeadline": "Du bist dabei.",
+			"admittedBody": "Die Moderation hat dich in den Gesprächskreis gelassen.",
+			"declinedBody": "Die Moderation hat deine Anfrage nicht angenommen. Bei Fragen wende dich an die Person, die dir den Link geschickt hat.",
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte frag die Moderation nach einem neuen Link."
+		},
+		"joinRequest": {
+			"failed": "Das hat nicht geklappt. Bitte versuche es erneut.",
+			"dialog": {
+				"description": "Entscheide, ob {{name}} in „{{group}}“ dazukommt.",
+				"privacy": "Bis du entscheidest, sieht {{name}} nichts aus diesem Gesprächskreis."
+			}
 		}
 	},
 	"help": {

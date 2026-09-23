@@ -29,7 +29,11 @@ interface SubmitOptions {
 	 * `true` to stay on the screen — e.g. to show the share dialog (#1499) —
 	 * and call `leave()` when done; otherwise the hook navigates as before.
 	 */
-	holdAfterSuccess?: (saved: { seriesId: number | null }) => boolean;
+	holdAfterSuccess?: (saved: {
+		seriesId: number | null;
+		/** Secret part of the invite link (ORISO-UserService#1237). */
+		inviteToken?: string | null;
+	}) => boolean;
 }
 
 const SESSION_VIEW_PATH = '/sessions/consultant/sessionView';
@@ -64,6 +68,7 @@ export const useCreateChatSubmit = () => {
 				.then((response) => {
 					onSuccess?.();
 					let seriesId: number | null = null;
+					let inviteToken: string | null = null;
 					return apiGetSessionRoomsByRoomIds([response.matrixRoomId])
 						.then(({ sessions }) => {
 							dispatch({
@@ -76,13 +81,14 @@ export const useCreateChatSubmit = () => {
 									response.matrixRoomId
 							);
 							seriesId = saved?.chat?.id ?? null;
+							inviteToken = saved?.chat?.inviteToken ?? null;
 						})
 						.catch(() => {
 							// The chat was created — a failed list refresh must
 							// not strand the user on the create screen.
 						})
 						.finally(() => {
-							if (holdAfterSuccess?.({ seriesId })) {
+							if (holdAfterSuccess?.({ seriesId, inviteToken })) {
 								return;
 							}
 							navigate(SESSION_VIEW_PATH);

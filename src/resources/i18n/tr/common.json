@@ -1166,6 +1166,57 @@
 			"done": "Tamam",
 			"durationValue": "{{value}} sa",
 			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
+		},
+		"notMember": {
+			"headline": "Bu sohbet grubunun bir parçası değilsiniz.",
+			"body": "Bu sohbet grubunu yalnızca moderatörler ve onların davet ettiği kişiler açar. Ortak moderatör olmanız gerekiyorsa, moderatörlerden sizi eklemelerini isteyin.",
+			"back": "Görüşmelerime",
+			"knockBody": "Moderatörlerden sizi içeri almalarını isteyebilirsiniz. O zamana kadar bu sohbet grubundan hiçbir şey görmezsiniz.",
+			"request": "Katılma isteği gönder",
+			"requestFailed": "İstek gönderilemedi. Lütfen tekrar deneyin.",
+			"pendingHeadline": "İstek gönderildi – moderatörlere bildirim gidiyor.",
+			"pendingBody": "Bir moderatör sizi içeri aldığında burada devam edebilirsiniz. Bunun için bu sayfayı açık bırakmanız yeterli.",
+			"cancel": "İsteği geri çek",
+			"admittedHeadline": "Artık gruptasınız.",
+			"admittedBody": "Moderatörler sizi sohbet grubuna aldı.",
+			"openGroup": "Sohbet grubunu aç",
+			"declinedHeadline": "Bu sefer olmadı.",
+			"declinedBody": "Moderatörler isteğinizi kabul etmedi. Sorularınız varsa size bağlantıyı gönderen kişiye başvurun.",
+			"linkInvalid": "Bu davet bağlantısı artık geçerli değil. Lütfen moderatörlerden yeni bir bağlantı isteyin."
+		},
+		"joinRequest": {
+			"knocks": "“{{group}}” grubuna katılmak istiyor",
+			"announcement": "{{name}}, “{{group}}” grubuna katılmak istiyor.",
+			"role": "Danışman",
+			"viaInviteLink": "davet bağlantısı üzerinden",
+			"justNow": "az önce",
+			"minutesAgo": "{{count}} dk. önce",
+			"details": "Ayrıntılar",
+			"admit": "İçeri al",
+			"decline": "Reddet",
+			"otherAgency": "başka danışma merkezi",
+			"otherTenant": "başka kuruluş",
+			"unknown": "bilinmiyor",
+			"admitted": "{{name}} artık sohbet grubunda.",
+			"admittedAsCoModerator": "{{name}} artık ortak moderatör.",
+			"declined": "{{name}} adlı kişinin isteği reddedildi.",
+			"failed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
+			"dialog": {
+				"title": "{{name}} katılmak istiyor",
+				"description": "{{name}} adlı kişinin “{{group}}” grubuna katılıp katılmayacağına karar verin.",
+				"roleLabel": "Rol",
+				"agencyLabel": "Danışma merkezi",
+				"tenantLabel": "Kuruluş",
+				"wayLabel": "Yol",
+				"timeLabel": "İstek zamanı",
+				"timeValue": "Saat {{time}}",
+				"admitAs": "Şu rolle içeri al",
+				"asParticipant": "Katılımcı",
+				"asCoModerator": "Ortak moderatör",
+				"coModeratorOwnerOnly": "Ortak moderatörlüğü yalnızca grup yöneticisi verebilir.",
+				"coModeratorSameTenant": "Ortak moderatörlük yalnızca kendi kuruluşunuzun uzmanlarına açıktır.",
+				"privacy": "Siz karar verene kadar {{name}} bu sohbet grubundan hiçbir şey görmez."
+			}
 		}
 	},
 	"help": {
@@ -3175,6 +3226,7 @@
 			},
 			"temporary": {
 				"join": "Katıl",
+				"joinGroup": "Gruba katıl",
 				"toggleOff": "Hesap oluştur",
 				"toggleOn": "Hesap açmadan katıl",
 				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
@@ -5197,6 +5249,13 @@
 			"password": "Kendi şifreniz",
 			"twoFactor": "İkinci faktör",
 			"done": "tamamlandı"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "Bildirimler",
+			"more": "{{count}} tane daha göster",
+			"less": "Daha az göster"
 		}
 	}
 }
