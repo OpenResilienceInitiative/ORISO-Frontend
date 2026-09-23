@@ -25,6 +25,7 @@ import {
 } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { computeOrisoPalette } from '../../utils/theme/orisoScheme';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import './sessionsListItem.styles.scss';
 
@@ -1717,5 +1718,94 @@ export const GuidedSelfHelpGroup: Story = {
 				'.sessionsListItem__consultingTypeIcon--selfHelpIcon'
 			).getAttribute('alt')
 		).toBe('Gesprächskreis');
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Tenant colour
+ * ------------------------------------------------------------------ */
+
+/**
+ * Every token of a light blue tenant, as `applyTenantPalette` sets them. Its
+ * on-primary is dark, so a hard-coded white chip text cannot pass.
+ */
+const TENANT_TOKENS = computeOrisoPalette(
+	{ primary: '#2e9bff' },
+	'light'
+).tokens;
+
+const rgb = (hex: string) => {
+	const value = parseInt(hex.slice(1), 16);
+	return `rgb(${(value >> 16) & 255}, ${(value >> 8) & 255}, ${value & 255})`;
+};
+
+/** Selected card, topic chip and Mail mark follow the tenant's palette instead of the default red. */
+export const TenantPrimaryColour: Story = {
+	name: 'Träger-Farbe — Auswahl, Themen-Chip und Mail folgen ihr',
+	render: () => {
+		seedMatrixRoom(2);
+		return (
+			<div style={TENANT_TOKENS as React.CSSProperties}>
+				<div style={listShell}>
+					<RuntimeCard index={0} item={runtimeSessionItem()} />
+					<RuntimeCard
+						index={1}
+						item={runtimeSessionItem({
+							sessionOverrides: {
+								id: 4402,
+								matrixRoomId: 'storybook-runtime-room-4402'
+							}
+						})}
+					/>
+				</div>
+			</div>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const [selected, resting] = await settledRows(canvasElement, 2);
+		await expect(
+			selected.classList.contains('sessionsListItem--active')
+		).toBe(true);
+		const style = (row: HTMLElement, selector: string) =>
+			getComputedStyle(part(row, selector));
+		const tenant = (token: string) => rgb(TENANT_TOKENS[token]);
+
+		// The palette really is another colour, so the checks below can fail.
+		await expect(tenant('--m3-primary')).not.toBe(PRIMARY);
+
+		await waitFor(() =>
+			expect(
+				style(selected, '.sessionsListItem__content').borderTopColor
+			).toBe(tenant('--m3-primary'))
+		);
+
+		const selectedChip = style(selected, '.sessionsListItem__topic');
+		await expect(selectedChip.backgroundColor).toBe(
+			tenant('--m3-primary-container')
+		);
+		await expect(selectedChip.color).toBe(tenant('--m3-on-primary'));
+		const restingChip = style(resting, '.sessionsListItem__topic');
+		await expect(restingChip.backgroundColor).toBe(
+			tenant('--m3-primary-fixed-dim')
+		);
+		await expect(restingChip.color).toBe(tenant('--m3-on-primary-fixed'));
+		const restingPostcode = style(resting, '.sessionsListItem__postcode');
+		await expect(restingPostcode.borderTopColor).toBe(
+			tenant('--m3-primary-fixed-dim')
+		);
+		await expect(restingPostcode.color).toBe(
+			tenant('--m3-primary-container')
+		);
+
+		for (const row of [selected, resting]) {
+			await expect(
+				style(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
+					.color
+			).toBe(tenant('--m3-primary'));
+			await expect(
+				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
+					.backgroundColor
+			).toBe(tenant('--m3-primary'));
+		}
 	}
 };
