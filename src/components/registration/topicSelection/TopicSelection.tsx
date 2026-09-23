@@ -401,9 +401,13 @@ export const TopicSelection: FC<{
 			return;
 		}
 
+		/* Show the carried-over pick, but do not confirm it here: this effect
+		   cannot see the list, so it used to enable Next for a subject area
+		   this centre does not offer and never renders (#1524). The effect
+		   above already enables Next once the value is in what is on screen,
+		   which is the only place that knows. */
 		setValue(registrationData.mainTopic.id);
-		setDisabledNextButton(false);
-	}, [registrationData?.mainTopic, setDisabledNextButton]);
+	}, [registrationData?.mainTopic]);
 
 	useEffect(() => {
 		const consultantTopicIds = [
