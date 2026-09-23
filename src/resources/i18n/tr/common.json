@@ -3596,6 +3596,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} {{oldConsultant}} bu nedenle tüm mesaj geçmişini okuyabilir ve sizden sorumludur. artık mesajlara erişimi yoktur."
 						},
+						"historical": "Bu daha önceki bir taleptir. Artık buradan yanıtlanamaz.",
 						"question": "Devir teslim işlemini kabul ediyor musunuz?",
 						"sent": {
 							"description": {

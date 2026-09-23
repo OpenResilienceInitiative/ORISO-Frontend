@@ -3596,6 +3596,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} ስለዚ ንኹሉ ታሪኽ መልእኽቲ ከንብብ ይኽእል እዩ ንዓኻ ድማ ሓላፍነት ይወስድ። {{oldConsultant}} ድሕሪ ሕጂ ነቶም መልእኽትታት ክረኽቦም ኣይክእልን እዩ።"
 						},
+						"historical": "እዚ ቅድሚ ሕጂ ዝቐረበ ሕቶ እዩ። ኣብዚ ደጊም ክምለስ ኣይክእልን።",
 						"question": "ነቲ ምትሕልላፍ ትሰማምዑሉ ዶ?",
 						"sent": {
 							"description": {

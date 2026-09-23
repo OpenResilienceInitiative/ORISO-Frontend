@@ -65,6 +65,30 @@ describe('HistoricalReassignMessage', () => {
 		);
 	});
 
+	// An open request can no longer be answered; the old copy claimed access
+	// had moved (asker) or would move on consent (staff).
+	it.each([true, false])(
+		'describes an unanswered request as historical (asker: %s)',
+		(isAsker) => {
+			const { container } = render(
+				<HistoricalReassignMessage
+					message={payload()}
+					isAsker={isAsker}
+					isMySession={false}
+				/>
+			);
+			expect(container.textContent).toContain(
+				'session.reassign.system.message.reassign.historical'
+			);
+			expect(container.textContent).not.toContain(
+				'session.reassign.system.message.reassign.description.noTeam'
+			);
+			expect(container.textContent).not.toContain(
+				'session.reassign.system.message.reassign.sent.description.noTeam'
+			);
+		}
+	);
+
 	it('names a blank counsellor as a former counsellor', () => {
 		const { container } = render(
 			<HistoricalReassignMessage

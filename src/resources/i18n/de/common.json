@@ -3400,7 +3400,7 @@
 			"retired": "Nicht näher angegeben"
 		},
 		"history": {
-			"unknownConsultant": "Eine frühere Beratungsperson"
+			"unknownConsultant": "Eine frühere Berater:in"
 		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
@@ -3616,6 +3616,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} kann somit den kompletten Nachrichtenverlauf lesen und ist für Sie verantwortlich. {{oldConsultant}} hat keinen Zugriff mehr auf die Nachrichten."
 						},
+						"historical": "Dies ist eine frühere Anfrage. Sie kann hier nicht mehr beantwortet werden.",
 						"question": "Stimmen Sie der Übergabe zu?",
 						"sent": {
 							"description": {

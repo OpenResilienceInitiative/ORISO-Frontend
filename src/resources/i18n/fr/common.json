@@ -3380,7 +3380,7 @@
 			"retired": "Non précisé"
 		},
 		"history": {
-			"unknownConsultant": "Un ancien conseiller"
+			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller"
 		},
 		"submit": "Demander l'accès",
 		"submitSending": "Envoi en cours",
@@ -3596,6 +3596,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} peut donc lire l'historique complet des messages et est responsable de vous. {{oldConsultant}} n'a plus accès aux messages."
 						},
+						"historical": "Il s’agit d’une demande antérieure. Il n’est plus possible d’y répondre ici.",
 						"question": "Approuvez-vous le transfert ?",
 						"sent": {
 							"description": {

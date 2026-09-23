@@ -63,8 +63,7 @@ export const ReassignRequestMessage: React.FC<{
 
 				<span className="description">
 					{translate(
-						'session.reassign.system.message.reassign.description.noTeam',
-						{ oldConsultant, newConsultant }
+						'session.reassign.system.message.reassign.historical'
 					)}
 				</span>
 			</div>
@@ -73,17 +72,13 @@ export const ReassignRequestMessage: React.FC<{
 };
 
 export const ReassignRequestSentMessage: React.FC<{
-	toAskerName: string;
-	fromConsultantId: string;
-	toConsultantId: string;
+	toAskerName?: string;
+	fromConsultantId?: string;
+	toConsultantId?: string;
 	toConsultantName?: string;
 	isMySession: boolean;
-}> = (props) => {
+}> = () => {
 	const { t: translate } = useTranslation();
-	const toConsultantName = useConsultantName(
-		props.toConsultantId,
-		props.toConsultantName
-	);
 
 	return (
 		<div className="reassignRequestMessage">
@@ -95,12 +90,7 @@ export const ReassignRequestSentMessage: React.FC<{
 				</h5>
 				<span className="description">
 					{translate(
-						'session.reassign.system.message.reassign.sent.description.noTeam',
-						{
-							client1: props.toAskerName,
-							client2: props.toAskerName,
-							newConsultant: toConsultantName
-						}
+						'session.reassign.system.message.reassign.historical'
 					)}
 				</span>
 			</div>

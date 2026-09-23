@@ -1860,10 +1860,8 @@ export const MessageItemComponent = ({
 				return (
 					<HistoricalReassignMessage
 						message={decryptedMessage || ''}
-						isAsker={hasUserAuthority(
-							AUTHORITIES.ASKER_DEFAULT,
-							userData
-						)}
+						// Includes anonymous guests: no legal-name lookup (#1486).
+						isAsker={isAskerViewer}
 						isMySession={isMySession}
 					/>
 				);
