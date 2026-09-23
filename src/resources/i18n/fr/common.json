@@ -3372,6 +3372,16 @@
 		"reasons": {
 			"loading": "Chargement des motifs"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Absence planifiée",
+			"UNPLANNED_ABSENCE": "Absence imprévue",
+			"ASSIGNMENT_ENDED": "Attribution terminée",
+			"ADVICE_REQUESTED": "Conseil demandé",
+			"retired": "Non précisé"
+		},
+		"history": {
+			"unknownConsultant": "Un ancien conseiller"
+		},
 		"submit": "Demander l'accès",
 		"submitSending": "Envoi en cours",
 		"title": "Demander l'accès",

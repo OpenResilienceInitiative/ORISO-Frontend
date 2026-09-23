@@ -3372,6 +3372,16 @@
 		"reasons": {
 			"loading": "Nedenler yükleniyor"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planlı yokluk",
+			"UNPLANNED_ABSENCE": "Plansız yokluk",
+			"ASSIGNMENT_ENDED": "Görevlendirme sona erdi",
+			"ADVICE_REQUESTED": "Danışma talep edildi",
+			"retired": "Belirtilmemiş"
+		},
+		"history": {
+			"unknownConsultant": "Önceki danışman"
+		},
 		"submit": "Erişim talep et",
 		"submitSending": "Gönderiliyor",
 		"title": "Erişim talep et",

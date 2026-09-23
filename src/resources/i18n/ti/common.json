@@ -3372,6 +3372,16 @@
 		"reasons": {
 			"loading": "ምኽንያታት ይጽዕኑ ኣለዉ"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "ዝተመደበ ብኩራት",
+			"UNPLANNED_ABSENCE": "ዘይተመደበ ብኩራት",
+			"ASSIGNMENT_ENDED": "ምምዳብ ተወዲኡ",
+			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ",
+			"retired": "ዘይተገልጸ"
+		},
+		"history": {
+			"unknownConsultant": "ናይ ቀደም ኣማኻሪ"
+		},
 		"submit": "ተበጻሕነት ሕተት",
 		"submitSending": "ይለኣኽ ኣሎ",
 		"title": "ተበጻሕነት ሕተት",

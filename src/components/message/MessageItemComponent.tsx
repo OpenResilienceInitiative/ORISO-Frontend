@@ -47,19 +47,7 @@ import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
 import { e2eeParams } from '../../hooks/useE2EE';
 import { E2EEActivatedMessage } from './E2EEActivatedMessage';
-import {
-	ReassignRequestAcceptedMessage,
-	ReassignRequestDeclinedMessage,
-	ReassignRequestMessage,
-	ReassignRequestSentMessage
-} from './ReassignMessage';
-import {
-	apiSendAliasMessage,
-	ConsultantReassignment,
-	ReassignStatus
-} from '../../api/apiSendAliasMessage';
-import { apiPatchMessage } from '../../api/apiPatchMessage';
-import { apiSessionAssign } from '../../api';
+import { HistoricalReassignMessage } from './ReassignMessage';
 
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
@@ -430,8 +418,7 @@ export const MessageItemComponent = ({
 	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession, reloadActiveSession } =
-		useContext(ActiveSessionContext);
+	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -1242,39 +1229,6 @@ export const MessageItemComponent = ({
 		return 'consultant';
 	};
 
-	const clickReassignRequestMessage = (accepted, toConsultantId) => {
-		if (accepted) {
-			apiSessionAssign(activeSession.item.id, toConsultantId)
-				.then(() => {
-					apiPatchMessage(
-						toConsultantId,
-						ReassignStatus.CONFIRMED,
-						_id
-					)
-						.then(() => {
-							// WORKAROUND for an issue with reassignment and old users breaking the lastMessage for this session
-							apiSendAliasMessage({
-								matrixRoomId: activeSession.rid,
-								type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT_RESET_LAST_MESSAGE
-							});
-							reloadActiveSession();
-						})
-						.catch((error) => {
-							/* console.log(error); */
-						});
-				})
-				.catch((error) => {
-					/* console.log(error); */
-				});
-		} else {
-			apiPatchMessage(toConsultantId, ReassignStatus.REJECTED, _id).catch(
-				(error) => {
-					/* console.log(error); */
-				}
-			);
-		}
-	};
-
 	const isUserMessage = () =>
 		userId === askerMatrixUserId ||
 		(activeSession.isGroup &&
@@ -1899,51 +1853,17 @@ export const MessageItemComponent = ({
 			case isE2EEActivatedMessage:
 				return <E2EEActivatedMessage />;
 			case isReassignmentMessage:
-				if (message) {
-					const isAsker = hasUserAuthority(
-						AUTHORITIES.ASKER_DEFAULT,
-						userData
-					);
-
-					const reassignmentParams: ConsultantReassignment =
-						JSON.parse(message);
-					switch (reassignmentParams.status) {
-						case ReassignStatus.REQUESTED:
-							return isAsker ? (
-								<ReassignRequestMessage
-									{...reassignmentParams}
-									onClick={(accepted) =>
-										clickReassignRequestMessage(
-											accepted,
-											reassignmentParams.toConsultantId
-										)
-									}
-								/>
-							) : (
-								<ReassignRequestSentMessage
-									{...reassignmentParams}
-									isMySession={isMySession}
-								/>
-							);
-						case ReassignStatus.CONFIRMED:
-							return (
-								<ReassignRequestAcceptedMessage
-									isAsker={isAsker}
-									isMySession={isMySession}
-									{...reassignmentParams}
-								/>
-							);
-						case ReassignStatus.REJECTED:
-							return (
-								<ReassignRequestDeclinedMessage
-									isAsker={isAsker}
-									isMySession={isMySession}
-									{...reassignmentParams}
-								/>
-							);
-					}
-				}
-				return;
+				// `decryptedMessage` is the plaintext in E2EE and plain rooms alike.
+				return (
+					<HistoricalReassignMessage
+						message={decryptedMessage || ''}
+						isAsker={hasUserAuthority(
+							AUTHORITIES.ASKER_DEFAULT,
+							userData
+						)}
+						isMySession={isMySession}
+					/>
+				);
 			case isAppointmentSet:
 				return (
 					<Appointment

@@ -3375,6 +3375,16 @@
 		"reasons": {
 			"loading": "Причины загружаются"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Запланированное отсутствие",
+			"UNPLANNED_ABSENCE": "Незапланированное отсутствие",
+			"ASSIGNMENT_ENDED": "Назначение завершено",
+			"ADVICE_REQUESTED": "Запрошена консультация",
+			"retired": "Не указано"
+		},
+		"history": {
+			"unknownConsultant": "Предыдущий консультант"
+		},
 		"submit": "Запросить доступ",
 		"submitSending": "Отправляется",
 		"title": "Запросить доступ",
