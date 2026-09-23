@@ -20,6 +20,38 @@ describe('knockableGroupId — where "Beitritt anfragen" may appear', () => {
 		);
 	});
 
+	/* Same rule as the server's ChatConverter.conversationTypeOf(Chat), so the
+	   app never offers a knock the server answers with 400. */
+	it('treats a legacy group with one occurrence and no interval as a team chat', () => {
+		expect(
+			knockableGroupId(group({ repeatCount: 1 }), 'notMember')
+		).toBeUndefined();
+		expect(
+			knockableGroupId(group({ repeatCount: 0 }), 'notMember')
+		).toBeUndefined();
+	});
+
+	it('treats a legacy group that repeats or has an interval as self-help', () => {
+		expect(knockableGroupId(group({ repeatCount: 2 }), 'notMember')).toBe(
+			42
+		);
+		expect(
+			knockableGroupId(
+				group({ repeatCount: 1, chatInterval: 'WEEKLY' }),
+				'notMember'
+			)
+		).toBe(42);
+	});
+
+	it('lets a stored type win over the legacy guess', () => {
+		expect(
+			knockableGroupId(
+				group({ conversationType: 'SELF_HELP', repeatCount: 1 }),
+				'notMember'
+			)
+		).toBe(42);
+	});
+
 	it('never offers it on an internal team chat', () => {
 		expect(
 			knockableGroupId(

@@ -1,12 +1,24 @@
 import type { ExtendedSessionInterface } from '../../../globalState';
-import { getModalityIfKnown, Modality } from '../../session/getModality';
+import type { GroupChatItemInterface } from '../../../globalState/interfaces';
 import type { GroupChatAccess } from '../useGroupChatAccess';
 
 /**
+ * Mirrors the server's `ChatConverter.conversationTypeOf(Chat)`
+ * (ORISO-UserService#1243): a stored type wins; a legacy group without one
+ * is self-help only if it repeats more than once or has an interval. Not
+ * `getModality`'s guess, which counts any repeat count — the app must never
+ * offer a knock the server refuses with 400.
+ */
+const isSelfHelp = (chat: GroupChatItemInterface) =>
+	chat.conversationType
+		? chat.conversationType === 'SELF_HELP'
+		: Boolean(chat.repetitive) ||
+			(chat.repeatCount ?? 0) > 1 ||
+			chat.chatInterval != null;
+
+/**
  * The group a counsellor may knock on, or `undefined`. Only self-help groups
- * (Gesprächskreise) take knocks — never an internal team chat; the server
- * refuses those too (ORISO-UserService#1243). An unknown format counts as
- * "no": the notice then stays what #1534 shipped.
+ * (Gesprächskreise) take knocks, never an internal team chat.
  */
 export const knockableGroupId = (
 	session: ExtendedSessionInterface | undefined,
@@ -14,6 +26,7 @@ export const knockableGroupId = (
 ): number | undefined =>
 	access === 'notMember' &&
 	session?.isGroup &&
-	getModalityIfKnown(session) === Modality.SELF_HELP
-		? session.item?.id
+	session.item &&
+	isSelfHelp(session.item as GroupChatItemInterface)
+		? session.item.id
 		: undefined;
