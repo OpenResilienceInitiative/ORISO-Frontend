@@ -2601,7 +2601,8 @@
 			},
 			"help": {
 				"title": "Help",
-				"videoCall": "Video-Call"
+				"videoCall": "Video-Call",
+				"tours": "Tours"
 			},
 			"notifications": {
 				"email": "E-mail notification",
@@ -4320,8 +4321,9 @@
 				"label": "Tour active"
 			},
 			"deactive": {
-				"label": "Tour activated"
-			}
+				"label": "Tour deactivated"
+			},
+			"hint": "Off: tours do not start on their own. You can start them here at any time."
 		},
 		"title": "Tour"
 	},

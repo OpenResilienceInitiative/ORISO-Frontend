@@ -2639,7 +2639,8 @@
 			},
 			"help": {
 				"title": "Hilfe",
-				"videoCall": "Video-Call"
+				"videoCall": "Video-Call",
+				"tours": "Rundgänge"
 			},
 			"notifications": {
 				"email": "E-Mail Benachrichtigung",
@@ -4378,8 +4379,9 @@
 				"label": "Rundgang aktiv"
 			},
 			"deactive": {
-				"label": "Rundgang aktiviert"
-			}
+				"label": "Rundgang deaktiviert"
+			},
+			"hint": "Aus: Rundgänge starten nicht von selbst. Sie können sie hier jederzeit starten."
 		},
 		"title": "Rundgang"
 	},

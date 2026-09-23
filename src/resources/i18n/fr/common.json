@@ -2618,7 +2618,8 @@
 			},
 			"help": {
 				"title": "Aide",
-				"videoCall": "Appel vidéo"
+				"videoCall": "Appel vidéo",
+				"tours": "Visites guidées"
 			},
 			"notifications": {
 				"email": "Notification par e-mail",
@@ -4361,8 +4362,9 @@
 				"label": "Circuit actif"
 			},
 			"deactive": {
-				"label": "Tour d'horizon activé"
-			}
+				"label": "Visite guidée désactivée"
+			},
+			"hint": "Désactivé : les visites guidées ne démarrent pas d'elles-mêmes. Vous pouvez les lancer ici à tout moment."
 		},
 		"title": "Visite guidée"
 	},

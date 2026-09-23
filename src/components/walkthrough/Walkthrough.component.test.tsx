@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { apiPatchConsultantData } from '../../api';
@@ -61,6 +61,9 @@ const renderWalkthrough = (
 	return { reloadUserData, store, ...utils };
 };
 
+// Lets the async progress read settle before asserting that nothing started.
+const flushProgressRead = () => act(async () => {});
+
 afterEach(() => {
 	cleanup();
 	adapterProps = null;
@@ -69,31 +72,87 @@ afterEach(() => {
 });
 
 describe('Walkthrough', () => {
-	it('renders nothing when the app config disables the walkthrough', () => {
+	it('renders nothing when the app config disables the walkthrough', async () => {
 		appConfig.enableWalkthrough = false;
 		const { queryByTestId } = renderWalkthrough();
 
+		await flushProgressRead();
+		expect(queryByTestId('product-tour-adapter')).toBeNull();
+		expect(
+			versionedTourProgressRepository.getProgress
+		).not.toHaveBeenCalled();
+	});
+
+	it('ignores a manual start while the app config disables the walkthrough', () => {
+		appConfig.enableWalkthrough = false;
+		const { queryByTestId } = renderWalkthrough(
+			{ isWalkThroughEnabled: false },
+			{ tourId: 'consultant-walkthrough', mode: 'start', requestedAt: 10 }
+		);
+
 		expect(queryByTestId('product-tour-adapter')).toBeNull();
 	});
 
-	it('renders nothing without auto-run or a carousel launch request', () => {
-		const { queryByTestId } = renderWalkthrough({
-			isWalkThroughEnabled: false
-		});
+	it('does not auto-start while the switch is off', async () => {
+		renderWalkthrough({ isWalkThroughEnabled: false });
 
-		expect(queryByTestId('product-tour-adapter')).toBeNull();
+		await flushProgressRead();
+		expect(adapterProps).toBeNull();
+		expect(
+			versionedTourProgressRepository.getProgress
+		).not.toHaveBeenCalled();
 	});
 
-	it('runs the consultant walkthrough tour when the legacy gate is open', () => {
+	it('auto-starts the walkthrough when the switch is on and the current version is not done', async () => {
+		vi.mocked(
+			versionedTourProgressRepository.getProgress
+		).mockResolvedValueOnce([
+			{
+				tourId: 'consultant-walkthrough',
+				tourVersion: 0,
+				surface: 'frontend',
+				status: 'completed'
+			}
+		]);
 		renderWalkthrough();
 
-		expect(adapterProps).not.toBeNull();
+		await waitFor(() => expect(adapterProps).not.toBeNull());
 		expect(adapterProps.tour.id).toBe('consultant-walkthrough');
 		expect(adapterProps.active).toBe(true);
 		expect(adapterProps.paused).toBe(false);
 	});
 
-	it('runs on a carousel launch request even when the legacy switch is off', () => {
+	it.each(['completed', 'skipped'])(
+		'does not auto-start when the current version is %s',
+		async (status) => {
+			vi.mocked(
+				versionedTourProgressRepository.getProgress
+			).mockResolvedValueOnce([
+				{
+					tourId: 'consultant-walkthrough',
+					tourVersion: 1,
+					surface: 'frontend',
+					status: status as 'completed' | 'skipped'
+				}
+			]);
+			renderWalkthrough();
+
+			await flushProgressRead();
+			expect(adapterProps).toBeNull();
+		}
+	);
+
+	it('does not auto-start when the progress cannot be read', async () => {
+		vi.mocked(
+			versionedTourProgressRepository.getProgress
+		).mockRejectedValueOnce(new Error('network down'));
+		renderWalkthrough();
+
+		await flushProgressRead();
+		expect(adapterProps).toBeNull();
+	});
+
+	it('runs a manual start from the list even when the switch is off', () => {
 		renderWalkthrough(
 			{ isWalkThroughEnabled: false },
 			{
@@ -107,14 +166,16 @@ describe('Walkthrough', () => {
 		expect(adapterProps.active).toBe(true);
 	});
 
-	it('pauses the tour while the two-factor-authentication dialog is shown', () => {
+	it('pauses the tour while the two-factor-authentication dialog is shown', async () => {
 		renderWalkthrough({ twoFactorAuth: { isShown: true } });
 
+		await waitFor(() => expect(adapterProps).not.toBeNull());
 		expect(adapterProps.paused).toBe(true);
 	});
 
-	it('persists step progress through the versioned api while running', () => {
+	it('persists step progress through the versioned api while running', async () => {
 		renderWalkthrough();
+		await waitFor(() => expect(adapterProps).not.toBeNull());
 
 		adapterProps.onEvent('step_completed', { id: 'enquiries' });
 
@@ -128,8 +189,9 @@ describe('Walkthrough', () => {
 		});
 	});
 
-	it('skips the step-progress write for the final step so it cannot race the terminal write', () => {
+	it('skips the step-progress write for the final step so it cannot race the terminal write', async () => {
 		renderWalkthrough();
+		await waitFor(() => expect(adapterProps).not.toBeNull());
 
 		adapterProps.onEvent('step_completed', { id: 'profile' });
 
@@ -159,25 +221,40 @@ describe('Walkthrough', () => {
 		});
 	});
 
-	it('persists terminal progress via the versioned api and syncs the legacy boolean', async () => {
-		const { reloadUserData, store } = renderWalkthrough();
+	it('persists terminal progress and never switches the counsellor off', async () => {
+		const { store } = renderWalkthrough();
+		await waitFor(() => expect(adapterProps).not.toBeNull());
 
-		await adapterProps.onTerminalStatus({
-			tourId: 'consultant-walkthrough',
-			tourVersion: 1,
-			status: 'completed'
-		});
+		await act(() =>
+			adapterProps.onTerminalStatus({
+				tourId: 'consultant-walkthrough',
+				tourVersion: 1,
+				status: 'completed'
+			})
+		);
 
 		expect(
 			versionedTourProgressRepository.saveProgress
 		).toHaveBeenCalledWith(
 			expect.objectContaining({ status: 'completed' })
 		);
-		expect(apiPatchConsultantData).toHaveBeenCalledWith({
-			walkThroughEnabled: false
-		});
-		await waitFor(() => expect(reloadUserData).toHaveBeenCalled());
+		expect(apiPatchConsultantData).not.toHaveBeenCalled();
 		expect(store.get(tourLaunchRequestAtom)).toBeNull();
+	});
+
+	it('does not re-open the auto-run tour after it finished in this session', async () => {
+		const { queryByTestId } = renderWalkthrough();
+		await waitFor(() => expect(adapterProps).not.toBeNull());
+
+		await act(() =>
+			adapterProps.onTerminalStatus({
+				tourId: 'consultant-walkthrough',
+				tourVersion: 1,
+				status: 'skipped'
+			})
+		);
+
+		expect(queryByTestId('product-tour-adapter')).toBeNull();
 	});
 
 	it('hosts the mail-counselling tour when the carousel requests it', () => {
@@ -195,7 +272,7 @@ describe('Walkthrough', () => {
 		expect(adapterProps.active).toBe(true);
 	});
 
-	it('prefers the requested tour over the legacy auto-run', () => {
+	it('prefers the requested tour over the auto-run', () => {
 		renderWalkthrough(
 			{ isWalkThroughEnabled: true },
 			{
@@ -230,7 +307,7 @@ describe('Walkthrough', () => {
 		});
 	});
 
-	it('never syncs the legacy boolean for a non-walkthrough tour', async () => {
+	it('never touches the switch for a non-walkthrough tour', async () => {
 		renderWalkthrough(
 			{ isWalkThroughEnabled: true },
 			{
@@ -258,7 +335,7 @@ describe('Walkthrough', () => {
 		expect(queryByTestId('product-tour-adapter')).toBeNull();
 	});
 
-	it('does not fall back to the legacy auto-run for an unknown requested tour id', () => {
+	it('does not fall back to the auto-run for an unknown requested tour id', () => {
 		const { queryByTestId } = renderWalkthrough(
 			{ isWalkThroughEnabled: true },
 			{ tourId: 'does-not-exist', mode: 'start', requestedAt: 9 }
@@ -267,7 +344,7 @@ describe('Walkthrough', () => {
 		expect(queryByTestId('product-tour-adapter')).toBeNull();
 	});
 
-	it('does not touch the legacy boolean for carousel-only runs', async () => {
+	it('does not touch the switch for manual runs', async () => {
 		renderWalkthrough(
 			{ isWalkThroughEnabled: false },
 			{
