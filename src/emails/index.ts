@@ -19,11 +19,20 @@ import {
 	toEmailDialectText
 } from './kit/emailDialect';
 import {
+	emailAssurance,
+	emailCallToAction,
+	emailFootnote
+} from './kit/emailMolecules';
+import {
 	EmailContent,
 	renderEmailHtml,
 	renderEmailText
 } from './kit/emailTemplate';
-import { EmailBrand, emailDefaultBrand } from './kit/emailTokens';
+import {
+	EmailBrand,
+	emailDefaultBrand,
+	emailSampleBrand
+} from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
 export * from './kit/emailDialect';
@@ -141,7 +150,7 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	// Invitations and the DPA.
 	tenantName: 'Caritasverband Mainz',
 	tenantNameDative: 'Caritasverband Mainz',
-	// The offered-by line of a contract mail: the platform, never the Träger.
+	// The offered-by line names the platform, never the Träger…
 	offeringName: 'Online-Beratung',
 	// …and its operator (Admin → Dokument-Stammdaten → Betreiber), never the Träger.
 	operatorName: 'Sunflower Care e.V.',
@@ -151,6 +160,38 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	dpaUrl: 'https://beratung.example.org/avv/2026-0044',
 	dpaProvidedAt: '3. August 2026',
 	dpaExpiresAt: '17. August 2026, 23:59',
+
+	// The invite an operator writes themselves. UserService fills these: the
+	// sanitised body, its text twin, and the action block it builds from the
+	// kit's button and a copy-link fallback.
+	subject: 'Einladung zur Beratung in Mainz-Neustadt',
+	preheader:
+		'Wir laden Sie ein, unser Team in der Online-Beratung zu verstärken.',
+	bodyHtml:
+		'<p style="margin:0 0 16px 0;">Guten Tag,</p>' +
+		'<p style="margin:0 0 16px 0;">wir laden Sie ein, unser Team in der Online-Beratung der Beratungsstelle Mainz-Neustadt zu verstärken.</p>' +
+		'<p style="margin:0 0 16px 0;">Mit freundlichen Grüßen<br>K. Reuter</p>',
+	bodyText:
+		'Guten Tag,\n\nwir laden Sie ein, unser Team in der Online-Beratung der Beratungsstelle Mainz-Neustadt zu verstärken.\n\nMit freundlichen Grüßen\nK. Reuter',
+	ctaBlock:
+		emailCallToAction(
+			{
+				label: 'Einladung annehmen',
+				href: 'https://beratung.example.org/einladung?token=1c9d'
+			},
+			emailSampleBrand
+		) +
+		emailFootnote(
+			'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser: https://beratung.example.org/einladung?token=1c9d'
+		),
+	// The previewed invite has an action, so the fine print and the footer
+	// note are the invitation's. Without one, UserService leaves
+	// {{assuranceBlock}} empty and sends a neutral "sent automatically" note.
+	assuranceBlock: emailAssurance(
+		'Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Geben Sie diesen Link an niemanden weiter.'
+	),
+	footerNote:
+		'Diese E-Mail gehört zu Ihrer Einladung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.',
 
 	// Team and platform operations.
 	teamChangeStatement:

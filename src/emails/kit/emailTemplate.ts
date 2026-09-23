@@ -12,6 +12,7 @@ import { emailDocument } from './emailDocument';
 import {
 	EmailFooterContent,
 	emailAssurance,
+	emailAuthoredProse,
 	emailCallToAction,
 	emailCodePanel,
 	emailDataPanel,
@@ -38,7 +39,7 @@ export interface EmailAction {
 	fallbackHint?: string;
 }
 
-export interface EmailContent {
+interface EmailContentBase {
 	/** Inbox subject line. */
 	subject: string;
 	/** Hidden preview text shown next to the subject. */
@@ -46,6 +47,19 @@ export interface EmailContent {
 	headline: string;
 	/** One or more body paragraphs, in reading order. */
 	paragraphs: string[];
+	/**
+	 * Body copy the sender supplies already rendered, instead of `paragraphs`:
+	 * a mail whose text an operator wrote (the free-text invite). `html` is
+	 * inserted unescaped — the sender sanitises it — and `text` is its
+	 * plain-text twin. Both are placeholders in a template file.
+	 */
+	authoredBody?: { html: string; text: string };
+	/**
+	 * A placeholder the sender expands into the whole action block (button and
+	 * copy-link fallback), or into nothing when the mail has no action. Takes
+	 * the place of `cta` for a mail whose action is optional at send time.
+	 */
+	actionSlot?: string;
 	/** Optional tinted label/value panel between the copy and the button. */
 	panel?: EmailDataRow[];
 	/**
@@ -65,10 +79,33 @@ export interface EmailContent {
 	secondaryAction?: EmailAction;
 	/** The reassuring line under the actions. */
 	footnote?: string;
-	/** Closing fine print inside the card. */
-	assurance: string;
 	footer: EmailFooterContent;
 }
+
+/**
+ * The closing fine print inside the card: either a fixed line, or — for a
+ * mail whose action is optional at send time — a placeholder the sender
+ * expands into the whole fine-print row (divider plus line) or into nothing.
+ * The free-text frame needs the second form: its line warns the recipient
+ * not to pass the link on, which is wrong in a mail that has no link.
+ */
+type EmailAssuranceContent =
+	| {
+			/** Closing fine print inside the card. */
+			assurance: string;
+			assuranceSlot?: never;
+	  }
+	| {
+			assurance?: never;
+			/**
+			 * Placeholder the sender expands into what `emailAssurance` would
+			 * render (text part: the rule plus the line), or into nothing.
+			 * Pairs with `actionSlot`.
+			 */
+			assuranceSlot: string;
+	  };
+
+export type EmailContent = EmailContentBase & EmailAssuranceContent;
 
 export interface EmailRenderOptions {
 	brand: EmailBrand;
@@ -83,15 +120,20 @@ export const renderEmailHtml = (
 ): string => {
 	const cardRows =
 		emailTitleGroup(content.headline, brand) +
-		emailProse(content.paragraphs) +
+		(content.authoredBody
+			? emailAuthoredProse(content.authoredBody.html)
+			: emailProse(content.paragraphs)) +
 		(content.panel ? emailDataPanel(content.panel) : '') +
 		(content.code ? emailCodePanel(content.code) : '') +
 		(content.cta ? emailCallToAction(content.cta, brand) : '') +
+		(content.actionSlot ?? '') +
 		(content.secondaryAction
 			? emailSecondaryAction(content.secondaryAction, brand)
 			: '') +
 		(content.footnote ? emailFootnote(content.footnote) : '') +
-		emailAssurance(content.assurance);
+		(content.assuranceSlot !== undefined
+			? content.assuranceSlot
+			: emailAssurance(content.assurance));
 
 	const body = emailShell(
 		emailHeaderBar(brand) +
@@ -106,6 +148,9 @@ export const renderEmailHtml = (
 		body
 	});
 };
+
+/** Width of the plain-text divider under the body. */
+const RULE_WIDTH = 64;
 
 /** Strips the `<br>` a panel value may carry, for the plain-text twin. */
 const flatten = (value: string): string =>
@@ -122,9 +167,13 @@ export const renderEmailText = (
 ): string => {
 	const lines: string[] = [
 		content.headline,
-		'='.repeat(content.headline.length),
+		// An authored mail's headline is the sender's subject, whose length
+		// is unknown here, so its rule takes the divider's width instead.
+		'='.repeat(content.authoredBody ? RULE_WIDTH : content.headline.length),
 		'',
-		...content.paragraphs.flatMap((p) => [p, ''])
+		...(content.authoredBody
+			? [content.authoredBody.text, '']
+			: content.paragraphs.flatMap((p) => [p, '']))
 	];
 
 	if (content.panel) {
@@ -142,6 +191,10 @@ export const renderEmailText = (
 		lines.push(`${content.cta.label}:`, content.cta.href, '');
 	}
 
+	if (content.actionSlot) {
+		lines.push(content.actionSlot, '');
+	}
+
 	if (content.secondaryAction) {
 		lines.push(
 			`${content.secondaryAction.label}:`,
@@ -154,8 +207,11 @@ export const renderEmailText = (
 	}
 
 	lines.push(
-		'-'.repeat(64),
-		content.assurance,
+		// A slot carries its own rule, like the HTML row it stands for, so a
+		// mail without the fine print keeps no orphan divider either.
+		...(content.assuranceSlot !== undefined
+			? [content.assuranceSlot]
+			: ['-'.repeat(RULE_WIDTH), content.assurance]),
 		'',
 		brand.orgName,
 		brand.orgAddress,
