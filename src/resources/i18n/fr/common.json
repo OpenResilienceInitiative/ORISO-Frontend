@@ -2077,6 +2077,14 @@
 			"teamDiscussionNew": {
 				"title": "Réunion d'équipe",
 				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			},
+			"firstResponseReceived": {
+				"title": "Vos premiers pas",
+				"text": "Nous vous avons envoyé les informations les plus importantes dans le chat."
+			},
+			"conversationFinished": {
+				"title": "Chat terminé",
+				"text": "Le chat anonyme est terminé."
 			}
 		},
 		"error": "Échec",

@@ -9,6 +9,7 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
+import type { IUserDraftItem } from '../../api/apiUserDrafts';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
@@ -243,11 +244,63 @@ const withTimelineData =
 		</UserDataContext.Provider>
 	);
 
+/**
+ * #1535: the timeline loads unsent drafts from `/users/drafts` itself. The
+ * fetch patch answers only that path, and only while a story is mounted.
+ */
+let storyDrafts: IUserDraftItem[] | null = null;
+let draftsFetchPatched = false;
+const patchDraftsFetch = () => {
+	if (draftsFetchPatched) return;
+	draftsFetchPatched = true;
+	const originalFetch = globalThis.fetch.bind(globalThis);
+	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (storyDrafts && url.includes('/service/users/drafts')) {
+			return new Response(
+				JSON.stringify({ items: storyDrafts, page: 0, perPage: 200 }),
+				{ status: 200, headers: { 'Content-Type': 'application/json' } }
+			);
+		}
+		return originalFetch(input, init);
+	};
+};
+
+// Set during render: the timeline's own effect fetches before a parent effect runs.
+const ServerDraftsScope = ({
+	drafts,
+	children
+}: {
+	drafts: IUserDraftItem[];
+	children: React.ReactNode;
+}) => {
+	patchDraftsFetch();
+	storyDrafts = drafts;
+	React.useEffect(
+		() => () => {
+			storyDrafts = null;
+		},
+		[]
+	);
+	return <>{children}</>;
+};
+
+const withServerDrafts = (Story: React.ComponentType, context: any) => (
+	<ServerDraftsScope drafts={context.parameters.serverDrafts ?? []}>
+		<Story />
+	</ServerDraftsScope>
+);
+
 const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs'],
-	decorators: [withDisplayFilterStore],
+	decorators: [withDisplayFilterStore, withServerDrafts],
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: '/notifications' },
@@ -368,4 +421,68 @@ export const AllEventTypes: Story = {
 			)
 		)
 	]
+};
+
+/**
+ * #1535: an unsent draft loaded from the server sits in the timeline next to
+ * the two events that used to show as a bare "Activity" card — the asker's
+ * first reply ("Ihre ersten Schritte") and the end of an anonymous chat.
+ */
+export const DraftAndChatEvents: Story = {
+	decorators: [
+		withTimelineData(
+			[
+				feedItem({
+					id: 'first-response',
+					eventType: 'first_response.received',
+					createdAt: minutesAgo(3),
+					sourceSessionId: '103',
+					actionPath: '/sessions/user/view/session/103'
+				}),
+				feedItem({
+					id: 'finished',
+					eventType: 'conversation.finished',
+					createdAt: minutesAgo(40),
+					sourceSessionId: '104',
+					params: {
+						sourceSessionId: '104',
+						roomRef: '!anon:matrix.example'
+					}
+				})
+			],
+			{
+				...consultantUserData,
+				userId: 'sb-client',
+				userName: 'Storybook Client',
+				grantedAuthorities: []
+			}
+		)
+	],
+	parameters: {
+		serverDrafts: [
+			{
+				scopeKey: 'scope:!room103:matrix.example|thread:main',
+				text: 'Opaque draft ciphertext',
+				actionPath: '/sessions/user/view/session/103',
+				sourceSessionId: 103,
+				roomRef: '!room103:matrix.example',
+				updatedAt: minutesAgo(15)
+			}
+		]
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText('Entwurf gespeichert').length
+			).toBeGreaterThan(0)
+		);
+		await expect(
+			canvas.getAllByText('Ihre ersten Schritte').length
+		).toBeGreaterThan(0);
+		await expect(
+			canvas.getAllByText('Chat beendet').length
+		).toBeGreaterThan(0);
+		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
+	}
 };

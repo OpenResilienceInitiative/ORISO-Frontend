@@ -1,4 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
+import { DRAFTS_UPDATED_EVENT } from '../services/draftStore';
 import {
 	fetchData,
 	FETCH_ERRORS,
@@ -75,6 +76,8 @@ export const apiUpsertUserDraft = async (
 			responseHandling: [FETCH_ERRORS.CATCH_ALL],
 			...(signal && { signal })
 		});
+		// Lists showing drafts (sessions, timeline) refetch; no content is sent along.
+		window.dispatchEvent(new Event(DRAFTS_UPDATED_EVENT));
 	} catch {
 		// Drafts are non-critical: a failed/conflicting autosave must never bubble up
 		// and break the chat. The next keystroke re-saves.
@@ -92,6 +95,7 @@ export const apiDeleteUserDraft = async (
 			responseHandling: [FETCH_ERRORS.CATCH_ALL],
 			...(signal && { signal })
 		});
+		window.dispatchEvent(new Event(DRAFTS_UPDATED_EVENT));
 	} catch {
 		// Non-critical cleanup; ignore failures.
 	}

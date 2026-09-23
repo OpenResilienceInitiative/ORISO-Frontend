@@ -2074,6 +2074,14 @@
 			"teamDiscussionNew": {
 				"title": "Team discussion",
 				"text": "{{senderDisplayName}} posted in the team discussion"
+			},
+			"firstResponseReceived": {
+				"title": "Your first steps",
+				"text": "We have sent you the most important information in the chat."
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"text": "The anonymous chat has ended."
 			}
 		},
 		"error": "failed",

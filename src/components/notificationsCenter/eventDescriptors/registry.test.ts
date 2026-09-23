@@ -77,6 +77,8 @@ const KNOWN_ICON_IDS: EventIconId[] = [
 const EXPECTED_TARGET_KIND: Record<string, string> = {
 	'inquiry.accepted': 'conversation',
 	'message.new': 'conversation',
+	'first_response.received': 'conversation',
+	'conversation.finished': 'conversation',
 	'thread.reply.new': 'conversation',
 	'team.discussion.new': 'conversation',
 	'supervisor.added': 'conversation',
@@ -125,8 +127,9 @@ describe('WP-06 event-descriptor registry', () => {
 
 	it('seeds group-chat lifecycle events in the appointments family', () => {
 		// 7 existing + 3 requests (new/denied/waiting-room) + draft.created
-		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments = 30.
-		expect(KNOWN_EVENT_TYPES.length).toBe(31);
+		// + 8 handover + 4 call + 3 group-chat lifecycle + 4 appointments
+		// + team discussion + first response + conversation finished = 33.
+		expect(KNOWN_EVENT_TYPES.length).toBe(33);
 		[
 			'request.new',
 			'request.denied',
@@ -335,6 +338,31 @@ describe('WP-06 event-descriptor registry', () => {
 			);
 			expect(title).toBe('New message');
 			expect(text).toBe('You received a new message.');
+		});
+
+		// #1535: both are emitted by UserService but rendered as the generic
+		// "Activity" card until they had their own templates.
+		it.each([
+			[
+				'first_response.received',
+				'Your first steps',
+				'We have sent you the most important information in the chat.'
+			],
+			[
+				'conversation.finished',
+				'Chat ended',
+				'The anonymous chat has ended.'
+			]
+		])('renders %s from its own template', (type, title, text) => {
+			const descriptor = getEventDescriptor(type);
+			expect(descriptor).not.toBe(FALLBACK_DESCRIPTOR);
+			expect(descriptor.family).toBe('messages');
+			expect(
+				renderEventStrings(descriptor, translate, {
+					fallbackTitle: 'server title',
+					fallbackText: 'server text'
+				})
+			).toEqual({ title, text });
 		});
 
 		it('falls back to server-provided text for unknown types', () => {

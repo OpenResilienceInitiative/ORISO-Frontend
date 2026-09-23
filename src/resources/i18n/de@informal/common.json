@@ -654,6 +654,10 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"firstResponseReceived": {
+				"title": "Deine ersten Schritte",
+				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
 			}
 		}
 	},

@@ -2098,6 +2098,14 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"firstResponseReceived": {
+				"title": "Ihre ersten Schritte",
+				"text": "Wir haben Ihnen im Chat die wichtigsten Informationen geschrieben."
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"text": "Der anonyme Chat wurde beendet."
 			}
 		},
 		"error": "Fehlgeschlagen",

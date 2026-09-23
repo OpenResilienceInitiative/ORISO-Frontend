@@ -96,6 +96,8 @@ import {
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
+import { isTimelineDraftId, mergeDraftsIntoFeed } from './timelineDrafts';
+import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -256,9 +258,9 @@ export const NotificationsCenter = () => {
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
 	const {
-		notificationFeed,
+		notificationFeed: serverFeed,
 		hasUnreadNotifications,
-		markNotificationAsRead,
+		markNotificationAsRead: markServerNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
 		loadOlderNotifications,
@@ -266,6 +268,18 @@ export const NotificationsCenter = () => {
 		isLoadingOlderNotifications,
 		olderNotificationsError
 	} = useContext(NotificationsContext);
+	// #1535: unsent drafts join the list here only, not the provider feed.
+	const timelineDrafts = useTimelineDrafts();
+	const notificationFeed = useMemo(
+		() => mergeDraftsIntoFeed(serverFeed, timelineDrafts),
+		[serverFeed, timelineDrafts]
+	);
+	const markNotificationAsRead = useCallback(
+		(id: string) => {
+			if (!isTimelineDraftId(id)) markServerNotificationAsRead(id);
+		},
+		[markServerNotificationAsRead]
+	);
 	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
 	const {
 		effective: timelineFilter,
