@@ -281,6 +281,8 @@ class NotificationSettingsStore {
 	/** Merge-update the account-wide settings (optimistic, then persist). */
 	updateSettings(update: NotificationSettingsUpdate): void {
 		const settings = mergeNotificationSettings(this.state.settings, update);
+		// A deliberate choice supersedes a legacy opt-in still pending retry.
+		markLegacyMigrationDone();
 		this.setState({ settings });
 		if (this.client) {
 			void writeAccountData(

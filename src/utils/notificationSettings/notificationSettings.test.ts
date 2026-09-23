@@ -333,6 +333,36 @@ describe('legacy opt-in reconcile on attach', () => {
 		).toBe(false);
 	});
 
+	it('keeps a deliberate "off" made after a failed migration write', async () => {
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true })
+		);
+		const client = makeMockClient();
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			globalMute: false
+		});
+		client.setAccountData.mockRejectedValueOnce(new Error('offline'));
+		notificationSettingsStore.attachClient(client as any);
+		await Promise.resolve();
+		await Promise.resolve();
+
+		notificationSettingsStore.updateSettings({
+			browserNotifications: { enabled: false }
+		});
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		notificationSettingsStore.detachClient();
+		notificationSettingsStore.attachClient(client as any);
+
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(false);
+		expect(client.setAccountData).toHaveBeenCalledTimes(2);
+	});
+
 	it('never switches an existing opt-in off', () => {
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',
