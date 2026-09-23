@@ -209,10 +209,9 @@ describe('usePendingGroupChatJoin', () => {
 			);
 		});
 
-		/* Knock to join (#1499 item 14) needs the link's token; she carries
-		   it from the login redirect into her session view. */
-		it('opens the group of an invite id with token and keeps the token for a knock', async () => {
-			forgetGroupInviteToken(42);
+		/* #1534 + #1554: the invite id became "<number>.<token>"; her route is
+		   the number. Without parsing, the link left her on the start page. */
+		it('opens the group of an invite id that carries the token', async () => {
 			withDeepLink('42.tok_EN-9');
 
 			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
@@ -223,8 +222,19 @@ describe('usePendingGroupChatJoin', () => {
 					{ replace: true }
 				)
 			);
-			expect(groupInviteTokenFor(42)).toBe('tok_EN-9');
 			expect(joinGroupChat).not.toHaveBeenCalled();
+		});
+
+		/* Knock to join (#1499 item 14) needs the link's token; she carries
+		   it from the login redirect into her session view. */
+		it('keeps the token of the invite id for a knock', async () => {
+			forgetGroupInviteToken(42);
+			withDeepLink('42.tok_EN-9');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() => expect(navigate).toHaveBeenCalled());
+			expect(groupInviteTokenFor(42)).toBe('tok_EN-9');
 		});
 
 		it('keeps no token for a link without one', async () => {

@@ -56,7 +56,8 @@ export const usePendingGroupChatJoin = (
 		setPendingGroupChatId(null);
 		/* `gcid` may carry the invite token as well (#1237); the room is the number. */
 		const invite = parseGroupChatInviteId(gcid);
-		const entryRoom = groupEntryRoomPath(invite?.seriesId ?? gcid);
+		const seriesId = invite?.seriesId;
+		const entryRoom = groupEntryRoomPath(seriesId ?? gcid);
 		/* #1499: the assignment is a client action (404 for a counsellor) and
 		   the entry room is the client's room. Whether she may see the group
 		   is decided in the session view, which shows "not part of it" — and,
@@ -67,16 +68,11 @@ export const usePendingGroupChatJoin = (
 				userData as UserDataInterface
 			)
 		) {
-			if (invite && isGroupChatId(invite.seriesId)) {
-				if (invite.inviteToken) {
-					rememberGroupInviteToken(
-						invite.seriesId,
-						invite.inviteToken
-					);
+			if (isGroupChatId(seriesId)) {
+				if (invite?.inviteToken) {
+					rememberGroupInviteToken(seriesId, invite.inviteToken);
 				}
-				navigate(consultantGroupChatPath(invite.seriesId), {
-					replace: true
-				});
+				navigate(consultantGroupChatPath(seriesId), { replace: true });
 			}
 			return;
 		}
