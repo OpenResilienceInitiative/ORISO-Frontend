@@ -66,6 +66,11 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
+import {
+	getGroupJoin,
+	resolveGroupInviteEntry
+} from './groupInviteEntry/groupInviteEntryState';
 
 /**
  * This type of registration is currently not supporting:
@@ -117,7 +122,8 @@ export const Registration = () => {
 		availableSteps,
 		registrationConsultingType
 	} = useContext(RegistrationContext);
-	const { consultant: preselectedConsultant } = useContext(UrlParamsContext);
+	const { consultant: preselectedConsultant, agency: urlParamsAgency } =
+		useContext(UrlParamsContext);
 	const { tenant } = useContext(TenantContext);
 	const { locale } = useContext(LocaleContext);
 
@@ -157,6 +163,32 @@ export const Registration = () => {
 		: t('registration.register');
 	const toggleTemporaryJoin = useCallback(
 		() => setTemporaryJoinChosen((chosen) => !chosen),
+		[]
+	);
+
+	/* Correction (#1499): the comment above describes the fallback only. The
+	   #1289 link variant — no stepper, no chips — is `GroupInviteEntry`, shown
+	   when the link also names the agency (`aid`) and the topic follows from
+	   it. Without that the four steps below still run, with this toggle. */
+	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
+	const inviteEntry = resolveGroupInviteEntry({
+		gcid: groupChatId,
+		aid: inviteAgencyId,
+		agency:
+			urlParamsAgency &&
+			String(urlParamsAgency.id) === inviteAgencyId?.trim()
+				? urlParamsAgency
+				: null,
+		mainTopic: registrationData?.mainTopic,
+		stepNames: availableSteps.map(({ name }) => name),
+		consultingTypeReady:
+			!urlParamsAgency?.consultingType ||
+			registrationConsultingType != null
+	});
+	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
+	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	const toggleInviteWithAccount = useCallback(
+		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
 	);
 
@@ -455,6 +487,10 @@ export const Registration = () => {
 	);
 
 	useEffect(() => {
+		// The invite entry asks for nothing the steps would bounce back to.
+		if (inviteEntry === 'entry' || inviteEntry === 'pending') {
+			return;
+		}
 		// Check if mandatory fields from previous steps are missing
 		const missingPreviousSteps = checkForStepsWithMissingMandatoryFields()
 			.sort()
@@ -470,7 +506,8 @@ export const Registration = () => {
 		checkForStepsWithMissingMandatoryFields,
 		navigate,
 		makeStepUrl,
-		currStepIndex
+		currStepIndex,
+		inviteEntry
 	]);
 
 	useEffect(() => {
@@ -512,6 +549,11 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const groupJoin = getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedData.agency?.id
+		});
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -528,6 +570,16 @@ export const Registration = () => {
 			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
+				: {}),
+			/* Joining a self-help group is not a request for counselling: the
+			   backend assigns the group and opens no enquiry. */
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
 				: {})
 		};
 
@@ -607,7 +659,9 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		groupChatId,
+		inviteAgencyId
 	]);
 
 	const handleSubmit = useCallback(
@@ -630,6 +684,26 @@ export const Registration = () => {
 			onRegisterClick
 		]
 	);
+
+	if (inviteEntry === 'pending') {
+		return null;
+	}
+
+	if (inviteEntry === 'entry') {
+		return (
+			<GroupInviteEntry
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				temporary={!inviteWithAccount}
+				onToggleTemporary={toggleInviteWithAccount}
+				onChange={setStepData}
+				onJoin={onRegisterClick}
+				joinDisabled={Boolean(disabledNextButton) || isRegistering}
+				busy={isRegistering}
+			/>
+		);
+	}
 
 	return (
 		<>
