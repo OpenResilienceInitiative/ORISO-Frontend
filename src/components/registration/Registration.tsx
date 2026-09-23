@@ -187,6 +187,11 @@ export const Registration = () => {
 	});
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	/* The minted password is never shown, so nobody can log in again once the
+	   browser is closed; the backend deletes such an account later
+	   (ORISO-UserService#1001). */
+	const joinsTemporarily =
+		inviteEntry === 'entry' ? !inviteWithAccount : temporaryJoin;
 	const toggleInviteWithAccount = useCallback(
 		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
@@ -580,7 +585,8 @@ export const Registration = () => {
 							? { groupChatInviteToken: groupJoin.inviteToken }
 							: {})
 					}
-				: {})
+				: {}),
+			temporary: joinsTemporarily
 		};
 
 		if (
@@ -661,7 +667,8 @@ export const Registration = () => {
 		registrationConsultingType,
 		location.search,
 		groupChatId,
-		inviteAgencyId
+		inviteAgencyId,
+		joinsTemporarily
 	]);
 
 	const handleSubmit = useCallback(

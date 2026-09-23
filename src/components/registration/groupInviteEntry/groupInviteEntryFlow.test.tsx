@@ -283,6 +283,82 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(body).not.toHaveProperty('groupChatId');
 	});
 
+	/* The minted password is never shown, so once the browser is closed nobody
+	   can log in again. The backend deletes such an account after a while
+	   (ORISO-UserService#1001) and needs to know which one it is. */
+	it('joining without an account registers a temporary account', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.temporary).toBe(true);
+	});
+
+	it('"Konto anlegen" registers a permanent account', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(secondary());
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.temporary).toBe(false);
+	});
+
+	it('a link with an invite token still registers a temporary account, and "Konto anlegen" a permanent one', async () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		fireEvent.click(primary());
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, temporaryBody] = apiPostRegistration.mock
+			.calls[0] as unknown as [string, Record<string, unknown>];
+		expect(temporaryBody.temporary).toBe(true);
+		expect(temporaryBody.groupChatInviteToken).toBe('q2Vx8mK4TzJ1bR7n');
+
+		cleanup();
+		apiPostRegistration.mockClear();
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		fireEvent.click(secondary());
+		fireEvent.click(primary());
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, permanentBody] = apiPostRegistration.mock
+			.calls[0] as unknown as [string, Record<string, unknown>];
+		expect(permanentBody.temporary).toBe(false);
+	});
+
+	it('the four-step fallback marks the account temporary too when "Ohne Konto beitreten" is chosen', async () => {
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="button-temporary-join"]'
+			) as HTMLElement
+		);
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as HTMLElement
+		);
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.temporary).toBe(true);
+	});
+
 	it('keeps the four steps when the topic cannot be told from the agency', () => {
 		renderAt('?gcid=19&aid=19', {
 			agency: { ...agency, topicIds: [17, 18] }
