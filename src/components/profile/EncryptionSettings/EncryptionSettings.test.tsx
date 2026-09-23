@@ -14,6 +14,7 @@ import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupSer
 import {
 	beginRecoverySetup,
 	getPendingRecoveryKey,
+	resetPendingRecoveryKeyCacheForTests,
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
 import {
@@ -159,6 +160,7 @@ describe('EncryptionSettingsPanel', () => {
 
 		beforeEach(() => {
 			localStorage.clear();
+			resetPendingRecoveryKeyCacheForTests();
 			getEncryptionStatus.mockReset();
 			setUpRecovery.mockClear();
 		});
@@ -306,6 +308,7 @@ afterEach(() => {
 	cleanup();
 	clearRecoveryRuntimeState();
 	localStorage.clear();
+	resetPendingRecoveryKeyCacheForTests();
 });
 it.each([
 	'idle',

@@ -2568,7 +2568,7 @@
 				"alwaysSent": {
 					"title": "Bu e-postaları her zaman alırsınız:",
 					"security": "Giriş ve erişim – parola sıfırlama, giriş bağlantısı, tek kullanımlık kod, erişiminizdeki değişiklikler.",
-					"legal": "Sözleşmeye ilişkin konular – örneğin imzalanacak bir veri işleme sözleşmesi.",
+					"legal": "Sözleşmeye ilişkin konular – örneğin imzalanacak sözleşme belgeleri.",
 					"outage": "Platformdaki arızalar."
 				}
 			},
@@ -4865,20 +4865,20 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Veri işleme sözleşmesini imzala",
-		"subtitle": "Lütfen sözleşmeyi tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
+		"title": "Sözleşme belgelerini incele ve onayla",
+		"subtitle": "Lütfen sözleşme belgelerini tamamen okuyun ve ardından imzalayan kişiye ilişkin bilgileri onaylayın.",
 		"signerName": "Ad soyad",
-		"loadingContract": "Sözleşme yükleniyor...",
+		"loadingContract": "Sözleşme belgeleri yükleniyor...",
 		"signerHeading": "Temsile yetkili kişinin onayı",
 		"signingFor": "Şunun adına imzalıyorsunuz:",
-		"accept": "Yukarıda gösterilen sözleşmeyi okudum ve bağlayıcı olarak onaylıyorum.",
+		"accept": "Yukarıda gösterilen sözleşme belgelerini okudum ve bağlayıcı olarak onaylıyorum.",
 		"submit": "Bağlayıcı olarak onayla",
 		"submitting": "Kaydediliyor...",
-		"success": "Veri işleme sözleşmesi onayı kaydedildi.",
+		"success": "Sözleşme belgelerinin onayı kaydedildi.",
 		"error": {
 			"missingToken": "İmza bağlantısı eksik.",
-			"previewRequired": "Sözleşmeyi onaylayabilmeniz için önce tamamen yüklenmiş olması gerekir.",
-			"acceptRequired": "Lütfen sözleşmeyi onaylayın.",
+			"previewRequired": "Sözleşme belgelerini onaylayabilmeniz için önce tamamen yüklenmiş olmaları gerekir.",
+			"acceptRequired": "Lütfen sözleşme belgelerini onaylayın.",
 			"generic": "İmza şu anda kaydedilemedi.",
 			"invalidToken": "Bu imza bağlantısı geçersiz, süresi dolmuş veya daha önce kullanılmış.",
 			"invalidRequest": "Bilgiler kaydedilemedi. Lütfen formu kontrol edin."
