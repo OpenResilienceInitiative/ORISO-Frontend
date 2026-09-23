@@ -14,12 +14,20 @@ import { buildGroupChatInviteLink } from './groupChatInviteLink';
 
 type GroupChatCopyLinksProps = {
 	seriesId: number;
+	agencyId?: number | null;
 };
 
 /** Invite URL of a group series plus the copy action with its snackbar. */
-export const useGroupChatInviteLink = (seriesId: number) => {
+export const useGroupChatInviteLink = (
+	seriesId: number,
+	agencyId?: number | null
+) => {
 	const settings = useAppConfig();
-	const url = buildGroupChatInviteLink(settings.urls.toLogin, seriesId);
+	const url = buildGroupChatInviteLink(
+		settings.urls.toLogin,
+		seriesId,
+		agencyId
+	);
 	const { addNotification } = useContext(NotificationsContext);
 	const { t: translate } = useTranslation();
 
@@ -37,9 +45,15 @@ export const useGroupChatInviteLink = (seriesId: number) => {
 	return { url, copyRegistrationLink };
 };
 
-export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
+export const GroupChatCopyLinks = ({
+	seriesId,
+	agencyId
+}: GroupChatCopyLinksProps) => {
 	const { t: translate } = useTranslation();
-	const { url, copyRegistrationLink } = useGroupChatInviteLink(seriesId);
+	const { url, copyRegistrationLink } = useGroupChatInviteLink(
+		seriesId,
+		agencyId
+	);
 
 	return (
 		<div className="GroupChatCopyLinks">

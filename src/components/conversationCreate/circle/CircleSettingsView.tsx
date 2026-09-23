@@ -256,7 +256,10 @@ export const CircleSettingsView = ({
 						return false;
 					}
 					setCreated({
-						link: currentHostGroupChatInviteLink(seriesId),
+						link: currentHostGroupChatInviteLink(
+							seriesId,
+							selectedAgency
+						),
 						details: {
 							topic: topic.trim(),
 							startDate: seriesFields.startDate,

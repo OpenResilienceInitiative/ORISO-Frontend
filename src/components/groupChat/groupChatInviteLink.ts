@@ -1,9 +1,18 @@
+/**
+ * `aid` is the group's Beratungsstelle. Before login a newcomer cannot look the
+ * group up, so without it registration falls back to topic → postcode → agency,
+ * where the group's own agency is often not listed (#1499, gcid=19 on dev).
+ */
 export const buildGroupChatInviteLink = (
 	loginUrl: string,
-	seriesId: number
+	seriesId: number,
+	agencyId?: number | null
 ) => {
 	const url = new URL(loginUrl);
 	url.searchParams.set('gcid', String(seriesId));
+	if (agencyId != null) {
+		url.searchParams.set('aid', String(agencyId));
+	}
 	return url.toString();
 };
 
@@ -17,8 +26,21 @@ export const buildGroupChatInviteLink = (
  */
 export const buildGroupChatInviteLinkForOrigin = (
 	origin: string,
-	seriesId: number
-) => buildGroupChatInviteLink(`${origin.replace(/\/+$/, '')}/login`, seriesId);
+	seriesId: number,
+	agencyId?: number | null
+) =>
+	buildGroupChatInviteLink(
+		`${origin.replace(/\/+$/, '')}/login`,
+		seriesId,
+		agencyId
+	);
 
-export const currentHostGroupChatInviteLink = (seriesId: number) =>
-	buildGroupChatInviteLinkForOrigin(window.location.origin, seriesId);
+export const currentHostGroupChatInviteLink = (
+	seriesId: number,
+	agencyId?: number | null
+) =>
+	buildGroupChatInviteLinkForOrigin(
+		window.location.origin,
+		seriesId,
+		agencyId
+	);

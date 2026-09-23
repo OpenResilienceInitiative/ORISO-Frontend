@@ -105,9 +105,11 @@ export const Login = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
+	const inviteAgencyId = useSearchParam<string>('aid');
 	const registrationUrl = buildRegistrationLink(
 		settings.urls.toRegistration,
-		gcid
+		gcid,
+		inviteAgencyId
 	);
 	const magicToken = useSearchParam<string>('magicToken');
 	const isFirstVisit = useIsFirstVisit();
