@@ -390,7 +390,8 @@
 			"pendingBody": "Sobald jemand aus der Moderation dich hereinlässt, geht es hier weiter. Lass diese Seite dafür einfach offen.",
 			"admittedHeadline": "Du bist dabei.",
 			"admittedBody": "Die Moderation hat dich in den Gesprächskreis gelassen.",
-			"declinedBody": "Die Moderation hat deine Anfrage nicht angenommen. Bei Fragen wende dich an die Person, die dir den Link geschickt hat."
+			"declinedBody": "Die Moderation hat deine Anfrage nicht angenommen. Bei Fragen wende dich an die Person, die dir den Link geschickt hat.",
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte frag die Moderation nach einem neuen Link."
 		},
 		"joinRequest": {
 			"failed": "Das hat nicht geklappt. Bitte versuche es erneut.",

@@ -114,6 +114,18 @@ describe('useOwnJoinRequest — the counsellor who knocks', () => {
 		await waitFor(() => expect(hook.result.current?.state).toBe('error'));
 	});
 
+	it('tells her when the server no longer accepts the link', async () => {
+		const { hook, transport } = setup();
+		transport.failNext('knock', 'linkInvalid');
+		await waitFor(() => expect(hook.result.current?.state).toBe('idle'));
+
+		act(() => hook.result.current!.onRequest());
+
+		await waitFor(() =>
+			expect(hook.result.current?.state).toBe('linkInvalid')
+		);
+	});
+
 	it('learns that she was let in, or not, while she waits', async () => {
 		const { hook, transport } = setup({
 			id: 1,

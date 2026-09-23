@@ -5,6 +5,7 @@ import type {
 } from '../GroupChatNotMember';
 import { GroupChatJoinRequestOwnStatus } from './joinRequestModel';
 import {
+	JoinRequestLinkInvalidError,
 	JoinRequestsUnavailableError,
 	JoinRequestTransport
 } from './joinRequestTransport';
@@ -68,7 +69,13 @@ export const useOwnJoinRequest = (
 		transport
 			.knock(seriesId, inviteToken)
 			.then((status) => setState(viewStateOf(status)))
-			.catch(() => setState('error'));
+			.catch((error) =>
+				setState(
+					error instanceof JoinRequestLinkInvalidError
+						? 'linkInvalid'
+						: 'error'
+				)
+			);
 	}, [seriesId, inviteToken, transport]);
 
 	const onCancel = useCallback(() => {

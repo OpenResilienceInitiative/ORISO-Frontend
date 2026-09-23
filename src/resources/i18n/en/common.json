@@ -1158,7 +1158,8 @@
 			"admittedBody": "The moderators have let you into the group.",
 			"openGroup": "Open group",
 			"declinedHeadline": "It did not work out this time.",
-			"declinedBody": "The moderators did not accept your request. If you have questions, contact the person who sent you the link."
+			"declinedBody": "The moderators did not accept your request. If you have questions, contact the person who sent you the link.",
+			"linkInvalid": "This invite link is no longer valid. Please ask the moderators for a new link."
 		},
 		"joinRequest": {
 			"knocks": "would like to join “{{group}}”",

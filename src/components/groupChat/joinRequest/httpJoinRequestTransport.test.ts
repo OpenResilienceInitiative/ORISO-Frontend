@@ -5,7 +5,10 @@ import {
 	createHttpJoinRequestTransport,
 	JoinRequestApi
 } from './httpJoinRequestTransport';
-import { JoinRequestsUnavailableError } from './joinRequestTransport';
+import {
+	JoinRequestLinkInvalidError,
+	JoinRequestsUnavailableError
+} from './joinRequestTransport';
 import type { GroupChatJoinRequest } from './joinRequestModel';
 
 const pendingRequest = (id: number) =>
@@ -123,6 +126,16 @@ describe('HTTP join-request transport', () => {
 		await transport.knock(7, 'tok_EN-9');
 
 		expect(api.knock).toHaveBeenCalledWith(7, 'tok_EN-9');
+	});
+
+	it('reports a refused link (403) as such, not as a failed send', async () => {
+		const api = fakeApi();
+		api.knock.mockRejectedValue(new Error(FETCH_ERRORS.FORBIDDEN));
+		const transport = createHttpJoinRequestTransport({ api });
+
+		await expect(transport.knock(7, 'old')).rejects.toBeInstanceOf(
+			JoinRequestLinkInvalidError
+		);
 	});
 
 	it('sends admit and decline for the request’s own group', async () => {

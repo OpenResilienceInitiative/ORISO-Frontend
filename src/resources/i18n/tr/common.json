@@ -1181,7 +1181,8 @@
 			"admittedBody": "Moderatörler sizi sohbet grubuna aldı.",
 			"openGroup": "Sohbet grubunu aç",
 			"declinedHeadline": "Bu sefer olmadı.",
-			"declinedBody": "Moderatörler isteğinizi kabul etmedi. Sorularınız varsa size bağlantıyı gönderen kişiye başvurun."
+			"declinedBody": "Moderatörler isteğinizi kabul etmedi. Sorularınız varsa size bağlantıyı gönderen kişiye başvurun.",
+			"linkInvalid": "Bu davet bağlantısı artık geçerli değil. Lütfen moderatörlerden yeni bir bağlantı isteyin."
 		},
 		"joinRequest": {
 			"knocks": "“{{group}}” grubuna katılmak istiyor",

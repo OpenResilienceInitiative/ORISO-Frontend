@@ -111,4 +111,14 @@ describe('GroupChatNotMember — knock to join', () => {
 		await userEvent.click(button('groupChat.notMember.request'));
 		expect(handlers.onRequest).toHaveBeenCalledTimes(1);
 	});
+
+	it('when the invite link is no longer valid, says so and offers no retry', () => {
+		renderNotice({ state: 'linkInvalid' });
+
+		expect(screen.getByRole('alert').textContent).toBe(
+			'groupChat.notMember.linkInvalid'
+		);
+		expect(screen.getAllByRole('button')).toHaveLength(1);
+		expect(button('groupChat.notMember.back')).toBeTruthy();
+	});
 });

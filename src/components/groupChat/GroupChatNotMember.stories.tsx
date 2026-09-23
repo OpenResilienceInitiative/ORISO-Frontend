@@ -159,6 +159,25 @@ export const SendFailed1440: Story = {
 	}
 };
 
+/** The server refused the link's token (403): no retry, only the way back. */
+export const LinkInvalid1440: Story = {
+	name: 'Knock · link no longer valid · 1440',
+	globals: desktop1440Globals,
+	args: { joinRequest: joinRequest('linkInvalid') },
+	play: async ({ canvas }) => {
+		await expect(canvas.getByRole('alert')).toHaveTextContent(
+			'Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link.'
+		);
+		await expect(canvas.getAllByRole('button')).toHaveLength(1);
+	}
+};
+
+export const LinkInvalid390: Story = {
+	name: 'Knock · link no longer valid · 390',
+	globals: phone390Globals,
+	args: { joinRequest: joinRequest('linkInvalid') }
+};
+
 /** In-memory server for the wired flow; reset before each run. */
 const knockFlowTransport = createFakeJoinRequestTransport({ latencyMs: 150 });
 

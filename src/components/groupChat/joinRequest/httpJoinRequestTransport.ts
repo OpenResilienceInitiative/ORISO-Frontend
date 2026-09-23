@@ -13,6 +13,7 @@ import {
 	GroupChatJoinRequestOwnStatus
 } from './joinRequestModel';
 import {
+	JoinRequestLinkInvalidError,
 	JoinRequestsUnavailableError,
 	JoinRequestTransport
 } from './joinRequestTransport';
@@ -122,7 +123,13 @@ export const createHttpJoinRequestTransport = ({
 	mineIntervalMs?: number;
 	pendingIntervalMs?: number;
 } = {}): JoinRequestTransport => ({
-	knock: (seriesId, inviteToken) => api.knock(seriesId, inviteToken),
+	knock: (seriesId, inviteToken) =>
+		api.knock(seriesId, inviteToken).catch((error) => {
+			throw error instanceof Error &&
+				error.message === FETCH_ERRORS.FORBIDDEN
+				? new JoinRequestLinkInvalidError()
+				: error;
+		}),
 	getMine: (seriesId) =>
 		api.getMine(seriesId).catch((error) => {
 			throw isUnavailable(error)

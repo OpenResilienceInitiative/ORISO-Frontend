@@ -1176,7 +1176,8 @@
 			"admittedBody": "Die Moderation hat Sie in den Gesprächskreis gelassen.",
 			"openGroup": "Gesprächskreis öffnen",
 			"declinedHeadline": "Diesmal hat es nicht geklappt.",
-			"declinedBody": "Die Moderation hat Ihre Anfrage nicht angenommen. Bei Fragen wenden Sie sich an die Person, die Ihnen den Link geschickt hat."
+			"declinedBody": "Die Moderation hat Ihre Anfrage nicht angenommen. Bei Fragen wenden Sie sich an die Person, die Ihnen den Link geschickt hat.",
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link."
 		},
 		"joinRequest": {
 			"knocks": "möchte in „{{group}}“ dazukommen",

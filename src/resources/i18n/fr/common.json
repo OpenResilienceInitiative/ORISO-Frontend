@@ -1181,7 +1181,8 @@
 			"admittedBody": "La modération vous a laissé entrer dans le groupe de parole.",
 			"openGroup": "Ouvrir le groupe de parole",
 			"declinedHeadline": "Cette fois, cela n’a pas fonctionné.",
-			"declinedBody": "La modération n’a pas accepté votre demande. Pour toute question, adressez-vous à la personne qui vous a envoyé le lien."
+			"declinedBody": "La modération n’a pas accepté votre demande. Pour toute question, adressez-vous à la personne qui vous a envoyé le lien.",
+			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération."
 		},
 		"joinRequest": {
 			"knocks": "souhaite rejoindre « {{group}} »",

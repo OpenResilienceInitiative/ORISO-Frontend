@@ -11,7 +11,9 @@ export type JoinRequestViewState =
 	| 'cancelling'
 	| 'admitted'
 	| 'declined'
-	| 'error';
+	| 'error'
+	/** The server refused the invite token (403): asking again cannot help. */
+	| 'linkInvalid';
 
 export interface GroupChatJoinRequestView {
 	state: JoinRequestViewState;
@@ -46,6 +48,7 @@ const headlineKey: Record<JoinRequestViewState | 'none', string> = {
 	idle: 'groupChat.notMember.headline',
 	sending: 'groupChat.notMember.headline',
 	error: 'groupChat.notMember.headline',
+	linkInvalid: 'groupChat.notMember.headline',
 	pending: 'groupChat.notMember.pendingHeadline',
 	cancelling: 'groupChat.notMember.pendingHeadline',
 	admitted: 'groupChat.notMember.admittedHeadline',
@@ -57,6 +60,7 @@ const bodyKey: Record<JoinRequestViewState | 'none', string> = {
 	idle: 'groupChat.notMember.knockBody',
 	sending: 'groupChat.notMember.knockBody',
 	error: 'groupChat.notMember.knockBody',
+	linkInvalid: 'groupChat.notMember.body',
 	pending: 'groupChat.notMember.pendingBody',
 	cancelling: 'groupChat.notMember.pendingBody',
 	admitted: 'groupChat.notMember.admittedBody',
@@ -99,6 +103,14 @@ export const GroupChatNotMember = ({
 				variant="no-conversations"
 			>
 				<Typography sx={bodySx}>{translate(bodyKey[state])}</Typography>
+				{state === 'linkInvalid' && (
+					<Typography
+						role="alert"
+						sx={{ ...bodySx, color: 'var(--m3-error)' }}
+					>
+						{translate('groupChat.notMember.linkInvalid')}
+					</Typography>
+				)}
 				{state === 'error' && (
 					<Typography
 						role="alert"

@@ -51,3 +51,10 @@ export class JoinRequestsUnavailableError extends Error {
 		super('JOIN_REQUESTS_UNAVAILABLE');
 	}
 }
+
+/** The server refused the knock's invite token (403): the link is no longer valid. */
+export class JoinRequestLinkInvalidError extends Error {
+	constructor() {
+		super('JOIN_REQUEST_LINK_INVALID');
+	}
+}

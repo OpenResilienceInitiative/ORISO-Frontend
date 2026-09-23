@@ -4,6 +4,7 @@ import {
 	GroupChatJoinRequestOwnStatus
 } from './joinRequestModel';
 import {
+	JoinRequestLinkInvalidError,
 	JoinRequestsUnavailableError,
 	JoinRequestTransport
 } from './joinRequestTransport';
@@ -31,14 +32,17 @@ export const createFakeJoinRequestTransport = (
 	const pendingListeners = new Set<
 		(requests: GroupChatJoinRequest[]) => void
 	>();
-	const failing = new Set<Operation>();
+	const failing = new Map<Operation, 'error' | 'linkInvalid'>();
 	let unavailable = false;
 	let nextId = 1000;
 
 	const fail = (operation: Operation) => {
-		if (failing.has(operation)) {
+		const kind = failing.get(operation);
+		if (kind) {
 			failing.delete(operation);
-			throw new Error('FAKE_FAILURE');
+			throw kind === 'linkInvalid'
+				? new JoinRequestLinkInvalidError()
+				: new Error('FAKE_FAILURE');
 		}
 	};
 	const emitMine = (seriesId: number) =>
@@ -71,7 +75,10 @@ export const createFakeJoinRequestTransport = (
 			pending = requests;
 			emitPending();
 		},
-		failNext: (operation: Operation) => failing.add(operation),
+		failNext: (
+			operation: Operation,
+			kind: 'error' | 'linkInvalid' = 'error'
+		) => failing.set(operation, kind),
 		setUnavailable: (value: boolean) => {
 			unavailable = value;
 		}
