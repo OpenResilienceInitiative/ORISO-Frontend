@@ -373,9 +373,12 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			return;
 		}
 
+		// With a URL topic the mainTopic slot is the URL's: a different value
+		// there is the stale stored one, about to be replaced by the direct-link
+		// effect. Clearing it would also retire its step and topic group, which
+		// the URL topic never gets back.
 		const clearMainTopic =
-			preselectedTopic?.id !== mainTopic?.id &&
-			agencyExcludesTopic(agency, mainTopic);
+			!preselectedTopic?.id && agencyExcludesTopic(agency, mainTopic);
 		const clearTopic =
 			preselectedTopic?.id !== topic?.id &&
 			agencyExcludesTopic(agency, topic);
