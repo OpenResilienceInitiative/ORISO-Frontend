@@ -129,10 +129,6 @@ $message-avatar-overlap: -19px;
 		&--consultant {
 			color: $message-name-consultant;
 		}
-
-		.flyoutMenu {
-			margin-left: $grid-base;
-		}
 	}
 
 	/*
@@ -1399,26 +1395,6 @@ $message-avatar-overlap: -19px;
 	.booking-confirmation {
 		width: 600px;
 		height: 780px;
-	}
-
-	.flyoutMenu {
-		margin-left: $grid-base;
-
-		&--left {
-			margin-right: $grid-base;
-		}
-
-		&__item {
-			&--delete {
-				color: var(--m3-error, $form-error);
-				text-decoration: none;
-				display: flex;
-
-				svg g {
-					fill: var(--m3-error, $form-error);
-				}
-			}
-		}
 	}
 }
 

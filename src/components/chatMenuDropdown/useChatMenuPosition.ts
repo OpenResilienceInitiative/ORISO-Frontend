@@ -1,5 +1,6 @@
 import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import { CSSProperties, RefObject, useLayoutEffect, useState } from 'react';
+import { followLayout } from './followLayout';
 
 export type ChatMenuPlacement = 'right' | 'left' | 'below' | 'above';
 
@@ -9,51 +10,31 @@ type SurfaceRect = Pick<DOMRect, 'left' | 'right' | 'top' | 'bottom'>;
 const MARGIN = 12;
 const GAP = 8;
 
-/*
- * The chat-room menu's own spacing, measured by Frank on 17.09.2026: at most
- * 6 px between the ⋮ trigger and a menu beside it ("max 6px"), and on a
- * phone 2 px below the trigger with the right edge pulled 4 px in.
- */
+// Chat-room menu spacing (Figma review 17.09.): beside the trigger, stacked below it.
 const HUG_BESIDE_GAP = 6;
 const HUG_STACK_GAP = 2;
 const HUG_STACK_INSET = 4;
 
+type Size = { width: number; height: number };
+
 /**
- * Where the menu goes.
+ * Where the menu goes. `anchor` is the trigger; `surface` is what the menu
+ * must not cover (the card, not the button inside it). Beside the card comes
+ * first so the card stays readable; below/above are the fallback when there
+ * is no room beside, as on a phone.
  *
- * `anchor` is the trigger — it decides only where the reveal animation grows
- * from. `surface` is what the menu must not cover: the whole card, not the
- * button inside it. Frank, 15.09.2026: "Es soll kein Overlap da sein,
- * sondern ein Nebeneinander. Wer hat gesagt, dass ein Menü immer oben drüber
- * oder unten drunter öffnen muss?"
- *
- * Seen in Storybook:
- * https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
- * https://dev.oriso.org/storybook-frontend/?path=/story/organisms-casehandover-casehandoveractionbutton--menu-beside-the-card
- *
- * Beside comes first, because that is the arrangement that keeps the card
- * readable while the menu is open. Below and above are the escape routes for
- * when there is genuinely no room beside — on a phone there never is, and
- * then an overlap is unavoidable rather than careless.
+ * Storybook: https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
  */
 export const getChatMenuPosition = (
 	anchor: Rect,
-	viewport: { width: number; height: number },
-	menu: { width: number; height: number },
+	viewport: Size,
+	menu: Size,
 	/**
-	 * Defaults to the trigger itself, which is the behaviour from before.
-	 * Written out field by field on purpose: `anchor` is a live `DOMRect` in
-	 * the browser, whose properties live on the prototype — `{ ...anchor }`
-	 * yields an empty object there and every coordinate becomes `NaN`. Unit
-	 * tests pass plain objects and never see it; a Storybook play test does.
+	 * Defaults to the trigger. Copied field by field: a live `DOMRect` keeps
+	 * its coordinates on the prototype, so spreading it yields `{}`.
 	 */
 	surface?: SurfaceRect,
-	/**
-	 * `hugTrigger`: the menu keeps close to its trigger — beside it at
-	 * `HUG_BESIDE_GAP` (covering the card's empty trailing strip if the
-	 * trigger sits there), stacked at `HUG_STACK_GAP` with its right edge
-	 * `HUG_STACK_INSET` inside the trigger's. Needs a surface.
-	 */
+	/** Keep close to the trigger (chat-room menu). Needs a surface. */
 	options: { hugTrigger?: boolean } = {}
 ) => {
 	const hug = Boolean(options.hugTrigger && surface);
@@ -73,13 +54,8 @@ export const getChatMenuPosition = (
 	const maxHeight = Math.max(0, viewport.height - MARGIN * 2);
 	const height = Math.min(menu.height, maxHeight);
 
-	/*
-	 * Where a stacked menu hangs from. Without a surface that is the old
-	 * behaviour. With one, a menu that cannot sit beside the card hangs from
-	 * the trigger's corner — Frank, 17.09.2026, on the phone: below the
-	 * whole card it was "mit dem riesen Abstand" from its button; "das muss
-	 * natürlich dann rechts im Corner sein".
-	 */
+	// With a surface, a stacked menu hangs from the trigger's corner, not
+	// from the whole card.
 	const stack = surface
 		? {
 				right: anchor.right,
@@ -87,58 +63,57 @@ export const getChatMenuPosition = (
 				bottom: anchor.bottom ?? anchor.top
 			}
 		: bounds;
-
-	// Beside on the right starts from the trigger when hugging it, from the
-	// card otherwise; on the left the card is in the way either way.
+	// Hugging may cover the card's empty trailing strip on the right.
 	const rightEdge = hug ? anchor.right : bounds.right;
 
-	const fitsRight = rightEdge + besideGap + width <= viewport.width - MARGIN;
-	const fitsLeft = bounds.left - besideGap - width >= MARGIN;
-	const fitsBelow =
-		stack.bottom + stackGap + height <= viewport.height - MARGIN;
-	const fitsAbove = stack.top - stackGap - height >= MARGIN;
+	const candidates: Record<
+		ChatMenuPlacement,
+		{ fits: boolean; left: number; top: number }
+	> = {
+		right: {
+			fits: rightEdge + besideGap + width <= viewport.width - MARGIN,
+			left: rightEdge + besideGap,
+			top: anchor.top
+		},
+		left: {
+			fits: bounds.left - besideGap - width >= MARGIN,
+			left: bounds.left - besideGap - width,
+			top: anchor.top
+		},
+		below: {
+			fits: stack.bottom + stackGap + height <= viewport.height - MARGIN,
+			left: stack.right - stackInset - width,
+			top: stack.bottom + stackGap
+		},
+		above: {
+			fits: stack.top - stackGap - height >= MARGIN,
+			left: stack.right - stackInset - width,
+			top: stack.top - stackGap - height
+		}
+	};
+	const order: ChatMenuPlacement[] = ['right', 'left', 'below', 'above'];
+	const placement = order.find((side) => candidates[side].fits) ?? 'left';
 
-	const placement: ChatMenuPlacement = fitsRight
-		? 'right'
-		: fitsLeft
-			? 'left'
-			: fitsBelow
-				? 'below'
-				: fitsAbove
-					? 'above'
-					: 'left';
-
-	const clampLeft = (value: number) =>
-		Math.max(MARGIN, Math.min(value, viewport.width - width - MARGIN));
-	const clampTop = (value: number) =>
-		Math.max(MARGIN, Math.min(value, viewport.height - height - MARGIN));
-
-	const left = clampLeft(
-		placement === 'right'
-			? rightEdge + besideGap
-			: placement === 'left'
-				? bounds.left - besideGap - width
-				: // Stacked: right edge at the trigger's (inset when hugging).
-					stack.right - stackInset - width
+	const left = Math.max(
+		MARGIN,
+		Math.min(candidates[placement].left, viewport.width - width - MARGIN)
 	);
-	const top = clampTop(
-		placement === 'below'
-			? stack.bottom + stackGap
-			: placement === 'above'
-				? stack.top - stackGap - height
-				: anchor.top
+	const top = Math.max(
+		MARGIN,
+		Math.min(candidates[placement].top, viewport.height - height - MARGIN)
 	);
 
 	// The reveal grows out of the trigger, whichever side the menu landed on.
 	const stackedOrigin = surface
 		? 'right'
 		: `${Math.max(0, anchor.left - left)}px`;
-	const transformOrigin =
-		placement === 'below'
-			? `${stackedOrigin} top`
-			: placement === 'above'
-				? `${stackedOrigin} bottom`
-				: `${placement === 'right' ? 'left' : 'right'} ${Math.max(0, anchor.top - top)}px`;
+	const besideTop = `${Math.max(0, anchor.top - top)}px`;
+	const transformOrigin = {
+		right: `left ${besideTop}`,
+		left: `right ${besideTop}`,
+		below: `${stackedOrigin} top`,
+		above: `${stackedOrigin} bottom`
+	}[placement];
 
 	return { left, top, width, maxHeight, placement, transformOrigin };
 };
@@ -155,11 +130,7 @@ export const useChatMenuPosition = ({
 	open: boolean;
 	anchorRef: RefObject<HTMLElement | null>;
 	menuRef: RefObject<HTMLElement | null>;
-	/**
-	 * The surface the menu must not cover — the card, not the trigger. Leave
-	 * it out and the menu falls back to opening beside the trigger, which is
-	 * what it did before and still overlaps whatever the trigger sits in.
-	 */
+	/** What the menu must not cover; without it the menu opens beside the trigger. */
 	surfaceRef?: RefObject<HTMLElement | null>;
 	width?: number;
 	/** See `getChatMenuPosition` — the chat-room menu's tight spacing. */
@@ -207,27 +178,7 @@ export const useChatMenuPosition = ({
 				);
 			};
 			update();
-			const observer =
-				typeof ResizeObserver === 'undefined'
-					? null
-					: new ResizeObserver(update);
-			observer?.observe(menu);
-			observer?.observe(anchor);
-			if (surfaceRef?.current) {
-				observer?.observe(surfaceRef.current);
-			}
-			window.addEventListener('resize', update);
-			window.addEventListener('scroll', update, true);
-			// Transforms move the trigger without resizing anything: a menu
-			// opened while its row still scales in (the list's entrance)
-			// was left behind. Re-measure whenever an animation ends.
-			window.addEventListener('animationend', update, true);
-			cleanup = () => {
-				observer?.disconnect();
-				window.removeEventListener('resize', update);
-				window.removeEventListener('scroll', update, true);
-				window.removeEventListener('animationend', update, true);
-			};
+			cleanup = followLayout(update, [menu, anchor, surfaceRef?.current]);
 		};
 		attach();
 		return () => {
@@ -248,8 +199,7 @@ export const useChatMenuPosition = ({
 		'maxWidth': 'calc(100vw - 24px)',
 		'overflowY': 'auto',
 		'visibility': open && position ? 'visible' : 'hidden',
-		// Exposed so the markup can carry `data-placement` and the styles can
-		// point a caret or shift a shadow without measuring anything twice.
+		// Lets the markup carry `data-placement` without measuring twice.
 		'--chat-menu-placement': placement
 	};
 };

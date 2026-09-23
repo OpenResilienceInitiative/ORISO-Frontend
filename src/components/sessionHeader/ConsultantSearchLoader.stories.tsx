@@ -273,3 +273,22 @@ export const GeometryContract: Story = {
 		sweep.style.removeProperty('transform');
 	}
 };
+
+/** Sends once on arrival, then rests: the pulse ends with its own animation. */
+export const SendsOnceOnArrival: Story = {
+	name: 'Sendet einmal beim Erscheinen, dann Ruhe',
+	render: () => <ConsultantSearchLoader size="40px" />,
+	play: async ({ canvasElement }) => {
+		const loader = canvasElement.querySelector<HTMLElement>(
+			'.consultantSearchLoader'
+		)!;
+		await expect(loader).toHaveClass('consultantSearchLoader--pulsing');
+		await waitFor(
+			() =>
+				expect(loader).not.toHaveClass(
+					'consultantSearchLoader--pulsing'
+				),
+			{ timeout: 4000 }
+		);
+	}
+};

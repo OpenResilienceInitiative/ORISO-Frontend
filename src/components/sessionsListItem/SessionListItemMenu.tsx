@@ -1,4 +1,8 @@
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import {
+	CARD_MENU_BACKDROP_LAYER,
+	CARD_MENU_LAYER
+} from '../chatMenuDropdown/menuLayers';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import * as React from 'react';
 import clsx from 'clsx';
@@ -14,24 +18,11 @@ import LegalLinks from '../legalLinks/LegalLinks';
 import { ChatroomSettingsMenuVisibility } from './chatroomSettingsMenu';
 import { TProvidedLegalLink } from '../../globalState/provider/LegalLinksProvider';
 
-/**
- * The chat-room menu of a session card (Figma 7086-57413). It opens 6 px
- * beside the ⋮ trigger, or hangs 2 px below it on a phone; while it is open
- * only the menu carries the red ring and the veil spares the card.
- *
- * Storybook (asserted):
- * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
- * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-on-the-phone
- */
 export interface SessionListItemMenuProps {
 	flyoutOpen: boolean;
 	menuIconRef: React.RefObject<HTMLButtonElement>;
-	/**
-	 * The card the trigger sits in. The menu opens BESIDE it and never on
-	 * top of it — without this the menu is only placed beside the button,
-	 * which is still inside the card (Frank, 15.09.2026).
-	 */
-	surfaceRef?: React.RefObject<HTMLElement>;
+	/** The card the trigger sits in; the menu opens beside it, not on it. */
+	surfaceRef?: React.RefObject<HTMLElement | null>;
 	dropdownRef: React.RefObject<HTMLDivElement>;
 	dropdownId: string;
 	dropdownLabel: string;
@@ -52,6 +43,15 @@ export interface SessionListItemMenuProps {
 	onLegalLinkClick: (title: string, url: string) => void;
 }
 
+/**
+ * The chat-room menu of a session card (Figma 7086-57413). It opens 6 px
+ * beside the ⋮ trigger, or hangs 2 px below it on a phone; while it is open
+ * only the menu carries the red ring and the veil spares the card.
+ *
+ * Storybook (asserted):
+ * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-beside-the-card
+ * - https://dev.oriso.org/storybook-frontend/?path=/story/components-session-list-sessionlistitem--menu-on-the-phone
+ */
 export const SessionListItemMenu = ({
 	flyoutOpen,
 	menuIconRef,
@@ -92,7 +92,7 @@ export const SessionListItemMenu = ({
 					onClose();
 					menuIconRef.current?.focus();
 				}}
-				zIndex={999998}
+				zIndex={CARD_MENU_BACKDROP_LAYER}
 			/>
 			<button
 				type="button"
@@ -120,7 +120,7 @@ export const SessionListItemMenu = ({
 						onKeyDown={onDropdownKeyDown}
 						role="dialog"
 						aria-label={dropdownLabel}
-						style={{ ...menuPosition, zIndex: 999999 }}
+						style={{ ...menuPosition, zIndex: CARD_MENU_LAYER }}
 					>
 						<div className="sessionsListItem__dropdownHeader">
 							<p className="sessionsListItem__dropdownSubtitle">

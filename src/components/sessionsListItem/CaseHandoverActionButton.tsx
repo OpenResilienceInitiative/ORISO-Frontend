@@ -3,6 +3,10 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import {
+	CARD_MENU_BACKDROP_LAYER,
+	CARD_MENU_LAYER
+} from '../chatMenuDropdown/menuLayers';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
 import './sessionsListItem.styles';
 
@@ -18,7 +22,7 @@ import './sessionsListItem.styles';
  *   offers "Confirm selection" and "Deselect and close".
  */
 
-/** Mirrors the `width` of `.sessionsListItem__handoverActionMenu`. */
+/** Menu width; applied inline by `useChatMenuPosition`. */
 const HANDOVER_MENU_WIDTH = 236;
 
 export type CaseHandoverActionState =
@@ -278,7 +282,7 @@ export const CaseHandoverActionButton = ({
 					setMenuOpen(false);
 					toggleRef.current?.focus();
 				}}
-				zIndex={999998}
+				zIndex={CARD_MENU_BACKDROP_LAYER}
 			/>
 			<button
 				type="button"
@@ -335,7 +339,7 @@ export const CaseHandoverActionButton = ({
 						id={menuId}
 						aria-label={labels.menuLabel}
 						data-placement={placement}
-						style={{ ...menuPosition, zIndex: 999999 }}
+						style={{ ...menuPosition, zIndex: CARD_MENU_LAYER }}
 						// Portalled nodes still bubble through the React tree,
 						// so without this a click on the menu chrome would open
 						// the session card underneath.

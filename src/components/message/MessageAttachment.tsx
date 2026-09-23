@@ -22,6 +22,7 @@ import { getIconForAttachmentType } from './messageHelpers';
 import { AttachmentCard } from './AttachmentCard';
 import { VoicePlayer } from '../voicePlayer/VoicePlayer';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
+import { voiceDurationMsFromFileName } from '../../utils/voiceMessageFileName';
 
 /**
  * Media check state of an attachment (WP-4, epic ORISO-Admin#366):
@@ -281,34 +282,14 @@ export const MessageAttachment = (props: MessageAttachmentProps) => {
 	// For non-encrypted files, wrap in download link
 	const downloadUrl = buildUrl(props.attachment.downloadUrl);
 
-	const getVoiceDurationFromFileName = useCallback((): number | null => {
-		const name = props.file?.name || props.attachment?.title || '';
-		const matchSec = name.match(/-s(\d+)-ms\d+\.(webm|ogg|mp3|wav)$/i);
-		if (matchSec) {
-			const valueSec = parseInt(matchSec[1], 10);
-			if (!Number.isNaN(valueSec) && valueSec > 0) {
-				return valueSec;
-			}
-		}
-		const matchMs = name.match(/-ms(\d+)\.(webm|ogg|mp3|wav)$/i);
-		if (matchMs) {
-			const valueMs = parseInt(matchMs[1], 10);
-			if (!Number.isNaN(valueMs) && valueMs > 0) {
-				return valueMs / 1000;
-			}
-		}
-		const match = name.match(/-d(\d+)\.(webm|ogg|mp3|wav)$/i);
-		if (!match) {
-			return null;
-		}
-		const value = parseInt(match[1], 10);
-		return Number.isNaN(value) ? null : value;
-	}, [props.file?.name, props.attachment?.title]);
-
 	// Prefer the canonical duration encoded in the file name so sender and
 	// receiver show the same length; VoicePlayer falls back to the duration
 	// reported by the audio element when the name carries none.
-	const durationFromFileName = getVoiceDurationFromFileName();
+	const durationMsFromFileName = voiceDurationMsFromFileName(
+		props.file?.name || props.attachment?.title || ''
+	);
+	const durationFromFileName =
+		durationMsFromFileName === null ? null : durationMsFromFileName / 1000;
 
 	const renderVoiceAttachment = useCallback(
 		(src: string) => (

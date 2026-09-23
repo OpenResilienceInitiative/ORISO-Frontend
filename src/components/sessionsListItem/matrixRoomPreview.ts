@@ -2,6 +2,10 @@ import { stripReplyFallback } from '../../utils/messageRelations';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { parseMessagePrefixes } from '../message/messageConstants';
+import {
+	isVoiceMessageFileName,
+	voiceDurationMsFromFileName
+} from '../../utils/voiceMessageFileName';
 
 export type MatrixRoomPreviewKind =
 	| 'text'
@@ -209,19 +213,26 @@ const toKindPreview = (
 		}
 		case 'm.audio': {
 			const duration = content.info?.duration;
-			return {
-				kind: Object.prototype.hasOwnProperty.call(
-					content,
-					'org.matrix.msc3245.voice'
-				)
-					? 'voice'
-					: 'audio',
-				text: null,
-				...(typeof duration === 'number' &&
+			const recorded = isVoiceMessageFileName(body);
+			const durationMs =
+				typeof duration === 'number' &&
 				Number.isFinite(duration) &&
 				duration >= 0
-					? { durationMs: duration }
-					: {})
+					? duration
+					: recorded
+						? voiceDurationMsFromFileName(body)
+						: null;
+			return {
+				kind:
+					recorded ||
+					Object.prototype.hasOwnProperty.call(
+						content,
+						'org.matrix.msc3245.voice'
+					)
+						? 'voice'
+						: 'audio',
+				text: null,
+				...(durationMs === null ? {} : { durationMs })
 			};
 		}
 		case 'm.image':

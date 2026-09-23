@@ -221,6 +221,39 @@ describe('getLatestMatrixRoomPreview', () => {
 		).toEqual({ kind: 'voice', text: null });
 	});
 
+	// ORISO's recorder sends a plain m.audio; the length travels in the file name.
+	it('reads an ORISO voice recording and its length from the file name', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.audio',
+						body: 'voice-message-1758600000000-s42-ms42300.webm',
+						info: { mimetype: 'audio/webm', size: 1234 }
+					},
+					3
+				)
+			])
+		).toEqual({ kind: 'voice', text: null, durationMs: 42_000 });
+	});
+
+	it('keeps any other audio file as audio', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.audio',
+						body: 'interview-s42-ms42300.webm',
+						info: { mimetype: 'audio/webm' }
+					},
+					3
+				)
+			])
+		).toEqual({ kind: 'audio', text: null });
+	});
+
 	it('ignores edits, reactions and redactions as standalone previews', () => {
 		expect(
 			getLatestMatrixRoomPreview([

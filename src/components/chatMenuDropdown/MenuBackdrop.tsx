@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
+import { followLayout } from './followLayout';
 
 type Hole = {
 	left: number;
@@ -74,22 +75,7 @@ const useHole = (
 		}
 		const update = () => setHole(readHole(element));
 		update();
-		window.addEventListener('scroll', update, true);
-		window.addEventListener('resize', update);
-		// The element may still be scaling in (list entrance); transforms
-		// resize nothing, so follow it once an animation ends.
-		window.addEventListener('animationend', update, true);
-		const observer =
-			typeof ResizeObserver === 'undefined'
-				? null
-				: new ResizeObserver(update);
-		observer?.observe(element);
-		return () => {
-			window.removeEventListener('scroll', update, true);
-			window.removeEventListener('resize', update);
-			window.removeEventListener('animationend', update, true);
-			observer?.disconnect();
-		};
+		return followLayout(update, [element]);
 	}, [active, element]);
 	return hole;
 };
