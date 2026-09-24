@@ -514,7 +514,7 @@ export const mockActiveConversationManyParticipants = () => ({
 	]
 });
 
-/** `consultant` is deliberately absent: that puts `ConsultantSearchLoader` into the stack. */
+/** `consultant` is deliberately absent: the capsule's magnet searches and the stack stays away. */
 const buildSearchingSession = (
 	status: typeof STATUS_ENQUIRY | typeof STATUS_EMPTY = STATUS_ENQUIRY
 ): ExtendedSessionInterface =>
@@ -1043,7 +1043,7 @@ export const RequestStageEmptyEnquiry: Story = {
 	}
 };
 
-/** Once a counsellor accepts, the avatar takes the indicator's box, so the row does not jump. */
+/** Once a counsellor accepts, the search stops and the participant stack returns. */
 export const RequestStageAccepted: Story = {
 	name: 'Request stage — counsellor accepted (FE#1115)',
 	globals: desktop1440Globals,
@@ -1054,5 +1054,14 @@ export const RequestStageAccepted: Story = {
 				canvasElement.querySelector('[data-cy="participant-avatar"]')
 			).toBeTruthy();
 		});
+		// The still enquiry glyph may stay; only the searching state must go.
+		await expect(
+			canvasElement.querySelector(
+				'.chatroomMainInteractionIcon--searching'
+			)
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader--animated')
+		).toBeNull();
 	}
 };

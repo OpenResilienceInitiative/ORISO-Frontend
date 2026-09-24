@@ -137,12 +137,17 @@ export const IncomingVideoCall = (props: IncomingVideoCallProps) => {
 					</div>
 				</div>
 				{!supportsE2EEncryptionVideoCall() && !isMobile && (
-					<div
-						className="notification__close"
+					/* A real button: it rejects the call, and a keyboard-only
+					   counsellor must be able to reach and press it. */
+					<button
+						type="button"
+						className="notification__close incomingVideoCall__reject"
 						onClick={handleRejectVideoCall}
+						aria-label={translate('videoCall.button.rejectCall')}
+						title={translate('videoCall.button.rejectCall')}
 					>
-						<CloseIcon />
-					</div>
+						<CloseIcon aria-hidden="true" focusable="false" />
+					</button>
 				)}
 			</div>
 

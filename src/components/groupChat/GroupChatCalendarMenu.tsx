@@ -70,17 +70,23 @@ export const GroupChatCalendarPopover = ({
 	const [copyState, setCopyState] = useState<
 		'pending' | 'success' | 'error' | null
 	>(null);
-	useEffect(() => {
+	// A title edit or reopening makes a pending copy stale; its result is dropped.
+	const copyAction = useRef(0);
+	const resetCopy = () => {
+		copyAction.current += 1;
 		setCopyState(null);
-	}, [anchor]);
+	};
+	useEffect(resetCopy, [anchor]);
 	const copyLink = async (url: string) => {
+		const action = ++copyAction.current;
 		setCopyState('pending');
+		let result: 'success' | 'error' = 'success';
 		try {
 			await navigator.clipboard.writeText(url);
-			setCopyState('success');
 		} catch {
-			setCopyState('error');
+			result = 'error';
 		}
+		if (action === copyAction.current) setCopyState(result);
 	};
 	const defaultTitle = translate('groupChat.calendar.defaultTitle');
 	const [title, setTitle] = useState(() => defaultTitle);
@@ -133,7 +139,7 @@ export const GroupChatCalendarPopover = ({
 						onChange={(event) => {
 							titleEdited.current = true;
 							setTitle(event.target.value);
-							setCopyState(null);
+							resetCopy();
 						}}
 						onKeyDown={(event) => {
 							if (event.key !== 'Escape') {

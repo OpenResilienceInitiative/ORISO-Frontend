@@ -5,10 +5,19 @@ describe('sessionKindRegistry (#1377 sound mask)', () => {
 	beforeEach(() => sessionKindRegistry.reset());
 
 	it('remembers the classified kind per session id and section', () => {
-		sessionKindRegistry.publish('sessions', { '12': 'oneToOne', '13': 'circle' });
+		sessionKindRegistry.publish('sessions', {
+			'12': 'oneToOne',
+			'13': 'circle'
+		});
 		sessionKindRegistry.publish('requests', { '99': 'liveChat' });
-		expect(sessionKindRegistry.lookup('12')).toEqual({ section: 'sessions', kind: 'oneToOne' });
-		expect(sessionKindRegistry.lookup(99)).toEqual({ section: 'requests', kind: 'liveChat' });
+		expect(sessionKindRegistry.lookup('12')).toEqual({
+			section: 'sessions',
+			kind: 'oneToOne'
+		});
+		expect(sessionKindRegistry.lookup(99)).toEqual({
+			section: 'requests',
+			kind: 'liveChat'
+		});
 		expect(sessionKindRegistry.lookup('nope')).toBeNull();
 	});
 

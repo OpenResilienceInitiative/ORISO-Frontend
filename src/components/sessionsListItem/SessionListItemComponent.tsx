@@ -908,6 +908,9 @@ export const SessionListItemComponent = ({
 	// has to exist before the branch does. Pure string work — no hook, no
 	// behaviour change for the card list.
 	const hasConsultantData = !!activeSession.consultant;
+	// An unwritten enquiry is not searched for yet, so the magnet rests.
+	const isSearchingForConsultant =
+		isAsker && !hasConsultantData && !activeSession.isEmptyEnquiry;
 	let sessionTopic = '';
 
 	// Card title:
@@ -1257,15 +1260,13 @@ export const SessionListItemComponent = ({
 								<img
 									src={internalConversationIcon}
 									alt={translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 									className="sessionsListItem__consultingTypeIcon--internalIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 									{translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 								</span>
 							</div>
@@ -1280,15 +1281,13 @@ export const SessionListItemComponent = ({
 								<img
 									src={selfHelpIcon}
 									alt={translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 									{translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 								</span>
 							</div>
@@ -1298,7 +1297,9 @@ export const SessionListItemComponent = ({
 								<div className="sessionsListItem__consultingTypeIcon">
 									<img
 										src={teamImage}
-										alt="Team Beratung"
+										alt={translate(
+											'sessionList.item.sessionType.team'
+										)}
 										className="sessionsListItem__consultingTypeIcon--team"
 									/>
 								</div>
@@ -1341,9 +1342,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem__content--flow',
 					isAnonymousChat && 'sessionsListItem__content--anonymous',
 					/* The whole card, not the glyph, replays the magnet on hover. */
-					isAsker &&
-						!hasConsultantData &&
-						'consultantSearchLoaderHost'
+					isSearchingForConsultant && 'consultantSearchLoaderHost'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={setCardRef}
@@ -1463,12 +1462,10 @@ export const SessionListItemComponent = ({
 									data-testid="supervision-badge"
 									role="img"
 									title={translate(
-										'sessionList.supervision.badge',
-										'Supervision'
+										'sessionList.supervision.badge'
 									)}
 									aria-label={translate(
-										'sessionList.supervision.badge',
-										'Supervision'
+										'sessionList.supervision.badge'
 									)}
 								>
 									<SupervisionIcon
@@ -1498,7 +1495,10 @@ export const SessionListItemComponent = ({
 								</div>
 							) : isAsker && !hasConsultantData ? (
 								/* Points right, into the card's width, so the card's corner clip never cuts the beam. */
-								<ConsultantSearchLoader size="40px" />
+								<ConsultantSearchLoader
+									size="40px"
+									animated={isSearchingForConsultant}
+								/>
 							) : !isAsker ? (
 								// Restored username+icon linkage: the asker card
 								// shows the SAME animal avatar the chat derives
@@ -1719,8 +1719,7 @@ export const SessionListItemComponent = ({
 											</svg>
 											<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
 												{translate(
-													'sessionList.item.sessionType.liveChat',
-													'Live Chat'
+													'sessionList.item.sessionType.liveChat'
 												)}
 											</span>
 										</div>
@@ -1747,8 +1746,7 @@ export const SessionListItemComponent = ({
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 												{translate(
-													'sessionList.toolbar.chips.nearby',
-													'Mail'
+													'sessionList.toolbar.chips.nearby'
 												)}
 											</span>
 										</div>
@@ -1763,15 +1761,13 @@ export const SessionListItemComponent = ({
 											<img
 												src={internalConversationIcon}
 												alt={translate(
-													'sessionList.item.sessionType.internal',
-													'Interna'
+													'sessionList.item.sessionType.internal'
 												)}
 												className="sessionsListItem__consultingTypeIcon--internalIcon"
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 												{translate(
-													'sessionList.item.sessionType.internal',
-													'Interna'
+													'sessionList.item.sessionType.internal'
 												)}
 											</span>
 										</div>
@@ -1799,15 +1795,13 @@ export const SessionListItemComponent = ({
 											<img
 												src={selfHelpIcon}
 												alt={translate(
-													'sessionList.item.sessionType.selfHelp',
-													'Gesprächskreis'
+													'sessionList.item.sessionType.selfHelp'
 												)}
 												className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 												{translate(
-													'sessionList.item.sessionType.selfHelp',
-													'Gesprächskreis'
+													'sessionList.item.sessionType.selfHelp'
 												)}
 											</span>
 										</div>

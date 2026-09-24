@@ -2,11 +2,12 @@
  * ORISO's recorder sends a plain `m.audio` and writes the length into the file
  * name (`voice-message-<time>-s<sec>-ms<ms>.<ext>`), not into `info.duration`.
  */
-const EXTENSION = '\\.(webm|ogg|mp3|wav)$';
-const VOICE_FILE = new RegExp(`^voice-message-.*${EXTENSION}`, 'i');
-const SECONDS = new RegExp(`-s(\\d+)-ms\\d+${EXTENSION}`, 'i');
-const MILLISECONDS = new RegExp(`-ms(\\d+)${EXTENSION}`, 'i');
-const LEGACY_SECONDS = new RegExp(`-d(\\d+)${EXTENSION}`, 'i');
+// Recorder names only: timestamp, then a length (current -s-ms, legacy -ms, -s or -d).
+const VOICE_FILE =
+	/^voice-message-\d+-(?:s\d+-ms\d+|ms\d+|s\d+|d\d+)\.(?:webm|ogg|mp3|wav)$/i;
+const SECONDS = /-s(\d+)-ms\d+\.(?:webm|ogg|mp3|wav)$/i;
+const MILLISECONDS = /-ms(\d+)\.(?:webm|ogg|mp3|wav)$/i;
+const LEGACY_SECONDS = /-d(\d+)\.(?:webm|ogg|mp3|wav)$/i;
 
 export const isVoiceMessageFileName = (name: string): boolean =>
 	VOICE_FILE.test(name);

@@ -4,6 +4,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import {
+	dropLegacyMenuEffectKeys,
 	readMenuEffects,
 	saveMenuEffects,
 	useMenuEffects
@@ -35,6 +36,22 @@ describe('menu display preference', () => {
 		saveMenuEffects(true, 'anna');
 		expect(readMenuEffects('anna')).toBe(true);
 	});
+	it('keeps the account id out of the storage key', () => {
+		saveMenuEffects(false, 'asker-4401');
+		const keys = Object.keys(localStorage);
+		expect(keys).toHaveLength(1);
+		expect(keys[0]).not.toContain('asker-4401');
+		expect(readMenuEffects('asker-4401')).toBe(false);
+		expect(readMenuEffects('asker-4402')).toBe(true);
+	});
+
+	it('removes the old keys that carried the raw account id', () => {
+		localStorage.setItem('oriso.menuEffects.v1:asker-4401', 'false');
+		localStorage.setItem('unrelated', 'kept');
+		dropLegacyMenuEffectKeys();
+		expect(Object.keys(localStorage)).toEqual(['unrelated']);
+	});
+
 	it('keeps the setting usable when writing browser storage fails', () => {
 		const write = vi
 			.spyOn(Storage.prototype, 'setItem')

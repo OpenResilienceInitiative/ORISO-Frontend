@@ -84,12 +84,12 @@ const StatefulSession = () => {
 		</div>
 	);
 };
-const InfoDialog = () => {
+const InfoDialog = ({ dialog }: { dialog?: boolean }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const { groupId, sessionId } = useParams();
 	return (
-		<div role="dialog">
+		<div role="dialog" data-dialog-flag={String(dialog)}>
 			<span>
 				{groupId}:{sessionId}
 				{location.search}
@@ -186,6 +186,13 @@ describe('SessionsZone v7 routing — consultant', () => {
 		expect(screen.getByRole('dialog').textContent).toContain(
 			'!room:dev.oriso.org:42?sessionListTab=active'
 		);
+	});
+
+	it('tells the dialog route component that it renders as a dialog', () => {
+		renderAt(`${sessionPath}/groupChatInfo`, modalConfig);
+		expect(
+			screen.getByRole('dialog').getAttribute('data-dialog-flag')
+		).toBe('true');
 	});
 
 	it('preserves the mounted session and its draft across opening and browser back', () => {

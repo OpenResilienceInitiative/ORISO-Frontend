@@ -118,11 +118,18 @@ export const AnonymousMobileActions: Story = {
  */
 
 const openTheKebab = async (canvasElement: HTMLElement) => {
-	await userEvent.click(
-		canvasElement.querySelector<HTMLButtonElement>(
-			'.sessionMenu__icon--desktop'
-		)!
-	);
+	// Click the trigger a person can see: the other one is display:none, and a
+	// menu whose trigger is hidden closes on the next resize.
+	const trigger = await waitFor(() => {
+		const visible = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.sessionMenu__icon'
+			)
+		).find((button) => button.getClientRects().length > 0);
+		expect(visible).toBeTruthy();
+		return visible!;
+	});
+	await userEvent.click(trigger);
 	// The flyout is portalled to <body>, outside the canvas.
 	await waitFor(() =>
 		expect(

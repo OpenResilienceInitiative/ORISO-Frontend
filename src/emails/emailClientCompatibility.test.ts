@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
+import { emailLogoLockup } from './kit/emailAtoms';
+import { emailSampleBrand } from './kit/emailTokens';
 
 /**
  * Static compatibility check against what e-mail clients actually support.
@@ -131,5 +133,25 @@ describe('e-mail client compatibility', () => {
 			// the privacy promise and the unsubscribe link.
 			expect(Buffer.byteLength(html, 'utf8')).toBeLessThan(102_000);
 		});
+	});
+});
+
+describe('header logo lockup', () => {
+	// The brand name always stands beside the logo, so the logo is decorative:
+	// a failed image must not repeat the name as alt text next to itself.
+	it('shows the logo and the name, with a decorative empty alt', () => {
+		const header = emailLogoLockup(emailSampleBrand);
+		const img = header.match(/<img [^>]*>/)?.[0] ?? '';
+		expect(img).toContain('src="/logo512.png"');
+		expect(img).toContain(' alt=""');
+		expect(img).toContain('width="36" height="36"');
+		expect(img).toContain('border:0');
+		expect(header).toContain('>Online-Beratung</td>');
+	});
+
+	it('emits no <img> at all without a logo, only the name', () => {
+		const header = emailLogoLockup({ ...emailSampleBrand, logoUrl: '' });
+		expect(header).not.toContain('<img');
+		expect(header).toContain('>Online-Beratung</td>');
 	});
 });

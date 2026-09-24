@@ -2,7 +2,9 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createInstance } from 'i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Registration } from './Registration';
 import {
 	AppConfigContext,
@@ -12,6 +14,7 @@ import {
 	TenantContext
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import deCommon from '../../resources/i18n/de/common.json';
 
 /** Lottie touches a canvas 2d context at module load; jsdom has none. */
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -41,58 +44,72 @@ const availableSteps = [
 	{ name: 'account-data', component: Step }
 ];
 
+// The real German catalogue: the labels below are what a person reads.
+const i18n = createInstance().use(initReactI18next);
+beforeAll(async () => {
+	await i18n.init({
+		lng: 'de',
+		ns: ['common'],
+		defaultNS: 'common',
+		resources: { de: { common: deCommon } },
+		interpolation: { escapeValue: false }
+	});
+});
+
 const renderAccountStep = (search: string) =>
 	render(
-		<AppConfigContext.Provider value={{} as any}>
-			<GlobalComponentContext.Provider
-				value={{ Stage: () => <div /> } as any}
-			>
-				<NotificationsContext.Provider
-					value={{ addNotification: () => undefined } as any}
+		<I18nextProvider i18n={i18n}>
+			<AppConfigContext.Provider value={{} as any}>
+				<GlobalComponentContext.Provider
+					value={{ Stage: () => <div /> } as any}
 				>
-					<TenantContext.Provider value={{ tenant: null } as any}>
-						<LocaleContext.Provider value={{ locale: 'de' } as any}>
-							<RegistrationContext.Provider
-								value={
-									{
-										disabledNextButton: false,
-										setDisabledNextButton: () => undefined,
-										updateRegistrationData: () => undefined,
-										registrationData: {},
-										availableSteps,
-										registrationConsultingType: null
-									} as any
-								}
+					<NotificationsContext.Provider
+						value={{ addNotification: () => undefined } as any}
+					>
+						<TenantContext.Provider value={{ tenant: null } as any}>
+							<LocaleContext.Provider
+								value={{ locale: 'de' } as any}
 							>
-								<MemoryRouter
-									initialEntries={[
-										`/registration/account-data${search}`
-									]}
+								<RegistrationContext.Provider
+									value={
+										{
+											disabledNextButton: false,
+											setDisabledNextButton: () =>
+												undefined,
+											updateRegistrationData: () =>
+												undefined,
+											registrationData: {},
+											availableSteps,
+											registrationConsultingType: null
+										} as any
+									}
 								>
-									<Routes>
-										<Route
-											path="/registration/:step"
-											element={<Registration />}
-										/>
-									</Routes>
-								</MemoryRouter>
-							</RegistrationContext.Provider>
-						</LocaleContext.Provider>
-					</TenantContext.Provider>
-				</NotificationsContext.Provider>
-			</GlobalComponentContext.Provider>
-		</AppConfigContext.Provider>
+									<MemoryRouter
+										initialEntries={[
+											`/registration/account-data${search}`
+										]}
+									>
+										<Routes>
+											<Route
+												path="/registration/:step"
+												element={<Registration />}
+											/>
+										</Routes>
+									</MemoryRouter>
+								</RegistrationContext.Provider>
+							</LocaleContext.Provider>
+						</TenantContext.Provider>
+					</NotificationsContext.Provider>
+				</GlobalComponentContext.Provider>
+			</AppConfigContext.Provider>
+		</I18nextProvider>
 	);
 
 /** The wide-layout primary action — the way on. */
 const primaryLabel = () =>
 	document.querySelector('[data-cy="button-register"]')?.textContent;
 
-/* No i18next instance is initialised in this environment, so `t(key)` returns
-   the key and `t(key, fallback)` returns the fallback. The assertions below
-   therefore name the fallback for the new keys and the key for the existing
-   `registration.register` — which is exactly what tells the two apart. */
-const REGISTER = 'registration.register';
+const REGISTER = 'Registrieren';
 
 const toggles = () =>
 	Array.from(document.querySelectorAll('[data-cy="button-temporary-join"]'));

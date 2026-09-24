@@ -140,13 +140,17 @@ export const SessionsZone = ({ routerConfig }: { routerConfig: any }) => {
 								toV7Paths(route).map((path) => (
 									<Route
 										key={`dialog-${path}`}
-										path={stripPrefix(path, SESSIONS_PREFIX)}
+										path={stripPrefix(
+											path,
+											SESSIONS_PREFIX
+										)}
 										element={
 											<SessionTypeProvider
 												type={route.type || null}
 											>
 												<route.component
 													type={route.type || null}
+													dialog
 												/>
 											</SessionTypeProvider>
 										}

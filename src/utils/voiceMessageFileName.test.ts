@@ -13,6 +13,9 @@ describe('voice message file name', () => {
 		).toBe(true);
 		expect(isVoiceMessageFileName('interview.webm')).toBe(false);
 		expect(isVoiceMessageFileName('voice-message-notes.pdf')).toBe(false);
+		expect(isVoiceMessageFileName('voice-message-notes.mp3')).toBe(false);
+		expect(isVoiceMessageFileName('voice-message-1-d7.ogg')).toBe(true);
+		expect(isVoiceMessageFileName('voice-message-1-ms900.ogg')).toBe(true);
 	});
 
 	it('prefers the whole seconds the sender showed', () => {
