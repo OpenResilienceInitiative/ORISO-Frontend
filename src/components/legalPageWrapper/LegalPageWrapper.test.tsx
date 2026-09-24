@@ -6,7 +6,7 @@ import { LegalPageWrapper } from './LegalPageWrapper';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) => key,
 		i18n: { language: 'en' }
 	})
 }));
@@ -19,10 +19,8 @@ vi.mock('../stage/stage', () => ({
 vi.mock('./legalPageWrapper.styles.scss', () => ({}));
 vi.mock('../legalContent/legalContent.styles.scss', () => ({}));
 
-const PLACEHOLDER_NOTICE =
-	'Hinweis: Dieser Text ist ein Platzhalter und noch nicht rechtsverbindlich gepflegt.';
-const MT_NOTICE =
-	'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.';
+const PLACEHOLDER_NOTICE = 'legal.notice.placeholder';
+const MT_NOTICE = 'legal.notice.machineTranslated';
 
 describe('LegalPageWrapper', () => {
 	afterEach(() => {
@@ -73,11 +71,7 @@ describe('LegalPageWrapper', () => {
 		);
 
 		expect(screen.getByText('Nur Deutsch vorhanden')).toBeDefined();
-		expect(
-			screen.getByText(
-				'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
-			)
-		).toBeDefined();
+		expect(screen.getByText('legal.notice.fallbackLanguage')).toBeDefined();
 	});
 
 	it('falls back to the resolved string when the raw map has no renderable content', () => {

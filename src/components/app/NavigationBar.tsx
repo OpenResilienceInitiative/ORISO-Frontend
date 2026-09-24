@@ -873,6 +873,7 @@ const NavigationUnreadIndicator = ({
 	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
 	title?: string;
 }) => {
+	const { t: translate } = useTranslation();
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {

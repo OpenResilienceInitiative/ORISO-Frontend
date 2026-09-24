@@ -31,10 +31,7 @@ const PreselectedConsultant = ({ hasError }: { hasError: boolean }) => {
 		return (
 			<>
 				<Typography>
-					{t(
-						'registration.consultantlinkAbsent',
-						'This counselor is currently absent. You can still send your request to the counseling center.'
-					)}
+					{t('registration.consultantlinkAbsent')}
 				</Typography>
 				{consultant.absenceMessage && (
 					<Typography sx={{ mt: '8px' }}>

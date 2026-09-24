@@ -1,15 +1,36 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	beginRecoverySetup,
 	clearPendingRecoveryKey,
 	endRecoverySetup,
 	getPendingRecoveryKey,
+	loadPendingRecoveryKey,
+	markPendingRecoveryKeyPasswordProtected,
+	PASSWORD_PROTECTED_KEY_TTL_MS,
+	pendingRecoveryKeyPersisted,
+	purgeParkedRecoveryKeys,
 	RecoverySetupBusyError,
 	refreshRecoverySetup,
+	resetPendingRecoveryKeyCacheForTests,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
 } from './pendingRecoveryKeyStore';
+
+// vi.mock is hoisted above the imports.
+// Stands in for IndexedDB, which jsdom lacks; outlives a simulated reload.
+const { sealKeys } = vi.hoisted(() => ({
+	sealKeys: new Map<string, { key: CryptoKey; expiresAt: number }>()
+}));
+vi.mock('./loginHandoffKeyStore', () => ({
+	putHandoffKey: async (id: string, key: CryptoKey, expiresAt: number) =>
+		void sealKeys.set(id, { key, expiresAt }),
+	readHandoffKey: async (id: string) => {
+		const entry = sealKeys.get(id);
+		return entry && entry.expiresAt > Date.now() ? entry.key : null;
+	},
+	dropHandoffKey: (id: string) => void sealKeys.delete(id)
+}));
 
 const USER = '@abe.simpson:example.org';
 const OTHER_USER = '@lisa.simpson:example.org';
@@ -18,8 +39,19 @@ const KEY = 'EsTc 1234 5678 90ab cdef';
 describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 	beforeEach(() => {
 		localStorage.clear();
+		resetPendingRecoveryKeyCacheForTests();
+		sealKeys.clear();
 		vi.useRealTimers();
+		vi.stubGlobal('indexedDB', {});
 	});
+	afterEach(() => vi.unstubAllGlobals());
+
+	/** Module memory is gone after a document load; storage and IndexedDB are not. */
+	const reload = () => resetPendingRecoveryKeyCacheForTests();
+	const stored = () =>
+		Object.entries(localStorage)
+			.filter(([name]) => name.startsWith('oriso.pendingRecoveryKey.'))
+			.map(([, value]) => String(value));
 
 	it('hands the parked key back for the user it was stored for', () => {
 		savePendingRecoveryKey(USER, KEY);
@@ -36,14 +68,111 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 		expect(getPendingRecoveryKey(USER)).toBeNull();
 	});
 
-	it('survives a reload — the key lives in localStorage, not in memory', () => {
+	it('never writes the key to Web Storage in plain text', async () => {
 		savePendingRecoveryKey(USER, KEY);
+		await pendingRecoveryKeyPersisted();
 
-		const raw = Object.entries(localStorage).find(([, value]) =>
-			String(value).includes(KEY)
+		expect(stored()).toHaveLength(1);
+		expect(stored()[0]).not.toContain(KEY);
+		expect(stored()[0]).not.toContain('EsTc');
+	});
+
+	it('survives a reload — decrypted with the sealed key from IndexedDB', async () => {
+		savePendingRecoveryKey(USER, KEY);
+		await pendingRecoveryKeyPersisted();
+		reload();
+
+		expect(getPendingRecoveryKey(USER)).toBeNull();
+		expect(await loadPendingRecoveryKey(USER)).toBe(KEY);
+		expect(getPendingRecoveryKey(USER)).toBe(KEY);
+	});
+
+	it('binds the ciphertext to its user, so a copied entry opens nothing', async () => {
+		savePendingRecoveryKey(USER, KEY);
+		await pendingRecoveryKeyPersisted();
+		localStorage.setItem(
+			`oriso.pendingRecoveryKey.${OTHER_USER}`,
+			stored()[0]
 		);
+		sealKeys.set(
+			`pendingRecoveryKey:${OTHER_USER}`,
+			sealKeys.get(`pendingRecoveryKey:${USER}`)!
+		);
+		reload();
 
-		expect(raw).toBeTruthy();
+		expect(await loadPendingRecoveryKey(OTHER_USER)).toBeNull();
+	});
+
+	it('keeps the key in memory only when IndexedDB is unavailable', async () => {
+		vi.unstubAllGlobals();
+		savePendingRecoveryKey(USER, KEY);
+		await pendingRecoveryKeyPersisted();
+
+		expect(getPendingRecoveryKey(USER)).toBe(KEY);
+		expect(stored()).toHaveLength(0);
+	});
+
+	it('adopts a plaintext key from an older build and re-stores it sealed', async () => {
+		localStorage.setItem(`oriso.pendingRecoveryKey.${USER}`, KEY);
+
+		expect(await loadPendingRecoveryKey(USER)).toBe(KEY);
+		await pendingRecoveryKeyPersisted();
+		expect(stored()[0]).not.toContain(KEY);
+	});
+
+	it('drops the sealing key together with the entry', async () => {
+		savePendingRecoveryKey(USER, KEY);
+		await pendingRecoveryKeyPersisted();
+
+		clearPendingRecoveryKey(USER);
+
+		expect(sealKeys.size).toBe(0);
+		expect(stored()).toHaveLength(0);
+	});
+
+	it('expires a password-protected copy after a week, also across reloads', async () => {
+		const now = Date.now();
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+		savePendingRecoveryKey(USER, KEY);
+		markPendingRecoveryKeyPasswordProtected(USER);
+		await pendingRecoveryKeyPersisted();
+
+		clock.mockReturnValue(now + PASSWORD_PROTECTED_KEY_TTL_MS - 1);
+		reload();
+		expect(await loadPendingRecoveryKey(USER)).toBe(KEY);
+
+		clock.mockReturnValue(now + PASSWORD_PROTECTED_KEY_TTL_MS);
+		expect(getPendingRecoveryKey(USER)).toBeNull();
+		expect(stored()).toHaveLength(0);
+		clock.mockRestore();
+	});
+
+	it('never expires a key the login password does not protect — it is the only copy', async () => {
+		const now = Date.now();
+		const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+		savePendingRecoveryKey(USER, KEY);
+		await pendingRecoveryKeyPersisted();
+
+		clock.mockReturnValue(now + 10 * PASSWORD_PROTECTED_KEY_TTL_MS);
+		purgeParkedRecoveryKeys('expired');
+		reload();
+		expect(await loadPendingRecoveryKey(USER)).toBe(KEY);
+		clock.mockRestore();
+	});
+
+	it('drops password-protected copies on logout but keeps RECOVERY_KEY-mode keys', async () => {
+		savePendingRecoveryKey(USER, KEY);
+		savePendingRecoveryKey(OTHER_USER, 'other key');
+		markPendingRecoveryKeyPasswordProtected(OTHER_USER);
+		await pendingRecoveryKeyPersisted();
+
+		purgeParkedRecoveryKeys('passwordProtected');
+
+		expect(getPendingRecoveryKey(OTHER_USER)).toBeNull();
+		expect(getPendingRecoveryKey(USER)).toBe(KEY);
+		reload();
+		expect(await loadPendingRecoveryKey(OTHER_USER)).toBeNull();
+		expect(await loadPendingRecoveryKey(USER)).toBe(KEY);
 	});
 
 	it('lets the first caller take the setup lock and refuses the second', () => {
@@ -143,7 +272,8 @@ describe('pendingRecoveryKeyStore (silent key-backup setup)', () => {
 			});
 
 		expect(() => savePendingRecoveryKey(USER, KEY)).not.toThrow();
-		expect(getPendingRecoveryKey(USER)).toBeNull();
+		// Held in memory for this document; nothing reaches disk.
+		expect(getPendingRecoveryKey(USER)).toBe(KEY);
 		// Without storage we cannot coordinate tabs — do not block the setup.
 		expect(beginRecoverySetup(USER)).toBeTruthy();
 

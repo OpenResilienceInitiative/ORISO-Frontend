@@ -134,7 +134,7 @@ export const InviteLink = () => {
 	useEffect(() => {
 		if (!token) {
 			setStatus('error');
-			setErrorMessage('Missing token');
+			setErrorMessage(t('inviteLink.error.missingToken'));
 			return;
 		}
 		if (hasRunRef.current) return;
@@ -247,14 +247,14 @@ export const InviteLink = () => {
 				setErrorMessage(
 					err instanceof Error
 						? err.message
-						: 'Invite link could not be used'
+						: t('inviteLink.error.generic')
 				);
 			}
 		})();
-	}, [token, locale, resumeAttempt]);
+	}, [token, locale, resumeAttempt, t]);
 
 	const redeemForRoom = useCallback(async (): Promise<number> => {
-		if (!token) throw new Error('Missing token');
+		if (!token) throw new Error(t('inviteLink.error.missingToken'));
 		/* Again here, not only on arrival: cookies are shared across tabs, and a
 		   counsellor may have signed in elsewhere while this tab waited. */
 		if (holdsCounsellorSession()) {
@@ -275,7 +275,7 @@ export const InviteLink = () => {
 			setErrorMessage(
 				err instanceof Error
 					? err.message
-					: 'Invite link could not be used'
+					: t('inviteLink.error.generic')
 			);
 			setStatus('error');
 			throw err;
@@ -298,7 +298,7 @@ export const InviteLink = () => {
 		applyRedeemSessionCredentials(data);
 		rememberInviteSession(token, data.sessionId);
 		return data.sessionId;
-	}, [token]);
+	}, [token, t]);
 
 	const handleReroll = useCallback(() => {
 		if (!identity) return;
@@ -337,12 +337,12 @@ export const InviteLink = () => {
 			setErrorMessage(
 				err instanceof Error
 					? err.message
-					: 'Invite link could not be used'
+					: t('inviteLink.error.generic')
 			);
 		}
-	}, [legacyRedeem, username, password, locale, tenant, navigate]);
+	}, [legacyRedeem, username, password, locale, tenant, navigate, t]);
 
-	const diceLabel = t('anonymousChat.pseudonym.changeName', 'Name ändern');
+	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
 	/* While it looks, and for a live-chat link after that, the room itself is
 	   on screen — the same element throughout, so on a desktop the stage stays
@@ -382,26 +382,15 @@ export const InviteLink = () => {
 							component="h1"
 							sx={{ mb: 1, ...registrationScreenTitleSx }}
 						>
-							{t(
-								'liveChat.entry.staff.headline',
-								'Sie sind als Beraterin angemeldet.'
-							)}
+							{t('liveChat.entry.staff.headline')}
 						</Typography>
 						<Typography sx={registrationScreenIntroSx}>
-							{t(
-								'liveChat.entry.staff.text',
-								'Dieser Link würde Sie hier abmelden und Sie wären nicht mehr live. Öffnen Sie ihn zum Testen bitte in einem privaten Fenster.'
-							)}
+							{t('liveChat.entry.staff.text')}
 						</Typography>
 					</Box>
 				)}
 				{status === 'registering' && (
-					<p>
-						{t(
-							'registration.registering',
-							'Registrierung läuft...'
-						)}
-					</p>
+					<p>{t('registration.registering')}</p>
 				)}
 				{status === 'identity' && identity && (
 					<Box>
@@ -409,18 +398,12 @@ export const InviteLink = () => {
 							component="h1"
 							sx={{ mb: 1, ...registrationScreenTitleSx }}
 						>
-							{t(
-								'registration.account.headline',
-								'Anmeldedaten erfassen'
-							)}
+							{t('registration.account.headline')}
 						</Typography>
 						<Typography
 							sx={{ mb: 3, ...registrationScreenIntroSx }}
 						>
-							{t(
-								'registration.account.subline',
-								'Um Ihre Anonymität zu schützen, raten wir Ihnen, nicht Ihren tatsächlichen Namen oder Initialen zu verwenden.'
-							)}
+							{t('registration.account.subline')}
 						</Typography>
 						<Box
 							sx={{
@@ -441,19 +424,14 @@ export const InviteLink = () => {
 						<OrisoTextField
 							value={username}
 							placeholder={t(
-								'registration.account.username.label',
-								'User-ID'
+								'registration.account.username.label'
 							)}
-							helperText={t(
-								'registration.account.username.info',
-								'Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.'
-							)}
+							helperText={t('registration.account.username.info')}
 							fullWidth
 							autoComplete="username"
 							inputProps={{
 								'aria-label': t(
-									'registration.account.username.label',
-									'User-ID'
+									'registration.account.username.label'
 								),
 								'readOnly': true
 							}}
@@ -493,19 +471,14 @@ export const InviteLink = () => {
 						<OrisoTextField
 							value={password}
 							placeholder={t(
-								'registration.account.password.label',
-								'Passwort'
+								'registration.account.password.label'
 							)}
-							helperText={t(
-								'anonymousChat.password.warning',
-								'Bitte kopieren Sie das Passwort und speichern Sie es sicher, um später auf Ihr Konto zugreifen zu können.'
-							)}
+							helperText={t('anonymousChat.password.warning')}
 							fullWidth
 							autoComplete="new-password"
 							inputProps={{
 								'aria-label': t(
-									'registration.account.password.label',
-									'Passwort'
+									'registration.account.password.label'
 								),
 								'readOnly': true
 							}}
@@ -531,10 +504,7 @@ export const InviteLink = () => {
 								}
 							}}
 						>
-							{t(
-								'anonymousChat.pseudonym.continueWithSelection',
-								'Weiter mit Auswahl'
-							)}
+							{t('anonymousChat.pseudonym.continueWithSelection')}
 						</Button>
 					</Box>
 				)}
@@ -544,18 +514,12 @@ export const InviteLink = () => {
 							{t(
 								resumeFailed
 									? 'inviteLink.resume.title'
-									: 'inviteLink.error.title',
-								resumeFailed
-									? 'Verbindung unterbrochen'
-									: 'This invite link can no longer be used'
+									: 'inviteLink.error.title'
 							)}
 						</h3>
 						<p>
 							{resumeFailed
-								? t(
-										'inviteLink.resume.message',
-										'Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.'
-									)
+								? t('inviteLink.resume.message')
 								: errorMessage}
 						</p>
 						{resumeFailed && (
@@ -567,10 +531,7 @@ export const InviteLink = () => {
 									setResumeAttempt((attempt) => attempt + 1);
 								}}
 							>
-								{t(
-									'inviteLink.resume.retry',
-									'Erneut versuchen'
-								)}
+								{t('inviteLink.resume.retry')}
 							</Button>
 						)}
 					</div>
