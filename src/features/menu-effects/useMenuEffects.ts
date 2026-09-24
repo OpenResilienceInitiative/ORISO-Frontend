@@ -5,8 +5,17 @@ import './menuEffects.scss';
 
 const CHANGE_EVENT = 'oriso:menu-effects-change';
 const memory = new Map<string, boolean>();
+// FNV-1a: the key must not reveal which accounts used a shared device.
+const hashId = (value: string) => {
+	let hash = 0x811c9dc5;
+	for (let index = 0; index < value.length; index++) {
+		hash ^= value.charCodeAt(index);
+		hash = Math.imul(hash, 0x01000193);
+	}
+	return (hash >>> 0).toString(36);
+};
 const storageKey = (userId?: string) =>
-	`oriso.menuEffects.v1:${encodeURIComponent(userId || '__anonymous__')}`;
+	`oriso.menuEffects.v2:${userId ? hashId(userId) : '__anonymous__'}`;
 
 export const readMenuEffects = (userId?: string): boolean => {
 	const key = storageKey(userId);

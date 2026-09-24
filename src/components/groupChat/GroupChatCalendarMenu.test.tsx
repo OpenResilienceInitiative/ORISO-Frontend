@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -158,6 +159,44 @@ describe('GroupChatCalendarMenu', () => {
 			expect(screen.queryByRole('alert')).toBeNull();
 		}
 	);
+
+	it('drops the result of a copy that a title edit made stale', async () => {
+		let settle: () => void = () => {};
+		Object.defineProperty(navigator, 'clipboard', {
+			configurable: true,
+			value: {
+				writeText: vi.fn(
+					() => new Promise<void>((resolve) => (settle = resolve))
+				)
+			}
+		});
+		render(
+			<GroupChatCalendarMenu
+				start={new Date('2026-08-04T18:00:00Z')}
+				durationMinutes={60}
+				eventId={42}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Add to calendar' })
+		);
+		const titleInput = await screen.findByRole('textbox', {
+			name: 'Neutral calendar title'
+		});
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.calendar.copyGoogle'
+			})
+		);
+		fireEvent.change(titleInput, { target: { value: 'Edited later' } });
+		await act(async () => settle());
+		expect(screen.queryByRole('status')).toBeNull();
+		expect(
+			screen.getByRole('button', {
+				name: 'groupChat.calendar.copyGoogle'
+			})
+		).toHaveProperty('disabled', false);
+	});
 
 	it('shows failure rather than success when clipboard permission is denied', async () => {
 		Object.defineProperty(navigator, 'clipboard', {

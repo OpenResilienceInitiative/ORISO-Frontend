@@ -265,6 +265,20 @@ export const buildAudienceRoster = ({
  * consultant who is also supervising this conversation is a moderator here,
  * and the icon has to say the more restrictive thing.
  */
+/**
+ * Kind for a self-help member no roster entry matches. Only once counsellor
+ * identities are resolved may the rest count as clients; otherwise an
+ * unmatched counsellor could land in "all clients".
+ */
+export const unmatchedMemberKind = (
+	isSelfHelpGroup: boolean,
+	directoryState: 'loading' | 'ready' | 'error' | 'unavailable'
+): AudienceKind =>
+	isSelfHelpGroup &&
+	(directoryState === 'ready' || directoryState === 'unavailable')
+		? 'asker'
+		: 'person';
+
 export const classifyAudienceKind = (
 	value: string,
 	roster: AudienceRoster,

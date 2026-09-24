@@ -71,6 +71,7 @@ import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
@@ -2624,10 +2625,10 @@ export const MessageSubmitInterfaceComponent = ({
 						: classifyAudienceKind(
 								value,
 								roster,
-								isSelfHelpGroup &&
-									mentionDirectoryState !== 'loading'
-									? 'asker'
-									: 'person'
+								unmatchedMemberKind(
+									isSelfHelpGroup,
+									mentionDirectoryState
+								)
 							)
 				};
 			})

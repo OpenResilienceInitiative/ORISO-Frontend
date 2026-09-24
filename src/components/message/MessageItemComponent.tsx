@@ -2910,20 +2910,10 @@ export const MessageItemComponent = ({
 						)}
 				</div>
 			</div>
-			<MenuBackdrop
-				open={isActionMenuOpen || isVisibilityMenuOpen}
-				zIndex={8999}
-				onClose={() => {
-					const anchor = isActionMenuOpen
-						? actionMenuAnchor
-						: visibilityMenuAnchor;
-					setIsActionMenuOpen(false);
-					setIsVisibilityMenuOpen(false);
-					setActionMenuPosition(null);
-					setVisibilityMenuPosition(null);
-					if (anchor instanceof HTMLElement) anchor.focus();
-				}}
-			/>
+			{/* Mounted only while a menu is open: one per message would subscribe the whole timeline. */}
+			{(isActionMenuOpen || isVisibilityMenuOpen) && (
+				<MenuBackdrop open zIndex={8999} onClose={closeMessageMenus} />
+			)}
 			{isActionMenuOpen
 				? createPortal(
 						<ChatMenuDropdown

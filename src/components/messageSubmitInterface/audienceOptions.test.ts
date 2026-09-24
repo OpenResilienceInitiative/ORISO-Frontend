@@ -5,6 +5,7 @@ import {
 	audienceIdentityKeys,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
@@ -552,5 +553,19 @@ describe('createIdentityLookup', () => {
 
 		expect(lookup.size).toBe(0);
 		expect(lookup.get('')).toBeUndefined();
+	});
+});
+
+describe('unmatchedMemberKind', () => {
+	it('counts an unmatched self-help member as a client only once counsellors are known', () => {
+		expect(unmatchedMemberKind(true, 'ready')).toBe('asker');
+		// An asker has no directory; counsellors come from the session itself.
+		expect(unmatchedMemberKind(true, 'unavailable')).toBe('asker');
+	});
+
+	it('leaves members unclassified while counsellor identities are unresolved', () => {
+		expect(unmatchedMemberKind(true, 'loading')).toBe('person');
+		expect(unmatchedMemberKind(true, 'error')).toBe('person');
+		expect(unmatchedMemberKind(false, 'ready')).toBe('person');
 	});
 });
