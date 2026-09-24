@@ -7,6 +7,9 @@ interface AnimalAvatarProps {
 	size?: number;
 }
 
+/** Share of the avatar's diameter the (tightly cropped) artwork occupies. */
+const ARTWORK_FRACTION = 0.64;
+
 /**
  * Circular generated avatar. The SVG itself is loaded on demand and recolored
  * by the shared anonymous-name engine so light and dark backgrounds stay legible.
@@ -20,8 +23,12 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	const minPadding = size >= 60 ? 8 : 2;
 	// The SVGs are cropped to their artwork (no built-in margin), so this
 	// padding alone sets how much of the circle the animal fills: ~64%, large
-	// and even across the set, yet clear of the rim.
-	const padding = Math.max(minPadding, Math.round(size * 0.16));
+	// and even across the set, yet clear of the rim. The border is subtracted
+	// first, or small ringed avatars (24px in UserAvatar) shrink to ~50%.
+	const padding = Math.max(
+		minPadding,
+		Math.round((size * (1 - ARTWORK_FRACTION) - borderWidth * 2) / 2)
+	);
 	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
 
 	useEffect(() => {
