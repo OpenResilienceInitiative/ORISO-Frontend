@@ -1,6 +1,13 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
+import {
+	expectCaptionClear,
+	expectHandsVisible,
+	expectOverdueClockOnOneRow,
+	handContrast
+} from './waitingClockStoryChecks';
+import { computeOrisoPalette } from '../../../utils/theme/orisoScheme';
 import { phone375Globals } from '../../message/messageStoryShell';
 
 const WELCOME =
@@ -94,6 +101,151 @@ export const Overdue4b: Story = {
 		plannedStart: new Date(Date.now() - 252 * 1000),
 		welcomeText: WELCOME,
 		rules: RULES
+	}
+};
+
+/**
+ * #1499. Past 99 minutes the minutes group grows a third digit — it used to
+ * draw "99" while the timer label said the truth. The extra digit is paid for
+ * with a smaller mini-clock, never with a second row: the row sits in a flip
+ * card that is exactly one group tall, so anything that wraps lands on the
+ * caption below it.
+ */
+export const Overdue3Digits: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const Overdue3DigitsMobile: Story = {
+	args: {
+		...Overdue3Digits.args,
+		labelsOutside: true,
+		hideMotionToggle: true,
+		gap: 12
+	},
+	globals: phone375Globals,
+	parameters: { phoneFrame: true },
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+/**
+ * The clock under other Träger brands (#1499). Hands and "+" are the brand
+ * colour: `--oriso-primary-text`, falling back to `--m3-primary`.
+ *
+ * `--oriso-primary-text` comes from #1528, which is not on this branch. The
+ * light-brand stories set the value #1528 computes for #b4ddee (#416977), so
+ * they show the clock as it will look once both are merged. The `Fallback`
+ * story leaves it out on purpose: that is the state if #1529 ships first.
+ */
+const TRAEGER_2_SEED = '#b4ddee';
+/** What #1528's `computeOrisoPalette` returns as `--oriso-primary-text` for #b4ddee. */
+const TRAEGER_2_PRIMARY_TEXT = '#416977';
+
+const Brand = ({
+	seed,
+	primaryText,
+	children
+}: {
+	seed: string;
+	primaryText?: string;
+	children: React.ReactNode;
+}) => {
+	const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
+	const scoped: Record<string, string> = { ...tokens };
+	if (primaryText) {
+		scoped['--oriso-primary-text'] = primaryText;
+	}
+	return <div style={scoped as React.CSSProperties}>{children}</div>;
+};
+
+const lightBrand = (Story: React.ComponentType) => (
+	<Brand seed={TRAEGER_2_SEED} primaryText={TRAEGER_2_PRIMARY_TEXT}>
+		<Story />
+	</Brand>
+);
+
+export const LightBrandOverdue: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	decorators: [lightBrand],
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const LightBrandFuture: Story = {
+	args: {
+		plannedStart: new Date(
+			Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
+		),
+		welcomeText: WELCOME,
+		rules: RULES
+	},
+	decorators: [lightBrand],
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+/**
+ * The honest counter-case: #b4ddee without `--oriso-primary-text`, i.e. this
+ * PR on `dev` before #1528 lands. The hands fall back to the pastel primary
+ * and read at about 1.1:1 — the layout still holds, the colour does not.
+ * The play function pins that number so nobody mistakes it for a pass.
+ */
+export const LightBrandOverdueFallback: Story = {
+	args: LightBrandOverdue.args,
+	decorators: [
+		(Story) => (
+			<Brand seed={TRAEGER_2_SEED}>
+				<Story />
+			</Brand>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		const ratio = handContrast(canvasElement);
+		if (ratio >= 3) {
+			throw new Error(
+				`fallback reached ${ratio.toFixed(2)}:1 — update this story, the case it documents is gone`
+			);
+		}
+	}
+};
+
+/** A dark brand other than red: the fallback alone is enough here. */
+export const GreenBrandOverdue: Story = {
+	args: LightBrandOverdue.args,
+	decorators: [
+		(Story) => (
+			<Brand seed="#2e7d32">
+				<Story />
+			</Brand>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
 	}
 };
 

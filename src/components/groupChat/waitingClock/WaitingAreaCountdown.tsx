@@ -8,7 +8,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
-import { twoDigits } from './waitingClockDigits';
+import { faceDigitCount, faceDigits } from './waitingClockDigits';
 import './waitingAreaCountdown.styles';
 
 /** ORISO design palette for the waiting box, resolved through the M3 tokens. */
@@ -16,6 +16,11 @@ const RED = 'var(--m3-primary-container, #cc1e1c)';
 const DARK = 'var(--m3-secondary, #374151)';
 const MUTED = 'var(--m3-on-surface-variant, #444748)';
 const INK = 'var(--m3-on-surface, #1a1c1e)';
+/**
+ * The pale brand tint the overdue clock faces carry — kept in step with
+ * `$clock-face-tint-top` in waitingAreaCountdown.styles.scss (#1499).
+ */
+const TINT = 'var(--m3-primary-fixed, #ffdad5)';
 const PINK = 'var(--m3-primary-fixed-dim, #ffb4aa)';
 
 /** Discomfort grows one emoji per waiting minute (design: emojiStepSec 60). */
@@ -87,7 +92,6 @@ const clockGeometry = (size: number, tight: boolean, compact = false) => {
 		: Math.max(10, Math.min(13, Math.round(size * 0.27)));
 	const labelH = labelFont + (compact ? 2 : 8);
 	const digitW = size * 4 + cellGap * 3;
-	const groupW = 2 * digitW + digitGap;
 	const groupH = size * 6 + cellGap * 5 + labelH;
 	return {
 		cellGap,
@@ -96,40 +100,96 @@ const clockGeometry = (size: number, tight: boolean, compact = false) => {
 		labelFont,
 		labelH,
 		digitW,
-		groupW,
 		groupH
 	};
 };
 
+type ClockGeometry = ReturnType<typeof clockGeometry>;
+
 /**
- * Width the overdue "+" and the flex gaps around it take from the two groups.
- * The phone "+" (34 px, weight 300) renders 22 px wide, not 20; budgeting 20
- * let the fit land exactly on the column width, sub-pixel rounding wrapped the
- * seconds group onto a second row and it painted over the caption below the
- * fixed-height card (#1499, 390 px). 24 px plus 2 px slack keeps one row.
+ * Width of one number group. It is not a constant of the geometry: a group
+ * showing 140 minutes is three digit cells wide, one showing 7 is two (#1499).
+ * Everything that reserves room for a group has to ask for its digit count,
+ * otherwise the budget and the rendered row disagree — which is exactly how
+ * the seconds group ended up on a second row.
  */
+export const groupWidth = (geometry: ClockGeometry, digits: number) =>
+	digits * geometry.digitW + (digits - 1) * geometry.digitGap;
+
+/**
+ * The column the overdue "+" occupies, pinned in `waitingAreaCountdown.styles`
+ * as a hard `width` on `.waitingClock__plus`.
+ *
+ * It used to be a guess at how wide the glyph renders, and the guess was wrong
+ * in both directions: the 34 px phone "+" measures 22 px (#1499 round 1, fixed
+ * for 390) and the 64 px desktop one measures 41.8 px against a 28 px budget.
+ * At 1440 that put the row at 809.8 px inside an 800 px column, the seconds
+ * group wrapped and painted over the caption below the fixed-height flip card.
+ * Pinning the box instead of measuring the glyph makes the two agree by
+ * construction, in any font.
+ */
+export const PLUS_BOX = { compact: 24, wide: 44 };
+const PLUS_GAP = { compact: 10, wide: 28 };
+
+/** Width the "+" and the flex gaps around it take from the number groups. */
 const overdueSignWidth = (compact: boolean) =>
-	compact ? 24 + 2 * 10 + 2 : 28 + 2 * 28;
+	compact
+		? PLUS_BOX.compact + 2 * PLUS_GAP.compact
+		: PLUS_BOX.wide + 2 * PLUS_GAP.wide;
+
+/** What the layout has to fit into: how the clock is drawn and what it shows. */
+export interface ClockShape {
+	/** The counting-up state: "+", minutes, seconds on one row. */
+	overdue: boolean;
+	/** One continuous lattice instead of a little air between the groups. */
+	tight: boolean;
+	/** Phone geometry (below `$fromMedium`). */
+	compact: boolean;
+	/** Digit count of each rendered group, left to right. */
+	digits: number[];
+}
+
+/**
+ * The width the clock really occupies at mini-clock diameter `size`.
+ *
+ * Single source of truth: `fitClockSize` searches with it, and the layout
+ * tests assert against it. The wrap in #1499 was exactly the gap between a
+ * budget that lived here and the pixels the browser actually laid out.
+ */
+export const clockRowWidth = (
+	size: number,
+	{ overdue, tight, compact, digits }: ClockShape
+) => {
+	const g = clockGeometry(size, tight, compact);
+	return overdue
+		? digits.reduce((sum, n) => sum + groupWidth(g, n), 0) +
+				overdueSignWidth(compact)
+		: // The future 2x2 grid sizes both of its columns by the widest group,
+			// because `grid-template-columns: repeat(2, auto)` does the same.
+			2 * groupWidth(g, Math.max(...digits)) + g.groupGap;
+};
+
+/** The height the clock occupies at mini-clock diameter `size`. */
+export const clockRowHeight = (size: number, shape: ClockShape) => {
+	const g = clockGeometry(size, shape.tight, shape.compact);
+	return shape.overdue ? g.groupH : 2 * g.groupH + g.groupGap;
+};
 
 /**
  * The largest mini-clock that still lets the whole clock fit the given box.
  * Walks down from the maximum; the first size that fits wins. Width alone
  * decides when no height is given.
  */
-const fitClockSize = (
+export const fitClockSize = (
 	width: number,
 	height: number | undefined,
-	overdue: boolean,
-	tight: boolean,
-	compact: boolean
+	shape: ClockShape
 ) => {
 	for (let size = FIT_MAX_SIZE; size >= FIT_MIN_SIZE; size--) {
-		const g = clockGeometry(size, tight, compact);
-		const w = overdue
-			? 2 * g.groupW + overdueSignWidth(compact)
-			: 2 * g.groupW + g.groupGap;
-		const h = overdue ? g.groupH : 2 * g.groupH + g.groupGap;
-		if (w <= width && (height === undefined || h <= height)) {
+		if (
+			clockRowWidth(size, shape) <= width &&
+			(height === undefined || clockRowHeight(size, shape) <= height)
+		) {
 			return size;
 		}
 	}
@@ -371,10 +431,13 @@ export const WaitingAreaCountdown = ({
 	const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(
 		null
 	);
-	// Measured for `clockSize="fit"` — and on a phone also for a fixed
-	// `clockSize`, where it is only ever used to clamp the given number down to
-	// what the column can hold. A hard-coded 30 px mini-clock is 522 px of
-	// digits, which no 375 pt screen has.
+	// Measured for `clockSize="fit"`, and for a fixed `clockSize` too, where it
+	// only ever clamps the given number down to what the column can hold. A
+	// hard-coded 30 px mini-clock is 522 px of digits, which no 375 pt screen
+	// has — and 678 px once the minutes group needs a third digit, which the
+	// counsellor's 768 px waiting box does not have either (#1499). The clamp
+	// used to be a phone-only rule; a fixed number is never right for every
+	// content, not just for every screen.
 	React.useEffect(() => {
 		if (!rootRef.current) {
 			return undefined;
@@ -399,30 +462,6 @@ export const WaitingAreaCountdown = ({
 	const remaining = (plannedStart.getTime() - tick) / 1000;
 	const isOverdue = remaining <= 0;
 	const tight = spacing === 'tight';
-	const size =
-		clockSize === 'fit'
-			? measuredWidth === null
-				? CLOCK_SIZE
-				: fitClockSize(
-						measuredWidth,
-						fitHeight,
-						isOverdue,
-						tight,
-						compact
-					)
-			: compact && measuredWidth !== null
-				? Math.min(
-						clockSize,
-						fitClockSize(
-							measuredWidth,
-							undefined,
-							isOverdue,
-							tight,
-							compact
-						)
-					)
-				: clockSize;
-	const geo = clockGeometry(size, tight, compact);
 	const rem = Math.max(0, remaining);
 	const d = Math.floor(rem / 86400);
 	const h = Math.floor(rem / 3600) % 24;
@@ -432,6 +471,31 @@ export const WaitingAreaCountdown = ({
 	// Total elapsed minutes — an hour-late chat must read 60+, never wrap to 0.
 	const oM = Math.floor(elapsed / 60);
 	const oS = Math.floor(elapsed) % 60;
+	/* The numbers come before the size, not after it: how wide the clock is
+	   depends on how many digit cells the values need, and only the values
+	   know that. Hours, minutes and seconds are always two — days and overdue
+	   minutes are the two that can reach three (#1499). */
+	const faceWidths = isOverdue
+		? [faceDigitCount(oM), faceDigitCount(oS)]
+		: [faceDigitCount(d), 2];
+	const shape: ClockShape = {
+		overdue: isOverdue,
+		tight,
+		compact,
+		digits: faceWidths
+	};
+	const size =
+		clockSize === 'fit'
+			? measuredWidth === null
+				? CLOCK_SIZE
+				: fitClockSize(measuredWidth, fitHeight, shape)
+			: measuredWidth !== null
+				? Math.min(
+						clockSize,
+						fitClockSize(measuredWidth, undefined, shape)
+					)
+				: clockSize;
+	const geo = clockGeometry(size, tight, compact);
 	const overdueEmoji =
 		OVERDUE_EMOJIS[
 			Math.min(
@@ -448,19 +512,24 @@ export const WaitingAreaCountdown = ({
 			return undefined;
 		}
 		const t = window.setInterval(() => {
-			setPop((current) =>
-				current
-					? null
-					: {
-							group: Math.random() < 0.5 ? 'om' : 'os',
-							digit: Math.floor(Math.random() * 2),
-							cell: Math.floor(Math.random() * 24),
-							emoji: overdueEmoji
-						}
-			);
+			setPop((current) => {
+				if (current) {
+					return null;
+				}
+				const group = Math.random() < 0.5 ? 'om' : 'os';
+				// Three-digit groups have a third cell to pop in, too.
+				const cells = group === 'om' ? faceWidths[0] : faceWidths[1];
+				return {
+					group,
+					digit: Math.floor(Math.random() * cells),
+					cell: Math.floor(Math.random() * 24),
+					emoji: overdueEmoji
+				};
+			});
 		}, POP_INTERVAL_MS);
 		return () => window.clearInterval(t);
-	}, [isOverdue, motionless, overdueEmoji]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOverdue, motionless, overdueEmoji, faceWidths[0], faceWidths[1]]);
 
 	const greetingLabel = tr('greetingLabel', 'Begrüßung deiner Beratung');
 
@@ -633,12 +702,18 @@ export const WaitingAreaCountdown = ({
 
 	const overdueCaption = isOverdue && (
 		<div
+			// The clock must never be drawn over this line; the class is how
+			// the layout stories find it in any language (#1499).
+			className="waitingClock__overdueCaption"
 			style={{
 				alignSelf: 'center',
 				display: 'flex',
 				alignItems: 'center',
 				gap: 10,
-				background: '#fdeded',
+				// The same pale brand tint the overdue mini-clocks carry, so
+				// the note belongs to the clock in every Träger theme instead
+				// of staying Caritas pink under a blue one (#1499).
+				background: TINT,
 				borderRadius: 16,
 				padding: '10px 18px',
 				fontSize: 13,
@@ -683,12 +758,15 @@ export const WaitingAreaCountdown = ({
 			<div
 				key={unit.key}
 				style={{
-					width: geo.groupW,
+					width: groupWidth(geo, faceDigitCount(unit.value)),
 					height: geo.groupH,
 					display: 'flex',
 					flexDirection: 'column',
 					alignItems: 'center',
-					justifyContent: 'center'
+					justifyContent: 'center',
+					// The fit already reserved this width; letting the flex row
+					// shrink it would squash the lattice instead (#1499).
+					flexShrink: 0
 				}}
 			>
 				{options.labelAbove && label}
@@ -906,7 +984,7 @@ export const WaitingAreaCountdown = ({
 			}`}
 		>
 			<span className="waitingClock__stillValue">
-				{twoDigits(unit.value).join('')}
+				{faceDigits(unit.value).join('')}
 			</span>
 			<span className="waitingClock__stillLabel">{unit.label}</span>
 		</div>
