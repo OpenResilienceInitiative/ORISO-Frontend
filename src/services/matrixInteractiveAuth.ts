@@ -10,25 +10,49 @@ const deviceSigningAuthByClient = new WeakMap<
 	UIAuthCallback<void>
 >();
 
-/** Password UIA for the device-signing upload, matching Matrix's two-step flow. */
-export const createPasswordUiAuth = (
-	userId: string,
-	password: string
-): UIAuthCallback<void> =>
+/** Resolves the account's current Matrix password; each call may rotate it server-side. */
+export type UiaPasswordSource = () => Promise<string>;
+
+/**
+ * Password UIA for the device-signing upload, matching Matrix's two-step flow. With `retry`, a
+ * password Synapse rejects inside the UIA session is replaced once by a fresh one: another tab or
+ * device may have rotated it between fetching and submitting.
+ */
+export const createPasswordUiAuth =
+	(
+		userId: string,
+		password: string | UiaPasswordSource,
+		retry?: UiaPasswordSource
+	): UIAuthCallback<void> =>
 	async (makeRequest) => {
+		let session: string | undefined;
 		try {
 			return await makeRequest(null);
 		} catch (error) {
-			const session = (error as MatrixUiAuthError)?.data?.session;
+			session = (error as MatrixUiAuthError)?.data?.session;
 			if (!session) {
 				throw error;
 			}
-			return makeRequest({
+		}
+		const submit = (secret: string) =>
+			makeRequest({
 				type: 'm.login.password',
 				identifier: { type: 'm.id.user', user: userId },
-				password,
+				password: secret,
 				session
 			});
+		const source =
+			retry ?? (typeof password === 'string' ? undefined : password);
+		try {
+			// Resolved only now: a password captured earlier is stale once any other sign-in rotated it.
+			return await submit(
+				typeof password === 'string' ? password : await password()
+			);
+		} catch (error) {
+			if (!source || !(error as MatrixUiAuthError)?.data?.session) {
+				throw error;
+			}
+			return submit(await source());
 		}
 	};
 
@@ -42,5 +66,38 @@ export const registerDeviceSigningAuth = (
 
 export const getDeviceSigningAuth = (
 	client: MatrixClient
-): UIAuthCallback<void> | undefined =>
-	deviceSigningAuthByClient.get(client);
+): UIAuthCallback<void> | undefined => deviceSigningAuthByClient.get(client);
+
+const deviceSigningPasswordByClient = new WeakMap<
+	MatrixClient,
+	{ userId: string; currentPassword: UiaPasswordSource }
+>();
+
+/** Device-signing UIA that asks for the account's current password when the server wants it. */
+export const registerDeviceSigningPassword = (
+	client: MatrixClient,
+	userId: string,
+	currentPassword: UiaPasswordSource
+): void => {
+	deviceSigningPasswordByClient.set(client, { userId, currentPassword });
+	registerDeviceSigningAuth(
+		client,
+		createPasswordUiAuth(userId, currentPassword, currentPassword)
+	);
+};
+
+/**
+ * Device-signing UIA with the password already in hand, for flows that destroy state before they
+ * authenticate: if no current password can be had, they must fail before touching anything.
+ */
+export const prepareDeviceSigningAuth = async (
+	client: MatrixClient
+): Promise<UIAuthCallback<void> | undefined> => {
+	const source = deviceSigningPasswordByClient.get(client);
+	if (!source) return getDeviceSigningAuth(client);
+	return createPasswordUiAuth(
+		source.userId,
+		await source.currentPassword(),
+		source.currentPassword
+	);
+};

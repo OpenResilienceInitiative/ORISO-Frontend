@@ -4,6 +4,7 @@ import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
 	ActiveSessionContext,
+	AUTHORITIES,
 	E2EEContext,
 	UserDataContext,
 	type ExtendedSessionInterface
@@ -43,25 +44,48 @@ import {
 } from './messageStoryShell';
 import './message.styles.scss';
 
+/** The shape of a consultant-list entry the bubble reads names from. */
+type ConsultantListEntry = {
+	value?: string;
+	username?: string;
+	rawUsername?: string;
+	consultantDisplayName?: string;
+	firstName?: string;
+	lastName?: string;
+};
+
 type MessageItemStoryParameters = {
 	activeSession?: ExtendedSessionInterface;
 	userData?: UserDataInterface;
+	/**
+	 * Entries for `ConsultantListContext`. This is the list the bubble used to
+	 * pull a counsellor's legal name out of (#1486), so a story has to be able
+	 * to seed it with one.
+	 */
+	consultantList?: ConsultantListEntry[];
 };
 
 function MessageItemContextDecorator({
 	activeSession,
 	userData,
+	consultantList,
 	children,
 	compact = false
 }: {
 	activeSession: ExtendedSessionInterface;
 	userData: UserDataInterface;
+	consultantList?: ConsultantListEntry[];
 	children: React.ReactNode;
 	compact?: boolean;
 }) {
+	const consultantListContextValue = consultantList
+		? { ...mockConsultantListContext(), consultantList }
+		: mockConsultantListContext();
 	return (
 		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
-			<ConsultantListContext.Provider value={mockConsultantListContext()}>
+			<ConsultantListContext.Provider
+				value={consultantListContextValue as never}
+			>
 				<E2EEContext.Provider value={mockE2EEContext()}>
 					<UserDataContext.Provider
 						value={{
@@ -199,6 +223,9 @@ const meta = {
 				userData={
 					(parameters as MessageItemStoryParameters).userData ??
 					mockUserData()
+				}
+				consultantList={
+					(parameters as MessageItemStoryParameters).consultantList
 				}
 				compact={Boolean(
 					(parameters as { compactShell?: boolean }).compactShell
@@ -1428,5 +1455,193 @@ export const SupervisionNoticeMobile390: Story = {
 				shell.getBoundingClientRect().right + 1
 			);
 		});
+	}
+};
+
+// ---------------------------------------------------------------------------
+// Identity: the name a counsellor is published under (#1486)
+// ---------------------------------------------------------------------------
+
+/** A counsellor whose legal name is on file and whose public name is not. */
+const consultantWithRealName: ConsultantListEntry[] = [
+	{
+		value: 'consultant-storybook',
+		username: 'karina.p@oriso.invalid',
+		rawUsername: 'karina.p',
+		consultantDisplayName: 'Karina P',
+		firstName: 'Karina',
+		lastName: 'P'
+	}
+];
+
+/**
+ * The leak this issue is about, at the surface an advice seeker reads.
+ *
+ * An anonymous Live Chat guest is granted `ANONYMOUS_DEFAULT`, not
+ * `ASKER_DEFAULT`, so the asker-facing name resolution never ran for them and
+ * the bubble fell through to the consultant list — printing the counsellor's
+ * legal name ("Karina P") above the message, overriding the public display
+ * name the session carries. ADR-002 §2: the published identity is the display
+ * name. See OpenResilienceInitiative/ORISO-Frontend#1486.
+ */
+export const AnonymousGuestSeesDisplayName: Story = {
+	name: 'Identity — anonymous guest sees the display name, never the real name',
+	parameters: {
+		activeSession: mockActiveSession1on1({
+			consultant: {
+				consultantId: 'consultant-storybook',
+				id: 'consultant-storybook',
+				username: 'karina.p@oriso.invalid',
+				displayName: 'sanftes Alpaka Kim',
+				firstName: 'Karina',
+				lastName: 'P',
+				absent: false
+			} as never
+		}),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: consultantWithRealName,
+		docs: {
+			description: {
+				story: 'Display name and real name are both available to the client. The bubble must show "sanftes Alpaka Kim" — the counsellor\'s legal name must not appear anywhere in the thread.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			// The Matrix member event carries the legal name too — a third
+			// identity layer that must not win either.
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Danke, dass du dich meldest. Lass uns die nächsten Schritte sortieren.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getByText('sanftes Alpaka Kim')
+			).toBeInTheDocument();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+	}
+};
+
+/**
+ * Same counsellor with no public display name: the bubble falls back to the
+ * User-ID — the identity anchor the chat header and the session list already
+ * show — and still not to the legal name (#1486).
+ */
+export const AnonymousGuestWithoutDisplayNameSeesTheAnchor: Story = {
+	name: 'Identity — no display name falls back to the User-ID, not the real name',
+	parameters: {
+		activeSession: mockActiveSession1on1({
+			consultant: {
+				consultantId: 'consultant-storybook',
+				id: 'consultant-storybook',
+				username: 'karina.p@oriso.invalid',
+				displayName: '',
+				firstName: 'Karina',
+				lastName: 'P',
+				absent: false
+			} as never
+		}),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: consultantWithRealName,
+		docs: {
+			description: {
+				story: 'With the public display name cleared, the counsellor is named by their User-ID. The legal name stays out of the thread entirely.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: undefined,
+			username: 'karina.p@oriso.invalid',
+			message: 'Ich bin da. Erzähl mir, was gerade am dringendsten ist.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+		await expect(canvasElement.textContent).toContain('karina p');
+	}
+};
+
+/**
+ * The counsellor-internal view of the same rule (#1486).
+ *
+ * The bubble used to reach into `ConsultantListContext` for a colleague's
+ * `firstName`/`lastName`, while the chat header and the session list resolve
+ * the same colleague as display name → User-ID. One person, two names, one
+ * conversation. The bubble now passes no name parts at all, so all three
+ * surfaces land on the same string.
+ */
+export const InternalGroupColleagueName: Story = {
+	name: 'Identity — colleague in an internal group chat is named like the header',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		consultantList: [
+			{
+				value: 'consultant-angela',
+				username: 'angela.k@oriso.invalid',
+				rawUsername: 'angela.k',
+				// No public display name on file — the leak used to fill the
+				// gap with the legal name instead of the User-ID.
+				firstName: 'Angela',
+				lastName: 'K'
+			}
+		],
+		docs: {
+			description: {
+				story: 'A colleague with a legal name on file and no published display name. The bubble names them by their User-ID, exactly as the chat header and the session list do.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: undefined,
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Ich übernehme die Fallübergabe und melde mich nach der Supervision.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
+		});
+		await expect(canvasElement.textContent).not.toContain('Angela K');
+		await expect(canvasElement.textContent).toContain('angela k');
 	}
 };

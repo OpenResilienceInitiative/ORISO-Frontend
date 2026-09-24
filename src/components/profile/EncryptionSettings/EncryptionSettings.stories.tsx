@@ -44,6 +44,7 @@ const buildFakeClient = (
 		...overrides
 	};
 	const client = {
+		clientRunning: true,
 		getCrypto: () => crypto,
 		getUserId: () => '@encryption-story:example.test',
 		secretStorage: { checkKey: async () => true }

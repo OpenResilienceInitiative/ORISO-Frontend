@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
 	AUTHORITIES,
 	ConsultingTypesContext,
@@ -90,14 +90,28 @@ export const storybookSettings = {
 
 export function NavigationStoryProviders({
 	role,
+	liveChatViaSidebar = true,
 	children
 }: {
 	role: 'consultant' | 'asker';
+	/**
+	 * The consultant's profile preference "Live Chat über Menü Leiste
+	 * aktivieren" (UserService `liveChatViaSidebar`). Defaults to on so the
+	 * rail stories keep showing the Live Chat toggle.
+	 */
+	liveChatViaSidebar?: boolean;
 	children: React.ReactNode;
 }) {
-	const userData = role === 'consultant' ? consultantUserData : askerUserData;
+	const [userData, setUserData] = useState(() =>
+		role === 'consultant'
+			? { ...consultantUserData, liveChatViaSidebar }
+			: askerUserData
+	);
 
-	/* Set before first child paint so useLiveChatViaSidebar() reads correctly. */
+	/*
+	 * Cleared before first child paint: the preference lives in the profile
+	 * now, and a stale browser key would trigger the one-time migration.
+	 */
 	const previousLiveChatKeys = useRef<
 		| {
 				availability: string | null;
@@ -114,7 +128,7 @@ export function NavigationStoryProviders({
 				viaSidebar: localStorage.getItem('oriso_liveChatViaSidebar')
 			};
 			localStorage.removeItem('oriso_liveChatAvailability');
-			localStorage.setItem('oriso_liveChatViaSidebar', '1');
+			localStorage.removeItem('oriso_liveChatViaSidebar');
 		} catch {
 			previousLiveChatKeys.current = {
 				availability: null,
@@ -156,7 +170,7 @@ export function NavigationStoryProviders({
 		<UserDataContext.Provider
 			value={{
 				userData,
-				setUserData: () => {},
+				setUserData,
 				reloadUserData: async () => userData
 			}}
 		>

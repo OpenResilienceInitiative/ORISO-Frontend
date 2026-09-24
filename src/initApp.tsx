@@ -15,6 +15,7 @@ import { createAppTheme } from './resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
 import { syncLocalTenantCookie } from './utils/localTenantCookie';
 import { purgeLegacyDraftStorage } from './services/clientStorageHygiene';
+import { purgeParkedRecoveryKeys } from './services/pendingRecoveryKeyStore';
 import { Navigate } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
@@ -73,6 +74,8 @@ const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
 // plaintext under `oriso.chatDrafts.v1`. Drafts have been server-side and
 // room-key encrypted for a while; this drops the leftovers on first load.
 purgeLegacyDraftStorage();
+// Parked recovery keys the login password protects expire after a week.
+purgeParkedRecoveryKeys('expired');
 
 // React 19 uses createRoot API
 syncLocalTenantCookie();

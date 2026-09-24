@@ -17,7 +17,8 @@ import {
 } from './matrixPasswordRecoveryService';
 import {
 	RecoverySetupBusyError,
-	getPendingRecoveryKey,
+	loadPendingRecoveryKey,
+	markPendingRecoveryKeyPasswordProtected,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
 } from './pendingRecoveryKeyStore';
@@ -45,13 +46,17 @@ export const initializeChatRecovery = async (
 					password
 				);
 				if (recovery.kind !== 'not-enrolled') {
+					if (recovery.kind === 'ready') {
+						await loadPendingRecoveryKey(userId);
+						markPendingRecoveryKeyPasswordProtected(userId);
+					}
 					setRecoveryRuntimeStatus(userId, recovery.kind);
 					return;
 				}
 			}
 			// Re-read server state inside the lock; another tab may have completed it.
 			let status = await getEncryptionStatus(client);
-			let recoveryKey = getPendingRecoveryKey(userId);
+			let recoveryKey = await loadPendingRecoveryKey(userId);
 			if (cancelled()) return;
 			if (
 				canBootstrapSilently(status) &&
@@ -90,6 +95,7 @@ export const initializeChatRecovery = async (
 					recoveryKey,
 					policy.revision
 				);
+				markPendingRecoveryKeyPasswordProtected(userId);
 				setRecoveryRuntimeStatus(userId, 'ready');
 			} else {
 				setRecoveryRuntimeStatus(
@@ -120,16 +126,23 @@ export const startAuthenticatedChatRecovery = (
 	client: MatrixClient,
 	account: Parameters<typeof getChatRecoveryPolicy>[0],
 	claimedClients: WeakSet<object>,
-	cancelled: () => boolean = () => false
+	cancelled: () => boolean = () => false,
+	holdTokenRefresh: <T>(operation: () => Promise<T>) => Promise<T> = (
+		operation
+	) => operation()
 ): Promise<void> | undefined => {
 	if (claimedClients.has(client) || !client.getUserId() || cancelled())
 		return;
 	const policy = getChatRecoveryPolicy(account);
+	// Claimed synchronously, before the hold may wait: a second sync must not start it again.
 	claimedClients.add(client);
-	return initializeChatRecovery(
-		client,
-		policy,
-		consumeLoginRecoveryPassword(client.getUserId()!),
-		cancelled
-	);
+	// Held: a token refresh would replace the client while keys are imported or bootstrapped.
+	return holdTokenRefresh(async () => {
+		// Replaced by a refresh while waiting: the replacement client runs its own recovery.
+		if (!client.clientRunning) return;
+		const password = await consumeLoginRecoveryPassword(
+			client.getUserId()!
+		);
+		await initializeChatRecovery(client, policy, password, cancelled);
+	});
 };
