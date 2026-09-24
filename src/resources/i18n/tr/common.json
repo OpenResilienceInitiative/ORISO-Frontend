@@ -884,7 +884,7 @@
 				"hintMessage": "İpucu",
 				"repetition": {
 					"label": "Tekrarlar",
-					"single": "benzersiz",
+					"single": "bir kez",
 					"weekly": "haftalık"
 				},
 				"startDate": "Tarih",
@@ -1118,8 +1118,7 @@
 				"decrease": "{{field}} azalt",
 				"openList": "{{field}} seç",
 				"durationValue": "{{count}} sa",
-				"repeatValue_one": "{{count}} kez",
-				"repeatValue_other": "{{count}} kez"
+				"repeatDates": "{{count}} oturum"
 			},
 			"noModeratorAvailable": "Uygun kişi yok",
 			"moderatorHelp": "Yardım",

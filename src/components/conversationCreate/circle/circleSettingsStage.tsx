@@ -12,7 +12,10 @@ import { SessionsDataProvider } from '../../../globalState/provider/SessionsData
 import { InternalChatPerson } from '../internal/InternalChatCreateCard';
 import { BackPill } from '../BackPill';
 import { PanelHeader } from '../PanelHeader';
-import { CircleSettingsView } from './CircleSettingsView';
+import {
+	CircleSettingsPrefill,
+	CircleSettingsView
+} from './CircleSettingsView';
 import '../../app/navigation.styles.scss';
 import '../../app/authenticatedApp.styles.scss';
 import '../conversationCreate.styles.scss';
@@ -42,6 +45,8 @@ export type StageProps = {
 	layout: 'desktop' | 'mobile';
 	people: InternalChatPerson[];
 	activeLanguages: string[];
+	/** Extra prefill, e.g. a stored repeat count and interval. */
+	prefill?: Partial<CircleSettingsPrefill>;
 };
 
 const Rail = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
@@ -105,7 +110,12 @@ const ListColumnStandIn = () => (
 	</aside>
 );
 
-const CreateCard = ({ layout, people, activeLanguages }: StageProps) => {
+const CreateCard = ({
+	layout,
+	people,
+	activeLanguages,
+	prefill
+}: StageProps) => {
 	const { t } = useTranslation();
 	const compact = layout === 'mobile';
 	return (
@@ -122,7 +132,7 @@ const CreateCard = ({ layout, people, activeLanguages }: StageProps) => {
 					onAgencyChange={() => undefined}
 					activeLanguages={activeLanguages}
 					translationAvailable
-					prefill={{ topic: 'Sucht', modality: 'TEXT' }}
+					prefill={{ topic: 'Sucht', modality: 'TEXT', ...prefill }}
 					topicOptions={TOPICS}
 					people={people}
 					compact={compact}

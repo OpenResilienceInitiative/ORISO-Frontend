@@ -52,6 +52,8 @@ export interface CircleSettingsPrefill {
 	topic?: string;
 	startDate?: string;
 	startTime?: string;
+	/** Edit mode: the group's zone, which startDate/startTime are given in. */
+	timezone?: string;
 	duration?: number;
 	repeatCount?: number;
 	interval?: GroupChatSeriesFieldsValue['interval'];
@@ -209,7 +211,12 @@ export const CircleSettingsView = ({
 		);
 	}, [isEditMode, selectedAgency, storedDefaults, prefill, activeLanguages]);
 
-	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+	// An edit keeps the group's zone; otherwise its wall-clock time would be
+	// re-read in the editor's zone and the group would move.
+	const timezone =
+		(isEditMode && prefill?.timezone) ||
+		Intl.DateTimeFormat().resolvedOptions().timeZone ||
+		'UTC';
 
 	const isTopicValid = isGroupChatTopicLengthValid(topic);
 	const isReady =
@@ -305,7 +312,6 @@ export const CircleSettingsView = ({
 				label: language.toUpperCase()
 			}))}
 			valuesAreChosen={Boolean(prefill)}
-			isEditMode={isEditMode}
 		/>
 	);
 

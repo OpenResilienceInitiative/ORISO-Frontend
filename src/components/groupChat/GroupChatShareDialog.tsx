@@ -18,6 +18,7 @@ import {
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { copyTextToClipboard } from '../../utils/clipboardHelpers';
 import { GroupChatInterval, GroupChatModality } from './createChatHelpers';
+import { getGroupChatRepeatLabel } from './groupChatRepeatLabel';
 import './groupChatShareDialog.styles.scss';
 
 export interface GroupChatShareDetails {
@@ -176,15 +177,13 @@ export const GroupChatShareDialog = ({
 			key: 'repeats',
 			icon: <Repeat400Icon />,
 			label: translate('groupChat.shareDialog.repeats'),
-			value:
-				details.repeatCount > 1
-					? translate('groupChat.shareDialog.repeatValue', {
-							count: details.repeatCount,
-							interval: translate(
-								`groupChat.create.interval.options.${details.interval.toLowerCase()}`
-							)
-						})
-					: translate('groupChat.info.settings.repetition.single')
+			value: getGroupChatRepeatLabel(
+				{
+					repeatCount: details.repeatCount,
+					chatInterval: details.interval
+				},
+				translate
+			)
 		},
 		{
 			key: 'format',

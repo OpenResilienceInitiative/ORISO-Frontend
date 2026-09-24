@@ -9,11 +9,8 @@ import {
 	ChatFilledIcon,
 	Date400Icon,
 	Duration400Icon,
-	Interval400Icon,
-	IntervalFilledIcon,
 	Language400Icon,
 	Medium400Icon,
-	Repeat400Icon,
 	StartTime400Icon,
 	Video400Icon,
 	VideoFilledIcon
@@ -23,12 +20,12 @@ import { OrisoCalendar } from '../../form/OrisoCalendar';
 import { OrisoTimePicker } from '../../form/OrisoTimePicker';
 import {
 	durationSelectOptionsSet,
-	GroupChatInterval,
 	GroupChatModality
 } from '../../groupChat/createChatHelpers';
 import { GroupChatSeriesFieldsValue } from '../../groupChat/GroupChatSeriesFields';
 import { SplitButton } from '../../splitButton/SplitButton';
 import { RowMenu, RowMenuOption } from '../RowMenu';
+import { RepeatCountField } from './RepeatCountField';
 
 /**
  * Schedule rows of the Gesprächskreis settings screen (Figma 8482-30552,
@@ -36,26 +33,16 @@ import { RowMenu, RowMenuOption } from '../RowMenu';
  * segment opens the field's picker or option list, chosen values switch the
  * row to the tonal state, and the row that currently owns an open menu is
  * elevated. Time, duration and repetitions additionally carry the down/up
- * stepper pair from the design.
+ * stepper pair from the design. The repetition row is its own field,
+ * `RepeatCountField`: count and interval in one control.
  *
  * The value shape is `GroupChatSeriesFieldsValue`, unchanged, so
  * `buildGroupChatSeriesRequest` and its tests remain the submit seam.
  */
 
-const INTERVALS: GroupChatInterval[] = [
-	'DAILY',
-	'WEEKLY',
-	'BIWEEKLY',
-	'MONTHLY',
-	'QUARTERLY',
-	'YEARLY'
-];
-
 const MODALITIES: GroupChatModality[] = ['TEXT', 'AUDIO', 'VIDEO'];
 
 const TIME_STEP_MINUTES = 15;
-const MIN_REPEAT = 1;
-const MAX_REPEAT = 365;
 
 type OpenRow = 'date' | 'duration' | 'repeat' | 'medium' | 'language' | null;
 
@@ -84,12 +71,6 @@ interface ScheduleRowsProps {
 	 * author has actually settled each one (Figma 8470-29945).
 	 */
 	valuesAreChosen?: boolean;
-	/**
-	 * Editing an existing series: its stored interval is a real decision, so the
-	 * repetition row opens on the frequency rather than the count. A creation
-	 * prefill also sets `valuesAreChosen`, which is why this is its own flag.
-	 */
-	isEditMode?: boolean;
 }
 
 export const ScheduleRows = ({
@@ -98,23 +79,12 @@ export const ScheduleRows = ({
 	language,
 	onLanguageChange,
 	languageOptions,
-	valuesAreChosen = false,
-	isEditMode = false
+	valuesAreChosen = false
 }: ScheduleRowsProps) => {
 	const { t: translate } = useTranslation();
 	const [openRow, setOpenRow] = useState<OpenRow>(null);
-	/**
-	 * The repetition row carries two independent controls: the stepper sets a
-	 * number of dates, the menu sets a fixed frequency. The control the author
-	 * touched last owns the label, so choosing "Wöchentlich" no longer leaves
-	 * a stale "34 mal" on the button.
-	 */
-	const [repeatMode, setRepeatMode] = useState<'count' | 'interval'>(
-		isEditMode ? 'interval' : 'count'
-	);
 	const dateRef = useRef<HTMLDivElement | null>(null);
 	const durationRef = useRef<HTMLDivElement | null>(null);
-	const repeatRef = useRef<HTMLDivElement | null>(null);
 	const mediumRef = useRef<HTMLDivElement | null>(null);
 	const languageRef = useRef<HTMLDivElement | null>(null);
 
@@ -156,9 +126,9 @@ export const ScheduleRows = ({
 	const MediumRowIcon =
 		MEDIUM_ICONS[
 			resolvePrimaryMediumIcon(
-			isChosen('medium') ? value.modality : undefined,
-			isChosen('medium')
-		)
+				isChosen('medium') ? value.modality : undefined,
+				isChosen('medium')
+			)
 		];
 
 	const variantFor = (row: Exclude<OpenRow, null>, chosen: boolean) => {
@@ -196,14 +166,7 @@ export const ScheduleRows = ({
 		update('duration', values[nextIndex]);
 	};
 
-	const shiftRepeat = (step: number) =>
-		update(
-			'repeatCount',
-			Math.min(MAX_REPEAT, Math.max(MIN_REPEAT, value.repeatCount + step))
-		);
-
 	const durationLabel = translate('groupChat.circle.rows.durationLabel');
-	const repeatLabel = translate('groupChat.circle.rows.repeatLabel');
 	const timeLabel = translate('groupChat.circle.rows.timeLabel');
 
 	return (
@@ -333,70 +296,19 @@ export const ScheduleRows = ({
 				/>
 			)}
 
-			<SplitButton
-				ref={repeatRef}
-				fullWidth
-				icon={
-					!isChosen('repeat') ? (
-						<Interval400Icon />
-					) : repeatMode === 'interval' ? (
-						<IntervalFilledIcon />
-					) : (
-						<Repeat400Icon />
+			<RepeatCountField
+				repeatCount={value.repeatCount}
+				interval={value.interval}
+				onChange={(next) => onChange({ ...value, ...next })}
+				chosen={isChosen('repeat')}
+				onTouched={() => markTouched('repeat')}
+				open={openRow === 'repeat'}
+				onOpenChange={(open) =>
+					setOpenRow((current) =>
+						open ? 'repeat' : current === 'repeat' ? null : current
 					)
 				}
-				label={
-					!isChosen('repeat')
-						? repeatLabel
-						: repeatMode === 'interval'
-						? translate(
-								`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
-								value.interval
-							)
-						: translate('groupChat.circle.rows.repeatValue', {
-								count: value.repeatCount
-							})
-				}
-				variant={variantFor('repeat', isChosen('repeat'))}
-				open={openRow === 'repeat'}
-				onClick={() => toggle('repeat')}
-				onDecrement={() => {
-					setRepeatMode('count');
-					markTouched('repeat');
-					shiftRepeat(-1);
-				}}
-				onIncrement={() => {
-					setRepeatMode('count');
-					markTouched('repeat');
-					shiftRepeat(1);
-				}}
-				decrementLabel={translate('groupChat.circle.rows.decrease', {
-					field: repeatLabel
-				})}
-				incrementLabel={translate('groupChat.circle.rows.increase', {
-					field: repeatLabel
-				})}
 			/>
-			{openRow === 'repeat' && (
-				<RowMenu
-					options={INTERVALS.map((interval) => ({
-						value: interval,
-						label: translate(
-							`groupChat.create.interval.options.${interval.toLowerCase()}`,
-							interval
-						)
-					}))}
-					value={value.interval}
-					onSelect={(next) => {
-						update('interval', next as GroupChatInterval);
-						setRepeatMode('interval');
-						markTouched('repeat');
-						setOpenRow(null);
-					}}
-					anchorRef={repeatRef}
-					onClose={() => setOpenRow(null)}
-				/>
-			)}
 
 			<SplitButton
 				ref={mediumRef}

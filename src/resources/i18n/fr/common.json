@@ -1118,8 +1118,7 @@
 				"decrease": "Diminuer {{field}}",
 				"openList": "Choisir {{field}}",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} fois",
-				"repeatValue_other": "{{count}} fois"
+				"repeatDates": "{{count}} séances"
 			},
 			"noModeratorAvailable": "Aucune personne disponible",
 			"moderatorHelp": "Aide",
