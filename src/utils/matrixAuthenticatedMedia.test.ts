@@ -75,9 +75,9 @@ describe('getAuthenticatedMatrixMediaUrl', () => {
 	});
 
 	it('never produces a legacy media path', () => {
-		expect(getAuthenticatedMatrixMediaUrl('mxc://hs/media-1')).not.toContain(
-			'/_matrix/media/'
-		);
+		expect(
+			getAuthenticatedMatrixMediaUrl('mxc://hs/media-1')
+		).not.toContain('/_matrix/media/');
 	});
 
 	it('returns null for anything that is not homeserver media', () => {
