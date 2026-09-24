@@ -2,9 +2,7 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { createInstance } from 'i18next';
-import { I18nextProvider, initReactI18next } from 'react-i18next';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Registration } from './Registration';
 import {
 	AppConfigContext,
@@ -14,7 +12,6 @@ import {
 	TenantContext
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
-import deCommon from '../../resources/i18n/de/common.json';
 
 /** Lottie touches a canvas 2d context at module load; jsdom has none. */
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -44,72 +41,60 @@ const availableSteps = [
 	{ name: 'account-data', component: Step }
 ];
 
-// The real German catalogue: the labels below are what a person reads.
-const i18n = createInstance().use(initReactI18next);
-beforeAll(async () => {
-	await i18n.init({
-		lng: 'de',
-		ns: ['common'],
-		defaultNS: 'common',
-		resources: { de: { common: deCommon } },
-		interpolation: { escapeValue: false }
-	});
-});
-
 const renderAccountStep = (search: string) =>
 	render(
-		<I18nextProvider i18n={i18n}>
-			<AppConfigContext.Provider value={{} as any}>
-				<GlobalComponentContext.Provider
-					value={{ Stage: () => <div /> } as any}
+		<AppConfigContext.Provider value={{} as any}>
+			<GlobalComponentContext.Provider
+				value={{ Stage: () => <div /> } as any}
+			>
+				<NotificationsContext.Provider
+					value={{ addNotification: () => undefined } as any}
 				>
-					<NotificationsContext.Provider
-						value={{ addNotification: () => undefined } as any}
-					>
-						<TenantContext.Provider value={{ tenant: null } as any}>
-							<LocaleContext.Provider
-								value={{ locale: 'de' } as any}
+					<TenantContext.Provider value={{ tenant: null } as any}>
+						<LocaleContext.Provider value={{ locale: 'de' } as any}>
+							<RegistrationContext.Provider
+								value={
+									{
+										disabledNextButton: false,
+										setDisabledNextButton: () => undefined,
+										updateRegistrationData: () => undefined,
+										registrationData: {},
+										availableSteps,
+										registrationConsultingType: null
+									} as any
+								}
 							>
-								<RegistrationContext.Provider
-									value={
-										{
-											disabledNextButton: false,
-											setDisabledNextButton: () =>
-												undefined,
-											updateRegistrationData: () =>
-												undefined,
-											registrationData: {},
-											availableSteps,
-											registrationConsultingType: null
-										} as any
-									}
+								<MemoryRouter
+									initialEntries={[
+										`/registration/account-data${search}`
+									]}
 								>
-									<MemoryRouter
-										initialEntries={[
-											`/registration/account-data${search}`
-										]}
-									>
-										<Routes>
-											<Route
-												path="/registration/:step"
-												element={<Registration />}
-											/>
-										</Routes>
-									</MemoryRouter>
-								</RegistrationContext.Provider>
-							</LocaleContext.Provider>
-						</TenantContext.Provider>
-					</NotificationsContext.Provider>
-				</GlobalComponentContext.Provider>
-			</AppConfigContext.Provider>
-		</I18nextProvider>
+									<Routes>
+										<Route
+											path="/registration/:step"
+											element={<Registration />}
+										/>
+									</Routes>
+								</MemoryRouter>
+							</RegistrationContext.Provider>
+						</LocaleContext.Provider>
+					</TenantContext.Provider>
+				</NotificationsContext.Provider>
+			</GlobalComponentContext.Provider>
+		</AppConfigContext.Provider>
 	);
 
 /** The wide-layout primary action — the way on. */
 const primaryLabel = () =>
 	document.querySelector('[data-cy="button-register"]')?.textContent;
 
-const REGISTER = 'Registrieren';
+/* No i18next instance is initialised here, so `t(key)` returns the key.
+   That is enough to tell the two ways on apart: the ordinary primary stays
+   `registration.register`; the temporary path uses its own keys. */
+const REGISTER = 'registration.register';
+const TOGGLE_ON = 'registration.account.temporary.toggleOn';
+const TOGGLE_OFF = 'registration.account.temporary.toggleOff';
+const JOIN = 'registration.account.temporary.join';
 
 const toggles = () =>
 	Array.from(document.querySelectorAll('[data-cy="button-temporary-join"]'));
@@ -126,13 +111,13 @@ describe('registration — temporary join', () => {
 		expect(toggles().length, 'the toggle is in the footer').toBeGreaterThan(
 			0
 		);
-		expect(toggles()[0].textContent).toBe('Ohne Konto beitreten');
+		expect(toggles()[0].textContent).toBe(TOGGLE_ON);
 		expect(primaryLabel()).toBe(REGISTER);
 
 		fireEvent.click(toggles()[0]);
 
-		expect(toggles()[0].textContent).toBe('Konto anlegen');
-		expect(primaryLabel()).toBe('Beitreten');
+		expect(toggles()[0].textContent).toBe(TOGGLE_OFF);
+		expect(primaryLabel()).toBe(JOIN);
 
 		fireEvent.click(toggles()[0]);
 

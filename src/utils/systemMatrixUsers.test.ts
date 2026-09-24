@@ -15,8 +15,8 @@ describe('LEGACY_MATRIX_HOMESERVER_SUFFIX', () => {
 
 describe('isSystemMatrixUser', () => {
 	it('filters the app system-notice sender', () => {
-		expect(isSystemMatrixUser('@system:matrix.oriso.org')).toBe(true);
-		expect(isSystemMatrixUser('@system-broadcast:matrix.oriso.org')).toBe(
+		expect(isSystemMatrixUser('@system:matrix.example.org')).toBe(true);
+		expect(isSystemMatrixUser('@system-broadcast:matrix.example.org')).toBe(
 			true
 		);
 	});
@@ -27,10 +27,10 @@ describe('isSystemMatrixUser', () => {
 	});
 
 	it('lets a human counsellor or advice seeker through', () => {
-		expect(isSystemMatrixUser('@counsellor-42:matrix.oriso.org')).toBe(
+		expect(isSystemMatrixUser('@counsellor-42:matrix.example.org')).toBe(
 			false
 		);
-		expect(isSystemMatrixUser('@asker-abc123:matrix.oriso.org')).toBe(
+		expect(isSystemMatrixUser('@asker-abc123:matrix.example.org')).toBe(
 			false
 		);
 	});
@@ -45,7 +45,7 @@ describe('isSystemMatrixUser', () => {
 		// The agency-service filter is domain-specific to a couple of composers;
 		// keeping it out of this helper keeps callers free to combine checks
 		// rather than baking every domain rule in here.
-		expect(isSystemMatrixUser('@agency-7-service:matrix.oriso.org')).toBe(
+		expect(isSystemMatrixUser('@agency-7-service:matrix.example.org')).toBe(
 			false
 		);
 	});

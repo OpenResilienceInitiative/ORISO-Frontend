@@ -34,7 +34,7 @@ describe('Matrix send message privacy', () => {
 				true,
 				false,
 				123,
-				'!secure-room:oriso.org'
+				'!secure-room:example.org'
 			).then(
 				() => {
 					throw new Error(
@@ -74,7 +74,7 @@ describe('Matrix send message privacy', () => {
 				true,
 				false,
 				123,
-				'!secure-room:oriso.org'
+				'!secure-room:example.org'
 			).then(
 				() => {
 					throw new Error(
@@ -100,7 +100,7 @@ describe('Matrix send message privacy', () => {
 		service.client = {
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-room:oriso.org')
+				.withArgs('!plain-room:example.org')
 				.returns(false),
 			sendMessage
 		};
@@ -108,7 +108,7 @@ describe('Matrix send message privacy', () => {
 		cy.then(() =>
 			matrixClientService
 				.sendMessage(
-					'!plain-room:oriso.org',
+					'!plain-room:example.org',
 					'sensitive Matrix message body'
 				)
 				.then(
@@ -132,7 +132,7 @@ describe('Matrix send message privacy', () => {
 		const service = matrixClientService as any;
 		const uploadContent = cy
 			.stub()
-			.resolves({ content_uri: 'mxc://oriso.org/plain-file' });
+			.resolves({ content_uri: 'mxc://example.org/plain-file' });
 		const sendMessage = cy.stub().resolves({ event_id: '$plain-file' });
 		const file = new File(['sensitive attachment'], 'case-note.txt', {
 			type: 'text/plain'
@@ -142,7 +142,7 @@ describe('Matrix send message privacy', () => {
 		service.client = {
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-room:oriso.org')
+				.withArgs('!plain-room:example.org')
 				.returns(false),
 			uploadContent,
 			sendMessage
@@ -150,7 +150,7 @@ describe('Matrix send message privacy', () => {
 
 		cy.then(() =>
 			matrixClientService
-				.sendFileMessage('!plain-room:oriso.org', file)
+				.sendFileMessage('!plain-room:example.org', file)
 				.then(
 					() => {
 						throw new Error(
@@ -177,24 +177,28 @@ describe('Matrix send message privacy', () => {
 		service.client = {
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-room:oriso.org')
+				.withArgs('!plain-room:example.org')
 				.returns(false),
 			sendTyping
 		};
 
 		cy.then(() =>
-			matrixClientService.sendTyping('!plain-room:oriso.org', true).then(
-				() => {
-					throw new Error(
-						'Expected unencrypted Matrix typing event to fail'
-					);
-				},
-				(error) => {
-					expect(error.message).to.contain('encrypted Matrix room');
-					expect(sendTyping.callCount).to.equal(0);
-					service.client = null;
-				}
-			)
+			matrixClientService
+				.sendTyping('!plain-room:example.org', true)
+				.then(
+					() => {
+						throw new Error(
+							'Expected unencrypted Matrix typing event to fail'
+						);
+					},
+					(error) => {
+						expect(error.message).to.contain(
+							'encrypted Matrix room'
+						);
+						expect(sendTyping.callCount).to.equal(0);
+						service.client = null;
+					}
+				)
 		);
 	});
 
@@ -202,22 +206,24 @@ describe('Matrix send message privacy', () => {
 		const service = matrixClientService as any;
 		const createRoom = cy
 			.stub()
-			.resolves({ room_id: '!encrypted-dm:oriso.org' });
+			.resolves({ room_id: '!encrypted-dm:example.org' });
 
 		cy.stub(service, 'ensureFreshToken').resolves();
 		service.client = { createRoom };
 
 		cy.then(() =>
-			matrixClientService.createDirectMessageRoom('@asker:oriso.org')
+			matrixClientService.createDirectMessageRoom('@asker:example.org')
 		).then((roomId) => {
-			expect(roomId).to.equal('!encrypted-dm:oriso.org');
+			expect(roomId).to.equal('!encrypted-dm:example.org');
 			expect(createRoom).to.have.been.calledOnceWith(
 				Cypress.sinon.match((options) => {
 					expect(options).to.deep.include({
 						preset: 'private_chat',
 						is_direct: true
 					});
-					expect(options.invite).to.deep.equal(['@asker:oriso.org']);
+					expect(options.invite).to.deep.equal([
+						'@asker:example.org'
+					]);
 					expect(options.initial_state).to.deep.include({
 						type: 'm.room.encryption',
 						state_key: '',
@@ -244,7 +250,7 @@ describe('Matrix send message privacy', () => {
 					uploadOptions = options;
 					options.progressHandler({ loaded: 5, total: 10 });
 					return Promise.resolve({
-						content_uri: 'mxc://oriso.org/file'
+						content_uri: 'mxc://example.org/file'
 					});
 				}
 			);
@@ -258,7 +264,7 @@ describe('Matrix send message privacy', () => {
 		service.client = {
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!secure-room:oriso.org')
+				.withArgs('!secure-room:example.org')
 				.returns(true),
 			uploadContent,
 			sendMessage
@@ -266,7 +272,7 @@ describe('Matrix send message privacy', () => {
 
 		cy.then(() =>
 			matrixClientService.sendFileMessage(
-				'!secure-room:oriso.org',
+				'!secure-room:example.org',
 				file,
 				{
 					uploadProgress: (percentUpload) =>
@@ -279,7 +285,7 @@ describe('Matrix send message privacy', () => {
 			expect(uploadOptions.includeFilename).to.equal(false);
 			expect(uploadOptions.type).to.equal('application/octet-stream');
 			expect(sendMessage).to.have.been.calledOnceWith(
-				'!secure-room:oriso.org',
+				'!secure-room:example.org',
 				Cypress.sinon.match((content) => {
 					expect(content).to.deep.include({
 						body: 'case-note.txt',
@@ -288,7 +294,7 @@ describe('Matrix send message privacy', () => {
 					});
 					expect(content).not.to.have.property('url');
 					expect(content.file).to.deep.include({
-						url: 'mxc://oriso.org/file',
+						url: 'mxc://example.org/file',
 						v: 'v2'
 					});
 					expect(content.file.key).to.deep.include({
@@ -327,7 +333,9 @@ describe('Matrix send message privacy', () => {
 			.stub()
 			.callsFake(async (payload: XMLHttpRequestBodyInit) => {
 				uploadedPayload = payload;
-				return Promise.resolve({ content_uri: 'mxc://oriso.org/file' });
+				return Promise.resolve({
+					content_uri: 'mxc://example.org/file'
+				});
 			});
 		const sendMessage = cy.stub().callsFake((_roomId, content) => {
 			sentContent = content;
@@ -338,14 +346,17 @@ describe('Matrix send message privacy', () => {
 		service.client = {
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!secure-room:oriso.org')
+				.withArgs('!secure-room:example.org')
 				.returns(true),
 			uploadContent,
 			sendMessage
 		};
 
 		cy.then(() =>
-			matrixClientService.sendFileMessage('!secure-room:oriso.org', file)
+			matrixClientService.sendFileMessage(
+				'!secure-room:example.org',
+				file
+			)
 		).then(async () => {
 			const { decryptMatrixAttachment } = await import(
 				'../../src/utils/matrixEncryptedAttachment'
@@ -378,7 +389,7 @@ describe('Matrix send message privacy', () => {
 
 		cy.then(() =>
 			apiSendMatrixAttachmentMessage(
-				'!secure-room:oriso.org',
+				'!secure-room:example.org',
 				file,
 				{
 					threadRootId: '$thread-root',
@@ -391,7 +402,7 @@ describe('Matrix send message privacy', () => {
 		).then((response) => {
 			expect(response).to.deep.equal({ event_id: '$encrypted-file' });
 			expect(sendFileMessage).to.have.been.calledOnceWith(
-				'!secure-room:oriso.org',
+				'!secure-room:example.org',
 				file,
 				Cypress.sinon.match.object
 			);
@@ -399,7 +410,7 @@ describe('Matrix send message privacy', () => {
 			// not merely blanked downstream — so threadParentPreview is no
 			// longer forwarded into the notification payload at all.
 			expect(postMessageEventNotification).to.have.been.calledOnceWith({
-				roomId: '!secure-room:oriso.org',
+				roomId: '!secure-room:example.org',
 				matrixRoom: true,
 				threadRootId: '$thread-root',
 				supervisorMessage: true,
@@ -414,7 +425,7 @@ describe('Matrix send message privacy', () => {
 			const notificationBody =
 				buildMessageEventNotificationBody(notificationInput);
 			expect(notificationBody).to.deep.equal({
-				roomId: '!secure-room:oriso.org',
+				roomId: '!secure-room:example.org',
 				messagePreview: '',
 				matrixRoom: true,
 				threadRootId: '$thread-root',
