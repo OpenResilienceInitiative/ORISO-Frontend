@@ -3,3 +3,6 @@
 !.gitignore
 !anon-animals/
 !anon-animals/*.svg
+!counsellor-icons/
+!counsellor-icons/*.svg
+!counsellor-icons/README.md
