@@ -796,7 +796,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			});
 		});
 		return map;
-	}, [threadSummariesRaw, translate]);
+	}, [threadSummariesRaw]);
 	// Per-thread unread (#435): device-local approximation, bumped whenever
 	// a thread is opened (markThreadRead) so the derived map recomputes.
 	const [threadReadVersion, setThreadReadVersion] = useState(0);
