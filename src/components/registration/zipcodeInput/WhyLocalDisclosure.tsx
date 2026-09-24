@@ -18,13 +18,6 @@ const REASONS = [
 	{ key: 'inPerson', artwork: whyLocalArtwork.inPerson }
 ] as const;
 
-const FALLBACKS: Record<string, string> = {
-	localHelp: 'Ihre Beratungsstelle kennt die Hilfsangebote vor Ort.',
-	stateLaw: 'Sie kennt die Gesetze Ihres Bundeslandes.',
-	anonymous: 'Nur diese eine Stelle sieht Ihre Angabe — Sie bleiben anonym.',
-	inPerson: 'Wenn Sie möchten, können Sie später auch persönlich weiterreden.'
-};
-
 /**
  * "Warum lokal beraten?" — collapsed by default, so the postcode step stays a
  * single question. Replaces the grey bullet box, which pushed the input below
@@ -101,10 +94,7 @@ export const WhyLocalDisclosure = ({
 						color: registrationMd3.onSurface
 					}}
 				>
-					{t(
-						'registration.zipcode.whyLocal.title',
-						'Warum lokal beraten?'
-					)}
+					{t('registration.zipcode.whyLocal.title')}
 				</Typography>
 				{open ? (
 					<ArrowDropUpRoundedIcon sx={{ flexShrink: 0 }} />
@@ -159,10 +149,7 @@ export const WhyLocalDisclosure = ({
 									color: registrationMd3.onSurface
 								}}
 							>
-								{t(
-									`registration.zipcode.whyLocal.${key}`,
-									FALLBACKS[key]
-								)}
+								{t(`registration.zipcode.whyLocal.${key}`)}
 							</Typography>
 						</Box>
 					))}

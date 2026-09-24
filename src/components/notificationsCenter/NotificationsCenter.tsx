@@ -498,29 +498,18 @@ export const NotificationsCenter = () => {
 	}, [timelineFilter]);
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
-			image: translate('notifications.center.preview.image', 'Image'),
-			file: translate('notifications.center.preview.file', 'File'),
-			audio: translate(
-				'notifications.center.preview.audio',
-				'Audio message'
-			),
-			video: translate('notifications.center.preview.video', 'Video'),
-			notice: translate('notifications.center.preview.notice', 'Notice'),
-			unsupported: translate(
-				'notifications.center.preview.unsupported',
-				'Unsupported message'
-			),
-			pending: translate(
-				'notifications.center.preview.pending',
-				'Waiting for decryption'
-			),
+			image: translate('notifications.center.preview.image'),
+			file: translate('notifications.center.preview.file'),
+			audio: translate('notifications.center.preview.audio'),
+			video: translate('notifications.center.preview.video'),
+			notice: translate('notifications.center.preview.notice'),
+			unsupported: translate('notifications.center.preview.unsupported'),
+			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
-				'notifications.center.preview.roomUnavailable',
-				'Conversation unavailable on this device'
+				'notifications.center.preview.roomUnavailable'
 			),
 			eventUnavailable: translate(
-				'notifications.center.preview.eventUnavailable',
-				'Message unavailable in local history'
+				'notifications.center.preview.eventUnavailable'
 			)
 		}),
 		[translate]
@@ -992,24 +981,18 @@ export const NotificationsCenter = () => {
 						value={searchQuery}
 						onChange={setSearchQuery}
 						placeholder={translate(
-							'notifications.center.searchPlaceholder',
-							'Search activity…'
+							'notifications.center.searchPlaceholder'
 						)}
 						clearLabel={translate(
-							'sessionList.toolbar.search.clear',
-							'Clear search'
+							'sessionList.toolbar.search.clear'
 						)}
 						menuLabel={translate(
-							'sessionList.toolbar.search.toggle',
-							'Open or close search results'
+							'sessionList.toolbar.search.toggle'
 						)}
 					/>
 					{notificationFeed.length > 0 && (
 						<FilterChipRow
-							label={translate(
-								'notifications.center.title',
-								'Notifications'
-							)}
+							label={translate('notifications.center.title')}
 						>
 							{pillKinds.map((kind) => (
 								<FilterChip
@@ -1040,12 +1023,10 @@ export const NotificationsCenter = () => {
 								}`}
 								onClick={() => setUnreadOnly((value) => !value)}
 								title={translate(
-									'notifications.center.unreadFilter',
-									'Unread'
+									'notifications.center.unreadFilter'
 								)}
 								aria-label={translate(
-									'notifications.center.unreadFilter',
-									'Unread'
+									'notifications.center.unreadFilter'
 								)}
 							>
 								<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
@@ -1054,8 +1035,7 @@ export const NotificationsCenter = () => {
 									aria-hidden={!unreadOnly}
 								>
 									{translate(
-										'notifications.center.unreadFilter',
-										'Unread'
+										'notifications.center.unreadFilter'
 									)}
 								</span>
 							</button>
@@ -1063,8 +1043,7 @@ export const NotificationsCenter = () => {
 								hasUnread={hasUnreadActivity}
 								onClick={markAllNotificationsAsRead}
 								label={translate(
-									'notifications.center.markAllRead',
-									'Mark all as read'
+									'notifications.center.markAllRead'
 								)}
 							/>
 						</FilterChipRow>
@@ -1105,10 +1084,7 @@ export const NotificationsCenter = () => {
 				<div className="notificationsCenter__list" ref={listScrollRef}>
 					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
-							{translate(
-								'notifications.center.noResults',
-								'No activity matches your filters.'
-							)}
+							{translate('notifications.center.noResults')}
 						</div>
 					) : (
 						filteredFeed.map((item, index) => {
@@ -1218,8 +1194,7 @@ export const NotificationsCenter = () => {
 												type="button"
 												className="notificationsCenter__cardMenuButton"
 												aria-label={translate(
-													'notifications.center.cardMenu',
-													'Notification actions'
+													'notifications.center.cardMenu'
 												)}
 												onClick={(event) =>
 													setCardMenuAnchor(
@@ -1243,8 +1218,7 @@ export const NotificationsCenter = () => {
 											aria-label={
 												item.actionLabel ||
 												translate(
-													'notifications.center.open',
-													'View Conversation'
+													'notifications.center.open'
 												)
 											}
 											onClick={handleOpenAction}
@@ -1262,8 +1236,7 @@ export const NotificationsCenter = () => {
 								<>
 									<span role="alert">
 										{translate(
-											'notifications.center.olderError',
-											'Could not load older activity.'
+											'notifications.center.olderError'
 										)}
 									</span>
 									<button
@@ -1274,8 +1247,7 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'notifications.center.retryOlder',
-											'Try again'
+											'notifications.center.retryOlder'
 										)}
 									</button>
 								</>
@@ -1290,17 +1262,13 @@ export const NotificationsCenter = () => {
 									{translate(
 										isLoadingOlderNotifications
 											? 'notifications.center.loadingOlder'
-											: 'notifications.center.loadOlder',
-										isLoadingOlderNotifications
-											? 'Loading older activity…'
-											: 'Load older activity'
+											: 'notifications.center.loadOlder'
 									)}
 								</button>
 							) : (
 								<span role="status">
 									{translate(
-										'notifications.center.endOfHistory',
-										'End of activity history'
+										'notifications.center.endOfHistory'
 									)}
 								</span>
 							)}
@@ -1328,11 +1296,7 @@ export const NotificationsCenter = () => {
 								selectedNotification?.eventType ===
 									'group_chat.opened'
 									? 'notifications.center.join'
-									: 'notifications.center.open',
-								selectedNotification?.eventType ===
-									'group_chat.opened'
-									? 'Join'
-									: 'Open chat'
+									: 'notifications.center.open'
 							)}
 					</MenuItem>
 					{canShowChatPreview && (
@@ -1345,10 +1309,7 @@ export const NotificationsCenter = () => {
 							{translate(
 								showEmbeddedChat
 									? 'notifications.center.showDetails'
-									: 'notifications.center.showPreview',
-								showEmbeddedChat
-									? 'Show details'
-									: 'Show conversation preview'
+									: 'notifications.center.showPreview'
 							)}
 						</MenuItem>
 					)}
@@ -1360,10 +1321,7 @@ export const NotificationsCenter = () => {
 							setCardMenuAnchor(null);
 						}}
 					>
-						{translate(
-							'notifications.center.markRead',
-							'Mark as read'
-						)}
+						{translate('notifications.center.markRead')}
 					</MenuItem>
 					<MenuItem
 						onClick={() => {
@@ -1371,10 +1329,7 @@ export const NotificationsCenter = () => {
 							setCardMenuAnchor(null);
 						}}
 					>
-						{translate(
-							'notifications.center.markAllRead',
-							'Mark all as read'
-						)}
+						{translate('notifications.center.markAllRead')}
 					</MenuItem>
 				</Menu>
 				{fromL && (
@@ -1397,10 +1352,7 @@ export const NotificationsCenter = () => {
 				>
 					{!selectedNotification ? (
 						<div className="notificationsCenter__emptyDetail">
-							{translate(
-								'notifications.center.emptyDetail',
-								'Select a notification to see the details.'
-							)}
+							{translate('notifications.center.emptyDetail')}
 						</div>
 					) : showEmbeddedChat ? (
 						<ConversationPreview
@@ -1431,8 +1383,6 @@ export const NotificationsCenter = () => {
 									? translate(
 											'notifications.center.waitingSince',
 											{
-												defaultValue:
-													'Waiting since {{time}} ({{date}})',
 												...formatClockParts(
 													selectedNotification.createdAt,
 													i18n.language
@@ -1461,8 +1411,7 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'caseHandover.consent.approve',
-											'Approve'
+											'caseHandover.consent.approve'
 										)}
 									</button>
 									<button
@@ -1479,8 +1428,7 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'caseHandover.consent.decline',
-											'Decline'
+											'caseHandover.consent.decline'
 										)}
 									</button>
 									{caseHandoverConsentError && (
@@ -1505,11 +1453,7 @@ export const NotificationsCenter = () => {
 											selectedNotification.eventType ===
 												'group_chat.opened'
 												? 'notifications.center.join'
-												: 'notifications.center.open',
-											selectedNotification.eventType ===
-												'group_chat.opened'
-												? 'Join'
-												: 'Open chat'
+												: 'notifications.center.open'
 										)}
 								</button>
 								<button
@@ -1518,10 +1462,7 @@ export const NotificationsCenter = () => {
 									onClick={handleNextNotification}
 									disabled={!nextUnreadId}
 								>
-									{translate(
-										'notifications.center.next',
-										'Next notification'
-									)}
+									{translate('notifications.center.next')}
 								</button>
 							</div>
 						</div>

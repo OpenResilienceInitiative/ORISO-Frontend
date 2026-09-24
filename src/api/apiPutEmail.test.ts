@@ -5,7 +5,7 @@ import { FETCH_ERRORS } from './fetchData';
 
 vi.mock('../resources/scripts/endpoints', () => ({
 	endpoints: {
-		email: 'https://predev.oriso.org/service/users/email'
+		email: 'https://predev.example.org/service/users/email'
 	}
 }));
 
@@ -39,7 +39,7 @@ describe('contact email request wire format', () => {
 
 		expect(fetchMock).toHaveBeenCalledOnce();
 		const req = fetchMock.mock.calls[0][0];
-		expect(req.url).toBe('https://predev.oriso.org/service/users/email');
+		expect(req.url).toBe('https://predev.example.org/service/users/email');
 		expect(req.init.method).toBe('PUT');
 		expect(req.init.headers['Content-Type']).toBe('application/json');
 		// The server's first eligible converter is Jackson, so an unquoted
