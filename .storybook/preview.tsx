@@ -649,7 +649,8 @@ function MuiStoryShell({
 				<TenantContext.Provider
 					value={{
 						tenant: null,
-						setTenant: () => {}
+						setTenant: () => {},
+						updateTenantSettings: () => {}
 					}}
 				>
 					<UserDataContext.Provider
@@ -689,6 +690,17 @@ function MuiStoryShell({
 											notifications: [],
 											notificationFeed: [],
 											unreadNotificationCount: 0,
+											serverUnreadTotal: 0,
+											serverUnreadTotalExcludesHidden: false,
+											hasUnreadNotifications: false,
+											timelineDisplayFilter: {
+												kinds: {},
+												autoReadHidden: false
+											},
+											visibleUnreadCount: 0,
+											hiddenUnreadInLoadedPages: 0,
+											markNotificationsReadConfirmed:
+												async () => {},
 											setNotifications: () => {},
 											hasNotification: () => false,
 											addNotification: () => {},
@@ -834,10 +846,20 @@ const preview: Preview = {
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
 				},
+				phone390Landscape: {
+					name: 'Phone 390 landscape (844×390)',
+					styles: { width: '844px', height: '390px' },
+					type: 'mobile'
+				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
+				},
+				desktop1280: {
+					name: 'Desktop 1280',
+					styles: { width: '1280px', height: '800px' },
+					type: 'desktop'
 				},
 				desktop1440: {
 					name: 'Desktop 1440',

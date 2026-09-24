@@ -60,6 +60,55 @@ describe('caseHandoverHelpers', () => {
 		).toBe(true);
 	});
 
+	it('is not access-controlled for the active supervisor of the session (ADR-008 marker)', () => {
+		const supervisedByMe = {
+			...baseSession,
+			item: {
+				...baseSession.item,
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [consultantUser.userId],
+					supervisorDisplayNames: ['Receiving Counsellor']
+				}
+			}
+		};
+		expect(
+			isCaseHandoverAccessControlled({
+				activeSession: supervisedByMe,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(false);
+		expect(
+			isCaseHandoverCandidate({
+				activeSession: supervisedByMe,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(false);
+	});
+
+	it('stays access-controlled when someone else supervises the session', () => {
+		const supervisedByOther = {
+			...baseSession,
+			item: {
+				...baseSession.item,
+				supervision: {
+					supervisedByMe: false,
+					supervisorConsultantIds: ['another-supervisor'],
+					supervisorDisplayNames: ['Another Supervisor']
+				}
+			}
+		};
+		expect(
+			isCaseHandoverAccessControlled({
+				activeSession: supervisedByOther,
+				userData: consultantUser,
+				type: MY_SESSION_TYPE
+			})
+		).toBe(true);
+	});
+
 	it('keeps archive sessions access-controlled even when batch selection is disabled', () => {
 		expect(
 			isCaseHandoverAccessControlled({

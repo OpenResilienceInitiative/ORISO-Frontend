@@ -100,9 +100,15 @@ const clockGeometry = (size: number, tight: boolean, compact = false) => {
 	};
 };
 
-/** Width the overdue "+" and the flex gaps around it take from the two groups. */
+/**
+ * Width the overdue "+" and the flex gaps around it take from the two groups.
+ * The phone "+" (34 px, weight 300) renders 22 px wide, not 20; budgeting 20
+ * let the fit land exactly on the column width, sub-pixel rounding wrapped the
+ * seconds group onto a second row and it painted over the caption below the
+ * fixed-height card (#1499, 390 px). 24 px plus 2 px slack keeps one row.
+ */
 const overdueSignWidth = (compact: boolean) =>
-	compact ? 20 + 2 * 10 : 28 + 2 * 28;
+	compact ? 24 + 2 * 10 + 2 : 28 + 2 * 28;
 
 /**
  * The largest mini-clock that still lets the whole clock fit the given box.
@@ -128,6 +134,74 @@ const fitClockSize = (
 	}
 	return FIT_MIN_SIZE;
 };
+
+/**
+ * "Animation abschalten" — the waiting room's motion switch. Exported so a
+ * screen that hides the built-in one (`hideMotionToggle`) can place the same
+ * control elsewhere, e.g. in its footer next to the main action (#1499).
+ */
+export const WaitingAreaMotionToggle = ({
+	label,
+	checked,
+	disabled = false,
+	onChange
+}: {
+	label: string;
+	checked: boolean;
+	disabled?: boolean;
+	onChange: (checked: boolean) => void;
+}) => (
+	<label
+		style={{
+			display: 'flex',
+			alignItems: 'center',
+			gap: 10,
+			fontSize: 12,
+			color: MUTED,
+			cursor: disabled ? 'default' : 'pointer',
+			opacity: disabled ? 0.6 : 1
+		}}
+	>
+		{label}
+		<button
+			type="button"
+			role="switch"
+			aria-checked={checked}
+			aria-label={label}
+			disabled={disabled}
+			onClick={() => onChange(!checked)}
+			style={{
+				width: 46,
+				height: 26,
+				borderRadius: 13,
+				border: checked
+					? `2px solid ${RED}`
+					: '2px solid var(--m3-outline, #747878)',
+				background: checked
+					? RED
+					: 'var(--m3-surface-container-high, #eae7e8)',
+				position: 'relative',
+				cursor: disabled ? 'default' : 'pointer',
+				padding: 0,
+				transition: 'all .25s',
+				flexShrink: 0
+			}}
+		>
+			<span
+				style={{
+					position: 'absolute',
+					top: checked ? 1 : 3,
+					left: checked ? 21 : 3,
+					width: checked ? 20 : 16,
+					height: checked ? 20 : 16,
+					borderRadius: '50%',
+					background: checked ? '#fff' : MUTED,
+					transition: 'all .25s'
+				}}
+			/>
+		</button>
+	</label>
+);
 
 export interface WaitingAreaCountdownProps {
 	/** When the group chat is scheduled to start. */
@@ -196,6 +270,12 @@ export interface WaitingAreaCountdownProps {
 	 * set, the parent owns the switch so siblings (rules) can pause too (#1293).
 	 */
 	animationOff?: boolean;
+	/**
+	 * Who is waiting. `moderator` is the counsellor who opens the room: she
+	 * gets her own headline and subline instead of the participants' "we'll be
+	 * with you in a moment" (#1499). Default `participant`.
+	 */
+	audience?: 'participant' | 'moderator';
 	onAnimationOffChange?: (off: boolean) => void;
 	/**
 	 * Vertical gap between headline, clock and the rest, in px. Default 26.
@@ -242,6 +322,7 @@ export const WaitingAreaCountdown = ({
 	labelsOutside = false,
 	hideMotionToggle = false,
 	animationOff: animationOffProp,
+	audience = 'participant',
 	onAnimationOffChange,
 	gap = 26,
 	nowMs,
@@ -423,56 +504,12 @@ export const WaitingAreaCountdown = ({
 
 	const toggleLabel = tr('toggleLabel');
 	const toggle = (
-		<label
-			style={{
-				display: 'flex',
-				alignItems: 'center',
-				gap: 10,
-				fontSize: 12,
-				color: MUTED,
-				cursor: forcedMotionless ? 'default' : 'pointer',
-				opacity: forcedMotionless ? 0.6 : 1
-			}}
-		>
-			{toggleLabel}
-			<button
-				type="button"
-				role="switch"
-				aria-checked={motionless}
-				aria-label={toggleLabel}
-				disabled={forcedMotionless}
-				onClick={() => setAnimOff(!animOff)}
-				style={{
-					width: 46,
-					height: 26,
-					borderRadius: 13,
-					border: motionless
-						? `2px solid ${RED}`
-						: '2px solid var(--m3-outline, #747878)',
-					background: motionless
-						? RED
-						: 'var(--m3-surface-container-high, #eae7e8)',
-					position: 'relative',
-					cursor: forcedMotionless ? 'default' : 'pointer',
-					padding: 0,
-					transition: 'all .25s',
-					flexShrink: 0
-				}}
-			>
-				<span
-					style={{
-						position: 'absolute',
-						top: motionless ? 1 : 3,
-						left: motionless ? 21 : 3,
-						width: motionless ? 20 : 16,
-						height: motionless ? 20 : 16,
-						borderRadius: '50%',
-						background: motionless ? '#fff' : MUTED,
-						transition: 'all .25s'
-					}}
-				/>
-			</button>
-		</label>
+		<WaitingAreaMotionToggle
+			label={toggleLabel}
+			checked={motionless}
+			disabled={forcedMotionless}
+			onChange={setAnimOff}
+		/>
 	);
 
 	const eta =
@@ -489,17 +526,26 @@ export const WaitingAreaCountdown = ({
 						? tr('etaMinute')
 						: tr('etaMinutes', { count: m })
 					: tr('etaSoon');
-	const headline = isOverdue
-		? tr('overdueHeadline')
-		: tr('headline', { eta });
+	const moderator = audience === 'moderator';
+	const headline = moderator
+		? isOverdue
+			? tr('moderatorOverdueHeadline')
+			: tr('moderatorHeadline', {
+					eta
+				})
+		: isOverdue
+			? tr('overdueHeadline')
+			: tr('headline', { eta });
 	// Frank, 2026-09-07: "statt zu sagen hey dieser Bindestrich ist quasi,
 	// kannst auch ein Komma machen" — and nobody clicks "a number" any more,
 	// there is one card now. Short enough to hold one line at 375 px.
-	const subtitle = isOverdue
-		? tr('overdueSubtitle')
-		: canFlip
-			? tr('subtitleCard')
-			: '';
+	const subtitle = moderator
+		? tr('moderatorSubtitle')
+		: isOverdue
+			? tr('overdueSubtitle')
+			: canFlip
+				? tr('subtitleCard')
+				: '';
 	// The still view keeps the clock's footprint, so the row under it and the
 	// bar never move when someone flips the switch (Frank, 2026-09-04: "er
 	// sollte auf jeden Fall nicht springen").

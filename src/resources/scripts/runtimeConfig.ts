@@ -148,6 +148,13 @@ export const getObservabilityConfig = (): ObservabilityRuntimeConfig => ({
 export const getPlatformVersion = (): string =>
 	pickValue('REACT_APP_PLATFORM_VERSION', 'VITE_PLATFORM_VERSION') || '';
 
+// Bundle identity bypasses runtime env.js, Cypress and hostname fallbacks.
+// An ordinary local build without an injected full commit is unidentified.
+export const getBuildCommit = (): string | undefined => {
+	const commit = process.env.REACT_APP_BUILD_COMMIT;
+	return commit && /^[0-9a-f]{40}$/.test(commit) ? commit : undefined;
+};
+
 /**
  * Ensure an http(s) URL. Bare hostnames are upgraded to https.
  */

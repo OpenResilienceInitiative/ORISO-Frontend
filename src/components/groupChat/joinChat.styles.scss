@@ -5,10 +5,24 @@
 		align-items: center;
 		flex-direction: column;
 
-		@include breakpoint($fromLarge) {
-			justify-content: center;
-		}
+		// #1499 item 1: the waiting room sits in the middle of the free panel
+		// height at every width. `safe` keeps the top edge reachable when the
+		// clock is taller than the panel (short phones) instead of pushing it
+		// above the scroll origin.
+		justify-content: safe center;
+	}
 
+	// `.session__content` is the chat timeline's class and reserves the
+	// composer's docked height at the bottom (240–344 px). The waiting room has
+	// no composer — its button lives in `__button-container` below — so that
+	// reserve pushed the clock out of the centre and made it scroll, which is
+	// what read as "cut off" (#1499). Two classes, so this wins over the
+	// session rules and their width media queries regardless of import order.
+	&__content.session__content {
+		padding: $grid-base-two;
+	}
+
+	&__content {
 		.headline--4 {
 			margin-bottom: $grid-base-three;
 		}
@@ -46,10 +60,11 @@
 	// countdown (WaitingAreaCountdown). It is a transparent spacing wrapper only —
 	// the surrounding room container already supplies the white surface and the
 	// #ffb4aa outline, so drawing our own card here would double the frame.
+	// No vertical margin/padding of its own (#1499): the panel centres the
+	// block now, so the 64 px of air it used to carry only pushed a 1280×800
+	// screen into scrolling.
 	&__waitingBox {
 		width: min(100%, $grid-base * 96);
-		margin: $grid-base-two 0;
-		padding: $grid-base-two 0;
 		box-sizing: border-box;
 	}
 
@@ -98,6 +113,49 @@
 
 	&__button-container {
 		text-align: center;
-		padding: $grid-base-six $grid-base-four;
+		padding: $grid-base-two $grid-base-two $grid-base-three;
+
+		@include breakpoint($fromLarge) {
+			padding: $grid-base-two $grid-base-four $grid-base-three;
+		}
+	}
+
+	// Footer row (#1499): calendar | main button | motion switch on desktop,
+	// main button first and the two secondary controls under it on a phone.
+	&__actions {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			'main'
+			'start'
+			'end';
+		gap: $grid-base-two;
+		align-items: center;
+		justify-items: center;
+
+		@include breakpoint($fromLarge) {
+			grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+			grid-template-areas: 'start main end';
+		}
+	}
+
+	&__actionsStart {
+		grid-area: start;
+
+		@include breakpoint($fromLarge) {
+			justify-self: start;
+		}
+	}
+
+	&__actionsMain {
+		grid-area: main;
+	}
+
+	&__actionsEnd {
+		grid-area: end;
+
+		@include breakpoint($fromLarge) {
+			justify-self: end;
+		}
 	}
 }

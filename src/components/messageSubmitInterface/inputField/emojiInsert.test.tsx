@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { createRef } from 'react';
-import { cleanup, render, waitFor } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TipTapComposer, TipTapComposerRef } from '../TipTapComposer';
 
@@ -18,7 +18,7 @@ afterEach(() => cleanup());
  * insertText (used by handleEmojiPick) is the contract the emoji popup calls.
  */
 describe('emoji insertion at cursor', () => {
-	it('inserts the emoji at the current caret position', async () => {
+	it('inserts the emoji at the current caret position', () => {
 		const ref = createRef<TipTapComposerRef>();
 		let html = '';
 		render(
@@ -35,21 +35,40 @@ describe('emoji insertion at cursor', () => {
 			/>
 		);
 
-		await waitFor(() => expect(ref.current).toBeTruthy());
+		expect(ref.current).toBeTruthy();
 
-		// On mount the composer syncs its initial `value` prop into the editor
-		// and, during that window, swallows editor updates (isSyncingFromValue)
-		// and can even reset content just after an imperative edit. That settle
-		// is not directly observable, so drive the whole sequence through a
-		// retrying waitFor: setText replaces the content with 'Hallo' (no
-		// accumulation across retries) and insertText appends the emoji — the
-		// emoji popup's contract is to add to existing content, not replace it.
-		// Once the sync window has closed a single retry lands both.
-		await waitFor(() => {
+		act(() => {
 			ref.current!.setText('Hallo');
 			ref.current!.insertText('😀');
-			expect(html).toContain('Hallo');
-			expect(html).toContain('😀');
 		});
+		expect(html).toContain('Hallo');
+		expect(html).toContain('😀');
+	});
+	it('reports the first edit immediately after an external draft changes', () => {
+		const ref = createRef<TipTapComposerRef>();
+		let html = '';
+		const composer = (value: string) => (
+			<TipTapComposer
+				ref={ref}
+				value={value}
+				placeholder="test"
+				showToolbar={false}
+				readOnly={false}
+				onChange={(next) => {
+					html = next;
+				}}
+				onSubmitShortcut={() => {}}
+			/>
+		);
+		const view = render(composer(''));
+		view.rerender(composer('<p>Draft</p>'));
+		act(() =>
+			ref.current!.setText('Wir besprechen diese Anfrage im Team.')
+		);
+		expect(
+			view.container.querySelector('[contenteditable="true"]')
+				?.textContent
+		).toBe('Wir besprechen diese Anfrage im Team.');
+		expect(html).toContain('Wir besprechen diese Anfrage im Team.');
 	});
 });

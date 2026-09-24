@@ -1,4 +1,6 @@
 .stageLayout {
+	$registration-footer-clearance: 120px;
+
 	// Login (design 2e): below the stage breakpoint the content sits in a white
 	// sheet that overlaps the red head by 28px. The head itself is rendered by
 	// StageLayout; everything here is the sheet it slides under.
@@ -17,6 +19,10 @@
 			// print them a second time under the form.
 			.stageLayout__footer {
 				display: none;
+
+				&--withIdentity {
+					display: flex;
+				}
 			}
 
 			// Card geometry from 2d.
@@ -347,19 +353,36 @@
 
 		// Add more bottom padding on mobile to prevent overlapping with fixed registration buttons (96px height)
 		@media screen and (width <= 899px) {
-			padding-bottom: 120px; // Account for 96px button bar + extra spacing
+			padding-bottom: $registration-footer-clearance; // Account for 96px button bar + extra spacing
 			margin-top: -60px;
 			display: none;
 		}
 	}
 
-	&__footer {
-		// Add more bottom padding on mobile to prevent overlapping with fixed registration buttons (96px height)
+	&__footer--withIdentity {
+		@include breakpoint($fromXLarge) {
+			// Share the content column's surface. A content-driven footer on
+			// the fixed stage can meet its heading at any content height.
+			padding-left: calc(40vw + #{$grid-base-three});
+		}
+
+		@media screen and (width < #{$fromXLarge}) {
+			display: flex;
+			flex-direction: column;
+			margin-top: 0;
+		}
+	}
+
+	// Keep the existing mobile legal-link choice; only the identity is new.
+	&:not(.stageLayout--login) &__legalLinks {
 		@media screen and (width <= 899px) {
-			padding-bottom: 120px; // Account for 96px button bar + extra spacing
-			margin-top: -60px;
 			display: none;
 		}
+	}
+
+	&--registration &__footer--withIdentity {
+		// The identity now shares the fixed bar's column on desktop too.
+		padding-bottom: $registration-footer-clearance;
 	}
 
 	.stageLayout__header > * {
@@ -371,6 +394,10 @@
 		flex-direction: column;
 		justify-content: space-between;
 		min-height: 100%;
+
+		// min-height disables `min-height: auto`; shrinking lets the sticky
+		// header inside scroll away on long steps.
+		flex-shrink: 0;
 
 		/*
 		 * From the stage breakpoint up, the content column is only 60vw wide
@@ -391,7 +418,9 @@
 		@media screen and (width <= #{$fromXLarge - 1px}) {
 			position: relative;
 			z-index: 2;
-			flex: 1;
+
+			// Never shrink below the content (see `flex-shrink` above).
+			flex: 1 0 auto;
 			margin-top: -28px;
 			border-radius: 28px 28px 0 0;
 			background: var(--m3-surface-container-lowest, $white);
@@ -413,8 +442,9 @@
 		display: flex;
 		justify-content: flex-end;
 		align-items: center;
-		flex-basis: $header-height;
-		height: $header-height;
+
+		// Height comes from StageLayout's sx (72px); the step band pins below it.
+		flex: 0 0 auto;
 		width: 100%;
 		padding: 0 $grid-base-three;
 
@@ -535,7 +565,7 @@
 		}
 	}
 
-	&__platformVersion {
+	&__platformVersion.text {
 		color: var(--m3-on-surface-variant, $tertiary);
 		white-space: nowrap;
 	}

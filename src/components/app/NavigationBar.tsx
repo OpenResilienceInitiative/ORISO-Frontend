@@ -23,7 +23,8 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS,
 	TenantContext,
-	LocaleContext
+	LocaleContext,
+	NotificationsContext
 } from '../../globalState';
 import { initNavigationHandler } from './navigationHandler';
 import { ReactComponent as LogoutIconOutline } from '../../resources/img/icons/logout_outline.svg';
@@ -53,6 +54,11 @@ import {
 	LiveChatToggleActiveIcon,
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
+import { resolveLiveChatRailTarget } from './liveChatRailTarget';
+import {
+	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
+	useLiveChatAvailabilityLossNotice
+} from './useLiveChatAvailabilityLossNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -112,7 +118,8 @@ export const NavigationBar = ({
 		{
 			loading: liveChatLoading,
 			pending: liveChatPending,
-			error: liveChatError
+			error: liveChatError,
+			lostReason: liveChatLostReason
 		}
 	] = useLiveChatAvailable();
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
@@ -124,6 +131,8 @@ export const NavigationBar = ({
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
+	// #1485: the one heartbeat owner is also the one that says why it stopped.
+	useLiveChatAvailabilityLossNotice(liveChatLostReason);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -149,23 +158,26 @@ export const NavigationBar = ({
 		const nextActive = !liveChatAvailable;
 		try {
 			await setLiveChatAvailable(nextActive);
-			if (nextActive) {
-				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+			// Frank 2026-09-16 (Variante 1): with a live chat already open the
+			// button leads back into that conversation, not the empty queue.
+			const target = resolveLiveChatRailTarget({ nextActive, sessions });
+			if (target) {
+				navigate(target);
 			}
 		} catch {
 			// The hook retains the acknowledged state and exposes a localized error.
 		}
-	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
+	}, [liveChatAvailable, navigate, sessions, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
 	/**
-	 * Live Chat rail toggle:
-	 * - Desktop: only when the consultant opted into "control from the menu
-	 *   bar" in My Profile (Frank / viaSidebar preference).
-	 * - Mobile/tablet: always for consultants so Live Chat stays reachable in
-	 *   the scrollable bottom bar without hunting through Profile.
+	 * Live Chat rail toggle: only when the consultant opted into "Live Chat
+	 * über Menü Leiste aktivieren" in My Profile (profile preference
+	 * `liveChatViaSidebar`). Same rule on every breakpoint — the earlier
+	 * "always on mobile" exception was dropped by the product owner; without
+	 * the preference, availability is switched in My Profile.
 	 */
-	const showLiveChatNav = isConsultant && (liveChatViaSidebar || !fromL);
+	const showLiveChatNav = isConsultant && liveChatViaSidebar;
 	const languageMenuPlacement = fromL
 		? MENUPLACEMENT_RIGHT
 		: MENUPLACEMENT_TOP;
@@ -216,10 +228,24 @@ export const NavigationBar = ({
 		}, 1000);
 	}, [isFirstVisit]);
 
+	// #1377 spec §6.3: the Zeitstrahl badge counts VISIBLE unread only (the
+	// server total minus hidden unread rows on loaded pages, an upper bound);
+	// the tooltip says so while hidden unread rows exist in the loaded feed.
+	const notificationsContext = useContext(NotificationsContext);
+	const visibleUnreadCount = notificationsContext?.visibleUnreadCount ?? 0;
+	const hiddenUnreadInLoadedPages =
+		notificationsContext?.hiddenUnreadInLoadedPages ?? 0;
 	const pathsToShowUnreadMessageNotification = {
 		'/profile':
-			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0
+			isFirstVisit && !browserNotificationsSettings().visited ? 1 : 0,
+		'/notifications': visibleUnreadCount
 	};
+	const unreadNavTitle = (to: string): string | undefined =>
+		to === '/notifications' && hiddenUnreadInLoadedPages > 0
+			? translate('notifications.displayFilter.badgeHiddenHint', {
+					count: hiddenUnreadInLoadedPages
+				})
+			: undefined;
 
 	const pathToClassNameInWalkThrough = React.useCallback((to: string) => {
 		const value = to.replace(REGEX_DASH, '-').toLowerCase().slice(1);
@@ -356,6 +382,19 @@ export const NavigationBar = ({
 										pathsToShowUnreadMessageNotification
 									).includes(item.to) && unreadCount > 0;
 								const label = translate(item.titleKeys.large);
+								const unreadLabel = showUnreadNav
+									? translate(
+											'sessionList.rail.unreadCount',
+											{
+												count: unreadCount
+											}
+										)
+									: '';
+								// The Link's aria-label is its whole accessible
+								// name, so the count has to be part of it.
+								const linkLabel = showUnreadNav
+									? `${label}, ${unreadLabel}`
+									: label;
 								// Desktop rail may hyphenate/wrap; mobile bottom bar
 								// must stay single-line to avoid overlapping neighbors.
 								const visibleLabel = useFigmaSlot
@@ -439,7 +478,7 @@ export const NavigationBar = ({
 												`navigation__item--nav-${item.navSlot}`
 										)}
 										to={item.to}
-										aria-label={label}
+										aria-label={linkLabel}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -475,7 +514,11 @@ export const NavigationBar = ({
 													<NavigationUnreadIndicator
 														animate={animateNavIcon}
 														count={unreadCount}
+														label={unreadLabel}
 														variant="figma"
+														title={unreadNavTitle(
+															item.to
+														)}
 													/>
 												)}
 											</div>
@@ -497,7 +540,9 @@ export const NavigationBar = ({
 											<NavigationUnreadIndicator
 												animate={animateNavIcon}
 												count={unreadCount}
+												label={unreadLabel}
 												variant="default"
+												title={unreadNavTitle(item.to)}
 											/>
 										)}
 									</Link>
@@ -579,11 +624,17 @@ export const NavigationBar = ({
 							aria-busy={liveChatPending}
 							disabled={liveChatLoading || liveChatPending}
 							title={
-								liveChatError
+								liveChatLostReason
 									? translate(
-											'error.statusCodes.500.description'
+											LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[
+												liveChatLostReason
+											]
 										)
-									: undefined
+									: liveChatError
+										? translate(
+												'error.statusCodes.500.description'
+											)
+										: undefined
 							}
 							onClick={handleLiveChatToggle}
 						>
@@ -810,11 +861,17 @@ const NavGroup = ({
 const NavigationUnreadIndicator = ({
 	animate,
 	count,
-	variant = 'default'
+	label,
+	variant = 'default',
+	title
 }: {
 	animate: boolean;
 	count: number;
+	/** Localised "{{count}} new messages" (also part of the link's name). */
+	label: string;
 	variant?: 'default' | 'figma';
+	/** Optional hint (e.g. "up to N hidden", #1377 §6.3). */
+	title?: string;
 }) => {
 	const { t: translate } = useTranslation();
 	const [visible, setVisible] = useState(false);
@@ -838,7 +895,8 @@ const NavigationUnreadIndicator = ({
 				count > 9 && 'navigation__item__count--double',
 				isFigma && 'navigation__item__count--figma'
 			)}
-			aria-label={translate('navigation.unreadCount', { count })}
+			aria-label={title ? `${label}, ${title}` : label}
+			title={title}
 		>
 			{isFigma ? (
 				<span className="navigation__item__count__sup">{display}</span>

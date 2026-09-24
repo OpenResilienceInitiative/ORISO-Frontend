@@ -25,6 +25,7 @@ jobs:
     name: validate, build, tag and publish release image
     if: ${{ github.event.deleted == false }}
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout release branch
@@ -217,8 +218,11 @@ jobs:
             ## Release Artifact
 
             Docker images:
-            `${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.IMAGE_NAME }}@${{ steps.frontend_image.outputs.digest }}`
-            `${{ env.REGISTRY }}/${{ env.ORG }}/${{ env.STORYBOOK_IMAGE_NAME }}@${{ steps.storybook_image.outputs.digest }}`
+            `${{ env.IMAGE }}` (digest `${{ steps.frontend_image.outputs.digest }}`)
+            `${{ env.STORYBOOK_IMAGE }}` (digest `${{ steps.storybook_image.outputs.digest }}`)
+
+            Source branch:
+            `${{ github.ref_name }}`
 
             Source commit:
             `${{ github.sha }}`

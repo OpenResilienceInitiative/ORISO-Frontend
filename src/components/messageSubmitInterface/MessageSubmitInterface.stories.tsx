@@ -43,18 +43,29 @@ function ComposerShell({
 	activeSession,
 	roomMembers,
 	userData,
+	shellHeight,
 	...composerProps
 }: {
 	activeSession?: any;
 	roomMembers?: Array<{ userId: string; name: string }>;
 	userData?: any;
+	/**
+	 * T41: the composer never grows past its host minus
+	 * `MIN_TIMELINE_VISIBLE`, so a story about growth has to stand in a card
+	 * as tall as a real one (852 px at a 900 px window).
+	 */
+	shellHeight?: number;
 } & Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>) {
 	return (
 		<div
 			className="session"
 			tabIndex={-1}
 			onMouseDown={focusSessionChromeOnPointerDown}
-			style={shellStyle}
+			style={
+				shellHeight
+					? { ...shellStyle, minHeight: shellHeight }
+					: shellStyle
+			}
 		>
 			<ComposerStoryDecorator
 				activeSession={activeSession}
@@ -318,7 +329,7 @@ export const ReadyToSend: Story = {
 
 export const LongMessageAutoGrow: Story = {
 	name: 'Long message (auto-grows to 14 lines)',
-	render: () => <ComposerShell />,
+	render: () => <ComposerShell shellHeight={852} />,
 	play: async ({ canvasElement }) => {
 		const editor = await waitFor(() => {
 			const node = canvasElement.querySelector<HTMLElement>(
@@ -335,12 +346,18 @@ export const LongMessageAutoGrow: Story = {
 			)
 		);
 
+		// D1 (05.09.2026): 14 lines × 19.6 px (14 px × 1.4) + 122 px of
+		// chrome (dock, toolbar strip, insets, borders) = 396 px — was 436
+		// with the 16 px / 22.4 px line. T41: the card is a real 852 px one,
+		// so the timeline floor (`MIN_TIMELINE_VISIBLE`) leaves those 14
+		// lines room; in a shorter card the floor wins and the composer
+		// stops earlier — which is the point of it.
 		await waitFor(() => {
 			const shell = canvasElement.querySelector<HTMLElement>(
 				'.textarea__wrapper-send-message'
 			);
 			expect(Math.round(shell?.getBoundingClientRect().height || 0)).toBe(
-				436
+				396
 			);
 		});
 	}

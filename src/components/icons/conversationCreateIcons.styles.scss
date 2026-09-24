@@ -1,0 +1,45 @@
+.conversationCreateIconCatalog {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+	&__item {
+		align-items: center;
+		background: var(--m3-surface-container-low, #f6f3f3);
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+		border-radius: 16px;
+		display: flex;
+		gap: 12px;
+		margin: 0;
+		min-height: 72px;
+		padding: 12px;
+
+		figcaption {
+			display: flex;
+			flex-direction: column;
+			font-size: 13px;
+			gap: 2px;
+			line-height: 18px;
+		}
+
+		span {
+			color: var(--m3-on-surface-variant, #444748);
+		}
+	}
+
+	&__glyph {
+		align-items: center;
+		background: var(--m3-surface, #fcf9f9);
+		border-radius: 12px;
+		color: var(--m3-on-surface-variant, #444748);
+		display: flex;
+		flex: 0 0 48px;
+		height: 48px;
+		justify-content: center;
+
+		svg {
+			height: 24px;
+			width: 24px;
+		}
+	}
+}

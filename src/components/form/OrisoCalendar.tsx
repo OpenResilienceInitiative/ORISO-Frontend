@@ -62,10 +62,20 @@ const dayCellSx = {
 	},
 	'&.orisoCalendarDay--selected, &.orisoCalendarDay--selected:hover': {
 		backgroundColor: orisoDateTimeColors.primary,
-		color: orisoDateTimeColors.onPrimary
+		color: 'var(--m3-on-primary-container, #ffe2de)'
 	},
 	'&.Mui-disabled': {
 		color: orisoDateTimeColors.disabledText
+	},
+	/*
+	 * The chosen day stays legible even once it can no longer be picked — a
+	 * series that already started still shows its start date. The disabled
+	 * rule above would otherwise paint near-black text at 38% onto the filled
+	 * primary circle, which is what made the number vanish.
+	 */
+	'&.orisoCalendarDay--selected.Mui-disabled': {
+		backgroundColor: orisoDateTimeColors.primary,
+		color: 'var(--m3-on-primary-container, #ffe2de)'
 	},
 	'&.Mui-focusVisible': {
 		outline: `3px solid ${orisoDateTimeColors.focus}`,

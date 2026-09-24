@@ -14,8 +14,15 @@ import { LocaleContext } from '../../../globalState';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import LegalLinks from '../../legalLinks/LegalLinks';
 import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
+import { apiGetConsultantAvailability } from '../../../api/apiGetConsultantAvailability';
+import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
+import { apiPutSessionConsent } from '../../../api/apiPutSessionConsent';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
+import {
+	DepartmentConsentState,
+	resolveEntryRoomConsent
+} from './entryRoomConsent';
 import { performLeaveQueueDelete } from '../../pseudonym/leaveQueueDelete';
 import { toRegistrationUsername } from '../../registration/accountData/registrationUsername';
 import { generatePseudonym } from '../../../utils/pseudonymGenerator';
@@ -26,15 +33,77 @@ import { EntryRoomShell } from './EntryRoomShell';
 import { LiveChatAccess } from './LiveChatAccess';
 import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 import { LiveChatClosed } from './LiveChatClosed';
+import { LiveChatChecking } from './LiveChatChecking';
+import { EntryRoomView } from './EntryRoomView';
+import {
+	readConfirmedEntryName,
+	rememberConfirmedEntryName
+} from './entryRoomIdentity';
 
 export interface LiveChatEntryRoomProps {
-	/** The anonymous session the invite link redeemed. Tokens are already set. */
-	sessionId: number;
+	/** The anonymous session this browser already has for the link. Tokens are set. */
+	sessionId?: number;
+	/**
+	 * A link that has not been redeemed yet. The room asks who is live first
+	 * and only redeems — a fresh account, a place in the queue — once the guest
+	 * has picked a name. Nobody live: closed, and nothing was created.
+	 */
+	invite?: {
+		/** Unknown while the page still reads the link; the room keeps looking. */
+		topicId?: number;
+		consultingTypeId?: number;
+		/** Redeems the link, sets its tokens, and returns the new session. */
+		redeem: () => Promise<number>;
+	};
 	/** The topic slug from the link, for the heading. */
 	topicSlug?: string;
 }
 
 const POLL_MS = 4000;
+/* The details endpoint deliberately maps a transient availability lookup
+   failure to zero. One sample is therefore not enough to call the room
+   closed; a second consecutive poll confirms that nobody is live. */
+const CLOSED_CONFIRMATION_POLLS = 2;
+/* Before a name the loader is on screen anyway, so the confirming second look
+   comes after a second rather than a full poll: closed has to feel immediate. */
+const CLOSED_CONFIRMATION_MS = 1000;
+/* A rejection is unknown and must not block the person (the endpoint's own
+   contract). An outage that persists this many samples opens the door as it
+   was before the pre-check; the waiting room's poll takes over from there. */
+const UNKNOWN_FALLBACK_FAILURES = 3;
+/* Per sample. A server that accepts and never answers would otherwise hold
+   each one for fetchData's 30 s default, and the fallback above by minutes. */
+const AVAILABILITY_SAMPLE_TIMEOUT_MS = 5000;
+
+/**
+ * One answer to "who is live for this topic": the number, or `null` when the
+ * request failed or timed out — unknown, which never counts as closed.
+ */
+const askWhoIsLive = (
+	topicId: number,
+	consultingTypeId: number | undefined,
+	request: AbortController
+): Promise<number | null> => {
+	const deadline = window.setTimeout(
+		() => request.abort(),
+		AVAILABILITY_SAMPLE_TIMEOUT_MS
+	);
+	return apiGetConsultantAvailability(
+		topicId,
+		consultingTypeId,
+		request.signal
+	)
+		.finally(() => window.clearTimeout(deadline))
+		.then(
+			/* Only a reported count is an answer; an empty or odd body says
+			   nothing about who is live. */
+			(d) =>
+				typeof d?.numAvailableConsultants === 'number'
+					? d.numAvailableConsultants
+					: null,
+			() => null
+		);
+};
 
 /** How many names the door offers at once (Frank: „drei vier varianten"). */
 const NAME_CHOICES = 4;
@@ -91,13 +160,19 @@ const rollGuestNames = (locale: string): GuestName[] => {
  * `anonymous-waiting-dismissed-*`) and the user-level consent flag on the
  * server, then hands over. Nothing about the chat is re-implemented here.
  *
- * State: `access` (a name) → `waiting` (poll every 4 s: people ahead,
+ * State: `checking` (no session yet: who is live?) → `access` (a name; the
+ * link is redeemed on continue) → `waiting` (poll every 4 s: people ahead,
  * available counsellors, status) → `accepted` (status IN_PROGRESS: consent
  * slides in) → hand-over. `closed` is a view of `waiting` while no
  * counsellor is available; it steps back the moment one is.
  */
-export const LiveChatEntryRoom = ({
-	sessionId,
+export const LiveChatEntryRoom = (props: LiveChatEntryRoomProps) => (
+	<LiveChatEntryRoomContent key={props.sessionId ?? 'invite'} {...props} />
+);
+
+const LiveChatEntryRoomContent = ({
+	sessionId: givenSessionId,
+	invite,
 	topicSlug
 }: LiveChatEntryRoomProps) => {
 	const { t } = useTranslation();
@@ -111,7 +186,25 @@ export const LiveChatEntryRoom = ({
 		[t]
 	);
 
-	const [stage, setStage] = useState<'access' | 'waiting'>('access');
+	const [sessionId, setSessionId] = useState<number | null>(
+		givenSessionId ?? null
+	);
+	const [confirmedName] = useState(() =>
+		givenSessionId === undefined
+			? null
+			: readConfirmedEntryName(givenSessionId)
+	);
+	const [stage, setStage] = useState<'checking' | 'access' | 'waiting'>(() =>
+		givenSessionId === undefined
+			? 'checking'
+			: confirmedName
+				? 'waiting'
+				: 'access'
+	);
+	useEffect(() => {
+		if (confirmedName && sessionId !== null)
+			rememberConfirmedEntryName(sessionId, confirmedName);
+	}, [confirmedName, sessionId]);
 	const [names, setNames] = useState<GuestName[]>(() =>
 		rollGuestNames(locale)
 	);
@@ -119,7 +212,14 @@ export const LiveChatEntryRoom = ({
 	const [busy, setBusy] = useState(false);
 	const [ahead, setAhead] = useState<number | null>(null);
 	const [available, setAvailable] = useState<number | null>(null);
+	const [availabilityUnknown, setAvailabilityUnknown] = useState(false);
+	const [consecutiveUnavailablePolls, setConsecutiveUnavailablePolls] =
+		useState(0);
 	const [accepted, setAccepted] = useState(false);
+	const [department, setDepartment] = useState<{
+		agencyId: number;
+		topicId: number;
+	} | null>(null);
 	const [closedDismissed, setClosedDismissed] = useState(false);
 	const [leaveFailed, setLeaveFailed] = useState(false);
 	const [continueFailed, setContinueFailed] = useState(false);
@@ -142,25 +242,83 @@ export const LiveChatEntryRoom = ({
 		? `${tr('kicker', 'Live-Chat')} · ${topicName}`
 		: tr('kicker', 'Live-Chat');
 
-	/* The tenant's consent sentence, exactly as the old gate built it. */
-	const consentHtml = useMemo(
+	/* The link markup the sentence's `{{legal_links}}` token is replaced with.
+	   The backend cannot render it: the targets come from this frontend's
+	   deployment configuration (ADR-021 decision 5). */
+	const legalLinksHtml = useMemo(
+		() =>
+			renderToString(
+				<LegalLinks
+					legalLinks={legalLinks}
+					filter={(l) => l.registration}
+					/* The parameters the dialog lookup uses, so every legal
+					   anchor in the sentence is recognised as one. */
+					params={{ aid: null }}
+					/* Without it the two links glue into
+					   "DatenschutzerklärungImpressum" — the sanitizer
+					   drops `class`, so a CSS separator cannot survive.
+					   Same delimiter the registration's consent sentence
+					   passes. */
+					delimiter={', '}
+				/>
+			),
+		[legalLinks]
+	);
+
+	/* The platform's consent sentence, exactly as the old gate built it. It is
+	   the right text only when the department has no wording of its own; a
+	   department that does have one governs the advice seeker instead. */
+	const platformConsentHtml = useMemo(
 		() =>
 			t('anonymousConsent.label.text', {
 				interpolation: { escapeValue: false },
-				legal_links: renderToString(
-					<LegalLinks
-						legalLinks={legalLinks}
-						filter={(l) => l.registration}
-						/* Without it the two links glue into
-						   "DatenschutzerklärungImpressum" — the sanitizer
-						   drops `class`, so a CSS separator cannot survive.
-						   Same delimiter the registration's consent sentence
-						   passes. */
-						delimiter={', '}
-					/>
-				)
+				legal_links: legalLinksHtml
 			}),
-		[legalLinks, t]
+		[legalLinksHtml, t]
+	);
+
+	/* Product-owned fallback for an agency without a usable published policy.
+	   It is intentionally a warning rather than a gate: the customer sees the
+	   missing-policy risk, the configured legal links and the cookie disclosure,
+	   and decides whether to continue with the existing checkbox. */
+	const missingPolicyHtml = useMemo(
+		() =>
+			t('anonymousConsent.label.missingPolicy', {
+				interpolation: { escapeValue: false },
+				legal_links: legalLinksHtml
+			}),
+		[legalLinksHtml, t]
+	);
+
+	/**
+	 * The department's own consent sentence, resolved from (agencyId, topicId).
+	 *
+	 * `idle` while the coordinate is unknown — the enquiry carries no agency,
+	 * or the backend predates ORISO-UserService#1141 and does not send one.
+	 * An absent or unavailable policy uses the fixed risk warning. An unavailable
+	 * response keeps retrying in the background, but never blocks the customer.
+	 */
+	const [departmentConsent, setDepartmentConsent] =
+		useState<DepartmentConsentState>({ status: 'idle' });
+
+	const consent = useMemo(
+		() =>
+			resolveEntryRoomConsent({
+				hasDepartment: department !== null,
+				department: departmentConsent,
+				platformHtml: platformConsentHtml,
+				missingPolicyHtml,
+				legalLinksHtml,
+				locale
+			}),
+		[
+			department,
+			departmentConsent,
+			legalLinksHtml,
+			locale,
+			missingPolicyHtml,
+			platformConsentHtml
+		]
 	);
 
 	const storageKey = (name: string) => `anonymous-${name}-${sessionId}`;
@@ -181,14 +339,60 @@ export const LiveChatEntryRoom = ({
 		setBusy(true);
 		setContinueFailed(false);
 		try {
+			/* The link is redeemed here, not on arrival: an account and a place
+			   in the queue only for somebody who has chosen to wait. A retry
+			   after a failed name keeps the session the first attempt made. */
+			let id = sessionId;
+			if (id === null) {
+				if (!invite) return;
+				/* The last positive sample can be seconds old. Ask once more
+				   right before an account and a queue entry are created; an
+				   answered zero is closed, an unknown answer does not block. */
+				if (invite.topicId !== undefined) {
+					const ask = () =>
+						askWhoIsLive(
+							invite.topicId as number,
+							invite.consultingTypeId,
+							new AbortController()
+						);
+					let liveNow = await ask();
+					/* One zero may be the server's own failed lookup: here too it
+					   takes a second one, a second later, to turn somebody away. */
+					if (liveNow === 0 && !cancelled.current) {
+						await new Promise((resolve) =>
+							window.setTimeout(resolve, CLOSED_CONFIRMATION_MS)
+						);
+						liveNow = await ask();
+					}
+					if (cancelled.current) return;
+					if (liveNow === 0) {
+						/* Say so — also after "Ich warte", which had dismissed it. */
+						setClosedDismissed(false);
+						/* A real answer ends the outage fallback: "Ich warte" waits
+						   for the next one instead of reopening the names. */
+						setAvailabilityUnknown(false);
+						setAvailable(0);
+						setConsecutiveUnavailablePolls(
+							CLOSED_CONFIRMATION_POLLS
+						);
+						return;
+					}
+				}
+				id = await invite.redeem();
+				if (cancelled.current) return;
+				setSessionId(id);
+				/* Door samples describe the door, not this session: from here
+				   only the session's own enquiry details may call it closed. */
+				setAvailable(null);
+				setConsecutiveUnavailablePolls(0);
+			}
 			/* One name, everywhere: the counsellor's queue shows the same
 			   string the guest just picked. */
-			await apiPutSessionData(sessionId, {
+			await apiPutSessionData(id, {
 				displayName: chosen.userId
 			});
 			await apiPatchUserData({ displayName: chosen.userId });
-			mark('pseudonym');
-			mark('pseudonym-name', chosen.userId);
+			rememberConfirmedEntryName(id, chosen.userId);
 			if (!cancelled.current) setStage('waiting');
 		} catch (error) {
 			/* Without this the door swallowed the failure: the stage stayed on
@@ -198,26 +402,102 @@ export const LiveChatEntryRoom = ({
 		} finally {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, names, selectedIndex, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, names, selectedIndex, sessionId, invite]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	/* Before any session: who is live for this topic, on the public endpoint
+	   that needs no account. An answered zero needs a second look, because the
+	   server reports its own failed lookup as nobody. A rejected request is
+	   unknown and changes nothing — the waiting room's poll has always ignored
+	   rejections — so the room keeps looking rather than calling it closed. */
+	const topicId = invite?.topicId;
+	const consultingTypeId = invite?.consultingTypeId;
+	useEffect(() => {
+		if (sessionId !== null || topicId === undefined) return undefined;
+		let stop = false;
+		let timer: number | undefined;
+		let zeros = 0;
+		let failures = 0;
+		let inFlight: AbortController | undefined;
+		const sample = (): Promise<number | null> => {
+			inFlight = new AbortController();
+			return askWhoIsLive(topicId, consultingTypeId, inFlight);
+		};
+		const run = async () => {
+			const next = await sample();
+			if (stop) return;
+			if (next === null) {
+				failures += 1;
+				if (failures === UNKNOWN_FALLBACK_FAILURES)
+					setAvailabilityUnknown(true);
+			} else {
+				failures = 0;
+				setAvailabilityUnknown(false);
+				zeros = next > 0 ? 0 : zeros + 1;
+				setAvailable(next);
+				setConsecutiveUnavailablePolls(zeros);
+			}
+			timer = window.setTimeout(
+				run,
+				zeros === 1 ? CLOSED_CONFIRMATION_MS : POLL_MS
+			);
+		};
+		void run();
+		return () => {
+			stop = true;
+			window.clearTimeout(timer);
+			inFlight?.abort();
+		};
+	}, [sessionId, topicId, consultingTypeId]);
+
+	/* Somebody is live — or nobody can tell — : the names step in. */
+	useEffect(() => {
+		if (
+			stage === 'checking' &&
+			((available !== null && available > 0) || availabilityUnknown)
+		)
+			setStage('access');
+	}, [stage, available, availabilityUnknown]);
 
 	/* B: the queue, every 4 s — same endpoint and cadence the session used. */
 	useEffect(() => {
-		if (stage !== 'waiting' || accepted) return undefined;
+		if (stage !== 'waiting' || accepted || sessionId === null)
+			return undefined;
 		let stop = false;
-		const refresh = () =>
-			apiGetAnonymousEnquiryDetails(sessionId)
+		let latestPoll = 0;
+		let latestAppliedPoll = 0;
+		const refresh = () => {
+			const poll = ++latestPoll;
+			return apiGetAnonymousEnquiryDetails(sessionId)
 				.then((d) => {
-					if (stop) return;
+					// A slow response must not overwrite a newer poll's room state.
+					if (stop || poll < latestAppliedPoll) return;
+					latestAppliedPoll = poll;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
-					setAvailable(
+					const nextAvailable =
 						typeof d?.numAvailableConsultants === 'number'
 							? d.numAvailableConsultants
-							: null
+							: null;
+					setAvailable(nextAvailable);
+					setConsecutiveUnavailablePolls((previous) =>
+						nextAvailable === 0 ? previous + 1 : 0
 					);
+					/* The department coordinate is bound at registration, so it
+					   arrives on the very first poll — the sentence is fetched
+					   while the person waits and is ready long before anyone
+					   accepts. Set once; the enquiry does not move department. */
+					const agencyId = d?.agencyId;
+					const topicId = d?.mainTopicId;
+					if (
+						typeof agencyId === 'number' &&
+						typeof topicId === 'number'
+					) {
+						setDepartment((prev) => prev ?? { agencyId, topicId });
+					}
 					if (d?.status === 'IN_PROGRESS') setAccepted(true);
 				})
 				.catch(() => undefined);
+		};
 		refresh();
 		const timer = window.setInterval(refresh, POLL_MS);
 		return () => {
@@ -225,6 +505,39 @@ export const LiveChatEntryRoom = ({
 			window.clearInterval(timer);
 		};
 	}, [stage, accepted, sessionId]);
+
+	/* Fetch as soon as the coordinate is known. A transient failure shows the
+	   non-blocking warning immediately and keeps retrying, so published wording
+	   can replace it if the service recovers while the customer is waiting. */
+	useEffect(() => {
+		if (!department || departmentConsent.status === 'ok') return undefined;
+		let stop = false;
+		const load = () =>
+			apiGetConsentText(department.agencyId, department.topicId)
+				.then((result) => {
+					if (stop) return;
+					setDepartmentConsent(
+						result.status === 'ok'
+							? {
+									status: 'ok',
+									sentence:
+										result.consentText?.sentence ?? null,
+									versionId:
+										result.consentText?.versionId ?? null
+								}
+							: { status: 'unavailable' }
+					);
+				})
+				.catch(() => {
+					if (!stop) setDepartmentConsent({ status: 'unavailable' });
+				});
+		load();
+		const timer = window.setInterval(load, POLL_MS);
+		return () => {
+			stop = true;
+			window.clearInterval(timer);
+		};
+	}, [department, departmentConsent.status]);
 
 	/* Closed steps back the moment someone is available again. */
 	useEffect(() => {
@@ -235,6 +548,7 @@ export const LiveChatEntryRoom = ({
 	   component, then the hand-over — a full load, as the redeem did before,
 	   so the app boots with the tokens the redeem set. */
 	const handleAccept = useCallback(async () => {
+		if (sessionId === null) return;
 		if (busy) return;
 		setBusy(true);
 		try {
@@ -242,15 +556,35 @@ export const LiveChatEntryRoom = ({
 				dataPrivacyConfirmation: true,
 				termsAndConditionsConfirmation: true
 			});
+			/* Pin the agreement to the exact wording that was on screen
+			   (ADR-022 decision 2). The account-level flag above records only
+			   *that* somebody agreed; without this pointer a Träger publishing
+			   new wording would not invalidate the acceptance, which is what
+			   ADR-021 gave the legal texts a version history for. Only the
+			   department levels carry a version — Träger and platform wording
+			   lives in TenantService and has none, so there is nothing to pin
+			   and the account flag stands alone, exactly as before.
+
+			   Best-effort on purpose: the consent is already recorded on the
+			   account, so a failure here must not strand somebody in the entry
+			   room over a pointer the server treats as a refinement. */
+			if (typeof consent.versionId === 'number') {
+				try {
+					await apiPutSessionConsent(sessionId, consent.versionId);
+				} catch {
+					/* keep going — the account-level confirmation carries it */
+				}
+			}
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
 		} catch {
 			if (!cancelled.current) setBusy(false);
 		}
-	}, [busy, sessionId]); // eslint-disable-line react-hooks/exhaustive-deps
+	}, [busy, sessionId, consent]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLeave = useCallback(async () => {
+		if (sessionId === null) return;
 		setBusy(true);
 		setLeaveFailed(false);
 		await performLeaveQueueDelete(sessionId, {
@@ -265,62 +599,109 @@ export const LiveChatEntryRoom = ({
 
 	const goToMail = useCallback(() => navigate('/registration'), [navigate]);
 
+	const nobodyLive =
+		available === 0 &&
+		consecutiveUnavailablePolls >= CLOSED_CONFIRMATION_POLLS;
 	const closed =
-		stage === 'waiting' && !accepted && available === 0 && !closedDismissed;
+		nobodyLive &&
+		!closedDismissed &&
+		(sessionId === null
+			? stage !== 'waiting' && !busy
+			: stage === 'waiting' && !accepted);
 	const statusLine = closed
 		? tr('status.closed', 'Gerade geschlossen')
-		: stage === 'access'
-			? tr('status.access', 'Ihr Zugang für dieses Gespräch')
-			: accepted
-				? tr(
-						'status.accepted',
-						'Eine Beraterin hat Ihr Gespräch angenommen'
-					)
-				: tr(
-						'status.waiting',
-						'Warteraum — freie Beraterin wird gesucht'
-					);
+		: stage === 'checking'
+			? closedDismissed
+				? tr('status.waitingForLive', 'Wir warten, bis jemand live ist')
+				: tr('status.checking', 'Wer ist gerade live?')
+			: stage === 'access'
+				? tr('status.access', 'Ihr Zugang für dieses Gespräch')
+				: accepted
+					? tr(
+							'status.accepted',
+							'Eine Beraterin hat Ihr Gespräch angenommen'
+						)
+					: tr(
+							'status.waiting',
+							'Warteraum — freie Beraterin wird gesucht'
+						);
 
 	return (
-		<EntryRoomShell kicker={kicker} statusLine={statusLine}>
-			{stage === 'access' && (
-				<LiveChatAccess
-					names={names}
-					selectedIndex={selectedIndex}
-					busy={busy}
-					failed={continueFailed}
-					onSelect={setSelectedIndex}
-					onReroll={() => {
-						/* A new set, and the first of it taken: the way on
+		<EntryRoomShell
+			kicker={kicker}
+			statusLine={statusLine}
+			/* Gate 2 (ADR-022): once a centre has taken the conversation its
+			   department governs — before, the platform does. */
+			department={accepted ? department : null}
+		>
+			{/* One view at a time slides in; the frame and the stage stay. */}
+			<EntryRoomView key={closed ? 'closed' : stage}>
+				{stage === 'checking' && !closed && (
+					<LiveChatChecking
+						text={
+							closedDismissed
+								? tr(
+										'checking.waiting',
+										'Wir warten mit Ihnen, bis jemand live ist …'
+									)
+								: tr(
+										'checking.text',
+										'Wir schauen, wer gerade live ist …'
+									)
+						}
+					/>
+				)}
+				{stage === 'access' && !closed && (
+					<LiveChatAccess
+						names={names}
+						selectedIndex={selectedIndex}
+						busy={busy}
+						failed={continueFailed}
+						onSelect={setSelectedIndex}
+						onReroll={() => {
+							/* A new set, and the first of it taken: the way on
 						   must never need a second click. */
-						setNames(rollGuestNames(locale));
-						setSelectedIndex(0);
-					}}
-					onContinue={() => {
-						void handleContinue();
-					}}
-				/>
-			)}
-			{stage === 'waiting' && closed && (
-				<LiveChatClosed
-					onMailCounselling={goToMail}
-					onLater={() => setClosedDismissed(true)}
-				/>
-			)}
-			{stage === 'waiting' && !closed && (
-				<LiveChatWaitingRoom
-					ahead={ahead}
-					accepted={accepted}
-					consentHtml={consentHtml}
-					busy={busy}
-					leaveFailed={leaveFailed}
-					onAccept={() => {
-						void handleAccept();
-					}}
-					onLeave={handleLeave}
-					onMailCounselling={goToMail}
-				/>
-			)}
+							setNames(rollGuestNames(locale));
+							setSelectedIndex(0);
+						}}
+						onContinue={() => {
+							void handleContinue();
+						}}
+					/>
+				)}
+				{closed && (
+					<LiveChatClosed
+						onMailCounselling={goToMail}
+						onLater={() => {
+							/* "Ich warte": without a session there is no queue to
+						   wait in, so the room waits here and steps on by itself. */
+							if (sessionId === null) setStage('checking');
+							setClosedDismissed(true);
+						}}
+					/>
+				)}
+				{stage === 'waiting' && !closed && (
+					<LiveChatWaitingRoom
+						ahead={ahead}
+						/* Held only while the department lookup is still in flight —
+					   a poll that reports the coordinate and IN_PROGRESS together
+					   would otherwise show "no policy" for a centre that has one,
+					   and let the hand-off record a consent pinning no version.
+					   A *failed* lookup never holds; `resolveEntryRoomConsent`
+					   owns that distinction. */
+						accepted={consent.readable && accepted}
+						consentHtml={consent.html}
+						department={department}
+						busy={busy}
+						leaveFailed={leaveFailed}
+						onAccept={() => {
+							void handleAccept();
+						}}
+						onLeave={handleLeave}
+						onMailCounselling={goToMail}
+					/>
+				)}
+			</EntryRoomView>
 		</EntryRoomShell>
 	);
 };

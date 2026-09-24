@@ -7,6 +7,7 @@ import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
 import { DoNotDisturbControl } from './DoNotDisturbControl';
+import { DisplayFilterProfileSection } from './DisplayFilterProfileSection';
 import { NotificationConfigView } from './NotificationConfigDialog';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
 import {
@@ -156,6 +157,11 @@ export const NotificationSettingsPanel = () => {
 				}
 				onPreview={previewNotificationSound}
 			/>
+
+			<hr />
+
+			{/* #1377 slice 6: per-list display-filter defaults + #593 per-event-type view. */}
+			<DisplayFilterProfileSection />
 
 			<hr />
 
