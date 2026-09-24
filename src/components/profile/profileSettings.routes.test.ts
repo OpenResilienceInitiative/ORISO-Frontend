@@ -26,6 +26,14 @@ vi.mock('./EmailNotifications', () => ({ EmailNotification: () => null }));
 vi.mock('./NotificationSettings', () => ({
 	NotificationSettingsPanel: () => null
 }));
+// Node env has no window; #1553 gates a panel on isSupported().
+vi.mock('../../utils/notificationHelpers', async (importOriginal) => ({
+	...(await importOriginal<object>()),
+	isSupported: () => true
+}));
+vi.mock('./BrowserNotifications', () => ({
+	BrowserNotification: () => null
+}));
 vi.mock('./DeleteAccount', () => ({ DeleteAccount: () => null }));
 vi.mock('./Locale', () => ({ Locale: () => null }));
 vi.mock(
