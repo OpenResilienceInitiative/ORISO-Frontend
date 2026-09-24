@@ -22,9 +22,13 @@ vi.mock('../../globalState', () => ({
 	hasUserAuthority: (authority: string, userData: any) =>
 		!!userData?.grantedAuthorities?.includes(authority)
 }));
+const browserEnv = vi.hoisted(() => ({ supported: true, visited: true }));
 vi.mock('../../utils/notificationHelpers', () => ({
-	isSupported: () => true,
-	browserNotificationsSettings: () => ({ enabled: false, visited: true })
+	isSupported: () => browserEnv.supported,
+	browserNotificationsSettings: () => ({
+		enabled: false,
+		visited: browserEnv.visited
+	})
 }));
 vi.mock('./ConsultantInformation', stub('ConsultantInformation'));
 vi.mock('./ConsultantSpokenLanguages', stub('ConsultantSpokenLanguages'));
@@ -60,12 +64,12 @@ vi.mock(
 const consultant = { grantedAuthorities: ['consultant'] };
 const asker = { grantedAuthorities: ['asker'] };
 
-const routes = (enableNewNotifications: boolean) =>
+const routes = (enableNewNotifications: boolean, isFirstVisit = false) =>
 	profileRoutes(
 		{ releaseToggles: { enableNewNotifications } } as AppConfigInterface,
 		null as unknown as TenantDataInterface,
 		['de'],
-		false
+		isFirstVisit
 	);
 
 // Mirrors Profile.tsx: `/profile${tab.url}${group.url}`.
@@ -106,6 +110,26 @@ describe('browser pop-up opt-in is reachable (#1551)', () => {
 			componentsAt(true, consultant, NOTIFICATION_SETTINGS_PATH)
 		).not.toContain(BrowserNotification);
 	});
+
+	it.each([
+		[true, true],
+		[false, false]
+	])(
+		'first-visit dot on Settings follows browser support (supported=%s)',
+		(supported, expected) => {
+			browserEnv.supported = supported;
+			browserEnv.visited = false;
+			try {
+				const settingsTab = routes(false, true).find(
+					(tab) => tab.url === '/einstellungen'
+				);
+				expect(!!settingsTab?.notificationBubble).toBe(expected);
+			} finally {
+				browserEnv.supported = true;
+				browserEnv.visited = true;
+			}
+		}
+	);
 
 	it('has no second, hidden notifications tab', () => {
 		expect(routes(false).map((tab) => tab.url)).not.toContain(

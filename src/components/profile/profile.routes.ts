@@ -20,7 +20,10 @@ import {
 	TenantDataInterface,
 	AppConfigInterface
 } from '../../globalState/interfaces';
-import { browserNotificationsSettings } from '../../utils/notificationHelpers';
+import {
+	browserNotificationsSettings,
+	isSupported as isBrowserNotificationSupported
+} from '../../utils/notificationHelpers';
 import { AdditionalEnquiry } from './AdditionalEnquiry/AdditionalEnquiry';
 
 const shouldShowOverview = (useOverviewPage: boolean, userData) =>
@@ -223,6 +226,7 @@ const profileRoutes = (
 			notificationBubble:
 				isFirstVisit &&
 				!settings?.releaseToggles?.enableNewNotifications &&
+				!!isBrowserNotificationSupported() &&
 				!browserNotificationsSettings().visited,
 			elements: profileRoutesSettings(selectableLocales, settings)
 		},
