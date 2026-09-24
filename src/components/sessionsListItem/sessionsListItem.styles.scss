@@ -1,24 +1,26 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
-$session-card-bg: #eae7e8;
+$session-card-bg: var(--m3-surface-container-high, #eae7e8);
 $session-card-hover-bg: #f0e7e7;
 
 // WP-06 Slice 0b: source the active-state colours from the shared list-item
 // selection tokens (settings.scss → _listItemSelection.scss). Values are
 // unchanged — this only makes them the single canonical source.
-$session-card-selected-bg: #f6f3f3;
+$session-card-selected-bg: var(--m3-surface-container-low, #f6f3f3);
+
+// No border role is white, and surface roles may not colour borders (m3Sweep).
 $session-light-border: #fff;
 
 // #597: selected ring uses M3 primary (was #ffb4aa / 1px)
 $session-selected-border: var(--m3-primary, #a5000a);
 $session-active-border: var(--m3-primary-container, #cc1e1c);
-$session-focus-ring: #ffdad5;
-$session-topic-chip-bg: #ffb4aa;
-$session-topic-chip-color: #410001;
-$session-chip-hover-bg: #cc1e1c;
-$session-chip-hover-color: #ffffff;
-$session-postcode-border: #ffb4aa;
-$session-postcode-color: #cc1e1c;
+$session-focus-ring: var(--m3-primary-fixed, #ffdad5);
+$session-topic-chip-bg: var(--m3-primary-fixed-dim, #ffb4aa);
+$session-topic-chip-color: var(--m3-on-primary-fixed, #410001);
+$session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
+$session-chip-hover-color: var(--m3-on-primary, #ffffff);
+$session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
+$session-postcode-color: var(--m3-primary-container, #cc1e1c);
 $case-handover-action: var(--m3-primary, $primary);
 $case-handover-action-hover: var(--m3-primary-hover, $hover-primary);
 $case-handover-action-disabled: var(--m3-surface-variant, #d8dde3);
@@ -102,12 +104,12 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		// Make tags red when card is active
 		.sessionsListItem__topic {
 			background-color: $session-active-border !important;
-			color: #ffffff !important;
+			color: var(--m3-on-primary, #ffffff) !important;
 		}
 
 		.sessionsListItem__menuIcon {
 			border-color: $session-selected-border;
-			color: #410001;
+			color: var(--m3-on-primary-fixed, #410001);
 		}
 
 		// Make consulting type icons red when card is active
@@ -207,7 +209,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		.sessionsListItem__topic {
 			background-color: $session-active-border !important;
-			color: #ffffff !important;
+			color: var(--m3-on-primary, #ffffff) !important;
 		}
 	}
 
@@ -286,7 +288,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 	&--caseHandoverLocked:not(.sessionsListItem--active)
 		.sessionsListItem__content {
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border-color: #ffd8d4;
 	}
 
@@ -450,7 +452,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		box-sizing: border-box;
 		border-radius: 32px;
 		border: 1px solid #ffffff;
-		background-color: #ffffff;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		color: #1e1e1e;
 		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -603,7 +605,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		margin-top: 2px;
 
 		&--disabled {
-			fill: #9ba4b0;
+			fill: var(--m3-tertiary-container, #9ba4b0);
 		}
 	}
 
@@ -630,7 +632,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		flex: 1;
 
 		&--disabled {
-			color: #9ba4b0;
+			color: var(--m3-tertiary-container, #9ba4b0);
 		}
 	}
 
@@ -655,7 +657,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		margin: 0;
 
 		&--disabled {
-			color: #9ba4b0;
+			color: var(--m3-tertiary-container, #9ba4b0);
 		}
 	}
 
@@ -675,7 +677,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		justify-content: center;
 		padding: 2px 12px 2px 4px;
 		box-sizing: border-box;
-		background-color: #ffffff;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid $session-postcode-border;
 		border-left: none;
 		border-radius: 0 12px 12px 0;
