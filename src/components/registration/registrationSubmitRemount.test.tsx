@@ -25,23 +25,25 @@ import { clearRegistrationSubmitting } from './registrationSubmission';
  * test settles it, which is the state under test. Hoisted with the `vi.mock`
  * calls below, which run before this file's own imports are evaluated.
  */
-const { pendingRegistration, redirectToApp, settle } = vi.hoisted(() => {
-	const settle: {
-		resolve?: () => void;
-		reject?: (error: Error) => void;
-	} = {};
-	return {
-		settle,
-		redirectToApp: vi.fn(),
-		pendingRegistration: vi.fn(
-			(..._args: unknown[]) =>
-				new Promise<void>((resolve, reject) => {
-					settle.resolve = resolve;
-					settle.reject = reject;
-				})
-		)
-	};
-});
+const { pendingRegistration, redirectToApp, redirectToLogin, settle } =
+	vi.hoisted(() => {
+		const settle: {
+			resolve?: () => void;
+			reject?: (error: Error) => void;
+		} = {};
+		return {
+			settle,
+			redirectToApp: vi.fn(),
+			redirectToLogin: vi.fn(),
+			pendingRegistration: vi.fn(
+				(..._args: unknown[]) =>
+					new Promise<void>((resolve, reject) => {
+						settle.resolve = resolve;
+						settle.reject = reject;
+					})
+			)
+		};
+	});
 
 /** Lottie touches a canvas 2d context at module load; jsdom has none. */
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -52,11 +54,11 @@ vi.mock('../../components/stageLayout/StageLayout', () => ({
 	)
 }));
 
-/* The real one leaves the document, which a test cannot come back from — and
-   it is the end of the successful path, so it is what the test waits for. */
+/* The real ones leave the document, which a test cannot come back from — and
+   each is the end of its path, so it is what the test waits for. */
 vi.mock('./autoLogin', async (importOriginal) => {
 	const actual = await importOriginal<Record<string, unknown>>();
-	return { ...actual, redirectToApp };
+	return { ...actual, redirectToApp, redirectToLogin };
 });
 
 vi.mock('../../api', async (importOriginal) => {
@@ -166,6 +168,7 @@ beforeEach(() => {
 	clearRegistrationSubmitting();
 	pendingRegistration.mockClear();
 	redirectToApp.mockClear();
+	redirectToLogin.mockClear();
 	settle.reject = undefined;
 	settle.resolve = undefined;
 });
@@ -225,6 +228,10 @@ describe('registration — a submit that is already in flight', () => {
 			handover(),
 			'the handover gives way once the submit has failed'
 		).toBeNull();
+		expect(
+			redirectToLogin,
+			'no account was created — there is nothing to log in to'
+		).not.toHaveBeenCalled();
 	});
 
 	it('keeps the handover when the account exists and only the tidy-up fails', async () => {
@@ -265,12 +272,17 @@ describe('registration — a submit that is already in flight', () => {
 		}
 	});
 
-	it('keeps the handover when the account exists and the auto-login fails', async () => {
+	it('sends the person to the login when the account exists and the auto-login fails', async () => {
 		/* `apiPostRegistration` posts the registration *and then* logs in, and
 		   resolves only when both have worked. An auto-login that fails after
 		   the account was created would otherwise arrive in the same `catch`
 		   as a registration that never happened — form back, second account
-		   offered to someone who already has one (CodeRabbit on #1514). */
+		   offered to someone who already has one (CodeRabbit on #1514).
+
+		   Keeping the handover up is not the answer on its own either: nothing
+		   ends it, so "Fast geschafft." would stand for good, with no message
+		   and no way on. The account exists; logging in is the one step left
+		   that can still work, so that is where the person goes. */
 		renderAccountStep();
 		fireEvent.click(registerButton());
 		await waitFor(() => expect(handover()).toBeTruthy());
@@ -292,7 +304,11 @@ describe('registration — a submit that is already in flight', () => {
 			form(),
 			'the account exists — the form must not come back'
 		).toBeNull();
-		expect(handover()).toBeTruthy();
+		expect(
+			redirectToLogin,
+			'the handover must end somewhere — the login is where the account can still be used'
+		).toHaveBeenCalledTimes(1);
+		expect(redirectToApp).not.toHaveBeenCalled();
 	});
 
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {

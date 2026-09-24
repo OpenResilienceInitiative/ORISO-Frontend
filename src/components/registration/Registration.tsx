@@ -33,6 +33,7 @@ import {
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import {
 	redirectToApp,
+	redirectToLogin,
 	getPostRegistrationGroupChatId,
 	getPostRegistrationSessionId,
 	POST_REGISTRATION_LOADER_KEY
@@ -623,10 +624,14 @@ export const Registration = () => {
 				.catch((error) => {
 					// console.error('Registration failed:', error);
 					if (accountCreated) {
-						/* The account is real; the redirect is what failed.
-						   Putting the form back here would offer a second
-						   registration to someone who already has one, which
-						   is the very thing this screen exists to prevent. */
+						/* The account is real; what failed is the automatic
+						   login or the way into the app. Putting the form back
+						   would offer a second registration to someone who
+						   already has one, and keeping the handover up would
+						   leave them on "Fast geschafft." for good — nothing
+						   else ends it. The login is the step that can still
+						   work, and the flag stays set until that load. */
+						redirectToLogin();
 						return;
 					}
 					clearRegistrationSubmitting();
