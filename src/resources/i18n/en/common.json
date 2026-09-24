@@ -2709,7 +2709,9 @@
 				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
-				"confirmLabel": "I have saved the key securely."
+				"confirmLabel": "I have saved the key securely.",
+				"copied": "Copied ✓",
+				"done": "Done"
 			},
 			"status": {
 				"ok": "✓ Key backup is active. Your history stays readable on new devices."
@@ -2724,7 +2726,8 @@
 				"inputLabel": "Recovery key",
 				"invalidKey": "This recovery key is invalid. Please check your entry.",
 				"error": "Recovery failed. Please try again.",
-				"success": "{{count}} message keys restored."
+				"success": "{{count}} message keys restored.",
+				"cta": "Restore history"
 			},
 			"reset": {
 				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
@@ -3259,6 +3262,12 @@
 			"done": "completed",
 			"active": "current step",
 			"pending": "not started"
+		},
+		"errors": {
+			"ups": {
+				"text": "Sorry, something went wrong. Please reload the page and try again.",
+				"title": "Oops!"
+			}
 		}
 	},
 	"releaseNote": {
@@ -4392,7 +4401,15 @@
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
 			"later": "Come back later",
-			"title": "Live chat is currently closed"
+			"title": "Live chat is currently closed",
+			"topicLabel": "Requested topic: {{topic}}",
+			"weekdays": {
+				"monday": "Monday",
+				"tuesday": "Tuesday",
+				"wednesday": "Wednesday",
+				"thursday": "Thursday",
+				"friday": "Friday"
+			}
 		},
 		"consent": {
 			"accept": "I agree",

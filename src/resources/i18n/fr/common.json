@@ -2726,7 +2726,9 @@
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
-				"confirmLabel": "J'ai enregistré la clé en lieu sûr."
+				"confirmLabel": "J'ai enregistré la clé en lieu sûr.",
+				"copied": "Copié ✓",
+				"done": "Terminé"
 			},
 			"status": {
 				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils."
@@ -2741,7 +2743,8 @@
 				"inputLabel": "Clé de récupération",
 				"invalidKey": "Cette clé de récupération n'est pas valide. Veuillez vérifier votre saisie.",
 				"error": "La récupération a échoué. Veuillez réessayer.",
-				"success": "{{count}} clés de messages restaurées."
+				"success": "{{count}} clés de messages restaurées.",
+				"cta": "Restaurer l'historique"
 			},
 			"reset": {
 				"explainer": "Vous avez oublié votre clé de récupération ? Vous pouvez réinitialiser votre identité de chiffrement. Attention : l'historique chiffré jusqu'ici peut alors devenir définitivement illisible.",
@@ -4468,7 +4471,15 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
-			"title": "Le Live-Chat est malheureusement fermé pour le moment"
+			"title": "Le Live-Chat est malheureusement fermé pour le moment",
+			"topicLabel": "Thème demandé : {{topic}}",
+			"weekdays": {
+				"monday": "lundi",
+				"tuesday": "mardi",
+				"wednesday": "mercredi",
+				"thursday": "jeudi",
+				"friday": "vendredi"
+			}
 		}
 	},
 	"sessionMenu": {

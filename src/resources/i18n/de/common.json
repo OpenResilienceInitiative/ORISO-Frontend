@@ -2747,7 +2747,9 @@
 				"silentExplainer": "Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel — speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
 				"explainer": "Das ist Ihr Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichern Sie ihn jetzt an einem sicheren Ort.",
 				"copy": "Schlüssel kopieren",
-				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert."
+				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert.",
+				"copied": "Kopiert ✓",
+				"done": "Fertig"
 			},
 			"status": {
 				"ok": "✓ Schlüsselsicherung ist aktiv. Ihr Verlauf bleibt auf neuen Geräten lesbar."
@@ -2762,7 +2764,8 @@
 				"inputLabel": "Ersatzschlüssel",
 				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
-				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt."
+				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt.",
+				"cta": "Verlauf wiederherstellen"
 			},
 			"reset": {
 				"explainer": "Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
@@ -4490,7 +4493,15 @@
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
 			"later": "Später wiederkommen",
-			"title": "Live-Chat ist zurzeit leider geschlossen"
+			"title": "Live-Chat ist zurzeit leider geschlossen",
+			"topicLabel": "Angefragtes Thema: {{topic}}",
+			"weekdays": {
+				"monday": "Montag",
+				"tuesday": "Dienstag",
+				"wednesday": "Mittwoch",
+				"thursday": "Donnerstag",
+				"friday": "Freitag"
+			}
 		}
 	},
 	"sessionMenu": {

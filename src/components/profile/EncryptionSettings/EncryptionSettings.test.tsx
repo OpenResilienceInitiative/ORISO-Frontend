@@ -44,9 +44,26 @@ vi.mock('../../../services/reauthenticateRecovery', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'profile.encryption.setup.cta': 'Ersatzschlüssel einrichten',
+			'profile.encryption.showKey.confirmLabel':
+				'Ich habe den Schlüssel sicher gespeichert.',
+			'profile.encryption.showKey.copy': 'Schlüssel kopieren',
+			'profile.encryption.showKey.done': 'Fertig',
+			'profile.encryption.unavailable':
+				'Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.',
+			'profile.encryption.recover.inputLabel': 'Ersatzschlüssel',
+			'profile.encryption.recover.cta': 'Verlauf wiederherstellen',
+			'profile.encryption.showKey.silentExplainer':
+				'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel.',
+			'profile.encryption.setup.busy':
+				'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund.'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -394,7 +411,7 @@ it.each(['busy', 'work-limit'])(
 		expect(
 			await screen.findByText(
 				kind === 'busy'
-					? 'profile.encryption.setup.busy'
+					? /gerade schon eingerichtet/
 					: 'encryption.passwordRecovery.retryable-failure'
 			)
 		).toBeTruthy();

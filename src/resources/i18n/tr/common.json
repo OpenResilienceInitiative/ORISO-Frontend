@@ -2726,7 +2726,9 @@
 				"silentExplainer": "Kasanız giriş yaparken otomatik olarak kuruldu. Bu, sizin kurtarma anahtarınız — anahtarı şimdi güvenli bir yere kaydedin, örneğin bir parola yöneticisine. Bundan sonra anahtarı bir daha göstermeyeceğiz.",
 				"explainer": "Bu, sizin kurtarma anahtarınız. Yalnızca bu bir kez gösterilir. Anahtarı şimdi güvenli bir yere kaydedin.",
 				"copy": "Anahtarı kopyala",
-				"confirmLabel": "Anahtarı güvenli bir şekilde kaydettim."
+				"confirmLabel": "Anahtarı güvenli bir şekilde kaydettim.",
+				"copied": "Kopyalandı ✓",
+				"done": "Tamam"
 			},
 			"status": {
 				"ok": "✓ Anahtar yedeklemesi etkin. Geçmişiniz yeni cihazlarda okunabilir kalır."
@@ -2741,7 +2743,8 @@
 				"inputLabel": "Kurtarma anahtarı",
 				"invalidKey": "Bu kurtarma anahtarı geçersiz. Lütfen girdiğiniz bilgiyi kontrol edin.",
 				"error": "Kurtarma başarısız oldu. Lütfen tekrar deneyin.",
-				"success": "{{count}} mesaj anahtarı geri getirildi."
+				"success": "{{count}} mesaj anahtarı geri getirildi.",
+				"cta": "Geçmişi geri yükle"
 			},
 			"reset": {
 				"explainer": "Kurtarma anahtarınızı mı unuttunuz? Şifreleme kimliğinizi sıfırlayabilirsiniz. Dikkat: Şimdiye kadar şifrelenmiş olan geçmiş, bundan sonra kalıcı olarak okunamaz hale gelebilir.",
@@ -4468,7 +4471,15 @@
 			"responseTime": "2 iş günü içinde yanıt",
 			"back": "Önceki sayfaya dön",
 			"later": "Daha sonra tekrar gelin",
-			"title": "Canlı sohbet şu anda maalesef kapalı"
+			"title": "Canlı sohbet şu anda maalesef kapalı",
+			"topicLabel": "Talep edilen konu: {{topic}}",
+			"weekdays": {
+				"monday": "Pazartesi",
+				"tuesday": "Salı",
+				"wednesday": "Çarşamba",
+				"thursday": "Perşembe",
+				"friday": "Cuma"
+			}
 		}
 	},
 	"sessionMenu": {
