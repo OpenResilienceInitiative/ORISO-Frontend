@@ -16,7 +16,7 @@ This page documents the frontend as it exists in the current repository. It shou
 
 Important repo anchors:
 
-- app bootstrap: `src/initApp.tsx`
+- app bootstrap: `src/initApp.tsx` (runtime-config gate) → `src/startApp.tsx`
 - app shell: `src/components/app/app.tsx`
 - authenticated startup: `src/components/app/AuthenticatedApp.tsx`
 - route config: `src/components/app/RouterConfig.tsx`
@@ -29,7 +29,11 @@ Important repo anchors:
 
 ### Bootstrap
 
-`src/initApp.tsx` initializes the app by:
+`src/initApp.tsx` first checks the required runtime config
+(`getRuntimeConfigProblems`). In a production build a missing or invalid key
+renders a configuration-error screen that names the key; nothing is guessed
+from the page host (ORISO-Helm#368). Otherwise it loads `src/startApp.tsx`,
+which initializes the app by:
 
 - loading polyfills and global styles
 - creating the React root
