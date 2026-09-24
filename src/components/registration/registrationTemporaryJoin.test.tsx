@@ -109,13 +109,17 @@ describe('registration — temporary join', () => {
 		expect(toggles().length, 'the toggle is in the footer').toBeGreaterThan(
 			0
 		);
-		expect(toggles()[0].textContent).toBe('Ohne Konto beitreten');
+		expect(toggles()[0].textContent).toBe(
+			'registration.account.temporary.toggleOn'
+		);
 		expect(primaryLabel()).toBe(REGISTER);
 
 		fireEvent.click(toggles()[0]);
 
-		expect(toggles()[0].textContent).toBe('Konto anlegen');
-		expect(primaryLabel()).toBe('Beitreten');
+		expect(toggles()[0].textContent).toBe(
+			'registration.account.temporary.toggleOff'
+		);
+		expect(primaryLabel()).toBe('registration.account.temporary.join');
 
 		fireEvent.click(toggles()[0]);
 
