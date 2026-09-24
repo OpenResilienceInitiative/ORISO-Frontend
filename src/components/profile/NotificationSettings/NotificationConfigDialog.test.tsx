@@ -91,6 +91,23 @@ describe('NotificationConfigDialog', () => {
 		);
 		expect(onConfirm).toHaveBeenCalledWith(DEFAULT_NOTIFICATION_CONFIG);
 	});
+
+	it.each([true, false])('email link shown=%s', (showEmailLink) => {
+		render(
+			<NotificationConfigDialog
+				open
+				config={DEFAULT_NOTIFICATION_CONFIG}
+				onConfirm={vi.fn()}
+				onClose={vi.fn()}
+				showEmailLink={showEmailLink}
+			/>
+		);
+		expect(
+			!!screen.queryByRole('link', {
+				name: 'profile.notifications.title'
+			})
+		).toBe(showEmailLink);
+	});
 });
 
 describe('NotificationConfigView', () => {

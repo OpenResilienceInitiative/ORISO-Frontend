@@ -212,6 +212,8 @@ export interface NotificationConfigViewProps {
 	onPreview: (soundId: SoundId, volume: number) => void;
 	/** Called when the email link leaves the dialog. */
 	onNavigate?: () => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigView = ({
@@ -220,7 +222,8 @@ export const NotificationConfigView = ({
 	onAreaChange,
 	onChange,
 	onPreview,
-	onNavigate
+	onNavigate,
+	showEmailLink = true
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -228,18 +231,20 @@ export const NotificationConfigView = ({
 			<p className="notifConfig__intro">
 				{t('profile.notifications.config.intro')}
 			</p>
-			<p className="notifConfig__emailNote">
-				{/* The group route exists on desktop and mobile; the bare tab is a menu on mobile. */}
-				<Link
-					to="/profile/einstellungen/email#email-notifications"
-					onClick={onNavigate}
-				>
-					{t(
-						'profile.notifications.title',
-						'E-Mail-Benachrichtigungen'
-					)}
-				</Link>
-			</p>
+			{showEmailLink && (
+				<p className="notifConfig__emailNote">
+					{/* The group route exists on desktop and mobile; the bare tab is a menu on mobile. */}
+					<Link
+						to="/profile/einstellungen/email#email-notifications"
+						onClick={onNavigate}
+					>
+						{t(
+							'profile.notifications.title',
+							'E-Mail-Benachrichtigungen'
+						)}
+					</Link>
+				</p>
+			)}
 
 			<div className="notifConfig__tabs" role="tablist">
 				{NOTIFICATION_AREAS.map((area) => {
@@ -338,13 +343,16 @@ interface NotificationConfigDialogProps {
 	config: NotificationConfig;
 	onConfirm: (config: NotificationConfig) => void;
 	onClose: () => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigDialog = ({
 	open,
 	config,
 	onConfirm,
-	onClose
+	onClose,
+	showEmailLink = true
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
 	const [draft, setDraft] = useState<NotificationConfig>(config);
@@ -408,6 +416,7 @@ export const NotificationConfigDialog = ({
 				onChange={handleChange}
 				onNavigate={onClose}
 				onPreview={handlePreview}
+				showEmailLink={showEmailLink}
 			/>
 		</M3Dialog>
 	);
