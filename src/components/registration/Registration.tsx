@@ -147,13 +147,13 @@ export const Registration = () => {
 		useState<boolean>(false);
 	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
 	const temporaryToggleLabel = temporaryJoin
-		? t('registration.account.temporary.toggleOff', 'Konto anlegen')
-		: t('registration.account.temporary.toggleOn', 'Ohne Konto beitreten');
+		? t('registration.account.temporary.toggleOff')
+		: t('registration.account.temporary.toggleOn');
 	/* The way on is the same action either way — only what it is called
 	   changes, because "Registrieren" would name something that is not
 	   happening. */
 	const primaryActionLabel = temporaryJoin
-		? t('registration.account.temporary.join', 'Beitreten')
+		? t('registration.account.temporary.join')
 		: t('registration.register');
 	const toggleTemporaryJoin = useCallback(
 		() => setTemporaryJoinChosen((chosen) => !chosen),
@@ -873,8 +873,7 @@ export const Registration = () => {
 															primaryActionLabel
 														}
 														registeringLabel={t(
-															'registration.registering',
-															'Registering...'
+															'registration.registering'
 														)}
 														nextLabel={t(
 															'registration.next'
@@ -927,8 +926,7 @@ export const Registration = () => {
 														primaryActionLabel
 													}
 													registeringLabel={t(
-														'registration.registering',
-														'Registering...'
+														'registration.registering'
 													)}
 													disabledNext={
 														disabledNextButton

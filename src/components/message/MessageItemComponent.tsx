@@ -998,7 +998,7 @@ export const MessageItemComponent = ({
 			content.replace(
 				/\[image:\s*(https?:\/\/[^\]\s]+)\s*\]/gi,
 				(_match, imageUrl: string) =>
-					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="Message image" loading="lazy" decoding="async" />`
+					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="${translate('message.thread.inlineImageAlt')}" loading="lazy" decoding="async" />`
 			);
 		const decodeHtmlEntities = (content: string) => {
 			if (!content || !content.includes('&')) {
@@ -1109,7 +1109,7 @@ export const MessageItemComponent = ({
 		}
 		// `parsedMessage` is itself memoized on `decryptedMessage`, so this one
 		// dependency already tracks every change to the decrypted body.
-	}, [parsedMessage.cleanedMessage]);
+	}, [parsedMessage.cleanedMessage, translate]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
@@ -2508,10 +2508,7 @@ export const MessageItemComponent = ({
 					className="messageItem__chatEvent"
 					data-testid="erstantwort-unavailable"
 				>
-					{translate(
-						'erstantwort.unavailableInRoom',
-						'First response – not available in this room.'
-					)}
+					{translate('erstantwort.unavailableInRoom')}
 				</div>
 			</div>
 		);
@@ -2526,10 +2523,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<ErstantwortSequence
 					name={systemNotificationTitle}
-					subtitle={translate(
-						'message.systemNotification',
-						'System notification'
-					)}
+					subtitle={translate('message.systemNotification')}
 					bausteine={[
 						{
 							id: 'supervision-notice',
@@ -2792,15 +2786,10 @@ export const MessageItemComponent = ({
 								)}
 								data-cy="thread-entry"
 								aria-label={[
-									translate(
-										'message.thread.open',
-										'Open thread'
-									),
-									translate(
-										'message.thread.replies',
-										'{{count}} replies',
-										{ count: threadSummary.replyCount }
-									),
+									translate('message.thread.open'),
+									translate('message.thread.replies', {
+										count: threadSummary.replyCount
+									}),
 									threadSummary.lastReplyText
 								]
 									.filter(Boolean)
@@ -2817,11 +2806,9 @@ export const MessageItemComponent = ({
 									aria-hidden="true"
 								/>
 								<span className="messageItem__threadButtonMain">
-									{translate(
-										'message.thread.replies',
-										'{{count}} replies',
-										{ count: threadSummary.replyCount }
-									)}
+									{translate('message.thread.replies', {
+										count: threadSummary.replyCount
+									})}
 								</span>
 								{threadSummary.lastReplyText && (
 									<span

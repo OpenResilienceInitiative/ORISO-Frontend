@@ -76,9 +76,12 @@ describe('ConsultantSpokenLanguages', () => {
 
 		const combobox = screen.getByRole('combobox', { name: 'My languages' });
 		fireEvent.mouseDown(combobox);
-		fireEvent.change(screen.getByRole('textbox', { name: 'Search' }), {
-			target: { value: 'fr' }
-		});
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'form.select.search' }),
+			{
+				target: { value: 'fr' }
+			}
+		);
 		fireEvent.click(screen.getByRole('option', { name: /French/ }));
 
 		expect(combobox.textContent).toContain('(DE) German');
@@ -90,9 +93,12 @@ describe('ConsultantSpokenLanguages', () => {
 
 		const combobox = screen.getByRole('combobox', { name: 'My languages' });
 		fireEvent.mouseDown(combobox);
-		fireEvent.change(screen.getByRole('textbox', { name: 'Search' }), {
-			target: { value: 'ger' }
-		});
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'form.select.search' }),
+			{
+				target: { value: 'ger' }
+			}
+		);
 		fireEvent.click(screen.getByRole('option', { name: /German/ }));
 
 		expect(combobox.textContent).toContain('(DE) German');

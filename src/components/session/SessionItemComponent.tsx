@@ -796,7 +796,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			});
 		});
 		return map;
-	}, [threadSummariesRaw]);
+	}, [threadSummariesRaw, translate]);
 	// Per-thread unread (#435): device-local approximation, bumped whenever
 	// a thread is opened (markThreadRead) so the derived map recomputes.
 	const [threadReadVersion, setThreadReadVersion] = useState(0);
@@ -1496,7 +1496,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				type: NOTIFICATION_TYPE_INFO,
 				eventType: 'thread.reply.new',
 				title: translate('notifications.threadReply.title'),
-				text: `${contactName}: ${snippet || 'New reply in thread'}`,
+				text: `${contactName}: ${snippet || translate('notifications.events.threadReplyNew.text')}`,
 				actionPath,
 				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
