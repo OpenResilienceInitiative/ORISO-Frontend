@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -50,6 +51,7 @@ export const EmojiPickerPopup = ({
 	anchorEl,
 	placement
 }: EmojiPickerPopupProps) => {
+	const { t } = useTranslation();
 	const popupRef = useRef<HTMLDivElement | null>(null);
 	const [position, setPosition] = useState<{ top: number; left: number }>({
 		top: -9999,
@@ -142,7 +144,7 @@ export const EmojiPickerPopup = ({
 					height={380}
 					lazyLoadEmojis
 					skinTonesDisabled={false}
-					searchPlaceHolder="Suchen"
+					searchPlaceHolder={t('form.select.search')}
 					previewConfig={{ showPreview: false }}
 					theme={LIGHT_THEME}
 				/>
