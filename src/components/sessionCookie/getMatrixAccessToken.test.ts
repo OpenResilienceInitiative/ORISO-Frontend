@@ -13,6 +13,10 @@ import { getMatrixClientLogger } from '../../utils/matrixLogging';
 import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getDeviceSigningAuth } from '../../services/matrixInteractiveAuth';
 
+vi.mock('../../services/matrixKeyBackupService', () => ({
+	secretStorageKeyCallback: vi.fn(async () => null)
+}));
+
 vi.mock('../../resources/scripts/endpoints', () => ({
 	endpoints: {
 		matrixAccessToken: 'https://api.example.test/service/matrix/me/token'
@@ -245,7 +249,7 @@ describe('getMatrixAccessToken', () => {
 		expect([...storage.values()]).not.toContain('must-stay-in-memory');
 	});
 
-	it('creates a Matrix client from stored credentials', () => {
+	it('creates a Matrix client from stored credentials', async () => {
 		const client = createMatrixClient({
 			accessToken: 'matrix-token',
 			deviceId: 'ORISO_WEB_TEST_DEVICE',
@@ -253,6 +257,16 @@ describe('getMatrixAccessToken', () => {
 			uiaPassword: 'ephemeral-uia-password',
 			userId: '@consultant:matrix.example.test'
 		});
+
+		const callback = vi.mocked(createClient).mock.calls.at(-1)![0]
+			.cryptoCallbacks!.getSecretStorageKey!;
+		const sdkKeys = { keys: {} };
+		await callback(sdkKeys, 'synthetic-secret');
+		expect(secretStorageKeyCallback).toHaveBeenCalledWith(
+			client,
+			sdkKeys,
+			'synthetic-secret'
+		);
 
 		expect(createClient).toHaveBeenCalledWith({
 			baseUrl: 'https://matrix.example.test',
@@ -262,7 +276,7 @@ describe('getMatrixAccessToken', () => {
 			fallbackICEServerAllowed: true,
 			logger: getMatrixClientLogger(),
 			cryptoCallbacks: {
-				getSecretStorageKey: secretStorageKeyCallback
+				getSecretStorageKey: expect.any(Function)
 			}
 		});
 		expect(client).toEqual({
@@ -274,10 +288,365 @@ describe('getMatrixAccessToken', () => {
 				fallbackICEServerAllowed: true,
 				logger: getMatrixClientLogger(),
 				cryptoCallbacks: {
-					getSecretStorageKey: secretStorageKeyCallback
+					getSecretStorageKey: expect.any(Function)
 				}
 			}
 		});
 		expect(getDeviceSigningAuth(client)).toBeTypeOf('function');
+	});
+
+	/**
+	 * Every token fetch rotates the Matrix password, so the one handed out
+	 * with this client is stale once another tab or device signs in. On dev
+	 * (21.09.) that made "Verschlüsselung zurücksetzen" fail half-way.
+	 */
+	it('asks the server for the current password when device signing needs one', async () => {
+		const client = createMatrixClient({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: 'current-password'
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockResolvedValueOnce(undefined);
+
+		await getDeviceSigningAuth(client)!(makeRequest);
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: expect.stringContaining('deviceId=ORISO_WEB_TEST_DEVICE')
+			})
+		);
+		expect(makeRequest).toHaveBeenLastCalledWith(
+			expect.objectContaining({ password: 'current-password' })
+		);
+	});
+
+	/**
+	 * The call that yields the current password also signs the device in again
+	 * and hands out a new access token. The running client must carry that
+	 * token, so the session stays authorised and logout revokes it (#1504 review).
+	 */
+	it('moves the running client onto the access token issued with the password', async () => {
+		const client = createMatrixClient({
+			accessToken: 'first-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: 'current-password',
+			expiresInMs: 60000
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockResolvedValueOnce(undefined);
+
+		await getDeviceSigningAuth(client)!(makeRequest);
+
+		expect(client.setAccessToken).toHaveBeenCalledWith('second-token');
+		expect(localStorage.getItem('matrix_access_token')).toBe(
+			'second-token'
+		);
+	});
+
+	/**
+	 * Sign-out can run while this request is in flight. The late answer must
+	 * not write credentials back into a browser that was just cleared, and the
+	 * token it carries is revoked, not left alive (#1504 review).
+	 */
+	it('commits nothing and revokes the new token when the session ended meanwhile', async () => {
+		const client = createMatrixClient({
+			accessToken: 'first-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockImplementation(async () => {
+			localStorage.clear(); // sign-out tore the session down meanwhile
+			return {
+				accessToken: 'late-token',
+				userId: '@consultant:matrix.example.test',
+				deviceId: 'ORISO_WEB_TEST_DEVICE',
+				uiaPassword: 'current-password'
+			};
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } });
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(localStorage.getItem('matrix_access_token')).toBeNull();
+		expect(makeRequest).toHaveBeenCalledOnce();
+		expect(revoke).toHaveBeenCalledWith(
+			'https://matrix.example.test/_matrix/client/v3/logout',
+			expect.objectContaining({
+				method: 'POST',
+				// Must survive the sign-out redirect that usually follows.
+				keepalive: true,
+				headers: expect.objectContaining({
+					Authorization: 'Bearer late-token'
+				})
+			})
+		);
+		vi.unstubAllGlobals();
+	});
+
+	const liveClient = (token = 'first-token') => {
+		const client = createMatrixClient({
+			accessToken: token,
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
+		client.getAccessToken = () => token;
+		return client;
+	};
+	const uiaChallenge = () =>
+		vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } })
+			.mockResolvedValueOnce(undefined);
+
+	/**
+	 * A token refresh or another tab of the same account stored a newer token
+	 * meanwhile. That session is alive: a logout here would delete the shared
+	 * device. Use the token in this client, leave the newer one in storage
+	 * (#1504 review).
+	 */
+	/**
+	 * A same-tab token refresh replaces the client and stops this one. Carrying
+	 * on would let a reset run destructive steps on a detached client the app
+	 * no longer uses (#1504 review). Abort, touch nothing: the session lives on
+	 * in the replacement client.
+	 */
+	it('aborts without touching anything once this client was replaced', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'replacement-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockImplementation(async () => {
+			client.clientRunning = false; // replaced while the request was in flight
+			return {
+				accessToken: 'uia-token',
+				userId: '@consultant:matrix.example.test',
+				deviceId: 'ORISO_WEB_TEST_DEVICE',
+				uiaPassword: 'current-password'
+			};
+		});
+		const makeRequest = uiaChallenge();
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(revoke).not.toHaveBeenCalled();
+		expect(localStorage.getItem('matrix_access_token')).toBe(
+			'replacement-token'
+		);
+		expect(makeRequest).toHaveBeenCalledOnce();
+		vi.unstubAllGlobals();
+	});
+
+	it('neither revokes nor overwrites a newer token of the same account', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'newer-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'uia-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: 'current-password'
+		});
+		const makeRequest = uiaChallenge();
+
+		await getDeviceSigningAuth(client)!(makeRequest);
+
+		expect(revoke).not.toHaveBeenCalled();
+		expect(client.setAccessToken).toHaveBeenCalledWith('uia-token');
+		expect(localStorage.getItem('matrix_access_token')).toBe('newer-token');
+		expect(makeRequest).toHaveBeenLastCalledWith(
+			expect.objectContaining({ password: 'current-password' })
+		);
+		vi.unstubAllGlobals();
+	});
+
+	it('revokes a token issued for another device before rejecting it', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'foreign-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_OTHER_DEVICE',
+			uiaPassword: 'current-password'
+		});
+
+		await expect(
+			getDeviceSigningAuth(client)!(uiaChallenge())
+		).rejects.toThrow();
+
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(revoke).toHaveBeenCalledWith(
+			'https://matrix.example.test/_matrix/client/v3/logout',
+			expect.objectContaining({
+				headers: expect.objectContaining({
+					Authorization: 'Bearer foreign-token'
+				})
+			})
+		);
+		vi.unstubAllGlobals();
+	});
+
+	it('keeps this device authorised when the login carries no password', async () => {
+		const client = liveClient();
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		const revoke = vi.fn(async () => new Response('{}'));
+		vi.stubGlobal('fetch', revoke);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: ''
+		});
+
+		await expect(
+			getDeviceSigningAuth(client)!(uiaChallenge())
+		).rejects.toThrow();
+
+		expect(revoke).not.toHaveBeenCalled();
+		expect(client.setAccessToken).toHaveBeenCalledWith('second-token');
+		expect(localStorage.getItem('matrix_access_token')).toBe(
+			'second-token'
+		);
+		vi.unstubAllGlobals();
+	});
+
+	it('refuses a login the server bound to another account or device', async () => {
+		const client = createMatrixClient({
+			accessToken: 'first-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		}) as any;
+		client.setAccessToken = vi.fn();
+		client.clientRunning = true;
+		client.getAccessToken = () => 'first-token';
+		localStorage.setItem('matrix_access_token', 'first-token');
+		localStorage.setItem(
+			'matrix_user_id',
+			'@consultant:matrix.example.test'
+		);
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'foreign-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_OTHER_DEVICE',
+			uiaPassword: 'current-password'
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } });
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+		expect(client.setAccessToken).not.toHaveBeenCalled();
+		expect(makeRequest).toHaveBeenCalledOnce();
+	});
+
+	it('refuses to authenticate when the server hands out no password', async () => {
+		const client = createMatrixClient({
+			accessToken: 'matrix-token',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			homeserverUrl: 'https://matrix.example.test',
+			uiaPassword: 'stale-password',
+			userId: '@consultant:matrix.example.test'
+		});
+		vi.mocked(fetchData).mockResolvedValue({
+			accessToken: 'second-token',
+			userId: '@consultant:matrix.example.test',
+			deviceId: 'ORISO_WEB_TEST_DEVICE',
+			uiaPassword: ''
+		});
+		const makeRequest = vi
+			.fn()
+			.mockRejectedValueOnce({ data: { session: 'uia' } });
+
+		await expect(
+			getDeviceSigningAuth(client)!(makeRequest)
+		).rejects.toThrow();
+		expect(makeRequest).toHaveBeenCalledOnce();
 	});
 });

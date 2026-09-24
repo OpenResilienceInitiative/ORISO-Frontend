@@ -316,6 +316,57 @@
 			"ready": "Extrait de texte ajouté à votre réponse"
 		}
 	},
+	"chatStage": {
+		"participants": {
+			"label": "Participants : {{names}}",
+			"more": "{{count}} autres participants",
+			"more_one": "1 autre personne"
+		},
+		"panel": {
+			"channelOptions": "Changer de canal",
+			"channelOptionsEmpty": "Aucun autre canal",
+			"participantCount": "{{count}} personnes",
+			"participantCount_one": "1 personne",
+			"back": "Retour au chat de conseil",
+			"close": "Fermer le panneau latéral",
+			"region": "Panneau latéral : {{title}}",
+			"thread": {
+				"title": "Fil"
+			},
+			"team": {
+				"title": "Consultation d’équipe",
+				"onlyMarker": "Réservé à l’équipe",
+				"composer": {
+					"placeholder": "Message à l’équipe…"
+				},
+				"systemNotice": "La consultation d’équipe se déroule en parallèle du conseil. La personne conseillée n’y participe pas et ne peut pas voir ce canal.",
+				"empty": {
+					"title": "Démarrer la consultation d’équipe",
+					"text": "Écrivez ci-dessous le premier message à votre équipe."
+				}
+			}
+		},
+		"switcher": {
+			"backToMain": "Retour au chat de conseil",
+			"closeMenu": "Masquer les canaux secondaires",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil",
+				"team": "Consultation d’équipe"
+			},
+			"mainChat": "Chat de conseil",
+			"openChannel": "Ouvrir {{label}}",
+			"openMenu": "Afficher les canaux secondaires"
+		},
+		"menu": {
+			"eyebrow": "Autres conversations",
+			"title": "Fils et supervision",
+			"supervisionChat": "Chat de supervision",
+			"thread": "Fil #{{n}}",
+			"teamChat": "Consultation d’équipe",
+			"titleWithTeam": "Fils, supervision et consultation d’équipe"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archiver",
 		"archiveDescription": "Les notifications sont désactivées pour les chats archivés. Le chat sera supprimé dans 12 mois.",
@@ -526,6 +577,9 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": {
+			"open": "Ouvrir la discussion d’équipe"
+		},
 		"acceptButton": {
 			"anonymous": "Démarrer le chat",
 			"known": "Accepter la demande"
@@ -785,12 +839,14 @@
 				"sourceLanguage": "Langue source",
 				"welcome": "Message d'accueil (120 caractères maximum)",
 				"rules": "Règles du groupe",
-				"rule": "Règle",
+				"rule": "Règle n° 1 (120 caractères maximum)",
 				"addRule": "Ajouter une règle",
+				"removeLanguage": "Supprimer la langue {{language}}",
 				"removeRule": "Supprimer",
 				"translate": "Traduire dans les langues actives",
 				"translating": "Traduction en cours…",
 				"translationError": "La traduction a échoué. Votre texte a été conservé ; veuillez réessayer.",
+				"ruleChipShort": "N° {{index}}",
 				"ruleChip": "Règle n° {{index}}"
 			}
 		},
@@ -837,7 +893,8 @@
 			},
 			"subscribers": {
 				"empty": "pas de participants disponibles",
-				"headline": "Personnes participantes"
+				"headline": "Personnes participantes",
+				"menuLabel": "Options pour {{name}}"
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
@@ -862,6 +919,10 @@
 					}
 				},
 				"upcoming": "Prochaines dates"
+			},
+			"status": {
+				"active": "En cours",
+				"planned": "Prévu"
 			}
 		},
 		"join": {
@@ -884,6 +945,9 @@
 					"flipHint": "cliquer pour retourner",
 					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
 					"headline": "Votre chat de groupe commence {{eta}}.",
+					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
+					"moderatorOverdueHeadline": "Le groupe vous attend.",
+					"moderatorSubtitle": "Vous pouvez lancer le chat dès que vous êtes prêt·e.",
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
@@ -1056,6 +1120,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} fois",
 				"repeatValue_other": "{{count}} fois"
+			},
+			"noModeratorAvailable": "Aucune personne disponible",
+			"moderatorHelp": "Aide",
+			"moderatorHelpDialog": {
+				"title": "Inviter une co-modération plus tard",
+				"description": "Pour l’instant, aucun·e autre professionnel·le de votre organisme ne peut être sélectionné·e. Vous pouvez tout de même créer le cercle et ajouter une co-modération ensuite.",
+				"step1": "Ouvrez le cercle dans votre liste, puis « Infos sur le chat ».",
+				"step2": "Sous « Paramètres de chat », choisissez « Modifier ».",
+				"step3": "Ajoutez des collègues sous « Modération supplémentaire » et enregistrez.",
+				"note": "Seule la personne qui a créé le cercle peut le modifier, et uniquement lorsqu’il n’est pas en cours. Tous les professionnel·les actifs de votre organisme peuvent être sélectionné·es.",
+				"close": "Compris"
 			}
 		},
 		"entry": {
@@ -1069,6 +1144,28 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours"
+		},
+		"shareDialog": {
+			"title_text": "Cercle créé",
+			"title_audio": "Appel audio créé",
+			"title_video": "Appel vidéo créé",
+			"description": "Partagez ce lien avec les participant·es. Il les mène à la salle d’attente jusqu’au début de la séance.",
+			"linkLabel": "Lien d’invitation",
+			"copy": "Copier le lien",
+			"copied": "Copié",
+			"detailsHeadline": "Séance",
+			"topic": "Sujet",
+			"date": "Jour",
+			"start": "Début",
+			"timeValue": "à {{time}}",
+			"duration": "Durée",
+			"repeats": "Répétitions",
+			"repeatValue": "{{count}} séances, {{interval}}",
+			"format": "Format",
+			"language": "Langue",
+			"done": "Terminé",
+			"durationValue": "{{value}} h",
+			"copyFailed": "La copie a échoué. Veuillez réessayer."
 		}
 	},
 	"help": {
@@ -1507,6 +1604,7 @@
 					}
 				},
 				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
+				"unavailable": "La connexion n'est pas possible pour le moment. Veuillez réessayer dans quelques minutes.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
@@ -1733,10 +1831,12 @@
 		},
 		"thread": {
 			"unknownRoot": "Message précédent",
+			"targetLabel": "Destination : Fil de discussion",
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
 			"title": "Fil de discussion",
-			"placeholder": "Répondre dans le fil"
+			"placeholder": "Répondre dans le fil",
+			"open": "Ouvrir le fil"
 		},
 		"deliveryStatus": {
 			"sent": "Envoyé"
@@ -1780,6 +1880,65 @@
 		"warning": "Avertissement"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "Filtre d’affichage",
+			"buttonCustomised": "Filtre personnalisé",
+			"title": "Filtre d’affichage",
+			"description": "Quels types apparaissent dans cette liste, lesquels reçoivent une pastille et quel son ils émettent.",
+			"showColumn": "Afficher",
+			"pillColumn": "Pastille",
+			"soundColumn": "Son",
+			"soundKind": "Écouter le son : {{kind}}",
+			"soundMenu": "Choisir le son : {{kind}}",
+			"soundDefault": "Par défaut",
+			"pillMenu": "Choisir l’affichage : {{kind}}",
+			"liveChatDynamic": "Dynamique",
+			"liveChatFixed": "Fixe",
+			"pillOff": "Désactivé",
+			"pillOn": "Activé",
+			"placeholderHint": "Bientôt disponible.",
+			"showKind": "Afficher : {{kind}}",
+			"pillKind": "Pastille : {{kind}}",
+			"otherFixed": "« Autres » est toujours affiché pour que rien ne disparaisse sans être vu.",
+			"pillNotApplicable": "Pas de pastille pour ce type",
+			"autoRead": "Marquer immédiatement les éléments masqués comme lus",
+			"autoReadDescription": "Ne concerne que cette liste. Aucun accusé de lecture n’est envoyé aux discussions.",
+			"autoReadSessions": "Ne pas compter les discussions masquées comme non lues",
+			"autoReadSessionsDescription": "Ne concerne que cette liste et son compteur. Les discussions ne sont pas marquées comme lues, aucun accusé de lecture n’est envoyé.",
+			"reset": "Rétablir mes valeurs par défaut",
+			"done": "Terminé",
+			"profileLink": "Modifier les standards",
+			"overrideNotice": "Cette liste s’écarte de vos standards.",
+			"resetShort": "Réinitialiser",
+			"otherChip": "Autres",
+			"readOnlyHint": "Ces réglages ont été enregistrés par une version plus récente de l’application. Mettez-la à jour pour les modifier.",
+			"viewTitle": "Options d'affichage du bouton filtre",
+			"viewIcons": "Icônes",
+			"viewLabels": "Icônes + texte",
+			"viewText": "Texte",
+			"autoSort": "Placer les non lus à gauche",
+			"autoSortDescription": "Les pastilles avec des éléments non lus passent en tête de ligne.",
+			"deactivatedHint": "Désactivé par votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage.",
+			"deactivatedChip": "{{kind}} (désactivé par votre organisme)",
+			"deactivatedNotice": "{{kind}} est désactivé pour votre organisme. Les conversations existantes restent visibles jusqu’à leur archivage ; aucune nouvelle ne peut être créée.",
+			"badgeHiddenHint": "jusqu’à {{count}} masqués",
+			"hiddenActiveRow": "Masqué par votre filtre d’affichage",
+			"profileTitle": "Filtres d’affichage",
+			"profileDescription": "Réglages par liste, valables sur tous les appareils. Une liste peut les remplacer temporairement via son bouton de filtre.",
+			"overrideActive": "Cette liste utilise actuellement son propre filtre ; les réglages s’appliquent dès qu’il est réinitialisé.",
+			"eventTypesTitle": "Réglage fin par type d’événement",
+			"eventTypesDescription": "Masquer certains types d’événements de la chronologie. S’applique aussi quand la liste utilise son propre filtre.",
+			"eventTypeShow": "Afficher {{type}}",
+			"applyToAll": "Appliquer aux autres listes",
+			"applyToAllDescription": "Copie « marquer les éléments masqués comme lus » vers Chronologie et Conversations et le réglage du chat en direct vers Conversations et Demandes.",
+			"otherKind": "Autres",
+			"sections": {
+				"timeline": "Chronologie",
+				"sessions": "Échanges",
+				"requests": "Demandes"
+			},
+			"liveChatSession": "Si ouvert"
+		},
 		"families": {
 			"all": "Toutes",
 			"requests": "Demandes",
@@ -2179,6 +2338,13 @@
 				"viaSidebar": {
 					"label": "Activer le Live-Chat depuis la barre de menu",
 					"description": "Lorsque cette option est activée, vous activez et désactivez votre disponibilité Live-Chat depuis la barre de menu (barre latérale) au lieu de le faire ici. L'interrupteur de disponibilité ci-dessus est alors désactivé et l'icône du Live-Chat reste visible en permanence dans la barre latérale – un clic ne change que son état, l'icône ne disparaît pas. Si cette option est désactivée, le Live-Chat se pilote comme auparavant uniquement ici, dans Mon profil."
+				},
+				"lost": {
+					"title": "Vous n'êtes plus joignable par chat en direct",
+					"refused": "Le serveur a refusé votre disponibilité. Réactivez le chat en direct. Si cela ne fonctionne pas, reconnectez-vous.",
+					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
+					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
+					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
 				}
 			},
 			"masterKey": {
@@ -2196,7 +2362,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirmer le nouveau mot de passe"
+						"label": "Confirmer le nouveau mot de passe",
+						"dialogLabel": "Répéter le nouveau mot de passe"
 					},
 					"insecure": "Votre mot de passe n'est pas sécurisé.",
 					"instructions": "<span class=\"text--bold\">Votre mot de passe doit répondre aux critères suivants afin de garantir une consultation protégée:</span><ul class=\"pl--2 my--1\"><li>majuscules et minuscules</li><li>au moins un chiffre</li><li>au moins un caractère spécial (par ex. : ?, !, +, #, &, ...)</li><li>au moins 9 caractères</li></ul>",
@@ -2208,7 +2375,9 @@
 					},
 					"old": {
 						"incorrect": "Votre mot de passe n'est pas correct.",
-						"label": "Mot de passe actuel"
+						"label": "Mot de passe actuel",
+						"hint": "Le mot de passe avec lequel vous venez de vous connecter.",
+						"dialogLabel": "Mot de passe précédent"
 					},
 					"overlay": {
 						"button": {
@@ -2217,9 +2386,19 @@
 						"headline": "Vous avez modifié votre mot de passe avec succès. Vous allez maintenant être redirigé vers le login."
 					},
 					"same": "Votre mot de passe est identique.",
+					"sameAsOld": "Veuillez choisir un nouveau mot de passe – celui-ci est votre mot de passe actuel.",
 					"secure": "Votre mot de passe est sécurisé.",
 					"subtitle": "Si vous le souhaitez, vous pouvez modifier votre mot de passe ici. Saisissez d'abord votre mot de passe actuel avant d'en définir un nouveau.",
-					"title": "Mot de passe"
+					"title": "Mot de passe",
+					"criteria": {
+						"title": "Votre nouveau mot de passe doit contenir",
+						"mixedCase": "des majuscules et des minuscules",
+						"number": "au moins un chiffre",
+						"specialChar": "un caractère spécial (?, !, +, # …)",
+						"minLength": "au moins 9 caractères",
+						"met": "rempli"
+					},
+					"submitAndContinue": "Enregistrer le mot de passe et continuer"
 				}
 			},
 			"security": {
@@ -2389,7 +2568,7 @@
 				"alwaysSent": {
 					"title": "Vous recevez toujours ces e-mails :",
 					"security": "Connexion et accès – réinitialisation du mot de passe, lien de connexion, code à usage unique, modifications de votre accès.",
-					"legal": "Questions contractuelles – par exemple un contrat de sous-traitance à signer.",
+					"legal": "Questions contractuelles – par exemple des documents contractuels à signer.",
 					"outage": "Pannes de la plateforme."
 				}
 			},
@@ -2547,7 +2726,9 @@
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
-				"confirmLabel": "J'ai enregistré la clé en lieu sûr."
+				"confirmLabel": "J'ai enregistré la clé en lieu sûr.",
+				"copied": "Copié ✓",
+				"done": "Terminé"
 			},
 			"status": {
 				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils."
@@ -2562,7 +2743,8 @@
 				"inputLabel": "Clé de récupération",
 				"invalidKey": "Cette clé de récupération n'est pas valide. Veuillez vérifier votre saisie.",
 				"error": "La récupération a échoué. Veuillez réessayer.",
-				"success": "{{count}} clés de messages restaurées."
+				"success": "{{count}} clés de messages restaurées.",
+				"cta": "Restaurer l'historique"
 			},
 			"reset": {
 				"explainer": "Vous avez oublié votre clé de récupération ? Vous pouvez réinitialiser votre identité de chiffrement. Attention : l'historique chiffré jusqu'ici peut alors devenir définitivement illisible.",
@@ -2929,6 +3111,13 @@
 					"title": "Délinquance et réinsertion",
 					"description": "Accompagnement pour les questions de délinquance, de nouveau départ et de quotidien."
 				}
+			},
+			"search": {
+				"open": "Rechercher un thème",
+				"placeholder": "Rechercher un thème ou un mot-clé",
+				"close": "Fermer la recherche",
+				"noResults": "Aucun thème correspondant. Essayez un autre mot.",
+				"matchedBy": "correspond à « {{term}} »"
 			}
 		},
 		"account": {
@@ -3453,6 +3642,10 @@
 			"video": "Vidéo",
 			"file": "Fichier",
 			"first_response": "Première réponse",
+			"channel": {
+				"thread": "Fil :",
+				"supervision": "Supervision :"
+			},
 			"registered": {
 				"tab": "Premières demandes"
 			}
@@ -3515,14 +3708,17 @@
 				"unread": "Non lu",
 				"drafts": "Brouillons",
 				"nearby": "Mail",
+				"other": "Autres",
 				"create": "Créer",
+				"group": "Filtres",
 				"archive": "Archivé",
 				"oneToOne": "Conseil 1-1",
 				"liveChat": "Chat en direct",
 				"internalGroup": "Discussion de groupe interne",
 				"groups": "Cercle de discussion",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Créer un chat"
 			},
 			"emptyFilterResult": "Aucune consultation ne correspond à votre recherche ou aux filtres.",
 			"draftMetadataOnly": "Message non envoyé enregistré."
@@ -3537,8 +3733,17 @@
 				"internal": "Échange interne"
 			}
 		},
+		"supervision": {
+			"badge": "Supervision – vous suivez cette conversation",
+			"supervisedBy": "Supervision : {{name}}"
+		},
 		"resizeHandle": {
+			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste.",
 			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
+		},
+		"rail": {
+			"unreadCount": "{{count}} nouveaux messages",
+			"unreadCount_one": "{{count}} nouveau message"
 		}
 	},
 	"statusOverlay": {
@@ -3781,11 +3986,12 @@
 					"missingQr": "Le code QR n'est pas disponible pour le moment. Utilisez la clé manuelle.",
 					"missingSecret": "La clé n'est pas disponible pour le moment.",
 					"or": "ou",
-					"qrAlt": "Code QR pour l'application d'authentification"
+					"qrAlt": "Code QR pour l'application d'authentification",
+					"title": "Connecter l’application à ORISO"
 				},
 				"install": {
 					"android": "Télécharger sur le Google Play Store",
-					"copy": "Installez Google Authenticator ou Microsoft Authenticator sur votre smartphone ou votre tablette. Les deux applications prennent en charge le code de sécurité de la consultation en ligne.",
+					"copy": "Vous avez besoin de l’une de ces deux applications sur votre smartphone ou votre tablette. Déjà installée ? Continuez directement.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -3796,20 +4002,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Installer une application d’authentification",
+					"note": "gratuite, utilisable sans compte",
+					"done": "L’application est installée – continuer"
 				},
 				"success": {
 					"title": "L'authentification par application a bien été configurée."
 				},
 				"verify": {
 					"copy": "Saisissez le code à six chiffres affiché dans l'application pour terminer la configuration.",
-					"input": "Code à usage unique"
+					"input": "Code à usage unique",
+					"title": "Vérifier le code"
 				}
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
-				"email": "Utiliser un code par e-mail (moins sûr)"
+				"email": "Utiliser un code par e-mail (moins sûr)",
+				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
 				"connect": {
@@ -3817,12 +4028,14 @@
 					"input": "Code à usage unique",
 					"resend": "Envoyer un nouveau code",
 					"resendTitle": "Cela n'a pas fonctionné ?",
-					"sent": "Nouveau code envoyé."
+					"sent": "Nouveau code envoyé.",
+					"title": "Vérifier le code"
 				},
 				"select": {
 					"copy": "Saisissez l'adresse e-mail à laquelle nous devons envoyer votre code de sécurité.",
 					"hint": "Si vous modifiez l'adresse e-mail, vous recevrez également vos prochaines notifications à cette adresse.",
-					"input": "Adresse e-mail"
+					"input": "Adresse e-mail",
+					"title": "Configurer le deuxième facteur par e-mail"
 				},
 				"success": {
 					"title": "L'authentification par e-mail a bien été configurée."
@@ -3847,7 +4060,9 @@
 				"select": "Sélectionner",
 				"verify": "Vérifier"
 			},
-			"title": "Quelle méthode de connexion souhaitez-vous utiliser ?"
+			"success": {
+				"title": "Deuxième facteur configuré"
+			}
 		},
 		"overlayButton": {
 			"back": "Retour",
@@ -3870,7 +4085,11 @@
 				"label": "Votre deuxième facteur"
 			}
 		},
-		"title": "Authentification à deux facteurs"
+		"title": "Authentification à deux facteurs",
+		"required": {
+			"copy": "Veuillez configurer maintenant un deuxième facteur (application ou e-mail). Ce n'est qu'ensuite que votre compte n'appartient qu'à vous et que vous pouvez commencer les consultations.",
+			"title": "Deuxième facteur requis"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4484,6 +4703,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "La supervision par {{name}} est active. Vous pouvez demander une autre superviseuse ou un autre superviseur via le plus à côté du symbole de courrier.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Conseil"
+			},
+			"privacyHint": "Ce canal n’est jamais visible pour la personne conseillée.",
+			"close": "Fermer la supervision",
+			"collapse": "Réduire la supervision",
+			"dragHandle": "Déplacer la fenêtre de supervision – les flèches déplacent, Maj + flèches redimensionnent",
+			"unread": "{{count}} messages non lus",
+			"unread_one": "1 message non lu",
+			"empty": {
+				"title": "Pas encore de messages",
+				"hint": "Échangez ici en toute confidentialité avec {{name}} au sujet de cet accompagnement."
+			},
+			"composer": {
+				"placeholder": "Message à {{name}} …",
+				"send": "Envoyer",
+				"failed": "Échec de l’envoi – veuillez réessayer."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Fil de discussion"
+			},
+			"mini": {
+				"expand": "Ouvrir {{kind}}",
+				"newMessage": "Nouveau message",
+				"dragHandle": "Déplacer la miniature – touches fléchées"
+			},
+			"stage": {
+				"divider": "Séparateur – les flèches modifient la largeur de la supervision, Début et Fin fixent le minimum et le maximum",
+				"mainPane": "Chat de conseil",
+				"secondaryPane": "Salle annexe"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Réunion d'équipe",
 		"startHint": "Démarrer la réunion",
@@ -4505,6 +4764,11 @@
 			"title": "Ce lien d’invitation ne peut plus être utilisé",
 			"generic": "Le lien d’invitation n’a pas pu être utilisé",
 			"missingToken": "Ce lien d’invitation est incomplet"
+		},
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
 		}
 	},
 	"anonymousConsent": {
@@ -4513,7 +4777,8 @@
 		"headline": "Bienvenue",
 		"label": {
 			"and": "et",
-			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela."
+			"text": "J'ai pris connaissance du site {{legal_links}}. Ce site utilise des cookies pour l'authentification et la navigation. Je suis d'accord avec cela.",
+			"missingPolicy": "Ce centre de conseil ne dispose actuellement d’aucune politique de confidentialité propre enregistrée. Si vous continuez, vous utilisez le service à vos propres risques. En cochant la case, vous acceptez les {{legal_links}} de ce site. Ce site utilise des cookies."
 		},
 		"subline": "Veuillez confirmer notre politique de confidentialité."
 	},
@@ -4589,7 +4854,8 @@
 			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
 			"email": "Envoyez-moi un e-mail",
 			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
-		}
+		},
+		"unavailableInRoom": "Première réponse – non disponible dans cet espace."
 	},
 	"legal": {
 		"notice": {
@@ -4622,19 +4888,20 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Signer le contrat de sous-traitance",
-		"subtitle": "Veuillez lire le contrat dans son intégralité, puis confirmez les informations concernant la personne signataire.",
-		"loadingContract": "Chargement du contrat...",
+		"title": "Vérifier et confirmer les documents contractuels",
+		"subtitle": "Veuillez lire les documents contractuels dans leur intégralité, puis confirmez les informations concernant la personne signataire.",
+		"signerName": "Nom complet",
+		"loadingContract": "Chargement des documents contractuels...",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
 		"signingFor": "Vous signez au nom de :",
-		"accept": "J'ai lu le contrat affiché ci-dessus et je le confirme de manière contraignante.",
+		"accept": "J'ai lu les documents contractuels affichés ci-dessus et je les confirme de manière contraignante.",
 		"submit": "Confirmer de manière contraignante",
 		"submitting": "Enregistrement...",
-		"success": "La confirmation du contrat de sous-traitance a été enregistrée.",
+		"success": "La confirmation des documents contractuels a été enregistrée.",
 		"error": {
 			"missingToken": "Le lien de signature est incomplet.",
-			"previewRequired": "Le contrat doit être entièrement chargé avant que vous puissiez le confirmer.",
-			"acceptRequired": "Veuillez confirmer le contrat.",
+			"previewRequired": "Les documents contractuels doivent être entièrement chargés avant que vous puissiez les confirmer.",
+			"acceptRequired": "Veuillez confirmer les documents contractuels.",
 			"generic": "La signature n'a pas pu être enregistrée pour le moment.",
 			"invalidToken": "Ce lien de signature n'est pas valide, a expiré ou a déjà été utilisé.",
 			"invalidRequest": "Les informations n'ont pas pu être enregistrées. Veuillez vérifier le formulaire."
@@ -4652,7 +4919,42 @@
 				"later": "Plus tard",
 				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
+			},
+			"snackbar": {
+				"close": "Fermer la notification"
 			}
+		},
+		"saveReminder": {
+			"title": "Enregistrer une clé de récupération supplémentaire",
+			"pending": "Votre demande a été envoyée. La sauvegarde des clés est en cours de configuration.",
+			"unavailable": "Votre demande a été envoyée. La sauvegarde supplémentaire des clés n’est pas encore prête.",
+			"show": "Afficher la clé",
+			"later": "Plus tard",
+			"confirm": "J’ai conservé la clé en lieu sûr",
+			"retry": "Vérifier la sauvegarde dans les paramètres de sécurité",
+			"busy": "Votre demande a été envoyée avec succès. La récupération est en cours dans un autre onglet ou en arrière-plan."
+		},
+		"passwordRecovery": {
+			"ready": "La récupération avec votre mot de passe de connexion est configurée. Une clé de récupération enregistrée reste également valide.",
+			"needs-password": "La récupération par mot de passe n’a pas encore été vérifiée dans cette session. Reconnectez-vous ou configurez-la avec votre clé de récupération existante.",
+			"needs-recovery-key": "Votre historique nécessite votre clé de récupération sur cet appareil.",
+			"retryable-failure": "La sauvegarde des clés n’a pas pu être terminée. Vous pouvez continuer à rédiger votre demande et vérifier la sauvegarde dans les paramètres de sécurité.",
+			"settings": "Paramètres de sécurité",
+			"reauthenticate": "Se déconnecter et se reconnecter",
+			"passwordChangeFailed": "Le mot de passe n’a pas pu être modifié en toute sécurité. Vérifiez l’ancien mot de passe et, si nécessaire, restaurez d’abord votre historique avec la clé de récupération. Après une perte de connexion, le mot de passe peut déjà avoir été modifié.",
+			"enrollmentFailed": "La configuration n’a pas pu être terminée. Vérifiez votre mot de passe et votre code à usage unique si nécessaire, puis réessayez.",
+			"enrollmentExplanation": "Protégez votre clé de récupération existante avec votre mot de passe de connexion actuel. Votre clé enregistrée reste valide. Une sauvegarde chiffrée volée peut être ouverte avec le mot de passe sans second facteur.",
+			"loginPassword": "Mot de passe de connexion actuel",
+			"repeatPassword": "Répéter le mot de passe de connexion",
+			"otp": "Code à usage unique",
+			"enroll": "Confirmer le mot de passe et configurer la récupération",
+			"device-ready": "Cet appareil peut utiliser ses clés existantes. La récupération par mot de passe sera vérifiée lors de la prochaine connexion avec le mot de passe.",
+			"repairBlocked": "Les sauvegardes protégées par mot de passe ne peuvent pas être remplacées ici en toute sécurité. Votre historique reste accessible avec la clé de récupération. La configuration avec un nouveau mot de passe est actuellement indisponible.",
+			"idle": "L’état de la récupération n’a pas encore été vérifié.",
+			"pending": "La récupération est en cours de vérification. Vous pouvez continuer à utiliser l’application.",
+			"busy": "La récupération est en cours dans un autre onglet ou en arrière-plan. Veuillez réessayer plus tard.",
+			"repairRequired": "Avant de modifier votre mot de passe, vous devez réparer la récupération des conversations dans les paramètres de sécurité. Votre mot de passe de connexion n’a pas été modifié.",
+			"chatUnavailable": "La connexion au chat n’est pas disponible actuellement, votre mot de passe ne peut donc pas être modifié en toute sécurité. Votre mot de passe n’a pas été modifié. Veuillez réessayer plus tard et contacter votre administration si le problème persiste."
 		}
 	},
 	"accountInvite": {
@@ -4829,7 +5131,9 @@
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
 				"accepted": "Une conseillère a pris votre conversation",
-				"closed": "Fermé pour le moment"
+				"closed": "Fermé pour le moment",
+				"checking": "Qui est en ligne ?",
+				"waitingForLive": "En attente de quelqu'un en ligne"
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
@@ -4867,7 +5171,8 @@
 				"later": "Plus tard",
 				"mail": "Écrire une demande à un centre de conseil",
 				"mailShort": "Écrire une demande",
-				"closedDay": "fermé"
+				"closedDay": "fermé",
+				"wait": "J'attends"
 			},
 			"steps": {
 				"wait": {
@@ -4882,7 +5187,32 @@
 					"title": "Anonyme, puis effacé",
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
+			},
+			"checking": {
+				"text": "Nous regardons qui est en ligne …",
+				"waiting": "Nous attendons avec vous que quelqu'un soit en ligne …"
+			},
+			"staff": {
+				"headline": "Vous êtes connectée en tant que conseillère.",
+				"text": "Ce lien vous déconnecterait ici et vous ne seriez plus en ligne. Pour le tester, ouvrez-le dans une fenêtre privée."
 			}
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Votre accès a été créé pour vous – quelqu’un d’autre connaît donc encore le premier mot de passe. Choisissez-en un maintenant que vous seul connaissez.",
+			"title": "Votre propre mot de passe"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Se déconnecter à la place"
+		},
+		"progress": {
+			"label": "Configuration en deux étapes",
+			"password": "Mot de passe personnel",
+			"twoFactor": "Deuxième facteur",
+			"done": "terminé"
 		}
 	}
 }

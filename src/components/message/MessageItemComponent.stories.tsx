@@ -1,9 +1,10 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
 	ActiveSessionContext,
+	AUTHORITIES,
 	E2EEContext,
 	UserDataContext,
 	type ExtendedSessionInterface
@@ -11,7 +12,8 @@ import {
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import type { UserDataInterface } from '../../globalState/interfaces';
-import { MessageItemComponent } from './MessageItemComponent';
+import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import {
 	MOCK_ASKER_MATRIX_ID,
 	MOCK_CONSULTANT_MATRIX_ID,
@@ -23,6 +25,7 @@ import {
 	mockE2EEContext,
 	mockE2eeParams,
 	mockLongGermanMessage,
+	mockMessageItem,
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
@@ -41,25 +44,48 @@ import {
 } from './messageStoryShell';
 import './message.styles.scss';
 
+/** The shape of a consultant-list entry the bubble reads names from. */
+type ConsultantListEntry = {
+	value?: string;
+	username?: string;
+	rawUsername?: string;
+	consultantDisplayName?: string;
+	firstName?: string;
+	lastName?: string;
+};
+
 type MessageItemStoryParameters = {
 	activeSession?: ExtendedSessionInterface;
 	userData?: UserDataInterface;
+	/**
+	 * Entries for `ConsultantListContext`. This is the list the bubble used to
+	 * pull a counsellor's legal name out of (#1486), so a story has to be able
+	 * to seed it with one.
+	 */
+	consultantList?: ConsultantListEntry[];
 };
 
 function MessageItemContextDecorator({
 	activeSession,
 	userData,
+	consultantList,
 	children,
 	compact = false
 }: {
 	activeSession: ExtendedSessionInterface;
 	userData: UserDataInterface;
+	consultantList?: ConsultantListEntry[];
 	children: React.ReactNode;
 	compact?: boolean;
 }) {
+	const consultantListContextValue = consultantList
+		? { ...mockConsultantListContext(), consultantList }
+		: mockConsultantListContext();
 	return (
 		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
-			<ConsultantListContext.Provider value={mockConsultantListContext()}>
+			<ConsultantListContext.Provider
+				value={consultantListContextValue as never}
+			>
 				<E2EEContext.Provider value={mockE2EEContext()}>
 					<UserDataContext.Provider
 						value={{
@@ -197,6 +223,9 @@ const meta = {
 				userData={
 					(parameters as MessageItemStoryParameters).userData ??
 					mockUserData()
+				}
+				consultantList={
+					(parameters as MessageItemStoryParameters).consultantList
 				}
 				compact={Boolean(
 					(parameters as { compactShell?: boolean }).compactShell
@@ -1136,5 +1165,483 @@ export const KebabMenuFollowsScroll: Story = {
 		const rect = menu.getBoundingClientRect();
 		expect(rect.left).toBeGreaterThanOrEqual(0);
 		expect(rect.right).toBeLessThanOrEqual(window.innerWidth);
+	}
+};
+
+/**
+ * T21: the thread entry under a root message — reply count and
+ * "Author: last reply…" on one line — opens the thread.
+ */
+export const ThreadEntryWithLastReply: Story = {
+	name: 'Thread entry — replies + "Author: last reply…" (T21)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid',
+			message:
+				'Es sind ein paar Briefe gekommen, die ich nicht aufgemacht habe. Mahnbescheide, glaube ich.'
+		}),
+		...baseHandlers,
+		renderMode: 'main',
+		threadsEnabled: true,
+		threadSummary: {
+			replyCount: 2,
+			lastReplyText:
+				'Sanftes Alpaka Kala: Okay. Vielleicht nächste Woche, wenn ich weiß, wie es mit dem Vertrag weitergeht.'
+		},
+		onOpenThread: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const entry = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="thread-entry"]'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expect(entry.textContent).toContain('2 Antworten');
+		const preview = entry.querySelector<HTMLElement>(
+			'[data-cy="thread-entry-preview"]'
+		)!;
+		await expect(preview.textContent).toContain('Sanftes Alpaka Kala:');
+		// One line, ellipsis — never a second line (D1: the entry follows
+		// the chat text scale, label/medium 12/16 — one line-height plus rounding).
+		await expect(
+			preview.getBoundingClientRect().height
+		).toBeLessThanOrEqual(
+			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
+		);
+		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
+		await userEvent.click(entry);
+		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
+	}
+};
+
+/* ---------------------------------------------------------------------------
+ * T49 — the supervision side room's system notice.
+ *
+ * The notice is not a message someone wrote: `buildSupervisionTimeline`
+ * (session/sessionHelpers.ts) builds it in the frontend and prepends it to the
+ * side room's timeline. Its `[SYSTEM_NOTIFICATION]` payload carries
+ * `type: 'SUPERVISION_NOTICE'`, and that type is what makes
+ * `MessageItemComponent` return the **Carimat organism** (`ErstantwortSequence`
+ * → `pseudonymCard`) instead of the generic system-notification chrome.
+ *
+ * That was the promise in T49, and until now it could only be seen two levels
+ * up — in `Components/Session/SidePanel` "first visit, empty side room" and in
+ * the stage story "(a2)". Here it stands at the block that actually renders it.
+ *
+ * The fixtures come from `buildSupervisionTimeline` itself rather than a
+ * hand-written payload, so a change to the builder shows up here instead of
+ * quietly passing against a copy of what it used to emit.
+ * ------------------------------------------------------------------------- */
+
+const SUPERVISION_ROOM_ID = '!storybook-supervision:oriso.org';
+const SUPERVISION_NOTICE_TITLE = 'Supervision';
+const SUPERVISION_NOTICE_TEXT =
+	'Supervision durch Angela K. ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.';
+
+const buildSupervisionNoticeTimeline = (messages: MessageItem[] = []) =>
+	buildSupervisionTimeline(messages, {
+		roomId: SUPERVISION_ROOM_ID,
+		title: SUPERVISION_NOTICE_TITLE,
+		description: SUPERVISION_NOTICE_TEXT,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+	});
+
+/** One counsellor line under the notice — the side room's first real message. */
+const supervisionFirstMessage = (): MessageItem =>
+	mockMessageItem({
+		_id: 'supervision-msg-1',
+		rid: SUPERVISION_ROOM_ID,
+		userId: MOCK_CONSULTANT_MATRIX_ID,
+		displayName: 'Beratende Person Kim G.',
+		username: 'kim.g@oriso.invalid',
+		message:
+			'Ich komme beim Thema Mahnbescheide nicht weiter und hätte gern einen zweiten Blick darauf.',
+		messageDate: { str: 'Heute', date: null }
+	});
+
+const renderSupervisionTimeline = (items: MessageItem[]) => (
+	<div style={{ display: 'flex', flexDirection: 'column' }}>
+		{items.map((item) => (
+			<MessageItemComponent
+				key={item._id}
+				{...mockMessageItemComponentProps(item)}
+				{...baseHandlers}
+			/>
+		))}
+	</div>
+);
+
+/**
+ * The whole point of T49, asserted rather than eyeballed: the notice is drawn
+ * with the Carimat organism and carries **none** of the generic system chrome.
+ *
+ * Every negative check is scoped to the notice's own subtree — in the story
+ * where a real message sits below it, a kebab and a bubble legitimately exist
+ * on that message, and an unscoped `querySelector` would pass for the wrong
+ * reason (or fail for one).
+ */
+const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
+	const notice = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.messageItem--supervisionNotice'
+		);
+		expect(element).not.toBeNull();
+		return element!;
+	});
+
+	// Carimat structure: the staged sequence and its pseudonym card.
+	expect(
+		notice.querySelector('[data-testid="erstantwort-sequence"]')
+	).not.toBeNull();
+	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
+	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
+			?.textContent
+	).toBe(SUPERVISION_NOTICE_TITLE);
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
+			?.textContent
+	).toMatch(/^(Systembenachrichtigung|System Notification)$/);
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__bubbleText')
+			?.textContent
+	).toBe(SUPERVISION_NOTICE_TEXT);
+
+	// No generic system-notification chrome: no kebab, no notification bubble
+	// class, no bot avatar, no two-line notification header.
+	expect(notice.querySelector('.messageItem__kebabButton')).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__message--systemNotification')
+	).toBeNull();
+	expect(notice.querySelector('.messageItem__avatar--bot')).toBeNull();
+	expect(notice.querySelector('.messageItem__botAvatarIcon')).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__systemNotificationHeaderText')
+	).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__systemNotificationDescription')
+	).toBeNull();
+
+	return notice;
+};
+
+export const SupervisionNotice: Story = {
+	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `pseudonymCard`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		// The day pill moves onto the notice when the room already has history.
+		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeAboveMessage: Story = {
+	name: 'Supervision notice — above the first real message (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Notice plus the counsellor line beneath it. The day pill sits on the notice and the message below gives its own up, so the same day is never drawn twice — and the message keeps its ordinary chrome (kebab, bubble) while the notice keeps none of it.'
+			}
+		}
+	},
+	render: () =>
+		renderSupervisionTimeline(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])
+		),
+	play: async ({ canvasElement }) => {
+		await expectCarimatNoticeStructure(canvasElement);
+
+		const rows = canvasElement.querySelectorAll(
+			'.messageItem:not(.pseudonymCard)'
+		);
+		expect(rows.length).toBe(2);
+		expect(rows[0].classList).toContain('messageItem--supervisionNotice');
+
+		// Exactly one day pill in the pair, and it belongs to the notice.
+		expect(
+			canvasElement.querySelectorAll('.messageDateDivider').length
+		).toBe(1);
+		expect(rows[0].querySelector('.messageDateDivider')).not.toBeNull();
+
+		// The ordinary message below is untouched — it still has its kebab,
+		// which is what makes the notice's missing one meaningful.
+		await waitFor(() =>
+			expect(
+				rows[1].querySelector('.messageItem__kebabButton')
+			).not.toBeNull()
+		);
+	}
+};
+
+export const SupervisionNoticeEmptyRoom: Story = {
+	name: 'Supervision notice — empty side room, no day pill (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'What a freshly assigned standing supervisor sees before anyone has written. N-2: `buildSupervisionTimeline` sets an explicit empty `PrettyDate` here — the earlier version cloned `list[0]`, left `messageDate` undefined on an empty room and crashed the timeline.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(buildSupervisionNoticeTimeline()[0]),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		// No history, so no day pill — and no crash on the empty date.
+		expect(notice.querySelector('.messageDateDivider')).toBeNull();
+		expect(
+			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+				.length
+		).toBe(1);
+	}
+};
+
+export const SupervisionNoticeMobile390: Story = {
+	name: 'Supervision notice — phone 390 (T49)',
+	globals: phone390Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'The notice at 390px, where the side room is a full-width sheet. The card and its text stay inside the column — the notice is the first thing in that room, so a horizontal overflow here would be the first thing anyone sees.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const shell = notice.parentElement!;
+		await waitFor(() => {
+			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
+			expect(card.getBoundingClientRect().right).toBeLessThanOrEqual(
+				shell.getBoundingClientRect().right + 1
+			);
+		});
+	}
+};
+
+// ---------------------------------------------------------------------------
+// Identity: the name a counsellor is published under (#1486)
+// ---------------------------------------------------------------------------
+
+/** A counsellor whose legal name is on file and whose public name is not. */
+const consultantWithRealName: ConsultantListEntry[] = [
+	{
+		value: 'consultant-storybook',
+		username: 'karina.p@oriso.invalid',
+		rawUsername: 'karina.p',
+		consultantDisplayName: 'Karina P',
+		firstName: 'Karina',
+		lastName: 'P'
+	}
+];
+
+/**
+ * The leak this issue is about, at the surface an advice seeker reads.
+ *
+ * An anonymous Live Chat guest is granted `ANONYMOUS_DEFAULT`, not
+ * `ASKER_DEFAULT`, so the asker-facing name resolution never ran for them and
+ * the bubble fell through to the consultant list — printing the counsellor's
+ * legal name ("Karina P") above the message, overriding the public display
+ * name the session carries. ADR-002 §2: the published identity is the display
+ * name. See OpenResilienceInitiative/ORISO-Frontend#1486.
+ */
+export const AnonymousGuestSeesDisplayName: Story = {
+	name: 'Identity — anonymous guest sees the display name, never the real name',
+	parameters: {
+		activeSession: mockActiveSession1on1({
+			consultant: {
+				consultantId: 'consultant-storybook',
+				id: 'consultant-storybook',
+				username: 'karina.p@oriso.invalid',
+				displayName: 'sanftes Alpaka Kim',
+				firstName: 'Karina',
+				lastName: 'P',
+				absent: false
+			} as never
+		}),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: consultantWithRealName,
+		docs: {
+			description: {
+				story: 'Display name and real name are both available to the client. The bubble must show "sanftes Alpaka Kim" — the counsellor\'s legal name must not appear anywhere in the thread.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			// The Matrix member event carries the legal name too — a third
+			// identity layer that must not win either.
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Danke, dass du dich meldest. Lass uns die nächsten Schritte sortieren.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getByText('sanftes Alpaka Kim')
+			).toBeInTheDocument();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+	}
+};
+
+/**
+ * Same counsellor with no public display name: the bubble falls back to the
+ * User-ID — the identity anchor the chat header and the session list already
+ * show — and still not to the legal name (#1486).
+ */
+export const AnonymousGuestWithoutDisplayNameSeesTheAnchor: Story = {
+	name: 'Identity — no display name falls back to the User-ID, not the real name',
+	parameters: {
+		activeSession: mockActiveSession1on1({
+			consultant: {
+				consultantId: 'consultant-storybook',
+				id: 'consultant-storybook',
+				username: 'karina.p@oriso.invalid',
+				displayName: '',
+				firstName: 'Karina',
+				lastName: 'P',
+				absent: false
+			} as never
+		}),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: consultantWithRealName,
+		docs: {
+			description: {
+				story: 'With the public display name cleared, the counsellor is named by their User-ID. The legal name stays out of the thread entirely.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: undefined,
+			username: 'karina.p@oriso.invalid',
+			message: 'Ich bin da. Erzähl mir, was gerade am dringendsten ist.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+		await expect(canvasElement.textContent).toContain('karina p');
+	}
+};
+
+/**
+ * The counsellor-internal view of the same rule (#1486).
+ *
+ * The bubble used to reach into `ConsultantListContext` for a colleague's
+ * `firstName`/`lastName`, while the chat header and the session list resolve
+ * the same colleague as display name → User-ID. One person, two names, one
+ * conversation. The bubble now passes no name parts at all, so all three
+ * surfaces land on the same string.
+ */
+export const InternalGroupColleagueName: Story = {
+	name: 'Identity — colleague in an internal group chat is named like the header',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		consultantList: [
+			{
+				value: 'consultant-angela',
+				username: 'angela.k@oriso.invalid',
+				rawUsername: 'angela.k',
+				// No public display name on file — the leak used to fill the
+				// gap with the legal name instead of the User-ID.
+				firstName: 'Angela',
+				lastName: 'K'
+			}
+		],
+		docs: {
+			description: {
+				story: 'A colleague with a legal name on file and no published display name. The bubble names them by their User-ID, exactly as the chat header and the session list do.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: undefined,
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Ich übernehme die Fallübergabe und melde mich nach der Supervision.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
+		});
+		await expect(canvasElement.textContent).not.toContain('Angela K');
+		await expect(canvasElement.textContent).toContain('angela k');
 	}
 };

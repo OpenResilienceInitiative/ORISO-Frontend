@@ -26,10 +26,13 @@ const M3_NAV_BAR_LIVE_CHAT_FIGMA_URL =
 function RuntimeNavigationRail({
 	role,
 	layout = 'desktop',
-	railHeightPx
+	railHeightPx,
+	liveChatViaSidebar = true
 }: {
 	role: 'consultant' | 'asker';
 	layout?: 'desktop' | 'mobile';
+	/** Profile preference "Live Chat über Menü Leiste aktivieren". */
+	liveChatViaSidebar?: boolean;
 	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
 	railHeightPx?: number;
 }) {
@@ -61,7 +64,10 @@ function RuntimeNavigationRail({
 			};
 
 	return (
-		<NavigationStoryProviders role={role}>
+		<NavigationStoryProviders
+			role={role}
+			liveChatViaSidebar={liveChatViaSidebar}
+		>
 			{/*
 			  app__wrapper is required so production shell + figma nav rules
 			  (authenticatedApp + app-scoped navigation styles) apply in Storybook.
@@ -286,6 +292,32 @@ export const RuntimeConsultantMobile: Story = {
 		await expect(container.scrollWidth).toBeGreaterThan(
 			container.clientWidth
 		);
+	}
+};
+
+/**
+ * Consultant on a phone who has NOT enabled "Live Chat über Menü Leiste
+ * aktivieren" in My Profile: the bottom bar carries no Live Chat entry — the
+ * same rule as the desktop rail. Availability is switched in My Profile.
+ */
+export const RuntimeConsultantMobileWithoutLiveChatPreference: Story = {
+	args: {
+		role: 'consultant',
+		layout: 'mobile',
+		liveChatViaSidebar: false
+	},
+	parameters: {
+		viewport: {
+			defaultViewport: 'mobile1'
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await expect(
+			canvasElement.querySelector('.navigation__item--nav-logout')
+		).not.toBeNull();
+		await expect(
+			canvasElement.querySelector('.navigation__item--liveChatToggle')
+		).toBeNull();
 	}
 };
 

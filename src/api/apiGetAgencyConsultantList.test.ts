@@ -6,7 +6,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../resources/scripts/endpoints', () => ({
-	endpoints: { agencyConsultants: '/service/users/consultants' }
+	endpoints: {
+		agencyConsultants: '/service/users/consultants',
+		chatSeriesBase: '/service/users/chat-series/'
+	}
 }));
 
 const fetchDataMock = vi.fn();
@@ -24,10 +27,20 @@ afterEach(() => {
 
 describe('agency consultant list', () => {
 	it('asks for the consultants of the given agency', async () => {
-		fetchDataMock.mockResolvedValue([]);
+		const eligibleSupervisor = {
+			consultantId: 'eligible-id',
+			firstName: 'Elli',
+			lastName: 'Eligible',
+			displayName: 'Elli Eligible',
+			username: 'elli',
+			isSupervisor: true
+		};
+		fetchDataMock.mockResolvedValue([eligibleSupervisor]);
 		const { fetchAgencyConsultantList } = await importModule();
 
-		await fetchAgencyConsultantList('42');
+		await expect(fetchAgencyConsultantList('42')).resolves.toEqual([
+			eligibleSupervisor
+		]);
 
 		expect(fetchDataMock).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -48,5 +61,32 @@ describe('agency consultant list', () => {
 		const { apiGetAgencyConsultantList } = await importModule();
 
 		await expect(apiGetAgencyConsultantList('42')).resolves.toEqual([]);
+	});
+
+	it('reads a 204 (nobody else in the Träger) as an empty list (#1499)', async () => {
+		// fetchData resolves a 204 as `{}`; the co-moderator menu must get [].
+		fetchDataMock.mockResolvedValue({});
+		const { apiGetTenantConsultantList } = await importModule();
+
+		await expect(apiGetTenantConsultantList()).resolves.toEqual([]);
+		expect(fetchDataMock).toHaveBeenCalledWith(
+			expect.objectContaining({
+				url: '/service/users/chat-series/consultants'
+			})
+		);
+	});
+
+	it('lets a rejected tenant consultant request propagate', async () => {
+		fetchDataMock.mockRejectedValue(new Error('CATCH_ALL'));
+		const { apiGetTenantConsultantList } = await importModule();
+
+		await expect(apiGetTenantConsultantList()).rejects.toThrow('CATCH_ALL');
+	});
+
+	it('rejects an unexpected non-array 200 payload instead of treating it as empty', async () => {
+		fetchDataMock.mockResolvedValue({ consultants: [{ id: 1 }] });
+		const { apiGetTenantConsultantList } = await importModule();
+
+		await expect(apiGetTenantConsultantList()).rejects.toThrow('CATCH_ALL');
 	});
 });

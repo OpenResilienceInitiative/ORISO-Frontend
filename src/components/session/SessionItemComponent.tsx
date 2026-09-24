@@ -6,41 +6,120 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	lazy,
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 import {
 	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
 	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
 } from './anonymousConsentInvariant';
 import clsx from 'clsx';
-import { scrollToEnd, isMyMessage, SESSION_LIST_TYPES } from './sessionHelpers';
+import {
+	buildSupervisionTimeline,
+	scrollToEnd,
+	isMyMessage,
+	SESSION_LIST_TYPES
+} from './sessionHelpers';
 import { getModality, Modality } from './getModality';
-import { formatToHHMM } from '../../utils/dateHelpers';
+import {
+	isComposerBusy,
+	isTimelineAtBottom,
+	shouldClearAtBottomAfterSuppressedFollow,
+	shouldFollowNewMessage,
+	unreadCountAfterArrival
+} from '../messageSubmitInterface/timelineFollow';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
 	isMatrixRoom,
 	isMatrixRoomIdHeuristic
 } from '../../utils/matrixRoomUtils';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import {
-	MessageItem,
-	MessageItemComponent
-} from '../message/MessageItemComponent';
+import { MessageItem } from '../message/MessageItemComponent';
+import { MessageTimeline } from './MessageTimeline';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
-import { MessageSendFailed } from '../message/MessageSendFailed';
 import {
 	FailedSend,
 	FailedSendTimelineEntry
 } from '../message/FailedSendTimelineEntry';
+import { failedSendBelongsTo } from '../message/failedSendTarget';
+import { useReportChatStagePanel } from '../chatStage/ChatStagePanelContext';
 import {
 	ReactionEvent,
 	AggregatedReaction,
 	aggregateReactions
 } from '../../utils/messageRelations';
 import { chatTransportService } from '../../services/chatTransportService';
-import { computeThreadSummaries } from '../../utils/threadSummaries';
+import {
+	SupervisionPanelContext,
+	SupervisionPanelContextValue
+} from '../supervisionPanel/SupervisionPanelContext';
+import {
+	countUnreadSideRoomMessages,
+	excludeSideRoomMessages,
+	findUnseenMessages
+} from '../supervisionPanel/supervisionPanelState';
+// B2: the stage composition (chatStage/) wired 1:1 — same DOM, same classes.
+import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
+import { teamCopy } from '../chatStage/teamChannelCopy';
+import { PanelHeader } from '../chatStage/PanelHeader';
+import { Button, BUTTON_TYPES } from '../button/Button';
+import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
+import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
+import {
+	resolveChannelLabel,
+	type SecondaryChannel
+} from '../chatStage/channelSwitcherState';
+import {
+	clampPanelWidth,
+	readPanelWidth,
+	STAGE_LAYOUT,
+	writePanelWidth
+} from '../chatStage/stageLayout';
+import { useDockedComposerOffset } from '../chatStage/useDockedComposerOffset';
+import { useComposerFocus } from '../chatStage/useComposerFocus';
+import { ResizableHandle } from '../sessionsList/ResizableHandle';
+import { useResponsive } from '../../hooks/useResponsive';
+import {
+	buildSessionChannelPath,
+	channelFromId,
+	channelId,
+	normalizeLegacyChannelSearch,
+	parseChannel,
+	decideAutoOpen,
+	readLastChannel,
+	stripAtParam,
+	safeChannelStorage,
+	stripChannelParams,
+	withChannel,
+	writeLastChannel,
+	type SessionChannel
+} from '../../utils/channelRoute';
+import {
+	seedLastActivity,
+	toStackParticipants
+} from '../sessionHeader/headerParticipants';
+import type { StackParticipant } from '../message/participantStack';
+import {
+	buildVisibleParticipantRules,
+	filterVisibleParticipants
+} from '../message/visibleParticipants';
+import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
+import '../chatStage/chatStage.styles.scss';
+import {
+	getSupervisorDisplayNames,
+	isActiveSupervisorOf
+} from '../sessionsListItem/supervisionListState';
+import {
+	pickDisplayOrUsername,
+	pickSupervisionCounterpartName,
+	CounterpartNameSource
+} from '../supervisionPanel/supervisionCounterpart';
+import { apiGetConsultant } from '../../api/apiGetConsultant';
+import {
+	computeThreadSummaries,
+	formatThreadEntryPreview
+} from '../../utils/threadSummaries';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import {
 	getThreadLastReadTs,
@@ -49,7 +128,9 @@ import {
 } from '../../utils/threadUnread';
 import { ThreadListPanel } from './ThreadListPanel';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
-import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { PanelCallActions } from '../chatStage/PanelCallActions';
+import { resolveSupervisionCallFeatureGates } from '../call/callFeatureGates';
+import { startRoomCall } from '../call/startRoomCall';
 import {
 	AUTHORITIES,
 	getContact,
@@ -71,7 +152,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import './session.styles';
 import { focusSessionChromeOnPointerDown } from './focusSessionChrome';
 import { useDebouncedCallback } from 'use-debounce';
-import { ReactComponent as ArrowDoubleDownIcon } from '../../resources/img/icons/arrow-double-down.svg';
 import { ReactComponent as NotificationBellIcon } from '../../resources/img/icons/notification_bell.svg';
 import smoothScroll from './smoothScrollHelper';
 import { DragAndDropArea } from '../dragAndDropArea/DragAndDropArea';
@@ -89,7 +169,14 @@ import {
 	buildReplyQuotePreview
 } from './replyQuote';
 import { EncryptionBanner } from './EncryptionBanner';
-import { apiGetSessionSupervisors } from '../../api/apiGetSessionSupervisors';
+import {
+	apiGetSessionSupervisors,
+	type SessionSupervisor
+} from '../../api/apiGetSessionSupervisors';
+import {
+	roomIdForActiveSession,
+	type SupervisionRoomLookup
+} from './supervisionRoomLookup';
 import { apiPatchNotificationActiveView } from '../../api/apiPatchNotificationActiveView';
 import { isNotificationActiveViewRoute } from './notificationActiveView';
 import { apiRegisterMatrixRoomForSync } from '../../api/apiMatrixSyncRegister';
@@ -136,7 +223,9 @@ import liveChatClosedIllustration from '../../resources/img/illustrations/live-c
 import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
-const MessageSubmitInterfaceComponent = lazy(() =>
+import { canRenderClientComposer } from './clientComposerPolicy';
+import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
+const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
 	)
@@ -144,9 +233,28 @@ const MessageSubmitInterfaceComponent = lazy(() =>
 
 interface SessionItemProps {
 	isTyping?: Function;
+	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
 	/** Reactions (m.annotation, #435): raw reaction events for the loaded window. */
 	reactionEvents?: ReactionEvent[];
+	/**
+	 * WP-B2 (ADR-008): the supervision side room's own timeline. Never part
+	 * of `messages`; rendered in the SupervisionPanel next to the chat.
+	 */
+	supervisionMessages?: MessageItem[];
+	/**
+	 * Teamberatung (Frank, 09.09.; FE#514 / ADR-016): the team side room's
+	 * own timeline — the third channel, built one-to-one like supervision.
+	 * Never part of `messages`; the advice seeker is never a member.
+	 */
+	teamMessages?: MessageItem[];
+	/** Matrix room id of that team room (`apiGetTeamDiscussion`). */
+	teamRoomId?: string;
+	/** Existing room or an eligible enquiry where opening may create it. */
+	teamDiscussionAvailable?: boolean;
+	teamDiscussionStatus?: TeamDiscussionStatus;
+	teamDiscussionResolved?: boolean;
+	teamDiscussionError?: boolean;
 	typingUsers: string[];
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
@@ -165,7 +273,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		useContext(ActiveSessionContext);
 	const { userData, setUserData } = useContext(UserDataContext);
 	const { addEventNotification } = useContext(NotificationsContext);
-	const { type } = useContext(SessionTypeContext);
+	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { locale } = useContext(LocaleContext);
 	const legalLinks = useContext(LegalLinksContext);
 	const { matrixClientService } = useMatrixClient();
@@ -175,11 +283,35 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		new URLSearchParams(location.search).get('embeddedNotifications') ===
 		'1';
 	const [isSupervisor, setIsSupervisor] = useState(false);
+	const isSupervisorView =
+		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
-	const [supervisionRoomId, setSupervisionRoomId] = useState<
-		string | undefined
-	>(undefined);
+	const [supervisionRoomLookup, setSupervisionRoomLookup] =
+		useState<SupervisionRoomLookup | null>(null);
+	const supervisionRoomId = roomIdForActiveSession(
+		supervisionRoomLookup,
+		activeSession.item.id
+	);
+	// WP-B2: the supervisor rows from the same call — identities for the
+	// participant stacks (`buildVisibleParticipantRules`) and, as usernames,
+	// the counterpart name for the consultant when the list DTO has no
+	// display names.
+	const [sessionSupervisors, setSessionSupervisors] = useState<
+		SessionSupervisor[]
+	>([]);
+	const supervisorUsernames = useMemo(
+		() =>
+			sessionSupervisors.map((s) => s.supervisorUsername).filter(Boolean),
+		[sessionSupervisors]
+	);
+	// WP-B2 (#996): the supervisor's counterpart is the responsible
+	// consultant, but the consultant session-list DTO carries only
+	// `{ id, firstName, lastName }` — no display name, no username. Resolved
+	// by id via the public consultant endpoint; keyed so a stale response
+	// for a previous session can never name the current one.
+	const [resolvedCounterpartConsultant, setResolvedCounterpartConsultant] =
+		useState<{ id: string; name: CounterpartNameSource } | null>(null);
 	const [showWaitingMiniGame, setShowWaitingMiniGame] = useState(false);
 	/**
 	 * Initial values for the consent/pseudonym gates are read synchronously
@@ -547,7 +679,18 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);
 
-	const messages = useMemo(() => props.messages, [props && props.messages]); // eslint-disable-line react-hooks/exhaustive-deps
+	// WP-B2 safety net: the client-facing timeline never carries side-room
+	// items, whatever SessionStream handed over.
+	const messages = useMemo(
+		() =>
+			props.messages
+				? excludeSideRoomMessages(props.messages, [
+						supervisionRoomId,
+						props.teamRoomId
+					])
+				: props.messages,
+		[props.messages, supervisionRoomId, props.teamRoomId]
+	);
 	const resolvedMatrixRoomId = isMatrixRoom(activeSession.rid)
 		? activeSession.rid
 		: activeSession.item?.matrixRoomId || activeSession.rid;
@@ -613,11 +756,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [supervisionReason, setSupervisionReason] = useState<string | null>(
 		null
 	);
-	const [activeThreadRootId, setActiveThreadRootId] = useState<string | null>(
-		null
+	// B2 / T24: the open side channel is DERIVED from the URL
+	// (`?channel=thread:<root>` / `?channel=supervision`, `channelRoute.ts`),
+	// never a `useState` beside it. Reload, timeline, e-mail and the panel
+	// header's menu all use the same parameter.
+	const { channel: routeChannel, at: routeAt } = useMemo(
+		() => parseChannel(location.search),
+		[location.search]
 	);
-	const [activeThreadRootMessage, setActiveThreadRootMessage] =
-		useState<MessageItem | null>(null);
+	const activeThreadRootId =
+		isThreadsEnabled && routeChannel?.kind === 'thread'
+			? routeChannel.rootId
+			: null;
+	const activeThreadRootMessage = useMemo<MessageItem | null>(
+		() =>
+			activeThreadRootId
+				? (messages || []).find(
+						(message) => message._id === activeThreadRootId
+					) || null
+				: null,
+		[messages, activeThreadRootId]
+	);
 	const knownMessageIdsRef = useRef<Set<string>>(new Set());
 	// Thread-panel-UX (#435): pure summary computation (unit-tested).
 	const threadSummariesRaw = useMemo(
@@ -632,9 +791,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		threadSummariesRaw.forEach((summary, rootId) => {
 			map.set(rootId, {
 				replyCount: summary.replyCount,
-				lastReplyText:
-					'Last reply at ' +
-					formatToHHMM(new Date(summary.lastReplyTs).toString())
+				// T21: "Autor: letzte Nachricht" on the thread entry.
+				lastReplyText: formatThreadEntryPreview(summary)
 			});
 		});
 		return map;
@@ -723,20 +881,27 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		]
 	);
 
-	// Check if current user is a supervisor
+	// Check if current user is a supervisor. The response stays tied to the
+	// session that requested it: a late lookup must never expose the previous
+	// case's side room to the new session.
 	useEffect(() => {
+		let cancelled = false;
+		const lookupSessionId = activeSession.item.id;
 		if (!isSupervisionEnabledForCurrentChat) {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
-			setSupervisionRoomId(undefined);
-			return;
+			setSupervisionRoomLookup(null);
+			setSessionSupervisors([]);
+			return () => {
+				cancelled = true;
+			};
 		}
-		if (
-			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-			activeSession.item.id
-		) {
-			apiGetSessionSupervisors(activeSession.item.id)
+		if (isConsultantUser && lookupSessionId) {
+			apiGetSessionSupervisors(lookupSessionId)
 				.then((supervisors) => {
+					if (cancelled) {
+						return;
+					}
 					const isCurrentUserSupervisor = supervisors.some(
 						(s) => s.supervisorConsultantId === userData.userId
 					);
@@ -750,20 +915,84 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					const sideRoomId = supervisors.find(
 						(s) => s.matrixRoomId
 					)?.matrixRoomId;
-					setSupervisionRoomId(sideRoomId || undefined);
+					setSupervisionRoomLookup({
+						sessionId: lookupSessionId,
+						roomId: sideRoomId || undefined
+					});
+					setSessionSupervisors(supervisors);
 				})
 				.catch((error) => {
+					if (cancelled) {
+						return;
+					}
 					// console.error('Failed to check supervisor status:', error);
 					setIsSupervisor(false);
 					setSupervisionReason(null);
-					setSupervisionRoomId(undefined);
+					setSupervisionRoomLookup({
+						sessionId: lookupSessionId,
+						roomId: undefined
+					});
+					setSessionSupervisors([]);
 				});
 		} else {
 			setIsSupervisor(false);
 			setSupervisionReason(null);
-			setSupervisionRoomId(undefined);
+			setSupervisionRoomLookup(null);
+			setSessionSupervisors([]);
 		}
-	}, [activeSession.item.id, userData, isSupervisionEnabledForCurrentChat]);
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		activeSession.item.id,
+		isConsultantUser,
+		isSupervisionEnabledForCurrentChat,
+		userData.userId
+	]);
+
+	// WP-B2 (#996): resolve the responsible consultant's display name for the
+	// supervisor view. First choice is the marker's `counsellorDisplayName`
+	// (backend-resolved, never a real name); the by-id lookup stays as the
+	// fallback for backends that do not send it yet.
+	const counterpartConsultantId = activeSession.consultant?.id;
+	const markerCounsellorDisplayName = (
+		activeSession.item?.supervision?.counsellorDisplayName ?? ''
+	).trim();
+	const listDtoHasCounterpartName = Boolean(
+		markerCounsellorDisplayName ||
+			pickDisplayOrUsername(activeSession.consultant)
+	);
+	useEffect(() => {
+		if (
+			!isSupervisor ||
+			!counterpartConsultantId ||
+			listDtoHasCounterpartName
+		) {
+			return;
+		}
+		let cancelled = false;
+		apiGetConsultant(counterpartConsultantId, false, true)
+			.then((consultant) => {
+				if (cancelled || !consultant) {
+					return;
+				}
+				setResolvedCounterpartConsultant({
+					id: counterpartConsultantId,
+					name: {
+						displayName: consultant.displayName,
+						username: (consultant as CounterpartNameSource)
+							.username,
+						userName: consultant.userName
+					}
+				});
+			})
+			.catch(() => {
+				// Fallback label stays; the panel is still usable.
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [isSupervisor, counterpartConsultantId, listDtoHasCounterpartName]);
 
 	useEffect(() => {
 		const canWrite =
@@ -1254,12 +1483,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		newThreadReplies.forEach((message) => {
 			const parsed = parseMessagePrefixes(message.message);
 			const rootId = message.threadRootEventId;
-			const params = new URLSearchParams(location.search);
-			if (rootId) {
-				params.set('threadRootId', rootId);
-			}
-			params.set('threadMessageId', message._id);
-			const actionPath = `${location.pathname}?${params.toString()}`;
+			const actionPath = buildSessionChannelPath(
+				`${location.pathname}${stripChannelParams(location.search)}`,
+				rootId ? { kind: 'thread', rootId } : null,
+				message._id
+			);
 			const snippet = (parsed.cleanedMessage || '')
 				.replace(/\s+/g, ' ')
 				.trim()
@@ -1291,29 +1519,25 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		translate
 	]);
 
+	// Hard cut for the legacy `threadRootId` / `threadMessageId` pair
+	// (Frank, 05.09.): mapped ONCE to `channel=` / `at=` on entry, never
+	// written again.
 	useEffect(() => {
-		if (!isThreadsEnabled || !messages || messages.length === 0) {
-			return;
+		const normalized = normalizeLegacyChannelSearch(location.search);
+		if (normalized !== null) {
+			navigate(
+				{ pathname: location.pathname, search: normalized },
+				{ replace: true }
+			);
 		}
-		const params = new URLSearchParams(location.search);
-		const threadRootId = params.get('threadRootId');
-		if (!threadRootId) {
-			return;
-		}
-		const rootMessage = messages.find(
-			(message) => message._id === threadRootId
-		);
-		if (rootMessage) {
-			setActiveThreadRootId(rootMessage._id);
-			setActiveThreadRootMessage(rootMessage);
-		}
-	}, [location.search, isThreadsEnabled, messages]);
+	}, [location.pathname, location.search, navigate]);
 
 	const resetUnreadCount = () => {
 		setNewMessages(0);
 		initMessageCount = messages?.length;
+		// The card is unmounted while the phone shows a side panel full-screen.
 		scrollContainerRef.current
-			.querySelectorAll('.messageItem__divider--lastRead')
+			?.querySelectorAll('.messageItem__divider--lastRead')
 			.forEach((e) => e.remove());
 	};
 
@@ -1354,10 +1578,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		if (
-			initialScrollCompleted &&
-			isMyMessageMatrix(messages[messages.length - 1]?.userId)
-		) {
+		const isOwnMessage = isMyMessageMatrix(
+			messages[messages.length - 1]?.userId
+		);
+		// Frank (14.09.): a reader who is not writing gets carried to the
+		// newest message; a reader who IS writing keeps their place and the
+		// composer's arrow lights up instead.
+		const composing = isComposerBusy(
+			scrollContainerRef.current
+				?.closest('.session')
+				?.querySelector('.textarea__wrapper-send-message') ?? null,
+			document.activeElement
+		);
+
+		if (initialScrollCompleted && isOwnMessage) {
 			resetUnreadCount();
 			scrollToEnd(0, true);
 		} else {
@@ -1380,17 +1614,57 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 			}
 
-			if (isScrolledToBottom && initialScrollCompleted) {
+			const shouldFollow =
+				initialScrollCompleted &&
+				shouldFollowNewMessage({
+					isOwnMessage,
+					atBottom: isScrolledToBottom,
+					isComposing: composing
+				});
+			if (shouldFollow) {
 				resetUnreadCount();
 				scrollToEnd(0, true);
+			} else if (
+				shouldClearAtBottomAfterSuppressedFollow({
+					initialScrollCompleted,
+					followed: shouldFollow,
+					atBottom: isScrolledToBottom
+				})
+			) {
+				// Review (CodeRabbit): appending a row fires no scroll event,
+				// so the flag would still say "at the bottom" although the
+				// newest message now sits below the fold. The composer-resize
+				// observer reads that flag — a writer whose composer grows one
+				// line would be scrolled to the newest message after all,
+				// which is exactly what declining to follow avoided. Do not
+				// clear during the first paint: the first remote message on
+				// an empty timeline would then stop later arrivals following.
+				setIsScrolledToBottom(false);
 			}
 
-			setNewMessages(messages.length - initMessageCount);
+			setNewMessages(
+				unreadCountAfterArrival(
+					messages.length,
+					initMessageCount,
+					initialScrollCompleted
+				)
+			);
 		}
 	}, [messages?.length]); // eslint-disable-line
 
 	useEffect(() => {
-		if (isScrolledToBottom) {
+		if (!isScrolledToBottom) {
+			return;
+		}
+		// …unless the reader is writing: then the badge on the composer's
+		// arrow is the only signal they get (Frank, 14.09.).
+		const composing = isComposerBusy(
+			scrollContainerRef.current
+				?.closest('.session')
+				?.querySelector('.textarea__wrapper-send-message') ?? null,
+			document.activeElement
+		);
+		if (!composing) {
 			resetUnreadCount();
 		}
 	}, [isScrolledToBottom]); // eslint-disable-line
@@ -1408,17 +1682,49 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	/* eslint-disable */
 	const handleScroll = useDebouncedCallback((e) => {
-		const scrollPosition = Math.round(
-			e.target.scrollHeight - e.target.scrollTop
+		// The ±1 px window this used to require was missed by every composer
+		// resize (auto-grow while typing, the drag handle, an info bar
+		// appearing) and by fractional layout heights — after which the chat
+		// silently stopped following new messages (T41).
+		setIsScrolledToBottom(
+			isTimelineAtBottom({
+				scrollTop: e.target.scrollTop,
+				scrollHeight: e.target.scrollHeight,
+				clientHeight: e.target.clientHeight
+			})
 		);
-		const containerHeight = e.target.clientHeight;
-		const isBottom =
-			scrollPosition >= containerHeight - 1 &&
-			scrollPosition <= containerHeight + 1;
-
-		setIsScrolledToBottom(isBottom);
 	}, 100);
 	/* eslint-enable */
+
+	/**
+	 * T41: the composer is absolutely positioned over the timeline and the
+	 * timeline reserves its measured height at the bottom. When it grows —
+	 * auto-grow while typing, the drag handle, an info bar — that reservation
+	 * grows with it, which pushes the last message up and out of sight for a
+	 * reader who was resting at the end. Follow the composer instead.
+	 */
+	const isScrolledToBottomRef = useRef(isScrolledToBottom);
+	isScrolledToBottomRef.current = isScrolledToBottom;
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		const dock = container
+			?.closest('.session')
+			?.querySelector<HTMLElement>('.messageSubmit__wrapper');
+		if (!container || !dock || typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		let previousHeight = dock.getBoundingClientRect().height;
+		const observer = new ResizeObserver(() => {
+			const height = dock.getBoundingClientRect().height;
+			const grew = height > previousHeight;
+			previousHeight = height;
+			if (grew && isScrolledToBottomRef.current) {
+				container.scrollTop = container.scrollHeight;
+			}
+		});
+		observer.observe(dock);
+		return () => observer.disconnect();
+	}, [activeSession?.rid]); // eslint-disable-line
 
 	const handleScrollToBottomButtonClick = () => {
 		const scrollContainer = scrollContainerRef.current;
@@ -1454,9 +1760,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			scrollToEnd(0, true);
 		}
 	};
-	const handleMobileNavigateBackClick = () => {
-		mobileListView();
-	};
 	const handleMobileNavigateStepDownClick = () => {
 		const scrollContainer = scrollContainerRef.current;
 		if (!scrollContainer) {
@@ -1478,18 +1781,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setInitialScrollCompleted(true);
 			// Initial open should snap only the message container, without animated jumps.
 			scrollToEnd(0, false);
+			// Review (CodeRabbit): the first remote row can land before this
+			// flag flips, and the arrival effect would leave an unread count
+			// on a view that is about to jump to that message.
+			resetUnreadCount();
 		}
 	};
 
 	const isOnlyEnquiry = type === SESSION_LIST_TYPES.ENQUIRY;
-
-	const scrollBottomButtonItem: ButtonItem = {
-		icon: <ArrowDoubleDownIcon />,
-		type: BUTTON_TYPES.SMALL_ICON,
-		smallIconBackgroundColor: 'alternate',
-		title: translate('app.scrollDown')
-	};
-
 	// cancels dragging automatically if user drags outside the
 	// browser window (there is no build-in mechanic for that)
 	const cancelDraggingOnOutsideWindow = () => {
@@ -1536,6 +1835,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isAside: boolean;
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
+		targetRoomId?: string | null;
 	} | null>(null);
 	// Read the live retry request inside the (non-memoised) success handler,
 	// which the composer may invoke from a closure captured a render earlier.
@@ -1551,7 +1851,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			transportMessage = message,
 			isAside = false,
 			replyToEventId?: string | null,
-			mentionedUserIds: string[] = []
+			mentionedUserIds: string[] = [],
+			targetRoomId: string | null = null
 		) => {
 			if (
 				sessionIdentity &&
@@ -1576,7 +1877,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										transportMessage,
 										isAside,
 										replyToEventId,
-										mentionedUserIds
+										mentionedUserIds,
+										targetRoomId
 									}
 								: failed
 						);
@@ -1592,7 +1894,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						transportMessage,
 						isAside,
 						replyToEventId: replyToEventId || null,
-						mentionedUserIds
+						mentionedUserIds,
+						targetRoomId: targetRoomId || null
 					}
 				];
 			});
@@ -1618,7 +1921,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							transportMessage: failed.transportMessage,
 							isAside: failed.isAside,
 							replyToEventId: failed.replyToEventId || null,
-							mentionedUserIds: failed.mentionedUserIds
+							mentionedUserIds: failed.mentionedUserIds,
+							targetRoomId: failed.targetRoomId || null
 						}
 					: null;
 			});
@@ -1645,7 +1949,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			transportMessage?: string,
 			isAside?: boolean,
 			replyToEventId?: string | null,
-			mentionedUserIds?: string[]
+			mentionedUserIds?: string[],
+			targetRoomId?: string | null
 		) =>
 			handleSendError(
 				message,
@@ -1656,7 +1961,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				transportMessage,
 				isAside,
 				replyToEventId,
-				mentionedUserIds
+				mentionedUserIds,
+				targetRoomId ?? null
 			),
 		[activeSessionIdentity, handleSendError]
 	);
@@ -1699,10 +2005,57 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 	};
 
+	// Route writer (B2 / T24): opening a channel PUSHES a history entry
+	// (browser Back closes the panel), switching REPLACES it, closing
+	// removes the param. The last open channel is remembered per session.
+	const locationRef = useRef(location);
+	locationRef.current = location;
+	const sessionIdForChannelMemory = activeSession.item?.id;
+	const setChannelRoute = useCallback(
+		(channel: SessionChannel | null, mode: 'push' | 'replace') => {
+			const current = locationRef.current;
+			const search = withChannel(current.search, channel);
+			writeLastChannel(
+				safeChannelStorage(),
+				sessionIdForChannelMemory,
+				channel
+			);
+			if (search === (current.search || '')) {
+				return;
+			}
+			navigate(
+				{ pathname: current.pathname, search },
+				{ replace: mode === 'replace' }
+			);
+		},
+		[navigate, sessionIdForChannelMemory]
+	);
+	// Review v6: a pick from the FAB hands focus to the panel header's
+	// channel button (the FAB unmounts with the pick).
+	const [focusPanelHeader, setFocusPanelHeader] = useState(false);
+	const openChannel = useCallback(
+		(channel: SessionChannel, source: 'fab' | 'header' = 'header') => {
+			setFocusPanelHeader(source === 'fab');
+			setChannelRoute(channel, routeChannel ? 'replace' : 'push');
+		},
+		[setChannelRoute, routeChannel]
+	);
+	const closeChannel = useCallback(() => {
+		setFocusPanelHeader(false);
+		setChannelRoute(null, 'replace');
+	}, [setChannelRoute]);
+	const selectChannelFromHeader = useCallback(
+		(id: string) => openChannel(channelFromId(id), 'header'),
+		[openChannel]
+	);
+	const selectChannelFromFab = useCallback(
+		(id: string) => openChannel(channelFromId(id), 'fab'),
+		[openChannel]
+	);
+
 	const handleOpenThread = useCallback(
 		(message: MessageItem) => {
-			setActiveThreadRootId(message._id);
-			setActiveThreadRootMessage(message);
+			openChannel({ kind: 'thread', rootId: message._id }, 'header');
 			setIsThreadListOpen(false);
 			// Per-thread unread (#435): opening a thread marks it read up to
 			// its current last reply.
@@ -1716,13 +2069,676 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setThreadReadVersion((version) => version + 1);
 			}
 		},
-		[threadSummariesRaw, resolvedMatrixRoomId]
+		[threadSummariesRaw, resolvedMatrixRoomId, openChannel]
 	);
 
 	const handleCloseThread = useCallback(() => {
-		setActiveThreadRootId(null);
-		setActiveThreadRootMessage(null);
+		closeChannel();
+	}, [closeChannel]);
+
+	// ------------------------------------------------------------------
+	// B2: side channels (supervision side room + native threads) — the
+	// stage composition (`chatStage/__storybook__/ConsultantSessionStage`)
+	// wired to real data. One `SidePanel` for both, one URL param as truth.
+	// ------------------------------------------------------------------
+	const supervisionMessages = props.supervisionMessages;
+	// Consultants and supervisors only — an asker is never a member of the
+	// side room and never gets the supervision channel, whatever the props
+	// say (checklist 9: wiring rule, no component guard).
+	const isSupervisionPanelViewer =
+		isConsultantUser &&
+		!isAskerUser &&
+		!activeSession.isGroup &&
+		!isEmbeddedNotificationsView;
+	const hasSupervisionSideRoom =
+		isSupervisionPanelViewer && !!supervisionRoomId;
+	// Teamberatung: the SAME viewer rule as supervision — consultants, never
+	// an asker, never a group, never the embedded notifications view — plus a
+	// resolved room id. `SessionStream` only resolves that id for consultants
+	// of the enquiry's agency, so this is a second lock on the same door.
+	const teamRoomId = props.teamRoomId;
+	const teamMessages = props.teamMessages;
+	const hasTeamSideRoom = isSupervisionPanelViewer && !!teamRoomId;
+	// Creation is initiated by the list/deep-link contract, which first resolves
+	// the POST and then supplies this id. Do not expose an in-stage channel item
+	// until it can resolve to a real room, except for an eligible enquiry where
+	// selecting the item is what initiates that POST.
+	const canOpenTeamSideRoom =
+		isSupervisionPanelViewer &&
+		(hasTeamSideRoom || props.teamDiscussionAvailable === true);
+	// A stale/unauthorised `?channel=team` route must not leave a panel that
+	// can fall back to another room. Consume it only after lookup settles.
+	useEffect(() => {
+		if (
+			routeChannel?.kind === 'team' &&
+			props.teamDiscussionResolved &&
+			!props.teamDiscussionError &&
+			!hasTeamSideRoom
+		) {
+			closeChannel();
+		}
+	}, [
+		closeChannel,
+		hasTeamSideRoom,
+		props.teamDiscussionError,
+		props.teamDiscussionResolved,
+		routeChannel?.kind
+	]);
+
+	// ONE breakpoint source for the phone layout (checklist 5): the app's
+	// `fromL` (900 px) = `STAGE_LAYOUT.DESKTOP_MIN_WIDTH`.
+	const { fromL } = useResponsive();
+	const isPhoneLayout = !fromL;
+
+	// The panel the URL asks for, resolved against what exists. A thread
+	// whose root is not in the loaded history keeps the main chat open
+	// (analysis F3 — fetching the root is a follow-up).
+	const openPanel: 'supervision' | 'team' | 'thread' | null =
+		routeChannel?.kind === 'supervision'
+			? hasSupervisionSideRoom
+				? 'supervision'
+				: null
+			: routeChannel?.kind === 'team'
+				? hasTeamSideRoom
+					? 'team'
+					: null
+				: activeThreadRootId && activeThreadRootMessage
+					? 'thread'
+					: null;
+	const shownChannelId =
+		openPanel === 'supervision'
+			? channelId({ kind: 'supervision' })
+			: openPanel === 'team'
+				? channelId({ kind: 'team' })
+				: openPanel === 'thread' && activeThreadRootId
+					? activeThreadRootId
+					: undefined;
+	// The list column snaps to the rail for the pane that is REALLY open
+	// (review D-4) — report the resolved pane, clear it on unmount.
+	const reportChatStagePanel = useReportChatStagePanel();
+	useEffect(() => {
+		reportChatStagePanel(openPanel);
+		return () => reportChatStagePanel(null);
+	}, [openPanel, reportChatStagePanel]);
+
+	// `?at=<eventId>` (review D-6): once the bubble is in the DOM — main
+	// chat or the open pane — scroll it into view and consume the param
+	// (`replace`, the channel stays). Best effort: an event that is not in
+	// the loaded history is simply left alone, no error; a later timeline
+	// change retries until the param is gone.
+	const consumedAtRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (!routeAt || consumedAtRef.current === routeAt) {
+			return;
+		}
+		const card =
+			scrollContainerRef.current?.closest<HTMLElement>('.session') ??
+			null;
+		const scope: ParentNode = card ?? document;
+		const target = Array.from(
+			scope.querySelectorAll<HTMLElement>('[data-message-id]')
+		).find((element) => element.dataset.messageId === routeAt);
+		if (!target) {
+			return;
+		}
+		consumedAtRef.current = routeAt;
+		target.scrollIntoView?.({ block: 'center' });
+		const current = locationRef.current;
+		navigate(
+			{
+				pathname: current.pathname,
+				search: stripAtParam(current.search)
+			},
+			{ replace: true }
+		);
+		// messages / supervisionMessages / openPanel are the retry triggers:
+		// they change when the bubble may have appeared.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [routeAt, messages, supervisionMessages, openPanel, navigate]);
+
+	// No param on entry: reopen the last channel of this session; a
+	// remembered close stays closed; nothing remembered → the side room
+	// auto-opens once (today's behaviour), never for askers. Entering WITH
+	// a param (deep link) settles the session at once, so browser Back
+	// lands on the closed main chat instead of re-opening (review D-3).
+	// The decision itself is pure: `decideAutoOpen` (channelRoute.ts).
+	const autoOpenedForSessionRef = useRef<string | number | null>(null);
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		if (!sessionId || !isSupervisionPanelViewer) {
+			return;
+		}
+		const decision = decideAutoOpen({
+			routeChannel,
+			alreadySettled: autoOpenedForSessionRef.current === sessionId,
+			remembered: readLastChannel(safeChannelStorage(), sessionId),
+			loadedRootIds: messages
+				? messages.map((message) => message._id)
+				: null,
+			hasSupervisionSideRoom,
+			hasTeamSideRoom,
+			teamDiscussionResolved: props.teamDiscussionResolved,
+			canStartTeamDiscussion:
+				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
+		});
+		if (decision.settle) {
+			autoOpenedForSessionRef.current = sessionId;
+		}
+		if (decision.open) {
+			setChannelRoute(decision.open, 'replace');
+		}
+	}, [
+		activeSession.item?.id,
+		routeChannel,
+		isSupervisionPanelViewer,
+		hasSupervisionSideRoom,
+		hasTeamSideRoom,
+		props.teamDiscussionResolved,
+		activeSession.isEnquiry,
+		canOpenTeamSideRoom,
+		messages,
+		setChannelRoute
+	]);
+
+	// Unread side-room messages: foreign items newer than the last time the
+	// supervision channel was on screen; 0 while it is.
+	const [supervisionSeenAt, setSupervisionSeenAt] = useState(0);
+	useEffect(() => {
+		if (hasSupervisionSideRoom) {
+			setSupervisionSeenAt(Date.now());
+		}
+	}, [hasSupervisionSideRoom, activeSession.item?.id]);
+	useEffect(() => {
+		if (openPanel === 'supervision') {
+			setSupervisionSeenAt(Date.now());
+			if (supervisionRoomId) {
+				void chatTransportService.markRoomAsRead(supervisionRoomId);
+			}
+		}
+	}, [openPanel, supervisionMessages, supervisionRoomId]);
+	const supervisionUnreadCount = useMemo(
+		() =>
+			countUnreadSideRoomMessages(
+				supervisionMessages,
+				{
+					status:
+						openPanel === 'supervision' ? 'expanded' : 'collapsed',
+					lastExpandedAt: supervisionSeenAt
+				},
+				isMyMessageMatrix
+			),
+		[supervisionMessages, openPanel, supervisionSeenAt, isMyMessageMatrix]
+	);
+
+	// The same three steps for the team room — one counter each, so an
+	// unread badge on one channel never silences the other.
+	const [teamSeenAt, setTeamSeenAt] = useState(0);
+	useEffect(() => {
+		setTeamSeenAt(0);
+	}, [activeSession.item?.id]);
+	useEffect(() => {
+		if (hasTeamSideRoom) {
+			setTeamSeenAt(Date.now());
+		}
+	}, [hasTeamSideRoom, activeSession.item?.id]);
+	useEffect(() => {
+		if (openPanel === 'team') {
+			setTeamSeenAt(Date.now());
+			if (teamRoomId) {
+				void chatTransportService.markRoomAsRead(teamRoomId);
+			}
+		}
+	}, [openPanel, teamMessages, teamRoomId]);
+	const teamUnreadCount = useMemo(
+		() =>
+			countUnreadSideRoomMessages(
+				teamMessages,
+				{
+					status: openPanel === 'team' ? 'expanded' : 'collapsed',
+					lastExpandedAt: teamSeenAt
+				},
+				isMyMessageMatrix
+			),
+		[teamMessages, openPanel, teamSeenAt, isMyMessageMatrix]
+	);
+
+	// New side-room message from someone else while no panel is open:
+	// desktop re-opens the supervision channel (auto re-open); the phone
+	// only lets the FAB show the unread badge. History arriving on
+	// hydration is not "new" — the first list seeds the known ids.
+	const knownSideRoomIdsRef = useRef<Set<string> | null>(null);
+	useEffect(() => {
+		if (!hasSupervisionSideRoom) {
+			knownSideRoomIdsRef.current = null;
+			return;
+		}
+		const list = supervisionMessages || [];
+		if (knownSideRoomIdsRef.current === null) {
+			knownSideRoomIdsRef.current = new Set(list.map((m) => m._id));
+			return;
+		}
+		const unseen = findUnseenMessages(list, knownSideRoomIdsRef.current);
+		if (unseen.length === 0) {
+			return;
+		}
+		unseen.forEach((m) => knownSideRoomIdsRef.current?.add(m._id));
+		const fresh = unseen.filter(
+			(m) =>
+				Number(m.messageTime) > supervisionSeenAt &&
+				!isMyMessageMatrix(m.userId)
+		);
+		if (fresh.length === 0 || openPanel !== null || isPhoneLayout) {
+			return;
+		}
+		setChannelRoute({ kind: 'supervision' }, 'replace');
+		// supervisionSeenAt / openPanel are read, not reacted to: a change of
+		// them must not re-run the new-message detection.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		supervisionMessages,
+		hasSupervisionSideRoom,
+		isMyMessageMatrix,
+		isPhoneLayout,
+		setChannelRoute
+	]);
+
+	// Counterpart: the supervisor for the consultant (list DTO display name,
+	// else the username from the supervisors call); the responsible
+	// consultant for the supervisor (marker counsellorDisplayName, else the
+	// list DTO name, else the by-id lookup).
+	const supervisionCounterpartName = useMemo(() => {
+		if (isSupervisor) {
+			const resolved =
+				resolvedCounterpartConsultant?.id === counterpartConsultantId
+					? resolvedCounterpartConsultant.name
+					: null;
+			return pickSupervisionCounterpartName({
+				role: 'supervisor',
+				counsellorDisplayName: markerCounsellorDisplayName,
+				consultant: pickDisplayOrUsername(activeSession.consultant)
+					? activeSession.consultant
+					: resolved,
+				fallback: translate('sessionList.user.consultantUnknown')
+			});
+		}
+		return pickSupervisionCounterpartName({
+			role: 'consultant',
+			supervisorDisplayNames: getSupervisorDisplayNames(activeSession),
+			supervisorUsernames,
+			fallback: translate('supervision.panel.title')
+		});
+	}, [
+		activeSession,
+		isSupervisor,
+		supervisorUsernames,
+		resolvedCounterpartConsultant,
+		counterpartConsultantId,
+		markerCounsellorDisplayName,
+		translate
+	]);
+
+	const clientDisplayName =
+		getContact(activeSession)?.username ||
+		translate('sessionList.user.consultantUnknown');
+
+	// Teamberatung words (Frank, 09.09.). The i18n catalogue is on a drift
+	// budget of 0, so the German originals travel with the call through the
+	// copy map and `translate(key, fallback)` — no locale file is touched.
+	const teamText = teamCopy(translate);
+	const teamChannelTitle = teamText('chatStage.panel.team.title');
+
+	// T20: the newest message of a channel — orders the menu, feeds the
+	// "Author: text…" preview.
+	const lastMessageOf = useCallback((list: MessageItem[] | undefined) => {
+		const last = list?.[list.length - 1];
+		if (!last) {
+			return undefined;
+		}
+		return {
+			author: last.displayName || last.username || '',
+			text: toMessagePreviewText(last.message),
+			ts: Number(last.messageTime)
+		};
 	}, []);
+
+	// Secondary channels of this session — the supervision side room (for
+	// consultants and supervisors only) and every native thread
+	// (`computeThreadSummaries`: root creation ts, last reply author/text).
+	const secondaryChannels = useMemo<SecondaryChannel[]>(() => {
+		const threads: SecondaryChannel[] = isThreadsEnabled
+			? Array.from(threadSummariesRaw.values()).map((summary) => {
+					const root = (messages || []).find(
+						(message) => message._id === summary.rootId
+					);
+					const topic = summary.rootPreview
+						? `${summary.rootPreview.slice(0, 28)}…`
+						: translate('chatStage.panel.thread.title');
+					return {
+						id: summary.rootId,
+						kind: 'thread' as const,
+						label: resolveChannelLabel(
+							{
+								kind: 'thread',
+								topic,
+								person: root?.displayName || root?.username
+							},
+							'person'
+						),
+						unread:
+							threadUnreadByRoot.get(summary.rootId) === true
+								? 1
+								: 0,
+						createdTs: root ? Number(root.messageTime) : undefined,
+						lastMessage: summary.lastReplyTs
+							? {
+									author: summary.lastReplyAuthor,
+									text: summary.lastReplyPreview,
+									ts: summary.lastReplyTs
+								}
+							: undefined
+					};
+				})
+			: [];
+		const sideRooms: SecondaryChannel[] = [];
+		if (hasSupervisionSideRoom) {
+			sideRooms.push({
+				id: channelId({ kind: 'supervision' }),
+				kind: 'supervision' as const,
+				label: resolveChannelLabel(
+					{
+						kind: 'supervision',
+						topic: translate('supervision.panel.title'),
+						person: supervisionCounterpartName
+					},
+					'person'
+				),
+				unread: supervisionUnreadCount,
+				lastMessage: lastMessageOf(supervisionMessages)
+			});
+		}
+		if (canOpenTeamSideRoom) {
+			// The team room has no single counterpart — it is the team. So
+			// the label is the topic word, not a person (the same
+			// `resolveChannelLabel` seam, the other mode).
+			sideRooms.push({
+				id: channelId({ kind: 'team' }),
+				kind: 'team' as const,
+				label: resolveChannelLabel(
+					{ kind: 'team', topic: teamChannelTitle },
+					'topic'
+				),
+				unread: teamUnreadCount,
+				lastMessage: lastMessageOf(teamMessages)
+			});
+		}
+		return [...threads, ...sideRooms];
+	}, [
+		isThreadsEnabled,
+		threadSummariesRaw,
+		messages,
+		threadUnreadByRoot,
+		hasSupervisionSideRoom,
+		supervisionCounterpartName,
+		supervisionUnreadCount,
+		supervisionMessages,
+		canOpenTeamSideRoom,
+		teamChannelTitle,
+		teamUnreadCount,
+		teamMessages,
+		lastMessageOf,
+		translate
+	]);
+	// Channels not on screen — the desktop FAB (while no panel is open)
+	// offers these; the panel header's menu lists all of them (T15).
+	const otherChannels = useMemo(
+		() =>
+			secondaryChannels.filter(
+				(channel) => channel.id !== shownChannelId
+			),
+		[secondaryChannels, shownChannelId]
+	);
+
+	// Room participants for the panel headers (the same avatar stack the
+	// session header renders, `headerParticipants.ts`).
+	// ADR-002 silent membership: the rooms list every counsellor of the
+	// agency; the panels show only the asker, the assigned consultant and
+	// the active supervisors (thread = main room) or the counterpart and me
+	// (supervision room). Silent members never appear, "+N" counts only
+	// visible people (`visibleParticipants.ts`).
+	const supervisionMarker = activeSession.item?.supervision;
+	const stackParticipantsOf = useCallback(
+		(
+			roomId: string | null | undefined,
+			mode: 'session' | 'supervision' | 'team'
+		): StackParticipant[] => {
+			const client = matrixClientService?.getClient?.();
+			const room = roomId ? client?.getRoom?.(roomId) : null;
+			if (!room) {
+				return [];
+			}
+			const lastActivity = seedLastActivity(
+				room.getLiveTimeline?.()?.getEvents?.() ?? []
+			);
+			const members = toStackParticipants(
+				room.getJoinedMembers?.() ?? [],
+				lastActivity,
+				{
+					askerMatrixUserId: activeSession.item?.askerMatrixUserId,
+					askerDisplayName: clientDisplayName,
+					isSystemUser: isSystemMatrixUser
+				}
+			);
+			return filterVisibleParticipants(
+				members,
+				buildVisibleParticipantRules({
+					mode,
+					isGroup: activeSession.isGroup,
+					marker: supervisionMarker,
+					supervisors: sessionSupervisors,
+					selfIsSupervisor: isSupervisor,
+					askerIds: [
+						activeSession.item?.askerMatrixUserId,
+						activeSession.user?.username
+					],
+					consultant: activeSession.consultant,
+					consultantMatrixUserId:
+						activeSession.item?.consultantMatrixUserId,
+					self: {
+						ids: [
+							userData?.userName,
+							userData?.userId,
+							client?.getUserId?.(),
+							getCurrentMatrixUserId()
+						],
+						displayName: userData?.displayName || undefined
+					}
+				})
+			);
+		},
+		[
+			matrixClientService,
+			activeSession.item?.askerMatrixUserId,
+			activeSession.item?.consultantMatrixUserId,
+			activeSession.user?.username,
+			activeSession.consultant,
+			activeSession.isGroup,
+			supervisionMarker,
+			sessionSupervisors,
+			isSupervisor,
+			userData,
+			clientDisplayName
+		]
+	);
+	const threadParticipants = useMemo(
+		() => stackParticipantsOf(resolvedMatrixRoomId, 'session'),
+		// messages: re-read the room members whenever the timeline changes.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[stackParticipantsOf, resolvedMatrixRoomId, messages]
+	);
+	const supervisionParticipants = useMemo(
+		() => stackParticipantsOf(supervisionRoomId, 'supervision'),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[stackParticipantsOf, supervisionRoomId, supervisionMessages]
+	);
+	// Teamberatung: the room's own members ARE the team — the `team` rule
+	// shows them all and drops only the advice seeker, who is never invited
+	// (`visibleParticipants.ts`).
+	const teamParticipants = useMemo(
+		() => stackParticipantsOf(teamRoomId, 'team'),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[stackParticipantsOf, teamRoomId, teamMessages]
+	);
+
+	// Use the same trigger and tenant gate as the main chat
+	// (`call/callFeatureGates.ts`) — only the room differs: the call goes to
+	// the SIDE room, so its Element Call room is created from
+	// `supervisionRoomId` and admits exactly that room's members.
+	const supervisionCallGates =
+		resolveSupervisionCallFeatureGates(getTenantSettings());
+	// Role/session eligibility is separate from the feature-policy helper.
+	// Supervision intentionally does not inherit the client-facing consulting-
+	// type gate; it is an internal room with dedicated tenant flags.
+	const mayCallInSideRoom =
+		isConsultantUser && !isOnlyEnquiry && !activeSession.isEnquiry;
+	const startSupervisionCall = useCallback(
+		(isVideo: boolean) => {
+			startRoomCall({
+				roomId: supervisionRoomId,
+				isVideo,
+				// Consultant + supervisor is a 1:1 call; a second supervisor
+				// makes it a group one. Never `undefined`: the CallManager's
+				// auto-detection filters power-level-10 members — the
+				// supervisors — out of its own head count.
+				isGroup: supervisionParticipants.length > 2
+			});
+		},
+		[supervisionRoomId, supervisionParticipants.length]
+	);
+
+	// T7: the side room opens with the system notice "Supervision durch
+	// {name} ist aktiv …" as its first item (frontend-rendered, exactly as
+	// on the stage; never counted as unread).
+	const supervisionTimelineMessages = useMemo<MessageItem[]>(() => {
+		if (!hasSupervisionSideRoom) {
+			return [];
+		}
+		const supervisorName = isSupervisor
+			? userData?.displayName || userData?.userName || ''
+			: supervisionCounterpartName;
+		return buildSupervisionTimeline(supervisionMessages, {
+			roomId: supervisionRoomId || '',
+			title: translate('supervision.panel.title'),
+			description: translate('supervision.panel.systemNotice', {
+				name: supervisorName
+			}),
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+		});
+	}, [
+		hasSupervisionSideRoom,
+		supervisionMessages,
+		supervisionRoomId,
+		isSupervisor,
+		userData?.displayName,
+		userData?.userName,
+		supervisionCounterpartName,
+		activeSession.item?.askerMatrixUserId,
+		translate
+	]);
+
+	// T7, for the team room: the same builder, the same system-notice
+	// organism — only the words differ. Nothing new was invented for it.
+	const teamTimelineMessages = useMemo<MessageItem[]>(() => {
+		if (!hasTeamSideRoom) {
+			return [];
+		}
+		return buildSupervisionTimeline(teamMessages, {
+			roomId: teamRoomId || '',
+			title: teamChannelTitle,
+			description: teamText('chatStage.panel.team.systemNotice'),
+			askerMatrixUserId: activeSession.item?.askerMatrixUserId
+		});
+		// teamText is rebuilt each render from `translate` (stable per locale).
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		hasTeamSideRoom,
+		teamMessages,
+		teamRoomId,
+		teamChannelTitle,
+		activeSession.item?.askerMatrixUserId,
+		translate
+	]);
+
+	// T2: the side panel's width — dragged, clamped to both panes' floor,
+	// persisted (`chatStage_panelWidth`, like the list's `sessionsList_width`).
+	const [cardRef, cardBounds] = useMeasure({ polyfill: ResizeObserver });
+	const cardWidth = Math.round(cardBounds.width);
+	const [panelWidthRaw, setPanelWidthRaw] = useState(() =>
+		readPanelWidth(STAGE_LAYOUT.MIN_PANE_WIDTH)
+	);
+	const panelWidth =
+		cardWidth > 0
+			? clampPanelWidth(panelWidthRaw, cardWidth)
+			: panelWidthRaw;
+	const handlePanelResize = useCallback(
+		(requested: number) => {
+			const next =
+				cardWidth > 0
+					? clampPanelWidth(requested, cardWidth)
+					: requested;
+			setPanelWidthRaw(next);
+			writePanelWidth(next);
+		},
+		[cardWidth]
+	);
+
+	// Main pane: the FAB clears the docked composer; on the phone it steps
+	// back while the composer has focus (T10).
+	const showEnquiryTeamAction =
+		type === SESSION_LIST_TYPES.ENQUIRY &&
+		activeSession.isEnquiry &&
+		!shouldBlockAnonymousInquiryChat &&
+		!isAnonymousAskerExperience &&
+		canOpenTeamSideRoom &&
+		!canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat
+		});
+	const mainPaneRef = useRef<HTMLDivElement | null>(null);
+	const fabOffset = useDockedComposerOffset(mainPaneRef);
+	const composing = useComposerFocus(mainPaneRef);
+
+	// D7 (phone): the composer's back arrow does what the header's Link
+	// did — list route AND `mobileListView()`.
+	const sessionListTabParam = new URLSearchParams(location.search).get(
+		'sessionListTab'
+	);
+	const handleMobileNavigateToList = useCallback(() => {
+		navigate(
+			listPath +
+				(sessionListTabParam
+					? `?sessionListTab=${sessionListTabParam}`
+					: '')
+		);
+		mobileListView();
+	}, [navigate, listPath, sessionListTabParam]);
+
+	const supervisionPanelContextValue = useMemo<SupervisionPanelContextValue>(
+		() => ({
+			visible: isSupervisionPanelViewer,
+			available: hasSupervisionSideRoom,
+			isExpanded: openPanel === 'supervision',
+			unreadCount: supervisionUnreadCount,
+			expand: () => openChannel({ kind: 'supervision' }, 'header')
+		}),
+		[
+			isSupervisionPanelViewer,
+			hasSupervisionSideRoom,
+			openPanel,
+			supervisionUnreadCount,
+			openChannel
+		]
+	);
 
 	const getMessageById = useCallback(
 		(id: string): MessageItem | null =>
@@ -1933,463 +2949,278 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		true
 	);
 
-	return (
-		<div
-			className={clsx(
-				'session',
-				shouldFadeSessionChrome && 'session--gameFocus'
-			)}
-			tabIndex={-1}
-			onMouseDown={focusSessionChromeOnPointerDown}
-		>
+	const desktopPanelOpen = !isPhoneLayout && openPanel !== null;
+	// B2: the stage's main pane — header · timeline · composer · FAB — its
+	// own positioning context, so the composer docks to the pane. The card
+	// (`.session.chatStage__card`) wraps it together with the side panel
+	// below (`cardWithPanel`).
+	const sessionCard = (
+		<>
 			<div
-				ref={headerRef}
-				style={
-					isEmbeddedNotificationsView
-						? { display: 'none' }
-						: undefined
-				}
+				className="chatStage__mainPane"
+				ref={mainPaneRef}
+				data-cy="stage-main"
 			>
-				{!isEmbeddedNotificationsView && (
-					<SessionHeaderComponent
-						consultantAbsent={
-							activeSession.consultant &&
-							activeSession.consultant.absent
-								? activeSession.consultant
-								: null
-						}
-						hasUserInitiatedStopOrLeaveRequest={
-							props.hasUserInitiatedStopOrLeaveRequest
-						}
-						bannedUsers={props.bannedUsers}
-					/>
-				)}
-			</div>
-
-			{/* Thread-panel-UX (#435): per-room list of all threads. */}
-			{!isEmbeddedNotificationsView &&
-				isThreadsEnabled &&
-				threadSummariesRaw.size > 0 && (
-					<div className="session__threadListBar">
-						<button
-							type="button"
-							className={clsx(
-								'session__threadListToggle',
-								isThreadListOpen &&
-									'session__threadListToggle--active'
-							)}
-							onClick={() => setIsThreadListOpen((open) => !open)}
-						>
-							{translate('message.thread.listToggle')}
-							{' ('}
-							{threadSummariesRaw.size}
-							{')'}
-							{unreadThreadCount > 0 && (
-								<span className="session__threadListUnreadBadge">
-									{unreadThreadCount}
-								</span>
-							)}
-						</button>
-						{isThreadListOpen && (
-							<ThreadListPanel
-								summaries={Array.from(
-									threadSummariesRaw.values()
-								).sort((a, b) => b.lastReplyTs - a.lastReplyTs)}
-								unreadRootIds={
-									new Set(
-										Array.from(threadUnreadByRoot.entries())
-											.filter(([, unread]) => unread)
-											.map(([rootId]) => rootId)
-									)
-								}
-								unknownRootLabel={translate(
-									'message.thread.unknownRoot'
-								)}
-								repliesLabel={(count) =>
-									translate('message.thread.replies', {
-										count
-									})
-								}
-								onSelectRoot={(rootId) => {
-									const rootMessage = getMessageById(rootId);
-									if (rootMessage) {
-										handleOpenThread(rootMessage);
-									}
-								}}
-							/>
-						)}
-					</div>
-				)}
-
-			<div
-				id="session-scroll-container"
-				className={clsx(
-					'session__content',
-					isDragging && 'drag-in-progress',
-					activeThreadRootId && 'session__content--withThread',
-					shouldLockScroll && 'session__content--gameLockScroll',
-					shouldFadeSessionChrome && 'session__content--gameFocus',
-					shouldShowConsentGate && 'session__content--consentGate',
-					shouldShowPseudonymGate && 'session__content--pseudonymGate'
-				)}
-				ref={scrollContainerRef}
-				onScroll={(e) => handleScroll(e)}
-				onDragEnter={onDragEnter}
-			>
-				{isSupervisor && supervisionReason && (
-					<div className="session__supervisionReason">
-						<div className="session__supervisionReasonTitle">
-							{translate('session.supervisor.reason.title')}
-						</div>
-						<div className="session__supervisionReasonText">
-							{supervisionReason}
-						</div>
-					</div>
-				)}
-				{isSupervisor && (!messages || messages.length === 0) && (
-					<div className="session__supervisionReason">
-						<div className="session__supervisionReasonTitle">
-							{translate('session.supervisor.startChat.title')}
-						</div>
-						<div className="session__supervisionReasonText">
-							{translate('session.supervisor.startChat.hint')}
-						</div>
-					</div>
-				)}
-				{shouldShowConsentGate && (
-					<AnonymousConsentGate
-						consentLabelHtml={anonymousInquiryConsentLabel}
-						onAccept={handleAnonymousInquiryConsentAccept}
-					/>
-				)}
-				{shouldShowPseudonymGate && (
-					<div className="session__pseudonymGate">
-						<PseudonymCard
-							pseudonym={currentPseudonym}
-							skipTyping={pseudonymConfirmed}
+				<div
+					ref={headerRef}
+					style={
+						isEmbeddedNotificationsView
+							? { display: 'none' }
+							: undefined
+					}
+				>
+					{!isEmbeddedNotificationsView && (
+						<SessionHeaderComponent
+							consultantAbsent={
+								activeSession.consultant &&
+								activeSession.consultant.absent
+									? activeSession.consultant
+									: null
+							}
+							hasUserInitiatedStopOrLeaveRequest={
+								props.hasUserInitiatedStopOrLeaveRequest
+							}
+							bannedUsers={props.bannedUsers}
+							hideBackButton={isPhoneLayout}
+							callsInMenu={isPhoneLayout}
 						/>
-						{pseudonymConfirmed && <PrivacyMessageCard />}
-					</div>
-				)}
-				{!shouldBlockAnonymousInquiryChat && (
-					<div className="session__gameChromeFadeTarget">
-						<EncryptionBanner />
-					</div>
-				)}
-				{(!shouldBlockAnonymousInquiryChat ||
-					isInAnonymousWaitingQueuePhase) &&
-					isAnonymousBreathingGameAvailable &&
-					!consultantAccepted &&
-					showWaitingMiniGame && (
-						<div
-							className="session__waitingCompanionInline"
-							role="region"
-							aria-label={translate(
-								'liveChat.breathing.title',
-								'Ihre Atempause'
+					)}
+				</div>
+
+				{/* Thread-panel-UX (#435): per-room list of all threads. */}
+				{!isEmbeddedNotificationsView &&
+					isThreadsEnabled &&
+					threadSummariesRaw.size > 0 && (
+						<div className="session__threadListBar">
+							<button
+								type="button"
+								className={clsx(
+									'session__threadListToggle',
+									isThreadListOpen &&
+										'session__threadListToggle--active'
+								)}
+								onClick={() =>
+									setIsThreadListOpen((open) => !open)
+								}
+							>
+								{translate('message.thread.listToggle')}
+								{' ('}
+								{threadSummariesRaw.size}
+								{')'}
+								{unreadThreadCount > 0 && (
+									<span className="session__threadListUnreadBadge">
+										{unreadThreadCount}
+									</span>
+								)}
+							</button>
+							{isThreadListOpen && (
+								<ThreadListPanel
+									summaries={Array.from(
+										threadSummariesRaw.values()
+									).sort(
+										(a, b) => b.lastReplyTs - a.lastReplyTs
+									)}
+									unreadRootIds={
+										new Set(
+											Array.from(
+												threadUnreadByRoot.entries()
+											)
+												.filter(([, unread]) => unread)
+												.map(([rootId]) => rootId)
+										)
+									}
+									unknownRootLabel={translate(
+										'message.thread.unknownRoot'
+									)}
+									repliesLabel={(count) =>
+										translate('message.thread.replies', {
+											count
+										})
+									}
+									onSelectRoot={(rootId) => {
+										const rootMessage =
+											getMessageById(rootId);
+										if (rootMessage) {
+											handleOpenThread(rootMessage);
+										}
+									}}
+								/>
 							)}
-						>
-							{/* The breathing companion (single-file handoff, 2026-09-06)
-							    replaced the level-and-briefing mini game that used to live
-							    here; the mini game's state, effects and copy are gone.
-							    `isAnonymousBreathingGameAvailable` is derived from modality
-							    and roles alone, so it stays true after a counsellor accepts —
-							    `!consultantAccepted` is what honours the companion's host
-							    contract ("When counselling starts, UNMOUNT the component"),
-							    releasing its audio and animation frames. Same condition the
-							    live chat entry room uses: `companion && !accepted`.
-							    It renders inline in the white session content column (no
-							    backdrop, no modal) and takes the place of the robot cards. */}
-							<BreathingCompanionHost
-								onClose={handleCloseCalmCompanion}
-							/>
 						</div>
 					)}
-				{!shouldBlockAnonymousInquiryChat && (
-					<div className={'message-holder'}>
-						{shouldShowRobotMessages &&
-							!showWaitingMiniGame &&
-							visibleRobotCards.map((card, index) => (
-								<div className="messageItem" key={card._id}>
-									<div className="messageItem__messageWrap">
-										{index === 0 && (
-											<div
-												className="messageItem__systemAvatar"
-												aria-hidden="true"
-											>
-												<NotificationBellIcon className="messageItem__systemAvatarIcon" />
-											</div>
-										)}
-										{index !== 0 && (
-											<div
-												className="session__robotIncomingAvatarSpacer"
-												aria-hidden="true"
-											/>
-										)}
-										<div className="messageItem__content">
+
+				<div
+					id="session-scroll-container"
+					className={clsx(
+						'session__content',
+						isDragging && 'drag-in-progress',
+						shouldLockScroll && 'session__content--gameLockScroll',
+						shouldFadeSessionChrome &&
+							'session__content--gameFocus',
+						shouldShowConsentGate &&
+							'session__content--consentGate',
+						shouldShowPseudonymGate &&
+							'session__content--pseudonymGate'
+					)}
+					ref={scrollContainerRef}
+					onScroll={(e) => handleScroll(e)}
+					onDragEnter={onDragEnter}
+				>
+					{shouldShowConsentGate && (
+						<AnonymousConsentGate
+							consentLabelHtml={anonymousInquiryConsentLabel}
+							onAccept={handleAnonymousInquiryConsentAccept}
+						/>
+					)}
+					{shouldShowPseudonymGate && (
+						<div className="session__pseudonymGate">
+							<PseudonymCard
+								pseudonym={currentPseudonym}
+								skipTyping={pseudonymConfirmed}
+							/>
+							{pseudonymConfirmed && <PrivacyMessageCard />}
+						</div>
+					)}
+					{!shouldBlockAnonymousInquiryChat && (
+						<div className="session__gameChromeFadeTarget">
+							<EncryptionBanner />
+						</div>
+					)}
+					{(!shouldBlockAnonymousInquiryChat ||
+						isInAnonymousWaitingQueuePhase) &&
+						isAnonymousBreathingGameAvailable &&
+						!consultantAccepted &&
+						showWaitingMiniGame && (
+							<div
+								className="session__waitingCompanionInline"
+								role="region"
+								aria-label={translate(
+									'liveChat.breathing.title'
+								)}
+							>
+								{/* The breathing companion (single-file handoff, 2026-09-06)
+								    replaced the level-and-briefing mini game that used to live
+								    here; the mini game's state, effects and copy are gone.
+								    `isAnonymousBreathingGameAvailable` is derived from modality
+								    and roles alone, so it stays true after a counsellor accepts —
+								    `!consultantAccepted` is what honours the companion's host
+								    contract ("When counselling starts, UNMOUNT the component"),
+								    releasing its audio and animation frames. Same condition the
+								    live chat entry room uses: `companion && !accepted`.
+								    It renders inline in the white session content column (no
+								    backdrop, no modal) and takes the place of the robot cards. */}
+								<BreathingCompanionHost
+									onClose={handleCloseCalmCompanion}
+								/>
+							</div>
+						)}
+					{!shouldBlockAnonymousInquiryChat && (
+						<div className={'message-holder'}>
+							{shouldShowRobotMessages &&
+								!showWaitingMiniGame &&
+								visibleRobotCards.map((card, index) => (
+									<div className="messageItem" key={card._id}>
+										<div className="messageItem__messageWrap">
 											{index === 0 && (
-												<div className="messageItem__header">
-													<div className="messageItem__username messageItem__username--system">
-														{translate(
-															'message.systemNotification'
-														)}
-													</div>
-													<span className="messageItem__headerTime">
-														5:00
-													</span>
+												<div
+													className="messageItem__systemAvatar"
+													aria-hidden="true"
+												>
+													<NotificationBellIcon className="messageItem__systemAvatarIcon" />
 												</div>
 											)}
-											<div className="messageItem__message messageItem__message--systemNotification">
+											{index !== 0 && (
+												<div
+													className="session__robotIncomingAvatarSpacer"
+													aria-hidden="true"
+												/>
+											)}
+											<div className="messageItem__content">
 												{index === 0 && (
-													<div className="messageItem__systemNotificationTag">
-														{translate(
-															'message.systemNotification'
-														)}
+													<div className="messageItem__header">
+														<div className="messageItem__username messageItem__username--system">
+															{translate(
+																'message.systemNotification'
+															)}
+														</div>
+														<span className="messageItem__headerTime">
+															5:00
+														</span>
 													</div>
 												)}
-												<div className="messageItem__systemNotificationTitle">
-													{card.title}
-												</div>
-												{card.playLabel ? (
-													<div className="session__robotSystemActionRow">
+												<div className="messageItem__message messageItem__message--systemNotification">
+													{index === 0 && (
+														<div className="messageItem__systemNotificationTag">
+															{translate(
+																'message.systemNotification'
+															)}
+														</div>
+													)}
+													<div className="messageItem__systemNotificationTitle">
+														{card.title}
+													</div>
+													{card.playLabel ? (
+														<div className="session__robotSystemActionRow">
+															<div className="messageItem__systemNotificationDescription">
+																{
+																	card.description
+																}
+															</div>
+															<button
+																type="button"
+																className="session__robotSystemInlinePlayButton"
+																onClick={(
+																	event
+																) => {
+																	event.preventDefault();
+																	event.stopPropagation();
+																	setShowWaitingMiniGame(
+																		true
+																	);
+																}}
+															>
+																{card.playLabel}
+															</button>
+														</div>
+													) : (
 														<div className="messageItem__systemNotificationDescription">
 															{card.description}
 														</div>
+													)}
+													{card.cta && (
 														<button
 															type="button"
-															className="session__robotSystemInlinePlayButton"
+															className="session__robotSystemRegistrationLink"
 															onClick={(
 																event
 															) => {
 																event.preventDefault();
 																event.stopPropagation();
-																setShowWaitingMiniGame(
-																	true
+																navigate(
+																	'/registration'
 																);
 															}}
 														>
-															{card.playLabel}
+															{card.cta}
 														</button>
-													</div>
-												) : (
-													<div className="messageItem__systemNotificationDescription">
-														{card.description}
-													</div>
-												)}
-												{card.cta && (
-													<button
-														type="button"
-														className="session__robotSystemRegistrationLink"
-														onClick={(event) => {
-															event.preventDefault();
-															event.stopPropagation();
-															navigate(
-																'/registration'
-															);
-														}}
-													>
-														{card.cta}
-													</button>
-												)}
+													)}
+												</div>
 											</div>
 										</div>
 									</div>
-								</div>
-							))}
-						{shouldShowRobotTypingIndicator && (
-							<div className="messageItem session__robotTypingIndicator">
-								<div className="messageItem__messageWrap">
-									<div
-										className="session__robotIncomingAvatarSpacer"
-										aria-hidden="true"
-									/>
-									<div className="messageItem__content">
+								))}
+							{shouldShowRobotTypingIndicator && (
+								<div className="messageItem session__robotTypingIndicator">
+									<div className="messageItem__messageWrap">
 										<div
-											className="session__robotTypingDots"
+											className="session__robotIncomingAvatarSpacer"
 											aria-hidden="true"
-										>
-											<span />
-											<span />
-											<span />
-										</div>
-									</div>
-								</div>
-							</div>
-						)}
-						{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
-						{messages &&
-							(ready || !activeSession.rid) &&
-							messages.map((message: MessageItem, index) => (
-								<React.Fragment key={`${message._id}-${index}`}>
-									<MessageItemComponent
-										clientName={
-											getContact(activeSession)
-												?.username ||
-											translate(
-												'sessionList.user.consultantUnknown'
-											)
-										}
-										askerMatrixUserId={
-											!activeSession.rid &&
-											message.userId &&
-											!message.userId.includes(
-												activeSession.consultant
-													?.username || ''
-											)
-												? message.userId
-												: activeSession.item
-														.askerMatrixUserId
-										}
-										isOnlyEnquiry={isOnlyEnquiry}
-										isMyMessage={isMyMessageMatrix(
-											message.userId
-										)}
-										isUserBanned={props.bannedUsers.includes(
-											message.username
-										)}
-										handleDecryptionErrors={
-											handleDecryptionErrors
-										}
-										handleDecryptionSuccess={
-											handleDecryptionSuccess
-										}
-										e2eeParams={{
-											key,
-											keyID,
-											encrypted,
-											subscriptionKeyLost
-										}}
-										renderMode="main"
-										threadsEnabled={isThreadsEnabled}
-										threadSummary={threadSummaries.get(
-											message._id
-										)}
-										onOpenThread={
-											isThreadsEnabled
-												? () =>
-														handleOpenThread(
-															message
-														)
-												: undefined
-										}
-										replyQuote={resolveReplyQuote(
-											message.replyToEventId
-										)}
-										onReplyDirect={() =>
-											handleReplyDirect(message)
-										}
-										onEditDirect={
-											isMyMessageMatrix(message.userId)
-												? () =>
-														handleEditDirect(
-															message
-														)
-												: undefined
-										}
-										onDeleteDirect={
-											isMyMessageMatrix(message.userId)
-												? () =>
-														handleDeleteDirect(
-															message
-														)
-												: undefined
-										}
-										reactions={getReactionsFor(message._id)}
-										onReact={(key: string) =>
-											handleReact(message._id, key)
-										}
-										onUnreact={handleUnreact}
-										{...message}
-										encryptionBroke={decryptionFailures.has(
-											message._id
-										)}
-									/>
-									{decryptionFailures.has(message._id) &&
-										(!isThreadsEnabled ||
-											!message.threadRootEventId) && (
-											<MessageSendFailed
-												messageTime={
-													message.messageTime
-												}
-												isDecryptionFailure
-											/>
-										)}
-								</React.Fragment>
-							))}
-						{/* "Sending message failed" cards for sends that never
-						    reached the server (Figma 7086-57415). */}
-						{failedSends
-							.filter((failed) => !failed.threadRootId)
-							.map((failed) => (
-								<FailedSendTimelineEntry
-									key={failed.id}
-									failed={failed}
-									messageProps={{
-										clientName:
-											getContact(activeSession)
-												?.username ||
-											translate(
-												'sessionList.user.consultantUnknown'
-											),
-										isMyMessage: true,
-										isUserBanned: false,
-										handleDecryptionErrors,
-										handleDecryptionSuccess,
-										e2eeParams: {
-											key,
-											keyID,
-											encrypted,
-											subscriptionKeyLost
-										},
-										renderMode: 'main',
-										threadsEnabled: false,
-										forceShow: true,
-										displayName:
-											userData?.displayName ||
-											userData?.userName ||
-											'',
-										username: userData?.userName || '',
-										userId:
-											userData?.userId ||
-											userData?.userName ||
-											'local-user',
-										isNotRead: false,
-										t: null,
-										rid: resolvedMatrixRoomId || ''
-									}}
-									onRetry={handleRetryFailedSend}
-									retryPending={
-										retryRequest?.failedSendId === failed.id
-									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
-								/>
-							))}
-						{shouldShowInlineTypingIndicator && (
-							<div className="messageItem session__inlineTypingIndicator">
-								<div className="messageItem__messageWrap">
-									<div className="messageItem__avatar">
-										<UserAvatar
-											username={primaryTypingUser}
-											displayName={primaryTypingUser}
-											firstName={primaryTypingUser}
-											lastName=""
-											userId={`typing-${primaryTypingUser}`}
-											ring={false}
 										/>
-									</div>
-									<div className="messageItem__content">
-										<div className="session__inlineTypingLabel">
-											{typingIndicatorLabel}
-										</div>
-										<div
-											className="session__inlineTypingBubble"
-											aria-hidden="true"
-										>
-											<div className="session__inlineTypingDots">
+										<div className="messageItem__content">
+											<div
+												className="session__robotTypingDots"
+												aria-hidden="true"
+											>
 												<span />
 												<span />
 												<span />
@@ -2397,460 +3228,410 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										</div>
 									</div>
 								</div>
-							</div>
-						)}
-						<div
-							className={`session__scrollToBottom ${
-								isScrolledToBottom
-									? 'session__scrollToBottom--disabled'
-									: ''
-							}`}
-						>
-							{newMessages > 0 && (
-								<span className="session__unreadCount">
-									{newMessages > 99
-										? translate(
-												'session.unreadCount.maxValue'
-											)
-										: newMessages}
-								</span>
 							)}
-							<Button
-								item={scrollBottomButtonItem}
-								isLink={false}
-								buttonHandle={handleScrollToBottomButtonClick}
-							/>
-						</div>
-					</div>
-				)}
-			</div>
-
-			{isThreadsEnabled && activeThreadRootId && (
-				<div className="session__threadPanel">
-					<div className="session__threadHeader">
-						<div className="session__threadTitle">
-							{translate('message.thread.title')}
-						</div>
-						<button
-							type="button"
-							className="session__threadClose"
-							onClick={handleCloseThread}
-						>
-							×
-						</button>
-					</div>
-					<div className="session__threadBody">
-						{activeThreadRootMessage && (
-							<MessageItemComponent
-								clientName={
-									getContact(activeSession)?.username ||
-									translate(
-										'sessionList.user.consultantUnknown'
-									)
-								}
-								askerMatrixUserId={
-									!activeSession.rid &&
-									activeThreadRootMessage.userId &&
-									!activeThreadRootMessage.userId.includes(
-										activeSession.consultant?.username || ''
-									)
-										? activeThreadRootMessage.userId
-										: activeSession.item.askerMatrixUserId
-								}
-								isOnlyEnquiry={isOnlyEnquiry}
-								isMyMessage={isMyMessageMatrix(
-									activeThreadRootMessage.userId
-								)}
-								isUserBanned={props.bannedUsers.includes(
-									activeThreadRootMessage.username
-								)}
-								handleDecryptionErrors={handleDecryptionErrors}
-								handleDecryptionSuccess={
-									handleDecryptionSuccess
-								}
-								e2eeParams={{
-									key,
-									keyID,
-									encrypted,
-									subscriptionKeyLost
-								}}
-								renderMode="thread"
-								threadsEnabled={true}
-								forceShow={true}
-								{...activeThreadRootMessage}
-								encryptionBroke={decryptionFailures.has(
-									activeThreadRootMessage._id
-								)}
-							/>
-						)}
-						{activeThreadRootMessage &&
-							decryptionFailures.has(
-								activeThreadRootMessage._id
-							) && (
-								<MessageSendFailed
-									messageTime={
-										activeThreadRootMessage.messageTime
+							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
+							{messages && (ready || !activeSession.rid) && (
+								<MessageTimeline
+									messages={messages}
+									renderMode="main"
+									clientName={
+										getContact(activeSession)?.username ||
+										translate(
+											'sessionList.user.consultantUnknown'
+										)
 									}
-									isDecryptionFailure
+									askerMatrixUserIdFor={(message) =>
+										!activeSession.rid &&
+										message.userId &&
+										!message.userId.includes(
+											activeSession.consultant
+												?.username || ''
+										)
+											? message.userId
+											: activeSession.item
+													.askerMatrixUserId
+									}
+									isOnlyEnquiry={isOnlyEnquiry}
+									hideSystemMessages={
+										isConsultantUser &&
+										(isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry))
+									}
+									showFullContent={
+										isOnlyEnquiry ||
+										Boolean(activeSession.isEnquiry)
+									}
+									isMyMessage={isMyMessageMatrix}
+									isUserBanned={(username) =>
+										props.bannedUsers.includes(username)
+									}
+									handleDecryptionErrors={
+										handleDecryptionErrors
+									}
+									handleDecryptionSuccess={
+										handleDecryptionSuccess
+									}
+									e2eeParams={{
+										key,
+										keyID,
+										encrypted,
+										subscriptionKeyLost
+									}}
+									decryptionFailures={decryptionFailures}
+									showDecryptionCardFor={(message) =>
+										!isThreadsEnabled ||
+										!message.threadRootEventId
+									}
+									threadsEnabled={isThreadsEnabled}
+									threadSummaryFor={(id) =>
+										threadSummaries.get(id)
+									}
+									onOpenThread={
+										isThreadsEnabled
+											? handleOpenThread
+											: undefined
+									}
+									resolveReplyQuote={resolveReplyQuote}
+									onReplyDirect={handleReplyDirect}
+									onEditDirect={handleEditDirect}
+									onDeleteDirect={handleDeleteDirect}
+									reactionsFor={getReactionsFor}
+									onReact={handleReact}
+									onUnreact={handleUnreact}
 								/>
 							)}
-						{messages &&
-							(ready || !activeSession.rid) &&
-							messages.map((message: MessageItem, index) => (
-								<React.Fragment
-									key={`thread-${message._id}-${index}`}
-								>
-									<MessageItemComponent
-										clientName={
-											getContact(activeSession)
-												?.username ||
-											translate(
-												'sessionList.user.consultantUnknown'
-											)
-										}
-										askerMatrixUserId={
-											!activeSession.rid &&
-											message.userId &&
-											!message.userId.includes(
-												activeSession.consultant
-													?.username || ''
-											)
-												? message.userId
-												: activeSession.item
-														.askerMatrixUserId
-										}
-										isOnlyEnquiry={isOnlyEnquiry}
-										isMyMessage={isMyMessageMatrix(
-											message.userId
-										)}
-										isUserBanned={props.bannedUsers.includes(
-											message.username
-										)}
-										handleDecryptionErrors={
-											handleDecryptionErrors
-										}
-										handleDecryptionSuccess={
-											handleDecryptionSuccess
-										}
-										e2eeParams={{
-											key,
-											keyID,
-											encrypted,
-											subscriptionKeyLost
+							{/* "Sending message failed" cards for sends that never
+						    reached the server (Figma 7086-57415). */}
+							{failedSends
+								.filter((failed) =>
+									failedSendBelongsTo(failed, {
+										kind: 'main'
+									})
+								)
+								.map((failed) => (
+									<FailedSendTimelineEntry
+										key={failed.id}
+										failed={failed}
+										messageProps={{
+											clientName:
+												getContact(activeSession)
+													?.username ||
+												translate(
+													'sessionList.user.consultantUnknown'
+												),
+											isMyMessage: true,
+											isUserBanned: false,
+											handleDecryptionErrors,
+											handleDecryptionSuccess,
+											e2eeParams: {
+												key,
+												keyID,
+												encrypted,
+												subscriptionKeyLost
+											},
+											renderMode: 'main',
+											threadsEnabled: false,
+											forceShow: true,
+											displayName:
+												userData?.displayName ||
+												userData?.userName ||
+												'',
+											username: userData?.userName || '',
+											userId:
+												userData?.userId ||
+												userData?.userName ||
+												'local-user',
+											isNotRead: false,
+											t: null,
+											rid: resolvedMatrixRoomId || ''
 										}}
-										renderMode="thread"
-										threadsEnabled={true}
-										threadRootId={activeThreadRootId}
-										reactions={getReactionsFor(message._id)}
-										onReact={(key: string) =>
-											handleReact(message._id, key)
+										onRetry={handleRetryFailedSend}
+										retryPending={
+											retryRequest?.failedSendId ===
+											failed.id
 										}
-										onUnreact={handleUnreact}
-										{...message}
-										encryptionBroke={decryptionFailures.has(
-											message._id
+										retryDisabled={Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
 										)}
 									/>
-									{decryptionFailures.has(message._id) &&
-										message.threadRootEventId ===
-											activeThreadRootId && (
-											<MessageSendFailed
-												messageTime={
-													message.messageTime
-												}
-												isDecryptionFailure
+								))}
+							{shouldShowInlineTypingIndicator && (
+								<div className="messageItem session__inlineTypingIndicator">
+									<div className="messageItem__messageWrap">
+										<div className="messageItem__avatar">
+											<UserAvatar
+												username={primaryTypingUser}
+												displayName={primaryTypingUser}
+												firstName={primaryTypingUser}
+												lastName=""
+												userId={`typing-${primaryTypingUser}`}
+												ring={false}
 											/>
-										)}
-								</React.Fragment>
-							))}
-						{failedSends
-							.filter(
-								(failed) =>
-									failed.threadRootId === activeThreadRootId
-							)
-							.map((failed) => (
-								<FailedSendTimelineEntry
-									key={failed.id}
-									failed={failed}
-									messageProps={{
-										clientName:
-											getContact(activeSession)
-												?.username ||
-											translate(
-												'sessionList.user.consultantUnknown'
-											),
-										isMyMessage: true,
-										isUserBanned: false,
-										handleDecryptionErrors,
-										handleDecryptionSuccess,
-										e2eeParams: {
-											key,
-											keyID,
-											encrypted,
-											subscriptionKeyLost
-										},
-										renderMode: 'thread',
-										threadsEnabled: false,
-										threadRootId: activeThreadRootId,
-										forceShow: true,
-										displayName:
-											userData?.displayName ||
-											userData?.userName ||
-											'',
-										username: userData?.userName || '',
-										userId:
-											userData?.userId ||
-											userData?.userName ||
-											'local-user',
-										isNotRead: false,
-										t: null,
-										rid: resolvedMatrixRoomId || ''
-									}}
-									onRetry={handleRetryFailedSend}
-									retryPending={
-										retryRequest?.failedSendId === failed.id
-									}
-									retryDisabled={Boolean(
-										retryRequest &&
-											retryRequest.failedSendId !==
-												failed.id
-									)}
-								/>
-							))}
-					</div>
-					<div className="session__threadInput">
-						<MessageSubmitInterfaceComponent
-							isTyping={props.isTyping}
-							className="session__submit-interface"
-							placeholder={translate(
-								'message.thread.placeholder'
+										</div>
+										<div className="messageItem__content">
+											<div className="session__inlineTypingLabel">
+												{typingIndicatorLabel}
+											</div>
+											<div
+												className="session__inlineTypingBubble"
+												aria-hidden="true"
+											>
+												<div className="session__inlineTypingDots">
+													<span />
+													<span />
+													<span />
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
 							)}
-							typingUsers={props.typingUsers}
-							handleMessageSendSuccess={handleMessageSendSuccess}
-							onSendError={handleComposerSendError}
-							retryRequest={
-								retryRequest?.threadRootId ===
-								activeThreadRootId
-									? retryRequest
-									: null
+						</div>
+					)}
+				</div>
+
+				{type === SESSION_LIST_TYPES.ENQUIRY &&
+					activeSession.isEnquiry &&
+					!shouldBlockAnonymousInquiryChat &&
+					!isAnonymousAskerExperience && (
+						<AcceptAssign
+							btnLabel={'enquiry.acceptButton.known'}
+							secondaryAction={
+								showEnquiryTeamAction && openPanel === null ? (
+									<Button
+										item={{
+											type: BUTTON_TYPES.SECONDARY,
+											label: 'enquiry.teamDiscussion.open',
+											icon: (
+												<TeamActionGlyph aria-hidden="true" />
+											)
+										}}
+										className="session__teamDiscussionAction"
+										testingAttribute="enquiry-open-team"
+										buttonHandle={() =>
+											selectChannelFromFab(
+												channelId({ kind: 'team' })
+											)
+										}
+									/>
+								) : undefined
 							}
-							onRetrySettled={handleComposerRetrySettled}
-							isSupervisor={isSupervisor}
-							supervisionRoomId={supervisionRoomId}
-							threadRootId={activeThreadRootId}
-							threadParentPreview={
-								activeThreadRootMessage
-									? toMessagePreviewText(
-											activeThreadRootMessage.message
-										)
-									: null
-							}
-							mobileUnreadCount={newMessages}
-							mobileIsScrolledToBottom={isScrolledToBottom}
-							onMobileNavigateBack={handleMobileNavigateBackClick}
-							onMobileNavigateDown={
-								handleMobileNavigateStepDownClick
-							}
-							onMobileNavigateBottom={
-								handleScrollToBottomButtonClick
-							}
-							messages={messages}
-							onCloseThread={handleCloseThread}
-							isOwnMessage={isMyMessageMatrix}
 						/>
-					</div>
-				</div>
-			)}
+					)}
 
-			{type === SESSION_LIST_TYPES.ENQUIRY &&
-				!shouldBlockAnonymousInquiryChat &&
-				!isAnonymousAskerExperience && (
-					<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
-				)}
-
-			{shouldShowPseudonymGate && !pseudonymConfirmed && (
-				<div className="session__pseudonymActionBarSlot">
-					<PseudonymActionBar
-						onRegenerate={handleRegeneratePseudonym}
-						onConfirm={handleConfirmPseudonym}
-						disabled={pseudonymSaving}
-					/>
-				</div>
-			)}
-
-			{shouldShowPseudonymGate && pseudonymConfirmed && enquiryClosed && (
-				<div className="session__pseudonymActionBarSlot">
-					<div
-						className="session__anonymousEnquiryClosedNote"
-						role="status"
-					>
-						{translate('anonymousChat.enquiryClosed')}
-					</div>
-				</div>
-			)}
-
-			{shouldShowPseudonymGate &&
-				pseudonymConfirmed &&
-				!enquiryClosed &&
-				!consultantAccepted && (
+				{shouldShowPseudonymGate && !pseudonymConfirmed && (
 					<div className="session__pseudonymActionBarSlot">
-						<WaitingQueueActionBar
-							queuePosition={queuePeopleAhead}
-							onOpenCalmCompanion={handleOpenCalmCompanion}
-							onLeaveQueue={() => {
-								setLeaveQueueFailed(false);
-								setIsLeaveQueueDialogOpen(true);
-							}}
+						<PseudonymActionBar
+							onRegenerate={handleRegeneratePseudonym}
+							onConfirm={handleConfirmPseudonym}
+							disabled={pseudonymSaving}
 						/>
 					</div>
 				)}
 
-			{/*
-			 * The exit from the waiting queue (#893). Mounted for the whole
-			 * queue phase rather than inside the action bar, so it survives the
-			 * bar swapping to `ConsultantAcceptedActionBar` the moment somebody
-			 * accepts — an overlay that unmounts under the user is exactly the
-			 * trap that bit us before.
-			 */}
-			{shouldShowPseudonymGate &&
-				pseudonymConfirmed &&
-				!enquiryClosed && (
-					<LeaveQueueDialog
-						open={isLeaveQueueDialogOpen}
-						canStartChat={consultantAccepted}
-						busy={isLeavingQueue}
-						onStay={() => setIsLeaveQueueDialogOpen(false)}
-						onStartChat={() => {
-							setIsLeaveQueueDialogOpen(false);
-							handleStartAcceptedChat();
-						}}
-						onDeleteAccess={handleLeaveQueueDelete}
-						errorMessage={
-							leaveQueueFailed
-								? translate('anonymousChat.leaveQueue.error')
-								: undefined
+				{shouldShowPseudonymGate &&
+					pseudonymConfirmed &&
+					enquiryClosed && (
+						<div className="session__pseudonymActionBarSlot">
+							<div
+								className="session__anonymousEnquiryClosedNote"
+								role="status"
+							>
+								{translate('anonymousChat.enquiryClosed')}
+							</div>
+						</div>
+					)}
+
+				{shouldShowPseudonymGate &&
+					pseudonymConfirmed &&
+					!enquiryClosed &&
+					!consultantAccepted && (
+						<div className="session__pseudonymActionBarSlot">
+							<WaitingQueueActionBar
+								queuePosition={queuePeopleAhead}
+								onOpenCalmCompanion={handleOpenCalmCompanion}
+								onLeaveQueue={() => {
+									setLeaveQueueFailed(false);
+									setIsLeaveQueueDialogOpen(true);
+								}}
+							/>
+						</div>
+					)}
+
+				{/*
+				 * The exit from the waiting queue (#893). Mounted for the whole
+				 * queue phase rather than inside the action bar, so it survives the
+				 * bar swapping to `ConsultantAcceptedActionBar` the moment somebody
+				 * accepts — an overlay that unmounts under the user is exactly the
+				 * trap that bit us before.
+				 */}
+				{shouldShowPseudonymGate &&
+					pseudonymConfirmed &&
+					!enquiryClosed && (
+						<LeaveQueueDialog
+							open={isLeaveQueueDialogOpen}
+							canStartChat={consultantAccepted}
+							busy={isLeavingQueue}
+							onStay={() => setIsLeaveQueueDialogOpen(false)}
+							onStartChat={() => {
+								setIsLeaveQueueDialogOpen(false);
+								handleStartAcceptedChat();
+							}}
+							onDeleteAccess={handleLeaveQueueDelete}
+							errorMessage={
+								leaveQueueFailed
+									? translate(
+											'anonymousChat.leaveQueue.error'
+										)
+									: undefined
+							}
+						/>
+					)}
+
+				{shouldShowPseudonymGate &&
+					pseudonymConfirmed &&
+					!enquiryClosed &&
+					consultantAccepted && (
+						<div className="session__pseudonymActionBarSlot">
+							<ConsultantAcceptedActionBar
+								onDismiss={handleDismissConsultantAccepted}
+								onStartChat={handleStartAcceptedChat}
+							/>
+						</div>
+					)}
+
+				{canRenderClientComposer({
+					canWriteMessage,
+					isSupervisor: isSupervisorView,
+					shouldBlockAnonymousInquiryChat
+				}) && (
+					<div
+						className={clsx(
+							'session__gameInputFadeTarget',
+							areRobotMessagesComplete &&
+								'session__gameInputFadeTarget--reveal',
+							!areRobotMessagesComplete &&
+								'session__gameInputFadeTarget--hidden'
+						)}
+					>
+						{areRobotMessagesComplete && (
+							<Suspense
+								fallback={
+									<MessageSubmitInterfaceSkeleton
+										placeholder={getPlaceholder()}
+										className={clsx(
+											'session__submit-interface'
+										)}
+									/>
+								}
+							>
+								<MessageSubmitErrorBoundary
+									onRetry={() =>
+										setComposerRemountKey((key) => key + 1)
+									}
+								>
+									<MessageSubmitInterfaceComponent
+										key={composerRemountKey}
+										isAnonymousLiveChat={
+											isAnonymousAskerExperience &&
+											waitingGateDismissed
+										}
+										isTyping={props.isTyping}
+										className={clsx(
+											'session__submit-interface',
+											!isScrolledToBottom &&
+												'session__submit-interface--scrolled-up'
+										)}
+										placeholder={getPlaceholder()}
+										typingUsers={props.typingUsers}
+										preselectedFile={draggedFile}
+										handleMessageSendSuccess={
+											handleMessageSendSuccess
+										}
+										onSendError={handleComposerSendError}
+										retryRequest={
+											retryRequest &&
+											failedSendBelongsTo(retryRequest, {
+												kind: 'main'
+											})
+												? retryRequest
+												: null
+										}
+										onRetrySettled={
+											handleComposerRetrySettled
+										}
+										isSupervisor={isSupervisor}
+										supervisionRoomId={supervisionRoomId}
+										hideSupervisorAudience={
+											hasSupervisionSideRoom
+										}
+										replyTo={replyTo}
+										onCancelReply={handleCancelReply}
+										editingMessage={editingMessage}
+										onCancelEdit={handleCancelEdit}
+										mobileUnreadCount={newMessages}
+										mobileIsScrolledToBottom={
+											isScrolledToBottom
+										}
+										flushCorner={
+											desktopPanelOpen
+												? 'bottom-left'
+												: undefined
+										}
+										onMobileNavigateBack={
+											handleMobileNavigateToList
+										}
+										onMobileNavigateDown={
+											handleMobileNavigateStepDownClick
+										}
+										onMobileNavigateBottom={
+											handleScrollToBottomButtonClick
+										}
+										messages={messages}
+										onCloseThread={handleCloseThread}
+										isOwnMessage={isMyMessageMatrix}
+									/>
+								</MessageSubmitErrorBoundary>
+							</Suspense>
+						)}
+						{areRobotMessagesComplete &&
+							hasMediaUploadFeature(
+								tenantData?.settings,
+								chatType
+							) && (
+								<DragAndDropArea
+									onFileDragged={onFileDragged}
+									isDragging={isDragging}
+									canDrop={isDragOverDropArea}
+									onDragLeave={onDragLeave}
+									styleOverride={{
+										top: headerBounds.height + 'px'
+									}}
+								/>
+							)}
+					</div>
+				)}
+
+				{/* T1/T15: the channel switcher FAB — every secondary channel not
+			    on screen; hidden while a panel is open (its header offers the
+			    channels) and, on the phone, while the composer has focus. */}
+				{otherChannels.some(
+					(channel) =>
+						!showEnquiryTeamAction || channel.kind !== 'team'
+				) && (
+					<ChannelSwitcherFab
+						channels={secondaryChannels}
+						activeChannelId={shownChannelId}
+						onSelect={selectChannelFromFab}
+						bottomOffset={fabOffset}
+						fabHidden={
+							openPanel !== null || (isPhoneLayout && composing)
 						}
 					/>
 				)}
-
-			{shouldShowPseudonymGate &&
-				pseudonymConfirmed &&
-				!enquiryClosed &&
-				consultantAccepted && (
-					<div className="session__pseudonymActionBarSlot">
-						<ConsultantAcceptedActionBar
-							onDismiss={handleDismissConsultantAccepted}
-							onStartChat={handleStartAcceptedChat}
-						/>
-					</div>
-				)}
-
-			{canWriteMessage && !shouldBlockAnonymousInquiryChat && (
-				<div
-					className={clsx(
-						'session__gameInputFadeTarget',
-						areRobotMessagesComplete &&
-							'session__gameInputFadeTarget--reveal',
-						!areRobotMessagesComplete &&
-							'session__gameInputFadeTarget--hidden'
-					)}
-				>
-					{isSupervisor && (
-						<div
-							className="session__supervisorInputNote"
-							style={{
-								textAlign: 'center'
-							}}
-						>
-							{translate('session.supervisor.input.note')}
-						</div>
-					)}
-					{areRobotMessagesComplete && (
-						<Suspense
-							fallback={
-								<MessageSubmitInterfaceSkeleton
-									placeholder={getPlaceholder()}
-									className={clsx(
-										'session__submit-interface'
-									)}
-								/>
-							}
-						>
-							<MessageSubmitErrorBoundary
-								onRetry={() =>
-									setComposerRemountKey((key) => key + 1)
-								}
-							>
-								<MessageSubmitInterfaceComponent
-									key={composerRemountKey}
-									isAnonymousLiveChat={
-										isAnonymousAskerExperience &&
-										waitingGateDismissed
-									}
-									isTyping={props.isTyping}
-									className={clsx(
-										'session__submit-interface',
-										!isScrolledToBottom &&
-											'session__submit-interface--scrolled-up',
-										activeThreadRootId &&
-											'session__submit-interface--withThread'
-									)}
-									placeholder={getPlaceholder()}
-									typingUsers={props.typingUsers}
-									preselectedFile={draggedFile}
-									handleMessageSendSuccess={
-										handleMessageSendSuccess
-									}
-									onSendError={handleComposerSendError}
-									retryRequest={
-										retryRequest?.threadRootId
-											? null
-											: retryRequest
-									}
-									onRetrySettled={handleComposerRetrySettled}
-									isSupervisor={isSupervisor}
-									supervisionRoomId={supervisionRoomId}
-									replyTo={replyTo}
-									onCancelReply={handleCancelReply}
-									editingMessage={editingMessage}
-									onCancelEdit={handleCancelEdit}
-									mobileUnreadCount={newMessages}
-									mobileIsScrolledToBottom={
-										isScrolledToBottom
-									}
-									onMobileNavigateBack={
-										handleMobileNavigateBackClick
-									}
-									onMobileNavigateDown={
-										handleMobileNavigateStepDownClick
-									}
-									onMobileNavigateBottom={
-										handleScrollToBottomButtonClick
-									}
-									messages={messages}
-									onCloseThread={handleCloseThread}
-									isOwnMessage={isMyMessageMatrix}
-								/>
-							</MessageSubmitErrorBoundary>
-						</Suspense>
-					)}
-					{areRobotMessagesComplete &&
-						hasMediaUploadFeature(
-							tenantData?.settings,
-							chatType
-						) && (
-							<DragAndDropArea
-								onFileDragged={onFileDragged}
-								isDragging={isDragging}
-								canDrop={isDragOverDropArea}
-								onDragLeave={onDragLeave}
-								styleOverride={{
-									top: headerBounds.height + 'px'
-								}}
-							/>
-						)}
-				</div>
-			)}
+			</div>
 
 			<Dialog
 				open={liveChatClosedModalOpen}
@@ -3065,6 +3846,542 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</MuiBox>
 				</MuiBox>
 			</Dialog>
+		</>
+	);
+
+	// B2: the side panel — ONE `SidePanel` for the supervision side room
+	// and for a native thread (stage `SupervisionRoom` / `ThreadRoom`).
+	const panelVariant = isPhoneLayout ? 'fullscreen' : 'inside';
+	const panelHeaderNav = {
+		channels: secondaryChannels,
+		activeChannelId: shownChannelId,
+		onSelectChannel: selectChannelFromHeader,
+		autoFocusChannelButton: focusPanelHeader,
+		onBack: isPhoneLayout ? closeChannel : undefined,
+		hideBackButton: isPhoneLayout,
+		onClose: isPhoneLayout ? undefined : closeChannel
+	};
+	// Phone, inside a side room: the FAB switches back (and offers the rest).
+	const phoneBackFab = isPhoneLayout ? (
+		<ChannelSwitcherFab
+			channels={secondaryChannels}
+			activeChannelId={shownChannelId}
+			onSelect={selectChannelFromFab}
+			onBack={closeChannel}
+		/>
+	) : undefined;
+	const askerMatrixUserIdFor = (message: MessageItem) =>
+		!activeSession.rid &&
+		message.userId &&
+		!message.userId.includes(activeSession.consultant?.username || '')
+			? message.userId
+			: activeSession.item.askerMatrixUserId;
+	const e2eeParams = { key, keyID, encrypted, subscriptionKeyLost };
+	const panelComposerFlush = desktopPanelOpen ? 'bottom-right' : undefined;
+
+	const threadPanel =
+		openPanel === 'thread' &&
+		activeThreadRootId &&
+		activeThreadRootMessage ? (
+			<SidePanel
+				variant={panelVariant}
+				className={`chatStage__panel--${panelVariant}`}
+				label={translate('chatStage.panel.region', {
+					title: translate('chatStage.panel.thread.title')
+				})}
+				data-cy="stage-panel"
+				header={
+					<PanelHeader
+						kind="thread"
+						title={translate('chatStage.panel.thread.title')}
+						name={clientDisplayName}
+						participants={threadParticipants}
+						{...panelHeaderNav}
+					/>
+				}
+				timeline={
+					<>
+						<MessageTimeline
+							keyPrefix="thread-"
+							messages={[
+								activeThreadRootMessage,
+								...(messages || []).filter(
+									(message) =>
+										message.threadRootEventId ===
+										activeThreadRootId
+								)
+							]}
+							renderMode="thread"
+							threadsEnabled
+							threadRootId={activeThreadRootId}
+							forceShow
+							clientName={clientDisplayName}
+							askerMatrixUserIdFor={askerMatrixUserIdFor}
+							isOnlyEnquiry={isOnlyEnquiry}
+							isMyMessage={isMyMessageMatrix}
+							isUserBanned={(username) =>
+								props.bannedUsers.includes(username)
+							}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							decryptionFailures={decryptionFailures}
+							reactionsFor={getReactionsFor}
+							onReact={handleReact}
+							onUnreact={handleUnreact}
+						/>
+						{failedSends
+							.filter((failed) =>
+								failedSendBelongsTo(failed, {
+									kind: 'thread',
+									rootId: activeThreadRootId
+								})
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName: clientDisplayName,
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams,
+										renderMode: 'thread',
+										threadsEnabled: false,
+										threadRootId: activeThreadRootId,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: resolvedMatrixRoomId || ''
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
+							))}
+					</>
+				}
+				composer={
+					<MessageSubmitInterfaceComponent
+						isTyping={props.isTyping}
+						placeholder={translate('message.thread.placeholder')}
+						typingUsers={props.typingUsers}
+						handleMessageSendSuccess={handleMessageSendSuccess}
+						onSendError={handleComposerSendError}
+						retryRequest={
+							retryRequest &&
+							failedSendBelongsTo(retryRequest, {
+								kind: 'thread',
+								rootId: activeThreadRootId
+							})
+								? retryRequest
+								: null
+						}
+						onRetrySettled={handleComposerRetrySettled}
+						isSupervisor={isSupervisor}
+						supervisionRoomId={supervisionRoomId}
+						hideSupervisorAudience={hasSupervisionSideRoom}
+						threadRootId={activeThreadRootId}
+						threadParentPreview={toMessagePreviewText(
+							activeThreadRootMessage.message
+						)}
+						autoFocusEditor={!focusPanelHeader}
+						flushCorner={panelComposerFlush}
+						onMobileNavigateBack={
+							isPhoneLayout ? closeChannel : undefined
+						}
+						messages={messages}
+						onCloseThread={handleCloseThread}
+						isOwnMessage={isMyMessageMatrix}
+					/>
+				}
+				switcher={phoneBackFab}
+			/>
+		) : null;
+
+	const supervisionPanel =
+		openPanel === 'supervision' ? (
+			<SidePanel
+				variant={panelVariant}
+				className={`chatStage__panel--${panelVariant}`}
+				label={translate('chatStage.panel.region', {
+					title: translate('supervision.panel.title')
+				})}
+				data-cy="stage-panel"
+				header={
+					<PanelHeader
+						kind="supervision"
+						title={translate('supervision.panel.title')}
+						name={supervisionCounterpartName}
+						participants={supervisionParticipants}
+						unreadCount={supervisionUnreadCount}
+						actions={
+							mayCallInSideRoom ? (
+								<PanelCallActions
+									onStartCall={startSupervisionCall}
+									audioEnabled={supervisionCallGates.audio}
+									videoEnabled={supervisionCallGates.video}
+									participantCount={
+										supervisionParticipants.length
+									}
+									// The panel fills the screen on the phone;
+									// on the desktop it is as wide as the drag
+									// left it.
+									width={isPhoneLayout ? null : panelWidth}
+									phone={isPhoneLayout}
+									copy={{
+										video: translate(
+											'videoCall.button.startVideoCall'
+										),
+										audio: translate(
+											'videoCall.button.startCall'
+										),
+										menu: translate('app.menu'),
+										participants: translate(
+											'chatStage.panel.participantCount',
+											{
+												count: supervisionParticipants.length
+											}
+										)
+									}}
+								/>
+							) : undefined
+						}
+						{...panelHeaderNav}
+					/>
+				}
+				banner={
+					isSupervisor && supervisionReason ? (
+						<InfoBanner
+							title={translate('session.supervisor.reason.title')}
+							text={supervisionReason}
+						/>
+					) : isSupervisor &&
+					  (!supervisionMessages ||
+							supervisionMessages.length === 0) ? (
+						<InfoBanner
+							title={translate(
+								'session.supervisor.startChat.title'
+							)}
+							text={translate(
+								'session.supervisor.startChat.hint'
+							)}
+						/>
+					) : undefined
+				}
+				timeline={
+					<>
+						<MessageTimeline
+							keyPrefix="supervision-"
+							messages={supervisionTimelineMessages}
+							renderMode="main"
+							threadsEnabled={false}
+							clientName={supervisionCounterpartName}
+							askerMatrixUserIdFor={() =>
+								activeSession.item?.askerMatrixUserId
+							}
+							isOnlyEnquiry={isOnlyEnquiry}
+							isMyMessage={isMyMessageMatrix}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							decryptionFailures={decryptionFailures}
+						/>
+						{/* Side-room sends that never reached the server: same
+						    card + retry as the client chat (review B2 D-2). */}
+						{failedSends
+							.filter((failed) =>
+								failedSendBelongsTo(failed, {
+									kind: 'room',
+									roomId: supervisionRoomId
+								})
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName: supervisionCounterpartName,
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams,
+										renderMode: 'main',
+										threadsEnabled: false,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: supervisionRoomId
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={Boolean(
+										retryRequest &&
+											retryRequest.failedSendId !==
+												failed.id
+									)}
+								/>
+							))}
+					</>
+				}
+				composer={
+					<MessageSubmitInterfaceComponent
+						isTyping={props.isTyping}
+						placeholder={translate(
+							'supervision.panel.composer.placeholder',
+							{ name: supervisionCounterpartName }
+						)}
+						handleMessageSendSuccess={handleMessageSendSuccess}
+						onSendError={handleComposerSendError}
+						retryRequest={
+							retryRequest &&
+							failedSendBelongsTo(retryRequest, {
+								kind: 'room',
+								roomId: supervisionRoomId
+							})
+								? retryRequest
+								: null
+						}
+						onRetrySettled={handleComposerRetrySettled}
+						targetRoomId={supervisionRoomId}
+						isSupervisor={isSupervisor}
+						supervisionRoomId={supervisionRoomId}
+						hideSupervisorAudience
+						autoFocusEditor={!focusPanelHeader}
+						flushCorner={panelComposerFlush}
+						accent="supervision"
+						onMobileNavigateBack={
+							isPhoneLayout ? closeChannel : undefined
+						}
+						messages={supervisionMessages}
+						isOwnMessage={isMyMessageMatrix}
+					/>
+				}
+				switcher={phoneBackFab}
+			/>
+		) : null;
+
+	// Teamberatung (Frank, 09.09.): "eins zu eins diese Gruppen genau wie bei
+	// der Supervision … nur steht dann einfach Teamberatung". Same organism,
+	// same header nav, same composer — its own room, words and members.
+	const teamPanel =
+		openPanel === 'team' ? (
+			<SidePanel
+				variant={panelVariant}
+				className={`chatStage__panel--${panelVariant}`}
+				label={translate('chatStage.panel.region', {
+					title: teamChannelTitle
+				})}
+				data-cy="stage-panel"
+				header={
+					<PanelHeader
+						kind="team"
+						title={teamChannelTitle}
+						// The case this room is about — the same pseudonym
+						// the chat beside it carries, so it is obvious WHICH
+						// enquiry the team is discussing. It is not a leak:
+						// everyone in this room may already see the enquiry.
+						name={clientDisplayName}
+						// … but the name alone would read as "you are writing
+						// to her". ADR-016 §6 asks for a permanent marker;
+						// this is it.
+						chip={teamText('chatStage.panel.team.onlyMarker')}
+						participants={teamParticipants}
+						unreadCount={teamUnreadCount}
+						{...panelHeaderNav}
+					/>
+				}
+				banner={
+					!teamMessages || teamMessages.length === 0 ? (
+						<InfoBanner
+							title={teamText('chatStage.panel.team.empty.title')}
+							text={teamText('chatStage.panel.team.empty.text')}
+						/>
+					) : undefined
+				}
+				timeline={
+					<>
+						<MessageTimeline
+							keyPrefix="team-"
+							messages={teamTimelineMessages}
+							renderMode="main"
+							threadsEnabled={false}
+							clientName={clientDisplayName}
+							askerMatrixUserIdFor={() =>
+								activeSession.item?.askerMatrixUserId
+							}
+							isOnlyEnquiry={isOnlyEnquiry}
+							isMyMessage={isMyMessageMatrix}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							decryptionFailures={decryptionFailures}
+						/>
+						{failedSends
+							.filter((failed) =>
+								failedSendBelongsTo(failed, {
+									kind: 'room',
+									roomId: teamRoomId
+								})
+							)
+							.map((failed) => (
+								<FailedSendTimelineEntry
+									key={failed.id}
+									failed={failed}
+									messageProps={{
+										clientName: clientDisplayName,
+										isMyMessage: true,
+										isUserBanned: false,
+										handleDecryptionErrors,
+										handleDecryptionSuccess,
+										e2eeParams,
+										renderMode: 'main',
+										threadsEnabled: false,
+										forceShow: true,
+										displayName:
+											userData?.displayName ||
+											userData?.userName ||
+											'',
+										username: userData?.userName || '',
+										userId:
+											userData?.userId ||
+											userData?.userName ||
+											'local-user',
+										isNotRead: false,
+										t: null,
+										rid: teamRoomId
+									}}
+									onRetry={handleRetryFailedSend}
+									retryPending={
+										retryRequest?.failedSendId === failed.id
+									}
+									retryDisabled={
+										props.teamDiscussionStatus !== 'OPEN' ||
+										Boolean(
+											retryRequest &&
+												retryRequest.failedSendId !==
+													failed.id
+										)
+									}
+								/>
+							))}
+					</>
+				}
+				composer={
+					props.teamDiscussionStatus === 'OPEN' ? (
+						<MessageSubmitInterfaceComponent
+							isTyping={(isCleared: boolean) =>
+								props.isTypingInRoom?.(isCleared, teamRoomId)
+							}
+							placeholder={teamText(
+								'chatStage.panel.team.composer.placeholder'
+							)}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleComposerSendError}
+							retryRequest={
+								retryRequest &&
+								failedSendBelongsTo(retryRequest, {
+									kind: 'room',
+									roomId: teamRoomId
+								})
+									? retryRequest
+									: null
+							}
+							onRetrySettled={handleComposerRetrySettled}
+							targetRoomId={teamRoomId}
+							targetChannelKind="team"
+							teamDiscussion
+							hideSupervisorAudience
+							flushCorner={panelComposerFlush}
+							accent="team"
+							onMobileNavigateBack={
+								isPhoneLayout ? closeChannel : undefined
+							}
+							messages={teamMessages}
+							isOwnMessage={isMyMessageMatrix}
+						/>
+					) : undefined
+				}
+				switcher={phoneBackFab}
+			/>
+		) : null;
+
+	const sidePanel = threadPanel ?? supervisionPanel ?? teamPanel;
+
+	// Desktop: the panel joins the card (`.chatStage__card--split`) behind
+	// the real `ResizableHandle` (T2). Phone: the panel fills the screen
+	// instead of the card (stage `single` mode).
+	const cardWithPanel = (
+		<div
+			ref={cardRef}
+			className={clsx(
+				'session',
+				'chatStage__card',
+				desktopPanelOpen && 'chatStage__card--split',
+				shouldFadeSessionChrome && 'session--gameFocus'
+			)}
+			tabIndex={-1}
+			onMouseDown={focusSessionChromeOnPointerDown}
+		>
+			{sessionCard}
+			{desktopPanelOpen && sidePanel && (
+				<div
+					className="chatStage__panel"
+					style={{ width: panelWidth }}
+					data-cy="stage-panel-slot"
+				>
+					<ResizableHandle
+						anchor="start"
+						snapping={false}
+						currentWidth={panelWidth}
+						onResize={handlePanelResize}
+						minWidth={STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH}
+						maxWidth={Math.max(
+							STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH,
+							cardWidth - STAGE_LAYOUT.MIN_PANE_DRAG_WIDTH
+						)}
+						ariaLabel={translate('supervision.panel.stage.divider')}
+						className="chatStage__panelHandle"
+						data-cy="stage-panel-handle"
+					/>
+					{sidePanel}
+				</div>
+			)}
 		</div>
+	);
+
+	return (
+		<SupervisionPanelContext.Provider value={supervisionPanelContextValue}>
+			{isPhoneLayout && sidePanel ? sidePanel : cardWithPanel}
+		</SupervisionPanelContext.Provider>
 	);
 };

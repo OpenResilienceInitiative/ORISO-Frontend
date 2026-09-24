@@ -1,13 +1,7 @@
 import * as React from 'react';
-import {
-	useState,
-	useEffect,
-	useContext,
-	useCallback,
-	lazy,
-	Suspense
-} from 'react';
+import { useState, useEffect, useContext, useCallback, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -37,7 +31,7 @@ import { useTranslation } from 'react-i18next';
 import { MessageSubmitInterfaceSkeleton } from '../messageSubmitInterface/messageSubmitInterfaceSkeleton';
 import { isMatrixRoomIdHeuristic } from '../../utils/matrixRoomUtils';
 
-const MessageSubmitInterfaceComponent = lazy(() =>
+const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
 	)

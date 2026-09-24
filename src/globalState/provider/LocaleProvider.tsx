@@ -10,11 +10,33 @@ import { LocaleContext, TLocaleContext } from '../context/LocaleContext';
 
 export const STORAGE_KEY_LOCALE = 'locale';
 
+/**
+ * `init` reconfigures the shared i18n singleton. A tenant switch can start a
+ * second initialisation while the first is pending, and the singleton keeps
+ * whichever finished last — so the calls are queued: the newest one is always
+ * the last to touch it.
+ */
+let i18nInitQueue: Promise<unknown> = Promise.resolve();
+
+const queueI18nInit = (
+	...args: Parameters<typeof init>
+): ReturnType<typeof init> => {
+	const run = i18nInitQueue.then(() => init(...args));
+	i18nInitQueue = run.catch(() => undefined);
+	return run;
+};
+
 export function LocaleProvider(props) {
 	const settings = useAppConfig();
 	const isLoading = useTenantTheming();
 	const tenant = useTenant();
 	const [initialized, setInitialized] = useState(false);
+	// Which tenant language set the current list was built from. Signing in
+	// swaps the tenant inside this provider, and the list has to follow —
+	// otherwise a counsellor keeps the languages of the login screen's tenant.
+	const [appliedLanguages, setAppliedLanguages] = useState<string | null>(
+		null
+	);
 	const [initLocale, setInitLocale] = useState(null);
 	const { informal } = useContext(InformalContext);
 	const [locales, setLocales] = useState([]);
@@ -22,14 +44,25 @@ export function LocaleProvider(props) {
 		localStorage.getItem(STORAGE_KEY_LOCALE) || null
 	);
 
+	const activeLanguagesKey = (tenant?.settings?.activeLanguages ?? []).join(
+		','
+	);
+
 	useEffect(() => {
 		// If using the tenant service we should load first the tenant because we need the
 		// active languages from the server to apply it on loading
-		if ((settings.useTenantService && isLoading) || initialized) {
+		if (settings.useTenantService && isLoading) {
+			return;
+		}
+		if (initialized && appliedLanguages === activeLanguagesKey) {
 			return;
 		}
 
-		init(
+		// A tenant switch supersedes a pending initialisation: its answer
+		// describes the previous Träger's languages and must not be committed.
+		let isCurrent = true;
+
+		queueI18nInit(
 			{
 				...settings.i18n,
 				...(tenant?.settings?.activeLanguages && {
@@ -46,35 +79,72 @@ export function LocaleProvider(props) {
 				})
 			},
 			settings.translation
-		).then((supportedLanguages) => {
-			setLocales(supportedLanguages);
-			setInitLocale(i18n.language);
-			const locale =
-				localStorage.getItem(STORAGE_KEY_LOCALE) ||
-				i18n.language ||
-				FALLBACK_LNG;
+		)
+			.then((supportedLanguages) => {
+				if (!isCurrent) {
+					return;
+				}
+				setLocales(supportedLanguages);
+				setAppliedLanguages(activeLanguagesKey);
+				setInitLocale(i18n.language);
+				const locale =
+					localStorage.getItem(STORAGE_KEY_LOCALE) ||
+					i18n.language ||
+					FALLBACK_LNG;
 
-			setValueInCookie('lang', locale);
-			setLocale(locale);
-			setInitialized(true);
-		});
+				setValueInCookie('lang', locale);
+				setLocale(locale);
+				setInitialized(true);
+			})
+			// A rejected initialisation must not leave the previous Träger's
+			// language list standing: the counsellor would be offered
+			// languages that belong to someone else's Träger. Fall back to
+			// what the app itself is configured for, which is the most this
+			// can honestly claim when the tenant's own list never loaded.
+			.catch(() => {
+				if (!isCurrent) {
+					return;
+				}
+				// i18next types supportedLngs as `false | readonly string[]`.
+				const configured = settings.i18n?.supportedLngs;
+				const fallbackLanguages = (
+					Array.isArray(configured) ? configured : [FALLBACK_LNG]
+				).filter((lng: string) => lng.indexOf('@informal') < 0);
+				setLocales(fallbackLanguages);
+				setAppliedLanguages(activeLanguagesKey);
+				setInitialized(true);
+			});
+
+		return () => {
+			isCurrent = false;
+		};
+		// activeLanguagesKey is the stable derivation of the tenant's language
+		// array; depending on the array itself would re-init on every new
+		// object identity.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		activeLanguagesKey,
+		appliedLanguages,
 		initialized,
 		isLoading,
 		settings.i18n,
 		settings.translation,
-		settings.useTenantService,
-		tenant?.settings?.activeLanguages
+		settings.useTenantService
 	]);
 
+	const languagesReady =
+		initialized &&
+		(!settings.useTenantService ||
+			(!isLoading && appliedLanguages === activeLanguagesKey));
+
 	const selectableLocales = useMemo(() => {
-		return initialized
+		return languagesReady
 			? locales.filter((lng) => lng.indexOf('@informal') < 0)
 			: [];
-	}, [initialized, locales]);
+	}, [languagesReady, locales]);
 
 	useEffect(() => {
-		if (!initialized) {
+		if (!languagesReady) {
 			return;
 		}
 
@@ -93,17 +163,20 @@ export function LocaleProvider(props) {
 			document.documentElement.lang = locale;
 			setValueInCookie('lang', locale);
 		}
-	}, [locale, informal, locales, initialized]);
+	}, [locale, informal, locales, languagesReady]);
 
 	const handleOnSetLocale = React.useCallback(
 		(lng) => {
-			if (locales?.includes?.(lng)) {
+			if (languagesReady && locales?.includes?.(lng)) {
 				setLocale(lng);
 			}
 		},
-		[locales]
+		[languagesReady, locales]
 	);
 
+	// Only the initial load blocks mounting. During sign-in the router and
+	// in-flight registration callback must survive tenant resolution (#1475).
+	// Withhold stale language choices instead of unmounting the whole app.
 	if (!initialized) {
 		return null;
 	}
@@ -114,7 +187,7 @@ export function LocaleProvider(props) {
 				locale,
 				initLocale,
 				setLocale: handleOnSetLocale,
-				locales,
+				locales: languagesReady ? locales : [],
 				selectableLocales
 			}}
 		>

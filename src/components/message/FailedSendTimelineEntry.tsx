@@ -12,6 +12,8 @@ export interface FailedSend {
 	isAside: boolean;
 	replyToEventId?: string | null;
 	mentionedUserIds: string[];
+	/** The room the composer sent to (supervision side room); empty = the session's own room. */
+	targetRoomId?: string | null;
 }
 
 type FailedMessageProps = Omit<

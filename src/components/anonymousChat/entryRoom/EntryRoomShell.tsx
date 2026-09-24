@@ -11,6 +11,8 @@ export interface EntryRoomShellProps {
 	/** Line 2 — what is happening right now, or who has taken the conversation. */
 	statusLine: string;
 	showLoginLink?: boolean;
+	/** The accepting centre's department, once known — the footer legal links open its documents. */
+	department?: { agencyId: number; topicId: number } | null;
 	children: React.ReactNode;
 }
 
@@ -29,6 +31,7 @@ export const EntryRoomShell = ({
 	kicker,
 	statusLine,
 	showLoginLink = false,
+	department,
 	children
 }: EntryRoomShellProps) => {
 	const { Stage } = useContext(GlobalComponentContext);
@@ -65,6 +68,7 @@ export const EntryRoomShell = ({
 		<StageLayout
 			className="stageLayout--registration"
 			showLegalLinks={true}
+			legalDepartment={department}
 			showLoginLink={showLoginLink}
 			showRegistrationLink={false}
 			stage={<Stage hasAnimation={false} isReady={true} />}
@@ -74,17 +78,24 @@ export const EntryRoomShell = ({
 			<Box
 				data-cy="entry-room"
 				sx={{
-					width: '100%',
-					minWidth: 0,
-					minHeight: {
+					'width': '100%',
+					'minWidth': 0,
+					'minHeight': {
 						xs: 'calc(100vh - 96px)',
 						lg: 'calc(100vh - 128px)'
 					},
-					display: 'flex',
-					flexDirection: 'column',
-					px: { xs: 2.5, sm: 5 },
-					pt: { xs: 3, sm: 4 },
-					pb: '104px'
+					'display': 'flex',
+					'flexDirection': 'column',
+					/* A view slides in from beyond the column's edge; clip, so
+					   the page never gains a scrollbar for it. `hidden` first for
+					   browsers without `clip` (IE 11 is still in browserslist);
+					   `clip` where supported, because unlike `hidden` it does not
+					   turn the column into a scroll container. */
+					'overflowX': 'hidden',
+					'@supports (overflow-x: clip)': { overflowX: 'clip' },
+					'px': { xs: 2.5, sm: 5 },
+					'pt': { xs: 3, sm: 4 },
+					'pb': '104px'
 				}}
 			>
 				<Box sx={{ display: { xs: 'block', lg: 'none' }, mb: 3 }}>
