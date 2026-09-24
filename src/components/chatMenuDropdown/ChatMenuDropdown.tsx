@@ -5,13 +5,16 @@ import './chatMenuDropdown.styles';
 export const ChatMenuDropdown = React.forwardRef<
 	HTMLDivElement,
 	{
-		id?: string;
-		children: React.ReactNode;
-		className?: string;
-		style?: React.CSSProperties;
-		ariaLabel?: string;
-		onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
-		role?: string;
+		'id'?: string;
+		'children': React.ReactNode;
+		'className'?: string;
+		'style'?: React.CSSProperties;
+		'ariaLabel'?: string;
+		'onKeyDown'?: React.KeyboardEventHandler<HTMLDivElement>;
+		/** Focus leaving the card (a host that owns focus watches this). */
+		'onBlur'?: React.FocusEventHandler<HTMLDivElement>;
+		'role'?: string;
+		'data-cy'?: string;
 	}
 >(
 	(
@@ -22,7 +25,9 @@ export const ChatMenuDropdown = React.forwardRef<
 			style,
 			ariaLabel,
 			onKeyDown,
-			role = 'dialog'
+			onBlur,
+			role = 'dialog',
+			'data-cy': dataCy
 		},
 		ref
 	) => (
@@ -34,6 +39,8 @@ export const ChatMenuDropdown = React.forwardRef<
 			role={role}
 			aria-label={ariaLabel}
 			onKeyDown={onKeyDown}
+			onBlur={onBlur}
+			data-cy={dataCy}
 		>
 			{children}
 		</div>

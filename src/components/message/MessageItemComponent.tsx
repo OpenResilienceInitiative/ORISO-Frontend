@@ -27,11 +27,17 @@ import {
 } from '../messageSubmitInterface/richtextHelpers';
 import { VideoCallMessage } from './VideoCallMessage';
 import { ErstantwortMessage } from '../erstantwort/ErstantwortMessage';
+import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
+import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRoomGate';
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
-import { getModality, Modality } from '../session/getModality';
+import {
+	getModality,
+	getModalityIfKnown,
+	Modality
+} from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
 	type MediaChatType
@@ -75,10 +81,12 @@ import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
 import clsx from 'clsx';
+import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab-menu-thread.svg';
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
-	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
+	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED,
+	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
@@ -331,6 +339,9 @@ export interface MessageItem {
 
 interface MessageItemComponentProps extends MessageItem {
 	isOnlyEnquiry?: boolean;
+	/** Keep the complete enquiry visible while deciding whether to accept it. */
+	showFullContent?: boolean;
+	hideSystemMessages?: boolean;
 	isMyMessage: boolean;
 	clientName: string;
 	isUserBanned: boolean;
@@ -384,6 +395,8 @@ export const MessageItemComponent = ({
 	messageDate,
 	messageTime,
 	isMyMessage,
+	showFullContent = false,
+	hideSystemMessages = false,
 	displayName,
 	username,
 	askerMatrixUserId,
@@ -1116,16 +1129,19 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const erstantwortModality = useMemo(
-		() => (activeSession ? getModality(activeSession) : undefined),
+		() => (activeSession ? getModalityIfKnown(activeSession) : undefined),
 		[activeSession]
 	);
 	/* An Erstantwort in an internal counsellor room would be a category error —
 	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
 	   resolves anything unknown to Agency Counselling, so it would render the
-	   wrong sequence rather than none. Excluded explicitly. */
-	const isErstantwortModality =
-		erstantwortModality !== undefined &&
-		erstantwortModality !== Modality.INTERNAL_GROUP;
+	   wrong sequence rather than none. Such an event renders one neutral line
+	   instead of falling through to the generic chrome (raw JSON payload).
+	   Decision lives in erstantwortRoomGate.ts. */
+	const erstantwortRenderMode = getErstantwortRenderModeForSession(
+		isErstantwortEvent,
+		activeSession
+	);
 	/* Only a freshly arrived event plays the stagger. The message list mounts and
 	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
 	   `revealed` to 0 on every mount — so without this an event received days ago
@@ -1142,6 +1158,12 @@ export const MessageItemComponent = ({
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
+	/* T49: the supervision side room's notice is drawn with the SAME organism
+	   as the main chat's Carimat message (ErstantwortSequence → pseudonymCard),
+	   under the room's name — never with the generic chrome below. */
+	const isSupervisionNoticeEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_SUPERVISION_NOTICE;
 	const userLeftChatEventText = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
@@ -1183,14 +1205,11 @@ export const MessageItemComponent = ({
 		decryptedMessage !== null && decryptedMessage !== undefined;
 
 	const getMessageDate = () => {
-		if (messageDate.str || messageDate.date) {
-			return (
-				<MessageDateDivider
-					label={translate(
-						messageDate.str ? messageDate.str : messageDate.date
-					)}
-				/>
-			);
+		// Defence in depth (N-2): a message without a date must never send
+		// the whole conversation to the error page.
+		const label = messageDate?.str || messageDate?.date;
+		if (label) {
+			return <MessageDateDivider label={translate(label)} />;
 		}
 		return null;
 	};
@@ -1653,7 +1672,21 @@ export const MessageItemComponent = ({
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
-	const isAskerViewer = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	/**
+	 * Who counts as an advice seeker reading this thread (#1486).
+	 *
+	 * `ASKER_DEFAULT` alone missed the anonymous Live Chat guest, who is
+	 * granted `ANONYMOUS_DEFAULT` instead — so the asker-facing name
+	 * resolution never ran for them and the bubble fell through to the
+	 * counsellor's legal name from the consultant list. This is the same test
+	 * `SessionHeaderComponent` already applies, so the bubble and the chat
+	 * header now agree on who is reading.
+	 */
+	const isAskerViewer =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('USER') ||
+		(userData?.userRoles || []).includes('ANONYMOUS');
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -1664,6 +1697,17 @@ export const MessageItemComponent = ({
 					username
 				})
 			: null;
+	/**
+	 * An incoming message is published under a display name or, failing that,
+	 * the User-ID — never a real name (#1486).
+	 *
+	 * The bubble used to hand `consultantMatch.firstName`/`lastName` from the
+	 * consultant list to `formatMessagePersonName`, which preferred them, so a
+	 * counsellor's legal name appeared above their bubble and overrode the
+	 * identity they publish. Display name + User-ID are the only two sources
+	 * the bubble, the chat header and the session list have in common, so the
+	 * bubble now uses exactly those and passes no name parts at all.
+	 */
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
@@ -1671,27 +1715,6 @@ export const MessageItemComponent = ({
 				roomUser?.displayName ||
 				displayName
 			: displayName;
-	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
-	const incomingNameParts = normalizedIncomingName
-		.split(/\s+/)
-		.filter(Boolean);
-	const resolvedIncomingNameParts = askerIncomingConsultantName
-		? {
-				firstName: askerIncomingConsultantName.firstName,
-				lastName: askerIncomingConsultantName.lastName
-			}
-		: incomingNameParts.length >= 2
-			? {
-					firstName:
-						consultantMatch?.firstName || incomingNameParts[0],
-					lastName:
-						consultantMatch?.lastName ||
-						incomingNameParts.slice(1).join(' ')
-				}
-			: {
-					firstName: consultantMatch?.firstName || undefined,
-					lastName: consultantMatch?.lastName || undefined
-				};
 	const ownConsultantName =
 		isMyMessage && !isUserMessage()
 			? resolveOwnConsultantName({
@@ -1704,16 +1727,18 @@ export const MessageItemComponent = ({
 	const formattedName = formatMessagePersonName(
 		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
 		username,
+		// Own messages may still fall back to the viewer's own name — it is
+		// their own screen. Incoming messages never carry one (#1486).
 		ownConsultantName
 			? ownConsultantName.firstName
 			: isMyMessage
 				? userData?.firstName
-				: resolvedIncomingNameParts.firstName,
+				: undefined,
 		ownConsultantName
 			? ownConsultantName.lastName
 			: isMyMessage
 				? userData?.lastName
-				: resolvedIncomingNameParts.lastName
+				: undefined
 	);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
@@ -2026,12 +2051,6 @@ export const MessageItemComponent = ({
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										firstName={
-											resolvedIncomingNameParts.firstName
-										}
-										lastName={
-											resolvedIncomingNameParts.lastName
-										}
 									/>
 								)}
 								{/* MATRIX MIGRATION: Temporarily hide message menu */}
@@ -2176,6 +2195,7 @@ export const MessageItemComponent = ({
 											''
 										);
 									const isLongMessage =
+										!showFullContent &&
 										textContent.length > MESSAGE_CHAR_LIMIT;
 
 									// Helper function to safely truncate HTML while preserving structure
@@ -2485,20 +2505,75 @@ export const MessageItemComponent = ({
 		}
 	}
 
+	if (
+		hideSystemMessages &&
+		(isSystemNotification || Boolean(alias?.messageType))
+	) {
+		return null;
+	}
+
 	/* ADR-018: the Erstantwort is one persisted [SYSTEM_NOTIFICATION] event
 	   carrying a versioned Baustein payload, not a message body. It returns
 	   early — before the generic system-notification chrome — because it renders
 	   as its own staged Carimat sequence, and the surrounding message frame
 	   (avatar, meta line, reactions, delivery ticks) would duplicate what the
 	   sequence already draws. */
-	if (isErstantwortEvent && isErstantwortModality) {
+	if (erstantwortRenderMode === 'sequence') {
 		return (
-			<div className="messageItem messageItem--erstantwort">
+			<div
+				className="messageItem messageItem--erstantwort"
+				data-message-id={_id}
+			>
 				{getMessageDate()}
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
 					skipAnimation={!isRecentErstantwortEvent}
+				/>
+			</div>
+		);
+	}
+
+	if (erstantwortRenderMode === 'unavailable') {
+		return (
+			<div
+				className="messageItem messageItem--chatEvent messageItem--erstantwortUnavailable"
+				data-message-id={_id}
+			>
+				{getMessageDate()}
+				<div
+					className="messageItem__chatEvent"
+					data-testid="erstantwort-unavailable"
+				>
+					{translate(
+						'erstantwort.unavailableInRoom',
+						'First response – not available in this room.'
+					)}
+				</div>
+			</div>
+		);
+	}
+
+	if (isSupervisionNoticeEvent) {
+		return (
+			<div
+				className="messageItem messageItem--erstantwort messageItem--supervisionNotice"
+				data-message-id={_id}
+			>
+				{getMessageDate()}
+				<ErstantwortSequence
+					name={systemNotificationTitle}
+					subtitle={translate(
+						'message.systemNotification',
+						'System notification'
+					)}
+					bausteine={[
+						{
+							id: 'supervision-notice',
+							body: systemNotificationDescription
+						}
+					]}
+					skipAnimation
 				/>
 			</div>
 		);
@@ -2525,6 +2600,9 @@ export const MessageItemComponent = ({
 
 	return (
 		<div
+			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
+			// this bubble into view after the history has loaded.
+			data-message-id={_id}
 			className={`messageItem ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${
@@ -2557,12 +2635,6 @@ export const MessageItemComponent = ({
 										username={username}
 										displayName={
 											resolvedIncomingDisplayName
-										}
-										firstName={
-											resolvedIncomingNameParts.firstName
-										}
-										lastName={
-											resolvedIncomingNameParts.lastName
 										}
 										size={48}
 									/>
@@ -2751,6 +2823,64 @@ export const MessageItemComponent = ({
 							) : null}
 						</div>
 					)}
+					{/* T21: the thread entry under a root message — reply count
+					    and "Author: last reply…" on one line, opens the thread. */}
+					{renderMode === 'main' &&
+						threadsEnabled &&
+						!alias?.messageType &&
+						onOpenThread &&
+						threadSummary &&
+						threadSummary.replyCount > 0 && (
+							<button
+								type="button"
+								className={clsx(
+									'messageItem__threadButton',
+									isMyMessage &&
+										'messageItem__threadButton--right'
+								)}
+								data-cy="thread-entry"
+								aria-label={[
+									translate(
+										'message.thread.open',
+										'Open thread'
+									),
+									translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count: threadSummary.replyCount }
+									),
+									threadSummary.lastReplyText
+								]
+									.filter(Boolean)
+									.join(' – ')}
+								title={threadSummary.lastReplyText}
+								onClick={(event) => {
+									event.preventDefault();
+									event.stopPropagation();
+									onOpenThread?.();
+								}}
+							>
+								<ThreadEntryIcon
+									className="messageItem__threadButtonIcon"
+									aria-hidden="true"
+								/>
+								<span className="messageItem__threadButtonMain">
+									{translate(
+										'message.thread.replies',
+										'{{count}} replies',
+										{ count: threadSummary.replyCount }
+									)}
+								</span>
+								{threadSummary.lastReplyText && (
+									<span
+										className="messageItem__threadButtonMeta"
+										data-cy="thread-entry-preview"
+									>
+										{threadSummary.lastReplyText}
+									</span>
+								)}
+							</button>
+						)}
 				</div>
 			</div>
 			{isActionMenuOpen

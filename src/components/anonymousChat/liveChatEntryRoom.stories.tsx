@@ -17,6 +17,8 @@ import type { GuestName } from './entryRoom/LiveChatEntryRoom';
 import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { LiveChatWaitingRoom } from './entryRoom/LiveChatWaitingRoom';
 import { LiveChatClosed } from './entryRoom/LiveChatClosed';
+import { LiveChatChecking } from './entryRoom/LiveChatChecking';
+import { EntryRoomView } from './entryRoom/EntryRoomView';
 import LegalLinks from '../legalLinks/LegalLinks';
 import { phone375Globals } from '../message/messageStoryShell';
 
@@ -132,13 +134,16 @@ const Access = () => {
 const Waiting = ({
 	accepted = false,
 	companionStart = false,
-	ahead = 3
+	ahead = 3,
+	consentHtml: consentHtmlOverride
 }: {
 	accepted?: boolean;
 	companionStart?: boolean;
 	ahead?: number;
+	consentHtml?: string;
 }) => {
-	const consentHtml = useConsentHtml();
+	const defaultConsentHtml = useConsentHtml();
+	const consentHtml = consentHtmlOverride ?? defaultConsentHtml;
 	return (
 		<Shell
 			statusKey={
@@ -168,11 +173,111 @@ const Closed = () => (
 	</Shell>
 );
 
+const Checking = () => {
+	const { t } = useTranslation();
+	return (
+		<Shell statusKey="liveChat.entry.status.checking">
+			<LiveChatChecking text={t('liveChat.entry.checking.text')} />
+		</Shell>
+	);
+};
+
+/* The door as the link plays it: look, nobody → closed; „Ich warte" → look
+   again; somebody comes online → the names. Timed, so the slides are visible. */
+const DoorFlow = () => {
+	const { t } = useTranslation();
+	const [view, setView] = React.useState<
+		'checking' | 'closed' | 'waitingForLive' | 'access'
+	>('checking');
+	const [names, setNames] = React.useState(rollFour);
+	const [selected, setSelected] = React.useState(0);
+	React.useEffect(() => {
+		const next =
+			view === 'checking'
+				? 'closed'
+				: view === 'waitingForLive'
+					? 'access'
+					: null;
+		if (!next) return undefined;
+		const timer = window.setTimeout(() => setView(next), 1800);
+		return () => window.clearTimeout(timer);
+	}, [view]);
+	return (
+		<Shell
+			statusKey={
+				view === 'closed'
+					? 'liveChat.entry.status.closed'
+					: view === 'access'
+						? 'liveChat.entry.status.access'
+						: view === 'waitingForLive'
+							? 'liveChat.entry.status.waitingForLive'
+							: 'liveChat.entry.status.checking'
+			}
+		>
+			<EntryRoomView key={view}>
+				{(view === 'checking' || view === 'waitingForLive') && (
+					<LiveChatChecking
+						text={t(
+							view === 'checking'
+								? 'liveChat.entry.checking.text'
+								: 'liveChat.entry.checking.waiting'
+						)}
+					/>
+				)}
+				{view === 'closed' && (
+					<LiveChatClosed
+						onMailCounselling={() => undefined}
+						onLater={() => setView('waitingForLive')}
+					/>
+				)}
+				{view === 'access' && (
+					<LiveChatAccess
+						names={names}
+						selectedIndex={selected}
+						onSelect={setSelected}
+						onReroll={() => {
+							setNames(rollFour());
+							setSelected(0);
+						}}
+						onContinue={() => setView('checking')}
+					/>
+				)}
+			</EntryRoomView>
+		</Shell>
+	);
+};
+
 const full = (story: string) => ({
 	layout: 'fullscreen' as const,
 	docs: { description: { story } }
 });
 
+export const StepChecking: StoryObj = {
+	name: '0 — Wer ist live?',
+	render: () => <Checking />,
+	parameters: full(
+		'Das Erste, was der Link zeigt: der Orbital-Loader mittig im weißen Bereich, darunter ein Satz. Noch ist nichts angelegt — kein Konto, kein Platz in der Schlange. In der App: `GET /service/users/invitelinks/{token}/context` (öffentlich) für das Thema, dann `GET /service/conversations/anonymous/availability?topicId=…` (öffentlich). Eine 0 wird nach 1 s ein zweites Mal gefragt, weil der Server einen Fehler als 0 meldet.'
+	)
+};
+export const StepCheckingMobile: StoryObj = {
+	name: '0 — Wer ist live?, mobil',
+	globals: phone375Globals,
+	render: () => <Checking />,
+	parameters: { layout: 'fullscreen' }
+};
+export const Door: StoryObj = {
+	name: '0 → C → A — Die Tür, als Ablauf',
+	render: () => <DoorFlow />,
+	parameters: full(
+		'Der Ablauf mit echten Übergängen: Loader → niemand live → „Geschlossen" gleitet ein (Desktop von rechts, mobil von unten; die Bühne links bleibt stehen). „Ich warte" → der Loader wartet weiter → jemand kommt online → die Namen gleiten ein. Erst „Zum Warteraum" löst den Link ein. Zeiten hier fest (1,8 s), in der App der Poll alle 4 s.'
+	)
+};
+export const DoorMobile: StoryObj = {
+	name: '0 → C → A — Die Tür, mobil',
+	globals: phone375Globals,
+	render: () => <DoorFlow />,
+	parameters: { layout: 'fullscreen' }
+};
 export const StepAccess: StoryObj = {
 	name: 'A — Der Zugang',
 	render: () => <Access />,
@@ -219,6 +324,18 @@ export const StepAccepted: StoryObj = {
 	render: () => <Waiting accepted />,
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
+	)
+};
+export const StepAcceptedMissingAgencyPolicy: StoryObj = {
+	name: 'B — Warteraum: Datenschutzerklärung fehlt',
+	render: () => (
+		<Waiting
+			accepted
+			consentHtml="Für diese Beratungsstelle ist derzeit keine eigene Datenschutzerklärung hinterlegt. Wenn Sie fortfahren, nutzen Sie das Angebot auf eigenes Risiko. Mit dem Aktivieren des Kontrollkästchens stimmen Sie den Datenschutzhinweisen und Nutzungsbedingungen dieser Website zu. Diese Website verwendet Cookies."
+		/>
+	),
+	parameters: full(
+		'Fehlt der Beratungsstelle eine nutzbare veröffentlichte Datenschutzerklärung, bleibt der Einstieg möglich. Die feste Systemwarnung nennt das Risiko; die bestehende Checkbox dokumentiert die bewusste Entscheidung der ratsuchenden Person.'
 	)
 };
 /**
@@ -276,7 +393,7 @@ export const StepClosed: StoryObj = {
 	name: 'C — Geschlossen',
 	render: () => <Closed />,
 	parameters: full(
-		'Kein Berater verfügbar (`numAvailableConsultants === 0`). Woche als Leiste aus `LIVE_CHAT_OPENING_HOURS`, Fuß: Später · Anfrage schreiben (→ Registrierung). Steigt zurück in den Warteraum, sobald jemand verfügbar ist.'
+		'Kein Berater verfügbar (`numAvailableConsultants === 0`). Woche als Leiste aus `LIVE_CHAT_OPENING_HOURS`, Fuß: Ich warte · Anfrage schreiben (→ Registrierung). Erscheint schon vor der Namenswahl, ohne dass etwas angelegt wurde. „Ich warte" statt „Später": eine Seite kann einen Tab, den die Person selbst geöffnet hat, nicht schließen — der Knopf sagt, was er tut. Steigt weiter, sobald jemand live ist.'
 	)
 };
 export const StepClosedMobile: StoryObj = {

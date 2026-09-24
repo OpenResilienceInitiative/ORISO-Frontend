@@ -599,24 +599,61 @@
 				"{{dpaProvidedAt}}",
 				"{{dpaExpiresAt}}",
 				"{{dpaUrl}}",
+				"{{tenantNameDative}}",
+				"{{offeringName}}",
+				"{{operatorName}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
-					"preheader": "Der AVV für {{tenantName}} liegt bereit."
+					"subject": "Vertragsunterlagen für {{tenantName}}",
+					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Auftragsverarbeitungsvertrag zur Unterschrift",
-					"preheader": "Der AVV für {{tenantName}} liegt bereit."
+					"subject": "Vertragsunterlagen für {{tenantName}}",
+					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "Data processing agreement ready for signature",
-					"preheader": "The agreement for {{tenantName}} is ready."
+					"subject": "Contract documents for {{tenantName}}",
+					"preheader": "The contract documents for {{tenantName}} are ready."
+				}
+			}
+		},
+		"einladung-freitext": {
+			"audience": "admin",
+			"class": "security",
+			"unsubscribable": false,
+			"placeholders": [
+				"{{subject}}",
+				"{{preheader}}",
+				"{{bodyHtml}}",
+				"{{ctaBlock}}",
+				"{{assuranceBlock}}",
+				"{{offeringName}}",
+				"{{operatorName}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{footerNote}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"en": {
+					"lang": "en",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
 				}
 			}
 		},

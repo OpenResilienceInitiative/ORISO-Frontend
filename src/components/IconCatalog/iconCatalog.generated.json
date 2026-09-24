@@ -1066,6 +1066,21 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:add-circle:base",
+		"family": "add-circle",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "add-circle.svg",
+		"sourcePath": "src/resources/img/icons/add-circle.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/conversationCreate/circle/CircleSettingsView.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:add-shield:base",
 		"family": "add-shield",
 		"state": "base",
@@ -1115,9 +1130,23 @@
 		"sourcePath": "src/resources/img/icons/apple.svg",
 		"exportNames": ["AppleIcon"],
 		"usageFiles": [
+			"src/components/twoFactorAuth/TwoFactorSetupDialog.tsx",
 			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:arrow-right:base",
+		"family": "arrow-right",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "arrow_right_24px.svg",
+		"sourcePath": "src/resources/img/icons/arrow_right_24px.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/session/session.styles.scss"],
 		"usage": "app-used"
 	},
 	{
@@ -1130,10 +1159,7 @@
 		"fileName": "arrow-double-down.svg",
 		"sourcePath": "src/resources/img/icons/arrow-double-down.svg",
 		"exportNames": ["ArrowDoubleDownIcon"],
-		"usageFiles": [
-			"src/components/session/SessionItemComponent.tsx",
-			"src/resources/img/icons.ts"
-		],
+		"usageFiles": ["src/resources/img/icons.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -1197,10 +1223,10 @@
 		"sourcePath": "src/resources/img/icons/arrow-left.svg",
 		"exportNames": ["BackIcon"],
 		"usageFiles": [
-			"src/components/askerInfo/AskerInfo.tsx",
+			"src/components/askerInfo/AskerInfoFooter.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
-			"src/components/groupChat/GroupChatInfo.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
@@ -1219,7 +1245,10 @@
 		"fileName": "arrow-right-m3.svg",
 		"sourcePath": "src/resources/img/icons/arrow-right-m3.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/pseudonym/WaitingQueueActionBar.tsx"],
+		"usageFiles": [
+			"src/components/askerInfo/AskerInfoFooter.tsx",
+			"src/components/pseudonym/WaitingQueueActionBar.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1325,7 +1354,10 @@
 		"fileName": "bell-off.svg",
 		"sourcePath": "src/resources/img/icons/bell-off.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/app/NavigationBar.tsx"],
+		"usageFiles": [
+			"src/components/app/NavigationBar.tsx",
+			"src/components/displayFilter/DisplayFilterKindTable.tsx"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1338,8 +1370,8 @@
 		"fileName": "breath-level-emojis.svg",
 		"sourcePath": "src/resources/img/icons/breath-level-emojis.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/session/SessionItemComponent.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:caldav:base",
@@ -1494,9 +1526,8 @@
 		"sourcePath": "src/resources/img/icons/calendar.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
-			"src/components/notificationsCenter/NotificationsCenter.tsx",
+			"src/components/displayFilter/kindOptions.ts",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -1547,9 +1578,12 @@
 		"sourcePath": "src/resources/img/icons/call.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts",
 			"src/components/message/VideoChatDetails/index.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/notificationsCenter/NotificationsCenter.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/containers/bookings/components/Event/LocationType/index.tsx"
 		],
@@ -1692,7 +1726,8 @@
 		"usageFiles": [
 			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
 			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/ScreenIntro.tsx"
+			"src/components/conversationCreate/ScreenIntro.tsx",
+			"src/components/groupChat/GroupChatShareDialog.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -1723,6 +1758,7 @@
 		"sourcePath": "src/resources/img/icons/chat.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/icons/conversationCreateIcons.ts",
 			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx"
 		],
@@ -1913,10 +1949,7 @@
 		"fileName": "clock.svg",
 		"sourcePath": "src/resources/img/icons/clock.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/conversationCreate/circle/ScheduleRows.tsx",
-			"src/components/datepicker/datepicker.styles.scss"
-		],
+		"usageFiles": ["src/components/datepicker/datepicker.styles.scss"],
 		"usage": "app-used"
 	},
 	{
@@ -1948,7 +1981,10 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
+			"src/components/groupChat/GroupChatAuthorContentFields.tsx",
 			"src/components/groupChat/RuleChipsEditor.tsx"
 		],
 		"usage": "app-used"
@@ -2067,6 +2103,119 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:display-filter-appointment:base",
+		"family": "display-filter-appointment",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-appointment.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-appointment.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:display-filter-call:base",
+		"family": "display-filter-call",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-call.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-call.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:display-filter-draft:base",
+		"family": "display-filter-draft",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-draft.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-draft.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:display-filter-handover:base",
+		"family": "display-filter-handover",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-handover.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-handover.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:display-filter-other:base",
+		"family": "display-filter-other",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-other.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-other.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts",
+			"src/components/sessionsList/SessionsListToolbar.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:display-filter-request:base",
+		"family": "display-filter-request",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-request.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-request.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:display-filter-system:base",
+		"family": "display-filter-system",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "display-filter-system.svg",
+		"sourcePath": "src/resources/img/icons/display-filter-system.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:diversity-2:base",
 		"family": "diversity-2",
 		"state": "base",
@@ -2076,10 +2225,8 @@
 		"fileName": "diversity-2.svg",
 		"sourcePath": "src/resources/img/icons/diversity-2.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/conversationCreate/circle/ScheduleRows.tsx"
-		],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "ui-icon:documents:base",
@@ -2210,6 +2357,7 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/passwordReset/PasswordReset.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2228,9 +2376,42 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/passwordReset/PasswordReset.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:fab-menu-close:base",
+		"family": "fab-menu-close",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "fab-menu-close.svg",
+		"sourcePath": "src/resources/img/icons/fab-menu-close.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/chatStage/ChannelSwitcherFab.tsx"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:fab-menu-thread:base",
+		"family": "fab-menu-thread",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "fab-menu-thread.svg",
+		"sourcePath": "src/resources/img/icons/fab-menu-thread.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/chatStage/ChannelMenu.tsx",
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
+			"src/components/message/MessageItemComponent.tsx",
+			"src/components/sessionsList/SessionRailPill.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2505,8 +2686,8 @@
 		"fileName": "inbox_outline.svg",
 		"sourcePath": "src/resources/img/icons/inbox_outline.svg",
 		"exportNames": [],
-		"usageFiles": [],
-		"usage": "catalogued-only"
+		"usageFiles": ["src/components/sessionMenu/SessionMenu.tsx"],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:inbox:base",
@@ -2519,7 +2700,6 @@
 		"sourcePath": "src/resources/img/icons/inbox.svg",
 		"exportNames": ["InboxIcon"],
 		"usageFiles": [
-			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2542,6 +2722,32 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:interval-cycle:400",
+		"family": "interval-cycle",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "interval-cycle-400.svg",
+		"sourcePath": "src/resources/img/icons/interval-cycle-400.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:interval-cycle:filled",
+		"family": "interval-cycle",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "interval-cycle-filled.svg",
+		"sourcePath": "src/resources/img/icons/interval-cycle-filled.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:keyboard-arrow-down:base",
 		"family": "keyboard-arrow-down",
 		"state": "base",
@@ -2552,6 +2758,7 @@
 		"sourcePath": "src/resources/img/icons/keyboard_arrow_down.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/profile/NotificationSettings/NotificationConfigDialog.tsx",
 			"src/components/splitButton/SplitButton.tsx"
 		],
@@ -2596,10 +2803,7 @@
 		"fileName": "language_outline.svg",
 		"sourcePath": "src/resources/img/icons/language_outline.svg",
 		"exportNames": [],
-		"usageFiles": [
-			"src/components/conversationCreate/circle/ScheduleRows.tsx",
-			"src/components/localeSwitch/LocaleSwitch.tsx"
-		],
+		"usageFiles": ["src/components/localeSwitch/LocaleSwitch.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -2680,7 +2884,6 @@
 		"sourcePath": "src/resources/img/icons/lock.svg",
 		"exportNames": ["LockIcon"],
 		"usageFiles": [
-			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
@@ -2772,6 +2975,87 @@
 		"usageFiles": [
 			"src/components/legalContent/LegalTextReader.tsx",
 			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:modality-audio:filled",
+		"family": "modality-audio",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "modality-audio-filled.svg",
+		"sourcePath": "src/resources/img/icons/modality-audio-filled.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:modality-audio:base",
+		"family": "modality-audio",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "modality-audio.svg",
+		"sourcePath": "src/resources/img/icons/modality-audio.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:modality-chat:filled",
+		"family": "modality-chat",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "modality-chat-filled.svg",
+		"sourcePath": "src/resources/img/icons/modality-chat-filled.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:modality-chat:base",
+		"family": "modality-chat",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "modality-chat.svg",
+		"sourcePath": "src/resources/img/icons/modality-chat.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:modality-video:filled",
+		"family": "modality-video",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "modality-video-filled.svg",
+		"sourcePath": "src/resources/img/icons/modality-video-filled.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:modality-video:base",
+		"family": "modality-video",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "modality-video.svg",
+		"sourcePath": "src/resources/img/icons/modality-video.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/icons/conversationCreateIcons.ts",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2916,7 +3200,6 @@
 		"usageFiles": [
 			"src/components/app/NavigationBar.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/session/SessionItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -3038,7 +3321,6 @@
 		"exportNames": ["FeedbackIcon"],
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3135,8 +3417,8 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/notificationsCenter/NotificationsCenter.tsx",
-			"src/components/sessionHeader/GroupChatHeader/index.tsx"
+			"src/components/sessionHeader/MemberAvatarStack.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3180,6 +3462,7 @@
 		"sourcePath": "src/resources/img/icons/play-circle.svg",
 		"exportNames": [],
 		"usageFiles": [
+			"src/components/displayFilter/DisplayFilterKindTable.tsx",
 			"src/components/profile/NotificationSettings/NotificationConfigDialog.tsx"
 		],
 		"usage": "app-used"
@@ -3276,7 +3559,8 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/app/navigationSidebarIcons.tsx",
-			"src/components/app/RouterConfig.tsx"
+			"src/components/app/RouterConfig.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3320,7 +3604,6 @@
 		"exportNames": ["ReloadIcon"],
 		"usageFiles": [
 			"src/components/button/Button.tsx",
-			"src/components/conversationCreate/circle/ScheduleRows.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3339,6 +3622,87 @@
 			"src/components/messageSubmitInterface/messageSubmitInterfaceSkeleton.tsx",
 			"src/resources/img/icons.ts"
 		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:schedule-date:base",
+		"family": "schedule-date",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "schedule-date.svg",
+		"sourcePath": "src/resources/img/icons/schedule-date.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:schedule-duration:base",
+		"family": "schedule-duration",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "schedule-duration.svg",
+		"sourcePath": "src/resources/img/icons/schedule-duration.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:schedule-language:base",
+		"family": "schedule-language",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "schedule-language.svg",
+		"sourcePath": "src/resources/img/icons/schedule-language.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/groupChat/GroupChatAuthorContentFields.tsx",
+			"src/components/icons/conversationCreateIcons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:schedule-medium:base",
+		"family": "schedule-medium",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "schedule-medium.svg",
+		"sourcePath": "src/resources/img/icons/schedule-medium.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:schedule-repeat:base",
+		"family": "schedule-repeat",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "schedule-repeat.svg",
+		"sourcePath": "src/resources/img/icons/schedule-repeat.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:schedule-start:base",
+		"family": "schedule-start",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "schedule-start.svg",
+		"sourcePath": "src/resources/img/icons/schedule-start.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/icons/conversationCreateIcons.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -3422,7 +3786,6 @@
 		"sourcePath": "src/resources/img/icons/session-toolbar/supervision_chats.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx"
 		],
 		"usage": "app-used"
@@ -3504,7 +3867,11 @@
 		"sourcePath": "src/resources/img/icons/speech-bubble-team.svg",
 		"exportNames": ["SpeechBubbleTeamIcon"],
 		"usageFiles": [
+			"src/components/chatStage/ChannelMenu.tsx",
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
+			"src/components/session/SessionItemComponent.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3520,9 +3887,11 @@
 		"sourcePath": "src/resources/img/icons/speech-bubble.svg",
 		"exportNames": ["GroupChatIcon", "SpeechBubbleIcon"],
 		"usageFiles": [
-			"src/components/groupChat/GroupChatInfo.tsx",
+			"src/components/chatStage/ChannelMenu.tsx",
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/displayFilter/displayFilterStoryData.ts",
+			"src/components/displayFilter/kindOptions.ts",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/notificationsCenter/NotificationsCenter.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
@@ -3571,12 +3940,61 @@
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/chatStage/PanelCallActions.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:supervision-circ:400",
+		"family": "supervision-circ",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "supervision_circ_400_24px.svg",
+		"sourcePath": "src/resources/img/icons/supervision_circ_400_24px.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
+			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:supervision-nocirc:400",
+		"family": "supervision-nocirc",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "supervision_nocirc_400_24px.svg",
+		"sourcePath": "src/resources/img/icons/supervision_nocirc_400_24px.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/chatStage/ChannelMenu.tsx",
+			"src/components/sessionMenu/SessionMenu.tsx",
+			"src/components/sessionsList/SessionRailPill.tsx"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:supervision-on:400",
+		"family": "supervision-on",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "supervision_on_400_24px.svg",
+		"sourcePath": "src/resources/img/icons/supervision_on_400_24px.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/chatStage/ChannelSwitcherFab.tsx"],
 		"usage": "app-used"
 	},
 	{
@@ -3617,7 +4035,7 @@
 		"exportNames": [],
 		"usageFiles": [
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/notificationsCenter/NotificationsCenter.tsx"
+			"src/components/sessionMenu/SessionMenu.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3722,8 +4140,7 @@
 		"sourcePath": "src/resources/img/icons/timeline-request-client.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
-			"src/components/notificationsCenter/NotificationsCenter.tsx"
+			"src/components/notificationsCenter/eventDescriptors/icons.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -3795,6 +4212,21 @@
 		"exportNames": [],
 		"usageFiles": [],
 		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:translate:base",
+		"family": "translate",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "translate.svg",
+		"sourcePath": "src/resources/img/icons/translate.svg",
+		"exportNames": [],
+		"usageFiles": [
+			"src/components/groupChat/GroupChatAuthorContentFields.tsx"
+		],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:trash:base",
@@ -3894,19 +4326,6 @@
 		"usage": "app-used"
 	},
 	{
-		"id": "ui-icon:email-code-graphic:base",
-		"family": "email-code-graphic",
-		"state": "base",
-		"role": "default",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "email_code_graphic.svg",
-		"sourcePath": "src/resources/img/icons/two-factor/email_code_graphic.svg",
-		"exportNames": [],
-		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
-		"usage": "app-used"
-	},
-	{
 		"id": "ui-icon:install:400",
 		"family": "install",
 		"state": "400",
@@ -3928,19 +4347,6 @@
 		"size": null,
 		"fileName": "install_filled.svg",
 		"sourcePath": "src/resources/img/icons/two-factor/install_filled.svg",
-		"exportNames": [],
-		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
-		"usage": "app-used"
-	},
-	{
-		"id": "ui-icon:otp-app-graphic:base",
-		"family": "otp-app-graphic",
-		"state": "base",
-		"role": "default",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "otp_app_graphic.svg",
-		"sourcePath": "src/resources/img/icons/two-factor/otp_app_graphic.svg",
 		"exportNames": [],
 		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
 		"usage": "app-used"
@@ -4079,6 +4485,9 @@
 		"sourcePath": "src/resources/img/icons/x.svg",
 		"exportNames": ["CrossMarkIcon", "RemoveIcon", "StopGroupChatIcon"],
 		"usageFiles": [
+			"src/components/chatStage/ChannelMenu.tsx",
+			"src/components/chatStage/ChannelSwitcherFab.tsx",
+			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/editableData/EditableData.tsx",
 			"src/components/groupChat/JoinGroupChatView.tsx",
 			"src/components/incomingVideoCall/IncomingVideoCall.tsx",
@@ -4094,8 +4503,12 @@
 			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
 			"src/components/session/AcceptAssign.tsx",
 			"src/components/session/DeleteSession.tsx",
+			"src/components/session/session.styles.scss",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts",
+			"src/components/sessionsList/SessionRailPill.tsx",
+			"src/components/sessionsList/SessionToolbarFilterIcons.tsx",
+			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"

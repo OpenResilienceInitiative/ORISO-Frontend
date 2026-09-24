@@ -14,6 +14,7 @@
  * (ADR-AT-01 — the server record is text-free).
  */
 
+import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
 	EventActionParams,
 	EventActionTarget,
@@ -45,9 +46,12 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 	return null;
 };
 
+// B2 / T24: server action paths may still carry the legacy `threadRootId`
+// (UserService B2 pending) — the frontend contract is `?channel=thread:<id>`,
+// rewritten once here at the boundary.
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
-	path: buildConversationPath(params)
+	path: rewriteLegacyChannelPath(buildConversationPath(params))
 });
 
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({

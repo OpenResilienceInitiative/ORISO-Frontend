@@ -9,7 +9,7 @@ import {
 	waitFor,
 	within
 } from '@testing-library/react';
-import { LegalTextReader } from './LegalTextReader';
+import { ACTIVE_HEADING_ATTRIBUTE, LegalTextReader } from './LegalTextReader';
 
 let mockLanguage = 'de';
 
@@ -96,6 +96,217 @@ describe('LegalTextReader', () => {
 		expect(chip('2. Ihre Rechte').getAttribute('aria-pressed')).toBe(
 			'true'
 		);
+	});
+
+	/** The heading the marker sits on, or `null` while nothing is marked. */
+	const markedHeadingId = (): string | null =>
+		document.querySelector(`[${ACTIVE_HEADING_ATTRIBUTE}='true']`)?.id ??
+		null;
+
+	/**
+	 * The chapter cue must not be focus-bound. A chip clicked with the MOUSE
+	 * gives the heading focus but not `:focus-visible`, so a cue drawn off the
+	 * focus ring alone would show for keyboard readers and for nobody else.
+	 */
+	it('marks the picked chapter heading and unmarks the previous one', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+
+		// A freshly opened document shows no line at all: the cue is a position
+		// the reader navigated to, not decoration on the first heading.
+		expect(markedHeadingId()).toBeNull();
+
+		fireEvent.click(chip('2. Ihre Rechte'));
+
+		expect(markedHeadingId()).toBe('2-ihre-rechte');
+		expect(
+			document
+				.getElementById('datenschutzerklarung')
+				?.hasAttribute(ACTIVE_HEADING_ATTRIBUTE)
+		).toBe(false);
+
+		fireEvent.click(chip('1. Verantwortlich'));
+
+		expect(markedHeadingId()).toBe('1-verantwortlich');
+		expect(
+			document
+				.getElementById('2-ihre-rechte')
+				?.hasAttribute(ACTIVE_HEADING_ATTRIBUTE)
+		).toBe(false);
+	});
+
+	/**
+	 * Scrolling changes the chapter without touching focus at all — the case the
+	 * marker exists for. Only ONE heading may carry it, or the line appears
+	 * under a chapter the reader has already left.
+	 */
+	it('moves the chapter marker as the reader scrolls', async () => {
+		const scrollHeight = vi
+			.spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host') ? 1400 : 0;
+			});
+		const clientHeight = vi
+			.spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host') ? 400 : 0;
+			});
+		// The host stays put and the headings travel through it, which is what
+		// scrolling does. (The mock in the test below deliberately moves both,
+		// because it exercises the reached-the-bottom branch instead.)
+		const bounds = vi
+			.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+			.mockImplementation(function () {
+				const chapterTops: Record<string, number> = {
+					'datenschutzerklarung': 0,
+					'1-verantwortlich': 200,
+					'2-ihre-rechte': 500
+				};
+				const host = document.querySelector(
+					'.scroll-host'
+				) as HTMLElement;
+				const top = this.classList.contains('scroll-host')
+					? 0
+					: (chapterTops[this.id] ?? 0) - (host?.scrollTop ?? 0);
+				return {
+					top,
+					bottom: top,
+					left: 0,
+					right: 0,
+					width: 0,
+					height: 0,
+					x: 0,
+					y: top,
+					toJSON: () => ({})
+				};
+			});
+
+		try {
+			render(
+				<div className="scroll-host" style={{ overflowY: 'auto' }}>
+					<LegalTextReader content={POLICY} label="Datenschutz" />
+				</div>
+			);
+			const host = document.querySelector('.scroll-host') as HTMLElement;
+
+			// The measurement that runs on open reports where the reader already
+			// is. It is not a move, so it marks nothing.
+			expect(markedHeadingId()).toBeNull();
+
+			host.scrollTop = 250;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(markedHeadingId()).toBe('1-verantwortlich')
+			);
+
+			host.scrollTop = 550;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(markedHeadingId()).toBe('2-ihre-rechte')
+			);
+
+			expect(
+				document.querySelectorAll(
+					`[${ACTIVE_HEADING_ATTRIBUTE}='true']`
+				)
+			).toHaveLength(1);
+		} finally {
+			scrollHeight.mockRestore();
+			clientHeight.mockRestore();
+			bounds.mockRestore();
+		}
+	});
+
+	it('keeps the final chapter selected when the scrollport reaches its maximum', async () => {
+		let mockedScrollHeight = 700;
+		let mockedClientHeight = 400;
+		const scrollHeight = vi
+			.spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host')
+					? mockedScrollHeight
+					: 0;
+			});
+		const clientHeight = vi
+			.spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host')
+					? mockedClientHeight
+					: 0;
+			});
+		const bounds = vi
+			.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+			.mockImplementation(function () {
+				const chapterTops: Record<string, number> = {
+					'datenschutzerklarung': 0,
+					'1-verantwortlich': 200,
+					'2-ihre-rechte': 500
+				};
+				const host = document.querySelector(
+					'.scroll-host'
+				) as HTMLElement;
+				const top =
+					(chapterTops[this.id] ?? 0) - (host?.scrollTop ?? 0);
+				return {
+					top,
+					bottom: top,
+					left: 0,
+					right: 0,
+					width: 0,
+					height: 0,
+					x: 0,
+					y: top,
+					toJSON: () => ({})
+				};
+			});
+
+		try {
+			render(
+				<div className="scroll-host" style={{ overflowY: 'auto' }}>
+					<LegalTextReader content={POLICY} label="Datenschutz" />
+				</div>
+			);
+			const host = document.querySelector('.scroll-host') as HTMLElement;
+			const last = chip('2. Ihre Rechte');
+
+			fireEvent.click(last);
+			host.scrollTop = 300;
+			fireEvent.scroll(host);
+
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
+
+			// Responsive/content changes can remove the overflow after this host
+			// was captured as the scroll parent. Zero scrollable distance is the
+			// top of the document, not the bottom of its final chapter.
+			mockedScrollHeight = 400;
+			mockedClientHeight = 400;
+			host.scrollTop = 0;
+			fireEvent.scroll(host);
+
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+
+			mockedScrollHeight = 401;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+			host.scrollTop = 1;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
+		} finally {
+			scrollHeight.mockRestore();
+			clientHeight.mockRestore();
+			bounds.mockRestore();
+		}
 	});
 
 	it('opens and closes the fullscreen reading mode', () => {

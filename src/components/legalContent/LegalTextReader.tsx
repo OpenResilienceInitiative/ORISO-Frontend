@@ -22,6 +22,17 @@ import {
 } from '../../resources/img/icons';
 import './legalTextReader.styles.scss';
 
+/**
+ * Marks the heading of the chapter the reader is currently in — once they have
+ * moved. On open no heading carries it, so a freshly opened document shows no
+ * line at all.
+ *
+ * The stylesheet draws the chapter underline off this AND off `:focus-visible`,
+ * so the cue is there whether the chapter was reached with the keyboard, with a
+ * mouse click on a chip, or by plain scrolling.
+ */
+export const ACTIVE_HEADING_ATTRIBUTE = 'data-legal-active';
+
 export interface LegalTextReaderProps {
 	/**
 	 * Raw legal content: plain HTML, or the language→HTML map the tenant
@@ -393,8 +404,37 @@ const LegalReaderBody = ({
 		const target: HTMLElement | Window = scroller ?? window;
 
 		let frame = 0;
+		// The measurement this effect arms on its own — on mount, and again after
+		// a re-stamp — reports the chapter the reader is ALREADY in. That is not
+		// moving, so it must not un-hide the chapter line. Only a measurement a
+		// real scroll event asked for can (see `onScroll`).
+		//
+		// Deliberately not "the first update() call wins": a scroll inside the
+		// first frame CANCELS the armed frame, so the reader's own scroll would
+		// have inherited the exemption and shown nothing.
+		let initialMeasurement = true;
+		const commit = (nextId: string) => {
+			if (!initialMeasurement && nextId !== activeIdRef.current) {
+				hasNavigatedRef.current = true;
+			}
+			setActiveId(nextId);
+		};
 		const update = () => {
 			frame = 0;
+			// The final heading cannot always reach the sticky row: once the
+			// scrollport is at its maximum, there may be too little content below
+			// it. In that state the reader has reached the final chapter, even if
+			// an earlier heading is still nearest the top measurement line.
+			if (
+				scroller &&
+				scroller.scrollHeight - scroller.clientHeight > 0 &&
+				scroller.scrollTop > 0 &&
+				scroller.scrollTop + scroller.clientHeight >=
+					scroller.scrollHeight - 1
+			) {
+				commit(headings[headings.length - 1].id);
+				return;
+			}
 			const top = scroller ? scroller.getBoundingClientRect().top : 0;
 			// A heading counts as reached once its top is at or above the line
 			// just under the sticky chip row, with a little tolerance so the
@@ -407,7 +447,7 @@ const LegalReaderBody = ({
 				}
 				current = heading;
 			}
-			setActiveId(current.id);
+			commit(current.id);
 		};
 		// Cancel-and-reschedule rather than "skip if one is pending". A frame
 		// scheduled while the tab or the pane is hidden never runs, and a
@@ -415,6 +455,7 @@ const LegalReaderBody = ({
 		// the selected chip froze on whatever it last computed and never moved
 		// again. Measured exactly that in a hidden browser pane.
 		const onScroll = () => {
+			initialMeasurement = false;
 			window.cancelAnimationFrame(frame);
 			frame = window.requestAnimationFrame(update);
 		};
@@ -454,19 +495,87 @@ const LegalReaderBody = ({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isFullscreen]);
 
-	const selectAnchor = useCallback((anchorId: string) => {
-		const heading = findHeadingById(textRef.current, anchorId);
-		if (!heading) {
+	// The "you are reading this chapter" line cannot ride on `:focus-visible`.
+	// A chip activated with the MOUSE does move focus to the heading, but a
+	// programmatic focus after a click is not "visible" focus to the browser, so
+	// the cue appeared for keyboard readers and for nobody else — and scrolling,
+	// which changes the chapter without touching focus at all, never showed it.
+	//
+	// So the active heading carries the marker itself. Deliberately an attribute
+	// toggled on the node rather than React state: the headings are not rendered
+	// by this component at all (they are sanitized HTML that
+	// `LegalContentRenderer` puts in the DOM), and routing the active chapter
+	// through state would re-render the whole reader on every scroll frame.
+	// `stampHeadingAnchors` only ever writes `id` and `tabindex`, so a restamp
+	// leaves the marker untouched.
+	//
+	// Nothing is marked on open (owner call 2026-09-21). A line under the first
+	// heading before the reader has done anything is decoration, not a position:
+	// it answers a question nobody has asked yet, and on a document whose first
+	// heading is its title it sits under the title. The cue appears the moment
+	// the reader MOVES — a chip, a keyboard activation, or scrolling into the
+	// next chapter — and from then on it follows them.
+	const hasNavigatedRef = useRef(false);
+	// What the scroll listener compares against. A ref, because that listener
+	// runs off an animation frame and must not re-arm whenever the chapter
+	// changes.
+	const activeIdRef = useRef<string | null>(null);
+	const markedRef = useRef<HTMLElement | null>(null);
+
+	// The one place that touches the attribute.
+	const markHeading = useCallback((heading: HTMLElement | null) => {
+		if (markedRef.current === heading) {
 			return;
 		}
-		setActiveId(anchorId);
-		// Focus FIRST, scroll second. Moving focus is what makes the chips work
-		// for a keyboard or screen-reader user — scrolling alone leaves them
-		// reading the old chapter — and `preventScroll` keeps the focus call
-		// itself from jumping.
-		heading.focus({ preventScroll: true });
-		scrollAnchorIntoView(heading, navRef.current?.offsetHeight ?? 0);
+		markedRef.current?.removeAttribute(ACTIVE_HEADING_ATTRIBUTE);
+		heading?.setAttribute(ACTIVE_HEADING_ATTRIBUTE, 'true');
+		markedRef.current = heading;
 	}, []);
+
+	useLayoutEffect(() => {
+		activeIdRef.current = activeId;
+		markHeading(
+			hasNavigatedRef.current && activeId
+				? findHeadingById(textRef.current, activeId)
+				: null
+		);
+		// `anchors`, not `anchorIds`: a re-render can replace the heading NODES
+		// while their ids stay the same (a translation swap, an edited heading),
+		// and the marker would otherwise stay on the node that was thrown away.
+		// Neither a re-render nor a re-stamp can un-set `hasNavigatedRef` — once
+		// the reader has moved, the cue stays with them.
+	}, [activeId, anchors, markHeading]);
+
+	// Leaving the marker behind would strand it on a node a host may keep.
+	useEffect(
+		() => () => {
+			markedRef.current?.removeAttribute(ACTIVE_HEADING_ATTRIBUTE);
+			markedRef.current = null;
+		},
+		[]
+	);
+
+	const selectAnchor = useCallback(
+		(anchorId: string) => {
+			const heading = findHeadingById(textRef.current, anchorId);
+			if (!heading) {
+				return;
+			}
+			// Picking a chapter IS moving, including picking the one you are
+			// already in — and that case changes no state, so the effect above
+			// would never run. Mark it here.
+			hasNavigatedRef.current = true;
+			markHeading(heading);
+			setActiveId(anchorId);
+			// Focus FIRST, scroll second. Moving focus is what makes the chips
+			// work for a keyboard or screen-reader user — scrolling alone leaves
+			// them reading the old chapter — and `preventScroll` keeps the focus
+			// call itself from jumping.
+			heading.focus({ preventScroll: true });
+			scrollAnchorIntoView(heading, navRef.current?.offsetHeight ?? 0);
+		},
+		[markHeading]
+	);
 
 	return (
 		<div

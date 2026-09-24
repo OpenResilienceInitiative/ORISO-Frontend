@@ -9,18 +9,20 @@ import { config, routePathNames } from './resources/scripts/config';
 import { ThemeProvider } from '@mui/material';
 import { UrlParamsProvider } from './globalState/provider/UrlParamsProvider';
 import { RegistrationProvider } from './globalState';
-import { lazy, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './resources/styles/mui-variables-mapping.scss';
 import { createAppTheme } from './resources/scripts/theme';
 import { THEME_APPLIED_EVENT } from './utils/theme/applyTenantTheme';
 import { syncLocalTenantCookie } from './utils/localTenantCookie';
 import { purgeLegacyDraftStorage } from './services/clientStorageHygiene';
+import { purgeParkedRecoveryKeys } from './services/pendingRecoveryKeyStore';
 import { Navigate } from 'react-router-dom';
 import { Privacy } from './components/legalInformationLinks/Privacy';
 import { Imprint } from './components/legalInformationLinks/Imprint';
 import { initMeterProvider } from './utils/observability/meterProvider';
 import { initWebVitals } from './utils/observability/webVitals';
 import { initUtdTracking } from './utils/observability/utdTracker';
+import { lazyWithReload } from './utils/chunkLoadRecovery';
 
 // OBS-P8 (ORISO-Helm#62): browser-side Real User Monitoring. Register the
 // MeterProvider before anything else gets a chance to call
@@ -34,13 +36,13 @@ initWebVitals();
 // failure tracking for encrypted counselling conversations.
 initUtdTracking();
 
-const ThemeDemo = lazy(() =>
+const ThemeDemo = lazyWithReload(() =>
 	import('./components/themeDemo/ThemeDemo').then((m) => ({
 		default: m.ThemeDemo
 	}))
 );
 
-const Registration = lazy(() =>
+const Registration = lazyWithReload(() =>
 	import('./components/registration/Registration').then((m) => ({
 		default: m.Registration
 	}))
@@ -72,6 +74,8 @@ const AppThemeProvider = ({ children }: { children: React.ReactNode }) => {
 // plaintext under `oriso.chatDrafts.v1`. Drafts have been server-side and
 // room-key encrypted for a while; this drops the leftovers on first load.
 purgeLegacyDraftStorage();
+// Parked recovery keys the login password protects expire after a week.
+purgeParkedRecoveryKeys('expired');
 
 // React 19 uses createRoot API
 syncLocalTenantCookie();

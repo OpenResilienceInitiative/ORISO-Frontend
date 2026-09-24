@@ -299,6 +299,57 @@
 			"ready": "Text snippet added to your reply"
 		}
 	},
+	"chatStage": {
+		"switcher": {
+			"openMenu": "Show side channels",
+			"closeMenu": "Hide side channels",
+			"openChannel": "Open {{label}}",
+			"backToMain": "Back to the counselling chat",
+			"mainChat": "Counselling chat",
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread",
+				"team": "Team consultation"
+			}
+		},
+		"participants": {
+			"label": "Participants: {{names}}",
+			"more": "{{count}} more participants",
+			"more_one": "1 more participant"
+		},
+		"panel": {
+			"channelOptions": "Switch channel",
+			"channelOptionsEmpty": "No other channels",
+			"participantCount": "{{count}} participants",
+			"participantCount_one": "1 participant",
+			"close": "Close side panel",
+			"back": "Back to the counselling chat",
+			"region": "Side panel: {{title}}",
+			"thread": {
+				"title": "Thread"
+			},
+			"team": {
+				"title": "Team consultation",
+				"onlyMarker": "Team only",
+				"composer": {
+					"placeholder": "Message to the team …"
+				},
+				"systemNotice": "Team consultation runs alongside the counselling session. The advice seeker is not part of this channel and cannot see it.",
+				"empty": {
+					"title": "Start team consultation",
+					"text": "Write the first message to your team below."
+				}
+			}
+		},
+		"menu": {
+			"eyebrow": "Further conversations",
+			"title": "Threads and supervision",
+			"supervisionChat": "Supervision chat",
+			"thread": "Thread #{{n}}",
+			"teamChat": "Team consultation",
+			"titleWithTeam": "Threads, supervision and team consultation"
+		}
+	},
 	"chatFlyout": {
 		"archive": "Archive",
 		"archiveDescription": "Notifications are off for archived chats. The chat will be deleted in 12 months.",
@@ -509,6 +560,9 @@
 		}
 	},
 	"enquiry": {
+		"teamDiscussion": {
+			"open": "Open team discussion"
+		},
 		"acceptButton": {
 			"anonymous": "Start chat",
 			"known": "Accept request"
@@ -746,10 +800,11 @@
 			"authorContent": {
 				"title": "Welcome and group rules",
 				"sourceLanguage": "Source language",
-				"welcome": "Welcome message (maximum 120 characters)",
+				"welcome": "Welcome text max. 120 characters",
 				"rules": "Group rules",
-				"rule": "Rule",
+				"rule": "Rule no. 1, max. 120 characters",
 				"addRule": "Add rule",
+				"removeLanguage": "Remove language {{language}}",
 				"removeRule": "Remove",
 				"translate": "Translate into active languages",
 				"translating": "Translating…",
@@ -759,6 +814,7 @@
 				"ruleEditorLabel": "Edit rule",
 				"editRule": "Edit rule {{index}}",
 				"deleteRule": "Delete rule {{index}}",
+				"ruleChipShort": "No. {{index}}",
 				"ruleChip": "Rule no. {{index}}"
 			},
 			"listItem": {
@@ -833,6 +889,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} time",
 				"repeatValue_other": "{{count}} times"
+			},
+			"noModeratorAvailable": "No person available",
+			"moderatorHelp": "Help",
+			"moderatorHelpDialog": {
+				"title": "Invite co-moderators later",
+				"description": "Right now no other professional of your organisation can be selected. You can still create the circle and add co-moderators afterwards.",
+				"step1": "Open the circle in your list and open its Chat-Info.",
+				"step2": "Under “Chatroom Settings”, choose “Edit”.",
+				"step3": "Add colleagues under “Additional moderation” and save.",
+				"note": "Only the person who created the circle can edit it, and only while it is not running. All active professionals of your organisation can be selected.",
+				"close": "Got it"
 			}
 		},
 		"createError": {
@@ -876,7 +943,8 @@
 			},
 			"subscribers": {
 				"empty": "no participants available",
-				"headline": "Participants"
+				"headline": "Participants",
+				"menuLabel": "Options for {{name}}"
 			},
 			"gallery": {
 				"back": "Back to the countdown",
@@ -901,6 +969,10 @@
 					}
 				},
 				"upcoming": "Next dates"
+			},
+			"status": {
+				"active": "Running now",
+				"planned": "Scheduled"
 			}
 		},
 		"join": {
@@ -923,6 +995,9 @@
 					"flipHint": "click to flip",
 					"greetingLabel": "A welcome from your counsellor",
 					"headline": "Your group chat starts {{eta}}.",
+					"moderatorHeadline": "The group session starts {{eta}}.",
+					"moderatorOverdueHeadline": "The group is waiting.",
+					"moderatorSubtitle": "You can start the chat whenever you are ready.",
 					"netiquetteLabel": "Netiquette · rule {{no}}",
 					"netiquetteTitle": "Netiquette",
 					"overdueCaption": "The wait is getting a little awkward …",
@@ -1046,6 +1121,28 @@
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
 			"backToCountdown": "Back to the countdown"
+		},
+		"shareDialog": {
+			"title_text": "Circle created",
+			"title_audio": "Audio call created",
+			"title_video": "Video call created",
+			"description": "Share this link with the participants. It takes them to the waiting room until the session starts.",
+			"linkLabel": "Invitation link",
+			"copy": "Copy link",
+			"copied": "Copied",
+			"detailsHeadline": "Session",
+			"topic": "Topic",
+			"date": "Date",
+			"start": "Start",
+			"timeValue": "{{time}}",
+			"duration": "Duration",
+			"repeats": "Repetitions",
+			"repeatValue": "{{count}} sessions, {{interval}}",
+			"format": "Format",
+			"language": "Language",
+			"done": "Done",
+			"durationValue": "{{value}} h",
+			"copyFailed": "Copying failed. Please try again."
 		}
 	},
 	"help": {
@@ -1508,6 +1605,7 @@
 					}
 				},
 				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
+				"unavailable": "Signing in is not possible right now. Please try again in a few minutes.",
 				"email": {
 					"otp": {
 						"missing": "Please enter the code from your email for two-factor authentication."
@@ -1732,10 +1830,12 @@
 		},
 		"thread": {
 			"unknownRoot": "Earlier message",
+			"targetLabel": "Destination: Thread",
 			"listToggle": "Threads",
 			"replies": "{{count}} replies",
 			"title": "Thread",
-			"placeholder": "Reply in thread"
+			"placeholder": "Reply in thread",
+			"open": "Open thread"
 		},
 		"deliveryStatus": {
 			"sent": "Sent"
@@ -1777,6 +1877,65 @@
 		"warning": "Warning"
 	},
 	"notifications": {
+		"displayFilter": {
+			"button": "List settings",
+			"buttonCustomised": "List settings changed",
+			"title": "View",
+			"description": "Which kinds this list shows, which get a chip and how they sound.",
+			"showColumn": "In the list",
+			"pillColumn": "Show",
+			"soundColumn": "Sound",
+			"soundKind": "Play tone: {{kind}}",
+			"soundMenu": "Choose tone: {{kind}}",
+			"soundDefault": "Default",
+			"pillMenu": "Choose display: {{kind}}",
+			"liveChatDynamic": "Dynamic",
+			"liveChatFixed": "Pinned",
+			"pillOff": "Off",
+			"pillOn": "On",
+			"placeholderHint": "Coming soon.",
+			"showKind": "In the list: {{kind}}",
+			"pillKind": "Pill: {{kind}}",
+			"otherFixed": "Other is always shown so nothing disappears unnoticed.",
+			"pillNotApplicable": "No pill for this kind",
+			"autoRead": "Mark hidden items as read immediately",
+			"autoReadDescription": "Applies to this list only. No read receipts are sent to chats.",
+			"autoReadSessions": "Don't count hidden chats as unread",
+			"autoReadSessionsDescription": "Applies to this list and its counter only. Chats are not marked read and no read receipts are sent.",
+			"reset": "Reset to my defaults",
+			"done": "Done",
+			"profileLink": "Edit standards",
+			"overrideNotice": "This list deviates from your standards.",
+			"resetShort": "Reset",
+			"otherChip": "More",
+			"readOnlyHint": "These settings were saved by a newer app version. Please update the app to change them.",
+			"viewTitle": "Filter button display options",
+			"viewIcons": "Icons",
+			"viewLabels": "Icons + text",
+			"viewText": "Text",
+			"autoSort": "Move unread to the left",
+			"autoSortDescription": "Chips with unread items move to the start of the row.",
+			"deactivatedHint": "Switched off by your organisation. Existing conversations stay visible until they are archived.",
+			"deactivatedChip": "{{kind}} (switched off by your organisation)",
+			"deactivatedNotice": "{{kind}} is switched off for your organisation. Existing conversations stay visible until they are archived; new ones cannot be created.",
+			"badgeHiddenHint": "up to {{count}} hidden",
+			"hiddenActiveRow": "Hidden by your display filter",
+			"profileTitle": "Display filters",
+			"profileDescription": "Defaults per list, valid on every device. A list can temporarily override them through its filter button.",
+			"overrideActive": "This list currently uses its own filter; the defaults apply once it is reset.",
+			"eventTypesTitle": "Fine-tune by event type",
+			"eventTypesDescription": "Hide single event types of the timeline. Also applies while the list uses its own filter.",
+			"eventTypeShow": "Show {{type}}",
+			"applyToAll": "Apply to other lists",
+			"applyToAllDescription": "Copies \"mark hidden items as read\" to Timeline and Conversations and the live-chat setting to Conversations and Requests.",
+			"otherKind": "Other",
+			"sections": {
+				"timeline": "Timeline",
+				"sessions": "Conversations",
+				"requests": "Requests"
+			},
+			"liveChatSession": "While open"
+		},
 		"families": {
 			"all": "All",
 			"requests": "Requests",
@@ -2175,6 +2334,13 @@
 				"viaSidebar": {
 					"label": "Activate Live Chat via the menu bar",
 					"description": "When enabled, you switch your Live Chat availability on and off from the menu bar (sidebar) instead of here. The availability toggle above is then disabled, and the Live Chat icon stays permanently visible in the sidebar — clicking it only changes its state, it never disappears. When disabled, Live Chat is controlled here in My Profile as before."
+				},
+				"lost": {
+					"title": "You are no longer reachable in live chat",
+					"refused": "The server refused your availability. Switch live chat on again. If that does not work, sign in again.",
+					"sessionExpired": "Your sign-in has expired. Sign in again, then switch live chat back on.",
+					"leaseLost": "The server no longer lists you as available. Switch live chat on again to be reachable.",
+					"connectionLost": "The connection to the server was lost for more than two minutes. Switch live chat on again once you are back online."
 				}
 			},
 			"masterKey": {
@@ -2192,7 +2358,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirm new password"
+						"label": "Confirm new password",
+						"dialogLabel": "Repeat the new password"
 					},
 					"insecure": "Your password is not secure.",
 					"instructions": "<span class=\"text--bold\">Your password must meet the following criteria to guarantee a protected consultation:</span><ul class=\"pl--2 my--1\"><li>upper/lower case</li><li>min. one number</li><li>min. one special character (e.g.: ?, !, +, #, &, ...)</li><li>min. 9 characters</li></ul>",
@@ -2204,7 +2371,9 @@
 					},
 					"old": {
 						"incorrect": "Your password is not correct.",
-						"label": "Current password"
+						"label": "Current password",
+						"hint": "The password you have just signed in with.",
+						"dialogLabel": "Previous password"
 					},
 					"overlay": {
 						"button": {
@@ -2213,9 +2382,19 @@
 						"headline": "You have successfully changed your password. You will now be redirected to the login."
 					},
 					"same": "Your password is identical.",
+					"sameAsOld": "Please choose a new password – this is your current one.",
 					"secure": "Your password is safe.",
 					"subtitle": "If you wish, you can change your password here. First enter your current password to set a new one.",
-					"title": "Password"
+					"title": "Password",
+					"criteria": {
+						"title": "Your new password needs",
+						"mixedCase": "upper and lower case letters",
+						"number": "at least one number",
+						"specialChar": "one special character (?, !, +, # …)",
+						"minLength": "at least 9 characters",
+						"met": "met"
+					},
+					"submitAndContinue": "Save password and continue"
 				}
 			},
 			"security": {
@@ -2403,7 +2582,7 @@
 				"alwaysSent": {
 					"title": "You always receive these emails:",
 					"security": "Signing in and access — password reset, sign-in link, one-time code, changes to your account.",
-					"legal": "Contractual matters — for example a data processing agreement to sign.",
+					"legal": "Contractual matters — for example contract documents to sign.",
 					"outage": "Platform outages."
 				}
 			}
@@ -2530,7 +2709,9 @@
 				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
-				"confirmLabel": "I have saved the key securely."
+				"confirmLabel": "I have saved the key securely.",
+				"copied": "Copied ✓",
+				"done": "Done"
 			},
 			"status": {
 				"ok": "✓ Key backup is active. Your history stays readable on new devices."
@@ -2545,7 +2726,8 @@
 				"inputLabel": "Recovery key",
 				"invalidKey": "This recovery key is invalid. Please check your entry.",
 				"error": "Recovery failed. Please try again.",
-				"success": "{{count}} message keys restored."
+				"success": "{{count}} message keys restored.",
+				"cta": "Restore history"
 			},
 			"reset": {
 				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
@@ -2911,6 +3093,13 @@
 					"title": "Offender Support",
 					"description": "Support for questions around offending, restart, and daily life."
 				}
+			},
+			"search": {
+				"open": "Search topics",
+				"placeholder": "Search a topic or keyword",
+				"close": "Close search",
+				"noResults": "No matching topic found. Try another word.",
+				"matchedBy": "matches “{{term}}”"
 			}
 		},
 		"account": {
@@ -3073,6 +3262,12 @@
 			"done": "completed",
 			"active": "current step",
 			"pending": "not started"
+		},
+		"errors": {
+			"ups": {
+				"text": "Sorry, something went wrong. Please reload the page and try again.",
+				"title": "Oops!"
+			}
 		}
 	},
 	"releaseNote": {
@@ -3420,6 +3615,10 @@
 			"video": "Video",
 			"file": "File",
 			"first_response": "First response",
+			"channel": {
+				"thread": "Thread:",
+				"supervision": "Supervision:"
+			},
 			"registered": {
 				"tab": "Initial inquiries"
 			}
@@ -3482,14 +3681,17 @@
 				"unread": "Unread",
 				"drafts": "Drafts",
 				"nearby": "Mail",
+				"other": "More",
 				"create": "Create",
+				"group": "Filters",
 				"archive": "Archived",
 				"oneToOne": "1-1 counseling",
 				"liveChat": "Live chat",
 				"internalGroup": "Internal group chat",
 				"groups": "Conversation circle",
 				"supervision": "Supervision",
-				"chats": "Mail"
+				"chats": "Mail",
+				"createRow": "Create chat"
 			},
 			"emptyFilterResult": "No consultations match your search or filters.",
 			"draftMetadataOnly": "Unsent message saved."
@@ -3497,8 +3699,17 @@
 		"anonymous": {
 			"tag": "Anonymous"
 		},
+		"supervision": {
+			"badge": "Supervision – you read along in this chat",
+			"supervisedBy": "Supervision: {{name}}"
+		},
 		"resizeHandle": {
+			"ariaLabel": "Resize the sessions list: drag to resize, hold or double-click to collapse or expand, Up and Down scroll the list.",
 			"scrollAriaLabel": "Drag to scroll the list."
+		},
+		"rail": {
+			"unreadCount": "{{count}} new messages",
+			"unreadCount_one": "{{count}} new message"
 		}
 	},
 	"statusOverlay": {
@@ -3740,11 +3951,12 @@
 					"missingQr": "The QR code is currently unavailable. Use the manual key instead.",
 					"missingSecret": "The key is currently unavailable.",
 					"or": "or",
-					"qrAlt": "QR code for the authenticator app"
+					"qrAlt": "QR code for the authenticator app",
+					"title": "Connect the app to ORISO"
 				},
 				"install": {
 					"android": "Download from Google Play Store",
-					"copy": "Install Google Authenticator or Microsoft Authenticator on your smartphone or tablet. Both apps support the security code for Online-Beratung.",
+					"copy": "You need one of these two apps on your smartphone or tablet. Already installed? Then go straight on.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/us/app/google-authenticator/id388497605",
@@ -3755,20 +3967,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/us/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Install an authenticator app",
+					"note": "free of charge, usable without an account",
+					"done": "The app is installed – continue"
 				},
 				"success": {
 					"title": "App authentication successfully set up."
 				},
 				"verify": {
 					"copy": "Enter the six-digit code from the app to complete setup.",
-					"input": "One-time code"
+					"input": "One-time code",
+					"title": "Check the code"
 				}
 			},
 			"decision": {
 				"app": "Connect securely via app",
 				"copy": "Protect your account with a second factor. The authenticator app is the more secure option; alternatively you can receive codes by email.",
-				"email": "Use email code (less secure)"
+				"email": "Use email code (less secure)",
+				"title": "Choose your second factor"
 			},
 			"email": {
 				"connect": {
@@ -3776,12 +3993,14 @@
 					"input": "One-time code",
 					"resend": "Send new code",
 					"resendTitle": "Did it not work?",
-					"sent": "New code sent."
+					"sent": "New code sent.",
+					"title": "Check the code"
 				},
 				"select": {
 					"copy": "Enter the email address where we should send your security code.",
 					"hint": "If you change the email address, future notifications will also be sent to this address.",
-					"input": "Email address"
+					"input": "Email address",
+					"title": "Set up the second factor by email"
 				},
 				"success": {
 					"title": "Email authentication successfully set up."
@@ -3806,7 +4025,9 @@
 				"select": "Select",
 				"verify": "Verify"
 			},
-			"title": "What connection do you prefer?"
+			"success": {
+				"title": "Second factor set up"
+			}
 		},
 		"overlayButton": {
 			"back": "Back",
@@ -3829,7 +4050,11 @@
 				"label": "Your second factor"
 			}
 		},
-		"title": "Two-factor authentication"
+		"title": "Two-factor authentication",
+		"required": {
+			"copy": "Please set up a second factor (app or e-mail) now. Only then is the account yours alone and you can start counselling.",
+			"title": "Second factor required"
+		}
 	},
 	"typingIndicator": {
 		"multipleUsers": {
@@ -4425,6 +4650,46 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"title": "Supervision",
+			"systemNotice": "Supervision by {{name}} is active. You can request a different supervisor via the plus next to the mail icon.",
+			"headerLabel": "Supervision · {{name}}",
+			"role": {
+				"supervisor": "Supervision",
+				"consultant": "Counselling"
+			},
+			"privacyHint": "This channel is never visible to the person seeking advice.",
+			"close": "Close supervision",
+			"collapse": "Minimise supervision",
+			"dragHandle": "Move supervision pane – arrow keys move, Shift + arrow keys resize",
+			"unread": "{{count}} unread messages",
+			"unread_one": "1 unread message",
+			"empty": {
+				"title": "No messages yet",
+				"hint": "Talk confidentially with {{name}} about this counselling here."
+			},
+			"composer": {
+				"placeholder": "Message to {{name}} …",
+				"send": "Send",
+				"failed": "Sending failed – please try again."
+			},
+			"kind": {
+				"supervision": "Supervision",
+				"thread": "Thread"
+			},
+			"mini": {
+				"expand": "Open {{kind}}",
+				"newMessage": "New message",
+				"dragHandle": "Move miniature – arrow keys"
+			},
+			"stage": {
+				"divider": "Divider – arrow keys change the supervision width, Home and End set minimum and maximum",
+				"mainPane": "Counselling chat",
+				"secondaryPane": "Side room"
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team discussion",
 		"startHint": "Start discussion",
@@ -4446,6 +4711,11 @@
 			"title": "This invite link can no longer be used",
 			"generic": "Invite link could not be used",
 			"missingToken": "This invite link is incomplete"
+		},
+		"resume": {
+			"title": "Connection interrupted",
+			"message": "Your session could not be loaded. Please try again.",
+			"retry": "Try again"
 		}
 	},
 	"anonymousConsent": {
@@ -4454,7 +4724,8 @@
 		"headline": "A warm welcome",
 		"label": {
 			"and": "and",
-			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this."
+			"text": "I have taken note of the {{legal_links}}. This website uses cookies for authentication and navigation. I agree with this.",
+			"missingPolicy": "This counselling centre currently has no privacy policy of its own on file. If you continue, you use the service at your own risk. By selecting the checkbox, you agree to this website's {{legal_links}}. This website uses cookies."
 		},
 		"subline": "Please confirm our privacy policy."
 	},
@@ -4530,16 +4801,18 @@
 			"headline": "Your displayed name",
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
-		}
+		},
+		"unavailableInRoom": "First response – not available in this room."
 	},
 	"dpaSign": {
-		"title": "Sign contract documents",
-		"subtitle": "Please read the contract documents in full and then confirm the details of the person signing.",
+		"title": "Review and confirm contract documents",
+		"subtitle": "Please read the contract documents in full, provide your details, and then confirm.",
+		"signerName": "Full name",
 		"loadingContract": "Loading contract documents…",
 		"signerHeading": "Confirmation by authorised signatory",
-		"signingFor": "You are signing on behalf of:",
+		"signingFor": "You are acting on behalf of:",
 		"accept": "I have read the contract documents shown above and confirm them as binding.",
-		"submit": "Confirm and sign",
+		"submit": "Send confirmation",
 		"submitting": "Saving…",
 		"success": "The confirmation of the contract documents has been saved.",
 		"error": {
@@ -4563,7 +4836,42 @@
 				"later": "Later",
 				"openVault": "Open vault",
 				"restoring": "Restoring…"
+			},
+			"snackbar": {
+				"close": "Dismiss notice"
 			}
+		},
+		"saveReminder": {
+			"title": "Save an additional recovery key",
+			"pending": "Your enquiry was sent. Key backup is still being set up.",
+			"unavailable": "Your enquiry was sent. The additional key backup is not ready yet.",
+			"show": "Show key",
+			"later": "Later",
+			"confirm": "I have stored the key safely",
+			"retry": "Check backup in security settings",
+			"busy": "Your enquiry was sent successfully. Recovery is currently being processed in another tab or in the background."
+		},
+		"passwordRecovery": {
+			"ready": "Recovery using your login password is set up. An additional saved recovery key remains valid.",
+			"needs-password": "Password recovery has not been verified in this session. Sign in again or set it up with your existing recovery key.",
+			"needs-recovery-key": "Your previous history needs your recovery key on this device.",
+			"retryable-failure": "Key backup could not be completed. You can still write your enquiry and check backup again in security settings.",
+			"settings": "Security settings",
+			"reauthenticate": "Sign out and sign in again",
+			"passwordChangeFailed": "The password could not be changed safely. Check the old password and, if needed, restore your history with the recovery key first. After a connection loss the password may already have changed.",
+			"enrollmentFailed": "Setup could not be completed. Check your password and one-time code if required, then try again.",
+			"enrollmentExplanation": "Protect your existing recovery key with your current login password. Your saved key remains valid. A stolen encrypted backup can be opened using the password without a second factor.",
+			"loginPassword": "Current login password",
+			"repeatPassword": "Repeat login password",
+			"otp": "One-time code",
+			"enroll": "Confirm password and set up recovery",
+			"device-ready": "This device can use its existing keys. Password recovery will be verified at the next password login.",
+			"repairBlocked": "The existing password backups cannot be safely replaced here. Your conversation history remains accessible with the recovery key. Setup with a new password is currently unavailable.",
+			"idle": "Recovery status has not been checked yet.",
+			"pending": "Recovery is being checked. You can continue using the app.",
+			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed.",
+			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
 		}
 	},
 	"accountInvite": {
@@ -4740,7 +5048,9 @@
 				"access": "Your access for this conversation",
 				"waiting": "Waiting room — looking for a free counsellor",
 				"accepted": "A counsellor has taken your conversation",
-				"closed": "Closed right now"
+				"closed": "Closed right now",
+				"checking": "Who is live right now?",
+				"waitingForLive": "Waiting until someone is live"
 			},
 			"access": {
 				"headline": "Your name for today.",
@@ -4778,7 +5088,8 @@
 				"later": "Later",
 				"mail": "Write a request to a counselling centre",
 				"mailShort": "Write a request",
-				"closedDay": "closed"
+				"closedDay": "closed",
+				"wait": "I'll wait"
 			},
 			"steps": {
 				"wait": {
@@ -4793,7 +5104,32 @@
 					"title": "Anonymous, and gone afterwards",
 					"text": "Only your user ID is visible. After 48 hours everything is deleted."
 				}
+			},
+			"checking": {
+				"text": "Checking who is live right now …",
+				"waiting": "Waiting with you until someone is live …"
+			},
+			"staff": {
+				"headline": "You are signed in as a counsellor.",
+				"text": "This link would sign you out here and you would no longer be live. To test it, please open it in a private window."
 			}
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Your account was set up for you, so someone else still knows the first password. Choose one now that only you know.",
+			"title": "Your own password"
+		}
+	},
+	"accountSetup": {
+		"required": {
+			"logout": "Log out instead"
+		},
+		"progress": {
+			"label": "Setup in two steps",
+			"password": "Your own password",
+			"twoFactor": "Second factor",
+			"done": "done"
 		}
 	}
 }

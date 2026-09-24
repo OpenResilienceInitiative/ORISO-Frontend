@@ -11,22 +11,36 @@ import type {
 	ChatAttachment,
 	ChatFile
 } from '../components/message/chatAttachmentTypes';
+import { isUndecryptedRoomEvent } from './matrixDecryptionFailure';
 
-const getMatrixMediaDownloadPath = (contentUrl: string): string => {
+/**
+ * Where an attachment's bytes come from.
+ *
+ * `downloadUrl` is a URL a browser can use on its own — the content scanner,
+ * or a non-Matrix URL that was already absolute. `mxcUrl` is media that lives
+ * on the homeserver and, since authenticated media (#1487), has no such URL at
+ * all: it must be fetched with the Matrix access token attached and handed on
+ * as an object URL. That decision belongs to the component that holds a Matrix
+ * client, not to this formatter, so the `mxc://` URI is carried through
+ * untouched instead of being flattened into a path here.
+ */
+const getMatrixMediaRoute = (
+	contentUrl: string
+): { downloadUrl: string; mxcUrl?: string } => {
 	if (!contentUrl.startsWith('mxc://')) {
-		return contentUrl;
+		return { downloadUrl: contentUrl };
 	}
 
 	// Where a content scanner is deployed, unencrypted media goes through it
 	// too (ADR-019) — otherwise legacy attachments from before the E2EE
-	// migration would keep a route that nothing inspects.
+	// migration would keep a route that nothing inspects. The scanner serves
+	// the bytes itself, so that URL needs no Matrix token.
 	const scannedPath = getScannedMediaDownloadPath(contentUrl);
 	if (scannedPath) {
-		return scannedPath;
+		return { downloadUrl: scannedPath };
 	}
 
-	const [serverName, mediaId] = contentUrl.substring(6).split('/');
-	return `/_matrix/media/r0/download/${serverName}/${mediaId}`;
+	return { downloadUrl: '', mxcUrl: contentUrl };
 };
 
 export const formatMatrixTimelineEvent = (
@@ -64,18 +78,16 @@ export const formatMatrixTimelineEvent = (
 	}
 
 	const content = event?.getClearContent?.() || event?.getContent?.() || {};
-	const isUndecryptedEvent =
-		eventType === 'm.room.encrypted' && !content?.msgtype;
+	const isUndecryptedEvent = isUndecryptedRoomEvent(event);
 	// Relations foundation (#435): replies are the m.in_reply_to relation.
 	// The legacy Element quote-fallback in the body would duplicate the quote
 	// we render from the relation, so it is stripped for reply events.
 	const replyToEventId = getReplyToEventId(content);
-	const rawTextContent =
-		content?.msgtype === 'm.text'
+	const rawTextContent = isUndecryptedEvent
+		? encryptedFallbackText
+		: content?.msgtype === 'm.text'
 			? content?.formatted_body || content?.body || ''
-			: isUndecryptedEvent
-				? encryptedFallbackText
-				: content?.body || '';
+			: content?.body || '';
 	const textMessageContent = replyToEventId
 		? stripReplyFallback(rawTextContent)
 		: rawTextContent;
@@ -114,11 +126,11 @@ export const formatMatrixTimelineEvent = (
 
 	const mediaUrl = content?.file?.url || content?.url;
 	if (mediaUrl && content?.msgtype !== 'm.text') {
-		const downloadPath = getMatrixMediaDownloadPath(mediaUrl);
+		const mediaRoute = getMatrixMediaRoute(mediaUrl);
 		const isEncryptedMedia = Boolean(content?.file?.url);
 		const attachment: ChatAttachment = {
 			title: content.body,
-			downloadUrl: downloadPath,
+			downloadUrl: mediaRoute.downloadUrl,
 			type: content.msgtype === 'm.image' ? 'image' : 'file',
 			mediaType: content.info?.mimetype,
 			size: content.info?.size
@@ -132,6 +144,9 @@ export const formatMatrixTimelineEvent = (
 		) {
 			attachment.width = content.info.w;
 			attachment.height = content.info.h;
+		}
+		if (mediaRoute.mxcUrl) {
+			attachment.mxcUrl = mediaRoute.mxcUrl;
 		}
 		if (isEncryptedMedia) {
 			attachment.encryptedFile = content.file;

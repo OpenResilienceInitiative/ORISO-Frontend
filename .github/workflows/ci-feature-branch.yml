@@ -1,5 +1,15 @@
 name: Frontend Branch Validation
 
+# This workflow and ci-pull-request.yml run the identical `node-build` on the
+# same commit. Measured on one pushed commit whose only change was a workflow
+# file: 6 m 17 s here and 8 m 10 s there, for the same output. Once a pull
+# request exists it validates every push to the branch anyway, and its checks
+# are the ones branch protection reads — so this run proves nothing twice.
+#
+# The `gate` job below costs a few seconds and skips the build when a pull
+# request already covers the commit. A branch without one still gets validated,
+# which is the only reason this workflow exists.
+
 on:
   push:
     branches-ignore:
@@ -13,8 +23,39 @@ concurrency:
   group: frontend-branch-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read # the gate asks whether a PR already covers this commit
+
 jobs:
+  gate:
+    name: check whether a pull request already validates this commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+
+    steps:
+      - name: Look for an open pull request on this commit
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # `commits/{sha}/pulls` answers for the exact commit, so a branch that
+          # is pushed but not yet proposed still builds.
+          open_prs="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/pulls" \
+              --jq '[.[] | select(.state == "open")] | length')"
+          if [ "${open_prs}" -gt 0 ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipped: ${open_prs} open pull request(s) already validate this commit."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   validate:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     name: lint, type-check, build and test frontend
     runs-on: ubuntu-latest
     # Success median is ~8 min. Without a cap, a hung vitest process runs into
