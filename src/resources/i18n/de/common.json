@@ -4770,6 +4770,18 @@
 			"send": "Die Nachricht konnte nicht gesendet werden."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Dieser Einladungslink kann nicht mehr verwendet werden",
+			"generic": "Der Einladungslink konnte nicht verwendet werden",
+			"missingToken": "Der Einladungslink ist unvollständig"
+		},
+		"resume": {
+			"title": "Verbindung unterbrochen",
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
+			"retry": "Erneut versuchen"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Bestätigen",
 		"description": "Danach kann eine beratende Person einen Chat mit Ihnen beginnen.",
@@ -5165,13 +5177,6 @@
 				"headline": "Sie sind als Beraterin angemeldet.",
 				"text": "Dieser Link würde Sie hier abmelden und Sie wären nicht mehr live. Öffnen Sie ihn zum Testen bitte in einem privaten Fenster."
 			}
-		}
-	},
-	"inviteLink": {
-		"resume": {
-			"title": "Verbindung unterbrochen",
-			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuchen Sie es erneut.",
-			"retry": "Erneut versuchen"
 		}
 	},
 	"passwordChange": {

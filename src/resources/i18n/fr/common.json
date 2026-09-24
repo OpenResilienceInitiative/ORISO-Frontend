@@ -4748,6 +4748,18 @@
 			"send": "Le message n'a pas pu être envoyé."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Ce lien d’invitation ne peut plus être utilisé",
+			"generic": "Le lien d’invitation n’a pas pu être utilisé",
+			"missingToken": "Ce lien d’invitation est incomplet"
+		},
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Confirmer",
 		"description": "Ensuite, une personne de notre équipe de conseil peut démarrer un chat avec vous.",
@@ -5173,13 +5185,6 @@
 				"headline": "Vous êtes connectée en tant que conseillère.",
 				"text": "Ce lien vous déconnecterait ici et vous ne seriez plus en ligne. Pour le tester, ouvrez-le dans une fenêtre privée."
 			}
-		}
-	},
-	"inviteLink": {
-		"resume": {
-			"title": "Connexion interrompue",
-			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
-			"retry": "Réessayer"
 		}
 	},
 	"passwordChange": {

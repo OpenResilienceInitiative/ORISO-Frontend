@@ -4748,6 +4748,18 @@
 			"send": "Mesaj gönderilemedi."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Bu davet bağlantısı artık kullanılamıyor",
+			"generic": "Davet bağlantısı kullanılamadı",
+			"missingToken": "Bu davet bağlantısı eksik"
+		},
+		"resume": {
+			"title": "Bağlantı kesildi",
+			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
+			"retry": "Tekrar dene"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Onaylayın",
 		"description": "Danışmanlarımız daha sonra sizinle bir sohbet başlatabilir.",
@@ -5173,13 +5185,6 @@
 				"headline": "Danışman olarak oturum açtınız.",
 				"text": "Bu bağlantı sizi burada oturumdan çıkarır ve artık çevrimiçi olmazsınız. Test etmek için lütfen gizli bir pencerede açın."
 			}
-		}
-	},
-	"inviteLink": {
-		"resume": {
-			"title": "Bağlantı kesildi",
-			"message": "Oturumunuz yüklenemedi. Lütfen tekrar deneyin.",
-			"retry": "Tekrar dene"
 		}
 	},
 	"passwordChange": {

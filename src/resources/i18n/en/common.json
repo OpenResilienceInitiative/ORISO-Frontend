@@ -4689,6 +4689,18 @@
 			"send": "The message could not be sent."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "This invite link can no longer be used",
+			"generic": "Invite link could not be used",
+			"missingToken": "This invite link is incomplete"
+		},
+		"resume": {
+			"title": "Connection interrupted",
+			"message": "Your session could not be loaded. Please try again.",
+			"retry": "Try again"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Confirm",
 		"description": "After that, a counsellor can start a chat with you.",
@@ -5084,13 +5096,6 @@
 				"headline": "You are signed in as a counsellor.",
 				"text": "This link would sign you out here and you would no longer be live. To test it, please open it in a private window."
 			}
-		}
-	},
-	"inviteLink": {
-		"resume": {
-			"title": "Connection interrupted",
-			"message": "Your session could not be loaded. Please try again.",
-			"retry": "Try again"
 		}
 	},
 	"passwordChange": {
