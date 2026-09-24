@@ -1,5 +1,6 @@
 /**
- * Holds the keys that seal login recovery handoffs, in IndexedDB — the only
+ * Holds the keys that seal login recovery handoffs (and the parked recovery
+ * key, `pendingRecoveryKeyStore`), in IndexedDB — the only
  * browser store that keeps a non-extractable CryptoKey across a document load.
  * Separate from session storage, so the ciphertext alone opens nothing.
  *
@@ -83,6 +84,14 @@ export const takeHandoffKey = async (id: string): Promise<CryptoKey | null> => {
 		return read;
 	});
 	return entry?.key ?? null;
+};
+
+/** Reads without consuming — for sealed values that live longer than one load. */
+export const readHandoffKey = async (id: string): Promise<CryptoKey | null> => {
+	const entry = (await run('readonly', (store) => store.get(id))) as
+		| Entry
+		| undefined;
+	return entry && entry.expiresAt > Date.now() ? entry.key : null;
 };
 
 export const dropHandoffKey = (id: string): void => {

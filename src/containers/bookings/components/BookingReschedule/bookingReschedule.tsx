@@ -6,9 +6,11 @@ import {
 	hasUserAuthority,
 	UserDataContext
 } from '../../../../globalState';
+import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../../../hooks/useAppConfig';
 
 export const BookingReschedule = () => {
+	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -43,7 +45,7 @@ export const BookingReschedule = () => {
 				scrolling="false"
 				width="100%"
 				height="100%"
-				title="booking-reschedule"
+				title={t('booking.reschedule.iframeTitle')}
 			/>
 		)) ||
 		null

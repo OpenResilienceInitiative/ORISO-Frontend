@@ -51,6 +51,8 @@ export const emailType = {
 	/** The reassuring line under the CTA. */
 	footnote: { size: 14, line: 22, tracking: 0.25 },
 	caption: { size: 12, line: 18 },
+	/** A link spelled out under the button, for clients that break the button. */
+	copyLink: { size: 13, line: 20 },
 	button: { size: 16, line: 20, weight: 600 },
 	/** Wordmark next to the logo. */
 	brand: { size: 16, line: 24, weight: 600, tracking: 0.15 },

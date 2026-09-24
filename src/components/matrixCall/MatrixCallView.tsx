@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
 import { CallState } from 'matrix-js-sdk/lib/webrtc/call';
 import { matrixCallService } from '../../services/matrixCallService';
@@ -21,6 +22,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 	isVideoCall,
 	onCallEnd
 }) => {
+	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
 	const localVideoRef = useRef<HTMLVideoElement>(null);
 	const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -178,11 +180,11 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 					>
 						<path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
 					</svg>
-					<span>Call</span>
+					<span>{t('calls.title')}</span>
 				</div>
 				<button
 					className="matrix-call__fullscreen-btn"
-					title="Fullscreen"
+					title={t('calls.fullscreen')}
 				>
 					<svg
 						width="20"
@@ -235,7 +237,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 					<button
 						className={`matrix-call__control-btn ${isMuted ? 'matrix-call__control-btn--muted' : 'matrix-call__control-btn--dark'}`}
 						onClick={toggleMute}
-						title={isMuted ? 'Unmute' : 'Mute'}
+						title={isMuted ? t('calls.unmute') : t('calls.mute')}
 					>
 						{isMuted ? (
 							<svg
@@ -277,8 +279,8 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 							onClick={toggleVideo}
 							title={
 								isVideoMuted
-									? 'Turn on video'
-									: 'Turn off video'
+									? t('calls.turnOnVideo')
+									: t('calls.turnOffVideo')
 							}
 						>
 							<svg
@@ -324,7 +326,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 				{/* More options */}
 				<button
 					className="matrix-call__control-btn matrix-call__control-btn--dark"
-					title="More options"
+					title={t('calls.moreOptions')}
 				>
 					<svg
 						width="20"
@@ -342,7 +344,7 @@ export const MatrixCallView: React.FC<MatrixCallViewProps> = ({
 				<button
 					className="matrix-call__control-btn matrix-call__control-btn--hangup"
 					onClick={hangUp}
-					title="End call"
+					title={t('calls.endCall')}
 				>
 					<svg
 						width="20"

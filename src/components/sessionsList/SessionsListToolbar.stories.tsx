@@ -343,7 +343,9 @@ export const WithDisplayFilter: Story = {
 	render: () => <ToolbarWithDisplayFilter />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const button = canvas.getByRole('button', { name: 'Ansicht einstellen' });
+		const button = canvas.getByRole('button', {
+			name: 'Ansicht einstellen'
+		});
 		await expect(
 			button.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
@@ -409,7 +411,7 @@ const supervisionRow = (
 		user: { username: name } as ListItemInterface['user'],
 		session: {
 			id,
-			matrixRoomId: `!supervision-demo-${id}:oriso.org`,
+			matrixRoomId: `!supervision-demo-${id}:example.org`,
 			messagesRead: true,
 			conversationType: 'AGENCY_COUNSELLING',
 			...(supervision ? { supervision } : {})
