@@ -49,7 +49,10 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
 	const borderWidth = 2;
-	const minPadding = size >= 60 ? 8 : 2;
+	// A small floor only. The old 8px floor above 60px dates from SVGs with
+	// built-in margins; now it would clamp the per-icon overrides at 64px
+	// (LiveChatAccess, mobile AskerInfo) to the same padding as the default.
+	const minPadding = 2;
 	// The border is subtracted first, or small ringed avatars (24px in
 	// UserAvatar) shrink to ~50%.
 	const fraction = artworkFraction(iconPaddingFor(avatar.file));

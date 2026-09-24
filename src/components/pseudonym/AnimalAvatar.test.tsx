@@ -65,4 +65,15 @@ describe('AnimalAvatar artwork size (#1059)', () => {
 		) as HTMLElement;
 		expect(parseFloat(inner.style.width)).toBe(artworkBox(104));
 	});
+
+	it.each([48, 60, 64, 80])(
+		'keeps the per-icon distinction at %ipx',
+		(size) => {
+			const fox = artworkBox(size);
+			const alpaca = artworkBox(size, 'alpaca.svg');
+			const dolphin = artworkBox(size, 'dolphin.svg');
+			expect(alpaca).toBeGreaterThan(fox);
+			expect(dolphin).toBeGreaterThan(alpaca);
+		}
+	);
 });
