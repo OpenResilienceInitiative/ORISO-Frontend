@@ -21,17 +21,17 @@ describe('buildMatrixFileMessageContent', () => {
 				file,
 				encryptedFile,
 				null,
-				{ threadRootId: '$thread-root:oriso.org' }
+				{ threadRootId: '$thread-root:example.org' }
 			);
 
 			expect(content).toMatchObject({
 				msgtype,
 				'm.relates_to': {
 					'rel_type': 'm.thread',
-					'event_id': '$thread-root:oriso.org',
+					'event_id': '$thread-root:example.org',
 					'is_falling_back': true,
 					'm.in_reply_to': {
-						event_id: '$thread-root:oriso.org'
+						event_id: '$thread-root:example.org'
 					}
 				}
 			});

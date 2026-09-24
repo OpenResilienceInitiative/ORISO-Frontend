@@ -478,7 +478,7 @@ export const ReplyingToMessage: Story = {
 	render: () => (
 		<ComposerShell
 			replyTo={{
-				eventId: '$orig:matrix.oriso.org',
+				eventId: '$orig:matrix.example.org',
 				author: 'Maria K.',
 				text: 'Ich habe seit letzter Woche große Probleme mit meinem Vermieter und weiß nicht weiter.'
 			}}
@@ -580,7 +580,7 @@ export const EditingMessage: Story = {
 	render: () => (
 		<ComposerShell
 			editingMessage={{
-				eventId: '$orig:matrix.oriso.org',
+				eventId: '$orig:matrix.example.org',
 				text: EDITING_LONG_TEXT
 			}}
 			onCancelEdit={() => {}}
@@ -605,7 +605,7 @@ export const EditingMessageMobile: Story = {
 	render: () => (
 		<ComposerShell
 			editingMessage={{
-				eventId: '$orig:matrix.oriso.org',
+				eventId: '$orig:matrix.example.org',
 				text: EDITING_LONG_TEXT
 			}}
 			onCancelEdit={() => {}}

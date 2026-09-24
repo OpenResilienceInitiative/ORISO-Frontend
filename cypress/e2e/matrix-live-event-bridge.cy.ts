@@ -7,7 +7,7 @@ describe('Matrix live event bridge privacy', () => {
 	it('emits Matrix message metadata without forwarding plaintext bodies', () => {
 		const listeners: Record<string, Listener[]> = {};
 		const fakeClient = {
-			getUserId: () => '@consultant:oriso.org',
+			getUserId: () => '@consultant:example.org',
 			on: (eventType: string, callback: Listener) => {
 				listeners[eventType] = listeners[eventType] || [];
 				listeners[eventType].push(callback);
@@ -27,7 +27,7 @@ describe('Matrix live event bridge privacy', () => {
 		listeners['Room.timeline'][0](
 			{
 				getType: () => 'm.room.message',
-				getSender: () => '@asker:oriso.org',
+				getSender: () => '@asker:example.org',
 				getContent: () => ({
 					msgtype: 'm.text',
 					body: 'sensitive Matrix message body'
@@ -35,14 +35,14 @@ describe('Matrix live event bridge privacy', () => {
 				getId: () => '$event-id',
 				getTs: () => 1782302400000
 			},
-			{ roomId: '!room:oriso.org' },
+			{ roomId: '!room:example.org' },
 			false
 		);
 
 		expect(receivedEvents).to.deep.equal([
 			{
-				roomId: '!room:oriso.org',
-				sender: '@asker:oriso.org',
+				roomId: '!room:example.org',
+				sender: '@asker:example.org',
 				isOwnMessage: false,
 				msgtype: 'm.text',
 				eventId: '$event-id',
@@ -57,7 +57,7 @@ describe('Matrix live event bridge privacy', () => {
 	it('does not forward Matrix call answer payloads into legacy callbacks', () => {
 		const listeners: Record<string, Listener[]> = {};
 		const fakeClient = {
-			getUserId: () => '@consultant:oriso.org',
+			getUserId: () => '@consultant:example.org',
 			on: (eventType: string, callback: Listener) => {
 				listeners[eventType] = listeners[eventType] || [];
 				listeners[eventType].push(callback);
@@ -77,7 +77,7 @@ describe('Matrix live event bridge privacy', () => {
 		listeners['Room.timeline'][0](
 			{
 				getType: () => 'm.call.answer',
-				getSender: () => '@asker:oriso.org',
+				getSender: () => '@asker:example.org',
 				getContent: () => ({
 					call_id: 'call-123',
 					answer: {
@@ -87,7 +87,7 @@ describe('Matrix live event bridge privacy', () => {
 				getId: () => '$answer-event-id',
 				getTs: () => 1782302401000
 			},
-			{ roomId: '!room:oriso.org' },
+			{ roomId: '!room:example.org' },
 			false
 		);
 
