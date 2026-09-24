@@ -411,7 +411,7 @@ it.each(['busy', 'work-limit'])(
 		expect(
 			await screen.findByText(
 				kind === 'busy'
-					? 'profile.encryption.setup.busy'
+					? /gerade schon eingerichtet/
 					: 'encryption.passwordRecovery.retryable-failure'
 			)
 		).toBeTruthy();
