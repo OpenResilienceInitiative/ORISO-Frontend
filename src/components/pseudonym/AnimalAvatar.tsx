@@ -18,7 +18,10 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
 	const borderWidth = 2;
 	const minPadding = size >= 60 ? 8 : 2;
-	const padding = Math.max(minPadding, Math.round(size * 0.12));
+	// The SVGs are cropped to their artwork (no built-in margin), so this
+	// padding alone sets how much of the circle the animal fills: ~64%, large
+	// and even across the set, yet clear of the rim.
+	const padding = Math.max(minPadding, Math.round(size * 0.16));
 	const innerSize = Math.max(0, size - padding * 2 - borderWidth * 2);
 
 	useEffect(() => {
