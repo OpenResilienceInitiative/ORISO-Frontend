@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { callManager, CallData } from '../../services/CallManager';
 import { matrixCallService } from '../../services/matrixCallService';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -28,6 +29,7 @@ const FLOATING_MIN = { width: 300, height: 400 };
 const DEFAULT_VIDEO_ASPECT = 16 / 9;
 
 export const FloatingCallWidget: React.FC = () => {
+	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
 	const [callData, setCallData] = useState<CallData | null>(null);
 	const [isMuted, setIsMuted] = useState(false);
@@ -236,10 +238,14 @@ export const FloatingCallWidget: React.FC = () => {
 			})
 			.catch((err) => {
 				// console.error("Failed to start call:", err);
-				alert(`Failed to start call: ${(err as Error).message}`);
+				alert(
+					t('calls.widget.startFailed', {
+						message: (err as Error).message
+					})
+				);
 				callManager.endCall();
 			});
-	}, [callData]);
+	}, [callData, t]);
 
 	// Re-bind media elements whenever the call connects or feeds update.
 	// Audio-only calls keep `<video>` elements hidden but they must exist for playback.
@@ -388,7 +394,11 @@ export const FloatingCallWidget: React.FC = () => {
 			setTimeout(() => forceUpdate((prev) => prev + 1), 100);
 		} catch (err) {
 			// console.error("Failed to answer:", err);
-			alert(`Failed to answer: ${(err as Error).message}`);
+			alert(
+				t('calls.widget.answerFailed', {
+					message: (err as Error).message
+				})
+			);
 			callManager.endCall();
 		}
 	};
@@ -466,7 +476,9 @@ export const FloatingCallWidget: React.FC = () => {
 							<path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
 						</svg>
 						<span>
-							{callData.isVideo ? 'Video Call' : 'Audio Call'}
+							{callData.isVideo
+								? t('calls.videoCall')
+								: t('calls.audioCall')}
 						</span>
 					</div>
 
@@ -479,8 +491,8 @@ export const FloatingCallWidget: React.FC = () => {
 									e.stopPropagation();
 									applyAutoFit(videoAspect);
 								}}
-								title="Auto-fit video"
-								aria-label="Auto-fit video to window"
+								title={t('calls.widget.autoFit')}
+								aria-label={t('calls.widget.autoFitAria')}
 							>
 								<svg
 									width="18"
@@ -499,7 +511,7 @@ export const FloatingCallWidget: React.FC = () => {
 								e.stopPropagation();
 								toggleFullscreen();
 							}}
-							title="Fullscreen"
+							title={t('calls.fullscreen')}
 						>
 							<svg
 								width="18"
@@ -569,7 +581,7 @@ export const FloatingCallWidget: React.FC = () => {
 							<button
 								className="call-btn answer-btn"
 								onClick={handleAnswer}
-								title="Answer"
+								title={t('calls.answer')}
 							>
 								<svg
 									width="20"
@@ -583,7 +595,7 @@ export const FloatingCallWidget: React.FC = () => {
 							<button
 								className="call-btn reject-btn"
 								onClick={handleReject}
-								title="Reject"
+								title={t('calls.reject')}
 							>
 								<svg
 									width="20"
@@ -601,7 +613,11 @@ export const FloatingCallWidget: React.FC = () => {
 							<button
 								className={`call-btn ${isMuted ? 'muted' : ''}`}
 								onClick={toggleMute}
-								title={isMuted ? 'Unmute' : 'Mute'}
+								title={
+									isMuted
+										? t('calls.unmute')
+										: t('calls.mute')
+								}
 							>
 								<svg
 									width="20"
@@ -630,8 +646,8 @@ export const FloatingCallWidget: React.FC = () => {
 									onClick={toggleVideo}
 									title={
 										isVideoOff
-											? 'Turn on video'
-											: 'Turn off video'
+											? t('calls.turnOnVideo')
+											: t('calls.turnOffVideo')
 									}
 								>
 									<svg
@@ -670,7 +686,7 @@ export const FloatingCallWidget: React.FC = () => {
 							<button
 								className="call-btn hangup-btn"
 								onClick={handleHangup}
-								title="End call"
+								title={t('calls.endCall')}
 							>
 								<svg
 									width="20"
@@ -696,7 +712,7 @@ export const FloatingCallWidget: React.FC = () => {
 									? 'horizontal'
 									: 'vertical'
 							}
-							aria-label={`Resize video call window (${edge})`}
+							aria-label={t('calls.resizeAria', { edge })}
 							onPointerDown={(e) =>
 								handleResizePointerDown(e, edge)
 							}

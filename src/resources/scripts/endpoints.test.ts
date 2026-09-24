@@ -8,7 +8,7 @@ const loadEndpoints = async (
 	vi.resetModules();
 	vi.stubEnv('NODE_ENV', nodeEnv);
 	vi.stubEnv('REACT_APP_KEYCLOAK_REALM', 'online-beratung');
-	vi.stubEnv('REACT_APP_API_URL', 'https://api.oriso.org');
+	vi.stubEnv('REACT_APP_API_URL', 'https://api.example.org');
 
 	for (const [key, value] of Object.entries(env)) {
 		if (value === undefined) {
@@ -44,10 +44,10 @@ describe('endpoints service origins', () => {
 			'http://localhost:8082/service/conversations/anonymous/123'
 		);
 		expect(endpoints.tenantServiceBase).toBe(
-			'https://api.oriso.org/service/tenant'
+			'https://api.example.org/service/tenant'
 		);
 		expect(endpoints.topicsData).toBe(
-			'https://api.oriso.org/service/topic/public'
+			'https://api.example.org/service/topic/public'
 		);
 	});
 
@@ -55,16 +55,16 @@ describe('endpoints service origins', () => {
 		const { endpoints } = await loadEndpoints();
 
 		expect(endpoints.userData).toBe(
-			'https://api.oriso.org/service/users/data'
+			'https://api.example.org/service/users/data'
 		);
 		expect(endpoints.matrixAccessToken).toBe(
-			'https://api.oriso.org/service/matrix/me/token'
+			'https://api.example.org/service/matrix/me/token'
 		);
 		expect(endpoints.consultingTypeServiceBase).toBe(
-			'https://api.oriso.org/service/consultingtypes'
+			'https://api.example.org/service/consultingtypes'
 		);
 		expect(endpoints.keycloakAccessToken).toBe(
-			'https://api.oriso.org/auth/realms/online-beratung/protocol/openid-connect/token'
+			'https://api.example.org/auth/realms/online-beratung/protocol/openid-connect/token'
 		);
 	});
 

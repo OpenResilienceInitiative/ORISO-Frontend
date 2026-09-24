@@ -1025,7 +1025,7 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-body: isMatrixBackedSession
+				body: isMatrixBackedSession
 					? previewBody(railChannelPreviews?.main ?? null)
 					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
@@ -1288,15 +1288,13 @@ body: isMatrixBackedSession
 								<img
 									src={internalConversationIcon}
 									alt={translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 									className="sessionsListItem__consultingTypeIcon--internalIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 									{translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 								</span>
 							</div>
@@ -1311,15 +1309,13 @@ body: isMatrixBackedSession
 								<img
 									src={selfHelpIcon}
 									alt={translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 									{translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 								</span>
 							</div>
@@ -1329,7 +1325,9 @@ body: isMatrixBackedSession
 								<div className="sessionsListItem__consultingTypeIcon">
 									<img
 										src={teamImage}
-										alt="Team Beratung"
+										alt={translate(
+											'sessionList.item.sessionType.team'
+										)}
 										className="sessionsListItem__consultingTypeIcon--team"
 									/>
 								</div>
@@ -1466,12 +1464,10 @@ body: isMatrixBackedSession
 								data-testid="supervision-badge"
 								role="img"
 								title={translate(
-									'sessionList.supervision.badge',
-									'Supervision'
+									'sessionList.supervision.badge'
 								)}
 								aria-label={translate(
-									'sessionList.supervision.badge',
-									'Supervision'
+									'sessionList.supervision.badge'
 								)}
 							>
 								<SupervisionIcon
@@ -1711,8 +1707,7 @@ body: isMatrixBackedSession
 									</svg>
 									<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
 										{translate(
-											'sessionList.item.sessionType.liveChat',
-											'Live Chat'
+											'sessionList.item.sessionType.liveChat'
 										)}
 									</span>
 								</div>
@@ -1727,15 +1722,13 @@ body: isMatrixBackedSession
 									<img
 										src={mailConversationIcon}
 										alt={translate(
-											'sessionList.toolbar.chips.nearby',
-											'Mail'
+											'sessionList.toolbar.chips.nearby'
 										)}
 										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 										{translate(
-											'sessionList.toolbar.chips.nearby',
-											'Mail'
+											'sessionList.toolbar.chips.nearby'
 										)}
 									</span>
 								</div>
@@ -1750,15 +1743,13 @@ body: isMatrixBackedSession
 									<img
 										src={internalConversationIcon}
 										alt={translate(
-											'sessionList.item.sessionType.internal',
-											'Interna'
+											'sessionList.item.sessionType.internal'
 										)}
 										className="sessionsListItem__consultingTypeIcon--internalIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 										{translate(
-											'sessionList.item.sessionType.internal',
-											'Interna'
+											'sessionList.item.sessionType.internal'
 										)}
 									</span>
 								</div>
@@ -1783,15 +1774,13 @@ body: isMatrixBackedSession
 									<img
 										src={selfHelpIcon}
 										alt={translate(
-											'sessionList.item.sessionType.selfHelp',
-											'Gesprächskreis'
+											'sessionList.item.sessionType.selfHelp'
 										)}
 										className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 										{translate(
-											'sessionList.item.sessionType.selfHelp',
-											'Gesprächskreis'
+											'sessionList.item.sessionType.selfHelp'
 										)}
 									</span>
 								</div>
