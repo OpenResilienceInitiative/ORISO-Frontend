@@ -6,6 +6,7 @@
  * clean state transitions.
  */
 
+import i18n from 'i18next';
 import { MatrixCall } from 'matrix-js-sdk/lib/webrtc/call';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { getMatrixClientService } from './matrixClientRegistry';
@@ -215,8 +216,8 @@ class CallManager {
 
 			// For group calls, create a fresh dedicated Element Call room rather
 			// than re-using the session room. This matches the "direct" usage of
-			// call.oriso.site where each call lives in its own Matrix room with
-			// appropriate power levels.
+			// a standalone Element Call deployment, where each call lives in its
+			// own Matrix room with appropriate power levels.
 			elementCallRoomId = await this.createElementCallRoom(roomId);
 
 			this.currentCall = {
@@ -257,7 +258,11 @@ class CallManager {
 			this.notifyListeners();
 		})().catch((err: any) => {
 			// console.error("❌ Error while starting call:", err);
-			alert(`Failed to start call: ${(err as Error).message}`);
+			alert(
+				i18n.t('calls.error.startFailed', {
+					message: (err as Error).message
+				})
+			);
 			this.endCall();
 		});
 	}

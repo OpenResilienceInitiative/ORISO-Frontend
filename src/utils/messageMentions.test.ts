@@ -18,9 +18,9 @@ import {
 describe('extractMentionedUserIds', () => {
 	it('extracts resolved Matrix user ids from mention pill markup', () => {
 		const html =
-			'<p>Hallo <span class="messageItem__mention" data-mention-id="42" data-mention-matrix-id="@anna:matrix.oriso.org">@Anna</span>, bitte übernehmen</p>';
+			'<p>Hallo <span class="messageItem__mention" data-mention-id="42" data-mention-matrix-id="@anna:matrix.example.org">@Anna</span>, bitte übernehmen</p>';
 		expect(extractMentionedUserIds(html)).toEqual([
-			'@anna:matrix.oriso.org'
+			'@anna:matrix.example.org'
 		]);
 	});
 

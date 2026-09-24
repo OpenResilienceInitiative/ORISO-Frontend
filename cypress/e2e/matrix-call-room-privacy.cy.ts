@@ -16,8 +16,8 @@ describe('Matrix call room privacy', () => {
 	it('creates dedicated Element Call rooms with encryption enabled from the initial state', () => {
 		const createRoom = cy
 			.stub()
-			.resolves({ room_id: '!element-call-room:oriso.org' });
-		const getUserId = cy.stub().returns('@consultant:oriso.org');
+			.resolves({ room_id: '!element-call-room:example.org' });
+		const getUserId = cy.stub().returns('@consultant:example.org');
 
 		cy.stub(matrixClientService, 'getClient').returns({
 			createRoom,
@@ -26,16 +26,16 @@ describe('Matrix call room privacy', () => {
 
 		cy.then(() =>
 			(callManager as any).createElementCallRoom(
-				'!session-room:oriso.org'
+				'!session-room:example.org'
 			)
 		).then((roomId) => {
-			expect(roomId).to.equal('!element-call-room:oriso.org');
+			expect(roomId).to.equal('!element-call-room:example.org');
 			expect(createRoom).to.have.been.calledOnceWith(
 				Cypress.sinon.match((options) => {
 					expect(options).to.deep.include({
 						visibility: 'private',
 						preset: 'public_chat',
-						name: 'Group call for !session-room:oriso.org'
+						name: 'Group call for !session-room:example.org'
 					});
 					expect(options.initial_state).to.deep.include({
 						type: 'm.room.encryption',
@@ -62,17 +62,17 @@ describe('Matrix call room privacy', () => {
 			getDeviceId: cy.stub().returns('DEVICEID'),
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-session-room:oriso.org')
+				.withArgs('!plain-session-room:example.org')
 				.returns(false),
 			sendEvent
 		} as never);
 
 		cy.then(() =>
 			(callManager as any).sendGroupCallInvite(
-				'!plain-session-room:oriso.org',
+				'!plain-session-room:example.org',
 				'call-123',
 				true,
-				'!encrypted-call-room:oriso.org',
+				'!encrypted-call-room:example.org',
 				true
 			)
 		).then(() => {
@@ -86,7 +86,7 @@ describe('Matrix call room privacy', () => {
 		cy.stub(matrixClientService, 'getClient').returns({
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-session-room:oriso.org')
+				.withArgs('!plain-session-room:example.org')
 				.returns(false),
 			sendEvent
 		} as never);
@@ -94,13 +94,13 @@ describe('Matrix call room privacy', () => {
 		cy.then(() =>
 			(callManager as any).sendElementCallHangup({
 				callId: 'call-123',
-				roomId: '!encrypted-call-room:oriso.org',
+				roomId: '!encrypted-call-room:example.org',
 				isVideo: true,
 				isIncoming: false,
 				state: 'connected',
 				usesElementCall: true,
-				elementCallRoomId: '!encrypted-call-room:oriso.org',
-				signalRoomId: '!plain-session-room:oriso.org'
+				elementCallRoomId: '!encrypted-call-room:example.org',
+				signalRoomId: '!plain-session-room:example.org'
 			})
 		).then(() => {
 			expect(sendEvent.callCount).to.equal(0);
@@ -113,7 +113,7 @@ describe('Matrix call room privacy', () => {
 		cy.stub(matrixClientService, 'getClient').returns({
 			getRoom: cy
 				.stub()
-				.withArgs('!plain-call-room:oriso.org')
+				.withArgs('!plain-call-room:example.org')
 				.returns({
 					currentState: {
 						getStateEvents: cy.stub().returns({
@@ -129,14 +129,14 @@ describe('Matrix call room privacy', () => {
 				}),
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-call-room:oriso.org')
+				.withArgs('!plain-call-room:example.org')
 				.returns(false),
 			sendStateEvent
 		} as never);
 
 		cy.then(() =>
 			(callManager as any).ensureGroupCallPermissions(
-				'!plain-call-room:oriso.org'
+				'!plain-call-room:example.org'
 			)
 		).then(() => {
 			expect(sendStateEvent.callCount).to.equal(0);

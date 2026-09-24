@@ -1254,7 +1254,7 @@ export const ThreadEntryWithLastReply: Story = {
  * quietly passing against a copy of what it used to emit.
  * ------------------------------------------------------------------------- */
 
-const SUPERVISION_ROOM_ID = '!storybook-supervision:oriso.org';
+const SUPERVISION_ROOM_ID = '!storybook-supervision:example.org';
 const SUPERVISION_NOTICE_TITLE = 'Supervision';
 const SUPERVISION_NOTICE_TEXT =
 	'Supervision durch Angela K. ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.';

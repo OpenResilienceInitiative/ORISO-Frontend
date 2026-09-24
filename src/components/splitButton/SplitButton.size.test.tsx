@@ -17,7 +17,9 @@ describe('SplitButton size (#1377 sound picker)', () => {
 				menuLabel="Ton wählen"
 			/>
 		);
-		const root = screen.getByRole('button', { name: 'Ton 3' }).parentElement!;
+		const root = screen.getByRole('button', {
+			name: 'Ton 3'
+		}).parentElement!;
 		expect(root.className).toContain('splitButton--small');
 		expect(screen.getByRole('button', { name: 'Ton wählen' })).toBeTruthy();
 	});
