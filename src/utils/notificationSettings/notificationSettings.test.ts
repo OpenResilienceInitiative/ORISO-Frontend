@@ -363,6 +363,36 @@ describe('legacy opt-in reconcile on attach', () => {
 		expect(client.setAccountData).toHaveBeenCalledTimes(2);
 	});
 
+	it('keeps a pending legacy opt-in when an unrelated update also fails', async () => {
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true })
+		);
+		const client = makeMockClient();
+		client.emitAccountData(NOTIFICATION_SETTINGS_EVENT_TYPE, {
+			globalMute: false
+		});
+		client.setAccountData
+			.mockRejectedValueOnce(new Error('offline'))
+			.mockRejectedValueOnce(new Error('offline'));
+		notificationSettingsStore.attachClient(client as any);
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		await Promise.resolve();
+		expect(
+			localStorage.getItem('ORISO_NOTIFICATION_LEGACY_MIGRATED')
+		).toBeNull();
+
+		notificationSettingsStore.detachClient();
+		notificationSettingsStore.attachClient(client as any);
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(true);
+	});
+
 	it('never switches an existing opt-in off', () => {
 		localStorage.setItem(
 			'BROWSER_NOTIFICATIONS',

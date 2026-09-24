@@ -281,15 +281,20 @@ class NotificationSettingsStore {
 	/** Merge-update the account-wide settings (optimistic, then persist). */
 	updateSettings(update: NotificationSettingsUpdate): void {
 		const settings = mergeNotificationSettings(this.state.settings, update);
-		// A deliberate choice supersedes a legacy opt-in still pending retry.
-		markLegacyMigrationDone();
+		// An explicit "off" beats a pending legacy opt-in; anything else only
+		// settles the migration once the write (which carries it) persisted.
+		if (update.browserNotifications?.enabled === false) {
+			markLegacyMigrationDone();
+		}
 		this.setState({ settings });
 		if (this.client) {
 			void writeAccountData(
 				this.client,
 				NOTIFICATION_SETTINGS_EVENT_TYPE,
 				settings
-			);
+			).then((persisted) => {
+				if (persisted) markLegacyMigrationDone();
+			});
 		}
 	}
 
