@@ -74,7 +74,6 @@ import DeleteSession from '../session/DeleteSession';
 import { Text } from '../text/Text';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
-import { callMediaErrorMessage } from '../../utils/callMediaErrorMessage';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import LegalLinks from '../legalLinks/LegalLinks';

@@ -940,6 +940,9 @@ export const SessionListItemComponent = ({
 	// has to exist before the branch does. Pure string work — no hook, no
 	// behaviour change for the card list.
 	const hasConsultantData = !!activeSession.consultant;
+	// An unwritten enquiry is not searched for yet, so the magnet rests.
+	const isSearchingForConsultant =
+		isAsker && !hasConsultantData && !activeSession.isEmptyEnquiry;
 	let sessionTopic = '';
 
 	// Card title:
@@ -1371,9 +1374,7 @@ export const SessionListItemComponent = ({
 					/* FE#1115: hovering the card replays the magnet's
 					   search gesture, so the whole card is the target and
 					   not the 32 px glyph inside it. */
-					isAsker &&
-						!hasConsultantData &&
-						'consultantSearchLoaderHost'
+					isSearchingForConsultant && 'consultantSearchLoaderHost'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={itemRef}
@@ -1506,7 +1507,10 @@ export const SessionListItemComponent = ({
 							   without the black disc — beam included. It
 							   points right, into the card's own width, so
 							   the card's corner clip never reaches it. */
-							<ConsultantSearchLoader size="32px" />
+							<ConsultantSearchLoader
+								size="32px"
+								animated={isSearchingForConsultant}
+							/>
 						) : !isAsker ? (
 							// Restored username+icon linkage: the asker card
 							// shows the SAME animal avatar the chat derives
