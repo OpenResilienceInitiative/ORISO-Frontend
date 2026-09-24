@@ -119,6 +119,12 @@ export const emailFootnoteStyle = (): string =>
 		color: emailColor.onSurfaceVariant
 	});
 
+/** The spelled-out link under a button: muted, and allowed to wrap anywhere. */
+export const emailCopyLinkStyle = (): string =>
+	`${font(emailType.copyLink.size, emailType.copyLink.line, {
+		color: emailColor.onSurfaceVariant
+	})};word-break:break-word`;
+
 /** Fine print: the encryption assurance and the footer. */
 export const emailCaptionStyle = (): string =>
 	font(emailType.caption.size, emailType.caption.line, {
@@ -157,6 +163,15 @@ export const emailTextLink = (
 		brand.primaryColor
 	};text-decoration:underline;">${emailEscape(label)}</a>`;
 
+/**
+ * A URL shown as its own link text, so it can be copied. Breaks anywhere,
+ * because a long token would otherwise push the card wider than the screen.
+ */
+export const emailCopyLink = (href: string, brand: EmailBrand): string =>
+	`<a href="${emailEscape(href)}" style="color:${
+		brand.primaryColor
+	};text-decoration:underline;word-break:break-all;">${emailEscape(href)}</a>`;
+
 export const emailDivider = (): string =>
 	'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
 	`<tr><td height="1" bgcolor="${emailColor.outline}" ` +
@@ -169,6 +184,10 @@ export const emailDivider = (): string =>
  * a broken-image icon in most clients — worse than no logo at all. So a blank
  * URL yields no cell, and the text wordmark carries the header alone.
  *
+ * The brand name always stands in the next cell, so the image is decorative:
+ * `alt=""`. A logo that fails to load must leave nothing behind, not repeat
+ * the name beside itself.
+ *
  * The plain dialect replaces this exact fragment with a `{{logoCell}}` token
  * (see `emailDialect`), because a template file cannot express the conditional:
  * UserService's renderer makes the same present-or-absent decision at send
@@ -180,10 +199,10 @@ export const emailLogoCell = (brand: EmailBrand): string =>
 		: `<td width="${emailLayout.logoSize}" valign="middle" style="width:${emailLayout.logoSize}px;padding-right:12px;">` +
 			`<img src="${emailEscape(brand.logoUrl)}" width="${emailLayout.logoSize}" height="${
 				emailLayout.logoSize
-			}" alt="${emailEscape(brand.platformName)}" ` +
+			}" alt="" ` +
 			`style="display:block;width:${emailLayout.logoSize}px;height:${emailLayout.logoSize}px;border:0;border-radius:${emailRadius.logo}px;"></td>`;
 
-/** Logo plus wordmark. The logo is decorative next to the name, hence `alt`. */
+/** Logo plus wordmark. The name is text, so the logo beside it is decorative. */
 export const emailLogoLockup = (brand: EmailBrand): string =>
 	'<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
 	emailLogoCell(brand) +
@@ -197,6 +216,19 @@ export const emailLogoLockup = (brand: EmailBrand): string =>
 		}
 	)};">${emailEscape(brand.platformName)}</td>` +
 	'</tr></table>';
+
+/**
+ * Head CSS that hides a header logo that failed to load. Only Chromium draws
+ * `::after` on an `<img>`, and only on one that failed, so this paints the
+ * broken-image icon over with the canvas the header sits on; a loaded logo is
+ * untouched. Gecko and WebKit ignore it and draw a faint empty frame, Outlook
+ * its own placeholder box. The header's logo is the only image with an empty
+ * `alt`, which is what the selector keys on.
+ */
+export const emailLogoCellFallbackCss = (): string =>
+	'img[alt=""]{position:relative}' +
+	'img[alt=""]::after{content:"";position:absolute;top:0;left:0;width:100%;height:100%;' +
+	`background-color:${emailColor.canvas}}`;
 
 /**
  * The hidden preview line most clients show next to the subject.

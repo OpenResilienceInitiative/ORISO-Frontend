@@ -20,7 +20,11 @@ export const Header = () => {
 			<div className="header__right">
 				<UIVersionToggle />
 				{agencyLogo ? (
-					<img src={agencyLogo} className="header__logo" alt="Logo" />
+					<img
+						src={agencyLogo}
+						className="header__logo"
+						alt={translate('app.logo')}
+					/>
 				) : (
 					<Text
 						type="standard"

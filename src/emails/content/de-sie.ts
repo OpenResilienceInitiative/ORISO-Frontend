@@ -42,8 +42,15 @@ const securityFooter = {
 		'Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} ist ein Angebot von {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'Diese E-Mail gehört zum Vertragsverhältnis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
 };
@@ -65,8 +72,10 @@ const codeAssurance =
 const accountAssurance =
 	'Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Änderungen an Ihrem Zugang melden wir Ihnen immer.';
 
+// "zwischen … und" takes the dative, so the Träger has its own placeholder
+// here: a sender without a Träger name fills "Ihrer Organisation".
 const legalAssurance =
-	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantName}}.';
+	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.';
 
 export const deSie: Record<EmailId, EmailContent> = {
 	'neue-nachricht': {
@@ -391,23 +400,49 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Auftragsverarbeitungsvertrag zur Unterschrift',
-		preheader: 'Der AVV für {{tenantName}} liegt bereit.',
-		headline: 'Der AVV liegt zur Unterschrift bereit',
+		subject: 'Vertragsunterlagen für {{tenantName}}',
+		preheader: 'Die Vertragsunterlagen für {{tenantName}} liegen bereit.',
+		headline: 'Die Vertragsunterlagen liegen zur Unterschrift bereit',
 		paragraphs: [
-			'Für {{tenantName}} wurde ein Auftragsverarbeitungsvertrag erstellt.',
-			'Bitte prüfen Sie den Vertrag und zeichnen Sie ihn digital.'
+			'Für {{tenantName}} wurden Vertragsunterlagen erstellt.',
+			'Bitte prüfen Sie die Unterlagen und zeichnen Sie sie digital.'
 		],
 		panel: [
 			{ label: 'Träger', value: '{{tenantName}}' },
 			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' },
 			{ label: 'Zu unterschreiben bis', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Vertrag öffnen', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Vertrag öffnen',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:'
+		},
 		footnote:
-			'Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.',
+			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.',
 		assurance: legalAssurance,
 		footer: legalFooter
+	},
+
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		// Both depend on whether the mail has an action, which only the sender
+		// knows: with one, UserService fills the "never pass this link on"
+		// line and the invitation note; without one (a plain notice such as
+		// "contract signed") the line is dropped and the note is neutral.
+		assuranceSlot: '{{assuranceBlock}}',
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {

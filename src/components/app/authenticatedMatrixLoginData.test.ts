@@ -6,9 +6,9 @@ describe('withAuthenticatedSessionContext', () => {
 		const result = withAuthenticatedSessionContext(
 			{
 				accessToken: 'matrix-access-token',
-				userId: '@marge:predev.oriso.org',
+				userId: '@marge:predev.example.org',
 				deviceId: 'ORISO_WEB_MARGE',
-				homeserverUrl: 'https://predev.oriso.org/matrix',
+				homeserverUrl: 'https://predev.example.org/matrix',
 				uiaPassword: 'transient-password'
 			},
 			true

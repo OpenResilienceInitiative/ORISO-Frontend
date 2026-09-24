@@ -15,11 +15,16 @@ class SessionKindRegistry {
 	private bySection = new Map<DisplayFilterSection, Record<string, string>>();
 
 	/** Replace the whole mapping of one section (the list's current rows). */
-	publish(section: DisplayFilterSection, kinds: Record<string, string>): void {
+	publish(
+		section: DisplayFilterSection,
+		kinds: Record<string, string>
+	): void {
 		this.bySection.set(section, { ...kinds });
 	}
 
-	lookup(sessionId: string | number | null | undefined): SessionKindEntry | null {
+	lookup(
+		sessionId: string | number | null | undefined
+	): SessionKindEntry | null {
 		if (sessionId === null || sessionId === undefined) {
 			return null;
 		}

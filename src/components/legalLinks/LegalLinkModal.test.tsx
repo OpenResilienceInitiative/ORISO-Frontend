@@ -15,7 +15,7 @@ vi.mock('./useLegalLinkContent', async () => ({
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) => key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -130,7 +130,7 @@ describe('LegalLinkModal', () => {
 		).toBeNull();
 
 		expect(
-			screen.getByText(/dieser Hinweis gilt für die Plattform selbst/i)
+			screen.getByText('login.legal.platform.dataprotection')
 		).toBeTruthy();
 
 		const link = screen.getByRole('link');
@@ -229,7 +229,7 @@ describe('getInternalPath', () => {
 
 	/**
 	 * `routePathNames` records intent; the router records reality. The terms
-	 * route is commented out in `initApp.tsx`, so `/nutzungsbedingungen` is an
+	 * route is commented out in `startApp.tsx`, so `/nutzungsbedingungen` is an
 	 * unknown path and routing to it would land the reader on the authenticated
 	 * catch-all. Flip this test in the same change that re-enables the route.
 	 */

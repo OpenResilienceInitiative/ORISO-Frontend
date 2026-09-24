@@ -42,7 +42,7 @@ const profileRoutes = (
 				{
 					condition: (userData) =>
 						shouldShowOverview(settings.useOverviewPage, userData),
-					title: 'Overview',
+					title: 'navigation.overview',
 					url: '/overview',
 					elements: [
 						{

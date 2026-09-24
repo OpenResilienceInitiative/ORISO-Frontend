@@ -12,11 +12,11 @@ vi.mock('@opentelemetry/api', () => ({
 	metrics: { getMeter: () => ({ createCounter: () => ({ add: mockAdd }) }) }
 }));
 
-// Exactly what webpack's JSONP runtime throws on dev.oriso.org when a chunk
+// Exactly what webpack's JSONP runtime throws on dev.example.org when a chunk
 // hash of the previous build 404s (captured 2026-09-16).
 const webpackChunkError = () => {
 	const error = new Error(
-		'Loading chunk 785 failed.\n(error: https://dev.oriso.org/static/js/785.91cfda41.chunk.js)'
+		'Loading chunk 785 failed.\n(error: https://dev.example.org/static/js/785.91cfda41.chunk.js)'
 	);
 	error.name = 'ChunkLoadError';
 	return error;
@@ -29,7 +29,7 @@ describe('isChunkLoadError', () => {
 
 	it.each([
 		'Loading chunk 785 failed.',
-		'Loading CSS chunk 265 failed.\n(https://dev.oriso.org/static/css/265.23045830.chunk.css)',
+		'Loading CSS chunk 265 failed.\n(https://dev.example.org/static/css/265.23045830.chunk.css)',
 		'Failed to fetch dynamically imported module: /static/js/1.js',
 		'Importing a module script failed.'
 	])('recognises the message %s', (message) => {

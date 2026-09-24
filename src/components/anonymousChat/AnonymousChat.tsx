@@ -439,17 +439,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					}}
 				>
 					<Typography variant="h3" sx={{ mb: '24px' }}>
-						{t('anonymousChat.headline', 'Anonyme Beratung')}
+						{t('anonymousChat.headline')}
 					</Typography>
 
 					<Typography
 						variant="body1"
 						sx={{ mb: '32px', color: 'text.secondary' }}
 					>
-						{t(
-							'anonymousChat.subline',
-							'Wählen Sie eine Beratungsstelle und starten Sie sofort eine anonyme Beratung.'
-						)}
+						{t('anonymousChat.subline')}
 					</Typography>
 
 					{/* Username and Password Display (Read-only) */}
@@ -487,8 +484,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 										}}
 									>
 										{t(
-											'registration.account.username.label',
-											'Benutzername'
+											'registration.account.username.label'
 										)}
 									</Typography>
 									<Typography
@@ -504,10 +500,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 											mt: '4px'
 										}}
 									>
-										{t(
-											'anonymousChat.username.info',
-											'Dieser Benutzername wurde automatisch generiert'
-										)}
+										{t('anonymousChat.username.info')}
 									</Typography>
 								</Box>
 							</Box>
@@ -528,10 +521,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									variant="body2"
 									sx={{ color: 'text.secondary', mb: '8px' }}
 								>
-									{t(
-										'registration.account.password.label',
-										'Passwort'
-									)}
+									{t('registration.account.password.label')}
 								</Typography>
 								<TextField
 									fullWidth
@@ -549,12 +539,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 															notificationType:
 																NOTIFICATION_TYPE_SUCCESS,
 															title: t(
-																'anonymousChat.password.copied.title',
-																'Passwort kopiert'
+																'anonymousChat.password.copied.title'
 															),
 															text: t(
-																'anonymousChat.password.copied.text',
-																'Das Passwort wurde in die Zwischenablage kopiert.'
+																'anonymousChat.password.copied.text'
 															),
 															closeable: true,
 															timeout: 3000
@@ -592,10 +580,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 										display: 'block'
 									}}
 								>
-									{t(
-										'anonymousChat.password.warning',
-										'Bitte kopieren Sie das Passwort und speichern Sie es sicher, um später auf Ihr Konto zugreifen zu können.'
-									)}
+									{t('anonymousChat.password.warning')}
 								</Typography>
 							</Box>
 						</Box>
@@ -607,10 +592,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							variant="h5"
 							sx={{ mb: '16px', fontWeight: '600' }}
 						>
-							{t(
-								'anonymousChat.topics.headline',
-								'Beratungsthemen und Beratungsstellen wählen'
-							)}
+							{t('anonymousChat.topics.headline')}
 						</Typography>
 
 						{loadingTopics ? (
@@ -628,10 +610,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 								variant="body2"
 								sx={{ color: 'text.secondary' }}
 							>
-								{t(
-									'anonymousChat.topics.noresults',
-									'Keine Beratungsthemen verfügbar.'
-								)}
+								{t('anonymousChat.topics.noresults')}
 							</Typography>
 						) : (
 							<Box>
@@ -692,8 +671,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 														}}
 													>
 														{t(
-															'anonymousChat.agencies.noresults',
-															'Für dieses Thema sind keine Beratungsstellen verfügbar.'
+															'anonymousChat.agencies.noresults'
 														)}
 													</Typography>
 												) : (
@@ -830,8 +808,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 																							}}
 																						>
 																							{t(
-																								'registration.agency.result.languages',
-																								'Diese Beratungsstelle berät Sie auf:'
+																								'registration.agency.result.languages'
 																							)}
 																						</Typography>
 																						<AgencyLanguages
@@ -885,7 +862,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						disabled={isRegistering}
 						sx={{ flex: 1 }}
 					>
-						{t('registration.back', 'Zurück')}
+						{t('registration.back')}
 					</Button>
 					<Button
 						variant="contained"
@@ -894,11 +871,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						sx={{ flex: 1 }}
 					>
 						{isRegistering
-							? t(
-									'registration.registering',
-									'Registrierung läuft...'
-								)
-							: t('anonymousChat.start', 'Beratung starten')}
+							? t('registration.registering')
+							: t('anonymousChat.start')}
 					</Button>
 				</Box>
 			</Box>
@@ -946,18 +920,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
-							{t(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
+							{t('anonymousChat.noAvailability.title')}
 						</Typography>
 					</Box>
 
 					<Typography variant="body1" sx={{ mb: '16px' }}>
-						{t(
-							'anonymousChat.noAvailability.subtitle',
-							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
-						)}
+						{t('anonymousChat.noAvailability.subtitle')}
 					</Typography>
 
 					<Box
@@ -998,8 +966,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									}}
 								>
 									{t(
-										'anonymousChat.noAvailability.openingHours',
-										'Reguläre Öffnungszeiten anzeigen'
+										'anonymousChat.noAvailability.openingHours'
 									)}
 								</Typography>
 							</Box>
@@ -1035,8 +1002,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 										}}
 									>
 										{t(
-											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
-											entry.day
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`
 										)}
 									</Typography>
 									<Typography
@@ -1053,20 +1019,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					</Box>
 
 					<Typography variant="body1" sx={{ mb: '8px' }}>
-						{t(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
-						)}
+						{t('anonymousChat.noAvailability.mailHint')}
 					</Typography>
 
 					<Typography
 						variant="body2"
 						sx={{ fontWeight: 700, mb: '16px' }}
 					>
-						{t(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
+						{t('anonymousChat.noAvailability.tip')}
 					</Typography>
 
 					<Button
@@ -1081,10 +1041,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						}}
 						startIcon={<NorthEastIcon />}
 					>
-						{t(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'anonyme Mail-Beratung starten'
-						)}
+						{t('anonymousChat.noAvailability.startMailCounseling')}
 					</Button>
 
 					<Typography
@@ -1096,10 +1053,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							mb: '16px'
 						}}
 					>
-						{t(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
+						{t('anonymousChat.noAvailability.responseTime')}
 					</Typography>
 
 					<Box sx={{ display: 'flex', gap: '10px' }}>
@@ -1118,10 +1072,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 								color: '#4C555F'
 							}}
 						>
-							{t(
-								'anonymousChat.noAvailability.back',
-								'Zurück zur vorherigen Seite'
-							)}
+							{t('anonymousChat.noAvailability.back')}
 						</Button>
 						<Button
 							fullWidth
@@ -1135,10 +1086,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 								color: '#A5000A'
 							}}
 						>
-							{t(
-								'anonymousChat.noAvailability.later',
-								'Später wiederkommen'
-							)}
+							{t('anonymousChat.noAvailability.later')}
 						</Button>
 					</Box>
 
@@ -1147,11 +1095,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							variant="caption"
 							sx={{ mt: '12px', display: 'block', opacity: 0.7 }}
 						>
-							{t(
-								'anonymousChat.noAvailability.topicLabel',
-								'Angefragtes Thema: {{topic}}',
-								{ topic: noAvailabilityModalTopic.name }
-							)}
+							{t('anonymousChat.noAvailability.topicLabel', {
+								topic: noAvailabilityModalTopic.name
+							})}
 						</Typography>
 					)}
 				</Box>
