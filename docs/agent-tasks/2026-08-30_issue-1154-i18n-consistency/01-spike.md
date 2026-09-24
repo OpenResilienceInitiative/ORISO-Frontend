@@ -1,43 +1,39 @@
-# Spike — #1154 remaining gaps
+# Spike — remaining raw chrome after #1242
 
 ## Current behavior
 
-- i18next + chained backends: localStorage → Weblate fetch → bundled JSON (`src/i18n.ts`). Fallback locale is `de`.
-- Bundled UI locales: `de`, `de@informal`, `en`, `fr`, `ru`, `ti`, `tr` (`config.ts` `supportedLngs`). **No `uk/` bundle.**
-- PRs already merged: [#1164](https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1164) consultingTypes per locale, [#1170](https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1170) fr/ru/ti/tr backfill, [#1227](https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1227) topic catalogue + Weblate empty-vs-absent gate.
-- Topic list uses `getRegistrationTopicDisplay()` (`registrationDesign.ts:752`). Preselected topic does **not** (`PreselectedTopic.tsx:45` → API `titles.long`).
-- Weblate parse does `_.merge(bundle, weblate)` (`i18n.ts:209-212`) so Weblate **overwrites** the complete repo catalogues.
+Slices 1–12 dropped one-language `t()` fallbacks. Catalogues for `de`/`en`/`fr`/`ru`/`ti`/`tr` are complete vs German. Production call/form primitives never called `t()`.
 
 ## Root cause / gap
 
-Signup still mixed after #1227 because:
-
-1. **Weblate wins on conflict** — a partial/stale Weblate file (English placeholders, German source) replaces bundled French/Russian/Tigrinya.
-2. **Preselected topic** always shows backend German titles.
-3. **German `defaultValue`s** on header, compact stepper, zipcode, consent — visible whenever a key is missing or emptied.
-4. Age/state option **labels come from ConsultingTypeService** (German). Out of this stack.
-5. **Ukrainian is not a UI locale** — only a spoken-language label.
+Raw JSX / default props / `alert()` / `window.prompt()`, not missing JSON. `leftoversI18n` / `remainingChromeI18n` only listed known files — not a full `src/` walk.
 
 ## Approach
 
-Small stacked PRs, independent files where possible. Prefer **bundle over Weblate on key conflict**; Weblate still fills keys the bundle lacks. Do not re-translate 3000 keys.
+Same leftover pattern: source-scan test first, then `t('key')` with no string fallback, keys in every UI locale. Reuse `message.submit.toolbar.*` and `message.thread.*`. New `calls.*` + `form.*`. Extract SessionMenu / GroupChatHeader media-error copy into one helper so the strings are not duplicated.
+
+Skip `legal.modal.*` for dialog defaults — those keys are legal-specific; user asked for `form.dialog.*`.
 
 ## Files likely to change
 
-| Path                                                                | Intent                             |
-| ------------------------------------------------------------------- | ---------------------------------- |
-| `src/utils/mergeWeblateCatalogue.ts`                                | Bundle-wins merge helper           |
-| `src/i18n.ts`                                                       | Use helper in FetchBackend `parse` |
-| `src/components/registration/preselectionBox/PreselectedTopic.tsx`  | Use `getRegistrationTopicDisplay`  |
-| Registration header / CompactStepRow / ZipcodeInput / consent files | Drop German defaultValues          |
+- `src/components/call/FloatingCallWidget.tsx`, `GroupCallWidget.tsx`
+- `src/components/matrixCall/MatrixCallView.tsx`, `src/components/videoCall/VideoCall.tsx`
+- `src/services/CallManager.ts`, `src/components/sessionMenu/SessionMenu.tsx`, `src/components/sessionHeader/GroupChatHeader/index.tsx`
+- `src/components/modal/OrisoDialog.tsx`, `src/components/form/Oriso{Calendar,DatePicker,TimePicker,Select}.tsx`
+- `TipTapComposer.tsx`, `EmojiPickerPopup.tsx`, `ThreadListPanel.tsx`
+- `DepartmentLegalSection.tsx`, booking iframe titles, `UIVersionToggle.tsx` (config `alert`)
+- `src/resources/i18n/{de,en,fr,ru,ti,tr}/common.json`
+- `src/components/call/callsFormsI18n.test.ts` (new)
+
+Dead (skip): `FloatingCallWidget.OLD.tsx`, `*.PROFESSIONAL.tsx`. IncomingVideoCall already keyed.
 
 ## Risks
 
-- Weblate-only languages with no bundle still work (`bundle` empty).
-- Cache: proxy disables translation cache by default; if enabled, old merges linger until TTL.
+- OrisoDialog / form defaults: resolve `t()` in the body (hooks), not default-arg literals.
+- Do not strip i18n option objects (`returnObjects`, `lng`, interpolation).
+- `i18n.test.ts`: fr/ru/ti/tr missing budget 0; no English parked in those catalogues; no redundant informal overlay.
+- KeyBackupRecoveryPrompt mocks OrisoDialog — no update needed.
 
 ## Test strategy
 
-- New unit tests for merge helper (conflict, gap-fill, empty Weblate).
-- PreselectedTopic render: French catalogue title beats German API title.
-- Header/zipcode/consent: `t(key)` without German defaultValue; missing key follows `fallbackLng`.
+Red-green source scan modelled on `remainingChromeI18n.test.ts`. Catalogue presence asserts for `calls.*` / `form.*`. Update any `t: (key, fallback) => fallback` mocks. Then `i18n.test.ts` + `test:unit` + `lint:scripts`.

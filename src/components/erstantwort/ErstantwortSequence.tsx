@@ -164,11 +164,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 								{name}
 							</span>
 							<span className="pseudonymCard__headerSubtitle">
-								{subtitle ??
-									t(
-										'erstantwort.subtitle',
-										'Ihre ersten Schritte'
-									)}
+								{subtitle ?? t('erstantwort.subtitle')}
 							</span>
 						</div>
 

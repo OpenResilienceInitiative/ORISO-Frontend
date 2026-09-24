@@ -188,13 +188,13 @@ export const Registration = () => {
 		useState<boolean>(false);
 	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
 	const temporaryToggleLabel = temporaryJoin
-		? t('registration.account.temporary.toggleOff', 'Konto anlegen')
-		: t('registration.account.temporary.toggleOn', 'Ohne Konto beitreten');
+		? t('registration.account.temporary.toggleOff')
+		: t('registration.account.temporary.toggleOn');
 	/* The way on is the same action either way — only what it is called
 	   changes, because "Registrieren" would name something that is not
 	   happening. */
 	const primaryActionLabel = temporaryJoin
-		? t('registration.account.temporary.join', 'Beitreten')
+		? t('registration.account.temporary.join')
 		: t('registration.register');
 	const toggleTemporaryJoin = useCallback(
 		() => setTemporaryJoinChosen((chosen) => !chosen),
@@ -324,14 +324,11 @@ export const Registration = () => {
 				mergedRegistrationData.topicGroupId
 			)
 		: undefined;
-	const selectedPrefix = t('registration.selectedLabel', 'Ausgewählt');
-	const noneSelectedLabel = t(
-		'registration.noneSelected',
-		'Bitte wählen Sie ein Thema, um fortzufahren.'
-	);
+	const selectedPrefix = t('registration.selectedLabel');
+	const noneSelectedLabel = t('registration.noneSelected');
 	const footerEmptyLabel =
 		step === 'topic-selection'
-			? t('registration.topicInstruction', 'Wählen Sie ein Thema aus.')
+			? t('registration.topicInstruction')
 			: noneSelectedLabel;
 
 	/* Navigating between steps must never discard what was entered: merge the
@@ -932,8 +929,7 @@ export const Registration = () => {
 															primaryActionLabel
 														}
 														registeringLabel={t(
-															'registration.registering',
-															'Registering...'
+															'registration.registering'
 														)}
 														nextLabel={t(
 															'registration.next'
@@ -986,8 +982,7 @@ export const Registration = () => {
 														primaryActionLabel
 													}
 													registeringLabel={t(
-														'registration.registering',
-														'Registering...'
+														'registration.registering'
 													)}
 													disabledNext={
 														disabledNextButton
