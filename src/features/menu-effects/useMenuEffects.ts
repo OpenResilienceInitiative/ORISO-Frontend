@@ -17,7 +17,25 @@ const hashId = (value: string) => {
 const storageKey = (userId?: string) =>
 	`oriso.menuEffects.v2:${userId ? hashId(userId) : '__anonymous__'}`;
 
+const LEGACY_PREFIX = 'oriso.menuEffects.v1:';
+let legacyDropped = false;
+
+/** v1 keys held the raw account id; the preference is not worth migrating. */
+export const dropLegacyMenuEffectKeys = (): void => {
+	try {
+		Object.keys(window.localStorage)
+			.filter((key) => key.startsWith(LEGACY_PREFIX))
+			.forEach((key) => window.localStorage.removeItem(key));
+	} catch {
+		// Storage unavailable: nothing was written there either.
+	}
+};
+
 export const readMenuEffects = (userId?: string): boolean => {
+	if (!legacyDropped) {
+		legacyDropped = true;
+		dropLegacyMenuEffectKeys();
+	}
 	const key = storageKey(userId);
 	if (memory.has(key)) return memory.get(key)!;
 	try {
