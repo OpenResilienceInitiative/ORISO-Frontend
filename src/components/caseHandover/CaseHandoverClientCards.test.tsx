@@ -4,11 +4,33 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
-	})
-}));
+vi.mock('react-i18next', () => {
+	const catalogue: Record<string, string> = {
+		'caseHandover.consent.sender': 'Carimat',
+		'caseHandover.consent.senderRole': 'Quick Guide',
+		'caseHandover.consent.title':
+			'A counsellor requested access to this conversation',
+		'caseHandover.consent.copy':
+			'Please approve or decline the request to continue the handover.',
+		'caseHandover.consent.approve': 'Approve access',
+		'caseHandover.consent.decline': 'Decline access',
+		'caseHandover.consent.optOut.title': 'Privacy notice for case handover',
+		'caseHandover.consent.optOut.prompt':
+			'Please read the information and then make your decision.',
+		'caseHandover.consent.optOut.copy':
+			'For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.',
+		'caseHandover.consent.optOut.revocationCopy':
+			'By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.',
+		'caseHandover.consent.optOut.switchLabel':
+			'I consent to data processing for this case handover',
+		'message.menu.open': 'More options',
+		'message.deliveryStatus.sent': 'sent'
+	};
+	const t = (key: string) => catalogue[key] ?? key;
+	return {
+		useTranslation: () => ({ t })
+	};
+});
 
 afterEach(cleanup);
 

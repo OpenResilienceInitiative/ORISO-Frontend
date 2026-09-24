@@ -18,7 +18,19 @@ const baseProps = {
 	onAttachmentClick: vi.fn(),
 	isExpanded: false,
 	onExpandToggle: vi.fn(),
-	translate: ((_key: string, fallback?: string) => fallback ?? _key) as any
+	translate: ((key: string) => {
+		const catalogue: Record<string, string> = {
+			'message.submit.toolbar.voiceRecording.label': 'Voice recording',
+			'message.submit.toolbar.voiceRecording.tooltip':
+				'Record voice message',
+			'message.submit.toolbar.attachment': 'Add attachment',
+			'message.submit.toolbar.emoji': 'Emoji panel',
+			'message.submit.toolbar.mention': 'Mention',
+			'message.mobileNav.back': 'Navigate up',
+			'message.mobileNav.scrollToBottom': 'Scroll to bottom'
+		};
+		return catalogue[key] ?? key;
+	}) as any
 };
 
 describe('DefaultActionBar', () => {

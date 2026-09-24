@@ -160,7 +160,8 @@ describe('encrypted attachment — the ciphertext fetch', () => {
 		screen.getByRole('button').click();
 
 		await waitFor(() => expect(fetchMock).toHaveBeenCalled());
-		const authorization = fetchMock.mock.calls[0][1]?.headers?.Authorization;
+		const authorization =
+			fetchMock.mock.calls[0][1]?.headers?.Authorization;
 		expect(authorization).toBe(`Bearer ${MATRIX_TOKEN}`);
 		expect(authorization).not.toContain(KEYCLOAK_TOKEN);
 	});
