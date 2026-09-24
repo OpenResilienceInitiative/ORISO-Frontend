@@ -15,10 +15,27 @@ const DRAFT_ID_PREFIX = 'local-draft-';
 export const isTimelineDraftId = (id: string): boolean =>
 	id.startsWith(DRAFT_ID_PREFIX);
 
-const resumePath = (draft: IUserDraftItem): string => {
-	const [base, query = ''] = (draft.actionPath || '/drafts').split('?');
+const splitWithoutEmbedded = (path: string) => {
+	const [base, query = ''] = path.split('?');
 	const params = new URLSearchParams(query);
 	params.delete('embeddedNotifications');
+	return { base, params };
+};
+
+/** The path as a full-page route, without the timeline's embedded flag. */
+export const toNonEmbeddedPath = (path?: string | null): string | null => {
+	if (!path) {
+		return null;
+	}
+	const { base, params } = splitWithoutEmbedded(String(path));
+	const query = params.toString();
+	return `${base}${query ? `?${query}` : ''}`;
+};
+
+const resumePath = (draft: IUserDraftItem): string => {
+	const { base, params } = splitWithoutEmbedded(
+		draft.actionPath || '/drafts'
+	);
 	params.set('draftScopeKey', draft.scopeKey);
 	return `${base}?${params}`;
 };

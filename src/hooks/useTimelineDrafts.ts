@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGetUserDrafts } from '../api/apiUserDrafts';
+import { apiFetchUserDrafts } from '../api/apiUserDrafts';
 import type { NotificationFeedItem } from '../globalState/provider/NotificationsProvider';
 import { draftsToFeedItems } from '../components/notificationsCenter/timelineDrafts';
 import { DRAFTS_UPDATED_EVENT } from '../services/draftStore';
@@ -14,7 +14,13 @@ export const useTimelineDrafts = (): NotificationFeedItem[] => {
 		let latestRequest = 0;
 		const refresh = async () => {
 			const request = ++latestRequest;
-			const response = await apiGetUserDrafts(0, 200);
+			let response;
+			try {
+				response = await apiFetchUserDrafts(0, 200);
+			} catch {
+				// Keep the last good list; the next refresh retries.
+				return;
+			}
 			// A slower earlier response must not overwrite a newer one.
 			if (!active || request !== latestRequest) return;
 			setDrafts(draftsToFeedItems(response?.items || []));

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
 	draftsToFeedItems,
 	isTimelineDraftId,
-	mergeDraftsIntoFeed
+	mergeDraftsIntoFeed,
+	toNonEmbeddedPath
 } from './timelineDrafts';
 import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
@@ -77,5 +78,16 @@ describe('timeline drafts (#1535)', () => {
 		]);
 		expect(mergeDraftsIntoFeed(feed, [])).toBe(feed);
 		expect(isTimelineDraftId('a')).toBe(false);
+	});
+});
+
+describe('toNonEmbeddedPath', () => {
+	it.each([
+		[null, null],
+		['/sessions/1', '/sessions/1'],
+		['/sessions/1?embeddedNotifications=1', '/sessions/1'],
+		['/s?a=1&embeddedNotifications=1', '/s?a=1']
+	])('%s -> %s', (path, expected) => {
+		expect(toNonEmbeddedPath(path)).toBe(expected);
 	});
 });

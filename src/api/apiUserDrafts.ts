@@ -25,16 +25,23 @@ export interface IUserDraftFeedResponse {
 	perPage: number;
 }
 
+/** Rejects on failure, so callers can tell an error from an empty list. */
+export const apiFetchUserDrafts = (
+	page = 0,
+	perPage = 200
+): Promise<IUserDraftFeedResponse> =>
+	fetchData({
+		url: `${endpoints.userDrafts}?page=${page}&perPage=${perPage}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+	});
+
 export const apiGetUserDrafts = async (
 	page = 0,
 	perPage = 200
 ): Promise<IUserDraftFeedResponse> => {
 	try {
-		return await fetchData({
-			url: `${endpoints.userDrafts}?page=${page}&perPage=${perPage}`,
-			method: FETCH_METHODS.GET,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
-		});
+		return await apiFetchUserDrafts(page, perPage);
 	} catch {
 		return { items: [], page, perPage };
 	}

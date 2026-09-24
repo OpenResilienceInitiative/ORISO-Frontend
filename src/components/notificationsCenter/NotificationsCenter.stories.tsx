@@ -281,12 +281,13 @@ const ServerDraftsScope = ({
 }) => {
 	patchDraftsFetch();
 	storyDrafts = drafts;
-	React.useEffect(
-		() => () => {
+	// Layout effects run before the timeline's fetch effect; re-set after a prior scope's cleanup.
+	React.useLayoutEffect(() => {
+		storyDrafts = drafts;
+		return () => {
 			storyDrafts = null;
-		},
-		[]
-	);
+		};
+	}, [drafts]);
 	return <>{children}</>;
 };
 

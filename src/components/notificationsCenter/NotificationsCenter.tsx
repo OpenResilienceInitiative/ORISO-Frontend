@@ -90,7 +90,11 @@ import type {
 import { ConversationPreview } from './ConversationPreview';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
-import { isTimelineDraftId, mergeDraftsIntoFeed } from './timelineDrafts';
+import {
+	isTimelineDraftId,
+	mergeDraftsIntoFeed,
+	toNonEmbeddedPath
+} from './timelineDrafts';
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
 import {
 	formatAbsoluteTime,
@@ -232,17 +236,6 @@ const parseNumericId = (value?: string | null): number | null => {
 	}
 	const parsed = Number(value);
 	return Number.isSafeInteger(parsed) ? parsed : null;
-};
-
-const toNonEmbeddedPath = (path?: string | null): string | null => {
-	if (!path) {
-		return null;
-	}
-	const [basePath, queryString = ''] = String(path).split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
 };
 
 export const NotificationsCenter = () => {
