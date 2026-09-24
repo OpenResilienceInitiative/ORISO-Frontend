@@ -4,6 +4,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationSettingsPanel } from './index';
 import { APP_ORISO_FIGMA_URL } from '../../storybookDesignLinks';
 import { notificationSettingsStore } from '../../../utils/notificationSettings/store';
+import { expect, within } from 'storybook/test';
+import { withDisplayFilterStore } from '../../displayFilter/displayFilterStoryStore';
+import {
+	DEFAULT_DISPLAY_FILTERS,
+	withGlobalFilter,
+	withSectionOverride
+} from '../../../utils/displayFilter/model';
 
 /**
  * The panel runs on the Slice 6a settings store, which works without a Matrix
@@ -30,6 +37,7 @@ const meta = {
 	title: 'Organisms/NotificationSettingsPanel',
 	component: NotificationSettingsPanel,
 	tags: ['autodocs'],
+	decorators: [withDisplayFilterStore],
 	parameters: {
 		design: {
 			type: 'figma',
@@ -75,4 +83,58 @@ export const DeviceSilenced: Story = {
 			});
 		})
 	]
+};
+
+/**
+ * #1377 slice 6: the display-filter defaults per list, a per-event-type
+ * hide in the Zeitstrahl (System shows as "mixed"), and a Gespräche list
+ * that currently runs its own override (hint shown).
+ */
+export const DisplayFilters: Story = {
+	decorators: [
+		withStoreState(() => notificationSettingsStore.resetForTests())
+	],
+	parameters: {
+		displayFilters: withSectionOverride(
+			withGlobalFilter(DEFAULT_DISPLAY_FILTERS, 'timeline', {
+				kinds: { drafts: { show: true, pill: false } },
+				autoReadHidden: true,
+				hiddenEventTypes: ['supervisor.added']
+			}),
+			'sessions',
+			{
+				kinds: { circle: { show: false, pill: false } },
+				autoReadHidden: false
+			}
+		)
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByRole('checkbox', { name: 'In der Liste: System' })
+		).toHaveAttribute('aria-checked', 'mixed');
+		// Entwürfe is a row in the Zeitstrahl AND the Gespräche section
+		// (Frank 2026-09-16: every chip a row), so scope to the timeline.
+		const timeline = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="display-filter-profile-timeline"]'
+			)!
+		);
+		await expect(
+			timeline.getByRole('button', { name: 'Pille: Entwürfe' })
+		).toHaveTextContent('Aus');
+		const sessions = within(
+			canvasElement.querySelector<HTMLElement>(
+				'[data-cy="display-filter-profile-sessions"]'
+			)!
+		);
+		await expect(
+			sessions.getByRole('button', { name: 'Pille: Ungelesen' })
+		).toHaveTextContent('An');
+		await expect(
+			canvas.getByText(
+				'Diese Liste nutzt gerade einen eigenen Filter; die Standards gelten, sobald er zurückgesetzt wird.'
+			)
+		).toBeVisible();
+	}
 };

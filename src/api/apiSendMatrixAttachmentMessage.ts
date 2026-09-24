@@ -7,9 +7,9 @@ import { chatTransportService } from '../services/chatTransportService';
 
 export interface SendMatrixAttachmentMessageOptions
 	extends MatrixFileMessageOptions {
-	threadRootId?: string | null;
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
+	teamDiscussion?: boolean;
 }
 
 type PostMessageEventNotification = (

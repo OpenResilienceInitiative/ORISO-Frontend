@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -100,5 +100,54 @@ describe('M3Snackbar', () => {
 		expect(
 			document.querySelector('.MuiSnackbar-root .MuiAlert-root')
 		).not.toBeNull();
+	});
+	/**
+	 * M3 shows one snackbar at a time. A standing notice (the recovery
+	 * reminder) and a transient one (the display-filter note in the sessions
+	 * list) share the bottom-centre spot on desktop, so the transient one
+	 * covered the other's action (#1505 review). The standing one steps aside
+	 * while another is open and comes back when it closes.
+	 */
+	it('lets a standing notice step aside while another snackbar is open', async () => {
+		const { rerender } = render(
+			<>
+				<M3Snackbar
+					message="Standing"
+					testId="standing"
+					yieldToOthers
+				/>
+				<M3Snackbar message="Transient" testId="transient" open />
+			</>
+		);
+
+		await waitFor(() =>
+			expect(screen.queryByTestId('standing')).toBeNull()
+		);
+		expect(screen.getByTestId('transient')).toBeTruthy();
+
+		rerender(
+			<>
+				<M3Snackbar
+					message="Standing"
+					testId="standing"
+					yieldToOthers
+				/>
+				<M3Snackbar
+					message="Transient"
+					testId="transient"
+					open={false}
+				/>
+			</>
+		);
+
+		expect(await screen.findByTestId('standing')).toBeTruthy();
+	});
+
+	it('shows a standing notice when nothing else is open', () => {
+		render(
+			<M3Snackbar message="Standing" testId="standing" yieldToOthers />
+		);
+
+		expect(screen.getByTestId('standing')).toBeTruthy();
 	});
 });

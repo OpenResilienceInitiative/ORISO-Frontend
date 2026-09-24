@@ -38,6 +38,11 @@ export interface ErstantwortSequenceProps {
 	onFirstReveal?: () => void;
 	/** Fired when an action Baustein's button is pressed. */
 	onAction?: (kind: ErstantwortActionKind) => void;
+	/**
+	 * Sender shown in the kicker line. Defaults to "Carimat"; the supervision
+	 * side room's notice (T49) reuses this organism under its own name.
+	 */
+	name?: string;
 	/** Subtitle beside the Carimat name; defaults to the platform wording. */
 	subtitle?: string;
 	/**
@@ -77,6 +82,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	skipAnimation = false,
 	onFirstReveal,
 	onAction,
+	name = 'Carimat',
 	subtitle,
 	slots
 }) => {
@@ -155,7 +161,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					<div className="pseudonymCard__contentCol erstantwort__content">
 						<div className="pseudonymCard__header">
 							<span className="pseudonymCard__headerName">
-								Carimat
+								{name}
 							</span>
 							<span className="pseudonymCard__headerSubtitle">
 								{subtitle ??

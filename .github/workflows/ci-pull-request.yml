@@ -98,10 +98,43 @@ jobs:
       - name: Run Storybook component tests
         run: npm run test:storybook
 
-# NOTE: the Playwright public-route smoke (`npm run test:smoke`) is intentionally
-# NOT a CI job. The app's bootstrap requires a reachable backend to render; CI
-# runners can't reach the dev cluster, so a browser smoke would need Cypress's
-# full API-mock layer (which is also why the Cypress suite isn't wired to CI).
-# The router migration's automated CI coverage is the vitest routing suite
-# (src/components/app/SessionsZone.routing.test.tsx, both roles) + the build/test
-# job above. Playwright stays a local smoke against the dev backend.
+  enquiry-team-browser:
+    name: Enquiry team panel browser regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: Install browser test runtimes
+        run: |
+          npx cypress install
+          node node_modules/playwright/cli.js install --with-deps chrome
+
+      - name: Verify enquiry and team discussion through the actual app
+        run: npm run test:enquiry-team
+
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: enquiry-team-browser
+          path: cypress/screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+# The public-route Playwright smoke still needs the real backend and remains local.
+# The enquiry/team scenario above provides its own synthetic HTTP fixtures, so it
+# can verify the actual app in CI without reaching Dev or using account secrets.

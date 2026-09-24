@@ -144,7 +144,10 @@ describe('Matrix session stream privacy', () => {
 		});
 		expect(message.attachments[0]).to.deep.include({
 			title: 'case-note.txt',
-			downloadUrl: '/_matrix/media/r0/download/oriso.org/file',
+			// Authenticated media (#1487): no browser-usable URL is minted for
+			// homeserver media any more; the mxc URI is carried instead.
+			downloadUrl: '',
+			mxcUrl: 'mxc://oriso.org/file',
 			type: 'file',
 			mediaType: 'text/plain',
 			size: 22,

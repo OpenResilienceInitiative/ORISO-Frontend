@@ -27,8 +27,33 @@ import {
 	filterSearchPeople,
 	SessionSearchPersonResult
 } from './sessionSearchPeople';
+import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
+import { ReactComponent as OtherKindIcon } from '../../resources/img/icons/display-filter-other.svg';
+import { FilterChipRow } from '../displayFilter/FilterChipRow';
+import { FilterChip as MenuChip } from '../displayFilter/FilterChip';
+import { ChipView, orderChipKinds } from '../displayFilter/displayFilterTypes';
+import '../displayFilter/displayFilter.styles.scss';
+
+/** The pinned tune button at the right end of the chip row (#1377 §3). */
+export interface SessionsToolbarDisplayFilterProps {
+	/** Section icon shown in the search field's leading slot (Frank 2026-09-16). */
+	icon?: React.ReactNode;
+	label: string;
+	customisedLabel: string;
+	customised: boolean;
+	open: boolean;
+	controlsId: string;
+	onOpen: () => void;
+}
 
 export type { SessionToolbarChipFilter } from './sessionToolbarFilters';
+
+/**
+ * Chips the display filter may hide (#1377 §5.2): the kind chips only —
+ * "unread" and "drafts" are refinements, never kinds.
+ */
+/** Every chip a display-filter row can switch (Frank 2026-09-16: all of them). */
+export type DisplayFilterKindChip = SessionToolbarChipFilter;
 export type {
 	SessionSearchAgencyOption,
 	SessionSearchPersonOption,
@@ -83,6 +108,33 @@ interface SessionsListToolbarProps {
 	/** Create-group-chat route is open. */
 	createGroupChatActive: boolean;
 	chipCounts?: Partial<Record<SessionToolbarChipFilter, number>>;
+	/** Renders the display-filter button when given (#1377 slice 4/5). */
+	displayFilter?: SessionsToolbarDisplayFilterProps;
+	/**
+	 * Kind chips the display filter suppresses (#1377 §5.1 user-gated
+	 * chips: pill off, or no unread rows and not active). `unread`/`drafts`
+	 * are not kinds and are never listed here.
+	 */
+	hiddenKindChips?: Partial<Record<DisplayFilterKindChip, boolean>>;
+	/**
+	 * Kind chips whose format the Träger switched off while rows still exist
+	 * (Frank 2026-09-16): rendered locked regardless of the module gate, a
+	 * click goes to `onDeactivatedChipClick`.
+	 */
+	deactivatedKindChips?: Partial<Record<DisplayFilterKindChip, boolean>>;
+	/** Accessible name of a locked chip, e.g. "Gesprächskreis (1) (vom Träger abgeschaltet)". */
+	deactivatedChipLabel?: (chipName: string) => string;
+	onDeactivatedChipClick?: (chip: DisplayFilterKindChip) => void;
+	/** Chip menu view from the display filter: icon pills or compact text pills. */
+	chipView?: ChipView;
+	/** Chips with unread items float to the left of the row. */
+	chipAutoSort?: boolean;
+	/** Offer the Sonstiges chip (lists that classify their rows, #1377). */
+	showOtherChip?: boolean;
+	/** The Archiv link (Gespräche); the display filter's Archiv pill drives it. */
+	showArchiveChip?: boolean;
+	/** Pill of the Erstellen row (display filter); the Träger gate stays `showCreateGroupChatAction`. */
+	showCreateChip?: boolean;
 }
 
 export const IconMenuDots = () => (
@@ -135,6 +187,14 @@ export const IconCheck = () => (
 			fill="#ffffff"
 		/>
 	</svg>
+);
+
+/** Sonstiges: the catch-all chip, bundles kinds without their own pill. */
+const OtherFilterIcon = ({ className }: SessionToolbarFilterIconProps) => (
+	<OtherKindIcon
+		className={clsx(className, 'sessionsListToolbar__chipIconSvg--asset')}
+		aria-hidden="true"
+	/>
 );
 
 type FilterChipConfig = {
@@ -194,62 +254,60 @@ const FILTER_CHIPS: FilterChipConfig[] = [
 		fallback: 'Conversation circle',
 		Icon: GroupFilterIcon,
 		dataCy: 'sessions-list-chip-groups'
+	},
+	{
+		id: 'other',
+		labelKey: 'sessionList.toolbar.chips.other',
+		fallback: 'More',
+		Icon: OtherFilterIcon,
+		dataCy: 'sessions-list-chip-other'
 	}
 ];
-
-const CountBadge = ({ count }: { count?: number }) => {
-	if (!count || count <= 0) {
-		return null;
-	}
-
-	return (
-		<span className="sessionsListToolbar__chipBadge">
-			{count > 99 ? '99+' : count}
-		</span>
-	);
-};
 
 const FilterChip = ({
 	chip,
 	active,
 	count,
 	label,
-	onClick
+	onClick,
+	view,
+	deactivated,
+	deactivatedLabel,
+	onDeactivatedClick
 }: {
 	chip: FilterChipConfig;
 	active: boolean;
 	count?: number;
 	label: string;
 	onClick: () => void;
+	view: ChipView;
+	deactivated: boolean;
+	deactivatedLabel?: string;
+	onDeactivatedClick?: () => void;
 }) => {
-	const Icon = chip.Icon;
-
+	// The toolbar icons take `hasIndicator` (the unread dot); the shared
+	// chip only knows an SVG component, so bind the indicator here.
+	const indicator = chip.id === 'unread' && Boolean(count && count > 0);
+	const Icon = React.useMemo(
+		() =>
+			({ className }: React.SVGProps<SVGSVGElement>) => (
+				<chip.Icon className={className} hasIndicator={indicator} />
+			),
+		[chip, indicator]
+	);
 	return (
-		<button
-			type="button"
-			className={clsx('sessionsListToolbar__chip', {
-				'sessionsListToolbar__chip--active': active,
-				'sessionsListToolbar__chip--iconOnly': !active
-			})}
+		<MenuChip
+			label={label}
+			icon={Icon}
+			active={active}
+			count={count}
+			view={view}
+			deactivated={deactivated}
+			deactivatedLabel={deactivatedLabel}
 			onClick={onClick}
-			aria-pressed={active}
-			aria-label={label}
+			onDeactivatedClick={onDeactivatedClick}
 			data-cy={chip.dataCy}
-		>
-			<Icon
-				className="sessionsListToolbar__chipIconSvg"
-				hasIndicator={
-					chip.id === 'unread' && Boolean(count && count > 0)
-				}
-			/>
-			<span
-				className="sessionsListToolbar__chipLabel"
-				aria-hidden={!active}
-			>
-				{label}
-			</span>
-			<CountBadge count={count} />
-		</button>
+		/>
 	);
 };
 
@@ -284,7 +342,17 @@ export const SessionsListToolbar = ({
 	archiveTabPath,
 	archiveTabActive,
 	createGroupChatActive,
-	chipCounts = {}
+	chipCounts = {},
+	displayFilter,
+	hiddenKindChips = {},
+	deactivatedKindChips = {},
+	deactivatedChipLabel,
+	onDeactivatedChipClick,
+	chipView = 'icons',
+	chipAutoSort = false,
+	showOtherChip = false,
+	showArchiveChip = true,
+	showCreateChip = true
 }: SessionsListToolbarProps) => {
 	const searchId = React.useId();
 	const searchRootRef = React.useRef<HTMLDivElement | null>(null);
@@ -389,30 +457,54 @@ export const SessionsListToolbar = ({
 		};
 	}, []);
 
-	const visibleFilterChips = React.useMemo(
-		() =>
-			FILTER_CHIPS.filter((chip) => {
-				if (chip.id === 'liveChat') {
-					return showLiveChatChip;
-				}
-				if (chip.id === 'supervision') {
-					return showSupervisionChip;
-				}
-				if (chip.id === 'groups') {
-					return showGroupChip;
-				}
-				if (chip.id === 'internalGroup') {
-					return showInternalGroupChip;
-				}
+	const visibleFilterChips = React.useMemo(() => {
+		const listed = FILTER_CHIPS.filter((chip) => {
+			if (hiddenKindChips[chip.id as DisplayFilterKindChip]) {
+				return false;
+			}
+			// Träger switched the format off but rows still exist: the
+			// chip stays (locked) although the module gate below is off.
+			if (deactivatedKindChips[chip.id as DisplayFilterKindChip]) {
 				return true;
-			}),
-		[
-			showGroupChip,
-			showInternalGroupChip,
-			showLiveChatChip,
-			showSupervisionChip
-		]
-	);
+			}
+			if (chip.id === 'liveChat') {
+				return showLiveChatChip;
+			}
+			if (chip.id === 'supervision') {
+				return showSupervisionChip;
+			}
+			if (chip.id === 'groups') {
+				return showGroupChip;
+			}
+			if (chip.id === 'internalGroup') {
+				return showInternalGroupChip;
+			}
+			if (chip.id === 'other') {
+				return showOtherChip;
+			}
+			return true;
+		});
+		// Drafts are a count, not unread: they never float.
+		return orderChipKinds(
+			listed.map((chip) => ({
+				...chip,
+				label: chip.fallback,
+				unreadCount:
+					chip.id === 'drafts' ? 0 : (chipCounts[chip.id] ?? 0)
+			})),
+			{ autoSort: chipAutoSort }
+		);
+	}, [
+		chipAutoSort,
+		chipCounts,
+		deactivatedKindChips,
+		hiddenKindChips,
+		showGroupChip,
+		showInternalGroupChip,
+		showLiveChatChip,
+		showOtherChip,
+		showSupervisionChip
+	]);
 	const archiveInsertIndex = Math.max(
 		visibleFilterChips.findIndex((chip) => chip.id === 'internalGroup'),
 		0
@@ -423,16 +515,35 @@ export const SessionsListToolbar = ({
 	const filterChipsAfterArchive = showConsultantActions
 		? visibleFilterChips.slice(archiveInsertIndex)
 		: [];
-	const renderFilterChip = (chip: FilterChipConfig) => (
-		<FilterChip
-			key={chip.id}
-			chip={chip}
-			active={activeChip === chip.id}
-			count={chipCounts[chip.id]}
-			label={tr(chip.labelKey, chip.fallback)}
-			onClick={() => onChipToggle(chip.id)}
-		/>
-	);
+	const renderFilterChip = (chip: FilterChipConfig) => {
+		const deactivated = Boolean(
+			deactivatedKindChips[chip.id as DisplayFilterKindChip]
+		);
+		const count = chipCounts[chip.id];
+		const label = tr(chip.labelKey, chip.fallback);
+		const named =
+			count && count > 0
+				? `${label} (${count > 99 ? '99+' : count})`
+				: label;
+		return (
+			<FilterChip
+				key={chip.id}
+				chip={chip}
+				active={activeChip === chip.id}
+				count={count}
+				label={label}
+				view={chipView}
+				deactivated={deactivated}
+				deactivatedLabel={
+					deactivated ? deactivatedChipLabel?.(named) : undefined
+				}
+				onDeactivatedClick={() =>
+					onDeactivatedChipClick?.(chip.id as DisplayFilterKindChip)
+				}
+				onClick={() => onChipToggle(chip.id)}
+			/>
+		);
+	};
 
 	return (
 		<div className="sessionsListToolbar" data-cy="sessions-list-toolbar">
@@ -443,24 +554,47 @@ export const SessionsListToolbar = ({
 							showSearchDropdown
 					})}
 				>
-					<button
-						type="button"
-						className="sessionsListToolbar__iconButton"
-						aria-label={
-							showSearchDropdown
-								? tr(
-										'sessionList.toolbar.search.close',
-										'Close search'
-									)
-								: tr(
-										'sessionList.toolbar.search.toggle',
-										'Open or close search results'
-									)
-						}
-						onClick={() => setIsSearchViewOpen((prev) => !prev)}
-					>
-						{showSearchDropdown ? <IconClose /> : <IconMenuDots />}
-					</button>
+					{/* Frank 2026-09-16: the display-filter button lives in the
+					    search field's leading slot (the kebab had no function of
+					    its own); while the search panel is open the slot closes it. */}
+					{showSearchDropdown || !displayFilter ? (
+						<button
+							type="button"
+							className="sessionsListToolbar__iconButton"
+							aria-label={
+								showSearchDropdown
+									? tr(
+											'sessionList.toolbar.search.close',
+											'Close search'
+										)
+									: tr(
+											'sessionList.toolbar.search.toggle',
+											'Open or close search results'
+										)
+							}
+							onClick={() => setIsSearchViewOpen((prev) => !prev)}
+						>
+							{showSearchDropdown ? (
+								<IconClose />
+							) : (
+								<IconMenuDots />
+							)}
+						</button>
+					) : (
+						<span className="sessionsListToolbar__iconButton sessionsListToolbar__iconButton--filter">
+							<DisplayFilterButton
+								icon={displayFilter.icon}
+								label={displayFilter.label}
+								customised={displayFilter.customised}
+								customisedLabel={displayFilter.customisedLabel}
+								open={displayFilter.open}
+								controlsId={displayFilter.controlsId}
+								onClick={displayFilter.onOpen}
+								compact
+								data-cy="sessions-list-display-filter"
+							/>
+						</span>
+					)}
 					<div className="sessionsListToolbar__searchFieldWrap">
 						{selectedPeople.length > 0 && (
 							<div className="sessionsListToolbar__searchInlinePills">
@@ -639,69 +773,77 @@ export const SessionsListToolbar = ({
 				)}
 			</div>
 
-			<div
-				className="sessionsListToolbar__chipsScroll"
-				data-cy="sessions-list-chips"
+			<FilterChipRow
+				label={tr('sessionList.toolbar.chips.group', 'Filter')}
+				className={clsx(chipView === 'text' && 'filterChipRow--dense')}
 				style={{ display: showSearchDropdown ? 'none' : undefined }}
+				scrollDataCy="sessions-list-chips"
 			>
-				<div className="sessionsListToolbar__chipsRow">
-					{showCreateGroupChatAction && (
-						<Link
-							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--active':
-									createGroupChatActive
-							})}
-							to={createGroupChatPath}
-							aria-label={translate(
-								'sessionList.createChat.buttonTitle'
-							)}
-							aria-current={
-								createGroupChatActive ? 'page' : undefined
-							}
-							data-cy="sessions-list-chip-create"
-							data-tour-target="groupchat-create-button"
-						>
+				{showCreateGroupChatAction && showCreateChip && (
+					<Link
+						className={clsx('sessionsListToolbar__chip', {
+							'sessionsListToolbar__chip--active':
+								createGroupChatActive,
+							'sessionsListToolbar__chip--text':
+								chipView === 'text',
+							'sessionsListToolbar__chip--labelled':
+								chipView === 'labels'
+						})}
+						to={createGroupChatPath}
+						aria-label={translate(
+							'sessionList.createChat.buttonTitle'
+						)}
+						aria-current={
+							createGroupChatActive ? 'page' : undefined
+						}
+						data-cy="sessions-list-chip-create"
+						data-tour-target="groupchat-create-button"
+					>
+						{chipView !== 'text' && (
 							<CreateChatFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span className="sessionsListToolbar__chipLabel">
-								{tr(
-									'sessionList.toolbar.chips.create',
-									'Create'
-								)}
-							</span>
-						</Link>
-					)}
-					{filterChipsBeforeArchive.map(renderFilterChip)}
-					{showConsultantActions && (
-						<Link
-							className={clsx('sessionsListToolbar__chip', {
-								'sessionsListToolbar__chip--iconOnly':
-									!archiveTabActive,
-								'sessionsListToolbar__chip--active':
-									archiveTabActive
-							})}
-							data-tour-target="sessions-archive-tab"
-							to={archiveTabPath}
-							aria-label={translate(
-								'sessionList.view.archive.tab'
-							)}
-							aria-current={archiveTabActive ? 'page' : undefined}
-							data-cy="sessions-list-chip-archive"
-						>
+						)}
+						<span className="sessionsListToolbar__chipLabel">
+							{tr('sessionList.toolbar.chips.create', 'Create')}
+						</span>
+					</Link>
+				)}
+				{filterChipsBeforeArchive.map(renderFilterChip)}
+				{showConsultantActions && showArchiveChip && (
+					<Link
+						className={clsx('sessionsListToolbar__chip', {
+							'sessionsListToolbar__chip--iconOnly':
+								!archiveTabActive && chipView === 'icons',
+							'sessionsListToolbar__chip--active':
+								archiveTabActive,
+							'sessionsListToolbar__chip--text':
+								chipView === 'text',
+							'sessionsListToolbar__chip--labelled':
+								chipView === 'labels'
+						})}
+						data-tour-target="sessions-archive-tab"
+						to={archiveTabPath}
+						aria-label={translate('sessionList.view.archive.tab')}
+						aria-current={archiveTabActive ? 'page' : undefined}
+						data-cy="sessions-list-chip-archive"
+					>
+						{chipView !== 'text' && (
 							<ArchiveFilterIcon className="sessionsListToolbar__chipIconSvg" />
-							<span
-								className="sessionsListToolbar__chipLabel"
-								aria-hidden={!archiveTabActive}
-							>
-								{tr(
-									'sessionList.toolbar.chips.archive',
-									'Archived'
-								)}
-							</span>
-						</Link>
-					)}
-					{filterChipsAfterArchive.map(renderFilterChip)}
-				</div>
-			</div>
+						)}
+						<span
+							className="sessionsListToolbar__chipLabel"
+							aria-hidden={
+								!archiveTabActive && chipView === 'icons'
+							}
+						>
+							{tr(
+								'sessionList.toolbar.chips.archive',
+								'Archived'
+							)}
+						</span>
+					</Link>
+				)}
+				{filterChipsAfterArchive.map(renderFilterChip)}
+			</FilterChipRow>
 		</div>
 	);
 };

@@ -17,6 +17,14 @@ vi.mock('react-i18next', () => ({
 vi.mock('../../resources/scripts/endpoints', () => ({
 	apiUrl: 'https://api.test'
 }));
+// Authenticated media (#1487). The stub is deliberately faithful about the one
+// thing these tests care about: it resolves nothing while the caller passes
+// `null`, which is how an unrevealed guest image stays unfetched.
+vi.mock('../../utils/matrixAuthenticatedMedia', () => ({
+	fetchAuthenticatedMatrixMedia: vi.fn(),
+	useAuthenticatedMatrixMediaUrl: (mxcUrl?: string | null) =>
+		mxcUrl ? `blob:${mxcUrl.replace('mxc://hs/', '')}` : null
+}));
 // The globalState barrel transitively pulls lottie-web (crashes in jsdom), so
 // mock it down to just what MessageAttachment consumes.
 vi.mock('../../globalState', () => {
@@ -32,7 +40,8 @@ vi.mock('../../globalState', () => {
 
 const imageAttachment = {
 	title: 'photo.png',
-	downloadUrl: '/_matrix/media/r0/download/hs/media-1',
+	downloadUrl: '',
+	mxcUrl: 'mxc://hs/media-1',
 	type: 'image',
 	mediaType: 'image/png',
 	size: 12,
