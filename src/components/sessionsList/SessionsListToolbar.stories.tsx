@@ -411,7 +411,7 @@ const supervisionRow = (
 		user: { username: name } as ListItemInterface['user'],
 		session: {
 			id,
-			matrixRoomId: `!supervision-demo-${id}:oriso.org`,
+			matrixRoomId: `!supervision-demo-${id}:example.org`,
 			messagesRead: true,
 			conversationType: 'AGENCY_COUNSELLING',
 			...(supervision ? { supervision } : {})

@@ -129,7 +129,7 @@ describe('LegalContentRenderer', () => {
 						'<p onclick="window.__xss = true"><strong>Sicherer Text</strong></p>',
 						'<script>window.__xss = true</script>',
 						'<a href="javascript:alert(1)">Unsicher</a>',
-						'<a href="https://oriso.org/legal">Sicher</a>'
+						'<a href="https://example.org/legal">Sicher</a>'
 					].join('')
 				})}
 			/>
@@ -141,7 +141,7 @@ describe('LegalContentRenderer', () => {
 		expect(container.querySelector('[onclick]')).toBeNull();
 		expect(screen.getByText('Unsicher').getAttribute('href')).toBeNull();
 		expect(screen.getByText('Sicher').getAttribute('href')).toBe(
-			'https://oriso.org/legal'
+			'https://example.org/legal'
 		);
 	});
 });

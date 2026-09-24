@@ -171,7 +171,7 @@ describe('EncryptionSettingsPanel', () => {
 	});
 
 	describe('recovery key parked by the silent setup (#839 follow-up)', () => {
-		const USER_ID = '@abe.simpson:oriso.org';
+		const USER_ID = '@abe.simpson:example.org';
 		const PARKED_KEY = 'EsTc 1111 2222 3333 4444';
 		const clientWithUser = { getUserId: () => USER_ID } as MatrixClient;
 
