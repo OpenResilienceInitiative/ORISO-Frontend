@@ -27,6 +27,7 @@ import {
 	TopicsContext,
 	UserDataContext
 } from '../../globalState';
+import { STATUS_EMPTY } from '../../globalState/interfaces';
 import type {
 	ConsultingTypeInterface,
 	ListItemInterface,
@@ -2013,5 +2014,34 @@ export const AskerSearchingRow: Story = {
 		await expect(beamBox.top).toBeGreaterThan(cardBox.top);
 		await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
 		magnet.classList.remove('consultantSearchLoader--pulsing');
+	}
+};
+
+/** Own enquiry not written yet: nobody searches, so the magnet rests. */
+export const AskerEmptyEnquiryRow: Story = {
+	name: 'Ratsuchende, Anfrage noch leer — Magnet ruht (FE#1115)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				asSearchingAsker
+				sessionOverrides={{ status: STATUS_EMPTY }}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const magnet = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.consultantSearchLoader'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(magnet).not.toHaveClass(
+			'consultantSearchLoader--animated'
+		);
+		await expect(
+			canvasElement.querySelector('.sessionsListItem__content')
+		).not.toHaveClass('consultantSearchLoaderHost');
 	}
 };

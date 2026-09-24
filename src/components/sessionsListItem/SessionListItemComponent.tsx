@@ -908,6 +908,9 @@ export const SessionListItemComponent = ({
 	// has to exist before the branch does. Pure string work — no hook, no
 	// behaviour change for the card list.
 	const hasConsultantData = !!activeSession.consultant;
+	// An unwritten enquiry is not searched for yet, so the magnet rests.
+	const isSearchingForConsultant =
+		isAsker && !hasConsultantData && !activeSession.isEmptyEnquiry;
 	let sessionTopic = '';
 
 	// Card title:
@@ -1339,9 +1342,7 @@ export const SessionListItemComponent = ({
 					'sessionsListItem__content--flow',
 					isAnonymousChat && 'sessionsListItem__content--anonymous',
 					/* The whole card, not the glyph, replays the magnet on hover. */
-					isAsker &&
-						!hasConsultantData &&
-						'consultantSearchLoaderHost'
+					isSearchingForConsultant && 'consultantSearchLoaderHost'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={setCardRef}
@@ -1494,7 +1495,10 @@ export const SessionListItemComponent = ({
 								</div>
 							) : isAsker && !hasConsultantData ? (
 								/* Points right, into the card's width, so the card's corner clip never cuts the beam. */
-								<ConsultantSearchLoader size="40px" />
+								<ConsultantSearchLoader
+									size="40px"
+									animated={isSearchingForConsultant}
+								/>
 							) : !isAsker ? (
 								// Restored username+icon linkage: the asker card
 								// shows the SAME animal avatar the chat derives
