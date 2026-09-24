@@ -13,7 +13,7 @@ describe('createPasswordUiAuth', () => {
 			.mockRejectedValueOnce({ data: { session: 'uia-session' } })
 			.mockResolvedValueOnce(undefined);
 		const authenticate = createPasswordUiAuth(
-			'@herb-powell:predev.oriso.org',
+			'@herb-powell:predev.example.org',
 			'ephemeral-uia-password'
 		);
 
@@ -24,7 +24,7 @@ describe('createPasswordUiAuth', () => {
 			type: 'm.login.password',
 			identifier: {
 				type: 'm.id.user',
-				user: '@herb-powell:predev.oriso.org'
+				user: '@herb-powell:predev.example.org'
 			},
 			password: 'ephemeral-uia-password',
 			session: 'uia-session'
@@ -44,7 +44,7 @@ describe('createPasswordUiAuth', () => {
 			.mockResolvedValueOnce(undefined);
 		const currentPassword = vi.fn().mockResolvedValue('rotated-password');
 		const authenticate = createPasswordUiAuth(
-			'@herb-powell:predev.oriso.org',
+			'@herb-powell:predev.example.org',
 			currentPassword
 		);
 
@@ -125,7 +125,7 @@ describe('createPasswordUiAuth', () => {
 		const failure = new Error('network failed');
 		const makeRequest = vi.fn().mockRejectedValueOnce(failure);
 		const authenticate = createPasswordUiAuth(
-			'@herb-powell:predev.oriso.org',
+			'@herb-powell:predev.example.org',
 			'ephemeral-uia-password'
 		);
 

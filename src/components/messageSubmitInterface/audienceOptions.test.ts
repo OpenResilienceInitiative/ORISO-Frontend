@@ -107,9 +107,9 @@ describe('restoreAudienceSelection', () => {
 
 describe('classifyAudienceKind', () => {
 	const roster = buildAudienceRoster({
-		askerIds: ['@enc.katze_mika_1234:oriso.org', 'katze_mika_1234'],
-		consultantIds: ['@consultant42:oriso.org'],
-		supervisorIds: ['@moderator7:oriso.org']
+		askerIds: ['@enc.katze_mika_1234:example.org', 'katze_mika_1234'],
+		consultantIds: ['@consultant42:example.org'],
+		supervisorIds: ['@moderator7:example.org']
 	});
 
 	it('marks the sentinel as "all"', () => {
@@ -118,7 +118,7 @@ describe('classifyAudienceKind', () => {
 
 	it('recognises the asker by their Matrix id', () => {
 		expect(
-			classifyAudienceKind('@enc.katze_mika_1234:oriso.org', roster)
+			classifyAudienceKind('@enc.katze_mika_1234:example.org', roster)
 		).toBe('asker');
 	});
 
@@ -127,7 +127,7 @@ describe('classifyAudienceKind', () => {
 	});
 
 	it('recognises a consultant', () => {
-		expect(classifyAudienceKind('@consultant42:oriso.org', roster)).toBe(
+		expect(classifyAudienceKind('@consultant42:example.org', roster)).toBe(
 			'consultant'
 		);
 	});
@@ -139,7 +139,7 @@ describe('classifyAudienceKind', () => {
 	});
 
 	it('recognises a supervisor', () => {
-		expect(classifyAudienceKind('@moderator7:oriso.org', roster)).toBe(
+		expect(classifyAudienceKind('@moderator7:example.org', roster)).toBe(
 			'supervisor'
 		);
 	});
@@ -152,10 +152,10 @@ describe('classifyAudienceKind', () => {
 	it('prefers supervisor over consultant when a person is both', () => {
 		const both = buildAudienceRoster({
 			askerIds: [],
-			consultantIds: ['@consultant42:oriso.org'],
-			supervisorIds: ['@consultant42:oriso.org']
+			consultantIds: ['@consultant42:example.org'],
+			supervisorIds: ['@consultant42:example.org']
 		});
-		expect(classifyAudienceKind('@consultant42:oriso.org', both)).toBe(
+		expect(classifyAudienceKind('@consultant42:example.org', both)).toBe(
 			'supervisor'
 		);
 	});
@@ -166,12 +166,15 @@ describe('classifyAudienceKind', () => {
 	 */
 	it('does not infer a role from the label text', () => {
 		expect(
-			classifyAudienceKind('@gutmuetiger_berater_biber:oriso.org', roster)
+			classifyAudienceKind(
+				'@gutmuetiger_berater_biber:example.org',
+				roster
+			)
 		).toBe('person');
 	});
 
 	it('falls back to "person" for anyone unmatched', () => {
-		expect(classifyAudienceKind('@someone-else:oriso.org', roster)).toBe(
+		expect(classifyAudienceKind('@someone-else:example.org', roster)).toBe(
 			'person'
 		);
 	});
@@ -319,35 +322,35 @@ describe('audienceOptionsReady', () => {
 describe('groupAudienceOptions', () => {
 	const options: AudienceOption[] = [
 		{
-			value: '@enc.katze_mika:oriso.org',
+			value: '@enc.katze_mika:example.org',
 			label: 'Katze Mika',
 			kind: 'asker'
 		},
 		{
-			value: '@consultant42:oriso.org',
+			value: '@consultant42:example.org',
 			label: 'K. Paulstätter',
 			kind: 'consultant'
 		},
 		{
-			value: '@moderator7:oriso.org',
+			value: '@moderator7:example.org',
 			label: 'B. Pardon',
 			kind: 'supervisor'
 		},
-		{ value: '@someone:oriso.org', label: 'Unklar', kind: 'person' },
+		{ value: '@someone:example.org', label: 'Unklar', kind: 'person' },
 		{ value: AUDIENCE_ALL, label: 'Send to all', kind: 'all' }
 	];
 
 	it('puts each option in the section its role says', () => {
 		const grouped = groupAudienceOptions(options, []);
 		expect(grouped.clients.map((o) => o.value)).toEqual([
-			'@enc.katze_mika:oriso.org'
+			'@enc.katze_mika:example.org'
 		]);
 		expect(grouped.moderators.map((o) => o.value)).toEqual([
-			'@moderator7:oriso.org'
+			'@moderator7:example.org'
 		]);
 		expect(grouped.counsellors.map((o) => o.value)).toEqual([
-			'@consultant42:oriso.org',
-			'@someone:oriso.org'
+			'@consultant42:example.org',
+			'@someone:example.org'
 		]);
 	});
 
@@ -365,7 +368,7 @@ describe('groupAudienceOptions', () => {
 	 * The reason this is a function rather than inline classification: the menu
 	 * used to re-derive roles with the fuzzy `getComparableAudienceIds`, whose
 	 * 4+ character tokens include the homeserver name. Every participant on
-	 * `oriso.org` shares the token `oriso`, so one supervisor in the room could
+	 * `example.org` shares the token `example`, so one supervisor in the room could
 	 * pull unrelated people into the moderator section — and with them the
 	 * moderator icon. Reported by CodeRabbit on #948.
 	 */
@@ -378,7 +381,7 @@ describe('groupAudienceOptions', () => {
 	it('marks the viewer’s own entry as disabled rather than dropping it', () => {
 		const grouped = groupAudienceOptions(options, ['consultant42']);
 		expect(grouped.counsellors[0]).toMatchObject({
-			value: '@consultant42:oriso.org',
+			value: '@consultant42:example.org',
 			disabled: true
 		});
 		expect(grouped.counsellors[1].disabled).toBe(false);
@@ -388,12 +391,12 @@ describe('groupAudienceOptions', () => {
 	it('does not disable someone who merely shares a word with the viewer', () => {
 		const shared: AudienceOption[] = [
 			{
-				value: '@alpaka_mika:oriso.org',
+				value: '@alpaka_mika:example.org',
 				label: 'sanftes Alpaka Mika',
 				kind: 'asker'
 			},
 			{
-				value: '@alpaka_leon:oriso.org',
+				value: '@alpaka_leon:example.org',
 				label: 'gutmütiges Alpaka Leon',
 				kind: 'asker'
 			}
@@ -405,22 +408,22 @@ describe('groupAudienceOptions', () => {
 
 describe('audienceIdentityKeys', () => {
 	it('recognises one person across the spellings they arrive in', () => {
-		const keys = audienceIdentityKeys('@enc.katze_mika:oriso.org');
+		const keys = audienceIdentityKeys('@enc.katze_mika:example.org');
 		expect(keys.has('katze_mika')).toBe(true);
 		expect(keys.has('enc.katze_mika')).toBe(true);
-		expect(keys.has('@enc.katze_mika:oriso.org')).toBe(true);
+		expect(keys.has('@enc.katze_mika:example.org')).toBe(true);
 	});
 
 	/** The whole point: the homeserver must never become an identity. */
 	it('never yields the homeserver as a key', () => {
-		const keys = audienceIdentityKeys('@consultant42:oriso.org');
+		const keys = audienceIdentityKeys('@consultant42:example.org');
 		expect(keys.has('oriso')).toBe(false);
-		expect(keys.has('oriso.org')).toBe(false);
+		expect(keys.has('example.org')).toBe(false);
 	});
 
 	it('has nothing in common with another account on the same homeserver', () => {
-		const mine = audienceIdentityKeys('@consultant42:oriso.org');
-		const theirs = audienceIdentityKeys('@moderator7:oriso.org');
+		const mine = audienceIdentityKeys('@consultant42:example.org');
+		const theirs = audienceIdentityKeys('@moderator7:example.org');
 		const shared = [...mine].filter((key) => theirs.has(key));
 		expect(shared).toEqual([]);
 	});
@@ -432,29 +435,29 @@ describe('createAudienceCollector', () => {
 	 *
 	 * De-duplication used to run through the composer's fuzzy
 	 * `getComparableAudienceIds`, which adds every token of four or more
-	 * characters — so `@consultant42:oriso.org` contributed `oriso`, and every
+	 * characters — so `@consultant42:example.org` contributed `example`, and every
 	 * account on the homeserver looked like a duplicate of every other one. The
 	 * second recipient was silently dropped and the message went out narrowed
 	 * to the wrong audience.
 	 */
 	it('keeps two different people who share a homeserver', () => {
 		const collector = createAudienceCollector([]);
-		collector.add('@consultant42:oriso.org', 'K. Paulstätter');
-		collector.add('@moderator7:oriso.org', 'B. Pardon');
+		collector.add('@consultant42:example.org', 'K. Paulstätter');
+		collector.add('@moderator7:example.org', 'B. Pardon');
 
 		expect(collector.entries()).toEqual([
-			['@consultant42:oriso.org', 'K. Paulstätter'],
-			['@moderator7:oriso.org', 'B. Pardon']
+			['@consultant42:example.org', 'K. Paulstätter'],
+			['@moderator7:example.org', 'B. Pardon']
 		]);
 	});
 
 	it('keeps a whole room of accounts on one homeserver', () => {
 		const collector = createAudienceCollector([]);
 		[
-			'@enc.katze_mika:oriso.org',
-			'@consultant42:oriso.org',
-			'@moderator7:oriso.org',
-			'@someone-else:oriso.org'
+			'@enc.katze_mika:example.org',
+			'@consultant42:example.org',
+			'@moderator7:example.org',
+			'@someone-else:example.org'
 		].forEach((id) => collector.add(id, id));
 
 		expect(collector.entries()).toHaveLength(4);
@@ -462,18 +465,18 @@ describe('createAudienceCollector', () => {
 
 	it('still collapses the same person arriving twice', () => {
 		const collector = createAudienceCollector([]);
-		collector.add('@enc.katze_mika:oriso.org', 'Katze Mika');
+		collector.add('@enc.katze_mika:example.org', 'Katze Mika');
 		// The session payload calls the same asker by their bare username.
 		collector.add('katze_mika', 'katze_mika');
 
 		expect(collector.entries()).toEqual([
-			['@enc.katze_mika:oriso.org', 'Katze Mika']
+			['@enc.katze_mika:example.org', 'Katze Mika']
 		]);
 	});
 
 	it('reports whether an entry was taken', () => {
 		const collector = createAudienceCollector([]);
-		expect(collector.add('@consultant42:oriso.org', 'K.')).toBe(true);
+		expect(collector.add('@consultant42:example.org', 'K.')).toBe(true);
 		expect(collector.add('consultant42', 'K.')).toBe(false);
 		expect(collector.add('', 'nobody')).toBe(false);
 	});
@@ -481,38 +484,38 @@ describe('createAudienceCollector', () => {
 	/**
 	 * The same defect on the self test, and the more damaging half: it runs
 	 * before de-duplication, over the Matrix room member list. With the fuzzy
-	 * matcher the signed-in consultant's own `oriso` token matched every member
+	 * matcher the signed-in consultant's own `example` token matched every member
 	 * of the room, so the loop discarded all of them as "me" and the selector
 	 * fell back to whatever the explicit additions could supply.
 	 */
 	it('does not mistake a colleague on the same homeserver for the viewer', () => {
-		const collector = createAudienceCollector(['@consultant1:oriso.org']);
+		const collector = createAudienceCollector(['@consultant1:example.org']);
 
-		expect(collector.isSelf('@moderator7:oriso.org')).toBe(false);
-		expect(collector.isSelf('@enc.katze_mika:oriso.org')).toBe(false);
-		expect(collector.isSelf('@consultant1:oriso.org')).toBe(true);
+		expect(collector.isSelf('@moderator7:example.org')).toBe(false);
+		expect(collector.isSelf('@enc.katze_mika:example.org')).toBe(false);
+		expect(collector.isSelf('@consultant1:example.org')).toBe(true);
 	});
 
 	it('drops the viewer however their own id is spelled', () => {
 		const collector = createAudienceCollector([
-			'@consultant1:oriso.org',
+			'@consultant1:example.org',
 			'consultant1',
 			'Kim Paulstätter'
 		]);
-		collector.add('@consultant1:oriso.org', 'me');
+		collector.add('@consultant1:example.org', 'me');
 		collector.add('consultant1', 'me');
-		collector.add('@moderator7:oriso.org', 'B. Pardon');
+		collector.add('@moderator7:example.org', 'B. Pardon');
 
 		expect(collector.entries()).toEqual([
-			['@moderator7:oriso.org', 'B. Pardon']
+			['@moderator7:example.org', 'B. Pardon']
 		]);
 	});
 
 	/** Two generated pseudonyms can share a word without being one person. */
 	it('does not merge two people who merely share a name word', () => {
 		const collector = createAudienceCollector([]);
-		collector.add('@alpaka_mika:oriso.org', 'sanftes Alpaka Mika');
-		collector.add('@alpaka_leon:oriso.org', 'gutmütiges Alpaka Leon');
+		collector.add('@alpaka_mika:example.org', 'sanftes Alpaka Mika');
+		collector.add('@alpaka_leon:example.org', 'gutmütiges Alpaka Leon');
 
 		expect(collector.entries()).toHaveLength(2);
 	});
@@ -521,9 +524,9 @@ describe('createAudienceCollector', () => {
 describe('createIdentityLookup', () => {
 	it('finds the entry whichever spelling of the id is used', () => {
 		const lookup = createIdentityLookup<string>();
-		lookup.set(['@moderator7:oriso.org', 'moderator7'], 'B. Pardon');
+		lookup.set(['@moderator7:example.org', 'moderator7'], 'B. Pardon');
 
-		expect(lookup.get('@moderator7:oriso.org')).toBe('B. Pardon');
+		expect(lookup.get('@moderator7:example.org')).toBe('B. Pardon');
 		expect(lookup.get('moderator7')).toBe('B. Pardon');
 	});
 
@@ -533,10 +536,10 @@ describe('createIdentityLookup', () => {
 	 */
 	it('does not hand a supervisor label to their homeserver neighbours', () => {
 		const lookup = createIdentityLookup<string>();
-		lookup.set(['@moderator7:oriso.org'], 'B. Pardon');
+		lookup.set(['@moderator7:example.org'], 'B. Pardon');
 
-		expect(lookup.get('@consultant42:oriso.org')).toBeUndefined();
-		expect(lookup.get('@enc.katze_mika:oriso.org')).toBeUndefined();
+		expect(lookup.get('@consultant42:example.org')).toBeUndefined();
+		expect(lookup.get('@enc.katze_mika:example.org')).toBeUndefined();
 	});
 
 	it('keeps the first label written for an identity', () => {

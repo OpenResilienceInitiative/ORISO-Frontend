@@ -56,9 +56,9 @@ Module._load = function patchedLoad(this: unknown, ...args: unknown[]) {
 	return originalLoad.apply(this, args);
 };
 
-const ROOM_ID = '!room:matrix.oriso.org';
-const MY_USER_ID = '@me:matrix.oriso.org';
-const OTHER_USER_ID = '@peer:matrix.oriso.org';
+const ROOM_ID = '!room:matrix.example.org';
+const MY_USER_ID = '@me:matrix.example.org';
+const OTHER_USER_ID = '@peer:matrix.example.org';
 
 type Listener = (...args: any[]) => void;
 
@@ -93,7 +93,7 @@ const makeEvent = (overrides: Record<string, any> = {}) => {
 		content = {},
 		sender = OTHER_USER_ID,
 		ts = Date.now(),
-		id = '$evt:matrix.oriso.org'
+		id = '$evt:matrix.example.org'
 	} = overrides;
 	let currentType = type;
 	let currentContent = content;
@@ -245,7 +245,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 	});
 
 	it('recovers an old Element Call invite when the call room still has active MatrixRTC membership', () => {
-		const callRoomId = '!active-call:matrix.oriso.org';
+		const callRoomId = '!active-call:matrix.example.org';
 		const activeCallRoom = { roomId: callRoomId };
 		(client as any).getRoom = vi.fn((roomId: string) =>
 			roomId === callRoomId ? activeCallRoom : null
@@ -278,7 +278,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 	});
 
 	it('retries a stale Element Call invite after membership state finishes syncing', () => {
-		const callRoomId = '!late-membership:matrix.oriso.org';
+		const callRoomId = '!late-membership:matrix.example.org';
 		const historicalInvite = makeEvent({
 			type: 'org.oriso.call.invite',
 			content: {
@@ -323,7 +323,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 	});
 
 	it('scans the synced timeline after reload for an active Element Call invite', () => {
-		const callRoomId = '!active-call:matrix.oriso.org';
+		const callRoomId = '!active-call:matrix.example.org';
 		const historicalInvite = makeEvent({
 			type: 'org.oriso.call.invite',
 			content: {
@@ -375,8 +375,8 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 	});
 
 	it('recovers an older active invite when the newest candidate was already processed', () => {
-		const newestCallRoomId = '!newest-call:matrix.oriso.org';
-		const olderCallRoomId = '!older-call:matrix.oriso.org';
+		const newestCallRoomId = '!newest-call:matrix.example.org';
+		const olderCallRoomId = '!older-call:matrix.example.org';
 		emitInvite({
 			content: {
 				call_id: 'already-processed',
@@ -468,14 +468,14 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 				call_id: 'call-group',
 				is_group_call: true,
 				is_video: true,
-				call_room_id: '!element:matrix.oriso.org'
+				call_room_id: '!element:matrix.example.org'
 			},
 			ts: Date.now()
 		});
 
 		expect(receiveCall).toHaveBeenCalledTimes(1);
 		const args = receiveCall.mock.calls[0];
-		expect(args[0]).toBe('!element:matrix.oriso.org'); // callRoomId
+		expect(args[0]).toBe('!element:matrix.example.org'); // callRoomId
 		expect(args[1]).toBe(true); // isVideo
 		expect(args[2]).toBe('call-group'); // callId
 		expect(args[4]).toBe(true); // isGroupCall
@@ -502,7 +502,7 @@ describe('MatrixLiveEventBridge call-invite de-dupe & stale handling', () => {
 				is_group_call: true,
 				is_element_call: true,
 				is_video: true,
-				call_room_id: '!element:matrix.oriso.org'
+				call_room_id: '!element:matrix.example.org'
 			}
 		});
 
