@@ -90,14 +90,14 @@ import type {
 import { ConversationPreview } from './ConversationPreview';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
+import { isTimelineDraftId, mergeDraftsIntoFeed } from './timelineDrafts';
+import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
 import {
 	formatAbsoluteTime,
 	formatClockParts,
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
-import { isTimelineDraftId, mergeDraftsIntoFeed } from './timelineDrafts';
-import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
