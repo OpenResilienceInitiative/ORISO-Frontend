@@ -1130,6 +1130,7 @@
 		"sourcePath": "src/resources/img/icons/apple.svg",
 		"exportNames": ["AppleIcon"],
 		"usageFiles": [
+			"src/components/twoFactorAuth/TwoFactorSetupDialog.tsx",
 			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -1728,7 +1729,8 @@
 		"usageFiles": [
 			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
 			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/ScreenIntro.tsx"
+			"src/components/conversationCreate/ScreenIntro.tsx",
+			"src/components/groupChat/GroupChatShareDialog.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2360,6 +2362,7 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/passwordReset/PasswordReset.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2378,6 +2381,7 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/passwordReset/PasswordReset.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/resources/img/icons.ts"
@@ -4339,19 +4343,6 @@
 		"usage": "app-used"
 	},
 	{
-		"id": "ui-icon:email-code-graphic:base",
-		"family": "email-code-graphic",
-		"state": "base",
-		"role": "default",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "email_code_graphic.svg",
-		"sourcePath": "src/resources/img/icons/two-factor/email_code_graphic.svg",
-		"exportNames": [],
-		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
-		"usage": "app-used"
-	},
-	{
 		"id": "ui-icon:install:400",
 		"family": "install",
 		"state": "400",
@@ -4373,19 +4364,6 @@
 		"size": null,
 		"fileName": "install_filled.svg",
 		"sourcePath": "src/resources/img/icons/two-factor/install_filled.svg",
-		"exportNames": [],
-		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
-		"usage": "app-used"
-	},
-	{
-		"id": "ui-icon:otp-app-graphic:base",
-		"family": "otp-app-graphic",
-		"state": "base",
-		"role": "default",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "otp_app_graphic.svg",
-		"sourcePath": "src/resources/img/icons/two-factor/otp_app_graphic.svg",
 		"exportNames": [],
 		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
 		"usage": "app-used"

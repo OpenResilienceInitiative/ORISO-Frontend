@@ -802,7 +802,6 @@ Additional product input that changed the spec (same conversation):
 
 Each slice is a separate PR with Storybook before/after screenshots.
 
-
 ### Amendment 2026-09-16 (round 7)
 
 - **Gespräche rows = toolbar chips.** Chat erstellen, Ungelesen, Entwürfe, Mail-Beratung, Live-Chat, Interner

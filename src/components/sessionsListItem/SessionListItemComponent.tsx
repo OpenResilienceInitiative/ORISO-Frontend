@@ -1257,15 +1257,13 @@ export const SessionListItemComponent = ({
 								<img
 									src={internalConversationIcon}
 									alt={translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 									className="sessionsListItem__consultingTypeIcon--internalIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 									{translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 								</span>
 							</div>
@@ -1280,15 +1278,13 @@ export const SessionListItemComponent = ({
 								<img
 									src={selfHelpIcon}
 									alt={translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 									{translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 								</span>
 							</div>
@@ -1298,7 +1294,9 @@ export const SessionListItemComponent = ({
 								<div className="sessionsListItem__consultingTypeIcon">
 									<img
 										src={teamImage}
-										alt="Team Beratung"
+										alt={translate(
+											'sessionList.item.sessionType.team'
+										)}
 										className="sessionsListItem__consultingTypeIcon--team"
 									/>
 								</div>
@@ -1463,12 +1461,10 @@ export const SessionListItemComponent = ({
 									data-testid="supervision-badge"
 									role="img"
 									title={translate(
-										'sessionList.supervision.badge',
-										'Supervision'
+										'sessionList.supervision.badge'
 									)}
 									aria-label={translate(
-										'sessionList.supervision.badge',
-										'Supervision'
+										'sessionList.supervision.badge'
 									)}
 								>
 									<SupervisionIcon
@@ -1719,8 +1715,7 @@ export const SessionListItemComponent = ({
 											</svg>
 											<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
 												{translate(
-													'sessionList.item.sessionType.liveChat',
-													'Live Chat'
+													'sessionList.item.sessionType.liveChat'
 												)}
 											</span>
 										</div>
@@ -1747,8 +1742,7 @@ export const SessionListItemComponent = ({
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 												{translate(
-													'sessionList.toolbar.chips.nearby',
-													'Mail'
+													'sessionList.toolbar.chips.nearby'
 												)}
 											</span>
 										</div>
@@ -1763,15 +1757,13 @@ export const SessionListItemComponent = ({
 											<img
 												src={internalConversationIcon}
 												alt={translate(
-													'sessionList.item.sessionType.internal',
-													'Interna'
+													'sessionList.item.sessionType.internal'
 												)}
 												className="sessionsListItem__consultingTypeIcon--internalIcon"
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 												{translate(
-													'sessionList.item.sessionType.internal',
-													'Interna'
+													'sessionList.item.sessionType.internal'
 												)}
 											</span>
 										</div>
@@ -1799,15 +1791,13 @@ export const SessionListItemComponent = ({
 											<img
 												src={selfHelpIcon}
 												alt={translate(
-													'sessionList.item.sessionType.selfHelp',
-													'Gesprächskreis'
+													'sessionList.item.sessionType.selfHelp'
 												)}
 												className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 											/>
 											<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 												{translate(
-													'sessionList.item.sessionType.selfHelp',
-													'Gesprächskreis'
+													'sessionList.item.sessionType.selfHelp'
 												)}
 											</span>
 										</div>

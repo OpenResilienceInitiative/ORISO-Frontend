@@ -599,18 +599,15 @@ export const SessionMenu = (props: SessionMenuProps) => {
 								}
 							}}
 							ariaLabel={translate(
-								'groupChat.info.settings.headline',
-								'Chatraum Einstellungen'
+								'groupChat.info.settings.headline'
 							)}
 						>
 							<ChatMenuDropdownHeader
 								subtitle={translate(
-									'groupChat.info.settings.subtitle',
-									'Jeder Raum individuell anpassbar'
+									'groupChat.info.settings.subtitle'
 								)}
 								title={translate(
-									'groupChat.info.settings.headline',
-									'Chatraum Einstellungen'
+									'groupChat.info.settings.headline'
 								)}
 							/>
 							<ChatMenuDropdownDivider />
@@ -779,8 +776,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									<SessionMenuItemContent
 										icon={<GroupChatInfoIcon />}
 										title={translate(
-											'sessionHeader.supervisor.modal.title',
-											'Supervisor verwalten'
+											'sessionHeader.supervisor.modal.title'
 										)}
 										shortcut="⇧S"
 									/>
@@ -808,8 +804,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									<SessionMenuItemContent
 										icon={<StopGroupChatIcon />}
 										title={translate(
-											'sessionHeader.anonymous.endChat.label',
-											'End chat'
+											'sessionHeader.anonymous.endChat.label'
 										)}
 										disabled={
 											props.mobileEndAnonymousChatDisabled
@@ -839,8 +834,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									<SessionMenuItemContent
 										icon={<TrashIcon />}
 										title={translate(
-											'sessionHeader.anonymous.deleteAccount.label',
-											'Konto löschen'
+											'sessionHeader.anonymous.deleteAccount.label'
 										)}
 										disabled={
 											props.mobileDeleteAnonymousAccountDisabled
@@ -910,8 +904,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 														'chatFlyout.archive'
 													)}
 													description={translate(
-														'chatFlyout.archiveDescription',
-														'Der Chat wird in das Archiv verschoben.'
+														'chatFlyout.archiveDescription'
 													)}
 												/>
 											</div>
@@ -939,8 +932,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 														'chatFlyout.dearchive'
 													)}
 													description={translate(
-														'chatFlyout.dearchiveDescription',
-														'Der Chat wird wieder in die aktive Liste verschoben.'
+														'chatFlyout.dearchiveDescription'
 													)}
 												/>
 											</div>
@@ -987,8 +979,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 														'chatFlyout.remove'
 													)}
 													description={translate(
-														'chatFlyout.removeDescription',
-														'Der Chat und Nutzer werden in 48h gelöscht.'
+														'chatFlyout.removeDescription'
 													)}
 												/>
 											</div>
@@ -1044,8 +1035,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 													description={
 														kind === 'privacy'
 															? translate(
-																	'chatFlyout.privacyPolicyDescription',
-																	'Lese wie diese Beratungsstelle deine Daten verarbeitet.'
+																	'chatFlyout.privacyPolicyDescription'
 																)
 															: undefined
 													}
