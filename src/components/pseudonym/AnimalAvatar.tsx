@@ -23,8 +23,9 @@ export const ICON_PADDING: Readonly<Record<string, number>> = {
 	turtle: 0.12
 };
 
-export const iconPaddingFor = (file: string): number =>
-	ICON_PADDING[file.replace(/\.svg$/i, '').toLowerCase()] ??
+/** Padding for one SVG file; unknown or missing names get the default. */
+export const iconPaddingFor = (file?: string | null): number =>
+	(file && ICON_PADDING[file.replace(/\.svg$/i, '').toLowerCase()]) ||
 	DEFAULT_ICON_PADDING;
 
 /**

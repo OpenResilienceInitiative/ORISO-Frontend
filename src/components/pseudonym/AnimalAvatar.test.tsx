@@ -50,4 +50,19 @@ describe('AnimalAvatar artwork size (#1059)', () => {
 		// File names are matched case-insensitively (Nightingale.svg).
 		expect(artworkBox(104, 'Nightingale.svg')).toBe(dolphin);
 	});
+
+	it('falls back to the default padding when the avatar has no file name', () => {
+		// Avatars built by hand (stories, older mocks) may omit `file`;
+		// sizing must degrade to the default, never throw during render.
+		const { container } = render(
+			<AnimalAvatar
+				avatar={{ bg: '#fff', iconColor: '#000' } as never}
+				size={104}
+			/>
+		);
+		const inner = container.querySelector(
+			'[aria-hidden="true"]'
+		) as HTMLElement;
+		expect(parseFloat(inner.style.width)).toBe(artworkBox(104));
+	});
 });
