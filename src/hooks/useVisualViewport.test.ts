@@ -10,11 +10,12 @@ import { useVisualViewport } from './useVisualViewport';
 type Listener = () => void;
 
 /** Minimal stand-in for `window.visualViewport`. */
-const stubViewport = (height: number, offsetTop = 0) => {
+const stubViewport = (height: number, offsetTop = 0, scale = 1) => {
 	const listeners: Record<string, Listener[]> = { resize: [], scroll: [] };
 	const viewport = {
 		height,
 		offsetTop,
+		scale,
 		addEventListener: (type: string, fn: Listener) => {
 			listeners[type]?.push(fn);
 		},
@@ -86,6 +87,30 @@ describe('useVisualViewport', () => {
 		});
 		expect(result.current?.height).toBe(844);
 		expect(result.current?.bottomInset).toBe(0);
+	});
+
+	/**
+	 * `visualViewport.height` is the visible area in *its own* CSS pixels, so a
+	 * pinch zoom halves it at 2x with nothing covering the screen at all
+	 * (CodeRabbit on #1514).
+	 */
+	it('does not report a zoomed-in viewport as covered', () => {
+		vi.stubGlobal('innerHeight', 844);
+		stubViewport(422, 0, 2);
+
+		const { result } = renderHook(() => useVisualViewport());
+
+		expect(result.current?.bottomInset).toBe(0);
+	});
+
+	it('still reports what is covered while the page is zoomed', () => {
+		vi.stubGlobal('innerHeight', 844);
+		// Zoomed 2x *and* a keyboard up: 844 - 254x2 = 336 px really are gone.
+		stubViewport(254, 0, 2);
+
+		const { result } = renderHook(() => useVisualViewport());
+
+		expect(result.current?.bottomInset).toBe(336);
 	});
 
 	// Older Safari and jsdom have no API; callers fall back to 100dvh.
