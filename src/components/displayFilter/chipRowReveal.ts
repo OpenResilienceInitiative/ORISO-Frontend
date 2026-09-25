@@ -22,8 +22,8 @@ export const chipRevealScrollLeft = (
 const ACTIVE_CHIP_SELECTOR =
 	'.sessionsListToolbar__chip--active, [aria-pressed="true"], [aria-current="page"]';
 
-export const findActiveChip = (scroller: HTMLElement) =>
-	scroller.querySelector<HTMLElement>(ACTIVE_CHIP_SELECTOR);
+export const findActiveChips = (scroller: HTMLElement) =>
+	Array.from(scroller.querySelectorAll<HTMLElement>(ACTIVE_CHIP_SELECTOR));
 
 /** Scrolls the row horizontally (never the page) until `chip` is fully visible. */
 export const revealChip = (scroller: HTMLElement, chip: HTMLElement) => {

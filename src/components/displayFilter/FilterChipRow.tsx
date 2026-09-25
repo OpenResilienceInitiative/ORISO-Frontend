@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { CSSProperties, ReactNode, useEffect, useRef } from 'react';
 import clsx from 'clsx';
-import { findActiveChip, revealChip } from './chipRowReveal';
+import { findActiveChips, revealChip } from './chipRowReveal';
 import './displayFilter.styles.scss';
 
 export interface FilterChipRowProps {
@@ -47,20 +47,36 @@ export const FilterChipRow = ({
 	useEffect(() => {
 		const scroller = scrollRef.current;
 		if (!scroller || typeof MutationObserver === 'undefined') return;
-		// Only a change of the active chip scrolls, so badge updates never
-		// yank a row the user scrolled by hand.
+		// Only a NEWLY active chip scrolls: badge updates never yank a row the
+		// user scrolled by hand, and a second active chip (Zeitstrahl family +
+		// Ungelesen) still gets revealed.
+		let active = new Set<HTMLElement>();
 		let revealed: HTMLElement | null = null;
-		const onMutation = () => {
-			const chip = findActiveChip(scroller);
-			if (chip === revealed) return;
+		// Chosen while the row was hidden (search panel open): measured once
+		// the row has a size again.
+		let pending: HTMLElement | null = null;
+		const laidOut = () => scroller.clientWidth > 0;
+		const reveal = (chip: HTMLElement) => {
 			revealed = chip;
-			if (chip) revealChip(scroller, chip);
+			if (!laidOut()) {
+				pending = chip;
+				return;
+			}
+			pending = null;
+			revealChip(scroller, chip);
+		};
+		const onMutation = () => {
+			const now = findActiveChips(scroller);
+			const added = now.filter((chip) => !active.has(chip));
+			active = new Set(now);
+			if (added.length) reveal(added[added.length - 1]);
 		};
 		const onTransitionEnd = (event: TransitionEvent) => {
 			if (
 				revealed &&
 				event.target === revealed &&
-				event.propertyName === 'max-width'
+				event.propertyName === 'max-width' &&
+				laidOut()
 			)
 				revealChip(scroller, revealed);
 		};
@@ -71,10 +87,21 @@ export const FilterChipRow = ({
 			attributes: true,
 			attributeFilter: ['aria-pressed', 'aria-current', 'class']
 		});
+		const resize =
+			typeof ResizeObserver === 'undefined'
+				? null
+				: new ResizeObserver(() => {
+						if (!pending || !laidOut()) return;
+						const chip = pending;
+						pending = null;
+						if (chip.isConnected) revealChip(scroller, chip);
+					});
+		resize?.observe(scroller);
 		scroller.addEventListener('transitionend', onTransitionEnd);
 		onMutation();
 		return () => {
 			observer.disconnect();
+			resize?.disconnect();
 			scroller.removeEventListener('transitionend', onTransitionEnd);
 		};
 	}, []);
