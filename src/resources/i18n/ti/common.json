@@ -3325,6 +3325,10 @@
 		"stepper": {
 			"progress": "ስጉምቲ {{current}} ካብ {{total}}",
 			"progressShort": "ስጉምቲ {{current}}/{{total}}"
+		},
+		"accountCreated": {
+			"login": "ኣካውንትኩም ተፈጢሩ ኣሎ፡ ግን እቲ ብኣውቶማቲክ ምእታው ኣይሰለጠን። በጃኹም ብስም ተጠቃሚኹምን መሕለፊ ቓልኩምን እተዉ።",
+			"retry": "መእተዊኹም ተፈጢሩ ኣሎ፡ ግን ምእታው ኣይሰለጠን። በጃኹም እንደገና ፈትኑ።"
 		}
 	},
 	"releaseNote": {

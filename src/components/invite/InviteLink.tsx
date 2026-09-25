@@ -14,8 +14,6 @@ import {
 	InputAdornment,
 	Typography
 } from '@mui/material';
-import { endpoints } from '../../resources/scripts/endpoints';
-import { apiPostRegistration } from '../../api/apiPostRegistration';
 import {
 	isRedeemInviteLinkSessionResponse,
 	redeemInviteLink,
@@ -29,6 +27,7 @@ import { getValueFromCookie } from '../sessionCookie/accessSessionCookie';
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { redirectToApp } from '../registration/autoLogin';
+import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import {
 	applyRedeemSessionCredentials,
 	assignInviteSessionDisplayName
@@ -116,6 +115,11 @@ export const InviteLink = () => {
 	const [identity, setIdentity] = useState<Pseudonym | null>(null);
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
+	const registerThenLogin = useRegisterThenLogin();
+	/* The account exists and only the login after it failed (#1533). The
+	   identity stays on screen as it was — it is now the account's — and
+	   "continue" only tries the login again. */
+	const [loginRetry, setLoginRetry] = useState(false);
 	const hasRunRef = useRef(false);
 	/* Whether the page is still on screen. The lookups before a redeem can take
 	   seconds; leaving meanwhile must not create a guest behind the person's
@@ -311,8 +315,7 @@ export const InviteLink = () => {
 		if (!legacyRedeem || !username || !password) return;
 		setStatus('registering');
 		try {
-			await apiPostRegistration(
-				endpoints.registerAsker,
+			await registerThenLogin.submit(
 				{
 					username,
 					password,
@@ -333,6 +336,11 @@ export const InviteLink = () => {
 			);
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
+			if (registerThenLogin.accountCreated()) {
+				setLoginRetry(true);
+				setStatus('identity');
+				return;
+			}
 			setStatus('error');
 			setErrorMessage(
 				err instanceof Error
@@ -340,7 +348,16 @@ export const InviteLink = () => {
 					: t('inviteLink.error.generic')
 			);
 		}
-	}, [legacyRedeem, username, password, locale, tenant, navigate, t]);
+	}, [
+		legacyRedeem,
+		username,
+		password,
+		locale,
+		tenant,
+		navigate,
+		t,
+		registerThenLogin
+	]);
 
 	const diceLabel = t('anonymousChat.pseudonym.changeName');
 
@@ -437,7 +454,7 @@ export const InviteLink = () => {
 							}}
 							InputProps={{
 								readOnly: true,
-								endAdornment: (
+								endAdornment: !loginRetry && (
 									<InputAdornment position="end">
 										<IconButton
 											edge="end"
@@ -486,6 +503,17 @@ export const InviteLink = () => {
 								readOnly: true
 							}}
 						/>
+						{loginRetry && (
+							<Typography
+								role="status"
+								sx={{
+									mt: 3,
+									...registrationScreenIntroSx
+								}}
+							>
+								{t('registration.accountCreated.retry')}
+							</Typography>
+						)}
 						<Button
 							fullWidth
 							variant="contained"

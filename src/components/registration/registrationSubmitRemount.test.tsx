@@ -19,6 +19,7 @@ import {
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { clearRegistrationSubmitting } from './registrationSubmission';
+import { readAccountCreatedLogin } from './accountCreatedLogin';
 
 /**
  * The registration request, controlled by each test. It stays in flight until a
@@ -232,6 +233,7 @@ describe('registration — a submit that is already in flight', () => {
 			redirectToLogin,
 			'no account was created — there is nothing to log in to'
 		).not.toHaveBeenCalled();
+		expect(readAccountCreatedLogin()).toBeNull();
 	});
 
 	it('keeps the handover when the account exists and only the tidy-up fails', async () => {
@@ -309,6 +311,10 @@ describe('registration — a submit that is already in flight', () => {
 			'the handover must end somewhere — the login is where the account can still be used'
 		).toHaveBeenCalledTimes(1);
 		expect(redirectToApp).not.toHaveBeenCalled();
+		expect(
+			readAccountCreatedLogin(),
+			'the login page has to know why the person is there, and which User-ID they chose (#1533)'
+		).toEqual({ username: 'blaue-wolke' });
 	});
 
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {

@@ -64,6 +64,7 @@ import {
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import { stageAccountCreatedLogin } from './accountCreatedLogin';
 import {
 	clearRegistrationSubmitting,
 	isRegistrationSubmitting,
@@ -630,7 +631,10 @@ export const Registration = () => {
 						   already has one, and keeping the handover up would
 						   leave them on "Fast geschafft." for good — nothing
 						   else ends it. The login is the step that can still
-						   work, and the flag stays set until that load. */
+						   work, and the flag stays set until that load. The
+						   login page is told why the person is there and which
+						   User-ID they chose — never the password (#1533). */
+						stageAccountCreatedLogin(data.username || '');
 						redirectToLogin();
 						return;
 					}

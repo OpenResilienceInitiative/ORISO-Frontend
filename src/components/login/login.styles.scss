@@ -507,6 +507,25 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 	}
 
+	/* Why the person is here: a registration created their account but
+	   could not log it in (#1533). Neutral surface tokens — it is an
+	   explanation, not an error, and it has to read in every tenant theme. */
+	&__notice {
+		width: 100%;
+		max-width: 380px;
+		margin: 6px auto 14px;
+		padding: 10px 12px;
+		border-radius: 10px;
+		text-align: left;
+		color: var(--m3-on-surface, #1b1b1c);
+		background: var(--m3-surface-container, #f0edee);
+		border: 1px solid var(--m3-outline-variant, #c4c7c8);
+
+		.text {
+			color: inherit;
+		}
+	}
+
 	&__magicLinkInfo {
 		width: 100%;
 		max-width: 380px;
