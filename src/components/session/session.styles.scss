@@ -637,6 +637,24 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		background-color: #f4f6f9;
 	}
 
+	&__readOnlyExtend {
+		display: block;
+		width: 100%;
+		padding: 0 24px 16px;
+		border: 0;
+		font-size: 15px;
+		font-weight: 600;
+		color: var(--m3-primary, #a5000a);
+		text-decoration: underline;
+		cursor: pointer;
+		background-color: #f4f6f9;
+
+		&:disabled {
+			cursor: default;
+			opacity: 0.6;
+		}
+	}
+
 	&__content--consentGate {
 		display: flex;
 		align-items: center;

@@ -3419,7 +3419,8 @@
 		},
 		"readOnly": {
 			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
-			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages."
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages.",
+			"extend": "Extend access"
 		}
 	},
 	"session": {

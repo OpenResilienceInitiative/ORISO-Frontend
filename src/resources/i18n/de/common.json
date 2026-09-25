@@ -3473,7 +3473,8 @@
 		},
 		"readOnly": {
 			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
-			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden."
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"extend": "Zugriff verlängern"
 		}
 	},
 	"session": {

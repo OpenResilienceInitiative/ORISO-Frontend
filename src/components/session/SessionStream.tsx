@@ -1398,6 +1398,7 @@ export const SessionStream = ({
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 				caseHandoverStatus={caseHandoverStatus}
+				onCaseHandoverStatusChange={setCaseHandoverStatus}
 			/>
 			{isOverlayActive && (
 				<Overlay
