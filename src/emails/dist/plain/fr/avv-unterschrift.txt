@@ -1,0 +1,29 @@
+Les documents contractuels sont prêts à être signés
+===================================================
+
+Des documents contractuels ont été préparés pour {{tenantName}}.
+
+Veuillez vérifier les documents et les signer numériquement.
+
+Organisme: {{tenantName}}
+Mis à disposition le: {{dpaProvidedAt}}
+À signer avant le: {{dpaExpiresAt}}
+
+Ouvrir le contrat:
+{{dpaUrl}}
+
+Sans documents contractuels signés, le service de conseil restera bloqué pour cet organisme.
+
+----------------------------------------------------------------
+Cet e-mail fait partie de la relation contractuelle entre {{orgName}} et {{tenantNameDative}}.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} est un service proposé par {{operatorName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail relève de la relation contractuelle et ne peut pas être désactivé. Merci de ne pas y répondre.

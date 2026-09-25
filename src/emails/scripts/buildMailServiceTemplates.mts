@@ -1,3 +1,4 @@
+import { assertAppLocaleCoverage } from './appLocaleCoverage';
 /**
  * Emits the MailService (Thymeleaf) template set from the design system.
  *
@@ -22,7 +23,14 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
+import {
+	EMAIL_CONTENT,
+	EMAIL_LANGUAGE_LOCALES,
+	EMAIL_LOCALE_LANG,
+	EMAIL_SOURCE_LOCALE,
+	EmailId,
+	EmailLocale
+} from '../index';
 import { EmailDataRow } from '../kit/emailAtoms';
 import { toEmailDialectHtml } from '../kit/emailDialect';
 import {
@@ -63,7 +71,7 @@ interface MailServiceTemplate {
 	 * other side of the handover, and upstream sends no such name — so rather
 	 * than a blank in the middle of a sentence, the sentence changes.
 	 */
-	paragraphs?: { de: string[]; en: string[] };
+	paragraphs?: Partial<Record<EmailLocale, string[]>>;
 	/** Placeholders this template resolves itself, before the brand mapping. */
 	values?: Record<string, string>;
 }
@@ -119,13 +127,29 @@ const TEMPLATES: MailServiceTemplate[] = [
 		// reference, no requesting counsellor. So this one carries no panel.
 		model: ['name_recipient', 'url'],
 		paragraphs: {
-			de: [
+			'de-sie': [
 				'Eine laufende Beratung soll an Sie übergeben werden.',
 				'Bitte prüfen Sie im Beratungsbereich, ob Sie die Beratung übernehmen können.'
 			],
-			en: [
+			'en': [
 				'An ongoing counselling case is to be handed over to you.',
 				'Please check in the counselling area whether you can take it on.'
+			],
+			'fr': [
+				'Une consultation en cours doit vous être transférée.',
+				'Veuillez vérifier dans l’espace de consultation si vous pouvez la prendre en charge.'
+			],
+			'ru': [
+				'Вам предлагается принять текущую консультацию.',
+				'Пожалуйста, проверьте в разделе консультаций, можете ли вы принять её.'
+			],
+			'ti': [
+				'ሕጂ ዝካየድ ዘሎ ምኽሪ ናባኹም ክሰጋገር እዩ።',
+				'ነቲ ምኽሪ ክትቅበሉዎ ትኽእሉ ዲኹም ኣብ ክፍሊ ምኽሪ ተመልከቱ።'
+			],
+			'tr': [
+				'Devam eden bir danışmanlık size devredilecek.',
+				'Lütfen danışmanlık alanında bu görevi üstlenip üstlenemeyeceğinizi kontrol edin.'
 			]
 		},
 		cta: '${url}'
@@ -135,13 +159,29 @@ const TEMPLATES: MailServiceTemplate[] = [
 		id: 'uebergabe-bestaetigt',
 		model: ['name_recipient', 'name_from_consultant', 'url'],
 		paragraphs: {
-			de: [
+			'de-sie': [
 				'Die Übergabe ist bestätigt. Ab sofort sind Sie für diese Beratung zuständig.',
 				'Die ratsuchende Person wurde in der Anwendung darüber informiert.'
 			],
-			en: [
+			'en': [
 				'The handover is confirmed. You are responsible for this counselling from now on.',
 				'The person seeking advice has been informed in the application.'
+			],
+			'fr': [
+				'Le transfert est confirmé. Vous êtes désormais responsable de cette consultation.',
+				'La personne qui demande conseil en a été informée dans l’application.'
+			],
+			'ru': [
+				'Передача подтверждена. Теперь вы отвечаете за эту консультацию.',
+				'Человек, обратившийся за советом, получил уведомление в приложении.'
+			],
+			'ti': [
+				'እቲ ምስግጋር ተረጋጊጹ ኣሎ። ካብ ሕጂ ንደሓር ንስኹም ሓላፍነት ናይዚ ምኽሪ ኣለኩም።',
+				'ምኽሪ ዝደልይ ሰብ ኣብቲ መተግበሪ ሓበሬታ ተዋሂብዎ ኣሎ።'
+			],
+			'tr': [
+				'Devir onaylandı. Artık bu danışmanlıktan siz sorumlusunuz.',
+				'Danışmanlık isteyen kişi uygulamada bilgilendirildi.'
 			]
 		},
 		panel: [
@@ -169,10 +209,60 @@ const TEMPLATES: MailServiceTemplate[] = [
 	}
 ];
 
-const LOCALES: { locale: EmailLocale; suffix: string }[] = [
-	{ locale: 'de-sie', suffix: '' },
-	{ locale: 'en', suffix: '.en' }
-];
+/** One file per App language. Missing localized copy overrides fail the build. */
+const LOCALES: { locale: EmailLocale; suffix: string }[] =
+	EMAIL_LANGUAGE_LOCALES.map((locale) => ({
+		locale,
+		suffix:
+			locale === EMAIL_SOURCE_LOCALE
+				? ''
+				: `.${EMAIL_LOCALE_LANG[locale]}`
+	}));
+
+const PANEL_LABELS: Record<EmailLocale, Record<string, string>> = {
+	'de-sie': {},
+	'de-du': {},
+	'en': {
+		'Beratungsstelle': 'Counselling centre',
+		'Postleitzahl': 'Postcode',
+		'Ratsuchende Person': 'Person seeking advice',
+		'Zugewiesen von': 'Assigned by',
+		'Offene Anfragen': 'Open requests',
+		'Bisherige Zuständigkeit': 'Previously responsible'
+	},
+	'fr': {
+		'Beratungsstelle': 'Centre de consultation',
+		'Postleitzahl': 'Code postal',
+		'Ratsuchende Person': 'Personne qui demande conseil',
+		'Zugewiesen von': 'Attribué par',
+		'Offene Anfragen': 'Demandes ouvertes',
+		'Bisherige Zuständigkeit': 'Responsable précédent'
+	},
+	'ru': {
+		'Beratungsstelle': 'Консультационный центр',
+		'Postleitzahl': 'Почтовый индекс',
+		'Ratsuchende Person': 'Человек, обратившийся за советом',
+		'Zugewiesen von': 'Назначено',
+		'Offene Anfragen': 'Открытые запросы',
+		'Bisherige Zuständigkeit': 'Предыдущий ответственный'
+	},
+	'ti': {
+		'Beratungsstelle': 'ማእከል ምኽሪ',
+		'Postleitzahl': 'ፖስታ ኮድ',
+		'Ratsuchende Person': 'ምኽሪ ዝደልይ ሰብ',
+		'Zugewiesen von': 'ዝመደቦ',
+		'Offene Anfragen': 'ክፉት ሕቶታት',
+		'Bisherige Zuständigkeit': 'ናይ ቀደም ሓላፊ'
+	},
+	'tr': {
+		'Beratungsstelle': 'Danışma merkezi',
+		'Postleitzahl': 'Posta kodu',
+		'Ratsuchende Person': 'Danışmanlık isteyen kişi',
+		'Zugewiesen von': 'Atayan',
+		'Offene Anfragen': 'Açık talepler',
+		'Bisherige Zuständigkeit': 'Önceki sorumlu'
+	}
+};
 
 /**
  * Rebuilds the content against what upstream actually sends.
@@ -186,19 +276,51 @@ const adapt = (
 	content: EmailContent,
 	template: MailServiceTemplate,
 	locale: EmailLocale
-): EmailContent => ({
-	...content,
-	headline: template.headline ?? content.headline,
-	paragraphs: template.body
-		? [template.body]
-		: (template.paragraphs?.[locale === 'en' ? 'en' : 'de'] ??
-			content.paragraphs),
-	panel: template.panel,
-	code: undefined,
-	cta: template.cta
-		? { label: content.cta?.label ?? 'Öffnen', href: template.cta }
-		: undefined
-});
+): EmailContent => {
+	// A template that rewrites its copy has to rewrite it in every language it
+	// is emitted in. Falling back to the designed paragraphs would put a
+	// counsellor's name back into a sentence upstream cannot fill, and falling
+	// back to German would put German into a Turkish mail — so neither.
+	if (template.paragraphs && !template.paragraphs[locale]) {
+		throw new Error(
+			`${template.file}: no ${locale} copy override. This template rewrites ` +
+				'its paragraphs for the values upstream actually sends, and ' +
+				`${locale} is bundled by the App, so it needs its own wording.`
+		);
+	}
+
+	return {
+		...content,
+		headline: template.headline ?? content.headline,
+		paragraphs: template.body
+			? [template.body]
+			: (template.paragraphs?.[locale] ?? content.paragraphs),
+		panel: template.panel?.map((row) => {
+			const label =
+				locale === 'de-sie'
+					? row.label
+					: PANEL_LABELS[locale][row.label];
+			if (!label)
+				throw new Error(
+					`${template.file}: no ${locale} panel label for ${row.label}`
+				);
+			return { ...row, label };
+		}),
+		code: undefined,
+		cta: template.cta
+			? {
+					label:
+						content.cta?.label ??
+						(() => {
+							throw new Error(
+								`${template.file}: no ${locale} CTA label`
+							);
+						})(),
+					href: template.cta
+				}
+			: undefined
+	};
+};
 
 /** Brand values upstream can supply, and what to fall back to when it cannot. */
 const BRAND: Record<string, string> = {
@@ -231,6 +353,7 @@ const TENANT_ATTRIBUTES = [
 ];
 
 const run = async () => {
+	assertAppLocaleCoverage();
 	await rm(outDir, { recursive: true, force: true });
 	await mkdir(outDir, { recursive: true });
 
@@ -248,7 +371,7 @@ const run = async () => {
 			);
 			let html = renderEmailHtml(content, {
 				brand: emailDefaultBrand,
-				lang: locale === 'en' ? 'en' : 'de'
+				lang: EMAIL_LOCALE_LANG[locale]
 			});
 
 			for (const [placeholder, value] of Object.entries({

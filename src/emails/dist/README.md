@@ -11,7 +11,12 @@ Layout: `<dialect>/<tone>/<id>.<ext>`.
 | `thymeleaf/`  | MailService                                                | `[[${name}]]`       | `.html` / `.txt`         |
 | `freemarker/` | Keycloak e-mail theme                                      | `${(name!'')?html}` | `.html.ftl` / `.txt.ftl` |
 
-Tones: de-sie, de-du, en.
+Variants in this directory: de-sie, de-du, en, fr, ru, ti, tr.
+
+**Pending human language review: fr, ru, ti, tr.** These variants
+are built now. Legal, encryption and anonymity wording has not been approved
+by a native speaker; inspect `content/translationReview.json` before claiming
+otherwise.
 
 Both MIME parts are generated from one content model, so the plain-text twin
 cannot drift from the HTML, and all three dialects come from one renderer, so a

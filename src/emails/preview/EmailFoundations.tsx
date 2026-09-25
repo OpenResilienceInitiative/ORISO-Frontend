@@ -1,14 +1,22 @@
 import * as React from 'react';
+import emailTranslationReview from '../content/translationReview.json';
 import {
 	EMAIL_AUDIENCE,
+	EMAIL_CONTENT,
 	EMAIL_DIALECTS,
 	EMAIL_DIALECT_INFO,
 	EMAIL_IDS,
 	EMAIL_LABELS,
 	EMAIL_LOCALES,
+	EMAIL_LOCALE_DIR,
 	EMAIL_LOCALE_LABELS,
+	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_PROVENANCE,
+	EMAIL_LOCALE_RELEASE,
+	EMAIL_RELEASED_LOCALES,
 	EmailLocale,
 	buildEmail,
+	emailReviewGaps,
 	listEmailPlaceholders,
 	toEmailDialectHtml
 } from '../index';
@@ -236,14 +244,112 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 			</tbody>
 		</table>
 		<p style={{ color: emailColor.onSurfaceVariant, maxWidth: '72ch' }}>
-			Tone variants:{' '}
-			{EMAIL_LOCALES.map((l) => EMAIL_LOCALE_LABELS[l]).join(', ')}. Files
-			ship as{' '}
+			Variants:{' '}
+			{EMAIL_LOCALES.map((l) => EMAIL_LOCALE_LABELS[l]).join(', ')} — of
+			which{' '}
+			{EMAIL_RELEASED_LOCALES.map((l) => EMAIL_LOCALE_LABELS[l]).join(
+				', '
+			)}{' '}
+			are send-ready; see <strong>Translations</strong>. Files ship as{' '}
 			<code style={mono}>
 				emails/&lt;dialect&gt;/&lt;tone&gt;/&lt;id&gt;
 			</code>{' '}
 			— the ids are the contract with the sending services, so renaming
 			one is a breaking change.
+		</p>
+	</div>
+);
+
+/**
+ * Which languages exist, where their copy came from, and what still stands
+ * between a machine translation and a send.
+ *
+ * The unsigned count is the number of distinct strings that state something
+ * about the platform — the encryption promise, the privacy wording, the DPA
+ * mail — which nobody who reads that language has confirmed yet. It is the
+ * whole gate, in one column.
+ */
+export const EmailTranslationSheet: React.FC = () => (
+	<div style={{ ...shell, overflowX: 'auto' }}>
+		<table style={{ borderCollapse: 'collapse', width: '100%' }}>
+			<thead>
+				<tr>
+					{[
+						'Variant',
+						'Id',
+						'lang',
+						'dir',
+						'Copy from',
+						'Send-ready',
+						'Unsigned claims'
+					].map((label) => (
+						<th
+							key={label}
+							style={{ ...th, whiteSpace: 'nowrap' as const }}
+						>
+							{label}
+						</th>
+					))}
+				</tr>
+			</thead>
+			<tbody>
+				{EMAIL_LOCALES.map((locale) => {
+					const released =
+						EMAIL_LOCALE_RELEASE[locale] === 'released';
+					const unsigned =
+						EMAIL_LOCALE_PROVENANCE[locale] === 'machine'
+							? emailReviewGaps(
+									EMAIL_CONTENT[locale],
+									EMAIL_IDS,
+									(
+										emailTranslationReview.locales as Record<
+											string,
+											Record<string, never>
+										>
+									)[locale] ?? {}
+								).unsigned.length
+							: 0;
+					const tight = { ...td, whiteSpace: 'nowrap' as const };
+					return (
+						<tr key={locale}>
+							<td style={tight}>{EMAIL_LOCALE_LABELS[locale]}</td>
+							<td style={{ ...tight, ...mono }}>{locale}</td>
+							<td style={{ ...tight, ...mono }}>
+								{EMAIL_LOCALE_LANG[locale]}
+							</td>
+							<td style={{ ...tight, ...mono }}>
+								{EMAIL_LOCALE_DIR[locale]}
+							</td>
+							<td style={tight}>
+								{EMAIL_LOCALE_PROVENANCE[locale]}
+							</td>
+							<td
+								style={{
+									...tight,
+									color: released
+										? emailColor.onSurface
+										: '#a5000a'
+								}}
+							>
+								{released ? 'yes' : 'not yet'}
+							</td>
+							<td style={{ ...tight, ...mono }}>
+								{unsigned === 0 ? '—' : unsigned}
+							</td>
+						</tr>
+					);
+				})}
+			</tbody>
+		</table>
+		<p style={{ color: emailColor.onSurfaceVariant, maxWidth: '72ch' }}>
+			A <code style={mono}>machine</code> variant renders here and in{' '}
+			<strong>Email/Pages</strong> so it can be read, but it produces no
+			files under <code style={mono}>dist/</code> and no sending service
+			may select it. It becomes send-ready when every claim it makes has a
+			signature in{' '}
+			<code style={mono}>content/translationReview.json</code> — run{' '}
+			<code style={mono}>npm run emails:sync</code> to list what is
+			missing. See ADR-022.
 		</p>
 	</div>
 );

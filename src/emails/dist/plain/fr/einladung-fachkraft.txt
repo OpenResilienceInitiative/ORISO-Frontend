@@ -1,0 +1,28 @@
+Vous avez été invité au service de conseil
+==========================================
+
+{{agencyName}} vous a invité sur {{platformName}} en tant que professionnel.
+
+Ce lien vous permet de définir votre mot de passe et de configurer la connexion à deux facteurs.
+
+Centre de consultation: {{agencyName}}
+Lien valable jusqu’au: {{inviteExpiresAt}}
+
+Configurer l’accès:
+{{inviteUrl}}
+
+Sans connexion à deux facteurs, aucun accès aux consultations n’est possible.
+
+----------------------------------------------------------------
+Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce lien à personne.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.

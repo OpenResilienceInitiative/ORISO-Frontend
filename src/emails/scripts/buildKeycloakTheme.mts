@@ -1,3 +1,4 @@
+import { assertAppLocaleCoverage } from './appLocaleCoverage';
 /**
  * Emits the Keycloak e-mail theme from the design system.
  *
@@ -26,7 +27,13 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
+import {
+	EMAIL_CONTENT,
+	EMAIL_LANGUAGE_LOCALES,
+	EMAIL_LOCALE_LANG,
+	EmailId,
+	EmailLocale
+} from '../index';
 import {
 	EmailContent,
 	renderEmailHtml,
@@ -374,12 +381,16 @@ const propertiesValue = (value: string): string =>
 		.replace(/:/g, '\\:')
 		.replace(/=/g, '\\=');
 
-const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] = [
-	{ locale: 'de-sie', lang: 'de' },
-	{ locale: 'en', lang: 'en' }
-];
+/** One bundle per App language. Review status is recorded in catalogue.json;
+ * pending human language review does not suppress generated files. */
+const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] =
+	EMAIL_LANGUAGE_LOCALES.map((locale) => ({
+		locale,
+		lang: EMAIL_LOCALE_LANG[locale]
+	}));
 
 const run = async () => {
+	assertAppLocaleCoverage();
 	await rm(outDir, { recursive: true, force: true });
 	await mkdir(path.join(outDir, 'html'), { recursive: true });
 	await mkdir(path.join(outDir, 'text'), { recursive: true });

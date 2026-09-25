@@ -1,0 +1,23 @@
+Votre adresse e-mail a été modifiée
+===================================
+
+L’adresse e-mail de l’accès {{username}} a été modifiée. Les notifications sont désormais envoyées à cette adresse.
+
+Si ce n’était pas vous, changez immédiatement votre mot de passe.
+
+Aller au profil:
+{{appUrl}}
+
+----------------------------------------------------------------
+Nous ne vous demandons jamais votre mot de passe par e-mail. Nous vous signalons toujours toute modification de votre accès.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.
