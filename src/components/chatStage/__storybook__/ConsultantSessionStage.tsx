@@ -316,8 +316,21 @@ function MainChat({
 			}
 		};
 		toBottom();
-		// Rows animate in and the editor mounts late; settle, then scroll again.
-		const timer = window.setTimeout(toBottom, 400);
+		// Rows animate in and the editor mounts late; settle, then scroll again
+		// — unless the reader has started writing by then (q3): writing keeps
+		// the place, the same rule `deliverNext` follows.
+		const timer = window.setTimeout(() => {
+			if (
+				!isComposerBusy(
+					paneRef.current?.querySelector(
+						'.textarea__wrapper-send-message'
+					) ?? null,
+					document.activeElement
+				)
+			) {
+				toBottom();
+			}
+		}, 400);
 		return () => window.clearTimeout(timer);
 	}, []);
 
