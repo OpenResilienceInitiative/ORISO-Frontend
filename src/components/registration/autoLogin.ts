@@ -242,3 +242,14 @@ export const redirectToApp = (
 	}
 	window.location.assign(path);
 };
+
+/**
+ * Leaves for the login page with a document load, like `redirectToApp` (#1402).
+ * For a registration that created the account but could not log it in: the
+ * account is real, so the form must not come back, and the handover screen has
+ * nothing left that would end it — logging in is the one step that can still
+ * work. The load also drops everything this document half-set on the way.
+ */
+export const redirectToLogin = () => {
+	window.location.assign(appConfig.urls.toLogin);
+};

@@ -6,6 +6,7 @@ import {
 	useContext,
 	useCallback,
 	useMemo,
+	useSyncExternalStore,
 	FormEvent
 } from 'react';
 import {
@@ -32,6 +33,7 @@ import {
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import {
 	redirectToApp,
+	redirectToLogin,
 	getPostRegistrationGroupChatId,
 	getPostRegistrationSessionId,
 	POST_REGISTRATION_LOADER_KEY
@@ -62,6 +64,12 @@ import {
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import {
+	clearRegistrationSubmitting,
+	isRegistrationSubmitting,
+	markRegistrationSubmitting,
+	subscribeRegistrationSubmitting
+} from './registrationSubmission';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -80,6 +88,27 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
  */
 
 const registrationMaxStepSessionStorageKey = 'registrationMaxStepReached';
+
+/**
+ * Clears what the finished registration left behind and asks the app for the
+ * welcome animation. Every write is best-effort: Web Storage throws when it is
+ * disabled or full, and the account exists either way — a person must not be
+ * held back from their counselling session because a browser refused to forget
+ * a draft. The in-memory draft is cleared outside the guard; it cannot throw.
+ */
+const forgetRegistrationDraft = () => {
+	clearAccountDataDraft();
+	try {
+		sessionStorage.removeItem(registrationSessionStorageKey);
+		sessionStorage.removeItem(registrationMaxStepSessionStorageKey);
+		// Skip the manual "registration successful" overlay: flag the app to
+		// play the welcome loading animation and go straight into the chat
+		// room (autoLogin already ran inside apiPostRegistration).
+		sessionStorage.setItem(POST_REGISTRATION_LOADER_KEY, 'true');
+	} catch {
+		/* non-fatal — the app still opens, just without the animation */
+	}
+};
 
 export const Registration = () => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
@@ -122,7 +151,20 @@ export const Registration = () => {
 	const { locale } = useContext(LocaleContext);
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
-	const [isRegistering, setIsRegistering] = useState<boolean>(false);
+	/* Read from the submission module, not held here: this screen is remounted
+	   while the account is being created (see `registrationSubmission`), and
+	   local state starts over at `false` — putting the account form, password
+	   and all, back in front of someone who has already registered.
+
+	   Subscribed rather than sampled once, because the submit can also *fail*
+	   after such a remount: the `catch` then runs in the closure of the screen
+	   that is gone, and a screen holding a stale `true` would keep the handover
+	   up with no way back to the form. */
+	const isRegistering = useSyncExternalStore(
+		subscribeRegistrationSubmitting,
+		isRegistrationSubmitting,
+		isRegistrationSubmitting
+	);
 	// Set by the topic step while mounted; the header shows the search only then.
 	const [topicSearch, setTopicSearch] =
 		useState<RegistrationTopicSearchApi | null>(null);
@@ -533,26 +575,33 @@ export const Registration = () => {
 				REGISTRATION_DATA_VALIDATION[item].validation(data[item])
 			)
 		) {
-			setIsRegistering(true);
+			markRegistrationSubmitting();
+			/* The account either exists or it does not, and only the request
+			   below decides that. Everything after it is tidying up and
+			   leaving; a failure there must never be reported as a failed
+			   registration, or the form comes back and invites a second
+			   account for a person who already has one (CodeRabbit on #1514).
+			   The automatic login is part of that "everything after": it runs
+			   inside `apiPostRegistration`, after the account was created, and
+			   shares its promise — which is why the account is marked through
+			   the callback rather than in `then`, one step too late. */
+			let accountCreated = false;
 			apiPostRegistration(
 				endpoints.registerAsker,
 				data,
 				settings.multitenancyWithSingleDomainEnabled,
-				tenant
+				tenant,
+				() => {
+					accountCreated = true;
+				}
 			)
 				.then(async () => {
-					sessionStorage.removeItem(registrationSessionStorageKey);
-					sessionStorage.removeItem(
-						registrationMaxStepSessionStorageKey
-					);
-					clearAccountDataDraft();
-					// Skip the manual "registration successful" overlay: flag the app
-					// to play the welcome loading animation and go straight into the
-					// chat room (autoLogin already ran inside apiPostRegistration).
-					sessionStorage.setItem(
-						POST_REGISTRATION_LOADER_KEY,
-						'true'
-					);
+					/* Best-effort, every one of them: Web Storage throws when
+					   it is disabled or full (Safari's private mode is the
+					   classic), and none of this is worth not arriving in the
+					   app for. The welcome animation is the only thing lost,
+					   and only if its key is the one that failed. */
+					forgetRegistrationDraft();
 					let sessionId: string | undefined;
 					try {
 						sessionId = getPostRegistrationSessionId(
@@ -574,7 +623,18 @@ export const Registration = () => {
 				})
 				.catch((error) => {
 					// console.error('Registration failed:', error);
-					setIsRegistering(false);
+					if (accountCreated) {
+						/* The account is real; what failed is the automatic
+						   login or the way into the app. Putting the form back
+						   would offer a second registration to someone who
+						   already has one, and keeping the handover up would
+						   leave them on "Fast geschafft." for good — nothing
+						   else ends it. The login is the step that can still
+						   work, and the flag stays set until that load. */
+						redirectToLogin();
+						return;
+					}
+					clearRegistrationSubmitting();
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
@@ -584,6 +644,7 @@ export const Registration = () => {
 					});
 				});
 		} else {
+			clearRegistrationSubmitting();
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: t('registration.errors.ups.title'),
