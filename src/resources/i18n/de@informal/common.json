@@ -1800,7 +1800,11 @@
 		},
 		"subtitle": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten.",
 		"switch": {
-			"hint": "Aus: Rundgänge starten nicht von selbst. Du kannst sie hier jederzeit starten."
+			"hint": {
+				"off": "Aus: Rundgänge starten nicht von selbst. Du kannst sie hier jederzeit starten.",
+				"on": "An: Neue Rundgänge starten einmal von selbst. Du kannst sie hier jederzeit erneut starten."
+			},
+			"subtitle": "Kurze Rundgänge zeigen Dir, wo Du was findest."
 		}
 	},
 	"anonymousChat": {

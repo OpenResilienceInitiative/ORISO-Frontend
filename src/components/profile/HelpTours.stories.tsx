@@ -4,6 +4,15 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route, Routes } from 'react-router-dom';
 import { expect, userEvent, waitFor } from 'storybook/test';
 import { Profile } from './Profile';
+import { NavigationBar } from '../app/NavigationBar';
+import { RouterConfigConsultant } from '../app/RouterConfig';
+import {
+	NavigationStoryProviders,
+	storybookSettings
+} from '../app/navigationStoryHelpers';
+import { Header } from '../header/Header';
+import '../app/authenticatedApp.styles.scss';
+import '../app/navigation.styles.scss';
 import {
 	AppConfigContext,
 	AUTHORITIES,
@@ -114,6 +123,34 @@ const StubbedToursApi = ({
 	return <>{children(ownSwitch, reload)}</>;
 };
 
+/**
+ * The authenticated app shell as `Routing.tsx` builds it: navigation, header
+ * and the profile column. The production SCSS decides the layout by viewport
+ * width, so a phone gets the bottom navigation bar and a desktop the rail.
+ */
+const AppShell = ({ children }: { children: React.ReactNode }) => {
+	const routerConfig = useMemo(
+		() => RouterConfigConsultant({ ...config, ...storybookSettings }),
+		[]
+	);
+	return (
+		<div className="app__wrapper" style={{ height: '100vh' }}>
+			<NavigationStoryProviders role="consultant">
+				<NavigationBar
+					routerConfig={routerConfig}
+					onLogout={() => {}}
+				/>
+			</NavigationStoryProviders>
+			<section className="contentWrapper">
+				<Header />
+				<div className="contentWrapper__content">
+					<div className="contentWrapper__profile">{children}</div>
+				</div>
+			</section>
+		</div>
+	);
+};
+
 const renderStage = (options: StageOptions) => () => (
 	<StubbedToursApi options={options}>
 		{(ownSwitch, reload) => (
@@ -138,20 +175,58 @@ const renderStage = (options: StageOptions) => () => (
 							} as never
 						}
 					>
-						<div style={{ height: '100vh' }}>
+						<AppShell>
 							<Routes>
 								<Route
 									path="/profile/*"
 									element={<Profile />}
 								/>
 							</Routes>
-						</div>
+						</AppShell>
 					</UserDataContext.Provider>
 				</ConsultingTypesContext.Provider>
 			</AppConfigContext.Provider>
 		)}
 	</StubbedToursApi>
 );
+
+const SWITCH_NAME = 'Rundgänge automatisch starten';
+const HINT_OFF =
+	'Aus: Rundgänge starten nicht von selbst. Sie können sie hier jederzeit starten.';
+const HINT_ON =
+	'An: Neue Rundgänge starten einmal von selbst. Sie können sie hier jederzeit erneut starten.';
+
+type Canvas = Parameters<NonNullable<Story['play']>>[0]['canvas'];
+
+/** Switch, state word and hint have to tell the same story. */
+const expectSwitchState = async (canvas: Canvas, on: boolean) => {
+	const toggle = await canvas.findByRole('switch', { name: SWITCH_NAME });
+	if (on) {
+		await expect(toggle).toBeChecked();
+	} else {
+		await expect(toggle).not.toBeChecked();
+	}
+	await expect(canvas.getByText(on ? 'An' : 'Aus')).toBeVisible();
+	await expect(canvas.getByText(on ? HINT_ON : HINT_OFF)).toBeVisible();
+	await expect(canvas.queryByText(on ? HINT_OFF : HINT_ON)).toBeNull();
+};
+
+/** On a phone the app's navigation sits as a bar at the bottom edge. */
+const expectBottomNavigation = async (canvasElement: HTMLElement) => {
+	const nav = canvasElement.querySelector<HTMLElement>(
+		'.navigation__wrapper'
+	);
+	await expect(nav).not.toBeNull();
+	await expect(nav).toBeVisible();
+	// Only a viewport below the app's 900 px breakpoint lays it out as a bar.
+	if (window.innerWidth < 900) {
+		const bar = nav!.getBoundingClientRect();
+		await expect(Math.round(bar.bottom)).toBeGreaterThanOrEqual(
+			window.innerHeight - 1
+		);
+		await expect(Math.round(bar.width)).toBe(window.innerWidth);
+	}
+};
 
 const desktop = {
 	globals: { viewport: { value: 'desktop1440', isRotated: false } },
@@ -164,9 +239,10 @@ const phone = (path: string) => ({
 });
 
 /**
- * Profile → Help → Tours, wired exactly like the app: the real `Profile`
- * page, the real Help routes and the real switch and tour list. Only the
- * two backend calls are stubbed.
+ * Profile → Help → Tours, wired exactly like the app: the app shell with its
+ * navigation (bottom bar on a phone), the real `Profile` page, the real Help
+ * routes and the real switch and tour list. Only the two backend calls are
+ * stubbed.
  */
 const meta = {
 	title: 'Organisms/HelpTours',
@@ -192,13 +268,7 @@ export const OffByDefault: Story = {
 	...desktop,
 	render: renderStage({ ownSwitch: false }),
 	play: async ({ canvas }) => {
-		const toggle = await canvas.findByRole('switch', {
-			name: 'Rundgang deaktiviert'
-		});
-		await expect(toggle).not.toBeChecked();
-		await expect(
-			canvas.getByText(/Rundgänge starten nicht von selbst/)
-		).toBeVisible();
+		await expectSwitchState(canvas, false);
 		// Disable, don't hide: the list stays and starts tours by hand.
 		const startButtons = await canvas.findAllByRole('button', {
 			name: 'Starten'
@@ -214,14 +284,16 @@ export const SwitchingOn: Story = {
 	...desktop,
 	render: renderStage({ ownSwitch: false }),
 	play: async ({ canvas }) => {
+		await expectSwitchState(canvas, false);
 		await userEvent.click(
-			await canvas.findByRole('switch', { name: 'Rundgang deaktiviert' })
+			await canvas.findByRole('switch', { name: SWITCH_NAME })
 		);
 		await waitFor(() =>
 			expect(
-				canvas.getByRole('switch', { name: 'Rundgang aktiv' })
+				canvas.getByRole('switch', { name: SWITCH_NAME })
 			).toBeChecked()
 		);
+		await expectSwitchState(canvas, true);
 	}
 };
 
@@ -230,9 +302,7 @@ export const On: Story = {
 	...desktop,
 	render: renderStage({ ownSwitch: true }),
 	play: async ({ canvas }) => {
-		await expect(
-			await canvas.findByRole('switch', { name: 'Rundgang aktiv' })
-		).toBeChecked();
+		await expectSwitchState(canvas, true);
 	}
 };
 
@@ -271,7 +341,10 @@ export const PlatformSwitchOff: Story = {
 	render: renderStage({ platformTours: false, ownSwitch: true }),
 	play: async ({ canvas }) => {
 		await canvas.findByRole('tab', { name: 'Hilfe' });
-		await expect(canvas.queryByRole('switch')).toBeNull();
+		// The navigation has its own Live Chat switch; only ours must be gone.
+		await expect(
+			canvas.queryByRole('switch', { name: SWITCH_NAME })
+		).toBeNull();
 		await expect(canvas.queryByText('Meine Rundgänge')).toBeNull();
 	}
 };
@@ -280,10 +353,11 @@ export const PhoneHelpMenu: Story = {
 	name: 'Help menu · phone 390',
 	...phone('/profile/hilfe'),
 	render: renderStage({ ownSwitch: false }),
-	play: async ({ canvas }) => {
+	play: async ({ canvas, canvasElement }) => {
 		await expect(
 			await canvas.findByRole('link', { name: /Rundgänge/ })
 		).toBeVisible();
+		await expectBottomNavigation(canvasElement);
 	}
 };
 
@@ -291,10 +365,9 @@ export const PhoneOff: Story = {
 	name: 'Off (default) · phone 390',
 	...phone('/profile/hilfe/rundgaenge'),
 	render: renderStage({ ownSwitch: false }),
-	play: async ({ canvas }) => {
-		await expect(
-			await canvas.findByRole('switch', { name: 'Rundgang deaktiviert' })
-		).not.toBeChecked();
+	play: async ({ canvas, canvasElement }) => {
+		await expectSwitchState(canvas, false);
+		await expectBottomNavigation(canvasElement);
 	}
 };
 
@@ -302,9 +375,8 @@ export const PhoneOn: Story = {
 	name: 'On · phone 390',
 	...phone('/profile/hilfe/rundgaenge'),
 	render: renderStage({ ownSwitch: true }),
-	play: async ({ canvas }) => {
-		await expect(
-			await canvas.findByRole('switch', { name: 'Rundgang aktiv' })
-		).toBeChecked();
+	play: async ({ canvas, canvasElement }) => {
+		await expectSwitchState(canvas, true);
+		await expectBottomNavigation(canvasElement);
 	}
 };

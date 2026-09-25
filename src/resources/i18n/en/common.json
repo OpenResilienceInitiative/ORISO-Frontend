@@ -4317,13 +4317,16 @@
 		},
 		"subtitle": "To explain the individual functions, we have prepared a short tour for you <br /> You can cancel it at any time or start it again in your profile.",
 		"switch": {
-			"active": {
-				"label": "Tour active"
+			"hint": {
+				"off": "Off: tours do not start on their own. You can start them here at any time.",
+				"on": "On: new tours start once on their own. You can restart them here at any time."
 			},
-			"deactive": {
-				"label": "Tour deactivated"
+			"label": {
+				"off": "Off",
+				"on": "On"
 			},
-			"hint": "Off: tours do not start on their own. You can start them here at any time."
+			"subtitle": "Short tours show you where to find things.",
+			"title": "Start tours automatically"
 		},
 		"title": "Tour"
 	},

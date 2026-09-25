@@ -4358,13 +4358,16 @@
 		},
 		"subtitle": "Pour vous expliquer les différentes fonctions, nous vous avons préparé une petite visite guidée. <br /> Vous pouvez l'interrompre à tout moment ou la relancer dans votre profil.",
 		"switch": {
-			"active": {
-				"label": "Circuit actif"
+			"hint": {
+				"off": "Désactivé : les visites guidées ne démarrent pas d'elles-mêmes. Vous pouvez les lancer ici à tout moment.",
+				"on": "Activé : les nouvelles visites guidées démarrent une fois d'elles-mêmes. Vous pouvez les relancer ici à tout moment."
 			},
-			"deactive": {
-				"label": "Visite guidée désactivée"
+			"label": {
+				"off": "Désactivé",
+				"on": "Activé"
 			},
-			"hint": "Désactivé : les visites guidées ne démarrent pas d'elles-mêmes. Vous pouvez les lancer ici à tout moment."
+			"subtitle": "De courtes visites guidées vous montrent où trouver chaque chose.",
+			"title": "Lancer les visites guidées automatiquement"
 		},
 		"title": "Visite guidée"
 	},

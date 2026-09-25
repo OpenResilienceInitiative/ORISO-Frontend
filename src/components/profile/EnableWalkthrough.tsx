@@ -14,7 +14,8 @@ import { apiPatchConsultantData } from '../../api';
 /**
  * The counsellor's own auto-start switch for product tours (#1526). Off only
  * stops tours from starting on their own; the tour list next to it still
- * starts every tour by hand.
+ * starts every tour by hand. One switch governs all tours, so the texts are
+ * plural and the hint follows the state.
  */
 export const EnableWalkthrough = () => {
 	const { t: translate } = useTranslation();
@@ -22,10 +23,17 @@ export const EnableWalkthrough = () => {
 	const { addNotification } = useContext(NotificationsContext);
 	const [pending, setPending] = useState(false);
 	const isWalkThroughEnabled = !!userData.isWalkThroughEnabled;
-	const switchLabel = translate(
+	const title = translate('walkthrough.switch.title');
+	// Static keys, so the i18n guard can see every one of them.
+	const stateLabel = translate(
 		isWalkThroughEnabled
-			? 'walkthrough.switch.active.label'
-			: 'walkthrough.switch.deactive.label'
+			? 'walkthrough.switch.label.on'
+			: 'walkthrough.switch.label.off'
+	);
+	const hint = translate(
+		isWalkThroughEnabled
+			? 'walkthrough.switch.hint.on'
+			: 'walkthrough.switch.hint.off'
 	);
 
 	const handleChange = useCallback(() => {
@@ -47,12 +55,9 @@ export const EnableWalkthrough = () => {
 	return (
 		<div className="twoFactorAuth" data-testid="enable-walkthrough">
 			<div className="profile__content__title">
-				<Headline
-					text={translate('walkthrough.title')}
-					semanticLevel="5"
-				/>
+				<Headline text={title} semanticLevel="5" />
 				<Text
-					text={translate('walkthrough.subtitle')}
+					text={translate('walkthrough.switch.subtitle')}
 					type="standard"
 					className="tertiary"
 				/>
@@ -62,15 +67,11 @@ export const EnableWalkthrough = () => {
 					onChange={handleChange}
 					checked={isWalkThroughEnabled}
 					disabled={pending}
-					aria-label={switchLabel}
+					aria-label={title}
 				/>
-				<Text text={switchLabel} type="standard" />
+				<Text text={stateLabel} type="standard" />
 			</div>
-			<Text
-				text={translate('walkthrough.switch.hint')}
-				type="standard"
-				className="tertiary"
-			/>
+			<Text text={hint} type="standard" className="tertiary" />
 		</div>
 	);
 };
