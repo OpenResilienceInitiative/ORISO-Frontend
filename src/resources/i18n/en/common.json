@@ -3398,7 +3398,12 @@
 			},
 			"back": "Back",
 			"next": "Next",
-			"consentPending": "Client consent is required before access is activated."
+			"consentPending": "Client consent is required before access is activated.",
+			"reclaim": {
+				"copy": "A colleague took over this case while you were away. You can take it back now.",
+				"cta": "Take the case back",
+				"unavailable": "This case can no longer be taken back."
+			}
 		},
 		"accepted": {
 			"title": "Your inquiry has been accepted by a consultant.",

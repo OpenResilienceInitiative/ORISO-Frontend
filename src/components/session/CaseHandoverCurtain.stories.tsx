@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
 import {
@@ -54,6 +55,7 @@ type PlaygroundProps = {
 	initialExplanation?: string;
 	error?: string;
 	topicLabel?: string;
+	canReclaim?: boolean;
 };
 
 function CurtainPlayground({
@@ -61,7 +63,8 @@ function CurtainPlayground({
 	initialReasonCode = '',
 	initialExplanation = '',
 	error,
-	topicLabel = 'Schwangerschaftsberatung'
+	topicLabel = 'Schwangerschaftsberatung',
+	canReclaim = false
 }: PlaygroundProps) {
 	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
 	const [reasonCode, setReasonCode] = useState(initialReasonCode);
@@ -82,6 +85,8 @@ function CurtainPlayground({
 				onReasonSelect={setReasonCode}
 				onExplanationChange={setExplanation}
 				onSubmit={() => setStep('pending')}
+				canReclaim={canReclaim}
+				onReclaim={() => {}}
 			/>
 		</div>
 	);
@@ -170,6 +175,31 @@ export const ErrorState: Story = {
 			error="Something went wrong. Please try again."
 		/>
 	)
+};
+
+/** ADR-002 reclaim: the counsellor a takeover moved the case away from is back. */
+export const ReclaimAvailable: Story = {
+	render: () => <CurtainPlayground canReclaim />
+};
+
+function ReclaimConflictPlayground() {
+	const { t: translate } = useTranslation();
+	return (
+		<CurtainPlayground
+			canReclaim
+			error={translate('caseHandover.curtain.reclaim.unavailable')}
+		/>
+	);
+}
+
+/** 409: a permanent reason, or the cover counsellor no longer owns the case. */
+export const ReclaimConflict: Story = {
+	render: () => <ReclaimConflictPlayground />
+};
+
+/** No reclaim offered: the normal "request access" intro, unchanged. */
+export const IntroWithoutReclaim: Story = {
+	render: () => <CurtainPlayground canReclaim={false} />
 };
 
 /** Full wizard walk: intro → reason (radio) → describe → submit → pending. */

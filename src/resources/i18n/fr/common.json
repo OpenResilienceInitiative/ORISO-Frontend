@@ -3432,7 +3432,12 @@
 			},
 			"back": "Retour",
 			"next": "Continuer",
-			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé."
+			"consentPending": "Le consentement du·de la client·e est nécessaire avant que l'accès soit activé.",
+			"reclaim": {
+				"copy": "Un·e collègue a repris ce dossier pendant votre absence. Vous pouvez le reprendre maintenant.",
+				"cta": "Reprendre le dossier",
+				"unavailable": "Ce dossier ne peut plus être repris."
+			}
 		},
 		"accepted": {
 			"title": "Votre demande a été acceptée par une conseillère ou un conseiller.",
