@@ -112,20 +112,27 @@ describe('autoLogin', () => {
 			'synthetic-password',
 			'123456'
 		);
-		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
+		expect(await consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
 			'synthetic-password'
 		);
-		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBeNull();
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
 	});
 	it('clears a stale handoff and never stages credentials when OTP is required or rejected', async () => {
-		stageLoginRecoveryPassword(matrixResponse.userId, 'stale-synthetic');
+		await stageLoginRecoveryPassword(
+			matrixResponse.userId,
+			'stale-synthetic'
+		);
 		vi.mocked(getKeycloakAccessToken).mockRejectedValue(
 			new Error('OTP_REQUIRED')
 		);
 		await expect(
 			autoLogin({ username: 'synthetic', password: 'synthetic-password' })
 		).rejects.toThrow();
-		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBeNull();
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
 		expect(getMatrixAccessToken).not.toHaveBeenCalled();
 	});
 

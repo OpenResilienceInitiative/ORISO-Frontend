@@ -210,9 +210,10 @@ describe('LocaleProvider – tenant switch', () => {
 			</LocaleProvider>
 		);
 
-		// The provider renders nothing at all while the switch is in flight —
-		// there is no stale locale list left for a consumer to read.
-		await waitFor(() => expect(screen.queryByTestId('locales')).toBe(null));
+		// Consumers survive the switch without receiving stale languages.
+		await waitFor(() =>
+			expect(screen.getByTestId('locales').textContent).toBe('')
+		);
 
 		mocks.isLoadingTenant = false;
 		mocks.tenant = { settings: { activeLanguages: ['de', 'ru'] } };

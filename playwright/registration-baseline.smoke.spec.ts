@@ -31,7 +31,7 @@ function deployedAppBaseURL(): string {
 		process.env.PLAYWRIGHT_BASE_URL || process.env.ORISO_APP_BASE_URL;
 	if (!baseURL) {
 		throw new Error(
-			'Set PLAYWRIGHT_BASE_URL, for example PLAYWRIGHT_BASE_URL=https://app.oriso.org npm run test:smoke:baseline'
+			'Set PLAYWRIGHT_BASE_URL, for example PLAYWRIGHT_BASE_URL=https://app.example.org npm run test:smoke:baseline'
 		);
 	}
 	return baseURL;

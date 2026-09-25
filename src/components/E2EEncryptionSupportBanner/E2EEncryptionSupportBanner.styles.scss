@@ -160,3 +160,16 @@
 		color: var(--m3-primary, #4c555f);
 	}
 }
+
+/* The settings link sits inside the M3 snackbar message, on the inverse
+   surface — it takes the inverse primary like the snackbar action does. */
+.encryption-recovery-snackbar__link {
+	color: var(--m3-inverse-primary, #ffb4aa);
+	text-decoration: underline;
+	white-space: nowrap;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-inverse-primary, #ffb4aa);
+		outline-offset: 2px;
+	}
+}

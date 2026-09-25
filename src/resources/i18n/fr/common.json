@@ -65,7 +65,8 @@
 		},
 		"wait": "Veuillez attendre",
 		"info": "Information",
-		"or": "ou"
+		"or": "ou",
+		"logo": "Logo"
 	},
 	"appointments": {
 		"copy": {
@@ -228,7 +229,8 @@
 		},
 		"availability": {
 			"description": "Indiquez ici votre disponibilité générale afin que les personnes en quête de conseils puissent réserver des rendez-vous chez vous.",
-			"title": "Votre disponibilité"
+			"title": "Votre disponibilité",
+			"iframeTitle": "Disponibilité"
 		},
 		"calender": {
 			"add": "Ajouter un calendrier",
@@ -309,6 +311,18 @@
 			"button": {
 				"label": "Démarrer un appel vidéo"
 			}
+		},
+		"assignedCalendars": {
+			"iframeTitle": "Calendriers assignés"
+		},
+		"calcom": {
+			"loading": "Chargement de {{calLink}}"
+		},
+		"reschedule": {
+			"iframeTitle": "Reporter le rendez-vous"
+		},
+		"cancellation": {
+			"iframeTitle": "Annuler le rendez-vous"
 		}
 	},
 	"chat": {
@@ -648,7 +662,8 @@
 				"description": "Il semble que nous ayons actuellement un problème de serveur.<br>Réessayez plus tard.",
 				"headline": "Oups !"
 			}
-		}
+		},
+		"notFound": "Page introuvable"
 	},
 	"furtherSteps": {
 		"arrowTitle": "Continuer",
@@ -893,7 +908,8 @@
 			},
 			"subscribers": {
 				"empty": "pas de participants disponibles",
-				"headline": "Personnes participantes"
+				"headline": "Personnes participantes",
+				"menuLabel": "Options pour {{name}}"
 			},
 			"gallery": {
 				"back": "Retour au compte à rebours",
@@ -918,6 +934,10 @@
 					}
 				},
 				"upcoming": "Prochaines dates"
+			},
+			"status": {
+				"active": "En cours",
+				"planned": "Prévu"
 			}
 		},
 		"join": {
@@ -940,6 +960,9 @@
 					"flipHint": "cliquer pour retourner",
 					"greetingLabel": "Mot de bienvenue de votre conseiller·ère",
 					"headline": "Votre chat de groupe commence {{eta}}.",
+					"moderatorHeadline": "Le groupe de parole commence {{eta}}.",
+					"moderatorOverdueHeadline": "Le groupe vous attend.",
+					"moderatorSubtitle": "Vous pouvez lancer le chat dès que vous êtes prêt·e.",
 					"netiquetteLabel": "Nétiquette · règle {{no}}",
 					"netiquetteTitle": "Nétiquette",
 					"overdueCaption": "L'attente devient un peu gênante …",
@@ -1112,6 +1135,17 @@
 				"durationValue": "{{count}} h",
 				"repeatValue_one": "{{count}} fois",
 				"repeatValue_other": "{{count}} fois"
+			},
+			"noModeratorAvailable": "Aucune personne disponible",
+			"moderatorHelp": "Aide",
+			"moderatorHelpDialog": {
+				"title": "Inviter une co-modération plus tard",
+				"description": "Pour l’instant, aucun·e autre professionnel·le de votre organisme ne peut être sélectionné·e. Vous pouvez tout de même créer le cercle et ajouter une co-modération ensuite.",
+				"step1": "Ouvrez le cercle dans votre liste, puis « Infos sur le chat ».",
+				"step2": "Sous « Paramètres de chat », choisissez « Modifier ».",
+				"step3": "Ajoutez des collègues sous « Modération supplémentaire » et enregistrez.",
+				"note": "Seule la personne qui a créé le cercle peut le modifier, et uniquement lorsqu’il n’est pas en cours. Tous les professionnel·les actifs de votre organisme peuvent être sélectionné·es.",
+				"close": "Compris"
 			}
 		},
 		"entry": {
@@ -1125,6 +1159,28 @@
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
 			"backToCountdown": "Retour au compte à rebours"
+		},
+		"shareDialog": {
+			"title_text": "Cercle créé",
+			"title_audio": "Appel audio créé",
+			"title_video": "Appel vidéo créé",
+			"description": "Partagez ce lien avec les participant·es. Il les mène à la salle d’attente jusqu’au début de la séance.",
+			"linkLabel": "Lien d’invitation",
+			"copy": "Copier le lien",
+			"copied": "Copié",
+			"detailsHeadline": "Séance",
+			"topic": "Sujet",
+			"date": "Jour",
+			"start": "Début",
+			"timeValue": "à {{time}}",
+			"duration": "Durée",
+			"repeats": "Répétitions",
+			"repeatValue": "{{count}} séances, {{interval}}",
+			"format": "Format",
+			"language": "Langue",
+			"done": "Terminé",
+			"durationValue": "{{value}} h",
+			"copyFailed": "La copie a échoué. Veuillez réessayer."
 		}
 	},
 	"help": {
@@ -1653,6 +1709,8 @@
 				"overLimit": "Le message dépasse la limite de caractères.",
 				"warning": "Le message approche de la limite de caractères."
 			},
+			"loadError": "La zone de saisie du chat n'a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer",
 			"toolbar": {
 				"openTools": "Revenir à tous les outils",
 				"closeTools": "Passer aux outils compacts",
@@ -1696,7 +1754,9 @@
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
 					"tooltip": "Enregistrer un message vocal"
-				}
+				},
+				"imageUrlPrompt": "URL de l'image",
+				"urlPrompt": "URL"
 			}
 		},
 		"mention": {
@@ -1793,8 +1853,10 @@
 			"targetLabel": "Destination : Fil de discussion",
 			"listToggle": "Fils de discussion",
 			"replies": "{{count}} réponses",
+			"lastReplyAt": "Dernière réponse à {{time}}",
 			"title": "Fil de discussion",
 			"placeholder": "Répondre dans le fil",
+			"inlineImageAlt": "Image du message",
 			"open": "Ouvrir le fil"
 		},
 		"deliveryStatus": {
@@ -1830,7 +1892,8 @@
 		"overview": "Aperçu",
 		"profile": "Profil",
 		"myProfile": "Mon profil",
-		"tools": "Mes outils"
+		"tools": "Mes outils",
+		"unreadCount": "{{count}} non lu"
 	},
 	"notification": {
 		"error": "Erreur",
@@ -2297,6 +2360,13 @@
 				"viaSidebar": {
 					"label": "Activer le Live-Chat depuis la barre de menu",
 					"description": "Lorsque cette option est activée, vous activez et désactivez votre disponibilité Live-Chat depuis la barre de menu (barre latérale) au lieu de le faire ici. L'interrupteur de disponibilité ci-dessus est alors désactivé et l'icône du Live-Chat reste visible en permanence dans la barre latérale – un clic ne change que son état, l'icône ne disparaît pas. Si cette option est désactivée, le Live-Chat se pilote comme auparavant uniquement ici, dans Mon profil."
+				},
+				"lost": {
+					"title": "Vous n'êtes plus joignable par chat en direct",
+					"refused": "Le serveur a refusé votre disponibilité. Réactivez le chat en direct. Si cela ne fonctionne pas, reconnectez-vous.",
+					"sessionExpired": "Votre session a expiré. Reconnectez-vous, puis réactivez le chat en direct.",
+					"leaseLost": "Le serveur ne vous indique plus comme disponible. Réactivez le chat en direct pour être joignable.",
+					"connectionLost": "La connexion au serveur a été interrompue pendant plus de deux minutes. Réactivez le chat en direct dès que la connexion est rétablie."
 				}
 			},
 			"masterKey": {
@@ -2314,7 +2384,8 @@
 			"password": {
 				"reset": {
 					"confirm": {
-						"label": "Confirmer le nouveau mot de passe"
+						"label": "Confirmer le nouveau mot de passe",
+						"dialogLabel": "Répéter le nouveau mot de passe"
 					},
 					"insecure": "Votre mot de passe n'est pas sécurisé.",
 					"instructions": "<span class=\"text--bold\">Votre mot de passe doit répondre aux critères suivants afin de garantir une consultation protégée:</span><ul class=\"pl--2 my--1\"><li>majuscules et minuscules</li><li>au moins un chiffre</li><li>au moins un caractère spécial (par ex. : ?, !, +, #, &, ...)</li><li>au moins 9 caractères</li></ul>",
@@ -2326,7 +2397,9 @@
 					},
 					"old": {
 						"incorrect": "Votre mot de passe n'est pas correct.",
-						"label": "Mot de passe actuel"
+						"label": "Mot de passe actuel",
+						"hint": "Le mot de passe avec lequel vous venez de vous connecter.",
+						"dialogLabel": "Mot de passe précédent"
 					},
 					"overlay": {
 						"button": {
@@ -2335,9 +2408,19 @@
 						"headline": "Vous avez modifié votre mot de passe avec succès. Vous allez maintenant être redirigé vers le login."
 					},
 					"same": "Votre mot de passe est identique.",
+					"sameAsOld": "Veuillez choisir un nouveau mot de passe – celui-ci est votre mot de passe actuel.",
 					"secure": "Votre mot de passe est sécurisé.",
 					"subtitle": "Si vous le souhaitez, vous pouvez modifier votre mot de passe ici. Saisissez d'abord votre mot de passe actuel avant d'en définir un nouveau.",
-					"title": "Mot de passe"
+					"title": "Mot de passe",
+					"criteria": {
+						"title": "Votre nouveau mot de passe doit contenir",
+						"mixedCase": "des majuscules et des minuscules",
+						"number": "au moins un chiffre",
+						"specialChar": "un caractère spécial (?, !, +, # …)",
+						"minLength": "au moins 9 caractères",
+						"met": "rempli"
+					},
+					"submitAndContinue": "Enregistrer le mot de passe et continuer"
 				}
 			},
 			"security": {
@@ -2507,7 +2590,7 @@
 				"alwaysSent": {
 					"title": "Vous recevez toujours ces e-mails :",
 					"security": "Connexion et accès – réinitialisation du mot de passe, lien de connexion, code à usage unique, modifications de votre accès.",
-					"legal": "Questions contractuelles – par exemple un contrat de sous-traitance à signer.",
+					"legal": "Questions contractuelles – par exemple des documents contractuels à signer.",
 					"outage": "Pannes de la plateforme."
 				}
 			},
@@ -2665,7 +2748,9 @@
 				"silentExplainer": "Votre coffre-fort a été configuré automatiquement lors de votre connexion. Voici votre clé de récupération — enregistrez-la maintenant en lieu sûr, par exemple dans un gestionnaire de mots de passe. Nous ne l'afficherons plus par la suite.",
 				"explainer": "Voici votre clé de récupération. Elle n'est affichée que cette seule fois. Enregistrez-la maintenant en lieu sûr.",
 				"copy": "Copier la clé",
-				"confirmLabel": "J'ai enregistré la clé en lieu sûr."
+				"confirmLabel": "J'ai enregistré la clé en lieu sûr.",
+				"copied": "Copié ✓",
+				"done": "Terminé"
 			},
 			"status": {
 				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils."
@@ -2680,7 +2765,8 @@
 				"inputLabel": "Clé de récupération",
 				"invalidKey": "Cette clé de récupération n'est pas valide. Veuillez vérifier votre saisie.",
 				"error": "La récupération a échoué. Veuillez réessayer.",
-				"success": "{{count}} clés de messages restaurées."
+				"success": "{{count}} clés de messages restaurées.",
+				"cta": "Restaurer l'historique"
 			},
 			"reset": {
 				"explainer": "Vous avez oublié votre clé de récupération ? Vous pouvez réinitialiser votre identité de chiffrement. Attention : l'historique chiffré jusqu'ici peut alors devenir définitivement illisible.",
@@ -2780,7 +2866,8 @@
 				"headline": "Informations sur la protection des données du centre de consultation",
 				"imprintHeadline": "Mentions légales du centre de consultation",
 				"label": "Informations légales",
-				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment."
+				"unavailable": "Les informations sur la protection des données ne peuvent pas être chargées pour le moment.",
+				"loading": "Chargement des informations de protection des données"
 			},
 			"type": {
 				"single": "Conseil individuel",
@@ -3047,6 +3134,13 @@
 					"title": "Délinquance et réinsertion",
 					"description": "Accompagnement pour les questions de délinquance, de nouveau départ et de quotidien."
 				}
+			},
+			"search": {
+				"open": "Rechercher un thème",
+				"placeholder": "Rechercher un thème ou un mot-clé",
+				"close": "Fermer la recherche",
+				"noResults": "Aucun thème correspondant. Essayez un autre mot.",
+				"matchedBy": "correspond à « {{term}} »"
 			}
 		},
 		"account": {
@@ -3382,17 +3476,129 @@
 				"confirm": "Compris, c'est parti",
 				"inhale": {
 					"bubble": "Vous devez faire 3 choses pour gagner.",
-					"subtitle": "par le nez"
+					"subtitle": "par le nez",
+					"instruction": "Inspirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
 				},
 				"hold": {
 					"bubble": "Vous devez faire 3 choses.",
-					"subtitle": "retenez votre souffle"
+					"subtitle": "retenez votre souffle",
+					"instruction": "Retenez votre souffle pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
 				},
 				"exhale": {
 					"bubble": "Vous devez faire 3 choses.",
-					"subtitle": "par la bouche"
+					"subtitle": "par la bouche",
+					"instruction": "Expirez lentement pendant <strong>{{count}} secondes</strong>, puis appuyez sur le bouton."
+				},
+				"restart": "Recommencer",
+				"pressAtRightTime": "Appuyez au bon moment",
+				"belly": {
+					"autoPilot": "Pilote auto",
+					"timeIt": "Mesurer",
+					"inhale": "Super, inspirez encore <strong>3 secondes</strong>, mais cette fois en dilatant le ventre.",
+					"hold": "Retenez maintenant votre souffle <strong>3 secondes</strong>.",
+					"exhale": "Expirez maintenant <strong>4 secondes</strong> et détendez tout le corps."
+				},
+				"selfTimer": {
+					"instruction": "Définissez maintenant vos propres intervalles de temps pendant que vous respirez.",
+					"repeatGame": "Rejouer",
+					"backToWaiting": "Retour à l'attente"
+				},
+				"completion": {
+					"instruction": "Félicitations, vous y êtes arrivé.",
+					"receiveGift": "Recevoir un petit cadeau"
+				},
+				"serenity": {
+					"instruction": "Ce cadeau est un petit mantra qui a aidé beaucoup de personnes à traverser des périodes difficiles. On l'appelle la prière de la sérénité : “Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux changer, et la sagesse de distinguer les unes des autres.”"
 				}
-			}
+			},
+			"inhaleExhale": "Guide respiratoire inspirer expirer",
+			"timeLeft": "Temps restant",
+			"choosePace": "Choisissez votre rythme, puis commencez votre premier essai.",
+			"firstTryInstruction": "Premier essai : suivez inspirer, retenir et expirer.",
+			"practiceSuccessPrompt": "Excellent, vous voulez commencer maintenant ?",
+			"timingInfo": "Réglez votre rythme de respiration avant de commencer.",
+			"achievementUnlocked": "Succès débloqué : Niveau {{level}} {{emoji}} {{title}}.",
+			"levelBadge": "Niveau {{level}} : {{title}}",
+			"completionTitle": "Félicitations, vous y êtes arrivé",
+			"prizeLine1": "Votre prix principal est la vraie sagesse.",
+			"prizeLine2": "Parce que vous avez dépassé votre bruit intérieur, vaincu l'ennui, pris du recul et trouvé un peu de paix intérieure.",
+			"serenityPrayer": "Mon Dieu, donne-moi la sérénité d'accepter les choses que je ne peux pas changer, le courage de changer celles que je peux, et la sagesse d'en connaître la différence.",
+			"changeMind": "Je change d'avis, laissez-moi essayer votre jeu d'attente",
+			"iJustWait": "J'attends simplement",
+			"startGame": "Démarrer le jeu",
+			"startFirstTry": "Commençons le premier essai",
+			"repeatTrainingRound": "Répéter le tour d'entraînement",
+			"startRealGame": "Commençons la vraie partie",
+			"repeatGame": "Répéter le jeu",
+			"receivePrize": "Recevoir votre prix",
+			"playAgain": "Rejouer",
+			"joinRoom": "Rejoindre la salle",
+			"decreaseInhale": "Diminuer les secondes d'inspiration",
+			"increaseInhale": "Augmenter les secondes d'inspiration",
+			"decreaseHold": "Diminuer les secondes de pause",
+			"increaseHold": "Augmenter les secondes de pause",
+			"decreaseExhale": "Diminuer les secondes d'expiration",
+			"increaseExhale": "Augmenter les secondes d'expiration",
+			"robotCard4Info": "Infos",
+			"presets": {
+				"starter334": "première fois",
+				"standard446": "expérience modérée (recommandé)",
+				"deep556": "long (personnes expertes)"
+			},
+			"secondsAria": "{{label}}, {{count}} secondes",
+			"secondsShort": "{{count}} s",
+			"levels": {
+				"1": {
+					"title": "Dompteur de chaos",
+					"success": "Bon départ."
+				},
+				"2": {
+					"title": "Chercheur de souffle",
+					"success": "Vous avez trouvé un rythme."
+				},
+				"3": {
+					"title": "Guide du souffle",
+					"success": "Belle maîtrise."
+				},
+				"4": {
+					"title": "Bâtisseur de calme",
+					"success": "Le flux s'améliore."
+				},
+				"5": {
+					"title": "Équilibre intérieur",
+					"success": "La respiration reste fluide."
+				},
+				"6": {
+					"title": "Gardien du rythme",
+					"success": "Concentration solide."
+				},
+				"7": {
+					"title": "Artisan de paix",
+					"success": "Vous restez centré."
+				},
+				"8": {
+					"title": "Navigateur silencieux",
+					"success": "Calme sous pression."
+				},
+				"9": {
+					"title": "Maître du silence",
+					"success": "Presque terminé."
+				},
+				"10": {
+					"title": "Vraie sagesse",
+					"success": "Vous avez maîtrisé cette manche."
+				}
+			},
+			"briefing": {
+				"0": "Désolé, vous devez attendre pour le moment, tous les conseillers sont actuellement occupés.",
+				"1": "Attendre avec tous ces problèmes peut être assez éprouvant. Si vous voulez, nous avons créé un petit pont de salle d'attente.",
+				"2": "D'accord, vous devez faire trois choses dans le jeu.",
+				"3": "1. Inspirez par le nez\n\n2. Retenez votre souffle\n\n3. Expirez par la bouche",
+				"negative": "D'accord, merci de patienter. Dès qu'un conseiller est libre, nous vous faisons entrer."
+			},
+			"onboardingLine1": "Prenez simplement le temps d'arriver. Nous respirons ensemble.",
+			"onboardingLine3": "Quand vous êtes prêt, lancez votre premier essai.",
+			"volumeHint": "Pour une meilleure expérience, veuillez activer le son."
 		},
 		"acceptance": {
 			"button": {
@@ -3611,6 +3817,7 @@
 				"confirm": "Confirmer la sélection",
 				"close": "Fermer la recherche",
 				"clear": "Effacer la recherche",
+				"removeSelectedPerson": "Retirer {{name}}",
 				"emptyPeople": "Aucune personne correspondante trouvée.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
@@ -3659,7 +3866,8 @@
 			"sessionType": {
 				"liveChat": "Live Chat",
 				"selfHelp": "Cercle de parole",
-				"internal": "Échange interne"
+				"internal": "Échange interne",
+				"team": "Conseil en équipe"
 			}
 		},
 		"supervision": {
@@ -3668,6 +3876,8 @@
 		},
 		"resizeHandle": {
 			"ariaLabel": "Modifier la largeur de la liste des conversations : glisser pour redimensionner, maintenir ou double-cliquer pour replier ou déplier, flèches haut/bas pour faire défiler la liste.",
+			"expand": "Afficher la liste des consultations",
+			"collapse": "Réduire la liste des consultations pour agrandir le chat",
 			"scrollAriaLabel": "Faites glisser pour faire défiler la liste."
 		},
 		"rail": {
@@ -3915,11 +4125,12 @@
 					"missingQr": "Le code QR n'est pas disponible pour le moment. Utilisez la clé manuelle.",
 					"missingSecret": "La clé n'est pas disponible pour le moment.",
 					"or": "ou",
-					"qrAlt": "Code QR pour l'application d'authentification"
+					"qrAlt": "Code QR pour l'application d'authentification",
+					"title": "Connecter l’application à ORISO"
 				},
 				"install": {
 					"android": "Télécharger sur le Google Play Store",
-					"copy": "Installez Google Authenticator ou Microsoft Authenticator sur votre smartphone ou votre tablette. Les deux applications prennent en charge le code de sécurité de la consultation en ligne.",
+					"copy": "Vous avez besoin de l’une de ces deux applications sur votre smartphone ou votre tablette. Déjà installée ? Continuez directement.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -3930,20 +4141,25 @@
 						"android": "https://play.google.com/store/apps/details?id=com.azure.authenticator",
 						"ios": "https://apps.apple.com/de/app/microsoft-authenticator/id983156458",
 						"title": "Microsoft Authenticator"
-					}
+					},
+					"title": "Installer une application d’authentification",
+					"note": "gratuite, utilisable sans compte",
+					"done": "L’application est installée – continuer"
 				},
 				"success": {
 					"title": "L'authentification par application a bien été configurée."
 				},
 				"verify": {
 					"copy": "Saisissez le code à six chiffres affiché dans l'application pour terminer la configuration.",
-					"input": "Code à usage unique"
+					"input": "Code à usage unique",
+					"title": "Vérifier le code"
 				}
 			},
 			"decision": {
 				"app": "Se connecter en toute sécurité via l'application",
 				"copy": "Protégez votre compte avec un deuxième facteur. L'application d'authentification est l'option la plus sûre ; vous pouvez aussi recevoir les codes par e-mail.",
-				"email": "Utiliser un code par e-mail (moins sûr)"
+				"email": "Utiliser un code par e-mail (moins sûr)",
+				"title": "Choisir le deuxième facteur"
 			},
 			"email": {
 				"connect": {
@@ -3951,12 +4167,14 @@
 					"input": "Code à usage unique",
 					"resend": "Envoyer un nouveau code",
 					"resendTitle": "Cela n'a pas fonctionné ?",
-					"sent": "Nouveau code envoyé."
+					"sent": "Nouveau code envoyé.",
+					"title": "Vérifier le code"
 				},
 				"select": {
 					"copy": "Saisissez l'adresse e-mail à laquelle nous devons envoyer votre code de sécurité.",
 					"hint": "Si vous modifiez l'adresse e-mail, vous recevrez également vos prochaines notifications à cette adresse.",
-					"input": "Adresse e-mail"
+					"input": "Adresse e-mail",
+					"title": "Configurer le deuxième facteur par e-mail"
 				},
 				"success": {
 					"title": "L'authentification par e-mail a bien été configurée."
@@ -3981,7 +4199,9 @@
 				"select": "Sélectionner",
 				"verify": "Vérifier"
 			},
-			"title": "Quelle méthode de connexion souhaitez-vous utiliser ?"
+			"success": {
+				"title": "Deuxième facteur configuré"
+			}
 		},
 		"overlayButton": {
 			"back": "Retour",
@@ -4020,7 +4240,8 @@
 		"twoUsers": {
 			"connector": "et",
 			"typing": "écrire"
-		}
+		},
+		"aria": "En train d’écrire"
 	},
 	"user": {
 		"userAddiction": {
@@ -4390,7 +4611,15 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
-			"title": "Le Live-Chat est malheureusement fermé pour le moment"
+			"title": "Le Live-Chat est malheureusement fermé pour le moment",
+			"topicLabel": "Thème demandé : {{topic}}",
+			"weekdays": {
+				"monday": "lundi",
+				"tuesday": "mardi",
+				"wednesday": "mercredi",
+				"thursday": "jeudi",
+				"friday": "vendredi"
+			}
 		}
 	},
 	"sessionMenu": {
@@ -4670,6 +4899,18 @@
 			"send": "Le message n'a pas pu être envoyé."
 		}
 	},
+	"inviteLink": {
+		"error": {
+			"title": "Ce lien d’invitation ne peut plus être utilisé",
+			"generic": "Le lien d’invitation n’a pas pu être utilisé",
+			"missingToken": "Ce lien d’invitation est incomplet"
+		},
+		"resume": {
+			"title": "Connexion interrompue",
+			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
+			"retry": "Réessayer"
+		}
+	},
 	"anonymousConsent": {
 		"button": "Confirmer",
 		"description": "Ensuite, une personne de notre équipe de conseil peut démarrer un chat avec vous.",
@@ -4787,20 +5028,26 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Signer le contrat de sous-traitance",
-		"subtitle": "Veuillez lire le contrat dans son intégralité, puis confirmez les informations concernant la personne signataire.",
+		"title": "Vérifier et confirmer les documents contractuels",
+		"subtitle": "Veuillez lire les documents contractuels dans leur intégralité, puis confirmez les informations concernant la personne signataire.",
 		"signerName": "Nom complet",
-		"loadingContract": "Chargement du contrat...",
+		"signerPosition": "Fonction",
+		"signerEmail": "Adresse e-mail",
+		"signerNote": "Remarque (facultatif)",
+		"language": "Langue",
+		"loadingContract": "Chargement des documents contractuels...",
+		"contractHeading": "Documents contractuels",
+		"version": "Version du contrat",
 		"signerHeading": "Confirmation par la personne habilitée à représenter l'organisation",
 		"signingFor": "Vous signez au nom de :",
-		"accept": "J'ai lu le contrat affiché ci-dessus et je le confirme de manière contraignante.",
+		"accept": "J'ai lu les documents contractuels affichés ci-dessus et je les confirme de manière contraignante.",
 		"submit": "Confirmer de manière contraignante",
 		"submitting": "Enregistrement...",
-		"success": "La confirmation du contrat de sous-traitance a été enregistrée.",
+		"success": "La confirmation des documents contractuels a été enregistrée.",
 		"error": {
 			"missingToken": "Le lien de signature est incomplet.",
-			"previewRequired": "Le contrat doit être entièrement chargé avant que vous puissiez le confirmer.",
-			"acceptRequired": "Veuillez confirmer le contrat.",
+			"previewRequired": "Les documents contractuels doivent être entièrement chargés avant que vous puissiez les confirmer.",
+			"acceptRequired": "Veuillez confirmer les documents contractuels.",
 			"generic": "La signature n'a pas pu être enregistrée pour le moment.",
 			"invalidToken": "Ce lien de signature n'est pas valide, a expiré ou a déjà été utilisé.",
 			"invalidRequest": "Les informations n'ont pas pu être enregistrées. Veuillez vérifier le formulaire."
@@ -4818,6 +5065,9 @@
 				"later": "Plus tard",
 				"openVault": "Ouvrir le coffre-fort",
 				"restoring": "Restauration en cours …"
+			},
+			"snackbar": {
+				"close": "Fermer la notification"
 			}
 		},
 		"saveReminder": {
@@ -4854,6 +5104,13 @@
 		}
 	},
 	"accountInvite": {
+		"title": "Créer un compte de consultation",
+		"successTitle": "Compte créé",
+		"email": "Adresse e-mail",
+		"username": "Nom d'utilisateur",
+		"password": "Mot de passe",
+		"repeatPassword": "Répéter le mot de passe",
+		"submit": "Créer le compte",
 		"invalid": "Le lien d'invitation n'est pas valide ou a expiré.",
 		"createFailed": "Le compte de consultation n'a pas pu être créé. Veuillez réessayer.",
 		"loading": "Chargement de l'invitation",
@@ -4873,7 +5130,8 @@
 			"open": "Ouvrir le brouillon",
 			"next": "Brouillon suivant",
 			"delete": "Supprimer le brouillon",
-			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire."
+			"emptyDetail": "Sélectionnez un brouillon pour continuer à écrire.",
+			"embeddedTitle": "Chat du brouillon"
 		}
 	},
 	"tour": {
@@ -5027,7 +5285,9 @@
 				"access": "Votre accès pour cette conversation",
 				"waiting": "Salle d'attente — recherche d'une conseillère disponible",
 				"accepted": "Une conseillère a pris votre conversation",
-				"closed": "Fermé pour le moment"
+				"closed": "Fermé pour le moment",
+				"checking": "Qui est en ligne ?",
+				"waitingForLive": "En attente de quelqu'un en ligne"
 			},
 			"access": {
 				"headline": "Votre nom pour aujourd’hui.",
@@ -5065,7 +5325,8 @@
 				"later": "Plus tard",
 				"mail": "Écrire une demande à un centre de conseil",
 				"mailShort": "Écrire une demande",
-				"closedDay": "fermé"
+				"closedDay": "fermé",
+				"wait": "J'attends"
 			},
 			"steps": {
 				"wait": {
@@ -5080,25 +5341,129 @@
 					"title": "Anonyme, puis effacé",
 					"text": "Seul votre identifiant est visible. Après 48 heures, tout est supprimé."
 				}
+			},
+			"checking": {
+				"text": "Nous regardons qui est en ligne …",
+				"waiting": "Nous attendons avec vous que quelqu'un soit en ligne …"
+			},
+			"staff": {
+				"headline": "Vous êtes connectée en tant que conseillère.",
+				"text": "Ce lien vous déconnecterait ici et vous ne seriez plus en ligne. Pour le tester, ouvrez-le dans une fenêtre privée."
 			}
 		}
 	},
-	"inviteLink": {
-		"resume": {
-			"title": "Connexion interrompue",
-			"message": "Votre session n’a pas pu être chargée. Veuillez réessayer.",
-			"retry": "Réessayer"
+	"calls": {
+		"answer": "Répondre",
+		"reject": "Refuser",
+		"decline": "Refuser",
+		"endCall": "Raccrocher",
+		"fullscreen": "Plein écran",
+		"mute": "Couper le micro",
+		"unmute": "Activer le micro",
+		"turnOnVideo": "Activer la vidéo",
+		"turnOffVideo": "Désactiver la vidéo",
+		"moreOptions": "Autres options",
+		"close": "Fermer l'appel",
+		"title": "Appel",
+		"videoCall": "Appel vidéo",
+		"audioCall": "Appel audio",
+		"autoFit": "Ajuster automatiquement",
+		"autoFitAria": "Ajuster la vidéo à la fenêtre",
+		"resizeAria": "Redimensionner la fenêtre d'appel ({{edge}})",
+		"widget": {
+			"autoFit": "Ajuster la vidéo",
+			"autoFitAria": "Ajuster la vidéo à la fenêtre",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}",
+			"answerFailed": "Impossible de répondre : {{message}}"
+		},
+		"group": {
+			"incomingTitle": "Appel entrant",
+			"incomingDescription": "Quelqu'un vous appelle…",
+			"close": "Fermer l'appel",
+			"autoFit": "Ajuster automatiquement",
+			"autoFitAria": "Ajuster la fenêtre d'appel",
+			"openFullView": "Ouvrir la vue complète",
+			"switchToSmallView": "Passer à la petite vue",
+			"exitFullScreen": "Quitter le plein écran",
+			"enterFullScreen": "Passer en plein écran",
+			"fullView": "Vue complète",
+			"smallView": "Petite vue",
+			"fullScreen": "Plein écran",
+			"iframeTitle": "Appel vidéo de groupe",
+			"connecting": "Connexion…",
+			"settingUp": "Préparation de l'appel",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}"
+		},
+		"video": {
+			"noRoomTitle": "Aucun identifiant de salle",
+			"noRoomDescription": "Impossible de démarrer un appel sans identifiant de salle.",
+			"goBack": "Retour"
+		},
+		"error": {
+			"noRoom": "Impossible de démarrer l'appel : aucune salle Matrix pour cette session.",
+			"httpsRequired": "L'accès à la caméra et au microphone nécessite HTTPS. Rediriger vers une connexion sécurisée ?",
+			"cannotAccess": "Impossible d'accéder à la caméra ou au microphone. ",
+			"grantPermissions": "Veuillez autoriser l'accès dans les paramètres du navigateur.",
+			"noDevice": "Aucune caméra ni microphone n'a été trouvé sur cet appareil.",
+			"browserUnsupported": "Votre navigateur ne prend pas en charge cette fonction. Veuillez utiliser HTTPS.",
+			"unknown": "Erreur inconnue.",
+			"callFailed": "L'appel a échoué : {{message}}",
+			"startFailed": "Impossible de démarrer l'appel : {{message}}",
+			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		}
+	},
+	"form": {
+		"dialog": {
+			"back": "Retour",
+			"confirm": "Compris",
+			"close": "Fermer"
+		},
+		"calendar": {
+			"cancel": "Annuler",
+			"ok": "OK",
+			"previousMonth": "Mois précédent",
+			"selectMonth": "Choisir le mois",
+			"nextMonth": "Mois suivant",
+			"previousYear": "Année précédente",
+			"selectYear": "Choisir l'année",
+			"nextYear": "Année suivante"
+		},
+		"datePicker": {
+			"openCalendar": "Ouvrir le calendrier"
+		},
+		"timePicker": {
+			"dialogTitle": "Choisir l'heure",
+			"cancel": "Annuler",
+			"ok": "OK",
+			"open": "Ouvrir le sélecteur d'heure",
+			"selectHours": "Choisir les heures",
+			"selectMinutes": "Choisir les minutes",
+			"hour": "Heure",
+			"minute": "Minute",
+			"am": "AM",
+			"pm": "PM",
+			"switchToText": "Passer à la saisie texte",
+			"switchToDial": "Passer au cadran"
+		},
+		"select": {
+			"search": "Rechercher"
 		}
 	},
 	"passwordChange": {
 		"required": {
-			"copy": "Votre accès a été créé par une administratrice ou un administrateur, qui a également défini votre premier mot de passe et le connaît toujours. Veuillez le remplacer maintenant par un mot de passe que vous seul connaissez. Vous configurerez ensuite votre deuxième facteur.",
-			"title": "Veuillez choisir votre propre mot de passe"
+			"copy": "Votre accès a été créé pour vous – quelqu’un d’autre connaît donc encore le premier mot de passe. Choisissez-en un maintenant que vous seul connaissez.",
+			"title": "Votre propre mot de passe"
 		}
 	},
 	"accountSetup": {
 		"required": {
-			"logout": "Se déconnecter"
+			"logout": "Se déconnecter à la place"
+		},
+		"progress": {
+			"label": "Configuration en deux étapes",
+			"password": "Mot de passe personnel",
+			"twoFactor": "Deuxième facteur",
+			"done": "terminé"
 		}
 	}
 }

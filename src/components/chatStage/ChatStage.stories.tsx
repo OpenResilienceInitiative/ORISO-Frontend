@@ -9,7 +9,10 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
+import {
+	ConsultantSessionStage,
+	MOUNT_SETTLE_MS
+} from './__storybook__/ConsultantSessionStage';
 import { PANEL_WIDTH_STORAGE_KEY, STAGE_LAYOUT } from './stageLayout';
 import { BOTTOM_TOLERANCE_PX } from '../messageSubmitInterface/timelineFollow';
 import {
@@ -2991,17 +2994,19 @@ export const NewMessagesFollowWhileWatching: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		const timeline = mainTimeline(canvasElement);
 		for (const body of ARRIVALS) {
 			await userEvent.click(deliverNext(canvasElement));
 			await canvas.findByText(body);
+			// The stage lands a frame after each arrival; delivering sooner
+			// measures the timeline mid-landing and reads "scrolled up".
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
 		}
-		const timeline = mainTimeline(canvasElement);
-		await waitFor(() =>
-			expect(
-				timeline.scrollHeight -
-					(timeline.scrollTop + timeline.clientHeight)
-			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
-		);
 		// Nothing waits below the fold, so the arrow stays the quiet one.
 		await expect(scrollArrow(canvasElement).className).not.toContain(
 			'composerToolbar__button--scrollToNewest--unread'
@@ -3025,6 +3030,9 @@ const waitForAutomaticCursor = async (canvasElement: HTMLElement) => {
 		expect(card.hasAttribute('data-auto-focused')).toBe(true);
 		expect(card.contains(document.activeElement)).toBe(true);
 	});
+	// The stage scrolls to the end once more after mount; landing after an
+	// arrival, that scroll moves a view the story expects to stay put.
+	await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 	const timeline = mainTimeline(canvasElement);
 	await waitFor(() =>
 		expect(
@@ -3136,6 +3144,9 @@ export const NewMessagesLightTheArrowWhileWriting: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
+		// See waitForAutomaticCursor: the stage's second mount scroll must
+		// not land after the arrival this story expects the view to ignore.
+		await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 		const editor = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .tiptap'
 		)!;

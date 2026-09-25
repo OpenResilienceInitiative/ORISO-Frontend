@@ -425,7 +425,7 @@ const supervisionRow = (
 		session: {
 			...runtimeSession.session,
 			id,
-			matrixRoomId: `!supervision-demo-${id}:oriso.org`,
+			matrixRoomId: `!supervision-demo-${id}:example.org`,
 			lastMessage: note,
 			messagesRead: true,
 			conversationType: 'AGENCY_COUNSELLING',

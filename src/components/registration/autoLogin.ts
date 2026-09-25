@@ -147,7 +147,8 @@ export const autoLogin = async ({
 		// client (that produced a second orphan sync loop that was never torn
 		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
-		stageLoginRecoveryPassword(matrixLoginData.userId, password);
+		// Awaited: the caller leaves this document right after autoLogin resolves.
+		await stageLoginRecoveryPassword(matrixLoginData.userId, password);
 	} catch (error) {
 		// Continue without Matrix login data - the app boots and shows the
 		// session list; chat features recover on the next successful login.
@@ -240,4 +241,15 @@ export const redirectToApp = (
 		return;
 	}
 	window.location.assign(path);
+};
+
+/**
+ * Leaves for the login page with a document load, like `redirectToApp` (#1402).
+ * For a registration that created the account but could not log it in: the
+ * account is real, so the form must not come back, and the handover screen has
+ * nothing left that would end it — logging in is the one step that can still
+ * work. The load also drops everything this document half-set on the way.
+ */
+export const redirectToLogin = () => {
+	window.location.assign(appConfig.urls.toLogin);
 };

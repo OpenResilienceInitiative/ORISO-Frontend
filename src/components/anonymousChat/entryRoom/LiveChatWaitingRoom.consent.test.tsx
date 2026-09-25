@@ -7,6 +7,10 @@ import { LiveChatWaitingRoom } from './LiveChatWaitingRoom';
 
 // `globals` is off in this project, so RTL never registers its own teardown.
 afterEach(() => cleanup());
+/* The legal links open a dialog, which pulls in the lottie player; jsdom has
+   no canvas for it. */
+vi.mock('lottie-web', () => ({ default: {} }));
+vi.mock('lottie-react', () => ({ default: () => null }));
 
 const CONSENT_HTML =
 	'Ich habe die <a href="https://oriso.example/datenschutz">Datenschutzerklärung</a> zur Kenntnis genommen.';
@@ -126,7 +130,9 @@ describe('LiveChatWaitingRoom — cancelling asks first (#1341)', () => {
 
 		pressTheCross();
 		fireEvent.click(
-			screen.getByRole('button', { name: /Chat jetzt starten/i })
+			screen.getByRole('button', {
+				name: /Chat jetzt starten|anonymousChat\.leaveQueue\.startChat/i
+			})
 		);
 
 		expect(onAccept).not.toHaveBeenCalled();
