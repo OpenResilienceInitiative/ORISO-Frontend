@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React, { PropsWithChildren } from 'react';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { ActiveSessionContext, E2EEContext } from '../../globalState';
 import { useDraftMessage } from './useDraftMessage';
@@ -140,6 +140,15 @@ describe('useDraftMessage', () => {
 	});
 
 	afterEach(() => {
+		/* Unmount every hook this test rendered. The unit project runs without
+		   Vitest globals, so Testing Library's automatic cleanup is never
+		   registered, and a hook left mounted keeps its draft effects, its
+		   logout listener and any save still in flight. Whatever of that
+		   settles after the last test lands on a torn-down jsdom — React's
+		   scheduler then throws `window is not defined`, and the job goes red
+		   with every test passing (#1522). Unmounting here, inside `act`,
+		   leaves nothing that can still schedule a render. */
+		cleanup();
 		vi.useRealTimers();
 	});
 
