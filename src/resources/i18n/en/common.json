@@ -3416,6 +3416,10 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"readOnly": {
+			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages."
 		}
 	},
 	"session": {
