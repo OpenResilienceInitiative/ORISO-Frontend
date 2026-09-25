@@ -31,6 +31,7 @@ import {
 	EMAIL_CONTENT,
 	EMAIL_LANGUAGE_LOCALES,
 	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_RELEASE,
 	EmailId,
 	EmailLocale
 } from '../index';
@@ -488,7 +489,7 @@ const run = async () => {
 		written += 2;
 	}
 
-	for (const { lang } of KEYCLOAK_LOCALES) {
+	for (const { lang, locale } of KEYCLOAK_LOCALES) {
 		const body = Object.entries(bundles[lang])
 			.map(([key, value]) => `${key}=${propertiesValue(value)}`)
 			.join('\n');
@@ -496,6 +497,7 @@ const run = async () => {
 			path.join(outDir, 'messages', `messages_${lang}.properties`),
 			`# Generated from the ORISO e-mail design system — do not edit by hand.\n` +
 				`# Run 'npm run emails:keycloak' in ORISO-Frontend after changing the copy.\n` +
+				`# Human language review: ${EMAIL_LOCALE_RELEASE[locale]}.\n` +
 				`${body}\n`,
 			'utf8'
 		);
@@ -506,6 +508,12 @@ const run = async () => {
 		path.join(outDir, 'theme.properties'),
 		'parent=base\n' +
 			'# Generated from the ORISO e-mail design system — do not edit by hand.\n' +
+			`locales=${KEYCLOAK_LOCALES.map(({ lang }) => lang).join(',')}\n` +
+			`# Human language review pending: ${KEYCLOAK_LOCALES.filter(
+				({ locale }) => EMAIL_LOCALE_RELEASE[locale] !== 'released'
+			)
+				.map(({ lang }) => lang)
+				.join(', ')}.\n` +
 			'# Brand defaults; an operator may override them in the image.\n' +
 			Object.entries(themeDefaults)
 				.map(([key, value]) => `${key}=${value}`)

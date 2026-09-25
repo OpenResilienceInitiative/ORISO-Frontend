@@ -27,6 +27,7 @@ import {
 	EMAIL_CONTENT,
 	EMAIL_LANGUAGE_LOCALES,
 	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_RELEASE,
 	EMAIL_SOURCE_LOCALE,
 	EmailId,
 	EmailLocale
@@ -434,7 +435,10 @@ Generated — do not edit by hand. Run \`npm run emails:mailservice\`.
 Mounted over the upstream Online-Beratung mail service's \`templates/\`
 directory; see ADR-020 for why an override rather than a fork.
 
-German is \`<name>.html\`, English \`<name>.en.html\`, matching upstream's layout.
+German is \`<name>.html\`; other languages use \`<name>.<lang>.html\`.
+
+Human language review status is carried with this standalone artifact:
+${EMAIL_LANGUAGE_LOCALES.map((locale) => `- \`${EMAIL_LOCALE_LANG[locale]}\`: ${EMAIL_LOCALE_RELEASE[locale]}`).join('\n')}
 
 ## The model contract
 

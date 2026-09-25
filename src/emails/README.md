@@ -42,14 +42,14 @@ mail that atom touches. That diff is the review surface.
 German is the source. Everything else is a derivative, and the rules that keep
 it from rotting are in **ADR-022**; the short version:
 
-| Variant             | Copy from            | Send-ready  |
-| ------------------- | -------------------- | ----------- |
-| `de-sie`            | source               | yes         |
-| `de-du`             | human (tone variant) | yes         |
-| `en`                | human                | yes         |
-| `fr` `ru` `ti` `tr` | machine              | **not yet** |
+| Variant             | Copy from            | Human language review |
+| ------------------- | -------------------- | --------------------- |
+| `de-sie`            | source               | yes                   |
+| `de-du`             | human (tone variant) | yes                   |
+| `en`                | human                | yes                   |
+| `fr` `ru` `ti` `tr` | machine              | **pending**           |
 
-- **Changing a German string costs five translations.** The manifest records
+- **Changing a German string costs six translations.** The manifest records
   what each translation was made from; the test suite recomputes it. A German
   edit without its translations turns the build red, and `emails:sync` refuses
   to re-stamp it (`--force` if the edit genuinely does not reach a language).

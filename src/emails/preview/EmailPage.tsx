@@ -120,10 +120,10 @@ export const emailPageArgTypes = {
 /**
  * Side-by-side of every language and tone, for copy review.
  *
- * The four machine-translated languages are marked, because this is the one
- * place they can be read at all — they produce no files under `dist/` until a
- * person has signed off what they claim. See `Email/Foundations →
- * Translations`.
+ * The four machine-translated languages are marked pending human review.
+ * They produce files under `dist/` now for technical testing; protected
+ * wording still needs a native speaker before production sign-off. See
+ * `Email/Foundations → Translations`.
  */
 export const EmailToneRow: React.FC<{
 	id: EmailId;
@@ -148,7 +148,7 @@ export const EmailToneRow: React.FC<{
 					{EMAIL_LOCALE_RELEASE[locale] === 'released' ? null : (
 						<span style={{ color: '#a5000a' }}>
 							{' '}
-							· not send-ready
+							· human review pending
 						</span>
 					)}
 				</div>

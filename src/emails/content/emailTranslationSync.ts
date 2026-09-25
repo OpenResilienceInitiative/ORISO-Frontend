@@ -225,7 +225,17 @@ export const emailReviewGaps = (
 	const index = emailProtectedStringIndex(content, ids);
 	return {
 		unsigned: [...index.entries()]
-			.filter(([fingerprint]) => !signatures[fingerprint])
+			.filter(([fingerprint, entry]) => {
+				const signature = signatures[fingerprint];
+				return !(
+					signature &&
+					signature.text === entry.value &&
+					typeof signature.reviewer === 'string' &&
+					signature.reviewer.trim().length > 0 &&
+					typeof signature.reviewedAt === 'string' &&
+					/^\d{4}-\d{2}-\d{2}$/.test(signature.reviewedAt)
+				);
+			})
 			.map(([, entry]) => entry),
 		orphaned: Object.entries(signatures)
 			.filter(([fingerprint]) => !index.has(fingerprint))

@@ -250,7 +250,8 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
 			{EMAIL_RELEASED_LOCALES.map((l) => EMAIL_LOCALE_LABELS[l]).join(
 				', '
 			)}{' '}
-			are send-ready; see <strong>Translations</strong>. Files ship as{' '}
+			are human reviewed; all variants have generated files. See{' '}
+			<strong>Translations</strong>. Files ship as{' '}
 			<code style={mono}>
 				emails/&lt;dialect&gt;/&lt;tone&gt;/&lt;id&gt;
 			</code>{' '}
@@ -280,7 +281,7 @@ export const EmailTranslationSheet: React.FC = () => (
 						'lang',
 						'dir',
 						'Copy from',
-						'Send-ready',
+						'Human reviewed',
 						'Unsigned claims'
 					].map((label) => (
 						<th
@@ -331,7 +332,7 @@ export const EmailTranslationSheet: React.FC = () => (
 										: '#a5000a'
 								}}
 							>
-								{released ? 'yes' : 'not yet'}
+								{released ? 'yes' : 'pending'}
 							</td>
 							<td style={{ ...tight, ...mono }}>
 								{unsigned === 0 ? '—' : unsigned}
@@ -343,10 +344,10 @@ export const EmailTranslationSheet: React.FC = () => (
 		</table>
 		<p style={{ color: emailColor.onSurfaceVariant, maxWidth: '72ch' }}>
 			A <code style={mono}>machine</code> variant renders here and in{' '}
-			<strong>Email/Pages</strong> so it can be read, but it produces no
-			files under <code style={mono}>dist/</code> and no sending service
-			may select it. It becomes send-ready when every claim it makes has a
-			signature in{' '}
+			<strong>Email/Pages</strong> and produces files under{' '}
+			<code style={mono}>dist/</code> for technical testing. Its legal,
+			encryption and anonymity wording remains pending human review before
+			production sign-off. Each protected claim needs a signature in{' '}
 			<code style={mono}>content/translationReview.json</code> — run{' '}
 			<code style={mono}>npm run emails:sync</code> to list what is
 			missing. See ADR-022.

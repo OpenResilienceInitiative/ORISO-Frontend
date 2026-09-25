@@ -276,6 +276,22 @@ describe('e-mail translations', () => {
 			).toHaveLength(1);
 		});
 
+		it('does not count a forged or incomplete ledger entry as a review', () => {
+			const [fingerprint, entry] = [
+				...emailProtectedStringIndex(EMAIL_CONTENT.fr, EMAIL_IDS)
+			][0];
+			const invalid = {
+				[fingerprint]: {
+					text: entry.value + ' changed',
+					reviewer: ' ',
+					reviewedAt: ''
+				}
+			};
+			expect(
+				emailReviewGaps(EMAIL_CONTENT.fr, EMAIL_IDS, invalid).unsigned
+			).toContainEqual(entry);
+		});
+
 		it.each([...EMAIL_TRANSLATED_LOCALES])(
 			'%s is only marked released if a person has read what it claims',
 			(locale) => {

@@ -44,22 +44,18 @@ const args = process.argv.slice(2);
 const check = args.includes('--check');
 const force = args.includes('--force');
 
-const readJson = async <T,>(file: string, fallback: T): Promise<T> => {
-	try {
-		return JSON.parse(await readFile(file, 'utf8')) as T;
-	} catch {
-		return fallback;
-	}
-};
+const readJson = async <T,>(file: string): Promise<T> =>
+	JSON.parse(await readFile(file, 'utf8')) as T;
 
 const run = async () => {
-	const previous = await readJson<EmailTranslationManifest>(manifestPath, {
-		source: EMAIL_SOURCE_LOCALE,
-		locales: {}
-	});
-	const review = await readJson<EmailTranslationReview>(reviewPath, {
-		locales: {}
-	});
+	const previous = await readJson<EmailTranslationManifest>(manifestPath);
+	const review = await readJson<EmailTranslationReview>(reviewPath);
+	if (previous.source !== EMAIL_SOURCE_LOCALE || !previous.locales) {
+		throw new Error('Translation manifest source or locales are invalid');
+	}
+	if (!review.locales) {
+		throw new Error('Translation review ledger is invalid');
+	}
 
 	const next: EmailTranslationManifest = {
 		source: EMAIL_SOURCE_LOCALE,
@@ -79,9 +75,14 @@ const run = async () => {
 				EMAIL_CONTENT[EMAIL_SOURCE_LOCALE][id]
 			);
 			const target = emailOccasionFingerprint(EMAIL_CONTENT[locale][id]);
-			const before = previous.locales[locale]?.occasions[id];
+			const before = previous.locales[locale]?.occasions?.[id];
 
 			if (!before) {
+				if (previous.locales[locale]) {
+					throw new Error(
+						`Translation manifest lost existing occasion ${locale}/${id}`
+					);
+				}
 				added.push(`${locale}/${id}`);
 				occasions[id] = { source, target };
 				continue;

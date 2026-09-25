@@ -12,11 +12,10 @@ import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
  * files UserService ships, or the next sync silently changes — or removes — the
  * invite mail.
  *
- * The fixtures are the UserService files verbatim, from
- * `feat/mail-footer-org-from-tenant` @ 8ca0d787 (the merge-order tip, which
- * contains #1233 and #1238) — the frame whose fine print (`{{assuranceBlock}}`)
- * and footer note (`{{footerNote}}`) UserService fills according to whether
- * the mail has an action.
+ * The three original fixtures are from UserService's
+ * `feat/mail-footer-org-from-tenant` @ 8ca0d787. The four new fixtures pin
+ * the proposed UserService #1290 sync. Each is reviewed as a separate file,
+ * so changing the renderer cannot silently change its published frame.
  */
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -40,20 +39,16 @@ describe('einladung-freitext', () => {
 	});
 
 	describe.each([...EMAIL_LOCALES])('%s', (locale) => {
-		it('keeps existing UserService HTML fixtures stable', () => {
-			if (['de-sie', 'de-du', 'en'].includes(locale)) {
-				expect(buildEmail('einladung-freitext', locale).html).toBe(
-					fixture(locale, 'html')
-				);
-			}
+		it('matches the committed UserService HTML fixture', () => {
+			expect(buildEmail('einladung-freitext', locale).html).toBe(
+				fixture(locale, 'html')
+			);
 		});
 
-		it('keeps existing UserService text fixtures stable', () => {
-			if (['de-sie', 'de-du', 'en'].includes(locale)) {
-				expect(buildEmail('einladung-freitext', locale).text).toBe(
-					fixture(locale, 'txt')
-				);
-			}
+		it('matches the committed UserService text fixture', () => {
+			expect(buildEmail('einladung-freitext', locale).text).toBe(
+				fixture(locale, 'txt')
+			);
 		});
 
 		// Frank, 2026-09-23: "X ist ein Angebot von Y" names the platform and

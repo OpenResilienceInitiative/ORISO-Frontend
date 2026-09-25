@@ -200,6 +200,30 @@ describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 );
 
 describe('Keycloak theme.properties', () => {
+	it('declares every generated language and the pending review state', () => {
+		const properties = readFileSync(
+			path.join(themeDir, 'theme.properties'),
+			'utf8'
+		);
+		expect(properties).toContain('locales=de,en,fr,ru,ti,tr');
+		expect(properties).toContain(
+			'Human language review pending: fr, ru, ti, tr'
+		);
+		for (const locale of ['fr', 'ru', 'ti', 'tr']) {
+			const messages = readFileSync(
+				path.join(
+					themeDir,
+					'messages',
+					`messages_${locale}.properties`
+				),
+				'utf8'
+			);
+			expect(messages).toContain(
+				'Human language review: pending-human-review'
+			);
+		}
+	});
+
 	it('takes the platform logo from ORISO_LOGO_URL with no default', () => {
 		const properties = readFileSync(
 			path.join(themeDir, 'theme.properties'),
