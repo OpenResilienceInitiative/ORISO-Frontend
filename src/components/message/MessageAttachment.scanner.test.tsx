@@ -54,7 +54,9 @@ const encryptedFile = {
 
 const encryptedAttachment = {
 	title: 'photo.png',
-	downloadUrl: '/_matrix/media/r0/download/hs/media-1',
+	// Encrypted media is located by encryptedFile.url; there is no plain URL.
+	downloadUrl: '',
+	mxcUrl: 'mxc://hs/media-1',
 	type: 'image',
 	mediaType: 'image/png',
 	size: 12,

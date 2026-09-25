@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Box, Button as MuiButton, Dialog, Fade } from '@mui/material';
 import { UserDataContext } from '../../globalState';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { Headline } from '../headline/Headline';
@@ -12,7 +13,12 @@ import {
 	ACCOUNT_SETUP_STEPS,
 	resolveAccountSetupStep
 } from './accountSetupStep';
+import {
+	AccountSetupHeader,
+	AccountSetupProgress
+} from './accountSetupDialogChrome';
 import './accountSetupGate.styles';
+import './twoFactorSetupDialog.styles';
 
 interface AccountSetupGateProps {
 	onLogout: () => void;
@@ -23,7 +29,8 @@ interface AccountSetupGateProps {
  *
  * An admin-provisioned account starts with a password its administrator chose, so two things are
  * owed: the user's own password, then a second factor. This replaces the routed app rather than
- * covering it.
+ * covering it. Both steps are the same non-dismissable dialog, so setup reads as one flow; the text
+ * underneath is what a screen reader reaches behind it.
  *
  * The password step reuses the profile's password change unchanged, including its logout — for
  * LOGIN_PASSWORD chat recovery that change rotates Matrix key-backup material, and routing around
@@ -54,7 +61,6 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					type="standard"
 					text={translate(`${copyKey}.required.copy`)}
 				/>
-				{isPasswordStep && <PasswordReset />}
 				<Button
 					buttonHandle={onLogout}
 					item={{
@@ -63,6 +69,45 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					}}
 				/>
 			</div>
+			{isPasswordStep && (
+				<Dialog
+					BackdropProps={{
+						className: 'twoFactorSetupDialog__backdrop'
+					}}
+					TransitionComponent={Fade}
+					TransitionProps={{ timeout: 180 }}
+					aria-describedby="account-setup-password-description"
+					aria-labelledby="account-setup-password-title"
+					className="twoFactorSetupDialog"
+					disableEscapeKeyDown
+					maxWidth={false}
+					open
+					PaperProps={{
+						className: 'twoFactorSetupDialog__paper'
+					}}
+				>
+					<AccountSetupProgress active="password" />
+					<AccountSetupHeader
+						descriptionId="account-setup-password-description"
+						icon="key"
+						subtitle={translate('passwordChange.required.copy')}
+						title={translate('passwordChange.required.title')}
+						titleId="account-setup-password-title"
+					/>
+					<Box className="twoFactorSetupDialog__body">
+						<PasswordReset hideIntro variant="dialog" />
+					</Box>
+					{/* The dialog is modal, so the logout underneath it is out of
+					    reach — and it is the same link as in the second step. */}
+					<MuiButton
+						className="twoFactorSetupDialog__logout"
+						onClick={onLogout}
+						variant="text"
+					>
+						{translate('accountSetup.required.logout')}
+					</MuiButton>
+				</Dialog>
+			)}
 			{!isPasswordStep && (
 				<TwoFactorSetupDialog
 					canClose={false}
@@ -71,10 +116,12 @@ export const AccountSetupGate = ({ onLogout }: AccountSetupGateProps) => {
 					email={userData?.email}
 					onClose={() => undefined}
 					onDisable={() => undefined}
+					onLogout={onLogout}
 					onSetupComplete={handleSetupComplete}
 					open
 					qrCode={userData?.twoFactorAuth?.qrCode}
 					secret={userData?.twoFactorAuth?.secret}
+					showAccountProgress
 				/>
 			)}
 		</div>

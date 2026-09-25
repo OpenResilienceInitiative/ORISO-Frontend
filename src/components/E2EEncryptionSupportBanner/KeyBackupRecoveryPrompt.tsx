@@ -1,7 +1,7 @@
 import { UserDataContext } from '../../globalState';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
-import { useCallback, useContext, useState, useSyncExternalStore } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
@@ -9,12 +9,11 @@ import {
 	recoverWithKey
 } from '../../services/matrixKeyBackupService';
 import {
-	getPendingRecoveryKey,
+	usePendingRecoveryKey,
 	savePendingRecoveryKey
 } from '../../services/pendingRecoveryKeyStore';
 import {
 	useRecoveryReminder,
-	subscribeRecoveryState,
 	isActionableRecoveryStatus,
 	useRecoveryRuntimeStatus,
 	useRecoveryRuntimeRevision,
@@ -52,14 +51,8 @@ export const KeyBackupRecoveryDialog = ({
 		} catch (recoverError) {
 			setError(
 				recoverError instanceof InvalidRecoveryKeyError
-					? translate(
-							'encryption.keyBackup.dialog.invalidKey',
-							'Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
-						)
-					: translate(
-							'encryption.keyBackup.dialog.error',
-							'Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
-						)
+					? translate('encryption.keyBackup.dialog.invalidKey')
+					: translate('encryption.keyBackup.dialog.error')
 			);
 		} finally {
 			setBusy(false);
@@ -70,10 +63,7 @@ export const KeyBackupRecoveryDialog = ({
 		<OrisoDialog
 			open
 			onClose={onClose}
-			title={translate(
-				'encryption.keyBackup.dialog.recoveryTitle',
-				'Schön, dass Sie wieder da sind'
-			)}
+			title={translate('encryption.keyBackup.dialog.recoveryTitle')}
 			icon={<RecoverySafeIcon />}
 			maxWidth="560px"
 			height="auto"
@@ -83,24 +73,15 @@ export const KeyBackupRecoveryDialog = ({
 				className="keyBackupDialog"
 				data-cy="key-backup-recovery-dialog"
 			>
+				<p>{translate('encryption.keyBackup.dialog.recoveryCopy')}</p>
 				<p>
 					{translate(
-						'encryption.keyBackup.dialog.recoveryCopy',
-						'Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.'
-					)}
-				</p>
-				<p>
-					{translate(
-						'encryption.keyBackup.dialog.recoveryInstruction',
-						'Geben Sie Ihren Ersatzschlüssel ein, um Ihre Nachrichten hier weiterzulesen.'
+						'encryption.keyBackup.dialog.recoveryInstruction'
 					)}
 				</p>
 				<label className="keyBackupDialog__field">
 					<span>
-						{translate(
-							'encryption.keyBackup.dialog.keyLabel',
-							'Ersatzschlüssel'
-						)}
+						{translate('encryption.keyBackup.dialog.keyLabel')}
 					</span>
 					<input
 						type="text"
@@ -123,10 +104,7 @@ export const KeyBackupRecoveryDialog = ({
 						onClick={onClose}
 						disabled={busy}
 					>
-						{translate(
-							'encryption.keyBackup.dialog.later',
-							'Später'
-						)}
+						{translate('encryption.keyBackup.dialog.later')}
 					</button>
 					<button
 						type="button"
@@ -135,13 +113,9 @@ export const KeyBackupRecoveryDialog = ({
 						disabled={!recoveryKey.trim() || busy}
 					>
 						{busy
-							? translate(
-									'encryption.keyBackup.dialog.restoring',
-									'Wird wiederhergestellt …'
-								)
+							? translate('encryption.keyBackup.dialog.restoring')
 							: translate(
-									'encryption.keyBackup.dialog.openVault',
-									'Tresor öffnen'
+									'encryption.keyBackup.dialog.openVault'
 								)}
 					</button>
 				</div>
@@ -178,11 +152,7 @@ export const KeyBackupRecoveryPrompt = () => {
 	const status = useRecoveryRuntimeStatus(userId);
 	const revision = useRecoveryRuntimeRevision(userId);
 	const eligible = useRecoveryReminder(userId);
-	const key = useSyncExternalStore(
-		subscribeRecoveryState,
-		() => (userId ? getPendingRecoveryKey(userId) : null),
-		() => null
-	);
+	const key = usePendingRecoveryKey(userId);
 	const [openedFor, setOpenedFor] = useState<string | null>(null);
 	/* Dismissal lives in component state on purpose: the notice comes back on
 	   every reload and every login until the history is readable, but it never
