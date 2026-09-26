@@ -44,6 +44,9 @@ dialect cannot disagree with what Storybook shows.
 | `einladung-freitext`     | admin      | `{{subject}}` `{{preheader}}` `{{bodyHtml}}` `{{ctaBlock}}` `{{assuranceBlock}}` `{{offeringName}}` `{{operatorName}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{footerNote}}`                                             |
 | `team-aenderung`         | consultant | `{{teamChangeStatement}}` `{{caseReference}}` `{{teamChangedAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                               |
 | `smtp-test`              | admin      | `{{smtpHost}}` `{{smtpFrom}}` `{{sentAt}}` `{{appUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                      |
+| `anruf-erinnerung`       | asker      | `{{callUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                                |
+| `anruf-einladung`        | asker      | `{{callUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                                |
+| `anruf-verpasst`         | asker      | `{{callUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                                |
 
 Brand placeholders (`platformName`, `primaryColor`, `accentColor`,
 `logoUrl`, `orgName`, `orgAddress`, `contactLine`) appear in every mail and
