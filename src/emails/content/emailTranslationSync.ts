@@ -2,7 +2,7 @@
  * How a translation is kept honest.
  *
  * German is the source. Every other variant is a derivative, and a derivative
- * rots silently: someone improves a German sentence, the five translations keep
+ * rots silently: someone improves a German sentence, the six translations keep
  * saying the old thing, and nothing anywhere goes red. This module is the part
  * that goes red.
  *
@@ -147,7 +147,7 @@ export const emailProtectedStrings = (
 /**
  * Every distinct protected string in a whole locale, keyed by fingerprint.
  *
- * Distinct by *value*: the encryption promise closes all 22 mails, and signing
+ * Distinct by *value*: the encryption promise closes the catalogue mails, and signing
  * it off once per language is the point of the exercise.
  */
 export const emailProtectedStringIndex = (
@@ -180,6 +180,15 @@ export interface EmailTranslationManifest {
 	source: EmailLocale;
 	locales: Record<string, EmailTranslationLocaleEntry>;
 }
+
+/** A new occasion has no baseline in any existing translation. */
+export const emailOccasionIsNew = (
+	manifest: EmailTranslationManifest,
+	id: string
+): boolean =>
+	Object.values(manifest.locales).every(
+		(locale) => !Object.prototype.hasOwnProperty.call(locale.occasions, id)
+	);
 
 /**
  * One signature in `translationReview.json`.
