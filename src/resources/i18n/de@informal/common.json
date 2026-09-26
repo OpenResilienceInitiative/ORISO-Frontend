@@ -381,6 +381,10 @@
 		"shareDialog": {
 			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"notMember": {
+			"headline": "Du bist nicht Teil dieses Gesprächskreises.",
+			"body": "Diesen Gesprächskreis öffnet nur die Moderation und wen sie dazuholt. Wenn du mitmoderieren sollst, bitte die Moderation, dich hinzuzufügen."
 		}
 	},
 	"help": {

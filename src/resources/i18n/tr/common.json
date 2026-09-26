@@ -1181,6 +1181,11 @@
 			"done": "Tamam",
 			"durationValue": "{{value}} sa",
 			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
+		},
+		"notMember": {
+			"headline": "Bu konuşma grubunun bir parçası değilsiniz.",
+			"body": "Bu grubu yalnızca moderatörler ve onların eklediği kişiler açabilir. Birlikte moderatörlük yapmanız gerekiyorsa moderatörden sizi eklemesini isteyin.",
+			"back": "Konuşmalarıma dön"
 		}
 	},
 	"help": {
