@@ -371,22 +371,22 @@ export const ti: Record<EmailId, EmailContent> = {
 	'avv-unterschrift': {
 		subject: 'ናይ ውዕል ሰነዳት ን{{tenantName}}',
 		preheader: 'ናይ ውዕል ሰነዳት ን{{tenantName}} ተዳልዮም ኣለዉ።',
-		headline: 'ናይ ውዕል ሰነዳት ንፊርማ ተዳልዮም ኣለዉ',
+		headline: 'ናይ ውዕል ሰነዳት ንምርግጋጽ ተዳልዮም ኣለዉ',
 		paragraphs: [
 			'ን{{tenantName}} ናይ ውዕል ሰነዳት ተዳልዮም ኣለዉ።',
-			'በጃኹም ነቶም ሰነዳት መርምሩዎም እሞ ብዲጂታል ፈርሙዎም።'
+			'በጃኹም ነቶም ሰነዳት መርምሩዎም እሞ ብዲጂታል ኣረጋግጹዎም።'
 		],
 		panel: [
 			{ label: 'ትካል', value: '{{tenantName}}' },
 			{ label: 'ዝቐረበሉ', value: '{{dpaProvidedAt}}' },
-			{ label: 'ክሳብ ዝፍረም', value: '{{dpaExpiresAt}}' }
+			{ label: 'ክሳብ ዝረጋገጽ', value: '{{dpaExpiresAt}}' }
 		],
 		cta: {
 			label: 'ውዕል ክፈቱ',
 			href: '{{dpaUrl}}',
 			fallbackHint: 'እታ መጠወቒ እንተዘይሰሪሓ፣ ነዚ መላግቦ ናብ መርበብ መርኣዪኹም ቅድሑዎ፦'
 		},
-		footnote: 'ብዘይ ዝተፈረሙ ናይ ውዕል ሰነዳት፣ ነዚ ትካል ምኽሪ ተዓጽዩ ይጸንሕ።',
+		footnote: 'ብዘይ ምርግጋጽ ናይ ውዕል ሰነዳት፣ ነዚ ትካል ምኽሪ ተዓጽዩ ይጸንሕ።',
 		assurance: legalAssurance,
 		footer: {
 			...legalFooter,

@@ -1,18 +1,18 @@
-Les documents contractuels sont prêts à être signés
-===================================================
+Les documents contractuels sont prêts à être confirmés
+======================================================
 
 Des documents contractuels ont été préparés pour {{tenantName}}.
 
-Veuillez vérifier les documents et les signer numériquement.
+Veuillez vérifier les documents et les confirmer en ligne.
 
 Organisme: {{tenantName}}
 Mis à disposition le: {{dpaProvidedAt}}
-À signer avant le: {{dpaExpiresAt}}
+À confirmer avant le: {{dpaExpiresAt}}
 
 Ouvrir le contrat:
 {{dpaUrl}}
 
-Sans documents contractuels signés, le service de conseil restera bloqué pour cet organisme.
+Sans confirmation des documents contractuels, le service de conseil restera bloqué pour cet organisme.
 
 ----------------------------------------------------------------
 Cet e-mail fait partie de la relation contractuelle entre {{orgName}} et {{tenantNameDative}}.
