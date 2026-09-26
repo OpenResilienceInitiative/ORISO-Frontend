@@ -52,7 +52,9 @@ it from rotting are in **ADR-022**; the short version:
 - **Changing a German string costs six translations.** The manifest records
   what each translation was made from; the test suite recomputes it. A German
   edit without its translations turns the build red, and `emails:sync` refuses
-  to re-stamp it (`--force` if the edit genuinely does not reach a language).
+  to re-stamp it (`--force=locale/occasion` for a reviewed exception that genuinely
+  does not reach that translation). A genuinely new locale needs an explicit
+  `--new-locale=locale`; a missing existing locale fails instead of being re-stamped.
 - **Every variant produces files now.** The catalogue, generated Keycloak theme and MailService template README mark French, Russian, Tigrinya and Turkish as pending human language review. The later review does not block generation. Production delivery of pending variants requires a separate release decision.
 - **A claim is:** the encryption promise (`assurance`, on every mail), the two
   privacy paragraphs, and the DPA mail in full. The list is

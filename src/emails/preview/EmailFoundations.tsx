@@ -265,10 +265,8 @@ export const EmailCatalogueSheet: React.FC<{ locale?: EmailLocale }> = ({
  * Which languages exist, where their copy came from, and what still stands
  * between a machine translation and a send.
  *
- * The unsigned count is the number of distinct strings that state something
- * about the platform — the encryption promise, the privacy wording, the DPA
- * mail — which nobody who reads that language has confirmed yet. It is the
- * whole gate, in one column.
+ * The review gap column includes unsigned claims and signatures for wording
+ * that has since changed. Either gap blocks human release.
  */
 export const EmailTranslationSheet: React.FC = () => (
 	<div style={{ ...shell, overflowX: 'auto' }}>
@@ -282,7 +280,7 @@ export const EmailTranslationSheet: React.FC = () => (
 						'dir',
 						'Copy from',
 						'Human reviewed',
-						'Unsigned claims'
+						'Review gaps (unsigned / stale)'
 					].map((label) => (
 						<th
 							key={label}
@@ -297,7 +295,7 @@ export const EmailTranslationSheet: React.FC = () => (
 				{EMAIL_LOCALES.map((locale) => {
 					const released =
 						EMAIL_LOCALE_RELEASE[locale] === 'released';
-					const unsigned =
+					const gaps =
 						EMAIL_LOCALE_PROVENANCE[locale] === 'machine'
 							? emailReviewGaps(
 									EMAIL_CONTENT[locale],
@@ -308,8 +306,8 @@ export const EmailTranslationSheet: React.FC = () => (
 											Record<string, never>
 										>
 									)[locale] ?? {}
-								).unsigned.length
-							: 0;
+								)
+							: null;
 					const tight = { ...td, whiteSpace: 'nowrap' as const };
 					return (
 						<tr key={locale}>
@@ -335,7 +333,10 @@ export const EmailTranslationSheet: React.FC = () => (
 								{released ? 'yes' : 'pending'}
 							</td>
 							<td style={{ ...tight, ...mono }}>
-								{unsigned === 0 ? '—' : unsigned}
+								{gaps &&
+								gaps.unsigned.length + gaps.orphaned.length > 0
+									? `${gaps.unsigned.length} / ${gaps.orphaned.length}`
+									: '—'}
 							</td>
 						</tr>
 					);

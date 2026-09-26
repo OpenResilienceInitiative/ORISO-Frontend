@@ -55,6 +55,7 @@ import {
 	keycloakLinkProperties,
 	keycloakLogoProperty
 } from '../kit/keycloakThemeLinks';
+import { assertKeycloakMessageParity } from './keycloakMessageParity';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist/keycloak/email');
@@ -414,6 +415,11 @@ const run = async () => {
 		// The skeleton is language-independent: the copy is looked up at render
 		// time, so one file serves every locale Keycloak knows.
 		const KEYS = keysFor(template.name, template.subjectKey);
+		const sourceMessages = messages(
+			EMAIL_CONTENT['de-sie'][template.id],
+			KEYS,
+			template.dropCta === true
+		);
 		const skeleton = keyed(
 			EMAIL_CONTENT['de-sie'][template.id],
 			KEYS,
@@ -431,6 +437,12 @@ const run = async () => {
 				EMAIL_CONTENT[locale][template.id],
 				KEYS,
 				template.dropCta === true
+			);
+			assertKeycloakMessageParity(
+				sourceMessages,
+				raw,
+				locale,
+				template.id
 			);
 			const converted: Record<string, string> = {};
 			for (const [key, value] of Object.entries(raw)) {
