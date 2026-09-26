@@ -21,6 +21,7 @@ import {
 	EmailTranslationManifest,
 	EmailTranslationReview,
 	emailFingerprint,
+	emailOccasionIsNew,
 	emailOccasionFingerprint,
 	emailProtectedStringIndex,
 	emailReviewGaps,
@@ -178,6 +179,17 @@ describe('e-mail translations', () => {
 	});
 
 	describe('the manifest', () => {
+		it('accepts a new occasion across locales but refuses a lost existing baseline', () => {
+			expect(emailOccasionIsNew(typedManifest, 'new-occasion')).toBe(
+				true
+			);
+			expect(emailOccasionIsNew(typedManifest, EMAIL_IDS[0])).toBe(false);
+
+			const missingOne = structuredClone(typedManifest);
+			delete missingOne.locales.fr.occasions[EMAIL_IDS[0]];
+			expect(emailOccasionIsNew(missingOne, EMAIL_IDS[0])).toBe(false);
+		});
+
 		it('covers every translated locale', () => {
 			expect(Object.keys(typedManifest.locales).sort()).toEqual(
 				[...EMAIL_TRANSLATED_LOCALES].sort()
