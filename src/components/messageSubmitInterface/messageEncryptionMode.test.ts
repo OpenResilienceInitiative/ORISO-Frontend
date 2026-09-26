@@ -4,6 +4,7 @@ import {
 	dispatchAskerMessageTransport,
 	isAskerEnquirySubmission,
 	resolveAskerMessageTransport,
+	resolveEnquiryMatrixRoom,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
@@ -312,4 +313,96 @@ it('signals reminder eligibility only after backend finalization, including a su
 	await sendEncryptedInitialEnquiry(input);
 	expect(finalized).toHaveBeenCalledOnce();
 	expect(send).toHaveBeenCalledOnce();
+});
+
+describe('resolveEnquiryMatrixRoom (#1401)', () => {
+	const noSleep = async () => undefined;
+
+	it('sends straight away when the known room is already encrypted', async () => {
+		const fetchSessionRoomId = vi.fn();
+		const result = await resolveEnquiryMatrixRoom({
+			knownRoomId: '!known:oriso',
+			fetchSessionRoomId,
+			isRoomEncrypted: () => true,
+			sleep: noSleep
+		});
+		expect(result).toEqual({ status: 'ready', roomId: '!known:oriso' });
+		expect(fetchSessionRoomId).not.toHaveBeenCalled();
+	});
+
+	it('re-reads the session when the list did not know the holding room yet', async () => {
+		const fetchSessionRoomId = vi.fn().mockResolvedValue('!late:oriso');
+		const result = await resolveEnquiryMatrixRoom({
+			knownRoomId: null,
+			fetchSessionRoomId,
+			isRoomEncrypted: (roomId) => roomId === '!late:oriso',
+			sleep: noSleep
+		});
+		expect(result).toEqual({ status: 'ready', roomId: '!late:oriso' });
+		expect(fetchSessionRoomId).toHaveBeenCalledTimes(1);
+	});
+
+	it('names the missing room when the session has none even after re-reading', async () => {
+		const isRoomEncrypted = vi.fn();
+		const result = await resolveEnquiryMatrixRoom({
+			knownRoomId: undefined,
+			fetchSessionRoomId: async () => null,
+			isRoomEncrypted,
+			sleep: noSleep
+		});
+		expect(result).toEqual({ status: 'room-missing' });
+		expect(isRoomEncrypted).not.toHaveBeenCalled();
+	});
+
+	it('treats a failed session re-read as a missing room instead of throwing', async () => {
+		const result = await resolveEnquiryMatrixRoom({
+			knownRoomId: '',
+			fetchSessionRoomId: async () => {
+				throw new Error('network');
+			},
+			isRoomEncrypted: () => true,
+			sleep: noSleep
+		});
+		expect(result).toEqual({ status: 'room-missing' });
+	});
+
+	it('waits for /sync to deliver the encrypted room before sending', async () => {
+		let polls = 0;
+		let clock = 0;
+		const sleep = vi.fn(async (ms: number) => {
+			clock += ms;
+		});
+		const result = await resolveEnquiryMatrixRoom({
+			knownRoomId: '!room:oriso',
+			fetchSessionRoomId: async () => null,
+			isRoomEncrypted: () => ++polls >= 3,
+			waitMs: 8000,
+			pollIntervalMs: 250,
+			sleep,
+			now: () => clock
+		});
+		expect(result).toEqual({ status: 'ready', roomId: '!room:oriso' });
+		expect(sleep).toHaveBeenCalledTimes(2);
+	});
+
+	it('gives up with the room named once the wait bound is exhausted', async () => {
+		let clock = 0;
+		const sleep = async (ms: number) => {
+			clock += ms;
+		};
+		const result = await resolveEnquiryMatrixRoom({
+			knownRoomId: '!room:oriso',
+			fetchSessionRoomId: async () => null,
+			isRoomEncrypted: () => false,
+			waitMs: 1000,
+			pollIntervalMs: 250,
+			sleep,
+			now: () => clock
+		});
+		expect(result).toEqual({
+			status: 'room-not-encrypted',
+			roomId: '!room:oriso'
+		});
+		expect(clock).toBe(1000);
+	});
 });

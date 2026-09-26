@@ -3852,6 +3852,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Your request cannot be sent yet",
+			"text": "The encrypted chat for this counselling centre has not been set up yet. Your text stays in this field – please try again later or contact the counselling centre directly."
+		},
 		"error": {
 			"headline": "An error occurred while sending the message",
 			"text": "A problem has occurred, please try again"

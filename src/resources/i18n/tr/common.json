@@ -3886,6 +3886,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Talebiniz henüz gönderilemiyor",
+			"text": "Bu danışma merkezi için şifreli sohbet henüz kurulmadı. Metniniz bu alanda kalır – lütfen daha sonra tekrar deneyin veya doğrudan danışma merkeziyle iletişime geçin."
+		},
 		"error": {
 			"headline": "Mesaj gönderilirken bir hata oluştu",
 			"text": "Bir sorun oluştu, lütfen tekrar deneyin"

@@ -181,3 +181,73 @@ export const createEnquirySubmissionGuard = (): EnquirySubmissionGuard => {
 		}
 	};
 };
+
+export type EnquiryMatrixRoomResolution =
+	| { status: 'ready'; roomId: string }
+	| { status: 'room-missing' }
+	| { status: 'room-not-encrypted'; roomId: string };
+
+interface EnquiryMatrixRoomResolutionInput {
+	/** The room id the session list already knows, if any. */
+	knownRoomId?: string | null;
+	/**
+	 * Re-reads the session from UserService. Registration provisions the
+	 * agency holding room synchronously, but the session list may have been
+	 * fetched before that write landed — and on a fresh deployment the room
+	 * can be missing altogether (ORISO-Frontend#1401).
+	 */
+	fetchSessionRoomId: () => Promise<string | null | undefined>;
+	/** Whether the Matrix client already holds the room with its encryption state. */
+	isRoomEncrypted: (roomId: string) => boolean;
+	/** Upper bound for waiting on /sync to deliver the room. */
+	waitMs?: number;
+	pollIntervalMs?: number;
+	sleep?: (ms: number) => Promise<void>;
+	now?: () => number;
+}
+
+const defaultSleep = (ms: number) =>
+	new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * ORISO-Frontend#1401: an initial enquiry can only be sent into an encrypted
+ * Matrix room, and the room is created by UserService at registration. When
+ * the session shows no room, the old code failed instantly with the generic
+ * "error while sending" box and every retry hit the same wall. This resolves
+ * the room in three steps — trust the known id, otherwise re-read the
+ * session, then give /sync a bounded window to deliver the encrypted room —
+ * and names the reason when it still cannot send, so the UI can say what is
+ * wrong instead of asking for a pointless retry.
+ */
+export const resolveEnquiryMatrixRoom = async ({
+	knownRoomId,
+	fetchSessionRoomId,
+	isRoomEncrypted,
+	waitMs = 8000,
+	pollIntervalMs = 250,
+	sleep = defaultSleep,
+	now = () => Date.now()
+}: EnquiryMatrixRoomResolutionInput): Promise<EnquiryMatrixRoomResolution> => {
+	let roomId = knownRoomId || null;
+	if (!roomId) {
+		try {
+			roomId = (await fetchSessionRoomId()) || null;
+		} catch {
+			roomId = null;
+		}
+	}
+	if (!roomId) {
+		return { status: 'room-missing' };
+	}
+
+	const startedAt = now();
+	while (true) {
+		if (isRoomEncrypted(roomId)) {
+			return { status: 'ready', roomId };
+		}
+		if (now() - startedAt >= waitMs) {
+			return { status: 'room-not-encrypted', roomId };
+		}
+		await sleep(pollIntervalMs);
+	}
+};
