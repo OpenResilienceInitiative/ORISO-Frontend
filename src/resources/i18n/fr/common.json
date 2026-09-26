@@ -3450,6 +3450,11 @@
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",
 			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
+		},
+		"readOnly": {
+			"notice": "Accès en lecture seule : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
+			"noticeUntil": "Accès en lecture seule jusqu'au {{until}} : vous pouvez suivre cette conversation, mais pas envoyer de messages.",
+			"extend": "Prolonger l'accès"
 		}
 	},
 	"session": {
