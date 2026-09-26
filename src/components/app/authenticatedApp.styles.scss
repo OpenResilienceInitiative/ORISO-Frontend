@@ -288,6 +288,18 @@ a {
 						var(--pane-gap) - var(--pane-inner-gutter)
 					);
 				}
+
+				// The create/edit-chat card sits in the same frame as the
+				// chat card: 24px top/right/bottom (Frank 2026-09-21). Its
+				// own `height: 100%` would push the margin off-screen.
+				.conversationCreate {
+					height: auto;
+					min-height: 0;
+					margin: var(--session-card-margin, 24px);
+					margin-left: calc(
+						var(--pane-gap) - var(--pane-inner-gutter)
+					);
+				}
 			}
 
 			&--smallInactive {

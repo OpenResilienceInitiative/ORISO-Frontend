@@ -424,6 +424,11 @@
 
 .filterChipRow--dense .sessionsListToolbar__chipsRow {
 	gap: 4px;
+
+	/* The 48px row height is for icon pills; 28px text pills sat centred in
+	   it with 10px of dead space above (Frank 2026-09-21). */
+	min-height: 28px;
+	padding: 2px 0;
 }
 
 .filterChipRow--dense .sessionsListToolbar__chip--text {
