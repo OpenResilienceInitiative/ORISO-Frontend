@@ -2099,6 +2099,14 @@
 			"teamDiscussionNew": {
 				"title": "Ekip görüşmesi",
 				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			},
+			"firstResponseReceived": {
+				"title": "İlk adımlarınız",
+				"text": "Size sohbette en önemli bilgileri yazdık."
+			},
+			"conversationFinished": {
+				"title": "Sohbet sona erdi",
+				"text": "Anonim sohbet sona erdi."
 			}
 		},
 		"error": "Başarısız",

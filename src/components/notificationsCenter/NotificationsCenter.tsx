@@ -91,6 +91,12 @@ import { ConversationPreview } from './ConversationPreview';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
+	isTimelineDraftId,
+	mergeDraftsIntoFeed,
+	toNonEmbeddedPath
+} from './timelineDrafts';
+import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import {
 	formatAbsoluteTime,
 	formatClockParts,
 	formatRelativeTime
@@ -232,17 +238,6 @@ const parseNumericId = (value?: string | null): number | null => {
 	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
-const toNonEmbeddedPath = (path?: string | null): string | null => {
-	if (!path) {
-		return null;
-	}
-	const [basePath, queryString = ''] = String(path).split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
-
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -256,9 +251,9 @@ export const NotificationsCenter = () => {
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
 	const {
-		notificationFeed,
+		notificationFeed: serverFeed,
 		hasUnreadNotifications,
-		markNotificationAsRead,
+		markNotificationAsRead: markServerNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
 		loadOlderNotifications,
@@ -266,6 +261,18 @@ export const NotificationsCenter = () => {
 		isLoadingOlderNotifications,
 		olderNotificationsError
 	} = useContext(NotificationsContext);
+	// #1535: unsent drafts join the list here only, not the provider feed.
+	const timelineDrafts = useTimelineDrafts();
+	const notificationFeed = useMemo(
+		() => mergeDraftsIntoFeed(serverFeed, timelineDrafts),
+		[serverFeed, timelineDrafts]
+	);
+	const markNotificationAsRead = useCallback(
+		(id: string) => {
+			if (!isTimelineDraftId(id)) markServerNotificationAsRead(id);
+		},
+		[markServerNotificationAsRead]
+	);
 	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
 	const {
 		effective: timelineFilter,

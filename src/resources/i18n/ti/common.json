@@ -2099,6 +2099,14 @@
 			"teamDiscussionNew": {
 				"title": "ናይ ጋንታ ምይይጥ",
 				"text": "{{senderDisplayName}} ኣብ ናይ ጋንታ ምይይጥ ጽሒፉ"
+			},
+			"firstResponseReceived": {
+				"title": "ቀዳሞት ስጉምትኹም",
+				"text": "ኣብቲ ቻት እቲ ኣገዳሲ ሓበሬታ ጽሒፍናልኩም ኣለና።"
+			},
+			"conversationFinished": {
+				"title": "ቻት ተዛዚሙ",
+				"text": "እቲ ካብ ስሙ ዘይተፈልጠ ቻት ተዛዚሙ።"
 			}
 		},
 		"error": "ወዲቑ",
