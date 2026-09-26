@@ -1,0 +1,25 @@
+Giriş bağlantınız
+=================
+
+Bu bağlantıyla şifresiz giriş yaparsınız.
+
+Bağlantı {{expiryMinutes}} dakika geçerlidir ve tam olarak bir kez çalışır.
+
+Şimdi giriş yap:
+{{loginUrl}}
+
+Giriş yapmak istemediyseniz bu e-postayı dikkate almayın. Bağlantı olmadan hiçbir şey olmaz.
+
+----------------------------------------------------------------
+Şifrenizi hiçbir zaman e-postayla sormayız. Bu bağlantıyı kimseyle paylaşmayın.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+
+Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.

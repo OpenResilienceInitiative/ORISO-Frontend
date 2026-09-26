@@ -122,7 +122,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail einfach. Ihr Passwort bleibt dann unverändert.',
 		assurance,
-		footer
+		footer: securityFooter
 	},
 
 	'termin': {
@@ -152,11 +152,10 @@ export const deSie: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'So erreichen Sie Ihre Beratung',
-		preheader: 'Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick.',
+		preheader: 'Kontaktdaten Ihrer Beratung auf einen Blick.',
 		headline: 'So erreichen Sie Ihre Beratung',
 		paragraphs: [
-			'Neben dem geschützten Chat können Sie Ihre Beratung auch telefonisch erreichen oder direkt einen Termin buchen.',
-			'Ihr Zugang bleibt dabei anonym – Sie entscheiden, was Sie erzählen.'
+			'Sie haben die Kontaktdaten Ihrer Beratung angefordert. Die verfügbaren Kontaktwege finden Sie unten.'
 		],
 		panel: [
 			{ label: 'Beratung', value: '{{consultantName}}' },
@@ -164,13 +163,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 			{ label: 'Sprechzeiten', value: '{{consultantHours}}' },
 			{ label: 'E-Mail', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Termin buchen', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Zum geschützten Chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Außerhalb der Sprechzeiten schreiben Sie am besten im Chat. Wir melden uns innerhalb von 2 Werktagen.',
+		cta: { label: 'Zum geschützten Chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -493,6 +486,10 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail informiert Sie über eine Änderung Ihrer E-Mail-Adresse und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	}
 };

@@ -267,7 +267,8 @@
 		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
 		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts",
 		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts",
-		"test:enquiry-team": "cross-env REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001 REACT_APP_KEYCLOAK_REALM=online-beratung REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test CYPRESS_WS_URL=http://127.0.0.1:9002 concurrently --names server,test --kill-others --success command-test \"npm run cypress:start-cra\" \"wait-on --timeout 300000 http://127.0.0.1:9001 && cypress run --browser chrome --spec cypress/e2e/enquiry-team-panel.cy.ts --config retries=0,defaultCommandTimeout=10000,baseUrl=http://127.0.0.1:9001 --env REACT_APP_API_URL=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_REALM=online-beratung,REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test\""
+		"test:enquiry-team": "cross-env REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001 REACT_APP_KEYCLOAK_REALM=online-beratung REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test CYPRESS_WS_URL=http://127.0.0.1:9002 concurrently --names server,test --kill-others --success command-test \"npm run cypress:start-cra\" \"wait-on --timeout 300000 http://127.0.0.1:9001 && cypress run --browser chrome --spec cypress/e2e/enquiry-team-panel.cy.ts --config retries=0,defaultCommandTimeout=10000,baseUrl=http://127.0.0.1:9001 --env REACT_APP_API_URL=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_REALM=online-beratung,REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test\"",
+		"emails:sync": "vite-node src/emails/scripts/syncEmailTranslations.mts"
 	},
 	"eslintConfig": {
 		"extends": [

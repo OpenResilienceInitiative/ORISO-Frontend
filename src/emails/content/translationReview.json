@@ -1,0 +1,32 @@
+{
+	"$howToSign": [
+		"The ledger of human sign-offs on machine-translated copy that states something",
+		"rather than describes something — the encryption promise, the privacy",
+		"explanation, and the DPA mail. emailProtectedPaths in emailCatalogue.ts is",
+		"the list; this file is who has read it.",
+		"",
+		"To sign a string off:",
+		"  1. npm run emails:sync   — it prints every unsigned protected string",
+		"  2. read the string in the language you speak, in Storybook under Email/Pages",
+		"  3. add an entry under the locale, keyed by the fingerprint the script printed:",
+		"       \"<fingerprint>\": {",
+		"         \"text\": \"<the string, verbatim>\",",
+		"         \"reviewer\": \"<name>\",",
+		"         \"reviewedAt\": \"<YYYY-MM-DD>\"",
+		"       }",
+		"",
+		"A signature is bound to the exact wording it was given for. Edit the sentence",
+		"and the fingerprint changes, the signature stops matching, and the string",
+		"counts as unsigned again. That is deliberate: a sign-off is on words, not on a",
+		"slot.",
+		"",
+		"A locale stays 'pending-human-review' in EMAIL_LOCALE_RELEASE until its map",
+		"here is complete. Flipping it to 'released' before that fails the build."
+	],
+	"locales": {
+		"fr": {},
+		"ru": {},
+		"ti": {},
+		"tr": {}
+	}
+}
