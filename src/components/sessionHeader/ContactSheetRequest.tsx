@@ -42,6 +42,11 @@ export const ContactSheetRequest = ({
 					? t('contactSheet.sending')
 					: t('contactSheet.request')}
 			</button>
+			{pending && (
+				<span className="sr-only" role="status">
+					{t('contactSheet.sending')}
+				</span>
+			)}
 			{recipient ? (
 				<small>
 					{t('contactSheet.recipient', { email: recipient })}

@@ -1232,6 +1232,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				) &&
 				activeSession.item.agencyId && (
 					<ContactSheetRequest
+						key={activeSession.item.id}
 						sessionId={activeSession.item.id}
 						email={userData.email}
 					/>

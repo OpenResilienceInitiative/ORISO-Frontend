@@ -43,12 +43,41 @@ describe('contact-sheet request', () => {
 		expect(apiRequestContactSheetEmail).not.toHaveBeenCalled();
 
 		fireEvent.click(screen.getByRole('button'));
-		await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+		await waitFor(() =>
+			expect(screen.getByRole('status').textContent).toContain(
+				'contactSheet.sent'
+			)
+		);
 		expect(apiRequestContactSheetEmail).toHaveBeenCalledExactlyOnceWith(42);
 
 		fireEvent.click(screen.getByRole('button'));
 		await waitFor(() =>
 			expect(apiRequestContactSheetEmail).toHaveBeenCalledTimes(2)
+		);
+	});
+
+	it('announces a pending request before delivery finishes', async () => {
+		let complete = () => undefined;
+		vi.mocked(apiRequestContactSheetEmail).mockReturnValue(
+			new Promise<void>((resolve) => {
+				complete = resolve;
+			})
+		);
+		render(
+			<ContactSheetRequest sessionId={42} email="seeker@example.org" />
+		);
+
+		fireEvent.click(screen.getByRole('button'));
+		expect(screen.getByRole('status').textContent).toBe(
+			'contactSheet.sending'
+		);
+		expect(screen.getByRole('button')).toHaveProperty('disabled', true);
+
+		complete();
+		await waitFor(() =>
+			expect(screen.getByRole('status').textContent).toContain(
+				'contactSheet.sent'
+			)
 		);
 	});
 
