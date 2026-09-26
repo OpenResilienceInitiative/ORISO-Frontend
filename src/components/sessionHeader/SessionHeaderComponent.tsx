@@ -37,7 +37,6 @@ import {
 	TopicSessionInterface
 } from '../../globalState/interfaces';
 import {
-	STATUS_EMPTY,
 	STATUS_ENQUIRY,
 	STATUS_ACTIVE
 } from '../../globalState/interfaces/SessionsDataInterface';
@@ -1228,7 +1227,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				!isConsultantUser &&
 				activeSession.isSession &&
 				!isChatFinished &&
-				[STATUS_EMPTY, STATUS_ENQUIRY, STATUS_ACTIVE].includes(
+				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
 					activeSession.item.status
 				) &&
 				activeSession.item.agencyId && (
