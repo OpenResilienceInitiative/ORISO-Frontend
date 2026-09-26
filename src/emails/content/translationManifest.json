@@ -413,7 +413,7 @@
 				},
 				"selbsthilfe-termin-bestaetigt-teilnahme": {
 					"source": "fc6f38bbd9b41df7",
-					"target": "982a442fdf2acd83"
+					"target": "ec5d73cf1d47cce3"
 				},
 				"selbsthilfe-termin-verschoben-teilnahme": {
 					"source": "f29ce3cc82b473b8",
@@ -429,7 +429,7 @@
 				},
 				"selbsthilfe-termin-bestaetigt-beratung": {
 					"source": "10668862683c2bee",
-					"target": "000c18adf5deb561"
+					"target": "64849b8db53fbd81"
 				},
 				"selbsthilfe-termin-verschoben-beratung": {
 					"source": "0f59c9a77604688b",

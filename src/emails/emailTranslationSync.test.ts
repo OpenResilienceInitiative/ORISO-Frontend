@@ -258,14 +258,18 @@ describe('e-mail translations', () => {
 			).toBeGreaterThan(5);
 		});
 
-		it('collapses the shared assurance to one signature per language', () => {
-			// The promise closes all 22 mails. Asking for 22 signatures per
-			// language would guarantee nobody ever finishes.
+		it('keeps one signature for each distinct assurance per language', () => {
 			const distinct = emailProtectedStringIndex(
 				EMAIL_CONTENT.fr,
 				EMAIL_IDS
 			);
-			expect(distinct.size).toBeLessThan(EMAIL_IDS.length);
+			const assurances = [...distinct.values()].filter(
+				(entry) => entry.path === 'assurance'
+			);
+			expect(assurances).toHaveLength(6);
+			expect(new Set(assurances.map((entry) => entry.value)).size).toBe(
+				6
+			);
 		});
 
 		it('reports an unsigned protected string, and stops reporting it once signed', () => {

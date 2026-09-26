@@ -14,6 +14,8 @@ const occasions = [
 	'erinnerung'
 ] as const;
 const roles = ['teilnahme', 'beratung'] as const;
+const identifyingPlaceholder =
+	/\{\{(?:group|topic|participant|counselor|consultant|location)/i;
 
 describe('self-help appointment mail', () => {
 	it.each(EMAIL_LOCALES)(
@@ -24,11 +26,15 @@ describe('self-help appointment mail', () => {
 					const id =
 						`selbsthilfe-termin-${occasion}-${role}` as const;
 					const content = EMAIL_CONTENT[locale][id];
+					const built = buildEmail(id, locale);
 					expect(
 						`${content.subject} ${content.preheader}`
-					).not.toMatch(
-						/\{\{(?:group|topic|participant|counselor|consultant|location)/i
-					);
+					).not.toMatch(identifyingPlaceholder);
+					if (role === 'teilnahme') {
+						expect(`${built.html} ${built.text}`).not.toMatch(
+							identifyingPlaceholder
+						);
+					}
 					expect(content.subject).not.toContain(
 						'{{appointmentDate}}'
 					);
@@ -40,9 +46,7 @@ describe('self-help appointment mail', () => {
 					expect(EMAIL_CLASS[id]).toBe(
 						role === 'teilnahme' ? 'personal' : 'operational'
 					);
-					expect(buildEmail(id, locale).text).toContain(
-						'{{appointmentUrl}}'
-					);
+					expect(built.text).toContain('{{appointmentUrl}}');
 				}
 			}
 		}

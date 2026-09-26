@@ -199,7 +199,7 @@ const copy: Record<EmailLocale, LocaleCopy> = {
 				preheader:
 					'Встреча состоится {{appointmentDate}} в {{appointmentTime}}.',
 				headline: 'Встреча подтверждена',
-				paragraph: 'Для вас назначена встреча.'
+				paragraph: 'Для Вас назначена встреча.'
 			},
 			verschoben: {
 				subject: 'Время вашей встречи изменилось',
