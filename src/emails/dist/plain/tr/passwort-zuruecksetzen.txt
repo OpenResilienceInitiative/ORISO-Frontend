@@ -1,0 +1,25 @@
+Yeni şifre belirleyin
+=====================
+
+{{platformName}} erişiminiz için yeni bir şifre talep ettiniz.
+
+Bağlantı {{expiryHours}} saat geçerlidir ve yalnızca bir kez kullanılabilir.
+
+Şifreyi yeniden belirle:
+{{resetUrl}}
+
+Bunu siz talep etmediyseniz bu e-postayı dikkate almayın. Şifreniz değişmeden kalır.
+
+----------------------------------------------------------------
+Mesajlarınız uçtan uca şifrelenmiştir. Sizden ve danışmanlığınızdan başka kimse onları okuyamaz – biz de okuyamayız.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+
+Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.

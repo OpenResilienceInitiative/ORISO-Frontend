@@ -1,4 +1,12 @@
 {
+	"contactSheet": {
+		"request": "Kontaktdaten per E-Mail erhalten",
+		"sending": "Wird gesendet …",
+		"recipient": "Die E-Mail geht an {{email}}.",
+		"missingEmail": "Hinterlegen Sie zuerst eine E-Mail-Adresse in Ihrem Profil.",
+		"sent": "Die Kontaktdaten wurden an {{email}} gesendet.",
+		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Ratsuchende über meine Abwesenheit informieren"
@@ -4384,7 +4392,7 @@
 			},
 			"openModal": "Tool-Beschreibungen anzeigen",
 			"options": {
-				"saveError": "Beim Werkzeugwechsel ist ein Problem aufgetreten. Bitte versuche es erneut."
+				"saveError": "Beim Werkzeugwechsel ist ein Problem aufgetreten. Bitte versuchen Sie es erneut."
 			},
 			"optionsPlaceholder": "Wähle eine Option...",
 			"share": {

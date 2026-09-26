@@ -1,4 +1,12 @@
 {
+	"contactSheet": {
+		"request": "Email me the contact details",
+		"sending": "Sending…",
+		"recipient": "The email will go to {{email}}.",
+		"missingEmail": "Add an email address to your profile first.",
+		"sent": "The contact details were sent to {{email}}.",
+		"failed": "The email could not be sent. Please try again."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Inform advice seekers about my absence"

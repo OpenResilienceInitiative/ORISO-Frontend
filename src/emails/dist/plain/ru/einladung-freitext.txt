@@ -1,0 +1,19 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+{{assuranceBlock}}
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} предоставляется организацией {{operatorName}}.
+
+Защита данных: {{privacyUrl}}
+Выходные данные: {{imprintUrl}}
+
+{{footerNote}}

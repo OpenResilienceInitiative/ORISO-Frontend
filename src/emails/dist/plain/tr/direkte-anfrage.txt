@@ -1,0 +1,30 @@
+Bir talep doğrudan size yönelik
+===============================
+
+Bir danışan, talebini yazarken açıkça sizi seçti.
+
+Talebi üstlenemiyorsanız lütfen danışma merkezine geri verin, böylece bekleyip kalmaz.
+
+Konu: {{requestTopic}}
+Geliş: {{requestReceivedAt}}
+
+Talebi aç:
+{{requestUrl}}
+
+Lütfen 2 iş günü içinde yanıt verin.
+
+----------------------------------------------------------------
+Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Ayarlar: {{settingsUrl}}
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+Bildirimlerden çık: {{unsubscribeUrl}}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.

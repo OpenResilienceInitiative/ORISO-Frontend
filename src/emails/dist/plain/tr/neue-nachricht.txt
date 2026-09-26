@@ -1,0 +1,27 @@
+Yeni bir mesajınız var
+======================
+
+{{platformName}} üzerindeki danışmanlığınızda sizin için yeni bir mesaj hazır.
+
+Veri koruma nedeniyle burada ne içerik ne de isim gösteriyoruz. Mesajı oturum açtıktan sonra şifreli olarak okursunuz.
+
+Mesaja git:
+{{messageUrl}}
+
+Hemen yanıtlamak zorunda değilsiniz. Mesaj, ihtiyacınız olduğu sürece posta kutunuzda kalır.
+
+----------------------------------------------------------------
+Mesajlarınız uçtan uca şifrelenmiştir. Sizden ve danışmanlığınızdan başka kimse onları okuyamaz – biz de okuyamayız.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Ayarlar: {{settingsUrl}}
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+Bildirimlerden çık: {{unsubscribeUrl}}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.
