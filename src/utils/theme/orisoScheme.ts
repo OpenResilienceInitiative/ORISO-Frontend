@@ -32,6 +32,7 @@ import {
 	LIGHT_NEUTRAL_TONES,
 	NEUTRAL,
 	NEUTRAL_VARIANT,
+	PRIMARY_TEXT_SURFACE_TONE,
 	SECONDARY_TONES,
 	SLATE,
 	SUCCESS_ANCHOR,
@@ -82,6 +83,8 @@ const clampTone = (tone: number): number => Math.min(100, Math.max(0, tone));
 interface BrandFamily {
 	role: string;
 	onRole: string;
+	/** The role as a text/icon colour on light surfaces; always AA. */
+	text: string;
 	container: string;
 	onContainer: string;
 	inverse: string;
@@ -92,6 +95,14 @@ interface BrandFamily {
 	onFixed: string;
 	onFixedVariant: string;
 }
+
+/**
+ * Lightest tone brand-coloured text may have: AA on the darkest light
+ * surface that carries it. Floored so hex rounding cannot dip below.
+ */
+const MAX_LEGIBLE_TEXT_TONE = Math.floor(
+	Contrast.darker(PRIMARY_TEXT_SURFACE_TONE, CONTRAST_AA)
+);
 
 /**
  * The Oriso brand recipe (light): the seed itself is the role colour —
@@ -123,6 +134,12 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 	return {
 		role: seedHex,
 		onRole,
+		// Fills keep the seed; text drawn IN the brand colour steps down the
+		// seed's own palette when the seed is too light to read (#1499).
+		text:
+			hct.tone <= MAX_LEGIBLE_TEXT_TONE
+				? seedHex
+				: hex(palette.tone(MAX_LEGIBLE_TEXT_TONE)),
 		container: hex(boosted.tone(containerTone)),
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
@@ -144,6 +161,7 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 	return {
 		role: hex(palette.tone(DARK_BRAND_TONES.role)),
 		onRole: hex(palette.tone(DARK_BRAND_TONES.onRole)),
+		text: hex(palette.tone(DARK_BRAND_TONES.role)),
 		container: hex(palette.tone(DARK_BRAND_TONES.container)),
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
@@ -305,6 +323,7 @@ export const computeOrisoPalette = (
 		'--m3-primary-container': brand.container,
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
+		'--oriso-primary-text': brand.text,
 		'--m3-hover-layer': scheme === 'light' ? '#f9eff0' : '#331f21',
 		'--m3-selected-layer': scheme === 'light' ? '#f5e6e7' : '#4a292c',
 		'--m3-primary-fixed': brand.fixed,
@@ -395,7 +414,7 @@ export const computeOrisoPalette = (
 		'--hover-primary': brand.hover,
 		'--skin-color-primary': brand.role,
 		'--skin-color-primary-hover': brand.hover,
-		'--skin-color-primary-contrast-safe': brand.role,
+		'--skin-color-primary-contrast-safe': brand.text,
 		'--skin-color-secondary': secondary.role,
 		'--skin-color-secondary-contrast-safe': secondary.role,
 		'--skin-color-default': secondary.role

@@ -12,7 +12,7 @@
 		transition: all ease 0.5s;
 
 		&:hover + .tagSelect__label {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			background-color: $background-accent;
 		}
 
@@ -24,7 +24,7 @@
 		}
 
 		&:checked + .tagSelect__label {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			background-color: $hover-select;
 		}
 	}
@@ -42,7 +42,7 @@
 		transition: all ease 0.5s;
 
 		&:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			background-color: $hover-select;
 		}
 

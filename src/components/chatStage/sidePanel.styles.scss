@@ -261,7 +261,7 @@ $room-actions-gap: 12px;
 
 		&:not(:disabled):hover,
 		&--open {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 
 		&:focus-visible {
@@ -334,7 +334,7 @@ $room-actions-gap: 12px;
 			padding: 0 6px;
 			border-radius: 999px;
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 
@@ -355,7 +355,7 @@ $room-actions-gap: 12px;
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	// Figma: Topic Tag — label/medium 12/500/16, `secondary` on `primary-fixed`.

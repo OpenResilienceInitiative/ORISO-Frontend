@@ -159,7 +159,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__securityTeaserLink {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		font-weight: $font-weight-bold;
 		white-space: nowrap;
 	}
@@ -182,7 +182,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 		&__securityTeaserLinkShort {
 			display: inline;
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font-weight: $font-weight-bold;
 			white-space: nowrap;
 		}
@@ -201,7 +201,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	.button-as-link {
 		border: none;
 		background: none;
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		text-decoration: $link-text-decoration;
 		padding-left: 0px;
 		margin-top: $grid-base-four;

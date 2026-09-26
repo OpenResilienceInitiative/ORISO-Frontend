@@ -8,11 +8,12 @@ import i18n from 'i18next';
 import { ThemeProvider } from '@mui/material';
 import type { Preview } from '@storybook/react-vite';
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGlobals } from 'storybook/preview-api';
 import { I18nextProvider } from 'react-i18next';
 import { themes } from 'storybook/theming';
-import theme from '../src/resources/scripts/theme';
+import theme, { createAppTheme } from '../src/resources/scripts/theme';
+import { THEME_APPLIED_EVENT } from '../src/utils/theme/applyTenantTheme';
 import { config } from '../src/resources/scripts/config';
 import { LegalLinksProvider } from '../src/globalState/provider/LegalLinksProvider';
 import { init, FALLBACK_LNG } from '../src/i18n';
@@ -635,6 +636,14 @@ function MuiStoryShell({
 	Story: React.ComponentType;
 	needsLiveData: boolean;
 }) {
+	// Like the app's AppThemeProvider: MUI reads the --m3-* values when the
+	// theme is created, so a story palette (orisoSeed) needs a fresh theme.
+	const [muiTheme, setMuiTheme] = useState(() => theme);
+	useEffect(() => {
+		const refresh = () => setMuiTheme(createAppTheme());
+		window.addEventListener(THEME_APPLIED_EVENT, refresh);
+		return () => window.removeEventListener(THEME_APPLIED_EVENT, refresh);
+	}, []);
 	return (
 		<AppConfigContext.Provider value={config}>
 			<LocaleContext.Provider
@@ -736,7 +745,7 @@ function MuiStoryShell({
 												}
 											}}
 										>
-											<ThemeProvider theme={theme}>
+											<ThemeProvider theme={muiTheme}>
 												<LegalLinksProvider
 													legalLinks={[]}
 												>

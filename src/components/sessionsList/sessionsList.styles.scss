@@ -261,7 +261,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		margin-left: auto;
 		border: 0;
 		background: transparent;
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		font-weight: 700;
 		cursor: pointer;
 
@@ -491,7 +491,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 
 		a {
-			color: var(--m3-primary, $tertiary);
+			color: var(--oriso-primary-text, var(--m3-primary, $tertiary));
 
 			&:last-of-type {
 				margin-left: $grid-base-three;
@@ -499,7 +499,10 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 			@media (hover: hover) {
 				&:hover .text {
-					color: var(--m3-primary, $hover-primary);
+					color: var(
+						--oriso-primary-text,
+						var(--m3-primary, $hover-primary)
+					);
 				}
 			}
 		}
@@ -507,7 +510,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		&--active {
 			.text {
 				font-weight: $font-weight-medium;
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			&::after {
@@ -773,7 +776,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		font-size: 12px;
 		line-height: 16px;
 		font-weight: $font-weight-medium;
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	&__title {
@@ -1357,7 +1360,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__searchModalTab--active {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		border-bottom-color: var(--m3-primary, #a5000a);
 	}
 
@@ -1458,7 +1461,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__personCheckbox--selected {
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	/* #1195 JOB3: the results scroll inside the menu instead of growing it. */

@@ -48,13 +48,13 @@
 		}
 	}
 
-	/* M3 filled tonal button: the one action inside the body. */
+	/* M3 filled button in the primary role: the tonal pair measured 4.46:1. */
 	&__copy {
 		align-items: center;
-		background: var(--m3-secondary-container, #646d78);
+		background: var(--m3-primary, #a5000a);
 		border: 0;
 		border-radius: 100px;
-		color: var(--m3-on-secondary-container, #e7effc);
+		color: var(--m3-on-primary, #ffffff);
 		cursor: pointer;
 		display: inline-flex;
 		flex: 0 0 auto;
@@ -79,11 +79,6 @@
 		&:focus-visible {
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 2px;
-		}
-
-		&--done {
-			background: var(--m3-primary, #a5000a);
-			color: var(--m3-on-primary, #ffffff);
 		}
 	}
 

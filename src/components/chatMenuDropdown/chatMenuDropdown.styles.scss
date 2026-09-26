@@ -97,7 +97,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 
 			.chatMenuDropdown__itemTitle,
 			.chatMenuDropdown__itemShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.chatMenuDropdown__itemDescription {
@@ -105,7 +105,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 			}
 
 			.chatMenuDropdown__itemIcon {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 		}
 
