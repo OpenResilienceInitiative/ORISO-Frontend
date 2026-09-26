@@ -1,4 +1,5 @@
 import React, {
+	useCallback,
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
@@ -139,6 +140,11 @@ const getAvailableInputLength = (
 	return maxLength - (currentLength - selectedLength);
 };
 
+/* How many of the editor's own recent states count as echoes. A parent can lag
+   a few keystrokes behind under load; more than this would be a stale value
+   from long ago, and treating it as news is the lesser harm. */
+const OWN_STATES_KEPT = 50;
+
 const enforceEditorMaxLength = (
 	editorLike: any,
 	maxLength?: number
@@ -203,6 +209,22 @@ export const TipTapComposer = forwardRef<
 	) => {
 		const { t } = useTranslation();
 		const isSyncingFromValue = useRef(false);
+		/* The editor's own recent states, as it reported them. `value` comes back
+		   from the parent a render later — under load, several keystrokes later.
+		   Such a value is an echo of where the editor already was, and writing
+		   it back erases what was typed since (CI: "Wir besp" → "Wir bes",
+		   leaving "Wir besrechen"). Only a value the editor never produced —
+		   a draft, a reset — is news. */
+		const ownStates = useRef<string[]>([]);
+		const emit = useCallback(
+			(html: string) => {
+				ownStates.current.push(html);
+				if (ownStates.current.length > OWN_STATES_KEPT)
+					ownStates.current.shift();
+				onChange(html);
+			},
+			[onChange]
+		);
 
 		const { handleComposerKeyDown } = useChatComposerShortcuts({
 			onSend: onSubmitShortcut,
@@ -364,11 +386,12 @@ export const TipTapComposer = forwardRef<
 				) {
 					return;
 				}
+				// The truncating setContent emits its own update, which already
+				// reports the shortened text.
 				if (enforceEditorMaxLength(currentEditor, maxLength)) {
-					onChange(currentEditor.getHTML());
 					return;
 				}
-				onChange(currentEditor.getHTML());
+				emit(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
 				if (!onSelectionSnippet || !isEditorReady(currentEditor)) {
@@ -413,15 +436,24 @@ export const TipTapComposer = forwardRef<
 			}
 			const current = editor.getHTML();
 			if (normalizedValue === current) {
+				// The parent has caught up: nothing earlier can still be an echo.
+				ownStates.current = [];
+				return;
+			}
+			if (
+				ownStates.current.includes(value || '') ||
+				ownStates.current.includes(normalizedValue)
+			) {
 				return;
 			}
 			isSyncingFromValue.current = true;
 			try {
 				clearInsertionMarker(editor);
+				ownStates.current = [];
 				editor.commands.setContent(normalizedValue);
 				editor.commands.setTextAlign('left');
 				if (enforceEditorMaxLength(editor, maxLength)) {
-					onChange(editor.getHTML());
+					emit(editor.getHTML());
 				}
 			} catch {
 				try {
@@ -432,11 +464,12 @@ export const TipTapComposer = forwardRef<
 			} finally {
 				isSyncingFromValue.current = false;
 			}
-		}, [editor, maxLength, onChange, value]);
+		}, [editor, emit, maxLength, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
 				if (isEditorReady(editor)) {
+					ownStates.current = [];
 					editor.commands.clearContent();
 				}
 			},
@@ -448,6 +481,7 @@ export const TipTapComposer = forwardRef<
 			setText: (nextValue: string) => {
 				if (isEditorReady(editor)) {
 					clearInsertionMarker(editor);
+					ownStates.current = [];
 					editor.commands.setContent(nextValue || '');
 				}
 			},
