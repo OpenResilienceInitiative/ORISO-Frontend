@@ -33,7 +33,11 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -117,6 +121,18 @@ const storyUserData = {
 		secret: '',
 		qrCode: ''
 	}
+} as any;
+
+// FE#1115 — the request stage is seen by the ADVICE SEEKER, not the
+// counsellor: while nobody has accepted the case, `activeSession.consultant`
+// is empty and the header shows the search indicator instead of an avatar.
+const storyAskerUserData = {
+	...storyUserData,
+	userId: 'asker-4401',
+	userName: 'ruhiges-yak-kim@example.invalid',
+	displayName: 'Ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
 } as any;
 
 /* ------------------------------------------------------------------ *
@@ -326,11 +342,13 @@ const StoryProviders = ({
 	session,
 	members = [],
 	lastActivity,
+	userData = storyUserData,
 	children
 }: {
 	session: ExtendedSessionInterface;
 	members?: MockMember[];
 	lastActivity?: Record<string, number>;
+	userData?: typeof storyUserData;
 	children: React.ReactNode;
 }) => {
 	React.useLayoutEffect(() => installHeaderFetchMocks(), []);
@@ -343,9 +361,9 @@ const StoryProviders = ({
 		<div style={headerShell}>
 			<UserDataContext.Provider
 				value={{
-					userData: storyUserData,
+					userData,
 					setUserData: () => {},
-					reloadUserData: async () => storyUserData
+					reloadUserData: async () => userData
 				}}
 			>
 				<SessionTypeContext.Provider
@@ -445,6 +463,7 @@ const renderSessionHeader = (
 		session: ExtendedSessionInterface;
 		members?: MockMember[];
 		lastActivity?: Record<string, number>;
+		userData?: typeof storyUserData;
 	},
 	showAddButton?: boolean
 ) => (
@@ -452,6 +471,7 @@ const renderSessionHeader = (
 		session={preset.session}
 		members={preset.members}
 		lastActivity={preset.lastActivity}
+		userData={preset.userData}
 	>
 		<SessionHeaderComponent
 			bannedUsers={[]}
@@ -493,6 +513,71 @@ export const mockActiveConversationManyParticipants = () => ({
 		{ userId: '@ali:matrix.storybook.test', name: 'Ali R.' },
 		{ userId: '@jo:matrix.storybook.test', name: 'Jo L.' }
 	]
+});
+
+/**
+ * FE#1115 — request stage: the advice seeker waits, no counsellor has
+ * accepted. `consultant` is deliberately absent, which is what puts
+ * `ConsultantSearchLoader` into the member stack.
+ */
+const buildSearchingSession = (
+	status: typeof STATUS_ENQUIRY | typeof STATUS_EMPTY = STATUS_ENQUIRY
+): ExtendedSessionInterface =>
+	buildExtendedSession(
+		{
+			user: {
+				username: 'ruhiges-yak-kim@example.invalid',
+				displayName: 'Ruhiges Yak Kim',
+				sessionData: {}
+			},
+			language: 'de',
+			session: {
+				id: 4401,
+				agencyId: 101,
+				askerMatrixUserId: ASKER_MATRIX_ID,
+				attachment: null,
+				consultingType: 1,
+				matrixRoomId: 'sb-single-room-4401',
+				e2eLastMessage: null,
+				lastMessage: 'Anfrage gesendet',
+				messageDate: 1773822900,
+				createDate: '2026-03-18T06:15:00.000Z',
+				messagesRead: true,
+				postcode: 12345,
+				registrationType: REGISTRATION_TYPE_REGISTERED,
+				status,
+				videoCallMessageDTO: null,
+				topic: {
+					id: 1,
+					name: 'Familienberatung',
+					description: ''
+				}
+			} as unknown as SessionItemInterface
+		} as ListItemInterface,
+		''
+	);
+
+// 10. Request stage seen by the advice seeker — the search indicator.
+export const mockRequestStageSearching = () => ({
+	session: buildSearchingSession(),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 10b. The asker's own EMPTY enquiry (nothing sent yet): also no counsellor,
+// but not a request being searched for — review of #1418 (Riccardo).
+export const mockAskerEmptyEnquiry = () => ({
+	session: buildSearchingSession(STATUS_EMPTY),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 11. The same header one moment later: a counsellor accepted, so the real
+// avatar has taken the indicator's place.
+export const mockRequestStageAccepted = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: roomParticipants,
+	userData: storyAskerUserData
 });
 
 // Asserts the "+" add pill is present and rendered to the LEFT of the type
@@ -824,4 +909,186 @@ export const WaitingRoom: Story = {
  */
 export const Inquiry: Story = {
 	render: () => renderSessionHeader(mockInquiry())
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1115 — request stage: "searching for a counsellor"
+ * ------------------------------------------------------------------ */
+
+/**
+ * FE#1115 acceptance, measured rather than eyeballed.
+ *
+ * The request stage has exactly one magnet, it lives inside the oval
+ * capsule, and its beam leaves the capsule while still at full strength —
+ * the fade-out happens in the open, which is the part the old
+ * `overflow: hidden` cut away entirely.
+ */
+const expectMagnetSearchesFromInsideTheCapsule = async (
+	canvasElement: HTMLElement
+) => {
+	const magnet = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.consultantSearchLoader'
+		);
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	const capsule = canvasElement.querySelector<HTMLElement>(
+		'.chatroomMainInteractionIcon'
+	)!;
+
+	// 1. One magnet, and it is inside the capsule — the black disc beside
+	//    it is gone, and so is the capsule's own second, static magnet.
+	await expect(
+		canvasElement.querySelectorAll('.consultantSearchLoader')
+	).toHaveLength(1);
+	await expect(capsule.contains(magnet)).toBe(true);
+	await expect(
+		canvasElement.querySelector(
+			'.chatroomMainInteractionIcon__typeGenerated'
+		)
+	).toBeNull();
+	await expect(
+		capsule.classList.contains('chatroomMainInteractionIcon--searching')
+	).toBe(true);
+
+	// 2. Nothing clips the beam, from the magnet up to the header itself.
+	//    Three separate rules used to: the disc, the member bubble and the
+	//    header row below 900 px.
+	let ancestor: HTMLElement | null = magnet;
+	while (ancestor && !ancestor.classList.contains('sessionInfo')) {
+		await expect(getComputedStyle(ancestor).overflow).toBe('visible');
+		ancestor = ancestor.parentElement;
+	}
+
+	// 3. The beam is still opaque when it crosses the capsule's edge, and
+	//    spent only well outside it. A pulse is an event rather than an
+	//    endless loop, so the test starts one itself, freezes both
+	//    animations and steps through the flight — a measurement, not a
+	//    lucky frame.
+	const sweep = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__sweep'
+	)!;
+	const beam = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__beam'
+	)!;
+	magnet.classList.add('consultantSearchLoader--pulsing');
+	sweep.getAnimations().forEach((animation) => animation.pause());
+	const capsuleBox = capsule.getBoundingClientRect();
+	const flight = Number(
+		beam.getAnimations()[0]!.effect!.getTiming().duration
+	);
+	const at = (fraction: number) => {
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight * fraction;
+		});
+		return {
+			box: beam.getBoundingClientRect(),
+			opacity: Number.parseFloat(getComputedStyle(beam).opacity)
+		};
+	};
+	const crossing = at(0.6);
+	await expect(crossing.box.right).toBeGreaterThan(capsuleBox.right);
+	await expect(crossing.opacity).toBeGreaterThan(0.8);
+	const spent = at(1);
+	await expect(spent.box.right).toBeGreaterThan(crossing.box.right);
+	await expect(spent.opacity).toBeLessThan(0.1);
+
+	// 4. Between two pulses the magnet is genuinely still — no permanent
+	//    spin in the header (Frank, 15.09.: "nach ein paar Mal stehen
+	//    bleiben"). The gap itself is redrawn each time, so several waiting
+	//    requests never fall into lockstep.
+	magnet.classList.remove('consultantSearchLoader--pulsing');
+	await expect(getComputedStyle(beam).animationName).toBe('none');
+	await expect(getComputedStyle(sweep).animationName).toBe('none');
+
+	return { magnet, capsule, capsuleBox };
+};
+
+/**
+ * FE#1115 — the advice seeker's request stage at 1440 px. Expected: the
+ * search indicator is a disc of the same diameter as the avatar that
+ * replaces it, its beam travels beyond the disc edge, and it clears both
+ * the conversation pill and the header title.
+ */
+export const RequestStageSearching: Story = {
+	name: 'Request stage — searching for a counsellor (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** The same stage on a tablet (834 px). */
+export const RequestStageSearchingTablet: Story = {
+	name: 'Request stage — searching, tablet 834 px (FE#1115)',
+	globals: tablet834Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** The same stage on the phone (390 px) — where the row used to clip. */
+export const RequestStageSearchingPhone: Story = {
+	name: 'Request stage — searching, phone 390 px (FE#1115)',
+	globals: phone390Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/**
+ * Review of #1418 (Riccardo, 17.09.2026): only an enquiry is searched for.
+ * The asker's empty enquiry has no counsellor either, but its capsule is the
+ * waiting clock — no magnet, and the avatar stack stays where it was.
+ */
+export const RequestStageEmptyEnquiry: Story = {
+	name: 'Request stage — own empty enquiry: no magnet, stack stays (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockAskerEmptyEnquiry()),
+	play: async ({ canvasElement }) => {
+		const capsule = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.chatroomMainInteractionIcon'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--waiting')
+		).toBe(true);
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--searching')
+		).toBe(false);
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-participants"]'
+			)
+		).toBeTruthy();
+	}
+};
+
+/**
+ * FE#1115 acceptance: once a counsellor accepts, the real avatar takes the
+ * indicator's place. Both occupy the same box, so the row does not jump.
+ * The two stories are measured against each other in `play` below.
+ */
+export const RequestStageAccepted: Story = {
+	name: 'Request stage — counsellor accepted (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageAccepted()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).toBeTruthy();
+		});
+	}
 };

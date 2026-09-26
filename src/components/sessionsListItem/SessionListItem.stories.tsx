@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -27,6 +27,7 @@ import {
 	TopicsContext,
 	UserDataContext
 } from '../../globalState';
+import { STATUS_EMPTY } from '../../globalState/interfaces';
 import type {
 	ConsultingTypeInterface,
 	ListItemInterface,
@@ -687,7 +688,8 @@ function RuntimeSessionListItem({
 	lastMessage = runtimeSession.session.lastMessage,
 	sessionOverrides = {},
 	consultantId = runtimeSession.consultant.id,
-	viewerId = runtimeUserData.userId
+	viewerId = runtimeUserData.userId,
+	asSearchingAsker = false
 }: {
 	lastMessage?: string;
 	/** Extra `session` DTO fields, e.g. the ADR-008 `supervision` marker. */
@@ -696,14 +698,21 @@ function RuntimeSessionListItem({
 	consultantId?: string;
 	/** Logged-in consultant. */
 	viewerId?: string;
+	/**
+	 * FE#1115 — the advice seeker's own row while nobody has accepted:
+	 * no consultant on the session, so the avatar slot holds the magnet.
+	 */
+	asSearchingAsker?: boolean;
 } = {}) {
 	const storySession: ListItemInterface = {
 		...runtimeSession,
-		consultant: {
-			...runtimeSession.consultant,
-			consultantId,
-			id: consultantId
-		},
+		consultant: asSearchingAsker
+			? undefined
+			: {
+					...runtimeSession.consultant,
+					consultantId,
+					id: consultantId
+				},
 		session: {
 			...runtimeSession.session,
 			lastMessage,
@@ -711,7 +720,14 @@ function RuntimeSessionListItem({
 		}
 	};
 	const activeSession = buildExtendedSession(storySession, '');
-	const userData = { ...runtimeUserData, userId: viewerId };
+	const userData = asSearchingAsker
+		? {
+				...runtimeUserData,
+				userId: 'asker-4401',
+				grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+				userRoles: ['USER']
+			}
+		: { ...runtimeUserData, userId: viewerId };
 
 	return (
 		<div style={listShell}>
@@ -1049,6 +1065,11 @@ export const RuntimeComponent: Story = {
 				)
 			).toBe(false);
 		});
+		// Review of #1418: "Mail" is read out once — the envelope beside the
+		// visible word is decoration, not a second name.
+		const canvas = within(canvasElement);
+		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
+		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
 	}
 };
 
@@ -1303,5 +1324,96 @@ export const SupervisedByOthers: Story = {
 				canvasElement.querySelector('[data-testid="supervision-badge"]')
 			).toBeNull();
 		});
+	}
+};
+
+/**
+ * FE#1115 — the advice seeker's own row while the platform is still looking
+ * for a counsellor. The avatar slot holds the magnet, naked: no black disc
+ * any more, and nothing in the row clips its beam.
+ */
+export const AskerSearchingRow: Story = {
+	name: 'Ratsuchende wartet — Magnet im Avatar-Platz (FE#1115)',
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem asSearchingAsker />;
+	},
+	play: async ({ canvasElement }) => {
+		const magnet = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.consultantSearchLoader'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		// The slot it stands in is the avatar slot, at the avatar's size.
+		const box = magnet.getBoundingClientRect();
+		await expect(Math.round(box.width)).toBe(32);
+		// No black disc any more — nothing is painted behind the magnet.
+		await expect(getComputedStyle(magnet).backgroundColor).toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+
+		// The beam is here too, and it stays inside the card: it points
+		// right, into the card's own width, so the corner clip that rounds
+		// the card never reaches it. Measured at the end of the flight.
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.sessionsListItem__content'
+		)!;
+		await expect(
+			card.classList.contains('consultantSearchLoaderHost')
+		).toBe(true);
+		const sweep = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__sweep'
+		)!;
+		const beam = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__beam'
+		)!;
+		await expect(beam).toBeTruthy();
+		magnet.classList.add('consultantSearchLoader--pulsing');
+		sweep.getAnimations().forEach((animation) => animation.pause());
+		const flight = Number(
+			beam.getAnimations()[0]!.effect!.getTiming().duration
+		);
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight;
+		});
+		const beamBox = beam.getBoundingClientRect();
+		const cardBox = card.getBoundingClientRect();
+		await expect(beamBox.right).toBeGreaterThan(box.right);
+		await expect(beamBox.right).toBeLessThan(cardBox.right);
+		await expect(beamBox.top).toBeGreaterThan(cardBox.top);
+		await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
+		magnet.classList.remove('consultantSearchLoader--pulsing');
+	}
+};
+
+/** Own enquiry not written yet: nobody searches, so the magnet rests. */
+export const AskerEmptyEnquiryRow: Story = {
+	name: 'Ratsuchende, Anfrage noch leer — Magnet ruht (FE#1115)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				asSearchingAsker
+				sessionOverrides={{ status: STATUS_EMPTY }}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const magnet = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.consultantSearchLoader'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(magnet).not.toHaveClass(
+			'consultantSearchLoader--animated'
+		);
+		await expect(
+			canvasElement.querySelector('.sessionsListItem__content')
+		).not.toHaveClass('consultantSearchLoaderHost');
 	}
 };
