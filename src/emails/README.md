@@ -53,7 +53,7 @@ it from rotting are in **ADR-022**; the short version:
   what each translation was made from; the test suite recomputes it. A German
   edit without its translations turns the build red, and `emails:sync` refuses
   to re-stamp it (`--force` if the edit genuinely does not reach a language).
-- **Every variant produces files now.** The catalogue and Storybook mark French, Russian, Tigrinya and Turkish as pending human language review. The later review does not block generation.
+- **Every variant produces files now.** The catalogue, generated Keycloak theme and MailService template README mark French, Russian, Tigrinya and Turkish as pending human language review. The later review does not block generation or delivery; operators can see the review status before deployment.
 - **A claim is:** the encryption promise (`assurance`, on every mail), the two
   privacy paragraphs, and the DPA mail in full. The list is
   `EMAIL_PROTECTED_EXTRA` in `content/emailCatalogue.ts` — about 18 strings per
