@@ -1,18 +1,18 @@
-The contract documents are ready for signature
-==============================================
+The contract documents are ready for confirmation
+=================================================
 
 Contract documents have been prepared for {{tenantName}}.
 
-Please review the documents and sign them digitally.
+Please review the documents and confirm them digitally.
 
 Organisation: {{tenantName}}
 Provided on: {{dpaProvidedAt}}
-To be signed by: {{dpaExpiresAt}}
+To be confirmed by: {{dpaExpiresAt}}
 
 Open contract:
 {{dpaUrl}}
 
-Without signed contract documents, counselling stays blocked for this organisation.
+Without confirmation of the contract documents, counselling stays blocked for this organisation.
 
 ----------------------------------------------------------------
 This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.
