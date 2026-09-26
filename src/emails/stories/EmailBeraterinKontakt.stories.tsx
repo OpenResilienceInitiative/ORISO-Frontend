@@ -16,7 +16,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The contact sheet: direct line, phone hours, e-mail, booking link. Sent only when the recipient asked for it, which is what makes naming the counselling centre acceptable here. Two actions, so this is the reference for the secondary link.'
+					'The contact sheet shows maintained contact fields and a link to the protected chat. It is sent only when the recipient asks for it, which makes naming the counselling centre appropriate. Missing contact fields are omitted by the sending renderer; no booking link or response-time promise is inferred.'
 			}
 		}
 	}
@@ -41,7 +41,7 @@ export const English: Story = {
 };
 
 export const AllTones: Story = {
-	name: 'All three tones',
+	name: 'All seven tones',
 	render: (args) => <EmailToneRow id={args.id} />
 };
 

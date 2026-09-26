@@ -1,0 +1,29 @@
+Sözleşme belgeleri onaylanmaya hazır
+====================================
+
+{{tenantName}} için sözleşme belgeleri hazırlandı.
+
+Lütfen belgeleri inceleyin ve dijital olarak onaylayın.
+
+Kurum: {{tenantName}}
+Hazırlanma tarihi: {{dpaProvidedAt}}
+Son onay tarihi: {{dpaExpiresAt}}
+
+Sözleşmeyi aç:
+{{dpaUrl}}
+
+Sözleşme belgeleri onaylanmadan bu kurum için danışmanlık hizmeti kapalı kalır.
+
+----------------------------------------------------------------
+Bu e-posta, {{orgName}} ile {{tenantNameDative}} arasındaki sözleşme ilişkisine aittir.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}}, {{operatorName}} tarafından sunulur.
+
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+
+Bu e-posta sözleşme ilişkisinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.

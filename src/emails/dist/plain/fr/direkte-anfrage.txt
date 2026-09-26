@@ -1,0 +1,30 @@
+Une demande vous est adressée directement
+=========================================
+
+Une personne qui demande conseil vous a expressément choisi au moment d’écrire sa demande.
+
+Si vous ne pouvez pas la prendre en charge, rendez-la au centre de consultation pour qu’elle ne reste pas en attente.
+
+Sujet: {{requestTopic}}
+Reçue le: {{requestReceivedAt}}
+
+Ouvrir la demande:
+{{requestUrl}}
+
+Merci de répondre sous 2 jours ouvrés.
+
+----------------------------------------------------------------
+Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

@@ -41,6 +41,7 @@ import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
+import { groupAppointmentRedirect } from './groupAppointmentRedirect';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
@@ -102,9 +103,10 @@ export const Login = () => {
 
 	const { locale, initLocale } = useContext(LocaleContext);
 	const { tenant } = useContext(TenantContext);
-	const { userData, reloadUserData } = useContext(UserDataContext);
+	const { reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
+	const appointmentSeriesId = useSearchParam<string>('seriesId');
 	const registrationUrl = buildRegistrationLink(
 		settings.urls.toRegistration,
 		gcid
@@ -173,18 +175,6 @@ export const Login = () => {
 	}, [isSecurityExplainerOpen]);
 
 	useEffect(() => {
-		// If we're authenticated and have a gcid, redirect to app
-		if (gcid && getValueFromCookie('keycloak')) {
-			apiGetUserData([FETCH_ERRORS.CATCH_ALL])
-				/* Deliberately no `navigate`: see postLogin below -- entering
-				   the authenticated app from the login screen is a cold start
-				   and must be a document load. */
-				.then(() => redirectToApp(gcid))
-				.catch(() => null); // do nothing
-		}
-	}, [consultant, gcid, reloadUserData, userData]);
-
-	useEffect(() => {
 		setShowLoginError('');
 		setShowMagicLinkError('');
 		setLabelState(null);
@@ -239,6 +229,39 @@ export const Login = () => {
 	}, [translate]);
 
 	useEffect(() => {
+		// An appointment link is read-only. Unlike gcid, it must never ASSIGN a group.
+		if ((gcid || appointmentSeriesId) && getValueFromCookie('keycloak')) {
+			apiGetUserData([FETCH_ERRORS.CATCH_ALL])
+				/* Deliberately no `navigate`: see postLogin below -- entering
+				   the authenticated app from the login screen is a cold start
+				   and must be a document load. */
+				.then((freshUserData) => {
+					if (
+						appConfig.blockConsultantAppLogin &&
+						hasUserAuthority(
+							AUTHORITIES.CONSULTANT_DEFAULT,
+							freshUserData
+						)
+					) {
+						clearAuthSession();
+						showConsultantLoginBlockedError();
+						return;
+					}
+					const appointment = groupAppointmentRedirect(
+						appointmentSeriesId,
+						freshUserData
+					);
+					if (appointment) {
+						redirectToApp(undefined, appointment);
+					} else if (gcid) {
+						redirectToApp(gcid);
+					}
+				})
+				.catch(() => null); // Leave the login form available.
+		}
+	}, [appointmentSeriesId, gcid, showConsultantLoginBlockedError]);
+
+	useEffect(() => {
 		if (consumeConsultantLoginBlocked()) {
 			showConsultantLoginBlockedError();
 		}
@@ -278,6 +301,14 @@ export const Login = () => {
 					});
 				}
 
+				const appointment = groupAppointmentRedirect(
+					appointmentSeriesId,
+					userData
+				);
+				if (appointment) {
+					return redirectToApp(undefined, appointment);
+				}
+
 				if (
 					!consultant ||
 					!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)
@@ -304,6 +335,7 @@ export const Login = () => {
 			}),
 		[
 			reloadUserData,
+			appointmentSeriesId,
 			locale,
 			initLocale,
 			consultant,

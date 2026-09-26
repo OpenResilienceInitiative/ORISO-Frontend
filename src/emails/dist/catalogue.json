@@ -1,6 +1,50 @@
 {
 	"dialects": ["plain", "thymeleaf", "freemarker"],
-	"tones": ["de-sie", "de-du", "en"],
+	"tones": ["de-sie", "de-du", "en", "fr", "ru", "ti", "tr"],
+	"locales": {
+		"de-sie": {
+			"lang": "de",
+			"dir": "ltr",
+			"provenance": "source",
+			"release": "released"
+		},
+		"de-du": {
+			"lang": "de",
+			"dir": "ltr",
+			"provenance": "human",
+			"release": "released"
+		},
+		"en": {
+			"lang": "en",
+			"dir": "ltr",
+			"provenance": "human",
+			"release": "released"
+		},
+		"fr": {
+			"lang": "fr",
+			"dir": "ltr",
+			"provenance": "machine",
+			"release": "pending-human-review"
+		},
+		"ru": {
+			"lang": "ru",
+			"dir": "ltr",
+			"provenance": "machine",
+			"release": "pending-human-review"
+		},
+		"ti": {
+			"lang": "ti",
+			"dir": "ltr",
+			"provenance": "machine",
+			"release": "pending-human-review"
+		},
+		"tr": {
+			"lang": "tr",
+			"dir": "ltr",
+			"provenance": "machine",
+			"release": "pending-human-review"
+		}
+	},
 	"mails": {
 		"neue-nachricht": {
 			"audience": "asker",
@@ -28,6 +72,26 @@
 					"lang": "en",
 					"subject": "You have a new message",
 					"preheader": "A new message is waiting for you in your counselling."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Vous avez un nouveau message",
+					"preheader": "Un nouveau message vous attend dans votre service de conseil."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Для Вас есть новое сообщение",
+					"preheader": "В Вашей консультации Вас ждёт новое сообщение."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓድሽ መልእኽቲ በጺሑኩም ኣሎ",
+					"preheader": "ኣብ ምኽርኹም ሓድሽ መልእኽቲ ይጽበየኩም ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Yeni bir mesajınız var",
+					"preheader": "Danışmanlığınızda sizin için yeni bir mesaj hazır."
 				}
 			}
 		},
@@ -58,6 +122,26 @@
 					"lang": "en",
 					"subject": "Welcome to {{platformName}}",
 					"preheader": "Your anonymous account is ready – here is what happens next."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Bienvenue sur {{platformName}}",
+					"preheader": "Votre accès anonyme est prêt – voici la suite."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Добро пожаловать на {{platformName}}",
+					"preheader": "Ваш анонимный доступ создан — вот что дальше."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "እንኳዕ ናብ {{platformName}} ብደሓን መጻእኩም",
+					"preheader": "ስም ኣልቦ መእተዊኹም ተዳልዩ ኣሎ – ቀጺሉ ዘሎ ስጉምቲ እዚ እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{platformName}} platformuna hoş geldiniz",
+					"preheader": "Anonim erişiminiz hazır – bundan sonrası şöyle."
 				}
 			}
 		},
@@ -68,10 +152,8 @@
 			"placeholders": [
 				"{{expiryHours}}",
 				"{{resetUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
@@ -88,6 +170,26 @@
 					"lang": "en",
 					"subject": "Set a new password",
 					"preheader": "The link is valid for {{expiryHours}} hours."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Définir un nouveau mot de passe",
+					"preheader": "Le lien est valable {{expiryHours}} heures."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Задать новый пароль",
+					"preheader": "Ссылка действительна {{expiryHours}} часов."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓድሽ መሕለፊ ቃል ኣቐምጡ",
+					"preheader": "እቲ መላግቦ ን{{expiryHours}} ሰዓታት ይሰርሕ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Yeni şifre belirleyin",
+					"preheader": "Bağlantı {{expiryHours}} saat geçerlidir."
 				}
 			}
 		},
@@ -123,6 +225,434 @@
 					"lang": "en",
 					"subject": "Your appointment on {{appointmentDate}}",
 					"preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous du {{appointmentDate}}",
+					"preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча {{appointmentDate}}",
+					"preheader": "{{appointmentDate}}, {{appointmentTime}} — {{appointmentType}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ኣብ {{appointmentDate}}",
+					"preheader": "{{appointmentDate}}፣ {{appointmentTime}} – {{appointmentType}}።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{appointmentDate}} tarihli randevunuz",
+					"preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-bestaetigt-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde bestätigt",
+					"preheader": "Der Termin ist für {{appointmentDate}} um {{appointmentTime}} Uhr vorgesehen."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde bestätigt",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment is confirmed",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous est confirmé",
+					"preheader": "Votre rendez-vous est prévu le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча подтверждена",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተረጋጊጹ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz onaylandı",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}} için planlandı."
+				}
+			}
+		},
+		"selbsthilfe-termin-verschoben-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde verschoben",
+					"preheader": "Der neue Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde verschoben",
+					"preheader": "Dein neuer Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment has changed",
+					"preheader": "The new time is {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été déplacé",
+					"preheader": "Le nouvel horaire est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Время вашей встречи изменилось",
+					"preheader": "Новое время: {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተቐይሩ",
+					"preheader": "ሓድሽ ግዜ፦ {{appointmentDate}} ሰዓት {{appointmentTime}}።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz değiştirildi",
+					"preheader": "Yeni zaman: {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-abgesagt-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment was cancelled",
+					"preheader": "The appointment on {{appointmentDate}} at {{appointmentTime}} will not take place."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été annulé",
+					"preheader": "Le rendez-vous du {{appointmentDate}} à {{appointmentTime}} n’aura pas lieu."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча отменена",
+					"preheader": "Встреча {{appointmentDate}} в {{appointmentTime}} не состоится."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተሰሪዙ",
+					"preheader": "ናይ {{appointmentDate}} ሰዓት {{appointmentTime}} ቆጸራ ኣይካየድን እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz iptal edildi",
+					"preheader": "{{appointmentDate}} saat {{appointmentTime}} randevusu yapılmayacak."
+				}
+			}
+		},
+		"selbsthilfe-termin-erinnerung-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Erinnerung an Ihren Termin",
+					"preheader": "Ihr Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Erinnerung an deinen Termin",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Appointment reminder",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Rappel de votre rendez-vous",
+					"preheader": "Votre rendez-vous est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Напоминание о встрече",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "መዘኻኸሪ ቆጸራ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevu hatırlatması",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-bestaetigt-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde bestätigt",
+					"preheader": "Der Termin ist für {{appointmentDate}} um {{appointmentTime}} Uhr vorgesehen."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde bestätigt",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment is confirmed",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous est confirmé",
+					"preheader": "Votre rendez-vous est prévu le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча подтверждена",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተረጋጊጹ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz onaylandı",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}} için planlandı."
+				}
+			}
+		},
+		"selbsthilfe-termin-verschoben-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde verschoben",
+					"preheader": "Der neue Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde verschoben",
+					"preheader": "Dein neuer Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment has changed",
+					"preheader": "The new time is {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été déplacé",
+					"preheader": "Le nouvel horaire est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Время вашей встречи изменилось",
+					"preheader": "Новое время: {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተቐይሩ",
+					"preheader": "ሓድሽ ግዜ፦ {{appointmentDate}} ሰዓት {{appointmentTime}}።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz değiştirildi",
+					"preheader": "Yeni zaman: {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-abgesagt-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment was cancelled",
+					"preheader": "The appointment on {{appointmentDate}} at {{appointmentTime}} will not take place."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été annulé",
+					"preheader": "Le rendez-vous du {{appointmentDate}} à {{appointmentTime}} n’aura pas lieu."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча отменена",
+					"preheader": "Встреча {{appointmentDate}} в {{appointmentTime}} не состоится."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተሰሪዙ",
+					"preheader": "ናይ {{appointmentDate}} ሰዓት {{appointmentTime}} ቆጸራ ኣይካየድን እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz iptal edildi",
+					"preheader": "{{appointmentDate}} saat {{appointmentTime}} randevusu yapılmayacak."
+				}
+			}
+		},
+		"selbsthilfe-termin-erinnerung-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Erinnerung an Ihren Termin",
+					"preheader": "Ihr Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Erinnerung an deinen Termin",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Appointment reminder",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Rappel de votre rendez-vous",
+					"preheader": "Votre rendez-vous est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Напоминание о встрече",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "መዘኻኸሪ ቆጸራ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevu hatırlatması",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}}."
 				}
 			}
 		},
@@ -135,7 +665,6 @@
 				"{{consultantPhone}}",
 				"{{consultantHours}}",
 				"{{consultantEmail}}",
-				"{{bookingUrl}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -146,17 +675,37 @@
 				"de-sie": {
 					"lang": "de",
 					"subject": "So erreichen Sie Ihre Beratung",
-					"preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+					"preheader": "Kontaktdaten Ihrer Beratung auf einen Blick."
 				},
 				"de-du": {
 					"lang": "de",
 					"subject": "So erreichst du deine Beratung",
-					"preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+					"preheader": "Kontaktdaten deiner Beratung auf einen Blick."
 				},
 				"en": {
 					"lang": "en",
 					"subject": "How to reach your counselling service",
-					"preheader": "Direct line, phone hours and booking at a glance."
+					"preheader": "Your counselling service’s contact details at a glance."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Comment joindre votre service de conseil",
+					"preheader": "Les coordonnées de votre service de conseil en un coup d’œil."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Как связаться с Вашей консультацией",
+					"preheader": "Контактные данные Вашей консультации."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ንኣገልግሎት ምኽርኹም ብኸመይ ትረኽብዎ",
+					"preheader": "ናይ ኣገልግሎት ምኽርኹም ርክብ ሓበሬታ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Danışmanlığınıza nasıl ulaşırsınız",
+					"preheader": "Danışmanlığınızın iletişim bilgileri bir arada."
 				}
 			}
 		},
@@ -189,6 +738,26 @@
 					"lang": "en",
 					"subject": "New counselling request",
 					"preheader": "A new request is waiting for you."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Nouvelle demande de conseil",
+					"preheader": "Une nouvelle demande vous attend."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Новый запрос на консультацию",
+					"preheader": "Вас ждёт новый запрос."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓድሽ ሕቶ ምኽሪ",
+					"preheader": "ሓድሽ ሕቶ ይጽበየኩም ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Yeni danışmanlık talebi",
+					"preheader": "Yeni bir talep sizi bekliyor."
 				}
 			}
 		},
@@ -221,6 +790,26 @@
 					"lang": "en",
 					"subject": "Scheduled maintenance on {{maintenanceDate}}",
 					"preheader": "Unavailable from {{maintenanceStart}} to {{maintenanceEnd}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Maintenance prévue le {{maintenanceDate}}",
+					"preheader": "Indisponible de {{maintenanceStart}} à {{maintenanceEnd}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Плановые работы {{maintenanceDate}}",
+					"preheader": "Недоступно с {{maintenanceStart}} до {{maintenanceEnd}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ብመደብ ዝተታሕዘ ጽገና ኣብ {{maintenanceDate}}",
+					"preheader": "ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{maintenanceDate}} tarihinde planlı bakım",
+					"preheader": "{{maintenanceStart}} – {{maintenanceEnd}} arasında erişilemez."
 				}
 			}
 		},
@@ -253,6 +842,26 @@
 					"lang": "en",
 					"subject": "New enquiry at your counselling service",
 					"preheader": "An enquiry is waiting to be accepted."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Nouvelle demande dans votre centre de consultation",
+					"preheader": "Une demande attend d’être acceptée."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Новый запрос в Вашем консультационном центре",
+					"preheader": "Запрос ждёт, чтобы его приняли."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ኣብ ማእከል ምኽርኹም ሓድሽ ሕቶ",
+					"preheader": "ሓደ ሕቶ ክቕበሎ ዝጽበ ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Danışma merkezinizde yeni talep",
+					"preheader": "Bir talep kabul edilmeyi bekliyor."
 				}
 			}
 		},
@@ -284,6 +893,26 @@
 					"lang": "en",
 					"subject": "An enquiry is addressed to you directly",
 					"preheader": "This enquiry was written for you."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Une demande vous est adressée directement",
+					"preheader": "Cette demande a été écrite pour vous."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Запрос адресован лично Вам",
+					"preheader": "Этот запрос написан для Вас."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓደ ሕቶ ብቐጥታ ናባኹም ዝቐንዐ እዩ",
+					"preheader": "እዚ ሕቶ ንዓኹም ተጻሒፉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Bir talep doğrudan size yönelik",
+					"preheader": "Bu talep sizin için yazıldı."
 				}
 			}
 		},
@@ -316,6 +945,26 @@
 					"lang": "en",
 					"subject": "Your daily summary",
 					"preheader": "Open enquiries at your counselling service."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre récapitulatif du jour",
+					"preheader": "Demandes en attente dans votre centre de consultation."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша сводка за день",
+					"preheader": "Открытые запросы в Вашем консультационном центре."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "መዓልታዊ ጽማቕኩም",
+					"preheader": "ኣብ ማእከል ምኽርኹም ዘለዉ ክፉታት ሕቶታት።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Günlük özetiniz",
+					"preheader": "Danışma merkezinizdeki açık talepler."
 				}
 			}
 		},
@@ -348,6 +997,26 @@
 					"lang": "en",
 					"subject": "Handover requested",
 					"preheader": "A counselling case is to be handed over to you."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Transfert demandé",
+					"preheader": "Une consultation doit vous être transférée."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Запрошена передача",
+					"preheader": "Консультацию предлагают передать Вам."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ምትሕልላፍ ተሓቲቱ",
+					"preheader": "ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Devir talebi",
+					"preheader": "Bir danışmanlığın size devredilmesi isteniyor."
 				}
 			}
 		},
@@ -380,6 +1049,26 @@
 					"lang": "en",
 					"subject": "Handover confirmed",
 					"preheader": "Responsibility has changed."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Transfert confirmé",
+					"preheader": "La responsabilité a changé."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Передача подтверждена",
+					"preheader": "Ответственность перешла к другому специалисту."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ምትሕልላፍ ተረጋጊጹ",
+					"preheader": "እቲ ሓላፍነት ተቐዪሩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Devir onaylandı",
+					"preheader": "Sorumluluk değişti."
 				}
 			}
 		},
@@ -411,6 +1100,26 @@
 					"lang": "en",
 					"subject": "New reply in the professional exchange",
 					"preheader": "A reply is waiting for you in the professional exchange."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Nouveau retour dans l’échange entre professionnels",
+					"preheader": "Un retour vous attend dans l’échange entre professionnels."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Новый отклик в профессиональном обмене",
+					"preheader": "В профессиональном обмене Вас ждёт отклик."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ",
+					"preheader": "ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Uzmanlar arası paylaşımda yeni geri bildirim",
+					"preheader": "Uzmanlar arası paylaşımda sizin için bir geri bildirim var."
 				}
 			}
 		},
@@ -444,6 +1153,26 @@
 					"lang": "en",
 					"subject": "{{messageSubject}}",
 					"preheader": "{{messagePreview}}"
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "{{messageSubject}}",
+					"preheader": "{{messagePreview}}"
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "{{messageSubject}}",
+					"preheader": "{{messagePreview}}"
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "{{messageSubject}}",
+					"preheader": "{{messagePreview}}"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{messageSubject}}",
+					"preheader": "{{messagePreview}}"
 				}
 			}
 		},
@@ -472,6 +1201,26 @@
 					"lang": "en",
 					"subject": "Your sign-in link for {{platformName}}",
 					"preheader": "The link is valid for {{expiryMinutes}} minutes."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre lien de connexion pour {{platformName}}",
+					"preheader": "Le lien est valable {{expiryMinutes}} minutes."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша ссылка для входа на {{platformName}}",
+					"preheader": "Ссылка действует {{expiryMinutes}} минут."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ናይ {{platformName}} መእተዊ መላግቦኹም",
+					"preheader": "እቲ መላግቦ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{platformName}} için giriş bağlantınız",
+					"preheader": "Bağlantı {{expiryMinutes}} dakika geçerlidir."
 				}
 			}
 		},
@@ -501,6 +1250,26 @@
 					"lang": "en",
 					"subject": "Your one-time code for signing in",
 					"preheader": "The code is valid for {{expiryMinutes}} minutes."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre code à usage unique pour la connexion",
+					"preheader": "Le code est valable {{expiryMinutes}} minutes."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваш одноразовый код для входа",
+					"preheader": "Код действует {{expiryMinutes}} минут."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ንመእተዊ ዝኸውን ናይ ሓደ ግዜ ኮድኩም",
+					"preheader": "እቲ ኮድ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Giriş için tek kullanımlık kodunuz",
+					"preheader": "Kod {{expiryMinutes}} dakika geçerlidir."
 				}
 			}
 		},
@@ -529,6 +1298,26 @@
 					"lang": "en",
 					"subject": "Your email address has been changed",
 					"preheader": "The change is active from now on."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre adresse e-mail a été modifiée",
+					"preheader": "La modification est active dès maintenant."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваш адрес электронной почты изменён",
+					"preheader": "Изменение действует с этого момента."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ኢመይል ኣድራሻኹም ተቐዪሩ",
+					"preheader": "እቲ ለውጢ ካብ ሕጂ ጀሚሩ ይሰርሕ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "E-posta adresiniz değiştirildi",
+					"preheader": "Değişiklik şu andan itibaren geçerli."
 				}
 			}
 		},
@@ -558,6 +1347,26 @@
 					"lang": "en",
 					"subject": "Invitation: {{tenantName}} on {{platformName}}",
 					"preheader": "Set up your administration access."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Invitation : {{tenantName}} sur {{platformName}}",
+					"preheader": "Configurez votre accès à l’administration."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Приглашение: {{tenantName}} на {{platformName}}",
+					"preheader": "Настройте свой доступ к администрированию."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ዕድመ፦ {{tenantName}} ኣብ {{platformName}}",
+					"preheader": "ናይ ምምሕዳር መእተዊኹም ኣዳልዉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Davet: {{platformName}} üzerinde {{tenantName}}",
+					"preheader": "Yönetim erişiminizi kurun."
 				}
 			}
 		},
@@ -587,6 +1396,26 @@
 					"lang": "en",
 					"subject": "Invitation to counsel on {{platformName}}",
 					"preheader": "Set up your counsellor access."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Invitation au service de conseil sur {{platformName}}",
+					"preheader": "Configurez votre accès en tant que professionnel."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Приглашение в консультацию на {{platformName}}",
+					"preheader": "Настройте свой доступ как специалист."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ኣብ {{platformName}} ናብ ምኽሪ ዕድመ",
+					"preheader": "ከም ክኢላ መእተዊኹም ኣዳልዉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{platformName}} üzerinde danışmanlığa davet",
+					"preheader": "Uzman erişiminizi kurun."
 				}
 			}
 		},
@@ -620,6 +1449,26 @@
 					"lang": "en",
 					"subject": "Contract documents for {{tenantName}}",
 					"preheader": "The contract documents for {{tenantName}} are ready."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Documents contractuels pour {{tenantName}}",
+					"preheader": "Les documents contractuels pour {{tenantName}} sont disponibles."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Договорные документы для {{tenantName}}",
+					"preheader": "Договорные документы для {{tenantName}} готовы."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ናይ ውዕል ሰነዳት ን{{tenantName}}",
+					"preheader": "ናይ ውዕል ሰነዳት ን{{tenantName}} ተዳልዮም ኣለዉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{tenantName}} için sözleşme belgeleri",
+					"preheader": "{{tenantName}} için sözleşme belgeleri hazır."
 				}
 			}
 		},
@@ -654,6 +1503,26 @@
 					"lang": "en",
 					"subject": "{{subject}}",
 					"preheader": "{{preheader}}"
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{subject}}",
+					"preheader": "{{preheader}}"
 				}
 			}
 		},
@@ -686,6 +1555,26 @@
 					"lang": "en",
 					"subject": "A change in your team",
 					"preheader": "Your responsibilities have changed."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Changement dans votre équipe",
+					"preheader": "Vos responsabilités ont changé."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Изменение в Вашей команде",
+					"preheader": "Ваши зоны ответственности изменились."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ኣብ ጋንታኹም ለውጢ",
+					"preheader": "ሓላፍነታትኩም ተቐዪሮም።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Ekibinizde değişiklik",
+					"preheader": "Sorumluluklarınız değişti."
 				}
 			}
 		},
@@ -718,6 +1607,26 @@
 					"lang": "en",
 					"subject": "SMTP test successful",
 					"preheader": "Sending via {{smtpHost}} works."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Test SMTP réussi",
+					"preheader": "L’envoi via {{smtpHost}} fonctionne."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Тест SMTP пройден",
+					"preheader": "Отправка через {{smtpHost}} работает."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ናይ SMTP ፈተነ ተዓዊቱ",
+					"preheader": "ብ{{smtpHost}} ምልኣኽ ይሰርሕ ኣሎ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "SMTP testi başarılı",
+					"preheader": "{{smtpHost}} üzerinden gönderim çalışıyor."
 				}
 			}
 		}
