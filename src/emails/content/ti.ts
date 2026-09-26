@@ -26,6 +26,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} ብ{{orgName}} ዝቐርብ ኣገልግሎት እዩ።',
@@ -71,6 +72,7 @@ const legalAssurance =
 	'እዛ ኢመይል ናይ {{orgName}}ን {{tenantNameDative}}ን ውዕላዊ ርክብ ኣካል እያ።';
 
 export const ti: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('ti', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'ሓድሽ መልእኽቲ በጺሑኩም ኣሎ',
 		preheader: 'ኣብ ምኽርኹም ሓድሽ መልእኽቲ ይጽበየኩም ኣሎ።',

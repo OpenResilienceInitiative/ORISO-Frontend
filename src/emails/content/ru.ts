@@ -22,6 +22,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} — это сервис организации {{orgName}}.',
@@ -71,6 +72,7 @@ const legalAssurance =
 	'Это письмо относится к договорным отношениям между {{orgName}} и {{tenantNameDative}}.';
 
 export const ru: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('ru', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Для Вас есть новое сообщение',
 		preheader: 'В Вашей консультации Вас ждёт новое сообщение.',

@@ -5,6 +5,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} is a service provided by {{orgName}}.',
@@ -61,6 +62,7 @@ const legalAssurance =
 	'This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.';
 
 export const en: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('en', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'You have a new message',
 		preheader: 'A new message is waiting for you in your counselling.',

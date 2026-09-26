@@ -1,0 +1,28 @@
+Ihr Termin entfällt
+===================
+
+Der geplante Termin findet nicht statt.
+
+Sie begleiten diesen Termin als Fachkraft. Weitere Informationen sehen Sie nach der Anmeldung.
+
+Datum: {{appointmentDate}}
+Uhrzeit: {{appointmentTime}}
+
+Termin ansehen:
+{{appointmentUrl}}
+
+----------------------------------------------------------------
+Inhalte aus Beratungen stehen nie in einer E-Mail. Sie sehen sie ausschließlich verschlüsselt nach der Anmeldung.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworten Sie nicht darauf.
