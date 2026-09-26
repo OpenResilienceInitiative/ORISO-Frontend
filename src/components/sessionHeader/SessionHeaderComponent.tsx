@@ -37,6 +37,11 @@ import {
 	TopicSessionInterface
 } from '../../globalState/interfaces';
 import {
+	STATUS_EMPTY,
+	STATUS_ENQUIRY,
+	STATUS_ACTIVE
+} from '../../globalState/interfaces/SessionsDataInterface';
+import {
 	getViewPathForType,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
@@ -75,6 +80,7 @@ import {
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
 import { ConsultantSearchLoader } from './ConsultantSearchLoader';
+import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
@@ -1218,6 +1224,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 				</div>
 			)}
+			{isAskerUser &&
+				!isConsultantUser &&
+				activeSession.isSession &&
+				!isChatFinished &&
+				[STATUS_EMPTY, STATUS_ENQUIRY, STATUS_ACTIVE].includes(
+					activeSession.item.status
+				) &&
+				activeSession.item.agencyId && (
+					<ContactSheetRequest
+						sessionId={activeSession.item.id}
+						email={userData.email}
+					/>
+				)}
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
 			{isSupervisionEnabledForCurrentChat &&
