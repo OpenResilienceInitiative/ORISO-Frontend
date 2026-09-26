@@ -701,3 +701,206 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(chatTransportService.onMatrixTimeline).not.toHaveBeenCalled();
 	});
 });
+
+describe('SessionStream — co-access expiry (#200)', () => {
+	const NOW = new Date('2026-09-25T07:00:00Z');
+	const coAccess = (sessionId: number, expiresAt: string) => ({
+		sessionId,
+		requestId: 38,
+		status: 'GRANTED',
+		canViewContent: true,
+		clientConsentRequired: false,
+		accessType: 'CO_ACCESS',
+		expiresAt
+	});
+	const expired = (sessionId: number) => ({
+		sessionId,
+		requestId: 38,
+		status: 'EXPIRED',
+		canViewContent: false,
+		clientConsentRequired: false,
+		accessType: 'CO_ACCESS'
+	});
+
+	const tree = (sessionId: number, ownerId = 'owner-2') => (
+		<MemoryRouter>
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							userId: 'consultant-1',
+							grantedAuthorities: [
+								'AUTHORIZATION_CONSULTANT_DEFAULT'
+							]
+						}
+					} as any
+				}
+			>
+				<SessionTypeContext.Provider
+					value={{
+						type: SESSION_LIST_TYPES.MY_SESSION,
+						path: LIST_PATH
+					}}
+				>
+					<ConsultantListContext.Provider
+						value={
+							{
+								consultantList: [],
+								setConsultantList: () => {}
+							} as any
+						}
+					>
+						<ActiveSessionContext.Provider
+							value={
+								{
+									activeSession: {
+										rid: ROOM_ID,
+										isGroup: false,
+										isSession: true,
+										consultant: { id: ownerId },
+										item: {
+											id: sessionId,
+											matrixRoomId: ROOM_ID,
+											active: true,
+											status: 2
+										}
+									},
+									readActiveSession: () => {}
+								} as any
+							}
+						>
+							<SessionStream
+								readonly={false}
+								checkMutedUserForThisSession={() => {}}
+								bannedUsers={[]}
+							/>
+						</ActiveSessionContext.Provider>
+					</ConsultantListContext.Provider>
+				</SessionTypeContext.Provider>
+			</UserDataContext.Provider>
+		</MemoryRouter>
+	);
+
+	const advance = (ms: number) =>
+		act(async () => {
+			await vi.advanceTimersByTimeAsync(ms);
+		});
+	const statusCallsFor = (sessionId: number) =>
+		mocks.getCaseHandoverStatus.mock.calls.filter(
+			(call: any[]) => call[0] === sessionId
+		).length;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+		vi.setSystemTime(NOW);
+		mocks.sessionItemProps = null;
+		mocks.timelineListeners.length = 0;
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
+	});
+
+	it('asks again 5 s after co-access expires and closes the curtain', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-09-25T07:10:00'))
+			.mockResolvedValueOnce(expired(1));
+
+		render(tree(1));
+		await advance(0);
+		expect(screen.getByTestId('session-item')).toBeDefined();
+		expect(statusCallsFor(1)).toBe(1);
+		expect(mocks.timelineListeners.length).toBeGreaterThan(0);
+
+		await advance(10 * 60_000 + 4_999);
+		expect(statusCallsFor(1)).toBe(1);
+
+		await advance(1);
+		expect(statusCallsFor(1)).toBe(2);
+		expect(screen.getByTestId('case-handover-curtain')).toBeDefined();
+		expect(screen.queryByTestId('session-item')).toBeNull();
+		// New Matrix events stop arriving once access ends.
+		expect(mocks.timelineListeners.length).toBe(0);
+	});
+
+	it('asks right away when the expiry has already passed', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-09-25T06:59:00'))
+			.mockResolvedValueOnce(expired(1));
+
+		render(tree(1));
+		await advance(0);
+		await advance(0);
+
+		expect(statusCallsFor(1)).toBe(2);
+		expect(screen.getByTestId('case-handover-curtain')).toBeDefined();
+	});
+
+	it('waits past the setTimeout maximum instead of firing early', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-10-25T07:00:00'))
+			.mockResolvedValueOnce(expired(1));
+
+		render(tree(1));
+		await advance(0);
+		await advance(2 ** 31 - 1);
+		expect(statusCallsFor(1)).toBe(1);
+
+		await advance(30 * 24 * 60 * 60_000 + 5_000 - (2 ** 31 - 1));
+		expect(statusCallsFor(1)).toBe(2);
+	});
+
+	it('clears the timer on unmount', async () => {
+		mocks.getCaseHandoverStatus.mockResolvedValueOnce(
+			coAccess(1, '2026-09-25T07:10:00')
+		);
+
+		const { unmount } = render(tree(1));
+		await advance(0);
+		unmount();
+		await advance(11 * 60_000);
+
+		expect(statusCallsFor(1)).toBe(1);
+	});
+
+	it('clears the timer when another session opens', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-09-25T07:10:00'))
+			.mockResolvedValueOnce({
+				sessionId: 2,
+				status: 'PENDING',
+				canViewContent: false,
+				clientConsentRequired: false
+			});
+
+		const { rerender } = render(tree(1));
+		await advance(0);
+		rerender(tree(2));
+		await advance(11 * 60_000);
+
+		expect(statusCallsFor(1)).toBe(1);
+		expect(statusCallsFor(2)).toBe(1);
+	});
+
+	it('schedules nothing for a TAKEOVER recipient', async () => {
+		mocks.getCaseHandoverStatus.mockResolvedValueOnce({
+			...coAccess(1, '2026-09-25T07:10:00'),
+			accessType: 'TAKEOVER'
+		});
+
+		render(tree(1));
+		await advance(0);
+		await advance(24 * 60 * 60_000);
+
+		expect(statusCallsFor(1)).toBe(1);
+	});
+
+	it('schedules nothing for the case owner', async () => {
+		render(tree(1, 'consultant-1'));
+		await advance(24 * 60 * 60_000);
+
+		expect(mocks.getCaseHandoverStatus).not.toHaveBeenCalled();
+	});
+});

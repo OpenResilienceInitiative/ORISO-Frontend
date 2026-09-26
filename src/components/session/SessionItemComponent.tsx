@@ -224,6 +224,9 @@ import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
+import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
+import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
+import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
 const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
@@ -259,6 +262,8 @@ interface SessionItemProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
+	/** The viewer's case-handover grant; a CO_ACCESS grant is read-only (#200). */
+	caseHandoverStatus?: CaseHandoverStatus | null;
 }
 
 let initMessageCount: number;
@@ -285,6 +290,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [isSupervisor, setIsSupervisor] = useState(false);
 	const isSupervisorView =
 		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
+	const isCoAccessViewer = isCaseHandoverCoAccess(props.caseHandoverStatus);
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
 	const [supervisionRoomLookup, setSupervisionRoomLookup] =
@@ -996,10 +1002,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		const canWrite =
-			type !== SESSION_LIST_TYPES.ENQUIRY ||
-			(isAnonymousAskerExperience && waitingGateDismissed);
+			!isCoAccessViewer &&
+			(type !== SESSION_LIST_TYPES.ENQUIRY ||
+				(isAnonymousAskerExperience && waitingGateDismissed));
 		setCanWriteMessage(canWrite);
 	}, [
+		isCoAccessViewer,
 		type,
 		isAnonymousAskerExperience,
 		waitingGateDismissed,
@@ -3292,12 +3300,24 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 											: undefined
 									}
 									resolveReplyQuote={resolveReplyQuote}
-									onReplyDirect={handleReplyDirect}
+									onReplyDirect={
+										isCoAccessViewer
+											? undefined
+											: handleReplyDirect
+									}
 									onEditDirect={handleEditDirect}
 									onDeleteDirect={handleDeleteDirect}
 									reactionsFor={getReactionsFor}
-									onReact={handleReact}
-									onUnreact={handleUnreact}
+									onReact={
+										isCoAccessViewer
+											? undefined
+											: handleReact
+									}
+									onUnreact={
+										isCoAccessViewer
+											? undefined
+											: handleUnreact
+									}
 								/>
 							)}
 							{/* "Sending message failed" cards for sends that never
@@ -3501,6 +3521,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							/>
 						</div>
 					)}
+
+				{isCoAccessViewer && (
+					<CaseHandoverReadOnlyNotice
+						expiresAt={props.caseHandoverStatus?.expiresAt}
+					/>
+				)}
 
 				{canRenderClientComposer({
 					canWriteMessage,
@@ -3927,8 +3953,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
-							onReact={handleReact}
-							onUnreact={handleUnreact}
+							onReact={isCoAccessViewer ? undefined : handleReact}
+							onUnreact={
+								isCoAccessViewer ? undefined : handleUnreact
+							}
 						/>
 						{failedSends
 							.filter((failed) =>
@@ -3979,38 +4007,42 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</>
 				}
 				composer={
-					<MessageSubmitInterfaceComponent
-						isTyping={props.isTyping}
-						placeholder={translate('message.thread.placeholder')}
-						typingUsers={props.typingUsers}
-						handleMessageSendSuccess={handleMessageSendSuccess}
-						onSendError={handleComposerSendError}
-						retryRequest={
-							retryRequest &&
-							failedSendBelongsTo(retryRequest, {
-								kind: 'thread',
-								rootId: activeThreadRootId
-							})
-								? retryRequest
-								: null
-						}
-						onRetrySettled={handleComposerRetrySettled}
-						isSupervisor={isSupervisor}
-						supervisionRoomId={supervisionRoomId}
-						hideSupervisorAudience={hasSupervisionSideRoom}
-						threadRootId={activeThreadRootId}
-						threadParentPreview={toMessagePreviewText(
-							activeThreadRootMessage.message
-						)}
-						autoFocusEditor={!focusPanelHeader}
-						flushCorner={panelComposerFlush}
-						onMobileNavigateBack={
-							isPhoneLayout ? closeChannel : undefined
-						}
-						messages={messages}
-						onCloseThread={handleCloseThread}
-						isOwnMessage={isMyMessageMatrix}
-					/>
+					!isCoAccessViewer && (
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							placeholder={translate(
+								'message.thread.placeholder'
+							)}
+							typingUsers={props.typingUsers}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleComposerSendError}
+							retryRequest={
+								retryRequest &&
+								failedSendBelongsTo(retryRequest, {
+									kind: 'thread',
+									rootId: activeThreadRootId
+								})
+									? retryRequest
+									: null
+							}
+							onRetrySettled={handleComposerRetrySettled}
+							isSupervisor={isSupervisor}
+							supervisionRoomId={supervisionRoomId}
+							hideSupervisorAudience={hasSupervisionSideRoom}
+							threadRootId={activeThreadRootId}
+							threadParentPreview={toMessagePreviewText(
+								activeThreadRootMessage.message
+							)}
+							autoFocusEditor={!focusPanelHeader}
+							flushCorner={panelComposerFlush}
+							onMobileNavigateBack={
+								isPhoneLayout ? closeChannel : undefined
+							}
+							messages={messages}
+							onCloseThread={handleCloseThread}
+							isOwnMessage={isMyMessageMatrix}
+						/>
+					)
 				}
 				switcher={phoneBackFab}
 			/>

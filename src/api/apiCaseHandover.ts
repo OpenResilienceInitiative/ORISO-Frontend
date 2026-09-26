@@ -36,6 +36,10 @@ export interface CaseHandoverStatus {
 	auditOutcome?: string;
 	createdAt?: string;
 	resolvedAt?: string;
+	/** CO_ACCESS ("advice needed") is read-only; the case stays with its owner. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | (string & {});
+	/** Naive UTC date-time; set for a granted CO_ACCESS. */
+	expiresAt?: string;
 }
 
 export interface CaseHandoverBatchResult {
