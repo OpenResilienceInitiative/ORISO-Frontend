@@ -25,6 +25,17 @@ import { EmailNotification } from './EmailNotifications';
 import { BrowserNotification } from './BrowserNotifications';
 import { browserNotificationsSettings } from '../../utils/notificationHelpers';
 import { AdditionalEnquiry } from './AdditionalEnquiry/AdditionalEnquiry';
+import AccessAlarmOutlinedIcon from '@mui/icons-material/AccessAlarmOutlined';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
+import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
+import HomeWorkOutlinedIcon from '@mui/icons-material/HomeWorkOutlined';
+import InsertChartOutlinedIcon from '@mui/icons-material/InsertChartOutlined';
+import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
+import { ReactComponent as LiveConversationIcon } from '../../resources/img/icons/live_conv_type.svg';
 
 const shouldShowOverview = (useOverviewPage: boolean, userData) =>
 	useOverviewPage &&
@@ -41,6 +52,7 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.general.title',
 			url: '/allgemeines',
+			layout: 'cards',
 			elements: [
 				{
 					condition: (userData) =>
@@ -55,7 +67,8 @@ const profileRoutes = (
 									userData
 								),
 							boxed: false,
-							component: OverviewSessions
+							component: OverviewSessions,
+							icon: ForumOutlinedIcon
 						},
 						{
 							condition: (userData) =>
@@ -64,6 +77,7 @@ const profileRoutes = (
 									userData
 								),
 							component: OverviewBookings,
+							icon: EventOutlinedIcon,
 							boxed: false
 						}
 					]
@@ -79,6 +93,7 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantInformation,
+							icon: PersonOutlineIcon,
 							column: COLUMN_LEFT
 						},
 						{
@@ -88,6 +103,7 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantSpokenLanguages,
+							icon: LanguageOutlinedIcon,
 							column: COLUMN_RIGHT
 						},
 						{
@@ -97,6 +113,7 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantAgencies,
+							icon: HomeWorkOutlinedIcon,
 							column: COLUMN_LEFT
 						},
 						{
@@ -106,6 +123,7 @@ const profileRoutes = (
 									userData
 								) && settings.enableWalkthrough,
 							component: EnableWalkthrough,
+							icon: ExploreOutlinedIcon,
 							column: COLUMN_RIGHT
 						},
 						{
@@ -115,6 +133,7 @@ const profileRoutes = (
 									userData
 								) && settings.enableWalkthrough,
 							component: TourOverviewSection,
+							icon: ExploreOutlinedIcon,
 							column: COLUMN_RIGHT
 						},
 						{
@@ -135,6 +154,7 @@ const profileRoutes = (
 									userData
 								),
 							component: AdditionalEnquiry,
+							icon: AddCircleOutlineIcon,
 							order: 3,
 							column: COLUMN_RIGHT
 						}
@@ -151,6 +171,7 @@ const profileRoutes = (
 									userData
 								),
 							component: ConsultantPrivateData,
+							icon: VisibilityOffOutlinedIcon,
 							column: settings.enableWalkthrough
 								? COLUMN_LEFT
 								: COLUMN_RIGHT
@@ -162,6 +183,7 @@ const profileRoutes = (
 									userData
 								),
 							component: AskerAboutMeData,
+							icon: PersonOutlineIcon,
 							order: 1,
 							column: COLUMN_LEFT
 						}
@@ -172,6 +194,7 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.activities.title',
 			url: '/aktivitaeten',
+			layout: 'cards',
 			condition: (userData) =>
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData),
 			elements: [
@@ -181,6 +204,7 @@ const profileRoutes = (
 					elements: [
 						{
 							component: ConsultantStatistics,
+							icon: InsertChartOutlinedIcon,
 							condition: () =>
 								tenant === null ||
 								!!tenant?.settings?.featureStatisticsEnabled,
@@ -199,6 +223,7 @@ const profileRoutes = (
 									userData
 								),
 							component: LiveChatAvailability,
+							icon: LiveConversationIcon,
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled
@@ -208,6 +233,7 @@ const profileRoutes = (
 						},
 						{
 							component: AbsenceFormular,
+							icon: AccessAlarmOutlinedIcon,
 							column:
 								tenant === null ||
 								tenant?.settings?.featureStatisticsEnabled
@@ -272,11 +298,13 @@ const profileRoutes = (
 		{
 			title: 'profile.routes.settings.title',
 			url: '/einstellungen',
+			layout: 'cards',
 			elements: profileRoutesSettings(selectableLocales, settings)
 		},
 		{
 			title: 'profile.routes.help.title',
 			url: '/hilfe',
+			layout: 'cards',
 			elements: profileRoutesHelp(settings)
 		}
 	] as TabsType;
