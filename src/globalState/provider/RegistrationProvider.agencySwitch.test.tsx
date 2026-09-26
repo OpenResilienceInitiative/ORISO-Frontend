@@ -53,6 +53,7 @@ const apiGetConsultingTypeMock = vi.mocked(apiGetConsultingType);
 const CARRIED_OVER_TOPIC_ID = 99;
 const URL_TOPIC_ID = 42;
 const AGENCY_ID = 5;
+const TOPIC_GROUP_ID = 7;
 
 const Probe = () => {
 	const { registrationData } = useContext(RegistrationContext);
@@ -67,6 +68,9 @@ const Probe = () => {
 			</span>
 			<span data-testid="agency">
 				{registrationData?.agency?.id ?? 'none'}
+			</span>
+			<span data-testid="topic-group-id">
+				{registrationData?.topicGroupId ?? 'none'}
 			</span>
 		</div>
 	);
@@ -100,7 +104,8 @@ const givenStoredRegistration = (agencyTopicIds: number[]) => {
 			password: '',
 			zipcode: '00000',
 			agencyId: AGENCY_ID,
-			mainTopicId: CARRIED_OVER_TOPIC_ID
+			mainTopicId: CARRIED_OVER_TOPIC_ID,
+			topicGroupId: TOPIC_GROUP_ID
 		})
 	);
 	apiGetTopicByIdMock.mockResolvedValue({
@@ -199,6 +204,34 @@ describe('RegistrationProvider — restoring a subject area at another centre', 
 		);
 		expect(screen.getByTestId('agency').textContent).toBe(
 			String(AGENCY_ID)
+		);
+	});
+
+	it('keeps a stored centre that offers the URL subject area but not the stored one', async () => {
+		/* The stored subject area is replaced by the URL one, so it is no
+		   reason to drop the centre. Judged against it, a centre that offers
+		   exactly what the link asks for was thrown away, and the advice seeker
+		   had to pick it again. */
+		givenStoredRegistration([URL_TOPIC_ID]);
+		getUrlParameterMock.mockImplementation((name: string) =>
+			name === 'tid' ? String(URL_TOPIC_ID) : null
+		);
+
+		renderProvider({ id: URL_TOPIC_ID });
+
+		await waitFor(() =>
+			expect(screen.getByTestId('main-topic').textContent).toBe(
+				String(URL_TOPIC_ID)
+			)
+		);
+		expect(screen.getByTestId('agency').textContent).toBe(
+			String(AGENCY_ID)
+		);
+		/* The stale stored subject area is replaced by the URL one, so it must
+		   not be "cleared" on the way: clearing it also retires its step and
+		   would drop the topic group, which the URL topic never gets back. */
+		expect(screen.getByTestId('topic-group-id').textContent).toBe(
+			String(TOPIC_GROUP_ID)
 		);
 	});
 
