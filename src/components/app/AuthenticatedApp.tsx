@@ -2,6 +2,7 @@ import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff'
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
 import { Navigate } from 'react-router-dom';
+import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
@@ -366,5 +367,12 @@ export const AuthenticatedApp = ({
 		return <Loading />;
 	}
 
-	return <Navigate to="/login" replace />;
+	return (
+		<Navigate
+			to={loginPathForEmailPreferences(
+				window.location.pathname + window.location.search
+			)}
+			replace
+		/>
+	);
 };

@@ -15,6 +15,7 @@ import {
 	previewNotificationSound,
 	soundAssetFor
 } from '../../../utils/notificationSettings/soundPlayback';
+import { EMAIL_PREFERENCES_PATH } from '../../../utils/emailPreferencesReturn';
 import {
 	AREA_KINDS,
 	BannerMode,
@@ -225,7 +226,7 @@ export const NotificationConfigView = ({
 				{t('profile.notifications.config.intro')}
 			</p>
 			<p className="notifConfig__emailNote">
-				<a href="/profile/einstellungen/email#email-notifications">
+				<a href={`${EMAIL_PREFERENCES_PATH}#email-notifications`}>
 					{t(
 						'profile.notifications.title',
 						'E-Mail-Benachrichtigungen'
