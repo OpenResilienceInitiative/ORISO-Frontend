@@ -168,7 +168,7 @@ export const EMAIL_LOCALE_RELEASE: Record<EmailLocale, EmailLocaleRelease> = {
 	'tr': 'pending-human-review'
 };
 
-/** The variants a service may actually send today. */
+/** Variants with completed human copy review; generation does not filter on this list. */
 export const EMAIL_RELEASED_LOCALES: readonly EmailLocale[] =
 	EMAIL_LOCALES.filter(
 		(locale) => EMAIL_LOCALE_RELEASE[locale] === 'released'
