@@ -95,6 +95,9 @@ jobs:
       - name: Test the Storybook test runner
         run: npm run test:scripts
 
+      - name: Verify accessibility failures are enforced
+        run: npm run test:storybook:a11y-gate
+
       - name: Run Storybook component tests
         run: npm run test:storybook
 
