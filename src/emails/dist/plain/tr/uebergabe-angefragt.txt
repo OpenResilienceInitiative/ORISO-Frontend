@@ -1,0 +1,31 @@
+Bir danışmanlığın size devredilmesi isteniyor
+=============================================
+
+{{fromConsultantName}}, devam eden bir danışmanlığın size devredilmesini istiyor.
+
+Lütfen danışmanlık alanında devralıp devralamayacağınızı kontrol edin.
+
+Dosya: {{caseReference}}
+Talep eden: {{fromConsultantName}}
+Talep tarihi: {{requestReceivedAt}}
+
+Devri incele:
+{{requestUrl}}
+
+Siz onaylayana kadar danışmanlık mevcut uzmanda kalır.
+
+----------------------------------------------------------------
+Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Ayarlar: {{settingsUrl}}
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+Bildirimlerden çık: {{unsubscribeUrl}}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.

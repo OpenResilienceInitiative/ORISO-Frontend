@@ -1,0 +1,29 @@
+Günlük özetiniz
+===============
+
+Danışma merkezinizde kabul edilmeyi bekleyen açık talepler var.
+
+Açık talepler: {{openRequestCount}}
+En uzun bekleme: {{oldestRequestAge}}
+Durum: {{digestGeneratedAt}}
+
+Talepleri görüntüle:
+{{requestUrl}}
+
+Bu özet günde bir kez gelir. Ayarlardan aboneliğinizi iptal edebilirsiniz.
+
+----------------------------------------------------------------
+Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Ayarlar: {{settingsUrl}}
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+Bildirimlerden çık: {{unsubscribeUrl}}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.

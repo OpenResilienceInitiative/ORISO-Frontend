@@ -1,0 +1,33 @@
+Votre rendez-vous est confirmé
+==============================
+
+Nous avons noté votre rendez-vous. Vous n’avez rien à préparer – venez simplement comme vous êtes.
+
+Date: {{appointmentDate}}
+Heure: {{appointmentTime}}
+Type: {{appointmentType}}
+Lieu: {{locationName}}, {{locationAddress}}
+
+Voir le rendez-vous:
+{{appointmentUrl}}
+
+Ouvrir l’adresse sur une carte:
+{{mapUrl}}
+
+Vous recevrez un rappel 24 heures avant. Vous pouvez annuler à tout moment.
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.
