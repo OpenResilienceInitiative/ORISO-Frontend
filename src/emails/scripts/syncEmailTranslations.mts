@@ -8,7 +8,7 @@
  * every occasion, the fingerprint of the German source at translation time and
  * the fingerprint of the translation itself. `emailTranslationSync.test.ts`
  * compares those against the content on every run, so a German string that
- * moves without its translations turns the build red instead of shipping five
+ * moves without its translations turns the build red instead of shipping six
  * languages that quietly say last month's thing.
  *
  * The one rule worth stating out loud: **a re-stamp is refused when the German
@@ -32,6 +32,7 @@ import {
 	EmailTranslationManifest,
 	EmailTranslationReview,
 	emailFingerprint,
+	emailOccasionIsNew,
 	emailOccasionFingerprint,
 	emailReviewGaps
 } from '../index';
@@ -78,7 +79,10 @@ const run = async () => {
 			const before = previous.locales[locale]?.occasions?.[id];
 
 			if (!before) {
-				if (previous.locales[locale]) {
+				if (
+					previous.locales[locale] &&
+					!emailOccasionIsNew(previous, id)
+				) {
 					throw new Error(
 						`Translation manifest lost existing occasion ${locale}/${id}`
 					);
