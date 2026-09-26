@@ -31,6 +31,15 @@ const generated = () =>
  * environment's host (ORISO-Helm#366).
  */
 describe('generated Keycloak e-mail theme', () => {
+	it('points settings links at the active profile routes', () => {
+		expect(KEYCLOAK_LINK_PATHS.orisoSettingsUrl).toBe(
+			'/profile/einstellungen'
+		);
+		expect(KEYCLOAK_LINK_PATHS.orisoUnsubscribeUrl).toBe(
+			'/profile/einstellungen/email'
+		);
+	});
+
 	it('names no host and defaults no URL', () => {
 		expect(findHardcodedUrls(generated())).toEqual([]);
 	});
