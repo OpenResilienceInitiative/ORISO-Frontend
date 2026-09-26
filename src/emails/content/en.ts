@@ -134,11 +134,10 @@ export const en: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'How to reach your counselling service',
-		preheader: 'Direct line, phone hours and booking at a glance.',
+		preheader: 'Your counselling service’s contact details at a glance.',
 		headline: 'How to reach your counselling service',
 		paragraphs: [
-			'Besides the protected chat you can also reach your counselling service by phone or book an appointment directly.',
-			'Your account stays anonymous – you decide what you share.'
+			'You requested your counselling service’s contact details. The available ways to get in touch are below.'
 		],
 		panel: [
 			{ label: 'Service', value: '{{consultantName}}' },
@@ -146,13 +145,7 @@ export const en: Record<EmailId, EmailContent> = {
 			{ label: 'Phone hours', value: '{{consultantHours}}' },
 			{ label: 'Email', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Book an appointment', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Go to the protected chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Outside phone hours, writing in the chat works best. We reply within 2 working days.',
+		cta: { label: 'Go to the protected chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},

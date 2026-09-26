@@ -144,11 +144,10 @@ export const ru: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'Как связаться с Вашей консультацией',
-		preheader: 'Прямой номер, часы приёма и запись — на одном экране.',
+		preheader: 'Контактные данные Вашей консультации.',
 		headline: 'Как связаться с Вашей консультацией',
 		paragraphs: [
-			'Кроме защищённого чата Вы можете связаться с консультацией по телефону или сразу записаться на встречу.',
-			'Ваш доступ при этом остаётся анонимным — Вы сами решаете, что рассказывать.'
+			'Вы запросили контактные данные Вашей консультации. Доступные способы связи приведены ниже.'
 		],
 		panel: [
 			{ label: 'Консультация', value: '{{consultantName}}' },
@@ -156,13 +155,7 @@ export const ru: Record<EmailId, EmailContent> = {
 			{ label: 'Часы приёма', value: '{{consultantHours}}' },
 			{ label: 'Эл. почта', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Записаться на встречу', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'К защищённому чату',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Вне часов приёма лучше написать в чат. Мы ответим в течение 2 рабочих дней.',
+		cta: { label: 'К защищённому чату', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},

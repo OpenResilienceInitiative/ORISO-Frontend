@@ -146,11 +146,10 @@ export const fr: Record<EmailId, EmailContent> = {
 	'beraterin-kontakt': {
 		subject: 'Comment joindre votre service de conseil',
 		preheader:
-			'Ligne directe, horaires et prise de rendez-vous en un coup d’œil.',
+			'Les coordonnées de votre service de conseil en un coup d’œil.',
 		headline: 'Comment joindre votre service de conseil',
 		paragraphs: [
-			'Outre le chat protégé, vous pouvez aussi joindre votre service de conseil par téléphone ou prendre directement un rendez-vous.',
-			'Votre accès reste anonyme – c’est vous qui décidez de ce que vous racontez.'
+			'Vous avez demandé les coordonnées de votre service de conseil. Les moyens de contact disponibles figurent ci-dessous.'
 		],
 		panel: [
 			{ label: 'Service de conseil', value: '{{consultantName}}' },
@@ -158,13 +157,7 @@ export const fr: Record<EmailId, EmailContent> = {
 			{ label: 'Horaires', value: '{{consultantHours}}' },
 			{ label: 'E-mail', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Prendre rendez-vous', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Aller au chat protégé',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'En dehors des horaires, écrivez de préférence dans le chat. Nous vous répondons sous 2 jours ouvrés.',
+		cta: { label: 'Aller au chat protégé', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},

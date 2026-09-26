@@ -145,11 +145,10 @@ export const tr: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'Danışmanlığınıza nasıl ulaşırsınız',
-		preheader: 'Doğrudan hat, görüşme saatleri ve randevu tek bakışta.',
+		preheader: 'Danışmanlığınızın iletişim bilgileri bir arada.',
 		headline: 'Danışmanlığınıza nasıl ulaşırsınız',
 		paragraphs: [
-			'Korumalı sohbetin yanı sıra danışmanlığınıza telefonla da ulaşabilir veya doğrudan randevu alabilirsiniz.',
-			'Erişiminiz bu sırada anonim kalır – neyi anlatacağınıza siz karar verirsiniz.'
+			'Danışmanlığınızın iletişim bilgilerini istediniz. Kullanılabilir iletişim yolları aşağıdadır.'
 		],
 		panel: [
 			{ label: 'Danışmanlık', value: '{{consultantName}}' },
@@ -157,13 +156,7 @@ export const tr: Record<EmailId, EmailContent> = {
 			{ label: 'Görüşme saatleri', value: '{{consultantHours}}' },
 			{ label: 'E-posta', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Randevu al', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Korumalı sohbete git',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Görüşme saatleri dışında en iyisi sohbete yazmanızdır. 2 iş günü içinde size döneriz.',
+		cta: { label: 'Korumalı sohbete git', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},

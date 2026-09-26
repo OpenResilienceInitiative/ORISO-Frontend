@@ -1,22 +1,15 @@
 Comment joindre votre service de conseil
 ========================================
 
-Outre le chat protégé, vous pouvez aussi joindre votre service de conseil par téléphone ou prendre directement un rendez-vous.
-
-Votre accès reste anonyme – c’est vous qui décidez de ce que vous racontez.
+Vous avez demandé les coordonnées de votre service de conseil. Les moyens de contact disponibles figurent ci-dessous.
 
 Service de conseil: {{consultantName}}
 Ligne directe: {{consultantPhone}}
 Horaires: {{consultantHours}}
 E-mail: {{consultantEmail}}
 
-Prendre rendez-vous:
-{{bookingUrl}}
-
 Aller au chat protégé:
 {{messageUrl}}
-
-En dehors des horaires, écrivez de préférence dans le chat. Nous vous répondons sous 2 jours ouvrés.
 
 ----------------------------------------------------------------
 Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.

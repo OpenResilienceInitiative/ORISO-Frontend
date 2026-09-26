@@ -140,11 +140,10 @@ export const deDu: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'So erreichst du deine Beratung',
-		preheader: 'Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick.',
+		preheader: 'Kontaktdaten deiner Beratung auf einen Blick.',
 		headline: 'So erreichst du deine Beratung',
 		paragraphs: [
-			'Neben dem geschützten Chat kannst du deine Beratung auch telefonisch erreichen oder direkt einen Termin buchen.',
-			'Dein Zugang bleibt dabei anonym – du entscheidest, was du erzählst.'
+			'Du hast die Kontaktdaten deiner Beratung angefordert. Die verfügbaren Kontaktwege findest du unten.'
 		],
 		panel: [
 			{ label: 'Beratung', value: '{{consultantName}}' },
@@ -152,13 +151,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 			{ label: 'Sprechzeiten', value: '{{consultantHours}}' },
 			{ label: 'E-Mail', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Termin buchen', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Zum geschützten Chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Außerhalb der Sprechzeiten schreib am besten im Chat. Wir melden uns innerhalb von 2 Werktagen.',
+		cta: { label: 'Zum geschützten Chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
