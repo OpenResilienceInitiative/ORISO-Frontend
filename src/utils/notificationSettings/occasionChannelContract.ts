@@ -62,11 +62,26 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 };
 
 /**
- * The email catalogue names one primary audience. New-message mail is shared
- * by seekers and counsellors; each role has a different preference store.
+ * The catalogue names one primary audience, while the email matrix can show
+ * another role's switch for the same occasion. These are existing settings,
+ * not proof that a sender reaches either role.
  */
-const rolesFor = (id: EmailId): readonly RecipientRole[] =>
-	id === 'neue-nachricht' ? ['asker', 'consultant'] : [EMAIL_AUDIENCE[id]];
+const rolesFor = (id: EmailId): readonly RecipientRole[] => {
+	const roles: RecipientRole[] = [EMAIL_AUDIENCE[id]];
+	if (
+		switchForOccasion(ADVICE_SEEKER_SWITCHES, id) &&
+		!roles.includes('asker')
+	) {
+		roles.push('asker');
+	}
+	if (
+		switchForOccasion(CONSULTANT_SWITCHES, id) &&
+		!roles.includes('consultant')
+	) {
+		roles.push('consultant');
+	}
+	return roles;
+};
 
 export function occasionChannelContract(id: EmailId): {
 	roles: readonly RecipientRole[];

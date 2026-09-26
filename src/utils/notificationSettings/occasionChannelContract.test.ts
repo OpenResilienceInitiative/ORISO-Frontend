@@ -60,6 +60,20 @@ describe('occasion channel contract', () => {
 		).toEqual({
 			kind: 'unmapped'
 		});
+		expect(occasionChannelContract('systemhinweis').roles).toEqual([
+			'asker',
+			'consultant'
+		]);
+		expect(
+			occasionChannelContract('systemhinweis', 'consultant')
+				?.emailPreference
+		).toEqual({
+			kind: 'switch',
+			source: {
+				kind: 'settings',
+				field: 'serviceNoticeNotificationEnabled'
+			}
+		});
 		expect(occasionChannelContract('termin', 'asker')?.browser).toEqual({
 			kind: 'unmapped'
 		});
