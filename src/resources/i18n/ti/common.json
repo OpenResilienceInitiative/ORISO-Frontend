@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "ኣቀራርባ ምናሌ",
+		"label": "መጋረጃን ቀሊል ምንቅስቓስ ምናሌን",
+		"description": "ድሕረ ባይታ ክፉት ምናሌ የብርህ፣ ምናሌ ድማ ብቀሊል ምንቅስቓስ ይኸፍት። ምንቅስቓስ ንምንካይ እንተተመሪጹ ኣይንቀሳቐስን።",
+		"scope": "ነዚ ኣካውንት ኣብዚ መርበብ መርኣዪ ይምልከት። ብነባሪ ዝተወልዐ እዩ።"
+	},
 	"absence": {
 		"checkbox": {
 			"label": "ነቶም ምኽሪ ዝደልዩ ብዛዕባ ዘይምህላወይ ኣፍልጦም"
@@ -390,7 +396,7 @@
 		"dearchiveDescription": "ቻት ካብ ማእከል ማስታወሻ መልስ።",
 		"editGroupChat": "ቅጥዕታት ዕላል",
 		"editGroupChatDescription": "ኣርእስቲ፣ ሰዓትን ምምሕዳርን ናይዚ ዕላል ቀይር።",
-		"groupChatInfo": "ናይ ዕላል ሓበሬታ",
+		"groupChatInfo": "ሓበሬታን ቅጥዕታትን",
 		"imprint": "ኣሰር",
 		"leaveGroupChat": "ቻት ግደፍ",
 		"mute": "ስምዒት ጸጥ ኣብል",
@@ -724,7 +730,12 @@
 			"google": "ካላንደር Google",
 			"outlook": "ካላንደር Outlook",
 			"titleLabel": "ገለልተኛ ርእሲ ካላንደር",
-			"addShort": "ዓውደ-ኣዋርሕ"
+			"addShort": "ዓውደ-ኣዋርሕ",
+			"copyGoogle": "መላግቦ ካላንደር Google ቅዳሕ",
+			"copyOutlook": "መላግቦ ካላንደር Outlook ቅዳሕ",
+			"linkCopied": "መላግቦ ካላንደር ተቐዲሑ።",
+			"copyError": "መላግቦ ካላንደር ክቕዳሕ ኣይከኣለን። እንደገና ፈትኑ።",
+			"shareHint": "ናይ ካላንደር መላግቦታት ንመርበብኩም፦ ሓደ ቆጸራ፣ ብዘይ መላግቦ ዕድመ ወይ ኣውቶማቲክ ምሕዳስ።"
 		},
 		"futureTimeline": {
 			"appointmentFallback": "ቆጸራ",

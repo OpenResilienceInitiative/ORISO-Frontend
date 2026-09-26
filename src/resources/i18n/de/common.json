@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menüdarstellung",
+		"label": "Schleier und sanfte Menüanimationen",
+		"description": "Hellt den Hintergrund geöffneter Chatmenüs auf und blendet das Menü mit einer dezenten Bewegung ein. Bei reduzierter Bewegung wird nicht animiert.",
+		"scope": "Gilt für dieses Konto in diesem Browser. Standardmäßig eingeschaltet."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Ratsuchende über meine Abwesenheit informieren"
@@ -385,7 +391,7 @@
 		"dearchiveDescription": "Chat aus dem Archiv wiederherstellen.",
 		"editGroupChat": "Chat-Einstellungen",
 		"editGroupChatDescription": "Thema, Zeitplan und Moderation dieses Chats ändern.",
-		"groupChatInfo": "Chat-Info",
+		"groupChatInfo": "Informationen & Einstellungen",
 		"imprint": "Impressum",
 		"leaveGroupChat": "Chat verlassen",
 		"mute": "Stummschalten",
@@ -719,7 +725,12 @@
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
 			"titleLabel": "Neutraler Kalendertitel",
-			"addShort": "Kalender"
+			"addShort": "Kalender",
+			"copyGoogle": "Google-Kalenderlink kopieren",
+			"copyOutlook": "Outlook-Kalenderlink kopieren",
+			"linkCopied": "Kalenderlink kopiert.",
+			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",

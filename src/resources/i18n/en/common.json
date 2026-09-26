@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menu appearance",
+		"label": "Backdrop and gentle menu animations",
+		"description": "Lightens the background behind open chat menus and gently animates the menu. Animations are skipped when reduced motion is enabled.",
+		"scope": "Applies to this account in this browser. Enabled by default."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Inform advice seekers about my absence"
@@ -373,7 +379,7 @@
 		"dearchiveDescription": "Restore chat from archive.",
 		"editGroupChat": "Chat settings",
 		"editGroupChatDescription": "Change this chat's topic, schedule and moderation.",
-		"groupChatInfo": "Chat info",
+		"groupChatInfo": "Information & settings",
 		"imprint": "Imprint",
 		"leaveGroupChat": "Leave chat",
 		"mute": "Mute",
@@ -707,7 +713,12 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar"
+			"addShort": "Calendar",
+			"copyGoogle": "Copy Google Calendar link",
+			"copyOutlook": "Copy Outlook Calendar link",
+			"linkCopied": "Calendar link copied.",
+			"copyError": "The calendar link could not be copied. Please try again.",
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",

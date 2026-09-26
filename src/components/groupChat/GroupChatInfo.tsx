@@ -63,7 +63,7 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { GroupChatRoleManager } from './GroupChatRoleManager';
 import { getGroupChatPlannedStart } from './groupChatDate';
 
-export const GroupChatInfo = () => {
+export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -95,6 +95,9 @@ export const GroupChatInfo = () => {
 
 	const { fromL } = useResponsive();
 	useEffect(() => {
+		// As a dialog the session underneath owns the mobile pane; closing must
+		// not slide it away to the list.
+		if (dialog) return;
 		if (!fromL) {
 			mobileDetailView();
 			return () => {
@@ -102,7 +105,7 @@ export const GroupChatInfo = () => {
 			};
 		}
 		desktopView();
-	}, [fromL]);
+	}, [fromL, dialog]);
 
 	useEffect(() => {
 		if (!ready) {

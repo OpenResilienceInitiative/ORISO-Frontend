@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Menü görünümü",
+		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
+		"description": "Açık sohbet menülerinin arka planını aydınlatır ve menüyü hafif bir hareketle açar. Hareket azaltma etkinse animasyon oynatılmaz.",
+		"scope": "Bu tarayıcıdaki bu hesap için geçerlidir. Varsayılan olarak açıktır."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"
@@ -390,7 +396,7 @@
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
 		"editGroupChatDescription": "Bu sohbetin konusunu, zamanını ve moderasyonunu değiştirin.",
-		"groupChatInfo": "Sohbet bilgileri",
+		"groupChatInfo": "Bilgiler ve ayarlar",
 		"imprint": "Künye",
 		"leaveGroupChat": "Sohbeti bırakın",
 		"mute": "Sessize al",
@@ -724,7 +730,12 @@
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
 			"titleLabel": "Nötr takvim başlığı",
-			"addShort": "Takvim"
+			"addShort": "Takvim",
+			"copyGoogle": "Google Takvim bağlantısını kopyala",
+			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
+			"linkCopied": "Takvim bağlantısı kopyalandı.",
+			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
+			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",

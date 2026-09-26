@@ -181,11 +181,11 @@ $room-header-gap-top: 2px;
 			margin: 0;
 		}
 
-		// On mobile, keep the inset and ensure proper overflow handling
+		// On mobile, keep the inset. No row-level clip: the h3 and profile link clip
+		// themselves, and a row clip would cut the search beam (FE#1115).
 		@media screen and (width < 900px) {
 			gap: $stack-title-inset;
 			min-width: 0;
-			overflow: hidden;
 			margin-left: 0;
 		}
 
@@ -743,34 +743,17 @@ $room-header-gap-top: 2px;
 		}
 	}
 
-	&--inquiry &__typeGenerated {
-		&::before {
-			content: '';
-			position: absolute;
-			left: 3px;
-			top: 2px;
-			width: 7px;
-			height: 20px;
-			border-radius: 6px 0 0 6px;
-			background: #ff0000;
-		}
+	&--searching {
+		// The search beam leaves the capsule; a clip here would cut it off.
+		overflow: visible;
 
-		&::after {
-			content: '';
-			position: absolute;
-			left: 10px;
-			top: 2px;
-			width: 10px;
-			height: 20px;
-			background: linear-gradient(
-				to bottom,
-				#b8b8b8 0,
-				#b8b8b8 5px,
-				transparent 5px,
-				transparent 15px,
-				#b8b8b8 15px,
-				#b8b8b8 20px
-			);
+		// Down-right: the beam travels into the open corner below the title, not the row above.
+		.consultantSearchLoader {
+			--csl-aim: 122deg;
+
+			// Down-right crosses the capsule's long axis, so the arc needs a longer run
+			// to fade in the open rather than on the capsule's edge.
+			--csl-reach: calc(var(--csl-size) * 1.75);
 		}
 	}
 }

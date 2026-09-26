@@ -1,5 +1,6 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import addIcon from '../../resources/img/icons/chatroom/add_icon.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import liveConversationIcon from '../../resources/img/icons/chatroom/live_conv_type_200.svg';
@@ -18,6 +19,11 @@ interface ChatroomMainInteractionIconProps {
 	onAddClick?: () => void;
 	showAddIcon?: boolean;
 	type: ChatroomConversationIconType;
+	/**
+	 * FE#1115: no counsellor has accepted yet, so the magnet sweeps. Same drawing
+	 * either way, so nothing in the row moves when the search ends.
+	 */
+	isSearching?: boolean;
 }
 
 const conversationIconSources: Partial<
@@ -33,7 +39,8 @@ export const ChatroomMainInteractionIcon = ({
 	className,
 	onAddClick,
 	showAddIcon = false,
-	type
+	type,
+	isSearching = false
 }: ChatroomMainInteractionIconProps) => {
 	const addContent = (
 		<span className="chatroomMainInteractionIcon__addContent">
@@ -53,6 +60,9 @@ export const ChatroomMainInteractionIcon = ({
 				'chatroomMainInteractionIcon',
 				`chatroomMainInteractionIcon--${type}`,
 				showAddIcon && 'chatroomMainInteractionIcon--withAdd',
+				isSearching && 'chatroomMainInteractionIcon--searching',
+				// Hovering the capsule replays the magnet's search gesture.
+				isSearching && 'consultantSearchLoaderHost',
 				className
 			)}
 		>
@@ -83,7 +93,7 @@ export const ChatroomMainInteractionIcon = ({
 				className="chatroomMainInteractionIcon__type"
 				aria-hidden="true"
 			>
-				{iconSource ? (
+				{iconSource && (
 					<span
 						className="chatroomMainInteractionIcon__typeMask"
 						style={
@@ -92,7 +102,13 @@ export const ChatroomMainInteractionIcon = ({
 							} as React.CSSProperties
 						}
 					/>
-				) : (
+				)}
+				{/* The enquiry glyph is the magnet itself, so the capsule never
+				    holds two versions of one object. */}
+				{!iconSource && type === 'inquiry' && (
+					<ConsultantSearchLoader animated={isSearching} />
+				)}
+				{!iconSource && type !== 'inquiry' && (
 					<span className="chatroomMainInteractionIcon__typeGenerated" />
 				)}
 			</span>

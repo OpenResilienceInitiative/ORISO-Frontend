@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
-import './sessionsListItem.styles';
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import {
-	getSessionDropdownPosition,
-	HANDOVER_MENU_WIDTH
-} from './sessionDropdownPosition';
+	CARD_MENU_BACKDROP_LAYER,
+	CARD_MENU_LAYER
+} from '../chatMenuDropdown/menuLayers';
+import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
+import './sessionsListItem.styles';
 
 /**
  * Case-handover split button on a session card. Figma: "CARX — Teamberatung
@@ -19,6 +21,9 @@ import {
  * - Batch: primary segment is a "Select case" checkbox toggle, chevron menu
  *   offers "Confirm selection" and "Deselect and close".
  */
+
+/** Menu width; applied inline by `useChatMenuPosition`. */
+const HANDOVER_MENU_WIDTH = 236;
 
 export type CaseHandoverActionState =
 	| 'requestAccess'
@@ -51,6 +56,11 @@ interface CaseHandoverActionButtonProps {
 	selected?: boolean;
 	/** Batch mode: card cannot be selected (already granted/pending). */
 	disabled?: boolean;
+	/**
+	 * The card the button sits in; the menu opens beside it, never on top.
+	 * Without it the menu only avoids the chevron.
+	 */
+	surfaceRef?: React.RefObject<HTMLElement | null>;
 	onRequestAccess?: () => void;
 	onToggleSelect?: () => void;
 	onSelectMultiple?: () => void;
@@ -144,6 +154,7 @@ export const CaseHandoverActionButton = ({
 	batchMode = false,
 	selected = false,
 	disabled = false,
+	surfaceRef,
 	onRequestAccess,
 	onToggleSelect,
 	onSelectMultiple,
@@ -151,24 +162,20 @@ export const CaseHandoverActionButton = ({
 	onDeselectAndClose
 }: CaseHandoverActionButtonProps) => {
 	const [menuOpen, setMenuOpen] = useState(false);
-	const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 	const rootRef = useRef<HTMLDivElement | null>(null);
 	const toggleRef = useRef<HTMLButtonElement | null>(null);
 	const menuRef = useRef<HTMLDivElement | null>(null);
 	const menuId = useId();
-
-	const updateMenuPosition = useCallback(() => {
-		if (!toggleRef.current) {
-			return;
-		}
-		setMenuPosition(
-			getSessionDropdownPosition(
-				toggleRef.current.getBoundingClientRect(),
-				window.innerWidth,
-				HANDOVER_MENU_WIDTH
-			)
-		);
-	}, []);
+	// Same placement chain as the chat-room menu: beside the card first, then
+	// below/above. The hook follows scroll and resize on its own.
+	const menuPosition = useChatMenuPosition({
+		open: menuOpen,
+		anchorRef: toggleRef,
+		menuRef,
+		surfaceRef,
+		width: HANDOVER_MENU_WIDTH
+	});
+	const placement = menuPosition['--chat-menu-placement'];
 
 	useEffect(() => {
 		if (!menuOpen) {
@@ -194,16 +201,12 @@ export const CaseHandoverActionButton = ({
 		document.addEventListener('mousedown', handleOutsidePointer);
 		document.addEventListener('touchstart', handleOutsidePointer);
 		document.addEventListener('keydown', handleEscape);
-		window.addEventListener('scroll', updateMenuPosition, true);
-		window.addEventListener('resize', updateMenuPosition);
 		return () => {
 			document.removeEventListener('mousedown', handleOutsidePointer);
 			document.removeEventListener('touchstart', handleOutsidePointer);
 			document.removeEventListener('keydown', handleEscape);
-			window.removeEventListener('scroll', updateMenuPosition, true);
-			window.removeEventListener('resize', updateMenuPosition);
 		};
-	}, [menuOpen, updateMenuPosition]);
+	}, [menuOpen]);
 
 	const isStatusPill = !batchMode && state !== 'requestAccess';
 	const label = batchMode
@@ -271,6 +274,15 @@ export const CaseHandoverActionButton = ({
 			ref={rootRef}
 			data-cy="case-handover-action"
 		>
+			<MenuBackdrop
+				open={menuOpen}
+				spotlightRef={surfaceRef}
+				onClose={() => {
+					setMenuOpen(false);
+					toggleRef.current?.focus();
+				}}
+				zIndex={CARD_MENU_BACKDROP_LAYER}
+			/>
 			<button
 				type="button"
 				className="sessionsListItem__handoverActionPrimary"
@@ -301,9 +313,6 @@ export const CaseHandoverActionButton = ({
 				className="sessionsListItem__handoverActionToggle"
 				onClick={(event) => {
 					event.stopPropagation();
-					if (!menuOpen) {
-						updateMenuPosition();
-					}
 					setMenuOpen(!menuOpen);
 				}}
 				onKeyDown={(event) => {
@@ -328,10 +337,8 @@ export const CaseHandoverActionButton = ({
 						role="menu"
 						id={menuId}
 						aria-label={labels.menuLabel}
-						style={{
-							top: `${menuPosition.top}px`,
-							left: `${menuPosition.left}px`
-						}}
+						data-placement={placement}
+						style={{ ...menuPosition, zIndex: CARD_MENU_LAYER }}
 						// Portalled nodes still bubble through the React tree,
 						// so without this a click on the menu chrome would open
 						// the session card underneath.

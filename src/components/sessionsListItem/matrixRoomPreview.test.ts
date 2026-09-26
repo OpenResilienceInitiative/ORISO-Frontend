@@ -4,7 +4,8 @@ import {
 	filterVisibleMatrixPreviewEvents,
 	getLatestMatrixRoomPreview,
 	getLatestTimedMatrixRoomPreview,
-	getPreviewLastMessageType
+	getPreviewLastMessageType,
+	toListPreviewLine
 } from './matrixRoomPreview';
 
 const event = (
@@ -186,6 +187,73 @@ describe('getLatestMatrixRoomPreview', () => {
 		).toEqual({ kind: 'voice', text: null });
 	});
 
+	it('carries the length of a voice message from its info.duration', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						'msgtype': 'm.audio',
+						'body': 'voice-message.ogg',
+						'info': { duration: 42_300, mimetype: 'audio/ogg' },
+						'org.matrix.msc3245.voice': {}
+					},
+					3
+				)
+			])
+		).toEqual({ kind: 'voice', text: null, durationMs: 42_300 });
+	});
+
+	it('ignores a duration that is not a usable number', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						'msgtype': 'm.audio',
+						'body': 'voice-message.ogg',
+						'info': { duration: '42' },
+						'org.matrix.msc3245.voice': {}
+					},
+					3
+				)
+			])
+		).toEqual({ kind: 'voice', text: null });
+	});
+
+	// ORISO's recorder sends a plain m.audio; the length travels in the file name.
+	it('reads an ORISO voice recording and its length from the file name', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.audio',
+						body: 'voice-message-1758600000000-s42-ms42300.webm',
+						info: { mimetype: 'audio/webm', size: 1234 }
+					},
+					3
+				)
+			])
+		).toEqual({ kind: 'voice', text: null, durationMs: 42_000 });
+	});
+
+	it('keeps any other audio file as audio', () => {
+		expect(
+			getLatestMatrixRoomPreview([
+				event(
+					'm.room.message',
+					{
+						msgtype: 'm.audio',
+						body: 'interview-s42-ms42300.webm',
+						info: { mimetype: 'audio/webm' }
+					},
+					3
+				)
+			])
+		).toEqual({ kind: 'audio', text: null });
+	});
+
 	it('ignores edits, reactions and redactions as standalone previews', () => {
 		expect(
 			getLatestMatrixRoomPreview([
@@ -260,5 +328,96 @@ describe('channel of the latest preview (B2 / T24 list prefix)', () => {
 				)
 			])
 		).toEqual({ kind: 'image', text: null, channel: 'thread' });
+	});
+});
+
+describe('preview line of the list card: glyphs, not words', () => {
+	const translate = (key: string) =>
+		({
+			'e2ee.message.encryption.text': 'Verschlüsselte Nachricht',
+			'sessionList.preview.image': 'Bild',
+			'sessionList.preview.audio': 'Audionachricht',
+			'sessionList.preview.channel.supervision': 'Supervision:'
+		})[key] ?? `?${key}`;
+
+	it('shows a thread reply as the thread glyph and the bare text', () => {
+		expect(
+			toListPreviewLine(
+				{ kind: 'text', text: 'Ja, das passt.', channel: 'thread' },
+				translate
+			)
+		).toEqual({ glyphs: ['thread'], text: 'Ja, das passt.' });
+	});
+
+	it('shows a voice message as the voice glyph and its length', () => {
+		expect(
+			toListPreviewLine(
+				{ kind: 'voice', text: null, durationMs: 42_300 },
+				translate
+			)
+		).toEqual({ glyphs: ['voice'], text: '0:42' });
+		expect(
+			toListPreviewLine(
+				{ kind: 'voice', text: null, durationMs: 754_000 },
+				translate
+			)
+		).toEqual({ glyphs: ['voice'], text: '12:34' });
+		expect(
+			toListPreviewLine(
+				{ kind: 'voice', text: null, durationMs: 3_725_000 },
+				translate
+			)
+		).toEqual({ glyphs: ['voice'], text: '1:02:05' });
+	});
+
+	it('shows the voice glyph alone when the length is unknown', () => {
+		expect(
+			toListPreviewLine({ kind: 'voice', text: null }, translate)
+		).toEqual({ glyphs: ['voice'], text: '' });
+	});
+
+	it('marks a voice reply in a thread with both glyphs, thread first', () => {
+		expect(
+			toListPreviewLine(
+				{
+					kind: 'voice',
+					text: null,
+					channel: 'thread',
+					durationMs: 5_000
+				},
+				translate
+			)
+		).toEqual({ glyphs: ['thread', 'voice'], text: '0:05' });
+	});
+
+	it('keeps the words for everything that has no glyph', () => {
+		expect(
+			toListPreviewLine({ kind: 'text', text: 'Hallo' }, translate)
+		).toEqual({ glyphs: [], text: 'Hallo' });
+		expect(
+			toListPreviewLine({ kind: 'image', text: null }, translate)
+		).toEqual({ glyphs: [], text: 'Bild' });
+		expect(
+			toListPreviewLine(
+				{ kind: 'audio', text: null, durationMs: 9_000 },
+				translate
+			)
+		).toEqual({ glyphs: [], text: 'Audionachricht' });
+		expect(
+			toListPreviewLine(
+				{ kind: 'text', text: 'Notiz', channel: 'supervision' },
+				translate
+			)
+		).toEqual({ glyphs: [], text: 'Supervision: Notiz' });
+	});
+
+	it('falls back to the encryption notice when nothing is readable', () => {
+		expect(toListPreviewLine(null, translate)).toEqual({
+			glyphs: [],
+			text: 'Verschlüsselte Nachricht'
+		});
+		expect(
+			toListPreviewLine({ kind: 'encrypted', text: null }, translate)
+		).toEqual({ glyphs: [], text: 'Verschlüsselte Nachricht' });
 	});
 });

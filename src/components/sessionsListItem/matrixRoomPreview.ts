@@ -2,6 +2,10 @@ import { stripReplyFallback } from '../../utils/messageRelations';
 import { toMessagePreviewText } from '../../utils/messagePreviewText';
 import { isErstantwortMessage } from '../erstantwort/erstantwortPayload';
 import { parseMessagePrefixes } from '../message/messageConstants';
+import {
+	isVoiceMessageFileName,
+	voiceDurationMsFromFileName
+} from '../../utils/voiceMessageFileName';
 
 export type MatrixRoomPreviewKind =
 	| 'text'
@@ -26,7 +30,71 @@ export interface MatrixRoomPreview {
 	text: string | null;
 	/** Absent for the main chat. */
 	channel?: MatrixRoomPreviewChannel;
+	/**
+	 * Length of a voice or audio message in milliseconds, from the event's
+	 * `info.duration` (Matrix spec, `m.audio`). Absent when the sender's
+	 * client did not record it.
+	 */
+	durationMs?: number;
 }
+
+/** A glyph that stands in for a word on the list card's preview line. */
+export type ListPreviewGlyph = 'thread' | 'voice';
+
+export interface ListPreviewLine {
+	/** Rendered before the text, in this order. */
+	glyphs: ListPreviewGlyph[];
+	text: string;
+}
+
+const pad2 = (value: number) => String(value).padStart(2, '0');
+
+/** 42_300 → "0:42", 754_000 → "12:34", 3_725_000 → "1:02:05". */
+export const formatVoiceDuration = (durationMs: number): string => {
+	const totalSeconds = Math.round(durationMs / 1000);
+	const hours = Math.floor(totalSeconds / 3600);
+	const minutes = Math.floor((totalSeconds % 3600) / 60);
+	const seconds = totalSeconds % 60;
+	return hours > 0
+		? `${hours}:${pad2(minutes)}:${pad2(seconds)}`
+		: `${minutes}:${pad2(seconds)}`;
+};
+
+/**
+ * The list card's preview line: thread and voice use the chat's glyphs, since a word prefix
+ * crowds the line; voice reads as glyph plus length, other channels keep their word prefix.
+ */
+export const toListPreviewLine = (
+	preview: MatrixRoomPreview | null,
+	translate: (key: string, fallback?: string) => string
+): ListPreviewLine => {
+	if (!preview || preview.kind === 'encrypted') {
+		return {
+			glyphs: [],
+			text: translate('e2ee.message.encryption.text')
+		};
+	}
+	const glyphs: ListPreviewGlyph[] = [];
+	if (preview.channel === 'thread') {
+		glyphs.push('thread');
+	}
+	let text: string;
+	if (preview.kind === 'voice') {
+		glyphs.push('voice');
+		text =
+			preview.durationMs === undefined
+				? ''
+				: formatVoiceDuration(preview.durationMs);
+	} else if (preview.kind === 'text') {
+		text = preview.text || '';
+	} else {
+		text = translate(`sessionList.preview.${preview.kind}`, preview.kind);
+	}
+	if (preview.channel === 'supervision') {
+		text = `${translate('sessionList.preview.channel.supervision')} ${text}`;
+	}
+	return { glyphs, text };
+};
 
 export const getPreviewLastMessageType = (
 	isMatrixBackedSession: boolean,
@@ -138,16 +206,30 @@ const toKindPreview = (
 			const text = toMessagePreviewText(stripReplyFallback(body));
 			return text ? { kind: 'text', text } : null;
 		}
-		case 'm.audio':
+		case 'm.audio': {
+			const duration = content.info?.duration;
+			const recorded = isVoiceMessageFileName(body);
+			const durationMs =
+				typeof duration === 'number' &&
+				Number.isFinite(duration) &&
+				duration >= 0
+					? duration
+					: recorded
+						? voiceDurationMsFromFileName(body)
+						: null;
 			return {
-				kind: Object.prototype.hasOwnProperty.call(
-					content,
-					'org.matrix.msc3245.voice'
-				)
-					? 'voice'
-					: 'audio',
-				text: null
+				kind:
+					recorded ||
+					Object.prototype.hasOwnProperty.call(
+						content,
+						'org.matrix.msc3245.voice'
+					)
+						? 'voice'
+						: 'audio',
+				text: null,
+				...(durationMs === null ? {} : { durationMs })
 			};
+		}
 		case 'm.image':
 			return { kind: 'image', text: null };
 		case 'm.video':

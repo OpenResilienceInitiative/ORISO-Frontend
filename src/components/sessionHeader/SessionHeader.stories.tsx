@@ -33,7 +33,11 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
@@ -117,6 +121,17 @@ const storyUserData = {
 		secret: '',
 		qrCode: ''
 	}
+} as any;
+
+// FE#1115: the request stage is seen by the advice seeker; with no `consultant`
+// yet, the header shows the search indicator instead of an avatar.
+const storyAskerUserData = {
+	...storyUserData,
+	userId: 'asker-4401',
+	userName: 'ruhiges-yak-kim@example.invalid',
+	displayName: 'Ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
 } as any;
 
 /* ------------------------------------------------------------------ *
@@ -326,11 +341,13 @@ const StoryProviders = ({
 	session,
 	members = [],
 	lastActivity,
+	userData = storyUserData,
 	children
 }: {
 	session: ExtendedSessionInterface;
 	members?: MockMember[];
 	lastActivity?: Record<string, number>;
+	userData?: typeof storyUserData;
 	children: React.ReactNode;
 }) => {
 	React.useLayoutEffect(() => installHeaderFetchMocks(), []);
@@ -343,9 +360,9 @@ const StoryProviders = ({
 		<div style={headerShell}>
 			<UserDataContext.Provider
 				value={{
-					userData: storyUserData,
+					userData,
 					setUserData: () => {},
-					reloadUserData: async () => storyUserData
+					reloadUserData: async () => userData
 				}}
 			>
 				<SessionTypeContext.Provider
@@ -445,6 +462,7 @@ const renderSessionHeader = (
 		session: ExtendedSessionInterface;
 		members?: MockMember[];
 		lastActivity?: Record<string, number>;
+		userData?: typeof storyUserData;
 	},
 	showAddButton?: boolean
 ) => (
@@ -452,6 +470,7 @@ const renderSessionHeader = (
 		session={preset.session}
 		members={preset.members}
 		lastActivity={preset.lastActivity}
+		userData={preset.userData}
 	>
 		<SessionHeaderComponent
 			bannedUsers={[]}
@@ -493,6 +512,65 @@ export const mockActiveConversationManyParticipants = () => ({
 		{ userId: '@ali:matrix.storybook.test', name: 'Ali R.' },
 		{ userId: '@jo:matrix.storybook.test', name: 'Jo L.' }
 	]
+});
+
+/** `consultant` is deliberately absent: the capsule's magnet searches and the stack stays away. */
+const buildSearchingSession = (
+	status: typeof STATUS_ENQUIRY | typeof STATUS_EMPTY = STATUS_ENQUIRY
+): ExtendedSessionInterface =>
+	buildExtendedSession(
+		{
+			user: {
+				username: 'ruhiges-yak-kim@example.invalid',
+				displayName: 'Ruhiges Yak Kim',
+				sessionData: {}
+			},
+			language: 'de',
+			session: {
+				id: 4401,
+				agencyId: 101,
+				askerMatrixUserId: ASKER_MATRIX_ID,
+				attachment: null,
+				consultingType: 1,
+				matrixRoomId: 'sb-single-room-4401',
+				e2eLastMessage: null,
+				lastMessage: 'Anfrage gesendet',
+				messageDate: 1773822900,
+				createDate: '2026-03-18T06:15:00.000Z',
+				messagesRead: true,
+				postcode: 12345,
+				registrationType: REGISTRATION_TYPE_REGISTERED,
+				status,
+				videoCallMessageDTO: null,
+				topic: {
+					id: 1,
+					name: 'Familienberatung',
+					description: ''
+				}
+			} as unknown as SessionItemInterface
+		} as ListItemInterface,
+		''
+	);
+
+// 10. Request stage seen by the advice seeker — the search indicator.
+export const mockRequestStageSearching = () => ({
+	session: buildSearchingSession(),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 10b. The asker's own empty enquiry: no counsellor, but nothing is searched for (#1418).
+export const mockAskerEmptyEnquiry = () => ({
+	session: buildSearchingSession(STATUS_EMPTY),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 11. A counsellor accepted: the real avatar takes the indicator's place.
+export const mockRequestStageAccepted = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: roomParticipants,
+	userData: storyAskerUserData
 });
 
 // Asserts the "+" add pill is present and rendered to the LEFT of the type
@@ -824,4 +902,166 @@ export const WaitingRoom: Story = {
  */
 export const Inquiry: Story = {
 	render: () => renderSessionHeader(mockInquiry())
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1115 — request stage: "searching for a counsellor"
+ * ------------------------------------------------------------------ */
+
+/** FE#1115: exactly one magnet, inside the capsule, whose beam fades only outside it. */
+const expectMagnetSearchesFromInsideTheCapsule = async (
+	canvasElement: HTMLElement
+) => {
+	const magnet = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.consultantSearchLoader'
+		);
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	const capsule = canvasElement.querySelector<HTMLElement>(
+		'.chatroomMainInteractionIcon'
+	)!;
+
+	// 1. One magnet, and it is inside the capsule.
+	await expect(
+		canvasElement.querySelectorAll('.consultantSearchLoader')
+	).toHaveLength(1);
+	await expect(capsule.contains(magnet)).toBe(true);
+	await expect(
+		canvasElement.querySelector(
+			'.chatroomMainInteractionIcon__typeGenerated'
+		)
+	).toBeNull();
+	await expect(
+		capsule.classList.contains('chatroomMainInteractionIcon--searching')
+	).toBe(true);
+
+	// 2. Nothing clips the beam, from the magnet up to the header itself.
+	let ancestor: HTMLElement | null = magnet;
+	while (ancestor && !ancestor.classList.contains('sessionInfo')) {
+		await expect(getComputedStyle(ancestor).overflow).toBe('visible');
+		ancestor = ancestor.parentElement;
+	}
+
+	// 3. Opaque when crossing the capsule's edge, spent well outside it. The pulse is
+	//    one-shot, so start it here and step frozen animations through it.
+	const sweep = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__sweep'
+	)!;
+	const beam = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__beam'
+	)!;
+	magnet.classList.add('consultantSearchLoader--pulsing');
+	sweep.getAnimations().forEach((animation) => animation.pause());
+	const capsuleBox = capsule.getBoundingClientRect();
+	const flight = Number(
+		beam.getAnimations()[0]!.effect!.getTiming().duration
+	);
+	const at = (fraction: number) => {
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight * fraction;
+		});
+		return {
+			box: beam.getBoundingClientRect(),
+			opacity: Number.parseFloat(getComputedStyle(beam).opacity)
+		};
+	};
+	const crossing = at(0.6);
+	await expect(crossing.box.right).toBeGreaterThan(capsuleBox.right);
+	await expect(crossing.opacity).toBeGreaterThan(0.8);
+	const spent = at(1);
+	await expect(spent.box.right).toBeGreaterThan(crossing.box.right);
+	await expect(spent.opacity).toBeLessThan(0.1);
+
+	// 4. Between pulses the magnet is still: no permanent spin in the header.
+	magnet.classList.remove('consultantSearchLoader--pulsing');
+	await expect(getComputedStyle(beam).animationName).toBe('none');
+	await expect(getComputedStyle(sweep).animationName).toBe('none');
+
+	return { magnet, capsule, capsuleBox };
+};
+
+/** The advice seeker's request stage at 1440 px: one magnet, beam fading outside the capsule. */
+export const RequestStageSearching: Story = {
+	name: 'Request stage — searching for a counsellor (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** The same stage on a tablet (834 px). */
+export const RequestStageSearchingTablet: Story = {
+	name: 'Request stage — searching, tablet 834 px (FE#1115)',
+	globals: tablet834Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** The same stage on the phone (390 px), where no row clip may cut the beam. */
+export const RequestStageSearchingPhone: Story = {
+	name: 'Request stage — searching, phone 390 px (FE#1115)',
+	globals: phone390Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** Only an enquiry is searched for (#1418): an empty one keeps its waiting clock and avatar stack. */
+export const RequestStageEmptyEnquiry: Story = {
+	name: 'Request stage — own empty enquiry: no magnet, stack stays (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockAskerEmptyEnquiry()),
+	play: async ({ canvasElement }) => {
+		const capsule = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.chatroomMainInteractionIcon'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--waiting')
+		).toBe(true);
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--searching')
+		).toBe(false);
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader')
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-participants"]'
+			)
+		).toBeTruthy();
+	}
+};
+
+/** Once a counsellor accepts, the search stops and the participant stack returns. */
+export const RequestStageAccepted: Story = {
+	name: 'Request stage — counsellor accepted (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageAccepted()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).toBeTruthy();
+		});
+		// The still enquiry glyph may stay; only the searching state must go.
+		await expect(
+			canvasElement.querySelector(
+				'.chatroomMainInteractionIcon--searching'
+			)
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader--animated')
+		).toBeNull();
+	}
 };

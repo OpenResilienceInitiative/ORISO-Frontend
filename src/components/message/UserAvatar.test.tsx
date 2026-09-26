@@ -65,6 +65,30 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 		);
 	});
 
+	it('keeps the grey outline unless it is switched off', () => {
+		const { rerender } = render(
+			<UserAvatar username="u" userId="@u:x" ring={false} />
+		);
+		const circle = () =>
+			screen.getByTestId('user-avatar').firstElementChild as HTMLElement;
+		expect(circle().style.borderWidth).toBe('2px');
+		expect(circle().style.borderStyle).toBe('solid');
+		expect(circle().style.boxShadow).not.toBe('none');
+
+		rerender(
+			<UserAvatar
+				username="u"
+				userId="@u:x"
+				ring={false}
+				outline={false}
+			/>
+		);
+		expect(circle().style.borderWidth).toBe('0px');
+		expect(circle().style.boxShadow).toBe('none');
+		// The footprint does not move when the outline goes.
+		expect(circle().style.width).toBe('32px');
+	});
+
 	it('falls back to the username when there is no user id', () => {
 		render(<UserAvatar username="fallback-user" userId="" />);
 		expect(animalBackground(screen.getByTestId('user-avatar'))).toMatch(

@@ -21,6 +21,10 @@ const mapMembersToRoomUsers = (members: any[]): RoomUser[] =>
 			};
 		});
 
+const MEMBER_RETRY_INITIAL_DELAY_MS = 500;
+const MEMBER_RETRY_MAX_DELAY_MS = 8000;
+const MEMBER_RETRY_MAX_ATTEMPTS = 8;
+
 /**
  * Members of the active session's Matrix room, in the shape the legacy
  * the room-members context provides. Sessions without a
@@ -51,19 +55,38 @@ export const useMatrixRoomUsers = (): {
 
 		let cancelled = false;
 		let retryTimer: number | null = null;
+		let retryAttempt = 0;
 		let detachMembersListener: (() => void) | null = null;
+		let refreshPromise: Promise<boolean> | null = null;
 
+		// Resolves true only once the homeserver delivered the full membership;
+		// the transport swallows a failed load and returns the partial cache.
 		const refreshMembers = () => {
-			chatTransportService
+			if (refreshPromise) return refreshPromise;
+
+			refreshPromise = chatTransportService
 				.loadMatrixRoomMembers(matrixRoomId)
 				.then((members) => {
 					if (!cancelled) {
-						setUsers(mapMembersToRoomUsers(members));
+						const next = mapMembersToRoomUsers(members);
+						setUsers((current) =>
+							current.length === 0 && next.length === 0
+								? current
+								: next
+						);
 					}
+					return Boolean(
+						chatTransportService
+							.getMatrixRoom(matrixRoomId)
+							?.membersLoaded?.()
+					);
 				})
-				.catch(() => {
-					// keep the previous member state on transient errors
+				.catch(() => false)
+				.finally(() => {
+					refreshPromise = null;
 				});
+
+			return refreshPromise;
 		};
 
 		const attachMembersListener = () => {
@@ -74,26 +97,32 @@ export const useMatrixRoomUsers = (): {
 			return Boolean(detachMembersListener);
 		};
 
-		refreshMembers();
+		// The client can exist before the room reaches its sync store. Retry with
+		// backoff and give up after a bound, since every message mounts this hook.
+		const retryUntilComplete = (membersComplete: boolean) => {
+			if (cancelled) return;
+			if (membersComplete && detachMembersListener) return;
+			if (retryAttempt >= MEMBER_RETRY_MAX_ATTEMPTS) return;
 
-		// The Matrix client may not be initialized yet (e.g. right after
-		// login) — retry until it is, then re-read the members once.
-		if (!attachMembersListener()) {
-			retryTimer = window.setInterval(() => {
-				if (attachMembersListener()) {
-					if (retryTimer) {
-						window.clearInterval(retryTimer);
-						retryTimer = null;
-					}
-					refreshMembers();
-				}
-			}, 500);
-		}
+			const delay = Math.min(
+				MEMBER_RETRY_INITIAL_DELAY_MS * 2 ** retryAttempt,
+				MEMBER_RETRY_MAX_DELAY_MS
+			);
+			retryAttempt += 1;
+			retryTimer = window.setTimeout(() => {
+				retryTimer = null;
+				if (!detachMembersListener) attachMembersListener();
+				refreshMembers().then(retryUntilComplete);
+			}, delay);
+		};
+
+		refreshMembers().then(retryUntilComplete);
+		attachMembersListener();
 
 		return () => {
 			cancelled = true;
 			if (retryTimer) {
-				window.clearInterval(retryTimer);
+				window.clearTimeout(retryTimer);
 			}
 			detachMembersListener?.();
 		};

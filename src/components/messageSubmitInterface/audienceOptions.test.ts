@@ -5,6 +5,7 @@ import {
 	audienceIdentityKeys,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
@@ -128,6 +129,12 @@ describe('classifyAudienceKind', () => {
 	it('recognises a consultant', () => {
 		expect(classifyAudienceKind('@consultant42:example.org', roster)).toBe(
 			'consultant'
+		);
+	});
+
+	it('can classify unknown self-help room members as askers', () => {
+		expect(classifyAudienceKind('@joined-asker:x', roster, 'asker')).toBe(
+			'asker'
 		);
 	});
 
@@ -549,5 +556,19 @@ describe('createIdentityLookup', () => {
 
 		expect(lookup.size).toBe(0);
 		expect(lookup.get('')).toBeUndefined();
+	});
+});
+
+describe('unmatchedMemberKind', () => {
+	it('counts an unmatched self-help member as a client only once counsellors are known', () => {
+		expect(unmatchedMemberKind(true, 'ready')).toBe('asker');
+		// An asker has no directory; counsellors come from the session itself.
+		expect(unmatchedMemberKind(true, 'unavailable')).toBe('asker');
+	});
+
+	it('leaves members unclassified while counsellor identities are unresolved', () => {
+		expect(unmatchedMemberKind(true, 'loading')).toBe('person');
+		expect(unmatchedMemberKind(true, 'error')).toBe('person');
+		expect(unmatchedMemberKind(false, 'ready')).toBe('person');
 	});
 });
