@@ -20,4 +20,4 @@ ${platformName!''}, ${orgName!''} tarafından sunulan bir hizmettir.
 Veri koruma: ${privacyUrl!''}
 Künye: ${imprintUrl!''}
 
-Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.
+Bu e-posta, e-posta adresinizin değiştiğini bildirir. Bu güvenlik bildiriminden çıkamazsınız. Lütfen yanıtlamayınız.

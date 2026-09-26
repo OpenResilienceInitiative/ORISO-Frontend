@@ -20,4 +20,4 @@ Nous ne vous demandons jamais votre mot de passe par e-mail. Nous vous signalons
 Protection des données: {{privacyUrl}}
 Mentions légales: {{imprintUrl}}
 
-Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.
+Cet e-mail vous informe d’un changement de votre adresse e-mail. Vous ne pouvez pas désactiver cet avis de sécurité. Merci de ne pas y répondre.

@@ -114,7 +114,7 @@ export const ru: Record<EmailId, EmailContent> = {
 		footnote:
 			'Если Вы этого не запрашивали, просто не обращайте внимания на это письмо. Пароль останется прежним.',
 		assurance,
-		footer
+		footer: securityFooter
 	},
 
 	'termin': {
@@ -479,6 +479,10 @@ export const ru: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'В профиль', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Это письмо сообщает об изменении адреса электронной почты. Отключить такое уведомление безопасности нельзя. Пожалуйста, не отвечайте на него.'
+		}
 	}
 };

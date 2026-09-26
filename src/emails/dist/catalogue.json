@@ -1,1229 +1,1239 @@
 {
-	"dialects": ["plain", "thymeleaf", "freemarker"],
-	"tones": ["de-sie", "de-du", "en", "fr", "ru", "ti", "tr"],
-	"locales": {
-		"de-sie": {
-			"lang": "de",
-			"dir": "ltr",
-			"provenance": "source",
-			"release": "released"
-		},
-		"de-du": {
-			"lang": "de",
-			"dir": "ltr",
-			"provenance": "human",
-			"release": "released"
-		},
-		"en": {
-			"lang": "en",
-			"dir": "ltr",
-			"provenance": "human",
-			"release": "released"
-		},
-		"fr": {
-			"lang": "fr",
-			"dir": "ltr",
-			"provenance": "machine",
-			"release": "pending-human-review"
-		},
-		"ru": {
-			"lang": "ru",
-			"dir": "ltr",
-			"provenance": "machine",
-			"release": "pending-human-review"
-		},
-		"ti": {
-			"lang": "ti",
-			"dir": "ltr",
-			"provenance": "machine",
-			"release": "pending-human-review"
-		},
-		"tr": {
-			"lang": "tr",
-			"dir": "ltr",
-			"provenance": "machine",
-			"release": "pending-human-review"
-		}
-	},
-	"mails": {
-		"neue-nachricht": {
-			"audience": "asker",
-			"class": "personal",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{messageUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Sie haben eine neue Nachricht",
-					"preheader": "In Ihrer Beratung liegt eine neue Nachricht für Sie bereit."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Du hast eine neue Nachricht",
-					"preheader": "In deiner Beratung liegt eine neue Nachricht für dich bereit."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "You have a new message",
-					"preheader": "A new message is waiting for you in your counselling."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Vous avez un nouveau message",
-					"preheader": "Un nouveau message vous attend dans votre service de conseil."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Для Вас есть новое сообщение",
-					"preheader": "В Вашей консультации Вас ждёт новое сообщение."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ሓድሽ መልእኽቲ በጺሑኩም ኣሎ",
-					"preheader": "ኣብ ምኽርኹም ሓድሽ መልእኽቲ ይጽበየኩም ኣሎ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Yeni bir mesajınız var",
-					"preheader": "Danışmanlığınızda sizin için yeni bir mesaj hazır."
-				}
-			}
-		},
-		"willkommen": {
-			"audience": "asker",
-			"class": "personal",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{username}}",
-				"{{loginUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Willkommen bei {{platformName}}",
-					"preheader": "Ihr anonymer Zugang ist eingerichtet – so geht es weiter."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Willkommen bei {{platformName}}",
-					"preheader": "Dein anonymer Zugang ist eingerichtet – so geht es weiter."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Welcome to {{platformName}}",
-					"preheader": "Your anonymous account is ready – here is what happens next."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Bienvenue sur {{platformName}}",
-					"preheader": "Votre accès anonyme est prêt – voici la suite."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Добро пожаловать на {{platformName}}",
-					"preheader": "Ваш анонимный доступ создан — вот что дальше."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "እንኳዕ ናብ {{platformName}} ብደሓን መጻእኩም",
-					"preheader": "ስም ኣልቦ መእተዊኹም ተዳልዩ ኣሎ – ቀጺሉ ዘሎ ስጉምቲ እዚ እዩ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{platformName}} platformuna hoş geldiniz",
-					"preheader": "Anonim erişiminiz hazır – bundan sonrası şöyle."
-				}
-			}
-		},
-		"passwort-zuruecksetzen": {
-			"audience": "asker",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{expiryHours}}",
-				"{{resetUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Neues Passwort festlegen",
-					"preheader": "Der Link ist {{expiryHours}} Stunden gültig."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Neues Passwort festlegen",
-					"preheader": "Der Link ist {{expiryHours}} Stunden gültig."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Set a new password",
-					"preheader": "The link is valid for {{expiryHours}} hours."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Définir un nouveau mot de passe",
-					"preheader": "Le lien est valable {{expiryHours}} heures."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Задать новый пароль",
-					"preheader": "Ссылка действительна {{expiryHours}} часов."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ሓድሽ መሕለፊ ቃል ኣቐምጡ",
-					"preheader": "እቲ መላግቦ ን{{expiryHours}} ሰዓታት ይሰርሕ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Yeni şifre belirleyin",
-					"preheader": "Bağlantı {{expiryHours}} saat geçerlidir."
-				}
-			}
-		},
-		"termin": {
-			"audience": "asker",
-			"class": "personal",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{appointmentDate}}",
-				"{{appointmentTime}}",
-				"{{appointmentType}}",
-				"{{locationName}}",
-				"{{locationAddress}}",
-				"{{appointmentUrl}}",
-				"{{mapUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Ihr Termin am {{appointmentDate}}",
-					"preheader": "{{appointmentDate}}, {{appointmentTime}} Uhr – {{appointmentType}}."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Dein Termin am {{appointmentDate}}",
-					"preheader": "{{appointmentDate}}, {{appointmentTime}} Uhr – {{appointmentType}}."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Your appointment on {{appointmentDate}}",
-					"preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Votre rendez-vous du {{appointmentDate}}",
-					"preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Ваша встреча {{appointmentDate}}",
-					"preheader": "{{appointmentDate}}, {{appointmentTime}} — {{appointmentType}}."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ቆጸራኹም ኣብ {{appointmentDate}}",
-					"preheader": "{{appointmentDate}}፣ {{appointmentTime}} – {{appointmentType}}።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{appointmentDate}} tarihli randevunuz",
-					"preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
-				}
-			}
-		},
-		"beraterin-kontakt": {
-			"audience": "asker",
-			"class": "requested",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{consultantName}}",
-				"{{consultantPhone}}",
-				"{{consultantHours}}",
-				"{{consultantEmail}}",
-				"{{bookingUrl}}",
-				"{{messageUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "So erreichen Sie Ihre Beratung",
-					"preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "So erreichst du deine Beratung",
-					"preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "How to reach your counselling service",
-					"preheader": "Direct line, phone hours and booking at a glance."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Comment joindre votre service de conseil",
-					"preheader": "Ligne directe, horaires et prise de rendez-vous en un coup d’œil."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Как связаться с Вашей консультацией",
-					"preheader": "Прямой номер, часы приёма и запись — на одном экране."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ንኣገልግሎት ምኽርኹም ብኸመይ ትረኽብዎ",
-					"preheader": "ቀጥታዊ ስልኪ፣ ናይ ስራሕ ሰዓታትን ቆጸራን ብሓንሳብ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Danışmanlığınıza nasıl ulaşırsınız",
-					"preheader": "Doğrudan hat, görüşme saatleri ve randevu tek bakışta."
-				}
-			}
-		},
-		"anfrage-zugewiesen": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{requestTopic}}",
-				"{{requestPostcode}}",
-				"{{requestReceivedAt}}",
-				"{{requestUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Neue Beratungsanfrage",
-					"preheader": "Eine neue Anfrage wartet auf Sie."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Neue Beratungsanfrage",
-					"preheader": "Eine neue Anfrage wartet auf dich."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "New counselling request",
-					"preheader": "A new request is waiting for you."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Nouvelle demande de conseil",
-					"preheader": "Une nouvelle demande vous attend."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Новый запрос на консультацию",
-					"preheader": "Вас ждёт новый запрос."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ሓድሽ ሕቶ ምኽሪ",
-					"preheader": "ሓድሽ ሕቶ ይጽበየኩም ኣሎ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Yeni danışmanlık talebi",
-					"preheader": "Yeni bir talep sizi bekliyor."
-				}
-			}
-		},
-		"systemhinweis": {
-			"audience": "asker",
-			"class": "service",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{maintenanceDate}}",
-				"{{maintenanceStart}}",
-				"{{maintenanceEnd}}",
-				"{{statusUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Geplante Wartung am {{maintenanceDate}}",
-					"preheader": "{{maintenanceStart}} bis {{maintenanceEnd}} Uhr nicht erreichbar."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Geplante Wartung am {{maintenanceDate}}",
-					"preheader": "{{maintenanceStart}} bis {{maintenanceEnd}} Uhr nicht erreichbar."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Scheduled maintenance on {{maintenanceDate}}",
-					"preheader": "Unavailable from {{maintenanceStart}} to {{maintenanceEnd}}."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Maintenance prévue le {{maintenanceDate}}",
-					"preheader": "Indisponible de {{maintenanceStart}} à {{maintenanceEnd}}."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Плановые работы {{maintenanceDate}}",
-					"preheader": "Недоступно с {{maintenanceStart}} до {{maintenanceEnd}}."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ብመደብ ዝተታሕዘ ጽገና ኣብ {{maintenanceDate}}",
-					"preheader": "ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{maintenanceDate}} tarihinde planlı bakım",
-					"preheader": "{{maintenanceStart}} – {{maintenanceEnd}} arasında erişilemez."
-				}
-			}
-		},
-		"neue-anfrage": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{requestTopic}}",
-				"{{requestPostcode}}",
-				"{{requestReceivedAt}}",
-				"{{requestUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Neue Anfrage in Ihrer Beratungsstelle",
-					"preheader": "Eine Anfrage wartet auf Annahme."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Neue Anfrage in deiner Beratungsstelle",
-					"preheader": "Eine Anfrage wartet auf Annahme."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "New enquiry at your counselling service",
-					"preheader": "An enquiry is waiting to be accepted."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Nouvelle demande dans votre centre de consultation",
-					"preheader": "Une demande attend d’être acceptée."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Новый запрос в Вашем консультационном центре",
-					"preheader": "Запрос ждёт, чтобы его приняли."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ኣብ ማእከል ምኽርኹም ሓድሽ ሕቶ",
-					"preheader": "ሓደ ሕቶ ክቕበሎ ዝጽበ ኣሎ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Danışma merkezinizde yeni talep",
-					"preheader": "Bir talep kabul edilmeyi bekliyor."
-				}
-			}
-		},
-		"direkte-anfrage": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{requestTopic}}",
-				"{{requestReceivedAt}}",
-				"{{requestUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Eine Anfrage richtet sich direkt an Sie",
-					"preheader": "Diese Anfrage wurde für Sie geschrieben."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Eine Anfrage richtet sich direkt an dich",
-					"preheader": "Diese Anfrage wurde für dich geschrieben."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "An enquiry is addressed to you directly",
-					"preheader": "This enquiry was written for you."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Une demande vous est adressée directement",
-					"preheader": "Cette demande a été écrite pour vous."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Запрос адресован лично Вам",
-					"preheader": "Этот запрос написан для Вас."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ሓደ ሕቶ ብቐጥታ ናባኹም ዝቐንዐ እዩ",
-					"preheader": "እዚ ሕቶ ንዓኹም ተጻሒፉ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Bir talep doğrudan size yönelik",
-					"preheader": "Bu talep sizin için yazıldı."
-				}
-			}
-		},
-		"tagesuebersicht": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{openRequestCount}}",
-				"{{oldestRequestAge}}",
-				"{{digestGeneratedAt}}",
-				"{{requestUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Ihre Tagesübersicht",
-					"preheader": "Offene Anfragen in Ihrer Beratungsstelle."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Deine Tagesübersicht",
-					"preheader": "Offene Anfragen in deiner Beratungsstelle."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Your daily summary",
-					"preheader": "Open enquiries at your counselling service."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Votre récapitulatif du jour",
-					"preheader": "Demandes en attente dans votre centre de consultation."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Ваша сводка за день",
-					"preheader": "Открытые запросы в Вашем консультационном центре."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "መዓልታዊ ጽማቕኩም",
-					"preheader": "ኣብ ማእከል ምኽርኹም ዘለዉ ክፉታት ሕቶታት።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Günlük özetiniz",
-					"preheader": "Danışma merkezinizdeki açık talepler."
-				}
-			}
-		},
-		"uebergabe-angefragt": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{fromConsultantName}}",
-				"{{caseReference}}",
-				"{{requestReceivedAt}}",
-				"{{requestUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Übergabe angefragt",
-					"preheader": "Eine Beratung soll an Sie übergeben werden."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Übergabe angefragt",
-					"preheader": "Eine Beratung soll an dich übergeben werden."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Handover requested",
-					"preheader": "A counselling case is to be handed over to you."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Transfert demandé",
-					"preheader": "Une consultation doit vous être transférée."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Запрошена передача",
-					"preheader": "Консультацию предлагают передать Вам."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ምትሕልላፍ ተሓቲቱ",
-					"preheader": "ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Devir talebi",
-					"preheader": "Bir danışmanlığın size devredilmesi isteniyor."
-				}
-			}
-		},
-		"uebergabe-bestaetigt": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{toConsultantName}}",
-				"{{caseReference}}",
-				"{{handoverAt}}",
-				"{{requestUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Übergabe bestätigt",
-					"preheader": "Die Zuständigkeit hat gewechselt."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Übergabe bestätigt",
-					"preheader": "Die Zuständigkeit hat gewechselt."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Handover confirmed",
-					"preheader": "Responsibility has changed."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Transfert confirmé",
-					"preheader": "La responsabilité a changé."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Передача подтверждена",
-					"preheader": "Ответственность перешла к другому специалисту."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ምትሕልላፍ ተረጋጊጹ",
-					"preheader": "እቲ ሓላፍነት ተቐዪሩ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Devir onaylandı",
-					"preheader": "Sorumluluk değişti."
-				}
-			}
-		},
-		"rueckmeldung": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{caseReference}}",
-				"{{requestReceivedAt}}",
-				"{{messageUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Neue Rückmeldung im Fachaustausch",
-					"preheader": "Im Fachaustausch liegt eine Rückmeldung für Sie."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Neue Rückmeldung im Fachaustausch",
-					"preheader": "Im Fachaustausch liegt eine Rückmeldung für dich."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "New reply in the professional exchange",
-					"preheader": "A reply is waiting for you in the professional exchange."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Nouveau retour dans l’échange entre professionnels",
-					"preheader": "Un retour vous attend dans l’échange entre professionnels."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Новый отклик в профессиональном обмене",
-					"preheader": "В профессиональном обмене Вас ждёт отклик."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ",
-					"preheader": "ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Uzmanlar arası paylaşımda yeni geri bildirim",
-					"preheader": "Uzmanlar arası paylaşımda sizin için bir geri bildirim var."
-				}
-			}
-		},
-		"mitteilung": {
-			"audience": "asker",
-			"class": "service",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{messageSubject}}",
-				"{{messagePreview}}",
-				"{{messageHeadline}}",
-				"{{messageBody}}",
-				"{{loginUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				},
-				"en": {
-					"lang": "en",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
-				}
-			}
-		},
-		"anmeldelink": {
-			"audience": "asker",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{expiryMinutes}}",
-				"{{loginUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Ihr Anmeldelink für {{platformName}}",
-					"preheader": "Der Link gilt {{expiryMinutes}} Minuten."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Dein Anmeldelink für {{platformName}}",
-					"preheader": "Der Link gilt {{expiryMinutes}} Minuten."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Your sign-in link for {{platformName}}",
-					"preheader": "The link is valid for {{expiryMinutes}} minutes."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Votre lien de connexion pour {{platformName}}",
-					"preheader": "Le lien est valable {{expiryMinutes}} minutes."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Ваша ссылка для входа на {{platformName}}",
-					"preheader": "Ссылка действует {{expiryMinutes}} минут."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ናይ {{platformName}} መእተዊ መላግቦኹም",
-					"preheader": "እቲ መላግቦ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{platformName}} için giriş bağlantınız",
-					"preheader": "Bağlantı {{expiryMinutes}} dakika geçerlidir."
-				}
-			}
-		},
-		"einmalcode": {
-			"audience": "asker",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{expiryMinutes}}",
-				"{{otpCode}}",
-				"{{loginUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Ihr Einmalcode für die Anmeldung",
-					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Dein Einmalcode für die Anmeldung",
-					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Your one-time code for signing in",
-					"preheader": "The code is valid for {{expiryMinutes}} minutes."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Votre code à usage unique pour la connexion",
-					"preheader": "Le code est valable {{expiryMinutes}} minutes."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Ваш одноразовый код для входа",
-					"preheader": "Код действует {{expiryMinutes}} минут."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ንመእተዊ ዝኸውን ናይ ሓደ ግዜ ኮድኩም",
-					"preheader": "እቲ ኮድ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Giriş için tek kullanımlık kodunuz",
-					"preheader": "Kod {{expiryMinutes}} dakika geçerlidir."
-				}
-			}
-		},
-		"email-geaendert": {
-			"audience": "asker",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{username}}",
-				"{{appUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Ihre E-Mail-Adresse wurde geändert",
-					"preheader": "Die Änderung ist ab sofort aktiv."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Deine E-Mail-Adresse wurde geändert",
-					"preheader": "Die Änderung ist ab sofort aktiv."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Your email address has been changed",
-					"preheader": "The change is active from now on."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Votre adresse e-mail a été modifiée",
-					"preheader": "La modification est active dès maintenant."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Ваш адрес электронной почты изменён",
-					"preheader": "Изменение действует с этого момента."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ኢመይል ኣድራሻኹም ተቐዪሩ",
-					"preheader": "እቲ ለውጢ ካብ ሕጂ ጀሚሩ ይሰርሕ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "E-posta adresiniz değiştirildi",
-					"preheader": "Değişiklik şu andan itibaren geçerli."
-				}
-			}
-		},
-		"einladung-traeger": {
-			"audience": "admin",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{tenantName}}",
-				"{{inviteExpiresAt}}",
-				"{{inviteUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Einladung: {{tenantName}} bei {{platformName}}",
-					"preheader": "Richten Sie Ihren Zugang zur Administration ein."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Einladung: {{tenantName}} bei {{platformName}}",
-					"preheader": "Richte deinen Zugang zur Administration ein."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Invitation: {{tenantName}} on {{platformName}}",
-					"preheader": "Set up your administration access."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Invitation : {{tenantName}} sur {{platformName}}",
-					"preheader": "Configurez votre accès à l’administration."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Приглашение: {{tenantName}} на {{platformName}}",
-					"preheader": "Настройте свой доступ к администрированию."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ዕድመ፦ {{tenantName}} ኣብ {{platformName}}",
-					"preheader": "ናይ ምምሕዳር መእተዊኹም ኣዳልዉ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Davet: {{platformName}} üzerinde {{tenantName}}",
-					"preheader": "Yönetim erişiminizi kurun."
-				}
-			}
-		},
-		"einladung-fachkraft": {
-			"audience": "consultant",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{agencyName}}",
-				"{{inviteExpiresAt}}",
-				"{{inviteUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Einladung in die Beratung bei {{platformName}}",
-					"preheader": "Richten Sie Ihren Zugang als Fachkraft ein."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Einladung in die Beratung bei {{platformName}}",
-					"preheader": "Richte deinen Zugang als Fachkraft ein."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Invitation to counsel on {{platformName}}",
-					"preheader": "Set up your counsellor access."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Invitation au service de conseil sur {{platformName}}",
-					"preheader": "Configurez votre accès en tant que professionnel."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Приглашение в консультацию на {{platformName}}",
-					"preheader": "Настройте свой доступ как специалист."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ኣብ {{platformName}} ናብ ምኽሪ ዕድመ",
-					"preheader": "ከም ክኢላ መእተዊኹም ኣዳልዉ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{platformName}} üzerinde danışmanlığa davet",
-					"preheader": "Uzman erişiminizi kurun."
-				}
-			}
-		},
-		"avv-unterschrift": {
-			"audience": "admin",
-			"class": "legal",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{tenantName}}",
-				"{{dpaProvidedAt}}",
-				"{{dpaExpiresAt}}",
-				"{{dpaUrl}}",
-				"{{tenantNameDative}}",
-				"{{offeringName}}",
-				"{{operatorName}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Vertragsunterlagen für {{tenantName}}",
-					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Vertragsunterlagen für {{tenantName}}",
-					"preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "Contract documents for {{tenantName}}",
-					"preheader": "The contract documents for {{tenantName}} are ready."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Documents contractuels pour {{tenantName}}",
-					"preheader": "Les documents contractuels pour {{tenantName}} sont disponibles."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Договорные документы для {{tenantName}}",
-					"preheader": "Договорные документы для {{tenantName}} готовы."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ናይ ውዕል ሰነዳት ን{{tenantName}}",
-					"preheader": "ናይ ውዕል ሰነዳት ን{{tenantName}} ተዳልዮም ኣለዉ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{tenantName}} için sözleşme belgeleri",
-					"preheader": "{{tenantName}} için sözleşme belgeleri hazır."
-				}
-			}
-		},
-		"einladung-freitext": {
-			"audience": "admin",
-			"class": "security",
-			"unsubscribable": false,
-			"placeholders": [
-				"{{subject}}",
-				"{{preheader}}",
-				"{{bodyHtml}}",
-				"{{ctaBlock}}",
-				"{{assuranceBlock}}",
-				"{{offeringName}}",
-				"{{operatorName}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{footerNote}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				},
-				"en": {
-					"lang": "en",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "{{subject}}",
-					"preheader": "{{preheader}}"
-				}
-			}
-		},
-		"team-aenderung": {
-			"audience": "consultant",
-			"class": "operational",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{teamChangeStatement}}",
-				"{{caseReference}}",
-				"{{teamChangedAt}}",
-				"{{appUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "Änderung in Ihrem Team",
-					"preheader": "Ihre Zuständigkeiten haben sich geändert."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "Änderung in deinem Team",
-					"preheader": "Deine Zuständigkeiten haben sich geändert."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "A change in your team",
-					"preheader": "Your responsibilities have changed."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Changement dans votre équipe",
-					"preheader": "Vos responsabilités ont changé."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Изменение в Вашей команде",
-					"preheader": "Ваши зоны ответственности изменились."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ኣብ ጋንታኹም ለውጢ",
-					"preheader": "ሓላፍነታትኩም ተቐዪሮም።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "Ekibinizde değişiklik",
-					"preheader": "Sorumluluklarınız değişti."
-				}
-			}
-		},
-		"smtp-test": {
-			"audience": "admin",
-			"class": "service",
-			"unsubscribable": true,
-			"placeholders": [
-				"{{smtpHost}}",
-				"{{smtpFrom}}",
-				"{{sentAt}}",
-				"{{appUrl}}",
-				"{{settingsUrl}}",
-				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
-			],
-			"tones": {
-				"de-sie": {
-					"lang": "de",
-					"subject": "SMTP-Test erfolgreich",
-					"preheader": "Der Versand über {{smtpHost}} funktioniert."
-				},
-				"de-du": {
-					"lang": "de",
-					"subject": "SMTP-Test erfolgreich",
-					"preheader": "Der Versand über {{smtpHost}} funktioniert."
-				},
-				"en": {
-					"lang": "en",
-					"subject": "SMTP test successful",
-					"preheader": "Sending via {{smtpHost}} works."
-				},
-				"fr": {
-					"lang": "fr",
-					"subject": "Test SMTP réussi",
-					"preheader": "L’envoi via {{smtpHost}} fonctionne."
-				},
-				"ru": {
-					"lang": "ru",
-					"subject": "Тест SMTP пройден",
-					"preheader": "Отправка через {{smtpHost}} работает."
-				},
-				"ti": {
-					"lang": "ti",
-					"subject": "ናይ SMTP ፈተነ ተዓዊቱ",
-					"preheader": "ብ{{smtpHost}} ምልኣኽ ይሰርሕ ኣሎ።"
-				},
-				"tr": {
-					"lang": "tr",
-					"subject": "SMTP testi başarılı",
-					"preheader": "{{smtpHost}} üzerinden gönderim çalışıyor."
-				}
-			}
-		}
-	}
+  "dialects": [
+    "plain",
+    "thymeleaf",
+    "freemarker"
+  ],
+  "tones": [
+    "de-sie",
+    "de-du",
+    "en",
+    "fr",
+    "ru",
+    "ti",
+    "tr"
+  ],
+  "locales": {
+    "de-sie": {
+      "lang": "de",
+      "dir": "ltr",
+      "provenance": "source",
+      "release": "released"
+    },
+    "de-du": {
+      "lang": "de",
+      "dir": "ltr",
+      "provenance": "human",
+      "release": "released"
+    },
+    "en": {
+      "lang": "en",
+      "dir": "ltr",
+      "provenance": "human",
+      "release": "released"
+    },
+    "fr": {
+      "lang": "fr",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    },
+    "ru": {
+      "lang": "ru",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    },
+    "ti": {
+      "lang": "ti",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    },
+    "tr": {
+      "lang": "tr",
+      "dir": "ltr",
+      "provenance": "machine",
+      "release": "pending-human-review"
+    }
+  },
+  "mails": {
+    "neue-nachricht": {
+      "audience": "asker",
+      "class": "personal",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{messageUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Sie haben eine neue Nachricht",
+          "preheader": "In Ihrer Beratung liegt eine neue Nachricht für Sie bereit."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Du hast eine neue Nachricht",
+          "preheader": "In deiner Beratung liegt eine neue Nachricht für dich bereit."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "You have a new message",
+          "preheader": "A new message is waiting for you in your counselling."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Vous avez un nouveau message",
+          "preheader": "Un nouveau message vous attend dans votre service de conseil."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Для Вас есть новое сообщение",
+          "preheader": "В Вашей консультации Вас ждёт новое сообщение."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ሓድሽ መልእኽቲ በጺሑኩም ኣሎ",
+          "preheader": "ኣብ ምኽርኹም ሓድሽ መልእኽቲ ይጽበየኩም ኣሎ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Yeni bir mesajınız var",
+          "preheader": "Danışmanlığınızda sizin için yeni bir mesaj hazır."
+        }
+      }
+    },
+    "willkommen": {
+      "audience": "asker",
+      "class": "personal",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{username}}",
+        "{{loginUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Willkommen bei {{platformName}}",
+          "preheader": "Ihr anonymer Zugang ist eingerichtet – so geht es weiter."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Willkommen bei {{platformName}}",
+          "preheader": "Dein anonymer Zugang ist eingerichtet – so geht es weiter."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Welcome to {{platformName}}",
+          "preheader": "Your anonymous account is ready – here is what happens next."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Bienvenue sur {{platformName}}",
+          "preheader": "Votre accès anonyme est prêt – voici la suite."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Добро пожаловать на {{platformName}}",
+          "preheader": "Ваш анонимный доступ создан — вот что дальше."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "እንኳዕ ናብ {{platformName}} ብደሓን መጻእኩም",
+          "preheader": "ስም ኣልቦ መእተዊኹም ተዳልዩ ኣሎ – ቀጺሉ ዘሎ ስጉምቲ እዚ እዩ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{platformName}} platformuna hoş geldiniz",
+          "preheader": "Anonim erişiminiz hazır – bundan sonrası şöyle."
+        }
+      }
+    },
+    "passwort-zuruecksetzen": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{expiryHours}}",
+        "{{resetUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neues Passwort festlegen",
+          "preheader": "Der Link ist {{expiryHours}} Stunden gültig."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neues Passwort festlegen",
+          "preheader": "Der Link ist {{expiryHours}} Stunden gültig."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Set a new password",
+          "preheader": "The link is valid for {{expiryHours}} hours."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Définir un nouveau mot de passe",
+          "preheader": "Le lien est valable {{expiryHours}} heures."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Задать новый пароль",
+          "preheader": "Ссылка действительна {{expiryHours}} часов."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ሓድሽ መሕለፊ ቃል ኣቐምጡ",
+          "preheader": "እቲ መላግቦ ን{{expiryHours}} ሰዓታት ይሰርሕ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Yeni şifre belirleyin",
+          "preheader": "Bağlantı {{expiryHours}} saat geçerlidir."
+        }
+      }
+    },
+    "termin": {
+      "audience": "asker",
+      "class": "personal",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{appointmentDate}}",
+        "{{appointmentTime}}",
+        "{{appointmentType}}",
+        "{{locationName}}",
+        "{{locationAddress}}",
+        "{{appointmentUrl}}",
+        "{{mapUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihr Termin am {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} Uhr – {{appointmentType}}."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Dein Termin am {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} Uhr – {{appointmentType}}."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your appointment on {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Votre rendez-vous du {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Ваша встреча {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} — {{appointmentType}}."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ቆጸራኹም ኣብ {{appointmentDate}}",
+          "preheader": "{{appointmentDate}}፣ {{appointmentTime}} – {{appointmentType}}።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{appointmentDate}} tarihli randevunuz",
+          "preheader": "{{appointmentDate}}, {{appointmentTime}} – {{appointmentType}}."
+        }
+      }
+    },
+    "beraterin-kontakt": {
+      "audience": "asker",
+      "class": "requested",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{consultantName}}",
+        "{{consultantPhone}}",
+        "{{consultantHours}}",
+        "{{consultantEmail}}",
+        "{{bookingUrl}}",
+        "{{messageUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "So erreichen Sie Ihre Beratung",
+          "preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "So erreichst du deine Beratung",
+          "preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "How to reach your counselling service",
+          "preheader": "Direct line, phone hours and booking at a glance."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Comment joindre votre service de conseil",
+          "preheader": "Ligne directe, horaires et prise de rendez-vous en un coup d’œil."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Как связаться с Вашей консультацией",
+          "preheader": "Прямой номер, часы приёма и запись — на одном экране."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ንኣገልግሎት ምኽርኹም ብኸመይ ትረኽብዎ",
+          "preheader": "ቀጥታዊ ስልኪ፣ ናይ ስራሕ ሰዓታትን ቆጸራን ብሓንሳብ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Danışmanlığınıza nasıl ulaşırsınız",
+          "preheader": "Doğrudan hat, görüşme saatleri ve randevu tek bakışta."
+        }
+      }
+    },
+    "anfrage-zugewiesen": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{requestTopic}}",
+        "{{requestPostcode}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neue Beratungsanfrage",
+          "preheader": "Eine neue Anfrage wartet auf Sie."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neue Beratungsanfrage",
+          "preheader": "Eine neue Anfrage wartet auf dich."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "New counselling request",
+          "preheader": "A new request is waiting for you."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Nouvelle demande de conseil",
+          "preheader": "Une nouvelle demande vous attend."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Новый запрос на консультацию",
+          "preheader": "Вас ждёт новый запрос."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ሓድሽ ሕቶ ምኽሪ",
+          "preheader": "ሓድሽ ሕቶ ይጽበየኩም ኣሎ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Yeni danışmanlık talebi",
+          "preheader": "Yeni bir talep sizi bekliyor."
+        }
+      }
+    },
+    "systemhinweis": {
+      "audience": "asker",
+      "class": "service",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{maintenanceDate}}",
+        "{{maintenanceStart}}",
+        "{{maintenanceEnd}}",
+        "{{statusUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Geplante Wartung am {{maintenanceDate}}",
+          "preheader": "{{maintenanceStart}} bis {{maintenanceEnd}} Uhr nicht erreichbar."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Geplante Wartung am {{maintenanceDate}}",
+          "preheader": "{{maintenanceStart}} bis {{maintenanceEnd}} Uhr nicht erreichbar."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Scheduled maintenance on {{maintenanceDate}}",
+          "preheader": "Unavailable from {{maintenanceStart}} to {{maintenanceEnd}}."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Maintenance prévue le {{maintenanceDate}}",
+          "preheader": "Indisponible de {{maintenanceStart}} à {{maintenanceEnd}}."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Плановые работы {{maintenanceDate}}",
+          "preheader": "Недоступно с {{maintenanceStart}} до {{maintenanceEnd}}."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ብመደብ ዝተታሕዘ ጽገና ኣብ {{maintenanceDate}}",
+          "preheader": "ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{maintenanceDate}} tarihinde planlı bakım",
+          "preheader": "{{maintenanceStart}} – {{maintenanceEnd}} arasında erişilemez."
+        }
+      }
+    },
+    "neue-anfrage": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{requestTopic}}",
+        "{{requestPostcode}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neue Anfrage in Ihrer Beratungsstelle",
+          "preheader": "Eine Anfrage wartet auf Annahme."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neue Anfrage in deiner Beratungsstelle",
+          "preheader": "Eine Anfrage wartet auf Annahme."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "New enquiry at your counselling service",
+          "preheader": "An enquiry is waiting to be accepted."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Nouvelle demande dans votre centre de consultation",
+          "preheader": "Une demande attend d’être acceptée."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Новый запрос в Вашем консультационном центре",
+          "preheader": "Запрос ждёт, чтобы его приняли."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ኣብ ማእከል ምኽርኹም ሓድሽ ሕቶ",
+          "preheader": "ሓደ ሕቶ ክቕበሎ ዝጽበ ኣሎ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Danışma merkezinizde yeni talep",
+          "preheader": "Bir talep kabul edilmeyi bekliyor."
+        }
+      }
+    },
+    "direkte-anfrage": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{requestTopic}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Eine Anfrage richtet sich direkt an Sie",
+          "preheader": "Diese Anfrage wurde für Sie geschrieben."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Eine Anfrage richtet sich direkt an dich",
+          "preheader": "Diese Anfrage wurde für dich geschrieben."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "An enquiry is addressed to you directly",
+          "preheader": "This enquiry was written for you."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Une demande vous est adressée directement",
+          "preheader": "Cette demande a été écrite pour vous."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Запрос адресован лично Вам",
+          "preheader": "Этот запрос написан для Вас."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ሓደ ሕቶ ብቐጥታ ናባኹም ዝቐንዐ እዩ",
+          "preheader": "እዚ ሕቶ ንዓኹም ተጻሒፉ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Bir talep doğrudan size yönelik",
+          "preheader": "Bu talep sizin için yazıldı."
+        }
+      }
+    },
+    "tagesuebersicht": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{openRequestCount}}",
+        "{{oldestRequestAge}}",
+        "{{digestGeneratedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihre Tagesübersicht",
+          "preheader": "Offene Anfragen in Ihrer Beratungsstelle."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Deine Tagesübersicht",
+          "preheader": "Offene Anfragen in deiner Beratungsstelle."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your daily summary",
+          "preheader": "Open enquiries at your counselling service."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Votre récapitulatif du jour",
+          "preheader": "Demandes en attente dans votre centre de consultation."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Ваша сводка за день",
+          "preheader": "Открытые запросы в Вашем консультационном центре."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "መዓልታዊ ጽማቕኩም",
+          "preheader": "ኣብ ማእከል ምኽርኹም ዘለዉ ክፉታት ሕቶታት።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Günlük özetiniz",
+          "preheader": "Danışma merkezinizdeki açık talepler."
+        }
+      }
+    },
+    "uebergabe-angefragt": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{fromConsultantName}}",
+        "{{caseReference}}",
+        "{{requestReceivedAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Übergabe angefragt",
+          "preheader": "Eine Beratung soll an Sie übergeben werden."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Übergabe angefragt",
+          "preheader": "Eine Beratung soll an dich übergeben werden."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Handover requested",
+          "preheader": "A counselling case is to be handed over to you."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Transfert demandé",
+          "preheader": "Une consultation doit vous être transférée."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Запрошена передача",
+          "preheader": "Консультацию предлагают передать Вам."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ምትሕልላፍ ተሓቲቱ",
+          "preheader": "ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Devir talebi",
+          "preheader": "Bir danışmanlığın size devredilmesi isteniyor."
+        }
+      }
+    },
+    "uebergabe-bestaetigt": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{toConsultantName}}",
+        "{{caseReference}}",
+        "{{handoverAt}}",
+        "{{requestUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Übergabe bestätigt",
+          "preheader": "Die Zuständigkeit hat gewechselt."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Übergabe bestätigt",
+          "preheader": "Die Zuständigkeit hat gewechselt."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Handover confirmed",
+          "preheader": "Responsibility has changed."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Transfert confirmé",
+          "preheader": "La responsabilité a changé."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Передача подтверждена",
+          "preheader": "Ответственность перешла к другому специалисту."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ምትሕልላፍ ተረጋጊጹ",
+          "preheader": "እቲ ሓላፍነት ተቐዪሩ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Devir onaylandı",
+          "preheader": "Sorumluluk değişti."
+        }
+      }
+    },
+    "rueckmeldung": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{caseReference}}",
+        "{{requestReceivedAt}}",
+        "{{messageUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Neue Rückmeldung im Fachaustausch",
+          "preheader": "Im Fachaustausch liegt eine Rückmeldung für Sie."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Neue Rückmeldung im Fachaustausch",
+          "preheader": "Im Fachaustausch liegt eine Rückmeldung für dich."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "New reply in the professional exchange",
+          "preheader": "A reply is waiting for you in the professional exchange."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Nouveau retour dans l’échange entre professionnels",
+          "preheader": "Un retour vous attend dans l’échange entre professionnels."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Новый отклик в профессиональном обмене",
+          "preheader": "В профессиональном обмене Вас ждёт отклик."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ",
+          "preheader": "ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Uzmanlar arası paylaşımda yeni geri bildirim",
+          "preheader": "Uzmanlar arası paylaşımda sizin için bir geri bildirim var."
+        }
+      }
+    },
+    "mitteilung": {
+      "audience": "asker",
+      "class": "service",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{messageSubject}}",
+        "{{messagePreview}}",
+        "{{messageHeadline}}",
+        "{{messageBody}}",
+        "{{loginUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "en": {
+          "lang": "en",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{messageSubject}}",
+          "preheader": "{{messagePreview}}"
+        }
+      }
+    },
+    "anmeldelink": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{expiryMinutes}}",
+        "{{loginUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihr Anmeldelink für {{platformName}}",
+          "preheader": "Der Link gilt {{expiryMinutes}} Minuten."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Dein Anmeldelink für {{platformName}}",
+          "preheader": "Der Link gilt {{expiryMinutes}} Minuten."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your sign-in link for {{platformName}}",
+          "preheader": "The link is valid for {{expiryMinutes}} minutes."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Votre lien de connexion pour {{platformName}}",
+          "preheader": "Le lien est valable {{expiryMinutes}} minutes."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Ваша ссылка для входа на {{platformName}}",
+          "preheader": "Ссылка действует {{expiryMinutes}} минут."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ናይ {{platformName}} መእተዊ መላግቦኹም",
+          "preheader": "እቲ መላግቦ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{platformName}} için giriş bağlantınız",
+          "preheader": "Bağlantı {{expiryMinutes}} dakika geçerlidir."
+        }
+      }
+    },
+    "einmalcode": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{expiryMinutes}}",
+        "{{otpCode}}",
+        "{{loginUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihr Einmalcode für die Anmeldung",
+          "preheader": "Der Code gilt {{expiryMinutes}} Minuten."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Dein Einmalcode für die Anmeldung",
+          "preheader": "Der Code gilt {{expiryMinutes}} Minuten."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your one-time code for signing in",
+          "preheader": "The code is valid for {{expiryMinutes}} minutes."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Votre code à usage unique pour la connexion",
+          "preheader": "Le code est valable {{expiryMinutes}} minutes."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Ваш одноразовый код для входа",
+          "preheader": "Код действует {{expiryMinutes}} минут."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ንመእተዊ ዝኸውን ናይ ሓደ ግዜ ኮድኩም",
+          "preheader": "እቲ ኮድ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Giriş için tek kullanımlık kodunuz",
+          "preheader": "Kod {{expiryMinutes}} dakika geçerlidir."
+        }
+      }
+    },
+    "email-geaendert": {
+      "audience": "asker",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{username}}",
+        "{{appUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Ihre E-Mail-Adresse wurde geändert",
+          "preheader": "Die Änderung ist ab sofort aktiv."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Deine E-Mail-Adresse wurde geändert",
+          "preheader": "Die Änderung ist ab sofort aktiv."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Your email address has been changed",
+          "preheader": "The change is active from now on."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Votre adresse e-mail a été modifiée",
+          "preheader": "La modification est active dès maintenant."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Ваш адрес электронной почты изменён",
+          "preheader": "Изменение действует с этого момента."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ኢመይል ኣድራሻኹም ተቐዪሩ",
+          "preheader": "እቲ ለውጢ ካብ ሕጂ ጀሚሩ ይሰርሕ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "E-posta adresiniz değiştirildi",
+          "preheader": "Değişiklik şu andan itibaren geçerli."
+        }
+      }
+    },
+    "einladung-traeger": {
+      "audience": "admin",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{tenantName}}",
+        "{{inviteExpiresAt}}",
+        "{{inviteUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Einladung: {{tenantName}} bei {{platformName}}",
+          "preheader": "Richten Sie Ihren Zugang zur Administration ein."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Einladung: {{tenantName}} bei {{platformName}}",
+          "preheader": "Richte deinen Zugang zur Administration ein."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Invitation: {{tenantName}} on {{platformName}}",
+          "preheader": "Set up your administration access."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Invitation : {{tenantName}} sur {{platformName}}",
+          "preheader": "Configurez votre accès à l’administration."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Приглашение: {{tenantName}} на {{platformName}}",
+          "preheader": "Настройте свой доступ к администрированию."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ዕድመ፦ {{tenantName}} ኣብ {{platformName}}",
+          "preheader": "ናይ ምምሕዳር መእተዊኹም ኣዳልዉ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Davet: {{platformName}} üzerinde {{tenantName}}",
+          "preheader": "Yönetim erişiminizi kurun."
+        }
+      }
+    },
+    "einladung-fachkraft": {
+      "audience": "consultant",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{agencyName}}",
+        "{{inviteExpiresAt}}",
+        "{{inviteUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Einladung in die Beratung bei {{platformName}}",
+          "preheader": "Richten Sie Ihren Zugang als Fachkraft ein."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Einladung in die Beratung bei {{platformName}}",
+          "preheader": "Richte deinen Zugang als Fachkraft ein."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Invitation to counsel on {{platformName}}",
+          "preheader": "Set up your counsellor access."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Invitation au service de conseil sur {{platformName}}",
+          "preheader": "Configurez votre accès en tant que professionnel."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Приглашение в консультацию на {{platformName}}",
+          "preheader": "Настройте свой доступ как специалист."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ኣብ {{platformName}} ናብ ምኽሪ ዕድመ",
+          "preheader": "ከም ክኢላ መእተዊኹም ኣዳልዉ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{platformName}} üzerinde danışmanlığa davet",
+          "preheader": "Uzman erişiminizi kurun."
+        }
+      }
+    },
+    "avv-unterschrift": {
+      "audience": "admin",
+      "class": "legal",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{tenantName}}",
+        "{{dpaProvidedAt}}",
+        "{{dpaExpiresAt}}",
+        "{{dpaUrl}}",
+        "{{tenantNameDative}}",
+        "{{offeringName}}",
+        "{{operatorName}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Vertragsunterlagen für {{tenantName}}",
+          "preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Vertragsunterlagen für {{tenantName}}",
+          "preheader": "Die Vertragsunterlagen für {{tenantName}} liegen bereit."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "Contract documents for {{tenantName}}",
+          "preheader": "The contract documents for {{tenantName}} are ready."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Documents contractuels pour {{tenantName}}",
+          "preheader": "Les documents contractuels pour {{tenantName}} sont disponibles."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Договорные документы для {{tenantName}}",
+          "preheader": "Договорные документы для {{tenantName}} готовы."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ናይ ውዕል ሰነዳት ን{{tenantName}}",
+          "preheader": "ናይ ውዕል ሰነዳት ን{{tenantName}} ተዳልዮም ኣለዉ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{tenantName}} için sözleşme belgeleri",
+          "preheader": "{{tenantName}} için sözleşme belgeleri hazır."
+        }
+      }
+    },
+    "einladung-freitext": {
+      "audience": "admin",
+      "class": "security",
+      "unsubscribable": false,
+      "placeholders": [
+        "{{subject}}",
+        "{{preheader}}",
+        "{{bodyHtml}}",
+        "{{ctaBlock}}",
+        "{{assuranceBlock}}",
+        "{{offeringName}}",
+        "{{operatorName}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{footerNote}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        },
+        "en": {
+          "lang": "en",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "{{subject}}",
+          "preheader": "{{preheader}}"
+        }
+      }
+    },
+    "team-aenderung": {
+      "audience": "consultant",
+      "class": "operational",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{teamChangeStatement}}",
+        "{{caseReference}}",
+        "{{teamChangedAt}}",
+        "{{appUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "Änderung in Ihrem Team",
+          "preheader": "Ihre Zuständigkeiten haben sich geändert."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "Änderung in deinem Team",
+          "preheader": "Deine Zuständigkeiten haben sich geändert."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "A change in your team",
+          "preheader": "Your responsibilities have changed."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Changement dans votre équipe",
+          "preheader": "Vos responsabilités ont changé."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Изменение в Вашей команде",
+          "preheader": "Ваши зоны ответственности изменились."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ኣብ ጋንታኹም ለውጢ",
+          "preheader": "ሓላፍነታትኩም ተቐዪሮም።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "Ekibinizde değişiklik",
+          "preheader": "Sorumluluklarınız değişti."
+        }
+      }
+    },
+    "smtp-test": {
+      "audience": "admin",
+      "class": "service",
+      "unsubscribable": true,
+      "placeholders": [
+        "{{smtpHost}}",
+        "{{smtpFrom}}",
+        "{{sentAt}}",
+        "{{appUrl}}",
+        "{{settingsUrl}}",
+        "{{privacyUrl}}",
+        "{{imprintUrl}}",
+        "{{unsubscribeUrl}}"
+      ],
+      "tones": {
+        "de-sie": {
+          "lang": "de",
+          "subject": "SMTP-Test erfolgreich",
+          "preheader": "Der Versand über {{smtpHost}} funktioniert."
+        },
+        "de-du": {
+          "lang": "de",
+          "subject": "SMTP-Test erfolgreich",
+          "preheader": "Der Versand über {{smtpHost}} funktioniert."
+        },
+        "en": {
+          "lang": "en",
+          "subject": "SMTP test successful",
+          "preheader": "Sending via {{smtpHost}} works."
+        },
+        "fr": {
+          "lang": "fr",
+          "subject": "Test SMTP réussi",
+          "preheader": "L’envoi via {{smtpHost}} fonctionne."
+        },
+        "ru": {
+          "lang": "ru",
+          "subject": "Тест SMTP пройден",
+          "preheader": "Отправка через {{smtpHost}} работает."
+        },
+        "ti": {
+          "lang": "ti",
+          "subject": "ናይ SMTP ፈተነ ተዓዊቱ",
+          "preheader": "ብ{{smtpHost}} ምልኣኽ ይሰርሕ ኣሎ።"
+        },
+        "tr": {
+          "lang": "tr",
+          "subject": "SMTP testi başarılı",
+          "preheader": "{{smtpHost}} üzerinden gönderim çalışıyor."
+        }
+      }
+    }
+  }
 }

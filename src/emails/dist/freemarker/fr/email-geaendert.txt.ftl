@@ -20,4 +20,4 @@ ${platformName!''} est un service proposé par ${orgName!''}.
 Protection des données: ${privacyUrl!''}
 Mentions légales: ${imprintUrl!''}
 
-Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.
+Cet e-mail vous informe d’un changement de votre adresse e-mail. Vous ne pouvez pas désactiver cet avis de sécurité. Merci de ne pas y répondre.

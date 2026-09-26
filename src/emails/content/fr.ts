@@ -115,7 +115,7 @@ export const fr: Record<EmailId, EmailContent> = {
 		footnote:
 			'Si vous n’êtes pas à l’origine de cette demande, ignorez simplement cet e-mail. Votre mot de passe restera inchangé.',
 		assurance,
-		footer
+		footer: securityFooter
 	},
 
 	'termin': {
@@ -485,6 +485,10 @@ export const fr: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Aller au profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Cet e-mail vous informe d’un changement de votre adresse e-mail. Vous ne pouvez pas désactiver cet avis de sécurité. Merci de ne pas y répondre.'
+		}
 	}
 };

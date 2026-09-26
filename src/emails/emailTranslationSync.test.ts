@@ -24,6 +24,7 @@ import {
 	emailOccasionFingerprint,
 	emailProtectedStringIndex,
 	emailReviewGaps,
+	emailIsUnsubscribable,
 	listEmailPlaceholders
 } from './index';
 
@@ -91,6 +92,22 @@ const cases = EMAIL_TRANSLATED_LOCALES.flatMap((locale) =>
 );
 
 describe('e-mail translations', () => {
+	it('keeps security and legal mail footers free of preference and unsubscribe links', () => {
+		for (const locale of EMAIL_LOCALES) {
+			for (const id of EMAIL_IDS) {
+				if (emailIsUnsubscribable(id)) continue;
+				const links = EMAIL_CONTENT[locale][id].footer.links.map(
+					(link) => link.href
+				);
+				expect(links, `${locale}/${id}`).not.toContain(
+					'{{settingsUrl}}'
+				);
+				expect(links, `${locale}/${id}`).not.toContain(
+					'{{unsubscribeUrl}}'
+				);
+			}
+		}
+	});
 	describe('coverage', () => {
 		it('covers every bundled App locale and rejects a new one without mail copy', () => {
 			for (const locale of [
