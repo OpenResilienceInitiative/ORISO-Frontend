@@ -260,6 +260,92 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 		expect(apiCreateGroupChat).not.toHaveBeenCalled();
 	});
 
+	// #1499: the session API sends the group's wall clock as startDate +
+	// startTime (+ timezone) and never startDateWithTime.
+	const apiSeriesItem = {
+		...editSeriesItem,
+		startDate: '2026-09-25',
+		startDateWithTime: undefined,
+		startTime: '16:42:00',
+		timezone: 'Europe/Berlin',
+		repetitive: false,
+		repeatCount: 1,
+		chatInterval: null
+	};
+
+	const saveUnchanged = async (item: Record<string, unknown>) => {
+		vi.mocked(useSession).mockReturnValue({
+			session: { item } as any,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: true
+		});
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
+			matrixRoomId: '!room:matrix.example'
+		});
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: []
+		} as any);
+
+		renderInUserContext();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'groupChat.circle.saveLabel'
+			})
+		);
+		await waitFor(() =>
+			expect(apiUpdateGroupChat).toHaveBeenCalledTimes(1)
+		);
+		return apiUpdateGroupChat.mock.calls[0][1];
+	};
+
+	it('saves an untouched one-off group at its stored time (#1499)', async () => {
+		const payload = await saveUnchanged(apiSeriesItem);
+
+		expect(payload).toMatchObject({
+			startDate: '2026-09-25',
+			startTime: '16:42',
+			timezone: 'Europe/Berlin',
+			repeatCount: 1,
+			repetitive: false
+		});
+		expect(payload).not.toHaveProperty('chatInterval');
+	});
+
+	it('shows a one-off group as one date, not as a weekly series (#1499)', async () => {
+		await saveUnchanged(apiSeriesItem);
+
+		expect(
+			screen.queryByText('groupChat.create.interval.options.weekly')
+		).toBeNull();
+		expect(
+			screen.getByText('groupChat.circle.rows.repeatValue')
+		).toBeTruthy();
+	});
+
+	it('keeps a repeating series, its interval and the group timezone on save', async () => {
+		const payload = await saveUnchanged({
+			...apiSeriesItem,
+			startDate: '2026-10-20',
+			startTime: '18:00:00',
+			timezone: 'America/New_York',
+			repetitive: true,
+			repeatCount: 3,
+			chatInterval: 'BIWEEKLY'
+		});
+
+		expect(
+			screen.getByText('groupChat.create.interval.options.biweekly')
+		).toBeTruthy();
+		expect(payload).toMatchObject({
+			startDate: '2026-10-20',
+			startTime: '18:00',
+			timezone: 'America/New_York',
+			repeatCount: 3,
+			chatInterval: 'BIWEEKLY'
+		});
+	});
+
 	it('lets the owner add a co-moderator while editing a circle', async () => {
 		vi.mocked(useSession).mockReturnValue({
 			session: { item: editSeriesItem } as any,
