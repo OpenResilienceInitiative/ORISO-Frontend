@@ -1,0 +1,25 @@
+Définir un nouveau mot de passe
+===============================
+
+Vous avez demandé un nouveau mot de passe pour votre accès sur {{platformName}}.
+
+Le lien est valable {{expiryHours}} heures et ne fonctionne qu’une seule fois.
+
+Choisir un mot de passe:
+{{resetUrl}}
+
+Si vous n’êtes pas à l’origine de cette demande, ignorez simplement cet e-mail. Votre mot de passe restera inchangé.
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.

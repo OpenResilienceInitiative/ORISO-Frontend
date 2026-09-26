@@ -1,3 +1,4 @@
+import { assertAppLocaleCoverage } from './appLocaleCoverage';
 /**
  * Emits the Keycloak e-mail theme from the design system.
  *
@@ -26,7 +27,14 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
+import {
+	EMAIL_CONTENT,
+	EMAIL_LANGUAGE_LOCALES,
+	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_RELEASE,
+	EmailId,
+	EmailLocale
+} from '../index';
 import {
 	EmailContent,
 	renderEmailHtml,
@@ -47,6 +55,7 @@ import {
 	keycloakLinkProperties,
 	keycloakLogoProperty
 } from '../kit/keycloakThemeLinks';
+import { assertKeycloakMessageParity } from './keycloakMessageParity';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist/keycloak/email');
@@ -374,12 +383,16 @@ const propertiesValue = (value: string): string =>
 		.replace(/:/g, '\\:')
 		.replace(/=/g, '\\=');
 
-const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] = [
-	{ locale: 'de-sie', lang: 'de' },
-	{ locale: 'en', lang: 'en' }
-];
+/** One bundle per App language. Review status is recorded in catalogue.json;
+ * pending human language review does not suppress generated files. */
+const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] =
+	EMAIL_LANGUAGE_LOCALES.map((locale) => ({
+		locale,
+		lang: EMAIL_LOCALE_LANG[locale]
+	}));
 
 const run = async () => {
+	assertAppLocaleCoverage();
 	await rm(outDir, { recursive: true, force: true });
 	await mkdir(path.join(outDir, 'html'), { recursive: true });
 	await mkdir(path.join(outDir, 'text'), { recursive: true });
@@ -402,6 +415,11 @@ const run = async () => {
 		// The skeleton is language-independent: the copy is looked up at render
 		// time, so one file serves every locale Keycloak knows.
 		const KEYS = keysFor(template.name, template.subjectKey);
+		const sourceMessages = messages(
+			EMAIL_CONTENT['de-sie'][template.id],
+			KEYS,
+			template.dropCta === true
+		);
 		const skeleton = keyed(
 			EMAIL_CONTENT['de-sie'][template.id],
 			KEYS,
@@ -419,6 +437,12 @@ const run = async () => {
 				EMAIL_CONTENT[locale][template.id],
 				KEYS,
 				template.dropCta === true
+			);
+			assertKeycloakMessageParity(
+				sourceMessages,
+				raw,
+				locale,
+				template.id
 			);
 			const converted: Record<string, string> = {};
 			for (const [key, value] of Object.entries(raw)) {
@@ -477,7 +501,7 @@ const run = async () => {
 		written += 2;
 	}
 
-	for (const { lang } of KEYCLOAK_LOCALES) {
+	for (const { lang, locale } of KEYCLOAK_LOCALES) {
 		const body = Object.entries(bundles[lang])
 			.map(([key, value]) => `${key}=${propertiesValue(value)}`)
 			.join('\n');
@@ -485,6 +509,7 @@ const run = async () => {
 			path.join(outDir, 'messages', `messages_${lang}.properties`),
 			`# Generated from the ORISO e-mail design system — do not edit by hand.\n` +
 				`# Run 'npm run emails:keycloak' in ORISO-Frontend after changing the copy.\n` +
+				`# Human language review: ${EMAIL_LOCALE_RELEASE[locale]}.\n` +
 				`${body}\n`,
 			'utf8'
 		);
@@ -495,6 +520,12 @@ const run = async () => {
 		path.join(outDir, 'theme.properties'),
 		'parent=base\n' +
 			'# Generated from the ORISO e-mail design system — do not edit by hand.\n' +
+			`locales=${KEYCLOAK_LOCALES.map(({ lang }) => lang).join(',')}\n` +
+			`# Human language review pending: ${KEYCLOAK_LOCALES.filter(
+				({ locale }) => EMAIL_LOCALE_RELEASE[locale] !== 'released'
+			)
+				.map(({ lang }) => lang)
+				.join(', ')}.\n` +
 			'# Brand defaults; an operator may override them in the image.\n' +
 			Object.entries(themeDefaults)
 				.map(([key, value]) => `${key}=${value}`)

@@ -1,6 +1,6 @@
 /**
  * English. Used for tenants that offer counselling in English and as the
- * fallback when a recipient's language is unknown.
+ * English variant. An unknown recipient language is a configuration error.
  */
 
 import { EmailContent } from '../kit/emailTemplate';
@@ -58,7 +58,7 @@ const accountAssurance =
 	'We will never ask for your password by email. We always tell you when your account changes.';
 
 const legalAssurance =
-	'This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.';
+	'This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.';
 
 export const en: Record<EmailId, EmailContent> = {
 	'neue-nachricht': {
@@ -104,7 +104,7 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'If you did not ask for this, simply ignore this email. Your password stays unchanged.',
 		assurance,
-		footer
+		footer: securityFooter
 	},
 
 	'termin': {
@@ -475,6 +475,10 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Go to profile', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email reports a change to your email address and cannot be unsubscribed from. Please do not reply to it.'
+		}
 	}
 };

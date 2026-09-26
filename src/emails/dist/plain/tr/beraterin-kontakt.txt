@@ -1,0 +1,35 @@
+Danışmanlığınıza nasıl ulaşırsınız
+==================================
+
+Korumalı sohbetin yanı sıra danışmanlığınıza telefonla da ulaşabilir veya doğrudan randevu alabilirsiniz.
+
+Erişiminiz bu sırada anonim kalır – neyi anlatacağınıza siz karar verirsiniz.
+
+Danışmanlık: {{consultantName}}
+Doğrudan hat: {{consultantPhone}}
+Görüşme saatleri: {{consultantHours}}
+E-posta: {{consultantEmail}}
+
+Randevu al:
+{{bookingUrl}}
+
+Korumalı sohbete git:
+{{messageUrl}}
+
+Görüşme saatleri dışında en iyisi sohbete yazmanızdır. 2 iş günü içinde size döneriz.
+
+----------------------------------------------------------------
+Mesajlarınız uçtan uca şifrelenmiştir. Sizden ve danışmanlığınızdan başka kimse onları okuyamaz – biz de okuyamayız.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Ayarlar: {{settingsUrl}}
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+Bildirimlerden çık: {{unsubscribeUrl}}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.
