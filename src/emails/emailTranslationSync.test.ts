@@ -321,6 +321,37 @@ describe('e-mail translations', () => {
 			).toContainEqual(entry);
 		});
 
+		it('rejects a review date that is not a real calendar day', () => {
+			const [fingerprint, entry] = [
+				...emailProtectedStringIndex(EMAIL_CONTENT.fr, EMAIL_IDS)
+			][0];
+			for (const reviewedAt of [
+				'2026-99-99',
+				'2026-02-30',
+				'2025-02-29'
+			]) {
+				expect(
+					emailReviewGaps(EMAIL_CONTENT.fr, EMAIL_IDS, {
+						[fingerprint]: {
+							text: entry.value,
+							reviewer: 'test',
+							reviewedAt
+						}
+					}).unsigned,
+					reviewedAt
+				).toContainEqual(entry);
+			}
+			expect(
+				emailReviewGaps(EMAIL_CONTENT.fr, EMAIL_IDS, {
+					[fingerprint]: {
+						text: entry.value,
+						reviewer: 'test',
+						reviewedAt: '2024-02-29'
+					}
+				}).unsigned
+			).not.toContainEqual(entry);
+		});
+
 		it.each([...EMAIL_TRANSLATED_LOCALES])(
 			'%s is only marked released if a person has read what it claims',
 			(locale) => {
