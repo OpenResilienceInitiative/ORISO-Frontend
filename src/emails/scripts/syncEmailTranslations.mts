@@ -163,10 +163,17 @@ const run = async () => {
 
 	if (check) {
 		const drift = [...added, ...restamped];
-		if (drift.length > 0 || orphaned.length > 0) {
+		if (drift.length > 0) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'emails:sync --check: the manifest is out of date. Run npm run emails:sync.'
+			);
+			process.exitCode = 1;
+		}
+		if (orphaned.length > 0) {
+			// eslint-disable-next-line no-console
+			console.error(
+				'emails:sync --check: review signatures refer to edited copy. Re-review or remove those entries in translationReview.json.'
 			);
 			process.exitCode = 1;
 		}
