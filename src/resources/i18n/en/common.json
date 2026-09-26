@@ -3364,6 +3364,16 @@
 		"reasons": {
 			"loading": "Loading reasons"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planned absence",
+			"UNPLANNED_ABSENCE": "Unplanned absence",
+			"ASSIGNMENT_ENDED": "Assignment ended",
+			"ADVICE_REQUESTED": "Advice requested",
+			"retired": "Not specified"
+		},
+		"history": {
+			"unknownConsultant": "A former counsellor"
+		},
 		"submit": "Request access",
 		"submitSending": "Sending",
 		"title": "Request access",
@@ -3690,6 +3700,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} can thus read the complete message history and is responsible for you. {{oldConsultant}} no longer has access to the messages."
 						},
+						"historical": "This is an earlier request. It can no longer be answered here.",
 						"question": "Do you agree to the transfer?",
 						"sent": {
 							"description": {

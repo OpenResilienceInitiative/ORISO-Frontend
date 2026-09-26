@@ -3418,6 +3418,16 @@
 		"reasons": {
 			"loading": "Gründe werden geladen"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Geplant abwesend",
+			"UNPLANNED_ABSENCE": "Ungeplant abwesend",
+			"ASSIGNMENT_ENDED": "Zuordnung beendet",
+			"ADVICE_REQUESTED": "Rat erbeten",
+			"retired": "Nicht näher angegeben"
+		},
+		"history": {
+			"unknownConsultant": "Eine frühere Berater:in"
+		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
 		"title": "Zugriff anfragen",
@@ -3744,6 +3754,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} kann somit den kompletten Nachrichtenverlauf lesen und ist für Sie verantwortlich. {{oldConsultant}} hat keinen Zugriff mehr auf die Nachrichten."
 						},
+						"historical": "Dies ist eine frühere Anfrage. Sie kann hier nicht mehr beantwortet werden.",
 						"question": "Stimmen Sie der Übergabe zu?",
 						"sent": {
 							"description": {
