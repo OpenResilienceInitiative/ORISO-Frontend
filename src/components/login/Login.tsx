@@ -71,6 +71,10 @@ import {
 	InputAdornment
 } from '@mui/material';
 import { OrisoTextField } from '../form/OrisoTextField';
+import {
+	clearAccountCreatedLogin,
+	readAccountCreatedLogin
+} from '../registration/accountCreatedLogin';
 import { orisoInputColors } from '../form/orisoInputDesign';
 
 /**
@@ -122,7 +126,13 @@ export const Login = () => {
 	const { consultant, loaded: isReady } = useContext(UrlParamsContext);
 	const [labelState, setLabelState] = useState<LoginFieldLabelState>(null);
 	const [activeLoginMethod] = useState<LoginMethod>('password');
-	const [username, setUsername] = useState<string>('');
+	/* Set when a registration created the account but could not log it in
+	   and sent the person here (#1533): they are told so, and the User-ID
+	   they just chose is already filled in. Read once, on the first render. */
+	const [accountCreatedLogin] = useState(readAccountCreatedLogin);
+	const [username, setUsername] = useState<string>(
+		() => accountCreatedLogin?.username ?? ''
+	);
 	const [password, setPassword] = useState<string>('');
 	const passwordInputRef = useRef<HTMLInputElement>(null);
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -183,6 +193,14 @@ export const Login = () => {
 				.catch(() => null); // do nothing
 		}
 	}, [consultant, gcid, reloadUserData, userData]);
+
+	useEffect(() => {
+		/* One visit's worth: a reload or a later visit must not repeat it. */
+		clearAccountCreatedLogin();
+		if (accountCreatedLogin) {
+			passwordInputRef.current?.focus();
+		}
+	}, [accountCreatedLogin]);
 
 	useEffect(() => {
 		setShowLoginError('');
@@ -535,6 +553,20 @@ export const Login = () => {
 						<div className="loginForm__headline">
 							<h2>{translate('login.headline')}</h2>
 						</div>
+						{accountCreatedLogin && (
+							<div
+								role="status"
+								className="loginForm__notice"
+								data-cy="login-account-created"
+							>
+								<Text
+									text={translate(
+										'registration.accountCreated.login'
+									)}
+									type="infoSmall"
+								/>
+							</div>
+						)}
 						{/* <div className="loginForm__tabs">
 							<button
 								type="button"

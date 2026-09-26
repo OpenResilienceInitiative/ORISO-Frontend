@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor, within } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 import { StageMobileHero } from '../stageLayout/StageMobileHero';
@@ -9,6 +10,7 @@ import { Stage } from '../stage/stage';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { TenantContext } from '../../globalState/provider/TenantProvider';
 import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { stageAccountCreatedLogin } from '../registration/accountCreatedLogin';
 
 /**
  * Design turn 2d (desktop) / 2e (mobile) for the login screen, part by part.
@@ -203,4 +205,41 @@ export const FullScreen: StoryObj = {
 		}
 	},
 	render: () => <LoginScreen />
+};
+
+/**
+ * Stages the handoff a registration leaves behind when it created the account
+ * but could not log it in (#1533) — in the initializer, so it is in place
+ * before `Login` reads it on its first render.
+ */
+const LoginAfterAccountCreated = () => {
+	React.useState(() => stageAccountCreatedLogin('blaue-wolke'));
+	return <LoginScreen />;
+};
+
+export const AccountCreatedLoginFailed: StoryObj = {
+	name: 'Nach der Registrierung — Konto angelegt, Anmeldung fehlgeschlagen',
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'So kommt eine Person hier an, wenn die Registrierung ihr Konto angelegt hat, die automatische Anmeldung danach aber gescheitert ist (#1533): Ein Hinweis sagt, warum sie hier ist, ihre gerade gewählte User-ID ist schon eingetragen, und der Cursor steht im Passwortfeld. Das Passwort selbst wird nie übergeben.'
+			}
+		}
+	},
+	render: () => <LoginAfterAccountCreated />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const notice = await canvas.findByRole('status');
+		await expect(notice).toHaveTextContent(
+			'Ihr Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt.'
+		);
+		await expect(
+			canvasElement.querySelector<HTMLInputElement>('#username')?.value
+		).toBe('blaue-wolke');
+		await waitFor(() =>
+			expect(document.activeElement?.id).toBe('passwordInput')
+		);
+	}
 };

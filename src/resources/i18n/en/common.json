@@ -3291,6 +3291,10 @@
 				"text": "Sorry, something went wrong. Please reload the page and try again.",
 				"title": "Oops!"
 			}
+		},
+		"accountCreated": {
+			"login": "Your account has been created, but signing you in automatically did not work. Please log in with your username and password.",
+			"retry": "Your access has been created, but signing you in did not work. Please try again."
 		}
 	},
 	"releaseNote": {

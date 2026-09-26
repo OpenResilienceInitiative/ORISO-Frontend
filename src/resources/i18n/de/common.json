@@ -3345,6 +3345,10 @@
 			"done": "abgeschlossen",
 			"active": "aktueller Schritt",
 			"pending": "offen"
+		},
+		"accountCreated": {
+			"login": "Ihr Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melden Sie sich mit Ihrem Benutzernamen und Ihrem Passwort an.",
+			"retry": "Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal."
 		}
 	},
 	"releaseNote": {

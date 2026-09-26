@@ -3325,6 +3325,10 @@
 		"stepper": {
 			"progress": "{{total}} adımdan {{current}}. adım",
 			"progressShort": "Adım {{current}}/{{total}}"
+		},
+		"accountCreated": {
+			"login": "Hesabınız oluşturuldu, ancak otomatik giriş yapılamadı. Lütfen kullanıcı adınız ve şifrenizle giriş yapın.",
+			"retry": "Erişiminiz oluşturuldu, ancak giriş yapılamadı. Lütfen tekrar deneyin."
 		}
 	},
 	"releaseNote": {

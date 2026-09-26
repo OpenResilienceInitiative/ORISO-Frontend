@@ -1246,6 +1246,10 @@
 				"ready": "Alles bereit — du kannst schreiben",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
+		},
+		"accountCreated": {
+			"login": "Dein Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melde dich mit deinem Benutzernamen und deinem Passwort an.",
+			"retry": "Dein Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal."
 		}
 	},
 	"session": {

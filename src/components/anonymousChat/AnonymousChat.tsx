@@ -30,7 +30,6 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { apiPostRegistration } from '../../api/apiPostRegistration';
 import {
 	generatePseudonym,
 	generatePassword,
@@ -38,7 +37,7 @@ import {
 } from '../../utils/anonName/engine';
 import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { redirectToApp } from '../registration/autoLogin';
-import { endpoints } from '../../resources/scripts/endpoints';
+import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
 	TenantContext,
@@ -94,6 +93,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
 	const [username] = useState<string>(() => toRegistrationUsername(identity));
 	const [password] = useState<string>(() => generatePassword());
+	const registerThenLogin = useRegisterThenLogin();
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
@@ -334,37 +334,29 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						: {})
 			};
 
-			/* `apiPostRegistration` posts the registration *and then* logs in,
-			   and settles for both together — so a rejection alone cannot say
-			   whether an account exists. Offering the start button again after
-			   the account was created would make a second one for the same
-			   person (CodeRabbit on #1514). The callback fires between the two
-			   steps; the notification stays either way, so nobody is left
-			   looking at a frozen button with no explanation. */
-			let accountCreated = false;
-			apiPostRegistration(
-				endpoints.registerAsker,
-				registrationData,
-				settings.multitenancyWithSingleDomainEnabled,
-				tenant,
-				() => {
-					accountCreated = true;
-				}
-			)
+			/* The first press registers and logs in; once the account
+			   exists, a press only logs in again with the same generated
+			   credentials — so the button can come back after any failure
+			   without ever making a second account (#1533). */
+			registerThenLogin
+				.submit(
+					registrationData,
+					settings.multitenancyWithSingleDomainEnabled,
+					tenant
+				)
 				.then(() => {
 					// Registration successful, auto-login completed by apiPostRegistration
 					// Redirect to app (same as normal registration)
 					redirectToApp(undefined, { navigate });
 				})
-				.catch((error) => {
-					// console.error('Anonymous chat registration failed:', error);
-					if (!accountCreated) {
-						setIsRegistering(false);
-					}
+				.catch(() => {
+					setIsRegistering(false);
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
-						text: t('registration.errors.ups.text'),
+						text: registerThenLogin.accountCreated()
+							? t('registration.accountCreated.retry')
+							: t('registration.errors.ups.text'),
 						closeable: true,
 						timeout: 3000
 					});
@@ -401,7 +393,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		isRegistering,
 		t,
 		addNotification,
-		navigate
+		navigate,
+		registerThenLogin
 	]);
 
 	const canRegister = selectedAgency && selectedTopic && !isRegistering;

@@ -3325,6 +3325,10 @@
 		"stepper": {
 			"progress": "Étape {{current}} sur {{total}}",
 			"progressShort": "Étape {{current}}/{{total}}"
+		},
+		"accountCreated": {
+			"login": "Votre compte a été créé, mais la connexion automatique n’a pas fonctionné. Veuillez vous connecter avec votre nom d’utilisateur et votre mot de passe.",
+			"retry": "Votre accès a été créé, mais la connexion n’a pas fonctionné. Veuillez réessayer."
 		}
 	},
 	"releaseNote": {
