@@ -16,14 +16,14 @@ import { OverviewBookings } from './OverviewMobile/Bookings';
 import { OverviewSessions } from './OverviewMobile/Sessions';
 import { profileRoutesSettings } from './profileSettings.routes';
 import { profileRoutesHelp } from './profileHelp.routes';
-import { NotificationSettingsPanel } from './NotificationSettings';
 import {
 	TenantDataInterface,
 	AppConfigInterface
 } from '../../globalState/interfaces';
-import { EmailNotification } from './EmailNotifications';
-import { BrowserNotification } from './BrowserNotifications';
-import { browserNotificationsSettings } from '../../utils/notificationHelpers';
+import {
+	browserNotificationsSettings,
+	isSupported as isBrowserNotificationSupported
+} from '../../utils/notificationHelpers';
 import { AdditionalEnquiry } from './AdditionalEnquiry/AdditionalEnquiry';
 
 const shouldShowOverview = (useOverviewPage: boolean, userData) =>
@@ -220,58 +220,14 @@ const profileRoutes = (
 			]
 		},
 		{
-			title: 'profile.routes.notifications.title',
-			url: '/notifications',
-			condition: () => false,
-			notificationBubble:
-				isFirstVisit && !browserNotificationsSettings().visited,
-			elements: [
-				{
-					title: 'profile.routes.notifications.title',
-					url: '/email',
-					elements: [
-						{
-							component: EmailNotification,
-							column: COLUMN_LEFT
-						}
-					]
-				},
-				{
-					title: 'profile.browserNotifications.title',
-					notificationBubble:
-						isFirstVisit && !browserNotificationsSettings().visited,
-					url: '/browser',
-					elements: [
-						// Legacy per-browser panel (localStorage) while the new
-						// notification system is toggled off …
-						{
-							component: BrowserNotification,
-							column: COLUMN_RIGHT,
-							condition: (userData) =>
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								) &&
-								!settings?.releaseToggles
-									?.enableNewNotifications
-						},
-						// … and the WP-06 Slice 6b cross-device panel (Matrix
-						// account data) once it is on. Available to every role:
-						// askers get notified about handover consent & messages.
-						{
-							component: NotificationSettingsPanel,
-							column: COLUMN_RIGHT,
-							condition: () =>
-								!!settings?.releaseToggles
-									?.enableNewNotifications
-						}
-					]
-				}
-			]
-		},
-		{
 			title: 'profile.routes.settings.title',
 			url: '/einstellungen',
+			// First-visit hint to the browser pop-up switch (#1551).
+			notificationBubble:
+				isFirstVisit &&
+				!settings?.releaseToggles?.enableNewNotifications &&
+				!!isBrowserNotificationSupported() &&
+				!browserNotificationsSettings().visited,
 			elements: profileRoutesSettings(selectableLocales, settings)
 		},
 		{

@@ -96,6 +96,7 @@ import {
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
+import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -1063,7 +1064,7 @@ export const NotificationsCenter = () => {
 					}}
 					onOpenProfile={() => {
 						setDisplayFilterOpen(false);
-						navigate('/profile/notifications/browser');
+						navigate(NOTIFICATION_SETTINGS_PATH);
 					}}
 					labels={displayFilterLabels.dialogLabels}
 				/>

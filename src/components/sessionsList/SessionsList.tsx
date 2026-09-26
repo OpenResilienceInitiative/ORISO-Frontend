@@ -141,6 +141,7 @@ import {
 	SESSION_KIND_ICONS,
 	sessionKindLabel
 } from '../displayFilter/kindOptions';
+import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
@@ -2393,7 +2394,7 @@ export const SessionsList = ({
 					onReset={resetListDisplayOverride}
 					onOpenProfile={() => {
 						setDisplayFilterOpen(false);
-						navigate('/profile/notifications/browser');
+						navigate(NOTIFICATION_SETTINGS_PATH);
 					}}
 					labels={displayFilterLabels.dialogLabels}
 				/>
