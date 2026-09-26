@@ -65,8 +65,11 @@ const writeAccountData = (
 	client: MatrixClient,
 	type: string,
 	content: object
-): Promise<unknown> =>
-	client.setAccountData(type as any, content as any).catch(() => undefined);
+): Promise<boolean> =>
+	client.setAccountData(type as any, content as any).then(
+		() => true,
+		() => false
+	);
 
 const readMirror = (): OrisoNotificationSettings | null => {
 	try {
@@ -196,7 +199,12 @@ class NotificationSettingsStore {
 					client,
 					NOTIFICATION_SETTINGS_EVENT_TYPE,
 					reconciled
-				);
+				).then((persisted) => {
+					if (persisted) markLegacyMigrationDone();
+				});
+			} else {
+				// Existing account data already represents this browser's choice.
+				markLegacyMigrationDone();
 			}
 		} else {
 			// First device of this account to know about Slice 6a: seed from
@@ -206,13 +214,14 @@ class NotificationSettingsStore {
 				? mergeNotificationSettings(this.state.settings, legacy)
 				: this.state.settings;
 			this.setState({ settings: seeded, source: 'account' });
-			// Seeding already folded this browser's legacy value in.
-			markLegacyMigrationDone();
+			// A rejected write must leave the legacy choice eligible for retry.
 			void writeAccountData(
 				client,
 				NOTIFICATION_SETTINGS_EVENT_TYPE,
 				seeded
-			);
+			).then((persisted) => {
+				if (persisted) markLegacyMigrationDone();
+			});
 		}
 
 		const deviceType = this.deviceEventType();
@@ -247,7 +256,6 @@ class NotificationSettingsStore {
 		if (legacyMigrationDone()) {
 			return stored;
 		}
-		markLegacyMigrationDone();
 		if (stored.browserNotifications.enabled) {
 			return stored;
 		}
@@ -273,13 +281,20 @@ class NotificationSettingsStore {
 	/** Merge-update the account-wide settings (optimistic, then persist). */
 	updateSettings(update: NotificationSettingsUpdate): void {
 		const settings = mergeNotificationSettings(this.state.settings, update);
+		// An explicit "off" beats a pending legacy opt-in; anything else only
+		// settles the migration once the write (which carries it) persisted.
+		if (update.browserNotifications?.enabled === false) {
+			markLegacyMigrationDone();
+		}
 		this.setState({ settings });
 		if (this.client) {
 			void writeAccountData(
 				this.client,
 				NOTIFICATION_SETTINGS_EVENT_TYPE,
 				settings
-			);
+			).then((persisted) => {
+				if (persisted) markLegacyMigrationDone();
+			});
 		}
 	}
 

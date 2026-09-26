@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
@@ -15,7 +16,6 @@ import {
 	previewNotificationSound,
 	soundAssetFor
 } from '../../../utils/notificationSettings/soundPlayback';
-import { M3Checkbox } from '../../M3Checkbox';
 import {
 	AREA_KINDS,
 	BannerMode,
@@ -31,7 +31,7 @@ import {
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
- * A single kind row: volume arrows + sound dropdown (with play/mute) + email
+ * A single kind row: volume arrows + sound dropdown (with play/mute) + banner
  * ------------------------------------------------------------------ */
 
 const KindRow = ({
@@ -190,14 +190,6 @@ const KindRow = ({
 						</option>
 					</select>
 				</label>
-				<M3Checkbox
-					checked={value.email}
-					onChange={(checked) =>
-						onChange(area, kind, 'email', checked)
-					}
-					label={t('profile.notifications.config.sendByEmail')}
-					dataCy={`notif-email-${area}-${kind}`}
-				/>
 			</div>
 		</div>
 	);
@@ -218,6 +210,10 @@ export interface NotificationConfigViewProps {
 		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
+	/** Called when the email link leaves the dialog. */
+	onNavigate?: () => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigView = ({
@@ -225,7 +221,9 @@ export const NotificationConfigView = ({
 	activeArea,
 	onAreaChange,
 	onChange,
-	onPreview
+	onPreview,
+	onNavigate,
+	showEmailLink = true
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -233,9 +231,20 @@ export const NotificationConfigView = ({
 			<p className="notifConfig__intro">
 				{t('profile.notifications.config.intro')}
 			</p>
-			<p className="notifConfig__emailNote">
-				{t('profile.notifications.config.emailNote')}
-			</p>
+			{showEmailLink && (
+				<p className="notifConfig__emailNote">
+					{/* The group route exists on desktop and mobile; the bare tab is a menu on mobile. */}
+					<Link
+						to="/profile/einstellungen/email#email-notifications"
+						onClick={onNavigate}
+					>
+						{t(
+							'profile.notifications.title',
+							'E-Mail-Benachrichtigungen'
+						)}
+					</Link>
+				</p>
+			)}
 
 			<div className="notifConfig__tabs" role="tablist">
 				{NOTIFICATION_AREAS.map((area) => {
@@ -334,13 +343,16 @@ interface NotificationConfigDialogProps {
 	config: NotificationConfig;
 	onConfirm: (config: NotificationConfig) => void;
 	onClose: () => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigDialog = ({
 	open,
 	config,
 	onConfirm,
-	onClose
+	onClose,
+	showEmailLink = true
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
 	const [draft, setDraft] = useState<NotificationConfig>(config);
@@ -402,7 +414,9 @@ export const NotificationConfigDialog = ({
 				activeArea={activeArea}
 				onAreaChange={setActiveArea}
 				onChange={handleChange}
+				onNavigate={onClose}
 				onPreview={handlePreview}
+				showEmailLink={showEmailLink}
 			/>
 		</M3Dialog>
 	);

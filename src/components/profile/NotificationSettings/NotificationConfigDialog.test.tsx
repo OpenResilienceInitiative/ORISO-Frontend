@@ -9,9 +9,10 @@ import {
 	cleanup,
 	configure,
 	fireEvent,
-	render,
+	render as rtlRender,
 	screen
 } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import {
 	NotificationConfigDialog,
 	NotificationConfigView
@@ -23,8 +24,10 @@ configure({ testIdAttribute: 'data-cy' });
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, opts?: Record<string, unknown>) =>
-			opts && 'number' in opts ? `${key}:${opts.number}` : key
+		t: (key: string, opts?: Record<string, unknown> | string) =>
+			opts && typeof opts === 'object' && 'number' in opts
+				? `${key}:${opts.number}`
+				: key
 	})
 }));
 
@@ -44,6 +47,10 @@ vi.mock('../../../resources/img/icons/keyboard_arrow_up.svg', () => ({
 vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
 	ReactComponent: () => null
 }));
+
+// The email link is a router Link.
+const render = (ui: React.ReactElement) =>
+	rtlRender(ui, { wrapper: MemoryRouter });
 
 const baseProps = {
 	config: DEFAULT_NOTIFICATION_CONFIG,
@@ -83,6 +90,23 @@ describe('NotificationConfigDialog', () => {
 			) as HTMLElement
 		);
 		expect(onConfirm).toHaveBeenCalledWith(DEFAULT_NOTIFICATION_CONFIG);
+	});
+
+	it.each([true, false])('email link shown=%s', (showEmailLink) => {
+		render(
+			<NotificationConfigDialog
+				open
+				config={DEFAULT_NOTIFICATION_CONFIG}
+				onConfirm={vi.fn()}
+				onClose={vi.fn()}
+				showEmailLink={showEmailLink}
+			/>
+		);
+		expect(
+			!!screen.queryByRole('link', {
+				name: 'profile.notifications.title'
+			})
+		).toBe(showEmailLink);
 	});
 });
 
@@ -158,16 +182,30 @@ describe('NotificationConfigView', () => {
 		);
 	});
 
-	it('reports an email toggle', () => {
+	it('links to authoritative email preferences instead of editing Matrix email flags', () => {
 		const onChange = vi.fn();
 		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
-		fireEvent.click(screen.getByTestId('notif-email-requests-mention'));
-		expect(onChange).toHaveBeenCalledWith(
-			'requests',
-			'mention',
-			'email',
-			true
+		expect(screen.queryByTestId('notif-email-requests-mention')).toBeNull();
+		expect(
+			screen.queryByText('profile.notifications.config.emailNote')
+		).toBeNull();
+		expect(
+			screen
+				.getByRole('link', { name: 'profile.notifications.title' })
+				.getAttribute('href')
+		).toBe('/profile/einstellungen/email#email-notifications');
+		expect(onChange).not.toHaveBeenCalled();
+	});
+
+	it('closes the dialog when the email link navigates away', () => {
+		const onNavigate = vi.fn();
+		render(
+			<NotificationConfigView {...baseProps} onNavigate={onNavigate} />
 		);
+		fireEvent.click(
+			screen.getByRole('link', { name: 'profile.notifications.title' })
+		);
+		expect(onNavigate).toHaveBeenCalledTimes(1);
 	});
 
 	it('switches area via a tab click', () => {
