@@ -3452,7 +3452,12 @@
 			},
 			"back": "Zurück",
 			"next": "Weiter",
-			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird."
+			"consentPending": "Klient:innen-Zustimmung ist erforderlich, bevor der Zugriff aktiviert wird.",
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während Ihrer Abwesenheit übernommen. Sie können ihn jetzt zurücknehmen.",
+				"cta": "Fall zurücknehmen",
+				"unavailable": "Dieser Fall kann nicht mehr zurückgenommen werden."
+			}
 		},
 		"accepted": {
 			"title": "Ihre Anfrage wurde von einer Berater:in angenommen.",

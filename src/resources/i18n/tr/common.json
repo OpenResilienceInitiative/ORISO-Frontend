@@ -3432,7 +3432,12 @@
 			},
 			"back": "Geri",
 			"next": "İleri",
-			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir."
+			"consentPending": "Erişim etkinleştirilmeden önce danışanın onayı gereklidir.",
+			"reclaim": {
+				"copy": "Siz yokken bir meslektaşınız bu vakayı devraldı. Vakayı şimdi geri alabilirsiniz.",
+				"cta": "Vakayı geri al",
+				"unavailable": "Bu vaka artık geri alınamaz."
+			}
 		},
 		"accepted": {
 			"title": "Talebiniz bir danışman tarafından kabul edildi.",

@@ -2245,6 +2245,11 @@
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"curtain": {
+			"reclaim": {
+				"copy": "Eine Kolleg:in hat diesen Fall während deiner Abwesenheit übernommen. Du kannst ihn jetzt zurücknehmen."
+			}
 		}
 	},
 	"dpaSign": {
