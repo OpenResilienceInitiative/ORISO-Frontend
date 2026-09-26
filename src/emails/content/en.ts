@@ -1,10 +1,11 @@
 /**
  * English. Used for tenants that offer counselling in English and as the
- * fallback when a recipient's language is unknown.
+ * English variant. An unknown recipient language is a configuration error.
  */
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} is a service provided by {{orgName}}.',
@@ -58,9 +59,10 @@ const accountAssurance =
 	'We will never ask for your password by email. We always tell you when your account changes.';
 
 const legalAssurance =
-	'This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.';
+	'This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.';
 
 export const en: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('en', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'You have a new message',
 		preheader: 'A new message is waiting for you in your counselling.',
@@ -104,7 +106,7 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'If you did not ask for this, simply ignore this email. Your password stays unchanged.',
 		assurance,
-		footer
+		footer: securityFooter
 	},
 
 	'termin': {
@@ -134,11 +136,10 @@ export const en: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'How to reach your counselling service',
-		preheader: 'Direct line, phone hours and booking at a glance.',
+		preheader: 'Your counselling service’s contact details at a glance.',
 		headline: 'How to reach your counselling service',
 		paragraphs: [
-			'Besides the protected chat you can also reach your counselling service by phone or book an appointment directly.',
-			'Your account stays anonymous – you decide what you share.'
+			'You requested your counselling service’s contact details. The available ways to get in touch are below.'
 		],
 		panel: [
 			{ label: 'Service', value: '{{consultantName}}' },
@@ -146,13 +147,7 @@ export const en: Record<EmailId, EmailContent> = {
 			{ label: 'Phone hours', value: '{{consultantHours}}' },
 			{ label: 'Email', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Book an appointment', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Go to the protected chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Outside phone hours, writing in the chat works best. We reply within 2 working days.',
+		cta: { label: 'Go to the protected chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -475,6 +470,10 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Go to profile', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email reports a change to your email address and cannot be unsubscribed from. Please do not reply to it.'
+		}
 	}
 };

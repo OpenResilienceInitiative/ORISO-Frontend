@@ -1,0 +1,25 @@
+Votre lien de connexion
+=======================
+
+Ce lien vous connecte sans mot de passe.
+
+Il est valable {{expiryMinutes}} minutes et ne fonctionne qu’une seule fois.
+
+Se connecter maintenant:
+{{loginUrl}}
+
+Si vous ne vouliez pas vous connecter, ignorez cet e-mail. Sans le lien, il ne se passe rien.
+
+----------------------------------------------------------------
+Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce lien à personne.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.

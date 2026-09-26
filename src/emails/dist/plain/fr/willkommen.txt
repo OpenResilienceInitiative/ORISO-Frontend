@@ -1,0 +1,29 @@
+Votre accès est prêt
+====================
+
+Vous vous êtes inscrit anonymement sur {{platformName}}. Nous sommes heureux de vous accueillir.
+
+Conservez bien votre nom d’utilisateur. Pour des raisons de protection des données, nous ne pouvons pas le récupérer.
+
+Nom d’utilisateur: {{username}}
+
+Se connecter au service:
+{{loginUrl}}
+
+Votre conseillère ou votre conseiller vous répond sous 2 jours ouvrés.
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

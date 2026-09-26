@@ -1,0 +1,31 @@
+Devir onaylandı
+===============
+
+Danışmanlık devralındı. Bundan sonra {{toConsultantName}} sorumlu.
+
+Danışan, uygulama üzerinden bilgilendirildi.
+
+Dosya: {{caseReference}}
+Yeni sorumlu: {{toConsultantName}}
+Devir tarihi: {{handoverAt}}
+
+Danışmanlığı aç:
+{{requestUrl}}
+
+Önceki yazışmalara erişiminiz devirle birlikte sona erer.
+
+----------------------------------------------------------------
+Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Ayarlar: {{settingsUrl}}
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+Bildirimlerden çık: {{unsubscribeUrl}}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.

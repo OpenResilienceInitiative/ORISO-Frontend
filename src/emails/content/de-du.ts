@@ -8,6 +8,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} ist ein Angebot von {{orgName}}.',
@@ -66,6 +67,7 @@ const legalAssurance =
 	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.';
 
 export const deDu: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('de-du', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Du hast eine neue Nachricht',
 		preheader:
@@ -110,7 +112,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn du das nicht angefordert hast, ignoriere diese E-Mail einfach. Dein Passwort bleibt dann unverändert.',
 		assurance,
-		footer
+		footer: securityFooter
 	},
 
 	'termin': {
@@ -140,11 +142,10 @@ export const deDu: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'So erreichst du deine Beratung',
-		preheader: 'Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick.',
+		preheader: 'Kontaktdaten deiner Beratung auf einen Blick.',
 		headline: 'So erreichst du deine Beratung',
 		paragraphs: [
-			'Neben dem geschützten Chat kannst du deine Beratung auch telefonisch erreichen oder direkt einen Termin buchen.',
-			'Dein Zugang bleibt dabei anonym – du entscheidest, was du erzählst.'
+			'Du hast die Kontaktdaten deiner Beratung angefordert. Die verfügbaren Kontaktwege findest du unten.'
 		],
 		panel: [
 			{ label: 'Beratung', value: '{{consultantName}}' },
@@ -152,13 +153,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 			{ label: 'Sprechzeiten', value: '{{consultantHours}}' },
 			{ label: 'E-Mail', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Termin buchen', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Zum geschützten Chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Außerhalb der Sprechzeiten schreib am besten im Chat. Wir melden uns innerhalb von 2 Werktagen.',
+		cta: { label: 'Zum geschützten Chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -481,6 +476,10 @@ export const deDu: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail informiert dich über eine Änderung deiner E-Mail-Adresse und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
+		}
 	}
 };
