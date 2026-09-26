@@ -2661,7 +2661,8 @@
 			},
 			"help": {
 				"title": "Hilfe",
-				"videoCall": "Video-Call"
+				"videoCall": "Video-Call",
+				"tours": "Rundgänge"
 			},
 			"notifications": {
 				"email": "E-Mail Benachrichtigung",
@@ -4517,12 +4518,16 @@
 		},
 		"subtitle": "Um Ihnen die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Sie vorbereitet. <br /> Sie können ihn jederzeit abbrechen oder in Ihrem Profil erneut starten.",
 		"switch": {
-			"active": {
-				"label": "Rundgang aktiv"
+			"hint": {
+				"off": "Aus: Rundgänge starten nicht von selbst. Sie können sie hier jederzeit starten.",
+				"on": "An: Neue Rundgänge starten einmal von selbst. Sie können sie hier jederzeit erneut starten."
 			},
-			"deactive": {
-				"label": "Rundgang aktiviert"
-			}
+			"label": {
+				"off": "Aus",
+				"on": "An"
+			},
+			"subtitle": "Kurze Rundgänge zeigen Ihnen, wo Sie was finden.",
+			"title": "Rundgänge automatisch starten"
 		},
 		"title": "Rundgang"
 	},

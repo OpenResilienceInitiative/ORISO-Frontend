@@ -2640,7 +2640,8 @@
 			},
 			"help": {
 				"title": "Yardım",
-				"videoCall": "Görüntülü arama"
+				"videoCall": "Görüntülü arama",
+				"tours": "Turlar"
 			},
 			"notifications": {
 				"email": "E-posta bildirimi",
@@ -4500,12 +4501,16 @@
 		},
 		"subtitle": "Bireysel işlevleri açıklamak için sizin için kısa bir tur hazırladık. <br /> İstediğiniz zaman iptal edebilir veya profilinizde yeniden başlatabilirsiniz.",
 		"switch": {
-			"active": {
-				"label": "Aktif tur"
+			"hint": {
+				"off": "Kapalı: Turlar kendiliğinden başlamaz. Bunları istediğiniz zaman buradan başlatabilirsiniz.",
+				"on": "Açık: Yeni turlar bir kez kendiliğinden başlar. Bunları istediğiniz zaman buradan yeniden başlatabilirsiniz."
 			},
-			"deactive": {
-				"label": "Tur etkinleştirildi"
-			}
+			"label": {
+				"off": "Kapalı",
+				"on": "Açık"
+			},
+			"subtitle": "Kısa turlar size neyin nerede olduğunu gösterir.",
+			"title": "Turları otomatik başlat"
 		},
 		"title": "Tur"
 	},
