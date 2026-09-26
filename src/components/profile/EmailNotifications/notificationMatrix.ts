@@ -1,5 +1,5 @@
 /**
- * The notification matrix from ADR-019, as the settings screen shows it.
+ * The notification matrix from ADR-024, as the settings screen shows it.
  *
  * Advice seekers and counsellors get two separate lists, not one list filtered
  * by role. That is the decision the ADR turns on: an advice seeker uses ORISO a
