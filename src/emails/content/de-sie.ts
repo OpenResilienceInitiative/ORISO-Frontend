@@ -397,15 +397,15 @@ export const deSie: Record<EmailId, EmailContent> = {
 	'avv-unterschrift': {
 		subject: 'Vertragsunterlagen für {{tenantName}}',
 		preheader: 'Die Vertragsunterlagen für {{tenantName}} liegen bereit.',
-		headline: 'Die Vertragsunterlagen liegen zur Unterschrift bereit',
+		headline: 'Die Vertragsunterlagen liegen zur Bestätigung bereit',
 		paragraphs: [
 			'Für {{tenantName}} wurden Vertragsunterlagen erstellt.',
-			'Bitte prüfen Sie die Unterlagen und zeichnen Sie sie digital.'
+			'Bitte prüfen Sie die Unterlagen und bestätigen Sie sie digital.'
 		],
 		panel: [
 			{ label: 'Träger', value: '{{tenantName}}' },
 			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' },
-			{ label: 'Zu unterschreiben bis', value: '{{dpaExpiresAt}}' }
+			{ label: 'Zu bestätigen bis', value: '{{dpaExpiresAt}}' }
 		],
 		cta: {
 			label: 'Vertrag öffnen',
@@ -414,7 +414,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 				'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:'
 		},
 		footnote:
-			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.',
+			'Ohne die Bestätigung der Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.',
 		assurance: legalAssurance,
 		footer: legalFooter
 	},

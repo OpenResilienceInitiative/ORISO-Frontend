@@ -240,7 +240,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'email-geaendert': 'E-Mail-Adresse geändert',
 	'einladung-traeger': 'Einladung für einen Träger',
 	'einladung-fachkraft': 'Einladung für eine Fachkraft',
-	'avv-unterschrift': 'Vertragsunterlagen zur Unterschrift',
+	'avv-unterschrift': 'Vertragsunterlagen zur Bestätigung',
 	'einladung-freitext': 'Einladung mit eigenem Text',
 	'team-aenderung': 'Änderung im Team',
 	'smtp-test': 'SMTP-Test'

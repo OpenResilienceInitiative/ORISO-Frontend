@@ -390,15 +390,15 @@ export const tr: Record<EmailId, EmailContent> = {
 	'avv-unterschrift': {
 		subject: '{{tenantName}} için sözleşme belgeleri',
 		preheader: '{{tenantName}} için sözleşme belgeleri hazır.',
-		headline: 'Sözleşme belgeleri imzaya hazır',
+		headline: 'Sözleşme belgeleri onaylanmaya hazır',
 		paragraphs: [
 			'{{tenantName}} için sözleşme belgeleri hazırlandı.',
-			'Lütfen belgeleri inceleyin ve dijital olarak imzalayın.'
+			'Lütfen belgeleri inceleyin ve dijital olarak onaylayın.'
 		],
 		panel: [
 			{ label: 'Kurum', value: '{{tenantName}}' },
 			{ label: 'Hazırlanma tarihi', value: '{{dpaProvidedAt}}' },
-			{ label: 'Son imza tarihi', value: '{{dpaExpiresAt}}' }
+			{ label: 'Son onay tarihi', value: '{{dpaExpiresAt}}' }
 		],
 		cta: {
 			label: 'Sözleşmeyi aç',
@@ -407,7 +407,7 @@ export const tr: Record<EmailId, EmailContent> = {
 				'Düğme çalışmazsa bu bağlantıyı tarayıcınıza kopyalayın:'
 		},
 		footnote:
-			'İmzalanmış sözleşme belgeleri olmadan bu kurum için danışmanlık hizmeti kapalı kalır.',
+			'Sözleşme belgeleri onaylanmadan bu kurum için danışmanlık hizmeti kapalı kalır.',
 		assurance: legalAssurance,
 		footer: {
 			...legalFooter,
