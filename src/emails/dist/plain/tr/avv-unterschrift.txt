@@ -1,18 +1,18 @@
-Sözleşme belgeleri imzaya hazır
-===============================
+Sözleşme belgeleri onaylanmaya hazır
+====================================
 
 {{tenantName}} için sözleşme belgeleri hazırlandı.
 
-Lütfen belgeleri inceleyin ve dijital olarak imzalayın.
+Lütfen belgeleri inceleyin ve dijital olarak onaylayın.
 
 Kurum: {{tenantName}}
 Hazırlanma tarihi: {{dpaProvidedAt}}
-Son imza tarihi: {{dpaExpiresAt}}
+Son onay tarihi: {{dpaExpiresAt}}
 
 Sözleşmeyi aç:
 {{dpaUrl}}
 
-İmzalanmış sözleşme belgeleri olmadan bu kurum için danışmanlık hizmeti kapalı kalır.
+Sözleşme belgeleri onaylanmadan bu kurum için danışmanlık hizmeti kapalı kalır.
 
 ----------------------------------------------------------------
 Bu e-posta, {{orgName}} ile {{tenantNameDative}} arasındaki sözleşme ilişkisine aittir.

@@ -377,15 +377,15 @@ export const en: Record<EmailId, EmailContent> = {
 	'avv-unterschrift': {
 		subject: 'Contract documents for {{tenantName}}',
 		preheader: 'The contract documents for {{tenantName}} are ready.',
-		headline: 'The contract documents are ready for signature',
+		headline: 'The contract documents are ready for confirmation',
 		paragraphs: [
 			'Contract documents have been prepared for {{tenantName}}.',
-			'Please review the documents and sign them digitally.'
+			'Please review the documents and confirm them digitally.'
 		],
 		panel: [
 			{ label: 'Organisation', value: '{{tenantName}}' },
 			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
-			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
+			{ label: 'To be confirmed by', value: '{{dpaExpiresAt}}' }
 		],
 		cta: {
 			label: 'Open contract',
@@ -394,7 +394,7 @@ export const en: Record<EmailId, EmailContent> = {
 				'If the button does not work, copy this link into your browser:'
 		},
 		footnote:
-			'Without signed contract documents, counselling stays blocked for this organisation.',
+			'Without confirmation of the contract documents, counselling stays blocked for this organisation.',
 		assurance: legalAssurance,
 		footer: legalFooter
 	},

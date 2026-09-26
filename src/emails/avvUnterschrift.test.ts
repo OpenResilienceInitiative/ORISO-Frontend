@@ -72,18 +72,38 @@ describe('avv-unterschrift', () => {
 		}
 	);
 
+	// Frank, 2026-09-25: the documents are confirmed ("bestätigt"), not signed.
+	it.each(EMAIL_LOCALES)(
+		'%s asks for confirmation, not a signature',
+		(locale) => {
+			const mail = buildEmail('avv-unterschrift', locale, {
+				dialect: 'plain'
+			});
+			for (const part of [
+				mail.subject,
+				mail.preheader,
+				mail.html,
+				mail.text
+			]) {
+				expect(part).not.toMatch(
+					/unterschr|unterzeichn|zeichnen|\bsign(ed|ature)?\b/i
+				);
+			}
+		}
+	);
+
 	it.each([
 		[
 			'de-sie',
-			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.'
+			'Ohne die Bestätigung der Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.'
 		],
 		[
 			'de-du',
-			'Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.'
+			'Ohne die Bestätigung der Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.'
 		],
 		[
 			'en',
-			'Without signed contract documents, counselling stays blocked for this organisation.'
+			'Without confirmation of the contract documents, counselling stays blocked for this organisation.'
 		]
 	] as const)('%s keeps the blocked-counselling line', (locale, line) => {
 		const { html, text } = buildEmail('avv-unterschrift', locale, {

@@ -1,3 +1,5 @@
+import type { TraegerDpo } from '../../utils/traegerDpo';
+
 export interface TenantDataInterface {
 	id: number | null;
 	name: string;
@@ -46,6 +48,8 @@ export interface TenantDataInterface {
 		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
+	/** Optional DPO of the Träger, public on the restricted tenant read (ORISO-Admin#1067). */
+	dataProtectionOfficer?: TraegerDpo | null;
 }
 
 export interface TenantDataSettingsInterface {

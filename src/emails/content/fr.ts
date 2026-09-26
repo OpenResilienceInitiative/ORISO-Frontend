@@ -389,15 +389,15 @@ export const fr: Record<EmailId, EmailContent> = {
 		subject: 'Documents contractuels pour {{tenantName}}',
 		preheader:
 			'Les documents contractuels pour {{tenantName}} sont disponibles.',
-		headline: 'Les documents contractuels sont prêts à être signés',
+		headline: 'Les documents contractuels sont prêts à être confirmés',
 		paragraphs: [
 			'Des documents contractuels ont été préparés pour {{tenantName}}.',
-			'Veuillez vérifier les documents et les signer numériquement.'
+			'Veuillez vérifier les documents et les confirmer en ligne.'
 		],
 		panel: [
 			{ label: 'Organisme', value: '{{tenantName}}' },
 			{ label: 'Mis à disposition le', value: '{{dpaProvidedAt}}' },
-			{ label: 'À signer avant le', value: '{{dpaExpiresAt}}' }
+			{ label: 'À confirmer avant le', value: '{{dpaExpiresAt}}' }
 		],
 		cta: {
 			label: 'Ouvrir le contrat',
@@ -406,7 +406,7 @@ export const fr: Record<EmailId, EmailContent> = {
 				'Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :'
 		},
 		footnote:
-			'Sans documents contractuels signés, le service de conseil restera bloqué pour cet organisme.',
+			'Sans confirmation des documents contractuels, le service de conseil restera bloqué pour cet organisme.',
 		assurance: legalAssurance,
 		footer: {
 			...legalFooter,
