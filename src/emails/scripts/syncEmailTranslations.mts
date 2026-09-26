@@ -163,7 +163,7 @@ const run = async () => {
 
 	if (check) {
 		const drift = [...added, ...restamped];
-		if (drift.length > 0) {
+		if (drift.length > 0 || orphaned.length > 0) {
 			// eslint-disable-next-line no-console
 			console.error(
 				'emails:sync --check: the manifest is out of date. Run npm run emails:sync.'
