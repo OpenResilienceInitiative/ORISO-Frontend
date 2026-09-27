@@ -334,11 +334,22 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						: {})
 			};
 
+			/* `apiPostRegistration` posts the registration *and then* logs in,
+			   and settles for both together — so a rejection alone cannot say
+			   whether an account exists. Offering the start button again after
+			   the account was created would make a second one for the same
+			   person (CodeRabbit on #1514). The callback fires between the two
+			   steps; the notification stays either way, so nobody is left
+			   looking at a frozen button with no explanation. */
+			let accountCreated = false;
 			apiPostRegistration(
 				endpoints.registerAsker,
 				registrationData,
 				settings.multitenancyWithSingleDomainEnabled,
-				tenant
+				tenant,
+				() => {
+					accountCreated = true;
+				}
 			)
 				.then(() => {
 					// Registration successful, auto-login completed by apiPostRegistration
@@ -347,7 +358,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				})
 				.catch((error) => {
 					// console.error('Anonymous chat registration failed:', error);
-					setIsRegistering(false);
+					if (!accountCreated) {
+						setIsRegistering(false);
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
