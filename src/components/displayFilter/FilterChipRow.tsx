@@ -87,14 +87,24 @@ export const FilterChipRow = ({
 			attributes: true,
 			attributeFilter: ['aria-pressed', 'aria-current', 'class']
 		});
+		// Also re-check when the row narrows (list column dragged smaller), so
+		// the active chip does not slide out; widening never moves the row.
+		let lastWidth = scroller.clientWidth;
 		const resize =
 			typeof ResizeObserver === 'undefined'
 				? null
 				: new ResizeObserver(() => {
-						if (!pending || !laidOut()) return;
-						const chip = pending;
+						const width = scroller.clientWidth;
+						const narrowed = width < lastWidth;
+						lastWidth = width;
+						if (!laidOut()) return;
+						const chip =
+							pending ??
+							(narrowed && revealed && active.has(revealed)
+								? revealed
+								: null);
 						pending = null;
-						if (chip.isConnected) revealChip(scroller, chip);
+						if (chip?.isConnected) revealChip(scroller, chip);
 					});
 		resize?.observe(scroller);
 		scroller.addEventListener('transitionend', onTransitionEnd);

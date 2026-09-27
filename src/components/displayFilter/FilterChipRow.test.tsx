@@ -151,4 +151,35 @@ describe('FilterChipRow / FilterChip (#1377)', () => {
 			globalThis.ResizeObserver = original;
 		}
 	});
+
+	it('keeps the active chip in view when the row gets narrower', async () => {
+		let onResize: (() => void) | undefined;
+		const original = globalThis.ResizeObserver;
+		globalThis.ResizeObserver = class {
+			constructor(callback: () => void) {
+				onResize = callback;
+			}
+			observe() {}
+			unobserve() {}
+			disconnect() {}
+		} as unknown as typeof ResizeObserver;
+		try {
+			const width = { value: 700 };
+			const { rerender, container } = render(twoChipRow(false, false));
+			const scroller = stubGeometry(container, width);
+			// Browsers fire the observer once on observe() with the real size.
+			onResize?.();
+
+			rerender(twoChipRow(false, true));
+			await new Promise((resolve) => setTimeout(resolve, 0));
+			expect(scroller.scrollLeft).toBe(0);
+
+			width.value = 520;
+			onResize?.();
+
+			expect(scroller.scrollLeft).toBe(600 + 12 - 520);
+		} finally {
+			globalThis.ResizeObserver = original;
+		}
+	});
 });

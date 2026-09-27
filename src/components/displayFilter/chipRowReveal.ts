@@ -13,9 +13,13 @@ export const chipRevealScrollLeft = (
 	chipRight: number,
 	gutter = CHIP_REVEAL_GUTTER
 ): number | null => {
-	if (chipLeft - gutter < scrollLeft) return Math.max(0, chipLeft - gutter);
-	if (chipRight + gutter > scrollLeft + viewportWidth)
-		return chipRight + gutter - viewportWidth;
+	// A chip too wide for both gutters would be clipped by them: shrink the
+	// gutter to what fits instead.
+	const space = Math.max(0, (viewportWidth - (chipRight - chipLeft)) / 2);
+	const g = Math.min(gutter, space);
+	if (chipLeft - g < scrollLeft) return Math.max(0, chipLeft - g);
+	if (chipRight + g > scrollLeft + viewportWidth)
+		return chipRight + g - viewportWidth;
 	return null;
 };
 
