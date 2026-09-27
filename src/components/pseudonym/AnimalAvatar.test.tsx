@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AnimalAvatar } from './AnimalAvatar';
 
 vi.mock('../../utils/pseudonymGenerator', () => ({
@@ -24,6 +24,10 @@ const artworkBox = (size: number, file?: string) => {
 	) as HTMLElement;
 	return parseFloat(inner.style.width);
 };
+
+// The SVG loads asynchronously. Unmount after each test so the pending
+// setAvatarHtml is cancelled and cannot reach React after jsdom is torn down.
+afterEach(cleanup);
 
 describe('AnimalAvatar artwork size (#1059)', () => {
 	it.each([24, 40, 48, 104, 108])(
