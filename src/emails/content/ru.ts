@@ -116,7 +116,11 @@ export const ru: Record<EmailId, EmailContent> = {
 		footnote:
 			'Если Вы этого не запрашивали, просто не обращайте внимания на это письмо. Пароль останется прежним.',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Это письмо предназначено для сброса пароля, от него нельзя отписаться. Пожалуйста, не отвечайте на него.'
+		}
 	},
 
 	'termin': {

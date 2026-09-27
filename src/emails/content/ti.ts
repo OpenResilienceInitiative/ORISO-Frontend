@@ -113,7 +113,11 @@ export const ti: Record<EmailId, EmailContent> = {
 		cta: { label: 'መሕለፊ ቃል ኣሐድሱ', href: '{{resetUrl}}' },
 		footnote: 'ንስኹም ዘይሓተትኩምዎ እንተኾይኑ፣ ነዛ ኢመይል ግደፍዋ። መሕለፊ ቃልኩም ከምዘሎ ይጸንሕ።',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'እዛ ኢመይል ንምሕዳስ መሕለፊ ቃል እያ፣ ክትስረዝ ኣይትኽእልን። በጃኹም ኣይትምለስዋ።'
+		}
 	},
 
 	'termin': {

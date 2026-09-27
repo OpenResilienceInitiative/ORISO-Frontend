@@ -117,7 +117,11 @@ export const tr: Record<EmailId, EmailContent> = {
 		footnote:
 			'Bunu siz talep etmediyseniz bu e-postayı dikkate almayın. Şifreniz değişmeden kalır.',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Bu e-posta şifrenizi sıfırlamak içindir ve iptal edilemez. Lütfen yanıtlamayınız.'
+		}
 	},
 
 	'termin': {

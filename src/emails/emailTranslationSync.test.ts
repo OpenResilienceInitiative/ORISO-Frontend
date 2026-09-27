@@ -93,6 +93,27 @@ const cases = EMAIL_TRANSLATED_LOCALES.flatMap((locale) =>
 );
 
 describe('e-mail translations', () => {
+	it.each([
+		['de-sie', /Passwort/i],
+		['de-du', /Passwort/i],
+		['en', /password/i],
+		['fr', /mot de passe/i],
+		['ru', /парол/i],
+		['ti', /መሕለፊ ቃል/],
+		['tr', /şifre/i]
+	] as const)(
+		'%s describes password reset in its reset-mail footer',
+		(locale, passwordTerm) => {
+			const reset = EMAIL_CONTENT[locale]['passwort-zuruecksetzen'];
+			const signIn = EMAIL_CONTENT[locale].anmeldelink;
+			expect(reset.footer.automatedNote).toMatch(passwordTerm);
+			expect(reset.footer.automatedNote).not.toBe(
+				signIn.footer.automatedNote
+			);
+			expect(reset.footer.links).toEqual(signIn.footer.links);
+		}
+	);
+
 	it('keeps security and legal mail footers free of preference and unsubscribe links', () => {
 		for (const locale of EMAIL_LOCALES) {
 			for (const id of EMAIL_IDS) {
