@@ -110,7 +110,11 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn du das nicht angefordert hast, ignoriere diese E-Mail einfach. Dein Passwort bleibt dann unverändert.',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail gehört zum Zurücksetzen deines Passworts und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
+		}
 	},
 
 	'termin': {

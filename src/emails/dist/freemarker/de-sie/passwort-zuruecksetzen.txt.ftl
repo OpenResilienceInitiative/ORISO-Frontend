@@ -22,4 +22,4 @@ ${platformName!''} ist ein Angebot von ${orgName!''}.
 Datenschutz: ${privacyUrl!''}
 Impressum: ${imprintUrl!''}
 
-Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
+Diese E-Mail gehört zum Zurücksetzen Ihres Passworts und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
