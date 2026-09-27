@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { render } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AnimalAvatar } from './AnimalAvatar';
 
 vi.mock('../../utils/pseudonymGenerator', () => ({
@@ -26,6 +26,10 @@ const artworkBox = (size: number, file?: string) => {
 };
 
 describe('AnimalAvatar artwork size (#1059)', () => {
+	// Unmount after each test: the SVG loads asynchronously, and a render
+	// landing after the file's jsdom teardown fails CI with `window is not defined`.
+	afterEach(cleanup);
+
 	it.each([24, 40, 48, 104, 108])(
 		'gives the artwork about two thirds of a %ipx circle',
 		(size) => {
