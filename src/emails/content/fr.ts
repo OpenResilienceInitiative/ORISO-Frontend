@@ -115,7 +115,11 @@ export const fr: Record<EmailId, EmailContent> = {
 		footnote:
 			'Si vous n’êtes pas à l’origine de cette demande, ignorez simplement cet e-mail. Votre mot de passe restera inchangé.',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Cet e-mail concerne la réinitialisation de votre mot de passe et ne peut pas être désactivé. Merci de ne pas y répondre.'
+		}
 	},
 
 	'termin': {

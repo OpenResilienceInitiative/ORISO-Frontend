@@ -22,4 +22,4 @@ Your messages are encrypted end-to-end. Nobody but you and your counselling serv
 Privacy: {{privacyUrl}}
 Imprint: {{imprintUrl}}
 
-This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.
+This email is for resetting your password and cannot be unsubscribed from. Please do not reply to it.

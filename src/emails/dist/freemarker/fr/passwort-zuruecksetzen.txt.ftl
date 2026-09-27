@@ -22,4 +22,4 @@ ${platformName!''} est un service proposé par ${orgName!''}.
 Protection des données: ${privacyUrl!''}
 Mentions légales: ${imprintUrl!''}
 
-Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.
+Cet e-mail concerne la réinitialisation de votre mot de passe et ne peut pas être désactivé. Merci de ne pas y répondre.
