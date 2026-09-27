@@ -42,6 +42,7 @@ import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
 import { groupAppointmentRedirect } from './groupAppointmentRedirect';
+import { resolveExistingSession } from './existingSessionLookup';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
@@ -144,6 +145,7 @@ export const Login = () => {
 	// attempt (fields stay editable, the resend-mail path retries) must not
 	// write its message or field marks over newer input.
 	const loginAttemptRef = useRef(0);
+	const existingSessionLookupRef = useRef(0);
 	const [isMagicTokenLoginAttempted, setIsMagicTokenLoginAttempted] =
 		useState<boolean>(false);
 	const [isSecurityExplainerOpen, setIsSecurityExplainerOpen] =
@@ -229,13 +231,13 @@ export const Login = () => {
 	}, [translate]);
 
 	useEffect(() => {
+		const lookupId = ++existingSessionLookupRef.current;
 		// An appointment link is read-only. Unlike gcid, it must never ASSIGN a group.
 		if ((gcid || appointmentSeriesId) && getValueFromCookie('keycloak')) {
-			apiGetUserData([FETCH_ERRORS.CATCH_ALL])
-				/* Deliberately no `navigate`: see postLogin below -- entering
-				   the authenticated app from the login screen is a cold start
-				   and must be a document load. */
-				.then((freshUserData) => {
+			void resolveExistingSession({
+				load: () => apiGetUserData([FETCH_ERRORS.CATCH_ALL]),
+				isCurrent: () => existingSessionLookupRef.current === lookupId,
+				onResolved: (freshUserData) => {
 					if (
 						appConfig.blockConsultantAppLogin &&
 						hasUserAuthority(
@@ -252,14 +254,27 @@ export const Login = () => {
 						freshUserData
 					);
 					if (appointment) {
+						// Entering the authenticated app is a cold document load.
 						redirectToApp(undefined, appointment);
 					} else if (gcid) {
 						redirectToApp(gcid);
 					}
-				})
-				.catch(() => null); // Leave the login form available.
+				},
+				onFailure: () => {
+					if (appointmentSeriesId) {
+						setShowLoginError(
+							translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
+						);
+					}
+				}
+			});
 		}
-	}, [appointmentSeriesId, gcid, showConsultantLoginBlockedError]);
+		return () => {
+			if (existingSessionLookupRef.current === lookupId) {
+				existingSessionLookupRef.current += 1;
+			}
+		};
+	}, [appointmentSeriesId, gcid, showConsultantLoginBlockedError, translate]);
 
 	useEffect(() => {
 		if (consumeConsultantLoginBlocked()) {
@@ -350,6 +365,7 @@ export const Login = () => {
 		}
 
 		setIsMagicTokenLoginAttempted(true);
+		existingSessionLookupRef.current += 1;
 		setIsRequestInProgress(true);
 		setShowLoginError('');
 		setShowMagicLinkError('');
@@ -393,6 +409,7 @@ export const Login = () => {
 	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
 	const tryLogin = (otp?: string) => {
+		existingSessionLookupRef.current += 1;
 		setIsRequestInProgress(true);
 		loginAttemptRef.current += 1;
 		const attempt = loginAttemptRef.current;
