@@ -507,16 +507,22 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		}
 	}
 
-	/* Why the person is here: a registration created their account but
-	   could not log it in (#1533). Neutral surface tokens — it is an
-	   explanation, not an error, and it has to read in every tenant theme. */
-	&__notice {
+	/* One box shape for every informational line in the form; each state
+	   below brings only its own colours. */
+	&__notice,
+	&__magicLinkInfo {
 		width: 100%;
 		max-width: 380px;
 		margin: 6px auto 14px;
 		padding: 10px 12px;
 		border-radius: 10px;
 		text-align: left;
+	}
+
+	/* Why the person is here: a registration created their account but
+	   could not log it in (#1533). Neutral surface tokens — it is an
+	   explanation, not an error, and it has to read in every tenant theme. */
+	&__notice {
 		color: var(--m3-on-surface, #1b1b1c);
 		background: var(--m3-surface-container, #f0edee);
 		border: 1px solid var(--m3-outline-variant, #c4c7c8);
@@ -527,15 +533,9 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	&__magicLinkInfo {
-		width: 100%;
-		max-width: 380px;
-		margin: 6px auto 14px;
 		color: #065f46;
 		background: rgba(16, 185, 129, 0.12);
 		border: 1px solid rgba(16, 185, 129, 0.35);
-		border-radius: 10px;
-		padding: 10px 12px;
-		text-align: left;
 	}
 
 	.twoFactorAuthResendMail {

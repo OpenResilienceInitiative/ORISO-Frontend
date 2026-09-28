@@ -36,13 +36,18 @@ describe('account-created login handoff', () => {
 		expect(readAccountCreatedLogin()).toBeNull();
 	});
 
-	it('never stores the password', () => {
+	it('stores exactly the User-ID and nothing else — never the password', () => {
 		stageAccountCreatedLogin('blaue-wolke');
 
-		const stored = Object.keys(sessionStorage).map((key) =>
-			sessionStorage.getItem(key)
-		);
-		expect(stored.join(' ')).not.toMatch(/password/i);
+		/* The whole of session storage, not a search for the word
+		   "password": a secret under any other name, or under a second key,
+		   would slip past a pattern (CodeRabbit on #1567). */
+		expect(Object.keys(sessionStorage)).toEqual([
+			'oriso.accountCreatedLogin'
+		]);
+		expect(
+			JSON.parse(sessionStorage.getItem('oriso.accountCreatedLogin')!)
+		).toEqual({ username: 'blaue-wolke' });
 	});
 
 	it('ignores a value it did not write', () => {

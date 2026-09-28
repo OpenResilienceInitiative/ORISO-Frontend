@@ -94,6 +94,11 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [username] = useState<string>(() => toRegistrationUsername(identity));
 	const [password] = useState<string>(() => generatePassword());
 	const registerThenLogin = useRegisterThenLogin();
+	/* The account — and the enquiry with it — exists; only the login after it
+	   failed (#1533). From here on "start" only logs in again, so the topic
+	   and the counselling centre are fixed and nothing about them is checked
+	   again (CodeRabbit on #1567). */
+	const [loginRetry, setLoginRetry] = useState(false);
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
@@ -285,6 +290,11 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 	// Handle topic expansion
 	const handleTopicToggle = (topic: TopicsDataInterface) => {
+		/* Opening another topic auto-selects or clears the counselling centre,
+		   which would take the start button away from a login retry. */
+		if (loginRetry) {
+			return;
+		}
 		setExpandedTopics((prev) => {
 			const newSet = new Set(prev);
 			if (newSet.has(topic.id)) {
@@ -351,6 +361,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				})
 				.catch(() => {
 					setIsRegistering(false);
+					if (registerThenLogin.accountCreated()) {
+						setLoginRetry(true);
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
@@ -365,8 +378,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 		// Re-verify availability at the moment of starting — presence can change
 		// between selecting the topic and clicking start. Block and show the
-		// alert when no counsellor is available.
-		if (selectedTopic) {
+		// alert when no counsellor is available. Not for a login retry: the
+		// enquiry already exists, and a counsellor going offline meanwhile must
+		// not keep the person out of it.
+		if (selectedTopic && !registerThenLogin.accountCreated()) {
 			checkConsultantAvailability(
 				selectedTopic,
 				selectedAgency.consultingType,
@@ -752,6 +767,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 																			}}
 																		>
 																			<FormControlLabel
+																				disabled={
+																					loginRetry
+																				}
 																				value={
 																					agency.id
 																				}
