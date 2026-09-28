@@ -61,7 +61,7 @@ vi.mock('lottie-react', () => ({ default: () => null }));
 
 const { AnonymousChat } = await import('./AnonymousChat');
 
-const topic = { id: 11, name: 'Sucht', status: 'ACTIVE' };
+const topic = { id: 11, name: 'Sucht', slug: 'sucht', status: 'ACTIVE' };
 const agency = { id: 7, name: 'Beratungsstelle', consultingType: 3 };
 const tenant = { id: 1 };
 
@@ -151,6 +151,67 @@ describe('anonymous chat — login retry after the account exists', () => {
 			api.apiGetConsultantAvailability,
 			'the account and its enquiry exist — availability cannot block the login'
 		).not.toHaveBeenCalled();
+		expect(api.apiPostRegistration).toHaveBeenCalledTimes(1);
+		expect(api.autoLogin).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the choice when a topic opened before the start answers only after the account exists', async () => {
+		/* A second topic was opened before "start"; its list of centres is
+		   still on the way when the account is created and the login fails.
+		   When it arrives it must not replace or clear the centre the account
+		   was created for — an empty answer used to clear it, which switched
+		   the start button off and left no way to log in (CodeRabbit on
+		   #1567). */
+		const secondTopic = {
+			id: 12,
+			name: 'Familie',
+			slug: 'familie',
+			status: 'ACTIVE'
+		};
+		let answerSecondTopic: (agencies: unknown[]) => void = () => undefined;
+		api.apiGetTopicsData.mockResolvedValue([topic, secondTopic]);
+		api.apiAgencySelection.mockImplementation(
+			({ topicId }: { topicId: number }) =>
+				topicId === secondTopic.id
+					? new Promise((resolve) => {
+							answerSecondTopic = resolve;
+						})
+					: Promise.resolve([agency])
+		);
+		renderChat();
+
+		await waitFor(() =>
+			expect(startButton()).toHaveProperty('disabled', false)
+		);
+		fireEvent.click(screen.getByText('anonymousChat.topics.names.familie'));
+		await waitFor(() =>
+			expect(api.apiAgencySelection).toHaveBeenCalledWith(
+				expect.objectContaining({ topicId: secondTopic.id }),
+				expect.anything()
+			)
+		);
+
+		fireEvent.click(startButton());
+		await waitFor(() =>
+			expect(api.addNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					text: 'registration.accountCreated.retry'
+				})
+			)
+		);
+
+		await act(async () => {
+			answerSecondTopic([]);
+		});
+
+		await waitFor(() =>
+			expect(
+				startButton(),
+				'a late answer must not take the start button away from the login retry'
+			).toHaveProperty('disabled', false)
+		);
+		fireEvent.click(startButton());
+		await waitFor(() => expect(api.redirectToApp).toHaveBeenCalled());
 		expect(api.apiPostRegistration).toHaveBeenCalledTimes(1);
 		expect(api.autoLogin).toHaveBeenCalledTimes(1);
 	});

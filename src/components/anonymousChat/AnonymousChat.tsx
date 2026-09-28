@@ -227,6 +227,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, uniqueAgencies);
 							return newMap;
 						});
+						/* An answer that arrives after the account was created
+						   (a topic opened before "start") only fills its list:
+						   the choice the account was made for stays, and no
+						   availability alert opens over the login retry
+						   (CodeRabbit on #1567). */
+						if (registerThenLogin.accountCreated()) {
+							return;
+						}
 						// Auto-select first agency if none selected
 						if (!selectedAgency && uniqueAgencies.length > 0) {
 							setSelectedAgency(uniqueAgencies[0]);
@@ -244,6 +252,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, []);
 							return newMap;
 						});
+						if (registerThenLogin.accountCreated()) {
+							return;
+						}
 						setSelectedTopic(topic);
 						setSelectedAgency(null);
 						setShownNoAvailabilityTopics((prev) => {
@@ -270,6 +281,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						newMap.set(topic.id, []);
 						return newMap;
 					});
+					if (registerThenLogin.accountCreated()) {
+						return;
+					}
 					setSelectedTopic(topic);
 					setSelectedAgency(null);
 				})
@@ -285,7 +299,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				abortController.abort();
 			};
 		},
-		[topicAgencies, selectedAgency, checkConsultantAvailability]
+		[
+			topicAgencies,
+			selectedAgency,
+			checkConsultantAvailability,
+			registerThenLogin
+		]
 	);
 
 	// Handle topic expansion
