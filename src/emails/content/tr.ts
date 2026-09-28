@@ -312,8 +312,8 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: {

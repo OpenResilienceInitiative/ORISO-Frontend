@@ -303,8 +303,8 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Go to {{platformName}}', href: '{{loginUrl}}' },

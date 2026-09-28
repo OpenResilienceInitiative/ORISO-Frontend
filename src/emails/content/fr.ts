@@ -314,8 +314,8 @@ export const fr: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Nouveau message sur {{platformName}}',
+		preheader: 'Veuillez vous connecter.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Aller sur {{platformName}}', href: '{{loginUrl}}' },

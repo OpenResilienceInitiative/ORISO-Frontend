@@ -309,8 +309,8 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melde dich an.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Zu {{platformName}}', href: '{{loginUrl}}' },

@@ -300,8 +300,8 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'ናብ {{platformName}}', href: '{{loginUrl}}' },
