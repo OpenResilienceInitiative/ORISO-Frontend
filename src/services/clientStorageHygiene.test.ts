@@ -117,6 +117,24 @@ describe('clientStorageHygiene (#1071)', () => {
 			).toBe('123');
 		});
 
+		it('drops a parked key the login password protects', () => {
+			localStorage.setItem(
+				'oriso.pendingRecoveryKey.@ned:oriso',
+				JSON.stringify({
+					v: 2,
+					iv: 'aXY=',
+					ct: 'Y3Q=',
+					exp: Date.now() + 1000
+				})
+			);
+
+			purgeAppWebStorage();
+
+			expect(
+				localStorage.getItem('oriso.pendingRecoveryKey.@ned:oriso')
+			).toBeNull();
+		});
+
 		it('exposes the retained prefixes so the exception stays reviewable', () => {
 			expect(RETAINED_STORAGE_PREFIXES).toEqual([
 				'oriso.pendingRecoveryKey.',
