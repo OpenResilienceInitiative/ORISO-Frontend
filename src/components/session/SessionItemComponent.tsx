@@ -4223,8 +4223,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				banner={
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
-							title={teamText('chatStage.panel.team.empty.title')}
-							text={teamText('chatStage.panel.team.empty.text')}
+							title={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.title'
+										)
+									: teamChannelTitle
+							}
+							text={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.text'
+										)
+									: translate(
+											'notifications.center.preview.empty'
+										)
+							}
 						/>
 					) : undefined
 				}

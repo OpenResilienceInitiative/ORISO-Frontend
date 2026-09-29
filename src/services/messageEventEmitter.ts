@@ -8,6 +8,8 @@ type MessageEventData = {
 	matrixEventId?: string;
 	isOwnMessage?: boolean;
 	sessionId?: number;
+	/** Refresh this active session; unlike sessionId, never remove a list row. */
+	changedSessionId?: number;
 	timestamp?: number;
 	refreshEnquiryList?: boolean;
 	refreshSessionList?: boolean;
