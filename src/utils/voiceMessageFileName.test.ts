@@ -33,6 +33,12 @@ describe('voice message file name', () => {
 		);
 	});
 
+	it('reads the legacy -s seconds without a -ms part', () => {
+		expect(voiceDurationMsFromFileName('voice-message-1-s7.ogg')).toBe(
+			7_000
+		);
+	});
+
 	it('returns null when the name carries no length', () => {
 		expect(voiceDurationMsFromFileName('voice-message.ogg')).toBeNull();
 	});

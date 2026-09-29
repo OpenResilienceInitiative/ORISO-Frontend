@@ -635,7 +635,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												type="button"
 												className="sessionMenu__item chatMenuDropdown__item"
 												onClick={() => {
-													setFlyoutOpen(false);
+													closeMenu();
 													handleStartVideoCall(true);
 												}}
 												data-cy="session-menu-start-video-call"
@@ -655,7 +655,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 												type="button"
 												className="sessionMenu__item chatMenuDropdown__item"
 												onClick={() => {
-													setFlyoutOpen(false);
+													closeMenu();
 													handleStartVideoCall(false);
 												}}
 												data-cy="session-menu-start-call"
@@ -731,7 +731,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										if (!supervisionPanel.available) {
 											return;
 										}
-										setFlyoutOpen(false);
+										closeMenu();
 										supervisionPanel.expand();
 									}}
 									disabled={!supervisionPanel.available}
@@ -784,12 +784,16 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 
 							{props.showMobileEndAnonymousChatAction && (
-								<div
+								<button
+									type="button"
 									className={`sessionMenu__item chatMenuDropdown__item ${
 										props.mobileEndAnonymousChatDisabled
 											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
 											: ''
 									}`}
+									disabled={
+										props.mobileEndAnonymousChatDisabled
+									}
 									onClick={() => {
 										if (
 											props.mobileEndAnonymousChatDisabled
@@ -811,16 +815,20 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										}
 										shortcut="⇧E"
 									/>
-								</div>
+								</button>
 							)}
 
 							{props.showMobileDeleteAnonymousAccountAction && (
-								<div
+								<button
+									type="button"
 									className={`sessionMenu__item chatMenuDropdown__item ${
 										props.mobileDeleteAnonymousAccountDisabled
 											? 'sessionMenu__item--disabled chatMenuDropdown__item--disabled'
 											: ''
 									}`}
+									disabled={
+										props.mobileDeleteAnonymousAccountDisabled
+									}
 									onClick={() => {
 										if (
 											props.mobileDeleteAnonymousAccountDisabled
@@ -841,7 +849,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 										}
 										shortcut="Shift+D"
 									/>
-								</div>
+								</button>
 							)}
 
 							{showRequestAdvice && (
