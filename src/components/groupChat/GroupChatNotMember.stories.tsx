@@ -66,3 +66,25 @@ export const Phone390: Story = {
 	name: 'Not a member · 390',
 	globals: phone390Globals
 };
+
+/** The access check failed (network, 404, unreadable answer): ask again. */
+export const Unavailable390: Story = {
+	name: 'Check failed · retry · 390',
+	globals: phone390Globals,
+	args: { onRetry: fn() },
+	play: async ({ args, canvas }) => {
+		await expect(
+			canvas.getByText(
+				'Dieser Gesprächskreis lässt sich gerade nicht öffnen.'
+			)
+		).toBeVisible();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Erneut versuchen' })
+		);
+		await expect(args.onRetry).toHaveBeenCalledTimes(1);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Zu meinen Gesprächen' })
+		);
+		await expect(args.onBack).toHaveBeenCalledTimes(1);
+	}
+};
