@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActiveSessionContext } from '../globalState';
 import { useMatrixRoomUsers } from './useMatrixRoomUsers';
 
-const ROOM_ID = '!room:matrix.oriso.org';
+const ROOM_ID = '!room:matrix.example.org';
 
 const mocks = vi.hoisted(() => {
 	const env = process.env as Record<string, string>;

@@ -10,12 +10,19 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+const TRANSLATIONS: Record<string, string> = {
+	'groupChat.info.gallery.steps.formats.title': 'So findet die Gruppe statt',
+	'groupChat.info.gallery.steps.alias.title': 'Bitte nur mit Alias',
+	'groupChat.info.gallery.steps.dates.title': 'Neue Termine, neue Links'
+};
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, fallback?: string | Record<string, unknown>) =>
-			typeof fallback === 'string'
+			TRANSLATIONS[key] ??
+			(typeof fallback === 'string'
 				? fallback
-				: ((fallback?.defaultValue as string) ?? key)
+				: ((fallback?.defaultValue as string) ?? key))
 	})
 }));
 
