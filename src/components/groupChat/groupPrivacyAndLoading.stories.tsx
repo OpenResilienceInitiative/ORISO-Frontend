@@ -206,7 +206,8 @@ const GateOverGroupRoom = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
 const expectGate = async (canvasElement: HTMLElement) => {
 	const body = within(canvasElement.ownerDocument.body);
 	const dialog = await body.findByRole('dialog');
-	await expect(dialog).toBeVisible();
+	// MUI fades the dialog in: it exists at opacity 0 before it is visible.
+	await waitFor(() => expect(dialog).toBeVisible());
 	await expect(body.getByText('Bevor Sie schreiben')).toBeVisible();
 	await expect(body.queryByText(/beratende Person einen Chat/)).toBeNull();
 	// The app's font, not the legacy dialog's Helvetica/Arial stack.
@@ -287,9 +288,11 @@ export const WaitingRoomLegalMenu390: Story = {
 			await canvas.findByRole('button', { name: 'Rechtliches' })
 		);
 		const body = within(canvasElement.ownerDocument.body);
-		await expect(
-			await body.findByRole('menuitem', { name: /Datenschutz/ })
-		).toBeVisible();
+		const privacy = await body.findByRole('menuitem', {
+			name: /Datenschutz/
+		});
+		// The menu grows in; wait for the end of its transition.
+		await waitFor(() => expect(privacy).toBeVisible());
 		await expect(
 			body.getByRole('menuitem', { name: /Impressum/ })
 		).toBeVisible();
