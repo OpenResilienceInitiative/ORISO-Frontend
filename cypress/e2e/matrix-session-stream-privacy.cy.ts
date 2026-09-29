@@ -26,8 +26,8 @@ describe('Matrix session stream privacy', () => {
 			{
 				session: {
 					id: 123,
-					groupId: '!secure-room:oriso.org',
-					matrixRoomId: '!secure-room:oriso.org',
+					groupId: '!secure-room:example.org',
+					matrixRoomId: '!secure-room:example.org',
 					lastMessage: 'matrix plaintext preview must stay hidden',
 					e2eLastMessage: {
 						t: 'e2e',
@@ -46,7 +46,7 @@ describe('Matrix session stream privacy', () => {
 					messages: [
 						{
 							event_id: '$event-id',
-							sender: '@asker:oriso.org',
+							sender: '@asker:example.org',
 							origin_server_ts: 1782302400000,
 							content: {
 								msgtype: 'm.text',
@@ -99,7 +99,7 @@ describe('Matrix session stream privacy', () => {
 
 	it('maps Matrix encrypted media events to decryptable attachment metadata', () => {
 		const encryptedFile = {
-			url: 'mxc://oriso.org/file',
+			url: 'mxc://example.org/file',
 			key: {
 				alg: 'A256CTR',
 				ext: true,
@@ -122,7 +122,7 @@ describe('Matrix session stream privacy', () => {
 					size: 22
 				}
 			}),
-			getSender: () => '@asker:oriso.org',
+			getSender: () => '@asker:example.org',
 			getId: () => '$encrypted-file',
 			getTs: () => 1782302400000
 		};
@@ -147,7 +147,7 @@ describe('Matrix session stream privacy', () => {
 			// Authenticated media (#1487): no browser-usable URL is minted for
 			// homeserver media any more; the mxc URI is carried instead.
 			downloadUrl: '',
-			mxcUrl: 'mxc://oriso.org/file',
+			mxcUrl: 'mxc://example.org/file',
 			type: 'file',
 			mediaType: 'text/plain',
 			size: 22,
