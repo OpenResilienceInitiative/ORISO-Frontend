@@ -165,6 +165,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			apiGetConsultantAvailability(topic.id, consultingTypeId)
 				.then((res) => {
 					if (res && res.available === false) {
+						/* A check started before the account existed can
+						   answer after it: the enquiry is made, so no alert
+						   over the login retry (CodeRabbit on #1567). */
+						if (registerThenLogin.accountCreated()) {
+							return false;
+						}
 						if (force) {
 							openNoAvailabilityModal(topic);
 						} else {
@@ -183,7 +189,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					return true;
 				})
 				.catch(() => true),
-		[openNoAvailabilityModal]
+		[openNoAvailabilityModal, registerThenLogin]
 	);
 
 	// Load agencies for a specific topic

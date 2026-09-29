@@ -216,6 +216,56 @@ describe('anonymous chat — login retry after the account exists', () => {
 		expect(api.autoLogin).toHaveBeenCalledTimes(1);
 	});
 
+	it('opens no availability alert when a check started before the start answers only after the account exists', async () => {
+		/* Opening the topic starts an availability check. It is still on the
+		   way when "start" creates the account and the login fails. When it
+		   then answers "nobody available", the alert must not open over the
+		   login retry: it would hide the start button, and the enquiry
+		   already exists (CodeRabbit on #1567). */
+		let answerFirstCheck: (answer: { available: boolean }) => void = () =>
+			undefined;
+		api.apiGetConsultantAvailability
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						answerFirstCheck = resolve;
+					})
+			)
+			.mockResolvedValue({ available: true });
+		renderChat();
+
+		await waitFor(() =>
+			expect(startButton()).toHaveProperty('disabled', false)
+		);
+		await waitFor(() =>
+			expect(api.apiGetConsultantAvailability).toHaveBeenCalledTimes(1)
+		);
+
+		fireEvent.click(startButton());
+		await waitFor(() =>
+			expect(api.addNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					text: 'registration.accountCreated.retry'
+				})
+			)
+		);
+
+		await act(async () => {
+			answerFirstCheck({ available: false });
+		});
+
+		await waitFor(() =>
+			expect(
+				startButton(),
+				'a late "nobody available" must not cover the login retry'
+			).toHaveProperty('disabled', false)
+		);
+		fireEvent.click(startButton());
+		await waitFor(() => expect(api.redirectToApp).toHaveBeenCalled());
+		expect(api.apiPostRegistration).toHaveBeenCalledTimes(1);
+		expect(api.autoLogin).toHaveBeenCalledTimes(1);
+	});
+
 	it('freezes the counselling-centre choice once the account exists', async () => {
 		renderChat();
 
