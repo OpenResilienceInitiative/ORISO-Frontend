@@ -237,6 +237,28 @@ describe('WaitingAreaCountdown', () => {
 		);
 	});
 
+	// The face stops at three cells; past that it must not pass 999 off as exact.
+	it('marks the face as a lower bound from 1000 minutes late', () => {
+		const { container } = renderCountdown(-(1200 * 60 + 3));
+
+		expect(screen.getByRole('timer').getAttribute('aria-label')).toContain(
+			'Minuten: 1200, Sekunden: 3'
+		);
+		const cue = container.querySelector('.waitingClock__faceOverflow');
+		expect(cue?.textContent).toBe('+');
+		expect(container.querySelectorAll('.waitingClock__cell')).toHaveLength(
+			5 * 24
+		);
+	});
+
+	it('shows 999 minutes as exact, without the overflow cue', () => {
+		const { container } = renderCountdown(-(999 * 60 + 3));
+
+		expect(
+			container.querySelector('.waitingClock__faceOverflow')
+		).toBeNull();
+	});
+
 	it('prints the true minutes in the motionless fallback too', () => {
 		renderCountdown(-(140 * 60 + 7), { reducedMotion: true });
 
@@ -322,6 +344,17 @@ describe('clock geometry', () => {
 			}
 		}
 	);
+
+	// A fixed clockSize above the fit maximum stays as long as the column holds it.
+	it('keeps a fixed size above the fit maximum when it fits', () => {
+		const s = shape({ compact: false });
+		expect(clockRowWidth(120, s)).toBeLessThan(4000);
+		expect(fitClockSize(4000, undefined, s, 120)).toBe(120);
+		// ...and still shrinks it where the column is too narrow.
+		expect(fitClockSize(644, undefined, s, 120)).toBe(
+			fitClockSize(644, undefined, s)
+		);
+	});
 
 	it('keeps the clock as big as the column allows', () => {
 		const s = shape();

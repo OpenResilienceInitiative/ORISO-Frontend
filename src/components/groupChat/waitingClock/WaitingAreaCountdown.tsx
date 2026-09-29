@@ -7,7 +7,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { usePrefersReducedMotion } from '../../../hooks/usePrefersReducedMotion';
 import { ClockDigits, ClockDigitsPop } from './ClockDigits';
-import { faceDigitCount, faceDigits } from './waitingClockDigits';
+import { FACE_MAX, faceDigitCount, faceDigits } from './waitingClockDigits';
 import './waitingAreaCountdown.styles';
 
 /** ORISO design palette for the waiting box, resolved through the M3 tokens. */
@@ -182,9 +182,11 @@ export const clockRowHeight = (size: number, shape: ClockShape) => {
 export const fitClockSize = (
 	width: number,
 	height: number | undefined,
-	shape: ClockShape
+	shape: ClockShape,
+	// A fixed clockSize searches down from itself, not from the fit maximum.
+	maxSize: number = FIT_MAX_SIZE
 ) => {
-	for (let size = FIT_MAX_SIZE; size >= FIT_MIN_SIZE; size--) {
+	for (let size = maxSize; size >= FIT_MIN_SIZE; size--) {
 		if (
 			clockRowWidth(size, shape) <= width &&
 			(height === undefined || clockRowHeight(size, shape) <= height)
@@ -489,10 +491,7 @@ export const WaitingAreaCountdown = ({
 				? CLOCK_SIZE
 				: fitClockSize(measuredWidth, fitHeight, shape)
 			: measuredWidth !== null
-				? Math.min(
-						clockSize,
-						fitClockSize(measuredWidth, undefined, shape)
-					)
+				? fitClockSize(measuredWidth, undefined, shape, clockSize)
 				: clockSize;
 	const geo = clockGeometry(size, tight, compact);
 	const overdueEmoji =
@@ -744,10 +743,30 @@ export const WaitingAreaCountdown = ({
 					justifyContent: 'center',
 					// The fit already reserved this width; letting the flex row
 					// shrink it would squash the lattice instead (#1499).
-					flexShrink: 0
+					flexShrink: 0,
+					position: 'relative'
 				}}
 			>
 				{options.labelAbove && label}
+				{unit.value > FACE_MAX && (
+					// Three cells stop at 999; the "+" says the face is a lower bound.
+					<span
+						aria-hidden="true"
+						className="waitingClock__faceOverflow"
+						style={{
+							position: 'absolute',
+							top: 0,
+							right: 0,
+							transform: 'translateX(100%)',
+							fontSize: geo.labelFont * 1.4,
+							fontWeight: 700,
+							lineHeight: 1,
+							color: RED
+						}}
+					>
+						+
+					</span>
+				)}
 				<ClockDigits
 					value={unit.value}
 					size={size}
