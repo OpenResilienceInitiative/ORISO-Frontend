@@ -43,6 +43,11 @@ jobs:
         with:
           node_version: '22'
 
+      # The image copies this output instead of rebuilding Storybook inside
+      # Docker; see the header of Dockerfile.storybook.
+      - name: Build Storybook static output
+        run: npm run build-storybook
+
       - name: Publish Storybook Docker image
         uses: ./.github/actions/docker-build-push
         with:

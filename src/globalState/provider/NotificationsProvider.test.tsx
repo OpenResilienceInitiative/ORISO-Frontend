@@ -206,6 +206,51 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 		}
 	});
 
+	it('reconciles a newly accepted session once without replaying history or refreshing counsellor lists', async () => {
+		const accepted = (id: number, sourceSessionId: number) => ({
+			...feedItem(id, '2026-09-28T12:00:00Z'),
+			eventType: 'inquiry.accepted',
+			sourceSessionId
+		});
+		apiGetEventNotifications.mockResolvedValue({
+			items: [accepted(1, 4)],
+			unreadCount: 1
+		});
+		const signals = vi.fn();
+		messageEventEmitter.on(signals);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(signals).not.toHaveBeenCalled();
+			apiGetEventNotifications.mockResolvedValue({
+				items: [accepted(2, 7), accepted(1, 4)],
+				unreadCount: 2
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(signals).toHaveBeenCalledWith({
+					changedSessionId: 7,
+					source: 'notification-feed'
+				})
+			);
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			await new Promise((resolve) => setTimeout(resolve, 500));
+			expect(signals).toHaveBeenCalledTimes(1);
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(3);
+		} finally {
+			messageEventEmitter.off(signals);
+		}
+	});
+
 	it('refetches the feed when a live directMessage event fires, without waiting for the 15s poll', async () => {
 		render(
 			<NotificationsProvider>
