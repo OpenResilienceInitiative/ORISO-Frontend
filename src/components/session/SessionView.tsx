@@ -66,12 +66,17 @@ export const SessionView = () => {
 
 	// #1499: a counsellor can reach a group she is not part of through its
 	// invite link; the server refuses her the group, the room list does not.
-	const groupAccess = useGroupChatAccess({
-		chatId: activeSession?.item?.id,
-		isGroup: Boolean(activeSession?.isGroup),
-		subscribed: activeSession?.item?.subscribed,
-		isConsultant: hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
-	});
+	const { access: groupAccess, retry: retryGroupAccess } = useGroupChatAccess(
+		{
+			chatId: activeSession?.item?.id,
+			isGroup: Boolean(activeSession?.isGroup),
+			subscribed: activeSession?.item?.subscribed,
+			isConsultant: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+		}
+	);
 
 	// #1193 Job 3: remember the session the counsellor is looking at so the next
 	// sign-in resumes it. The helper only accepts consultant session routes.
@@ -185,9 +190,12 @@ export const SessionView = () => {
 		return <Loading />;
 	}
 
-	if (groupAccess === 'notMember') {
+	if (groupAccess === 'notMember' || groupAccess === 'unavailable') {
 		return (
 			<GroupChatNotMember
+				onRetry={
+					groupAccess === 'unavailable' ? retryGroupAccess : undefined
+				}
 				onBack={() =>
 					navigate(
 						listPath +

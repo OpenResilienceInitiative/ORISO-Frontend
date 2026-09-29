@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useGroupChatAccess } from './useGroupChatAccess';
 
@@ -35,8 +35,8 @@ describe('useGroupChatAccess', () => {
 			useGroupChatAccess({ ...group, isConsultant: true })
 		);
 
-		expect(result.current).toBe('checking');
-		await waitFor(() => expect(result.current).toBe('notMember'));
+		expect(result.current.access).toBe('checking');
+		await waitFor(() => expect(result.current.access).toBe('notMember'));
 		expect(apiGetGroupChatInfo).toHaveBeenCalledWith(42);
 	});
 
@@ -45,7 +45,7 @@ describe('useGroupChatAccess', () => {
 			useGroupChatAccess({ ...group, isConsultant: true })
 		);
 
-		await waitFor(() => expect(result.current).toBe('member'));
+		await waitFor(() => expect(result.current.access).toBe('member'));
 	});
 
 	// Owner and co-moderators are joined to the room: no extra request, no
@@ -59,7 +59,7 @@ describe('useGroupChatAccess', () => {
 			})
 		);
 
-		expect(result.current).toBe('member');
+		expect(result.current.access).toBe('member');
 		expect(apiGetGroupChatInfo).not.toHaveBeenCalled();
 	});
 
@@ -71,20 +71,40 @@ describe('useGroupChatAccess', () => {
 			useGroupChatAccess({ ...group, isGroup: false, isConsultant: true })
 		);
 
-		expect(asker.result.current).toBe('member');
-		expect(session.result.current).toBe('member');
+		expect(asker.result.current.access).toBe('member');
+		expect(session.result.current.access).toBe('member');
 		expect(apiGetGroupChatInfo).not.toHaveBeenCalled();
 	});
 
-	// Anything but a clear refusal keeps today's view; the server still
-	// guards starting and joining.
-	it('keeps the group open on an error that is not a refusal', async () => {
-		apiGetGroupChatInfo.mockRejectedValue(new Error('CATCH_ALL'));
+	// Only a clear answer decides: a failed or unreadable check must not show
+	// the moderator room with an enabled "Chat starten".
+	it.each([
+		['a request error', () => Promise.reject(new Error('CATCH_ALL'))],
+		['an unknown group', () => Promise.reject(new Error('NO_MATCH'))],
+		['an empty answer', () => Promise.resolve(undefined)],
+		['another group', () => Promise.resolve({ id: 7, active: true })]
+	])('reports the group unavailable on %s', async (_, answer) => {
+		apiGetGroupChatInfo.mockImplementation(answer);
 
 		const { result } = renderHook(() =>
 			useGroupChatAccess({ ...group, isConsultant: true })
 		);
 
-		await waitFor(() => expect(result.current).toBe('member'));
+		await waitFor(() => expect(result.current.access).toBe('unavailable'));
+	});
+
+	it('asks again on retry and lets her in once the server answers', async () => {
+		apiGetGroupChatInfo.mockRejectedValueOnce(new Error('CATCH_ALL'));
+
+		const { result } = renderHook(() =>
+			useGroupChatAccess({ ...group, isConsultant: true })
+		);
+		await waitFor(() => expect(result.current.access).toBe('unavailable'));
+
+		act(() => result.current.retry());
+
+		expect(result.current.access).toBe('checking');
+		await waitFor(() => expect(result.current.access).toBe('member'));
+		expect(apiGetGroupChatInfo).toHaveBeenCalledTimes(2);
 	});
 });
