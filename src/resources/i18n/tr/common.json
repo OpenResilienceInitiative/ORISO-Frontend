@@ -773,7 +773,8 @@
 					"title": "Bağlantı kopyalandı"
 				},
 				"text": "Davetiye bağlantısını kopyala",
-				"title": "Davet bağlantısını panoya kopyala"
+				"title": "Davet bağlantısını panoya kopyala",
+				"unavailable": "Bu grubun davet bağlantısı henüz kullanılamıyor."
 			}
 		},
 		"create": {
@@ -3326,6 +3327,12 @@
 		"stepper": {
 			"progress": "{{total}} adımdan {{current}}. adım",
 			"progressShort": "Adım {{current}}/{{total}}"
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "Davet şu anda yüklenemedi.",
+				"body": "Lütfen bağlantınızı kontrol edip tekrar deneyin. Davet bağlantınız geçerliliğini korur."
+			}
 		}
 	},
 	"releaseNote": {

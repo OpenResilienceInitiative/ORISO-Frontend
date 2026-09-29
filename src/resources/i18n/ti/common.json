@@ -773,7 +773,8 @@
 					"title": "ሊንክ ተቐዲሑ"
 				},
 				"text": "ናይ ዕድመ ሊንክ ቅዳሕ",
-				"title": "ናይ ዕድመ ሊንክ ናብ ቅንጥብጣብ ሰሌዳ ቅዳሕ"
+				"title": "ናይ ዕድመ ሊንክ ናብ ቅንጥብጣብ ሰሌዳ ቅዳሕ",
+				"unavailable": "መላግቦ ዕድመ ናይዚ ጉጅለ ገና ኣይተዳለወን።"
 			}
 		},
 		"create": {
@@ -3326,6 +3327,12 @@
 		"stepper": {
 			"progress": "ስጉምቲ {{current}} ካብ {{total}}",
 			"progressShort": "ስጉምቲ {{current}}/{{total}}"
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "ዕድመ ሕጂ ክጽዕን ኣይከኣለን።",
+				"body": "በጃኹም ምትእስሳርኩም ፈትሹ እሞ ደጊምኩም ፈትኑ። መላግቦ ዕድመኹም ቅቡል ኮይኑ ይጸንሕ።"
+			}
 		}
 	},
 	"releaseNote": {

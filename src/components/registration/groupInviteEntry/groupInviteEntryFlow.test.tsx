@@ -103,7 +103,8 @@ const renderAt = (
 		zipcode: '00000',
 		username: 'ente_yuki_7984',
 		password: 'Minted-in-the-test-1'
-	}
+	},
+	context: Record<string, unknown> = {}
 ) =>
 	render(
 		<AppConfigContext.Provider
@@ -139,7 +140,8 @@ const renderAt = (
 												undefined,
 											registrationData,
 											availableSteps: steps,
-											registrationConsultingType: {}
+											registrationConsultingType: {},
+											...context
 										} as any
 									}
 								>
@@ -370,6 +372,45 @@ describe('newcomer entry for a self-help group link', () => {
 		});
 		expect(screen.queryByTestId('account-data')).toBeNull();
 		expect(screen.getByTestId('step-body')).toBeTruthy();
+	});
+
+	it('shows a retry instead of a blank page when the group topic failed to load', () => {
+		const retryRegistrationData = vi.fn();
+		renderAt(
+			'?gcid=19&aid=19',
+			{ agency, zipcode: '00000' },
+			{ hasRegistrationDataError: true, retryRegistrationData }
+		);
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		const alert = screen.getByRole('alert');
+		// Unit tests run without catalogues, so the keys stand for the copy.
+		expect(alert.textContent).toContain(
+			'registration.groupInvite.loadError.headline'
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.loadError.retry' })
+		);
+		expect(retryRegistrationData).toHaveBeenCalledTimes(1);
+	});
+
+	it('shows the same retry when the consulting type failed to load', () => {
+		renderAt('?gcid=19&aid=19', undefined, {
+			registrationConsultingType: null,
+			hasRegistrationDataError: true,
+			retryRegistrationData: () => undefined
+		});
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.getByRole('alert')).toBeTruthy();
+	});
+
+	it('keeps the entry while its data is only still loading', () => {
+		renderAt('?gcid=19&aid=19', { agency, zipcode: '00000' });
+
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
 	});
 
 	it('leaves an ordinary registration untouched', () => {

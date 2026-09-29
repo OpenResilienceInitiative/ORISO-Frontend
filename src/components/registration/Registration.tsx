@@ -75,6 +75,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
+import { GroupInviteLoadError } from './groupInviteEntry/GroupInviteLoadError';
 import {
 	getGroupJoin,
 	resolveGroupInviteEntry
@@ -149,7 +150,9 @@ export const Registration = () => {
 		updateRegistrationData,
 		registrationData,
 		availableSteps,
-		registrationConsultingType
+		registrationConsultingType,
+		hasRegistrationDataError,
+		retryRegistrationData
 	} = useContext(RegistrationContext);
 	const { consultant: preselectedConsultant, agency: urlParamsAgency } =
 		useContext(UrlParamsContext);
@@ -751,7 +754,14 @@ export const Registration = () => {
 	);
 
 	if (inviteEntry === 'pending') {
-		return null;
+		return hasRegistrationDataError && retryRegistrationData ? (
+			<GroupInviteLoadError
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				onRetry={retryRegistrationData}
+			/>
+		) : null;
 	}
 
 	if (inviteEntry === 'entry') {
