@@ -66,6 +66,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { useForegroundRefresh } from '../../hooks/useForegroundRefresh';
 import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
@@ -195,7 +196,7 @@ const DraftMetadataListItem = ({
 }: {
 	draft: IUserDraftItem;
 	onOpen: (draft: IUserDraftItem) => void;
-	translate: (key: string, fallback?: string) => string;
+	translate: (key: string) => string;
 }) => (
 	<button
 		type="button"
@@ -205,19 +206,16 @@ const DraftMetadataListItem = ({
 		disabled={!draft.actionPath}
 	>
 		<span className="sessionsListDraftItem__tag">
-			{translate('sessionList.toolbar.chips.drafts', 'Drafts')}
+			{translate('sessionList.toolbar.chips.drafts')}
 		</span>
 		<span className="sessionsListDraftItem__title">
-			{draft.title || translate('drafts.center.untitledChat', 'Chat')}
+			{draft.title || translate('drafts.center.untitledChat')}
 		</span>
 		<span className="sessionsListDraftItem__meta">
 			{formatDraftTime(draft.updatedAt)}
 		</span>
 		<span className="sessionsListDraftItem__hint">
-			{translate(
-				'sessionList.toolbar.draftMetadataOnly',
-				'Unsent message saved'
-			)}
+			{translate('sessionList.toolbar.draftMetadataOnly')}
 		</span>
 	</button>
 );
@@ -270,6 +268,14 @@ export const SessionsList = ({
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
+	const enquiryRefresh = useRef<{
+		controller: AbortController;
+		promise: Promise<void>;
+		pending: boolean;
+	}>(null);
+	const latestEnquiryRefresh = useRef<() => Promise<void>>(() =>
+		Promise.resolve()
+	);
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedTopic, setSessionToolbarSelectedTopic] =
 		useState<string | null>(null);
@@ -521,11 +527,27 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		const running = enquiryRefresh.current;
+		if (
+			running &&
+			running.controller === abortController.current &&
+			!running.controller.signal.aborted
+		) {
+			// Preserve a newer invalidation without cancelling a slow response.
+			running.pending = true;
+			return running.promise;
+		}
 		setIsRequestInProgress(true);
 		abortController.current?.abort();
 		const controller = new AbortController();
 		abortController.current = controller;
-		return refetchEnquiryListState({
+		const request = {
+			controller,
+			promise: Promise.resolve(),
+			pending: false
+		};
+		enquiryRefresh.current = request;
+		request.promise = refetchEnquiryListState({
 			signal: controller.signal,
 			fetchPage: () =>
 				fetchEnquirySessionsWithAutoPage(
@@ -545,14 +567,23 @@ export const SessionsList = ({
 			setTotalItems,
 			setCurrentOffset
 		}).finally(() => {
+			if (enquiryRefresh.current === request)
+				enquiryRefresh.current = null;
 			// A live refresh takes ownership from pending pagination, including
 			// its loading indicator. Older completions cannot unlock a newer request.
 			if (abortController.current === controller) {
 				setIsRequestInProgress(false);
 				setIsLoading(false);
+				if (request.pending && !controller.signal.aborted) {
+					void latestEnquiryRefresh.current();
+				}
 			}
 		});
+		return request.promise;
 	}, [currentOffset, dispatch, fetchEnquirySessionsWithAutoPage, type]);
+	useEffect(() => {
+		latestEnquiryRefresh.current = refetchEnquiryList;
+	}, [refetchEnquiryList]);
 
 	const refetchSessionList = useCallback(() => {
 		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
@@ -1093,19 +1124,11 @@ export const SessionsList = ({
 		type
 	]);
 
-	/*
-	 * Reconcile submissions and acceptance even without an incoming Matrix message.
-	 * Keep the existing bounded polling interval for every enquiry filter.
-	 */
-	useEffect(() => {
-		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
-			return;
-		}
-		const intervalId = window.setInterval(() => {
-			refetchEnquiryList();
-		}, 15000);
-		return () => window.clearInterval(intervalId);
-	}, [refetchEnquiryList, sessionToolbarChip, type]);
+	// Live events accelerate this bounded fallback; neither depends on alert settings.
+	useForegroundRefresh(
+		type === SESSION_LIST_TYPES.ENQUIRY,
+		refetchEnquiryList
+	);
 
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
@@ -1298,11 +1321,9 @@ export const SessionsList = ({
 		},
 		[navigate]
 	);
-	const translateWithFallback = useCallback(
-		(key: string, fallback?: string) => {
-			const translated = fallback
-				? translate(key, { defaultValue: fallback })
-				: translate(key);
+	const translateKey = useCallback(
+		(key: string) => {
+			const translated = translate(key);
 			return typeof translated === 'string'
 				? translated
 				: String(translated);
@@ -2296,12 +2317,6 @@ export const SessionsList = ({
 					chipAutoSort={chipPresentation.autoSort}
 					showOtherChip
 					displayFilter={{
-						icon:
-							type === SESSION_LIST_TYPES.ENQUIRY ? (
-								<NavInboxIcon className="sessionsListToolbar__chipIconSvg" />
-							) : (
-								<NavChatsIcon className="sessionsListToolbar__chipIconSvg" />
-							),
 						label: displayFilterLabels.buttonLabel,
 						customisedLabel:
 							displayFilterLabels.buttonCustomisedLabel,
@@ -2595,7 +2610,7 @@ export const SessionsList = ({
 								key={draft.scopeKey}
 								draft={draft}
 								onOpen={handleOpenDraft}
-								translate={translateWithFallback}
+								translate={translateKey}
 							/>
 						))}
 

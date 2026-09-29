@@ -28,8 +28,8 @@ vi.mock('../api/apiGetSessionRooms', () => ({
 		apiGetSessionRoomBySessionId(sessionId)
 }));
 
-const ROOM_ID = '!room:matrix.oriso.org';
-const OTHER_ROOM_ID = '!other:matrix.oriso.org';
+const ROOM_ID = '!room:matrix.example.org';
+const OTHER_ROOM_ID = '!other:matrix.example.org';
 
 describe('chatTransportService session resolution', () => {
 	it('preserves session id zero for Matrix-backed group attachments', () => {
@@ -531,7 +531,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 			sessions: [{ session: { id: 42, matrixRoomId: ROOM_ID } }]
 		});
 		const sendMessage = vi.fn(() =>
-			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+			Promise.resolve({ event_id: '$evt:matrix.example.org' })
 		);
 		const override = {
 			getClient: () => createFakeMatrixClient(),
@@ -580,7 +580,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 
 	it('sends via the Matrix client with the room id and message when a room id is present', async () => {
 		const sendMessage = vi.fn(() =>
-			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+			Promise.resolve({ event_id: '$evt:matrix.example.org' })
 		);
 		const override = {
 			getClient: () => createFakeMatrixClient(),
@@ -602,7 +602,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		});
 		expect(result).toEqual({
 			success: true,
-			event_id: '$evt:matrix.oriso.org'
+			event_id: '$evt:matrix.example.org'
 		});
 
 		// A metadata-only notification fires, and it never carries the
@@ -679,7 +679,7 @@ describe('chatTransportService team attachment notifications', () => {
 			ROOM_ID,
 			new File(['x'], 'photo.png', { type: 'image/png' }),
 			{
-				threadRootId: '$thread-root:oriso.org',
+				threadRootId: '$thread-root:example.org',
 				postMessageEventNotification: vi.fn(() => Promise.resolve({}))
 			}
 		);
@@ -688,7 +688,7 @@ describe('chatTransportService team attachment notifications', () => {
 			ROOM_ID,
 			expect.any(File),
 			expect.objectContaining({
-				threadRootId: '$thread-root:oriso.org'
+				threadRootId: '$thread-root:example.org'
 			})
 		);
 	});

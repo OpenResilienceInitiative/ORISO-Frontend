@@ -103,6 +103,9 @@ import '../sidePanel.styles.scss';
 import '../channelSwitcherFab.styles.scss';
 import '../chatStage.styles.scss';
 
+/** The stage's second scroll to the newest message after mount. */
+export const MOUNT_SETTLE_MS = 400;
+
 export type StagePanel = 'supervision' | 'team' | 'thread' | null;
 
 export interface ConsultantSessionStageProps {
@@ -317,7 +320,7 @@ function MainChat({
 		};
 		toBottom();
 		// Rows animate in and the editor mounts late; settle, then scroll again.
-		const timer = window.setTimeout(toBottom, 400);
+		const timer = window.setTimeout(toBottom, MOUNT_SETTLE_MS);
 		return () => window.clearTimeout(timer);
 	}, []);
 

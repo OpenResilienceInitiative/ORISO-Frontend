@@ -17,13 +17,46 @@ import {
 } from '../../api/apiDpaSignature';
 import { DpaSign } from './DpaSign';
 
+const deCatalogue: Record<string, string> = {
+	'dpaSign.title': 'Vertragsunterlagen prüfen und bestätigen',
+	'dpaSign.subtitle':
+		'Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.',
+	'dpaSign.signerName': 'Vollständiger Name',
+	'dpaSign.signerPosition': 'Position',
+	'dpaSign.signerEmail': 'E-Mail',
+	'dpaSign.signerNote': 'Anmerkung (optional)',
+	'dpaSign.language': 'Sprache',
+	'dpaSign.loadingContract': 'Vertragsunterlagen werden geladen...',
+	'dpaSign.contractHeading': 'Vertragsunterlagen',
+	'dpaSign.version': 'Vertragsversion',
+	'dpaSign.signerHeading': 'Bestätigung der vertretungsberechtigten Person',
+	'dpaSign.signingFor': 'Sie handeln im Namen von:',
+	'dpaSign.accept':
+		'Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.',
+	'dpaSign.submit': 'Bestätigung absenden',
+	'dpaSign.submitting': 'Speichern...',
+	'dpaSign.success':
+		'Die Bestätigung der Vertragsunterlagen wurde gespeichert.',
+	'dpaSign.error.missingToken': 'Der Signaturlink ist unvollständig.',
+	'dpaSign.error.previewRequired':
+		'Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.',
+	'dpaSign.error.acceptRequired':
+		'Bitte bestätigen Sie die Vertragsunterlagen.',
+	'dpaSign.error.generic':
+		'Die Signatur konnte gerade nicht gespeichert werden.',
+	'dpaSign.error.invalidToken':
+		'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.',
+	'dpaSign.error.invalidRequest':
+		'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
+};
+
 // The page never uses the ambient language: it renders through
 // `getFixedT(<Sprache select>)`. The mock's ambient language is deliberately
 // NOT German so any regression back to the global `t` shows up as `ru:`-less
 // output where a fixed prefix is asserted.
 const getFixedT = vi.fn(
-	(lng: string) => (key: string, fallback?: string) =>
-		lng === 'de' ? (fallback ?? key) : `${lng}:${key}`
+	(lng: string) => (key: string) =>
+		lng === 'de' ? (deCatalogue[key] ?? key) : `${lng}:${key}`
 );
 
 // A vi.fn() so individual tests can override the resolution per call (e.g.
