@@ -7,6 +7,7 @@ import type { GroupChatJoinRequest } from './joinRequestModel';
 
 /* Keys come back with their values, so a test can see WHAT was said without
    depending on the German wording. */
+const i18nState = vi.hoisted(() => ({ language: 'de' }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
 		t: (key: string, values?: Record<string, unknown>) =>
@@ -15,14 +16,17 @@ vi.mock('react-i18next', () => ({
 						.map(([name, value]) => `${name}=${value}`)
 						.join(',')})`
 				: key,
-		i18n: { language: 'de' }
+		i18n: i18nState
 	})
 }));
 
 const { JoinRequestSnackbar } = await import('./JoinRequestSnackbar');
 const { JoinRequestDialog } = await import('./JoinRequestDialog');
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	i18nState.language = 'de';
+});
 
 const NOW = new Date('2026-09-23T14:35:00+02:00');
 
@@ -171,6 +175,19 @@ describe('JoinRequestDialog', () => {
 		expect(dialog.textContent).toContain(
 			'groupChat.joinRequest.viaInviteLink'
 		);
+	});
+
+	it('shows the time in the informal German locale too', () => {
+		// 'de@informal' is an i18next language, not a BCP 47 tag: Intl throws on it.
+		i18nState.language = 'de@informal';
+
+		renderDialog();
+
+		const time = new Date('2026-09-23T14:32:00+02:00').toLocaleTimeString(
+			'de',
+			{ hour: '2-digit', minute: '2-digit' }
+		);
+		expect(screen.getByRole('dialog').textContent).toContain(time);
 	});
 
 	it('admits as participant unless the owner picks co-moderation', async () => {

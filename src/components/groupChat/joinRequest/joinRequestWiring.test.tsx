@@ -171,6 +171,97 @@ describe('useOwnJoinRequest — the counsellor who knocks', () => {
 		expect(transport.cancellations).toEqual([SERIES]);
 	});
 
+	describe('while her knock or withdrawal is on its way', () => {
+		const slowSetup = (
+			mine: Parameters<
+				ReturnType<typeof createFakeJoinRequestTransport>['setMine']
+			>[1] = null
+		) => {
+			const transport = createFakeJoinRequestTransport({ latencyMs: 30 });
+			transport.setMine(SERIES, mine);
+			const hook = renderHook(
+				({ seriesId }: { seriesId: number }) =>
+					useOwnJoinRequest(seriesId, 'tok_EN-9', transport, {
+						onOpenGroup: vi.fn()
+					}),
+				{ initialProps: { seriesId: SERIES } }
+			);
+			return { transport, hook };
+		};
+		const PENDING_MINE = {
+			id: 1,
+			status: 'PENDING' as const,
+			requestedAt: '2026-09-23T14:30:00Z'
+		};
+
+		it('does not let a poll put the knock button back, so she cannot knock twice', async () => {
+			const { hook, transport } = slowSetup();
+			await waitFor(() =>
+				expect(hook.result.current?.state).toBe('idle')
+			);
+
+			act(() => hook.result.current!.onRequest());
+			// A poll answered before the server recorded the knock.
+			act(() => transport.setMine(SERIES, null));
+			expect(hook.result.current?.state).toBe('sending');
+			act(() => hook.result.current!.onRequest());
+
+			await waitFor(() =>
+				expect(hook.result.current?.state).toBe('pending')
+			);
+			expect(transport.knocks).toHaveLength(1);
+		});
+
+		it('does not let a poll undo a withdrawal that is still being sent', async () => {
+			const { hook, transport } = slowSetup(PENDING_MINE);
+			await waitFor(() =>
+				expect(hook.result.current?.state).toBe('pending')
+			);
+
+			act(() => hook.result.current!.onCancel());
+			act(() => transport.setMine(SERIES, PENDING_MINE));
+			expect(hook.result.current?.state).toBe('cancelling');
+
+			await waitFor(() =>
+				expect(hook.result.current?.state).toBe('idle')
+			);
+		});
+
+		it('never shows a knock on a group she did not knock on', async () => {
+			const OTHER = 9202;
+			const transport = createFakeJoinRequestTransport();
+			let answerKnock: (value: typeof PENDING_MINE) => void = () =>
+				undefined;
+			// The knock answers only after she has moved on to another group.
+			const slowKnock = {
+				...transport,
+				knock: () =>
+					new Promise<typeof PENDING_MINE>((resolve) => {
+						answerKnock = resolve;
+					})
+			};
+			const hook = renderHook(
+				({ seriesId }: { seriesId: number }) =>
+					useOwnJoinRequest(seriesId, 'tok_EN-9', slowKnock, {
+						onOpenGroup: vi.fn()
+					}),
+				{ initialProps: { seriesId: SERIES } }
+			);
+			await waitFor(() =>
+				expect(hook.result.current?.state).toBe('idle')
+			);
+
+			act(() => hook.result.current!.onRequest());
+			hook.rerender({ seriesId: OTHER });
+			await waitFor(() =>
+				expect(hook.result.current?.state).toBe('idle')
+			);
+			await act(async () => answerKnock(PENDING_MINE));
+
+			expect(hook.result.current?.state).toBe('idle');
+		});
+	});
+
 	it('offers no knock at all where the server does not support it yet', async () => {
 		const transport = createFakeJoinRequestTransport();
 		transport.setUnavailable(true);

@@ -85,7 +85,8 @@ export const JoinRequestDialog = ({
 	const blocked = coModerationBlockedReason(request);
 	const minutes = minutesSince(request.requestedAt, now);
 	const time = new Date(request.requestedAt).toLocaleTimeString(
-		i18n?.language || 'de',
+		// 'de@informal' is an i18next tag, not BCP 47: Intl throws on it.
+		(i18n?.language || 'de').split('@')[0],
 		{ hour: '2-digit', minute: '2-digit' }
 	);
 

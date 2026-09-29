@@ -48,6 +48,7 @@ describe('HTTP join-request transport', () => {
 		await flush();
 		await vi.advanceTimersByTimeAsync(1000);
 		await vi.advanceTimersByTimeAsync(1000);
+		await vi.advanceTimersByTimeAsync(1000);
 
 		expect(onChange.mock.calls.map(([status]) => status?.status)).toEqual([
 			'PENDING',
@@ -57,6 +58,53 @@ describe('HTTP join-request transport', () => {
 		const calls = api.getMine.mock.calls.length;
 		await vi.advanceTimersByTimeAsync(5000);
 		expect(api.getMine.mock.calls.length).toBe(calls);
+	});
+
+	it('leaves the first read of her request to getMine instead of asking twice at once', async () => {
+		const api = fakeApi();
+		const transport = createHttpJoinRequestTransport({
+			api,
+			mineIntervalMs: 1000
+		});
+
+		transport.watchMine(7, vi.fn());
+		await flush();
+		expect(api.getMine).not.toHaveBeenCalled();
+
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(api.getMine).toHaveBeenCalledTimes(1);
+	});
+
+	it('never asks twice at once, even when the tab comes back mid-request', async () => {
+		const api = fakeApi();
+		let answer: (value: GroupChatJoinRequest[]) => void = () => undefined;
+		api.listPending.mockImplementationOnce(
+			() =>
+				new Promise<GroupChatJoinRequest[]>((resolve) => {
+					answer = resolve;
+				})
+		);
+		const transport = createHttpJoinRequestTransport({
+			api,
+			pendingIntervalMs: 1000
+		});
+		const stop = transport.watchPending(vi.fn());
+		await flush();
+
+		document.dispatchEvent(new Event('visibilitychange'));
+		await flush();
+		expect(api.listPending).toHaveBeenCalledTimes(1);
+
+		answer([]);
+		await flush();
+		await vi.advanceTimersByTimeAsync(1000);
+		await vi.advanceTimersByTimeAsync(1000);
+		// One loop: one request per interval, not two.
+		expect(api.listPending).toHaveBeenCalledTimes(3);
+
+		stop();
+		await vi.advanceTimersByTimeAsync(5000);
+		expect(api.listPending).toHaveBeenCalledTimes(3);
 	});
 
 	it('looks again at once when the tab comes back into view', async () => {

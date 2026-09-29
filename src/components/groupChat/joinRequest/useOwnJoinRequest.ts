@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
 	GroupChatJoinRequestView,
 	JoinRequestViewState
@@ -38,10 +38,15 @@ export const useOwnJoinRequest = (
 	{ onOpenGroup }: { onOpenGroup: () => void }
 ): GroupChatJoinRequestView | undefined => {
 	const [state, setState] = useState<JoinRequestViewState | null>(null);
+	// A poll answered before the server recorded her action must not undo it.
+	const actionInFlight = useRef(false);
+	const currentSeries = useRef(seriesId);
+	currentSeries.current = seriesId;
 
 	useEffect(() => {
 		if (!seriesId) return;
 		let active = true;
+		actionInFlight.current = false;
 		setState(null);
 		transport
 			.getMine(seriesId)
@@ -55,7 +60,9 @@ export const useOwnJoinRequest = (
 				);
 			});
 		const unsubscribe = transport.watchMine(seriesId, (status) => {
-			if (active) setState(viewStateOf(status));
+			if (active && !actionInFlight.current) {
+				setState(viewStateOf(status));
+			}
 		});
 		return () => {
 			active = false;
@@ -63,29 +70,46 @@ export const useOwnJoinRequest = (
 		};
 	}, [seriesId, transport]);
 
+	/** Runs a knock or withdrawal; its answer counts only for the same group. */
+	const runAction = useCallback(
+		(
+			pending: JoinRequestViewState,
+			action: () => Promise<JoinRequestViewState>,
+			onError: (error: unknown) => JoinRequestViewState
+		) => {
+			if (!seriesId || actionInFlight.current) return;
+			actionInFlight.current = true;
+			setState(pending);
+			const settle = (next: JoinRequestViewState) => {
+				if (currentSeries.current !== seriesId) return;
+				actionInFlight.current = false;
+				setState(next);
+			};
+			action().then(settle, (error) => settle(onError(error)));
+		},
+		[seriesId]
+	);
+
 	const onRequest = useCallback(() => {
 		if (!seriesId || !inviteToken) return;
-		setState('sending');
-		transport
-			.knock(seriesId, inviteToken)
-			.then((status) => setState(viewStateOf(status)))
-			.catch((error) =>
-				setState(
-					error instanceof JoinRequestLinkInvalidError
-						? 'linkInvalid'
-						: 'error'
-				)
-			);
-	}, [seriesId, inviteToken, transport]);
+		runAction(
+			'sending',
+			() => transport.knock(seriesId, inviteToken).then(viewStateOf),
+			(error) =>
+				error instanceof JoinRequestLinkInvalidError
+					? 'linkInvalid'
+					: 'error'
+		);
+	}, [seriesId, inviteToken, transport, runAction]);
 
 	const onCancel = useCallback(() => {
 		if (!seriesId) return;
-		setState('cancelling');
-		transport
-			.cancelMine(seriesId)
-			.then(() => setState('idle'))
-			.catch(() => setState('pending'));
-	}, [seriesId, transport]);
+		runAction(
+			'cancelling',
+			() => transport.cancelMine(seriesId).then(() => 'idle' as const),
+			() => 'pending'
+		);
+	}, [seriesId, transport, runAction]);
 
 	if (!seriesId || !inviteToken || state === null) return undefined;
 	return { state, onRequest, onCancel, onOpenGroup };

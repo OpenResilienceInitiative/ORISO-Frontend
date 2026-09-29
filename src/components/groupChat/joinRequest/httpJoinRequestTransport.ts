@@ -58,7 +58,7 @@ const fingerprint = (
 			: `${value.id}:${value.status}`;
 
 /**
- * Asks `load` now, every `intervalMs`, and whenever the tab comes back into
+ * Asks `load` now (unless `immediate` is false), every `intervalMs`, and whenever the tab comes back into
  * view; reports a result only when it differs from the last one. A server
  * without the endpoints (404) ends the loop for good — no point asking a
  * UserService that predates #1499 every few seconds. Other errors are
@@ -69,9 +69,11 @@ const poll = <
 >(
 	load: () => Promise<T>,
 	intervalMs: number,
-	onChange: (value: T) => void
+	onChange: (value: T) => void,
+	{ immediate = true }: { immediate?: boolean } = {}
 ) => {
 	let stopped = false;
+	let loading = false;
 	let last: string | undefined;
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -81,7 +83,10 @@ const poll = <
 		document.removeEventListener('visibilitychange', onVisible);
 	};
 	const tick = () => {
+		// Single flight: a tab coming back mid-request would start a second loop.
+		if (stopped || loading) return;
 		if (timer) clearTimeout(timer);
+		loading = true;
 		load()
 			.then((value) => {
 				if (stopped) return;
@@ -95,6 +100,7 @@ const poll = <
 				if (isUnavailable(error)) stop();
 			})
 			.finally(() => {
+				loading = false;
 				if (!stopped) timer = setTimeout(tick, intervalMs);
 			});
 	};
@@ -103,7 +109,8 @@ const poll = <
 	}
 
 	document.addEventListener('visibilitychange', onVisible);
-	tick();
+	if (immediate) tick();
+	else timer = setTimeout(tick, intervalMs);
 	return stop;
 };
 
@@ -138,7 +145,10 @@ export const createHttpJoinRequestTransport = ({
 		}),
 	cancelMine: (seriesId) => api.cancelMine(seriesId),
 	watchMine: (seriesId, onChange) =>
-		poll(() => api.getMine(seriesId), mineIntervalMs, onChange),
+		// The caller reads her request once via getMine; asking here too doubled it.
+		poll(() => api.getMine(seriesId), mineIntervalMs, onChange, {
+			immediate: false
+		}),
 	watchPending: (onChange) =>
 		poll(() => api.listPending(), pendingIntervalMs, onChange),
 	admit: (request, role) => api.admit(request.seriesId, request.id, role),

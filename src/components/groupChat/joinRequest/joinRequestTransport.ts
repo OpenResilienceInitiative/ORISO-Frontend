@@ -26,7 +26,7 @@ export interface JoinRequestTransport {
 		seriesId: number
 	) => Promise<GroupChatJoinRequestOwnStatus | null>;
 	cancelMine: (seriesId: number) => Promise<void>;
-	/** Calls back whenever her request changes. Returns the unsubscribe. */
+	/** Calls back whenever her request changes (first read: `getMine`). Returns the unsubscribe. */
 	watchMine: (
 		seriesId: number,
 		onChange: (status: GroupChatJoinRequestOwnStatus | null) => void
