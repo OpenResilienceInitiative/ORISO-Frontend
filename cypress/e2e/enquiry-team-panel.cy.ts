@@ -441,6 +441,14 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.intercept('GET', '**/service/users/sessions/room?*', {
 			statusCode: 204
 		});
+		// Clearing a disappeared enquiry also verifies the handover-access lookup.
+		cy.intercept('GET', '**/service/users/case-handover/candidates?*', {
+			sessions: [],
+			total: 0
+		}).as('emptyHandoverCandidates');
+		cy.wait('@emptyHandoverCandidates')
+			.its('response.statusCode')
+			.should('eq', 200);
 		cy.get('.session__acceptance', { timeout: 12000 }).should('not.exist');
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// A colleague can accept while this consultant only watches the queue.
