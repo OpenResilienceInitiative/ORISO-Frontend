@@ -1,3 +1,4 @@
+import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {
@@ -237,6 +238,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	targetChannelKind?: SideRoomChannelKind;
 	/** Marks notifications from the internal ADR-016 team room. */
 	teamDiscussion?: boolean;
+	/** Set only by the dedicated protected feedback composer, never a generic aside. */
+	feedbackMailIntent?: boolean;
 	/**
 	 * T35: dual mode (a side panel is open) — the composer rests at ONE
 	 * line on the desktop as well and grows while typing (`composerResize`
@@ -309,7 +312,8 @@ export interface MessageSubmitInterfaceComponentProps {
 		isAside?: boolean,
 		replyToEventId?: string | null,
 		mentionedUserIds?: string[],
-		targetRoomId?: string | null
+		targetRoomId?: string | null,
+		feedbackMailIntent?: boolean
 	) => void;
 	/** A user-triggered retry. One request id is handled at most once. */
 	retryRequest?: {
@@ -322,6 +326,7 @@ export interface MessageSubmitInterfaceComponentProps {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
 }
@@ -442,6 +447,7 @@ export const MessageSubmitInterfaceComponent = ({
 	targetRoomId,
 	targetChannelKind,
 	teamDiscussion = false,
+	feedbackMailIntent = false,
 	compactHeight = false,
 	flushCorner,
 	accent = 'default',
@@ -1452,7 +1458,8 @@ export const MessageSubmitInterfaceComponent = ({
 			preserveComposerOnSuccess = false,
 			retryReplyToEventId?: string | null,
 			retryMentionedUserIds?: string[],
-			retryTargetRoomId?: string | null
+			retryTargetRoomId?: string | null,
+			sentFeedbackMailIntent = false
 		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
@@ -1552,6 +1559,7 @@ export const MessageSubmitInterfaceComponent = ({
 								uploadProgress: setUploadProgress,
 								threadRootId: threadRootId || null,
 								supervisorMessage: !!isSupervisor,
+								feedbackMailIntent: sentFeedbackMailIntent,
 								senderDisplayName:
 									userData?.displayName ||
 									userData?.userName ||
@@ -1624,7 +1632,8 @@ export const MessageSubmitInterfaceComponent = ({
 						? retryReplyToEventId || null
 						: replyTo?.eventId || null,
 					mentionedUserIds,
-					teamDiscussion
+					teamDiscussion,
+					sentFeedbackMailIntent
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -1652,7 +1661,8 @@ export const MessageSubmitInterfaceComponent = ({
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
 							mentionedUserIds,
-							matrixRoomId ?? targetRoomId ?? null
+							matrixRoomId ?? targetRoomId ?? null,
+							sentFeedbackMailIntent
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1709,6 +1719,7 @@ export const MessageSubmitInterfaceComponent = ({
 				replyToEventId?: string | null;
 				mentionedUserIds: string[];
 				targetRoomId?: string | null;
+				feedbackMailIntent?: boolean;
 			}
 		) => {
 			const attachmentInput: any = attachmentInputRef.current;
@@ -1749,6 +1760,12 @@ export const MessageSubmitInterfaceComponent = ({
 				? retryContext.transportMessage
 				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
+			const sentFeedbackMailIntent = resolveFeedbackMailIntent({
+				explicitFeedbackComposer: feedbackMailIntent,
+				supervisorFeedbackAction: !!isSupervisor,
+				teamDiscussion,
+				retry: retryContext
+			});
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
 			// MSC3440 m.thread relation on the event (see chatTransportService),
@@ -1847,7 +1864,8 @@ export const MessageSubmitInterfaceComponent = ({
 					preserveComposerOnSuccess,
 					retryContext?.replyToEventId || null,
 					retryContext?.mentionedUserIds || [],
-					retryContext?.targetRoomId
+					retryContext?.targetRoomId,
+					sentFeedbackMailIntent
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
@@ -1873,6 +1891,8 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession.isGroup,
 			attachmentSelected,
+			feedbackMailIntent,
+			teamDiscussion,
 			audienceOptions,
 			editingMessageId,
 			getTypedMarkdownMessage,
@@ -1975,7 +1995,8 @@ export const MessageSubmitInterfaceComponent = ({
 			isAside: retryRequest.isAside,
 			replyToEventId: retryRequest.replyToEventId,
 			mentionedUserIds: retryRequest.mentionedUserIds,
-			targetRoomId: retryRequest.targetRoomId
+			targetRoomId: retryRequest.targetRoomId,
+			feedbackMailIntent: retryRequest.feedbackMailIntent
 		})
 			.catch(() => {
 				// Send failures are surfaced through onSendError. This catch only

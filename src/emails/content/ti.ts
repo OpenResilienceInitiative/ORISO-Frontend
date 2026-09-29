@@ -283,16 +283,12 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ',
-		preheader: 'ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።',
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
 		headline: 'ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ',
 		paragraphs: [
 			'ብዛዕባ ሓደ ካብ ምኽርታትኩም ኣብ ዝካየድ ውሑስ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ ኣሎ።',
 			'ትሕዝቶኡ ድሕሪ ምእታውኩም ተመስጢሩ ትርእይዎ።'
-		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ዝኣተወሉ', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'ግብረ መልሲ ኣንብቡ', href: '{{messageUrl}}' },
 		footnote: 'እቲ ሞያዊ ልውውጥ ነቲ ምኽሪ ዝሓተተ ሰብ ኣይረአን።',

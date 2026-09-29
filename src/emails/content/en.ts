@@ -283,16 +283,12 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'New reply in the professional exchange',
-		preheader: 'A reply is waiting for you in the professional exchange.',
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
 		headline: 'New reply in the professional exchange',
 		paragraphs: [
 			'There is a new reply in the protected professional exchange about one of your counselling cases.',
 			'You will see the content encrypted, after signing in.'
-		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Received', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Read reply', href: '{{messageUrl}}' },
 		footnote:

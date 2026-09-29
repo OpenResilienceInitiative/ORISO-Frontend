@@ -289,16 +289,12 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'Neue Rückmeldung im Fachaustausch',
-		preheader: 'Im Fachaustausch liegt eine Rückmeldung für dich.',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melde dich an.',
 		headline: 'Neue Rückmeldung im Fachaustausch',
 		paragraphs: [
 			'Im geschützten Fachaustausch zu einer deiner Beratungen liegt eine neue Rückmeldung.',
 			'Den Inhalt siehst du verschlüsselt nach der Anmeldung.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Eingang', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Rückmeldung lesen', href: '{{messageUrl}}' },
 		footnote:

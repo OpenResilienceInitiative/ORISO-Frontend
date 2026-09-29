@@ -301,16 +301,12 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'Neue Rückmeldung im Fachaustausch',
-		preheader: 'Im Fachaustausch liegt eine Rückmeldung für Sie.',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
 		headline: 'Neue Rückmeldung im Fachaustausch',
 		paragraphs: [
 			'Im geschützten Fachaustausch zu einer Ihrer Beratungen liegt eine neue Rückmeldung.',
 			'Den Inhalt sehen Sie verschlüsselt nach der Anmeldung.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Eingang', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Rückmeldung lesen', href: '{{messageUrl}}' },
 		footnote:

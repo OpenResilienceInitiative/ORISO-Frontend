@@ -294,16 +294,12 @@ export const fr: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'Nouveau retour dans l’échange entre professionnels',
-		preheader: 'Un retour vous attend dans l’échange entre professionnels.',
+		subject: 'Nouveau message sur {{platformName}}',
+		preheader: 'Veuillez vous connecter.',
 		headline: 'Nouveau retour dans l’échange entre professionnels',
 		paragraphs: [
 			'Un nouveau retour vous attend dans l’échange protégé entre professionnels au sujet de l’une de vos consultations.',
 			'Vous en verrez le contenu, chiffré, après votre connexion.'
-		],
-		panel: [
-			{ label: 'Dossier', value: '{{caseReference}}' },
-			{ label: 'Reçu le', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Lire le retour', href: '{{messageUrl}}' },
 		footnote:

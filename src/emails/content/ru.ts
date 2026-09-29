@@ -292,16 +292,12 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'Новый отклик в профессиональном обмене',
-		preheader: 'В профессиональном обмене Вас ждёт отклик.',
+		subject: 'Новое сообщение на {{platformName}}',
+		preheader: 'Пожалуйста, войдите в систему.',
 		headline: 'Новый отклик в профессиональном обмене',
 		paragraphs: [
 			'В защищённом профессиональном обмене по одной из Ваших консультаций появился новый отклик.',
 			'Содержание Вы увидите в зашифрованном виде после входа в аккаунт.'
-		],
-		panel: [
-			{ label: 'Дело', value: '{{caseReference}}' },
-			{ label: 'Поступил', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Прочитать отклик', href: '{{messageUrl}}' },
 		footnote:

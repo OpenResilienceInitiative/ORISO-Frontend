@@ -712,8 +712,6 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
-				"{{caseReference}}",
-				"{{requestReceivedAt}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -723,38 +721,38 @@
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Neue Rückmeldung im Fachaustausch",
-					"preheader": "Im Fachaustausch liegt eine Rückmeldung für Sie."
+					"subject": "Neue Nachricht auf {{platformName}}",
+					"preheader": "Bitte melden Sie sich an."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Neue Rückmeldung im Fachaustausch",
-					"preheader": "Im Fachaustausch liegt eine Rückmeldung für dich."
+					"subject": "Neue Nachricht auf {{platformName}}",
+					"preheader": "Bitte melde dich an."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "New reply in the professional exchange",
-					"preheader": "A reply is waiting for you in the professional exchange."
+					"subject": "New message on {{platformName}}",
+					"preheader": "Please sign in."
 				},
 				"fr": {
 					"lang": "fr",
-					"subject": "Nouveau retour dans l’échange entre professionnels",
-					"preheader": "Un retour vous attend dans l’échange entre professionnels."
+					"subject": "Nouveau message sur {{platformName}}",
+					"preheader": "Veuillez vous connecter."
 				},
 				"ru": {
 					"lang": "ru",
-					"subject": "Новый отклик в профессиональном обмене",
-					"preheader": "В профессиональном обмене Вас ждёт отклик."
+					"subject": "Новое сообщение на {{platformName}}",
+					"preheader": "Пожалуйста, войдите в систему."
 				},
 				"ti": {
 					"lang": "ti",
-					"subject": "ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ",
-					"preheader": "ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።"
+					"subject": "ሓድሽ መልእኽቲ ኣብ {{platformName}}",
+					"preheader": "በጃኹም እተዉ።"
 				},
 				"tr": {
 					"lang": "tr",
-					"subject": "Uzmanlar arası paylaşımda yeni geri bildirim",
-					"preheader": "Uzmanlar arası paylaşımda sizin için bir geri bildirim var."
+					"subject": "{{platformName}} üzerinde yeni mesaj",
+					"preheader": "Lütfen giriş yapın."
 				}
 			}
 		},

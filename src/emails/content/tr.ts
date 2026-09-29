@@ -294,17 +294,12 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'rueckmeldung': {
-		subject: 'Uzmanlar arası paylaşımda yeni geri bildirim',
-		preheader:
-			'Uzmanlar arası paylaşımda sizin için bir geri bildirim var.',
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
 		headline: 'Uzmanlar arası paylaşımda yeni geri bildirim',
 		paragraphs: [
 			'Danışmanlıklarınızdan biriyle ilgili korumalı uzmanlar arası paylaşımda yeni bir geri bildirim var.',
 			'İçeriği oturum açtıktan sonra şifreli olarak görürsünüz.'
-		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Geliş', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Geri bildirimi oku', href: '{{messageUrl}}' },
 		footnote: 'Uzmanlar arası paylaşım danışana görünmez.',
