@@ -17,7 +17,8 @@ import {
 } from './matrixPasswordRecoveryService';
 import {
 	RecoverySetupBusyError,
-	getPendingRecoveryKey,
+	loadPendingRecoveryKey,
+	markPendingRecoveryKeyPasswordProtected,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
 } from './pendingRecoveryKeyStore';
@@ -45,13 +46,17 @@ export const initializeChatRecovery = async (
 					password
 				);
 				if (recovery.kind !== 'not-enrolled') {
+					if (recovery.kind === 'ready') {
+						await loadPendingRecoveryKey(userId);
+						markPendingRecoveryKeyPasswordProtected(userId);
+					}
 					setRecoveryRuntimeStatus(userId, recovery.kind);
 					return;
 				}
 			}
 			// Re-read server state inside the lock; another tab may have completed it.
 			let status = await getEncryptionStatus(client);
-			let recoveryKey = getPendingRecoveryKey(userId);
+			let recoveryKey = await loadPendingRecoveryKey(userId);
 			if (cancelled()) return;
 			if (
 				canBootstrapSilently(status) &&
@@ -90,6 +95,7 @@ export const initializeChatRecovery = async (
 					recoveryKey,
 					policy.revision
 				);
+				markPendingRecoveryKeyPasswordProtected(userId);
 				setRecoveryRuntimeStatus(userId, 'ready');
 			} else {
 				setRecoveryRuntimeStatus(

@@ -23,7 +23,7 @@
  * shape of a Keycloak theme's email directory, so it can be copied in whole.
  */
 
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
@@ -32,7 +32,21 @@ import {
 	renderEmailHtml,
 	renderEmailText
 } from '../kit/emailTemplate';
+import {
+	emailLogoCell,
+	emailLogoCellFallbackCss,
+	emailLogoLockup
+} from '../kit/emailAtoms';
 import { emailDefaultBrand } from '../kit/emailTokens';
+import {
+	APP_BASE_URL_ENV,
+	KEYCLOAK_LINK_PATHS,
+	LOGO_URL_ENV,
+	TENANT_LOGO_PATH,
+	findHardcodedUrls,
+	keycloakLinkProperties,
+	keycloakLogoProperty
+} from '../kit/keycloakThemeLinks';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist/keycloak/email');
@@ -40,26 +54,23 @@ const outDir = path.resolve(here, '../dist/keycloak/email');
 /**
  * Brand values and legal links become theme properties.
  *
- * Keycloak templates are per-realm and a realm has no Träger, so per-Träger
- * branding on this path is out of scope (ADR-021). But an operator still has to
- * be able to set a logo and an imprint link without editing a generated file,
- * and `${properties.x}` reading from `theme.properties` is Keycloak's own
- * mechanism for exactly that.
+ * An operator has to be able to set brand values without editing a generated
+ * file, and `${properties.x}` reading from `theme.properties` is Keycloak's own
+ * mechanism for exactly that. The logo is the exception: it is the recipient's
+ * Träger logo where there is one (see `logoHeader`), and otherwise the platform
+ * logo from the container's `ORISO_LOGO_URL`.
+ *
+ * Links are not brand values: they point at this environment's app, so they
+ * come from the container's `ORISO_APP_BASE_URL` (see keycloakThemeLinks). A
+ * host written here would be every environment's host (ORISO-Helm#366).
  */
 const themeDefaults: Record<string, string> = {
 	orisoPlatformName: 'Online-Beratung',
 	orisoOrgName: 'ORISO',
 	orisoOrgAddress: '',
 	orisoContactLine: '',
-	orisoLogoUrl: '',
 	orisoPrimaryColor: '#a5000a',
-	orisoAccentColor: '#cc1e1c',
-	orisoPrivacyUrl: 'https://app.oriso.org/datenschutz',
-	orisoImprintUrl: 'https://app.oriso.org/impressum',
-	orisoSettingsUrl: 'https://app.oriso.org/profile/settings',
-	orisoUnsubscribeUrl: 'https://app.oriso.org/profile/settings/notifications',
-	orisoLoginUrl: 'https://app.oriso.org/login',
-	orisoAppUrl: 'https://app.oriso.org'
+	orisoAccentColor: '#cc1e1c'
 };
 
 const themeProperty = (placeholder: string) =>
@@ -73,9 +84,15 @@ const themeProperty = (placeholder: string) =>
  * that depended on it would render a button with an empty `background-color` —
  * that is, no button. The parentheses matter too: `${properties.x!''}` defaults
  * only the last step and dies if `properties` itself is missing.
+ *
+ * Links are the exception: they get no default, so a theme without its
+ * properties fails to render instead of linking to some other environment.
  */
 const themeLookup = (placeholder: string): string => {
 	const key = themeProperty(placeholder);
+	if (key in KEYCLOAK_LINK_PATHS) {
+		return `properties.${key}`;
+	}
 	const fallback = (themeDefaults[key] ?? '').replace(/'/g, "\\'");
 	return `(properties.${key})!'${fallback}'`;
 };
@@ -221,6 +238,60 @@ const messages = (
 	return out;
 };
 
+/**
+ * The header: the logo beside the brand name. The logo is the recipient's
+ * Träger logo, else the platform logo, else absent, and the name stands alone.
+ *
+ * Keycloak hands every template the recipient as `user`; `user.attributes`
+ * holds the first value of each user attribute, among them UserService's
+ * `tenantId`. Only a positive integer counts: 0 is the platform tenant and
+ * anything else must not reach a URL. Mail clients block `data:` images, so
+ * the logo is always an absolute URL, and only one beneath the HTTPS app
+ * origin — a foreign host would learn who opened the mail and when. Whether
+ * the image then loads is up to TenantService; the name is already there, so
+ * the logo is decorative (`alt=""`) and a failed one leaves nothing behind.
+ */
+const logoHeader = (): string => {
+	const app = 'properties.orisoAppUrl';
+	const platformLogo = `(${themeLookup('logoUrl')})`;
+	const resolve =
+		"<#assign orisoLogoSrc = ''>" +
+		`<#if (${app})?starts_with("https://")>` +
+		'<#if ((user.attributes.tenantId)!\'\')?matches("[1-9][0-9]{0,18}")>' +
+		`<#assign orisoLogoSrc = ${app} + ${TENANT_LOGO_PATH(
+			'user.attributes.tenantId'
+		)}>` +
+		`<#elseif ${platformLogo}?starts_with(${app} + "/")>` +
+		`<#assign orisoLogoSrc = ${platformLogo}>` +
+		'</#if></#if>';
+	const cell = emailLogoCell({
+		...emailDefaultBrand,
+		// eslint-disable-next-line no-template-curly-in-string -- FreeMarker, not JS
+		logoUrl: '${orisoLogoSrc}'
+	});
+	return (
+		resolve +
+		emailLogoLockup(emailDefaultBrand)
+			.split(emailLogoCell(emailDefaultBrand))
+			.join(`<#if orisoLogoSrc?has_content>${cell}</#if>`)
+	);
+};
+
+const withLogoHeader = (html: string): string => {
+	const lockup = emailLogoLockup(emailDefaultBrand);
+	const headEnd = '</style>\n</head>';
+	if (!html.includes(lockup) || !html.includes(headEnd)) {
+		throw new Error(
+			'Keycloak theme: the kit no longer renders the logo lockup or the head ' +
+				'<style> this build rewrites; update logoHeader.'
+		);
+	}
+	return html
+		.split(lockup)
+		.join(logoHeader())
+		.replace(headEnd, `  ${emailLogoCellFallbackCss()}\n${headEnd}`);
+};
+
 /** Turns kit placeholders and copy markers into what Keycloak understands. */
 const finish = (
 	source: string,
@@ -229,6 +300,9 @@ const finish = (
 	freemarkerEscape: boolean
 ): string => {
 	let out = source;
+	if (freemarkerEscape) {
+		out = withLogoHeader(out);
+	}
 
 	// Kit placeholder → the expression Keycloak actually provides.
 	for (const [placeholder, expression] of Object.entries(variables)) {
@@ -420,15 +494,54 @@ const run = async () => {
 	await writeFile(
 		path.join(outDir, 'theme.properties'),
 		'parent=base\n' +
-			'# Generated defaults from the ORISO e-mail design system.\n' +
-			'# An operator may override any of these per realm.\n' +
+			'# Generated from the ORISO e-mail design system — do not edit by hand.\n' +
+			'# Brand defaults; an operator may override them in the image.\n' +
 			Object.entries(themeDefaults)
+				.map(([key, value]) => `${key}=${value}`)
+				.join('\n') +
+			'\n' +
+			`# Platform logo for recipients without a Träger; empty means none.\n` +
+			`# Keycloak substitutes \${env.${LOGO_URL_ENV}:} from the container environment.\n` +
+			Object.entries(keycloakLogoProperty())
+				.map(([key, value]) => `${key}=${value}`)
+				.join('\n') +
+			'\n' +
+			`# Links: Keycloak substitutes \${env.${APP_BASE_URL_ENV}} from the container\n` +
+			'# environment. No default on purpose; the image refuses to start without it.\n' +
+			Object.entries(keycloakLinkProperties())
 				.map(([key, value]) => `${key}=${value}`)
 				.join('\n') +
 			'\n',
 		'utf8'
 	);
 	written += 1;
+
+	// Last line of defence for the rule above: a host or URL default in the
+	// output fails the build instead of shipping to every environment.
+	const outputFiles = ['theme.properties'].concat(
+		...(await Promise.all(
+			['html', 'text', 'messages'].map(async (dir) =>
+				(await readdir(path.join(outDir, dir))).map((name) =>
+					path.join(dir, name)
+				)
+			)
+		))
+	);
+	const violations = findHardcodedUrls(
+		await Promise.all(
+			outputFiles.map(async (name) => ({
+				name,
+				content: await readFile(path.join(outDir, name), 'utf8')
+			}))
+		)
+	);
+	if (violations.length > 0) {
+		throw new Error(
+			'Keycloak theme: generated output names the production host or a literal URL ' +
+				`(${violations.join(', ')}). Links must derive from ` +
+				`${APP_BASE_URL_ENV}.`
+		);
+	}
 
 	// eslint-disable-next-line no-console
 	console.log(

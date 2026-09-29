@@ -526,10 +526,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				(value) => !value.toLowerCase().startsWith('anonymous-')
 			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
-			return translate(
-				'session.waitingMiniGame.robotUsernameFallback',
-				'Ratsuchende_r 9'
-			);
+			return translate('session.waitingMiniGame.robotUsernameFallback');
 		}
 		return resolved;
 	}, [
@@ -553,55 +550,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => [
 			{
 				_id: 'robot-system-1',
-				title: translate(
-					'session.waitingMiniGame.robotCard1Title',
-					'Bitte haben Sie etwas Geduld'
-				),
-				description: translate(
-					'session.waitingMiniGame.robotCard1Body',
-					'Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.'
-				)
+				title: translate('session.waitingMiniGame.robotCard1Title'),
+				description: translate('session.waitingMiniGame.robotCard1Body')
 			},
 			{
 				_id: 'robot-system-2',
-				title: `${translate(
-					'session.waitingMiniGame.robotCard2TitlePrefix',
-					'Ihr Benutzername lautet:'
-				)} ${robotIncomingUsername}`,
-				description: translate(
-					'session.waitingMiniGame.robotCard2Body',
-					'Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.'
-				)
+				title: `${translate('session.waitingMiniGame.robotCard2TitlePrefix')} ${robotIncomingUsername}`,
+				description: translate('session.waitingMiniGame.robotCard2Body')
 			},
 			{
 				_id: 'robot-system-3',
-				title: translate(
-					'session.waitingMiniGame.robotCard3Title',
-					'Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?'
-				),
+				title: translate('session.waitingMiniGame.robotCard3Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard3Body',
-					'Registrieren Sie sich und hinterlassen Sie uns eine Nachricht. Wir melden uns innerhalb von 2 Werktagen bei Ihnen.'
+					'session.waitingMiniGame.robotCard3Body'
 				),
-				cta: translate(
-					'session.waitingMiniGame.robotCard3Cta',
-					'Gehen Sie zur Registrierung'
-				)
+				cta: translate('session.waitingMiniGame.robotCard3Cta')
 			},
 			{
 				_id: 'robot-system-4',
-				title: translate(
-					'session.waitingMiniGame.robotCard4Title',
-					'Wollen Sie die Wartezeit sinnvoll nutzen?'
-				),
+				title: translate('session.waitingMiniGame.robotCard4Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard4Body',
-					'Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.'
+					'session.waitingMiniGame.robotCard4Body'
 				),
-				playLabel: translate(
-					'session.waitingMiniGame.robotCard4Play',
-					'Spiel starten'
-				)
+				playLabel: translate('session.waitingMiniGame.robotCard4Play')
 			}
 		],
 		[robotIncomingUsername, translate]
@@ -1539,16 +1510,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			addEventNotification({
 				type: NOTIFICATION_TYPE_INFO,
 				eventType: 'thread.reply.new',
-				title: translate(
-					'notifications.threadReply.title',
-					'New thread reply'
-				),
-				text: `${contactName}: ${snippet || 'New reply in thread'}`,
+				title: translate('notifications.threadReply.title'),
+				text: `${contactName}: ${snippet || translate('notifications.events.threadReplyNew.text')}`,
 				actionPath,
-				actionLabel: translate(
-					'notifications.center.open',
-					'Open chat'
-				),
+				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
 				category: 'message'
 			});
@@ -3053,10 +3018,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									setIsThreadListOpen((open) => !open)
 								}
 							>
-								{translate(
-									'message.thread.listToggle',
-									'Threads'
-								)}
+								{translate('message.thread.listToggle')}
 								{' ('}
 								{threadSummariesRaw.size}
 								{')'}
@@ -3083,15 +3045,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										)
 									}
 									unknownRootLabel={translate(
-										'message.thread.unknownRoot',
-										'Frühere Nachricht'
+										'message.thread.unknownRoot'
 									)}
 									repliesLabel={(count) =>
-										translate(
-											'message.thread.replies',
-											'{{count}} replies',
-											{ count }
-										)
+										translate('message.thread.replies', {
+											count
+										})
 									}
 									onSelectRoot={(rootId) => {
 										const rootMessage =
@@ -3164,8 +3123,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								className="session__waitingCompanionInline"
 								role="region"
 								aria-label={translate(
-									'liveChat.breathing.title',
-									'Ihre Atempause'
+									'liveChat.breathing.title'
 								)}
 							>
 								{/* The breathing companion (single-file handoff, 2026-09-06)
@@ -3210,8 +3168,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													<div className="messageItem__header">
 														<div className="messageItem__username messageItem__username--system">
 															{translate(
-																'message.systemNotification',
-																'System Notification'
+																'message.systemNotification'
 															)}
 														</div>
 														<span className="messageItem__headerTime">
@@ -3223,8 +3180,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 													{index === 0 && (
 														<div className="messageItem__systemNotificationTag">
 															{translate(
-																'message.systemNotification',
-																'System Notification'
+																'message.systemNotification'
 															)}
 														</div>
 													)}
@@ -3511,10 +3467,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								className="session__anonymousEnquiryClosedNote"
 								role="status"
 							>
-								{translate(
-									'anonymousChat.enquiryClosed',
-									'Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.'
-								)}
+								{translate('anonymousChat.enquiryClosed')}
 							</div>
 						</div>
 					)}
@@ -3558,8 +3511,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							errorMessage={
 								leaveQueueFailed
 									? translate(
-											'anonymousChat.leaveQueue.error',
-											'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
+											'anonymousChat.leaveQueue.error'
 										)
 									: undefined
 							}
@@ -3752,18 +3704,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
-							{translate(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
+							{translate('anonymousChat.noAvailability.title')}
 						</MuiTypography>
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
-						{translate(
-							'anonymousChat.noAvailability.subtitle',
-							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
-						)}
+						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
 					<MuiBox
@@ -3804,8 +3750,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									}}
 								>
 									{translate(
-										'anonymousChat.noAvailability.openingHours',
-										'Reguläre Öffnungszeiten anzeigen'
+										'anonymousChat.noAvailability.openingHours'
 									)}
 								</MuiTypography>
 							</MuiBox>
@@ -3841,8 +3786,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 									>
 										{translate(
-											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
-											entry.day
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`
 										)}
 									</MuiTypography>
 									<MuiTypography
@@ -3859,20 +3803,14 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
-						{translate(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
-						)}
+						{translate('anonymousChat.noAvailability.mailHint')}
 					</MuiTypography>
 
 					<MuiTypography
 						variant="body2"
 						sx={{ fontWeight: 700, mb: '16px' }}
 					>
-						{translate(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
+						{translate('anonymousChat.noAvailability.tip')}
 					</MuiTypography>
 
 					<MuiButton
@@ -3888,8 +3826,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						startIcon={<NorthEastIcon />}
 					>
 						{translate(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'anonyme Mail-Beratung starten'
+							'anonymousChat.noAvailability.startMailCounseling'
 						)}
 					</MuiButton>
 
@@ -3902,10 +3839,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							mb: '16px'
 						}}
 					>
-						{translate(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
+						{translate('anonymousChat.noAvailability.responseTime')}
 					</MuiTypography>
 
 					<MuiBox sx={{ display: 'flex', gap: '10px' }}>
@@ -3921,10 +3855,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								color: '#4C555F'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.back',
-								'Zurück zur vorherigen Seite'
-							)}
+							{translate('anonymousChat.noAvailability.back')}
 						</MuiButton>
 						<MuiButton
 							fullWidth
@@ -3938,10 +3869,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								color: '#A5000A'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.later',
-								'Später wiederkommen'
-							)}
+							{translate('anonymousChat.noAvailability.later')}
 						</MuiButton>
 					</MuiBox>
 				</MuiBox>
@@ -4081,10 +4009,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				composer={
 					<MessageSubmitInterfaceComponent
 						isTyping={props.isTyping}
-						placeholder={translate(
-							'message.thread.placeholder',
-							'Reply in thread'
-						)}
+						placeholder={translate('message.thread.placeholder')}
 						typingUsers={props.typingUsers}
 						handleMessageSendSuccess={handleMessageSendSuccess}
 						onSendError={handleComposerSendError}
@@ -4173,10 +4098,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				banner={
 					isSupervisor && supervisionReason ? (
 						<InfoBanner
-							title={translate(
-								'session.supervisor.reason.title',
-								'Supervisionsgrund'
-							)}
+							title={translate('session.supervisor.reason.title')}
 							text={supervisionReason}
 						/>
 					) : isSupervisor &&
@@ -4184,12 +4106,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							supervisionMessages.length === 0) ? (
 						<InfoBanner
 							title={translate(
-								'session.supervisor.startChat.title',
-								'Chat starten'
+								'session.supervisor.startChat.title'
 							)}
 							text={translate(
-								'session.supervisor.startChat.hint',
-								'Use the message field at the bottom to send the first supervision message.'
+								'session.supervisor.startChat.hint'
 							)}
 						/>
 					) : undefined
@@ -4331,8 +4251,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				banner={
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
-							title={teamText('chatStage.panel.team.empty.title')}
-							text={teamText('chatStage.panel.team.empty.text')}
+							title={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.title'
+										)
+									: teamChannelTitle
+							}
+							text={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.text'
+										)
+									: translate(
+											'notifications.center.preview.empty'
+										)
+							}
 						/>
 					) : undefined
 				}
