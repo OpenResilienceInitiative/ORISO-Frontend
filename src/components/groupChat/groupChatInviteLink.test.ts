@@ -18,8 +18,8 @@ describe('invite link for the current host (#1499)', () => {
 
 	it('builds the link on the origin it is given', () => {
 		expect(
-			buildGroupChatInviteLinkForOrigin('https://dev.oriso.org', 7)
-		).toBe('https://dev.oriso.org/login?gcid=7');
+			buildGroupChatInviteLinkForOrigin('https://dev.example.org', 7)
+		).toBe('https://dev.example.org/login?gcid=7');
 	});
 
 	it('tolerates a trailing slash and keeps a port', () => {
@@ -30,10 +30,10 @@ describe('invite link for the current host (#1499)', () => {
 
 	it('follows the host the app runs on, never the production host', () => {
 		vi.stubGlobal('window', {
-			location: { origin: 'https://predev.oriso.org' }
+			location: { origin: 'https://predev.example.org' }
 		});
 		const link = currentHostGroupChatInviteLink(4711);
-		expect(link).toBe('https://predev.oriso.org/login?gcid=4711');
+		expect(link).toBe('https://predev.example.org/login?gcid=4711');
 		expect(link).not.toContain('app.oriso.org');
 	});
 });
