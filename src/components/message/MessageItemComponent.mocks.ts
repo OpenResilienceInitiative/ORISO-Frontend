@@ -17,8 +17,8 @@ export const MOCK_ASKER_MATRIX_ID = '@sanftes.alpaka:oriso.invalid';
 export const MOCK_CONSULTANT_MATRIX_ID = '@karina.p:oriso.invalid';
 export const MOCK_GROUP_MODERATOR_MATRIX_ID = '@angela.k:oriso.invalid';
 
-const MOCK_MATRIX_ROOM_1ON1 = '!storybook-1on1:oriso.org';
-const MOCK_MATRIX_ROOM_GROUP = '!storybook-internal-group:oriso.org';
+const MOCK_MATRIX_ROOM_1ON1 = '!storybook-1on1:example.org';
+const MOCK_MATRIX_ROOM_GROUP = '!storybook-internal-group:example.org';
 
 export function mockActiveSession(
 	overrides: Partial<ExtendedSessionInterface> = {}

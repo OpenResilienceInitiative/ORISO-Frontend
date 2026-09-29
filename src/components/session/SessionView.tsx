@@ -56,7 +56,14 @@ export const SessionView = () => {
 		read: readActiveSession
 	} = useSession(
 		groupIdFromParam,
-		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
+		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
+		undefined,
+		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+			(userData?.userRoles || []).includes('USER')) &&
+			!(
+				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+				(userData?.userRoles || []).includes('CONSULTANT')
+			)
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');

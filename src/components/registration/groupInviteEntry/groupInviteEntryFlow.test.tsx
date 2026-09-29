@@ -20,6 +20,7 @@ import {
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { clearRegistrationSubmitting } from '../registrationSubmission';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 
@@ -175,6 +176,8 @@ beforeEach(() => {
 
 afterEach(() => {
 	sessionStorage.clear();
+	// A successful submit keeps this document-lived flag up until the redirect.
+	clearRegistrationSubmitting();
 	cleanup();
 });
 
