@@ -120,6 +120,26 @@ describe('M3SnackbarHost', () => {
 		expect(visibleTexts()).toEqual(['bleibt']);
 	});
 
+	it('forgets the pointer once the stack empties, so the next timed note still leaves', () => {
+		vi.useFakeTimers();
+		const stack = createSnackbarStack();
+		render(<M3SnackbarHost stack={stack} />);
+		let only = '';
+		act(() => {
+			only = stack.enqueue(note('einzige'));
+		});
+		// The pointer rests on the only card when it is closed: no mouseleave follows.
+		fireEvent.mouseEnter(screen.getByRole('region'));
+		act(() => stack.dismiss(only));
+
+		act(() => {
+			stack.enqueue({ ...note('kurz'), autoHideDuration: 4000 });
+		});
+		act(() => vi.advanceTimersByTime(4000));
+
+		expect(screen.queryByTestId('m3-snackbar-host-item')).toBeNull();
+	});
+
 	it('closes a dismissible snackbar with Escape, but never one that waits for a decision', async () => {
 		const stack = createSnackbarStack();
 		render(<M3SnackbarHost stack={stack} />);
@@ -163,6 +183,30 @@ describe('M3SnackbarHost', () => {
 		expect(document.activeElement).toBe(
 			screen.getByRole('button', { name: 'Composer' })
 		);
+	});
+
+	it('announces a second arrival even when it says the same as the first', () => {
+		const stack = createSnackbarStack();
+		render(<M3SnackbarHost stack={stack} />);
+		act(() => {
+			stack.enqueue(note('Das hat nicht geklappt.'));
+		});
+		const status = screen.getByRole('status');
+		const observer = new MutationObserver(() => undefined);
+		observer.observe(status, {
+			childList: true,
+			characterData: true,
+			subtree: true
+		});
+
+		act(() => {
+			stack.enqueue(note('Das hat nicht geklappt.'));
+		});
+
+		// A live region only speaks when its content changes.
+		expect(observer.takeRecords().length).toBeGreaterThan(0);
+		expect(status.textContent).toBe('Das hat nicht geklappt.');
+		observer.disconnect();
 	});
 
 	it('is a named landmark, so a keyboard user can jump to it', () => {

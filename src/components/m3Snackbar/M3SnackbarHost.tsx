@@ -9,6 +9,7 @@ import {
 	M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM,
 	M3_SNACKBAR_ELEVATION,
 	M3_SNACKBAR_PHONE_MEDIA,
+	M3_SNACKBAR_PHONE_QUERY,
 	m3SnackbarColors,
 	useFloatingSnackbarPresence
 } from './M3Snackbar';
@@ -80,12 +81,19 @@ export const M3SnackbarHost = ({
 }: M3SnackbarHostProps) => {
 	const { t } = useTranslation();
 	const entries = useSnackbarStackEntries(stack);
-	const phone = useMediaQuery('(max-width: 899.98px)');
+	const phone = useMediaQuery(M3_SNACKBAR_PHONE_QUERY);
 	const limit = maxVisible ?? (phone ? 2 : 3);
 	const [expanded, setExpanded] = useState(false);
 	const [hovered, setHovered] = useState(false);
 	const [focusedWithin, setFocusedWithin] = useState(false);
 	const paused = hovered || focusedWithin;
+	// The region unmounts with its last entry, so no mouseleave/blur ever resets these.
+	useEffect(() => {
+		if (entries.length === 0) {
+			setHovered(false);
+			setFocusedWithin(false);
+		}
+	}, [entries.length]);
 
 	useFloatingSnackbarPresence(entries.length > 0);
 	useAutoHide(entries, paused, stack.dismiss);
@@ -101,7 +109,8 @@ export const M3SnackbarHost = ({
 	return (
 		<>
 			<Box role="status" aria-live="polite" sx={visuallyHidden}>
-				{announcement}
+				{/* Keyed per arrival: a new node is announced even when its text repeats. */}
+				<span key={announcement.seq}>{announcement.text}</span>
 			</Box>
 			{entries.length > 0 && (
 				<Box
@@ -269,8 +278,12 @@ const useAutoHide = (
 /** The newest arrival's text, set once when it arrives. */
 const useArrivalAnnouncement = (entries: readonly SnackbarStackEntry[]) => {
 	const known = useRef(new Set<string>());
-	const [text, setText] = useState('');
-	const announce = useCallback((next: string) => setText(next), []);
+	const [announcement, setAnnouncement] = useState({ seq: 0, text: '' });
+	const announce = useCallback(
+		(text: string) =>
+			setAnnouncement((previous) => ({ seq: previous.seq + 1, text })),
+		[]
+	);
 	useEffect(() => {
 		const arrivals = entries.filter(
 			(entry) => !known.current.has(entry.id)
@@ -280,5 +293,5 @@ const useArrivalAnnouncement = (entries: readonly SnackbarStackEntry[]) => {
 			announce(arrivals[arrivals.length - 1].announcement);
 		}
 	}, [entries, announce]);
-	return text;
+	return announcement;
 };

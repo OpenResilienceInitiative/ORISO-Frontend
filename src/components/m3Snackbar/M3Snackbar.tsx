@@ -161,7 +161,8 @@ export const useFloatingSnackbarPresence = (active: boolean) => {
  * own `sm` rule would win over a plain value, and this theme puts `md` at
  * 600 px while the navigation bar stays until 900 px.
  */
-export const M3_SNACKBAR_PHONE_MEDIA = '@media (max-width: 899.98px)';
+export const M3_SNACKBAR_PHONE_QUERY = '(max-width: 899.98px)';
+export const M3_SNACKBAR_PHONE_MEDIA = `@media ${M3_SNACKBAR_PHONE_QUERY}`;
 export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM =
 	'calc(88px + env(safe-area-inset-bottom, 0px))';
 
