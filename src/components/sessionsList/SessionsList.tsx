@@ -66,6 +66,7 @@ import { useTranslation } from 'react-i18next';
 import { EmptyListItem } from './EmptyListItem';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { useForegroundRefresh } from '../../hooks/useForegroundRefresh';
 import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
@@ -267,6 +268,14 @@ export const SessionsList = ({
 	const [isReloadButtonVisible, setIsReloadButtonVisible] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const abortController = useRef<AbortController>(null);
+	const enquiryRefresh = useRef<{
+		controller: AbortController;
+		promise: Promise<void>;
+		pending: boolean;
+	}>(null);
+	const latestEnquiryRefresh = useRef<() => Promise<void>>(() =>
+		Promise.resolve()
+	);
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
 	const [sessionToolbarSelectedTopic, setSessionToolbarSelectedTopic] =
 		useState<string | null>(null);
@@ -518,11 +527,27 @@ export const SessionsList = ({
 			return Promise.resolve();
 		}
 
+		const running = enquiryRefresh.current;
+		if (
+			running &&
+			running.controller === abortController.current &&
+			!running.controller.signal.aborted
+		) {
+			// Preserve a newer invalidation without cancelling a slow response.
+			running.pending = true;
+			return running.promise;
+		}
 		setIsRequestInProgress(true);
 		abortController.current?.abort();
 		const controller = new AbortController();
 		abortController.current = controller;
-		return refetchEnquiryListState({
+		const request = {
+			controller,
+			promise: Promise.resolve(),
+			pending: false
+		};
+		enquiryRefresh.current = request;
+		request.promise = refetchEnquiryListState({
 			signal: controller.signal,
 			fetchPage: () =>
 				fetchEnquirySessionsWithAutoPage(
@@ -542,14 +567,23 @@ export const SessionsList = ({
 			setTotalItems,
 			setCurrentOffset
 		}).finally(() => {
+			if (enquiryRefresh.current === request)
+				enquiryRefresh.current = null;
 			// A live refresh takes ownership from pending pagination, including
 			// its loading indicator. Older completions cannot unlock a newer request.
 			if (abortController.current === controller) {
 				setIsRequestInProgress(false);
 				setIsLoading(false);
+				if (request.pending && !controller.signal.aborted) {
+					void latestEnquiryRefresh.current();
+				}
 			}
 		});
+		return request.promise;
 	}, [currentOffset, dispatch, fetchEnquirySessionsWithAutoPage, type]);
+	useEffect(() => {
+		latestEnquiryRefresh.current = refetchEnquiryList;
+	}, [refetchEnquiryList]);
 
 	const refetchSessionList = useCallback(() => {
 		if (type !== SESSION_LIST_TYPES.MY_SESSION) {
@@ -1090,19 +1124,11 @@ export const SessionsList = ({
 		type
 	]);
 
-	/*
-	 * Reconcile submissions and acceptance even without an incoming Matrix message.
-	 * Keep the existing bounded polling interval for every enquiry filter.
-	 */
-	useEffect(() => {
-		if (type !== SESSION_LIST_TYPES.ENQUIRY) {
-			return;
-		}
-		const intervalId = window.setInterval(() => {
-			refetchEnquiryList();
-		}, 15000);
-		return () => window.clearInterval(intervalId);
-	}, [refetchEnquiryList, sessionToolbarChip, type]);
+	// Live events accelerate this bounded fallback; neither depends on alert settings.
+	useForegroundRefresh(
+		type === SESSION_LIST_TYPES.ENQUIRY,
+		refetchEnquiryList
+	);
 
 	const loadMoreSessions = useCallback(() => {
 		setIsLoading(true);
