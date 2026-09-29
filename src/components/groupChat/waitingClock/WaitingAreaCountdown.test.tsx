@@ -259,6 +259,29 @@ describe('WaitingAreaCountdown', () => {
 		).toBeNull();
 	});
 
+	it('marks the motionless face as a lower bound from 1000 minutes late', () => {
+		const { container } = renderCountdown(-(1200 * 60 + 3), {
+			reducedMotion: true
+		});
+
+		const values = Array.from(
+			container.querySelectorAll('.waitingClock__stillValue'),
+			(node) => node.textContent
+		);
+		expect(values).toEqual(['999+', '03']);
+	});
+
+	it('keeps 999 motionless minutes exact', () => {
+		const { container } = renderCountdown(-(999 * 60 + 3), {
+			reducedMotion: true
+		});
+
+		expect(
+			container.querySelector('.waitingClock__faceOverflow')
+		).toBeNull();
+		expect(screen.getByText('999')).toBeTruthy();
+	});
+
 	it('prints the true minutes in the motionless fallback too', () => {
 		renderCountdown(-(140 * 60 + 7), { reducedMotion: true });
 

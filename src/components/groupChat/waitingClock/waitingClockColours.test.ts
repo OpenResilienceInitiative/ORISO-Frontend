@@ -7,7 +7,7 @@ import { computeOrisoPalette } from '../../../utils/theme/orisoScheme';
  * #1499: the clock hands and the "+" are the brand colour — Frank, 23.09.:
  * "nutze anstatt on-primary bitte einfach primary". They resolve through
  * `--oriso-primary-text` (#1528: the primary, darkened only when it is too
- * light to read) and fall back to `--m3-primary` while #1528 is not merged.
+ * light to read), with `--m3-primary` as the fallback.
  * The faces stay light so that ink reaches 3:1 on every one of them.
  */
 
@@ -58,12 +58,14 @@ describe('waiting clock colours', () => {
 		}
 	);
 
-	it('#b4ddee: the darker tone from #1528 reaches 3:1 on every face', () => {
-		// `--oriso-primary-text` for #b4ddee as #1528 computes it.
-		expect(weakest('#b4ddee', '#416977')).toBeGreaterThanOrEqual(3);
+	it('#b4ddee: the palette text tone reaches 3:1 on every face', () => {
+		const { tokens } = computeOrisoPalette({ primary: '#b4ddee' }, 'light');
+		expect(
+			weakest('#b4ddee', tokens['--oriso-primary-text'])
+		).toBeGreaterThanOrEqual(3);
 	});
 
-	it('#b4ddee: without #1528 the pastel primary is too light (known gap)', () => {
+	it('#b4ddee: the pastel primary alone is too light, hence the text token', () => {
 		expect(weakest('#b4ddee')).toBeLessThan(3);
 	});
 });

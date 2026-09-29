@@ -979,6 +979,16 @@ export const WaitingAreaCountdown = ({
 		>
 			<span className="waitingClock__stillValue">
 				{faceDigits(unit.value).join('')}
+				{unit.value > FACE_MAX && (
+					// Same lower-bound cue as the moving face; the timer label has the value.
+					<span
+						aria-hidden="true"
+						className="waitingClock__faceOverflow"
+						style={{ color: RED }}
+					>
+						+
+					</span>
+				)}
 			</span>
 			<span className="waitingClock__stillLabel">{unit.label}</span>
 		</div>
