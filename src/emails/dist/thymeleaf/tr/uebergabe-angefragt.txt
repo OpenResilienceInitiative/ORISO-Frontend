@@ -1,21 +1,15 @@
-Bir danışmanlığın size devredilmesi isteniyor
-=============================================
+Danışmanlığınızla ilgili bir talep
+==================================
 
-[[${fromConsultantName}]], devam eden bir danışmanlığın size devredilmesini istiyor.
+Bir danışman, danışmanlığınızdaki bir değişiklik için onayınızı istiyor.
 
-Lütfen danışmanlık alanında devralıp devralamayacağınızı kontrol edin.
+Talebi güvenli alanda incelemek için giriş yapın.
 
-Dosya: [[${caseReference}]]
-Talep eden: [[${fromConsultantName}]]
-Talep tarihi: [[${requestReceivedAt}]]
-
-Devri incele:
+Talebi incele:
 [[${requestUrl}]]
 
-Siz onaylayana kadar danışmanlık mevcut uzmanda kalır.
-
 ----------------------------------------------------------------
-Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.
+Mesajlarınız uçtan uca şifrelenmiştir. Sizden ve danışmanlığınızdan başka kimse onları okuyamaz – biz de okuyamayız.
 
 [[${orgName}]]
 [[${orgAddress}]]

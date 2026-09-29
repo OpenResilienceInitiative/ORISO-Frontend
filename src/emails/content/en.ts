@@ -251,41 +251,27 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Handover requested',
-		preheader: 'A counselling case is to be handed over to you.',
-		headline: 'A counselling case is to be handed over to you',
+		subject: 'New notification',
+		preheader: 'Please sign in.',
+		headline: 'A request about your counselling',
 		paragraphs: [
-			'{{fromConsultantName}} has asked to hand an ongoing counselling case over to you.',
-			'Please check in the counselling area whether you can take it on.'
+			'A counsellor is asking for your consent to a change in your counselling.',
+			'Sign in to review the request in the secure area.'
 		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Requested by', value: '{{fromConsultantName}}' },
-			{ label: 'Requested on', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Review handover', href: '{{requestUrl}}' },
-		footnote:
-			'Until you agree, the case stays with the counsellor who has it now.',
-		assurance: staffAssurance,
+		cta: { label: 'Review request', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Handover confirmed',
-		preheader: 'Responsibility has changed.',
+		subject: 'The handover is confirmed',
+		preheader: 'The handover is confirmed',
 		headline: 'The handover is confirmed',
 		paragraphs: [
-			'The counselling case has been taken on. {{toConsultantName}} is now responsible.',
-			'The person seeking advice has been informed in the application.'
+			'You are now responsible for this counselling case.',
+			'Open the case in the secure counselling area.'
 		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Now with', value: '{{toConsultantName}}' },
-			{ label: 'Handed over on', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Open counselling', href: '{{requestUrl}}' },
-		footnote:
-			'Your access to the previous conversation ends with the handover.',
+		cta: { label: 'Open counselling case', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},

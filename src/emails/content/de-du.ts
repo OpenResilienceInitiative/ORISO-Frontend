@@ -257,41 +257,27 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Übergabe angefragt',
-		preheader: 'Eine Beratung soll an dich übergeben werden.',
-		headline: 'Eine Beratung soll an dich übergeben werden',
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melde dich an.',
+		headline: 'Eine Anfrage zu deiner Beratung',
 		paragraphs: [
-			'{{fromConsultantName}} bittet darum, eine laufende Beratung an dich zu übergeben.',
-			'Bitte prüf im Beratungsbereich, ob du die Beratung übernehmen kannst.'
+			'Eine Beratungsperson bittet um deine Zustimmung zu einer Änderung deiner Beratung.',
+			'Melde dich an, um die Anfrage im geschützten Bereich zu prüfen.'
 		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Angefragt von', value: '{{fromConsultantName}}' },
-			{ label: 'Angefragt am', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Übergabe prüfen', href: '{{requestUrl}}' },
-		footnote:
-			'Bis du zustimmst, bleibt die Beratung bei der bisherigen Fachkraft.',
-		assurance: staffAssurance,
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Übergabe bestätigt',
-		preheader: 'Die Zuständigkeit hat gewechselt.',
+		subject: 'Die Übergabe ist bestätigt',
+		preheader: 'Die Übergabe ist bestätigt',
 		headline: 'Die Übergabe ist bestätigt',
 		paragraphs: [
-			'Die Beratung wurde übernommen. Ab sofort ist {{toConsultantName}} zuständig.',
-			'Die ratsuchende Person wurde in der Anwendung darüber informiert.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Neue Zuständigkeit', value: '{{toConsultantName}}' },
-			{ label: 'Übergeben am', value: '{{handoverAt}}' }
+			'Du bist jetzt für diese Beratung zuständig.',
+			'Öffne die Beratung im geschützten Bereich.'
 		],
 		cta: { label: 'Beratung öffnen', href: '{{requestUrl}}' },
-		footnote:
-			'Dein Zugriff auf den bisherigen Verlauf endet mit der Übergabe.',
 		assurance: staffAssurance,
 		footer
 	},

@@ -246,7 +246,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'neue-anfrage': 'consultant',
 		'direkte-anfrage': 'consultant',
 		'tagesuebersicht': 'consultant',
-		'uebergabe-angefragt': 'consultant',
+		'uebergabe-angefragt': 'asker',
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
 		'mitteilung': 'asker',

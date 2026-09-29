@@ -260,41 +260,27 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Запрошена передача',
-		preheader: 'Консультацию предлагают передать Вам.',
-		headline: 'Консультацию предлагают передать Вам',
+		subject: 'Новое уведомление',
+		preheader: 'Пожалуйста, войдите.',
+		headline: 'Запрос по вашей консультации',
 		paragraphs: [
-			'{{fromConsultantName}} просит передать Вам текущую консультацию.',
-			'Пожалуйста, проверьте в разделе консультаций, сможете ли Вы её взять.'
+			'Консультант запрашивает ваше согласие на изменение в вашей консультации.',
+			'Войдите, чтобы рассмотреть запрос в защищённом разделе.'
 		],
-		panel: [
-			{ label: 'Дело', value: '{{caseReference}}' },
-			{ label: 'Запросил', value: '{{fromConsultantName}}' },
-			{ label: 'Запрошено', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Проверить передачу', href: '{{requestUrl}}' },
-		footnote:
-			'Пока Вы не согласитесь, консультация остаётся у прежнего специалиста.',
-		assurance: staffAssurance,
+		cta: { label: 'Рассмотреть запрос', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
 		subject: 'Передача подтверждена',
-		preheader: 'Ответственность перешла к другому специалисту.',
+		preheader: 'Передача подтверждена',
 		headline: 'Передача подтверждена',
 		paragraphs: [
-			'Консультацию приняли. С этого момента отвечает {{toConsultantName}}.',
-			'Человека, обратившегося за консультацией, уведомили об этом в приложении.'
+			'Теперь вы отвечаете за эту консультацию.',
+			'Откройте дело в защищённом разделе.'
 		],
-		panel: [
-			{ label: 'Дело', value: '{{caseReference}}' },
-			{ label: 'Новая ответственность', value: '{{toConsultantName}}' },
-			{ label: 'Передано', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Открыть консультацию', href: '{{requestUrl}}' },
-		footnote:
-			'Ваш доступ к прежней истории переписки прекращается вместе с передачей.',
+		cta: { label: 'Открыть дело', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},

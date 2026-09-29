@@ -1,18 +1,12 @@
 Le transfert est confirmé
 =========================
 
-La consultation a été reprise. ${toConsultantName!''} en est responsable à partir de maintenant.
+Vous êtes désormais responsable de cet accompagnement.
 
-La personne qui demande conseil en a été informée dans l’application.
+Ouvrez le dossier dans votre espace sécurisé.
 
-Dossier: ${caseReference!''}
-Nouvelle responsabilité: ${toConsultantName!''}
-Transféré le: ${handoverAt!''}
-
-Ouvrir la consultation:
+Ouvrir le dossier:
 ${requestUrl!''}
-
-Votre accès à l’historique précédent prend fin avec le transfert.
 
 ----------------------------------------------------------------
 Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.

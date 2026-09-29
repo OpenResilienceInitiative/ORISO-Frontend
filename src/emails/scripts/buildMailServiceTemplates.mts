@@ -124,73 +124,16 @@ const TEMPLATES: MailServiceTemplate[] = [
 	{
 		file: 'reassign-request-notification',
 		id: 'uebergabe-angefragt',
-		// Upstream sends only the recipient's name and a link — no case
-		// reference, no requesting counsellor. So this one carries no panel.
+		// Neutral requester copy comes directly from the designed source.
+		// The legacy recipient-name field is deliberately unused.
 		model: ['name_recipient', 'url'],
-		paragraphs: {
-			'de-sie': [
-				'Eine laufende Beratung soll an Sie übergeben werden.',
-				'Bitte prüfen Sie im Beratungsbereich, ob Sie die Beratung übernehmen können.'
-			],
-			'en': [
-				'An ongoing counselling case is to be handed over to you.',
-				'Please check in the counselling area whether you can take it on.'
-			],
-			'fr': [
-				'Une consultation en cours doit vous être transférée.',
-				'Veuillez vérifier dans l’espace de consultation si vous pouvez la prendre en charge.'
-			],
-			'ru': [
-				'Вам предлагается принять текущую консультацию.',
-				'Пожалуйста, проверьте в разделе консультаций, можете ли Вы принять её.'
-			],
-			'ti': [
-				'ሕጂ ዝካየድ ዘሎ ምኽሪ ናባኹም ክሰጋገር እዩ።',
-				'ነቲ ምኽሪ ክትቅበሉዎ ትኽእሉ ዲኹም ኣብ ክፍሊ ምኽሪ ተመልከቱ።'
-			],
-			'tr': [
-				'Devam eden bir danışmanlık size devredilecek.',
-				'Lütfen danışmanlık alanında bu görevi üstlenip üstlenemeyeceğinizi kontrol edin.'
-			]
-		},
 		cta: '${url}'
 	},
 	{
 		file: 'reassign-confirmation-notification',
 		id: 'uebergabe-bestaetigt',
 		model: ['name_recipient', 'name_from_consultant', 'url'],
-		paragraphs: {
-			'de-sie': [
-				'Die Übergabe ist bestätigt. Ab sofort sind Sie für diese Beratung zuständig.',
-				'Die ratsuchende Person wurde in der Anwendung darüber informiert.'
-			],
-			'en': [
-				'The handover is confirmed. You are responsible for this counselling from now on.',
-				'The person seeking advice has been informed in the application.'
-			],
-			'fr': [
-				'Le transfert est confirmé. Vous êtes désormais responsable de cette consultation.',
-				'La personne qui demande conseil en a été informée dans l’application.'
-			],
-			'ru': [
-				'Передача подтверждена. Теперь Вы отвечаете за эту консультацию.',
-				'Человек, обратившийся за консультацией, получил уведомление в приложении.'
-			],
-			'ti': [
-				'እቲ ምስግጋር ተረጋጊጹ ኣሎ። ካብ ሕጂ ንደሓር ንስኹም ሓላፍነት ናይዚ ምኽሪ ኣለኩም።',
-				'ምኽሪ ዝደልይ ሰብ ኣብቲ መተግበሪ ሓበሬታ ተዋሂብዎ ኣሎ።'
-			],
-			'tr': [
-				'Devir onaylandı. Artık bu danışmanlıktan siz sorumlusunuz.',
-				'Danışmanlık isteyen kişi uygulamada bilgilendirildi.'
-			]
-		},
-		panel: [
-			{
-				label: 'Bisherige Zuständigkeit',
-				value: '${name_from_consultant}'
-			}
-		],
+		// Incoming-counsellor copy comes directly from the designed source.
 		cta: '${url}'
 	},
 	{

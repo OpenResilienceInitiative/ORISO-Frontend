@@ -262,39 +262,27 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Devir talebi',
-		preheader: 'Bir danışmanlığın size devredilmesi isteniyor.',
-		headline: 'Bir danışmanlığın size devredilmesi isteniyor',
+		subject: 'Yeni bildirim',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Danışmanlığınızla ilgili bir talep',
 		paragraphs: [
-			'{{fromConsultantName}}, devam eden bir danışmanlığın size devredilmesini istiyor.',
-			'Lütfen danışmanlık alanında devralıp devralamayacağınızı kontrol edin.'
+			'Bir danışman, danışmanlığınızdaki bir değişiklik için onayınızı istiyor.',
+			'Talebi güvenli alanda incelemek için giriş yapın.'
 		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Talep eden', value: '{{fromConsultantName}}' },
-			{ label: 'Talep tarihi', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Devri incele', href: '{{requestUrl}}' },
-		footnote: 'Siz onaylayana kadar danışmanlık mevcut uzmanda kalır.',
-		assurance: staffAssurance,
+		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
 		subject: 'Devir onaylandı',
-		preheader: 'Sorumluluk değişti.',
+		preheader: 'Devir onaylandı',
 		headline: 'Devir onaylandı',
 		paragraphs: [
-			'Danışmanlık devralındı. Bundan sonra {{toConsultantName}} sorumlu.',
-			'Danışan, uygulama üzerinden bilgilendirildi.'
+			'Artık bu danışmanlıktan siz sorumlusunuz.',
+			'Dosyayı güvenli danışmanlık alanında açın.'
 		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Yeni sorumlu', value: '{{toConsultantName}}' },
-			{ label: 'Devir tarihi', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Danışmanlığı aç', href: '{{requestUrl}}' },
-		footnote: 'Önceki yazışmalara erişiminiz devirle birlikte sona erer.',
+		cta: { label: 'Dosyayı aç', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},

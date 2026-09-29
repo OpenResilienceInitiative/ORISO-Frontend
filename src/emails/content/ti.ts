@@ -251,39 +251,27 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'ምትሕልላፍ ተሓቲቱ',
-		preheader: 'ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ።',
-		headline: 'ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ',
+		subject: 'ሓድሽ ምልክታ',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሕቶ ብዛዕባ ምኽርኹም',
 		paragraphs: [
-			'{{fromConsultantName}} ዝካየድ ዘሎ ምኽሪ ናባኹም ክመሓላለፍ ይሓትት ኣሎ።',
-			'በጃኹም ኣብ ክፍሊ ምኽሪ ክትርከብዎ ትኽእሉ እንተኾንኩም ኣረጋግጹ።'
+			'ሓደ ኣማኻሪ ንለውጢ ኣብ ምኽርኹም ፍቓድኩም ይሓትት ኣሎ።',
+			'ነቲ ሕቶ ኣብ ውሑስ ቦታ ንምርኣይ እተዉ።'
 		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ዝሓተተ', value: '{{fromConsultantName}}' },
-			{ label: 'ዝተሓተተሉ', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'ምትሕልላፍ ኣረጋግጹ', href: '{{requestUrl}}' },
-		footnote: 'ክሳብ እትሰማምዑ፣ እቲ ምኽሪ ኣብ ትሕቲ እቲ ናይ ቅድሚ ሕጂ ክኢላ ይጸንሕ።',
-		assurance: staffAssurance,
+		cta: { label: 'ሕቶ ርኣዩ', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'ምትሕልላፍ ተረጋጊጹ',
-		preheader: 'እቲ ሓላፍነት ተቐዪሩ።',
+		subject: 'እቲ ምትሕልላፍ ተረጋጊጹ',
+		preheader: 'እቲ ምትሕልላፍ ተረጋጊጹ',
 		headline: 'እቲ ምትሕልላፍ ተረጋጊጹ',
 		paragraphs: [
-			'እቲ ምኽሪ ተረኪቡ። ካብ ሕጂ ንደሓር {{toConsultantName}} ሓላፍነት ይወስድ።',
-			'እቲ ምኽሪ ዝሓተተ ሰብ ኣብ መተግበሪ ተሓቢሩ ኣሎ።'
+			'ካብ ሕጂ ንደሓር ነዚ ምኽሪ እዚ ሓላፍነት ትወስዱ።',
+			'ነቲ ጉዳይ ኣብ ውሑስ ቦታ ክፈቱ።'
 		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ሓድሽ ሓላፍነት', value: '{{toConsultantName}}' },
-			{ label: 'ዝተመሓላለፈሉ', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'ምኽሪ ክፈቱ', href: '{{requestUrl}}' },
-		footnote: 'ናብቲ ናይ ቅድሚ ሕጂ ታሪኽ ዝነበረኩም መእተዊ ምስቲ ምትሕልላፍ ይውዳእ።',
+		cta: { label: 'ጉዳይ ክፈቱ', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
