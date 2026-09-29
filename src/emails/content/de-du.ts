@@ -82,6 +82,19 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melde dich an.',
+		headline: 'Eine neue Nachricht für dich',
+		paragraphs: [
+			'In einer deiner Beratungen liegt eine neue Nachricht vor.',
+			'Melde dich an, um die Nachricht im geschützten Bereich zu lesen.'
+		],
+		cta: { label: 'Nachricht öffnen', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Willkommen bei {{platformName}}',
 		preheader: 'Dein anonymer Zugang ist eingerichtet – so geht es weiter.',

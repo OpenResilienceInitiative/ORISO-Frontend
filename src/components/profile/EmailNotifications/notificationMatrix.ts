@@ -111,7 +111,7 @@ export const CONSULTANT_SWITCHES: NotificationSwitch[] = [
 			kind: 'emailToggle',
 			type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
 		},
-		occasions: ['neue-nachricht']
+		occasions: ['neue-nachricht', 'neue-nachricht-beratung']
 	},
 	{
 		id: 'assignment',

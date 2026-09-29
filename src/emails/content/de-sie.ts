@@ -94,6 +94,19 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine neue Nachricht für Sie',
+		paragraphs: [
+			'In einer Ihrer Beratungen liegt eine neue Nachricht vor.',
+			'Melden Sie sich an, um die Nachricht im geschützten Bereich zu lesen.'
+		],
+		cta: { label: 'Nachricht öffnen', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Willkommen bei {{platformName}}',
 		preheader: 'Ihr anonymer Zugang ist eingerichtet – so geht es weiter.',

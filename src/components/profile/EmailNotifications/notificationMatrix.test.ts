@@ -126,6 +126,27 @@ describe('notification matrix (ADR-019)', () => {
 			});
 		});
 
+		it('resolves the consultant message variant to the existing consultant switch only', () => {
+			expect(
+				switchForOccasion(
+					CONSULTANT_SWITCHES,
+					'neue-nachricht-beratung'
+				)?.source
+			).toEqual({
+				kind: 'emailToggle',
+				type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
+			});
+			expect(
+				switchForOccasion(
+					ADVICE_SEEKER_SWITCHES,
+					'neue-nachricht-beratung'
+				)
+			).toBeUndefined();
+			expect(
+				switchForOccasion(CONSULTANT_SWITCHES, 'neue-nachricht')?.id
+			).toBe('newMessage');
+		});
+
 		it('resolves nothing for an unknown or absent occasion', () => {
 			expect(
 				switchForOccasion(CONSULTANT_SWITCHES, null)

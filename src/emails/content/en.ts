@@ -76,6 +76,19 @@ export const en: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
+		headline: 'A new message for you',
+		paragraphs: [
+			'There is a new message in one of your counselling cases.',
+			'Sign in to read the message in the secure counselling area.'
+		],
+		cta: { label: 'Open message', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Welcome to {{platformName}}',
 		preheader:

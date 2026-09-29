@@ -88,6 +88,19 @@ export const tr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Sizin için yeni bir mesaj',
+		paragraphs: [
+			'Yürüttüğünüz danışmanlıklardan birinde yeni bir mesaj var.',
+			'Mesajı güvenli danışmanlık alanında okumak için giriş yapın.'
+		],
+		cta: { label: 'Mesajı aç', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: '{{platformName}} platformuna hoş geldiniz',
 		preheader: 'Anonim erişiminiz hazır – bundan sonrası şöyle.',

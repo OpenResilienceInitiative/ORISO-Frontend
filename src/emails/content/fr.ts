@@ -87,6 +87,19 @@ export const fr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'Nouveau message sur {{platformName}}',
+		preheader: 'Veuillez vous connecter.',
+		headline: 'Un nouveau message pour vous',
+		paragraphs: [
+			'Un nouveau message est disponible dans l’un de vos accompagnements.',
+			'Connectez-vous pour lire le message dans votre espace sécurisé.'
+		],
+		cta: { label: 'Ouvrir le message', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Bienvenue sur {{platformName}}',
 		preheader: 'Votre accès anonyme est prêt – voici la suite.',

@@ -86,6 +86,19 @@ export const ru: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'Новое сообщение на {{platformName}}',
+		preheader: 'Пожалуйста, войдите в систему.',
+		headline: 'Новое сообщение для Вас',
+		paragraphs: [
+			'В одной из Ваших консультаций появилось новое сообщение.',
+			'Войдите в аккаунт, чтобы прочитать сообщение в защищённом разделе.'
+		],
+		cta: { label: 'Открыть сообщение', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Добро пожаловать на {{platformName}}',
 		preheader: 'Ваш анонимный доступ создан — вот что дальше.',

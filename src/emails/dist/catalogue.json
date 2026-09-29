@@ -95,6 +95,55 @@
 				}
 			}
 		},
+		"neue-nachricht-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{messageUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Neue Nachricht auf {{platformName}}",
+					"preheader": "Bitte melden Sie sich an."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Neue Nachricht auf {{platformName}}",
+					"preheader": "Bitte melde dich an."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "New message on {{platformName}}",
+					"preheader": "Please sign in."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Nouveau message sur {{platformName}}",
+					"preheader": "Veuillez vous connecter."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Новое сообщение на {{platformName}}",
+					"preheader": "Пожалуйста, войдите в систему."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓድሽ መልእኽቲ ኣብ {{platformName}}",
+					"preheader": "በጃኹም እተዉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{platformName}} üzerinde yeni mesaj",
+					"preheader": "Lütfen giriş yapın."
+				}
+			}
+		},
 		"willkommen": {
 			"audience": "asker",
 			"class": "personal",

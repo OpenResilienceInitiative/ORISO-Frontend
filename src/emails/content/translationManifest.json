@@ -9,6 +9,10 @@
 					"source": "de3b23b4d5938a00",
 					"target": "b667796122a9b185"
 				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "6a62d863fddcad0f"
+				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
 					"target": "04b9d0cfa476445b"
@@ -106,6 +110,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "51b4e867bd8e5a23"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "f6db3a07b0a87ecb"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -205,6 +213,10 @@
 					"source": "de3b23b4d5938a00",
 					"target": "eaf67300b3d14544"
 				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "8612e611ff665cd5"
+				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
 					"target": "7962728560a857f9"
@@ -302,6 +314,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "ff31b3c018b665ac"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "eebf39d085ed1d2c"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -401,6 +417,10 @@
 					"source": "de3b23b4d5938a00",
 					"target": "38753ca93dbe9e25"
 				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "06ef6bbf11ce3bab"
+				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
 					"target": "d643d59d520ec629"
@@ -498,6 +518,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "d55ea9bd63608769"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "52e7782a7014ed26"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",

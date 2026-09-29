@@ -85,6 +85,19 @@ export const ti: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሓድሽ መልእኽቲ ንዓኹም',
+		paragraphs: [
+			'ኣብ ሓደ ካብቶም እትከታተልዎም ጉዳያት ምኽሪ ሓድሽ መልእኽቲ ኣሎ።',
+			'ነቲ መልእኽቲ ኣብ ውሑስ ቦታ ንምንባብ እተዉ።'
+		],
+		cta: { label: 'መልእኽቲ ክፈቱ', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'እንኳዕ ናብ {{platformName}} ብደሓን መጻእኩም',
 		preheader: 'ስም ኣልቦ መእተዊኹም ተዳልዩ ኣሎ – ቀጺሉ ዘሎ ስጉምቲ እዚ እዩ።',
