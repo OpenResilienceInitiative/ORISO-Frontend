@@ -6,7 +6,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const TRANSLATIONS: Record<string, string> = {
 	'login.legal.infoText.dataprotection': 'Datenschutzerklärung',
-	'login.legal.infoText.impressum': 'Impressum'
+	'login.legal.infoText.impressum': 'Impressum',
+	'registration.agency.details.aboutLabel': 'Zu dieser Beratungsstelle',
+	'registration.agency.details.languagesLabel': 'Sprachen',
+	'registration.agency.details.languagesTooltip':
+		'Diese Beratungsstelle berät Sie auf:',
+	'registration.agency.details.addressLabel': 'Adresse',
+	'registration.agency.details.openInMaps': 'In Karte öffnen',
+	'registration.agency.details.navigate': 'Navigation starten',
+	'registration.agency.details.phoneLabel': 'Telefon',
+	'registration.agency.details.websiteLabel': 'Webseite',
+	'registration.agency.legal.label': 'Rechtliches',
+	'registration.agency.details.less': 'Weniger',
+	'registration.agency.details.more': 'Mehr'
 };
 
 vi.mock('react-i18next', () => ({

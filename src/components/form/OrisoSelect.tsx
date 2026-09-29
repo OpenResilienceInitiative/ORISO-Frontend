@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	Checkbox,
 	Chip,
@@ -145,9 +146,11 @@ export const OrisoMultiSelect = ({
 	fullWidth = true,
 	onChange,
 	searchable = false,
-	searchPlaceholder = 'Search',
+	searchPlaceholder,
 	...props
 }: OrisoMultiSelectProps) => {
+	const { t } = useTranslation();
+	const resolvedSearch = searchPlaceholder ?? t('form.select.search');
 	const selectId = useSelectId(id);
 	const labelId = `${selectId}-label`;
 	const searchId = `${selectId}-search`;
@@ -222,9 +225,9 @@ export const OrisoMultiSelect = ({
 							fullWidth
 							autoFocus
 							autoComplete="off"
-							placeholder={searchPlaceholder}
+							placeholder={resolvedSearch}
 							value={searchQuery}
-							inputProps={{ 'aria-label': searchPlaceholder }}
+							inputProps={{ 'aria-label': resolvedSearch }}
 							onChange={(event) =>
 								setSearchQuery(event.target.value)
 							}

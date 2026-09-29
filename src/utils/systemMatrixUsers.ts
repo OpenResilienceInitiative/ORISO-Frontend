@@ -6,7 +6,7 @@
  *
  * 1. `@system` — the app's own system-notice sender across every deployment.
  * 2. `@caritas.local` — the pre-ADR-005 Matrix homeserver name. ADR-005
- *    moved the homeserver to `matrix.oriso.org`, but accounts provisioned
+ *    moved the homeserver to `matrix.<domain>`, but accounts provisioned
  *    against the old homeserver survive in older-provisioned rooms, and
  *    some environments may still use `@caritas.local` as their `server_name`.
  *    Removing the filter blindly would silently re-surface those service

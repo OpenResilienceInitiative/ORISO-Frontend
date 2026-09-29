@@ -20,6 +20,7 @@ import {
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { clearRegistrationSubmitting } from '../registrationSubmission';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 
@@ -176,6 +177,9 @@ beforeEach(() => {
 afterEach(() => {
 	sessionStorage.clear();
 	cleanup();
+	// A successful join keeps the flag until the document reload, which the
+	// mocked `redirectToApp` never does; the next test must not inherit it.
+	clearRegistrationSubmitting();
 });
 
 describe('newcomer entry for a self-help group link', () => {
