@@ -117,7 +117,6 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	imprintUrl: 'https://beratung.example.org/impressum',
 	unsubscribeUrl:
 		'https://beratung.example.org/einstellungen/benachrichtigungen',
-	bookingUrl: 'https://beratung.example.org/termine/buchen',
 	username: 'ruhiges-yak-1428',
 	expiryHours: '24',
 	appointmentDate: 'Dienstag, 4. August 2026',

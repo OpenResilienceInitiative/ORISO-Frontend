@@ -142,13 +142,9 @@ const TEMPLATES: MailServiceTemplate[] = [
 		model: ['subject', 'text', 'url'],
 		headline: '${subject}',
 		body: '${text}',
-		// The subject and the preview line are the same string here: an
-		// administrator writes one subject, and a preheader repeating it beats
-		// a preheader dumping the whole message onto the lock screen.
-		values: {
-			messageSubject: '${subject}',
-			messagePreview: '${subject}'
-		},
+		// Existing automatic senders supply the interior headline and plain body.
+		// The designed title and preview stay neutral; MailService sets the
+		// actual MIME Subject from its separate template description.
 		cta: '${url}'
 	}
 ];

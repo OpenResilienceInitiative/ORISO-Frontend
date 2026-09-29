@@ -142,11 +142,10 @@ export const ti: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'ንኣገልግሎት ምኽርኹም ብኸመይ ትረኽብዎ',
-		preheader: 'ቀጥታዊ ስልኪ፣ ናይ ስራሕ ሰዓታትን ቆጸራን ብሓንሳብ።',
+		preheader: 'ናይ ኣገልግሎት ምኽርኹም ርክብ ሓበሬታ።',
 		headline: 'ንኣገልግሎት ምኽርኹም ብኸመይ ትረኽብዎ',
 		paragraphs: [
-			'ብዘይካ እቲ ውሑስ ዕላል፣ ንኣገልግሎት ምኽርኹም ብስልኪ እውን ክትረኽብዎ ወይ ብቐጥታ ቆጸራ ክትሕዙ ትኽእሉ።',
-			'መእተዊኹም ስም ኣልቦ ኮይኑ ይጸንሕ – እንታይ ከም እትነግሩ ንስኹም ትውስኑ።'
+			'ናይ ኣገልግሎት ምኽርኹም ርክብ ሓበሬታ ሓቲትኩም ኣለኹም። ዘሎ መገድታት ርክብ ኣብ ታሕቲ ተገሊጹ ኣሎ።'
 		],
 		panel: [
 			{ label: 'ኣገልግሎት ምኽሪ', value: '{{consultantName}}' },
@@ -154,13 +153,7 @@ export const ti: Record<EmailId, EmailContent> = {
 			{ label: 'ናይ ስራሕ ሰዓታት', value: '{{consultantHours}}' },
 			{ label: 'ኢመይል', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'ቆጸራ ሓዙ', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'ናብቲ ውሑስ ዕላል',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'ካብ ናይ ስራሕ ሰዓታት ወጻኢ ኣብ ዕላል ምጽሓፍ ይሓይሽ። ኣብ ውሽጢ 2 ናይ ስራሕ መዓልትታት ንምለሰልኩም።',
+		cta: { label: 'ናብቲ ውሑስ ዕላል', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -295,8 +288,8 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'ናብ {{platformName}}', href: '{{loginUrl}}' },
