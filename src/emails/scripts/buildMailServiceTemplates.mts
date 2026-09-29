@@ -188,8 +188,8 @@ const PANEL_LABELS: Record<EmailLocale, Record<string, string>> = {
 	},
 	'ti': {
 		'Beratungsstelle': 'ማእከል ምኽሪ',
-		'Postleitzahl': 'ፖስታ ኮድ',
-		'Ratsuchende Person': 'ምኽሪ ዝደልይ ሰብ',
+		'Postleitzahl': 'ፖስጣ ኮድ',
+		'Ratsuchende Person': 'ምኽሪ ዝሓትት ሰብ',
 		'Zugewiesen von': 'ዝመደቦ',
 		'Offene Anfragen': 'ክፉት ሕቶታት',
 		'Bisherige Zuständigkeit': 'ናይ ቀደም ሓላፊ'
@@ -197,7 +197,7 @@ const PANEL_LABELS: Record<EmailLocale, Record<string, string>> = {
 	'tr': {
 		'Beratungsstelle': 'Danışma merkezi',
 		'Postleitzahl': 'Posta kodu',
-		'Ratsuchende Person': 'Danışmanlık isteyen kişi',
+		'Ratsuchende Person': 'danışan',
 		'Zugewiesen von': 'Atayan',
 		'Offene Anfragen': 'Açık talepler',
 		'Bisherige Zuständigkeit': 'Önceki sorumlu'
