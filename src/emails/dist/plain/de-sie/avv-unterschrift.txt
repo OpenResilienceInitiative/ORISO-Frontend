@@ -1,18 +1,18 @@
-Die Vertragsunterlagen liegen zur Unterschrift bereit
-=====================================================
+Die Vertragsunterlagen liegen zur Bestätigung bereit
+====================================================
 
 Für {{tenantName}} wurden Vertragsunterlagen erstellt.
 
-Bitte prüfen Sie die Unterlagen und zeichnen Sie sie digital.
+Bitte prüfen Sie die Unterlagen und bestätigen Sie sie digital.
 
 Träger: {{tenantName}}
 Bereitgestellt am: {{dpaProvidedAt}}
-Zu unterschreiben bis: {{dpaExpiresAt}}
+Zu bestätigen bis: {{dpaExpiresAt}}
 
 Vertrag öffnen:
 {{dpaUrl}}
 
-Ohne unterzeichnete Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.
+Ohne die Bestätigung der Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.
 
 ----------------------------------------------------------------
 Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.
