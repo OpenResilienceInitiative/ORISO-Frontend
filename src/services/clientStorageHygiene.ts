@@ -9,6 +9,7 @@
  */
 
 import { getCookieDomain } from '../resources/scripts/runtimeConfig';
+import { purgeParkedRecoveryKeys } from './pendingRecoveryKeyStore';
 
 /** Namespace every key this app owns is written under. */
 export const APP_STORAGE_PREFIX = 'oriso.';
@@ -96,6 +97,8 @@ export const purgeLegacyDraftStorage = (): void =>
  * registration wizard's answers, which are per-visit by definition.
  */
 export const purgeAppWebStorage = (): void => {
+	// Password-protected copies are conveniences; RECOVERY_KEY-mode keys stay.
+	purgeParkedRecoveryKeys('passwordProtected');
 	withStorage(
 		() => window.localStorage,
 		(storage) => {
