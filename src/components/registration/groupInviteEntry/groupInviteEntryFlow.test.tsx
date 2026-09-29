@@ -327,6 +327,7 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(temporaryBody.groupChatInviteToken).toBe('q2Vx8mK4TzJ1bR7n');
 
 		cleanup();
+		clearRegistrationSubmitting();
 		apiPostRegistration.mockClear();
 		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
 		fireEvent.click(secondary());
