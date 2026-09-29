@@ -4,8 +4,7 @@ import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 import {
 	expectCaptionClear,
 	expectHandsVisible,
-	expectOverdueClockOnOneRow,
-	handContrast
+	expectOverdueClockOnOneRow
 } from './waitingClockStoryChecks';
 import { computeOrisoPalette } from '../../../utils/theme/orisoScheme';
 import { phone375Globals } from '../../message/messageStoryShell';
@@ -145,34 +144,24 @@ export const Overdue3DigitsMobile: Story = {
  * The clock under other Träger brands (#1499). Hands and "+" are the brand
  * colour: `--oriso-primary-text`, falling back to `--m3-primary`.
  *
- * `--oriso-primary-text` comes from #1528, which is not on this branch. The
- * light-brand stories set the value #1528 computes for #b4ddee (#416977), so
- * they show the clock as it will look once both are merged. The `Fallback`
- * story leaves it out on purpose: that is the state if #1529 ships first.
+ * Before #1528, #b4ddee had no `--oriso-primary-text` and its hands read at
+ * about 1.1:1; the palette now emits a legible tone, so no override here.
  */
 const TRAEGER_2_SEED = '#b4ddee';
-/** What #1528's `computeOrisoPalette` returns as `--oriso-primary-text` for #b4ddee. */
-const TRAEGER_2_PRIMARY_TEXT = '#416977';
 
 const Brand = ({
 	seed,
-	primaryText,
 	children
 }: {
 	seed: string;
-	primaryText?: string;
 	children: React.ReactNode;
 }) => {
 	const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
-	const scoped: Record<string, string> = { ...tokens };
-	if (primaryText) {
-		scoped['--oriso-primary-text'] = primaryText;
-	}
-	return <div style={scoped as React.CSSProperties}>{children}</div>;
+	return <div style={tokens as React.CSSProperties}>{children}</div>;
 };
 
 const lightBrand = (Story: React.ComponentType) => (
-	<Brand seed={TRAEGER_2_SEED} primaryText={TRAEGER_2_PRIMARY_TEXT}>
+	<Brand seed={TRAEGER_2_SEED}>
 		<Story />
 	</Brand>
 );
@@ -204,33 +193,6 @@ export const LightBrandFuture: Story = {
 	decorators: [lightBrand],
 	play: async ({ canvasElement }) => {
 		await expectHandsVisible(canvasElement);
-	}
-};
-
-/**
- * The honest counter-case: #b4ddee without `--oriso-primary-text`, i.e. this
- * PR on `dev` before #1528 lands. The hands fall back to the pastel primary
- * and read at about 1.1:1 — the layout still holds, the colour does not.
- * The play function pins that number so nobody mistakes it for a pass.
- */
-export const LightBrandOverdueFallback: Story = {
-	args: LightBrandOverdue.args,
-	decorators: [
-		(Story) => (
-			<Brand seed={TRAEGER_2_SEED}>
-				<Story />
-			</Brand>
-		)
-	],
-	play: async ({ canvasElement }) => {
-		await expectOverdueClockOnOneRow(canvasElement, 3);
-		await expectCaptionClear(canvasElement);
-		const ratio = handContrast(canvasElement);
-		if (ratio >= 3) {
-			throw new Error(
-				`fallback reached ${ratio.toFixed(2)}:1 — update this story, the case it documents is gone`
-			);
-		}
 	}
 };
 

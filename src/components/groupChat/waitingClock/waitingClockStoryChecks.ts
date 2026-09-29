@@ -168,23 +168,6 @@ export const expectHandsVisible = async (root: HTMLElement, minimum = 3) => {
 	}
 };
 
-/** The weakest hand-to-face contrast in the clock, for stories that report it. */
-export const handContrast = (root: HTMLElement) => {
-	const hand = root.querySelector<HTMLElement>('.waitingClock__hand');
-	if (!hand) {
-		return fail('no .waitingClock__hand rendered');
-	}
-	const ink =
-		root.ownerDocument.defaultView!.getComputedStyle(hand).backgroundColor;
-	return Math.min(
-		...[
-			'--m3-surface-container-high',
-			'--m3-surface-container-lowest',
-			'--m3-primary-fixed'
-		].map((face) => contrast(ink, token(root, face)))
-	);
-};
-
 /** Nothing of the clock is drawn on top of the caption below it. */
 export const expectCaptionClear = async (root: HTMLElement) => {
 	const row = await overdueRow(root);
