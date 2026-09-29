@@ -168,3 +168,21 @@ it('drops a definitively rejected hint but retains a temporarily missing Matrix 
 	await pending.queue.enqueue(USER, hint);
 	expect(localStorage.length).toBe(1);
 });
+
+it('processes a valid persisted event even when a malformed key precedes it after reload', async () => {
+	localStorage.setItem('oriso.feedbackMailHint.malformed', '{');
+	const key = `oriso.feedbackMailHint.${encodeURIComponent(USER)}.${encodeURIComponent(hint.matrixEventId)}`;
+	localStorage.setItem(
+		key,
+		JSON.stringify({
+			...hint,
+			userId: USER,
+			expiresAt: Date.now() + 86400000
+		})
+	);
+	const { queue, post } = createQueue();
+	queue.start(USER);
+	await Promise.resolve();
+	expect(post).toHaveBeenCalledOnce();
+	expect(localStorage.length).toBe(0);
+});

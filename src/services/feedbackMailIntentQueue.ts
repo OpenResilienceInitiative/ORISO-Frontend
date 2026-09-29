@@ -103,8 +103,11 @@ export class FeedbackMailIntentQueue {
 		const result = new Map(this.memory);
 		try {
 			const storage = this.options.storage();
-			for (let i = 0; i < storage.length; i++) {
-				const key = storage.key(i);
+			// Snapshot before removing malformed entries: live storage indices shift.
+			const keys = Array.from({ length: storage.length }, (_, index) =>
+				storage.key(index)
+			);
+			for (const key of keys) {
 				if (!key?.startsWith(FEEDBACK_MAIL_HINT_PREFIX)) continue;
 				try {
 					result.set(key, JSON.parse(storage.getItem(key) || 'null'));
