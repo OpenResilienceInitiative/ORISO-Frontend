@@ -4,7 +4,11 @@ import {
 	initializeChatRecovery,
 	startAuthenticatedChatRecovery
 } from './authenticatedChatRecovery';
-import { getPendingRecoveryKey } from './pendingRecoveryKeyStore';
+import {
+	getPendingRecoveryKey,
+	purgeParkedRecoveryKeys,
+	resetPendingRecoveryKeyCacheForTests
+} from './pendingRecoveryKeyStore';
 const status = vi.hoisted(() => vi.fn());
 const setup = vi.hoisted(() => vi.fn());
 const enroll = vi.hoisted(() => vi.fn());
@@ -48,6 +52,7 @@ const client = () =>
 beforeEach(() => {
 	vi.clearAllMocks();
 	localStorage.clear();
+	resetPendingRecoveryKeyCacheForTests();
 	status.mockResolvedValue(fresh);
 	setup.mockResolvedValue('synthetic-key');
 	recover.mockResolvedValue({ kind: 'not-enrolled' });
@@ -69,6 +74,9 @@ describe('authenticated setup coordination', () => {
 			2
 		);
 		expect(getPendingRecoveryKey('@synthetic:test')).toBe('synthetic-key');
+		// The password now guards it, so the parked copy goes on logout.
+		purgeParkedRecoveryKeys('passwordProtected');
+		expect(getPendingRecoveryKey('@synthetic:test')).toBeNull();
 	});
 	it('bootstraps legacy first-time accounts without migrating them to the password mode', async () => {
 		await initializeChatRecovery(
@@ -79,6 +87,9 @@ describe('authenticated setup coordination', () => {
 		expect(setup).toHaveBeenCalledOnce();
 		expect(enroll).not.toHaveBeenCalled();
 		expect(recover).not.toHaveBeenCalled();
+		// The only copy of this key: logout must not take it.
+		purgeParkedRecoveryKeys('passwordProtected');
+		expect(getPendingRecoveryKey('@synthetic:test')).toBe('synthetic-key');
 	});
 	it('never bootstraps on an interrupted envelope or a wrong password', async () => {
 		evidence.mockResolvedValue(true);
