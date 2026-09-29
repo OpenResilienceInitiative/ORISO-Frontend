@@ -184,7 +184,7 @@
 		flex: none;
 		width: 60px;
 		height: 60px;
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		opacity: 0.9;
 	}
 
@@ -240,7 +240,7 @@
 		}
 
 		a {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 
@@ -255,7 +255,7 @@
 		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 		border-radius: 0 0 12px 12px;
 		background: none;
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		cursor: pointer;
 		font-family: inherit;
 		font-size: 15px;

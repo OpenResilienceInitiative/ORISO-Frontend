@@ -122,14 +122,17 @@ $room-header-gap-top: 2px;
 			fill: #6e4d4d;
 
 			svg path {
-				fill: var(--m3-primary, $secondary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $secondary));
 			}
 
 			&:hover {
 				fill: #5b3f3f;
 
 				svg path {
-					fill: var(--m3-primary, $primary);
+					fill: var(
+						--oriso-primary-text,
+						var(--m3-primary, $primary)
+					);
 				}
 			}
 		}
@@ -299,11 +302,20 @@ $room-header-gap-top: 2px;
 		svg {
 			width: 100%;
 			height: 100%;
-			fill: var(--m3-primary, $secondary) !important;
-			color: var(--m3-primary, $secondary) !important;
+			fill: var(
+				--oriso-primary-text,
+				var(--m3-primary, $secondary)
+			) !important;
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $secondary)
+			) !important;
 
 			path {
-				fill: var(--m3-primary, $secondary) !important;
+				fill: var(
+					--oriso-primary-text,
+					var(--m3-primary, $secondary)
+				) !important;
 			}
 		}
 	}
@@ -390,7 +402,10 @@ $room-header-gap-top: 2px;
 			}
 
 			&--red {
-				color: var(--m3-primary, $primary) !important;
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, $primary)
+				) !important;
 				text-transform: uppercase;
 			}
 
@@ -581,7 +596,7 @@ $room-header-gap-top: 2px;
 		margin-left: -10px;
 		border-radius: 20px;
 		background: #ffd1d1;
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		flex: 0 0 auto;
 	}
 

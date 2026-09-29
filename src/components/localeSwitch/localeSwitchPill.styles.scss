@@ -122,7 +122,7 @@
 		&.Mui-selected,
 		&.Mui-selected:hover {
 			background: var(--m3-selected-layer, #f5e6e7);
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font-weight: $font-weight-bold;
 		}
 	}
