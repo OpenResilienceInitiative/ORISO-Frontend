@@ -36,6 +36,28 @@ describe('useJoinGroupChat', () => {
 		expect(result.current.tenantReady).toBe(true);
 	});
 
+	it('sends the link token so the server can check the invite (#1237)', async () => {
+		const { result } = renderHook(() => useJoinGroupChat());
+
+		await expect(
+			result.current.joinGroupChat('1013.Ab3_x-Yz')
+		).resolves.toBe(true);
+		expect(apiPutGroupChat).toHaveBeenCalledWith(
+			'1013',
+			GROUP_CHAT_API.ASSIGN,
+			{ inviteToken: 'Ab3_x-Yz' }
+		);
+	});
+
+	it('does not call the server with something that is no invite id', async () => {
+		const { result } = renderHook(() => useJoinGroupChat());
+
+		await expect(result.current.joinGroupChat('not-a-group')).resolves.toBe(
+			false
+		);
+		expect(apiPutGroupChat).not.toHaveBeenCalled();
+	});
+
 	it('does nothing while the tenant is still loading, and reports it', async () => {
 		tenant.current = null;
 		const { result } = renderHook(() => useJoinGroupChat());
