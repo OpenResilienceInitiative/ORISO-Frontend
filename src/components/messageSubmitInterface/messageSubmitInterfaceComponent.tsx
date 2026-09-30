@@ -3038,6 +3038,11 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
+		const recordedFeedbackMailIntent = resolveFeedbackMailIntent({
+			explicitFeedbackComposer: feedbackMailIntent,
+			supervisorFeedbackAction: !!isSupervisor,
+			teamDiscussion
+		});
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true
@@ -3099,7 +3104,19 @@ export const MessageSubmitInterfaceComponent = ({
 					);
 					if (sendAfterStop) {
 						setIsRequestInProgress(true);
-						sendMessage('', voiceFile, isE2eeEnabled);
+						sendMessage(
+							'',
+							voiceFile,
+							isE2eeEnabled,
+							!!isSupervisor,
+							undefined,
+							undefined,
+							false,
+							undefined,
+							undefined,
+							undefined,
+							recordedFeedbackMailIntent
+						);
 					} else {
 						if (voicePreviewUrl) {
 							URL.revokeObjectURL(voicePreviewUrl);
@@ -3147,6 +3164,9 @@ export const MessageSubmitInterfaceComponent = ({
 		stopVoiceRecording,
 		sendMessage,
 		isE2eeEnabled,
+		isSupervisor,
+		feedbackMailIntent,
+		teamDiscussion,
 		voicePreviewUrl
 	]);
 
