@@ -1,8 +1,11 @@
 import { getSessionNavigationPath } from '../sessionsListItem/sessionsListItemHelpers';
 
 /** Only a chat id becomes a route: the value comes from the address bar. */
-export const isGroupChatId = (value: unknown): value is string | number =>
-	/^[1-9]\d*$/.test(String(value ?? ''));
+export const isGroupChatId = (value: unknown): value is string | number => {
+	const text = String(value ?? '');
+	// Beyond the safe range Number() rounds or turns Infinity: another route.
+	return /^[1-9]\d*$/.test(text) && Number.isSafeInteger(Number(text));
+};
 
 /**
  * A group in the counsellor's own session view — her waiting room with

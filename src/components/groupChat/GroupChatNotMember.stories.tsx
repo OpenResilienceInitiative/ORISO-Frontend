@@ -225,3 +225,40 @@ export const KnockFlow: Story = {
 		);
 	}
 };
+
+/** The access check failed (network, 404, unreadable answer): ask again. */
+export const Unavailable390: Story = {
+	name: 'Check failed · retry · 390',
+	globals: phone390Globals,
+	args: { onRetry: fn() },
+	play: async ({ args, canvas }) => {
+		await expect(
+			canvas.getByText(
+				'Dieser Gesprächskreis lässt sich gerade nicht öffnen.'
+			)
+		).toBeVisible();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Erneut versuchen' })
+		);
+		await expect(args.onRetry).toHaveBeenCalledTimes(1);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Zu meinen Gesprächen' })
+		);
+		await expect(args.onBack).toHaveBeenCalledTimes(1);
+	}
+};
+
+/** A failed check hides the knock: she may already be a member. */
+export const UnavailableHidesKnock1440: Story = {
+	name: 'Check failed · no knock · 1440',
+	globals: desktop1440Globals,
+	args: { onRetry: fn(), joinRequest: joinRequest('idle') },
+	play: async ({ canvas }) => {
+		await expect(
+			canvas.getByRole('button', { name: 'Erneut versuchen' })
+		).toBeVisible();
+		await expect(
+			canvas.queryByRole('button', { name: 'Beitritt anfragen' })
+		).not.toBeInTheDocument();
+	}
+};

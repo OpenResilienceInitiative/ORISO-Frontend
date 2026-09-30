@@ -29,6 +29,8 @@ interface GroupChatNotMemberProps {
 	 * the way back.
 	 */
 	joinRequest?: GroupChatJoinRequestView;
+	/** Set when the check itself failed: she may be a member, so offer a retry. */
+	onRetry?: () => void;
 }
 
 const bodySx = {
@@ -73,12 +75,17 @@ const bodyKey: Record<JoinRequestViewState | 'none', string> = {
  * `joinRequest`, the knock: "Beitritt anfragen", then the state of that
  * request until the moderation lets her in or not. Nothing of the group
  * itself shows here — not its name, not its people (Frank, 23.09.2026).
+ * With `onRetry` the server gave no usable answer: the same screen offers to
+ * ask again instead of the knock.
  */
 export const GroupChatNotMember = ({
 	onBack,
-	joinRequest
+	joinRequest: knock,
+	onRetry
 }: GroupChatNotMemberProps) => {
 	const { t: translate } = useTranslation();
+	// Unknown membership: knocking could be wrong, so only the retry shows.
+	const joinRequest = onRetry ? undefined : knock;
 	const state = joinRequest?.state ?? 'none';
 	const canRequest =
 		state === 'idle' || state === 'sending' || state === 'error';
@@ -88,21 +95,44 @@ export const GroupChatNotMember = ({
 		<Button
 			disableElevation
 			onClick={onBack}
-			variant={canRequest || state === 'admitted' ? 'text' : 'contained'}
-			sx={canRequest || state === 'admitted' ? textButtonSx : undefined}
+			variant={
+				onRetry || canRequest || state === 'admitted'
+					? 'text'
+					: 'contained'
+			}
+			sx={
+				onRetry || canRequest || state === 'admitted'
+					? textButtonSx
+					: undefined
+			}
 		>
 			{translate('groupChat.notMember.back')}
 		</Button>
 	);
 
 	return (
-		<div className="session session--empty" data-cy="group-chat-not-member">
+		<div
+			className="session session--empty"
+			data-cy={
+				onRetry ? 'group-chat-unavailable' : 'group-chat-not-member'
+			}
+		>
 			<EmptyState
 				className="session__emptyState"
-				headline={translate(headlineKey[state])}
+				headline={translate(
+					onRetry
+						? 'groupChat.accessUnavailable.headline'
+						: headlineKey[state]
+				)}
 				variant="no-conversations"
 			>
-				<Typography sx={bodySx}>{translate(bodyKey[state])}</Typography>
+				<Typography sx={bodySx}>
+					{translate(
+						onRetry
+							? 'groupChat.accessUnavailable.body'
+							: bodyKey[state]
+					)}
+				</Typography>
 				{state === 'linkInvalid' && (
 					<Typography
 						role="alert"
@@ -128,6 +158,15 @@ export const GroupChatNotMember = ({
 						gap: 1
 					}}
 				>
+					{onRetry && (
+						<Button
+							disableElevation
+							variant="contained"
+							onClick={onRetry}
+						>
+							{translate('groupChat.loadError.retry')}
+						</Button>
+					)}
 					{joinRequest && canRequest && (
 						<Button
 							disableElevation

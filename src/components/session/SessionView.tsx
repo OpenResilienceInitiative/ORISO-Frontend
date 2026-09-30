@@ -70,17 +70,17 @@ export const SessionView = () => {
 
 	// #1499: a counsellor can reach a group she is not part of through its
 	// invite link; the server refuses her the group, the room list does not.
-	const [accessRevision, setAccessRevision] = useState(0);
-	const groupAccess = useGroupChatAccess({
-		chatId: activeSession?.item?.id,
-		isGroup: Boolean(activeSession?.isGroup),
-		subscribed: activeSession?.item?.subscribed,
-		isConsultant: hasUserAuthority(
-			AUTHORITIES.CONSULTANT_DEFAULT,
-			userData
-		),
-		revision: accessRevision
-	});
+	const { access: groupAccess, retry: retryGroupAccess } = useGroupChatAccess(
+		{
+			chatId: activeSession?.item?.id,
+			isGroup: Boolean(activeSession?.isGroup),
+			subscribed: activeSession?.item?.subscribed,
+			isConsultant: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+		}
+	);
 	// …and may knock on a self-help group (never a team chat); once a
 	// moderator lets her in, the group is asked again.
 	const inviteToken = activeSession?.item?.id
@@ -93,7 +93,7 @@ export const SessionView = () => {
 		{
 			onOpenGroup: () => {
 				reloadActiveSession?.();
-				setAccessRevision((revision) => revision + 1);
+				retryGroupAccess();
 			}
 		}
 	);
@@ -210,10 +210,13 @@ export const SessionView = () => {
 		return <Loading />;
 	}
 
-	if (groupAccess === 'notMember') {
+	if (groupAccess === 'notMember' || groupAccess === 'unavailable') {
 		return (
 			<GroupChatNotMember
 				joinRequest={joinRequest}
+				onRetry={
+					groupAccess === 'unavailable' ? retryGroupAccess : undefined
+				}
 				onBack={() =>
 					navigate(
 						listPath +

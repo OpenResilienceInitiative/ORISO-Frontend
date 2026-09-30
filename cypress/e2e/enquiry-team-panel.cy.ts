@@ -435,12 +435,15 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// The accepted case can disappear from this colleague's authorized lookup.
+		// Re-register the same `room*` glob used at setup: Cypress keeps the first
+		// matching stub, so a later `/1375` or `room?*` intercept never wins.
+		cy.intercept('GET', '**/service/users/sessions/room*', {
+			statusCode: 204
+		});
 		cy.intercept('GET', '**/service/users/sessions/room/1375', {
 			statusCode: 204
 		});
-		cy.intercept('GET', '**/service/users/sessions/room?*', {
-			statusCode: 204
-		});
+		cy.reload();
 		cy.get('.session__acceptance', { timeout: 12000 }).should('not.exist');
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// A colleague can accept while this consultant only watches the queue.

@@ -86,7 +86,7 @@ const renderProvider = (urlTopic: { id: number } | null = null) =>
 				zipcode: undefined
 			}}
 		>
-			{/* The provider reads `gcid` from the URL, as it does under the app router. */}
+			{/* The provider reads the invite `gcid` from the route (#1499). */}
 			<MemoryRouter>
 				<RegistrationProvider>
 					<Probe />

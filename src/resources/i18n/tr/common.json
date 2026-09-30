@@ -1199,6 +1199,10 @@
 			"declinedBody": "Moderatörler isteğinizi kabul etmedi. Sorularınız varsa size bağlantıyı gönderen kişiye başvurun.",
 			"linkInvalid": "Bu davet bağlantısı artık geçerli değil. Lütfen moderatörlerden yeni bir bağlantı isteyin."
 		},
+		"accessUnavailable": {
+			"headline": "Bu konuşma grubu şu anda açılamıyor.",
+			"body": "Sunucu bu grubun bu hesaba açık olduğunu doğrulamadı. Lütfen tekrar deneyin."
+		},
 		"joinRequest": {
 			"knocks": "“{{group}}” grubuna katılmak istiyor",
 			"announcement": "{{name}}, “{{group}}” grubuna katılmak istiyor.",

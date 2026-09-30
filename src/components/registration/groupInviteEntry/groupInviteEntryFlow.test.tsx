@@ -179,6 +179,9 @@ afterEach(() => {
 	// A successful submit keeps this document-lived flag up until the redirect.
 	clearRegistrationSubmitting();
 	cleanup();
+	// A successful join keeps the flag until the document reload, which the
+	// mocked `redirectToApp` never does; the next test must not inherit it.
+	clearRegistrationSubmitting();
 });
 
 describe('newcomer entry for a self-help group link', () => {

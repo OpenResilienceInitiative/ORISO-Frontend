@@ -1176,6 +1176,10 @@
 			"declinedBody": "The moderators did not accept your request. If you have questions, contact the person who sent you the link.",
 			"linkInvalid": "This invite link is no longer valid. Please ask the moderators for a new link."
 		},
+		"accessUnavailable": {
+			"headline": "This group cannot be opened right now.",
+			"body": "The server did not confirm that this group is open to this account. Please try again."
+		},
 		"joinRequest": {
 			"knocks": "would like to join “{{group}}”",
 			"announcement": "{{name}} would like to join “{{group}}”.",

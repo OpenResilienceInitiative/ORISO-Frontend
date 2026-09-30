@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { apiGetGroupChatInfo, FETCH_ERRORS } from '../../api';
 
-export type GroupChatAccess = 'member' | 'checking' | 'notMember';
+export type GroupChatAccess =
+	| 'member'
+	| 'checking'
+	| 'notMember'
+	| 'unavailable';
 
 interface GroupChatAccessInput {
 	chatId?: number;
 	isGroup: boolean;
 	subscribed?: boolean;
 	isConsultant: boolean;
-	/** Bump to ask again — after a moderator let her in (#1499, knock). */
-	revision?: number;
 }
 
 /**
@@ -17,20 +19,23 @@ interface GroupChatAccessInput {
  *
  * `/users/chat/room/<id>` returns a group to every counsellor, but the server
  * refuses the group itself (`/users/chat/<id>`, 403) to one of another
- * Beratungsstelle. Only that refusal means "not a member"; any other error
- * keeps today's view, since the server still guards start and join.
+ * Beratungsstelle. Only a readable answer for this group means "member"; any
+ * other outcome is "unavailable" with a retry, never the moderator room.
  */
 export const useGroupChatAccess = ({
 	chatId,
 	isGroup,
 	subscribed,
-	isConsultant,
-	revision = 0
-}: GroupChatAccessInput): GroupChatAccess => {
+	isConsultant
+}: GroupChatAccessInput): {
+	access: GroupChatAccess;
+	retry: () => void;
+} => {
 	const needsCheck = isGroup && isConsultant && !subscribed && !!chatId;
+	const [attempt, setAttempt] = useState(0);
 	const [result, setResult] = useState<{
 		chatId?: number;
-		revision?: number;
+		attempt?: number;
 		access: GroupChatAccess;
 	}>({ access: 'member' });
 
@@ -40,26 +45,36 @@ export const useGroupChatAccess = ({
 		}
 		let cancelled = false;
 		apiGetGroupChatInfo(chatId)
-			.then(() => 'member' as const)
+			.then((info) =>
+				info?.id === chatId
+					? ('member' as const)
+					: ('unavailable' as const)
+			)
 			.catch((error) =>
 				error?.message === FETCH_ERRORS.FORBIDDEN
 					? ('notMember' as const)
-					: ('member' as const)
+					: ('unavailable' as const)
 			)
 			.then((access) => {
 				if (!cancelled) {
-					setResult({ chatId, revision, access });
+					setResult({ chatId, attempt, access });
 				}
 			});
 		return () => {
 			cancelled = true;
 		};
-	}, [needsCheck, chatId, revision]);
+	}, [needsCheck, chatId, attempt]);
+
+	const retry = useCallback(() => setAttempt((count) => count + 1), []);
 
 	if (!needsCheck) {
-		return 'member';
+		return { access: 'member', retry };
 	}
-	return result.chatId === chatId && result.revision === revision
-		? result.access
-		: 'checking';
+	return {
+		access:
+			result.chatId === chatId && result.attempt === attempt
+				? result.access
+				: 'checking',
+		retry
+	};
 };

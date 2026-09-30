@@ -1199,6 +1199,10 @@
 			"declinedBody": "La modération n’a pas accepté votre demande. Pour toute question, adressez-vous à la personne qui vous a envoyé le lien.",
 			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération."
 		},
+		"accessUnavailable": {
+			"headline": "Ce groupe de parole ne peut pas être ouvert pour le moment.",
+			"body": "Le serveur n'a pas confirmé que ce groupe est accessible à ce compte. Veuillez réessayer."
+		},
 		"joinRequest": {
 			"knocks": "souhaite rejoindre « {{group}} »",
 			"announcement": "{{name}} souhaite rejoindre « {{group}} ».",
