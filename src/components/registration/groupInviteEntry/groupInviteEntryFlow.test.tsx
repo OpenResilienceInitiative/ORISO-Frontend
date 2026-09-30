@@ -178,6 +178,8 @@ beforeEach(() => {
 
 afterEach(() => {
 	sessionStorage.clear();
+	// A successful submit keeps this document-lived flag up until the redirect.
+	clearRegistrationSubmitting();
 	cleanup();
 	// A successful join keeps the flag until the document reload, which the
 	// mocked `redirectToApp` never does; the next test must not inherit it.

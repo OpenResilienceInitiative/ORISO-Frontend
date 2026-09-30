@@ -40,6 +40,19 @@ describe('useGroupChatAccess', () => {
 		expect(apiGetGroupChatInfo).toHaveBeenCalledWith(42);
 	});
 
+	it('asks again once she was let in (knock to join)', async () => {
+		apiGetGroupChatInfo.mockRejectedValueOnce(new Error('FORBIDDEN'));
+		const { result } = renderHook(() =>
+			useGroupChatAccess({ ...group, isConsultant: true })
+		);
+		await waitFor(() => expect(result.current.access).toBe('notMember'));
+
+		act(() => result.current.retry());
+
+		await waitFor(() => expect(result.current.access).toBe('member'));
+		expect(apiGetGroupChatInfo).toHaveBeenCalledTimes(2);
+	});
+
 	it('lets a counsellor in when the server allows her the group', async () => {
 		const { result } = renderHook(() =>
 			useGroupChatAccess({ ...group, isConsultant: true })
