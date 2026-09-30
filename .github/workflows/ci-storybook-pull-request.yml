@@ -21,10 +21,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      # No node-build step here: lint, type-check and unit tests already run in
-      # "Frontend PR Validation" on the same commit, and Dockerfile.storybook
-      # does its own `npm install` + `npm run build-storybook` — so running the
-      # app build first only duplicated work this job then threw away.
+      # Still no node-build step: lint, type-check and unit tests already run in
+      # "Frontend PR Validation" on the same commit, so the app build would only
+      # be duplicated work this job throws away. Storybook itself does have to
+      # be built here — Dockerfile.storybook copies the static output rather
+      # than building it inside the image.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts --legacy-peer-deps
+
+      - name: Build Storybook static output
+        run: npm run build-storybook
+
       - name: Storybook Docker build validation without publishing
         uses: ./.github/actions/docker-build-push
         with:
