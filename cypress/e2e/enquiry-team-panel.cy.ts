@@ -435,10 +435,12 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// The accepted case can disappear from this colleague's authorized lookup.
-		cy.intercept('GET', '**/service/users/sessions/room/1375', {
+		// Re-register the same `room*` glob used at setup: a later `/1375` or
+		// `room?*` intercept never wins against that stub.
+		cy.intercept('GET', '**/service/users/sessions/room*', {
 			statusCode: 204
 		});
-		cy.intercept('GET', '**/service/users/sessions/room?*', {
+		cy.intercept('GET', '**/service/users/sessions/room/1375', {
 			statusCode: 204
 		});
 		// Clearing a disappeared enquiry also verifies the handover-access lookup.
@@ -446,6 +448,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			sessions: [],
 			total: 0
 		}).as('emptyHandoverCandidates');
+		cy.reload();
 		cy.wait('@emptyHandoverCandidates')
 			.its('response.statusCode')
 			.should('eq', 200);

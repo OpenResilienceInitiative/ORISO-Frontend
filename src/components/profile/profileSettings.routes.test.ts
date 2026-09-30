@@ -6,6 +6,12 @@ import { ConsultantNotifications } from './ConsultantNotifications';
 import type { AppConfigInterface } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 
+// This route-table fixture models a browser without native notifications.
+// The companion browserNotifications test covers supported browsers as well.
+vi.mock('../../utils/notificationHelpers', () => ({
+	isSupported: () => false
+}));
+
 vi.mock('../../globalState', () => ({
 	hasUserAuthority: () => true,
 	AUTHORITIES: { CONSULTANT_DEFAULT: 'consultant', ASKER_DEFAULT: 'asker' }
