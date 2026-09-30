@@ -97,6 +97,10 @@
 					"source": "33e17aa4918e3738",
 					"target": "2c1d99ceb5c4a902"
 				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "6d1bfafd1bad30e9"
+				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
 					"target": "6816fdce5b3e295a"
@@ -230,6 +234,10 @@
 				"mitteilung": {
 					"source": "33e17aa4918e3738",
 					"target": "2546a8fbfaa498a7"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "a5c2e6f62846ddd2"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -365,6 +373,10 @@
 					"source": "33e17aa4918e3738",
 					"target": "82183965bc3753d1"
 				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "2f390eaa51137ece"
+				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
 					"target": "f4696b9493e18d80"
@@ -498,6 +510,10 @@
 				"mitteilung": {
 					"source": "33e17aa4918e3738",
 					"target": "fc3537811fcf2abd"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "cf4a85a9d8193cfd"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -633,6 +649,10 @@
 					"source": "33e17aa4918e3738",
 					"target": "4fe03c7ed9945a4a"
 				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "68752ddefe462cca"
+				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
 					"target": "4ee3a4ae526cad02"
@@ -766,6 +786,10 @@
 				"mitteilung": {
 					"source": "33e17aa4918e3738",
 					"target": "5155802ef0ee480a"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "3148d8da53534fa6"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",

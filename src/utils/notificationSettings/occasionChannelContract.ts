@@ -54,6 +54,7 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 	},
 	'rueckmeldung': { kind: 'unmapped' },
 	'mitteilung': { kind: 'unmapped' },
+	'konto-einrichten': { kind: 'unmapped' },
 	'anmeldelink': { kind: 'unmapped' },
 	'einmalcode': { kind: 'unmapped' },
 	'email-geaendert': { kind: 'unmapped' },

@@ -309,6 +309,22 @@ export const en: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Set up access to {{platformName}}',
+		preheader: 'Choose your own password.',
+		headline: 'Your account already exists',
+		paragraphs: [
+			'An account has already been created for you on {{platformName}}.',
+			'Use this link to choose your own password. Then sign in as usual; the required security checks still apply.'
+		],
+		panel: [{ label: 'Link valid until', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Choose password', href: '{{setupUrl}}' },
+		footnote:
+			'If you were not expecting this setup, do not use the link and contact your administrator.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
+	},
+
 	'anmeldelink': {
 		subject: 'Your sign-in link for {{platformName}}',
 		preheader: 'The link is valid for {{expiryMinutes}} minutes.',

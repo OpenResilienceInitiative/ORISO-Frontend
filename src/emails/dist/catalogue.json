@@ -1215,6 +1215,56 @@
 				}
 			}
 		},
+		"konto-einrichten": {
+			"audience": "admin",
+			"class": "security",
+			"unsubscribable": false,
+			"placeholders": [
+				"{{inviteExpiresAt}}",
+				"{{setupUrl}}",
+				"{{offeringName}}",
+				"{{operatorName}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Zugang zu {{platformName}} einrichten",
+					"preheader": "Legen Sie Ihr eigenes Passwort fest."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Zugang zu {{platformName}} einrichten",
+					"preheader": "Lege dein eigenes Passwort fest."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Set up access to {{platformName}}",
+					"preheader": "Choose your own password."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Configurer votre accès à {{platformName}}",
+					"preheader": "Choisissez votre propre mot de passe."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Настройте доступ к {{platformName}}",
+					"preheader": "Выберите собственный пароль."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ናብ {{platformName}} ዘሎ መእተዊኹም ኣዳልዉ",
+					"preheader": "ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "{{platformName}} erişiminizi ayarlayın",
+					"preheader": "Kendi şifrenizi belirleyin."
+				}
+			}
+		},
 		"anmeldelink": {
 			"audience": "asker",
 			"class": "security",

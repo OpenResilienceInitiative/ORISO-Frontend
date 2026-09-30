@@ -315,6 +315,22 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Zugang zu {{platformName}} einrichten',
+		preheader: 'Lege dein eigenes Passwort fest.',
+		headline: 'Dein Konto ist bereits angelegt',
+		paragraphs: [
+			'Für dich wurde bereits ein Konto auf {{platformName}} angelegt.',
+			'Lege über diesen Link dein eigenes Passwort fest. Melde dich anschließend wie gewohnt an; die erforderlichen Sicherheitsprüfungen bleiben bestehen.'
+		],
+		panel: [{ label: 'Link gültig bis', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Passwort festlegen', href: '{{setupUrl}}' },
+		footnote:
+			'Wenn du diese Einrichtung nicht erwartet hast, verwende den Link nicht und wende dich an deine Administration.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
+	},
+
 	'anmeldelink': {
 		subject: 'Dein Anmeldelink für {{platformName}}',
 		preheader: 'Der Link gilt {{expiryMinutes}} Minuten.',

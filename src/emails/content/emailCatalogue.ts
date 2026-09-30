@@ -40,6 +40,8 @@ export const EMAIL_IDS = [
 	'mitteilung',
 
 	// Account and access (#866).
+	// Existing-account password setup (#1058/#1302), without provisioning.
+	'konto-einrichten',
 	'anmeldelink',
 	'einmalcode',
 	'email-geaendert',
@@ -238,6 +240,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'uebergabe-bestaetigt': 'Übergabe bestätigt',
 	'rueckmeldung': 'Rückmeldung im Fachaustausch',
 	'mitteilung': 'Mitteilung',
+	'konto-einrichten': 'Passwort für bestehendes Konto festlegen',
 	'anmeldelink': 'Anmeldelink',
 	'einmalcode': 'Einmalcode',
 	'email-geaendert': 'E-Mail-Adresse geändert',
@@ -286,6 +289,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
 		'mitteilung': 'asker',
+		'konto-einrichten': 'admin',
 		'anmeldelink': 'asker',
 		'einmalcode': 'asker',
 		'email-geaendert': 'asker',
@@ -331,6 +335,7 @@ export const EMAIL_CLASS: Record<
 	'uebergabe-bestaetigt': 'operational',
 	'rueckmeldung': 'operational',
 	'mitteilung': 'service',
+	'konto-einrichten': 'security',
 	'anmeldelink': 'security',
 	'einmalcode': 'security',
 	'email-geaendert': 'security',

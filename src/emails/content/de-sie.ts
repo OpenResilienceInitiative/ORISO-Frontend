@@ -327,6 +327,22 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Zugang zu {{platformName}} einrichten',
+		preheader: 'Legen Sie Ihr eigenes Passwort fest.',
+		headline: 'Ihr Konto ist bereits angelegt',
+		paragraphs: [
+			'Für Sie wurde bereits ein Konto auf {{platformName}} angelegt.',
+			'Legen Sie über diesen Link Ihr eigenes Passwort fest. Melden Sie sich anschließend wie gewohnt an; die erforderlichen Sicherheitsprüfungen bleiben bestehen.'
+		],
+		panel: [{ label: 'Link gültig bis', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Passwort festlegen', href: '{{setupUrl}}' },
+		footnote:
+			'Wenn Sie diese Einrichtung nicht erwartet haben, verwenden Sie den Link nicht und wenden Sie sich an Ihre Administration.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
+	},
+
 	'anmeldelink': {
 		subject: 'Ihr Anmeldelink für {{platformName}}',
 		preheader: 'Der Link gilt {{expiryMinutes}} Minuten.',

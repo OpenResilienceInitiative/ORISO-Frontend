@@ -320,6 +320,29 @@ export const fr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Configurer votre accès à {{platformName}}',
+		preheader: 'Choisissez votre propre mot de passe.',
+		headline: 'Votre compte existe déjà',
+		paragraphs: [
+			'Un compte a déjà été créé pour vous sur {{platformName}}.',
+			'Utilisez ce lien pour choisir votre propre mot de passe. Connectez-vous ensuite comme d’habitude ; les contrôles de sécurité requis restent en vigueur.'
+		],
+		panel: [
+			{ label: 'Lien valable jusqu’au', value: '{{inviteExpiresAt}}' }
+		],
+		cta: { label: 'Choisir le mot de passe', href: '{{setupUrl}}' },
+		footnote:
+			'Si vous n’attendiez pas cette configuration, n’utilisez pas ce lien et contactez votre administration.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: 'Votre lien de connexion pour {{platformName}}',
 		preheader: 'Le lien est valable {{expiryMinutes}} minutes.',

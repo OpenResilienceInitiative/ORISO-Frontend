@@ -318,6 +318,29 @@ export const ru: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Настройте доступ к {{platformName}}',
+		preheader: 'Выберите собственный пароль.',
+		headline: 'Ваша учётная запись уже создана',
+		paragraphs: [
+			'Для Вас уже создана учётная запись на {{platformName}}.',
+			'Перейдите по этой ссылке, чтобы выбрать собственный пароль. Затем войдите обычным способом; все обязательные проверки безопасности сохраняются.'
+		],
+		panel: [
+			{ label: 'Ссылка действительна до', value: '{{inviteExpiresAt}}' }
+		],
+		cta: { label: 'Выбрать пароль', href: '{{setupUrl}}' },
+		footnote:
+			'Если Вы не ожидали эту настройку, не используйте ссылку и обратитесь к администратору.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: 'Ваша ссылка для входа на {{platformName}}',
 		preheader: 'Ссылка действует {{expiryMinutes}} минут.',

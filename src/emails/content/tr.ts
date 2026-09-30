@@ -322,6 +322,32 @@ export const tr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: '{{platformName}} erişiminizi ayarlayın',
+		preheader: 'Kendi şifrenizi belirleyin.',
+		headline: 'Hesabınız zaten oluşturuldu',
+		paragraphs: [
+			'{{platformName}} üzerinde sizin için bir hesap zaten oluşturuldu.',
+			'Kendi şifrenizi belirlemek için bu bağlantıyı kullanın. Ardından her zamanki gibi giriş yapın; gerekli güvenlik kontrolleri uygulanmaya devam eder.'
+		],
+		panel: [
+			{
+				label: 'Bağlantının geçerlilik sonu',
+				value: '{{inviteExpiresAt}}'
+			}
+		],
+		cta: { label: 'Şifre belirle', href: '{{setupUrl}}' },
+		footnote:
+			'Bu kurulumu beklemiyorsanız bağlantıyı kullanmayın ve yöneticinizle iletişime geçin.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: '{{platformName}} için giriş bağlantınız',
 		preheader: 'Bağlantı {{expiryMinutes}} dakika geçerlidir.',

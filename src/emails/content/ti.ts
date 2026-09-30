@@ -308,6 +308,26 @@ export const ti: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'ናብ {{platformName}} ዘሎ መእተዊኹም ኣዳልዉ',
+		preheader: 'ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ።',
+		headline: 'ሕሳብኩም ድሮ ተፈጢሩ ኣሎ',
+		paragraphs: [
+			'ኣብ {{platformName}} ንዓኹም ሕሳብ ድሮ ተፈጢሩ ኣሎ።',
+			'ነዚ መላግቦ ተጠቒምኩም ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ። ድሕሪኡ ከም ልሙድ እተዉ፤ ኣድለይቲ ናይ ድሕነት ምርመራታት ይቕጽሉ።'
+		],
+		panel: [{ label: 'መላግቦ ክሳብ ዝሰርሓሉ', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'ቃል ምስጢር ምረጹ', href: '{{setupUrl}}' },
+		footnote: 'ነዚ ምድላው እንተዘይተጸበኹምዎ፣ ነቲ መላግቦ ኣይትጠቐሙሉ፣ ምስ ኣመሓዳሪኹም ተራኸቡ።',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: 'ናይ {{platformName}} መእተዊ መላግቦኹም',
 		preheader: 'እቲ መላግቦ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።',
