@@ -73,6 +73,20 @@ describe('usePendingGroupChatJoin', () => {
 		);
 	});
 
+	it('opens the entry room of the group number, not of the whole invite id (#1237)', async () => {
+		withDeepLink('19.Ab3_x-Yz');
+		renderHook(() => usePendingGroupChatJoin(settled));
+
+		await waitFor(() =>
+			expect(joinGroupChat).toHaveBeenCalledWith('19.Ab3_x-Yz')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith('/group/19', {
+				replace: true
+			})
+		);
+	});
+
 	it('waits for the tenant before assigning anything', () => {
 		tenant.ready = false;
 
@@ -189,6 +203,22 @@ describe('usePendingGroupChatJoin', () => {
 					{ replace: true }
 				)
 			);
+		});
+
+		/* #1534 + #1554: the invite id became "<number>.<token>"; her route is
+		   the number. Without parsing, the link left her on the start page. */
+		it('opens the group of an invite id that carries the token', async () => {
+			withDeepLink('42.tok_EN-9');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+			expect(joinGroupChat).not.toHaveBeenCalled();
 		});
 
 		// The id comes from the address bar; only a chat id becomes a route.

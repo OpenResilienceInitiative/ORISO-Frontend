@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useJoinGroupChat } from './useJoinGroupChat';
 import { groupEntryRoomPath } from '../components/groupChat/entryRoom/GroupEntryRoom';
+import { parseGroupChatInviteId } from '../components/groupChat/groupChatInviteLink';
 import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupStep';
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
 import {
@@ -52,6 +53,9 @@ export const usePendingGroupChatJoin = (
 		}
 		const gcid = pendingGroupChatId;
 		setPendingGroupChatId(null);
+		/* `gcid` may carry the invite token as well (#1237); the room is the number. */
+		const seriesId = parseGroupChatInviteId(gcid)?.seriesId;
+		const entryRoom = groupEntryRoomPath(seriesId ?? gcid);
 		/* #1499: the assignment is a client action (404 for a counsellor) and
 		   the entry room is the client's room. Whether she may see the group
 		   is decided in the session view, which shows "not part of it". */
@@ -61,20 +65,20 @@ export const usePendingGroupChatJoin = (
 				userData as UserDataInterface
 			)
 		) {
-			if (isGroupChatId(gcid)) {
-				navigate(consultantGroupChatPath(gcid), { replace: true });
+			if (isGroupChatId(seriesId)) {
+				navigate(consultantGroupChatPath(seriesId), { replace: true });
 			}
 			return;
 		}
 		joinGroupChat(gcid)
 			.then((assigned) => {
 				if (assigned) {
-					navigate(groupEntryRoomPath(gcid), { replace: true });
+					navigate(entryRoom, { replace: true });
 				}
 			})
 			.catch(() => {
-				/* Already assigned (409) or gone — the entry room says so. */
-				navigate(groupEntryRoomPath(gcid), { replace: true });
+				/* Already assigned (409), link refused (403) or gone — the entry room says so. */
+				navigate(entryRoom, { replace: true });
 			});
 	}, [pendingGroupChatId, tenantReady, joinGroupChat, navigate, userData]);
 };
