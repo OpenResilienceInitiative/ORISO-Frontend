@@ -20,9 +20,7 @@ ${(properties.orisoContactLine)!''}
 
 ${msg("orisoResetOfferedBy", (properties.orisoPlatformName)!'Online-Beratung', (properties.orisoOrgName)!'ORISO')}
 
-${msg("orisoResetFooterLink1")}: ${properties.orisoSettingsUrl}
-${msg("orisoResetFooterLink2")}: ${properties.orisoPrivacyUrl}
-${msg("orisoResetFooterLink3")}: ${properties.orisoImprintUrl}
-${msg("orisoResetFooterLink4")}: ${properties.orisoUnsubscribeUrl}
+${msg("orisoResetFooterLink1")}: ${properties.orisoPrivacyUrl}
+${msg("orisoResetFooterLink2")}: ${properties.orisoImprintUrl}
 
 ${msg("orisoResetAutomatedNote")}

@@ -1,0 +1,28 @@
+Danışmanlığa davet edildiniz
+============================
+
+{{agencyName}}, sizi uzman olarak {{platformName}} platformuna davet etti.
+
+Bağlantı üzerinden şifrenizi belirler ve iki faktörlü girişi kurarsınız.
+
+Danışma merkezi: {{agencyName}}
+Bağlantı geçerlilik sonu: {{inviteExpiresAt}}
+
+Erişimi kur:
+{{inviteUrl}}
+
+İki faktörlü giriş olmadan danışmanlıklara erişim mümkün değildir.
+
+----------------------------------------------------------------
+Şifrenizi hiçbir zaman e-postayla sormayız. Bu bağlantıyı kimseyle paylaşmayın.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+
+Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.
