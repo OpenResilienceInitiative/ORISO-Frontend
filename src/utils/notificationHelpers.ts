@@ -29,7 +29,14 @@ export const PERMISSION_GRANTED = 'granted';
 export const PERMISSION_DEFAULT = 'default';
 
 export const isSupported = () => {
-	return 'Notification' in window && Notification.requestPermission;
+	// Route conditions call this outside a browser too (unit tests, and any
+	// non-DOM render path), where touching `window` throws instead of
+	// answering "not supported".
+	return (
+		typeof window !== 'undefined' &&
+		'Notification' in window &&
+		Notification.requestPermission
+	);
 };
 
 export const hasPermissions = (permission: NotificationPermission) => {
