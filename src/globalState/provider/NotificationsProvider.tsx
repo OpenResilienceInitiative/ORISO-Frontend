@@ -347,7 +347,7 @@ export function NotificationsProvider(props) {
 	const observedEventIdsRef = useRef<Set<string> | null>(null);
 	const pendingLiveEventIdsRef = useRef(new Set<string>());
 	const initialFeedTimeRef = useRef(Number.NEGATIVE_INFINITY);
-	const observedRequestIdsRef = useRef<Set<string> | null>(null);
+	const observedReconciliationIdsRef = useRef<Set<string> | null>(null);
 
 	// --- Request ordering and pending-read serialisation (spec §6.3) --------
 	// Every feed request carries a number from one counter. Rows are applied
@@ -383,7 +383,7 @@ export function NotificationsProvider(props) {
 		loadingOlderRef.current = false;
 		observedEventIdsRef.current = null;
 		pendingLiveEventIdsRef.current.clear();
-		observedRequestIdsRef.current = null;
+		observedReconciliationIdsRef.current = null;
 		initialFeedTimeRef.current = Number.NEGATIVE_INFINITY;
 		setNotificationFeed([]);
 		setServerUnreadTotal(0);
@@ -556,23 +556,46 @@ export function NotificationsProvider(props) {
 			}
 			pageFloorsRef.current.set(page, seq);
 			if (page === 0) {
-				const requests = items.filter(
-					(item) => item.eventType === 'request.new'
+				const stateEvents = items.filter(
+					(item) =>
+						item.eventType === 'request.new' ||
+						item.eventType === 'inquiry.accepted'
 				);
-				const observed = observedRequestIdsRef.current;
-				const hasNewRequest =
-					observed !== null &&
-					requests.some((item) => !observed.has(item.id));
-				observedRequestIdsRef.current ??= new Set();
-				requests.forEach((item) =>
-					observedRequestIdsRef.current.add(item.id)
+				const observed = observedReconciliationIdsRef.current;
+				const newEvents =
+					observed === null
+						? []
+						: stateEvents.filter((item) => !observed.has(item.id));
+				observedReconciliationIdsRef.current ??= new Set();
+				stateEvents.forEach((item) =>
+					observedReconciliationIdsRef.current.add(item.id)
 				);
-				if (hasNewRequest) {
+				if (
+					newEvents.some((item) => item.eventType === 'request.new')
+				) {
 					messageEventEmitter.emit({
 						refreshEnquiryList: true,
 						source: 'notification-feed'
 					});
 				}
+				for (const item of newEvents) {
+					if (
+						item.eventType !== 'inquiry.accepted' ||
+						item.sourceSessionId == null
+					)
+						continue;
+					const changedSessionId = Number(item.sourceSessionId);
+					if (
+						Number.isSafeInteger(changedSessionId) &&
+						changedSessionId >= 0
+					) {
+						messageEventEmitter.emit({
+							changedSessionId,
+							source: 'notification-feed'
+						});
+					}
+				}
+
 				announceNewEvents(items);
 				setNotificationFeed((existing) =>
 					// Page 0 is authoritative for its own window, so a row the

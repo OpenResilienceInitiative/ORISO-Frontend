@@ -105,7 +105,13 @@ describe('useCreateChatSubmit', () => {
 		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
 			sessions: [
 				{ chat: { id: 9, matrixRoomId: 'other' } },
-				{ chat: { id: 4711, matrixRoomId: 'r1' } }
+				{
+					chat: {
+						id: 4711,
+						matrixRoomId: 'r1',
+						inviteToken: 'Ab3_x-Yz'
+					}
+				}
 			]
 		} as any);
 		const hold = vi.fn(() => true);
@@ -116,7 +122,10 @@ describe('useCreateChatSubmit', () => {
 		});
 
 		await waitFor(() =>
-			expect(hold).toHaveBeenCalledWith({ seriesId: 4711 })
+			expect(hold).toHaveBeenCalledWith({
+				seriesId: 4711,
+				inviteToken: 'Ab3_x-Yz'
+			})
 		);
 		expect(navigate).not.toHaveBeenCalled();
 
@@ -143,7 +152,10 @@ describe('useCreateChatSubmit', () => {
 				'/sessions/consultant/sessionView'
 			)
 		);
-		expect(hold).toHaveBeenCalledWith({ seriesId: null });
+		expect(hold).toHaveBeenCalledWith({
+			seriesId: null,
+			inviteToken: null
+		});
 	});
 
 	it('does not invent a Series id from an unrelated session (#1499)', async () => {
@@ -159,7 +171,10 @@ describe('useCreateChatSubmit', () => {
 		});
 
 		await waitFor(() =>
-			expect(hold).toHaveBeenCalledWith({ seriesId: null })
+			expect(hold).toHaveBeenCalledWith({
+				seriesId: null,
+				inviteToken: null
+			})
 		);
 		expect(navigate).not.toHaveBeenCalled();
 	});
