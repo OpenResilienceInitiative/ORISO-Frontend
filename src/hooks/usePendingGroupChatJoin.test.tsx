@@ -18,14 +18,30 @@ vi.mock('../components/groupChat/entryRoom/GroupEntryRoom', () => ({
 }));
 
 const CONSULTANT = 'AUTHORIZATION_CONSULTANT_DEFAULT';
+const ASKER = 'AUTHORIZATION_USER_DEFAULT';
 
 const settled = {
+	grantedAuthorities: [ASKER],
+	passwordChangeRequired: false,
+	twoFactorAuth: { isRequired: false, isActive: false }
+} as any;
+
+const owesPassword = { ...settled, passwordChangeRequired: true };
+
+const settledCounsellor = {
 	grantedAuthorities: [CONSULTANT],
 	passwordChangeRequired: false,
 	twoFactorAuth: { isRequired: true, isActive: true }
 } as any;
 
-const owesPassword = { ...settled, passwordChangeRequired: true };
+const counsellorOwesPassword = {
+	...settledCounsellor,
+	passwordChangeRequired: true
+};
+const counsellorOwesSecondFactor = {
+	...settledCounsellor,
+	twoFactorAuth: { isRequired: true, isActive: false }
+};
 
 const withDeepLink = (gcid = 'gc-synthetic') => {
 	window.history.replaceState({}, '', `/?gcid=${gcid}`);
@@ -128,5 +144,91 @@ describe('usePendingGroupChatJoin', () => {
 				replace: true
 			})
 		);
+	});
+
+	/**
+	 * #1499: a counsellor, the group's own moderator included, landed in the
+	 * client's entry room — the assignment is a client action (404 for her)
+	 * and both branches opened `/groups/<id>/entry`. Her room is the group in
+	 * her own session view.
+	 */
+	describe('for a counsellor', () => {
+		it('opens the group in the counsellor session view without assigning', async () => {
+			withDeepLink('42');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+			expect(joinGroupChat).not.toHaveBeenCalled();
+			expect(navigate).toHaveBeenCalledTimes(1);
+		});
+
+		it.each([
+			['owes a new password', counsellorOwesPassword],
+			[
+				'still has to set up the second factor',
+				counsellorOwesSecondFactor
+			],
+			['has no profile yet', undefined]
+		])(
+			'leaves the account-setup gate in front while she %s',
+			(_label, userData) => {
+				withDeepLink('42');
+
+				renderHook(() => usePendingGroupChatJoin(userData));
+
+				expect(navigate).not.toHaveBeenCalled();
+				expect(joinGroupChat).not.toHaveBeenCalled();
+			}
+		);
+
+		it('still opens the group once her setup settles', async () => {
+			withDeepLink('42');
+			const { rerender } = renderHook(
+				({ userData }) => usePendingGroupChatJoin(userData),
+				{ initialProps: { userData: counsellorOwesPassword as any } }
+			);
+			expect(navigate).not.toHaveBeenCalled();
+
+			rerender({ userData: settledCounsellor });
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+		});
+
+		/* #1534 + #1554: the invite id became "<number>.<token>"; her route is
+		   the number. Without parsing, the link left her on the start page. */
+		it('opens the group of an invite id that carries the token', async () => {
+			withDeepLink('42.tok_EN-9');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			await waitFor(() =>
+				expect(navigate).toHaveBeenCalledWith(
+					'/sessions/consultant/sessionView/session/42',
+					{ replace: true }
+				)
+			);
+			expect(joinGroupChat).not.toHaveBeenCalled();
+		});
+
+		// The id comes from the address bar; only a chat id becomes a route.
+		it('ignores a link whose group id is not a number', () => {
+			withDeepLink('..%2Fadmin');
+
+			renderHook(() => usePendingGroupChatJoin(settledCounsellor));
+
+			expect(navigate).not.toHaveBeenCalled();
+			expect(joinGroupChat).not.toHaveBeenCalled();
+		});
 	});
 });
