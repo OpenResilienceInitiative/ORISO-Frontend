@@ -1,14 +1,15 @@
 # Transactional e-mail kit
 
-Twenty-two occasions, three tone variants, two MIME parts — built from one atomic
-component set and previewed in Storybook under `Email/`.
+Twenty-three occasions, seven language/tone variants, two MIME parts — built from one
+atomic component set and previewed in Storybook under `Email/`.
 
 ```
 kit/        atoms → molecules → organisms → document, plus the two renderers
-content/    the copy, one file per tone variant
+content/    the copy, one file per variant, plus the translation manifest and ledger
 preview/    Storybook-only harnesses (iframe preview, inbox line, token sheet)
 stories/    Email/Foundations, Email/Atoms, Email/Molecules, Email/Organisms, Email/Pages
-scripts/    buildEmails.mts, buildKeycloakTheme.mts, buildMailServiceTemplates.mts
+scripts/    buildEmails.mts, buildKeycloakTheme.mts, buildMailServiceTemplates.mts,
+            syncEmailTranslations.mts
 dist/       generated, committed: <dialect>/<tone>/<id>.* plus the packaged
             Keycloak theme (keycloak/email/) and MailService set (mailservice/)
 ```
@@ -30,10 +31,37 @@ npm run storybook          # preview every atom, molecule, organism and page
 npm run emails:build       # regenerate dist/ (plain, thymeleaf, freemarker)
 npm run emails:keycloak    # regenerate dist/keycloak/ (packaged theme)
 npm run emails:mailservice # regenerate dist/mailservice/
+npm run emails:sync        # re-stamp the translation manifest, list unsigned claims
 ```
 
 `dist/` is committed on purpose: after changing an atom, `git diff` shows every
 mail that atom touches. That diff is the review surface.
+
+## Languages
+
+German is the source. Everything else is a derivative, and the rules that keep
+it from rotting are in **ADR-022**; the short version:
+
+| Variant             | Copy from            | Human language review |
+| ------------------- | -------------------- | --------------------- |
+| `de-sie`            | source               | yes                   |
+| `de-du`             | human (tone variant) | yes                   |
+| `en`                | human                | yes                   |
+| `fr` `ru` `ti` `tr` | machine              | **pending**           |
+
+- **Changing a German string costs six translations.** The manifest records
+  what each translation was made from; the test suite recomputes it. A German
+  edit without its translations turns the build red, and `emails:sync` refuses
+  to re-stamp it (`--force=locale/occasion` for a reviewed exception that genuinely
+  does not reach that translation). A genuinely new locale needs an explicit
+  `--new-locale=locale`; a missing existing locale fails instead of being re-stamped.
+- **Every variant produces files now.** The catalogue, generated Keycloak theme and MailService template README mark French, Russian, Tigrinya and Turkish as pending human language review. The later review does not block generation. Production delivery of pending variants requires a separate release decision.
+- **A claim is:** the encryption promise (`assurance`, on every mail), the two
+  privacy paragraphs, and the DPA mail in full. The list is
+  `EMAIL_PROTECTED_EXTRA` in `content/emailCatalogue.ts` — about 18 strings per
+  language, not 23 mails.
+- `de@informal` is a **tone**, not a language. Whether the four new languages
+  need a second tone is a separate decision (ORISO-Frontend#1065).
 
 ## Rules the copy has to keep
 

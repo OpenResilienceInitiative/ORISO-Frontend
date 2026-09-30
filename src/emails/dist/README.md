@@ -1,4 +1,4 @@
-# Send-ready e-mail templates
+# Generated e-mail templates
 
 Generated — do not edit by hand. Run `npm run emails:build` after changing
 anything under `src/emails/`.
@@ -11,7 +11,12 @@ Layout: `<dialect>/<tone>/<id>.<ext>`.
 | `thymeleaf/`  | MailService                                                | `[[${name}]]`       | `.html` / `.txt`         |
 | `freemarker/` | Keycloak e-mail theme                                      | `${(name!'')?html}` | `.html.ftl` / `.txt.ftl` |
 
-Tones: de-sie, de-du, en.
+Variants in this directory: de-sie, de-du, en, fr, ru, ti, tr.
+
+**Pending human language review: fr, ru, ti, tr.** These variants
+are built now. Legal, encryption and anonymity wording has not been approved
+by a native speaker; inspect `content/translationReview.json` before claiming
+otherwise.
 
 Both MIME parts are generated from one content model, so the plain-text twin
 cannot drift from the HTML, and all three dialects come from one renderer, so a
@@ -23,9 +28,9 @@ dialect cannot disagree with what Storybook shows.
 | ------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `neue-nachricht`         | asker      | `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                             |
 | `willkommen`             | asker      | `{{username}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                                |
-| `passwort-zuruecksetzen` | asker      | `{{expiryHours}}` `{{resetUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                                             |
+| `passwort-zuruecksetzen` | asker      | `{{expiryHours}}` `{{resetUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                                    |
 | `termin`                 | asker      | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentType}}` `{{locationName}}` `{{locationAddress}}` `{{appointmentUrl}}` `{{mapUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
-| `beraterin-kontakt`      | asker      | `{{consultantName}}` `{{consultantPhone}}` `{{consultantHours}}` `{{consultantEmail}}` `{{bookingUrl}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                     |
+| `beraterin-kontakt`      | asker      | `{{consultantName}}` `{{consultantPhone}}` `{{consultantHours}}` `{{consultantEmail}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                      |
 | `anfrage-zugewiesen`     | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                            |
 | `systemhinweis`          | asker      | `{{maintenanceDate}}` `{{maintenanceStart}}` `{{maintenanceEnd}}` `{{statusUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                            |
 | `neue-anfrage`           | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                            |
@@ -34,7 +39,7 @@ dialect cannot disagree with what Storybook shows.
 | `uebergabe-angefragt`    | consultant | `{{fromConsultantName}}` `{{caseReference}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                        |
 | `uebergabe-bestaetigt`   | consultant | `{{toConsultantName}}` `{{caseReference}}` `{{handoverAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                 |
 | `rueckmeldung`           | consultant | `{{caseReference}}` `{{requestReceivedAt}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                 |
-| `mitteilung`             | asker      | `{{messageSubject}}` `{{messagePreview}}` `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                             |
+| `mitteilung`             | asker      | `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}`                                                                                       |
 | `anmeldelink`            | asker      | `{{expiryMinutes}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                                  |
 | `einmalcode`             | asker      | `{{expiryMinutes}}` `{{otpCode}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                    |
 | `email-geaendert`        | asker      | `{{username}}` `{{appUrl}}` `{{privacyUrl}}` `{{imprintUrl}}`                                                                                                                                                         |
