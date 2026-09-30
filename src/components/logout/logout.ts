@@ -30,6 +30,7 @@ import {
 	purgeAppWebStorage
 } from '../../services/clientStorageHygiene';
 import { withTimeout } from '../../utils/promiseTimeout';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 	MATRIX_USER_ID_STORAGE_KEY,
@@ -167,6 +168,9 @@ export const teardownLocalSession = (): void => {
 	// the loss record are session-bound; an auth or bootstrap failure that
 	// tears down without logout() must not hand them to the next counsellor.
 	clearLiveChatAvailabilityPreference();
+	// The app-wide snackbars outlive the host; a join request naming someone
+	// must not greet the next person who signs in (#1499).
+	appSnackbarStack.clear();
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

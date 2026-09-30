@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useJoinGroupChat } from './useJoinGroupChat';
 import { groupEntryRoomPath } from '../components/groupChat/entryRoom/GroupEntryRoom';
 import { parseGroupChatInviteId } from '../components/groupChat/groupChatInviteLink';
+import { rememberGroupInviteToken } from '../components/groupChat/groupInviteTokenMemory';
 import { isAccountSetupPending } from '../components/twoFactorAuth/accountSetupStep';
 import type { UserDataInterface } from '../globalState/interfaces/UserDataInterface';
 import {
@@ -54,11 +55,13 @@ export const usePendingGroupChatJoin = (
 		const gcid = pendingGroupChatId;
 		setPendingGroupChatId(null);
 		/* `gcid` may carry the invite token as well (#1237); the room is the number. */
-		const seriesId = parseGroupChatInviteId(gcid)?.seriesId;
+		const invite = parseGroupChatInviteId(gcid);
+		const seriesId = invite?.seriesId;
 		const entryRoom = groupEntryRoomPath(seriesId ?? gcid);
 		/* #1499: the assignment is a client action (404 for a counsellor) and
 		   the entry room is the client's room. Whether she may see the group
-		   is decided in the session view, which shows "not part of it". */
+		   is decided in the session view, which shows "not part of it" — and,
+		   with the link's token, lets her knock (item 14). */
 		if (
 			hasUserAuthority(
 				AUTHORITIES.CONSULTANT_DEFAULT,
@@ -66,6 +69,9 @@ export const usePendingGroupChatJoin = (
 			)
 		) {
 			if (isGroupChatId(seriesId)) {
+				if (invite?.inviteToken) {
+					rememberGroupInviteToken(seriesId, invite.inviteToken);
+				}
 				navigate(consultantGroupChatPath(seriesId), { replace: true });
 			}
 			return;

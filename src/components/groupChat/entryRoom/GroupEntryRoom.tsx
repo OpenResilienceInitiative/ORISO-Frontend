@@ -56,6 +56,11 @@ export const GroupEntryRoom = () => {
 	const { chatId: chatIdParam } = useParams<{ chatId: string }>();
 	const userData = useContext(UserDataContext)?.userData;
 
+	// Unknown role yet: choosing now would start the client flow for a counsellor.
+	if (!userData) {
+		return <EntryRoomLoading />;
+	}
+
 	if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
 		return isGroupChatId(chatIdParam) ? (
 			<Navigate to={consultantGroupChatPath(chatIdParam)} replace />
@@ -66,6 +71,20 @@ export const GroupEntryRoom = () => {
 
 	return <ClientGroupEntryRoom />;
 };
+
+const EntryRoomLoading = () => (
+	<Box
+		sx={{
+			minHeight: '100vh',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center'
+		}}
+		data-cy="group-entry-loading"
+	>
+		<CircularProgress />
+	</Box>
+);
 
 const ClientGroupEntryRoom = () => {
 	const { chatId: chatIdParam } = useParams<{ chatId: string }>();
@@ -175,19 +194,7 @@ const ClientGroupEntryRoom = () => {
 	}, [item, joinBusy, navigate, session?.rid]);
 
 	if (!ready) {
-		return (
-			<Box
-				sx={{
-					minHeight: '100vh',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center'
-				}}
-				data-cy="group-entry-loading"
-			>
-				<CircularProgress />
-			</Box>
-		);
+		return <EntryRoomLoading />;
 	}
 
 	if (!item) {
