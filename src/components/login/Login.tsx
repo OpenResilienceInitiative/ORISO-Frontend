@@ -41,6 +41,7 @@ import './login.styles';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
+import { useGroupInviteEntryRedirect } from '../registration/groupInviteEntry/useGroupInviteEntryRedirect';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
@@ -105,9 +106,13 @@ export const Login = () => {
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
+	const returnTo = useSearchParam<string>('returnTo');
+	const inviteAgencyId = useSearchParam<string>('aid');
+	const openingGroupInviteEntry = useGroupInviteEntryRedirect();
 	const registrationUrl = buildRegistrationLink(
 		settings.urls.toRegistration,
-		gcid
+		gcid,
+		inviteAgencyId
 	);
 	const magicToken = useSearchParam<string>('magicToken');
 	const isFirstVisit = useIsFirstVisit();
@@ -179,10 +184,10 @@ export const Login = () => {
 				/* Deliberately no `navigate`: see postLogin below -- entering
 				   the authenticated app from the login screen is a cold start
 				   and must be a document load. */
-				.then(() => redirectToApp(gcid))
+				.then(() => redirectToApp(gcid, { returnTo }))
 				.catch(() => null); // do nothing
 		}
-	}, [consultant, gcid, reloadUserData, userData]);
+	}, [consultant, gcid, reloadUserData, returnTo, userData]);
 
 	useEffect(() => {
 		setShowLoginError('');
@@ -299,7 +304,7 @@ export const Login = () => {
 					   users work around by reloading. Registration keeps its
 					   client-side nav; it has a handover animation to cover
 					   the gap, and login does not. */
-					return redirectToApp(gcid, { restorePath });
+					return redirectToApp(gcid, { restorePath, returnTo });
 				}
 			}),
 		[
@@ -308,6 +313,7 @@ export const Login = () => {
 			initLocale,
 			consultant,
 			gcid,
+			returnTo,
 			showConsultantLoginBlockedError
 		]
 	);
@@ -513,6 +519,10 @@ export const Login = () => {
 	const onPasswordResetClick = () => {
 		navigate('/password-reset');
 	};
+
+	if (openingGroupInviteEntry) {
+		return null;
+	}
 
 	return (
 		<>

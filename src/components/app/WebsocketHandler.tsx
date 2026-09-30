@@ -93,8 +93,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		stompClient.onWebSocketError = (error) => {
 			// console.log('Error', error);
 		};
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-		// MATRIX EVENT BRIDGE SETUP (for real-time Matrix events)
+	useEffect(() => {
+		// Matrix events must remain active when the optional LiveService is disabled.
 		// Listen to Matrix 'directMessage' events
 		const handleMatrixDirectMessage = (event: any) => {
 			// console.log('📬 Matrix directMessage event received:', event);
@@ -112,8 +114,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		// Register Matrix event listeners
 		matrixLiveEventBridge.on('directMessage', handleMatrixDirectMessage);
 
-		// console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
-
 		// Cleanup function
 		return () => {
 			// Unregister Matrix event listeners
@@ -123,7 +123,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			);
 			// console.log('🧹 WebsocketHandler: Event listeners cleaned up');
 		};
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		if (disconnect) {

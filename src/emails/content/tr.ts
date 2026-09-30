@@ -90,6 +90,19 @@ export const tr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Sizin için yeni bir mesaj',
+		paragraphs: [
+			'Yürüttüğünüz danışmanlıklardan birinde yeni bir mesaj var.',
+			'Mesajı güvenli danışmanlık alanında okumak için giriş yapın.'
+		],
+		cta: { label: 'Mesajı aç', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: '{{platformName}} platformuna hoş geldiniz',
 		preheader: 'Anonim erişiminiz hazır – bundan sonrası şöyle.',
@@ -257,55 +270,38 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Devir talebi',
-		preheader: 'Bir danışmanlığın size devredilmesi isteniyor.',
-		headline: 'Bir danışmanlığın size devredilmesi isteniyor',
+		subject: 'Yeni bildirim',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Danışmanlığınızla ilgili bir talep',
 		paragraphs: [
-			'{{fromConsultantName}}, devam eden bir danışmanlığın size devredilmesini istiyor.',
-			'Lütfen danışmanlık alanında devralıp devralamayacağınızı kontrol edin.'
+			'Bir danışman, danışmanlığınızdaki bir değişiklik için onayınızı istiyor.',
+			'Talebi güvenli alanda incelemek için giriş yapın.'
 		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Talep eden', value: '{{fromConsultantName}}' },
-			{ label: 'Talep tarihi', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Devri incele', href: '{{requestUrl}}' },
-		footnote: 'Siz onaylayana kadar danışmanlık mevcut uzmanda kalır.',
-		assurance: staffAssurance,
+		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
 		subject: 'Devir onaylandı',
-		preheader: 'Sorumluluk değişti.',
+		preheader: 'Devir onaylandı',
 		headline: 'Devir onaylandı',
 		paragraphs: [
-			'Danışmanlık devralındı. Bundan sonra {{toConsultantName}} sorumlu.',
-			'Danışan, uygulama üzerinden bilgilendirildi.'
+			'Artık bu danışmanlıktan siz sorumlusunuz.',
+			'Dosyayı güvenli danışmanlık alanında açın.'
 		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Yeni sorumlu', value: '{{toConsultantName}}' },
-			{ label: 'Devir tarihi', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Danışmanlığı aç', href: '{{requestUrl}}' },
-		footnote: 'Önceki yazışmalara erişiminiz devirle birlikte sona erer.',
+		cta: { label: 'Dosyayı aç', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'Uzmanlar arası paylaşımda yeni geri bildirim',
-		preheader:
-			'Uzmanlar arası paylaşımda sizin için bir geri bildirim var.',
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
 		headline: 'Uzmanlar arası paylaşımda yeni geri bildirim',
 		paragraphs: [
 			'Danışmanlıklarınızdan biriyle ilgili korumalı uzmanlar arası paylaşımda yeni bir geri bildirim var.',
 			'İçeriği oturum açtıktan sonra şifreli olarak görürsünüz.'
-		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Geliş', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Geri bildirimi oku', href: '{{messageUrl}}' },
 		footnote: 'Uzmanlar arası paylaşım danışana görünmez.',
@@ -314,8 +310,8 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: {
