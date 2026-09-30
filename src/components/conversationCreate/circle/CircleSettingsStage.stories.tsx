@@ -244,6 +244,7 @@ const mockCreateBackend = () => {
 						{
 							chat: {
 								id: 4711,
+								inviteToken: 'Ab3_x-Yz',
 								matrixRoomId:
 									'!story-room:matrix.storybook.test'
 							}
@@ -293,7 +294,9 @@ export const CreateOpensShareDialog: Story = {
 		const dialog = await createAndOpenShareDialog(canvasElement);
 		await expect(
 			within(dialog).getByLabelText('Einladungs-Link')
-		).toHaveValue(`${window.location.origin}/login?gcid=4711`);
+		).toHaveValue(
+			`${window.location.origin}/login?gcid=4711.Ab3_x-Yz&aid=101`
+		);
 		await expect(within(dialog).getByText('Sucht')).toBeVisible();
 	}
 };
