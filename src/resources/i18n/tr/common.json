@@ -3341,7 +3341,8 @@
 			"loadError": {
 				"headline": "Davet şu anda yüklenemedi.",
 				"body": "Lütfen bağlantınızı kontrol edip tekrar deneyin. Davet bağlantınız geçerliliğini korur."
-			}
+			},
+			"loading": "Davet yükleniyor …"
 		}
 	},
 	"releaseNote": {

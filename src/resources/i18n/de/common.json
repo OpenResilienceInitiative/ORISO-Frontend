@@ -3361,7 +3361,8 @@
 			"loadError": {
 				"headline": "Die Einladung konnte gerade nicht geladen werden.",
 				"body": "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihr Einladungslink bleibt gültig."
-			}
+			},
+			"loading": "Die Einladung wird geladen …"
 		}
 	},
 	"releaseNote": {

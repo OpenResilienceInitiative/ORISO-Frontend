@@ -75,7 +75,10 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
-import { GroupInviteLoadError } from './groupInviteEntry/GroupInviteLoadError';
+import {
+	GroupInviteLoadError,
+	GroupInviteLoading
+} from './groupInviteEntry/GroupInviteLoadError';
 import {
 	getGroupJoin,
 	resolveGroupInviteEntry
@@ -761,7 +764,13 @@ export const Registration = () => {
 				aid={inviteAgencyId}
 				onRetry={retryRegistrationData}
 			/>
-		) : null;
+		) : (
+			<GroupInviteLoading
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+			/>
+		);
 	}
 
 	if (inviteEntry === 'entry') {

@@ -3341,7 +3341,8 @@
 			"loadError": {
 				"headline": "L'invitation n'a pas pu être chargée pour le moment.",
 				"body": "Veuillez vérifier votre connexion et réessayer. Votre lien d'invitation reste valable."
-			}
+			},
+			"loading": "Chargement de l'invitation …"
 		}
 	},
 	"releaseNote": {

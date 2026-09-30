@@ -3307,7 +3307,8 @@
 			"loadError": {
 				"headline": "The invitation could not be loaded right now.",
 				"body": "Please check your connection and try again. Your invitation link stays valid."
-			}
+			},
+			"loading": "Loading the invitation …"
 		}
 	},
 	"releaseNote": {

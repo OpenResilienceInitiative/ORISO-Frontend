@@ -406,11 +406,14 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(screen.getByRole('alert')).toBeTruthy();
 	});
 
-	it('keeps the entry while its data is only still loading', () => {
+	it('shows a loading indicator, not a blank page, while the entry data loads', () => {
 		renderAt('?gcid=19&aid=19', { agency, zipcode: '00000' });
 
 		expect(screen.queryByRole('alert')).toBeNull();
 		expect(screen.queryByTestId('step-body')).toBeNull();
+		expect(screen.getByRole('status').getAttribute('aria-label')).toBe(
+			'registration.groupInvite.loading'
+		);
 	});
 
 	it('leaves an ordinary registration untouched', () => {
