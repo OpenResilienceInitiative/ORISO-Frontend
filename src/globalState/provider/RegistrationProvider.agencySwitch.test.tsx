@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { useContext } from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	RegistrationContext,
@@ -85,9 +86,12 @@ const renderProvider = (urlTopic: { id: number } | null = null) =>
 				zipcode: undefined
 			}}
 		>
-			<RegistrationProvider>
-				<Probe />
-			</RegistrationProvider>
+			{/* The provider reads the invite `gcid` from the route (#1499). */}
+			<MemoryRouter>
+				<RegistrationProvider>
+					<Probe />
+				</RegistrationProvider>
+			</MemoryRouter>
 		</UrlParamsContext.Provider>
 	);
 

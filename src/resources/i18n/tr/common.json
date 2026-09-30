@@ -1180,6 +1180,15 @@
 			"done": "Tamam",
 			"durationValue": "{{value}} sa",
 			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
+		},
+		"notMember": {
+			"headline": "Bu konuşma grubunun bir parçası değilsiniz.",
+			"body": "Bu grubu yalnızca moderatörler ve onların eklediği kişiler açabilir. Birlikte moderatörlük yapmanız gerekiyorsa moderatörden sizi eklemesini isteyin.",
+			"back": "Konuşmalarıma dön"
+		},
+		"accessUnavailable": {
+			"headline": "Bu konuşma grubu şu anda açılamıyor.",
+			"body": "Sunucu bu grubun bu hesaba açık olduğunu doğrulamadı. Lütfen tekrar deneyin."
 		}
 	},
 	"help": {
@@ -3200,6 +3209,7 @@
 			},
 			"temporary": {
 				"join": "Katıl",
+				"joinGroup": "Gruba katıl",
 				"toggleOff": "Hesap oluştur",
 				"toggleOn": "Hesap açmadan katıl",
 				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
