@@ -23,9 +23,21 @@ type EmailPreference =
  */
 const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 	'neue-nachricht': { kind: 'descriptor', eventTypes: ['message.new'] },
+	'neue-nachricht-beratung': {
+		kind: 'descriptor',
+		eventTypes: ['message.new']
+	},
 	'willkommen': { kind: 'unmapped' },
 	'passwort-zuruecksetzen': { kind: 'unmapped' },
 	'termin': { kind: 'unmapped' },
+	'selbsthilfe-termin-bestaetigt-teilnahme': { kind: 'unmapped' },
+	'selbsthilfe-termin-verschoben-teilnahme': { kind: 'unmapped' },
+	'selbsthilfe-termin-abgesagt-teilnahme': { kind: 'unmapped' },
+	'selbsthilfe-termin-erinnerung-teilnahme': { kind: 'unmapped' },
+	'selbsthilfe-termin-bestaetigt-beratung': { kind: 'unmapped' },
+	'selbsthilfe-termin-verschoben-beratung': { kind: 'unmapped' },
+	'selbsthilfe-termin-abgesagt-beratung': { kind: 'unmapped' },
+	'selbsthilfe-termin-erinnerung-beratung': { kind: 'unmapped' },
 	'beraterin-kontakt': { kind: 'unmapped' },
 	'anfrage-zugewiesen': { kind: 'unmapped' },
 	'systemhinweis': { kind: 'unmapped' },

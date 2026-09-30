@@ -5,6 +5,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} is a service provided by {{orgName}}.',
@@ -61,6 +62,7 @@ const legalAssurance =
 	'This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.';
 
 export const en: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('en', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'You have a new message',
 		preheader: 'A new message is waiting for you in your counselling.',
@@ -73,6 +75,19 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'You do not have to reply straight away. The message stays in your inbox as long as you need it.',
 		assurance,
+		footer
+	},
+
+	'neue-nachricht-beratung': {
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
+		headline: 'A new message for you',
+		paragraphs: [
+			'There is a new message in one of your counselling cases.',
+			'Sign in to read the message in the secure counselling area.'
+		],
+		cta: { label: 'Open message', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
 		footer
 	},
 
@@ -244,56 +259,38 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Handover requested',
-		preheader: 'A counselling case is to be handed over to you.',
-		headline: 'A counselling case is to be handed over to you',
+		subject: 'New notification',
+		preheader: 'Please sign in.',
+		headline: 'A request about your counselling',
 		paragraphs: [
-			'{{fromConsultantName}} has asked to hand an ongoing counselling case over to you.',
-			'Please check in the counselling area whether you can take it on.'
+			'A counsellor is asking for your consent to a change in your counselling.',
+			'Sign in to review the request in the secure area.'
 		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Requested by', value: '{{fromConsultantName}}' },
-			{ label: 'Requested on', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Review handover', href: '{{requestUrl}}' },
-		footnote:
-			'Until you agree, the case stays with the counsellor who has it now.',
-		assurance: staffAssurance,
+		cta: { label: 'Review request', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Handover confirmed',
-		preheader: 'Responsibility has changed.',
+		subject: 'The handover is confirmed',
+		preheader: 'The handover is confirmed',
 		headline: 'The handover is confirmed',
 		paragraphs: [
-			'The counselling case has been taken on. {{toConsultantName}} is now responsible.',
-			'The person seeking advice has been informed in the application.'
+			'You are now responsible for this counselling case.',
+			'Open the case in the secure counselling area.'
 		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Now with', value: '{{toConsultantName}}' },
-			{ label: 'Handed over on', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Open counselling', href: '{{requestUrl}}' },
-		footnote:
-			'Your access to the previous conversation ends with the handover.',
+		cta: { label: 'Open counselling case', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'New reply in the professional exchange',
-		preheader: 'A reply is waiting for you in the professional exchange.',
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
 		headline: 'New reply in the professional exchange',
 		paragraphs: [
 			'There is a new reply in the protected professional exchange about one of your counselling cases.',
 			'You will see the content encrypted, after signing in.'
-		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Received', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Read reply', href: '{{messageUrl}}' },
 		footnote:
@@ -463,6 +460,7 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Your email address has been changed',
 		preheader: 'The change is active from now on.',
 		headline: 'Your email address has been changed',
