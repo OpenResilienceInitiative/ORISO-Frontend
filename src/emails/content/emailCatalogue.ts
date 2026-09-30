@@ -9,6 +9,8 @@
 export const EMAIL_IDS = [
 	// Designed first, from the imported design project.
 	'neue-nachricht',
+	// Same message preference, with copy addressed to the consultant (#869).
+	'neue-nachricht-beratung',
 	'willkommen',
 	'passwort-zuruecksetzen',
 	'termin',
@@ -206,6 +208,7 @@ export const EMAIL_LANGUAGE_LOCALES: readonly EmailLocale[] =
 
 export const EMAIL_LABELS: Record<EmailId, string> = {
 	'neue-nachricht': 'Neue Nachricht',
+	'neue-nachricht-beratung': 'Neue Nachricht für die Beratung',
 	'willkommen': 'Willkommen',
 	'passwort-zuruecksetzen': 'Passwort zurücksetzen',
 	'termin': 'Termin',
@@ -261,6 +264,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 	{
 		'neue-nachricht': 'asker',
+		'neue-nachricht-beratung': 'consultant',
 		'willkommen': 'asker',
 		'passwort-zuruecksetzen': 'asker',
 		'termin': 'asker',
@@ -278,7 +282,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'neue-anfrage': 'consultant',
 		'direkte-anfrage': 'consultant',
 		'tagesuebersicht': 'consultant',
-		'uebergabe-angefragt': 'consultant',
+		'uebergabe-angefragt': 'asker',
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
 		'mitteilung': 'asker',
@@ -305,6 +309,7 @@ export const EMAIL_CLASS: Record<
 	'security' | 'legal' | 'personal' | 'operational' | 'requested' | 'service'
 > = {
 	'neue-nachricht': 'personal',
+	'neue-nachricht-beratung': 'operational',
 	'willkommen': 'personal',
 	'passwort-zuruecksetzen': 'security',
 	'termin': 'personal',

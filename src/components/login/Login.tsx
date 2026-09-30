@@ -43,6 +43,7 @@ import { VALIDITY_INVALID } from '../registration/registrationHelpers';
 import { buildRegistrationLink } from './groupChatRegistrationLink';
 import { groupAppointmentRedirect } from './groupAppointmentRedirect';
 import { resolveExistingSession } from './existingSessionLookup';
+import { useGroupInviteEntryRedirect } from '../registration/groupInviteEntry/useGroupInviteEntryRedirect';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
@@ -108,9 +109,13 @@ export const Login = () => {
 	const { Stage } = useContext(GlobalComponentContext);
 	const gcid = useSearchParam<string>('gcid');
 	const appointmentSeriesId = useSearchParam<string>('seriesId');
+	const returnTo = useSearchParam<string>('returnTo');
+	const inviteAgencyId = useSearchParam<string>('aid');
+	const openingGroupInviteEntry = useGroupInviteEntryRedirect();
 	const registrationUrl = buildRegistrationLink(
 		settings.urls.toRegistration,
-		gcid
+		gcid,
+		inviteAgencyId
 	);
 	const magicToken = useSearchParam<string>('magicToken');
 	const isFirstVisit = useIsFirstVisit();
@@ -257,7 +262,7 @@ export const Login = () => {
 						// Entering the authenticated app is a cold document load.
 						redirectToApp(undefined, appointment);
 					} else if (gcid) {
-						redirectToApp(gcid);
+						redirectToApp(gcid, { returnTo });
 					}
 				},
 				onFailure: () => {
@@ -274,7 +279,13 @@ export const Login = () => {
 				existingSessionLookupRef.current += 1;
 			}
 		};
-	}, [appointmentSeriesId, gcid, showConsultantLoginBlockedError, translate]);
+	}, [
+		appointmentSeriesId,
+		gcid,
+		returnTo,
+		showConsultantLoginBlockedError,
+		translate
+	]);
 
 	useEffect(() => {
 		if (consumeConsultantLoginBlocked()) {
@@ -345,7 +356,7 @@ export const Login = () => {
 					   users work around by reloading. Registration keeps its
 					   client-side nav; it has a handover animation to cover
 					   the gap, and login does not. */
-					return redirectToApp(gcid, { restorePath });
+					return redirectToApp(gcid, { restorePath, returnTo });
 				}
 			}),
 		[
@@ -355,6 +366,7 @@ export const Login = () => {
 			initLocale,
 			consultant,
 			gcid,
+			returnTo,
 			showConsultantLoginBlockedError
 		]
 	);
@@ -562,6 +574,10 @@ export const Login = () => {
 	const onPasswordResetClick = () => {
 		navigate('/password-reset');
 	};
+
+	if (openingGroupInviteEntry) {
+		return null;
+	}
 
 	return (
 		<>

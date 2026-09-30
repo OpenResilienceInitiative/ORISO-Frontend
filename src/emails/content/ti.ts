@@ -87,6 +87,19 @@ export const ti: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሓድሽ መልእኽቲ ንዓኹም',
+		paragraphs: [
+			'ኣብ ሓደ ካብቶም እትከታተልዎም ጉዳያት ምኽሪ ሓድሽ መልእኽቲ ኣሎ።',
+			'ነቲ መልእኽቲ ኣብ ውሑስ ቦታ ንምንባብ እተዉ።'
+		],
+		cta: { label: 'መልእኽቲ ክፈቱ', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'እንኳዕ ናብ {{platformName}} ብደሓን መጻእኩም',
 		preheader: 'ስም ኣልቦ መእተዊኹም ተዳልዩ ኣሎ – ቀጺሉ ዘሎ ስጉምቲ እዚ እዩ።',
@@ -113,7 +126,11 @@ export const ti: Record<EmailId, EmailContent> = {
 		cta: { label: 'መሕለፊ ቃል ኣሐድሱ', href: '{{resetUrl}}' },
 		footnote: 'ንስኹም ዘይሓተትኩምዎ እንተኾይኑ፣ ነዛ ኢመይል ግደፍዋ። መሕለፊ ቃልኩም ከምዘሎ ይጸንሕ።',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'እዛ ኢመይል ንምሕዳስ መሕለፊ ቃል እያ፣ ክትስረዝ ኣይትኽእልን። በጃኹም ኣይትምለስዋ።'
+		}
 	},
 
 	'termin': {
@@ -242,54 +259,38 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'ምትሕልላፍ ተሓቲቱ',
-		preheader: 'ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ።',
-		headline: 'ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ',
+		subject: 'ሓድሽ ምልክታ',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሕቶ ብዛዕባ ምኽርኹም',
 		paragraphs: [
-			'{{fromConsultantName}} ዝካየድ ዘሎ ምኽሪ ናባኹም ክመሓላለፍ ይሓትት ኣሎ።',
-			'በጃኹም ኣብ ክፍሊ ምኽሪ ክትርከብዎ ትኽእሉ እንተኾንኩም ኣረጋግጹ።'
+			'ሓደ ኣማኻሪ ንለውጢ ኣብ ምኽርኹም ፍቓድኩም ይሓትት ኣሎ።',
+			'ነቲ ሕቶ ኣብ ውሑስ ቦታ ንምርኣይ እተዉ።'
 		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ዝሓተተ', value: '{{fromConsultantName}}' },
-			{ label: 'ዝተሓተተሉ', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'ምትሕልላፍ ኣረጋግጹ', href: '{{requestUrl}}' },
-		footnote: 'ክሳብ እትሰማምዑ፣ እቲ ምኽሪ ኣብ ትሕቲ እቲ ናይ ቅድሚ ሕጂ ክኢላ ይጸንሕ።',
-		assurance: staffAssurance,
+		cta: { label: 'ሕቶ ርኣዩ', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'ምትሕልላፍ ተረጋጊጹ',
-		preheader: 'እቲ ሓላፍነት ተቐዪሩ።',
+		subject: 'እቲ ምትሕልላፍ ተረጋጊጹ',
+		preheader: 'እቲ ምትሕልላፍ ተረጋጊጹ',
 		headline: 'እቲ ምትሕልላፍ ተረጋጊጹ',
 		paragraphs: [
-			'እቲ ምኽሪ ተረኪቡ። ካብ ሕጂ ንደሓር {{toConsultantName}} ሓላፍነት ይወስድ።',
-			'እቲ ምኽሪ ዝሓተተ ሰብ ኣብ መተግበሪ ተሓቢሩ ኣሎ።'
+			'ካብ ሕጂ ንደሓር ነዚ ምኽሪ እዚ ሓላፍነት ትወስዱ።',
+			'ነቲ ጉዳይ ኣብ ውሑስ ቦታ ክፈቱ።'
 		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ሓድሽ ሓላፍነት', value: '{{toConsultantName}}' },
-			{ label: 'ዝተመሓላለፈሉ', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'ምኽሪ ክፈቱ', href: '{{requestUrl}}' },
-		footnote: 'ናብቲ ናይ ቅድሚ ሕጂ ታሪኽ ዝነበረኩም መእተዊ ምስቲ ምትሕልላፍ ይውዳእ።',
+		cta: { label: 'ጉዳይ ክፈቱ', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ',
-		preheader: 'ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።',
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
 		headline: 'ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ',
 		paragraphs: [
 			'ብዛዕባ ሓደ ካብ ምኽርታትኩም ኣብ ዝካየድ ውሑስ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ ኣሎ።',
 			'ትሕዝቶኡ ድሕሪ ምእታውኩም ተመስጢሩ ትርእይዎ።'
-		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ዝኣተወሉ', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'ግብረ መልሲ ኣንብቡ', href: '{{messageUrl}}' },
 		footnote: 'እቲ ሞያዊ ልውውጥ ነቲ ምኽሪ ዝሓተተ ሰብ ኣይረአን።',
@@ -298,8 +299,8 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'ናብ {{platformName}}', href: '{{loginUrl}}' },

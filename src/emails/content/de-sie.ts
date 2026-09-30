@@ -96,6 +96,19 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine neue Nachricht für Sie',
+		paragraphs: [
+			'In einer Ihrer Beratungen liegt eine neue Nachricht vor.',
+			'Melden Sie sich an, um die Nachricht im geschützten Bereich zu lesen.'
+		],
+		cta: { label: 'Nachricht öffnen', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Willkommen bei {{platformName}}',
 		preheader: 'Ihr anonymer Zugang ist eingerichtet – so geht es weiter.',
@@ -124,7 +137,11 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail einfach. Ihr Passwort bleibt dann unverändert.',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail gehört zum Zurücksetzen Ihres Passworts und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	},
 
 	'termin': {
@@ -260,56 +277,38 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Übergabe angefragt',
-		preheader: 'Eine Beratung soll an Sie übergeben werden.',
-		headline: 'Eine Beratung soll an Sie übergeben werden',
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine Anfrage zu Ihrer Beratung',
 		paragraphs: [
-			'{{fromConsultantName}} bittet darum, eine laufende Beratung an Sie zu übergeben.',
-			'Bitte prüfen Sie im Beratungsbereich, ob Sie die Beratung übernehmen können.'
+			'Eine Beratungsperson bittet um Ihre Zustimmung zu einer Änderung Ihrer Beratung.',
+			'Melden Sie sich an, um die Anfrage im geschützten Bereich zu prüfen.'
 		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Angefragt von', value: '{{fromConsultantName}}' },
-			{ label: 'Angefragt am', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Übergabe prüfen', href: '{{requestUrl}}' },
-		footnote:
-			'Bis Sie zustimmen, bleibt die Beratung bei der bisherigen Fachkraft.',
-		assurance: staffAssurance,
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Übergabe bestätigt',
-		preheader: 'Die Zuständigkeit hat gewechselt.',
+		subject: 'Die Übergabe ist bestätigt',
+		preheader: 'Die Übergabe ist bestätigt',
 		headline: 'Die Übergabe ist bestätigt',
 		paragraphs: [
-			'Die Beratung wurde übernommen. Ab sofort ist {{toConsultantName}} zuständig.',
-			'Die ratsuchende Person wurde in der Anwendung darüber informiert.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Neue Zuständigkeit', value: '{{toConsultantName}}' },
-			{ label: 'Übergeben am', value: '{{handoverAt}}' }
+			'Sie sind jetzt für diese Beratung zuständig.',
+			'Öffnen Sie die Beratung im geschützten Bereich.'
 		],
 		cta: { label: 'Beratung öffnen', href: '{{requestUrl}}' },
-		footnote:
-			'Ihr Zugriff auf den bisherigen Verlauf endet mit der Übergabe.',
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'Neue Rückmeldung im Fachaustausch',
-		preheader: 'Im Fachaustausch liegt eine Rückmeldung für Sie.',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
 		headline: 'Neue Rückmeldung im Fachaustausch',
 		paragraphs: [
 			'Im geschützten Fachaustausch zu einer Ihrer Beratungen liegt eine neue Rückmeldung.',
 			'Den Inhalt sehen Sie verschlüsselt nach der Anmeldung.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Eingang', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Rückmeldung lesen', href: '{{messageUrl}}' },
 		footnote:
@@ -319,8 +318,8 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Zu {{platformName}}', href: '{{loginUrl}}' },

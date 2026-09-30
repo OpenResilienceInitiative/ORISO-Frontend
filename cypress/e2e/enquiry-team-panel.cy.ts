@@ -74,7 +74,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 	before(() => startWebSocketServer());
 	after(() => closeWebSocketServer());
 	beforeEach(() => mockWebSocket());
-	it('shows the complete original enquiry beside its automatic team panel', () => {
+	const verifyTeamPanel = (archived: boolean) => () => {
 		const width = Number(Cypress.env('enquiryViewportWidth') || 1440);
 		const height = Number(Cypress.env('enquiryViewportHeight') || 1000);
 		cy.viewport(width, height);
@@ -159,17 +159,21 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			{ sessions: [], total: 0 }
 		);
 		cy.intercept('GET', '**/sessions/1375/supervisors*', []);
-		cy.intercept('GET', '**/sessions/1375/team-discussion', {
-			statusCode: 204
-		});
+		cy.intercept(
+			'GET',
+			'**/sessions/1375/team-discussion',
+			archived
+				? { matrixRoomId: teamRoomId, status: 'ARCHIVED' }
+				: { statusCode: 204 }
+		).as('readTeam');
 		cy.intercept('POST', '**/sessions/1375/team-discussion', {
 			matrixRoomId: teamRoomId,
-			status: 'OPEN'
+			status: archived ? 'ARCHIVED' : 'OPEN'
 		}).as('openTeam');
 		cy.fastLogin({ userId: USER_CONSULTANT });
 		cy.visit('/sessions/consultant/sessionPreview');
 		cy.get('[data-cy="session-list-item"]').first().click();
-		cy.wait('@openTeam');
+		cy.wait(archived ? '@readTeam' : '@openTeam');
 		if (width >= 900) {
 			cy.get('[data-cy="stage-main"]').should('contain.text', text);
 			cy.get(
@@ -194,6 +198,26 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 				nodes[0].ownerDocument.defaultView.innerWidth
 			);
 		});
+		if (archived) {
+			cy.get('[data-cy="stage-panel"]')
+				.should(
+					'contain.text',
+					'Noch keine Nachrichten in diesem Gespräch.'
+				)
+				.and(
+					'not.contain.text',
+					'Schreiben Sie unten die erste Nachricht'
+				);
+			cy.get('[data-cy="stage-panel"] [contenteditable="true"]').should(
+				'not.exist'
+			);
+			cy.screenshot(`enquiry-team-archived-empty-${width}`, {
+				capture: 'viewport',
+				scale: true,
+				disableTimersAndAnimations: false
+			});
+			return;
+		}
 		cy.intercept('POST', '**/service/error-reports', { statusCode: 204 });
 		const reply = 'Wir besprechen diese Anfrage im Team.';
 		cy.intercept(
@@ -380,13 +404,21 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 					footerRect.right - team.right,
 					'comfortable right inset'
 				).to.be.closeTo(32, 1);
-			} else {
+			} else if (accept.width + team.width + 16 > footerRect.width - 32) {
 				expect(team.top, 'mobile actions stack').to.be.at.least(
 					accept.bottom
 				);
 				expect(
 					(team.left + team.right) / 2,
 					'mobile team action centered'
+				).to.be.closeTo((footerRect.left + footerRect.right) / 2, 1);
+			} else {
+				expect(team.top, 'tablet actions share a row').to.equal(
+					accept.top
+				);
+				expect(
+					(accept.left + team.right) / 2,
+					'tablet actions centered together'
 				).to.be.closeTo((footerRect.left + footerRect.right) / 2, 1);
 			}
 		});
@@ -403,12 +435,23 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.get('[data-cy="stage-main"]').should('contain.text', text);
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// The accepted case can disappear from this colleague's authorized lookup.
+		// Re-register the same `room*` glob used at setup: a later `/1375` or
+		// `room?*` intercept never wins against that stub.
+		cy.intercept('GET', '**/service/users/sessions/room*', {
+			statusCode: 204
+		});
 		cy.intercept('GET', '**/service/users/sessions/room/1375', {
 			statusCode: 204
 		});
-		cy.intercept('GET', '**/service/users/sessions/room?*', {
-			statusCode: 204
-		});
+		// Clearing a disappeared enquiry also verifies the handover-access lookup.
+		cy.intercept('GET', '**/service/users/case-handover/candidates?*', {
+			sessions: [],
+			total: 0
+		}).as('emptyHandoverCandidates');
+		cy.reload();
+		cy.wait('@emptyHandoverCandidates')
+			.its('response.statusCode')
+			.should('eq', 200);
 		cy.get('.session__acceptance', { timeout: 12000 }).should('not.exist');
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// A colleague can accept while this consultant only watches the queue.
@@ -477,5 +520,13 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		);
 		cy.wrap(refreshCounts, { timeout: 22000 }).should('include', 30);
 		cy.get('[data-cy="session-list-item"]').should('have.length', 30);
-	});
+	};
+	it(
+		'shows the complete original enquiry beside its automatic team panel',
+		verifyTeamPanel(false)
+	);
+	it(
+		'shows an empty archived team discussion without inviting a reply',
+		verifyTeamPanel(true)
+	);
 });

@@ -10,6 +10,8 @@ export interface FailedSend {
 	threadRootId?: string | null;
 	transportMessage: string;
 	isAside: boolean;
+	/** Original explicit compose intent, independent of a later retry view. */
+	feedbackMailIntent?: boolean;
 	replyToEventId?: string | null;
 	mentionedUserIds: string[];
 	/** The room the composer sent to (supervision side room); empty = the session's own room. */

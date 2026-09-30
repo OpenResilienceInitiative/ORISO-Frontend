@@ -89,6 +89,19 @@ export const fr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'neue-nachricht-beratung': {
+		subject: 'Nouveau message sur {{platformName}}',
+		preheader: 'Veuillez vous connecter.',
+		headline: 'Un nouveau message pour vous',
+		paragraphs: [
+			'Un nouveau message est disponible dans l’un de vos accompagnements.',
+			'Connectez-vous pour lire le message dans votre espace sécurisé.'
+		],
+		cta: { label: 'Ouvrir le message', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
+		footer
+	},
+
 	'willkommen': {
 		subject: 'Bienvenue sur {{platformName}}',
 		preheader: 'Votre accès anonyme est prêt – voici la suite.',
@@ -117,7 +130,11 @@ export const fr: Record<EmailId, EmailContent> = {
 		footnote:
 			'Si vous n’êtes pas à l’origine de cette demande, ignorez simplement cet e-mail. Votre mot de passe restera inchangé.',
 		assurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Cet e-mail concerne la réinitialisation de votre mot de passe et ne peut pas être désactivé. Merci de ne pas y répondre.'
+		}
 	},
 
 	'termin': {
@@ -253,56 +270,38 @@ export const fr: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Transfert demandé',
-		preheader: 'Une consultation doit vous être transférée.',
-		headline: 'Une consultation doit vous être transférée',
+		subject: 'Nouvelle notification',
+		preheader: 'Veuillez vous connecter.',
+		headline: 'Une demande concernant votre accompagnement',
 		paragraphs: [
-			'{{fromConsultantName}} demande à vous transférer une consultation en cours.',
-			'Merci de vérifier dans l’espace de consultation si vous pouvez la reprendre.'
+			'Une personne chargée de votre accompagnement demande votre accord pour un changement.',
+			'Connectez-vous pour examiner la demande dans votre espace sécurisé.'
 		],
-		panel: [
-			{ label: 'Dossier', value: '{{caseReference}}' },
-			{ label: 'Demandé par', value: '{{fromConsultantName}}' },
-			{ label: 'Demandé le', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Examiner le transfert', href: '{{requestUrl}}' },
-		footnote:
-			'Tant que vous n’avez pas accepté, la consultation reste chez le professionnel actuel.',
-		assurance: staffAssurance,
+		cta: { label: 'Examiner la demande', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Transfert confirmé',
-		preheader: 'La responsabilité a changé.',
+		subject: 'Le transfert est confirmé',
+		preheader: 'Le transfert est confirmé',
 		headline: 'Le transfert est confirmé',
 		paragraphs: [
-			'La consultation a été reprise. {{toConsultantName}} en est responsable à partir de maintenant.',
-			'La personne qui demande conseil en a été informée dans l’application.'
+			'Vous êtes désormais responsable de cet accompagnement.',
+			'Ouvrez le dossier dans votre espace sécurisé.'
 		],
-		panel: [
-			{ label: 'Dossier', value: '{{caseReference}}' },
-			{ label: 'Nouvelle responsabilité', value: '{{toConsultantName}}' },
-			{ label: 'Transféré le', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Ouvrir la consultation', href: '{{requestUrl}}' },
-		footnote:
-			'Votre accès à l’historique précédent prend fin avec le transfert.',
+		cta: { label: 'Ouvrir le dossier', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'Nouveau retour dans l’échange entre professionnels',
-		preheader: 'Un retour vous attend dans l’échange entre professionnels.',
+		subject: 'Nouveau message sur {{platformName}}',
+		preheader: 'Veuillez vous connecter.',
 		headline: 'Nouveau retour dans l’échange entre professionnels',
 		paragraphs: [
 			'Un nouveau retour vous attend dans l’échange protégé entre professionnels au sujet de l’une de vos consultations.',
 			'Vous en verrez le contenu, chiffré, après votre connexion.'
-		],
-		panel: [
-			{ label: 'Dossier', value: '{{caseReference}}' },
-			{ label: 'Reçu le', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Lire le retour', href: '{{messageUrl}}' },
 		footnote:
@@ -312,8 +311,8 @@ export const fr: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Nouveau message sur {{platformName}}',
+		preheader: 'Veuillez vous connecter.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Aller sur {{platformName}}', href: '{{loginUrl}}' },
