@@ -321,8 +321,8 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Zu {{platformName}}', href: '{{loginUrl}}' },

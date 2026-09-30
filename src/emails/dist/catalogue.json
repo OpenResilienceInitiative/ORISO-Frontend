@@ -720,8 +720,6 @@
 			"class": "service",
 			"unsubscribable": true,
 			"placeholders": [
-				"{{messageSubject}}",
-				"{{messagePreview}}",
 				"{{messageHeadline}}",
 				"{{messageBody}}",
 				"{{loginUrl}}",
@@ -733,38 +731,38 @@
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "Neue Nachricht auf {{platformName}}",
+					"preheader": "Bitte melden Sie sich an."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "Neue Nachricht auf {{platformName}}",
+					"preheader": "Bitte melde dich an."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "New message on {{platformName}}",
+					"preheader": "Please sign in."
 				},
 				"fr": {
 					"lang": "fr",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "Nouveau message sur {{platformName}}",
+					"preheader": "Veuillez vous connecter."
 				},
 				"ru": {
 					"lang": "ru",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "Новое сообщение на {{platformName}}",
+					"preheader": "Пожалуйста, войдите в систему."
 				},
 				"ti": {
 					"lang": "ti",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "ሓድሽ መልእኽቲ ኣብ {{platformName}}",
+					"preheader": "በጃኹም እተዉ።"
 				},
 				"tr": {
 					"lang": "tr",
-					"subject": "{{messageSubject}}",
-					"preheader": "{{messagePreview}}"
+					"subject": "{{platformName}} üzerinde yeni mesaj",
+					"preheader": "Lütfen giriş yapın."
 				}
 			}
 		},

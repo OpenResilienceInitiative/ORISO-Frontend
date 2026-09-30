@@ -312,8 +312,8 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Новое сообщение на {{platformName}}',
+		preheader: 'Пожалуйста, войдите в систему.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'На {{platformName}}', href: '{{loginUrl}}' },
