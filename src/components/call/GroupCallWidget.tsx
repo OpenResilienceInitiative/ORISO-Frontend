@@ -5,6 +5,7 @@
  */
 
 import React, { useCallback, useEffect, useState, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { callManager, CallData } from '../../services/CallManager';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -25,6 +26,7 @@ const GROUP_ASPECT = GROUP_DEFAULT_WIDTH / GROUP_DEFAULT_HEIGHT;
 const GROUP_MIN = { width: 280, height: 180 };
 
 export const GroupCallWidget: React.FC = () => {
+	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
 	const [callData, setCallData] = useState<CallData | null>(null);
 	const [callState, setCallState] = useState<string | null>(null);
@@ -215,7 +217,11 @@ export const GroupCallWidget: React.FC = () => {
 		// Element Call iframe opens its own capture.
 		releaseWindowMediaStream('__preRequestedMediaStream');
 		if (widget.error) {
-			alert(`Failed to start call: ${widget.error.message}`);
+			alert(
+				t('calls.group.startFailed', {
+					message: widget.error.message
+				})
+			);
 			closeCallSurface();
 			return;
 		}
@@ -227,6 +233,7 @@ export const GroupCallWidget: React.FC = () => {
 		closeCallSurface,
 		elementCallUrl,
 		shouldPrepareWidget,
+		t,
 		widget.error,
 		widget.url
 	]);
@@ -428,26 +435,26 @@ export const GroupCallWidget: React.FC = () => {
 						<button
 							className="element-call-close"
 							onClick={handleDecline}
-							aria-label="Close call"
+							aria-label={t('calls.group.close')}
 						>
 							×
 						</button>
 						<div className="incoming-call-content">
 							<div className="call-avatar-large">G</div>
-							<h2>Incoming Call</h2>
-							<p>Someone is calling...</p>
+							<h2>{t('calls.group.incomingTitle')}</h2>
+							<p>{t('calls.group.incomingDescription')}</p>
 							<div className="incoming-call-actions">
 								<button
 									className="btn-answer"
 									onClick={handleAnswer}
 								>
-									Answer
+									{t('calls.answer')}
 								</button>
 								<button
 									className="btn-decline"
 									onClick={handleDecline}
 								>
-									Decline
+									{t('calls.decline')}
 								</button>
 							</div>
 						</div>
@@ -470,7 +477,7 @@ export const GroupCallWidget: React.FC = () => {
 						<button
 							className="element-call-close"
 							onClick={handleEndCall}
-							aria-label="Close call"
+							aria-label={t('calls.group.close')}
 						>
 							×
 						</button>
@@ -482,8 +489,8 @@ export const GroupCallWidget: React.FC = () => {
 									e.stopPropagation();
 									applyAutoFit();
 								}}
-								aria-label="Auto-fit call window"
-								title="Auto-fit"
+								aria-label={t('calls.group.autoFitAria')}
+								title={t('calls.group.autoFit')}
 							>
 								⛶
 							</button>
@@ -494,20 +501,20 @@ export const GroupCallWidget: React.FC = () => {
 							aria-label={
 								isMobileView
 									? isMobileCompact
-										? 'Open full view'
-										: 'Switch to small view'
+										? t('calls.group.openFullView')
+										: t('calls.group.switchToSmallView')
 									: isFullscreen
-										? 'Exit full screen'
-										: 'Enter full screen'
+										? t('calls.group.exitFullScreen')
+										: t('calls.group.enterFullScreen')
 							}
 							title={
 								isMobileView
 									? isMobileCompact
-										? 'Full view'
-										: 'Small view'
+										? t('calls.group.fullView')
+										: t('calls.group.smallView')
 									: isFullscreen
-										? 'Exit full screen'
-										: 'Full screen'
+										? t('calls.group.exitFullScreen')
+										: t('calls.group.fullScreen')
 							}
 						>
 							{isMobileView
@@ -525,7 +532,7 @@ export const GroupCallWidget: React.FC = () => {
 							className="element-call-iframe"
 							allow="camera; microphone; display-capture; autoplay; fullscreen; clipboard-write; screen-wake-lock"
 							allowFullScreen
-							title="Group video call"
+							title={t('calls.group.iframeTitle')}
 						/>
 						{!isMobileView &&
 							!isFullscreen &&
@@ -539,7 +546,9 @@ export const GroupCallWidget: React.FC = () => {
 											? 'horizontal'
 											: 'vertical'
 									}
-									aria-label={`Resize video call window (${edge})`}
+									aria-label={t('calls.resizeAria', {
+										edge
+									})}
 									onPointerDown={(e) =>
 										handleResizePointerDown(e, edge)
 									}
@@ -552,14 +561,14 @@ export const GroupCallWidget: React.FC = () => {
 						<button
 							className="element-call-close"
 							onClick={handleEndCall}
-							aria-label="Close call"
+							aria-label={t('calls.group.close')}
 						>
 							×
 						</button>
 						<div className="connecting-content">
 							<div className="call-avatar-large">G</div>
-							<h2>Connecting...</h2>
-							<p>Setting up call</p>
+							<h2>{t('calls.group.connecting')}</h2>
+							<p>{t('calls.group.settingUp')}</p>
 						</div>
 					</div>
 				)}

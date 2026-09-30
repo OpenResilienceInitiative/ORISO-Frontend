@@ -25,6 +25,7 @@ import {
 	EMAIL_LOCALE_LANG,
 	buildEmail,
 	emailIsUnsubscribable,
+	emailShipsInDialect,
 	listEmailPlaceholders
 } from '../index';
 
@@ -110,6 +111,9 @@ const run = async () => {
 			});
 
 			for (const id of EMAIL_IDS) {
+				if (!emailShipsInDialect(id, dialect)) {
+					continue;
+				}
 				const built = buildEmail(id, locale, { dialect });
 
 				if (dialect === 'plain' && locale === 'de-sie') {

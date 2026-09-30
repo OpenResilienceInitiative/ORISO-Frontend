@@ -156,9 +156,9 @@ export const ScheduleRows = ({
 	const MediumRowIcon =
 		MEDIUM_ICONS[
 			resolvePrimaryMediumIcon(
-			isChosen('medium') ? value.modality : undefined,
-			isChosen('medium')
-		)
+				isChosen('medium') ? value.modality : undefined,
+				isChosen('medium')
+			)
 		];
 
 	const variantFor = (row: Exclude<OpenRow, null>, chosen: boolean) => {
@@ -349,13 +349,13 @@ export const ScheduleRows = ({
 					!isChosen('repeat')
 						? repeatLabel
 						: repeatMode === 'interval'
-						? translate(
-								`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
-								value.interval
-							)
-						: translate('groupChat.circle.rows.repeatValue', {
-								count: value.repeatCount
-							})
+							? translate(
+									`groupChat.create.interval.options.${value.interval.toLowerCase()}`,
+									value.interval
+								)
+							: translate('groupChat.circle.rows.repeatValue', {
+									count: value.repeatCount
+								})
 				}
 				variant={variantFor('repeat', isChosen('repeat'))}
 				open={openRow === 'repeat'}

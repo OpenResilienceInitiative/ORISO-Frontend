@@ -21,6 +21,9 @@ import NotificationsOutlinedIcon from '@mui/icons-material/NotificationsOutlined
 import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
+import { BrowserNotification } from './BrowserNotifications';
+import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -71,6 +74,17 @@ export const profileRoutesSettings = (
 				component: ConsultantNotifications,
 				icon: NotificationsOutlinedIcon,
 				column: COLUMN_RIGHT,
+				order: 4
+			},
+			// Legacy per-browser pop-up switch; the cross-device panel owns
+			// this screen once enableNewNotifications is on (#1551).
+			{
+				condition: () =>
+					!settings?.releaseToggles?.enableNewNotifications &&
+					!!isBrowserNotificationSupported(),
+				component: BrowserNotification,
+				icon: NotificationsActiveOutlinedIcon,
+				column: COLUMN_LEFT,
 				order: 4
 			}
 		]

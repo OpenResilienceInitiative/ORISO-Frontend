@@ -98,7 +98,7 @@ controls. TDD red → green per slice; Storybook play tests green (55),
   Gespräche/Anfragen via the new `other` toolbar chip). Nothing leaves the
   chip row silently any more.
 - Pre-dev: two containerd instances on the host; only `k3s ctr -n k8s.io
-  images import` reaches the cluster store (see memory note). Storybook of
+images import` reaches the cluster store (see memory note). Storybook of
   the branch runs on `https://predev.oriso.org/storybook-frontend/`.
 
 ### 2026-09-16, third round (Frank's review of the pre-dev Storybook)
@@ -130,7 +130,7 @@ controls. TDD red → green per slice; Storybook play tests green (55),
 - **Dialog hero icon = the list's icon** (`DisplayFilterDialog.icon`: inbox,
   chats, activity).
 - **Future timeline panel keeps a switch** in sound mode (`In der Liste:
-  Zukünftige Termine`), the table row is gone.
+Zukünftige Termine`), the table row is gone.
 - Pill column caption is **"Anzeigen"** (Frank), show column stays "In der
   Liste" (Zeitstrahl only).
 - **Sound choice per kind** (Frank: "den Ton auswählen, nicht nur an/aus"):
