@@ -841,6 +841,11 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"title": "Änderungen verwerfen?",
+					"description": "Deine Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn du fortfährst, gehen deine Änderungen verloren.",
+					"discard": "Verwerfen und weiter"
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",

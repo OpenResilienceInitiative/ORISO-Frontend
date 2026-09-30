@@ -2504,6 +2504,11 @@
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",
 				"cancel": "İptal",
+				"discardChanges": {
+					"title": "Değişiklikler silinsin mi?",
+					"description": "Bildirim ayarlarınız henüz kaydedilmedi. Devam ederseniz değişiklikleriniz kaybolacak.",
+					"discard": "Sil ve devam et"
+				},
 				"area": {
 					"requests": "Talep",
 					"conversations": "Görüşme",
