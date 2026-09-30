@@ -2,7 +2,7 @@ import * as React from 'react';
 import './localeSwitch.styles';
 import { ReactComponent as LanguageIconOutline } from '../../resources/img/icons/language_outline.svg';
 import { useTranslation } from 'react-i18next';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { UserDataContext, LocaleContext } from '../../globalState';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import {
@@ -56,27 +56,39 @@ export const LocaleSwitch: React.FC<LocaleSwitchProp> = ({
 	const userDataContext = useContext(UserDataContext);
 	const { locale, setLocale, selectableLocales } = useContext(LocaleContext);
 
-	const [requestInProgress, setRequestInProgress] = useState(false);
+	const requestInProgress = useRef(false);
+	// The locale whose PATCH failed. userData keeps the old preferredLanguage
+	// when the request fails, so the guard below stays true; without this the
+	// effect would re-send forever. Cleared when the user picks another one.
+	const rejectedLocale = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (
-			updateUserData &&
-			userDataContext?.userData?.preferredLanguage !== locale &&
-			!requestInProgress
+			!updateUserData ||
+			userDataContext?.userData?.preferredLanguage === locale ||
+			requestInProgress.current ||
+			rejectedLocale.current === locale
 		) {
-			setRequestInProgress(true);
-			apiPatchUserData({
-				preferredLanguage: locale
-			})
-				.then(userDataContext.reloadUserData)
-				.catch((error) => {
-					/* console.log(error); */
-				})
-				.finally(() => {
-					setRequestInProgress(false);
-				});
+			return;
 		}
-	}, [locale, requestInProgress, updateUserData, userDataContext]);
+
+		requestInProgress.current = true;
+		apiPatchUserData({
+			preferredLanguage: locale
+		})
+			.then(() => {
+				rejectedLocale.current = null;
+				return userDataContext.reloadUserData();
+			})
+			.catch(() => {
+				// Give up on this locale. Accounts without a user or consultant
+				// record answer 404 for every attempt (ORISO-Frontend#1595).
+				rejectedLocale.current = locale;
+			})
+			.finally(() => {
+				requestInProgress.current = false;
+			});
+	}, [locale, updateUserData, userDataContext]);
 
 	if (selectableLocales.length <= 1) {
 		return null;
