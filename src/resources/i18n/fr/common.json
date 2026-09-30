@@ -5528,5 +5528,18 @@
 			"more": "Afficher {{count}} de plus",
 			"less": "Afficher moins"
 		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "Les nouvelles consultations sont actuellement suspendues",
+				"text": "L’organisme de conseil doit confirmer l’accord actuel de traitement des données. Contactez votre centre de conseil. Les consultations déjà commencées peuvent continuer."
+			},
+			"unavailable": {
+				"title": "La disponibilité des consultations ne peut pas être vérifiée",
+				"text": "Le statut de confirmation de l’accord n’a pas pu être vérifié. Réessayez. Vos saisies sont conservées.",
+				"inviteText": "La confirmation du contrat ne peut pas être vérifiée pour le moment. Veuillez réessayer."
+			}
+		}
 	}
 }
