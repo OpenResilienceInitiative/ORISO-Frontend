@@ -478,6 +478,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Ihre E-Mail-Adresse wurde geändert',
 		preheader: 'Die Änderung ist ab sofort aktiv.',
 		headline: 'Ihre E-Mail-Adresse wurde geändert',

@@ -460,6 +460,7 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Your email address has been changed',
 		preheader: 'The change is active from now on.',
 		headline: 'Your email address has been changed',
