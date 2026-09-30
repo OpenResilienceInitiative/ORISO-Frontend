@@ -206,6 +206,88 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const rgb = (value: string) => (value.match(/[\d.]+/g) || []).map(Number);
+const luminance = (color: number[]) => {
+	const [red, green, blue] = color.slice(0, 3).map((channel) => {
+		const value = channel / 255;
+		return value <= 0.04045
+			? value / 12.92
+			: ((value + 0.055) / 1.055) ** 2.4;
+	});
+	return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+};
+const contrastRatio = (foreground: number[], background: number[]) => {
+	const light = Math.max(luminance(foreground), luminance(background));
+	const dark = Math.min(luminance(foreground), luminance(background));
+	return (light + 0.05) / (dark + 0.05);
+};
+
+const assertFrenchNoticeLayout = async (
+	notice: HTMLElement,
+	title: HTMLElement,
+	close: HTMLElement,
+	retry: HTMLElement
+) => {
+	// This flat invitation fixture has no background images: composite the actual
+	// translucent notification over its computed ancestor colors, not a guessed grey.
+	const ancestors: HTMLElement[] = [];
+	for (let element = retry; element; element = element.parentElement)
+		ancestors.unshift(element);
+	let background = [255, 255, 255];
+	for (const element of ancestors) {
+		const style = getComputedStyle(element);
+		await expect(style.backgroundImage).toBe('none');
+		const color = rgb(style.backgroundColor);
+		const alpha = color[3] ?? 1;
+		background = background.map(
+			(channel, index) => color[index] * alpha + channel * (1 - alpha)
+		);
+	}
+	const foreground = rgb(getComputedStyle(retry).color);
+	const contrast = contrastRatio(foreground, background);
+	const closeBox = close.getBoundingClientRect();
+	const titleBox = title.getBoundingClientRect();
+	const titleGap = closeBox.left - titleBox.right;
+	const range = document.createRange();
+	range.selectNodeContents(title);
+	const titleLines = Array.from(range.getClientRects()).filter(
+		(line) =>
+			line.width > 0 &&
+			line.top < closeBox.bottom &&
+			line.bottom > closeBox.top
+	);
+	const textGap = Math.min(
+		...titleLines.map((line) => closeBox.left - line.right)
+	);
+	console.info(
+		'AVV notification measured layout/contrast',
+		JSON.stringify({
+			viewport: window.innerWidth,
+			notificationWidth: notice.getBoundingClientRect().width,
+			titleRight: titleBox.right,
+			closeLeft: closeBox.left,
+			closeWidth: closeBox.width,
+			closeHeight: closeBox.height,
+			titleGap,
+			textGap,
+			foreground,
+			background,
+			contrast
+		})
+	);
+	await expect(closeBox.width).toBeGreaterThanOrEqual(24);
+	await expect(closeBox.height).toBeGreaterThanOrEqual(24);
+	await expect(titleGap).toBeGreaterThanOrEqual(8);
+	await expect(textGap).toBeGreaterThanOrEqual(8);
+	await expect(contrast).toBeGreaterThanOrEqual(4.5);
+	await userEvent.hover(retry);
+	const hoverForeground = rgb(getComputedStyle(retry).color);
+	const hoverContrast = contrastRatio(hoverForeground, background);
+	console.info('AVV notification retry hover contrast', hoverContrast);
+	await expect(hoverContrast).toBeGreaterThanOrEqual(4.5);
+	await userEvent.unhover(retry);
+};
+
 const showFailure: Story['play'] = async ({ args }) => {
 	const view = within(document.body);
 	const catalogue = catalogues[args.locale];
@@ -251,6 +333,18 @@ const showFailure: Story['play'] = async ({ args }) => {
 				name: catalogue.groupChat.loadError.retry
 			})
 		).toBeEnabled();
+		if (args.locale === 'fr') {
+			await assertFrenchNoticeLayout(
+				notice,
+				within(notice).getByText(copy.title),
+				within(notice).getByRole('button', {
+					name: catalogue.app.close
+				}),
+				within(notice).getByRole('button', {
+					name: catalogue.groupChat.loadError.retry
+				})
+			);
+		}
 		if (args.retrySucceeds) {
 			await userEvent.click(
 				within(notice).getByRole('button', {
