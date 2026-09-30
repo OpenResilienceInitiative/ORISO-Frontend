@@ -257,7 +257,6 @@
 				"{{consultantPhone}}",
 				"{{consultantHours}}",
 				"{{consultantEmail}}",
-				"{{bookingUrl}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -268,37 +267,37 @@
 				"de-sie": {
 					"lang": "de",
 					"subject": "So erreichen Sie Ihre Beratung",
-					"preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+					"preheader": "Kontaktdaten Ihrer Beratung auf einen Blick."
 				},
 				"de-du": {
 					"lang": "de",
 					"subject": "So erreichst du deine Beratung",
-					"preheader": "Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick."
+					"preheader": "Kontaktdaten deiner Beratung auf einen Blick."
 				},
 				"en": {
 					"lang": "en",
 					"subject": "How to reach your counselling service",
-					"preheader": "Direct line, phone hours and booking at a glance."
+					"preheader": "Your counselling service’s contact details at a glance."
 				},
 				"fr": {
 					"lang": "fr",
 					"subject": "Comment joindre votre service de conseil",
-					"preheader": "Ligne directe, horaires et prise de rendez-vous en un coup d’œil."
+					"preheader": "Les coordonnées de votre service de conseil en un coup d’œil."
 				},
 				"ru": {
 					"lang": "ru",
 					"subject": "Как связаться с Вашей консультацией",
-					"preheader": "Прямой номер, часы приёма и запись — на одном экране."
+					"preheader": "Контактные данные Вашей консультации."
 				},
 				"ti": {
 					"lang": "ti",
 					"subject": "ንኣገልግሎት ምኽርኹም ብኸመይ ትረኽብዎ",
-					"preheader": "ቀጥታዊ ስልኪ፣ ናይ ስራሕ ሰዓታትን ቆጸራን ብሓንሳብ።"
+					"preheader": "ናይ ኣገልግሎት ምኽርኹም ርክብ ሓበሬታ።"
 				},
 				"tr": {
 					"lang": "tr",
 					"subject": "Danışmanlığınıza nasıl ulaşırsınız",
-					"preheader": "Doğrudan hat, görüşme saatleri ve randevu tek bakışta."
+					"preheader": "Danışmanlığınızın iletişim bilgileri bir arada."
 				}
 			}
 		},
