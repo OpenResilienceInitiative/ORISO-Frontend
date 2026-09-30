@@ -23,6 +23,19 @@ vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api')>()),
 	apiGetConsultantSessionList: getList
 }));
+// Unmocked, these hit the network and settle after jsdom teardown
+// (CI: unhandled "window is not defined" from requestCollector).
+vi.mock('../../api/apiUserDrafts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../api/apiUserDrafts')>()),
+	apiGetUserDrafts: () =>
+		Promise.resolve({ items: [], page: 0, perPage: 200 })
+}));
+vi.mock('../../api/apiSetLiveChatAvailability', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../api/apiSetLiveChatAvailability')
+	>()),
+	apiGetLiveChatAvailability: () => Promise.resolve(false)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../globalState', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../globalState')>()),

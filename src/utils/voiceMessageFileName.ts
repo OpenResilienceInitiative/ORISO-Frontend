@@ -5,7 +5,7 @@
 // Recorder names only: timestamp, then a length (current -s-ms, legacy -ms, -s or -d).
 const VOICE_FILE =
 	/^voice-message-\d+-(?:s\d+-ms\d+|ms\d+|s\d+|d\d+)\.(?:webm|ogg|mp3|wav)$/i;
-const SECONDS = /-s(\d+)-ms\d+\.(?:webm|ogg|mp3|wav)$/i;
+const SECONDS = /-s(\d+)(?:-ms\d+)?\.(?:webm|ogg|mp3|wav)$/i;
 const MILLISECONDS = /-ms(\d+)\.(?:webm|ogg|mp3|wav)$/i;
 const LEGACY_SECONDS = /-d(\d+)\.(?:webm|ogg|mp3|wav)$/i;
 

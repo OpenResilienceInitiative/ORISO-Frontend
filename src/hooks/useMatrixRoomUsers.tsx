@@ -58,6 +58,7 @@ export const useMatrixRoomUsers = (): {
 		let retryAttempt = 0;
 		let detachMembersListener: (() => void) | null = null;
 		let refreshPromise: Promise<boolean> | null = null;
+		let refreshQueued = false;
 
 		// Resolves true only once the homeserver delivered the full membership;
 		// the transport swallows a failed load and returns the partial cache.
@@ -84,15 +85,28 @@ export const useMatrixRoomUsers = (): {
 				.catch(() => false)
 				.finally(() => {
 					refreshPromise = null;
+					if (refreshQueued && !cancelled) {
+						refreshQueued = false;
+						refreshMembers();
+					}
 				});
 
 			return refreshPromise;
 		};
 
+		// An event after the in-flight load took its snapshot would be lost.
+		const onMembersChanged = () => {
+			if (refreshPromise) {
+				refreshQueued = true;
+				return;
+			}
+			refreshMembers();
+		};
+
 		const attachMembersListener = () => {
 			detachMembersListener = chatTransportService.onMatrixRoomMembers(
 				matrixRoomId,
-				refreshMembers
+				onMembersChanged
 			);
 			return Boolean(detachMembersListener);
 		};

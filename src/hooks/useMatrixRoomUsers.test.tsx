@@ -140,6 +140,41 @@ describe('useMatrixRoomUsers', () => {
 		});
 	});
 
+	it('reloads once more when a membership event lands during a load', async () => {
+		let membershipListener: (() => void) | null = null;
+		mocks.onMatrixRoomMembers.mockImplementation(
+			(_roomId: string, listener: () => void) => {
+				membershipListener = listener;
+				return () => {};
+			}
+		);
+		let resolveFirst: (members: any[]) => void = () => {};
+		mocks.loadMatrixRoomMembers
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveFirst = resolve;
+				})
+			)
+			.mockResolvedValue([
+				{ userId: '@asker:x', name: 'Asker' },
+				{ userId: '@joined:x', name: 'Late Joiner' }
+			]);
+
+		const { result } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		act(() => {
+			membershipListener?.();
+		});
+		await act(async () => {
+			resolveFirst([{ userId: '@asker:x', name: 'Asker' }]);
+		});
+
+		await waitFor(() => {
+			expect(result.current.users).toHaveLength(2);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(2);
+	});
+
 	it('retries when the client exists before the room reaches the sync store', async () => {
 		mocks.getMatrixRoom
 			.mockReturnValueOnce(null)

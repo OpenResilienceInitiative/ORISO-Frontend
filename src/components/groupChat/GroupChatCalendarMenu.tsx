@@ -123,6 +123,10 @@ export const GroupChatCalendarPopover = ({
 					'id': menuId,
 					'role': 'dialog',
 					'aria-labelledby': triggerId,
+					// GroupWaitingRoom opens the popover without a trigger id.
+					'aria-label': triggerId
+						? undefined
+						: translate('groupChat.calendar.add'),
 					'className': 'chatMenuDropdown',
 					'style': menuStyle,
 					'sx': { width: 360 }

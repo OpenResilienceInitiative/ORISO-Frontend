@@ -110,9 +110,10 @@ const overviewRoute = (settings: AppConfigInterface) => ({
 });
 
 /* Without the app shell: the group's waiting room stands on the same stage
-   the person registered on (Frank, 2026-09-04). Every role that can follow a
-   `?gcid=` link needs the route — `AuthenticatedApp` navigates there without
-   asking who is logged in. */
+   the person registered on (Frank, 2026-09-04). It is the client's room:
+   `usePendingGroupChatJoin` sends a counsellor who follows a `?gcid=` link to
+   the group in her own session view instead (#1499). The route stays in the
+   counsellor config only so an old link reaching it can forward her there. */
 const groupEntryPlainRoutes = [
 	{
 		path: '/groups/:chatId/entry',

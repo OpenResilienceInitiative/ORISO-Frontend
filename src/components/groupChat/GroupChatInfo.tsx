@@ -428,7 +428,9 @@ const GroupChatInfoM3Connected = ({
 	);
 	const [qrOpen, setQrOpen] = useState(false);
 	const { url, copyRegistrationLink } = useGroupChatInviteLink(
-		activeSession.item.id
+		activeSession.item.id,
+		activeSession.item.assignedAgencies?.[0]?.id,
+		activeSession.item.inviteToken
 	);
 
 	useEffect(() => {
