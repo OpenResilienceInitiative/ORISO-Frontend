@@ -1,5 +1,6 @@
 import {
 	EMAIL_AUDIENCE,
+	EMAIL_IDS,
 	type EmailId
 } from '../../emails/content/emailCatalogue';
 import {
@@ -8,6 +9,17 @@ import {
 	switchForOccasion,
 	type NotificationSource
 } from '../../components/profile/EmailNotifications/notificationMatrix';
+import {
+	getEventDescriptor,
+	isKnownEventType
+} from '../../components/notificationsCenter/eventDescriptors/registry';
+import type { EventFamily } from '../../components/notificationsCenter/eventDescriptors/types';
+import {
+	areaForFamily,
+	kindForEvent,
+	type NotificationArea,
+	type NotificationKind
+} from './notificationConfig';
 
 type RecipientRole = 'asker' | 'consultant' | 'admin';
 type BrowserAssociation =
@@ -114,3 +126,56 @@ export function occasionChannelContract(id: EmailId, role?: RecipientRole) {
 		browser: BROWSER_ASSOCIATIONS[id]
 	};
 }
+
+export type EventChannelContract = {
+	association:
+		| { kind: 'mapped'; role: RecipientRole; occasions: readonly EmailId[] }
+		| { kind: 'unmapped'; role: RecipientRole }
+		| { kind: 'unknown-recipient' }
+		| { kind: 'unknown-event' };
+	browser: {
+		family: EventFamily;
+		area: NotificationArea;
+		kind: NotificationKind;
+	};
+};
+
+/**
+ * Classifies an existing feed row against the mail catalogue and routes its
+ * browser channels through the existing area×kind choices. The server's
+ * recipient role is metadata, never authority. A missing mail association
+ * neither suppresses the feed nor changes browser permission or opt-in.
+ */
+export const resolveEventChannelContract = (
+	eventType: string | null | undefined,
+	recipientRole?: string | null,
+	options: { family?: EventFamily; mentioned?: boolean } = {}
+): EventChannelContract => {
+	const descriptor = getEventDescriptor(eventType);
+	const family = options.family ?? descriptor.family ?? 'system';
+	const browser = {
+		family,
+		area: areaForFamily(family),
+		kind: kindForEvent(family, eventType || '', options.mentioned === true)
+	};
+	if (!isKnownEventType(eventType) || descriptor.eventType !== eventType) {
+		return { association: { kind: 'unknown-event' }, browser };
+	}
+	const role = recipientRole === 'user' ? 'asker' : recipientRole;
+	if (role !== 'asker' && role !== 'consultant' && role !== 'admin') {
+		return { association: { kind: 'unknown-recipient' }, browser };
+	}
+	const occasions = EMAIL_IDS.filter((id) => {
+		const channel = occasionChannelContract(id, role)?.browser;
+		return (
+			channel?.kind === 'descriptor' &&
+			channel.eventTypes.includes(eventType)
+		);
+	});
+	return {
+		association: occasions.length
+			? { kind: 'mapped', role, occasions }
+			: { kind: 'unmapped', role },
+		browser
+	};
+};
