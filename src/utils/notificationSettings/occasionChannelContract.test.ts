@@ -138,7 +138,13 @@ describe('occasion channel contract', () => {
 				occasionChannelContract(participant, 'asker')?.browser
 			).toEqual({ kind: 'unmapped' });
 			expect(occasionChannelContract(counsellor, 'consultant')).toEqual({
-				emailPreference: { kind: 'no-switch' },
+				emailPreference: {
+					kind: 'switch',
+					source: {
+						kind: 'settings',
+						field: 'appointmentNotificationEnabled'
+					}
+				},
 				browser: { kind: 'unmapped' }
 			});
 			expect(

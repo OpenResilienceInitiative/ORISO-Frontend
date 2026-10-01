@@ -43,7 +43,9 @@ for (const id of CALL_IDS) {
 		throw new Error(`missing call catalogue entry: ${id}`);
 	}
 	if (!isDeepStrictEqual(frontendEntry, userServiceEntry)) {
-		throw new Error(`call catalogue entry differs between repositories: ${id}`);
+		throw new Error(
+			`call catalogue entry differs between repositories: ${id}`
+		);
 	}
 
 	for (const tone of EMAIL_LOCALES) {
@@ -52,7 +54,9 @@ for (const id of CALL_IDS) {
 			const frontendFile = path.join(frontendEmails, 'plain', relative);
 			const userServiceFile = path.join(userServiceEmails, relative);
 			if (read(frontendFile) !== read(userServiceFile)) {
-				throw new Error(`call template differs between repositories: ${relative}`);
+				throw new Error(
+					`call template differs between repositories: ${relative}`
+				);
 			}
 			compared += 1;
 		}

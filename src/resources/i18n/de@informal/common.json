@@ -2460,5 +2460,16 @@
 			"copy": "Dein Zugang wurde für Dich angelegt – das erste Passwort kennt deshalb noch jemand anderes. Vergib jetzt eines, das nur Du kennst.",
 			"title": "Dein eigenes Passwort"
 		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wende Dich an Deine Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"unavailable": {
+				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",
+				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuche es erneut."
+			}
+		}
 	}
 }

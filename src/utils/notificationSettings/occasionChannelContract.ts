@@ -83,7 +83,10 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 			'counselor.renamed'
 		]
 	},
-	'smtp-test': { kind: 'unmapped' }
+	'smtp-test': { kind: 'unmapped' },
+	'anruf-erinnerung': { kind: 'unmapped' },
+	'anruf-einladung': { kind: 'unmapped' },
+	'anruf-verpasst': { kind: 'unmapped' }
 };
 
 /**

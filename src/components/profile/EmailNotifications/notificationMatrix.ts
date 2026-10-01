@@ -144,6 +144,19 @@ export const CONSULTANT_SWITCHES: NotificationSwitch[] = [
 		occasions: ['rueckmeldung']
 	},
 	{
+		id: 'appointment',
+		titleKey: 'profile.notifications.appointmentNotificationEnabled.title',
+		descriptionKey:
+			'profile.notifications.appointmentNotificationEnabled.description',
+		source: { kind: 'settings', field: 'appointmentNotificationEnabled' },
+		occasions: [
+			'selbsthilfe-termin-bestaetigt-beratung',
+			'selbsthilfe-termin-verschoben-beratung',
+			'selbsthilfe-termin-abgesagt-beratung',
+			'selbsthilfe-termin-erinnerung-beratung'
+		]
+	},
+	{
 		id: 'serviceNotice',
 		titleKey: 'profile.notifications.matrix.shared.serviceNotice.title',
 		descriptionKey:

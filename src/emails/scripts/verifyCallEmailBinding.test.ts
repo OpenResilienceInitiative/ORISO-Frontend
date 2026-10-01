@@ -94,8 +94,8 @@ describe('call email catalogue binding', () => {
 		writeFixture('userservice', { subject: 'Call' });
 		rmSync(
 			path.join(
-			root,
-			'userservice/src/main/resources/emails/tr/anruf-verpasst.txt'
+				root,
+				'userservice/src/main/resources/emails/tr/anruf-verpasst.txt'
 			)
 		);
 		await expect(import('./verifyCallEmailBinding.mts')).rejects.toThrow(

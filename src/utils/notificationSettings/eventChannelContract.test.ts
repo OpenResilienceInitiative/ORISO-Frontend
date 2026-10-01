@@ -18,7 +18,7 @@ describe('event channel contract', () => {
 		expect(resolve('message.new', 'consultant')?.association).toEqual({
 			kind: 'mapped',
 			role: 'consultant',
-			occasions: ['neue-nachricht']
+			occasions: ['neue-nachricht', 'neue-nachricht-beratung']
 		});
 	});
 

@@ -1,3 +1,4 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import React, {
 	useCallback,
 	useContext,
@@ -83,6 +84,22 @@ const withdrawDiscardedGuest = (data: {
 	);
 };
 
+const inviteErrorText = (
+	error: unknown,
+	translate: (key: string) => string
+) => {
+	const failure = getCounsellingDpaFailure(error);
+	if (failure) {
+		return translate(
+			failure.retryable
+				? 'counselling.dpa.unavailable.inviteText'
+				: `${failure.key}.text`
+		);
+	}
+	return error instanceof Error
+		? error.message
+		: translate('inviteLink.error.generic');
+};
 export const InviteLink = () => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -111,6 +128,8 @@ export const InviteLink = () => {
 	} | null>(null);
 	const [roomSessionId, setRoomSessionId] = useState<number | null>(null);
 	const [errorMessage, setErrorMessage] = useState('');
+	const [dpaFailure, setDpaFailure] =
+		useState<ReturnType<typeof getCounsellingDpaFailure>>(null);
 	const [legacyRedeem, setLegacyRedeem] =
 		useState<RedeemInviteLinkLegacyResponse | null>(null);
 	const [identity, setIdentity] = useState<Pseudonym | null>(null);
@@ -242,13 +261,11 @@ export const InviteLink = () => {
 				setPassword(minted.password);
 				setStatus('identity');
 			} catch (err: unknown) {
+				const failure = getCounsellingDpaFailure(err);
+				setDpaFailure(failure);
 				setResumeFailed(err instanceof InviteSessionResumeError);
 				setStatus('error');
-				setErrorMessage(
-					err instanceof Error
-						? err.message
-						: t('inviteLink.error.generic')
-				);
+				setErrorMessage(inviteErrorText(err, t));
 			}
 		})();
 	}, [token, locale, resumeAttempt, t]);
@@ -268,15 +285,13 @@ export const InviteLink = () => {
 				throw new Error('Invite link did not open a live-chat session');
 			}
 		} catch (err) {
+			const failure = getCounsellingDpaFailure(err);
+			setDpaFailure(failure);
 			/* The link itself failed — consumed, withdrawn, or unreachable. Retrying
 			   the name cannot fix that, so this is the unusable-invite page the
 			   on-arrival flow showed, not the room's "name not saved". */
 			setResumeFailed(false);
-			setErrorMessage(
-				err instanceof Error
-					? err.message
-					: t('inviteLink.error.generic')
-			);
+			setErrorMessage(inviteErrorText(err, t));
 			setStatus('error');
 			throw err;
 		}
@@ -333,12 +348,10 @@ export const InviteLink = () => {
 			);
 			redirectToApp(undefined, { navigate });
 		} catch (err: unknown) {
+			const failure = getCounsellingDpaFailure(err);
+			setDpaFailure(failure);
 			setStatus('error');
-			setErrorMessage(
-				err instanceof Error
-					? err.message
-					: t('inviteLink.error.generic')
-			);
+			setErrorMessage(inviteErrorText(err, t));
 		}
 	}, [legacyRedeem, username, password, locale, tenant, navigate, t]);
 
@@ -512,9 +525,11 @@ export const InviteLink = () => {
 					<div>
 						<h3>
 							{t(
-								resumeFailed
-									? 'inviteLink.resume.title'
-									: 'inviteLink.error.title'
+								dpaFailure
+									? `${dpaFailure.key}.title`
+									: resumeFailed
+										? 'inviteLink.resume.title'
+										: 'inviteLink.error.title'
 							)}
 						</h3>
 						<p>
@@ -522,11 +537,12 @@ export const InviteLink = () => {
 								? t('inviteLink.resume.message')
 								: errorMessage}
 						</p>
-						{resumeFailed && (
+						{(resumeFailed || dpaFailure?.retryable) && (
 							<Button
 								onClick={() => {
 									hasRunRef.current = false;
 									setResumeFailed(false);
+									setDpaFailure(null);
 									setStatus('loading');
 									setResumeAttempt((attempt) => attempt + 1);
 								}}
