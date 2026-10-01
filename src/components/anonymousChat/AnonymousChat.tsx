@@ -1,3 +1,4 @@
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -360,6 +361,11 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					// console.error('Anonymous chat registration failed:', error);
 					if (!accountCreated) {
 						setIsRegistering(false);
+					}
+					const dpaNotice = getCounsellingDpaNotification(error, t);
+					if (dpaNotice) {
+						addNotification(dpaNotice);
+						return;
 					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,

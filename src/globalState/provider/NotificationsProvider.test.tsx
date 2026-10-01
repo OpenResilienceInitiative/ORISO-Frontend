@@ -525,6 +525,79 @@ describe('NotificationsProvider announcements', () => {
 			expect(screen.getByTestId('ids').textContent).toBe('1')
 		);
 	});
+
+	it.each([
+		[
+			'mapped recipient',
+			'message.new',
+			'user',
+			'conversations',
+			'standard'
+		],
+		[
+			'mail-unmapped event',
+			'inquiry.accepted',
+			'user',
+			'requests',
+			'standard'
+		],
+		[
+			'unknown recipient',
+			'message.new',
+			'future-role',
+			'conversations',
+			'standard'
+		]
+	] as const)(
+		'keeps %s in the feed and browser channel independently of legacy email flags',
+		async (_label, eventType, recipientRole, area, kind) => {
+			let config =
+				notificationSettingsStore.getState().settings
+					.notificationConfig;
+			config = setKindField(config, area, kind, 'sound', 'chime');
+			config = setKindField(config, area, kind, 'banner', 'persistent');
+			// This old Matrix config flag is not an SMTP preference. It must
+			// never decide whether a browser banner or sound may be delivered.
+			config = setKindField(config, area, kind, 'email', false);
+			notificationSettingsStore.updateSettings({
+				notificationConfig: config
+			});
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					{
+						...feedItem(1, '2026-09-14T12:00:00Z'),
+						eventType,
+						title: 'PRIVATE PERSON',
+						text: 'PRIVATE COUNSELLING CONTENT',
+						params: { recipientRole }
+					}
+				],
+				unreadCount: 1
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(banners).toHaveBeenCalledTimes(1);
+			expect(banners.mock.calls[0][1].requireInteraction).toBe(true);
+			expect(play).toHaveBeenCalledTimes(1);
+			expect(JSON.stringify(banners.mock.calls)).not.toContain('PRIVATE');
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			expect(banners).toHaveBeenCalledTimes(1);
+			expect(play).toHaveBeenCalledTimes(1);
+		}
+	);
 });
 
 describe('NotificationsProvider read accounting', () => {
