@@ -51,11 +51,11 @@ const buildListItem = (): ListItemInterface => {
 
 const MEMBERS = [
 	{
-		userId: '@beraterin_admin_1_sep21:oriso.org',
+		userId: '@beraterin_admin_1_sep21:example.org',
 		name: 'beraterin_admin_1_sep21'
 	},
-	{ userId: '@sanftes-alpaka-mika:oriso.org', name: 'sanftes Alpaka Mika' },
-	{ userId: '@ruhiges-yak-kim:oriso.org', name: 'ruhiges Yak Kim' }
+	{ userId: '@sanftes-alpaka-mika:example.org', name: 'sanftes Alpaka Mika' },
+	{ userId: '@ruhiges-yak-kim:example.org', name: 'ruhiges Yak Kim' }
 ];
 
 /**
