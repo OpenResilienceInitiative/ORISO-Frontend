@@ -4392,7 +4392,7 @@
 			},
 			"openModal": "Tool-Beschreibungen anzeigen",
 			"options": {
-				"saveError": "Beim Werkzeugwechsel ist ein Problem aufgetreten. Bitte versuchen Sie es erneut."
+				"saveError": "Beim Werkzeugwechsel ist ein Problem aufgetreten. Bitte versuche es erneut."
 			},
 			"optionsPlaceholder": "Wähle eine Option...",
 			"share": {
