@@ -20,7 +20,7 @@ ${(properties.orisoContactLine)!''}
 
 ${msg("orisoResetOfferedBy", (properties.orisoPlatformName)!'Online-Beratung', (properties.orisoOrgName)!'ORISO')}
 
-${msg("orisoResetFooterLink1")}: ${(properties.orisoPrivacyUrl)!'https://app.oriso.org/datenschutz'}
-${msg("orisoResetFooterLink2")}: ${(properties.orisoImprintUrl)!'https://app.oriso.org/impressum'}
+${msg("orisoResetFooterLink1")}: ${properties.orisoPrivacyUrl}
+${msg("orisoResetFooterLink2")}: ${properties.orisoImprintUrl}
 
 ${msg("orisoResetAutomatedNote")}

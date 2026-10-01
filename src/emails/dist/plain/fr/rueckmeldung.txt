@@ -1,0 +1,30 @@
+Nouveau retour dans l’échange entre professionnels
+==================================================
+
+Un nouveau retour vous attend dans l’échange protégé entre professionnels au sujet de l’une de vos consultations.
+
+Vous en verrez le contenu, chiffré, après votre connexion.
+
+Dossier: {{caseReference}}
+Reçu le: {{requestReceivedAt}}
+
+Lire le retour:
+{{messageUrl}}
+
+L’échange entre professionnels n’est pas visible par la personne qui demande conseil.
+
+----------------------------------------------------------------
+Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

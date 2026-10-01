@@ -16,7 +16,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'The generic mail an administrator composes. Subject, preview line, headline and body are all placeholders, so the skeleton, the privacy promise and the footer stay fixed while the words change. The button always goes to the platform: a free-text mail with a free-text link is a phishing template.'
+					'The generic mail an administrator composes. The localized inbox subject uses the configured platform name and the preview only asks the recipient to sign in; the operator controls the headline and body inside the mail. The button always goes to the platform.'
 			}
 		}
 	}

@@ -1,4 +1,5 @@
 import React, {
+	useCallback,
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
@@ -31,6 +32,7 @@ import {
 	Redo,
 	ChevronRight
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useChatComposerShortcuts } from '../../features/keyboard-shortcuts/hooks/useChatComposerShortcuts';
 import {
 	filesFromDataTransfer,
@@ -138,6 +140,11 @@ const getAvailableInputLength = (
 	return maxLength - (currentLength - selectedLength);
 };
 
+/* How many of the editor's own recent states count as echoes. A parent can lag
+   a few keystrokes behind under load; more than this would be a stale value
+   from long ago, and treating it as news is the lesser harm. */
+const OWN_STATES_KEPT = 50;
+
 const enforceEditorMaxLength = (
 	editorLike: any,
 	maxLength?: number
@@ -200,7 +207,24 @@ export const TipTapComposer = forwardRef<
 		},
 		ref
 	) => {
+		const { t } = useTranslation();
 		const isSyncingFromValue = useRef(false);
+		/* The editor's own recent states, as it reported them. `value` comes back
+		   from the parent a render later — under load, several keystrokes later.
+		   Such a value is an echo of where the editor already was, and writing
+		   it back erases what was typed since (CI: "Wir besp" → "Wir bes",
+		   leaving "Wir besrechen"). Only a value the editor never produced —
+		   a draft, a reset — is news. */
+		const ownStates = useRef<string[]>([]);
+		const emit = useCallback(
+			(html: string) => {
+				ownStates.current.push(html);
+				if (ownStates.current.length > OWN_STATES_KEPT)
+					ownStates.current.shift();
+				onChange(html);
+			},
+			[onChange]
+		);
 
 		const { handleComposerKeyDown } = useChatComposerShortcuts({
 			onSend: onSubmitShortcut,
@@ -362,11 +386,12 @@ export const TipTapComposer = forwardRef<
 				) {
 					return;
 				}
+				// The truncating setContent emits its own update, which already
+				// reports the shortened text.
 				if (enforceEditorMaxLength(currentEditor, maxLength)) {
-					onChange(currentEditor.getHTML());
 					return;
 				}
-				onChange(currentEditor.getHTML());
+				emit(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
 				if (!onSelectionSnippet || !isEditorReady(currentEditor)) {
@@ -411,15 +436,24 @@ export const TipTapComposer = forwardRef<
 			}
 			const current = editor.getHTML();
 			if (normalizedValue === current) {
+				// The parent has caught up: nothing earlier can still be an echo.
+				ownStates.current = [];
+				return;
+			}
+			if (
+				ownStates.current.includes(value || '') ||
+				ownStates.current.includes(normalizedValue)
+			) {
 				return;
 			}
 			isSyncingFromValue.current = true;
 			try {
 				clearInsertionMarker(editor);
+				ownStates.current = [];
 				editor.commands.setContent(normalizedValue);
 				editor.commands.setTextAlign('left');
 				if (enforceEditorMaxLength(editor, maxLength)) {
-					onChange(editor.getHTML());
+					emit(editor.getHTML());
 				}
 			} catch {
 				try {
@@ -430,11 +464,12 @@ export const TipTapComposer = forwardRef<
 			} finally {
 				isSyncingFromValue.current = false;
 			}
-		}, [editor, maxLength, onChange, value]);
+		}, [editor, emit, maxLength, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
 				if (isEditorReady(editor)) {
+					ownStates.current = [];
 					editor.commands.clearContent();
 				}
 			},
@@ -446,6 +481,7 @@ export const TipTapComposer = forwardRef<
 			setText: (nextValue: string) => {
 				if (isEditorReady(editor)) {
 					clearInsertionMarker(editor);
+					ownStates.current = [];
 					editor.commands.setContent(nextValue || '');
 				}
 			},
@@ -643,7 +679,10 @@ export const TipTapComposer = forwardRef<
 						editor.chain().focus().insertContent('🙂').run();
 						return;
 					case 'insertImageMarker': {
-						const imageUrl = window.prompt('Image URL', '');
+						const imageUrl = window.prompt(
+							t('message.submit.toolbar.imageUrlPrompt'),
+							''
+						);
 						if (imageUrl === null || !imageUrl.trim()) {
 							return;
 						}
@@ -687,7 +726,10 @@ export const TipTapComposer = forwardRef<
 					case 'setLink': {
 						const previousUrl =
 							editor.getAttributes('link').href || '';
-						const url = window.prompt('URL', previousUrl);
+						const url = window.prompt(
+							t('message.submit.toolbar.urlPrompt'),
+							previousUrl
+						);
 						if (url === null) {
 							return;
 						}
@@ -792,7 +834,7 @@ export const TipTapComposer = forwardRef<
 							type="button"
 							onClick={() => editor.chain().focus().undo().run()}
 							disabled={!editor.can().undo()}
-							aria-label="Undo"
+							aria-label={t('message.submit.toolbar.undo')}
 						>
 							<Undo fontSize="small" />
 						</button>
@@ -800,7 +842,7 @@ export const TipTapComposer = forwardRef<
 							type="button"
 							onClick={() => editor.chain().focus().redo().run()}
 							disabled={!editor.can().redo()}
-							aria-label="Redo"
+							aria-label={t('message.submit.toolbar.redo')}
 						>
 							<Redo fontSize="small" />
 						</button>
@@ -812,7 +854,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('bold') ? 'is-active' : ''
 							}
-							aria-label="Bold"
+							aria-label={t('message.submit.toolbar.bold')}
 						>
 							<FormatBold fontSize="small" />
 						</button>
@@ -824,7 +866,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('bulletList') ? 'is-active' : ''
 							}
-							aria-label="Bullet List"
+							aria-label={t('message.submit.toolbar.bulletList')}
 						>
 							<FormatListBulleted fontSize="small" />
 						</button>
@@ -838,7 +880,7 @@ export const TipTapComposer = forwardRef<
 									? 'is-active'
 									: ''
 							}
-							aria-label="Ordered List"
+							aria-label={t('message.submit.toolbar.orderedList')}
 						>
 							<FilterList fontSize="small" />
 						</button>
@@ -854,7 +896,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('link') ? 'is-active' : ''
 							}
-							aria-label="Quick Link"
+							aria-label={t('message.submit.toolbar.link')}
 						>
 							<ChevronRight fontSize="small" />
 						</button>

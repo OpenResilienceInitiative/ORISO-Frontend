@@ -1,0 +1,31 @@
+Le transfert est confirmé
+=========================
+
+La consultation a été reprise. {{toConsultantName}} en est responsable à partir de maintenant.
+
+La personne qui demande conseil en a été informée dans l’application.
+
+Dossier: {{caseReference}}
+Nouvelle responsabilité: {{toConsultantName}}
+Transféré le: {{handoverAt}}
+
+Ouvrir la consultation:
+{{requestUrl}}
+
+Votre accès à l’historique précédent prend fin avec le transfert.
+
+----------------------------------------------------------------
+Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

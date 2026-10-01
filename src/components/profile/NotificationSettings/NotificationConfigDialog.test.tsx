@@ -171,7 +171,7 @@ describe('NotificationConfigView', () => {
 			screen
 				.getByRole('link', { name: 'profile.notifications.title' })
 				.getAttribute('href')
-		).toBe('/profile/einstellungen#email-notifications');
+		).toBe('/profile/einstellungen/email#email-notifications');
 		expect(onChange).not.toHaveBeenCalled();
 	});
 

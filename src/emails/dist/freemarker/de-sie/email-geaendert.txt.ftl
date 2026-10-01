@@ -20,4 +20,4 @@ ${platformName!''} ist ein Angebot von ${orgName!''}.
 Datenschutz: ${privacyUrl!''}
 Impressum: ${imprintUrl!''}
 
-Diese E-Mail ist ein Sicherheitshinweis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.
+Diese E-Mail informiert Sie über eine Änderung Ihrer E-Mail-Adresse und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.

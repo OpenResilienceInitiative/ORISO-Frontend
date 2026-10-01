@@ -22,4 +22,4 @@ ${platformName!''} is a service provided by ${orgName!''}.
 Privacy: ${privacyUrl!''}
 Imprint: ${imprintUrl!''}
 
-This email was sent automatically. Please do not reply to it.
+This email is for resetting your password and cannot be unsubscribed from. Please do not reply to it.

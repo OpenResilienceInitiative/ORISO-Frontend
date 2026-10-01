@@ -2,7 +2,7 @@
 ${msg("orisoOtpHeadline")}
 ========================================
 
-${msg("orisoOtpBody1", (properties.orisoPlatformName)!'Online-Beratung')}
+${msg("orisoOtpBody1")}
 
 ${msg("orisoOtpCodeLabel")}: ${otp}
 
@@ -17,7 +17,7 @@ ${(properties.orisoContactLine)!''}
 
 ${msg("orisoOtpOfferedBy", (properties.orisoPlatformName)!'Online-Beratung', (properties.orisoOrgName)!'ORISO')}
 
-${msg("orisoOtpFooterLink1")}: ${(properties.orisoPrivacyUrl)!'https://app.oriso.org/datenschutz'}
-${msg("orisoOtpFooterLink2")}: ${(properties.orisoImprintUrl)!'https://app.oriso.org/impressum'}
+${msg("orisoOtpFooterLink1")}: ${properties.orisoPrivacyUrl}
+${msg("orisoOtpFooterLink2")}: ${properties.orisoImprintUrl}
 
 ${msg("orisoOtpAutomatedNote")}

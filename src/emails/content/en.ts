@@ -1,6 +1,6 @@
 /**
  * English. Used for tenants that offer counselling in English and as the
- * fallback when a recipient's language is unknown.
+ * English variant. An unknown recipient language is a configuration error.
  */
 
 import { EmailContent } from '../kit/emailTemplate';
@@ -32,8 +32,15 @@ const securityFooter = {
 		'This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} is a service provided by {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'This email is part of the contractual relationship and cannot be unsubscribed from. Please do not reply to it.'
 };
@@ -51,7 +58,7 @@ const accountAssurance =
 	'We will never ask for your password by email. We always tell you when your account changes.';
 
 const legalAssurance =
-	'This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.';
+	'This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.';
 
 export const en: Record<EmailId, EmailContent> = {
 	'neue-nachricht': {
@@ -97,7 +104,11 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'If you did not ask for this, simply ignore this email. Your password stays unchanged.',
 		assurance,
-		footer: { ...footer, links: securityFooter.links }
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email is for resetting your password and cannot be unsubscribed from. Please do not reply to it.'
+		}
 	},
 
 	'termin': {
@@ -127,11 +138,10 @@ export const en: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'How to reach your counselling service',
-		preheader: 'Direct line, phone hours and booking at a glance.',
+		preheader: 'Your counselling service’s contact details at a glance.',
 		headline: 'How to reach your counselling service',
 		paragraphs: [
-			'Besides the protected chat you can also reach your counselling service by phone or book an appointment directly.',
-			'Your account stays anonymous – you decide what you share.'
+			'You requested your counselling service’s contact details. The available ways to get in touch are below.'
 		],
 		panel: [
 			{ label: 'Service', value: '{{consultantName}}' },
@@ -139,13 +149,7 @@ export const en: Record<EmailId, EmailContent> = {
 			{ label: 'Phone hours', value: '{{consultantHours}}' },
 			{ label: 'Email', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Book an appointment', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Go to the protected chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Outside phone hours, writing in the chat works best. We reply within 2 working days.',
+		cta: { label: 'Go to the protected chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -299,8 +303,8 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Go to {{platformName}}', href: '{{loginUrl}}' },
@@ -324,20 +328,16 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Your one-time code',
+		subject: 'Your one-time code for signing in',
 		preheader: 'The code is valid for {{expiryMinutes}} minutes.',
 		headline: 'Your one-time code',
-		paragraphs: ['Enter this code in {{platformName}}.'],
+		paragraphs: ['Enter this code in the sign-in window.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Open {{platformName}}', href: '{{loginUrl}}' },
+		cta: { label: 'Go to sign-in', href: '{{loginUrl}}' },
 		footnote:
-			'If you did not request this code, please change your password.',
+			'If you did not want to sign in, please change your password.',
 		assurance: codeAssurance,
-		footer: {
-			...securityFooter,
-			automatedNote:
-				'This email contains a security code and cannot be unsubscribed from. Please do not reply to it.'
-		}
+		footer: securityFooter
 	},
 
 	'einladung-traeger': {
@@ -379,23 +379,49 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Data processing agreement ready for signature',
-		preheader: 'The agreement for {{tenantName}} is ready.',
-		headline: 'The agreement is ready for signature',
+		subject: 'Contract documents for {{tenantName}}',
+		preheader: 'The contract documents for {{tenantName}} are ready.',
+		headline: 'The contract documents are ready for confirmation',
 		paragraphs: [
-			'A data processing agreement has been prepared for {{tenantName}}.',
-			'Please review the agreement and sign it digitally.'
+			'Contract documents have been prepared for {{tenantName}}.',
+			'Please review the documents and confirm them digitally.'
 		],
 		panel: [
 			{ label: 'Organisation', value: '{{tenantName}}' },
 			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
-			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
+			{ label: 'To be confirmed by', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Open agreement', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Open contract',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'If the button does not work, copy this link into your browser:'
+		},
 		footnote:
-			'Counselling stays blocked for this organisation until the agreement is signed.',
+			'Without confirmation of the contract documents, counselling stays blocked for this organisation.',
 		assurance: legalAssurance,
 		footer: legalFooter
+	},
+
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		// Both depend on whether the mail has an action, which only the sender
+		// knows: with one, UserService fills the "never pass this link on"
+		// line and the invitation note; without one (a plain notice such as
+		// "contract signed") the line is dropped and the note is neutral.
+		assuranceSlot: '{{assuranceBlock}}',
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {
@@ -449,7 +475,7 @@ export const en: Record<EmailId, EmailContent> = {
 		footer: {
 			...securityFooter,
 			automatedNote:
-				'This is a security notice and cannot be unsubscribed from. Please do not reply to it.'
+				'This email reports a change to your email address and cannot be unsubscribed from. Please do not reply to it.'
 		}
 	}
 };
