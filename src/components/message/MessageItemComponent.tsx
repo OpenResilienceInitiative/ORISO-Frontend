@@ -515,16 +515,24 @@ export const MessageItemComponent = ({
 		useState<Placement>('right-start');
 	const [visibilityMenuOrigin, setVisibilityMenuOrigin] =
 		useState('left top');
-	const closeMessageMenus = useCallback(() => {
-		const anchor = isActionMenuOpen
-			? actionMenuAnchor
-			: visibilityMenuAnchor;
+	const resetMessageMenus = useCallback(() => {
 		setIsActionMenuOpen(false);
 		setIsVisibilityMenuOpen(false);
 		setActionMenuPosition(null);
 		setVisibilityMenuPosition(null);
+	}, []);
+	const closeMessageMenus = useCallback(() => {
+		const anchor = isActionMenuOpen
+			? actionMenuAnchor
+			: visibilityMenuAnchor;
+		resetMessageMenus();
 		if (anchor instanceof HTMLElement) anchor.focus();
-	}, [isActionMenuOpen, actionMenuAnchor, visibilityMenuAnchor]);
+	}, [
+		isActionMenuOpen,
+		actionMenuAnchor,
+		visibilityMenuAnchor,
+		resetMessageMenus
+	]);
 	useEffect(() => {
 		if (!isActionMenuOpen && !isVisibilityMenuOpen) return;
 		const onKey = (event: KeyboardEvent) => {
@@ -1576,14 +1584,12 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
+			// The trigger keeps focus, so reset without the closer's focus move.
+			resetMessageMenus();
 			if (isActionMenuOpen) {
-				setIsActionMenuOpen(false);
-				setActionMenuPosition(null);
 				setActionMenuAnchor(null);
 				return;
 			}
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
 			setVisibilityMenuAnchor(null);
 			// The kebab sits outside the bubble, so the menu opens away from it:
 			// to the right on the incoming side, to the left on the outgoing one.
@@ -1593,7 +1599,7 @@ export const MessageItemComponent = ({
 			setActionMenuAnchor(event.currentTarget);
 			setIsActionMenuOpen(true);
 		},
-		[isActionMenuOpen]
+		[isActionMenuOpen, resetMessageMenus]
 	);
 
 	// Keeps the action menu on its anchor across scroll, resize and any change
@@ -1712,14 +1718,11 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
+			resetMessageMenus();
 			if (isVisibilityMenuOpen) {
-				setIsVisibilityMenuOpen(false);
-				setVisibilityMenuPosition(null);
 				setVisibilityMenuAnchor(null);
 				return;
 			}
-			setIsActionMenuOpen(false);
-			setActionMenuPosition(null);
 			setActionMenuAnchor(null);
 			// Open beside the chip, then flip if the viewport edge requires it.
 			setVisibilityMenuPlacement(
@@ -1728,7 +1731,7 @@ export const MessageItemComponent = ({
 			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
 		},
-		[isVisibilityMenuOpen]
+		[isVisibilityMenuOpen, resetMessageMenus]
 	);
 	const toggleVisibilitySection = useCallback(
 		(section: 'clients' | 'counsellors' | 'moderators') => {
@@ -2979,9 +2982,7 @@ export const MessageItemComponent = ({
 														onUnreact?.(
 															ownReaction.ownEventId
 														);
-														setIsActionMenuOpen(
-															false
-														);
+														closeMessageMenus();
 														return;
 													}
 													applyQuickReaction(emoji);
