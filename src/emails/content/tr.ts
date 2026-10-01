@@ -322,6 +322,32 @@ export const tr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: '{{platformName}} erişiminizi ayarlayın',
+		preheader: 'Kendi şifrenizi belirleyin.',
+		headline: 'Hesabınız zaten oluşturuldu',
+		paragraphs: [
+			'{{platformName}} üzerinde sizin için bir hesap zaten oluşturuldu.',
+			'Kendi şifrenizi belirlemek için bu bağlantıyı kullanın. Ardından her zamanki gibi giriş yapın; gerekli güvenlik kontrolleri uygulanmaya devam eder.'
+		],
+		panel: [
+			{
+				label: 'Bağlantının geçerlilik sonu',
+				value: '{{inviteExpiresAt}}'
+			}
+		],
+		cta: { label: 'Şifre belirle', href: '{{setupUrl}}' },
+		footnote:
+			'Bu kurulumu beklemiyorsanız bağlantıyı kullanmayın ve yöneticinizle iletişime geçin.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: '{{platformName}} için giriş bağlantınız',
 		preheader: 'Bağlantı {{expiryMinutes}} dakika geçerlidir.',
@@ -483,5 +509,46 @@ export const tr: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'Bu e-posta, e-posta adresinizin değiştiğini bildirir. Bu güvenlik bildiriminden çıkamazsınız. Lütfen yanıtlamayınız.'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'Bir oturum yakında başlayacak',
+		preheader: 'Ayrıntıları görmek için giriş yapın.',
+		headline: 'Oturumunuz yakında başlayacak',
+		paragraphs: [
+			'Planlanmış bir sesli veya görüntülü oturum yakında başlayacak. Diğer tüm ayrıntıları giriş yaptıktan sonra güvenli şekilde görebilirsiniz.'
+		],
+		cta: { label: 'Oturumu aç', href: '{{callUrl}}' },
+		footnote:
+			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'Bir oturuma davet edildiniz',
+		preheader: 'Davet, hesabınızda güvenli şekilde sizi bekliyor.',
+		headline: 'Yeni davet',
+		paragraphs: [
+			'Bir sesli veya görüntülü oturuma davet edildiniz. Ayrıntıları giriş yaptıktan sonra güvenli şekilde görebilirsiniz.'
+		],
+		cta: { label: 'Daveti görüntüle', href: '{{callUrl}}' },
+		footnote:
+			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'Bir aramayı kaçırdınız',
+		preheader: 'Korunan geçmişi açmak için giriş yapın.',
+		headline: 'Cevapsız arama',
+		paragraphs: [
+			'Siz yokken bir sesli veya görüntülü arama gerçekleşti. Diğer ayrıntıları giriş yaptıktan sonra güvenli şekilde görebilirsiniz.'
+		],
+		cta: { label: 'Korunan geçmişi aç', href: '{{callUrl}}' },
+		footnote:
+			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
+		assurance,
+		footer
 	}
 };

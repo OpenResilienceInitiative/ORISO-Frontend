@@ -309,6 +309,22 @@ export const en: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Set up access to {{platformName}}',
+		preheader: 'Choose your own password.',
+		headline: 'Your account already exists',
+		paragraphs: [
+			'An account has already been created for you on {{platformName}}.',
+			'Use this link to choose your own password. Then sign in as usual; the required security checks still apply.'
+		],
+		panel: [{ label: 'Link valid until', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Choose password', href: '{{setupUrl}}' },
+		footnote:
+			'If you were not expecting this setup, do not use the link and contact your administrator.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
+	},
+
 	'anmeldelink': {
 		subject: 'Your sign-in link for {{platformName}}',
 		preheader: 'The link is valid for {{expiryMinutes}} minutes.',
@@ -475,5 +491,46 @@ export const en: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'This email reports a change to your email address and cannot be unsubscribed from. Please do not reply to it.'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'A session is starting soon',
+		preheader: 'Sign in to see the details.',
+		headline: 'Your session is starting soon',
+		paragraphs: [
+			'A scheduled audio or video session is starting soon. You can see all further details securely after signing in.'
+		],
+		cta: { label: 'Open session', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'You have been invited to a session',
+		preheader: 'The invitation is waiting securely in your account.',
+		headline: 'New invitation',
+		paragraphs: [
+			'You have been invited to an audio or video session. You can see the details securely after signing in.'
+		],
+		cta: { label: 'View invitation', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'You missed a call',
+		preheader: 'Sign in to open the protected history.',
+		headline: 'Missed call',
+		paragraphs: [
+			'An audio or video call took place while you were away. You can see further details securely after signing in.'
+		],
+		cta: { label: 'Open protected history', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
 	}
 };

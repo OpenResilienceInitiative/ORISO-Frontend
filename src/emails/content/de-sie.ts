@@ -327,6 +327,22 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Zugang zu {{platformName}} einrichten',
+		preheader: 'Legen Sie Ihr eigenes Passwort fest.',
+		headline: 'Ihr Konto ist bereits angelegt',
+		paragraphs: [
+			'Für Sie wurde bereits ein Konto auf {{platformName}} angelegt.',
+			'Legen Sie über diesen Link Ihr eigenes Passwort fest. Melden Sie sich anschließend wie gewohnt an; die erforderlichen Sicherheitsprüfungen bleiben bestehen.'
+		],
+		panel: [{ label: 'Link gültig bis', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Passwort festlegen', href: '{{setupUrl}}' },
+		footnote:
+			'Wenn Sie diese Einrichtung nicht erwartet haben, verwenden Sie den Link nicht und wenden Sie sich an Ihre Administration.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
+	},
+
 	'anmeldelink': {
 		subject: 'Ihr Anmeldelink für {{platformName}}',
 		preheader: 'Der Link gilt {{expiryMinutes}} Minuten.',
@@ -493,5 +509,46 @@ export const deSie: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'Diese E-Mail informiert Sie über eine Änderung Ihrer E-Mail-Adresse und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'Eine Sitzung beginnt bald',
+		preheader: 'Melden Sie sich an, um die Details zu sehen.',
+		headline: 'Ihre Sitzung beginnt bald',
+		paragraphs: [
+			'Eine geplante Audio- oder Videositzung beginnt bald. Alle weiteren Angaben sehen Sie geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Sitzung öffnen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'Sie wurden zu einer Sitzung eingeladen',
+		preheader: 'Die Einladung liegt geschützt in Ihrem Zugang bereit.',
+		headline: 'Neue Einladung',
+		paragraphs: [
+			'Sie wurden zu einer Audio- oder Videositzung eingeladen. Die Einzelheiten sehen Sie geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Einladung ansehen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'Sie haben einen Anruf verpasst',
+		preheader: 'Melden Sie sich an, um den geschützten Verlauf zu öffnen.',
+		headline: 'Verpasster Anruf',
+		paragraphs: [
+			'Während Ihrer Abwesenheit hat ein Audio- oder Videoanruf stattgefunden. Weitere Angaben sehen Sie geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Geschützten Verlauf öffnen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
 	}
 };

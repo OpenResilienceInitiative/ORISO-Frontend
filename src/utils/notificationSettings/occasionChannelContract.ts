@@ -66,6 +66,7 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 	},
 	'rueckmeldung': { kind: 'unmapped' },
 	'mitteilung': { kind: 'unmapped' },
+	'konto-einrichten': { kind: 'unmapped' },
 	'anmeldelink': { kind: 'unmapped' },
 	'einmalcode': { kind: 'unmapped' },
 	'email-geaendert': { kind: 'unmapped' },
@@ -82,7 +83,10 @@ const BROWSER_ASSOCIATIONS: Record<EmailId, BrowserAssociation> = {
 			'counselor.renamed'
 		]
 	},
-	'smtp-test': { kind: 'unmapped' }
+	'smtp-test': { kind: 'unmapped' },
+	'anruf-erinnerung': { kind: 'unmapped' },
+	'anruf-einladung': { kind: 'unmapped' },
+	'anruf-verpasst': { kind: 'unmapped' }
 };
 
 /**
