@@ -4,6 +4,8 @@ import {
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
+import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
@@ -430,6 +432,7 @@ export const MessageItemComponent = ({
 	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
+	const notifications = useContext(NotificationsContext);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
@@ -1344,7 +1347,11 @@ export const MessageItemComponent = ({
 						});
 				})
 				.catch((error) => {
-					/* console.log(error); */
+					const notice = getCounsellingDpaNotification(
+						error,
+						translate
+					);
+					if (notice) notifications?.addNotification(notice);
 				});
 		} else {
 			apiPatchMessage(toConsultantId, ReassignStatus.REJECTED, _id).catch(

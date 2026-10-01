@@ -5531,5 +5531,18 @@
 			"more": "{{count}} weitere anzeigen",
 			"less": "Weniger anzeigen"
 		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "Neue Beratung derzeit gesperrt",
+				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"unavailable": {
+				"title": "Beratung derzeit nicht prüfbar",
+				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuchen Sie es erneut. Ihre Eingaben bleiben erhalten.",
+				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuchen Sie es erneut."
+			}
+		}
 	}
 }
