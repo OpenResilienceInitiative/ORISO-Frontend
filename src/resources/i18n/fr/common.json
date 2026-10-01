@@ -2559,6 +2559,11 @@
 				"sendByEmail": "Envoyer par e-mail",
 				"confirm": "Confirmer",
 				"cancel": "Annuler",
+				"discardChanges": {
+					"title": "Abandonner les modifications ?",
+					"description": "Vos paramètres de notification ne sont pas encore enregistrés. Si vous continuez, vos modifications seront perdues.",
+					"discard": "Abandonner et continuer"
+				},
 				"area": {
 					"requests": "Demande",
 					"conversations": "Entretien",

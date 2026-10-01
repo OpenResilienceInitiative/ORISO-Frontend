@@ -859,6 +859,9 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"description": "Deine Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn du fortfährst, gehen deine Änderungen verloren."
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",

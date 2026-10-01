@@ -2559,6 +2559,11 @@
 				"sendByEmail": "ብኢመይል ስደድ",
 				"confirm": "ኣረጋግጽ",
 				"cancel": "ሰርዝ",
+				"discardChanges": {
+					"title": "ለውጥታት ክትድርብዩ ዲኹም?",
+					"description": "ቅጥዕታት መፍለጢኹም ገና ኣይተዓቀቡን። እንተቐጺልኩም፡ ለውጥታትኩም ክጠፍኡ እዮም።",
+					"discard": "ደርብዩ ቀጽሉ"
+				},
 				"area": {
 					"requests": "ሕቶ",
 					"conversations": "ዝርርብ",

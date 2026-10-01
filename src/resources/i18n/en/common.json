@@ -2573,6 +2573,11 @@
 				"sendByEmail": "Send by Email",
 				"confirm": "Confirm",
 				"cancel": "Cancel",
+				"discardChanges": {
+					"title": "Discard changes?",
+					"description": "Your notification settings have not been saved. Continuing will discard your changes.",
+					"discard": "Discard and continue"
+				},
 				"area": {
 					"requests": "Requests",
 					"conversations": "Conversation",

@@ -1,18 +1,12 @@
 Devir onaylandı
 ===============
 
-Danışmanlık devralındı. Bundan sonra {{toConsultantName}} sorumlu.
+Artık bu danışmanlıktan siz sorumlusunuz.
 
-Danışan, uygulama üzerinden bilgilendirildi.
+Dosyayı güvenli danışmanlık alanında açın.
 
-Dosya: {{caseReference}}
-Yeni sorumlu: {{toConsultantName}}
-Devir tarihi: {{handoverAt}}
-
-Danışmanlığı aç:
+Dosyayı aç:
 {{requestUrl}}
-
-Önceki yazışmalara erişiminiz devirle birlikte sona erer.
 
 ----------------------------------------------------------------
 Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.

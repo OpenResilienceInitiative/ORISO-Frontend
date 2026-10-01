@@ -9,9 +9,19 @@
 export const EMAIL_IDS = [
 	// Designed first, from the imported design project.
 	'neue-nachricht',
+	// Same message preference, with copy addressed to the consultant (#869).
+	'neue-nachricht-beratung',
 	'willkommen',
 	'passwort-zuruecksetzen',
 	'termin',
+	'selbsthilfe-termin-bestaetigt-teilnahme',
+	'selbsthilfe-termin-verschoben-teilnahme',
+	'selbsthilfe-termin-abgesagt-teilnahme',
+	'selbsthilfe-termin-erinnerung-teilnahme',
+	'selbsthilfe-termin-bestaetigt-beratung',
+	'selbsthilfe-termin-verschoben-beratung',
+	'selbsthilfe-termin-abgesagt-beratung',
+	'selbsthilfe-termin-erinnerung-beratung',
 	'beraterin-kontakt',
 	'anfrage-zugewiesen',
 	'systemhinweis',
@@ -198,9 +208,26 @@ export const EMAIL_LANGUAGE_LOCALES: readonly EmailLocale[] =
 
 export const EMAIL_LABELS: Record<EmailId, string> = {
 	'neue-nachricht': 'Neue Nachricht',
+	'neue-nachricht-beratung': 'Neue Nachricht für die Beratung',
 	'willkommen': 'Willkommen',
 	'passwort-zuruecksetzen': 'Passwort zurücksetzen',
 	'termin': 'Termin',
+	'selbsthilfe-termin-bestaetigt-teilnahme':
+		'Selbsthilfe-Termin bestätigt (Teilnahme)',
+	'selbsthilfe-termin-verschoben-teilnahme':
+		'Selbsthilfe-Termin verschoben (Teilnahme)',
+	'selbsthilfe-termin-abgesagt-teilnahme':
+		'Selbsthilfe-Termin abgesagt (Teilnahme)',
+	'selbsthilfe-termin-erinnerung-teilnahme':
+		'Selbsthilfe-Termin Erinnerung (Teilnahme)',
+	'selbsthilfe-termin-bestaetigt-beratung':
+		'Selbsthilfe-Termin bestätigt (Beratung)',
+	'selbsthilfe-termin-verschoben-beratung':
+		'Selbsthilfe-Termin verschoben (Beratung)',
+	'selbsthilfe-termin-abgesagt-beratung':
+		'Selbsthilfe-Termin abgesagt (Beratung)',
+	'selbsthilfe-termin-erinnerung-beratung':
+		'Selbsthilfe-Termin Erinnerung (Beratung)',
 	'beraterin-kontakt': 'Kontakt zur Beratung',
 	'anfrage-zugewiesen': 'Anfrage zugewiesen',
 	'systemhinweis': 'Systemhinweis',
@@ -237,16 +264,25 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 	{
 		'neue-nachricht': 'asker',
+		'neue-nachricht-beratung': 'consultant',
 		'willkommen': 'asker',
 		'passwort-zuruecksetzen': 'asker',
 		'termin': 'asker',
+		'selbsthilfe-termin-bestaetigt-teilnahme': 'asker',
+		'selbsthilfe-termin-verschoben-teilnahme': 'asker',
+		'selbsthilfe-termin-abgesagt-teilnahme': 'asker',
+		'selbsthilfe-termin-erinnerung-teilnahme': 'asker',
+		'selbsthilfe-termin-bestaetigt-beratung': 'consultant',
+		'selbsthilfe-termin-verschoben-beratung': 'consultant',
+		'selbsthilfe-termin-abgesagt-beratung': 'consultant',
+		'selbsthilfe-termin-erinnerung-beratung': 'consultant',
 		'beraterin-kontakt': 'asker',
 		'anfrage-zugewiesen': 'consultant',
 		'systemhinweis': 'asker',
 		'neue-anfrage': 'consultant',
 		'direkte-anfrage': 'consultant',
 		'tagesuebersicht': 'consultant',
-		'uebergabe-angefragt': 'consultant',
+		'uebergabe-angefragt': 'asker',
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
 		'mitteilung': 'asker',
@@ -273,9 +309,18 @@ export const EMAIL_CLASS: Record<
 	'security' | 'legal' | 'personal' | 'operational' | 'requested' | 'service'
 > = {
 	'neue-nachricht': 'personal',
+	'neue-nachricht-beratung': 'operational',
 	'willkommen': 'personal',
 	'passwort-zuruecksetzen': 'security',
 	'termin': 'personal',
+	'selbsthilfe-termin-bestaetigt-teilnahme': 'personal',
+	'selbsthilfe-termin-verschoben-teilnahme': 'personal',
+	'selbsthilfe-termin-abgesagt-teilnahme': 'personal',
+	'selbsthilfe-termin-erinnerung-teilnahme': 'personal',
+	'selbsthilfe-termin-bestaetigt-beratung': 'operational',
+	'selbsthilfe-termin-verschoben-beratung': 'operational',
+	'selbsthilfe-termin-abgesagt-beratung': 'operational',
+	'selbsthilfe-termin-erinnerung-beratung': 'operational',
 	'beraterin-kontakt': 'requested',
 	'anfrage-zugewiesen': 'operational',
 	'systemhinweis': 'service',
