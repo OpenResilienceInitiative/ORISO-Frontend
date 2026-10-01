@@ -1,3 +1,4 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import * as React from 'react';
 import {
 	useCallback,
@@ -230,7 +231,14 @@ export const AcceptAssign = ({
 			})
 			.catch((error) => {
 				setIsRequestInProgress(false);
-				if (error.message === FETCH_ERRORS.CONFLICT) {
+				const failure = getCounsellingDpaFailure(error);
+				if (failure) {
+					setOverlayItem({
+						...enquiryTakenByOtherConsultantOverlayItem,
+						headline: translate(`${failure.key}.title`),
+						copy: translate(`${failure.key}.text`)
+					});
+				} else if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {
 					// console.log(error);

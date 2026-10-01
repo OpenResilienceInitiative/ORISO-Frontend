@@ -13,6 +13,10 @@ import {
 	EmailLocale
 } from './content/emailCatalogue';
 import { en } from './content/en';
+import { fr } from './content/fr';
+import { ru } from './content/ru';
+import { ti } from './content/ti';
+import { tr } from './content/tr';
 import {
 	EmailDialect,
 	toEmailDialectHtml,
@@ -35,6 +39,7 @@ import {
 } from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
+export * from './content/emailTranslationSync';
 export * from './kit/emailDialect';
 export * from './kit/emailTokens';
 export type { EmailContent } from './kit/emailTemplate';
@@ -45,13 +50,21 @@ export const EMAIL_CONTENT: Record<
 > = {
 	'de-sie': deSie,
 	'de-du': deDu,
-	en
+	en,
+	fr,
+	ru,
+	ti,
+	tr
 };
 
 export const getEmailContent = (
 	id: EmailId,
 	locale: EmailLocale
-): EmailContent => EMAIL_CONTENT[locale][id];
+): EmailContent => {
+	const content = EMAIL_CONTENT[locale]?.[id];
+	if (!content) throw new Error(`Missing e-mail copy: ${locale}/${id}`);
+	return content;
+};
 
 export interface BuildEmailOptions {
 	/** Defaults to the placeholder brand, i.e. a send-ready template file. */
@@ -104,7 +117,6 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	imprintUrl: 'https://beratung.example.org/impressum',
 	unsubscribeUrl:
 		'https://beratung.example.org/einstellungen/benachrichtigungen',
-	bookingUrl: 'https://beratung.example.org/termine/buchen',
 	username: 'ruhiges-yak-1428',
 	expiryHours: '24',
 	appointmentDate: 'Dienstag, 4. August 2026',

@@ -1,3 +1,4 @@
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -388,6 +389,11 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					setIsRegistering(false);
 					if (registerThenLogin.accountCreated()) {
 						setLoginRetry(true);
+					}
+					const dpaNotice = getCounsellingDpaNotification(error, t);
+					if (dpaNotice) {
+						addNotification(dpaNotice);
+						return;
 					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,

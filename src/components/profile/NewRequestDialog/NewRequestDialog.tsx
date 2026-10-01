@@ -1,7 +1,15 @@
+import { getCounsellingDpaFailure } from '../../../api/counsellingDpaFailure';
 import * as React from 'react';
 import { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogTitle, IconButton } from '@mui/material';
+import {
+	Dialog,
+	DialogActions,
+	DialogContent,
+	DialogContentText,
+	DialogTitle,
+	IconButton
+} from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { UserDataContext } from '../../../globalState';
@@ -59,6 +67,8 @@ export const NewRequestDialog = ({
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [sessionId, setSessionId] = useState(null);
+	const [dpaFailure, setDpaFailure] =
+		useState<ReturnType<typeof getCounsellingDpaFailure>>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [tenantAgenciesTopics, setTenantAgenciesTopics] = useState<
 		TenantAgenciesTopicsInterface[]
@@ -168,6 +178,19 @@ export const NewRequestDialog = ({
 				setIsRequestInProgress(false);
 			})
 			.catch((error: Response) => {
+				const failure = getCounsellingDpaFailure(error);
+				setDpaFailure(failure);
+				if (failure) {
+					setOverlayItem({
+						...overlayItemNewRegistrationError,
+						headline: translate(`${failure.key}.title`),
+						copy: translate(`${failure.key}.text`)
+					});
+					setIsButtonDisabled(false);
+					setOverlayActive(true);
+					setIsRequestInProgress(false);
+					return;
+				}
 				const reason = error.headers?.get(FETCH_ERRORS.X_REASON);
 				if (
 					reason ===
@@ -210,7 +233,8 @@ export const NewRequestDialog = ({
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
 			setOverlayItem(null);
 			setOverlayActive(false);
-			setSelectedTopicId(preselectedTopicId ?? null);
+			if (!dpaFailure) setSelectedTopicId(preselectedTopicId ?? null);
+			setDpaFailure(null);
 		} else {
 			logout();
 		}
@@ -260,7 +284,34 @@ export const NewRequestDialog = ({
 					buttonHandle={handleRegistration}
 					disabled={isButtonDisabled}
 				/>
-				{overlayActive && (
+				{overlayActive && dpaFailure && (
+					<Dialog
+						open
+						onClose={() =>
+							handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE)
+						}
+						aria-labelledby="new-request-dpa-heading"
+						aria-describedby="new-request-dpa-text"
+					>
+						<DialogTitle id="new-request-dpa-heading">
+							{overlayItem.headline}
+						</DialogTitle>
+						<DialogContent>
+							<DialogContentText id="new-request-dpa-text">
+								{overlayItem.copy}
+							</DialogContentText>
+						</DialogContent>
+						<DialogActions>
+							<Button
+								item={overlayItem.buttonSet[0]}
+								buttonHandle={() =>
+									handleOverlayAction(OVERLAY_FUNCTIONS.CLOSE)
+								}
+							/>
+						</DialogActions>
+					</Dialog>
+				)}
+				{overlayActive && !dpaFailure && (
 					<Overlay
 						item={overlayItem}
 						handleOverlay={handleOverlayAction}

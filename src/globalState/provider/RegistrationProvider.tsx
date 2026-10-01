@@ -11,6 +11,7 @@ import {
 	useState
 } from 'react';
 import * as React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AgencyDataInterface, TopicsDataInterface } from '../interfaces';
 import { ConsultingTypeInterface } from '../interfaces/ConsultingTypeInterface';
 import { UrlParamsContext } from './UrlParamsProvider';
@@ -27,6 +28,7 @@ import {
 	filterRegistrationStepsForDirectLink,
 	getConsultantDirectLinkTopicIds
 } from '../../components/registration/registrationSteps';
+import { getGroupInviteTopicId } from '../../components/registration/groupInviteEntry/groupInviteEntryState';
 import { agencyExcludesTopic } from '../../components/registration/agencyTopicMatch';
 
 export const RegistrationContext = createContext<RegistrationContextInterface>(
@@ -220,10 +222,10 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			const restored: Partial<RegistrationData> = registrationData;
 
 			if (urlNamesTopic) {
-				if (
-					agencyExcludesTopic(restored.agency, restored.mainTopic) ||
-					agencyExcludesTopic(restored.agency, restored.topic)
-				) {
+				// The stored mainTopic is about to be replaced by the URL one, so
+				// it is no reason to drop the centre; the clearing effect below
+				// checks the centre against the URL topic once it is resolved.
+				if (agencyExcludesTopic(restored.agency, restored.topic)) {
 					delete restored.agency;
 					delete restored.agencyId;
 				}
@@ -373,9 +375,12 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 			return;
 		}
 
+		// With a URL topic the mainTopic slot is the URL's: a different value
+		// there is the stale stored one, about to be replaced by the direct-link
+		// effect. Clearing it would also retire its step and topic group, which
+		// the URL topic never gets back.
 		const clearMainTopic =
-			preselectedTopic?.id !== mainTopic?.id &&
-			agencyExcludesTopic(agency, mainTopic);
+			!preselectedTopic?.id && agencyExcludesTopic(agency, mainTopic);
 		const clearTopic =
 			preselectedTopic?.id !== topic?.id &&
 			agencyExcludesTopic(agency, topic);
@@ -440,6 +445,39 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		preselectedConsultant,
 		preselectedTopic,
 		registrationData?.agency,
+		registrationData?.mainTopic?.id,
+		updateRegistrationData
+	]);
+
+	/* A self-help group link (#1499) skips the topic step: the group's agency
+	   has one topic, and that is the group's. Several topics → steps as before. */
+	const [searchParams] = useSearchParams();
+	const inviteGroupChatId = searchParams.get('gcid');
+	useEffect(() => {
+		if (!inviteGroupChatId?.trim() || !preselectedAgency) {
+			return;
+		}
+		const topicId = getGroupInviteTopicId(preselectedAgency);
+		if (topicId == null || registrationData?.mainTopic?.id === topicId) {
+			return;
+		}
+
+		let cancelled = false;
+
+		apiGetTopicById(topicId)
+			.then((mainTopic) => {
+				if (!cancelled && mainTopic) {
+					updateRegistrationData({ mainTopic });
+				}
+			})
+			.catch(() => undefined);
+
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		inviteGroupChatId,
+		preselectedAgency,
 		registrationData?.mainTopic?.id,
 		updateRegistrationData
 	]);

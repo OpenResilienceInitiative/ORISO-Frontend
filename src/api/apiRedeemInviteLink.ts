@@ -1,5 +1,6 @@
 import { apiUrl } from '../resources/scripts/endpoints';
 import { FETCH_METHODS } from './fetchData';
+import { getCounsellingDpaFailure } from './counsellingDpaFailure';
 
 /** Response from POST /service/users/invitelinks/{token}/redeem (topic-based links). */
 export interface RedeemInviteLinkSessionResponse {
@@ -40,6 +41,7 @@ export const redeemInviteLink = async (
 	});
 
 	if (!response.ok) {
+		if (getCounsellingDpaFailure(response)) throw response;
 		const body = await response.text().catch(() => '');
 		throw new Error(body || `Redeem failed (HTTP ${response.status})`);
 	}
