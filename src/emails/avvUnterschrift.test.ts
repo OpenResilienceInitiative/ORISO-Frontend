@@ -13,7 +13,11 @@ describe('avv-unterschrift', () => {
 			'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:',
 		'de-du':
 			'Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:',
-		'en': 'If the button does not work, copy this link into your browser:'
+		'en': 'If the button does not work, copy this link into your browser:',
+		'fr': 'Si le bouton ne fonctionne pas, copiez ce lien dans votre navigateur :',
+		'ru': 'Если кнопка не работает, скопируйте эту ссылку в браузер:',
+		'ti': 'እታ መጠወቒ እንተዘይሰሪሓ፣ ነዚ መላግቦ ናብ መርበብ መርኣዪኹም ቅድሑዎ፦',
+		'tr': 'Düğme çalışmazsa bu bağlantıyı tarayıcınıza kopyalayın:'
 	} as const;
 
 	it.each(EMAIL_LOCALES)(
@@ -119,12 +123,19 @@ describe('avv-unterschrift', () => {
 			const { html, text } = buildEmail('avv-unterschrift', locale, {
 				dialect: 'plain'
 			});
-			const offeredBy =
-				locale === 'en'
-					? '{{offeringName}} is a service provided by {{operatorName}}.'
-					: '{{offeringName}} ist ein Angebot von {{operatorName}}.';
+			const offeredBy: Record<string, string> = {
+				'de-sie':
+					'{{offeringName}} ist ein Angebot von {{operatorName}}.',
+				'de-du':
+					'{{offeringName}} ist ein Angebot von {{operatorName}}.',
+				'en': '{{offeringName}} is a service provided by {{operatorName}}.',
+				'fr': '{{offeringName}} est un service proposé par {{operatorName}}.',
+				'ru': '{{offeringName}} предоставляется организацией {{operatorName}}.',
+				'ti': '{{offeringName}} ብ{{operatorName}} ዝቐርብ ኣገልግሎት እዩ።',
+				'tr': '{{offeringName}}, {{operatorName}} tarafından sunulur.'
+			};
 			for (const part of [html, text]) {
-				expect(part).toContain(offeredBy);
+				expect(part).toContain(offeredBy[locale]);
 				expect(part).not.toMatch(
 					/\{\{platformName\}\} (ist ein Angebot|is a service)/
 				);

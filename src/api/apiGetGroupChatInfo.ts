@@ -21,6 +21,10 @@ export const apiGetGroupChatInfo = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.NO_MATCH]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.NO_MATCH,
+			FETCH_ERRORS.FORBIDDEN
+		]
 	});
 };
