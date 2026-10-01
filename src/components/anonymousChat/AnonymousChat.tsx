@@ -388,6 +388,13 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				.catch((error) => {
 					setIsRegistering(false);
 					if (registerThenLogin.accountCreated()) {
+						/* An agency answer that arrived while the account was
+						   still being created may have cleared the choice or
+						   opened the alert. The retry logs in with what was
+						   submitted, so put that back (CodeRabbit on #1567). */
+						setSelectedAgency(selectedAgency);
+						setSelectedTopic(selectedTopic);
+						setNoAvailabilityModalOpen(false);
 						setLoginRetry(true);
 					}
 					/* A DPA refusal comes from the registration; once the

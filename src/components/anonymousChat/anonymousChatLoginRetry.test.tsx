@@ -216,6 +216,82 @@ describe('anonymous chat — login retry after the account exists', () => {
 		expect(api.autoLogin).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps the submitted choice when a topic opened before the start answers while the account is still being created', async () => {
+		/* A second topic's list arrives empty while the registration is
+		   still running: before the account exists, so it clears the centre
+		   and opens the "nobody available" alert as usual. The account is
+		   then created and the login fails. The retry must still log in with
+		   what was submitted: no cleared centre switching the start button
+		   off, no alert over it (CodeRabbit on #1567). */
+		const secondTopic = {
+			id: 12,
+			name: 'Familie',
+			slug: 'familie',
+			status: 'ACTIVE'
+		};
+		let answerSecondTopic: (agencies: unknown[]) => void = () => undefined;
+		let finishRegistration: () => void = () => undefined;
+		api.apiGetTopicsData.mockResolvedValue([topic, secondTopic]);
+		api.apiAgencySelection.mockImplementation(
+			({ topicId }: { topicId: number }) =>
+				topicId === secondTopic.id
+					? new Promise((resolve) => {
+							answerSecondTopic = resolve;
+						})
+					: Promise.resolve([agency])
+		);
+		api.apiPostRegistration.mockImplementation(
+			(_u, _d, _m, _t, onAccountCreated?: () => void) =>
+				new Promise((_resolve, reject) => {
+					finishRegistration = () => {
+						onAccountCreated?.();
+						reject(new Error('auto-login failed'));
+					};
+				})
+		);
+		renderChat();
+
+		await waitFor(() =>
+			expect(startButton()).toHaveProperty('disabled', false)
+		);
+		fireEvent.click(screen.getByText('anonymousChat.topics.names.familie'));
+		await waitFor(() =>
+			expect(api.apiAgencySelection).toHaveBeenCalledWith(
+				expect.objectContaining({ topicId: secondTopic.id }),
+				expect.anything()
+			)
+		);
+
+		fireEvent.click(startButton());
+		await waitFor(() =>
+			expect(api.apiPostRegistration).toHaveBeenCalledTimes(1)
+		);
+		await act(async () => {
+			answerSecondTopic([]);
+		});
+		await act(async () => {
+			finishRegistration();
+		});
+		await waitFor(() =>
+			expect(api.addNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					text: 'registration.accountCreated.retry'
+				})
+			)
+		);
+
+		await waitFor(() =>
+			expect(
+				startButton(),
+				'the retry needs the centre the account was created for'
+			).toHaveProperty('disabled', false)
+		);
+		fireEvent.click(startButton());
+		await waitFor(() => expect(api.redirectToApp).toHaveBeenCalled());
+		expect(api.apiPostRegistration).toHaveBeenCalledTimes(1);
+		expect(api.autoLogin).toHaveBeenCalledTimes(1);
+	});
+
 	it('opens no availability alert when a check started before the start answers only after the account exists', async () => {
 		/* Opening the topic starts an availability check. It is still on the
 		   way when "start" creates the account and the login fails. When it
