@@ -9,6 +9,7 @@ import {
 	setTenantSettings
 } from '../utils/tenantSettingsHelper';
 import { useSessionTenantSettings } from './useSessionTenantSettings';
+import { setValueInCookie } from '../components/sessionCookie/accessSessionCookie';
 
 vi.mock('../api/apiGetTenantTheming', () => ({
 	apiGetTenantTheming: vi.fn()
@@ -178,6 +179,47 @@ describe('useSessionTenantSettings', () => {
 				featureAudioCallsAnonymousChatsEnabled: false,
 				featureVideoCallsAnonymousChatsEnabled: false
 			})
+		);
+	});
+
+	// A failed refresh for the *same* tenant may keep the last good answer —
+	// but after a sign-in the retained settings describe the previous Träger.
+	it('drops the previous tenant settings when the refresh after a sign-in fails', async () => {
+		document.cookie = 'keycloak=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+		window.localStorage.clear();
+		vi.mocked(getTenantSettings).mockReturnValue({});
+		let signedIn = false;
+		vi.mocked(apiGetTenantTheming).mockImplementation(() =>
+			signedIn
+				? Promise.reject(new Error('tenant service unavailable'))
+				: (Promise.resolve({
+						settings: {
+							featureAudioCallsAnonymousChatsEnabled: true
+						}
+					}) as any)
+		);
+
+		const { result } = renderHook(() =>
+			useSessionTenantSettings('session-16')
+		);
+		await waitFor(() =>
+			expect(
+				result.current.settings.featureAudioCallsAnonymousChatsEnabled
+			).toBe(true)
+		);
+
+		signedIn = true;
+		await act(async () => {
+			setValueInCookie(
+				'keycloak',
+				`header.${btoa(JSON.stringify({ tenantId: 14 }))}.signature`
+			);
+		});
+
+		await waitFor(() =>
+			expect(
+				result.current.settings.featureAudioCallsAnonymousChatsEnabled
+			).toBeUndefined()
 		);
 	});
 });

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { OrisoDialog } from '../../modal/OrisoDialog';
+import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
 import { ReactComponent as PlayCircleIcon } from '../../../resources/img/icons/play-circle.svg';
@@ -15,7 +15,6 @@ import {
 	previewNotificationSound,
 	soundAssetFor
 } from '../../../utils/notificationSettings/soundPlayback';
-import { M3Checkbox } from '../../M3Checkbox';
 import {
 	AREA_KINDS,
 	BannerMode,
@@ -31,7 +30,7 @@ import {
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
- * A single kind row: volume arrows + sound dropdown (with play/mute) + email
+ * A single kind row: volume arrows + sound dropdown (with play/mute) + banner
  * ------------------------------------------------------------------ */
 
 const KindRow = ({
@@ -190,14 +189,6 @@ const KindRow = ({
 						</option>
 					</select>
 				</label>
-				<M3Checkbox
-					checked={value.email}
-					onChange={(checked) =>
-						onChange(area, kind, 'email', checked)
-					}
-					label={t('profile.notifications.config.sendByEmail')}
-					dataCy={`notif-email-${area}-${kind}`}
-				/>
 			</div>
 		</div>
 	);
@@ -234,7 +225,12 @@ export const NotificationConfigView = ({
 				{t('profile.notifications.config.intro')}
 			</p>
 			<p className="notifConfig__emailNote">
-				{t('profile.notifications.config.emailNote')}
+				<a href="/profile/einstellungen/email#email-notifications">
+					{t(
+						'profile.notifications.title',
+						'E-Mail-Benachrichtigungen'
+					)}
+				</a>
 			</p>
 
 			<div className="notifConfig__tabs" role="tablist">
@@ -376,14 +372,26 @@ export const NotificationConfigDialog = ({
 	}, []);
 
 	return (
-		<OrisoDialog
+		<M3Dialog
 			open={open}
 			onClose={onClose}
 			title={t('profile.notifications.config.title')}
 			icon={<NotificationSettingsIcon />}
-			maxWidth="620px"
-			height="auto"
-			hideActions
+			closeLabel={t('app.close')}
+			width={620}
+			actions={[
+				{
+					label: t('profile.notifications.config.cancel'),
+					onClick: onClose,
+					testId: 'notif-cancel'
+				},
+				{
+					label: t('profile.notifications.config.confirm'),
+					onClick: () => onConfirm(draft),
+					primary: true,
+					testId: 'notif-confirm'
+				}
+			]}
 		>
 			<NotificationConfigView
 				config={draft}
@@ -392,24 +400,6 @@ export const NotificationConfigDialog = ({
 				onChange={handleChange}
 				onPreview={handlePreview}
 			/>
-			<div className="notifConfig__footer">
-				<button
-					type="button"
-					className="notifConfig__cancel"
-					onClick={onClose}
-					aria-label={t('profile.notifications.config.cancel')}
-				>
-					✕
-				</button>
-				<button
-					type="button"
-					className="notifConfig__confirm"
-					onClick={() => onConfirm(draft)}
-					data-cy="notif-confirm"
-				>
-					✓ {t('profile.notifications.config.confirm')}
-				</button>
-			</div>
-		</OrisoDialog>
+		</M3Dialog>
 	);
 };

@@ -16,7 +16,24 @@
 	}
 
 	&__close {
+		/* One title line high, icon centred: where the old <div> put it. */
+		display: flex;
+		align-self: flex-start;
+		align-items: center;
+		height: 24px;
+		padding: 0;
+		border: 0;
+		background: none;
 		color: $white;
+		cursor: pointer;
+
+		/* The shared focus treatment, like every other control. */
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+			border-radius: 2px;
+		}
+
 		svg {
 			width: 14px;
 			height: 14px;

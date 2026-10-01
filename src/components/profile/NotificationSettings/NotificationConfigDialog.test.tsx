@@ -12,7 +12,10 @@ import {
 	render,
 	screen
 } from '@testing-library/react';
-import { NotificationConfigView } from './NotificationConfigDialog';
+import {
+	NotificationConfigDialog,
+	NotificationConfigView
+} from './NotificationConfigDialog';
 import { DEFAULT_NOTIFICATION_CONFIG } from '../../../utils/notificationSettings/notificationConfig';
 
 // The component tags nodes with data-cy (Cypress convention); make getByTestId use it.
@@ -20,8 +23,10 @@ configure({ testIdAttribute: 'data-cy' });
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, opts?: Record<string, unknown>) =>
-			opts && 'number' in opts ? `${key}:${opts.number}` : key
+		t: (key: string, opts?: Record<string, unknown> | string) =>
+			opts && typeof opts === 'object' && 'number' in opts
+				? `${key}:${opts.number}`
+				: key
 	})
 }));
 
@@ -49,6 +54,39 @@ const baseProps = {
 	onChange: vi.fn(),
 	onPreview: vi.fn()
 };
+
+describe('NotificationConfigDialog', () => {
+	afterEach(cleanup);
+
+	it('keeps the actions outside the keyboard-scrollable dialog body', () => {
+		const onConfirm = vi.fn();
+		const { baseElement } = render(
+			<NotificationConfigDialog
+				open
+				config={DEFAULT_NOTIFICATION_CONFIG}
+				onConfirm={onConfirm}
+				onClose={vi.fn()}
+			/>
+		);
+
+		const surface = baseElement.querySelector('.m3Dialog__surface');
+		const body = surface?.querySelector('.m3Dialog__body');
+		const footer = surface?.querySelector('.m3Dialog__footer');
+
+		expect(surface).toBeTruthy();
+		expect(body?.getAttribute('tabindex')).toBe('0');
+		expect(body?.querySelector('[data-cy="notif-config"]')).toBeTruthy();
+		expect(footer).toBeTruthy();
+		expect(body?.contains(footer ?? null)).toBe(false);
+
+		fireEvent.click(
+			surface?.querySelector(
+				'[data-testid="notif-confirm"]'
+			) as HTMLElement
+		);
+		expect(onConfirm).toHaveBeenCalledWith(DEFAULT_NOTIFICATION_CONFIG);
+	});
+});
 
 describe('NotificationConfigView', () => {
 	afterEach(cleanup);
@@ -122,16 +160,19 @@ describe('NotificationConfigView', () => {
 		);
 	});
 
-	it('reports an email toggle', () => {
+	it('links to authoritative email preferences instead of editing Matrix email flags', () => {
 		const onChange = vi.fn();
 		render(<NotificationConfigView {...baseProps} onChange={onChange} />);
-		fireEvent.click(screen.getByTestId('notif-email-requests-mention'));
-		expect(onChange).toHaveBeenCalledWith(
-			'requests',
-			'mention',
-			'email',
-			true
-		);
+		expect(screen.queryByTestId('notif-email-requests-mention')).toBeNull();
+		expect(
+			screen.queryByText('profile.notifications.config.emailNote')
+		).toBeNull();
+		expect(
+			screen
+				.getByRole('link', { name: 'profile.notifications.title' })
+				.getAttribute('href')
+		).toBe('/profile/einstellungen/email#email-notifications');
+		expect(onChange).not.toHaveBeenCalled();
 	});
 
 	it('switches area via a tab click', () => {

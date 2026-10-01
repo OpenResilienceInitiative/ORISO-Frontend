@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Box, Stack, Typography } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { userEvent, within } from 'storybook/test';
+import i18n from '../../i18n';
 import { OrisoMultiSelect, OrisoSelect } from './OrisoSelect';
 import { OrisoTextarea } from './OrisoTextarea';
 
@@ -245,7 +246,7 @@ export const MultiSelectFiltered: Story = {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('combobox'));
 		const search = await within(document.body).findByRole('textbox', {
-			name: 'Search'
+			name: i18n.t('form.select.search')
 		});
 		await userEvent.type(search, 'fr');
 	}

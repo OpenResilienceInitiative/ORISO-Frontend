@@ -21,7 +21,15 @@ import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
+import {
+	isFocusProtected,
+	isTypingElsewhere,
+	scheduleComposerAutoFocus
+} from './focusGuards';
+import {
+	AUTO_FOCUS_ATTRIBUTE,
+	focusComposerAutomatically
+} from './timelineFollow';
 import {
 	buildSessionChannelPath,
 	resolveComposerChannel,
@@ -44,6 +52,7 @@ import {
 	getExplicitAudienceValues,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
+import { useComposerDock } from './useComposerDock';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -470,6 +479,20 @@ export const MessageSubmitInterfaceComponent = ({
 	const location = useLocation();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
+	const composerCardRef = useRef<HTMLDivElement>(null);
+	// A click or a keystroke makes the focus the reader's own; leaving the
+	// card ends it. Either way the automatic-focus mark goes.
+	const clearAutoFocusMark = useCallback(() => {
+		composerCardRef.current?.removeAttribute(AUTO_FOCUS_ATTRIBUTE);
+	}, []);
+	const handleComposerCardBlur = useCallback(
+		(event: React.FocusEvent<HTMLDivElement>) => {
+			if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+				clearAutoFocusMark();
+			}
+		},
+		[clearAutoFocusMark]
+	);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
 	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -537,6 +560,13 @@ export const MessageSubmitInterfaceComponent = ({
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
 	const figmaToolbarRef = useRef<HTMLDivElement | null>(null);
+	/**
+	 * The docked wrapper (info bar + previews + composer card). Its height is
+	 * what the timeline has to keep free, and its host's height is what caps
+	 * the composer's growth — both published as CSS variables (T41).
+	 */
+	const dockedWrapperRef = useRef<HTMLDivElement | null>(null);
+	const composerHostHeight = useComposerDock(dockedWrapperRef);
 	const [emojiPickerAnchorEl, setEmojiPickerAnchorEl] =
 		useState<HTMLElement | null>(null);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
@@ -646,16 +676,7 @@ export const MessageSubmitInterfaceComponent = ({
 		if (isFocusProtected(activeElement)) {
 			return;
 		}
-		const activeTagName = activeElement?.tagName?.toLowerCase();
-		const isTypingInAnotherInput =
-			!!activeElement &&
-			!inputElement.contains(activeElement) &&
-			(activeElement.isContentEditable ||
-				activeTagName === 'input' ||
-				activeTagName === 'textarea' ||
-				activeTagName === 'select');
-
-		if (isTypingInAnotherInput) {
+		if (isTypingElsewhere(activeElement, inputElement)) {
 			return;
 		}
 
@@ -1235,8 +1256,23 @@ export const MessageSubmitInterfaceComponent = ({
 			if (isFocusProtected(document.activeElement)) {
 				return;
 			}
-			composerRef.current?.runAction('alignLeft');
-			focusEditorInput();
+			// Nor off another editor the person is typing in: chat card and
+			// side panel each run this once their draft has loaded, and the
+			// later one used to pull focus out mid-word.
+			if (
+				isTypingElsewhere(
+					document.activeElement,
+					textareaInputRef.current
+				)
+			) {
+				return;
+			}
+			// Frank (16.09.): this cursor is the app's, not the reader's —
+			// the card is marked so it does not count as writing.
+			focusComposerAutomatically(composerCardRef.current, () => {
+				composerRef.current?.runAction('alignLeft');
+				focusEditorInput();
+			});
 		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
@@ -2108,14 +2144,8 @@ export const MessageSubmitInterfaceComponent = ({
 		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
 			infoData = {
 				isInfo: false,
-				infoHeadline: translate(
-					'voice.recording.error.headline',
-					'Voice recording is unavailable'
-				),
-				infoMessage: translate(
-					'voice.recording.error.message',
-					'Please allow microphone access and try again.'
-				)
+				infoHeadline: translate('voice.recording.error.headline'),
+				infoMessage: translate('voice.recording.error.message')
 			};
 		} else if (activeInfo === INFO_TYPES.ARCHIVED) {
 			infoData = {
@@ -2210,7 +2240,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * The audience selector no longer uses it: it splits an id on
 	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:oriso.org` yields `oriso` — a token every account on the
+	 * `@consultant42:example.org` yields `example` — a token every account on the
 	 * homeserver shares. As an identity test that is worthless, which is why
 	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
 	 *
@@ -2418,7 +2448,7 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		const defaultOption: AudienceOption = {
 			value: AUDIENCE_ALL,
-			label: translate('message.audience.sendToAll', 'Send to all'),
+			label: translate('message.audience.sendToAll'),
 			kind: 'all'
 		};
 		const isInquiryNotAccepted =
@@ -2433,7 +2463,7 @@ export const MessageSubmitInterfaceComponent = ({
 		 * Strict identity throughout: both "is this me?" and "have I already
 		 * got this person?" used to run through `getComparableAudienceIds`,
 		 * whose 4+ character tokens include the homeserver — so every account
-		 * on `oriso.org` matched every other one. See #894.
+		 * on `example.org` matched every other one. See #894.
 		 */
 		const audience = createAudienceCollector([
 			getCurrentMatrixUserId(),
@@ -2761,7 +2791,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
-			return [translate('message.audience.sendToAll', 'Send to all')];
+			return [translate('message.audience.sendToAll')];
 		}
 		const labels = selectedAudienceValues
 			.map(
@@ -2789,14 +2819,13 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
-			return translate('message.audience.all', 'Alle');
+			return translate('message.audience.all');
 		}
 		if (selectedAudienceLabels.length === 1) {
 			return selectedAudienceLabels[0];
 		}
-		return translate('message.audience.multiCount', '{{count}} Personen', {
-			count: selectedAudienceLabels.length,
-			defaultValue: `${selectedAudienceLabels.length} Personen`
+		return translate('message.audience.multiCount', {
+			count: selectedAudienceLabels.length
 		});
 	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
 	const audienceTargetCount = useMemo(
@@ -2881,7 +2910,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * This used to re-derive the roles here with `getComparableAudienceIds`,
 	 * whose 4+ character tokens include the homeserver name — every
-	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * participant on `example.org` shares the token `example`, so one supervisor in
 	 * the room could pull unrelated people into the moderator section, and the
 	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
 	 */
@@ -3152,15 +3181,9 @@ export const MessageSubmitInterfaceComponent = ({
 		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
 	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
 	const characterCounterAnnouncement = isMessageOverLimit
-		? translate(
-				'message.submit.characterCounter.overLimit',
-				'Message is over the character limit.'
-			)
+		? translate('message.submit.characterCounter.overLimit')
 		: isMessageLengthWarning
-			? translate(
-					'message.submit.characterCounter.warning',
-					'Message is approaching the character limit.'
-				)
+			? translate('message.submit.characterCounter.warning')
 			: '';
 	const canSendMessage =
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
@@ -3501,21 +3524,12 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionProvider = useMemo(
 		() => ({
 			selfId: userData?.userId,
-			notInChatLabel: translate(
-				'message.mention.notInChat',
-				'nicht im Chat'
-			),
+			notInChatLabel: translate('message.mention.notInChat'),
 			// #993: the popup says why it is empty instead of rendering nothing.
 			getDirectoryState: () => mentionDataRef.current.directoryState,
-			emptyLabel: translate('message.mention.empty', 'Niemand gefunden'),
-			unavailableLabel: translate(
-				'message.mention.unavailable',
-				'Liste konnte nicht geladen werden'
-			),
-			loadingLabel: translate(
-				'message.mention.loading',
-				'Wird geladen …'
-			),
+			emptyLabel: translate('message.mention.empty'),
+			unavailableLabel: translate('message.mention.unavailable'),
+			loadingLabel: translate('message.mention.loading'),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -3586,9 +3600,10 @@ export const MessageSubmitInterfaceComponent = ({
 				viewportWidth: window.innerWidth,
 				viewportHeight: window.innerHeight,
 				compact: compactHeight,
-				flush: flushCorner !== undefined
+				flush: flushCorner !== undefined,
+				hostHeight: composerHostHeight
 			}),
-		[compactHeight, flushCorner]
+		[compactHeight, flushCorner, composerHostHeight]
 	);
 
 	const clampComposerHeight = useCallback(
@@ -3775,6 +3790,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	return (
 		<div
+			ref={dockedWrapperRef}
 			className={clsx(
 				className,
 				'messageSubmit__wrapper',
@@ -3785,11 +3801,30 @@ export const MessageSubmitInterfaceComponent = ({
 			style={expandedComposerStyle}
 		>
 			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{threadRootId && (
+				<div
+					className="messageSubmit__target"
+					data-cy="composer-target"
+					role="status"
+				>
+					<strong className="messageSubmit__targetLabel">
+						{translate('message.thread.targetLabel')}
+					</strong>
+					<span
+						className="messageSubmit__targetPreview"
+						title={
+							threadParentPreview ||
+							translate('message.thread.unknownRoot')
+						}
+					>
+						{threadParentPreview ||
+							translate('message.thread.unknownRoot')}
+					</span>
+				</div>
+			)}
 			{highlightedSnippet && (
 				<div className="textarea__snippetInfo">
-					{translate('chat.highlightSnippet.ready', {
-						defaultValue: 'Text snippet added to your reply'
-					})}
+					{translate('chat.highlightSnippet.ready', {})}
 				</div>
 			)}
 
@@ -3800,10 +3835,7 @@ export const MessageSubmitInterfaceComponent = ({
 					<div className="messageSubmit__replyPreview" role="status">
 						<div className="messageSubmit__replyPreviewContent">
 							<span className="messageSubmit__replyPreviewLabel">
-								{translate(
-									'message.reply.previewLabel',
-									'Antwort an'
-								)}{' '}
+								{translate('message.reply.previewLabel')}{' '}
 								<strong>{replyTo.author}</strong>
 							</span>
 							<span className="messageSubmit__replyPreviewText">
@@ -3814,10 +3846,7 @@ export const MessageSubmitInterfaceComponent = ({
 							type="button"
 							className="messageSubmit__replyPreviewCancel"
 							onClick={() => onCancelReply && onCancelReply()}
-							aria-label={translate(
-								'message.reply.cancel',
-								'Antwort verwerfen'
-							)}
+							aria-label={translate('message.reply.cancel')}
 						>
 							×
 						</button>
@@ -3833,19 +3862,13 @@ export const MessageSubmitInterfaceComponent = ({
 							type="button"
 							className="messageSubmit__editPreviewCancel"
 							onClick={() => onCancelEdit && onCancelEdit()}
-							aria-label={translate(
-								'message.edit.cancel',
-								'Bearbeiten abbrechen'
-							)}
+							aria-label={translate('message.edit.cancel')}
 						>
 							<HighlightOffIcon fontSize="inherit" />
 						</button>
 						<span className="messageSubmit__editPreviewText">
 							<span className="messageSubmit__editPreviewLabel">
-								{translate(
-									'message.edit.previewLabel',
-									'Nachricht bearbeiten'
-								)}
+								{translate('message.edit.previewLabel')}
 							</span>{' '}
 							<span className="messageSubmit__editPreviewQuote">
 								{editingMessage.text}
@@ -3880,8 +3903,12 @@ export const MessageSubmitInterfaceComponent = ({
 							accent !== 'default' &&
 								`textarea__wrapper-send-message--${accent}`
 						)}
+						ref={composerCardRef}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
+						onPointerDownCapture={clearAutoFocusMark}
+						onKeyDownCapture={clearAutoFocusMark}
+						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
@@ -3908,8 +3935,7 @@ export const MessageSubmitInterfaceComponent = ({
 										: 'inside'
 								}
 								ariaLabel={translate(
-									'message.mobileNav.dragToExpand',
-									'Drag to resize composer'
+									'message.mobileNav.dragToExpand'
 								)}
 							/>
 						)}
@@ -3932,8 +3958,7 @@ export const MessageSubmitInterfaceComponent = ({
 										)
 									}
 									chevronLabel={translate(
-										'message.audience.openMenu',
-										'Open send-to menu'
+										'message.audience.openMenu'
 									)}
 								/>
 								{isAudienceMenuOpen && (
@@ -3958,8 +3983,7 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__audienceSelectorMenu"
 											role="dialog"
 											aria-label={translate(
-												'message.audience.menuAriaLabel',
-												'Send to selector'
+												'message.audience.menuAriaLabel'
 											)}
 										>
 											<button
@@ -3969,8 +3993,7 @@ export const MessageSubmitInterfaceComponent = ({
 													setIsAudienceMenuOpen(false)
 												}
 												aria-label={translate(
-													'message.audience.closeMenu',
-													'Close send-to menu'
+													'message.audience.closeMenu'
 												)}
 											>
 												<svg
@@ -3998,14 +4021,12 @@ export const MessageSubmitInterfaceComponent = ({
 											</button>
 											<p className="textarea__audienceSelectorMenuSubheading">
 												{translate(
-													'message.audience.menuSubheading',
-													'Wähle wer diese Nachricht sehen soll'
+													'message.audience.menuSubheading'
 												)}
 											</p>
 											<p className="textarea__audienceSelectorMenuHeading">
 												{translate(
-													'message.audience.menuHeading',
-													'Adressaten wählen'
+													'message.audience.menuHeading'
 												)}
 											</p>
 											<div className="textarea__audienceSelectorMenuDivider" />
@@ -4046,7 +4067,6 @@ export const MessageSubmitInterfaceComponent = ({
 																	'clients'
 																	? translate(
 																			'message.audience.clientsSelected',
-																			'{{count}} Clients Selected',
 																			{
 																				count: selectedCount
 																			}
@@ -4055,14 +4075,12 @@ export const MessageSubmitInterfaceComponent = ({
 																		  'counsellors'
 																		? translate(
 																				'message.audience.counsellorsSelected',
-																				'{{count}} Counsellors Selected',
 																				{
 																					count: selectedCount
 																				}
 																			)
 																		: translate(
 																				'message.audience.moderatorsSelected',
-																				'{{count}} Moderators Selected',
 																				{
 																					count: selectedCount
 																				}
@@ -4070,18 +4088,15 @@ export const MessageSubmitInterfaceComponent = ({
 																: sectionDefinition.key ===
 																	  'clients'
 																	? translate(
-																			'message.audience.clientsSelectAll',
-																			'Select All Clients'
+																			'message.audience.clientsSelectAll'
 																		)
 																	: sectionDefinition.key ===
 																		  'counsellors'
 																		? translate(
-																				'message.audience.counsellorsSelect',
-																				'Select All Counsellors'
+																				'message.audience.counsellorsSelect'
 																			)
 																		: translate(
-																				'message.audience.moderatorsSelect',
-																				'Select All Moderators'
+																				'message.audience.moderatorsSelect'
 																			);
 														return (
 															<div
@@ -4137,8 +4152,7 @@ export const MessageSubmitInterfaceComponent = ({
 																			)
 																		}
 																		aria-label={translate(
-																			'message.audience.toggleSection',
-																			'Toggle section'
+																			'message.audience.toggleSection'
 																		)}
 																		aria-expanded={
 																			expandedAudienceSections[
@@ -4175,18 +4189,15 @@ export const MessageSubmitInterfaceComponent = ({
 																			{sectionDefinition.key ===
 																			'clients'
 																				? translate(
-																						'message.audience.clientsEmpty',
-																						'No clients are in this room'
+																						'message.audience.clientsEmpty'
 																					)
 																				: sectionDefinition.key ===
 																					  'counsellors'
 																					? translate(
-																							'message.audience.counsellorsEmpty',
-																							'No counsellors are in this room'
+																							'message.audience.counsellorsEmpty'
 																						)
 																					: translate(
-																							'message.audience.moderatorsEmpty',
-																							'No moderators are in this room'
+																							'message.audience.moderatorsEmpty'
 																						)}
 																		</div>
 																	) : (
@@ -4279,8 +4290,7 @@ export const MessageSubmitInterfaceComponent = ({
 													/>
 													<span>
 														{translate(
-															'message.audience.selectAllBottom',
-															'Select All'
+															'message.audience.selectAllBottom'
 														)}
 													</span>
 												</button>
@@ -4596,8 +4606,7 @@ export const MessageSubmitInterfaceComponent = ({
 											<span className="textarea__voiceRecordingDot"></span>
 											<span className="textarea__voiceRecordingLabel">
 												{translate(
-													'voice.recording.active',
-													'Recording...'
+													'voice.recording.active'
 												)}
 											</span>
 											<span className="textarea__voiceRecordButton__timer">
@@ -4614,10 +4623,7 @@ export const MessageSubmitInterfaceComponent = ({
 													})
 												}
 											>
-												{translate(
-													'app.cancel',
-													'Cancel'
-												)}
+												{translate('app.cancel')}
 											</button>
 											<button
 												type="button"
@@ -4628,7 +4634,7 @@ export const MessageSubmitInterfaceComponent = ({
 													})
 												}
 											>
-												{translate('app.stop', 'Stop')}
+												{translate('app.stop')}
 											</button>
 										</span>
 									</span>
@@ -4640,8 +4646,7 @@ export const MessageSubmitInterfaceComponent = ({
 												<AudioOnIcon />
 												<span>
 													{translate(
-														'voice.recording.preview',
-														'Voice message'
+														'voice.recording.preview'
 													)}
 												</span>
 												<span className="textarea__voicePreview__duration">

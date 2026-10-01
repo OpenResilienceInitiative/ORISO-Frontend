@@ -17,6 +17,7 @@ import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
 vi.mock('react-i18next', () => ({
@@ -29,14 +30,19 @@ vi.mock('react-i18next', () => ({
 // The globalState barrel pulls lottie-web (crashes in jsdom): stub the parts
 // the flow reads. Contexts are created inside the factory (hoisted) and read
 // back through the mocked module below.
-vi.mock('../../globalState', () => {
+vi.mock('../../globalState', async () => {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const react = require('react');
+	// The real user-data context: the agency-settings hook reads it through
+	// its direct module path, so the flow and the hook must share it.
+	const { UserDataContext } = await vi.importActual<any>(
+		'../../globalState/context/UserDataContext'
+	);
 	const tenant = {
 		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] }
 	};
 	return {
-		UserDataContext: react.createContext(null),
+		UserDataContext,
 		SessionsDataContext: react.createContext({ dispatch: () => {} }),
 		UPDATE_SESSIONS: 'UPDATE_SESSIONS',
 		useTenant: () => tenant,
@@ -63,6 +69,10 @@ vi.mock('../../resources/img/icons/group-chat-avatar.svg', () => ({
 vi.mock('../../resources/img/illustrations/Team.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
+}));
+// The create view waits for the agencies' settings (#1440); none known here.
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
 }));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])
@@ -207,6 +217,7 @@ const renderInUserContext = (
 describe('CreateConversationView edit mode (finding 1)', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -318,6 +329,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 describe('CreateConversationView internal card (finding 2)', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -359,7 +371,7 @@ describe('CreateConversationView internal card (finding 2)', () => {
 		]);
 
 		// Pick the first agency so the consultant list loads.
-		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
 		fireEvent.click(
 			await screen.findByRole('option', { name: 'Agency One' })
 		);

@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { EMAIL_LOCALES } from '../content/emailCatalogue';
 
 const CALL_IDS = [
 	'anruf-erinnerung',
 	'anruf-einladung',
 	'anruf-verpasst'
 ] as const;
-const TONES = ['de-sie', 'de-du', 'en'] as const;
 const PARTS = ['html', 'txt'] as const;
 
 const [frontendArgument, userServiceArgument, ...extraArguments] =
@@ -46,7 +46,7 @@ for (const id of CALL_IDS) {
 		throw new Error(`call catalogue entry differs between repositories: ${id}`);
 	}
 
-	for (const tone of TONES) {
+	for (const tone of EMAIL_LOCALES) {
 		for (const part of PARTS) {
 			const relative = path.join(tone, `${id}.${part}`);
 			const frontendFile = path.join(frontendEmails, 'plain', relative);

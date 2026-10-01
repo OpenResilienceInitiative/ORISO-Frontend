@@ -1,4 +1,3 @@
-import { lazy } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { SessionsListWrapper } from '../sessionsList/SessionsListWrapper';
 import {
@@ -46,16 +45,17 @@ import { BookingEvents } from '../../containers/bookings/components/BookingEvent
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 
-const GroupEntryRoom = lazy(() =>
+const GroupEntryRoom = lazyWithReload(() =>
 	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
 		default: m.GroupEntryRoom
 	}))
 );
-const SessionView = lazy(() =>
+const SessionView = lazyWithReload(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
 );
-const WriteEnquiry = lazy(() =>
+const WriteEnquiry = lazyWithReload(() =>
 	import('../enquiry/WriteEnquiry').then((m) => ({ default: m.WriteEnquiry }))
 );
 
@@ -110,9 +110,10 @@ const overviewRoute = (settings: AppConfigInterface) => ({
 });
 
 /* Without the app shell: the group's waiting room stands on the same stage
-   the person registered on (Frank, 2026-09-04). Every role that can follow a
-   `?gcid=` link needs the route — `AuthenticatedApp` navigates there without
-   asking who is logged in. */
+   the person registered on (Frank, 2026-09-04). It is the client's room:
+   `usePendingGroupChatJoin` sends a counsellor who follows a `?gcid=` link to
+   the group in her own session view instead (#1499). The route stays in the
+   counsellor config only so an old link reaching it can forward her there. */
 const groupEntryPlainRoutes = [
 	{
 		path: '/groups/:chatId/entry',

@@ -64,14 +64,16 @@ export const apiGetUserDraft = async (
 
 export const apiUpsertUserDraft = async (
 	scopeKey: string,
-	payload: Omit<IUserDraftItem, 'id' | 'scopeKey' | 'updatedAt'>
+	payload: Omit<IUserDraftItem, 'id' | 'scopeKey' | 'updatedAt'>,
+	signal?: AbortSignal
 ): Promise<void> => {
 	try {
 		await fetchData({
 			url: `${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scopeKey)}`,
 			method: FETCH_METHODS.PATCH,
 			bodyData: JSON.stringify(payload),
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+			responseHandling: [FETCH_ERRORS.CATCH_ALL],
+			...(signal && { signal })
 		});
 	} catch {
 		// Drafts are non-critical: a failed/conflicting autosave must never bubble up
@@ -79,12 +81,16 @@ export const apiUpsertUserDraft = async (
 	}
 };
 
-export const apiDeleteUserDraft = async (scopeKey: string): Promise<void> => {
+export const apiDeleteUserDraft = async (
+	scopeKey: string,
+	signal?: AbortSignal
+): Promise<void> => {
 	try {
 		await fetchData({
 			url: `${endpoints.userDrafts}?scopeKey=${encodeURIComponent(scopeKey)}`,
 			method: FETCH_METHODS.DELETE,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
+			responseHandling: [FETCH_ERRORS.CATCH_ALL],
+			...(signal && { signal })
 		});
 	} catch {
 		// Non-critical cleanup; ignore failures.

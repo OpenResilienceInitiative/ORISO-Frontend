@@ -4,7 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const ids = ['anruf-erinnerung', 'anruf-einladung', 'anruf-verpasst'];
-const tones = ['de-sie', 'de-du', 'en'];
+const tones = ['de-sie', 'de-du', 'en', 'fr', 'ru', 'ti', 'tr'];
 let root: string;
 let originalArguments: string[];
 
@@ -86,6 +86,20 @@ describe('call email catalogue binding', () => {
 		writeFixture('userservice', { placeholders: ['link', 'name'] });
 		await expect(import('./verifyCallEmailBinding.mts')).rejects.toThrow(
 			'call catalogue entry differs between repositories: anruf-erinnerung'
+		);
+	});
+
+	it('rejects a missing seven-variant native asset', async () => {
+		writeFixture('frontend', { subject: 'Call' });
+		writeFixture('userservice', { subject: 'Call' });
+		rmSync(
+			path.join(
+			root,
+			'userservice/src/main/resources/emails/tr/anruf-verpasst.txt'
+			)
+		);
+		await expect(import('./verifyCallEmailBinding.mts')).rejects.toThrow(
+			'anruf-verpasst.txt'
 		);
 	});
 });

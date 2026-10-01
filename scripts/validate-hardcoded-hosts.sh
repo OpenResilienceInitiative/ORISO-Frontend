@@ -13,8 +13,11 @@ PATTERNS=(
 	':8087'
 	'caritas.de'
 	'online-beratung'
-	'app.oriso.site'
-	'api.oriso.org'
+	# ORISO-Helm#368: no ORISO environment host may be baked into the bundle.
+	# Every service URL comes from runtime config; fixtures use example.org.
+	'oriso.org'
+	'oriso-dev.site'
+	'oriso.site'
 )
 
 # Fixed strings miss the domain that actually caused FE-H05: the mandatory
@@ -27,8 +30,8 @@ REGEX_PATTERNS=(
 )
 
 # Source maps embed `sourcesContent` — the original files, comments and all —
-# so they match on prose that never becomes a runtime value (e.g. the
-# `app.oriso.org -> api.oriso.org` example in runtimeConfig.ts). A genuinely
+# so they match on prose that never becomes a runtime value (e.g. a host
+# named in a code comment). A genuinely
 # hardcoded value is emitted into the .js/.css/.html as well, so skipping maps
 # costs no real coverage and keeps this gate free of false failures.
 for pattern in "${PATTERNS[@]}"; do

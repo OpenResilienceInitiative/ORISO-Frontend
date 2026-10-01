@@ -33,10 +33,7 @@ export const MessageDisplayName = ({
 
 	const getUsernameWithPrefix = useCallback(() => {
 		if (type === 'system') {
-			return translate(
-				'message.systemNotification',
-				'System Notification'
-			);
+			return translate('message.systemNotification');
 		} else {
 			return formatMessagePersonName(
 				displayName,

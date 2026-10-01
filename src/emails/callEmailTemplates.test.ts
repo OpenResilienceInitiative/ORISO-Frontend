@@ -27,17 +27,29 @@ const EXPECTED_SUBJECTS: Record<
 	'anruf-erinnerung': {
 		'de-sie': 'Eine Sitzung beginnt bald',
 		'de-du': 'Eine Sitzung beginnt bald',
-		'en': 'A session is starting soon'
+		'en': 'A session is starting soon',
+		'fr': 'Une session va bientôt commencer',
+		'ru': 'Сеанс скоро начнётся',
+		'ti': 'እቲ ክፍለ ጊዜ ቀልጢፉ ክጅምር እዩ',
+		'tr': 'Bir oturum yakında başlayacak'
 	},
 	'anruf-einladung': {
 		'de-sie': 'Sie wurden zu einer Sitzung eingeladen',
 		'de-du': 'Du wurdest zu einer Sitzung eingeladen',
-		'en': 'You have been invited to a session'
+		'en': 'You have been invited to a session',
+		'fr': 'Vous êtes invité à une session',
+		'ru': 'Вас пригласили на сеанс',
+		'ti': 'ናብ ክፍለ ጊዜ ተዓዲምኩም',
+		'tr': 'Bir oturuma davet edildiniz'
 	},
 	'anruf-verpasst': {
 		'de-sie': 'Sie haben einen Anruf verpasst',
 		'de-du': 'Du hast einen Anruf verpasst',
-		'en': 'You missed a call'
+		'en': 'You missed a call',
+		'fr': 'Vous avez manqué un appel',
+		'ru': 'Вы пропустили звонок',
+		'ti': 'ጻውዒት ሓሊፉኩም',
+		'tr': 'Bir aramayı kaçırdınız'
 	}
 };
 
