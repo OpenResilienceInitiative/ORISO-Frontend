@@ -22,6 +22,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} est un service proposé par {{orgName}}.',
@@ -71,6 +72,7 @@ const legalAssurance =
 	'Cet e-mail fait partie de la relation contractuelle entre {{orgName}} et {{tenantNameDative}}.';
 
 export const fr: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('fr', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Vous avez un nouveau message',
 		preheader:
@@ -468,6 +470,7 @@ export const fr: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Votre adresse e-mail a été modifiée',
 		preheader: 'La modification est active dès maintenant.',
 		headline: 'Votre adresse e-mail a été modifiée',

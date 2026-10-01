@@ -22,6 +22,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy:
@@ -73,6 +74,7 @@ const legalAssurance =
 	'Bu e-posta, {{orgName}} ile {{tenantNameDative}} arasındaki sözleşme ilişkisine aittir.';
 
 export const tr: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('tr', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Yeni bir mesajınız var',
 		preheader: 'Danışmanlığınızda sizin için yeni bir mesaj hazır.',
@@ -466,6 +468,7 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'E-posta adresiniz değiştirildi',
 		preheader: 'Değişiklik şu andan itibaren geçerli.',
 		headline: 'E-posta adresiniz değiştirildi',

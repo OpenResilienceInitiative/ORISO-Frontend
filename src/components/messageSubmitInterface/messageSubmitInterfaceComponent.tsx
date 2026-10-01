@@ -1,5 +1,5 @@
-import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
+import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {

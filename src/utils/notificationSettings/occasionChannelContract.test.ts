@@ -116,4 +116,37 @@ describe('occasion channel contract', () => {
 			}
 		}
 	});
+
+	it('keeps self-help appointments role-specific without promising a browser notification', () => {
+		for (const outcome of [
+			'bestaetigt',
+			'verschoben',
+			'abgesagt',
+			'erinnerung'
+		] as const) {
+			const participant =
+				`selbsthilfe-termin-${outcome}-teilnahme` as const;
+			const counsellor =
+				`selbsthilfe-termin-${outcome}-beratung` as const;
+			expect(occasionChannelContract(participant).roles).toEqual([
+				'asker'
+			]);
+			expect(occasionChannelContract(counsellor).roles).toEqual([
+				'consultant'
+			]);
+			expect(
+				occasionChannelContract(participant, 'asker')?.browser
+			).toEqual({ kind: 'unmapped' });
+			expect(occasionChannelContract(counsellor, 'consultant')).toEqual({
+				emailPreference: { kind: 'no-switch' },
+				browser: { kind: 'unmapped' }
+			});
+			expect(
+				occasionChannelContract(participant, 'consultant')
+			).toBeUndefined();
+			expect(
+				occasionChannelContract(counsellor, 'asker')
+			).toBeUndefined();
+		}
+	});
 });

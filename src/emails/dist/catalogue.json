@@ -297,6 +297,414 @@
 				}
 			}
 		},
+		"selbsthilfe-termin-bestaetigt-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde bestätigt",
+					"preheader": "Der Termin ist für {{appointmentDate}} um {{appointmentTime}} Uhr vorgesehen."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde bestätigt",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment is confirmed",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous est confirmé",
+					"preheader": "Votre rendez-vous est prévu le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча подтверждена",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተረጋጊጹ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz onaylandı",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}} için planlandı."
+				}
+			}
+		},
+		"selbsthilfe-termin-verschoben-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde verschoben",
+					"preheader": "Der neue Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde verschoben",
+					"preheader": "Dein neuer Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment has changed",
+					"preheader": "The new time is {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été déplacé",
+					"preheader": "Le nouvel horaire est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Время вашей встречи изменилось",
+					"preheader": "Новое время: {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተቐይሩ",
+					"preheader": "ሓድሽ ግዜ፦ {{appointmentDate}} ሰዓት {{appointmentTime}}።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz değiştirildi",
+					"preheader": "Yeni zaman: {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-abgesagt-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment was cancelled",
+					"preheader": "The appointment on {{appointmentDate}} at {{appointmentTime}} will not take place."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été annulé",
+					"preheader": "Le rendez-vous du {{appointmentDate}} à {{appointmentTime}} n’aura pas lieu."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча отменена",
+					"preheader": "Встреча {{appointmentDate}} в {{appointmentTime}} не состоится."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተሰሪዙ",
+					"preheader": "ናይ {{appointmentDate}} ሰዓት {{appointmentTime}} ቆጸራ ኣይካየድን እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz iptal edildi",
+					"preheader": "{{appointmentDate}} saat {{appointmentTime}} randevusu yapılmayacak."
+				}
+			}
+		},
+		"selbsthilfe-termin-erinnerung-teilnahme": {
+			"audience": "asker",
+			"class": "personal",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Erinnerung an Ihren Termin",
+					"preheader": "Ihr Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Erinnerung an deinen Termin",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Appointment reminder",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Rappel de votre rendez-vous",
+					"preheader": "Votre rendez-vous est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Напоминание о встрече",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "መዘኻኸሪ ቆጸራ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevu hatırlatması",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-bestaetigt-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde bestätigt",
+					"preheader": "Der Termin ist für {{appointmentDate}} um {{appointmentTime}} Uhr vorgesehen."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde bestätigt",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment is confirmed",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous est confirmé",
+					"preheader": "Votre rendez-vous est prévu le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча подтверждена",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተረጋጊጹ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz onaylandı",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}} için planlandı."
+				}
+			}
+		},
+		"selbsthilfe-termin-verschoben-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde verschoben",
+					"preheader": "Der neue Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde verschoben",
+					"preheader": "Dein neuer Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment has changed",
+					"preheader": "The new time is {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été déplacé",
+					"preheader": "Le nouvel horaire est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Время вашей встречи изменилось",
+					"preheader": "Новое время: {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተቐይሩ",
+					"preheader": "ሓድሽ ግዜ፦ {{appointmentDate}} ሰዓት {{appointmentTime}}።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz değiştirildi",
+					"preheader": "Yeni zaman: {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
+		"selbsthilfe-termin-abgesagt-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Ihr Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Dein Termin wurde abgesagt",
+					"preheader": "Der Termin am {{appointmentDate}} um {{appointmentTime}} Uhr findet nicht statt."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Your appointment was cancelled",
+					"preheader": "The appointment on {{appointmentDate}} at {{appointmentTime}} will not take place."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Votre rendez-vous a été annulé",
+					"preheader": "Le rendez-vous du {{appointmentDate}} à {{appointmentTime}} n’aura pas lieu."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Ваша встреча отменена",
+					"preheader": "Встреча {{appointmentDate}} в {{appointmentTime}} не состоится."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ቆጸራኹም ተሰሪዙ",
+					"preheader": "ናይ {{appointmentDate}} ሰዓት {{appointmentTime}} ቆጸራ ኣይካየድን እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevunuz iptal edildi",
+					"preheader": "{{appointmentDate}} saat {{appointmentTime}} randevusu yapılmayacak."
+				}
+			}
+		},
+		"selbsthilfe-termin-erinnerung-beratung": {
+			"audience": "consultant",
+			"class": "operational",
+			"unsubscribable": true,
+			"placeholders": [
+				"{{appointmentDate}}",
+				"{{appointmentTime}}",
+				"{{appointmentUrl}}",
+				"{{settingsUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}",
+				"{{unsubscribeUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Erinnerung an Ihren Termin",
+					"preheader": "Ihr Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Erinnerung an deinen Termin",
+					"preheader": "Dein Termin ist {{appointmentDate}} um {{appointmentTime}} Uhr."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "Appointment reminder",
+					"preheader": "Your appointment is on {{appointmentDate}} at {{appointmentTime}}."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Rappel de votre rendez-vous",
+					"preheader": "Votre rendez-vous est le {{appointmentDate}} à {{appointmentTime}}."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Напоминание о встрече",
+					"preheader": "Встреча состоится {{appointmentDate}} в {{appointmentTime}}."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "መዘኻኸሪ ቆጸራ",
+					"preheader": "ቆጸራኹም {{appointmentDate}} ሰዓት {{appointmentTime}} እዩ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Randevu hatırlatması",
+					"preheader": "Randevunuz {{appointmentDate}} saat {{appointmentTime}}."
+				}
+			}
+		},
 		"beraterin-kontakt": {
 			"audience": "asker",
 			"class": "requested",

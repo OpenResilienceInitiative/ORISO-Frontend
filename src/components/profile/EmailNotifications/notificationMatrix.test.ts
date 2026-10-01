@@ -98,6 +98,27 @@ describe('notification matrix (ADR-019)', () => {
 	});
 
 	describe('unsubscribe deep link', () => {
+		it('resolves self-help participant footers to the existing appointment preference only', () => {
+			for (const occasion of [
+				'selbsthilfe-termin-bestaetigt-teilnahme',
+				'selbsthilfe-termin-verschoben-teilnahme',
+				'selbsthilfe-termin-abgesagt-teilnahme',
+				'selbsthilfe-termin-erinnerung-teilnahme'
+			]) {
+				expect(
+					switchForOccasion(ADVICE_SEEKER_SWITCHES, occasion)?.source,
+					occasion
+				).toEqual({
+					kind: 'settings',
+					field: 'appointmentNotificationEnabled'
+				});
+				expect(
+					switchForOccasion(CONSULTANT_SWITCHES, occasion),
+					occasion
+				).toBeUndefined();
+			}
+		});
+
 		it('resolves the occasion a mail footer carries', () => {
 			expect(
 				switchForOccasion(CONSULTANT_SWITCHES, 'uebergabe-bestaetigt')

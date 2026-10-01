@@ -69,7 +69,13 @@ export const ADVICE_SEEKER_SWITCHES: NotificationSwitch[] = [
 		descriptionKey:
 			'profile.notifications.matrix.asker.appointment.description',
 		source: { kind: 'settings', field: 'appointmentNotificationEnabled' },
-		occasions: ['termin']
+		occasions: [
+			'termin',
+			'selbsthilfe-termin-bestaetigt-teilnahme',
+			'selbsthilfe-termin-verschoben-teilnahme',
+			'selbsthilfe-termin-abgesagt-teilnahme',
+			'selbsthilfe-termin-erinnerung-teilnahme'
+		]
 	},
 	{
 		id: 'serviceNotice',
