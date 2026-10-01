@@ -13,6 +13,10 @@ const joinGroupChat = vi.hoisted(() => vi.fn());
 const navigate = vi.hoisted(() => vi.fn());
 const tenant = vi.hoisted(() => ({ ready: true }));
 
+// Button's existing overlay imports need the browser animation boundary in jsdom.
+vi.mock('lottie-web', () => ({ default: {} }));
+vi.mock('lottie-react', () => ({ default: () => null }));
+
 vi.mock('./useJoinGroupChat', () => ({
 	useJoinGroupChat: () => ({ joinGroupChat, tenantReady: tenant.ready })
 }));

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	NotificationConfigDialog,
 	NotificationConfigView
@@ -56,6 +56,29 @@ const InteractiveDialog = () => {
 type DialogStory = StoryObj<typeof NotificationConfigDialog>;
 
 export const Dialog: DialogStory = { render: () => <InteractiveDialog /> };
+
+/** The real exit guard after editing a sound setting and choosing E-mail preferences. */
+export const UnsavedEmailNavigation: DialogStory = {
+	render: () => <InteractiveDialog />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const banner = doc.querySelector<HTMLSelectElement>(
+			'[data-cy="notif-banner-requests-new"]'
+		)!;
+		await userEvent.selectOptions(banner, 'persistent');
+		await userEvent.click(
+			doc.querySelector<HTMLAnchorElement>(
+				'a[href="/profile/einstellungen/email#email-notifications"]'
+			)!
+		);
+		await waitFor(() =>
+			expect(
+				doc.querySelector('[data-testid="notif-discard-changes"]')
+			).toBeVisible()
+		);
+		await expect(banner.value).toBe('persistent');
+	}
+};
 
 export const DialogMobile: DialogStory = {
 	render: () => <InteractiveDialog />,

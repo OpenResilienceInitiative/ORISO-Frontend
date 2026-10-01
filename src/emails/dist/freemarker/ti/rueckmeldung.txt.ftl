@@ -5,9 +5,6 @@
 
 ትሕዝቶኡ ድሕሪ ምእታውኩም ተመስጢሩ ትርእይዎ።
 
-ጉዳይ: ${caseReference!''}
-ዝኣተወሉ: ${requestReceivedAt!''}
-
 ግብረ መልሲ ኣንብቡ:
 ${messageUrl!''}
 

@@ -2611,6 +2611,11 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"title": "Änderungen verwerfen?",
+					"description": "Ihre Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn Sie fortfahren, gehen Ihre Änderungen verloren.",
+					"discard": "Verwerfen und weiter"
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",
@@ -5519,6 +5524,19 @@
 			"region": "Benachrichtigungen",
 			"more": "{{count}} weitere anzeigen",
 			"less": "Weniger anzeigen"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "Neue Beratung derzeit gesperrt",
+				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"unavailable": {
+				"title": "Beratung derzeit nicht prüfbar",
+				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuchen Sie es erneut. Ihre Eingaben bleiben erhalten.",
+				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuchen Sie es erneut."
+			}
 		}
 	}
 }
