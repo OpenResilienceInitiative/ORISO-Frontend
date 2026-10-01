@@ -40,6 +40,8 @@ export const EMAIL_IDS = [
 	'mitteilung',
 
 	// Account and access (#866).
+	// Existing-account password setup (#1058/#1302), without provisioning.
+	'konto-einrichten',
 	'anmeldelink',
 	'einmalcode',
 	'email-geaendert',
@@ -55,7 +57,12 @@ export const EMAIL_IDS = [
 
 	// Team and platform operations (#868).
 	'team-aenderung',
-	'smtp-test'
+	'smtp-test',
+
+	// Privacy-neutral audio/video call lifecycle notifications.
+	'anruf-erinnerung',
+	'anruf-einladung',
+	'anruf-verpasst'
 ] as const;
 
 export type EmailId = (typeof EMAIL_IDS)[number];
@@ -238,6 +245,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'uebergabe-bestaetigt': 'Übergabe bestätigt',
 	'rueckmeldung': 'Rückmeldung im Fachaustausch',
 	'mitteilung': 'Mitteilung',
+	'konto-einrichten': 'Passwort für bestehendes Konto festlegen',
 	'anmeldelink': 'Anmeldelink',
 	'einmalcode': 'Einmalcode',
 	'email-geaendert': 'E-Mail-Adresse geändert',
@@ -246,7 +254,10 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'avv-unterschrift': 'Vertragsunterlagen zur Bestätigung',
 	'einladung-freitext': 'Einladung mit eigenem Text',
 	'team-aenderung': 'Änderung im Team',
-	'smtp-test': 'SMTP-Test'
+	'smtp-test': 'SMTP-Test',
+	'anruf-erinnerung': 'Anruf-Erinnerung',
+	'anruf-einladung': 'Anruf-Einladung',
+	'anruf-verpasst': 'Verpasster Anruf'
 };
 
 /**
@@ -286,6 +297,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
 		'mitteilung': 'asker',
+		'konto-einrichten': 'admin',
 		'anmeldelink': 'asker',
 		'einmalcode': 'asker',
 		'email-geaendert': 'asker',
@@ -294,7 +306,10 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'avv-unterschrift': 'admin',
 		'einladung-freitext': 'admin',
 		'team-aenderung': 'consultant',
-		'smtp-test': 'admin'
+		'smtp-test': 'admin',
+		'anruf-erinnerung': 'asker',
+		'anruf-einladung': 'asker',
+		'anruf-verpasst': 'asker'
 	};
 
 /**
@@ -331,6 +346,7 @@ export const EMAIL_CLASS: Record<
 	'uebergabe-bestaetigt': 'operational',
 	'rueckmeldung': 'operational',
 	'mitteilung': 'service',
+	'konto-einrichten': 'security',
 	'anmeldelink': 'security',
 	'einmalcode': 'security',
 	'email-geaendert': 'security',
@@ -339,7 +355,10 @@ export const EMAIL_CLASS: Record<
 	'avv-unterschrift': 'legal',
 	'einladung-freitext': 'security',
 	'team-aenderung': 'operational',
-	'smtp-test': 'service'
+	'smtp-test': 'service',
+	'anruf-erinnerung': 'personal',
+	'anruf-einladung': 'personal',
+	'anruf-verpasst': 'personal'
 };
 
 /** Mails whose footer carries no unsubscribe link, because nothing switches them off. */

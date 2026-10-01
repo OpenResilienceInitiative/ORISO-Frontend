@@ -320,6 +320,29 @@ export const fr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'Configurer votre accès à {{platformName}}',
+		preheader: 'Choisissez votre propre mot de passe.',
+		headline: 'Votre compte existe déjà',
+		paragraphs: [
+			'Un compte a déjà été créé pour vous sur {{platformName}}.',
+			'Utilisez ce lien pour choisir votre propre mot de passe. Connectez-vous ensuite comme d’habitude ; les contrôles de sécurité requis restent en vigueur.'
+		],
+		panel: [
+			{ label: 'Lien valable jusqu’au', value: '{{inviteExpiresAt}}' }
+		],
+		cta: { label: 'Choisir le mot de passe', href: '{{setupUrl}}' },
+		footnote:
+			'Si vous n’attendiez pas cette configuration, n’utilisez pas ce lien et contactez votre administration.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: 'Votre lien de connexion pour {{platformName}}',
 		preheader: 'Le lien est valable {{expiryMinutes}} minutes.',
@@ -485,5 +508,47 @@ export const fr: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'Cet e-mail vous informe d’un changement de votre adresse e-mail. Vous ne pouvez pas désactiver cet avis de sécurité. Merci de ne pas y répondre.'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'Une session va bientôt commencer',
+		preheader: 'Connectez-vous pour voir les détails.',
+		headline: 'Votre session va bientôt commencer',
+		paragraphs: [
+			'Une session audio ou vidéo planifiée va bientôt commencer. Vous verrez tous les autres détails de manière sécurisée après votre connexion.'
+		],
+		cta: { label: 'Ouvrir la session', href: '{{callUrl}}' },
+		footnote:
+			'Cet e-mail ne contient volontairement ni sujet, ni nom, ni information sur les participants.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'Vous êtes invité à une session',
+		preheader:
+			'L’invitation vous attend en toute sécurité dans votre compte.',
+		headline: 'Nouvelle invitation',
+		paragraphs: [
+			'Vous êtes invité à une session audio ou vidéo. Vous verrez les détails de manière sécurisée après votre connexion.'
+		],
+		cta: { label: 'Voir l’invitation', href: '{{callUrl}}' },
+		footnote:
+			'Cet e-mail ne contient volontairement ni sujet, ni nom, ni information sur les participants.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'Vous avez manqué un appel',
+		preheader: 'Connectez-vous pour ouvrir l’historique protégé.',
+		headline: 'Appel manqué',
+		paragraphs: [
+			'Un appel audio ou vidéo a eu lieu pendant votre absence. Vous verrez les autres détails de manière sécurisée après votre connexion.'
+		],
+		cta: { label: 'Ouvrir l’historique protégé', href: '{{callUrl}}' },
+		footnote:
+			'Cet e-mail ne contient volontairement ni sujet, ni nom, ni information sur les participants.',
+		assurance,
+		footer
 	}
 };

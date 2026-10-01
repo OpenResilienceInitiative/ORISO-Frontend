@@ -308,6 +308,26 @@ export const ti: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'konto-einrichten': {
+		subject: 'ናብ {{platformName}} ዘሎ መእተዊኹም ኣዳልዉ',
+		preheader: 'ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ።',
+		headline: 'ሕሳብኩም ድሮ ተፈጢሩ ኣሎ',
+		paragraphs: [
+			'ኣብ {{platformName}} ንዓኹም ሕሳብ ድሮ ተፈጢሩ ኣሎ።',
+			'ነዚ መላግቦ ተጠቒምኩም ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ። ድሕሪኡ ከም ልሙድ እተዉ፤ ኣድለይቲ ናይ ድሕነት ምርመራታት ይቕጽሉ።'
+		],
+		panel: [{ label: 'መላግቦ ክሳብ ዝሰርሓሉ', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'ቃል ምስጢር ምረጹ', href: '{{setupUrl}}' },
+		footnote: 'ነዚ ምድላው እንተዘይተጸበኹምዎ፣ ነቲ መላግቦ ኣይትጠቐሙሉ፣ ምስ ኣመሓዳሪኹም ተራኸቡ።',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
+	},
+
 	'anmeldelink': {
 		subject: 'ናይ {{platformName}} መእተዊ መላግቦኹም',
 		preheader: 'እቲ መላግቦ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።',
@@ -463,5 +483,43 @@ export const ti: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'እዛ ኢመይል ብዛዕባ ለውጢ ናይ ኢመይል ኣድራሻኹም ትሕብር። ነዚ ናይ ድሕነት መፍለጢ ክትስርዝዎ ኣይትኽእሉን። በጃኹም ኣይትምለስዋ።'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'እቲ ክፍለ ጊዜ ቀልጢፉ ክጅምር እዩ',
+		preheader: 'ዝርዝር ንምርኣይ እቶ።',
+		headline: 'ክፍለ ጊዜኹም ቀልጢፉ ክጅምር እዩ',
+		paragraphs: [
+			'ዝተመደበ ናይ ድምጺ ወይ ቪድዮ ክፍለ ጊዜ ቀልጢፉ ክጅምር እዩ። ኩሉ ተወሳኺ ዝርዝር ድሕሪ ምእታውኩም ብውሑስ መንገዲ ትርእይዎ።'
+		],
+		cta: { label: 'ክፍለ ጊዜ ክፈት', href: '{{callUrl}}' },
+		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'ናብ ክፍለ ጊዜ ተዓዲምኩም',
+		preheader: 'እቲ ዕድመ ኣብ መለያኹም ብውሑስ መንገዲ ይጽበየኩም ኣሎ።',
+		headline: 'ሓድሽ ዕድመ',
+		paragraphs: [
+			'ናብ ናይ ድምጺ ወይ ቪድዮ ክፍለ ጊዜ ተዓዲምኩም። ዝርዝር ድሕሪ ምእታውኩም ብውሑስ መንገዲ ትርእይዎ።'
+		],
+		cta: { label: 'ዕድመ ርአ', href: '{{callUrl}}' },
+		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'ጻውዒት ሓሊፉኩም',
+		preheader: 'ዝተሓለወ ታሪኽ ንምኽፋት እቶ።',
+		headline: 'ዝሓለፈ ጻውዒት',
+		paragraphs: [
+			'ኣብ ዘይነበርኩምሉ ግዜ ናይ ድምጺ ወይ ቪድዮ ጻውዒት ተኻይዱ። ተወሳኺ ዝርዝር ድሕሪ ምእታውኩም ብውሑስ መንገዲ ትርእይዎ።'
+		],
+		cta: { label: 'ዝተሓለወ ታሪኽ ክፈት', href: '{{callUrl}}' },
+		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
+		assurance,
+		footer
 	}
 };
