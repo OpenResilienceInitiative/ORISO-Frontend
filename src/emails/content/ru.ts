@@ -22,6 +22,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} — это сервис организации {{orgName}}.',
@@ -71,6 +72,7 @@ const legalAssurance =
 	'Это письмо относится к договорным отношениям между {{orgName}} и {{tenantNameDative}}.';
 
 export const ru: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('ru', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Для Вас есть новое сообщение',
 		preheader: 'В Вашей консультации Вас ждёт новое сообщение.',
@@ -83,6 +85,19 @@ export const ru: Record<EmailId, EmailContent> = {
 		footnote:
 			'Отвечать сразу не обязательно. Сообщение останется в Вашем почтовом ящике столько, сколько нужно.',
 		assurance,
+		footer
+	},
+
+	'neue-nachricht-beratung': {
+		subject: 'Новое сообщение на {{platformName}}',
+		preheader: 'Пожалуйста, войдите в систему.',
+		headline: 'Новое сообщение для Вас',
+		paragraphs: [
+			'В одной из Ваших консультаций появилось новое сообщение.',
+			'Войдите в аккаунт, чтобы прочитать сообщение в защищённом разделе.'
+		],
+		cta: { label: 'Открыть сообщение', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
 		footer
 	},
 
@@ -253,56 +268,38 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Запрошена передача',
-		preheader: 'Консультацию предлагают передать Вам.',
-		headline: 'Консультацию предлагают передать Вам',
+		subject: 'Новое уведомление',
+		preheader: 'Пожалуйста, войдите.',
+		headline: 'Запрос по Вашей консультации',
 		paragraphs: [
-			'{{fromConsultantName}} просит передать Вам текущую консультацию.',
-			'Пожалуйста, проверьте в разделе консультаций, сможете ли Вы её взять.'
+			'Консультант запрашивает Ваше согласие на изменение в Вашей консультации.',
+			'Войдите, чтобы рассмотреть запрос в защищённом разделе.'
 		],
-		panel: [
-			{ label: 'Дело', value: '{{caseReference}}' },
-			{ label: 'Запросил', value: '{{fromConsultantName}}' },
-			{ label: 'Запрошено', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Проверить передачу', href: '{{requestUrl}}' },
-		footnote:
-			'Пока Вы не согласитесь, консультация остаётся у прежнего специалиста.',
-		assurance: staffAssurance,
+		cta: { label: 'Рассмотреть запрос', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
 		subject: 'Передача подтверждена',
-		preheader: 'Ответственность перешла к другому специалисту.',
+		preheader: 'Передача подтверждена',
 		headline: 'Передача подтверждена',
 		paragraphs: [
-			'Консультацию приняли. С этого момента отвечает {{toConsultantName}}.',
-			'Человека, обратившегося за консультацией, уведомили об этом в приложении.'
+			'Теперь Вы отвечаете за эту консультацию.',
+			'Откройте дело в защищённом разделе.'
 		],
-		panel: [
-			{ label: 'Дело', value: '{{caseReference}}' },
-			{ label: 'Новая ответственность', value: '{{toConsultantName}}' },
-			{ label: 'Передано', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Открыть консультацию', href: '{{requestUrl}}' },
-		footnote:
-			'Ваш доступ к прежней истории переписки прекращается вместе с передачей.',
+		cta: { label: 'Открыть дело', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'Новый отклик в профессиональном обмене',
-		preheader: 'В профессиональном обмене Вас ждёт отклик.',
+		subject: 'Новое сообщение на {{platformName}}',
+		preheader: 'Пожалуйста, войдите в систему.',
 		headline: 'Новый отклик в профессиональном обмене',
 		paragraphs: [
 			'В защищённом профессиональном обмене по одной из Ваших консультаций появился новый отклик.',
 			'Содержание Вы увидите в зашифрованном виде после входа в аккаунт.'
-		],
-		panel: [
-			{ label: 'Дело', value: '{{caseReference}}' },
-			{ label: 'Поступил', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Прочитать отклик', href: '{{messageUrl}}' },
 		footnote:
@@ -319,6 +316,29 @@ export const ru: Record<EmailId, EmailContent> = {
 		cta: { label: 'На {{platformName}}', href: '{{loginUrl}}' },
 		assurance,
 		footer
+	},
+
+	'konto-einrichten': {
+		subject: 'Настройте доступ к {{platformName}}',
+		preheader: 'Выберите собственный пароль.',
+		headline: 'Ваша учётная запись уже создана',
+		paragraphs: [
+			'Для Вас уже создана учётная запись на {{platformName}}.',
+			'Перейдите по этой ссылке, чтобы выбрать собственный пароль. Затем войдите обычным способом; все обязательные проверки безопасности сохраняются.'
+		],
+		panel: [
+			{ label: 'Ссылка действительна до', value: '{{inviteExpiresAt}}' }
+		],
+		cta: { label: 'Выбрать пароль', href: '{{setupUrl}}' },
+		footnote:
+			'Если Вы не ожидали эту настройку, не используйте ссылку и обратитесь к администратору.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
 	},
 
 	'anmeldelink': {
@@ -467,6 +487,7 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Ваш адрес электронной почты изменён',
 		preheader: 'Изменение действует с этого момента.',
 		headline: 'Ваш адрес электронной почты изменён',

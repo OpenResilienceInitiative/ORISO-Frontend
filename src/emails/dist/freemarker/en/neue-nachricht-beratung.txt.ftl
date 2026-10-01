@@ -1,0 +1,25 @@
+A new message for you
+=====================
+
+There is a new message in one of your counselling cases.
+
+Sign in to read the message in the secure counselling area.
+
+Open message:
+${messageUrl!''}
+
+----------------------------------------------------------------
+Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} is a service provided by ${orgName!''}.
+
+Settings: ${settingsUrl!''}
+Privacy: ${privacyUrl!''}
+Imprint: ${imprintUrl!''}
+Unsubscribe from notifications: ${unsubscribeUrl!''}
+
+This email was sent automatically. Please do not reply to it.

@@ -10,6 +10,7 @@ export interface SendMatrixAttachmentMessageOptions
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
+	feedbackMailIntent?: boolean;
 }
 
 type PostMessageEventNotification = (

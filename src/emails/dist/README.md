@@ -27,19 +27,29 @@ dialect cannot disagree with what Storybook shows.
 | Occasion | Audience | Placeholders |
 | --- | --- | --- |
 | `neue-nachricht` | asker | `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `neue-nachricht-beratung` | consultant | `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `willkommen` | asker | `{{username}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `passwort-zuruecksetzen` | asker | `{{expiryHours}}` `{{resetUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `termin` | asker | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentType}}` `{{locationName}}` `{{locationAddress}}` `{{appointmentUrl}}` `{{mapUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-bestaetigt-teilnahme` | asker | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-verschoben-teilnahme` | asker | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-abgesagt-teilnahme` | asker | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-erinnerung-teilnahme` | asker | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-bestaetigt-beratung` | consultant | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-verschoben-beratung` | consultant | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-abgesagt-beratung` | consultant | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `selbsthilfe-termin-erinnerung-beratung` | consultant | `{{appointmentDate}}` `{{appointmentTime}}` `{{appointmentUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `beraterin-kontakt` | asker | `{{consultantName}}` `{{consultantPhone}}` `{{consultantHours}}` `{{consultantEmail}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `anfrage-zugewiesen` | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `systemhinweis` | asker | `{{maintenanceDate}}` `{{maintenanceStart}}` `{{maintenanceEnd}}` `{{statusUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `neue-anfrage` | consultant | `{{requestTopic}}` `{{requestPostcode}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `direkte-anfrage` | consultant | `{{requestTopic}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `tagesuebersicht` | consultant | `{{openRequestCount}}` `{{oldestRequestAge}}` `{{digestGeneratedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
-| `uebergabe-angefragt` | consultant | `{{fromConsultantName}}` `{{caseReference}}` `{{requestReceivedAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
-| `uebergabe-bestaetigt` | consultant | `{{toConsultantName}}` `{{caseReference}}` `{{handoverAt}}` `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
-| `rueckmeldung` | consultant | `{{caseReference}}` `{{requestReceivedAt}}` `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `uebergabe-angefragt` | asker | `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `uebergabe-bestaetigt` | consultant | `{{requestUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `rueckmeldung` | consultant | `{{messageUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
 | `mitteilung` | asker | `{{messageHeadline}}` `{{messageBody}}` `{{loginUrl}}` `{{settingsUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` `{{unsubscribeUrl}}` |
+| `konto-einrichten` | admin | `{{inviteExpiresAt}}` `{{setupUrl}}` `{{offeringName}}` `{{operatorName}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `anmeldelink` | asker | `{{expiryMinutes}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `einmalcode` | asker | `{{expiryMinutes}}` `{{otpCode}}` `{{loginUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |
 | `email-geaendert` | asker | `{{username}}` `{{appUrl}}` `{{privacyUrl}}` `{{imprintUrl}}` |

@@ -109,6 +109,8 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	messageUrl: 'https://beratung.example.org/nachrichten',
 	loginUrl: 'https://beratung.example.org/login',
 	resetUrl: 'https://beratung.example.org/passwort/neu?token=8f3a',
+	setupUrl:
+		'https://beratung.example.org/admin/counsellor-onboarding/example-token',
 	appointmentUrl: 'https://beratung.example.org/termine',
 	callUrl: 'https://beratung.example.org/gespraeche/anruf',
 	requestUrl: 'https://beratung.example.org/anfragen/4711',
