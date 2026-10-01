@@ -1,4 +1,5 @@
 import { resolveFeedbackMailIntent } from './feedbackMailIntent';
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {
@@ -203,6 +204,8 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	DPA_RESTRICTED: 'DPA_RESTRICTED',
+	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
@@ -1369,7 +1372,14 @@ export const MessageSubmitInterfaceComponent = ({
 				.catch((error) => {
 					enquirySubmissionGuard.markFailed();
 					setIsRequestInProgress(false);
-					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					const failure = getCounsellingDpaFailure(error);
+					setActiveInfo(
+						failure
+							? failure.retryable
+								? INFO_TYPES.DPA_UNAVAILABLE
+								: INFO_TYPES.DPA_RESTRICTED
+							: INFO_TYPES.MESSAGE_SEND_ERROR
+					);
 					apiPostError({
 						name: error?.name || 'EnquiryMessageSendError',
 						message:
@@ -2155,6 +2165,19 @@ export const MessageSubmitInterfaceComponent = ({
 				isInfo: false,
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
+			};
+		} else if (
+			activeInfo === INFO_TYPES.DPA_RESTRICTED ||
+			activeInfo === INFO_TYPES.DPA_UNAVAILABLE
+		) {
+			const key =
+				activeInfo === INFO_TYPES.DPA_RESTRICTED
+					? 'counselling.dpa.restricted'
+					: 'counselling.dpa.unavailable';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.title`),
+				infoMessage: translate(`${key}.text`)
 			};
 		} else if (activeInfo === INFO_TYPES.MESSAGE_SEND_ERROR) {
 			infoData = {
