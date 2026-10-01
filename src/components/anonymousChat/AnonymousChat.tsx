@@ -385,12 +385,16 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					// Redirect to app (same as normal registration)
 					redirectToApp(undefined, { navigate });
 				})
-				.catch(() => {
+				.catch((error) => {
 					setIsRegistering(false);
 					if (registerThenLogin.accountCreated()) {
 						setLoginRetry(true);
 					}
-					const dpaNotice = getCounsellingDpaNotification(error, t);
+					/* A DPA refusal comes from the registration; once the
+					   account exists, only the login retry notice applies. */
+					const dpaNotice = registerThenLogin.accountCreated()
+						? null
+						: getCounsellingDpaNotification(error, t);
 					if (dpaNotice) {
 						addNotification(dpaNotice);
 						return;
