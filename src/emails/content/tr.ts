@@ -468,6 +468,7 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'E-posta adresiniz değiştirildi',
 		preheader: 'Değişiklik şu andan itibaren geçerli.',
 		headline: 'E-posta adresiniz değiştirildi',
