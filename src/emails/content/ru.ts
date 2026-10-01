@@ -464,6 +464,7 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Ваш адрес электронной почты изменён',
 		preheader: 'Изменение действует с этого момента.',
 		headline: 'Ваш адрес электронной почты изменён',

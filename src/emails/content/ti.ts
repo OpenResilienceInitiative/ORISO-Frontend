@@ -448,6 +448,7 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'ኢመይል ኣድራሻኹም ተቐዪሩ',
 		preheader: 'እቲ ለውጢ ካብ ሕጂ ጀሚሩ ይሰርሕ።',
 		headline: 'ኢመይል ኣድራሻኹም ተቐዪሩ',

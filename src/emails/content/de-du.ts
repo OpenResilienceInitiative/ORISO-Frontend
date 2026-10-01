@@ -466,6 +466,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Deine E-Mail-Adresse wurde geändert',
 		preheader: 'Die Änderung ist ab sofort aktiv.',
 		headline: 'Deine E-Mail-Adresse wurde geändert',
