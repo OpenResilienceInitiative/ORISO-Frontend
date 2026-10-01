@@ -5450,5 +5450,18 @@
 			"more": "Show {{count}} more",
 			"less": "Show less"
 		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "New counselling is currently restricted",
+				"text": "The counselling organisation must confirm the current data processing agreement. Contact your counselling centre. Counselling that has already begun can continue."
+			},
+			"unavailable": {
+				"title": "Counselling availability cannot be checked",
+				"text": "The agreement status could not be verified. Please try again. Your entries are retained.",
+				"inviteText": "The contract confirmation could not be checked right now. Please try again."
+			}
+		}
 	}
 }

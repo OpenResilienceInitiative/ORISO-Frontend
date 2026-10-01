@@ -16,8 +16,10 @@ import {
 	buildExtendedSession,
 	ExtendedSessionInterface,
 	hasUserAuthority,
+	NotificationsContext,
 	UserDataContext
 } from '../../../globalState';
+import { getCounsellingDpaNotification } from '../../../utils/counsellingDpaNotification';
 import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
@@ -91,6 +93,7 @@ const ClientGroupEntryRoom = () => {
 	const chatId = Number(chatIdParam);
 	const navigate = useNavigate();
 	const { t } = useTranslation();
+	const notifications = useContext(NotificationsContext);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
 			translateWithFallback(t, `groupChat.entry.${key}`, fallback),
@@ -187,11 +190,14 @@ const ClientGroupEntryRoom = () => {
 					{ replace: true }
 				);
 			})
-			.catch(() => {
-				setJoinFailed(true);
+			.catch((error) => {
+				const notice = getCounsellingDpaNotification(error, t);
+				if (notice && notifications)
+					notifications.addNotification(notice);
+				else setJoinFailed(true);
 				setJoinBusy(false);
 			});
-	}, [item, joinBusy, navigate, session?.rid]);
+	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
 
 	if (!ready) {
 		return <EntryRoomLoading />;
