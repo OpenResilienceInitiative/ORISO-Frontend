@@ -1,3 +1,4 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -206,6 +207,24 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 						}
 					})
 					.catch((error) => {
+						const failure = getCounsellingDpaFailure(error);
+						if (failure) {
+							setOverlayItem({
+								headline: translate(`${failure.key}.title`),
+								copy: translate(`${failure.key}.text`),
+								buttonSet: [
+									{
+										label: translate(
+											'profile.data.registerError.overlay.button.label'
+										),
+										function: OVERLAY_FUNCTIONS.CLOSE,
+										type: BUTTON_TYPES.PRIMARY
+									}
+								]
+							});
+							setOverlayActive(true);
+							return;
+						}
 						if (error === FETCH_ERRORS.CONFLICT) {
 							return null;
 						}
