@@ -2194,6 +2194,14 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"firstResponseReceived": {
+				"title": "Ihre ersten Schritte",
+				"text": "Wir haben Ihnen im Chat die wichtigsten Informationen geschrieben."
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"text": "Der anonyme Chat wurde beendet."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2612,7 +2620,7 @@
 			},
 			"dnd": {
 				"title": "Nicht stören",
-				"description": "Pausieren Sie alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
+				"description": "Pausieren Sie Benachrichtigungen (Ton, Pop-ups) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
 				"activeUntil": "Aktiv bis {{time}}",
 				"option": {
 					"off": "Aus",

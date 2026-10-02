@@ -2173,6 +2173,14 @@
 			"teamDiscussionNew": {
 				"title": "ናይ ጋንታ ምይይጥ",
 				"text": "{{senderDisplayName}} ኣብ ናይ ጋንታ ምይይጥ ጽሒፉ"
+			},
+			"firstResponseReceived": {
+				"title": "ቀዳሞት ስጉምትኹም",
+				"text": "ኣብቲ ቻት እቲ ኣገዳሲ ሓበሬታ ጽሒፍናልኩም ኣለና።"
+			},
+			"conversationFinished": {
+				"title": "ቻት ተዛዚሙ",
+				"text": "እቲ ካብ ስሙ ዘይተፈልጠ ቻት ተዛዚሙ።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -2560,7 +2568,7 @@
 			},
 			"dnd": {
 				"title": "ኣይትረብሽ",
-				"description": "ንዝተመረጸ ግዜ ኩሎም መፍለጢታት (ድምጺ፡ ፖፕ-ኣፕ፡ ኢመይል) ኣቋርጹ። ታሪኽኩም ግና ክመልእ ይቕጽል።",
+				"description": "ንዝተመረጸ ግዜ መፍለጢታት (ድምጺ፡ ፖፕ-ኣፕ) ኣቋርጹ። ታሪኽኩም ግና ክመልእ ይቕጽል።",
 				"activeUntil": "ክሳብ {{time}} ንጡፍ",
 				"option": {
 					"off": "ጠፊኡ",
@@ -4717,7 +4725,7 @@
 		"requestAdvice": "ምኽሪ ሕተት"
 	},
 	"sessionHeader": {
-		"searchingForConsultant": "We are looking for a counsellor for you.",
+		"searchingForConsultant": "ኣማኻሪ ንደልየልኩም ኣለና።",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "መለያ ሰርዝ",

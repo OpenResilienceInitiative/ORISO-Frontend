@@ -2173,6 +2173,14 @@
 			"teamDiscussionNew": {
 				"title": "Réunion d'équipe",
 				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			},
+			"firstResponseReceived": {
+				"title": "Vos premiers pas",
+				"text": "Nous vous avons envoyé les informations les plus importantes dans le chat."
+			},
+			"conversationFinished": {
+				"title": "Chat terminé",
+				"text": "Le chat anonyme est terminé."
 			}
 		},
 		"error": "Échec",
@@ -2560,7 +2568,7 @@
 			},
 			"dnd": {
 				"title": "Ne pas déranger",
-				"description": "Mettez toutes les notifications en pause (son, fenêtres contextuelles, e-mails) pour une durée choisie. Votre historique continue de se remplir.",
+				"description": "Mettez les notifications en pause (son, fenêtres contextuelles) pour une durée choisie. Votre historique continue de se remplir.",
 				"activeUntil": "Actif jusqu'à {{time}}",
 				"option": {
 					"off": "Désactivé",
