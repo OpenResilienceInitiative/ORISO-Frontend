@@ -155,6 +155,83 @@ describe('resolveLoginError', () => {
 		);
 	});
 
+	it('passes on the wait time Keycloak sends with the e-mail challenge (#1338)', () => {
+		expect(
+			resolveLoginError(
+				{
+					message: FETCH_ERRORS.BAD_REQUEST,
+					options: {
+						data: {
+							otpType: 'EMAIL' as never,
+							resendAvailableInSeconds: 17
+						}
+					}
+				},
+				false
+			)
+		).toEqual({
+			kind: 'otpRequired',
+			otpType: 'EMAIL',
+			outcome: 'otp_required',
+			resendAvailableInSeconds: 17
+		});
+	});
+
+	it('ignores a wait time that is not a usable number of seconds', () => {
+		[-1, Number.NaN, '20', 86400].forEach((value) =>
+			expect(
+				resolveLoginError(
+					{
+						message: FETCH_ERRORS.BAD_REQUEST,
+						options: {
+							data: {
+								otpType: 'EMAIL' as never,
+								resendAvailableInSeconds: value as never
+							}
+						}
+					},
+					false
+				)
+			).not.toHaveProperty('resendAvailableInSeconds')
+		);
+	});
+
+	it('explains the limit instead of an outage when Keycloak answers 429 (#1338)', () => {
+		[false, true].forEach((hasOtp) =>
+			expect(
+				resolveLoginError(
+					{ message: FETCH_ERRORS.TOO_MANY_REQUESTS },
+					hasOtp
+				)
+			).toEqual({
+				kind: 'message',
+				messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+				outcome: 'rate_limited'
+			})
+		);
+	});
+
+	it('translates the e-mail code resend texts in every shipped locale (#1338)', () => {
+		[
+			LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			'twoFactorAuth.activate.email.resend.countdown',
+			'twoFactorAuth.activate.email.resend.onlyLatest',
+			'twoFactorAuth.activate.email.resend.failed',
+			'twoFactorAuth.activate.email.resend.tooMany'
+		].forEach((key) =>
+			[
+				deCommon,
+				enCommon,
+				frCommon,
+				ruCommon,
+				tiCommon,
+				trCommon
+			].forEach((catalogue) =>
+				expect(typeof translationAt(catalogue, key), key).toBe('string')
+			)
+		);
+	});
+
 	it('is silent only when there is no error at all', () => {
 		expect(resolveLoginError(null, false)).toEqual({ kind: 'none' });
 		expect(resolveLoginError(undefined, true)).toEqual({ kind: 'none' });

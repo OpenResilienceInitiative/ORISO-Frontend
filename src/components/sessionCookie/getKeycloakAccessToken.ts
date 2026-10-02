@@ -69,6 +69,9 @@ export const getKeycloakAccessToken = (
 					// console.log("🔐 DEBUG: UNAUTHORIZED - 401 response");
 					// console.log("🔐 DEBUG: UNAUTHORIZED - Response text:", response.statusText);
 					reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+				} else if (response.status === 429) {
+					// Keycloak refuses further codes or attempts for now (#1338).
+					reject(new Error(FETCH_ERRORS.TOO_MANY_REQUESTS));
 				} else {
 					// console.log("🔐 DEBUG: UNEXPECTED STATUS -", response.status);
 					reject(new Error(`Unexpected status: ${response.status}`));
