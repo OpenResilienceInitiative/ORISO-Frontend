@@ -316,9 +316,10 @@ export const mockCaseHandoverGrantedMessage = `[SYSTEM_NOTIFICATION]${JSON.strin
 		type: 'CASE_HANDOVER_GRANTED',
 		username: 'Kim G.',
 		description:
-			'Deine bisherige Berater:in ist leider erkrankt. Damit du nicht warten musst, hat Kim G. deinen Fall übernommen.',
+			'Deine bisherige Berater:in ist derzeit nicht erreichbar. Kim G. betreut dich weiter.',
+		// Legacy label: the UI must show it as "Unplanned absence".
 		reasonLabel: 'Counsellor is ill',
 		explanation:
-			'My colleague is ill, so I decided it is better if I take care of this client.'
+			'My colleague is away, so I decided it is better if I take care of this client.'
 	}
 )}`;

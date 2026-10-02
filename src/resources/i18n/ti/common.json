@@ -2162,6 +2162,14 @@
 			"teamDiscussionNew": {
 				"title": "ናይ ጋንታ ምይይጥ",
 				"text": "{{senderDisplayName}} ኣብ ናይ ጋንታ ምይይጥ ጽሒፉ"
+			},
+			"firstResponseReceived": {
+				"title": "ቀዳሞት ስጉምትኹም",
+				"text": "ኣብቲ ቻት እቲ ኣገዳሲ ሓበሬታ ጽሒፍናልኩም ኣለና።"
+			},
+			"conversationFinished": {
+				"title": "ቻት ተዛዚሙ",
+				"text": "እቲ ካብ ስሙ ዘይተፈልጠ ቻት ተዛዚሙ።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -2549,7 +2557,7 @@
 			},
 			"dnd": {
 				"title": "ኣይትረብሽ",
-				"description": "ንዝተመረጸ ግዜ ኩሎም መፍለጢታት (ድምጺ፡ ፖፕ-ኣፕ፡ ኢመይል) ኣቋርጹ። ታሪኽኩም ግና ክመልእ ይቕጽል።",
+				"description": "ንዝተመረጸ ግዜ መፍለጢታት (ድምጺ፡ ፖፕ-ኣፕ) ኣቋርጹ። ታሪኽኩም ግና ክመልእ ይቕጽል።",
 				"activeUntil": "ክሳብ {{time}} ንጡፍ",
 				"option": {
 					"off": "ጠፊኡ",
@@ -3467,6 +3475,16 @@
 		"reasons": {
 			"loading": "ምኽንያታት ይጽዕኑ ኣለዉ"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "ዝተመደበ ብኩራት",
+			"UNPLANNED_ABSENCE": "ዘይተመደበ ብኩራት",
+			"ASSIGNMENT_ENDED": "ምምዳብ ተወዲኡ",
+			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ",
+			"retired": "ዘይተገልጸ"
+		},
+		"history": {
+			"unknownConsultant": "ናይ ቀደም ኣማኻሪ"
+		},
 		"submit": "ተበጻሕነት ሕተት",
 		"submitSending": "ይለኣኽ ኣሎ",
 		"title": "ተበጻሕነት ሕተት",
@@ -3793,6 +3811,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} ስለዚ ንኹሉ ታሪኽ መልእኽቲ ከንብብ ይኽእል እዩ ንዓኻ ድማ ሓላፍነት ይወስድ። {{oldConsultant}} ድሕሪ ሕጂ ነቶም መልእኽትታት ክረኽቦም ኣይክእልን እዩ።"
 						},
+						"historical": "እዚ ቅድሚ ሕጂ ዝቐረበ ሕቶ እዩ። ኣብዚ ደጊም ክምለስ ኣይክእልን።",
 						"question": "ነቲ ምትሕልላፍ ትሰማምዑሉ ዶ?",
 						"sent": {
 							"description": {

@@ -2162,6 +2162,14 @@
 			"teamDiscussionNew": {
 				"title": "Réunion d'équipe",
 				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			},
+			"firstResponseReceived": {
+				"title": "Vos premiers pas",
+				"text": "Nous vous avons envoyé les informations les plus importantes dans le chat."
+			},
+			"conversationFinished": {
+				"title": "Chat terminé",
+				"text": "Le chat anonyme est terminé."
 			}
 		},
 		"error": "Échec",
@@ -2549,7 +2557,7 @@
 			},
 			"dnd": {
 				"title": "Ne pas déranger",
-				"description": "Mettez toutes les notifications en pause (son, fenêtres contextuelles, e-mails) pour une durée choisie. Votre historique continue de se remplir.",
+				"description": "Mettez les notifications en pause (son, fenêtres contextuelles) pour une durée choisie. Votre historique continue de se remplir.",
 				"activeUntil": "Actif jusqu'à {{time}}",
 				"option": {
 					"off": "Désactivé",
@@ -3467,6 +3475,16 @@
 		"reasons": {
 			"loading": "Chargement des motifs"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Absence planifiée",
+			"UNPLANNED_ABSENCE": "Absence imprévue",
+			"ASSIGNMENT_ENDED": "Attribution terminée",
+			"ADVICE_REQUESTED": "Conseil demandé",
+			"retired": "Non précisé"
+		},
+		"history": {
+			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller"
+		},
 		"submit": "Demander l'accès",
 		"submitSending": "Envoi en cours",
 		"title": "Demander l'accès",
@@ -3793,6 +3811,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} peut donc lire l'historique complet des messages et est responsable de vous. {{oldConsultant}} n'a plus accès aux messages."
 						},
+						"historical": "Il s’agit d’une demande antérieure. Il n’est plus possible d’y répondre ici.",
 						"question": "Approuvez-vous le transfert ?",
 						"sent": {
 							"description": {

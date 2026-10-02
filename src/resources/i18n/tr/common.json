@@ -2162,6 +2162,14 @@
 			"teamDiscussionNew": {
 				"title": "Ekip görüşmesi",
 				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			},
+			"firstResponseReceived": {
+				"title": "İlk adımlarınız",
+				"text": "Size sohbette en önemli bilgileri yazdık."
+			},
+			"conversationFinished": {
+				"title": "Sohbet sona erdi",
+				"text": "Anonim sohbet sona erdi."
 			}
 		},
 		"error": "Başarısız",
@@ -2549,7 +2557,7 @@
 			},
 			"dnd": {
 				"title": "Rahatsız etmeyin",
-				"description": "Tüm bildirimleri (ses, açılır pencere, e-posta) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
+				"description": "Bildirimleri (ses, açılır pencere) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
 				"activeUntil": "{{time}} saatine kadar etkin",
 				"option": {
 					"off": "Kapalı",
@@ -3467,6 +3475,16 @@
 		"reasons": {
 			"loading": "Nedenler yükleniyor"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planlı yokluk",
+			"UNPLANNED_ABSENCE": "Plansız yokluk",
+			"ASSIGNMENT_ENDED": "Görevlendirme sona erdi",
+			"ADVICE_REQUESTED": "Danışma talep edildi",
+			"retired": "Belirtilmemiş"
+		},
+		"history": {
+			"unknownConsultant": "Önceki danışman"
+		},
 		"submit": "Erişim talep et",
 		"submitSending": "Gönderiliyor",
 		"title": "Erişim talep et",
@@ -3793,6 +3811,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} {{oldConsultant}} bu nedenle tüm mesaj geçmişini okuyabilir ve sizden sorumludur. artık mesajlara erişimi yoktur."
 						},
+						"historical": "Bu daha önceki bir taleptir. Artık buradan yanıtlanamaz.",
 						"question": "Devir teslim işlemini kabul ediyor musunuz?",
 						"sent": {
 							"description": {

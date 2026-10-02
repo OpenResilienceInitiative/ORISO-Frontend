@@ -139,6 +139,24 @@ const seeds: EventDescriptor[] = [
 		i18nKey: 'messageNew',
 		resolveActionTarget: conversationTarget
 	}),
+	// #1535: UserService emits both; without a descriptor they rendered as
+	// the generic "Activity" card. The asker receives the first one only.
+	descriptor('first_response.received', {
+		family: 'messages',
+		category: 'system',
+		icon: 'message',
+		i18nKey: 'firstResponseReceived',
+		resolveActionTarget: conversationTarget
+	}),
+	// Sent to whichever side did not end it, and on automatic clean-up to
+	// both — hence the text does not say who ended the chat.
+	descriptor('conversation.finished', {
+		family: 'messages',
+		category: 'system',
+		icon: 'message',
+		i18nKey: 'conversationFinished',
+		resolveActionTarget: conversationTarget
+	}),
 	descriptor('thread.reply.new', {
 		family: 'messages',
 		category: 'message',
