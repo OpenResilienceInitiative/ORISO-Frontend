@@ -1,9 +1,8 @@
 import * as React from 'react';
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useAtom } from 'jotai';
 import { UserDataContext } from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
-import { apiPatchConsultantData } from '../../api';
 import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
 import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
 import {
@@ -12,27 +11,77 @@ import {
 } from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
-import type { TourEvent, TourProgress, TourStep } from '../productTour/types';
+import type {
+	TourDefinition,
+	TourEvent,
+	TourProgress,
+	TourStep
+} from '../productTour/types';
+import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
+
+type AutoRunState = 'unknown' | 'due' | 'not_due';
+
+const isCurrentVersionFinished = (
+	items: Pick<ITutorialProgressItem, 'tourId' | 'tourVersion' | 'status'>[],
+	tour: TourDefinition
+): boolean =>
+	items.some(
+		(item) =>
+			item.tourId === tour.id &&
+			item.tourVersion === tour.version &&
+			(item.status === 'completed' || item.status === 'skipped')
+	);
 
 /**
- * Frontend tour host. Renders whichever registered tour the profile carousel
- * requested; without a request, the legacy auto-start gate (app-config flag +
- * the user's walkthrough switch) still runs the consultant walkthrough.
- * Progress is persisted through the versioned UserService API; the legacy
- * boolean is kept in sync for the walkthrough tour only, so the auto-start
- * behavior stays unchanged.
+ * Frontend tour host. Renders whichever tour the Help → Tours list requested;
+ * without a request, it auto-starts the consultant walkthrough only while the
+ * counsellor's own switch is on and the current tour version is neither
+ * completed nor skipped (#1526).
  */
 export const Walkthrough = () => {
 	const settings = useAppConfig();
-	const { userData, reloadUserData } = useContext(UserDataContext);
+	const { userData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
+	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
 
 	const requestedTour = launchRequest
 		? frontendTours.find((tour) => tour.id === launchRequest.tourId)
 		: undefined;
 	// Auto-run only when nothing was requested at all: a stale or unknown
 	// request must not fall back to starting an unrelated tour.
-	const isAutoRun = !launchRequest && !!userData.isWalkThroughEnabled;
+	const wantsAutoRun =
+		!!settings.enableWalkthrough &&
+		!launchRequest &&
+		!!userData.isWalkThroughEnabled;
+
+	useEffect(() => {
+		if (!wantsAutoRun || autoRunState !== 'unknown') {
+			return;
+		}
+		let cancelled = false;
+		versionedTourProgressRepository
+			.getProgress()
+			.then((items) => {
+				if (!cancelled) {
+					setAutoRunState(
+						isCurrentVersionFinished(
+							items ?? [],
+							consultantWalkthroughTour
+						)
+							? 'not_due'
+							: 'due'
+					);
+				}
+			})
+			// Unknown progress must not re-open a tour the user already
+			// finished; the list still starts it by hand.
+			.catch(() => !cancelled && setAutoRunState('not_due'));
+		return () => {
+			cancelled = true;
+		};
+	}, [wantsAutoRun, autoRunState]);
+
+	const isAutoRun = wantsAutoRun && autoRunState === 'due';
 	const activeTour =
 		requestedTour ?? (isAutoRun ? consultantWalkthroughTour : undefined);
 
@@ -76,26 +125,13 @@ export const Walkthrough = () => {
 			try {
 				await versionedTourProgressRepository.saveProgress(progress);
 			} finally {
-				if (
-					activeTour?.id === consultantWalkthroughTour.id &&
-					userData.isWalkThroughEnabled
-				) {
-					// Keep the legacy auto-start boolean in sync so the tour
-					// does not re-open on the next app view.
-					await apiPatchConsultantData({
-						walkThroughEnabled: false
-					}).catch(() => {});
-					reloadUserData();
+				if (progress.tourId === consultantWalkthroughTour.id) {
+					setAutoRunState('not_due');
 				}
 				setLaunchRequest(null);
 			}
 		},
-		[
-			activeTour?.id,
-			reloadUserData,
-			setLaunchRequest,
-			userData.isWalkThroughEnabled
-		]
+		[setLaunchRequest]
 	);
 
 	if (!settings.enableWalkthrough || !activeTour) {
