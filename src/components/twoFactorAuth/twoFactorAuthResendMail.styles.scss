@@ -47,12 +47,14 @@
 		}
 	}
 
-	&__hint {
-		margin-top: 4px;
+	// Descendant selectors: they must outrank `.text { margin: 0 }` above.
+	.twoFactorAuthResendMail__hint {
+		// Clear of the link's focus ring.
+		margin-top: 6px;
 		color: var(--m3-on-surface-variant, $tertiary);
 	}
 
-	&__status {
+	.twoFactorAuthResendMail__status {
 		display: flex;
 		align-items: center;
 		min-height: 0;

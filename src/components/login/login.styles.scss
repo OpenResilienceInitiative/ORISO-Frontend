@@ -522,6 +522,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	.twoFactorAuthResendMail {
+		margin-top: $grid-base;
 		margin-bottom: $grid-base-two;
 	}
 }
