@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { act, render, renderHook, waitFor } from '@testing-library/react';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { webcrypto } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -597,7 +598,7 @@ describe('useElementCallWidget', () => {
 		// Element Call hanging up on its own side unmounts the iframe, which
 		// calls the ref callback with null. Stopping the widget channel alone
 		// would leave the iframe document — and its capture — alive.
-		act(() => result.current.attachIframe(null));
+		await act(async () => result.current.attachIframe(null));
 		expect(iframe.src).toBe('about:blank');
 
 		// And the same must hold when the surface simply unmounts.
@@ -606,6 +607,75 @@ describe('useElementCallWidget', () => {
 		act(() => result.current.attachIframe(second));
 		unmount();
 		expect(second.src).toBe('about:blank');
+	});
+
+	it('preserves a mounted iframe across React ref callback replacement', async () => {
+		const client = createClient();
+		const firstClose = vi.fn();
+		const nextClose = vi.fn();
+		function Host({
+			onClose,
+			frameKey = 0
+		}: {
+			onClose: () => void;
+			frameKey?: number;
+		}) {
+			const widget = useElementCallWidget(client, {
+				roomId: CALL_ROOM,
+				isVideo: true,
+				onClose
+			});
+			return (
+				<>
+					{widget.url && (
+						<iframe
+							key={frameKey}
+							title="Call lifecycle"
+							src={widget.url}
+							ref={widget.attachIframe}
+						/>
+					)}
+					<output>{widget.error?.message}</output>
+				</>
+			);
+		}
+		const view = render(<Host onClose={firstClose} />);
+		await waitFor(() =>
+			expect(view.getByTitle('Call lifecycle')).toBeTruthy()
+		);
+		const iframe = view.getByTitle('Call lifecycle') as HTMLIFrameElement;
+		const source = iframe.src;
+		view.rerender(<Host onClose={nextClose} />);
+		await act(async () => {});
+		expect(iframe.src).toBe(source);
+		expect(view.container.querySelector('output')?.textContent).toBe('');
+		const closeRequest = {
+			action: 'io.element.close',
+			requestId: 'rerender-close',
+			widgetId: 'widget',
+			data: {}
+		};
+		const closeEvent = new CustomEvent('io.element.close', {
+			cancelable: true,
+			detail: closeRequest
+		});
+		const api = widgetApiMocks.apiInstances.at(-1)!;
+		act(() => api.emit('action:io.element.close', closeEvent));
+		expect(nextClose).toHaveBeenCalledTimes(1);
+		expect(firstClose).not.toHaveBeenCalled();
+		expect(api.transport.reply).toHaveBeenCalledWith(closeRequest, {});
+		view.rerender(<Host onClose={nextClose} frameKey={1} />);
+		await act(async () => {});
+		const replacement = view.getByTitle(
+			'Call lifecycle'
+		) as HTMLIFrameElement;
+		expect(replacement).not.toBe(iframe);
+		expect(iframe.src).toBe('about:blank');
+		expect(replacement.src).toBe(source);
+		expect(view.container.querySelector('output')?.textContent).toBe('');
+		view.unmount();
+		await act(async () => {});
+		expect(replacement.src).toBe('about:blank');
 	});
 
 	it('keeps a live call running when the same iframe is re-attached', async () => {
