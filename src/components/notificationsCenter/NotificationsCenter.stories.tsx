@@ -340,7 +340,7 @@ export const Empty: Story = {
 };
 
 /**
- * QA sweep: one card per seeded event type (all 30, unread), so every
+ * QA sweep: one card per seeded event type (all 32, unread), so every
  * descriptor's icon, i18n strings and detail rendering can be checked in one
  * place. Order follows the registry.
  */
@@ -368,4 +368,98 @@ export const AllEventTypes: Story = {
 			)
 		)
 	]
+};
+
+/**
+ * #876: a planned maintenance notice to counselling-centre admins. Title and
+ * text render from the locale catalogue with the window from the event params
+ * (the server title/text below are only the English fallback and must not
+ * show). The action opens the public status page in a new tab.
+ */
+const plannedServiceNotice = (
+	params: NotificationFeedItem['params']
+): NotificationFeedItem =>
+	feedItem({
+		id: 'notice-1',
+		eventType: 'service.notice.planned',
+		createdAt: minutesAgo(3),
+		title: 'Planned maintenance',
+		text: 'Planned maintenance on 2026-10-15 from 22:00 to 23:30. Current status: https://status.example.org/',
+		params
+	});
+
+const plannedServiceNoticeFeed = (params: NotificationFeedItem['params']) => [
+	plannedServiceNotice(params),
+	...mockFeed.slice(0, 3)
+];
+
+const PLANNED_NOTICE_PARAMS = {
+	campaignKey: 'maint-2026-10-15',
+	maintenanceDate: '2026-10-15',
+	maintenanceStart: '22:00',
+	maintenanceEnd: '23:30',
+	statusUrl: 'https://status.example.org/'
+};
+
+export const PlannedServiceNotice: Story = {
+	decorators: [
+		withTimelineData(plannedServiceNoticeFeed(PLANNED_NOTICE_PARAMS))
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText(/Geplante Wartung|Scheduled maintenance/)
+					.length
+			).toBeGreaterThan(0)
+		);
+		await expect(canvas.getAllByText(/22:00/).length).toBeGreaterThan(0);
+		await expect(
+			canvas.queryByText(/Current status:/)
+		).not.toBeInTheDocument();
+		// The detail pane only exists from the L breakpoint upwards.
+		const link = canvas.queryByRole('link', {
+			name: /Statusseite ansehen|View status page/
+		});
+		if (link) {
+			await expect(link).toHaveAttribute(
+				'href',
+				'https://status.example.org/'
+			);
+			await expect(link).toHaveAttribute('target', '_blank');
+			await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+			await expect(link).toHaveAccessibleName(
+				/(öffnet in einem neuen Tab|opens in a new tab)/
+			);
+		}
+	}
+};
+
+/** Without a valid status link the notice still shows, with no open action. */
+export const PlannedServiceNoticeWithoutStatusLink: Story = {
+	decorators: [
+		withTimelineData(
+			plannedServiceNoticeFeed({
+				...PLANNED_NOTICE_PARAMS,
+				statusUrl: undefined
+			})
+		)
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText(/Geplante Wartung|Scheduled maintenance/)
+					.length
+			).toBeGreaterThan(0)
+		);
+		await expect(
+			canvas.queryByRole('link', {
+				name: /Statusseite ansehen|View status page/
+			})
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByRole('button', { name: /Chat öffnen|Open chat/ })
+		).not.toBeInTheDocument();
+	}
 };

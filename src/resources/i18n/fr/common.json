@@ -2154,6 +2154,10 @@
 			"teamDiscussionNew": {
 				"title": "Réunion d'équipe",
 				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			},
+			"serviceNoticePlanned": {
+				"title": "Maintenance prévue",
+				"text": "Le {{maintenanceDate}}, la plateforme sera indisponible entre {{maintenanceStart}} et {{maintenanceEnd}}. Les messages déjà écrits ne seront pas perdus."
 			}
 		},
 		"error": "Échec",
@@ -2203,7 +2207,9 @@
 			"loadingOlder": "Chargement des activités précédentes…",
 			"olderError": "Impossible de charger les activités précédentes.",
 			"retryOlder": "Réessayer",
-			"endOfHistory": "Fin de l’historique des activités"
+			"endOfHistory": "Fin de l’historique des activités",
+			"openStatusPage": "Voir la page d’état",
+			"opensInNewTab": "(s’ouvre dans un nouvel onglet)"
 		},
 		"threadReply": {
 			"title": "Nouvelle réponse dans un fil"

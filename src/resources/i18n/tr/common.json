@@ -2154,6 +2154,10 @@
 			"teamDiscussionNew": {
 				"title": "Ekip görüşmesi",
 				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			},
+			"serviceNoticePlanned": {
+				"title": "Planlı bakım",
+				"text": "{{maintenanceDate}} tarihinde platform, {{maintenanceStart}} ile {{maintenanceEnd}} arasında erişilemez olacak. Daha önce yazdığınız mesajlar kaybolmaz."
 			}
 		},
 		"error": "Başarısız",
@@ -2203,7 +2207,9 @@
 			"loadingOlder": "Eski etkinlikler yükleniyor…",
 			"olderError": "Eski etkinlikler yüklenemedi.",
 			"retryOlder": "Tekrar dene",
-			"endOfHistory": "Etkinlik geçmişinin sonu"
+			"endOfHistory": "Etkinlik geçmişinin sonu",
+			"openStatusPage": "Durum sayfasını görüntüle",
+			"opensInNewTab": "(yeni sekmede açılır)"
 		},
 		"threadReply": {
 			"title": "Konuya yeni yanıt"

@@ -2151,6 +2151,10 @@
 			"teamDiscussionNew": {
 				"title": "Team discussion",
 				"text": "{{senderDisplayName}} posted in the team discussion"
+			},
+			"serviceNoticePlanned": {
+				"title": "Scheduled maintenance",
+				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
 			}
 		},
 		"error": "failed",
@@ -2200,7 +2204,9 @@
 			"loadingOlder": "Loading older activity…",
 			"olderError": "Could not load older activity.",
 			"retryOlder": "Try again",
-			"endOfHistory": "End of activity history"
+			"endOfHistory": "End of activity history",
+			"openStatusPage": "View status page",
+			"opensInNewTab": "(opens in a new tab)"
 		},
 		"threadReply": {
 			"title": "New thread reply"

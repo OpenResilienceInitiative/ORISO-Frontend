@@ -80,6 +80,11 @@ const joinTarget = (params: EventActionParams): EventActionTarget => ({
 	isVideo: !!params.isVideo
 });
 
+const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'statusPage',
+	url: params.statusUrl ?? null
+});
+
 // --- Descriptor factory --------------------------------------------------
 
 interface DescriptorSeed {
@@ -363,6 +368,17 @@ const seeds: EventDescriptor[] = [
 		icon: 'appointment',
 		i18nKey: 'groupChatCancelled',
 		resolveActionTarget: conversationTarget
+	}),
+
+	// ----- Platform operations (#876) -----
+	// A planned maintenance notice to counselling-centre admins. System family:
+	// the single system switch decides the pop-up; the feed row always stays.
+	descriptor('service.notice.planned', {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'serviceNoticePlanned',
+		resolveActionTarget: statusPageTarget
 	})
 ];
 

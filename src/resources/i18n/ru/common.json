@@ -2155,6 +2155,10 @@
 			"teamDiscussionNew": {
 				"title": "Обсуждение в команде",
 				"text": "{{senderDisplayName}} написал(а) в обсуждении команды"
+			},
+			"serviceNoticePlanned": {
+				"title": "Плановые работы",
+				"text": "{{maintenanceDate}} платформа будет недоступна с {{maintenanceStart}} до {{maintenanceEnd}}. Уже написанные сообщения не пропадут."
 			}
 		},
 		"error": "Не удалось",
@@ -2204,7 +2208,9 @@
 			"loadingOlder": "Загрузка предыдущих событий…",
 			"olderError": "Не удалось загрузить предыдущие события.",
 			"retryOlder": "Повторить",
-			"endOfHistory": "Конец истории событий"
+			"endOfHistory": "Конец истории событий",
+			"openStatusPage": "Посмотреть страницу статуса",
+			"opensInNewTab": "(откроется в новой вкладке)"
 		},
 		"threadReply": {
 			"title": "Новый ответ в теме"

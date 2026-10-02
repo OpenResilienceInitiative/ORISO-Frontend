@@ -48,8 +48,33 @@ export const EVENT_PARAM_KEYS = [
 	// #924: added on the frontend first. The backend starts emitting it with
 	// ORISO-UserService#961; until then the key is simply absent, which the
 	// preview hydration treats as "nothing to correlate".
-	'matrixEventId'
+	'matrixEventId',
+	// #876: planned maintenance notice (ORISO-UserService#1343).
+	'campaignKey',
+	'maintenanceDate',
+	'maintenanceStart',
+	'maintenanceEnd',
+	'statusUrl'
 ] as const;
+
+const ISO_DATE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const matching = (value: unknown, pattern: RegExp): string | undefined =>
+	typeof value === 'string' && pattern.test(value) ? value : undefined;
+
+// The link is rendered as an anchor, so only absolute web URLs pass.
+const webUrl = (value: unknown): string | undefined => {
+	if (typeof value !== 'string') return undefined;
+	try {
+		const url = new URL(value);
+		return url.protocol === 'https:' || url.protocol === 'http:'
+			? url.href
+			: undefined;
+	} catch {
+		return undefined;
+	}
+};
 
 /** Parse only the known, non-content fields accepted by action-target resolvers. */
 export const parseEventActionParams = (raw: unknown): EventActionParams => {
@@ -119,7 +144,38 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 		params.occurrenceIndex = source.occurrenceIndex;
 	}
 	params.start = asNullableString(source.start);
+	const campaignKey = asNullableString(source.campaignKey);
+	if (campaignKey) params.campaignKey = campaignKey;
+	const maintenanceDate = matching(source.maintenanceDate, ISO_DATE);
+	if (maintenanceDate) params.maintenanceDate = maintenanceDate;
+	const maintenanceStart = matching(source.maintenanceStart, CLOCK_TIME);
+	if (maintenanceStart) params.maintenanceStart = maintenanceStart;
+	const maintenanceEnd = matching(source.maintenanceEnd, CLOCK_TIME);
+	if (maintenanceEnd) params.maintenanceEnd = maintenanceEnd;
+	const statusUrl = webUrl(source.statusUrl);
+	if (statusUrl) params.statusUrl = statusUrl;
 	return params;
+};
+
+// `de@informal` is an i18next code, not a BCP 47 tag; Intl would throw on it.
+const intlLocale = (language: string | undefined): string =>
+	(language || 'de').split('@')[0] || 'de';
+
+/** A calendar day as the reader writes it ("15. Oktober 2026"). */
+const formatMaintenanceDate = (iso: string, language?: string): string => {
+	const [year, month, day] = iso.split('-').map(Number);
+	const date = new Date(Date.UTC(year, month - 1, day, 12));
+	const options: Intl.DateTimeFormatOptions = {
+		day: 'numeric',
+		month: 'long',
+		year: 'numeric',
+		timeZone: 'UTC'
+	};
+	try {
+		return date.toLocaleDateString(intlLocale(language), options);
+	} catch {
+		return date.toLocaleDateString('de', options);
+	}
 };
 
 /**
@@ -128,7 +184,8 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
  * content (ADR-AT-01).
  */
 export const toInterpolationValues = (
-	params: EventActionParams | undefined
+	params: EventActionParams | undefined,
+	language?: string
 ): Record<string, string | number> => {
 	const values: Record<string, string | number> = {};
 	Object.entries(params || {}).forEach(([key, value]) => {
@@ -142,7 +199,24 @@ export const toInterpolationValues = (
 	if (!values.senderDisplayName) {
 		values.senderDisplayName = values.senderName ?? '';
 	}
+	// #876: the day is localised here; the times are already the operator's
+	// wall clock. Missing values render empty, never as a raw placeholder.
+	values.maintenanceDate = params?.maintenanceDate
+		? formatMaintenanceDate(params.maintenanceDate, language)
+		: '';
+	values.maintenanceStart ??= '';
+	values.maintenanceEnd ??= '';
 	return values;
+};
+
+/** The status page a planned maintenance notice links to, or null. */
+export const resolveNotificationStatusPageUrl = (
+	item: NotificationActionInput
+): string | null => {
+	const target = getEventDescriptor(item.eventType).resolveActionTarget({
+		...(item.params || {})
+	});
+	return target.kind === 'statusPage' ? (webUrl(target.url) ?? null) : null;
 };
 
 export const resolveNotificationActionPath = (
