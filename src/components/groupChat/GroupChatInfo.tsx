@@ -275,8 +275,9 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		'agency',
 		'hint'
 	];
+	// Who leads the group, who invites and what roles exist is for moderators.
 	const m3Settings: GroupChatInfoSetting[] = [
-		...(showCreator
+		...(showCreator && isCurrentUserModerator
 			? [
 					{
 						key: 'creator' as const,
@@ -354,9 +355,12 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 					}
 					isCurrentUserModerator={isCurrentUserModerator}
 					showInviteActions={
-						!!featureGroupChatV2Enabled && isV2GroupChat
+						!!featureGroupChatV2Enabled &&
+						isV2GroupChat &&
+						isCurrentUserModerator
 					}
 					teamRolesSlot={
+						isCurrentUserModerator &&
 						activeSession.item.participants?.length &&
 						userData?.userId ? (
 							<GroupChatRoleManager
