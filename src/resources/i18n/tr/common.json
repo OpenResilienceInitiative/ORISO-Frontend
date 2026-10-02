@@ -1679,7 +1679,8 @@
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
-				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz."
+				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -4069,7 +4070,11 @@
 					"headline": "İşe yaramadı mı?",
 					"hint": "E-posta adresinize bir kod gönderdik. Lütfen kodu giriniz.",
 					"new": "Yeni kod gönder",
-					"sent": "Yeni kod gönderildi"
+					"sent": "Yeni kod gönderildi",
+					"countdown": "Yeni kod gönder ({{time}})",
+					"onlyLatest": "Yalnızca en son gönderilen kod geçerlidir.",
+					"failed": "Kod gönderilemedi. Lütfen tekrar deneyin.",
+					"tooMany": "Çok fazla kod istendi. Yeni bir kod istemeden önce lütfen birkaç dakika bekleyin."
 				},
 				"step2": {
 					"copy": "Lütfen e-posta adresinizi buraya girin.",

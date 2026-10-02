@@ -1700,7 +1700,8 @@
 					"otp": "Ihre Zugangsdaten sind nicht korrekt. Bitte versuchen Sie es erneut.",
 					"text": "Benutzername oder Passwort sind nicht korrekt. Bitte versuchen Sie es erneut."
 				},
-				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden."
+				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
+				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut."
 			}
 		},
 		"mobile": {
@@ -4086,7 +4087,11 @@
 					"headline": "Es hat nicht funktioniert?",
 					"hint": "Wir haben Ihnen einen Code an Ihre E-Mail-Adresse geschickt. Bitte geben Sie den Code ein.",
 					"new": "Neuen Code senden",
-					"sent": "Neuer Code gesendet"
+					"sent": "Neuer Code gesendet",
+					"countdown": "Neuen Code senden ({{time}})",
+					"onlyLatest": "Nur der zuletzt gesendete Code gilt.",
+					"failed": "Der Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+					"tooMany": "Zu viele Codes angefordert. Bitte warten Sie einige Minuten, bevor Sie einen neuen anfordern."
 				},
 				"step2": {
 					"copy": "Bitte geben Sie hier Ihre E-Mail-Adresse an.",

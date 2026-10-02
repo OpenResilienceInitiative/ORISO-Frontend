@@ -1679,7 +1679,8 @@
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
 				},
-				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici."
+				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici.",
+				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer."
 			}
 		},
 		"mobile": {
@@ -4069,7 +4070,11 @@
 					"headline": "Ça n'a pas marché ?",
 					"hint": "Nous vous avons envoyé un code à votre adresse e-mail. Veuillez saisir ce code.",
 					"new": "Envoyer un nouveau code",
-					"sent": "Nouveau code envoyé"
+					"sent": "Nouveau code envoyé",
+					"countdown": "Envoyer un nouveau code ({{time}})",
+					"onlyLatest": "Seul le dernier code envoyé est valable.",
+					"failed": "Le code n'a pas pu être envoyé. Veuillez réessayer.",
+					"tooMany": "Trop de codes demandés. Veuillez patienter quelques minutes avant d'en demander un nouveau."
 				},
 				"step2": {
 					"copy": "Veuillez indiquer ici votre adresse e-mail.",

@@ -12,7 +12,8 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 vi.mock('../../api', () => ({
 	FETCH_ERRORS: {
 		BAD_REQUEST: 'BAD_REQUEST',
-		UNAUTHORIZED: 'UNAUTHORIZED'
+		UNAUTHORIZED: 'UNAUTHORIZED',
+		TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS'
 	},
 	FetchErrorWithOptions: class FetchErrorWithOptions extends Error {
 		options: Record<string, unknown>;
@@ -111,5 +112,22 @@ describe('getKeycloakAccessToken', () => {
 				}
 			}
 		});
+	});
+
+	it('reports a 429 as too many requests, not as an outage (#1338)', async () => {
+		fetchMock.mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					error: 'invalid_grant',
+					error_description: 'Too many codes requested'
+				}),
+				{ status: 429 }
+			)
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(
+			getKeycloakAccessToken('user@example.com', 'password')
+		).rejects.toThrow('TOO_MANY_REQUESTS');
 	});
 });
