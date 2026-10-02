@@ -152,7 +152,7 @@ const htmlDir = path.resolve(__dirname, 'dist/keycloak/email/html');
 const read = (name: string) => readFileSync(path.join(htmlDir, name), 'utf8');
 
 const LOGO_BRANCH = /<#if orisoLogoSrc\?has_content>([\s\S]*?)<\/#if>/;
-const NAME_CELL = />\$\{\(properties\.orisoPlatformName\)[^}]*\}<\/td>/;
+const NAME_CELL = />\$\{properties\.orisoPlatformName\}<\/td>/;
 
 describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 	'Keycloak theme %s',
@@ -209,6 +209,40 @@ describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 );
 
 describe('Keycloak theme.properties', () => {
+	it('requires separate configured product and legal organisation names without defaults', () => {
+		const properties = readFileSync(
+			path.join(themeDir, 'theme.properties'),
+			'utf8'
+		);
+		expect(properties).toContain(
+			'\norisoPlatformName=${env.EMAIL_BRANDING_NAME}\n'
+		);
+		expect(properties).toContain(
+			'\norisoOrgName=${env.EMAIL_LEGAL_ORGANISATION_NAME}\n'
+		);
+		for (const { name, content } of generated().filter((file) =>
+			file.name.endsWith('.ftl')
+		)) {
+			expect(content, name).not.toContain("!'Online-Beratung'");
+			expect(content, name).not.toContain("!'ORISO'");
+		}
+	});
+
+	it('escapes configured names before trusted HTML messages are inserted', () => {
+		for (const name of ['otp-email.ftl', 'password-reset.ftl']) {
+			const html = read(name);
+			expect(html).toContain(
+				'properties.orisoPlatformName?esc?markup_string'
+			);
+			expect(html).toContain('properties.orisoOrgName?esc?markup_string');
+			const text = readFileSync(
+				path.join(themeDir, 'text', name),
+				'utf8'
+			);
+			expect(text).not.toContain('?esc');
+		}
+	});
+
 	it('declares every generated language and the pending review state', () => {
 		const properties = readFileSync(
 			path.join(themeDir, 'theme.properties'),

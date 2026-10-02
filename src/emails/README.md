@@ -1,6 +1,6 @@
 # Transactional e-mail kit
 
-Twenty-three occasions, seven language/tone variants, two MIME parts — built from one
+Twenty-four occasions, seven language/tone variants, two MIME parts — built from one
 atomic component set and previewed in Storybook under `Email/`.
 
 ```
@@ -59,9 +59,17 @@ it from rotting are in **ADR-022**; the short version:
 - **A claim is:** the encryption promise (`assurance`, on every mail), the two
   privacy paragraphs, and the DPA mail in full. The list is
   `EMAIL_PROTECTED_EXTRA` in `content/emailCatalogue.ts` — about 18 strings per
-  language, not 23 mails.
+  language, not 24 mails.
 - `de@informal` is a **tone**, not a language. Whether the four new languages
   need a second tone is a separate decision (ORISO-Frontend#1065).
+
+## Consultant message variant
+
+`neue-nachricht-beratung` is the consultant copy of the existing new-message
+notification. It keeps the neutral configured-name subject and preview, uses
+`messageUrl` for the established consultant destination, and shares the existing
+new-message preference. It does not add a preference toggle or an operator composer.
+The advice-seeker `neue-nachricht` copy remains unchanged.
 
 ## Rules the copy has to keep
 

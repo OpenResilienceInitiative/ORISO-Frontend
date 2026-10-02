@@ -1,4 +1,8 @@
 {
+	"contactSheet": {
+		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
+		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
+	},
 	"chatStage": {
 		"panel": {
 			"team": {
@@ -859,6 +863,9 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"description": "Deine Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn du fortfährst, gehen deine Änderungen verloren."
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",

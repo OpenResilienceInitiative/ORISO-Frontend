@@ -15,6 +15,177 @@ import { USER_CONSULTANT } from '../support/commands/mockApi';
 import { generateConsultantSession } from '../support/sessions';
 import { SESSION_LIST_TYPES } from '../../src/components/session/sessionHelpers';
 
+// Failure-only diagnosis for #1443 / #1602. The app and typing are unchanged.
+const TRACE_TYPING_TEXT = 'Wir besprechen diese Anfrage im Team.';
+const TRACE_LIMIT = 512;
+const causalTrace: unknown[] = [];
+let causalSequence = 0;
+let causalWindow = 0;
+let causalCase = 0;
+let causalDropped = 0;
+const causalCleanup: Array<() => void> = [];
+const bestEffort = (observe: () => void) => {
+	try {
+		observe();
+	} catch {
+		/* Diagnosis must not replace the original assertion. */
+	}
+};
+
+// Never emit unexpected document or input contents from the browser.
+const syntheticText = (text: string | null | undefined) => {
+	if (text == null) return undefined;
+	if (text.length > TRACE_TYPING_TEXT.length) return '[non-fixture-text]';
+	let next = 0;
+	for (const character of text) {
+		next = TRACE_TYPING_TEXT.indexOf(character, next);
+		if (next < 0) return '[non-fixture-text]';
+		next += 1;
+	}
+	return text;
+};
+
+beforeEach(() => {
+	causalTrace.length = 0;
+	causalSequence = 0;
+	causalWindow = 0;
+	causalDropped = 0;
+	causalCase += 1;
+	// Scoped to this test; retain events through its later app reloads.
+	cy.on('window:before:load', (win) =>
+		bestEffort(() => {
+			const documentId = ++causalWindow;
+			const attached = new WeakSet<object>();
+			const target = (element: Element | null) => ({
+				tag: element?.tagName,
+				stage: element?.closest?.('[data-cy="stage-panel"]')
+					? 'panel'
+					: element?.closest?.('[data-cy="stage-main"]')
+						? 'main'
+						: 'elsewhere',
+				editable: element?.getAttribute?.('contenteditable') === 'true',
+				text:
+					element?.getAttribute?.('contenteditable') === 'true'
+						? syntheticText(element.textContent)
+						: undefined
+			});
+			const record = (kind: string, data: unknown) =>
+				bestEffort(() => {
+					if (causalTrace.length === TRACE_LIMIT) {
+						causalTrace.shift();
+						causalDropped += 1;
+					}
+					causalTrace.push({
+						sequence: causalSequence++,
+						documentId,
+						ms: win.performance.now(),
+						kind,
+						active: target(win.document.activeElement),
+						data
+					});
+				});
+			// Observe only the editor already targeted by a real focus/key/input event.
+			const attachEditor = (eventTarget: Element | null) =>
+				bestEffort(() => {
+					const element = eventTarget?.closest?.(
+						'[contenteditable="true"]'
+					);
+					const editor = (element as any)?.editor;
+					if (
+						!editor ||
+						attached.has(editor) ||
+						typeof editor.on !== 'function'
+					)
+						return;
+					const observeTransaction = ({ transaction }: any) =>
+						bestEffort(() => {
+							record('transaction', {
+								target: target(element),
+								before: syntheticText(
+									transaction.before.textBetween(
+										0,
+										transaction.before.content.size,
+										'\n'
+									)
+								),
+								after: syntheticText(
+									transaction.doc.textBetween(
+										0,
+										transaction.doc.content.size,
+										'\n'
+									)
+								),
+								beforeSize: transaction.before.content.size,
+								afterSize: transaction.doc.content.size,
+								stepTypes: transaction.steps.map(
+									(step: any) => step.constructor.name
+								),
+								selection: {
+									from: transaction.selection.from,
+									to: transaction.selection.to
+								}
+							});
+						});
+					editor.on('transaction', observeTransaction);
+					attached.add(editor);
+					causalCleanup.push(() =>
+						editor.off('transaction', observeTransaction)
+					);
+				});
+			for (const kind of [
+				'focusin',
+				'focusout',
+				'keydown',
+				'keypress',
+				'beforeinput',
+				'input',
+				'keyup'
+			]) {
+				const observeEvent = (event: any) =>
+					bestEffort(() => {
+						attachEditor(event.target);
+						if (
+							kind.startsWith('focus') ||
+							event.target?.closest?.('[contenteditable="true"]')
+						)
+							record(kind, {
+								target: target(event.target),
+								key:
+									event.key?.length === 1
+										? syntheticText(event.key)
+										: undefined,
+								data: syntheticText(event.data),
+								inputType: event.inputType
+							});
+					});
+				win.document.addEventListener(kind, observeEvent, true);
+				causalCleanup.push(() =>
+					win.document.removeEventListener(kind, observeEvent, true)
+				);
+			}
+			record('window-load', undefined);
+		})
+	);
+});
+
+afterEach(function () {
+	causalCleanup.splice(0).forEach((cleanup) => bestEffort(cleanup));
+	if (this.currentTest?.state !== 'failed') return;
+	// The existing always-uploaded screenshot artifact also carries this JSON.
+	cy.writeFile(
+		`cypress/screenshots/enquiry-team-panel.cy.ts/causal-failure-${causalCase}.json`,
+		{
+			schemaVersion: 1,
+			fixture: 'synthetic-enquiry-team',
+			expectedTypingText: TRACE_TYPING_TEXT,
+			limit: TRACE_LIMIT,
+			dropped: causalDropped,
+			events: causalTrace.slice()
+		},
+		{ log: false }
+	);
+});
+
 const roomId = '!enquiry-1375:matrix.test';
 const teamRoomId = '!team-1375:matrix.test';
 const text =
@@ -443,7 +614,15 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		cy.intercept('GET', '**/service/users/sessions/room/1375', {
 			statusCode: 204
 		});
+		// Clearing a disappeared enquiry also verifies the handover-access lookup.
+		cy.intercept('GET', '**/service/users/case-handover/candidates?*', {
+			sessions: [],
+			total: 0
+		}).as('emptyHandoverCandidates');
 		cy.reload();
+		cy.wait('@emptyHandoverCandidates')
+			.its('response.statusCode')
+			.should('eq', 200);
 		cy.get('.session__acceptance', { timeout: 12000 }).should('not.exist');
 		cy.get('[data-cy="stage-panel"]').should('not.exist');
 		// A colleague can accept while this consultant only watches the queue.

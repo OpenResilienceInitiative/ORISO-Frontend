@@ -26,6 +26,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} ብ{{orgName}} ዝቐርብ ኣገልግሎት እዩ።',
@@ -71,6 +72,7 @@ const legalAssurance =
 	'እዛ ኢመይል ናይ {{orgName}}ን {{tenantNameDative}}ን ውዕላዊ ርክብ ኣካል እያ።';
 
 export const ti: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('ti', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'ሓድሽ መልእኽቲ በጺሑኩም ኣሎ',
 		preheader: 'ኣብ ምኽርኹም ሓድሽ መልእኽቲ ይጽበየኩም ኣሎ።',
@@ -82,6 +84,19 @@ export const ti: Record<EmailId, EmailContent> = {
 		cta: { label: 'ናብቲ መልእኽቲ', href: '{{messageUrl}}' },
 		footnote: 'ብኡንብኡ ክትምልሱ ኣየድልየኩምን። እቲ መልእኽቲ ክሳብ ዘድልየኩም ኣብ ሳጹንኩም ይጸንሕ።',
 		assurance,
+		footer
+	},
+
+	'neue-nachricht-beratung': {
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሓድሽ መልእኽቲ ንዓኹም',
+		paragraphs: [
+			'ኣብ ሓደ ካብቶም እትከታተልዎም ጉዳያት ምኽሪ ሓድሽ መልእኽቲ ኣሎ።',
+			'ነቲ መልእኽቲ ኣብ ውሑስ ቦታ ንምንባብ እተዉ።'
+		],
+		cta: { label: 'መልእኽቲ ክፈቱ', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
 		footer
 	},
 
@@ -244,54 +259,38 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'ምትሕልላፍ ተሓቲቱ',
-		preheader: 'ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ።',
-		headline: 'ሓደ ምኽሪ ናባኹም ክመሓላለፍ ተሓቲቱ ኣሎ',
+		subject: 'ሓድሽ ምልክታ',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሕቶ ብዛዕባ ምኽርኹም',
 		paragraphs: [
-			'{{fromConsultantName}} ዝካየድ ዘሎ ምኽሪ ናባኹም ክመሓላለፍ ይሓትት ኣሎ።',
-			'በጃኹም ኣብ ክፍሊ ምኽሪ ክትርከብዎ ትኽእሉ እንተኾንኩም ኣረጋግጹ።'
+			'ሓደ ኣማኻሪ ንለውጢ ኣብ ምኽርኹም ፍቓድኩም ይሓትት ኣሎ።',
+			'ነቲ ሕቶ ኣብ ውሑስ ቦታ ንምርኣይ እተዉ።'
 		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ዝሓተተ', value: '{{fromConsultantName}}' },
-			{ label: 'ዝተሓተተሉ', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'ምትሕልላፍ ኣረጋግጹ', href: '{{requestUrl}}' },
-		footnote: 'ክሳብ እትሰማምዑ፣ እቲ ምኽሪ ኣብ ትሕቲ እቲ ናይ ቅድሚ ሕጂ ክኢላ ይጸንሕ።',
-		assurance: staffAssurance,
+		cta: { label: 'ሕቶ ርኣዩ', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'ምትሕልላፍ ተረጋጊጹ',
-		preheader: 'እቲ ሓላፍነት ተቐዪሩ።',
+		subject: 'እቲ ምትሕልላፍ ተረጋጊጹ',
+		preheader: 'እቲ ምትሕልላፍ ተረጋጊጹ',
 		headline: 'እቲ ምትሕልላፍ ተረጋጊጹ',
 		paragraphs: [
-			'እቲ ምኽሪ ተረኪቡ። ካብ ሕጂ ንደሓር {{toConsultantName}} ሓላፍነት ይወስድ።',
-			'እቲ ምኽሪ ዝሓተተ ሰብ ኣብ መተግበሪ ተሓቢሩ ኣሎ።'
+			'ካብ ሕጂ ንደሓር ነዚ ምኽሪ እዚ ሓላፍነት ትወስዱ።',
+			'ነቲ ጉዳይ ኣብ ውሑስ ቦታ ክፈቱ።'
 		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ሓድሽ ሓላፍነት', value: '{{toConsultantName}}' },
-			{ label: 'ዝተመሓላለፈሉ', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'ምኽሪ ክፈቱ', href: '{{requestUrl}}' },
-		footnote: 'ናብቲ ናይ ቅድሚ ሕጂ ታሪኽ ዝነበረኩም መእተዊ ምስቲ ምትሕልላፍ ይውዳእ።',
+		cta: { label: 'ጉዳይ ክፈቱ', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ',
-		preheader: 'ኣብ ሞያዊ ልውውጥ ግብረ መልሲ ይጽበየኩም ኣሎ።',
+		subject: 'ሓድሽ መልእኽቲ ኣብ {{platformName}}',
+		preheader: 'በጃኹም እተዉ።',
 		headline: 'ኣብ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ',
 		paragraphs: [
 			'ብዛዕባ ሓደ ካብ ምኽርታትኩም ኣብ ዝካየድ ውሑስ ሞያዊ ልውውጥ ሓድሽ ግብረ መልሲ ኣሎ።',
 			'ትሕዝቶኡ ድሕሪ ምእታውኩም ተመስጢሩ ትርእይዎ።'
-		],
-		panel: [
-			{ label: 'ጉዳይ', value: '{{caseReference}}' },
-			{ label: 'ዝኣተወሉ', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'ግብረ መልሲ ኣንብቡ', href: '{{messageUrl}}' },
 		footnote: 'እቲ ሞያዊ ልውውጥ ነቲ ምኽሪ ዝሓተተ ሰብ ኣይረአን።',
@@ -307,6 +306,26 @@ export const ti: Record<EmailId, EmailContent> = {
 		cta: { label: 'ናብ {{platformName}}', href: '{{loginUrl}}' },
 		assurance,
 		footer
+	},
+
+	'konto-einrichten': {
+		subject: 'ናብ {{platformName}} ዘሎ መእተዊኹም ኣዳልዉ',
+		preheader: 'ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ።',
+		headline: 'ሕሳብኩም ድሮ ተፈጢሩ ኣሎ',
+		paragraphs: [
+			'ኣብ {{platformName}} ንዓኹም ሕሳብ ድሮ ተፈጢሩ ኣሎ።',
+			'ነዚ መላግቦ ተጠቒምኩም ናይ ገዛእ ርእስኹም ቃል ምስጢር ምረጹ። ድሕሪኡ ከም ልሙድ እተዉ፤ ኣድለይቲ ናይ ድሕነት ምርመራታት ይቕጽሉ።'
+		],
+		panel: [{ label: 'መላግቦ ክሳብ ዝሰርሓሉ', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'ቃል ምስጢር ምረጹ', href: '{{setupUrl}}' },
+		footnote: 'ነዚ ምድላው እንተዘይተጸበኹምዎ፣ ነቲ መላግቦ ኣይትጠቐሙሉ፣ ምስ ኣመሓዳሪኹም ተራኸቡ።',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
 	},
 
 	'anmeldelink': {
@@ -449,6 +468,7 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'ኢመይል ኣድራሻኹም ተቐዪሩ',
 		preheader: 'እቲ ለውጢ ካብ ሕጂ ጀሚሩ ይሰርሕ።',
 		headline: 'ኢመይል ኣድራሻኹም ተቐዪሩ',
@@ -463,5 +483,43 @@ export const ti: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'እዛ ኢመይል ብዛዕባ ለውጢ ናይ ኢመይል ኣድራሻኹም ትሕብር። ነዚ ናይ ድሕነት መፍለጢ ክትስርዝዎ ኣይትኽእሉን። በጃኹም ኣይትምለስዋ።'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'እቲ ክፍለ ጊዜ ቀልጢፉ ክጅምር እዩ',
+		preheader: 'ዝርዝር ንምርኣይ እቶ።',
+		headline: 'ክፍለ ጊዜኹም ቀልጢፉ ክጅምር እዩ',
+		paragraphs: [
+			'ዝተመደበ ናይ ድምጺ ወይ ቪድዮ ክፍለ ጊዜ ቀልጢፉ ክጅምር እዩ። ኩሉ ተወሳኺ ዝርዝር ድሕሪ ምእታውኩም ብውሑስ መንገዲ ትርእይዎ።'
+		],
+		cta: { label: 'ክፍለ ጊዜ ክፈት', href: '{{callUrl}}' },
+		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'ናብ ክፍለ ጊዜ ተዓዲምኩም',
+		preheader: 'እቲ ዕድመ ኣብ መለያኹም ብውሑስ መንገዲ ይጽበየኩም ኣሎ።',
+		headline: 'ሓድሽ ዕድመ',
+		paragraphs: [
+			'ናብ ናይ ድምጺ ወይ ቪድዮ ክፍለ ጊዜ ተዓዲምኩም። ዝርዝር ድሕሪ ምእታውኩም ብውሑስ መንገዲ ትርእይዎ።'
+		],
+		cta: { label: 'ዕድመ ርአ', href: '{{callUrl}}' },
+		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'ጻውዒት ሓሊፉኩም',
+		preheader: 'ዝተሓለወ ታሪኽ ንምኽፋት እቶ።',
+		headline: 'ዝሓለፈ ጻውዒት',
+		paragraphs: [
+			'ኣብ ዘይነበርኩምሉ ግዜ ናይ ድምጺ ወይ ቪድዮ ጻውዒት ተኻይዱ። ተወሳኺ ዝርዝር ድሕሪ ምእታውኩም ብውሑስ መንገዲ ትርእይዎ።'
+		],
+		cta: { label: 'ዝተሓለወ ታሪኽ ክፈት', href: '{{callUrl}}' },
+		footnote: 'እዚ ኢመይል ብፍላጥ ኣርእስቲ፣ ስማት ወይ ዝርዝር ተሳተፍቲ ኣይሓዘን።',
+		assurance,
+		footer
 	}
 };
