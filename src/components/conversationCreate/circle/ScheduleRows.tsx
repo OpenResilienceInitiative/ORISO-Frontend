@@ -109,8 +109,10 @@ export const ScheduleRows = ({
 	 * touched last owns the label, so choosing "Wöchentlich" no longer leaves
 	 * a stale "34 mal" on the button.
 	 */
+	// A one-off group has no frequency to show; its stored interval is only
+	// the form default.
 	const [repeatMode, setRepeatMode] = useState<'count' | 'interval'>(
-		isEditMode ? 'interval' : 'count'
+		isEditMode && value.repeatCount > 1 ? 'interval' : 'count'
 	);
 	const dateRef = useRef<HTMLDivElement | null>(null);
 	const durationRef = useRef<HTMLDivElement | null>(null);

@@ -62,6 +62,7 @@ import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { GroupChatRoleManager } from './GroupChatRoleManager';
 import { getGroupChatPlannedStart } from './groupChatDate';
+import { getGroupChatRepeatLabel } from './groupChatRepeatLabel';
 
 export const GroupChatInfo = () => {
 	const settings = useAppConfig();
@@ -229,9 +230,7 @@ export const GroupChatInfo = () => {
 		},
 		{
 			label: translate('groupChat.info.settings.repetition.label'),
-			value: activeSession.item.repetitive
-				? translate('groupChat.info.settings.repetition.weekly')
-				: translate('groupChat.info.settings.repetition.single')
+			value: getGroupChatRepeatLabel(activeSession.item, translate)
 		},
 		{
 			label: translate('groupChat.info.settings.agency'),
