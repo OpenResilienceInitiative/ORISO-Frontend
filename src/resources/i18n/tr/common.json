@@ -4717,6 +4717,7 @@
 		"requestAdvice": "Tavsiye iste"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Sizin için bir danışman arıyoruz.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Hesabı Sil",

@@ -4717,6 +4717,7 @@
 		"requestAdvice": "ምኽሪ ሕተት"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "We are looking for a counsellor for you.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "መለያ ሰርዝ",
