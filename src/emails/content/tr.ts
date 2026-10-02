@@ -22,6 +22,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy:
@@ -73,6 +74,7 @@ const legalAssurance =
 	'Bu e-posta, {{orgName}} ile {{tenantNameDative}} arasındaki sözleşme ilişkisine aittir.';
 
 export const tr: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('tr', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Yeni bir mesajınız var',
 		preheader: 'Danışmanlığınızda sizin için yeni bir mesaj hazır.',
@@ -85,6 +87,19 @@ export const tr: Record<EmailId, EmailContent> = {
 		footnote:
 			'Hemen yanıtlamak zorunda değilsiniz. Mesaj, ihtiyacınız olduğu sürece posta kutunuzda kalır.',
 		assurance,
+		footer
+	},
+
+	'neue-nachricht-beratung': {
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Sizin için yeni bir mesaj',
+		paragraphs: [
+			'Yürüttüğünüz danışmanlıklardan birinde yeni bir mesaj var.',
+			'Mesajı güvenli danışmanlık alanında okumak için giriş yapın.'
+		],
+		cta: { label: 'Mesajı aç', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
 		footer
 	},
 
@@ -255,55 +270,38 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Devir talebi',
-		preheader: 'Bir danışmanlığın size devredilmesi isteniyor.',
-		headline: 'Bir danışmanlığın size devredilmesi isteniyor',
+		subject: 'Yeni bildirim',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Danışmanlığınızla ilgili bir talep',
 		paragraphs: [
-			'{{fromConsultantName}}, devam eden bir danışmanlığın size devredilmesini istiyor.',
-			'Lütfen danışmanlık alanında devralıp devralamayacağınızı kontrol edin.'
+			'Bir danışman, danışmanlığınızdaki bir değişiklik için onayınızı istiyor.',
+			'Talebi güvenli alanda incelemek için giriş yapın.'
 		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Talep eden', value: '{{fromConsultantName}}' },
-			{ label: 'Talep tarihi', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Devri incele', href: '{{requestUrl}}' },
-		footnote: 'Siz onaylayana kadar danışmanlık mevcut uzmanda kalır.',
-		assurance: staffAssurance,
+		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
 		subject: 'Devir onaylandı',
-		preheader: 'Sorumluluk değişti.',
+		preheader: 'Devir onaylandı',
 		headline: 'Devir onaylandı',
 		paragraphs: [
-			'Danışmanlık devralındı. Bundan sonra {{toConsultantName}} sorumlu.',
-			'Danışan, uygulama üzerinden bilgilendirildi.'
+			'Artık bu danışmanlıktan siz sorumlusunuz.',
+			'Dosyayı güvenli danışmanlık alanında açın.'
 		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Yeni sorumlu', value: '{{toConsultantName}}' },
-			{ label: 'Devir tarihi', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Danışmanlığı aç', href: '{{requestUrl}}' },
-		footnote: 'Önceki yazışmalara erişiminiz devirle birlikte sona erer.',
+		cta: { label: 'Dosyayı aç', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'Uzmanlar arası paylaşımda yeni geri bildirim',
-		preheader:
-			'Uzmanlar arası paylaşımda sizin için bir geri bildirim var.',
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
 		headline: 'Uzmanlar arası paylaşımda yeni geri bildirim',
 		paragraphs: [
 			'Danışmanlıklarınızdan biriyle ilgili korumalı uzmanlar arası paylaşımda yeni bir geri bildirim var.',
 			'İçeriği oturum açtıktan sonra şifreli olarak görürsünüz.'
-		],
-		panel: [
-			{ label: 'Dosya', value: '{{caseReference}}' },
-			{ label: 'Geliş', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Geri bildirimi oku', href: '{{messageUrl}}' },
 		footnote: 'Uzmanlar arası paylaşım danışana görünmez.',
@@ -312,8 +310,8 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: '{{platformName}} üzerinde yeni mesaj',
+		preheader: 'Lütfen giriş yapın.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: {
@@ -322,6 +320,32 @@ export const tr: Record<EmailId, EmailContent> = {
 		},
 		assurance,
 		footer
+	},
+
+	'konto-einrichten': {
+		subject: '{{platformName}} erişiminizi ayarlayın',
+		preheader: 'Kendi şifrenizi belirleyin.',
+		headline: 'Hesabınız zaten oluşturuldu',
+		paragraphs: [
+			'{{platformName}} üzerinde sizin için bir hesap zaten oluşturuldu.',
+			'Kendi şifrenizi belirlemek için bu bağlantıyı kullanın. Ardından her zamanki gibi giriş yapın; gerekli güvenlik kontrolleri uygulanmaya devam eder.'
+		],
+		panel: [
+			{
+				label: 'Bağlantının geçerlilik sonu',
+				value: '{{inviteExpiresAt}}'
+			}
+		],
+		cta: { label: 'Şifre belirle', href: '{{setupUrl}}' },
+		footnote:
+			'Bu kurulumu beklemiyorsanız bağlantıyı kullanmayın ve yöneticinizle iletişime geçin.',
+		assurance: securityAssurance,
+		footer: {
+			...securityFooter,
+			offeredBy: securityFooter.offeredBy
+				.replace('{{platformName}}', '{{offeringName}}')
+				.replace('{{orgName}}', '{{operatorName}}')
+		}
 	},
 
 	'anmeldelink': {
@@ -470,6 +494,7 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'E-posta adresiniz değiştirildi',
 		preheader: 'Değişiklik şu andan itibaren geçerli.',
 		headline: 'E-posta adresiniz değiştirildi',
@@ -484,5 +509,46 @@ export const tr: Record<EmailId, EmailContent> = {
 			automatedNote:
 				'Bu e-posta, e-posta adresinizin değiştiğini bildirir. Bu güvenlik bildiriminden çıkamazsınız. Lütfen yanıtlamayınız.'
 		}
+	},
+	'anruf-erinnerung': {
+		subject: 'Bir oturum yakında başlayacak',
+		preheader: 'Ayrıntıları görmek için giriş yapın.',
+		headline: 'Oturumunuz yakında başlayacak',
+		paragraphs: [
+			'Planlanmış bir sesli veya görüntülü oturum yakında başlayacak. Diğer tüm ayrıntıları giriş yaptıktan sonra güvenli şekilde görebilirsiniz.'
+		],
+		cta: { label: 'Oturumu aç', href: '{{callUrl}}' },
+		footnote:
+			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'Bir oturuma davet edildiniz',
+		preheader: 'Davet, hesabınızda güvenli şekilde sizi bekliyor.',
+		headline: 'Yeni davet',
+		paragraphs: [
+			'Bir sesli veya görüntülü oturuma davet edildiniz. Ayrıntıları giriş yaptıktan sonra güvenli şekilde görebilirsiniz.'
+		],
+		cta: { label: 'Daveti görüntüle', href: '{{callUrl}}' },
+		footnote:
+			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'Bir aramayı kaçırdınız',
+		preheader: 'Korunan geçmişi açmak için giriş yapın.',
+		headline: 'Cevapsız arama',
+		paragraphs: [
+			'Siz yokken bir sesli veya görüntülü arama gerçekleşti. Diğer ayrıntıları giriş yaptıktan sonra güvenli şekilde görebilirsiniz.'
+		],
+		cta: { label: 'Korunan geçmişi aç', href: '{{callUrl}}' },
+		footnote:
+			'Bu e-posta kasıtlı olarak konu, ad veya katılımcı bilgisi içermez.',
+		assurance,
+		footer
 	}
 };

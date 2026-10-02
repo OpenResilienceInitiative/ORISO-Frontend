@@ -5,9 +5,6 @@ Danışmanlıklarınızdan biriyle ilgili korumalı uzmanlar arası paylaşımda
 
 İçeriği oturum açtıktan sonra şifreli olarak görürsünüz.
 
-Dosya: {{caseReference}}
-Geliş: {{requestReceivedAt}}
-
 Geri bildirimi oku:
 {{messageUrl}}
 

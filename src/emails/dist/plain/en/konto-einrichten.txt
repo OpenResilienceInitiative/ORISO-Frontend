@@ -1,0 +1,27 @@
+Your account already exists
+===========================
+
+An account has already been created for you on {{platformName}}.
+
+Use this link to choose your own password. Then sign in as usual; the required security checks still apply.
+
+Link valid until: {{inviteExpiresAt}}
+
+Choose password:
+{{setupUrl}}
+
+If you were not expecting this setup, do not use the link and contact your administrator.
+
+----------------------------------------------------------------
+We will never ask for your password by email. Do not pass this link on to anyone.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} is a service provided by {{operatorName}}.
+
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+
+This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.

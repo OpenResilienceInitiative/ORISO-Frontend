@@ -5,9 +5,6 @@ Un nouveau retour vous attend dans l’échange protégé entre professionnels a
 
 Vous en verrez le contenu, chiffré, après votre connexion.
 
-Dossier: {{caseReference}}
-Reçu le: {{requestReceivedAt}}
-
 Lire le retour:
 {{messageUrl}}
 

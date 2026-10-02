@@ -1189,6 +1189,61 @@
 			"done": "ተወዲኡ",
 			"durationValue": "{{value}} ሰዓት",
 			"copyFailed": "ምቅዳድ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
+		},
+		"notMember": {
+			"headline": "ኣባል ናይዚ ጉጅለ ዘተ ኣይኮንኩምን።",
+			"body": "ነዚ ጉጅለ ዘተ ዝኸፍቶ ኣወሃሃዲ ጥራይ እዩ፣ ምስቶም ዝዕድሞም ሰባት። ብሓባር ከተወሃህዱ እንተ ኾይንኩም፡ ኣወሃሃዲ ክውስኹኹም ሕተቱ።",
+			"back": "ናብ ዝርርባተይ",
+			"knockBody": "ኣወሃሃዲ ክኣትዉኹም ክትሓቱ ትኽእሉ ኢኹም። ክሳብ ሽዑ ካብዚ ጉጅለ ዘተ ዋላ ሓንቲ ኣይትርእዩን።",
+			"request": "ምጽንባር ሕተት",
+			"requestFailed": "እቲ ሕቶ ክለኣኽ ኣይከኣለን። በጃኹም ደጊምኩም ፈትኑ።",
+			"pendingHeadline": "ሕቶ ተላኢኹ – ኣወሃሃዲ ይሕበሩ ኣለዉ።",
+			"pendingBody": "ሓደ ኣወሃሃዲ ምስ ኣእተወኩም፡ ኣብዚ ክትቅጽሉ ትኽእሉ ኢኹም። ነዚ ገጽ ክፉት ግደፍዎ።",
+			"cancel": "ሕቶ ምልሱ",
+			"admittedHeadline": "ኣቲኹም ኣለኹም።",
+			"admittedBody": "ኣወሃሃዲ ናብቲ ጉጅለ ዘተ ኣእትዮምኹም።",
+			"openGroup": "ጉጅለ ዘተ ክፈት",
+			"declinedHeadline": "ሎሚ ኣይሰለጠን።",
+			"declinedBody": "ኣወሃሃዲ ሕቶኹም ኣይተቐበሉን። ሕቶ እንተሃልዩኩም፡ ነቲ ሊንክ ዝለኣኸልኩም ሰብ ተወከሱ።",
+			"linkInvalid": "እዚ ሊንክ ዕድመ ድሕሪ ሕጂ ኣይሰርሕን እዩ። በጃኹም ካብ ኣወሃሃዲ ሓድሽ ሊንክ ሕተቱ።"
+		},
+		"accessUnavailable": {
+			"headline": "ነዚ ጉጅለ ዝርርብ ሕጂ ክኽፈት ኣይከኣለን።",
+			"body": "እቲ ሰርቨር ነዚ ሕሳብ እዚ ጉጅለ ክፉት ምዃኑ ኣየረጋገጸን። በጃኹም ደጊምኩም ፈትኑ።"
+		},
+		"joinRequest": {
+			"knocks": "ናብ «{{group}}» ክጽንበር ይደሊ",
+			"announcement": "{{name}} ናብ «{{group}}» ክጽንበር ይደሊ።",
+			"role": "ኣማኻሪ",
+			"viaInviteLink": "ብሊንክ ዕድመ",
+			"justNow": "ሕጂ",
+			"minutesAgo": "ቅድሚ {{count}} ደቒቕ",
+			"details": "ዝርዝር",
+			"admit": "ኣእቱ",
+			"decline": "ኣይትቐበል",
+			"otherAgency": "ካልእ ማእከል ምኽሪ",
+			"otherTenant": "ካልእ ትካል",
+			"unknown": "ዘይፍለጥ",
+			"admitted": "{{name}} ሕጂ ኣብቲ ጉጅለ ዘተ ኣሎ።",
+			"admittedAsCoModerator": "{{name}} ሕጂ ብሓባር የወሃህድ።",
+			"declined": "ሕቶ {{name}} ተነጺጉ።",
+			"failed": "ኣይሰለጠን። በጃኹም ደጊምኩም ፈትኑ።",
+			"dialog": {
+				"title": "{{name}} ክጽንበር ይደሊ",
+				"description": "{{name}} ናብ «{{group}}» ይጽንበር እንተ ኾይኑ ወስኑ።",
+				"roleLabel": "ተራ",
+				"agencyLabel": "ማእከል ምኽሪ",
+				"tenantLabel": "ትካል",
+				"wayLabel": "መእተዊ",
+				"timeLabel": "ዝተሓተተሉ",
+				"timeValue": "ሰዓት {{time}}",
+				"admitAs": "ከም እዚ ኣእቱ",
+				"asParticipant": "ተሳታፊ",
+				"asCoModerator": "ብሓባር ኣወሃሃዲ",
+				"coModeratorOwnerOnly": "ብሓባር ምውህሃድ ክህብ ዝኽእል መራሒ ጉጅለ ጥራይ እዩ።",
+				"coModeratorSameTenant": "ብሓባር ምውህሃድ ንሞያውያን ናይ ገዛእ ትካልኩም ጥራይ እዩ።",
+				"privacy": "ክሳብ ትውስኑ፡ {{name}} ካብዚ ጉጅለ ዘተ ዋላ ሓንቲ ኣይርእን።"
+			}
 		}
 	},
 	"help": {
@@ -2512,6 +2567,11 @@
 				"sendByEmail": "ብኢመይል ስደድ",
 				"confirm": "ኣረጋግጽ",
 				"cancel": "ሰርዝ",
+				"discardChanges": {
+					"title": "ለውጥታት ክትድርብዩ ዲኹም?",
+					"description": "ቅጥዕታት መፍለጢኹም ገና ኣይተዓቀቡን። እንተቐጺልኩም፡ ለውጥታትኩም ክጠፍኡ እዮም።",
+					"discard": "ደርብዩ ቀጽሉ"
+				},
 				"area": {
 					"requests": "ሕቶ",
 					"conversations": "ዝርርብ",
@@ -3200,6 +3260,7 @@
 			},
 			"temporary": {
 				"join": "ተጸምበር",
+				"joinGroup": "ናብ ጉጅለ ተጸምበር",
 				"toggleOff": "ኣካውንት ፍጠር",
 				"toggleOn": "ብዘይ ኣካውንት ተጸምበር",
 				"title": "እዚ ክፍለ-ግዜ ንብሮዘር ምስ ዓጸኻዮ ይውዳእ።",
@@ -5472,6 +5533,26 @@
 			"password": "ናይ ባዕልኹም መሕለፊ ቃል",
 			"twoFactor": "ካልኣይ ረቛሒ",
 			"done": "ተዛዚሙ"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "መፍለጢታት",
+			"more": "ካልኦት {{count}} ኣርኢ",
+			"less": "ውሑድ ኣርኢ"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "ሓድሽ ምኽሪ ንግዚኡ ተዓጽዩ",
+				"text": "ትካል ምኽሪ ነቲ ህሉው ውዕል ምስራሕ ዳታ ከረጋግጾ ኣለዎ። በጃኹም ንማእከል ምኽርኹም ተወከሱ። ዝተጀመሩ ምኽርታት ይቕጽሉ።"
+			},
+			"unavailable": {
+				"title": "ምኽሪ ንግዚኡ ክምርመር ኣይከኣለን",
+				"text": "ኩነታት ምርግጋጽ እቲ ውዕል ክምርመር ኣይከኣለን። በጃኹም ዳግማይ ፈትኑ። ዘእተኹሞ ሓበሬታ ይዕቀብ።",
+				"inviteText": "ምርግጋጽ እቲ ውዕል ንግዚኡ ክምርመር ኣይከኣለን። በጃኹም ዳግማይ ፈትኑ።"
+			}
 		}
 	}
 }

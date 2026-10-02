@@ -1,7 +1,7 @@
 import * as React from 'react';
 import dayjs from 'dayjs';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,15 +12,24 @@ import {
 } from '../../../api';
 import { apiGetChatRoomById } from '../../../api/apiGetChatRoomById';
 import {
+	AUTHORITIES,
 	buildExtendedSession,
-	ExtendedSessionInterface
+	ExtendedSessionInterface,
+	hasUserAuthority,
+	NotificationsContext,
+	UserDataContext
 } from '../../../globalState';
+import { getCounsellingDpaNotification } from '../../../utils/counsellingDpaNotification';
 import { getGroupChatPlannedStart } from '../groupChatDate';
 import { useGroupChatAuthorContent } from '../useGroupChatAuthorContent';
 import { getSessionNavigationPath } from '../../sessionsListItem/sessionsListItemHelpers';
 import { GroupWaitingRoom } from './GroupWaitingRoom';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
+import {
+	consultantGroupChatPath,
+	isGroupChatId
+} from '../consultantGroupChatPath';
 
 const POLL_MS = 5000;
 export const GROUP_ENTRY_ROOM_PATH = '/groups/:chatId/entry';
@@ -40,12 +49,51 @@ export const groupEntryRoomPath = (chatId: string | number) =>
  * `useSession`), polls the group's state every 5 s the way
  * `JoinGroupChatView` does, joins on "Beitreten" and hands over to the
  * chat's own route.
+ *
+ * A counsellor who still reaches this address (an old link, a bookmark) is
+ * sent to the group in her own session view (#1499): this room is the
+ * client's, with client wording and a join she cannot use.
  */
 export const GroupEntryRoom = () => {
+	const { chatId: chatIdParam } = useParams<{ chatId: string }>();
+	const userData = useContext(UserDataContext)?.userData;
+
+	// Unknown role yet: choosing now would start the client flow for a counsellor.
+	if (!userData) {
+		return <EntryRoomLoading />;
+	}
+
+	if (hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)) {
+		return isGroupChatId(chatIdParam) ? (
+			<Navigate to={consultantGroupChatPath(chatIdParam)} replace />
+		) : (
+			<Navigate to="/sessions/consultant/sessionView" replace />
+		);
+	}
+
+	return <ClientGroupEntryRoom />;
+};
+
+const EntryRoomLoading = () => (
+	<Box
+		sx={{
+			minHeight: '100vh',
+			display: 'flex',
+			alignItems: 'center',
+			justifyContent: 'center'
+		}}
+		data-cy="group-entry-loading"
+	>
+		<CircularProgress />
+	</Box>
+);
+
+const ClientGroupEntryRoom = () => {
 	const { chatId: chatIdParam } = useParams<{ chatId: string }>();
 	const chatId = Number(chatIdParam);
 	const navigate = useNavigate();
 	const { t } = useTranslation();
+	const notifications = useContext(NotificationsContext);
 	const tr = useCallback(
 		(key: string, fallback: string) =>
 			translateWithFallback(t, `groupChat.entry.${key}`, fallback),
@@ -142,26 +190,17 @@ export const GroupEntryRoom = () => {
 					{ replace: true }
 				);
 			})
-			.catch(() => {
-				setJoinFailed(true);
+			.catch((error) => {
+				const notice = getCounsellingDpaNotification(error, t);
+				if (notice && notifications)
+					notifications.addNotification(notice);
+				else setJoinFailed(true);
 				setJoinBusy(false);
 			});
-	}, [item, joinBusy, navigate, session?.rid]);
+	}, [item, joinBusy, navigate, session?.rid, notifications, t]);
 
 	if (!ready) {
-		return (
-			<Box
-				sx={{
-					minHeight: '100vh',
-					display: 'flex',
-					alignItems: 'center',
-					justifyContent: 'center'
-				}}
-				data-cy="group-entry-loading"
-			>
-				<CircularProgress />
-			</Box>
-		);
+		return <EntryRoomLoading />;
 	}
 
 	if (!item) {

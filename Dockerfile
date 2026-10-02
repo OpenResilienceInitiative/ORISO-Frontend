@@ -43,19 +43,22 @@ ARG PORT=80
 RUN apk upgrade --no-cache libssl3 libcrypto3
 
 # The node base image bundles an npm whose vendored dependencies (tar,
-# sigstore, picomatch, brace-expansion) carry fixable HIGH/CRITICAL CVEs
-# flagged by the Trivy publish gate. Upgrade npm to a release that ships
-# fixed versions and patch its vendored brace-expansion to 5.0.9
-# (CVE-2026-69152) and ip-address to 10.3.1 (CVE-2026-69192), which no
-# npm release bundles yet.
+# sigstore, picomatch, brace-expansion, undici) carry fixable HIGH/CRITICAL
+# CVEs flagged by the Trivy publish gate. Upgrade npm to a release that ships
+# fixed versions, then patch the ones no npm release bundles yet: at
+# npm@12.1.0 the newest available, brace-expansion is still 5.0.9 and undici
+# still 6.28.0, so bumping npm alone cannot clear the gate.
+#   brace-expansion 5.0.11 - CVE-2026-102276, CVE-2026-102278
+#   ip-address     10.3.1  - CVE-2026-69192
+#   undici          6.28.1 - CVE-2026-19534
 RUN npm install -g npm@11.18.0 \
 	&& cd /tmp \
-	&& npm pack brace-expansion@5.0.9 \
+	&& npm pack brace-expansion@5.0.11 \
 	&& mkdir -p /tmp/brace-expansion-patch \
-	&& tar -xzf brace-expansion-5.0.9.tgz -C /tmp/brace-expansion-patch \
+	&& tar -xzf brace-expansion-5.0.11.tgz -C /tmp/brace-expansion-patch \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/brace-expansion \
 	&& mv /tmp/brace-expansion-patch/package /usr/local/lib/node_modules/npm/node_modules/brace-expansion \
-	&& rm -rf /tmp/brace-expansion-patch /tmp/brace-expansion-5.0.9.tgz \
+	&& rm -rf /tmp/brace-expansion-patch /tmp/brace-expansion-5.0.11.tgz \
 	&& npm pack ip-address@10.3.1 \
 	&& mkdir -p /tmp/ip-address-patch \
 	&& tar -xzf ip-address-10.3.1.tgz -C /tmp/ip-address-patch \
@@ -70,6 +73,14 @@ RUN npm install -g npm@11.18.0 \
 	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/tar \
 	&& mv /tmp/tar-patch/package /usr/local/lib/node_modules/npm/node_modules/tar \
 	&& rm -rf /tmp/tar-patch /tmp/tar-7.5.21.tgz \
+	# CVE-2026-19534: undici DoS via an unrequested WebSocket subprotocol.
+	# npm vendors 6.28.0 up to and including npm@12.1.0; 6.28.1 is the fix.
+	&& npm pack undici@6.28.1 \
+	&& mkdir -p /tmp/undici-patch \
+	&& tar -xzf undici-6.28.1.tgz -C /tmp/undici-patch \
+	&& rm -rf /usr/local/lib/node_modules/npm/node_modules/undici \
+	&& mv /tmp/undici-patch/package /usr/local/lib/node_modules/npm/node_modules/undici \
+	&& rm -rf /tmp/undici-patch /tmp/undici-6.28.1.tgz \
 	&& npm cache clean --force
 
 USER node

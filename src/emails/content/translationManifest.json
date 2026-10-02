@@ -9,6 +9,10 @@
 					"source": "de3b23b4d5938a00",
 					"target": "b667796122a9b185"
 				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "6a62d863fddcad0f"
+				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
 					"target": "04b9d0cfa476445b"
@@ -20,6 +24,38 @@
 				"termin": {
 					"source": "cf592c64cf4fde38",
 					"target": "b10068a08eb5d784"
+				},
+				"selbsthilfe-termin-bestaetigt-teilnahme": {
+					"source": "fc6f38bbd9b41df7",
+					"target": "3c630a5d9fc142a9"
+				},
+				"selbsthilfe-termin-verschoben-teilnahme": {
+					"source": "f29ce3cc82b473b8",
+					"target": "96b8e6a8e5b602fc"
+				},
+				"selbsthilfe-termin-abgesagt-teilnahme": {
+					"source": "82cc8a46462054ea",
+					"target": "d69e56063ab3764a"
+				},
+				"selbsthilfe-termin-erinnerung-teilnahme": {
+					"source": "eb3a29f8dff8c73c",
+					"target": "85b40cf21985f26e"
+				},
+				"selbsthilfe-termin-bestaetigt-beratung": {
+					"source": "10668862683c2bee",
+					"target": "55850ce60d860a6a"
+				},
+				"selbsthilfe-termin-verschoben-beratung": {
+					"source": "0f59c9a77604688b",
+					"target": "10819627a936ac23"
+				},
+				"selbsthilfe-termin-abgesagt-beratung": {
+					"source": "3661ef6d7db73929",
+					"target": "39ac46530ed67bb7"
+				},
+				"selbsthilfe-termin-erinnerung-beratung": {
+					"source": "6cd61c590f12cbbd",
+					"target": "d1a9d7a9adc2aefd"
 				},
 				"beraterin-kontakt": {
 					"source": "1a1bf287aa66e5e3",
@@ -46,20 +82,24 @@
 					"target": "00e1b2067386b3ba"
 				},
 				"uebergabe-angefragt": {
-					"source": "3965fc9afacdd56e",
-					"target": "4f99eeeee9c2a5c2"
+					"source": "372c6b1cd5edd8a0",
+					"target": "37745b254b9ed119"
 				},
 				"uebergabe-bestaetigt": {
-					"source": "ee21ea3788dd79c3",
-					"target": "39bb12ba4ab49436"
+					"source": "93de9b1a97b5b3fe",
+					"target": "6760aff5b2e71509"
 				},
 				"rueckmeldung": {
-					"source": "ac5d5404d00fa748",
-					"target": "cfc1629d9be12291"
+					"source": "90fb2d552d3156b1",
+					"target": "7e6613fd9311f779"
 				},
 				"mitteilung": {
-					"source": "34c5d9172dea95fb",
-					"target": "4d11a1e7d608056b"
+					"source": "33e17aa4918e3738",
+					"target": "2c1d99ceb5c4a902"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "6d1bfafd1bad30e9"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -96,6 +136,18 @@
 				"smtp-test": {
 					"source": "0f6d55f49482b6c8",
 					"target": "8e8579a88b97e9e4"
+				},
+				"anruf-erinnerung": {
+					"source": "36bdff7624e21132",
+					"target": "8ad7abd8698c9e5c"
+				},
+				"anruf-einladung": {
+					"source": "df3e918ad5d9c54e",
+					"target": "e5ad8e962e83c9b2"
+				},
+				"anruf-verpasst": {
+					"source": "9efbc04eea9c9e02",
+					"target": "08b7256425ed5ac0"
 				}
 			}
 		},
@@ -106,6 +158,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "51b4e867bd8e5a23"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "f6db3a07b0a87ecb"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -118,6 +174,38 @@
 				"termin": {
 					"source": "cf592c64cf4fde38",
 					"target": "98c82c6b264cc63f"
+				},
+				"selbsthilfe-termin-bestaetigt-teilnahme": {
+					"source": "fc6f38bbd9b41df7",
+					"target": "d9729524fd3d1f20"
+				},
+				"selbsthilfe-termin-verschoben-teilnahme": {
+					"source": "f29ce3cc82b473b8",
+					"target": "51fb4c579efe78e3"
+				},
+				"selbsthilfe-termin-abgesagt-teilnahme": {
+					"source": "82cc8a46462054ea",
+					"target": "960a23fd4e0e5859"
+				},
+				"selbsthilfe-termin-erinnerung-teilnahme": {
+					"source": "eb3a29f8dff8c73c",
+					"target": "fc55110059a417e4"
+				},
+				"selbsthilfe-termin-bestaetigt-beratung": {
+					"source": "10668862683c2bee",
+					"target": "c361d1501a1740cc"
+				},
+				"selbsthilfe-termin-verschoben-beratung": {
+					"source": "0f59c9a77604688b",
+					"target": "b09e9d632ededf4f"
+				},
+				"selbsthilfe-termin-abgesagt-beratung": {
+					"source": "3661ef6d7db73929",
+					"target": "dd80848588563711"
+				},
+				"selbsthilfe-termin-erinnerung-beratung": {
+					"source": "6cd61c590f12cbbd",
+					"target": "f90b9588dc52171c"
 				},
 				"beraterin-kontakt": {
 					"source": "1a1bf287aa66e5e3",
@@ -144,20 +232,24 @@
 					"target": "7175de640ba30df0"
 				},
 				"uebergabe-angefragt": {
-					"source": "3965fc9afacdd56e",
-					"target": "62907c0fe6580193"
+					"source": "372c6b1cd5edd8a0",
+					"target": "996ffd76dd997842"
 				},
 				"uebergabe-bestaetigt": {
-					"source": "ee21ea3788dd79c3",
-					"target": "7e09a07ec009994a"
+					"source": "93de9b1a97b5b3fe",
+					"target": "3603f2d2919c8f36"
 				},
 				"rueckmeldung": {
-					"source": "ac5d5404d00fa748",
-					"target": "52bc124ef871d642"
+					"source": "90fb2d552d3156b1",
+					"target": "e2441369aaa4aad5"
 				},
 				"mitteilung": {
-					"source": "34c5d9172dea95fb",
-					"target": "f33f8d652e0cf931"
+					"source": "33e17aa4918e3738",
+					"target": "2546a8fbfaa498a7"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "a5c2e6f62846ddd2"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -194,6 +286,18 @@
 				"smtp-test": {
 					"source": "0f6d55f49482b6c8",
 					"target": "f162b6309e6630f4"
+				},
+				"anruf-erinnerung": {
+					"source": "36bdff7624e21132",
+					"target": "83df14a05715f23c"
+				},
+				"anruf-einladung": {
+					"source": "df3e918ad5d9c54e",
+					"target": "28ff1da3b09548f7"
+				},
+				"anruf-verpasst": {
+					"source": "9efbc04eea9c9e02",
+					"target": "d167411b58661fff"
 				}
 			}
 		},
@@ -204,6 +308,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "eaf67300b3d14544"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "8612e611ff665cd5"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -216,6 +324,38 @@
 				"termin": {
 					"source": "cf592c64cf4fde38",
 					"target": "cd6fea8f8d8b7023"
+				},
+				"selbsthilfe-termin-bestaetigt-teilnahme": {
+					"source": "fc6f38bbd9b41df7",
+					"target": "98c1fce4fe3b2850"
+				},
+				"selbsthilfe-termin-verschoben-teilnahme": {
+					"source": "f29ce3cc82b473b8",
+					"target": "7eb495959748cfb1"
+				},
+				"selbsthilfe-termin-abgesagt-teilnahme": {
+					"source": "82cc8a46462054ea",
+					"target": "31dfc6d2fefd9516"
+				},
+				"selbsthilfe-termin-erinnerung-teilnahme": {
+					"source": "eb3a29f8dff8c73c",
+					"target": "a411866651a97152"
+				},
+				"selbsthilfe-termin-bestaetigt-beratung": {
+					"source": "10668862683c2bee",
+					"target": "4dec76666868022a"
+				},
+				"selbsthilfe-termin-verschoben-beratung": {
+					"source": "0f59c9a77604688b",
+					"target": "29644c77d972237b"
+				},
+				"selbsthilfe-termin-abgesagt-beratung": {
+					"source": "3661ef6d7db73929",
+					"target": "109b5ed4b03c28f0"
+				},
+				"selbsthilfe-termin-erinnerung-beratung": {
+					"source": "6cd61c590f12cbbd",
+					"target": "3250b110a326a584"
 				},
 				"beraterin-kontakt": {
 					"source": "1a1bf287aa66e5e3",
@@ -242,20 +382,24 @@
 					"target": "32b665729b2d9596"
 				},
 				"uebergabe-angefragt": {
-					"source": "3965fc9afacdd56e",
-					"target": "6389edaeef993ac2"
+					"source": "372c6b1cd5edd8a0",
+					"target": "624714ca7f7bc146"
 				},
 				"uebergabe-bestaetigt": {
-					"source": "ee21ea3788dd79c3",
-					"target": "c4ebf524467f8c18"
+					"source": "93de9b1a97b5b3fe",
+					"target": "a4754e93de951097"
 				},
 				"rueckmeldung": {
-					"source": "ac5d5404d00fa748",
-					"target": "5b6f9090daafa79c"
+					"source": "90fb2d552d3156b1",
+					"target": "76d517087a870844"
 				},
 				"mitteilung": {
-					"source": "34c5d9172dea95fb",
-					"target": "b95cc56f8e6df25b"
+					"source": "33e17aa4918e3738",
+					"target": "82183965bc3753d1"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "2f390eaa51137ece"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -292,6 +436,18 @@
 				"smtp-test": {
 					"source": "0f6d55f49482b6c8",
 					"target": "125c73e9012f1f2d"
+				},
+				"anruf-erinnerung": {
+					"source": "36bdff7624e21132",
+					"target": "9eba77dd71eaf4a1"
+				},
+				"anruf-einladung": {
+					"source": "df3e918ad5d9c54e",
+					"target": "0863640cb2b07480"
+				},
+				"anruf-verpasst": {
+					"source": "9efbc04eea9c9e02",
+					"target": "328712f3941cb7f7"
 				}
 			}
 		},
@@ -302,6 +458,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "ff31b3c018b665ac"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "eebf39d085ed1d2c"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -314,6 +474,38 @@
 				"termin": {
 					"source": "cf592c64cf4fde38",
 					"target": "a88706c36c2e8bff"
+				},
+				"selbsthilfe-termin-bestaetigt-teilnahme": {
+					"source": "fc6f38bbd9b41df7",
+					"target": "ec5d73cf1d47cce3"
+				},
+				"selbsthilfe-termin-verschoben-teilnahme": {
+					"source": "f29ce3cc82b473b8",
+					"target": "191f13313a1df855"
+				},
+				"selbsthilfe-termin-abgesagt-teilnahme": {
+					"source": "82cc8a46462054ea",
+					"target": "c8cc53d37ae39dc7"
+				},
+				"selbsthilfe-termin-erinnerung-teilnahme": {
+					"source": "eb3a29f8dff8c73c",
+					"target": "ed22aaeb1a9c5c7f"
+				},
+				"selbsthilfe-termin-bestaetigt-beratung": {
+					"source": "10668862683c2bee",
+					"target": "64849b8db53fbd81"
+				},
+				"selbsthilfe-termin-verschoben-beratung": {
+					"source": "0f59c9a77604688b",
+					"target": "81fb381b2fe622df"
+				},
+				"selbsthilfe-termin-abgesagt-beratung": {
+					"source": "3661ef6d7db73929",
+					"target": "9ea1cb5bd0c3c587"
+				},
+				"selbsthilfe-termin-erinnerung-beratung": {
+					"source": "6cd61c590f12cbbd",
+					"target": "19c1064353b3cd5f"
 				},
 				"beraterin-kontakt": {
 					"source": "1a1bf287aa66e5e3",
@@ -340,20 +532,24 @@
 					"target": "48ea56792737ff1d"
 				},
 				"uebergabe-angefragt": {
-					"source": "3965fc9afacdd56e",
-					"target": "ac41bfaae379205e"
+					"source": "372c6b1cd5edd8a0",
+					"target": "f8d2267cfd704ae8"
 				},
 				"uebergabe-bestaetigt": {
-					"source": "ee21ea3788dd79c3",
-					"target": "e91fa21e5ed0df42"
+					"source": "93de9b1a97b5b3fe",
+					"target": "29694f9cc9a15618"
 				},
 				"rueckmeldung": {
-					"source": "ac5d5404d00fa748",
-					"target": "dc0bcb7e60949e5a"
+					"source": "90fb2d552d3156b1",
+					"target": "0c46543cb96506b0"
 				},
 				"mitteilung": {
-					"source": "34c5d9172dea95fb",
-					"target": "4bcab07f2fa5fd0b"
+					"source": "33e17aa4918e3738",
+					"target": "fc3537811fcf2abd"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "cf4a85a9d8193cfd"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -390,6 +586,18 @@
 				"smtp-test": {
 					"source": "0f6d55f49482b6c8",
 					"target": "c55a0da2bc5c85ce"
+				},
+				"anruf-erinnerung": {
+					"source": "36bdff7624e21132",
+					"target": "3c850ef32e02041f"
+				},
+				"anruf-einladung": {
+					"source": "df3e918ad5d9c54e",
+					"target": "8b6b61aadc63c816"
+				},
+				"anruf-verpasst": {
+					"source": "9efbc04eea9c9e02",
+					"target": "bf0ad27a27664846"
 				}
 			}
 		},
@@ -400,6 +608,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "38753ca93dbe9e25"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "06ef6bbf11ce3bab"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -412,6 +624,38 @@
 				"termin": {
 					"source": "cf592c64cf4fde38",
 					"target": "e4a24699f10adc6d"
+				},
+				"selbsthilfe-termin-bestaetigt-teilnahme": {
+					"source": "fc6f38bbd9b41df7",
+					"target": "19c7d9949c34db78"
+				},
+				"selbsthilfe-termin-verschoben-teilnahme": {
+					"source": "f29ce3cc82b473b8",
+					"target": "86ec06c5e54ac7c1"
+				},
+				"selbsthilfe-termin-abgesagt-teilnahme": {
+					"source": "82cc8a46462054ea",
+					"target": "342d6ae9e4966595"
+				},
+				"selbsthilfe-termin-erinnerung-teilnahme": {
+					"source": "eb3a29f8dff8c73c",
+					"target": "8df036140ac9ed20"
+				},
+				"selbsthilfe-termin-bestaetigt-beratung": {
+					"source": "10668862683c2bee",
+					"target": "0c4da6ae2e89bae2"
+				},
+				"selbsthilfe-termin-verschoben-beratung": {
+					"source": "0f59c9a77604688b",
+					"target": "e8b512916f5cdb55"
+				},
+				"selbsthilfe-termin-abgesagt-beratung": {
+					"source": "3661ef6d7db73929",
+					"target": "c6fe9157f37599d3"
+				},
+				"selbsthilfe-termin-erinnerung-beratung": {
+					"source": "6cd61c590f12cbbd",
+					"target": "6eca7a580aa882fc"
 				},
 				"beraterin-kontakt": {
 					"source": "1a1bf287aa66e5e3",
@@ -438,20 +682,24 @@
 					"target": "69da48b6f78e6a2a"
 				},
 				"uebergabe-angefragt": {
-					"source": "3965fc9afacdd56e",
-					"target": "e6d3c99409045790"
+					"source": "372c6b1cd5edd8a0",
+					"target": "36dfd47b1fe752df"
 				},
 				"uebergabe-bestaetigt": {
-					"source": "ee21ea3788dd79c3",
-					"target": "cfa1751fdfc220bb"
+					"source": "93de9b1a97b5b3fe",
+					"target": "48c2d18a20f8aa26"
 				},
 				"rueckmeldung": {
-					"source": "ac5d5404d00fa748",
-					"target": "a2129a52ff3bf68e"
+					"source": "90fb2d552d3156b1",
+					"target": "1f65d4996ea3d995"
 				},
 				"mitteilung": {
-					"source": "34c5d9172dea95fb",
-					"target": "ab83b2f706ee055b"
+					"source": "33e17aa4918e3738",
+					"target": "4fe03c7ed9945a4a"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "68752ddefe462cca"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -488,6 +736,18 @@
 				"smtp-test": {
 					"source": "0f6d55f49482b6c8",
 					"target": "8848c7079302e893"
+				},
+				"anruf-erinnerung": {
+					"source": "36bdff7624e21132",
+					"target": "342395eb642479b7"
+				},
+				"anruf-einladung": {
+					"source": "df3e918ad5d9c54e",
+					"target": "68844c2260008506"
+				},
+				"anruf-verpasst": {
+					"source": "9efbc04eea9c9e02",
+					"target": "7ef76205d4035ca1"
 				}
 			}
 		},
@@ -498,6 +758,10 @@
 				"neue-nachricht": {
 					"source": "de3b23b4d5938a00",
 					"target": "d55ea9bd63608769"
+				},
+				"neue-nachricht-beratung": {
+					"source": "1d9763076616be8b",
+					"target": "52e7782a7014ed26"
 				},
 				"willkommen": {
 					"source": "d4dc0984eae45490",
@@ -510,6 +774,38 @@
 				"termin": {
 					"source": "cf592c64cf4fde38",
 					"target": "df35c3ce99249372"
+				},
+				"selbsthilfe-termin-bestaetigt-teilnahme": {
+					"source": "fc6f38bbd9b41df7",
+					"target": "de0bb3fe07c07f82"
+				},
+				"selbsthilfe-termin-verschoben-teilnahme": {
+					"source": "f29ce3cc82b473b8",
+					"target": "3e7a64ff506e64c3"
+				},
+				"selbsthilfe-termin-abgesagt-teilnahme": {
+					"source": "82cc8a46462054ea",
+					"target": "32c20dca9b96a106"
+				},
+				"selbsthilfe-termin-erinnerung-teilnahme": {
+					"source": "eb3a29f8dff8c73c",
+					"target": "2c3e76ce3389e61a"
+				},
+				"selbsthilfe-termin-bestaetigt-beratung": {
+					"source": "10668862683c2bee",
+					"target": "dbe3e5e62249b4d2"
+				},
+				"selbsthilfe-termin-verschoben-beratung": {
+					"source": "0f59c9a77604688b",
+					"target": "caecd4872091cfa3"
+				},
+				"selbsthilfe-termin-abgesagt-beratung": {
+					"source": "3661ef6d7db73929",
+					"target": "f14011fe06a179b2"
+				},
+				"selbsthilfe-termin-erinnerung-beratung": {
+					"source": "6cd61c590f12cbbd",
+					"target": "f2ae829258834b36"
 				},
 				"beraterin-kontakt": {
 					"source": "1a1bf287aa66e5e3",
@@ -536,20 +832,24 @@
 					"target": "1a2de758b0669d9c"
 				},
 				"uebergabe-angefragt": {
-					"source": "3965fc9afacdd56e",
-					"target": "5fb1e06e0cb4e8ba"
+					"source": "372c6b1cd5edd8a0",
+					"target": "24b8757e28861632"
 				},
 				"uebergabe-bestaetigt": {
-					"source": "ee21ea3788dd79c3",
-					"target": "21154314f2a0cbf8"
+					"source": "93de9b1a97b5b3fe",
+					"target": "75e671535797ab67"
 				},
 				"rueckmeldung": {
-					"source": "ac5d5404d00fa748",
-					"target": "a1f4864893701324"
+					"source": "90fb2d552d3156b1",
+					"target": "8028f1375c13bcd3"
 				},
 				"mitteilung": {
-					"source": "34c5d9172dea95fb",
-					"target": "810f137e6e6dec12"
+					"source": "33e17aa4918e3738",
+					"target": "5155802ef0ee480a"
+				},
+				"konto-einrichten": {
+					"source": "fc787dc2a07171c6",
+					"target": "3148d8da53534fa6"
 				},
 				"anmeldelink": {
 					"source": "b3f91ec3c8592e97",
@@ -586,6 +886,18 @@
 				"smtp-test": {
 					"source": "0f6d55f49482b6c8",
 					"target": "8ca2dfa3a353eb77"
+				},
+				"anruf-erinnerung": {
+					"source": "36bdff7624e21132",
+					"target": "41476c1a86bbf8a6"
+				},
+				"anruf-einladung": {
+					"source": "df3e918ad5d9c54e",
+					"target": "84c2fbf97049ee5d"
+				},
+				"anruf-verpasst": {
+					"source": "9efbc04eea9c9e02",
+					"target": "1c3dfd251a956641"
 				}
 			}
 		}
