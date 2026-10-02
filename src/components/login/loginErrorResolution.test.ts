@@ -155,6 +155,83 @@ describe('resolveLoginError', () => {
 		);
 	});
 
+	it('passes on the wait time Keycloak sends with the e-mail challenge (#1338)', () => {
+		expect(
+			resolveLoginError(
+				{
+					message: FETCH_ERRORS.BAD_REQUEST,
+					options: {
+						data: {
+							otpType: 'EMAIL' as never,
+							resendAvailableInSeconds: 17
+						}
+					}
+				},
+				false
+			)
+		).toEqual({
+			kind: 'otpRequired',
+			otpType: 'EMAIL',
+			outcome: 'otp_required',
+			resendAvailableInSeconds: 17
+		});
+	});
+
+	it('ignores a wait time that is not a usable number of seconds', () => {
+		[-1, Number.NaN, '20', 86400].forEach((value) =>
+			expect(
+				resolveLoginError(
+					{
+						message: FETCH_ERRORS.BAD_REQUEST,
+						options: {
+							data: {
+								otpType: 'EMAIL' as never,
+								resendAvailableInSeconds: value as never
+							}
+						}
+					},
+					false
+				)
+			).not.toHaveProperty('resendAvailableInSeconds')
+		);
+	});
+
+	it('explains the limit instead of an outage when Keycloak answers 429 (#1338)', () => {
+		[false, true].forEach((hasOtp) =>
+			expect(
+				resolveLoginError(
+					{ message: FETCH_ERRORS.TOO_MANY_REQUESTS },
+					hasOtp
+				)
+			).toEqual({
+				kind: 'message',
+				messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+				outcome: 'rate_limited'
+			})
+		);
+	});
+
+	it('translates the e-mail code resend texts in every shipped locale (#1338)', () => {
+		[
+			LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			'twoFactorAuth.activate.email.resend.countdown',
+			'twoFactorAuth.activate.email.resend.onlyLatest',
+			'twoFactorAuth.activate.email.resend.failed',
+			'twoFactorAuth.activate.email.resend.tooMany'
+		].forEach((key) =>
+			[
+				deCommon,
+				enCommon,
+				frCommon,
+				ruCommon,
+				tiCommon,
+				trCommon
+			].forEach((catalogue) =>
+				expect(typeof translationAt(catalogue, key), key).toBe('string')
+			)
+		);
+	});
+
 	it('is silent only when there is no error at all', () => {
 		expect(resolveLoginError(null, false)).toEqual({ kind: 'none' });
 		expect(resolveLoginError(undefined, true)).toEqual({ kind: 'none' });
@@ -174,100 +251,6 @@ describe('resolveLoginError', () => {
 		});
 	});
 
-	it('carries the cooldown the realm reports with the second-factor challenge', () => {
-		// #1338: without this the resend button has nothing to count down from
-		expect(
-			resolveLoginError(
-				{
-					message: FETCH_ERRORS.BAD_REQUEST,
-					options: {
-						data: {
-							error: 'invalid_grant',
-							otpType: 'EMAIL' as any,
-							resendAvailableInSeconds: 27
-						}
-					}
-				},
-				false
-			)
-		).toEqual({
-			kind: 'otpRequired',
-			otpType: 'EMAIL',
-			outcome: 'otp_required',
-			resendAvailableInSeconds: 27
-		});
-	});
-
-	it('leaves the cooldown out when the realm does not report one', () => {
-		// a Keycloak build from before #1338 sends no such field; the countdown
-		// must then fall back on its own rather than render NaN
-		[undefined, 0, -5, 'soon'].forEach((value) =>
-			expect(
-				resolveLoginError(
-					{
-						message: FETCH_ERRORS.BAD_REQUEST,
-						options: {
-							data: {
-								error: 'invalid_grant',
-								otpType: 'EMAIL' as any,
-								resendAvailableInSeconds: value as any
-							}
-						}
-					},
-					false
-				)
-			).toEqual({
-				kind: 'otpRequired',
-				otpType: 'EMAIL',
-				outcome: 'otp_required'
-			})
-		);
-	});
-
-	it('says the ceiling was reached on a 429 instead of claiming an outage', () => {
-		// before #1338 a 429 fell through to "Unexpected status" and the user was
-		// told the service was unavailable, which is wrong and unactionable
-		expect(
-			resolveLoginError(
-				{
-					message: FETCH_ERRORS.TOO_MANY_REQUESTS,
-					options: { data: { resendAvailableInSeconds: 600 } }
-				},
-				false
-			)
-		).toEqual({
-			kind: 'message',
-			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_CODES_WAIT,
-			outcome: 'rate_limited',
-			waitSeconds: 600
-		});
-	});
-
-	it('uses the wait-free message for a 429 without a figure', () => {
-		expect(
-			resolveLoginError(
-				{ message: FETCH_ERRORS.TOO_MANY_REQUESTS },
-				false
-			)
-		).toEqual({
-			kind: 'message',
-			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_CODES,
-			outcome: 'rate_limited'
-		});
-	});
-
-	it('translates every login error message in every shipped locale', () => {
-		[deCommon, enCommon, frCommon, ruCommon, tiCommon, trCommon].forEach(
-			(catalogue) =>
-				Object.values(LOGIN_ERROR_KEYS).forEach((key) =>
-					expect(
-						typeof translationAt(catalogue, key),
-						`${key} is missing`
-					).toBe('string')
-				)
-		);
-	});
-
 	it('translates the unavailable message in every shipped locale', () => {
 		[deCommon, enCommon, frCommon, ruCommon, tiCommon, trCommon].forEach(
 			(catalogue) =>
@@ -282,16 +265,13 @@ describe('resolveLoginError', () => {
 });
 
 describe('describeLoginTransport', () => {
-	it('maps the ways a failure reaches the browser', () => {
+	it('maps the four ways a failure reaches the browser', () => {
 		expect(
 			describeLoginTransport({ message: FETCH_ERRORS.BAD_REQUEST })
 		).toBe('bad_request');
 		expect(
 			describeLoginTransport({ message: FETCH_ERRORS.UNAUTHORIZED })
 		).toBe('unauthorized');
-		expect(
-			describeLoginTransport({ message: FETCH_ERRORS.TOO_MANY_REQUESTS })
-		).toBe('too_many_requests');
 		expect(describeLoginTransport({ message: 'keycloakLogin' })).toBe(
 			'network'
 		);

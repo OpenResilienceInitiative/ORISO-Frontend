@@ -1688,8 +1688,7 @@
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
 				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
-				"tooManyCodes": "Çok fazla kod talep ettiniz. Lütfen biraz bekleyip tekrar deneyin.",
-				"tooManyCodesWait": "Çok fazla kod talep ettiniz. Lütfen yaklaşık {{minutes}} dakika bekleyip tekrar deneyin."
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -4105,9 +4104,10 @@
 					"hint": "E-posta adresinize bir kod gönderdik. Lütfen kodu giriniz.",
 					"new": "Yeni kod gönder",
 					"sent": "Yeni kod gönderildi",
-					"newIn": "Yeni kod gönder ({{countdown}})",
-					"onlyNewest": "Yalnızca en son gönderilen kod geçerlidir.",
-					"failed": "Kod gönderilemedi. Lütfen tekrar deneyin."
+					"countdown": "Yeni kod gönder ({{time}})",
+					"onlyLatest": "Yalnızca en son gönderilen kod geçerlidir.",
+					"failed": "Kod gönderilemedi. Lütfen tekrar deneyin.",
+					"tooMany": "Çok fazla kod istendi. Yeni bir kod istemeden önce lütfen birkaç dakika bekleyin."
 				},
 				"step2": {
 					"copy": "Lütfen e-posta adresinizi buraya girin.",

@@ -27,16 +27,10 @@ export const LOGIN_ERROR_KEYS = {
 	ACCOUNT_DELETED: 'login.warning.failed.accountDeleted',
 	UNAUTHORIZED: 'login.warning.failed.unauthorized.text',
 	UNAUTHORIZED_OTP: 'login.warning.failed.unauthorized.otp',
+	/** Keycloak answered 429: too many codes or attempts for now (#1338). */
+	TOO_MANY_REQUESTS: 'login.warning.failed.tooManyRequests',
 	/** Anything that is not the user's fault: network, 5xx, malformed answers. */
-	UNAVAILABLE: 'login.warning.failed.unavailable',
-	/**
-	 * The realm refuses to send another code because the per-window ceiling is
-	 * reached (#1338). Not a credential problem, so it must not share the
-	 * deliberately vague credentials message: here the user CAN act, by waiting.
-	 */
-	TOO_MANY_CODES: 'login.warning.failed.tooManyCodes',
-	/** Same, but the realm told us how long — so the message can name it. */
-	TOO_MANY_CODES_WAIT: 'login.warning.failed.tooManyCodesWait'
+	UNAVAILABLE: 'login.warning.failed.unavailable'
 } as const;
 
 /**
@@ -51,26 +45,14 @@ export type LoginFailureOutcome =
 	| 'unavailable';
 
 export type LoginErrorResolution =
-	/**
-	 * Show `messageKey` as the login error. `waitSeconds` is set when the
-	 * message is about waiting, so the screen can name the time instead of
-	 * "please try again later".
-	 */
-	| {
-			kind: 'message';
-			messageKey: string;
-			outcome: LoginFailureOutcome;
-			waitSeconds?: number;
-	  }
-	/**
-	 * Credentials were fine, a second factor is required. `resendAvailableInSeconds`
-	 * is what the realm says the client must wait before asking for another code;
-	 * absent when the realm is older than #1338.
-	 */
+	/** Show `messageKey` as the login error. */
+	| { kind: 'message'; messageKey: string; outcome: LoginFailureOutcome }
+	/** Credentials were fine, a second factor is required. */
 	| {
 			kind: 'otpRequired';
 			otpType: TwoFactorType;
 			outcome: 'otp_required';
+			/** Server-side wait before another code may be mailed, if sent. */
 			resendAvailableInSeconds?: number;
 	  }
 	/** Nothing failed (no error object at all). */
@@ -83,7 +65,7 @@ interface LoginErrorLike {
 			error?: string;
 			error_description?: string;
 			otpType?: TwoFactorType;
-			resendAvailableInSeconds?: number;
+			resendAvailableInSeconds?: unknown;
 		};
 	};
 }
@@ -95,7 +77,6 @@ interface LoginErrorLike {
 export type LoginFailureTransport =
 	| 'bad_request'
 	| 'unauthorized'
-	| 'too_many_requests'
 	| 'network'
 	| 'unexpected';
 
@@ -107,8 +88,6 @@ export const describeLoginTransport = (
 			return 'bad_request';
 		case FETCH_ERRORS.UNAUTHORIZED:
 			return 'unauthorized';
-		case FETCH_ERRORS.TOO_MANY_REQUESTS:
-			return 'too_many_requests';
 		case 'keycloakLogin':
 			return 'network';
 		default:
@@ -124,22 +103,16 @@ const credentialsMessage = (hasOtp: boolean): LoginErrorResolution => ({
 	outcome: 'credentials'
 });
 
-/**
- * Only a usable number reaches the UI. A realm from before #1338 sends nothing,
- * and a broken or zero value must leave the countdown to its own default rather
- * than render "wait 0 seconds" or NaN.
- */
-const positiveSeconds = (value: unknown): { waitSeconds?: number } =>
-	typeof value === 'number' && Number.isFinite(value) && value > 0
-		? { waitSeconds: Math.ceil(value) }
-		: {};
+/** Anything beyond an hour is not a cooldown we could have configured. */
+const MAX_RESEND_WAIT_SECONDS = 3600;
 
-const resendSeconds = (
-	value: unknown
-): { resendAvailableInSeconds?: number } =>
-	typeof value === 'number' && Number.isFinite(value) && value > 0
-		? { resendAvailableInSeconds: Math.ceil(value) }
-		: {};
+const readResendWait = (value: unknown): number | undefined =>
+	typeof value === 'number' &&
+	Number.isFinite(value) &&
+	value >= 0 &&
+	value <= MAX_RESEND_WAIT_SECONDS
+		? Math.ceil(value)
+		: undefined;
 
 const unavailableMessage = (): LoginErrorResolution => ({
 	kind: 'message',
@@ -167,27 +140,19 @@ export const resolveLoginError = (
 		return { kind: 'none' };
 	}
 
-	if (error.message === FETCH_ERRORS.TOO_MANY_REQUESTS) {
-		// The ceiling on code mails, not an outage and not a wrong password.
-		// Saying so lets the form show a countdown instead of "try again later".
-		const wait = positiveSeconds(
-			error.options?.data?.resendAvailableInSeconds
-		);
-		return {
-			kind: 'message',
-			messageKey: wait.waitSeconds
-				? LOGIN_ERROR_KEYS.TOO_MANY_CODES_WAIT
-				: LOGIN_ERROR_KEYS.TOO_MANY_CODES,
-			outcome: 'rate_limited',
-			...wait
-		};
-	}
-
 	if (error.message === FETCH_ERRORS.UNAUTHORIZED) {
 		// Keycloak never answers wrong credentials with 401; `autoLogin` uses
 		// this code for a misconfigured client and for a tenant mismatch.
 		// Neither is something the user can fix by retyping.
 		return unavailableMessage();
+	}
+
+	if (error.message === FETCH_ERRORS.TOO_MANY_REQUESTS) {
+		return {
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			outcome: 'rate_limited'
+		};
 	}
 
 	if (error.message !== FETCH_ERRORS.BAD_REQUEST) {
@@ -217,11 +182,16 @@ export const resolveLoginError = (
 	 * a code attached is a credential problem and says so.
 	 */
 	if (data?.otpType && !hasOtp) {
+		const resendAvailableInSeconds = readResendWait(
+			data.resendAvailableInSeconds
+		);
 		return {
 			kind: 'otpRequired',
 			otpType: data.otpType,
 			outcome: 'otp_required',
-			...resendSeconds(data.resendAvailableInSeconds)
+			...(resendAvailableInSeconds === undefined
+				? {}
+				: { resendAvailableInSeconds })
 		};
 	}
 
@@ -231,4 +201,36 @@ export const resolveLoginError = (
 
 	// e.g. `invalid_client`: a deployment problem, not a user mistake.
 	return unavailableMessage();
+};
+
+/**
+ * What the "send new code" link tells the user after asking Keycloak for a
+ * new e-mail code. Asking means a password grant without a code: the 400
+ * challenge is the server's confirmation that it mailed one (#1338).
+ */
+export type EmailCodeResendResult =
+	| { kind: 'sent'; resendAvailableInSeconds?: number }
+	| { kind: 'tooMany' }
+	| { kind: 'failed' }
+	/** Nothing to announce: signed in, or a newer attempt took over. */
+	| { kind: 'none' };
+
+export const resolveEmailCodeResend = (
+	resolution: LoginErrorResolution | null
+): EmailCodeResendResult => {
+	if (!resolution || resolution.kind === 'none') {
+		return { kind: 'none' };
+	}
+	if (resolution.kind === 'otpRequired') {
+		return resolution.resendAvailableInSeconds === undefined
+			? { kind: 'sent' }
+			: {
+					kind: 'sent',
+					resendAvailableInSeconds:
+						resolution.resendAvailableInSeconds
+				};
+	}
+	return resolution.outcome === 'rate_limited'
+		? { kind: 'tooMany' }
+		: { kind: 'failed' };
 };

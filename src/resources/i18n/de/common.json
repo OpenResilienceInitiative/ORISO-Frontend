@@ -1709,8 +1709,7 @@
 					"text": "Benutzername oder Passwort sind nicht korrekt. Bitte versuchen Sie es erneut."
 				},
 				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
-				"tooManyCodes": "Sie haben zu viele Codes angefordert. Bitte warten Sie einen Moment und versuchen Sie es dann erneut.",
-				"tooManyCodesWait": "Sie haben zu viele Codes angefordert. Bitte warten Sie etwa {{minutes}} Minuten und versuchen Sie es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut."
 			}
 		},
 		"mobile": {
@@ -4122,9 +4121,10 @@
 					"hint": "Wir haben Ihnen einen Code an Ihre E-Mail-Adresse geschickt. Bitte geben Sie den Code ein.",
 					"new": "Neuen Code senden",
 					"sent": "Neuer Code gesendet",
-					"newIn": "Neuen Code senden ({{countdown}})",
-					"onlyNewest": "Es gilt immer nur der zuletzt gesendete Code.",
-					"failed": "Der Code konnte nicht gesendet werden. Bitte versuchen Sie es noch einmal."
+					"countdown": "Neuen Code senden ({{time}})",
+					"onlyLatest": "Nur der zuletzt gesendete Code gilt.",
+					"failed": "Der Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+					"tooMany": "Zu viele Codes angefordert. Bitte warten Sie einige Minuten, bevor Sie einen neuen anfordern."
 				},
 				"step2": {
 					"copy": "Bitte geben Sie hier Ihre E-Mail-Adresse an.",

@@ -46,15 +46,14 @@ import { resolveExistingSession } from './existingSessionLookup';
 import { useGroupInviteEntryRedirect } from '../registration/groupInviteEntry/useGroupInviteEntryRedirect';
 import {
 	describeLoginTransport,
+	EmailCodeResendResult,
 	LOGIN_ERROR_KEYS,
 	LoginErrorResolution,
+	resolveEmailCodeResend,
 	resolveLoginError
 } from './loginErrorResolution';
 import { recordLoginFailure } from '../../utils/observability/loginFailureTracker';
-import {
-	RESEND_ERROR_ALREADY_SHOWN,
-	TwoFactorAuthResendMail
-} from '../twoFactorAuth/TwoFactorAuthResendMail';
+import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
@@ -144,12 +143,6 @@ export const Login = () => {
 	);
 	const [otp, setOtp] = useState<string>('');
 	const [isOtpRequired, setIsOtpRequired] = useState<boolean>(false);
-	// What the realm says about waiting for the next code (#1338). Undefined
-	// against a realm older than that, which is why the countdown has its own
-	// fallback rather than relying on this.
-	const [resendCooldownSeconds, setResendCooldownSeconds] = useState<
-		number | undefined
-	>(undefined);
 	const [showLoginError, setShowLoginError] = useState<string>('');
 	const [showMagicLinkError, setShowMagicLinkError] = useState<string>('');
 	const [magicLinkSentToUsername, setMagicLinkSentToUsername] =
@@ -219,6 +212,12 @@ export const Login = () => {
 	const [twoFactorType, setTwoFactorType] = useState<TwoFactorType>(
 		TWO_FACTOR_TYPES.NONE
 	);
+	// Every e-mail challenge from a password submit mailed a code; the resend
+	// link restarts its wait for it (keyed by `id`). #1338
+	const [emailCodeChallenge, setEmailCodeChallenge] = useState<{
+		id: number;
+		resendAvailableInSeconds?: number;
+	}>({ id: 0 });
 
 	const handleUsernameChange = (event) => {
 		setUsername(event.target.value);
@@ -431,13 +430,13 @@ export const Login = () => {
 	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
 	/**
-	 * Runs one login attempt and reports how it ended, so the resend path can
-	 * tell a delivered code from a refused one: a 400 asking for a code IS the
-	 * successful outcome of "send me a new code", while a 429 or a network
-	 * failure is not. Before #1338 this returned nothing and the resend button
-	 * said "sent" before the request had even answered.
+	 * `resendCode` is the "send new code" link: the same grant without a code.
+	 * Its outage and rate-limit messages appear at the link, not in the form.
 	 */
-	const tryLogin = (otp?: string): Promise<LoginErrorResolution | null> => {
+	const tryLogin = (
+		otp?: string,
+		purpose: 'submit' | 'resendCode' = 'submit'
+	): Promise<LoginErrorResolution | null> => {
 		existingSessionLookupRef.current += 1;
 		setIsRequestInProgress(true);
 		loginAttemptRef.current += 1;
@@ -476,29 +475,32 @@ export const Login = () => {
 					// step is active; the stage is the step, not the payload.
 					stage: isOtpRequired || otp ? 'otp' : 'password'
 				});
-				setShowLoginError(
-					translate(resolution.messageKey, {
-						minutes: Math.ceil((resolution.waitSeconds ?? 0) / 60),
-						seconds: resolution.waitSeconds ?? 0
-					})
-				);
-				// A refused resend reports how long to wait; the countdown on
-				// the button is the only place that figure is useful.
-				if (resolution.waitSeconds) {
-					setResendCooldownSeconds(resolution.waitSeconds);
+				const isShownAtResendLink =
+					purpose === 'resendCode' &&
+					(resolution.outcome === 'unavailable' ||
+						resolution.outcome === 'rate_limited');
+				if (!isShownAtResendLink) {
+					setShowLoginError(translate(resolution.messageKey));
+					// Only a credential problem marks the fields; an outage
+					// or a rate limit is not the user's input being wrong,
+					// and must not leave a stale mark behind.
+					setLabelState(
+						resolution.outcome === 'unavailable' ||
+							resolution.outcome === 'rate_limited'
+							? null
+							: VALIDITY_INVALID
+					);
 				}
-				// Only a credential problem marks the fields; an outage is
-				// not the user's input being wrong, and must not leave a
-				// stale mark from an earlier attempt behind.
-				setLabelState(
-					resolution.outcome === 'unavailable'
-						? null
-						: VALIDITY_INVALID
-				);
 			} else if (resolution.kind === 'otpRequired') {
 				setTwoFactorType(resolution.otpType);
 				setIsOtpRequired(true);
-				setResendCooldownSeconds(resolution.resendAvailableInSeconds);
+				if (purpose === 'submit') {
+					setEmailCodeChallenge((previous) => ({
+						id: previous.id + 1,
+						resendAvailableInSeconds:
+							resolution.resendAvailableInSeconds
+					}));
+				}
 			}
 			return resolution;
 		};
@@ -514,11 +516,10 @@ export const Login = () => {
 				// login failures. `postLogin` reports its own problems (e.g. the
 				// consultant-blocked message) before it throws, and those must
 				// neither be overwritten nor counted.
-				.then<LoginErrorResolution | null, LoginErrorResolution | null>(
+				.then(
 					() =>
-						postLogin().then(
-							() => null,
-							(error: unknown) => {
+						postLogin()
+							.catch((error: unknown) => {
 								// The consultant block shows its own message before it
 								// throws; anything else (e.g. the user-data reload
 								// failing after a successful token) would otherwise
@@ -533,9 +534,8 @@ export const Login = () => {
 										translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
 									);
 								}
-								return null;
-							}
-						),
+							})
+							.then(() => null),
 					handleAutoLoginFailure
 				)
 				.finally(() => {
@@ -555,8 +555,11 @@ export const Login = () => {
 		) {
 			return;
 		}
-		tryLogin(otp);
+		void tryLogin(otp);
 	};
+
+	const requestNewEmailCode = (): Promise<EmailCodeResendResult> =>
+		tryLogin(undefined, 'resendCode').then(resolveEmailCodeResend);
 
 	const handleMagicLinkLogin = async () => {
 		const normalizedUsername = magicLinkUsername?.trim().toLowerCase();
@@ -882,31 +885,11 @@ export const Login = () => {
 										{twoFactorType ===
 											TWO_FACTOR_TYPES.EMAIL && (
 											<TwoFactorAuthResendMail
-												cooldownSeconds={
-													resendCooldownSeconds
+												key={emailCodeChallenge.id}
+												initialCooldownSeconds={
+													emailCodeChallenge.resendAvailableInSeconds
 												}
-												resendHandler={(callback) =>
-													tryLogin().then(
-														(resolution) => {
-															// The realm asking
-															// for a code again
-															// IS the delivered
-															// mail. Anything
-															// else already has
-															// its own message
-															// on screen.
-															if (
-																resolution?.kind !==
-																'otpRequired'
-															) {
-																throw new Error(
-																	RESEND_ERROR_ALREADY_SHOWN
-																);
-															}
-															callback();
-														}
-													)
-												}
+												onResend={requestNewEmailCode}
 											/>
 										)}
 									</div>

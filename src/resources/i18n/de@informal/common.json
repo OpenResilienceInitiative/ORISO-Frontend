@@ -1584,7 +1584,8 @@
 				},
 				"resend": {
 					"hint": "Wir haben Dir einen Code an Deine E-Mail-Adresse geschickt. Bitte gib den Code ein.",
-					"failed": "Der Code konnte nicht gesendet werden. Bitte versuche es noch einmal."
+					"failed": "Der Code konnte nicht gesendet werden. Bitte versuch es erneut.",
+					"tooMany": "Zu viele Codes angefordert. Bitte warte einige Minuten, bevor Du einen neuen anforderst."
 				},
 				"step2": {
 					"copy": "Bitte gib hier Deine E-Mail-Adresse an."
@@ -2208,8 +2209,7 @@
 		},
 		"warning": {
 			"failed": {
-				"tooManyCodes": "Du hast zu viele Codes angefordert. Bitte warte einen Moment und versuche es dann erneut.",
-				"tooManyCodesWait": "Du hast zu viele Codes angefordert. Bitte warte etwa {{minutes}} Minuten und versuche es dann erneut."
+				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut."
 			}
 		}
 	},

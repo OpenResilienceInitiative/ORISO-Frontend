@@ -1,128 +1,128 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CheckmarkIcon } from '../../resources/img/icons';
+import { CheckmarkIcon, WarningIcon } from '../../resources/img/icons';
 import { Text } from '../text/Text';
+import type { EmailCodeResendResult } from '../login/loginErrorResolution';
 import './twoFactorAuthResendMail.styles';
 
-/** Used when the realm does not report its own cooldown (a build before #1338). */
-export const RESEND_FALLBACK_COOLDOWN_SECONDS = 30;
-
 /**
- * Rejection reason a caller uses when it has already put the reason on screen
- * itself — the login form names the actual problem ("too many codes, wait 12
- * minutes"), and a second generic line below it would only add noise.
+ * Client-side wait between two code mails. Keycloak enforces its own cooldown
+ * once ORISO-UserService#1338 slice 1 ships and then sends the remaining
+ * seconds with the challenge; until then this is the only brake.
  */
-export const RESEND_ERROR_ALREADY_SHOWN = 'resend-error-already-shown';
+export const EMAIL_CODE_RESEND_COOLDOWN_SECONDS = 30;
+
+/** 27 -> "0:27", 75 -> "1:15". */
+export const formatResendCountdown = (seconds: number): string =>
+	`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+
+type Notice = 'sent' | 'failed' | 'tooMany' | null;
 
 interface TwoFactorAuthResendMailProps {
 	/**
-	 * Asks the server for a new code. The component shows "sent" only once this
-	 * resolves, and an error if it rejects — before #1338 it reported success
-	 * immediately, so a failed send looked exactly like a successful one.
+	 * Asks for a new code and resolves once the server has answered. The
+	 * component never claims "sent" before that answer.
 	 */
-	resendHandler: (callback: Function) => void | Promise<unknown>;
-	/**
-	 * Seconds the server says to wait, from `resendAvailableInSeconds`. The
-	 * countdown starts from this; it falls back to
-	 * {@link RESEND_FALLBACK_COOLDOWN_SECONDS} when the realm sends nothing.
-	 */
-	cooldownSeconds?: number;
+	onResend: () => Promise<EmailCodeResendResult>;
+	/** Wait before the first resend; a code was mailed a moment ago. */
+	initialCooldownSeconds?: number;
 }
-
-const formatCountdown = (secondsLeft: number): string => {
-	const minutes = Math.floor(secondsLeft / 60);
-	const seconds = secondsLeft % 60;
-	return `${minutes}:${String(seconds).padStart(2, '0')}`;
-};
 
 export const TwoFactorAuthResendMail: React.FC<
 	TwoFactorAuthResendMailProps
-> = ({ resendHandler, cooldownSeconds }) => {
+> = ({
+	onResend,
+	initialCooldownSeconds = EMAIL_CODE_RESEND_COOLDOWN_SECONDS
+}) => {
 	const { t: translate } = useTranslation();
-	const [isCodeSent, setIsCodeSent] = useState(false);
-	const [hasFailed, setHasFailed] = useState(false);
+	const hintId = useId();
+	// A deadline instead of a decrementing counter: browsers throttle timers
+	// in background tabs, and the wait must still end on time.
+	const [availableAt, setAvailableAt] = useState(
+		() => Date.now() + initialCooldownSeconds * 1000
+	);
+	const secondsUntil = useCallback(
+		(deadline: number) =>
+			Math.max(0, Math.ceil((deadline - Date.now()) / 1000)),
+		[]
+	);
+	const [secondsLeft, setSecondsLeft] = useState(() =>
+		secondsUntil(availableAt)
+	);
 	const [isSending, setIsSending] = useState(false);
-	const [secondsLeft, setSecondsLeft] = useState(0);
+	const [notice, setNotice] = useState<Notice>(null);
+	// State updates land after the next render; a fast double click must not
+	// slip through in between.
+	const isSendingRef = useRef(false);
 	const isMountedRef = useRef(true);
 
-	useEffect(() => {
-		isMountedRef.current = true;
-		return () => {
+	useEffect(
+		() => () => {
 			isMountedRef.current = false;
-		};
-	}, []);
+		},
+		[]
+	);
 
-	// One interval for the whole countdown. A timeout chain would drift, and a
-	// per-second effect would restart the interval on every tick.
 	useEffect(() => {
-		if (secondsLeft <= 0) {
-			return undefined;
-		}
-		const interval = window.setInterval(() => {
-			setSecondsLeft((current) => (current <= 1 ? 0 : current - 1));
+		setSecondsLeft(secondsUntil(availableAt));
+		const timer = window.setInterval(() => {
+			const left = secondsUntil(availableAt);
+			setSecondsLeft(left);
+			if (left === 0) {
+				window.clearInterval(timer);
+			}
 		}, 1000);
-		return () => window.clearInterval(interval);
-	}, [secondsLeft > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+		return () => window.clearInterval(timer);
+	}, [availableAt, secondsUntil]);
 
-	// The server's own figure wins. A realm that reports a wait while the form
-	// is open (the user clicked twice, or came back inside the cooldown) must be
-	// able to extend the countdown, never shorten it behind the user's back.
-	useEffect(() => {
-		if (typeof cooldownSeconds === 'number' && cooldownSeconds > 0) {
-			setSecondsLeft((current) => Math.max(current, cooldownSeconds));
-		}
-	}, [cooldownSeconds]);
+	const isBlocked = isSending || secondsLeft > 0;
 
-	const handleClick = useCallback(() => {
-		if (isSending || secondsLeft > 0) {
+	const startCooldown = (seconds: number) => {
+		const deadline = Date.now() + seconds * 1000;
+		setAvailableAt(deadline);
+		setSecondsLeft(secondsUntil(deadline));
+	};
+
+	const handleClick = async () => {
+		if (isSendingRef.current || secondsUntil(availableAt) > 0) {
 			return;
 		}
+		isSendingRef.current = true;
 		setIsSending(true);
-		setHasFailed(false);
+		setNotice(null);
 
-		let callbackRan = false;
-		const confirmSent = () => {
-			callbackRan = true;
-			if (!isMountedRef.current) {
-				return;
-			}
-			setIsCodeSent(true);
-			setSecondsLeft(cooldownSeconds || RESEND_FALLBACK_COOLDOWN_SECONDS);
-			window.setTimeout(() => {
-				if (isMountedRef.current) {
-					setIsCodeSent(false);
-				}
-			}, 2000);
-		};
+		let result: EmailCodeResendResult;
+		try {
+			result = await onResend();
+		} catch {
+			result = { kind: 'failed' };
+		}
+		isSendingRef.current = false;
+		if (!isMountedRef.current) {
+			return;
+		}
+		setIsSending(false);
 
-		// `resendHandler` may be synchronous (it was, before #1338). Treating its
-		// return value as a promise either way keeps both shapes working.
-		Promise.resolve(resendHandler(confirmSent))
-			.then(() => {
-				if (!callbackRan && isMountedRef.current) {
-					// A handler that resolves without calling back still means
-					// the request came back; do not leave the user without any
-					// feedback at all.
-					confirmSent();
-				}
-			})
-			.catch((reason: unknown) => {
-				if (!isMountedRef.current) {
-					return;
-				}
-				setHasFailed(
-					(reason as Error | null)?.message !==
-						RESEND_ERROR_ALREADY_SHOWN
+		switch (result.kind) {
+			case 'sent':
+				setNotice('sent');
+				startCooldown(
+					result.resendAvailableInSeconds ??
+						EMAIL_CODE_RESEND_COOLDOWN_SECONDS
 				);
-			})
-			.finally(() => {
-				if (isMountedRef.current) {
-					setIsSending(false);
-				}
-			});
-	}, [cooldownSeconds, isSending, resendHandler, secondsLeft]);
-
-	const isWaiting = secondsLeft > 0;
+				break;
+			case 'tooMany':
+				setNotice('tooMany');
+				startCooldown(EMAIL_CODE_RESEND_COOLDOWN_SECONDS);
+				break;
+			case 'failed':
+				// Nothing was mailed, so trying again right away is fine.
+				setNotice('failed');
+				break;
+			default:
+				break;
+		}
+	};
 
 	return (
 		<div className="twoFactorAuthResendMail">
@@ -131,42 +131,63 @@ export const TwoFactorAuthResendMail: React.FC<
 				text={translate('twoFactorAuth.activate.email.resend.headline')}
 				type="infoLargeStandard"
 			/>
-			{isCodeSent ? (
-				<p className="text text__infoLargeStandard">
-					<CheckmarkIcon />{' '}
-					{translate('twoFactorAuth.activate.email.resend.sent')}
-				</p>
-			) : (
-				<button
-					type="button"
-					onClick={handleClick}
-					disabled={isWaiting || isSending}
-					aria-live="polite"
-				>
-					{isWaiting
-						? translate(
-								'twoFactorAuth.activate.email.resend.newIn',
-								{ countdown: formatCountdown(secondsLeft) }
-							)
-						: translate('twoFactorAuth.activate.email.resend.new')}
-				</button>
-			)}
-			<Text
-				className="twoFactorAuthResendMail__onlyNewest"
-				text={translate(
-					'twoFactorAuth.activate.email.resend.onlyNewest'
+			{/* aria-disabled, not disabled: the button keeps keyboard focus
+			    while the countdown runs instead of dropping it on <body>. */}
+			<button
+				type="button"
+				className="twoFactorAuthResendMail__link"
+				aria-disabled={isBlocked}
+				aria-describedby={hintId}
+				onClick={handleClick}
+			>
+				{secondsLeft > 0
+					? translate(
+							'twoFactorAuth.activate.email.resend.countdown',
+							{
+								time: formatResendCountdown(secondsLeft)
+							}
+						)
+					: translate('twoFactorAuth.activate.email.resend.new')}
+			</button>
+			<p
+				id={hintId}
+				className="text text__infoSmall twoFactorAuthResendMail__hint"
+			>
+				{translate('twoFactorAuth.activate.email.resend.onlyLatest')}
+			</p>
+			{/* Always rendered: a live region must exist before its text
+			    changes, or screen readers miss the announcement. */}
+			<p
+				role="status"
+				className={`text text__infoSmall twoFactorAuthResendMail__status${
+					notice && notice !== 'sent'
+						? ' twoFactorAuthResendMail__status--error'
+						: ''
+				}`}
+			>
+				{notice === 'sent' && (
+					<>
+						<CheckmarkIcon aria-hidden="true" />{' '}
+						{translate('twoFactorAuth.activate.email.resend.sent')}
+					</>
 				)}
-				type="infoSmall"
-			/>
-			{hasFailed && (
-				<Text
-					className="twoFactorAuthResendMail__error"
-					text={translate(
-						'twoFactorAuth.activate.email.resend.failed'
-					)}
-					type="infoSmall"
-				/>
-			)}
+				{notice === 'failed' && (
+					<>
+						<WarningIcon aria-hidden="true" />{' '}
+						{translate(
+							'twoFactorAuth.activate.email.resend.failed'
+						)}
+					</>
+				)}
+				{notice === 'tooMany' && (
+					<>
+						<WarningIcon aria-hidden="true" />{' '}
+						{translate(
+							'twoFactorAuth.activate.email.resend.tooMany'
+						)}
+					</>
+				)}
+			</p>
 		</div>
 	);
 };
