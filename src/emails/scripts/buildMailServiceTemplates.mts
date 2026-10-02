@@ -75,6 +75,12 @@ interface MailServiceTemplate {
 	paragraphs?: Partial<Record<EmailLocale, string[]>>;
 	/** Placeholders this template resolves itself, before the brand mapping. */
 	values?: Record<string, string>;
+	/**
+	 * Brand links the supplier sends itself, overriding the `${url}` fallback.
+	 * The handover suppliers send `unsubscribe_url` with the mail's occasion
+	 * (`?mail=…`), so the footer link opens that mail's switch (#872).
+	 */
+	links?: Partial<Record<'unsubscribeUrl', string>>;
 }
 
 const TEMPLATES: MailServiceTemplate[] = [
@@ -126,13 +132,20 @@ const TEMPLATES: MailServiceTemplate[] = [
 		id: 'uebergabe-angefragt',
 		// Neutral requester copy comes directly from the designed source.
 		// The legacy recipient-name field is deliberately unused.
-		model: ['name_recipient', 'url'],
+		model: ['name_recipient', 'url', 'unsubscribe_url'],
+		links: { unsubscribeUrl: '${unsubscribe_url}' },
 		cta: '${url}'
 	},
 	{
 		file: 'reassign-confirmation-notification',
 		id: 'uebergabe-bestaetigt',
-		model: ['name_recipient', 'name_from_consultant', 'url'],
+		model: [
+			'name_recipient',
+			'name_from_consultant',
+			'url',
+			'unsubscribe_url'
+		],
+		links: { unsubscribeUrl: '${unsubscribe_url}' },
 		// Incoming-counsellor copy comes directly from the designed source.
 		cta: '${url}'
 	},
@@ -316,7 +329,8 @@ const run = async () => {
 
 			for (const [placeholder, value] of Object.entries({
 				...(template.values ?? {}),
-				...BRAND
+				...BRAND,
+				...(template.links ?? {})
 			})) {
 				html = html.split(`{{${placeholder}}}`).join(value);
 			}
