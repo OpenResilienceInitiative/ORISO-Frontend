@@ -2184,6 +2184,14 @@
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
 			},
+			"firstResponseReceived": {
+				"title": "Ihre ersten Schritte",
+				"text": "Wir haben Ihnen im Chat die wichtigsten Informationen geschrieben."
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"text": "Der anonyme Chat wurde beendet."
+			},
 			"serviceNoticePlanned": {
 				"title": "Geplante Wartung",
 				"text": "Am {{maintenanceDate}} ist die Plattform zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar. Bereits geschriebene Nachrichten gehen nicht verloren."
@@ -2607,7 +2615,7 @@
 			},
 			"dnd": {
 				"title": "Nicht stören",
-				"description": "Pausieren Sie alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
+				"description": "Pausieren Sie Benachrichtigungen (Ton, Pop-ups) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
 				"activeUntil": "Aktiv bis {{time}}",
 				"option": {
 					"off": "Aus",
@@ -3493,6 +3501,16 @@
 		"reasons": {
 			"loading": "Gründe werden geladen"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Geplant abwesend",
+			"UNPLANNED_ABSENCE": "Ungeplant abwesend",
+			"ASSIGNMENT_ENDED": "Zuordnung beendet",
+			"ADVICE_REQUESTED": "Rat erbeten",
+			"retired": "Nicht näher angegeben"
+		},
+		"history": {
+			"unknownConsultant": "Eine frühere Berater:in"
+		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
 		"title": "Zugriff anfragen",
@@ -3819,6 +3837,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} kann somit den kompletten Nachrichtenverlauf lesen und ist für Sie verantwortlich. {{oldConsultant}} hat keinen Zugriff mehr auf die Nachrichten."
 						},
+						"historical": "Dies ist eine frühere Anfrage. Sie kann hier nicht mehr beantwortet werden.",
 						"question": "Stimmen Sie der Übergabe zu?",
 						"sent": {
 							"description": {

@@ -2160,6 +2160,14 @@
 				"title": "Team discussion",
 				"text": "{{senderDisplayName}} posted in the team discussion"
 			},
+			"firstResponseReceived": {
+				"title": "Your first steps",
+				"text": "We have sent you the most important information in the chat."
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"text": "The anonymous chat has ended."
+			},
 			"serviceNoticePlanned": {
 				"title": "Scheduled maintenance",
 				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
@@ -2569,7 +2577,7 @@
 			},
 			"dnd": {
 				"title": "Do not disturb",
-				"description": "Pause all notifications (sound, pop-ups, emails) for a chosen time. Your history keeps filling.",
+				"description": "Pause notifications (sound, pop-ups) for a chosen time. Your history keeps filling.",
 				"activeUntil": "Active until {{time}}",
 				"option": {
 					"off": "Off",
@@ -3439,6 +3447,16 @@
 		"reasons": {
 			"loading": "Loading reasons"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planned absence",
+			"UNPLANNED_ABSENCE": "Unplanned absence",
+			"ASSIGNMENT_ENDED": "Assignment ended",
+			"ADVICE_REQUESTED": "Advice requested",
+			"retired": "Not specified"
+		},
+		"history": {
+			"unknownConsultant": "A former counsellor"
+		},
 		"submit": "Request access",
 		"submitSending": "Sending",
 		"title": "Request access",
@@ -3765,6 +3783,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} can thus read the complete message history and is responsible for you. {{oldConsultant}} no longer has access to the messages."
 						},
+						"historical": "This is an earlier request. It can no longer be answered here.",
 						"question": "Do you agree to the transfer?",
 						"sent": {
 							"description": {
