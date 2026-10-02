@@ -2170,6 +2170,10 @@
 			"conversationFinished": {
 				"title": "ቻት ተዛዚሙ",
 				"text": "እቲ ካብ ስሙ ዘይተፈልጠ ቻት ተዛዚሙ።"
+			},
+			"serviceNoticePlanned": {
+				"title": "ብመደብ ዝተታሕዘ ጽገና",
+				"text": "ኣብ {{maintenanceDate}}፣ እቲ መድረኽ ካብ {{maintenanceStart}} ክሳብ {{maintenanceEnd}} ኣይርከብን። ቅድሚ ሕጂ ዝጸሓፍኩምዎም መልእኽትታት ኣይጠፍኡን።"
 			}
 		},
 		"error": "ወዲቑ",
@@ -2219,7 +2223,9 @@
 			"loadingOlder": "ዝዓበየ ንጥፈታት ይጽዕን ኣሎ…",
 			"olderError": "ዝዓበየ ንጥፈታት ክጽዓን ኣይከኣለን።",
 			"retryOlder": "ደጊምካ ፈትን",
-			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት"
+			"endOfHistory": "መወዳእታ ታሪኽ ንጥፈታት",
+			"openStatusPage": "ገጽ ኩነታት ተመልከቱ",
+			"opensInNewTab": "(ኣብ ሓድሽ ታብ ይኽፈት)"
 		},
 		"threadReply": {
 			"title": "ሓድሽ መልሲ ኣብ ትሬድ"

@@ -2191,6 +2191,10 @@
 			"conversationFinished": {
 				"title": "Chat beendet",
 				"text": "Der anonyme Chat wurde beendet."
+			},
+			"serviceNoticePlanned": {
+				"title": "Geplante Wartung",
+				"text": "Am {{maintenanceDate}} ist die Plattform zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar. Bereits geschriebene Nachrichten gehen nicht verloren."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2240,7 +2244,9 @@
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",
 			"olderError": "Ältere Aktivitäten konnten nicht geladen werden.",
 			"retryOlder": "Erneut versuchen",
-			"endOfHistory": "Ende des Aktivitätsverlaufs"
+			"endOfHistory": "Ende des Aktivitätsverlaufs",
+			"openStatusPage": "Statusseite ansehen",
+			"opensInNewTab": "(öffnet in einem neuen Tab)"
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
