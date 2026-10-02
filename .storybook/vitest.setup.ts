@@ -6,12 +6,18 @@ import './testPreviewBootstrap';
 
 import { beforeAll } from 'vitest';
 import { setProjectAnnotations } from '@storybook/react-vite';
+import * as a11yAnnotations from '@storybook/addon-a11y/preview';
 
 // Reuse the exact preview the Storybook UI renders with (M3 scheme decorator,
 // i18n, router, realtime mocks) so a component test can never pass against a
 // different environment than the one a human reviews in the browser.
 import * as previewAnnotations from './preview';
 
-const annotations = setProjectAnnotations([previewAnnotations]);
+// Explicit annotations disable addon-vitest's automatic provisioning. Include
+// axe's hooks so a11y.test: 'error' also fails the headless component tests.
+const annotations = setProjectAnnotations([
+	a11yAnnotations,
+	previewAnnotations
+]);
 
 beforeAll(annotations.beforeAll);
