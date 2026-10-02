@@ -1584,8 +1584,6 @@
 				},
 				"resend": {
 					"hint": "Wir haben Dir einen Code an Deine E-Mail-Adresse geschickt. Bitte gib den Code ein.",
-					"newIn": "Neuen Code senden ({{countdown}})",
-					"onlyNewest": "Es gilt immer nur der zuletzt gesendete Code.",
 					"failed": "Der Code konnte nicht gesendet werden. Bitte versuche es noch einmal."
 				},
 				"step2": {
