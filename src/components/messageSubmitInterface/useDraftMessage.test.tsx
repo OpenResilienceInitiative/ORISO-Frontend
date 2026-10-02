@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React, { PropsWithChildren } from 'react';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { ActiveSessionContext, E2EEContext } from '../../globalState';
 import { useDraftMessage } from './useDraftMessage';
@@ -140,6 +140,9 @@ describe('useDraftMessage', () => {
 	});
 
 	afterEach(() => {
+		// No vitest globals, so RTL does not auto-unmount: a hook left mounted
+		// fires its autosave timer after jsdom is torn down (CI: window is not defined).
+		cleanup();
 		vi.useRealTimers();
 	});
 

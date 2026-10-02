@@ -34,6 +34,42 @@ $room-header-gap-top: 2px;
 	background-color: var(--m3-surface-container-lowest, #fff);
 	box-sizing: border-box;
 
+	&__contactSheetRequest {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 8px;
+		padding: 6px 0 6px 38px;
+		font-size: 12px;
+
+		@media screen and (width < 900px) {
+			padding-left: 0;
+		}
+
+		button {
+			border: 0;
+			border-radius: 12px;
+			padding: 5px 10px;
+			background: var(--m3-secondary-container, #e2e8f0);
+			color: var(--m3-on-secondary-container, #1d2733);
+			cursor: pointer;
+
+			&:disabled {
+				cursor: default;
+				opacity: 0.55;
+			}
+		}
+
+		small {
+			overflow-wrap: anywhere;
+		}
+
+		p {
+			flex-basis: 100%;
+			margin: 0;
+		}
+	}
+
 	@include breakpoint($fromLarge) {
 		align-items: stretch;
 	}

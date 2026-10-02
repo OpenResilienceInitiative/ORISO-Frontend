@@ -1,4 +1,8 @@
 {
+	"contactSheet": {
+		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
+		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
+	},
 	"chatStage": {
 		"panel": {
 			"team": {
@@ -381,6 +385,24 @@
 		"shareDialog": {
 			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
 			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"notMember": {
+			"headline": "Du bist nicht Teil dieses Gesprächskreises.",
+			"body": "Diesen Gesprächskreis öffnet nur die Moderation und wen sie dazuholt. Wenn du mitmoderieren sollst, bitte die Moderation, dich hinzuzufügen.",
+			"knockBody": "Du kannst die Moderation bitten, dich hereinzulassen. Bis dahin siehst du nichts aus diesem Gesprächskreis.",
+			"requestFailed": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"pendingBody": "Sobald jemand aus der Moderation dich hereinlässt, geht es hier weiter. Lass diese Seite dafür einfach offen.",
+			"admittedHeadline": "Du bist dabei.",
+			"admittedBody": "Die Moderation hat dich in den Gesprächskreis gelassen.",
+			"declinedBody": "Die Moderation hat deine Anfrage nicht angenommen. Bei Fragen wende dich an die Person, die dir den Link geschickt hat.",
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte frag die Moderation nach einem neuen Link."
+		},
+		"joinRequest": {
+			"failed": "Das hat nicht geklappt. Bitte versuche es erneut.",
+			"dialog": {
+				"description": "Entscheide, ob {{name}} in „{{group}}“ dazukommt.",
+				"privacy": "Bis du entscheidest, sieht {{name}} nichts aus diesem Gesprächskreis."
+			}
 		}
 	},
 	"help": {
@@ -654,6 +676,10 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"firstResponseReceived": {
+				"title": "Deine ersten Schritte",
+				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
 			}
 		}
 	},
@@ -841,6 +867,9 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"description": "Deine Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn du fortfährst, gehen deine Änderungen verloren."
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",
@@ -927,7 +956,7 @@
 				"alwaysSent": {
 					"title": "Diese E-Mails bekommst du immer:",
 					"security": "Anmeldung und Zugang – Passwort zurücksetzen, Anmeldelink, Einmalcode, Änderungen an deinem Zugang.",
-					"legal": "Vertragliches – zum Beispiel Vertragsunterlagen zur Unterschrift.",
+					"legal": "Vertragliches – zum Beispiel Vertragsunterlagen zur Bestätigung.",
 					"outage": "Störungen der Plattform."
 				}
 			}
@@ -2438,6 +2467,17 @@
 		"required": {
 			"copy": "Dein Zugang wurde für Dich angelegt – das erste Passwort kennt deshalb noch jemand anderes. Vergib jetzt eines, das nur Du kennst.",
 			"title": "Dein eigenes Passwort"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wende Dich an Deine Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"unavailable": {
+				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",
+				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuche es erneut."
+			}
 		}
 	}
 }

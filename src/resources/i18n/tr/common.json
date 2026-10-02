@@ -1,4 +1,12 @@
 {
+	"contactSheet": {
+		"request": "İletişim bilgilerini e-postayla al",
+		"sending": "Gönderiliyor…",
+		"recipient": "E-posta {{email}} adresine gönderilecek.",
+		"missingEmail": "Önce profilinize bir e-posta adresi ekleyin.",
+		"sent": "İletişim bilgileri {{email}} adresine gönderildi.",
+		"failed": "E-posta gönderilemedi. Lütfen tekrar deneyin."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"
@@ -1181,6 +1189,61 @@
 			"done": "Tamam",
 			"durationValue": "{{value}} sa",
 			"copyFailed": "Kopyalama başarısız. Lütfen tekrar deneyin."
+		},
+		"notMember": {
+			"headline": "Bu sohbet grubunun bir parçası değilsiniz.",
+			"body": "Bu sohbet grubunu yalnızca moderatörler ve onların davet ettiği kişiler açar. Ortak moderatör olmanız gerekiyorsa, moderatörlerden sizi eklemelerini isteyin.",
+			"back": "Görüşmelerime",
+			"knockBody": "Moderatörlerden sizi içeri almalarını isteyebilirsiniz. O zamana kadar bu sohbet grubundan hiçbir şey görmezsiniz.",
+			"request": "Katılma isteği gönder",
+			"requestFailed": "İstek gönderilemedi. Lütfen tekrar deneyin.",
+			"pendingHeadline": "İstek gönderildi – moderatörlere bildirim gidiyor.",
+			"pendingBody": "Bir moderatör sizi içeri aldığında burada devam edebilirsiniz. Bunun için bu sayfayı açık bırakmanız yeterli.",
+			"cancel": "İsteği geri çek",
+			"admittedHeadline": "Artık gruptasınız.",
+			"admittedBody": "Moderatörler sizi sohbet grubuna aldı.",
+			"openGroup": "Sohbet grubunu aç",
+			"declinedHeadline": "Bu sefer olmadı.",
+			"declinedBody": "Moderatörler isteğinizi kabul etmedi. Sorularınız varsa size bağlantıyı gönderen kişiye başvurun.",
+			"linkInvalid": "Bu davet bağlantısı artık geçerli değil. Lütfen moderatörlerden yeni bir bağlantı isteyin."
+		},
+		"accessUnavailable": {
+			"headline": "Bu konuşma grubu şu anda açılamıyor.",
+			"body": "Sunucu bu grubun bu hesaba açık olduğunu doğrulamadı. Lütfen tekrar deneyin."
+		},
+		"joinRequest": {
+			"knocks": "“{{group}}” grubuna katılmak istiyor",
+			"announcement": "{{name}}, “{{group}}” grubuna katılmak istiyor.",
+			"role": "Danışman",
+			"viaInviteLink": "davet bağlantısı üzerinden",
+			"justNow": "az önce",
+			"minutesAgo": "{{count}} dk. önce",
+			"details": "Ayrıntılar",
+			"admit": "İçeri al",
+			"decline": "Reddet",
+			"otherAgency": "başka danışma merkezi",
+			"otherTenant": "başka kuruluş",
+			"unknown": "bilinmiyor",
+			"admitted": "{{name}} artık sohbet grubunda.",
+			"admittedAsCoModerator": "{{name}} artık ortak moderatör.",
+			"declined": "{{name}} adlı kişinin isteği reddedildi.",
+			"failed": "Bu işe yaramadı. Lütfen tekrar deneyin.",
+			"dialog": {
+				"title": "{{name}} katılmak istiyor",
+				"description": "{{name}} adlı kişinin “{{group}}” grubuna katılıp katılmayacağına karar verin.",
+				"roleLabel": "Rol",
+				"agencyLabel": "Danışma merkezi",
+				"tenantLabel": "Kuruluş",
+				"wayLabel": "Yol",
+				"timeLabel": "İstek zamanı",
+				"timeValue": "Saat {{time}}",
+				"admitAs": "Şu rolle içeri al",
+				"asParticipant": "Katılımcı",
+				"asCoModerator": "Ortak moderatör",
+				"coModeratorOwnerOnly": "Ortak moderatörlüğü yalnızca grup yöneticisi verebilir.",
+				"coModeratorSameTenant": "Ortak moderatörlük yalnızca kendi kuruluşunuzun uzmanlarına açıktır.",
+				"privacy": "Siz karar verene kadar {{name}} bu sohbet grubundan hiçbir şey görmez."
+			}
 		}
 	},
 	"help": {
@@ -2099,6 +2162,14 @@
 			"teamDiscussionNew": {
 				"title": "Ekip görüşmesi",
 				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			},
+			"firstResponseReceived": {
+				"title": "İlk adımlarınız",
+				"text": "Size sohbette en önemli bilgileri yazdık."
+			},
+			"conversationFinished": {
+				"title": "Sohbet sona erdi",
+				"text": "Anonim sohbet sona erdi."
 			}
 		},
 		"error": "Başarısız",
@@ -2504,6 +2575,11 @@
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",
 				"cancel": "İptal",
+				"discardChanges": {
+					"title": "Değişiklikler silinsin mi?",
+					"description": "Bildirim ayarlarınız henüz kaydedilmedi. Devam ederseniz değişiklikleriniz kaybolacak.",
+					"discard": "Sil ve devam et"
+				},
 				"area": {
 					"requests": "Talep",
 					"conversations": "Görüşme",
@@ -3201,6 +3277,7 @@
 			},
 			"temporary": {
 				"join": "Katıl",
+				"joinGroup": "Gruba katıl",
 				"toggleOff": "Hesap oluştur",
 				"toggleOn": "Hesap açmadan katıl",
 				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
@@ -3397,6 +3474,16 @@
 		},
 		"reasons": {
 			"loading": "Nedenler yükleniyor"
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planlı yokluk",
+			"UNPLANNED_ABSENCE": "Plansız yokluk",
+			"ASSIGNMENT_ENDED": "Görevlendirme sona erdi",
+			"ADVICE_REQUESTED": "Danışma talep edildi",
+			"retired": "Belirtilmemiş"
+		},
+		"history": {
+			"unknownConsultant": "Önceki danışman"
 		},
 		"submit": "Erişim talep et",
 		"submitSending": "Gönderiliyor",
@@ -3724,6 +3811,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} {{oldConsultant}} bu nedenle tüm mesaj geçmişini okuyabilir ve sizden sorumludur. artık mesajlara erişimi yoktur."
 						},
+						"historical": "Bu daha önceki bir taleptir. Artık buradan yanıtlanamaz.",
 						"question": "Devir teslim işlemini kabul ediyor musunuz?",
 						"sent": {
 							"description": {
@@ -5464,6 +5552,26 @@
 			"password": "Kendi şifreniz",
 			"twoFactor": "İkinci faktör",
 			"done": "tamamlandı"
+		}
+	},
+	"snackbar": {
+		"stack": {
+			"region": "Bildirimler",
+			"more": "{{count}} tane daha göster",
+			"less": "Daha az göster"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "Yeni danışmanlık şu anda başlatılamıyor",
+				"text": "Danışmanlık kuruluşunun güncel veri işleme sözleşmesini onaylaması gerekiyor. Lütfen danışmanlık merkezinize başvurun. Başlamış danışmanlıklar devam eder."
+			},
+			"unavailable": {
+				"title": "Danışmanlık durumu şu anda doğrulanamıyor",
+				"text": "Sözleşmenin onay durumu doğrulanamadı. Lütfen tekrar deneyin. Girdiğiniz bilgiler korunur.",
+				"inviteText": "Sözleşme onayı şu anda doğrulanamadı. Lütfen tekrar deneyin."
+			}
 		}
 	}
 }

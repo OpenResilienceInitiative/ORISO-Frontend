@@ -16,6 +16,8 @@ import { NotificationSettingsPanel } from './NotificationSettings';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
 import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
+import { BrowserNotification } from './BrowserNotifications';
+import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -76,6 +78,16 @@ export const profileRoutesSettings = (
 					) && !settings?.releaseToggles?.enableNewNotifications,
 				component: ConsultantNotifications,
 				column: COLUMN_RIGHT,
+				order: 1
+			},
+			// Legacy per-browser pop-up switch; the cross-device panel owns
+			// this screen once enableNewNotifications is on (#1551).
+			{
+				condition: () =>
+					!settings?.releaseToggles?.enableNewNotifications &&
+					!!isBrowserNotificationSupported(),
+				component: BrowserNotification,
+				column: COLUMN_LEFT,
 				order: 1
 			}
 		]

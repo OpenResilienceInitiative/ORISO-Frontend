@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	NotificationConfigDialog,
 	NotificationConfigView
@@ -57,6 +57,29 @@ type DialogStory = StoryObj<typeof NotificationConfigDialog>;
 
 export const Dialog: DialogStory = { render: () => <InteractiveDialog /> };
 
+/** The real exit guard after editing a sound setting and choosing E-mail preferences. */
+export const UnsavedEmailNavigation: DialogStory = {
+	render: () => <InteractiveDialog />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const banner = doc.querySelector<HTMLSelectElement>(
+			'[data-cy="notif-banner-requests-new"]'
+		)!;
+		await userEvent.selectOptions(banner, 'persistent');
+		await userEvent.click(
+			doc.querySelector<HTMLAnchorElement>(
+				'a[href="/profile/einstellungen/email#email-notifications"]'
+			)!
+		);
+		await waitFor(() =>
+			expect(
+				doc.querySelector('[data-testid="notif-discard-changes"]')
+			).toBeVisible()
+		);
+		await expect(banner.value).toBe('persistent');
+	}
+};
+
 export const DialogMobile: DialogStory = {
 	render: () => <InteractiveDialog />,
 	globals: phone390Globals,
@@ -68,7 +91,9 @@ export const DialogMobile: DialogStory = {
 		const body = dialog.querySelector('.m3Dialog__body') as HTMLElement;
 		const footer = dialog.querySelector('.m3Dialog__footer') as HTMLElement;
 
-		// Default content fits at 390x844 since the e-mail boxes moved out; containment is the contract.
+		// Removing the redundant email controls can make this dialog fit at
+		// 390px. Both a fitting body and an independently scrolling body are valid.
+		const bodyOverflows = body.scrollHeight > body.clientHeight;
 		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
 		await expect(getComputedStyle(body).overflowY).toBe('auto');
 		const soundSelect = body.querySelector<HTMLSelectElement>(
@@ -84,8 +109,8 @@ export const DialogMobile: DialogStory = {
 		await expect(getComputedStyle(soundSelectWrap).outlineWidth).toBe(
 			'2px'
 		);
-		body.scrollTop = body.scrollHeight;
-		if (body.scrollHeight > body.clientHeight) {
+		if (bodyOverflows) {
+			body.scrollTop = body.scrollHeight;
 			await expect(body.scrollTop).toBeGreaterThan(0);
 		}
 		await expect(body.contains(footer)).toBe(false);

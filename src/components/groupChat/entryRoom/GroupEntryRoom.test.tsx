@@ -81,19 +81,66 @@ vi.mock('react-i18next', () => ({
 }));
 
 const { GroupEntryRoom } = await import('./GroupEntryRoom');
-const { apiPutGroupChat } = await import('../../../api');
+const { apiPutGroupChat, apiGetAskerSessionList } = await import(
+	'../../../api'
+);
+const { UserDataContext } = await import(
+	'../../../globalState/context/UserDataContext'
+);
 
-const renderRoom = () =>
+/* #1499: a counsellor who reaches the client's entry room (old link,
+   bookmark) goes on to the group in her own session view. */
+const renderRoomAsCounsellor = (path = '/groups/15/entry') =>
 	render(
+		<UserDataContext.Provider
+			value={
+				{
+					userData: {
+						grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+					}
+				} as any
+			}
+		>
+			<MemoryRouter initialEntries={[path]}>
+				<Routes>
+					<Route
+						path="/groups/:chatId/entry"
+						element={<GroupEntryRoom />}
+					/>
+					<Route
+						path="/sessions/consultant/sessionView/session/:sessionId"
+						element={<div data-testid="counsellor-group" />}
+					/>
+					<Route
+						path="/sessions/consultant/sessionView"
+						element={<div data-testid="counsellor-list" />}
+					/>
+				</Routes>
+			</MemoryRouter>
+		</UserDataContext.Provider>
+	);
+
+const CLIENT = { grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT'] };
+const COUNSELLOR = { grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'] };
+
+const roomFor = (userData: unknown) => (
+	<UserDataContext.Provider value={{ userData } as any}>
 		<MemoryRouter initialEntries={['/groups/15/entry']}>
 			<Routes>
 				<Route
 					path="/groups/:chatId/entry"
 					element={<GroupEntryRoom />}
 				/>
+				<Route
+					path="/sessions/consultant/sessionView/session/:sessionId"
+					element={<div data-testid="counsellor-group" />}
+				/>
 			</Routes>
 		</MemoryRouter>
-	);
+	</UserDataContext.Provider>
+);
+
+const renderRoom = () => render(roomFor(CLIENT));
 
 describe('GroupEntryRoom', () => {
 	afterEach(cleanup);
@@ -129,5 +176,33 @@ describe('GroupEntryRoom', () => {
 		sessionState.item = null;
 		renderRoom();
 		expect(await screen.findByText(/gibt es nicht mehr/)).toBeTruthy();
+	});
+
+	it('sends a counsellor on to the group in her own session view', async () => {
+		renderRoomAsCounsellor();
+
+		expect(await screen.findByTestId('counsellor-group')).toBeTruthy();
+		expect(screen.queryByTestId('waiting-room')).toBeNull();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+	});
+
+	it('waits for the user before choosing the client or the counsellor side', async () => {
+		const view = render(roomFor(null));
+
+		expect(
+			document.querySelector('[data-cy="group-entry-loading"]')
+		).not.toBeNull();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+
+		view.rerender(roomFor(COUNSELLOR));
+
+		expect(await screen.findByTestId('counsellor-group')).toBeTruthy();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+	});
+
+	it('sends a counsellor to her list when the group id is not a number', async () => {
+		renderRoomAsCounsellor('/groups/abc/entry');
+
+		expect(await screen.findByTestId('counsellor-list')).toBeTruthy();
 	});
 });

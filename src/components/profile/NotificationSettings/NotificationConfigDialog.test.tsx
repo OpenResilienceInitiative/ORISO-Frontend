@@ -9,10 +9,10 @@ import {
 	cleanup,
 	configure,
 	fireEvent,
-	render as rtlRender,
+	render,
 	screen
 } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import {
 	NotificationConfigDialog,
 	NotificationConfigView
@@ -49,9 +49,6 @@ vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
 }));
 
 // The email link is a router Link.
-const render = (ui: React.ReactElement) =>
-	rtlRender(ui, { wrapper: MemoryRouter });
-
 const baseProps = {
 	config: DEFAULT_NOTIFICATION_CONFIG,
 	activeArea: 'requests' as const,
@@ -60,18 +57,25 @@ const baseProps = {
 	onPreview: vi.fn()
 };
 
+const EmailDestination = () => {
+	const location = useLocation();
+	return <div>email destination {location.hash}</div>;
+};
+
 describe('NotificationConfigDialog', () => {
 	afterEach(cleanup);
 
 	it('keeps the actions outside the keyboard-scrollable dialog body', () => {
 		const onConfirm = vi.fn();
 		const { baseElement } = render(
-			<NotificationConfigDialog
-				open
-				config={DEFAULT_NOTIFICATION_CONFIG}
-				onConfirm={onConfirm}
-				onClose={vi.fn()}
-			/>
+			<MemoryRouter>
+				<NotificationConfigDialog
+					open
+					config={DEFAULT_NOTIFICATION_CONFIG}
+					onConfirm={onConfirm}
+					onClose={vi.fn()}
+				/>
+			</MemoryRouter>
 		);
 
 		const surface = baseElement.querySelector('.m3Dialog__surface');
@@ -84,23 +88,142 @@ describe('NotificationConfigDialog', () => {
 		expect(footer).toBeTruthy();
 		expect(body?.contains(footer ?? null)).toBe(false);
 
+		fireEvent.change(screen.getByTestId('notif-banner-requests-new'), {
+			target: { value: 'persistent' }
+		});
 		fireEvent.click(
 			surface?.querySelector(
 				'[data-testid="notif-confirm"]'
 			) as HTMLElement
 		);
-		expect(onConfirm).toHaveBeenCalledWith(DEFAULT_NOTIFICATION_CONFIG);
+		expect(onConfirm).toHaveBeenCalledWith({
+			...DEFAULT_NOTIFICATION_CONFIG,
+			requests: {
+				...DEFAULT_NOTIFICATION_CONFIG.requests,
+				new: {
+					...DEFAULT_NOTIFICATION_CONFIG.requests.new,
+					banner: 'persistent'
+				}
+			}
+		});
+	});
+
+	it('keeps an edited draft when email navigation is cancelled, then discards only on confirmation', () => {
+		const onClose = vi.fn();
+		const onConfirm = vi.fn();
+		render(
+			<MemoryRouter initialEntries={['/profile/notifications/browser']}>
+				<Routes>
+					<Route
+						path="/profile/notifications/browser"
+						element={
+							<NotificationConfigDialog
+								open
+								config={DEFAULT_NOTIFICATION_CONFIG}
+								onConfirm={onConfirm}
+								onClose={onClose}
+							/>
+						}
+					/>
+					<Route
+						path="/profile/einstellungen/email"
+						element={<EmailDestination />}
+					/>
+				</Routes>
+			</MemoryRouter>
+		);
+
+		fireEvent.change(screen.getByTestId('notif-banner-requests-new'), {
+			target: { value: 'persistent' }
+		});
+		const emailLink = screen.getByRole('link', {
+			name: 'profile.notifications.title'
+		});
+		fireEvent.click(emailLink);
+		expect(
+			screen.getByText(
+				'profile.notifications.config.discardChanges.title'
+			)
+		).toBeTruthy();
+		expect(screen.queryByText(/email destination/)).toBeNull();
+		fireEvent.click(
+			document.querySelector(
+				'[data-testid="notif-keep-editing"]'
+			) as HTMLElement
+		);
+		expect(
+			(
+				screen.getByTestId(
+					'notif-banner-requests-new'
+				) as HTMLSelectElement
+			).value
+		).toBe('persistent');
+		expect(onClose).not.toHaveBeenCalled();
+
+		fireEvent.click(emailLink);
+		fireEvent.click(
+			document.querySelector(
+				'[data-testid="notif-discard-changes"]'
+			) as HTMLElement
+		);
+		expect(
+			screen.getByText('email destination #email-notifications')
+		).toBeTruthy();
+		expect(onClose).toHaveBeenCalledTimes(1);
+		expect(onConfirm).not.toHaveBeenCalled();
+	});
+
+	it('navigates directly to email preferences when the draft is clean', () => {
+		const onClose = vi.fn();
+		render(
+			<MemoryRouter initialEntries={['/profile/notifications/browser']}>
+				<Routes>
+					<Route
+						path="/profile/notifications/browser"
+						element={
+							<NotificationConfigDialog
+								open
+								config={DEFAULT_NOTIFICATION_CONFIG}
+								onConfirm={vi.fn()}
+								onClose={onClose}
+							/>
+						}
+					/>
+					<Route
+						path="/profile/einstellungen/email"
+						element={<EmailDestination />}
+					/>
+				</Routes>
+			</MemoryRouter>
+		);
+
+		fireEvent.click(
+			screen.getByRole('link', {
+				name: 'profile.notifications.title'
+			})
+		);
+		expect(
+			screen.getByText('email destination #email-notifications')
+		).toBeTruthy();
+		expect(
+			screen.queryByText(
+				'profile.notifications.config.discardChanges.title'
+			)
+		).toBeNull();
+		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 
 	it.each([true, false])('email link shown=%s', (showEmailLink) => {
 		render(
-			<NotificationConfigDialog
-				open
-				config={DEFAULT_NOTIFICATION_CONFIG}
-				onConfirm={vi.fn()}
-				onClose={vi.fn()}
-				showEmailLink={showEmailLink}
-			/>
+			<MemoryRouter>
+				<NotificationConfigDialog
+					open
+					config={DEFAULT_NOTIFICATION_CONFIG}
+					onConfirm={vi.fn()}
+					onClose={vi.fn()}
+					showEmailLink={showEmailLink}
+				/>
+			</MemoryRouter>
 		);
 		expect(
 			!!screen.queryByRole('link', {
@@ -195,17 +318,6 @@ describe('NotificationConfigView', () => {
 				.getAttribute('href')
 		).toBe('/profile/einstellungen/email#email-notifications');
 		expect(onChange).not.toHaveBeenCalled();
-	});
-
-	it('closes the dialog when the email link navigates away', () => {
-		const onNavigate = vi.fn();
-		render(
-			<NotificationConfigView {...baseProps} onNavigate={onNavigate} />
-		);
-		fireEvent.click(
-			screen.getByRole('link', { name: 'profile.notifications.title' })
-		);
-		expect(onNavigate).toHaveBeenCalledTimes(1);
 	});
 
 	it('switches area via a tab click', () => {
