@@ -217,6 +217,8 @@ export const Login = () => {
 	const [emailCodeChallenge, setEmailCodeChallenge] = useState<{
 		id: number;
 		resendAvailableInSeconds?: number;
+		/** No new mail went out: the limit is reached, the last code works. */
+		limitReached?: boolean;
 	}>({ id: 0 });
 
 	const handleUsernameChange = (event) => {
@@ -494,11 +496,21 @@ export const Login = () => {
 			} else if (resolution.kind === 'otpRequired') {
 				setTwoFactorType(resolution.otpType);
 				setIsOtpRequired(true);
+				if (resolution.codeLimitReached) {
+					recordLoginFailure({
+						outcome: 'rate_limited',
+						transport: describeLoginTransport(
+							error as Parameters<typeof describeLoginTransport>[0]
+						),
+						stage: isOtpRequired || otp ? 'otp' : 'password'
+					});
+				}
 				if (purpose === 'submit') {
 					setEmailCodeChallenge((previous) => ({
 						id: previous.id + 1,
 						resendAvailableInSeconds:
-							resolution.resendAvailableInSeconds
+							resolution.resendAvailableInSeconds,
+						limitReached: resolution.codeLimitReached
 					}));
 				}
 			}
@@ -888,6 +900,11 @@ export const Login = () => {
 												key={emailCodeChallenge.id}
 												initialCooldownSeconds={
 													emailCodeChallenge.resendAvailableInSeconds
+												}
+												initialNotice={
+													emailCodeChallenge.limitReached
+														? 'tooMany'
+														: undefined
 												}
 												onResend={requestNewEmailCode}
 											/>
