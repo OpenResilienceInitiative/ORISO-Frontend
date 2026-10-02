@@ -1,6 +1,11 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { ListItemsResponseInterface } from '../globalState/interfaces';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 export type CaseHandoverStatusValue =
 	| 'NOT_REQUESTED'
@@ -10,6 +15,7 @@ export type CaseHandoverStatusValue =
 	| 'GRANTED'
 	| 'DENIED'
 	| 'CLIENT_CONSENT_DECLINED'
+	| 'RECLAIMED'
 	| (string & {});
 
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
@@ -36,6 +42,8 @@ export interface CaseHandoverStatus {
 	auditOutcome?: string;
 	createdAt?: string;
 	resolvedAt?: string;
+	/** The caller is the counsellor a takeover moved this case away from, and may take it back. */
+	canReclaim?: boolean;
 }
 
 export interface CaseHandoverBatchResult {
@@ -99,7 +107,24 @@ export const apiRequestCaseHandoverAccess = async (
 		url: `${endpoints.sessionBase}/${sessionId}/case-handover`,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ reasonCode, explanation }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN
+		]
+	});
+
+export const apiReclaimCaseHandover = async (
+	sessionId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/reclaim`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_ERRORS.CONFLICT
+		]
 	});
 
 export const apiRequestCaseHandoverBatchAccess = async (
@@ -111,7 +136,11 @@ export const apiRequestCaseHandoverBatchAccess = async (
 		url: endpoints.caseHandoverBatch,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ sessionIds, reasonCode, explanation }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN
+		]
 	});
 
 export const apiDecideCaseHandoverClientConsent = async (
@@ -123,5 +152,9 @@ export const apiDecideCaseHandoverClientConsent = async (
 		url: `${endpoints.sessionBase}/${sessionId}/case-handover/${requestId}/client-consent`,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ approved }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN
+		]
 	});
