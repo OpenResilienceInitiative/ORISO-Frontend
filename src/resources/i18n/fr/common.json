@@ -1,4 +1,10 @@
 {
+	"menuEffects": {
+		"title": "Affichage des menus",
+		"label": "Voile et animations douces",
+		"description": "Éclaircit l’arrière-plan des menus de conversation ouverts et anime doucement le menu. Aucune animation si la réduction des mouvements est activée.",
+		"scope": "S’applique à ce compte dans ce navigateur. Activé par défaut."
+	},
 	"contactSheet": {
 		"request": "Recevoir les coordonnées par e-mail",
 		"sending": "Envoi en cours…",
@@ -398,7 +404,7 @@
 		"dearchiveDescription": "Restaurer le chat depuis l'archive.",
 		"editGroupChat": "Paramètres de chat",
 		"editGroupChatDescription": "Modifier le thème, l'horaire et la modération de ce chat.",
-		"groupChatInfo": "Infos sur le chat",
+		"groupChatInfo": "Informations et paramètres",
 		"imprint": "Mentions légales",
 		"leaveGroupChat": "Quitter le chat",
 		"mute": "Désactiver le son",
@@ -732,7 +738,12 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda"
+			"addShort": "Agenda",
+			"copyGoogle": "Copier le lien Google Agenda",
+			"copyOutlook": "Copier le lien du calendrier Outlook",
+			"linkCopied": "Lien du calendrier copié.",
+			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -4720,6 +4731,7 @@
 		"requestAdvice": "Demander conseil"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Supprimer le compte",

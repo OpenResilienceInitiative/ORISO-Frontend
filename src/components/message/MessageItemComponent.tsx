@@ -1,3 +1,9 @@
+import {
+	ChatMenuDropdown,
+	ChatMenuDropdownItem
+} from '../chatMenuDropdown/ChatMenuDropdown';
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
@@ -13,7 +19,6 @@ import {
 	useTenant
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
-import { isUserModerator } from '../session/sessionHelpers';
 import { MessageDisplayName } from './MessageDisplayName';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
@@ -53,7 +58,6 @@ import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
-import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import {
 	IBooleanSetting,
@@ -62,9 +66,6 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
-import { apiDeleteMessage } from '../../api/apiDeleteMessage';
-import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
-import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
@@ -392,7 +393,6 @@ export const MessageItemComponent = ({
 	attachments,
 	file,
 	isNotRead,
-	isUserBanned,
 	t,
 	rid,
 	handleDecryptionErrors,
@@ -466,6 +466,7 @@ export const MessageItemComponent = ({
 	}, [getComparableRecipientIds, userData?.displayName, userData?.userName]);
 
 	const [isExpanded, setIsExpanded] = useState(false);
+	const { motionEnabled } = useMenuEffects();
 	const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 	const [actionMenuPosition, setActionMenuPosition] = useState<{
 		top: number;
@@ -481,6 +482,7 @@ export const MessageItemComponent = ({
 	>(null);
 	const [actionMenuPlacement, setActionMenuPlacement] =
 		useState<Placement>('right-start');
+	const [actionMenuOrigin, setActionMenuOrigin] = useState('left top');
 	// Quick-reaction row: the user's own recent picks, refreshed every time the
 	// menu opens, plus the "more" button that hands over to the full picker.
 	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
@@ -495,7 +497,88 @@ export const MessageItemComponent = ({
 	const [visibilityMenuAnchor, setVisibilityMenuAnchor] =
 		useState<Element | null>(null);
 	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
-		useState<Placement>('top-start');
+		useState<Placement>('right-start');
+	const [visibilityMenuOrigin, setVisibilityMenuOrigin] =
+		useState('left top');
+	const resetMessageMenus = useCallback(() => {
+		setIsActionMenuOpen(false);
+		setIsVisibilityMenuOpen(false);
+		setActionMenuPosition(null);
+		setVisibilityMenuPosition(null);
+	}, []);
+	const closeMessageMenus = useCallback(() => {
+		const anchor = isActionMenuOpen
+			? actionMenuAnchor
+			: visibilityMenuAnchor;
+		resetMessageMenus();
+		if (anchor instanceof HTMLElement) anchor.focus();
+	}, [
+		isActionMenuOpen,
+		actionMenuAnchor,
+		visibilityMenuAnchor,
+		resetMessageMenus
+	]);
+	useEffect(() => {
+		if (!isActionMenuOpen && !isVisibilityMenuOpen) return;
+		const onKey = (event: KeyboardEvent) => {
+			const menu = isActionMenuOpen
+				? actionMenuRef.current
+				: visibilityMenuRef.current;
+			if (
+				menu?.contains(event.target as Node) &&
+				['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+			) {
+				const items = Array.from(
+					menu.querySelectorAll<HTMLElement>(
+						'button:not(:disabled), a[href]'
+					)
+				);
+				const index = items.indexOf(
+					document.activeElement as HTMLElement
+				);
+				const next =
+					event.key === 'Home'
+						? 0
+						: event.key === 'End'
+							? items.length - 1
+							: (index +
+									(event.key === 'ArrowDown' ? 1 : -1) +
+									items.length) %
+								items.length;
+				event.preventDefault();
+				items[next]?.focus();
+			}
+
+			if (
+				event.key === 'Escape' &&
+				!event.defaultPrevented &&
+				!isQuickEmojiPickerOpen
+			) {
+				event.preventDefault();
+				closeMessageMenus();
+			}
+		};
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+	}, [
+		isActionMenuOpen,
+		isVisibilityMenuOpen,
+		isQuickEmojiPickerOpen,
+		closeMessageMenus
+	]);
+	const actionMenuReady = isActionMenuOpen && Boolean(actionMenuPosition);
+	const visibilityMenuReady =
+		isVisibilityMenuOpen && Boolean(visibilityMenuPosition);
+	useEffect(() => {
+		const menu = actionMenuReady
+			? actionMenuRef.current
+			: visibilityMenuReady
+				? visibilityMenuRef.current
+				: null;
+		menu?.querySelector<HTMLElement>(
+			'button:not(:disabled), a[href]'
+		)?.focus();
+	}, [actionMenuReady, visibilityMenuReady]);
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -535,7 +618,7 @@ export const MessageItemComponent = ({
 			return;
 		}
 		setIsQuickEmojiPickerOpen(false);
-	}, [isActionMenuOpen]);
+	}, [isActionMenuOpen, closeMessageMenus, actionMenuAnchor]);
 
 	/** React with `emoji` and promote it to the front of the recent list. */
 	const applyQuickReaction = useCallback(
@@ -544,9 +627,9 @@ export const MessageItemComponent = ({
 			setQuickEmojis(getQuickEmojis());
 			onReact?.(emoji);
 			setIsQuickEmojiPickerOpen(false);
-			setIsActionMenuOpen(false);
+			closeMessageMenus();
 		},
-		[onReact]
+		[onReact, closeMessageMenus]
 	);
 
 	useEffect(() => {
@@ -568,14 +651,21 @@ export const MessageItemComponent = ({
 			) {
 				return;
 			}
-			if (!actionMenuRef.current?.contains(target)) {
-				setIsActionMenuOpen(false);
+			if (
+				!actionMenuRef.current?.contains(target) &&
+				!(
+					actionMenuAnchor instanceof HTMLElement &&
+					actionMenuAnchor.contains(target)
+				)
+			) {
+				event.preventDefault();
+				closeMessageMenus();
 			}
 		};
 		document.addEventListener('mousedown', handleOutsideClick);
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isActionMenuOpen]);
+	}, [isActionMenuOpen, closeMessageMenus, actionMenuAnchor]);
 
 	useEffect(() => {
 		if (!isVisibilityMenuOpen) {
@@ -586,15 +676,19 @@ export const MessageItemComponent = ({
 			if (!target) {
 				return;
 			}
-			if (!visibilityMenuRef.current?.contains(target)) {
-				setIsVisibilityMenuOpen(false);
+			if (
+				!visibilityMenuRef.current?.contains(target) &&
+				!visibilityMenuAnchor?.contains(target)
+			) {
+				event.preventDefault();
+				closeMessageMenus();
 				setVisibilityMenuPosition(null);
 			}
 		};
 		document.addEventListener('mousedown', handleOutsideClick);
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isVisibilityMenuOpen]);
+	}, [isVisibilityMenuOpen, closeMessageMenus, visibilityMenuAnchor]);
 
 	useEffect(
 		() => () => {
@@ -1339,7 +1433,7 @@ export const MessageItemComponent = ({
 
 	const handleActionMenuItemClick = useCallback(
 		(actionKey: string) => {
-			setIsActionMenuOpen(false);
+			closeMessageMenus();
 			if (actionKey === 'reply-thread' && onOpenThread) {
 				onOpenThread();
 			}
@@ -1354,7 +1448,13 @@ export const MessageItemComponent = ({
 				setDeleteOverlay(true);
 			}
 		},
-		[onOpenThread, onReplyDirect, onEditDirect, onDeleteDirect]
+		[
+			onOpenThread,
+			onReplyDirect,
+			onEditDirect,
+			onDeleteDirect,
+			closeMessageMenus
+		]
 	);
 
 	const confirmDeleteMessage = useCallback(() => {
@@ -1434,14 +1534,12 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
+			// The trigger keeps focus, so reset without the closer's focus move.
+			resetMessageMenus();
 			if (isActionMenuOpen) {
-				setIsActionMenuOpen(false);
-				setActionMenuPosition(null);
 				setActionMenuAnchor(null);
 				return;
 			}
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
 			setVisibilityMenuAnchor(null);
 			// The kebab sits outside the bubble, so the menu opens away from it:
 			// to the right on the incoming side, to the left on the outgoing one.
@@ -1451,7 +1549,7 @@ export const MessageItemComponent = ({
 			setActionMenuAnchor(event.currentTarget);
 			setIsActionMenuOpen(true);
 		},
-		[isActionMenuOpen]
+		[isActionMenuOpen, resetMessageMenus]
 	);
 
 	// Keeps the action menu on its anchor across scroll, resize and any change
@@ -1464,9 +1562,15 @@ export const MessageItemComponent = ({
 		}
 		return autoUpdate(actionMenuAnchor, menuEl, () => {
 			computePosition(actionMenuAnchor, menuEl, {
+				strategy: 'fixed',
 				placement: actionMenuPlacement,
 				middleware: [offset(10), flip(), shift({ padding: 12 })]
-			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
+			}).then(({ x, y, placement }) => {
+				setActionMenuPosition({ left: x, top: y });
+				setActionMenuOrigin(
+					placement.startsWith('left') ? 'right top' : 'left top'
+				);
+			});
 		});
 	}, [isActionMenuOpen, actionMenuAnchor, actionMenuPlacement]);
 
@@ -1477,11 +1581,15 @@ export const MessageItemComponent = ({
 		}
 		return autoUpdate(visibilityMenuAnchor, menuEl, () => {
 			computePosition(visibilityMenuAnchor, menuEl, {
+				strategy: 'fixed',
 				placement: visibilityMenuPlacement,
 				middleware: [offset(6), flip(), shift({ padding: 12 })]
-			}).then(({ x, y }) =>
-				setVisibilityMenuPosition({ left: x, top: y })
-			);
+			}).then(({ x, y, placement }) => {
+				setVisibilityMenuPosition({ left: x, top: y });
+				setVisibilityMenuOrigin(
+					placement.startsWith('left') ? 'right top' : 'left top'
+				);
+			});
 		});
 	}, [isVisibilityMenuOpen, visibilityMenuAnchor, visibilityMenuPlacement]);
 
@@ -1560,23 +1668,20 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
+			resetMessageMenus();
 			if (isVisibilityMenuOpen) {
-				setIsVisibilityMenuOpen(false);
-				setVisibilityMenuPosition(null);
 				setVisibilityMenuAnchor(null);
 				return;
 			}
-			setIsActionMenuOpen(false);
-			setActionMenuPosition(null);
 			setActionMenuAnchor(null);
-			// The menu rises from the +N chip, aligned to the side the chip is on.
+			// Open beside the chip, then flip if the viewport edge requires it.
 			setVisibilityMenuPlacement(
-				side === 'left' ? 'top-start' : 'top-end'
+				side === 'left' ? 'right-start' : 'left-start'
 			);
 			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
 		},
-		[isVisibilityMenuOpen]
+		[isVisibilityMenuOpen, resetMessageMenus]
 	);
 	const toggleVisibilitySection = useCallback(
 		(section: 'clients' | 'counsellors' | 'moderators') => {
@@ -1945,20 +2050,6 @@ export const MessageItemComponent = ({
 										username={username}
 										displayName={
 											resolvedIncomingDisplayName
-										}
-									/>
-								)}
-								{/* MATRIX MIGRATION: Temporarily hide message menu */}
-								{false && (
-									<MessageFlyoutMenu
-										_id={_id}
-										userId={userId}
-										username={username}
-										isUserBanned={isUserBanned}
-										isMyMessage={isMyMessage}
-										isArchived={
-											activeSession.item.status ===
-											STATUS_ARCHIVED
 										}
 									/>
 								)}
@@ -2743,18 +2834,30 @@ export const MessageItemComponent = ({
 						)}
 				</div>
 			</div>
+			{/* Mounted only while a menu is open: one per message would subscribe the whole timeline. */}
+			{(isActionMenuOpen || isVisibilityMenuOpen) && (
+				<MenuBackdrop open zIndex={8999} onClose={closeMessageMenus} />
+			)}
 			{isActionMenuOpen
 				? createPortal(
-						<div
+						<ChatMenuDropdown
+							density="compact"
 							className="messageItem__actionMenu"
 							ref={actionMenuRef}
 							role="menu"
 							style={{
 								position: 'fixed',
+								maxHeight: 'calc(100vh - 24px)',
+								overflowY: 'auto',
 								// Off-screen until floating-ui has measured the
 								// rendered menu — it needs the real element, so
 								// the first paint cannot already know where it
 								// goes (same pattern as ToolbarMenu).
+								animation:
+									motionEnabled && actionMenuPosition
+										? 'oriso-menu-reveal 160ms ease-out both'
+										: 'none',
+								transformOrigin: actionMenuOrigin,
 								top: `${actionMenuPosition?.top ?? -9999}px`,
 								left: `${actionMenuPosition?.left ?? -9999}px`,
 								zIndex: 99999
@@ -2793,9 +2896,7 @@ export const MessageItemComponent = ({
 														onUnreact?.(
 															ownReaction.ownEventId
 														);
-														setIsActionMenuOpen(
-															false
-														);
+														closeMessageMenus();
 														return;
 													}
 													applyQuickReaction(emoji);
@@ -2847,24 +2948,18 @@ export const MessageItemComponent = ({
 								</div>
 							)}
 							{actionMenuItems.map((item) => (
-								<button
+								<ChatMenuDropdownItem
 									key={item.key}
-									type="button"
-									role="menuitem"
 									className="messageItem__actionMenuItem"
+									role="menuitem"
+									icon={item.icon}
+									title={item.label}
 									onClick={() =>
 										handleActionMenuItemClick(item.key)
 									}
-								>
-									<span className="messageItem__actionMenuItemIcon">
-										{item.icon}
-									</span>
-									<span className="messageItem__actionMenuItemLabel">
-										{item.label}
-									</span>
-								</button>
+								/>
 							))}
-						</div>,
+						</ChatMenuDropdown>,
 						document.body
 					)
 				: null}
@@ -2876,6 +2971,13 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
+								maxHeight: 'calc(100vh - 24px)',
+								overflowY: 'auto',
+								animation:
+									motionEnabled && visibilityMenuPosition
+										? 'oriso-menu-reveal 160ms ease-out both'
+										: 'none',
+								transformOrigin: visibilityMenuOrigin,
 								top: `${visibilityMenuPosition?.top ?? -9999}px`,
 								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000
@@ -3049,151 +3151,5 @@ export const MessageItemComponent = ({
 				/>
 			)}
 		</div>
-	);
-};
-
-const MessageFlyoutMenu = ({
-	_id,
-	userId,
-	isUserBanned,
-	isMyMessage,
-	isArchived,
-	username
-}: {
-	_id: string;
-	userId: string;
-	username: string;
-	isUserBanned: boolean;
-	isMyMessage: boolean;
-	isArchived: boolean;
-}) => {
-	const { activeSession } = useContext(ActiveSessionContext);
-	const { getSetting } = useContext(ServerSettingsContext);
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
-
-	const currentUserIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		matrixUserId: getCurrentMatrixUserId()
-	});
-
-	const subscriberIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		matrixUserId: userId
-	});
-
-	return (
-		<>
-			<FlyoutMenu position={isMyMessage ? 'left-top' : 'right-top'}>
-				{currentUserIsModerator &&
-					!subscriberIsModerator &&
-					!isUserBanned && (
-						<BanUser
-							userName={username}
-							matrixUserId={userId}
-							chatId={activeSession.item.id}
-							handleUserBan={() => {
-								setIsUserBanOverlayOpen(true);
-							}}
-						/>
-					)}
-
-				{isMyMessage &&
-					!isArchived &&
-					getSetting<IBooleanSetting>(
-						SETTING_MESSAGE_ALLOWDELETING
-					) && (
-						<DeleteMessage
-							messageId={_id}
-							className="flyoutMenu__item--delete"
-						/>
-					)}
-			</FlyoutMenu>
-			<BanUserOverlay
-				overlayActive={isUserBanOverlayOpen}
-				userName={username}
-				handleOverlay={() => {
-					setIsUserBanOverlayOpen(false);
-				}}
-			></BanUserOverlay>
-		</>
-	);
-};
-
-const DeleteMessage = ({
-	messageId,
-	className
-}: {
-	messageId: string;
-	className?: string;
-}) => {
-	const { t: translate } = useTranslation();
-	const [deleteOverlay, setDeleteOverlay] = useState(false);
-	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-
-	const deleteMessage = useCallback(() => {
-		setIsRequestInProgress(true);
-		apiDeleteMessage(messageId)
-			.then(() => setDeleteOverlay(false))
-			.then(() => setIsRequestInProgress(false));
-	}, [messageId]);
-
-	const deleteOverlayItem: OverlayItem = useMemo(
-		() => ({
-			headline: translate('message.delete.overlay.headline'),
-			copy: translate('message.delete.overlay.copy'),
-			svg: XIllustration,
-			illustrationBackground: 'neutral',
-			buttonSet: [
-				{
-					label: translate('message.delete.overlay.cancel'),
-					function: OVERLAY_FUNCTIONS.CLOSE,
-					type: BUTTON_TYPES.SECONDARY,
-					disabled: isRequestInProgress
-				},
-				{
-					label: translate('message.delete.overlay.confirm'),
-					function: 'CONFIRM',
-					type: BUTTON_TYPES.PRIMARY,
-					disabled: isRequestInProgress
-				}
-			],
-			handleOverlay: (functionName) => {
-				if (functionName === 'CONFIRM') {
-					deleteMessage();
-					return;
-				}
-				setDeleteOverlay(false);
-			}
-		}),
-		[deleteMessage, isRequestInProgress, translate]
-	);
-
-	return (
-		<>
-			<button
-				onClick={() => setDeleteOverlay(true)}
-				className={`flex ${className}`}
-			>
-				<div className="mr--1">
-					<TrashIcon
-						width={24}
-						height={24}
-						style={{ display: 'block', padding: '2px 0' }}
-						aria-hidden="true"
-						focusable="false"
-					/>
-				</div>
-				<div>{translate('message.delete.delete')}</div>
-			</button>
-			{deleteOverlay && (
-				<Overlay
-					item={deleteOverlayItem}
-					handleOverlayClose={() => {
-						setDeleteOverlay(false);
-					}}
-				/>
-			)}
-		</>
 	);
 };
