@@ -1061,6 +1061,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
 									isSearching={isSearchingForConsultant}
+									searchingLabel={translate(
+										'sessionHeader.searchingForConsultant'
+									)}
 									showAddIcon={
 										props.showAddButton ??
 										!activeSession.isEnquiry

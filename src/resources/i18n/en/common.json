@@ -4661,6 +4661,7 @@
 		"requestAdvice": "Ask for advice"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "We are looking for a counsellor for you.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Delete Account",

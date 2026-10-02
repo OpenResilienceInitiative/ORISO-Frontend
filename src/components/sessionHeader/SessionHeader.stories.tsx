@@ -1018,6 +1018,10 @@ export const RequestStageSearching: Story = {
 	render: () => renderSessionHeader(mockRequestStageSearching()),
 	play: async ({ canvasElement }) => {
 		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+		// The glyph is decoration; screen readers get the state as text.
+		await expect(
+			within(canvasElement).getByRole('status')
+		).toHaveTextContent('Wir suchen eine Beratung für Sie.');
 	}
 };
 
@@ -1066,6 +1070,9 @@ export const RequestStageEmptyEnquiry: Story = {
 		).toBe(false);
 		await expect(
 			canvasElement.querySelector('.consultantSearchLoader')
+		).toBeNull();
+		await expect(
+			within(canvasElement).queryByText(/Wir suchen eine Beratung/)
 		).toBeNull();
 		await expect(
 			canvasElement.querySelector(

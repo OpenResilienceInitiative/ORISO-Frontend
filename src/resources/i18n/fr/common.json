@@ -4714,6 +4714,7 @@
 		"requestAdvice": "Demander conseil"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Supprimer le compte",

@@ -26,6 +26,8 @@ interface ChatroomMainInteractionIconProps {
 	 * search ends.
 	 */
 	isSearching?: boolean;
+	/** Read out while `isSearching`; the glyph itself is decoration. */
+	searchingLabel?: string;
 }
 
 const conversationIconSources: Partial<
@@ -42,7 +44,8 @@ export const ChatroomMainInteractionIcon = ({
 	onAddClick,
 	showAddIcon = false,
 	type,
-	isSearching = false
+	isSearching = false,
+	searchingLabel
 }: ChatroomMainInteractionIconProps) => {
 	const addContent = (
 		<span className="chatroomMainInteractionIcon__addContent">
@@ -91,6 +94,11 @@ export const ChatroomMainInteractionIcon = ({
 						{addContent}
 					</button>
 				))}
+			{isSearching && searchingLabel && (
+				<span role="status" className="sr-only">
+					{searchingLabel}
+				</span>
+			)}
 			<span
 				className="chatroomMainInteractionIcon__type"
 				aria-hidden="true"

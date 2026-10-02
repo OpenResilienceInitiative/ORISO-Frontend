@@ -4719,6 +4719,7 @@
 		"requestAdvice": "Попросить совета"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Мы ищем для вас консультанта.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Удалить аккаунт",
