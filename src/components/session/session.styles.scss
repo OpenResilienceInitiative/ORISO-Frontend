@@ -627,7 +627,8 @@ $session-scroll-to-bottom-radius: $button-border-radius !default;
 		border-top: 1px solid rgba(0, 0, 0, 0.06);
 	}
 
-	&__anonymousEnquiryClosedNote {
+	&__anonymousEnquiryClosedNote,
+	&__readOnlyNote {
 		padding: 16px 24px;
 		text-align: center;
 		font-size: 15px;
