@@ -54,6 +54,27 @@ describe('occasion channel contract', () => {
 		});
 	});
 
+	it('keeps the consultant-specific message mail on the existing consultant channel', () => {
+		expect(
+			occasionChannelContract('neue-nachricht-beratung').roles
+		).toEqual(['consultant']);
+		expect(
+			occasionChannelContract('neue-nachricht-beratung', 'consultant')
+		).toEqual({
+			emailPreference: {
+				kind: 'switch',
+				source: {
+					kind: 'emailToggle',
+					type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
+				}
+			},
+			browser: { kind: 'descriptor', eventTypes: ['message.new'] }
+		});
+		expect(
+			occasionChannelContract('neue-nachricht-beratung', 'asker')
+		).toBeUndefined();
+	});
+
 	it('does not invent a browser producer for planned notices or appointments', () => {
 		expect(
 			occasionChannelContract('systemhinweis', 'asker')?.browser
@@ -93,6 +114,45 @@ describe('occasion channel contract', () => {
 					kind: 'no-switch'
 				});
 			}
+		}
+	});
+
+	it('keeps self-help appointments role-specific without promising a browser notification', () => {
+		for (const outcome of [
+			'bestaetigt',
+			'verschoben',
+			'abgesagt',
+			'erinnerung'
+		] as const) {
+			const participant =
+				`selbsthilfe-termin-${outcome}-teilnahme` as const;
+			const counsellor =
+				`selbsthilfe-termin-${outcome}-beratung` as const;
+			expect(occasionChannelContract(participant).roles).toEqual([
+				'asker'
+			]);
+			expect(occasionChannelContract(counsellor).roles).toEqual([
+				'consultant'
+			]);
+			expect(
+				occasionChannelContract(participant, 'asker')?.browser
+			).toEqual({ kind: 'unmapped' });
+			expect(occasionChannelContract(counsellor, 'consultant')).toEqual({
+				emailPreference: {
+					kind: 'switch',
+					source: {
+						kind: 'settings',
+						field: 'appointmentNotificationEnabled'
+					}
+				},
+				browser: { kind: 'unmapped' }
+			});
+			expect(
+				occasionChannelContract(participant, 'consultant')
+			).toBeUndefined();
+			expect(
+				occasionChannelContract(counsellor, 'asker')
+			).toBeUndefined();
 		}
 	});
 });

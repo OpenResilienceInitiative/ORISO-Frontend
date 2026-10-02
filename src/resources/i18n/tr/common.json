@@ -5,6 +5,14 @@
 		"description": "Açık sohbet menülerinin arka planını aydınlatır ve menüyü hafif bir hareketle açar. Hareket azaltma etkinse animasyon oynatılmaz.",
 		"scope": "Bu tarayıcıdaki bu hesap için geçerlidir. Varsayılan olarak açıktır."
 	},
+	"contactSheet": {
+		"request": "İletişim bilgilerini e-postayla al",
+		"sending": "Gönderiliyor…",
+		"recipient": "E-posta {{email}} adresine gönderilecek.",
+		"missingEmail": "Önce profilinize bir e-posta adresi ekleyin.",
+		"sent": "İletişim bilgileri {{email}} adresine gönderildi.",
+		"failed": "E-posta gönderilemedi. Lütfen tekrar deneyin."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"
@@ -2570,6 +2578,11 @@
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",
 				"cancel": "İptal",
+				"discardChanges": {
+					"title": "Değişiklikler silinsin mi?",
+					"description": "Bildirim ayarlarınız henüz kaydedilmedi. Devam ederseniz değişiklikleriniz kaybolacak.",
+					"discard": "Sil ve devam et"
+				},
 				"area": {
 					"requests": "Talep",
 					"conversations": "Görüşme",

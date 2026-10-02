@@ -69,7 +69,13 @@ export const ADVICE_SEEKER_SWITCHES: NotificationSwitch[] = [
 		descriptionKey:
 			'profile.notifications.matrix.asker.appointment.description',
 		source: { kind: 'settings', field: 'appointmentNotificationEnabled' },
-		occasions: ['termin']
+		occasions: [
+			'termin',
+			'selbsthilfe-termin-bestaetigt-teilnahme',
+			'selbsthilfe-termin-verschoben-teilnahme',
+			'selbsthilfe-termin-abgesagt-teilnahme',
+			'selbsthilfe-termin-erinnerung-teilnahme'
+		]
 	},
 	{
 		id: 'serviceNotice',
@@ -111,7 +117,7 @@ export const CONSULTANT_SWITCHES: NotificationSwitch[] = [
 			kind: 'emailToggle',
 			type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
 		},
-		occasions: ['neue-nachricht']
+		occasions: ['neue-nachricht', 'neue-nachricht-beratung']
 	},
 	{
 		id: 'assignment',
@@ -136,6 +142,19 @@ export const CONSULTANT_SWITCHES: NotificationSwitch[] = [
 			'profile.notifications.matrix.consultant.feedback.description',
 		source: { kind: 'settings', field: 'feedbackNotificationEnabled' },
 		occasions: ['rueckmeldung']
+	},
+	{
+		id: 'appointment',
+		titleKey: 'profile.notifications.appointmentNotificationEnabled.title',
+		descriptionKey:
+			'profile.notifications.appointmentNotificationEnabled.description',
+		source: { kind: 'settings', field: 'appointmentNotificationEnabled' },
+		occasions: [
+			'selbsthilfe-termin-bestaetigt-beratung',
+			'selbsthilfe-termin-verschoben-beratung',
+			'selbsthilfe-termin-abgesagt-beratung',
+			'selbsthilfe-termin-erinnerung-beratung'
+		]
 	},
 	{
 		id: 'serviceNotice',

@@ -5,6 +5,14 @@
 		"description": "Lightens the background behind open chat menus and gently animates the menu. Animations are skipped when reduced motion is enabled.",
 		"scope": "Applies to this account in this browser. Enabled by default."
 	},
+	"contactSheet": {
+		"request": "Email me the contact details",
+		"sending": "Sending…",
+		"recipient": "The email will go to {{email}}.",
+		"missingEmail": "Add an email address to your profile first.",
+		"sent": "The contact details were sent to {{email}}.",
+		"failed": "The email could not be sent. Please try again."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Inform advice seekers about my absence"
@@ -2584,6 +2592,11 @@
 				"sendByEmail": "Send by Email",
 				"confirm": "Confirm",
 				"cancel": "Cancel",
+				"discardChanges": {
+					"title": "Discard changes?",
+					"description": "Your notification settings have not been saved. Continuing will discard your changes.",
+					"discard": "Discard and continue"
+				},
 				"area": {
 					"requests": "Requests",
 					"conversations": "Conversation",

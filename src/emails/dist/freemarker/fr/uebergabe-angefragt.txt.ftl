@@ -1,21 +1,15 @@
-Une consultation doit vous être transférée
-==========================================
+Une demande concernant votre accompagnement
+===========================================
 
-${fromConsultantName!''} demande à vous transférer une consultation en cours.
+Une personne chargée de votre accompagnement demande votre accord pour un changement.
 
-Merci de vérifier dans l’espace de consultation si vous pouvez la reprendre.
+Connectez-vous pour examiner la demande dans votre espace sécurisé.
 
-Dossier: ${caseReference!''}
-Demandé par: ${fromConsultantName!''}
-Demandé le: ${requestReceivedAt!''}
-
-Examiner le transfert:
+Examiner la demande:
 ${requestUrl!''}
 
-Tant que vous n’avez pas accepté, la consultation reste chez le professionnel actuel.
-
 ----------------------------------------------------------------
-Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
 
 ${orgName!''}
 ${orgAddress!''}
