@@ -1,6 +1,11 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { ListItemsResponseInterface } from '../globalState/interfaces';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 export type CaseHandoverStatusValue =
 	| 'NOT_REQUESTED'
@@ -36,6 +41,12 @@ export interface CaseHandoverStatus {
 	auditOutcome?: string;
 	createdAt?: string;
 	resolvedAt?: string;
+	/** CO_ACCESS ("advice needed") is read-only; the case stays with its owner. */
+	accessType?: 'CO_ACCESS' | 'TAKEOVER' | (string & {});
+	/** Naive UTC date-time; set for a granted CO_ACCESS. */
+	expiresAt?: string;
+	/** The viewer holds an open CO_ACCESS they may extend (#200). */
+	canExtend?: boolean;
 }
 
 export interface CaseHandoverBatchResult {
@@ -124,4 +135,18 @@ export const apiDecideCaseHandoverClientConsent = async (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ approved }),
 		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+	});
+
+/** #200: adds the granted duration once to the colleague's co-access. */
+export const apiExtendCaseHandoverCoAccess = async (
+	sessionId: number
+): Promise<CaseHandoverStatus> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/extend`,
+		method: FETCH_METHODS.POST,
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.CONFLICT,
+			FETCH_ERRORS.FORBIDDEN
+		]
 	});
