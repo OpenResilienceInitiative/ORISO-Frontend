@@ -18,6 +18,7 @@ import {
 	REMOVE_SESSIONS
 } from '../../globalState';
 import { startRoomCall } from '../call/startRoomCall';
+import { useAppConfig } from '../../hooks/useAppConfig';
 import { resolveCallFeatureGates } from '../call/callFeatureGates';
 import {
 	AudioCallHeaderIcon,
@@ -142,6 +143,11 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const [notifConfigOpen, setNotifConfigOpen] = useState(false);
 	const { settings: notifSettings, updateSettings: updateNotifSettings } =
 		useNotificationSettings();
+	const appConfig = useAppConfig();
+	// Settings > Notifications has an email panel only with the toggle, or for counsellors.
+	const hasEmailSettings =
+		!!appConfig?.releaseToggles?.enableNewNotifications ||
+		!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [legalModal, setLegalModal] = useState<{
 		title: string;
@@ -910,6 +916,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 					setNotifConfigOpen(false);
 				}}
 				onClose={() => setNotifConfigOpen(false)}
+				showEmailLink={hasEmailSettings}
 			/>
 		</div>
 	);
