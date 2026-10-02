@@ -39,6 +39,16 @@ const OLD_FOOTNOTES = [
 	'Giriş yapmak istemediyseniz lütfen şifrenizi değiştirin.'
 ];
 
+/** The neutral footnote each Keycloak message bundle must carry. */
+const KEYCLOAK_FOOTNOTES = {
+	en: NEUTRAL.en.footnote,
+	de: NEUTRAL['de-sie'].footnote,
+	fr: 'Si vous n’avez pas demandé ce code, vous pouvez ignorer cet e-mail.',
+	ru: 'Если Вы не запрашивали этот код, просто не обращайте внимания на это письмо.',
+	ti: 'ነዚ ኮድ ዘይሓተትኩምዎ እንተኾይኑ፣ ነዛ ኢመይል ግደፍዋ።',
+	tr: 'Bu kodu siz talep etmediyseniz bu e-postayı dikkate almayın.'
+} as const;
+
 describe('one-time-code mail wording', () => {
 	it.each(Object.entries(NEUTRAL))(
 		'%s names no purpose and does not ask for a password change',
@@ -62,9 +72,11 @@ describe('one-time-code mail wording', () => {
 		}
 	);
 
-	it.each(['en', 'de', 'fr', 'ru', 'ti', 'tr'])(
+	// The bundle must carry the neutral text itself; rejecting the old wording
+	// alone would let a missing key or unrelated text through (CodeRabbit, #1606).
+	it.each(Object.entries(KEYCLOAK_FOOTNOTES))(
 		'the generated Keycloak bundle (%s) ships the neutral footnote',
-		(lang) => {
+		(lang, expected) => {
 			const properties = readFileSync(
 				path.resolve(
 					__dirname,
@@ -75,23 +87,7 @@ describe('one-time-code mail wording', () => {
 			for (const old of OLD_FOOTNOTES) {
 				expect(properties).not.toContain(`orisoOtpFootnote=${old}`);
 			}
+			expect(properties).toContain(`\norisoOtpFootnote=${expected}\n`);
 		}
 	);
-
-	it('the English and German Keycloak bundles say exactly the neutral text', () => {
-		const read = (lang: string) =>
-			readFileSync(
-				path.resolve(
-					__dirname,
-					`dist/keycloak/email/messages/messages_${lang}.properties`
-				),
-				'utf8'
-			);
-		expect(read('en')).toContain(
-			`\norisoOtpFootnote=${NEUTRAL.en.footnote}\n`
-		);
-		expect(read('de')).toContain(
-			`\norisoOtpFootnote=${NEUTRAL['de-sie'].footnote}\n`
-		);
-	});
 });
