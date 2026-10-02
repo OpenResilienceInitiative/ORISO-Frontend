@@ -9,7 +9,7 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
 	withSectionOverride
@@ -405,6 +405,8 @@ export const PlannedServiceNotice: Story = {
 	decorators: [
 		withTimelineData(plannedServiceNoticeFeed(PLANNED_NOTICE_PARAMS))
 	],
+	// The detail pane with the status-page link exists from 1200 px upwards.
+	globals: { viewport: { value: 'desktop1440' } },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await waitFor(() =>
@@ -417,20 +419,49 @@ export const PlannedServiceNotice: Story = {
 		await expect(
 			canvas.queryByText(/Current status:/)
 		).not.toBeInTheDocument();
-		// The detail pane only exists from the L breakpoint upwards.
-		const link = canvas.queryByRole('link', {
+		const link = await canvas.findByRole('link', {
 			name: /Statusseite ansehen|View status page/
 		});
-		if (link) {
-			await expect(link).toHaveAttribute(
-				'href',
-				'https://status.example.org/'
+		await expect(link).toHaveAttribute(
+			'href',
+			'https://status.example.org/'
+		);
+		await expect(link).toHaveAttribute('target', '_blank');
+		await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+		await expect(link).toHaveAccessibleName(
+			/(öffnet in einem neuen Tab|opens in a new tab)/
+		);
+	}
+};
+
+/**
+ * On a phone the card has no detail pane: tapping it opens the status page in
+ * a new tab instead of jumping into the conversation list.
+ */
+export const PlannedServiceNoticeOnPhone: Story = {
+	decorators: [
+		withTimelineData(plannedServiceNoticeFeed(PLANNED_NOTICE_PARAMS))
+	],
+	globals: { viewport: { value: 'phone390' } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const view = canvasElement.ownerDocument.defaultView!;
+		const open = fn();
+		const original = view.open;
+		view.open = open as unknown as typeof view.open;
+		try {
+			const title = await canvas.findByText(
+				/Geplante Wartung|Scheduled maintenance/
 			);
-			await expect(link).toHaveAttribute('target', '_blank');
-			await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
-			await expect(link).toHaveAccessibleName(
-				/(öffnet in einem neuen Tab|opens in a new tab)/
+			await userEvent.click(title);
+			await expect(open).toHaveBeenCalledTimes(1);
+			await expect(open).toHaveBeenCalledWith(
+				'https://status.example.org/',
+				'_blank',
+				'noopener,noreferrer'
 			);
+		} finally {
+			view.open = original;
 		}
 	}
 };

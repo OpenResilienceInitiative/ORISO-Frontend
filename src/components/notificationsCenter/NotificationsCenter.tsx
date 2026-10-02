@@ -27,7 +27,7 @@ import {
 } from './eventDescriptors';
 import {
 	resolveNotificationActionPath,
-	resolveNotificationStatusPageUrl,
+	resolveStatusPageAction,
 	toInterpolationValues
 } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
@@ -167,10 +167,6 @@ const describeItem = (
 
 // #876: a planned maintenance notice links out to the public status page
 // instead of an in-app origin, so it never falls back to the sessions list.
-const linksToStatusPage = (item: any): boolean =>
-	getEventDescriptor(item?.eventType).resolveActionTarget({}).kind ===
-	'statusPage';
-
 const openStatusPage = (url: string) => {
 	window.open(url, '_blank', 'noopener,noreferrer');
 };
@@ -806,12 +802,11 @@ export const NotificationsCenter = () => {
 		() => resolveSessionId(selectedNotification),
 		[selectedNotification]
 	);
-	const selectedLinksToStatusPage = linksToStatusPage(selectedNotification);
-	const selectedStatusPageUrl = useMemo(
-		() =>
-			selectedNotification
-				? resolveNotificationStatusPageUrl(selectedNotification)
-				: null,
+	const {
+		linksToStatusPage: selectedLinksToStatusPage,
+		url: selectedStatusPageUrl
+	} = useMemo(
+		() => resolveStatusPageAction(selectedNotification),
 		[selectedNotification]
 	);
 	const selectedOpenLabel = selectedLinksToStatusPage
@@ -885,10 +880,10 @@ export const NotificationsCenter = () => {
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
-		if (untilL && linksToStatusPage(item)) {
-			const statusPageUrl = resolveNotificationStatusPageUrl(item);
-			if (statusPageUrl) {
-				openStatusPage(statusPageUrl);
+		const statusPage = resolveStatusPageAction(item);
+		if (untilL && statusPage.linksToStatusPage) {
+			if (statusPage.url) {
+				openStatusPage(statusPage.url);
 			}
 			return;
 		}

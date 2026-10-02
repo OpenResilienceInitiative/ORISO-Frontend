@@ -63,6 +63,17 @@ const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 const matching = (value: unknown, pattern: RegExp): string | undefined =>
 	typeof value === 'string' && pattern.test(value) ? value : undefined;
 
+// Date.UTC would silently shift 2026-02-31 to 3 March; reject it instead.
+const calendarDay = (value: unknown): string | undefined => {
+	const iso = matching(value, ISO_DATE);
+	if (!iso) return undefined;
+	const [year, month, day] = iso.split('-').map(Number);
+	const date = new Date(Date.UTC(year, month - 1, day));
+	return date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+		? iso
+		: undefined;
+};
+
 // The link is rendered as an anchor, so only absolute web URLs pass.
 const webUrl = (value: unknown): string | undefined => {
 	if (typeof value !== 'string') return undefined;
@@ -146,7 +157,7 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.start = asNullableString(source.start);
 	const campaignKey = asNullableString(source.campaignKey);
 	if (campaignKey) params.campaignKey = campaignKey;
-	const maintenanceDate = matching(source.maintenanceDate, ISO_DATE);
+	const maintenanceDate = calendarDay(source.maintenanceDate);
 	if (maintenanceDate) params.maintenanceDate = maintenanceDate;
 	const maintenanceStart = matching(source.maintenanceStart, CLOCK_TIME);
 	if (maintenanceStart) params.maintenanceStart = maintenanceStart;
@@ -209,15 +220,25 @@ export const toInterpolationValues = (
 	return values;
 };
 
+/**
+ * Whether an item's action is the public status page, and its validated URL
+ * (null when the item has none, so the consumer offers no action at all).
+ */
+export const resolveStatusPageAction = (
+	item: NotificationActionInput | null | undefined
+): { linksToStatusPage: boolean; url: string | null } => {
+	const target = getEventDescriptor(item?.eventType).resolveActionTarget({
+		...(item?.params || {})
+	});
+	return target.kind === 'statusPage'
+		? { linksToStatusPage: true, url: webUrl(target.url) ?? null }
+		: { linksToStatusPage: false, url: null };
+};
+
 /** The status page a planned maintenance notice links to, or null. */
 export const resolveNotificationStatusPageUrl = (
 	item: NotificationActionInput
-): string | null => {
-	const target = getEventDescriptor(item.eventType).resolveActionTarget({
-		...(item.params || {})
-	});
-	return target.kind === 'statusPage' ? (webUrl(target.url) ?? null) : null;
-};
+): string | null => resolveStatusPageAction(item).url;
 
 export const resolveNotificationActionPath = (
 	item: NotificationActionInput,

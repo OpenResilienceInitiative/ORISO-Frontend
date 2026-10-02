@@ -9,6 +9,7 @@ import {
 	parseEventActionParams,
 	resolveNotificationActionPath,
 	resolveNotificationStatusPageUrl,
+	resolveStatusPageAction,
 	toInterpolationValues
 } from './notificationActionTarget';
 import de from '../../resources/i18n/de/common.json';
@@ -98,6 +99,38 @@ describe('planned service notice in the activity feed (#876)', () => {
 		expect(params.maintenanceStart).toBeUndefined();
 		expect(params.maintenanceEnd).toBeUndefined();
 		expect(params.statusUrl).toBeUndefined();
+	});
+
+	it('drops a calendar day that does not exist instead of shifting it', () => {
+		expect(
+			parseEventActionParams('{"maintenanceDate":"2026-02-31"}')
+				.maintenanceDate
+		).toBeUndefined();
+		expect(
+			parseEventActionParams('{"maintenanceDate":"2028-02-29"}')
+				.maintenanceDate
+		).toBe('2028-02-29');
+	});
+
+	it('resolves the status-page action once per item', () => {
+		expect(
+			resolveStatusPageAction({
+				eventType: EVENT_TYPE,
+				params: parseEventActionParams(PAYLOAD)
+			})
+		).toEqual({
+			linksToStatusPage: true,
+			url: 'https://status.example.org/'
+		});
+		expect(
+			resolveStatusPageAction({ eventType: EVENT_TYPE, params: {} })
+		).toEqual({ linksToStatusPage: true, url: null });
+		expect(
+			resolveStatusPageAction({
+				eventType: 'message.new',
+				params: parseEventActionParams(PAYLOAD)
+			})
+		).toEqual({ linksToStatusPage: false, url: null });
 	});
 
 	it('opens the status page, never an in-app route', () => {
