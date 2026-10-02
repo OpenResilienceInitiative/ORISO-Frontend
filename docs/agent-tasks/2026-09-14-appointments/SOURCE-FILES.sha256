@@ -1,0 +1,4 @@
+43c29995fc97a01406fe5430d2360f6ff3789c7cd98b571cc4a74d7d078c4fe1  src/components/message/Appointment.test.tsx
+14ce3f5a6f3f01fe3d890f9effed0b7e99bdd470c60c99e80c6320565180d64d  src/components/message/Appointment.timezone.test.tsx
+93b5466dcb192cf94cad6aa4200c3f77328b9f34a83897f8abcc31b712bc5ffc  src/components/message/Appointment.tsx
+5672eb9cf26863c3e5e731ee37cc7095207201d7869e664b2899652de83e8229  src/components/message/appointmentData.ts
