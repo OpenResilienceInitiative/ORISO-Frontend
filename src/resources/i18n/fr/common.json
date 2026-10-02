@@ -1,4 +1,12 @@
 {
+	"contactSheet": {
+		"request": "Recevoir les coordonnées par e-mail",
+		"sending": "Envoi en cours…",
+		"recipient": "L’e-mail sera envoyé à {{email}}.",
+		"missingEmail": "Ajoutez d’abord une adresse e-mail à votre profil.",
+		"sent": "Les coordonnées ont été envoyées à {{email}}.",
+		"failed": "L’e-mail n’a pas pu être envoyé. Veuillez réessayer."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Informer les personnes en quête de conseils de mon absence"
