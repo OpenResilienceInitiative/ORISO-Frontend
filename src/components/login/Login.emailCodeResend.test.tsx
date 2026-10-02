@@ -236,6 +236,51 @@ describe('Login e-mail code: resend link (#1338)', () => {
 		expect(status().textContent).not.toContain(SENT);
 	});
 
+	/*
+	 * Review of ORISO-Admin#1124, same defect here: after the mail cap,
+	 * Keycloak answers 429 with otpType EMAIL and the remaining wait. The
+	 * code from the last mail still works.
+	 */
+	const codeLimit = (resendAvailableInSeconds = 745) =>
+		new FetchErrorWithOptions(FETCH_ERRORS.TOO_MANY_REQUESTS, {
+			data: {
+				error: 'invalid_grant',
+				error_description: 'Too many codes requested',
+				otpType: 'EMAIL',
+				resendAvailableInSeconds
+			}
+		});
+
+	it('shows the code field with the server wait when the first sign-in hits the code limit', async () => {
+		const view = await reachEmailCodeStep(codeLimit());
+
+		expect(
+			view.container.querySelector('.loginForm__otp--active')
+		).not.toBeNull();
+		expect(resendButton().textContent).toBe(`${COUNTDOWN} 12:25`);
+		expect(resendButton().getAttribute('aria-disabled')).toBe('true');
+		expect(status().textContent).toContain(
+			'twoFactorAuth.activate.email.resend.tooMany'
+		);
+		expect(
+			screen.queryByText('login.warning.failed.tooManyRequests')
+		).toBeNull();
+	});
+
+	it('counts down the server wait, not 30 s, when a resend meets the code limit', async () => {
+		await reachEmailCodeStep();
+		await elapse(30000);
+
+		vi.mocked(autoLogin).mockRejectedValueOnce(codeLimit());
+		fireEvent.click(resendButton());
+		await flush();
+
+		expect(status().textContent).toContain(
+			'twoFactorAuth.activate.email.resend.tooMany'
+		);
+		expect(resendButton().textContent).toBe(`${COUNTDOWN} 12:25`);
+	});
+
 	it('uses the wait time the server sends with the challenge', async () => {
 		await reachEmailCodeStep(
 			emailChallenge({ resendAvailableInSeconds: 12 })

@@ -1,5 +1,8 @@
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { TwoFactorType } from '../twoFactorAuth/twoFactorAuthConstants';
+import {
+	TWO_FACTOR_TYPES,
+	TwoFactorType
+} from '../twoFactorAuth/twoFactorAuthConstants';
 
 /**
  * Keycloak answers the password grant of a disabled account with
@@ -54,6 +57,8 @@ export type LoginErrorResolution =
 			outcome: 'otp_required';
 			/** Server-side wait before another code may be mailed, if sent. */
 			resendAvailableInSeconds?: number;
+			/** 429: no new mail went out, the last code still works. */
+			codeLimitReached?: true;
 	  }
 	/** Nothing failed (no error object at all). */
 	| { kind: 'none' };
@@ -148,6 +153,23 @@ export const resolveLoginError = (
 	}
 
 	if (error.message === FETCH_ERRORS.TOO_MANY_REQUESTS) {
+		const data = error.options?.data;
+		// The e-mail code limit answers a password-only request with 429 and
+		// the challenge: the code from the last mail still works.
+		if (data?.otpType === TWO_FACTOR_TYPES.EMAIL && !hasOtp) {
+			const resendAvailableInSeconds = readResendWait(
+				data.resendAvailableInSeconds
+			);
+			return {
+				kind: 'otpRequired',
+				otpType: data.otpType,
+				outcome: 'otp_required',
+				...(resendAvailableInSeconds === undefined
+					? {}
+					: { resendAvailableInSeconds }),
+				codeLimitReached: true
+			};
+		}
 		return {
 			kind: 'message',
 			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
@@ -210,7 +232,7 @@ export const resolveLoginError = (
  */
 export type EmailCodeResendResult =
 	| { kind: 'sent'; resendAvailableInSeconds?: number }
-	| { kind: 'tooMany' }
+	| { kind: 'tooMany'; resendAvailableInSeconds?: number }
 	| { kind: 'failed' }
 	/** Nothing to announce: signed in, or a newer attempt took over. */
 	| { kind: 'none' };
@@ -220,6 +242,15 @@ export const resolveEmailCodeResend = (
 ): EmailCodeResendResult => {
 	if (!resolution || resolution.kind === 'none') {
 		return { kind: 'none' };
+	}
+	if (resolution.kind === 'otpRequired' && resolution.codeLimitReached) {
+		return resolution.resendAvailableInSeconds === undefined
+			? { kind: 'tooMany' }
+			: {
+					kind: 'tooMany',
+					resendAvailableInSeconds:
+						resolution.resendAvailableInSeconds
+				};
 	}
 	if (resolution.kind === 'otpRequired') {
 		return resolution.resendAvailableInSeconds === undefined
