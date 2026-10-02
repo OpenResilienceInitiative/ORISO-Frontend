@@ -97,3 +97,14 @@ _shots/
 !docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/**
 !docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/
 !docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/**
+
+# Understand Anything: generated graphs are published daily as release assets
+# (ORISO-Docs, tag ua-graph-latest) and fetched at runtime - never commit them.
+.understand-anything/knowledge-graph.json
+.understand-anything/meta.json
+.understand-anything/fingerprints.json
+.understand-anything/domain-graph.json
+.understand-anything/diff-overlay.json
+.understand-anything/*.bak*
+.understand-anything/intermediate/
+.understand-anything/tmp/
