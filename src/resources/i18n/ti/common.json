@@ -3467,6 +3467,16 @@
 		"reasons": {
 			"loading": "ምኽንያታት ይጽዕኑ ኣለዉ"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "ዝተመደበ ብኩራት",
+			"UNPLANNED_ABSENCE": "ዘይተመደበ ብኩራት",
+			"ASSIGNMENT_ENDED": "ምምዳብ ተወዲኡ",
+			"ADVICE_REQUESTED": "ምኽሪ ተሓቲቱ",
+			"retired": "ዘይተገልጸ"
+		},
+		"history": {
+			"unknownConsultant": "ናይ ቀደም ኣማኻሪ"
+		},
 		"submit": "ተበጻሕነት ሕተት",
 		"submitSending": "ይለኣኽ ኣሎ",
 		"title": "ተበጻሕነት ሕተት",
@@ -3793,6 +3803,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} ስለዚ ንኹሉ ታሪኽ መልእኽቲ ከንብብ ይኽእል እዩ ንዓኻ ድማ ሓላፍነት ይወስድ። {{oldConsultant}} ድሕሪ ሕጂ ነቶም መልእኽትታት ክረኽቦም ኣይክእልን እዩ።"
 						},
+						"historical": "እዚ ቅድሚ ሕጂ ዝቐረበ ሕቶ እዩ። ኣብዚ ደጊም ክምለስ ኣይክእልን።",
 						"question": "ነቲ ምትሕልላፍ ትሰማምዑሉ ዶ?",
 						"sent": {
 							"description": {

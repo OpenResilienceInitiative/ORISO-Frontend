@@ -52,6 +52,8 @@ type ConsultantListEntry = {
 	consultantDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
+	/** Legal-name label as `prepareConsultantDataForSelect` builds it. */
+	label?: string;
 };
 
 type MessageItemStoryParameters = {
@@ -434,6 +436,15 @@ export const CaseHandoverGranted: Story = {
 			message: mockCaseHandoverGrantedMessage
 		}),
 		...baseHandlers
+	},
+	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		// Rendered inside the collapsed details panel.
+		await expect(
+			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
+		).toBeInTheDocument();
+		await expect(canvas.queryByText(/is ill|erkrankt/i)).toBeNull();
 	}
 };
 
@@ -1534,6 +1545,62 @@ export const AnonymousGuestSeesDisplayName: Story = {
 			await expect(
 				canvas.getByText('sanftes Alpaka Kim')
 			).toBeInTheDocument();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+	}
+};
+
+/**
+ * A historical REASSIGN_CONSULTANT record seen by an anonymous guest: the
+ * card must use the names stored in the record, never the consultant list's
+ * legal-name label (#1536, #1486).
+ */
+export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
+	name: 'Identity — anonymous guest, historical reassign record, no real name',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: [
+			{
+				...consultantWithRealName[0],
+				label: 'Karina P (karina.p)'
+			}
+		]
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: JSON.stringify({
+				status: 'CONFIRMED',
+				fromConsultantId: 'consultant-storybook',
+				fromConsultantName: 'sanftes Alpaka Kim',
+				toConsultantId: 'consultant-storybook',
+				toConsultantName: 'sanftes Alpaka Kim',
+				toAskerName: 'anon_5'
+			}),
+			alias: {
+				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT
+			}
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getAllByText(/sanftes Alpaka Kim/).length
+			).toBeGreaterThan(0);
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina');
 	}
