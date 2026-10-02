@@ -8,7 +8,7 @@ $headerHeight: 80px;
 	}
 
 	&--primary {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 	}
 
 	&--font-weight-bold {
@@ -67,12 +67,15 @@ $headerHeight: 80px;
 			border-bottom: 4px solid transparent;
 
 			&.active {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 				border-color: var(--m3-primary, $primary);
 			}
 
 			&:hover {
-				color: var(--m3-primary, $hover-primary);
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, $hover-primary)
+				);
 			}
 		}
 
@@ -99,7 +102,7 @@ $headerHeight: 80px;
 		text-align: center;
 
 		p {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			text-align: center;
 			word-break: normal;
 		}
@@ -109,7 +112,7 @@ $headerHeight: 80px;
 		}
 
 		path {
-			fill: var(--m3-primary, $primary);
+			fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 
 		@include breakpoint($fromLarge) {
@@ -324,7 +327,7 @@ $headerHeight: 80px;
 			width: 18px;
 			height: 18px;
 			path {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 		}
 	}
@@ -501,7 +504,7 @@ $headerHeight: 80px;
 	border-bottom: 5px solid;
 	border-color: var(--m3-primary, $primary);
 	background: no-repeat;
-	color: var(--m3-primary, $primary);
+	color: var(--oriso-primary-text, var(--m3-primary, $primary));
 }
 
 .navigation-button {

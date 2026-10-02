@@ -134,7 +134,7 @@
 		inset: 4px;
 		border-radius: 50%;
 		background: var(--voice-player-knob-bg);
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		display: flex;
 		align-items: center;
 		justify-content: center;

@@ -13,6 +13,10 @@ import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus-mui.s
  * Selecting a chip loads that rule back into the editor so it can be changed;
  * the chip's × deletes it. Editing an existing rule replaces it in place
  * instead of appending a duplicate.
+ *
+ * Typing writes through to `rules` at once, like every other field of the
+ * form: text the author never confirmed with "+" used to be dropped silently
+ * on "Erstellen" (#1499). "+" only closes the rule and clears the field.
  */
 
 export const RULE_MAX_LENGTH = 120;
@@ -40,6 +44,23 @@ export const RuleChipsEditor = ({
 		setDraft('');
 		setEditingIndex(null);
 	}, [resetKey]);
+
+	const updateDraft = (text: string) => {
+		setDraft(text);
+		if (editingIndex !== null) {
+			onChange(
+				rules.map((rule, index) =>
+					index === editingIndex ? text : rule
+				)
+			);
+			return;
+		}
+		if (!text.trim() || rules.length >= maxRules) {
+			return;
+		}
+		setEditingIndex(rules.length);
+		onChange([...rules, text]);
+	};
 
 	const commit = () => {
 		const text = draft.trim();
@@ -97,7 +118,10 @@ export const RuleChipsEditor = ({
 				maxLength={RULE_MAX_LENGTH}
 				placeholder={t('groupChat.create.authorContent.rule')}
 				value={draft}
-				onChange={(event) => setDraft(event.target.value)}
+				// At the limit a new rule has nowhere to go; a chip still opens
+				// its rule for editing.
+				disabled={isFull}
+				onChange={(event) => updateDraft(event.target.value)}
 			/>
 			<div className="ruleChipsEditor__row">
 				<ul className="ruleChipsEditor__chips">

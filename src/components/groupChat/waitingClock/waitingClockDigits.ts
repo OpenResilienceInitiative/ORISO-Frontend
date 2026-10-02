@@ -294,9 +294,33 @@ export const DIGITS: HandAngles[][] = [
 /** Cells for a single digit 0–9 (falls back to 0 for out-of-range input). */
 export const digitCells = (d: number): HandAngles[] => DIGITS[d] ?? DIGITS[0];
 
-/** Two-digit, zero-padded value as its two digit indices, e.g. 7 → [0, 7].
- *  Values above 99 clamp — the clock face has only two digit cells. */
-export const twoDigits = (value: number): [number, number] => {
-	const v = Math.min(99, Math.max(0, Math.floor(value)));
-	return [Math.floor(v / 10), v % 10];
-};
+/**
+ * The largest value the face can draw. Three digit cells is where the clock
+ * stops growing: 999 minutes is more than sixteen hours late, and a fourth
+ * cell would cost the other group half its size on a phone.
+ */
+export const FACE_MAX = 999;
+
+const clampFace = (value: number) =>
+	Math.min(FACE_MAX, Math.max(0, Math.floor(value)));
+
+/**
+ * How many digit cells `value` needs: two, or three from 100 up.
+ *
+ * The face used to clamp at 99 (#1293), so a group 140 minutes late drew "99"
+ * while its own `role="timer"` label said 140 — the two disagreed again, just
+ * one digit further out. It grows a third cell instead now, and the geometry
+ * pays for it by choosing a smaller mini-clock (#1499).
+ */
+export const faceDigitCount = (value: number): number =>
+	clampFace(value) > 99 ? 3 : 2;
+
+/**
+ * `value` as its digit indices, zero-padded to at least two cells:
+ * 7 → [0, 7], 42 → [4, 2], 140 → [1, 4, 0].
+ */
+export const faceDigits = (value: number): number[] =>
+	String(clampFace(value))
+		.padStart(2, '0')
+		.split('')
+		.map((character) => Number(character));
