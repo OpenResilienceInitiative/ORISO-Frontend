@@ -1693,7 +1693,9 @@
 					"otp": "Your access data is not correct. Please try again.",
 					"text": "Username or password are not correct. Please try again."
 				},
-				"consultantBlocked": "Consultant accounts cannot sign in here."
+				"consultantBlocked": "Consultant accounts cannot sign in here.",
+				"tooManyCodes": "You have requested too many codes. Please wait a moment and try again.",
+				"tooManyCodesWait": "You have requested too many codes. Please wait about {{minutes}} minutes and try again."
 			}
 		},
 		"mobile": {
@@ -4068,7 +4070,10 @@
 					"headline": "It did not work?",
 					"hint": "We have sent you a code to your email address. Please enter the code.",
 					"new": "Send new code",
-					"sent": "New code sent"
+					"sent": "New code sent",
+					"newIn": "Send new code ({{countdown}})",
+					"onlyNewest": "Only the code sent most recently is valid.",
+					"failed": "The code could not be sent. Please try again."
 				},
 				"step2": {
 					"copy": "Please enter your e-mail address here.",

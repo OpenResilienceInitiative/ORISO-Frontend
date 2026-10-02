@@ -47,10 +47,14 @@ import { useGroupInviteEntryRedirect } from '../registration/groupInviteEntry/us
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
+	LoginErrorResolution,
 	resolveLoginError
 } from './loginErrorResolution';
 import { recordLoginFailure } from '../../utils/observability/loginFailureTracker';
-import { TwoFactorAuthResendMail } from '../twoFactorAuth/TwoFactorAuthResendMail';
+import {
+	RESEND_ERROR_ALREADY_SHOWN,
+	TwoFactorAuthResendMail
+} from '../twoFactorAuth/TwoFactorAuthResendMail';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
@@ -140,6 +144,12 @@ export const Login = () => {
 	);
 	const [otp, setOtp] = useState<string>('');
 	const [isOtpRequired, setIsOtpRequired] = useState<boolean>(false);
+	// What the realm says about waiting for the next code (#1338). Undefined
+	// against a realm older than that, which is why the countdown has its own
+	// fallback rather than relying on this.
+	const [resendCooldownSeconds, setResendCooldownSeconds] = useState<
+		number | undefined
+	>(undefined);
 	const [showLoginError, setShowLoginError] = useState<string>('');
 	const [showMagicLinkError, setShowMagicLinkError] = useState<string>('');
 	const [magicLinkSentToUsername, setMagicLinkSentToUsername] =
@@ -420,15 +430,24 @@ export const Login = () => {
 			});
 	}, [magicToken, isMagicTokenLoginAttempted, postLogin, translate, gcid]);
 
-	const tryLogin = (otp?: string) => {
+	/**
+	 * Runs one login attempt and reports how it ended, so the resend path can
+	 * tell a delivered code from a refused one: a 400 asking for a code IS the
+	 * successful outcome of "send me a new code", while a 429 or a network
+	 * failure is not. Before #1338 this returned nothing and the resend button
+	 * said "sent" before the request had even answered.
+	 */
+	const tryLogin = (otp?: string): Promise<LoginErrorResolution | null> => {
 		existingSessionLookupRef.current += 1;
 		setIsRequestInProgress(true);
 		loginAttemptRef.current += 1;
 		const attempt = loginAttemptRef.current;
 		const isLatestAttempt = () => attempt === loginAttemptRef.current;
-		const handleAutoLoginFailure = (error: unknown) => {
+		const handleAutoLoginFailure = (
+			error: unknown
+		): LoginErrorResolution | null => {
 			if (!isLatestAttempt()) {
-				return;
+				return null;
 			}
 			// autoLogin itself refuses a consultant token while the consultant
 			// block is on: that has its own message and is not a login failure.
@@ -437,7 +456,7 @@ export const Login = () => {
 				CONSULTANT_LOGIN_BLOCKED_ERROR
 			) {
 				showConsultantLoginBlockedError();
-				return;
+				return null;
 			}
 
 			const resolution = resolveLoginError(
@@ -457,7 +476,17 @@ export const Login = () => {
 					// step is active; the stage is the step, not the payload.
 					stage: isOtpRequired || otp ? 'otp' : 'password'
 				});
-				setShowLoginError(translate(resolution.messageKey));
+				setShowLoginError(
+					translate(resolution.messageKey, {
+						minutes: Math.ceil((resolution.waitSeconds ?? 0) / 60),
+						seconds: resolution.waitSeconds ?? 0
+					})
+				);
+				// A refused resend reports how long to wait; the countdown on
+				// the button is the only place that figure is useful.
+				if (resolution.waitSeconds) {
+					setResendCooldownSeconds(resolution.waitSeconds);
+				}
 				// Only a credential problem marks the fields; an outage is
 				// not the user's input being wrong, and must not leave a
 				// stale mark from an earlier attempt behind.
@@ -469,44 +498,52 @@ export const Login = () => {
 			} else if (resolution.kind === 'otpRequired') {
 				setTwoFactorType(resolution.otpType);
 				setIsOtpRequired(true);
+				setResendCooldownSeconds(resolution.resendAvailableInSeconds);
 			}
+			return resolution;
 		};
 
-		autoLogin({
-			username: username,
-			password: password,
-			tenantData: tenant,
-			...(otp ? { otp } : {})
-		})
-			// Two rejection paths on purpose: only `autoLogin` failures are
-			// login failures. `postLogin` reports its own problems (e.g. the
-			// consultant-blocked message) before it throws, and those must
-			// neither be overwritten nor counted.
-			.then(
-				() =>
-					postLogin().catch((error: unknown) => {
-						// The consultant block shows its own message before it
-						// throws; anything else (e.g. the user-data reload
-						// failing after a successful token) would otherwise
-						// leave the form silent. Not a login failure, so it is
-						// not counted.
-						if (
-							isLatestAttempt() &&
-							(error as Error | null)?.message !==
-								CONSULTANT_LOGIN_BLOCKED_ERROR
-						) {
-							setShowLoginError(
-								translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
-							);
-						}
-					}),
-				handleAutoLoginFailure
-			)
-			.finally(() => {
-				if (isLatestAttempt()) {
-					setIsRequestInProgress(false);
-				}
-			});
+		return (
+			autoLogin({
+				username: username,
+				password: password,
+				tenantData: tenant,
+				...(otp ? { otp } : {})
+			})
+				// Two rejection paths on purpose: only `autoLogin` failures are
+				// login failures. `postLogin` reports its own problems (e.g. the
+				// consultant-blocked message) before it throws, and those must
+				// neither be overwritten nor counted.
+				.then<LoginErrorResolution | null, LoginErrorResolution | null>(
+					() =>
+						postLogin().then(
+							() => null,
+							(error: unknown) => {
+								// The consultant block shows its own message before it
+								// throws; anything else (e.g. the user-data reload
+								// failing after a successful token) would otherwise
+								// leave the form silent. Not a login failure, so it is
+								// not counted.
+								if (
+									isLatestAttempt() &&
+									(error as Error | null)?.message !==
+										CONSULTANT_LOGIN_BLOCKED_ERROR
+								) {
+									setShowLoginError(
+										translate(LOGIN_ERROR_KEYS.UNAVAILABLE)
+									);
+								}
+								return null;
+							}
+						),
+					handleAutoLoginFailure
+				)
+				.finally(() => {
+					if (isLatestAttempt()) {
+						setIsRequestInProgress(false);
+					}
+				})
+		);
 	};
 
 	const handleLogin = () => {
@@ -845,10 +882,31 @@ export const Login = () => {
 										{twoFactorType ===
 											TWO_FACTOR_TYPES.EMAIL && (
 											<TwoFactorAuthResendMail
-												resendHandler={(callback) => {
-													tryLogin();
-													callback();
-												}}
+												cooldownSeconds={
+													resendCooldownSeconds
+												}
+												resendHandler={(callback) =>
+													tryLogin().then(
+														(resolution) => {
+															// The realm asking
+															// for a code again
+															// IS the delivered
+															// mail. Anything
+															// else already has
+															// its own message
+															// on screen.
+															if (
+																resolution?.kind !==
+																'otpRequired'
+															) {
+																throw new Error(
+																	RESEND_ERROR_ALREADY_SHOWN
+																);
+															}
+															callback();
+														}
+													)
+												}
 											/>
 										)}
 									</div>

@@ -28,7 +28,15 @@ export const LOGIN_ERROR_KEYS = {
 	UNAUTHORIZED: 'login.warning.failed.unauthorized.text',
 	UNAUTHORIZED_OTP: 'login.warning.failed.unauthorized.otp',
 	/** Anything that is not the user's fault: network, 5xx, malformed answers. */
-	UNAVAILABLE: 'login.warning.failed.unavailable'
+	UNAVAILABLE: 'login.warning.failed.unavailable',
+	/**
+	 * The realm refuses to send another code because the per-window ceiling is
+	 * reached (#1338). Not a credential problem, so it must not share the
+	 * deliberately vague credentials message: here the user CAN act, by waiting.
+	 */
+	TOO_MANY_CODES: 'login.warning.failed.tooManyCodes',
+	/** Same, but the realm told us how long — so the message can name it. */
+	TOO_MANY_CODES_WAIT: 'login.warning.failed.tooManyCodesWait'
 } as const;
 
 /**
@@ -39,13 +47,32 @@ export type LoginFailureOutcome =
 	| 'credentials'
 	| 'otp_required'
 	| 'account_disabled'
+	| 'rate_limited'
 	| 'unavailable';
 
 export type LoginErrorResolution =
-	/** Show `messageKey` as the login error. */
-	| { kind: 'message'; messageKey: string; outcome: LoginFailureOutcome }
-	/** Credentials were fine, a second factor is required. */
-	| { kind: 'otpRequired'; otpType: TwoFactorType; outcome: 'otp_required' }
+	/**
+	 * Show `messageKey` as the login error. `waitSeconds` is set when the
+	 * message is about waiting, so the screen can name the time instead of
+	 * "please try again later".
+	 */
+	| {
+			kind: 'message';
+			messageKey: string;
+			outcome: LoginFailureOutcome;
+			waitSeconds?: number;
+	  }
+	/**
+	 * Credentials were fine, a second factor is required. `resendAvailableInSeconds`
+	 * is what the realm says the client must wait before asking for another code;
+	 * absent when the realm is older than #1338.
+	 */
+	| {
+			kind: 'otpRequired';
+			otpType: TwoFactorType;
+			outcome: 'otp_required';
+			resendAvailableInSeconds?: number;
+	  }
 	/** Nothing failed (no error object at all). */
 	| { kind: 'none' };
 
@@ -56,6 +83,7 @@ interface LoginErrorLike {
 			error?: string;
 			error_description?: string;
 			otpType?: TwoFactorType;
+			resendAvailableInSeconds?: number;
 		};
 	};
 }
@@ -67,6 +95,7 @@ interface LoginErrorLike {
 export type LoginFailureTransport =
 	| 'bad_request'
 	| 'unauthorized'
+	| 'too_many_requests'
 	| 'network'
 	| 'unexpected';
 
@@ -78,6 +107,8 @@ export const describeLoginTransport = (
 			return 'bad_request';
 		case FETCH_ERRORS.UNAUTHORIZED:
 			return 'unauthorized';
+		case FETCH_ERRORS.TOO_MANY_REQUESTS:
+			return 'too_many_requests';
 		case 'keycloakLogin':
 			return 'network';
 		default:
@@ -92,6 +123,23 @@ const credentialsMessage = (hasOtp: boolean): LoginErrorResolution => ({
 		: LOGIN_ERROR_KEYS.UNAUTHORIZED,
 	outcome: 'credentials'
 });
+
+/**
+ * Only a usable number reaches the UI. A realm from before #1338 sends nothing,
+ * and a broken or zero value must leave the countdown to its own default rather
+ * than render "wait 0 seconds" or NaN.
+ */
+const positiveSeconds = (value: unknown): { waitSeconds?: number } =>
+	typeof value === 'number' && Number.isFinite(value) && value > 0
+		? { waitSeconds: Math.ceil(value) }
+		: {};
+
+const resendSeconds = (
+	value: unknown
+): { resendAvailableInSeconds?: number } =>
+	typeof value === 'number' && Number.isFinite(value) && value > 0
+		? { resendAvailableInSeconds: Math.ceil(value) }
+		: {};
 
 const unavailableMessage = (): LoginErrorResolution => ({
 	kind: 'message',
@@ -117,6 +165,22 @@ export const resolveLoginError = (
 ): LoginErrorResolution => {
 	if (!error) {
 		return { kind: 'none' };
+	}
+
+	if (error.message === FETCH_ERRORS.TOO_MANY_REQUESTS) {
+		// The ceiling on code mails, not an outage and not a wrong password.
+		// Saying so lets the form show a countdown instead of "try again later".
+		const wait = positiveSeconds(
+			error.options?.data?.resendAvailableInSeconds
+		);
+		return {
+			kind: 'message',
+			messageKey: wait.waitSeconds
+				? LOGIN_ERROR_KEYS.TOO_MANY_CODES_WAIT
+				: LOGIN_ERROR_KEYS.TOO_MANY_CODES,
+			outcome: 'rate_limited',
+			...wait
+		};
 	}
 
 	if (error.message === FETCH_ERRORS.UNAUTHORIZED) {
@@ -156,7 +220,8 @@ export const resolveLoginError = (
 		return {
 			kind: 'otpRequired',
 			otpType: data.otpType,
-			outcome: 'otp_required'
+			outcome: 'otp_required',
+			...resendSeconds(data.resendAvailableInSeconds)
 		};
 	}
 

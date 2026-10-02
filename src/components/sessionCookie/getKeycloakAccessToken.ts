@@ -65,6 +65,31 @@ export const getKeycloakAccessToken = (
 							)
 						);
 					});
+				} else if (response.status === 429) {
+					// The realm refuses to send another code (#1338). The body
+					// is the same Challenge shape as the 400 and carries
+					// resendAvailableInSeconds, which the form turns into a
+					// countdown. Without this branch the answer fell into the
+					// "unexpected status" catch-all below and the user was told
+					// the service was unavailable.
+					response
+						.json()
+						.then((data) => {
+							reject(
+								new FetchErrorWithOptions(
+									FETCH_ERRORS.TOO_MANY_REQUESTS,
+									{ data }
+								)
+							);
+						})
+						.catch(() => {
+							reject(
+								new FetchErrorWithOptions(
+									FETCH_ERRORS.TOO_MANY_REQUESTS,
+									{ data: {} }
+								)
+							);
+						});
 				} else if (response.status === 401) {
 					// console.log("🔐 DEBUG: UNAUTHORIZED - 401 response");
 					// console.log("🔐 DEBUG: UNAUTHORIZED - Response text:", response.statusText);

@@ -31,6 +31,24 @@
 		&:hover {
 			color: var(--m3-primary-hover, $hover-primary);
 		}
+
+		// While the cooldown runs the link is not actionable; it has to read
+		// that way rather than inviting a click that does nothing.
+		&:disabled {
+			color: var(--m3-on-surface-variant, $text-low-emphasis);
+			text-decoration: none;
+			cursor: default;
+		}
+	}
+
+	&__onlyNewest {
+		margin-top: 4px;
+		color: var(--m3-on-surface-variant, $text-low-emphasis);
+	}
+
+	&__error {
+		margin-top: 4px;
+		color: var(--m3-error, $form-error);
 	}
 
 	.text + .text {
