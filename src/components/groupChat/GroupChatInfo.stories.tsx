@@ -28,10 +28,11 @@ import {
 
 const INFO_PATH = `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}/groupChatInfo`;
 
-const buildListItem = (): ListItemInterface => {
-	const item = buildGroupStageListItem(3600);
+const buildListItem = (inviteToken: string | null = 'Ab3_x-Yz') => {
+	const item: ListItemInterface = buildGroupStageListItem(3600);
 	Object.assign(item.chat as object, {
 		modality: 'TEXT',
+		inviteToken,
 		participants: [
 			{
 				consultantId: groupStageConsultant.userId,
@@ -108,8 +109,17 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 	);
 };
 
-const WiredChatInfo = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
-	const listItem = React.useMemo(buildListItem, []);
+const WiredChatInfo = ({
+	layout,
+	inviteToken
+}: {
+	layout: 'desktop' | 'mobile';
+	inviteToken?: string | null;
+}) => {
+	const listItem = React.useMemo(
+		() => buildListItem(inviteToken),
+		[inviteToken]
+	);
 	useBackendMocks(listItem);
 	return (
 		<TenantContext.Provider
@@ -214,6 +224,22 @@ export const Wired390: Story = {
 		).toBeVisible();
 		await expect(
 			canvas.getByRole('button', { name: /Einladungs-Link kopieren/ })
-		).toBeVisible();
+		).toBeEnabled();
+	}
+};
+
+/** A group without an invite token: no link to copy or scan yet (#1499). */
+export const WiredNoInviteToken: Story = {
+	name: 'Wired · no invite token yet',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" inviteToken={null} />,
+	play: async ({ canvas }) => {
+		await canvas.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+		await expect(
+			canvas.getByRole('button', { name: /QR-Code anzeigen/ })
+		).toBeDisabled();
+		await expect(
+			canvas.getByRole('button', { name: /Einladungs-Link kopieren/ })
+		).toBeDisabled();
 	}
 };

@@ -764,7 +764,8 @@
 					"title": "Link copied"
 				},
 				"text": "Copy invitation link",
-				"title": "Copy invitation link to clipboard"
+				"title": "Copy invitation link to clipboard",
+				"unavailable": "The invitation link for this group is not available yet."
 			}
 		},
 		"create": {
@@ -3360,6 +3361,13 @@
 				"text": "Sorry, something went wrong. Please reload the page and try again.",
 				"title": "Oops!"
 			}
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "The invitation could not be loaded right now.",
+				"body": "Please check your connection and try again. Your invitation link stays valid."
+			},
+			"loading": "Loading the invitation …"
 		}
 	},
 	"releaseNote": {

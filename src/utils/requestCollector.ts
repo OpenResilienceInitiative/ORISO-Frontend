@@ -5,6 +5,12 @@ const requests: RequestLog[] = [];
 export const REQUEST_LOGS_LIMIT = 10;
 export const REQUEST_COLLECTOR_EVENT = 'requestCollector';
 
+// The log is shown in the DevToolbar; a group's invite token is a secret.
+const SECRET_QUERY_PARAMS = /([?&]inviteToken=)[^&#]*/g;
+
+const redactUrl = (url: string) =>
+	url.replace(SECRET_QUERY_PARAMS, '$1[redacted]');
+
 export class RequestLog {
 	uuid: string = uuidv4();
 	start: Date = new Date();
@@ -16,7 +22,7 @@ export class RequestLog {
 	timeout?: number;
 
 	constructor(url: string, method: string, timeout?: number) {
-		this.url = url;
+		this.url = redactUrl(url);
 		this.method = method;
 		this.timeout = timeout;
 		requestCollector.update(this);

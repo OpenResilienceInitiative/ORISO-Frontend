@@ -1271,6 +1271,11 @@
 				"ready": "Alles bereit — du kannst schreiben",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
+		},
+		"groupInvite": {
+			"loadError": {
+				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			}
 		}
 	},
 	"session": {

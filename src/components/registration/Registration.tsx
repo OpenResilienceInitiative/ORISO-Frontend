@@ -76,7 +76,14 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
-import { resolveGroupInviteEntry } from './groupInviteEntry/groupInviteEntryState';
+import {
+	GroupInviteLoadError,
+	GroupInviteLoading
+} from './groupInviteEntry/GroupInviteLoadError';
+import {
+	getGroupJoin,
+	resolveGroupInviteEntry
+} from './groupInviteEntry/groupInviteEntryState';
 
 /**
  * This type of registration is currently not supporting:
@@ -147,7 +154,9 @@ export const Registration = () => {
 		updateRegistrationData,
 		registrationData,
 		availableSteps,
-		registrationConsultingType
+		registrationConsultingType,
+		hasRegistrationDataError,
+		retryRegistrationData
 	} = useContext(RegistrationContext);
 	const { consultant: preselectedConsultant, agency: urlParamsAgency } =
 		useContext(UrlParamsContext);
@@ -227,6 +236,11 @@ export const Registration = () => {
 	});
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	/* The minted password is never shown, so nobody can log in again once the
+	   browser is closed; the backend deletes such an account later
+	   (ORISO-UserService#1001). */
+	const joinsTemporarily =
+		inviteEntry === 'entry' ? !inviteWithAccount : temporaryJoin;
 	const toggleInviteWithAccount = useCallback(
 		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
@@ -586,6 +600,11 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const groupJoin = getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedData.agency?.id
+		});
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -602,7 +621,18 @@ export const Registration = () => {
 			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
-				: {})
+				: {}),
+			/* Joining a self-help group is not a request for counselling: the
+			   backend assigns the group and opens no enquiry. */
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
+				: {}),
+			temporary: joinsTemporarily
 		};
 
 		if (
@@ -705,7 +735,10 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		groupChatId,
+		inviteAgencyId,
+		joinsTemporarily
 	]);
 
 	const handleSubmit = useCallback(
@@ -730,7 +763,20 @@ export const Registration = () => {
 	);
 
 	if (inviteEntry === 'pending') {
-		return null;
+		return hasRegistrationDataError && retryRegistrationData ? (
+			<GroupInviteLoadError
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				onRetry={retryRegistrationData}
+			/>
+		) : (
+			<GroupInviteLoading
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+			/>
+		);
 	}
 
 	if (inviteEntry === 'entry') {
