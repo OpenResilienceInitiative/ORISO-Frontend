@@ -401,6 +401,12 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		);
 		cy.intercept('PATCH', '**/service/users/drafts*', { statusCode: 204 });
 		cy.intercept('DELETE', '**/service/users/drafts*', { statusCode: 204 });
+		// #1613: type only into a settled editor — focused and still empty —
+		// so no late mount focus or draft restore lands mid-keystroke.
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').click();
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]')
+			.should('be.focused')
+			.and('have.text', '');
 		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').type(reply);
 		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').should(
 			'have.text',
