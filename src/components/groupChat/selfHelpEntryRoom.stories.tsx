@@ -16,7 +16,15 @@ import { StageLayout } from '../stageLayout/StageLayout';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
-import { phone375Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone375Globals
+} from '../message/messageStoryShell';
+import { expect, within } from 'storybook/test';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
 
 /**
  * The self-help group entry room — every view a person passes through between
@@ -288,6 +296,35 @@ export const WaitingAreaMobile: StoryObj = {
 			description: {
 				story: 'Derselbe Block auf 375 pt — ohne eigene Zahl. Die Uhr misst die Breite und schrumpft die Miniaturen, bis das Quadrat hineinpasst; nichts wird abgeschnitten, nichts wird zur Spalte. Das ist der Fehler, den Frank im Screenshot gesehen hat: eine Uhr mit fester Größe auf einem Bildschirm, für den sie nicht gerechnet war.'
 			}
+		}
+	}
+};
+
+/**
+ * Dev test of #1499: Träger 2's light-blue brand colour (#b4ddee) made
+ * "Zum Kalender hinzufügen" and "Mehr erfahren" unreadable (~1.4:1 on
+ * white). Their labels now use the legible brand text tone; filled areas
+ * such as the stage keep the Träger's pastel.
+ */
+export const WaitingAreaLightBrandColour: StoryObj = {
+	name: '1b — Wartebereich, helle Trägerfarbe (Träger 2) · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room />,
+	parameters: { layout: 'fullscreen', orisoSeed: '#b4ddee' },
+	play: async ({ canvasElement }) => {
+		const calendar = within(canvasElement).getByRole('button', {
+			name: /Zum Kalender hinzufügen/
+		});
+		const more = within(canvasElement).getByRole('button', {
+			name: /Mehr erfahren/
+		});
+		for (const button of [calendar, more]) {
+			await expect(
+				wcagContrast(
+					getComputedStyle(button).color,
+					effectiveBackground(button)
+				)
+			).toBeGreaterThanOrEqual(4.5);
 		}
 	}
 };

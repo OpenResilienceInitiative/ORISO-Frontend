@@ -9,7 +9,7 @@
 		.absence__link {
 			font-weight: $font-weight-bold;
 			text-transform: uppercase;
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			text-decoration: none;
 			transition: all 0.6s ease;
 			margin-left: auto;
@@ -24,7 +24,10 @@
 			}
 
 			&:hover {
-				color: var(--m3-primary, $hover-primary);
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, $hover-primary)
+				);
 				transition: all 0.3s ease;
 			}
 		}

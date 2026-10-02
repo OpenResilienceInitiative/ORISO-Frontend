@@ -40,12 +40,15 @@ $profile-footer-justify-content: center !default;
 			border-radius: 0;
 
 			&.active {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 				border-color: var(--m3-primary, $primary);
 			}
 
 			&:hover {
-				color: var(--m3-primary, $hover-primary);
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, $hover-primary)
+				);
 			}
 		}
 
@@ -379,7 +382,7 @@ $profile-footer-justify-content: center !default;
 		}
 
 		.title {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			margin-bottom: $grid-base-two;
 		}
 	}
