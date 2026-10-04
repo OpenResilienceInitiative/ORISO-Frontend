@@ -4,6 +4,7 @@ import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
+	resolveEmailCodeResend,
 	resolveLoginError
 } from './loginErrorResolution';
 import deCommon from '../../resources/i18n/de/common.json';
@@ -209,6 +210,47 @@ describe('resolveLoginError', () => {
 				outcome: 'rate_limited'
 			})
 		);
+	});
+
+	/*
+	 * Review of ORISO-Admin#1124: once the mail cap is used up, Keycloak
+	 * answers a password-only request with 429, otpType EMAIL and the wait.
+	 * The code from the last mail still works, so the code step must show.
+	 */
+	const codeLimit = {
+		message: FETCH_ERRORS.TOO_MANY_REQUESTS,
+		options: {
+			data: {
+				error: 'invalid_grant',
+				error_description: 'Too many codes requested',
+				otpType: 'EMAIL' as never,
+				resendAvailableInSeconds: 745
+			}
+		}
+	};
+
+	it('shows the code step when a password-only request hits the e-mail code limit (#1338)', () => {
+		expect(resolveLoginError(codeLimit, false)).toEqual({
+			kind: 'otpRequired',
+			otpType: 'EMAIL',
+			outcome: 'otp_required',
+			resendAvailableInSeconds: 745,
+			codeLimitReached: true
+		});
+	});
+
+	it('keeps the limit message when a submitted code meets a 429 with a challenge', () => {
+		expect(resolveLoginError(codeLimit, true)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			outcome: 'rate_limited'
+		});
+	});
+
+	it('reports a resend refused by the code limit as "too many", with the server wait', () => {
+		expect(
+			resolveEmailCodeResend(resolveLoginError(codeLimit, false))
+		).toEqual({ kind: 'tooMany', resendAvailableInSeconds: 745 });
 	});
 
 	it('translates the e-mail code resend texts in every shipped locale (#1338)', () => {
