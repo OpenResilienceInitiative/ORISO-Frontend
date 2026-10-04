@@ -1817,19 +1817,24 @@ export const AskerSearchingRow: Story = {
 		await expect(beam).toBeTruthy();
 		magnet.classList.add('consultantSearchLoader--pulsing');
 		sweep.getAnimations().forEach((animation) => animation.pause());
-		const flight = Number(
-			beam.getAnimations()[0]!.effect!.getTiming().duration
-		);
-		beam.getAnimations().forEach((animation) => {
-			animation.pause();
-			animation.currentTime = flight;
-		});
-		const beamBox = beam.getBoundingClientRect();
-		const cardBox = card.getBoundingClientRect();
-		await expect(beamBox.right).toBeGreaterThan(box.right);
-		await expect(beamBox.right).toBeLessThan(cardBox.right);
-		await expect(beamBox.top).toBeGreaterThan(cardBox.top);
-		await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
+		// Reduced motion removes the beam animation: nothing to fly, so the
+		// flight-end geometry below only applies when it runs.
+		const beamAnimations = beam.getAnimations();
+		if (beamAnimations.length > 0) {
+			const flight = Number(
+				beamAnimations[0].effect!.getTiming().duration
+			);
+			beamAnimations.forEach((animation) => {
+				animation.pause();
+				animation.currentTime = flight;
+			});
+			const beamBox = beam.getBoundingClientRect();
+			const cardBox = card.getBoundingClientRect();
+			await expect(beamBox.right).toBeGreaterThan(box.right);
+			await expect(beamBox.right).toBeLessThan(cardBox.right);
+			await expect(beamBox.top).toBeGreaterThan(cardBox.top);
+			await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
+		}
 		magnet.classList.remove('consultantSearchLoader--pulsing');
 	}
 };

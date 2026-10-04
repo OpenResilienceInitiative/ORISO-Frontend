@@ -1698,7 +1698,8 @@
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
-				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz."
+				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -2181,6 +2182,10 @@
 			"conversationFinished": {
 				"title": "Sohbet sona erdi",
 				"text": "Anonim sohbet sona erdi."
+			},
+			"serviceNoticePlanned": {
+				"title": "Planlı bakım",
+				"text": "{{maintenanceDate}} tarihinde platform, {{maintenanceStart}} ile {{maintenanceEnd}} arasında erişilemez olacak. Daha önce yazdığınız mesajlar kaybolmaz."
 			}
 		},
 		"error": "Başarısız",
@@ -2230,7 +2235,9 @@
 			"loadingOlder": "Eski etkinlikler yükleniyor…",
 			"olderError": "Eski etkinlikler yüklenemedi.",
 			"retryOlder": "Tekrar dene",
-			"endOfHistory": "Etkinlik geçmişinin sonu"
+			"endOfHistory": "Etkinlik geçmişinin sonu",
+			"openStatusPage": "Durum sayfasını görüntüle",
+			"opensInNewTab": "(yeni sekmede açılır)"
 		},
 		"threadReply": {
 			"title": "Konuya yeni yanıt"
@@ -4107,7 +4114,11 @@
 					"headline": "İşe yaramadı mı?",
 					"hint": "E-posta adresinize bir kod gönderdik. Lütfen kodu giriniz.",
 					"new": "Yeni kod gönder",
-					"sent": "Yeni kod gönderildi"
+					"sent": "Yeni kod gönderildi",
+					"countdown": "Yeni kod gönder ({{time}})",
+					"onlyLatest": "Yalnızca en son gönderilen kod geçerlidir.",
+					"failed": "Kod gönderilemedi. Lütfen tekrar deneyin.",
+					"tooMany": "Çok fazla kod istendi. Yeni bir kod istemeden önce lütfen birkaç dakika bekleyin."
 				},
 				"step2": {
 					"copy": "Lütfen e-posta adresinizi buraya girin.",
