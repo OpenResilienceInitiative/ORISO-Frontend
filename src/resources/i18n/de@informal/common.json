@@ -1918,6 +1918,7 @@
 		}
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Wir suchen eine Beratung für dich.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Konto löschen",

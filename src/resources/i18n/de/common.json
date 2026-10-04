@@ -4747,6 +4747,7 @@
 		"requestAdvice": "Rat einholen"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Wir suchen eine Beratung für Sie.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Konto löschen",
