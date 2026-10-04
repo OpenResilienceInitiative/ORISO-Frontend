@@ -1693,7 +1693,8 @@
 					"otp": "Your access data is not correct. Please try again.",
 					"text": "Username or password are not correct. Please try again."
 				},
-				"consultantBlocked": "Consultant accounts cannot sign in here."
+				"consultantBlocked": "Consultant accounts cannot sign in here.",
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
 			}
 		},
 		"mobile": {
@@ -2167,6 +2168,10 @@
 			"conversationFinished": {
 				"title": "Chat ended",
 				"text": "The anonymous chat has ended."
+			},
+			"serviceNoticePlanned": {
+				"title": "Scheduled maintenance",
+				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
 			}
 		},
 		"error": "failed",
@@ -2216,7 +2221,9 @@
 			"loadingOlder": "Loading older activity…",
 			"olderError": "Could not load older activity.",
 			"retryOlder": "Try again",
-			"endOfHistory": "End of activity history"
+			"endOfHistory": "End of activity history",
+			"openStatusPage": "View status page",
+			"opensInNewTab": "(opens in a new tab)"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -4062,7 +4069,11 @@
 					"headline": "It did not work?",
 					"hint": "We have sent you a code to your email address. Please enter the code.",
 					"new": "Send new code",
-					"sent": "New code sent"
+					"sent": "New code sent",
+					"countdown": "Send new code ({{time}})",
+					"onlyLatest": "Only the most recently sent code is valid.",
+					"failed": "The code could not be sent. Please try again.",
+					"tooMany": "Too many codes requested. Please wait a few minutes before requesting a new one."
 				},
 				"step2": {
 					"copy": "Please enter your e-mail address here.",
