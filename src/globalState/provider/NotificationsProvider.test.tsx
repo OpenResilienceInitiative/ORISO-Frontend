@@ -492,6 +492,59 @@ describe('NotificationsProvider announcements', () => {
 		}
 	);
 
+	// #876 (Frank, 2 Oct 2026): a planned maintenance notice always stays in
+	// the feed; a switched-off browser channel only suppresses the pop-up.
+	it.each([
+		['on', true, 1],
+		['off', false, 0]
+	] as const)(
+		'keeps a planned service notice in the feed with the system channel %s',
+		async (_label, system, expectedBanners) => {
+			notificationSettingsStore.updateSettings({ families: { system } });
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					{
+						...feedItem(1, '2026-09-14T12:00:00Z'),
+						eventType: 'service.notice.planned',
+						category: 'system',
+						title: 'Planned maintenance',
+						text: 'Planned maintenance on 2026-10-15 from 22:00 to 23:30. Current status: https://status.example.org/',
+						params: {
+							campaignKey: 'maint-2026-10-15',
+							maintenanceDate: '2026-10-15',
+							maintenanceStart: '22:00',
+							maintenanceEnd: '23:30',
+							statusUrl: 'https://status.example.org/'
+						}
+					}
+				],
+				unreadCount: 1
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(banners).toHaveBeenCalledTimes(expectedBanners);
+			if (expectedBanners) {
+				expect(banners.mock.calls[0][1]).toMatchObject({
+					family: 'system',
+					eventType: 'service.notice.planned'
+				});
+			}
+			expect(JSON.stringify(banners.mock.calls)).not.toContain(
+				'status.example.org'
+			);
+		}
+	);
+
 	it('still displays the new feed when the browser cannot construct a notification', async () => {
 		vi.stubGlobal(
 			'Notification',

@@ -73,6 +73,7 @@ import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
@@ -1259,9 +1260,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		return scheduleComposerAutoFocus(() => {
 			// Review v6: never pull focus off an open menu or a
-			// `data-keeps-focus` region (the side-panel header) — the
-			// alignLeft chain below focuses the editor on its own, so the
-			// check has to come first.
+			// `data-keeps-focus` region (the side-panel header).
 			if (isFocusProtected(document.activeElement)) {
 				return;
 			}
@@ -1279,7 +1278,9 @@ export const MessageSubmitInterfaceComponent = ({
 			// Frank (16.09.): this cursor is the app's, not the reader's —
 			// the card is marked so it does not count as writing.
 			focusComposerAutomatically(composerCardRef.current, () => {
-				composerRef.current?.runAction('alignLeft');
+				// Not runAction('alignLeft'): its focus lands a frame later,
+				// past the checks above, and took the other composer's focus.
+				composerRef.current?.resetTextAlign();
 				focusEditorInput();
 			});
 		}, autoFocusEditor);
@@ -2214,6 +2215,7 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
 	const hasUploadFunctionality =
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
@@ -2636,7 +2638,14 @@ export const MessageSubmitInterfaceComponent = ({
 			consultantIds: [
 				activeSession?.consultant?.username,
 				activeSession?.consultant?.id,
-				contact?.username
+				contact?.username,
+				...(activeSession?.item?.participants || []).flatMap(
+					(participant) => [
+						participant.consultantId,
+						agencyConsultantDirectory.get(participant.consultantId)
+							?.username
+					]
+				)
 			],
 			supervisorIds: sessionSupervisors.flatMap((supervisor) => [
 				supervisor.id,
@@ -2657,7 +2666,14 @@ export const MessageSubmitInterfaceComponent = ({
 						: label,
 					kind: supervisorLabel
 						? ('supervisor' as AudienceKind)
-						: classifyAudienceKind(value, roster)
+						: classifyAudienceKind(
+								value,
+								roster,
+								unmatchedMemberKind(
+									isSelfHelpGroup,
+									mentionDirectoryState
+								)
+							)
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label))
@@ -2691,6 +2707,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerMatrixUserId,
+		activeSession?.item?.participants,
 		activeSession?.user?.username,
 		activeSession?.item?.id,
 		contact?.username,
@@ -2700,7 +2717,9 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceRefreshTick,
 		sessionSupervisors,
 		agencyConsultantDirectory,
+		mentionDirectoryState,
 		currentChatType,
+		isSelfHelpGroup,
 		activeSession?.isGroup,
 		hideSupervisorAudience,
 		translate,

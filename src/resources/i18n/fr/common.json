@@ -1,4 +1,18 @@
 {
+	"menuEffects": {
+		"title": "Affichage des menus",
+		"label": "Voile et animations douces",
+		"description": "Éclaircit l’arrière-plan des menus de conversation ouverts et anime doucement le menu. Aucune animation si la réduction des mouvements est activée.",
+		"scope": "S’applique à ce compte dans ce navigateur. Activé par défaut."
+	},
+	"contactSheet": {
+		"request": "Recevoir les coordonnées par e-mail",
+		"sending": "Envoi en cours…",
+		"recipient": "L’e-mail sera envoyé à {{email}}.",
+		"missingEmail": "Ajoutez d’abord une adresse e-mail à votre profil.",
+		"sent": "Les coordonnées ont été envoyées à {{email}}.",
+		"failed": "L’e-mail n’a pas pu être envoyé. Veuillez réessayer."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Informer les personnes en quête de conseils de mon absence"
@@ -390,7 +404,7 @@
 		"dearchiveDescription": "Restaurer le chat depuis l'archive.",
 		"editGroupChat": "Paramètres de chat",
 		"editGroupChatDescription": "Modifier le thème, l'horaire et la modération de ce chat.",
-		"groupChatInfo": "Infos sur le chat",
+		"groupChatInfo": "Informations et paramètres",
 		"imprint": "Mentions légales",
 		"leaveGroupChat": "Quitter le chat",
 		"mute": "Désactiver le son",
@@ -724,7 +738,12 @@
 			"google": "Google Agenda",
 			"outlook": "Calendrier Outlook",
 			"titleLabel": "Titre neutre pour le calendrier",
-			"addShort": "Agenda"
+			"addShort": "Agenda",
+			"copyGoogle": "Copier le lien Google Agenda",
+			"copyOutlook": "Copier le lien du calendrier Outlook",
+			"linkCopied": "Lien du calendrier copié.",
+			"copyError": "Le lien du calendrier n’a pas pu être copié. Veuillez réessayer.",
+			"shareHint": "Liens pour votre site : un rendez-vous, sans lien d’invitation ni mise à jour automatique."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Rendez-vous",
@@ -1679,7 +1698,8 @@
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",
 					"text": "Le nom d'utilisateur ou le mot de passe n'est pas correct. Veuillez réessayer."
 				},
-				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici."
+				"consultantBlocked": "Les comptes de conseiller·ère ne peuvent pas se connecter ici.",
+				"tooManyRequests": "Trop de tentatives. Veuillez patienter quelques minutes, puis réessayer."
 			}
 		},
 		"mobile": {
@@ -2154,6 +2174,18 @@
 			"teamDiscussionNew": {
 				"title": "Réunion d'équipe",
 				"text": "{{senderDisplayName}} a écrit dans la réunion d'équipe"
+			},
+			"firstResponseReceived": {
+				"title": "Vos premiers pas",
+				"text": "Nous vous avons envoyé les informations les plus importantes dans le chat."
+			},
+			"conversationFinished": {
+				"title": "Chat terminé",
+				"text": "Le chat anonyme est terminé."
+			},
+			"serviceNoticePlanned": {
+				"title": "Maintenance prévue",
+				"text": "Le {{maintenanceDate}}, la plateforme sera indisponible entre {{maintenanceStart}} et {{maintenanceEnd}}. Les messages déjà écrits ne seront pas perdus."
 			}
 		},
 		"error": "Échec",
@@ -2203,7 +2235,9 @@
 			"loadingOlder": "Chargement des activités précédentes…",
 			"olderError": "Impossible de charger les activités précédentes.",
 			"retryOlder": "Réessayer",
-			"endOfHistory": "Fin de l’historique des activités"
+			"endOfHistory": "Fin de l’historique des activités",
+			"openStatusPage": "Voir la page d’état",
+			"opensInNewTab": "(s’ouvre dans un nouvel onglet)"
 		},
 		"threadReply": {
 			"title": "Nouvelle réponse dans un fil"
@@ -2541,7 +2575,7 @@
 			},
 			"dnd": {
 				"title": "Ne pas déranger",
-				"description": "Mettez toutes les notifications en pause (son, fenêtres contextuelles, e-mails) pour une durée choisie. Votre historique continue de se remplir.",
+				"description": "Mettez les notifications en pause (son, fenêtres contextuelles) pour une durée choisie. Votre historique continue de se remplir.",
 				"activeUntil": "Actif jusqu'à {{time}}",
 				"option": {
 					"off": "Désactivé",
@@ -2700,7 +2734,8 @@
 			},
 			"help": {
 				"title": "Aide",
-				"videoCall": "Appel vidéo"
+				"videoCall": "Appel vidéo",
+				"tours": "Visites guidées"
 			},
 			"notifications": {
 				"email": "Notification par e-mail",
@@ -3459,6 +3494,16 @@
 		"reasons": {
 			"loading": "Chargement des motifs"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Absence planifiée",
+			"UNPLANNED_ABSENCE": "Absence imprévue",
+			"ASSIGNMENT_ENDED": "Attribution terminée",
+			"ADVICE_REQUESTED": "Conseil demandé",
+			"retired": "Non précisé"
+		},
+		"history": {
+			"unknownConsultant": "Une ancienne conseillère ou un ancien conseiller"
+		},
 		"submit": "Demander l'accès",
 		"submitSending": "Envoi en cours",
 		"title": "Demander l'accès",
@@ -3785,6 +3830,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} peut donc lire l'historique complet des messages et est responsable de vous. {{oldConsultant}} n'a plus accès aux messages."
 						},
+						"historical": "Il s’agit d’une demande antérieure. Il n’est plus possible d’y répondre ici.",
 						"question": "Approuvez-vous le transfert ?",
 						"sent": {
 							"description": {
@@ -4069,7 +4115,11 @@
 					"headline": "Ça n'a pas marché ?",
 					"hint": "Nous vous avons envoyé un code à votre adresse e-mail. Veuillez saisir ce code.",
 					"new": "Envoyer un nouveau code",
-					"sent": "Nouveau code envoyé"
+					"sent": "Nouveau code envoyé",
+					"countdown": "Envoyer un nouveau code ({{time}})",
+					"onlyLatest": "Seul le dernier code envoyé est valable.",
+					"failed": "Le code n'a pas pu être envoyé. Veuillez réessayer.",
+					"tooMany": "Trop de codes demandés. Veuillez patienter quelques minutes avant d'en demander un nouveau."
 				},
 				"step2": {
 					"copy": "Veuillez indiquer ici votre adresse e-mail.",
@@ -4561,12 +4611,16 @@
 		},
 		"subtitle": "Pour vous expliquer les différentes fonctions, nous vous avons préparé une petite visite guidée. <br /> Vous pouvez l'interrompre à tout moment ou la relancer dans votre profil.",
 		"switch": {
-			"active": {
-				"label": "Circuit actif"
+			"hint": {
+				"off": "Désactivé : les visites guidées ne démarrent pas d'elles-mêmes. Vous pouvez les lancer ici à tout moment.",
+				"on": "Activé : la visite d'introduction démarre d'elle-même jusqu'à ce que vous l'ayez terminée ou passée. Vous pouvez lancer toutes les visites guidées ici à tout moment."
 			},
-			"deactive": {
-				"label": "Tour d'horizon activé"
-			}
+			"label": {
+				"off": "Désactivé",
+				"on": "Activé"
+			},
+			"subtitle": "De courtes visites guidées vous montrent où trouver chaque chose.",
+			"title": "Lancer les visites guidées automatiquement"
 		},
 		"title": "Visite guidée"
 	},
@@ -4687,6 +4741,7 @@
 		"requestAdvice": "Demander conseil"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Nous recherchons une personne de conseil pour vous.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Supprimer le compte",

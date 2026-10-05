@@ -12,7 +12,8 @@ vi.mock('../../resources/scripts/endpoints', () => ({
 vi.mock('../../api', () => ({
 	FETCH_ERRORS: {
 		BAD_REQUEST: 'BAD_REQUEST',
-		UNAUTHORIZED: 'UNAUTHORIZED'
+		UNAUTHORIZED: 'UNAUTHORIZED',
+		TOO_MANY_REQUESTS: 'TOO_MANY_REQUESTS'
 	},
 	FetchErrorWithOptions: class FetchErrorWithOptions extends Error {
 		options: Record<string, unknown>;
@@ -110,6 +111,63 @@ describe('getKeycloakAccessToken', () => {
 					otpType: 'EMAIL'
 				}
 			}
+		});
+	});
+
+	it('reports a 429 as too many requests, not as an outage (#1338)', async () => {
+		fetchMock.mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					error: 'invalid_grant',
+					error_description: 'Too many codes requested'
+				}),
+				{ status: 429 }
+			)
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(
+			getKeycloakAccessToken('user@example.com', 'password')
+		).rejects.toThrow('TOO_MANY_REQUESTS');
+	});
+
+	// Keycloak's e-mail code cap (ORISO-Keycloak#46) answers 429 with the
+	// challenge; the login screen needs it for the code field and the wait.
+	it('keeps the 429 body: otpType and resendAvailableInSeconds (#1338)', async () => {
+		fetchMock.mockResolvedValue(
+			new Response(
+				JSON.stringify({
+					error: 'invalid_grant',
+					error_description: 'Too many codes requested',
+					otpType: 'EMAIL',
+					resendAvailableInSeconds: 745
+				}),
+				{ status: 429 }
+			)
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(
+			getKeycloakAccessToken('user@example.com', 'password')
+		).rejects.toMatchObject({
+			message: 'TOO_MANY_REQUESTS',
+			options: {
+				data: { otpType: 'EMAIL', resendAvailableInSeconds: 745 }
+			}
+		});
+	});
+
+	it('still reports TOO_MANY_REQUESTS when the 429 body is not JSON (ingress limit)', async () => {
+		fetchMock.mockResolvedValue(
+			new Response('<html>429 Too Many Requests</html>', { status: 429 })
+		);
+		vi.stubGlobal('fetch', fetchMock);
+
+		await expect(
+			getKeycloakAccessToken('user@example.com', 'password')
+		).rejects.toMatchObject({
+			message: 'TOO_MANY_REQUESTS',
+			options: { data: {} }
 		});
 	});
 });

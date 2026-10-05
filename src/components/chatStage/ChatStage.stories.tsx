@@ -1680,8 +1680,26 @@ export const PanelOpensAfterMountComposersSettleEqual: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
-		// Let the 240 ms framed→flush transition run out before measuring.
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		// #1613: measure once the re-frame has run out. It is not one 240 ms
+		// transition: the mid-flight lock (138) animates in first, and the
+		// settle re-measure animates on to 106 — on a slow runner that took
+		// longer than a fixed pause. Wait for both shells to be compact and
+		// no longer animating; a height that stays wrong still fails below.
+		await waitFor(
+			() => {
+				for (const shell of canvasElement.querySelectorAll<HTMLElement>(
+					'.textarea__wrapper-send-message'
+				)) {
+					expect(
+						shell.classList.contains(
+							'textarea__wrapper-send-message--compact'
+						)
+					).toBe(true);
+					expect(shell.getAnimations()).toHaveLength(0);
+				}
+			},
+			{ timeout: 5_000 }
+		);
 		await expectCompactComposers(canvasElement);
 	}
 };
@@ -1887,12 +1905,13 @@ const expectPhoneHeaderRules = async (
 			'.sessionMenu__icon--mobile'
 		)!;
 		await userEvent.click(kebab);
+		// The flyout is portalled to <body>, outside the canvas.
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).not.toBeNull()
 		);
-		const flyout = canvasElement.querySelector<HTMLElement>(
+		const flyout = document.querySelector<HTMLElement>(
 			'.sessionMenu__content--open'
 		)!;
 		const videoRow = flyout.querySelector<HTMLElement>(
@@ -1921,7 +1940,7 @@ const expectPhoneHeaderRules = async (
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).toBeNull()
 		);
 	}
@@ -2653,13 +2672,13 @@ export const MainChatAtTheDragFloor320: Story = {
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector(
+				document.querySelector(
 					'[data-cy="session-menu-start-video-call"]'
 				)
 			).not.toBeNull()
 		);
 		await expect(
-			canvasElement.querySelector('[data-cy="session-menu-start-call"]')
+			document.querySelector('[data-cy="session-menu-start-call"]')
 		).not.toBeNull();
 		await userEvent.click(kebab);
 		// The title column is no longer squeezed to 20 px: it keeps enough

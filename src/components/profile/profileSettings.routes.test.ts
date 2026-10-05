@@ -26,6 +26,14 @@ vi.mock('./EmailNotifications', () => ({ EmailNotification: () => null }));
 vi.mock('./NotificationSettings', () => ({
 	NotificationSettingsPanel: () => null
 }));
+// Node env has no window; #1553 gates a panel on isSupported().
+vi.mock('../../utils/notificationHelpers', async (importOriginal) => ({
+	...(await importOriginal<object>()),
+	isSupported: () => true
+}));
+vi.mock('./BrowserNotifications', () => ({
+	BrowserNotification: () => null
+}));
 vi.mock('./DeleteAccount', () => ({ DeleteAccount: () => null }));
 vi.mock('./Locale', () => ({ Locale: () => null }));
 vi.mock(
@@ -50,11 +58,16 @@ describe('Profile settings notification access', () => {
 			const visible = group.elements.filter((entry) =>
 				solveCondition(entry.condition, {} as never, [])
 			);
-			expect(visible.map((entry) => entry.component)).toEqual(
-				enabled
-					? [EmailNotification, NotificationSettingsPanel]
-					: [ConsultantNotifications]
-			);
+			// Containment, not an exact list: other PRs add panels here (#1553).
+			const shown = visible.map((entry) => entry.component);
+			const modern = [EmailNotification, NotificationSettingsPanel];
+			if (enabled) {
+				expect(shown).toEqual(expect.arrayContaining(modern));
+				expect(shown).not.toContain(ConsultantNotifications);
+			} else {
+				expect(shown).toContain(ConsultantNotifications);
+				modern.forEach((panel) => expect(shown).not.toContain(panel));
+			}
 		}
 	);
 });

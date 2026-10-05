@@ -63,7 +63,7 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { GroupChatRoleManager } from './GroupChatRoleManager';
 import { getGroupChatPlannedStart } from './groupChatDate';
 
-export const GroupChatInfo = () => {
+export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const settings = useAppConfig();
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
@@ -95,6 +95,9 @@ export const GroupChatInfo = () => {
 
 	const { fromL } = useResponsive();
 	useEffect(() => {
+		// As a dialog the session underneath owns the mobile pane; closing must
+		// not slide it away to the list.
+		if (dialog) return;
 		if (!fromL) {
 			mobileDetailView();
 			return () => {
@@ -102,7 +105,7 @@ export const GroupChatInfo = () => {
 			};
 		}
 		desktopView();
-	}, [fromL]);
+	}, [fromL, dialog]);
 
 	useEffect(() => {
 		if (!ready) {
@@ -272,8 +275,9 @@ export const GroupChatInfo = () => {
 		'agency',
 		'hint'
 	];
+	// Who leads the group, who invites and what roles exist is for moderators.
 	const m3Settings: GroupChatInfoSetting[] = [
-		...(showCreator
+		...(showCreator && isCurrentUserModerator
 			? [
 					{
 						key: 'creator' as const,
@@ -351,9 +355,12 @@ export const GroupChatInfo = () => {
 					}
 					isCurrentUserModerator={isCurrentUserModerator}
 					showInviteActions={
-						!!featureGroupChatV2Enabled && isV2GroupChat
+						!!featureGroupChatV2Enabled &&
+						isV2GroupChat &&
+						isCurrentUserModerator
 					}
 					teamRolesSlot={
+						isCurrentUserModerator &&
 						activeSession.item.participants?.length &&
 						userData?.userId ? (
 							<GroupChatRoleManager
