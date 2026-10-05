@@ -38,6 +38,8 @@ export const RuleChipsEditor = ({
 	const { t } = useTranslation();
 	const [draft, setDraft] = useState('');
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
+	/* A rule started in this field, not an existing one opened from its chip. */
+	const [editingIsNew, setEditingIsNew] = useState(false);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	useEffect(() => {
@@ -47,6 +49,13 @@ export const RuleChipsEditor = ({
 
 	const updateDraft = (text: string) => {
 		setDraft(text);
+		// A new rule cleared again is no rule: it must not hold a slot.
+		if (editingIndex !== null && editingIsNew && !text.trim()) {
+			onChange(rules.filter((_, index) => index !== editingIndex));
+			setEditingIndex(null);
+			setEditingIsNew(false);
+			return;
+		}
 		if (editingIndex !== null) {
 			onChange(
 				rules.map((rule, index) =>
@@ -59,6 +68,7 @@ export const RuleChipsEditor = ({
 			return;
 		}
 		setEditingIndex(rules.length);
+		setEditingIsNew(true);
 		onChange([...rules, text]);
 	};
 
@@ -93,6 +103,7 @@ export const RuleChipsEditor = ({
 			const nextIndex = rules.length;
 			onChange([...rules, '']);
 			setEditingIndex(nextIndex);
+			setEditingIsNew(true);
 			inputRef.current?.focus();
 			return;
 		}
@@ -104,6 +115,9 @@ export const RuleChipsEditor = ({
 		if (editingIndex === index) {
 			setDraft('');
 			setEditingIndex(null);
+		} else if (editingIndex !== null && index < editingIndex) {
+			// The rule being written moved up one place.
+			setEditingIndex(editingIndex - 1);
 		}
 	};
 
@@ -145,6 +159,7 @@ export const RuleChipsEditor = ({
 								onClick={() => {
 									setDraft(rule);
 									setEditingIndex(index);
+									setEditingIsNew(false);
 								}}
 							>
 								{t(

@@ -363,9 +363,9 @@ export const RuleTypedWithoutPlusIsCreated: Story = {
 	play: async ({ canvasElement }) => {
 		await typeRuleWithoutPlus(canvasElement);
 		await createAndOpenShareDialog(canvasElement);
-		const sent = Object.values(
-			lastCreateBody.groupChatRulesTranslations || {}
-		).flat();
-		await expect(sent).toContain(TYPED_RULE);
+		// The German tab is open, so the rule must arrive under `de`.
+		await expect(
+			lastCreateBody.groupChatRulesTranslations?.de || []
+		).toContain(TYPED_RULE);
 	}
 };
