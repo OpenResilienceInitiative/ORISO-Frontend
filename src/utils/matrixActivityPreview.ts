@@ -1,5 +1,6 @@
 import type { MatrixActivityEventResolution } from './matrixActivityEventResolver';
 import { getDecryptedMatrixMessageText } from './matrixSessionPreview';
+import { toMessagePreviewText } from './messagePreviewText';
 
 const normalizePreviewText = (value: string): string =>
 	value.replace(/\s+/g, ' ').trim();
@@ -89,10 +90,12 @@ export const buildMatrixActivityTextPreview = (
 		);
 	}
 
-	const body = getDecryptedMatrixMessageText(resolution.event);
+	const body = toMessagePreviewText(
+		getDecryptedMatrixMessageText(resolution.event)
+	);
 	if (!body) {
 		return fallbackText;
 	}
 
-	return withSender(senderName, normalizePreviewText(body));
+	return withSender(senderName, body);
 };

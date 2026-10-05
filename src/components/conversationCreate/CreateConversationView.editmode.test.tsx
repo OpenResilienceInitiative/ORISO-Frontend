@@ -43,6 +43,7 @@ vi.mock('../../globalState', async () => {
 	};
 	return {
 		UserDataContext,
+		NotificationsContext: react.createContext(null),
 		SessionsDataContext: react.createContext({ dispatch: () => {} }),
 		UPDATE_SESSIONS: 'UPDATE_SESSIONS',
 		useTenant: () => tenant,

@@ -509,7 +509,8 @@ export function NotificationsProvider(props) {
 						soundOverrideForEvent(
 							displayFilter.filters,
 							event.sourceSessionId
-						)
+						),
+						event.params?.recipientRole
 					);
 				} catch {
 					// Device audio support must not prevent feed or banner delivery.
@@ -526,7 +527,8 @@ export function NotificationsProvider(props) {
 						mentioned,
 						showAlways: descriptor.family === 'requests',
 						onclick: () => window.focus()
-					}
+					},
+					event.params?.recipientRole
 				);
 			} catch {
 				// Some browsers expose Notification but reject its constructor.

@@ -1,5 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS } from './fetchData';
+import { fetchData, FETCH_METHODS, FETCH_ERRORS } from './fetchData';
 
 export interface MessageEventNotificationInput {
 	roomId: string;
@@ -7,6 +7,8 @@ export interface MessageEventNotificationInput {
 	matrixRoom?: boolean;
 	threadRootId?: string | null;
 	supervisorMessage?: boolean;
+	/** Explicit protected-feedback compose hint; the server independently authorizes the event. */
+	feedbackMailIntent?: boolean;
 	senderDisplayName?: string | null;
 	threadParentPreview?: string | null;
 	teamDiscussion?: boolean;
@@ -21,6 +23,7 @@ export interface MessageEventNotificationBody {
 	matrixRoom: boolean;
 	threadRootId: string | null;
 	supervisorMessage: boolean;
+	feedbackMailIntent: boolean;
 	senderDisplayName: string | null;
 	threadParentPreview: string | null;
 	teamDiscussion: boolean;
@@ -36,6 +39,7 @@ export const buildMessageEventNotificationBody = ({
 	matrixRoom = true,
 	threadRootId,
 	supervisorMessage = false,
+	feedbackMailIntent = false,
 	senderDisplayName,
 	threadParentPreview,
 	teamDiscussion = false,
@@ -51,6 +55,7 @@ export const buildMessageEventNotificationBody = ({
 		matrixRoom,
 		threadRootId: threadRootId || null,
 		supervisorMessage,
+		feedbackMailIntent: matrixRoom && !teamDiscussion && feedbackMailIntent,
 		senderDisplayName: senderDisplayName || null,
 		threadParentPreview: canIncludePlaintextPreview
 			? threadParentPreview || null
@@ -62,11 +67,18 @@ export const buildMessageEventNotificationBody = ({
 };
 
 export const apiPostMessageEventNotification = async (
-	input: MessageEventNotificationInput
+	input: MessageEventNotificationInput,
+	signal?: AbortSignal
 ): Promise<any> =>
 	fetchData({
 		url: `${endpoints.eventNotifications}/message-events`,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify(buildMessageEventNotificationBody(input)),
-		responseHandling: []
+		signal,
+		// Feedback hint delivery is retriable background metadata, never a page navigation.
+		responseHandling: input.feedbackMailIntent
+			? Object.values(FETCH_ERRORS).filter(
+					(error) => error !== FETCH_ERRORS.EMPTY
+				)
+			: []
 	});

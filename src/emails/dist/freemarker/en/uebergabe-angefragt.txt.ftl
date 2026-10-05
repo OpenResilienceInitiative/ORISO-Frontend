@@ -1,21 +1,15 @@
-A counselling case is to be handed over to you
-==============================================
+A request about your counselling
+================================
 
-${fromConsultantName!''} has asked to hand an ongoing counselling case over to you.
+A counsellor is asking for your consent to a change in your counselling.
 
-Please check in the counselling area whether you can take it on.
+Sign in to review the request in the secure area.
 
-Case: ${caseReference!''}
-Requested by: ${fromConsultantName!''}
-Requested on: ${requestReceivedAt!''}
-
-Review handover:
+Review request:
 ${requestUrl!''}
 
-Until you agree, the case stays with the counsellor who has it now.
-
 ----------------------------------------------------------------
-Counselling content never appears in an email. You only ever see it encrypted, after signing in.
+Your messages are encrypted end-to-end. Nobody but you and your counselling service can read them – not even us.
 
 ${orgName!''}
 ${orgAddress!''}

@@ -120,17 +120,27 @@ const renderRoomAsCounsellor = (path = '/groups/15/entry') =>
 		</UserDataContext.Provider>
 	);
 
-const renderRoom = () =>
-	render(
+const CLIENT = { grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT'] };
+const COUNSELLOR = { grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'] };
+
+const roomFor = (userData: unknown) => (
+	<UserDataContext.Provider value={{ userData } as any}>
 		<MemoryRouter initialEntries={['/groups/15/entry']}>
 			<Routes>
 				<Route
 					path="/groups/:chatId/entry"
 					element={<GroupEntryRoom />}
 				/>
+				<Route
+					path="/sessions/consultant/sessionView/session/:sessionId"
+					element={<div data-testid="counsellor-group" />}
+				/>
 			</Routes>
 		</MemoryRouter>
-	);
+	</UserDataContext.Provider>
+);
+
+const renderRoom = () => render(roomFor(CLIENT));
 
 describe('GroupEntryRoom', () => {
 	afterEach(cleanup);
@@ -173,6 +183,20 @@ describe('GroupEntryRoom', () => {
 
 		expect(await screen.findByTestId('counsellor-group')).toBeTruthy();
 		expect(screen.queryByTestId('waiting-room')).toBeNull();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+	});
+
+	it('waits for the user before choosing the client or the counsellor side', async () => {
+		const view = render(roomFor(null));
+
+		expect(
+			document.querySelector('[data-cy="group-entry-loading"]')
+		).not.toBeNull();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+
+		view.rerender(roomFor(COUNSELLOR));
+
+		expect(await screen.findByTestId('counsellor-group')).toBeTruthy();
 		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
 	});
 

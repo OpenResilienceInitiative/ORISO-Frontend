@@ -18,6 +18,7 @@ vi.mock('../../globalState', () => {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const react = require('react');
 	return {
+		NotificationsContext: react.createContext(null),
 		SessionsDataContext: react.createContext({ dispatch: () => {} }),
 		UPDATE_SESSIONS: 'UPDATE_SESSIONS'
 	};

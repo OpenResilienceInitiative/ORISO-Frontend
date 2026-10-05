@@ -363,6 +363,28 @@ describe('redirectToApp', () => {
 });
 
 describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
+	it('returns to the selected email switch after login', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				'/sessions/consultant/sessionView/session/3363',
+				'/profile/einstellungen/email?mail=tagesuebersicht'
+			)
+		).toBe('/profile/einstellungen/email?mail=tagesuebersicht');
+	});
+
+	it('rejects an external email-settings return target', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'https://evil.example/profile/einstellungen/email'
+			)
+		).toBe('/sessions');
+	});
+
 	it('lands on the remembered consultant session', () => {
 		expect(
 			buildAppRedirectPath(

@@ -1,3 +1,4 @@
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { Avatar, Box, Button, Chip, Link, Typography } from '@mui/material';
 import * as React from 'react';
 import {
@@ -669,6 +670,11 @@ export const Registration = () => {
 						return;
 					}
 					clearRegistrationSubmitting();
+					const dpaNotice = getCounsellingDpaNotification(error, t);
+					if (dpaNotice) {
+						addNotification(dpaNotice);
+						return;
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
