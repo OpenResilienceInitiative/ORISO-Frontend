@@ -26,10 +26,12 @@ const DEFAULT_RULES = ['Sprich von dir selbst.', 'Was hier geteilt wird …'];
 const Harness = ({
 	initial = DEFAULT_RULES,
 	maxRules,
+	resetKey,
 	onRules
 }: {
 	initial?: string[];
 	maxRules?: number;
+	resetKey?: string;
 	onRules: (rules: string[]) => void;
 }) => {
 	const [rules, setRules] = useState(initial);
@@ -37,6 +39,7 @@ const Harness = ({
 		<RuleChipsEditor
 			rules={rules}
 			maxRules={maxRules}
+			resetKey={resetKey}
 			onChange={(next) => {
 				setRules(next);
 				onRules(next);
@@ -131,11 +134,56 @@ describe('RuleChipsEditor', () => {
 
 	it('does not add an empty rule when the typed text is deleted again', () => {
 		let latest = DEFAULT_RULES;
-		render(<Harness onRules={(rules) => (latest = rules)} />);
+		const view = render(
+			<Harness
+				maxRules={3}
+				resetKey="de"
+				onRules={(rules) => (latest = rules)}
+			/>
+		);
 
+		fireEvent.change(ruleInput(), { target: { value: 'Handys' } });
 		fireEvent.change(ruleInput(), { target: { value: '   ' } });
 
 		expect(latest).toEqual(DEFAULT_RULES);
+		// After a language-tab switch the last free slot is still free.
+		view.rerender(
+			<Harness
+				maxRules={3}
+				resetKey="en"
+				onRules={(rules) => (latest = rules)}
+			/>
+		);
+		expect((ruleInput() as HTMLTextAreaElement).disabled).toBe(false);
+	});
+
+	it('keeps an existing rule in place when its text is cleared while editing', () => {
+		let latest = DEFAULT_RULES;
+		render(<Harness onRules={(rules) => (latest = rules)} />);
+
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.create.authorContent.editRule 1'
+			})
+		);
+		fireEvent.change(ruleInput(), { target: { value: '' } });
+
+		expect(latest).toEqual(['', DEFAULT_RULES[1]]);
+	});
+
+	it('keeps typing into the same rule after an earlier rule is removed', () => {
+		let latest = DEFAULT_RULES;
+		render(<Harness onRules={(rules) => (latest = rules)} />);
+
+		fireEvent.change(ruleInput(), { target: { value: 'Handys' } });
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.create.authorContent.deleteRule 1'
+			})
+		);
+		fireEvent.change(ruleInput(), { target: { value: 'Handys aus.' } });
+
+		expect(latest).toEqual([DEFAULT_RULES[1], 'Handys aus.']);
 	});
 
 	it('locks the field once the rule limit is reached, so nothing typed is lost', () => {
