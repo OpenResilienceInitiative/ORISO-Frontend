@@ -1,3 +1,4 @@
+import { MenuEffectsSettings } from '../../features/menu-effects/MenuEffectsSettings';
 import { hasUserAuthority, AUTHORITIES } from '../../globalState';
 import { AppConfigInterface } from '../../globalState/interfaces';
 import {
@@ -11,9 +12,13 @@ import { TwoFactorAuth } from '../twoFactorAuth/TwoFactorAuth';
 import { EncryptionSettingsPanel } from './EncryptionSettings';
 // import { MagicLinksLoginFeature } from './MagicLinksLoginFeature';
 import { ConsultantNotifications } from './ConsultantNotifications';
+import { EmailNotification } from './EmailNotifications';
+import { NotificationSettingsPanel } from './NotificationSettings';
 import { DeleteAccount } from './DeleteAccount';
 import { Locale } from './Locale';
 import { KeyboardShortcutsSettings } from '../../features/keyboard-shortcuts/components/KeyboardShortcutsSettings';
+import { BrowserNotification } from './BrowserNotifications';
+import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 
 export const profileRoutesSettings = (
 	selectableLocales: string[],
@@ -53,6 +58,20 @@ export const profileRoutesSettings = (
 		url: '/email',
 		elements: [
 			{
+				condition: () =>
+					!!settings?.releaseToggles?.enableNewNotifications,
+				component: EmailNotification,
+				column: COLUMN_LEFT,
+				order: 1
+			},
+			{
+				condition: () =>
+					!!settings?.releaseToggles?.enableNewNotifications,
+				component: NotificationSettingsPanel,
+				column: COLUMN_RIGHT,
+				order: 1
+			},
+			{
 				condition: (userData) =>
 					hasUserAuthority(
 						AUTHORITIES.CONSULTANT_DEFAULT,
@@ -61,6 +80,16 @@ export const profileRoutesSettings = (
 				component: ConsultantNotifications,
 				column: COLUMN_RIGHT,
 				order: 1
+			},
+			// Legacy per-browser pop-up switch; the cross-device panel owns
+			// this screen once enableNewNotifications is on (#1551).
+			{
+				condition: () =>
+					!settings?.releaseToggles?.enableNewNotifications &&
+					!!isBrowserNotificationSupported(),
+				component: BrowserNotification,
+				column: COLUMN_LEFT,
+				order: 1
 			}
 		]
 	},
@@ -68,6 +97,7 @@ export const profileRoutesSettings = (
 		title: 'profile.routes.display',
 		url: '/anzeige',
 		elements: [
+			{ component: MenuEffectsSettings, column: COLUMN_RIGHT, order: 2 },
 			{
 				condition: () => selectableLocales.length > 1,
 				component: Locale,

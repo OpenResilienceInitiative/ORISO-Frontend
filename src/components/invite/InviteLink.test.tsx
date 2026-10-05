@@ -90,10 +90,23 @@ vi.mock('../pseudonym/AnimalAvatar', () => ({
 	AnimalAvatar: () => <div data-testid="animal-avatar" />
 }));
 
+/* One stable t, as i18next gives: InviteLink lists t in effect and callback
+   deps, so a fresh function per render would re-run them in tests only. */
+const i18nMock = vi.hoisted(() => {
+	const catalogue: Record<string, string> = {
+		'registration.account.username.label': 'User-ID',
+		'registration.registering': 'Registrierung läuft...',
+		'anonymousChat.pseudonym.changeName': 'Name ändern',
+		'anonymousChat.pseudonym.continueWithSelection': 'Weiter mit Auswahl',
+		'liveChat.entry.staff.headline': 'Sie sind als Beraterin angemeldet.',
+		'inviteLink.error.title': 'This invite link can no longer be used',
+		'inviteLink.resume.retry': 'Erneut versuchen'
+	};
+	return { t: (key: string) => catalogue[key] ?? key };
+});
+
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => i18nMock
 }));
 
 const { InviteLink } = await import('./InviteLink');

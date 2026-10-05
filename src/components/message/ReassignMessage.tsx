@@ -1,15 +1,55 @@
 import React, { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, BUTTON_TYPES } from '../button/Button';
 import './reassignRequestMessage.styles';
 import { ConsultantListContext } from '../../globalState';
+import {
+	type ConsultantReassignment,
+	ReassignStatus
+} from '../../api/apiSendAliasMessage';
+
+/**
+ * Name for a counsellor in a reassignment record: the live consultant list
+ * first, then the name stored in the message, then a neutral placeholder.
+ */
+const useConsultantName = (
+	consultantId: string | undefined,
+	storedName: string | undefined,
+	lookUp = true
+): string => {
+	const { t: translate } = useTranslation();
+	const { consultantList } = useContext(ConsultantListContext);
+
+	return useMemo(() => {
+		if (lookUp && consultantId && consultantList?.length > 0) {
+			const consultant = consultantList.find(
+				(entry) => entry.value === consultantId
+			);
+			if (consultant) {
+				return consultant.label;
+			}
+		}
+		return (
+			storedName?.trim() ||
+			translate('caseHandover.history.unknownConsultant')
+		);
+	}, [consultantId, consultantList, lookUp, storedName, translate]);
+};
 
 export const ReassignRequestMessage: React.FC<{
 	fromConsultantName: string;
 	toConsultantName: string;
-	onClick: (accepted: boolean) => void;
 }> = (props) => {
 	const { t: translate } = useTranslation();
+	const oldConsultant = useConsultantName(
+		undefined,
+		props.fromConsultantName,
+		false
+	);
+	const newConsultant = useConsultantName(
+		undefined,
+		props.toConsultantName,
+		false
+	);
 
 	return (
 		<div className="reassignRequestMessage">
@@ -17,76 +57,28 @@ export const ReassignRequestMessage: React.FC<{
 				<h5>
 					{translate(
 						'session.reassign.system.message.reassign.title',
-						{
-							oldConsultant: props.fromConsultantName,
-							newConsultant: props.toConsultantName
-						}
+						{ oldConsultant, newConsultant }
 					)}
 				</h5>
 
 				<span className="description">
 					{translate(
-						'session.reassign.system.message.reassign.description.noTeam',
-						{
-							oldConsultant: props.fromConsultantName,
-							newConsultant: props.toConsultantName
-						}
+						'session.reassign.system.message.reassign.historical'
 					)}
 				</span>
-				<span className="description">
-					{translate(
-						'session.reassign.system.message.reassign.question'
-					)}
-				</span>
-				<div className="buttons">
-					<Button
-						item={{
-							label: translate(
-								'session.reassign.system.message.reassign.accept'
-							),
-							type: BUTTON_TYPES.PRIMARY
-						}}
-						buttonHandle={() => props.onClick(true)}
-					/>
-					<Button
-						item={{
-							label: translate(
-								'session.reassign.system.message.reassign.decline'
-							),
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						buttonHandle={() => props.onClick(false)}
-					/>
-				</div>
 			</div>
 		</div>
 	);
 };
 
 export const ReassignRequestSentMessage: React.FC<{
-	toAskerName: string;
-	fromConsultantId: string;
-	toConsultantId: string;
+	toAskerName?: string;
+	fromConsultantId?: string;
+	toConsultantId?: string;
+	toConsultantName?: string;
 	isMySession: boolean;
-}> = (props) => {
+}> = () => {
 	const { t: translate } = useTranslation();
-	const { consultantList } = useContext(ConsultantListContext);
-
-	const toConsultantName = useMemo(() => {
-		if (props.toConsultantId && consultantList.length > 0) {
-			const toConsultant = consultantList.find(
-				(consultant) => consultant.value === props.toConsultantId
-			);
-			if (toConsultant) {
-				return toConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.toConsultantId]);
-
-	let descriptionToTranslate =
-		'session.reassign.system.message.reassign.sent.description.noTeam';
 
 	return (
 		<div className="reassignRequestMessage">
@@ -97,11 +89,9 @@ export const ReassignRequestSentMessage: React.FC<{
 					)}
 				</h5>
 				<span className="description">
-					{translate(descriptionToTranslate, {
-						client1: props.toAskerName,
-						client2: props.toAskerName,
-						newConsultant: toConsultantName
-					})}
+					{translate(
+						'session.reassign.system.message.reassign.historical'
+					)}
 				</span>
 			</div>
 		</div>
@@ -114,43 +104,21 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 	toConsultantId: string;
 	isAsker: boolean;
 	fromConsultantId: string;
+	fromConsultantName?: string;
 	isMySession: boolean;
 }> = (props) => {
 	const { t: translate } = useTranslation();
-	const { consultantList } = useContext(ConsultantListContext);
-	const fromConsultantName = useMemo(() => {
-		if (
-			props.fromConsultantId &&
-			!props.isAsker &&
-			consultantList.length > 0
-		) {
-			const fromConsultant = consultantList.find(
-				(consultant) => consultant.value === props.fromConsultantId
-			);
-			if (fromConsultant) {
-				return fromConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.fromConsultantId, props.isAsker]);
-
-	const toConsultantName = useMemo(() => {
-		if (
-			props.toConsultantId &&
-			!props.isAsker &&
-			consultantList.length > 0
-		) {
-			const toConsultant = consultantList.find(
-				(consultant) => consultant.value === props.toConsultantId
-			);
-			if (toConsultant) {
-				return toConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.isAsker, props.toConsultantId]);
+	// Advice seekers never see staff lookups, only the stored names.
+	const fromConsultantName = useConsultantName(
+		props.fromConsultantId,
+		props.fromConsultantName,
+		!props.isAsker
+	);
+	const toConsultantName = useConsultantName(
+		props.toConsultantId,
+		props.toConsultantName,
+		!props.isAsker
+	);
 
 	const forWhichConsultant = props.isMySession ? 'self' : 'other';
 
@@ -162,17 +130,15 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 						<h5>
 							{translate(
 								'session.reassign.system.message.reassign.accepted.consultant.title',
-								{
-									newConsultant: props.toConsultantName
-								}
+								{ newConsultant: toConsultantName }
 							)}
 						</h5>
 						<span className="description">
 							{translate(
 								'session.reassign.system.message.reassign.accepted.new.consultant.description',
 								{
-									newConsultant1: props.toConsultantName,
-									newConsultant2: props.toConsultantName
+									newConsultant1: toConsultantName,
+									newConsultant2: toConsultantName
 								}
 							)}
 						</span>
@@ -213,23 +179,11 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 	fromConsultantId: string;
 }> = (props) => {
 	const { t: translate } = useTranslation();
-	const { consultantList } = useContext(ConsultantListContext);
-	const fromConsultantName = useMemo(() => {
-		if (
-			props.fromConsultantId &&
-			!props.isAsker &&
-			consultantList.length > 0
-		) {
-			const fromConsultant = consultantList.find(
-				(consultant) => consultant.value === props.fromConsultantId
-			);
-			if (fromConsultant) {
-				return fromConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.fromConsultantId, props.isAsker]);
+	const fromConsultantName = useConsultantName(
+		props.fromConsultantId,
+		props.fromConsultantName,
+		!props.isAsker
+	);
 
 	const forWhichConsultant = props.isMySession ? 'self' : 'other';
 
@@ -240,9 +194,7 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 					<h5>
 						{translate(
 							'session.reassign.system.message.reassign.declined.old.consultant.title',
-							{
-								oldConsultant: props.fromConsultantName
-							}
+							{ oldConsultant: fromConsultantName }
 						)}
 					</h5>
 				) : (
@@ -250,9 +202,7 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 						<h5>
 							{translate(
 								'session.reassign.system.message.reassign.declined.title',
-								{
-									client: props.toAskerName
-								}
+								{ client: props.toAskerName }
 							)}
 						</h5>
 						<span className="description">
@@ -269,4 +219,56 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 			</div>
 		</div>
 	);
+};
+
+/**
+ * Legacy REASSIGN_CONSULTANT record, read-only. Nothing on dev can still
+ * create or answer one (no /service/messages handler), so no buttons.
+ */
+export const HistoricalReassignMessage = ({
+	message,
+	isAsker,
+	isMySession
+}: {
+	message: string;
+	isAsker: boolean;
+	isMySession: boolean;
+}) => {
+	let params: ConsultantReassignment;
+	try {
+		params = JSON.parse(message);
+	} catch {
+		return null;
+	}
+	if (!params || typeof params !== 'object') return null;
+
+	switch (params.status) {
+		case ReassignStatus.REQUESTED:
+			return isAsker ? (
+				<ReassignRequestMessage {...params} />
+			) : (
+				<ReassignRequestSentMessage
+					{...params}
+					isMySession={isMySession}
+				/>
+			);
+		case ReassignStatus.CONFIRMED:
+			return (
+				<ReassignRequestAcceptedMessage
+					{...params}
+					isAsker={isAsker}
+					isMySession={isMySession}
+				/>
+			);
+		case ReassignStatus.REJECTED:
+			return (
+				<ReassignRequestDeclinedMessage
+					{...params}
+					isAsker={isAsker}
+					isMySession={isMySession}
+				/>
+			);
+		default:
+			return null;
+	}
 };

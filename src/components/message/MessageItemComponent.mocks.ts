@@ -17,8 +17,8 @@ export const MOCK_ASKER_MATRIX_ID = '@sanftes.alpaka:oriso.invalid';
 export const MOCK_CONSULTANT_MATRIX_ID = '@karina.p:oriso.invalid';
 export const MOCK_GROUP_MODERATOR_MATRIX_ID = '@angela.k:oriso.invalid';
 
-const MOCK_MATRIX_ROOM_1ON1 = '!storybook-1on1:oriso.org';
-const MOCK_MATRIX_ROOM_GROUP = '!storybook-internal-group:oriso.org';
+const MOCK_MATRIX_ROOM_1ON1 = '!storybook-1on1:example.org';
+const MOCK_MATRIX_ROOM_GROUP = '!storybook-internal-group:example.org';
 
 export function mockActiveSession(
 	overrides: Partial<ExtendedSessionInterface> = {}
@@ -316,9 +316,10 @@ export const mockCaseHandoverGrantedMessage = `[SYSTEM_NOTIFICATION]${JSON.strin
 		type: 'CASE_HANDOVER_GRANTED',
 		username: 'Kim G.',
 		description:
-			'Deine bisherige Berater:in ist leider erkrankt. Damit du nicht warten musst, hat Kim G. deinen Fall übernommen.',
+			'Deine bisherige Berater:in ist derzeit nicht erreichbar. Kim G. betreut dich weiter.',
+		// Legacy label: the UI must show it as "Unplanned absence".
 		reasonLabel: 'Counsellor is ill',
 		explanation:
-			'My colleague is ill, so I decided it is better if I take care of this client.'
+			'My colleague is away, so I decided it is better if I take care of this client.'
 	}
 )}`;

@@ -1340,7 +1340,9 @@
 		"sourcePath": "src/resources/img/icons/audio-on.svg",
 		"exportNames": [],
 		"usageFiles": [
-			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx"
+			"src/components/messageSubmitInterface/messageSubmitInterfaceComponent.tsx",
+			"src/components/sessionsListItem/SessionListItemLastMessage.tsx",
+			"src/components/sessionsListItem/sessionsListItem.styles.scss"
 		],
 		"usage": "app-used"
 	},
@@ -1528,6 +1530,7 @@
 		"usageFiles": [
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/displayFilter/kindOptions.ts",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -2240,6 +2243,7 @@
 		"exportNames": ["CopyIcon"],
 		"usageFiles": [
 			"src/components/E2EEncryptionSupportHelp/E2EEncryptionSupportHelp.tsx",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/groupChat/GroupChatCopyLinks.tsx",
 			"src/components/help/HelpVideoCall.tsx",
 			"src/components/profile/ConsultantAgencies.tsx",
@@ -2273,6 +2277,7 @@
 		"exportNames": ["DownloadIcon"],
 		"usageFiles": [
 			"src/components/generateQrCode/GenerateQrCode.tsx",
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2411,7 +2416,8 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
-			"src/components/sessionsList/SessionRailPill.tsx"
+			"src/components/sessionsList/SessionRailPill.tsx",
+			"src/components/sessionsListItem/SessionListItemLastMessage.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2526,6 +2532,7 @@
 		"sourcePath": "src/resources/img/icons/googlecalendar.svg",
 		"exportNames": ["GoogleCalendar"],
 		"usageFiles": [
+			"src/components/groupChat/GroupChatCalendarMenu.tsx",
 			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -3268,6 +3275,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:outlook-calendar:base",
+		"family": "outlook-calendar",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "outlook-calendar.svg",
+		"sourcePath": "src/resources/img/icons/outlook-calendar.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/groupChat/GroupChatCalendarMenu.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:overview:filled",
 		"family": "overview",
 		"state": "filled",
@@ -3909,10 +3929,7 @@
 		"fileName": "stack-horizontal.svg",
 		"sourcePath": "src/resources/img/icons/stack-horizontal.svg",
 		"exportNames": ["MenuHorizontalIcon"],
-		"usageFiles": [
-			"src/components/flyoutMenu/FlyoutMenu.tsx",
-			"src/resources/img/icons.ts"
-		],
+		"usageFiles": ["src/resources/img/icons.ts"],
 		"usage": "app-used"
 	},
 	{
@@ -3940,6 +3957,7 @@
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/chatMenuDropdown/CompactActionMenu.tsx",
 			"src/components/chatStage/PanelCallActions.tsx",
 			"src/components/conversationCreate/PanelHeader.tsx",
 			"src/components/message/MessageItemComponent.tsx",
@@ -4240,7 +4258,6 @@
 		"exportNames": ["TrashIcon"],
 		"usageFiles": [
 			"src/components/editableData/EditableData.tsx",
-			"src/components/message/MessageItemComponent.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
 			"src/resources/img/icons.ts"

@@ -1,0 +1,30 @@
+Quelque chose a changé dans votre équipe
+========================================
+
+{{teamChangeStatement}}
+
+Vous verrez ce que cela signifie pour vos responsabilités dans l’espace de consultation.
+
+Dossier: {{caseReference}}
+Modifié le: {{teamChangedAt}}
+
+Aller à l’espace de consultation:
+{{appUrl}}
+
+C’est votre organisme qui décide si cette notification est envoyée.
+
+----------------------------------------------------------------
+Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.
