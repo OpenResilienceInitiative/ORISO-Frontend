@@ -49,35 +49,58 @@ export const GroupConsentGate = ({
 	const departmentState = useGroupDepartment(agencyId);
 	const department =
 		departmentState.status === 'ready' ? departmentState.department : null;
-	const [departmentConsent, setDepartmentConsent] =
-		useState<DepartmentConsentState>({ status: 'idle' });
+	/* Keyed to its department: another group's statement never stands in
+	   while this one's is still loading. */
+	const [answeredConsent, setAnsweredConsent] = useState<{
+		key: string;
+		state: DepartmentConsentState;
+	} | null>(null);
+	const departmentKey = department
+		? `${department.agencyId}:${department.topicId}`
+		: null;
+	const departmentConsent: DepartmentConsentState =
+		answeredConsent && answeredConsent.key === departmentKey
+			? answeredConsent.state
+			: { status: 'idle' };
 	const [busy, setBusy] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
 	const [rejected, setRejected] = useState(false);
 	const phone = useMediaQuery('(max-width:599px)');
 
 	useEffect(() => {
-		if (!department) return undefined;
+		if (!department || !departmentKey) return undefined;
 		let cancelled = false;
 		apiGetConsentText(department.agencyId, department.topicId)
 			.then((result) => {
 				if (cancelled) return;
-				setDepartmentConsent(
-					result.status === 'ok'
-						? {
-								status: 'ok',
-								sentence: result.consentText?.sentence ?? null,
-								versionId: result.consentText?.versionId ?? null
-							}
-						: { status: 'unavailable' }
-				);
+				setAnsweredConsent({
+					key: departmentKey,
+					state:
+						result.status === 'ok'
+							? {
+									status: 'ok',
+									sentence:
+										result.consentText?.sentence ?? null,
+									versionId:
+										result.consentText?.versionId ?? null
+								}
+							: { status: 'unavailable' }
+				});
 			})
 			.catch(() => {
-				if (!cancelled) setDepartmentConsent({ status: 'unavailable' });
+				if (!cancelled) {
+					setAnsweredConsent({
+						key: departmentKey,
+						state: { status: 'unavailable' }
+					});
+				}
 			});
 		return () => {
 			cancelled = true;
 		};
-	}, [department]);
+		// The key stands for the department; its object identity may change.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [departmentKey]);
 
 	const legalLinksHtml = useMemo(
 		() =>
@@ -112,12 +135,17 @@ export const GroupConsentGate = ({
 	const handleAccept = useCallback(() => {
 		if (busy || !consent.readable) return;
 		setBusy(true);
+		setSaveFailed(false);
 		apiPatchUserData({
 			dataPrivacyConfirmation: true,
 			termsAndConditionsConfirmation: true
 		})
 			.then(() => onAccepted())
-			.catch(() => setBusy(false));
+			.catch(() => {
+				// Not recorded: the gate stays, and the client is told so.
+				setSaveFailed(true);
+				setBusy(false);
+			});
 	}, [busy, consent.readable, onAccepted]);
 
 	/* The sentence becomes Träger-authored text (ADR-021 decision 4), so it
@@ -161,7 +189,18 @@ export const GroupConsentGate = ({
 				}
 			]}
 		>
-			<p className="groupConsentGate__sentence">{sentence}</p>
+			{/* While the statement for this group loads, show none at all. */}
+			{consent.readable && (
+				<p className="groupConsentGate__sentence">{sentence}</p>
+			)}
+			{saveFailed && (
+				<p className="groupConsentGate__rejected" role="alert">
+					{t(
+						'groupChat.consent.saveFailed',
+						'Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.'
+					)}
+				</p>
+			)}
 			{rejected && (
 				<p className="groupConsentGate__rejected" role="alert">
 					{t(

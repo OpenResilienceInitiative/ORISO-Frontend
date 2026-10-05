@@ -103,7 +103,9 @@ vi.mock('../sessionHeader/SessionHeaderComponent', () => ({
 vi.mock('./EncryptionBanner', () => ({
 	EncryptionBanner: () => null
 }));
-vi.mock('./ThreadListPanel', () => ({ ThreadListPanel: () => null }));
+vi.mock('./ThreadListPanel', () => ({
+	ThreadListPanel: () => <div data-testid="thread-list" />
+}));
 vi.mock('./AcceptAssign', () => ({ AcceptAssign: () => null }));
 vi.mock('../message/MessageItemComponent', () => ({
 	MessageItemComponent: () => null
@@ -205,9 +207,29 @@ const groupSession = {
 	}
 } as any;
 
-const renderGroup = (userData: any) =>
+/* A thread in the group: its root, one reply. */
+const threadMessages = [
+	{
+		_id: '$root',
+		message: 'Wie geht es euch heute?',
+		messageTime: '2026-10-01T09:00:00Z',
+		userId: '@other:matrix.oriso.org'
+	},
+	{
+		_id: '$reply',
+		message: 'Etwas besser als gestern.',
+		messageTime: '2026-10-01T09:05:00Z',
+		threadRootEventId: '$root',
+		userId: '@other:matrix.oriso.org'
+	}
+] as any[];
+
+const renderGroup = (
+	userData: any,
+	{ path = '/', messages = [] as any[] } = {}
+) =>
 	render(
-		<MemoryRouter>
+		<MemoryRouter initialEntries={[path]}>
 			<NotificationsContext.Provider
 				value={{ addEventNotification: vi.fn() } as any}
 			>
@@ -228,7 +250,7 @@ const renderGroup = (userData: any) =>
 							<SessionItemComponent
 								typingUsers={[]}
 								bannedUsers={[]}
-								messages={[]}
+								messages={messages}
 								hasUserInitiatedStopOrLeaveRequest={{
 									current: false
 								}}
@@ -241,7 +263,11 @@ const renderGroup = (userData: any) =>
 	);
 
 describe('SessionItemComponent — privacy gate in a self-help group', () => {
-	beforeEach(() => sessionStorage.clear());
+	beforeEach(() => {
+		sessionStorage.clear();
+		// jsdom has no scrolling; the thread timeline scrolls on open.
+		Element.prototype.scrollTo = () => undefined;
+	});
 
 	afterEach(() => {
 		cleanup();
@@ -261,6 +287,41 @@ describe('SessionItemComponent — privacy gate in a self-help group', () => {
 
 		expect(await screen.findByTestId('composer')).toBeTruthy();
 		expect(screen.queryByTestId('group-consent-gate')).toBeNull();
+	});
+
+	it('opens no thread and shows no thread list before the agreement', async () => {
+		renderGroup(client(null), {
+			path: '/?channel=thread:%24root',
+			messages: threadMessages
+		});
+
+		expect(await screen.findByTestId('group-consent-gate')).toBeTruthy();
+		expect(document.querySelector('[data-cy="stage-panel"]')).toBeNull();
+		expect(document.querySelector('.session__threadListBar')).toBeNull();
+		expect(screen.queryByTestId('composer')).toBeNull();
+	});
+
+	it('opens the thread from the link once the agreement is recorded', async () => {
+		renderGroup(client('2026-09-23T10:00:00Z'), {
+			path: '/?channel=thread:%24root',
+			messages: threadMessages
+		});
+
+		await act(async () => undefined);
+		expect(
+			document.querySelector('[data-cy="stage-panel"]')
+		).not.toBeNull();
+	});
+
+	it('lists the threads once the agreement is recorded', async () => {
+		renderGroup(client('2026-09-23T10:00:00Z'), {
+			messages: threadMessages
+		});
+
+		await act(async () => undefined);
+		expect(
+			document.querySelector('.session__threadListBar')
+		).not.toBeNull();
 	});
 
 	it('never asks the counsellor', async () => {

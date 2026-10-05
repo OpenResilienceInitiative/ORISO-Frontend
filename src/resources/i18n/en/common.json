@@ -1252,7 +1252,8 @@
 			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group.",
 			"reject": "Decline",
 			"accept": "Agree",
-			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later."
+			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
+			"saveFailed": "Your agreement could not be saved. Please try again."
 		}
 	},
 	"help": {
