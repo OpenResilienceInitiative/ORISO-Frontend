@@ -79,13 +79,25 @@ export type RecoveryRuntimeStatus =
 	| 'needs-recovery-key'
 	| 'retryable-failure';
 const statuses = new Map<string, RecoveryRuntimeStatus>();
+/* Counts status changes, so a pass through another status (e.g. 'pending') is visible even when
+   React renders only the end state of one batch. */
+const revisions = new Map<string, number>();
 export const setRecoveryRuntimeStatus = (
 	userId: string,
 	status: RecoveryRuntimeStatus
 ): void => {
+	if (statuses.get(userId) !== status) {
+		revisions.set(userId, (revisions.get(userId) ?? 0) + 1);
+	}
 	statuses.set(userId, status);
 	notifyRecoveryState();
 };
+export const useRecoveryRuntimeRevision = (userId: string): number =>
+	useSyncExternalStore(
+		subscribeRecoveryState,
+		() => revisions.get(userId) ?? 0,
+		() => 0
+	);
 /** The current status, for callers outside React that must not overwrite a
  *  more specific one they did not produce. */
 export const getRecoveryRuntimeStatus = (
@@ -93,6 +105,7 @@ export const getRecoveryRuntimeStatus = (
 ): RecoveryRuntimeStatus => statuses.get(userId) ?? 'idle';
 export const clearRecoveryRuntimeState = (): void => {
 	statuses.clear();
+	revisions.clear();
 	notifyRecoveryState();
 };
 export const useRecoveryRuntimeStatus = (

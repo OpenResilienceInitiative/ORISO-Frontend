@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, waitFor, within } from 'storybook/test';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 import { MenuVerticalIcon } from '../../resources/img/icons';
 import { MessageAvatar } from '../message/MessageAvatar';
@@ -16,29 +16,14 @@ import nearbyConversationIcon from '../../resources/img/icons/chatroom/nearby_co
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import selfHelpIcon from '../../resources/img/icons/session-toolbar/supervision_chats.svg';
 import teamImage from '../../resources/img/illustrations/Team.svg';
+import type { ListItemInterface } from '../../globalState/interfaces';
 import {
-	ActiveSessionContext,
-	AUTHORITIES,
-	buildExtendedSession,
-	ConsultingTypesContext,
-	E2EEContext,
-	SessionTypeContext,
-	SessionsDataContext,
-	TopicsContext,
-	UserDataContext
-} from '../../globalState';
-import type {
-	ConsultingTypeInterface,
-	ListItemInterface,
-	TopicsDataInterface
-} from '../../globalState/interfaces';
-import {
-	REGISTRATION_TYPE_REGISTERED,
-	STATUS_ACTIVE
-} from '../../globalState/interfaces';
-import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
-import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
-import { SessionListItemComponent } from './SessionListItemComponent';
+	RuntimeSessionCard,
+	RuntimeSessionProviders,
+	runtimeSession,
+	runtimeUserData
+} from './__storybook__/runtimeSessionCard';
+import { STATUS_EMPTY } from '../../globalState/interfaces';
 import './sessionsListItem.styles.scss';
 
 const APP_ORISO_CHAT_FIGMA_URL =
@@ -52,110 +37,6 @@ const listShell: React.CSSProperties = {
 	margin: '0 auto',
 	padding: '4px 8px'
 };
-
-const runtimeTopic: TopicsDataInterface = {
-	id: 1,
-	name: 'Familienberatung',
-	slug: 'familienberatung',
-	description: 'Storybook runtime topic.',
-	internalIdentifier: 'familienberatung',
-	status: 'active',
-	createDate: '2026-03-01T00:00:00.000Z',
-	updateDate: '2026-03-01T00:00:00.000Z',
-	fallbackUrl: '',
-	titles: {
-		short: 'Familie',
-		long: 'Familienberatung',
-		registrationDropdown: 'Familienberatung',
-		welcome: 'Familienberatung'
-	}
-};
-
-const runtimeConsultingType: ConsultingTypeInterface = {
-	id: 1,
-	showAskerProfile: true,
-	titles: {
-		default: '1-1 Beratung',
-		short: '1-1',
-		long: '1-1 Beratung',
-		welcome: 'Willkommen',
-		registrationDropdown: '1-1 Beratung'
-	},
-	isVideoCallAllowed: true,
-	isSubsequentRegistrationAllowed: true,
-	urls: {
-		registrationPostcodeFallbackUrl: '',
-		requiredAidMissingRedirectUrl: ''
-	},
-	registration: {
-		autoSelectAgency: false,
-		autoSelectPostcode: false,
-		notes: {}
-	},
-	groupChat: {
-		isGroupChat: false,
-		groupChatRules: ['']
-	},
-	description: 'Storybook runtime fixture for the real session row.',
-	slug: 'one-on-one',
-	languageFormal: true,
-	welcomeScreen: {
-		anonymous: {
-			title: 'Willkommen',
-			text: ''
-		}
-	}
-};
-
-const runtimeSession: ListItemInterface = {
-	user: {
-		username: 'ruhiges-yak-kim@example.invalid',
-		displayName: 'ruhiges Yak Kim',
-		sessionData: {}
-	},
-	consultant: {
-		consultantId: 'consultant-storybook',
-		id: 'consultant-storybook',
-		username: 'beraterin@example.invalid',
-		displayName: 'Beraterin ORISO',
-		absent: false,
-		absenceMessage: ''
-	},
-	language: 'de',
-	session: {
-		id: 4401,
-		agencyId: 101,
-		askerMatrixUserId: 'asker-4401',
-		attachment: null,
-		consultingType: 1,
-		matrixRoomId: 'storybook-runtime-room-4401',
-		e2eLastMessage: null,
-		lastMessage: 'Anfrage gesendet',
-		messageDate: 1773822900,
-		createDate: '2026-03-18T06:15:00.000Z',
-		messagesRead: false,
-		postcode: 12345,
-		registrationType: REGISTRATION_TYPE_REGISTERED,
-		status: STATUS_ACTIVE,
-		videoCallMessageDTO: null,
-		topic: runtimeTopic
-	}
-};
-
-const runtimeUserData = {
-	userId: 'consultant-storybook',
-	userName: 'beraterin@example.invalid',
-	displayName: 'Beraterin ORISO',
-	grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT],
-	twoFactorAuth: {
-		isEnabled: false,
-		isActive: false,
-		isShown: false,
-		isToBeActivated: false,
-		secret: '',
-		qrCode: ''
-	}
-} as any;
 
 function MockAvatar({ letter, bg }: { letter: string; bg: string }) {
 	return (
@@ -687,7 +568,8 @@ function RuntimeSessionListItem({
 	lastMessage = runtimeSession.session.lastMessage,
 	sessionOverrides = {},
 	consultantId = runtimeSession.consultant.id,
-	viewerId = runtimeUserData.userId
+	viewerId = runtimeUserData.userId,
+	asSearchingAsker = false
 }: {
 	lastMessage?: string;
 	/** Extra `session` DTO fields, e.g. the ADR-008 `supervision` marker. */
@@ -696,86 +578,37 @@ function RuntimeSessionListItem({
 	consultantId?: string;
 	/** Logged-in consultant. */
 	viewerId?: string;
+	/**
+	 * FE#1115 — the advice seeker's own row while nobody has accepted:
+	 * no consultant on the session, so the avatar slot holds the magnet.
+	 */
+	asSearchingAsker?: boolean;
 } = {}) {
 	const storySession: ListItemInterface = {
 		...runtimeSession,
-		consultant: {
-			...runtimeSession.consultant,
-			consultantId,
-			id: consultantId
-		},
+		consultant: asSearchingAsker
+			? undefined
+			: {
+					...runtimeSession.consultant,
+					consultantId,
+					id: consultantId
+				},
 		session: {
 			...runtimeSession.session,
 			lastMessage,
 			...sessionOverrides
 		}
 	};
-	const activeSession = buildExtendedSession(storySession, '');
-	const userData = { ...runtimeUserData, userId: viewerId };
 
 	return (
 		<div style={listShell}>
-			<UserDataContext.Provider
-				value={{
-					userData,
-					setUserData: () => {},
-					reloadUserData: async () => userData
-				}}
+			<RuntimeSessionProviders
+				sessions={[storySession]}
+				viewerId={viewerId}
+				asAsker={asSearchingAsker}
 			>
-				<SessionTypeContext.Provider
-					value={{
-						type: SESSION_LIST_TYPES.MY_SESSION,
-						path: '/sessions/consultant/sessionView'
-					}}
-				>
-					<ConsultingTypesContext.Provider
-						value={{
-							consultingTypes: [runtimeConsultingType],
-							setConsultingTypes: () => {}
-						}}
-					>
-						<TopicsContext.Provider
-							value={{
-								topics: [runtimeTopic],
-								refreshTopics: () => {}
-							}}
-						>
-							<SessionsDataContext.Provider
-								value={{
-									ready: true,
-									sessions: [storySession],
-									dispatch: () => {}
-								}}
-							>
-								<E2EEContext.Provider
-									value={{
-										key: '',
-										reloadPrivateKey: () => {},
-										isE2eeEnabled: false,
-										e2EEReady: true
-									}}
-								>
-									<LegalLinksContext.Provider value={[]}>
-										<ActiveSessionContext.Provider
-											value={{
-												activeSession,
-												reloadActiveSession: () => {},
-												readActiveSession: () => {}
-											}}
-										>
-											<SessionListItemComponent
-												defaultLanguage="de"
-												handleKeyDownLisItemContent={() => {}}
-												index={0}
-											/>
-										</ActiveSessionContext.Provider>
-									</LegalLinksContext.Provider>
-								</E2EEContext.Provider>
-							</SessionsDataContext.Provider>
-						</TopicsContext.Provider>
-					</ConsultingTypesContext.Provider>
-				</SessionTypeContext.Provider>
-			</UserDataContext.Provider>
+				<RuntimeSessionCard session={storySession} />
+			</RuntimeSessionProviders>
 		</div>
 	);
 }
@@ -1049,6 +882,11 @@ export const RuntimeComponent: Story = {
 				)
 			).toBe(false);
 		});
+		// Review of #1418: "Mail" is read out once — the envelope beside the
+		// visible word is decoration, not a second name.
+		const canvas = within(canvasElement);
+		await expect(canvas.getAllByText('Mail')).toHaveLength(1);
+		await expect(canvas.queryByRole('img', { name: 'Mail' })).toBeNull();
 	}
 };
 
@@ -1303,5 +1141,101 @@ export const SupervisedByOthers: Story = {
 				canvasElement.querySelector('[data-testid="supervision-badge"]')
 			).toBeNull();
 		});
+	}
+};
+
+/**
+ * FE#1115 — the advice seeker's own row while the platform is still looking
+ * for a counsellor. The avatar slot holds the magnet, naked: no black disc
+ * any more, and nothing in the row clips its beam.
+ */
+export const AskerSearchingRow: Story = {
+	name: 'Ratsuchende wartet — Magnet im Avatar-Platz (FE#1115)',
+	render: () => {
+		seedMatrixRoom(0);
+		return <RuntimeSessionListItem asSearchingAsker />;
+	},
+	play: async ({ canvasElement }) => {
+		const magnet = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.consultantSearchLoader'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		// The slot it stands in is the avatar slot, at the avatar's size.
+		const box = magnet.getBoundingClientRect();
+		await expect(Math.round(box.width)).toBe(32);
+		// No black disc any more — nothing is painted behind the magnet.
+		await expect(getComputedStyle(magnet).backgroundColor).toBe(
+			'rgba(0, 0, 0, 0)'
+		);
+
+		// The beam is here too, and it stays inside the card: it points
+		// right, into the card's own width, so the corner clip that rounds
+		// the card never reaches it. Measured at the end of the flight.
+		const card = canvasElement.querySelector<HTMLElement>(
+			'.sessionsListItem__content'
+		)!;
+		await expect(
+			card.classList.contains('consultantSearchLoaderHost')
+		).toBe(true);
+		const sweep = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__sweep'
+		)!;
+		const beam = magnet.querySelector<HTMLElement>(
+			'.consultantSearchLoader__beam'
+		)!;
+		await expect(beam).toBeTruthy();
+		magnet.classList.add('consultantSearchLoader--pulsing');
+		sweep.getAnimations().forEach((animation) => animation.pause());
+		// Reduced motion removes the beam animation: nothing to fly, so the
+		// flight-end geometry below only applies when it runs.
+		const beamAnimations = beam.getAnimations();
+		if (beamAnimations.length > 0) {
+			const flight = Number(
+				beamAnimations[0].effect!.getTiming().duration
+			);
+			beamAnimations.forEach((animation) => {
+				animation.pause();
+				animation.currentTime = flight;
+			});
+			const beamBox = beam.getBoundingClientRect();
+			const cardBox = card.getBoundingClientRect();
+			await expect(beamBox.right).toBeGreaterThan(box.right);
+			await expect(beamBox.right).toBeLessThan(cardBox.right);
+			await expect(beamBox.top).toBeGreaterThan(cardBox.top);
+			await expect(beamBox.bottom).toBeLessThan(cardBox.bottom);
+		}
+		magnet.classList.remove('consultantSearchLoader--pulsing');
+	}
+};
+
+/** Own enquiry not written yet: nobody searches, so the magnet rests. */
+export const AskerEmptyEnquiryRow: Story = {
+	name: 'Ratsuchende, Anfrage noch leer — Magnet ruht (FE#1115)',
+	render: () => {
+		seedMatrixRoom(0);
+		return (
+			<RuntimeSessionListItem
+				asSearchingAsker
+				sessionOverrides={{ status: STATUS_EMPTY }}
+			/>
+		);
+	},
+	play: async ({ canvasElement }) => {
+		const magnet = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.consultantSearchLoader'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(magnet).not.toHaveClass(
+			'consultantSearchLoader--animated'
+		);
+		await expect(
+			canvasElement.querySelector('.sessionsListItem__content')
+		).not.toHaveClass('consultantSearchLoaderHost');
 	}
 };

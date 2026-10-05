@@ -1,124 +1,91 @@
 import * as React from 'react';
-import styled from 'styled-components';
+import clsx from 'clsx';
 import './consultantSearchLoader.styles.scss';
 
+/** How long one search gesture takes. Mirrors `--csl-pulse` in the SCSS. */
+const PULSE_MS = 2600;
+
 interface ConsultantSearchLoaderProps {
+	/** Edge length of the magnet's box. Defaults to the 24 px glyph slot. */
 	size?: string;
+	/**
+	 * While `false` the magnet stands still and never sends — the same
+	 * drawing serves as the static conversation-type glyph, so the two
+	 * states are visibly one object rather than two icons (FE#1115).
+	 */
+	animated?: boolean;
+	className?: string;
 }
 
+const prefersReducedMotion = () =>
+	typeof window !== 'undefined' &&
+	typeof window.matchMedia === 'function' &&
+	window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * The magnet — the conversation-type glyph of an enquiry, and the
+ * "we are looking for a counsellor for you" indicator.
+ *
+ * It sends once when the view arrives and again whenever the surface it
+ * sits on is hovered, and is otherwise completely still. Frank, 15.09.:
+ * "immer wenn wir drüber hovern, dann spielen wir einfach die Animation.
+ * Das reicht. … wenn das Ticket reingeladen wird, natürlich beim ersten Mal
+ * auch." That also settles the case he worried about earlier — three or
+ * four waiting requests on one screen can no longer pulse in lockstep,
+ * because nothing pulses on a timer at all.
+ *
+ * Hosts opt into the hover replay by carrying `consultantSearchLoaderHost`;
+ * the hover target is then the whole capsule or card, not the 24 px glyph.
+ *
+ * FE#1115: this used to be two separate hand-built drawings. The header
+ * carried a static magnet inside the grey capsule and an animated one
+ * inside a black disc next to it, each assembled from a bar with square
+ * corners on one side. There is one drawing now, it lives inside the
+ * capsule, and its beam is free to leave it.
+ */
 export const ConsultantSearchLoader: React.FC<ConsultantSearchLoaderProps> = ({
-	size = '40px'
+	size = '24px',
+	animated = true,
+	className
 }) => {
+	const [hasArrived, setHasArrived] = React.useState(false);
+
+	React.useEffect(() => {
+		if (!animated || prefersReducedMotion()) {
+			return undefined;
+		}
+		setHasArrived(true);
+		// Dropped again once it has played, so a later hover starts a fresh
+		// animation instead of restarting a still-running one.
+		const timer = window.setTimeout(() => setHasArrived(false), PULSE_MS);
+		return () => window.clearTimeout(timer);
+	}, [animated]);
+
 	return (
-		<div 
-			className="consultantSearchLoader"
-			style={{ 
-				width: size, 
-				height: size
-			}}
+		<span
+			className={clsx(
+				'consultantSearchLoader',
+				animated && 'consultantSearchLoader--animated',
+				hasArrived && 'consultantSearchLoader--pulsing',
+				className
+			)}
+			style={{ '--csl-size': size } as React.CSSProperties}
+			data-cy="consultant-search-loader"
+			aria-hidden="true"
 		>
-			<div className="consultantSearchLoader__circle">
-				<StyledWrapper>
-					<div className="loader">
-						<div className="magnetism" />
-					</div>
-				</StyledWrapper>
-			</div>
-		</div>
+			<span className="consultantSearchLoader__sweep">
+				{animated && (
+					<>
+						<span className="consultantSearchLoader__beam" />
+						<span className="consultantSearchLoader__beam consultantSearchLoader__beam--second" />
+						<span className="consultantSearchLoader__beam consultantSearchLoader__beam--third" />
+					</>
+				)}
+				<span className="consultantSearchLoader__magnet">
+					<span className="consultantSearchLoader__pole consultantSearchLoader__pole--left" />
+					<span className="consultantSearchLoader__pole consultantSearchLoader__pole--right" />
+				</span>
+			</span>
+		</span>
 	);
 };
-
-const StyledWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: scale(0.5);
-  transform-origin: center center;
-  margin-left: -8px;
-
-  .loader {
-    position: relative;
-    background-color: red;
-    height: 40px;
-    width: 10px;
-    border-radius: 6px 0px 0px 6px;
-    animation: rotate 5s infinite;
-  }
-
-  .magnetism {
-    position: absolute;
-    color: rgb(0, 151, 252);
-    bottom: 0;
-    width: 80px;
-    left: 0%;
-    height: 40px;
-    border: solid 2px currentColor;
-    border-color: currentColor transparent transparent transparent;
-    border-radius: 50%;
-    transform: rotate(90deg);
-    animation: go 0.5s ease-in-out infinite;
-  }
-
-  .loader::before {
-    content: "";
-    left: 10px;
-    position: absolute;
-    background: rgb(255, 0, 0);
-    background: linear-gradient(
-      90deg,
-      rgba(255, 0, 0, 1) 0%,
-      rgba(255, 0, 0, 1) 50%,
-      rgba(158, 158, 158, 1) 50%,
-      rgba(184, 184, 184, 1) 100%
-    );
-    height: 10px;
-    width: 20px;
-  }
-
-  .loader::after {
-    content: "";
-    left: 10px;
-    position: absolute;
-    bottom: 0;
-    background: rgb(255, 0, 0);
-    background: linear-gradient(
-      90deg,
-      rgba(255, 0, 0, 1) 0%,
-      rgba(255, 0, 0, 1) 50%,
-      rgba(158, 158, 158, 1) 50%,
-      rgba(184, 184, 184, 1) 100%
-    );
-    height: 10px;
-    width: 20px;
-  }
-
-  @keyframes rotate {
-    0% {
-      transform: rotate(-30deg);
-    }
-    50% {
-      transform: rotate(30deg);
-    }
-    100% {
-      transform: rotate(-30deg);
-    }
-  }
-
-  @keyframes go {
-    0% {
-      left: 0%;
-      width: 30px;
-      opacity: 1;
-    }
-    50% {
-      left: 100%;
-      width: 60px;
-      opacity: 0.5;
-    }
-    100% {
-      width: 90px;
-      left: 200%;
-      opacity: 0;
-    }
-  }
-`;

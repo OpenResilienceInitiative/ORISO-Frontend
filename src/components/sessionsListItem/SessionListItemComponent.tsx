@@ -940,6 +940,9 @@ export const SessionListItemComponent = ({
 	// has to exist before the branch does. Pure string work — no hook, no
 	// behaviour change for the card list.
 	const hasConsultantData = !!activeSession.consultant;
+	// An unwritten enquiry is not searched for yet, so the magnet rests.
+	const isSearchingForConsultant =
+		isAsker && !hasConsultantData && !activeSession.isEmptyEnquiry;
 	let sessionTopic = '';
 
 	// Card title:
@@ -1025,7 +1028,7 @@ export const SessionListItemComponent = ({
 		const railTooltips = {
 			pill: {
 				title: railName,
-body: isMatrixBackedSession
+				body: isMatrixBackedSession
 					? previewBody(railChannelPreviews?.main ?? null)
 					: displayLastMessage || undefined,
 				meta: prettyPrintDate(
@@ -1288,15 +1291,13 @@ body: isMatrixBackedSession
 								<img
 									src={internalConversationIcon}
 									alt={translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 									className="sessionsListItem__consultingTypeIcon--internalIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 									{translate(
-										'sessionList.item.sessionType.internal',
-										'Interna'
+										'sessionList.item.sessionType.internal'
 									)}
 								</span>
 							</div>
@@ -1311,15 +1312,13 @@ body: isMatrixBackedSession
 								<img
 									src={selfHelpIcon}
 									alt={translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 									className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 								/>
 								<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 									{translate(
-										'sessionList.item.sessionType.selfHelp',
-										'Gesprächskreis'
+										'sessionList.item.sessionType.selfHelp'
 									)}
 								</span>
 							</div>
@@ -1329,7 +1328,9 @@ body: isMatrixBackedSession
 								<div className="sessionsListItem__consultingTypeIcon">
 									<img
 										src={teamImage}
-										alt="Team Beratung"
+										alt={translate(
+											'sessionList.item.sessionType.team'
+										)}
 										className="sessionsListItem__consultingTypeIcon--team"
 									/>
 								</div>
@@ -1369,7 +1370,11 @@ body: isMatrixBackedSession
 			<div
 				className={clsx(
 					'sessionsListItem__content',
-					isAnonymousChat && 'sessionsListItem__content--anonymous'
+					isAnonymousChat && 'sessionsListItem__content--anonymous',
+					/* FE#1115: hovering the card replays the magnet's
+					   search gesture, so the whole card is the target and
+					   not the 32 px glyph inside it. */
+					isSearchingForConsultant && 'consultantSearchLoaderHost'
 				)}
 				onKeyDown={(e) => handleKeyDownListItem(e)}
 				ref={itemRef}
@@ -1466,12 +1471,10 @@ body: isMatrixBackedSession
 								data-testid="supervision-badge"
 								role="img"
 								title={translate(
-									'sessionList.supervision.badge',
-									'Supervision'
+									'sessionList.supervision.badge'
 								)}
 								aria-label={translate(
-									'sessionList.supervision.badge',
-									'Supervision'
+									'sessionList.supervision.badge'
 								)}
 							>
 								<SupervisionIcon
@@ -1500,7 +1503,14 @@ body: isMatrixBackedSession
 								/>
 							</div>
 						) : isAsker && !hasConsultantData ? (
-							<ConsultantSearchLoader size="32px" />
+							/* FE#1115: the same magnet as the chat header,
+							   without the black disc — beam included. It
+							   points right, into the card's own width, so
+							   the card's corner clip never reaches it. */
+							<ConsultantSearchLoader
+								size="32px"
+								animated={isSearchingForConsultant}
+							/>
 						) : !isAsker ? (
 							// Restored username+icon linkage: the asker card
 							// shows the SAME animal avatar the chat derives
@@ -1711,8 +1721,7 @@ body: isMatrixBackedSession
 									</svg>
 									<span className="sessionsListItem__consultingTypeIcon--liveChatLabel">
 										{translate(
-											'sessionList.item.sessionType.liveChat',
-											'Live Chat'
+											'sessionList.item.sessionType.liveChat'
 										)}
 									</span>
 								</div>
@@ -1724,18 +1733,20 @@ body: isMatrixBackedSession
 										'sessionsListItem__consultingTypeIcon--nearby'
 									)}
 								>
-									<img
-										src={mailConversationIcon}
-										alt={translate(
-											'sessionList.toolbar.chips.nearby',
-											'Mail'
-										)}
+									{/* The SVG has a grey fill baked in: worn as a mask, coloured by CSS. */}
+									<span
 										className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+										// The visible word next to it is the name.
+										aria-hidden="true"
+										style={
+											{
+												'--nearby-icon-url': `url("${mailConversationIcon}")`
+											} as React.CSSProperties
+										}
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
 										{translate(
-											'sessionList.toolbar.chips.nearby',
-											'Mail'
+											'sessionList.toolbar.chips.nearby'
 										)}
 									</span>
 								</div>
@@ -1750,15 +1761,13 @@ body: isMatrixBackedSession
 									<img
 										src={internalConversationIcon}
 										alt={translate(
-											'sessionList.item.sessionType.internal',
-											'Interna'
+											'sessionList.item.sessionType.internal'
 										)}
 										className="sessionsListItem__consultingTypeIcon--internalIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--internalLabel">
 										{translate(
-											'sessionList.item.sessionType.internal',
-											'Interna'
+											'sessionList.item.sessionType.internal'
 										)}
 									</span>
 								</div>
@@ -1783,15 +1792,13 @@ body: isMatrixBackedSession
 									<img
 										src={selfHelpIcon}
 										alt={translate(
-											'sessionList.item.sessionType.selfHelp',
-											'Gesprächskreis'
+											'sessionList.item.sessionType.selfHelp'
 										)}
 										className="sessionsListItem__consultingTypeIcon--selfHelpIcon"
 									/>
 									<span className="sessionsListItem__consultingTypeIcon--selfHelpLabel">
 										{translate(
-											'sessionList.item.sessionType.selfHelp',
-											'Gesprächskreis'
+											'sessionList.item.sessionType.selfHelp'
 										)}
 									</span>
 								</div>

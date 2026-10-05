@@ -47,19 +47,7 @@ import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
 import { e2eeParams } from '../../hooks/useE2EE';
 import { E2EEActivatedMessage } from './E2EEActivatedMessage';
-import {
-	ReassignRequestAcceptedMessage,
-	ReassignRequestDeclinedMessage,
-	ReassignRequestMessage,
-	ReassignRequestSentMessage
-} from './ReassignMessage';
-import {
-	apiSendAliasMessage,
-	ConsultantReassignment,
-	ReassignStatus
-} from '../../api/apiSendAliasMessage';
-import { apiPatchMessage } from '../../api/apiPatchMessage';
-import { apiSessionAssign } from '../../api';
+import { HistoricalReassignMessage } from './ReassignMessage';
 
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
@@ -90,6 +78,7 @@ import {
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
+import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -430,8 +419,7 @@ export const MessageItemComponent = ({
 	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession, reloadActiveSession } =
-		useContext(ActiveSessionContext);
+	const { activeSession } = useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -722,7 +710,7 @@ export const MessageItemComponent = ({
 				return '';
 			}
 			if (trimmed.toLowerCase() === '__all__') {
-				return translate('message.audience.all', 'All');
+				return translate('message.audience.all');
 			}
 			let normalized = trimmed;
 			if (normalized.startsWith('@')) {
@@ -965,16 +953,10 @@ export const MessageItemComponent = ({
 			}
 			const roleLabel =
 				role === 'clients'
-					? translate('message.audience.clients', 'Clients')
+					? translate('message.audience.clients')
 					: role === 'counsellors'
-						? translate(
-								'message.audience.counsellors',
-								'Counsellors'
-							)
-						: translate(
-								'message.audience.moderators',
-								'Moderators'
-							);
+						? translate('message.audience.counsellors')
+						: translate('message.audience.moderators');
 			summary.push(`${entries.length} ${roleLabel}`);
 		});
 		if (
@@ -982,7 +964,7 @@ export const MessageItemComponent = ({
 			rawVisibleAudienceLabels.length === 0 &&
 			activeSession?.isGroup
 		) {
-			summary.push(translate('message.audience.all', 'All'));
+			summary.push(translate('message.audience.all'));
 		}
 		return summary;
 	}, [
@@ -1004,7 +986,7 @@ export const MessageItemComponent = ({
 			content.replace(
 				/\[image:\s*(https?:\/\/[^\]\s]+)\s*\]/gi,
 				(_match, imageUrl: string) =>
-					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="Message image" loading="lazy" decoding="async" />`
+					`<img class="messageItem__inlineImage" src="${imageUrl}" alt="${translate('message.thread.inlineImageAlt')}" loading="lazy" decoding="async" />`
 			);
 		const decodeHtmlEntities = (content: string) => {
 			if (!content || !content.includes('&')) {
@@ -1115,7 +1097,7 @@ export const MessageItemComponent = ({
 		}
 		// `parsedMessage` is itself memoized on `decryptedMessage`, so this one
 		// dependency already tracks every change to the decrypted body.
-	}, [parsedMessage.cleanedMessage]);
+	}, [parsedMessage.cleanedMessage, translate]);
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
@@ -1168,16 +1150,18 @@ export const MessageItemComponent = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	)
-		? translate('message.userLeftChat', 'User left the chat')
-		: translate('message.consultantLeftChat', 'Consultant left the chat');
+		? translate('message.userLeftChat')
+		: translate('message.consultantLeftChat');
 	const systemNotificationTitle =
 		parsedMessage.systemNotificationTitle ||
-		translate('message.systemNotificationTitle', 'System notification');
+		translate('message.systemNotificationTitle');
 	const systemNotificationDescription =
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
-	const systemNotificationReasonLabel =
-		parsedMessage.systemNotificationReasonLabel;
+	const systemNotificationReasonLabel = neutralLegacyReasonLabel(
+		translate,
+		parsedMessage.systemNotificationReasonLabel
+	);
 	const systemNotificationExplanation =
 		parsedMessage.systemNotificationExplanation;
 	const visibleCaseHandoverInternalDetails =
@@ -1240,39 +1224,6 @@ export const MessageItemComponent = ({
 			return 'user';
 		}
 		return 'consultant';
-	};
-
-	const clickReassignRequestMessage = (accepted, toConsultantId) => {
-		if (accepted) {
-			apiSessionAssign(activeSession.item.id, toConsultantId)
-				.then(() => {
-					apiPatchMessage(
-						toConsultantId,
-						ReassignStatus.CONFIRMED,
-						_id
-					)
-						.then(() => {
-							// WORKAROUND for an issue with reassignment and old users breaking the lastMessage for this session
-							apiSendAliasMessage({
-								matrixRoomId: activeSession.rid,
-								type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT_RESET_LAST_MESSAGE
-							});
-							reloadActiveSession();
-						})
-						.catch((error) => {
-							/* console.log(error); */
-						});
-				})
-				.catch((error) => {
-					/* console.log(error); */
-				});
-		} else {
-			apiPatchMessage(toConsultantId, ReassignStatus.REJECTED, _id).catch(
-				(error) => {
-					/* console.log(error); */
-				}
-			);
-		}
 	};
 
 	const isUserMessage = () =>
@@ -1341,17 +1292,14 @@ export const MessageItemComponent = ({
 				? [
 						{
 							key: 'reply-direct',
-							label: translate(
-								'message.menu.replyDirect',
-								'Reply directly'
-							),
+							label: translate('message.menu.replyDirect'),
 							icon: <MenuReplyDirectIcon />
 						}
 					]
 				: []),
 			{
 				key: 'reply-thread',
-				label: translate('message.menu.replyThread', 'Reply in Thread'),
+				label: translate('message.menu.replyThread'),
 				icon: <MenuReplyThreadIcon />
 			},
 			// Editing (m.replace, #435): own messages only, where a handler
@@ -1360,22 +1308,19 @@ export const MessageItemComponent = ({
 				? [
 						{
 							key: 'edit',
-							label: translate(
-								'message.menu.edit',
-								'Edit Message'
-							),
+							label: translate('message.menu.edit'),
 							icon: <MenuEditIcon />
 						}
 					]
 				: []),
 			{
 				key: 'mark-text',
-				label: translate('message.menu.markText', 'Mark Text'),
+				label: translate('message.menu.markText'),
 				icon: <MenuMarkTextIcon />
 			},
 			{
 				key: 'forward',
-				label: translate('message.menu.forward', 'Forward Message'),
+				label: translate('message.menu.forward'),
 				icon: <MenuForwardIcon />
 			},
 			// Delete (#827): Matrix redact handler + allow-deleting + not archived.
@@ -1383,10 +1328,7 @@ export const MessageItemComponent = ({
 				? [
 						{
 							key: 'delete',
-							label: translate(
-								'message.menu.delete',
-								'Delete Message'
-							),
+							label: translate('message.menu.delete'),
 							icon: <MenuDeleteIcon />
 						}
 					]
@@ -1672,7 +1614,21 @@ export const MessageItemComponent = ({
 		!isDeleteMessage &&
 		!isSystemNotification &&
 		!alias?.messageType;
-	const isAskerViewer = hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData);
+	/**
+	 * Who counts as an advice seeker reading this thread (#1486).
+	 *
+	 * `ASKER_DEFAULT` alone missed the anonymous Live Chat guest, who is
+	 * granted `ANONYMOUS_DEFAULT` instead — so the asker-facing name
+	 * resolution never ran for them and the bubble fell through to the
+	 * counsellor's legal name from the consultant list. This is the same test
+	 * `SessionHeaderComponent` already applies, so the bubble and the chat
+	 * header now agree on who is reading.
+	 */
+	const isAskerViewer =
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
+		(userData?.userRoles || []).includes('USER') ||
+		(userData?.userRoles || []).includes('ANONYMOUS');
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -1683,6 +1639,17 @@ export const MessageItemComponent = ({
 					username
 				})
 			: null;
+	/**
+	 * An incoming message is published under a display name or, failing that,
+	 * the User-ID — never a real name (#1486).
+	 *
+	 * The bubble used to hand `consultantMatch.firstName`/`lastName` from the
+	 * consultant list to `formatMessagePersonName`, which preferred them, so a
+	 * counsellor's legal name appeared above their bubble and overrode the
+	 * identity they publish. Display name + User-ID are the only two sources
+	 * the bubble, the chat header and the session list have in common, so the
+	 * bubble now uses exactly those and passes no name parts at all.
+	 */
 	const resolvedIncomingDisplayName = askerIncomingConsultantName
 		? askerIncomingConsultantName.displayName
 		: !isMyMessage
@@ -1690,27 +1657,6 @@ export const MessageItemComponent = ({
 				roomUser?.displayName ||
 				displayName
 			: displayName;
-	const normalizedIncomingName = (resolvedIncomingDisplayName || '').trim();
-	const incomingNameParts = normalizedIncomingName
-		.split(/\s+/)
-		.filter(Boolean);
-	const resolvedIncomingNameParts = askerIncomingConsultantName
-		? {
-				firstName: askerIncomingConsultantName.firstName,
-				lastName: askerIncomingConsultantName.lastName
-			}
-		: incomingNameParts.length >= 2
-			? {
-					firstName:
-						consultantMatch?.firstName || incomingNameParts[0],
-					lastName:
-						consultantMatch?.lastName ||
-						incomingNameParts.slice(1).join(' ')
-				}
-			: {
-					firstName: consultantMatch?.firstName || undefined,
-					lastName: consultantMatch?.lastName || undefined
-				};
 	const ownConsultantName =
 		isMyMessage && !isUserMessage()
 			? resolveOwnConsultantName({
@@ -1723,16 +1669,18 @@ export const MessageItemComponent = ({
 	const formattedName = formatMessagePersonName(
 		ownConsultantName?.displayName ?? resolvedIncomingDisplayName,
 		username,
+		// Own messages may still fall back to the viewer's own name — it is
+		// their own screen. Incoming messages never carry one (#1486).
 		ownConsultantName
 			? ownConsultantName.firstName
 			: isMyMessage
 				? userData?.firstName
-				: resolvedIncomingNameParts.firstName,
+				: undefined,
 		ownConsultantName
 			? ownConsultantName.lastName
 			: isMyMessage
 				? userData?.lastName
-				: resolvedIncomingNameParts.lastName
+				: undefined
 	);
 	/**
 	 * Own counsellor messages render outside MessageDisplayName (that
@@ -1759,11 +1707,8 @@ export const MessageItemComponent = ({
 	const deliveryStatusLabel =
 		deliveryState === 'failed'
 			? encryptionBroke
-				? translate(
-						'message.encryptionBroke.status',
-						'Verschlüsselung gebrochen'
-					)
-				: translate('message.sendFailed.status', 'nicht zugestellt')
+				? translate('message.encryptionBroke.status')
+				: translate('message.sendFailed.status')
 			: translate(
 					deliveryState === 'sent' ? 'message.sent' : 'message.read'
 				);
@@ -1806,12 +1751,9 @@ export const MessageItemComponent = ({
 			{isEdited && (
 				<span
 					className="messageItem__editedMarker"
-					title={translate(
-						'message.edit.markerTitle',
-						'Nachricht wurde bearbeitet'
-					)}
+					title={translate('message.edit.markerTitle')}
 				>
-					{translate('message.edit.marker', '(bearbeitet)')}
+					{translate('message.edit.marker')}
 				</span>
 			)}
 		</span>
@@ -1841,14 +1783,10 @@ export const MessageItemComponent = ({
 								? onUnreact?.(reaction.ownEventId)
 								: onReact?.(reaction.key)
 						}
-						aria-label={translate(
-							'message.reaction.count',
-							'{{key}} reacted by {{count}}',
-							{
-								key: reaction.key,
-								count: reaction.count
-							}
-						)}
+						aria-label={translate('message.reaction.count', {
+							key: reaction.key,
+							count: reaction.count
+						})}
 					>
 						<span aria-hidden>{reaction.key}</span>
 						<span className="messageItem__reactionPillCount">
@@ -1893,51 +1831,15 @@ export const MessageItemComponent = ({
 			case isE2EEActivatedMessage:
 				return <E2EEActivatedMessage />;
 			case isReassignmentMessage:
-				if (message) {
-					const isAsker = hasUserAuthority(
-						AUTHORITIES.ASKER_DEFAULT,
-						userData
-					);
-
-					const reassignmentParams: ConsultantReassignment =
-						JSON.parse(message);
-					switch (reassignmentParams.status) {
-						case ReassignStatus.REQUESTED:
-							return isAsker ? (
-								<ReassignRequestMessage
-									{...reassignmentParams}
-									onClick={(accepted) =>
-										clickReassignRequestMessage(
-											accepted,
-											reassignmentParams.toConsultantId
-										)
-									}
-								/>
-							) : (
-								<ReassignRequestSentMessage
-									{...reassignmentParams}
-									isMySession={isMySession}
-								/>
-							);
-						case ReassignStatus.CONFIRMED:
-							return (
-								<ReassignRequestAcceptedMessage
-									isAsker={isAsker}
-									isMySession={isMySession}
-									{...reassignmentParams}
-								/>
-							);
-						case ReassignStatus.REJECTED:
-							return (
-								<ReassignRequestDeclinedMessage
-									isAsker={isAsker}
-									isMySession={isMySession}
-									{...reassignmentParams}
-								/>
-							);
-					}
-				}
-				return;
+				// `decryptedMessage` is the plaintext in E2EE and plain rooms alike.
+				return (
+					<HistoricalReassignMessage
+						message={decryptedMessage || ''}
+						// Includes anonymous guests: no legal-name lookup (#1486).
+						isAsker={isAskerViewer}
+						isMySession={isMySession}
+					/>
+				);
 			case isAppointmentSet:
 				return (
 					<Appointment
@@ -2022,8 +1924,7 @@ export const MessageItemComponent = ({
 														'caseHandover.systemMessage.noActionNeeded'
 													)
 												: translate(
-														'message.systemNotification',
-														'System Notification'
+														'message.systemNotification'
 													)}
 										</div>
 									</div>
@@ -2044,12 +1945,6 @@ export const MessageItemComponent = ({
 										username={username}
 										displayName={
 											resolvedIncomingDisplayName
-										}
-										firstName={
-											resolvedIncomingNameParts.firstName
-										}
-										lastName={
-											resolvedIncomingNameParts.lastName
 										}
 									/>
 								)}
@@ -2073,10 +1968,7 @@ export const MessageItemComponent = ({
 						{showVisibleAudience && isMyMessage && (
 							<div className="messageItem__visibleOnly">
 								<span className="messageItem__visibleOnlyLabel">
-									{translate(
-										'message.visibleOnlyTo',
-										'visible only to:'
-									)}
+									{translate('message.visibleOnlyTo')}
 								</span>
 								{visibleAudienceSummaryLabels.map(
 									(label, index) => (
@@ -2150,10 +2042,7 @@ export const MessageItemComponent = ({
 								)}
 							{isSupervisorFeedback && (
 								<div className="messageItem__feedbackTag">
-									{translate(
-										'message.feedbackTag',
-										'Feedback'
-									)}
+									{translate('message.feedbackTag')}
 								</div>
 							)}
 							{/* Relations foundation (#435): quote of the replied-to
@@ -2166,15 +2055,13 @@ export const MessageItemComponent = ({
 											: ''
 									}`}
 									aria-label={translate(
-										'message.reply.quoteLabel',
-										'Antwort auf'
+										'message.reply.quoteLabel'
 									)}
 								>
 									<span className="messageItem__replyQuoteAuthor">
 										{replyQuote?.author ||
 											translate(
-												'message.reply.quoteUnknown',
-												'Frühere Nachricht'
+												'message.reply.quoteUnknown'
 											)}
 									</span>
 									{replyQuote?.text && (
@@ -2414,10 +2301,7 @@ export const MessageItemComponent = ({
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
 								<span className="messageItem__visibleOnlyLabel">
-									{translate(
-										'message.visibleOnlyTo',
-										'visible only to:'
-									)}
+									{translate('message.visibleOnlyTo')}
 								</span>
 								{visibleAudienceSummaryLabels.map(
 									(label, index) => (
@@ -2545,10 +2429,7 @@ export const MessageItemComponent = ({
 					className="messageItem__chatEvent"
 					data-testid="erstantwort-unavailable"
 				>
-					{translate(
-						'erstantwort.unavailableInRoom',
-						'First response – not available in this room.'
-					)}
+					{translate('erstantwort.unavailableInRoom')}
 				</div>
 			</div>
 		);
@@ -2563,10 +2444,7 @@ export const MessageItemComponent = ({
 				{getMessageDate()}
 				<ErstantwortSequence
 					name={systemNotificationTitle}
-					subtitle={translate(
-						'message.systemNotification',
-						'System notification'
-					)}
+					subtitle={translate('message.systemNotification')}
 					bausteine={[
 						{
 							id: 'supervision-notice',
@@ -2636,22 +2514,13 @@ export const MessageItemComponent = ({
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										firstName={
-											resolvedIncomingNameParts.firstName
-										}
-										lastName={
-											resolvedIncomingNameParts.lastName
-										}
 										size={48}
 									/>
 								</div>
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate(
-										'message.menu.open',
-										'More options'
-									)}
+									aria-label={translate('message.menu.open')}
 									onClick={(event) =>
 										toggleActionMenu(event, 'left')
 									}
@@ -2676,8 +2545,7 @@ export const MessageItemComponent = ({
 										toggleVisibilityMenu(event, 'left')
 									}
 									aria-label={translate(
-										'message.visibility.open',
-										'Open visibility details'
+										'message.visibility.open'
 									)}
 								>
 									<span className="messageItem__visibilityChipCount">
@@ -2718,10 +2586,7 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
-									aria-label={translate(
-										'message.menu.open',
-										'More options'
-									)}
+									aria-label={translate('message.menu.open')}
 									onClick={(event) =>
 										toggleActionMenu(event, 'left')
 									}
@@ -2752,8 +2617,7 @@ export const MessageItemComponent = ({
 										toggleVisibilityMenu(event, 'right')
 									}
 									aria-label={translate(
-										'message.visibility.open',
-										'Open visibility details'
+										'message.visibility.open'
 									)}
 								>
 									<span className="messageItem__visibilityChipCount">
@@ -2772,10 +2636,7 @@ export const MessageItemComponent = ({
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--right"
-									aria-label={translate(
-										'message.menu.open',
-										'More options'
-									)}
+									aria-label={translate('message.menu.open')}
 									onClick={(event) =>
 										toggleActionMenu(event, 'right')
 									}
@@ -2846,15 +2707,10 @@ export const MessageItemComponent = ({
 								)}
 								data-cy="thread-entry"
 								aria-label={[
-									translate(
-										'message.thread.open',
-										'Open thread'
-									),
-									translate(
-										'message.thread.replies',
-										'{{count}} replies',
-										{ count: threadSummary.replyCount }
-									),
+									translate('message.thread.open'),
+									translate('message.thread.replies', {
+										count: threadSummary.replyCount
+									}),
 									threadSummary.lastReplyText
 								]
 									.filter(Boolean)
@@ -2871,11 +2727,9 @@ export const MessageItemComponent = ({
 									aria-hidden="true"
 								/>
 								<span className="messageItem__threadButtonMain">
-									{translate(
-										'message.thread.replies',
-										'{{count}} replies',
-										{ count: threadSummary.replyCount }
-									)}
+									{translate('message.thread.replies', {
+										count: threadSummary.replyCount
+									})}
 								</span>
 								{threadSummary.lastReplyText && (
 									<span
@@ -2911,8 +2765,7 @@ export const MessageItemComponent = ({
 									className="messageItem__actionMenuReactions"
 									role="group"
 									aria-label={translate(
-										'message.reaction.add',
-										'React'
+										'message.reaction.add'
 									)}
 								>
 									{quickEmojis.map((emoji) => {
@@ -2966,8 +2819,7 @@ export const MessageItemComponent = ({
 										// toggles it open again.
 										data-emoji-picker-toggle=""
 										aria-label={translate(
-											'message.reaction.more',
-											'Weitere Emojis'
+											'message.reaction.more'
 										)}
 										onClick={() =>
 											setIsQuickEmojiPickerOpen(
@@ -3030,16 +2882,10 @@ export const MessageItemComponent = ({
 							}}
 						>
 							<div className="messageItem__visibilityMenuSubheading">
-								{translate(
-									'message.visibility.people',
-									'People that see this message'
-								)}
+								{translate('message.visibility.people')}
 							</div>
 							<div className="messageItem__visibilityMenuHeading">
-								{translate(
-									'message.visibility.title',
-									'Message Visible to...'
-								)}
+								{translate('message.visibility.title')}
 							</div>
 							<div className="messageItem__visibilityMenuDivider" />
 							<div className="messageItem__visibilityMenuSections">
@@ -3048,8 +2894,7 @@ export const MessageItemComponent = ({
 										{
 											key: 'clients',
 											title: translate(
-												'message.audience.clients',
-												'Clients'
+												'message.audience.clients'
 											),
 											items: visibilityGroups.clients,
 											role: 'clients' as const
@@ -3057,8 +2902,7 @@ export const MessageItemComponent = ({
 										{
 											key: 'counsellors',
 											title: translate(
-												'message.audience.counsellors',
-												'Counsellors'
+												'message.audience.counsellors'
 											),
 											items: visibilityGroups.counsellors,
 											role: 'counsellors' as const
@@ -3066,8 +2910,7 @@ export const MessageItemComponent = ({
 										{
 											key: 'moderators',
 											title: translate(
-												'message.audience.moderators',
-												'Moderators'
+												'message.audience.moderators'
 											),
 											items: visibilityGroups.moderators,
 											role: 'moderators' as const
@@ -3142,18 +2985,15 @@ export const MessageItemComponent = ({
 														{section.key ===
 														'clients'
 															? translate(
-																	'message.audience.clientsEmpty',
-																	'No clients are in this room'
+																	'message.audience.clientsEmpty'
 																)
 															: section.key ===
 																  'counsellors'
 																? translate(
-																		'message.audience.counsellorsEmpty',
-																		'No counsellors are in this room'
+																		'message.audience.counsellorsEmpty'
 																	)
 																: translate(
-																		'message.audience.moderatorsEmpty',
-																		'No moderators are in this room'
+																		'message.audience.moderatorsEmpty'
 																	)}
 													</span>
 												) : (

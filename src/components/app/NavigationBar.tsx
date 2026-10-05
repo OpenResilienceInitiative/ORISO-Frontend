@@ -171,13 +171,13 @@ export const NavigationBar = ({
 
 	const figmaConsultantNav = true;
 	/**
-	 * Live Chat rail toggle:
-	 * - Desktop: only when the consultant opted into "control from the menu
-	 *   bar" in My Profile (Frank / viaSidebar preference).
-	 * - Mobile/tablet: always for consultants so Live Chat stays reachable in
-	 *   the scrollable bottom bar without hunting through Profile.
+	 * Live Chat rail toggle: only when the consultant opted into "Live Chat
+	 * über Menü Leiste aktivieren" in My Profile (profile preference
+	 * `liveChatViaSidebar`). Same rule on every breakpoint — the earlier
+	 * "always on mobile" exception was dropped by the product owner; without
+	 * the preference, availability is switched in My Profile.
 	 */
-	const showLiveChatNav = isConsultant && (liveChatViaSidebar || !fromL);
+	const showLiveChatNav = isConsultant && liveChatViaSidebar;
 	const languageMenuPlacement = fromL
 		? MENUPLACEMENT_RIGHT
 		: MENUPLACEMENT_TOP;

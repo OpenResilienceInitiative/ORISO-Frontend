@@ -6,8 +6,10 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
+	NotificationsContext,
 	ActiveSessionContext
 } from '../../globalState';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
@@ -41,7 +43,6 @@ import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
-import { translateWithFallback } from '../../utils/translationFallback';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -53,14 +54,10 @@ export const JoinGroupChatView = ({
 	bannedUsers = []
 }: JoinGroupChatViewProps) => {
 	const { t: translate } = useTranslation(['common', 'consultingTypes']);
-	const tr = useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(translate, key, fallback, options),
-		[translate]
-	);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const notifications = useContext(NotificationsContext);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
@@ -236,7 +233,12 @@ export const JoinGroupChatView = ({
 				: GROUP_CHAT_API.JOIN;
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
-			.catch(() => {
+			.catch((error) => {
+				const notice = getCounsellingDpaNotification(error, translate);
+				if (notice && notifications) {
+					notifications.addNotification(notice);
+					return;
+				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
 			})
@@ -336,9 +338,8 @@ export const JoinGroupChatView = ({
 					<WaitingAreaRules
 						rules={groupChatRules}
 						animationOff={animationOff}
-						ariaLabel={tr(
-							'groupChat.join.waitingArea.rulesLabel',
-							'Chat rules'
+						ariaLabel={translate(
+							'groupChat.join.waitingArea.rulesLabel'
 						)}
 					/>
 				)}
@@ -378,9 +379,8 @@ export const JoinGroupChatView = ({
 					{showCountdown && plannedStart && (
 						<div className="joinChat__actionsEnd">
 							<WaitingAreaMotionToggle
-								label={tr(
-									'groupChat.join.waitingArea.countdown.toggleLabel',
-									'Animation abschalten'
+								label={translate(
+									'groupChat.join.waitingArea.countdown.toggleLabel'
 								)}
 								checked={animationOff || prefersReducedMotion}
 								disabled={prefersReducedMotion}

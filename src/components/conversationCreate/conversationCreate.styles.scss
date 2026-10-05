@@ -424,6 +424,39 @@ body.conversationCreate--active .navigation__wrapper {
 		}
 	}
 
+	/* #1499 empty state: a disabled line, not a control (no hover, no toggle). */
+	&__row--empty {
+		cursor: default;
+
+		&:hover {
+			background: none;
+		}
+
+		.personSelectMenu__name {
+			color: $cc-on-surface-variant;
+		}
+	}
+
+	&__row--help {
+		/* Help sits outside the listbox, so the empty line is that listbox's
+		   last child and loses its divider. Restore it on the command. */
+		border-top: 1px solid rgba(27, 27, 28, 0.08);
+
+		.personSelectMenu__toggle {
+			background: none;
+			color: $cc-primary;
+
+			svg {
+				height: 24px;
+				width: 24px;
+			}
+		}
+
+		.personSelectMenu__name {
+			color: $cc-primary;
+		}
+	}
+
 	&__vacatedHint {
 		color: $cc-on-surface-variant;
 		display: block;
@@ -1001,6 +1034,40 @@ body.conversationCreate--active .navigation__wrapper {
 		&:focus-visible {
 			outline: 3px solid $cc-primary;
 			outline-offset: -3px;
+		}
+	}
+}
+
+/*
+ * #1499 (4c): on desktop the welcome and rule boxes grow to fill the card, so
+ * the right column matches the height of the schedule card instead of leaving
+ * an empty band under the create button. Mobile (compact, or stacked below
+ * 900px) keeps the fixed 120px boxes.
+ */
+@media (width > 900px) {
+	.circleSettings:not(.circleSettings--compact) {
+		.circleSettings__authorColumn .createChat__authorContent {
+			display: flex;
+			flex: 1 1 auto;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		.createChat__authorPanel {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.createChat__welcomeInput {
+			flex: 1 1 0;
+		}
+
+		.ruleChipsEditor {
+			flex: 1 1 0;
+		}
+
+		.ruleChipsEditor__input {
+			flex: 1 1 auto;
 		}
 	}
 }

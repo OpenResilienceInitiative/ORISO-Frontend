@@ -180,7 +180,7 @@ const fromCatalogue = (
 	return catalogueForTrigger(trigger, context)
 		.map((entry) => {
 			const body = applyPlaceholders(
-				translate(entry.bodyKey, entry.defaultBody),
+				translate(entry.bodyKey),
 				placeholders
 			).trim();
 			/* An empty body means the Baustein has nothing to say — the
@@ -190,7 +190,7 @@ const fromCatalogue = (
 
 			const headline = entry.headlineKey
 				? applyPlaceholders(
-						translate(entry.headlineKey, entry.defaultHeadline),
+						translate(entry.headlineKey),
 						placeholders
 					).trim()
 				: undefined;
@@ -200,10 +200,7 @@ const fromCatalogue = (
 			if (entry.action) {
 				resolved.action = {
 					kind: entry.action.kind,
-					label: translate(
-						entry.action.labelKey,
-						entry.action.defaultLabel
-					)
+					label: translate(entry.action.labelKey)
 				};
 			}
 			return resolved;

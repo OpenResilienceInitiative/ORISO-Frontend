@@ -131,6 +131,7 @@ beforeEach(() => {
 afterEach(() => {
 	cleanup();
 	vi.unstubAllGlobals();
+	vi.unstubAllEnvs();
 	vi.restoreAllMocks();
 	setAppConfig(null);
 });
@@ -171,6 +172,34 @@ describe('WebsocketHandler → new message notification', () => {
 			await waitFor(() => expect(constructed).toHaveLength(1));
 		}
 	);
+
+	it('announces an incoming Matrix message once after remount when LiveService is disabled', async () => {
+		vi.stubEnv('REACT_APP_DISABLE_LIVE_WEBSOCKET', '1');
+		saveBrowserNotificationsSettings({ enabled: true });
+		const firstMount = renderHandler();
+		firstMount.unmount();
+		const secondMount = renderHandler();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(2));
+		getFeed.mockResolvedValue({
+			items: [
+				{
+					id: 1,
+					eventType: 'message.new',
+					createdAt: '2026-09-14T12:00:00Z',
+					readAt: null
+				}
+			],
+			unreadCount: 1
+		});
+
+		receiveDirectMessage();
+		await waitFor(() => expect(getFeed).toHaveBeenCalledTimes(3));
+		expect(constructed).toHaveLength(1);
+		expect(bridge.listenerCount('directMessage')).toBe(1);
+
+		secondMount.unmount();
+		expect(bridge.listenerCount('directMessage')).toBe(0);
+	});
 
 	it('registers a Matrix directMessage listener', () => {
 		renderHandler();

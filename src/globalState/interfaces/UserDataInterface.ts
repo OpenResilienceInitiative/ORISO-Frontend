@@ -23,6 +23,13 @@ export interface UserDataInterface {
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
+	/**
+	 * Consultant preference "Live Chat über Menü Leiste aktivieren": show the
+	 * Live Chat availability toggle in the navigation (desktop and mobile).
+	 * Optional: UserService builds before this field never send it — the
+	 * frontend then falls back to the old browser-only value.
+	 */
+	liveChatViaSidebar?: boolean;
 	publicSlug?: string;
 	pendingPublicSlug?: string;
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';

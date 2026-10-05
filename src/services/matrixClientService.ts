@@ -303,12 +303,48 @@ export class MatrixClientService {
 		};
 	}
 
+	private readonly heldCryptoOperations = new Set<Promise<void>>();
+
+	/**
+	 * Runs a crypto operation that must finish on the client it started on (reset, setup,
+	 * recovery). A token refresh replaces the client and rotates the Matrix password, so it waits.
+	 * Stale-device recovery is not held: callers retry on the client it produces.
+	 */
+	public async holdTokenRefreshDuring<T>(
+		operation: () => Promise<T>
+	): Promise<T> {
+		// First let a due or in-flight refresh finish, so the operation starts on the current client.
+		await this.ensureFreshToken().catch(() => undefined);
+		while (this.refreshingToken) {
+			await this.refreshingToken.catch(() => undefined);
+		}
+		// Registered before the operation starts, with no await since the check above: its own first
+		// token check already sees the hold, and no refresh can slip in.
+		let release: () => void = () => undefined;
+		const settled = new Promise<void>((resolve) => (release = resolve));
+		this.heldCryptoOperations.add(settled);
+		try {
+			return await operation();
+		} finally {
+			this.heldCryptoOperations.delete(settled);
+			release();
+		}
+	}
+
+	/** Unbounded on purpose: giving up would replace the client under a running reset. */
+	private async heldCryptoOperationsSettled(): Promise<void> {
+		while (this.heldCryptoOperations.size > 0) {
+			await Promise.all([...this.heldCryptoOperations]);
+		}
+	}
+
 	public async refreshMatrixToken(): Promise<void> {
 		if (this.refreshingToken) {
 			return this.refreshingToken;
 		}
 
-		this.refreshingToken = getMatrixAccessToken()
+		this.refreshingToken = this.heldCryptoOperationsSettled()
+			.then(() => getMatrixAccessToken())
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag
@@ -427,6 +463,10 @@ export class MatrixClientService {
 	public async ensureFreshToken(): Promise<void> {
 		if (this.staleDeviceRecovery) {
 			await this.staleDeviceRecovery;
+		}
+		// A held crypto operation keeps its token: a refresh now would wait for that very operation.
+		if (this.heldCryptoOperations.size > 0) {
+			return;
 		}
 
 		const expiresAt = this.getStoredTokenExpiresAt();

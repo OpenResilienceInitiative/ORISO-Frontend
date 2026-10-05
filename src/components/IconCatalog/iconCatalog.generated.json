@@ -1130,9 +1130,23 @@
 		"sourcePath": "src/resources/img/icons/apple.svg",
 		"exportNames": ["AppleIcon"],
 		"usageFiles": [
+			"src/components/twoFactorAuth/TwoFactorSetupDialog.tsx",
 			"src/containers/bookings/components/AddCalendar/addCalendar.tsx",
 			"src/resources/img/icons.ts"
 		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:arrow-right:base",
+		"family": "arrow-right",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": 24,
+		"fileName": "arrow_right_24px.svg",
+		"sourcePath": "src/resources/img/icons/arrow_right_24px.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/session/session.styles.scss"],
 		"usage": "app-used"
 	},
 	{
@@ -1213,7 +1227,6 @@
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/conversationCreate/BackPill.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
-			"src/components/groupChat/GroupChatInfo.tsx",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/profile/Profile.tsx",
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
@@ -1713,7 +1726,8 @@
 		"usageFiles": [
 			"src/components/conversationCreate/circle/CircleSettingsView.tsx",
 			"src/components/conversationCreate/CreateConversationView.tsx",
-			"src/components/conversationCreate/ScreenIntro.tsx"
+			"src/components/conversationCreate/ScreenIntro.tsx",
+			"src/components/groupChat/GroupChatShareDialog.tsx"
 		],
 		"usage": "app-used"
 	},
@@ -2343,6 +2357,7 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/passwordReset/PasswordReset.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/resources/img/icons.ts"
 		],
@@ -2361,6 +2376,7 @@
 		"usageFiles": [
 			"src/components/inputField/InputField.tsx",
 			"src/components/login/Login.tsx",
+			"src/components/passwordReset/PasswordReset.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
 			"src/components/sessionsListItem/SessionListItemComponent.tsx",
 			"src/resources/img/icons.ts"
@@ -3855,6 +3871,7 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/chatStage/PanelHeader.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
+			"src/components/session/SessionItemComponent.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
@@ -3874,7 +3891,6 @@
 			"src/components/chatStage/ChannelSwitcherFab.tsx",
 			"src/components/displayFilter/displayFilterStoryData.ts",
 			"src/components/displayFilter/kindOptions.ts",
-			"src/components/groupChat/GroupChatInfo.tsx",
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/profile/ConsultantStatistics.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
@@ -4310,19 +4326,6 @@
 		"usage": "app-used"
 	},
 	{
-		"id": "ui-icon:email-code-graphic:base",
-		"family": "email-code-graphic",
-		"state": "base",
-		"role": "default",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "email_code_graphic.svg",
-		"sourcePath": "src/resources/img/icons/two-factor/email_code_graphic.svg",
-		"exportNames": [],
-		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
-		"usage": "app-used"
-	},
-	{
 		"id": "ui-icon:install:400",
 		"family": "install",
 		"state": "400",
@@ -4344,19 +4347,6 @@
 		"size": null,
 		"fileName": "install_filled.svg",
 		"sourcePath": "src/resources/img/icons/two-factor/install_filled.svg",
-		"exportNames": [],
-		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
-		"usage": "app-used"
-	},
-	{
-		"id": "ui-icon:otp-app-graphic:base",
-		"family": "otp-app-graphic",
-		"state": "base",
-		"role": "default",
-		"kind": "ui-icon",
-		"size": null,
-		"fileName": "otp_app_graphic.svg",
-		"sourcePath": "src/resources/img/icons/two-factor/otp_app_graphic.svg",
 		"exportNames": [],
 		"usageFiles": ["src/components/twoFactorAuth/TwoFactorSetupDialog.tsx"],
 		"usage": "app-used"
@@ -4513,6 +4503,7 @@
 			"src/components/profile/NewRequestDialog/NewRequestDialog.tsx",
 			"src/components/session/AcceptAssign.tsx",
 			"src/components/session/DeleteSession.tsx",
+			"src/components/session/session.styles.scss",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionMenu/sessionMenuHelpers.ts",
 			"src/components/sessionsList/SessionRailPill.tsx",

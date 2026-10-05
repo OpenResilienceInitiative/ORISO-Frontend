@@ -218,6 +218,153 @@ describe('MatrixClientService', () => {
 		expect(service.getClient()).toBeNull();
 	});
 
+	/**
+	 * A crypto reset spans deleting the backup, the UIA round-trip and new
+	 * keys. A token refresh in that window stops the client under it and
+	 * rotates the password, which leaves the account half-reset (#1504 review).
+	 * The refresh waits until the operation has settled.
+	 */
+	it('holds a token refresh until a crypto operation on the client has settled', async () => {
+		vi.mocked(getMatrixAccessToken).mockResolvedValue({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		let finishReset: (() => void) | undefined;
+		let resetStarted: (() => void) | undefined;
+		const started = new Promise<void>(
+			(resolve) => (resetStarted = resolve)
+		);
+		const reset = service.holdTokenRefreshDuring(
+			() =>
+				new Promise<void>((resolve) => {
+					finishReset = resolve;
+					resetStarted?.();
+				})
+		);
+		await started;
+
+		const refresh = service.refreshMatrixToken();
+		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
+
+		finishReset?.();
+		await reset;
+		await refresh;
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
+	/**
+	 * The other direction: a refresh already in flight (e.g. after
+	 * M_UNKNOWN_TOKEN) must finish before the crypto operation starts, or it
+	 * replaces the client under the reset (#1504 review).
+	 */
+	it('starts a crypto operation only after a refresh already in flight', async () => {
+		let finishLogin: ((value: unknown) => void) | undefined;
+		vi.mocked(getMatrixAccessToken).mockReturnValueOnce(
+			new Promise((resolve) => (finishLogin = resolve)) as any
+		);
+		const service = new MatrixClientService();
+		const refresh = service.refreshMatrixToken();
+		const operation = vi.fn(async () => 'done');
+
+		const held = service.holdTokenRefreshDuring(operation);
+		await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
+		expect(operation).not.toHaveBeenCalled();
+
+		finishLogin?.({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		await refresh;
+		await expect(held).resolves.toBe('done');
+		expect(operation).toHaveBeenCalledOnce();
+	});
+
+	/**
+	 * No escape hatch: a slow homeserver can keep a reset busy for minutes, and
+	 * a refresh that gives up waiting would replace the client under it
+	 * (#1504 review). Deadlock is ruled out instead: inside a held operation,
+	 * ensureFreshToken neither starts nor awaits a refresh.
+	 */
+	it('keeps a refresh waiting for as long as the crypto operation runs', async () => {
+		vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+		try {
+			vi.mocked(getMatrixAccessToken).mockResolvedValue({
+				userId: '@alice:matrix.localhost',
+				accessToken: 'replacement-token',
+				deviceId: 'DEVICE_ONE',
+				homeserverUrl: 'http://matrix.localhost:18008'
+			});
+			const service = new MatrixClientService();
+			let finishReset: (() => void) | undefined;
+			let resetStarted: (() => void) | undefined;
+			const started = new Promise<void>(
+				(resolve) => (resetStarted = resolve)
+			);
+			const reset = service.holdTokenRefreshDuring(
+				() =>
+					new Promise<void>((resolve) => {
+						finishReset = resolve;
+						resetStarted?.();
+					})
+			);
+			await started;
+
+			const refresh = service.refreshMatrixToken();
+			await vi.advanceTimersByTimeAsync(10 * 60_000);
+			expect(getMatrixAccessToken).not.toHaveBeenCalled();
+
+			finishReset?.();
+			await reset;
+			await refresh;
+			expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('does not deadlock when a held operation checks its token', async () => {
+		const service = new MatrixClientService();
+
+		const result = await service.holdTokenRefreshDuring(async () => {
+			// The token has expired by the time the operation checks it.
+			vi.stubGlobal('localStorage', {
+				getItem: vi.fn((key: string) =>
+					key === 'matrix_token_expires_at'
+						? String(Date.now() - 1)
+						: null
+				)
+			});
+			await service.ensureFreshToken();
+			return 'finished';
+		});
+
+		expect(result).toBe('finished');
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
+	});
+
+	it('still refreshes after a held crypto operation failed', async () => {
+		vi.mocked(getMatrixAccessToken).mockResolvedValue({
+			userId: '@alice:matrix.localhost',
+			accessToken: 'replacement-token',
+			deviceId: 'DEVICE_ONE',
+			homeserverUrl: 'http://matrix.localhost:18008'
+		});
+		const service = new MatrixClientService();
+		const failed = service.holdTokenRefreshDuring(() =>
+			Promise.reject(new Error('reset failed'))
+		);
+
+		await expect(failed).rejects.toThrow('reset failed');
+		await service.refreshMatrixToken();
+		expect(getMatrixAccessToken).toHaveBeenCalledOnce();
+	});
+
 	it('waits for replacement-client crypto initialization during token refresh', async () => {
 		let resolveCrypto: (() => void) | undefined;
 		mockedMatrixClient.initRustCrypto.mockReturnValueOnce(

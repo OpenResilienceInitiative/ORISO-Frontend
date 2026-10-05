@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { resolveLegalContent } from '../../utils/legalContent';
+import { withTraegerDpo } from '../../utils/traegerDpo';
 
 export type LegalLinkKind = 'imprint' | 'privacy';
 
@@ -69,5 +70,12 @@ export const useLegalLinkContent = (
 			? flat
 			: null;
 
-	return { kind, content: content ?? null };
+	return {
+		kind,
+		content:
+			kind === 'privacy'
+				? (withTraegerDpo(content, tenant?.dataProtectionOfficer) ??
+					null)
+				: (content ?? null)
+	};
 };
