@@ -1,4 +1,18 @@
 {
+	"menuEffects": {
+		"title": "Menüdarstellung",
+		"label": "Schleier und sanfte Menüanimationen",
+		"description": "Hellt den Hintergrund geöffneter Chatmenüs auf und blendet das Menü mit einer dezenten Bewegung ein. Bei reduzierter Bewegung wird nicht animiert.",
+		"scope": "Gilt für dieses Konto in diesem Browser. Standardmäßig eingeschaltet."
+	},
+	"contactSheet": {
+		"request": "Kontaktdaten per E-Mail erhalten",
+		"sending": "Wird gesendet …",
+		"recipient": "Die E-Mail geht an {{email}}.",
+		"missingEmail": "Hinterlegen Sie zuerst eine E-Mail-Adresse in Ihrem Profil.",
+		"sent": "Die Kontaktdaten wurden an {{email}} gesendet.",
+		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Ratsuchende über meine Abwesenheit informieren"
@@ -385,7 +399,7 @@
 		"dearchiveDescription": "Chat aus dem Archiv wiederherstellen.",
 		"editGroupChat": "Chat-Einstellungen",
 		"editGroupChatDescription": "Thema, Zeitplan und Moderation dieses Chats ändern.",
-		"groupChatInfo": "Chat-Info",
+		"groupChatInfo": "Informationen & Einstellungen",
 		"imprint": "Impressum",
 		"leaveGroupChat": "Chat verlassen",
 		"mute": "Stummschalten",
@@ -719,7 +733,12 @@
 			"google": "Google Kalender",
 			"outlook": "Outlook Kalender",
 			"titleLabel": "Neutraler Kalendertitel",
-			"addShort": "Kalender"
+			"addShort": "Kalender",
+			"copyGoogle": "Google-Kalenderlink kopieren",
+			"copyOutlook": "Outlook-Kalenderlink kopieren",
+			"linkCopied": "Kalenderlink kopiert.",
+			"copyError": "Der Kalenderlink konnte nicht kopiert werden. Bitte versuchen Sie es erneut.",
+			"shareHint": "Kalenderlinks für Ihre Webseite: ein Termin, ohne Einladungslink oder automatische Aktualisierung."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Termin",
@@ -1701,7 +1720,8 @@
 					"otp": "Ihre Zugangsdaten sind nicht korrekt. Bitte versuchen Sie es erneut.",
 					"text": "Benutzername oder Passwort sind nicht korrekt. Bitte versuchen Sie es erneut."
 				},
-				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden."
+				"consultantBlocked": "Berater-Konten können sich hier nicht anmelden.",
+				"tooManyRequests": "Zu viele Versuche. Bitte warten Sie einige Minuten und versuchen Sie es dann erneut."
 			}
 		},
 		"mobile": {
@@ -2176,6 +2196,18 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"firstResponseReceived": {
+				"title": "Ihre ersten Schritte",
+				"text": "Wir haben Ihnen im Chat die wichtigsten Informationen geschrieben."
+			},
+			"conversationFinished": {
+				"title": "Chat beendet",
+				"text": "Der anonyme Chat wurde beendet."
+			},
+			"serviceNoticePlanned": {
+				"title": "Geplante Wartung",
+				"text": "Am {{maintenanceDate}} ist die Plattform zwischen {{maintenanceStart}} und {{maintenanceEnd}} Uhr nicht erreichbar. Bereits geschriebene Nachrichten gehen nicht verloren."
 			}
 		},
 		"error": "Fehlgeschlagen",
@@ -2225,7 +2257,9 @@
 			"loadingOlder": "Ältere Aktivitäten werden geladen…",
 			"olderError": "Ältere Aktivitäten konnten nicht geladen werden.",
 			"retryOlder": "Erneut versuchen",
-			"endOfHistory": "Ende des Aktivitätsverlaufs"
+			"endOfHistory": "Ende des Aktivitätsverlaufs",
+			"openStatusPage": "Statusseite ansehen",
+			"opensInNewTab": "(öffnet in einem neuen Tab)"
 		},
 		"threadReply": {
 			"title": "Neue Thread-Antwort"
@@ -2594,7 +2628,7 @@
 			},
 			"dnd": {
 				"title": "Nicht stören",
-				"description": "Pausieren Sie alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
+				"description": "Pausieren Sie Benachrichtigungen (Ton, Pop-ups) für eine gewählte Zeit. Ihr Verlauf füllt sich weiter.",
 				"activeUntil": "Aktiv bis {{time}}",
 				"option": {
 					"off": "Aus",
@@ -2612,6 +2646,11 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"title": "Änderungen verwerfen?",
+					"description": "Ihre Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn Sie fortfahren, gehen Ihre Änderungen verloren.",
+					"discard": "Verwerfen und weiter"
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",
@@ -3482,6 +3521,16 @@
 		"reasons": {
 			"loading": "Gründe werden geladen"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Geplant abwesend",
+			"UNPLANNED_ABSENCE": "Ungeplant abwesend",
+			"ASSIGNMENT_ENDED": "Zuordnung beendet",
+			"ADVICE_REQUESTED": "Rat erbeten",
+			"retired": "Nicht näher angegeben"
+		},
+		"history": {
+			"unknownConsultant": "Eine frühere Berater:in"
+		},
 		"submit": "Zugriff anfragen",
 		"submitSending": "Wird gesendet",
 		"title": "Zugriff anfragen",
@@ -3808,6 +3857,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} kann somit den kompletten Nachrichtenverlauf lesen und ist für Sie verantwortlich. {{oldConsultant}} hat keinen Zugriff mehr auf die Nachrichten."
 						},
+						"historical": "Dies ist eine frühere Anfrage. Sie kann hier nicht mehr beantwortet werden.",
 						"question": "Stimmen Sie der Übergabe zu?",
 						"sent": {
 							"description": {
@@ -4089,7 +4139,11 @@
 					"headline": "Es hat nicht funktioniert?",
 					"hint": "Wir haben Ihnen einen Code an Ihre E-Mail-Adresse geschickt. Bitte geben Sie den Code ein.",
 					"new": "Neuen Code senden",
-					"sent": "Neuer Code gesendet"
+					"sent": "Neuer Code gesendet",
+					"countdown": "Neuen Code senden ({{time}})",
+					"onlyLatest": "Nur der zuletzt gesendete Code gilt.",
+					"failed": "Der Code konnte nicht gesendet werden. Bitte versuchen Sie es erneut.",
+					"tooMany": "Zu viele Codes angefordert. Bitte warten Sie einige Minuten, bevor Sie einen neuen anfordern."
 				},
 				"step2": {
 					"copy": "Bitte geben Sie hier Ihre E-Mail-Adresse an.",
@@ -4712,6 +4766,7 @@
 		"requestAdvice": "Rat einholen"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Wir suchen eine Beratung für Sie.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Konto löschen",
@@ -5527,6 +5582,19 @@
 			"region": "Benachrichtigungen",
 			"more": "{{count}} weitere anzeigen",
 			"less": "Weniger anzeigen"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "Neue Beratung derzeit gesperrt",
+				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"unavailable": {
+				"title": "Beratung derzeit nicht prüfbar",
+				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuchen Sie es erneut. Ihre Eingaben bleiben erhalten.",
+				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuchen Sie es erneut."
+			}
 		}
 	}
 }

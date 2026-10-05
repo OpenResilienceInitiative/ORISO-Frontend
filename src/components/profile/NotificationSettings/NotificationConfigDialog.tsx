@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { M3Dialog } from '../../m3Dialog/M3Dialog';
 import { ReactComponent as NotificationSettingsIcon } from '../../../resources/img/icons/notification_settings.svg';
 import { ReactComponent as NotificationAudioOffIcon } from '../../../resources/img/icons/notification_audio_off.svg';
@@ -15,7 +16,7 @@ import {
 	previewNotificationSound,
 	soundAssetFor
 } from '../../../utils/notificationSettings/soundPlayback';
-import { M3Checkbox } from '../../M3Checkbox';
+import { EMAIL_PREFERENCES_PATH } from '../../../utils/emailPreferencesReturn';
 import {
 	AREA_KINDS,
 	BannerMode,
@@ -31,7 +32,7 @@ import {
 import './notificationConfigDialog.styles.scss';
 
 /* ------------------------------------------------------------------ *
- * A single kind row: volume arrows + sound dropdown (with play/mute) + email
+ * A single kind row: volume arrows + sound dropdown (with play/mute) + banner
  * ------------------------------------------------------------------ */
 
 const KindRow = ({
@@ -190,14 +191,6 @@ const KindRow = ({
 						</option>
 					</select>
 				</label>
-				<M3Checkbox
-					checked={value.email}
-					onChange={(checked) =>
-						onChange(area, kind, 'email', checked)
-					}
-					label={t('profile.notifications.config.sendByEmail')}
-					dataCy={`notif-email-${area}-${kind}`}
-				/>
 			</div>
 		</div>
 	);
@@ -210,6 +203,9 @@ const KindRow = ({
 export interface NotificationConfigViewProps {
 	config: NotificationConfig;
 	activeArea: NotificationArea;
+	onEmailPreferencesClick?: (
+		event: React.MouseEvent<HTMLAnchorElement>
+	) => void;
 	onAreaChange: (area: NotificationArea) => void;
 	onChange: (
 		area: NotificationArea,
@@ -218,14 +214,18 @@ export interface NotificationConfigViewProps {
 		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigView = ({
 	config,
 	activeArea,
+	onEmailPreferencesClick,
 	onAreaChange,
 	onChange,
-	onPreview
+	onPreview,
+	showEmailLink = true
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -233,9 +233,19 @@ export const NotificationConfigView = ({
 			<p className="notifConfig__intro">
 				{t('profile.notifications.config.intro')}
 			</p>
-			<p className="notifConfig__emailNote">
-				{t('profile.notifications.config.emailNote')}
-			</p>
+			{showEmailLink && (
+				<p className="notifConfig__emailNote">
+					<a
+						href={`${EMAIL_PREFERENCES_PATH}#email-notifications`}
+						onClick={onEmailPreferencesClick}
+					>
+						{t(
+							'profile.notifications.title',
+							'E-Mail-Benachrichtigungen'
+						)}
+					</a>
+				</p>
+			)}
 
 			<div className="notifConfig__tabs" role="tablist">
 				{NOTIFICATION_AREAS.map((area) => {
@@ -334,24 +344,57 @@ interface NotificationConfigDialogProps {
 	config: NotificationConfig;
 	onConfirm: (config: NotificationConfig) => void;
 	onClose: () => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigDialog = ({
 	open,
 	config,
 	onConfirm,
-	onClose
+	onClose,
+	showEmailLink = true
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
+	const navigate = useNavigate();
 	const [draft, setDraft] = useState<NotificationConfig>(config);
 	const [activeArea, setActiveArea] = useState<NotificationArea>('requests');
+	const [discardTarget, setDiscardTarget] = useState<string | null>(null);
+	const [confirmDiscard, setConfirmDiscard] = useState(false);
 
 	React.useEffect(() => {
 		if (open) {
 			setDraft(config);
 			setActiveArea('requests');
+			setDiscardTarget(null);
+			setConfirmDiscard(false);
 		}
 	}, [open, config]);
+
+	const isDirty = JSON.stringify(draft) !== JSON.stringify(config);
+
+	const leave = (target: string | null) => {
+		if (isDirty) {
+			setDiscardTarget(target);
+			setConfirmDiscard(true);
+			return;
+		}
+		onClose();
+		if (target) navigate(target);
+	};
+
+	const openEmailPreferences = (
+		event: React.MouseEvent<HTMLAnchorElement>
+	) => {
+		event.preventDefault();
+		leave(`${EMAIL_PREFERENCES_PATH}#email-notifications`);
+	};
+
+	const discardAndLeave = () => {
+		setConfirmDiscard(false);
+		onClose();
+		if (discardTarget) navigate(discardTarget);
+	};
 
 	const handleChange = useCallback(
 		(
@@ -376,34 +419,62 @@ export const NotificationConfigDialog = ({
 	}, []);
 
 	return (
-		<M3Dialog
-			open={open}
-			onClose={onClose}
-			title={t('profile.notifications.config.title')}
-			icon={<NotificationSettingsIcon />}
-			closeLabel={t('app.close')}
-			width={620}
-			actions={[
-				{
-					label: t('profile.notifications.config.cancel'),
-					onClick: onClose,
-					testId: 'notif-cancel'
-				},
-				{
-					label: t('profile.notifications.config.confirm'),
-					onClick: () => onConfirm(draft),
-					primary: true,
-					testId: 'notif-confirm'
-				}
-			]}
-		>
-			<NotificationConfigView
-				config={draft}
-				activeArea={activeArea}
-				onAreaChange={setActiveArea}
-				onChange={handleChange}
-				onPreview={handlePreview}
+		<>
+			<M3Dialog
+				open={open}
+				onClose={() => leave(null)}
+				title={t('profile.notifications.config.title')}
+				icon={<NotificationSettingsIcon />}
+				closeLabel={t('app.close')}
+				width={620}
+				actions={[
+					{
+						label: t('profile.notifications.config.cancel'),
+						onClick: () => leave(null),
+						testId: 'notif-cancel'
+					},
+					{
+						label: t('profile.notifications.config.confirm'),
+						onClick: () => onConfirm(draft),
+						primary: true,
+						testId: 'notif-confirm'
+					}
+				]}
+			>
+				<NotificationConfigView
+					config={draft}
+					activeArea={activeArea}
+					onEmailPreferencesClick={openEmailPreferences}
+					onAreaChange={setActiveArea}
+					onChange={handleChange}
+					onPreview={handlePreview}
+					showEmailLink={showEmailLink}
+				/>
+			</M3Dialog>
+			<M3Dialog
+				open={confirmDiscard}
+				onClose={() => setConfirmDiscard(false)}
+				title={t('profile.notifications.config.discardChanges.title')}
+				description={t(
+					'profile.notifications.config.discardChanges.description'
+				)}
+				closeLabel={t('app.close')}
+				actions={[
+					{
+						label: t('profile.notifications.config.cancel'),
+						onClick: () => setConfirmDiscard(false),
+						testId: 'notif-keep-editing'
+					},
+					{
+						label: t(
+							'profile.notifications.config.discardChanges.discard'
+						),
+						onClick: discardAndLeave,
+						primary: true,
+						testId: 'notif-discard-changes'
+					}
+				]}
 			/>
-		</M3Dialog>
+		</>
 	);
 };

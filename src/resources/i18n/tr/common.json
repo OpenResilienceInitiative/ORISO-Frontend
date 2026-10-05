@@ -1,4 +1,18 @@
 {
+	"menuEffects": {
+		"title": "Menü görünümü",
+		"label": "Arka plan perdesi ve yumuşak menü animasyonları",
+		"description": "Açık sohbet menülerinin arka planını aydınlatır ve menüyü hafif bir hareketle açar. Hareket azaltma etkinse animasyon oynatılmaz.",
+		"scope": "Bu tarayıcıdaki bu hesap için geçerlidir. Varsayılan olarak açıktır."
+	},
+	"contactSheet": {
+		"request": "İletişim bilgilerini e-postayla al",
+		"sending": "Gönderiliyor…",
+		"recipient": "E-posta {{email}} adresine gönderilecek.",
+		"missingEmail": "Önce profilinize bir e-posta adresi ekleyin.",
+		"sent": "İletişim bilgileri {{email}} adresine gönderildi.",
+		"failed": "E-posta gönderilemedi. Lütfen tekrar deneyin."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Tavsiye isteyen kişileri yokluğum hakkında bilgilendirmek"
@@ -390,7 +404,7 @@
 		"dearchiveDescription": "Sohbeti arşivden geri yükle.",
 		"editGroupChat": "Sohbet ayarları",
 		"editGroupChatDescription": "Bu sohbetin konusunu, zamanını ve moderasyonunu değiştirin.",
-		"groupChatInfo": "Sohbet bilgileri",
+		"groupChatInfo": "Bilgiler ve ayarlar",
 		"imprint": "Künye",
 		"leaveGroupChat": "Sohbeti bırakın",
 		"mute": "Sessize al",
@@ -724,7 +738,12 @@
 			"google": "Google Takvim",
 			"outlook": "Outlook Takvim",
 			"titleLabel": "Nötr takvim başlığı",
-			"addShort": "Takvim"
+			"addShort": "Takvim",
+			"copyGoogle": "Google Takvim bağlantısını kopyala",
+			"copyOutlook": "Outlook Takvim bağlantısını kopyala",
+			"linkCopied": "Takvim bağlantısı kopyalandı.",
+			"copyError": "Takvim bağlantısı kopyalanamadı. Lütfen tekrar deneyin.",
+			"shareHint": "Web siteniz için takvim bağlantıları: tek bir randevu için; davet bağlantısı veya otomatik güncelleme içermez."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Randevu",
@@ -1680,7 +1699,8 @@
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
 					"text": "Kullanıcı adı veya şifre yanlış. Lütfen tekrar deneyiniz."
 				},
-				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz."
+				"consultantBlocked": "Danışman hesapları buradan giriş yapamaz.",
+				"tooManyRequests": "Çok fazla deneme. Lütfen birkaç dakika bekleyip tekrar deneyin."
 			}
 		},
 		"mobile": {
@@ -2155,6 +2175,18 @@
 			"teamDiscussionNew": {
 				"title": "Ekip görüşmesi",
 				"text": "{{senderDisplayName}} ekip görüşmesinde bir mesaj yazdı"
+			},
+			"firstResponseReceived": {
+				"title": "İlk adımlarınız",
+				"text": "Size sohbette en önemli bilgileri yazdık."
+			},
+			"conversationFinished": {
+				"title": "Sohbet sona erdi",
+				"text": "Anonim sohbet sona erdi."
+			},
+			"serviceNoticePlanned": {
+				"title": "Planlı bakım",
+				"text": "{{maintenanceDate}} tarihinde platform, {{maintenanceStart}} ile {{maintenanceEnd}} arasında erişilemez olacak. Daha önce yazdığınız mesajlar kaybolmaz."
 			}
 		},
 		"error": "Başarısız",
@@ -2204,7 +2236,9 @@
 			"loadingOlder": "Eski etkinlikler yükleniyor…",
 			"olderError": "Eski etkinlikler yüklenemedi.",
 			"retryOlder": "Tekrar dene",
-			"endOfHistory": "Etkinlik geçmişinin sonu"
+			"endOfHistory": "Etkinlik geçmişinin sonu",
+			"openStatusPage": "Durum sayfasını görüntüle",
+			"opensInNewTab": "(yeni sekmede açılır)"
 		},
 		"threadReply": {
 			"title": "Konuya yeni yanıt"
@@ -2542,7 +2576,7 @@
 			},
 			"dnd": {
 				"title": "Rahatsız etmeyin",
-				"description": "Tüm bildirimleri (ses, açılır pencere, e-posta) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
+				"description": "Bildirimleri (ses, açılır pencere) seçtiğiniz bir süre boyunca duraklatın. Geçmişiniz dolmaya devam eder.",
 				"activeUntil": "{{time}} saatine kadar etkin",
 				"option": {
 					"off": "Kapalı",
@@ -2560,6 +2594,11 @@
 				"sendByEmail": "E-posta ile gönder",
 				"confirm": "Onayla",
 				"cancel": "İptal",
+				"discardChanges": {
+					"title": "Değişiklikler silinsin mi?",
+					"description": "Bildirim ayarlarınız henüz kaydedilmedi. Devam ederseniz değişiklikleriniz kaybolacak.",
+					"discard": "Sil ve devam et"
+				},
 				"area": {
 					"requests": "Talep",
 					"conversations": "Görüşme",
@@ -3462,6 +3501,16 @@
 		"reasons": {
 			"loading": "Nedenler yükleniyor"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planlı yokluk",
+			"UNPLANNED_ABSENCE": "Plansız yokluk",
+			"ASSIGNMENT_ENDED": "Görevlendirme sona erdi",
+			"ADVICE_REQUESTED": "Danışma talep edildi",
+			"retired": "Belirtilmemiş"
+		},
+		"history": {
+			"unknownConsultant": "Önceki danışman"
+		},
 		"submit": "Erişim talep et",
 		"submitSending": "Gönderiliyor",
 		"title": "Erişim talep et",
@@ -3788,6 +3837,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} {{oldConsultant}} bu nedenle tüm mesaj geçmişini okuyabilir ve sizden sorumludur. artık mesajlara erişimi yoktur."
 						},
+						"historical": "Bu daha önceki bir taleptir. Artık buradan yanıtlanamaz.",
 						"question": "Devir teslim işlemini kabul ediyor musunuz?",
 						"sent": {
 							"description": {
@@ -4072,7 +4122,11 @@
 					"headline": "İşe yaramadı mı?",
 					"hint": "E-posta adresinize bir kod gönderdik. Lütfen kodu giriniz.",
 					"new": "Yeni kod gönder",
-					"sent": "Yeni kod gönderildi"
+					"sent": "Yeni kod gönderildi",
+					"countdown": "Yeni kod gönder ({{time}})",
+					"onlyLatest": "Yalnızca en son gönderilen kod geçerlidir.",
+					"failed": "Kod gönderilemedi. Lütfen tekrar deneyin.",
+					"tooMany": "Çok fazla kod istendi. Yeni bir kod istemeden önce lütfen birkaç dakika bekleyin."
 				},
 				"step2": {
 					"copy": "Lütfen e-posta adresinizi buraya girin.",
@@ -4690,6 +4744,7 @@
 		"requestAdvice": "Tavsiye iste"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Sizin için bir danışman arıyoruz.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Hesabı Sil",
@@ -5535,6 +5590,19 @@
 			"region": "Bildirimler",
 			"more": "{{count}} tane daha göster",
 			"less": "Daha az göster"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "Yeni danışmanlık şu anda başlatılamıyor",
+				"text": "Danışmanlık kuruluşunun güncel veri işleme sözleşmesini onaylaması gerekiyor. Lütfen danışmanlık merkezinize başvurun. Başlamış danışmanlıklar devam eder."
+			},
+			"unavailable": {
+				"title": "Danışmanlık durumu şu anda doğrulanamıyor",
+				"text": "Sözleşmenin onay durumu doğrulanamadı. Lütfen tekrar deneyin. Girdiğiniz bilgiler korunur.",
+				"inviteText": "Sözleşme onayı şu anda doğrulanamadı. Lütfen tekrar deneyin."
+			}
 		}
 	}
 }
