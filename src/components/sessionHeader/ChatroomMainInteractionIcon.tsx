@@ -1,5 +1,6 @@
 import * as React from 'react';
 import clsx from 'clsx';
+import { ConsultantSearchLoader } from './ConsultantSearchLoader';
 import addIcon from '../../resources/img/icons/chatroom/add_icon.svg';
 import internalConversationIcon from '../../resources/img/icons/chatroom/internal_conversation_200.svg';
 import liveConversationIcon from '../../resources/img/icons/chatroom/live_conv_type_200.svg';
@@ -18,6 +19,15 @@ interface ChatroomMainInteractionIconProps {
 	onAddClick?: () => void;
 	showAddIcon?: boolean;
 	type: ChatroomConversationIconType;
+	/**
+	 * FE#1115 — no counsellor has accepted yet. The enquiry's magnet starts
+	 * sweeping and sends its beam out of the capsule. It is the same drawing
+	 * either way, so nothing in the row changes size or place when the
+	 * search ends.
+	 */
+	isSearching?: boolean;
+	/** Read out while `isSearching`; the glyph itself is decoration. */
+	searchingLabel?: string;
 }
 
 const conversationIconSources: Partial<
@@ -33,7 +43,9 @@ export const ChatroomMainInteractionIcon = ({
 	className,
 	onAddClick,
 	showAddIcon = false,
-	type
+	type,
+	isSearching = false,
+	searchingLabel
 }: ChatroomMainInteractionIconProps) => {
 	const addContent = (
 		<span className="chatroomMainInteractionIcon__addContent">
@@ -53,6 +65,9 @@ export const ChatroomMainInteractionIcon = ({
 				'chatroomMainInteractionIcon',
 				`chatroomMainInteractionIcon--${type}`,
 				showAddIcon && 'chatroomMainInteractionIcon--withAdd',
+				isSearching && 'chatroomMainInteractionIcon--searching',
+				// Hovering the capsule replays the magnet's search gesture.
+				isSearching && 'consultantSearchLoaderHost',
 				className
 			)}
 		>
@@ -79,11 +94,16 @@ export const ChatroomMainInteractionIcon = ({
 						{addContent}
 					</button>
 				))}
+			{isSearching && searchingLabel && (
+				<span role="status" className="sr-only">
+					{searchingLabel}
+				</span>
+			)}
 			<span
 				className="chatroomMainInteractionIcon__type"
 				aria-hidden="true"
 			>
-				{iconSource ? (
+				{iconSource && (
 					<span
 						className="chatroomMainInteractionIcon__typeMask"
 						style={
@@ -92,7 +112,14 @@ export const ChatroomMainInteractionIcon = ({
 							} as React.CSSProperties
 						}
 					/>
-				) : (
+				)}
+				{/* FE#1115: the enquiry's glyph IS the magnet — the same
+				    drawing the search indicator animates, so the capsule
+				    never holds two versions of one object. */}
+				{!iconSource && type === 'inquiry' && (
+					<ConsultantSearchLoader animated={isSearching} />
+				)}
+				{!iconSource && type !== 'inquiry' && (
 					<span className="chatroomMainInteractionIcon__typeGenerated" />
 				)}
 			</span>
