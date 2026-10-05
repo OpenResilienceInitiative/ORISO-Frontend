@@ -8,22 +8,21 @@
 
 	.text {
 		margin: 0;
-		display: flex;
-		align-items: center;
 	}
 
 	svg {
-		color: var(--m3-success, $form-success);
+		flex-shrink: 0;
 		width: 16px;
 		height: 16px;
 		margin-right: 4px;
 	}
 
-	button {
+	&__link {
 		border: none;
 		background-color: transparent;
 		padding: 0;
 		font-size: 14px;
+		text-align: left;
 		text-decoration: underline;
 		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		cursor: pointer;
@@ -31,9 +30,49 @@
 		&:hover {
 			color: var(--m3-primary-hover, $hover-primary);
 		}
+
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+			border-radius: 4px;
+		}
+
+		// Waiting or sending: still focusable, visibly not clickable. The
+		// countdown keeps the underline off so it does not read as a link.
+		&[aria-disabled='true'] {
+			color: var(--m3-on-surface-variant, $tertiary);
+			text-decoration: none;
+			cursor: default;
+			font-variant-numeric: tabular-nums;
+		}
 	}
 
-	.text + .text {
-		margin-top: 3px;
+	// Descendant selectors: they must outrank `.text { margin: 0 }` above.
+	.twoFactorAuthResendMail__hint {
+		// Clear of the link's focus ring.
+		margin-top: 6px;
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
+
+	.twoFactorAuthResendMail__status {
+		display: flex;
+		align-items: center;
+		min-height: 0;
+
+		&:not(:empty) {
+			margin-top: 4px;
+		}
+
+		svg {
+			color: var(--m3-success, $form-success);
+		}
+
+		&--error {
+			color: var(--m3-error, $form-error);
+
+			svg {
+				color: currentColor;
+			}
+		}
 	}
 }

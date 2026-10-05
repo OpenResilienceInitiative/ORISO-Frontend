@@ -29,6 +29,10 @@ import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 import { rememberLastOpenSession } from '../../utils/lastOpenSession';
 import { useGroupChatAccess } from '../groupChat/useGroupChatAccess';
 import { GroupChatNotMember } from '../groupChat/GroupChatNotMember';
+import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
+import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
 
 export const SessionView = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
@@ -75,6 +79,22 @@ export const SessionView = () => {
 				AUTHORITIES.CONSULTANT_DEFAULT,
 				userData
 			)
+		}
+	);
+	// …and may knock on a self-help group (never a team chat); once a
+	// moderator lets her in, the group is asked again.
+	const inviteToken = activeSession?.item?.id
+		? groupInviteTokenFor(activeSession.item.id)
+		: undefined;
+	const joinRequest = useOwnJoinRequest(
+		knockableGroupId(activeSession, groupAccess, inviteToken),
+		inviteToken,
+		httpJoinRequestTransport,
+		{
+			onOpenGroup: () => {
+				reloadActiveSession?.();
+				retryGroupAccess();
+			}
 		}
 	);
 
@@ -193,6 +213,7 @@ export const SessionView = () => {
 	if (groupAccess === 'notMember' || groupAccess === 'unavailable') {
 		return (
 			<GroupChatNotMember
+				joinRequest={joinRequest}
 				onRetry={
 					groupAccess === 'unavailable' ? retryGroupAccess : undefined
 				}

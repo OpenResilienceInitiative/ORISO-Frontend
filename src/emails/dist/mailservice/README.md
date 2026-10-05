@@ -5,7 +5,16 @@ Generated — do not edit by hand. Run `npm run emails:mailservice`.
 Mounted over the upstream Online-Beratung mail service's `templates/`
 directory; see ADR-020 for why an override rather than a fork.
 
-German is `<name>.html`, English `<name>.en.html`, matching upstream's layout.
+German is `<name>.html`; other languages use `<name>.<lang>.html`.
+
+Human language review status is carried with this standalone artifact:
+
+- `de`: released
+- `en`: released
+- `fr`: pending-human-review
+- `ru`: pending-human-review
+- `ti`: pending-human-review
+- `tr`: pending-human-review
 
 ## The model contract
 
