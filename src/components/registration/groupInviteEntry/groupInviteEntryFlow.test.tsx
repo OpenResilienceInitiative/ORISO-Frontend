@@ -368,6 +368,42 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(body.temporary).toBe(true);
 	});
 
+	/* The backend refuses `temporary` without a valid group invite (US#1247):
+	   a link without `aid`, or another agency picked in the steps, is an
+	   ordinary registration and must not offer or send the temporary path. */
+	it.each([
+		['the link names no agency', '?gcid=19', 19],
+		['another agency was picked in the steps', '?gcid=19&aid=19', 7]
+	])(
+		'offers no temporary join and never sends one when %s',
+		async (_, search, agencyId) => {
+			renderAt(search, {
+				agency: { ...agency, id: agencyId, topicIds: [17, 18] },
+				mainTopic: grief,
+				zipcode: '00000',
+				username: 'ente_yuki_7984',
+				password: 'Minted-in-the-test-1'
+			});
+
+			expect(
+				document.querySelector('[data-cy="button-temporary-join"]')
+			).toBeNull();
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="button-register"]'
+				) as HTMLElement
+			);
+
+			await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+			const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+				string,
+				Record<string, unknown>
+			];
+			expect(body).not.toHaveProperty('groupChatId');
+			expect(body.temporary).not.toBe(true);
+		}
+	);
+
 	it('keeps the four steps when the topic cannot be told from the agency', () => {
 		renderAt('?gcid=19&aid=19', {
 			agency: { ...agency, topicIds: [17, 18] }

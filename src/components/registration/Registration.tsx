@@ -196,8 +196,20 @@ export const Registration = () => {
 	   it is a decision about *this* screen, not a value that is registered, and
 	   the account draft already carries the minted password across steps. */
 	const groupChatId = getPostRegistrationGroupChatId(location.search);
+	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const isAccountDataStep = step === 'account-data';
-	const canJoinTemporarily = Boolean(groupChatId) && isAccountDataStep;
+	/* The backend accepts `temporary` only with a valid group invite
+	   (UserService#1247): no `aid`, or another agency, is an ordinary
+	   registration without this way on. */
+	const canJoinTemporarily =
+		isAccountDataStep &&
+		Boolean(
+			getGroupJoin({
+				gcid: groupChatId,
+				aid: inviteAgencyId,
+				agencyId: registrationData?.agency?.id
+			})
+		);
 	const [temporaryJoinChosen, setTemporaryJoinChosen] =
 		useState<boolean>(false);
 	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
@@ -219,7 +231,6 @@ export const Registration = () => {
 	   #1289 link variant — no stepper, no chips — is `GroupInviteEntry`, shown
 	   when the link also names the agency (`aid`) and the topic follows from
 	   it. Without that the four steps below still run, with this toggle. */
-	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const inviteEntry = resolveGroupInviteEntry({
 		gcid: groupChatId,
 		aid: inviteAgencyId,
@@ -632,7 +643,8 @@ export const Registration = () => {
 							: {})
 					}
 				: {}),
-			temporary: joinsTemporarily
+			// Never temporary without the group: the backend answers 400.
+			temporary: Boolean(groupJoin) && joinsTemporarily
 		};
 
 		if (
