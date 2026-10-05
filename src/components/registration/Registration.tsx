@@ -76,6 +76,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import {
 	GroupInviteLoadError,
 	GroupInviteLoading
@@ -245,6 +246,15 @@ export const Registration = () => {
 			!urlParamsAgency?.consultingType ||
 			registrationConsultingType != null
 	});
+	/* Someone joining the group through the steps sees the group's words
+	   while the registration runs, not the counselling enquiry's (#1499). */
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
+	const joinsTheGroup =
+		getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: registrationData?.agency?.id
+		}) !== undefined;
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
 	/* The minted password is never shown, so nobody can log in again once the
@@ -868,6 +878,11 @@ export const Registration = () => {
 								forcedState="preparing"
 								variant="inline"
 								onEnter={() => undefined}
+								copy={
+									joinsTheGroup
+										? groupJoinHandoverCopy
+										: undefined
+								}
 							/>
 						) : activeStep ? (
 							<>

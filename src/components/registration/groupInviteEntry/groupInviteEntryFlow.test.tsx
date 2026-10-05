@@ -291,6 +291,58 @@ describe('newcomer entry for a self-help group link', () => {
 		expect(body).not.toHaveProperty('groupChatId');
 	});
 
+	it('while joining, the screen speaks about the group, not about a counselling enquiry', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="registration-handover"]')
+			).not.toBeNull()
+		);
+		const handover = document.querySelector(
+			'[data-cy="registration-handover"]'
+		) as HTMLElement;
+		const text = handover.textContent ?? '';
+		// The cards carry no German fallback any more (dev 939ee899), so the
+		// untranslated test run shows keys: the group's cards, none of the
+		// counselling handover's (which promise an answer and an enquiry).
+		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).not.toContain('registration.handover.steps.');
+	});
+
+	it('joining through the steps also speaks about the group while it registers', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="registration-handover"]')
+			).not.toBeNull()
+		);
+		const text =
+			document.querySelector('[data-cy="registration-handover"]')
+				?.textContent ?? '';
+		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).not.toContain('registration.handover.steps.');
+	});
+
 	/* The minted password is never shown, so once the browser is closed nobody
 	   can log in again. The backend deletes such an account after a while
 	   (ORISO-UserService#1001) and needs to know which one it is. */
