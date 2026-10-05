@@ -1433,6 +1433,12 @@ export const StackedListWithSelection: Story = {
 				row.classList.contains('sessionsListItem--active')
 			)
 		).toEqual([false, true, false]);
+		// An untyped group row is internal and carries the internal icon.
+		await expect(
+			before.querySelector(
+				'.sessionsListItem__consultingTypeIcon--internal'
+			)
+		).not.toBeNull();
 		await expect(
 			before.classList.contains('sessionsListItem--beforeActive')
 		).toBe(true);
@@ -1451,9 +1457,9 @@ export const StackedListWithSelection: Story = {
 	}
 };
 
-/** A group chat the backend types as neither Interna nor Gesprächskreis falls back to the team icon. */
+/** A group chat explicitly typed `AGENCY_COUNSELLING` shows the team icon. */
 export const GroupChatRow: Story = {
-	name: 'Gruppe — ohne Gruppen-Typ (Team-Symbol)',
+	name: 'Gruppe — Beratungsstelle (Team-Symbol)',
 	render: () => {
 		seedMatrixRoom(2);
 		return (
