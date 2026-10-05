@@ -37,6 +37,10 @@ import {
 	TopicSessionInterface
 } from '../../globalState/interfaces';
 import {
+	STATUS_ENQUIRY,
+	STATUS_ACTIVE
+} from '../../globalState/interfaces/SessionsDataInterface';
+import {
 	getViewPathForType,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
@@ -74,7 +78,7 @@ import {
 } from '../message/visibleParticipants';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
-import { ConsultantSearchLoader } from './ConsultantSearchLoader';
+import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
@@ -1040,10 +1044,23 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
+						/* FE#1115: only an unaccepted enquiry sweeps; empty ones and waiting
+						   live chats keep their avatar stack. No empty slot is reserved. */
+						const isSearchingForConsultant =
+							sessionHeaderConversationIconType === 'inquiry' &&
+							hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+							!activeSession.consultant;
 						return (
 							<div className="sessionInfo__memberStack sessionInfo__memberStack--single">
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
+									isSearching={isSearchingForConsultant}
+									searchingLabel={translate(
+										'sessionHeader.searchingForConsultant'
+									)}
 									showAddIcon={
 										props.showAddButton ??
 										!activeSession.isEnquiry
@@ -1060,14 +1077,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											: undefined
 									}
 								/>
-								{hasUserAuthority(
-									AUTHORITIES.ASKER_DEFAULT,
-									userData
-								) && !activeSession.consultant ? (
-									<div className="sessionInfo__memberBubble">
-										<ConsultantSearchLoader size="32px" />
-									</div>
-								) : (
+								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
 										participants={headerParticipants}
 										/* Phone (< 900 px): one avatar + a
@@ -1218,6 +1228,20 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 				</div>
 			)}
+			{isAskerUser &&
+				!isConsultantUser &&
+				activeSession.isSession &&
+				!isChatFinished &&
+				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
+					activeSession.item.status
+				) &&
+				activeSession.item.agencyId && (
+					<ContactSheetRequest
+						key={activeSession.item.id}
+						sessionId={activeSession.item.id}
+						email={userData.email}
+					/>
+				)}
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
 			{isSupervisionEnabledForCurrentChat &&

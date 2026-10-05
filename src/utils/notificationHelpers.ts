@@ -1,10 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './appConfig';
 import { isNotificationSuppressed } from './notificationSettings/model';
-import {
-	BannerMode,
-	soundSettingForEvent
-} from './notificationSettings/notificationConfig';
+import { BannerMode } from './notificationSettings/notificationConfig';
+import { resolveEventChannelContract } from './notificationSettings/occasionChannelContract';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
 
@@ -29,7 +27,14 @@ export const PERMISSION_GRANTED = 'granted';
 export const PERMISSION_DEFAULT = 'default';
 
 export const isSupported = () => {
-	return 'Notification' in window && Notification.requestPermission;
+	// Route conditions call this outside a browser too (unit tests, and any
+	// non-DOM render path), where touching `window` throws instead of
+	// answering "not supported".
+	return (
+		typeof window !== 'undefined' &&
+		'Notification' in window &&
+		Notification.requestPermission
+	);
 };
 
 export const hasPermissions = (permission: NotificationPermission) => {
@@ -108,7 +113,9 @@ const LEGACY_TYPE_BY_FAMILY: Partial<
 
 export const sendNotification = (
 	title: string,
-	opts?: NotificationOptions & ExtraNotificationOptions
+	opts?: NotificationOptions & ExtraNotificationOptions,
+	/** Internal feed metadata; never copied to the OS notification options. */
+	recipientRole?: string | null
 ): void => {
 	// If permissions not granted just ignore the notification because we only asking consultants
 	if (!isSupported() || !hasPermissions(PERMISSION_GRANTED)) {
@@ -160,12 +167,12 @@ export const sendNotification = (
 	// outside the tabs).
 	let bannerMode: BannerMode = 'temporary';
 	if (family !== 'system') {
-		const kindConfig = soundSettingForEvent(
-			settings.notificationConfig,
-			family,
-			options.eventType || '',
-			options.mentioned === true
-		);
+		const { area, kind } = resolveEventChannelContract(
+			options.eventType,
+			recipientRole,
+			{ family, mentioned: options.mentioned }
+		).browser;
+		const kindConfig = settings.notificationConfig[area][kind];
 		if (kindConfig.banner === 'off') {
 			return;
 		}

@@ -1,4 +1,18 @@
 {
+	"menuEffects": {
+		"title": "Menu appearance",
+		"label": "Backdrop and gentle menu animations",
+		"description": "Lightens the background behind open chat menus and gently animates the menu. Animations are skipped when reduced motion is enabled.",
+		"scope": "Applies to this account in this browser. Enabled by default."
+	},
+	"contactSheet": {
+		"request": "Email me the contact details",
+		"sending": "Sending…",
+		"recipient": "The email will go to {{email}}.",
+		"missingEmail": "Add an email address to your profile first.",
+		"sent": "The contact details were sent to {{email}}.",
+		"failed": "The email could not be sent. Please try again."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Inform advice seekers about my absence"
@@ -373,7 +387,7 @@
 		"dearchiveDescription": "Restore chat from archive.",
 		"editGroupChat": "Chat settings",
 		"editGroupChatDescription": "Change this chat's topic, schedule and moderation.",
-		"groupChatInfo": "Chat info",
+		"groupChatInfo": "Information & settings",
 		"imprint": "Imprint",
 		"leaveGroupChat": "Leave chat",
 		"mute": "Mute",
@@ -707,7 +721,12 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar"
+			"addShort": "Calendar",
+			"copyGoogle": "Copy Google Calendar link",
+			"copyOutlook": "Copy Outlook Calendar link",
+			"linkCopied": "Calendar link copied.",
+			"copyError": "The calendar link could not be copied. Please try again.",
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -1705,7 +1724,8 @@
 					"otp": "Your access data is not correct. Please try again.",
 					"text": "Username or password are not correct. Please try again."
 				},
-				"consultantBlocked": "Consultant accounts cannot sign in here."
+				"consultantBlocked": "Consultant accounts cannot sign in here.",
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
 			}
 		},
 		"mobile": {
@@ -2171,6 +2191,18 @@
 			"teamDiscussionNew": {
 				"title": "Team discussion",
 				"text": "{{senderDisplayName}} posted in the team discussion"
+			},
+			"firstResponseReceived": {
+				"title": "Your first steps",
+				"text": "We have sent you the most important information in the chat."
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"text": "The anonymous chat has ended."
+			},
+			"serviceNoticePlanned": {
+				"title": "Scheduled maintenance",
+				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
 			}
 		},
 		"error": "failed",
@@ -2220,7 +2252,9 @@
 			"loadingOlder": "Loading older activity…",
 			"olderError": "Could not load older activity.",
 			"retryOlder": "Try again",
-			"endOfHistory": "End of activity history"
+			"endOfHistory": "End of activity history",
+			"openStatusPage": "View status page",
+			"opensInNewTab": "(opens in a new tab)"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2575,7 +2609,7 @@
 			},
 			"dnd": {
 				"title": "Do not disturb",
-				"description": "Pause all notifications (sound, pop-ups, emails) for a chosen time. Your history keeps filling.",
+				"description": "Pause notifications (sound, pop-ups) for a chosen time. Your history keeps filling.",
 				"activeUntil": "Active until {{time}}",
 				"option": {
 					"off": "Off",
@@ -2593,6 +2627,11 @@
 				"sendByEmail": "Send by Email",
 				"confirm": "Confirm",
 				"cancel": "Cancel",
+				"discardChanges": {
+					"title": "Discard changes?",
+					"description": "Your notification settings have not been saved. Continuing will discard your changes.",
+					"discard": "Discard and continue"
+				},
 				"area": {
 					"requests": "Requests",
 					"conversations": "Conversation",
@@ -3440,6 +3479,16 @@
 		"reasons": {
 			"loading": "Loading reasons"
 		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planned absence",
+			"UNPLANNED_ABSENCE": "Unplanned absence",
+			"ASSIGNMENT_ENDED": "Assignment ended",
+			"ADVICE_REQUESTED": "Advice requested",
+			"retired": "Not specified"
+		},
+		"history": {
+			"unknownConsultant": "A former counsellor"
+		},
 		"submit": "Request access",
 		"submitSending": "Sending",
 		"title": "Request access",
@@ -3766,6 +3815,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} can thus read the complete message history and is responsible for you. {{oldConsultant}} no longer has access to the messages."
 						},
+						"historical": "This is an earlier request. It can no longer be answered here.",
 						"question": "Do you agree to the transfer?",
 						"sent": {
 							"description": {
@@ -4050,7 +4100,11 @@
 					"headline": "It did not work?",
 					"hint": "We have sent you a code to your email address. Please enter the code.",
 					"new": "Send new code",
-					"sent": "New code sent"
+					"sent": "New code sent",
+					"countdown": "Send new code ({{time}})",
+					"onlyLatest": "Only the most recently sent code is valid.",
+					"failed": "The code could not be sent. Please try again.",
+					"tooMany": "Too many codes requested. Please wait a few minutes before requesting a new one."
 				},
 				"step2": {
 					"copy": "Please enter your e-mail address here.",
@@ -4649,6 +4703,7 @@
 		"requestAdvice": "Ask for advice"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "We are looking for a counsellor for you.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Delete Account",
@@ -5464,6 +5519,19 @@
 			"region": "Notifications",
 			"more": "Show {{count}} more",
 			"less": "Show less"
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"title": "New counselling is currently restricted",
+				"text": "The counselling organisation must confirm the current data processing agreement. Contact your counselling centre. Counselling that has already begun can continue."
+			},
+			"unavailable": {
+				"title": "Counselling availability cannot be checked",
+				"text": "The agreement status could not be verified. Please try again. Your entries are retained.",
+				"inviteText": "The contract confirmation could not be checked right now. Please try again."
+			}
 		}
 	}
 }
