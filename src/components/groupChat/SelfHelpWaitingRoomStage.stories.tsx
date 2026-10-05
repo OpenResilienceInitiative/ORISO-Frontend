@@ -136,6 +136,13 @@ const meta = {
 } satisfies Meta;
 
 export default meta;
+
+/* "Chat-Info" is now labelled "Informationen & Einstellungen" (#1465). */
+const CHAT_INFO = /Informationen & Einstellungen/;
+
+/* The session menu renders through a portal into the body (#1465). */
+const menuOf = (canvasElement: HTMLElement) =>
+	canvasElement.ownerDocument.querySelector<HTMLElement>('#flyout')!;
 type Story = StoryObj<typeof meta>;
 
 /** Frank's case: 1440, start time just passed (the counting-up clock). */
@@ -152,7 +159,7 @@ export const Overdue1440: Story = {
 		).toBeVisible();
 		// Desktop keeps its "Chat-Info" link; the phone menu stays away.
 		await expect(
-			canvas.getByRole('link', { name: /Chat-Info/ })
+			canvas.getByRole('link', { name: CHAT_INFO })
 		).toBeVisible();
 		await expect(canvasElement.querySelector('#iconV')).toBeNull();
 	}
@@ -238,11 +245,9 @@ export const ChatInfoMenu390: Story = {
 		await expect(menuButton).not.toBeNull();
 		await expect(menuButton!).toBeVisible();
 		await userEvent.click(menuButton!);
-		const menu = within(
-			canvasElement.querySelector<HTMLElement>('#flyout')!
-		);
+		const menu = within(menuOf(canvasElement));
 		await waitFor(() =>
-			expect(menu.getByRole('link', { name: /Chat-Info/ })).toBeVisible()
+			expect(menu.getByRole('link', { name: CHAT_INFO })).toBeVisible()
 		);
 		await expect(menu.queryByText('Chat beenden')).toBeNull();
 	}
@@ -280,11 +285,9 @@ export const RunningChatInfoMenu390: Story = {
 		const menuButton = canvasElement.querySelector<HTMLElement>('#iconV');
 		await expect(menuButton).not.toBeNull();
 		await userEvent.click(menuButton!);
-		const menu = within(
-			canvasElement.querySelector<HTMLElement>('#flyout')!
-		);
+		const menu = within(menuOf(canvasElement));
 		await waitFor(() =>
-			expect(menu.getByRole('link', { name: /Chat-Info/ })).toBeVisible()
+			expect(menu.getByRole('link', { name: CHAT_INFO })).toBeVisible()
 		);
 	}
 };
