@@ -20,7 +20,9 @@ const TEXT_SURFACES = [
 	'--m3-surface-container-low',
 	'--m3-surface-container',
 	'--m3-surface-container-high',
-	'--m3-surface-container-highest'
+	'--m3-surface-container-highest',
+	// Outgoing message bubbles and the "+N" member chip.
+	'--m3-primary-fixed'
 ];
 
 const hueOf = (colour: string) => Hct.fromInt(argbFromHex(colour)).hue;
