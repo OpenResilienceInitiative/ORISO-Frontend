@@ -1,5 +1,5 @@
 /**
- * Emits the send-ready template files from the kit.
+ * Emits template files for every bundled App locale from the kit.
  *
  *   npm run emails:build
  *
@@ -13,6 +13,7 @@
  */
 
 import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { assertAppLocaleCoverage } from './appLocaleCoverage';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -22,12 +23,21 @@ import {
 	EMAIL_DIALECT_INFO,
 	EMAIL_IDS,
 	EMAIL_LOCALES,
+	EMAIL_LOCALE_DIR,
 	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_PROVENANCE,
+	EMAIL_LOCALE_RELEASE,
 	buildEmail,
 	emailIsUnsubscribable,
 	emailShipsInDialect,
 	listEmailPlaceholders
 } from '../index';
+
+/** Files are generated for every App language. The review state stays explicit
+ * in catalogue.json and translationReview.json for later human sign-off. */
+const pendingReview = EMAIL_LOCALES.filter(
+	(locale) => EMAIL_LOCALE_RELEASE[locale] === 'pending-human-review'
+);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist');
@@ -39,7 +49,7 @@ const dialectTable = EMAIL_DIALECTS.map((dialect) => {
 
 const readme = (
 	placeholders: Record<string, string[]>
-) => `# Send-ready e-mail templates
+) => `# Generated e-mail templates
 
 Generated — do not edit by hand. Run \`npm run emails:build\` after changing
 anything under \`src/emails/\`.
@@ -50,8 +60,17 @@ Layout: \`<dialect>/<tone>/<id>.<ext>\`.
 | --- | --- | --- | --- |
 ${dialectTable}
 
-Tones: ${EMAIL_LOCALES.join(', ')}.
-
+Variants in this directory: ${EMAIL_LOCALES.join(', ')}.
+${
+	pendingReview.length === 0
+		? ''
+		: `
+**Pending human language review: ${pendingReview.join(', ')}.** These variants
+are built now. Legal, encryption and anonymity wording has not been approved
+by a native speaker; inspect \`content/translationReview.json\` before claiming
+otherwise.
+`
+}
 Both MIME parts are generated from one content model, so the plain-text twin
 cannot drift from the HTML, and all three dialects come from one renderer, so a
 dialect cannot disagree with what Storybook shows.
@@ -95,6 +114,7 @@ const BRAND_PLACEHOLDERS = new Set([
 ]);
 
 const run = async () => {
+	assertAppLocaleCoverage();
 	// A removed occasion or a renamed dialect must not leave a stale file
 	// behind that still looks send-ready.
 	await rm(outDir, { recursive: true, force: true });
@@ -156,6 +176,20 @@ const run = async () => {
 			{
 				dialects: EMAIL_DIALECTS,
 				tones: EMAIL_LOCALES,
+				// Every variant that exists, send-ready or not, so a consumer
+				// can see what is coming and never has to guess whether a
+				// missing directory means "not translated" or "not allowed".
+				locales: Object.fromEntries(
+					EMAIL_LOCALES.map((locale) => [
+						locale,
+						{
+							lang: EMAIL_LOCALE_LANG[locale],
+							dir: EMAIL_LOCALE_DIR[locale],
+							provenance: EMAIL_LOCALE_PROVENANCE[locale],
+							release: EMAIL_LOCALE_RELEASE[locale]
+						}
+					])
+				),
 				mails: Object.fromEntries(
 					EMAIL_IDS.map((id) => [
 						id,
@@ -196,6 +230,12 @@ const run = async () => {
 	console.log(
 		`emails: wrote ${written} files to ${path.relative(process.cwd(), outDir)}`
 	);
+	if (pendingReview.length > 0) {
+		// eslint-disable-next-line no-console
+		console.log(
+			`emails: pending human language review: ${pendingReview.join(', ')}`
+		);
+	}
 };
 
 run().catch((error) => {

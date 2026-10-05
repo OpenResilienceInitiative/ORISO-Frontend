@@ -48,12 +48,17 @@ export const emailTitleGroup = (headline: string, brand: EmailBrand): string =>
  * Body copy. The final paragraph gets the larger bottom gap because whatever
  * follows it (panel or button) starts a new visual group.
  */
-export const emailProse = (paragraphs: string[]): string =>
+export const emailProse = (
+	paragraphs: string[],
+	wrapLongTokens = false
+): string =>
 	paragraphs
 		.map((text, index) =>
 			emailBlock(emailEscape(text), {
 				padding: [0, G, index === paragraphs.length - 1 ? 28 : 16, G],
-				style: emailBodyTextStyle()
+				style:
+					emailBodyTextStyle() +
+					(wrapLongTokens ? ';word-break:break-word' : '')
 			})
 		)
 		.join('');

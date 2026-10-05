@@ -2,6 +2,7 @@ import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff'
 import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
 import { Navigate } from 'react-router-dom';
+import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
 import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
@@ -37,6 +38,9 @@ import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
+import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
+import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
@@ -360,11 +364,22 @@ export const AuthenticatedApp = ({
 				<KeyBackupRecoveryPrompt />
 				<RecoveryKeySaveReminder />
 				<Routing logout={handleLogout} />
+				<M3SnackbarHost />
+				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+					<JoinRequestCenter transport={httpJoinRequestTransport} />
+				)}
 			</AuthenticatedBuildIdentityBoundary>
 		);
 	} else if (loading) {
 		return <Loading />;
 	}
 
-	return <Navigate to="/login" replace />;
+	return (
+		<Navigate
+			to={loginPathForEmailPreferences(
+				window.location.pathname + window.location.search
+			)}
+			replace
+		/>
+	);
 };

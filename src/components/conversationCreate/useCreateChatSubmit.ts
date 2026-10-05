@@ -1,6 +1,12 @@
 import { useCallback, useContext, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SessionsDataContext, UPDATE_SESSIONS } from '../../globalState';
+import {
+	NotificationsContext,
+	SessionsDataContext,
+	UPDATE_SESSIONS
+} from '../../globalState';
+import { useTranslation } from 'react-i18next';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import {
 	apiCreateGroupChat,
 	apiUpdateGroupChat,
@@ -41,6 +47,8 @@ const SESSION_VIEW_PATH = '/sessions/consultant/sessionView';
 export const useCreateChatSubmit = () => {
 	const navigate = useNavigate();
 	const { dispatch } = useContext(SessionsDataContext);
+	const notifications = useContext(NotificationsContext);
+	const { t: translate } = useTranslation();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasError, setHasError] = useState(false);
 	// Synchronous guard against duplicate POST/PUTs: React state updates are
@@ -94,7 +102,15 @@ export const useCreateChatSubmit = () => {
 							navigate(SESSION_VIEW_PATH);
 						});
 				})
-				.catch(() => {
+				.catch((error) => {
+					const notice = getCounsellingDpaNotification(
+						error,
+						translate
+					);
+					if (notice && notifications) {
+						notifications.addNotification(notice);
+						return;
+					}
 					setHasError(true);
 				})
 				.finally(() => {
@@ -102,7 +118,7 @@ export const useCreateChatSubmit = () => {
 					setIsSubmitting(false);
 				});
 		},
-		[dispatch, navigate]
+		[dispatch, navigate, notifications, translate]
 	);
 
 	return {

@@ -7,6 +7,7 @@
 		"fr:registration.state.options.7",
 		"fr:shortcuts.categories.application",
 		"fr:shortcuts.keys.ctrl",
+		"fr:snackbar.stack.region",
 		"fr:user.userU25.state.7"
 	],
 	"placeholderDriftKeys": ["en:banUser.banned.info"],
