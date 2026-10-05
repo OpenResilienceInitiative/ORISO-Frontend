@@ -8,8 +8,6 @@ import { AskerAboutMeData } from './AskerAboutMeData';
 import { ConsultantStatistics } from './ConsultantStatistics';
 import { AbsenceFormular } from './AbsenceFormular';
 import { LiveChatAvailability } from './LiveChatAvailability';
-import { EnableWalkthrough } from './EnableWalkthrough';
-import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { COLUMN_LEFT, COLUMN_RIGHT, TabsType } from '../../utils/tabsHelper';
 import { isDesktop } from 'react-device-detect';
 import { OverviewBookings } from './OverviewMobile/Bookings';
@@ -28,7 +26,6 @@ import { AdditionalEnquiry } from './AdditionalEnquiry/AdditionalEnquiry';
 import AccessAlarmOutlinedIcon from '@mui/icons-material/AccessAlarmOutlined';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import EventOutlinedIcon from '@mui/icons-material/EventOutlined';
-import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
 import HomeWorkOutlinedIcon from '@mui/icons-material/HomeWorkOutlined';
 import InsertChartOutlinedIcon from '@mui/icons-material/InsertChartOutlined';
@@ -118,26 +115,6 @@ const profileRoutes = (
 						},
 						{
 							condition: (userData) =>
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								) && settings.enableWalkthrough,
-							component: EnableWalkthrough,
-							icon: ExploreOutlinedIcon,
-							column: COLUMN_RIGHT
-						},
-						{
-							condition: (userData) =>
-								hasUserAuthority(
-									AUTHORITIES.CONSULTANT_DEFAULT,
-									userData
-								) && settings.enableWalkthrough,
-							component: TourOverviewSection,
-							icon: ExploreOutlinedIcon,
-							column: COLUMN_RIGHT
-						},
-						{
-							condition: (userData) =>
 								!hasUserAuthority(
 									AUTHORITIES.CONSULTANT_DEFAULT,
 									userData
@@ -172,9 +149,7 @@ const profileRoutes = (
 								),
 							component: ConsultantPrivateData,
 							icon: VisibilityOffOutlinedIcon,
-							column: settings.enableWalkthrough
-								? COLUMN_LEFT
-								: COLUMN_RIGHT
+							column: COLUMN_RIGHT
 						},
 						{
 							condition: (userData) =>
