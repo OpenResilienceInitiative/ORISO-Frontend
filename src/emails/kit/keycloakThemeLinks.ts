@@ -13,8 +13,8 @@ export const APP_BASE_URL_ENV = 'ORISO_APP_BASE_URL';
 export const KEYCLOAK_LINK_PATHS: Record<string, string> = {
 	orisoPrivacyUrl: '/datenschutz',
 	orisoImprintUrl: '/impressum',
-	orisoSettingsUrl: '/profile/settings',
-	orisoUnsubscribeUrl: '/profile/settings/notifications',
+	orisoSettingsUrl: '/profile/einstellungen',
+	orisoUnsubscribeUrl: '/profile/einstellungen/email',
 	orisoLoginUrl: '/login',
 	orisoAppUrl: ''
 };

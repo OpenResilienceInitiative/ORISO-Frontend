@@ -98,6 +98,50 @@ describe('notification matrix (ADR-019)', () => {
 	});
 
 	describe('unsubscribe deep link', () => {
+		it('resolves self-help participant footers to the existing appointment preference only', () => {
+			for (const occasion of [
+				'selbsthilfe-termin-bestaetigt-teilnahme',
+				'selbsthilfe-termin-verschoben-teilnahme',
+				'selbsthilfe-termin-abgesagt-teilnahme',
+				'selbsthilfe-termin-erinnerung-teilnahme'
+			]) {
+				expect(
+					switchForOccasion(ADVICE_SEEKER_SWITCHES, occasion)?.source,
+					occasion
+				).toEqual({
+					kind: 'settings',
+					field: 'appointmentNotificationEnabled'
+				});
+				expect(
+					switchForOccasion(CONSULTANT_SWITCHES, occasion),
+					occasion
+				).toBeUndefined();
+			}
+		});
+
+		it('resolves counsellor self-help footers to the persisted appointment flag only', () => {
+			for (const outcome of [
+				'bestaetigt',
+				'verschoben',
+				'abgesagt',
+				'erinnerung'
+			]) {
+				const occasion = `selbsthilfe-termin-${outcome}-beratung`;
+				expect(
+					switchForOccasion(CONSULTANT_SWITCHES, occasion)?.source
+				).toEqual({
+					kind: 'settings',
+					field: 'appointmentNotificationEnabled'
+				});
+				expect(
+					switchForOccasion(ADVICE_SEEKER_SWITCHES, occasion)
+				).toBeUndefined();
+			}
+			expect(
+				switchForOccasion(CONSULTANT_SWITCHES, 'termin')
+			).toBeUndefined();
+		});
+
 		it('resolves the occasion a mail footer carries', () => {
 			expect(
 				switchForOccasion(CONSULTANT_SWITCHES, 'uebergabe-bestaetigt')
@@ -124,6 +168,27 @@ describe('notification matrix (ADR-019)', () => {
 				kind: 'emailToggle',
 				type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
 			});
+		});
+
+		it('resolves the consultant message variant to the existing consultant switch only', () => {
+			expect(
+				switchForOccasion(
+					CONSULTANT_SWITCHES,
+					'neue-nachricht-beratung'
+				)?.source
+			).toEqual({
+				kind: 'emailToggle',
+				type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
+			});
+			expect(
+				switchForOccasion(
+					ADVICE_SEEKER_SWITCHES,
+					'neue-nachricht-beratung'
+				)
+			).toBeUndefined();
+			expect(
+				switchForOccasion(CONSULTANT_SWITCHES, 'neue-nachricht')?.id
+			).toBe('newMessage');
 		});
 
 		it('resolves nothing for an unknown or absent occasion', () => {

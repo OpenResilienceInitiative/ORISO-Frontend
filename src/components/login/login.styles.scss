@@ -342,7 +342,9 @@ $link-hover-text-decoration: $link-text-decoration !default;
 		transition: max-height 0.8s;
 
 		&--active {
-			max-height: 250px;
+			// Room for the e-mail hint, the code field and the resend block
+			// (link, "only the newest code" hint, status line) at 320px.
+			max-height: 480px;
 			overflow: visible;
 		}
 
@@ -520,6 +522,7 @@ $link-hover-text-decoration: $link-text-decoration !default;
 	}
 
 	.twoFactorAuthResendMail {
+		margin-top: $grid-base;
 		margin-bottom: $grid-base-two;
 	}
 }

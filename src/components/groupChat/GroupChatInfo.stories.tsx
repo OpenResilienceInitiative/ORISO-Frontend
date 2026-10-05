@@ -11,6 +11,7 @@ import {
 	GROUP_STAGE_CHAT_ID,
 	GROUP_STAGE_ROOM_ID,
 	GroupChatStage,
+	groupStageAsker,
 	groupStageConsultant
 } from './groupChatStageStoryShell';
 import {
@@ -108,7 +109,13 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 	);
 };
 
-const WiredChatInfo = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
+const WiredChatInfo = ({
+	layout,
+	asAsker = false
+}: {
+	layout: 'desktop' | 'mobile';
+	asAsker?: boolean;
+}) => {
 	const listItem = React.useMemo(buildListItem, []);
 	useBackendMocks(listItem);
 	return (
@@ -123,7 +130,11 @@ const WiredChatInfo = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
 				} as any
 			}
 		>
-			<GroupChatStage listItem={listItem} layout={layout}>
+			<GroupChatStage
+				listItem={listItem}
+				layout={layout}
+				viewer={asAsker ? groupStageAsker : undefined}
+			>
 				<Routes>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
@@ -215,5 +226,31 @@ export const Wired390: Story = {
 		await expect(
 			canvas.getByRole('button', { name: /Einladungs-Link kopieren/ })
 		).toBeVisible();
+	}
+};
+
+/** An advice seeker sees the members but not the team roles, the creator or the invite ways. */
+export const WiredAsAsker: Story = {
+	name: 'Wired · advice seeker sees no roles, creator or invite',
+	globals: desktop1440Globals,
+	render: () => <WiredChatInfo layout="desktop" asAsker />,
+	play: async ({ canvas }) => {
+		await canvas.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+		await expect(
+			canvas.queryByLabelText('Rolle für Berater Jonas Weber')
+		).toBeNull();
+		await expect(canvas.queryByText('Berater Jonas Weber')).toBeNull();
+		await expect(canvas.queryByText('Beraterin_Admin_1 Sep21')).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: /QR-Code anzeigen/ })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('button', {
+				name: 'Optionen für sanftes Alpaka Mika'
+			})
+		).toBeNull();
 	}
 };

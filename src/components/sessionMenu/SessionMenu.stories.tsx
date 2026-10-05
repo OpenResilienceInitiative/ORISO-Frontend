@@ -31,7 +31,7 @@ const meta = {
 			description: {
 				component:
 					'Session header flyout menu with archive/delete, group-chat actions, legal links and (consultant) video/audio call buttons. ' +
-					'#597: trigger is horizontal 48×32 when closed and vertical 32×48 with 2px `--m3-primary-container` when `aria-expanded`.'
+					'The trigger keeps the same size when opened, with a 2px `--m3-primary-container` highlight.'
 			}
 		}
 	}
@@ -47,7 +47,7 @@ export const Default: Story = {
 	}
 };
 
-/** Isolated #597 trigger shape (closed vs open) without full session providers. */
+/** Stable trigger geometry in closed and open states. */
 function MenuTriggerShapeDemo() {
 	const [expanded, setExpanded] = useState(false);
 	return (
@@ -80,7 +80,7 @@ function MenuTriggerShapeDemo() {
 				<MenuVerticalIcon />
 			</button>
 			<span style={{ fontSize: 12, color: '#4C555F' }}>
-				Closed 48×32 · click right for open 32×48
+				Stable 44×44 · click the right trigger to toggle its open state
 			</span>
 		</div>
 	);
@@ -118,19 +118,25 @@ export const AnonymousMobileActions: Story = {
  */
 
 const openTheKebab = async (canvasElement: HTMLElement) => {
-	await userEvent.click(
-		canvasElement.querySelector<HTMLButtonElement>(
-			'.sessionMenu__icon--desktop'
-		)!
-	);
+	// Click the trigger a person can see: the other one is display:none, and a
+	// menu whose trigger is hidden closes on the next resize.
+	const trigger = await waitFor(() => {
+		const visible = Array.from(
+			canvasElement.querySelectorAll<HTMLButtonElement>(
+				'.sessionMenu__icon'
+			)
+		).find((button) => button.getClientRects().length > 0);
+		expect(visible).toBeTruthy();
+		return visible!;
+	});
+	await userEvent.click(trigger);
+	// The flyout is portalled to <body>, outside the canvas.
 	await waitFor(() =>
 		expect(
-			canvasElement.querySelector('.sessionMenu__content--open')
+			document.querySelector('.sessionMenu__content--open')
 		).not.toBeNull()
 	);
-	return canvasElement.querySelector<HTMLElement>(
-		'.sessionMenu__content--open'
-	)!;
+	return document.querySelector<HTMLElement>('.sessionMenu__content--open')!;
 };
 
 const stageFrame = (Story: React.ComponentType) => (
