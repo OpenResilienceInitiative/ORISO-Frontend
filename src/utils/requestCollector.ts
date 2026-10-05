@@ -6,10 +6,35 @@ export const REQUEST_LOGS_LIMIT = 10;
 export const REQUEST_COLLECTOR_EVENT = 'requestCollector';
 
 // The log is shown in the DevToolbar; a group's invite token is a secret.
-const SECRET_QUERY_PARAMS = /([?&]inviteToken=)[^&#]*/g;
+const SECRET_QUERY_KEYS = new Set(['invitetoken']);
 
-const redactUrl = (url: string) =>
-	url.replace(SECRET_QUERY_PARAMS, '$1[redacted]');
+const decodedKey = (key: string) => {
+	try {
+		return decodeURIComponent(key.replace(/\+/g, ' ')).toLowerCase();
+	} catch {
+		return key.toLowerCase();
+	}
+};
+
+/* Rewrites only the secret values; every other byte of the URL stays. */
+const redactUrl = (url: string) => {
+	const hashAt = url.indexOf('#');
+	const beforeHash = hashAt < 0 ? url : url.slice(0, hashAt);
+	const hash = hashAt < 0 ? '' : url.slice(hashAt);
+	const queryAt = beforeHash.indexOf('?');
+	if (queryAt < 0) return url;
+	const query = beforeHash
+		.slice(queryAt + 1)
+		.split('&')
+		.map((pair) => {
+			const [key] = pair.split('=', 1);
+			return SECRET_QUERY_KEYS.has(decodedKey(key))
+				? `${key}=[redacted]`
+				: pair;
+		})
+		.join('&');
+	return `${beforeHash.slice(0, queryAt + 1)}${query}${hash}`;
+};
 
 export class RequestLog {
 	uuid: string = uuidv4();
