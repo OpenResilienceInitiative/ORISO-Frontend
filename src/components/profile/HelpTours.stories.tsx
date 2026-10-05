@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route, Routes } from 'react-router-dom';
 import { expect, userEvent, waitFor } from 'storybook/test';
@@ -66,8 +66,9 @@ const json = (body: unknown) =>
 
 /**
  * Serves the two calls the Tours area makes — the versioned progress read and
- * the switch PATCH — so the switch round-trips like on Dev. Installed during
- * render because the carousel fetches in an effect that runs before ours.
+ * the switch PATCH — so the switch round-trips like on Dev. Installed in a
+ * layout effect: it runs before the carousel's passive-effect fetch, and the
+ * cleanup restores `fetch` even when React abandons a render.
  */
 const StubbedToursApi = ({
 	options,
@@ -82,7 +83,7 @@ const StubbedToursApi = ({
 	const [ownSwitch, setOwnSwitch] = useState(!!options.ownSwitch);
 	const server = useMemo(() => ({ ownSwitch: !!options.ownSwitch }), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-	const restore = useMemo(() => {
+	useLayoutEffect(() => {
 		const realFetch = window.fetch;
 		window.fetch = (async (
 			input: RequestInfo | URL,
@@ -112,8 +113,6 @@ const StubbedToursApi = ({
 			window.fetch = realFetch;
 		};
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-	useEffect(() => restore, [restore]);
 
 	const reload = useCallback(async () => {
 		setOwnSwitch(server.ownSwitch);
@@ -194,7 +193,7 @@ const SWITCH_NAME = 'Rundgänge automatisch starten';
 const HINT_OFF =
 	'Aus: Rundgänge starten nicht von selbst. Sie können sie hier jederzeit starten.';
 const HINT_ON =
-	'An: Neue Rundgänge starten einmal von selbst. Sie können sie hier jederzeit erneut starten.';
+	'An: Der Einführungsrundgang startet von selbst, bis Sie ihn abgeschlossen oder übersprungen haben. Alle Rundgänge können Sie hier jederzeit starten.';
 
 type Canvas = Parameters<NonNullable<Story['play']>>[0]['canvas'];
 

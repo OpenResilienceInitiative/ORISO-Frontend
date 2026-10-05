@@ -49,10 +49,17 @@ export const Walkthrough = () => {
 		: undefined;
 	// Auto-run only when nothing was requested at all: a stale or unknown
 	// request must not fall back to starting an unrelated tour.
-	const wantsAutoRun =
-		!!settings.enableWalkthrough &&
-		!launchRequest &&
-		!!userData.isWalkThroughEnabled;
+	const switchIsOn =
+		!!settings.enableWalkthrough && !!userData.isWalkThroughEnabled;
+	const wantsAutoRun = switchIsOn && !launchRequest;
+
+	// Progress can change in another session while the switch is off, so
+	// turning it back on must read it again instead of reusing the old verdict.
+	useEffect(() => {
+		if (!switchIsOn) {
+			setAutoRunState('unknown');
+		}
+	}, [switchIsOn]);
 
 	useEffect(() => {
 		if (!wantsAutoRun || autoRunState !== 'unknown') {

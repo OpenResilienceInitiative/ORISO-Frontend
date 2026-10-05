@@ -122,6 +122,52 @@ describe('Walkthrough', () => {
 		expect(adapterProps.paused).toBe(false);
 	});
 
+	it('reads the progress again when the switch is turned back on', async () => {
+		const store = createStore();
+		const tree = (isWalkThroughEnabled: boolean) => (
+			<Provider store={store}>
+				<UserDataContext.Provider
+					value={
+						{
+							userData: {
+								isWalkThroughEnabled,
+								twoFactorAuth: { isShown: false }
+							},
+							reloadUserData: vi.fn()
+						} as any
+					}
+				>
+					<Walkthrough />
+				</UserDataContext.Provider>
+			</Provider>
+		);
+		const { rerender, queryByTestId } = render(tree(true));
+		await waitFor(() => expect(adapterProps).not.toBeNull());
+
+		rerender(tree(false));
+		await flushProgressRead();
+		expect(queryByTestId('product-tour-adapter')).toBeNull();
+
+		// Another session finished the tour while the switch was off.
+		vi.mocked(
+			versionedTourProgressRepository.getProgress
+		).mockResolvedValueOnce([
+			{
+				tourId: 'consultant-walkthrough',
+				tourVersion: 1,
+				surface: 'frontend',
+				status: 'completed'
+			}
+		]);
+		rerender(tree(true));
+		await flushProgressRead();
+
+		expect(
+			versionedTourProgressRepository.getProgress
+		).toHaveBeenCalledTimes(2);
+		expect(queryByTestId('product-tour-adapter')).toBeNull();
+	});
+
 	it.each(['completed', 'skipped'])(
 		'does not auto-start when the current version is %s',
 		async (status) => {

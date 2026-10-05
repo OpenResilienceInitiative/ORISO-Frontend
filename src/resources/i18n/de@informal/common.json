@@ -1833,7 +1833,7 @@
 		"switch": {
 			"hint": {
 				"off": "Aus: Rundgänge starten nicht von selbst. Du kannst sie hier jederzeit starten.",
-				"on": "An: Neue Rundgänge starten einmal von selbst. Du kannst sie hier jederzeit erneut starten."
+				"on": "An: Der Einführungsrundgang startet von selbst, bis du ihn abgeschlossen oder übersprungen hast. Alle Rundgänge kannst du hier jederzeit starten."
 			},
 			"subtitle": "Kurze Rundgänge zeigen Dir, wo Du was findest."
 		}

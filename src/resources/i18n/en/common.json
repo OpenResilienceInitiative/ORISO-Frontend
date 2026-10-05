@@ -4578,7 +4578,7 @@
 		"switch": {
 			"hint": {
 				"off": "Off: tours do not start on their own. You can start them here at any time.",
-				"on": "On: new tours start once on their own. You can restart them here at any time."
+				"on": "On: the intro tour starts on its own until you complete or skip it. You can start any tour here at any time."
 			},
 			"label": {
 				"off": "Off",

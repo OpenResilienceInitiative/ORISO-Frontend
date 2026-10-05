@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import de from '../../resources/i18n/de/common.json';
-import { UserDataContext } from '../../globalState';
+import { NotificationsContext, UserDataContext } from '../../globalState';
+import { apiPatchConsultantData } from '../../api';
 import { EnableWalkthrough } from './EnableWalkthrough';
 
 // The real German catalogue, so the test reads what the counsellor reads.
@@ -37,20 +44,31 @@ vi.mock('../../api', () => ({
 	apiPatchConsultantData: vi.fn(() => Promise.resolve())
 }));
 
-const renderSwitch = (isWalkThroughEnabled: boolean) =>
+const renderSwitch = (
+	isWalkThroughEnabled: boolean,
+	{
+		reloadUserData = vi.fn(),
+		addNotification = vi.fn()
+	}: { reloadUserData?: () => void; addNotification?: () => void } = {}
+) =>
 	render(
-		<UserDataContext.Provider
-			value={{
-				userData: { isWalkThroughEnabled } as any,
-				setUserData: vi.fn(),
-				reloadUserData: vi.fn()
-			}}
-		>
-			<EnableWalkthrough />
-		</UserDataContext.Provider>
+		<NotificationsContext.Provider value={{ addNotification } as any}>
+			<UserDataContext.Provider
+				value={{
+					userData: { isWalkThroughEnabled } as any,
+					setUserData: vi.fn(),
+					reloadUserData
+				}}
+			>
+				<EnableWalkthrough />
+			</UserDataContext.Provider>
+		</NotificationsContext.Provider>
 	);
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.clearAllMocks();
+});
 
 describe('EnableWalkthrough (#1526)', () => {
 	it('names the one switch for all tours in the plural', () => {
@@ -88,9 +106,41 @@ describe('EnableWalkthrough (#1526)', () => {
 		expect(screen.getByText('An')).toBeTruthy();
 		expect(
 			screen.getByText(
-				'An: Neue Rundgänge starten einmal von selbst. Sie können sie hier jederzeit erneut starten.'
+				'An: Der Einführungsrundgang startet von selbst, bis Sie ihn abgeschlossen oder übersprungen haben. Alle Rundgänge können Sie hier jederzeit starten.'
 			)
 		).toBeTruthy();
 		expect(screen.queryByText(/^Aus:/)).toBeNull();
+	});
+
+	it('locks the switch while saving and recovers after a failed save', async () => {
+		let rejectSave: (reason?: unknown) => void = () => {};
+		vi.mocked(apiPatchConsultantData).mockImplementationOnce(
+			() =>
+				new Promise((_resolve, reject) => {
+					rejectSave = reject;
+				}) as any
+		);
+		const addNotification = vi.fn();
+		const reloadUserData = vi.fn();
+		renderSwitch(false, { addNotification, reloadUserData });
+		const toggle = screen.getByRole('switch') as HTMLInputElement;
+
+		fireEvent.click(toggle);
+
+		expect(apiPatchConsultantData).toHaveBeenCalledWith({
+			walkThroughEnabled: true
+		});
+		expect(toggle.disabled).toBe(true);
+
+		rejectSave(new Error('PATCH failed'));
+
+		await waitFor(() => expect(toggle.disabled).toBe(false));
+		expect(addNotification).toHaveBeenCalledTimes(1);
+		expect(reloadUserData).not.toHaveBeenCalled();
+		expect(toggle.checked).toBe(false);
+
+		fireEvent.click(toggle);
+
+		expect(apiPatchConsultantData).toHaveBeenCalledTimes(2);
 	});
 });

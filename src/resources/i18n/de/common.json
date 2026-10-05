@@ -4630,7 +4630,7 @@
 		"switch": {
 			"hint": {
 				"off": "Aus: Rundgänge starten nicht von selbst. Sie können sie hier jederzeit starten.",
-				"on": "An: Neue Rundgänge starten einmal von selbst. Sie können sie hier jederzeit erneut starten."
+				"on": "An: Der Einführungsrundgang startet von selbst, bis Sie ihn abgeschlossen oder übersprungen haben. Alle Rundgänge können Sie hier jederzeit starten."
 			},
 			"label": {
 				"off": "Aus",

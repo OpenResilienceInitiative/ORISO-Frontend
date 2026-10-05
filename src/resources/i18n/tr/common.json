@@ -4613,7 +4613,7 @@
 		"switch": {
 			"hint": {
 				"off": "Kapalı: Turlar kendiliğinden başlamaz. Bunları istediğiniz zaman buradan başlatabilirsiniz.",
-				"on": "Açık: Yeni turlar bir kez kendiliğinden başlar. Bunları istediğiniz zaman buradan yeniden başlatabilirsiniz."
+				"on": "Açık: Tanıtım turu, tamamlayana veya atlayana kadar kendiliğinden başlar. Tüm turları istediğiniz zaman buradan başlatabilirsiniz."
 			},
 			"label": {
 				"off": "Kapalı",
