@@ -630,6 +630,40 @@ export const IncomingWithReactions: Story = {
 	}
 };
 
+/** Un-reacting from the menu closes it and hands focus back to the kebab. */
+export const UnreactFromMenuReturnsFocus: Story = {
+	name: 'Un-react from menu — focus back on the kebab',
+	parameters: IncomingWithReactions.parameters,
+	args: {
+		...IncomingWithReactions.args,
+		onUnreact: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const kebab = canvasElement.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		expect(kebab).not.toBeNull();
+		await userEvent.click(kebab!);
+		const mine = await waitFor(() => {
+			const button = document.querySelector<HTMLButtonElement>(
+				'.messageItem__actionMenuReactionEmoji--mine'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await userEvent.click(mine);
+		expect(args.onUnreact).toHaveBeenCalledWith('$own-reaction-1');
+		await waitFor(() => {
+			expect(
+				document.querySelector(
+					'.messageItem__actionMenuReactionEmoji--mine'
+				)
+			).toBeNull();
+			expect(document.activeElement).toBe(kebab);
+		});
+	}
+};
+
 export const OutgoingWithReactions: Story = {
 	name: 'Outgoing with reactions (delivered)',
 	parameters: {
