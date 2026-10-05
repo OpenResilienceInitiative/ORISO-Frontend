@@ -10,6 +10,9 @@ import { Help } from '../help/Help';
 import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { Documentation } from './Documentation';
 import { EnableWalkthrough } from './EnableWalkthrough';
+import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
+import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
+import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
 
 const showsTours = (settings: AppSettingsInterface, userData): boolean =>
 	!!settings?.enableWalkthrough &&
@@ -24,6 +27,7 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: Help,
+				icon: VideocamOutlinedIcon,
 				column: COLUMN_LEFT,
 				condition: () => !settings?.documentationEnabled
 			}
@@ -36,6 +40,7 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: Documentation,
+				icon: MenuBookOutlinedIcon,
 				column: COLUMN_LEFT,
 				condition: () => !!settings?.documentationEnabled
 			}
@@ -47,11 +52,13 @@ export const profileRoutesHelp = (
 		elements: [
 			{
 				component: EnableWalkthrough,
+				icon: ExploreOutlinedIcon,
 				column: COLUMN_RIGHT,
 				condition: (userData) => showsTours(settings, userData)
 			},
 			{
 				component: TourOverviewSection,
+				icon: ExploreOutlinedIcon,
 				column: COLUMN_RIGHT,
 				condition: (userData) => showsTours(settings, userData)
 			}
