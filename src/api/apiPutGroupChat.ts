@@ -23,6 +23,16 @@ export const apiPutGroupChat = async (
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.PUT,
-		responseHandling: [FETCH_ERRORS.CONFLICT, FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [
+			FETCH_ERRORS.CONFLICT,
+			FETCH_ERRORS.CATCH_ALL,
+			...([
+				GROUP_CHAT_API.START,
+				GROUP_CHAT_API.JOIN,
+				GROUP_CHAT_API.ASSIGN
+			].includes(groupChatApi)
+				? [FETCH_ERRORS.COUNSELLING_DPA_RESPONSE]
+				: [])
+		]
 	});
 };

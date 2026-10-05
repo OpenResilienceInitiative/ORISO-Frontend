@@ -5,6 +5,11 @@ interface AnimalAvatarProps {
 	avatar: Avatar;
 	/** Outer circle size in px (Figma default = 108) */
 	size?: number;
+	/**
+	 * The 2 px outline and shadow. `false` where the avatar sits flush with text,
+	 * as the outline would read as a 2 px gap. The circle keeps its size.
+	 */
+	outline?: boolean;
 }
 
 /**
@@ -45,10 +50,11 @@ const artworkFraction = (padding: number) =>
  */
 export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	avatar,
-	size = 108
+	size = 108,
+	outline = true
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
-	const borderWidth = 2;
+	const borderWidth = outline ? 2 : 0;
 	// A small floor only. The old 8px floor above 60px dates from SVGs with
 	// built-in margins; now it would clamp the per-icon overrides at 64px
 	// (LiveChatAccess, mobile AskerInfo) to the same padding as the default.
@@ -94,8 +100,8 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 				width: size,
 				height: size,
 				boxSizing: 'border-box',
-				border: `${borderWidth}px solid #c4c7c8`,
-				boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.10)',
+				border: outline ? `${borderWidth}px solid #c4c7c8` : 0,
+				boxShadow: outline ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
 				overflow: 'hidden',
 				flexShrink: 0
 			}}

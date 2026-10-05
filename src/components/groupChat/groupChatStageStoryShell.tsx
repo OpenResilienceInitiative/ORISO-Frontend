@@ -224,12 +224,24 @@ const listTranslations: Record<string, string> = {
 };
 const translateList = (key: string) => listTranslations[key] || key;
 
+/** An advice seeker in the group: no moderation rights. */
+export const groupStageAsker = {
+	...groupStageConsultant,
+	userId: 'asker-storybook',
+	userName: 'ruhiges_yak_kim',
+	displayName: 'ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+};
+
 /** All app contexts the list row and the right-hand screens read. */
 export const GroupStageProviders = ({
 	listItem,
+	viewer = groupStageConsultant,
 	children
 }: {
 	listItem: ListItemInterface;
+	/** Logged-in user; defaults to the owning counsellor. */
+	viewer?: typeof groupStageConsultant;
 	children: React.ReactNode;
 }) => {
 	const session = useMemo(
@@ -239,9 +251,9 @@ export const GroupStageProviders = ({
 	return (
 		<UserDataContext.Provider
 			value={{
-				userData: groupStageConsultant,
+				userData: viewer,
 				setUserData: () => {},
-				reloadUserData: async () => groupStageConsultant
+				reloadUserData: async () => viewer
 			}}
 		>
 			<SessionTypeContext.Provider
@@ -443,13 +455,15 @@ const stageCss = `
 export const GroupChatStage = ({
 	listItem,
 	layout,
+	viewer,
 	children
 }: {
 	listItem: ListItemInterface;
 	layout: 'desktop' | 'mobile';
+	viewer?: typeof groupStageConsultant;
 	children: React.ReactNode;
 }) => (
-	<GroupStageProviders listItem={listItem}>
+	<GroupStageProviders listItem={listItem} viewer={viewer}>
 		<div className={`app__wrapper groupStage groupStage--${layout}`}>
 			<style>{stageCss}</style>
 			{layout === 'desktop' && (
