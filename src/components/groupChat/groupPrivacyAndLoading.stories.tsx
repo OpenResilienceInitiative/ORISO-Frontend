@@ -352,15 +352,15 @@ const openMenuAndExpectLegal = async (canvasElement: HTMLElement) => {
 			'.sessionMenu__icon--desktop'
 		) ?? canvasElement.querySelector<HTMLElement>('.sessionMenu__icon');
 	await userEvent.click(trigger!);
+	// The session menu renders through a portal into the body (#1465).
+	const legalMenu = () =>
+		canvasElement.ownerDocument.querySelector(
+			'.legalInformationLinks--menu'
+		);
 	await waitFor(() =>
-		expect(
-			canvasElement.querySelector('.legalInformationLinks--menu')
-				?.textContent
-		).toMatch(/Datenschutz/)
+		expect(legalMenu()?.textContent).toMatch(/Datenschutz/)
 	);
-	await expect(
-		canvasElement.querySelector('.legalInformationLinks--menu')?.textContent
-	).toMatch(/Impressum/);
+	await expect(legalMenu()?.textContent).toMatch(/Impressum/);
 };
 
 export const RunningGroupClientMenu1440: Story = {

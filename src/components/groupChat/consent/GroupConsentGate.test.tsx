@@ -102,6 +102,40 @@ describe('GroupConsentGate', () => {
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalled());
 		expect(onAccepted).not.toHaveBeenCalled();
 		expect(screen.getByRole('dialog')).toBeTruthy();
+		// The client is told it did not work and can try again.
+		expect((await screen.findByRole('alert')).textContent).toContain(
+			'nicht gespeichert'
+		);
+		fireEvent.click(screen.getByRole('button', { name: 'Einverstanden' }));
+		await waitFor(() => expect(onAccepted).toHaveBeenCalled());
+	});
+
+	it("never offers another Beratungsstelle's statement for agreement", async () => {
+		const { rerender } = render(
+			<GroupConsentGate agencyId={19} onAccepted={() => undefined} />
+		);
+		await screen.findByText(
+			'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
+		);
+
+		// The next group's agency is still loading.
+		apiGetAgencyById.mockImplementation(() => new Promise(() => undefined));
+		rerender(
+			<GroupConsentGate agencyId={20} onAccepted={() => undefined} />
+		);
+
+		expect(
+			screen.queryByText(
+				'Ich habe die Datenschutzerklärung der Beratungstelle gelesen.'
+			)
+		).toBeNull();
+		expect(
+			(
+				screen.getByRole('button', {
+					name: 'Einverstanden'
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
 	});
 
 	it('falls back to the platform sentence when the topic cannot be told', async () => {

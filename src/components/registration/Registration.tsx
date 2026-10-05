@@ -232,12 +232,6 @@ export const Registration = () => {
 	/* Someone joining the group through the steps sees the group's words
 	   while the registration runs, not the counselling enquiry's (#1499). */
 	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
-	const joinsTheGroup =
-		getGroupJoin({
-			gcid: groupChatId,
-			aid: inviteAgencyId,
-			agencyId: registrationData?.agency?.id
-		}) !== undefined;
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
 	const toggleInviteWithAccount = useCallback(
@@ -353,6 +347,13 @@ export const Registration = () => {
 		}),
 		[registrationData, stepData]
 	);
+	// Same data the payload reads, so the copy and the request agree.
+	const joinsTheGroup =
+		getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedRegistrationData.agency?.id
+		}) !== undefined;
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;

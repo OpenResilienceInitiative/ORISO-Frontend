@@ -78,7 +78,19 @@ vi.mock('../autoLogin', async (importOriginal) => ({
  * "Konto anlegen" switches to 0b. Joining runs the ordinary registration and
  * hands the link on, which leads into `/groups/19/entry`.
  */
-const Step = () => <div data-testid="step-body" />;
+/* A step may hand its pick up through onChange without committing it, as the
+   agency selection does on the last step. */
+let stepPick: Record<string, unknown> | null = null;
+const Step = ({
+	onChange
+}: {
+	onChange: (data: Record<string, unknown>) => void;
+}) => {
+	React.useEffect(() => {
+		if (stepPick) onChange(stepPick);
+	}, [onChange]);
+	return <div data-testid="step-body" />;
+};
 const steps = [
 	{
 		name: 'topic-selection',
@@ -169,6 +181,7 @@ const secondary = () => screen.getByTestId('registration-footer-secondary');
 const lastStage = () => stageProps[stageProps.length - 1];
 
 beforeEach(() => {
+	stepPick = null;
 	stageProps.length = 0;
 	apiPostRegistration.mockClear();
 	redirectToApp.mockClear();
@@ -268,7 +281,7 @@ describe('newcomer entry for a self-help group link', () => {
 	});
 
 	it('does not name the group when the person registers at another agency', async () => {
-		renderAt('?gcid=19', {
+		renderAt('?gcid=19&aid=19', {
 			agency: { ...agency, id: 7 },
 			mainTopic: grief,
 			zipcode: '10115',
@@ -334,6 +347,36 @@ describe('newcomer entry for a self-help group link', () => {
 				document.querySelector('[data-cy="registration-handover"]')
 			).not.toBeNull()
 		);
+		const text =
+			document.querySelector('[data-cy="registration-handover"]')
+				?.textContent ?? '';
+		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).not.toContain('registration.handover.steps.');
+	});
+
+	it('speaks about the group when the last step picks the invited agency without committing it', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		stepPick = { agency: { ...agency, topicIds: [17, 18] } };
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, id: 7, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.groupChatId).toBe(19);
 		const text =
 			document.querySelector('[data-cy="registration-handover"]')
 				?.textContent ?? '';

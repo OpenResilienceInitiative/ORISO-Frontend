@@ -8,6 +8,8 @@ export type GroupDepartmentState =
 	| { status: 'loading' }
 	| { status: 'ready'; department: GroupDepartment | null };
 
+type Answer = { agencyId: number; department: GroupDepartment | null };
+
 /**
  * The department (agency × topic) whose legal texts govern a self-help group.
  *
@@ -19,33 +21,31 @@ export type GroupDepartmentState =
 export const useGroupDepartment = (
 	agencyId?: number | null
 ): GroupDepartmentState => {
-	const [state, setState] = useState<GroupDepartmentState>(() =>
-		agencyId ? { status: 'loading' } : { status: 'ready', department: null }
-	);
+	const [answer, setAnswer] = useState<Answer | null>(null);
 
 	useEffect(() => {
-		if (!agencyId) {
-			setState({ status: 'ready', department: null });
-			return undefined;
-		}
+		if (!agencyId) return undefined;
 		let cancelled = false;
-		setState({ status: 'loading' });
 		apiGetAgencyById(agencyId)
 			.then((agency) => {
 				if (cancelled) return;
 				const topicId = getGroupInviteTopicId(agency);
-				setState({
-					status: 'ready',
+				setAnswer({
+					agencyId,
 					department: topicId == null ? null : { agencyId, topicId }
 				});
 			})
 			.catch(() => {
-				if (!cancelled) setState({ status: 'ready', department: null });
+				if (!cancelled) setAnswer({ agencyId, department: null });
 			});
 		return () => {
 			cancelled = true;
 		};
 	}, [agencyId]);
 
-	return state;
+	if (!agencyId) return { status: 'ready', department: null };
+	// An answer for another agency must never stand in for this one.
+	return answer?.agencyId === agencyId
+		? { status: 'ready', department: answer.department }
+		: { status: 'loading' };
 };

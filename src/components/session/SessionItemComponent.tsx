@@ -779,8 +779,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => parseChannel(location.search),
 		[location.search]
 	);
+	// A gate hides threads too: the panel has its own timeline and composer.
 	const activeThreadRootId =
-		isThreadsEnabled && routeChannel?.kind === 'thread'
+		isThreadsEnabled &&
+		!blocksConversation &&
+		routeChannel?.kind === 'thread'
 			? routeChannel.rootId
 			: null;
 	const activeThreadRootMessage = useMemo<MessageItem | null>(
@@ -3012,6 +3015,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* Thread-panel-UX (#435): per-room list of all threads. */}
 				{!isEmbeddedNotificationsView &&
 					isThreadsEnabled &&
+					!blocksConversation &&
 					threadSummariesRaw.size > 0 && (
 						<div className="session__threadListBar">
 							<button
