@@ -23,7 +23,6 @@ import { config } from '../../resources/scripts/config';
 import { consultantWalkthroughTour } from '../productTour/tourDefinitions';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
-import { provideStoryPracticeCopy } from '../practice/practiceStoryHelpers';
 
 type ProgressFixture = Pick<
 	ITutorialProgressItem,
@@ -254,8 +253,6 @@ const meta = {
 	title: 'Organisms/HelpTours',
 	component: Profile,
 	tags: ['autodocs'],
-	// Tour titles of the practice flows, until their own copy ships (#1622).
-	beforeEach: provideStoryPracticeCopy,
 	parameters: {
 		layout: 'fullscreen',
 		design: { type: 'figma', url: APP_ORISO_FIGMA_URL },

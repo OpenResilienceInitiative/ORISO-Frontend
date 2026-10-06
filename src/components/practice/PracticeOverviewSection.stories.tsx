@@ -10,11 +10,7 @@ import {
 import { config } from '../../resources/scripts/config';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import { PracticeOverviewSection } from '../../practice/PracticeOverviewSection';
-import {
-	provideStoryPracticeCopy,
-	ScopedProgressFetch,
-	storyPracticeTours
-} from './practiceStoryHelpers';
+import { ScopedProgressFetch } from './practiceStoryHelpers';
 
 interface SectionArgs {
 	/** Platform master switch `settings.enableWalkthrough`. */
@@ -88,7 +84,7 @@ const Wired = ({
 					}
 				>
 					<div className="profile__content" style={{ maxWidth: 960 }}>
-						<PracticeOverviewSection tours={storyPracticeTours} />
+						<PracticeOverviewSection />
 					</div>
 				</TenantContext.Provider>
 			</UserDataContext.Provider>
@@ -100,7 +96,6 @@ const meta = {
 	title: 'Organisms/PracticeOverviewSection',
 	component: Wired,
 	tags: ['autodocs'],
-	beforeEach: provideStoryPracticeCopy,
 	parameters: {
 		layout: 'padded',
 		design: { type: 'figma', url: APP_ORISO_FIGMA_URL },
@@ -140,9 +135,9 @@ export const SupervisionOff: Story = {
 	play: async ({ canvas }) => {
 		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);
 		await expect(
-			canvas.getByRole('heading', { name: 'Anfrage annehmen' })
+			canvas.getByRole('heading', { name: 'Übung: Anfrage annehmen' })
 		).toBeVisible();
-		await expect(canvas.queryByText('Supervision')).toBeNull();
+		await expect(canvas.queryByText(/Supervision/)).toBeNull();
 	}
 };
 

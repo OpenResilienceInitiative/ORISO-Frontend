@@ -2,10 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fn, userEvent } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import { PracticeCards } from '../../practice/PracticeCards';
-import {
-	provideStoryPracticeCopy,
-	storyPracticeTours
-} from './practiceStoryHelpers';
+import { practiceTours } from '../../practice/practiceTours';
 
 type Progress = Awaited<
 	ReturnType<Parameters<typeof PracticeCards>[0]['loadProgress']>
@@ -15,7 +12,6 @@ const meta = {
 	title: 'Organisms/PracticeCards',
 	component: PracticeCards,
 	tags: ['autodocs'],
-	beforeEach: provideStoryPracticeCopy,
 	parameters: {
 		layout: 'padded',
 		design: { type: 'figma', url: APP_ORISO_FIGMA_URL },
@@ -27,7 +23,7 @@ const meta = {
 		}
 	},
 	args: {
-		tours: storyPracticeTours,
+		tours: practiceTours,
 		isPhone: false,
 		loadProgress: () => Promise.resolve([] as Progress),
 		onStartTour: fn()
@@ -50,7 +46,7 @@ export const NotStarted: Story = {
 			canvas.getAllByRole('button', { name: 'Übung starten' })[0]
 		);
 		await expect(args.onStartTour).toHaveBeenCalledWith(
-			storyPracticeTours[0],
+			practiceTours[0],
 			'start'
 		);
 	}
@@ -92,7 +88,7 @@ export const CompletedAndInterrupted: Story = {
 			canvas.getByRole('button', { name: 'Noch einmal üben' })
 		);
 		await expect(args.onStartTour).toHaveBeenCalledWith(
-			storyPracticeTours[0],
+			practiceTours[0],
 			'restart'
 		);
 	}
@@ -100,7 +96,7 @@ export const CompletedAndInterrupted: Story = {
 
 export const SupervisionHidden: Story = {
 	name: 'Supervision switched off · desktop',
-	args: { tours: storyPracticeTours.slice(0, 1) },
+	args: { tours: practiceTours.slice(0, 1) },
 	parameters: {
 		docs: {
 			description: {
@@ -110,7 +106,7 @@ export const SupervisionHidden: Story = {
 	},
 	play: async ({ canvas }) => {
 		await expect(await canvas.findAllByRole('listitem')).toHaveLength(1);
-		await expect(canvas.queryByText('Supervision')).toBeNull();
+		await expect(canvas.queryByText(/Supervision/)).toBeNull();
 	}
 };
 

@@ -9,11 +9,7 @@ import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeProvider } from '../../practice/PracticeProvider';
 import { isPracticeMode } from '../../practice/practiceMode';
 import { registerPracticeRestartHandler } from '../../practice/practiceRestart';
-import {
-	InPracticeMode,
-	provideStoryPracticeCopy,
-	storyPracticeTours
-} from './practiceStoryHelpers';
+import { InPracticeMode } from './practiceStoryHelpers';
 import { practiceTourProgressAtom } from '../../practice/usePracticeTourProgress';
 
 interface StageArgs {
@@ -53,7 +49,7 @@ const Stage = ({ onRestart }: StageArgs) => {
 					<main style={{ minHeight: '100vh', padding: 24 }}>
 						<h1 style={{ margin: 0 }}>Anfragen</h1>
 						<p>Die echte Oberfläche liegt hinter dem Hinweis.</p>
-						<PracticeBanner tours={storyPracticeTours} />
+						<PracticeBanner />
 					</main>
 				</InPracticeMode>
 			</PracticeProvider>
@@ -65,7 +61,6 @@ const meta = {
 	title: 'Organisms/PracticeBanner',
 	component: Stage,
 	tags: ['autodocs'],
-	beforeEach: provideStoryPracticeCopy,
 	parameters: {
 		layout: 'fullscreen',
 		design: { type: 'figma', url: APP_ORISO_FIGMA_URL },
@@ -90,7 +85,7 @@ export const Desktop: Story = {
 			name: 'Übungsmodus'
 		});
 		await expect(banner).toBeVisible();
-		await expect(canvas.getByText('Anfrage annehmen')).toBeVisible();
+		await expect(canvas.getByText('Übung: Anfrage annehmen')).toBeVisible();
 		await expect(canvas.getByText(/Schritt 3 von 6/)).toBeVisible();
 		await expect(
 			canvas.getByText(/Übungsfall, keine echten Daten/)
