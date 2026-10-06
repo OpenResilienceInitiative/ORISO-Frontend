@@ -12,8 +12,12 @@ import {
 	type PracticeStart
 } from './fixtures/practiceScenario';
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
+import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
-import { PRACTICE_MAIN_ROOM_ID } from './fixtures/practiceIdentifiers';
+import {
+	PRACTICE_MAIN_ROOM_ID,
+	PRACTICE_TEAM_ROOM_ID
+} from './fixtures/practiceIdentifiers';
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {
@@ -25,7 +29,9 @@ export interface PracticeWorld {
 
 /**
  * Wires one practice run. Reactions follow counsellor actions, never time, and
- * come from the ScriptEngine, which was built once in the run's language.
+ * come from the ScriptEngine, which was built once in the run's language. The
+ * tour events (`practice:*`) are emitted here, once per counsellor action and
+ * never for the scripted messages.
  */
 export const createPracticeWorld = ({
 	counsellor,
@@ -61,16 +67,26 @@ export const createPracticeWorld = ({
 	const matrix: FakeMatrixService = createFakeMatrixService({
 		rooms: scenario.rooms,
 		now,
-		onCounsellorMessage: (roomId, body) => {
+		onCounsellorMessage: (roomId, body, { isEdit }) => {
+			if (
+				isEdit ||
+				// e.g. the "supervision added" note the header posts
+				body.startsWith(SYSTEM_NOTIFICATION_PREFIX)
+			) {
+				return;
+			}
+			if (roomId === PRACTICE_TEAM_ROOM_ID) {
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.teamMessageSent);
+				return;
+			}
 			if (
 				roomId !== PRACTICE_MAIN_ROOM_ID ||
-				// e.g. the "supervision added" note the header posts
-				body.startsWith(SYSTEM_NOTIFICATION_PREFIX) ||
-				askerAnswered ||
 				rest.getCase().session.status !== 2
 			) {
 				return;
 			}
+			emitPracticeEvent(PRACTICE_TOUR_EVENTS.messageSent);
+			if (askerAnswered) return;
 			askerAnswered = true;
 			const reaction = script.reactionFor({
 				type: 'counsellor-first-reply',
@@ -87,11 +103,14 @@ export const createPracticeWorld = ({
 		start,
 		now,
 		hooks: {
+			onEnquiryAccepted: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted),
 			onSupervisorAdded: () => {
 				if (!supervisorAnswered) {
 					supervisorAnswered = true;
 					play(script.reactionFor({ type: 'supervisor-added' }));
 				}
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorAdded);
 			}
 		}
 	});

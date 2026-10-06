@@ -73,7 +73,32 @@ describe('FakeMatrixService', () => {
 		);
 		expect(onCounsellorMessage).toHaveBeenCalledWith(
 			PRACTICE_MAIN_ROOM_ID,
+			'Hallo Sam',
+			{ isEdit: false }
+		);
+	});
+
+	it('tells the world an edit is an edit, so it is not counted as another message', async () => {
+		const onCounsellorMessage = vi.fn();
+		const service = createFakeMatrixService({
+			rooms: scenario().rooms,
+			onCounsellorMessage
+		});
+		const { event_id } = await service.sendMessage(
+			PRACTICE_MAIN_ROOM_ID,
 			'Hallo Sam'
+		);
+
+		await service.editMessage(
+			PRACTICE_MAIN_ROOM_ID,
+			event_id,
+			'Hallo Sam!'
+		);
+
+		expect(onCounsellorMessage).toHaveBeenLastCalledWith(
+			PRACTICE_MAIN_ROOM_ID,
+			'* Hallo Sam!',
+			{ isEdit: true }
 		);
 	});
 

@@ -59,6 +59,8 @@ import {
 	createTestScript,
 	practiceScriptBlock
 } from './script/scriptTestSupport';
+import { subscribeToTourEvent } from '../components/productTour/tourEvents';
+import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	isPracticeRoomId,
 	PRACTICE_ENQUIRY_SESSION_ID,
@@ -140,6 +142,18 @@ const appNotifications = {
 	addNotification: vi.fn(),
 	addEventNotification: vi.fn()
 };
+
+/** How often each practice tour event fired while the journey ran. */
+const tourEvents: Record<string, number> = {};
+const stopWatchingEvents: Array<() => void> = [];
+const expectTourEvents = (expected: Partial<Record<string, number>>) =>
+	expect(tourEvents).toEqual({
+		[PRACTICE_TOUR_EVENTS.enquiryAccepted]: 0,
+		[PRACTICE_TOUR_EVENTS.messageSent]: 0,
+		[PRACTICE_TOUR_EVENTS.teamMessageSent]: 0,
+		[PRACTICE_TOUR_EVENTS.supervisorAdded]: 0,
+		...expected
+	});
 
 /** Every browser-storage write while the practice view runs. */
 const storageWrites: string[] = [];
@@ -237,6 +251,14 @@ const renderPractice = (
 };
 
 beforeEach(async () => {
+	Object.values(PRACTICE_TOUR_EVENTS).forEach((name) => {
+		tourEvents[name] = 0;
+		stopWatchingEvents.push(
+			subscribeToTourEvent(name, () => {
+				tourEvents[name] += 1;
+			})
+		);
+	});
 	network.length = 0;
 	realMatrixTouches.length = 0;
 	storageWrites.length = 0;
@@ -301,6 +323,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+	stopWatchingEvents.splice(0).forEach((stop) => stop());
 	cleanup();
 	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 	expect(getMatrixClientService()).toBe(realMatrixService);
@@ -467,6 +490,11 @@ describe('practice sandbox on the real session containers', () => {
 		expect(answer).toBe(
 			`${PRACTICE_CAST.asker.matrixUserId}: ${world!.script.texts.askerReply}`
 		);
+		// The tour waits for these: one accept, one first reply, nothing scripted.
+		expectTourEvents({
+			[PRACTICE_TOUR_EVENTS.enquiryAccepted]: 1,
+			[PRACTICE_TOUR_EVENTS.messageSent]: 1
+		});
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
@@ -495,6 +523,10 @@ describe('practice sandbox on the real session containers', () => {
 			await translations.changeLanguage('de');
 		});
 		expect(world!.script.locale).toBe('en');
+		expectTourEvents({
+			[PRACTICE_TOUR_EVENTS.enquiryAccepted]: 1,
+			[PRACTICE_TOUR_EVENTS.messageSent]: 1
+		});
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
@@ -550,6 +582,7 @@ describe('practice sandbox on the real session containers', () => {
 		expect(textOf(view.container, '.chatStage__mainPane')).not.toContain(
 			world!.script.texts.teamColleagueMessage
 		);
+		expectTourEvents({ [PRACTICE_TOUR_EVENTS.teamMessageSent]: 1 });
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
@@ -634,6 +667,7 @@ describe('practice sandbox on the real session containers', () => {
 		expect(textOf(view.container, '.chatStage__mainPane')).not.toContain(
 			world!.script.texts.supervisorReply
 		);
+		expectTourEvents({ [PRACTICE_TOUR_EVENTS.supervisorAdded]: 1 });
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 });

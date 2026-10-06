@@ -169,8 +169,12 @@ export class PracticeRoom extends PracticeEmitter {
 
 export interface FakeMatrixServiceOptions {
 	rooms: PracticeRoomSeed[];
-	/** Hook for the script engine: called after every own message is appended. */
-	onCounsellorMessage?: (roomId: string, text: string) => void;
+	/** Hook for the practice world: called after every own message is appended. */
+	onCounsellorMessage?: (
+		roomId: string,
+		text: string,
+		meta: { isEdit: boolean }
+	) => void;
 	now?: () => number;
 }
 
@@ -288,10 +292,7 @@ const notInPractice = (what: string) =>
  */
 export class FakeMatrixService {
 	private readonly client: FakeMatrixClient;
-	private readonly onCounsellorMessage?: (
-		roomId: string,
-		text: string
-	) => void;
+	private readonly onCounsellorMessage?: FakeMatrixServiceOptions['onCounsellorMessage'];
 	private readonly now: () => number;
 	private eventSeq = 0;
 
@@ -448,7 +449,9 @@ export class FakeMatrixService {
 		this.client.emit('Room.timeline', event, room, false, false, data);
 		room.emit('Room.timeline', event, room, false, false, data);
 		if (sender === this.client.getUserId()) {
-			this.onCounsellorMessage?.(roomId, String(content.body ?? ''));
+			this.onCounsellorMessage?.(roomId, String(content.body ?? ''), {
+				isEdit: content['m.relates_to']?.rel_type === 'm.replace'
+			});
 		}
 		return event;
 	}
