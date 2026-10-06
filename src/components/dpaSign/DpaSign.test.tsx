@@ -37,6 +37,11 @@ const deCatalogue: Record<string, string> = {
 	'dpaSign.submitting': 'Speichern...',
 	'dpaSign.success':
 		'Die Bestätigung der Vertragsunterlagen wurde gespeichert.',
+	'dpaSign.print': 'Drucken / als PDF speichern',
+	'dpaSign.confirmedAt': 'Bestätigt am (Europe/Berlin)',
+	'dpaSign.confirmedBy': 'Bestätigt von',
+	'dpaSign.organisation': 'Organisation',
+	'dpaSign.printUnavailable': 'Die Druckansicht ist nicht verfügbar.',
 	'dpaSign.error.missingToken': 'Der Signaturlink ist unvollständig.',
 	'dpaSign.error.previewRequired':
 		'Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.',
@@ -191,6 +196,140 @@ describe('DpaSign', () => {
 				'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
 			)
 		).toBeDefined();
+	});
+
+	it('prints the server confirmation and original loaded contract without fetching the consumed link', async () => {
+		confirmMock.mockResolvedValue({
+			status: 'SIGNED',
+			dpaVersion: '2026-07-20T12:30:00',
+			signerName: 'Marge Simpson (stored)',
+			signerPosition: 'Director (stored)',
+			signerOrganisation: 'Stored optional note',
+			signedAt: '2026-08-02T22:15:00'
+		});
+		const print = vi
+			.spyOn(window, 'print')
+			.mockImplementation(() => undefined);
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+		expect(
+			screen.queryByRole('button', {
+				name: 'Drucken / als PDF speichern'
+			})
+		).toBeNull();
+		fireEvent.change(screen.getByLabelText('Vollständiger Name *'), {
+			target: { value: 'Typed name' }
+		});
+		fireEvent.change(screen.getByLabelText('Position *'), {
+			target: { value: 'Typed position' }
+		});
+		fireEvent.change(screen.getByLabelText('E-Mail *'), {
+			target: { value: 'marge.simpson@dreambau.com' }
+		});
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Bestätigung absenden' })
+		);
+		const action = await screen.findByRole('button', {
+			name: 'Drucken / als PDF speichern'
+		});
+		fireEvent.click(action);
+		expect(print).toHaveBeenCalledTimes(1);
+		const receipt = screen.getByRole('document', {
+			name: 'Vertragsunterlagen',
+			hidden: true
+		});
+		expect(
+			within(receipt).getByText('Marge Simpson (stored)')
+		).toBeDefined();
+		expect(within(receipt).getByText('Director (stored)')).toBeDefined();
+		expect(within(receipt).getByText('Stored optional note')).toBeDefined();
+		expect(within(receipt).getByText('Träger Nord')).toBeDefined();
+		expect(
+			within(receipt).getByText('3. August 2026 um 00:15')
+		).toBeDefined();
+		expect(
+			within(receipt).getByText(
+				'Dieser konkrete Vertragstext ist verbindlich.'
+			)
+		).toBeDefined();
+		expect(within(receipt).queryByRole('button')).toBeNull();
+		expect(within(receipt).queryByText('Typed name')).toBeNull();
+		expect(previewMock).toHaveBeenCalledTimes(1);
+		print.mockRestore();
+	});
+
+	it.each([
+		{ signedAt: undefined },
+		{ signedAt: 'invalid-date' },
+		{ signerName: '' },
+		{ signerPosition: undefined },
+		{ dpaVersion: '2026-07-21T12:30:00' },
+		{ status: 'PENDING' }
+	])(
+		'keeps confirmation success but disables printing incomplete or inconsistent server data: %j',
+		async (missing) => {
+			confirmMock.mockResolvedValue({
+				status: 'SIGNED',
+				dpaVersion: '2026-07-20T12:30:00',
+				signerName: 'Marge Simpson',
+				signerPosition: 'Director',
+				signedAt: '2026-08-03T10:15:00',
+				...missing
+			});
+			renderPage();
+			await screen.findByText(
+				'Dieser konkrete Vertragstext ist verbindlich.'
+			);
+			fireEvent.click(screen.getByRole('checkbox'));
+			fireEvent.submit(
+				screen
+					.getByRole('button', { name: 'Bestätigung absenden' })
+					.closest('form')!
+			);
+			expect(
+				await screen.findByText(
+					'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
+				)
+			).toBeDefined();
+			expect(
+				screen
+					.getByRole('button', {
+						name: 'Drucken / als PDF speichern'
+					})
+					.hasAttribute('disabled')
+			).toBe(true);
+			expect(screen.queryByRole('document', { hidden: true })).toBeNull();
+		}
+	);
+
+	it('does not offer a receipt when the server rejects confirmation', async () => {
+		confirmMock.mockRejectedValue(
+			new Error(DPA_SIGN_ERRORS.INVALID_REQUEST)
+		);
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.submit(
+			screen
+				.getByRole('button', { name: 'Bestätigung absenden' })
+				.closest('form')!
+		);
+		expect(
+			await screen.findByText(
+				'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
+			)
+		).toBeDefined();
+		expect(
+			screen.queryByRole('button', {
+				name: 'Drucken / als PDF speichern'
+			})
+		).toBeNull();
+		expect(screen.queryByRole('document', { hidden: true })).toBeNull();
 	});
 
 	it('names the Träger the signature binds instead of asking for it again', async () => {
