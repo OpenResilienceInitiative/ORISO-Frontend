@@ -18,6 +18,7 @@ import {
 	setMatrixClientServiceRef
 } from '../services/matrixClientRegistry';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
+import { holdPracticeExit } from './practiceMode';
 import {
 	PRACTICE_TOPIC,
 	type PracticeStart
@@ -42,6 +43,10 @@ interface Installation {
 	depth: number;
 	/** Unmount started: only practice-addressed requests are still answered. */
 	draining: boolean;
+	/** Practice requests the fake has not answered yet. */
+	inFlight: number;
+	/** Keeps `endPractice` from removing the guard underneath this layer. */
+	releaseExitHold: () => void;
 }
 
 let installation: Installation | null = null;
@@ -91,11 +96,22 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 		if (!current || current.patchedFetch !== patchedFetch) {
 			return previousFetch(input as RequestInfo, init);
 		}
-		const response = await current.world.rest.handle(
-			input as RequestInfo,
-			init,
-			{ practiceAddressedOnly: current.draining }
-		);
+		// Counted until the fake answered: the uninstall (and with it the
+		// guard's removal) waits for every practice request in flight.
+		current.inFlight += 1;
+		let response: Response | null;
+		try {
+			response = await current.world.rest.handle(
+				input as RequestInfo,
+				init,
+				{ practiceAddressedOnly: current.draining }
+			);
+		} finally {
+			current.inFlight -= 1;
+			if (current.draining && current.inFlight === 0) {
+				scheduleUninstallCheck();
+			}
+		}
 		return response ?? current.baseFetch(input as RequestInfo, init);
 	};
 	installation = {
@@ -106,7 +122,9 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 		previousService: getMatrixClientService(),
 		activeSession: hideActiveSessionContext(),
 		depth: 0,
-		draining: false
+		draining: false,
+		inFlight: 0,
+		releaseExitHold: holdPracticeExit()
 	};
 	window.fetch = patchedFetch;
 	setMatrixClientServiceRef(asService(world));
@@ -116,7 +134,7 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 
 const uninstallIfIdle = () => {
 	const current = installation;
-	if (!current || current.depth > 0) return;
+	if (!current || current.depth > 0 || current.inFlight > 0) return;
 	installation = null;
 	if (window.fetch === current.patchedFetch) {
 		window.fetch = current.previousFetch;
@@ -125,6 +143,7 @@ const uninstallIfIdle = () => {
 		setMatrixClientServiceRef(current.previousService);
 	}
 	restoreActiveSessionContext(current.activeSession);
+	current.releaseExitHold();
 };
 
 // A macrotask later: the practice tree's passive cleanups (e.g. the

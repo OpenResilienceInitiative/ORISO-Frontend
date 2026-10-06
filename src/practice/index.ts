@@ -1,9 +1,11 @@
 export { PracticeProvider, usePractice } from './PracticeProvider';
 export type { PracticeContextValue } from './PracticeProvider';
 export {
+	endPractice,
 	enterPracticeMode,
 	exitPracticeMode,
 	getPracticeNetworkGuard,
+	holdPracticeExit,
 	isPracticeMode,
 	onPracticeBlocked,
 	onPracticeExit,

@@ -24,6 +24,12 @@ import { TopicsContext } from '../globalState/provider/TopicsProvider';
 import { NotificationsContext } from '../globalState/provider/NotificationsProvider';
 import { FakeMatrixService } from './fakeMatrix/FakeMatrixService';
 import {
+	endPractice,
+	enterPracticeMode,
+	exitPracticeMode,
+	isPracticeMode
+} from './practiceMode';
+import {
 	SessionsDataContext,
 	SET_SESSIONS
 } from '../globalState/provider/SessionsDataProvider';
@@ -271,6 +277,75 @@ describe('PracticeSandbox', () => {
 		expect(outer.addEventNotification).not.toHaveBeenCalled();
 		expect(outer.addNotification).toHaveBeenCalledWith({
 			title: 'Supervision hinzugefügt'
+		});
+	});
+
+	describe('ending practice on top of the guard', () => {
+		afterEach(() => exitPracticeMode());
+
+		it('holds the exit until it has drained and uninstalled, so the guard unwinds cleanly', async () => {
+			enterPracticeMode({ tourId: 'consultant-practice-accept' });
+			const view = render(
+				<PracticeSandbox counsellor={counsellor}>
+					{null}
+				</PracticeSandbox>
+			);
+			await settle();
+
+			// The surface unmounts the sandbox on "closing", after the call.
+			const ended = endPractice();
+			view.unmount();
+			await act(() => ended);
+
+			expect(window.fetch).toBe(pageFetch);
+			expect(getMatrixClientService()).toBe(realService);
+		});
+
+		it('keeps the guard on until a practice request still in flight at the end is answered by the fake', async () => {
+			enterPracticeMode({ tourId: 'consultant-practice-accept' });
+			const view = render(
+				<PracticeSandbox counsellor={counsellor}>
+					{null}
+				</PracticeSandbox>
+			);
+			await settle();
+			let finishBody = () => undefined as void;
+			const body = new ReadableStream<Uint8Array>({
+				start(controller) {
+					finishBody = () => {
+						controller.enqueue(
+							new TextEncoder().encode(
+								JSON.stringify({
+									roomId: PRACTICE_MAIN_ROOM_ID,
+									active: false
+								})
+							)
+						);
+						controller.close();
+					};
+				}
+			});
+			const inFlight = window.fetch(
+				new Request(`${endpoints.eventNotifications}/active-view`, {
+					method: 'PATCH',
+					body,
+					duplex: 'half'
+				} as RequestInit)
+			);
+
+			const ended = endPractice();
+			view.unmount();
+			await settle();
+			await settle();
+			expect(isPracticeMode()).toBe(true);
+
+			finishBody();
+			expect((await inFlight).status).toBe(204);
+			await act(() => ended);
+
+			expect(isPracticeMode()).toBe(false);
+			expect(window.fetch).toBe(pageFetch);
+			expect(pageFetch).not.toHaveBeenCalled();
 		});
 	});
 
