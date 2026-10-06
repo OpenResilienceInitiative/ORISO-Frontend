@@ -306,34 +306,16 @@ const bannerCovers = (page: Page, name: string): Promise<boolean> =>
 	}, name);
 
 /**
- * Clicks a tour anchor as a counsellor would. The practice banner sits at the
- * top centre and can cover an anchor on a narrow desktop window; then it is
- * moved aside with its arrow keys first, and the run reports a finding.
+ * Clicks a tour anchor as a counsellor would. The practice banner rests at the
+ * bottom left of the list column and must never cover an anchor; if it does,
+ * the run fails instead of working around it.
  */
 const clickTarget = async (page: Page, name: string) => {
 	await expect(target(page, name)).toBeVisible();
-	if (await bannerCovers(page, name)) {
-		test.info().annotations.push({
-			type: 'finding',
-			description: `The practice banner covers the "${name}" anchor at ${page.viewportSize()?.width}px width; moved aside to click it.`
-		});
-		await page
-			.getByRole('button', {
-				name: exactText('practice.banner.moveHandle')
-			})
-			.focus();
-		for (
-			let press = 0;
-			press < 12 && (await bannerCovers(page, name));
-			press++
-		) {
-			await page.keyboard.press('Shift+ArrowRight');
-		}
-		expect(
-			await bannerCovers(page, name),
-			'the banner could not be moved clear'
-		).toBe(false);
-	}
+	expect(
+		await bannerCovers(page, name),
+		`the practice banner covers the "${name}" anchor at ${page.viewportSize()?.width}px width`
+	).toBe(false);
 	await target(page, name).click();
 };
 
