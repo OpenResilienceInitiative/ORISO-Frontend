@@ -38,6 +38,7 @@ export const ProductTourTooltip = ({
 			role="alertdialog"
 			aria-label={translate(String(step.title))}
 			{...tooltipProps}
+			aria-modal={showNext ? tooltipProps['aria-modal'] : undefined}
 		>
 			<div className="productTourTooltip__header">
 				<h2 className="productTourTooltip__title">

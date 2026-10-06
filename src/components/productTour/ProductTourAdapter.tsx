@@ -59,6 +59,42 @@ export interface ProductTourAdapterProps {
 
 const DEFAULT_TARGET_TIMEOUT_MS = 4000;
 
+const ACTION_CONTROL_SELECTOR =
+	'button:not([disabled]), a[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]';
+
+/** A highlighted wrapper is often not operable; hand focus to its editor/control. */
+const focusActionTarget = (step: TourStep | undefined) => {
+	if (!step?.advanceOn) return;
+	const targetName =
+		step.advanceOn.type === 'click'
+			? (step.advanceOn.target ?? step.target)
+			: step.target;
+	if (!targetName) return;
+	const anchor = document.querySelector<HTMLElement>(
+		tourTargetSelector(targetName)
+	);
+	if (!anchor) return;
+	const control = anchor.matches(ACTION_CONTROL_SELECTOR)
+		? anchor
+		: (anchor.querySelector<HTMLElement>('[contenteditable="true"]') ??
+			anchor.querySelector<HTMLElement>(ACTION_CONTROL_SELECTOR));
+	if (!control) return undefined;
+	// Late composer autofocus must yield to the action the tour just named.
+	// Reuse its existing focus-protection convention for this step only.
+	const protectedBefore = control.hasAttribute('data-keeps-focus');
+	if (!protectedBefore)
+		control.setAttribute('data-keeps-focus', 'tour-action');
+	control.focus({ preventScroll: true });
+	return () => {
+		if (
+			!protectedBefore &&
+			control.getAttribute('data-keeps-focus') === 'tour-action'
+		) {
+			control.removeAttribute('data-keeps-focus');
+		}
+	};
+};
+
 export const ProductTourAdapter = ({
 	tour,
 	active,
@@ -94,6 +130,8 @@ export const ProductTourAdapter = ({
 	const startedAtRef = useRef<string | undefined>(undefined);
 	const terminalReportedRef = useRef(false);
 	const prepareTokenRef = useRef(0);
+	const mountedRef = useRef(false);
+	const actionFocusCleanupRef = useRef<(() => void) | undefined>(undefined);
 	const startedPreparingRef = useRef(false);
 	const locationRef = useRef(location);
 	locationRef.current = location;
@@ -115,6 +153,9 @@ export const ProductTourAdapter = ({
 			return;
 		}
 		host.ended = true;
+		prepareTokenRef.current += 1;
+		actionFocusCleanupRef.current?.();
+		actionFocusCleanupRef.current = undefined;
 		const teardown = () => onEndRef.current?.();
 		if (host.setup) {
 			host.setup.then(teardown);
@@ -123,9 +164,20 @@ export const ProductTourAdapter = ({
 		}
 	}, []);
 
-	useEffect(() => endTour, [endTour]);
+	useEffect(() => {
+		mountedRef.current = true;
+		return () => {
+			mountedRef.current = false;
+			// StrictMode immediately replays the effect. Only a real unmount
+			// leaves the adapter absent at the next microtask.
+			queueMicrotask(() => {
+				if (!mountedRef.current) endTour();
+			});
+		};
+	}, [endTour]);
 
 	const applyRunState = useCallback((next: TourRunState) => {
+		if (!mountedRef.current || hostRef.current.ended) return;
 		runStateRef.current = next;
 		setRunState(next);
 	}, []);
@@ -192,6 +244,9 @@ export const ProductTourAdapter = ({
 	 */
 	const prepareStep = useCallback(
 		async (index: number, direction: 1 | -1 = 1): Promise<boolean> => {
+			if (!mountedRef.current || hostRef.current.ended) return false;
+			actionFocusCleanupRef.current?.();
+			actionFocusCleanupRef.current = undefined;
 			prepareTokenRef.current += 1;
 			const token = prepareTokenRef.current;
 			let requiredMissing = false;
@@ -212,7 +267,11 @@ export const ProductTourAdapter = ({
 						tourTargetSelector(step.target),
 						{ timeoutMs: targetTimeoutMs }
 					);
-					if (prepareTokenRef.current !== token) {
+					if (
+						!mountedRef.current ||
+						hostRef.current.ended ||
+						prepareTokenRef.current !== token
+					) {
 						return false;
 					}
 					if (!found) {
@@ -293,48 +352,68 @@ export const ProductTourAdapter = ({
 			return;
 		}
 		startedPreparingRef.current = true;
-		const start = () =>
-			prepareStep(0).then((prepared) => {
-				if (prepared) {
+		const start = () => {
+			if (!mountedRef.current || hostRef.current.ended) return;
+			const preparation = prepareStep(0);
+			const token = prepareTokenRef.current;
+			preparation.then((prepared) => {
+				if (
+					prepared &&
+					mountedRef.current &&
+					!hostRef.current.ended &&
+					prepareTokenRef.current === token
+				) {
 					applyRunState({ ...runStateRef.current, run: true });
 				}
 			});
+		};
 
-		const host = hostRef.current;
-		host.began = true;
-		let setup: Promise<void> | undefined;
-		try {
-			const pending = onBeforeStartRef.current?.();
-			setup = pending ? Promise.resolve(pending) : undefined;
-		} catch (error) {
-			setup = Promise.reject(error);
-		}
-		if (!setup) {
-			start();
-			return;
-		}
-		host.setup = setup.then(
-			() => {},
-			() => {}
-		);
-		setup.then(
-			() => {
-				// Unmounted while setup was pending: teardown is on its way.
-				if (!host.ended) {
-					start();
-				}
-			},
-			// The tour never starts; undo whatever the setup got done.
-			endTour
-		);
+		// A replacement adapter starts after the old adapter's queued cleanup.
+		// StrictMode's same-instance replay keeps this single setup pending.
+		queueMicrotask(() => {
+			if (!mountedRef.current || hostRef.current.ended) return;
+			const host = hostRef.current;
+			host.began = true;
+			let setup: Promise<void> | undefined;
+			try {
+				const pending = onBeforeStartRef.current?.();
+				setup = pending ? Promise.resolve(pending) : undefined;
+			} catch (error) {
+				setup = Promise.reject(error);
+			}
+			if (!setup) {
+				start();
+				return;
+			}
+			host.setup = setup.then(
+				() => {},
+				() => {}
+			);
+			setup.then(
+				() => {
+					// Unmounted while setup was pending: teardown is on its way.
+					if (mountedRef.current && !host.ended) {
+						start();
+					}
+				},
+				// The tour never starts; undo whatever the setup got done.
+				endTour
+			);
+		});
 	}, [active, applyRunState, endTour, prepareStep, steps.length]);
 
 	const handleCallback = useCallback(
 		(data: TourCallbackInput) => {
-			if (hostRef.current.ended) return;
+			if (!mountedRef.current || hostRef.current.ended) return;
 			const stepForIndex = (index: number): TourStep | undefined =>
 				steps[index];
 
+			if (data.type === EVENTS.TOOLTIP) {
+				actionFocusCleanupRef.current?.();
+				actionFocusCleanupRef.current = focusActionTarget(
+					stepForIndex(data.index)
+				);
+			}
 			const prev = runStateRef.current;
 			const { state, events } = reduceTourCallback(
 				prev,

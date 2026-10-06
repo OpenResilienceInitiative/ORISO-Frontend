@@ -625,3 +625,123 @@ export const AddASupervisor: Story = {
 		);
 	}
 };
+
+/** Bounded native Tab navigation: never moves focus through a test-only API. */
+const tabTo = async (control: HTMLElement) => {
+	for (
+		let count = 0;
+		document.activeElement !== control && count < 40;
+		count += 1
+	) {
+		// eslint-disable-next-line no-await-in-loop -- exercise real sequential Tab navigation
+		await userEvent.tab();
+	}
+	await expect(control).toHaveFocus();
+};
+
+export const SupervisorPickerWithKeyboard: Story = {
+	name: 'Supervisor picker and End with keyboard · desktop',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Uses only Tab, Enter and typing to start supervision, reach the real add button, choose Robin in the modal, and end practice while the picker is open. The permanent banner stays accessible and no practice data leaves the page.'
+			}
+		}
+	},
+	play: async ({ canvas, step }) => {
+		const storageBefore = storageSnapshot();
+		await step('Start supervision with Tab and Enter', async () => {
+			const card = (
+				await canvas.findByRole(
+					'heading',
+					{ name: 'Übung: Supervision hinzufügen' },
+					SLOW
+				)
+			).closest('li')!;
+			await tabTo(
+				within(card).getByRole('button', { name: 'Übung starten' })
+			);
+			await userEvent.keyboard('{Enter}');
+			await expectStep(1, 4);
+			await waitFor(
+				() =>
+					expect(document.activeElement).toBe(
+						document.querySelector(
+							'[data-tour-target="session-supervisor-add"]'
+						)
+					),
+				SLOW
+			);
+			await expect(await tooltip()).not.toHaveAttribute(
+				'aria-modal',
+				'true'
+			);
+		});
+		await step(
+			'Open the picker, choose Robin and type the reason with the keyboard',
+			async () => {
+				await userEvent.keyboard('{Enter}');
+				const picker = await screen.findByRole('combobox', {}, SLOW);
+				await tabTo(picker);
+				await userEvent.keyboard('{Enter}');
+				const robin = await screen.findByRole(
+					'option',
+					{ name: 'Robin (Übung)' },
+					SLOW
+				);
+				await waitFor(() => expect(robin).toHaveFocus(), SLOW);
+				await userEvent.keyboard('{Enter}');
+				await expect(picker).toHaveTextContent('Robin (Übung)');
+				const reason = screen.getByPlaceholderText(
+					'Bitte geben Sie den Grund für die Supervision an...'
+				);
+				await tabTo(reason);
+				await userEvent.keyboard(
+					'Ich möchte mich zum Vorgehen absichern.'
+				);
+				await expect(reason).toHaveValue(
+					'Ich möchte mich zum Vorgehen absichern.'
+				);
+			}
+		);
+		await step(
+			'Reach the permanent banner and end while the picker remains open',
+			async () => {
+				const banner = screen.getByRole('status', {
+					name: 'Übungsmodus'
+				});
+				await expect(banner.closest('[aria-hidden="true"]')).toBeNull();
+				await expect(screen.getByRole('dialog')).toBeVisible();
+				await tabTo(
+					within(banner).getByRole('button', {
+						name: 'Übung beenden'
+					})
+				);
+				await userEvent.keyboard('{Enter}');
+				await waitFor(
+					() => expect(getPracticeSnapshot().status).toBe('inactive'),
+					SLOW
+				);
+				await expect(
+					screen.queryByRole('status', { name: 'Übungsmodus' })
+				).toBeNull();
+				await expect(screen.queryByRole('dialog')).toBeNull();
+				await expect(
+					requestLog.filter(
+						({ method, url }) =>
+							method !== 'GET' &&
+							!(
+								method === 'PUT' &&
+								url.includes(TUTORIAL_PROGRESS)
+							)
+					)
+				).toEqual([]);
+				await expect(
+					requestLog.some(({ status }) => status === 'completed')
+				).toBe(false);
+				await expect(realMatrixWrites).toEqual([]);
+				await expect(storageSnapshot()).toEqual(storageBefore);
+			}
+		);
+	}
+};

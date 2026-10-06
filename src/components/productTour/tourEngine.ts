@@ -73,6 +73,8 @@ export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 		placement: step.placement ?? (step.target ? 'bottom' : 'center'),
 		title: step.titleKey,
 		content: step.contentKey,
+		// An action step requires keyboard access to the highlighted app UI.
+		...(step.advanceOn && { disableFocusTrap: true }),
 		// Read by the tooltip: no Next on a self-advancing step, no Back after
 		// an action that cannot be undone.
 		...((step.advanceOn || step.hideBack) && {

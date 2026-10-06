@@ -208,7 +208,8 @@ const uiVersionSwitch = () => screen.queryByLabelText('app.ui.classic');
 const renderApp = ({
 	teamDiscussion = true,
 	practiceArea = true,
-	width = 1440
+	width = 1440,
+	strictMode = false
 } = {}) => {
 	const settings = {
 		...appConfig,
@@ -316,7 +317,9 @@ const renderApp = ({
 			</JotaiProvider>
 		</I18nextProvider>
 	);
-	const view = render(app());
+	const view = render(app(), {
+		wrapper: strictMode ? React.StrictMode : undefined
+	});
 	const resize = (viewportWidth: number) => view.rerender(app(viewportWidth));
 	/** Starts a flow from its real card on the Help page. */
 	const start = async (tourId: string) => {
@@ -594,6 +597,21 @@ const banner = () =>
 	within(screen.getByRole('status', { name: 'practice.banner.title' }));
 
 describe('practice flows on the real app shell', () => {
+	it('keeps the real practice sandbox active during StrictMode replay and restores the real service after unmount', async () => {
+		const app = renderApp({ strictMode: true });
+		await app.start(SUPERVISION);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(getPracticeNetworkGuard()?.isInstalled).toBe(true);
+		expect(getMatrixClientService()).not.toBe(realMatrixService);
+
+		app.unmount();
+		await waitFor(() =>
+			expect(getPracticeSnapshot().status).toBe('inactive')
+		);
+		expect(getMatrixClientService()).toBe(realMatrixService);
+	});
+
 	it('F1 with the team step: every anchor is live when its step shows, and the real actions advance the tour', async () => {
 		const app = renderApp({ teamDiscussion: true });
 		expect(uiVersionSwitch()).not.toBeNull();

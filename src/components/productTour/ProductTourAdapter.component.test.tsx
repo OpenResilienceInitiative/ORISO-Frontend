@@ -89,7 +89,8 @@ const NavigateCapture = () => {
 };
 
 const renderAdapter = (
-	over: Partial<React.ComponentProps<typeof ProductTourAdapter>> = {}
+	over: Partial<React.ComponentProps<typeof ProductTourAdapter>> = {},
+	strictMode = false
 ) => {
 	const events: Array<{ event: TourEvent; stepId?: string }> = [];
 	const paths: string[] = [];
@@ -120,15 +121,18 @@ const renderAdapter = (
 			</Routes>
 		</MemoryRouter>
 	);
-	const utils = render(tree(over));
+	const utils = render(tree(over), {
+		wrapper: strictMode ? React.StrictMode : undefined
+	});
 	const rerenderAdapter = (
 		props: Partial<React.ComponentProps<typeof ProductTourAdapter>>
 	) => utils.rerender(tree({ ...over, ...props }));
 	return { events, paths, onTerminal, rerenderAdapter, ...utils };
 };
 
-afterEach(() => {
+afterEach(async () => {
 	cleanup();
+	await act(async () => {});
 	joyrideProps = null;
 	document.body.innerHTML = '';
 	vi.clearAllMocks();
@@ -598,6 +602,60 @@ describe('ProductTourAdapter', () => {
 			return { promise, resolve, reject };
 		};
 
+		it.each(['synchronous', 'asynchronous'])(
+			'keeps %s host setup alive during StrictMode replay and tears down once on real unmount',
+			async (mode) => {
+				const setup = deferred();
+				const onBeforeStart = vi.fn(() =>
+					mode === 'asynchronous' ? setup.promise : undefined
+				);
+				const onEnd = vi.fn();
+				const { unmount } = renderAdapter(
+					{ onBeforeStart, onEnd },
+					true
+				);
+				await act(async () => {});
+				expect(onBeforeStart).toHaveBeenCalledTimes(1);
+				expect(onEnd).not.toHaveBeenCalled();
+				if (mode === 'asynchronous')
+					await act(async () => setup.resolve());
+				await waitFor(() => expect(joyrideProps!.run).toBe(true));
+				expect(onEnd).not.toHaveBeenCalled();
+
+				unmount();
+				await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+			}
+		);
+
+		it('does not emit missing-target events from preparation that outlives a real unmount', async () => {
+			const onEnd = vi.fn();
+			const { events, onTerminal, unmount } = renderAdapter(
+				{
+					tour: {
+						...tour,
+						steps: [
+							{
+								...tour.steps[1],
+								route: undefined,
+								optional: true
+							}
+						]
+					},
+					onEnd
+				},
+				true
+			);
+			await act(async () => {});
+			unmount();
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 120))
+			);
+			expect(events).toEqual([]);
+			expect(onTerminal).not.toHaveBeenCalled();
+			expect(joyrideProps!.run).toBe(false);
+		});
+
 		it('runs onBeforeStart before the first step is prepared and starts after it resolves', async () => {
 			const setup = deferred();
 			const onBeforeStart = vi.fn(() => setup.promise);
@@ -731,7 +789,7 @@ describe('ProductTourAdapter', () => {
 
 			unmount();
 
-			expect(onEnd).toHaveBeenCalledTimes(1);
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
 		});
 
 		it('does not tear down again on unmount after the terminal teardown', async () => {
@@ -750,7 +808,7 @@ describe('ProductTourAdapter', () => {
 
 			unmount();
 
-			expect(onEnd).toHaveBeenCalledTimes(1);
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
 		});
 
 		it('does not tear down a tour whose setup never ran', () => {
