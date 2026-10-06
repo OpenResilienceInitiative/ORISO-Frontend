@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	NotificationConfigDialog,
 	NotificationConfigView
@@ -12,16 +13,18 @@ import {
 } from '../../../utils/notificationSettings/notificationConfig';
 import type { SoundId } from '../../../utils/notificationSettings/model';
 import { previewNotificationSound } from '../../../utils/notificationSettings/soundPlayback';
+import { phone390Globals } from '../../message/messageStoryShell';
 import './notificationConfigDialog.styles.scss';
 
 const meta: Meta<typeof NotificationConfigDialog> = {
 	title: 'Profile/NotificationConfigDialog',
-	component: NotificationConfigDialog
+	component: NotificationConfigDialog,
+	parameters: { layout: 'fullscreen' }
 };
 export default meta;
 
 /**
- * The whole dialog, end-to-end: OrisoDialog chrome + hero icon + working
+ * The whole dialog, end-to-end: M3Dialog chrome + hero icon + working
  * play buttons that actually play the vendored tones. Click a tone in a row,
  * then its play button — you hear the sound at the row's volume.
  */
@@ -54,9 +57,71 @@ type DialogStory = StoryObj<typeof NotificationConfigDialog>;
 
 export const Dialog: DialogStory = { render: () => <InteractiveDialog /> };
 
+/** The real exit guard after editing a sound setting and choosing E-mail preferences. */
+export const UnsavedEmailNavigation: DialogStory = {
+	render: () => <InteractiveDialog />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const banner = doc.querySelector<HTMLSelectElement>(
+			'[data-cy="notif-banner-requests-new"]'
+		)!;
+		await userEvent.selectOptions(banner, 'persistent');
+		await userEvent.click(
+			doc.querySelector<HTMLAnchorElement>(
+				'a[href="/profile/einstellungen/email#email-notifications"]'
+			)!
+		);
+		await waitFor(() =>
+			expect(
+				doc.querySelector('[data-testid="notif-discard-changes"]')
+			).toBeVisible()
+		);
+		await expect(banner.value).toBe('persistent');
+	}
+};
+
 export const DialogMobile: DialogStory = {
 	render: () => <InteractiveDialog />,
-	parameters: { viewport: { defaultViewport: 'mobile1' } }
+	globals: phone390Globals,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const documentBody = within(doc.body);
+		const dialog = await waitFor(() => documentBody.getByRole('dialog'));
+		const surface = dialog as HTMLElement;
+		const body = dialog.querySelector('.m3Dialog__body') as HTMLElement;
+		const footer = dialog.querySelector('.m3Dialog__footer') as HTMLElement;
+
+		// Removing the redundant email controls can make this dialog fit at
+		// 390px. Both a fitting body and an independently scrolling body are valid.
+		const bodyOverflows = body.scrollHeight > body.clientHeight;
+		await expect(getComputedStyle(surface).overflowY).toBe('hidden');
+		await expect(getComputedStyle(body).overflowY).toBe('auto');
+		const soundSelect = body.querySelector<HTMLSelectElement>(
+			'.notifConfig__select'
+		)!;
+		const soundSelectWrap = soundSelect.closest<HTMLElement>(
+			'.notifConfig__selectWrap'
+		)!;
+		soundSelect.focus();
+		await expect(getComputedStyle(soundSelectWrap).outlineStyle).toBe(
+			'solid'
+		);
+		await expect(getComputedStyle(soundSelectWrap).outlineWidth).toBe(
+			'2px'
+		);
+		if (bodyOverflows) {
+			body.scrollTop = body.scrollHeight;
+			await expect(body.scrollTop).toBeGreaterThan(0);
+		}
+		await expect(body.contains(footer)).toBe(false);
+		await expect(footer.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+			doc.defaultView!.innerHeight
+		);
+		const confirm = within(footer).getByRole('button', {
+			name: /Bestätigen|Confirm|profile\.notifications\.config\.confirm/
+		});
+		await waitFor(() => expect(confirm).toBeVisible());
+	}
 };
 
 /**

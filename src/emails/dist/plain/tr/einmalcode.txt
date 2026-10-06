@@ -1,0 +1,25 @@
+Tek kullanımlık kodunuz
+=======================
+
+Bu kodu giriş penceresine yazın.
+
+Kod: {{otpCode}}
+
+Girişe git:
+{{loginUrl}}
+
+Giriş yapmak istemediyseniz lütfen şifrenizi değiştirin.
+
+----------------------------------------------------------------
+Şifrenizi hiçbir zaman e-postayla sormayız. Bu kodu kimseyle paylaşmayın.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}}, {{orgName}} tarafından sunulan bir hizmettir.
+
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+
+Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.

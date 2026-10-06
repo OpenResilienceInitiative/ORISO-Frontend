@@ -26,12 +26,12 @@ describe('Matrix group call privacy', () => {
 			getGroupCallForRoom: cy.stub().returns(null),
 			getRoom: cy
 				.stub()
-				.withArgs('!plain-group-room:oriso.org')
+				.withArgs('!plain-group-room:example.org')
 				.returns(room),
 			getUser: cy.stub(),
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-group-room:oriso.org')
+				.withArgs('!plain-group-room:example.org')
 				.returns(false),
 			waitUntilRoomReadyForGroupCalls
 		} as never);
@@ -39,7 +39,7 @@ describe('Matrix group call privacy', () => {
 		cy.then(() =>
 			matrixGroupCallService
 				.startOrJoinGroupCall(
-					'!plain-group-room:oriso.org',
+					'!plain-group-room:example.org',
 					true,
 					cy.stub(),
 					cy.stub()
@@ -87,26 +87,26 @@ describe('Matrix group call privacy', () => {
 			getGroupCallForRoom: cy.stub().returns(null),
 			getRoom: cy
 				.stub()
-				.withArgs('!encrypted-group-room:oriso.org')
+				.withArgs('!encrypted-group-room:example.org')
 				.returns(room),
 			getUser: cy.stub(),
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!encrypted-group-room:oriso.org')
+				.withArgs('!encrypted-group-room:example.org')
 				.returns(true),
 			waitUntilRoomReadyForGroupCalls
 		} as never);
 
 		cy.then(() =>
 			matrixGroupCallService.startOrJoinGroupCall(
-				'!encrypted-group-room:oriso.org',
+				'!encrypted-group-room:example.org',
 				true,
 				cy.stub(),
 				cy.stub()
 			)
 		).then(() => {
 			expect(waitUntilRoomReadyForGroupCalls).to.have.been.calledOnceWith(
-				'!encrypted-group-room:oriso.org'
+				'!encrypted-group-room:example.org'
 			);
 			expect(createGroupCall.callCount).to.equal(1);
 			expect(enter.callCount).to.equal(1);

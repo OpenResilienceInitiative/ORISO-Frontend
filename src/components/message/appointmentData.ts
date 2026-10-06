@@ -9,6 +9,11 @@ export interface AppointmentData {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
+// The appointment contract carries an ISO instant. Never infer a timezone
+// from the viewer's browser for a legacy or malformed payload.
+const ISO_INSTANT =
+	/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/i;
+
 export const parseAppointmentData = (data: string): AppointmentData | null => {
 	let value: unknown;
 	try {
@@ -22,6 +27,7 @@ export const parseAppointmentData = (data: string): AppointmentData | null => {
 		typeof value.title !== 'string' ||
 		value.title.trim().length === 0 ||
 		typeof value.date !== 'string' ||
+		!ISO_INSTANT.test(value.date) ||
 		Number.isNaN(new Date(value.date).getTime()) ||
 		typeof value.duration !== 'number' ||
 		!Number.isFinite(value.duration) ||

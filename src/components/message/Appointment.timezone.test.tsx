@@ -46,6 +46,12 @@ describe.skipIf(process.env.TZ !== 'Europe/Berlin')(
 	() => {
 		it.each([
 			['summer', '2026-08-12T09:00:00.000Z', 50, '11:00 - 11:50'],
+			[
+				'explicit offset',
+				'2026-08-12T11:00:00+02:00',
+				50,
+				'11:00 - 11:50'
+			],
 			['winter', '2026-01-12T09:00:00.000Z', 50, '10:00 - 10:50'],
 			[
 				'spring DST transition',
@@ -90,13 +96,15 @@ describe.skipIf(process.env.TZ !== 'Europe/Berlin')(
 );
 
 describe.skipIf(process.env.TZ !== 'UTC')('Appointment in UTC', () => {
-	it('renders the raw instant without a Berlin-specific offset', () => {
-		const date = '2026-08-12T09:00:00.000Z';
-		const { container } = renderAppointment(date, 50);
+	it.each(['2026-08-12T09:00:00.000Z', '2026-08-12T11:00:00+02:00'])(
+		'renders the explicit instant %s without a Berlin-specific offset',
+		(date) => {
+			const { container } = renderAppointment(date, 50);
 
-		expect(displayedDateAndTime(container).time).toBe('09:00 - 09:50');
-		expect(calendarProps).toHaveBeenCalledWith(
-			expect.objectContaining({ start: date, durationMinutes: 50 })
-		);
-	});
+			expect(displayedDateAndTime(container).time).toBe('09:00 - 09:50');
+			expect(calendarProps).toHaveBeenCalledWith(
+				expect.objectContaining({ start: date, durationMinutes: 50 })
+			);
+		}
+	);
 });

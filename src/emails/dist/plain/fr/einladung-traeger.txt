@@ -1,0 +1,28 @@
+Bienvenue sur {{platformName}}
+==============================
+
+Un accès à l’administration de {{platformName}} a été créé pour {{tenantName}}.
+
+Ce lien vous permet de définir votre mot de passe et de terminer la configuration.
+
+Organisme: {{tenantName}}
+Lien valable jusqu’au: {{inviteExpiresAt}}
+
+Configurer l’accès:
+{{inviteUrl}}
+
+Si vous n’attendiez pas cette invitation, contactez la personne qui vous a invité.
+
+----------------------------------------------------------------
+Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce lien à personne.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+
+Cet e-mail fait partie de la connexion et ne peut pas être désactivé. Merci de ne pas y répondre.

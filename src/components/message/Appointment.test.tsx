@@ -33,6 +33,12 @@ describe('Appointment', () => {
 		['null JSON', 'null'],
 		['array JSON', '[]'],
 		['invalid date', appointment({ date: 'not-a-date' })],
+		[
+			'timezone-free date-time',
+			appointment({ date: '2026-08-12T09:00:00' })
+		],
+		['date without time or offset', appointment({ date: '2026-08-12' })],
+		['locale-specific date', appointment({ date: 'August 12, 2026' })],
 		['zero duration', appointment({ duration: 0 })],
 		['negative duration', appointment({ duration: -15 })],
 		[

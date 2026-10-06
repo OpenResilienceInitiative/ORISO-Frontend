@@ -112,20 +112,27 @@ describe('autoLogin', () => {
 			'synthetic-password',
 			'123456'
 		);
-		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
+		expect(await consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
 			'synthetic-password'
 		);
-		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBeNull();
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
 	});
 	it('clears a stale handoff and never stages credentials when OTP is required or rejected', async () => {
-		stageLoginRecoveryPassword(matrixResponse.userId, 'stale-synthetic');
+		await stageLoginRecoveryPassword(
+			matrixResponse.userId,
+			'stale-synthetic'
+		);
 		vi.mocked(getKeycloakAccessToken).mockRejectedValue(
 			new Error('OTP_REQUIRED')
 		);
 		await expect(
 			autoLogin({ username: 'synthetic', password: 'synthetic-password' })
 		).rejects.toThrow();
-		expect(consumeLoginRecoveryPassword(matrixResponse.userId)).toBeNull();
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
 		expect(getMatrixAccessToken).not.toHaveBeenCalled();
 	});
 
@@ -356,6 +363,28 @@ describe('redirectToApp', () => {
 });
 
 describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
+	it('returns to the selected email switch after login', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				'/sessions/consultant/sessionView/session/3363',
+				'/profile/einstellungen/email?mail=tagesuebersicht'
+			)
+		).toBe('/profile/einstellungen/email?mail=tagesuebersicht');
+	});
+
+	it('rejects an external email-settings return target', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'https://evil.example/profile/einstellungen/email'
+			)
+		).toBe('/sessions');
+	});
+
 	it('lands on the remembered consultant session', () => {
 		expect(
 			buildAppRedirectPath(

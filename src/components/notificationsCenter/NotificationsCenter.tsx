@@ -2,6 +2,7 @@ import {
 	parseChannel,
 	rewriteLegacyChannelPath
 } from '../../utils/channelRoute';
+import { NavActivityIcon } from '../app/navigationSidebarIcons';
 import * as React from 'react';
 import {
 	useCallback,
@@ -15,18 +16,18 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
 	getEventDescriptor,
 	getEventIcon,
 	renderEventStrings,
-	familyLabelKey,
 	isKnownEventType
 } from './eventDescriptors';
-import { EventFamily } from './eventDescriptors/types';
 import {
 	resolveNotificationActionPath,
+	resolveStatusPageAction,
 	toInterpolationValues
 } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
@@ -34,8 +35,34 @@ import { pickActiveItemKey } from '../../utils/listItemSelection';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
-	TimelineFamilyFilter
+	TIMELINE_KIND_ORDER,
+	TimelineFamilyFilter,
+	TimelineKindId
 } from './timelineFilter';
+import { useDisplayFilter } from '../../hooks/useDisplayFilter';
+import {
+	DisplayFilterButton,
+	DisplayFilterDialog,
+	DisplayFilterKindOption,
+	FilterChip,
+	FilterChipRow,
+	isDisplayFilterCustomised,
+	reconcileActiveKind,
+	orderChipKinds,
+	resolveChipPresentation,
+	kindsUnderOther,
+	useDisplayFilterLabels,
+	visiblePillKinds
+} from '../displayFilter';
+import {
+	applyTimelineFilter,
+	isTimelineKindPartiallyHidden,
+	timelineUnreadByKind
+} from '../../utils/displayFilter/timeline';
+import {
+	TIMELINE_KIND_ICONS,
+	timelineKindLabel
+} from '../displayFilter/kindOptions';
 import {
 	NotificationsContext,
 	SessionsDataContext,
@@ -54,13 +81,6 @@ import {
 	requiresCaseHandoverCheck,
 	useCaseHandoverPreviewGate
 } from './caseHandoverPreviewGate';
-import { ReactComponent as RequestsFamilyIcon } from '../../resources/img/icons/timeline-request-client.svg';
-import { ReactComponent as MessagesFamilyIcon } from '../../resources/img/icons/speech-bubble.svg';
-import { ReactComponent as DraftsFamilyIcon } from '../../resources/img/icons/pen-paper.svg';
-import { ReactComponent as HandoverFamilyIcon } from '../../resources/img/icons/persons-two.svg';
-import { ReactComponent as CallsFamilyIcon } from '../../resources/img/icons/timeline-add-call.svg';
-import { ReactComponent as SystemFamilyIcon } from '../../resources/img/icons/notification_bell.svg';
-import { ReactComponent as AppointmentsFamilyIcon } from '../../resources/img/icons/calendar.svg';
 import { ReactComponent as ImageMessageIcon } from '../../resources/img/icons/file-image.svg';
 import { ReactComponent as FileMessageIcon } from '../../resources/img/icons/file-doc.svg';
 import { ReactComponent as AudioMessageIcon } from '../../resources/img/icons/notification_audio.svg';
@@ -73,11 +93,18 @@ import { ConversationPreview } from './ConversationPreview';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
+	isTimelineDraftId,
+	mergeDraftsIntoFeed,
+	toNonEmbeddedPath
+} from './timelineDrafts';
+import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import {
 	formatAbsoluteTime,
 	formatClockParts,
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
+import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -86,18 +113,14 @@ const TIMELINE_MIN_WIDTH = 300;
 const TIMELINE_MAX_WIDTH = 600;
 const TIMELINE_DEFAULT_WIDTH = 400;
 
-const FAMILY_ICONS: Record<
-	EventFamily,
-	React.ComponentType<React.SVGProps<SVGSVGElement>>
-> = {
-	requests: RequestsFamilyIcon,
-	messages: MessagesFamilyIcon,
-	drafts: DraftsFamilyIcon,
-	handover: HandoverFamilyIcon,
-	calls: CallsFamilyIcon,
-	system: SystemFamilyIcon,
-	appointments: AppointmentsFamilyIcon
-};
+/**
+ * Keep paging (#1377 §5.1): a loaded page can be entirely hidden, so the
+ * list requests older pages until this many visible rows exist or the
+ * server has no more.
+ */
+const MIN_VISIBLE_TIMELINE_ROWS = 10;
+
+const TIMELINE_DISPLAY_FILTER_DIALOG_ID = 'timeline-display-filter-dialog';
 
 const MESSAGE_PREVIEW_ICONS: Partial<
 	Record<
@@ -134,7 +157,8 @@ const resolveItemCategory = (item: any): 'system' | 'message' =>
 // server-provided title/text until the strict text-free migration (Slice 2).
 const describeItem = (
 	item: any,
-	translate: (key: string, options?: Record<string, unknown>) => string
+	translate: (key: string, options?: Record<string, unknown>) => string,
+	language?: string
 ) => {
 	const descriptor = getEventDescriptor(item?.eventType);
 	const { title, text } = renderEventStrings(descriptor, translate, {
@@ -142,9 +166,15 @@ const describeItem = (
 		fallbackText: item?.text,
 		// #846: params metadata feeds template placeholders such as
 		// {{senderDisplayName}} — previously they rendered unresolved.
-		interpolation: toInterpolationValues(item?.params)
+		interpolation: toInterpolationValues(item?.params, language)
 	});
 	return { descriptor, title, text };
+};
+
+// #876: a planned maintenance notice links out to the public status page
+// instead of an in-app origin, so it never falls back to the sessions list.
+const openStatusPage = (url: string) => {
+	window.open(url, '_blank', 'noopener,noreferrer');
 };
 
 const resolveSessionId = (item: any): string | null => {
@@ -218,17 +248,6 @@ const parseNumericId = (value?: string | null): number | null => {
 	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
-const toNonEmbeddedPath = (path?: string | null): string | null => {
-	if (!path) {
-		return null;
-	}
-	const [basePath, queryString = ''] = String(path).split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
-
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -242,9 +261,9 @@ export const NotificationsCenter = () => {
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
 	const {
-		notificationFeed,
-		unreadNotificationCount,
-		markNotificationAsRead,
+		notificationFeed: serverFeed,
+		hasUnreadNotifications,
+		markNotificationAsRead: markServerNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
 		loadOlderNotifications,
@@ -252,6 +271,35 @@ export const NotificationsCenter = () => {
 		isLoadingOlderNotifications,
 		olderNotificationsError
 	} = useContext(NotificationsContext);
+	// #1535: unsent drafts join the list here only, not the provider feed.
+	const timelineDrafts = useTimelineDrafts();
+	const notificationFeed = useMemo(
+		() => mergeDraftsIntoFeed(serverFeed, timelineDrafts),
+		[serverFeed, timelineDrafts]
+	);
+	const markNotificationAsRead = useCallback(
+		(id: string) => {
+			if (!isTimelineDraftId(id)) markServerNotificationAsRead(id);
+		},
+		[markServerNotificationAsRead]
+	);
+	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
+	const {
+		effective: timelineFilter,
+		override: timelineOverride,
+		canWrite: canEditDisplayFilter,
+		readOnly: displayFilterReadOnly,
+		setSection: setTimelineOverride,
+		resetSection: resetTimelineOverride
+	} = useDisplayFilter('timeline');
+	const displayFilterLabels = useDisplayFilterLabels('timeline');
+	const [displayFilterOpen, setDisplayFilterOpen] = useState(false);
+	// The feed is reduced ONCE; chips and list both read `visibleFeed` so a
+	// hidden kind leaves both in the same render (AC2).
+	const visibleFeed = useMemo(
+		() => applyTimelineFilter(notificationFeed, timelineFilter),
+		[notificationFeed, timelineFilter]
+	);
 	// Design feedback 2026-07-12: on mobile nothing is pre-selected — a
 	// selection immediately opens the conversation there, so an auto-selected
 	// first card would be surprising. Desktop keeps the first card selected so
@@ -372,40 +420,99 @@ export const NotificationsCenter = () => {
 		localStorage.setItem(TIMELINE_WIDTH_STORAGE_KEY, width.toString());
 	}, []);
 
-	// Families actually present in the feed, in canonical order (drives chips).
+	// Kinds actually present in the VISIBLE feed, in canonical order.
 	const familiesInFeed = useMemo(
-		() => getFamiliesInFeed(notificationFeed),
-		[notificationFeed]
+		() => getFamiliesInFeed(visibleFeed),
+		[visibleFeed]
 	);
+	// The dialog rows: every kind, "Termine" only once such an event exists
+	// (§5.1), with the visible unread count per kind for the pill badges and
+	// the profile's partial hiding for the mixed checkbox.
+	const timelineKinds = useMemo<DisplayFilterKindOption[]>(() => {
+		const unread = timelineUnreadByKind(visibleFeed);
+		const presentKinds = new Set(getFamiliesInFeed(notificationFeed));
+		return TIMELINE_KIND_ORDER.filter(
+			(kind) => kind !== 'appointments' || presentKinds.has(kind)
+		).map((kind) => ({
+			id: kind,
+			label: timelineKindLabel(translate, kind),
+			icon: TIMELINE_KIND_ICONS[kind],
+			chipLabel:
+				kind === 'other'
+					? translate('notifications.displayFilter.otherChip')
+					: undefined,
+			unreadCount: unread[kind] ?? 0,
+			partial: isTimelineKindPartiallyHidden(timelineFilter, kind)
+		}));
+	}, [notificationFeed, timelineFilter, translate, visibleFeed]);
+	const chipPresentation = resolveChipPresentation(timelineFilter);
+	const pillKinds = useMemo(
+		() =>
+			orderChipKinds(
+				visiblePillKinds(timelineFilter, timelineKinds, activeFamily),
+				{ autoSort: chipPresentation.autoSort }
+			),
+		[activeFamily, chipPresentation.autoSort, timelineFilter, timelineKinds]
+	);
+	const displayFilterCustomised = isDisplayFilterCustomised(
+		timelineFilter,
+		timelineKinds
+	);
+	// A page can be entirely hidden: keep paging until enough is visible.
+	useEffect(() => {
+		if (
+			visibleFeed.length >= MIN_VISIBLE_TIMELINE_ROWS ||
+			notificationFeed.length === 0 ||
+			!hasOlderNotifications ||
+			isLoadingOlderNotifications ||
+			olderNotificationsError
+		) {
+			return;
+		}
+		void loadOlderNotifications();
+	}, [
+		hasOlderNotifications,
+		isLoadingOlderNotifications,
+		loadOlderNotifications,
+		notificationFeed.length,
+		olderNotificationsError,
+		visibleFeed.length
+	]);
 	// #1200: "Mark all as read" is only actionable while something is unread.
 	// The provider's counter is the server-backed total, so unread activity on
-	// pages that are not loaded yet still enables the action.
-	const hasUnreadActivity = unreadNotificationCount > 0;
+	// pages that are not loaded yet still enables the action. With the display
+	// filter (#1377 slice 7) that total leaves hidden kinds out, while ✓✓
+	// still clears everything server-side (spec §6.1): unread rows the filter
+	// hides on the loaded pages keep the action enabled.
+	const hasUnreadActivity =
+		hasUnreadNotifications || notificationFeed.some((row) => !row.readAt);
+	// §5.1: an active family whose pill the effective filter took (a profile
+	// change or another device) must not keep narrowing the feed with no
+	// chip left to clear it. Same reconciliation as the sessions lists.
+	useEffect(() => {
+		setActiveFamily((current) =>
+			current && current !== 'all'
+				? (reconcileActiveKind(
+						timelineFilter,
+						current
+					) as TimelineFamilyFilter)
+				: current
+		);
+	}, [timelineFilter]);
 	const previewLabels = useMemo<MatrixActivityPreviewLabels>(
 		() => ({
-			image: translate('notifications.center.preview.image', 'Image'),
-			file: translate('notifications.center.preview.file', 'File'),
-			audio: translate(
-				'notifications.center.preview.audio',
-				'Audio message'
-			),
-			video: translate('notifications.center.preview.video', 'Video'),
-			notice: translate('notifications.center.preview.notice', 'Notice'),
-			unsupported: translate(
-				'notifications.center.preview.unsupported',
-				'Unsupported message'
-			),
-			pending: translate(
-				'notifications.center.preview.pending',
-				'Waiting for decryption'
-			),
+			image: translate('notifications.center.preview.image'),
+			file: translate('notifications.center.preview.file'),
+			audio: translate('notifications.center.preview.audio'),
+			video: translate('notifications.center.preview.video'),
+			notice: translate('notifications.center.preview.notice'),
+			unsupported: translate('notifications.center.preview.unsupported'),
+			pending: translate('notifications.center.preview.pending'),
 			roomUnavailable: translate(
-				'notifications.center.preview.roomUnavailable',
-				'Conversation unavailable on this device'
+				'notifications.center.preview.roomUnavailable'
 			),
 			eventUnavailable: translate(
-				'notifications.center.preview.eventUnavailable',
-				'Message unavailable in local history'
+				'notifications.center.preview.eventUnavailable'
 			)
 		}),
 		[translate]
@@ -435,7 +542,11 @@ export const NotificationsCenter = () => {
 						roomRef,
 						matrixEventId,
 						senderName: item.params?.senderName,
-						fallbackText: describeItem(item, translate).text,
+						fallbackText: describeItem(
+							item,
+							translate,
+							i18n.language
+						).text,
 						labels: previewLabels,
 						sessionId,
 						needsCaseHandoverCheck: requiresCaseHandoverCheck(
@@ -445,7 +556,14 @@ export const NotificationsCenter = () => {
 					}
 				];
 			}),
-		[notificationFeed, previewLabels, sessions, translate, userData?.userId]
+		[
+			notificationFeed,
+			previewLabels,
+			sessions,
+			translate,
+			i18n.language,
+			userData?.userId
+		]
 	);
 	// Only sessions that could be curtained cost a status request; a group
 	// chat, an enquiry or one's own case previews without one.
@@ -552,19 +670,34 @@ export const NotificationsCenter = () => {
 	const filteredFeed = useMemo(
 		() =>
 			filterTimelineItems(
-				notificationFeed,
-				{ family: activeFamily, query: searchQuery, unreadOnly },
+				visibleFeed,
+				{
+					family: activeFamily,
+					query: searchQuery,
+					unreadOnly,
+					bundledUnderOther: kindsUnderOther(
+						timelineFilter,
+						timelineKinds
+					)
+				},
 				(item) => {
-					const { title, text } = describeItem(item, translate);
+					const { title, text } = describeItem(
+						item,
+						translate,
+						i18n.language
+					);
 					return `${title} ${visiblePreview(item.id)?.text || text}`;
 				}
 			),
 		[
-			notificationFeed,
+			visibleFeed,
 			activeFamily,
+			timelineFilter,
+			timelineKinds,
 			searchQuery,
 			unreadOnly,
 			translate,
+			i18n.language,
 			visiblePreview
 		]
 	);
@@ -668,14 +801,31 @@ export const NotificationsCenter = () => {
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
-				? describeItem(selectedNotification, translate)
+				? describeItem(selectedNotification, translate, i18n.language)
 				: null,
-		[selectedNotification, translate]
+		[selectedNotification, translate, i18n.language]
 	);
 	const selectedSessionId = useMemo(
 		() => resolveSessionId(selectedNotification),
 		[selectedNotification]
 	);
+	const {
+		linksToStatusPage: selectedLinksToStatusPage,
+		url: selectedStatusPageUrl
+	} = useMemo(
+		() => resolveStatusPageAction(selectedNotification),
+		[selectedNotification]
+	);
+	const selectedOpenLabel = selectedLinksToStatusPage
+		? translate('notifications.center.openStatusPage')
+		: selectedNotification?.actionLabel ||
+			translate(
+				selectedNotification?.eventType === 'group_chat.opened'
+					? 'notifications.center.join'
+					: 'notifications.center.open'
+			);
+	const canOpenSelected =
+		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
 	const selectedThreadRootId = useMemo(
 		() => resolveThreadRootId(selectedNotification),
 		[selectedNotification]
@@ -737,6 +887,13 @@ export const NotificationsCenter = () => {
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
+		const statusPage = resolveStatusPageAction(item);
+		if (untilL && statusPage.linksToStatusPage) {
+			if (statusPage.url) {
+				openStatusPage(statusPage.url);
+			}
+			return;
+		}
 		if (untilL) {
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
@@ -751,6 +908,13 @@ export const NotificationsCenter = () => {
 
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
+		if (selectedLinksToStatusPage) {
+			markNotificationAsRead(selectedNotification.id);
+			if (selectedStatusPageUrl) {
+				openStatusPage(selectedStatusPageUrl);
+			}
+			return;
+		}
 		const nextUnreadId = getNextNotificationId(
 			filteredFeed,
 			selectedNotification.id,
@@ -824,41 +988,6 @@ export const NotificationsCenter = () => {
 		: null;
 	const showEmbeddedChat = Boolean(embeddedChatOpen && canShowChatPreview);
 
-	// Same filter-chip contract as the conversation page toolbar: inactive
-	// chips are icon-only pills, the active chip expands with its label.
-	// Chips are toggles (aria-pressed): clicking the active chip clears the
-	// filter — no dedicated "All" chip, no selection means everything.
-	const renderFamilyChip = (
-		family: EventFamily,
-		Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>,
-		label: string
-	) => {
-		const isActive = activeFamily === family;
-		return (
-			<button
-				key={family}
-				type="button"
-				aria-pressed={isActive}
-				title={label}
-				aria-label={label}
-				className={`sessionsListToolbar__chip ${
-					isActive
-						? 'sessionsListToolbar__chip--active'
-						: 'sessionsListToolbar__chip--iconOnly'
-				}`}
-				onClick={() => setActiveFamily(isActive ? null : family)}
-			>
-				<Icon className="sessionsListToolbar__chipIconSvg sessionsListToolbar__chipIconSvg--asset" />
-				<span
-					className="sessionsListToolbar__chipLabel"
-					aria-hidden={!isActive}
-				>
-					{label}
-				</span>
-			</button>
-		);
-	};
-
 	if (notificationFeed.length === 0) {
 		return (
 			<div className="notificationsCenter notificationsCenter--empty">
@@ -882,89 +1011,127 @@ export const NotificationsCenter = () => {
 			>
 				<div className="sessionsListToolbar notificationsCenter__toolbar">
 					<ListSearchField
+						leading={
+							<DisplayFilterButton
+								label={displayFilterLabels.buttonLabel}
+								customised={displayFilterCustomised}
+								customisedLabel={
+									displayFilterLabels.buttonCustomisedLabel
+								}
+								open={displayFilterOpen}
+								controlsId={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
+								onClick={() => setDisplayFilterOpen(true)}
+								compact
+								data-cy="timeline-display-filter"
+							/>
+						}
 						value={searchQuery}
 						onChange={setSearchQuery}
 						placeholder={translate(
-							'notifications.center.searchPlaceholder',
-							'Search activity…'
+							'notifications.center.searchPlaceholder'
 						)}
 						clearLabel={translate(
-							'sessionList.toolbar.search.clear',
-							'Clear search'
+							'sessionList.toolbar.search.clear'
 						)}
 						menuLabel={translate(
-							'sessionList.toolbar.search.toggle',
-							'Open or close search results'
+							'sessionList.toolbar.search.toggle'
 						)}
 					/>
 					{notificationFeed.length > 0 && (
-						<div className="sessionsListToolbar__chipsScroll">
-							<div
-								className="sessionsListToolbar__chipsRow"
-								role="group"
+						<FilterChipRow
+							label={translate('notifications.center.title')}
+						>
+							{pillKinds.map((kind) => (
+								<FilterChip
+									key={kind.id}
+									label={kind.label}
+									icon={kind.icon!}
+									assetIcon
+									view={chipPresentation.view}
+									count={kind.unreadCount}
+									active={activeFamily === kind.id}
+									onClick={() =>
+										setActiveFamily((current) =>
+											current === kind.id
+												? null
+												: (kind.id as TimelineKindId)
+										)
+									}
+									data-cy={`timeline-chip-${kind.id}`}
+								/>
+							))}
+							<button
+								type="button"
+								aria-pressed={unreadOnly}
+								className={`sessionsListToolbar__chip ${
+									unreadOnly
+										? 'sessionsListToolbar__chip--active'
+										: 'sessionsListToolbar__chip--iconOnly'
+								}`}
+								onClick={() => setUnreadOnly((value) => !value)}
+								title={translate(
+									'notifications.center.unreadFilter'
+								)}
 								aria-label={translate(
-									'notifications.center.title',
-									'Notifications'
+									'notifications.center.unreadFilter'
 								)}
 							>
-								{familiesInFeed.map((family) =>
-									renderFamilyChip(
-										family,
-										FAMILY_ICONS[family] ||
-											SystemFamilyIcon,
-										translate(familyLabelKey(family))
-									)
-								)}
-								<button
-									type="button"
-									aria-pressed={unreadOnly}
-									className={`sessionsListToolbar__chip ${
-										unreadOnly
-											? 'sessionsListToolbar__chip--active'
-											: 'sessionsListToolbar__chip--iconOnly'
-									}`}
-									onClick={() =>
-										setUnreadOnly((value) => !value)
-									}
-									title={translate(
-										'notifications.center.unreadFilter',
-										'Unread'
-									)}
-									aria-label={translate(
-										'notifications.center.unreadFilter',
-										'Unread'
-									)}
+								<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
+								<span
+									className="sessionsListToolbar__chipLabel"
+									aria-hidden={!unreadOnly}
 								>
-									<MarkChatUnreadOutlinedIcon className="sessionsListToolbar__chipIconSvg" />
-									<span
-										className="sessionsListToolbar__chipLabel"
-										aria-hidden={!unreadOnly}
-									>
-										{translate(
-											'notifications.center.unreadFilter',
-											'Unread'
-										)}
-									</span>
-								</button>
-								<MarkAllReadButton
-									hasUnread={hasUnreadActivity}
-									onClick={markAllNotificationsAsRead}
-									label={translate(
-										'notifications.center.markAllRead',
-										'Mark all as read'
+									{translate(
+										'notifications.center.unreadFilter'
 									)}
-								/>
-							</div>
-						</div>
+								</span>
+							</button>
+							<MarkAllReadButton
+								hasUnread={hasUnreadActivity}
+								onClick={markAllNotificationsAsRead}
+								label={translate(
+									'notifications.center.markAllRead'
+								)}
+							/>
+						</FilterChipRow>
 					)}
 				</div>
+				<DisplayFilterDialog
+					icon={
+						<NavActivityIcon className="displayFilterDialog__heroIcon" />
+					}
+					id={TIMELINE_DISPLAY_FILTER_DIALOG_ID}
+					open={displayFilterOpen}
+					fullScreen={untilL}
+					onClose={() => setDisplayFilterOpen(false)}
+					kinds={timelineKinds}
+					value={timelineFilter}
+					canReset={timelineOverride !== null}
+					readOnly={displayFilterReadOnly || !canEditDisplayFilter}
+					onChange={(next) => {
+						setTimelineOverride(next);
+						setActiveFamily(
+							(current) =>
+								reconcileActiveKind(
+									next,
+									current
+								) as TimelineFamilyFilter
+						);
+					}}
+					onReset={() => {
+						resetTimelineOverride();
+						setActiveFamily(null);
+					}}
+					onOpenProfile={() => {
+						setDisplayFilterOpen(false);
+						navigate(NOTIFICATION_SETTINGS_PATH);
+					}}
+					labels={displayFilterLabels.dialogLabels}
+				/>
 				<div className="notificationsCenter__list" ref={listScrollRef}>
 					{filteredFeed.length === 0 ? (
 						<div className="notificationsCenter__empty">
-							{translate(
-								'notifications.center.noResults',
-								'No activity matches your filters.'
-							)}
+							{translate('notifications.center.noResults')}
 						</div>
 					) : (
 						filteredFeed.map((item, index) => {
@@ -982,7 +1149,8 @@ export const NotificationsCenter = () => {
 								activeIndex !== -1 && index === activeIndex + 1;
 							const { descriptor, title, text } = describeItem(
 								item,
-								translate
+								translate,
+								i18n.language
 							);
 							const hydratedPreview = visiblePreview(item.id);
 							const visibleText = hydratedPreview?.text || text;
@@ -1074,8 +1242,7 @@ export const NotificationsCenter = () => {
 												type="button"
 												className="notificationsCenter__cardMenuButton"
 												aria-label={translate(
-													'notifications.center.cardMenu',
-													'Notification actions'
+													'notifications.center.cardMenu'
 												)}
 												onClick={(event) =>
 													setCardMenuAnchor(
@@ -1092,16 +1259,17 @@ export const NotificationsCenter = () => {
 									    origin (Figma arrow affordance) — it no longer
 									    toggles the preview, which is open by default
 									    for chat events. */}
-									{isActive && (
+									{isActive && canOpenSelected && (
 										<button
 											type="button"
 											className="notificationsCenter__expander"
 											aria-label={
-												item.actionLabel ||
-												translate(
-													'notifications.center.open',
-													'View Conversation'
-												)
+												selectedLinksToStatusPage
+													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
+													: item.actionLabel ||
+														translate(
+															'notifications.center.open'
+														)
 											}
 											onClick={handleOpenAction}
 										>
@@ -1118,8 +1286,7 @@ export const NotificationsCenter = () => {
 								<>
 									<span role="alert">
 										{translate(
-											'notifications.center.olderError',
-											'Could not load older activity.'
+											'notifications.center.olderError'
 										)}
 									</span>
 									<button
@@ -1130,8 +1297,7 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'notifications.center.retryOlder',
-											'Try again'
+											'notifications.center.retryOlder'
 										)}
 									</button>
 								</>
@@ -1146,17 +1312,13 @@ export const NotificationsCenter = () => {
 									{translate(
 										isLoadingOlderNotifications
 											? 'notifications.center.loadingOlder'
-											: 'notifications.center.loadOlder',
-										isLoadingOlderNotifications
-											? 'Loading older activity…'
-											: 'Load older activity'
+											: 'notifications.center.loadOlder'
 									)}
 								</button>
 							) : (
 								<span role="status">
 									{translate(
-										'notifications.center.endOfHistory',
-										'End of activity history'
+										'notifications.center.endOfHistory'
 									)}
 								</span>
 							)}
@@ -1173,24 +1335,16 @@ export const NotificationsCenter = () => {
 					}}
 					transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 				>
-					<MenuItem
-						onClick={() => {
-							setCardMenuAnchor(null);
-							handleOpenAction();
-						}}
-					>
-						{selectedNotification?.actionLabel ||
-							translate(
-								selectedNotification?.eventType ===
-									'group_chat.opened'
-									? 'notifications.center.join'
-									: 'notifications.center.open',
-								selectedNotification?.eventType ===
-									'group_chat.opened'
-									? 'Join'
-									: 'Open chat'
-							)}
-					</MenuItem>
+					{canOpenSelected && (
+						<MenuItem
+							onClick={() => {
+								setCardMenuAnchor(null);
+								handleOpenAction();
+							}}
+						>
+							{selectedOpenLabel}
+						</MenuItem>
+					)}
 					{canShowChatPreview && (
 						<MenuItem
 							onClick={() => {
@@ -1201,10 +1355,7 @@ export const NotificationsCenter = () => {
 							{translate(
 								showEmbeddedChat
 									? 'notifications.center.showDetails'
-									: 'notifications.center.showPreview',
-								showEmbeddedChat
-									? 'Show details'
-									: 'Show conversation preview'
+									: 'notifications.center.showPreview'
 							)}
 						</MenuItem>
 					)}
@@ -1216,10 +1367,7 @@ export const NotificationsCenter = () => {
 							setCardMenuAnchor(null);
 						}}
 					>
-						{translate(
-							'notifications.center.markRead',
-							'Mark as read'
-						)}
+						{translate('notifications.center.markRead')}
 					</MenuItem>
 					<MenuItem
 						onClick={() => {
@@ -1227,10 +1375,7 @@ export const NotificationsCenter = () => {
 							setCardMenuAnchor(null);
 						}}
 					>
-						{translate(
-							'notifications.center.markAllRead',
-							'Mark all as read'
-						)}
+						{translate('notifications.center.markAllRead')}
 					</MenuItem>
 				</Menu>
 				{fromL && (
@@ -1253,10 +1398,7 @@ export const NotificationsCenter = () => {
 				>
 					{!selectedNotification ? (
 						<div className="notificationsCenter__emptyDetail">
-							{translate(
-								'notifications.center.emptyDetail',
-								'Select a notification to see the details.'
-							)}
+							{translate('notifications.center.emptyDetail')}
 						</div>
 					) : showEmbeddedChat ? (
 						<ConversationPreview
@@ -1287,8 +1429,6 @@ export const NotificationsCenter = () => {
 									? translate(
 											'notifications.center.waitingSince',
 											{
-												defaultValue:
-													'Waiting since {{time}} ({{date}})',
 												...formatClockParts(
 													selectedNotification.createdAt,
 													i18n.language
@@ -1317,8 +1457,7 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'caseHandover.consent.approve',
-											'Approve'
+											'caseHandover.consent.approve'
 										)}
 									</button>
 									<button
@@ -1335,8 +1474,7 @@ export const NotificationsCenter = () => {
 										}
 									>
 										{translate(
-											'caseHandover.consent.decline',
-											'Decline'
+											'caseHandover.consent.decline'
 										)}
 									</button>
 									{caseHandoverConsentError && (
@@ -1350,34 +1488,46 @@ export const NotificationsCenter = () => {
 								</div>
 							)}
 							<div className="notificationsCenter__detailActions">
-								<button
-									type="button"
-									className="notificationsCenter__openButton"
-									onClick={handleOpenAction}
-								>
-									<OpenInFullIcon />
-									{selectedNotification.actionLabel ||
-										translate(
-											selectedNotification.eventType ===
-												'group_chat.opened'
-												? 'notifications.center.join'
-												: 'notifications.center.open',
-											selectedNotification.eventType ===
-												'group_chat.opened'
-												? 'Join'
-												: 'Open chat'
-										)}
-								</button>
+								{selectedLinksToStatusPage ? (
+									selectedStatusPageUrl && (
+										<a
+											className="notificationsCenter__openButton"
+											href={selectedStatusPageUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											onClick={() =>
+												markNotificationAsRead(
+													selectedNotification.id
+												)
+											}
+										>
+											<OpenInNewIcon aria-hidden="true" />
+											{selectedOpenLabel}
+											<span className="sr-only">
+												{' '}
+												{translate(
+													'notifications.center.opensInNewTab'
+												)}
+											</span>
+										</a>
+									)
+								) : (
+									<button
+										type="button"
+										className="notificationsCenter__openButton"
+										onClick={handleOpenAction}
+									>
+										<OpenInFullIcon />
+										{selectedOpenLabel}
+									</button>
+								)}
 								<button
 									type="button"
 									className="notificationsCenter__nextButton"
 									onClick={handleNextNotification}
 									disabled={!nextUnreadId}
 								>
-									{translate(
-										'notifications.center.next',
-										'Next notification'
-									)}
+									{translate('notifications.center.next')}
 								</button>
 							</div>
 						</div>

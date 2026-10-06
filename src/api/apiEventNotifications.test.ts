@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiClearEventNotifications,
 	apiGetEventNotifications,
+	apiGetEventNotificationsUnreadCount,
 	apiMarkAllEventNotificationsRead,
 	apiMarkEventNotificationRead
 } from './apiEventNotifications';
@@ -40,7 +41,24 @@ describe('apiEventNotifications', () => {
 
 		expect(fetchData).toHaveBeenCalledWith({
 			url: 'https://api.oriso-dev.site/service/users/event-notifications?page=2&perPage=25',
-			method: 'GET'
+			method: 'GET',
+			responseHandling: []
+		});
+	});
+
+	it('keeps hidden-type exclusions on feed and count polls with local error handling', async () => {
+		vi.mocked(fetchData).mockResolvedValue({ items: [], unreadCount: 0 });
+		await apiGetEventNotifications(0, 50, ['request.new', 'message.new']);
+		await apiGetEventNotificationsUnreadCount(['request.new']);
+		expect(fetchData).toHaveBeenNthCalledWith(1, {
+			url: 'https://api.oriso-dev.site/service/users/event-notifications?page=0&perPage=50&excludeEventTypes=request.new%2Cmessage.new',
+			method: 'GET',
+			responseHandling: []
+		});
+		expect(fetchData).toHaveBeenNthCalledWith(2, {
+			url: 'https://api.oriso-dev.site/service/users/event-notifications/unread-count?page=0&excludeEventTypes=request.new',
+			method: 'GET',
+			responseHandling: []
 		});
 	});
 

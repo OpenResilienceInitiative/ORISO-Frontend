@@ -153,6 +153,25 @@
 		position: relative;
 	}
 
+	// Frank (14.09.): while messages wait below the fold the arrow itself
+	// lights up in the primary red — it is the only signal a reader who is
+	// writing gets, so it has to be visible without being hunted for. The
+	// ring is the second, non-colour signal (house rule).
+	// ORISO's `primary-container` is a full red (#cc1e1c) — a red glyph on it
+	// disappears. `primary-fixed` (#ffdad5) is the light tint of the same
+	// role, so the arrow stays the loud thing on the strip.
+	&__button--scrollToNewest--unread {
+		color: var(--m3-primary, #a5000a);
+		background: var(--m3-primary-fixed, #ffdad5);
+		box-shadow: inset 0 0 0 1px var(--m3-primary, #a5000a);
+
+		&:hover,
+		&:focus-visible {
+			color: var(--m3-on-primary, #fff);
+			background: var(--m3-primary, #a5000a);
+		}
+	}
+
 	&__badge {
 		position: absolute;
 		top: -3px;
@@ -165,11 +184,12 @@
 		padding: 0 4px;
 		box-sizing: border-box;
 		border-radius: 999px;
-		background: var(
-			--oriso-unread-indicator-color,
-			var(--m3-error, #cc0000)
-		);
-		color: var(--m3-on-error, #fff);
+
+		// The badge follows the arrow into the primary role (Frank, 14.09.)
+		// so the composer speaks with one colour; the channel card, the FAB
+		// and the panel header keep the unread-indicator role.
+		background: var(--m3-primary, #a5000a);
+		color: var(--m3-on-primary, #fff);
 		font-size: 10px;
 		font-weight: 500;
 		line-height: 1;

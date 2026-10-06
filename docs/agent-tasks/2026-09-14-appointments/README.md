@@ -34,8 +34,12 @@ npm run build
 
 Booking implementation is explicitly deferred. Backend appointment event/update contract remains separate. Browser and cross-timezone acceptance remain open.
 
-Keep this PR draft until integration and required checks are resolved. No merge or deployment is part of this handoff. Shazia should review the source, complete the explicitly missing behavior, rerun local tests, then decide when to request final review. Local tests, independent review, deployment, browser proof and mail receipt are separate evidence states.
+The appointment renderer source can enter review after current checks pass. Backend booking and real browser acceptance remain open. No merge or deployment is part of this handoff. Shazia should review this partial slice and complete the missing integration acceptance. Local tests, independent review, deployment, browser proof and mail receipt are separate evidence states.
 
 ## Evidence
 
 Fresh per-branch verification is recorded in `VERIFICATION.md`. Earlier retained-source test counts are not presented as fresh results. Dependency cache was copied locally only after verifying package-lock SHA-256 equality; the install command above is the portable setup.
+
+## Fresh Dev reintegration — 2026-10-06
+
+Merged Dev `9ec1b655c6973d26d7fbc0bc5a319fe26793a9c6`. Appointment payloads must identify an ISO instant using UTC Z or an explicit offset; timezone-free dates are rejected without guessing the sender’s timezone. Current frontend alias fixtures use Z/toISOString; the legacy apiAppointmentServiceSet helper has no callers. The backend appointment schema documents ISO8601UTC. Valid Z and offset inputs retain their exact calendar payload and render correctly across UTC/Berlin, summer/winter and DST transitions. Backend writer and real deployed acceptance remain separate.

@@ -1,10 +1,11 @@
 /**
  * English. Used for tenants that offer counselling in English and as the
- * fallback when a recipient's language is unknown.
+ * English variant. An unknown recipient language is a configuration error.
  */
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} is a service provided by {{orgName}}.',
@@ -32,8 +33,15 @@ const securityFooter = {
 		'This email is part of signing in and cannot be unsubscribed from. Please do not reply to it.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} is a service provided by {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'This email is part of the contractual relationship and cannot be unsubscribed from. Please do not reply to it.'
 };
@@ -51,9 +59,10 @@ const accountAssurance =
 	'We will never ask for your password by email. We always tell you when your account changes.';
 
 const legalAssurance =
-	'This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.';
+	'This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.';
 
 export const en: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('en', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'You have a new message',
 		preheader: 'A new message is waiting for you in your counselling.',
@@ -66,6 +75,19 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'You do not have to reply straight away. The message stays in your inbox as long as you need it.',
 		assurance,
+		footer
+	},
+
+	'neue-nachricht-beratung': {
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
+		headline: 'A new message for you',
+		paragraphs: [
+			'There is a new message in one of your counselling cases.',
+			'Sign in to read the message in the secure counselling area.'
+		],
+		cta: { label: 'Open message', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
 		footer
 	},
 
@@ -97,7 +119,11 @@ export const en: Record<EmailId, EmailContent> = {
 		footnote:
 			'If you did not ask for this, simply ignore this email. Your password stays unchanged.',
 		assurance,
-		footer
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email is for resetting your password and cannot be unsubscribed from. Please do not reply to it.'
+		}
 	},
 
 	'termin': {
@@ -127,11 +153,10 @@ export const en: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'How to reach your counselling service',
-		preheader: 'Direct line, phone hours and booking at a glance.',
+		preheader: 'Your counselling service’s contact details at a glance.',
 		headline: 'How to reach your counselling service',
 		paragraphs: [
-			'Besides the protected chat you can also reach your counselling service by phone or book an appointment directly.',
-			'Your account stays anonymous – you decide what you share.'
+			'You requested your counselling service’s contact details. The available ways to get in touch are below.'
 		],
 		panel: [
 			{ label: 'Service', value: '{{consultantName}}' },
@@ -139,13 +164,7 @@ export const en: Record<EmailId, EmailContent> = {
 			{ label: 'Phone hours', value: '{{consultantHours}}' },
 			{ label: 'Email', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Book an appointment', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Go to the protected chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Outside phone hours, writing in the chat works best. We reply within 2 working days.',
+		cta: { label: 'Go to the protected chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -240,56 +259,38 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Handover requested',
-		preheader: 'A counselling case is to be handed over to you.',
-		headline: 'A counselling case is to be handed over to you',
+		subject: 'New notification',
+		preheader: 'Please sign in.',
+		headline: 'A request about your counselling',
 		paragraphs: [
-			'{{fromConsultantName}} has asked to hand an ongoing counselling case over to you.',
-			'Please check in the counselling area whether you can take it on.'
+			'A counsellor is asking for your consent to a change in your counselling.',
+			'Sign in to review the request in the secure area.'
 		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Requested by', value: '{{fromConsultantName}}' },
-			{ label: 'Requested on', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Review handover', href: '{{requestUrl}}' },
-		footnote:
-			'Until you agree, the case stays with the counsellor who has it now.',
-		assurance: staffAssurance,
+		cta: { label: 'Review request', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Handover confirmed',
-		preheader: 'Responsibility has changed.',
+		subject: 'The handover is confirmed',
+		preheader: 'The handover is confirmed',
 		headline: 'The handover is confirmed',
 		paragraphs: [
-			'The counselling case has been taken on. {{toConsultantName}} is now responsible.',
-			'The person seeking advice has been informed in the application.'
+			'You are now responsible for this counselling case.',
+			'Open the case in the secure counselling area.'
 		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Now with', value: '{{toConsultantName}}' },
-			{ label: 'Handed over on', value: '{{handoverAt}}' }
-		],
-		cta: { label: 'Open counselling', href: '{{requestUrl}}' },
-		footnote:
-			'Your access to the previous conversation ends with the handover.',
+		cta: { label: 'Open counselling case', href: '{{requestUrl}}' },
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'New reply in the professional exchange',
-		preheader: 'A reply is waiting for you in the professional exchange.',
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
 		headline: 'New reply in the professional exchange',
 		paragraphs: [
 			'There is a new reply in the protected professional exchange about one of your counselling cases.',
 			'You will see the content encrypted, after signing in.'
-		],
-		panel: [
-			{ label: 'Case', value: '{{caseReference}}' },
-			{ label: 'Received', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Read reply', href: '{{messageUrl}}' },
 		footnote:
@@ -299,13 +300,29 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'New message on {{platformName}}',
+		preheader: 'Please sign in.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Go to {{platformName}}', href: '{{loginUrl}}' },
 		assurance,
 		footer
+	},
+
+	'konto-einrichten': {
+		subject: 'Set up access to {{platformName}}',
+		preheader: 'Choose your own password.',
+		headline: 'Your account already exists',
+		paragraphs: [
+			'An account has already been created for you on {{platformName}}.',
+			'Use this link to choose your own password. Then sign in as usual; the required security checks still apply.'
+		],
+		panel: [{ label: 'Link valid until', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Choose password', href: '{{setupUrl}}' },
+		footnote:
+			'If you were not expecting this setup, do not use the link and contact your administrator.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
 	},
 
 	'anmeldelink': {
@@ -375,23 +392,49 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Data processing agreement ready for signature',
-		preheader: 'The agreement for {{tenantName}} is ready.',
-		headline: 'The agreement is ready for signature',
+		subject: 'Contract documents for {{tenantName}}',
+		preheader: 'The contract documents for {{tenantName}} are ready.',
+		headline: 'The contract documents are ready for confirmation',
 		paragraphs: [
-			'A data processing agreement has been prepared for {{tenantName}}.',
-			'Please review the agreement and sign it digitally.'
+			'Contract documents have been prepared for {{tenantName}}.',
+			'Please review the documents and confirm them digitally.'
 		],
 		panel: [
 			{ label: 'Organisation', value: '{{tenantName}}' },
 			{ label: 'Provided on', value: '{{dpaProvidedAt}}' },
-			{ label: 'To be signed by', value: '{{dpaExpiresAt}}' }
+			{ label: 'To be confirmed by', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Open agreement', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Open contract',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'If the button does not work, copy this link into your browser:'
+		},
 		footnote:
-			'Counselling stays blocked for this organisation until the agreement is signed.',
+			'Without confirmation of the contract documents, counselling stays blocked for this organisation.',
 		assurance: legalAssurance,
 		footer: legalFooter
+	},
+
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		// Both depend on whether the mail has an action, which only the sender
+		// knows: with one, UserService fills the "never pass this link on"
+		// line and the invitation note; without one (a plain notice such as
+		// "contract signed") the line is dropped and the note is neutral.
+		assuranceSlot: '{{assuranceBlock}}',
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {
@@ -433,6 +476,7 @@ export const en: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Your email address has been changed',
 		preheader: 'The change is active from now on.',
 		headline: 'Your email address has been changed',
@@ -442,6 +486,51 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Go to profile', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'This email reports a change to your email address and cannot be unsubscribed from. Please do not reply to it.'
+		}
+	},
+	'anruf-erinnerung': {
+		subject: 'A session is starting soon',
+		preheader: 'Sign in to see the details.',
+		headline: 'Your session is starting soon',
+		paragraphs: [
+			'A scheduled audio or video session is starting soon. You can see all further details securely after signing in.'
+		],
+		cta: { label: 'Open session', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'You have been invited to a session',
+		preheader: 'The invitation is waiting securely in your account.',
+		headline: 'New invitation',
+		paragraphs: [
+			'You have been invited to an audio or video session. You can see the details securely after signing in.'
+		],
+		cta: { label: 'View invitation', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'You missed a call',
+		preheader: 'Sign in to open the protected history.',
+		headline: 'Missed call',
+		paragraphs: [
+			'An audio or video call took place while you were away. You can see further details securely after signing in.'
+		],
+		cta: { label: 'Open protected history', href: '{{callUrl}}' },
+		footnote:
+			'This email intentionally contains no topic, names or participant details.',
+		assurance,
+		footer
 	}
 };

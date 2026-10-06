@@ -28,3 +28,9 @@ a2c513345185f6925523a6fd8778244f10894b068a2253ab1b3606b30b7a7642  build
 Run the commands from README on your machine. Fingerprints identify this run;
 they do not substitute for rerunning the tests or for the deferred integrated
 phone/desktop and two-account browser acceptance.
+
+## Fresh Dev checks — 2026-10-06
+
+TargetDev `9ec1b655c6973d26d7fbc0bc5a319fe26793a9c6`, Node22.12.0. Three regression cases first fail for ambiguous timezone-free/date-only/locale-specific input. Fresh focused UTC suites:3files53tests pass with6 Berlin-specific skips; Berlin suites:3files57tests pass with2 UTC-specific skips. These cover Z and explicit+02:00 calendar payloads, DST/midnight and30 ICS tests. September full-suite counts above are historical. Current-head CI, backend and real browser acceptance remain separate gates.
+
+Fresh full unit suite:607 suites pass,1 timezone-only suite skipped;10979 tests pass,8 timezone-specific tests skipped in the default environment. All8 skipped cases are exercised by the explicit UTC and Berlin runs above. Fresh fullESLint+TypeScript, style, productionbuild andpostbuild hostvalidation pass. No backend/browser acceptance is claimed.
