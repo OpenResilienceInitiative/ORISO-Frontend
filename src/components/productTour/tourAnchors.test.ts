@@ -59,6 +59,11 @@ const anchorContract: Array<{
 		expected: /tourTarget="enquiry-accept-button"/
 	},
 	{
+		anchor: 'enquiry-team-button',
+		sourceFile: 'session/SessionItemComponent.tsx',
+		expected: /tourTarget="enquiry-team-button"/
+	},
+	{
 		anchor: 'team-discussion-panel',
 		sourceFile: 'session/SessionItemComponent.tsx'
 	},
