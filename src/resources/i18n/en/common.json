@@ -5570,6 +5570,30 @@
 			"less": "Show less"
 		}
 	},
+	"practice": {
+		"banner": {
+			"title": "Practice mode",
+			"progress": "Step {{current}} of {{total}}",
+			"note": "Practice case, no real data",
+			"end": "End practice",
+			"restart": "Restart",
+			"moveHandle": "Move banner (arrow keys)"
+		},
+		"cards": {
+			"title": "Practice area",
+			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",
+			"empty": "There are currently no practice flows available for you.",
+			"badge": "Practice",
+			"phoneHint": "Please practise on a computer.",
+			"action": {
+				"start": "Start practice",
+				"restart": "Practise again"
+			}
+		},
+		"error": {
+			"start": "The practice could not be started. Please try again."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {
