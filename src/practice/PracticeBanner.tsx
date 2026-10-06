@@ -13,7 +13,7 @@ import type { TourDefinition } from '../components/productTour/types';
 import { usePractice } from './PracticeProvider';
 import { nextPracticeLaunchRequest } from './practiceLaunch';
 import { runPracticeRestartHandlers } from './practiceRestart';
-import { practiceTours } from './practiceToursSource';
+import { practiceTours } from './practiceTours';
 import { usePracticeTourProgress } from './usePracticeTourProgress';
 
 /**
@@ -266,40 +266,19 @@ export const PracticeBanner = ({
 				<DragIndicatorRoundedIcon sx={{ fontSize: 20 }} />
 			</ButtonBase>
 			<Box sx={{ minWidth: 0, py: '6px' }}>
-				<Box
-					sx={{
-						display: 'flex',
-						alignItems: 'center',
-						gap: 1,
-						fontSize: 14,
-						lineHeight: '20px',
-						letterSpacing: '0.25px'
-					}}
-				>
+				{tour && (
 					<Box
-						component="span"
 						sx={{
-							flexShrink: 0,
-							px: 0.75,
-							borderRadius: '4px',
-							fontSize: 12,
+							fontSize: 14,
 							fontWeight: 500,
-							lineHeight: '18px',
-							backgroundColor: m3SnackbarColors.action,
-							color: m3SnackbarColors.surface
+							lineHeight: '20px',
+							letterSpacing: '0.25px',
+							overflowWrap: 'anywhere'
 						}}
 					>
-						{translate('practice.banner.badge')}
+						{translate(tour.titleKey)}
 					</Box>
-					{tour && (
-						<Box
-							component="span"
-							sx={{ fontWeight: 500, overflowWrap: 'anywhere' }}
-						>
-							{translate(tour.titleKey)}
-						</Box>
-					)}
-				</Box>
+				)}
 				<Box
 					sx={{
 						fontSize: 12,

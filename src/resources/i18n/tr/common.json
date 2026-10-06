@@ -5656,7 +5656,6 @@
 	"practice": {
 		"banner": {
 			"title": "Alıştırma modu",
-			"badge": "Alıştırma",
 			"progress": "Adım {{current}} / {{total}}",
 			"note": "Alıştırma vakası, gerçek veri yok",
 			"end": "Alıştırmayı bitir",

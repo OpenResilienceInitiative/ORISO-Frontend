@@ -5656,7 +5656,6 @@
 	"practice": {
 		"banner": {
 			"title": "Mode exercice",
-			"badge": "Exercice",
 			"progress": "Étape {{current}} sur {{total}}",
 			"note": "Cas d'exercice, aucune donnée réelle",
 			"end": "Terminer l'exercice",

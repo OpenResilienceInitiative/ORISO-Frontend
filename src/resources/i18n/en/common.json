@@ -5573,7 +5573,6 @@
 	"practice": {
 		"banner": {
 			"title": "Practice mode",
-			"badge": "Practice",
 			"progress": "Step {{current}} of {{total}}",
 			"note": "Practice case, no real data",
 			"end": "End practice",

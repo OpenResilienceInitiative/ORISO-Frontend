@@ -5656,7 +5656,6 @@
 	"practice": {
 		"banner": {
 			"title": "ልምምድ",
-			"badge": "ልምምድ",
 			"progress": "ደረጃ {{current}} ካብ {{total}}",
 			"note": "ናይ ልምምድ ጉዳይ፣ ሓቀኛ ዳታ የለን",
 			"end": "ልምምድ ኣብቅዕ",

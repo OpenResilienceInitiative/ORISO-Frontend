@@ -17,18 +17,11 @@ import {
 } from '../globalState';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import { versionedTourProgressRepository } from '../components/productTour/versionedTourProgressRepository';
-import type { TourDefinition } from '../components/productTour/types';
 import { PracticeOverviewSection } from './PracticeOverviewSection';
 
 vi.mock('react-i18next', async () => {
 	const { makeTranslate } = await import('./practiceTestTranslate');
-	const t = makeTranslate({
-		'tour.practice.accept.title': 'Anfrage annehmen',
-		'tour.practice.accept.summary': 'Nehmen Sie eine Übungsanfrage an.',
-		'tour.practice.supervision.title': 'Supervision',
-		'tour.practice.supervision.summary':
-			'Ziehen Sie eine Supervisorin hinzu.'
-	});
+	const t = makeTranslate();
 	return { useTranslation: () => ({ t, i18n: { language: 'de' } }) };
 });
 
@@ -46,20 +39,6 @@ const phone = vi.hoisted(() => ({ value: false }));
 vi.mock('../hooks/useResponsive', () => ({
 	useResponsive: () => ({ untilM: phone.value })
 }));
-
-const tour = (id: string, name: string): TourDefinition => ({
-	id,
-	version: 1,
-	surface: 'frontend',
-	audiences: ['consultant'],
-	titleKey: `tour.practice.${name}.title`,
-	summaryKey: `tour.practice.${name}.summary`,
-	steps: []
-});
-const tours = [
-	tour('consultant-practice-accept', 'accept'),
-	tour('consultant-practice-supervision', 'supervision')
-];
 
 interface Scenario {
 	enableWalkthrough?: boolean;
@@ -94,7 +73,7 @@ const tree = ({
 					tenant ? ({ tenant: { settings: tenant } } as never) : null
 				}
 			>
-				<PracticeOverviewSection tours={tours} />
+				<PracticeOverviewSection />
 			</TenantContext.Provider>
 		</UserDataContext.Provider>
 	</AppConfigContext.Provider>
@@ -122,7 +101,7 @@ describe('PracticeOverviewSection (T10)', () => {
 			within(
 				(
 					await screen.findByRole('heading', {
-						name: 'Anfrage annehmen'
+						name: 'Übung: Anfrage annehmen'
 					})
 				).closest('li') as HTMLElement
 			).getByRole('button', { name: 'Übung starten' })
@@ -149,7 +128,9 @@ describe('PracticeOverviewSection (T10)', () => {
 		const { store } = renderSection();
 
 		const accept = (
-			await screen.findByRole('heading', { name: 'Anfrage annehmen' })
+			await screen.findByRole('heading', {
+				name: 'Übung: Anfrage annehmen'
+			})
 		).closest('li') as HTMLElement;
 		expect(within(accept).getByText('Abgeschlossen')).toBeTruthy();
 		fireEvent.click(
@@ -193,7 +174,9 @@ describe('PracticeOverviewSection (T10)', () => {
 			renderSection({ tenant: {} });
 
 			expect(
-				await screen.findByRole('heading', { name: 'Supervision' })
+				await screen.findByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
 			).toBeTruthy();
 		});
 
@@ -201,7 +184,9 @@ describe('PracticeOverviewSection (T10)', () => {
 			renderSection({ tenant: null });
 
 			expect(
-				await screen.findByRole('heading', { name: 'Supervision' })
+				await screen.findByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
 			).toBeTruthy();
 		});
 
@@ -209,28 +194,36 @@ describe('PracticeOverviewSection (T10)', () => {
 			renderSection({ tenant: { featureSupervisionEnabled: false } });
 
 			expect(
-				await screen.findByRole('heading', { name: 'Anfrage annehmen' })
+				await screen.findByRole('heading', {
+					name: 'Übung: Anfrage annehmen'
+				})
 			).toBeTruthy();
 			expect(
-				screen.queryByRole('heading', { name: 'Supervision' })
+				screen.queryByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
 			).toBeNull();
-			expect(
-				screen.queryByText('Ziehen Sie eine Supervisorin hinzu.')
-			).toBeNull();
+			expect(screen.queryByText(/Supervisor:in hinzuzufügen/)).toBeNull();
 		});
 
 		it('follows the tenant switch while the page is open', async () => {
 			const { rerenderWith } = renderSection({ tenant: {} });
-			await screen.findByRole('heading', { name: 'Supervision' });
+			await screen.findByRole('heading', {
+				name: 'Übung: Supervision hinzufügen'
+			});
 
 			rerenderWith({ tenant: { featureSupervisionEnabled: false } });
 			expect(
-				screen.queryByRole('heading', { name: 'Supervision' })
+				screen.queryByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
 			).toBeNull();
 
 			rerenderWith({ tenant: { featureSupervisionEnabled: true } });
 			expect(
-				await screen.findByRole('heading', { name: 'Supervision' })
+				await screen.findByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
 			).toBeTruthy();
 		});
 	});
@@ -241,7 +234,9 @@ describe('PracticeOverviewSection (T10)', () => {
 			const { store } = renderSection();
 
 			const accept = (
-				await screen.findByRole('heading', { name: 'Anfrage annehmen' })
+				await screen.findByRole('heading', {
+					name: 'Übung: Anfrage annehmen'
+				})
 			).closest('li') as HTMLElement;
 			const start = within(accept).getByRole('button', {
 				name: 'Übung starten'

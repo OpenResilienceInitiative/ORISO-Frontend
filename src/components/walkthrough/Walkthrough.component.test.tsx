@@ -46,45 +46,6 @@ const appConfig: {
 	releaseToggles?: { enablePracticeArea?: boolean };
 } = { enableWalkthrough: true };
 
-// Stand-ins for the practice tours of S5/S6: one step is a Träger variant.
-vi.mock('../../practice/practiceToursSource', () => {
-	const step = (id: string, extra: object = {}) => ({
-		id,
-		target: '',
-		titleKey: `${id}.title`,
-		contentKey: `${id}.content`,
-		...extra
-	});
-	const base = {
-		version: 1,
-		surface: 'frontend',
-		audiences: ['consultant'],
-		titleKey: 'practice.test.title',
-		summaryKey: 'practice.test.summary',
-		dismissible: false
-	};
-	return {
-		practiceTours: [
-			{
-				...base,
-				id: 'consultant-practice-accept',
-				steps: [
-					step('p1'),
-					step('p2', {
-						when: { flag: 'featureTeamDiscussionEnabled' }
-					}),
-					step('p3'),
-					step('p4')
-				]
-			},
-			{
-				...base,
-				id: 'consultant-practice-supervision',
-				steps: [step('s1'), step('s2')]
-			}
-		]
-	};
-});
 vi.mock('../../hooks/useAppConfig', () => ({
 	useAppConfig: () => appConfig
 }));
@@ -723,7 +684,14 @@ describe('Walkthrough', () => {
 
 			expect(
 				adapterProps.tour.steps.map((s: { id: string }) => s.id)
-			).toEqual(['p1', 'p3', 'p4']);
+			).toEqual([
+				'nav-enquiries',
+				'open-enquiry',
+				'accept',
+				'first-answer',
+				'reply',
+				'done'
+			]);
 		});
 
 		it('keeps the banner count in step with the tour that runs', async () => {
@@ -735,13 +703,13 @@ describe('Walkthrough', () => {
 				expect(store.get(practiceTourProgressAtom)).toEqual({
 					tourId: 'consultant-practice-accept',
 					stepIndex: 0,
-					stepCount: 3
+					stepCount: 6
 				})
 			);
 
 			act(() =>
 				adapterProps.onEvent('step_viewed', {
-					id: 'p4',
+					id: 'done',
 					target: '',
 					titleKey: 't',
 					contentKey: 'c'
@@ -750,8 +718,8 @@ describe('Walkthrough', () => {
 
 			expect(store.get(practiceTourProgressAtom)).toEqual({
 				tourId: 'consultant-practice-accept',
-				stepIndex: 2,
-				stepCount: 3
+				stepIndex: 5,
+				stepCount: 6
 			});
 		});
 
@@ -782,7 +750,7 @@ describe('Walkthrough', () => {
 			practiceOn();
 			const { store } = renderWalkthrough(consultant, accept());
 
-			adapterProps.onEvent('step_completed', { id: 'p1' });
+			adapterProps.onEvent('step_completed', { id: 'nav-enquiries' });
 			await act(() =>
 				adapterProps.onTerminalStatus({
 					tourId: 'consultant-practice-accept',
@@ -797,7 +765,7 @@ describe('Walkthrough', () => {
 				tourId: 'consultant-practice-accept',
 				tourVersion: 1,
 				status: 'in_progress',
-				currentStepId: 'p1'
+				currentStepId: 'nav-enquiries'
 			});
 			expect(
 				versionedTourProgressRepository.saveProgress

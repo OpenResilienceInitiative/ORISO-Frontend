@@ -22,8 +22,8 @@ import type {
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { canUsePractice } from '../../practice/practiceAccess';
 import { isPracticeTourId } from '../../practice/practiceTourIds';
-import { isPracticeTourAvailable } from '../../practice/practiceTourAvailability';
-import { practiceTours } from '../../practice/practiceToursSource';
+import { isPracticeTourOffered } from '../../practice/practiceTourOffer';
+import { practiceTours } from '../../practice/practiceTours';
 import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
 
 type AutoRunState = 'unknown' | 'due' | 'not_due';
@@ -124,7 +124,7 @@ export const Walkthrough = () => {
 				// no steps, so nothing starts; no mid-run flip changes that.
 				steps:
 					isPracticeTourId(activeTour.id) &&
-					!isPracticeTourAvailable(activeTour, { ...tenantSettings })
+					!isPracticeTourOffered(activeTour, { ...tenantSettings })
 						? []
 						: resolveTourSteps(activeTour, {
 								flags: { ...tenantSettings }

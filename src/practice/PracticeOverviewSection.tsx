@@ -11,8 +11,8 @@ import type { TourDefinition } from '../components/productTour/types';
 import { PracticeCards } from './PracticeCards';
 import { canUsePractice } from './practiceAccess';
 import { nextPracticeLaunchRequest } from './practiceLaunch';
-import { isPracticeTourAvailable } from './practiceTourAvailability';
-import { practiceTours } from './practiceToursSource';
+import { isPracticeTourOffered } from './practiceTourOffer';
+import { practiceTours } from './practiceTours';
 
 export interface PracticeOverviewSectionProps {
 	/** Defaults to the practice tours; stories and tests pass their own. */
@@ -56,7 +56,7 @@ export const PracticeOverviewSection = ({
 				(tour) =>
 					tour.surface === 'frontend' &&
 					tour.audiences.includes('consultant') &&
-					isPracticeTourAvailable(tour, { ...tenantFlags })
+					isPracticeTourOffered(tour, { ...tenantFlags })
 			),
 		[tenantFlags, tours]
 	);
