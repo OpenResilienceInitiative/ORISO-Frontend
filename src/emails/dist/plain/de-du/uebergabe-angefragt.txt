@@ -1,21 +1,15 @@
-Eine Beratung soll an dich übergeben werden
-===========================================
+Eine Anfrage zu deiner Beratung
+===============================
 
-{{fromConsultantName}} bittet darum, eine laufende Beratung an dich zu übergeben.
+Eine Beratungsperson bittet um deine Zustimmung zu einer Änderung deiner Beratung.
 
-Bitte prüf im Beratungsbereich, ob du die Beratung übernehmen kannst.
+Melde dich an, um die Anfrage im geschützten Bereich zu prüfen.
 
-Fall: {{caseReference}}
-Angefragt von: {{fromConsultantName}}
-Angefragt am: {{requestReceivedAt}}
-
-Übergabe prüfen:
+Anfrage prüfen:
 {{requestUrl}}
 
-Bis du zustimmst, bleibt die Beratung bei der bisherigen Fachkraft.
-
 ----------------------------------------------------------------
-Inhalte aus Beratungen stehen nie in einer E-Mail. Du siehst sie ausschließlich verschlüsselt nach der Anmeldung.
+Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer dir und deiner Beratung kann sie lesen – auch wir nicht.
 
 {{orgName}}
 {{orgAddress}}

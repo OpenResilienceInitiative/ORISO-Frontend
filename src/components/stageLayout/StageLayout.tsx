@@ -37,9 +37,17 @@ interface StageLayoutProps {
 	children: ReactNode;
 	stage: ReactNode;
 	showLegalLinks?: boolean;
+	/**
+	 * The department (agency × topic) whose documents the footer legal links
+	 * open. Absent on public pages, where the platform note applies because no
+	 * counselling centre is known; set once one is (ADR-022 gate 2).
+	 */
+	legalDepartment?: { agencyId: number; topicId: number } | null;
 	showLoginLink?: boolean;
 	showRegistrationLink?: boolean;
 	loginParams?: string;
+	/** Router state for the login link (the invite entry marks a chosen login). */
+	loginState?: unknown;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
 	/** Mobile head presentation — `bar` is the slim 8a brand row. */
@@ -52,6 +60,8 @@ interface StageLayoutProps {
 	 * caller places it in the column.
 	 */
 	headerStart?: ReactNode;
+	/** Control before the language switch; rendered per tone, CSS shows one. */
+	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => ReactNode;
 }
 
 export const StageLayout = ({
@@ -59,13 +69,16 @@ export const StageLayout = ({
 	children,
 	stage,
 	showLegalLinks,
+	legalDepartment,
 	showLoginLink,
 	showRegistrationLink,
 	loginParams,
+	loginState,
 	registrationUrl,
 	showRegistrationInfoDrawer,
 	mobileHero = 'hero',
-	headerStart
+	headerStart,
+	renderHeaderAction
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -92,13 +105,15 @@ export const StageLayout = ({
 		<div className={clsx('stageLayout', className)}>
 			<StageMobileHero
 				variant={mobileHero}
+				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
 					showLoginLink && (
 						<IconButton
 							{...(loginRoute && routerContext
 								? {
 										component: RouterLink,
-										to: loginRoute
+										to: loginRoute,
+										state: loginState
 									}
 								: { href: loginRoute || loginUrl })}
 							color="inherit"
@@ -165,6 +180,14 @@ export const StageLayout = ({
 							{headerStart}
 						</Box>
 					)}
+					{renderHeaderAction && (
+						<Box
+							className="stageLayout__headerAction"
+							sx={{ display: { xs: 'none', lg: 'block' } }}
+						>
+							{renderHeaderAction('surface')}
+						</Box>
+					)}
 					{selectableLocales.length > 1 && (
 						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
 							<LocaleSwitchPill />
@@ -180,7 +203,8 @@ export const StageLayout = ({
 								{...(loginRoute && routerContext
 									? {
 											component: RouterLink,
-											to: loginRoute
+											to: loginRoute,
+											state: loginState
 										}
 									: {
 											component: 'a',
@@ -313,6 +337,15 @@ export const StageLayout = ({
 											rawLabel={rawLabel}
 											url={url}
 											textClassName="stageLayout__legalLinksItem"
+											{...(legalDepartment
+												? {
+														scope: 'agency' as const,
+														agencyId:
+															legalDepartment.agencyId,
+														topicId:
+															legalDepartment.topicId
+													}
+												: {})}
 										/>
 									)}
 								</LegalLinks>

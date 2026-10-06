@@ -76,8 +76,7 @@ export const SessionsListWrapper = ({
 	// stage uses. "Open" is the pane the card actually shows
 	// (`ChatStagePanelContext`, review D-4), not the `?channel=` request:
 	// an asker's forwarded link or an unloaded thread root keeps the param
-	// without a pane. The persisted width survives; dragging the list
-	// wider is locked meanwhile.
+	// without a pane. The persisted width survives the automatic snap.
 	const viewportWidth = useViewportWidth();
 	const openPanel = useChatStageOpenPanel();
 	const panelOpen = openPanel !== null;
@@ -106,9 +105,6 @@ export const SessionsListWrapper = ({
 		!widenedBesidePanel &&
 		stageLayout.mode === 'split' &&
 		stageLayout.listMode === 'rail';
-	const effectiveWidth = railSnapped
-		? Math.min(sidebarWidth, STAGE_LAYOUT.RAIL_WIDTH)
-		: sidebarWidth;
 	// Beside an open pane the list may grow until the chat card can no
 	// longer host two panes at their drag floor.
 	const maxListWidth =
@@ -118,6 +114,10 @@ export const SessionsListWrapper = ({
 					maxListWidthBesidePanel(viewportWidth)
 				)
 			: EXPANDED_MAX_WIDTH;
+
+	const effectiveWidth = railSnapped
+		? Math.min(sidebarWidth, STAGE_LAYOUT.RAIL_WIDTH)
+		: Math.min(sidebarWidth, maxListWidth);
 
 	// Switch a bit earlier so text layout never reaches the broken/truncated range.
 	const isIconOnly = effectiveWidth < ICON_ONLY_THRESHOLD;
@@ -133,15 +133,6 @@ export const SessionsListWrapper = ({
 		},
 		[maxListWidth, panelOpen]
 	);
-
-	// Review (CodeRabbit): a window that shrinks under a widened list would
-	// leave the chat and the panel below their drag floor — the persisted
-	// width follows the current ceiling instead.
-	useEffect(() => {
-		setSidebarWidth((current) =>
-			current > maxListWidth ? maxListWidth : current
-		);
-	}, [maxListWidth]);
 
 	if (hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData)) {
 		return (

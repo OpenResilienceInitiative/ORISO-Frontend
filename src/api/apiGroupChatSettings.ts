@@ -1,5 +1,10 @@
 import { endpoints } from '../resources/scripts/endpoints';
-import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 import { GROUP_CHAT_API } from './apiPutGroupChat';
 
 export interface groupChatSettings {
@@ -50,7 +55,10 @@ export const apiCreateGroupChat = async (
 		url: url,
 		method: FETCH_METHODS.POST,
 		bodyData: chatData,
-		responseHandling: [FETCH_SUCCESS.CONTENT]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.COUNSELLING_DPA_RESPONSE
+		]
 	});
 };
 
@@ -65,6 +73,9 @@ export const apiUpdateGroupChat = async (
 		url: url,
 		method: FETCH_METHODS.PUT,
 		bodyData: chatData,
-		responseHandling: [FETCH_SUCCESS.CONTENT]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.COUNSELLING_DPA_RESPONSE
+		]
 	});
 };

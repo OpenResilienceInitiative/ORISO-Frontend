@@ -9,7 +9,10 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
+import {
+	ConsultantSessionStage,
+	MOUNT_SETTLE_MS
+} from './__storybook__/ConsultantSessionStage';
 import { PANEL_WIDTH_STORAGE_KEY, STAGE_LAYOUT } from './stageLayout';
 import { BOTTOM_TOLERANCE_PX } from '../messageSubmitInterface/timelineFollow';
 import {
@@ -106,6 +109,18 @@ const expectStageParts = async (
 		},
 		{ timeout: 10_000 }
 	);
+};
+
+const expectFabClearsComposer = async (
+	fab: HTMLElement,
+	composer: HTMLElement
+) => {
+	await waitFor(() => {
+		const clearance =
+			composer.getBoundingClientRect().top -
+			fab.getBoundingClientRect().bottom;
+		expect(clearance).toBeGreaterThanOrEqual(15);
+	});
 };
 
 const paneWidths = (canvasElement: HTMLElement) => ({
@@ -1665,8 +1680,26 @@ export const PanelOpensAfterMountComposersSettleEqual: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
-		// Let the 240 ms framed→flush transition run out before measuring.
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		// #1613: measure once the re-frame has run out. It is not one 240 ms
+		// transition: the mid-flight lock (138) animates in first, and the
+		// settle re-measure animates on to 106 — on a slow runner that took
+		// longer than a fixed pause. Wait for both shells to be compact and
+		// no longer animating; a height that stays wrong still fails below.
+		await waitFor(
+			() => {
+				for (const shell of canvasElement.querySelectorAll<HTMLElement>(
+					'.textarea__wrapper-send-message'
+				)) {
+					expect(
+						shell.classList.contains(
+							'textarea__wrapper-send-message--compact'
+						)
+					).toBe(true);
+					expect(shell.getAnimations()).toHaveLength(0);
+				}
+			},
+			{ timeout: 5_000 }
+		);
 		await expectCompactComposers(canvasElement);
 	}
 };
@@ -1872,12 +1905,13 @@ const expectPhoneHeaderRules = async (
 			'.sessionMenu__icon--mobile'
 		)!;
 		await userEvent.click(kebab);
+		// The flyout is portalled to <body>, outside the canvas.
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).not.toBeNull()
 		);
-		const flyout = canvasElement.querySelector<HTMLElement>(
+		const flyout = document.querySelector<HTMLElement>(
 			'.sessionMenu__content--open'
 		)!;
 		const videoRow = flyout.querySelector<HTMLElement>(
@@ -1906,7 +1940,7 @@ const expectPhoneHeaderRules = async (
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).toBeNull()
 		);
 	}
@@ -1926,6 +1960,25 @@ export const PhoneMainChatWithFab: Story = {
 			'[data-cy="channel-switcher"]'
 		);
 		await expect(root?.getAttribute('data-variant')).toBe('attention');
+		const fab = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="channel-switcher-fab"]'
+		)!;
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-main"] .textarea__wrapper-send-message'
+		)!;
+		// #1302: the switcher belongs above the movable composer. It must keep
+		// the 16 px FAB gap instead of falling back to the viewport bottom and
+		// covering the input field.
+		await expectFabClearsComposer(fab, composer);
+		const initialFabTop = fab.getBoundingClientRect().top;
+		composer.style.height = `${composer.getBoundingClientRect().height + 64}px`;
+		await waitFor(() => {
+			expect(fab.getBoundingClientRect().top).toBeLessThanOrEqual(
+				initialFabTop - 63
+			);
+		});
+		await expectFabClearsComposer(fab, composer);
+		composer.style.removeProperty('height');
 		await expect(
 			canvasElement.querySelector('.sessionsListItem')
 		).toBeNull();
@@ -2111,6 +2164,10 @@ export const PhoneSecondaryChatWithBackFab: Story = {
 		const fab = canvasElement.querySelector<HTMLButtonElement>(
 			'[data-cy="channel-switcher-fab"]'
 		)!;
+		const composer = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="stage-panel"] .textarea__wrapper-send-message'
+		)!;
+		await expectFabClearsComposer(fab, composer);
 		await expect(fab.getAttribute('aria-label')).toMatch(
 			/Beratungschat|counselling/i
 		);
@@ -2615,13 +2672,13 @@ export const MainChatAtTheDragFloor320: Story = {
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector(
+				document.querySelector(
 					'[data-cy="session-menu-start-video-call"]'
 				)
 			).not.toBeNull()
 		);
 		await expect(
-			canvasElement.querySelector('[data-cy="session-menu-start-call"]')
+			document.querySelector('[data-cy="session-menu-start-call"]')
 		).not.toBeNull();
 		await userEvent.click(kebab);
 		// The title column is no longer squeezed to 20 px: it keeps enough
@@ -2956,20 +3013,129 @@ export const NewMessagesFollowWhileWatching: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		const timeline = mainTimeline(canvasElement);
 		for (const body of ARRIVALS) {
 			await userEvent.click(deliverNext(canvasElement));
 			await canvas.findByText(body);
+			// The stage lands a frame after each arrival; delivering sooner
+			// measures the timeline mid-landing and reads "scrolled up".
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
 		}
-		const timeline = mainTimeline(canvasElement);
+		// Nothing waits below the fold, so the arrow stays the quiet one.
+		await expect(scrollArrow(canvasElement).className).not.toContain(
+			'composerToolbar__button--scrollToNewest--unread'
+		);
+	}
+};
+
+/** The main composer card and whether the app placed its cursor itself. */
+const mainComposerCard = (canvasElement: HTMLElement) =>
+	canvasElement.querySelector<HTMLElement>(
+		'[data-cy="stage-main"] .textarea__wrapper-send-message'
+	)!;
+
+const waitForAutomaticCursor = async (canvasElement: HTMLElement) => {
+	await expectStageParts(canvasElement, {
+		composers: 1,
+		bubblesAtLeast: 6
+	});
+	const card = mainComposerCard(canvasElement);
+	await waitFor(() => {
+		expect(card.hasAttribute('data-auto-focused')).toBe(true);
+		expect(card.contains(document.activeElement)).toBe(true);
+	});
+	// The stage scrolls to the end once more after mount; landing after an
+	// arrival, that scroll moves a view the story expects to stay put.
+	await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
+	const timeline = mainTimeline(canvasElement);
+	await waitFor(() =>
+		expect(
+			timeline.scrollHeight - (timeline.scrollTop + timeline.clientHeight)
+		).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+	);
+	return { card, timeline };
+};
+
+/**
+ * (q2) Frank, 16.09.: "Erst beim Klicken oder Tippen zählt es als
+ * schreiben." On desktop the app puts the cursor into the composer by
+ * itself when the chat opens. The reader has not touched it, so they are
+ * still only reading: new messages carry the view along.
+ */
+export const NewMessagesFollowWithTheAppsOwnCursor: Story = {
+	name: '(q2) New messages — cursor placed by the app: the timeline still follows',
+	globals: desktop1280Globals,
+	args: {
+		panel: null,
+		arrivals: ARRIVALS
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const { card, timeline } = await waitForAutomaticCursor(canvasElement);
+		for (const body of ARRIVALS) {
+			// `.click()`, not `userEvent.click`: a real click on the story's
+			// delivery button would move the cursor out of the composer.
+			// A message from the client arrives without touching the page.
+			deliverNext(canvasElement).click();
+			await canvas.findByText(body);
+			// The stage lands on the end twice (next frame + 350 ms, while
+			// the row animates in). A message that arrives in between finds
+			// the view "not at the bottom" — wait for the second landing.
+			await new Promise((resolve) => setTimeout(resolve, 400));
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
+		}
+		// The cursor is still the app's, still in the composer.
+		await expect(card.hasAttribute('data-auto-focused')).toBe(true);
+		await expect(card.contains(document.activeElement)).toBe(true);
 		await waitFor(() =>
 			expect(
 				timeline.scrollHeight -
 					(timeline.scrollTop + timeline.clientHeight)
 			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
 		);
-		// Nothing waits below the fold, so the arrow stays the quiet one.
 		await expect(scrollArrow(canvasElement).className).not.toContain(
 			'composerToolbar__button--scrollToNewest--unread'
+		);
+	}
+};
+
+/**
+ * (q3) Frank, 16.09.: a click into the composer counts as writing, even
+ * before the first letter. The view keeps its place and the arrow lights up.
+ */
+export const NewMessagesLightTheArrowAfterAClick: Story = {
+	name: '(q3) New messages — clicked into the composer: the arrow lights up',
+	globals: desktop1280Globals,
+	args: {
+		panel: null,
+		arrivals: ARRIVALS
+	},
+	play: async ({ canvasElement }) => {
+		const { card, timeline } = await waitForAutomaticCursor(canvasElement);
+		await userEvent.click(card.querySelector<HTMLElement>('.tiptap')!);
+		await expect(card.hasAttribute('data-auto-focused')).toBe(false);
+		const restingTop = timeline.scrollTop;
+		// Arrives without touching the page (see q2).
+		deliverNext(canvasElement).click();
+		await waitFor(() =>
+			expect(scrollArrow(canvasElement).className).toContain(
+				'composerToolbar__button--scrollToNewest--unread'
+			)
+		);
+		await expect(timeline.scrollTop).toBe(restingTop);
+		// Nothing was typed — the click alone made it writing.
+		await expect(card.querySelector('.tiptap')!.textContent?.trim()).toBe(
+			''
 		);
 	}
 };
@@ -2989,12 +3155,17 @@ export const NewMessagesLightTheArrowWhileWriting: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		// Let the stage settle first: both composers mounted, the panel done
-		// animating. Typing into a composer that is still being laid out
-		// loses characters to the re-render.
+		// animating. Both composers schedule an initial focus once their
+		// draft has loaded; the panel's must not pull focus out of the main
+		// editor mid-word (`isTypingElsewhere`), which used to cut the draft
+		// down to its first letters.
 		await expectStageParts(canvasElement, {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
+		// See waitForAutomaticCursor: the stage's second mount scroll must
+		// not land after the arrival this story expects the view to ignore.
+		await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 		const editor = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .tiptap'
 		)!;

@@ -10,6 +10,7 @@
 
 import { EmailContent } from '../kit/emailTemplate';
 import { EmailId } from './emailCatalogue';
+import { selfHelpAppointmentContent } from './selfHelpAppointments';
 
 const footer = {
 	offeredBy: '{{platformName}} ist ein Angebot von {{orgName}}.',
@@ -42,8 +43,15 @@ const securityFooter = {
 		'Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
 };
 
+// The Träger may brand the header (`platformName`) and overlay the sender block
+// (`orgName`); the offered-by line names the platform and its operator, so it
+// takes `offeringName` and `operatorName`, which no sender overlays.
+const platformOfferedBy =
+	'{{offeringName}} ist ein Angebot von {{operatorName}}.';
+
 const legalFooter = {
 	...securityFooter,
+	offeredBy: platformOfferedBy,
 	automatedNote:
 		'Diese E-Mail gehört zum Vertragsverhältnis und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
 };
@@ -65,10 +73,13 @@ const codeAssurance =
 const accountAssurance =
 	'Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Änderungen an Ihrem Zugang melden wir Ihnen immer.';
 
+// "zwischen … und" takes the dative, so the Träger has its own placeholder
+// here: a sender without a Träger name fills "Ihrer Organisation".
 const legalAssurance =
-	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantName}}.';
+	'Diese E-Mail gehört zum Vertragsverhältnis zwischen {{orgName}} und {{tenantNameDative}}.';
 
 export const deSie: Record<EmailId, EmailContent> = {
+	...selfHelpAppointmentContent('de-sie', footer, assurance, staffAssurance),
 	'neue-nachricht': {
 		subject: 'Sie haben eine neue Nachricht',
 		preheader:
@@ -82,6 +93,19 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Sie müssen nicht sofort antworten. Die Nachricht bleibt in Ihrem Postfach, solange Sie sie brauchen.',
 		assurance,
+		footer
+	},
+
+	'neue-nachricht-beratung': {
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine neue Nachricht für Sie',
+		paragraphs: [
+			'In einer Ihrer Beratungen liegt eine neue Nachricht vor.',
+			'Melden Sie sich an, um die Nachricht im geschützten Bereich zu lesen.'
+		],
+		cta: { label: 'Nachricht öffnen', href: '{{messageUrl}}' },
+		assurance: staffAssurance,
 		footer
 	},
 
@@ -113,7 +137,11 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footnote:
 			'Wenn Sie das nicht angefordert haben, ignorieren Sie diese E-Mail einfach. Ihr Passwort bleibt dann unverändert.',
 		assurance,
-		footer
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail gehört zum Zurücksetzen Ihres Passworts und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	},
 
 	'termin': {
@@ -143,11 +171,10 @@ export const deSie: Record<EmailId, EmailContent> = {
 
 	'beraterin-kontakt': {
 		subject: 'So erreichen Sie Ihre Beratung',
-		preheader: 'Durchwahl, Sprechzeiten und Terminbuchung auf einen Blick.',
+		preheader: 'Kontaktdaten Ihrer Beratung auf einen Blick.',
 		headline: 'So erreichen Sie Ihre Beratung',
 		paragraphs: [
-			'Neben dem geschützten Chat können Sie Ihre Beratung auch telefonisch erreichen oder direkt einen Termin buchen.',
-			'Ihr Zugang bleibt dabei anonym – Sie entscheiden, was Sie erzählen.'
+			'Sie haben die Kontaktdaten Ihrer Beratung angefordert. Die verfügbaren Kontaktwege finden Sie unten.'
 		],
 		panel: [
 			{ label: 'Beratung', value: '{{consultantName}}' },
@@ -155,13 +182,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 			{ label: 'Sprechzeiten', value: '{{consultantHours}}' },
 			{ label: 'E-Mail', value: '{{consultantEmail}}' }
 		],
-		cta: { label: 'Termin buchen', href: '{{bookingUrl}}' },
-		secondaryAction: {
-			label: 'Zum geschützten Chat',
-			href: '{{messageUrl}}'
-		},
-		footnote:
-			'Außerhalb der Sprechzeiten schreiben Sie am besten im Chat. Wir melden uns innerhalb von 2 Werktagen.',
+		cta: { label: 'Zum geschützten Chat', href: '{{messageUrl}}' },
 		assurance,
 		footer
 	},
@@ -256,56 +277,38 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'uebergabe-angefragt': {
-		subject: 'Übergabe angefragt',
-		preheader: 'Eine Beratung soll an Sie übergeben werden.',
-		headline: 'Eine Beratung soll an Sie übergeben werden',
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine Anfrage zu Ihrer Beratung',
 		paragraphs: [
-			'{{fromConsultantName}} bittet darum, eine laufende Beratung an Sie zu übergeben.',
-			'Bitte prüfen Sie im Beratungsbereich, ob Sie die Beratung übernehmen können.'
+			'Eine Beratungsperson bittet um Ihre Zustimmung zu einer Änderung Ihrer Beratung.',
+			'Melden Sie sich an, um die Anfrage im geschützten Bereich zu prüfen.'
 		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Angefragt von', value: '{{fromConsultantName}}' },
-			{ label: 'Angefragt am', value: '{{requestReceivedAt}}' }
-		],
-		cta: { label: 'Übergabe prüfen', href: '{{requestUrl}}' },
-		footnote:
-			'Bis Sie zustimmen, bleibt die Beratung bei der bisherigen Fachkraft.',
-		assurance: staffAssurance,
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
 		footer
 	},
 
 	'uebergabe-bestaetigt': {
-		subject: 'Übergabe bestätigt',
-		preheader: 'Die Zuständigkeit hat gewechselt.',
+		subject: 'Die Übergabe ist bestätigt',
+		preheader: 'Die Übergabe ist bestätigt',
 		headline: 'Die Übergabe ist bestätigt',
 		paragraphs: [
-			'Die Beratung wurde übernommen. Ab sofort ist {{toConsultantName}} zuständig.',
-			'Die ratsuchende Person wurde in der Anwendung darüber informiert.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Neue Zuständigkeit', value: '{{toConsultantName}}' },
-			{ label: 'Übergeben am', value: '{{handoverAt}}' }
+			'Sie sind jetzt für diese Beratung zuständig.',
+			'Öffnen Sie die Beratung im geschützten Bereich.'
 		],
 		cta: { label: 'Beratung öffnen', href: '{{requestUrl}}' },
-		footnote:
-			'Ihr Zugriff auf den bisherigen Verlauf endet mit der Übergabe.',
 		assurance: staffAssurance,
 		footer
 	},
 
 	'rueckmeldung': {
-		subject: 'Neue Rückmeldung im Fachaustausch',
-		preheader: 'Im Fachaustausch liegt eine Rückmeldung für Sie.',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
 		headline: 'Neue Rückmeldung im Fachaustausch',
 		paragraphs: [
 			'Im geschützten Fachaustausch zu einer Ihrer Beratungen liegt eine neue Rückmeldung.',
 			'Den Inhalt sehen Sie verschlüsselt nach der Anmeldung.'
-		],
-		panel: [
-			{ label: 'Fall', value: '{{caseReference}}' },
-			{ label: 'Eingang', value: '{{requestReceivedAt}}' }
 		],
 		cta: { label: 'Rückmeldung lesen', href: '{{messageUrl}}' },
 		footnote:
@@ -315,13 +318,29 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'mitteilung': {
-		subject: '{{messageSubject}}',
-		preheader: '{{messagePreview}}',
+		subject: 'Neue Nachricht auf {{platformName}}',
+		preheader: 'Bitte melden Sie sich an.',
 		headline: '{{messageHeadline}}',
 		paragraphs: ['{{messageBody}}'],
 		cta: { label: 'Zu {{platformName}}', href: '{{loginUrl}}' },
 		assurance,
 		footer
+	},
+
+	'konto-einrichten': {
+		subject: 'Zugang zu {{platformName}} einrichten',
+		preheader: 'Legen Sie Ihr eigenes Passwort fest.',
+		headline: 'Ihr Konto ist bereits angelegt',
+		paragraphs: [
+			'Für Sie wurde bereits ein Konto auf {{platformName}} angelegt.',
+			'Legen Sie über diesen Link Ihr eigenes Passwort fest. Melden Sie sich anschließend wie gewohnt an; die erforderlichen Sicherheitsprüfungen bleiben bestehen.'
+		],
+		panel: [{ label: 'Link gültig bis', value: '{{inviteExpiresAt}}' }],
+		cta: { label: 'Passwort festlegen', href: '{{setupUrl}}' },
+		footnote:
+			'Wenn Sie diese Einrichtung nicht erwartet haben, verwenden Sie den Link nicht und wenden Sie sich an Ihre Administration.',
+		assurance: securityAssurance,
+		footer: { ...securityFooter, offeredBy: platformOfferedBy }
 	},
 
 	'anmeldelink': {
@@ -391,23 +410,49 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'avv-unterschrift': {
-		subject: 'Auftragsverarbeitungsvertrag zur Unterschrift',
-		preheader: 'Der AVV für {{tenantName}} liegt bereit.',
-		headline: 'Der AVV liegt zur Unterschrift bereit',
+		subject: 'Vertragsunterlagen für {{tenantName}}',
+		preheader: 'Die Vertragsunterlagen für {{tenantName}} liegen bereit.',
+		headline: 'Die Vertragsunterlagen liegen zur Bestätigung bereit',
 		paragraphs: [
-			'Für {{tenantName}} wurde ein Auftragsverarbeitungsvertrag erstellt.',
-			'Bitte prüfen Sie den Vertrag und zeichnen Sie ihn digital.'
+			'Für {{tenantName}} wurden Vertragsunterlagen erstellt.',
+			'Bitte prüfen Sie die Unterlagen und bestätigen Sie sie digital.'
 		],
 		panel: [
 			{ label: 'Träger', value: '{{tenantName}}' },
 			{ label: 'Bereitgestellt am', value: '{{dpaProvidedAt}}' },
-			{ label: 'Zu unterschreiben bis', value: '{{dpaExpiresAt}}' }
+			{ label: 'Zu bestätigen bis', value: '{{dpaExpiresAt}}' }
 		],
-		cta: { label: 'Vertrag öffnen', href: '{{dpaUrl}}' },
+		cta: {
+			label: 'Vertrag öffnen',
+			href: '{{dpaUrl}}',
+			fallbackHint:
+				'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:'
+		},
 		footnote:
-			'Ohne unterzeichneten AVV bleibt die Beratung für diesen Träger gesperrt.',
+			'Ohne die Bestätigung der Vertragsunterlagen bleibt die Beratung für diesen Träger gesperrt.',
 		assurance: legalAssurance,
 		footer: legalFooter
+	},
+
+	'einladung-freitext': {
+		// Subject and body are the operator's, filled in by UserService; only
+		// the frame around them is this kit's.
+		subject: '{{subject}}',
+		preheader: '{{preheader}}',
+		headline: '{{subject}}',
+		paragraphs: [],
+		authoredBody: { html: '{{bodyHtml}}', text: '{{bodyText}}' },
+		actionSlot: '{{ctaBlock}}',
+		// Both depend on whether the mail has an action, which only the sender
+		// knows: with one, UserService fills the "never pass this link on"
+		// line and the invitation note; without one (a plain notice such as
+		// "contract signed") the line is dropped and the note is neutral.
+		assuranceSlot: '{{assuranceBlock}}',
+		footer: {
+			...securityFooter,
+			offeredBy: platformOfferedBy,
+			automatedNote: '{{footerNote}}'
+		}
 	},
 
 	'team-aenderung': {
@@ -449,6 +494,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'email-geaendert': {
+		wrapLongTokens: true,
 		subject: 'Ihre E-Mail-Adresse wurde geändert',
 		preheader: 'Die Änderung ist ab sofort aktiv.',
 		headline: 'Ihre E-Mail-Adresse wurde geändert',
@@ -458,6 +504,51 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Zum Profil', href: '{{appUrl}}' },
 		assurance: accountAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail informiert Sie über eine Änderung Ihrer E-Mail-Adresse und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
+	},
+	'anruf-erinnerung': {
+		subject: 'Eine Sitzung beginnt bald',
+		preheader: 'Melden Sie sich an, um die Details zu sehen.',
+		headline: 'Ihre Sitzung beginnt bald',
+		paragraphs: [
+			'Eine geplante Audio- oder Videositzung beginnt bald. Alle weiteren Angaben sehen Sie geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Sitzung öffnen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
+	},
+
+	'anruf-einladung': {
+		subject: 'Sie wurden zu einer Sitzung eingeladen',
+		preheader: 'Die Einladung liegt geschützt in Ihrem Zugang bereit.',
+		headline: 'Neue Einladung',
+		paragraphs: [
+			'Sie wurden zu einer Audio- oder Videositzung eingeladen. Die Einzelheiten sehen Sie geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Einladung ansehen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
+	},
+
+	'anruf-verpasst': {
+		subject: 'Sie haben einen Anruf verpasst',
+		preheader: 'Melden Sie sich an, um den geschützten Verlauf zu öffnen.',
+		headline: 'Verpasster Anruf',
+		paragraphs: [
+			'Während Ihrer Abwesenheit hat ein Audio- oder Videoanruf stattgefunden. Weitere Angaben sehen Sie geschützt nach der Anmeldung.'
+		],
+		cta: { label: 'Geschützten Verlauf öffnen', href: '{{callUrl}}' },
+		footnote:
+			'Diese E-Mail enthält bewusst weder Thema noch Namen oder Teilnehmende.',
+		assurance,
+		footer
 	}
 };

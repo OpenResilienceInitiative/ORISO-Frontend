@@ -19,6 +19,13 @@ const readViewport = (): VisualViewportMetrics | null => {
 	}
 	const height = Math.round(viewport.height);
 	const offsetTop = Math.round(viewport.offsetTop);
+	// `height` is the visible area in the *visual* viewport's own CSS pixels,
+	// so a pinch zoom halves it at 2x with nothing covering the screen.
+	// Multiplying by the scale puts it back into the layout viewport's pixels,
+	// which is the space `innerHeight`, `offsetTop` and `bottom` are measured
+	// in — without it a 2x zoom reports the lower half of the screen as
+	// covered (CodeRabbit on #1514).
+	const scale = viewport.scale || 1;
 	return {
 		height,
 		offsetTop,
@@ -26,7 +33,7 @@ const readViewport = (): VisualViewportMetrics | null => {
 		// the keyboard opens, which is exactly the difference we want.
 		bottomInset: Math.max(
 			0,
-			Math.round(window.innerHeight - height - offsetTop)
+			Math.round(window.innerHeight - viewport.height * scale - offsetTop)
 		)
 	};
 };

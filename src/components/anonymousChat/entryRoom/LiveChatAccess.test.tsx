@@ -12,6 +12,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiPutSessionData } from '../../../api/apiPutSessionData';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import { apiGetAnonymousEnquiryDetails } from '../../../api/apiGetAnonymousEnquiryDetails';
+import { purgeAppWebStorage } from '../../../services/clientStorageHygiene';
+import {
+	rememberConfirmedEntryName,
+	readConfirmedEntryName
+} from './entryRoomIdentity';
 import { LiveChatEntryRoom } from './LiveChatEntryRoom';
 
 vi.mock('react-i18next', () => ({
@@ -52,6 +57,8 @@ const checked = () =>
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	sessionStorage.clear();
+	localStorage.clear();
 });
 afterEach(cleanup);
 
@@ -254,5 +261,74 @@ describe('the live chat waiting-room availability (#1400)', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe('resuming a confirmed live-chat identity (#1404)', () => {
+	it.each([false, true])(
+		'returns to waiting without rewriting the name (new tab: %s)',
+		async (newTab) => {
+			vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue({
+				status: 'NEW',
+				numAvailableConsultants: 1,
+				peopleAhead: 0
+			});
+			const first = render(<LiveChatEntryRoom sessionId={17} />);
+			fireEvent.click(screen.getAllByRole('radio')[1]);
+			const chosen = screen.getAllByRole('radio')[1].textContent;
+			fireEvent.click(
+				screen.getByRole('button', { name: /Zum Warteraum/i })
+			);
+			await waitFor(() =>
+				expect(screen.queryAllByRole('radio')).toHaveLength(0)
+			);
+			first.unmount();
+			if (newTab) sessionStorage.clear();
+			vi.clearAllMocks();
+			render(<LiveChatEntryRoom sessionId={17} />);
+			await waitFor(() =>
+				expect(apiGetAnonymousEnquiryDetails).toHaveBeenCalledWith(17)
+			);
+			expect(screen.queryAllByRole('radio')).toHaveLength(0);
+			expect(apiPutSessionData).not.toHaveBeenCalled();
+			expect(apiPatchUserData).not.toHaveBeenCalled();
+			expect(sessionStorage.getItem('anonymous-pseudonym-name-17')).toBe(
+				chosen
+			);
+		}
+	);
+
+	it('does not reuse another session name', () => {
+		sessionStorage.setItem(
+			'anonymous-pseudonym-name-17',
+			'katze_mika_1234'
+		);
+		render(<LiveChatEntryRoom sessionId={18} />);
+		expect(screen.getAllByRole('radio')).toHaveLength(4);
+	});
+});
+
+describe('confirmed identity boundaries', () => {
+	it('clears the confirmed identity on logout', () => {
+		rememberConfirmedEntryName(17, 'katze_mika_1234');
+		purgeAppWebStorage();
+		expect(readConfirmedEntryName(17)).toBeNull();
+	});
+	it('does not transfer confirmation when the session changes', () => {
+		rememberConfirmedEntryName(17, 'katze_mika_1234');
+		const view = render(<LiveChatEntryRoom sessionId={17} />);
+		view.rerender(<LiveChatEntryRoom sessionId={18} />);
+		expect(screen.getAllByRole('radio')).toHaveLength(4);
+		expect(readConfirmedEntryName(18)).toBeNull();
+	});
+	it('makes an existing tab confirmation available on reopening', () => {
+		sessionStorage.setItem(
+			'anonymous-pseudonym-name-17',
+			'katze_mika_1234'
+		);
+		const view = render(<LiveChatEntryRoom sessionId={17} />);
+		view.unmount();
+		sessionStorage.clear();
+		expect(readConfirmedEntryName(17)).toBe('katze_mika_1234');
 	});
 });

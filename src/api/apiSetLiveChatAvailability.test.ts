@@ -5,7 +5,12 @@ import {
 	apiHeartbeatLiveChatAvailability,
 	apiSetLiveChatAvailability
 } from './apiSetLiveChatAvailability';
-import { fetchData, FETCH_METHODS, FETCH_SUCCESS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 import { endpoints } from '../resources/scripts/endpoints';
 
 vi.mock('./fetchData', async () => {
@@ -38,6 +43,17 @@ describe('live-chat availability API', () => {
 		);
 	});
 
+	it('lets the caller abort a heartbeat', async () => {
+		vi.mocked(fetchData).mockResolvedValueOnce({ available: true });
+		const controller = new AbortController();
+
+		await apiHeartbeatLiveChatAvailability(controller.signal);
+
+		expect(fetchData).toHaveBeenCalledWith(
+			expect.objectContaining({ signal: controller.signal })
+		);
+	});
+
 	it('uses the refresh-only heartbeat endpoint', async () => {
 		vi.mocked(fetchData).mockResolvedValueOnce({ available: false });
 
@@ -45,7 +61,10 @@ describe('live-chat availability API', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 			method: FETCH_METHODS.POST,
-			responseHandling: [FETCH_SUCCESS.CONTENT]
+			responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN],
+			// #1485 review: a hung beat has to fail well inside the 15 s
+			// unknown-lease window, not after fetchData's 30 s default.
+			timeout: 5_000
 		});
 	});
 });

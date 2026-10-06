@@ -1,4 +1,7 @@
+import { FETCH_ERRORS } from '../../api/fetchData';
 import { apiGetAnonymousEnquiryDetails } from '../../api/apiGetAnonymousEnquiryDetails';
+
+export class InviteSessionResumeError extends Error {}
 
 /**
  * Remember which anonymous session an invite link already produced, so a
@@ -58,9 +61,9 @@ export const readRememberedInviteSession = (token: string): number | null => {
  * the details endpoint only answers for the session's own advice seeker, so a
  * reply at all proves the stored credentials still belong to this session.
  * DONE and IN_ARCHIVE mean the conversation is over — a new one is what the
- * guest wants. Any failure (expired tokens, deleted session, backend down)
- * falls back to redeeming, which is the behaviour this repo had before: the
- * guest always gets into a room.
+ * guest wants. A confirmed access failure or missing session allows a fresh redeem.
+ * Transient failures preserve the session and reject so the caller can offer
+ * a read retry without creating another account.
  */
 export const resolveReusableInviteSession = async (
 	token: string
@@ -77,8 +80,18 @@ export const resolveReusableInviteSession = async (
 			return null;
 		}
 		return sessionId;
-	} catch {
-		forgetInviteSession(token);
-		return null;
+	} catch (error) {
+		if (
+			error instanceof Error &&
+			[
+				FETCH_ERRORS.UNAUTHORIZED,
+				FETCH_ERRORS.FORBIDDEN,
+				FETCH_ERRORS.NO_MATCH
+			].includes(error.message)
+		) {
+			forgetInviteSession(token);
+			return null;
+		}
+		throw new InviteSessionResumeError('Session could not be checked');
 	}
 };

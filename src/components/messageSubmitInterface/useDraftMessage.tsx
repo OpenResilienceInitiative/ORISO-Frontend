@@ -30,6 +30,32 @@ import {
 
 const SAVE_DRAFT_TIMEOUT = 1500;
 
+const deleteUserDraft = (scopeKey: string, signal?: AbortSignal) =>
+	signal
+		? apiDeleteUserDraft(scopeKey, signal)
+		: apiDeleteUserDraft(scopeKey);
+
+const upsertUserDraft = (
+	scopeKey: string,
+	payload: Parameters<typeof apiUpsertUserDraft>[1],
+	signal?: AbortSignal
+) =>
+	signal
+		? apiUpsertUserDraft(scopeKey, payload, signal)
+		: apiUpsertUserDraft(scopeKey, payload);
+
+const isAbortSignal = (value: unknown): value is AbortSignal => {
+	if (!value || typeof value !== 'object') {
+		return false;
+	}
+	const candidate = value as Partial<AbortSignal>;
+	return (
+		typeof candidate.aborted === 'boolean' &&
+		typeof candidate.addEventListener === 'function' &&
+		typeof candidate.removeEventListener === 'function'
+	);
+};
+
 export const useDraftMessage = (
 	enabled: boolean,
 	loadFunction: (state: EditorState, rawDraft?: string) => void,
@@ -115,8 +141,12 @@ export const useDraftMessage = (
 	);
 
 	const updateRemoteDraftIndex = useCallback(
-		async (draftText?: string, scopeKey: string = remoteScopeKey) => {
-			if (!canUseRemoteApi) {
+		async (
+			draftText?: string,
+			scopeKey: string = remoteScopeKey,
+			signal?: AbortSignal
+		) => {
+			if (!canUseRemoteApi || signal?.aborted) {
 				return;
 			}
 			try {
@@ -136,7 +166,8 @@ export const useDraftMessage = (
 				let hadIndexRow = false;
 				try {
 					const indexRes = await apiGetUserDraft(
-						REMOTE_DRAFT_INDEX_SCOPE
+						REMOTE_DRAFT_INDEX_SCOPE,
+						signal
 					);
 					if (indexRes?.text && typeof indexRes.text === 'string') {
 						hadIndexRow = true;
@@ -146,6 +177,10 @@ export const useDraftMessage = (
 					if (e?.message !== FETCH_ERRORS.EMPTY) {
 						indexMap = {};
 					}
+				}
+
+				if (signal?.aborted) {
+					return;
 				}
 
 				if (hasDraftContent(draftText)) {
@@ -164,14 +199,16 @@ export const useDraftMessage = (
 					 * silent on the wire.
 					 */
 					if (hadIndexRow) {
-						await apiDeleteUserDraft(REMOTE_DRAFT_INDEX_SCOPE);
+						await deleteUserDraft(REMOTE_DRAFT_INDEX_SCOPE, signal);
 					}
 					return;
 				}
 
-				await apiUpsertUserDraft(REMOTE_DRAFT_INDEX_SCOPE, {
-					text: JSON.stringify(indexMap)
-				});
+				await upsertUserDraft(
+					REMOTE_DRAFT_INDEX_SCOPE,
+					{ text: JSON.stringify(indexMap) },
+					signal
+				);
 			} catch {
 				// Draft index is non-critical; ignore failures.
 			}
@@ -211,8 +248,12 @@ export const useDraftMessage = (
 	};
 
 	const persistDraftMessage = useCallback(
-		async (draftMessage: string, ctx: DraftPersistContext) => {
-			if (!ctx.enabled || !ctx.canUseRemoteApi) {
+		async (
+			draftMessage: string,
+			ctx: DraftPersistContext,
+			signal?: AbortSignal
+		) => {
+			if (!ctx.enabled || !ctx.canUseRemoteApi || signal?.aborted) {
 				return;
 			}
 			if (!ctx.loaded && !ctx.allowUnloaded) {
@@ -244,6 +285,9 @@ export const useDraftMessage = (
 					});
 				}
 			}
+			if (signal?.aborted) {
+				return;
+			}
 
 			/*
 			 * Review (CodeRabbit): encryption can outlive a conversation
@@ -273,23 +317,33 @@ export const useDraftMessage = (
 					}
 					await Promise.allSettled(
 						capturedKeys.map((scopeKey) =>
-							apiDeleteUserDraft(scopeKey)
+							deleteUserDraft(scopeKey, signal)
 						)
 					);
 				} else {
 					if (stillCurrent) {
 						hasRemoteDraftRef.current = true;
 					}
-					await apiUpsertUserDraft(capturedScope, {
-						text: message,
-						actionPath: ctx.actionPath,
-						title: ctx.title,
-						sourceSessionId: ctx.sessionId,
-						roomRef: ctx.roomRef,
-						threadRootId: ctx.threadRootId
-					});
+					await upsertUserDraft(
+						capturedScope,
+						{
+							text: message,
+							actionPath: ctx.actionPath,
+							title: ctx.title,
+							sourceSessionId: ctx.sessionId,
+							roomRef: ctx.roomRef,
+							threadRootId: ctx.threadRootId
+						},
+						signal
+					);
 				}
-				await updateRemoteDraftIndex(draftMessage, capturedScope);
+				if (!signal?.aborted) {
+					await updateRemoteDraftIndex(
+						draftMessage,
+						capturedScope,
+						signal
+					);
+				}
 			} catch {
 				// Draft autosave must never break chat input.
 			}
@@ -487,29 +541,33 @@ export const useDraftMessage = (
 	]);
 
 	const saveDraftMessage = useCallback(
-		async (draftMessage) => {
-			await persistDraftMessage(draftMessage ?? '', {
-				...persistContextRef.current,
-				enabled,
-				canUseRemoteApi,
-				loaded,
-				allowUnloaded: false,
-				remoteScopeKey,
-				scopeKeysToTry,
-				loadVersion: loadVersionRef.current,
-				clearVersion: clearVersionRef.current,
-				hasRemoteDraft: hasRemoteDraftRef.current,
-				encrypted,
-				isE2eeEnabled,
-				key,
-				keyID,
-				actionPath: options?.actionPath || null,
-				title: options?.title || null,
-				sessionId:
-					options?.sessionId ?? activeSession?.item?.id ?? null,
-				roomRef: options?.roomRef ?? activeSession?.rid ?? null,
-				threadRootId: options?.threadRootId || null
-			});
+		async (draftMessage, signal?: AbortSignal) => {
+			await persistDraftMessage(
+				draftMessage ?? '',
+				{
+					...persistContextRef.current,
+					enabled,
+					canUseRemoteApi,
+					loaded,
+					allowUnloaded: false,
+					remoteScopeKey,
+					scopeKeysToTry,
+					loadVersion: loadVersionRef.current,
+					clearVersion: clearVersionRef.current,
+					hasRemoteDraft: hasRemoteDraftRef.current,
+					encrypted,
+					isE2eeEnabled,
+					key,
+					keyID,
+					actionPath: options?.actionPath || null,
+					title: options?.title || null,
+					sessionId:
+						options?.sessionId ?? activeSession?.item?.id ?? null,
+					roomRef: options?.roomRef ?? activeSession?.rid ?? null,
+					threadRootId: options?.threadRootId || null
+				},
+				signal
+			);
 		},
 		[
 			activeSession?.item?.id,
@@ -577,7 +635,8 @@ export const useDraftMessage = (
 	}, [loaded, saveDraftMessage]);
 
 	const onLogout = useCallback(
-		async (args) => {
+		async <T,>(args?: T): Promise<T | undefined> => {
+			const signal = isAbortSignal(args) ? args : undefined;
 			if (draftSaveTimeout.current) {
 				clearTimeout(draftSaveTimeout.current);
 				draftSaveTimeout.current = null;
@@ -586,7 +645,9 @@ export const useDraftMessage = (
 				skipNextCleanupSaveRef.current = false;
 				return args;
 			}
-			await saveDraftMessage(latestMessageRef.current);
+			if (!signal?.aborted) {
+				await saveDraftMessage(latestMessageRef.current, signal);
+			}
 			return args;
 		},
 		[saveDraftMessage]

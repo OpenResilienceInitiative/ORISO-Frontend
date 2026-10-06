@@ -144,8 +144,9 @@ export const TogglePillRemovesChip: Story = {
 			canvas.getByRole('button', { name: 'Anzeige-Filter' })
 		);
 		await userEvent.click(
-			body.getByRole('checkbox', { name: 'Pille: System' })
+			body.getByRole('button', { name: 'Anzeige wählen: System' })
 		);
+		await userEvent.click(body.getByRole('menuitem', { name: 'Aus' }));
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
 		// MUI keeps the canvas `aria-hidden` until the dialog has faded out.
 		await waitFor(() =>
@@ -198,8 +199,9 @@ export const PillOffClearsActiveKind: Story = {
 			canvas.getByRole('button', { name: 'Anzeige-Filter' })
 		);
 		await userEvent.click(
-			body.getByRole('checkbox', { name: 'Pille: Nachrichten' })
+			body.getByRole('button', { name: 'Anzeige wählen: Nachrichten' })
 		);
+		await userEvent.click(body.getByRole('menuitem', { name: 'Aus' }));
 		await userEvent.click(body.getByRole('button', { name: 'Fertig' }));
 		await waitFor(() =>
 			expect(body.queryByRole('dialog')).not.toBeInTheDocument()
