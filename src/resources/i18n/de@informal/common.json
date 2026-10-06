@@ -401,6 +401,17 @@
 				"description": "Entscheide, ob {{name}} in „{{group}}“ dazukommt.",
 				"privacy": "Bis du entscheidest, sieht {{name}} nichts aus diesem Gesprächskreis."
 			}
+		},
+		"joinHandover": {
+			"status": {
+				"ready": "Alles bereit — du kannst zur Gruppe"
+			}
+		},
+		"consent": {
+			"headline": "Bevor du schreibst",
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
+			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}
 	},
 	"help": {
