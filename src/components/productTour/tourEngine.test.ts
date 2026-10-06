@@ -6,7 +6,8 @@ import {
 	isTourAvailable,
 	mapStepsToJoyride,
 	reduceTourCallback,
-	resolveTourSteps
+	resolveTourSteps,
+	routeMatches
 } from './tourEngine';
 import type { TourDefinition, TourStep } from './types';
 
@@ -92,6 +93,62 @@ describe('mapStepsToJoyride advanceOn', () => {
 		]);
 
 		expect(joyrideSteps[0]).not.toHaveProperty('data');
+	});
+});
+
+describe('routeMatches', () => {
+	const at = (pathname: string, search = '') => ({ pathname, search });
+
+	it('matches an exact path', () => {
+		expect(
+			routeMatches(
+				'/sessions/consultant/sessionPreview',
+				at('/sessions/consultant/sessionPreview')
+			)
+		).toBe(true);
+	});
+
+	it('does not match another path or a longer one', () => {
+		expect(routeMatches('/sessions/consultant', at('/profile'))).toBe(
+			false
+		);
+		expect(
+			routeMatches(
+				'/sessions/consultant',
+				at('/sessions/consultant/sessionView')
+			)
+		).toBe(false);
+	});
+
+	it('matches dynamic segments of a router pattern', () => {
+		const path = '/sessions/consultant/sessionView/:roomId/:sessionId';
+
+		expect(
+			routeMatches(path, at('/sessions/consultant/sessionView/abc/42'))
+		).toBe(true);
+		expect(
+			routeMatches(path, at('/sessions/consultant/sessionView/abc'))
+		).toBe(false);
+	});
+
+	it('ignores a trailing slash', () => {
+		expect(routeMatches('/profile', at('/profile/'))).toBe(true);
+	});
+
+	it('ignores the location query when the path names none', () => {
+		expect(routeMatches('/profile', at('/profile', '?tab=help'))).toBe(
+			true
+		);
+	});
+
+	it('requires every query param the path names', () => {
+		const path = '/sessions/consultant/sessionView/:rid/:id?channel=team';
+		const base = '/sessions/consultant/sessionView/a/1';
+
+		expect(routeMatches(path, at(base, '?channel=team'))).toBe(true);
+		expect(routeMatches(path, at(base, '?x=1&channel=team'))).toBe(true);
+		expect(routeMatches(path, at(base, '?channel=main'))).toBe(false);
+		expect(routeMatches(path, at(base))).toBe(false);
 	});
 });
 

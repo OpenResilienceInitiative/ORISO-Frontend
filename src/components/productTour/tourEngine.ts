@@ -1,4 +1,5 @@
 import { ACTIONS, EVENTS, STATUS } from 'react-joyride';
+import { matchPath } from 'react-router-dom';
 import type { Step } from 'react-joyride';
 import type {
 	TourCondition,
@@ -12,6 +13,24 @@ import type {
 
 export const tourTargetSelector = (target: string) =>
 	`[data-tour-target="${target}"]`;
+
+/**
+ * Whether a location reached an `advanceOn: { type: 'route' }` path: a router
+ * pattern for the pathname, plus every query param the path names.
+ */
+export const routeMatches = (
+	path: string,
+	location: { pathname: string; search: string }
+): boolean => {
+	const [pattern, query = ''] = path.split('?');
+	if (!matchPath({ path: pattern, end: true }, location.pathname)) {
+		return false;
+	}
+	const current = new URLSearchParams(location.search);
+	return [...new URLSearchParams(query)].every(
+		([key, value]) => current.get(key) === value
+	);
+};
 
 const conditionHolds = (
 	condition: TourCondition,
