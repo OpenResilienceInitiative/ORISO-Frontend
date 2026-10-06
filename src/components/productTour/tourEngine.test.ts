@@ -71,6 +71,30 @@ describe('mapStepsToJoyride', () => {
 	});
 });
 
+describe('mapStepsToJoyride advanceOn', () => {
+	it('carries advanceOn into the joyride step data so the tooltip can hide Next', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{
+				id: 'accept',
+				target: 'enquiry-accept-button',
+				titleKey: 't',
+				contentKey: 'c',
+				advanceOn: { type: 'click' }
+			}
+		]);
+
+		expect(joyrideSteps[0].data).toEqual({ advanceOn: { type: 'click' } });
+	});
+
+	it('leaves the step data untouched for ordinary steps', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{ id: 'a', target: 'a-target', titleKey: 't', contentKey: 'c' }
+		]);
+
+		expect(joyrideSteps[0]).not.toHaveProperty('data');
+	});
+});
+
 describe('reduceTourCallback', () => {
 	const cb = (
 		over: Partial<Record<'action' | 'index' | 'status' | 'type', any>>

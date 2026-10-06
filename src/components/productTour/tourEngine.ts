@@ -53,7 +53,9 @@ export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 		target: step.target ? tourTargetSelector(step.target) : 'body',
 		placement: step.placement ?? (step.target ? 'bottom' : 'center'),
 		title: step.titleKey,
-		content: step.contentKey
+		content: step.contentKey,
+		// Read by the tooltip, which has no Next on a self-advancing step.
+		...(step.advanceOn && { data: { advanceOn: step.advanceOn } })
 	}));
 
 /**
