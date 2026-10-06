@@ -5,7 +5,7 @@ import type {
 } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import { isChatItemUnread, isRoomUnread } from '../../utils/sessionUnread';
 import {
 	getSupervisionListState,
 	hasSupervisionMarker
@@ -215,7 +215,9 @@ export const countUnreadSupervisedSessions = (
 	pairs.filter(
 		({ raw, extended }) =>
 			getSupervisionListState(extended, currentUserId) ===
-				'supervisedByMe' && isChatItemUnread(getToolbarChatItem(raw))
+				'supervisedByMe' &&
+			(isChatItemUnread(getToolbarChatItem(raw)) ||
+				isRoomUnread(extended.item?.supervision?.sideRoomId))
 	).length;
 
 export function sessionMatchesToolbar(

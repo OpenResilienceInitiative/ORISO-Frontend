@@ -23,13 +23,17 @@ import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
 import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-const { matrixPreviewMock, roomUnreadCountMock } = vi.hoisted(() => ({
-	matrixPreviewMock: vi.fn(),
-	roomUnreadCountMock: vi.fn(() => 0)
-}));
+const { matrixPreviewMock, roomUnreadCountMock, localeState } = vi.hoisted(
+	() => ({
+		matrixPreviewMock: vi.fn(),
+		localeState: { realEnglish: false },
+		roomUnreadCountMock: vi.fn(() => 0)
+	})
+);
 
 afterEach(() => {
 	cleanup();
+	localeState.realEnglish = false;
 	matrixPreviewMock.mockReset();
 	roomUnreadCountMock.mockReset();
 	roomUnreadCountMock.mockReturnValue(0);
@@ -94,14 +98,28 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 // ---------------------------------------------------------------------------
 // i18n
 // ---------------------------------------------------------------------------
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (k: string, opts?: any) =>
-			opts && typeof opts === 'object' && opts.name
-				? `${k}:${opts.name}`
-				: k
-	})
-}));
+vi.mock('react-i18next', async () => {
+	const catalogue = (await import('../../resources/i18n/en/common.json'))
+		.default;
+	return {
+		useTranslation: () => ({
+			t: (k: string, opts?: any) => {
+				if (localeState.realEnglish) {
+					const value = k
+						.split('.')
+						.reduce(
+							(current: any, key) => current?.[key],
+							catalogue
+						);
+					if (typeof value === 'string') return value;
+				}
+				return opts && typeof opts === 'object' && opts.name
+					? `${k}:${opts.name}`
+					: k;
+			}
+		})
+	};
+});
 
 // ---------------------------------------------------------------------------
 // Lottie — imported transitively through AnimatedIllustration; crashes in jsdom
@@ -169,7 +187,7 @@ vi.mock('../sessionHeader/ConsultantSearchLoader', () => ({
 	ConsultantSearchLoader: () => <span />
 }));
 vi.mock('../teamDiscussion/TeamDiscussionBadge', () => ({
-	TeamDiscussionBadge: () => <span />,
+	TeamDiscussionBadge: () => <span data-testid="team-discussion-badge" />,
 	getCachedTeamDiscussion: () => Promise.resolve(null)
 }));
 vi.mock('./SessionListItemLastMessage', () => ({
@@ -555,7 +573,9 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 		);
 		await nextTick();
 		const modality = screen.getByTestId('supervision-modality');
-		expect(modality.textContent).toContain('sessionList.supervision.badge');
+		expect(modality.textContent).toContain(
+			'sessionList.toolbar.chips.supervision'
+		);
 		// The consulting type is not shown twice and not shown at all here —
 		// it is one panel to the right, in the client chat the supervisor
 		// reads along with.
@@ -564,6 +584,45 @@ describe('SessionListItemComponent — supervision list marker (ADR-008)', () =>
 				'.sessionsListItem__consultingTypeIcon--nearbyLabel'
 			)
 		).toBeNull();
+	});
+
+	it('uses the real short English modality label while retaining its explanatory tooltip', async () => {
+		localeState.realEnglish = true;
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const label = screen
+			.getByTestId('supervision-modality')
+			.querySelector(
+				'.sessionsListItem__consultingTypeIcon--supervisionLabel'
+			);
+		expect(label?.textContent).toBe('Supervision');
+		expect(label?.getAttribute('title')).toBe(
+			'Supervision – you read along in this chat'
+		);
+	});
+
+	it('keeps the existing team discussion badge on a supervised enquiry', async () => {
+		const session = {
+			...makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME]
+				}
+			}),
+			isEnquiry: true,
+			isSession: false
+		};
+		renderItem(session, makeUserData(ME));
+		await nextTick();
+		expect(screen.getByTestId('team-discussion-badge')).toBeTruthy();
 	});
 
 	it('supervisedByMe → the icon travels with the word', async () => {

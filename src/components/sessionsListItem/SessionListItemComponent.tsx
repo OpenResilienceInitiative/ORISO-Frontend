@@ -1712,7 +1712,7 @@ export const SessionListItemComponent = ({
 										)}
 									>
 										{translate(
-											'sessionList.supervision.badge',
+											'sessionList.toolbar.chips.supervision',
 											'Supervision'
 										)}
 									</span>
@@ -1794,19 +1794,6 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{/* FE#514: team-only discussion exists on this
-								    enquiry (consultants only, ADR-016). */}
-									{!isAsker &&
-										activeSession.isEnquiry &&
-										modality ===
-											Modality.AGENCY_COUNSELLING &&
-										activeSession.item?.id && (
-											<TeamDiscussionBadge
-												sessionId={
-													activeSession.item.id
-												}
-											/>
-										)}
 									{modality === Modality.SELF_HELP && (
 										<div
 											className={clsx(
@@ -1830,6 +1817,16 @@ export const SessionListItemComponent = ({
 									)}
 								</>
 							)}
+							{/* FE#514: team-only discussion exists on this
+								    enquiry (consultants only, ADR-016). */}
+							{!isAsker &&
+								activeSession.isEnquiry &&
+								modality === Modality.AGENCY_COUNSELLING &&
+								activeSession.item?.id && (
+									<TeamDiscussionBadge
+										sessionId={activeSession.item.id}
+									/>
+								)}
 						</>
 					}
 				/>

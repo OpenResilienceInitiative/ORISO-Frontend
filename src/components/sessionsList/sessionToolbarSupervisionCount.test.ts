@@ -18,6 +18,8 @@ vi.mock('../../utils/sessionUnread', async (importOriginal) => {
 		await importOriginal<typeof import('../../utils/sessionUnread')>();
 	return {
 		...actual,
+		isRoomUnread: (roomId?: string | null) =>
+			Boolean(roomId && unreadRooms.has(roomId)),
 		isChatItemUnread: (
 			chatItem?: { matrixRoomId?: string | null } | null
 		) =>
@@ -66,6 +68,36 @@ describe('countUnreadSupervisedSessions', () => {
 			countUnreadSupervisedSessions([pair('!a:hs', supervisedByMe)], ME)
 		).toBe(1);
 	});
+
+	it.each([false, true])(
+		'counts side-room unread once, including when main unread is %s',
+		(mainUnread) => {
+			unreadRooms.add('!side:hs');
+			if (mainUnread) unreadRooms.add('!a:hs');
+			expect(
+				countUnreadSupervisedSessions(
+					[
+						pair('!a:hs', {
+							...supervisedByMe,
+							sideRoomId: '!side:hs'
+						})
+					],
+					ME
+				)
+			).toBe(1);
+			expect(
+				countUnreadSupervisedSessions(
+					[
+						pair('!b:hs', {
+							...supervisedByOther,
+							sideRoomId: '!side:hs'
+						})
+					],
+					ME
+				)
+			).toBe(0);
+		}
+	);
 
 	it('does not count a supervised row that has been read', () => {
 		expect(
