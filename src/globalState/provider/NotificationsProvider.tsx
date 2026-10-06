@@ -566,9 +566,14 @@ export function NotificationsProvider(props) {
 						item.eventType === 'conversation.finished'
 				);
 				const observed = observedReconciliationIdsRef.current;
+				// Lists may have loaded before a finish appeared in the first feed.
+				// Announcement history is seeded separately, so this stays silent.
 				const newEvents =
 					observed === null
-						? []
+						? stateEvents.filter(
+								(item) =>
+									item.eventType === 'conversation.finished'
+							)
 						: stateEvents.filter((item) => !observed.has(item.id));
 				observedReconciliationIdsRef.current ??= new Set();
 				stateEvents.forEach((item) =>

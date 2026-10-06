@@ -178,6 +178,42 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 	// stale listeners don't fire on the next test's emit.
 	afterEach(() => cleanup());
 
+	it('reconciles a finished conversation in the first feed after the list loaded', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				{
+					...feedItem(1, '2026-10-06T12:00:00Z'),
+					eventType: 'conversation.finished'
+				}
+			],
+			unreadCount: 1
+		});
+		const listRefresh = vi.fn();
+		messageEventEmitter.on(listRefresh);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(listRefresh).toHaveBeenCalledWith({
+					refreshEnquiryList: true,
+					refreshSessionList: true,
+					source: 'notification-feed'
+				})
+			);
+			expect(listRefresh).toHaveBeenCalledTimes(1);
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
+			);
+			expect(listRefresh).toHaveBeenCalledTimes(1);
+		} finally {
+			messageEventEmitter.off(listRefresh);
+		}
+	});
+
 	it('refreshes enquiry lists for a newly submitted request below another event without a feed loop', async () => {
 		const listRefresh = vi.fn();
 		const listener = (event) => {
@@ -290,7 +326,12 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 				await waitFor(() =>
 					expect(screen.getByTestId('ids').textContent).toBe('1')
 				);
-				expect(signals).not.toHaveBeenCalled();
+				if (eventType === 'conversation.finished') {
+					expect(signals).toHaveBeenCalledTimes(1);
+				} else {
+					expect(signals).not.toHaveBeenCalled();
+				}
+				signals.mockClear();
 				apiGetEventNotifications.mockResolvedValue({
 					items: [item(2), item(1)],
 					unreadCount: 2
