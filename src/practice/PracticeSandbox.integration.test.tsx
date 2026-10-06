@@ -54,7 +54,13 @@ import { setTenantSettings } from '../utils/tenantSettingsHelper';
 import { config } from '../resources/scripts/config';
 import { PracticeSandbox, usePracticeSandbox } from './PracticeSandbox';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
-import { PRACTICE_CAST, PRACTICE_SCRIPT } from './fixtures/practiceCast';
+import { PRACTICE_CAST } from './fixtures/practiceCast';
+import {
+	createTestScript,
+	practiceScriptBlock
+} from './script/scriptTestSupport';
+import { subscribeToTourEvent } from '../components/productTour/tourEvents';
+import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import {
 	isPracticeRoomId,
 	PRACTICE_ENQUIRY_SESSION_ID,
@@ -136,6 +142,18 @@ const appNotifications = {
 	addNotification: vi.fn(),
 	addEventNotification: vi.fn()
 };
+
+/** How often each practice tour event fired while the journey ran. */
+const tourEvents: Record<string, number> = {};
+const stopWatchingEvents: Array<() => void> = [];
+const expectTourEvents = (expected: Partial<Record<string, number>>) =>
+	expect(tourEvents).toEqual({
+		[PRACTICE_TOUR_EVENTS.enquiryAccepted]: 0,
+		[PRACTICE_TOUR_EVENTS.messageSent]: 0,
+		[PRACTICE_TOUR_EVENTS.teamMessageSent]: 0,
+		[PRACTICE_TOUR_EVENTS.supervisorAdded]: 0,
+		...expected
+	});
 
 /** Every browser-storage write while the practice view runs. */
 const storageWrites: string[] = [];
@@ -233,6 +251,14 @@ const renderPractice = (
 };
 
 beforeEach(async () => {
+	Object.values(PRACTICE_TOUR_EVENTS).forEach((name) => {
+		tourEvents[name] = 0;
+		stopWatchingEvents.push(
+			subscribeToTourEvent(name, () => {
+				tourEvents[name] += 1;
+			})
+		);
+	});
 	network.length = 0;
 	realMatrixTouches.length = 0;
 	storageWrites.length = 0;
@@ -242,10 +268,14 @@ beforeEach(async () => {
 	appNotifications.addEventNotification.mockClear();
 	vi.stubGlobal('fetch', networkFetch);
 	vi.stubGlobal('indexedDB', { open: indexedDbOpens });
+	// Product keys render as themselves; only the practice script has texts.
 	await translations.init({
 		lng: 'de',
 		fallbackLng: 'de',
-		resources: { de: { translation: {} } },
+		resources: {
+			de: { translation: { practiceScript: practiceScriptBlock('de') } },
+			en: { translation: { practiceScript: practiceScriptBlock('en') } }
+		},
 		interpolation: { escapeValue: false }
 	});
 	localStorage.clear();
@@ -293,6 +323,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+	stopWatchingEvents.splice(0).forEach((stop) => stop());
 	cleanup();
 	await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 	expect(getMatrixClientService()).toBe(realMatrixService);
@@ -311,7 +342,7 @@ const openThePracticeCase = async (container: HTMLElement) => {
 			const items = listItems(container);
 			expect(items).toHaveLength(1);
 			expect(items[0].textContent).toContain(
-				PRACTICE_CAST.asker.displayName
+				world!.script.cast.asker.displayName
 			);
 			return items[0];
 		},
@@ -383,7 +414,10 @@ const expectNothingLeftThePracticeWorld = () => {
 };
 
 /** F1 up to the scripted answer: open, accept, reply through the composer. */
-const acceptAndReply = async (view: { container: HTMLElement }) => {
+const acceptAndReply = async (
+	view: { container: HTMLElement },
+	reply = 'Hallo Sam, schön, dass du dich meldest.'
+) => {
 	await openThePracticeCase(view.container);
 	const accept = await screen.findByRole(
 		'button',
@@ -391,7 +425,7 @@ const acceptAndReply = async (view: { container: HTMLElement }) => {
 		{ timeout: 15000 }
 	);
 	expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-		PRACTICE_SCRIPT.enquiry
+		world!.script.texts.askerFirstMessage
 	);
 
 	fireEvent.click(accept);
@@ -418,12 +452,11 @@ const acceptAndReply = async (view: { container: HTMLElement }) => {
 	await waitFor(
 		() =>
 			expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-				PRACTICE_SCRIPT.enquiry
+				world!.script.texts.askerFirstMessage
 			),
 		{ timeout: 15000 }
 	);
 
-	const reply = 'Hallo Sam, schön, dass du dich meldest.';
 	await typeAndSend(
 		() => view.container.querySelector('.chatStage__mainPane'),
 		reply
@@ -433,11 +466,73 @@ const acceptAndReply = async (view: { container: HTMLElement }) => {
 		() => {
 			const main = textOf(view.container, '.chatStage__mainPane');
 			expect(main).toContain(reply);
-			expect(main).toContain(PRACTICE_SCRIPT.askerReply);
+			expect(main).toContain(world!.script.texts.askerReply);
 		},
 		{ timeout: 15000 }
 	);
 	return reply;
+};
+
+/** F2 up to the confirmed add: open the accepted case, pick Robin, confirm. */
+const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
+	await openThePracticeCase(view.container);
+	const add = await screen.findByRole(
+		'button',
+		{ name: 'sessionHeader.supervisor.modal.title' },
+		{ timeout: 15000 }
+	);
+	fireEvent.click(add);
+
+	const picker = await screen.findByRole('combobox', {}, { timeout: 15000 });
+	fireEvent.mouseDown(picker);
+	fireEvent.click(
+		await screen.findByRole('option', {
+			name: PRACTICE_CAST.supervisor.displayName
+		})
+	);
+	expect(
+		screen.queryByRole('option', {
+			name: PRACTICE_CAST.colleague.displayName
+		})
+	).toBeNull();
+	fireEvent.change(
+		screen.getByPlaceholderText(
+			'sessionHeader.supervisor.modal.reasonPlaceholder'
+		),
+		{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
+	);
+	await act(async () => {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'sessionHeader.supervisor.modal.addButton'
+			})
+		);
+	});
+
+	await waitFor(
+		() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
+		{ timeout: 15000 }
+	);
+	// The success toast stays; the feed entry is swallowed (see below).
+	await waitFor(() =>
+		expect(appNotifications.addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: 'sessionHeader.supervisor.success.add.title'
+			})
+		)
+	);
+	await waitFor(() =>
+		expect(
+			bodiesIn(PRACTICE_MAIN_ROOM_ID).some((line) =>
+				line.startsWith(
+					`${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: ${SYSTEM_NOTIFICATION_PREFIX}`
+				)
+			)
+		).toBe(true)
+	);
+	expect(bodiesIn(PRACTICE_SUPERVISION_ROOM_ID)).toEqual([
+		`${PRACTICE_CAST.supervisor.matrixUserId}: ${world!.script.texts.supervisorReply}`
+	]);
 };
 
 describe('practice sandbox on the real session containers', () => {
@@ -448,15 +543,52 @@ describe('practice sandbox on the real session containers', () => {
 
 		// The real Erstantwort renderer reads the fake room's system event.
 		expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-			PRACTICE_SCRIPT.erstantwortGreeting
+			world!.script.texts.erstantwortGreeting
 		);
 		const [sent, answer] = bodiesIn(PRACTICE_MAIN_ROOM_ID).slice(-2);
 		expect(sent).toMatch(
 			new RegExp(`^${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: .*${reply}`)
 		);
 		expect(answer).toBe(
-			`${PRACTICE_CAST.asker.matrixUserId}: ${PRACTICE_SCRIPT.askerReply}`
+			`${PRACTICE_CAST.asker.matrixUserId}: ${world!.script.texts.askerReply}`
 		);
+		// The tour waits for these: one accept, one first reply, nothing scripted.
+		expectTourEvents({
+			[PRACTICE_TOUR_EVENTS.enquiryAccepted]: 1,
+			[PRACTICE_TOUR_EVENTS.messageSent]: 1
+		});
+		expectNothingLeftThePracticeWorld();
+	}, 60000);
+
+	it('F1 in English: the page language at the start gives the whole script in English and keeps it', async () => {
+		await translations.changeLanguage('en');
+		const english = createTestScript('en');
+		const view = renderPractice();
+
+		const reply = await acceptAndReply(view, 'Hello Sam, glad you wrote.');
+
+		const main = textOf(view.container, '.chatStage__mainPane');
+		expect(world!.script.locale).toBe('en');
+		expect(main).toContain(english.texts.askerFirstMessage);
+		expect(main).toContain(english.texts.erstantwortGreeting);
+		expect(main).toContain(english.texts.askerReply);
+		expect(main).toContain(reply);
+		expect(world!.rest.getCase().user.displayName).toBe(
+			'Sam Muster (practice)'
+		);
+		expect(bodiesIn(PRACTICE_MAIN_ROOM_ID).join('\n')).not.toContain(
+			createTestScript('de').texts.askerFirstMessage
+		);
+
+		// A language switch in the page does not change a run that has begun.
+		await act(async () => {
+			await translations.changeLanguage('de');
+		});
+		expect(world!.script.locale).toBe('en');
+		expectTourEvents({
+			[PRACTICE_TOUR_EVENTS.enquiryAccepted]: 1,
+			[PRACTICE_TOUR_EVENTS.messageSent]: 1
+		});
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
@@ -493,7 +625,7 @@ describe('practice sandbox on the real session containers', () => {
 		await waitFor(
 			() =>
 				expect(panel()?.textContent).toContain(
-					PRACTICE_SCRIPT.teamColleague
+					world!.script.texts.teamColleagueMessage
 				),
 			{ timeout: 15000 }
 		);
@@ -510,92 +642,78 @@ describe('practice sandbox on the real session containers', () => {
 		);
 		expect(bodiesIn(PRACTICE_MAIN_ROOM_ID).join('\n')).not.toContain(note);
 		expect(textOf(view.container, '.chatStage__mainPane')).not.toContain(
-			PRACTICE_SCRIPT.teamColleague
+			world!.script.texts.teamColleagueMessage
 		);
+		expectTourEvents({ [PRACTICE_TOUR_EVENTS.teamMessageSent]: 1 });
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
-	it('supervision: adds Robin through the real picker and shows the reply in the side thread after reopening', async () => {
+	it('supervision in practice mode: the reply shows in the side thread without reopening the case, the side room offers no call and nothing needs blocking', async () => {
+		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+		try {
+			const view = renderPractice('acceptedCase', { underGuard: true });
+
+			await addRobinThroughThePicker(view);
+
+			// The side room is resolved again after the add (S6): no reopening.
+			await waitFor(
+				() =>
+					expect(
+						textOf(view.container, '.chatStage__panel')
+					).toContain(world!.script.texts.supervisorReply),
+				{ timeout: 15000 }
+			);
+			expect(
+				textOf(view.container, '.chatStage__mainPane')
+			).not.toContain(world!.script.texts.supervisorReply);
+			// The F2 tour points its reply step at this anchor.
+			expect(
+				view.container.querySelector(
+					'[data-tour-target="supervision-panel"]'
+				)
+			).not.toBeNull();
+			expect(
+				view.container.querySelector('[data-cy="panel-call-actions"]')
+			).toBeNull();
+			expect(getPracticeNetworkGuard()?.blockedRequests).toEqual([]);
+			cleanup();
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
+		} finally {
+			exitPracticeMode();
+		}
+		expectNothingLeftThePracticeWorld();
+	}, 60000);
+
+	it('supervision outside practice mode keeps the product behaviour: the side room appears after reopening, with its call actions', async () => {
 		const view = renderPractice('acceptedCase');
 
-		await openThePracticeCase(view.container);
-		const add = await screen.findByRole(
-			'button',
-			{ name: 'sessionHeader.supervisor.modal.title' },
-			{ timeout: 15000 }
+		await addRobinThroughThePicker(view);
+		await act(
+			() => new Promise<void>((resolve) => setTimeout(resolve, 100))
 		);
-		fireEvent.click(add);
+		expect(textOf(view.container, '.chatStage__panel')).not.toContain(
+			world!.script.texts.supervisorReply
+		);
 
-		const picker = await screen.findByRole(
-			'combobox',
-			{},
-			{ timeout: 15000 }
-		);
-		fireEvent.mouseDown(picker);
-		fireEvent.click(
-			await screen.findByRole('option', {
-				name: PRACTICE_CAST.supervisor.displayName
-			})
-		);
-		expect(
-			screen.queryByRole('option', {
-				name: PRACTICE_CAST.colleague.displayName
-			})
-		).toBeNull();
-		fireEvent.change(
-			screen.getByPlaceholderText(
-				'sessionHeader.supervisor.modal.reasonPlaceholder'
-			),
-			{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
-		);
-		await act(async () => {
-			fireEvent.click(
-				screen.getByRole('button', {
-					name: 'sessionHeader.supervisor.modal.addButton'
-				})
-			);
-		});
-
-		await waitFor(
-			() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
-			{ timeout: 15000 }
-		);
-		// The success toast stays; the feed entry is swallowed (see below).
-		await waitFor(() =>
-			expect(appNotifications.addNotification).toHaveBeenCalledWith(
-				expect.objectContaining({
-					title: 'sessionHeader.supervisor.success.add.title'
-				})
-			)
-		);
-		await waitFor(() =>
-			expect(
-				bodiesIn(PRACTICE_MAIN_ROOM_ID).some((line) =>
-					line.startsWith(
-						`${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: ${SYSTEM_NOTIFICATION_PREFIX}`
-					)
-				)
-			).toBe(true)
-		);
-		expect(bodiesIn(PRACTICE_SUPERVISION_ROOM_ID)).toEqual([
-			`${PRACTICE_CAST.supervisor.matrixUserId}: ${PRACTICE_SCRIPT.supervisorReply}`
-		]);
-
-		// The real view resolves the side room on open only (finding in
-		// SPIKE-REPORT): leave the case and open it again.
 		act(() => navigateInTest!(LIST_ROUTE.acceptedCase));
 		await openThePracticeCase(view.container);
 
 		await waitFor(
 			() =>
 				expect(textOf(view.container, '.chatStage__panel')).toContain(
-					PRACTICE_SCRIPT.supervisorReply
+					world!.script.texts.supervisorReply
 				),
 			{ timeout: 15000 }
 		);
 		expect(textOf(view.container, '.chatStage__mainPane')).not.toContain(
-			PRACTICE_SCRIPT.supervisorReply
+			world!.script.texts.supervisorReply
 		);
+		expectTourEvents({ [PRACTICE_TOUR_EVENTS.supervisorAdded]: 1 });
+		expect(
+			view.container.querySelector('[data-cy="panel-call-actions"]')
+		).not.toBeNull();
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 });

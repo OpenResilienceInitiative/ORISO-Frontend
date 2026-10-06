@@ -2901,6 +2901,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (alıştırma)",
+			"colleague": "Alex (alıştırma)",
+			"supervisor": "Robin (alıştırma)"
+		},
+		"asker": {
+			"firstMessage": "Merhaba, sunduğunuz hizmet hakkında genel bir sorum var. Danışmanlık sizde nasıl işliyor ve yanıtı ne kadar çabuk alabilirim? Teşekkür ederim.",
+			"reply": "Yanıtınız için çok teşekkür ederim, bu bana yardımcı oldu. Başka sorum olursa size yazarım."
+		},
+		"colleague": {
+			"teamMessage": "Bugün görüşmedeyim, yanıtı yetiştiremeyeceğim. Talebi sen devralabilir misin?"
+		},
+		"supervisor": {
+			"reply": "Kulağa iyi geliyor. Kişinin tam olarak ne öğrenmek istediğini rahatça sor. Ben de okuyorum, dikkatimi çeken bir şey olursa sana haber veririm."
+		},
+		"erstantwort": {
+			"greeting": "Talebiniz bize ulaştı. Bir danışman en kısa sürede size dönüş yapacak."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Merhaba, mesajınız için teşekkürler. Danışmanlık burada yazılı ve gizli olarak yürütülür."
+		},
+		"names": {
+			"agency": "Alıştırma danışma merkezi",
+			"topic": "Alıştırma",
+			"teamRoom": "Ekip görüşmesi (alıştırma)",
+			"supervisionRoom": "Süpervizyon (alıştırma)"
+		}
+	},
 	"registration": {
 		"accordion": {
 			"item": {
@@ -5325,11 +5354,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Süpervizör ekleyin",
-					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Danışmanlığa süpervizör eklemek için “+” işaretine tıklayın."
-				},
-				"pickSupervisor": {
-					"title": "Süpervizörü seçin",
-					"intro": "Listeden süpervizörü seçip seçiminizi onaylayın. Ardından sohbette bir sistem notu görünür."
+					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. “+” işaretine tıklayın, süpervizörü seçin ve seçiminizi onaylayın."
 				},
 				"supervisorReply": {
 					"title": "Süpervizörün yanıtı",

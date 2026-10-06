@@ -11,75 +11,109 @@ import {
 	createPracticeScenario,
 	type PracticeStart
 } from './fixtures/practiceScenario';
-import { PRACTICE_CAST, PRACTICE_SCRIPT } from './fixtures/practiceCast';
+import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
+import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import {
 	PRACTICE_MAIN_ROOM_ID,
-	PRACTICE_SUPERVISION_ROOM_ID
+	PRACTICE_TEAM_ROOM_ID
 } from './fixtures/practiceIdentifiers';
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {
 	readonly start: PracticeStart;
+	readonly script: ScriptEngine;
 	readonly rest: FakeRestBackend;
 	readonly matrix: FakeMatrixService;
 }
 
 /**
- * Wires the spike's minimal script: reactions follow counsellor actions, never
- * time. S5/S6 replace the inline reactions with the ScriptEngine.
+ * Wires one practice run. Reactions follow counsellor actions, never time, and
+ * come from the ScriptEngine, which was built once in the run's language. The
+ * tour events (`practice:*`) are emitted here, once per counsellor action and
+ * never for the scripted messages.
  */
 export const createPracticeWorld = ({
 	counsellor,
+	script,
 	start = 'enquiry',
 	now = Date.now
 }: {
 	counsellor: UserDataInterface;
+	script: ScriptEngine;
 	start?: PracticeStart;
 	now?: () => number;
 }): PracticeWorld => {
-	const scenario = createPracticeScenario({ counsellor, start, now: now() });
+	const scenario = createPracticeScenario({
+		counsellor,
+		script,
+		start,
+		now: now()
+	});
 	// The accepted case (F2) already contains the asker's answer.
 	let askerAnswered = start === 'acceptedCase';
+	let supervisorAnswered = false;
+
+	const play = (reaction: ScriptReaction | null) => {
+		if (reaction) {
+			matrix.appendMessage(
+				reaction.roomId,
+				reaction.sender,
+				reaction.body
+			);
+		}
+	};
 
 	const matrix: FakeMatrixService = createFakeMatrixService({
 		rooms: scenario.rooms,
 		now,
-		onCounsellorMessage: (roomId, body) => {
+		onCounsellorMessage: (roomId, body, { isEdit }) => {
+			if (
+				isEdit ||
+				// e.g. the "supervision added" note the header posts
+				body.startsWith(SYSTEM_NOTIFICATION_PREFIX)
+			) {
+				return;
+			}
+			if (roomId === PRACTICE_TEAM_ROOM_ID) {
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.teamMessageSent);
+				return;
+			}
 			if (
 				roomId !== PRACTICE_MAIN_ROOM_ID ||
-				// e.g. the "supervision added" note the header posts
-				body.startsWith(SYSTEM_NOTIFICATION_PREFIX) ||
-				askerAnswered ||
 				rest.getCase().session.status !== 2
 			) {
 				return;
 			}
+			emitPracticeEvent(PRACTICE_TOUR_EVENTS.messageSent);
+			if (askerAnswered) return;
 			askerAnswered = true;
+			const reaction = script.reactionFor({
+				type: 'counsellor-first-reply',
+				roomId
+			});
 			// After the counsellor's own event has been announced.
-			queueMicrotask(() =>
-				matrix.appendMessage(
-					PRACTICE_MAIN_ROOM_ID,
-					PRACTICE_CAST.asker.matrixUserId,
-					PRACTICE_SCRIPT.askerReply
-				)
-			);
+			queueMicrotask(() => play(reaction));
 		}
 	});
 
 	const rest = createFakeRestBackend({
 		counsellor,
+		script,
 		start,
 		now,
 		hooks: {
-			onSupervisorAdded: () =>
-				matrix.appendMessage(
-					PRACTICE_SUPERVISION_ROOM_ID,
-					PRACTICE_CAST.supervisor.matrixUserId,
-					PRACTICE_SCRIPT.supervisorReply
-				)
+			onEnquiryAccepted: () =>
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted),
+			onSupervisorAdded: () => {
+				if (!supervisorAnswered) {
+					supervisorAnswered = true;
+					play(script.reactionFor({ type: 'supervisor-added' }));
+				}
+				emitPracticeEvent(PRACTICE_TOUR_EVENTS.supervisorAdded);
+			}
 		}
 	});
 
-	return { start, rest, matrix };
+	return { start, script, rest, matrix };
 };

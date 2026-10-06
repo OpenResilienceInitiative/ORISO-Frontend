@@ -17,11 +17,10 @@ import {
 	practiceUserId
 } from './practiceIdentifiers';
 import {
-	PRACTICE_CAST,
 	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
-	PRACTICE_SCRIPT,
 	type PracticePerson
 } from './practiceCast';
+import type { ScriptEngine } from '../script/ScriptEngine';
 
 /** F1 starts with an open enquiry, F2 with an already accepted case. */
 export type PracticeStart = 'enquiry' | 'acceptedCase';
@@ -29,9 +28,9 @@ export type PracticeStart = 'enquiry' | 'acceptedCase';
 export const PRACTICE_SYSTEM_MATRIX_USER_ID = practiceUserId('system');
 
 /** The only topic the practice view knows; real topics never reach it. */
-export const PRACTICE_TOPIC: TopicsDataInterface = {
+export const createPracticeTopic = (name: string): TopicsDataInterface => ({
 	id: PRACTICE_TOPIC_ID,
-	name: 'Übung',
+	name,
 	slug: 'uebung',
 	description: '',
 	internalIdentifier: 'practice',
@@ -40,12 +39,12 @@ export const PRACTICE_TOPIC: TopicsDataInterface = {
 	updateDate: '',
 	fallbackUrl: '',
 	titles: {
-		short: 'Übung',
-		long: 'Übung',
-		registrationDropdown: 'Übung',
-		welcome: 'Übung'
+		short: name,
+		long: name,
+		registrationDropdown: name,
+		welcome: name
 	}
-};
+});
 
 export interface PracticeMessageSeed {
 	sender: string;
@@ -82,7 +81,7 @@ export interface PracticeScenario {
 	rooms: PracticeRoomSeed[];
 }
 
-const erstantwortBody = () =>
+const erstantwortBody = (greeting: string) =>
 	`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
 		type: SYSTEM_NOTIFICATION_FIRST_RESPONSE,
 		version: ERSTANTWORT_PAYLOAD_VERSION,
@@ -90,7 +89,7 @@ const erstantwortBody = () =>
 		bausteine: [
 			{
 				id: 'practice-greeting',
-				body: PRACTICE_SCRIPT.erstantwortGreeting
+				body: greeting
 			}
 		]
 	})}`;
@@ -121,14 +120,19 @@ export const counsellorAsSessionConsultant = (
  */
 export const createPracticeScenario = ({
 	counsellor,
+	script,
 	start = 'enquiry',
 	now = Date.now()
 }: {
 	counsellor: UserDataInterface;
+	/** Every text and cast name of the run, in the language chosen at start. */
+	script: ScriptEngine;
 	start?: PracticeStart;
 	now?: number;
 }): PracticeScenario => {
 	const accepted = start === 'acceptedCase';
+	const { cast, texts } = script;
+	const topic = createPracticeTopic(script.names.topic);
 	const minute = 60_000;
 	const enquiryTs = now - 30 * minute;
 	const counsellorMember = {
@@ -138,24 +142,24 @@ export const createPracticeScenario = ({
 	const mainMessages: PracticeMessageSeed[] = [
 		{
 			sender: PRACTICE_SYSTEM_MATRIX_USER_ID,
-			body: erstantwortBody(),
+			body: erstantwortBody(texts.erstantwortGreeting),
 			ts: enquiryTs - minute
 		},
 		{
-			sender: PRACTICE_CAST.asker.matrixUserId,
-			body: PRACTICE_SCRIPT.enquiry,
+			sender: cast.asker.matrixUserId,
+			body: texts.askerFirstMessage,
 			ts: enquiryTs
 		},
 		...(accepted
 			? [
 					{
 						sender: PRACTICE_COUNSELLOR_MATRIX_USER_ID,
-						body: PRACTICE_SCRIPT.acceptedCaseCounsellor,
+						body: texts.acceptedCaseCounsellorMessage,
 						ts: now - 20 * minute
 					},
 					{
-						sender: PRACTICE_CAST.asker.matrixUserId,
-						body: PRACTICE_SCRIPT.askerReply,
+						sender: cast.asker.matrixUserId,
+						body: texts.askerReply,
 						ts: now - 10 * minute
 					}
 				]
@@ -175,7 +179,7 @@ export const createPracticeScenario = ({
 				postcode: '00000',
 				language: 'de',
 				matrixRoomId: PRACTICE_MAIN_ROOM_ID,
-				askerMatrixUserId: PRACTICE_CAST.asker.matrixUserId,
+				askerMatrixUserId: cast.asker.matrixUserId,
 				consultantMatrixUserId: accepted
 					? PRACTICE_COUNSELLOR_MATRIX_USER_ID
 					: null,
@@ -187,15 +191,15 @@ export const createPracticeScenario = ({
 				registrationType: 'REGISTERED',
 				createDate: new Date(enquiryTs).toISOString(),
 				topic: {
-					id: PRACTICE_TOPIC.id,
-					name: PRACTICE_TOPIC.name,
-					description: PRACTICE_TOPIC.description
+					id: topic.id,
+					name: topic.name,
+					description: topic.description
 				}
 			},
 			user: {
-				id: PRACTICE_CAST.asker.id,
-				username: PRACTICE_CAST.asker.username,
-				displayName: PRACTICE_CAST.asker.displayName
+				id: cast.asker.id,
+				username: cast.asker.username,
+				displayName: cast.asker.displayName
 			},
 			consultant: accepted
 				? counsellorAsSessionConsultant(counsellor)
@@ -207,26 +211,26 @@ export const createPracticeScenario = ({
 		rooms: [
 			{
 				roomId: PRACTICE_MAIN_ROOM_ID,
-				name: PRACTICE_CAST.asker.displayName,
-				members: [memberOf(PRACTICE_CAST.asker), counsellorMember],
+				name: cast.asker.displayName,
+				members: [memberOf(cast.asker), counsellorMember],
 				messages: mainMessages
 			},
 			{
 				roomId: PRACTICE_TEAM_ROOM_ID,
-				name: 'Team-Besprechung (Übung)',
-				members: [memberOf(PRACTICE_CAST.colleague), counsellorMember],
+				name: script.names.teamRoom,
+				members: [memberOf(cast.colleague), counsellorMember],
 				messages: [
 					{
-						sender: PRACTICE_CAST.colleague.matrixUserId,
-						body: PRACTICE_SCRIPT.teamColleague,
+						sender: cast.colleague.matrixUserId,
+						body: texts.teamColleagueMessage,
 						ts: enquiryTs + 5 * minute
 					}
 				]
 			},
 			{
 				roomId: PRACTICE_SUPERVISION_ROOM_ID,
-				name: 'Supervision (Übung)',
-				members: [memberOf(PRACTICE_CAST.supervisor), counsellorMember],
+				name: script.names.supervisionRoom,
+				members: [memberOf(cast.supervisor), counsellorMember],
 				messages: []
 			}
 		]
