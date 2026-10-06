@@ -35,3 +35,28 @@ export const verifyEmailLogoVariants = async ({
 		).toBeLessThanOrEqual(doc.documentElement.clientWidth + 1);
 	}
 };
+
+/** A retained 3:1 wordmark must wrap even when the tenant name has no spaces. */
+export const verifyLongEmailWordmark = async ({
+	canvasElement
+}: {
+	canvasElement: HTMLElement;
+}) => {
+	await waitFor(() => {
+		const image = canvasElement
+			.querySelector('iframe')
+			?.contentDocument?.querySelector('img');
+		expect(image?.complete && image.naturalWidth > 0).toBe(true);
+	});
+	const doc = canvasElement.querySelector('iframe')!.contentDocument!;
+	const image = doc.querySelector('img')!;
+	const wordmark = doc.querySelector('.logo-wordmark')!;
+	expect(doc.documentElement.clientWidth).toBe(320);
+	expect(image.getBoundingClientRect().width).toBe(144);
+	expect(image.getBoundingClientRect().height).toBe(48);
+	expect(doc.defaultView!.getComputedStyle(wordmark).display).not.toBe(
+		'none'
+	);
+	expect(wordmark.getBoundingClientRect().height).toBeGreaterThan(48);
+	expect(doc.documentElement.scrollWidth).toBeLessThanOrEqual(321);
+};

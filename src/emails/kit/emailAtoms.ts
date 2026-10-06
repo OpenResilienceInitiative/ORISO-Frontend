@@ -232,7 +232,7 @@ export const emailLogoLockup = (brand: EmailBrand): string =>
 			tracking: emailType.brand.tracking,
 			color: emailColor.onSurface
 		}
-	)};">${emailEscape(brand.platformName)}</td>` +
+	)};word-break:break-word;">${emailEscape(brand.platformName)}</td>` +
 	'</tr></table>';
 
 /**

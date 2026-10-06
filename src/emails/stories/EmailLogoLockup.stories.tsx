@@ -1,4 +1,7 @@
-import { verifyEmailLogoVariants } from '../../../.storybook/emailLogoAssertions';
+import {
+	verifyEmailLogoVariants,
+	verifyLongEmailWordmark
+} from '../../../.storybook/emailLogoAssertions';
 import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import { EmailFragment, emailFragmentArgTypes } from '../preview/EmailFragment';
@@ -150,4 +153,16 @@ export const LongNameOnPhone: Story = {
 		onCard: false,
 		width: 320
 	}
+};
+
+export const LongUnbrokenNameOnPhone: Story = {
+	args: {
+		fragment: emailHeaderBar({
+			...emailLogoFixtureBrand(emailLogoFixtures[2]),
+			platformName: 'OnlineBeratungCaritasMainzSozialberatung'
+		}),
+		onCard: false,
+		width: 320
+	},
+	play: verifyLongEmailWordmark
 };
