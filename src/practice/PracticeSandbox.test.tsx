@@ -349,6 +349,58 @@ describe('PracticeSandbox', () => {
 		});
 	});
 
+	it('keeps the real Zeitstrahl out of the practice view: no rows, no counts, no feed actions', () => {
+		const realRow = {
+			id: '7',
+			title: 'Neue Nachricht von Kim',
+			readAt: null
+		};
+		const outer = {
+			notifications: [],
+			notificationFeed: [realRow],
+			unreadNotificationCount: 3,
+			serverUnreadTotal: 3,
+			hasUnreadNotifications: true,
+			visibleUnreadCount: 3,
+			hiddenUnreadInLoadedPages: 1,
+			hasOlderNotifications: true,
+			addNotification: vi.fn(),
+			addEventNotification: vi.fn(),
+			refreshNotificationFeed: vi.fn(),
+			loadOlderNotifications: vi.fn(),
+			markNotificationAsRead: vi.fn(),
+			markNotificationsReadConfirmed: vi.fn(),
+			markAllNotificationsAsRead: vi.fn(),
+			clearNotificationFeed: vi.fn()
+		};
+		let inner: any;
+		const Probe = () => {
+			inner = useContext(NotificationsContext);
+			return null;
+		};
+		render(
+			<NotificationsContext.Provider value={outer as any}>
+				{sandbox(<Probe />)}
+			</NotificationsContext.Provider>
+		);
+
+		expect(inner.notificationFeed).toEqual([]);
+		expect(inner.unreadNotificationCount).toBe(0);
+		expect(inner.visibleUnreadCount).toBe(0);
+		expect(inner.hasUnreadNotifications).toBe(false);
+		expect(inner.hasOlderNotifications).toBe(false);
+		inner.markNotificationAsRead('7');
+		inner.markAllNotificationsAsRead();
+		inner.clearNotificationFeed();
+		inner.loadOlderNotifications();
+		inner.refreshNotificationFeed();
+		expect(outer.markNotificationAsRead).not.toHaveBeenCalled();
+		expect(outer.markAllNotificationsAsRead).not.toHaveBeenCalled();
+		expect(outer.clearNotificationFeed).not.toHaveBeenCalled();
+		expect(outer.loadOlderNotifications).not.toHaveBeenCalled();
+		expect(outer.refreshNotificationFeed).not.toHaveBeenCalled();
+	});
+
 	it('restarts from fresh fixtures', async () => {
 		let restart: () => void = () => undefined;
 		const Probe = () => {

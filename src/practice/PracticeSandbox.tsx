@@ -186,6 +186,7 @@ export const usePracticeSandbox = (): PracticeSandboxApi => {
 };
 
 const noop = () => undefined;
+const resolved = () => Promise.resolve();
 const practiceTopics = { topics: [PRACTICE_TOPIC], refreshTopics: noop };
 
 export interface PracticeSandboxProps {
@@ -234,10 +235,28 @@ export const PracticeSandbox = ({
 		[counsellor, start]
 	);
 	const api = useMemo(() => ({ world, restart }), [world, restart]);
-	// Toasts stay; feed entries would outlive practice in the real centre.
+	// Toasts stay; feed entries would outlive practice in the real centre, and
+	// the real Zeitstrahl (asker names, links to real cases) stays out of view.
 	const notifications = useContext(NotificationsContext);
 	const practiceNotifications = useMemo(
-		() => notifications && { ...notifications, addEventNotification: noop },
+		() =>
+			notifications && {
+				...notifications,
+				addEventNotification: noop,
+				notificationFeed: [],
+				unreadNotificationCount: 0,
+				serverUnreadTotal: 0,
+				hasUnreadNotifications: false,
+				visibleUnreadCount: 0,
+				hiddenUnreadInLoadedPages: 0,
+				hasOlderNotifications: false,
+				refreshNotificationFeed: noop,
+				loadOlderNotifications: resolved,
+				markNotificationAsRead: noop,
+				markNotificationsReadConfirmed: resolved,
+				markAllNotificationsAsRead: noop,
+				clearNotificationFeed: noop
+			},
 		[notifications]
 	);
 	const matrixContext = useMemo(
