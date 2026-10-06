@@ -1335,6 +1335,12 @@ export const MessageSubmitInterfaceComponent = ({
 					return !!client && isMatrixRoomEncrypted(client, roomId);
 				}
 			});
+			if (roomResolution.status === 'lookup-failed') {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+				return;
+			}
 			if (roomResolution.status !== 'ready') {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);

@@ -187,6 +187,7 @@ export const createEnquirySubmissionGuard = (): EnquirySubmissionGuard => {
 export type EnquiryMatrixRoomResolution =
 	| { status: 'ready'; roomId: string }
 	| { status: 'room-missing' }
+	| { status: 'lookup-failed' }
 	| { status: 'room-not-encrypted'; roomId: string };
 
 interface EnquiryMatrixRoomResolutionInput {
@@ -235,7 +236,7 @@ export const resolveEnquiryMatrixRoom = async ({
 		try {
 			roomId = (await fetchSessionRoomId()) || null;
 		} catch {
-			roomId = null;
+			return { status: 'lookup-failed' };
 		}
 	}
 	if (!roomId) {

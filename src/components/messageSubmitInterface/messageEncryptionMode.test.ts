@@ -374,17 +374,20 @@ describe('resolveEnquiryMatrixRoom (#1401)', () => {
 		expect(isRoomEncrypted).not.toHaveBeenCalled();
 	});
 
-	it('treats a failed session re-read as a missing room instead of throwing', async () => {
-		const result = await resolveEnquiryMatrixRoom({
-			knownRoomId: '',
-			fetchSessionRoomId: async () => {
-				throw new Error('network');
-			},
-			isRoomEncrypted: () => true,
-			sleep: noSleep
-		});
-		expect(result).toEqual({ status: 'room-missing' });
-	});
+	it.each(['network', 'unauthorized'])(
+		'keeps a failed %s session lookup distinct from missing room',
+		async (reason) => {
+			const result = await resolveEnquiryMatrixRoom({
+				knownRoomId: '',
+				fetchSessionRoomId: async () => {
+					throw new Error(reason);
+				},
+				isRoomEncrypted: () => true,
+				sleep: noSleep
+			});
+			expect(result).toEqual({ status: 'lookup-failed' });
+		}
+	);
 
 	it('waits for /sync to deliver the encrypted room before sending', async () => {
 		let polls = 0;
