@@ -22,7 +22,8 @@ export type SessionToolbarChipFilter =
 	| 'liveChat'
 	| 'internalGroup'
 	| 'groups'
-	| 'supervision';
+	| 'supervision'
+	| 'other';
 
 export type SessionToolbarGroupSession = {
 	isGroup?: boolean;
@@ -45,6 +46,8 @@ export const normalizeSessionToolbarChip = (
 			return 'nearby';
 		case 'drafts':
 			return 'drafts';
+		case 'other':
+			return 'other';
 		case 'liveChat':
 			return 'liveChat';
 		case 'internal':
@@ -197,25 +200,10 @@ export const draftMatchesSession = (
 };
 
 /**
- * How many supervised rows have something unread — the number on the
- * Supervision chip (#1306).
- *
- * Frank, 14.09.2026: the supervisor could not tell from the chip that anything
- * had arrived. The toolbar already renders a `CountBadge` for any chip that is
- * given a count, and `SessionsListToolbar.stories.tsx` already demonstrates
- * `chipCounts={{ supervision: … }}`; nothing in the app ever computed the
- * number. This is that number.
- *
- * It counts **unread among supervised**, not "how many cases I supervise". The
- * complaint was about not noticing a new message, and a badge that shows a
- * standing inventory never changes, so it stops being read after a day. This
- * mirrors the `unread` chip, which is derived the same way.
- *
- * Deliberately marker-only: a row without `session.supervision` is not
- * counted. `sessionMatchesToolbar` still falls back to the old "owned by
- * another consultant" heuristic when filtering, because an over-broad *filter*
- * merely shows too many rows — but an over-broad *number* tells the supervisor
- * that something arrived when nothing did. A wrong badge is worse than none.
+ * Counts unread cases explicitly supervised by this viewer. The display
+ * filter owns which rows are eligible, so callers pass its unread source.
+ * Legacy ownership guesses still affect filtering but never inflate this
+ * notification count.
  */
 export const countUnreadSupervisedSessions = (
 	pairs: ReadonlyArray<{
@@ -237,7 +225,15 @@ export function sessionMatchesToolbar(
 	chip: SessionToolbarChipFilter | null,
 	selectedPersonIds: string[],
 	drafts: IUserDraftItem[],
-	currentUserId?: string
+	currentUserId?: string,
+	/**
+	 * The row the route currently has open. The display filter already keeps
+	 * the open conversation visible (§5.2, `applySessionsFilter`); the chip
+	 * axis runs after it and used to drop the very session the consultant is
+	 * chatting in as soon as the chip flipped — an accepted live chat vanished
+	 * behind the "Chats" chip and could not be reopened (#1404).
+	 */
+	isRouteActive: boolean = false
 ): boolean {
 	const chatItem = getToolbarChatItem(raw);
 
@@ -249,35 +245,37 @@ export function sessionMatchesToolbar(
 	 * Runs client-side against the /enquiries/registered feed because this
 	 * install doesn't populate registration_type=ANONYMOUS in the DB.
 	 */
+	const effectiveChip = isRouteActive ? null : chip;
+
 	const isAnonymous = isAnonymousAskerSession(raw, extended);
-	if (chip === 'liveChat' && !isAnonymous) {
+	if (effectiveChip === 'liveChat' && !isAnonymous) {
 		return false;
 	}
-	if (chip === 'nearby' && (isAnonymous || extended.isGroup)) {
+	if (effectiveChip === 'nearby' && (isAnonymous || extended.isGroup)) {
 		return false;
 	}
 
-	if (chip === 'unread') {
+	if (effectiveChip === 'unread') {
 		// Derived from the Matrix client (#1147) — the DTO's `messagesRead`
 		// is hard-coded to true by the backend and must not be consulted.
 		if (!isChatItemUnread(chatItem)) {
 			return false;
 		}
-	} else if (chip === 'drafts') {
+	} else if (effectiveChip === 'drafts') {
 		if (
 			!drafts.some((draft) => draftMatchesSession(draft, raw, extended))
 		) {
 			return false;
 		}
-	} else if (chip === 'internalGroup') {
+	} else if (effectiveChip === 'internalGroup') {
 		if (!isInternalGroupChatSession(extended)) {
 			return false;
 		}
-	} else if (chip === 'groups') {
+	} else if (effectiveChip === 'groups') {
 		if (!isConversationCircleSession(extended)) {
 			return false;
 		}
-	} else if (chip === 'supervision') {
+	} else if (effectiveChip === 'supervision') {
 		if (hasSupervisionMarker(extended)) {
 			// ADR-008 list marker: the backend says whether I supervise this row.
 			if (

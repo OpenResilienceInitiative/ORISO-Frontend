@@ -3,7 +3,7 @@ import { buildMessageEventNotificationBody } from '../../src/api/apiPostMessageE
 describe('Message event notification privacy', () => {
 	it('strips plaintext previews from Matrix notification payloads', () => {
 		const payload = buildMessageEventNotificationBody({
-			roomId: '!matrix-room:oriso.org',
+			roomId: '!matrix-room:example.org',
 			matrixRoom: true,
 			messagePreview: 'highly sensitive Matrix message body',
 			threadRootId: '$thread-root',
@@ -13,7 +13,7 @@ describe('Message event notification privacy', () => {
 		});
 
 		expect(payload).to.deep.equal({
-			roomId: '!matrix-room:oriso.org',
+			roomId: '!matrix-room:example.org',
 			messagePreview: '',
 			matrixRoom: true,
 			threadRootId: '$thread-root',
@@ -31,7 +31,7 @@ describe('Message event notification privacy', () => {
 
 	it('defaults to Matrix-safe payloads when the room type is not provided', () => {
 		const payload = buildMessageEventNotificationBody({
-			roomId: '!matrix-room:oriso.org',
+			roomId: '!matrix-room:example.org',
 			messagePreview: 'implicit Matrix plaintext'
 		});
 

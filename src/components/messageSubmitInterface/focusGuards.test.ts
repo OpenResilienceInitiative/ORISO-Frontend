@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	isFocusInsideOpenMenu,
 	isFocusProtected,
+	isTypingElsewhere,
 	scheduleComposerAutoFocus
 } from './focusGuards';
 
@@ -92,5 +93,38 @@ describe('scheduleComposerAutoFocus', () => {
 		vi.runAllTimers();
 
 		expect(document.activeElement).toBe(editor);
+	});
+});
+
+/**
+ * Two composers share one view (chat card + supervision panel). Each one
+ * schedules its own initial focus once its draft has loaded, and the later
+ * one used to pull focus out of the editor the person was already typing
+ * in — the keystrokes after that point were lost (the flaky "arrow lights
+ * up" story: `expected 'Da' to contain 'Das schauen wir uns'`).
+ */
+describe('isTypingElsewhere', () => {
+	const setUp = () => {
+		document.body.innerHTML =
+			'<div id="main"><div contenteditable="true" id="mainEditor"></div></div>' +
+			'<div id="panel"><div contenteditable="true" id="panelEditor"></div><button id="panelSend">send</button></div>' +
+			'<input id="search" /><button id="other">x</button>';
+		const byId = (id: string) => document.getElementById(id)!;
+		return { byId, panel: byId('panel') };
+	};
+
+	it('is true while another editor or form field holds focus', () => {
+		const { byId, panel } = setUp();
+		expect(isTypingElsewhere(byId('mainEditor'), panel)).toBe(true);
+		expect(isTypingElsewhere(byId('search'), panel)).toBe(true);
+	});
+
+	it('is false inside the own composer, on buttons, body and null', () => {
+		const { byId, panel } = setUp();
+		expect(isTypingElsewhere(byId('panelEditor'), panel)).toBe(false);
+		expect(isTypingElsewhere(byId('panelSend'), panel)).toBe(false);
+		expect(isTypingElsewhere(byId('other'), panel)).toBe(false);
+		expect(isTypingElsewhere(document.body, panel)).toBe(false);
+		expect(isTypingElsewhere(null, panel)).toBe(false);
 	});
 });

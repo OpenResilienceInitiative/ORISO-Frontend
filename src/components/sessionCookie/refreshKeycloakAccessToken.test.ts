@@ -60,4 +60,19 @@ describe('refreshKeycloakAccessToken', () => {
 			'keycloakLogin'
 		);
 	});
+
+	it('rejects instead of hanging for any failed refresh response', async () => {
+		fetchMock.mockResolvedValue(new Response(null, { status: 503 }));
+		vi.stubGlobal('fetch', fetchMock);
+
+		let rejection: unknown;
+		void refreshKeycloakAccessToken().catch((error) => {
+			rejection = error;
+		});
+		for (let index = 0; index < 3; index += 1) {
+			await Promise.resolve();
+		}
+
+		expect(rejection).toMatchObject({ message: 'keycloakLogin' });
+	});
 });

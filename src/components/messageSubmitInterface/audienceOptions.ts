@@ -84,8 +84,9 @@ export const restoreAudienceSelection = (
  *
  * Built with the strict normaliser below rather than the composer's fuzzy
  * `getComparableAudienceIds`, which splits an id into tokens of four or more
- * characters — so every participant on the same homeserver shares the token
- * `oriso`, far too loose to decide whether somebody is a moderator.
+ * characters — so every participant on the same homeserver shares the
+ * homeserver token (`example` for `example.org`), far too loose to decide
+ * whether somebody is a moderator.
  *
  * Recipient collection (`createAudienceCollector`) is strict for the same
  * reason; the fuzzy matcher now survives only in the @-mention provider.
@@ -136,7 +137,7 @@ const collectKeys = (values: (string | null | undefined)[]): Set<string> => {
 /**
  * A lookup keyed by identity rather than by one spelling of an id.
  *
- * The same person reaches the composer as `@enc.katze_mika:oriso.org` from the
+ * The same person reaches the composer as `@enc.katze_mika:example.org` from the
  * room member list, as `katze_mika` from the session payload and as a bare
  * consultant id from the supervisor endpoint. Registering every key once means
  * a later lookup finds them whichever spelling it happens to hold.
@@ -188,7 +189,7 @@ export interface AudienceCollector {
  * Both used to run through the composer's fuzzy `getComparableAudienceIds`,
  * which adds every token of four or more characters to the comparison set. For
  * a Matrix id that includes the homeserver, so *every* participant on
- * `oriso.org` shares the token `oriso`:
+ * `example.org` shares the token `example`:
  *
  * - as a self test, the first member of the room list matched the signed-in
  *   user and the entire room was discarded as "me";
@@ -265,9 +266,24 @@ export const buildAudienceRoster = ({
  * consultant who is also supervising this conversation is a moderator here,
  * and the icon has to say the more restrictive thing.
  */
+/**
+ * Kind for a self-help member no roster entry matches. Only once counsellor
+ * identities are resolved may the rest count as clients; otherwise an
+ * unmatched counsellor could land in "all clients".
+ */
+export const unmatchedMemberKind = (
+	isSelfHelpGroup: boolean,
+	directoryState: 'loading' | 'ready' | 'error' | 'unavailable'
+): AudienceKind =>
+	isSelfHelpGroup &&
+	(directoryState === 'ready' || directoryState === 'unavailable')
+		? 'asker'
+		: 'person';
+
 export const classifyAudienceKind = (
 	value: string,
-	roster: AudienceRoster
+	roster: AudienceRoster,
+	fallback: AudienceKind = 'person'
 ): AudienceKind => {
 	if (value === AUDIENCE_ALL) {
 		return 'all';
@@ -282,7 +298,7 @@ export const classifyAudienceKind = (
 	if (keys.some((key) => roster.consultant.has(key))) {
 		return 'consultant';
 	}
-	return 'person';
+	return fallback;
 };
 
 /**
@@ -368,7 +384,7 @@ export interface GroupedAudienceOptions {
  *
  * The menu used to re-derive roles with `getComparableAudienceIds`, whose
  * four-character-plus tokens include the homeserver name — every participant
- * on `oriso.org` shares the token `oriso`, so a single supervisor in the room
+ * on `example.org` shares the token `example`, so a single supervisor in the room
  * could pull unrelated people into the moderator section, and the section
  * decides which icon their pill gets. Reported by CodeRabbit on #948.
  *
