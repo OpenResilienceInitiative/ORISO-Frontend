@@ -5589,6 +5589,31 @@
 			"less": "Afficher moins"
 		}
 	},
+	"practice": {
+		"banner": {
+			"title": "Mode exercice",
+			"badge": "Exercice",
+			"progress": "Étape {{current}} sur {{total}}",
+			"note": "Cas d'exercice, aucune donnée réelle",
+			"end": "Terminer l'exercice",
+			"restart": "Recommencer",
+			"moveHandle": "Déplacer le bandeau (flèches du clavier)"
+		},
+		"cards": {
+			"title": "Espace d'exercice",
+			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",
+			"empty": "Aucun exercice n'est disponible pour vous pour le moment.",
+			"badge": "Exercice",
+			"phoneHint": "Merci de vous exercer sur un ordinateur.",
+			"action": {
+				"start": "Commencer l'exercice",
+				"restart": "S'exercer à nouveau"
+			}
+		},
+		"error": {
+			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {

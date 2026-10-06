@@ -5581,6 +5581,31 @@
 			"less": "Weniger anzeigen"
 		}
 	},
+	"practice": {
+		"banner": {
+			"title": "Übungsmodus",
+			"badge": "Übung",
+			"progress": "Schritt {{current}} von {{total}}",
+			"note": "Übungsfall, keine echten Daten",
+			"end": "Übung beenden",
+			"restart": "Neu starten",
+			"moveHandle": "Hinweis verschieben (Pfeiltasten)"
+		},
+		"cards": {
+			"title": "Übungsbereich",
+			"subtitle": "Üben Sie Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was Sie hier eingeben, wird nicht gespeichert.",
+			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",
+			"badge": "Übung",
+			"phoneHint": "Bitte üben Sie am Computer.",
+			"action": {
+				"start": "Übung starten",
+				"restart": "Noch einmal üben"
+			}
+		},
+		"error": {
+			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {

@@ -2484,6 +2484,16 @@
 			"title": "Dein eigenes Passwort"
 		}
 	},
+	"practice": {
+		"cards": {
+			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
+			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
+			"phoneHint": "Bitte übe am Computer."
+		},
+		"error": {
+			"start": "Die Übung konnte nicht gestartet werden. Bitte versuche es erneut."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {
