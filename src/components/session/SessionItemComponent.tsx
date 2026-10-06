@@ -200,6 +200,7 @@ import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
+import { GroupConsentGate } from '../groupChat/consent/GroupConsentGate';
 import {
 	generatePseudonym,
 	regeneratePseudonym,
@@ -589,6 +590,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldFadeSessionChrome = false;
 	const shouldShowConsentGate =
 		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	/* ADR-022 gate 2 in a self-help group (#1499): the group's Beratungsstelle
+	   statement, before the first message, for a client whose agreement is not
+	   on record. Decided by the recorded state, never by guessing whether the
+	   account is temporary — a group join records none at registration. */
+	const [groupConsentAccepted, setGroupConsentAccepted] = useState(false);
+	const shouldShowGroupConsentGate =
+		Boolean(activeSession.isGroup) &&
+		isAskerUser &&
+		!isConsultantUser &&
+		!privacyAcceptanceRecorded &&
+		!groupConsentAccepted;
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
@@ -604,6 +616,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		requiresPseudonymConfirmation,
 		isInAnonymousWaitingQueuePhase
 	});
+	/* Either gate hides the conversation and the composer until it is passed. */
+	const blocksConversation =
+		shouldBlockAnonymousInquiryChat || shouldShowGroupConsentGate;
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
@@ -768,8 +783,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => parseChannel(location.search),
 		[location.search]
 	);
+	// A gate hides threads too: the panel has its own timeline and composer.
 	const activeThreadRootId =
-		isThreadsEnabled && routeChannel?.kind === 'thread'
+		isThreadsEnabled &&
+		!blocksConversation &&
+		routeChannel?.kind === 'thread'
 			? routeChannel.rootId
 			: null;
 	const activeThreadRootMessage = useMemo<MessageItem | null>(
@@ -3014,6 +3032,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* Thread-panel-UX (#435): per-room list of all threads. */}
 				{!isEmbeddedNotificationsView &&
 					isThreadsEnabled &&
+					!blocksConversation &&
 					threadSummariesRaw.size > 0 && (
 						<div className="session__threadListBar">
 							<button
@@ -3096,6 +3115,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onAccept={handleAnonymousInquiryConsentAccept}
 						/>
 					)}
+					{shouldShowGroupConsentGate && (
+						<GroupConsentGate
+							agencyId={
+								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							onAccepted={() => {
+								setGroupConsentAccepted(true);
+								apiGetUserData()
+									.then((fresh) => setUserData(fresh))
+									.catch(() => undefined);
+							}}
+						/>
+					)}
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
@@ -3105,7 +3137,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{pseudonymConfirmed && <PrivacyMessageCard />}
 						</div>
 					)}
-					{!shouldBlockAnonymousInquiryChat && (
+					{!blocksConversation && (
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
@@ -3138,7 +3170,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								/>
 							</div>
 						)}
-					{!shouldBlockAnonymousInquiryChat && (
+					{!blocksConversation && (
 						<div className={'message-holder'}>
 							{shouldShowRobotMessages &&
 								!showWaitingMiniGame &&
@@ -3530,7 +3562,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{canRenderClientComposer({
 					canWriteMessage,
 					isSupervisor: isSupervisorView,
-					shouldBlockAnonymousInquiryChat
+					shouldBlockAnonymousInquiryChat: blocksConversation
 				}) && (
 					<div
 						className={clsx(

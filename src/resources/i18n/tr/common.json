@@ -918,7 +918,7 @@
 				"hintMessage": "İpucu",
 				"repetition": {
 					"label": "Tekrarlar",
-					"single": "benzersiz",
+					"single": "bir kez",
 					"weekly": "haftalık"
 				},
 				"startDate": "Tarih",
@@ -1152,8 +1152,7 @@
 				"decrease": "{{field}} azalt",
 				"openList": "{{field}} seç",
 				"durationValue": "{{count}} sa",
-				"repeatValue_one": "{{count}} kez",
-				"repeatValue_other": "{{count}} kez"
+				"repeatDates": "{{count}} oturum"
 			},
 			"noModeratorAvailable": "Uygun kişi yok",
 			"moderatorHelp": "Yardım",
@@ -1177,7 +1176,8 @@
 			"moreOpen": "Moderatör grubu açtı. “Katıl” sizi görüşmeye götürür.",
 			"moreWaiting": "Moderatör grubu açar açmaz “Katıl” burada etkinleşir. Sizin yapmanız gereken bir şey yok.",
 			"missing": "Bu grup artık yok ya da erişiminiz yok.",
-			"backToCountdown": "Geri sayıma dön"
+			"backToCountdown": "Geri sayıma dön",
+			"legalMenu": "Yasal bilgiler"
 		},
 		"shareDialog": {
 			"title_text": "Çember oluşturuldu",
@@ -1255,6 +1255,26 @@
 				"coModeratorSameTenant": "Ortak moderatörlük yalnızca kendi kuruluşunuzun uzmanlarına açıktır.",
 				"privacy": "Siz karar verene kadar {{name}} bu sohbet grubundan hiçbir şey görmez."
 			}
+		},
+		"joinHandover": {
+			"badge": "Sohbet grubu",
+			"subline": "Grup nasıl işler:",
+			"encryption": "Şifreli: Grupta yazılanları yalnızca grubun üyeleri görür.",
+			"cta": "Gruba git",
+			"status": {
+				"preparing": "Grup odası hazırlanıyor …",
+				"ready": "Her şey hazır — gruba geçebilirsiniz",
+				"slow": "Bu, her zamankinden uzun sürüyor",
+				"entering": "Grup odası açılıyor …"
+			}
+		},
+		"consent": {
+			"headline": "Yazmadan önce",
+			"description": "Bu grup bir danışma merkezi tarafından yürütülüyor. Lütfen grupta yazmadan önce merkezin gizlilik politikasını kabul edin.",
+			"reject": "Reddet",
+			"accept": "Kabul ediyorum",
+			"rejected": "Onayınız olmadan bu grupta yazamazsınız. Daha sonra istediğiniz zaman onay verebilirsiniz.",
+			"saveFailed": "Onayınız kaydedilemedi. Lütfen tekrar deneyin."
 		}
 	},
 	"help": {
@@ -3450,6 +3470,10 @@
 		"stepper": {
 			"progress": "{{total}} adımdan {{current}}. adım",
 			"progressShort": "Adım {{current}}/{{total}}"
+		},
+		"accountCreated": {
+			"login": "Hesabınız oluşturuldu, ancak otomatik giriş yapılamadı. Lütfen kullanıcı adınız ve şifrenizle giriş yapın.",
+			"retry": "Erişiminiz oluşturuldu, ancak giriş yapılamadı. Lütfen tekrar deneyin."
 		}
 	},
 	"releaseNote": {

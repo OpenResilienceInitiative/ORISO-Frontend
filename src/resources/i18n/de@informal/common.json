@@ -339,9 +339,7 @@
 				"increase": "{{field}} erhöhen",
 				"decrease": "{{field}} verringern",
 				"openList": "{{field}} auswählen",
-				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} mal",
-				"repeatValue_other": "{{count}} mal"
+				"durationValue": "{{count}} h"
 			},
 			"moderatorHelpDialog": {
 				"description": "Gerade kann keine weitere Fachkraft deines Trägers ausgewählt werden. Du kannst den Gesprächskreis trotzdem erstellen und Co-Moderator:innen danach hinzufügen.",
@@ -403,6 +401,17 @@
 				"description": "Entscheide, ob {{name}} in „{{group}}“ dazukommt.",
 				"privacy": "Bis du entscheidest, sieht {{name}} nichts aus diesem Gesprächskreis."
 			}
+		},
+		"joinHandover": {
+			"status": {
+				"ready": "Alles bereit — du kannst zur Gruppe"
+			}
+		},
+		"consent": {
+			"headline": "Bevor du schreibst",
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
+			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}
 	},
 	"help": {
@@ -1275,6 +1284,10 @@
 				"ready": "Alles bereit — du kannst schreiben",
 				"entering": "Dein Beratungsraum wird geöffnet …"
 			}
+		},
+		"accountCreated": {
+			"login": "Dein Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melde dich mit deinem Benutzernamen und deinem Passwort an.",
+			"retry": "Dein Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal."
 		}
 	},
 	"session": {

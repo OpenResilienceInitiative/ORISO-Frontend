@@ -933,8 +933,7 @@
 				"decrease": "{{field}} verringern",
 				"openList": "{{field}} auswählen",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} mal",
-				"repeatValue_other": "{{count}} mal"
+				"repeatDates": "{{count}} Termine"
 			},
 			"noModeratorAvailable": "Keine Person verfügbar",
 			"moderatorHelp": "Hilfe",
@@ -1172,7 +1171,8 @@
 			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ sind Sie im Gespräch.",
 			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Sie müssen nichts tun.",
 			"missing": "Diese Gruppe gibt es nicht mehr oder Sie haben keinen Zugang.",
-			"backToCountdown": "Zurück zum Countdown"
+			"backToCountdown": "Zurück zum Countdown",
+			"legalMenu": "Rechtliches"
 		},
 		"shareDialog": {
 			"title_text": "Gesprächskreis angelegt",
@@ -1250,6 +1250,26 @@
 				"coModeratorSameTenant": "Co-Moderation ist Fachkräften des eigenen Trägers vorbehalten.",
 				"privacy": "Bis Sie entscheiden, sieht {{name}} nichts aus diesem Gesprächskreis."
 			}
+		},
+		"joinHandover": {
+			"badge": "Gesprächskreis",
+			"subline": "So läuft es in der Gruppe:",
+			"encryption": "Verschlüsselt: Was in der Gruppe geschrieben wird, sehen nur ihre Mitglieder.",
+			"cta": "Zur Gruppe",
+			"status": {
+				"preparing": "Gruppenraum wird vorbereitet …",
+				"ready": "Alles bereit — Sie können zur Gruppe",
+				"slow": "Das dauert länger als gewohnt",
+				"entering": "Der Gruppenraum wird geöffnet …"
+			}
+		},
+		"consent": {
+			"headline": "Bevor Sie schreiben",
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.",
+			"reject": "Ablehnen",
+			"accept": "Einverstanden",
+			"rejected": "Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.",
+			"saveFailed": "Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
 		}
 	},
 	"help": {
@@ -3470,6 +3490,10 @@
 			"done": "abgeschlossen",
 			"active": "aktueller Schritt",
 			"pending": "offen"
+		},
+		"accountCreated": {
+			"login": "Ihr Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melden Sie sich mit Ihrem Benutzernamen und Ihrem Passwort an.",
+			"retry": "Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal."
 		}
 	},
 	"releaseNote": {

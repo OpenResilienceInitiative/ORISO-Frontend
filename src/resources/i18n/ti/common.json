@@ -918,7 +918,7 @@
 				"hintMessage": "ኣፍልጦ",
 				"repetition": {
 					"label": "ምድግጋም",
-					"single": "ዝተፈለየ",
+					"single": "ሓደ ግዜ",
 					"weekly": "ሰሙናዊ ምዃኑ ይፍለጥ"
 				},
 				"startDate": "ዕለት",
@@ -1152,8 +1152,7 @@
 				"decrease": "{{field}} ኣጉድል",
 				"openList": "{{field}} ምረጽ",
 				"durationValue": "{{count}} ሰዓት",
-				"repeatValue_one": "{{count}} ግዜ",
-				"repeatValue_other": "{{count}} ግዜ"
+				"repeatDates": "{{count}} ግዜያት"
 			},
 			"noModeratorAvailable": "ዝርከብ ሰብ የለን",
 			"moderatorHelp": "ሓገዝ",
@@ -1177,7 +1176,8 @@
 			"moreOpen": "ኣወሃሃዲ ነቲ ጉጅለ ከፊቱዎ። ብ„ተጸንበር“ ኣብቲ ዝርርብ ትኣትዉ።",
 			"moreWaiting": "ኣወሃሃዲ ነቲ ጉጅለ ምስ ከፈቶ „ተጸንበር“ ኣብዚ ይፍቀድ። ዝገብርዎ የለን።",
 			"missing": "እዚ ጉጅለ የለን ወይ መእተዊ የብልኩምን።",
-			"backToCountdown": "ናብቲ ቆጻሪ ተመለስ"
+			"backToCountdown": "ናብቲ ቆጻሪ ተመለስ",
+			"legalMenu": "ሕጋዊ ሓበሬታ"
 		},
 		"shareDialog": {
 			"title_text": "ክቢ ተፈጢሩ",
@@ -1255,6 +1255,26 @@
 				"coModeratorSameTenant": "ብሓባር ምውህሃድ ንሞያውያን ናይ ገዛእ ትካልኩም ጥራይ እዩ።",
 				"privacy": "ክሳብ ትውስኑ፡ {{name}} ካብዚ ጉጅለ ዘተ ዋላ ሓንቲ ኣይርእን።"
 			}
+		},
+		"joinHandover": {
+			"badge": "ጉጅለ ዝርርብ",
+			"subline": "ጉጅለ ከመይ ይካየድ፦",
+			"encryption": "ምስጢራዊ፤ ኣብ ጉጅለ ዝተጻሕፈ ኣባላት ጉጅለ ጥራይ እዮም ዝርእይዎ።",
+			"cta": "ናብ ጉጅለ",
+			"status": {
+				"preparing": "ናይ ጉጅለ ክፍሊ ይዳሎ ኣሎ …",
+				"ready": "ኩሉ ድሉው እዩ — ናብ ጉጅለ ክትከዱ ትኽእሉ ኢኹም",
+				"slow": "እዚ ካብ ንቡር ንላዕሊ ግዜ ይወስድ ኣሎ",
+				"entering": "ናይ ጉጅለ ክፍሊ ይኽፈት ኣሎ …"
+			}
+		},
+		"consent": {
+			"headline": "ቅድሚ ምጽሓፍኩም",
+			"description": "እዛ ጉጅለ ብማእከል ምኽሪ እያ እትምራሕ። በጃኹም ኣብ ጉጅለ ቅድሚ ምጽሓፍኩም ፖሊሲ ምሕላው ውልቃዊ ሓበሬታኡ ተቐበሉ።",
+			"reject": "ኣይተቐበልኩን",
+			"accept": "ተሰማሚዔ",
+			"rejected": "ብዘይ ስምምዕኹም ኣብዛ ጉጅለ ክትጽሕፉ ኣይትኽእሉን ኢኹም። ኣብ ዝኾነ ግዜ ደሓር ክትሰማምዑ ትኽእሉ ኢኹም።",
+			"saveFailed": "ስምምዕኹም ክዕቀብ ኣይከኣለን። በጃኹም እንደገና ፈትኑ።"
 		}
 	},
 	"help": {
@@ -3450,6 +3470,10 @@
 		"stepper": {
 			"progress": "ስጉምቲ {{current}} ካብ {{total}}",
 			"progressShort": "ስጉምቲ {{current}}/{{total}}"
+		},
+		"accountCreated": {
+			"login": "ኣካውንትኩም ተፈጢሩ ኣሎ፡ ግን እቲ ብኣውቶማቲክ ምእታው ኣይሰለጠን። በጃኹም ብስም ተጠቃሚኹምን መሕለፊ ቓልኩምን እተዉ።",
+			"retry": "መእተዊኹም ተፈጢሩ ኣሎ፡ ግን ምእታው ኣይሰለጠን። በጃኹም እንደገና ፈትኑ።"
 		}
 	},
 	"releaseNote": {
