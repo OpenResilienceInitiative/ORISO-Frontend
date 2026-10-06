@@ -1,8 +1,20 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { fireEvent, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import {
+	afterEach,
+	beforeAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi
+} from 'vitest';
+
+import { createInstance } from 'i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import englishCatalogue from '../../../resources/i18n/en/common.json';
 
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { callManager } from '../../../services/CallManager';
@@ -49,9 +61,20 @@ vi.mock('matrix-widget-api', async (importOriginal) => {
 	};
 });
 
-vi.mock('../../../resources/scripts/runtimeConfig', () => ({
+vi.mock('../../../resources/scripts/runtimeConfig', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../../resources/scripts/runtimeConfig')
+	>()),
 	getElementCallBaseUrl: () => 'https://call.storybook.test'
 }));
+
+const testI18n = createInstance();
+const renderTranslated = (ui: React.ReactElement) =>
+	render(ui, {
+		wrapper: ({ children }) => (
+			<I18nextProvider i18n={testI18n}>{children}</I18nextProvider>
+		)
+	});
 
 describe('GroupCallWidget Storybook harness', () => {
 	const listenerCount = (matrixClientService: unknown) =>
@@ -61,12 +84,23 @@ describe('GroupCallWidget Storybook harness', () => {
 			}
 		).getHarnessListenerCount();
 
+	beforeAll(async () => {
+		await testI18n.use(initReactI18next).init({
+			lng: 'en',
+			fallbackLng: 'en',
+			defaultNS: 'common',
+			resources: { en: { common: englishCatalogue } },
+			interpolation: { escapeValue: false }
+		});
+	});
+
 	beforeEach(() => {
 		widgetApiMocks.instances.length = 0;
 		resetCallManager();
 	});
 
 	afterEach(() => {
+		cleanup();
 		callManager.endCall(false);
 	});
 
@@ -75,7 +109,7 @@ describe('GroupCallWidget Storybook harness', () => {
 		seedIncomingElementCall();
 		callManager.answerCall();
 
-		const view = render(
+		const view = renderTranslated(
 			<MatrixClientContext.Provider
 				value={{
 					matrixClientService,
@@ -132,15 +166,23 @@ describe('GroupCallWidget Storybook harness', () => {
 				<GroupCallWidget />
 			</MatrixClientContext.Provider>
 		);
-		const view = render(renderWidget(firstService));
+		const view = renderTranslated(renderWidget(firstService));
 
-		await waitFor(() => expect(listenerCount(firstService)).toBe(4));
+		await waitFor(() => {
+			expect(listenerCount(firstService)).toBe(4);
+			expect(widgetApiMocks.instances).toHaveLength(1);
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
 		view.rerender(renderWidget(nextService));
 		await waitFor(() => {
 			expect(listenerCount(firstService)).toBe(0);
 			expect(listenerCount(nextService)).toBe(4);
 		});
-		expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled();
+		await waitFor(() =>
+			expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled()
+		);
 
 		view.unmount();
 
@@ -150,7 +192,7 @@ describe('GroupCallWidget Storybook harness', () => {
 	});
 
 	it('clears retained local-leave metadata when the actual harness unmounts', async () => {
-		const view = render(<GroupCallStoryHarness mode="active" />);
+		const view = renderTranslated(<GroupCallStoryHarness mode="active" />);
 
 		await waitFor(() => {
 			expect(
@@ -172,7 +214,7 @@ describe('GroupCallWidget Storybook harness', () => {
 	});
 
 	it('reseeds the actual harness without carrying active UI across modes', async () => {
-		const view = render(<GroupCallStoryHarness mode="active" />);
+		const view = renderTranslated(<GroupCallStoryHarness mode="active" />);
 
 		await waitFor(() => {
 			expect(
@@ -188,7 +230,9 @@ describe('GroupCallWidget Storybook harness', () => {
 				view.container.querySelector('.element-call-iframe')
 			).toBeFalsy();
 		});
-		expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled();
+		await waitFor(() =>
+			expect(widgetApiMocks.instances[0].stop).toHaveBeenCalled()
+		);
 
 		view.unmount();
 		expect(callManager.getCurrentCall()).toBeNull();

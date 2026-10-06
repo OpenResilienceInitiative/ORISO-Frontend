@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { useTranslation } from 'react-i18next';
-import { ReactComponent as LanguageIcon } from '../../resources/img/icons/language_filled.svg';
 
 import './profile.styles';
 import { OrisoSelect } from '../form/OrisoSelect';
@@ -25,13 +24,10 @@ export const Locale = () => {
 	return (
 		<div className="appLanguage">
 			<div className="profile__content__title">
-				<div className="profile__content__header">
-					<LanguageIcon className="icon" />
-					<Headline
-						text={translate('profile.appLanguage.title')}
-						semanticLevel="5"
-					/>
-				</div>
+				<Headline
+					text={translate('profile.appLanguage.title')}
+					semanticLevel="5"
+				/>
 				<Text
 					text={translate('profile.appLanguage.info')}
 					type="standard"

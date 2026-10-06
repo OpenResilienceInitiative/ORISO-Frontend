@@ -6,6 +6,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { SelectChangeEvent } from '@mui/material/Select';
 import { OrisoMultiSelect } from './OrisoSelect';
 
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string) => key
+	})
+}));
+
 const languageOptions = [
 	{ value: 'de', label: '(DE) German', disabled: true },
 	{ value: 'en', label: '(EN) English' },
@@ -54,7 +60,9 @@ describe('OrisoMultiSelect searchable', () => {
 		render(<Harness searchable={false} />);
 		openMenu();
 
-		expect(screen.queryByRole('textbox', { name: 'Search' })).toBeNull();
+		expect(
+			screen.queryByRole('textbox', { name: 'form.select.search' })
+		).toBeNull();
 		expect(screen.getByRole('option', { name: /German/ })).toBeTruthy();
 		expect(screen.getByRole('option', { name: /French/ })).toBeTruthy();
 	});
@@ -63,9 +71,12 @@ describe('OrisoMultiSelect searchable', () => {
 		render(<Harness />);
 		openMenu();
 
-		fireEvent.change(screen.getByRole('textbox', { name: 'Search' }), {
-			target: { value: 'fr' }
-		});
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'form.select.search' }),
+			{
+				target: { value: 'fr' }
+			}
+		);
 
 		expect(screen.getByRole('option', { name: /French/ })).toBeTruthy();
 		expect(screen.queryByRole('option', { name: /English/ })).toBeNull();
@@ -87,9 +98,12 @@ describe('OrisoMultiSelect searchable', () => {
 		);
 		openMenu();
 
-		fireEvent.change(screen.getByRole('textbox', { name: 'Search' }), {
-			target: { value: 'fr' }
-		});
+		fireEvent.change(
+			screen.getByRole('textbox', { name: 'form.select.search' }),
+			{
+				target: { value: 'fr' }
+			}
+		);
 		fireEvent.click(screen.getByRole('option', { name: /French/ }));
 
 		const nextValue = onChange.mock.calls[0][0].target.value as string[];

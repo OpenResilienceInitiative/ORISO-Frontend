@@ -1,4 +1,4 @@
-import { logout } from '../logout/logout';
+import { logout, teardownLocalSession } from '../logout/logout';
 import { setValueInCookie } from '../sessionCookie/accessSessionCookie';
 import {
 	getTokenExpiryFromLocalStorage,
@@ -8,6 +8,22 @@ import { refreshKeycloakAccessToken } from '../sessionCookie/refreshKeycloakAcce
 import { appConfig } from '../../utils/appConfig';
 
 export const RENEW_BEFORE_EXPIRY_IN_MS = 10 * 1000; // seconds
+
+export class TokenRefreshUnavailableError extends Error {
+	constructor(cause?: unknown) {
+		super('Token refresh temporarily unavailable');
+		this.name = 'TokenRefreshUnavailableError';
+		Object.setPrototypeOf(this, TokenRefreshUnavailableError.prototype);
+		if (cause !== undefined) {
+			(this as Error & { cause?: unknown }).cause = cause;
+		}
+	}
+}
+
+export const isTokenRefreshUnavailableError = (
+	error: unknown
+): error is TokenRefreshUnavailableError =>
+	error instanceof TokenRefreshUnavailableError;
 
 export const isInviteRoute = (): boolean =>
 	/^\/invite(?:\/|$)/.test(window.location.pathname);
@@ -88,7 +104,7 @@ const startTimers = ({
 	// just a sanity check so that we don't accidentally register an endless loop
 	if (accessTokenRefreshIntervalInMs > 0) {
 		refreshInterval = window.setInterval(() => {
-			refreshTokens();
+			void refreshTokens().catch(() => undefined);
 		}, accessTokenRefreshIntervalInMs);
 	}
 
@@ -116,18 +132,27 @@ export const handleTokenRefresh = (redirect: boolean = true): Promise<void> => {
 			tokenExpiry.refreshTokenValidUntilTime - currentTime;
 
 		if (refreshTokenValidInMs <= 0 && accessTokenValidInMs <= 0) {
-			// access token and refresh token no longer valid, logout
-			logout(redirect, appConfig.urls.toLogin);
+			// Access and refresh token are gone. Tear the local session down
+			// *now*, before the caller renders the login form: `logout()`
+			// first awaits its pre-logout handlers, and in that window the
+			// leftover cookies kept the notification poller and the Matrix
+			// client alive next to the login form (dev, 2026-09-16).
+			teardownLocalSession();
+			void logout(redirect, appConfig.urls.toLogin);
 			reject();
 		} else if (accessTokenValidInMs <= 0) {
 			// access token no longer valid but refresh token still valid, refresh tokens
-			refreshTokens().then(() => {
-				startTimers({
-					accessTokenValidInMs,
-					refreshTokenValidInMs
+			refreshTokens()
+				.then(() => {
+					startTimers({
+						accessTokenValidInMs,
+						refreshTokenValidInMs
+					});
+					resolve();
+				})
+				.catch((error) => {
+					reject(new TokenRefreshUnavailableError(error));
 				});
-				resolve();
-			});
 		} else {
 			// access token and refresh token still valid, just start the timers
 			startTimers({

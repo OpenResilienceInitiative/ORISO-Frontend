@@ -36,8 +36,12 @@ The Storybook browser/play-function run and visual screenshots remain deferred;
 the unit tests exercise the real host with the fake Matrix boundary but are not
 a substitute for opening the Connecting and ActiveCall stories in a browser.
 
-Keep this PR draft until integration and required checks are resolved. No merge or deployment is part of this handoff. Shazia should review the source, complete the explicitly missing behavior, rerun local tests, then decide when to request final review. Local tests, independent review, deployment, browser proof and mail receipt are separate evidence states.
+The source can enter review after the current checks pass. Real-media and deployed integration acceptance remain separate open checks. No merge or deployment is part of this handoff. Shazia should review the source and complete the missing browser acceptance. Local tests, independent review, deployment, browser proof and mail receipt are separate evidence states.
 
 ## Evidence
 
 Fresh per-branch verification is recorded in `VERIFICATION.md`. Earlier retained-source test counts are not presented as fresh results. Dependency cache was copied locally only after verifying package-lock SHA-256 equality; the install command above is the portable setup.
+
+## Dev reintegration — 2026-10-06
+
+Merged current Dev `9ec1b655c6973d26d7fbc0bc5a319fe26793a9c6`. Keep the current production widget unchanged. Tests initialize the real English catalogue, wait for the initial asynchronous widget channel before replacing clients, and retain channel-stop and listener-transfer assertions. The story follows the active translated close label. Runtime configuration uses a partial mock so newer Dev exports remain available.

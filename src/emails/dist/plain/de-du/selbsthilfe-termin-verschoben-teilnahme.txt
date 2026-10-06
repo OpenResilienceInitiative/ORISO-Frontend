@@ -1,0 +1,28 @@
+Dein Termin hat sich geändert
+=============================
+
+Bitte beachte das neue Datum und die neue Uhrzeit.
+
+Du nimmst an diesem Termin teil. Mehr siehst du nach der Anmeldung.
+
+Datum: {{appointmentDate}}
+Uhrzeit: {{appointmentTime}}
+
+Termin ansehen:
+{{appointmentUrl}}
+
+----------------------------------------------------------------
+Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer dir und deiner Beratung kann sie lesen – auch wir nicht.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} ist ein Angebot von {{orgName}}.
+
+Einstellungen: {{settingsUrl}}
+Datenschutz: {{privacyUrl}}
+Impressum: {{imprintUrl}}
+Benachrichtigungen abbestellen: {{unsubscribeUrl}}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworte nicht darauf.

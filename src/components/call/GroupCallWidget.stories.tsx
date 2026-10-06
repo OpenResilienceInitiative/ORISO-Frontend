@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
@@ -104,9 +105,14 @@ export const ActiveCall: Story = {
 				).toBeTruthy();
 				expect(
 					canvasElement.querySelector(
-						'button.element-call-close[aria-label="Close call"]'
+						'button.element-call-close[aria-label]'
 					)
 				).toBeTruthy();
+				expect(
+					canvasElement
+						.querySelector('button.element-call-close')
+						?.getAttribute('aria-label')
+				).toBe(i18n.t('calls.group.close'));
 			},
 			{ timeout: 5000 }
 		);
