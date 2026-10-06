@@ -72,7 +72,7 @@ describe('PracticeLayer', () => {
 		expect(mounted).toHaveBeenCalledTimes(1);
 	});
 
-	it('ends practice when the authenticated app goes away', () => {
+	it('ends practice when the authenticated app goes away', async () => {
 		const { unmount } = render(
 			<PracticeLayer>
 				<Probe />
@@ -81,6 +81,7 @@ describe('PracticeLayer', () => {
 		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
 
 		unmount();
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
 		expect(isPracticeMode()).toBe(false);
 	});

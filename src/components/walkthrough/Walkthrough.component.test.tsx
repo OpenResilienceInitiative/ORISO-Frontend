@@ -791,6 +791,13 @@ describe('Walkthrough', () => {
 					);
 
 					adapterProps.onEnd();
+					expect(getPracticeSnapshot().status).toBe('closing');
+					await act(
+						() =>
+							new Promise<void>((resolve) =>
+								setTimeout(resolve, 0)
+							)
+					);
 					expect(getPracticeSnapshot().status).toBe('inactive');
 				} finally {
 					unregister();

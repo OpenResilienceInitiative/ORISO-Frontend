@@ -4,7 +4,7 @@ import i18n from 'i18next';
 import { M3Snackbar } from '../components/m3Snackbar/M3Snackbar';
 import { appSnackbarStack } from '../components/m3Snackbar/snackbarStack';
 import { registerTourHostHooks } from '../components/productTour/tourHostHooks';
-import { enterPracticeMode, exitPracticeMode } from './practiceMode';
+import { endPractice, enterPracticeMode } from './practiceMode';
 import { PRACTICE_TOUR_IDS } from './practiceTourIds';
 
 const START_ERROR_MS = 8000;
@@ -32,7 +32,8 @@ const announceStartFailed = () => {
 /**
  * Hooks the tour host runs around a practice tour (`Walkthrough` hands them to
  * the adapter): practice mode, and with it the network guard, is on before the
- * first step is prepared and off when the tour ends, however it ends.
+ * first step is prepared, and it ends with the tour, however it ends, through
+ * the drained exit. A restart remounts the run: its enter cancels that exit.
  *
  * A failing `setup` means no tour starts: the adapter never prepares a step
  * and still calls `teardown`, which is safe without an active session.
@@ -48,7 +49,9 @@ export const registerPracticeTourHostHooks = (): (() => void) => {
 					throw error;
 				}
 			},
-			teardown: exitPracticeMode
+			teardown: () => {
+				void endPractice();
+			}
 		})
 	);
 	return () => unregister.forEach((remove) => remove());

@@ -228,6 +228,36 @@ describe('logout storage sweep (#1071)', () => {
 			expect(seen).toEqual([false]);
 		});
 
+		it('lets the practice views drain before the guard comes off, then signs out', async () => {
+			const practice = await startPractice();
+			const releaseSandbox = practice.holdPracticeExit();
+			const order: string[] = [];
+			practice.onPracticeExit(() => order.push('layers down'));
+			const { apiKeycloakLogout } = await import(
+				'../../api/apiLogoutKeycloak'
+			);
+			vi.mocked(apiKeycloakLogout).mockImplementationOnce(() => {
+				order.push('keycloak logout');
+				return Promise.resolve() as never;
+			});
+
+			const { logout } = await import('./logout');
+			const signingOut = logout(false);
+			await flush();
+			expect(practice.isPracticeMode()).toBe(true);
+
+			order.push('sandbox drained');
+			releaseSandbox();
+			await signingOut;
+			await flush();
+
+			expect(order).toEqual([
+				'sandbox drained',
+				'layers down',
+				'keycloak logout'
+			]);
+		});
+
 		it('also leaves it when there is no session left to sign out of', async () => {
 			const practice = await startPractice();
 			const { getValueFromCookie } = await import(
