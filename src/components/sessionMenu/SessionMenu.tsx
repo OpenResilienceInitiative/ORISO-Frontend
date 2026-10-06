@@ -90,6 +90,7 @@ import {
 	ChatMenuDropdownItemContent as SessionMenuItemContent
 } from '../chatMenuDropdown/ChatMenuDropdown';
 import { sessionMenuOwnsCallControls } from './callControlOwnership';
+import { usePracticeActive } from '../../practice';
 import { useSessionTenantSettings } from '../../hooks/useSessionTenantSettings';
 import { useSupervisionPanel } from '../supervisionPanel/SupervisionPanelContext';
 import { ReactComponent as SupervisionIcon } from '../../resources/img/icons/supervision_nocirc_400_24px.svg';
@@ -138,6 +139,8 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	const { dispatch: sessionsDispatch } = useContext(SessionsDataContext);
 	// WP-B2: the supervision parallel panel; null outside a session view.
 	const supervisionPanel = useSupervisionPanel();
+	// Practice: no calls, no booking (they would start real network traffic).
+	const isPracticing = usePracticeActive();
 
 	const [overlayItem, setOverlayItem] = useState(null);
 	const [flyoutOpen, setFlyoutOpen] = useState(null);
@@ -477,8 +480,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 	// One gate for every caller: the side room's controls ask the same
 	// question with `chatType: 'supervision'` (`call/callFeatureGates.ts`).
-	const { audio: isAudioCallsEnabled, video: isVideoCallsEnabled } =
-		resolveCallFeatureGates(currentTenantSettings, chatType);
+	const callGates = resolveCallFeatureGates(currentTenantSettings, chatType);
+	const isAudioCallsEnabled = callGates.audio && !isPracticing;
+	const isVideoCallsEnabled = callGates.video && !isPracticing;
 
 	const hasVideoCallFeatures = () =>
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
@@ -537,6 +541,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 
 			{!activeSession.isEnquiry &&
 				appointmentFeatureEnabled &&
+				!isPracticing &&
 				!activeSession.isGroup && (
 					<div
 						className="sessionMenu__icon sessionMenu__icon--booking"

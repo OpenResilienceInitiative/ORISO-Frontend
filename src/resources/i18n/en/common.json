@@ -5271,11 +5271,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Add a supervisor",
-					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+” to add a supervisor to the consultation."
-				},
-				"pickSupervisor": {
-					"title": "Choose the supervisor",
-					"intro": "Pick the supervisor from the list and confirm your choice. A system note then appears in the chat."
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor and confirm your choice."
 				},
 				"supervisorReply": {
 					"title": "The supervisor’s reply",

@@ -208,6 +208,11 @@ describe('practiceAcceptTour (flow F1)', () => {
 		);
 	});
 
+	it('offers no Back on the step after the accept, which cannot be undone', () => {
+		const hidden = practiceAcceptTour.steps.filter((s) => s.hideBack);
+		expect(stepIds(hidden)).toEqual(['first-answer']);
+	});
+
 	it('gates only the team steps on the team-discussion flag', () => {
 		const gated = practiceAcceptTour.steps.filter((s) => s.when);
 		expect(stepIds(gated)).toEqual(['open-team', 'team-reply']);
@@ -235,7 +240,15 @@ describe('practiceSupervisionTour (flow F2)', () => {
 	it('opens on the supervisor "+" inside the accepted practice case', () => {
 		expect(first.target).toBe('session-supervisor-add');
 		expect(first.route).toBe(practiceAcceptedSessionRoute());
-		expect(first.advanceOn).toEqual({ type: 'click' });
+	});
+
+	it('waits for the confirmed add, not for the click on the "+"', () => {
+		// The real picker modal covers the tooltip (z-index 9999 vs 53), so the
+		// first step explains the whole add and lets the confirm advance it.
+		expect(first.advanceOn).toEqual({
+			type: 'event',
+			name: PRACTICE_TOUR_EVENTS.supervisorAdded
+		});
 	});
 
 	it('ends on a centered final step', () => {
@@ -244,28 +257,25 @@ describe('practiceSupervisionTour (flow F2)', () => {
 		expect(last.advanceOn).toBeUndefined();
 	});
 
-	it('walks the five spec steps', () => {
+	it('walks the four steps', () => {
 		expect(stepIds(resolveTourSteps(practiceSupervisionTour))).toEqual([
 			'add-supervisor',
-			'pick-supervisor',
 			'supervisor-reply',
 			'standing-assignment',
 			'done'
 		]);
 	});
 
-	it('waits for the real picker confirm on a centered step', () => {
-		const pick = practiceSupervisionTour.steps[1];
-		expect(pick.target).toBe('');
-		expect(pick.placement).toBe('center');
-		expect(pick.advanceOn).toEqual({
-			type: 'event',
-			name: PRACTICE_TOUR_EVENTS.supervisorAdded
-		});
+	it('points the reply step at the supervision side panel and offers no Back after the add', () => {
+		const reply = practiceSupervisionTour.steps[1];
+		expect(reply.target).toBe('supervision-panel');
+		expect(reply.placement).toBe('left');
+		expect(reply.hideBack).toBe(true);
+		expect(reply.advanceOn).toBeUndefined();
 	});
 
-	it('is read-only after the picker: replies and the standing assignment advance with Next', () => {
-		practiceSupervisionTour.steps.slice(2, 4).forEach((step) => {
+	it('is read-only after the add: replies and the standing assignment advance with Next', () => {
+		practiceSupervisionTour.steps.slice(1, 3).forEach((step) => {
 			expect(step.advanceOn).toBeUndefined();
 		});
 	});
@@ -291,7 +301,25 @@ describe('practiceSupervisionTour (flow F2)', () => {
 	it('does not depend on the team-discussion flag', () => {
 		expect(
 			stepIds(resolveTourSteps(practiceSupervisionTour, TEAM_OFF))
-		).toHaveLength(5);
+		).toHaveLength(4);
+	});
+
+	it('tells the learner up front to click, choose and confirm', () => {
+		const intro = resolveKey(deTranslations, first.contentKey) as string;
+		expect(intro).toMatch(/„\+“/);
+		expect(intro).toMatch(/bestätigen/);
+	});
+
+	it('keeps the retired picker step out of every locale', () => {
+		bundledLocales.forEach(([locale, bundle]) => {
+			expect(
+				resolveKey(
+					bundle,
+					'tour.practiceSupervision.step.pickSupervisor'
+				),
+				`${locale} still carries pickSupervisor`
+			).toBeUndefined();
+		});
 	});
 });
 

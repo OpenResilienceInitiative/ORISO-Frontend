@@ -2407,10 +2407,7 @@
 			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
 			"step": {
 				"addSupervisor": {
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, um der Beratung eine Supervisor:in hinzuzufügen."
-				},
-				"pickSupervisor": {
-					"intro": "Wähle die Supervisor:in aus der Liste aus und bestätige die Auswahl. Im Chat erscheint danach ein Systemhinweis."
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus und bestätige die Auswahl."
 				},
 				"supervisorReply": {
 					"intro": "Deine Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei — die ratsuchende Person sieht sie nicht."

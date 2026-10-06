@@ -130,6 +130,61 @@ describe('ProductTourTooltip', () => {
 		expect(screen.queryByText('Weiter')).toBeNull();
 	});
 
+	describe('steps that cannot be undone (hideBack)', () => {
+		const irreversible = (over: Record<string, any> = {}) =>
+			baseProps({
+				step: {
+					title: 't.title',
+					content: 't.content',
+					data: { hideBack: true }
+				},
+				...over
+			});
+
+		it('hides Back although an earlier step exists, and keeps Next', () => {
+			render(<ProductTourTooltip {...(irreversible() as any)} />);
+
+			expect(screen.queryByText('Zurück')).toBeNull();
+			expect(screen.getByText('Weiter')).toBeTruthy();
+		});
+
+		it('keeps the close button working', () => {
+			const props = irreversible();
+			render(<ProductTourTooltip {...(props as any)} />);
+
+			fireEvent.click(screen.getByLabelText('Rundgang schließen'));
+
+			expect(props.controls.skip).toHaveBeenCalled();
+		});
+
+		it('still shows Back on steps without the flag', () => {
+			render(<ProductTourTooltip {...(baseProps() as any)} />);
+
+			expect(screen.getByText('Zurück')).toBeTruthy();
+		});
+
+		it('renders no empty actions row when a self-advancing step hides Back', () => {
+			render(
+				<ProductTourTooltip
+					{...(baseProps({
+						step: {
+							title: 't.title',
+							content: 't.content',
+							data: {
+								advanceOn: { type: 'click' },
+								hideBack: true
+							}
+						}
+					}) as any)}
+				/>
+			);
+
+			expect(
+				document.querySelector('.productTourTooltip__actions')
+			).toBeNull();
+		});
+	});
+
 	describe('self-advancing steps (advanceOn)', () => {
 		const advancing = (over: Record<string, any> = {}) =>
 			baseProps({

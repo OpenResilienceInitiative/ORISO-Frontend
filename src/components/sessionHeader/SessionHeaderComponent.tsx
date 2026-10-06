@@ -92,6 +92,7 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { notifyPracticeSupervisorsChanged } from '../../practice';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
@@ -464,6 +465,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			);
 			await postSupervisorAddedSystemMessage(selectedSupervisorName);
 			await loadSupervisors();
+			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
 			setSupervisionReason('');
 			setSupervisionReasonError(false);

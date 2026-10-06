@@ -83,6 +83,9 @@ export const practiceAcceptTour: TourDefinition = {
 		},
 		{
 			id: 'first-answer',
+			// The accept cannot be undone: Back would land on a screen that no
+			// longer exists (the enquiry is now an accepted case).
+			hideBack: true,
 			target: '',
 			placement: 'center',
 			titleKey: 'tour.practiceAccept.step.firstAnswer.title',
@@ -125,31 +128,26 @@ export const practiceSupervisionTour: TourDefinition = {
 	when: SUPERVISION_ON,
 	steps: [
 		{
+			// One step for the whole add. The real picker is a modal above the
+			// tooltip (z-index 9999 vs 53), so a second step could not be seen:
+			// the intro names click, choose and confirm, and the confirm advances.
 			id: 'add-supervisor',
 			route: practiceAcceptedSessionRoute(),
 			target: 'session-supervisor-add',
 			placement: 'bottom',
-			advanceOn: { type: 'click' },
-			titleKey: 'tour.practiceSupervision.step.addSupervisor.title',
-			contentKey: 'tour.practiceSupervision.step.addSupervisor.intro'
-		},
-		{
-			// The real picker is open and covers the page; there is nothing to
-			// point at, so the step waits centered for the confirm.
-			id: 'pick-supervisor',
-			target: '',
-			placement: 'center',
 			advanceOn: {
 				type: 'event',
 				name: PRACTICE_TOUR_EVENTS.supervisorAdded
 			},
-			titleKey: 'tour.practiceSupervision.step.pickSupervisor.title',
-			contentKey: 'tour.practiceSupervision.step.pickSupervisor.intro'
+			titleKey: 'tour.practiceSupervision.step.addSupervisor.title',
+			contentKey: 'tour.practiceSupervision.step.addSupervisor.intro'
 		},
 		{
 			id: 'supervisor-reply',
-			target: '',
-			placement: 'center',
+			// The add cannot be undone, and Back would wait for it again.
+			hideBack: true,
+			target: 'supervision-panel',
+			placement: 'left',
 			titleKey: 'tour.practiceSupervision.step.supervisorReply.title',
 			contentKey: 'tour.practiceSupervision.step.supervisorReply.intro'
 		},

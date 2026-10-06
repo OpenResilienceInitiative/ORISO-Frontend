@@ -5354,11 +5354,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Ajouter un·e superviseur·e",
-					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + » pour ajouter un·e superviseur·e à la consultation."
-				},
-				"pickSupervisor": {
-					"title": "Choisir le ou la superviseur·e",
-					"intro": "Choisissez le ou la superviseur·e dans la liste et confirmez votre choix. Une note système apparaît ensuite dans le chat."
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + », choisissez le ou la superviseur·e et confirmez votre choix."
 				},
 				"supervisorReply": {
 					"title": "Réponse du ou de la superviseur·e",

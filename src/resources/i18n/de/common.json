@@ -5346,11 +5346,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Supervisor:in hinzufügen",
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, um der Beratung eine Supervisor:in hinzuzufügen."
-				},
-				"pickSupervisor": {
-					"title": "Supervisor:in auswählen",
-					"intro": "Wählen Sie die Supervisor:in aus der Liste aus und bestätigen Sie die Auswahl. Im Chat erscheint danach ein Systemhinweis."
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, wählen Sie die Supervisor:in aus und bestätigen Sie die Auswahl."
 				},
 				"supervisorReply": {
 					"title": "Antwort der Supervision",

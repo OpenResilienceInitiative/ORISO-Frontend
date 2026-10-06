@@ -96,6 +96,48 @@ describe('mapStepsToJoyride advanceOn', () => {
 	});
 });
 
+describe('mapStepsToJoyride hideBack', () => {
+	it('carries hideBack into the joyride step data so the tooltip can hide Back', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{
+				id: 'after-accept',
+				target: '',
+				titleKey: 't',
+				contentKey: 'c',
+				hideBack: true
+			}
+		]);
+
+		expect(joyrideSteps[0].data).toEqual({ hideBack: true });
+	});
+
+	it('keeps advanceOn and hideBack side by side', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{
+				id: 'a',
+				target: 'a-target',
+				titleKey: 't',
+				contentKey: 'c',
+				advanceOn: { type: 'click' },
+				hideBack: true
+			}
+		]);
+
+		expect(joyrideSteps[0].data).toEqual({
+			advanceOn: { type: 'click' },
+			hideBack: true
+		});
+	});
+
+	it('leaves the step data untouched when hideBack is not set', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{ id: 'a', target: 'a-target', titleKey: 't', contentKey: 'c' }
+		]);
+
+		expect(joyrideSteps[0]).not.toHaveProperty('data');
+	});
+});
+
 describe('routeMatches', () => {
 	const at = (pathname: string, search = '') => ({ pathname, search });
 

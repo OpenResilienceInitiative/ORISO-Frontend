@@ -473,6 +473,68 @@ const acceptAndReply = async (
 	return reply;
 };
 
+/** F2 up to the confirmed add: open the accepted case, pick Robin, confirm. */
+const addRobinThroughThePicker = async (view: { container: HTMLElement }) => {
+	await openThePracticeCase(view.container);
+	const add = await screen.findByRole(
+		'button',
+		{ name: 'sessionHeader.supervisor.modal.title' },
+		{ timeout: 15000 }
+	);
+	fireEvent.click(add);
+
+	const picker = await screen.findByRole('combobox', {}, { timeout: 15000 });
+	fireEvent.mouseDown(picker);
+	fireEvent.click(
+		await screen.findByRole('option', {
+			name: PRACTICE_CAST.supervisor.displayName
+		})
+	);
+	expect(
+		screen.queryByRole('option', {
+			name: PRACTICE_CAST.colleague.displayName
+		})
+	).toBeNull();
+	fireEvent.change(
+		screen.getByPlaceholderText(
+			'sessionHeader.supervisor.modal.reasonPlaceholder'
+		),
+		{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
+	);
+	await act(async () => {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'sessionHeader.supervisor.modal.addButton'
+			})
+		);
+	});
+
+	await waitFor(
+		() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
+		{ timeout: 15000 }
+	);
+	// The success toast stays; the feed entry is swallowed (see below).
+	await waitFor(() =>
+		expect(appNotifications.addNotification).toHaveBeenCalledWith(
+			expect.objectContaining({
+				title: 'sessionHeader.supervisor.success.add.title'
+			})
+		)
+	);
+	await waitFor(() =>
+		expect(
+			bodiesIn(PRACTICE_MAIN_ROOM_ID).some((line) =>
+				line.startsWith(
+					`${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: ${SYSTEM_NOTIFICATION_PREFIX}`
+				)
+			)
+		).toBe(true)
+	);
+	expect(bodiesIn(PRACTICE_SUPERVISION_ROOM_ID)).toEqual([
+		`${PRACTICE_CAST.supervisor.matrixUserId}: ${world!.script.texts.supervisorReply}`
+	]);
+};
+
 describe('practice sandbox on the real session containers', () => {
 	it('F1: lists only the practice enquiry, accepts it with the real button and answers through the real composer', async () => {
 		const view = renderPractice();
@@ -586,74 +648,55 @@ describe('practice sandbox on the real session containers', () => {
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
-	it('supervision: adds Robin through the real picker and shows the reply in the side thread after reopening', async () => {
+	it('supervision in practice mode: the reply shows in the side thread without reopening the case, the side room offers no call and nothing needs blocking', async () => {
+		enterPracticeMode({ tourId: 'consultant-practice-supervision' });
+		try {
+			const view = renderPractice('acceptedCase', { underGuard: true });
+
+			await addRobinThroughThePicker(view);
+
+			// The side room is resolved again after the add (S6): no reopening.
+			await waitFor(
+				() =>
+					expect(
+						textOf(view.container, '.chatStage__panel')
+					).toContain(world!.script.texts.supervisorReply),
+				{ timeout: 15000 }
+			);
+			expect(
+				textOf(view.container, '.chatStage__mainPane')
+			).not.toContain(world!.script.texts.supervisorReply);
+			// The F2 tour points its reply step at this anchor.
+			expect(
+				view.container.querySelector(
+					'[data-tour-target="supervision-panel"]'
+				)
+			).not.toBeNull();
+			expect(
+				view.container.querySelector('[data-cy="panel-call-actions"]')
+			).toBeNull();
+			expect(getPracticeNetworkGuard()?.blockedRequests).toEqual([]);
+			cleanup();
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
+		} finally {
+			exitPracticeMode();
+		}
+		expectNothingLeftThePracticeWorld();
+	}, 60000);
+
+	it('supervision outside practice mode keeps the product behaviour: the side room appears after reopening, with its call actions', async () => {
 		const view = renderPractice('acceptedCase');
 
-		await openThePracticeCase(view.container);
-		const add = await screen.findByRole(
-			'button',
-			{ name: 'sessionHeader.supervisor.modal.title' },
-			{ timeout: 15000 }
+		await addRobinThroughThePicker(view);
+		await act(
+			() => new Promise<void>((resolve) => setTimeout(resolve, 100))
 		);
-		fireEvent.click(add);
+		expect(textOf(view.container, '.chatStage__panel')).not.toContain(
+			world!.script.texts.supervisorReply
+		);
 
-		const picker = await screen.findByRole(
-			'combobox',
-			{},
-			{ timeout: 15000 }
-		);
-		fireEvent.mouseDown(picker);
-		fireEvent.click(
-			await screen.findByRole('option', {
-				name: world!.script.cast.supervisor.displayName
-			})
-		);
-		expect(
-			screen.queryByRole('option', {
-				name: world!.script.cast.colleague.displayName
-			})
-		).toBeNull();
-		fireEvent.change(
-			screen.getByPlaceholderText(
-				'sessionHeader.supervisor.modal.reasonPlaceholder'
-			),
-			{ target: { value: 'Ich möchte mich zum Vorgehen absichern.' } }
-		);
-		await act(async () => {
-			fireEvent.click(
-				screen.getByRole('button', {
-					name: 'sessionHeader.supervisor.modal.addButton'
-				})
-			);
-		});
-
-		await waitFor(
-			() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
-			{ timeout: 15000 }
-		);
-		// The success toast stays; the feed entry is swallowed (see below).
-		await waitFor(() =>
-			expect(appNotifications.addNotification).toHaveBeenCalledWith(
-				expect.objectContaining({
-					title: 'sessionHeader.supervisor.success.add.title'
-				})
-			)
-		);
-		await waitFor(() =>
-			expect(
-				bodiesIn(PRACTICE_MAIN_ROOM_ID).some((line) =>
-					line.startsWith(
-						`${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: ${SYSTEM_NOTIFICATION_PREFIX}`
-					)
-				)
-			).toBe(true)
-		);
-		expect(bodiesIn(PRACTICE_SUPERVISION_ROOM_ID)).toEqual([
-			`${PRACTICE_CAST.supervisor.matrixUserId}: ${world!.script.texts.supervisorReply}`
-		]);
-
-		// The real view resolves the side room on open only (finding in
-		// SPIKE-REPORT): leave the case and open it again.
 		act(() => navigateInTest!(LIST_ROUTE.acceptedCase));
 		await openThePracticeCase(view.container);
 
@@ -668,6 +711,9 @@ describe('practice sandbox on the real session containers', () => {
 			world!.script.texts.supervisorReply
 		);
 		expectTourEvents({ [PRACTICE_TOUR_EVENTS.supervisorAdded]: 1 });
+		expect(
+			view.container.querySelector('[data-cy="panel-call-actions"]')
+		).not.toBeNull();
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 });

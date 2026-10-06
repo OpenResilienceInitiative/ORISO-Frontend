@@ -1,4 +1,9 @@
 export { PracticeProvider, usePractice } from './PracticeProvider';
+export { usePracticeActive } from './usePracticeActive';
+export {
+	notifyPracticeSupervisorsChanged,
+	usePracticeSupervisorsRevision
+} from './practiceSupervisionRefresh';
 export type { PracticeContextValue } from './PracticeProvider';
 export {
 	enterPracticeMode,

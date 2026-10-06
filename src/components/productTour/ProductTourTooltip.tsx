@@ -23,9 +23,10 @@ export const ProductTourTooltip = ({
 	const { t: translate } = useTranslation();
 
 	// A self-advancing step finishes through the user's own action, so it has
-	// no Next; Back and close stay.
+	// no Next; Back and close stay. `hideBack` marks the step after an action
+	// that cannot be undone.
 	const showNext = !step.data?.advanceOn;
-	const showBack = index > 0;
+	const showBack = index > 0 && !step.data?.hideBack;
 
 	const nextLabel = isLastStep
 		? translate('walkthrough.step.done')
