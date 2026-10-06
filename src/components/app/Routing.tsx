@@ -14,6 +14,8 @@ import { NavigationBar } from './NavigationBar';
 import { Header } from '../header/Header';
 import { ReleaseNote } from '../releaseNote/ReleaseNote';
 import { Walkthrough } from '../walkthrough/Walkthrough';
+import { PracticeBanner } from '../../practice/PracticeBanner';
+import { PracticeSurface } from '../../practice/PracticeSurface';
 import { TwoFactorNag } from '../twoFactorAuth/TwoFactorNag';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useAskerHasAssignedConsultant } from '../../containers/bookings/hooks/useAskerHasAssignedConsultant';
@@ -80,6 +82,8 @@ export const Routing = (props: RoutingProps) => {
 				element={
 					<>
 						<Walkthrough />
+						<PracticeBanner />
+						<PracticeSurface />
 						<E2EEProvider>
 							<div
 								className={`app__wrapper ${
