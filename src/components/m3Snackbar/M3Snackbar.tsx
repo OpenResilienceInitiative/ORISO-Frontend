@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -110,8 +110,64 @@ export interface M3SnackbarProps {
 	role?: 'alert' | 'status';
 	/** Layout only. Paint belongs to the roles above. */
 	sx?: SxProps<Theme>;
+	/**
+	 * Floating only. Layout of the fixed container — for a screen that has its
+	 * own chrome at the bottom edge (the phone navigation bar) and needs the
+	 * snackbar to rest above it.
+	 */
+	containerSx?: SxProps<Theme>;
+	/**
+	 * Floating only. A standing notice steps aside while another floating snackbar is open — M3
+	 * shows one at a time, and both would share the same spot — and returns when it closes.
+	 */
+	yieldToOthers?: boolean;
 	testId?: string;
 }
+
+/* Floating snackbars that are open and do not yield. */
+const openSnackbars = new Set<string>();
+const openSnackbarListeners = new Set<() => void>();
+const notifyOpenSnackbars = () => openSnackbarListeners.forEach((l) => l());
+const subscribeOpenSnackbars = (listener: () => void) => {
+	openSnackbarListeners.add(listener);
+	return () => {
+		openSnackbarListeners.delete(listener);
+	};
+};
+const anotherSnackbarOpen = () => openSnackbars.size > 0;
+
+/**
+ * Tells standing notices (`yieldToOthers`) that something else now occupies the
+ * snackbar spot. Every floating snackbar calls it; the stacked host
+ * (`M3SnackbarHost`) calls it while it holds anything, so the two systems can
+ * never paint over each other.
+ */
+export const useFloatingSnackbarPresence = (active: boolean) => {
+	const id = useId();
+	useEffect(() => {
+		if (!active) return;
+		openSnackbars.add(id);
+		notifyOpenSnackbars();
+		return () => {
+			openSnackbars.delete(id);
+			notifyOpenSnackbars();
+		};
+	}, [id, active]);
+};
+
+/**
+ * Where a floating snackbar rests on a phone: above the bottom navigation bar
+ * plus the home-indicator inset. A media query rather than the `md` key: MUI's
+ * own `sm` rule would win over a plain value, and this theme puts `md` at
+ * 600 px while the navigation bar stays until 900 px.
+ */
+export const M3_SNACKBAR_PHONE_QUERY = '(max-width: 899.98px)';
+export const M3_SNACKBAR_PHONE_MEDIA = `@media ${M3_SNACKBAR_PHONE_QUERY}`;
+export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM =
+	'calc(88px + env(safe-area-inset-bottom, 0px))';
+
+/** For surfaces that share the snackbar's role but not its anatomy (the join request). */
+export const M3_SNACKBAR_ELEVATION = elevation3;
 
 /**
  * The ORISO snackbar.
@@ -144,8 +200,19 @@ export const M3Snackbar = ({
 	anchorOrigin = { vertical: 'bottom', horizontal: 'center' },
 	role = 'alert',
 	sx,
+	containerSx,
+	yieldToOthers = false,
 	testId = 'm3-snackbar'
 }: M3SnackbarProps) => {
+	useFloatingSnackbarPresence(
+		placement === 'floating' && open && !yieldToOthers
+	);
+	const othersOpen = useSyncExternalStore(
+		subscribeOpenSnackbars,
+		anotherSnackbarOpen,
+		() => false
+	);
+	const shown = open && !(yieldToOthers && othersOpen);
 	const actionButton = action && (
 		<Button
 			variant="text"
@@ -275,7 +342,7 @@ export const M3Snackbar = ({
 
 	return (
 		<Snackbar
-			open={open}
+			open={shown}
 			autoHideDuration={autoHideDuration}
 			anchorOrigin={anchorOrigin}
 			/* A click anywhere else on the page is not a dismissal. MUI's
@@ -287,7 +354,10 @@ export const M3Snackbar = ({
 				}
 				onClose?.();
 			}}
-			sx={{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' }}
+			sx={[
+				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' },
+				...(Array.isArray(containerSx) ? containerSx : [containerSx])
+			]}
 		>
 			{surface}
 		</Snackbar>

@@ -44,9 +44,7 @@ export function useCallTimelineState(
 					value &&
 					hasSameCallLifecycleIdentity(value, initialCall) &&
 					(initialCall.state === 'running' ||
-						value.state === initialCall.state ||
-						(initialCall.state === 'missed' &&
-							value.state === 'ended'))
+						value.state !== 'running')
 				) {
 					setStored((previous) =>
 						previous &&

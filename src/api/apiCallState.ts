@@ -34,12 +34,7 @@ export async function apiCallState(
 		data.state !== 'missed'
 	)
 		return null;
-	if (
-		call.state !== 'running' &&
-		data.state !== call.state &&
-		!(call.state === 'missed' && data.state === 'ended')
-	)
-		return null;
+	if (call.state !== 'running' && data.state === 'running') return null;
 	if (data.state === 'missed') {
 		if (
 			data.startedAt !== null ||

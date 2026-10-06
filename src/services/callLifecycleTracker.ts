@@ -10,7 +10,12 @@ interface TrackedCall {
 	message: CallLifecycleMessage;
 	stop: () => void;
 	writer: CallTimelineMessageService;
+	isCurrentClient: () => boolean;
+	retryAttempts: number;
+	retryTimer?: ReturnType<typeof setTimeout>;
 }
+
+const TERMINAL_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
 
 /** Keeps room timeline metadata tied to actual MatrixRTC attendance. */
 class CallLifecycleTracker {
@@ -37,6 +42,9 @@ class CallLifecycleTracker {
 		});
 		const tracked: TrackedCall = {
 			writer,
+			isCurrentClient: () =>
+				getMatrixClientService()?.getClient?.() === client,
+			retryAttempts: 0,
 			message: {
 				callId: call.callId,
 				roomRef: call.signalRoomId || call.roomId,
@@ -143,6 +151,22 @@ class CallLifecycleTracker {
 
 	private publish(tracked: TrackedCall): void {
 		void tracked.writer.publish(tracked.message).catch(() => {
+			// The writer retains the original transaction ID and root event after
+			// failure, so retrying a terminal edit cannot create another call card.
+			// Never send it through a replacement login client.
+			if (!tracked.isCurrentClient()) return;
+			if (tracked.message.state !== 'running') {
+				if (tracked.retryTimer !== undefined) return;
+				const delay = TERMINAL_RETRY_DELAYS_MS[tracked.retryAttempts];
+				if (delay !== undefined) {
+					tracked.retryAttempts += 1;
+					tracked.retryTimer = setTimeout(() => {
+						tracked.retryTimer = undefined;
+						if (tracked.isCurrentClient()) this.publish(tracked);
+					}, delay);
+					return;
+				}
+			}
 			// Avoid logging room IDs or raw transport errors from counselling calls.
 			console.warn('Call timeline update could not be saved');
 		});

@@ -77,6 +77,20 @@ describe('useCallTimelineState', () => {
 		expect(result.current.durationSeconds).toBe(42);
 	});
 
+	it('lets authoritative missed state replace a provisional ended card without reopening it', async () => {
+		const initial = runningCall({ state: 'ended', durationSeconds: 42 });
+		const { result } = renderHook(() =>
+			useCallTimelineState(initial, async () => ({
+				...initial,
+				state: 'missed',
+				durationSeconds: undefined
+			}))
+		);
+		await act(async () => {});
+		expect(result.current.state).toBe('missed');
+		expect(result.current.durationSeconds).toBeUndefined();
+	});
+
 	it('keeps a terminal result when an equivalent stale running prop object is supplied', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall();

@@ -1,33 +1,20 @@
-# PR summary — #1154 stacked slices
+# PR summary — #1154 slices 13–15 + audit
 
-Parent: [ORISO-Frontend#1154](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154). Scan comment: [5468992934](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154#issuecomment-5468992934).
-
-GitHub cannot nest PRs. This issue is the parent. Three stacked PRs, each reviewable alone:
-
-1. **Weblate overlay** (`cursor/1154/weblate-bundle-wins` → `pre-dev`) — bundle wins on key conflict so a stale Weblate file cannot undo #1170/#1227 catalogues.
-2. **Preselected topic** (`cursor/1154/preselected-topic-locale` → PR1 branch) — `PreselectedTopic` uses `getRegistrationTopicDisplay`.
-3. **German defaultValues** (`cursor/1154/registration-german-fallbacks` → PR2 branch) — signup chrome calls `t(key)` without hardcoded German fallbacks.
+Parent: [ORISO-Frontend#1154](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1154). Stacked PR: [#1243](https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1243) on #1242.
 
 ## Files changed
 
-See `git diff --stat` per slice in the progress session. Combined vs `origin/pre-dev` is the three slices stacked.
+Call/form chrome from 080ef0df, plus the 2026-08-31 audit fix: NavigationBar unread aria, waiting mini-game / thread chrome in SessionItemComponent, MessageSubmitErrorBoundary, catalogues, and the source-scan test.
 
 ## Test evidence
 
-See `04-test-evidence.md`. Headline: targeted vitest green; `lint:scripts` pass. Verified **local only**.
+Local only, Node 22.12.0: `callsFormsI18n` 31 PASS; `i18n.test.ts` 31 PASS; `test:unit` 3738 PASS; `lint:scripts` PASS.
 
 ## Screenshots
 
-None — no running frontend this turn. Reviewer should switch registration to `fr` and `ru` on Pre-Dev after merge.
+None — no running frontend this turn.
 
 ## Risks / follow-ups
 
-- Weblate-only locales still load when the bundle is empty.
-- Age/state option labels stay German (ConsultingTypeService).
-- Ukrainian is not a UI locale (`supportedLngs` has no `uk`).
-- Agency names and Träger consent body are API/CMS owned.
-- If translation cache is enabled in an environment, old Weblate merges linger until TTL.
-
-## Security
-
-No auth, storage, or Matrix plaintext changes. Weblate fetch already existed; only merge order changed.
+- Still out of repo: API `agency.name` / `topic.name`, ConsultingTypeService `option.label`, Ukrainian UI locale.
+- Merge is for senior review. Not merging this stack.

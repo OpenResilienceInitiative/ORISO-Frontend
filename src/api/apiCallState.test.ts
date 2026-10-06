@@ -114,3 +114,23 @@ it('restores the stored terminal state and duration for the same call', async ()
 		durationSeconds: 125
 	});
 });
+
+it('accepts a server-confirmed missed state over a provisional ended room card', async () => {
+	fetchDataMock.mockResolvedValue({
+		sourceRoomId: original.roomRef,
+		callId: original.callId,
+		callRoomId: original.callRoomId,
+		callType: original.callType,
+		state: 'missed',
+		invitedAt: 1000,
+		startedAt: null,
+		endedAt: 2000,
+		durationSeconds: 0,
+		participantMatrixIds: []
+	});
+	expect(await apiCallState({ ...original, state: 'ended' })).toMatchObject({
+		state: 'missed',
+		participants: [],
+		durationSeconds: undefined
+	});
+});

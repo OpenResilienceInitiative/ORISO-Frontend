@@ -2,6 +2,13 @@
 import * as React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MessageItemComponent } from './MessageItemComponent';
+import { MessageContextShell } from './messageStoryShell';
+import {
+	mockActiveSession1on1,
+	mockActiveSessionGroup,
+	mockMessageItemComponentProps
+} from './MessageItemComponent.mocks';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
 
 const callManagerSpies = vi.hoisted(() => ({
@@ -57,15 +64,6 @@ describe('the durable call action in an actual message row', () => {
 	])(
 		'joins the existing call with exact identity for %s',
 		async (_, isGroup) => {
-			const { MessageItemComponent } = await import(
-				'./MessageItemComponent'
-			);
-			const { MessageContextShell } = await import('./messageStoryShell');
-			const {
-				mockActiveSession1on1,
-				mockActiveSessionGroup,
-				mockMessageItemComponentProps
-			} = await import('./MessageItemComponent.mocks');
 			const activeSession = isGroup
 				? mockActiveSessionGroup()
 				: mockActiveSession1on1();
@@ -111,10 +109,6 @@ describe('the durable call action in an actual message row', () => {
 		['a banned user', true, false] as const,
 		['an archived session', false, true] as const
 	])('offers no join action to %s', async (_, isUserBanned, isArchived) => {
-		const { MessageItemComponent } = await import('./MessageItemComponent');
-		const { MessageContextShell } = await import('./messageStoryShell');
-		const { mockActiveSession1on1, mockMessageItemComponentProps } =
-			await import('./MessageItemComponent.mocks');
 		const baseSession = mockActiveSession1on1();
 		const activeSession = isArchived
 			? {

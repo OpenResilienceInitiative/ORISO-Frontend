@@ -30,3 +30,9 @@ Lint/style/build also passed again after the final locale corrections. Builds
 emit existing dependency/bundle warnings; no production readiness is inferred.
 
 Final full-unit log SHA-256: `e10d84cd819d61f359b574509f96341fb783323e53e403e2a8d69270038ef736`.
+
+## Fresh Dev checks — 2026-10-06
+
+Target: `9ec1b655c6973d26d7fbc0bc5a319fe26793a9c6`, Node22.12.0. Full unit suite passes617 files and11053 tests. Focused lifecycle, timeline renderer, state API and formatter suites pass9 files and88 tests. New regression tests were first red for missing terminal retry and server terminal correction. September counts above are historical. Backend PR1153, current-head CI, real-media and deployed acceptance remain separate open gates.
+
+Fresh full lint:scripts, style and production build also pass; postbuild confirms no forbidden deployment values. Existing dependency/bundle warnings remain. No backend or real-call acceptance is claimed.
