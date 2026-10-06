@@ -2901,6 +2901,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (exercice)",
+			"colleague": "Alex (exercice)",
+			"supervisor": "Robin (exercice)"
+		},
+		"asker": {
+			"firstMessage": "Bonjour, j’ai une question générale sur votre offre. Comment se déroule un accompagnement chez vous, et sous quel délai puis-je espérer une réponse ? Merci d’avance.",
+			"reply": "Merci beaucoup pour votre réponse, elle m’aide. Je reviendrai vers vous si j’ai d’autres questions."
+		},
+		"colleague": {
+			"teamMessage": "Je suis en rendez-vous aujourd’hui et je n’aurai pas le temps de répondre. Peux-tu reprendre la demande ?"
+		},
+		"supervisor": {
+			"reply": "Ça me paraît bien. N’hésite pas à demander ce que la personne souhaite savoir exactement. Je lis en même temps et je te fais signe si quelque chose me frappe."
+		},
+		"erstantwort": {
+			"greeting": "Votre demande nous est bien parvenue. Une conseillère ou un conseiller vous répondra prochainement."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Bonjour, merci pour votre message. Ici, l’accompagnement se fait par écrit et en toute confidentialité."
+		},
+		"names": {
+			"agency": "Service d’exercice",
+			"topic": "Exercice",
+			"teamRoom": "Réunion d’équipe (exercice)",
+			"supervisionRoom": "Supervision (exercice)"
+		}
+	},
 	"registration": {
 		"selectedLabel": "Sélectionné",
 		"noneSelected": "Veuillez choisir un thème pour continuer.",

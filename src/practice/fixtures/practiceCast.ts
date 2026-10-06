@@ -1,5 +1,7 @@
 import { practiceUserId } from './practiceIdentifiers';
 
+export type PracticePersonKey = 'asker' | 'colleague' | 'supervisor';
+
 export interface PracticePerson {
 	/** Practice consultant/user id; never a real Keycloak id. */
 	id: string;

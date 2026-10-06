@@ -2884,6 +2884,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (practice)",
+			"colleague": "Alex (practice)",
+			"supervisor": "Robin (practice)"
+		},
+		"asker": {
+			"firstMessage": "Hello, I have a general question about your service. How does counselling work with you, and how quickly can I expect an answer? Thank you.",
+			"reply": "Thank you for your reply. That helps me. I’ll get in touch if I have any more questions."
+		},
+		"colleague": {
+			"teamMessage": "I’m in an appointment today and won’t be able to reply in time. Could you take over the request?"
+		},
+		"supervisor": {
+			"reply": "That sounds good to me. Do ask what exactly the person wants to know. I’m reading along and will get in touch if anything stands out."
+		},
+		"erstantwort": {
+			"greeting": "Your request has reached us. A counsellor will get back to you."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Hello, thank you for your message. Counselling here is written and confidential."
+		},
+		"names": {
+			"agency": "Practice agency",
+			"topic": "Practice",
+			"teamRoom": "Team discussion (practice)",
+			"supervisionRoom": "Supervision (practice)"
+		}
+	},
 	"registration": {
 		"accordion": {
 			"item": {
