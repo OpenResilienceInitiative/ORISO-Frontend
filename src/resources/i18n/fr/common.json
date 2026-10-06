@@ -5280,6 +5280,70 @@
 					"intro": "Les consultations terminées sont déplacées vers les archives comme avant — elles se trouvent désormais dans cet onglet."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Exercice : accepter une demande",
+			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à accepter une demande et à écrire la première réponse. Toutes les personnes et tous les contenus sont fictifs.",
+			"step": {
+				"navEnquiries": {
+					"title": "Ouvrir les demandes",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous trouverez ici, sous « Demandes », les nouvelles demandes."
+				},
+				"openEnquiry": {
+					"title": "Ouvrir la demande",
+					"intro": "Une demande d’exercice vous attend dans la liste. Cliquez dessus pour l’ouvrir."
+				},
+				"openTeam": {
+					"title": "Ouvrir la discussion d’équipe",
+					"intro": "La discussion d’équipe est activée chez vous : elle permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir la discussion d’équipe »."
+				},
+				"teamReply": {
+					"title": "Répondre à l’équipe",
+					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, la discussion d’équipe se ferme."
+				},
+				"accept": {
+					"title": "Accepter la demande",
+					"intro": "Cliquez sur « Accepter la demande » : elle passe dans « Mes consultations » et disparaît de la liste de votre équipe."
+				},
+				"firstAnswer": {
+					"title": "Première réponse et premier message",
+					"intro": "La demande est maintenant la vôtre. Dans le chat, vous voyez la première réponse automatique et le premier message de la personne qui cherche conseil."
+				},
+				"reply": {
+					"title": "Écrire votre première réponse",
+					"intro": "Écrivez une courte réponse à cette personne et envoyez-la. Elle reste dans l’exercice et n’est enregistrée nulle part."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Bien joué : vous avez accepté une demande et y avez répondu. Terminez l’exercice avec le bouton ci-dessous."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Exercice : ajouter un·e superviseur·e",
+			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
+			"step": {
+				"addSupervisor": {
+					"title": "Ajouter un·e superviseur·e",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + » pour ajouter un·e superviseur·e à la consultation."
+				},
+				"pickSupervisor": {
+					"title": "Choisir le ou la superviseur·e",
+					"intro": "Choisissez le ou la superviseur·e dans la liste et confirmez votre choix. Une note système apparaît ensuite dans le chat."
+				},
+				"supervisorReply": {
+					"title": "Réponse du ou de la superviseur·e",
+					"intro": "Votre superviseur·e a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
+				},
+				"standingAssignment": {
+					"title": "Attribution fixe",
+					"intro": "Si votre administration vous a attribué un·e superviseur·e fixe, il ou elle est ajouté·e automatiquement quand vous acceptez une demande. Vous n’avez rien à faire."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
+				}
+			}
 		}
 	},
 	"weekday": {

@@ -3417,6 +3417,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 										className="session__teamDiscussionAction"
 										testingAttribute="enquiry-open-team"
+										tourTarget="enquiry-team-button"
 										buttonHandle={() =>
 											selectChannelFromFab(
 												channelId({ kind: 'team' })
