@@ -1,9 +1,51 @@
 import { ACTIONS, EVENTS, STATUS } from 'react-joyride';
 import type { Step } from 'react-joyride';
-import type { TourEvent, TourStatus, TourStep } from './types';
+import type {
+	TourCondition,
+	TourDefinition,
+	TourEvent,
+	TourResolveContext,
+	TourStatus,
+	TourStep,
+	TourWhen
+} from './types';
 
 export const tourTargetSelector = (target: string) =>
 	`[data-tour-target="${target}"]`;
+
+const conditionHolds = (
+	condition: TourCondition,
+	ctx: TourResolveContext
+): boolean =>
+	(ctx.flags?.[condition.flag] !== false) === (condition.equals ?? true);
+
+const whenHolds = (when: TourWhen | undefined, ctx: TourResolveContext) =>
+	when === undefined || [when].flat().every((c) => conditionHolds(c, ctx));
+
+/** Tour-level condition only; steps are not looked at. */
+export const isTourAvailable = (
+	tour: Pick<TourDefinition, 'when'>,
+	ctx: TourResolveContext = {}
+): boolean => whenHolds(tour.when, ctx);
+
+/**
+ * The steps of a tour for one run: those whose conditions hold, in order, or
+ * none when the tour-level condition fails. Resolve once when the tour
+ * starts and hand the result to everything that counts steps (adapter,
+ * reducer, host) so they agree. Resolved steps carry no `when`, which keeps
+ * a second resolution harmless.
+ */
+export const resolveTourSteps = (
+	tour: Pick<TourDefinition, 'steps' | 'when'>,
+	ctx: TourResolveContext = {}
+): TourStep[] => {
+	if (!isTourAvailable(tour, ctx)) {
+		return [];
+	}
+	return tour.steps
+		.filter((step) => whenHolds(step.when, ctx))
+		.map(({ when: _when, ...step }) => step);
+};
 
 export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 	steps.map((step) => ({

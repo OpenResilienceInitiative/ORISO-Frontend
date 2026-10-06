@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
 	effectivePlacement,
 	initialTourRunState,
+	isTourAvailable,
 	mapStepsToJoyride,
-	reduceTourCallback
+	reduceTourCallback,
+	resolveTourSteps
 } from './tourEngine';
-import type { TourStep } from './types';
+import type { TourDefinition, TourStep } from './types';
 
 describe('mapStepsToJoyride', () => {
 	it('maps a centered step without target to a body-centered joyride step', () => {
@@ -376,5 +378,109 @@ describe('effectivePlacement axis-specific coverage', () => {
 				{ width: 390, height: 844 }
 			)
 		).toBe('center');
+	});
+});
+
+describe('resolveTourSteps', () => {
+	const step = (id: string, when?: TourStep['when']): TourStep => ({
+		id,
+		target: '',
+		titleKey: `t.${id}`,
+		contentKey: `c.${id}`,
+		...(when ? { when } : {})
+	});
+	const tour = (
+		steps: TourStep[],
+		when?: TourDefinition['when']
+	): TourDefinition => ({
+		id: 'variant-tour',
+		version: 1,
+		surface: 'frontend',
+		audiences: ['consultant'],
+		titleKey: 't',
+		summaryKey: 's',
+		steps,
+		...(when ? { when } : {})
+	});
+	const team = { flag: 'featureTeamDiscussionEnabled' };
+
+	it('keeps steps without a condition and returns them unchanged', () => {
+		const plain = [step('a'), step('b')];
+
+		expect(resolveTourSteps(tour(plain), {})).toEqual(plain);
+	});
+
+	it('treats an unset flag as ON, so a step needing the flag stays', () => {
+		const steps = [step('a'), step('team', team), step('b')];
+
+		const resolved = resolveTourSteps(tour(steps), { flags: {} });
+
+		expect(resolved.map((s) => s.id)).toEqual(['a', 'team', 'b']);
+	});
+
+	it('drops a step whose flag is explicitly off and keeps the order of the rest', () => {
+		const steps = [step('a'), step('team', team), step('b')];
+
+		const resolved = resolveTourSteps(tour(steps), {
+			flags: { featureTeamDiscussionEnabled: false }
+		});
+
+		expect(resolved.map((s) => s.id)).toEqual(['a', 'b']);
+	});
+
+	it('supports a step that only shows while the flag is off', () => {
+		const steps = [
+			step('a'),
+			step('no-team', { ...team, equals: false }),
+			step('b')
+		];
+
+		expect(
+			resolveTourSteps(tour(steps), {
+				flags: { featureTeamDiscussionEnabled: false }
+			}).map((s) => s.id)
+		).toEqual(['a', 'no-team', 'b']);
+		expect(
+			resolveTourSteps(tour(steps), {
+				flags: { featureTeamDiscussionEnabled: true }
+			}).map((s) => s.id)
+		).toEqual(['a', 'b']);
+	});
+
+	it('requires every condition of a list', () => {
+		const steps = [
+			step('both', [team, { flag: 'featureSupervisionEnabled' }])
+		];
+
+		expect(
+			resolveTourSteps(tour(steps), {
+				flags: { featureSupervisionEnabled: false }
+			})
+		).toEqual([]);
+		expect(resolveTourSteps(tour(steps), {})).toHaveLength(1);
+	});
+
+	it('returns no steps when the tour-level condition fails', () => {
+		const supervision = { flag: 'featureSupervisionEnabled' };
+		const t = tour([step('a')], supervision);
+
+		expect(
+			resolveTourSteps(t, { flags: { featureSupervisionEnabled: false } })
+		).toEqual([]);
+		expect(
+			isTourAvailable(t, { flags: { featureSupervisionEnabled: false } })
+		).toBe(false);
+		expect(isTourAvailable(t, {})).toBe(true);
+	});
+
+	it('strips resolved conditions so resolving twice cannot disagree', () => {
+		const steps = [step('a'), step('no-team', { ...team, equals: false })];
+		const flagsOff = { flags: { featureTeamDiscussionEnabled: false } };
+
+		const once = resolveTourSteps(tour(steps), flagsOff);
+		const twice = resolveTourSteps(tour(once), {});
+
+		expect(once.every((s) => s.when === undefined)).toBe(true);
+		expect(twice.map((s) => s.id)).toEqual(['a', 'no-team']);
 	});
 });
