@@ -20,6 +20,10 @@ import {
 	PRACTICE_MAIN_ROOM_ID
 } from './fixtures/practiceIdentifiers';
 import { FakeMatrixService } from './fakeMatrix/FakeMatrixService';
+import {
+	SessionsDataContext,
+	SET_SESSIONS
+} from '../globalState/provider/SessionsDataProvider';
 
 const realService = { real: true } as any;
 const counsellor = practiceCounsellorFixture();
@@ -190,6 +194,32 @@ describe('PracticeSandbox', () => {
 		});
 
 		expect(setItem).not.toHaveBeenCalled();
+	});
+
+	it('keeps practice list data out of the app-level sessions store', () => {
+		const outer = { sessions: [{ real: true }], dispatch: vi.fn() };
+		let inner: any;
+		const Probe = () => {
+			inner = useContext(SessionsDataContext);
+			return null;
+		};
+		render(
+			<SessionsDataContext.Provider value={outer as any}>
+				{sandbox(<Probe />)}
+			</SessionsDataContext.Provider>
+		);
+
+		act(() =>
+			inner.dispatch({
+				type: SET_SESSIONS,
+				sessions: [{ session: { id: PRACTICE_ENQUIRY_SESSION_ID } }]
+			})
+		);
+
+		expect(inner.sessions).toEqual([
+			{ session: { id: PRACTICE_ENQUIRY_SESSION_ID } }
+		]);
+		expect(outer.dispatch).not.toHaveBeenCalled();
 	});
 
 	it('restarts from fresh fixtures', async () => {

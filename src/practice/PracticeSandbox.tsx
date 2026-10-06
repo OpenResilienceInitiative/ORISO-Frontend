@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { UserDataInterface } from '../globalState/interfaces';
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
+import { SessionsDataProvider } from '../globalState/provider/SessionsDataProvider';
 import type { MatrixClientService } from '../services/matrixClientService';
 import {
 	getMatrixClientService,
@@ -219,7 +220,10 @@ export const PracticeSandbox = ({
 	return (
 		<PracticeSandboxContext.Provider value={api}>
 			<MatrixClientContext.Provider value={matrixContext}>
-				<React.Fragment key={run.generation}>{children}</React.Fragment>
+				{/* Practice lists never enter the app-level sessions store. */}
+				<SessionsDataProvider key={run.generation}>
+					{children}
+				</SessionsDataProvider>
 			</MatrixClientContext.Provider>
 		</PracticeSandboxContext.Provider>
 	);

@@ -2,6 +2,7 @@ import { MatrixEvent } from 'matrix-js-sdk';
 import type { PracticeRoomSeed } from '../fixtures/practiceScenario';
 import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 import { buildTextMessageContent } from '../../utils/messageRelations';
+import { markSandboxedMatrixClient } from '../../services/matrixClientRegistry';
 
 type Listener = (...args: any[]) => void;
 
@@ -186,6 +187,7 @@ export class FakeMatrixClient extends PracticeEmitter {
 		) => MatrixEvent
 	) {
 		super();
+		markSandboxedMatrixClient(this);
 	}
 
 	getUserId(): string {
