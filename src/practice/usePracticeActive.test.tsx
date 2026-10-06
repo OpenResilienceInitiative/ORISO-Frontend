@@ -1,7 +1,11 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
-import { enterPracticeMode, exitPracticeMode } from './practiceMode';
+import {
+	endPractice,
+	enterPracticeMode,
+	exitPracticeMode
+} from './practiceMode';
 import { usePracticeActive } from './usePracticeActive';
 
 describe('usePracticeActive', () => {
@@ -18,6 +22,20 @@ describe('usePracticeActive', () => {
 		expect(result.current).toBe(true);
 
 		act(() => exitPracticeMode());
+		expect(result.current).toBe(false);
+	});
+
+	it('stays true while practice drains, until the guard is off', async () => {
+		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		const { result } = renderHook(() => usePracticeActive());
+
+		let ended: Promise<void> = Promise.resolve();
+		act(() => {
+			ended = endPractice();
+		});
+		expect(result.current).toBe(true);
+
+		await act(() => ended);
 		expect(result.current).toBe(false);
 	});
 
