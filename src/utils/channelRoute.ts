@@ -24,6 +24,8 @@
  * memory of the last open channel.
  */
 
+import { isPracticeId } from '../practice/practiceIds';
+
 export type SessionChannel =
 	| { kind: 'supervision' }
 	| { kind: 'team' }
@@ -431,8 +433,8 @@ export const writeLastChannel = (
 	if (!storage || sessionId === null || sessionId === undefined) {
 		return;
 	}
-	// Practice cases (FE#1622) have negative ids and never persist.
-	if (Number(sessionId) < 0) return;
+	// Practice cases (FE#1622) never persist.
+	if (isPracticeId(sessionId)) return;
 	try {
 		storage.setItem(
 			lastChannelKey(sessionId),

@@ -11,8 +11,21 @@
  * See OpenResilienceInitiative/ORISO-Frontend#894 (rule D).
  */
 
+import { isPracticeId } from '../../practice/practiceIds';
+
 /** Sentinel option value meaning "everyone in this conversation". */
 export const AUDIENCE_ALL = '__all__';
+
+/**
+ * Where the selection of one chat is remembered; empty means "do not store".
+ * Practice cases never persist.
+ */
+export const audienceSelectionStorageKeyFor = (
+	sessionId: number | undefined
+): string =>
+	!sessionId || isPracticeId(sessionId)
+		? ''
+		: `oriso.audienceSelection.${sessionId}`;
 
 /**
  * What a recipient *is*, decided while the options are built rather than
