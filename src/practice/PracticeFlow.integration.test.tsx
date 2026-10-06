@@ -27,6 +27,7 @@ import '../components/messageSubmitInterface/messageSubmitInterfaceComponent';
 import '../components/session/SessionView';
 import { SessionsZone } from '../components/app/SessionsZone';
 import { NavigationBar } from '../components/app/NavigationBar';
+import { Header } from '../components/header/Header';
 import { RouterConfigConsultant } from '../components/app/RouterConfig';
 import { Walkthrough } from '../components/walkthrough/Walkthrough';
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
@@ -188,6 +189,7 @@ const appNotifications = {
 	addEventNotification: vi.fn()
 };
 const storageWrites: string[] = [];
+const appSessionsDispatch = vi.fn();
 const translations = createInstance().use(initReactI18next);
 const counsellor = practiceCounsellorFixture({ isWalkThroughEnabled: false });
 const appConfig = {
@@ -201,6 +203,8 @@ function RouteProbe() {
 	return <output data-testid="route">{`${pathname}${search}`}</output>;
 }
 const route = () => screen.getByTestId('route').textContent;
+/** The header's switch to the Element client (all real rooms). */
+const uiVersionSwitch = () => screen.queryByLabelText('app.ui.classic');
 
 const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
 	const settings = {
@@ -248,7 +252,7 @@ const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
 		],
 		[LanguagesContext, { fixed: ['de'], spoken: [] }],
 		// The app-level store the navigation bar reads: practice must not fill it.
-		[SessionsDataContext, { sessions: [], dispatch: vi.fn() }],
+		[SessionsDataContext, { sessions: [], dispatch: appSessionsDispatch }],
 		[
 			MatrixClientContext,
 			{
@@ -275,6 +279,7 @@ const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
 								routerConfig={routerConfig}
 								onLogout={() => undefined}
 							/>
+							<Header />
 							<RouteProbe />
 							<PracticeSurface>
 								<Routes>
@@ -333,6 +338,7 @@ beforeEach(async () => {
 	storageWrites.length = 0;
 	networkFetch.mockClear();
 	appNotifications.addEventNotification.mockClear();
+	appSessionsDispatch.mockClear();
 	vi.stubGlobal('fetch', networkFetch);
 	vi.stubGlobal('indexedDB', { open: vi.fn() });
 	await translations.init({
@@ -485,6 +491,7 @@ const expectNothingLeftThePracticeWorld = () => {
 	expect(realMatrixWrites).toEqual([]);
 	expect(storageWrites).toEqual([]);
 	expect(appNotifications.addEventNotification).not.toHaveBeenCalled();
+	expect(appSessionsDispatch).not.toHaveBeenCalled();
 	expect(getPracticeNetworkGuard()?.blockedRequests ?? []).toEqual([]);
 };
 
@@ -493,6 +500,7 @@ const openThePracticeEnquiry = async () => {
 	// 1: the Anfragen icon in the real navigation bar; Next.
 	await expectStep(0);
 	expect(getPracticeSnapshot().status).toBe('active');
+	expect(uiVersionSwitch()).toBeNull();
 	pressNext(0);
 
 	// 2: the practice enquiry, the only row of the real list; click it.
@@ -553,6 +561,7 @@ const finish = async (at: number) => {
 	);
 	expect(route()).toBe(HELP_ROUTE);
 	expect(screen.getByTestId('help-page')).toBeTruthy();
+	expect(uiVersionSwitch()).not.toBeNull();
 	expect(window.fetch).toBe(networkFetch);
 	expect(progressWrites()).toContain('completed');
 	expectNothingLeftThePracticeWorld();
@@ -572,6 +581,7 @@ const banner = () =>
 describe('practice flows on the real app shell', () => {
 	it('F1 with the team step: every anchor is live when its step shows, and the real actions advance the tour', async () => {
 		const app = renderApp({ teamDiscussion: true });
+		expect(uiVersionSwitch()).not.toBeNull();
 		await app.start(ACCEPT);
 		await openThePracticeEnquiry();
 		expect(joyride!.steps).toHaveLength(8);
