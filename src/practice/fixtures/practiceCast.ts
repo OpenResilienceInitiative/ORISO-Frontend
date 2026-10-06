@@ -1,4 +1,4 @@
-import { practiceUserId } from './practiceIdentifiers';
+import { practiceUserId } from '../practiceIds';
 
 export type PracticePersonKey = 'asker' | 'colleague' | 'supervisor';
 

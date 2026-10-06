@@ -10,9 +10,10 @@ import {
 	isPracticeId,
 	isPracticeRoomId,
 	PRACTICE_AGENCY_ID,
+	PRACTICE_NUMERIC_ID_PATTERN,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
-} from '../fixtures/practiceIdentifiers';
+} from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
 
 export interface FakeRestHooks {
@@ -83,7 +84,7 @@ const ok = (body: unknown) =>
 const noContent = () => new Response(null, { status: 204 });
 
 /** Practice ids are negative; a positive id is never answered from memory. */
-const PRACTICE_ID_SEGMENT = '(-\\d+)';
+const PRACTICE_ID_SEGMENT = `(${PRACTICE_NUMERIC_ID_PATTERN})`;
 
 const parseRequest = (
 	input: RequestInfo | URL,

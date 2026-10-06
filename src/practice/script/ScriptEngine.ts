@@ -6,7 +6,7 @@ import {
 import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID
-} from '../fixtures/practiceIdentifiers';
+} from '../practiceIds';
 
 /**
  * The script texts are versioned with the practice tour version (spec 6): a

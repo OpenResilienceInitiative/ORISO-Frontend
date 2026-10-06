@@ -14,10 +14,7 @@ import {
 import type { ScriptEngine, ScriptReaction } from './script/ScriptEngine';
 import { emitPracticeEvent, PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
-import {
-	PRACTICE_MAIN_ROOM_ID,
-	PRACTICE_TEAM_ROOM_ID
-} from './fixtures/practiceIdentifiers';
+import { PRACTICE_MAIN_ROOM_ID, PRACTICE_TEAM_ROOM_ID } from './practiceIds';
 
 /** One practice run: the fake REST state and the fake Matrix rooms it points at. */
 export interface PracticeWorld {

@@ -19,7 +19,7 @@ import {
 	PRACTICE_ENQUIRY_SESSION_ID,
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_TOPIC_ID
-} from './fixtures/practiceIdentifiers';
+} from './practiceIds';
 import { TopicsContext } from '../globalState/provider/TopicsProvider';
 import { NotificationsContext } from '../globalState/provider/NotificationsProvider';
 import { FakeMatrixService } from './fakeMatrix/FakeMatrixService';

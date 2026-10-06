@@ -3,11 +3,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import {
+	isPracticeId,
 	PRACTICE_ENQUIRY_SESSION_ID,
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
-} from './fixtures/practiceIdentifiers';
+} from './practiceIds';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import { subscribeToTourEvent } from '../components/productTour/tourEvents';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
@@ -429,4 +430,44 @@ describe('practice world tour events', () => {
 
 		expect(Object.values(counts)).toEqual([0, 0, 0, 0]);
 	});
+});
+
+describe('practice world ids', () => {
+	it.each(['enquiry', 'acceptedCase'] as const)(
+		"are all practice ids (%s), apart from the counsellor's own identity",
+		async (start) => {
+			const world = worldIn('de', start);
+			await addSupervisor(world);
+			const { session, user, supervisors } = world.rest.getCase();
+			const cast = Object.values(world.script.cast);
+
+			const ids = [
+				session.id,
+				session.agencyId,
+				session.topic?.id,
+				session.matrixRoomId,
+				session.askerMatrixUserId,
+				user.id,
+				...cast.flatMap((person) => [person.id, person.matrixUserId]),
+				...supervisors.flatMap((supervisor) => [
+					supervisor.id,
+					supervisor.sessionId,
+					supervisor.supervisorConsultantId,
+					supervisor.supervisorMatrixUserId,
+					supervisor.matrixRoomId
+				]),
+				...world.matrix
+					.getRooms()
+					.flatMap((room) => [
+						room.roomId,
+						...world.matrix
+							.getRoomMessages(room.roomId)
+							.map((event) => event.getSender())
+					])
+			];
+
+			expect(ids.length).toBeGreaterThan(15);
+			expect(ids.filter((id) => !isPracticeId(id))).toEqual([]);
+		}
+	);
 });

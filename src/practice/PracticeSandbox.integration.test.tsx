@@ -67,7 +67,7 @@ import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
-} from './fixtures/practiceIdentifiers';
+} from './practiceIds';
 import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from './fixtures/practiceCast';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import type { PracticeWorld } from './practiceWorld';

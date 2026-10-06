@@ -6,7 +6,7 @@ import { createPracticeScenario } from '../fixtures/practiceScenario';
 import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture';
 import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 import { createTestScript } from '../script/scriptTestSupport';
-import { PRACTICE_MAIN_ROOM_ID } from '../fixtures/practiceIdentifiers';
+import { PRACTICE_MAIN_ROOM_ID } from '../practiceIds';
 import { feedbackMailIntentQueue } from '../../services/feedbackMailIntentQueue';
 import { chatTransportService } from '../../services/chatTransportService';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';

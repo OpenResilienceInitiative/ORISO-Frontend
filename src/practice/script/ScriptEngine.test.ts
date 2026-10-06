@@ -4,7 +4,7 @@ import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
-} from '../fixtures/practiceIdentifiers';
+} from '../practiceIds';
 import { practiceAcceptTour, practiceSupervisionTour } from '../practiceTours';
 import {
 	createScriptEngine,

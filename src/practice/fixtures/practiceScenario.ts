@@ -15,7 +15,7 @@ import {
 	PRACTICE_TEAM_ROOM_ID,
 	PRACTICE_TOPIC_ID,
 	practiceUserId
-} from './practiceIdentifiers';
+} from '../practiceIds';
 import {
 	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
 	type PracticePerson
