@@ -471,6 +471,18 @@ describe('Walkthrough', () => {
 			expect(adapterProps.tour.steps).toHaveLength(3);
 		});
 
+		it('keeps the rest of the definition, e.g. dismissible, on the resolved tour', () => {
+			variantTour.dismissible = false;
+			try {
+				renderWalkthrough({}, request(25), {});
+
+				expect(adapterProps.tour.dismissible).toBe(false);
+				expect(adapterProps.tour.id).toBe('variant-tour');
+			} finally {
+				delete variantTour.dismissible;
+			}
+		});
+
 		it('works without any tenant loaded', () => {
 			renderWalkthrough({}, request(22));
 
