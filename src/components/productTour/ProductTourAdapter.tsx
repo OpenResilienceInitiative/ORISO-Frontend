@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Joyride } from 'react-joyride';
-import type { EventData } from 'react-joyride';
+import { ACTIONS, EVENTS, Joyride, STATUS } from 'react-joyride';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -10,9 +9,12 @@ import {
 	mapStepsToJoyride,
 	reduceTourCallback,
 	resolveTourSteps,
+	routeMatches,
 	tourTargetSelector,
+	TourCallbackInput,
 	TourRunState
 } from './tourEngine';
+import { subscribeToTourEvent } from './tourEvents';
 import { waitForTarget } from './targetReadiness';
 import type {
 	TourDefinition,
@@ -318,7 +320,7 @@ export const ProductTourAdapter = ({
 	}, [active, applyRunState, endTour, prepareStep, steps.length]);
 
 	const handleCallback = useCallback(
-		(data: EventData) => {
+		(data: TourCallbackInput) => {
 			const stepForIndex = (index: number): TourStep | undefined =>
 				steps[index];
 
@@ -370,6 +372,89 @@ export const ProductTourAdapter = ({
 		},
 		[applyRunState, emit, endTour, prepareStep, reportTerminal, steps]
 	);
+
+	// A step with `advanceOn` finishes through the user's own action instead of
+	// Next. Whatever fires, it takes the same path as Next (events, progress,
+	// completion) and only once per shown step. The callback is read through a
+	// ref so a navigation or re-render caused by the very click that fires it
+	// cannot re-arm the listeners and drop the advance.
+	const handleCallbackRef = useRef(handleCallback);
+	handleCallbackRef.current = handleCallback;
+	const advancedFromRef = useRef<number | null>(null);
+	useEffect(() => {
+		advancedFromRef.current = null;
+	}, [readyIndex]);
+
+	const advanceFrom = useCallback((index: number) => {
+		if (
+			advancedFromRef.current === index ||
+			runStateRef.current.stepIndex !== index ||
+			!runStateRef.current.run
+		) {
+			return;
+		}
+		advancedFromRef.current = index;
+		handleCallbackRef.current({
+			action: ACTIONS.NEXT,
+			index,
+			status: STATUS.RUNNING,
+			type: EVENTS.STEP_AFTER
+		});
+	}, []);
+
+	const currentStep = steps[readyIndex];
+	const currentAdvanceOn = currentStep?.advanceOn;
+	const currentTarget = currentStep?.target;
+	const listening = runState.run && !paused;
+
+	useEffect(() => {
+		if (!currentAdvanceOn || !listening) {
+			return undefined;
+		}
+		const index = readyIndex;
+		if (currentAdvanceOn.type === 'event') {
+			return subscribeToTourEvent(currentAdvanceOn.name, () =>
+				advanceFrom(index)
+			);
+		}
+		if (currentAdvanceOn.type !== 'click') {
+			return undefined;
+		}
+		const targetName = currentAdvanceOn.target ?? currentTarget;
+		if (!targetName) {
+			return undefined;
+		}
+		const selector = tourTargetSelector(targetName);
+		let timer: number | undefined;
+		// Capture phase: sees the click even if the target stops propagation.
+		const onClick = (event: MouseEvent) => {
+			if (
+				timer === undefined &&
+				event.target instanceof Element &&
+				event.target.closest(selector)
+			) {
+				// A macrotask later, so the target handles its own click before
+				// the tour navigates or re-renders around it.
+				timer = window.setTimeout(() => advanceFrom(index), 0);
+			}
+		};
+		document.addEventListener('click', onClick, true);
+		return () => {
+			document.removeEventListener('click', onClick, true);
+			window.clearTimeout(timer);
+		};
+	}, [advanceFrom, currentAdvanceOn, currentTarget, listening, readyIndex]);
+
+	useEffect(() => {
+		if (
+			listening &&
+			currentAdvanceOn?.type === 'route' &&
+			// Level-triggered: a step shown on a matching location moves on.
+			routeMatches(currentAdvanceOn.path, location)
+		) {
+			advanceFrom(readyIndex);
+		}
+	}, [advanceFrom, currentAdvanceOn, listening, location, readyIndex]);
 
 	if (!active || !steps.length) {
 		return null;

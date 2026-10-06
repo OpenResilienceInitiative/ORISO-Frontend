@@ -1,9 +1,22 @@
 // @vitest-environment jsdom
 import React from 'react';
-import { act, cleanup, render, waitFor } from '@testing-library/react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	waitFor
+} from '@testing-library/react';
+import {
+	MemoryRouter,
+	Route,
+	Routes,
+	useLocation,
+	useNavigate
+} from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProductTourAdapter } from './ProductTourAdapter';
+import { emitTourEvent } from './tourEvents';
 import type { TourDefinition, TourEvent } from './types';
 
 interface CapturedJoyrideProps {
@@ -67,6 +80,12 @@ const LocationProbe = ({ onPath }: { onPath: (path: string) => void }) => {
 	return null;
 };
 
+let navigateTo: (path: string) => void = () => {};
+const NavigateCapture = () => {
+	navigateTo = useNavigate();
+	return null;
+};
+
 const renderAdapter = (
 	over: Partial<React.ComponentProps<typeof ProductTourAdapter>> = {}
 ) => {
@@ -78,6 +97,7 @@ const renderAdapter = (
 	) => (
 		<MemoryRouter initialEntries={['/']}>
 			<LocationProbe onPath={(p) => paths.push(p)} />
+			<NavigateCapture />
 			<Routes>
 				<Route
 					path="*"
@@ -736,6 +756,393 @@ describe('ProductTourAdapter', () => {
 
 			expect(onBeforeStart).not.toHaveBeenCalled();
 			expect(onEnd).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('advanceOn', () => {
+		const target = (name: string) => {
+			const el = document.createElement('button');
+			el.setAttribute('data-tour-target', name);
+			document.body.appendChild(el);
+			return el;
+		};
+		const advancing = (steps: TourDefinition['steps']): TourDefinition => ({
+			...tour,
+			steps
+		});
+		const plain = (id: string) => ({
+			id,
+			target: '',
+			placement: 'center' as const,
+			titleKey: `${id}.t`,
+			contentKey: `${id}.c`
+		});
+		const click = (
+			id: string,
+			over: Partial<TourDefinition['steps'][number]> = {}
+		) => ({
+			id,
+			target: `${id}-target`,
+			titleKey: `${id}.t`,
+			contentKey: `${id}.c`,
+			advanceOn: { type: 'click' as const },
+			...over
+		});
+		const started = async (
+			steps: TourDefinition['steps'],
+			over: Parameters<typeof renderAdapter>[0] = {}
+		) => {
+			const utils = renderAdapter({ tour: advancing(steps), ...over });
+			await waitFor(() => expect(joyrideProps?.run).toBe(true));
+			return utils;
+		};
+		const completed = (events: Array<{ event: TourEvent }>) =>
+			events.filter((e) => e.event === 'step_completed');
+
+		it('hands the step data to joyride so the tooltip can drop Next', async () => {
+			target('a-target');
+			await started([click('a'), plain('b')]);
+
+			expect(joyrideProps!.steps[0].data).toEqual({
+				advanceOn: { type: 'click' }
+			});
+		});
+
+		describe('click', () => {
+			it('advances like Next when the step target is clicked', async () => {
+				const el = target('a-target');
+				const { events } = await started([click('a'), plain('b')]);
+
+				fireEvent.click(el);
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				expect(completed(events)).toEqual([
+					{ event: 'step_completed', stepId: 'a' }
+				]);
+			});
+
+			it('advances for a click on a child of the target', async () => {
+				const el = target('a-target');
+				const child = document.createElement('span');
+				el.appendChild(child);
+				await started([click('a'), plain('b')]);
+
+				fireEvent.click(child);
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+			});
+
+			it('ignores clicks elsewhere and on other tour targets', async () => {
+				target('a-target');
+				const other = target('other-target');
+				await started([click('a'), plain('b')]);
+
+				fireEvent.click(other);
+				fireEvent.click(document.body);
+				await act(async () => {});
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(joyrideProps!.stepIndex).toBe(0);
+			});
+
+			it('listens on the explicit click target instead of the step target', async () => {
+				const anchor = target('a-target');
+				const trigger = target('trigger-target');
+				await started([
+					click('a', {
+						advanceOn: { type: 'click', target: 'trigger-target' }
+					}),
+					plain('b')
+				]);
+
+				fireEvent.click(anchor);
+				await new Promise((r) => setTimeout(r, 30));
+				expect(joyrideProps!.stepIndex).toBe(0);
+
+				fireEvent.click(trigger);
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+			});
+
+			it('sees a click the target stops from bubbling (capture phase)', async () => {
+				const el = target('a-target');
+				el.addEventListener('click', (e) => e.stopPropagation());
+				await started([click('a'), plain('b')]);
+
+				fireEvent.click(el);
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+			});
+
+			it('lets the target handle its own click before the tour moves on', async () => {
+				const el = target('a-target');
+				const order: string[] = [];
+				el.addEventListener('click', () => order.push('target click'));
+				await started([click('a'), plain('b')], {
+					onEvent: (event) => order.push(event)
+				});
+
+				fireEvent.click(el);
+
+				await waitFor(() => expect(order).toContain('step_completed'));
+				expect(order.indexOf('target click')).toBeLessThan(
+					order.indexOf('step_completed')
+				);
+			});
+
+			it('advances only once for repeated clicks', async () => {
+				const el = target('a-target');
+				const { events } = await started([click('a'), plain('b')]);
+
+				fireEvent.click(el);
+				fireEvent.click(el);
+				fireEvent.click(el);
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				fireEvent.click(el);
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(completed(events)).toHaveLength(1);
+				expect(joyrideProps!.stepIndex).toBe(1);
+			});
+
+			it('still advances when the click itself navigates', async () => {
+				const el = target('a-target');
+				el.addEventListener('click', () => navigateTo('/after-click'));
+				const { paths } = await started([click('a'), plain('b')]);
+
+				fireEvent.click(el);
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				expect(paths).toContain('/after-click');
+			});
+
+			it('still advances when the click re-renders the host with fresh callbacks', async () => {
+				const el = target('a-target');
+				const { rerenderAdapter } = await started([
+					click('a'),
+					plain('b')
+				]);
+
+				fireEvent.click(el);
+				rerenderAdapter({ onEvent: () => {} });
+				rerenderAdapter({ onEvent: () => {} });
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+			});
+
+			it('does not advance while the tour is paused', async () => {
+				const el = target('a-target');
+				const { rerenderAdapter } = await started([
+					click('a'),
+					plain('b')
+				]);
+				rerenderAdapter({ paused: true });
+
+				fireEvent.click(el);
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(joyrideProps!.stepIndex).toBe(0);
+			});
+
+			it('stops listening once the tour is unmounted', async () => {
+				const el = target('a-target');
+				const { events, unmount } = await started([
+					click('a'),
+					plain('b')
+				]);
+
+				unmount();
+				fireEvent.click(el);
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(completed(events)).toHaveLength(0);
+			});
+
+			it('arms the next self-advancing step after moving on, and again after Back', async () => {
+				const a = target('a-target');
+				const b = target('b-target');
+				const { events } = await started([
+					click('a'),
+					click('b'),
+					plain('c')
+				]);
+
+				fireEvent.click(a);
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				fireEvent.click(a);
+				await new Promise((r) => setTimeout(r, 30));
+				expect(joyrideProps!.stepIndex).toBe(1);
+
+				act(() => {
+					joyrideProps!.onEvent({
+						action: 'prev',
+						index: 1,
+						status: 'running',
+						type: 'step:after'
+					});
+				});
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(0));
+
+				fireEvent.click(a);
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				fireEvent.click(b);
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(2));
+				expect(completed(events).map((e: any) => e.stepId)).toEqual([
+					'a',
+					'a',
+					'b'
+				]);
+			});
+
+			it('completes the tour when the last step advances by itself', async () => {
+				const el = target('a-target');
+				const { onTerminal } = await started([
+					plain('intro'),
+					click('a')
+				]);
+				act(() => {
+					joyrideProps!.onEvent({
+						action: 'next',
+						index: 0,
+						status: 'running',
+						type: 'step:after'
+					});
+				});
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+
+				fireEvent.click(el);
+
+				await waitFor(() =>
+					expect(onTerminal).toHaveBeenCalledWith(
+						expect.objectContaining({
+							status: 'completed',
+							currentStepId: 'a'
+						})
+					)
+				);
+			});
+		});
+
+		describe('route', () => {
+			const routeStep = (path: string) => ({
+				...plain('r'),
+				advanceOn: { type: 'route' as const, path }
+			});
+
+			it('advances when the location reaches the path', async () => {
+				const { events } = await started([
+					routeStep('/done'),
+					plain('b')
+				]);
+				expect(joyrideProps!.stepIndex).toBe(0);
+
+				act(() => navigateTo('/elsewhere'));
+				await new Promise((r) => setTimeout(r, 30));
+				expect(joyrideProps!.stepIndex).toBe(0);
+
+				act(() => navigateTo('/done'));
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				expect(completed(events)).toHaveLength(1);
+			});
+
+			it('matches router patterns and required query params', async () => {
+				await started([
+					routeStep('/session/:id?channel=team'),
+					plain('b')
+				]);
+
+				act(() => navigateTo('/session/7'));
+				await new Promise((r) => setTimeout(r, 30));
+				expect(joyrideProps!.stepIndex).toBe(0);
+
+				act(() => navigateTo('/session/7?channel=team'));
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+			});
+
+			it('advances at once when the step is shown on a location that already matches', async () => {
+				await started([plain('intro'), routeStep('/'), plain('c')]);
+				act(() => {
+					joyrideProps!.onEvent({
+						action: 'next',
+						index: 0,
+						status: 'running',
+						type: 'step:after'
+					});
+				});
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(2));
+			});
+		});
+
+		describe('event', () => {
+			const eventStep = (name: string) => ({
+				...plain('e'),
+				advanceOn: { type: 'event' as const, name }
+			});
+
+			it('advances when the named event is emitted while the step is shown', async () => {
+				const { events } = await started([
+					eventStep('practice:message-sent'),
+					plain('b')
+				]);
+
+				emitTourEvent('practice:other');
+				await new Promise((r) => setTimeout(r, 30));
+				expect(joyrideProps!.stepIndex).toBe(0);
+
+				act(() => emitTourEvent('practice:message-sent'));
+
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				expect(completed(events)).toHaveLength(1);
+			});
+
+			it('advances only once when the event is emitted repeatedly', async () => {
+				const { events } = await started([eventStep('x'), plain('b')]);
+
+				act(() => {
+					emitTourEvent('x');
+					emitTourEvent('x');
+				});
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				act(() => emitTourEvent('x'));
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(completed(events)).toHaveLength(1);
+			});
+
+			it('ignores an event emitted before the step is shown', async () => {
+				await started([plain('intro'), eventStep('early'), plain('c')]);
+
+				act(() => emitTourEvent('early'));
+				act(() => {
+					joyrideProps!.onEvent({
+						action: 'next',
+						index: 0,
+						status: 'running',
+						type: 'step:after'
+					});
+				});
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(joyrideProps!.stepIndex).toBe(1);
+			});
+
+			it('stops listening after the step was left', async () => {
+				const { events } = await started([
+					eventStep('x'),
+					plain('b'),
+					plain('c')
+				]);
+				act(() => emitTourEvent('x'));
+				await waitFor(() => expect(joyrideProps!.stepIndex).toBe(1));
+
+				act(() => emitTourEvent('x'));
+				await new Promise((r) => setTimeout(r, 30));
+
+				expect(joyrideProps!.stepIndex).toBe(1);
+				expect(completed(events)).toHaveLength(1);
+			});
 		});
 	});
 });
