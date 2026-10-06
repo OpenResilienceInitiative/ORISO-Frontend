@@ -23,6 +23,7 @@ import { config } from '../../resources/scripts/config';
 import { consultantWalkthroughTour } from '../productTour/tourDefinitions';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+import { provideStoryPracticeCopy } from '../practice/practiceStoryHelpers';
 
 type ProgressFixture = Pick<
 	ITutorialProgressItem,
@@ -34,6 +35,8 @@ interface StageOptions {
 	platformTours?: boolean;
 	/** The counsellor's own switch (`userData.isWalkThroughEnabled`). */
 	ownSwitch?: boolean;
+	/** Release flag `releaseToggles.enablePracticeArea` (#1622), off by default. */
+	practiceArea?: boolean;
 	progress?: ProgressFixture;
 }
 
@@ -156,7 +159,11 @@ const renderStage = (options: StageOptions) => () => (
 			<AppConfigContext.Provider
 				value={{
 					...config,
-					enableWalkthrough: options.platformTours ?? true
+					enableWalkthrough: options.platformTours ?? true,
+					releaseToggles: {
+						...config.releaseToggles,
+						enablePracticeArea: options.practiceArea ?? false
+					}
 				}}
 			>
 				<ConsultingTypesContext.Provider
@@ -247,6 +254,8 @@ const meta = {
 	title: 'Organisms/HelpTours',
 	component: Profile,
 	tags: ['autodocs'],
+	// Tour titles of the practice flows, until their own copy ships (#1622).
+	beforeEach: provideStoryPracticeCopy,
 	parameters: {
 		layout: 'fullscreen',
 		design: { type: 'figma', url: APP_ORISO_FIGMA_URL },
@@ -377,5 +386,52 @@ export const PhoneOn: Story = {
 	play: async ({ canvas, canvasElement }) => {
 		await expectSwitchState(canvas, true);
 		await expectBottomNavigation(canvasElement);
+	}
+};
+
+export const PracticeCardsOn: Story = {
+	name: 'Practice cards on, personal switch off · desktop',
+	...desktop,
+	parameters: {
+		...desktop.parameters,
+		docs: {
+			description: {
+				story: 'With the release flag `enablePracticeArea` on, the practice flows (#1622) appear as their own cards after the tour list, marked "Übung". Start works with the personal switch off.'
+			}
+		}
+	},
+	render: renderStage({ ownSwitch: false, practiceArea: true }),
+	play: async ({ canvas }) => {
+		await expectSwitchState(canvas, false);
+		await expect(
+			await canvas.findByRole('heading', { name: 'Übungsbereich' })
+		).toBeVisible();
+		for (const button of await canvas.findAllByRole('button', {
+			name: 'Übung starten'
+		})) {
+			await expect(button).toBeEnabled();
+		}
+	}
+};
+
+export const PracticeCardsPhone: Story = {
+	name: 'Practice cards on · phone 390',
+	...phone('/profile/hilfe/rundgaenge'),
+	render: renderStage({ ownSwitch: false, practiceArea: true }),
+	play: async ({ canvas }) => {
+		await expect(
+			await canvas.findByRole('heading', { name: 'Übungsbereich' })
+		).toBeVisible();
+		// Only a viewport below the app's 900 px breakpoint counts as a phone.
+		if (window.innerWidth < 900) {
+			await expect(
+				canvas.getAllByText('Bitte üben Sie am Computer.').length
+			).toBeGreaterThan(0);
+			for (const button of canvas.getAllByRole('button', {
+				name: 'Übung starten'
+			})) {
+				await expect(button).toBeDisabled();
+			}
+		}
 	}
 };
