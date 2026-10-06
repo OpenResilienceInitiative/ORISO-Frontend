@@ -253,8 +253,8 @@ export interface PracticeSandboxProps {
 	 */
 	script?: ScriptEngine;
 	/**
-	 * Where unanswered requests go. Seam for S1's NetworkGuard; defaults to the
-	 * `fetch` found at install time.
+	 * Where requests the fake does not answer go. Defaults to the `fetch`
+	 * found at install time, which is the network guard's while practice runs.
 	 */
 	baseFetch?: Fetch;
 	children: React.ReactNode;

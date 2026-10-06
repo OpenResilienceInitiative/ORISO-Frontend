@@ -32,7 +32,7 @@ const progressBody = (overrides: Record<string, unknown> = {}) =>
 const refreshBody =
 	'refresh_token=abc.def.ghi&client_id=app&grant_type=refresh_token';
 
-describe('NetworkGuard (T1: default-deny for every non-GET request)', () => {
+describe('NetworkGuard (default-deny for every non-GET request)', () => {
 	let realFetch: ReturnType<typeof vi.fn>;
 	let originalFetch: typeof globalThis.fetch;
 	let guard: NetworkGuard;

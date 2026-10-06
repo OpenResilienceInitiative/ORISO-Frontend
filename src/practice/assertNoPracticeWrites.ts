@@ -6,7 +6,7 @@ import {
 } from './requestPolicy';
 
 /**
- * T2 proof helper: given what the browser REALLY sent during a practice run
+ * Given what the browser REALLY sent during a practice run
  * (Playwright `page.on('request')`), list every write that is not on the
  * allowlist. It uses the same policy as the runtime guard, so the guard and
  * its independent check cannot drift apart. Plain data in, no Playwright or

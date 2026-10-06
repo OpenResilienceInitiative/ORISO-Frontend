@@ -72,7 +72,7 @@ const member = (userId: string, displayName: string): PracticeRoomMember => ({
 	getMxcAvatarUrl: () => undefined
 });
 
-/** Duck-typed `Room`: the subset the chat view reads (see S0 notes). */
+/** Duck-typed `Room`: the subset the chat view reads. */
 export class PracticeRoom extends PracticeEmitter {
 	readonly timeline: MatrixEvent[] = [];
 	private readonly members = new Map<string, PracticeRoomMember>();

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * I1 proof: the REAL practice tours walk through the REAL app shell pieces
+ * The REAL practice tours walk through the REAL app shell pieces
  * (tour host, banner, navigation bar, practice surface + sandbox, session
  * containers) exactly as `Routing` wires them. Only Joyride's overlay is
  * captured (as in `ProductTourAdapter.component.test.tsx`) and browser gaps

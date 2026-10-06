@@ -4,8 +4,9 @@
  * free of app imports: the Playwright run loads this file outside the app.
  *
  * Default-deny: only GET/HEAD/OPTIONS pass; of everything else exactly two
- * requests are allowed (spec section 4, claim 1). Anything unparseable or
- * unreadable fails closed.
+ * requests are allowed: the progress write of the running tour and the
+ * identity-provider token refresh. Anything unparseable or unreadable fails
+ * closed.
  */
 
 export type AllowlistEntry = 'tutorial-progress' | 'token-refresh';

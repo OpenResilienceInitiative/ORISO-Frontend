@@ -153,7 +153,7 @@ afterEach(() => {
 	exitPracticeMode();
 });
 
-describe('composer media controls and practice mode (safety invariant 5)', () => {
+describe('composer media controls and practice mode (no voice, no attachments)', () => {
 	it('offers voice recording, attachments and the file input outside practice', () => {
 		const { container } = render(<Composer />);
 

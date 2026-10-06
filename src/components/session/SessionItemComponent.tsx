@@ -2618,7 +2618,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
-	// Practice: no calls (safety invariant 5).
+	// Practice: no calls; there is nobody real to call.
 	const mayCallInSideRoom =
 		isConsultantUser &&
 		!isOnlyEnquiry &&
@@ -3622,7 +3622,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							</Suspense>
 						)}
 						{areRobotMessagesComplete &&
-							// Practice: no attachments (safety invariant 5).
+							// Practice: no attachments; an upload would leave the page.
 							!isPracticing &&
 							hasMediaUploadFeature(
 								tenantData?.settings,

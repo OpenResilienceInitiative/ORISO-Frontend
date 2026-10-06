@@ -136,7 +136,7 @@ afterEach(() => {
 	exitPracticeMode();
 });
 
-describe('SessionMenu calls and practice mode (safety invariant 5)', () => {
+describe('SessionMenu calls and practice mode (no calls)', () => {
 	it('offers the call buttons in the header row outside practice', () => {
 		render(<Menu />);
 

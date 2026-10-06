@@ -2,8 +2,8 @@ import de from '../resources/i18n/de/common.json';
 
 /**
  * Test-only `t` backed by the real German bundle, so a missing or misspelled
- * practice key fails the test instead of printing the key. `extra` adds copy
- * that is not shipped yet (e.g. the tour titles of the stub tours).
+ * practice key fails the test instead of printing the key. `extra` adds or
+ * overrides copy for one test.
  */
 export const makeTranslate =
 	(extra: Record<string, string> = {}) =>
