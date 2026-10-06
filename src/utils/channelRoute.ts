@@ -431,6 +431,8 @@ export const writeLastChannel = (
 	if (!storage || sessionId === null || sessionId === undefined) {
 		return;
 	}
+	// Practice cases (FE#1622) have negative ids and never persist.
+	if (Number(sessionId) < 0) return;
 	try {
 		storage.setItem(
 			lastChannelKey(sessionId),

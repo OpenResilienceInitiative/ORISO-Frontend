@@ -649,7 +649,8 @@ export const MessageSubmitInterfaceComponent = ({
 	});
 	const audienceSelectionStorageKey = useMemo(() => {
 		const sessionId = activeSession?.item?.id;
-		if (!sessionId) {
+		// Practice cases (FE#1622) have negative ids and never persist.
+		if (!sessionId || sessionId < 0) {
 			return '';
 		}
 		return `oriso.audienceSelection.${sessionId}`;
