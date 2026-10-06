@@ -107,10 +107,17 @@ let joyride: {
 } | null = null;
 vi.mock('react-joyride', async () => {
 	const actual: any = await vi.importActual('react-joyride');
+	const { useEffect } = await vi.importActual<typeof React>('react');
 	return {
 		...actual,
 		Joyride: (props: any) => {
 			joyride = props;
+			useEffect(
+				() => () => {
+					joyride = null;
+				},
+				[]
+			);
 			return null;
 		}
 	};
@@ -126,6 +133,8 @@ const TUTORIAL_PROGRESS = '/service/users/tutorials/progress';
 interface NetworkCall {
 	method: string;
 	url: string;
+	/** The tutorial progress status a PUT writes. */
+	status?: string;
 }
 const network: NetworkCall[] = [];
 const networkFetch = vi.fn(
@@ -133,7 +142,12 @@ const networkFetch = vi.fn(
 		const request = input instanceof Request ? input : null;
 		const method = (init?.method || request?.method || 'GET').toUpperCase();
 		const url = request ? request.url : String(input);
-		network.push({ method, url });
+		const body = init?.body ?? (await request?.clone().text());
+		const status =
+			typeof body === 'string' && body
+				? JSON.parse(body).status
+				: undefined;
+		network.push({ method, url, status });
 		if (url.includes(TUTORIAL_PROGRESS)) {
 			return method === 'GET'
 				? new Response('[]', {
@@ -516,11 +530,20 @@ const finish = async (at: number) => {
 	expect(route()).toBe(HELP_ROUTE);
 	expect(screen.getByTestId('help-page')).toBeTruthy();
 	expect(window.fetch).toBe(networkFetch);
-	expect(
-		network.filter(({ method }) => method === 'PUT').length
-	).toBeGreaterThan(0);
+	expect(progressWrites()).toContain('completed');
 	expectNothingLeftThePracticeWorld();
 };
+
+const progressWrites = () =>
+	network
+		.filter(
+			({ method, url }) =>
+				method === 'PUT' && url.includes(TUTORIAL_PROGRESS)
+		)
+		.map(({ status }) => status);
+
+const banner = () =>
+	within(screen.getByRole('status', { name: 'practice.banner.title' }));
 
 describe('practice flows on the real app shell', () => {
 	it('F1 with the team step: every anchor is live when its step shows, and the real actions advance the tour', async () => {
@@ -529,7 +552,13 @@ describe('practice flows on the real app shell', () => {
 		await openThePracticeEnquiry();
 		expect(joyride!.steps).toHaveLength(8);
 
-		// 3: the team button of the open enquiry; click it.
+		// 3: the team button of the open enquiry. It stays until it is
+		// clicked: the step would hang if the panel opened by itself.
+		await expectStep(2);
+		await act(
+			() => new Promise<void>((resolve) => setTimeout(resolve, 300))
+		);
+		expect(route()).not.toContain('channel=');
 		const teamButton = await expectStep(2);
 		fireEvent.click(teamButton!);
 
@@ -627,5 +656,66 @@ describe('practice flows on the real app shell', () => {
 
 		// 4: done.
 		await finish(3);
+	}, 120000);
+	it('banner Restart mid-flow: same guard, fresh case with the accept available again, tour back at step 1', async () => {
+		const app = renderApp({ teamDiscussion: false });
+		app.start(ACCEPT);
+		await openThePracticeEnquiry();
+		const accept = await expectStep(2);
+		await afterWorldEvent(
+			PRACTICE_TOUR_EVENTS.enquiryAccepted,
+			async () => {
+				fireEvent.click(accept!);
+			}
+		);
+		await expectStep(3);
+		const guard = getPracticeNetworkGuard();
+
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.restart' })
+		);
+
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(getPracticeNetworkGuard()).toBe(guard);
+		// The accepted case is an open enquiry again.
+		await openThePracticeEnquiry();
+		await expectStep(2);
+
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		expect(route()).toBe(HELP_ROUTE);
+		expectNothingLeftThePracticeWorld();
+	}, 120000);
+
+	it('banner End mid-flow: the real page comes back where practice started, and the run is not marked done', async () => {
+		const app = renderApp();
+		app.start(ACCEPT);
+		await openThePracticeEnquiry();
+		await expectStep(2);
+
+		fireEvent.click(
+			banner().getByRole('button', { name: 'practice.banner.end' })
+		);
+
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		expect(route()).toBe(HELP_ROUTE);
+		expect(screen.getByTestId('help-page')).toBeTruthy();
+		expect(joyride).toBeNull();
+		expect(
+			screen.queryByRole('status', { name: 'practice.banner.title' })
+		).toBeNull();
+		expect(progressWrites()).not.toContain('completed');
+		expect(progressWrites()).not.toContain('skipped');
+		expect(window.fetch).toBe(networkFetch);
+		expectNothingLeftThePracticeWorld();
 	}, 120000);
 });

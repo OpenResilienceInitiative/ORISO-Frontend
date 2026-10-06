@@ -2217,6 +2217,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// lands on the closed main chat instead of re-opening (review D-3).
 	// The decision itself is pure: `decideAutoOpen` (channelRoute.ts).
 	const autoOpenedForSessionRef = useRef<string | number | null>(null);
+	// Practice (FE#1622): the tour teaches opening the team discussion; a panel
+	// opening by itself would remove the button its step points at.
+	const isPracticing = usePracticeActive();
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
 		if (!sessionId || !isSupervisionPanelViewer) {
@@ -2233,7 +2236,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			hasTeamSideRoom,
 			teamDiscussionResolved: props.teamDiscussionResolved,
 			canStartTeamDiscussion:
-				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
+				Boolean(activeSession.isEnquiry) &&
+				canOpenTeamSideRoom &&
+				!isPracticing
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2250,6 +2255,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		props.teamDiscussionResolved,
 		activeSession.isEnquiry,
 		canOpenTeamSideRoom,
+		isPracticing,
 		messages,
 		setChannelRoute
 	]);
@@ -2613,7 +2619,6 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
 	// Practice: no calls (safety invariant 5).
-	const isPracticing = usePracticeActive();
 	const mayCallInSideRoom =
 		isConsultantUser &&
 		!isOnlyEnquiry &&
