@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { createStore, Provider, useAtomValue } from 'jotai';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { PracticeBanner } from '../../practice/PracticeBanner';
@@ -68,7 +68,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Persistent note that practice mode is on (#1622). It names the flow, shows "Step i of N", says it is a practice case without real data, and offers **End practice** and **Restart**. It cannot be dismissed. It rests at the bottom of the list column, clear of every tour step. Drag the handle, or focus it and use the arrow keys (Shift: larger steps); it stays inside the window. It sits above the tour overlay and below dialogs. Desktop only: practice cannot be started on a phone.'
+					'Persistent note that practice mode is on (#1622). It names the flow, shows "Step i of N", says it is a practice case without real data, and offers **End practice** and **Restart**. It cannot be dismissed. It rests at the bottom of the list column, clear of every tour step. Drag the handle, or focus it and use the arrow keys (Shift: larger steps); it stays inside the window. It stays visible and usable with the supervisor picker open. Desktop only: practice cannot be started on a phone.'
 			}
 		}
 	},
@@ -80,21 +80,24 @@ type Story = StoryObj<typeof meta>;
 
 export const Desktop: Story = {
 	name: 'Running · desktop',
-	play: async ({ canvas }) => {
-		const banner = await canvas.findByRole('status', {
+	play: async () => {
+		const banner = await screen.findByRole('status', {
 			name: 'Übungsmodus'
 		});
+		const controls = within(banner);
 		await expect(banner).toBeVisible();
-		await expect(canvas.getByText('Übung: Anfrage annehmen')).toBeVisible();
-		await expect(canvas.getByText(/Schritt 3 von 6/)).toBeVisible();
 		await expect(
-			canvas.getByText(/Übungsfall, keine echten Daten/)
+			controls.getByText('Übung: Anfrage annehmen')
+		).toBeVisible();
+		await expect(controls.getByText(/Schritt 3 von 6/)).toBeVisible();
+		await expect(
+			controls.getByText(/Übungsfall, keine echten Daten/)
 		).toBeVisible();
 		await expect(
-			canvas.getByRole('button', { name: 'Übung beenden' })
+			controls.getByRole('button', { name: 'Übung beenden' })
 		).toBeVisible();
 		await expect(
-			canvas.getByRole('button', { name: 'Neu starten' })
+			controls.getByRole('button', { name: 'Neu starten' })
 		).toBeVisible();
 		// Nothing to dismiss it with.
 		await userEvent.keyboard('{Escape}');
@@ -112,11 +115,13 @@ export const Desktop: Story = {
 
 export const MovedWithKeyboard: Story = {
 	name: 'Moved with the arrow keys · desktop',
-	play: async ({ canvas }) => {
-		const banner = await canvas.findByRole('status', {
+	play: async () => {
+		const banner = await screen.findByRole('status', {
 			name: 'Übungsmodus'
 		});
-		const handle = canvas.getByRole('button', { name: /verschieben/ });
+		const handle = within(banner).getByRole('button', {
+			name: /verschieben/
+		});
 		handle.focus();
 		await expect(handle).toHaveFocus();
 
@@ -140,7 +145,7 @@ export const Restart: Story = {
 	name: 'Restart · desktop',
 	play: async ({ canvas }) => {
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Neu starten' })
+			await screen.findByRole('button', { name: 'Neu starten' })
 		);
 
 		// The tour host gets a new run of the same tour; its re-enter resets
@@ -155,15 +160,22 @@ export const Restart: Story = {
 export const EndPractice: Story = {
 	name: 'End practice · desktop',
 	play: async ({ canvas }) => {
+		const banner = await screen.findByRole('status', {
+			name: 'Übungsmodus'
+		});
 		await userEvent.click(
-			await canvas.findByRole('button', { name: 'Übung beenden' })
+			within(banner).getByRole('button', { name: 'Übung beenden' })
 		);
 
 		await waitFor(() =>
 			expect(
-				canvas.queryByRole('status', { name: 'Übungsmodus' })
+				screen.queryByRole('status', { name: 'Übungsmodus' })
 			).toBeNull()
 		);
+		await expect(banner).not.toBeInTheDocument();
+		await expect(
+			canvas.getByRole('status', { name: 'Tour host request' })
+		).toHaveTextContent('none');
 		// The guard comes off once the practice views have drained.
 		await waitFor(() => expect(isPracticeMode()).toBe(false));
 	}
