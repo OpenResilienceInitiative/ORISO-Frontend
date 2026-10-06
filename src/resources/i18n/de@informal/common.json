@@ -2305,12 +2305,6 @@
 		}
 	},
 	"dpaSign": {
-		"print": "Drucken / als PDF speichern",
-		"confirmedBy": "Bestätigt von",
-		"confirmedAt": "Bestätigt am (Europe/Berlin)",
-		"organisation": "Organisation",
-		"printHint": "Im Druckdialog können Sie als PDF speichern. Schalten Sie Kopf- und Fußzeilen aus, damit die Linkadresse nicht mitgedruckt wird.",
-		"printUnavailable": "Ihre Bestätigung wurde gespeichert. Die Druckansicht ist nicht verfügbar, weil die Bestätigungsdaten unvollständig sind.",
 		"title": "Vertragsunterlagen prüfen und bestätigen",
 		"subtitle": "Bitte lies die Vertragsunterlagen vollständig, mache Angaben zur Person und bestätige sie anschließend.",
 		"loadingContract": "Vertragsunterlagen werden geladen...",
