@@ -9,6 +9,7 @@ import {
 	initialTourRunState,
 	mapStepsToJoyride,
 	reduceTourCallback,
+	resolveTourSteps,
 	tourTargetSelector,
 	TourRunState
 } from './tourEngine';
@@ -18,6 +19,7 @@ import type {
 	TourEvent,
 	TourPlacement,
 	TourProgress,
+	TourResolveContext,
 	TourStep
 } from './types';
 
@@ -27,6 +29,12 @@ export interface ProductTourAdapterProps {
 	active: boolean;
 	/** A higher-priority blocking surface (e.g. the 2FA dialog) is visible. */
 	paused?: boolean;
+	/**
+	 * Resolves the `when` conditions of the tour and its steps once, when the
+	 * tour mounts. Without it, unset flags apply (everything ON). Hosts that
+	 * count steps themselves resolve first and pass the resolved tour.
+	 */
+	context?: TourResolveContext;
 	/** Bounded wait for a step target before it is skipped as missing. */
 	targetTimeoutMs?: number;
 	onEvent?: (event: TourEvent, step?: TourStep) => void;
@@ -41,6 +49,7 @@ export const ProductTourAdapter = ({
 	tour,
 	active,
 	paused = false,
+	context,
 	targetTimeoutMs = DEFAULT_TARGET_TIMEOUT_MS,
 	onEvent,
 	onTerminalStatus,
@@ -78,7 +87,13 @@ export const ProductTourAdapter = ({
 		setRunState(next);
 	}, []);
 
-	const { steps } = tour;
+	// Variants are resolved once per tour: a flag flipping mid-run must not
+	// change the step count under a running tour.
+	const contextRef = useRef(context);
+	const steps = useMemo(
+		() => resolveTourSteps(tour, contextRef.current),
+		[tour]
+	);
 	const joyrideSteps = useMemo(() => {
 		const mapped = mapStepsToJoyride(steps);
 		return mapped.map((step, index) =>
@@ -208,7 +223,7 @@ export const ProductTourAdapter = ({
 	// Gate the initial run: prepare step 0 (route + target) before Joyride
 	// ever positions against the page.
 	useEffect(() => {
-		if (!active || startedPreparingRef.current) {
+		if (!active || !steps.length || startedPreparingRef.current) {
 			return;
 		}
 		startedPreparingRef.current = true;
@@ -217,7 +232,7 @@ export const ProductTourAdapter = ({
 				applyRunState({ ...runStateRef.current, run: true });
 			}
 		});
-	}, [active, applyRunState, prepareStep]);
+	}, [active, applyRunState, prepareStep, steps.length]);
 
 	const handleCallback = useCallback(
 		(data: EventData) => {
@@ -266,7 +281,7 @@ export const ProductTourAdapter = ({
 		[applyRunState, emit, prepareStep, reportTerminal, steps]
 	);
 
-	if (!active) {
+	if (!active || !steps.length) {
 		return null;
 	}
 

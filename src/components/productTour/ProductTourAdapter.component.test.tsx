@@ -73,7 +73,9 @@ const renderAdapter = (
 	const events: Array<{ event: TourEvent; stepId?: string }> = [];
 	const paths: string[] = [];
 	const onTerminal = vi.fn(() => Promise.resolve());
-	const utils = render(
+	const tree = (
+		props: Partial<React.ComponentProps<typeof ProductTourAdapter>>
+	) => (
 		<MemoryRouter initialEntries={['/']}>
 			<LocationProbe onPath={(p) => paths.push(p)} />
 			<Routes>
@@ -89,14 +91,18 @@ const renderAdapter = (
 								events.push({ event, stepId: step?.id })
 							}
 							onTerminalStatus={onTerminal}
-							{...over}
+							{...props}
 						/>
 					}
 				/>
 			</Routes>
 		</MemoryRouter>
 	);
-	return { events, paths, onTerminal, ...utils };
+	const utils = render(tree(over));
+	const rerenderAdapter = (
+		props: Partial<React.ComponentProps<typeof ProductTourAdapter>>
+	) => utils.rerender(tree({ ...over, ...props }));
+	return { events, paths, onTerminal, rerenderAdapter, ...utils };
 };
 
 afterEach(() => {
@@ -349,5 +355,110 @@ describe('ProductTourAdapter', () => {
 			)
 		);
 		expect(joyrideProps!.run).toBe(false);
+	});
+
+	describe('variants', () => {
+		const variantTour: TourDefinition = {
+			...tour,
+			steps: [
+				{
+					id: 'intro',
+					target: '',
+					placement: 'center',
+					titleKey: 't0',
+					contentKey: 'c0'
+				},
+				{
+					id: 'team',
+					target: '',
+					placement: 'center',
+					when: { flag: 'featureTeamDiscussionEnabled' },
+					titleKey: 't1',
+					contentKey: 'c1'
+				},
+				{
+					id: 'outro',
+					target: '',
+					placement: 'center',
+					titleKey: 't2',
+					contentKey: 'c2'
+				}
+			]
+		};
+
+		it('hands joyride only the steps whose conditions hold', async () => {
+			renderAdapter({
+				tour: variantTour,
+				context: { flags: { featureTeamDiscussionEnabled: false } }
+			});
+
+			await waitFor(() => expect(joyrideProps).not.toBeNull());
+			expect(joyrideProps!.steps.map((s) => s.id)).toEqual([
+				'intro',
+				'outro'
+			]);
+		});
+
+		it('keeps every step when the flag is unset', async () => {
+			renderAdapter({ tour: variantTour, context: { flags: {} } });
+
+			await waitFor(() => expect(joyrideProps).not.toBeNull());
+			expect(joyrideProps!.steps).toHaveLength(3);
+		});
+
+		it('completes at the last resolved step, not the last defined one', async () => {
+			const { onTerminal } = renderAdapter({
+				tour: variantTour,
+				context: { flags: { featureTeamDiscussionEnabled: false } }
+			});
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'next',
+					index: 1,
+					status: 'running',
+					type: 'step:after'
+				});
+			});
+
+			await waitFor(() =>
+				expect(onTerminal).toHaveBeenCalledWith(
+					expect.objectContaining({
+						status: 'completed',
+						currentStepId: 'outro'
+					})
+				)
+			);
+		});
+
+		it('renders and starts nothing when the tour-level condition fails', async () => {
+			const { onTerminal } = renderAdapter({
+				tour: {
+					...variantTour,
+					when: { flag: 'featureSupervisionEnabled' }
+				},
+				context: { flags: { featureSupervisionEnabled: false } }
+			});
+
+			await act(async () => {});
+			expect(joyrideProps).toBeNull();
+			expect(onTerminal).not.toHaveBeenCalled();
+		});
+
+		it('resolves once at start and ignores later flag changes', async () => {
+			const { rerenderAdapter } = renderAdapter({
+				tour: variantTour,
+				context: { flags: { featureTeamDiscussionEnabled: false } }
+			});
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			rerenderAdapter({ context: { flags: {} } });
+
+			expect(joyrideProps!.steps.map((s) => s.id)).toEqual([
+				'intro',
+				'outro'
+			]);
+		});
 	});
 });
