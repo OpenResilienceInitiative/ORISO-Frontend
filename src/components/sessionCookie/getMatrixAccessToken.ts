@@ -28,6 +28,8 @@ export interface MatrixLoginData {
 	uiaPassword?: string;
 	/** Authentication identity that requested these credentials; never a password. */
 	authenticatedSubject?: string;
+	/** Transient device epoch prevents persisting credentials invalidated by recovery. */
+	deviceGeneration?: number;
 	// Anonymous live-chat users can never cross-sign a consultant's device, so
 	// their client must share Megolm keys to all devices; invisible crypto
 	// (verified-only) would silently make their messages undecryptable for the
@@ -165,6 +167,7 @@ const getPersistedMatrixLoginData = (): MatrixLoginData | null => {
 		deviceId,
 		homeserverUrl,
 		authenticatedSubject: sessionSubject,
+		deviceGeneration: deviceBootstrapGeneration,
 		expiresInMs: remainingLifetimeMs
 	};
 };
@@ -271,6 +274,7 @@ const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 
 		return {
 			accessToken: response.accessToken,
+			deviceGeneration: requestedGeneration,
 			userId: response.userId,
 			deviceId: getOrCreateMatrixDeviceId(
 				response.userId,
@@ -322,6 +326,12 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
+	if (
+		loginData.deviceGeneration !== undefined &&
+		loginData.deviceGeneration !== deviceBootstrapGeneration
+	) {
+		throw new Error('Matrix device changed before credential persistence');
+	}
 	if (
 		loginData.authenticatedSubject &&
 		loginData.authenticatedSubject !== getCurrentAuthSubject()

@@ -167,6 +167,7 @@ describe('getMatrixAccessToken', () => {
 		);
 
 		await expect(getMatrixAccessToken()).resolves.toEqual({
+			deviceGeneration: expect.any(Number),
 			accessToken: 'persisted-token',
 			authenticatedSubject: 'keycloak-user',
 			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
@@ -285,6 +286,7 @@ describe('getMatrixAccessToken', () => {
 		});
 
 		await expect(getMatrixAccessToken()).resolves.toEqual({
+			deviceGeneration: expect.any(Number),
 			accessToken: 'replacement-token',
 			authenticatedSubject: 'keycloak-user',
 			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
@@ -321,6 +323,7 @@ describe('getMatrixAccessToken', () => {
 				forceRefresh: true
 			})
 		).resolves.toEqual({
+			deviceGeneration: expect.any(Number),
 			accessToken: 'replacement-token',
 			authenticatedSubject: 'keycloak-user',
 			deviceId: 'ORISO_WEB_EXISTING_DEVICE',
@@ -406,6 +409,22 @@ describe('getMatrixAccessToken', () => {
 		await expect(firstBootstrap).rejects.toThrow(
 			'Matrix session changed during token bootstrap'
 		);
+	});
+
+	it('cannot persist completed bootstrap credentials after their device was invalidated', async () => {
+		setAuthenticatedSubject('keycloak-user');
+		vi.mocked(fetchData).mockResolvedValueOnce({
+			accessToken: 'invalidated-device-token',
+			deviceId: 'ORISO_WEB_OLD_DEVICE',
+			userId: '@user:matrix.example.test',
+			expiresInMs: 3300000
+		});
+		const loginData = await getMatrixAccessToken({ forceRefresh: true });
+		clearPersistedMatrixDeviceId(loginData.userId);
+		expect(() => persistMatrixLoginData(loginData)).toThrow(
+			'Matrix device changed before credential persistence'
+		);
+		expect(localStorage.getItem('matrix_access_token')).toBeNull();
 	});
 
 	it('starts a new device bootstrap when recovery invalidates an in-flight device', async () => {
@@ -504,6 +523,7 @@ describe('getMatrixAccessToken', () => {
 		});
 
 		await expect(getMatrixAccessToken()).resolves.toEqual({
+			deviceGeneration: expect.any(Number),
 			accessToken: 'matrix-token',
 			deviceId: 'RESPONSE_DEVICE',
 			expiresInMs: 120_000,
