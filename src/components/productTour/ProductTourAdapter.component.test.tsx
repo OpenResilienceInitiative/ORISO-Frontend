@@ -512,4 +512,230 @@ describe('ProductTourAdapter', () => {
 			);
 		});
 	});
+
+	describe('host hooks (setup and teardown)', () => {
+		const deferred = () => {
+			let resolve!: () => void;
+			let reject!: (error: Error) => void;
+			const promise = new Promise<void>((res, rej) => {
+				resolve = res;
+				reject = rej;
+			});
+			return { promise, resolve, reject };
+		};
+
+		it('runs onBeforeStart before the first step is prepared and starts after it resolves', async () => {
+			const setup = deferred();
+			const onBeforeStart = vi.fn(() => setup.promise);
+			renderAdapter({ onBeforeStart });
+
+			await waitFor(() => expect(onBeforeStart).toHaveBeenCalledTimes(1));
+			await act(async () => {});
+			expect(joyrideProps!.run).toBe(false);
+
+			await act(async () => setup.resolve());
+
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+			expect(onBeforeStart).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not prepare the first target while setup is still pending', async () => {
+			const setup = deferred();
+			const el = document.createElement('div');
+			el.setAttribute('data-tour-target', 'second-target');
+			document.body.appendChild(el);
+			const { paths } = renderAdapter({
+				tour: {
+					...tour,
+					steps: [{ ...tour.steps[1] }]
+				},
+				onBeforeStart: () => setup.promise
+			});
+
+			await act(async () => {});
+			expect(paths).not.toContain('/second');
+
+			await act(async () => setup.resolve());
+			await waitFor(() => expect(paths).toContain('/second'));
+		});
+
+		it('tears down once after the terminal status is written', async () => {
+			const order: string[] = [];
+			const onEnd = vi.fn(() => order.push('end'));
+			const { onTerminal } = renderAdapter({ onEnd });
+			onTerminal.mockImplementation(() => {
+				order.push('terminal');
+				return Promise.resolve();
+			});
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'next',
+					index: 2,
+					status: 'running',
+					type: 'step:after'
+				});
+			});
+
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+			expect(order).toEqual(['terminal', 'end']);
+		});
+
+		it('tears down when the tour is skipped', async () => {
+			const onEnd = vi.fn();
+			renderAdapter({ onEnd });
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'close',
+					index: 0,
+					status: 'running',
+					type: 'step:after'
+				});
+			});
+
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+		});
+
+		it('tears down when the tour stops without a terminal status', async () => {
+			const onEnd = vi.fn();
+			renderAdapter({
+				onEnd,
+				tour: {
+					...tour,
+					steps: [
+						tour.steps[0],
+						{
+							id: 'strict-end',
+							target: 'strict-end-target',
+							titleKey: 't1',
+							contentKey: 'c1'
+						}
+					]
+				}
+			});
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'next',
+					index: 0,
+					status: 'running',
+					type: 'step:after'
+				});
+			});
+
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1), {
+				timeout: 3000
+			});
+		});
+
+		it('tears down when joyride loses the last required target', async () => {
+			const onEnd = vi.fn();
+			const { onTerminal } = renderAdapter({ onEnd });
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'next',
+					index: 2,
+					status: 'running',
+					type: 'error:target_not_found'
+				});
+			});
+
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+			expect(onTerminal).not.toHaveBeenCalled();
+		});
+
+		it('tears down on unmount and never twice', async () => {
+			const onEnd = vi.fn();
+			const { unmount } = renderAdapter({ onEnd });
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			unmount();
+
+			expect(onEnd).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not tear down again on unmount after the terminal teardown', async () => {
+			const onEnd = vi.fn();
+			const { unmount } = renderAdapter({ onEnd });
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'close',
+					index: 0,
+					status: 'running',
+					type: 'step:after'
+				});
+			});
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+
+			unmount();
+
+			expect(onEnd).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not tear down a tour whose setup never ran', () => {
+			const onEnd = vi.fn();
+			const { unmount } = renderAdapter({ active: false, onEnd });
+
+			unmount();
+
+			expect(onEnd).not.toHaveBeenCalled();
+		});
+
+		it('waits for a pending setup before tearing down after an early unmount', async () => {
+			const setup = deferred();
+			const order: string[] = [];
+			const { unmount } = renderAdapter({
+				onBeforeStart: () =>
+					setup.promise.then(() => {
+						order.push('setup');
+					}),
+				onEnd: () => order.push('end')
+			});
+			await act(async () => {});
+
+			unmount();
+			await act(async () => {});
+			expect(order).toEqual([]);
+
+			await act(async () => setup.resolve());
+
+			await waitFor(() => expect(order).toEqual(['setup', 'end']));
+		});
+
+		it('never starts the tour when its setup fails, and still tears down', async () => {
+			const onEnd = vi.fn();
+			const { events } = renderAdapter({
+				onBeforeStart: () => Promise.reject(new Error('boom')),
+				onEnd
+			});
+
+			await waitFor(() => expect(onEnd).toHaveBeenCalledTimes(1));
+			expect(joyrideProps!.run).toBe(false);
+			expect(events).toEqual([]);
+		});
+
+		it('runs neither hook for a tour that resolves to no steps', async () => {
+			const onBeforeStart = vi.fn();
+			const onEnd = vi.fn();
+			const { unmount } = renderAdapter({
+				tour: { ...tour, when: { flag: 'off' } },
+				context: { flags: { off: false } },
+				onBeforeStart,
+				onEnd
+			});
+			await act(async () => {});
+
+			unmount();
+
+			expect(onBeforeStart).not.toHaveBeenCalled();
+			expect(onEnd).not.toHaveBeenCalled();
+		});
+	});
 });

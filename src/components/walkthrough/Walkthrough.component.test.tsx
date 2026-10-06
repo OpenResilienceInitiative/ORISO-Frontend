@@ -7,6 +7,7 @@ import { apiPatchConsultantData } from '../../api';
 import { TenantContext, UserDataContext } from '../../globalState';
 import { frontendTours } from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
+import { registerTourHostHooks } from '../productTour/tourHostHooks';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 import type { TourDefinition } from '../productTour/types';
 import { Walkthrough } from './Walkthrough';
@@ -507,6 +508,71 @@ describe('Walkthrough', () => {
 				expect(queryByTestId('product-tour-adapter')).toBeNull();
 			} finally {
 				delete variantTour.when;
+			}
+		});
+	});
+
+	describe('host hooks', () => {
+		it('passes no hooks for a tour that registered none', () => {
+			renderWalkthrough(
+				{},
+				{
+					tourId: 'consultant-walkthrough',
+					mode: 'start',
+					requestedAt: 30
+				}
+			);
+
+			expect(adapterProps.onBeforeStart).toBeUndefined();
+			expect(adapterProps.onEnd).toBeUndefined();
+		});
+
+		it('hands the registered setup and teardown of the running tour to the adapter', async () => {
+			const setup = vi.fn();
+			const teardown = vi.fn();
+			const unregister = registerTourHostHooks(
+				'consultant-mail-counselling',
+				{ setup, teardown }
+			);
+			try {
+				renderWalkthrough(
+					{},
+					{
+						tourId: 'consultant-mail-counselling',
+						mode: 'start',
+						requestedAt: 31
+					}
+				);
+
+				await adapterProps.onBeforeStart();
+				adapterProps.onEnd();
+
+				expect(setup).toHaveBeenCalledTimes(1);
+				expect(teardown).toHaveBeenCalledTimes(1);
+			} finally {
+				unregister();
+			}
+		});
+
+		it('does not hand one tour the hooks of another', () => {
+			const unregister = registerTourHostHooks(
+				'consultant-mail-counselling',
+				{ setup: vi.fn(), teardown: vi.fn() }
+			);
+			try {
+				renderWalkthrough(
+					{},
+					{
+						tourId: 'consultant-walkthrough',
+						mode: 'start',
+						requestedAt: 32
+					}
+				);
+
+				expect(adapterProps.onBeforeStart).toBeUndefined();
+				expect(adapterProps.onEnd).toBeUndefined();
+			} finally {
+				unregister();
 			}
 		});
 	});

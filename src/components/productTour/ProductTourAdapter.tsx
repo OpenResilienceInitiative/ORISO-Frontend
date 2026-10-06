@@ -40,6 +40,18 @@ export interface ProductTourAdapterProps {
 	onEvent?: (event: TourEvent, step?: TourStep) => void;
 	/** Called exactly once when the tour reaches completed or skipped. */
 	onTerminalStatus?: (progress: TourProgress) => void | Promise<void>;
+	/**
+	 * Host setup (e.g. entering practice mode). Runs before the first step is
+	 * prepared; the tour starts once it resolves, and never starts if it
+	 * rejects.
+	 */
+	onBeforeStart?: () => void | Promise<void>;
+	/**
+	 * Host teardown. At most once per mount, after the terminal status was
+	 * written, when the tour stops without one, or on unmount. Waits for a
+	 * still-pending setup, and never runs when setup never began.
+	 */
+	onEnd?: () => void;
 	tooltipComponent?: React.ComponentType<any>;
 }
 
@@ -53,6 +65,8 @@ export const ProductTourAdapter = ({
 	targetTimeoutMs = DEFAULT_TARGET_TIMEOUT_MS,
 	onEvent,
 	onTerminalStatus,
+	onBeforeStart,
+	onEnd,
 	tooltipComponent
 }: ProductTourAdapterProps) => {
 	const { t: translate } = useTranslation();
@@ -81,6 +95,33 @@ export const ProductTourAdapter = ({
 	const startedPreparingRef = useRef(false);
 	const locationRef = useRef(location);
 	locationRef.current = location;
+	const onBeforeStartRef = useRef(onBeforeStart);
+	onBeforeStartRef.current = onBeforeStart;
+	const onEndRef = useRef(onEnd);
+	onEndRef.current = onEnd;
+	// `setup` settles (never rejects) once the host setup is over, so a
+	// teardown that arrives early can wait for it.
+	const hostRef = useRef<{
+		began: boolean;
+		ended: boolean;
+		setup: Promise<void> | null;
+	}>({ began: false, ended: false, setup: null });
+
+	const endTour = useCallback(() => {
+		const host = hostRef.current;
+		if (!host.began || host.ended) {
+			return;
+		}
+		host.ended = true;
+		const teardown = () => onEndRef.current?.();
+		if (host.setup) {
+			host.setup.then(teardown);
+		} else {
+			teardown();
+		}
+	}, []);
+
+	useEffect(() => endTour, [endTour]);
 
 	const applyRunState = useCallback((next: TourRunState) => {
 		runStateRef.current = next;
@@ -124,13 +165,17 @@ export const ProductTourAdapter = ({
 				startedAt: startedAtRef.current,
 				completedAt: new Date().toISOString()
 			};
-			Promise.resolve(onTerminalStatus?.(progress)).catch(() => {
-				// A failed write must not crash the tour surface; the caller
-				// owns retry/reporting semantics.
-				terminalReportedRef.current = false;
-			});
+			Promise.resolve(onTerminalStatus?.(progress))
+				.catch(() => {
+					// A failed write must not crash the tour surface; the caller
+					// owns retry/reporting semantics.
+					terminalReportedRef.current = false;
+				})
+				// Leave the host's mode only after the write, which a guarded
+				// mode may only allow while it is still active.
+				.finally(endTour);
 		},
-		[onTerminalStatus, tour.id, tour.version]
+		[endTour, onTerminalStatus, tour.id, tour.version]
 	);
 
 	/**
@@ -215,9 +260,18 @@ export const ProductTourAdapter = ({
 				return false;
 			}
 			applyRunState({ ...runStateRef.current, run: false });
+			endTour();
 			return false;
 		},
-		[applyRunState, emit, navigate, reportTerminal, steps, targetTimeoutMs]
+		[
+			applyRunState,
+			emit,
+			endTour,
+			navigate,
+			reportTerminal,
+			steps,
+			targetTimeoutMs
+		]
 	);
 
 	// Gate the initial run: prepare step 0 (route + target) before Joyride
@@ -227,12 +281,41 @@ export const ProductTourAdapter = ({
 			return;
 		}
 		startedPreparingRef.current = true;
-		prepareStep(0).then((prepared) => {
-			if (prepared) {
-				applyRunState({ ...runStateRef.current, run: true });
-			}
-		});
-	}, [active, applyRunState, prepareStep, steps.length]);
+		const start = () =>
+			prepareStep(0).then((prepared) => {
+				if (prepared) {
+					applyRunState({ ...runStateRef.current, run: true });
+				}
+			});
+
+		const host = hostRef.current;
+		host.began = true;
+		let setup: Promise<void> | undefined;
+		try {
+			const pending = onBeforeStartRef.current?.();
+			setup = pending ? Promise.resolve(pending) : undefined;
+		} catch (error) {
+			setup = Promise.reject(error);
+		}
+		if (!setup) {
+			start();
+			return;
+		}
+		host.setup = setup.then(
+			() => {},
+			() => {}
+		);
+		setup.then(
+			() => {
+				// Unmounted while setup was pending: teardown is on its way.
+				if (!host.ended) {
+					start();
+				}
+			},
+			// The tour never starts; undo whatever the setup got done.
+			endTour
+		);
+	}, [active, applyRunState, endTour, prepareStep, steps.length]);
 
 	const handleCallback = useCallback(
 		(data: EventData) => {
@@ -277,8 +360,15 @@ export const ProductTourAdapter = ({
 				return;
 			}
 			applyRunState(state);
+			const isTerminal =
+				state.status === 'completed' || state.status === 'skipped';
+			if (prev.run && !state.run && !isTerminal) {
+				// Stopped without a terminal status (e.g. a missing required
+				// target): the terminal paths tear down after their write.
+				endTour();
+			}
 		},
-		[applyRunState, emit, prepareStep, reportTerminal, steps]
+		[applyRunState, emit, endTour, prepareStep, reportTerminal, steps]
 	);
 
 	if (!active || !steps.length) {

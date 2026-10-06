@@ -11,6 +11,7 @@ import {
 } from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { resolveTourSteps } from '../productTour/tourEngine';
+import { getTourHostHooks } from '../productTour/tourHostHooks';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 import type {
 	TourDefinition,
@@ -167,6 +168,8 @@ export const Walkthrough = () => {
 		return null;
 	}
 
+	const hostHooks = getTourHostHooks(runTour.id);
+
 	return (
 		<ProductTourAdapter
 			key={runKey}
@@ -176,6 +179,8 @@ export const Walkthrough = () => {
 			tooltipComponent={ProductTourTooltip}
 			onEvent={persistStepProgress}
 			onTerminalStatus={handleTerminalStatus}
+			onBeforeStart={hostHooks?.setup}
+			onEnd={hostHooks?.teardown}
 		/>
 	);
 };
