@@ -4677,9 +4677,13 @@
 				"on": "Açık"
 			},
 			"subtitle": "Kısa turlar size neyin nerede olduğunu gösterir.",
-			"title": "Turları otomatik başlat"
+			"title": "Tanıtım turunu otomatik başlat"
 		},
-		"title": "Tur"
+		"title": "Tur",
+		"introduction": {
+			"title": "Tanıtım",
+			"summary": "Uygulamanın bölümlerini tanıyın. Tanıtım turunu istediğiniz zaman yeniden başlatabilirsiniz."
+		}
 	},
 	"consultingTypes": {
 		"title": "Welcome to Caritas online counselling",
@@ -5340,7 +5344,7 @@
 		},
 		"practiceAccept": {
 			"title": "Alıştırma: Talebi kabul etme",
-			"summary": "Korumalı alıştırma alanında bir talebi kabul etmeyi ve ilk yanıtı yazmayı deneyin. Tüm kişiler ve içerikler kurgusaldır.",
+			"summary": "Bir sorguyu kabul edin ve ilk yanıtı yazın.",
 			"step": {
 				"navEnquiries": {
 					"title": "Talepleri açın",
@@ -5378,7 +5382,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Alıştırma: Süpervizör ekleme",
-			"summary": "Korumalı alıştırma alanında bir danışmanlığa süpervizör eklemeyi deneyin. Tüm kişiler ve içerikler kurgusaldır.",
+			"summary": "Bir süpervizör seçin ve danışmanlık oturumuna ekleyin.",
 			"step": {
 				"addSupervisor": {
 					"title": "Süpervizör ekleyin",

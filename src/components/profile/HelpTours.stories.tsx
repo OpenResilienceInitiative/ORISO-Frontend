@@ -2,8 +2,9 @@ import * as React from 'react';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Route, Routes } from 'react-router-dom';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Profile } from './Profile';
+import { HelpToursSection } from './HelpToursSection';
 import { NavigationBar } from '../app/NavigationBar';
 import { RouterConfigConsultant } from '../app/RouterConfig';
 import {
@@ -17,7 +18,8 @@ import {
 	AppConfigContext,
 	AUTHORITIES,
 	ConsultingTypesContext,
-	UserDataContext
+	UserDataContext,
+	TenantContext
 } from '../../globalState';
 import { config } from '../../resources/scripts/config';
 import { consultantWalkthroughTour } from '../productTour/tourDefinitions';
@@ -36,6 +38,8 @@ interface StageOptions {
 	ownSwitch?: boolean;
 	/** Release flag `releaseToggles.enablePracticeArea` (#1622), off by default. */
 	practiceArea?: boolean;
+	/** Tenant-level feature gate. */
+	supervision?: boolean;
 	progress?: ProgressFixture;
 }
 
@@ -180,14 +184,27 @@ const renderStage = (options: StageOptions) => () => (
 							} as never
 						}
 					>
-						<AppShell>
-							<Routes>
-								<Route
-									path="/profile/*"
-									element={<Profile />}
-								/>
-							</Routes>
-						</AppShell>
+						<TenantContext.Provider
+							value={
+								{
+									tenant: {
+										settings: {
+											featureSupervisionEnabled:
+												options.supervision ?? true
+										}
+									}
+								} as never
+							}
+						>
+							<AppShell>
+								<Routes>
+									<Route
+										path="/profile/*"
+										element={<Profile />}
+									/>
+								</Routes>
+							</AppShell>
+						</TenantContext.Provider>
 					</UserDataContext.Provider>
 				</ConsultingTypesContext.Provider>
 			</AppConfigContext.Provider>
@@ -195,7 +212,7 @@ const renderStage = (options: StageOptions) => () => (
 	</StubbedToursApi>
 );
 
-const SWITCH_NAME = 'Rundgänge automatisch starten';
+const SWITCH_NAME = 'Einführung automatisch starten';
 const HINT_OFF =
 	'Aus: Rundgänge starten nicht von selbst. Sie können sie hier jederzeit starten.';
 const HINT_ON =
@@ -252,6 +269,7 @@ const phone = (path: string) => ({
 const meta = {
 	title: 'Organisms/HelpTours',
 	component: Profile,
+	subcomponents: { HelpToursSection },
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
@@ -259,7 +277,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Each counsellor decides for themselves whether product tours start on their own (#1526). The switch lives under Profile → Help → Tours and is **off by default**. Off only stops the automatic start: the tour list next to it stays visible and starts every tour by hand ("disable, don\'t hide"). On, a tour starts on its own once per tour version, and not again after it was completed or skipped. The platform switch `enableWalkthrough` still gates everything: off, the Tours area is gone.'
+					'The introduction and practice exercises share one My tours card (#1622). Each counsellor decides whether the introduction starts on its own (#1526). The subordinate switch lives inside My tours under Profile → Help and is **off by default**. Off only stops the automatic start: the manual learning options in the same card stay visible ("disable, don\'t hide"). On, only the introduction starts on its own once per tour version, and not again after it was completed or skipped. The platform switch `enableWalkthrough` still gates everything: off, the Tours area is gone.'
 			}
 		}
 	}
@@ -274,7 +292,20 @@ export const OffByDefault: Story = {
 	render: renderStage({ ownSwitch: false }),
 	play: async ({ canvas }) => {
 		await expectSwitchState(canvas, false);
-		// Disable, don't hide: the list stays and starts tours by hand.
+		const card = canvas
+			.getByRole('heading', { name: 'Meine Rundgänge' })
+			.closest('section')!;
+		await expect(
+			within(card).getByRole('switch', { name: SWITCH_NAME })
+		).toBeInTheDocument();
+		await expect(within(card).getByText(SWITCH_NAME)).toBeVisible();
+		await expect(
+			await within(card).findByRole('heading', { name: 'Einführung' })
+		).toBeVisible();
+		await expect(
+			canvas.queryByRole('heading', { name: 'Mail-Beratung' })
+		).toBeNull();
+		// The introduction stays available by hand while auto-start is off.
 		const startButtons = await canvas.findAllByRole('button', {
 			name: 'Starten'
 		});
@@ -290,9 +321,9 @@ export const SwitchingOn: Story = {
 	render: renderStage({ ownSwitch: false }),
 	play: async ({ canvas }) => {
 		await expectSwitchState(canvas, false);
-		await userEvent.click(
-			await canvas.findByRole('switch', { name: SWITCH_NAME })
-		);
+		const toggle = await canvas.findByRole('switch', { name: SWITCH_NAME });
+		toggle.focus();
+		await userEvent.keyboard(' ');
 		await waitFor(() =>
 			expect(
 				canvas.getByRole('switch', { name: SWITCH_NAME })
@@ -393,15 +424,32 @@ export const PracticeCardsOn: Story = {
 		...desktop.parameters,
 		docs: {
 			description: {
-				story: 'With the release flag `enablePracticeArea` on, the practice flows (#1622) appear as their own cards after the tour list, marked "Übung". Start works with the personal switch off.'
+				story: 'With the release flag `enablePracticeArea` on, the practice flows (#1622) join the introduction inside the same outer My tours card, marked "Übung". Start works with the personal switch off.'
 			}
 		}
 	},
 	render: renderStage({ ownSwitch: false, practiceArea: true }),
 	play: async ({ canvas }) => {
 		await expectSwitchState(canvas, false);
+		const card = canvas
+			.getByRole('heading', { name: 'Meine Rundgänge' })
+			.closest('section')!;
+		const learning = within(card);
 		await expect(
-			await canvas.findByRole('heading', { name: 'Übungsbereich' })
+			learning.getByRole('switch', { name: SWITCH_NAME })
+		).toBeInTheDocument();
+		await expect(learning.getByText(SWITCH_NAME)).toBeVisible();
+		await expect(
+			await learning.findByRole('heading', { name: 'Einführung' })
+		).toBeVisible();
+		await expect(
+			learning.queryByRole('heading', { name: 'Mail-Beratung' })
+		).toBeNull();
+		await expect(
+			await learning.findAllByRole('button', { name: 'Übung starten' })
+		).toHaveLength(2);
+		await expect(
+			await learning.findByRole('heading', { name: 'Übungsbereich' })
 		).toBeVisible();
 		for (const button of await canvas.findAllByRole('button', {
 			name: 'Übung starten'
@@ -414,21 +462,49 @@ export const PracticeCardsOn: Story = {
 export const PracticeCardsPhone: Story = {
 	name: 'Practice cards on · phone 390',
 	...phone('/profile/hilfe/rundgaenge'),
-	render: renderStage({ ownSwitch: false, practiceArea: true }),
-	play: async ({ canvas }) => {
+	render: renderStage({ practiceArea: true }),
+	play: async ({ canvas, canvasElement }) => {
+		await expectSwitchState(canvas, false);
+		const card = canvas
+			.getByRole('heading', { name: 'Meine Rundgänge' })
+			.closest<HTMLElement>('.profile__item')!;
 		await expect(
-			await canvas.findByRole('heading', { name: 'Übungsbereich' })
-		).toBeVisible();
-		// Only a viewport below the app's 900 px breakpoint counts as a phone.
+			within(card).getByRole('switch', { name: SWITCH_NAME })
+		).toBeInTheDocument();
+		await expect(within(card).getByText(SWITCH_NAME)).toBeVisible();
+		await expect(
+			await within(card).findAllByRole('button', {
+				name: 'Übung starten'
+			})
+		).toHaveLength(2);
 		if (window.innerWidth < 900) {
-			await expect(
-				canvas.getAllByText('Bitte üben Sie am Computer.').length
-			).toBeGreaterThan(0);
-			for (const button of canvas.getAllByRole('button', {
+			for (const button of within(card).getAllByRole('button', {
 				name: 'Übung starten'
 			})) {
 				await expect(button).toBeDisabled();
 			}
 		}
+		await expectBottomNavigation(canvasElement);
+	}
+};
+
+export const PracticeSupervisionOff: Story = {
+	name: 'One learning card, supervision disabled by tenant',
+	...desktop,
+	render: renderStage({ practiceArea: true, supervision: false }),
+	play: async ({ canvas }) => {
+		await expect(
+			await canvas.findByRole('heading', {
+				name: 'Übung: Anfrage annehmen'
+			})
+		).toBeVisible();
+		await expect(
+			canvas.queryByRole('heading', {
+				name: 'Übung: Supervision hinzufügen'
+			})
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('heading', { name: 'Mail-Beratung' })
+		).toBeNull();
 	}
 };

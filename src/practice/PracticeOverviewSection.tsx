@@ -17,16 +17,19 @@ import { practiceTours } from './practiceTours';
 export interface PracticeOverviewSectionProps {
 	/** Defaults to the practice tours; stories and tests pass their own. */
 	tours?: TourDefinition[];
+	/** A subordinate learning area inside the shared Help card. */
+	embedded?: boolean;
 }
 
 /**
- * Profile → Help → "Meine Rundgänge": the practice flows as cards of their
- * own. Visible to counsellors while the master switch and the release flag are
+ * Profile → Help → "Meine Rundgänge": the practice flows as manual learning
+ * options. Visible to counsellors while the master switch and release flag are
  * on; a flow the Träger switched off (Supervision) is hidden, not greyed. Start
  * is the same launch request the tour cards use; the host does the rest.
  */
 export const PracticeOverviewSection = ({
-	tours = practiceTours
+	tours = practiceTours,
+	embedded = false
 }: PracticeOverviewSectionProps) => {
 	const settings = useAppConfig();
 	const { userData } = useContext(UserDataContext);
@@ -67,6 +70,7 @@ export const PracticeOverviewSection = ({
 
 	return (
 		<PracticeCards
+			embedded={embedded}
 			tours={offered}
 			isPhone={isPhone}
 			isWideDesktop={isWideDesktop}

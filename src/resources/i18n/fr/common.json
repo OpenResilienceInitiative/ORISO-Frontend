@@ -4677,9 +4677,13 @@
 				"on": "Activé"
 			},
 			"subtitle": "De courtes visites guidées vous montrent où trouver chaque chose.",
-			"title": "Lancer les visites guidées automatiquement"
+			"title": "Lancer l’introduction automatiquement"
 		},
-		"title": "Visite guidée"
+		"title": "Visite guidée",
+		"introduction": {
+			"title": "Visite d’introduction",
+			"summary": "Découvrez les différentes parties de l’application. Vous pouvez relancer l’introduction à tout moment."
+		}
 	},
 	"consultingTypes": {
 		"title": "Welcome to Caritas online counselling",
@@ -5340,7 +5344,7 @@
 		},
 		"practiceAccept": {
 			"title": "Exercice : accepter une demande",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à accepter une demande et à écrire la première réponse. Toutes les personnes et tous les contenus sont fictifs.",
+			"summary": "Accepter une demande et rédiger une première réponse.",
 			"step": {
 				"navEnquiries": {
 					"title": "Ouvrir les demandes",
@@ -5378,7 +5382,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Exercice : ajouter un·e superviseur·e",
-			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
+			"summary": "Choisir une personne de supervision et l’ajouter à un entretien.",
 			"step": {
 				"addSupervisor": {
 					"title": "Ajouter un·e superviseur·e",

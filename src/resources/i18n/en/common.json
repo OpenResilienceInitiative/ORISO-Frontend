@@ -4642,9 +4642,13 @@
 				"on": "On"
 			},
 			"subtitle": "Short tours show you where to find things.",
-			"title": "Start tours automatically"
+			"title": "Start the introduction automatically"
 		},
-		"title": "Tour"
+		"title": "Tour",
+		"introduction": {
+			"title": "Introduction",
+			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		}
 	},
 	"anonymousChat": {
 		"headline": "Anonymous Consultation",
@@ -5257,7 +5261,7 @@
 		},
 		"practiceAccept": {
 			"title": "Practice: Accept a request",
-			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
+			"summary": "Accept an enquiry and write a first reply.",
 			"step": {
 				"navEnquiries": {
 					"title": "Open the requests",
@@ -5295,7 +5299,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Practice: Add a supervisor",
-			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
+			"summary": "Choose a supervisor and add them to a counselling session.",
 			"step": {
 				"addSupervisor": {
 					"title": "Add a supervisor",

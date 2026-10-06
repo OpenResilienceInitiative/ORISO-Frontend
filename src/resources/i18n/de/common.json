@@ -4694,9 +4694,13 @@
 				"on": "An"
 			},
 			"subtitle": "Kurze Rundgänge zeigen Ihnen, wo Sie was finden.",
-			"title": "Rundgänge automatisch starten"
+			"title": "Einführung automatisch starten"
 		},
-		"title": "Rundgang"
+		"title": "Rundgang",
+		"introduction": {
+			"title": "Einführung",
+			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		}
 	},
 	"banner": {
 		"ie": {
@@ -5332,7 +5336,7 @@
 		},
 		"practiceAccept": {
 			"title": "Übung: Anfrage annehmen",
-			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"summary": "Eine Anfrage annehmen und eine erste Antwort schreiben.",
 			"step": {
 				"navEnquiries": {
 					"title": "Anfragen öffnen",
@@ -5370,7 +5374,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Übung: Supervision hinzufügen",
-			"summary": "Üben Sie im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"summary": "Eine Supervisor:in auswählen und einer Beratung hinzufügen.",
 			"step": {
 				"addSupervisor": {
 					"title": "Supervisor:in hinzufügen",

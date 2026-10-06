@@ -21,6 +21,8 @@ export interface TourOverviewCarouselProps {
 		>[]
 	>;
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;
+	/** The enclosing Help card supplies the overview heading. */
+	embedded?: boolean;
 }
 
 /**
@@ -55,7 +57,8 @@ export const TourOverviewCarousel = ({
 	tours,
 	audience,
 	loadProgress,
-	onStartTour
+	onStartTour,
+	embedded = false
 }: TourOverviewCarouselProps) => {
 	const { t: translate } = useTranslation();
 	const [progress, setProgress] = useState<
@@ -103,18 +106,22 @@ export const TourOverviewCarousel = ({
 	}
 
 	return (
-		<div className="tourOverview">
-			<div className="profile__content__title">
-				<Headline
-					text={translate('walkthrough.overview.title')}
-					semanticLevel="5"
-				/>
-				<Text
-					text={translate('walkthrough.overview.subtitle')}
-					type="standard"
-					className="tertiary"
-				/>
-			</div>
+		<div
+			className={`tourOverview${embedded ? ' tourOverview--embedded' : ''}`}
+		>
+			{!embedded && (
+				<div className="profile__content__title">
+					<Headline
+						text={translate('walkthrough.overview.title')}
+						semanticLevel="5"
+					/>
+					<Text
+						text={translate('walkthrough.overview.subtitle')}
+						type="standard"
+						className="tertiary"
+					/>
+				</div>
+			)}
 			{eligibleTours.length === 0 ? (
 				<Text
 					text={translate('walkthrough.overview.empty')}
@@ -129,7 +136,10 @@ export const TourOverviewCarousel = ({
 						const status = statusFor(tour);
 						const mode = actionForStatus(status);
 						return (
-							<li className="tourOverview__card" key={tour.id}>
+							<li
+								className={`tourOverview__card${embedded ? ' tourOverview__card--compact' : ''}`}
+								key={tour.id}
+							>
 								<span
 									className={`tourOverview__status tourOverview__status--${status}`}
 								>

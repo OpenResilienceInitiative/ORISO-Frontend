@@ -10,11 +10,8 @@ import {
 	TabGroups
 } from '../../utils/tabsHelper';
 import { Help } from '../help/Help';
-import { canUsePractice } from '../../practice/practiceAccess';
-import { PracticeOverviewSection } from '../../practice/PracticeOverviewSection';
-import { TourOverviewSection } from '../productTour/TourOverviewSection';
 import { Documentation } from './Documentation';
-import { EnableWalkthrough } from './EnableWalkthrough';
+import { HelpToursSection } from './HelpToursSection';
 import VideocamOutlinedIcon from '@mui/icons-material/VideocamOutlined';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
 import ExploreOutlinedIcon from '@mui/icons-material/ExploreOutlined';
@@ -56,24 +53,10 @@ export const profileRoutesHelp = (
 		url: '/rundgaenge',
 		elements: [
 			{
-				component: EnableWalkthrough,
+				component: HelpToursSection,
 				icon: ExploreOutlinedIcon,
 				column: COLUMN_RIGHT,
 				condition: (userData) => showsTours(settings, userData)
-			},
-			{
-				component: TourOverviewSection,
-				icon: ExploreOutlinedIcon,
-				column: COLUMN_RIGHT,
-				condition: (userData) => showsTours(settings, userData)
-			},
-			{
-				component: PracticeOverviewSection,
-				icon: ExploreOutlinedIcon,
-				column: COLUMN_RIGHT,
-				// Master switch + release flag + counsellor; Supervision's
-				// tenant gate is reactive and lives in the section itself.
-				condition: (userData) => canUsePractice(settings, userData)
 			}
 		]
 	}

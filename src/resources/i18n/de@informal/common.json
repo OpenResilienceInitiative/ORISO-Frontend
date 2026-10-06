@@ -1853,6 +1853,9 @@
 				"on": "An: Der Einführungsrundgang startet von selbst, bis du ihn abgeschlossen oder übersprungen hast. Alle Rundgänge kannst du hier jederzeit starten."
 			},
 			"subtitle": "Kurze Rundgänge zeigen Dir, wo Du was findest."
+		},
+		"introduction": {
+			"summary": "Lerne die Bereiche der Anwendung kennen. Du kannst die Einführung jederzeit erneut starten."
 		}
 	},
 	"anonymousChat": {
@@ -2392,7 +2395,7 @@
 			}
 		},
 		"practiceAccept": {
-			"summary": "Übe im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"summary": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
 			"step": {
 				"navEnquiries": {
 					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen findest du hier unter „Anfragen“."
@@ -2421,7 +2424,7 @@
 			}
 		},
 		"practiceSupervision": {
-			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"summary": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen.",
 			"step": {
 				"addSupervisor": {
 					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus, nenne kurz den Grund und bestätige."

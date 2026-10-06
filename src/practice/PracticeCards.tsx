@@ -31,6 +31,8 @@ export interface PracticeCardsProps {
 	isWideDesktop?: boolean;
 	loadProgress: () => Promise<ProgressItem[]>;
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;
+	/** Use subordinate headings inside the shared Help learning card. */
+	embedded?: boolean;
 }
 
 /**
@@ -49,9 +51,11 @@ export const PracticeCards = ({
 	isPhone,
 	isWideDesktop = true,
 	loadProgress,
-	onStartTour
+	onStartTour,
+	embedded = false
 }: PracticeCardsProps) => {
 	const { t: translate } = useTranslation();
+	const CardHeading = embedded ? 'h4' : 'h3';
 	const [progress, setProgress] = useState<ProgressItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
@@ -87,11 +91,22 @@ export const PracticeCards = ({
 		)?.status ?? 'not_started';
 
 	return (
-		<div className="tourOverview practiceCards">
-			<div className="profile__content__title">
+		<div
+			className={`tourOverview practiceCards${embedded ? ' tourOverview--embedded' : ''}`}
+		>
+			<div
+				className={
+					embedded
+						? 'helpTours__practiceIntro'
+						: 'profile__content__title'
+				}
+			>
 				<Headline
 					text={translate('practice.cards.title')}
-					semanticLevel="5"
+					semanticLevel={embedded ? '3' : '5'}
+					className={
+						embedded ? 'helpTours__practiceTitle' : undefined
+					}
 				/>
 				<Text
 					text={translate('practice.cards.subtitle')}
@@ -136,9 +151,9 @@ export const PracticeCards = ({
 										)}
 									</span>
 								</span>
-								<h3 className="tourOverview__cardTitle">
+								<CardHeading className="tourOverview__cardTitle">
 									{translate(tour.titleKey)}
-								</h3>
+								</CardHeading>
 								<p className="tourOverview__cardSummary">
 									{toPlainText(translate(tour.summaryKey))}
 								</p>
