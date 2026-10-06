@@ -65,6 +65,7 @@ import {
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import { stageAccountCreatedLogin } from './accountCreatedLogin';
 import {
 	clearRegistrationSubmitting,
 	isRegistrationSubmitting,
@@ -76,7 +77,11 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
-import { resolveGroupInviteEntry } from './groupInviteEntry/groupInviteEntryState';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
+import {
+	getGroupJoin,
+	resolveGroupInviteEntry
+} from './groupInviteEntry/groupInviteEntryState';
 
 /**
  * This type of registration is currently not supporting:
@@ -225,6 +230,9 @@ export const Registration = () => {
 			!urlParamsAgency?.consultingType ||
 			registrationConsultingType != null
 	});
+	/* Someone joining the group through the steps sees the group's words
+	   while the registration runs, not the counselling enquiry's (#1499). */
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
 	const toggleInviteWithAccount = useCallback(
@@ -340,6 +348,13 @@ export const Registration = () => {
 		}),
 		[registrationData, stepData]
 	);
+	// Same data the payload reads, so the copy and the request agree.
+	const joinsTheGroup =
+		getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedRegistrationData.agency?.id
+		}) !== undefined;
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
@@ -586,6 +601,11 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const groupJoin = getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedData.agency?.id
+		});
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -602,6 +622,16 @@ export const Registration = () => {
 			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
+				: {}),
+			/* Joining a self-help group is not a request for counselling: the
+			   backend assigns the group and opens no enquiry. */
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
 				: {})
 		};
 
@@ -665,7 +695,10 @@ export const Registration = () => {
 						   already has one, and keeping the handover up would
 						   leave them on "Fast geschafft." for good — nothing
 						   else ends it. The login is the step that can still
-						   work, and the flag stays set until that load. */
+						   work, and the flag stays set until that load. The
+						   login page is told why the person is there and which
+						   User-ID they chose — never the password (#1533). */
+						stageAccountCreatedLogin(data.username || '');
 						redirectToLogin();
 						return;
 					}
@@ -705,7 +738,9 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		groupChatId,
+		inviteAgencyId
 	]);
 
 	const handleSubmit = useCallback(
@@ -810,6 +845,11 @@ export const Registration = () => {
 								forcedState="preparing"
 								variant="inline"
 								onEnter={() => undefined}
+								copy={
+									joinsTheGroup
+										? groupJoinHandoverCopy
+										: undefined
+								}
 							/>
 						) : activeStep ? (
 							<>
