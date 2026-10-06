@@ -17,7 +17,6 @@ import {
 	isPracticeMode
 } from './practiceMode';
 import { PracticeProvider } from './PracticeProvider';
-import { registerPracticeRestartHandler } from './practiceRestart';
 import { practiceTourProgressAtom } from './usePracticeTourProgress';
 import { PracticeBanner } from './PracticeBanner';
 
@@ -189,7 +188,7 @@ describe('PracticeBanner', () => {
 	});
 
 	describe('End practice', () => {
-		it('stops the tour host and leaves practice mode', () => {
+		it('stops the tour host and leaves practice mode once the practice views drained', async () => {
 			const { store } = renderBanner();
 			store.set(tourLaunchRequestAtom, {
 				tourId: ACCEPT,
@@ -202,16 +201,19 @@ describe('PracticeBanner', () => {
 			);
 
 			expect(store.get(tourLaunchRequestAtom)).toBeNull();
-			expect(isPracticeMode()).toBe(false);
 			expect(screen.queryByTestId('practice-banner')).toBeNull();
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
+			expect(isPracticeMode()).toBe(false);
 		});
 	});
 
 	describe('Restart', () => {
-		it('resets the fixtures and asks the host for a fresh run of the same tour', () => {
+		// The host restarts the run as end + enter; that new run resets the
+		// fixtures (PracticeFlow.integration.test.tsx).
+		it('asks the host for a fresh run of the same tour', () => {
 			const { store } = renderBanner();
-			const resetFixtures = vi.fn();
-			const off = registerPracticeRestartHandler(resetFixtures);
 			store.set(tourLaunchRequestAtom, {
 				tourId: ACCEPT,
 				mode: 'start',
@@ -222,7 +224,6 @@ describe('PracticeBanner', () => {
 				screen.getByRole('button', { name: 'Neu starten' })
 			);
 
-			expect(resetFixtures).toHaveBeenCalledTimes(1);
 			expect(store.get(tourLaunchRequestAtom)).toEqual({
 				tourId: ACCEPT,
 				mode: 'restart',
@@ -231,7 +232,6 @@ describe('PracticeBanner', () => {
 			expect(
 				store.get(tourLaunchRequestAtom)!.requestedAt
 			).toBeGreaterThan(5);
-			off();
 		});
 
 		it('always remounts the run, even for two restarts in the same millisecond', () => {

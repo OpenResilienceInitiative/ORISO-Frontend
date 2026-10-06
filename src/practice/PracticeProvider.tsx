@@ -7,15 +7,17 @@ import React, {
 	type PropsWithChildren
 } from 'react';
 import {
+	endPractice,
 	enterPracticeMode,
-	exitPracticeMode,
 	getPracticeSnapshot,
 	restartPracticeMode,
 	subscribePractice
 } from './practiceMode';
 
 export interface PracticeContextValue {
-	state: 'inactive' | 'active';
+	/** `closing`: ended, the practice views unmount, the guard is still on. */
+	state: 'inactive' | 'active' | 'closing';
+	/** Only while active: the banner and practice-only UI show then. */
 	isPractice: boolean;
 	tourId: string | null;
 	variant: string | null;
@@ -23,8 +25,11 @@ export interface PracticeContextValue {
 	runId: number | null;
 	/** Installs the network guard, then switches practice on. */
 	enter: (params: { tourId: string; variant?: string }) => void;
-	/** Removes every layer and the guard; nothing is persisted, nothing to delete. */
-	exit: () => void;
+	/**
+	 * Ends practice: the views unmount, drain, then every layer and the guard
+	 * come off. Nothing is persisted, nothing to delete.
+	 */
+	exit: () => Promise<void>;
 	/** New run of the same tour. The guard stays on throughout. */
 	restart: () => void;
 }
@@ -38,7 +43,7 @@ const outsideProvider: PracticeContextValue = {
 	enter: () => {
 		throw new Error('usePractice().enter needs a <PracticeProvider>');
 	},
-	exit: () => undefined,
+	exit: () => Promise.resolve(),
 	restart: () => undefined
 };
 
@@ -60,8 +65,15 @@ export const PracticeProvider = ({ children }: PropsWithChildren) => {
 		getPracticeSnapshot
 	);
 
-	// StrictMode's simulated unmount lands here too; entering again re-installs.
-	useEffect(() => () => exitPracticeMode(), []);
+	// Logout and teardown: the practice views below unmount in the same
+	// commit, so the guard comes off after they drained. StrictMode's
+	// simulated unmount lands here too; entering again cancels that exit.
+	useEffect(
+		() => () => {
+			void endPractice();
+		},
+		[]
+	);
 
 	const value = useMemo<PracticeContextValue>(
 		() => ({
@@ -71,7 +83,7 @@ export const PracticeProvider = ({ children }: PropsWithChildren) => {
 			variant: snapshot.session?.variant ?? null,
 			runId: snapshot.session?.runId ?? null,
 			enter: enterPracticeMode,
-			exit: exitPracticeMode,
+			exit: endPractice,
 			restart: restartPracticeMode
 		}),
 		[snapshot]

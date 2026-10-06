@@ -1,27 +1,31 @@
 import * as React from 'react';
 import { useMemo } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { createStore, Provider } from 'jotai';
-import { expect, fn, userEvent, waitFor } from 'storybook/test';
+import { createStore, Provider, useAtomValue } from 'jotai';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeProvider } from '../../practice/PracticeProvider';
 import { isPracticeMode } from '../../practice/practiceMode';
-import { registerPracticeRestartHandler } from '../../practice/practiceRestart';
 import { InPracticeMode } from './practiceStoryHelpers';
 import { practiceTourProgressAtom } from '../../practice/usePracticeTourProgress';
 
-interface StageArgs {
-	/** Called by "Restart" through the restart handler slot, like the sandbox's reset. */
-	onRestart: () => void;
-}
+/** What the tour host receives from the banner. */
+const HostRequest = () => {
+	const request = useAtomValue(tourLaunchRequestAtom);
+	return (
+		<p role="status" aria-label="Tour host request">
+			{request ? `${request.mode} ${request.tourId}` : 'none'}
+		</p>
+	);
+};
 
 /**
  * Practice mode on, a run at step 3 of 6, and an "app" behind the banner so
  * its elevation and its contrast against real content are visible.
  */
-const Stage = ({ onRestart }: StageArgs) => {
+const Stage = () => {
 	const store = useMemo(() => {
 		const created = createStore();
 		created.set(practiceTourProgressAtom, {
@@ -37,11 +41,6 @@ const Stage = ({ onRestart }: StageArgs) => {
 		return created;
 	}, []);
 
-	React.useEffect(
-		() => registerPracticeRestartHandler(onRestart),
-		[onRestart]
-	);
-
 	return (
 		<Provider store={store}>
 			<PracticeProvider>
@@ -50,6 +49,7 @@ const Stage = ({ onRestart }: StageArgs) => {
 						<h1 style={{ margin: 0 }}>Anfragen</h1>
 						<p>Die echte Oberfläche liegt hinter dem Hinweis.</p>
 						<PracticeBanner />
+						<HostRequest />
 					</main>
 				</InPracticeMode>
 			</PracticeProvider>
@@ -71,7 +71,6 @@ const meta = {
 			}
 		}
 	},
-	args: { onRestart: fn() },
 	globals: { viewport: { value: 'desktop1440', isRotated: false } }
 } satisfies Meta<typeof Stage>;
 
@@ -130,13 +129,16 @@ export const MovedWithKeyboard: Story = {
 
 export const Restart: Story = {
 	name: 'Restart · desktop',
-	play: async ({ canvas, args }) => {
+	play: async ({ canvas }) => {
 		await userEvent.click(
 			await canvas.findByRole('button', { name: 'Neu starten' })
 		);
 
-		await expect(args.onRestart).toHaveBeenCalledTimes(1);
-		// Still practising: the host remounts the run with fresh fixtures.
+		// The tour host gets a new run of the same tour; its re-enter resets
+		// the fixtures (Organisms/PracticeFlow runs the whole chain).
+		await expect(
+			canvas.getByRole('status', { name: 'Tour host request' })
+		).toHaveTextContent('restart consultant-practice-accept');
 		await expect(isPracticeMode()).toBe(true);
 	}
 };
@@ -153,6 +155,7 @@ export const EndPractice: Story = {
 				canvas.queryByRole('status', { name: 'Übungsmodus' })
 			).toBeNull()
 		);
-		await expect(isPracticeMode()).toBe(false);
+		// The guard comes off once the practice views have drained.
+		await waitFor(() => expect(isPracticeMode()).toBe(false));
 	}
 };

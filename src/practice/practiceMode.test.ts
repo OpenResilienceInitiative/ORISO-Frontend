@@ -3,16 +3,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { endpoints } from '../resources/scripts/endpoints';
 import { PracticeBlockedRequestError } from './networkGuard';
 import {
+	endPractice,
 	enterPracticeMode,
 	exitPracticeMode,
 	getPracticeNetworkGuard,
 	getPracticeSnapshot,
+	holdPracticeExit,
 	isPracticeMode,
 	onPracticeBlocked,
 	onPracticeExit,
+	PRACTICE_DRAIN_TIMEOUT_MS,
 	restartPracticeMode,
 	subscribePractice
 } from './practiceMode';
+import { registerPracticeRestartHandler } from './practiceRestart';
 import { PRACTICE_TOUR_IDS } from './practiceTourIds';
 
 const ACCEPT = 'consultant-practice-accept';
@@ -212,6 +216,31 @@ describe('practice mode (module-level core)', () => {
 			expect(isPracticeMode()).toBe(false);
 		});
 
+		it('resets the layers on top for every new run on a running guard, not for the first one', async () => {
+			const resetFixtures = vi.fn(() =>
+				expect(getPracticeSnapshot().status).toBe('active')
+			);
+			const off = registerPracticeRestartHandler(resetFixtures);
+			try {
+				enterPracticeMode({ tourId: ACCEPT });
+				expect(resetFixtures).not.toHaveBeenCalled();
+
+				restartPracticeMode();
+				expect(resetFixtures).toHaveBeenCalledTimes(1);
+
+				// The tour host restarts a run as end + enter.
+				void endPractice();
+				enterPracticeMode({ tourId: ACCEPT });
+				expect(resetFixtures).toHaveBeenCalledTimes(2);
+
+				await endPractice();
+				enterPracticeMode({ tourId: ACCEPT });
+				expect(resetFixtures).toHaveBeenCalledTimes(2);
+			} finally {
+				off();
+			}
+		});
+
 		it('never reuses a run id across sessions', () => {
 			enterPracticeMode({ tourId: ACCEPT });
 			const a = getPracticeSnapshot().session.runId;
@@ -328,6 +357,133 @@ describe('practice mode (module-level core)', () => {
 
 		it('refuses to register a teardown while inactive', () => {
 			expect(() => onPracticeExit(() => undefined)).toThrow(/active/i);
+		});
+	});
+
+	describe('ending practice (the one exit path)', () => {
+		const macrotask = () =>
+			new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+		it('closes first with the guard still on, and removes it one macrotask later', async () => {
+			enterPracticeMode({ tourId: ACCEPT });
+
+			const ended = endPractice();
+
+			expect(getPracticeSnapshot().status).toBe('closing');
+			expect(getPracticeSnapshot().session?.tourId).toBe(ACCEPT);
+			expect(isPracticeMode()).toBe(true);
+			await expect(
+				globalThis.fetch('https://api.test.local/x', { method: 'POST' })
+			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+
+			await ended;
+
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(globalThis.fetch).toBe(realFetch);
+		});
+
+		it('keeps the guard on until every layer holding the exit let go', async () => {
+			enterPracticeMode({ tourId: ACCEPT });
+			const releaseSandbox = holdPracticeExit();
+			const releaseOther = holdPracticeExit();
+
+			const ended = endPractice();
+			await macrotask();
+			await macrotask();
+			releaseOther();
+			await macrotask();
+
+			expect(getPracticeSnapshot().status).toBe('closing');
+			expect(globalThis.fetch).not.toBe(realFetch);
+
+			releaseSandbox();
+			releaseSandbox();
+			await ended;
+
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(globalThis.fetch).toBe(realFetch);
+		});
+
+		it('is idempotent: every caller waits for the same exit, and the layers come down once', async () => {
+			enterPracticeMode({ tourId: ACCEPT });
+			const teardown = vi.fn();
+			onPracticeExit(teardown);
+
+			const first = endPractice();
+			const second = endPractice();
+			await Promise.all([first, second, endPractice()]);
+
+			expect(second).toBe(first);
+			expect(teardown).toHaveBeenCalledTimes(1);
+			await expect(endPractice()).resolves.toBeUndefined();
+		});
+
+		it('entering again while closing cancels the exit and keeps the same guard (a restart is end + enter)', async () => {
+			enterPracticeMode({ tourId: ACCEPT });
+			const guard = getPracticeNetworkGuard();
+			const wrapped = globalThis.fetch;
+			const teardown = vi.fn();
+			onPracticeExit(teardown);
+			const release = holdPracticeExit();
+
+			const ended = endPractice();
+			enterPracticeMode({ tourId: ACCEPT });
+			await ended;
+			release();
+			await macrotask();
+
+			expect(getPracticeSnapshot().status).toBe('active');
+			expect(getPracticeNetworkGuard()).toBe(guard);
+			expect(globalThis.fetch).toBe(wrapped);
+			expect(teardown).not.toHaveBeenCalled();
+		});
+
+		it('survives two restarts in a row without ever dropping the guard', async () => {
+			enterPracticeMode({ tourId: ACCEPT });
+			const guard = getPracticeNetworkGuard();
+			const statuses: string[] = [];
+			const off = subscribePractice(() =>
+				statuses.push(getPracticeSnapshot().status)
+			);
+
+			const first = endPractice();
+			enterPracticeMode({ tourId: ACCEPT });
+			const second = endPractice();
+			enterPracticeMode({ tourId: ACCEPT });
+			await Promise.all([first, second]);
+			await macrotask();
+			off();
+
+			expect(statuses).toEqual([
+				'closing',
+				'active',
+				'closing',
+				'active'
+			]);
+			expect(getPracticeNetworkGuard()).toBe(guard);
+			expect(isPracticeMode()).toBe(true);
+		});
+
+		it('does not wait forever for a layer that never lets go', async () => {
+			vi.useFakeTimers();
+			const release = holdPracticeExit();
+			try {
+				enterPracticeMode({ tourId: ACCEPT });
+
+				const ended = endPractice();
+				await vi.advanceTimersByTimeAsync(
+					PRACTICE_DRAIN_TIMEOUT_MS - 1
+				);
+				expect(getPracticeSnapshot().status).toBe('closing');
+				await vi.advanceTimersByTimeAsync(1);
+				await ended;
+
+				expect(getPracticeSnapshot().status).toBe('inactive');
+				expect(globalThis.fetch).toBe(realFetch);
+			} finally {
+				release();
+				vi.useRealTimers();
+			}
 		});
 	});
 });

@@ -1,5 +1,9 @@
 import { matchPath } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
+import {
+	PRACTICE_ENQUIRY_SESSION_ID as FIXTURE_CASE_ID,
+	PRACTICE_MAIN_ROOM_ID as FIXTURE_CASE_ROOM_ID
+} from './fixtures/practiceIdentifiers';
 import { isPracticeId } from './practiceIds';
 import {
 	PRACTICE_ACCEPTED_ROOM_ID,
@@ -21,11 +25,19 @@ describe('practice ids', () => {
 		].forEach((id) => expect(isPracticeId(id)).toBe(true));
 	});
 
-	it('uses the agreed values, one pair per start state', () => {
+	it('uses the agreed values: one case, which F2 finds already accepted', () => {
 		expect(PRACTICE_ENQUIRY_SESSION_ID).toBe(-1);
-		expect(PRACTICE_ACCEPTED_SESSION_ID).toBe(-2);
+		expect(PRACTICE_ACCEPTED_SESSION_ID).toBe(-1);
 		expect(PRACTICE_ENQUIRY_ROOM_ID).toBe('!practice-1:practice.invalid');
-		expect(PRACTICE_ACCEPTED_ROOM_ID).toBe('!practice-2:practice.invalid');
+		expect(PRACTICE_ACCEPTED_ROOM_ID).toBe('!practice-1:practice.invalid');
+	});
+
+	it('addresses the case the fixtures serve in both start states', () => {
+		// The team room is !practice-2: an F2 route there opened no case.
+		expect(PRACTICE_ACCEPTED_SESSION_ID).toBe(FIXTURE_CASE_ID);
+		expect(PRACTICE_ACCEPTED_ROOM_ID).toBe(FIXTURE_CASE_ROOM_ID);
+		expect(PRACTICE_ENQUIRY_SESSION_ID).toBe(FIXTURE_CASE_ID);
+		expect(PRACTICE_ENQUIRY_ROOM_ID).toBe(FIXTURE_CASE_ROOM_ID);
 	});
 });
 
@@ -55,7 +67,7 @@ describe('practice routes', () => {
 			'/sessions/consultant/sessionView/:groupId/:sessionId',
 			route
 		);
-		expect(match?.params.sessionId).toBe('-2');
+		expect(match?.params.sessionId).toBe('-1');
 		expect(decodeURIComponent(match?.params.groupId ?? '')).toBe(
 			PRACTICE_ACCEPTED_ROOM_ID
 		);

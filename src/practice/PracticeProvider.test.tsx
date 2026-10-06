@@ -36,6 +36,9 @@ const Probe = ({ tourId = ACCEPT }: { tourId?: string }) => {
 };
 
 const text = (id: string) => screen.getByTestId(id).textContent;
+/** The guard comes off one macrotask after the practice views drained. */
+const drained = () =>
+	act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 const click = (name: string) =>
 	act(() => {
 		fireEvent.click(screen.getByText(name));
@@ -100,7 +103,7 @@ describe('PracticeProvider and usePractice', () => {
 		).rejects.toBeInstanceOf(PracticeBlockedRequestError);
 	});
 
-	it('exit removes the guard and returns to inactive', async () => {
+	it('exit closes first, with the guard still on, then removes the guard and returns to inactive', async () => {
 		render(
 			<PracticeProvider>
 				<Probe />
@@ -109,6 +112,12 @@ describe('PracticeProvider and usePractice', () => {
 		click('enter');
 
 		click('exit');
+
+		expect(text('state')).toBe('closing');
+		expect(text('is-practice')).toBe('false');
+		expect(globalThis.fetch).not.toBe(realFetch);
+
+		await drained();
 
 		expect(text('state')).toBe('inactive');
 		expect(isPracticeMode()).toBe(false);
@@ -159,7 +168,7 @@ describe('PracticeProvider and usePractice', () => {
 		expect(globalThis.fetch).toBe(realFetch);
 	});
 
-	it('uninstalls the guard when the provider unmounts while practising', () => {
+	it('ends practice when the provider unmounts while practising, after the views below drained', async () => {
 		const { unmount } = render(
 			<PracticeProvider>
 				<Probe />
@@ -169,6 +178,7 @@ describe('PracticeProvider and usePractice', () => {
 		expect(isPracticeMode()).toBe(true);
 
 		unmount();
+		await drained();
 
 		expect(isPracticeMode()).toBe(false);
 		expect(globalThis.fetch).toBe(realFetch);
@@ -206,7 +216,7 @@ describe('PracticeProvider and usePractice', () => {
 			return null;
 		};
 
-		it('ends with exactly one guard layer when a child enters on mount', () => {
+		it('ends with exactly one guard layer when a child enters on mount', async () => {
 			const { unmount } = render(
 				<StrictMode>
 					<PracticeProvider>
@@ -218,14 +228,18 @@ describe('PracticeProvider and usePractice', () => {
 
 			expect(text('state')).toBe('active');
 			expect(isPracticeMode()).toBe(true);
+			await drained();
+			// The simulated unmount's exit was cancelled by the remount's enter.
+			expect(isPracticeMode()).toBe(true);
 
 			unmount();
+			await drained();
 
 			expect(isPracticeMode()).toBe(false);
 			expect(globalThis.fetch).toBe(realFetch);
 		});
 
-		it('keeps an entered session across the simulated remount of a later click', () => {
+		it('keeps an entered session across the simulated remount of a later click', async () => {
 			const { unmount } = render(
 				<StrictMode>
 					<PracticeProvider>
@@ -238,7 +252,10 @@ describe('PracticeProvider and usePractice', () => {
 			expect(text('tour')).toBe(SUPERVISION);
 			click('exit');
 			click('enter');
+			await drained();
+			expect(text('state')).toBe('active');
 			unmount();
+			await drained();
 
 			expect(globalThis.fetch).toBe(realFetch);
 		});

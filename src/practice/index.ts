@@ -6,9 +6,11 @@ export {
 } from './practiceSupervisionRefresh';
 export type { PracticeContextValue } from './PracticeProvider';
 export {
+	endPractice,
 	enterPracticeMode,
 	exitPracticeMode,
 	getPracticeNetworkGuard,
+	holdPracticeExit,
 	isPracticeMode,
 	onPracticeBlocked,
 	onPracticeExit,

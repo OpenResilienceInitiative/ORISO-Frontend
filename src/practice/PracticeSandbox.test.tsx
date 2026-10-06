@@ -29,6 +29,12 @@ import {
 	createTestScript
 } from './script/scriptTestSupport';
 import {
+	endPractice,
+	enterPracticeMode,
+	exitPracticeMode,
+	isPracticeMode
+} from './practiceMode';
+import {
 	SessionsDataContext,
 	SET_SESSIONS
 } from '../globalState/provider/SessionsDataProvider';
@@ -81,6 +87,25 @@ describe('PracticeSandbox', () => {
 		expect(await other.text()).toBe('real');
 		expect(baseFetch).toHaveBeenCalledTimes(1);
 		expect(pageFetch).not.toHaveBeenCalled();
+	});
+
+	it('never passes on a request for a practice id the fake does not know: it is answered 404 in the page', async () => {
+		render(sandbox());
+
+		const unknownCase = await window.fetch(
+			`${endpoints.sessionRooms}?rcGroupIds=-7`
+		);
+		const search = await window.fetch(
+			`${endpoints.caseHandoverCandidates}?query=-7&offset=0&count=15`
+		);
+		const room = await window.fetch(
+			`${endpoints.sessionBase}/${encodeURIComponent('!practice-9:practice.invalid')}/x`
+		);
+
+		expect([unknownCase.status, search.status, room.status]).toEqual([
+			404, 404, 404
+		]);
+		expect(baseFetch).not.toHaveBeenCalled();
 	});
 
 	it('patches fetch during render so the first child effect already reaches the fake', async () => {
@@ -281,6 +306,133 @@ describe('PracticeSandbox', () => {
 		expect(outer.addNotification).toHaveBeenCalledWith({
 			title: 'Supervision hinzugefügt'
 		});
+	});
+
+	describe('ending practice on top of the guard', () => {
+		afterEach(() => exitPracticeMode());
+
+		it('holds the exit until it has drained and uninstalled, so the guard unwinds cleanly', async () => {
+			enterPracticeMode({ tourId: 'consultant-practice-accept' });
+			const view = render(
+				<PracticeSandbox
+					counsellor={counsellor}
+					script={createTestScript()}
+				>
+					{null}
+				</PracticeSandbox>
+			);
+			await settle();
+
+			// The surface unmounts the sandbox on "closing", after the call.
+			const ended = endPractice();
+			view.unmount();
+			await act(() => ended);
+
+			expect(window.fetch).toBe(pageFetch);
+			expect(getMatrixClientService()).toBe(realService);
+		});
+
+		it('keeps the guard on until a practice request still in flight at the end is answered by the fake', async () => {
+			enterPracticeMode({ tourId: 'consultant-practice-accept' });
+			const view = render(
+				<PracticeSandbox
+					counsellor={counsellor}
+					script={createTestScript()}
+				>
+					{null}
+				</PracticeSandbox>
+			);
+			await settle();
+			let finishBody = () => undefined as void;
+			const body = new ReadableStream<Uint8Array>({
+				start(controller) {
+					finishBody = () => {
+						controller.enqueue(
+							new TextEncoder().encode(
+								JSON.stringify({
+									roomId: PRACTICE_MAIN_ROOM_ID,
+									active: false
+								})
+							)
+						);
+						controller.close();
+					};
+				}
+			});
+			const inFlight = window.fetch(
+				new Request(`${endpoints.eventNotifications}/active-view`, {
+					method: 'PATCH',
+					body,
+					duplex: 'half'
+				} as RequestInit)
+			);
+
+			const ended = endPractice();
+			view.unmount();
+			await settle();
+			await settle();
+			expect(isPracticeMode()).toBe(true);
+
+			finishBody();
+			expect((await inFlight).status).toBe(204);
+			await act(() => ended);
+
+			expect(isPracticeMode()).toBe(false);
+			expect(window.fetch).toBe(pageFetch);
+			expect(pageFetch).not.toHaveBeenCalled();
+		});
+	});
+
+	it('keeps the real Zeitstrahl out of the practice view: no rows, no counts, no feed actions', () => {
+		const realRow = {
+			id: '7',
+			title: 'Neue Nachricht von Kim',
+			readAt: null
+		};
+		const outer = {
+			notifications: [],
+			notificationFeed: [realRow],
+			unreadNotificationCount: 3,
+			serverUnreadTotal: 3,
+			hasUnreadNotifications: true,
+			visibleUnreadCount: 3,
+			hiddenUnreadInLoadedPages: 1,
+			hasOlderNotifications: true,
+			addNotification: vi.fn(),
+			addEventNotification: vi.fn(),
+			refreshNotificationFeed: vi.fn(),
+			loadOlderNotifications: vi.fn(),
+			markNotificationAsRead: vi.fn(),
+			markNotificationsReadConfirmed: vi.fn(),
+			markAllNotificationsAsRead: vi.fn(),
+			clearNotificationFeed: vi.fn()
+		};
+		let inner: any;
+		const Probe = () => {
+			inner = useContext(NotificationsContext);
+			return null;
+		};
+		render(
+			<NotificationsContext.Provider value={outer as any}>
+				{sandbox(<Probe />)}
+			</NotificationsContext.Provider>
+		);
+
+		expect(inner.notificationFeed).toEqual([]);
+		expect(inner.unreadNotificationCount).toBe(0);
+		expect(inner.visibleUnreadCount).toBe(0);
+		expect(inner.hasUnreadNotifications).toBe(false);
+		expect(inner.hasOlderNotifications).toBe(false);
+		inner.markNotificationAsRead('7');
+		inner.markAllNotificationsAsRead();
+		inner.clearNotificationFeed();
+		inner.loadOlderNotifications();
+		inner.refreshNotificationFeed();
+		expect(outer.markNotificationAsRead).not.toHaveBeenCalled();
+		expect(outer.markAllNotificationsAsRead).not.toHaveBeenCalled();
+		expect(outer.clearNotificationFeed).not.toHaveBeenCalled();
+		expect(outer.loadOlderNotifications).not.toHaveBeenCalled();
+		expect(outer.refreshNotificationFeed).not.toHaveBeenCalled();
 	});
 
 	it('restarts from fresh fixtures', async () => {

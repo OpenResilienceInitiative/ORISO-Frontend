@@ -41,6 +41,25 @@ describe('PracticeLayer', () => {
 		).toBeUndefined();
 	});
 
+	it('adds nothing to the page while practice is off: no markup, no fetch patch, no request, no storage', async () => {
+		const pageFetch = vi.fn(async () => new Response('{}'));
+		window.fetch = pageFetch as typeof window.fetch;
+		const setItem = vi.spyOn(Storage.prototype, 'setItem');
+		const page = <main data-testid="app">app</main>;
+		const plain = render(page).container.innerHTML;
+		cleanup();
+
+		const view = render(<PracticeLayer>{page}</PracticeLayer>);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
+		expect(view.container.innerHTML).toBe(plain);
+		expect(window.fetch).toBe(pageFetch);
+		expect(pageFetch).not.toHaveBeenCalled();
+		expect(setItem).not.toHaveBeenCalled();
+		expect(isPracticeMode()).toBe(false);
+		setItem.mockRestore();
+	});
+
 	it('provides practice state to everything below it', () => {
 		render(
 			<PracticeLayer>
@@ -72,7 +91,7 @@ describe('PracticeLayer', () => {
 		expect(mounted).toHaveBeenCalledTimes(1);
 	});
 
-	it('ends practice when the authenticated app goes away', () => {
+	it('ends practice when the authenticated app goes away', async () => {
 		const { unmount } = render(
 			<PracticeLayer>
 				<Probe />
@@ -81,6 +100,7 @@ describe('PracticeLayer', () => {
 		act(() => enterPracticeMode({ tourId: 'consultant-practice-accept' }));
 
 		unmount();
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
 		expect(isPracticeMode()).toBe(false);
 	});

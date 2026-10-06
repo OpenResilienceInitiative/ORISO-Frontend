@@ -61,8 +61,8 @@ describe('registerPracticeTourHostHooks', () => {
 	});
 
 	it.each(PRACTICE_TOUR_IDS)(
-		'enters practice mode for %s before the tour starts and leaves it when the tour ends',
-		(id) => {
+		'enters practice mode for %s before the tour starts and ends it through the drained exit when the tour ends',
+		async (id) => {
 			const unregister = registerPracticeTourHostHooks();
 			const hooks = getTourHostHooks(id)!;
 
@@ -71,6 +71,10 @@ describe('registerPracticeTourHostHooks', () => {
 			expect(getPracticeSnapshot().session?.tourId).toBe(id);
 
 			hooks.teardown!();
+			expect(getPracticeSnapshot().status).toBe('closing');
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
 			expect(isPracticeMode()).toBe(false);
 			unregister();
 		}

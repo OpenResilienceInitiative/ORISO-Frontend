@@ -19,6 +19,8 @@ import {
 	setMatrixClientServiceRef
 } from '../services/matrixClientRegistry';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
+import { holdPracticeExit } from './practiceMode';
+import { isPracticeId } from './practiceIds';
 import {
 	createPracticeTopic,
 	type PracticeStart
@@ -45,6 +47,10 @@ interface Installation {
 	depth: number;
 	/** Unmount started: only practice-addressed requests are still answered. */
 	draining: boolean;
+	/** Practice requests the fake has not answered yet. */
+	inFlight: number;
+	/** Keeps `endPractice` from removing the guard underneath this layer. */
+	releaseExitHold: () => void;
 }
 
 let installation: Installation | null = null;
@@ -76,6 +82,26 @@ const restoreActiveSessionContext = ({
 	if (had) (window as any)[ACTIVE_SESSION_KEY] = value;
 };
 
+/** A practice id in the path or a query value (a search for "-1" as well). */
+const addressesPractice = (input: RequestInfo | URL): boolean => {
+	const href = input instanceof Request ? input.url : String(input);
+	let url: URL;
+	try {
+		url = new URL(href, window.location.href);
+	} catch {
+		return false;
+	}
+	return [...url.pathname.split('/'), ...url.searchParams.values()].some(
+		(part) => {
+			try {
+				return isPracticeId(decodeURIComponent(part));
+			} catch {
+				return false;
+			}
+		}
+	);
+};
+
 const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 	if (installation) {
 		if (installation.world !== world) {
@@ -94,12 +120,27 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 		if (!current || current.patchedFetch !== patchedFetch) {
 			return previousFetch(input as RequestInfo, init);
 		}
-		const response = await current.world.rest.handle(
-			input as RequestInfo,
-			init,
-			{ practiceAddressedOnly: current.draining }
-		);
-		return response ?? current.baseFetch(input as RequestInfo, init);
+		// Counted until the fake answered: the uninstall (and with it the
+		// guard's removal) waits for every practice request in flight.
+		current.inFlight += 1;
+		let response: Response | null;
+		try {
+			response = await current.world.rest.handle(
+				input as RequestInfo,
+				init,
+				{ practiceAddressedOnly: current.draining }
+			);
+		} finally {
+			current.inFlight -= 1;
+			if (current.draining && current.inFlight === 0) {
+				scheduleUninstallCheck();
+			}
+		}
+		if (response) return response;
+		// Practice ids are the fake's, even the ones it does not know.
+		return addressesPractice(input)
+			? new Response(null, { status: 404 })
+			: current.baseFetch(input as RequestInfo, init);
 	};
 	installation = {
 		world,
@@ -109,7 +150,9 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 		previousService: getMatrixClientService(),
 		activeSession: hideActiveSessionContext(),
 		depth: 0,
-		draining: false
+		draining: false,
+		inFlight: 0,
+		releaseExitHold: holdPracticeExit()
 	};
 	window.fetch = patchedFetch;
 	setMatrixClientServiceRef(asService(world));
@@ -119,7 +162,7 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 
 const uninstallIfIdle = () => {
 	const current = installation;
-	if (!current || current.depth > 0) return;
+	if (!current || current.depth > 0 || current.inFlight > 0) return;
 	installation = null;
 	if (window.fetch === current.patchedFetch) {
 		window.fetch = current.previousFetch;
@@ -128,6 +171,7 @@ const uninstallIfIdle = () => {
 		setMatrixClientServiceRef(current.previousService);
 	}
 	restoreActiveSessionContext(current.activeSession);
+	current.releaseExitHold();
 };
 
 // A macrotask later: the practice tree's passive cleanups (e.g. the
@@ -170,6 +214,7 @@ export const usePracticeSandbox = (): PracticeSandboxApi => {
 };
 
 const noop = () => undefined;
+const resolved = () => Promise.resolve();
 
 export interface PracticeSandboxProps {
 	/** The real logged-in counsellor; practice fixtures borrow only identity. */
@@ -236,10 +281,28 @@ export const PracticeSandbox = ({
 		[script]
 	);
 	const api = useMemo(() => ({ world, restart }), [world, restart]);
-	// Toasts stay; feed entries would outlive practice in the real centre.
+	// Toasts stay; feed entries would outlive practice in the real centre, and
+	// the real Zeitstrahl (asker names, links to real cases) stays out of view.
 	const notifications = useContext(NotificationsContext);
 	const practiceNotifications = useMemo(
-		() => notifications && { ...notifications, addEventNotification: noop },
+		() =>
+			notifications && {
+				...notifications,
+				addEventNotification: noop,
+				notificationFeed: [],
+				unreadNotificationCount: 0,
+				serverUnreadTotal: 0,
+				hasUnreadNotifications: false,
+				visibleUnreadCount: 0,
+				hiddenUnreadInLoadedPages: 0,
+				hasOlderNotifications: false,
+				refreshNotificationFeed: noop,
+				loadOlderNotifications: resolved,
+				markNotificationAsRead: noop,
+				markNotificationsReadConfirmed: resolved,
+				markAllNotificationsAsRead: noop,
+				clearNotificationFeed: noop
+			},
 		[notifications]
 	);
 	const matrixContext = useMemo(

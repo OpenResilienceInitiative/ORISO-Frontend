@@ -1,14 +1,14 @@
 import { practiceMatrixId, practiceNumericId } from './practiceIds';
 
 /**
- * Ids and routes of the two practice start states, kept in one place so the
- * tours, fixtures and tests cannot drift apart. Sequence 1 is the open
- * enquiry of flow F1, sequence 2 the already accepted case of flow F2.
+ * Ids and routes of the one practice case, kept in one place so the tours,
+ * fixtures and tests cannot drift apart. Flow F1 opens it as an enquiry, flow
+ * F2 starts on it already accepted (the fixtures serve both start states).
  */
 export const PRACTICE_ENQUIRY_SESSION_ID = practiceNumericId(1);
-export const PRACTICE_ACCEPTED_SESSION_ID = practiceNumericId(2);
 export const PRACTICE_ENQUIRY_ROOM_ID = practiceMatrixId('!', '1');
-export const PRACTICE_ACCEPTED_ROOM_ID = practiceMatrixId('!', '2');
+export const PRACTICE_ACCEPTED_SESSION_ID = PRACTICE_ENQUIRY_SESSION_ID;
+export const PRACTICE_ACCEPTED_ROOM_ID = PRACTICE_ENQUIRY_ROOM_ID;
 
 /** The consultant enquiries list (the real route, not a practice copy). */
 export const PRACTICE_ENQUIRIES_ROUTE = '/sessions/consultant/sessionPreview';
@@ -25,8 +25,8 @@ export const practiceEnquirySessionRoute = (): string =>
 
 /**
  * An accepted case in "My consultations", addressed by its room id as
- * `AcceptAssign.redirectToAcceptedSession` does. Defaults to the F2 start
- * case; pass the enquiry ids for the case a fresh accept moves over.
+ * `AcceptAssign.redirectToAcceptedSession` does: where F2 starts and where
+ * the accept in F1 lands.
  */
 export const practiceAcceptedSessionRoute = (
 	sessionId: number = PRACTICE_ACCEPTED_SESSION_ID,

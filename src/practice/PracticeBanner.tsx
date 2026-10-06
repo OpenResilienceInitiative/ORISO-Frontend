@@ -12,7 +12,6 @@ import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState
 import type { TourDefinition } from '../components/productTour/types';
 import { usePractice } from './PracticeProvider';
 import { nextPracticeLaunchRequest } from './practiceLaunch';
-import { runPracticeRestartHandlers } from './practiceRestart';
 import { practiceTours } from './practiceTours';
 import { usePracticeTourProgress } from './usePracticeTourProgress';
 
@@ -111,7 +110,10 @@ export const PracticeBanner = ({
 	const [position, setPosition] = useState<Position | null>(null);
 
 	const isActive = practice.isPractice;
-	const tour = tours.find((candidate) => candidate.id === practice.tourId);
+	// No registry lookup outside practice (release flag off: none at all).
+	const tour = isActive
+		? tours.find((candidate) => candidate.id === practice.tourId)
+		: undefined;
 
 	useEffect(() => {
 		if (!position) {
@@ -204,7 +206,8 @@ export const PracticeBanner = ({
 			return;
 		}
 		const tourId = practice.tourId;
-		runPracticeRestartHandlers();
+		// The host remounts the run (end + enter on the same guard); the new
+		// run resets the fixtures through the restart handlers.
 		setLaunchRequest((previous) =>
 			nextPracticeLaunchRequest(tourId, 'restart', previous)
 		);

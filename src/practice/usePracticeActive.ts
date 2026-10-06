@@ -11,6 +11,7 @@ import { getPracticeSnapshot, subscribePractice } from './practiceMode';
 export const usePracticeActive = (): boolean =>
 	useSyncExternalStore(
 		subscribePractice,
-		() => getPracticeSnapshot().status === 'active',
+		// "closing" counts: the guard is still on while practice drains.
+		() => getPracticeSnapshot().status !== 'inactive',
 		() => false
 	);
