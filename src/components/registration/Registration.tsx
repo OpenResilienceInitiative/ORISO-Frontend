@@ -77,7 +77,10 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
-import { resolveGroupInviteEntry } from './groupInviteEntry/groupInviteEntryState';
+import {
+	getGroupJoin,
+	resolveGroupInviteEntry
+} from './groupInviteEntry/groupInviteEntryState';
 
 /**
  * This type of registration is currently not supporting:
@@ -587,6 +590,11 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const groupJoin = getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedData.agency?.id
+		});
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -603,6 +611,16 @@ export const Registration = () => {
 			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
+				: {}),
+			/* Joining a self-help group is not a request for counselling: the
+			   backend assigns the group and opens no enquiry. */
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
 				: {})
 		};
 
@@ -709,7 +727,9 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		groupChatId,
+		inviteAgencyId
 	]);
 
 	const handleSubmit = useCallback(
