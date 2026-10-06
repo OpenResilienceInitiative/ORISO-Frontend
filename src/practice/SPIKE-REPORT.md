@@ -18,7 +18,7 @@ Proof: `src/practice/PracticeSandbox.integration.test.tsx` (real `SessionsZone` 
 | No practice endpoint and no non-GET on the network; no storage write; no IndexedDB; real Matrix untouched; no feed entry | PASS    | all journeys (`expectNothingLeftThePracticeWorld`) |
 | Team discussion: side panel with colleague message, reply lands in team room only                                        | PASS    | `team discussion: …`                               |
 | Supervisor add: picker lists only Robin, POST applied, system note, scripted reply in side room                          | PASS    | `supervision: …`                                   |
-| …reply visible in the side panel without reopening the case                                                              | PARTIAL | needs reopen, see finding 1                        |
+| …reply visible in the side panel without reopening the case                                                              | PASS    | S6: `supervision in practice mode: …` (finding 1)  |
 | Composes with S1 `NetworkGuard`: nothing blocked, layers unwind in order                                                 | PASS    | `F1 under the real network guard…`                 |
 | Sandbox lifecycle: StrictMode, restore, drain on unmount, restart, storage spies                                         | PASS    | `PracticeSandbox.test.tsx`                         |
 
@@ -51,8 +51,8 @@ Neutralised by the sandbox:
 
 Open, not fixed in S0:
 
-1. **Supervision side room is resolved on session change only.** It lives in `SessionStream.tsx:355-402` and `SessionItemComponent.tsx:884-951`, and this is real-product behaviour. S6 must script "open the case again", or a later slice re-runs the lookup after an add.
-2. **Invariant 5, UI half.** The composer shows the voice and attachment buttons (2 file inputs), and `SessionMenu` shows calls when the counsellor's consulting type allows video. Uploads go through `sendFileMessage`, which the fake refuses, and the S1 guard blocks a call-start POST. Hiding the controls needs `usePractice()` in the composer (`hasUploadFunctionality`, line 2220, plus the voice gate) and in `SessionMenu`. That is integrator or S7 work.
+1. **Supervision side room is resolved on session change only.** It lives in `SessionStream.tsx:355-402` and `SessionItemComponent.tsx:884-951`, and this is real-product behaviour. _Closed in S6 for practice:_ the header announces a successful add (`notifyPracticeSupervisorsChanged`, `practiceSupervisionRefresh.ts`) and both lookups re-run; outside practice the signal stays 0, so the product is unchanged.
+2. **Invariant 5, UI half (closed in S6, `usePracticeActive`).** The composer shows the voice and attachment buttons (2 file inputs), and `SessionMenu` shows calls when the counsellor's consulting type allows video. Uploads go through `sendFileMessage`, which the fake refuses, and the S1 guard blocks a call-start POST. Hiding the controls needs `usePractice()` in the composer (`hasUploadFunctionality`, line 2220, plus the voice gate) and in `SessionMenu`. That is integrator or S7 work.
 3. **Real GETs from inside the practice view.** All read-only and about the counsellor's own settings, not case data. Decide whether practice may show them.
     - `/service/agencies/<real id>` (`useCounsellorAgencyFormats`, `SessionsList.tsx:262`)
     - `/service/conversations/consultants/availability`
