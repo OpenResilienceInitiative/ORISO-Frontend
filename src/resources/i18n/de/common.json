@@ -5272,6 +5272,70 @@
 					"intro": "Abgeschlossene Beratungen verschieben Sie wie bisher ins Archiv — es liegt jetzt in diesem Tab."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Übung: Anfrage annehmen",
+			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"navEnquiries": {
+					"title": "Anfragen öffnen",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen finden Sie hier unter „Anfragen“."
+				},
+				"openEnquiry": {
+					"title": "Anfrage öffnen",
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
+				},
+				"openTeam": {
+					"title": "Teambesprechung öffnen",
+					"intro": "Bei Ihnen ist die Teambesprechung aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Teambesprechung öffnen“."
+				},
+				"teamReply": {
+					"title": "Im Team antworten",
+					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird die Teambesprechung geschlossen."
+				},
+				"accept": {
+					"title": "Anfrage annehmen",
+					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für Ihr Team nicht mehr in der Liste."
+				},
+				"firstAnswer": {
+					"title": "Erstantwort und erste Nachricht",
+					"intro": "Die Anfrage gehört jetzt Ihnen. Im Chat sehen Sie die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
+				},
+				"reply": {
+					"title": "Erste Antwort schreiben",
+					"intro": "Schreiben Sie der ratsuchenden Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Gut gemacht: Sie haben eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Übung: Supervision hinzufügen",
+			"summary": "Üben Sie im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"addSupervisor": {
+					"title": "Supervisor:in hinzufügen",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, um der Beratung eine Supervisor:in hinzuzufügen."
+				},
+				"pickSupervisor": {
+					"title": "Supervisor:in auswählen",
+					"intro": "Wählen Sie die Supervisor:in aus der Liste aus und bestätigen Sie die Auswahl. Im Chat erscheint danach ein Systemhinweis."
+				},
+				"supervisorReply": {
+					"title": "Antwort der Supervision",
+					"intro": "Ihre Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten sehen nur Sie beide — die ratsuchende Person sieht sie nicht."
+				},
+				"standingAssignment": {
+					"title": "Feste Zuordnung",
+					"intro": "Hat Ihre Administration Ihnen eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür müssen Sie nichts tun."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
 		}
 	},
 	"weekday": {
