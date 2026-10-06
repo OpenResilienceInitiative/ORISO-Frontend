@@ -56,6 +56,8 @@ export interface NetworkGuardOptions extends RequestPolicyConfig {
 export interface NetworkGuard {
 	install(): void;
 	uninstall(): void;
+	/** Restart with another tour without re-wrapping, so layers on top stay in order. */
+	setAllowedTourIds(tourIds: readonly string[]): void;
 	readonly isInstalled: boolean;
 	counter(): { blocked: number; allowed: number };
 	readonly blockedRequests: readonly BlockedRequest[];
@@ -196,12 +198,9 @@ export const createNetworkGuard = (
 		push(allowed, { method, url: redactUrl(url), channel: 'fetch' });
 	};
 
-	const install = () => {
-		if (active) {
-			return;
-		}
-		active = true;
-
+	// Each patch returns its undo. An undo unwraps only what is still ours,
+	// so an outer patch put on top later stays in charge.
+	const patchFetch = (): (() => void) => {
 		const originalFetch = globalThis.fetch;
 		const guardedFetch = ((input: FetchInput, init?: FetchInit) => {
 			if (!active) {
@@ -237,13 +236,20 @@ export const createNetworkGuard = (
 			});
 		}) as typeof fetch;
 		globalThis.fetch = guardedFetch;
+		return () => {
+			if (globalThis.fetch === guardedFetch) {
+				globalThis.fetch = originalFetch;
+			}
+		};
+	};
 
-		const xhrProto =
-			typeof XMLHttpRequest !== 'undefined'
-				? XMLHttpRequest.prototype
-				: undefined;
-		const originalOpen = xhrProto?.open as AnyFunction;
-		const originalSend = xhrProto?.send as AnyFunction;
+	const patchXhr = (): (() => void) => {
+		if (typeof XMLHttpRequest === 'undefined') {
+			return () => undefined;
+		}
+		const proto = XMLHttpRequest.prototype;
+		const originalOpen = proto.open as AnyFunction;
+		const originalSend = proto.send as AnyFunction;
 		const xhrMeta = new WeakMap<XMLHttpRequest, XhrMeta>();
 		const guardedOpen = function (
 			this: XMLHttpRequest,
@@ -299,16 +305,37 @@ export const createNetworkGuard = (
 				);
 			}, 0);
 		};
-		if (xhrProto) {
-			xhrProto.open = guardedOpen as typeof xhrProto.open;
-			xhrProto.send = guardedSend as typeof xhrProto.send;
+		const undo = () => {
+			if (proto.open === guardedOpen) {
+				proto.open = originalOpen as typeof proto.open;
+			}
+			if (proto.send === guardedSend) {
+				proto.send = originalSend as typeof proto.send;
+			}
+		};
+		try {
+			proto.open = guardedOpen as typeof proto.open;
+			proto.send = guardedSend as typeof proto.send;
+		} catch (error) {
+			undo();
+			throw error;
 		}
+		return undo;
+	};
 
+	const patchBeacon = (): (() => void) => {
 		const nav = typeof navigator !== 'undefined' ? navigator : undefined;
 		const originalBeacon = nav?.sendBeacon;
-		const beaconWasOwn =
-			nav !== undefined &&
-			Object.prototype.hasOwnProperty.call(nav, 'sendBeacon');
+		if (!nav || typeof originalBeacon !== 'function') {
+			return () => undefined;
+		}
+		const wasOwn = Object.prototype.hasOwnProperty.call(nav, 'sendBeacon');
+		const define = (value: unknown) =>
+			Object.defineProperty(nav, 'sendBeacon', {
+				value,
+				configurable: true,
+				writable: true
+			});
 		const guardedBeacon = function (
 			url: string | URL,
 			data?: BodyInit | null
@@ -319,40 +346,42 @@ export const createNetworkGuard = (
 			recordBlocked('beacon', 'POST', String(url), 'default-deny');
 			return false;
 		};
-		const defineBeacon = (value: unknown) =>
-			Object.defineProperty(nav, 'sendBeacon', {
-				value,
-				configurable: true,
-				writable: true
-			});
-		if (nav && typeof originalBeacon === 'function') {
-			defineBeacon(guardedBeacon);
-		}
-
-		restore = () => {
-			// Unwrap only what is still ours; an outer patch stays in charge.
-			if (globalThis.fetch === guardedFetch) {
-				globalThis.fetch = originalFetch;
+		define(guardedBeacon);
+		return () => {
+			if (nav.sendBeacon !== guardedBeacon) {
+				return;
 			}
-			if (xhrProto) {
-				if (xhrProto.open === guardedOpen) {
-					xhrProto.open = originalOpen as typeof xhrProto.open;
-				}
-				if (xhrProto.send === guardedSend) {
-					xhrProto.send = originalSend as typeof xhrProto.send;
-				}
-			}
-			if (nav && typeof originalBeacon === 'function') {
-				if (nav.sendBeacon !== guardedBeacon) {
-					return;
-				}
-				if (beaconWasOwn) {
-					defineBeacon(originalBeacon);
-				} else {
-					delete (nav as { sendBeacon?: unknown }).sendBeacon;
-				}
+			if (wasOwn) {
+				define(originalBeacon);
+			} else {
+				delete (nav as { sendBeacon?: unknown }).sendBeacon;
 			}
 		};
+	};
+
+	const install = () => {
+		if (active) {
+			return;
+		}
+		active = true;
+		const undos: Array<() => void> = [];
+		const undoAll = () => {
+			undos
+				.splice(0)
+				.reverse()
+				.forEach((undo) => undo());
+		};
+		try {
+			undos.push(patchFetch());
+			undos.push(patchXhr());
+			undos.push(patchBeacon());
+		} catch (error) {
+			// Half a guard is worse than none: practice must not start on it.
+			active = false;
+			undoAll();
+			throw error;
+		}
+		restore = undoAll;
 	};
 
 	const uninstall = () => {
@@ -367,6 +396,9 @@ export const createNetworkGuard = (
 	return {
 		install,
 		uninstall,
+		setAllowedTourIds: (tourIds) => {
+			config.allowedTourIds = [...tourIds];
+		},
 		get isInstalled() {
 			return active;
 		},

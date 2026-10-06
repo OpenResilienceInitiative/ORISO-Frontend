@@ -318,6 +318,27 @@ describe('NetworkGuard (T1: default-deny for every non-GET request)', () => {
 		});
 	});
 
+	describe('changing the running tour while installed', () => {
+		it('swaps the allowed tour ids without touching the fetch chain', async () => {
+			guard.install();
+			const wrapped = globalThis.fetch;
+			const put = (tourId: string) =>
+				globalThis.fetch(TUTORIAL_PROGRESS_URL, {
+					method: 'PUT',
+					body: progressBody({ tourId })
+				});
+			await put(TOUR_ID);
+
+			guard.setAllowedTourIds(['consultant-practice-supervision']);
+
+			await expect(put(TOUR_ID)).rejects.toBeInstanceOf(
+				PracticeBlockedRequestError
+			);
+			await put('consultant-practice-supervision');
+			expect(globalThis.fetch).toBe(wrapped);
+		});
+	});
+
 	describe('allowlist (b): identity-provider token refresh', () => {
 		const post = (body: string, url = TOKEN_URL) =>
 			globalThis.fetch(url, {
@@ -625,6 +646,30 @@ describe('NetworkGuard (T1: default-deny for every non-GET request)', () => {
 			await expect(
 				globalThis.fetch(`${USER_SERVICE}/x`, { method: 'POST' })
 			).rejects.toBeInstanceOf(PracticeBlockedRequestError);
+		});
+
+		it('rolls back completely and throws when a patch cannot be applied (fail closed)', () => {
+			const originalOpen = XMLHttpRequest.prototype.open;
+			const originalSend = XMLHttpRequest.prototype.send;
+			Object.defineProperty(XMLHttpRequest.prototype, 'send', {
+				value: originalSend,
+				writable: false,
+				configurable: true
+			});
+
+			try {
+				expect(() => guard.install()).toThrow();
+
+				expect(guard.isInstalled).toBe(false);
+				expect(globalThis.fetch).toBe(realFetch);
+				expect(XMLHttpRequest.prototype.open).toBe(originalOpen);
+			} finally {
+				Object.defineProperty(XMLHttpRequest.prototype, 'send', {
+					value: originalSend,
+					writable: true,
+					configurable: true
+				});
+			}
 		});
 
 		it('does not clobber an outer patch on uninstall and then only passes through', async () => {
