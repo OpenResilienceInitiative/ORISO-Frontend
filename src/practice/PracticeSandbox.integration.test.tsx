@@ -446,6 +446,10 @@ describe('practice sandbox on the real session containers', () => {
 
 		const reply = await acceptAndReply(view);
 
+		// The real Erstantwort renderer reads the fake room's system event.
+		expect(textOf(view.container, '.chatStage__mainPane')).toContain(
+			PRACTICE_SCRIPT.erstantwortGreeting
+		);
 		const [sent, answer] = bodiesIn(PRACTICE_MAIN_ROOM_ID).slice(-2);
 		expect(sent).toMatch(
 			new RegExp(`^${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: .*${reply}`)
