@@ -70,6 +70,11 @@ const anchorContract: Array<{
 	{
 		anchor: 'session-supervisor-add',
 		sourceFile: 'sessionHeader/ChatroomMainInteractionIcon.tsx'
+	},
+	{
+		anchor: 'supervision-panel',
+		sourceFile: 'session/SessionItemComponent.tsx',
+		expected: /data-tour-target="supervision-panel"/
 	}
 ];
 

@@ -595,6 +595,12 @@ describe('practice sandbox on the real session containers', () => {
 			expect(
 				textOf(view.container, '.chatStage__mainPane')
 			).not.toContain(PRACTICE_SCRIPT.supervisorReply);
+			// The F2 tour points its reply step at this anchor.
+			expect(
+				view.container.querySelector(
+					'[data-tour-target="supervision-panel"]'
+				)
+			).not.toBeNull();
 			expect(
 				view.container.querySelector('[data-cy="panel-call-actions"]')
 			).toBeNull();

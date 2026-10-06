@@ -4045,6 +4045,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: translate('supervision.panel.title')
 				})}
 				data-cy="stage-panel"
+				data-tour-target="supervision-panel"
 				header={
 					<PanelHeader
 						kind="supervision"
