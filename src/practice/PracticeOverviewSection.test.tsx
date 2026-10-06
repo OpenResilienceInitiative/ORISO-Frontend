@@ -8,6 +8,7 @@ import {
 	within
 } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
+import { Context as ResponsiveContext } from 'react-responsive';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	AppConfigContext,
@@ -35,12 +36,8 @@ vi.mock('../components/productTour/versionedTourProgressRepository', () => ({
 	}
 }));
 
-const phone = vi.hoisted(() => ({ value: false }));
-vi.mock('../hooks/useResponsive', () => ({
-	useResponsive: () => ({ untilM: phone.value })
-}));
-
 interface Scenario {
+	width?: number;
 	enableWalkthrough?: boolean;
 	releaseToggles?: Record<string, unknown>;
 	authorities?: string[];
@@ -49,34 +46,39 @@ interface Scenario {
 }
 
 const tree = ({
+	width = 1440,
 	enableWalkthrough = true,
 	releaseToggles = { enablePracticeArea: true },
 	authorities = [AUTHORITIES.CONSULTANT_DEFAULT],
 	ownSwitch = false,
 	tenant = {}
 }: Scenario = {}) => (
-	<AppConfigContext.Provider
-		value={{ enableWalkthrough, releaseToggles } as never}
-	>
-		<UserDataContext.Provider
-			value={
-				{
-					userData: {
-						grantedAuthorities: authorities,
-						isWalkThroughEnabled: ownSwitch
-					}
-				} as never
-			}
+	<ResponsiveContext.Provider value={{ width }}>
+		<AppConfigContext.Provider
+			value={{ enableWalkthrough, releaseToggles } as never}
 		>
-			<TenantContext.Provider
+			<UserDataContext.Provider
 				value={
-					tenant ? ({ tenant: { settings: tenant } } as never) : null
+					{
+						userData: {
+							grantedAuthorities: authorities,
+							isWalkThroughEnabled: ownSwitch
+						}
+					} as never
 				}
 			>
-				<PracticeOverviewSection />
-			</TenantContext.Provider>
-		</UserDataContext.Provider>
-	</AppConfigContext.Provider>
+				<TenantContext.Provider
+					value={
+						tenant
+							? ({ tenant: { settings: tenant } } as never)
+							: null
+					}
+				>
+					<PracticeOverviewSection />
+				</TenantContext.Provider>
+			</UserDataContext.Provider>
+		</AppConfigContext.Provider>
+	</ResponsiveContext.Provider>
 );
 
 const renderSection = (scenario?: Scenario) => {
@@ -89,7 +91,6 @@ const renderSection = (scenario?: Scenario) => {
 
 afterEach(() => {
 	cleanup();
-	phone.value = false;
 	vi.clearAllMocks();
 });
 
@@ -230,8 +231,7 @@ describe('PracticeOverviewSection', () => {
 
 	describe('on a phone', () => {
 		it('asks to practise on a computer and cannot start', async () => {
-			phone.value = true;
-			const { store } = renderSection();
+			const { store } = renderSection({ width: 390 });
 
 			const accept = (
 				await screen.findByRole('heading', {
@@ -249,5 +249,51 @@ describe('PracticeOverviewSection', () => {
 			fireEvent.click(start);
 			expect(store.get(tourLaunchRequestAtom)).toBeNull();
 		});
+	});
+
+	it.each([1199, 1200])(
+		'matches the supervision picker boundary at %ipx',
+		async (width) => {
+			const { store } = renderSection({ width });
+			const supervision = (
+				await screen.findByRole('heading', {
+					name: 'Übung: Supervision hinzufügen'
+				})
+			).closest('li')!;
+			const start = within(supervision).getByRole('button', {
+				name: 'Übung starten'
+			}) as HTMLButtonElement;
+			expect(start.disabled).toBe(width < 1200);
+			fireEvent.click(start);
+			expect(store.get(tourLaunchRequestAtom)?.tourId).toBe(
+				width < 1200 ? undefined : 'consultant-practice-supervision'
+			);
+		}
+	);
+
+	it('offers F1 at 1024px and explains why F2 needs a wider window', async () => {
+		renderSection({ width: 1024 });
+		const accept = (
+			await screen.findByRole('heading', {
+				name: 'Übung: Anfrage annehmen'
+			})
+		).closest('li')!;
+		const supervision = (
+			await screen.findByRole('heading', {
+				name: 'Übung: Supervision hinzufügen'
+			})
+		).closest('li')!;
+		expect(
+			(
+				within(accept).getByRole('button', {
+					name: 'Übung starten'
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(false);
+		expect(
+			within(supervision).getByText(
+				'Bitte vergrößern Sie das Browserfenster für diese Übung.'
+			)
+		).toBeTruthy();
 	});
 });

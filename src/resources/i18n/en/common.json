@@ -5634,6 +5634,7 @@
 			"empty": "There are currently no practice flows available for you.",
 			"badge": "Practice",
 			"phoneHint": "Please practise on a computer.",
+			"windowHint": "Please widen your browser window for this exercise.",
 			"action": {
 				"start": "Start practice",
 				"restart": "Practise again"

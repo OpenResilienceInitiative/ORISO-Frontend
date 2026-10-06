@@ -2,6 +2,7 @@
 import React from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
+import { Context as ResponsiveContext } from 'react-responsive';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiPatchConsultantData } from '../../api';
 import { AUTHORITIES, TenantContext, UserDataContext } from '../../globalState';
@@ -64,21 +65,25 @@ const renderWalkthrough = (
 	const store = createStore();
 	store.set(tourLaunchRequestAtom, launchRequest);
 	const utils = render(
-		<Provider store={store}>
-			<UserDataContext.Provider
-				value={{ userData, reloadUserData } as any}
-			>
-				<TenantContext.Provider
-					value={
-						tenantSettings
-							? ({ tenant: { settings: tenantSettings } } as any)
-							: null
-					}
+		<ResponsiveContext.Provider value={{ width: 1440 }}>
+			<Provider store={store}>
+				<UserDataContext.Provider
+					value={{ userData, reloadUserData } as any}
 				>
-					<Walkthrough />
-				</TenantContext.Provider>
-			</UserDataContext.Provider>
-		</Provider>
+					<TenantContext.Provider
+						value={
+							tenantSettings
+								? ({
+										tenant: { settings: tenantSettings }
+									} as any)
+								: null
+						}
+					>
+						<Walkthrough />
+					</TenantContext.Provider>
+				</UserDataContext.Provider>
+			</Provider>
+		</ResponsiveContext.Provider>
 	);
 	return { reloadUserData, store, ...utils };
 };

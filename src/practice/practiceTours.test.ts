@@ -234,7 +234,7 @@ describe('practiceSupervisionTour (flow F2)', () => {
 	});
 
 	it('waits for the confirmed add, not for the click on the "+"', () => {
-		// The real picker modal covers the tooltip (z-index 9999 vs 53), so the
+		// The real picker dialog covers the tooltip, so the
 		// first step explains the whole add and lets the confirm advance it.
 		expect(first.advanceOn).toEqual({
 			type: 'event',

@@ -2547,7 +2547,8 @@
 		"cards": {
 			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
 			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
-			"phoneHint": "Bitte übe am Computer."
+			"phoneHint": "Bitte übe am Computer.",
+			"windowHint": "Bitte vergrößere dein Browserfenster für diese Übung."
 		},
 		"error": {
 			"start": "Die Übung konnte nicht gestartet werden. Bitte versuche es erneut."

@@ -33,7 +33,7 @@ export const PracticeOverviewSection = ({
 	// Reactive on purpose: a Träger switching a feature while the page is open
 	// must show or hide its card (the plain-JS mirror would not re-render).
 	const tenantFlags = useTenant()?.settings;
-	const { untilM: isPhone } = useResponsive();
+	const { untilM: isPhone, fromXL: isWideDesktop } = useResponsive();
 	const requestTourLaunch = useSetAtom(tourLaunchRequestAtom);
 
 	const loadProgress = useCallback(
@@ -69,6 +69,7 @@ export const PracticeOverviewSection = ({
 		<PracticeCards
 			tours={offered}
 			isPhone={isPhone}
+			isWideDesktop={isWideDesktop}
 			loadProgress={loadProgress}
 			onStartTour={handleStartTour}
 		/>

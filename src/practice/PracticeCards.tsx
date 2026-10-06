@@ -15,6 +15,7 @@ import type {
 } from '../components/productTour/types';
 import '../components/productTour/productTour.styles.scss';
 import './practiceCards.styles.scss';
+import { canStartPracticeTourInViewport } from './practiceViewport';
 
 type ProgressItem = Pick<
 	ITutorialProgressItem,
@@ -26,6 +27,8 @@ export interface PracticeCardsProps {
 	tours: TourDefinition[];
 	/** Phone viewport: practice is desktop only, so Start is off and a hint shows. */
 	isPhone: boolean;
+	/** The supervision plus is only interactive in the wide desktop layout. */
+	isWideDesktop?: boolean;
 	loadProgress: () => Promise<ProgressItem[]>;
 	onStartTour: (tour: TourDefinition, mode: TourStartMode) => void;
 }
@@ -44,6 +47,7 @@ const modeForStatus = (status: TourStatus): TourStartMode =>
 export const PracticeCards = ({
 	tours,
 	isPhone,
+	isWideDesktop = true,
 	loadProgress,
 	onStartTour
 }: PracticeCardsProps) => {
@@ -108,6 +112,13 @@ export const PracticeCards = ({
 					{tours.map((tour) => {
 						const status = statusFor(tour);
 						const mode = modeForStatus(status);
+						const canStart = canStartPracticeTourInViewport(
+							tour.id,
+							{
+								fromL: !isPhone,
+								fromXL: isWideDesktop
+							}
+						);
 						return (
 							<li
 								className="tourOverview__card practiceCards__card"
@@ -146,13 +157,17 @@ export const PracticeCards = ({
 												? BUTTON_TYPES.SECONDARY
 												: BUTTON_TYPES.PRIMARY
 									}}
-									disabled={isPhone}
+									disabled={!canStart}
 									buttonHandle={() => onStartTour(tour, mode)}
 									className="tourOverview__action"
 								/>
-								{isPhone && (
+								{!canStart && (
 									<p className="practiceCards__phoneHint">
-										{translate('practice.cards.phoneHint')}
+										{translate(
+											isPhone
+												? 'practice.cards.phoneHint'
+												: 'practice.cards.windowHint'
+										)}
 									</p>
 								)}
 							</li>

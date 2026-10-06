@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Button, ButtonBase } from '@mui/material';
 import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
@@ -20,12 +21,6 @@ import { nextPracticeLaunchRequest } from './practiceLaunch';
 import { practiceTours } from './practiceTours';
 import { usePracticeTourProgress } from './usePracticeTourProgress';
 
-/**
- * Above the tour overlay (53) and every in-page layer (side panel 1200), also
- * above the snackbar host (1250), but below MUI modals (1300): a dialog may
- * cover the banner, nothing else may.
- */
-const PRACTICE_BANNER_Z_INDEX = 1290;
 const EDGE_MARGIN = 8;
 const KEY_STEP = 16;
 const KEY_STEP_LARGE = 64;
@@ -209,15 +204,17 @@ export const PracticeBanner = ({
 		return null;
 	}
 
-	return (
+	// A page-level portal escapes the app's stacking contexts. Practice
+	// controls stay above dialogs and join the supervisor picker's focus trap.
+	return createPortal(
 		<Box
 			ref={bannerRef}
 			role="status"
 			aria-label={translate('practice.banner.title')}
 			data-testid="practice-banner"
+			data-practice-controls=""
 			style={{
 				position: 'fixed',
-				zIndex: PRACTICE_BANNER_Z_INDEX,
 				...(position
 					? { left: position.left, top: position.top }
 					: {
@@ -226,6 +223,7 @@ export const PracticeBanner = ({
 						})
 			}}
 			sx={{
+				zIndex: (theme) => theme.zIndex.tooltip,
 				boxSizing: 'border-box',
 				display: 'flex',
 				flexDirection: 'column',
@@ -320,6 +318,7 @@ export const PracticeBanner = ({
 					{translate('practice.banner.end')}
 				</Button>
 			</Box>
-		</Box>
+		</Box>,
+		document.body
 	);
 };

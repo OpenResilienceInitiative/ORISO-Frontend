@@ -3,6 +3,8 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
 import { UserDataContext, useTenant } from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { useResponsive } from '../../hooks/useResponsive';
+import { canStartPracticeTourInViewport } from '../../practice/practiceViewport';
 import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
 import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
 import {
@@ -47,6 +49,7 @@ const isCurrentVersionFinished = (
  */
 export const Walkthrough = () => {
 	const settings = useAppConfig();
+	const viewport = useResponsive();
 	const { userData } = useContext(UserDataContext);
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
@@ -57,7 +60,8 @@ export const Walkthrough = () => {
 	// below stays hard-wired to the intro tour.
 	const requestedTour = launchRequest
 		? (frontendTours.find((tour) => tour.id === launchRequest.tourId) ??
-			(canUsePractice(settings, userData)
+			(canUsePractice(settings, userData) &&
+			canStartPracticeTourInViewport(launchRequest.tourId, viewport)
 				? practiceTours.find((tour) => tour.id === launchRequest.tourId)
 				: undefined))
 		: undefined;

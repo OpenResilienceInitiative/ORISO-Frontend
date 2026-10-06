@@ -22,6 +22,7 @@ import { Context as ResponsiveContext } from 'react-responsive';
 import { I18nextProvider, initReactI18next } from 'react-i18next';
 import { createInstance } from 'i18next';
 import { createStore, Provider as JotaiProvider } from 'jotai';
+import userEvent from '@testing-library/user-event';
 // Preload the lazy composer and session view during collection.
 import '../components/messageSubmitInterface/messageSubmitInterfaceComponent';
 import '../components/session/SessionView';
@@ -202,7 +203,11 @@ const route = () => screen.getByTestId('route').textContent;
 /** The header's switch to the Element client (all real rooms). */
 const uiVersionSwitch = () => screen.queryByLabelText('app.ui.classic');
 
-const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
+const renderApp = ({
+	teamDiscussion = true,
+	practiceArea = true,
+	width = 1440
+} = {}) => {
 	const settings = {
 		...appConfig,
 		releaseToggles: {
@@ -219,7 +224,7 @@ const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
 	const routerConfig = RouterConfigConsultant(settings);
 	const providers: [React.Context<any>, any][] = [
 		[AppConfigContext, settings],
-		[ResponsiveContext, { width: 1440 }],
+		[ResponsiveContext, { width }],
 		[UserDataContext, { userData: counsellor, setUserData: vi.fn() }],
 		[TenantContext, { tenant: { id: 1, settings: flags }, setTenant() {} }],
 		[
@@ -691,6 +696,55 @@ describe('practice flows on the real app shell', () => {
 		// 4: done.
 		await finish(3);
 	}, 120000);
+	it('cannot launch F2 through a stale request below its picker breakpoint', async () => {
+		const app = renderApp({ width: 1199 });
+		app.request(SUPERVISION);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		expect(progressWrites()).toEqual([]);
+	});
+
+	it('can launch F2 at the real picker breakpoint', async () => {
+		const app = renderApp({ width: 1200 });
+		await app.start(SUPERVISION);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+	}, 120000);
+
+	it('banner End remains keyboard-accessible while the F2 picker is open', async () => {
+		// The real focus trap stays active; jsdom supplies no visible geometry.
+		vi.spyOn(HTMLElement.prototype, 'getClientRects').mockImplementation(
+			() => [{ width: 100, height: 40 }] as unknown as DOMRectList
+		);
+		const app = renderApp();
+		await app.start(SUPERVISION);
+		const add = await expectStep(0);
+		fireEvent.click(add!);
+		await screen.findByRole('combobox', {}, SLOW);
+		const dialog = screen.getByRole('dialog', {
+			name: 'sessionHeader.supervisor.modal.title'
+		});
+		const end = banner().getByRole('button', {
+			name: 'practice.banner.end'
+		});
+		const close = within(dialog).getByRole('button', { name: 'app.close' });
+		await waitFor(() => expect(document.activeElement).toBe(close));
+		await userEvent.tab({ shift: true });
+		expect(document.activeElement).toBe(end);
+		expect(end.closest('[aria-hidden="true"]')).toBeNull();
+		await userEvent.keyboard('{Enter}');
+
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		expect(document.body.contains(dialog)).toBe(false);
+		expect(route()).toBe(HELP_ROUTE);
+		expect(progressWrites()).not.toContain('completed');
+		expectNothingLeftThePracticeWorld();
+	}, 120000);
+
 	it('banner Restart mid-flow: same guard, fresh case with the accept available again, tour back at step 1', async () => {
 		const app = renderApp({ teamDiscussion: false });
 		await app.start(ACCEPT);

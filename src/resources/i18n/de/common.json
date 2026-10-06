@@ -5709,6 +5709,7 @@
 			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",
 			"badge": "Übung",
 			"phoneHint": "Bitte üben Sie am Computer.",
+			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung.",
 			"action": {
 				"start": "Übung starten",
 				"restart": "Noch einmal üben"

@@ -5717,6 +5717,7 @@
 			"empty": "Aucun exercice n'est disponible pour vous pour le moment.",
 			"badge": "Exercice",
 			"phoneHint": "Merci de vous exercer sur un ordinateur.",
+			"windowHint": "Veuillez agrandir la fenêtre de votre navigateur pour cet exercice.",
 			"action": {
 				"start": "Commencer l'exercice",
 				"restart": "S'exercer à nouveau"

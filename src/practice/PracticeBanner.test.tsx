@@ -196,12 +196,11 @@ describe('PracticeBanner', () => {
 		});
 	});
 
-	it('sits above the tour overlay (53) and below modals (1300)', () => {
+	it('keeps the permanent warning above the dialog layer', () => {
 		renderBanner();
 
-		const zIndex = Number(bannerEl().style.zIndex);
-		expect(zIndex).toBeGreaterThan(53);
-		expect(zIndex).toBeLessThan(1300);
+		const zIndex = Number(getComputedStyle(bannerEl()).zIndex);
+		expect(zIndex).toBeGreaterThan(1300);
 	});
 
 	describe('End practice', () => {

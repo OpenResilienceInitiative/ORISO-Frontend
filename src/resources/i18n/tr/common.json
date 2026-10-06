@@ -5717,6 +5717,7 @@
 			"empty": "Şu anda sizin için alıştırma yok.",
 			"badge": "Alıştırma",
 			"phoneHint": "Lütfen bilgisayarda alıştırma yapın.",
+			"windowHint": "Bu alıştırma için lütfen tarayıcı pencerenizi genişletin.",
 			"action": {
 				"start": "Alıştırmayı başlat",
 				"restart": "Yeniden alıştırma yap"

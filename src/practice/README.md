@@ -61,6 +61,28 @@ while closing cancels the exit through an epoch token and keeps the guard.
 `exitPracticeMode()` stays the immediate exit, for `teardownLocalSession` and
 for logout after the drained end (the Keycloak logout is a POST).
 
+**Emergency auth teardown.** The sandbox restores the retained real Matrix
+service synchronously on `exitPracticeMode`, so `teardownLocalSession` stops
+that service before login can render. The fake REST layer stays until its
+pending requests and practice-addressed unmount writes drain; the forgotten
+real service is never restored by a later sandbox cleanup. Proof:
+`practiceLogout.integration.test.tsx` uses the actual sandbox, registry and
+Matrix service, with a pending streamed practice PATCH during teardown.
+
+**Required actions.** Both practice tours use `requiredTargetPolicy: 'stop'`.
+A missing required control interrupts the run without a terminal progress
+write; it cannot fall through to the explanations and record completion.
+Regular tours keep their existing missing-target skip policy. Proof:
+`ProductTourAdapter.component.test.tsx` records the progress HTTP boundary for
+F2 with absent controls, and `tourEngine.test.ts` covers a disappearing target.
+
+**Window size.** F1 starts in the real controls' `fromL` layout; F2 needs
+`fromXL`, where the real supervisor plus is interactive. A narrower F2 card
+explains that the browser window needs widening, and the tour host rejects a
+stale launch request too. The phone hint and F1's existing range are preserved.
+Proof: `PracticeOverviewSection.test.tsx` checks 1199/1200 and F1 at 1024;
+`PracticeFlow.integration.test.tsx` checks the actual host boundary.
+
 **Restart.** The banner asks the tour host for a new run of the same tour. The
 host ends and re-enters on the running guard; the re-enter runs the restart
 handlers, and `PracticeSandboxSlot` registered the sandbox's `restart` there:
@@ -82,8 +104,14 @@ practice endpoints are answered from memory too. The shell around it stays on
 the real contexts. Proof: `PracticeFlow.integration.test.tsx` walks F1 (both
 variants) and F2 through the real navigation bar, header, banner and tour host.
 
-Known limits: the banner sits below MUI modals (z-index 1290 under 1300), so an
-open dialog can cover it. While practising, `/service/error-reports` is answered
+**Permanent controls.** The banner uses a page-level portal and the theme's
+tooltip layer, above the supervisor dialog's modal layer. The picker and banner
+share a focus trap, so End remains accessible by pointer, keyboard and screen
+reader while the picker is open. The dropdown stays inside the dialog's
+container, so its modal manager does not hide the banner. Proof:
+`PracticeFlow.integration.test.tsx` and local Chromium picker captures.
+
+Known limits: while practising, `/service/error-reports` is answered
 by the fake, so an error report from a practice run is not sent. The real reads
 in the table below were reviewed by hand; no test pins them.
 
