@@ -91,3 +91,50 @@ Open decisions (Frank): a counsellor who is live-chat available drops out after
 about 2 minutes of practice (allowlist the heartbeat, or switch live chat off
 at the start); a real incoming call cannot be answered while practising (end
 practice on ring, or accept); the feed burst after the exit.
+
+## Proof on Dev (T2)
+
+`playwright/practice-network-guard.smoke.spec.ts` (helpers in
+`playwright/practice-proof.ts`) walks both flows through the real UI of a
+deployed build and checks, from outside the page, what the unit tests claim.
+It skips unless `ORISO_TOUR_STORAGE_STATE` is set, and it needs a build of this
+branch on Dev. It was dry-run against the Storybook stage only (selectors and
+flow); it has **not** been run against a live environment.
+
+```bash
+ORISO_TOUR_STORAGE_STATE=/path/consultant-state.json \
+PLAYWRIGHT_BASE_URL=https://dev.oriso.org \
+ORISO_KEYCLOAK_TOKEN_URL=https://<keycloak>/auth/realms/<realm>/protocol/openid-connect/token \
+npx playwright test practice-network-guard --project=chromium
+```
+
+| Env                           | Needed | Meaning                                                                                      |
+| ----------------------------- | ------ | -------------------------------------------------------------------------------------------- |
+| `ORISO_TOUR_STORAGE_STATE`    | yes    | logged-in counsellor test account (storage state of the test-access hub)                     |
+| `PLAYWRIGHT_BASE_URL`         | yes    | Dev frontend; `ORISO_APP_BASE_URL` also works                                                |
+| `ORISO_KEYCLOAK_TOKEN_URL`    | yes    | token endpoint, the one allowed POST                                                         |
+| `ORISO_TUTORIAL_PROGRESS_URL` | no     | when the user service has its own origin (default `<base>/service/users/tutorials/progress`) |
+
+The spec forces `enableWalkthrough` and `releaseToggles.enablePracticeArea` on in
+the `/service/settings` response of its own page only, opens Profile, Help,
+"Meine Rundgänge", starts the card and drives the real controls. Per run, from
+the card click to the end of the practice:
+
+1. no write except the tutorial-progress PUT of the running tour (and the token
+   refresh), and a PUT with status `completed` was sent (not for the half-way End);
+2. no request URL or body names a practice id (`-1`, `practice-...`,
+   `practice.invalid`), carries what was typed, or is a WebSocket publish;
+3. localStorage, sessionStorage and the IndexedDB database names equal the
+   snapshot before the start (differences are reported as key names, never values);
+4. the real Anfragen list afterwards holds no practice id or name.
+
+Runs: F1 to the end, F1 ended half way from the banner, F2 to the end (skipped
+with a message when the tenant has no supervision). F1 has eight steps with the
+Träger's Team-Besprechung and six without; the run reports which variant the
+tenant has, so the other one needs a tenant with the other setting. The run marks
+the account's practice tours as completed (the one allowed write): use a test
+account.
+
+Limits: a pre-install `fetch`, form or link navigations and the real live-chat
+heartbeat after the exit are outside the window (see Lifecycle). Real-mode
+traffic before the card click and after the guard is off is not judged.
