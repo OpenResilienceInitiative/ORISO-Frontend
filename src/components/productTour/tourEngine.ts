@@ -73,8 +73,14 @@ export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 		placement: step.placement ?? (step.target ? 'bottom' : 'center'),
 		title: step.titleKey,
 		content: step.contentKey,
-		// Read by the tooltip, which has no Next on a self-advancing step.
-		...(step.advanceOn && { data: { advanceOn: step.advanceOn } })
+		// Read by the tooltip: no Next on a self-advancing step, no Back after
+		// an action that cannot be undone.
+		...((step.advanceOn || step.hideBack) && {
+			data: {
+				...(step.advanceOn && { advanceOn: step.advanceOn }),
+				...(step.hideBack && { hideBack: true })
+			}
+		})
 	}));
 
 /**

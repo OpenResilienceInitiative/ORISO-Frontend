@@ -91,6 +91,12 @@ export interface TourStep {
 	/** Finish this step without "Next"; see {@link TourAdvanceOn}. */
 	advanceOn?: TourAdvanceOn;
 	/**
+	 * Hide "Back" on this step. For the step after an action that cannot be
+	 * undone (the practice accept), where going back would show a screen that
+	 * no longer matches the app.
+	 */
+	hideBack?: boolean;
+	/**
 	 * Variant condition. The step is dropped from the tour when it fails,
 	 * resolved once at start (`resolveTourSteps`).
 	 */
