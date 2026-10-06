@@ -19,6 +19,8 @@ import {
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import { isPracticeDraftScope } from '../practiceDraftScopes';
+import { REMOTE_DRAFT_INDEX_SCOPE } from '../../services/draftStore';
 import { endpoints } from '../../resources/scripts/endpoints';
 import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 import type { EventNotificationFeedResponse } from '../../api/apiEventNotifications';
@@ -78,13 +80,20 @@ type Route = {
 	path: RegExp;
 	/**
 	 * Not tied to a practice id (lists, drafts, feed): answered only while the
-	 * practice view is mounted, never during its teardown.
+	 * practice view is mounted, except explicitly scoped cleanup.
 	 */
 	viewWide?: true;
+	/** Practice drafts and their shared index may finish during teardown. */
+	duringDrain?: (request: ParsedRequest) => boolean;
 	handle: (
 		request: ParsedRequest,
 		match: RegExpMatchArray
 	) => Promise<Response | null> | Response | null;
+};
+
+const isIsolatedDraftRequest = ({ url }: ParsedRequest): boolean => {
+	const scope = url.searchParams.get('scopeKey') || '';
+	return scope === REMOTE_DRAFT_INDEX_SCOPE || isPracticeDraftScope(scope);
 };
 
 const ok = (body: unknown) =>
@@ -391,6 +400,7 @@ export const createFakeRestBackend = ({
 			method: 'GET',
 			path: at(endpoints.userDrafts, '/single'),
 			viewWide: true,
+			duringDrain: isIsolatedDraftRequest,
 			handle: ({ url }) => {
 				const draft = drafts.get(
 					url.searchParams.get('scopeKey') || ''
@@ -413,6 +423,7 @@ export const createFakeRestBackend = ({
 			method: 'PATCH',
 			path: at(endpoints.userDrafts),
 			viewWide: true,
+			duringDrain: isIsolatedDraftRequest,
 			handle: async ({ url, body }) => {
 				const scopeKey = url.searchParams.get('scopeKey') || '';
 				drafts.set(scopeKey, { ...(await body()), scopeKey });
@@ -423,6 +434,7 @@ export const createFakeRestBackend = ({
 			method: 'DELETE',
 			path: at(endpoints.userDrafts),
 			viewWide: true,
+			duringDrain: isIsolatedDraftRequest,
 			handle: ({ url }) => {
 				drafts.delete(url.searchParams.get('scopeKey') || '');
 				return noContent();
@@ -489,7 +501,12 @@ export const createFakeRestBackend = ({
 			const request = parseRequest(input, init);
 			for (const route of routes) {
 				if (route.method !== request.method) continue;
-				if (route.viewWide && options.practiceAddressedOnly) continue;
+				if (
+					route.viewWide &&
+					options.practiceAddressedOnly &&
+					!route.duringDrain?.(request)
+				)
+					continue;
 				const match = request.url.pathname.match(route.path);
 				if (!match) continue;
 				const response = await route.handle(request, match);

@@ -244,6 +244,21 @@ describe('FakeRestBackend', () => {
 		);
 	});
 
+	it('lets a newly mounted real view read its own drafts while practice cleanup drains', async () => {
+		const backend = backendFor();
+		for (const url of [
+			`${endpoints.userDrafts}/single?scopeKey=${encodeURIComponent('scope:!real:matrix.org|thread:main')}`,
+			`${endpoints.userDrafts}/single?scopeKey=${encodeURIComponent('scope:4711|thread:main')}`,
+			`${endpoints.userDrafts}?page=0&perPage=200`
+		]) {
+			expect(
+				await backend.handle(new Request(url), undefined, {
+					practiceAddressedOnly: true
+				})
+			).toBeNull();
+		}
+	});
+
 	it('answers every practice request with 2xx and restarts from fresh fixtures', async () => {
 		const backend = backendFor();
 		await backend.handle(send(`${endpoints.sessionBase}/new/${ID}`, 'PUT'));

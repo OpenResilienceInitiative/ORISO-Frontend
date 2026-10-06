@@ -25,6 +25,7 @@ import {
 	onPracticeExit
 } from './practiceMode';
 import { isPracticeId } from './practiceIds';
+import { isPracticeDraftScope } from './practiceDraftScopes';
 import { PracticeBlockedRequestError } from './networkGuard';
 import { isSafeMethod, redactUrl } from './requestPolicy';
 import {
@@ -102,7 +103,8 @@ const addressesPractice = (input: RequestInfo | URL): boolean => {
 	return [...url.pathname.split('/'), ...url.searchParams.values()].some(
 		(part) => {
 			try {
-				return isPracticeId(decodeURIComponent(part));
+				const value = decodeURIComponent(part);
+				return isPracticeId(value) || isPracticeDraftScope(value);
 			} catch {
 				return false;
 			}

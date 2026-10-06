@@ -410,7 +410,7 @@ const expectExited = async (
 		)
 	).toBeVisible();
 	await expect(
-		canvas.queryByRole('status', { name: 'Übungsmodus' })
+		screen.queryByRole('status', { name: 'Übungsmodus' })
 	).toBeNull();
 	await expectIsolated(storageBefore);
 };

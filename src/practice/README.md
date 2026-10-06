@@ -68,6 +68,9 @@ pending requests and practice-addressed unmount writes drain; the forgotten
 real service is never restored by a later sandbox cleanup. Proof:
 `practiceLogout.integration.test.tsx` uses the actual sandbox, registry and
 Matrix service, with a pending streamed practice PATCH during teardown.
+Unsent composer cleanup stays in memory too: composite practice room/thread
+scopes and the shared draft index remain isolated while the fake REST layer
+drains. Real draft scopes and list reads from the restored page pass through.
 
 **Required actions.** Both practice tours use `requiredTargetPolicy: 'stop'`.
 A missing required control interrupts the run without a terminal progress
@@ -79,7 +82,9 @@ F2 with absent controls, and `tourEngine.test.ts` covers a disappearing target.
 **Window size.** F1 starts in the real controls' `fromL` layout; F2 needs
 `fromXL`, where the real supervisor plus is interactive. A narrower F2 card
 explains that the browser window needs widening, and the tour host rejects a
-stale launch request too. The phone hint and F1's existing range are preserved.
+stale launch request too. Resizing below the supported range discards that
+request, so widening the window requires another deliberate Start. The phone
+hint and F1's existing range are preserved.
 Proof: `PracticeOverviewSection.test.tsx` checks 1199/1200 and F1 at 1024;
 `PracticeFlow.integration.test.tsx` checks the actual host boundary.
 

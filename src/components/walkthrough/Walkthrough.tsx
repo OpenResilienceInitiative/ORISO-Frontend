@@ -65,6 +65,18 @@ export const Walkthrough = () => {
 				? practiceTours.find((tour) => tour.id === launchRequest.tourId)
 				: undefined))
 		: undefined;
+	const unavailablePracticeRequest =
+		!!launchRequest &&
+		isPracticeTourId(launchRequest.tourId) &&
+		(!canUsePractice(settings, userData) ||
+			!canStartPracticeTourInViewport(launchRequest.tourId, viewport));
+	useEffect(() => {
+		if (unavailablePracticeRequest) {
+			// Resizing may end an active practice run. Widening the window
+			// requires a fresh, deliberate Start instead of replaying its request.
+			setLaunchRequest(null);
+		}
+	}, [unavailablePracticeRequest, setLaunchRequest]);
 	// Auto-run only when nothing was requested at all: a stale or unknown
 	// request must not fall back to starting an unrelated tour.
 	const switchIsOn =

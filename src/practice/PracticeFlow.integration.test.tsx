@@ -53,6 +53,8 @@ import {
 } from '../services/matrixClientRegistry';
 import { setTenantSettings } from '../utils/tenantSettingsHelper';
 import { config } from '../resources/scripts/config';
+import { teardownLocalSession } from '../components/logout/logout';
+import { MatrixClientService } from '../services/matrixClientService';
 import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
@@ -262,13 +264,19 @@ const renderApp = ({
 			}
 		]
 	];
-	const view = render(
+	const app = (viewportWidth = width) => (
 		<I18nextProvider i18n={translations}>
 			<JotaiProvider store={store}>
 				<MemoryRouter initialEntries={[HELP_ROUTE]}>
 					{providers.reduceRight(
 						(child, [Context, value]) => (
-							<Context.Provider value={value}>
+							<Context.Provider
+								value={
+									Context === ResponsiveContext
+										? { width: viewportWidth }
+										: value
+								}
+							>
 								{child}
 							</Context.Provider>
 						),
@@ -308,6 +316,8 @@ const renderApp = ({
 			</JotaiProvider>
 		</I18nextProvider>
 	);
+	const view = render(app());
+	const resize = (viewportWidth: number) => view.rerender(app(viewportWidth));
 	/** Starts a flow from its real card on the Help page. */
 	const start = async (tourId: string) => {
 		const title = practiceTours.find(
@@ -331,7 +341,7 @@ const renderApp = ({
 				requestedAt: Date.now()
 			})
 		);
-	return { ...view, store, start, request };
+	return { ...view, store, start, request, resize };
 };
 
 beforeEach(async () => {
@@ -703,6 +713,10 @@ describe('practice flows on the real app shell', () => {
 		expect(getPracticeSnapshot().status).toBe('inactive');
 		expect(screen.queryByTestId('practice-banner')).toBeNull();
 		expect(progressWrites()).toEqual([]);
+		app.resize(1200);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
 	});
 
 	it('can launch F2 at the real picker breakpoint', async () => {
@@ -710,6 +724,70 @@ describe('practice flows on the real app shell', () => {
 		await app.start(SUPERVISION);
 		await expectStep(0);
 		expect(getPracticeSnapshot().status).toBe('active');
+	}, 120000);
+
+	it('does not restart F2 automatically after resizing below and back above its picker breakpoint', async () => {
+		const app = renderApp({ width: 1200 });
+		await app.start(SUPERVISION);
+		await expectStep(0);
+
+		app.resize(1199);
+		await waitFor(
+			() => expect(getPracticeSnapshot().status).toBe('inactive'),
+			SLOW
+		);
+		expect(route()).toBe(HELP_ROUTE);
+		app.resize(1200);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(screen.queryByTestId('practice-banner')).toBeNull();
+		expect(progressWrites()).not.toContain('completed');
+
+		await app.start(SUPERVISION);
+		await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+	}, 120000);
+
+	it('keeps an unsent real composer draft and its shared index off the network during immediate auth teardown', async () => {
+		const service = new MatrixClientService();
+		setMatrixClientServiceRef(service);
+		const app = renderApp();
+		try {
+			await app.start(SUPERVISION);
+			await expectStep(0);
+			const scope = () =>
+				document.querySelector<HTMLElement>('.chatStage__mainPane');
+			await waitFor(() => expect(liveEditor(scope)).toBeTruthy(), SLOW);
+			const unsent = 'This fictional draft must stay in practice.';
+			act(() =>
+				liveEditor(scope).chain().focus().insertContent(unsent).run()
+			);
+			expect(liveEditor(scope).getText()).toContain(unsent);
+
+			act(() => teardownLocalSession());
+			app.unmount();
+			// Include the asynchronous shared-index continuation of composer cleanup.
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 50))
+			);
+			expect(
+				network.filter(
+					({ method, url }) =>
+						url.includes('/drafts') &&
+						(method !== 'GET' ||
+							new URL(url).searchParams.has('scopeKey'))
+				)
+			).toEqual([]);
+			expect(progressWrites()).not.toContain('completed');
+			expect(getPracticeSnapshot().status).toBe('inactive');
+			expect(getMatrixClientService()).toBeNull();
+		} finally {
+			app.unmount();
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
+			setMatrixClientServiceRef(realMatrixService as any);
+		}
 	}, 120000);
 
 	it('banner End remains keyboard-accessible while the F2 picker is open', async () => {
