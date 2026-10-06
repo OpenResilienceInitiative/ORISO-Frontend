@@ -65,6 +65,11 @@ import {
 import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from './fixtures/practiceCast';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import type { PracticeWorld } from './practiceWorld';
+import {
+	enterPracticeMode,
+	exitPracticeMode,
+	getPracticeNetworkGuard
+} from './practiceMode';
 
 vi.hoisted(() => {
 	Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
@@ -156,7 +161,10 @@ const LIST_ROUTE = {
 	acceptedCase: '/sessions/consultant/sessionView'
 } as const;
 
-const renderPractice = (start: 'enquiry' | 'acceptedCase' = 'enquiry') => {
+const renderPractice = (
+	start: 'enquiry' | 'acceptedCase' = 'enquiry',
+	{ underGuard = false } = {}
+) => {
 	const providers: [React.Context<any>, any][] = [
 		[AppConfigContext, config],
 		[ResponsiveContext, { width: 1440 }],
@@ -198,7 +206,10 @@ const renderPractice = (start: 'enquiry' | 'acceptedCase' = 'enquiry') => {
 					<PracticeSandbox
 						counsellor={counsellor}
 						start={start}
-						baseFetch={networkFetch as any}
+						// Under the guard the sandbox falls back to the page fetch.
+						baseFetch={
+							underGuard ? undefined : (networkFetch as any)
+						}
 					>
 						<WorldProbe />
 						<RouteProbe />
@@ -371,64 +382,70 @@ const expectNothingLeftThePracticeWorld = () => {
 	).toBe(true);
 };
 
+/** F1 up to the scripted answer: open, accept, reply through the composer. */
+const acceptAndReply = async (view: { container: HTMLElement }) => {
+	await openThePracticeCase(view.container);
+	const accept = await screen.findByRole(
+		'button',
+		{ name: 'enquiry.acceptButton.known' },
+		{ timeout: 15000 }
+	);
+	expect(textOf(view.container, '.chatStage__mainPane')).toContain(
+		PRACTICE_SCRIPT.enquiry
+	);
+
+	fireEvent.click(accept);
+
+	await waitFor(() => expect(world!.rest.getCase().session.status).toBe(2), {
+		timeout: 15000
+	});
+	expect(
+		world!.rest.served.some(
+			({ method, url }) =>
+				method === 'PUT' &&
+				url.endsWith(
+					`/service/users/sessions/new/${PRACTICE_ENQUIRY_SESSION_ID}`
+				)
+		)
+	).toBe(true);
+	await waitFor(
+		() =>
+			expect(screen.getByTestId('route').textContent).toMatch(
+				/\/sessions\/consultant\/sessionView\/!practice-1/
+			),
+		{ timeout: 15000 }
+	);
+	await waitFor(
+		() =>
+			expect(textOf(view.container, '.chatStage__mainPane')).toContain(
+				PRACTICE_SCRIPT.enquiry
+			),
+		{ timeout: 15000 }
+	);
+
+	const reply = 'Hallo Sam, schön, dass du dich meldest.';
+	await typeAndSend(
+		() => view.container.querySelector('.chatStage__mainPane'),
+		reply
+	);
+
+	await waitFor(
+		() => {
+			const main = textOf(view.container, '.chatStage__mainPane');
+			expect(main).toContain(reply);
+			expect(main).toContain(PRACTICE_SCRIPT.askerReply);
+		},
+		{ timeout: 15000 }
+	);
+	return reply;
+};
+
 describe('practice sandbox on the real session containers', () => {
 	it('F1: lists only the practice enquiry, accepts it with the real button and answers through the real composer', async () => {
 		const view = renderPractice();
 
-		await openThePracticeCase(view.container);
-		const accept = await screen.findByRole(
-			'button',
-			{ name: 'enquiry.acceptButton.known' },
-			{ timeout: 15000 }
-		);
-		expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-			PRACTICE_SCRIPT.enquiry
-		);
+		const reply = await acceptAndReply(view);
 
-		fireEvent.click(accept);
-
-		await waitFor(
-			() => expect(world!.rest.getCase().session.status).toBe(2),
-			{ timeout: 15000 }
-		);
-		expect(
-			world!.rest.served.some(
-				({ method, url }) =>
-					method === 'PUT' &&
-					url.endsWith(
-						`/service/users/sessions/new/${PRACTICE_ENQUIRY_SESSION_ID}`
-					)
-			)
-		).toBe(true);
-		await waitFor(
-			() =>
-				expect(screen.getByTestId('route').textContent).toMatch(
-					/\/sessions\/consultant\/sessionView\/!practice-1/
-				),
-			{ timeout: 15000 }
-		);
-		await waitFor(
-			() =>
-				expect(
-					textOf(view.container, '.chatStage__mainPane')
-				).toContain(PRACTICE_SCRIPT.enquiry),
-			{ timeout: 15000 }
-		);
-
-		const reply = 'Hallo Sam, schön, dass du dich meldest.';
-		await typeAndSend(
-			() => view.container.querySelector('.chatStage__mainPane'),
-			reply
-		);
-
-		await waitFor(
-			() => {
-				const main = textOf(view.container, '.chatStage__mainPane');
-				expect(main).toContain(reply);
-				expect(main).toContain(PRACTICE_SCRIPT.askerReply);
-			},
-			{ timeout: 15000 }
-		);
 		const [sent, answer] = bodiesIn(PRACTICE_MAIN_ROOM_ID).slice(-2);
 		expect(sent).toMatch(
 			new RegExp(`^${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: .*${reply}`)
@@ -436,6 +453,28 @@ describe('practice sandbox on the real session containers', () => {
 		expect(answer).toBe(
 			`${PRACTICE_CAST.asker.matrixUserId}: ${PRACTICE_SCRIPT.askerReply}`
 		);
+		expectNothingLeftThePracticeWorld();
+	}, 60000);
+
+	it('F1 under the real network guard: nothing needs blocking and the layers unwind in order', async () => {
+		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+		const guardedFetch = window.fetch;
+		try {
+			const view = renderPractice('enquiry', { underGuard: true });
+
+			await acceptAndReply(view);
+
+			expect(getPracticeNetworkGuard()?.blockedRequests).toEqual([]);
+			expect(window.fetch).not.toBe(guardedFetch);
+			cleanup();
+			await act(
+				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+			);
+			expect(window.fetch).toBe(guardedFetch);
+		} finally {
+			exitPracticeMode();
+		}
+		expect(window.fetch).toBe(networkFetch);
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
