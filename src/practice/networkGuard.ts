@@ -11,12 +11,12 @@ import {
 
 /**
  * Default-deny wrapper for `fetch`, `XMLHttpRequest` and `navigator.sendBeacon`
- * for as long as a practice flow runs (spec section 4, claim 1). Only
+ * for as long as a practice flow runs. Only
  * GET/HEAD/OPTIONS pass; of everything else only two fetch requests are
  * allowed (see `requestPolicy.ts`). XHR and beacons never get an exception:
  * nothing the app sends on those channels is on the allowlist.
  *
- * Layering: install the guard FIRST. The fake REST backend (S2) goes on top
+ * Layering: install the guard FIRST. The fake REST backend goes on top
  * and answers practice endpoints from memory; whatever it does not answer
  * falls through to this guard. Uninstall in reverse order. If something else
  * still wraps the guard on uninstall, the guard stays in the chain as a
@@ -25,10 +25,13 @@ import {
  * WebSocket is deliberately NOT wrapped. The only sockets in the app are the
  * LiveService STOMP client, which only subscribes (the app never publishes a
  * frame) and Matrix events, which arrive via sync; blocking `new WebSocket`
- * would only break reads. Nothing can be proven by a send hook there, so the
- * claim is asserted from outside instead: the T2 end-to-end run records every
- * request with `page.on('request')` and `assertNoPracticeWrites` fails on any
- * non-allowlisted write that reaches the network.
+ * would only break reads. No test that has run asserts on its frames.
+ *
+ * Proof for the wrapped channels: this guard's unit tests, and the runs of
+ * both flows that record every request (the jsdom integration tests and the
+ * Chromium story `Organisms/PracticeFlow`). The Playwright run against Dev
+ * (`assertNoPracticeWrites` over `page.on('request')`) is runnable but has
+ * not been run yet.
  *
  * Not covered, by design of the platform: form-submit and link navigations,
  * `<img>`/CSS loads (all GET), code that kept a pre-install reference to

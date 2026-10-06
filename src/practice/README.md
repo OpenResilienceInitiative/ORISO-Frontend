@@ -7,11 +7,15 @@ sections 4 and 5. Two claims must stay provable:
    wraps `fetch`, `XMLHttpRequest` and `navigator.sendBeacon`. GET, HEAD and
    OPTIONS pass; every other request is blocked (fetch rejects with
    `PracticeBlockedRequestError`, XHR errors out, beacon returns `false`) and
-   counted by method and URL, never query or body. Proof: T1
-   (`networkGuard.test.ts`), T2 (`playwright/practice-network-guard.smoke.spec.ts`,
-   built on `assertNoPracticeWrites`).
+   counted by method and URL, never query or body. Proof: the guard's unit
+   tests (`networkGuard.test.ts`) and the runs of both flows that record every
+   request: the jsdom integration tests (`PracticeSandbox.integration.test.tsx`,
+   `PracticeFlow.integration.test.tsx`) and the Chromium story
+   `Organisms/PracticeFlow`. The Playwright run against Dev
+   (`playwright/practice-network-guard.smoke.spec.ts`, built on
+   `assertNoPracticeWrites`) is runnable but has not been run yet.
 2. **Practice state lives in memory only.** No localStorage, sessionStorage or
-   IndexedDB (T8, `PracticeProvider.test.tsx`). Practice ids are negative,
+   IndexedDB (`PracticeProvider.test.tsx`). Practice ids are negative,
    `practice-...` or `...:practice.invalid`, so never a real id (`practiceIds.ts`).
 
 ## Allowlist (exact, fetch only)
@@ -22,14 +26,15 @@ sections 4 and 5. Two claims must stay provable:
   `client_id=app` and no credentials. The password grant shares the URL: blocked.
 - Unparseable, unreadable or oversized bodies fail closed. XHR and beacons get no
   exception. SigNoz/OTLP exports are blocked (non-essential). WebSocket is not
-  wrapped (the app only receives on it); T2 asserts the claim from outside.
+  wrapped (the app only receives on it), and no test that has run asserts on
+  its frames.
 
 ## Adding an endpoint to the allowlist
 
 You must not. The list is the spec (section 4); a new entry needs a spec change
 decided by Frank, plus tests in `networkGuard.test.ts` and
 `assertNoPracticeWrites.test.ts`. Practice endpoints are answered by the fake
-backend (S2) and never reach the network.
+backend and never reach the network.
 
 ## Lifecycle and layering
 
@@ -76,6 +81,11 @@ notifications. Its `fetch` patch is page-wide, so the shell's requests for
 practice endpoints are answered from memory too. The shell around it stays on
 the real contexts. Proof: `PracticeFlow.integration.test.tsx` walks F1 (both
 variants) and F2 through the real navigation bar, header, banner and tour host.
+
+Known limits: the banner sits below MUI modals (z-index 1290 under 1300), so an
+open dialog can cover it. While practising, `/service/error-reports` is answered
+by the fake, so an error report from a practice run is not sent. The real reads
+in the table below were reviewed by hand; no test pins them.
 
 | Outside the sandbox                                       | Shows                                                                       | Decision                                                                                   |
 | --------------------------------------------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
