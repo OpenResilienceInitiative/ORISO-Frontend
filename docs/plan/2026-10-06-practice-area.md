@@ -59,6 +59,8 @@ The assembled feature includes the latest dev changes. Final validation results
 and current CI are recorded in the PR description. The release flag remains off
 until deployed proof and the retained product decisions are settled.
 
-The Help page currently distinguishes automatic-start preference, explanatory
-tours and hands-on practice. A common learning overview is under discussion;
-no rearrangement or removal of learning offers is approved in this continuation.
+Help now groups the automatic-start preference, the short introduction and the
+two gated hands-on practice flows in one Meine Rundgänge card. The user approved
+replacing the displayed Mail-Beratung offer with these exercises. Its tour
+definition, launch compatibility and saved progress remain available; the
+practice release flag stays off by default.
