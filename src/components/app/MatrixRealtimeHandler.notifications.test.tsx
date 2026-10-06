@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /** Matrix is the early trigger; persisted feed events own announcements. */
 import React from 'react';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MatrixRealtimeHandler } from './MatrixRealtimeHandler';
@@ -302,4 +303,33 @@ describe('MatrixRealtimeHandler → new message notification', () => {
 
 		expect(constructed).toHaveLength(0);
 	});
+});
+
+// Incoming activity must refresh other active views after the room update.
+describe('active timeline refresh contract', () => {
+	it.each([false, true])(
+		'refreshes another active room only for incoming activity (own=%s)',
+		(isOwnMessage) => {
+			const refreshOtherRoom = vi.fn();
+			const onMessage = (event: { roomId?: string }) => {
+				if (!event.roomId || event.roomId === '!other:oriso')
+					refreshOtherRoom();
+			};
+			messageEventEmitter.on(onMessage);
+			try {
+				render(<MatrixRealtimeHandler />);
+				act(() =>
+					bridge.emit('directMessage', {
+						roomId: '!incoming:oriso',
+						isOwnMessage
+					})
+				);
+				expect(refreshOtherRoom).toHaveBeenCalledTimes(
+					isOwnMessage ? 0 : 1
+				);
+			} finally {
+				messageEventEmitter.off(onMessage);
+			}
+		}
+	);
 });
