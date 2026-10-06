@@ -4,17 +4,17 @@
 
 - Counsellors practise two real workflows (accept an enquiry with a
   Team-Besprechung, add a supervisor) on fixed fictional people.
-- Success: the real UI runs on in-memory fixtures; no mutating request leaves
-  the page and nothing is stored. Epic #1622, decision record ADR-020.
+- Success: the real UI runs on in-memory fixtures; practice data stays in memory.
+  Only the allowed tutorial-progress update and identity refresh leave the page. Epic #1622, decision record ADR-020.
 
-## Current State
+## Original Problem
 
 - Product tours explain screens but cannot practise workflows: an enquiry only
   exists once an advice seeker writes one.
 - A backend practice agency (option B in ADR-020) would touch statistics,
   notifications, licences and registration; it was rejected.
 
-## Proposed Changes
+## Implemented Changes
 
 - `src/practice/`: default-deny network guard, fake REST backend typed against
   the generated DTOs, fake Matrix service, scripted cast, two guided tours,
@@ -37,3 +37,28 @@
 - A JavaScript guard cannot cover form or link navigations or WebSocket frames.
 - Open product decisions: live-chat heartbeat, incoming calls, notification
   burst after the exit, join-request snackbars (see `src/practice/README.md`).
+
+## Review delivery — 6 October 2026
+
+Both [Frontend PR1624](https://github.com/OpenResilienceInitiative/ORISO-Frontend/pull/1624)
+and [UserService PR1349](https://github.com/OpenResilienceInitiative/ORISO-UserService/pull/1349)
+are open for review. [Issue1622](https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/1622)
+is In review, planned for v2.0.11. Reviewers are requested. Opening the PRs is
+separate from passing CI, human review, merge and deployed Dev acceptance.
+
+The source review corrections cover immediate auth expiry restoring the real
+Matrix service, unsent practice drafts draining without reaching the real API,
+required tour controls interrupting rather than falsely completing, and the
+practice banner remaining accessible while the supervisor picker is open.
+Acceptance starts at the real desktop layout; supervision starts only when its
+actual supervisor control is available. Resizing cannot restart a practice
+without another deliberate Start. Browser stories cover both acceptance
+variants and supervision with the real containers.
+
+The assembled feature includes the latest dev changes. Final validation results
+and current CI are recorded in the PR description. The release flag remains off
+until deployed proof and the retained product decisions are settled.
+
+The Help page currently distinguishes automatic-start preference, explanatory
+tours and hands-on practice. A common learning overview is under discussion;
+no rearrangement or removal of learning offers is approved in this continuation.
