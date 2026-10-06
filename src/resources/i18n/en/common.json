@@ -5261,7 +5261,7 @@
 		},
 		"practiceAccept": {
 			"title": "Practice: Accept a request",
-			"summary": "Accept an enquiry and write a first reply.",
+			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
 			"step": {
 				"navEnquiries": {
 					"title": "Open the requests",
@@ -5299,7 +5299,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Practice: Add a supervisor",
-			"summary": "Choose a supervisor and add them to a counselling session.",
+			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
 			"step": {
 				"addSupervisor": {
 					"title": "Add a supervisor",
@@ -5637,6 +5637,10 @@
 			"moveHandle": "Move banner (arrow keys)"
 		},
 		"cards": {
+			"summary": {
+				"accept": "Accept an enquiry and write a first reply.",
+				"supervision": "Choose a supervisor and add them to a counselling session."
+			},
 			"title": "Practice area",
 			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",
 			"empty": "There are currently no practice flows available for you.",

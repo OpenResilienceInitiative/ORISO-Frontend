@@ -5344,7 +5344,7 @@
 		},
 		"practiceAccept": {
 			"title": "Exercice : accepter une demande",
-			"summary": "Accepter une demande et rédiger une première réponse.",
+			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à accepter une demande et à écrire la première réponse. Toutes les personnes et tous les contenus sont fictifs.",
 			"step": {
 				"navEnquiries": {
 					"title": "Ouvrir les demandes",
@@ -5382,7 +5382,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Exercice : ajouter un·e superviseur·e",
-			"summary": "Choisir une personne de supervision et l’ajouter à un entretien.",
+			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
 			"step": {
 				"addSupervisor": {
 					"title": "Ajouter un·e superviseur·e",
@@ -5720,6 +5720,10 @@
 			"moveHandle": "Déplacer le bandeau (flèches du clavier)"
 		},
 		"cards": {
+			"summary": {
+				"accept": "Accepter une demande et rédiger une première réponse.",
+				"supervision": "Choisir une personne de supervision et l’ajouter à un entretien."
+			},
 			"title": "Espace d'exercice",
 			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",
 			"empty": "Aucun exercice n'est disponible pour vous pour le moment.",

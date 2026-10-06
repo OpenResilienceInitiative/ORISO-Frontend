@@ -16,6 +16,19 @@ import type {
 import '../components/productTour/productTour.styles.scss';
 import './practiceCards.styles.scss';
 import { canStartPracticeTourInViewport } from './practiceViewport';
+import {
+	isPracticeTourId,
+	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_SUPERVISION_TOUR_ID,
+	type PracticeTourId
+} from './practiceTourIds';
+
+// Compact Help copy relies on the shared fictional-case caption above it.
+// Standalone cards retain the complete safety description from the registry.
+const helpSummaryKeys: Record<PracticeTourId, string> = {
+	[PRACTICE_ACCEPT_TOUR_ID]: 'practice.cards.summary.accept',
+	[PRACTICE_SUPERVISION_TOUR_ID]: 'practice.cards.summary.supervision'
+};
 
 type ProgressItem = Pick<
 	ITutorialProgressItem,
@@ -127,6 +140,10 @@ export const PracticeCards = ({
 					{tours.map((tour) => {
 						const status = statusFor(tour);
 						const mode = modeForStatus(status);
+						const summaryKey =
+							embedded && isPracticeTourId(tour.id)
+								? helpSummaryKeys[tour.id]
+								: tour.summaryKey;
 						const canStart = canStartPracticeTourInViewport(
 							tour.id,
 							{
@@ -155,7 +172,7 @@ export const PracticeCards = ({
 									{translate(tour.titleKey)}
 								</CardHeading>
 								<p className="tourOverview__cardSummary">
-									{toPlainText(translate(tour.summaryKey))}
+									{toPlainText(translate(summaryKey))}
 								</p>
 								<Button
 									item={{

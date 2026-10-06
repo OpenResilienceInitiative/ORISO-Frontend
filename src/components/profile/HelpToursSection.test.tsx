@@ -22,6 +22,8 @@ import {
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 import { ProfileCardList } from './ProfileCardList';
 import { profileRoutesHelp } from './profileHelp.routes';
+import { PracticeCards } from '../../practice/PracticeCards';
+import { practiceTours } from '../../practice/practiceTours';
 
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('react-i18next', async () => {
@@ -133,6 +135,33 @@ afterEach(() => {
 });
 
 describe('Help learning card', () => {
+	it('keeps standalone fictional-data summaries and short Help summaries separate', async () => {
+		render(
+			<PracticeCards
+				tours={practiceTours}
+				isPhone={false}
+				loadProgress={async () => []}
+				onStartTour={() => {}}
+			/>
+		);
+		await screen.findAllByRole('button', { name: 'Übung starten' });
+		expect(
+			screen.getAllByText(/Alle Personen und Inhalte sind erfunden\./)
+		).toHaveLength(2);
+		cleanup();
+		renderHelp();
+		await screen.findAllByRole('button', { name: 'Übung starten' });
+		expect(
+			screen.getByText(
+				'Eine Anfrage annehmen und eine erste Antwort schreiben.'
+			)
+		).toBeTruthy();
+		expect(
+			screen.queryByText(/Alle Personen und Inhalte sind erfunden\./)
+		).toBeNull();
+		expect(screen.getByText(/an einem erfundenen Fall/)).toBeTruthy();
+	});
+
 	it('keeps manual learning actions with the auto-start control in one card', async () => {
 		renderHelp();
 		await screen.findAllByRole('button', { name: 'Übung starten' });

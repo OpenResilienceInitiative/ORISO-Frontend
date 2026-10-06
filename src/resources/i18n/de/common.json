@@ -5336,7 +5336,7 @@
 		},
 		"practiceAccept": {
 			"title": "Übung: Anfrage annehmen",
-			"summary": "Eine Anfrage annehmen und eine erste Antwort schreiben.",
+			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
 			"step": {
 				"navEnquiries": {
 					"title": "Anfragen öffnen",
@@ -5374,7 +5374,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Übung: Supervision hinzufügen",
-			"summary": "Eine Supervisor:in auswählen und einer Beratung hinzufügen.",
+			"summary": "Üben Sie im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
 			"step": {
 				"addSupervisor": {
 					"title": "Supervisor:in hinzufügen",
@@ -5712,6 +5712,10 @@
 			"moveHandle": "Hinweis verschieben (Pfeiltasten)"
 		},
 		"cards": {
+			"summary": {
+				"accept": "Eine Anfrage annehmen und eine erste Antwort schreiben.",
+				"supervision": "Eine Supervisor:in auswählen und einer Beratung hinzufügen."
+			},
 			"title": "Übungsbereich",
 			"subtitle": "Üben Sie Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was Sie hier eingeben, wird nicht gespeichert.",
 			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",

@@ -2395,7 +2395,7 @@
 			}
 		},
 		"practiceAccept": {
-			"summary": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
+			"summary": "Übe im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
 			"step": {
 				"navEnquiries": {
 					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen findest du hier unter „Anfragen“."
@@ -2424,7 +2424,7 @@
 			}
 		},
 		"practiceSupervision": {
-			"summary": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen.",
+			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
 			"step": {
 				"addSupervisor": {
 					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus, nenne kurz den Grund und bestätige."
@@ -2552,6 +2552,10 @@
 	},
 	"practice": {
 		"cards": {
+			"summary": {
+				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
+				"supervision": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen."
+			},
 			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
 			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
 			"phoneHint": "Bitte übe am Computer.",

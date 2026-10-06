@@ -5344,7 +5344,7 @@
 		},
 		"practiceAccept": {
 			"title": "Alıştırma: Talebi kabul etme",
-			"summary": "Bir sorguyu kabul edin ve ilk yanıtı yazın.",
+			"summary": "Korumalı alıştırma alanında bir talebi kabul etmeyi ve ilk yanıtı yazmayı deneyin. Tüm kişiler ve içerikler kurgusaldır.",
 			"step": {
 				"navEnquiries": {
 					"title": "Talepleri açın",
@@ -5382,7 +5382,7 @@
 		},
 		"practiceSupervision": {
 			"title": "Alıştırma: Süpervizör ekleme",
-			"summary": "Bir süpervizör seçin ve danışmanlık oturumuna ekleyin.",
+			"summary": "Korumalı alıştırma alanında bir danışmanlığa süpervizör eklemeyi deneyin. Tüm kişiler ve içerikler kurgusaldır.",
 			"step": {
 				"addSupervisor": {
 					"title": "Süpervizör ekleyin",
@@ -5720,6 +5720,10 @@
 			"moveHandle": "Bildirimi taşı (ok tuşları)"
 		},
 		"cards": {
+			"summary": {
+				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın.",
+				"supervision": "Bir süpervizör seçin ve danışmanlık oturumuna ekleyin."
+			},
 			"title": "Alıştırma alanı",
 			"subtitle": "İş akışlarını kurgusal bir vaka üzerinde deneyin. Gerçek veri kullanılmaz ve burada yazdıklarınız kaydedilmez.",
 			"empty": "Şu anda sizin için alıştırma yok.",
