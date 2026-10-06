@@ -9,6 +9,7 @@ import {
 	CaseHandoverStatus
 } from '../../api/apiCaseHandover';
 import { FETCH_ERRORS } from '../../api/fetchData';
+import { caseHandoverReasonOptionLabel } from '../caseHandover/caseHandoverReasons';
 import {
 	isCaseHandoverDenied,
 	isCaseHandoverPending
@@ -146,7 +147,7 @@ export const CaseHandoverCurtainView = ({
 							aria-hidden
 						/>
 						<span className="caseHandoverCurtain__reasonLabel">
-							{reason.label}
+							{caseHandoverReasonOptionLabel(translate, reason)}
 						</span>
 						{reason.clientConsentRequired && (
 							<span className="caseHandoverCurtain__reasonConsentHint">

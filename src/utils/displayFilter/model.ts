@@ -6,12 +6,47 @@
  * override). No transport here; see `store.ts`.
  */
 
+import { SOUND_IDS, SoundId } from '../notificationSettings/model';
 import {
+	CHIP_VIEWS,
+	ChipView,
 	DEFAULT_KIND_SETTING,
 	DisplayFilterValue,
 	KindSetting,
+	LIVE_CHAT_PILL_MODES,
+	LiveChatPillMode,
 	OTHER_KIND_ID
 } from '../../components/displayFilter/displayFilterTypes';
+
+export { resolveChipPresentation } from '../../components/displayFilter/displayFilterTypes';
+
+/** The optional chip-presentation fields of a value, only when valid. */
+const presentationFields = (
+	raw: Record<string, unknown>
+): Pick<DisplayFilterValue, 'view' | 'autoSort'> => {
+	const fields: Pick<DisplayFilterValue, 'view' | 'autoSort'> = {};
+	if (CHIP_VIEWS.includes(raw.view as ChipView)) {
+		fields.view = raw.view as ChipView;
+	}
+	if (typeof raw.autoSort === 'boolean') {
+		fields.autoSort = raw.autoSort;
+	}
+	return fields;
+};
+
+/** Copies `view`/`autoSort` from `source` onto `target` when set. */
+const carryPresentation = <T extends DisplayFilterValue>(
+	target: T,
+	source: Pick<DisplayFilterValue, 'view' | 'autoSort'>
+): T => {
+	if (source.view !== undefined) {
+		target.view = source.view;
+	}
+	if (source.autoSort !== undefined) {
+		target.autoSort = source.autoSort;
+	}
+	return target;
+};
 
 export type DisplayFilterSection = 'timeline' | 'sessions' | 'requests';
 
@@ -67,7 +102,29 @@ const parseKindSetting = (raw: unknown): KindSetting | null => {
 		typeof raw.show === 'boolean' ? raw.show : DEFAULT_KIND_SETTING.show;
 	const pill =
 		typeof raw.pill === 'boolean' ? raw.pill : DEFAULT_KIND_SETTING.pill;
-	return { show, pill: show && pill };
+	// `pill` is the user's intent; the effective value is resolved on read
+	// (`resolveKindSetting`), so a hidden kind keeps its pill for re-show.
+	const setting: KindSetting = { show, pill };
+	if (raw.sound === false) {
+		// legacy boolean mute (pre-dev builds of 2026-09-16)
+		setting.sound = 'none';
+	} else if (
+		typeof raw.sound === 'string' &&
+		SOUND_IDS.includes(raw.sound as SoundId)
+	) {
+		setting.sound = raw.sound as SoundId;
+	}
+	if (
+		typeof raw.pillMode === 'string' &&
+		LIVE_CHAT_PILL_MODES.includes(raw.pillMode as LiveChatPillMode) &&
+		raw.pillMode !== 'dynamic'
+	) {
+		setting.pillMode = raw.pillMode as LiveChatPillMode;
+	} else if (raw.fixed === true) {
+		// legacy boolean pin (pre-dev builds of 2026-09-16)
+		setting.pillMode = 'fixed';
+	}
+	return setting;
 };
 
 /**
@@ -87,15 +144,15 @@ export const parseDisplayFilter = (raw: unknown): DisplayFilter => {
 			if (parsed) {
 				kinds[kindId] =
 					kindId === OTHER_KIND_ID
-						? { show: true, pill: parsed.pill }
+						? { ...parsed, show: true }
 						: parsed;
 			}
 		});
 	}
-	const filter: DisplayFilter = {
-		kinds,
-		autoReadHidden: raw.autoReadHidden === true
-	};
+	const filter: DisplayFilter = carryPresentation(
+		{ kinds, autoReadHidden: raw.autoReadHidden === true },
+		presentationFields(raw)
+	);
 	if (Array.isArray(raw.hiddenEventTypes)) {
 		filter.hiddenEventTypes = raw.hiddenEventTypes.filter(
 			(type): type is string => typeof type === 'string'
@@ -159,10 +216,13 @@ export const resolveEffective = (
 	if (!override) {
 		return global;
 	}
-	const effective: DisplayFilter = {
-		kinds: override.kinds,
-		autoReadHidden: override.autoReadHidden
-	};
+	const effective: DisplayFilter = carryPresentation(
+		{ kinds: override.kinds, autoReadHidden: override.autoReadHidden },
+		{
+			view: override.view ?? global.view,
+			autoSort: override.autoSort ?? global.autoSort
+		}
+	);
 	if (global.hiddenEventTypes) {
 		effective.hiddenEventTypes = global.hiddenEventTypes;
 	}
@@ -172,10 +232,11 @@ export const resolveEffective = (
 /** The dialog-editable part of a filter (never `hiddenEventTypes`). */
 export const toDisplayFilterValue = (
 	filter: DisplayFilter
-): DisplayFilterValue => ({
-	kinds: filter.kinds,
-	autoReadHidden: filter.autoReadHidden
-});
+): DisplayFilterValue =>
+	carryPresentation(
+		{ kinds: filter.kinds, autoReadHidden: filter.autoReadHidden },
+		filter
+	);
 
 /**
  * Immutable writers. Each returns a new record with `version` pinned to the
@@ -190,7 +251,10 @@ export const withSectionOverride = (
 	...filters,
 	sections: {
 		...filters.sections,
-		[section]: { kinds: value.kinds, autoReadHidden: value.autoReadHidden }
+		[section]: carryPresentation(
+			{ kinds: value.kinds, autoReadHidden: value.autoReadHidden },
+			value
+		)
 	}
 });
 
@@ -208,10 +272,10 @@ export const withGlobalFilter = (
 	section: DisplayFilterSection,
 	filter: DisplayFilter
 ): OrisoDisplayFilters => {
-	const next: DisplayFilter = {
-		kinds: filter.kinds,
-		autoReadHidden: filter.autoReadHidden
-	};
+	const next: DisplayFilter = carryPresentation(
+		{ kinds: filter.kinds, autoReadHidden: filter.autoReadHidden },
+		filter
+	);
 	// Only the timeline carries per-event-type hiding (§7).
 	if (section === 'timeline' && filter.hiddenEventTypes) {
 		next.hiddenEventTypes = filter.hiddenEventTypes;

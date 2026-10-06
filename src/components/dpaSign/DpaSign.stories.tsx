@@ -3,11 +3,45 @@ import * as React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { DpaSign } from './DpaSign';
 
+/**
+ * A real contract spans several chapters. This fixture deliberately exceeds
+ * the DpaSign host scrollport so Storybook can verify the reader's chip row,
+ * overflow arrow, and bounded document scrolling without changing reader logic.
+ */
+const LONG_DE = [
+	[
+		'1. Gegenstand und Dauer',
+		'Gegenstand dieser Vereinbarung ist die Verarbeitung personenbezogener Daten im Auftrag im Rahmen der Nutzung der Online-Beratungsplattform durch den Auftraggeber. Die Vereinbarung gilt für die Dauer der Hauptvereinbarung und endet nicht automatisch mit deren Beendigung, solange noch personenbezogene Daten beim Auftragnehmer vorgehalten werden.'
+	],
+	[
+		'2. Art und Zweck der Verarbeitung',
+		'Die Verarbeitung umfasst insbesondere das Erheben, Speichern, Übermitteln und Löschen von Bestands- und Nutzungsdaten Ratsuchender sowie Fachkräfte, soweit dies zur Bereitstellung der Beratungsplattform erforderlich ist. Eine Verarbeitung zu anderen als den hier genannten Zwecken erfolgt nicht.'
+	],
+	[
+		'3. Pflichten des Auftragnehmers',
+		'Der Auftragnehmer verarbeitet personenbezogene Daten ausschließlich auf dokumentierte Weisung des Auftraggebers, soweit er nicht durch das Recht der Union oder der Mitgliedstaaten hierzu verpflichtet ist. Er stellt sicher, dass zur Verarbeitung befugte Personen zur Vertraulichkeit verpflichtet wurden.'
+	],
+	[
+		'4. Technische und organisatorische Maßnahmen',
+		'Der Auftragnehmer trifft die in Anlage 2 aufgeführten technischen und organisatorischen Maßnahmen, um ein dem Risiko angemessenes Schutzniveau zu gewährleisten. Änderungen an den Maßnahmen, die das vereinbarte Schutzniveau unterschreiten, bedürfen der vorherigen Zustimmung des Auftraggebers.'
+	],
+	[
+		'5. Unterauftragsverhältnisse',
+		'Die Einbeziehung weiterer Auftragsverarbeiter bedarf der vorherigen schriftlichen oder dokumentierten Genehmigung des Auftraggebers. Eine Übersicht der zum Zeitpunkt des Vertragsschlusses eingesetzten Subunternehmer ist dieser Vereinbarung als Anlage 3 beigefügt.'
+	],
+	[
+		'6. Kontrollrechte des Auftraggebers',
+		'Der Auftraggeber ist berechtigt, sich vor Beginn der Datenverarbeitung und danach regelmäßig von der Einhaltung der beim Auftragnehmer getroffenen technischen und organisatorischen Maßnahmen zu überzeugen. Der Auftragnehmer verpflichtet sich, dem Auftraggeber die dafür erforderlichen Auskünfte zu erteilen.'
+	]
+]
+	.map(([heading, body]) => `<h2>${heading}</h2><p>${body}</p>`)
+	.join('');
+
 const PREVIEW = {
 	tenantName: 'Caritasverband Musterstadt e. V.',
 	dpaVersion: '2026-07-20T12:30:00',
 	content: JSON.stringify({
-		de: '<h2>Vertragsunterlagen</h2><p>Platzhalter — der veröffentlichte Vertragstext des Betreibers wird hier unverändert angezeigt.</p><h3>1. Gegenstand</h3><p>Der Auftragnehmer verarbeitet personenbezogene Daten ausschließlich weisungsgebunden.</p>',
+		de: LONG_DE,
 		en: '<h2>Data processing agreement</h2><p>Placeholder — the operator’s published DPA text is rendered here unchanged.</p>'
 	}),
 	expiresAt: '2026-08-03T12:30:00'
