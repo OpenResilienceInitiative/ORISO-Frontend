@@ -429,10 +429,24 @@ export const EndedCall: Story = {
 		await expect(
 			canvas.getByText(/Videoanruf beendet|Video call ended/)
 		).toBeVisible();
-		await expect(canvas.getByText(/Alex Test.*Sam Test/)).toBeVisible();
+		const attendance = within(
+			canvas.getByRole('group', { name: /Teilgenommen|Attended/ })
+		);
+		await expect(
+			attendance.getByRole('img', { name: 'Alex Test' })
+		).toBeVisible();
+		await expect(
+			attendance.getByRole('img', { name: 'Sam Test' })
+		).toBeVisible();
+		await expect(attendance.getAllByRole('img')).toHaveLength(2);
+		await expect(
+			attendance.getByText(/(?:Teilgenommen|Attended) · 2/)
+		).toBeVisible();
 		await expect(canvas.getByText(/02:05/)).toBeVisible();
 		await expect(
-			canvasElement.querySelector('.messageItem__messageWrap')
+			canvasElement.querySelector(
+				'.messageItem__message:not(.messageItem__message--systemNotification)'
+			)
 		).toBeNull();
 	}
 };
