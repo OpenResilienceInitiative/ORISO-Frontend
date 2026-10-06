@@ -54,7 +54,11 @@ import { setTenantSettings } from '../utils/tenantSettingsHelper';
 import { config } from '../resources/scripts/config';
 import { PracticeSandbox, usePracticeSandbox } from './PracticeSandbox';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
-import { PRACTICE_CAST, PRACTICE_SCRIPT } from './fixtures/practiceCast';
+import { PRACTICE_CAST } from './fixtures/practiceCast';
+import {
+	createTestScript,
+	practiceScriptBlock
+} from './script/scriptTestSupport';
 import {
 	isPracticeRoomId,
 	PRACTICE_ENQUIRY_SESSION_ID,
@@ -242,10 +246,14 @@ beforeEach(async () => {
 	appNotifications.addEventNotification.mockClear();
 	vi.stubGlobal('fetch', networkFetch);
 	vi.stubGlobal('indexedDB', { open: indexedDbOpens });
+	// Product keys render as themselves; only the practice script has texts.
 	await translations.init({
 		lng: 'de',
 		fallbackLng: 'de',
-		resources: { de: { translation: {} } },
+		resources: {
+			de: { translation: { practiceScript: practiceScriptBlock('de') } },
+			en: { translation: { practiceScript: practiceScriptBlock('en') } }
+		},
 		interpolation: { escapeValue: false }
 	});
 	localStorage.clear();
@@ -311,7 +319,7 @@ const openThePracticeCase = async (container: HTMLElement) => {
 			const items = listItems(container);
 			expect(items).toHaveLength(1);
 			expect(items[0].textContent).toContain(
-				PRACTICE_CAST.asker.displayName
+				world!.script.cast.asker.displayName
 			);
 			return items[0];
 		},
@@ -383,7 +391,10 @@ const expectNothingLeftThePracticeWorld = () => {
 };
 
 /** F1 up to the scripted answer: open, accept, reply through the composer. */
-const acceptAndReply = async (view: { container: HTMLElement }) => {
+const acceptAndReply = async (
+	view: { container: HTMLElement },
+	reply = 'Hallo Sam, schön, dass du dich meldest.'
+) => {
 	await openThePracticeCase(view.container);
 	const accept = await screen.findByRole(
 		'button',
@@ -391,7 +402,7 @@ const acceptAndReply = async (view: { container: HTMLElement }) => {
 		{ timeout: 15000 }
 	);
 	expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-		PRACTICE_SCRIPT.enquiry
+		world!.script.texts.askerFirstMessage
 	);
 
 	fireEvent.click(accept);
@@ -418,12 +429,11 @@ const acceptAndReply = async (view: { container: HTMLElement }) => {
 	await waitFor(
 		() =>
 			expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-				PRACTICE_SCRIPT.enquiry
+				world!.script.texts.askerFirstMessage
 			),
 		{ timeout: 15000 }
 	);
 
-	const reply = 'Hallo Sam, schön, dass du dich meldest.';
 	await typeAndSend(
 		() => view.container.querySelector('.chatStage__mainPane'),
 		reply
@@ -433,7 +443,7 @@ const acceptAndReply = async (view: { container: HTMLElement }) => {
 		() => {
 			const main = textOf(view.container, '.chatStage__mainPane');
 			expect(main).toContain(reply);
-			expect(main).toContain(PRACTICE_SCRIPT.askerReply);
+			expect(main).toContain(world!.script.texts.askerReply);
 		},
 		{ timeout: 15000 }
 	);
@@ -448,15 +458,43 @@ describe('practice sandbox on the real session containers', () => {
 
 		// The real Erstantwort renderer reads the fake room's system event.
 		expect(textOf(view.container, '.chatStage__mainPane')).toContain(
-			PRACTICE_SCRIPT.erstantwortGreeting
+			world!.script.texts.erstantwortGreeting
 		);
 		const [sent, answer] = bodiesIn(PRACTICE_MAIN_ROOM_ID).slice(-2);
 		expect(sent).toMatch(
 			new RegExp(`^${PRACTICE_COUNSELLOR_MATRIX_USER_ID}: .*${reply}`)
 		);
 		expect(answer).toBe(
-			`${PRACTICE_CAST.asker.matrixUserId}: ${PRACTICE_SCRIPT.askerReply}`
+			`${PRACTICE_CAST.asker.matrixUserId}: ${world!.script.texts.askerReply}`
 		);
+		expectNothingLeftThePracticeWorld();
+	}, 60000);
+
+	it('F1 in English: the page language at the start gives the whole script in English and keeps it', async () => {
+		await translations.changeLanguage('en');
+		const english = createTestScript('en');
+		const view = renderPractice();
+
+		const reply = await acceptAndReply(view, 'Hello Sam, glad you wrote.');
+
+		const main = textOf(view.container, '.chatStage__mainPane');
+		expect(world!.script.locale).toBe('en');
+		expect(main).toContain(english.texts.askerFirstMessage);
+		expect(main).toContain(english.texts.erstantwortGreeting);
+		expect(main).toContain(english.texts.askerReply);
+		expect(main).toContain(reply);
+		expect(world!.rest.getCase().user.displayName).toBe(
+			'Sam Muster (practice)'
+		);
+		expect(bodiesIn(PRACTICE_MAIN_ROOM_ID).join('\n')).not.toContain(
+			createTestScript('de').texts.askerFirstMessage
+		);
+
+		// A language switch in the page does not change a run that has begun.
+		await act(async () => {
+			await translations.changeLanguage('de');
+		});
+		expect(world!.script.locale).toBe('en');
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
 
@@ -493,7 +531,7 @@ describe('practice sandbox on the real session containers', () => {
 		await waitFor(
 			() =>
 				expect(panel()?.textContent).toContain(
-					PRACTICE_SCRIPT.teamColleague
+					world!.script.texts.teamColleagueMessage
 				),
 			{ timeout: 15000 }
 		);
@@ -510,7 +548,7 @@ describe('practice sandbox on the real session containers', () => {
 		);
 		expect(bodiesIn(PRACTICE_MAIN_ROOM_ID).join('\n')).not.toContain(note);
 		expect(textOf(view.container, '.chatStage__mainPane')).not.toContain(
-			PRACTICE_SCRIPT.teamColleague
+			world!.script.texts.teamColleagueMessage
 		);
 		expectNothingLeftThePracticeWorld();
 	}, 60000);
@@ -534,12 +572,12 @@ describe('practice sandbox on the real session containers', () => {
 		fireEvent.mouseDown(picker);
 		fireEvent.click(
 			await screen.findByRole('option', {
-				name: PRACTICE_CAST.supervisor.displayName
+				name: world!.script.cast.supervisor.displayName
 			})
 		);
 		expect(
 			screen.queryByRole('option', {
-				name: PRACTICE_CAST.colleague.displayName
+				name: world!.script.cast.colleague.displayName
 			})
 		).toBeNull();
 		fireEvent.change(
@@ -578,7 +616,7 @@ describe('practice sandbox on the real session containers', () => {
 			).toBe(true)
 		);
 		expect(bodiesIn(PRACTICE_SUPERVISION_ROOM_ID)).toEqual([
-			`${PRACTICE_CAST.supervisor.matrixUserId}: ${PRACTICE_SCRIPT.supervisorReply}`
+			`${PRACTICE_CAST.supervisor.matrixUserId}: ${world!.script.texts.supervisorReply}`
 		]);
 
 		// The real view resolves the side room on open only (finding in
@@ -589,12 +627,12 @@ describe('practice sandbox on the real session containers', () => {
 		await waitFor(
 			() =>
 				expect(textOf(view.container, '.chatStage__panel')).toContain(
-					PRACTICE_SCRIPT.supervisorReply
+					world!.script.texts.supervisorReply
 				),
 			{ timeout: 15000 }
 		);
 		expect(textOf(view.container, '.chatStage__mainPane')).not.toContain(
-			PRACTICE_SCRIPT.supervisorReply
+			world!.script.texts.supervisorReply
 		);
 		expectNothingLeftThePracticeWorld();
 	}, 60000);

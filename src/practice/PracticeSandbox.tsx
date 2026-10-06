@@ -7,6 +7,7 @@ import {
 	useMemo,
 	useState
 } from 'react';
+import { getI18n, I18nContext } from 'react-i18next';
 import type { UserDataInterface } from '../globalState/interfaces';
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
 import { SessionsDataProvider } from '../globalState/provider/SessionsDataProvider';
@@ -19,9 +20,11 @@ import {
 } from '../services/matrixClientRegistry';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
 import {
-	PRACTICE_TOPIC,
+	createPracticeTopic,
 	type PracticeStart
 } from './fixtures/practiceScenario';
+import type { ScriptEngine } from './script/ScriptEngine';
+import { createScriptFromI18n } from './script/createScriptFromI18n';
 
 type Fetch = typeof window.fetch;
 
@@ -167,12 +170,16 @@ export const usePracticeSandbox = (): PracticeSandboxApi => {
 };
 
 const noop = () => undefined;
-const practiceTopics = { topics: [PRACTICE_TOPIC], refreshTopics: noop };
 
 export interface PracticeSandboxProps {
 	/** The real logged-in counsellor; practice fixtures borrow only identity. */
 	counsellor: UserDataInterface;
 	start?: PracticeStart;
+	/**
+	 * The script of this run. Defaults to the one built from the page's i18n
+	 * when practice starts (language follows the counsellor, fixed for the run).
+	 */
+	script?: ScriptEngine;
 	/**
 	 * Where unanswered requests go. Seam for S1's NetworkGuard; defaults to the
 	 * `fetch` found at install time.
@@ -189,12 +196,19 @@ export interface PracticeSandboxProps {
 export const PracticeSandbox = ({
 	counsellor,
 	start = 'enquiry',
+	script: scriptOverride,
 	baseFetch,
 	children
 }: PracticeSandboxProps) => {
+	const i18n = useContext(I18nContext)?.i18n ?? getI18n();
+	// Resolved once: a restart replays the same language, a language switch
+	// during the run does not reach it.
+	const [script] = useState(
+		() => scriptOverride ?? createScriptFromI18n(i18n)
+	);
 	const [run, setRun] = useState(() => ({
 		generation: 0,
-		world: createPracticeWorld({ counsellor, start })
+		world: createPracticeWorld({ counsellor, script, start })
 	}));
 	const { world } = run;
 
@@ -210,9 +224,16 @@ export const PracticeSandbox = ({
 		() =>
 			setRun(({ generation }) => ({
 				generation: generation + 1,
-				world: createPracticeWorld({ counsellor, start })
+				world: createPracticeWorld({ counsellor, script, start })
 			})),
-		[counsellor, start]
+		[counsellor, script, start]
+	);
+	const practiceTopics = useMemo(
+		() => ({
+			topics: [createPracticeTopic(script.names.topic)],
+			refreshTopics: noop
+		}),
+		[script]
 	);
 	const api = useMemo(() => ({ world, restart }), [world, restart]);
 	// Toasts stay; feed entries would outlive practice in the real centre.

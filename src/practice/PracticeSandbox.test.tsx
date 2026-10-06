@@ -23,6 +23,11 @@ import {
 import { TopicsContext } from '../globalState/provider/TopicsProvider';
 import { NotificationsContext } from '../globalState/provider/NotificationsProvider';
 import { FakeMatrixService } from './fakeMatrix/FakeMatrixService';
+import { I18nextProvider } from 'react-i18next';
+import {
+	createPracticeTestI18n,
+	createTestScript
+} from './script/scriptTestSupport';
 import {
 	SessionsDataContext,
 	SET_SESSIONS
@@ -54,7 +59,11 @@ const settle = () =>
 	act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
 const sandbox = (children: React.ReactNode = null) => (
-	<PracticeSandbox counsellor={counsellor} baseFetch={baseFetch as any}>
+	<PracticeSandbox
+		counsellor={counsellor}
+		script={createTestScript()}
+		baseFetch={baseFetch as any}
+	>
 		{children}
 	</PracticeSandbox>
 );
@@ -292,5 +301,73 @@ describe('PracticeSandbox', () => {
 		act(() => restart());
 
 		expect((await window.fetch(new Request(enquiryFeed))).status).toBe(200);
+	});
+
+	describe('script language', () => {
+		const inPageLanguage = (
+			i18n: ReturnType<typeof createPracticeTestI18n>,
+			children: React.ReactNode
+		) => (
+			<I18nextProvider i18n={i18n}>
+				<PracticeSandbox
+					counsellor={counsellor}
+					baseFetch={baseFetch as any}
+				>
+					{children}
+				</PracticeSandbox>
+			</I18nextProvider>
+		);
+
+		it('builds the script from the language the page is in when practice starts', () => {
+			let world: any;
+			let topics: any;
+			const Probe = () => {
+				world = usePracticeSandbox().world;
+				topics = useContext(TopicsContext)?.topics;
+				return null;
+			};
+
+			render(inPageLanguage(createPracticeTestI18n('fr'), <Probe />));
+
+			expect(world.script.locale).toBe('fr');
+			expect(world.rest.getCase().user.displayName).toBe(
+				'Sam Muster (exercice)'
+			);
+			expect(topics.map(({ name }) => name)).toEqual(['Exercice']);
+		});
+
+		it('keeps that language through a switch of the page and through a restart', async () => {
+			const i18n = createPracticeTestI18n('en');
+			let world: any;
+			let restart: () => void = () => undefined;
+			const Probe = () => {
+				({ world, restart } = usePracticeSandbox());
+				return null;
+			};
+			const view = render(inPageLanguage(i18n, <Probe />));
+
+			await act(async () => {
+				await i18n.changeLanguage('tr');
+			});
+			view.rerender(inPageLanguage(i18n, <Probe />));
+			act(() => restart());
+
+			expect(world.script.locale).toBe('en');
+			expect(world.rest.getCase().user.displayName).toBe(
+				'Sam Muster (practice)'
+			);
+		});
+
+		it('refuses to start without a script and without an i18n instance', () => {
+			vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+			expect(() =>
+				render(
+					<PracticeSandbox counsellor={counsellor}>
+						{null}
+					</PracticeSandbox>
+				)
+			).toThrow(/i18n/);
+		});
 	});
 });

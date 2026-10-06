@@ -5,11 +5,7 @@ import {
 	type PracticeCaseState,
 	type PracticeStart
 } from '../fixtures/practiceScenario';
-import {
-	PRACTICE_CAST,
-	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
-	PRACTICE_SCRIPT
-} from '../fixtures/practiceCast';
+import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
 import {
 	isPracticeId,
 	isPracticeRoomId,
@@ -17,6 +13,7 @@ import {
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from '../fixtures/practiceIdentifiers';
+import type { ScriptEngine } from '../script/ScriptEngine';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -27,6 +24,8 @@ export interface FakeRestHooks {
 
 export interface FakeRestBackendOptions {
 	counsellor: UserDataInterface;
+	/** Names and texts of the run; the REST side shows only the cast. */
+	script: ScriptEngine;
 	start?: PracticeStart;
 	now?: () => number;
 	hooks?: FakeRestHooks;
@@ -115,6 +114,7 @@ const parseRequest = (
  */
 export const createFakeRestBackend = ({
 	counsellor,
+	script,
 	start = 'enquiry',
 	now = Date.now,
 	hooks = {}
@@ -127,6 +127,7 @@ export const createFakeRestBackend = ({
 	const reset = () => {
 		practiceCase = createPracticeScenario({
 			counsellor,
+			script,
 			start,
 			now: now()
 		}).practiceCase;
@@ -283,7 +284,7 @@ export const createFakeRestBackend = ({
 				if (!isCase(id)) return null;
 				const body = await request.body();
 				if (
-					body?.supervisorConsultantId !== PRACTICE_CAST.supervisor.id
+					body?.supervisorConsultantId !== script.cast.supervisor.id
 				) {
 					// Only the practice supervisor exists here; nothing else is added.
 					return noContent();
@@ -292,10 +293,10 @@ export const createFakeRestBackend = ({
 					{
 						id: -++supervisorSeq,
 						sessionId: practiceCase.session.id,
-						supervisorConsultantId: PRACTICE_CAST.supervisor.id,
-						supervisorUsername: PRACTICE_CAST.supervisor.username,
+						supervisorConsultantId: script.cast.supervisor.id,
+						supervisorUsername: script.cast.supervisor.username,
 						supervisorMatrixUserId:
-							PRACTICE_CAST.supervisor.matrixUserId,
+							script.cast.supervisor.matrixUserId,
 						addedByConsultantId: counsellor.userId,
 						addedDate: new Date(now()).toISOString(),
 						matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID,
@@ -316,18 +317,17 @@ export const createFakeRestBackend = ({
 			handle: ({ url }) =>
 				Number(url.searchParams.get('agencyId')) === PRACTICE_AGENCY_ID
 					? ok(
-							[
-								PRACTICE_CAST.colleague,
-								PRACTICE_CAST.supervisor
-							].map((person) => ({
-								consultantId: person.id,
-								firstName: person.firstName,
-								lastName: person.lastName,
-								displayName: person.displayName,
-								username: person.username,
-								isSupervisor:
-									person.id === PRACTICE_CAST.supervisor.id
-							}))
+							[script.cast.colleague, script.cast.supervisor].map(
+								(person) => ({
+									consultantId: person.id,
+									firstName: person.firstName,
+									lastName: person.lastName,
+									displayName: person.displayName,
+									username: person.username,
+									isSupervisor:
+										person.id === script.cast.supervisor.id
+								})
+							)
 						)
 					: null
 		},
@@ -338,7 +338,7 @@ export const createFakeRestBackend = ({
 				Number(id) === PRACTICE_AGENCY_ID
 					? ok({
 							id: PRACTICE_AGENCY_ID,
-							name: PRACTICE_SCRIPT.agencyName,
+							name: script.names.agency,
 							postcode: '00000',
 							city: '',
 							description: '',
