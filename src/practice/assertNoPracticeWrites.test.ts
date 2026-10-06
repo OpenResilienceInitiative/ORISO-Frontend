@@ -28,7 +28,7 @@ const progress = (tourId = TOUR_ID): RecordedNetworkRequest => ({
 	})
 });
 
-describe('assertNoPracticeWrites (T2 helper: what the browser really sent)', () => {
+describe('assertNoPracticeWrites (what the browser really sent)', () => {
 	it('passes for no requests and for reads only', () => {
 		expect(() => assertNoPracticeWrites([], config)).not.toThrow();
 		expect(() =>

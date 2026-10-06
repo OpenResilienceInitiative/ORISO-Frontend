@@ -261,7 +261,7 @@ describe('PracticeProvider and usePractice', () => {
 		});
 	});
 
-	describe('T8 part 1: practice state lives in memory only', () => {
+	describe('practice state lives in memory only', () => {
 		const storageSnapshot = (storage: Storage) =>
 			Array.from({ length: storage.length }, (_, i) => {
 				const key = storage.key(i) as string;

@@ -8,7 +8,7 @@ import { runPracticeRestartHandlers } from './practiceRestart';
 import { isPracticeTourId } from './practiceTourIds';
 
 /**
- * The practice mode state, in memory only (spec section 4, claim 2): nothing
+ * The practice mode state, in memory only: nothing
  * here touches localStorage, sessionStorage or IndexedDB, so a reload, a closed
  * tab or a logout simply ends it. Module level on purpose: api layers and
  * other non-React code ask `isPracticeMode()`, and the guard patches globals

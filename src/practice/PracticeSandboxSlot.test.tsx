@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../globalState/context/UserDataContext';
 import { endpoints } from '../resources/scripts/endpoints';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
-import { PRACTICE_ENQUIRY_SESSION_ID } from './fixtures/practiceIdentifiers';
+import { PRACTICE_ENQUIRY_SESSION_ID } from './practiceIds';
 import { usePracticeSandbox } from './PracticeSandbox';
 import { PracticeSandboxSlot } from './PracticeSandboxSlot';
 import { PracticeProvider } from './PracticeProvider';

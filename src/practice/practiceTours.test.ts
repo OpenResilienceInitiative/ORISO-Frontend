@@ -15,7 +15,6 @@ import { practiceAcceptedSessionRoute } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
-	getPracticeTour,
 	isPracticeTourAvailable,
 	practiceAcceptTour,
 	practiceSupervisionTour,
@@ -64,14 +63,6 @@ describe('practiceTours registry', () => {
 			expect(frontendIds).not.toContain(tour.id);
 			expect(frontendTours).not.toContain(tour);
 		});
-	});
-
-	it('finds a tour by id and nothing else', () => {
-		expect(getPracticeTour('consultant-practice-accept')).toBe(
-			practiceAcceptTour
-		);
-		expect(getPracticeTour('consultant-mail-counselling')).toBeUndefined();
-		expect(getPracticeTour(undefined)).toBeUndefined();
 	});
 
 	it.each(practiceTours.map((t) => [t.id, t] as const))(
@@ -309,6 +300,25 @@ describe('practiceSupervisionTour (flow F2)', () => {
 		expect(intro).toMatch(/„\+“/);
 		expect(intro).toMatch(/bestätigen/);
 	});
+
+	// The add dialog refuses to confirm without a reason (reasonError); the
+	// words are those of its reason field in each language.
+	it.each([
+		['de', deTranslations, /Grund/],
+		['de@informal', deInformalTranslations, /Grund/],
+		['en', enTranslations, /reason/],
+		['fr', frTranslations, /motif/],
+		['ru', ruTranslations, /причин/],
+		['ti', tiTranslations, /ምኽንያት/],
+		['tr', trTranslations, /neden/]
+	] as const)(
+		'asks for the short reason the add dialog requires (%s)',
+		(_locale, bundle, reasonWord) => {
+			expect(resolveKey(bundle, first.contentKey) as string).toMatch(
+				reasonWord
+			);
+		}
+	);
 
 	it('keeps the retired picker step out of every locale', () => {
 		bundledLocales.forEach(([locale, bundle]) => {

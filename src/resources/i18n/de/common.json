@@ -5346,7 +5346,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Supervisor:in hinzufügen",
-					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, wählen Sie die Supervisor:in aus und bestätigen Sie die Auswahl."
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, wählen Sie die Supervisor:in aus, nennen Sie kurz den Grund und bestätigen Sie."
 				},
 				"supervisorReply": {
 					"title": "Antwort der Supervision",

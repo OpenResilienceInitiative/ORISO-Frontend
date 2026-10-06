@@ -19,6 +19,7 @@ import {
 import { PracticeProvider } from './PracticeProvider';
 import { practiceTourProgressAtom } from './usePracticeTourProgress';
 import { PracticeBanner } from './PracticeBanner';
+import { PRACTICE_BANNER_RESTING } from './practiceBannerPlacement';
 
 vi.mock('react-i18next', async () => {
 	const { makeTranslate } = await import('./practiceTestTranslate');
@@ -42,7 +43,12 @@ const tours: TourDefinition[] = [
 ];
 
 const VIEWPORT = { width: 1024, height: 768 };
-const BANNER_SIZE = { width: 480, height: 64 };
+const BANNER_SIZE = { width: PRACTICE_BANNER_RESTING.width, height: 96 };
+/** Where it rests in VIEWPORT before anyone moves it. */
+const RESTING = {
+	left: PRACTICE_BANNER_RESTING.left,
+	top: VIEWPORT.height - PRACTICE_BANNER_RESTING.bottom - BANNER_SIZE.height
+};
 
 const bannerEl = () => screen.getByTestId('practice-banner');
 const handle = () => screen.getByRole('button', { name: /verschieben/i });
@@ -79,14 +85,16 @@ beforeEach(() => {
 	vi.stubGlobal('PointerEvent', TestPointerEvent);
 	window.innerWidth = VIEWPORT.width;
 	window.innerHeight = VIEWPORT.height;
-	// jsdom lays nothing out: the banner sits centred at the top until it is
-	// moved, then wherever `left`/`top` put it.
+	// jsdom lays nothing out: the box follows `left` and `top`, or `bottom`
+	// while the banner rests.
 	vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
 		function (this: HTMLElement) {
-			const left = this.style.left.endsWith('px')
-				? parseFloat(this.style.left)
-				: (VIEWPORT.width - BANNER_SIZE.width) / 2;
-			const top = this.style.top ? parseFloat(this.style.top) : 16;
+			const left = parseFloat(this.style.left) || 0;
+			const top = this.style.top
+				? parseFloat(this.style.top)
+				: window.innerHeight -
+					parseFloat(this.style.bottom || '0') -
+					BANNER_SIZE.height;
 			return {
 				left,
 				top,
@@ -177,6 +185,15 @@ describe('PracticeBanner', () => {
 			screen.queryByRole('button', { name: /schließen|close/i })
 		).toBeNull();
 		expect(screen.getByTestId('practice-banner')).toBeTruthy();
+	});
+
+	it('rests at the bottom of the list column, left-aligned with its cards', () => {
+		renderBanner();
+
+		expect(bannerEl().getBoundingClientRect()).toMatchObject({
+			left: 97,
+			bottom: VIEWPORT.height - 16
+		});
 	});
 
 	it('sits above the tour overlay (53) and below modals (1300)', () => {
@@ -276,19 +293,18 @@ describe('PracticeBanner', () => {
 
 		it('follows the pointer when the handle is dragged', () => {
 			renderBanner();
-			const start = { left: 272, top: 16 };
 
-			drag([300, 40], [350, 140]);
+			drag([120, 700], [170, 600]);
 
 			expect(pos()).toEqual({
-				left: start.left + 50,
-				top: start.top + 100
+				left: RESTING.left + 50,
+				top: RESTING.top - 100
 			});
 		});
 
 		it('stops following once the pointer is released', () => {
 			renderBanner();
-			drag([300, 40], [350, 140]);
+			drag([120, 700], [170, 600]);
 			const after = pos();
 
 			fireEvent.pointerMove(handle(), {
@@ -317,21 +333,30 @@ describe('PracticeBanner', () => {
 			renderBanner();
 			handle().focus();
 
-			fireEvent.keyDown(handle(), { key: 'ArrowDown' });
-			expect(pos()).toEqual({ left: 272, top: 32 });
+			fireEvent.keyDown(handle(), { key: 'ArrowUp' });
+			expect(pos()).toEqual({
+				left: RESTING.left,
+				top: RESTING.top - 16
+			});
 
 			fireEvent.keyDown(handle(), { key: 'ArrowRight' });
-			expect(pos()).toEqual({ left: 288, top: 32 });
+			expect(pos()).toEqual({
+				left: RESTING.left + 16,
+				top: RESTING.top - 16
+			});
 
 			fireEvent.keyDown(handle(), { key: 'ArrowRight', shiftKey: true });
-			expect(pos()).toEqual({ left: 352, top: 32 });
+			expect(pos()).toEqual({
+				left: RESTING.left + 80,
+				top: RESTING.top - 16
+			});
 		});
 
 		it('does not let the arrow keys push it out of the viewport', () => {
 			renderBanner();
 
-			fireEvent.keyDown(handle(), { key: 'ArrowUp' });
-			fireEvent.keyDown(handle(), { key: 'ArrowUp' });
+			fireEvent.keyDown(handle(), { key: 'ArrowDown' });
+			fireEvent.keyDown(handle(), { key: 'ArrowDown' });
 			for (let press = 0; press < 5; press += 1) {
 				fireEvent.keyDown(handle(), {
 					key: 'ArrowLeft',
@@ -339,18 +364,21 @@ describe('PracticeBanner', () => {
 				});
 			}
 
-			expect(pos()).toEqual({ left: 8, top: 8 });
+			expect(pos()).toEqual({
+				left: 8,
+				top: VIEWPORT.height - 8 - BANNER_SIZE.height
+			});
 		});
 
 		it('pulls it back into view when the window shrinks', () => {
 			renderBanner();
-			for (let press = 0; press < 4; press += 1) {
+			for (let press = 0; press < 8; press += 1) {
 				fireEvent.keyDown(handle(), {
 					key: 'ArrowRight',
 					shiftKey: true
 				});
 			}
-			expect(pos().left).toBe(528);
+			expect(pos().left).toBe(RESTING.left + 8 * 64);
 
 			window.innerWidth = 700;
 			act(() => {
@@ -366,7 +394,8 @@ describe('PracticeBanner', () => {
 			fireEvent.keyDown(handle(), { key: 'a' });
 			fireEvent.keyDown(handle(), { key: 'Enter' });
 
-			expect(bannerEl().style.left).toBe('50%');
+			expect(bannerEl().style.top).toBe('');
+			expect(bannerEl().getBoundingClientRect()).toMatchObject(RESTING);
 		});
 	});
 });

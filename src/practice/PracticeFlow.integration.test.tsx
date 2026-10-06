@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * I1 proof: the REAL practice tours walk through the REAL app shell pieces
+ * The REAL practice tours walk through the REAL app shell pieces
  * (tour host, banner, navigation bar, practice surface + sandbox, session
  * containers) exactly as `Routing` wires them. Only Joyride's overlay is
  * captured (as in `ProductTourAdapter.component.test.tsx`) and browser gaps
@@ -56,7 +56,7 @@ import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
 import { PracticeOverviewSection } from './PracticeOverviewSection';
-import { getPracticeTour, practiceTours } from './practiceTours';
+import { practiceTours } from './practiceTours';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import { getPracticeNetworkGuard, getPracticeSnapshot } from './practiceMode';
 import {
@@ -305,7 +305,9 @@ const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
 	);
 	/** Starts a flow from its real card on the Help page. */
 	const start = async (tourId: string) => {
-		const title = getPracticeTour(tourId)!.titleKey;
+		const title = practiceTours.find(
+			(tour) => tour.id === tourId
+		)!.titleKey;
 		const card = (
 			await screen.findByRole('heading', { name: title }, SLOW)
 		).closest('li')!;

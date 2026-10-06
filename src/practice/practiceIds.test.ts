@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
 	isPracticeId,
+	isPracticeRoomId,
+	PRACTICE_AGENCY_ID,
+	PRACTICE_ENQUIRY_SESSION_ID,
 	PRACTICE_ID_PREFIX,
+	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_MATRIX_SERVER,
 	practiceMatrixId,
 	practiceNumericId,
-	practiceStringId
+	practiceStringId,
+	PRACTICE_SUPERVISION_ROOM_ID,
+	PRACTICE_TEAM_ROOM_ID,
+	PRACTICE_TOPIC_ID,
+	practiceUserId
 } from './practiceIds';
 
-describe('practice ids (T8 part 2: no practice id can be a real id)', () => {
+describe('practice ids: no practice id can be a real id', () => {
 	describe('numeric ids', () => {
 		it('are negative, so they never equal a database id (>= 0, sequential)', () => {
 			for (let n = 1; n <= 1000; n++) {
@@ -28,6 +36,13 @@ describe('practice ids (T8 part 2: no practice id can be a real id)', () => {
 
 		it.each([0, 1, 42, 9_007_199_254_740_991, -0])(
 			'recognise %s as a real id, not a practice id',
+			(id) => {
+				expect(isPracticeId(id)).toBe(false);
+			}
+		);
+
+		it.each(['-1.0', '-01', '-0', '- 1', '-1e3', ' -1', '-1 '])(
+			'accept only the canonical form, not %j',
 			(id) => {
 				expect(isPracticeId(id)).toBe(false);
 			}
@@ -102,5 +117,44 @@ describe('practice ids (T8 part 2: no practice id can be a real id)', () => {
 				expect(() => practiceStringId(local, 1)).toThrow();
 			}
 		);
+	});
+
+	describe('the ids of the practice world', () => {
+		it('are practice ids, and the case rooms are practice rooms', () => {
+			[
+				PRACTICE_AGENCY_ID,
+				PRACTICE_TOPIC_ID,
+				PRACTICE_ENQUIRY_SESSION_ID,
+				PRACTICE_MAIN_ROOM_ID,
+				PRACTICE_TEAM_ROOM_ID,
+				PRACTICE_SUPERVISION_ROOM_ID,
+				practiceUserId('asker')
+			].forEach((id) => expect(isPracticeId(id)).toBe(true));
+			expect(
+				[
+					PRACTICE_MAIN_ROOM_ID,
+					PRACTICE_TEAM_ROOM_ID,
+					PRACTICE_SUPERVISION_ROOM_ID
+				].every(isPracticeRoomId)
+			).toBe(true);
+		});
+
+		it('keep the values the routes and tours address', () => {
+			expect(PRACTICE_ENQUIRY_SESSION_ID).toBe(-1);
+			expect(PRACTICE_MAIN_ROOM_ID).toBe('!practice-1:practice.invalid');
+			expect(practiceUserId('asker')).toBe(
+				'@practice-asker:practice.invalid'
+			);
+		});
+
+		it.each([
+			'@practice-asker:practice.invalid',
+			'!practice-1:oriso.org',
+			'!room:practice.invalid',
+			'!practice-1:practice.invalid.example.org',
+			-1
+		])('do not take %j for a practice room', (id) => {
+			expect(isPracticeRoomId(id)).toBe(false);
+		});
 	});
 });

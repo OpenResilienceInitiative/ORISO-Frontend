@@ -6,10 +6,10 @@ import {
 import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID
-} from '../fixtures/practiceIdentifiers';
+} from '../practiceIds';
 
 /**
- * The script texts are versioned with the practice tour version (spec 6): a
+ * The script texts are versioned with the practice tour version: a
  * script change bumps both. A test pins the two together.
  */
 export const PRACTICE_SCRIPT_VERSION = 1;
@@ -67,7 +67,7 @@ const person = (
 };
 
 /**
- * Maps counsellor actions to scripted reactions (spec 3.6, 5). Pure: it reads
+ * Maps counsellor actions to scripted reactions. Pure: it reads
  * the texts once, in the one locale chosen when practice started, and then
  * only looks them up. No timers, no randomness, no AI, and the typed text
  * never reaches it, so every run says the same thing.

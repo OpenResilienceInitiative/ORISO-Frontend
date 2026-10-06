@@ -2,6 +2,10 @@ import type {
 	TopicsDataInterface,
 	UserDataInterface
 } from '../../globalState/interfaces';
+import {
+	STATUS_ACTIVE,
+	STATUS_ENQUIRY
+} from '../../globalState/interfaces/SessionsDataInterface';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../../components/message/messageConstants';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,
@@ -15,12 +19,13 @@ import {
 	PRACTICE_TEAM_ROOM_ID,
 	PRACTICE_TOPIC_ID,
 	practiceUserId
-} from './practiceIdentifiers';
+} from '../practiceIds';
 import {
 	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
 	type PracticePerson
 } from './practiceCast';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 
 /** F1 starts with an open enquiry, F2 with an already accepted case. */
 export type PracticeStart = 'enquiry' | 'acceptedCase';
@@ -59,18 +64,13 @@ export interface PracticeRoomSeed {
 	messages: PracticeMessageSeed[];
 }
 
-export interface PracticeTeamDiscussion {
-	matrixRoomId: string;
-	status: 'OPEN' | 'ARCHIVED';
-}
-
 /** The REST-side truth of the one practice case. */
 export interface PracticeCaseState {
 	session: UserService.Schemas.SessionDTO;
 	user: UserService.Schemas.SessionUserDTO;
 	consultant?: UserService.Schemas.SessionConsultantForConsultantDTO;
 	latestMessage: number;
-	teamDiscussion: PracticeTeamDiscussion | null;
+	teamDiscussion: TeamDiscussion | null;
 	supervisors: UserService.Schemas.SessionSupervisorResponseDTO[];
 }
 
@@ -174,7 +174,7 @@ export const createPracticeScenario = ({
 				id: PRACTICE_ENQUIRY_SESSION_ID,
 				agencyId: PRACTICE_AGENCY_ID,
 				consultingType: counsellor.agencies?.[0]?.consultingType ?? 0,
-				status: accepted ? 2 : 1,
+				status: accepted ? STATUS_ACTIVE : STATUS_ENQUIRY,
 				conversationType: 'AGENCY_COUNSELLING',
 				postcode: '00000',
 				language: 'de',

@@ -9,7 +9,7 @@ import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
-} from '../fixtures/practiceIdentifiers';
+} from '../practiceIds';
 import { createTestScript } from '../script/scriptTestSupport';
 
 const ID = PRACTICE_ENQUIRY_SESSION_ID;
@@ -75,6 +75,25 @@ describe('FakeRestBackend', () => {
 		}
 		expect(backend.served).toHaveLength(0);
 	});
+
+	it.each(['-01', '-1.0', '-0'])(
+		'does not take the non-canonical id %j for the practice case',
+		async (id) => {
+			const backend = backendFor();
+
+			expect(
+				await backend.handle(
+					new Request(`${endpoints.sessionRooms}/${id}`)
+				)
+			).toBeNull();
+			expect(
+				await backend.handle(
+					send(`${endpoints.sessionBase}/new/${id}`, 'PUT')
+				)
+			).toBeNull();
+			expect(backend.getCase().session.status).toBe(1);
+		}
+	);
 
 	it('accepts the enquiry in memory: the case moves from the enquiry feed to the counsellor sessions', async () => {
 		const onEnquiryAccepted = vi.fn();
@@ -201,6 +220,18 @@ describe('FakeRestBackend', () => {
 				)
 			)
 		).toMatchObject({ text: 'Entwurf' });
+		// The drafts list and the timeline read `items` (IUserDraftFeedResponse).
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${endpoints.userDrafts}?page=0&perPage=200`)
+				)
+			)
+		).toMatchObject({
+			items: [expect.objectContaining({ text: 'Entwurf' })],
+			page: 0,
+			perPage: 200
+		});
 		expect(
 			(
 				await backend.handle(

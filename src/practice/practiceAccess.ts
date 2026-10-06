@@ -4,7 +4,7 @@ import type { UserDataInterface } from '../globalState/interfaces/UserDataInterf
 import { isPracticeAreaEnabled } from './releaseFlag';
 
 /**
- * Who may see and start the practice flows (spec 3.1): counsellors only, while
+ * Who may see and start the practice flows: counsellors only, while
  * the platform master switch `enableWalkthrough` is on and the release flag is
  * on. The personal tutorial switch is deliberately not part of it: a manual
  * start works with that switch off. One rule for the cards and the tour host.
@@ -17,4 +17,5 @@ export const canUsePractice = (
 ): boolean =>
 	!!settings?.enableWalkthrough &&
 	isPracticeAreaEnabled(settings) &&
-	!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData as never);
+	!!userData &&
+	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);

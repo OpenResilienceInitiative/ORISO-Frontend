@@ -5271,7 +5271,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Add a supervisor",
-					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor and confirm your choice."
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor, give a short reason and confirm."
 				},
 				"supervisorReply": {
 					"title": "The supervisor’s reply",

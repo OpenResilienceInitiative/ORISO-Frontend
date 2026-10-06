@@ -81,6 +81,7 @@ import {
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
@@ -648,14 +649,9 @@ export const MessageSubmitInterfaceComponent = ({
 		counsellors: true,
 		moderators: true
 	});
-	const audienceSelectionStorageKey = useMemo(() => {
-		const sessionId = activeSession?.item?.id;
-		// Practice cases (FE#1622) have negative ids and never persist.
-		if (!sessionId || sessionId < 0) {
-			return '';
-		}
-		return `oriso.audienceSelection.${sessionId}`;
-	}, [activeSession?.item?.id]);
+	const audienceSelectionStorageKey = audienceSelectionStorageKeyFor(
+		activeSession?.item?.id
+	);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {

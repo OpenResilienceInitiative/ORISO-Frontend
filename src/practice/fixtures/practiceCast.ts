@@ -1,4 +1,4 @@
-import { practiceUserId } from './practiceIdentifiers';
+import { practiceUserId } from '../practiceIds';
 
 export type PracticePersonKey = 'asker' | 'colleague' | 'supervisor';
 
@@ -19,7 +19,7 @@ export interface PracticePerson extends PracticePersonIdentity {
 }
 
 /**
- * Fictional cast (spec 3.6). The counsellor is the real logged-in user. Display
+ * Fictional cast. The counsellor is the real logged-in user. Display
  * names carry the localised "(Übung)" suffix and therefore come from the
  * ScriptEngine (`script.cast`), not from here.
  */

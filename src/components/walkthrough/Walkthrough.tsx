@@ -53,7 +53,7 @@ export const Walkthrough = () => {
 
 	const tenantSettings = useTenant()?.settings;
 	// A practice tour is hosted only by deliberate request, and only where
-	// the practice area is open to this counsellor (spec 3.1); the auto-run
+	// the practice area is open to this counsellor; the auto-run
 	// below stays hard-wired to the intro tour.
 	const requestedTour = launchRequest
 		? (frontendTours.find((tour) => tour.id === launchRequest.tourId) ??

@@ -21,6 +21,8 @@ import {
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
 import { holdPracticeExit } from './practiceMode';
 import { isPracticeId } from './practiceIds';
+import { PracticeBlockedRequestError } from './networkGuard';
+import { isSafeMethod, redactUrl } from './requestPolicy';
 import {
 	createPracticeTopic,
 	type PracticeStart
@@ -102,6 +104,32 @@ const addressesPractice = (input: RequestInfo | URL): boolean => {
 	);
 };
 
+/**
+ * Practice ids are the fake's, even the ones it does not know. A non-2xx
+ * answer would send `fetchData` to the error page, so a read finds nothing
+ * (204) and a write fails like every other write while practising.
+ */
+const unknownToTheFake = (
+	input: RequestInfo | URL,
+	init?: RequestInit
+): Promise<Response> => {
+	const method = (
+		init?.method || (input instanceof Request ? input.method : 'GET')
+	).toUpperCase();
+	if (isSafeMethod(method)) {
+		return Promise.resolve(new Response(null, { status: 204 }));
+	}
+	const href = input instanceof Request ? input.url : String(input);
+	return Promise.reject(
+		new PracticeBlockedRequestError({
+			method,
+			url: redactUrl(href),
+			channel: 'fetch',
+			reason: 'default-deny'
+		})
+	);
+};
+
 const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 	if (installation) {
 		if (installation.world !== world) {
@@ -137,9 +165,8 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 			}
 		}
 		if (response) return response;
-		// Practice ids are the fake's, even the ones it does not know.
 		return addressesPractice(input)
-			? new Response(null, { status: 404 })
+			? unknownToTheFake(input, init)
 			: current.baseFetch(input as RequestInfo, init);
 	};
 	installation = {
@@ -226,8 +253,8 @@ export interface PracticeSandboxProps {
 	 */
 	script?: ScriptEngine;
 	/**
-	 * Where unanswered requests go. Seam for S1's NetworkGuard; defaults to the
-	 * `fetch` found at install time.
+	 * Where requests the fake does not answer go. Defaults to the `fetch`
+	 * found at install time, which is the network guard's while practice runs.
 	 */
 	baseFetch?: Fetch;
 	children: React.ReactNode;

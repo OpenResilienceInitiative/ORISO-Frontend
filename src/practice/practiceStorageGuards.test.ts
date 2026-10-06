@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { readLastChannel, writeLastChannel } from '../utils/channelRoute';
-import { PRACTICE_ENQUIRY_SESSION_ID } from './fixtures/practiceIdentifiers';
+import { PRACTICE_ENQUIRY_SESSION_ID } from './practiceIds';
 
 const memoryStorage = () => {
 	const values = new Map<string, string>();

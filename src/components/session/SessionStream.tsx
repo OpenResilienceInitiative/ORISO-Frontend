@@ -69,8 +69,17 @@ import { NotificationsContext } from '../../globalState/provider/NotificationsPr
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
+import { isPracticeRoomId } from '../../practice/practiceIds';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
+
+// Practice rooms (FE#1622) have no keys to fetch; parked in the real
+// key-transfer singleton they would be retried on the real client.
+const requestHistoryKeys = (roomId: string) => {
+	if (!isPracticeRoomId(roomId)) {
+		void matrixRoomHistoryKeyTransfer.requestKeys(roomId);
+	}
+};
 
 const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
 	if (!actionPath?.includes('?')) {
@@ -492,9 +501,7 @@ export const SessionStream = ({
 							roomId &&
 							(events as any[]).some(isUndecryptedRoomEvent)
 						) {
-							void matrixRoomHistoryKeyTransfer.requestKeys(
-								roomId as string
-							);
+							requestHistoryKeys(roomId as string);
 						}
 					});
 				}
@@ -782,10 +789,7 @@ export const SessionStream = ({
 				// time React sees it. Request this room's existing keys once per
 				// client generation instead of depending on a particular failure
 				// event shape.
-				watchedRoomIds.forEach(
-					(roomId) =>
-						void matrixRoomHistoryKeyTransfer.requestKeys(roomId)
-				);
+				watchedRoomIds.forEach(requestHistoryKeys);
 				refreshMessages();
 			}
 			return true;

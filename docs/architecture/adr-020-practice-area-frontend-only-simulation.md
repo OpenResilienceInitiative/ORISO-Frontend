@@ -54,7 +54,7 @@ browser tab:
   a release toggle (`releaseToggles.enablePracticeArea`, default off) plus the
   existing platform master switch `enableWalkthrough`.
 
-The decision was gated by a spike. Verdict (S0, 2026-10-06): the real
+The decision was gated by a spike. Verdict (2026-10-06): the real
 `SessionsList`, `SessionStream`, `SessionItemComponent`, `AcceptAssign` and
 supervisor flow run unmodified on the fixtures with the real Matrix client
 still registered in the page; see `src/practice/SPIKE-REPORT.md`.
@@ -66,15 +66,22 @@ still registered in the page; see `src/practice/SPIKE-REPORT.md`.
   backend touch is configuration: both tour ids must be on the UserService
   allowlist `tutorial.tours.frontend`.
 - Fidelity is "real components on fake data". When a backend contract changes,
-  the fake can drift; the fake REST responses are typed against the generated
-  DTOs and a test fails on type drift.
+  the fake can drift. The fake REST answers are typed against the generated
+  DTOs (`satisfies`), so the type check fails on drift, and its routes are
+  built from the app's `endpoints`.
 - The guard is a JavaScript guard. It cannot cover form or link navigations, a
   `fetch` reference taken before installation, a replaced `window.fetch`, other
-  windows, or WebSocket frames. The Playwright proof (T2) asserts the claim from
-  the outside, and the app does not contain such code today.
+  windows, or WebSocket frames; the app does not contain such code today. The
+  no-write claim is proven by the jsdom integration tests
+  (`PracticeSandbox.integration.test.tsx`, `PracticeFlow.integration.test.tsx`)
+  and the Chromium story `Organisms/PracticeFlow`, which record every request.
+  A Playwright run against Dev (`playwright/practice-network-guard.smoke.spec.ts`)
+  checks it from outside the page; it is runnable but has not been run yet. No
+  test that has run asserts on WebSocket frames.
 - A few real components carry small, tested practice guards (composer upload and
-  voice, session menu calls, storage keys for negative ids, supervisor
-  side-room refresh). They are no-ops outside practice mode.
+  voice, session menu calls, storage keys for negative ids, history-key
+  requests for practice rooms, supervisor side-room refresh). They are no-ops
+  outside practice mode.
 - Option B stays rejected. It is only reconsidered after a new decision, for
   example if a flow needs real Matrix rooms (calls, attachments, end-to-end
   encrypted history).

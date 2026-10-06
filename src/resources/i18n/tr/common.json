@@ -5354,7 +5354,7 @@
 			"step": {
 				"addSupervisor": {
 					"title": "Süpervizör ekleyin",
-					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. “+” işaretine tıklayın, süpervizörü seçin ve seçiminizi onaylayın."
+					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. “+” işaretine tıklayın, süpervizörü seçin, nedenini kısaca yazın ve onaylayın."
 				},
 				"supervisorReply": {
 					"title": "Süpervizörün yanıtı",

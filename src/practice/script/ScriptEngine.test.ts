@@ -4,7 +4,7 @@ import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
-} from '../fixtures/practiceIdentifiers';
+} from '../practiceIds';
 import { practiceAcceptTour, practiceSupervisionTour } from '../practiceTours';
 import {
 	createScriptEngine,
@@ -36,7 +36,7 @@ const firstReply: ScriptAction = {
 };
 const supervisorAdded: ScriptAction = { type: 'supervisor-added' };
 
-describe('ScriptEngine (T3)', () => {
+describe('ScriptEngine', () => {
 	it('maps the counsellor first reply in the case room to the scripted asker answer', () => {
 		const script = createTestScript('de');
 
@@ -183,7 +183,7 @@ describe('ScriptEngine (T3)', () => {
 		expect(createTestScript('de').scriptVersion).toBe(
 			PRACTICE_SCRIPT_VERSION
 		);
-		// A script change bumps the tour version (spec 6): move both together.
+		// A script change bumps the tour version: move both together.
 		expect(practiceAcceptTour.version).toBe(PRACTICE_SCRIPT_VERSION);
 		expect(practiceSupervisionTour.version).toBe(PRACTICE_SCRIPT_VERSION);
 	});

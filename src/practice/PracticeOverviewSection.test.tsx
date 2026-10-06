@@ -93,7 +93,7 @@ afterEach(() => {
 	vi.clearAllMocks();
 });
 
-describe('PracticeOverviewSection (T10)', () => {
+describe('PracticeOverviewSection', () => {
 	it('starts a flow by hand with the personal tutorial switch off', async () => {
 		const { store } = renderSection({ ownSwitch: false });
 

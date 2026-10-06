@@ -8,6 +8,7 @@ import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeProvider } from '../../practice/PracticeProvider';
 import { isPracticeMode } from '../../practice/practiceMode';
+import { PRACTICE_BANNER_RESTING } from '../../practice/practiceBannerPlacement';
 import { InPracticeMode } from './practiceStoryHelpers';
 import { practiceTourProgressAtom } from '../../practice/usePracticeTourProgress';
 
@@ -67,7 +68,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Persistent note that practice mode is on (#1622). It names the flow, shows "Step i of N", says it is a practice case without real data, and offers **End practice** and **Restart**. It cannot be dismissed. Drag the handle, or focus it and use the arrow keys (Shift: larger steps); it stays inside the window. It sits above the tour overlay and below dialogs. Desktop only: practice cannot be started on a phone.'
+					'Persistent note that practice mode is on (#1622). It names the flow, shows "Step i of N", says it is a practice case without real data, and offers **End practice** and **Restart**. It cannot be dismissed. It rests at the bottom of the list column, clear of every tour step. Drag the handle, or focus it and use the arrow keys (Shift: larger steps); it stays inside the window. It sits above the tour overlay and below dialogs. Desktop only: practice cannot be started on a phone.'
 			}
 		}
 	},
@@ -98,6 +99,14 @@ export const Desktop: Story = {
 		// Nothing to dismiss it with.
 		await userEvent.keyboard('{Escape}');
 		await expect(banner).toBeVisible();
+		// At rest at the bottom of the list column, clear of every tour step
+		// (src/practice/practiceBannerPlacement.test.ts).
+		const box = banner.getBoundingClientRect();
+		await expect(Math.round(box.left)).toBe(PRACTICE_BANNER_RESTING.left);
+		await expect(Math.round(box.width)).toBe(PRACTICE_BANNER_RESTING.width);
+		await expect(Math.round(window.innerHeight - box.bottom)).toBe(
+			PRACTICE_BANNER_RESTING.bottom
+		);
 	}
 };
 
@@ -112,10 +121,10 @@ export const MovedWithKeyboard: Story = {
 		await expect(handle).toHaveFocus();
 
 		const before = banner.getBoundingClientRect();
-		await userEvent.keyboard('{Shift>}{ArrowDown}{/Shift}');
+		await userEvent.keyboard('{Shift>}{ArrowUp}{/Shift}');
 		const after = banner.getBoundingClientRect();
 
-		await expect(Math.round(after.top - before.top)).toBe(64);
+		await expect(Math.round(before.top - after.top)).toBe(64);
 		await expect(Math.round(after.left)).toBe(Math.round(before.left));
 		// Never out of the window, however far it is pushed.
 		await userEvent.keyboard(

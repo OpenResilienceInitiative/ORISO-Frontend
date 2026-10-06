@@ -1,12 +1,16 @@
+/** Flow F1: accept an enquiry and answer it. */
+export const PRACTICE_ACCEPT_TOUR_ID = 'consultant-practice-accept';
+/** Flow F2: add a supervisor to an accepted case. */
+export const PRACTICE_SUPERVISION_TOUR_ID = 'consultant-practice-supervision';
+
 /**
- * Tour ids of the practice flows (spec section 6). They are the only ids the
- * network guard may ever allow a progress write for, and they must also be on
- * the UserService allowlist `tutorial.tours.frontend` in every environment.
- * Adding one here is a spec change.
+ * The only tour ids the network guard may ever allow a progress write for.
+ * Each must also be on the UserService allowlist `tutorial.tours.frontend` in
+ * every environment, so adding one is a product decision, not a code change.
  */
 export const PRACTICE_TOUR_IDS = [
-	'consultant-practice-accept',
-	'consultant-practice-supervision'
+	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_SUPERVISION_TOUR_ID
 ] as const;
 
 export type PracticeTourId = (typeof PRACTICE_TOUR_IDS)[number];

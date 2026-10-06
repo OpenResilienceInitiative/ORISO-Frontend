@@ -10,7 +10,7 @@ import {
 	type PracticeScriptLocale
 } from './scriptTestSupport';
 
-/** T9 for the script: every locale carries exactly the keys the engine reads. */
+/** Every locale carries exactly the script keys the engine reads. */
 const engineKeys = extractStaticTranslationKeys(
 	readFileSync(new URL('./ScriptEngine.ts', import.meta.url), 'utf8')
 ).filter((key) => key.startsWith('practiceScript.'));
@@ -28,7 +28,7 @@ const valuesOf = (locale: PracticeScriptLocale) =>
 		])
 	) as Record<string, string>;
 
-describe('practiceScript catalogue (T9)', () => {
+describe('practiceScript catalogue', () => {
 	it('is read through 13 literal keys', () => {
 		expect(engineKeys).toHaveLength(13);
 	});

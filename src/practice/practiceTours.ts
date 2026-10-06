@@ -6,15 +6,17 @@ import {
 	PRACTICE_ENQUIRIES_ROUTE
 } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
-import { PRACTICE_TOUR_IDS } from './practiceTourIds';
+import {
+	PRACTICE_ACCEPT_TOUR_ID,
+	PRACTICE_SUPERVISION_TOUR_ID
+} from './practiceTourIds';
 
-/**
- * The two practice flows (spec sections 3.3 and 3.4). A registry of their own:
- * `frontendTours` feeds the normal Help list and the auto-run, and a practice
- * tour must start only from its own card. Both are `dismissible: false`, so
- * ESC or an overlay click can never mark the exercise skipped.
+/*
+ * The two practice flows, a registry of their own: `frontendTours` feeds the
+ * normal Help list and the auto-run, and a practice tour must start only from
+ * its own card. Both are `dismissible: false`, so ESC or an overlay click can
+ * never mark the exercise skipped.
  */
-const [ACCEPT_TOUR_ID, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
 
 const TEAM_DISCUSSION_ON = { flag: 'featureTeamDiscussionEnabled' };
 const SUPERVISION_ON = { flag: 'featureSupervisionEnabled' };
@@ -25,7 +27,7 @@ const SUPERVISION_ON = { flag: 'featureSupervisionEnabled' };
  * or 6 steps.
  */
 export const practiceAcceptTour: TourDefinition = {
-	id: ACCEPT_TOUR_ID,
+	id: PRACTICE_ACCEPT_TOUR_ID,
 	version: 1,
 	surface: 'frontend',
 	audiences: ['consultant'],
@@ -118,7 +120,7 @@ export const practiceAcceptTour: TourDefinition = {
  * the engine agree (no steps).
  */
 export const practiceSupervisionTour: TourDefinition = {
-	id: SUPERVISION_TOUR_ID,
+	id: PRACTICE_SUPERVISION_TOUR_ID,
 	version: 1,
 	surface: 'frontend',
 	audiences: ['consultant'],
@@ -130,7 +132,7 @@ export const practiceSupervisionTour: TourDefinition = {
 		{
 			// One step for the whole add. The real picker is a modal above the
 			// tooltip (z-index 9999 vs 53), so a second step could not be seen:
-			// the intro names click, choose and confirm, and the confirm advances.
+			// the intro names click, choose, reason and confirm; the confirm advances.
 			id: 'add-supervisor',
 			route: practiceAcceptedSessionRoute(),
 			target: 'session-supervisor-add',
@@ -172,11 +174,6 @@ export const practiceTours: TourDefinition[] = [
 	practiceAcceptTour,
 	practiceSupervisionTour
 ];
-
-export const getPracticeTour = (
-	tourId: string | undefined
-): TourDefinition | undefined =>
-	practiceTours.find((tour) => tour.id === tourId);
 
 /**
  * Whether a practice card is offered at all, from the tenant's flags (unset
