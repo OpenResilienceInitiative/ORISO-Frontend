@@ -344,8 +344,7 @@ export const createFakeRestBackend = ({
 							description: '',
 							teamAgency: true,
 							offline: false,
-							consultingType: practiceCase.session.consultingType,
-							external: false
+							consultingType: practiceCase.session.consultingType
 						} satisfies AgencyService.Schemas.AgencyResponseDTO)
 					: null
 		},
