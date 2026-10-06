@@ -2373,6 +2373,55 @@
 					"intro": "Abgeschlossene Beratungen verschiebst du wie bisher ins Archiv — es liegt jetzt in diesem Tab."
 				}
 			}
+		},
+		"practiceAccept": {
+			"summary": "Übe im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"navEnquiries": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen findest du hier unter „Anfragen“."
+				},
+				"openEnquiry": {
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
+				},
+				"openTeam": {
+					"intro": "Bei dir ist die Teambesprechung aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Teambesprechung öffnen“."
+				},
+				"teamReply": {
+					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird die Teambesprechung geschlossen."
+				},
+				"accept": {
+					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
+				},
+				"firstAnswer": {
+					"intro": "Die Anfrage gehört jetzt dir. Im Chat siehst du die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
+				},
+				"reply": {
+					"intro": "Schreibe der ratsuchenden Person eine kurze Antwort und sende sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"done": {
+					"intro": "Gut gemacht: Du hast eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"addSupervisor": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, um der Beratung eine Supervisor:in hinzuzufügen."
+				},
+				"pickSupervisor": {
+					"intro": "Wähle die Supervisor:in aus der Liste aus und bestätige die Auswahl. Im Chat erscheint danach ein Systemhinweis."
+				},
+				"supervisorReply": {
+					"intro": "Deine Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei — die ratsuchende Person sieht sie nicht."
+				},
+				"standingAssignment": {
+					"intro": "Hat deine Administration dir eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür musst du nichts tun."
+				},
+				"done": {
+					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
 		}
 	},
 	"liveChat": {
