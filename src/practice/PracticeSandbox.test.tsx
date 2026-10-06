@@ -17,8 +17,10 @@ import {
 } from '../utils/lastOpenSession';
 import {
 	PRACTICE_ENQUIRY_SESSION_ID,
-	PRACTICE_MAIN_ROOM_ID
+	PRACTICE_MAIN_ROOM_ID,
+	PRACTICE_TOPIC_ID
 } from './fixtures/practiceIdentifiers';
+import { TopicsContext } from '../globalState/provider/TopicsProvider';
 import { FakeMatrixService } from './fakeMatrix/FakeMatrixService';
 import {
 	SessionsDataContext,
@@ -220,6 +222,26 @@ describe('PracticeSandbox', () => {
 			{ session: { id: PRACTICE_ENQUIRY_SESSION_ID } }
 		]);
 		expect(outer.dispatch).not.toHaveBeenCalled();
+	});
+
+	it('shows the practice view only the practice topic', () => {
+		let topics: any;
+		const Probe = () => {
+			topics = useContext(TopicsContext)?.topics;
+			return null;
+		};
+		render(
+			<TopicsContext.Provider
+				value={{
+					topics: [{ id: 7, name: 'Real' }] as any,
+					refreshTopics() {}
+				}}
+			>
+				{sandbox(<Probe />)}
+			</TopicsContext.Provider>
+		);
+
+		expect(topics.map(({ id }) => id)).toEqual([PRACTICE_TOPIC_ID]);
 	});
 
 	it('restarts from fresh fixtures', async () => {

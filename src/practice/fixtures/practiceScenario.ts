@@ -1,4 +1,7 @@
-import type { UserDataInterface } from '../../globalState/interfaces';
+import type {
+	TopicsDataInterface,
+	UserDataInterface
+} from '../../globalState/interfaces';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../../components/message/messageConstants';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,
@@ -10,6 +13,7 @@ import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID,
+	PRACTICE_TOPIC_ID,
 	practiceUserId
 } from './practiceIdentifiers';
 import {
@@ -23,6 +27,25 @@ import {
 export type PracticeStart = 'enquiry' | 'acceptedCase';
 
 export const PRACTICE_SYSTEM_MATRIX_USER_ID = practiceUserId('system');
+
+/** The only topic the practice view knows; real topics never reach it. */
+export const PRACTICE_TOPIC: TopicsDataInterface = {
+	id: PRACTICE_TOPIC_ID,
+	name: 'Übung',
+	slug: 'uebung',
+	description: '',
+	internalIdentifier: 'practice',
+	status: 'ACTIVE',
+	createDate: '',
+	updateDate: '',
+	fallbackUrl: '',
+	titles: {
+		short: 'Übung',
+		long: 'Übung',
+		registrationDropdown: 'Übung',
+		welcome: 'Übung'
+	}
+};
 
 export interface PracticeMessageSeed {
 	sender: string;
@@ -164,9 +187,9 @@ export const createPracticeScenario = ({
 				registrationType: 'REGISTERED',
 				createDate: new Date(enquiryTs).toISOString(),
 				topic: {
-					id: PRACTICE_AGENCY_ID,
-					name: 'Übung',
-					description: ''
+					id: PRACTICE_TOPIC.id,
+					name: PRACTICE_TOPIC.name,
+					description: PRACTICE_TOPIC.description
 				}
 			},
 			user: {

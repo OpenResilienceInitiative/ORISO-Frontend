@@ -25,6 +25,7 @@ export const isPracticeId = (id: unknown): boolean => {
 };
 
 export const PRACTICE_AGENCY_ID = -1;
+export const PRACTICE_TOPIC_ID = -1;
 /** The one practice case; both start states (enquiry, accepted case) use it. */
 export const PRACTICE_ENQUIRY_SESSION_ID = -1;
 export const PRACTICE_MAIN_ROOM_ID = practiceRoomId(1);

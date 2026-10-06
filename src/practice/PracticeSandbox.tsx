@@ -10,13 +10,17 @@ import {
 import type { UserDataInterface } from '../globalState/interfaces';
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
 import { SessionsDataProvider } from '../globalState/provider/SessionsDataProvider';
+import { TopicsContext } from '../globalState/provider/TopicsProvider';
 import type { MatrixClientService } from '../services/matrixClientService';
 import {
 	getMatrixClientService,
 	setMatrixClientServiceRef
 } from '../services/matrixClientRegistry';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
-import type { PracticeStart } from './fixtures/practiceScenario';
+import {
+	PRACTICE_TOPIC,
+	type PracticeStart
+} from './fixtures/practiceScenario';
 
 type Fetch = typeof window.fetch;
 
@@ -162,6 +166,7 @@ export const usePracticeSandbox = (): PracticeSandboxApi => {
 };
 
 const noop = () => undefined;
+const practiceTopics = { topics: [PRACTICE_TOPIC], refreshTopics: noop };
 
 export interface PracticeSandboxProps {
 	/** The real logged-in counsellor; practice fixtures borrow only identity. */
@@ -220,10 +225,12 @@ export const PracticeSandbox = ({
 	return (
 		<PracticeSandboxContext.Provider value={api}>
 			<MatrixClientContext.Provider value={matrixContext}>
-				{/* Practice lists never enter the app-level sessions store. */}
-				<SessionsDataProvider key={run.generation}>
-					{children}
-				</SessionsDataProvider>
+				<TopicsContext.Provider value={practiceTopics}>
+					{/* Practice lists never enter the app-level sessions store. */}
+					<SessionsDataProvider key={run.generation}>
+						{children}
+					</SessionsDataProvider>
+				</TopicsContext.Provider>
 			</MatrixClientContext.Provider>
 		</PracticeSandboxContext.Provider>
 	);
