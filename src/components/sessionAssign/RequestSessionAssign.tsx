@@ -1,3 +1,4 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +29,7 @@ import {
 } from '../../api/apiSendAliasMessage';
 import { prepareConsultantDataForSelect } from './sessionAssignHelper';
 import { SelectChangeEvent } from '@mui/material/Select';
+import { AskerInfoActionContext } from '../askerInfo/askerInfoActionContext';
 
 export const ACCEPTED_GROUP_CLOSE = 'CLOSE';
 
@@ -48,6 +50,37 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 		useState<ConsultantReassignment | null>(null);
 
 	const { isE2eeEnabled } = useContext(E2EEContext);
+	const { setHasPendingChange } = useContext(AskerInfoActionContext);
+
+	/*
+	 * The one value the select actually renders. Everything downstream reads
+	 * this, so the footer and the dropdown cannot disagree.
+	 *
+	 * `props.value` deliberately wins: `AskerInfoAssign` pins it to the
+	 * session's current consultant, and `OrisoSelect` wraps a fully controlled
+	 * MUI Select, so the dropdown shows the current allocation until a
+	 * reassignment is actually confirmed (which navigates away).
+	 */
+	const displayedConsultantId = props.value || selectedOption?.value || '';
+
+	/*
+	 * Derived, never set imperatively (ORISO-Frontend#1192 review).
+	 *
+	 * It used to be latched in `handleDatalistSelect` and nothing cleared it:
+	 * cancelling the confirmation dialog runs the `CLOSE` branch, which resets
+	 * the overlay and returns, so the footer's next button stayed primary and
+	 * enabled indefinitely while the select had already snapped back to the
+	 * original consultant. Reading the same value the select renders makes the
+	 * two agree by construction instead of by remembering to reset a flag.
+	 */
+	const hasPendingChange = Boolean(
+		displayedConsultantId &&
+			displayedConsultantId !== activeSession?.consultant?.id
+	);
+
+	useEffect(() => {
+		setHasPendingChange(hasPendingChange);
+	}, [hasPendingChange, setHasPendingChange]);
 
 	const { addNewUsersToEncryptedRoom } = useE2EE(
 		activeSession.item.matrixRoomId
@@ -174,6 +207,24 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 						}
 					})
 					.catch((error) => {
+						const failure = getCounsellingDpaFailure(error);
+						if (failure) {
+							setOverlayItem({
+								headline: translate(`${failure.key}.title`),
+								copy: translate(`${failure.key}.text`),
+								buttonSet: [
+									{
+										label: translate(
+											'profile.data.registerError.overlay.button.label'
+										),
+										function: OVERLAY_FUNCTIONS.CLOSE,
+										type: BUTTON_TYPES.PRIMARY
+									}
+								]
+							});
+							setOverlayActive(true);
+							return;
+						}
 						if (error === FETCH_ERRORS.CONFLICT) {
 							return null;
 						}
@@ -208,7 +259,7 @@ export const RequestSessionAssign = (props: { value?: string }) => {
 					value: consultant.value,
 					label: consultant.label
 				}))}
-				value={props.value || selectedOption?.value || ''}
+				value={displayedConsultantId}
 				onChange={handleConsultantSelect}
 			/>
 			{overlayActive && (

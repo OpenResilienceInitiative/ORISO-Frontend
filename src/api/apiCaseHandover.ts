@@ -6,14 +6,18 @@ export type CaseHandoverStatusValue =
 	| 'NOT_REQUESTED'
 	| 'PENDING'
 	| 'PENDING_CLIENT_CONSENT'
+	| 'GRANTED_PENDING_CLIENT_OPTOUT'
 	| 'GRANTED'
 	| 'DENIED'
 	| 'CLIENT_CONSENT_DECLINED'
 	| (string & {});
 
+export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
+
 export interface CaseHandoverReason {
 	code: string;
 	label: string;
+	clientConsent?: CaseHandoverConsentValue;
 	clientConsentRequired: boolean;
 	accessAllowed?: boolean;
 	policyAuthority?: string;
@@ -26,6 +30,7 @@ export interface CaseHandoverStatus {
 	canViewContent: boolean;
 	reasonCode?: string;
 	reasonLabel?: string;
+	clientConsent?: CaseHandoverConsentValue;
 	clientConsentRequired: boolean;
 	policyAuthority?: string;
 	auditOutcome?: string;

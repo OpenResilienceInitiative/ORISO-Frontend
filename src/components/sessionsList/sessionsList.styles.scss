@@ -292,6 +292,21 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// #1377 §5.2: the route-active row stays while its kind is hidden.
+	&__hiddenActiveRow {
+		opacity: 0.55;
+	}
+
+	// The hidden-active explanation as text, not only a title tooltip
+	// (keyboard, touch and screen-reader users see it too).
+	&__hiddenActiveRowHint {
+		margin: 0;
+		padding: 4px 16px 0;
+		font-size: 12px;
+		line-height: 16px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
 	&__scrollContainer {
 		padding-top: 16px;
 		overflow: auto;
@@ -377,26 +392,55 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		}
 	}
 
+	// T5: one handle for list ↔ chat (anchor end) and chat ↔ side panel
+	// (anchor start). Full height of the resized element, pill centred on
+	// it — never on the list's scroll thumb, no chevron button.
+	// T13: the end handle is centred horizontally in the gap between the
+	// list and the chat card; the host sets `--pane-gap` (the card's
+	// margin, 24 px on desktop). With no gap the handle straddles the edge.
+	// T34: a host whose list cards end before the column edge (the 12 px
+	// `__scrollContainer` gutter) declares `--pane-inner-gutter` so the
+	// gap — and the handle's centre — is measured from the cards.
+	$handle-width: 24px;
+	$handle-half: 12px; // = $handle-width / 2, keeps the compiled calc readable
+
 	&__resizeHandle {
 		position: absolute;
-		right: -12px;
 		top: 0;
 		bottom: 0;
-		width: 24px;
-
-		/* Cursor is controlled dynamically (resize vs scroll drag mode) */
-		cursor: grab;
+		width: $handle-width;
+		cursor: col-resize;
 		z-index: 30;
 		background: transparent;
 		border: 0;
 		outline: none;
 		touch-action: none;
 		padding: 0;
+
+		&--end {
+			right: calc(
+				-#{$handle-half} - var(--pane-gap, 0px) / 2 +
+					var(--pane-inner-gutter, 0px)
+			);
+		}
+
+		&--start {
+			left: -$handle-half;
+		}
+	}
+
+	/* Scroll-only placement: the bar sits inside the surface it scrolls rather
+	   than straddling its edge, because a dropdown has no neighbour to
+	   separate from (ORISO-Frontend#1196 job 2). */
+	&__resizeHandle--inset {
+		right: 0;
+		width: 20px;
+		cursor: grab;
 	}
 
 	&__resizeHandlePill {
 		position: absolute;
-		right: 8px;
+		left: 8px;
 		top: 50%;
 		width: 8px;
 		height: 48px;
@@ -409,52 +453,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			transform 140ms ease;
 	}
 
-	// Once cards overflow, the same visible dragbar becomes their scrollbar
-	// thumb. No separate full-height side line is rendered beside populated
-	// fields.
-	&__resizeHandle[data-scrollable='true'] &__resizeHandlePill {
-		top: var(--sessions-list-thumb-top);
-		height: var(--sessions-list-thumb-height);
-		transform: none;
-	}
-
-	&__resizeToggle {
-		position: absolute;
-		right: -14px;
-		top: 18px;
-		z-index: 3;
-		width: 28px;
-		height: 28px;
-		padding: 0;
-		border: 1px solid var(--m3-outline-variant, #c9c5c7);
-		border-radius: 999px;
-		background: var(--m3-surface-container-highest, #e1dddf);
-		color: var(--m3-on-surface, #1d1b1c);
-		font-size: 22px;
-		line-height: 24px;
-		cursor: pointer;
-		display: none;
-		align-items: center;
-		justify-content: center;
-
-		@include breakpoint($fromLarge) {
-			display: flex;
-		}
-
-		&:hover {
-			background: var(--m3-secondary-container, #ffdad5);
-		}
-
-		&:focus-visible {
-			outline: 2px solid var(--m3-primary, #a5000a);
-			outline-offset: 2px;
-		}
-	}
-
 	&__resizeHandle:hover &__resizeHandlePill {
-		box-shadow:
-			0 0 0 1px rgba(165, 0, 10, 0.22),
-			0 3px 10px rgba(0, 0, 0, 0.14);
 		box-shadow:
 			0 0 0 1px
 				color-mix(in srgb, var(--m3-primary, #a5000a) 22%, transparent),
@@ -464,16 +463,7 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 	&__resizeHandle[data-dragging='true'] &__resizeHandlePill {
 		background: var(--m3-primary-fixed, #ffdad5);
-	}
-
-	&__resizeHandle[data-dragging='true'][data-scrollable='false']
-		&__resizeHandlePill {
 		transform: translateY(-50%) scaleX(1.12);
-	}
-
-	&__resizeHandle[data-dragging='true'][data-scrollable='true']
-		&__resizeHandlePill {
-		transform: scaleX(1.12);
 	}
 
 	&__resizeHandle:focus-visible &__resizeHandlePill {
@@ -620,11 +610,17 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 		// Align the hairlines with the card gutter: 6px on mobile, 12px on
 		// desktop (matches the scrollContainer margins above).
+		// `width: auto`: the base `.emptyState` is `width: 100%`, which with
+		// the side margins pushed the hairline 12px past the column edge.
+		width: auto;
 		margin: 0 6px;
-		border-right: 1px solid #fff;
 
+		// Desktop: the hairline runs through the resize handle's centre
+		// (same formula as `&__resizeHandle--end`), so the pill sits on it.
 		@include breakpoint($fromLarge) {
-			margin: 0 12px;
+			margin: 0
+				calc(var(--pane-inner-gutter, 0px) - var(--pane-gap, 0px) / 2) 0
+				12px;
 		}
 	}
 
@@ -637,6 +633,26 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			max-width: unset;
 			line-height: $grid-base-three;
 		}
+	}
+}
+
+// The list↔chat divider only while BOTH panes are empty, desktop only
+// (Frank 2026-09-21): next to an open chat or the create card there is no
+// line. The resize handle draws it: full column height, above the toolbar
+// (whose background hid a border on the empty state), centred under the pill.
+@include breakpoint($fromLarge) {
+	.contentWrapper:has(.contentWrapper__detail .session--empty):has(
+			.sessionsList__emptyState
+		)
+		.sessionsList__resizeHandle--end::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: calc(50% - 0.5px);
+		width: 1px;
+		background: #fff;
+		pointer-events: none;
 	}
 }
 
@@ -691,24 +707,46 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		.sessionsListItem {
 			justify-content: center;
 			align-items: center;
-			margin-bottom: 0px;
 
+			// Production applies `.sessionRailList` to the scroll container; its
+			// flex gap owns the rail rhythm, so rows must not retain card spacing.
+			margin-bottom: 0;
+
+			// Rows that carry state render `SessionRailPill` and have no
+			// `__content` at all. What is left below is the residue that still
+			// uses the card markup in the rail — the loading skeleton — so it
+			// takes the pill's box, and loading → loaded shifts nothing.
 			&__content {
 				display: flex;
+				flex-direction: column;
 				justify-content: center;
 				align-items: center;
-				padding: 8px;
-				margin: 0 8px;
-				width: auto;
+				padding: 6px 4px 8px;
+				margin: 0;
+				width: 48px;
 				min-width: 48px;
+				max-width: 48px;
 				min-height: 48px;
-				border-radius: 50%;
+
+				// Was `border-radius: 50%`. A percentage radius follows the
+				// box, and this box measured 48 × 50 px (8 + 8 padding + the
+				// 32 px avatar row + 2 × 1 px border), so the "circle" was an
+				// ellipse with 24 × 25 px radii — Frank's "eiförmig". Stated
+				// in px it is a stadium at any height and cannot go egg-shaped
+				// again, whatever the content does.
+				border-radius: 24px;
 			}
 
 			&__row {
 				justify-content: center;
 				align-items: center;
 				width: auto;
+
+				// The 16 px side padding of the avatar row is what pushed the
+				// old box wider than the 48 px it was clamped to, so the
+				// avatar sat in a box that overflowed its own circle.
+				padding-left: 0;
+				padding-right: 0;
 				margin-bottom: 0 !important;
 
 				&:first-child {
@@ -1045,6 +1083,14 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		color: $toolbar-chip-fg;
 		text-decoration: none;
 		cursor: pointer;
+
+		/* #1200: an action chip with nothing to act on (e.g. "Mark all as read"
+		   with no unread activity) — M3 disabled state, no hover/press feedback */
+		&:disabled {
+			cursor: default;
+			opacity: 0.38;
+			pointer-events: none;
+		}
 
 		/* <Link> = <a>: undo global a:hover / a:focus (skin primary + 4px radius) */
 		&:link,
@@ -1433,29 +1479,27 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 	}
 
 	&__personCheckbox {
-		width: 18px;
-		height: 18px;
-		border-radius: 3px;
-		border: 2px solid var(--m3-on-surface-variant, #444748);
 		flex-shrink: 0;
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	&__personCheckbox--selected {
-		background: var(--m3-primary, #a5000a);
-		border-color: var(--m3-primary, #a5000a);
-		position: relative;
+		color: var(--m3-primary, #a5000a);
+	}
 
-		&::after {
-			content: '';
-			position: absolute;
-			left: 5px;
-			top: 1px;
-			width: 4px;
-			height: 8px;
-			border: solid #fff;
-			border-width: 0 2px 2px 0;
-			transform: rotate(45deg);
-		}
+	/* #1195 JOB3: the results scroll inside the menu instead of growing it. */
+	&__searchResultsScroll {
+		max-height: 320px;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+
+	&__searchSentinel {
+		height: 1px;
+	}
+
+	&__searchAgencyGroup {
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c8);
 	}
 
 	&__personRadio {

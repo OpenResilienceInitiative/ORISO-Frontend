@@ -43,12 +43,26 @@ export const LongPlatformName: Story = {
 export const ImagesBlocked: Story = {
 	name: 'Images blocked',
 	args: {
-		// Deliberately unresolvable, so the story shows what Outlook's default
-		// (and every "load images?" prompt) actually renders: the alt text.
+		// Deliberately unresolvable. The logo is decorative (alt=""), so a
+		// failed image leaves an empty spot and the name beside it stays;
+		// clients still draw their own placeholder frame (Outlook a box).
 		fragment: emailHeaderBar({
 			...emailSampleBrand,
 			logoUrl: '/deliberately-missing-logo.png'
 		}),
+		onCard: false,
+		width: 700
+	}
+};
+
+export const WithoutLogo: Story = {
+	name: 'Without logo',
+	args: {
+		// A tenant without a logo sends an empty URL, and the kit drops the
+		// image cell entirely — an <img src=""> would render as a broken-image
+		// icon. The text wordmark carries the header alone, exactly what
+		// UserService produces when it expands {{logoCell}} to nothing.
+		fragment: emailHeaderBar({ ...emailSampleBrand, logoUrl: '' }),
 		onCard: false,
 		width: 700
 	}

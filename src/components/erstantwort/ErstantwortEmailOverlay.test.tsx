@@ -12,14 +12,38 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const apiPutEmail = vi.fn();
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'furtherSteps.email.overlay.input.label': 'E-Mail',
+			'furtherSteps.email.overlay.input.unavailable':
+				'Diese E-Mail-Adresse ist bereits registriert.',
+			'furtherSteps.email.overlay.button1.label': 'Speichern',
+			'furtherSteps.email.overlay.button2.label': 'Schließen',
+			'furtherSteps.email.overlay.headline': 'E-Mail-Adresse angeben',
+			'furtherSteps.email.success.overlay.headline':
+				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.',
+			'erstantwort.emailNotification.saveFailed':
+				'Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.',
+			'erstantwort.emailNotification.notAllowed':
+				'Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.',
+			'profile.notifications.noEmail.modal.errorMessage':
+				'Leider können wir Ihre E-mail-Adresse momentan nicht speichern. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie unseren Support.'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 vi.mock('../../api', () => ({
 	apiPutEmail: (...args: unknown[]) => apiPutEmail(...args),
-	FETCH_ERRORS: { X_REASON: 'X-Reason' },
+	FETCH_ERRORS: {
+		X_REASON: 'X-Reason',
+		FORBIDDEN: 'FORBIDDEN',
+		ABORTED: 'ABORTED',
+		GATEWAY_TIMEOUT: 'GATEWAY_TIMEOUT',
+		TIMEOUT: 'TIMEOUT'
+	},
 	X_REASON: { EMAIL_NOT_AVAILABLE: 'EMAIL_NOT_AVAILABLE' }
 }));
 
@@ -72,7 +96,7 @@ beforeEach(() => {
 const type = (value: string) =>
 	fireEvent.change(screen.getByRole('textbox'), { target: { value } });
 
-const saveButton = () => screen.getByRole('button', { name: 'Save' });
+const saveButton = () => screen.getByRole('button', { name: 'Speichern' });
 
 describe('ErstantwortEmailOverlay', () => {
 	it('keeps saving disabled until the address is a valid one', () => {
@@ -99,7 +123,9 @@ describe('ErstantwortEmailOverlay', () => {
 		expect(apiPutEmail).toHaveBeenCalledWith('jemand@example.test');
 		expect(onSaved).toHaveBeenCalled();
 		expect(
-			screen.getByText('Your e-mail address has been saved.')
+			screen.getByText(
+				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.'
+			)
 		).toBeTruthy();
 	});
 
@@ -117,16 +143,13 @@ describe('ErstantwortEmailOverlay', () => {
 		/* InputField renders its label twice (the MUI floating label plus a
 		   visually-hidden span), so the count is the component's, not ours. */
 		expect(
-			screen.getAllByText('This e-mail address is already registered.')
+			screen.getAllByText('Diese E-Mail-Adresse ist bereits registriert.')
 				.length
 		).toBeGreaterThan(0);
 	});
 
-	it('reports an unexpected failure rather than leaving the dialog stuck', async () => {
-		/* The FurtherSteps overlay this replaces swallowed every error that was
-		   not EMAIL_NOT_AVAILABLE: `isRequestInProgress` stayed true, so the
-		   save button was dead for the rest of the session with no explanation. */
-		apiPutEmail.mockRejectedValue({ headers: { get: () => null } });
+	it('explains when the account is not allowed to store an e-mail', async () => {
+		apiPutEmail.mockRejectedValue(new Error('FORBIDDEN'));
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 
 		type('jemand@example.test');
@@ -135,7 +158,44 @@ describe('ErstantwortEmailOverlay', () => {
 		});
 
 		expect(
-			screen.getAllByText('Saving failed. Please try again.').length
+			screen.getAllByText(
+				'Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support.'
+			).length
+		).toBeGreaterThan(0);
+	});
+
+	it('asks the person to try again later when the server is unreachable', async () => {
+		apiPutEmail.mockRejectedValue(new Error('ABORTED'));
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		type('jemand@example.test');
+		await act(async () => {
+			saveButton().click();
+		});
+
+		expect(
+			screen.getAllByText(
+				'Leider können wir Ihre E-mail-Adresse momentan nicht speichern. Bitte versuchen Sie es später noch einmal oder kontaktieren Sie unseren Support.'
+			).length
+		).toBeGreaterThan(0);
+	});
+
+	it('reports an unexpected failure rather than leaving the dialog stuck', async () => {
+		/* The FurtherSteps overlay this replaces swallowed every error that was
+		   not EMAIL_NOT_AVAILABLE: `isRequestInProgress` stayed true, so the
+		   save button was dead for the rest of the session with no explanation. */
+		apiPutEmail.mockRejectedValue(new Error('CATCH_ALL'));
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		type('jemand@example.test');
+		await act(async () => {
+			saveButton().click();
+		});
+
+		expect(
+			screen.getAllByText(
+				'Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
+			).length
 		).toBeGreaterThan(0);
 		expect(saveButton().hasAttribute('disabled')).toBe(false);
 	});
@@ -144,7 +204,7 @@ describe('ErstantwortEmailOverlay', () => {
 		const onClose = vi.fn();
 		render(<ErstantwortEmailOverlay onClose={onClose} onSaved={vi.fn()} />);
 
-		screen.getByRole('button', { name: 'Close' }).click();
+		screen.getByRole('button', { name: 'Schließen' }).click();
 		expect(onClose).toHaveBeenCalled();
 	});
 });

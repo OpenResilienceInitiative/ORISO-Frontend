@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { expect } from 'storybook/test';
 import { useRef, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useTranslation } from 'react-i18next';
+import { ReactComponent as AddCircleIcon } from '../../resources/img/icons/add-circle.svg';
 import { ReactComponent as CircleIcon } from '../../resources/img/icons/self-help-group.svg';
 import { ReactComponent as InternalIcon } from '../../resources/img/icons/internal-conversation.svg';
 import { ReactComponent as CategorySearchIcon } from '../../resources/img/icons/category-search.svg';
@@ -54,6 +56,31 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/**
+ * Both stacked cards must read as one pair: same width, same height. They
+ * drifted by two pixels once because the columns did not stretch, which is
+ * exactly the kind of thing nobody sees in a diff.
+ */
+const expectCardsMatch = async (canvasElement: HTMLElement) => {
+	/*
+	 * Both cards are named, not taken by position: the right-hand column IS the
+	 * welcome-and-rules card — it carries the surface, outline and radius, and
+	 * the create action sits inside it, as the node draws it.
+	 */
+	const left = canvasElement.querySelector(
+		'.circleSettings__card'
+	) as HTMLElement;
+	const right = canvasElement.querySelector(
+		'.circleSettings__authorColumn'
+	) as HTMLElement;
+	await expect(left).not.toBeNull();
+	await expect(right).not.toBeNull();
+	const a = left.getBoundingClientRect();
+	const b = right.getBoundingClientRect();
+	await expect(Math.round(a.height)).toBe(Math.round(b.height));
+	await expect(Math.round(a.width)).toBe(Math.round(b.width));
+};
+
 const PEOPLE = [
 	'Sabine Leutheuser-Schnarrenberger',
 	'Siegfried Beutmer',
@@ -76,7 +103,7 @@ const DesktopShell = ({ children }: { children: React.ReactNode }) => (
 		<div
 			style={{
 				background: '#fcf9f9',
-				borderRadius: 28,
+				borderRadius: 32,
 				margin: '0 auto',
 				maxWidth: 1100,
 				overflow: 'hidden'
@@ -92,7 +119,7 @@ const MobileShell = ({ children }: { children: React.ReactNode }) => (
 		<div
 			style={{
 				background: '#fcf9f9',
-				borderRadius: 28,
+				borderRadius: 32,
 				margin: '0 auto',
 				maxWidth: 390,
 				overflow: 'hidden'
@@ -401,6 +428,7 @@ const CircleSettings = ({ compact }: { compact: boolean }) => {
 							type="button"
 							className="circleSettings__createButton circleSettings__createButton--primary"
 						>
+							<AddCircleIcon aria-hidden />
 							{t('groupChat.circle.createLabel')}
 						</button>
 					</div>
@@ -421,7 +449,8 @@ export const CircleSettingsDesktop: Story = {
 		<DesktopShell>
 			<CircleSettings compact={false} />
 		</DesktopShell>
-	)
+	),
+	play: async ({ canvasElement }) => expectCardsMatch(canvasElement)
 };
 
 export const CircleSettingsMobile: Story = {

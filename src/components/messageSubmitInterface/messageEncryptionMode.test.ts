@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -7,6 +8,25 @@ import {
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
+
+// The real HTTP permission boundary permits these existing transport/retry cases.
+beforeEach(() => {
+	vi.stubGlobal(
+		'Request',
+		class {
+			constructor(
+				public url: string,
+				public init: RequestInit
+			) {}
+		}
+	);
+	vi.stubGlobal('fetch', async (request: { url: string }) => {
+		if (request.url.endsWith('/enquiry/permission'))
+			return new Response(null, { status: 204 });
+		throw new Error(`Unexpected HTTP request: ${request.url}`);
+	});
+});
+afterEach(() => vi.unstubAllGlobals());
 
 describe('messageEncryptionMode', () => {
 	it('detects asker enquiry submissions from the enquiry list type', () => {
@@ -281,4 +301,35 @@ describe('messageEncryptionMode', () => {
 		expect(finalizeEnquiry).toHaveBeenCalledTimes(2);
 		expect(values.size).toBe(0);
 	});
+});
+
+it('signals reminder eligibility only after backend finalization, including a successful retry', async () => {
+	const values = new Map<string, string>();
+	const storage = {
+		getItem: (key: string) => values.get(key) ?? null,
+		setItem: (key: string, value: string) => {
+			values.set(key, value);
+		},
+		removeItem: (key: string) => {
+			values.delete(key);
+		}
+	};
+	const finalized = vi.fn();
+	const send = vi.fn(async () => ({ event_id: '$synthetic' }));
+	const finalize = vi
+		.fn()
+		.mockRejectedValueOnce(new Error('offline'))
+		.mockResolvedValueOnce({ sessionId: 7 });
+	const input = {
+		sessionId: 7,
+		sendEncryptedMatrixMessage: send,
+		finalizeEnquiry: finalize,
+		onFinalized: finalized,
+		storage
+	};
+	await expect(sendEncryptedInitialEnquiry(input)).rejects.toThrow('offline');
+	expect(finalized).not.toHaveBeenCalled();
+	await sendEncryptedInitialEnquiry(input);
+	expect(finalized).toHaveBeenCalledOnce();
+	expect(send).toHaveBeenCalledOnce();
 });

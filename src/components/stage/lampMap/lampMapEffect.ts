@@ -20,6 +20,8 @@ import {
 
 const GLOW_SPRITE_SIZE = 64;
 const HERO_RADIUS = 92;
+/** The torch: how far the pointer's light reaches into the dot field. */
+const TORCH_RADIUS = 150;
 const HERO_SPEED = 17;
 const MAX_HELD = 12;
 
@@ -89,11 +91,6 @@ export const createLampMap = async (
 		presenceList.map((entry) => [entry.id, entry])
 	);
 
-	const dpr = Math.min(2, window.devicePixelRatio || 1);
-	const width = canvas.clientWidth;
-	const height = canvas.clientHeight;
-	canvas.width = width * dpr;
-	canvas.height = height * dpr;
 	const ctx = canvas.getContext('2d');
 	if (!ctx) {
 		return {
@@ -103,22 +100,51 @@ export const createLampMap = async (
 			destroy: () => undefined
 		};
 	}
-	ctx.scale(dpr, dpr);
 
 	const projection: MapProjection = createProjection();
-	const grid: PointGrid = createPointGrid(projection, width, height);
-	const { points } = grid;
 	const sprite = createGlowSprite();
+
+	/*
+	 * Everything that depends on the panel's size lives behind `fit()`, because
+	 * the size is not settled when the module comes up: on a first visit the
+	 * stage starts at 100vw and slides to 40vw over 2.5 s, and a map measured
+	 * at 100vw would afterwards be squeezed to a third of its width by CSS.
+	 * A ResizeObserver below re-fits when the panel changes size.
+	 */
+	let width = 0;
+	let height = 0;
+	let points: PointGrid['points'] = [];
+	// Stage 4: the schedules are the expensive part (points x anchors x
+	// carriers), so they are only built for a carrier that is actually asked
+	// for, and then cached — until the grid is rebuilt.
+	const schedules = new Map<CarrierId, LampSchedule[]>();
+
+	const fit = () => {
+		// A panel that has not been laid out yet measures 0x0; fitting to that
+		// would leave an empty grid behind (and a NaN dim, see below). Wait for
+		// the ResizeObserver to report a real size instead.
+		const nextWidth = canvas.clientWidth;
+		const nextHeight = canvas.clientHeight;
+		if (nextWidth < 1 || nextHeight < 1) {
+			return;
+		}
+		const dpr = Math.min(2, window.devicePixelRatio || 1);
+		width = nextWidth;
+		height = nextHeight;
+		canvas.width = Math.max(1, Math.round(width * dpr));
+		canvas.height = Math.max(1, Math.round(height * dpr));
+		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+		const grid: PointGrid = createPointGrid(projection, width, height);
+		points = grid.points;
+		schedules.clear();
+	};
+	fit();
 
 	const reducedMotion = window.matchMedia?.(
 		'(prefers-reduced-motion: reduce)'
 	);
 	const isStill = () => Boolean(reducedMotion?.matches);
 
-	// Stage 4: the schedules are the expensive part (points x anchors x
-	// carriers), so they are only built for a carrier that is actually asked
-	// for, and then cached.
-	const schedules = new Map<CarrierId, LampSchedule[]>();
 	const scheduleFor = (carrier: CarrierId): LampSchedule[] => {
 		const cached = schedules.get(carrier);
 		if (cached) {
@@ -157,7 +183,7 @@ export const createLampMap = async (
 	});
 
 	let hero = spawnHero();
-	const held: { x: number; y: number; links: typeof points }[] = [];
+	let held: { x: number; y: number; links: typeof points }[] = [];
 	let heroEnabled = false;
 	let carrier: CarrierId | null = null;
 	let appliedCarrier: CarrierId | null = null;
@@ -165,6 +191,32 @@ export const createLampMap = async (
 	let previousTime = 0;
 	let frame = 0;
 	let firstFramePainted = false;
+
+	// Re-fit once the panel has stopped changing size. The wandering point
+	// and its net are anchored to grid points, so they start over; the
+	// selected carrier is re-applied on the next frame.
+	let resizeTimer = 0;
+	const refit = () => {
+		window.clearTimeout(resizeTimer);
+		resizeTimer = window.setTimeout(() => {
+			if (
+				canvas.clientWidth === width &&
+				canvas.clientHeight === height
+			) {
+				return;
+			}
+			fit();
+			hero = spawnHero();
+			held = [];
+			appliedCarrier = null;
+		}, 150);
+	};
+	const resizeObserver =
+		typeof ResizeObserver === 'function' ? new ResizeObserver(refit) : null;
+	resizeObserver?.observe(canvas);
+	if (!resizeObserver) {
+		window.addEventListener('resize', refit);
+	}
 
 	const applyCarrier = (time: number) => {
 		points.forEach((point) => {
@@ -246,7 +298,9 @@ export const createLampMap = async (
 			litSum += point.glow;
 		}
 
-		const litFraction = Math.min(1, litSum / (points.length * 0.35));
+		const litFraction = points.length
+			? Math.min(1, litSum / (points.length * 0.35))
+			: 0;
 		const targetDim = carrier ? Math.max(0.25, litFraction) : litFraction;
 		dim += (targetDim - dim) * Math.min(1, delta * 1.6);
 		if (dim > 0.01) {
@@ -335,11 +389,27 @@ export const createLampMap = async (
 			}
 		}
 
+		// The pointer is a torch on the dot field: dots under it lighten and
+		// grow a touch, falling off with the square of the distance so the
+		// light has a soft core and a quick edge.
+		const torchX = pointer.inside ? pointer.x : -9999;
+		const torchY = pointer.inside ? pointer.y : -9999;
+
 		for (const point of points) {
 			const distance = heroEnabled
 				? Math.hypot(point.x - hero.x, point.y - hero.y)
 				: Infinity;
+			const torchDistance = Math.hypot(
+				point.x - torchX,
+				point.y - torchY
+			);
+			const torch =
+				torchDistance < TORCH_RADIUS
+					? (1 - torchDistance / TORCH_RADIUS) ** 2
+					: 0;
+			// `near` (the wandering point's halo) is a hint; the torch is light.
 			const near = Math.max(0, 1 - distance / HERO_RADIUS);
+			const lit = Math.max(near * 0.5, torch);
 			const breathing = still
 				? 1
 				: 0.93 + 0.07 * Math.sin(time * 7 + point.phase);
@@ -367,7 +437,7 @@ export const createLampMap = async (
 			ctx.arc(
 				point.x,
 				point.y,
-				1.2 + 0.5 * near + 0.4 * glow,
+				1.2 + 0.9 * lit + 0.4 * glow,
 				0,
 				Math.PI * 2
 			);
@@ -375,15 +445,15 @@ export const createLampMap = async (
 			const shade = 1 - 0.55 * dim;
 			ctx.fillStyle = `rgba(${Math.round(158 * shade)}, ${Math.round(
 				4 * shade
-			)}, ${Math.round(16 * shade)}, ${(0.66 + 0.2 * (1 - near)).toFixed(
+			)}, ${Math.round(16 * shade)}, ${(0.66 + 0.2 * (1 - lit)).toFixed(
 				2
 			)})`;
 			ctx.fill();
 
-			if (near > 0.02) {
+			if (lit > 0.02) {
 				ctx.beginPath();
-				ctx.arc(point.x, point.y, 1.2 + 0.5 * near, 0, Math.PI * 2);
-				ctx.fillStyle = `rgba(255, 214, 206, ${(0.4 * near).toFixed(3)})`;
+				ctx.arc(point.x, point.y, 1.2 + 0.9 * lit, 0, Math.PI * 2);
+				ctx.fillStyle = `rgba(255, 224, 218, ${(0.85 * lit).toFixed(3)})`;
 				ctx.fill();
 			}
 			if (glow > 0.02) {
@@ -441,7 +511,10 @@ export const createLampMap = async (
 			ctx.stroke();
 		}
 
-		if (!firstFramePainted) {
+		// Only a frame that actually painted a fitted grid counts as the first
+		// one — `fit()` bails on a 0x0 canvas, and the caller starts the
+		// wandering point off this callback.
+		if (!firstFramePainted && width > 0 && height > 0) {
 			firstFramePainted = true;
 			options.onFirstFrame?.();
 		}
@@ -467,6 +540,9 @@ export const createLampMap = async (
 		},
 		destroy: () => {
 			cancelAnimationFrame(frame);
+			window.clearTimeout(resizeTimer);
+			resizeObserver?.disconnect();
+			window.removeEventListener('resize', refit);
 			container.removeEventListener('mousemove', handlePointerMove);
 			container.removeEventListener('mouseleave', handlePointerLeave);
 		}

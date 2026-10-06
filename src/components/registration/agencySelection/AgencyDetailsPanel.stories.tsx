@@ -118,7 +118,7 @@ export const EmptyState: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'An agency without optional DTO fields: address, hours, phone, website and about rows are hidden entirely — no placeholder values.'
+				story: 'An agency without optional DTO fields: address, phone, website and about rows are hidden entirely — no placeholder values. Languages always render.'
 			}
 		}
 	}

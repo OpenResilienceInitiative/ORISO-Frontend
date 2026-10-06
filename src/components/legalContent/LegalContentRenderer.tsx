@@ -2,27 +2,13 @@ import * as React from 'react';
 import { useMemo, useState } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
-import sanitizeHtml from 'sanitize-html';
 import htmlParser from '../../resources/scripts/util/htmlParser';
 import {
 	normalizeLegalLang,
 	resolveLegalContent
 } from '../../utils/legalContent';
+import { sanitizeLegalHtml } from './legalHtmlSanitizer';
 import './legalContent.styles.scss';
-
-const LEGAL_HTML_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-	allowedTags: [...sanitizeHtml.defaults.allowedTags, 'img'],
-	allowedAttributes: {
-		'*': ['class'],
-		'a': ['href', 'name', 'target', 'rel'],
-		'img': ['src', 'alt', 'title', 'width', 'height', 'loading']
-	},
-	allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-	allowedSchemesByTag: {
-		img: ['http', 'https']
-	},
-	allowProtocolRelative: false
-};
 
 export interface LegalContentRendererProps {
 	/**
@@ -65,10 +51,7 @@ export const LegalContentRenderer = ({
 		[showOriginal, resolved, content]
 	);
 	const sanitizedHtml = useMemo(
-		() =>
-			displayed
-				? sanitizeHtml(displayed.html, LEGAL_HTML_SANITIZE_OPTIONS)
-				: '',
+		() => sanitizeLegalHtml(displayed?.html),
 		[displayed]
 	);
 
@@ -82,10 +65,7 @@ export const LegalContentRenderer = ({
 		<div className={clsx('legalContentRenderer', className)}>
 			{showsFallbackLanguage && (
 				<p className="legalContentRenderer__notice" role="note">
-					{t(
-						'legal.notice.fallbackLanguage',
-						'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
-					)}
+					{t('legal.notice.fallbackLanguage')}
 				</p>
 			)}
 			{displayed.isMachineTranslated && (
@@ -93,34 +73,25 @@ export const LegalContentRenderer = ({
 					className="legalContentRenderer__notice legalContentRenderer__notice--machineTranslated"
 					role="note"
 				>
-					{t(
-						'legal.notice.machineTranslated',
-						'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.'
-					)}{' '}
+					{t('legal.notice.machineTranslated')}{' '}
 					<button
 						type="button"
 						className="legalContentRenderer__noticeAction"
 						onClick={() => setShowOriginal(true)}
 					>
-						{t('legal.notice.showOriginal', 'Original anzeigen')}
+						{t('legal.notice.showOriginal')}
 					</button>
 				</p>
 			)}
 			{showOriginal && (
 				<p className="legalContentRenderer__notice" role="note">
-					{t(
-						'legal.notice.showingOriginal',
-						'Sie sehen die Originalfassung.'
-					)}{' '}
+					{t('legal.notice.showingOriginal')}{' '}
 					<button
 						type="button"
 						className="legalContentRenderer__noticeAction"
 						onClick={() => setShowOriginal(false)}
 					>
-						{t(
-							'legal.notice.showTranslation',
-							'Übersetzung anzeigen'
-						)}
+						{t('legal.notice.showTranslation')}
 					</button>
 				</p>
 			)}

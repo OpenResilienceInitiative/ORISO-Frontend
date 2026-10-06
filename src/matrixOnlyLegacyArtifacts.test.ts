@@ -73,15 +73,38 @@ describe('Matrix-only active frontend artifacts', () => {
 			expect(workflow).toContain('id-token: write');
 			expect(workflow).toContain('attestations: write');
 			expect(workflow).toContain(
-				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
-			);
-			expect(workflow).toContain(
 				'actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6'
 			);
 			expect(workflow).toContain('subject-digest: ${{ steps.');
-			expect(workflow).toMatch(
-				/image-ref: .*@\$\{\{ steps\..*\.outputs\.digest \}\}/
+		}
+
+		// The vulnerability scan has to sit ahead of the publish. Scanning the
+		// pushed digest afterwards can only redden the run: the image is already
+		// in GHCR and the deploy scripts resolve a tag to a digest without ever
+		// reading a workflow result (OpenResilienceInitiative/ORISO-Docs#88).
+		// ci-main.yml publishes through the shared action, so its gate lives
+		// there; release-image.yml calls build-push-action directly and carries
+		// its own.
+		// Comment lines are stripped first: the explanatory comments themselves
+		// quote `push: true`, which would otherwise match ahead of the real step.
+		const withoutComments = (yaml: string) =>
+			yaml
+				.split('\n')
+				.filter((line) => !line.trim().startsWith('#'))
+				.join('\n');
+
+		for (const [rawSource, publishPattern] of [
+			[buildAction, /push: \$\{\{ inputs\.push_to_ghcr \}\}/],
+			[releaseWorkflow, /push: true/]
+		] as const) {
+			const source = withoutComments(rawSource);
+			const scanIndex = source.indexOf(
+				'aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25'
 			);
+			const publishIndex = source.search(publishPattern);
+			expect(scanIndex).toBeGreaterThan(-1);
+			expect(publishIndex).toBeGreaterThan(-1);
+			expect(scanIndex).toBeLessThan(publishIndex);
 		}
 
 		expect(releaseWorkflow).toContain('platforms: linux/amd64,linux/arm64');
@@ -102,9 +125,12 @@ describe('Matrix-only active frontend artifacts', () => {
 		expect(runtimeDockerfile).toMatch(
 			/ARG NODE_VERSION=[^\s]+@sha256:[a-f0-9]{64}/
 		);
-		expect(storybookDockerfile).toMatch(
-			/ARG NODE_VERSION=[^\s]+@sha256:[a-f0-9]{64}/
-		);
+		// Dockerfile.storybook has no node base: it copies the storybook-static
+		// output the workflow builds. nginx is the only base it still pulls, so
+		// asserting a NODE_VERSION pin here would demand a stage that must not
+		// come back — an in-image `npm install` for linux/arm64 runs under QEMU
+		// and cost that workflow ~28 minutes per publish.
+		expect(storybookDockerfile).not.toMatch(/ARG NODE_VERSION=/);
 		expect(storybookDockerfile).toMatch(
 			/FROM nginx:[^\s]+@sha256:[a-f0-9]{64}/
 		);

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
 import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 import { StageMobileHero } from '../stageLayout/StageMobileHero';
@@ -9,6 +10,7 @@ import { Stage } from '../stage/stage';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { TenantContext } from '../../globalState/provider/TenantProvider';
 import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { stageAccountCreatedLogin } from '../registration/accountCreatedLogin';
 
 /**
  * Design turn 2d (desktop) / 2e (mobile) for the login screen, part by part.
@@ -133,7 +135,9 @@ export const SecurityExplainer: StoryObj = {
 				py: 3
 			}}
 		>
-			<Caption>Zurück führt auf das Formular, nicht auf eine neue Seite</Caption>
+			<Caption>
+				Zurück führt auf das Formular, nicht auf eine neue Seite
+			</Caption>
 			<LoginSecurityExplainer onBack={() => undefined} />
 		</Box>
 	)
@@ -202,3 +206,223 @@ export const FullScreen: StoryObj = {
 	},
 	render: () => <LoginScreen />
 };
+
+/**
+ * Stages the handoff a registration leaves behind when it created the account
+ * but could not log it in (#1533) — in the initializer, so it is in place
+ * before `Login` reads it on its first render.
+ */
+const LoginAfterAccountCreated = () => {
+	React.useState(() => stageAccountCreatedLogin('blaue-wolke'));
+	return <LoginScreen />;
+};
+
+export const AccountCreatedLoginFailed: StoryObj = {
+	name: 'Nach der Registrierung — Konto angelegt, Anmeldung fehlgeschlagen',
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'So kommt eine Person hier an, wenn die Registrierung ihr Konto angelegt hat, die automatische Anmeldung danach aber gescheitert ist (#1533): Ein Hinweis sagt, warum sie hier ist, ihre gerade gewählte User-ID ist schon eingetragen, und der Cursor steht im Passwortfeld. Das Passwort selbst wird nie übergeben.'
+			}
+		}
+	},
+	render: () => <LoginAfterAccountCreated />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+
+		const notice = await canvas.findByRole('status');
+		await expect(notice).toHaveTextContent(
+			'Ihr Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt.'
+		);
+		await expect(
+			canvasElement.querySelector<HTMLInputElement>('#username')?.value
+		).toBe('blaue-wolke');
+		await waitFor(() =>
+			expect(document.activeElement?.id).toBe('passwordInput')
+		);
+	}
+};
+
+/**
+ * ORISO-UserService#1338: the e-mail code step of the real `Login`, reached by
+ * signing in against a stubbed Keycloak token endpoint. The stub answers the
+ * password grant with the 400 e-mail challenge, the way Keycloak does after it
+ * mailed a code; `resend` decides what the second request (the "send new
+ * code" link) gets back.
+ */
+type ResendAnswer = 'challenge' | 'outage' | 'limit';
+
+const jsonResponse = (status: number, body: unknown) =>
+	new Response(JSON.stringify(body), {
+		status,
+		headers: { 'content-type': 'application/json' }
+	});
+
+const TokenEndpointStub = ({
+	firstWaitSeconds,
+	resend,
+	children
+}: {
+	firstWaitSeconds?: number;
+	resend: ResendAnswer;
+	children: React.ReactNode;
+}) => {
+	const [isReady, setIsReady] = React.useState(false);
+	React.useLayoutEffect(() => {
+		const realFetch = window.fetch;
+		let calls = 0;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = String(
+				typeof input === 'string' || input instanceof URL
+					? input
+					: input.url
+			);
+			if (!url.includes('/protocol/openid-connect/token')) {
+				return realFetch(input as RequestInfo, init);
+			}
+			calls += 1;
+			// Long enough to see that "sent" waits for the answer.
+			await new Promise((done) => window.setTimeout(done, 600));
+			if (calls > 1 && resend === 'outage') {
+				return new Response('', { status: 503 });
+			}
+			if (calls > 1 && resend === 'limit') {
+				return jsonResponse(429, { error: 'invalid_grant' });
+			}
+			return jsonResponse(400, {
+				error: 'invalid_grant',
+				error_description: 'Missing totp',
+				otpType: 'EMAIL',
+				...(calls === 1 && firstWaitSeconds !== undefined
+					? { resendAvailableInSeconds: firstWaitSeconds }
+					: {})
+			});
+		}) as typeof window.fetch;
+		setIsReady(true);
+		return () => {
+			window.fetch = realFetch;
+		};
+	}, [firstWaitSeconds, resend]);
+	return isReady ? <>{children}</> : null;
+};
+
+const signInUntilEmailCode = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const username = canvasElement.querySelector(
+		'#username'
+	) as HTMLInputElement;
+	const password = canvasElement.querySelector(
+		'#passwordInput'
+	) as HTMLInputElement;
+	await userEvent.type(username, 'berater@example.org');
+	await userEvent.type(password, 'story-only{Enter}');
+	await canvas.findByRole(
+		'button',
+		{ name: /Neuen Code senden|Send new code/ },
+		{ timeout: 4000 }
+	);
+	return canvas;
+};
+
+const resendLink = (canvas: ReturnType<typeof within>) =>
+	canvas.getByRole('button', { name: /Neuen Code senden|Send new code/ });
+
+const emailCodeStory = (
+	name: string,
+	story: string,
+	stub: { firstWaitSeconds?: number; resend: ResendAnswer },
+	play: StoryObj['play']
+): StoryObj => ({
+	name,
+	parameters: {
+		layout: 'fullscreen',
+		docs: { description: { story } }
+	},
+	render: () => (
+		<TokenEndpointStub {...stub}>
+			<LoginScreen />
+		</TokenEndpointStub>
+	),
+	play
+});
+
+export const EmailCodeCountdown = emailCodeStory(
+	'E-Mail-Code — Wartezeit nach dem ersten Code',
+	'Direkt nach der Anmeldung wurde ein Code gemailt. Der Link zählt 30 s herunter („Neuen Code senden (0:27)“) und sendet in der Zeit nichts — ein Klick bleibt wirkungslos, der Fokus bleibt auf dem Link (`aria-disabled`, nicht `disabled`). Darunter: „Nur der zuletzt gesendete Code gilt.“',
+	{ resend: 'challenge' },
+	async ({ canvasElement }) => {
+		const canvas = await signInUntilEmailCode(canvasElement);
+		const link = resendLink(canvas);
+		await expect(link).toHaveAttribute('aria-disabled', 'true');
+		await expect(link.textContent).toMatch(/\(0:(30|29|28)\)/);
+		await expect(
+			canvas.getByText(
+				/Nur der zuletzt gesendete Code gilt|Only the most recently sent code is valid/
+			)
+		).toBeVisible();
+	}
+);
+
+export const EmailCodeResent = emailCodeStory(
+	'E-Mail-Code — neuer Code gesendet',
+	'Wartezeit vorbei (hier vom Server mit `resendAvailableInSeconds: 0` gemeldet), Klick auf den Link: „Neuer Code gesendet“ erscheint erst, wenn Keycloak mit der Challenge geantwortet hat, und die nächste Wartezeit beginnt. Ein zweiter Klick sendet nichts.',
+	{ firstWaitSeconds: 0, resend: 'challenge' },
+	async ({ canvasElement }) => {
+		const canvas = await signInUntilEmailCode(canvasElement);
+		await userEvent.click(resendLink(canvas));
+		await expect(canvas.getByRole('status')).toBeEmptyDOMElement();
+		await waitFor(
+			() =>
+				expect(canvas.getByRole('status')).toHaveTextContent(
+					/Neuer Code gesendet|New code sent/
+				),
+			{ timeout: 4000 }
+		);
+		await expect(resendLink(canvas)).toHaveAttribute(
+			'aria-disabled',
+			'true'
+		);
+	}
+);
+
+export const EmailCodeResendFailed = emailCodeStory(
+	'E-Mail-Code — Senden fehlgeschlagen',
+	'Keycloak antwortet nicht (hier 503). Statt „gesendet“ steht eine Fehlermeldung im Live-Bereich, und der Link ist sofort wieder nutzbar, weil keine Mail rausging.',
+	{ firstWaitSeconds: 0, resend: 'outage' },
+	async ({ canvasElement }) => {
+		const canvas = await signInUntilEmailCode(canvasElement);
+		await userEvent.click(resendLink(canvas));
+		await waitFor(
+			() =>
+				expect(canvas.getByRole('status')).toHaveTextContent(
+					/konnte nicht gesendet werden|could not be sent/
+				),
+			{ timeout: 4000 }
+		);
+		await expect(resendLink(canvas)).toHaveAttribute(
+			'aria-disabled',
+			'false'
+		);
+	}
+);
+
+export const EmailCodeResendLimit = emailCodeStory(
+	'E-Mail-Code — Grenze erreicht (429)',
+	'Mehr als 5 Codes in 15 Minuten: Keycloak antwortet 429 (kommt mit Scheibe 1 von #1338). Der Link erklärt die Grenze, statt einen Ausfall zu melden.',
+	{ firstWaitSeconds: 0, resend: 'limit' },
+	async ({ canvasElement }) => {
+		const canvas = await signInUntilEmailCode(canvasElement);
+		await userEvent.click(resendLink(canvas));
+		await waitFor(
+			() =>
+				expect(canvas.getByRole('status')).toHaveTextContent(
+					/Zu viele Codes angefordert|Too many codes requested/
+				),
+			{ timeout: 4000 }
+		);
+	}
+);

@@ -25,8 +25,25 @@ const consultantSession = (
 	isAgencyCounselling: true,
 	teamDiscussionFeatureEnabled: true,
 	hasExistingTeamDiscussion: false,
+	isGroupChatOwner: false,
+	isGroupChatActive: false,
+	hasMatrixRoom: true,
 	...overrides
 });
+
+// #1189 — a group chat the consultant owns. `isSession` is false for a group
+// chat (stateHelpers derives it from `sessionChat`), which is why none of the
+// one-to-one flags can ever apply here.
+const ownedGroupChat = (
+	overrides: Partial<ChatroomSettingsMenuInput> = {}
+): ChatroomSettingsMenuInput =>
+	consultantSession({
+		isSession: false,
+		isGroup: true,
+		isGroupChatOwner: true,
+		isAgencyCounselling: false,
+		...overrides
+	});
 
 // An enquiry is still a sessionChat (stateHelpers: `isSession = !!sessionChat`),
 // so the enquiry list is distinguished by `listType`, not by `isSession`.
@@ -190,6 +207,76 @@ describe('getChatroomSettingsMenuVisibility', () => {
 		});
 	});
 
+	// #1189 — the list row must offer the same "Chat settings" entry the header
+	// menu already has (SessionMenu.tsx:1007-1022), under the same conditions.
+	describe('chat settings — must mirror the session header menu (SessionMenu.tsx)', () => {
+		it('is offered to the owner of a group chat that is not running', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(ownedGroupChat())
+					.showChatSettings
+			).toBe(true);
+		});
+
+		it('is withheld while the group chat is running', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(
+					ownedGroupChat({ isGroupChatActive: true })
+				).showChatSettings
+			).toBe(false);
+		});
+
+		it('is withheld from a consultant who does not own the group chat', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(
+					ownedGroupChat({ isGroupChatOwner: false })
+				).showChatSettings
+			).toBe(false);
+		});
+
+		// The settings route is /:groupId/:sessionId/editGroupChat, so without a
+		// materialized room there is no path to navigate to.
+		it('is withheld when the chat has no Matrix room yet', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(
+					ownedGroupChat({ hasMatrixRoom: false })
+				).showChatSettings
+			).toBe(false);
+		});
+
+		it('is withheld from the asker', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(
+					ownedGroupChat({ isAsker: true, isConsultant: false })
+				).showChatSettings
+			).toBe(false);
+		});
+
+		it('is withheld on a one-to-one session, which has no group settings', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(
+					consultantSession({ isGroupChatOwner: true })
+				).showChatSettings
+			).toBe(false);
+		});
+
+		it('stays available on the archive tab, where the chat is never running', () => {
+			expect(
+				getChatroomSettingsMenuVisibility(
+					ownedGroupChat({ isArchiveTab: true })
+				).showChatSettings
+			).toBe(true);
+		});
+
+		it('offers no one-to-one action alongside it', () => {
+			const visibility =
+				getChatroomSettingsMenuVisibility(ownedGroupChat());
+			expect(visibility.showArchive).toBe(false);
+			expect(visibility.showDearchive).toBe(false);
+			expect(visibility.showDelete).toBe(false);
+			expect(visibility.showRequestHelp).toBe(false);
+		});
+	});
+
 	describe('unfinished actions have no backing feature and are never rendered', () => {
 		const everyCase: ChatroomSettingsMenuInput[] = [
 			consultantSession(),
@@ -198,7 +285,8 @@ describe('getChatroomSettingsMenuVisibility', () => {
 			consultantEnquiry(),
 			consultantEnquiry({ hasExistingTeamDiscussion: true }),
 			consultantSession({ isAsker: true, isConsultant: false }),
-			consultantSession({ isGroup: true })
+			consultantSession({ isGroup: true }),
+			ownedGroupChat()
 		];
 
 		it('exposes no mute / invite / summarize flag in any configuration', () => {
@@ -206,6 +294,7 @@ describe('getChatroomSettingsMenuVisibility', () => {
 				const visibility = getChatroomSettingsMenuVisibility(input);
 				expect(Object.keys(visibility).sort()).toEqual([
 					'showArchive',
+					'showChatSettings',
 					'showDearchive',
 					'showDelete',
 					'showRequestHelp'

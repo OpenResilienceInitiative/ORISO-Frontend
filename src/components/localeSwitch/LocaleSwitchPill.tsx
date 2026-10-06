@@ -32,6 +32,51 @@ const stripIsoPrefix = (label: string) =>
 	label.replace(/^\(\s*[A-Za-z-]+\s*\)\s*/, '');
 
 /**
+ * Endonyms for the platform's core locales — each language named in itself.
+ *
+ * A language menu must be readable by someone who cannot read the current UI
+ * language, so exonyms ("Russian" on a German UI) are wrong here by design.
+ * The `languages` catalogues cannot provide this: they name languages in the
+ * catalogue's own language (and the non-English catalogues silently fall back
+ * to English for every entry nobody translated, which is what produced the
+ * mixed "Deutsch, Englisch, Russian, Tigrinya…" menu).
+ */
+const CORE_ENDONYMS: Record<string, string> = {
+	de: 'Deutsch',
+	en: 'English',
+	fr: 'Français',
+	ru: 'Русский',
+	ti: 'ትግርኛ',
+	tr: 'Türkçe',
+	uk: 'Українська'
+};
+
+/**
+ * Endonym for a locale: curated map first, then the browser's CLDR data
+ * (`Intl.DisplayNames` in the language's own locale, capitalised for a
+ * standalone label), then the catalogue label as the last resort.
+ */
+const toEndonym = (locale: string, catalogueLabel: string) => {
+	const base = locale.split(/[-_@]/)[0].toLowerCase();
+	if (CORE_ENDONYMS[base]) {
+		return CORE_ENDONYMS[base];
+	}
+	try {
+		const name = new Intl.DisplayNames([base], {
+			type: 'language'
+		}).of(base);
+		if (name && name !== base) {
+			// CLDR autonyms can be lowercase ("русский"); the menu shows them
+			// as standalone labels, so the first letter is capitalised.
+			return name.charAt(0).toLocaleUpperCase(base) + name.slice(1);
+		}
+	} catch {
+		// Unknown tag or missing CLDR data — fall through to the catalogue.
+	}
+	return catalogueLabel;
+};
+
+/**
  * Language switch for the public stage screens (design 2d / 2e).
  *
  * Deliberately not the react-select based {@link LocaleSwitch}: that one is
@@ -66,7 +111,10 @@ export const LocaleSwitchPill = ({
 	}
 
 	const languageName = (lng: string) =>
-		stripIsoPrefix(translate([lng, lng], { ns: 'languages' }) as string);
+		toEndonym(
+			lng,
+			stripIsoPrefix(translate([lng, lng], { ns: 'languages' }) as string)
+		);
 
 	return (
 		<>

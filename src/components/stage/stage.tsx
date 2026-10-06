@@ -38,12 +38,6 @@ export const Stage = ({
 
 	const legalLinks = useContext(LegalLinksContext);
 	const tenant = useTenant();
-	// The stage used to ship seven hardcoded Caritas-association logos, which
-	// is a third party's branding on every ORISO login screen (FE-H05, #178).
-	// The association mark is tenant data now: shown when a tenant configures
-	// one, absent otherwise. No fallback — a wrong mark is worse than none.
-	const associationLogo =
-		tenant?.theming?.associationLogo || tenant?.theming?.logo || '';
 
 	const rootNodeRef = useRef<HTMLDivElement>(null);
 	const effectCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -71,7 +65,16 @@ export const Stage = ({
 			setIsOpen(true);
 		}
 
-		const onTransitionEnd = () => {
+		// Only the panel's own width transition counts — a focused mark's
+		// opacity/transform transition bubbles up here too and would mark the
+		// stage ready (and interactive) while it is still sliding.
+		const onTransitionEnd = (event: TransitionEvent) => {
+			if (
+				event.target !== rootNodeRef.current ||
+				event.propertyName !== 'width'
+			) {
+				return;
+			}
 			setHasAnimationFinished(true);
 		};
 
@@ -100,9 +103,11 @@ export const Stage = ({
 
 		current.x += deltaX * 0.06;
 		current.y += deltaY * 0.06;
+		// Design 2d's torch: soft, and softer the lower it sits on the panel.
+		// (0.2 peak; the older 0.42 read as a floodlight over the dot field.)
 		const glowOpacity = Math.max(
-			0.08,
-			Math.min(0.42, 0.42 - current.y * 0.0028)
+			0.06,
+			Math.min(0.2, 0.2 - current.y * 0.0011)
 		);
 
 		rootNode.style.setProperty('--stage-mx', `${current.x.toFixed(2)}%`);
@@ -219,14 +224,10 @@ export const Stage = ({
 					/>
 				</div>
 				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
-				{associationLogo ? (
-					<div className="stage__tenantLogo">
-						<img
-							src={associationLogo}
-							alt={translate('app.stage.associationLogoAlt')}
-						/>
-					</div>
-				) : null}
+				{/* The centre of the panel belongs to the lamp-map composition.
+				    The tenant/association mark that used to sit here was removed
+				    on the owner's decision (2026-08-19): it doubled branding that
+				    already lives on the header and covered the composition. */}
 				<StageCarrierLogos
 					allowed={tenant?.theming?.associationLogos}
 					onHighlight={lampMap.setCarrier}

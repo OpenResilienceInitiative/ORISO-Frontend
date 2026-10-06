@@ -6,9 +6,9 @@ import {
 	createMatrixErrorAwareLogger,
 	getMatrixClientLogger
 } from '../../utils/matrixLogging';
-import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import { getValueFromCookie } from './accessSessionCookie';
 import { parseJwt } from '../../utils/parseJWT';
+import { secretStorageKeyCallback } from '../../services/matrixKeyBackupService';
 import {
 	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
 	MATRIX_DEVICE_ID_STORAGE_KEY,
@@ -16,10 +16,7 @@ import {
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
-import {
-	createPasswordUiAuth,
-	registerDeviceSigningAuth
-} from '../../services/matrixInteractiveAuth';
+import { registerDeviceSigningPassword } from '../../services/matrixInteractiveAuth';
 
 export interface MatrixLoginData {
 	accessToken: string;
@@ -29,6 +26,8 @@ export interface MatrixLoginData {
 	expiresInMs?: number;
 	/** Transient Matrix password for device-signing UIA; never persisted. */
 	uiaPassword?: string;
+	/** Authentication identity that requested these credentials; never a password. */
+	authenticatedSubject?: string;
 	// Anonymous live-chat users can never cross-sign a consultant's device, so
 	// their client must share Megolm keys to all devices; invisible crypto
 	// (verified-only) would silently make their messages undecryptable for the
@@ -38,6 +37,7 @@ export interface MatrixLoginData {
 
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
 const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
+
 const MATRIX_TOKEN_REUSE_BUFFER_MS = 2 * 60 * 1000;
 const MATRIX_DEVICE_ID_PATTERN = /^[A-Za-z0-9._=-]{1,255}$/;
 
@@ -51,6 +51,7 @@ interface InFlightTokenBootstrap {
 }
 
 let inFlightTokenBootstrap: InFlightTokenBootstrap | null = null;
+let deviceBootstrapGeneration = 0;
 
 const isMatrixTokenBootstrapDisabled = (): boolean =>
 	process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1' ||
@@ -163,25 +164,99 @@ const getPersistedMatrixLoginData = (): MatrixLoginData | null => {
 		userId,
 		deviceId,
 		homeserverUrl,
+		authenticatedSubject: sessionSubject,
 		expiresInMs: remainingLifetimeMs
 	};
 };
 
-const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
-	const requestedDeviceId = getOrCreateRequestedDeviceId();
-	const querySeparator = endpoints.matrixAccessToken.includes('?')
-		? '&'
-		: '?';
-	const tokenUrl = `${endpoints.matrixAccessToken}${querySeparator}deviceId=${encodeURIComponent(
-		requestedDeviceId
-	)}`;
+const matrixTokenUrl = (deviceId: string): string =>
+	`${endpoints.matrixAccessToken}${
+		endpoints.matrixAccessToken.includes('?') ? '&' : '?'
+	}deviceId=${encodeURIComponent(deviceId)}`;
 
+/** Ends the session behind a token. Matrix logout deletes that token's device, so only use it on a
+ * token of another device or after this browser was signed out. */
+const revokeMatrixToken = (homeserverUrl: string, accessToken: string) =>
+	void fetch(`${homeserverUrl}/_matrix/client/v3/logout`, {
+		method: 'POST',
+		// Survives the navigation that usually follows sign-out.
+		keepalive: true,
+		headers: { Authorization: `Bearer ${accessToken}` }
+	}).catch(() => undefined);
+
+/**
+ * The account's Matrix password as of now, for one device-signing UIA. The same call signs this
+ * device in again; the client moves onto that token so it stays authorised and logout revokes it.
+ */
+const fetchCurrentUiaPassword = async (
+	client: MatrixClient,
+	loginData: MatrixLoginData
+): Promise<string> => {
+	const response = await fetchData({
+		url: matrixTokenUrl(loginData.deviceId),
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		recoverOnPublicAuthRoute: false
+	});
+	const token: string | undefined = response?.accessToken;
+	if (
+		response?.userId !== loginData.userId ||
+		response?.deviceId !== loginData.deviceId
+	) {
+		if (token) revokeMatrixToken(loginData.homeserverUrl, token);
+		throw new Error('Matrix login was bound to another account or device');
+	}
+	if (!token) {
+		throw new Error('Matrix login returned no access token');
+	}
+	const storedToken = localStorage.getItem(MATRIX_ACCESS_TOKEN_STORAGE_KEY);
+	if (
+		!storedToken ||
+		localStorage.getItem(MATRIX_USER_ID_STORAGE_KEY) !== loginData.userId
+	) {
+		// Signed out while the request was in flight: commit nothing, end the session just issued.
+		revokeMatrixToken(loginData.homeserverUrl, token);
+		throw new Error('Matrix session ended during device-signing auth');
+	}
+	// Replaced by a same-tab refresh (stopped): the session lives on in the new client, touch nothing.
+	if (!client.clientRunning) {
+		throw new Error(
+			'Matrix client was replaced during device-signing auth'
+		);
+	}
+	// A newer token of this account in storage (refresh, other tab) stays; it is alive too.
+	const ownsStorage = storedToken === client.getAccessToken();
+	client.setAccessToken(token);
+	if (ownsStorage) {
+		persistMatrixLoginData({
+			...loginData,
+			accessToken: token,
+			expiresInMs: response.expiresInMs
+		});
+	}
+	if (!response.uiaPassword) {
+		throw new Error('Matrix login returned no UIA password');
+	}
+	return response.uiaPassword;
+};
+
+const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
+	const requestedSubject = getCurrentAuthSubject();
+	const requestedGeneration = deviceBootstrapGeneration;
+
+	const requestedDeviceId = getOrCreateRequestedDeviceId();
 	return fetchData({
-		url: tokenUrl,
+		url: matrixTokenUrl(requestedDeviceId),
 		method: FETCH_METHODS.GET,
 		responseHandling: [FETCH_ERRORS.CATCH_ALL],
 		recoverOnPublicAuthRoute: false
 	}).then((response) => {
+		if (requestedGeneration !== deviceBootstrapGeneration) {
+			throw new Error('Matrix device changed during token bootstrap');
+		}
+		if (getCurrentAuthSubject() !== requestedSubject) {
+			throw new Error('Matrix session changed during token bootstrap');
+		}
 		const homeserverUrl = getMatrixHomeserverUrl();
 		if (!homeserverUrl) {
 			throw new Error(
@@ -203,7 +278,10 @@ const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 			),
 			homeserverUrl,
 			expiresInMs: response.expiresInMs,
-			uiaPassword: response.uiaPassword
+			uiaPassword: response.uiaPassword,
+			...(requestedSubject
+				? { authenticatedSubject: requestedSubject }
+				: {})
 		};
 	});
 };
@@ -244,6 +322,12 @@ export const getMatrixAccessToken = (
 };
 
 export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
+	if (
+		loginData.authenticatedSubject &&
+		loginData.authenticatedSubject !== getCurrentAuthSubject()
+	) {
+		throw new Error('Matrix session changed before credential persistence');
+	}
 	localStorage.setItem(
 		MATRIX_ACCESS_TOKEN_STORAGE_KEY,
 		loginData.accessToken
@@ -263,15 +347,23 @@ export const persistMatrixLoginData = (loginData: MatrixLoginData): void => {
 	} else {
 		localStorage.removeItem(MATRIX_SESSION_SUBJECT_STORAGE_KEY);
 	}
-	if (loginData.expiresInMs) {
+	if (
+		typeof loginData.expiresInMs === 'number' &&
+		Number.isFinite(loginData.expiresInMs) &&
+		loginData.expiresInMs > 0
+	) {
 		localStorage.setItem(
 			MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 			(Date.now() + loginData.expiresInMs).toString()
 		);
+	} else {
+		localStorage.removeItem(MATRIX_TOKEN_EXPIRY_STORAGE_KEY);
 	}
 };
 
 export const clearPersistedMatrixDeviceId = (userId: string): void => {
+	deviceBootstrapGeneration += 1;
+	inFlightTokenBootstrap = null;
 	localStorage.removeItem(MATRIX_DEVICE_ID_STORAGE_KEY);
 	localStorage.removeItem(`${MATRIX_DEVICE_ID_STORAGE_KEY}:${userId}`);
 };
@@ -295,14 +387,18 @@ export const createMatrixClient = (
 		// through this callback during setup/recovery flows (one-shot in-memory
 		// cache, never persisted).
 		cryptoCallbacks: {
-			getSecretStorageKey: secretStorageKeyCallback
+			getSecretStorageKey: (keys, name) =>
+				secretStorageKeyCallback(client, keys, name)
 		}
 	});
 
-	if (loginData.uiaPassword) {
-		registerDeviceSigningAuth(
-			client,
-			createPasswordUiAuth(loginData.userId, loginData.uiaPassword)
+	if (
+		!loginData.isAnonymous &&
+		(loginData.uiaPassword || loginData.authenticatedSubject)
+	) {
+		// Every token fetch rotates the password, so the one in loginData goes stale; ask anew.
+		registerDeviceSigningPassword(client, loginData.userId, () =>
+			fetchCurrentUiaPassword(client, loginData)
 		);
 	}
 

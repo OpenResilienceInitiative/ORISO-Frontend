@@ -8,7 +8,8 @@ import {
 	Box,
 	Button,
 	Link,
-	Avatar
+	Avatar,
+	Chip
 } from '@mui/material';
 import {
 	Dispatch,
@@ -23,7 +24,6 @@ import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
 import { useTranslation } from 'react-i18next';
 import { RegistrationContext, RegistrationData } from '../../../globalState';
 import { AgencyDataInterface } from '../../../globalState/interfaces';
-import { AgencyLanguages } from './AgencyLanguages';
 import { AgencyDetailsPanel } from './AgencyDetailsPanel';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
 import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
@@ -117,8 +117,8 @@ export const AgencySelectionResults = ({
 	const renderAgencyLabel = (agency: AgencyDataInterface) => {
 		const detailsOpen = openAgencyDetailsId === agency.id;
 		const detailsLabel = detailsOpen
-			? t('registration.agency.details.less', 'Weniger')
-			: t('registration.agency.details.more', 'Mehr');
+			? t('registration.agency.details.less')
+			: t('registration.agency.details.more');
 
 		return (
 			<Box
@@ -165,16 +165,23 @@ export const AgencySelectionResults = ({
 						>
 							{agency.name}
 						</Typography>
-						<Typography
-							variant="body2"
+						<Chip
+							size="small"
+							label={
+								agency.teamAgency
+									? t('registration.agency.type.team')
+									: t('registration.agency.type.single')
+							}
 							sx={{
+								mt: 1,
+								height: 24,
+								fontWeight: 600,
+								fontSize: 12,
+								bgcolor: registrationMd3.surfaceContainer,
 								color: registrationMd3.onSurfaceVariant,
-								mt: '8px'
+								border: `1px solid ${registrationMd3.outlineVariant}`
 							}}
-						>
-							{t('registration.agency.result.languages')}
-						</Typography>
-						<AgencyLanguages agencyId={agency.id} />
+						/>
 					</Box>
 					<Button
 						type="button"

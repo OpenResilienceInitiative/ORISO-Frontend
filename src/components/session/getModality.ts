@@ -30,7 +30,7 @@ type ConversationItem = Partial<SessionItemInterface> &
 		teamSession?: boolean;
 	};
 
-type ModalityInput =
+export type ModalityInput =
 	| ListItemInterface
 	| {
 			item?: ConversationItem | null;
@@ -39,6 +39,8 @@ type ModalityInput =
 			user?: { username?: string | null };
 	  };
 
+// Historical accounts: live-chat used to mint Anonymous-<timestamp> handles;
+// topic-based invite still uses anon_N. Newer guests get animal User-IDs.
 const isAnonymousUsername = (username?: string | null): boolean =>
 	typeof username === 'string' &&
 	(username.startsWith('Anonymous-') || username.startsWith('anon_'));
@@ -64,7 +66,9 @@ const isAnonymousPostcode = (postcode?: number | string | null): boolean => {
  * significant: a group `chat` is checked before `teamSession`, which is checked before the
  * anonymous (live-chat) signal, so an internal group is never mislabelled as agency counselling.
  */
-export const getModality = (item?: ModalityInput): Modality => {
+export const getModalityIfKnown = (
+	item?: ModalityInput
+): Modality | undefined => {
 	const activeSession = item && 'item' in item ? item : undefined;
 	const listItem =
 		item && !('item' in item) ? (item as ListItemInterface) : undefined;
@@ -87,6 +91,11 @@ export const getModality = (item?: ModalityInput): Modality => {
 	const explicit = session?.conversationType ?? chat?.conversationType;
 	if (isModality(explicit)) {
 		return explicit;
+	}
+	// An explicit value is authoritative even when this frontend does not know
+	// it yet. Do not disguise a future/backend modality as a legacy heuristic.
+	if (explicit !== undefined) {
+		return undefined;
 	}
 
 	// 2. Fallback heuristic (centralised here, deleted once the column is populated everywhere).
@@ -111,5 +120,8 @@ export const getModality = (item?: ModalityInput): Modality => {
 		return Modality.AGENCY_COUNSELLING;
 	}
 
-	return Modality.AGENCY_COUNSELLING;
+	return undefined;
 };
+
+export const getModality = (item?: ModalityInput): Modality =>
+	getModalityIfKnown(item) ?? Modality.AGENCY_COUNSELLING;

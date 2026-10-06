@@ -1,30 +1,38 @@
 $icon-size: 24px;
 $icon-size-small: 16px;
-$session-card-bg: #eae7e8;
+$session-card-bg: var(--m3-surface-container-high, #eae7e8);
 $session-card-hover-bg: #f0e7e7;
 
 // WP-06 Slice 0b: source the active-state colours from the shared list-item
 // selection tokens (settings.scss → _listItemSelection.scss). Values are
 // unchanged — this only makes them the single canonical source.
-$session-card-selected-bg: #f6f3f3;
+$session-card-selected-bg: var(--m3-surface-container-low, #f6f3f3);
+
+// No border role is white, and surface roles may not colour borders (m3Sweep).
 $session-light-border: #fff;
 
 // #597: selected ring uses M3 primary (was #ffb4aa / 1px)
 $session-selected-border: var(--m3-primary, #a5000a);
 $session-active-border: var(--m3-primary-container, #cc1e1c);
-$session-focus-ring: #ffdad5;
-$session-topic-chip-bg: #ffb4aa;
-$session-topic-chip-color: #410001;
-$session-chip-hover-bg: #cc1e1c;
-$session-chip-hover-color: #ffffff;
-$session-postcode-border: #ffb4aa;
-$session-postcode-color: #cc1e1c;
+$session-focus-ring: var(--m3-primary-fixed, #ffdad5);
+$session-topic-chip-bg: var(--m3-primary-fixed-dim, #ffb4aa);
+$session-topic-chip-color: var(--m3-on-primary-fixed, #410001);
+$session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
+$session-chip-hover-color: var(--m3-on-primary, #ffffff);
+$session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
+$session-postcode-color: var(--m3-primary-container, #cc1e1c);
 $case-handover-action: var(--m3-primary, $primary);
 $case-handover-action-hover: var(--m3-primary-hover, $hover-primary);
 $case-handover-action-disabled: var(--m3-surface-variant, #d8dde3);
 $case-handover-status-muted: var(--m3-on-surface-variant, #667280);
 $case-handover-denied-bg: var(--m3-error-container, #f7d7d7);
 $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
+
+// The menu pill sits this far in from the card's inset (`__rowRight`); the
+// session card body's marks and text end under it (`--card-trailing`).
+$card-trailing-wide: 10px;
+$card-trailing-narrow: 4px;
+$card-border-grow: $list-item-selected-border-width - 1px;
 
 .sessionsListItem {
 	&__groupModalityIcon {
@@ -36,8 +44,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	display: flex;
 	color: $body-font-color;
 
-	// Every card is a standalone tile: 6px gap + full 24px radius always.
-	margin: 0 0 6px;
+	// Every card is a standalone tile with the full 24px radius; T5 (Frank's
+	// spacing example, 05.09.): 24px between cards, 16px inside.
+	margin: 0 0 24px;
 	transition:
 		background-color 160ms ease,
 		border-color 160ms ease,
@@ -95,12 +104,12 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		// Make tags red when card is active
 		.sessionsListItem__topic {
 			background-color: $session-active-border !important;
-			color: #ffffff !important;
+			color: var(--m3-on-primary, #ffffff) !important;
 		}
 
 		.sessionsListItem__menuIcon {
 			border-color: $session-selected-border;
-			color: #410001;
+			color: var(--m3-on-primary-fixed, #410001);
 		}
 
 		// Make consulting type icons red when card is active
@@ -121,8 +130,16 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			color: #da5248 !important;
 		}
 
+		// Mail keeps the primary colour when active: it is the modality's colour, not a highlight.
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
-			color: #da5248 !important;
+			color: var(--m3-primary, $primary) !important;
+		}
+
+		.sessionsListItem__consultingTypeIcon--nearbyIcon {
+			// The mask already paints it; the black-to-red filter the other
+			// modalities use would double up on it.
+			filter: none;
+			background-color: var(--m3-primary, $primary);
 		}
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
@@ -155,24 +172,44 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&--menuOpen {
+		// Only the open menu carries the red ring. The border keeps a selected card's 2 px,
+		// which `__content--flow` gives back, so nothing moves.
 		.sessionsListItem__content {
 			background-color: #fff6f5 !important;
-
-			@include list-item-active-menu-border($important: true);
+			border: $list-item-active-menu-border-width solid
+				$session-light-border !important;
 		}
 
-		// Flyout open: vertical pill (height > width) + 2px primary-container
-		.sessionsListItem__menuIcon {
-			width: 32px;
-			height: 48px;
+		.sessionsListItem__content:hover,
+		.sessionsListItem__content:focus,
+		.sessionsListItem__content:active {
+			border-color: $session-light-border !important;
+		}
 
+		// Geometry stays put so the card does not twitch when the menu opens.
+		.sessionsListItem__menuIcon {
 			@include list-item-active-menu-border;
-			color: $session-active-border;
+
+			background-color: var(--m3-primary, $primary);
+			border-color: var(--m3-primary, $primary);
+			color: var(--m3-on-primary-container, #ffe2de);
+
+			// The resting hover tint comes later in this file and would hide the light dots.
+			&:hover {
+				background-color: var(--m3-primary, $primary);
+			}
+		}
+
+		// One focus ring at a time: the menu holds the keyboard, so the card drops its ring.
+		.sessionsListItem__content:focus-visible,
+		.sessionsListItem__content:focus {
+			outline: none;
+			box-shadow: none;
 		}
 
 		.sessionsListItem__topic {
 			background-color: $session-active-border !important;
-			color: #ffffff !important;
+			color: var(--m3-on-primary, #ffffff) !important;
 		}
 	}
 
@@ -251,25 +288,28 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&--caseHandoverLocked:not(.sessionsListItem--active)
 		.sessionsListItem__content {
-		background: #ffffff;
+		background: var(--m3-surface-container-lowest, #ffffff);
 		border-color: #ffd8d4;
 	}
 
-	&.sessionsListItem--active .sessionsListItem__content:focus-visible {
-		// Keep selected primary border; layer keyboard halo (#596 / WP-06)
+	&.sessionsListItem--active:not(.sessionsListItem--menuOpen)
+		.sessionsListItem__content:focus-visible {
+		// Keep selected primary border; layer keyboard halo (#596 / WP-06).
+		// Not while the menu is open: the menu owns the focus then.
 		@include list-item-selected-border($important: true);
 		box-shadow: 0 0 0 3px $session-focus-ring;
 	}
 
 	&__row {
 		display: flex;
-		gap: 10px;
+
+		gap: 12px;
 		color: var(--m3-primary, $secondary);
 		min-width: 0;
 
 		&:first-child {
 			justify-content: space-between;
-			padding: 18px 16px 0;
+			padding: 16px 16px 0;
 			color: var(--m3-on-surface-variant, $tertiary);
 			font-size: 12px;
 			line-height: 16px;
@@ -283,7 +323,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		&:last-child {
 			justify-content: space-between;
 			align-items: flex-end;
-			padding: 0 16px 14px 24px;
+			padding: 0 16px 16px;
 
 			// Figma 8609-31260: 48px-high bottom action row.
 			min-height: 48px;
@@ -298,9 +338,47 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
+	// The body (`SessionCardBody`) fixes its own height. A selected card or
+	// one with its menu open has a 2 px border; the rows give the pixel back.
+	&__content--flow {
+		--card-trailing: #{$card-trailing-wide};
+
+		min-height: 0;
+
+		@media screen and (width <= 899px) {
+			--card-trailing: #{$card-trailing-narrow};
+		}
+	}
+
+	&--active &__content--flow,
+	&--menuOpen &__content--flow {
+		> .sessionsListItem__row:first-child {
+			margin: (-$card-border-grow) (-$card-border-grow) 0;
+		}
+
+		> .sessionCard {
+			margin: 0 (-$card-border-grow) (-$card-border-grow);
+		}
+	}
+
+	&__previewGlyph {
+		width: 14px;
+		height: 14px;
+		margin-right: 6px;
+		vertical-align: -2px;
+		color: var(--m3-secondary, #4c555f);
+
+		// `audio-on.svg` is drawn in white for the composer's red button.
+		path {
+			fill: currentcolor;
+		}
+	}
+
 	&__rowLeft {
 		display: flex;
-		align-items: center;
+
+		// The tag sits level with the menu pill at the top of the row, not centred on it.
+		align-items: flex-start;
 		gap: 8px;
 		flex: 1;
 		min-width: 0;
@@ -312,7 +390,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 	}
 
 	&__rowRight {
-		padding-right: 10px;
+		padding-right: $card-trailing-wide;
 		display: flex;
 		align-items: center;
 		gap: 8px;
@@ -323,7 +401,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		@media screen and (width <= 899px) {
 			// On narrow devices, let the right cluster compress first
 			// so topic tags keep more readable space.
-			padding-right: 4px;
+			padding-right: $card-trailing-narrow;
 			gap: 4px;
 			min-width: 0;
 			flex-shrink: 1;
@@ -365,6 +443,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
+
 		width: 48px;
 		height: 32px;
 		padding: 0;
@@ -373,13 +452,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		box-sizing: border-box;
 		border-radius: 32px;
 		border: 1px solid #ffffff;
-		background-color: #ffffff;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		color: #1e1e1e;
 		font: inherit;
 		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 		transition:
-			width 160ms ease,
-			height 160ms ease,
 			border-color 160ms ease,
 			background-color 160ms ease;
 
@@ -409,7 +486,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		border-radius: 8px;
 		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 		overflow: auto;
-		z-index: 99999 !important;
+
 		display: flex !important;
 		flex-direction: column;
 		padding: 8px;
@@ -482,7 +559,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin: 0;
 
 		&:hover:not(:disabled) {
-			background-color: #e7effc;
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
@@ -499,7 +576,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			outline: 2px solid
 				color-mix(in srgb, var(--m3-primary, #a5000a) 42%, transparent);
 			outline-offset: -2px;
-			background-color: #e7effc;
+			background-color: var(--oriso-menu-hover-surface, #e7effc);
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
@@ -528,7 +605,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin-top: 2px;
 
 		&--disabled {
-			fill: #9ba4b0;
+			fill: var(--m3-tertiary-container, #9ba4b0);
 		}
 	}
 
@@ -555,7 +632,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		flex: 1;
 
 		&--disabled {
-			color: #9ba4b0;
+			color: var(--m3-tertiary-container, #9ba4b0);
 		}
 	}
 
@@ -580,7 +657,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		margin: 0;
 
 		&--disabled {
-			color: #9ba4b0;
+			color: var(--m3-tertiary-container, #9ba4b0);
 		}
 	}
 
@@ -600,7 +677,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		justify-content: center;
 		padding: 2px 12px 2px 4px;
 		box-sizing: border-box;
-		background-color: #ffffff;
+		background-color: var(--m3-surface-container-lowest, #ffffff);
 		border: 1px solid $session-postcode-border;
 		border-left: none;
 		border-radius: 0 12px 12px 0;
@@ -627,7 +704,7 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		align-self: center;
+		align-self: flex-start;
 		min-width: 0;
 		max-width: 100%;
 		flex: 0 1 auto;
@@ -673,6 +750,57 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			width: $icon-size;
 			height: $icon-size;
 		}
+	}
+
+	// ADR-008 supervision marker (replaces the silent-member eye for the
+	// assigned supervisor).
+	&__supervisionBadge {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background-color: var(--m3-secondary-container, #e8e6f0);
+		color: var(--m3-on-secondary-container, #4f5864);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		// T9: `supervision_circ` (currentColor) — same glyph as panel header
+		// and FAB.
+		svg {
+			width: 18px;
+			height: 18px;
+			fill: currentcolor;
+		}
+	}
+
+	// Owner-side hint: "Supervision: <name>" on the preview row.
+	&__supervisionIndicator {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		max-width: 40%;
+		margin-left: 8px;
+		padding: 2px 8px;
+		border-radius: 12px;
+		background-color: var(--m3-secondary-container, #e8e6f0);
+		color: var(--m3-on-secondary-container, #4f5864);
+		font-size: 12px;
+		line-height: 16px;
+		white-space: nowrap;
+		overflow: hidden;
+
+		svg {
+			width: 14px;
+			height: 14px;
+			flex: 0 0 auto;
+			fill: currentcolor;
+		}
+	}
+
+	&__supervisionIndicatorName {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	&__stackedAvatars {
@@ -737,7 +865,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__username {
 		font-weight: $font-weight-medium;
-		padding: 8px 22px;
+
+		// No horizontal padding: the distance to the avatar is the row's 12 px gap alone.
+		padding: 8px 0;
 		margin-right: auto;
 		white-space: nowrap;
 		overflow: hidden;
@@ -768,8 +898,9 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 
 	&__subject {
 		// padding: 8px 16px;
-		font-size: 14px;
-		line-height: 20px;
+		// T37/D1: one switch with the message body (`mui-variables-mapping.scss`).
+		font-size: var(--session-preview-font-size, 12px);
+		line-height: var(--session-preview-line-height, 16px);
 		letter-spacing: 0.25px;
 		white-space: nowrap;
 		overflow: hidden;
@@ -876,21 +1007,35 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 			margin-right: 0;
 			padding-right: 12px;
 			gap: 8px;
-			height: 38px;
 			white-space: nowrap;
+
+			// Centre icon and word on each other; the base rule's `end` hangs them
+			// from a shared bottom edge.
+			align-items: center;
 		}
 
+		// The asset has a grey fill baked in, so it is worn as a mask coloured here.
 		&--nearbyIcon {
 			width: 24px !important;
 			height: 24px !important;
 			flex-shrink: 0;
+			display: block;
+			background-color: var(--m3-primary, $primary);
+			mask-image: var(--nearby-icon-url);
+			mask-size: contain;
+			mask-position: center;
+			mask-repeat: no-repeat;
+			-webkit-mask-image: var(--nearby-icon-url);
+			-webkit-mask-size: contain;
+			-webkit-mask-position: center;
+			-webkit-mask-repeat: no-repeat;
 		}
 
 		&--nearbyLabel {
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
 			font-weight: 600;
-			color: var(--m3-secondary, #4b515a);
+			color: var(--m3-primary, $primary);
 			line-height: 20px;
 			letter-spacing: 0;
 		}
@@ -1061,12 +1206,11 @@ $case-handover-denied-text: var(--m3-on-error-container, #a5000a);
 		}
 	}
 
+	// #1158: portalled to document.body so the card's `overflow: hidden`
+	// cannot clip it; position, width and layer come inline.
 	&__handoverActionMenu {
-		position: absolute;
-		top: calc(100% + 6px);
-		right: 0;
-		z-index: 40;
-		min-width: 236px;
+		position: fixed;
+		max-width: calc(100vw - 16px);
 		padding: 6px;
 		border-radius: 14px;
 		border: 1px solid var(--m3-primary, #a5000a);

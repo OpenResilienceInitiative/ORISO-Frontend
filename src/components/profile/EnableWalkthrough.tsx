@@ -1,57 +1,77 @@
 import * as React from 'react';
+import { useCallback, useContext, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Headline } from '../headline/Headline';
 import { Text } from '../text/Text';
 import { Switch } from '../Switch';
-import { useContext } from 'react';
-import { UserDataContext } from '../../globalState';
-
+import {
+	NotificationsContext,
+	NOTIFICATION_TYPE_ERROR,
+	UserDataContext
+} from '../../globalState';
 import { apiPatchConsultantData } from '../../api';
-import { useTranslation } from 'react-i18next';
 
+/**
+ * The counsellor's own auto-start switch for product tours (#1526). Off only
+ * stops tours from starting on their own; the tour list next to it still
+ * starts every tour by hand. One switch governs all tours, so the texts are
+ * plural and the hint follows the state.
+ */
 export const EnableWalkthrough = () => {
 	const { t: translate } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
-	const { isWalkThroughEnabled } = userData;
+	const { addNotification } = useContext(NotificationsContext);
+	const [pending, setPending] = useState(false);
+	const isWalkThroughEnabled = !!userData.isWalkThroughEnabled;
+	const title = translate('walkthrough.switch.title');
+	// Static keys, so the i18n guard can see every one of them.
+	const stateLabel = translate(
+		isWalkThroughEnabled
+			? 'walkthrough.switch.label.on'
+			: 'walkthrough.switch.label.off'
+	);
+	const hint = translate(
+		isWalkThroughEnabled
+			? 'walkthrough.switch.hint.on'
+			: 'walkthrough.switch.hint.off'
+	);
+
+	const handleChange = useCallback(() => {
+		setPending(true);
+		apiPatchConsultantData({ walkThroughEnabled: !isWalkThroughEnabled })
+			.then(reloadUserData)
+			.catch(() => {
+				addNotification({
+					notificationType: NOTIFICATION_TYPE_ERROR,
+					title: translate('profile.notifications.error.title'),
+					text: translate('profile.notifications.error.description'),
+					closeable: true,
+					timeout: 60000
+				});
+			})
+			.finally(() => setPending(false));
+	}, [addNotification, isWalkThroughEnabled, reloadUserData, translate]);
+
 	return (
-		<div className="twoFactorAuth">
+		<div className="twoFactorAuth" data-testid="enable-walkthrough">
 			<div className="profile__content__title">
-				<Headline
-					text={translate('walkthrough.title')}
-					semanticLevel="5"
-				/>
+				<Headline text={title} semanticLevel="5" />
 				<Text
-					text={translate('walkthrough.subtitle')}
+					text={translate('walkthrough.switch.subtitle')}
 					type="standard"
 					className="tertiary"
 				/>
 			</div>
 			<div className="twoFactorAuth__switch">
 				<Switch
-					onChange={() => {
-						apiPatchConsultantData({
-							walkThroughEnabled: !isWalkThroughEnabled
-						})
-							.then(reloadUserData)
-							.catch((error) => {
-								/* console.log(error); */
-							});
-					}}
-					checked={userData.isWalkThroughEnabled}
-					aria-label={
-						isWalkThroughEnabled
-							? translate('walkthrough.switch.active.label')
-							: translate('walkthrough.switch.deactive.label')
-					}
+					onChange={handleChange}
+					checked={isWalkThroughEnabled}
+					disabled={pending}
+					aria-label={title}
 				/>
-				<Text
-					text={
-						isWalkThroughEnabled
-							? translate('walkthrough.switch.active.label')
-							: translate('walkthrough.switch.deactive.label')
-					}
-					type="standard"
-				/>
+				<Text text={stateLabel} type="standard" />
 			</div>
+			<Text text={hint} type="standard" className="tertiary" />
 		</div>
 	);
 };

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useContext, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { resolveStompListRefresh } from './stompListRefresh';
 import { Stomp } from '@stomp/stompjs';
 import * as SockJS from 'sockjs-client';
 import { endpoints } from '../../resources/scripts/endpoints';
@@ -14,12 +14,7 @@ import {
 	NOTIFICATION_TYPE_SUCCESS,
 	WebsocketConnectionDeactivatedContext
 } from '../../globalState';
-import {
-	isBrowserNotificationTypeEnabled,
-	sendNotification
-} from '../../utils/notificationHelpers';
 import { useTranslation } from 'react-i18next';
-import { useAppConfig } from '../../hooks/useAppConfig';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 
@@ -31,8 +26,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const liveWebsocketDisabled =
 		process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1';
 	const { t: translate } = useTranslation();
-	const navigate = useNavigate();
-	const { releaseToggles } = useAppConfig();
 	const [newStompDirectMessage, setNewStompDirectMessage] =
 		useState<boolean>(false);
 	const [newStompAnonymousEnquiry, setNewStompAnonymousEnquiry] =
@@ -40,6 +33,10 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 	const [
 		newStompAnonymousConversationFinished,
 		setNewStompAnonymousConversationFinished
+	] = useState<boolean>(false);
+	const [
+		newStompAnonymousEnquiryAccepted,
+		setNewStompAnonymousEnquiryAccepted
 	] = useState<boolean>(false);
 	const [newStompVideoCallRequest, setNewStompVideoCallRequest] =
 		useState<VideoCallRequestProps>();
@@ -96,13 +93,17 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		stompClient.onWebSocketError = (error) => {
 			// console.log('Error', error);
 		};
+	}, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-		// MATRIX EVENT BRIDGE SETUP (for real-time Matrix events)
+	useEffect(() => {
+		// Matrix events must remain active when the optional LiveService is disabled.
 		// Listen to Matrix 'directMessage' events
 		const handleMatrixDirectMessage = (event: any) => {
 			// console.log('📬 Matrix directMessage event received:', event);
 			messageEventEmitter.emit({
 				roomId: event?.roomId,
+				matrixEventId: event?.eventId,
+				isOwnMessage: event?.isOwnMessage === true,
 				timestamp: event?.timestamp
 			});
 			if (!event?.isOwnMessage) {
@@ -113,8 +114,6 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 		// Register Matrix event listeners
 		matrixLiveEventBridge.on('directMessage', handleMatrixDirectMessage);
 
-		// console.log('✅ WebsocketHandler: STOMP + Matrix event listeners registered');
-
 		// Cleanup function
 		return () => {
 			// Unregister Matrix event listeners
@@ -124,7 +123,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			);
 			// console.log('🧹 WebsocketHandler: Event listeners cleaned up');
 		};
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		if (disconnect) {
@@ -140,20 +139,7 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			// console.log('🔔 LiveService directMessage event - refreshing open sessions');
 			messageEventEmitter.emit({});
 
-			if (
-				!releaseToggles.enableNewNotifications ||
-				isBrowserNotificationTypeEnabled('newMessage')
-			) {
-				sendNotification(translate('notifications.message.new'), {
-					// Route the banner to its config row (#576 harmonised
-					// model): Gespräch → Standard-Benachrichtigung.
-					family: 'messages',
-					eventType: 'message.new',
-					onclick: () => {
-						navigate(`/sessions/consultant/sessionView`);
-					}
-				});
-			}
+			// NotificationsProvider announces the persisted event once the feed arrives.
 		}
 	}, [newStompDirectMessage]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -163,6 +149,23 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 			messageEventEmitter.emit({ refreshEnquiryList: true });
 		}
 	}, [newStompAnonymousEnquiry]); // eslint-disable-line react-hooks/exhaustive-deps
+
+	useEffect(() => {
+		if (newStompAnonymousEnquiryAccepted) {
+			setNewStompAnonymousEnquiryAccepted(false);
+			const refresh = resolveStompListRefresh('anonymousEnquiryAccepted');
+			if (refresh) {
+				messageEventEmitter.emit(refresh);
+			}
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_SUCCESS,
+				title: translate('profile.notifications.inquiryAccepted.title'),
+				text: translate(
+					'profile.notifications.inquiryAccepted.description'
+				)
+			});
+		}
+	}, [newStompAnonymousEnquiryAccepted]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	useEffect(() => {
 		if (newStompAnonymousConversationFinished) {
@@ -218,15 +221,11 @@ export const WebsocketHandler = ({ disconnect }: WebsocketHandlerProps) => {
 					stompEventType === 'anonymousEnquiryAccepted' ||
 					stompEventType === 'ANONYMOUSENQUIRYACCEPTED'
 				) {
-					addNotification({
-						notificationType: NOTIFICATION_TYPE_SUCCESS,
-						title: translate(
-							'profile.notifications.inquiryAccepted.title'
-						),
-						text: translate(
-							'profile.notifications.inquiryAccepted.description'
-						)
-					});
+					// #1206: an accepted enquiry leaves every counsellor's
+					// request list and enters the assignee's conversation
+					// list. This branch used to raise the toast only, so both
+					// lists stayed stale until a hard reload.
+					setNewStompAnonymousEnquiryAccepted(true);
 				} else if (
 					stompEventType === 'anonymousConversationFinished' ||
 					stompEventType === 'ANONYMOUSCONVERSATIONFINISHED'

@@ -5,7 +5,8 @@ import {
 	fireEvent,
 	render,
 	screen,
-	waitFor
+	waitFor,
+	within
 } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,12 +17,63 @@ import {
 } from '../../api/apiDpaSignature';
 import { DpaSign } from './DpaSign';
 
-const translate = (_key: string, fallback?: string) => fallback ?? _key;
+const deCatalogue: Record<string, string> = {
+	'dpaSign.title': 'Vertragsunterlagen prüfen und bestätigen',
+	'dpaSign.subtitle':
+		'Bitte lesen Sie die Vertragsunterlagen vollständig, machen Sie Angaben zur Person und bestätigen Sie anschließend.',
+	'dpaSign.signerName': 'Vollständiger Name',
+	'dpaSign.signerPosition': 'Position',
+	'dpaSign.signerEmail': 'E-Mail',
+	'dpaSign.signerNote': 'Anmerkung (optional)',
+	'dpaSign.language': 'Sprache',
+	'dpaSign.loadingContract': 'Vertragsunterlagen werden geladen...',
+	'dpaSign.contractHeading': 'Vertragsunterlagen',
+	'dpaSign.version': 'Vertragsversion',
+	'dpaSign.signerHeading': 'Bestätigung der vertretungsberechtigten Person',
+	'dpaSign.signingFor': 'Sie handeln im Namen von:',
+	'dpaSign.accept':
+		'Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.',
+	'dpaSign.submit': 'Bestätigung absenden',
+	'dpaSign.submitting': 'Speichern...',
+	'dpaSign.success':
+		'Die Bestätigung der Vertragsunterlagen wurde gespeichert.',
+	'dpaSign.error.missingToken': 'Der Signaturlink ist unvollständig.',
+	'dpaSign.error.previewRequired':
+		'Die Vertragsunterlagen müssen vollständig geladen sein, bevor Sie sie bestätigen können.',
+	'dpaSign.error.acceptRequired':
+		'Bitte bestätigen Sie die Vertragsunterlagen.',
+	'dpaSign.error.generic':
+		'Die Signatur konnte gerade nicht gespeichert werden.',
+	'dpaSign.error.invalidToken':
+		'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.',
+	'dpaSign.error.invalidRequest':
+		'Die Angaben konnten nicht gespeichert werden. Bitte prüfen Sie das Formular.'
+};
+
+// The page never uses the ambient language: it renders through
+// `getFixedT(<Sprache select>)`. The mock's ambient language is deliberately
+// NOT German so any regression back to the global `t` shows up as `ru:`-less
+// output where a fixed prefix is asserted.
+const getFixedT = vi.fn(
+	(lng: string) => (key: string) =>
+		lng === 'de' ? (deCatalogue[key] ?? key) : `${lng}:${key}`
+);
+
+// A vi.fn() so individual tests can override the resolution per call (e.g.
+// mockRejectedValueOnce) while the object identity stays stable like the
+// real i18next singleton — a fresh object per render would re-trigger every
+// effect that lists `t`/`i18n` in its dependencies.
+const loadLanguages = vi.fn(() => Promise.resolve());
+const i18nMock = {
+	language: 'ru',
+	loadLanguages,
+	getFixedT
+};
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: translate,
-		i18n: { language: 'de' }
+		t: (key: string) => `ambient:${key}`,
+		i18n: i18nMock
 	})
 }));
 
@@ -77,8 +129,11 @@ describe('DpaSign', () => {
 		expect(screen.getAllByText('Träger Nord').length).toBe(2);
 		expect(
 			screen.getByRole('heading', {
-				name: 'Auftragsverarbeitungsvereinbarung'
+				name: 'Vertragsunterlagen prüfen und bestätigen'
 			})
+		).toBeDefined();
+		expect(
+			screen.getByRole('heading', { name: 'Vertragsunterlagen' })
 		).toBeDefined();
 		expect(
 			screen.getByRole('heading', {
@@ -87,7 +142,7 @@ describe('DpaSign', () => {
 		).toBeDefined();
 		expect(
 			screen.getByText(
-				/Ich habe die oben angezeigte Vereinbarung gelesen/
+				/Ich habe die oben angezeigten Vertragsunterlagen gelesen/
 			)
 		).toBeDefined();
 		expect(previewMock).toHaveBeenCalledWith('valid-token');
@@ -99,7 +154,7 @@ describe('DpaSign', () => {
 			'Dieser konkrete Vertragstext ist verbindlich.'
 		);
 
-		fireEvent.change(screen.getByLabelText('Name *'), {
+		fireEvent.change(screen.getByLabelText('Vollständiger Name *'), {
 			target: { value: 'Marge Simpson' }
 		});
 		fireEvent.change(screen.getByLabelText('Position *'), {
@@ -113,11 +168,11 @@ describe('DpaSign', () => {
 		});
 		fireEvent.click(
 			screen.getByRole('checkbox', {
-				name: /Ich habe die oben angezeigte Vereinbarung gelesen/
+				name: /Ich habe die oben angezeigten Vertragsunterlagen gelesen/
 			})
 		);
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Verbindlich bestätigen' })
+			screen.getByRole('button', { name: 'Bestätigung absenden' })
 		);
 
 		await waitFor(() =>
@@ -126,12 +181,15 @@ describe('DpaSign', () => {
 				expect.objectContaining({
 					signerName: 'Marge Simpson',
 					signerEmail: 'marge.simpson@dreambau.com',
-					accepted: true
+					accepted: true,
+					language: 'de'
 				})
 			)
 		);
 		expect(
-			await screen.findByText('Die AVV-Bestätigung wurde gespeichert.')
+			await screen.findByText(
+				'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
+			)
 		).toBeDefined();
 	});
 
@@ -144,9 +202,7 @@ describe('DpaSign', () => {
 		// The link is scoped to exactly one Träger, so the organisation is
 		// stated — not retyped into a field that could contradict it.
 		expect(screen.queryByLabelText('Organisation *')).toBeNull();
-		expect(
-			screen.getByText(/Sie unterzeichnen im Namen von/)
-		).toBeDefined();
+		expect(screen.getByText(/Sie handeln im Namen von/)).toBeDefined();
 		expect(screen.getAllByText('Träger Nord').length).toBeGreaterThan(1);
 	});
 
@@ -156,7 +212,7 @@ describe('DpaSign', () => {
 			'Dieser konkrete Vertragstext ist verbindlich.'
 		);
 
-		fireEvent.change(screen.getByLabelText('Name *'), {
+		fireEvent.change(screen.getByLabelText('Vollständiger Name *'), {
 			target: { value: 'Marge Simpson' }
 		});
 		fireEvent.change(screen.getByLabelText('Position *'), {
@@ -167,11 +223,11 @@ describe('DpaSign', () => {
 		});
 		fireEvent.click(
 			screen.getByRole('checkbox', {
-				name: /Ich habe die oben angezeigte Vereinbarung gelesen/
+				name: /Ich habe die oben angezeigten Vertragsunterlagen gelesen/
 			})
 		);
 		fireEvent.click(
-			screen.getByRole('button', { name: 'Verbindlich bestätigen' })
+			screen.getByRole('button', { name: 'Bestätigung absenden' })
 		);
 
 		await waitFor(() =>
@@ -181,7 +237,75 @@ describe('DpaSign', () => {
 			)
 		);
 		expect(
-			await screen.findByText('Die AVV-Bestätigung wurde gespeichert.')
+			await screen.findByText(
+				'Die Bestätigung der Vertragsunterlagen wurde gespeichert.'
+			)
+		).toBeDefined();
+	});
+
+	it('offers chapter chips for a multi-chapter contract and focuses the selected chapter', async () => {
+		previewMock.mockResolvedValue({
+			tenantName: 'Träger Nord',
+			dpaVersion: '2026-07-20T12:30:00',
+			content: JSON.stringify({
+				de: '<h2>1. Gegenstand</h2><p>Absatz eins.</p><h2>2. Pflichten des Auftragnehmers</h2><p>Absatz zwei.</p>',
+				en: '<h2>1. Subject</h2><p>Paragraph one.</p><h2>2. Duties</h2><p>Paragraph two.</p>'
+			}),
+			expiresAt: '2026-08-03T12:30:00'
+		});
+		renderPage();
+		await screen.findByText('Absatz eins.');
+
+		const chapters = await screen.findByTestId('legal-anchor-chips');
+		expect(
+			within(chapters)
+				.getAllByRole('button')
+				.map((chip) => chip.textContent)
+		).toEqual(['1. Gegenstand', '2. Pflichten des Auftragnehmers']);
+
+		fireEvent.click(
+			within(chapters).getByRole('button', {
+				name: '2. Pflichten des Auftragnehmers'
+			})
+		);
+
+		expect(document.activeElement?.id).toBe(
+			'2-pflichten-des-auftragnehmers'
+		);
+		expect(document.activeElement?.tagName).toBe('H2');
+	});
+
+	it('renders its default signature-language chrome without exposing a language field', async () => {
+		// The public legal page ignores a previously persisted app locale. Its
+		// hidden signature language remains explicit in the submitted request.
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+
+		expect(getFixedT).toHaveBeenCalledWith('de');
+		expect(
+			screen.getByRole('heading', {
+				name: 'Vertragsunterlagen prüfen und bestätigen'
+			})
+		).toBeDefined();
+		expect(screen.queryByText(/^ambient:/)).toBeNull();
+		expect(screen.queryByLabelText('Sprache *')).toBeNull();
+	});
+
+	it('keeps the default chrome language when its initial language load fails', async () => {
+		loadLanguages.mockRejectedValueOnce(new Error('network down'));
+		renderPage();
+		await screen.findByText(
+			'Dieser konkrete Vertragstext ist verbindlich.'
+		);
+
+		await waitFor(() => expect(loadLanguages).toHaveBeenCalledWith('de'));
+		expect(getFixedT).toHaveBeenCalledWith('de');
+		expect(
+			screen.getByRole('heading', {
+				name: 'Vertragsunterlagen prüfen und bestätigen'
+			})
 		).toBeDefined();
 	});
 
@@ -196,7 +320,7 @@ describe('DpaSign', () => {
 				'Dieser Signaturlink ist ungültig, abgelaufen oder wurde bereits verwendet.'
 			)
 		).toBeDefined();
-		expect(screen.queryByLabelText('Name *')).toBeNull();
+		expect(screen.queryByLabelText('Vollständiger Name *')).toBeNull();
 		expect(confirmMock).not.toHaveBeenCalled();
 	});
 });

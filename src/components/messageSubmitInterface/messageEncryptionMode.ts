@@ -1,3 +1,4 @@
+import { apiCheckEnquiryPermission } from '../../api/apiSendEnquiry';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
 interface AskerEnquirySubmissionInput {
@@ -35,6 +36,7 @@ interface EncryptedInitialEnquiryInput {
 		eventId?: string;
 	}>;
 	finalizeEnquiry: (matrixEventId: string) => Promise<any>;
+	onFinalized?: () => void;
 	storage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 }
 
@@ -84,11 +86,13 @@ export const sendEncryptedInitialEnquiry = async ({
 	sessionId,
 	sendEncryptedMatrixMessage,
 	finalizeEnquiry,
+	onFinalized,
 	storage = window.localStorage
 }: EncryptedInitialEnquiryInput): Promise<any> => {
 	const storageKey = pendingEnquiryEventStorageKey(sessionId);
 	let matrixEventId = readRetryEventId(storage, storageKey);
 	if (!matrixEventId) {
+		await apiCheckEnquiryPermission(sessionId);
 		const response = await sendEncryptedMatrixMessage(
 			initialEnquiryTransactionId(sessionId)
 		);
@@ -103,6 +107,7 @@ export const sendEncryptedInitialEnquiry = async ({
 
 	const response = await finalizeEnquiry(matrixEventId);
 	clearRetryEventId(storage, storageKey);
+	onFinalized?.();
 	return response;
 };
 

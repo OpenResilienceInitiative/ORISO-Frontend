@@ -101,6 +101,17 @@ describe('shared params contract (#846)', () => {
 		expect(params.consultingTypeId).toBe(1);
 	});
 
+	it('keeps the Case Handover opt-out variant as typed metadata', () => {
+		expect(
+			parseEventActionParams('{"clientConsent":"OPT_OUT"}')
+		).toMatchObject({
+			clientConsent: 'OPT_OUT'
+		});
+		expect(
+			parseEventActionParams('{"clientConsent":"unexpected"}')
+		).toEqual({});
+	});
+
 	it('pins the shared key set mirrored by the backend contract test', () => {
 		// ORISO-UserService EventNotificationServiceTest
 		// .allEmittedParamKeysStayInsideTheSharedFrontendContract pins the
@@ -123,6 +134,7 @@ describe('shared params contract (#846)', () => {
 				'senderDisplayName',
 				'contentClass',
 				'recipientRole',
+				'clientConsent',
 				'threadRootId',
 				'mentioned',
 				'seriesId',
@@ -131,7 +143,13 @@ describe('shared params contract (#846)', () => {
 				'callRoomId',
 				'isVideo',
 				'forcedScopeKey',
-				'matrixEventId'
+				'matrixEventId',
+				// #876: planned maintenance notice (ORISO-UserService#1343).
+				'campaignKey',
+				'maintenanceDate',
+				'maintenanceStart',
+				'maintenanceEnd',
+				'statusUrl'
 			].sort()
 		);
 	});

@@ -99,6 +99,12 @@
 
 	/* stylelint-disable-next-line selector-class-pattern -- MUI MenuItem slot */
 	&__option.MuiMenuItem-root {
+		// The app theme forces `align-items: flex-start` on every MuiMenuItem
+		// (theme.jsx MuiMenuItem styleOverrides, built for multi-line menus
+		// with `padding: 12px 16px`). This menu strips that padding and pins
+		// the row to 44px, so without re-centring here the label and the
+		// check column sit at the top of the row with dead space below.
+		align-items: center;
 		min-height: 44px;
 		height: 44px;
 		gap: 10px;

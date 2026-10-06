@@ -1,0 +1,208 @@
+// @vitest-environment jsdom
+
+import * as React from 'react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+vi.mock('lottie-web', () => ({ default: {} }));
+vi.mock('lottie-react', () => ({ default: () => null }));
+const navigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+	const actual =
+		await vi.importActual<typeof import('react-router-dom')>(
+			'react-router-dom'
+		);
+	return { ...actual, useNavigate: () => navigate };
+});
+
+const sessionState = vi.hoisted(() => ({
+	ready: true,
+	item: {
+		id: 15,
+		active: false,
+		matrixRoomId: '!room:oriso',
+		consultingType: 1,
+		topic: 'Trauerbegleitung',
+		assignedAgencies: [{ name: 'Caritas Berlin' }],
+		startDate: '2026-09-07',
+		startTime: '18:00',
+		duration: 90,
+		hintMessage: 'Willkommen.'
+	} as Record<string, unknown> | null
+}));
+vi.mock('../../../api', () => ({
+	apiGetAskerSessionList: vi.fn(() =>
+		Promise.resolve({
+			sessions: sessionState.item ? [{ chat: sessionState.item }] : []
+		})
+	),
+	apiGetGroupChatInfo: vi.fn(() =>
+		Promise.resolve({ active: false, id: 15, matrixRoomId: '!room:oriso' })
+	),
+	apiPutGroupChat: vi.fn(() => Promise.resolve()),
+	GROUP_CHAT_API: { JOIN: '/join', ASSIGN: '/assign' }
+}));
+vi.mock('../../../api/apiGetChatRoomById', () => ({
+	apiGetChatRoomById: vi.fn(() => Promise.resolve({ sessions: [] }))
+}));
+vi.mock('../useGroupChatAuthorContent', () => ({
+	useGroupChatAuthorContent: () => ({
+		hintMessage: 'Willkommen.',
+		rules: ['Regel eins']
+	})
+}));
+vi.mock('./GroupWaitingRoom', () => ({
+	GroupWaitingRoom: (props: {
+		topicName?: string;
+		agencyName?: string;
+		active: boolean;
+		onJoin: () => void;
+	}) => (
+		<div data-testid="waiting-room">
+			<span>{props.topicName}</span>
+			<span>{props.agencyName}</span>
+			<button onClick={props.onJoin} disabled={!props.active}>
+				join
+			</button>
+		</div>
+	)
+}));
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (_key: string, fallback?: string) => fallback ?? _key
+	})
+}));
+
+const { GroupEntryRoom } = await import('./GroupEntryRoom');
+const { apiPutGroupChat, apiGetAskerSessionList } = await import(
+	'../../../api'
+);
+const { UserDataContext } = await import(
+	'../../../globalState/context/UserDataContext'
+);
+
+/* #1499: a counsellor who reaches the client's entry room (old link,
+   bookmark) goes on to the group in her own session view. */
+const renderRoomAsCounsellor = (path = '/groups/15/entry') =>
+	render(
+		<UserDataContext.Provider
+			value={
+				{
+					userData: {
+						grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+					}
+				} as any
+			}
+		>
+			<MemoryRouter initialEntries={[path]}>
+				<Routes>
+					<Route
+						path="/groups/:chatId/entry"
+						element={<GroupEntryRoom />}
+					/>
+					<Route
+						path="/sessions/consultant/sessionView/session/:sessionId"
+						element={<div data-testid="counsellor-group" />}
+					/>
+					<Route
+						path="/sessions/consultant/sessionView"
+						element={<div data-testid="counsellor-list" />}
+					/>
+				</Routes>
+			</MemoryRouter>
+		</UserDataContext.Provider>
+	);
+
+const CLIENT = { grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT'] };
+const COUNSELLOR = { grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'] };
+
+const roomFor = (userData: unknown) => (
+	<UserDataContext.Provider value={{ userData } as any}>
+		<MemoryRouter initialEntries={['/groups/15/entry']}>
+			<Routes>
+				<Route
+					path="/groups/:chatId/entry"
+					element={<GroupEntryRoom />}
+				/>
+				<Route
+					path="/sessions/consultant/sessionView/session/:sessionId"
+					element={<div data-testid="counsellor-group" />}
+				/>
+			</Routes>
+		</MemoryRouter>
+	</UserDataContext.Provider>
+);
+
+const renderRoom = () => render(roomFor(CLIENT));
+
+describe('GroupEntryRoom', () => {
+	afterEach(cleanup);
+	beforeEach(() => {
+		vi.clearAllMocks();
+		sessionState.ready = true;
+		sessionState.item = { ...sessionState.item, active: false };
+	});
+
+	it('feeds the room from the chat: topic and agency come from the item', async () => {
+		renderRoom();
+		const room = await screen.findByTestId('waiting-room');
+		expect(room.textContent).toContain('Trauerbegleitung');
+		expect(room.textContent).toContain('Caritas Berlin');
+	});
+
+	it('joins on "Beitreten" and hands over to the chat route', async () => {
+		sessionState.item = { ...sessionState.item, active: true };
+		renderRoom();
+		fireEvent.click(await screen.findByText('join'));
+		await waitFor(() =>
+			expect(apiPutGroupChat).toHaveBeenCalledWith(15, '/join')
+		);
+		await waitFor(() =>
+			expect(navigate).toHaveBeenCalledWith(
+				'/sessions/user/view/!room%3Aoriso/15',
+				{ replace: true }
+			)
+		);
+	});
+
+	it('says so when the chat is gone', async () => {
+		sessionState.item = null;
+		renderRoom();
+		expect(await screen.findByText(/gibt es nicht mehr/)).toBeTruthy();
+	});
+
+	it('sends a counsellor on to the group in her own session view', async () => {
+		renderRoomAsCounsellor();
+
+		expect(await screen.findByTestId('counsellor-group')).toBeTruthy();
+		expect(screen.queryByTestId('waiting-room')).toBeNull();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+	});
+
+	it('waits for the user before choosing the client or the counsellor side', async () => {
+		const view = render(roomFor(null));
+
+		expect(
+			document.querySelector('[data-cy="group-entry-loading"]')
+		).not.toBeNull();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+
+		view.rerender(roomFor(COUNSELLOR));
+
+		expect(await screen.findByTestId('counsellor-group')).toBeTruthy();
+		expect(apiGetAskerSessionList).not.toHaveBeenCalled();
+	});
+
+	it('sends a counsellor to her list when the group id is not a number', async () => {
+		renderRoomAsCounsellor('/groups/abc/entry');
+
+		expect(await screen.findByTestId('counsellor-list')).toBeTruthy();
+	});
+});

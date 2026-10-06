@@ -4,10 +4,22 @@ import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
 } from './erstantwortPayload';
+import { ERSTANTWORT_CATALOGUE } from './erstantwortCatalogue';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 
-/** Minimal `t` stand-in: returns the defaultValue, so the catalogue fallback wins. */
-const translate = (_key: string, defaultValue?: string) => defaultValue ?? '';
+/** Resolve catalogue keys the same way production `t(key)` does — never a second arg. */
+const catalogueByKey = new Map<string, string>();
+for (const entry of ERSTANTWORT_CATALOGUE) {
+	catalogueByKey.set(entry.bodyKey, entry.defaultBody);
+	if (entry.headlineKey && entry.defaultHeadline) {
+		catalogueByKey.set(entry.headlineKey, entry.defaultHeadline);
+	}
+	if (entry.action) {
+		catalogueByKey.set(entry.action.labelKey, entry.action.defaultLabel);
+	}
+}
+
+const translate = (key: string) => catalogueByKey.get(key) ?? '';
 
 const event = (bausteine: unknown[]) =>
 	`${SYSTEM_NOTIFICATION_PREFIX}${JSON.stringify({
@@ -202,10 +214,33 @@ describe('resolveErstantwortBausteine — client-side triggers (no event)', () =
 
 		expect(resolved.status).toBe('ok');
 		expect(resolved.bausteine.map((b) => b.id)).toEqual([
+			'enquiryReceived',
+			'notificationChoice',
+			'deviceLimit',
 			'saveCredentials',
 			'displayName'
 		]);
-		expect(resolved.bausteine[0].body).toContain('Anmeldenamen');
+		expect(
+			resolved.bausteine.find((b) => b.id === 'saveCredentials')?.body
+		).toContain('Anmeldenamen');
+	});
+
+	it('reassures before it limits — the counselling survives a lost device', () => {
+		const { bausteine } = resolveErstantwortBausteine({
+			trigger: 'AFTER_ENQUIRY_DISPATCHED',
+			context: { conversationType: 'AGENCY_COUNSELLING' },
+			translate,
+			state: baseState
+		});
+
+		const deviceLimit = bausteine.find((b) => b.id === 'deviceLimit');
+
+		// "Beratung geht weiter" has to come before "Ersatzschlüssel", or the
+		// message reads as "everything you wrote is about to be lost".
+		expect(
+			deviceLimit?.body.indexOf('geht die Beratung ganz normal weiter')
+		).toBeLessThan(deviceLimit?.body.indexOf('Ersatzschlüssel') ?? -1);
+		expect(deviceLimit?.action?.kind).toBe('SHOW_RECOVERY_KEY');
 	});
 
 	it('respects the modality assignment — Live Chat gets no post-dispatch Bausteine', () => {

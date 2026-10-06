@@ -1,11 +1,13 @@
 /**
  * Resolves the visible name for anonymous live-chat participants.
- * Matrix usernames stay "Anonymous-<timestamp>"; the animal pseudonym
- * lives in displayName after the asker confirms their selection.
+ * Historical Matrix usernames were "Anonymous-<timestamp>"; topic-based
+ * invite still uses anon_N. The animal display-name lives in displayName
+ * after the asker confirms their selection.
  */
 
 export const isAnonymousMatrixUsername = (username?: string): boolean => {
 	const value = (username || '').trim();
+	// Historical accounts only — do not treat animal User-IDs as anonymous.
 	return value.startsWith('Anonymous-') || value.startsWith('anon_');
 };
 

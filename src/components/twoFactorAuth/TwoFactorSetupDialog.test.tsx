@@ -135,16 +135,6 @@ vi.mock('@mui/material', async () => {
 	};
 });
 
-vi.mock('../../resources/img/icons/two-factor/otp_app_graphic.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
-		<svg aria-hidden="true" {...props} />
-	)
-}));
-vi.mock('../../resources/img/icons/two-factor/email_code_graphic.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
-		<svg aria-hidden="true" {...props} />
-	)
-}));
 vi.mock('../../resources/img/icons/two-factor/decision_400.svg', () => ({
 	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => (
 		<svg aria-hidden="true" {...props} />
@@ -292,7 +282,7 @@ describe('TwoFactorSetupDialog', () => {
 		const { onClose } = renderDialog();
 
 		expect(
-			await screen.findByText('twoFactorAuth.setupDialog.title')
+			await screen.findByText('twoFactorAuth.setupDialog.decision.title')
 		).toBeTruthy();
 		clickButton('twoFactorAuth.setupDialog.decision.app');
 
@@ -319,7 +309,7 @@ describe('TwoFactorSetupDialog', () => {
 		renderDialog({ canClose: false });
 
 		expect(
-			await screen.findByText('twoFactorAuth.setupDialog.title')
+			await screen.findByText('twoFactorAuth.setupDialog.decision.title')
 		).toBeTruthy();
 		expect(
 			screen.queryByRole('button', {
@@ -335,7 +325,7 @@ describe('TwoFactorSetupDialog', () => {
 
 		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
 		clickButton('twoFactorAuth.setupDialog.decision.app');
-		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.app.install.done');
 		clickButton('twoFactorAuth.setupDialog.action.next');
 		fireEvent.change(
 			await screen.findByLabelText(
@@ -431,7 +421,7 @@ describe('TwoFactorSetupDialog', () => {
 
 		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
 		clickButton('twoFactorAuth.setupDialog.decision.app');
-		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.app.install.done');
 		clickButton('twoFactorAuth.setupDialog.action.next');
 		fireEvent.change(
 			await screen.findByLabelText(
@@ -545,7 +535,7 @@ describe('TwoFactorSetupDialog', () => {
 
 		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
 		clickButton('twoFactorAuth.setupDialog.decision.app');
-		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.app.install.done');
 		clickButton('twoFactorAuth.setupDialog.action.next');
 		fireEvent.change(
 			await screen.findByLabelText(
@@ -576,7 +566,7 @@ describe('TwoFactorSetupDialog', () => {
 
 		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
 		clickButton('twoFactorAuth.setupDialog.decision.app');
-		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.app.install.done');
 		clickButton('twoFactorAuth.setupDialog.action.next');
 		fireEvent.change(
 			await screen.findByLabelText(
@@ -603,7 +593,7 @@ describe('TwoFactorSetupDialog', () => {
 
 		await screen.findByText('twoFactorAuth.setupDialog.decision.app');
 		clickButton('twoFactorAuth.setupDialog.decision.app');
-		clickButton('twoFactorAuth.setupDialog.action.next');
+		clickButton('twoFactorAuth.setupDialog.app.install.done');
 		clickButton('twoFactorAuth.setupDialog.action.next');
 		fireEvent.change(
 			await screen.findByLabelText(

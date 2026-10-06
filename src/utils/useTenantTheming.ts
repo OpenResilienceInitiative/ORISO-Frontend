@@ -1,13 +1,29 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore
+} from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
 import { TenantContext, useLocaleData } from '../globalState';
 import { TenantDataInterface } from '../globalState/interfaces';
 import getLocationVariables from './getLocationVariables';
 import decodeHTML from './decodeHTML';
+import decodeTenantAsset from './decodeTenantAsset';
+import getSafeFaviconUrl from './getSafeFaviconUrl';
+import applyBrandingFavicon from './applyBrandingFavicon';
+import {
+	getAuthenticatedTenantId,
+	subscribeToAuthenticatedTenant
+} from './authenticatedTenant';
 import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
-	applyTenantPalette
+	applyTenantPalette,
+	isThemePreviewRoute
 } from './theme/applyTenantTheme';
 
 const getOrCreateHeadNode = (
@@ -37,14 +53,12 @@ const getOrCreateHeadNode = (
 	return node;
 };
 
-const applyTheming = (tenant: TenantDataInterface) => {
+const applyTheming = (tenant: TenantDataInterface, previewApplied: boolean) => {
 	if (tenant.theming) {
 		// Seeds → OrisoScheme engine → --m3-* variables on the document
 		// root. Without a stored seed (or with an invalid one) nothing is
 		// injected and the compiled legacy palette keeps applying (UAT-E).
-		// In Theme Builder preview mode (sandboxed admin iframe) the URL
-		// seeds win over the stored tenant palette.
-		if (!applyPreviewFromLocation(window.location.search)) {
+		if (!previewApplied) {
 			applyTenantPalette(tenant.theming);
 		}
 
@@ -53,11 +67,14 @@ const applyTheming = (tenant: TenantDataInterface) => {
 			tenant.theming.primaryColor
 		);
 
-		if (tenant.theming.favicon) {
-			getOrCreateHeadNode('link', { rel: 'icon' }).setAttribute(
-				'href',
-				tenant.theming.favicon
-			);
+		// The uploaded favicon has to reach anonymous visitors too — the login,
+		// password-reset, invite, DPA-sign and registration routes all render
+		// under this hook's provider, so applying it here covers them. Anything
+		// getSafeFaviconUrl refuses (wrong scheme, still-encoded payload) leaves
+		// the built-in icon in place rather than replacing it with a broken one.
+		const favicon = getSafeFaviconUrl(tenant.theming.favicon);
+		if (favicon) {
+			applyBrandingFavicon(favicon);
 		}
 	}
 
@@ -84,9 +101,20 @@ const useTenantTheming = () => {
 	const tenantContext = useContext(TenantContext);
 	const { locale } = useLocaleData();
 	const { subdomain } = getLocationVariables();
+	// Resolved from the access token, so it is `null` for an anonymous visitor
+	// and the user's own tenant once they sign in. The providers above the
+	// router do not remount on login, so without this the app would keep
+	// serving the tenant it resolved on the login screen.
+	const authenticatedTenantId = useSyncExternalStore(
+		subscribeToAuthenticatedTenant,
+		getAuthenticatedTenantId
+	);
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
+	// Which tenant the state currently in the context was resolved for. Only
+	// meaningful once a resolution has succeeded.
+	const appliedTenantId = useRef<number | null | undefined>(undefined);
 
 	const cypressTenantEnabled = useMemo(
 		() => (window as any).Cypress?.env('TENANT_ENABLED'),
@@ -95,23 +123,60 @@ const useTenantTheming = () => {
 
 	const onTenantServiceResponse = useCallback(
 		(tenant: TenantDataInterface) => {
+			// Theme Builder preview (ORISO-Admin#907): the seeds arrive in the
+			// URL and are independent of tenant resolution, so they are applied
+			// before both branches below. They have to survive a host without a
+			// subdomain (the admin's iframe in local development) and a Träger
+			// that has never saved colours — that admin is precisely the one
+			// choosing them for the first time. The seeds are honoured only on
+			// the demo route, so a link cannot repaint the real app.
+			const previewApplied =
+				isThemePreviewRoute(window.location.pathname) &&
+				applyPreviewFromLocation(window.location.search);
+
 			if (!subdomain && cypressTenantEnabled !== '1') {
-				tenantContext?.setTenant({ settings } as any);
+				/* A host without a tenant subdomain (localhost, a bare
+				   domain) keeps the app config as its settings — but the
+				   tenant service still answers with the feature flags the
+				   admin set, and nothing else carries them. Without this
+				   merge `featureGroupChatV2Enabled` was never true here, so a
+				   group link's assignment never fired on a single-domain
+				   stand (#974, #1216). App config wins where both speak. */
+				tenantContext?.setTenant({
+					settings: { ...(tenant?.settings ?? {}), ...settings }
+				} as any);
 			} else {
 				// ToDo: See VIC-428 + VIC-427
 				const decodedTenant = JSON.parse(JSON.stringify(tenant));
 
-				decodedTenant.theming.logo = decodeHTML(tenant.theming.logo);
-				decodedTenant.theming.associationLogo = decodeHTML(
-					tenant.theming.associationLogo
-				);
-				decodedTenant.theming.favicon = decodeHTML(
-					tenant.theming.favicon
-				);
-				decodedTenant.content.claim = decodeHTML(tenant.content.claim);
-				decodedTenant.name = decodeHTML(tenant.name);
+				// Branding assets go through decodeTenantAsset, not decodeHTML:
+				// they end up in img[src] / link[href] and must not take a
+				// detour through innerHTML. The optional chaining matters on the
+				// anonymous path — a restricted tenant payload without theming
+				// or content used to throw here, which silently dropped the
+				// whole theming (favicon, title, palette) for logged-out
+				// visitors.
+				if (decodedTenant.theming) {
+					decodedTenant.theming.logo = decodeTenantAsset(
+						tenant.theming?.logo
+					);
+					decodedTenant.theming.associationLogo = decodeTenantAsset(
+						tenant.theming?.associationLogo
+					);
+					decodedTenant.theming.favicon = decodeTenantAsset(
+						tenant.theming?.favicon
+					);
+				}
+				if (decodedTenant.content?.claim) {
+					decodedTenant.content.claim = decodeHTML(
+						tenant.content.claim
+					);
+				}
+				if (tenant.name) {
+					decodedTenant.name = decodeHTML(tenant.name);
+				}
 
-				applyTheming(decodedTenant);
+				applyTheming(decodedTenant, previewApplied);
 				tenantContext?.setTenant(decodedTenant);
 			}
 			return;
@@ -124,17 +189,62 @@ const useTenantTheming = () => {
 			return;
 		}
 
+		// Sign-in and sign-out start a second resolution while the first may
+		// still be in flight. Whoever answers last would otherwise win: a slow
+		// anonymous response landing after the signed-in one puts the
+		// subdomain tenant back, which is the leak this hook exists to close.
+		let active = true;
+		const requestedTenantId = authenticatedTenantId;
+
+		// The switch starts the moment the token changes, not when the answer
+		// arrives. Until then the context would still hand out the previous
+		// Träger's branding and feature flags, so it is emptied up front and
+		// consumers read `null` for the duration. `undefined` means "never
+		// resolved" and is left alone, so the first load still shows its
+		// loading state instead of a hard "no tenant".
+		if (
+			appliedTenantId.current !== undefined &&
+			appliedTenantId.current !== requestedTenantId
+		) {
+			setIsLoadingTenant(true);
+			tenantContext?.setTenant(null as any);
+		}
+
 		apiGetTenantTheming()
-			.then(onTenantServiceResponse)
-			.catch((error) => {
-				// console.log('Theme could not be loaded', error);
+			.then((tenant) => {
+				if (!active) {
+					return;
+				}
+				appliedTenantId.current = requestedTenantId;
+				onTenantServiceResponse(tenant);
+			})
+			.catch(() => {
+				if (!active) {
+					return;
+				}
+				// The tenant changed and the new one could not be resolved.
+				// Keeping the previous one would go on serving another
+				// Träger's branding and feature flags to this counsellor, so
+				// the app serves none: consumers read `null` and gate every
+				// tenant feature off rather than guessing.
+				if (appliedTenantId.current !== requestedTenantId) {
+					appliedTenantId.current = requestedTenantId;
+					tenantContext?.setTenant(null as any);
+				}
 			})
 			.finally(() => {
+				if (!active) {
+					return;
+				}
 				setIsLoadingTenant(false);
 			});
+
+		return () => {
+			active = false;
+		};
 		// False positive
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tenantContext?.setTenant, subdomain, locale]);
+	}, [tenantContext?.setTenant, subdomain, locale, authenticatedTenantId]);
 
 	return isLoadingTenant;
 };

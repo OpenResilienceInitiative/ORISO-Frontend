@@ -1,33 +1,28 @@
-ARG NODE_VERSION=22.12.0@sha256:0e910f435308c36ea60b4cfd7b80208044d77a074d16b768a81901ce938a62dc
-ARG PORT=80
+# Serves the Storybook static build produced by the CI job (npm run
+# build-storybook) — this image does not build it.
+#
+# It used to: a node stage ran `npm install --legacy-peer-deps` and
+# `storybook build` inside the image, repeating work the job had already done
+# one step earlier. Because the image is published for linux/amd64 AND
+# linux/arm64, the arm64 half of that ran under QEMU emulation and the publish
+# step took ~28 of the workflow's 38 minutes. Copying the finished output makes
+# both architectures a file copy over an nginx base.
+#
+# The build context is narrowed to storybook-static/ by
+# Dockerfile.storybook.dockerignore.
 
-# Build stage
-FROM node:$NODE_VERSION AS storybookbuild
-
-WORKDIR /app
-
-# Copy package files
-COPY package*.json ./
-COPY .npmrc* ./
-
-# Install dependencies with legacy peer deps to resolve conflicts
-RUN npm install --legacy-peer-deps --ignore-scripts
-
-# Copy source code
-COPY . .
-
-# Build Storybook static files
-RUN npm run build-storybook
-
-# Production stage - serve static files
 FROM nginx:1.31.3-alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
 
 ARG PORT=80
 
-# Copy Storybook build output to nginx html directory
-COPY --from=storybookbuild /app/storybook-static /usr/share/nginx/html
+# CVE-2026-14456, same as in the frontend image: the pinned nginx alpine base
+# also carries libssl3/libcrypto3 3.5.7-r0 while Alpine 3.24 ships the fixed
+# 3.5.8-r0. The Storybook image has its own Trivy gate, so it needs the same
+# upgrade rather than inheriting the frontend one.
+RUN apk upgrade --no-cache libssl3 libcrypto3
 
-# Copy nginx configuration
+COPY storybook-static /usr/share/nginx/html
+
 RUN echo "server { \
     listen ${PORT}; \
     server_name _; \

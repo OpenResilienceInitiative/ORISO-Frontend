@@ -57,6 +57,13 @@ export const ZipcodeInput: FC<{
 			sx={{
 				maxWidth: '520px',
 				mx: 'auto',
+				// This step is one short block — icon, question, five digit
+				// boxes — in a column that has room to spare. Sitting it at the
+				// top left a large empty field below it. `auto` block margins
+				// centre it in whatever the header and the footer leave over,
+				// and they collapse to the natural top offset as soon as the
+				// disclosure below is expanded and the block outgrows the space.
+				my: 'auto',
 				display: 'flex',
 				flexDirection: 'column',
 				alignItems: 'center',
@@ -86,7 +93,7 @@ export const ZipcodeInput: FC<{
 					textWrap: 'pretty'
 				}}
 			>
-				{t('registration.zipcode.headline', 'Wo suchen Sie Beratung?')}
+				{t('registration.zipcode.headline')}
 			</Typography>
 			<Typography
 				sx={{
@@ -97,10 +104,7 @@ export const ZipcodeInput: FC<{
 					textWrap: 'pretty'
 				}}
 			>
-				{t(
-					'registration.zipcode.subline',
-					'Nur Ihre Postleitzahl — mehr brauchen wir nicht.'
-				)}
+				{t('registration.zipcode.subline')}
 			</Typography>
 
 			<Box sx={{ width: '100%', maxWidth: 340, mt: 3 }}>
@@ -110,9 +114,7 @@ export const ZipcodeInput: FC<{
 					digitLabel={(position) =>
 						t('registration.zipcode.digitLabel', {
 							position,
-							total: ZIPCODE_LENGTH,
-							defaultValue:
-								'Postleitzahl, Ziffer {{position}} von {{total}}'
+							total: ZIPCODE_LENGTH
 						})
 					}
 				/>
@@ -129,10 +131,7 @@ export const ZipcodeInput: FC<{
 				>
 					{remaining > 0 && value.length > 0
 						? t('registration.zipcode.remaining', {
-								count: remaining,
-								defaultValue_one: 'Noch {{count}} Ziffer',
-								defaultValue_other: 'Noch {{count}} Ziffern',
-								defaultValue: 'Noch {{count}} Ziffern'
+								count: remaining
 							})
 						: ''}
 				</Typography>

@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ZipcodeDigits } from './ZipcodeDigits';
 
@@ -66,6 +67,40 @@ describe('ZipcodeDigits', () => {
 
 		expect(emitted()).toBe('50667');
 		expect(slot(5).value).toBe('7');
+	});
+
+	it('fills the row in order when a postcode is typed key by key', async () => {
+		// The other tests drive one chosen slot at a time with `fireEvent`,
+		// which writes to the element they name regardless of where the browser
+		// actually put the caret. Real typing goes wherever focus is, so the
+		// post-write focus move has to be exercised for real: a guard reading a
+		// `value` React has not re-rendered yet bounces focus back onto the slot
+		// just filled, and the next key overwrites it instead of advancing.
+		const user = userEvent.setup();
+		render(<Harness />);
+
+		await user.click(slot(1));
+		await user.keyboard('12345');
+
+		expect(emitted()).toBe('12345');
+		expect(slot(1).value).toBe('1');
+		expect(slot(2).value).toBe('2');
+		expect(slot(3).value).toBe('3');
+		expect(slot(4).value).toBe('4');
+		expect(slot(5).value).toBe('5');
+	});
+
+	it('types a postcode whose digits repeat', async () => {
+		// A repeated digit leaves the emitted string unchanged for that slot,
+		// so any fix that keys the focus move off a *changed* value would stall
+		// here. Reported as `11111` landing four digits deep.
+		const user = userEvent.setup();
+		render(<Harness />);
+
+		await user.click(slot(1));
+		await user.keyboard('11111');
+
+		expect(emitted()).toBe('11111');
 	});
 
 	it('steps back and clears on backspace in an empty slot', () => {

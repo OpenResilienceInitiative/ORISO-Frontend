@@ -11,14 +11,15 @@ import { ErstantwortActionKind } from './erstantwortPayload';
  * carries legal weight (consent must precede data transmission).
  *
  * The `default*` strings are the **platform fallback wording**. They serve
- * three purposes and only three:
+ * two purposes and only two:
  *
- * 1. as the i18n `defaultValue`, so a missing key degrades to real German
- *    rather than to a raw key;
- * 2. so Storybook and the tests can render the full sequence with no backend
+ * 1. so Storybook and the tests can render the full sequence with no backend
  *    (ORISO-Frontend#826);
- * 3. so the client-side triggers (post-dispatch, ORISO-Frontend#825) — which
- *    produce no server event — have wording to render.
+ * 2. so gender-voice and catalogue-shape tests can pin the platform voice
+ *    without going through i18n.
+ *
+ * Production resolve calls `t(key)` only. A missing key must follow the
+ * locale fallback chain (#1154), not snap to these German strings.
  *
  * They are **not** the wording of a delivered Erstantwort. That is frozen into
  * the persisted event by the UserService (ADR-018 §4, ORISO-UserService#926),
@@ -252,6 +253,60 @@ export const ERSTANTWORT_CATALOGUE: ErstantwortCatalogueEntry[] = [
 	   No Live Chat: there is no enquiry to dispatch, and someone who just
 	   chose their name in the pseudonym card must not be asked again three
 	   minutes later. */
+	{
+		id: 'enquiryReceived',
+		trigger: 'AFTER_ENQUIRY_DISPATCHED',
+		source: 'PLATFORM',
+		modalities: ASYNC_MODALITIES,
+		toggleable: false,
+		editable: true,
+		headlineKey: 'erstantwort.enquiryReceived.headline',
+		defaultHeadline: 'Ihre Nachricht ist bei uns',
+		bodyKey: 'erstantwort.enquiryReceived.body',
+		defaultBody:
+			'Wir suchen jetzt eine Ansprechperson, die zu Ihrem Anliegen passt. Innerhalb von {{deadlineDays}} Werktagen erhalten Sie eine Antwort.'
+		/* The illustration rides in the `enquiryReceived` slot rather than in
+		   the body: a Träger may rewrite these words, and a picture that stops
+		   matching rewritten text is worse than no picture. */
+	},
+	{
+		id: 'notificationChoice',
+		trigger: 'AFTER_ENQUIRY_DISPATCHED',
+		source: 'PLATFORM',
+		modalities: ASYNC_MODALITIES,
+		toggleable: true,
+		editable: false,
+		headlineKey: 'erstantwort.notificationChoice.headline',
+		defaultHeadline: 'Wie sollen wir Sie erreichen?',
+		bodyKey: 'erstantwort.notificationChoice.body',
+		defaultBody:
+			'Sie müssen nicht warten und immer wieder nachsehen. Sagen Sie uns, wie wir Ihnen Bescheid geben dürfen, sobald die Antwort da ist.'
+		/* No `action`: three choices do not fit one button. The affordance is
+		   the inline NotificationChoiceCard, in the `notificationChoice` slot. */
+	},
+	{
+		id: 'deviceLimit',
+		trigger: 'AFTER_ENQUIRY_DISPATCHED',
+		source: 'PLATFORM',
+		modalities: ASYNC_MODALITIES,
+		toggleable: false,
+		editable: false,
+		headlineKey: 'erstantwort.deviceLimit.headline',
+		defaultHeadline: 'Eines noch, damit nichts verloren geht',
+		bodyKey: 'erstantwort.deviceLimit.body',
+		/* The reassurance comes first and the limit second, because the limit
+		   alone reads as "you are about to lose everything". You are not locked
+		   out of the counselling — the counsellor keeps the conversation and can
+		   pick it up. Only your own copy of what you already wrote depends on
+		   this device. */
+		defaultBody:
+			'Was Sie hier schreiben, kann nur auf diesem Gerät gelesen werden — das schützt Sie. Wechseln Sie später das Gerät, geht die Beratung ganz normal weiter; Ihre Ansprechperson hat das Gespräch und knüpft daran an. Nur Ihre eigene Sicht auf das bisher Geschriebene braucht dann Ihren Ersatzschlüssel.',
+		action: {
+			kind: 'SHOW_RECOVERY_KEY',
+			labelKey: 'erstantwort.deviceLimit.action',
+			defaultLabel: 'Ersatzschlüssel ansehen'
+		}
+	},
 	{
 		id: 'saveCredentials',
 		trigger: 'AFTER_ENQUIRY_DISPATCHED',

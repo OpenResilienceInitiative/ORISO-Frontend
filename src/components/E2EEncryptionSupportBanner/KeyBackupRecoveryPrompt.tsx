@@ -1,25 +1,33 @@
+import { UserDataContext } from '../../globalState';
+import { Link } from 'react-router-dom';
 import * as React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import {
-	canBootstrapSilently,
-	getEncryptionStatus,
 	InvalidRecoveryKeyError,
-	recoverWithKey,
-	setUpRecovery
+	recoverWithKey
 } from '../../services/matrixKeyBackupService';
 import {
-	RecoverySetupBusyError,
-	savePendingRecoveryKey,
-	withRecoverySetupLock
+	usePendingRecoveryKey,
+	savePendingRecoveryKey
 } from '../../services/pendingRecoveryKeyStore';
+import {
+	useRecoveryReminder,
+	isActionableRecoveryStatus,
+	useRecoveryRuntimeStatus,
+	useRecoveryRuntimeRevision,
+	setRecoveryRuntimeStatus
+} from '../../services/recoveryReminderState';
 import { executeWithReadyEncryptionClient } from '../profile/EncryptionSettings/encryptionClient';
 import { OrisoDialog } from '../modal/OrisoDialog';
+import {
+	M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM,
+	M3_SNACKBAR_PHONE_MEDIA,
+	M3Snackbar
+} from '../m3Snackbar/M3Snackbar';
 import { ReactComponent as RecoverySafeIcon } from '../../resources/img/icons/recovery-safe.svg';
 import './E2EEncryptionSupportBanner.styles.scss';
-
-const DISMISS_KEY = 'hideKeyBackupPrompt';
 
 type KeyBackupRecoveryDialogProps = {
 	onClose: () => void;
@@ -47,14 +55,8 @@ export const KeyBackupRecoveryDialog = ({
 		} catch (recoverError) {
 			setError(
 				recoverError instanceof InvalidRecoveryKeyError
-					? translate(
-							'encryption.keyBackup.dialog.invalidKey',
-							'Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
-						)
-					: translate(
-							'encryption.keyBackup.dialog.error',
-							'Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
-						)
+					? translate('encryption.keyBackup.dialog.invalidKey')
+					: translate('encryption.keyBackup.dialog.error')
 			);
 		} finally {
 			setBusy(false);
@@ -65,10 +67,7 @@ export const KeyBackupRecoveryDialog = ({
 		<OrisoDialog
 			open
 			onClose={onClose}
-			title={translate(
-				'encryption.keyBackup.dialog.recoveryTitle',
-				'Schön, dass Sie wieder da sind'
-			)}
+			title={translate('encryption.keyBackup.dialog.recoveryTitle')}
 			icon={<RecoverySafeIcon />}
 			maxWidth="560px"
 			height="auto"
@@ -78,24 +77,15 @@ export const KeyBackupRecoveryDialog = ({
 				className="keyBackupDialog"
 				data-cy="key-backup-recovery-dialog"
 			>
+				<p>{translate('encryption.keyBackup.dialog.recoveryCopy')}</p>
 				<p>
 					{translate(
-						'encryption.keyBackup.dialog.recoveryCopy',
-						'Sie sind auf einem neuen Gerät angemeldet. Ihr bisheriger Gesprächsverlauf liegt sicher verschlossen in Ihrem Tresor.'
-					)}
-				</p>
-				<p>
-					{translate(
-						'encryption.keyBackup.dialog.recoveryInstruction',
-						'Geben Sie Ihren Wiederherstellungsschlüssel ein, um Ihre Nachrichten hier weiterzulesen.'
+						'encryption.keyBackup.dialog.recoveryInstruction'
 					)}
 				</p>
 				<label className="keyBackupDialog__field">
 					<span>
-						{translate(
-							'encryption.keyBackup.dialog.keyLabel',
-							'Wiederherstellungsschlüssel'
-						)}
+						{translate('encryption.keyBackup.dialog.keyLabel')}
 					</span>
 					<input
 						type="text"
@@ -118,10 +108,7 @@ export const KeyBackupRecoveryDialog = ({
 						onClick={onClose}
 						disabled={busy}
 					>
-						{translate(
-							'encryption.keyBackup.dialog.later',
-							'Später'
-						)}
+						{translate('encryption.keyBackup.dialog.later')}
 					</button>
 					<button
 						type="button"
@@ -130,13 +117,9 @@ export const KeyBackupRecoveryDialog = ({
 						disabled={!recoveryKey.trim() || busy}
 					>
 						{busy
-							? translate(
-									'encryption.keyBackup.dialog.restoring',
-									'Wird wiederhergestellt …'
-								)
+							? translate('encryption.keyBackup.dialog.restoring')
 							: translate(
-									'encryption.keyBackup.dialog.openVault',
-									'Tresor öffnen'
+									'encryption.keyBackup.dialog.openVault'
 								)}
 					</button>
 				</div>
@@ -145,129 +128,115 @@ export const KeyBackupRecoveryDialog = ({
 	);
 };
 
-/**
- * #437 login-time key-backup handling. Two situations, deliberately handled
- * very differently:
- *
- * - **New device, backup on the server** — only the user can unlock it, so we
- *   ask: the recovery dialog opens and takes their recovery key.
- * - **Fresh account, no backup yet** — nothing to ask about. The Tresor is
- *   bootstrapped silently in the background and the generated recovery key is
- *   parked for the Sicherheit panel, which shows it when the user gets there.
- *   Nobody is stopped mid-Anfrage by a modal they cannot act on usefully.
- *
- * Probes once per mount, only after sync reaches PREPARED. Dismissal is
- * session-scoped *and* bound to the user who dismissed, so we do not nag on
- * every navigation but a different account logging into the same tab still
- * gets its own answer. It only ever silences the dialog — the background
- * setup is not something the user dismissed, so it always gets to run.
+/*
+ * Below 900 px (`$fromLarge`) the app shows its navigation bar at the bottom
+ * edge (72 px); the snackbar rests above it instead of covering it. MUI only
+ * centres a snackbar from 600 px up, so the phone width is centred here.
  */
+const recoverySnackbarPlacement = {
+	// Shared with the stacked host, so both rest at the same height above the bar.
+	[M3_SNACKBAR_PHONE_MEDIA]: {
+		bottom: M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM
+	},
+	left: { xs: '50%' },
+	right: { xs: 'auto' },
+	transform: { xs: 'translateX(-50%)' },
+	width: { xs: 'calc(100% - 16px)' }
+} as const;
+
+/** Recovery is available inline; opening the restore dialog is always explicit. */
 export const KeyBackupRecoveryPrompt = () => {
+	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
-	const [showRecovery, setShowRecovery] = useState(false);
-	const probedRef = useRef(false);
-	const userIdRef = useRef<string | null>(null);
-
-	useEffect(() => {
-		if (!matrixClientService) {
-			return undefined;
-		}
-
-		let cancelled = false;
-
-		/**
-		 * Best-effort bootstrap. Every failure path stays silent: the user did
-		 * not ask for this, so an error here must not become their problem —
-		 * the Sicherheit panel still offers the explicit setup.
-		 */
-		const bootstrapSilently = async (userId: string) => {
-			try {
-				// The lock keeps a second tab — or the panel's manual setup —
-				// from creating a rival recovery key while this one runs.
-				const encodedKey = await withRecoverySetupLock(userId, () =>
-					executeWithReadyEncryptionClient(
-						undefined,
-						matrixClientService,
-						setUpRecovery
-					)
-				);
-				if (encodedKey) {
-					savePendingRecoveryKey(userId, encodedKey);
-				}
-			} catch (setupError) {
-				if (setupError instanceof RecoverySetupBusyError) {
-					// Someone else is already on it; theirs wins, ours is a no-op.
-					return;
-				}
-				console.warn('Silent key-backup setup failed', setupError);
-			}
-		};
-
-		const unsubscribe = matrixClientService.onSyncStateChange(
-			(state: string | null) => {
-				if (state !== 'PREPARED' || probedRef.current) {
-					return;
-				}
-				probedRef.current = true;
-				const client = matrixClientService.getClient();
-				if (!client) {
-					return;
-				}
-				const userId = client.getUserId();
-				userIdRef.current = userId;
-				getEncryptionStatus(client)
-					.then((status) => {
-						if (cancelled) {
-							return;
-						}
-						if (status.keyStorageOutOfSync) {
-							if (
-								sessionStorage.getItem(DISMISS_KEY) !== userId
-							) {
-								setShowRecovery(true);
-							}
-							return;
-						}
-						if (userId && canBootstrapSilently(status)) {
-							void bootstrapSilently(userId);
-						}
-					})
-					.catch(() => {
-						// Best-effort nudge — never surface crypto probe errors.
-					});
-			}
-		);
-
-		return () => {
-			cancelled = true;
-			unsubscribe();
-		};
-	}, [matrixClientService]);
-
-	if (!showRecovery) {
-		return null;
-	}
-
-	const closePrompt = () => {
-		// Remember *who* dismissed: the next account in this tab has not.
-		sessionStorage.setItem(DISMISS_KEY, userIdRef.current ?? 'true');
-		setShowRecovery(false);
-	};
-
+	const passwordMode =
+		useContext(UserDataContext)?.userData?.chatRecoveryMode ===
+		'LOGIN_PASSWORD';
+	const userId = matrixClientService?.getClient()?.getUserId() ?? '';
+	const status = useRecoveryRuntimeStatus(userId);
+	const revision = useRecoveryRuntimeRevision(userId);
+	const eligible = useRecoveryReminder(userId);
+	const key = usePendingRecoveryKey(userId);
+	const [openedFor, setOpenedFor] = useState<string | null>(null);
+	/* Dismissal lives in component state on purpose: the notice comes back on
+	   every reload and every login until the history is readable, but it never
+	   blocks the screen while somebody is working. */
+	const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+	const showRecovery = openedFor === userId;
+	if (!isActionableRecoveryStatus(status) || (eligible && !!key)) return null;
+	// Scoped to the status revision: any change, even via 'pending' back to the same status, reshows it.
+	const dismissKey = `${userId}:${revision}`;
 	return (
-		<KeyBackupRecoveryDialog
-			onClose={closePrompt}
-			onRecover={async (recoveryKey) => {
-				const result = await executeWithReadyEncryptionClient(
-					undefined,
-					matrixClientService,
-					(client) => recoverWithKey(client, recoveryKey)
-				);
-				if (!result) {
-					throw new Error('Matrix recovery client unavailable');
-				}
-				return result.imported;
-			}}
-		/>
+		<>
+			{dismissedFor !== dismissKey && !showRecovery && (
+				<M3Snackbar
+					role="status"
+					testId="key-backup-recovery-action"
+					message={
+						<>
+							{eligible && (
+								<span>
+									{t(
+										'encryption.saveReminder.unavailable'
+									)}{' '}
+								</span>
+							)}
+							<span>
+								{t('encryption.passwordRecovery.' + status)}
+							</span>{' '}
+							<Link
+								to="/profile/einstellungen/sicherheit"
+								className="encryption-recovery-snackbar__link"
+							>
+								{t('encryption.passwordRecovery.settings')}
+							</Link>
+						</>
+					}
+					action={{
+						label: t('encryption.keyBackup.dialog.openVault'),
+						onClick: () => setOpenedFor(userId),
+						testId: 'key-backup-recovery-open'
+					}}
+					actionOnOwnLine
+					onClose={() => setDismissedFor(dismissKey)}
+					closeLabel={t('encryption.keyBackup.snackbar.close')}
+					containerSx={recoverySnackbarPlacement}
+					yieldToOthers
+				/>
+			)}
+			{showRecovery && (
+				<KeyBackupRecoveryDialog
+					onClose={() => setOpenedFor(null)}
+					onRecover={async (key) => {
+						const result = await executeWithReadyEncryptionClient(
+							undefined,
+							matrixClientService,
+							async (client) => {
+								const recovered = await recoverWithKey(
+									client,
+									key
+								);
+								const id = client.getUserId();
+								if (id) {
+									if (passwordMode)
+										savePendingRecoveryKey(id, key);
+									setRecoveryRuntimeStatus(
+										id,
+										passwordMode
+											? 'needs-password'
+											: 'ready'
+									);
+								}
+								return recovered;
+							}
+						);
+						if (!result)
+							throw new Error(
+								'Matrix recovery client unavailable'
+							);
+						return result.imported;
+					}}
+				/>
+			)}
+		</>
 	);
 };

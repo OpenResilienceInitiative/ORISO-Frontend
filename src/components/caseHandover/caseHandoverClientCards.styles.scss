@@ -117,6 +117,25 @@
 	line-height: 21px;
 }
 
+.caseHandoverMessage__intro {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.caseHandoverMessage__body .caseHandoverMessage__introTitle,
+.caseHandoverMessage__body .caseHandoverMessage__introCopy {
+	margin: 0;
+	font-size: 16px;
+	line-height: 21px;
+	font-weight: 400;
+	letter-spacing: normal;
+}
+
+.caseHandoverMessage__body .caseHandoverMessage__introTitle {
+	font-weight: 500;
+}
+
 /*
  * Actions belong to the message flow, so they sit inside the bubble under the
  * copy rather than in a card footer. The pair itself is `ButtonGroup`
@@ -124,7 +143,34 @@
  * fallback all live there. Only the gap to the copy above is set here.
  */
 .caseHandoverMessage__actions {
-	margin-top: 4px;
+	margin-top: 8px;
+}
+
+.caseHandoverMessage__optOutCopy {
+	margin: 0;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 400;
+	letter-spacing: normal;
+}
+
+.caseHandoverMessage__optOutCopy + .caseHandoverMessage__optOutCopy {
+	margin-top: 12px;
+}
+
+.caseHandoverMessage__optOutSwitch {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 24px;
+	margin-top: 16px;
+	font-size: 15px;
+	line-height: 22px;
+	font-weight: 500;
+
+	> span {
+		flex: 1 1 auto;
+	}
 }
 
 .caseHandoverMessage__error {
@@ -150,11 +196,22 @@
  * group's stacking fallback fires on a desktop stream too, which is not the
  * layout that was signed off.
  */
-.caseHandoverInlineConsent .messageItem__message--systemNotification {
-	// Hug the answer pair like the Figma frame does, instead of stretching to
-	// the full content column — a 720px bubble around two centred buttons
-	// reads as an empty panel.
-	width: fit-content;
+.caseHandoverInlineConsent--choice .messageItem__message--systemNotification {
+	// The wide message has room for the horizontal filled pair; the same bubble
+	// becomes fluid below that width and its existing ButtonGroup stacks.
+	width: min(720px, 100%);
 	min-width: min(440px, 100%);
 	max-width: min(720px, 100%);
+	container: case-handover-consent / inline-size;
+}
+
+/* Figma 9596-35524: on a narrow message both answers are neutral outline
+   actions. The semantic positive/negative fill is reserved for the wide row. */
+@container case-handover-consent (width < 520px) {
+	.caseHandoverMessage__actions .buttonGroup__item.buttonGroup__item--primary,
+	.caseHandoverMessage__actions .buttonGroup__item.buttonGroup__item--tonal {
+		border-color: var(--m3-outline-variant, #c4c7c8);
+		background-color: transparent;
+		color: var(--m3-on-surface-variant, #444748);
+	}
 }

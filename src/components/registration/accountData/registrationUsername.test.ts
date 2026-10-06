@@ -4,7 +4,11 @@ import {
 	REGISTRATION_DATA_VALIDATION,
 	USERNAME_MAX_LENGTH
 } from '../registrationDataValidation';
-import { generatePseudonym, Pseudonym, SUPPORTED } from '../../../utils/anonName/engine';
+import {
+	generatePseudonym,
+	Pseudonym,
+	SUPPORTED
+} from '../../../utils/anonName/engine';
 
 const identity = (partial: Partial<Pseudonym>): Pseudonym => ({
 	displayName: 'freundliche Katze Mika',
@@ -16,7 +20,9 @@ const identity = (partial: Partial<Pseudonym>): Pseudonym => ({
 
 describe('toRegistrationUsername', () => {
 	it('builds the handle from animal + name, dropping the adjective', () => {
-		expect(toRegistrationUsername(identity({}))).toMatch(/^katze_mika_\d{4}$/);
+		expect(toRegistrationUsername(identity({}))).toMatch(
+			/^katze_mika_\d{4}$/
+		);
 	});
 
 	it('never exceeds the backend username limit', () => {
@@ -26,16 +32,18 @@ describe('toRegistrationUsername', () => {
 			displayName: 'sanftmütige Meerschweinchen Dominique'
 		});
 		for (let i = 0; i < 200; i++) {
-			expect(
-				toRegistrationUsername(longest).length
-			).toBeLessThanOrEqual(USERNAME_MAX_LENGTH);
+			expect(toRegistrationUsername(longest).length).toBeLessThanOrEqual(
+				USERNAME_MAX_LENGTH
+			);
 		}
 	});
 
 	it('passes the frontend username validation for every language', () => {
 		for (const lang of SUPPORTED) {
 			for (let i = 0; i < 50; i++) {
-				const username = toRegistrationUsername(generatePseudonym(lang));
+				const username = toRegistrationUsername(
+					generatePseudonym(lang)
+				);
 				expect(
 					REGISTRATION_DATA_VALIDATION.username.validation(username),
 					`invalid username "${username}" (${lang})`
@@ -58,7 +66,9 @@ describe('toRegistrationUsername', () => {
 	it('never emits a trailing underscore before the numeric suffix', () => {
 		for (const lang of SUPPORTED) {
 			for (let i = 0; i < 50; i++) {
-				const username = toRegistrationUsername(generatePseudonym(lang));
+				const username = toRegistrationUsername(
+					generatePseudonym(lang)
+				);
 				expect(username).not.toMatch(/__\d{4}$/);
 			}
 		}
@@ -71,8 +81,36 @@ describe('toRegistrationUsername', () => {
 		} as Pseudonym;
 		const username = toRegistrationUsername(legacy);
 		expect(username.length).toBeLessThanOrEqual(USERNAME_MAX_LENGTH);
+		expect(REGISTRATION_DATA_VALIDATION.username.validation(username)).toBe(
+			true
+		);
+	});
+
+	/* German spells its umlauts out when it cannot draw the dots: Löwe is
+	   loewe, not lowe (Frank, 2026-09-10). The live chat's door shows this
+	   string to the guest, so a swallowed umlaut is a visible typo. */
+	it('spells out umlauts instead of stripping them', () => {
+		const built = toRegistrationUsername({
+			displayName: 'stiller Löwe Shin',
+			animalLabel: 'Löwe',
+			name: 'Shin'
+		} as never);
+		expect(built).toMatch(/^loewe_shin_\d{4}$/);
+
 		expect(
-			REGISTRATION_DATA_VALIDATION.username.validation(username)
-		).toBe(true);
+			toRegistrationUsername({
+				displayName: 'kleiner Käfer Uli',
+				animalLabel: 'Käfer',
+				name: 'Uli'
+			} as never)
+		).toMatch(/^kaefer_uli_\d{4}$/);
+
+		expect(
+			toRegistrationUsername({
+				displayName: 'weiße Möwe Bo',
+				animalLabel: 'Möwe',
+				name: 'Straße'
+			} as never)
+		).toMatch(/^moewe_strasse_\d{4}$/);
 	});
 });

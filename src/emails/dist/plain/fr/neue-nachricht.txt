@@ -1,0 +1,27 @@
+Vous avez un nouveau message
+============================
+
+Un nouveau message vous attend dans votre service de conseil sur {{platformName}}.
+
+Pour des raisons de protection des données, nous n’affichons ici ni contenu ni nom. Vous lirez le message, chiffré, après votre connexion.
+
+Lire le message:
+{{messageUrl}}
+
+Vous n’êtes pas obligé de répondre tout de suite. Le message reste dans votre boîte aussi longtemps que vous en avez besoin.
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

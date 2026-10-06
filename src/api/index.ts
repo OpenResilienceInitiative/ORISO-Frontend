@@ -1,5 +1,6 @@
 export * from './apiAgencySelection';
 export * from './apiGetDepartmentLegal';
+export * from './useDepartmentLegal';
 export * from './apiDeleteAskerAccount';
 export * from './apiDeleteSessionAndUser';
 export * from './apiFinishAnonymousConversation';

@@ -7,6 +7,11 @@ const RULE_CYCLE_INTERVAL_MS = 4000;
 interface WaitingAreaRulesProps {
 	rules: string[];
 	ariaLabel?: string;
+	/**
+	 * Pause the spotlight cycle. Combined with OS `prefers-reduced-motion` —
+	 * either one stops the motion (WCAG 2.2.2 / #1293).
+	 */
+	animationOff?: boolean;
 }
 
 /**
@@ -17,11 +22,12 @@ interface WaitingAreaRulesProps {
  */
 export const WaitingAreaRules = ({
 	rules,
-	ariaLabel
+	ariaLabel,
+	animationOff = false
 }: WaitingAreaRulesProps) => {
 	const prefersReducedMotion = usePrefersReducedMotion();
 	const activeIndex = useCyclingIndex(rules.length, RULE_CYCLE_INTERVAL_MS, {
-		enabled: !prefersReducedMotion
+		enabled: !prefersReducedMotion && !animationOff
 	});
 
 	if (rules.length === 0) {

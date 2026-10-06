@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import {
 	Checkbox,
 	Chip,
@@ -6,11 +7,13 @@ import {
 	FormHelperText,
 	InputLabel,
 	ListItemText,
+	ListSubheader,
 	MenuItem,
 	OutlinedInput,
 	Select,
 	SelectChangeEvent,
-	SelectProps
+	SelectProps,
+	TextField
 } from '@mui/material';
 import {
 	orisoInputColors,
@@ -50,11 +53,34 @@ export interface OrisoMultiSelectProps
 	value: string[];
 	helperText?: React.ReactNode;
 	error?: boolean;
+	searchable?: boolean;
+	searchPlaceholder?: string;
 	onChange?: (
 		event: SelectChangeEvent<string[]>,
 		child: React.ReactNode
 	) => void;
 }
+
+const optionLabelText = (label: React.ReactNode): string => {
+	if (typeof label === 'string' || typeof label === 'number') {
+		return String(label);
+	}
+
+	return '';
+};
+
+export const optionMatchesSearch = (
+	option: OrisoSelectOption,
+	query: string
+): boolean => {
+	const needle = query.trim().toLowerCase();
+
+	if (!needle) {
+		return true;
+	}
+
+	return optionLabelText(option.label).toLowerCase().includes(needle);
+};
 
 const useSelectId = (id?: string) => {
 	const fallbackId = React.useId();
@@ -119,13 +145,29 @@ export const OrisoMultiSelect = ({
 	id,
 	fullWidth = true,
 	onChange,
+	searchable = false,
+	searchPlaceholder,
 	...props
 }: OrisoMultiSelectProps) => {
+	const { t } = useTranslation();
+	const resolvedSearch = searchPlaceholder ?? t('form.select.search');
 	const selectId = useSelectId(id);
 	const labelId = `${selectId}-label`;
+	const searchId = `${selectId}-search`;
+	const [searchQuery, setSearchQuery] = React.useState('');
 	const labelByValue = new Map(
 		options.map((option) => [option.value, option.label])
 	);
+	const visibleOptions = searchable
+		? options.filter((option) => optionMatchesSearch(option, searchQuery))
+		: options;
+	const menuProps = searchable
+		? {
+				...(props.MenuProps ?? orisoSelectMenuProps),
+				autoFocus: false,
+				disableAutoFocusItem: true
+			}
+		: (props.MenuProps ?? orisoSelectMenuProps);
 
 	return (
 		<FormControl
@@ -144,8 +186,9 @@ export const OrisoMultiSelect = ({
 				label={label}
 				variant="outlined"
 				input={<OutlinedInput label={label} />}
-				MenuProps={props.MenuProps ?? orisoSelectMenuProps}
+				MenuProps={menuProps}
 				onChange={onChange}
+				{...(searchable ? { onClose: () => setSearchQuery('') } : {})}
 				renderValue={(selected) => (
 					<span className="orisoMultiSelectValue">
 						{selected.map((selectedValue) => (
@@ -167,7 +210,38 @@ export const OrisoMultiSelect = ({
 					</span>
 				)}
 			>
-				{options.map((option) => (
+				{searchable && (
+					<ListSubheader
+						sx={{
+							backgroundColor: orisoInputColors.surface,
+							lineHeight: 'normal',
+							py: 1,
+							px: 1.5
+						}}
+					>
+						<TextField
+							id={searchId}
+							size="small"
+							fullWidth
+							autoFocus
+							autoComplete="off"
+							placeholder={resolvedSearch}
+							value={searchQuery}
+							inputProps={{ 'aria-label': resolvedSearch }}
+							onChange={(event) =>
+								setSearchQuery(event.target.value)
+							}
+							onClick={(event) => event.stopPropagation()}
+							onMouseDown={(event) => event.stopPropagation()}
+							onKeyDown={(event) => {
+								if (event.key !== 'Escape') {
+									event.stopPropagation();
+								}
+							}}
+						/>
+					</ListSubheader>
+				)}
+				{visibleOptions.map((option) => (
 					<MenuItem
 						key={option.value}
 						value={option.value}

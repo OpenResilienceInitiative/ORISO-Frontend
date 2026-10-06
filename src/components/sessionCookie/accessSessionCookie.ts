@@ -5,6 +5,17 @@ const AUTH_STORAGE_KEYS: Record<string, string> = {
 
 const getAuthStorageKey = (name: string) => AUTH_STORAGE_KEYS[name];
 
+/**
+ * Fired whenever the auth session is written or cleared here. Signing in does
+ * not remount the providers above the router, so anything derived from the
+ * token — first of all the user's tenant — has to be told to re-resolve.
+ */
+export const AUTH_SESSION_CHANGE_EVENT = 'oriso:auth-session-change';
+
+const notifyAuthSessionChange = () => {
+	window.dispatchEvent(new Event(AUTH_SESSION_CHANGE_EVENT));
+};
+
 const setAuthStorageValue = (name: string, value: string) => {
 	const storageKey = getAuthStorageKey(name);
 	if (!storageKey) return;
@@ -102,19 +113,34 @@ export const setValueInCookie = (
 
 	if (readCookieValue(name) === value) {
 		removeAuthStorageValue(name);
+		notifyAuthSessionChange();
 		return;
 	}
 
 	setAuthStorageValue(name, value);
+	notifyAuthSessionChange();
 };
 
 export const deleteCookieByName = (name: string, path: string = '/') => {
 	document.cookie = `${name}=; path=${path}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 	removeAuthStorageValue(name);
+
+	if (getAuthStorageKey(name)) {
+		notifyAuthSessionChange();
+	}
 };
 
 export const getValueFromCookie = (targetValue: string) =>
 	readCookieValue(targetValue) ?? getAuthStorageValue(targetValue);
+
+/**
+ * Cookie-only variant: no localStorage mirror fallback. Use it where the
+ * question is "is there an auth session *right now*" — during sign-out the
+ * cookie is removed first and the mirror may lag, so `getValueFromCookie`
+ * would still answer with the stale token.
+ */
+export const hasAuthCookie = (name: string): boolean =>
+	Boolean(readCookieValue(name));
 
 export const removeAllCookies = (allowlist: string[] = []) => {
 	const retainedCookies = [
@@ -135,4 +161,6 @@ export const removeAllCookies = (allowlist: string[] = []) => {
 			removeAuthStorageValue(name);
 		}
 	});
+
+	notifyAuthSessionChange();
 };

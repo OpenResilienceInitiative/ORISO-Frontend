@@ -31,6 +31,14 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof AgencySelectionResults>;
 
+const baseAgency = {
+	city: 'Köln',
+	consultingType: 1,
+	description: '',
+	offline: false,
+	postcode: '50667'
+} as const;
+
 export const NoResults: Story = {
 	name: 'Keine Online-Beratungsstelle gefunden',
 	args: { results: [] }
@@ -47,5 +55,30 @@ export const OnlyExternal: Story = {
 				url: 'https://example.org/beratung'
 			} as AgencyDataInterface
 		]
+	}
+};
+
+export const TeamAndSingle: Story = {
+	name: 'Team- und Einzelberatung Labels',
+	args: {
+		results: [
+			{
+				...baseAgency,
+				id: 1,
+				name: 'Teamberatung Innenstadt',
+				teamAgency: true
+			},
+			{
+				...baseAgency,
+				id: 2,
+				name: 'Einzelberatung Ehrenfeld',
+				teamAgency: false
+			},
+			{
+				...baseAgency,
+				id: 3,
+				name: 'Beratung ohne Typ-Flag (Single-Fallback)'
+			}
+		] as AgencyDataInterface[]
 	}
 };

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { SxProps, Theme, Typography } from '@mui/material';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import { TopicsDataInterface } from '../../../globalState/interfaces';
+import { getRegistrationTopicDisplay } from '../registrationDesign/registrationDesign';
 
 const PreselectedTopic = ({
 	hasError,
@@ -13,7 +14,7 @@ const PreselectedTopic = ({
 	topic: TopicsDataInterface;
 	sx: SxProps<Theme>;
 }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 
 	if (!hasError && !topic) {
 		return null;
@@ -42,7 +43,7 @@ const PreselectedTopic = ({
 				</Typography>
 			) : (
 				<Typography sx={sx}>
-					{topic.titles?.long || topic.name}
+					{getRegistrationTopicDisplay(topic, i18n.language).title}
 				</Typography>
 			)}
 		</>

@@ -4,8 +4,11 @@ import clsx from 'clsx';
 import { ReactComponent as CaseAcceptedIcon } from '../../resources/img/icons/case-handover/case-accepted.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
+import { ReactComponent as CheckIcon } from '../../resources/img/icons/check.svg';
+import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import { Switch } from '../Switch';
 import '../message/message.styles.scss';
 import './caseHandoverClientCards.styles';
 
@@ -187,10 +190,7 @@ export const CaseHandoverSystemMessageCard = ({
 							<button
 								type="button"
 								className="messageItem__kebabButton messageItem__kebabButton--left"
-								aria-label={translate(
-									'message.menu.open',
-									'More options'
-								)}
+								aria-label={translate('message.menu.open')}
 								onClick={onOpenMenu}
 							>
 								<StackVerticalIcon className="messageItem__kebabIconDefault" />
@@ -235,8 +235,7 @@ export const CaseHandoverSystemMessageCard = ({
 										className="messageItem__deliveryStatus messageItem__deliveryStatus--sent"
 										role="img"
 										aria-label={translate(
-											'message.deliveryStatus.sent',
-											'sent'
+											'message.deliveryStatus.sent'
 										)}
 									>
 										<DeliverySentIcon
@@ -255,6 +254,8 @@ export const CaseHandoverSystemMessageCard = ({
 };
 
 interface CaseHandoverConsentCardProps {
+	/** Reuses this system-message surface before access (OPT_IN) or after access starts (OPT_OUT). */
+	mode?: 'OPT_IN' | 'OPT_OUT';
 	isSubmitting?: boolean;
 	error?: string;
 	onApprove: () => void;
@@ -266,73 +267,149 @@ interface CaseHandoverConsentCardProps {
 	 * delivery tick in an empty one.
 	 */
 	timestamp?: string;
+	/**
+	 * Current state of the OPT_OUT consent switch. Pass it to let the caller own
+	 * the truth (e.g. after the server confirmed the decision); omit it and the
+	 * card tracks the client's own choice, starting from granted — the opt-out
+	 * default. Either way the switch must follow the click, never snap back.
+	 */
+	consentGranted?: boolean;
 }
 
 /** Client-side continuation for a handover request that requires explicit consent. */
 export const CaseHandoverConsentCard = ({
+	mode = 'OPT_IN',
 	isSubmitting = false,
 	error,
 	onApprove,
 	onDecline,
-	timestamp
+	timestamp,
+	consentGranted
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
+	const isOptOut = mode === 'OPT_OUT';
+	/*
+	 * `Switch` is fully controlled — its `<input>` renders whatever `checked`
+	 * says, so a hard-coded `checked` made every toggle snap straight back and
+	 * the client could never see their withdrawal take effect (ORISO-Frontend#1329).
+	 * Standard controlled/uncontrolled pattern: the prop wins when given.
+	 */
+	const isConsentControlled = consentGranted !== undefined;
+	const [ownConsentGranted, setOwnConsentGranted] = React.useState(true);
+	const isConsentGranted = isConsentControlled
+		? consentGranted
+		: ownConsentGranted;
+
+	const handleConsentChange = (checked: boolean) => {
+		if (!isConsentControlled) {
+			setOwnConsentGranted(checked);
+		}
+		if (checked) {
+			onApprove();
+		} else {
+			onDecline();
+		}
+	};
+	const messageTitle = isOptOut
+		? translate('caseHandover.consent.optOut.title')
+		: translate('caseHandover.consent.title');
+	const messageCopy = isOptOut
+		? translate('caseHandover.consent.optOut.prompt')
+		: translate('caseHandover.consent.copy');
 
 	return (
 		<div
-			className="caseHandoverInlineConsent"
+			className={clsx(
+				'caseHandoverInlineConsent',
+				!isOptOut && 'caseHandoverInlineConsent--choice'
+			)}
 			data-testid="case-handover-inline-consent"
 		>
 			<CaseHandoverSystemMessageCard
-				title={translate(
-					'caseHandover.consent.title',
-					'A counsellor requested access to this conversation'
-				)}
-				subtitle={translate(
-					'caseHandover.consent.copy',
-					'Please approve or decline the request to continue the handover.'
-				)}
+				title={translate('caseHandover.consent.sender')}
+				subtitle={translate('caseHandover.consent.senderRole')}
 				timestamp={timestamp}
 			>
-				{/*
-				 * The pair is a design-system button group (Figma App.Oriso
-				 * 9564-86125), not two loose buttons: the numbered badges, the
-				 * dark-red / slate pairing and — crucially — the stack-instead-
-				 * of-overflow behaviour all belong to the group, and the same
-				 * question/answer box recurs elsewhere in the product.
-				 *
-				 * `ButtonGroup` puts the native `disabled` attribute on each
-				 * item, so while the decision is in flight both controls really
-				 * do leave the tab order instead of only looking greyed out.
-				 */}
-				<ButtonGroup
-					className="caseHandoverMessage__actions"
-					alignment="horizontal-flex"
-					numbered
-					ariaLabel={translate(
-						'caseHandover.consent.title',
-						'A counsellor requested access to this conversation'
-					)}
-					testingAttribute="case-handover-consent-actions"
-					items={[
-						{
-							id: 'caseHandoverConsentApprove',
-							label: translate('caseHandover.consent.approve'),
-							variant: 'primary',
-							disabled: isSubmitting,
-							onClick: onApprove,
-							testingAttribute: 'case-handover-consent-approve'
-						},
-						{
-							id: 'caseHandoverConsentDecline',
-							label: translate('caseHandover.consent.decline'),
-							variant: 'tonal',
-							disabled: isSubmitting,
-							onClick: onDecline,
-							testingAttribute: 'case-handover-consent-decline'
-						}
-					]}
-				/>
+				<div className="caseHandoverMessage__intro">
+					<p className="caseHandoverMessage__introTitle">
+						{messageTitle}
+					</p>
+					<p className="caseHandoverMessage__introCopy">
+						{messageCopy}
+					</p>
+				</div>
+				{isOptOut ? (
+					<>
+						<p className="caseHandoverMessage__optOutCopy">
+							{translate('caseHandover.consent.optOut.copy')}
+						</p>
+						<p className="caseHandoverMessage__optOutCopy">
+							{translate(
+								'caseHandover.consent.optOut.revocationCopy'
+							)}
+						</p>
+						<div className="caseHandoverMessage__optOutSwitch">
+							<span>
+								{translate(
+									'caseHandover.consent.optOut.switchLabel'
+								)}
+							</span>
+							<Switch
+								checked={isConsentGranted}
+								disabled={isSubmitting}
+								aria-label={translate(
+									'caseHandover.consent.optOut.switchLabel'
+								)}
+								onChange={handleConsentChange}
+							/>
+						</div>
+					</>
+				) : (
+					<>
+						{/*
+						 * The pair is the shared design-system button group (Figma
+						 * 9596-35524), not two loose controls. Wide messages use the
+						 * primary/secondary event colours; narrow messages keep the same
+						 * controls and switch them to the stacked outline presentation.
+						 *
+						 * `ButtonGroup` puts the native `disabled` attribute on each
+						 * item, so while the decision is in flight both controls really
+						 * do leave the tab order instead of only looking greyed out.
+						 */}
+						<ButtonGroup
+							className="caseHandoverMessage__actions"
+							alignment="horizontal-flex"
+							ariaLabel={messageTitle}
+							testingAttribute="case-handover-consent-actions"
+							items={[
+								{
+									id: 'caseHandoverConsentApprove',
+									label: translate(
+										'caseHandover.consent.approve'
+									),
+									variant: 'primary',
+									icon: <CheckIcon />,
+									disabled: isSubmitting,
+									onClick: onApprove,
+									testingAttribute:
+										'case-handover-consent-approve'
+								},
+								{
+									id: 'caseHandoverConsentDecline',
+									label: translate(
+										'caseHandover.consent.decline'
+									),
+									variant: 'tonal',
+									icon: <CloseIcon />,
+									disabled: isSubmitting,
+									onClick: onDecline,
+									testingAttribute:
+										'case-handover-consent-decline'
+								}
+							]}
+						/>
+					</>
+				)}
 				{error && (
 					<p className="caseHandoverMessage__error" role="alert">
 						{error}

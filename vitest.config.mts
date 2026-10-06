@@ -150,6 +150,25 @@ export default defineConfig({
 						instances: [
 							{
 								browser: 'chromium',
+								// Real Google Chrome, not Playwright's bundled
+								// `chrome-headless-shell`. Under the headless shell
+								// the orchestrator page — one long-lived tab that
+								// drives all ~170 story files through iframes —
+								// loses its WebSocket partway through roughly one
+								// run in ten. Vitest then rejects the in-flight
+								// `createTesters` RPC with "Browser connection was
+								// closed while running tests", empties the queue and
+								// aborts, so the job goes red with zero failed
+								// assertions and the tail of the queue (the smallest
+								// stories, which the sequencer runs last) silently
+								// never executes. Upstream traced it to detached
+								// iframes accumulating in the shell's frame graph
+								// and could not fix it in JS; switching the channel
+								// is their confirmed workaround.
+								// See vitest-dev/vitest#7981 and PR #10300.
+								launch: {
+									channel: 'chrome'
+								},
 								context: {
 									// i18next-browser-languagedetector picks the
 									// language from navigator. Headless Chromium

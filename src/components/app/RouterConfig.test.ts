@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import * as React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -147,6 +149,21 @@ describe('"My profile" rail icon', () => {
 });
 
 describe('RouterConfigUser navigation', () => {
+	it('does not hide My profile behind an Anonymous- username prefix (#1216)', () => {
+		const source = readFileSync(
+			join(process.cwd(), 'src/components/app/RouterConfig.tsx'),
+			'utf8'
+		);
+		expect(source).not.toMatch(/startsWith\(\s*['"]Anonymous-['"]\s*\)/);
+
+		const profileItem = RouterConfigUser(settings, false).navigation.find(
+			(item) => item.to === '/profile'
+		);
+
+		expect(profileItem).toBeDefined();
+		expect(profileItem.condition).toBeUndefined();
+	});
+
 	it('keeps the Activity Timeline rail item and route but hides it from askers', () => {
 		const routerConfig = RouterConfigUser(settings, false);
 		const timelineItem = routerConfig.navigation.find(
@@ -182,5 +199,29 @@ describe('RouterConfigUser navigation', () => {
 				})
 			])
 		);
+	});
+});
+
+describe('RouterConfigConsultant chat info', () => {
+	it('provides a group info dialog route for participating askers', () => {
+		const config = RouterConfigUser(settings, true);
+		expect(config.dialogRoutes).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					path: '/sessions/user/view/:groupId/:sessionId/groupChatInfo'
+				})
+			])
+		);
+	});
+	it('places chat info in the dialog routes instead of replacing the session', () => {
+		const config = RouterConfigConsultant(settings);
+		const path =
+			'/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo';
+		expect(config.dialogRoutes.some((route) => route.path === path)).toBe(
+			true
+		);
+		expect(
+			config.userProfileRoutes.some((route) => route.path === path)
+		).toBe(false);
 	});
 });

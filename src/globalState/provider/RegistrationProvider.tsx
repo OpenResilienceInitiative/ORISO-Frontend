@@ -11,6 +11,7 @@ import {
 	useState
 } from 'react';
 import * as React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AgencyDataInterface, TopicsDataInterface } from '../interfaces';
 import { ConsultingTypeInterface } from '../interfaces/ConsultingTypeInterface';
 import { UrlParamsContext } from './UrlParamsProvider';
@@ -27,6 +28,8 @@ import {
 	filterRegistrationStepsForDirectLink,
 	getConsultantDirectLinkTopicIds
 } from '../../components/registration/registrationSteps';
+import { getGroupInviteTopicId } from '../../components/registration/groupInviteEntry/groupInviteEntryState';
+import { agencyExcludesTopic } from '../../components/registration/agencyTopicMatch';
 
 export const RegistrationContext = createContext<RegistrationContextInterface>(
 	{}
@@ -197,6 +200,46 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 					registrationData.topicId
 				);
 			}
+
+			/* A subject area belongs to the counselling centre it was chosen
+			   for. Restoring both by id alone is how a pick made at one centre
+			   reached the registration of another (#1524) — and it does not
+			   fail loudly: the (centre x subject area) legal lookup answers 404,
+			   which legitimately reads as "this centre has no own wording, the
+			   platform wording applies", so the advice seeker would consent to
+			   the fallback text with nothing on screen saying so.
+
+			   Which side is stale depends on who asked. A `tid` in the URL is
+			   the caller's explicit choice, so there the restored CENTRE gives
+			   way; otherwise the restored subject area does. It is read here
+			   rather than closed over because this effect deliberately runs
+			   once, and the URL at that moment is the question being asked. */
+			const urlNamesTopic = !!getUrlParameter('tid');
+			// Every one of these keys is absent on a first visit, so the stored
+			// object is a partial however it is typed. Saying so is what lets a
+			// stale entry be REMOVED rather than overwritten with a value that
+			// would read back as a deliberate choice.
+			const restored: Partial<RegistrationData> = registrationData;
+
+			if (urlNamesTopic) {
+				// The stored mainTopic is about to be replaced by the URL one, so
+				// it is no reason to drop the centre; the clearing effect below
+				// checks the centre against the URL topic once it is resolved.
+				if (agencyExcludesTopic(restored.agency, restored.topic)) {
+					delete restored.agency;
+					delete restored.agencyId;
+				}
+			} else {
+				if (agencyExcludesTopic(restored.agency, restored.mainTopic)) {
+					delete restored.mainTopic;
+					delete restored.mainTopicId;
+				}
+				if (agencyExcludesTopic(restored.agency, restored.topic)) {
+					delete restored.topic;
+					delete restored.topicId;
+				}
+			}
+
 			setRegistrationData(registrationData);
 			setLoading(false);
 		})();
@@ -305,6 +348,71 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		updateRegistrationData
 	]);
 
+	/* The same rule as the age/state reset above, for the subject area: a pick
+	   is void once the centre it was made for is gone. Only a PROVEN mismatch
+	   acts on it (see `agencyExcludesTopic`) — a centre whose topic list we could
+	   not read never costs the advice seeker a valid selection.
+
+	   Which of the two gives way is the same question the restore effect above
+	   answers, and it has to be answered here too: the URL topic is not resolved
+	   yet while that effect runs, so a centre restored from storage meets its
+	   `tid` topic only now. A topic the caller named in the URL therefore clears
+	   the CENTRE; any other topic clears itself. Exempting the URL topic without
+	   touching the centre — as this effect first did — left exactly the pair
+	   this whole change exists to prevent. */
+	useEffect(() => {
+		const agency = registrationData?.agency;
+		const mainTopic = registrationData?.mainTopic;
+		const topic = registrationData?.topic;
+		const urlNamedConflict =
+			(preselectedTopic?.id === mainTopic?.id &&
+				agencyExcludesTopic(agency, mainTopic)) ||
+			(preselectedTopic?.id === topic?.id &&
+				agencyExcludesTopic(agency, topic));
+
+		if (urlNamedConflict) {
+			updateRegistrationData({ agency: undefined, agencyId: undefined });
+			return;
+		}
+
+		// With a URL topic the mainTopic slot is the URL's: a different value
+		// there is the stale stored one, about to be replaced by the direct-link
+		// effect. Clearing it would also retire its step and topic group, which
+		// the URL topic never gets back.
+		const clearMainTopic =
+			!preselectedTopic?.id && agencyExcludesTopic(agency, mainTopic);
+		const clearTopic =
+			preselectedTopic?.id !== topic?.id &&
+			agencyExcludesTopic(agency, topic);
+
+		if (!clearMainTopic && !clearTopic) {
+			return;
+		}
+
+		/* Clearing the pick also retires the step it belonged to — the same set
+		   the chip's own ✕ clears (`onClearSelection`, Registration.tsx). Leaving
+		   `topicGroupId` behind would still steer the placement preselect, and
+		   leaving the Next button enabled would let the advice seeker walk past a
+		   step that no longer has an answer. */
+		setDisabledNextButton(true);
+		updateRegistrationData({
+			...(clearMainTopic
+				? {
+						mainTopic: undefined,
+						mainTopicId: undefined,
+						topicGroupId: undefined
+					}
+				: {}),
+			...(clearTopic ? { topic: undefined, topicId: undefined } : {})
+		});
+	}, [
+		preselectedTopic?.id,
+		registrationData?.agency,
+		registrationData?.mainTopic,
+		registrationData?.topic,
+		updateRegistrationData
+	]);
+
 	useEffect(() => {
 		if (!preselectedConsultant || preselectedTopic) {
 			return;
@@ -337,6 +445,39 @@ export function RegistrationProvider({ children }: PropsWithChildren<{}>) {
 		preselectedConsultant,
 		preselectedTopic,
 		registrationData?.agency,
+		registrationData?.mainTopic?.id,
+		updateRegistrationData
+	]);
+
+	/* A self-help group link (#1499) skips the topic step: the group's agency
+	   has one topic, and that is the group's. Several topics → steps as before. */
+	const [searchParams] = useSearchParams();
+	const inviteGroupChatId = searchParams.get('gcid');
+	useEffect(() => {
+		if (!inviteGroupChatId?.trim() || !preselectedAgency) {
+			return;
+		}
+		const topicId = getGroupInviteTopicId(preselectedAgency);
+		if (topicId == null || registrationData?.mainTopic?.id === topicId) {
+			return;
+		}
+
+		let cancelled = false;
+
+		apiGetTopicById(topicId)
+			.then((mainTopic) => {
+				if (!cancelled && mainTopic) {
+					updateRegistrationData({ mainTopic });
+				}
+			})
+			.catch(() => undefined);
+
+		return () => {
+			cancelled = true;
+		};
+	}, [
+		inviteGroupChatId,
+		preselectedAgency,
 		registrationData?.mainTopic?.id,
 		updateRegistrationData
 	]);

@@ -21,49 +21,41 @@ import {
 const CANONICAL_STEPS: {
 	name: string;
 	labelKey: string;
-	fallback: string;
 	Icon: SvgIconComponent;
 }[] = [
 	{
 		name: 'topic-selection',
 		labelKey: 'registration.md3.stepNames.focus',
-		fallback: 'Thema wählen',
 		Icon: CenterFocusStrongRoundedIcon
 	},
 	{
 		name: 'zipcode',
 		labelKey: 'registration.md3.stepNames.postcode',
-		fallback: 'Postleitzahl',
 		Icon: PlaceRoundedIcon
 	},
 	{
 		name: 'agency-selection',
 		labelKey: 'registration.md3.stepNames.agency',
-		fallback: 'Beratungsstelle',
 		Icon: ApartmentRoundedIcon
 	},
 	{
 		name: 'age',
 		labelKey: 'registration.age.headline',
-		fallback: 'Alter',
 		Icon: CakeRoundedIcon
 	},
 	{
 		name: 'state',
 		labelKey: 'registration.state.headline',
-		fallback: 'Bundesland',
 		Icon: PublicRoundedIcon
 	},
 	{
 		name: 'account-data',
 		labelKey: 'registration.md3.stepNames.register',
-		fallback: 'Registrieren',
 		Icon: HowToRegRoundedIcon
 	},
 	{
 		name: 'request',
 		labelKey: 'registration.md3.stepNames.request',
-		fallback: 'Anfrage stellen',
 		Icon: ChatBubbleRoundedIcon
 	}
 ];
@@ -124,9 +116,9 @@ export const RegistrationHeader = ({
 
 	const steps = useMemo(
 		() =>
-			visibleSteps.map(({ name, labelKey, fallback, Icon }) => ({
+			visibleSteps.map(({ name, labelKey, Icon }) => ({
 				name,
-				label: t(labelKey, fallback),
+				label: t(labelKey),
 				icon: <Icon />
 			})),
 		[visibleSteps, t]
@@ -156,17 +148,33 @@ export const RegistrationHeader = ({
 			data-cy="registration-header"
 			sx={{
 				position: fullBleed ? 'sticky' : 'relative',
-				top: fullBleed ? { xs: '48px', md: '72px' } : undefined,
+				// The 72px offset exists to tuck the band under the in-flow
+				// sticky header row — and that row only renders from `lg` up
+				// (StageLayout hides it below $fromXLarge). Everywhere below
+				// lg nothing sits above the band, so it pins flush at 0;
+				// offsetting it there left a 72px gap that list rows scrolled
+				// through (the sliced-content screenshot). This theme's `md`
+				// is 600px, not MUI's 900 — which is how the gap covered the
+				// whole 600–1199 range.
+				top: fullBleed ? { xs: 0, lg: '72px' } : undefined,
 				zIndex: 68,
 				boxSizing: 'border-box',
-				// 100vw counts the classic scrollbar, so pairing it with the
-				// negative margin pushed the document sideways by the scrollbar
-				// width. The xs row simply fills its column instead.
-				width: fullBleed ? { xs: '100%', lg: '60vw' } : '100%',
-				ml: fullBleed ? { xs: 0, lg: 'calc((100% - 60vw) / 2)' } : 0,
+				// Follow the registration column (60vw on desktop) rather than
+				// breaking out with 100vw: that width counts the classic scrollbar,
+				// so pairing it with a centering margin pushed the whole document
+				// sideways (#1174). The band still pads itself: it spans the whole
+				// column, and #1174 zeroed that column's padding — the px it dropped
+				// here could not be missed on pre-dev, where this component is not
+				// wired in and renders nowhere.
+				width: '100%',
+				maxWidth: '100%',
 				px: { xs: 2, sm: 3, lg: 4 },
-				backgroundColor: 'rgba(255, 255, 255, 0.96)',
-				backdropFilter: 'blur(8px)',
+				// Opaque, token-true surface: rows scrolling underneath must not
+				// shine through a header. Same token the StageLayout header row
+				// paints with, so the two read as one surface. This is the point of
+				// #1167 and #1174 never meant to touch it — the translucent
+				// rgba/backdrop-filter pair it still carried is the old value.
+				backgroundColor: 'var(--m3-background, #fff)',
 				// One rule, default outline tone. The previous header stacked a
 				// border plus a margin band below it, which read as two lines
 				// with dead space between them.
@@ -185,7 +193,9 @@ export const RegistrationHeader = ({
 							: { xs: 0, sm: 1.5 }
 				// No bottom margin: the gap to the step content belongs to the
 				// page, not to the header. Carrying it here is what produced
-				// the dead band under the desktop stepper.
+				// the dead band under the desktop stepper. The step body sets
+				// it (`pt` on the content column, #1179); a second one here
+				// simply added to that.
 			}}
 		>
 			{/* Mobile: compact row + chips */}
@@ -237,14 +247,14 @@ export const RegistrationHeader = ({
 						mb: 0.75
 					}}
 				>
-					{t('registration.headline', 'Registrierung')}
+					{t('registration.headline')}
 				</Typography>
 				<IconStepper
 					steps={steps}
 					currentStepName={currentStepName}
 					clickableStepNames={clickableStepNames}
 					onStepClick={onStepClick}
-					ariaLabel={t('registration.headline', 'Registrierung')}
+					ariaLabel={t('registration.headline')}
 					stateLabel={(state) => t(`registration.stepState.${state}`)}
 				/>
 			</Box>
