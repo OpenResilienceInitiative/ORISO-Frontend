@@ -56,9 +56,9 @@ vi.mock('react-i18next', () => ({
 			'profile.encryption.recover.inputLabel': 'Ersatzschlüssel',
 			'profile.encryption.recover.cta': 'Verlauf wiederherstellen',
 			'profile.encryption.showKey.silentExplainer':
-				'Ihr Tresor wurde beim Anmelden automatisch eingerichtet. Das ist Ihr Ersatzschlüssel.',
+				'Ihr Ersatzschlüssel wurde beim Anmelden automatisch eingerichtet.',
 			'profile.encryption.setup.busy':
-				'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund.'
+				'Ihr Ersatzschlüssel wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund.'
 		};
 		return {
 			t: (key: string) => catalogue[key] ?? key
