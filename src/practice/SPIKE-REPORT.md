@@ -1,3 +1,5 @@
+> Historical record of the 2026-10-06 spike; file and line references reflect that day, not the current code.
+
 # S0 spike report: practice area on the real containers (FE#1622)
 
 **Gate: PASS.** The real wired containers run unmodified on in-memory fixtures in

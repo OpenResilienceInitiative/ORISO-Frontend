@@ -15,7 +15,6 @@ import { practiceAcceptedSessionRoute } from './practiceRoutes';
 import { PRACTICE_TOUR_EVENTS } from './practiceTourEvents';
 import { PRACTICE_TOUR_IDS } from './practiceTourIds';
 import {
-	getPracticeTour,
 	isPracticeTourAvailable,
 	practiceAcceptTour,
 	practiceSupervisionTour,
@@ -64,14 +63,6 @@ describe('practiceTours registry', () => {
 			expect(frontendIds).not.toContain(tour.id);
 			expect(frontendTours).not.toContain(tour);
 		});
-	});
-
-	it('finds a tour by id and nothing else', () => {
-		expect(getPracticeTour('consultant-practice-accept')).toBe(
-			practiceAcceptTour
-		);
-		expect(getPracticeTour('consultant-mail-counselling')).toBeUndefined();
-		expect(getPracticeTour(undefined)).toBeUndefined();
 	});
 
 	it.each(practiceTours.map((t) => [t.id, t] as const))(

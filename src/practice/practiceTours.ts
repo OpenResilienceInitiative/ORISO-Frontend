@@ -175,11 +175,6 @@ export const practiceTours: TourDefinition[] = [
 	practiceSupervisionTour
 ];
 
-export const getPracticeTour = (
-	tourId: string | undefined
-): TourDefinition | undefined =>
-	practiceTours.find((tour) => tour.id === tourId);
-
 /**
  * Whether a practice card is offered at all, from the tenant's flags (unset
  * counts as ON). Only the supervision tour can be unavailable; the accept tour

@@ -17,4 +17,5 @@ export const canUsePractice = (
 ): boolean =>
 	!!settings?.enableWalkthrough &&
 	isPracticeAreaEnabled(settings) &&
-	!!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData as never);
+	!!userData &&
+	hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
