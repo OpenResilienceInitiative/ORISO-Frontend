@@ -32,6 +32,11 @@ export interface FakeRestBackendOptions {
 	hooks?: FakeRestHooks;
 }
 
+export interface HandleOptions {
+	/** Answer only requests addressed to a practice id or room. */
+	practiceAddressedOnly?: boolean;
+}
+
 export interface ServedRequest {
 	method: string;
 	url: string;
@@ -42,7 +47,8 @@ export interface FakeRestBackend {
 	/** `null` means "not a practice endpoint": the caller passes it on. */
 	handle(
 		input: RequestInfo | URL,
-		init?: RequestInit
+		init?: RequestInit,
+		options?: HandleOptions
 	): Promise<Response | null>;
 	getCase(): Readonly<PracticeCaseState>;
 	/** Requests answered from memory, newest last. */
@@ -59,6 +65,11 @@ interface ParsedRequest {
 type Route = {
 	method: string;
 	path: RegExp;
+	/**
+	 * Not tied to a practice id (lists, drafts, feed): answered only while the
+	 * practice view is mounted, never during its teardown.
+	 */
+	viewWide?: true;
 	handle: (
 		request: ParsedRequest,
 		match: RegExpMatchArray
@@ -149,21 +160,25 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: /\/service\/conversations\/consultants\/enquiries\/registered$/,
+			viewWide: true,
 			handle: () => sessionList(1)
 		},
 		{
 			method: 'GET',
 			path: /\/service\/conversations\/consultants\/enquiries\/anonymous$/,
+			viewWide: true,
 			handle: () => noContent()
 		},
 		{
 			method: 'GET',
 			path: /\/service\/users\/sessions\/consultants$/,
+			viewWide: true,
 			handle: () => sessionList(2)
 		},
 		{
 			method: 'GET',
 			path: /\/service\/conversations\/consultants\/mymessages\/archive$/,
+			viewWide: true,
 			handle: () => noContent()
 		},
 		{
@@ -339,6 +354,7 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: /\/service\/users\/drafts\/single$/,
+			viewWide: true,
 			handle: ({ url }) => {
 				const draft = drafts.get(
 					url.searchParams.get('scopeKey') || ''
@@ -349,11 +365,13 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: /\/service\/users\/drafts$/,
+			viewWide: true,
 			handle: () => ok([...drafts.values()])
 		},
 		{
 			method: 'PATCH',
 			path: /\/service\/users\/drafts$/,
+			viewWide: true,
 			handle: async ({ url, body }) => {
 				const scopeKey = url.searchParams.get('scopeKey') || '';
 				drafts.set(scopeKey, { ...(await body()), scopeKey });
@@ -363,6 +381,7 @@ export const createFakeRestBackend = ({
 		{
 			method: 'DELETE',
 			path: /\/service\/users\/drafts$/,
+			viewWide: true,
 			handle: ({ url }) => {
 				drafts.delete(url.searchParams.get('scopeKey') || '');
 				return noContent();
@@ -371,6 +390,7 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: /\/service\/users\/event-notifications$/,
+			viewWide: true,
 			handle: ({ url }) =>
 				ok({
 					items: [],
@@ -382,6 +402,7 @@ export const createFakeRestBackend = ({
 		{
 			method: 'GET',
 			path: /\/service\/users\/event-notifications\/unread-count$/,
+			viewWide: true,
 			handle: () => ok({ unreadCount: 0 })
 		},
 		{
@@ -408,21 +429,24 @@ export const createFakeRestBackend = ({
 		{
 			method: 'POST',
 			path: /\/service\/error-reports$/,
+			viewWide: true,
 			handle: () => noContent()
 		},
 		// Erstantwort "add e-mail": accepted and discarded, never persisted.
 		{
 			method: 'PUT',
 			path: /\/service\/users\/email$/,
+			viewWide: true,
 			handle: () => noContent()
 		}
 	];
 
 	return {
-		async handle(input, init) {
+		async handle(input, init, options = {}) {
 			const request = parseRequest(input, init);
 			for (const route of routes) {
 				if (route.method !== request.method) continue;
+				if (route.viewWide && options.practiceAddressedOnly) continue;
 				const match = request.url.pathname.match(route.path);
 				if (!match) continue;
 				const response = await route.handle(request, match);
