@@ -3417,6 +3417,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 										className="session__teamDiscussionAction"
 										testingAttribute="enquiry-open-team"
+										tourTarget="enquiry-team-button"
 										buttonHandle={() =>
 											selectChannelFromFab(
 												channelId({ kind: 'team' })
@@ -4210,6 +4211,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: teamChannelTitle
 				})}
 				data-cy="stage-panel"
+				data-tour-target="team-discussion-panel"
 				header={
 					<PanelHeader
 						kind="team"

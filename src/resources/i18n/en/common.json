@@ -5197,6 +5197,70 @@
 					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Practice: Accept a request",
+			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
+			"step": {
+				"navEnquiries": {
+					"title": "Open the requests",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. You will find new requests here under “Requests”."
+				},
+				"openEnquiry": {
+					"title": "Open the request",
+					"intro": "A practice request is waiting in the list. Click it to open it."
+				},
+				"openTeam": {
+					"title": "Open the team discussion",
+					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+				},
+				"teamReply": {
+					"title": "Reply in the team",
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+				},
+				"accept": {
+					"title": "Accept the request",
+					"intro": "Click “Accept request”: the request moves to “My consultations” and disappears from your team’s list."
+				},
+				"firstAnswer": {
+					"title": "First response and first message",
+					"intro": "The request is now yours. In the chat you can see the automatic first response and the advice seeker’s first message."
+				},
+				"reply": {
+					"title": "Write your first reply",
+					"intro": "Write the advice seeker a short reply and send it. It stays in the practice and is not saved anywhere."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "Well done: you accepted a request and replied to it. Use the button below to end the practice."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Practice: Add a supervisor",
+			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
+			"step": {
+				"addSupervisor": {
+					"title": "Add a supervisor",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+” to add a supervisor to the consultation."
+				},
+				"pickSupervisor": {
+					"title": "Choose the supervisor",
+					"intro": "Pick the supervisor from the list and confirm your choice. A system note then appears in the chat."
+				},
+				"supervisorReply": {
+					"title": "The supervisor’s reply",
+					"intro": "Your supervisor has replied in the side chat. Only the two of you can see these messages — the advice seeker cannot."
+				},
+				"standingAssignment": {
+					"title": "Fixed assignment",
+					"intro": "If your administrator has assigned a fixed supervisor to you, they are added automatically when you accept a request. You do not need to do anything."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
+				}
+			}
 		}
 	},
 	"weekday": {

@@ -94,4 +94,11 @@ interface ReleaseToggles {
 	 * secret-storage setup (#437) and on the homeserver supporting MSC3814.
 	 */
 	enableDeviceDehydration?: boolean;
+	/**
+	 * FE#1622 practice area ("Übungsbereich"): guided counsellor flows on
+	 * in-memory fixtures. Default / unset = OFF until the dev proof. Hides the
+	 * practice cards and the practice tour registry; the platform master
+	 * switch `enableWalkthrough` still applies on top.
+	 */
+	enablePracticeArea?: boolean;
 }

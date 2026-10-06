@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useAtom } from 'jotai';
-import { UserDataContext } from '../../globalState';
+import { UserDataContext, useTenant } from '../../globalState';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { ProductTourAdapter } from '../productTour/ProductTourAdapter';
 import { ProductTourTooltip } from '../productTour/ProductTourTooltip';
@@ -10,6 +10,8 @@ import {
 	frontendTours
 } from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
+import { resolveTourSteps } from '../productTour/tourEngine';
+import { getTourHostHooks } from '../productTour/tourHostHooks';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 import type {
 	TourDefinition,
@@ -92,13 +94,34 @@ export const Walkthrough = () => {
 	const activeTour =
 		requestedTour ?? (isAutoRun ? consultantWalkthroughTour : undefined);
 
-	const lastStepId = activeTour
-		? activeTour.steps[activeTour.steps.length - 1].id
-		: undefined;
+	// Variants resolve once per run, so the adapter, its reducer and the
+	// last-step check below all count the same steps.
+	const tenantSettings = useTenant()?.settings;
+	const runKey = `${activeTour?.id}-${launchRequest?.requestedAt ?? 'auto'}`;
+	const resolvedRunRef = useRef<{
+		key: string;
+		tour: TourDefinition;
+	} | null>(null);
+	if (!activeTour) {
+		resolvedRunRef.current = null;
+	} else if (resolvedRunRef.current?.key !== runKey) {
+		resolvedRunRef.current = {
+			key: runKey,
+			tour: {
+				...activeTour,
+				steps: resolveTourSteps(activeTour, {
+					flags: { ...tenantSettings }
+				})
+			}
+		};
+	}
+	const runTour = activeTour ? resolvedRunRef.current?.tour : undefined;
+
+	const lastStepId = runTour?.steps[runTour.steps.length - 1]?.id;
 
 	const persistStepProgress = useCallback(
 		(event: TourEvent, step?: TourStep) => {
-			if (!activeTour) {
+			if (!runTour) {
 				return;
 			}
 			if (event === 'step_completed' && step && step.id !== lastStepId) {
@@ -106,8 +129,8 @@ export const Walkthrough = () => {
 				// continue state but must never block the tour.
 				versionedTourProgressRepository
 					.saveProgress({
-						tourId: activeTour.id,
-						tourVersion: activeTour.version,
+						tourId: runTour.id,
+						tourVersion: runTour.version,
 						status: 'in_progress',
 						currentStepId: step.id
 					})
@@ -117,14 +140,14 @@ export const Walkthrough = () => {
 				// A restart of a terminal tour re-opens the versioned scope.
 				versionedTourProgressRepository
 					.saveProgress({
-						tourId: activeTour.id,
-						tourVersion: activeTour.version,
+						tourId: runTour.id,
+						tourVersion: runTour.version,
 						status: 'in_progress'
 					})
 					.catch(() => {});
 			}
 		},
-		[activeTour, lastStepId, launchRequest?.mode]
+		[runTour, lastStepId, launchRequest?.mode]
 	);
 
 	const handleTerminalStatus = useCallback(
@@ -141,19 +164,23 @@ export const Walkthrough = () => {
 		[setLaunchRequest]
 	);
 
-	if (!settings.enableWalkthrough || !activeTour) {
+	if (!settings.enableWalkthrough || !runTour || !runTour.steps.length) {
 		return null;
 	}
 
+	const hostHooks = getTourHostHooks(runTour.id);
+
 	return (
 		<ProductTourAdapter
-			key={`${activeTour.id}-${launchRequest?.requestedAt ?? 'auto'}`}
-			tour={activeTour}
+			key={runKey}
+			tour={runTour}
 			active={true}
 			paused={!!userData.twoFactorAuth?.isShown}
 			tooltipComponent={ProductTourTooltip}
 			onEvent={persistStepProgress}
 			onTerminalStatus={handleTerminalStatus}
+			onBeforeStart={hostHooks?.setup}
+			onEnd={hostHooks?.teardown}
 		/>
 	);
 };
