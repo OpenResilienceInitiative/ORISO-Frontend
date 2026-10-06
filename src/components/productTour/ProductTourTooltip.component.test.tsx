@@ -129,4 +129,69 @@ describe('ProductTourTooltip', () => {
 		expect(screen.getByText('Fertig')).toBeTruthy();
 		expect(screen.queryByText('Weiter')).toBeNull();
 	});
+
+	describe('self-advancing steps (advanceOn)', () => {
+		const advancing = (over: Record<string, any> = {}) =>
+			baseProps({
+				step: {
+					title: 't.title',
+					content: 't.content',
+					data: { advanceOn: { type: 'click' } }
+				},
+				...over
+			});
+
+		it('hides Next because the step finishes through the user action', () => {
+			render(<ProductTourTooltip {...(advancing() as any)} />);
+
+			expect(screen.queryByText('Weiter')).toBeNull();
+		});
+
+		it('also hides the done label on a last step that advances by itself', () => {
+			render(
+				<ProductTourTooltip
+					{...(advancing({ index: 4, isLastStep: true }) as any)}
+				/>
+			);
+
+			expect(screen.queryByText('Fertig')).toBeNull();
+		});
+
+		it('keeps Back and the close button working', () => {
+			const props = advancing();
+			render(<ProductTourTooltip {...(props as any)} />);
+
+			fireEvent.click(screen.getByText('Zurück'));
+			fireEvent.click(screen.getByLabelText('Rundgang schließen'));
+
+			expect(props.controls.prev).toHaveBeenCalled();
+			expect(props.controls.skip).toHaveBeenCalled();
+		});
+
+		it('renders no empty actions row on a first step without Back', () => {
+			render(
+				<ProductTourTooltip {...(advancing({ index: 0 }) as any)} />
+			);
+
+			expect(
+				document.querySelector('.productTourTooltip__actions')
+			).toBeNull();
+		});
+
+		it('shows Next for steps whose data carries no advanceOn', () => {
+			render(
+				<ProductTourTooltip
+					{...(baseProps({
+						step: {
+							title: 't.title',
+							content: 't.content',
+							data: {}
+						}
+					}) as any)}
+				/>
+			);
+
+			expect(screen.getByText('Weiter')).toBeTruthy();
+		});
+	});
 });

@@ -54,6 +54,8 @@ export interface ButtonProps {
 	className?: string;
 	customIcon?: React.ReactElement;
 	tabIndex?: number;
+	/** Semantic product-tour anchor, rendered as `data-tour-target`. */
+	tourTarget?: string;
 }
 
 export const Button = (props: ButtonProps) => {
@@ -151,6 +153,7 @@ export const Button = (props: ButtonProps) => {
 					${props.disabled || props.item.disabled ? ' button__item--disabled' : ''}
 				`}
 				data-cy={props.testingAttribute}
+				data-tour-target={props.tourTarget}
 				tabIndex={props.tabIndex}
 			>
 				{props.customIcon && (

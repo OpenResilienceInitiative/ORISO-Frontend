@@ -2,11 +2,14 @@
 import React from 'react';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiPatchConsultantData } from '../../api';
-import { UserDataContext } from '../../globalState';
+import { TenantContext, UserDataContext } from '../../globalState';
+import { frontendTours } from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
+import { registerTourHostHooks } from '../productTour/tourHostHooks';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
+import type { TourDefinition } from '../productTour/types';
 import { Walkthrough } from './Walkthrough';
 
 let adapterProps: any = null;
@@ -39,7 +42,8 @@ vi.mock('../../hooks/useAppConfig', () => ({
 
 const renderWalkthrough = (
 	userDataOver: Record<string, any> = {},
-	launchRequest: any = null
+	launchRequest: any = null,
+	tenantSettings?: Record<string, any>
 ) => {
 	const reloadUserData = vi.fn();
 	const userData = {
@@ -54,7 +58,15 @@ const renderWalkthrough = (
 			<UserDataContext.Provider
 				value={{ userData, reloadUserData } as any}
 			>
-				<Walkthrough />
+				<TenantContext.Provider
+					value={
+						tenantSettings
+							? ({ tenant: { settings: tenantSettings } } as any)
+							: null
+					}
+				>
+					<Walkthrough />
+				</TenantContext.Provider>
 			</UserDataContext.Provider>
 		</Provider>
 	);
@@ -407,5 +419,173 @@ describe('Walkthrough', () => {
 		});
 
 		expect(apiPatchConsultantData).not.toHaveBeenCalled();
+	});
+
+	describe('variants', () => {
+		const variantTour: TourDefinition = {
+			id: 'variant-tour',
+			version: 1,
+			surface: 'frontend',
+			audiences: ['consultant'],
+			titleKey: 't',
+			summaryKey: 's',
+			steps: [
+				{ id: 'a', target: '', titleKey: 'a.t', contentKey: 'a.c' },
+				{ id: 'b', target: '', titleKey: 'b.t', contentKey: 'b.c' },
+				{
+					id: 'team',
+					target: '',
+					titleKey: 'c.t',
+					contentKey: 'c.c',
+					when: { flag: 'featureTeamDiscussionEnabled' }
+				}
+			]
+		};
+		const request = (requestedAt: number) => ({
+			tourId: 'variant-tour',
+			mode: 'start',
+			requestedAt
+		});
+
+		beforeEach(() => {
+			frontendTours.push(variantTour);
+		});
+		afterEach(() => {
+			frontendTours.splice(frontendTours.indexOf(variantTour), 1);
+		});
+
+		it('hands the adapter the steps the tenant flags leave', () => {
+			renderWalkthrough({}, request(20), {
+				featureTeamDiscussionEnabled: false
+			});
+
+			expect(adapterProps.tour.steps.map((s: any) => s.id)).toEqual([
+				'a',
+				'b'
+			]);
+		});
+
+		it('keeps every step for a tenant that never set the flag', () => {
+			renderWalkthrough({}, request(21), {});
+
+			expect(adapterProps.tour.steps).toHaveLength(3);
+		});
+
+		it('keeps the rest of the definition, e.g. dismissible, on the resolved tour', () => {
+			variantTour.dismissible = false;
+			try {
+				renderWalkthrough({}, request(25), {});
+
+				expect(adapterProps.tour.dismissible).toBe(false);
+				expect(adapterProps.tour.id).toBe('variant-tour');
+			} finally {
+				delete variantTour.dismissible;
+			}
+		});
+
+		it('works without any tenant loaded', () => {
+			renderWalkthrough({}, request(22));
+
+			expect(adapterProps.tour.steps).toHaveLength(3);
+		});
+
+		it('treats the last resolved step as the last one for the progress writes', () => {
+			renderWalkthrough({}, request(23), {
+				featureTeamDiscussionEnabled: false
+			});
+
+			adapterProps.onEvent('step_completed', { id: 'b' });
+			expect(
+				versionedTourProgressRepository.saveProgress
+			).not.toHaveBeenCalled();
+
+			adapterProps.onEvent('step_completed', { id: 'a' });
+			expect(
+				versionedTourProgressRepository.saveProgress
+			).toHaveBeenCalledWith(
+				expect.objectContaining({
+					tourId: 'variant-tour',
+					currentStepId: 'a'
+				})
+			);
+		});
+
+		it('renders nothing when the tour-level condition fails', () => {
+			variantTour.when = { flag: 'featureSupervisionEnabled' };
+			try {
+				const { queryByTestId } = renderWalkthrough({}, request(24), {
+					featureSupervisionEnabled: false
+				});
+
+				expect(queryByTestId('product-tour-adapter')).toBeNull();
+			} finally {
+				delete variantTour.when;
+			}
+		});
+	});
+
+	describe('host hooks', () => {
+		it('passes no hooks for a tour that registered none', () => {
+			renderWalkthrough(
+				{},
+				{
+					tourId: 'consultant-walkthrough',
+					mode: 'start',
+					requestedAt: 30
+				}
+			);
+
+			expect(adapterProps.onBeforeStart).toBeUndefined();
+			expect(adapterProps.onEnd).toBeUndefined();
+		});
+
+		it('hands the registered setup and teardown of the running tour to the adapter', async () => {
+			const setup = vi.fn();
+			const teardown = vi.fn();
+			const unregister = registerTourHostHooks(
+				'consultant-mail-counselling',
+				{ setup, teardown }
+			);
+			try {
+				renderWalkthrough(
+					{},
+					{
+						tourId: 'consultant-mail-counselling',
+						mode: 'start',
+						requestedAt: 31
+					}
+				);
+
+				await adapterProps.onBeforeStart();
+				adapterProps.onEnd();
+
+				expect(setup).toHaveBeenCalledTimes(1);
+				expect(teardown).toHaveBeenCalledTimes(1);
+			} finally {
+				unregister();
+			}
+		});
+
+		it('does not hand one tour the hooks of another', () => {
+			const unregister = registerTourHostHooks(
+				'consultant-mail-counselling',
+				{ setup: vi.fn(), teardown: vi.fn() }
+			);
+			try {
+				renderWalkthrough(
+					{},
+					{
+						tourId: 'consultant-walkthrough',
+						mode: 'start',
+						requestedAt: 32
+					}
+				);
+
+				expect(adapterProps.onBeforeStart).toBeUndefined();
+				expect(adapterProps.onEnd).toBeUndefined();
+			} finally {
+				unregister();
+			}
+		});
 	});
 });
