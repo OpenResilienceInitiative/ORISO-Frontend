@@ -13,6 +13,7 @@ import {
 	GroupChatJoinRequest
 } from './joinRequestModel';
 import { JoinRequestTransport } from './joinRequestTransport';
+import { getCounsellingDpaFailure } from '../../../api/counsellingDpaFailure';
 
 export interface JoinRequestCenterProps {
 	transport: JoinRequestTransport;
@@ -106,9 +107,17 @@ export const JoinRequestCenter = ({
 					setDetailsId((id) => (id === request.id ? null : id));
 					note(confirmation, CONFIRMATION_MS);
 				})
-				.catch(() =>
-					note(t('groupChat.joinRequest.failed'), FAILURE_MS)
-				)
+				.catch((error) => {
+					const failure = getCounsellingDpaFailure(error);
+					note(
+						failure
+							? t(
+									`${failure.key}.${failure.retryable ? 'inviteText' : 'text'}`
+								)
+							: t('groupChat.joinRequest.failed'),
+						FAILURE_MS
+					);
+				})
 				.finally(() => setBusyFor(request.id, false));
 		},
 		[note, setBusyFor, t]
@@ -121,8 +130,8 @@ export const JoinRequestCenter = ({
 				transport.admit(request, role),
 				t(
 					role === 'CO_MODERATOR'
-						? 'groupChat.joinRequest.admittedAsCoModerator'
-						: 'groupChat.joinRequest.admitted',
+						? 'groupChat.joinRequest.coModerationQueued'
+						: 'groupChat.joinRequest.admissionQueued',
 					{ name: request.requester.displayName }
 				)
 			),

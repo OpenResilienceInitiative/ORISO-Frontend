@@ -16,6 +16,8 @@ const viewStateOf = (
 	switch (status?.status) {
 		case 'PENDING':
 			return 'pending';
+		case 'ADMITTING':
+			return 'admitting';
 		case 'ADMITTED':
 			return 'admitted';
 		case 'DECLINED':

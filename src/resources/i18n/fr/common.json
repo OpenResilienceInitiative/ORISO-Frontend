@@ -1216,7 +1216,9 @@
 			"openGroup": "Ouvrir le groupe de parole",
 			"declinedHeadline": "Cette fois, cela n’a pas fonctionné.",
 			"declinedBody": "La modération n’a pas accepté votre demande. Pour toute question, adressez-vous à la personne qui vous a envoyé le lien.",
-			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération."
+			"linkInvalid": "Ce lien d’invitation n’est plus valable. Veuillez demander un nouveau lien à la modération.",
+			"admittingHeadline": "Votre demande est approuvée.",
+			"admittingBody": "L’accès au groupe est encore en cours de préparation. Gardez cette page ouverte."
 		},
 		"accessUnavailable": {
 			"headline": "Ce groupe de parole ne peut pas être ouvert pour le moment.",
@@ -1254,7 +1256,9 @@
 				"coModeratorOwnerOnly": "Seule la direction du groupe de parole peut attribuer la co-modération.",
 				"coModeratorSameTenant": "La co-modération est réservée aux professionnel·les de votre propre organisme.",
 				"privacy": "Tant que vous n’avez pas décidé, {{name}} ne voit rien de ce groupe de parole."
-			}
+			},
+			"admissionQueued": "L’admission de {{name}} est approuvée. L’accès au groupe doit encore être confirmé.",
+			"coModerationQueued": "La co-modération de {{name}} est approuvée. L’accès au groupe doit encore être confirmé."
 		}
 	},
 	"help": {

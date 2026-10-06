@@ -1193,7 +1193,9 @@
 			"openGroup": "Open group",
 			"declinedHeadline": "It did not work out this time.",
 			"declinedBody": "The moderators did not accept your request. If you have questions, contact the person who sent you the link.",
-			"linkInvalid": "This invite link is no longer valid. Please ask the moderators for a new link."
+			"linkInvalid": "This invite link is no longer valid. Please ask the moderators for a new link.",
+			"admittingHeadline": "Your request is approved.",
+			"admittingBody": "Group access is still being completed. Keep this page open."
 		},
 		"accessUnavailable": {
 			"headline": "This group cannot be opened right now.",
@@ -1231,7 +1233,9 @@
 				"coModeratorOwnerOnly": "Only the group lead can grant co-moderation.",
 				"coModeratorSameTenant": "Co-moderation is reserved for professionals of your own organisation.",
 				"privacy": "Until you decide, {{name}} sees nothing of this group."
-			}
+			},
+			"admissionQueued": "{{name}}'s admission is approved. Group access still needs to be confirmed.",
+			"coModerationQueued": "{{name}}'s co-moderation is approved. Group access still needs to be confirmed."
 		}
 	},
 	"help": {
