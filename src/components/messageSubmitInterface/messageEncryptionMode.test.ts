@@ -1,4 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
+// @vitest-environment jsdom
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
@@ -8,6 +9,25 @@ import {
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
+
+// The real HTTP permission boundary permits these existing transport/retry cases.
+beforeEach(() => {
+	vi.stubGlobal(
+		'Request',
+		class {
+			constructor(
+				public url: string,
+				public init: RequestInit
+			) {}
+		}
+	);
+	vi.stubGlobal('fetch', async (request: { url: string }) => {
+		if (request.url.endsWith('/enquiry/permission'))
+			return new Response(null, { status: 204 });
+		throw new Error(`Unexpected HTTP request: ${request.url}`);
+	});
+});
+afterEach(() => vi.unstubAllGlobals());
 
 describe('messageEncryptionMode', () => {
 	it('detects asker enquiry submissions from the enquiry list type', () => {

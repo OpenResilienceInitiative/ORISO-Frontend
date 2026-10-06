@@ -7,6 +7,7 @@
 		"fr:registration.state.options.7",
 		"fr:shortcuts.categories.application",
 		"fr:shortcuts.keys.ctrl",
+		"fr:snackbar.stack.region",
 		"fr:user.userU25.state.7"
 	],
 	"placeholderDriftKeys": ["en:banUser.banned.info"],
@@ -629,9 +630,6 @@
 		"groupChat.internal.personCount",
 		"inviteLink.error.title",
 		"legal.termsAndConditions.label",
-		"profile.encryption.recover.cta",
-		"profile.encryption.showKey.copied",
-		"profile.encryption.showKey.done",
 		"registration.state.options",
 		"registration.zipcode.remaining"
 	]

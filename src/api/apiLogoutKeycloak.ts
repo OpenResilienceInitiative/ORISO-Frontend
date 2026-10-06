@@ -1,7 +1,9 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
 
-export const apiKeycloakLogout = async (): Promise<Response | null> => {
+export const apiKeycloakLogout = async (
+	signal?: AbortSignal
+): Promise<Response | null> => {
 	const refreshToken = getValueFromCookie('refreshToken');
 	if (!refreshToken) {
 		return null;
@@ -25,7 +27,8 @@ export const apiKeycloakLogout = async (): Promise<Response | null> => {
 			method: 'POST',
 			headers,
 			credentials: 'include',
-			body: body.toString()
+			body: body.toString(),
+			signal
 		})
 	);
 };

@@ -1,3 +1,4 @@
+import { apiCheckEnquiryPermission } from '../../api/apiSendEnquiry';
 import { STATUS_ENQUIRY } from '../../globalState/interfaces/SessionsDataInterface';
 
 interface AskerEnquirySubmissionInput {
@@ -91,6 +92,7 @@ export const sendEncryptedInitialEnquiry = async ({
 	const storageKey = pendingEnquiryEventStorageKey(sessionId);
 	let matrixEventId = readRetryEventId(storage, storageKey);
 	if (!matrixEventId) {
+		await apiCheckEnquiryPermission(sessionId);
 		const response = await sendEncryptedMatrixMessage(
 			initialEnquiryTransactionId(sessionId)
 		);

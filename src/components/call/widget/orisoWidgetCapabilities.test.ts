@@ -122,3 +122,17 @@ describe('isAllowedWidgetCapability', () => {
 		}
 	});
 });
+
+describe('MSC4039 media', () => {
+	it('grants download_file so the widget can render avatars', () => {
+		expect(allowed('org.matrix.msc4039.download_file')).toBe(true);
+	});
+
+	it('denies upload_file: a call widget never writes media', () => {
+		expect(allowed('org.matrix.msc4039.upload_file')).toBe(false);
+	});
+
+	it('denies get_media_config, which we never granted', () => {
+		expect(allowed('org.matrix.msc4039.get_media_config')).toBe(false);
+	});
+});
