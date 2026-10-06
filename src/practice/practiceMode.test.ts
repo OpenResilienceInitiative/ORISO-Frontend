@@ -243,6 +243,23 @@ describe('practice mode (module-level core)', () => {
 			expect(listener).toHaveBeenCalledTimes(3);
 		});
 
+		it('lets a throwing subscriber neither stop the others nor break enter and exit', () => {
+			const other = vi.fn();
+			const offBroken = subscribePractice(() => {
+				throw new Error('subscriber bug');
+			});
+			const offOther = subscribePractice(other);
+
+			expect(() => enterPracticeMode({ tourId: ACCEPT })).not.toThrow();
+			expect(() => exitPracticeMode()).not.toThrow();
+
+			offBroken();
+			offOther();
+			expect(other).toHaveBeenCalledTimes(2);
+			expect(isPracticeMode()).toBe(false);
+			expect(globalThis.fetch).toBe(realFetch);
+		});
+
 		it('reports blocked requests to onPracticeBlocked listeners until they unsubscribe', async () => {
 			const seen: string[] = [];
 			const off = onPracticeBlocked((request) =>

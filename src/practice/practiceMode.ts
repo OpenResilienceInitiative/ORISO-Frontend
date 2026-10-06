@@ -39,7 +39,13 @@ let exitTeardowns: Array<() => void> = [];
 
 const publish = (next: PracticeSnapshot) => {
 	snapshot = next;
-	subscribers.forEach((listener) => listener());
+	subscribers.forEach((listener) => {
+		try {
+			listener();
+		} catch (_error) {
+			// A broken subscriber must not break enter, exit or the others.
+		}
+	});
 };
 
 export const isPracticeMode = (): boolean => snapshot.status === 'active';
