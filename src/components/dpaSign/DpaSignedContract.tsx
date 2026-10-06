@@ -8,7 +8,7 @@ import type {
 } from '../../api/apiDpaSignature';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
 import { resolveLegalContent } from '../../utils/legalContent';
-import { formatDpaDate } from './formatDpaDate';
+import { formatDpaDate, parseDpaUtcTime } from './formatDpaDate';
 import './dpaSignedContract.styles.scss';
 
 export interface DpaPrintReceipt {
@@ -20,9 +20,6 @@ export interface DpaPrintReceipt {
 		signedAt: string;
 	};
 }
-
-const utcTime = (value: string) =>
-	Date.parse(/(Z|[+-]\d{2}:?\d{2})$/i.test(value) ? value : `${value}Z`);
 
 /** Never attach a receipt to a different contract, or fill missing server data from the form. */
 export const createDpaPrintReceipt = (
@@ -36,9 +33,9 @@ export const createDpaPrintReceipt = (
 		!signerName?.trim() ||
 		!signerPosition?.trim() ||
 		!signedAt ||
-		!Number.isFinite(utcTime(signedAt)) ||
+		!Number.isFinite(parseDpaUtcTime(signedAt)) ||
 		!dpaVersion ||
-		utcTime(dpaVersion) !== utcTime(preview.dpaVersion) ||
+		parseDpaUtcTime(dpaVersion) !== parseDpaUtcTime(preview.dpaVersion) ||
 		!preview.tenantName?.trim() ||
 		!resolveLegalContent(preview.content, language)
 	) {
