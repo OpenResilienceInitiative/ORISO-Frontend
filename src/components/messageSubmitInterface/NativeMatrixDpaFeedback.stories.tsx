@@ -15,14 +15,33 @@ import '../session/session.styles.scss';
 
 const DRAFT = 'Synthetic message stays here';
 
-function NativeJoinFeedback({ unavailable }: { unavailable: boolean }) {
+function NativeJoinFeedback({
+	unavailable,
+	ordinaryRetry
+}: {
+	unavailable: boolean;
+	ordinaryRetry?: 'permission' | 'network';
+}) {
 	const [failedMessage, setFailedMessage] = useState(false);
 	const [session] = useState(buildMockGroupSession);
 	// Synthetic SDK error injection, not a running Synapse module. The public
 	// SDK HTTP parser and production transport are covered by the integration test.
-	const [transport] = useState(() =>
-		Object.assign(buildMockMatrixClientService([]), {
+	const [transport] = useState(() => {
+		let attempts = 0;
+		return Object.assign(buildMockMatrixClientService([]), {
 			sendMessage: async () => {
+				attempts += 1;
+				if (ordinaryRetry && attempts > 1) {
+					if (ordinaryRetry === 'network')
+						throw new TypeError('Synthetic network failure');
+					throw new MatrixError(
+						{
+							errcode: 'M_FORBIDDEN',
+							error: 'Synthetic ordinary permission failure'
+						},
+						403
+					);
+				}
 				throw new MatrixError(
 					{
 						'errcode': unavailable ? 'M_UNKNOWN' : 'M_FORBIDDEN',
@@ -34,8 +53,8 @@ function NativeJoinFeedback({ unavailable }: { unavailable: boolean }) {
 					unavailable ? 502 : 403
 				);
 			}
-		})
-	);
+		});
+	});
 	return (
 		<div
 			className="session"
@@ -127,4 +146,36 @@ export const RestrictedFrench: Story = {
 	play: verifyFeedback(
 		'Les nouvelles consultations sont actuellement suspendues'
 	)
+};
+
+const verifyOrdinaryRetry =
+	(title: string) =>
+	async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+		await verifyFeedback(title)({ canvasElement });
+		const canvas = within(canvasElement);
+		canvas
+			.getByRole('button', { name: /Nachricht senden|Send message/ })
+			.focus();
+		await userEvent.keyboard('{Enter}');
+		await canvas.findByLabelText('Failed message');
+		await waitFor(() => expect(canvas.queryByRole('alert')).toBeNull());
+		expect(canvas.getByRole('textbox')).toHaveTextContent(DRAFT);
+		expect(
+			canvas.getByRole('button', {
+				name: /Nachricht senden|Send message/
+			})
+		).toBeEnabled();
+	};
+
+export const RestrictedThenPermissionFailure: Story = {
+	globals: { locale: 'en' },
+	render: () => (
+		<NativeJoinFeedback unavailable={false} ordinaryRetry="permission" />
+	),
+	play: verifyOrdinaryRetry('New counselling is currently restricted')
+};
+export const UnavailableThenNetworkFailure: Story = {
+	globals: { locale: 'de' },
+	render: () => <NativeJoinFeedback unavailable ordinaryRetry="network" />,
+	play: verifyOrdinaryRetry('Beratung derzeit nicht prüfbar')
 };

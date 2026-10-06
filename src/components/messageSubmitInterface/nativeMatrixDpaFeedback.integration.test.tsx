@@ -51,6 +51,10 @@ vi.hoisted(() => {
 const i18n = createInstance().use(initReactI18next);
 let service: MatrixClientService;
 let joinAllowed = false;
+let nextJoinFailure:
+	| { status: number; data: Record<string, unknown> }
+	| 'network'
+	| null = null;
 const groupSession = buildMockGroupSession();
 const requests: Array<{ path: string; method: string }> = [];
 class BrowserRequest extends Request {
@@ -125,6 +129,7 @@ function Composer() {
 beforeEach(async () => {
 	requests.length = 0;
 	joinAllowed = false;
+	nextJoinFailure = null;
 	window.localStorage.clear();
 	vi.stubGlobal('Request', BrowserRequest);
 	vi.spyOn(MatrixClient.prototype, 'initRustCrypto').mockResolvedValue(
@@ -170,9 +175,13 @@ async function prepareJoinFailure(
 				(input instanceof Request ? input.method : 'GET');
 			requests.push({ path, method });
 			if (path.startsWith('/_matrix/client/v3/join/')) {
+				if (nextJoinFailure === 'network')
+					throw new TypeError('Synthetic network failure');
 				return joinAllowed
 					? Response.json({ room_id: '!storybook-group:example.org' })
-					: Response.json(data, { status });
+					: Response.json(nextJoinFailure?.data ?? data, {
+							status: nextJoinFailure?.status ?? status
+						});
 			}
 			if (
 				path.startsWith('/_matrix/client/v3/rooms/') &&
@@ -333,3 +342,68 @@ it('allows an explicit keyboard retry after the owner becomes available and send
 		requests.filter(({ path }) => path.includes('/send/m.room.message/'))
 	).toHaveLength(1);
 });
+
+it.each([
+	[
+		403,
+		'M_FORBIDDEN',
+		'DPA_NEW_COUNSELLING_NOT_ALLOWED',
+		'ordinary-permission'
+	],
+	[502, 'M_UNKNOWN', 'DPA_POLICY_UNAVAILABLE', 'ordinary-permission'],
+	[
+		403,
+		'M_FORBIDDEN',
+		'DPA_NEW_COUNSELLING_NOT_ALLOWED',
+		'mismatched-outage'
+	],
+	[502, 'M_UNKNOWN', 'DPA_POLICY_UNAVAILABLE', 'mismatched-outage'],
+	[403, 'M_FORBIDDEN', 'DPA_NEW_COUNSELLING_NOT_ALLOWED', 'network'],
+	[502, 'M_UNKNOWN', 'DPA_POLICY_UNAVAILABLE', 'network']
+] as const)(
+	'removes previous %s/%s/%s feedback after an explicit %s retry failure',
+	async (status, errcode, reason, retryFailure) => {
+		const editor = await prepareJoinFailure(status, {
+			errcode,
+			'error': 'Synthetic policy failure',
+			'org.oriso.reason': reason
+		});
+		await screen.findByRole('alert');
+		nextJoinFailure =
+			retryFailure === 'network'
+				? 'network'
+				: retryFailure === 'ordinary-permission'
+					? {
+							status: 403,
+							data: {
+								errcode: 'M_FORBIDDEN',
+								error: 'Synthetic ordinary permission failure'
+							}
+						}
+					: {
+							status: 502,
+							data: {
+								'errcode': 'M_FORBIDDEN',
+								'error': 'Synthetic mismatched outage',
+								'org.oriso.reason': 'DPA_POLICY_UNAVAILABLE'
+							}
+						};
+		const send = screen.getByRole('button', { name: 'Send message' });
+		send.focus();
+		await userEvent.setup().keyboard('{Enter}');
+		expect(
+			(await screen.findByLabelText('Failed message')).textContent
+		).toContain('Synthetic message stays here');
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(editor.textContent).toBe('Synthetic message stays here');
+		expect(send.hasAttribute('disabled')).toBe(false);
+		expect(
+			requests.filter(({ path }) => path.includes('/send/'))
+		).toHaveLength(0);
+		expect(
+			requests.filter(({ path }) =>
+				path.startsWith('/_matrix/client/v3/join/')
+			)
+		).toHaveLength(2);
+	}
+);

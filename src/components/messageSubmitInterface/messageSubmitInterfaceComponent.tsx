@@ -1667,6 +1667,12 @@ export const MessageSubmitInterfaceComponent = ({
 							);
 							return;
 						}
+						setActiveInfo((info) =>
+							info === INFO_TYPES.DPA_RESTRICTED ||
+							info === INFO_TYPES.DPA_UNAVAILABLE
+								? ''
+								: info
+						);
 						// Surface the failure in the timeline ("Sending message
 						// failed"); the composer keeps the text so the user can
 						// resend without retyping.
