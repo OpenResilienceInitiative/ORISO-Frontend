@@ -115,7 +115,9 @@ const parseRequest = (
 /**
  * Stateful in-memory stand-in for the endpoints the practice view calls.
  * Answers are 2xx only: a 401 would log the real user out, any other non-2xx
- * sends `fetchData` to the error page. Mutations change this memory only.
+ * sends `fetchData` to the error page when the caller passes no
+ * `responseHandling`. Requests it returns `null` for are the sandbox's to
+ * answer (`PracticeSandbox`). Mutations change this memory only.
  */
 export const createFakeRestBackend = ({
 	counsellor,

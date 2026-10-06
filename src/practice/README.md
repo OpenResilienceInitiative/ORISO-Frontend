@@ -64,7 +64,9 @@ fresh fixtures, tour from step 1, same guard.
 **Routes.** While practising, a real case route leads to the practice enquiries;
 outside practice, a practice case route does (Back after End). A request that
 carries a practice id in its path or query never reaches the network: the
-fake answers it, or the sandbox answers 404.
+fake answers it; if the fake does not know the id, a read gets an empty 204 and
+a write fails like any blocked write (a 404 would send `fetchData` to the error
+page).
 
 ## What stays real
 

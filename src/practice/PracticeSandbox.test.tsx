@@ -38,6 +38,15 @@ import {
 	SessionsDataContext,
 	SET_SESSIONS
 } from '../globalState/provider/SessionsDataProvider';
+import { fetchData, FETCH_METHODS } from '../api/fetchData';
+import { redirectToErrorPage } from '../components/error/errorHandling';
+
+vi.mock('../components/error/errorHandling', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../components/error/errorHandling')
+	>()),
+	redirectToErrorPage: vi.fn()
+}));
 
 const realService = { real: true } as any;
 const counsellor = practiceCounsellorFixture();
@@ -89,7 +98,7 @@ describe('PracticeSandbox', () => {
 		expect(pageFetch).not.toHaveBeenCalled();
 	});
 
-	it('never passes on a request for a practice id the fake does not know: it is answered 404 in the page', async () => {
+	it('never passes on a read for a practice id the fake does not know: it is answered empty in the page', async () => {
 		render(sandbox());
 
 		const unknownCase = await window.fetch(
@@ -103,8 +112,28 @@ describe('PracticeSandbox', () => {
 		);
 
 		expect([unknownCase.status, search.status, room.status]).toEqual([
-			404, 404, 404
+			204, 204, 204
 		]);
+		expect(baseFetch).not.toHaveBeenCalled();
+	});
+
+	it('keeps the real view off the error page when the fake does not know a practice id', async () => {
+		render(sandbox());
+
+		await expect(
+			fetchData({
+				url: `${endpoints.sessionBase}/-7/supervisors`,
+				method: FETCH_METHODS.GET
+			})
+		).resolves.toEqual({});
+		await expect(
+			fetchData({
+				url: `${endpoints.sessionBase}/-7/archive`,
+				method: FETCH_METHODS.PUT
+			})
+		).rejects.toThrow(/blocked PUT/);
+
+		expect(redirectToErrorPage).not.toHaveBeenCalled();
 		expect(baseFetch).not.toHaveBeenCalled();
 	});
 
