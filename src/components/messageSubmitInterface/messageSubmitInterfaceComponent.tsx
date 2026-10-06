@@ -16,6 +16,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { deriveSendButtonState } from './inputField/sendButtonState';
@@ -2217,7 +2218,10 @@ export const MessageSubmitInterfaceComponent = ({
 					? 'anonymous'
 					: 'oneOnOne';
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
+	const isPracticing = usePracticeActive();
 	const hasUploadFunctionality =
+		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
