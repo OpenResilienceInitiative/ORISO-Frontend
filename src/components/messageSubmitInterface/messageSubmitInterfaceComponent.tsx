@@ -18,7 +18,8 @@ import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
@@ -60,6 +61,7 @@ import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
 	resolveAskerMessageTransport,
+	resolveEnquiryMatrixRoom,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
@@ -137,7 +139,11 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
-import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
+import {
+	apiPostError,
+	ERROR_LEVEL_ERROR,
+	ERROR_LEVEL_WARN
+} from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { Overlay } from '../overlay/Overlay';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
@@ -207,6 +213,7 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
 	DPA_RESTRICTED: 'DPA_RESTRICTED',
 	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
@@ -1297,29 +1304,59 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message) => {
+		async (message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
-				return Promise.resolve();
+				return;
 			}
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (!matrixRoomId || !matrixClientService) {
+			if (!matrixClientService) {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
-			try {
-				assertMatrixRoomEncrypted(
-					matrixClientService.getClient(),
-					matrixRoomId
-				);
-			} catch {
+			// #1401: the session may show no Matrix room yet (list fetched before
+			// registration persisted the holding room) or none at all (the agency
+			// has no Matrix service account on this deployment). Re-read the
+			// session and give /sync a moment before deciding; a definite miss is
+			// reported with its reason instead of the generic retry prompt.
+			const roomResolution = await resolveEnquiryMatrixRoom({
+				knownRoomId: resolvedChatSession.matrixRoomId,
+				fetchSessionRoomId: () =>
+					apiGetSessionRoomBySessionId(activeSession.item.id).then(
+						(response) =>
+							response?.sessions?.[0]?.session?.matrixRoomId ??
+							null
+					),
+				isRoomEncrypted: (roomId) => {
+					const client = matrixClientService.getClient();
+					return !!client && isMatrixRoomEncrypted(client, roomId);
+				}
+			});
+			if (roomResolution.status === 'lookup-failed') {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
+			if (roomResolution.status !== 'ready') {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE);
+				apiPostError({
+					name:
+						roomResolution.status === 'room-missing'
+							? 'EnquiryMatrixRoomMissing'
+							: 'EnquiryMatrixRoomNotEncrypted',
+					message:
+						roomResolution.status === 'room-missing'
+							? `Enquiry session ${activeSession.item.id} (agency ${activeSession.item.agencyId}) has no Matrix room; registration did not provision the agency holding room`
+							: `Matrix room ${roomResolution.roomId} of enquiry session ${activeSession.item.id} did not become an encrypted room in time`,
+					level: ERROR_LEVEL_ERROR
+				}).then();
+				return;
+			}
+			const matrixRoomId = roomResolution.roomId;
 			const submissionUserId = matrixClientService
 				.getClient()
 				?.getUserId();
@@ -1389,6 +1426,7 @@ export const MessageSubmitInterfaceComponent = ({
 				});
 		},
 		[
+			activeSession.item.agencyId,
 			activeSession.item.id,
 			enquirySubmissionGuard,
 			encryptRoom,
@@ -2183,6 +2221,16 @@ export const MessageSubmitInterfaceComponent = ({
 				isInfo: false,
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
+			};
+		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(
+					'statusOverlay.enquiryRoomUnavailable.headline'
+				),
+				infoMessage: translate(
+					'statusOverlay.enquiryRoomUnavailable.text'
+				)
 			};
 		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
 			infoData = {
