@@ -58,10 +58,6 @@ import { PracticeSurface } from './PracticeSurface';
 import { PracticeOverviewSection } from './PracticeOverviewSection';
 import { getPracticeTour, practiceTours } from './practiceTours';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
-import {
-	PRACTICE_MAIN_ROOM_ID,
-	PRACTICE_TEAM_ROOM_ID
-} from './fixtures/practiceIdentifiers';
 import { getPracticeNetworkGuard, getPracticeSnapshot } from './practiceMode';
 import {
 	PRACTICE_TOUR_EVENTS,
