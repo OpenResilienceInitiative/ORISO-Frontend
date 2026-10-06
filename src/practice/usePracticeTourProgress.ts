@@ -16,7 +16,9 @@ export interface PracticeTourProgress {
 }
 
 /** What the banner shows as "Step i of N"; null while no practice run mounts. */
-export const practiceTourProgressAtom = atom<PracticeTourProgress | null>(null);
+export const practiceTourProgressAtom = atom(
+	null as PracticeTourProgress | null
+);
 
 export const usePracticeTourProgress = (): PracticeTourProgress | null =>
 	useAtomValue(practiceTourProgressAtom);
