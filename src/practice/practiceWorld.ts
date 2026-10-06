@@ -12,6 +12,7 @@ import {
 	type PracticeStart
 } from './fixtures/practiceScenario';
 import { PRACTICE_CAST, PRACTICE_SCRIPT } from './fixtures/practiceCast';
+import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_SUPERVISION_ROOM_ID
@@ -44,9 +45,11 @@ export const createPracticeWorld = ({
 	const matrix: FakeMatrixService = createFakeMatrixService({
 		rooms: scenario.rooms,
 		now,
-		onCounsellorMessage: (roomId) => {
+		onCounsellorMessage: (roomId, body) => {
 			if (
 				roomId !== PRACTICE_MAIN_ROOM_ID ||
+				// e.g. the "supervision added" note the header posts
+				body.startsWith(SYSTEM_NOTIFICATION_PREFIX) ||
 				askerAnswered ||
 				rest.getCase().session.status !== 2
 			) {

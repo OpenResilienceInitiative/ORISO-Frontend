@@ -448,7 +448,7 @@ export class FakeMatrixService {
 		this.client.emit('Room.timeline', event, room, false, false, data);
 		room.emit('Room.timeline', event, room, false, false, data);
 		if (sender === this.client.getUserId()) {
-			this.onCounsellorMessage?.(roomId, content.body);
+			this.onCounsellorMessage?.(roomId, String(content.body ?? ''));
 		}
 		return event;
 	}
