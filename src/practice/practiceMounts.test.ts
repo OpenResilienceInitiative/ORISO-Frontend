@@ -23,12 +23,13 @@ describe('practice mount points', () => {
 		);
 	});
 
-	it('renders the banner and the sandbox slot in the layout route, next to the tour host', () => {
+	it('renders the banner next to the tour host, and the routed content inside the practice surface', () => {
 		const source = read('Routing.tsx');
 		const shell = source.slice(source.indexOf('<Walkthrough />'));
 
+		expect(shell).toMatch(/<Walkthrough \/>\s*<PracticeBanner \/>/);
 		expect(shell).toMatch(
-			/<Walkthrough \/>\s*<PracticeBanner \/>\s*<PracticeSurface \/>\s*<E2EEProvider>/
+			/<PracticeSurface>\s*<Outlet \/>\s*<\/PracticeSurface>/
 		);
 	});
 });

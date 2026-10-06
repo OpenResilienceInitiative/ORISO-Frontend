@@ -83,7 +83,6 @@ export const Routing = (props: RoutingProps) => {
 					<>
 						<Walkthrough />
 						<PracticeBanner />
-						<PracticeSurface />
 						<E2EEProvider>
 							<div
 								className={`app__wrapper ${
@@ -99,7 +98,9 @@ export const Routing = (props: RoutingProps) => {
 								<section className="contentWrapper">
 									<Header />
 									<div className="contentWrapper__content">
-										<Outlet />
+										<PracticeSurface>
+											<Outlet />
+										</PracticeSurface>
 									</div>
 								</section>
 								{/* Privacy / data-protection overlay: askers only

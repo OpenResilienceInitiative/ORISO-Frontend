@@ -3,17 +3,16 @@ import { PracticeSandboxSlot } from './PracticeSandboxSlot';
 import { usePractice } from './PracticeProvider';
 
 /**
- * Wraps the authenticated shell. Renders `children` untouched and, only while
- * practice mode is active, the sandbox slot beside them. It never wraps the
- * children in anything, so they keep their place in the tree (no remount)
- * when practice starts or ends.
+ * Wraps the routed content of the authenticated shell. Renders `children`
+ * untouched while practice is off, and inside the sandbox slot while it is
+ * on. The subtree remounts when practice starts or ends: that is what puts
+ * the real session views onto the practice world and back.
  */
 export const PracticeSurface = ({ children }: PropsWithChildren) => {
 	const { isPractice } = usePractice();
-	return (
-		<>
-			{children}
-			{isPractice && <PracticeSandboxSlot />}
-		</>
+	return isPractice ? (
+		<PracticeSandboxSlot>{children}</PracticeSandboxSlot>
+	) : (
+		<>{children}</>
 	);
 };
