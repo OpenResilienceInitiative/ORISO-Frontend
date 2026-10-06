@@ -3622,6 +3622,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							</Suspense>
 						)}
 						{areRobotMessagesComplete &&
+							// Practice: no attachments (safety invariant 5).
+							!isPracticing &&
 							hasMediaUploadFeature(
 								tenantData?.settings,
 								chatType

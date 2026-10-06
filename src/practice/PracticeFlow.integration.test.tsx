@@ -538,6 +538,8 @@ const acceptAndAnswer = async (at: number) => {
 
 	// The composer; the reply is answered by the script.
 	await expectStep(at + 2);
+	// No attachments while practising, not even by drag and drop.
+	expect(document.querySelector('.dragAndDropArea')).toBeNull();
 	const reply = 'Hallo Sam, schön, dass Sie sich melden.';
 	await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
 		typeAndSend(() => document.querySelector('.chatStage__mainPane'), reply)
