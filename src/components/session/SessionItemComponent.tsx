@@ -4210,6 +4210,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: teamChannelTitle
 				})}
 				data-cy="stage-panel"
+				data-tour-target="team-discussion-panel"
 				header={
 					<PanelHeader
 						kind="team"
