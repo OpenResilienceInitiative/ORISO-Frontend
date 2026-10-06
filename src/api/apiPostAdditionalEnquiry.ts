@@ -34,6 +34,7 @@ export const apiPostAdditionalEnquiry = async (
 		responseHandling: [
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.CATCH_ALL,
+			FETCH_ERRORS.COUNSELLING_DPA_RESPONSE,
 			FETCH_ERRORS.CONFLICT_WITH_RESPONSE
 		]
 	});

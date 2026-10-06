@@ -5,9 +5,6 @@ Im geschützten Fachaustausch zu einer Ihrer Beratungen liegt eine neue Rückmel
 
 Den Inhalt sehen Sie verschlüsselt nach der Anmeldung.
 
-Fall: {{caseReference}}
-Eingang: {{requestReceivedAt}}
-
 Rückmeldung lesen:
 {{messageUrl}}
 

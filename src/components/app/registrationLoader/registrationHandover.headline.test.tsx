@@ -8,9 +8,15 @@ vi.mock('./HandoverCarousel', () => ({
 	HandoverCarousel: () => <div data-testid="carousel" />
 }));
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'registration.handover.headline': 'Geschafft.',
+			'registration.handover.headlineAlmost': 'Fast geschafft.'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 const { RegistrationHandover } = await import('./RegistrationHandover');

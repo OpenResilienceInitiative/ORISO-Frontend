@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -11,10 +12,11 @@ import {
 import type { Placement } from '@floating-ui/dom';
 import type { Theme } from 'emoji-picker-react';
 import type { MenuDirection } from './menuDirection';
+import { lazyWithReload } from '../../../utils/chunkLoadRecovery';
 import './emojiPickerPopup.styles.scss';
 
 // emoji-picker-react is ~200KB of emoji data — load it only when opened.
-const EmojiPicker = React.lazy(() => import('emoji-picker-react'));
+const EmojiPicker = lazyWithReload(() => import('emoji-picker-react'));
 
 /** Keep light chrome even when the OS prefers dark (avoids #835 dark clip). */
 const LIGHT_THEME = 'light' as Theme;
@@ -49,6 +51,7 @@ export const EmojiPickerPopup = ({
 	anchorEl,
 	placement
 }: EmojiPickerPopupProps) => {
+	const { t } = useTranslation();
 	const popupRef = useRef<HTMLDivElement | null>(null);
 	const [position, setPosition] = useState<{ top: number; left: number }>({
 		top: -9999,
@@ -141,7 +144,7 @@ export const EmojiPickerPopup = ({
 					height={380}
 					lazyLoadEmojis
 					skinTonesDisabled={false}
-					searchPlaceHolder="Suchen"
+					searchPlaceHolder={t('form.select.search')}
 					previewConfig={{ showPreview: false }}
 					theme={LIGHT_THEME}
 				/>

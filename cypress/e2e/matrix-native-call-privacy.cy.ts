@@ -18,11 +18,11 @@ describe('Matrix native call privacy', () => {
 			createCall,
 			getRoom: cy
 				.stub()
-				.withArgs('!plain-call-room:oriso.org')
+				.withArgs('!plain-call-room:example.org')
 				.returns(room),
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-call-room:oriso.org')
+				.withArgs('!plain-call-room:example.org')
 				.returns(false),
 			on: cy.stub(),
 			removeAllListeners: cy.stub()
@@ -31,7 +31,7 @@ describe('Matrix native call privacy', () => {
 		cy.then(() =>
 			matrixCallService
 				.startCall({
-					roomId: '!plain-call-room:oriso.org',
+					roomId: '!plain-call-room:example.org',
 					isVideoCall: true
 				})
 				.then(
@@ -55,7 +55,7 @@ describe('Matrix native call privacy', () => {
 		const call = {
 			answer,
 			on: cy.stub(),
-			roomId: '!plain-call-room:oriso.org'
+			roomId: '!plain-call-room:example.org'
 		};
 		const room = {
 			hasEncryptionStateEvent: cy.stub().returns(false)
@@ -64,11 +64,11 @@ describe('Matrix native call privacy', () => {
 		matrixCallService.initialize({
 			getRoom: cy
 				.stub()
-				.withArgs('!plain-call-room:oriso.org')
+				.withArgs('!plain-call-room:example.org')
 				.returns(room),
 			isRoomEncrypted: cy
 				.stub()
-				.withArgs('!plain-call-room:oriso.org')
+				.withArgs('!plain-call-room:example.org')
 				.returns(false),
 			on: cy.stub(),
 			removeAllListeners: cy.stub()

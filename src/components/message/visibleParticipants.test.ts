@@ -480,9 +480,9 @@ describe('the team room rule', () => {
 		expect(stack.visible).toHaveLength(STACK_MAX_VISIBLE);
 		expect(stack.overflow).toBe(roomMembers.length - 1 - STACK_MAX_VISIBLE);
 		expect(stack.overflow).toBe(3);
-		expect(
-			[...stack.visible].some((p) => p.userId === ASKER_MATRIX)
-		).toBe(false);
+		expect([...stack.visible].some((p) => p.userId === ASKER_MATRIX)).toBe(
+			false
+		);
 	});
 
 	it('is not the supervision rule: supervision hides the same colleagues', () => {

@@ -17,6 +17,7 @@ import { apiGetTenantConsultantList } from '../../api/apiGetAgencyConsultantList
 import { useSession } from '../../hooks/useSession';
 import { UserDataContext, SessionsDataContext } from '../../globalState';
 import { CreateConversationView } from './CreateConversationView';
+import { resetCounsellorAgencyFormatsForTests } from '../../hooks/useCounsellorAgencyFormats';
 
 // react-i18next: identity translator so we can assert on keys.
 vi.mock('react-i18next', () => ({
@@ -29,14 +30,20 @@ vi.mock('react-i18next', () => ({
 // The globalState barrel pulls lottie-web (crashes in jsdom): stub the parts
 // the flow reads. Contexts are created inside the factory (hoisted) and read
 // back through the mocked module below.
-vi.mock('../../globalState', () => {
+vi.mock('../../globalState', async () => {
 	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const react = require('react');
+	// The real user-data context: the agency-settings hook reads it through
+	// its direct module path, so the flow and the hook must share it.
+	const { UserDataContext } = await vi.importActual<any>(
+		'../../globalState/context/UserDataContext'
+	);
 	const tenant = {
 		settings: { featureGroupChatV2Enabled: true, activeLanguages: ['de'] }
 	};
 	return {
-		UserDataContext: react.createContext(null),
+		UserDataContext,
+		NotificationsContext: react.createContext(null),
 		SessionsDataContext: react.createContext({ dispatch: () => {} }),
 		UPDATE_SESSIONS: 'UPDATE_SESSIONS',
 		useTenant: () => tenant,
@@ -63,6 +70,10 @@ vi.mock('../../resources/img/icons/group-chat-avatar.svg', () => ({
 vi.mock('../../resources/img/illustrations/Team.svg', () => ({
 	ReactComponent: () => null,
 	default: () => null
+}));
+// The create view waits for the agencies' settings (#1440); none known here.
+vi.mock('../../api/apiGetAgenciesByIds', () => ({
+	apiGetAgenciesByIds: vi.fn().mockResolvedValue([])
 }));
 vi.mock('../../api/apiGetTenantAgenciesTopics', () => ({
 	apiGetTenantAgenciesTopics: vi.fn().mockResolvedValue([])
@@ -207,6 +218,7 @@ const renderInUserContext = (
 describe('CreateConversationView edit mode (finding 1)', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -247,6 +259,96 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 			topic: 'Existing circle'
 		});
 		expect(apiCreateGroupChat).not.toHaveBeenCalled();
+	});
+
+	// #1499: the session API sends the group's wall clock as startDate +
+	// startTime (+ timezone) and never startDateWithTime.
+	const apiSeriesItem = {
+		...editSeriesItem,
+		startDate: '2026-09-25',
+		startDateWithTime: undefined,
+		startTime: '16:42:00',
+		timezone: 'Europe/Berlin',
+		repetitive: false,
+		repeatCount: 1,
+		chatInterval: null
+	};
+
+	const saveUnchanged = async (item: Record<string, unknown>) => {
+		vi.mocked(useSession).mockReturnValue({
+			session: { item } as any,
+			reload: vi.fn(),
+			read: vi.fn(),
+			ready: true
+		});
+		vi.mocked(apiUpdateGroupChat).mockResolvedValue({
+			matrixRoomId: '!room:matrix.example'
+		});
+		vi.mocked(apiGetSessionRoomsByRoomIds).mockResolvedValue({
+			sessions: []
+		} as any);
+
+		renderInUserContext();
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'groupChat.circle.saveLabel'
+			})
+		);
+		await waitFor(() =>
+			expect(apiUpdateGroupChat).toHaveBeenCalledTimes(1)
+		);
+		return apiUpdateGroupChat.mock.calls[0][1];
+	};
+
+	it('saves an untouched one-off group at its stored time (#1499)', async () => {
+		const payload = await saveUnchanged(apiSeriesItem);
+
+		expect(payload).toMatchObject({
+			startDate: '2026-09-25',
+			startTime: '16:42',
+			timezone: 'Europe/Berlin',
+			repeatCount: 1,
+			repetitive: false
+		});
+		expect(payload).not.toHaveProperty('chatInterval');
+	});
+
+	it('shows a one-off group as one date, not as a weekly series (#1499)', async () => {
+		await saveUnchanged(apiSeriesItem);
+
+		expect(
+			screen.queryByText('groupChat.create.interval.options.weekly')
+		).toBeNull();
+		expect(
+			screen.getByText('groupChat.info.settings.repetition.single')
+		).toBeTruthy();
+	});
+
+	it('keeps a repeating series, its interval and the group timezone on save', async () => {
+		const payload = await saveUnchanged({
+			...apiSeriesItem,
+			startDate: '2026-10-20',
+			startTime: '18:00:00',
+			timezone: 'America/New_York',
+			repetitive: true,
+			repeatCount: 3,
+			chatInterval: 'BIWEEKLY'
+		});
+
+		// Count and interval in one control: three dates, every two weeks.
+		expect(
+			screen.getByText('groupChat.circle.rows.repeatDates')
+		).toBeTruthy();
+		expect(
+			screen.getByText('groupChat.create.interval.options.biweekly')
+		).toBeTruthy();
+		expect(payload).toMatchObject({
+			startDate: '2026-10-20',
+			startTime: '18:00',
+			timezone: 'America/New_York',
+			repeatCount: 3,
+			chatInterval: 'BIWEEKLY'
+		});
 	});
 
 	it('lets the owner add a co-moderator while editing a circle', async () => {
@@ -318,6 +420,7 @@ describe('CreateConversationView edit mode (finding 1)', () => {
 describe('CreateConversationView internal card (finding 2)', () => {
 	afterEach(() => {
 		cleanup();
+		resetCounsellorAgencyFormatsForTests();
 		vi.clearAllMocks();
 	});
 
@@ -359,7 +462,7 @@ describe('CreateConversationView internal card (finding 2)', () => {
 		]);
 
 		// Pick the first agency so the consultant list loads.
-		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
 		fireEvent.click(
 			await screen.findByRole('option', { name: 'Agency One' })
 		);

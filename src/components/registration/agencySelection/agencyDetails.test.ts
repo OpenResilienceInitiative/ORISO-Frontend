@@ -115,10 +115,25 @@ describe('getAgencyDetails — missing fields stay absent (never invented)', () 
 
 	it('exposes coordinates only when the record really carries them', () => {
 		const details = getAgencyDetails(
-			baseAgency({ lat: 50.9384, lng: 6.9599 } as any)
+			baseAgency({ lat: 50.9384, lng: 6.9599 })
 		);
 		expect(details.lat).toBe(50.9384);
 		expect(details.lng).toBe(6.9599);
+	});
+
+	it.each([
+		{ lat: null, lng: null },
+		{ lat: NaN, lng: Infinity }
+	])('keeps missing or non-finite coordinates absent: %o', (coordinates) => {
+		const details = getAgencyDetails(baseAgency(coordinates));
+		expect(details.lat).toBeUndefined();
+		expect(details.lng).toBeUndefined();
+	});
+
+	it('preserves zero coordinates', () => {
+		const details = getAgencyDetails(baseAgency({ lat: 0, lng: 0 }));
+		expect(details.lat).toBe(0);
+		expect(details.lng).toBe(0);
 	});
 });
 
