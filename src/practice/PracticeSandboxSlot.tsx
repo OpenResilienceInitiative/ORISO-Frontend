@@ -8,13 +8,11 @@ import type { PracticeStart } from './fixtures/practiceScenario';
 import { PracticeSandbox, usePracticeSandbox } from './PracticeSandbox';
 import { usePractice } from './PracticeProvider';
 import { registerPracticeRestartHandler } from './practiceRestart';
-import { PRACTICE_TOUR_IDS } from './practiceTourIds';
-
-const [, SUPERVISION_TOUR_ID] = PRACTICE_TOUR_IDS;
+import { PRACTICE_SUPERVISION_TOUR_ID } from './practiceTourIds';
 
 /** F2 starts on the already accepted case, F1 on the open enquiry. */
 const startOf = (tourId: string | null): PracticeStart =>
-	tourId === SUPERVISION_TOUR_ID ? 'acceptedCase' : 'enquiry';
+	tourId === PRACTICE_SUPERVISION_TOUR_ID ? 'acceptedCase' : 'enquiry';
 
 /** A new run on the running guard (restart) gets fresh fixtures. */
 const RestartOnNewRun = () => {

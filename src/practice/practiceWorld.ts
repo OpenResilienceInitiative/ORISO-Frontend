@@ -1,4 +1,5 @@
 import type { UserDataInterface } from '../globalState/interfaces';
+import { STATUS_ACTIVE } from '../globalState/interfaces/SessionsDataInterface';
 import {
 	createFakeRestBackend,
 	type FakeRestBackend
@@ -78,7 +79,7 @@ export const createPracticeWorld = ({
 			}
 			if (
 				roomId !== PRACTICE_MAIN_ROOM_ID ||
-				rest.getCase().session.status !== 2
+				rest.getCase().session.status !== STATUS_ACTIVE
 			) {
 				return;
 			}

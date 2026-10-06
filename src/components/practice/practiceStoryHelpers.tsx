@@ -5,6 +5,7 @@ import {
 	enterPracticeMode,
 	exitPracticeMode
 } from '../../practice/practiceMode';
+import { PRACTICE_ACCEPT_TOUR_ID } from '../../practice/practiceTourIds';
 
 type ProgressFixture = Pick<
 	ITutorialProgressItem,
@@ -56,7 +57,7 @@ export const ScopedProgressFetch = ({
  * never outlive the story.
  */
 export const InPracticeMode = ({
-	tourId = 'consultant-practice-accept',
+	tourId = PRACTICE_ACCEPT_TOUR_ID,
 	children
 }: {
 	tourId?: string;

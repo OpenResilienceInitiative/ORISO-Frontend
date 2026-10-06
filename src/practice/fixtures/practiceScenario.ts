@@ -2,6 +2,10 @@ import type {
 	TopicsDataInterface,
 	UserDataInterface
 } from '../../globalState/interfaces';
+import {
+	STATUS_ACTIVE,
+	STATUS_ENQUIRY
+} from '../../globalState/interfaces/SessionsDataInterface';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../../components/message/messageConstants';
 import {
 	ERSTANTWORT_PAYLOAD_VERSION,
@@ -174,7 +178,7 @@ export const createPracticeScenario = ({
 				id: PRACTICE_ENQUIRY_SESSION_ID,
 				agencyId: PRACTICE_AGENCY_ID,
 				consultingType: counsellor.agencies?.[0]?.consultingType ?? 0,
-				status: accepted ? 2 : 1,
+				status: accepted ? STATUS_ACTIVE : STATUS_ENQUIRY,
 				conversationType: 'AGENCY_COUNSELLING',
 				postcode: '00000',
 				language: 'de',

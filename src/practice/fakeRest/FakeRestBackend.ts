@@ -1,5 +1,9 @@
 import type { UserDataInterface } from '../../globalState/interfaces';
 import {
+	STATUS_ACTIVE,
+	STATUS_ENQUIRY
+} from '../../globalState/interfaces/SessionsDataInterface';
+import {
 	counsellorAsSessionConsultant,
 	createPracticeScenario,
 	type PracticeCaseState,
@@ -163,7 +167,7 @@ export const createFakeRestBackend = ({
 			method: 'GET',
 			path: /\/service\/conversations\/consultants\/enquiries\/registered$/,
 			viewWide: true,
-			handle: () => sessionList(1)
+			handle: () => sessionList(STATUS_ENQUIRY)
 		},
 		{
 			method: 'GET',
@@ -175,7 +179,7 @@ export const createFakeRestBackend = ({
 			method: 'GET',
 			path: /\/service\/users\/sessions\/consultants$/,
 			viewWide: true,
-			handle: () => sessionList(2)
+			handle: () => sessionList(STATUS_ACTIVE)
 		},
 		{
 			method: 'GET',
@@ -213,12 +217,12 @@ export const createFakeRestBackend = ({
 			),
 			handle: (_request, [, id]) => {
 				if (!isCase(id)) return null;
-				if (practiceCase.session.status === 1) {
+				if (practiceCase.session.status === STATUS_ENQUIRY) {
 					practiceCase = {
 						...practiceCase,
 						session: {
 							...practiceCase.session,
-							status: 2,
+							status: STATUS_ACTIVE,
 							consultantMatrixUserId:
 								PRACTICE_COUNSELLOR_MATRIX_USER_ID
 						},
@@ -259,7 +263,7 @@ export const createFakeRestBackend = ({
 						teamDiscussion: {
 							matrixRoomId: PRACTICE_TEAM_ROOM_ID,
 							status:
-								practiceCase.session.status === 1
+								practiceCase.session.status === STATUS_ENQUIRY
 									? 'OPEN'
 									: 'ARCHIVED'
 						}

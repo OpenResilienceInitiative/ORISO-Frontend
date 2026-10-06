@@ -1,6 +1,7 @@
 import { isTourAvailable } from '../components/productTour/tourEngine';
 import type { TourDefinition } from '../components/productTour/types';
 import { isPracticeTourAvailable } from './practiceTours';
+import { PRACTICE_SUPERVISION_TOUR_ID } from './practiceTourIds';
 
 /**
  * Tenant gates a practice tour needs on top of its own `when`. The Supervision
@@ -23,5 +24,5 @@ export const isPracticeTourOffered = (
 	flags?: Record<string, unknown>
 ): boolean =>
 	isPracticeTourAvailable(tour, flags) &&
-	(tour.id !== 'consultant-practice-supervision' ||
+	(tour.id !== PRACTICE_SUPERVISION_TOUR_ID ||
 		isTourAvailable({ when: ONE_ON_ONE_SUPERVISION }, { flags }));
