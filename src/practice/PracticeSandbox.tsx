@@ -11,6 +11,7 @@ import type { UserDataInterface } from '../globalState/interfaces';
 import { MatrixClientContext } from '../globalState/context/MatrixClientContext';
 import { SessionsDataProvider } from '../globalState/provider/SessionsDataProvider';
 import { TopicsContext } from '../globalState/provider/TopicsProvider';
+import { NotificationsContext } from '../globalState/provider/NotificationsProvider';
 import type { MatrixClientService } from '../services/matrixClientService';
 import {
 	getMatrixClientService,
@@ -214,6 +215,12 @@ export const PracticeSandbox = ({
 		[counsellor, start]
 	);
 	const api = useMemo(() => ({ world, restart }), [world, restart]);
+	// Toasts stay; feed entries would outlive practice in the real centre.
+	const notifications = useContext(NotificationsContext);
+	const practiceNotifications = useMemo(
+		() => notifications && { ...notifications, addEventNotification: noop },
+		[notifications]
+	);
 	const matrixContext = useMemo(
 		() => ({
 			matrixClientService: asService(world),
@@ -226,10 +233,14 @@ export const PracticeSandbox = ({
 		<PracticeSandboxContext.Provider value={api}>
 			<MatrixClientContext.Provider value={matrixContext}>
 				<TopicsContext.Provider value={practiceTopics}>
-					{/* Practice lists never enter the app-level sessions store. */}
-					<SessionsDataProvider key={run.generation}>
-						{children}
-					</SessionsDataProvider>
+					<NotificationsContext.Provider
+						value={practiceNotifications}
+					>
+						{/* Practice lists never enter the app-level sessions store. */}
+						<SessionsDataProvider key={run.generation}>
+							{children}
+						</SessionsDataProvider>
+					</NotificationsContext.Provider>
 				</TopicsContext.Provider>
 			</MatrixClientContext.Provider>
 		</PracticeSandboxContext.Provider>

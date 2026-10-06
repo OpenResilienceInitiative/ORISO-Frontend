@@ -125,6 +125,13 @@ const realMatrixService = new Proxy(
 	}
 );
 
+/** The app-level notification centre the practice view sits inside. */
+const appNotifications = {
+	notifications: [],
+	addNotification: vi.fn(),
+	addEventNotification: vi.fn()
+};
+
 /** Every browser-storage write while the practice view runs. */
 const storageWrites: string[] = [];
 const indexedDbOpens = vi.fn();
@@ -167,14 +174,7 @@ const renderPractice = (start: 'enquiry' | 'acceptedCase' = 'enquiry') => {
 				setConsultingTypes: vi.fn()
 			}
 		],
-		[
-			NotificationsContext,
-			{
-				notifications: [],
-				addNotification: vi.fn(),
-				addEventNotification: vi.fn()
-			}
-		],
+		[NotificationsContext, appNotifications],
 		[LocaleContext, { locale: 'de' }],
 		[LanguagesContext, { fixed: ['de'], spoken: [] }],
 		// The real app-level provider: the sandbox must shadow it.
@@ -227,6 +227,8 @@ beforeEach(async () => {
 	storageWrites.length = 0;
 	networkFetch.mockClear();
 	indexedDbOpens.mockClear();
+	appNotifications.addNotification.mockClear();
+	appNotifications.addEventNotification.mockClear();
 	vi.stubGlobal('fetch', networkFetch);
 	vi.stubGlobal('indexedDB', { open: indexedDbOpens });
 	await translations.init({
@@ -363,6 +365,7 @@ const expectNothingLeftThePracticeWorld = () => {
 	expect(realMatrixTouches).toEqual([]);
 	expect(storageWrites).toEqual([]);
 	expect(indexedDbOpens).not.toHaveBeenCalled();
+	expect(appNotifications.addEventNotification).not.toHaveBeenCalled();
 	expect(
 		world!.matrix.getRooms().every((room) => isPracticeRoomId(room.roomId))
 	).toBe(true);
@@ -513,6 +516,14 @@ describe('practice sandbox on the real session containers', () => {
 		await waitFor(
 			() => expect(world!.rest.getCase().supervisors).toHaveLength(1),
 			{ timeout: 15000 }
+		);
+		// The success toast stays; the feed entry is swallowed (see below).
+		await waitFor(() =>
+			expect(appNotifications.addNotification).toHaveBeenCalledWith(
+				expect.objectContaining({
+					title: 'sessionHeader.supervisor.success.add.title'
+				})
+			)
 		);
 		await waitFor(() =>
 			expect(

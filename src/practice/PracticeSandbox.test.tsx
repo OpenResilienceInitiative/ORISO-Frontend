@@ -21,6 +21,7 @@ import {
 	PRACTICE_TOPIC_ID
 } from './fixtures/practiceIdentifiers';
 import { TopicsContext } from '../globalState/provider/TopicsProvider';
+import { NotificationsContext } from '../globalState/provider/NotificationsProvider';
 import { FakeMatrixService } from './fakeMatrix/FakeMatrixService';
 import {
 	SessionsDataContext,
@@ -242,6 +243,35 @@ describe('PracticeSandbox', () => {
 		);
 
 		expect(topics.map(({ id }) => id)).toEqual([PRACTICE_TOPIC_ID]);
+	});
+
+	it('keeps practice events out of the real notification feed but still shows toasts', () => {
+		const outer = {
+			notifications: [],
+			addNotification: vi.fn(),
+			addEventNotification: vi.fn()
+		};
+		let inner: any;
+		const Probe = () => {
+			inner = useContext(NotificationsContext);
+			return null;
+		};
+		render(
+			<NotificationsContext.Provider value={outer as any}>
+				{sandbox(<Probe />)}
+			</NotificationsContext.Provider>
+		);
+
+		inner.addEventNotification({
+			eventType: 'supervisor.added',
+			title: 'x'
+		});
+		inner.addNotification({ title: 'Supervision hinzugefügt' });
+
+		expect(outer.addEventNotification).not.toHaveBeenCalled();
+		expect(outer.addNotification).toHaveBeenCalledWith({
+			title: 'Supervision hinzugefügt'
+		});
 	});
 
 	it('restarts from fresh fixtures', async () => {
