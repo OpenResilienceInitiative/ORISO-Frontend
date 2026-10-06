@@ -444,24 +444,84 @@ const expectNothingLeftThePracticeWorld = () => {
 	expect(getPracticeNetworkGuard()?.blockedRequests ?? []).toEqual([]);
 };
 
+/** The enquiry steps of F1 up to the open enquiry: 1 and 2 in both variants. */
+const openThePracticeEnquiry = async () => {
+	// 1: the Anfragen icon in the real navigation bar; Next.
+	await expectStep(0);
+	expect(getPracticeSnapshot().status).toBe('active');
+	pressNext(0);
+
+	// 2: the practice enquiry, the only row of the real list; click it.
+	const row = await expectStep(1);
+	expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
+	expect(
+		document.querySelectorAll('[data-cy="session-list-item"]')
+	).toHaveLength(1);
+	expect(row!.textContent).toContain(SCRIPT.cast.asker.displayName);
+	fireEvent.click(row!);
+};
+
+/** F1 from the accept step on; `at` is the accept step's index. */
+const acceptAndAnswer = async (at: number) => {
+	// The real accept button; click it.
+	const accept = await expectStep(at);
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.enquiryAccepted, async () => {
+		fireEvent.click(accept!);
+	});
+	await waitFor(
+		() => expect(route()).toMatch(/sessionView\/!practice-1/),
+		SLOW
+	);
+
+	// The Erstantwort and the asker's message; Next.
+	await expectStep(at + 1);
+	await waitFor(
+		() =>
+			expect(textOf('.chatStage__mainPane')).toContain(
+				SCRIPT.texts.askerFirstMessage
+			),
+		SLOW
+	);
+	pressNext(at + 1);
+
+	// The composer; the reply is answered by the script.
+	await expectStep(at + 2);
+	const reply = 'Hallo Sam, schön, dass Sie sich melden.';
+	await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
+		typeAndSend(() => document.querySelector('.chatStage__mainPane'), reply)
+	);
+	await waitFor(
+		() =>
+			expect(textOf('.chatStage__mainPane')).toContain(
+				SCRIPT.texts.askerReply
+			),
+		SLOW
+	);
+};
+
+/** The last step: completion is written, practice ends, back to Help. */
+const finish = async (at: number) => {
+	await expectStep(at);
+	pressNext(at);
+	await waitFor(
+		() => expect(getPracticeSnapshot().status).toBe('inactive'),
+		SLOW
+	);
+	expect(route()).toBe(HELP_ROUTE);
+	expect(screen.getByTestId('help-page')).toBeTruthy();
+	expect(window.fetch).toBe(networkFetch);
+	expect(
+		network.filter(({ method }) => method === 'PUT').length
+	).toBeGreaterThan(0);
+	expectNothingLeftThePracticeWorld();
+};
+
 describe('practice flows on the real app shell', () => {
 	it('F1 with the team step: every anchor is live when its step shows, and the real actions advance the tour', async () => {
 		const app = renderApp({ teamDiscussion: true });
 		app.start(ACCEPT);
-
-		// 1: the Anfragen icon in the real navigation bar; Next.
-		await expectStep(0);
-		expect(getPracticeSnapshot().status).toBe('active');
-		pressNext(0);
-
-		// 2: the practice enquiry, the only row of the real list; click it.
-		const row = await expectStep(1);
-		expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
-		expect(
-			document.querySelectorAll('[data-cy="session-list-item"]')
-		).toHaveLength(1);
-		expect(row!.textContent).toContain(SCRIPT.cast.asker.displayName);
-		fireEvent.click(row!);
+		await openThePracticeEnquiry();
+		expect(joyride!.steps).toHaveLength(8);
 
 		// 3: the team button of the open enquiry; click it.
 		const teamButton = await expectStep(2);
@@ -473,64 +533,93 @@ describe('practice flows on the real app shell', () => {
 		await afterWorldEvent(PRACTICE_TOUR_EVENTS.teamMessageSent, () =>
 			typeAndSend(() => panel, note)
 		);
-		expect(
-			document.querySelector('.chatStage__mainPane')?.textContent ?? ''
-		).not.toContain(note);
+		expect(textOf('.chatStage__mainPane')).not.toContain(note);
 
-		// 5: the real accept button; click it.
-		const accept = await expectStep(4);
+		// 5-7: accept, Erstantwort, reply.
+		await acceptAndAnswer(4);
+
+		// 8: done.
+		await finish(7);
+	}, 120000);
+
+	it('F1 without the team step (Träger switched it off): six steps, no team anchor, the same real actions', async () => {
+		const app = renderApp({ teamDiscussion: false });
+		app.start(ACCEPT);
+		await openThePracticeEnquiry();
+		expect(joyride!.steps).toHaveLength(6);
+
+		// 3-5: accept straight away, Erstantwort, reply.
+		await expectStep(2);
+		expect(
+			document.querySelector('[data-tour-target="enquiry-team-button"]')
+		).toBeNull();
+		await acceptAndAnswer(2);
+
+		// 6: done.
+		await finish(5);
+	}, 120000);
+
+	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
+		const app = renderApp();
+		app.start(SUPERVISION);
+
+		// 1: the add-supervisor button of the accepted case; click, pick, confirm.
+		const add = await expectStep(0);
+		expect(getPracticeSnapshot().status).toBe('active');
+		expect(route()).toMatch(/sessionView\//);
+		expect(textOf('.chatStage__mainPane')).toContain(
+			SCRIPT.texts.acceptedCaseCounsellorMessage
+		);
 		await afterWorldEvent(
-			PRACTICE_TOUR_EVENTS.enquiryAccepted,
+			PRACTICE_TOUR_EVENTS.supervisorAdded,
 			async () => {
-				fireEvent.click(accept!);
+				fireEvent.click(add!);
+				const picker = await screen.findByRole('combobox', {}, SLOW);
+				fireEvent.mouseDown(picker);
+				fireEvent.click(
+					await screen.findByRole('option', {
+						name: SCRIPT.cast.supervisor.displayName
+					})
+				);
+				fireEvent.change(
+					screen.getByPlaceholderText(
+						'sessionHeader.supervisor.modal.reasonPlaceholder'
+					),
+					{
+						target: {
+							value: 'Ich möchte mich zum Vorgehen absichern.'
+						}
+					}
+				);
+				await act(async () => {
+					fireEvent.click(
+						screen.getByRole('button', {
+							name: 'sessionHeader.supervisor.modal.addButton'
+						})
+					);
+				});
 			}
 		);
-		await waitFor(
-			() => expect(route()).toMatch(/sessionView\/!practice-1/),
-			SLOW
-		);
 
-		// 6: the Erstantwort and the asker's message; Next.
-		await expectStep(5);
+		// 2: the side thread with the supervisor's reply; Next.
+		const panel = await expectStep(1);
 		await waitFor(
 			() =>
-				expect(textOf('.chatStage__mainPane')).toContain(
-					SCRIPT.texts.askerFirstMessage
+				expect(panel!.textContent).toContain(
+					SCRIPT.texts.supervisorReply
 				),
 			SLOW
 		);
-		pressNext(5);
+		expect(textOf('.chatStage__mainPane')).not.toContain(
+			SCRIPT.texts.supervisorReply
+		);
+		pressNext(1);
 
-		// 7: the composer; the reply is answered by the script.
-		await expectStep(6);
-		const reply = 'Hallo Sam, schön, dass Sie sich melden.';
-		await afterWorldEvent(PRACTICE_TOUR_EVENTS.messageSent, () =>
-			typeAndSend(
-				() => document.querySelector('.chatStage__mainPane'),
-				reply
-			)
-		);
-		await waitFor(
-			() =>
-				expect(textOf('.chatStage__mainPane')).toContain(
-					SCRIPT.texts.askerReply
-				),
-			SLOW
-		);
+		// 3: the standing assignment, explained; Next.
+		await expectStep(2);
+		pressNext(2);
 
-		// 8: done; completion is written, practice ends, back to Help.
-		await expectStep(7);
-		pressNext(7);
-		await waitFor(
-			() => expect(getPracticeSnapshot().status).toBe('inactive'),
-			SLOW
-		);
-		expect(route()).toBe(HELP_ROUTE);
-		expect(screen.getByTestId('help-page')).toBeTruthy();
-		expect(window.fetch).toBe(networkFetch);
-		expect(
-			network.filter(({ method }) => method === 'PUT').length
-		).toBeGreaterThan(0);
-		expectNothingLeftThePracticeWorld();
+		// 4: done.
+		await finish(3);
 	}, 120000);
 });
