@@ -295,7 +295,10 @@ describe('PracticeSandbox', () => {
 		it('holds the exit until it has drained and uninstalled, so the guard unwinds cleanly', async () => {
 			enterPracticeMode({ tourId: 'consultant-practice-accept' });
 			const view = render(
-				<PracticeSandbox counsellor={counsellor}>
+				<PracticeSandbox
+					counsellor={counsellor}
+					script={createTestScript()}
+				>
 					{null}
 				</PracticeSandbox>
 			);
@@ -313,7 +316,10 @@ describe('PracticeSandbox', () => {
 		it('keeps the guard on until a practice request still in flight at the end is answered by the fake', async () => {
 			enterPracticeMode({ tourId: 'consultant-practice-accept' });
 			const view = render(
-				<PracticeSandbox counsellor={counsellor}>
+				<PracticeSandbox
+					counsellor={counsellor}
+					script={createTestScript()}
+				>
 					{null}
 				</PracticeSandbox>
 			);

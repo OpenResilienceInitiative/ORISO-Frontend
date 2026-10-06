@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import React from 'react';
 import { act, cleanup, render } from '@testing-library/react';
+import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../globalState/context/UserDataContext';
 import { endpoints } from '../resources/scripts/endpoints';
@@ -11,6 +12,7 @@ import { PracticeSandboxSlot } from './PracticeSandboxSlot';
 import { PracticeProvider } from './PracticeProvider';
 import { enterPracticeMode, exitPracticeMode } from './practiceMode';
 import type { PracticeWorld } from './practiceWorld';
+import { createPracticeTestI18n } from './script/scriptTestSupport';
 
 const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
@@ -27,15 +29,17 @@ const settle = () =>
 const renderSlot = (tourId: string) => {
 	enterPracticeMode({ tourId });
 	return render(
-		<PracticeProvider>
-			<UserDataContext.Provider
-				value={{ userData: counsellor, setUserData: vi.fn() }}
-			>
-				<PracticeSandboxSlot>
-					<WorldProbe />
-				</PracticeSandboxSlot>
-			</UserDataContext.Provider>
-		</PracticeProvider>
+		<I18nextProvider i18n={createPracticeTestI18n('de')}>
+			<PracticeProvider>
+				<UserDataContext.Provider
+					value={{ userData: counsellor, setUserData: vi.fn() }}
+				>
+					<PracticeSandboxSlot>
+						<WorldProbe />
+					</PracticeSandboxSlot>
+				</UserDataContext.Provider>
+			</PracticeProvider>
+		</I18nextProvider>
 	);
 };
 

@@ -7,6 +7,7 @@ import {
 	useNavigate,
 	type NavigateFunction
 } from 'react-router-dom';
+import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserDataContext } from '../globalState/context/UserDataContext';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
@@ -24,6 +25,7 @@ import {
 	PRACTICE_ENQUIRIES_ROUTE
 } from './practiceRoutes';
 import { PracticeSurface } from './PracticeSurface';
+import { createPracticeTestI18n } from './script/scriptTestSupport';
 
 const ACCEPT = 'consultant-practice-accept';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
@@ -56,21 +58,23 @@ const settle = () =>
 
 const renderSurface = (at = HELP_ROUTE) =>
 	render(
-		<PracticeProvider>
-			<UserDataContext.Provider
-				value={{
-					userData: practiceCounsellorFixture(),
-					setUserData: vi.fn()
-				}}
-			>
-				<MemoryRouter initialEntries={[at]}>
-					<Location />
-					<PracticeSurface>
-						<Content />
-					</PracticeSurface>
-				</MemoryRouter>
-			</UserDataContext.Provider>
-		</PracticeProvider>
+		<I18nextProvider i18n={createPracticeTestI18n('de')}>
+			<PracticeProvider>
+				<UserDataContext.Provider
+					value={{
+						userData: practiceCounsellorFixture(),
+						setUserData: vi.fn()
+					}}
+				>
+					<MemoryRouter initialEntries={[at]}>
+						<Location />
+						<PracticeSurface>
+							<Content />
+						</PracticeSurface>
+					</MemoryRouter>
+				</UserDataContext.Provider>
+			</PracticeProvider>
+		</I18nextProvider>
 	);
 
 beforeEach(() => {

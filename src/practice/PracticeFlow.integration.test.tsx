@@ -55,17 +55,19 @@ import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
-import { PRACTICE_CAST, PRACTICE_SCRIPT } from './fixtures/practiceCast';
 import {
 	PRACTICE_MAIN_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from './fixtures/practiceIdentifiers';
 import { getPracticeNetworkGuard, getPracticeSnapshot } from './practiceMode';
 import {
-	emitPracticeEvent,
 	PRACTICE_TOUR_EVENTS,
 	type PracticeTourEventName
 } from './practiceTourEvents';
+import {
+	createTestScript,
+	practiceScriptBlock
+} from './script/scriptTestSupport';
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
 
 vi.hoisted(() => {
@@ -113,17 +115,11 @@ vi.mock('react-joyride', async () => {
 	};
 });
 
-/**
- * TODO(integrator): S8a adds the world's emitters (accept, team message,
- * message, supervisor). Until it is merged the test fires the event itself
- * AFTER the real action; set this to true then, and the assertions that the
- * world emitted it go live.
- */
-const WORLD_EMITS_TOUR_EVENTS = false;
-
 const ACCEPT = 'consultant-practice-accept';
 const SUPERVISION = 'consultant-practice-supervision';
 const HELP_ROUTE = '/profile/hilfe/rundgaenge';
+/** The texts the page's German script shows; the catalogue is the source. */
+const SCRIPT = createTestScript('de');
 const TUTORIAL_PROGRESS = '/service/users/tutorials/progress';
 
 interface NetworkCall {
@@ -303,7 +299,10 @@ beforeEach(async () => {
 	await translations.init({
 		lng: 'de',
 		fallbackLng: 'de',
-		resources: { de: { translation: {} } },
+		// Product keys render as themselves; only the practice script has texts.
+		resources: {
+			de: { translation: { practiceScript: practiceScriptBlock('de') } }
+		},
 		interpolation: { escapeValue: false }
 	});
 	localStorage.clear();
@@ -378,7 +377,7 @@ const pressNext = (index: number) =>
 		});
 	});
 
-/** Waits for the world's event after the real action (see the TODO above). */
+/** The real action makes the world emit the step's event, exactly once. */
 const afterWorldEvent = async (
 	name: PracticeTourEventName,
 	action: () => Promise<void>
@@ -387,11 +386,8 @@ const afterWorldEvent = async (
 	const off = subscribeToTourEvent(name, seen);
 	try {
 		await action();
-		if (WORLD_EMITS_TOUR_EVENTS) {
-			await waitFor(() => expect(seen).toHaveBeenCalled(), SLOW);
-		} else {
-			act(() => emitPracticeEvent(name));
-		}
+		await waitFor(() => expect(seen).toHaveBeenCalled(), SLOW);
+		expect(seen).toHaveBeenCalledTimes(1);
 	} finally {
 		off();
 	}
@@ -464,7 +460,7 @@ describe('practice flows on the real app shell', () => {
 		expect(
 			document.querySelectorAll('[data-cy="session-list-item"]')
 		).toHaveLength(1);
-		expect(row!.textContent).toContain(PRACTICE_CAST.asker.displayName);
+		expect(row!.textContent).toContain(SCRIPT.cast.asker.displayName);
 		fireEvent.click(row!);
 
 		// 3: the team button of the open enquiry; click it.
@@ -499,7 +495,7 @@ describe('practice flows on the real app shell', () => {
 		await waitFor(
 			() =>
 				expect(textOf('.chatStage__mainPane')).toContain(
-					PRACTICE_SCRIPT.enquiry
+					SCRIPT.texts.askerFirstMessage
 				),
 			SLOW
 		);
@@ -517,7 +513,7 @@ describe('practice flows on the real app shell', () => {
 		await waitFor(
 			() =>
 				expect(textOf('.chatStage__mainPane')).toContain(
-					PRACTICE_SCRIPT.askerReply
+					SCRIPT.texts.askerReply
 				),
 			SLOW
 		);
