@@ -71,6 +71,7 @@ import {
 import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from './fixtures/practiceCast';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../components/message/messageConstants';
 import type { PracticeWorld } from './practiceWorld';
+import { matrixRoomHistoryKeyTransfer } from '../services/matrixRoomHistoryKeyTransfer';
 import {
 	enterPracticeMode,
 	exitPracticeMode,
@@ -411,6 +412,14 @@ const expectNothingLeftThePracticeWorld = () => {
 	expect(
 		world!.matrix.getRooms().every((room) => isPracticeRoomId(room.roomId))
 	).toBe(true);
+	// The real key-transfer singleton would retry these rooms on the real client.
+	expect([
+		...(
+			matrixRoomHistoryKeyTransfer as unknown as {
+				pendingRooms: Set<string>;
+			}
+		).pendingRooms
+	]).toEqual([]);
 };
 
 /** F1 up to the scripted answer: open, accept, reply through the composer. */
