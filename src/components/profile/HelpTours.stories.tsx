@@ -390,10 +390,19 @@ export const PhoneHelpMenu: Story = {
 	...phone('/profile/hilfe'),
 	render: renderStage({ ownSwitch: false }),
 	play: async ({ canvas, canvasElement }) => {
+		const tours = await canvas.findByRole('link', { name: /Rundgänge/ });
+		await expect(tours).toBeVisible();
+		const videoCall = canvas.getByRole('link', { name: /Video-Call/ });
 		await expect(
-			await canvas.findByRole('link', { name: /Rundgänge/ })
-		).toBeVisible();
+			tours.compareDocumentPosition(videoCall) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
 		await expectBottomNavigation(canvasElement);
+		tours.focus();
+		await userEvent.keyboard('{Enter}');
+		await expect(
+			await canvas.findByRole('heading', { name: 'Meine Rundgänge' })
+		).toBeVisible();
 	}
 };
 
@@ -435,6 +444,12 @@ export const PracticeCardsOn: Story = {
 			.getByRole('heading', { name: 'Meine Rundgänge' })
 			.closest('section')!;
 		const learning = within(card);
+		const videoCard = canvas
+			.getByRole('heading', { name: 'Video-Call' })
+			.closest('section')!;
+		await expect(card.getBoundingClientRect().left).toBeLessThan(
+			videoCard.getBoundingClientRect().left
+		);
 		await expect(
 			learning.getByRole('switch', { name: SWITCH_NAME })
 		).toBeInTheDocument();

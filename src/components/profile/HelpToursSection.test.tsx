@@ -34,6 +34,7 @@ vi.mock('react-i18next', async () => {
 });
 
 interface HelpScenario {
+	allHelp?: boolean;
 	width?: number;
 	practiceArea?: boolean;
 	platformTours?: boolean;
@@ -43,6 +44,7 @@ interface HelpScenario {
 let savedPreference = false;
 
 const renderHelp = ({
+	allHelp = false,
 	width = 1440,
 	practiceArea = true,
 	platformTours = true,
@@ -52,6 +54,7 @@ const renderHelp = ({
 	const store = createStore();
 	const settings = {
 		enableWalkthrough: platformTours,
+		urls: { toLogin: 'http://localhost/login' },
 		releaseToggles: { enablePracticeArea: practiceArea }
 	};
 	const Stage = () => {
@@ -63,7 +66,8 @@ const renderHelp = ({
 		const elements = profileRoutesHelp(settings as never)
 			.filter(
 				(element) =>
-					isTabGroup(element) && element.url === '/rundgaenge'
+					allHelp ||
+					(isTabGroup(element) && element.url === '/rundgaenge')
 			)
 			.flatMap((element) =>
 				isTabGroup(element) ? element.elements : element
@@ -135,6 +139,22 @@ afterEach(() => {
 });
 
 describe('Help learning card', () => {
+	it('presents the learning actions before Video-Call in the Help reading order', async () => {
+		renderHelp({ allHelp: true });
+		await screen.findAllByRole('button', { name: 'Übung starten' });
+		const cards = screen.getAllByTestId('profile-card');
+		expect(cards).toHaveLength(2);
+		expect(
+			within(cards[0]).getByRole('heading', { name: 'Meine Rundgänge' })
+		).toBeTruthy();
+		expect(
+			within(cards[0]).getByRole('button', { name: 'Starten' })
+		).toBeTruthy();
+		expect(
+			within(cards[1]).getByRole('heading', { name: 'Video-Call' })
+		).toBeTruthy();
+	});
+
 	it('keeps standalone fictional-data summaries and short Help summaries separate', async () => {
 		render(
 			<PracticeCards

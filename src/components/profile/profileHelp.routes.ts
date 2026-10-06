@@ -24,13 +24,25 @@ export const profileRoutesHelp = (
 	settings: AppSettingsInterface & Pick<AppConfigInterface, 'releaseToggles'>
 ): (TabGroups | SingleComponentType)[] => [
 	{
+		title: 'profile.routes.help.tours',
+		url: '/rundgaenge',
+		elements: [
+			{
+				component: HelpToursSection,
+				icon: ExploreOutlinedIcon,
+				column: COLUMN_LEFT,
+				condition: (userData) => showsTours(settings, userData)
+			}
+		]
+	},
+	{
 		title: 'profile.routes.help.videoCall',
 		url: '/videoCall',
 		elements: [
 			{
 				component: Help,
 				icon: VideocamOutlinedIcon,
-				column: COLUMN_LEFT,
+				column: COLUMN_RIGHT,
 				condition: () => !settings?.documentationEnabled
 			}
 		]
@@ -43,20 +55,8 @@ export const profileRoutesHelp = (
 			{
 				component: Documentation,
 				icon: MenuBookOutlinedIcon,
-				column: COLUMN_LEFT,
-				condition: () => !!settings?.documentationEnabled
-			}
-		]
-	},
-	{
-		title: 'profile.routes.help.tours',
-		url: '/rundgaenge',
-		elements: [
-			{
-				component: HelpToursSection,
-				icon: ExploreOutlinedIcon,
 				column: COLUMN_RIGHT,
-				condition: (userData) => showsTours(settings, userData)
+				condition: () => !!settings?.documentationEnabled
 			}
 		]
 	}
