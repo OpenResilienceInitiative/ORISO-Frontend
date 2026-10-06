@@ -5,6 +5,10 @@ import { Route, Routes } from 'react-router-dom';
 import { createStore, Provider as JotaiProvider } from 'jotai';
 import { expect, screen, userEvent, waitFor, within } from 'storybook/test';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
+// Resolve the lazy session view and composer before the timed interaction.
+// A cold CI shard otherwise compiles both while the exercise is running.
+import '../session/SessionView';
+import '../messageSubmitInterface/messageSubmitInterfaceComponent';
 import { NavigationBar } from '../app/NavigationBar';
 import { RouterConfigConsultant } from '../app/RouterConfig';
 import { SessionsZone } from '../app/SessionsZone';
@@ -46,6 +50,7 @@ const TENANT_FLAGS = {
 interface RecordedRequest {
 	method: string;
 	url: string;
+	status?: string;
 }
 
 /** Every request that reached the page's network, in order. */
@@ -85,7 +90,16 @@ const RecordedNetwork = ({ children }: { children: React.ReactNode }) => {
 			init?: RequestInit
 		) => {
 			const request = new Request(input, init);
-			requestLog.push({ method: request.method, url: request.url });
+			const progressWrite =
+				request.method === 'PUT' &&
+				request.url.includes(TUTORIAL_PROGRESS);
+			requestLog.push({
+				method: request.method,
+				url: request.url,
+				status: progressWrite
+					? (await request.clone().json()).status
+					: undefined
+			});
 			if (request.url.includes(TUTORIAL_PROGRESS)) {
 				return request.method === 'GET'
 					? new Response('[]', {
@@ -129,8 +143,15 @@ const SessionSupport = ({ children }: { children: React.ReactNode }) => (
  * tour host, practice banner, navigation, header, and the routed content in
  * `PracticeSurface`. Profile and sessions are the real pages.
  */
-const PracticeFlowStage = () => {
+const PracticeFlowStage = ({ teamDiscussion = false }) => {
 	const store = useMemo(() => createStore(), []);
+	const tenantFlags = useMemo(
+		() => ({
+			...TENANT_FLAGS,
+			featureTeamDiscussionEnabled: teamDiscussion
+		}),
+		[teamDiscussion]
+	);
 	const settings = useMemo(
 		() => ({
 			...config,
@@ -168,7 +189,7 @@ const PracticeFlowStage = () => {
 								tenant: {
 									id: 1,
 									name: 'ORISO Storybook',
-									settings: TENANT_FLAGS
+									settings: tenantFlags
 								} as never,
 								setTenant: () => {},
 								updateTenantSettings: () => {}
@@ -261,7 +282,8 @@ const storageSnapshot = () =>
 		}).sort()
 	);
 
-const SLOW = { timeout: 15000 };
+// Fail at the stalled UI action before the whole story reaches its 15s limit.
+const SLOW = { timeout: 5000 };
 
 /** The tour tooltip of the step on screen. */
 const tooltip = () => screen.findByRole('alertdialog', {}, SLOW);
@@ -271,7 +293,11 @@ const progressText = () =>
 
 const expectStep = (step: number, of: number) =>
 	waitFor(
-		() => expect(progressText()).toMatch(new RegExp(`${step}\\D+${of}`)),
+		() =>
+			expect(
+				progressText(),
+				`Practice step ${step} of ${of}; observed: ${progressText()}`
+			).toMatch(new RegExp(`${step}\\D+${of}`)),
 		SLOW
 	);
 
@@ -299,8 +325,12 @@ const meta = {
 		}
 	},
 	globals: { viewport: { value: 'desktop1440', isRotated: false } },
-	beforeEach: () => {
-		replaceTenantSettings(TENANT_FLAGS);
+	args: { teamDiscussion: false },
+	beforeEach: ({ args }) => {
+		replaceTenantSettings({
+			...TENANT_FLAGS,
+			featureTeamDiscussionEnabled: args.teamDiscussion
+		});
 		return () => {
 			replaceTenantSettings({});
 		};
@@ -310,16 +340,89 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const AcceptAnEnquiry: Story = {
-	name: 'Accept an enquiry · desktop',
-	parameters: {
-		docs: {
-			description: {
-				story: 'Starts "Übung: Anfrage annehmen" from its card and walks it with the real controls: open the practice enquiry, accept it, read the Erstantwort, send a reply, finish. Nothing but the allowlisted tutorial progress write leaves the page, the browser storage is unchanged, and the page returns to the Help page.'
-			}
-		}
-	},
-	play: async ({ canvas }) => {
+/** Sends through the visible composer, without calling the editor's internals. */
+const sendReply = async (scope: HTMLElement, text: string) => {
+	const editor = await waitFor(() => {
+		const field = scope.querySelector<HTMLElement>(
+			'.ProseMirror[contenteditable="true"]'
+		);
+		expect(field).not.toBeNull();
+		return field!;
+	}, SLOW);
+	await userEvent.click(editor);
+	await userEvent.keyboard(text);
+	const send = await waitFor(() => {
+		const button = within(scope).getByRole('button', {
+			name: 'Nachricht senden'
+		});
+		expect(button).toBeEnabled();
+		return button;
+	}, SLOW);
+	await userEvent.click(send);
+};
+
+const next = async (label = 'Weiter') =>
+	userEvent.click(
+		within(await tooltip()).getByRole('button', { name: label })
+	);
+
+/** No practice data or action may reach the real page's network or storage. */
+const expectIsolated = async (
+	storageBefore: ReturnType<typeof storageSnapshot>
+) => {
+	await expect(
+		requestLog.filter(
+			({ method, url }) =>
+				method !== 'GET' &&
+				!(method === 'PUT' && url.includes(TUTORIAL_PROGRESS))
+		)
+	).toEqual([]);
+	await expect(
+		requestLog.some(
+			({ method, url, status }) =>
+				method === 'PUT' &&
+				url.includes(TUTORIAL_PROGRESS) &&
+				status === 'completed'
+		)
+	).toBe(true);
+	await expect(
+		requestLog.filter(({ url }) =>
+			/(\/|=)-\d+(\/|&|$)|practice/.test(decodeURIComponent(url))
+		)
+	).toEqual([]);
+	await expect(realMatrixWrites).toEqual([]);
+	await expect(storageSnapshot()).toEqual(storageBefore);
+};
+
+const expectExited = async (
+	canvas: ReturnType<typeof within>,
+	storageBefore: ReturnType<typeof storageSnapshot>
+) => {
+	await waitFor(
+		() => expect(getPracticeSnapshot().status).toBe('inactive'),
+		SLOW
+	);
+	await expect(
+		await canvas.findByRole(
+			'heading',
+			{ name: 'Übung: Anfrage annehmen' },
+			SLOW
+		)
+	).toBeVisible();
+	await expect(
+		canvas.queryByRole('status', { name: 'Übungsmodus' })
+	).toBeNull();
+	await expectIsolated(storageBefore);
+};
+
+const acceptAnEnquiry: NonNullable<Story['play']> = async ({
+	canvas,
+	step,
+	args
+}) => {
+	const of = args.teamDiscussion ? 8 : 6;
+	const storageBefore = storageSnapshot();
+	await step('Start the exercise from its Help card', async () => {
 		const card = (
 			await canvas.findByRole(
 				'heading',
@@ -327,104 +430,198 @@ export const AcceptAnEnquiry: Story = {
 				SLOW
 			)
 		).closest('li')!;
-		const storageBefore = storageSnapshot();
-
 		await userEvent.click(
 			within(card).getByRole('button', { name: 'Übung starten' })
 		);
+	});
 
-		// 1: the Anfragen icon in the navigation.
-		await expectStep(1, 6);
+	await step('1: Find the enquiry navigation', async () => {
+		await expectStep(1, of);
 		await expect(getPracticeSnapshot().status).toBe('active');
 		await expect(canvas.queryByLabelText('Klassisches Design')).toBeNull();
-		await userEvent.click(
-			within(await tooltip()).getByRole('button', { name: 'Weiter' })
-		);
-
-		// 2: the practice enquiry in the real list; click it.
-		await expectStep(2, 6);
+		await next();
+	});
+	await step('2: Open the practice enquiry in the real list', async () => {
+		await expectStep(2, of);
 		await userEvent.click(await target('enquiry-list-item'));
+	});
 
-		// 3: the real accept button; click it.
-		await expectStep(3, 6);
+	if (args.teamDiscussion) {
+		await step('3: Open the team discussion', async () => {
+			await expectStep(3, of);
+			await userEvent.click(await target('enquiry-team-button'));
+		});
+		await step('4: Send a reply in the team discussion', async () => {
+			await expectStep(4, of);
+			const panel = await target('team-discussion-panel');
+			await sendReply(panel, 'Ich übernehme das gern.');
+			await expect(
+				document.querySelector('.chatStage__mainPane')?.textContent
+			).not.toContain('Ich übernehme das gern.');
+		});
+	}
+
+	const acceptAt = args.teamDiscussion ? 5 : 3;
+	await step(`${acceptAt}: Accept the enquiry`, async () => {
+		await expectStep(acceptAt, of);
+		if (!args.teamDiscussion) {
+			await expect(
+				document.querySelector(
+					'[data-tour-target="enquiry-team-button"]'
+				)
+			).toBeNull();
+		}
 		await userEvent.click(await target('enquiry-accept-button'));
-
-		// 4: the Erstantwort, explained.
-		await expectStep(4, 6);
-		await userEvent.click(
-			within(await tooltip()).getByRole('button', { name: 'Weiter' })
-		);
-
-		// 5: the composer; a reply, answered by the script.
-		await expectStep(5, 6);
-		const composer = await target('session-composer');
-		const editor = await waitFor(() => {
-			const field = composer.querySelector<HTMLElement>(
-				'.ProseMirror[contenteditable="true"]'
+	});
+	await step(
+		`${acceptAt + 1}: Read the first answer explanation`,
+		async () => {
+			await expectStep(acceptAt + 1, of);
+			await next();
+		}
+	);
+	await step(
+		`${acceptAt + 2}: Send a reply and receive Sam's answer`,
+		async () => {
+			await expectStep(acceptAt + 2, of);
+			await target('session-composer');
+			await sendReply(
+				document.querySelector<HTMLElement>('.chatStage__mainPane')!,
+				'Hallo Sam, schön, dass Sie sich melden.'
 			);
-			expect(field).not.toBeNull();
-			return field!;
-		}, SLOW);
-		await userEvent.click(editor);
-		await userEvent.keyboard('Hallo Sam, schön, dass Sie sich melden.');
-		const send = await waitFor(() => {
-			const button = within(
-				document.querySelector<HTMLElement>('.chatStage__mainPane')!
-			).getByRole('button', { name: 'Nachricht senden' });
-			expect(button).toBeEnabled();
-			return button;
-		}, SLOW);
-		await userEvent.click(send);
-		await waitFor(
-			() =>
-				expect(
-					document.querySelector('.chatStage__mainPane')?.textContent
-				).toContain('Vielen Dank für Ihre Antwort'),
-			SLOW
-		);
-
-		// 6: done.
-		await expectStep(6, 6);
-		await expect(getPracticeNetworkGuard()?.blockedRequests).toEqual([]);
-		await userEvent.click(
-			within(await tooltip()).getByRole('button', { name: 'Fertig' })
-		);
-
-		await waitFor(
-			() => expect(getPracticeSnapshot().status).toBe('inactive'),
-			SLOW
-		);
-		await expect(
-			await canvas.findByRole(
-				'heading',
-				{ name: 'Übung: Anfrage annehmen' },
+			await waitFor(
+				() =>
+					expect(
+						document.querySelector('.chatStage__mainPane')
+							?.textContent
+					).toContain('Vielen Dank für Ihre Antwort'),
 				SLOW
-			)
-		).toBeVisible();
-		await expect(
-			canvas.queryByRole('status', { name: 'Übungsmodus' })
-		).toBeNull();
+			);
+		}
+	);
+	await step(
+		`${of}: Finish and return to Help without outbound writes`,
+		async () => {
+			await expectStep(of, of);
+			await expect(getPracticeNetworkGuard()?.blockedRequests).toEqual(
+				[]
+			);
+			await next('Fertig');
+			await expectExited(canvas, storageBefore);
+		}
+	);
+};
 
-		// Only the allowlisted progress write left the page.
-		await expect(
-			requestLog.filter(
-				({ method, url }) =>
-					method !== 'GET' &&
-					!(method === 'PUT' && url.includes(TUTORIAL_PROGRESS))
-			)
-		).toEqual([]);
-		await expect(
-			requestLog.some(
-				({ method, url }) =>
-					method === 'PUT' && url.includes(TUTORIAL_PROGRESS)
-			)
-		).toBe(true);
-		await expect(
-			requestLog.filter(({ url }) =>
-				/(\/|=)-\d+(\/|&|$)|practice/.test(decodeURIComponent(url))
-			)
-		).toEqual([]);
-		await expect(realMatrixWrites).toEqual([]);
-		await expect(storageSnapshot()).toEqual(storageBefore);
+export const AcceptAnEnquiry: Story = {
+	name: 'Accept an enquiry · desktop',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Starts "Übung: Anfrage annehmen" from its card with Team-Besprechung disabled and walks six steps with the real controls. Nothing but the allowlisted tutorial progress write leaves the page, the browser storage is unchanged, and the page returns to Help.'
+			}
+		}
+	},
+	play: acceptAnEnquiry
+};
+
+export const AcceptAnEnquiryWithTeamDiscussion: Story = {
+	name: 'Accept an enquiry with team discussion · desktop',
+	args: { teamDiscussion: true },
+	parameters: {
+		docs: {
+			description: {
+				story: 'Walks all eight acceptance steps with Team-Besprechung enabled. The team reply stays in its side thread; the case reply receives the scripted answer. Completion returns to Help with no practice writes outside the page.'
+			}
+		}
+	},
+	play: acceptAnEnquiry
+};
+
+export const AddASupervisor: Story = {
+	name: 'Add a supervisor · desktop',
+	parameters: {
+		docs: {
+			description: {
+				story: 'Starts "Übung: Supervision hinzufügen" from Help, adds Robin through the real picker, reads the reply in the supervision thread, and finishes back on Help. No practice write reaches the real network, Matrix service or browser storage.'
+			}
+		}
+	},
+	play: async ({ canvas, step }) => {
+		const storageBefore = storageSnapshot();
+		await step('Start supervision from its Help card', async () => {
+			const card = (
+				await canvas.findByRole(
+					'heading',
+					{ name: 'Übung: Supervision hinzufügen' },
+					SLOW
+				)
+			).closest('li')!;
+			await userEvent.click(
+				within(card).getByRole('button', { name: 'Übung starten' })
+			);
+		});
+		await step(
+			'1: Choose Robin, enter a reason and add the supervisor',
+			async () => {
+				await expectStep(1, 4);
+				await expect(getPracticeSnapshot().status).toBe('active');
+				await expect(
+					canvas.queryByLabelText('Klassisches Design')
+				).toBeNull();
+				await userEvent.click(await target('session-supervisor-add'));
+				await userEvent.click(
+					await screen.findByRole('combobox', {}, SLOW)
+				);
+				await userEvent.click(
+					await screen.findByRole(
+						'option',
+						{ name: 'Robin (Übung)' },
+						SLOW
+					)
+				);
+				await userEvent.type(
+					screen.getByPlaceholderText(
+						'Bitte geben Sie den Grund für die Supervision an...'
+					),
+					'Ich möchte mich zum Vorgehen absichern.'
+				);
+				await userEvent.click(
+					screen.getByRole('button', { name: 'Hinzufügen' })
+				);
+			}
+		);
+		await step(
+			'2: Read the supervisor reply in the side thread',
+			async () => {
+				await expectStep(2, 4);
+				const panel = await target('supervision-panel');
+				await waitFor(
+					() =>
+						expect(panel.textContent).toContain(
+							'Das klingt gut so.'
+						),
+					SLOW
+				);
+				await expect(
+					document.querySelector('.chatStage__mainPane')?.textContent
+				).not.toContain('Das klingt gut so.');
+				await next();
+			}
+		);
+		await step('3: Read the standing assignment explanation', async () => {
+			await expectStep(3, 4);
+			await next();
+		});
+		await step(
+			'4: Finish and return to Help without outbound writes',
+			async () => {
+				await expectStep(4, 4);
+				await expect(
+					getPracticeNetworkGuard()?.blockedRequests
+				).toEqual([]);
+				await next('Fertig');
+				await expectExited(canvas, storageBefore);
+			}
+		);
 	}
 };
