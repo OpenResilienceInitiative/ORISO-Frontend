@@ -8,6 +8,7 @@ import { useNotificationSettings } from '../hooks/useNotificationSettings';
 import { notificationSettingsStore } from '../utils/notificationSettings/store';
 import { isSandboxedMatrixClient } from '../services/matrixClientRegistry';
 import { createFakeMatrixService } from './fakeMatrix/FakeMatrixService';
+import { createTestScript } from './script/scriptTestSupport';
 
 afterEach(async () => {
 	cleanup();
@@ -32,7 +33,10 @@ describe('app-wide Matrix singletons in practice mode', () => {
 		};
 
 		render(
-			<PracticeSandbox counsellor={practiceCounsellorFixture()}>
+			<PracticeSandbox
+				counsellor={practiceCounsellorFixture()}
+				script={createTestScript()}
+			>
 				<Settings />
 			</PracticeSandbox>
 		);

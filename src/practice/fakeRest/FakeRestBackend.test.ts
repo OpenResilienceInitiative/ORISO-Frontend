@@ -10,9 +10,10 @@ import {
 	PRACTICE_SUPERVISION_ROOM_ID,
 	PRACTICE_TEAM_ROOM_ID
 } from '../fixtures/practiceIdentifiers';
-import { PRACTICE_CAST } from '../fixtures/practiceCast';
+import { createTestScript } from '../script/scriptTestSupport';
 
 const ID = PRACTICE_ENQUIRY_SESSION_ID;
+const script = createTestScript('de');
 const registeredFeed = `${endpoints.consultantEnquiriesBase}registered?count=15&filter=all&offset=0`;
 const mySessions = `${endpoints.consultantSessions}count=15&filter=all&offset=0`;
 
@@ -32,6 +33,7 @@ const backendFor = (
 ) =>
 	createFakeRestBackend({
 		counsellor: practiceCounsellorFixture(),
+		script,
 		...options
 	});
 
@@ -49,7 +51,7 @@ describe('FakeRestBackend', () => {
 			matrixRoomId: PRACTICE_MAIN_ROOM_ID
 		});
 		expect(body.sessions[0].user?.displayName).toBe(
-			PRACTICE_CAST.asker.displayName
+			script.cast.asker.displayName
 		);
 	});
 
@@ -136,8 +138,8 @@ describe('FakeRestBackend', () => {
 			picker.filter((consultant: any) => consultant.isSupervisor)
 		).toEqual([
 			expect.objectContaining({
-				consultantId: PRACTICE_CAST.supervisor.id,
-				displayName: PRACTICE_CAST.supervisor.displayName
+				consultantId: script.cast.supervisor.id,
+				displayName: script.cast.supervisor.displayName
 			})
 		]);
 		expect(
@@ -147,7 +149,7 @@ describe('FakeRestBackend', () => {
 		await json(
 			await backend.handle(
 				send(supervisorsUrl, 'POST', {
-					supervisorConsultantId: PRACTICE_CAST.supervisor.id,
+					supervisorConsultantId: script.cast.supervisor.id,
 					notes: 'Bitte mitlesen'
 				})
 			)
@@ -158,7 +160,7 @@ describe('FakeRestBackend', () => {
 		);
 		expect(supervisors).toEqual([
 			expect.objectContaining({
-				supervisorConsultantId: PRACTICE_CAST.supervisor.id,
+				supervisorConsultantId: script.cast.supervisor.id,
 				matrixRoomId: PRACTICE_SUPERVISION_ROOM_ID
 			})
 		]);

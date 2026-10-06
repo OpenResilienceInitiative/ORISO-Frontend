@@ -4,18 +4,19 @@ import { MatrixEvent } from 'matrix-js-sdk';
 import { createFakeMatrixService } from './FakeMatrixService';
 import { createPracticeScenario } from '../fixtures/practiceScenario';
 import { practiceCounsellorFixture } from '../fixtures/practiceCounsellorFixture';
-import {
-	PRACTICE_CAST,
-	PRACTICE_COUNSELLOR_MATRIX_USER_ID,
-	PRACTICE_SCRIPT
-} from '../fixtures/practiceCast';
+import { PRACTICE_COUNSELLOR_MATRIX_USER_ID } from '../fixtures/practiceCast';
+import { createTestScript } from '../script/scriptTestSupport';
 import { PRACTICE_MAIN_ROOM_ID } from '../fixtures/practiceIdentifiers';
 import { feedbackMailIntentQueue } from '../../services/feedbackMailIntentQueue';
 import { chatTransportService } from '../../services/chatTransportService';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 
+const script = createTestScript('de');
 const scenario = () =>
-	createPracticeScenario({ counsellor: practiceCounsellorFixture() });
+	createPracticeScenario({
+		counsellor: practiceCounsellorFixture(),
+		script
+	});
 
 afterEach(() => {
 	setMatrixClientServiceRef(null);
@@ -32,11 +33,12 @@ describe('FakeMatrixService', () => {
 			room.timeline.every((event) => event instanceof MatrixEvent)
 		).toBe(true);
 		const enquiry = room.timeline.find(
-			(event) => event.getContent().body === PRACTICE_SCRIPT.enquiry
+			(event) =>
+				event.getContent().body === script.texts.askerFirstMessage
 		);
-		expect(enquiry?.getSender()).toBe(PRACTICE_CAST.asker.matrixUserId);
-		expect(room.getMember(PRACTICE_CAST.asker.matrixUserId)?.name).toBe(
-			PRACTICE_CAST.asker.displayName
+		expect(enquiry?.getSender()).toBe(script.cast.asker.matrixUserId);
+		expect(room.getMember(script.cast.asker.matrixUserId)?.name).toBe(
+			script.cast.asker.displayName
 		);
 		expect(service.getClient().getUserId()).toBe(
 			PRACTICE_COUNSELLOR_MATRIX_USER_ID
@@ -71,7 +73,32 @@ describe('FakeMatrixService', () => {
 		);
 		expect(onCounsellorMessage).toHaveBeenCalledWith(
 			PRACTICE_MAIN_ROOM_ID,
+			'Hallo Sam',
+			{ isEdit: false }
+		);
+	});
+
+	it('tells the world an edit is an edit, so it is not counted as another message', async () => {
+		const onCounsellorMessage = vi.fn();
+		const service = createFakeMatrixService({
+			rooms: scenario().rooms,
+			onCounsellorMessage
+		});
+		const { event_id } = await service.sendMessage(
+			PRACTICE_MAIN_ROOM_ID,
 			'Hallo Sam'
+		);
+
+		await service.editMessage(
+			PRACTICE_MAIN_ROOM_ID,
+			event_id,
+			'Hallo Sam!'
+		);
+
+		expect(onCounsellorMessage).toHaveBeenLastCalledWith(
+			PRACTICE_MAIN_ROOM_ID,
+			'* Hallo Sam!',
+			{ isEdit: true }
 		);
 	});
 
@@ -84,11 +111,11 @@ describe('FakeMatrixService', () => {
 
 		const event = service.appendMessage(
 			PRACTICE_MAIN_ROOM_ID,
-			PRACTICE_CAST.asker.matrixUserId,
-			PRACTICE_SCRIPT.askerReply
+			script.cast.asker.matrixUserId,
+			script.texts.askerReply
 		);
 
-		expect(event.getSender()).toBe(PRACTICE_CAST.asker.matrixUserId);
+		expect(event.getSender()).toBe(script.cast.asker.matrixUserId);
 		expect(
 			service.getRoomMessages(PRACTICE_MAIN_ROOM_ID).at(-1)?.getId()
 		).toBe(event.getId());
@@ -125,7 +152,7 @@ describe('FakeMatrixService', () => {
 		await chatTransportService.markRoomAsRead(PRACTICE_MAIN_ROOM_ID);
 
 		expect(messages.map((event) => event.getContent().body)).toContain(
-			PRACTICE_SCRIPT.enquiry
+			script.texts.askerFirstMessage
 		);
 		expect(service.sentReadReceipts).toEqual([
 			messages[messages.length - 1].getId()

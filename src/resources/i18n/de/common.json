@@ -2922,6 +2922,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (Übung)",
+			"colleague": "Alex (Übung)",
+			"supervisor": "Robin (Übung)"
+		},
+		"asker": {
+			"firstMessage": "Guten Tag, ich habe eine allgemeine Frage zu Ihrem Angebot. Wie läuft eine Beratung bei Ihnen ab, und wie schnell bekomme ich eine Antwort? Vielen Dank.",
+			"reply": "Vielen Dank für Ihre Antwort. Das hilft mir weiter. Ich melde mich, wenn ich noch Fragen habe."
+		},
+		"colleague": {
+			"teamMessage": "Ich bin heute im Termin und schaffe die Antwort nicht mehr. Kannst du die Anfrage übernehmen?"
+		},
+		"supervisor": {
+			"reply": "Das klingt gut so. Frag ruhig nach, was die Person genau wissen möchte. Ich lese mit und melde mich, wenn mir etwas auffällt."
+		},
+		"erstantwort": {
+			"greeting": "Ihre Anfrage ist bei uns eingegangen. Eine Beraterin oder ein Berater meldet sich bei Ihnen."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Guten Tag, danke für Ihre Nachricht. Eine Beratung läuft hier schriftlich und vertraulich ab."
+		},
+		"names": {
+			"agency": "Übungsstelle",
+			"topic": "Übung",
+			"teamRoom": "Team-Besprechung (Übung)",
+			"supervisionRoom": "Supervision (Übung)"
+		}
+	},
 	"registration": {
 		"accordion": {
 			"item": {
