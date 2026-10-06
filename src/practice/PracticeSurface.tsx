@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, type PropsWithChildren } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { PracticeSandboxSlot } from './PracticeSandboxSlot';
 import { usePractice } from './PracticeProvider';
+import { holdPracticeExit } from './practiceMode';
 import { addressesPracticeCase, addressesRealCase } from './practiceRouteGuard';
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
 
@@ -19,13 +20,22 @@ export const PracticeSurface = ({ children }: PropsWithChildren) => {
 	const { state } = usePractice();
 	const location = useLocation();
 	const navigate = useNavigate();
+	const here = location.pathname + location.search;
 	const startedAt = useRef<string | null>(null);
+	// The router commits navigations as transitions: the guard stays on until
+	// the way back has landed, so no real view mounts on a practice route.
+	const returning = useRef<(() => void) | null>(null);
 
 	useLayoutEffect(() => {
 		if (state === 'active' && startedAt.current === null) {
-			startedAt.current = location.pathname + location.search;
+			startedAt.current = here;
 		}
-		if (state === 'closing' && startedAt.current !== null) {
+		if (
+			state === 'closing' &&
+			startedAt.current !== null &&
+			here !== startedAt.current
+		) {
+			returning.current ??= holdPracticeExit();
 			navigate(startedAt.current, { replace: true });
 		}
 		if (state === 'inactive') {
@@ -34,6 +44,23 @@ export const PracticeSurface = ({ children }: PropsWithChildren) => {
 		// Only the switch matters, not the navigation inside practice.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [state]);
+
+	useLayoutEffect(() => {
+		if (
+			returning.current &&
+			(state !== 'closing' || here === startedAt.current)
+		) {
+			returning.current();
+			returning.current = null;
+		}
+	}, [state, here]);
+
+	useLayoutEffect(
+		() => () => {
+			returning.current?.();
+		},
+		[]
+	);
 
 	if (state === 'closing') {
 		return null;
