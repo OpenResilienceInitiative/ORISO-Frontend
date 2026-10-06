@@ -5682,6 +5682,30 @@
 			"less": "Daha az göster"
 		}
 	},
+	"practice": {
+		"banner": {
+			"title": "Alıştırma modu",
+			"progress": "Adım {{current}} / {{total}}",
+			"note": "Alıştırma vakası, gerçek veri yok",
+			"end": "Alıştırmayı bitir",
+			"restart": "Yeniden başlat",
+			"moveHandle": "Bildirimi taşı (ok tuşları)"
+		},
+		"cards": {
+			"title": "Alıştırma alanı",
+			"subtitle": "İş akışlarını kurgusal bir vaka üzerinde deneyin. Gerçek veri kullanılmaz ve burada yazdıklarınız kaydedilmez.",
+			"empty": "Şu anda sizin için alıştırma yok.",
+			"badge": "Alıştırma",
+			"phoneHint": "Lütfen bilgisayarda alıştırma yapın.",
+			"action": {
+				"start": "Alıştırmayı başlat",
+				"restart": "Yeniden alıştırma yap"
+			}
+		},
+		"error": {
+			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."
+		}
+	},
 	"counselling": {
 		"dpa": {
 			"restricted": {

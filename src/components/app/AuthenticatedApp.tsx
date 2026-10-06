@@ -39,6 +39,7 @@ import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
 import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
+import { PracticeLayer } from '../../practice/PracticeLayer';
 import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
 import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import {
@@ -363,7 +364,9 @@ export const AuthenticatedApp = ({
 				<E2EEncryptionSupportBanner />
 				<KeyBackupRecoveryPrompt />
 				<RecoveryKeySaveReminder />
-				<Routing logout={handleLogout} />
+				<PracticeLayer>
+					<Routing logout={handleLogout} />
+				</PracticeLayer>
 				<M3SnackbarHost />
 				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
 					<JoinRequestCenter transport={httpJoinRequestTransport} />
