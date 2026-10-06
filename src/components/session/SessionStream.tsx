@@ -28,27 +28,27 @@ import {
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import {
-	mergeMatrixMessages,
 	prepareMessages,
 	SESSION_LIST_TAB,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
+import { MessageItem } from '../message/MessageItemComponent';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
-import { BUTTON_TYPES } from '../button/Button';
+import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import { ReactComponent as CheckIcon } from '../../resources/img/illustrations/check.svg';
 import './session.styles';
 import useUpdatingRef from '../../hooks/useUpdatingRef';
 import { useSearchParam } from '../../hooks/useSearchParams';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { prepareConsultantDataForSelect } from '../sessionAssign/sessionAssignHelper';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
 import { getModality, Modality } from './getModality';
-import { TeamDiscussionPanel } from '../teamDiscussion/TeamDiscussionPanel';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
+import { useTeamDiscussionChannel } from '../../hooks/useTeamDiscussionChannel';
 import {
 	chatTransportService,
 	MatrixRoomLifecycleChange
@@ -68,6 +68,8 @@ import {
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
 import { formatToHHMM } from '../../utils/dateHelpers';
+
+const EMPTY_MESSAGES: MessageItem[] = [];
 
 const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
 	if (!actionPath?.includes('?')) {
@@ -99,6 +101,7 @@ export const SessionStream = ({
 	const MATRIX_TYPING_STALE_MS = 3600;
 	const { t: translate } = useTranslation();
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	const { type, path: listPath } = useContext(SessionTypeContext);
 	const { userData } = useContext(UserDataContext);
@@ -107,6 +110,22 @@ export const SessionStream = ({
 	// FE#514 follow-up: `team.discussion.new` notifications deep-link with
 	// ?teamDiscussion=1 — the panel then opens expanded instead of collapsed.
 	const teamDiscussionParam = useSearchParam<string>('teamDiscussion');
+	const channelParam = useSearchParam<string>('channel');
+	const teamChannelRequested =
+		channelParam === 'team' || teamDiscussionParam === '1';
+
+	// Migrate legacy notification links to the canonical channel route. The
+	// old standalone TeamDiscussionPanel no longer owns a second timeline.
+	useEffect(() => {
+		if (teamDiscussionParam !== '1') return;
+		const params = new URLSearchParams(location.search);
+		params.delete('teamDiscussion');
+		params.set('channel', 'team');
+		navigate(
+			{ pathname: location.pathname, search: `?${params.toString()}` },
+			{ replace: true }
+		);
+	}, [location.pathname, location.search, navigate, teamDiscussionParam]);
 
 	// MATRIX MIGRATION: Track component mount/unmount
 	useEffect(() => {
@@ -123,6 +142,20 @@ export const SessionStream = ({
 	const [matrixClientGeneration, setMatrixClientGeneration] = useState(0);
 	const initialTimelineHydrationKeyRef = useRef('');
 	const [messagesItem, setMessagesItem] = useState(null);
+	// WP-B2 (ADR-008): the supervision side room is its own timeline. It is
+	// never merged into `messagesItem` — the client-facing list must not
+	// contain side-room events — and renders in the SupervisionPanel instead.
+	const [supervisionMessages, setSupervisionMessages] = useState<
+		MessageItem[]
+	>([]);
+	// Teamberatung (Frank, 09.09.; FE#514 / ADR-016): the second side room,
+	// loaded exactly like the supervision one — its own timeline, never
+	// merged into `messagesItem`, and never reachable by the advice seeker.
+	const [teamMessageState, setTeamMessageState] = useState<{
+		sessionId?: number;
+		roomId?: string;
+		messages: MessageItem[];
+	}>({ messages: [] });
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isOverlayActive, setIsOverlayActive] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -195,12 +228,44 @@ export const SessionStream = ({
 	const hasUserInitiatedStopOrLeaveRequest = useRef<boolean>(false);
 
 	// ADR-008: per-session supervision side room id, resolved for authorized
-	// supervisors/consultants. When present we also load & merge its messages
-	// so asides render for members — the client is never a member of this room.
+	// supervisors/consultants. When present we also load its messages into a
+	// separate side-room timeline (WP-B2) — the client is never a member of
+	// this room and never sees these events in the main stream.
 	const [supervisionRoomId, setSupervisionRoomId] = useState<
 		string | undefined
 	>(undefined);
 	const [hasSupervisionAccess, setHasSupervisionAccess] = useState(false);
+	/**
+	 * FE#514 / ADR-016: the Team-Besprechung room of this session. The
+	 * backend hands the id only to consultants of the enquiry's agency
+	 * (`TeamDiscussionFacade`: "Participation right = enquiry visibility
+	 * right"), and answers 204 while no room exists — so `undefined` here
+	 * means "no team channel", exactly as it does for supervision.
+	 */
+	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
+	const teamDiscussionEnabled =
+		featureTeamDiscussionEnabled &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
+		!!activeSession.item?.id;
+	const {
+		discussion: teamDiscussion,
+		error: teamDiscussionError,
+		resolved: teamDiscussionResolved,
+		retry: retryTeamDiscussion
+	} = useTeamDiscussionChannel({
+		sessionId: activeSession.item?.id,
+		enabled: teamDiscussionEnabled,
+		allowCreate: Boolean(activeSession.isEnquiry),
+		teamChannelRequested
+	});
+	const teamRoomId = teamDiscussion?.matrixRoomId;
+	const teamMessages =
+		teamMessageState.sessionId === activeSession.item?.id &&
+		teamMessageState.roomId === teamRoomId
+			? teamMessageState.messages
+			: EMPTY_MESSAGES;
 	const [matrixTypingUsers, setMatrixTypingUsers] = useState<string[]>([]);
 	const matrixTypingTimeoutRef = useRef<number | null>(null);
 	const matrixTypingLastTriggerRef = useRef(0);
@@ -218,25 +283,25 @@ export const SessionStream = ({
 		}
 	}, []);
 	const sendMatrixTyping = useCallback(
-		(typing: boolean) => {
-			if (!isMatrixSession || !matrixRoomId) {
+		(typing: boolean, targetRoomId = matrixRoomId) => {
+			if (!isMatrixSession || !targetRoomId) {
 				return;
 			}
 			chatTransportService
-				.sendTyping(matrixRoomId, typing)
+				.sendTyping(targetRoomId, typing)
 				.catch(() => {});
 		},
 		[isMatrixSession, matrixRoomId]
 	);
 	const handleSessionTyping = useCallback(
-		(isCleared) => {
-			if (!isMatrixSession || !matrixRoomId) {
+		(isCleared: boolean, targetRoomId = matrixRoomId) => {
+			if (!isMatrixSession || !targetRoomId) {
 				return;
 			}
 			clearMatrixTypingTimeout();
 
 			const cancelTyping = () => {
-				sendMatrixTyping(false);
+				sendMatrixTyping(false, targetRoomId);
 				matrixTypingTimeoutRef.current = null;
 				matrixTypingLastTriggerRef.current = 0;
 			};
@@ -248,7 +313,7 @@ export const SessionStream = ({
 						MATRIX_TYPING_TRIGGER_MS <
 					now
 				) {
-					sendMatrixTyping(true);
+					sendMatrixTyping(true, targetRoomId);
 					matrixTypingLastTriggerRef.current = now;
 				}
 				matrixTypingTimeoutRef.current = window.setTimeout(
@@ -350,6 +415,7 @@ export const SessionStream = ({
 				!caseHandoverStatus?.canViewContent
 			) {
 				setMessagesItem({ messages: [] });
+				setSupervisionMessages([]);
 				setLoading(false);
 				return Promise.resolve(false);
 			}
@@ -375,33 +441,48 @@ export const SessionStream = ({
 
 				const formatRoomMessages = (
 					events: any[],
-					roomId?: string | null
+					roomId?: string | null,
+					stampRoomId = false
 				) => {
 					const matrixRoom = roomId
 						? chatTransportService.getMatrixRoom(roomId)
 						: null;
-					return events
-						.map((event: any) =>
-							formatMatrixTimelineEvent(
-								event,
-								matrixRoom,
-								encryptedFallbackText
+					return (
+						events
+							.map((event: any) =>
+								formatMatrixTimelineEvent(
+									event,
+									matrixRoom,
+									encryptedFallbackText
+								)
 							)
-						)
-						.filter(Boolean);
+							.filter(Boolean)
+							// WP-B2: side-room items carry their room id so the
+							// client timeline can reject them as a safety net
+							// (`excludeSideRoomMessages`).
+							.map((item: any) =>
+								stampRoomId && roomId
+									? { ...item, rid: roomId }
+									: item
+							)
+					);
 				};
 
 				const clientEvents = loadRoomEvents(resolvedMatrixRoomId);
-				// ADR-008: merge the supervision side room's asides so they
-				// render for members. The client is never a member of the side
-				// room, so it never loads these.
+				// ADR-008 / WP-B2: the supervision side room is loaded for
+				// members but kept as its own timeline (SupervisionPanel).
+				// The client is never a member of the side room, so it never
+				// loads these.
 				const supervisionEvents = supervisionRoomId
 					? loadRoomEvents(supervisionRoomId)
 					: [];
+				// The Teamberatung room, same treatment (FE#514 / ADR-016).
+				const teamEvents = teamRoomId ? loadRoomEvents(teamRoomId) : [];
 				if (mayRequestHistoryKeys) {
 					[
 						[resolvedMatrixRoomId, clientEvents],
-						[supervisionRoomId, supervisionEvents]
+						[supervisionRoomId, supervisionEvents],
+						[teamRoomId, teamEvents]
 					].forEach(([roomId, events]) => {
 						if (
 							roomId &&
@@ -413,22 +494,49 @@ export const SessionStream = ({
 						}
 					});
 				}
-				const formattedMessages = mergeMatrixMessages(
-					formatRoomMessages(clientEvents, resolvedMatrixRoomId),
-					formatRoomMessages(supervisionEvents, supervisionRoomId)
+				const formattedMessages = formatRoomMessages(
+					clientEvents,
+					resolvedMatrixRoomId
 				);
 				// Reactions (m.annotation, #435): a distinct event type,
 				// collected separately from the formatted message list.
-				const reactionEvents = [
-					...extractReactionEvents(clientEvents),
-					...extractReactionEvents(supervisionEvents)
-				];
+				// Side-room reactions stay out of the client timeline; the
+				// panel renders its bubbles without reactions.
+				const reactionEvents = [...extractReactionEvents(clientEvents)];
 
 				setMessagesItem({
 					messages: prepareMessages(
 						applyMessageEdits(formattedMessages)
 					),
 					reactionEvents
+				});
+				setSupervisionMessages(
+					supervisionRoomId
+						? prepareMessages(
+								applyMessageEdits(
+									formatRoomMessages(
+										supervisionEvents,
+										supervisionRoomId,
+										true
+									)
+								)
+							)
+						: []
+				);
+				setTeamMessageState({
+					sessionId: activeSession.item?.id,
+					roomId: teamRoomId,
+					messages: teamRoomId
+						? prepareMessages(
+								applyMessageEdits(
+									formatRoomMessages(
+										teamEvents,
+										teamRoomId,
+										true
+									)
+								)
+							)
+						: []
 				});
 				setLoading(false);
 				return Promise.resolve(true);
@@ -437,6 +545,11 @@ export const SessionStream = ({
 			// Sessions without a Matrix room (stale pre-migration data) render
 			// an empty history instead of pulling messages from a removed backend.
 			setMessagesItem({ messages: [] });
+			setSupervisionMessages([]);
+			setTeamMessageState({
+				sessionId: activeSession.item?.id,
+				messages: []
+			});
 			setLoading(false);
 			return Promise.resolve(true);
 		},
@@ -445,7 +558,9 @@ export const SessionStream = ({
 			caseHandoverStatus?.canViewContent,
 			mayRequestHistoryKeys,
 			resolvedChatSession,
+			activeSession.item?.id,
 			supervisionRoomId,
+			teamRoomId,
 			translate
 		]
 	);
@@ -455,9 +570,11 @@ export const SessionStream = ({
 		const onHistoryKeysImported = (rawEvent: Event) => {
 			const importedRoomId = (rawEvent as CustomEvent)?.detail?.roomId;
 			if (
-				[resolvedChatSession.matrixRoomId, supervisionRoomId].includes(
-					importedRoomId
-				)
+				[
+					resolvedChatSession.matrixRoomId,
+					supervisionRoomId,
+					teamRoomId
+				].includes(importedRoomId)
 			) {
 				void fetchSessionMessagesRef.current(true);
 			}
@@ -474,7 +591,8 @@ export const SessionStream = ({
 	}, [
 		fetchSessionMessagesRef,
 		resolvedChatSession.matrixRoomId,
-		supervisionRoomId
+		supervisionRoomId,
+		teamRoomId
 	]);
 
 	const setSessionRead = useCallback(() => {
@@ -579,9 +697,11 @@ export const SessionStream = ({
 
 		// ADR-008: listen on the client room AND (for members) the supervision
 		// side room, so newly-sent asides appear live for authorized viewers.
-		const watchedRoomIds = supervisionRoomId
-			? [clientRoomId, supervisionRoomId]
-			: [clientRoomId];
+		const watchedRoomIds = [
+			clientRoomId,
+			supervisionRoomId,
+			teamRoomId
+		].filter(Boolean) as string[];
 		const initialHydrationKey = `${matrixClientGeneration}:${watchedRoomIds.join('|')}`;
 
 		let retryTimer: number | null = null;
@@ -707,6 +827,7 @@ export const SessionStream = ({
 	}, [
 		resolvedChatSession,
 		supervisionRoomId,
+		teamRoomId,
 		fetchSessionMessages,
 		matrixRoomId,
 		matrixClientGeneration,
@@ -1037,6 +1158,7 @@ export const SessionStream = ({
 			}
 
 			setMessagesItem(null);
+			setSupervisionMessages([]);
 
 			if (subscribed.current && activeSession) {
 				subscribed.current = false;
@@ -1162,19 +1284,20 @@ export const SessionStream = ({
 		);
 	}
 
-	// FE#514 / ADR-016: the Team-Besprechung exists for consultants on
-	// Agency-Counselling enquiries only (Live Chat + groups excluded). The
-	// panel itself keeps working read-only when an archived discussion exists.
-	const { featureTeamDiscussionEnabled = true } = getTenantSettings();
-	const showTeamDiscussion =
-		featureTeamDiscussionEnabled &&
-		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
-		!activeSession.isGroup &&
-		getModality(activeSession) === Modality.AGENCY_COUNSELLING &&
-		!!activeSession.item?.id;
-
 	return (
 		<div className="session__wrapper">
+			{teamChannelRequested && teamDiscussionError && (
+				<div role="alert">
+					<p>{translate('teamDiscussion.error.open')}</p>
+					<Button
+						item={{
+							label: translate('sessionList.reloadButton.label'),
+							type: BUTTON_TYPES.SECONDARY
+						}}
+						buttonHandle={retryTeamDiscussion}
+					/>
+				</div>
+			)}
 			{pendingCaseHandoverConsent &&
 				pendingCaseHandoverRequestId !== null && (
 					<CaseHandoverConsentCard
@@ -1201,22 +1324,25 @@ export const SessionStream = ({
 						}
 					/>
 				)}
-			{showTeamDiscussion && (
-				<TeamDiscussionPanel
-					key={activeSession.item.id}
-					sessionId={activeSession.item.id}
-					allowCreate={activeSession.isEnquiry}
-					initiallyOpen={teamDiscussionParam === '1'}
-				/>
-			)}
 			<SessionItemComponent
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
 				}
 				isTyping={handleSessionTyping}
+				isTypingInRoom={handleSessionTyping}
 				typingUsers={matrixTypingUsers}
 				messages={messagesItem?.messages}
 				reactionEvents={messagesItem?.reactionEvents || []}
+				supervisionMessages={supervisionMessages}
+				teamMessages={teamMessages}
+				teamRoomId={teamRoomId}
+				teamDiscussionAvailable={
+					teamDiscussionEnabled &&
+					(Boolean(activeSession.isEnquiry) || !!teamDiscussion)
+				}
+				teamDiscussionStatus={teamDiscussion?.status}
+				teamDiscussionResolved={teamDiscussionResolved}
+				teamDiscussionError={!!teamDiscussionError}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
 			/>

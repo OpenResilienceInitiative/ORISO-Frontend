@@ -13,6 +13,7 @@ import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg'
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
 import { UserAvatar } from '../message/UserAvatar';
+import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import './profile.styles';
 import profileRoutes from './profile.routes';
 import {
@@ -25,6 +26,7 @@ import {
 	generatePath
 } from 'react-router-dom';
 import { Box } from '../box/Box';
+import { ProfileCardList } from './ProfileCardList';
 import { useResponsive } from '../../hooks/useResponsive';
 import {
 	isLinkMenuComponent,
@@ -61,7 +63,35 @@ export const Profile = () => {
 
 	const legalLinks = useContext(LegalLinksContext);
 	const { userData } = useContext(UserDataContext);
+	// #1193 Job 4: the profile shows the same animal other participants see in
+	// the chat, which is derived from the Matrix user id when the client is up.
+	const matrixClientContext = useContext(MatrixClientContext);
+	const ownAvatarUserId =
+		matrixClientContext?.matrixClientService
+			?.getClient?.()
+			?.getUserId?.() || userData.userId;
 	const { consultingTypes } = useContext(ConsultingTypesContext);
+
+	const visibleElements = (
+		elements: (TabGroups | SingleComponentType | null)[] = []
+	): SingleComponentType[] =>
+		elements
+			.reduce(
+				(acc: SingleComponentType[], element) =>
+					element
+						? acc.concat(
+								isTabGroup(element) ? element.elements : element
+							)
+						: acc,
+				[]
+			)
+			.filter((element) =>
+				solveCondition(
+					element.condition,
+					userData,
+					consultingTypes ?? []
+				)
+			);
 
 	const [mobileMenu, setMobileMenu] = useState<
 		(LinkMenuGroupType | LinkMenuItemType | LinkMenuComponentType)[]
@@ -239,7 +269,7 @@ export const Profile = () => {
 											userData.displayName ||
 											userData.userName
 										}
-										userId={userData.userId}
+										userId={ownAvatarUserId}
 										size="56px"
 									/>
 								</div>
@@ -352,44 +382,40 @@ export const Profile = () => {
 											key={`/profile${tab.url}`}
 											element={
 												<div className="profile__content">
-													{tab.elements
-														.reduce(
-															(
-																acc: SingleComponentType[],
-																element
-															) =>
-																acc.concat(
-																	isTabGroup(
-																		element
-																	)
-																		? element.elements
-																		: element
-																),
-															[]
+													{tab.layout === 'cards' ? (
+														<ProfileCardList
+															elements={visibleElements(
+																tab.elements
+															)}
+														/>
+													) : (
+														visibleElements(
+															tab.elements
 														)
-														.filter((element) =>
-															solveCondition(
-																element.condition,
-																userData,
-																consultingTypes ??
-																	[]
+															.sort(
+																(a, b) =>
+																	(a?.order ||
+																		99) -
+																	(b?.order ||
+																		99)
 															)
-														)
-														.sort(
-															(a, b) =>
-																(a?.order ||
-																	99) -
-																(b?.order || 99)
-														)
-														.map((element, i) => (
-															<ProfileItem
-																key={i}
-																element={
-																	element
-																}
-																index={i}
-															/>
-														))}
+															.map(
+																(
+																	element,
+																	i
+																) => (
+																	<ProfileItem
+																		key={i}
+																		element={
+																			element
+																		}
+																		index={
+																			i
+																		}
+																	/>
+																)
+															)
+													)}
 												</div>
 											}
 										/>
@@ -456,10 +482,21 @@ export const Profile = () => {
 													key={`/profile${tab.url}${element.url}`}
 													element={
 														<div className="profile__content">
-															<ProfileGroup
-																group={element}
-																key={`/profile${tab.url}${element.url}`}
-															/>
+															{tab.layout ===
+															'cards' ? (
+																<ProfileCardList
+																	elements={visibleElements(
+																		element.elements
+																	)}
+																/>
+															) : (
+																<ProfileGroup
+																	group={
+																		element
+																	}
+																	key={`/profile${tab.url}${element.url}`}
+																/>
+															)}
 														</div>
 													}
 												/>

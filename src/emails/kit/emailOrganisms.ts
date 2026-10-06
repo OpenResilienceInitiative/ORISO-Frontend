@@ -16,11 +16,16 @@ import {
  * `bgcolor` is repeated alongside `background-color` because Outlook ignores
  * the CSS property on a table, and the card must never come out transparent on
  * the tinted canvas.
+ *
+ * `border-collapse:separate` opts the card out of the stylesheet's
+ * `table{border-collapse:collapse}` reset: `border-radius` has no effect on a
+ * collapsed-border table, so without it clients round the background but draw
+ * the 1px outline square (observed in Roundcube).
  */
 export const emailCard = (rows: string): string =>
 	'<tr><td style="padding:0;">' +
 	'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" ' +
-	`bgcolor="${emailColor.surface}" style="background-color:${emailColor.surface};` +
+	`bgcolor="${emailColor.surface}" style="border-collapse:separate;background-color:${emailColor.surface};` +
 	`border-radius:${emailRadius.card}px;border:1px solid ${emailColor.outline};">` +
 	rows +
 	'</table></td></tr>';

@@ -96,4 +96,54 @@ describe('LegalLinkButton', () => {
 		expect(open).not.toHaveBeenCalled();
 		expect(screen.getByText('login.legal.platform.impressum')).toBeTruthy();
 	});
+
+	it('inline variant is a text hyperlink, not a chip or a new-tab anchor', () => {
+		const open = vi.spyOn(window, 'open').mockImplementation(() => null);
+
+		render(
+			<LegalLinkButton
+				variant="inline"
+				label="Datenschutzerklärung"
+				rawLabel="login.legal.infoText.dataprotection"
+				url="https://example.test/datenschutz"
+			/>
+		);
+
+		const button = screen.getByRole('button', {
+			name: 'Datenschutzerklärung'
+		});
+		expect(button.tagName).toBe('BUTTON');
+		expect(button.getAttribute('target')).toBeNull();
+		expect(button.querySelector('a')).toBeNull();
+		/* The footer variant wraps `Text` (`<p>`), which paints as a chip/box
+		   once it leaves the stage's `.button-as-link` reset. Inline must not. */
+		expect(button.querySelector('p')).toBeNull();
+		expect(button.className).toMatch(/legalLinkButton--inline/);
+
+		fireEvent.click(button);
+		expect(open).not.toHaveBeenCalled();
+		expect(
+			screen.getByText('login.legal.platform.dataprotection')
+		).toBeTruthy();
+	});
+
+	it('stops a click from toggling a wrapping checkbox', () => {
+		const onChange = vi.fn();
+		render(
+			<label>
+				<input type="checkbox" onChange={onChange} />
+				<LegalLinkButton
+					variant="inline"
+					label="Impressum"
+					rawLabel="login.legal.infoText.impressum"
+					url="https://example.test/impressum"
+				/>
+			</label>
+		);
+
+		const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
+		fireEvent.click(screen.getByRole('button', { name: 'Impressum' }));
+		expect(onChange).not.toHaveBeenCalled();
+		expect(checkbox.checked).toBe(false);
+	});
 });

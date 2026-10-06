@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
 	ActiveSessionContext,
 	AUTHORITIES,
@@ -32,10 +32,18 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
+import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
+import {
+	desktop1440Globals,
+	phone390Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 import './sessionHeader.styles.scss';
 
 const APP_ORISO_CHAT_HEADER_FIGMA_URL =
 	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1131-44172&t=7scG0mpt60RDLUqB-4';
+const ROOM_HEADER_FIGMA_URL =
+	'https://www.figma.com/design/L2mOFNSGdxPPx1XA4HFAog/App.Oriso?node-id=1320-38281';
 
 /* ------------------------------------------------------------------ *
  * Shared fixtures
@@ -115,6 +123,17 @@ const storyUserData = {
 	}
 } as any;
 
+// FE#1115: the request stage is seen by the advice seeker; with no `consultant`
+// yet, the header shows the search indicator instead of an avatar.
+const storyAskerUserData = {
+	...storyUserData,
+	userId: 'asker-4401',
+	userName: 'ruhiges-yak-kim@example.invalid',
+	displayName: 'Ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+} as any;
+
 /* ------------------------------------------------------------------ *
  * Matrix client mock (GroupChatHeader reads members from the client)
  * ------------------------------------------------------------------ */
@@ -127,21 +146,14 @@ const makeMembers = (count: number): MockMember[] =>
 		name: `Mitglied ${index + 1}`
 	}));
 
-// Minimal stand-in for MatrixClientService exposing just enough of the
-// getClient()/getRoom()/getJoinedMembers() surface GroupChatHeader touches.
-const makeMatrixClientService = (members: MockMember[]) => {
-	const room = {
-		getJoinedMembers: () => members,
-		getMember: () => ({ powerLevel: 0 })
-	};
-	const client = {
-		getRoom: () => room,
-		getRooms: () => [room]
-	};
-	return {
-		getClient: () => client
-	} as any;
-};
+// The chat-stage stand-in implements the client surface the header and
+// SessionMenu touch (`on`/`removeListener`/`getAccountData`/`setAccountData`,
+// room members, live timeline) — the earlier minimal mock threw in the
+// browser and kept three stories on `!test`.
+const makeMatrixClientService = (
+	members: MockMember[],
+	lastActivity: Record<string, number> = {}
+) => buildStageMatrixClientService({}, members, lastActivity);
 
 /* ------------------------------------------------------------------ *
  * Session presets (one factory per Figma condition)
@@ -276,27 +288,81 @@ const headerShell: React.CSSProperties = {
 	background: '#fff'
 };
 
+/**
+ * ADR-002 silent membership: the header shows only the asker, the assigned
+ * consultant and the active supervisors — every other room member is a
+ * silent agency colleague and stays hidden. The supervisors endpoint is
+ * therefore what makes Bettina, Kim, Ali and Jo visible in the 1:1 stories;
+ * their Matrix ids are `@<username>:…` like the real homeserver.
+ */
+const storySessionSupervisors = ['bettina.b', 'kim', 'ali', 'jo'].map(
+	(username, index) => ({
+		id: index + 1,
+		sessionId: 4401,
+		supervisorConsultantId: `consultant-${username}`,
+		supervisorUsername: `${username}@example.invalid`,
+		addedByConsultantId: CONSULTANT_ID,
+		addedDate: '2026-03-18T07:00:00.000Z'
+	})
+);
+
+const jsonResponse = (body: unknown) =>
+	new Response(JSON.stringify(body), {
+		status: 200,
+		headers: { 'Content-Type': 'application/json' }
+	});
+
+// Installed during render (useState initializer): the header fires its
+// supervisor fetch from a child effect, which runs before this parent's
+// effects — an effect-installed mock would always be one render too late.
+const installHeaderFetchMocks = () => {
+	const previousFetch = window.fetch;
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (/\/sessions\/4401\/supervisors$/.test(url.split('?')[0])) {
+			return jsonResponse(storySessionSupervisors);
+		}
+		if (url.split('?')[0].endsWith('/service/users/consultants')) {
+			return jsonResponse([]);
+		}
+		return previousFetch(input, init);
+	};
+	return () => {
+		window.fetch = previousFetch;
+	};
+};
+
 const StoryProviders = ({
 	session,
 	members = [],
+	lastActivity,
+	userData = storyUserData,
 	children
 }: {
 	session: ExtendedSessionInterface;
 	members?: MockMember[];
+	lastActivity?: Record<string, number>;
+	userData?: typeof storyUserData;
 	children: React.ReactNode;
 }) => {
+	React.useLayoutEffect(() => installHeaderFetchMocks(), []);
 	const matrixClientService = React.useMemo(
-		() => makeMatrixClientService(members),
-		[members]
+		() => makeMatrixClientService(members, lastActivity),
+		[members, lastActivity]
 	);
 
 	return (
 		<div style={headerShell}>
 			<UserDataContext.Provider
 				value={{
-					userData: storyUserData,
+					userData,
 					setUserData: () => {},
-					reloadUserData: async () => storyUserData
+					reloadUserData: async () => userData
 				}}
 			>
 				<SessionTypeContext.Provider
@@ -394,16 +460,118 @@ const renderGroupHeader = (preset: {
 const renderSessionHeader = (
 	preset: {
 		session: ExtendedSessionInterface;
+		members?: MockMember[];
+		lastActivity?: Record<string, number>;
+		userData?: typeof storyUserData;
 	},
 	showAddButton?: boolean
 ) => (
-	<StoryProviders session={preset.session}>
+	<StoryProviders
+		session={preset.session}
+		members={preset.members}
+		lastActivity={preset.lastActivity}
+		userData={preset.userData}
+	>
 		<SessionHeaderComponent
 			bannedUsers={[]}
 			showAddButton={showAddButton}
 		/>
 	</StoryProviders>
 );
+
+// T4: the 1-on-1 room's participants (client · counsellor · supervisor).
+const ASKER_MATRIX_ID = 'asker-4401';
+const roomParticipants: MockMember[] = [
+	{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' },
+	{ userId: '@beraterin:matrix.storybook.test', name: 'Beraterin ORISO' },
+	{ userId: '@bettina.b:matrix.storybook.test', name: 'Bettina B.' },
+	// ADR-002: silent agency colleagues are room members but never shown.
+	{ userId: '@silent.simpson:matrix.storybook.test', name: 'Silent Simpson' },
+	{ userId: '@stumm.meier:matrix.storybook.test', name: 'Stumm Meier' }
+];
+
+// 8. Active 1-on-1 with the room's participants in the header avatar row.
+export const mockActiveConversationWithParticipants = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: roomParticipants,
+	// The supervisor wrote last → first in the stack (FE#1193 Job 1).
+	lastActivity: {
+		[ASKER_MATRIX_ID]: 100,
+		'@beraterin:matrix.storybook.test': 200,
+		'@bettina.b:matrix.storybook.test': 300
+	}
+});
+
+// 9. Six visible participants (asker, consultant, four supervisors) → four
+// avatars + "+2" (FE#1193 Job 2); the silent members never count.
+export const mockActiveConversationManyParticipants = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: [
+		...roomParticipants,
+		{ userId: '@kim:matrix.storybook.test', name: 'Kim G.' },
+		{ userId: '@ali:matrix.storybook.test', name: 'Ali R.' },
+		{ userId: '@jo:matrix.storybook.test', name: 'Jo L.' }
+	]
+});
+
+/** `consultant` is deliberately absent: the capsule's magnet searches and the stack stays away. */
+const buildSearchingSession = (
+	status: typeof STATUS_ENQUIRY | typeof STATUS_EMPTY = STATUS_ENQUIRY
+): ExtendedSessionInterface =>
+	buildExtendedSession(
+		{
+			user: {
+				username: 'ruhiges-yak-kim@example.invalid',
+				displayName: 'Ruhiges Yak Kim',
+				sessionData: {}
+			},
+			language: 'de',
+			session: {
+				id: 4401,
+				agencyId: 101,
+				askerMatrixUserId: ASKER_MATRIX_ID,
+				attachment: null,
+				consultingType: 1,
+				matrixRoomId: 'sb-single-room-4401',
+				e2eLastMessage: null,
+				lastMessage: 'Anfrage gesendet',
+				messageDate: 1773822900,
+				createDate: '2026-03-18T06:15:00.000Z',
+				messagesRead: true,
+				postcode: 12345,
+				registrationType: REGISTRATION_TYPE_REGISTERED,
+				status,
+				videoCallMessageDTO: null,
+				topic: {
+					id: 1,
+					name: 'Familienberatung',
+					description: ''
+				}
+			} as unknown as SessionItemInterface
+		} as ListItemInterface,
+		''
+	);
+
+// 10. Request stage seen by the advice seeker — the search indicator.
+export const mockRequestStageSearching = () => ({
+	session: buildSearchingSession(),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 10b. The asker's own empty enquiry: no counsellor, but nothing is searched for (#1418).
+export const mockAskerEmptyEnquiry = () => ({
+	session: buildSearchingSession(STATUS_EMPTY),
+	members: [{ userId: ASKER_MATRIX_ID, name: 'ruhiges_yak_kim' }],
+	userData: storyAskerUserData
+});
+
+// 11. A counsellor accepted: the real avatar takes the indicator's place.
+export const mockRequestStageAccepted = () => ({
+	session: buildSingleSession(STATUS_ACTIVE),
+	members: roomParticipants,
+	userData: storyAskerUserData
+});
 
 // Asserts the "+" add pill is present and rendered to the LEFT of the type
 // glyph (Figma #430 layout order).
@@ -425,6 +593,26 @@ const expectAddButtonLeftOfType = async (canvasElement: HTMLElement) => {
 	});
 };
 
+/**
+ * The title ends in an ellipsis before the action group — it is never
+ * painted over by the call buttons (stage v3 review, 05.09.).
+ */
+const expectTitleClearOfActions = async (canvasElement: HTMLElement) => {
+	const title = canvasElement.querySelector<HTMLElement>(
+		'.sessionInfo__username h3'
+	)!;
+	const actions = canvasElement.querySelector<HTMLElement>(
+		'.sessionInfo__headerWrapper > .sessionMenu__wrapper'
+	)!;
+	await expect(title).not.toBeNull();
+	await expect(actions).not.toBeNull();
+	const titleRect = title.getBoundingClientRect();
+	const actionsRect = actions.getBoundingClientRect();
+	await expect(titleRect.right).toBeLessThanOrEqual(actionsRect.left + 0.5);
+	await expect(getComputedStyle(title).textOverflow).toBe('ellipsis');
+	return { titleRect, actionsRect };
+};
+
 /* ------------------------------------------------------------------ *
  * Meta + stories
  * ------------------------------------------------------------------ */
@@ -440,10 +628,18 @@ const meta = {
 		router: {
 			initialPath: '/sessions/consultant/sessionView/session/4401'
 		},
-		design: {
-			type: 'figma',
-			url: APP_ORISO_CHAT_HEADER_FIGMA_URL
-		},
+		design: [
+			{
+				type: 'figma',
+				name: 'Chatroom header conditions',
+				url: APP_ORISO_CHAT_HEADER_FIGMA_URL
+			},
+			{
+				type: 'figma',
+				name: 'Room Header All (1320:38281)',
+				url: ROOM_HEADER_FIGMA_URL
+			}
+		],
 		docs: {
 			description: {
 				component:
@@ -468,17 +664,10 @@ export const GroupChatSmall: Story = {
 
 /**
  * Group chat with >4 members (27 here).
- * Expected (Figma #430): no avatars, a single "+N people" count badge instead.
+ * Expected (#1193 Job 2, Figma #430 cap): four overlapping avatars, then a
+ * "+23" chip for the participants that do not fit.
  */
 export const GroupChatLarge: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	render: () => renderGroupHeader(mockGroupSessionLarge()),
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
@@ -489,22 +678,184 @@ export const GroupChatLarge: Story = {
 			expect(
 				canvasElement.querySelector('.sessionInfo__memberCountNumber')
 					?.textContent
-			).toContain('+27');
-			// No stacked member avatars when the badge is shown.
+			).toContain('+23');
+			// Four stacked avatars, the remaining 23 collapse into the chip.
 			expect(
 				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
 					.length
-			).toBe(0);
+			).toBe(4);
 		});
 	}
 };
 
 /**
  * Active 1-on-1 conversation (nearby / vicinity, AGENCY_COUNSELLING).
- * Expected (Figma): house icon + add button + single contact avatar. Matches.
+ * Expected (Figma): house icon + add button + the contact's avatar (animal,
+ * FE#1193 Job 4) — no Matrix members yet, so the stack falls back to the contact.
  */
 export const ActiveConversation: Story = {
-	render: () => renderSessionHeader(mockActiveConversation())
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(1);
+			// T8: no "•••" next to the topic tag.
+			expect(
+				canvasElement.querySelector('.sessionInfo__topicDots')
+			).toBeNull();
+			expect(canvasElement.textContent).not.toContain('•••');
+		});
+	}
+};
+
+/**
+ * T4 / Figma 1320:38281: the room's participants as the avatar row —
+ * animal for the advice seeker, monograms for the counsellors, 28 px step,
+ * latest activity first, hover / focus shows the display name (#1209: the
+ * asker's anonymous id, identical to the title).
+ */
+export const ActiveConversationParticipants: Story = {
+	name: 'Active conversation — participant avatar row (T4)',
+	render: () => renderSessionHeader(mockActiveConversationWithParticipants()),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		let avatars: NodeListOf<HTMLElement>;
+		await waitFor(() => {
+			avatars = canvasElement.querySelectorAll<HTMLElement>(
+				'[data-cy="participant-avatar"]'
+			);
+			expect(avatars).toHaveLength(3);
+		});
+		// Latest activity first: the supervisor wrote last.
+		await expect(avatars![0].getAttribute('data-user-id')).toBe(
+			'@bettina.b:matrix.storybook.test'
+		);
+		// T14/T17 — measured in Figma 1320:38281 (get_metadata): 40 px
+		// avatars, 28 px step, the group starts 8 px inside the type pill
+		// and the title text follows 6 px after the group.
+		const first = avatars![0].getBoundingClientRect();
+		const second = avatars![1].getBoundingClientRect();
+		await expect(Math.round(first.width)).toBe(40);
+		await expect(Math.round(first.height)).toBe(40);
+		await expect(Math.round(second.left - first.left)).toBe(28);
+		const pill = canvasElement
+			.querySelector('.chatroomMainInteractionIcon')!
+			.getBoundingClientRect();
+		const stack = canvasElement
+			.querySelector('[data-cy="session-header-participants"]')!
+			.getBoundingClientRect();
+		await expect(Math.round(pill.right - stack.left)).toBe(8);
+		const title = canvasElement
+			.querySelector('.sessionInfo__username h3')!
+			.getBoundingClientRect();
+		await expect(Math.round(title.left - stack.right)).toBe(6);
+		// Hover shows the name; the asker's tooltip is exactly what the
+		// header title shows (#1209: one identity, list = header = tooltip).
+		const headerTitle =
+			canvasElement.querySelector('h3')?.textContent ?? '';
+		await expect(headerTitle.length).toBeGreaterThan(0);
+		const askerAvatar = canvasElement.querySelector<HTMLElement>(
+			`[data-user-id="${ASKER_MATRIX_ID}"]`
+		)!;
+		await userEvent.hover(askerAvatar);
+		await waitFor(() =>
+			expect(
+				canvas.getByText(headerTitle, {
+					selector: '[data-cy="participant-tooltip"]'
+				})
+			).toBeVisible()
+		);
+		// … and it is not clipped by the header row (T4 self-check).
+		const tip = canvas.getByText(headerTitle, {
+			selector: '[data-cy="participant-tooltip"]'
+		});
+		const tipRect = tip.getBoundingClientRect();
+		const rowRect = canvasElement
+			.querySelector('.sessionInfo__username')!
+			.getBoundingClientRect();
+		await expect(tipRect.top).toBeGreaterThan(rowRect.bottom - 1);
+		// No clipping ancestor cuts it off (the tooltip is pointer-events:
+		// none, so elementFromPoint cannot be used here).
+		let ancestor = tip.parentElement;
+		while (ancestor && ancestor !== canvasElement) {
+			if (getComputedStyle(ancestor).overflow !== 'visible') {
+				const box = ancestor.getBoundingClientRect();
+				await expect(tipRect.top).toBeGreaterThanOrEqual(box.top);
+				await expect(tipRect.bottom).toBeLessThanOrEqual(box.bottom);
+			}
+			ancestor = ancestor.parentElement;
+		}
+		// T3/T43: the hairline sits at 16 + 2 + 40 + 6 = 64 px from the
+		// header top (T43: row padding-top 2 — Frank deviates from Figma's 6
+		// by 4 px); the row's box (incl. the 1 px hairline) ends at 65.
+		const header = canvasElement.querySelector('.sessionInfo')!;
+		const row = canvasElement.querySelector('.sessionInfo__headerWrapper')!;
+		await expect(
+			Math.round(
+				row.getBoundingClientRect().bottom -
+					header.getBoundingClientRect().top
+			)
+		).toBe(65);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+/** FE#1193 Job 2: beyond four participants the tail folds into "+N". */
+export const ActiveConversationManyParticipants: Story = {
+	name: 'Active conversation — six participants, "+2"',
+	render: () => renderSessionHeader(mockActiveConversationManyParticipants()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(4);
+			expect(
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
+					?.textContent
+			).toBe('+2');
+		});
+		// The "+2" chip sits in the flow, before the title — never over it.
+		const chip = canvasElement
+			.querySelector('[data-cy="participant-overflow"]')!
+			.getBoundingClientRect();
+		const title = canvasElement
+			.querySelector('.sessionInfo__username h3')!
+			.getBoundingClientRect();
+		await expect(chip.right).toBeLessThanOrEqual(title.left + 0.5);
+		await expectTitleClearOfActions(canvasElement);
+	}
+};
+
+/**
+ * Phone (390 px): back button, type pill and the inline call buttons take
+ * 236 of the 358 px row before any avatar, so the stack is capped at one
+ * avatar + a compact "+N" and the title keeps ≥ 40 % of the width it shares
+ * with the stack — and still ends before the actions. Whether the call
+ * buttons move into the kebab on the phone is Frank's call (stage v3 review).
+ */
+export const ActiveConversationManyParticipantsPhone: Story = {
+	name: 'Active conversation — six participants on the phone (1 + "+5")',
+	globals: phone390Globals,
+	render: () => renderSessionHeader(mockActiveConversationManyParticipants()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelectorAll('[data-cy="participant-avatar"]')
+			).toHaveLength(1);
+			expect(
+				canvasElement.querySelector('[data-cy="participant-overflow"]')
+					?.textContent
+			).toBe('+5');
+		});
+		const { titleRect } = await expectTitleClearOfActions(canvasElement);
+		const stack = canvasElement
+			.querySelector('[data-cy="session-header-participants"]')!
+			.getBoundingClientRect();
+		await expect(
+			titleRect.width / (titleRect.width + stack.width)
+		).toBeGreaterThanOrEqual(0.4);
+	}
 };
 
 /**
@@ -513,14 +864,6 @@ export const ActiveConversation: Story = {
  * `showAddButton` opts this enquiry state into showing the "+".
  */
 export const WaitingRoomWithAdd: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	render: () => renderSessionHeader(mockWaitingRoomWithAdd(), true),
 	play: async ({ canvasElement }) => {
 		await expectAddButtonLeftOfType(canvasElement);
@@ -536,14 +879,6 @@ export const WaitingRoomWithAdd: Story = {
  * `showAddButton` opts this enquiry state into showing the "+".
  */
 export const InquiryWithAdd: Story = {
-	// Excluded from `vitest --project storybook`: the story's mock Matrix client
-	// is missing methods the component calls (`client.getAccountData`,
-	// `client.on`, `client.removeListener`), so it throws during render and
-	// Storybook's StoryErrorBoundary swaps it for the "Needs live app data"
-	// panel — in the browser too, not just here. The play function below then
-	// asserts markup that was never rendered. Drop this tag once the mock
-	// client is completed.
-	tags: ['!test'],
 	render: () => renderSessionHeader(mockInquiryWithAdd(), true),
 	play: async ({ canvasElement }) => {
 		await expectAddButtonLeftOfType(canvasElement);
@@ -567,4 +902,173 @@ export const WaitingRoom: Story = {
  */
 export const Inquiry: Story = {
 	render: () => renderSessionHeader(mockInquiry())
+};
+
+/* ------------------------------------------------------------------ *
+ * FE#1115 — request stage: "searching for a counsellor"
+ * ------------------------------------------------------------------ */
+
+/** FE#1115: exactly one magnet, inside the capsule, whose beam fades only outside it. */
+const expectMagnetSearchesFromInsideTheCapsule = async (
+	canvasElement: HTMLElement
+) => {
+	const magnet = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.consultantSearchLoader'
+		);
+		expect(element).toBeTruthy();
+		return element!;
+	});
+	const capsule = canvasElement.querySelector<HTMLElement>(
+		'.chatroomMainInteractionIcon'
+	)!;
+
+	// 1. One magnet, and it is inside the capsule.
+	await expect(
+		canvasElement.querySelectorAll('.consultantSearchLoader')
+	).toHaveLength(1);
+	await expect(capsule.contains(magnet)).toBe(true);
+	await expect(
+		canvasElement.querySelector(
+			'.chatroomMainInteractionIcon__typeGenerated'
+		)
+	).toBeNull();
+	await expect(
+		capsule.classList.contains('chatroomMainInteractionIcon--searching')
+	).toBe(true);
+
+	// 2. Nothing clips the beam, from the magnet up to the header itself.
+	let ancestor: HTMLElement | null = magnet;
+	while (ancestor && !ancestor.classList.contains('sessionInfo')) {
+		await expect(getComputedStyle(ancestor).overflow).toBe('visible');
+		ancestor = ancestor.parentElement;
+	}
+
+	// 3. Opaque when crossing the capsule's edge, spent well outside it. The pulse is
+	//    one-shot, so start it here and step frozen animations through it.
+	const sweep = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__sweep'
+	)!;
+	const beam = magnet.querySelector<HTMLElement>(
+		'.consultantSearchLoader__beam'
+	)!;
+	magnet.classList.add('consultantSearchLoader--pulsing');
+	sweep.getAnimations().forEach((animation) => animation.pause());
+	const capsuleBox = capsule.getBoundingClientRect();
+	const flight = Number(
+		beam.getAnimations()[0]!.effect!.getTiming().duration
+	);
+	const at = (fraction: number) => {
+		beam.getAnimations().forEach((animation) => {
+			animation.pause();
+			animation.currentTime = flight * fraction;
+		});
+		return {
+			box: beam.getBoundingClientRect(),
+			opacity: Number.parseFloat(getComputedStyle(beam).opacity)
+		};
+	};
+	const crossing = at(0.6);
+	await expect(crossing.box.right).toBeGreaterThan(capsuleBox.right);
+	await expect(crossing.opacity).toBeGreaterThan(0.8);
+	const spent = at(1);
+	await expect(spent.box.right).toBeGreaterThan(crossing.box.right);
+	await expect(spent.opacity).toBeLessThan(0.1);
+
+	// 4. Between pulses the magnet is still: no permanent spin in the header.
+	magnet.classList.remove('consultantSearchLoader--pulsing');
+	await expect(getComputedStyle(beam).animationName).toBe('none');
+	await expect(getComputedStyle(sweep).animationName).toBe('none');
+
+	return { magnet, capsule, capsuleBox };
+};
+
+/** The advice seeker's request stage at 1440 px: one magnet, beam fading outside the capsule. */
+export const RequestStageSearching: Story = {
+	name: 'Request stage — searching for a counsellor (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+		// The glyph is decoration; screen readers get the state as text.
+		await expect(
+			within(canvasElement).getByRole('status')
+		).toHaveTextContent('Wir suchen eine Beratung für Sie.');
+	}
+};
+
+/** The same stage on a tablet (834 px). */
+export const RequestStageSearchingTablet: Story = {
+	name: 'Request stage — searching, tablet 834 px (FE#1115)',
+	globals: tablet834Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** The same stage on the phone (390 px), where no row clip may cut the beam. */
+export const RequestStageSearchingPhone: Story = {
+	name: 'Request stage — searching, phone 390 px (FE#1115)',
+	globals: phone390Globals,
+	render: () => renderSessionHeader(mockRequestStageSearching()),
+	play: async ({ canvasElement }) => {
+		await expectMagnetSearchesFromInsideTheCapsule(canvasElement);
+	}
+};
+
+/** Only an enquiry is searched for (#1418): an empty one keeps its waiting clock and avatar stack. */
+export const RequestStageEmptyEnquiry: Story = {
+	name: 'Request stage — own empty enquiry: no magnet, stack stays (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockAskerEmptyEnquiry()),
+	play: async ({ canvasElement }) => {
+		const capsule = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.chatroomMainInteractionIcon'
+			);
+			expect(element).toBeTruthy();
+			return element!;
+		});
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--waiting')
+		).toBe(true);
+		await expect(
+			capsule.classList.contains('chatroomMainInteractionIcon--searching')
+		).toBe(false);
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader')
+		).toBeNull();
+		await expect(
+			within(canvasElement).queryByText(/Wir suchen eine Beratung/)
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector(
+				'[data-cy="session-header-participants"]'
+			)
+		).toBeTruthy();
+	}
+};
+
+/** Once a counsellor accepts, the search stops and the participant stack returns. */
+export const RequestStageAccepted: Story = {
+	name: 'Request stage — counsellor accepted (FE#1115)',
+	globals: desktop1440Globals,
+	render: () => renderSessionHeader(mockRequestStageAccepted()),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('[data-cy="participant-avatar"]')
+			).toBeTruthy();
+		});
+		// The still enquiry glyph may stay; only the searching state must go.
+		await expect(
+			canvasElement.querySelector(
+				'.chatroomMainInteractionIcon--searching'
+			)
+		).toBeNull();
+		await expect(
+			canvasElement.querySelector('.consultantSearchLoader--animated')
+		).toBeNull();
+	}
 };

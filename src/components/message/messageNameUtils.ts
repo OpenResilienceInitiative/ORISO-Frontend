@@ -1,3 +1,5 @@
+import { isAnonymousMatrixUsername } from '../../utils/anonymousChatDisplayName';
+
 const normalizeMatrixLikeValue = (rawValue?: string) => {
 	const value = (rawValue || '').trim();
 	if (!value) {
@@ -37,26 +39,53 @@ const humanizeTechnicalName = (value: string) => {
 	return words.join(' ') || value;
 };
 
+/**
+ * Which name a person is published under (#1486).
+ *
+ * ADR-002 §2: the published identity is the public display name. A
+ * counsellor's legal name is staff data, not an identity the platform shows —
+ * it used to be checked first here, so wherever `firstName`/`lastName` reached
+ * this function the bubble overrode the display name the counsellor publishes
+ * and named them to the advice seeker.
+ *
+ * The order is therefore:
+ *   1. the public display name,
+ *   2. the identity anchor — the Matrix/User-ID the chat header and the
+ *      session list already show,
+ *   3. the real name, and only when the person has neither of the above, so
+ *      the line is never blank.
+ *
+ * Callers on advice-seeker-facing surfaces must not supply the real name at
+ * all; see `MessageItemComponent`.
+ */
 const resolvePreferredName = (
 	rawDisplayName?: string,
 	rawUsername?: string,
 	firstName?: string,
 	lastName?: string
 ) => {
-	const normalizedFirstName = (firstName || '').trim();
-	const normalizedLastName = (lastName || '').trim();
-	const combinedRealName =
-		`${normalizedFirstName} ${normalizedLastName}`.trim();
-	if (combinedRealName) {
-		return combinedRealName;
-	}
-
 	const normalizedDisplayName = normalizeMatrixLikeValue(rawDisplayName);
 	if (normalizedDisplayName) {
 		return humanizeTechnicalName(normalizedDisplayName);
 	}
 
-	return humanizeTechnicalName(normalizeMatrixLikeValue(rawUsername));
+	// An anonymous User-ID is the platform's identity anchor (#1209), not a
+	// technical name to prettify. Humanising it drops the trailing digits, so
+	// every guest in a room collapses to the same bare word — `anon_5` and
+	// `anon_12` both render as "anon" — and the bubble stops matching the
+	// header and the session list, which already show it raw.
+	const normalizedUsername = normalizeMatrixLikeValue(rawUsername);
+	if (isAnonymousMatrixUsername(normalizedUsername)) {
+		return normalizedUsername;
+	}
+	if (normalizedUsername) {
+		return humanizeTechnicalName(normalizedUsername);
+	}
+
+	// Last resort only: no published name and no identity anchor at all.
+	const normalizedFirstName = (firstName || '').trim();
+	const normalizedLastName = (lastName || '').trim();
+	return `${normalizedFirstName} ${normalizedLastName}`.trim();
 };
 
 export const formatMessagePersonName = (
@@ -79,8 +108,8 @@ export type IncomingConsultantNameForAsker = {
  * When that public name is set, omit first/last so `formatMessagePersonName`
  * cannot prefer the legal name. Fallback: Matrix name → event name → username.
  *
- * Does not change `resolvePreferredName`; consultant-internal surfaces keep
- * legal-name-first behaviour.
+ * Since #1486 `resolvePreferredName` no longer prefers the legal name either;
+ * this helper keeps it from being supplied at all on the asker-facing path.
  */
 export const resolveIncomingConsultantNameForAsker = ({
 	sessionConsultantDisplayName,
@@ -123,10 +152,8 @@ export type OwnConsultantName = {
  *
  * Prefer the chosen public `displayName` from userData. When it is set, omit
  * first/last so `formatMessagePersonName` cannot prefer the legal name.
- * Fallback: firstName + lastName → username.
- *
- * Does not change `resolvePreferredName`; consultant-internal surfaces keep
- * legal-name-first behaviour.
+ * Fallback: username → firstName + lastName, so a counsellor without a public
+ * display name reads the same in the bubble, the chat header and the session list.
  */
 export const resolveOwnConsultantName = ({
 	displayName,
@@ -144,45 +171,19 @@ export const resolveOwnConsultantName = ({
 		return { displayName: publicDisplayName };
 	}
 
+	const fallbackUsername = (username || '').trim();
+	if (fallbackUsername) {
+		return { displayName: fallbackUsername };
+	}
+
 	const normalizedFirstName = (firstName || '').trim();
 	const normalizedLastName = (lastName || '').trim();
-	if (normalizedFirstName || normalizedLastName) {
-		return {
-			firstName: normalizedFirstName || undefined,
-			lastName: normalizedLastName || undefined
-		};
-	}
-
-	const fallbackUsername = (username || '').trim();
-	return fallbackUsername ? { displayName: fallbackUsername } : {};
-};
-
-export const getMessagePersonInitials = (
-	rawDisplayName?: string,
-	rawUsername?: string,
-	firstName?: string,
-	lastName?: string
-) => {
-	const resolvedName = resolvePreferredName(
-		rawDisplayName,
-		rawUsername,
-		firstName,
-		lastName
-	);
-	if (!resolvedName) {
-		return 'U';
-	}
-
-	const parts = resolvedName.split(/\s+/).filter(Boolean);
-	if (parts.length >= 2) {
-		return `${parts[0].charAt(0)}${parts[1].charAt(0)}`.toUpperCase();
-	}
-
-	const alphanumericOnly = parts[0].replace(/[^a-zA-Z0-9]/g, '');
-	if (alphanumericOnly.length >= 2) {
-		return alphanumericOnly.slice(0, 2).toUpperCase();
-	}
-	return parts[0].slice(0, 2).toUpperCase();
+	return normalizedFirstName || normalizedLastName
+		? {
+				firstName: normalizedFirstName || undefined,
+				lastName: normalizedLastName || undefined
+			}
+		: {};
 };
 
 /**

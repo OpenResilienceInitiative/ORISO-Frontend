@@ -5,20 +5,21 @@
 
 ## Subtasks
 
-| #   | Subtask                                             | Files                                         | Verify with                                                                            | Status                                  |
-| --- | --------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------- |
-| 1   | Publish scan as #1154 comment + sub-issues          | GitHub                                        | comment URL                                                                            | done (comment only; new issues blocked) |
-| 2   | PR1: Weblate merge — bundle wins                    | `mergeWeblateCatalogue.ts`, `i18n.ts`         | `npx vitest run src/utils/mergeWeblateCatalogue.test.ts`                               | done                                    |
-| 3   | PR2: PreselectedTopic locale helper                 | `PreselectedTopic.tsx` + test                 | `npx vitest run src/components/registration/preselectionBox/PreselectedTopic.test.tsx` | doing                                   |
-| 4   | PR3: Drop German defaultValues on signup chrome     | header, CompactStepRow, ZipcodeInput, consent | targeted vitest + `lint:scripts`                                                       | todo                                    |
-| 5   | Follow-up only: API age labels; Ukrainian UI locale | —                                             | —                                                                                      | blocked (out of stack)                  |
+| #   | Subtask                                                 | Files                                                            | Verify with                                                                            | Status                                  |
+| --- | ------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------- | --------------------------------------- |
+| 1   | Publish scan as #1154 comment + sub-issues              | GitHub                                                           | comment URL                                                                            | done (comment only; new issues blocked) |
+| 2   | PR1: Weblate merge — bundle wins                        | `mergeWeblateCatalogue.ts`, `i18n.ts`                            | `npx vitest run src/utils/mergeWeblateCatalogue.test.ts`                               | done                                    |
+| 3   | PR2: PreselectedTopic locale helper                     | `PreselectedTopic.tsx` + test                                    | `npx vitest run src/components/registration/preselectionBox/PreselectedTopic.test.tsx` | done (PR #1232 merged)                  |
+| 4   | PR3: Drop German defaultValues on signup chrome         | header, CompactStepRow, ZipcodeInput, consent                    | targeted vitest + `lint:scripts`                                                       | done (PR #1233 merged)                  |
+| 5   | Follow-up only: API age labels; Ukrainian UI locale     | —                                                                | —                                                                                      | blocked (out of stack)                  |
+| 6   | PR4: remaining registration + profile Overview literals | zipcode/whyLocal, agency details, password chips, profile.routes | `npx vitest run src/components/registration/registrationChromeI18n.test.ts`            | doing                                   |
 
 ## Verification checklist
 
-- [ ] Targeted vitest per PR
-- [ ] `npm run lint:scripts` on each PR
-- [ ] `npm run test:unit` before declaring the stack done
-- [ ] `lint:style` / `build` if imports/styles change
+- [x] Targeted vitest per PR
+- [x] `npm run lint:scripts` on each PR
+- [x] `npm run test:unit` before declaring the stack done
+- [ ] `lint:style` / `build` if imports/styles change — skipped (no SCSS; build not needed)
 - [ ] Browser: registration in `fr` and `ru` (when a running frontend is available)
 
 ## Risks

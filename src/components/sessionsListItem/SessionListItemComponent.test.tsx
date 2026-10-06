@@ -18,10 +18,22 @@ import {
 	AUTHORITIES
 } from '../../globalState';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
+import { STATUS_ACTIVE } from '../../globalState/interfaces';
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionListItemComponent } from './SessionListItemComponent';
+import { SessionListRailProvider } from '../sessionsList/SessionListRailContext';
 
-afterEach(cleanup);
+const { matrixPreviewMock, roomUnreadCountMock } = vi.hoisted(() => ({
+	matrixPreviewMock: vi.fn(),
+	roomUnreadCountMock: vi.fn(() => 0)
+}));
+
+afterEach(() => {
+	cleanup();
+	matrixPreviewMock.mockReset();
+	roomUnreadCountMock.mockReset();
+	roomUnreadCountMock.mockReturnValue(0);
+});
 
 // ---------------------------------------------------------------------------
 // Global state: keep real context, only stub the hooks that need values
@@ -45,7 +57,13 @@ vi.mock('../../hooks/useE2EE', () => ({
 }));
 
 vi.mock('../../hooks/useMatrixSessionPreview', () => ({
-	useMatrixSessionPreview: () => null
+	useMatrixSessionPreview: matrixPreviewMock,
+	useMatrixSessionEvents: (roomId: string) => matrixPreviewMock(roomId) || []
+}));
+
+vi.mock('../../utils/sessionUnread', async (importOriginal) => ({
+	...(await importOriginal<any>()),
+	getRoomUnreadCount: roomUnreadCountMock
 }));
 
 vi.mock('../../hooks/useUnreadVersion', () => ({
@@ -77,7 +95,12 @@ vi.mock('../../utils/tenantSettingsHelper', () => ({
 // i18n
 // ---------------------------------------------------------------------------
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (k: string) => k })
+	useTranslation: () => ({
+		t: (k: string, opts?: any) =>
+			opts && typeof opts === 'object' && opts.name
+				? `${k}:${opts.name}`
+				: k
+	})
 }));
 
 // ---------------------------------------------------------------------------
@@ -91,7 +114,7 @@ vi.mock('lottie-web', () => ({ default: {} }));
 // ---------------------------------------------------------------------------
 vi.mock('../../resources/img/icons', () => ({
 	MenuVerticalIcon: () => <span data-testid="menu-vertical-icon" />,
-	ShowPasswordIcon: () => <span />
+	ShowPasswordIcon: () => <span data-testid="silent-member-eye" />
 }));
 vi.mock('../../resources/img/icons/inbox.svg', () => ({
 	ReactComponent: () => <span />
@@ -161,7 +184,7 @@ vi.mock('./SessionListItemVideoCall', () => ({
 	SessionListItemVideoCall: () => <span />
 }));
 vi.mock('./CaseHandoverActionButton', () => ({
-	CaseHandoverActionButton: () => <span />
+	CaseHandoverActionButton: () => <span data-testid="case-handover-action" />
 }));
 vi.mock('../session/DeleteSession', () => ({
 	default: ({
@@ -257,9 +280,54 @@ const makeGroupSession = ({
 	agency: { id: 1 }
 });
 
+/**
+ * Minimal ExtendedSessionInterface for a 1:1 agency-counselling row
+ * (`isSession = true`, `isGroup = false`), optionally carrying the ADR-008
+ * supervision marker.
+ */
+const makeSession = ({
+	consultantId = OWNER_USER_ID,
+	supervision = undefined as any,
+	matrixRoomId = '!session:matrix.example.org'
+} = {}) => ({
+	item: {
+		id: 202,
+		matrixRoomId,
+		agencyId: 1,
+		askerMatrixUserId: '@asker:matrix.example.org',
+		consultingType: 1,
+		status: STATUS_ACTIVE,
+		messageDate: 1700000000,
+		createDate: '2023-11-14T12:00:00Z',
+		messagesRead: true,
+		registrationType: 'REGISTERED',
+		postcode: 12345,
+		lastMessage: 'Hallo',
+		attachment: null,
+		videoCallMessageDTO: null,
+		topic: { id: 1, name: 'Topic', description: '' },
+		...(supervision !== undefined ? { supervision } : {})
+	},
+	rid: matrixRoomId,
+	type: 'singleChat' as const,
+	isGroup: false,
+	isSession: true,
+	isEnquiry: false,
+	isEmptyEnquiry: false,
+	isNonEmptyEnquiry: false,
+	isArchive: false,
+	consultant: { id: consultantId, username: 'owner', displayName: 'Owner' },
+	user: { username: 'asker', displayName: 'Asker', sessionData: {} },
+	agency: { id: 1 }
+});
+
 const sessionsDispatch = vi.fn();
 
-const renderItem = (activeSession: any, userData = makeUserData()) => {
+const renderItem = (
+	activeSession: any,
+	userData = makeUserData(),
+	{ rail = false }: { rail?: boolean } = {}
+) => {
 	const sessionTypeValue = {
 		type: SESSION_LIST_TYPES.MY_SESSION,
 		path: '/sessions/consultant/sessionView'
@@ -292,10 +360,12 @@ const renderItem = (activeSession: any, userData = makeUserData()) => {
 						<SessionsDataContext.Provider value={sessionsDataValue}>
 							<E2EEContext.Provider value={e2eeValue}>
 								<LegalLinksContext.Provider value={[]}>
-									<SessionListItemComponent
-										defaultLanguage="de"
-										index={0}
-									/>
+									<SessionListRailProvider rail={rail}>
+										<SessionListItemComponent
+											defaultLanguage="de"
+											index={0}
+										/>
+									</SessionListRailProvider>
 								</LegalLinksContext.Provider>
 							</E2EEContext.Provider>
 						</SessionsDataContext.Provider>
@@ -392,5 +462,198 @@ describe('SessionListItemComponent — group-chat Chat settings reachability (#1
 			name: 'groupChat.info.settings.headline'
 		});
 		expect(trigger).toBeNull();
+	});
+});
+
+describe('SessionListItemComponent — supervision list marker (ADR-008)', () => {
+	const ME = 'consultant-supervisor-7';
+	const nextTick = () => new Promise((r) => setTimeout(r, 0));
+
+	it('without the marker a non-owner still sees the silent-member eye and the handover action', async () => {
+		renderItem(makeSession(), makeUserData(ME));
+		await nextTick();
+		expect(screen.getByTestId('silent-member-eye')).toBeTruthy();
+		expect(await screen.findByTestId('case-handover-action')).toBeTruthy();
+		expect(screen.queryByTestId('supervision-badge')).toBeNull();
+	});
+
+	it('supervisedByMe → supervision badge, no eye, no handover action', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		const badge = screen.getByTestId('supervision-badge');
+		expect(badge.getAttribute('title')).toBe(
+			'sessionList.supervision.badge'
+		);
+		expect(screen.queryByTestId('silent-member-eye')).toBeNull();
+		expect(screen.queryByTestId('case-handover-action')).toBeNull();
+	});
+
+	it('owner sees a supervisor indicator when someone else supervises', async () => {
+		renderItem(
+			makeSession({
+				consultantId: OWNER_USER_ID,
+				supervision: {
+					supervisedByMe: false,
+					supervisorConsultantIds: ['sup-1'],
+					supervisorDisplayNames: ['Sabine Supervisor']
+				}
+			}),
+			makeUserData(OWNER_USER_ID)
+		);
+		await nextTick();
+		const indicator = screen.getByTestId('supervision-indicator');
+		expect(indicator.textContent).toContain('Sabine Supervisor');
+		expect(indicator.getAttribute('title')).toBe(
+			'sessionList.supervision.supervisedBy:Sabine Supervisor'
+		);
+		expect(screen.queryByTestId('supervision-badge')).toBeNull();
+		expect(screen.queryByTestId('silent-member-eye')).toBeNull();
+		expect(screen.queryByTestId('case-handover-action')).toBeNull();
+	});
+
+	it('supervisor of the session does not get an indicator for themselves', async () => {
+		renderItem(
+			makeSession({
+				supervision: {
+					supervisedByMe: true,
+					supervisorConsultantIds: [ME],
+					supervisorDisplayNames: ['Me']
+				}
+			}),
+			makeUserData(ME)
+		);
+		await nextTick();
+		expect(screen.queryByTestId('supervision-indicator')).toBeNull();
+	});
+});
+
+/**
+ * Rail wiring (Frank, 09.09.2026 *2). The collapsed 80 px list must render a
+ * DIFFERENT row — the portrait `SessionRailPill` — not the same card with its
+ * fields hidden by CSS. These tests fail the moment the early return is
+ * dropped, which is exactly the regression that would bring the egg back.
+ */
+describe('SessionListItemComponent — collapsed rail row', () => {
+	afterEach(() => {
+		mockNavigate.mockReset();
+	});
+
+	it('renders the card (and no pill) while the list is expanded', () => {
+		renderItem(makeSession());
+		expect(
+			document.querySelector('[data-cy="session-rail-pill"]')
+		).toBeNull();
+		expect(
+			document.querySelector('.sessionsListItem__content')
+		).not.toBeNull();
+	});
+
+	it('renders the pill instead of the card in the rail', () => {
+		renderItem(makeSession(), makeUserData(), { rail: true });
+		const pill = document.querySelector('[data-cy="session-rail-pill"]');
+		expect(pill).not.toBeNull();
+		// Not a hidden card: the card body is gone, not display:none.
+		expect(document.querySelector('.sessionsListItem__content')).toBeNull();
+		// A named button, not a bare avatar.
+		expect(pill.tagName).toBe('BUTTON');
+		// The same display name the expanded card shows (`sessionTopic`).
+		expect(pill.textContent).toContain('Asker');
+	});
+
+	it('marks the mail modality from getModality, using the existing chip key', () => {
+		renderItem(makeSession(), makeUserData(), { rail: true });
+		const marks = Array.from(
+			document.querySelectorAll('.sessionRailPill__mark')
+		).map((mark) => (mark as HTMLElement).dataset.mark);
+		expect(marks).toEqual(['mail']);
+		expect(
+			screen.getByRole('img', {
+				name: 'sessionList.toolbar.chips.nearby'
+			})
+		).toBeTruthy();
+	});
+
+	it('adds the supervision mark only when the DTO carries the ADR-008 marker', () => {
+		renderItem(
+			makeSession({ supervision: { supervisedByMe: true } }),
+			makeUserData(),
+			{ rail: true }
+		);
+		const marks = Array.from(
+			document.querySelectorAll('.sessionRailPill__mark')
+		).map((mark) => (mark as HTMLElement).dataset.mark);
+		expect(marks).toEqual(['supervision', 'mail']);
+		expect(
+			screen.getByRole('img', {
+				name: 'sessionList.toolbar.chips.supervision'
+			})
+		).toBeTruthy();
+	});
+
+	it('uses the confidential sideRoomId for supervision preview and unread count', () => {
+		const sideRoomId = '!supervision:matrix.example.org';
+		matrixPreviewMock.mockImplementation((roomId: string) =>
+			roomId === sideRoomId
+				? [
+						{
+							getType: () => 'm.room.message',
+							getClearContent: () => ({
+								msgtype: 'm.text',
+								body: 'Interne Rückfrage'
+							}),
+							getTs: () => 1700000000000
+						}
+					]
+				: []
+		);
+		roomUnreadCountMock.mockImplementation((roomId: string) =>
+			roomId === sideRoomId ? 2 : 1
+		);
+		renderItem(
+			makeSession({
+				supervision: { supervisedByMe: true, sideRoomId }
+			}),
+			makeUserData(),
+			{ rail: true }
+		);
+
+		const supervisionMark = document.querySelector(
+			'.sessionRailPill__mark--supervision'
+		) as HTMLElement;
+		fireEvent.mouseEnter(supervisionMark);
+		expect(
+			document.querySelector('[data-cy="session-rail-pill-tooltip"]')
+				?.textContent
+		).toContain('Interne Rückfrage');
+		expect(
+			document.querySelector('.sessionRailPill__mark--unread')
+				?.textContent
+		).toBe('3');
+	});
+
+	it('opens the conversation when the pill is clicked', () => {
+		renderItem(makeSession(), makeUserData(), { rail: true });
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="session-rail-pill"]'
+			) as HTMLElement
+		);
+		expect(mockNavigate).toHaveBeenCalled();
+	});
+
+	it('renders a pill for group rows too', () => {
+		renderItem(makeGroupSession(), makeUserData(), { rail: true });
+		const pill = document.querySelector('[data-cy="session-rail-pill"]');
+		expect(pill).not.toBeNull();
+		expect(pill.textContent).toContain('Test group chat');
 	});
 });

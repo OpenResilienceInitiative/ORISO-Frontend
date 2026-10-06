@@ -2,11 +2,34 @@ import { OverlayItem, OVERLAY_FUNCTIONS, Overlay } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
 import * as React from 'react';
 import { apiSetAbsence } from '../../api';
-import { UserDataContext } from '../../globalState';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext
+} from '../../globalState';
 import { useContext, useState, useEffect } from 'react';
+import { hasAuthCookie } from '../sessionCookie/accessSessionCookie';
 import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import { useTranslation } from 'react-i18next';
 import { OVERLAY_ABSENCE } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
+
+const REMINDED_STORAGE_KEY = 'oriso.absenceReminderShownFor';
+
+const readRemindedUserId = (): string | null => {
+	try {
+		return window.sessionStorage.getItem(REMINDED_STORAGE_KEY);
+	} catch {
+		return null;
+	}
+};
+
+const writeRemindedUserId = (userId: string): void => {
+	try {
+		window.sessionStorage.setItem(REMINDED_STORAGE_KEY, userId);
+	} catch {
+		// storage disabled: fall back to once-per-mount
+	}
+};
 
 export const AbsenceHandler = () => {
 	const { t: translate } = useTranslation();
@@ -44,27 +67,39 @@ export const AbsenceHandler = () => {
 
 	const [overlayItem, setOverlayItem] = useState(absenceReminderOverlayItem);
 	const [overlayActive, setOverlayActive] = useState(false);
-	const [reminderSend, setReminderSend] = useState(false);
-	const [init, setInit] = useState(true);
+	// The user id the reminder was already shown for: once per signed-in
+	// counsellor per browser session, not once per mount (#1210 job 2). Kept
+	// in sessionStorage because the shell can remount this handler (route
+	// changes right after login); sign-out purges sessionStorage, so the next
+	// sign-in shows it again.
+	const [remindedUserId, setRemindedUserId] = useState<string | null>(() =>
+		readRemindedUserId()
+	);
+
+	const userId = userData?.userId ?? null;
+	const isAbsentConsultant =
+		Boolean(userData?.absent) &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
 
 	useEffect(() => {
-		if (init) {
-			handleAbsenceReminder();
-			setInit(false);
+		// #1210 job 2: decide from the data of the user who is signed in *now*,
+		// not from whatever the shared UserDataContext held when this component
+		// mounted. Stale or mixed data (a non-consultant, data left over from a
+		// previous session, a sign-out in flight with the auth cookie already
+		// gone) never opens the counsellor-only reminder.
+		if (!userId || !isAbsentConsultant || remindedUserId === userId) {
+			return;
 		}
-	}, [init]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	const handleAbsenceReminder = () => {
-		const absence = userData.absent;
-		if (absence && !reminderSend) {
-			activateOverlay();
+		// Cookie only: the localStorage token mirror can outlive the cookie
+		// for a moment during sign-out and must not count as a session.
+		if (!hasAuthCookie('keycloak')) {
+			return;
 		}
-	};
-
-	const activateOverlay = () => {
-		setReminderSend(true);
+		setRemindedUserId(userId);
+		writeRemindedUserId(userId);
+		setOverlayItem(absenceReminderOverlayItem);
 		setOverlayActive(true);
-	};
+	}, [userId, isAbsentConsultant, remindedUserId]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleOverlayAction = (buttonFunction: string) => {
 		if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
@@ -72,7 +107,7 @@ export const AbsenceHandler = () => {
 			setOverlayActive(false);
 		}
 		if (buttonFunction === OVERLAY_FUNCTIONS.DEACTIVATE_ABSENCE) {
-			apiSetAbsence(false, userData.absenceMessage)
+			apiSetAbsence(false, userData?.absenceMessage)
 				.then(reloadUserData)
 				.then(() => {
 					setOverlayItem(absenceChangedOverlayItem);

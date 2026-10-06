@@ -1,5 +1,8 @@
+/* Bodies rendered inside the shared `M3Dialog` sheet. The dialog owns the
+   surface, the scrolling and the actions; these rules only shape the text. */
+
 .legalLinkModal__content {
-	color: #1e1e1e;
+	color: var(--m3-on-surface, #1e1e1e);
 	font-size: 16px;
 	line-height: 1.4;
 	white-space: normal;
@@ -36,16 +39,24 @@
 	}
 }
 
-.legalLinkModal__platformNote {
+/* The platform-level note and the "no text configured" degradation read the
+   same way — both are the platform speaking, not a carrier's document. */
+.legalLinkModal__platformNote,
+.legalLinkModal__missing {
 	color: var(--m3-on-surface-variant, #444748);
 	font-size: 15px;
 	line-height: 1.6;
 
 	p {
 		margin: 0 0 16px;
+
 		/* The note is authored with its paragraph breaks; they carry the
 		   "platform, not carrier" distinction and must survive. */
 		white-space: pre-line;
+	}
+
+	p:last-child {
+		margin-bottom: 0;
 	}
 
 	a {

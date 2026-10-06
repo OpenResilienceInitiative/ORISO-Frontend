@@ -93,6 +93,19 @@ export const mockComposerUserData = {
 	}
 } as any;
 
+export const mockComposerAskerData = {
+	userId: 'asker-storybook',
+	userName: 'forelle_geri_1009',
+	displayName: 'forelle geri',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	agencies: [],
+	emailToggles: [],
+	e2eEncryptionEnabled: false,
+	formalLanguage: false,
+	hasArchive: false,
+	isDisplayNameEditable: false
+};
+
 export const buildMockActiveSession = (
 	overrides: Record<string, any> = {},
 	itemOverrides: Record<string, any> = {}
@@ -106,7 +119,7 @@ export const buildMockActiveSession = (
 			id: 360,
 			agencyId: 101,
 			askerMatrixUserId: 'alice',
-			matrixRoomId: '!storybook:oriso.org',
+			matrixRoomId: '!storybook:example.org',
 			postcode: 10115,
 			registrationType: REGISTRATION_TYPE_REGISTERED,
 			status: STATUS_ACTIVE,
@@ -142,7 +155,7 @@ export const buildMockGroupSession = () =>
 			assignedAgencies: [],
 			consultingType: 2,
 			duration: 60,
-			matrixRoomId: '!storybook-group:oriso.org',
+			matrixRoomId: '!storybook-group:example.org',
 			hintMessage: '',
 			messageDate: Date.now(),
 			messagesRead: false,
@@ -285,10 +298,14 @@ const installComposerFetchMocks = () => {
 export function ComposerStoryDecorator({
 	activeSession,
 	roomMembers,
+	userData,
 	children
 }: {
 	activeSession?: any;
 	roomMembers?: Array<{ userId: string; name: string }>;
+	/** Override the signed-in user; defaults to the consultant. Asker-only
+	 *  chrome such as the absence banner needs an asker here. */
+	userData?: any;
 	children: React.ReactNode;
 }) {
 	// Install during render (useState initializer), not in an effect: the
@@ -316,8 +333,9 @@ export function ComposerStoryDecorator({
 			>
 				<UserDataContext.Provider
 					value={{
-						userData: mockComposerUserData,
-						reloadUserData: async () => mockComposerUserData,
+						userData: userData ?? mockComposerUserData,
+						reloadUserData: async () =>
+							userData ?? mockComposerUserData,
 						setUserData: () => {}
 					}}
 				>

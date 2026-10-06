@@ -21,49 +21,41 @@ import {
 const CANONICAL_STEPS: {
 	name: string;
 	labelKey: string;
-	fallback: string;
 	Icon: SvgIconComponent;
 }[] = [
 	{
 		name: 'topic-selection',
 		labelKey: 'registration.md3.stepNames.focus',
-		fallback: 'Thema wählen',
 		Icon: CenterFocusStrongRoundedIcon
 	},
 	{
 		name: 'zipcode',
 		labelKey: 'registration.md3.stepNames.postcode',
-		fallback: 'Postleitzahl',
 		Icon: PlaceRoundedIcon
 	},
 	{
 		name: 'agency-selection',
 		labelKey: 'registration.md3.stepNames.agency',
-		fallback: 'Beratungsstelle',
 		Icon: ApartmentRoundedIcon
 	},
 	{
 		name: 'age',
 		labelKey: 'registration.age.headline',
-		fallback: 'Alter',
 		Icon: CakeRoundedIcon
 	},
 	{
 		name: 'state',
 		labelKey: 'registration.state.headline',
-		fallback: 'Bundesland',
 		Icon: PublicRoundedIcon
 	},
 	{
 		name: 'account-data',
 		labelKey: 'registration.md3.stepNames.register',
-		fallback: 'Registrieren',
 		Icon: HowToRegRoundedIcon
 	},
 	{
 		name: 'request',
 		labelKey: 'registration.md3.stepNames.request',
-		fallback: 'Anfrage stellen',
 		Icon: ChatBubbleRoundedIcon
 	}
 ];
@@ -124,9 +116,9 @@ export const RegistrationHeader = ({
 
 	const steps = useMemo(
 		() =>
-			visibleSteps.map(({ name, labelKey, fallback, Icon }) => ({
+			visibleSteps.map(({ name, labelKey, Icon }) => ({
 				name,
-				label: t(labelKey, fallback),
+				label: t(labelKey),
 				icon: <Icon />
 			})),
 		[visibleSteps, t]
@@ -255,14 +247,14 @@ export const RegistrationHeader = ({
 						mb: 0.75
 					}}
 				>
-					{t('registration.headline', 'Registrierung')}
+					{t('registration.headline')}
 				</Typography>
 				<IconStepper
 					steps={steps}
 					currentStepName={currentStepName}
 					clickableStepNames={clickableStepNames}
 					onStepClick={onStepClick}
-					ariaLabel={t('registration.headline', 'Registrierung')}
+					ariaLabel={t('registration.headline')}
 					stateLabel={(state) => t(`registration.stepState.${state}`)}
 				/>
 			</Box>

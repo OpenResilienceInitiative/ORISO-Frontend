@@ -18,7 +18,7 @@
 
 ## Context First
 
-- Treat `pre-dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise. Keep `dev` stable for QA, as defined by the parent ORISO map.
+- Treat `dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise.
 - Before non-trivial changes, skim `.understand-anything/README.md`, `.understand-anything/ARCHITECTURE.md`, and `.understand-anything/knowledge-graph.json` for fast repo context.
 - Use `CONTEXT.md` for Activity Timeline and notification vocabulary; avoid inventing parallel terms.
 
@@ -48,7 +48,7 @@
 
 ## Review Expectations
 
-- Cursor should compare PRs against `origin/pre-dev` for normal ORISO feature work.
+- Cursor should compare PRs against `origin/dev` for normal ORISO feature work.
 - CodeRabbit is optional/manual and should not be treated as the primary automated reviewer.
 - Automated review should flag missing tests, duplicated UI architecture, unsafe privacy changes, and mergeability risks.
 - Only auto-fix issues that are clearly scoped and testable. Leave architectural or ambiguous changes as review comments.
@@ -67,9 +67,69 @@ delivery rules"). Summary:
   requested reviewers is not open for review.
 - **"Pre-Dev is free" means the server, not the branch.** Deploying images,
   mutating config or data and running E2E on the Pre-Dev server needs no
-  approval; the `pre-dev` *branch* is review-gated like any shared branch.
-- **Restore what you borrowed.** Record image reference *and* `imagePullPolicy`
+  approval; the `dev` _branch_ is review-gated like any shared branch.
+- **Restore what you borrowed.** Record image reference _and_ `imagePullPolicy`
   before swapping anything on Pre-Dev, put both back before reporting done, and
   say so in the report.
 - **State where it was verified** in every PR body — environment and image, or
   plainly "local only".
+- **Attach visual proof of what you did to the issue and the PR.** Any change a
+  reviewer could look at — UI, layout, copy, icons, states — ships with
+  screenshots, not just a prose claim. Capture them from Storybook when the
+  changed components have stories (no backend needed, and it is reproducible by
+  the reviewer); use the running app only when the change needs live data.
+  Commit the images under `docs/storybook/issue-<number>-<slug>/` following the
+  existing `NN-before-*.png` / `NN-after-*.png` convention, embed them in the PR
+  body, and post the same evidence as an issue comment. Include a **before** shot
+  whenever the change fixes something visible — an "after" alone does not show
+  that anything was wrong. Label each image with what it actually proves, and do
+  not imply a screenshot demonstrates behaviour it cannot show; say which parts
+  are covered by tests instead.
+- **Never claim a job is done on evidence you did not produce.** If a job needs a
+  live environment you cannot reach, say so plainly in the PR and the issue, and
+  leave a runnable verification script for a human instead of a completion tick.
+
+## Writing issues and pull requests
+
+Binding for every AI agent. These rules govern _where_ text goes and _whose_
+text may be changed. They do not relax the delivery rules above.
+
+- **Machine detail belongs in fenced code blocks, and gets redacted first.**
+  Scanner output, dependency trees, stack traces, failing job logs, resolved
+  versions, config excerpts: put them inside a fenced block. Strip credentials,
+  tokens, connection strings, personal data and anything else sensitive before
+  pasting — a fenced block controls formatting, not disclosure. A human skimming
+  the ticket must be able to skip the block and still understand the point.
+  Prose outside the block stays short and in plain language.
+- **Write findings into the description, not into another comment.** A comment
+  is for a decision or a question that needs a person. Analysis, cause, status
+  and evidence belong in the issue or pull request description, where the next
+  reader finds them without scrolling a thread. Prefer updating the description
+  over adding a third, fourth, fifth comment.
+  The visual-proof rule above is the one exception: screenshots go in the pull
+  request body _and_ as an issue comment, because that is where reviewers look
+  for them.
+- **Lead with the business or end-user effect.** Before any technical detail,
+  two or three plain sentences: what does not work for whom, and what that
+  costs. Write it so a non-engineer stakeholder can act on it. English, short.
+- **You may edit descriptions — but not everyone's.**
+
+    | Description author                                  | May an agent rewrite it?                                                        |
+    | --------------------------------------------------- | ------------------------------------------------------------------------------- |
+    | `Storypapst`, `kiodreambau`                         | Yes — rewrite, restructure, correct, extend                                     |
+    | `BjoernLudwig`, `HelenaSKloeckner`, any other human | No — leave their wording untouched; append a clearly separated section below it |
+
+- **Adding an analysis to someone's bug report** — the ticket says "X is
+  broken" and you found out why:
+    1. Keep the original report as written.
+    2. Add the plain-language cause, two or three sentences.
+    3. Put the technical evidence under it, in a code block.
+    4. Link the pull request, run or ticket that proves it.
+       If the description was corrected rather than extended, say so in one line
+       so the change is not silent.
+- **Link the ticket you found.** If an issue already covers the problem,
+  reference it rather than restating it, and add your findings there.
+- **Duplicates: decide, never leave both drifting.** Name in the description
+  which ticket survives. A ticket that came back from Caritas — raised by
+  `BjoernLudwig` or `HelenaSKloeckner` — is the one that stays open. Close the
+  agent-created duplicate against it and link the survivor.

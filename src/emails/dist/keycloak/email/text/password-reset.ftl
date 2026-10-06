@@ -2,7 +2,7 @@
 ${msg("orisoResetHeadline")}
 ========================================
 
-${msg("orisoResetBody1", (properties.orisoPlatformName)!'Online-Beratung')}
+${msg("orisoResetBody1", properties.orisoPlatformName)}
 
 ${msg("orisoResetBody2", linkExpirationFormatter(linkExpiration))}
 
@@ -14,15 +14,13 @@ ${msg("orisoResetFootnote")}
 ----------------------------------------------------------------
 ${msg("orisoResetAssurance")}
 
-${(properties.orisoOrgName)!'ORISO'}
+${properties.orisoOrgName}
 ${(properties.orisoOrgAddress)!''}
 ${(properties.orisoContactLine)!''}
 
-${msg("orisoResetOfferedBy", (properties.orisoPlatformName)!'Online-Beratung', (properties.orisoOrgName)!'ORISO')}
+${msg("orisoResetOfferedBy", properties.orisoPlatformName, properties.orisoOrgName)}
 
-${msg("orisoResetFooterLink1")}: ${(properties.orisoSettingsUrl)!'https://app.oriso.org/profile/settings'}
-${msg("orisoResetFooterLink2")}: ${(properties.orisoPrivacyUrl)!'https://app.oriso.org/datenschutz'}
-${msg("orisoResetFooterLink3")}: ${(properties.orisoImprintUrl)!'https://app.oriso.org/impressum'}
-${msg("orisoResetFooterLink4")}: ${(properties.orisoUnsubscribeUrl)!'https://app.oriso.org/profile/settings/notifications'}
+${msg("orisoResetFooterLink1")}: ${properties.orisoPrivacyUrl}
+${msg("orisoResetFooterLink2")}: ${properties.orisoImprintUrl}
 
 ${msg("orisoResetAutomatedNote")}

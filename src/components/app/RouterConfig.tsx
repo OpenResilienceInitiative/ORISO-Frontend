@@ -1,4 +1,3 @@
-import { lazy } from 'react';
 import { isDesktop } from 'react-device-detect';
 import { SessionsListWrapper } from '../sessionsList/SessionsListWrapper';
 import {
@@ -46,11 +45,17 @@ import { BookingEvents } from '../../containers/bookings/components/BookingEvent
 import { BookingReschedule } from '../../containers/bookings/components/BookingReschedule/bookingReschedule';
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 
-const SessionView = lazy(() =>
+const GroupEntryRoom = lazyWithReload(() =>
+	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
+		default: m.GroupEntryRoom
+	}))
+);
+const SessionView = lazyWithReload(() =>
 	import('../session/SessionView').then((m) => ({ default: m.SessionView }))
 );
-const WriteEnquiry = lazy(() =>
+const WriteEnquiry = lazyWithReload(() =>
 	import('../enquiry/WriteEnquiry').then((m) => ({ default: m.WriteEnquiry }))
 );
 
@@ -104,11 +109,24 @@ const overviewRoute = (settings: AppConfigInterface) => ({
 	}
 });
 
+/* Without the app shell: the group's waiting room stands on the same stage
+   the person registered on (Frank, 2026-09-04). It is the client's room:
+   `usePendingGroupChatJoin` sends a counsellor who follows a `?gcid=` link to
+   the group in her own session view instead (#1499). The route stays in the
+   counsellor config only so an old link reaching it can forward her there. */
+const groupEntryPlainRoutes = [
+	{
+		path: '/groups/:chatId/entry',
+		component: GroupEntryRoom
+	}
+];
+
 export const RouterConfigUser = (
 	_settings: AppConfigInterface,
 	hasAssignedConsultant: boolean
 ): any => {
 	return {
+		plainRoutes: groupEntryPlainRoutes,
 		navigation: [
 			{
 				to: '/sessions/user/view',
@@ -221,6 +239,13 @@ export const RouterConfigUser = (
 				type: SESSION_LIST_TYPES.MY_SESSION
 			}
 		],
+		dialogRoutes: [
+			{
+				path: '/sessions/user/view/:groupId/:sessionId/groupChatInfo',
+				component: GroupChatInfo,
+				type: SESSION_LIST_TYPES.MY_SESSION
+			}
+		],
 		profileRoutes: [
 			{
 				path: '/notifications',
@@ -245,7 +270,7 @@ export const RouterConfigUser = (
 
 export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 	return {
-		plainRoutes: [],
+		plainRoutes: groupEntryPlainRoutes,
 		navigation: [
 			overviewRoute(settings),
 			{
@@ -389,7 +414,9 @@ export const RouterConfigConsultant = (settings: AppConfigInterface): any => {
 				path: '/sessions/consultant/sessionView/:groupId/:sessionId/userProfile',
 				component: AskerInfo,
 				type: SESSION_LIST_TYPES.MY_SESSION
-			},
+			}
+		],
+		dialogRoutes: [
 			{
 				path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
 				component: GroupChatInfo,

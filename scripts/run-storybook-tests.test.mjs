@@ -2,15 +2,42 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+	DEFAULT_STORYBOOK_SHARDS,
 	MAX_BROWSER_DISCONNECT_RETRIES,
+	looksLikeBrowserDisconnect,
+	resolveShardCount,
 	shouldRetryStorybookRun,
+	storybookShardArgs,
 	storybookVitestArgs
 } from './run-storybook-tests.mjs';
 
 const disconnect = '[vitest] Browser connection was closed while running tests';
+const abortedGreenSummary = [
+	' Test Files  132 passed (171)',
+	'      Tests  808 passed (808)',
+	'     Errors  1 error'
+].join('\n');
 
 test('retries when the browser disconnect is the only reported failure', () => {
 	assert.equal(shouldRetryStorybookRun(1, disconnect), true);
+});
+
+test('retries an aborted-green summary even if the disconnect line was not captured', () => {
+	// The disconnect is the last thing Vitest prints. Resolving on `close`
+	// before stderr `end` can drop that line; the incomplete file count is
+	// printed earlier and is enough to retry.
+	assert.equal(looksLikeBrowserDisconnect(abortedGreenSummary), true);
+	assert.equal(shouldRetryStorybookRun(1, abortedGreenSummary), true);
+});
+
+test('retries an ANSI-wrapped disconnect line', () => {
+	assert.equal(
+		shouldRetryStorybookRun(
+			1,
+			`\u001b[31m\u001b[1mError\u001b[22m: ${disconnect}. Was the page closed unexpectedly?\u001b[39m`
+		),
+		true
+	);
 });
 
 test('does not retry and mask a failed assertion reported before the disconnect', () => {
@@ -32,9 +59,31 @@ test('does not retry ordinary test failures or successful runs', () => {
 		assert.equal(shouldRetryStorybookRun(1, output), false);
 	}
 	assert.equal(shouldRetryStorybookRun(0, disconnect), false);
+	assert.equal(
+		looksLikeBrowserDisconnect(
+			' Test Files  171 passed (171)\n      Tests  900 passed (900)'
+		),
+		false
+	);
 });
 
-test('does not retry after truncation can have removed an earlier failure', () => {
+test('still retries a disconnect when captured output was truncated', () => {
+	assert.equal(
+		shouldRetryStorybookRun(1, disconnect, {
+			failureDetected: false,
+			outputTruncated: true
+		}),
+		true
+	);
+});
+
+test('a failure latched off the live stream blocks the retry', () => {
+	// The Storybook run emits thousands of "Module … has been externalized"
+	// lines, so MAX_CAPTURED_OUTPUT is crossed on every CI run and truncation
+	// alone must not gate the retry (the test above). `failureDetected` is a
+	// different signal: it is latched in `forwardOutput` as the run streams, so
+	// it reports a failure that truncation has since scrolled out of the buffer
+	// — and it must still stop the retry from masking it.
 	assert.equal(
 		shouldRetryStorybookRun(1, disconnect, {
 			failureDetected: true,
@@ -42,13 +91,36 @@ test('does not retry after truncation can have removed an earlier failure', () =
 		}),
 		false
 	);
+});
+
+test('a real failure in a truncated log still blocks the retry', () => {
 	assert.equal(
-		shouldRetryStorybookRun(1, disconnect, {
+		shouldRetryStorybookRun(1, `Tests 3 failed\n${disconnect}`, {
 			failureDetected: false,
 			outputTruncated: true
 		}),
 		false
 	);
+});
+
+test('retries the interleaved, ANSI-coloured abort from CI run 33968368364', () => {
+	// Two streams share one buffer, so stderr stack frames land between the
+	// stdout summary lines and the coloured disconnect phrase gets split. Only
+	// the aborted-green shape survives that, which is why the retry decision
+	// goes through looksLikeBrowserDisconnect rather than a raw substring test.
+	const interleaved = [
+		'[31mError[39m: [vitest] Browser connection [2mwas',
+		' ❯ WebSocket.emit node:events:531:35',
+		'closed while running tests[22m. Was the page closed unexpectedly?',
+		' ❯ WebSocket.emitClose node_modules/ws/lib/websocket.js:279:10',
+		' Test Files  88 passed (176)',
+		' ❯ Socket.socketOnClose node_modules/ws/lib/websocket.js:1360:15',
+		'      Tests  543 passed (543)',
+		'     Errors  1 error'
+	].join('\n');
+
+	assert.equal(interleaved.includes(disconnect), false);
+	assert.equal(shouldRetryStorybookRun(1, interleaved), true);
 });
 
 test('caps Storybook workers and allows several disconnect retries', () => {
@@ -57,4 +129,40 @@ test('caps Storybook workers and allows several disconnect retries', () => {
 		storybookVitestArgs.filter((arg) => arg.startsWith('--maxWorkers')),
 		['--maxWorkers=2']
 	);
+});
+
+test('splits the suite into sequential shards so one browser session never drives the whole queue', () => {
+	// Every full-suite attempt in ORISO-Frontend#1316 run 34016457101 died at
+	// ~95-107 of 175 files; a shard keeps each orchestrator tab well below that.
+	assert.equal(DEFAULT_STORYBOOK_SHARDS, 4);
+	assert.deepEqual(storybookShardArgs(2, 4), [
+		...storybookVitestArgs,
+		'--shard=2/4'
+	]);
+});
+
+test('runs unsharded when a single shard is requested', () => {
+	assert.deepEqual(storybookShardArgs(1, 1), storybookVitestArgs);
+});
+
+test('reads the shard count from STORYBOOK_TEST_SHARDS and falls back to the default', () => {
+	assert.equal(resolveShardCount({ STORYBOOK_TEST_SHARDS: '6' }), 6);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '0' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: 'abc' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	// parseInt would accept these prefixes as 6 and 1
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '6workers' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(
+		resolveShardCount({ STORYBOOK_TEST_SHARDS: '1.5' }),
+		DEFAULT_STORYBOOK_SHARDS
+	);
+	assert.equal(resolveShardCount({}), DEFAULT_STORYBOOK_SHARDS);
 });

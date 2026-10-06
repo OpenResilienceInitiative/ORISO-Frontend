@@ -7,8 +7,31 @@
 export const COMPOSER_MAX_VIEWPORT_FRACTION = 2 / 3;
 export const COMPOSER_MOBILE_BREAKPOINT = 899;
 
-const MIN_HEIGHT_MOBILE = 180;
+// T10 (05.09.): on the phone the composer opens as ONE line and grows while
+// typing (auto-grow below). 66 px toolbar strip to the editor top + one
+// 20 px line (D1: 14 px × 1.4) + 10 px bottom inset + 2 × 2 px card border
+// = 100 px — no dock under the card, no spare line under the placeholder
+// (stage v3 review). Desktop keeps its Figma baseline …
+const MIN_HEIGHT_MOBILE = 100;
 const MIN_HEIGHT_DESKTOP = 196;
+// … except in dual mode (T35, side panel open): both composers rest at ONE
+// line and grow while typing, like the phone. 1 px border + 16 px dock +
+// 66 px toolbar strip = 84 px to the editor, one 20 px line, then 18 px
+// editor inset + 16 px dock + 1 px border (+ rounding) = 36 px → 138 px.
+const MIN_HEIGHT_COMPACT_DESKTOP = 138;
+// T40 (Frank, round 6): in dual mode the composer has NO outer frame any
+// more — the field sits directly in the 16 px dock (`flushCorner`). 1 px
+// field border + 66 px toolbar strip + one 20 px line + 18 px editor inset
+// + 1 px border = 106 px. Flush implies the one-line rule.
+const MIN_HEIGHT_FLUSH_DESKTOP = 106;
+
+/**
+ * T41 (Frank, 14.09.): whatever the composer grows to, this much of the
+ * timeline stays visible above it. The composer is absolutely positioned
+ * over the timeline, so without a floor the two-thirds rule let it cover
+ * the chat in the dual view, where a pane is half a window tall.
+ */
+export const MIN_TIMELINE_VISIBLE = 200;
 
 const STEP_SMALL = 24;
 const STEP_LARGE = 48;
@@ -57,19 +80,42 @@ export const getEffectiveComposerHeight = (
 
 export const getComposerHeightBounds = ({
 	viewportWidth,
-	viewportHeight
+	viewportHeight,
+	compact = false,
+	flush = false,
+	hostHeight
 }: {
 	viewportWidth: number;
 	viewportHeight: number;
+	/** T35: one line at rest on the desktop too (dual mode). */
+	compact?: boolean;
+	/** T40: dual mode without the outer frame — one line, 32 px less inset. */
+	flush?: boolean;
+	/**
+	 * T41: height of the scrolling timeline the composer lies over
+	 * (`.session__content` / `.sidePanel__timeline`, measured by
+	 * `useComposerDock`). In the dual view that is far shorter than the
+	 * window, so the two-thirds rule alone would hand the composer more room
+	 * than the chat has. Omitted (or 0) → viewport rule only, as before.
+	 */
+	hostHeight?: number;
 }): ComposerHeightBounds => {
 	const minHeight =
 		viewportWidth <= COMPOSER_MOBILE_BREAKPOINT
 			? MIN_HEIGHT_MOBILE
-			: MIN_HEIGHT_DESKTOP;
-	const maxHeight = Math.max(
-		minHeight,
-		Math.round(viewportHeight * COMPOSER_MAX_VIEWPORT_FRACTION)
+			: flush
+				? MIN_HEIGHT_FLUSH_DESKTOP
+				: compact
+					? MIN_HEIGHT_COMPACT_DESKTOP
+					: MIN_HEIGHT_DESKTOP;
+	const viewportCap = Math.round(
+		viewportHeight * COMPOSER_MAX_VIEWPORT_FRACTION
 	);
+	const hostCap =
+		hostHeight && hostHeight > 0
+			? hostHeight - MIN_TIMELINE_VISIBLE
+			: viewportCap;
+	const maxHeight = Math.max(minHeight, Math.min(viewportCap, hostCap));
 	return { minHeight, maxHeight };
 };
 

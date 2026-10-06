@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiGetDepartmentLegal,
+	clearDepartmentLegalCache,
+	getCachedDepartmentLegalOutcome,
 	normalizeDepartmentLegalResponse
 } from './apiGetDepartmentLegal';
 import { fetchData, FETCH_ERRORS } from './fetchData';
@@ -110,5 +112,84 @@ describe('apiGetDepartmentLegal', () => {
 				])
 			})
 		);
+	});
+});
+
+describe('getCachedDepartmentLegalOutcome', () => {
+	beforeEach(() => {
+		clearDepartmentLegalCache();
+	});
+
+	afterEach(() => {
+		clearDepartmentLegalCache();
+		vi.clearAllMocks();
+	});
+
+	it('does not cache unavailable outcomes so a later call retries', async () => {
+		vi.mocked(fetchData)
+			.mockRejectedValueOnce(new Error(FETCH_ERRORS.CATCH_ALL))
+			.mockResolvedValueOnce({
+				dpp: {
+					content: '{"de":"<p>DPP</p>"}',
+					consentText: '{"de":"Einwilligungssatz"}'
+				},
+				imprint: { content: null }
+			});
+
+		await expect(getCachedDepartmentLegalOutcome(42, 7)).resolves.toEqual({
+			status: 'unavailable'
+		});
+
+		await expect(getCachedDepartmentLegalOutcome(42, 7)).resolves.toEqual({
+			status: 'ok',
+			data: {
+				dpp: {
+					content: '{"de":"<p>DPP</p>"}',
+					consentText: '{"de":"Einwilligungssatz"}'
+				},
+				imprint: { content: null, consentText: null }
+			}
+		});
+
+		expect(fetchData).toHaveBeenCalledTimes(2);
+	});
+
+	it('caches a successful fetch for the same agencyId/topicId', async () => {
+		vi.mocked(fetchData).mockResolvedValue({
+			dpp: {
+				content: '{"de":"<p>DPP</p>"}',
+				consentText: '{"de":"Einwilligungssatz"}'
+			},
+			imprint: { content: null }
+		});
+
+		const first = await getCachedDepartmentLegalOutcome(42, 7);
+		const second = await getCachedDepartmentLegalOutcome(42, 7);
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(first).toBe(second);
+		expect(first).toEqual({
+			status: 'ok',
+			data: {
+				dpp: {
+					content: '{"de":"<p>DPP</p>"}',
+					consentText: '{"de":"Einwilligungssatz"}'
+				},
+				imprint: { content: null, consentText: null }
+			}
+		});
+	});
+
+	it('caches a NO_MATCH 404 as ok with null data, not as a failure', async () => {
+		vi.mocked(fetchData).mockRejectedValue(
+			new Error(FETCH_ERRORS.NO_MATCH)
+		);
+
+		const first = await getCachedDepartmentLegalOutcome(42, 7);
+		const second = await getCachedDepartmentLegalOutcome(42, 7);
+
+		expect(fetchData).toHaveBeenCalledTimes(1);
+		expect(first).toEqual({ status: 'ok', data: null });
+		expect(second).toBe(first);
 	});
 });

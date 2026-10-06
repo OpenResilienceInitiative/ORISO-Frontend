@@ -1,7 +1,15 @@
+import { clearLoginRecoveryPassword } from '../../services/loginRecoveryHandoff';
+import { RecoveryKeySaveReminder } from '../E2EEncryptionSupportBanner/RecoveryKeySaveReminder';
 import * as React from 'react';
 import { Navigate } from 'react-router-dom';
+import { loginPathForEmailPreferences } from '../../utils/emailPreferencesReturn';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { Routing } from './Routing';
+import { AccountSetupGate } from '../twoFactorAuth/AccountSetupGate';
+import {
+	isAccountSetupPending,
+	resolveAccountSetupStep
+} from '../twoFactorAuth/accountSetupStep';
 import {
 	UserDataContext,
 	hasUserAuthority,
@@ -15,24 +23,33 @@ import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
-import { handleTokenRefresh } from '../auth/auth';
-import { logout } from '../logout/logout';
+import {
+	handleTokenRefresh,
+	isTokenRefreshUnavailableError
+} from '../auth/auth';
+import { logout, teardownLocalSession } from '../logout/logout';
 import './authenticatedApp.styles';
 import './navigation.styles';
 import { requestPermissions } from '../../utils/notificationHelpers';
 import { useNotificationPermission } from '../../hooks/useNotificationPermission';
-import { useJoinGroupChat } from '../../hooks/useJoinGroupChat';
+import { useAuthenticatedChatRecovery } from '../../hooks/useAuthenticatedChatRecovery';
+import { usePendingGroupChatJoin } from '../../hooks/usePendingGroupChatJoin';
 import { useCall } from '../../globalState/provider/CallProvider';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { E2EEncryptionSupportBanner } from '../E2EEncryptionSupportBanner/E2EEncryptionSupportBanner';
 import { KeyBackupRecoveryPrompt } from '../E2EEncryptionSupportBanner/KeyBackupRecoveryPrompt';
+import { M3SnackbarHost } from '../m3Snackbar/M3SnackbarHost';
+import { JoinRequestCenter } from '../groupChat/joinRequest/JoinRequestCenter';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import {
 	getMatrixAccessToken,
 	persistMatrixLoginData
 } from '../sessionCookie/getMatrixAccessToken';
 import { withAuthenticatedSessionContext } from './authenticatedMatrixLoginData';
-import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
+import { AuthenticatedBuildIdentityBoundary } from './BuildIdentity';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { useDisplayFilterStoreBinding } from '../../hooks/useDisplayFilter';
+import { displayFilterStore } from '../../utils/displayFilter/store';
 import {
 	clearAuthSession,
 	CONSULTANT_LOGIN_BLOCKED_ERROR,
@@ -43,60 +60,84 @@ import { withTimeout } from '../../utils/promiseTimeout';
 
 interface AuthenticatedAppProps {
 	onAppReady: Function;
+	onLogout: Function;
 }
 
-export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
+export const AuthenticatedApp = ({
+	onLogout,
+	onAppReady
+}: AuthenticatedAppProps) => {
 	const { releaseToggles } = useAppConfig();
 	const { setConsultingTypes } = useContext(ConsultingTypesContext);
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const { locale, setLocale } = useContext(LocaleContext);
 	const { setInformal } = useContext(InformalContext);
-	const { joinGroupChat } = useJoinGroupChat();
 	const { setNotifications } = useContext(NotificationsContext);
 	const callContext = useCall();
-	const { setMatrixClientService } = useMatrixClient();
+	const { matrixClientService, setMatrixClientService } = useMatrixClient();
+	// #1377: the display-filter store follows the published client (and
+	// detaches on logout, before the storage hygiene runs).
+	useDisplayFilterStoreBinding();
+	useAuthenticatedChatRecovery(matrixClientService, userData);
+	usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
 	// the browser's permission dialog for anonymous visitors (owner report,
-	// 2026-08-19).
-	useNotificationPermission();
+	// 2026-08-19). Withheld until the profile says the account is the counsellor's
+	// own: an account that still owes its password or second factor takes no calls,
+	// and the dialog would land over the setup gate. Unknown counts as pending here.
+	useNotificationPermission(!!userData && !isAccountSetupPending(userData));
 	const mounted = useRef(true);
 	useEffect(
 		() => () => {
 			mounted.current = false;
+			clearLoginRecoveryPassword();
 		},
 		[]
 	);
 
 	const [appReady, setAppReady] = useState<boolean>(false);
 	const [loading, setLoading] = useState<boolean>(true);
+	/* Every path that ends in `<Navigate to="/login">` below goes through
+	   here: the old session is torn down *before* the login form renders,
+	   so no provider above the router (notification poller, Matrix client)
+	   keeps running on leftover cookies, and the next sign-in starts from a
+	   clean Matrix registry instead of inheriting the old device. */
+	const abandonSession = useCallback(() => {
+		displayFilterStore.detachClient();
+		setMatrixClientService(null);
+		teardownLocalSession();
+		setLoading(false);
+	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
 	// Freshly-registered askers get a welcome loading animation bridging the
 	// bootstrap below (one-shot flag set just before the post-registration redirect).
 	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
-		const shouldShow =
+		const flagged =
 			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
-		if (shouldShow) {
+		if (flagged) {
 			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
 		}
-		return shouldShow;
+		/* Someone who registered through a group link is not about to
+		   write an enquiry — the group's entry room is their handover. */
+		const cameForAGroup = Boolean(
+			new URLSearchParams(window.location.search).get('gcid')
+		);
+		return flagged && !cameForAGroup;
 	});
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
 		// console.log('🧹 Clearing all old notifications on app mount...');
 		setNotifications([]);
-
-		// When the user has a group chat id that means that we need to join the user in the group chat
-		const gcid = new URLSearchParams(window.location.search).get('gcid');
-		joinGroupChat(gcid);
-	}, [joinGroupChat, setNotifications]);
+	}, [setNotifications]);
 
 	useEffect(() => {
 		if (
 			!releaseToggles?.enableNewNotifications &&
 			userData &&
+			!isAccountSetupPending(userData) &&
 			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
 		) {
 			requestPermissions();
@@ -172,6 +213,20 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 											(window as any).callContext =
 												callContext;
 
+											// Deliberately NOT gated: the client has
+											// already started, and the password step needs
+											// a PREPARED client whenever there is
+											// key-backup material to rotate. What IS
+											// withheld is everything acting on the content:
+											// live events, notifications, the deep link.
+											if (
+												isAccountSetupPending(
+													userProfileData
+												)
+											) {
+												return;
+											}
+
 											const { matrixLiveEventBridge } =
 												await import(
 													'../../services/matrixLiveEventBridge'
@@ -200,6 +255,7 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 								);
 							} catch (matrixError) {
 								matrixBootstrapActive.current = false;
+								clearLoginRecoveryPassword();
 								console.error(
 									'Matrix bootstrap failed; continuing with non-chat features',
 									matrixError
@@ -213,11 +269,19 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 								'Authenticated app bootstrap failed',
 								error
 							);
-							setLoading(false);
+							abandonSession();
 						});
 				})
-				.catch(() => {
-					setLoading(false);
+				.catch((error) => {
+					if (isTokenRefreshUnavailableError(error)) {
+						window.setTimeout(() => {
+							if (mounted.current) {
+								setUserDataRequested(false);
+							}
+						}, 2_000);
+						return;
+					}
+					abandonSession();
 				});
 		}
 		// callContext is deliberately omitted: the CallProvider context value is
@@ -225,6 +289,7 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 		// effect; it is only mirrored to window.callContext here.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
+		abandonSession,
 		locale,
 		setConsultingTypes,
 		setInformal,
@@ -239,12 +304,17 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 	}, [appReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const handleLogout = useCallback(() => {
+		// Synchronously, before the async pre-logout handlers and the storage
+		// purge: a pending display-filter write must not recreate this user's
+		// mirror afterwards (#1377 §7.5). The effect cleanup detaches again.
+		displayFilterStore.detachClient();
+		onLogout();
 		// Clear the React context's Matrix client reference on sign-out so a
 		// stale authenticated client cannot survive into a subsequent session
 		// (logout() also resets the module-level registry).
 		setMatrixClientService(null);
 		logout();
-	}, [setMatrixClientService]);
+	}, [onLogout, setMatrixClientService]);
 
 	/* The gate opens itself after SLOW_AFTER_MS as an escape hatch, so the
 	   click can land while bootstrap is still in flight. Tearing the handover
@@ -263,7 +333,6 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 			setShowPostRegLoader(false);
 		}
 	}, [handoverEntered, appReady]);
-	const platformVersion = getPlatformVersion();
 
 	// Post-registration: bridge the bootstrap load with the welcome animation,
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
@@ -278,21 +347,39 @@ export const AuthenticatedApp = ({ onAppReady }: AuthenticatedAppProps) => {
 	}
 
 	if (appReady) {
+		// Account setup comes before the app, not on top of it: until the counsellor's
+		// own password and a second factor are settled, the only ways on are completing
+		// them or logging out. Replacing the routed app is what makes that true.
+		if (resolveAccountSetupStep(userData) !== null) {
+			return (
+				<AuthenticatedBuildIdentityBoundary>
+					<AccountSetupGate onLogout={handleLogout} />
+				</AuthenticatedBuildIdentityBoundary>
+			);
+		}
+
 		return (
-			<>
+			<AuthenticatedBuildIdentityBoundary>
 				<E2EEncryptionSupportBanner />
 				<KeyBackupRecoveryPrompt />
+				<RecoveryKeySaveReminder />
 				<Routing logout={handleLogout} />
-				{platformVersion && (
-					<div className="app__platformVersion">
-						{platformVersion}
-					</div>
+				<M3SnackbarHost />
+				{hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) && (
+					<JoinRequestCenter transport={httpJoinRequestTransport} />
 				)}
-			</>
+			</AuthenticatedBuildIdentityBoundary>
 		);
 	} else if (loading) {
 		return <Loading />;
 	}
 
-	return <Navigate to="/login" replace />;
+	return (
+		<Navigate
+			to={loginPathForEmailPreferences(
+				window.location.pathname + window.location.search
+			)}
+			replace
+		/>
+	);
 };

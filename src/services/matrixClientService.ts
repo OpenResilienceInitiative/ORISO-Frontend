@@ -1,3 +1,4 @@
+import { clearSecretStorageKeys } from './matrixKeyBackupService';
 import { MatrixClient, Room, MatrixEvent } from 'matrix-js-sdk';
 import {
 	MatrixLoginData,
@@ -17,6 +18,8 @@ import { encryptMatrixAttachment } from '../utils/matrixEncryptedAttachment';
 import { buildMatrixRoomEncryptionInitialState } from '../utils/matrixRoomEncryption';
 import {
 	TextMessageContentOptions,
+	type MessageRelationOptions,
+	buildMessageRelationContent,
 	buildTextMessageContent,
 	buildEditContent,
 	buildReactionContent
@@ -43,7 +46,7 @@ type RefreshableRustCrypto = {
 	};
 };
 
-export interface MatrixFileMessageOptions {
+export interface MatrixFileMessageOptions extends MessageRelationOptions {
 	abortController?: AbortController;
 	uploadProgress?: (percentUpload: number) => void;
 }
@@ -65,8 +68,10 @@ const getMatrixFileMessageType = (file: File): string => {
 export const buildMatrixFileMessageContent = (
 	file: File,
 	encryptedFile: Awaited<ReturnType<typeof encryptMatrixAttachment>>['file'],
-	dimensions?: { w: number; h: number } | null
+	dimensions?: { w: number; h: number } | null,
+	options?: MessageRelationOptions
 ): Record<string, unknown> => ({
+	...buildMessageRelationContent(options),
 	body: file.name,
 	filename: file.name,
 	msgtype: getMatrixFileMessageType(file),
@@ -298,12 +303,48 @@ export class MatrixClientService {
 		};
 	}
 
+	private readonly heldCryptoOperations = new Set<Promise<void>>();
+
+	/**
+	 * Runs a crypto operation that must finish on the client it started on (reset, setup,
+	 * recovery). A token refresh replaces the client and rotates the Matrix password, so it waits.
+	 * Stale-device recovery is not held: callers retry on the client it produces.
+	 */
+	public async holdTokenRefreshDuring<T>(
+		operation: () => Promise<T>
+	): Promise<T> {
+		// First let a due or in-flight refresh finish, so the operation starts on the current client.
+		await this.ensureFreshToken().catch(() => undefined);
+		while (this.refreshingToken) {
+			await this.refreshingToken.catch(() => undefined);
+		}
+		// Registered before the operation starts, with no await since the check above: its own first
+		// token check already sees the hold, and no refresh can slip in.
+		let release: () => void = () => undefined;
+		const settled = new Promise<void>((resolve) => (release = resolve));
+		this.heldCryptoOperations.add(settled);
+		try {
+			return await operation();
+		} finally {
+			this.heldCryptoOperations.delete(settled);
+			release();
+		}
+	}
+
+	/** Unbounded on purpose: giving up would replace the client under a running reset. */
+	private async heldCryptoOperationsSettled(): Promise<void> {
+		while (this.heldCryptoOperations.size > 0) {
+			await Promise.all([...this.heldCryptoOperations]);
+		}
+	}
+
 	public async refreshMatrixToken(): Promise<void> {
 		if (this.refreshingToken) {
 			return this.refreshingToken;
 		}
 
-		this.refreshingToken = getMatrixAccessToken()
+		this.refreshingToken = this.heldCryptoOperationsSettled()
+			.then(() => getMatrixAccessToken())
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag
@@ -422,6 +463,10 @@ export class MatrixClientService {
 	public async ensureFreshToken(): Promise<void> {
 		if (this.staleDeviceRecovery) {
 			await this.staleDeviceRecovery;
+		}
+		// A held crypto operation keeps its token: a refresh now would wait for that very operation.
+		if (this.heldCryptoOperations.size > 0) {
+			return;
 		}
 
 		const expiresAt = this.getStoredTokenExpiresAt();
@@ -860,6 +905,7 @@ export class MatrixClientService {
 	}
 
 	private teardownClient(): void {
+		if (this.client) clearSecretStorageKeys(this.client);
 		this.clearRefreshTimer();
 
 		if (this.client) {
@@ -913,7 +959,8 @@ export class MatrixClientService {
 				...encryptedAttachment.file,
 				url: uploadResponse.content_uri
 			},
-			dimensions
+			dimensions,
+			options
 		);
 	}
 

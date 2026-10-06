@@ -93,12 +93,13 @@ export const config: AppConfigInterface = {
 	postcodeFallbackUrl: '{url}{postcode}/',
 	legalLinks: [
 		{
-			url: legalImprintUrl,
-			label: 'login.legal.infoText.impressum'
-		},
-		{
 			url: legalPrivacyUrl,
 			label: 'login.legal.infoText.dataprotection',
+			registration: true
+		},
+		{
+			url: legalImprintUrl,
+			label: 'login.legal.infoText.impressum',
 			registration: true
 		}
 		// {

@@ -1,11 +1,16 @@
 import * as React from 'react';
 import { FC, useContext } from 'react';
-import { Link, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import LegalLinks from '../../legalLinks/LegalLinks';
+import { LegalLinkButton } from '../../legalLinks/LegalLinkButton';
+import { useLegalHtmlWithDialogs } from '../../legalLinks/useLegalHtmlWithDialogs';
 import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { ConsentTextData } from '../../../api/apiGetConsentText';
-import htmlParser from '../../../resources/scripts/util/htmlParser';
+import {
+	AgencyDataInterface,
+	TopicsDataInterface
+} from '../../../globalState/interfaces';
 import { normalizeLegalLang } from '../../../utils/legalContent';
 import { useTraegerSentenceHtml } from './useTraegerSentenceHtml';
 
@@ -35,6 +40,10 @@ export interface ConsentSentenceProps {
 	 * exactly the pre-#250 sentence.
 	 */
 	consentText: ConsentTextData | null;
+	/** Selected agency — passed to the legal-link modal (`scope="agency"`). */
+	agency?: AgencyDataInterface;
+	/** Selected topic — passed to the legal-link modal (`scope="agency"`). */
+	topic?: TopicsDataInterface;
 }
 
 /**
@@ -55,11 +64,26 @@ export interface ConsentSentenceProps {
  * (decision 2 — a Träger text *replaces* the platform sentence, so the
  * platform's mandatory disclosure has to survive that replacement on its own).
  */
-export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
+export const ConsentSentence: FC<ConsentSentenceProps> = ({
+	consentText,
+	agency,
+	topic
+}) => {
 	const { t, i18n } = useTranslation();
 	const legalLinks = useContext(LegalLinksContext);
 
-	const traegerSentence = useTraegerSentenceHtml(consentText);
+	const traegerSentence = useTraegerSentenceHtml(consentText, {
+		agencyName: agency?.name,
+		topicName: topic?.name
+	});
+
+	/* The Träger sentence's platform legal anchors (`{{legal_links}}`
+	   substitutions) open the shared M3 dialog instead of a new tab. */
+	const renderTraegerHtml = useLegalHtmlWithDialogs({
+		scope: 'agency',
+		agencyId: agency?.id,
+		topicId: topic?.id
+	});
 
 	/* Platform wording applies only when no Träger text is configured. A
 	   configured text that cannot be rendered is a fault, not a reason to show
@@ -73,17 +97,14 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 	if (consentText && !traegerSentence) {
 		return (
 			<span role="alert" data-cy="consent-sentence-unrenderable">
-				{t(
-					'registration.dataProtection.unrenderable',
-					'Der Einwilligungstext dieser Beratungsstelle kann derzeit nicht angezeigt werden. Bitte versuchen Sie es später erneut oder wenden Sie sich an die Beratungsstelle.'
-				)}
+				{t('registration.dataProtection.unrenderable')}
 			</span>
 		);
 	}
 
 	if (!traegerSentence) {
 		return (
-			<Typography>
+			<Typography component="span">
 				<LegalLinks
 					delimiter={', '}
 					filter={(legalLink) => legalLink.registration}
@@ -93,10 +114,16 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 					lastDelimiter={t('registration.dataProtection.label.and')}
 					suffix={t('registration.dataProtection.label.suffix')}
 				>
-					{(label, url) => (
-						<Link target="_blank" href={url}>
-							{label}
-						</Link>
+					{(label, url, rawLabel) => (
+						<LegalLinkButton
+							variant="inline"
+							label={label}
+							rawLabel={rawLabel}
+							url={url}
+							scope="agency"
+							agencyId={agency?.id}
+							topicId={topic?.id}
+						/>
 					)}
 				</LegalLinks>
 			</Typography>
@@ -107,12 +134,9 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 		<>
 			<Typography
 				component="span"
-				/* The anchors here come from `renderToString` and are therefore
-				   plain `<a>`, not the MUI `<Link>` the fallback renders. Style
-				   them the same way (`primary.main`, always underlined) so the
-				   two shapes are indistinguishable to a help-seeker — a policy
-				   link that does not read as a link is a consent problem, not a
-				   cosmetic one. */
+				/* Leftover Träger-authored `<a>` (not a platform legal link) stay
+				   anchors. Paint them the same as `LegalLinkButton variant="inline"`
+				   so a policy link still reads as a link. */
 				sx={{
 					'display': 'block',
 					'& a': {
@@ -122,7 +146,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 				}}
 				data-cy="consent-sentence-traeger"
 			>
-				{htmlParser(traegerSentence.html)}
+				{renderTraegerHtml(traegerSentence.html)}
 			</Typography>
 			{traegerSentence.isMachineTranslated && (
 				<Typography
@@ -146,9 +170,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 						language: languageName(
 							traegerSentence.originalLang,
 							i18n?.language
-						),
-						defaultValue:
-							'Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).'
+						)
 					})}
 				</Typography>
 			)}
@@ -165,10 +187,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 						}}
 						data-cy="consent-fallback-language"
 					>
-						{t(
-							'legal.notice.fallbackLanguage',
-							'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.'
-						)}
+						{t('legal.notice.fallbackLanguage')}
 					</Typography>
 				)}
 			<Typography
@@ -183,10 +202,7 @@ export const ConsentSentence: FC<ConsentSentenceProps> = ({ consentText }) => {
 				    client renders beneath the sentence." So it comes from the
 				    catalogue, not from the payload — and a Träger cannot edit
 				    it away, which is the point of ADR-021 decision 2. */}
-				{t(
-					'registration.dataProtection.cookieNotice',
-					'Für Authentifizierung und Navigation verwendet diese Webseite Cookies.'
-				)}
+				{t('registration.dataProtection.cookieNotice')}
 			</Typography>
 		</>
 	);

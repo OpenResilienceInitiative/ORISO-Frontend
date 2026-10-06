@@ -1,6 +1,17 @@
+import {
+	clearLoginRecoveryPassword,
+	consumeLoginRecoveryPassword,
+	stageLoginRecoveryPassword
+} from '../../services/loginRecoveryHandoff';
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { autoLogin, getPostRegistrationGroupChatId } from './autoLogin';
+import {
+	autoLogin,
+	buildAppRedirectPath,
+	getPostRegistrationGroupChatId,
+	getPostRegistrationSessionId,
+	redirectToApp
+} from './autoLogin';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import {
 	getMatrixAccessToken,
@@ -80,6 +91,7 @@ const matrixResponse = {
 describe('autoLogin', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearLoginRecoveryPassword();
 		mockAppConfig.multitenancyWithSingleDomainEnabled = false;
 		mockAppConfig.useTenantService = false;
 		mockAppConfig.blockConsultantAppLogin = false;
@@ -87,6 +99,41 @@ describe('autoLogin', () => {
 		vi.mocked(getKeycloakAccessToken).mockResolvedValue(keycloakResponse);
 		vi.mocked(getMatrixAccessToken).mockResolvedValue(matrixResponse);
 		vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+	});
+
+	it('stages a one-use password only after complete OTP authentication and Matrix login', async () => {
+		await autoLogin({
+			username: 'synthetic',
+			password: 'synthetic-password',
+			otp: '123456'
+		});
+		expect(getKeycloakAccessToken).toHaveBeenCalledWith(
+			'synthetic',
+			'synthetic-password',
+			'123456'
+		);
+		expect(await consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
+			'synthetic-password'
+		);
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
+	});
+	it('clears a stale handoff and never stages credentials when OTP is required or rejected', async () => {
+		await stageLoginRecoveryPassword(
+			matrixResponse.userId,
+			'stale-synthetic'
+		);
+		vi.mocked(getKeycloakAccessToken).mockRejectedValue(
+			new Error('OTP_REQUIRED')
+		);
+		await expect(
+			autoLogin({ username: 'synthetic', password: 'synthetic-password' })
+		).rejects.toThrow();
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
 	});
 
 	// The consultant login block (PR #273 originally blocked EVERY counsellor
@@ -261,4 +308,137 @@ describe('getPostRegistrationGroupChatId', () => {
 			expect(getPostRegistrationGroupChatId(search)).toBeUndefined();
 		}
 	);
+});
+
+describe('getPostRegistrationSessionId', () => {
+	it('reads the first asker session id from the session list payload', () => {
+		expect(
+			getPostRegistrationSessionId({
+				sessions: [{ session: { id: 102900 } }]
+			})
+		).toBe('102900');
+	});
+
+	it('returns undefined when the session list is empty', () => {
+		expect(getPostRegistrationSessionId({ sessions: [] })).toBeUndefined();
+		expect(getPostRegistrationSessionId(undefined)).toBeUndefined();
+	});
+});
+
+describe('redirectToApp', () => {
+	it('uses client-side navigation instead of a hard reload', () => {
+		const navigate = vi.fn();
+		const hrefBefore = window.location.href;
+
+		redirectToApp(undefined, { navigate });
+
+		expect(navigate).toHaveBeenCalledWith('/sessions');
+		expect(window.location.href).toBe(hrefBefore);
+	});
+
+	it('navigates to the asker session route when a session id is known', () => {
+		const navigate = vi.fn();
+
+		redirectToApp(undefined, { navigate, sessionId: 102900 });
+
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/user/view/session/102900'
+		);
+	});
+
+	it('preserves the group chat deep link on the session route', () => {
+		const navigate = vi.fn();
+
+		redirectToApp('!room:matrix.localhost', {
+			navigate,
+			sessionId: 7
+		});
+
+		expect(navigate).toHaveBeenCalledWith(
+			`/sessions/user/view/session/7?${new URLSearchParams({
+				gcid: '!room:matrix.localhost'
+			}).toString()}`
+		);
+	});
+});
+
+describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
+	it('returns to the selected email switch after login', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				'/sessions/consultant/sessionView/session/3363',
+				'/profile/einstellungen/email?mail=tagesuebersicht'
+			)
+		).toBe('/profile/einstellungen/email?mail=tagesuebersicht');
+	});
+
+	it('rejects an external email-settings return target', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'https://evil.example/profile/einstellungen/email'
+			)
+		).toBe('/sessions');
+	});
+
+	it('lands on the remembered consultant session', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				'/sessions/consultant/sessionView/session/3363'
+			)
+		).toBe('/sessions/consultant/sessionView/session/3363');
+	});
+
+	it('keeps the gcid query on the restored route', () => {
+		expect(
+			buildAppRedirectPath(
+				'abc',
+				undefined,
+				'/sessions/consultant/sessionView/!room:x/12/'
+			)
+		).toBe('/sessions/consultant/sessionView/!room:x/12/?gcid=abc');
+	});
+
+	it('prefers an explicit post-registration session over the remembered one', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				7,
+				'/sessions/consultant/sessionView/session/3363'
+			)
+		).toBe('/sessions/user/view/session/7');
+	});
+
+	it('ignores anything that is not a consultant session route', () => {
+		for (const bad of [
+			null,
+			undefined,
+			'',
+			'https://evil.example/',
+			'//evil.example',
+			'/sessions/consultant/sessionPreview/session/1',
+			'/sessions/consultant/sessionView/'
+		]) {
+			expect(buildAppRedirectPath(undefined, undefined, bad)).toBe(
+				'/sessions'
+			);
+		}
+	});
+
+	it('navigates via the router when a navigate function is given', () => {
+		const navigate = vi.fn();
+		redirectToApp(undefined, {
+			navigate,
+			restorePath: '/sessions/consultant/sessionView/session/42'
+		});
+		expect(navigate).toHaveBeenCalledWith(
+			'/sessions/consultant/sessionView/session/42'
+		);
+	});
 });

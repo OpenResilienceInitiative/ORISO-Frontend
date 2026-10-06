@@ -1,3 +1,4 @@
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,6 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { apiPostRegistration } from '../../api/apiPostRegistration';
 import {
 	generatePseudonym,
 	generatePassword,
@@ -38,7 +38,7 @@ import {
 } from '../../utils/anonName/engine';
 import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { redirectToApp } from '../registration/autoLogin';
-import { endpoints } from '../../resources/scripts/endpoints';
+import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
 	TenantContext,
@@ -94,6 +94,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
 	const [username] = useState<string>(() => toRegistrationUsername(identity));
 	const [password] = useState<string>(() => generatePassword());
+	const registerThenLogin = useRegisterThenLogin();
+	/* The account — and the enquiry with it — exists; only the login after it
+	   failed (#1533). From here on "start" only logs in again, so the topic
+	   and the counselling centre are fixed and nothing about them is checked
+	   again (CodeRabbit on #1567). */
+	const [loginRetry, setLoginRetry] = useState(false);
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
@@ -103,7 +109,6 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	// Only the setter is needed: the current value is read via the functional
 	// updater to show the no-availability modal once per topic.
 	const [, setShownNoAvailabilityTopics] = useState<Set<number>>(new Set());
-
 
 	// Fetch all topics on mount
 	useEffect(() => {
@@ -161,6 +166,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			apiGetConsultantAvailability(topic.id, consultingTypeId)
 				.then((res) => {
 					if (res && res.available === false) {
+						/* A check started before the account existed can
+						   answer after it: the enquiry is made, so no alert
+						   over the login retry (CodeRabbit on #1567). */
+						if (registerThenLogin.accountCreated()) {
+							return false;
+						}
 						if (force) {
 							openNoAvailabilityModal(topic);
 						} else {
@@ -179,7 +190,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					return true;
 				})
 				.catch(() => true),
-		[openNoAvailabilityModal]
+		[openNoAvailabilityModal, registerThenLogin]
 	);
 
 	// Load agencies for a specific topic
@@ -223,6 +234,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, uniqueAgencies);
 							return newMap;
 						});
+						/* An answer that arrives after the account was created
+						   (a topic opened before "start") only fills its list:
+						   the choice the account was made for stays, and no
+						   availability alert opens over the login retry
+						   (CodeRabbit on #1567). */
+						if (registerThenLogin.accountCreated()) {
+							return;
+						}
 						// Auto-select first agency if none selected
 						if (!selectedAgency && uniqueAgencies.length > 0) {
 							setSelectedAgency(uniqueAgencies[0]);
@@ -240,6 +259,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, []);
 							return newMap;
 						});
+						if (registerThenLogin.accountCreated()) {
+							return;
+						}
 						setSelectedTopic(topic);
 						setSelectedAgency(null);
 						setShownNoAvailabilityTopics((prev) => {
@@ -266,6 +288,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						newMap.set(topic.id, []);
 						return newMap;
 					});
+					if (registerThenLogin.accountCreated()) {
+						return;
+					}
 					setSelectedTopic(topic);
 					setSelectedAgency(null);
 				})
@@ -281,11 +306,21 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				abortController.abort();
 			};
 		},
-		[topicAgencies, selectedAgency, checkConsultantAvailability]
+		[
+			topicAgencies,
+			selectedAgency,
+			checkConsultantAvailability,
+			registerThenLogin
+		]
 	);
 
 	// Handle topic expansion
 	const handleTopicToggle = (topic: TopicsDataInterface) => {
+		/* Opening another topic auto-selects or clears the counselling centre,
+		   which would take the start button away from a login retry. */
+		if (loginRetry) {
+			return;
+		}
 		setExpandedTopics((prev) => {
 			const newSet = new Set(prev);
 			if (newSet.has(topic.id)) {
@@ -335,24 +370,48 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						: {})
 			};
 
-			apiPostRegistration(
-				endpoints.registerAsker,
-				registrationData,
-				settings.multitenancyWithSingleDomainEnabled,
-				tenant
-			)
+			/* The first press registers and logs in; once the account
+			   exists, a press only logs in again with the same generated
+			   credentials — so the button can come back after any failure
+			   without ever making a second account (#1533). */
+			registerThenLogin
+				.submit(
+					registrationData,
+					settings.multitenancyWithSingleDomainEnabled,
+					tenant
+				)
 				.then(() => {
 					// Registration successful, auto-login completed by apiPostRegistration
 					// Redirect to app (same as normal registration)
-					redirectToApp();
+					redirectToApp(undefined, { navigate });
 				})
 				.catch((error) => {
-					// console.error('Anonymous chat registration failed:', error);
 					setIsRegistering(false);
+					if (registerThenLogin.accountCreated()) {
+						/* An agency answer that arrived while the account was
+						   still being created may have cleared the choice or
+						   opened the alert. The retry logs in with what was
+						   submitted, so put that back (CodeRabbit on #1567). */
+						setSelectedAgency(selectedAgency);
+						setSelectedTopic(selectedTopic);
+						setNoAvailabilityModalOpen(false);
+						setLoginRetry(true);
+					}
+					/* A DPA refusal comes from the registration; once the
+					   account exists, only the login retry notice applies. */
+					const dpaNotice = registerThenLogin.accountCreated()
+						? null
+						: getCounsellingDpaNotification(error, t);
+					if (dpaNotice) {
+						addNotification(dpaNotice);
+						return;
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
-						text: t('registration.errors.ups.text'),
+						text: registerThenLogin.accountCreated()
+							? t('registration.accountCreated.retry')
+							: t('registration.errors.ups.text'),
 						closeable: true,
 						timeout: 3000
 					});
@@ -361,8 +420,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 		// Re-verify availability at the moment of starting — presence can change
 		// between selecting the topic and clicking start. Block and show the
-		// alert when no counsellor is available.
-		if (selectedTopic) {
+		// alert when no counsellor is available. Not for a login retry: the
+		// enquiry already exists, and a counsellor going offline meanwhile must
+		// not keep the person out of it.
+		if (selectedTopic && !registerThenLogin.accountCreated()) {
 			checkConsultantAvailability(
 				selectedTopic,
 				selectedAgency.consultingType,
@@ -388,7 +449,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		tenant,
 		isRegistering,
 		t,
-		addNotification
+		addNotification,
+		navigate,
+		registerThenLogin
 	]);
 
 	const canRegister = selectedAgency && selectedTopic && !isRegistering;
@@ -439,17 +502,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					}}
 				>
 					<Typography variant="h3" sx={{ mb: '24px' }}>
-						{t('anonymousChat.headline', 'Anonyme Beratung')}
+						{t('anonymousChat.headline')}
 					</Typography>
 
 					<Typography
 						variant="body1"
 						sx={{ mb: '32px', color: 'text.secondary' }}
 					>
-						{t(
-							'anonymousChat.subline',
-							'Wählen Sie eine Beratungsstelle und starten Sie sofort eine anonyme Beratung.'
-						)}
+						{t('anonymousChat.subline')}
 					</Typography>
 
 					{/* Username and Password Display (Read-only) */}
@@ -474,7 +534,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									gap: '12px'
 								}}
 							>
-								<AnimalAvatar avatar={identity.avatar} size={48} />
+								<AnimalAvatar
+									avatar={identity.avatar}
+									size={48}
+								/>
 								<Box sx={{ flex: 1 }}>
 									<Typography
 										variant="body2"
@@ -484,8 +547,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 										}}
 									>
 										{t(
-											'registration.account.username.label',
-											'Benutzername'
+											'registration.account.username.label'
 										)}
 									</Typography>
 									<Typography
@@ -501,10 +563,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 											mt: '4px'
 										}}
 									>
-										{t(
-											'anonymousChat.username.info',
-											'Dieser Benutzername wurde automatisch generiert'
-										)}
+										{t('anonymousChat.username.info')}
 									</Typography>
 								</Box>
 							</Box>
@@ -525,10 +584,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									variant="body2"
 									sx={{ color: 'text.secondary', mb: '8px' }}
 								>
-									{t(
-										'registration.account.password.label',
-										'Passwort'
-									)}
+									{t('registration.account.password.label')}
 								</Typography>
 								<TextField
 									fullWidth
@@ -546,12 +602,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 															notificationType:
 																NOTIFICATION_TYPE_SUCCESS,
 															title: t(
-																'anonymousChat.password.copied.title',
-																'Passwort kopiert'
+																'anonymousChat.password.copied.title'
 															),
 															text: t(
-																'anonymousChat.password.copied.text',
-																'Das Passwort wurde in die Zwischenablage kopiert.'
+																'anonymousChat.password.copied.text'
 															),
 															closeable: true,
 															timeout: 3000
@@ -589,10 +643,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 										display: 'block'
 									}}
 								>
-									{t(
-										'anonymousChat.password.warning',
-										'Bitte kopieren Sie das Passwort und speichern Sie es sicher, um später auf Ihr Konto zugreifen zu können.'
-									)}
+									{t('anonymousChat.password.warning')}
 								</Typography>
 							</Box>
 						</Box>
@@ -604,10 +655,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							variant="h5"
 							sx={{ mb: '16px', fontWeight: '600' }}
 						>
-							{t(
-								'anonymousChat.topics.headline',
-								'Beratungsthemen und Beratungsstellen wählen'
-							)}
+							{t('anonymousChat.topics.headline')}
 						</Typography>
 
 						{loadingTopics ? (
@@ -625,10 +673,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 								variant="body2"
 								sx={{ color: 'text.secondary' }}
 							>
-								{t(
-									'anonymousChat.topics.noresults',
-									'Keine Beratungsthemen verfügbar.'
-								)}
+								{t('anonymousChat.topics.noresults')}
 							</Typography>
 						) : (
 							<Box>
@@ -689,8 +734,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 														}}
 													>
 														{t(
-															'anonymousChat.agencies.noresults',
-															'Für dieses Thema sind keine Beratungsstellen verfügbar.'
+															'anonymousChat.agencies.noresults'
 														)}
 													</Typography>
 												) : (
@@ -765,6 +809,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 																			}}
 																		>
 																			<FormControlLabel
+																				disabled={
+																					loginRetry
+																				}
 																				value={
 																					agency.id
 																				}
@@ -827,8 +874,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 																							}}
 																						>
 																							{t(
-																								'registration.agency.result.languages',
-																								'Diese Beratungsstelle berät Sie auf:'
+																								'registration.agency.result.languages'
 																							)}
 																						</Typography>
 																						<AgencyLanguages
@@ -882,7 +928,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						disabled={isRegistering}
 						sx={{ flex: 1 }}
 					>
-						{t('registration.back', 'Zurück')}
+						{t('registration.back')}
 					</Button>
 					<Button
 						variant="contained"
@@ -891,11 +937,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						sx={{ flex: 1 }}
 					>
 						{isRegistering
-							? t(
-									'registration.registering',
-									'Registrierung läuft...'
-								)
-							: t('anonymousChat.start', 'Beratung starten')}
+							? t('registration.registering')
+							: t('anonymousChat.start')}
 					</Button>
 				</Box>
 			</Box>
@@ -943,18 +986,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
-							{t(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
+							{t('anonymousChat.noAvailability.title')}
 						</Typography>
 					</Box>
 
 					<Typography variant="body1" sx={{ mb: '16px' }}>
-						{t(
-							'anonymousChat.noAvailability.subtitle',
-							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
-						)}
+						{t('anonymousChat.noAvailability.subtitle')}
 					</Typography>
 
 					<Box
@@ -995,8 +1032,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 									}}
 								>
 									{t(
-										'anonymousChat.noAvailability.openingHours',
-										'Reguläre Öffnungszeiten anzeigen'
+										'anonymousChat.noAvailability.openingHours'
 									)}
 								</Typography>
 							</Box>
@@ -1032,8 +1068,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 										}}
 									>
 										{t(
-											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
-											entry.day
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`
 										)}
 									</Typography>
 									<Typography
@@ -1050,20 +1085,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					</Box>
 
 					<Typography variant="body1" sx={{ mb: '8px' }}>
-						{t(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
-						)}
+						{t('anonymousChat.noAvailability.mailHint')}
 					</Typography>
 
 					<Typography
 						variant="body2"
 						sx={{ fontWeight: 700, mb: '16px' }}
 					>
-						{t(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
+						{t('anonymousChat.noAvailability.tip')}
 					</Typography>
 
 					<Button
@@ -1078,10 +1107,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						}}
 						startIcon={<NorthEastIcon />}
 					>
-						{t(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'anonyme Mail-Beratung starten'
-						)}
+						{t('anonymousChat.noAvailability.startMailCounseling')}
 					</Button>
 
 					<Typography
@@ -1093,10 +1119,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							mb: '16px'
 						}}
 					>
-						{t(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
+						{t('anonymousChat.noAvailability.responseTime')}
 					</Typography>
 
 					<Box sx={{ display: 'flex', gap: '10px' }}>
@@ -1115,10 +1138,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 								color: '#4C555F'
 							}}
 						>
-							{t(
-								'anonymousChat.noAvailability.back',
-								'Zurück zur vorherigen Seite'
-							)}
+							{t('anonymousChat.noAvailability.back')}
 						</Button>
 						<Button
 							fullWidth
@@ -1132,10 +1152,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 								color: '#A5000A'
 							}}
 						>
-							{t(
-								'anonymousChat.noAvailability.later',
-								'Später wiederkommen'
-							)}
+							{t('anonymousChat.noAvailability.later')}
 						</Button>
 					</Box>
 
@@ -1144,11 +1161,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							variant="caption"
 							sx={{ mt: '12px', display: 'block', opacity: 0.7 }}
 						>
-							{t(
-								'anonymousChat.noAvailability.topicLabel',
-								'Angefragtes Thema: {{topic}}',
-								{ topic: noAvailabilityModalTopic.name }
-							)}
+							{t('anonymousChat.noAvailability.topicLabel', {
+								topic: noAvailabilityModalTopic.name
+							})}
 						</Typography>
 					)}
 				</Box>
