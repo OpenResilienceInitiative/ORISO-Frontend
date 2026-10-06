@@ -306,7 +306,13 @@ export const ProductTourAdapter = ({
 				// The app shell is a fixed-viewport layout; scrolling the
 				// window would break it and every tour target is in view.
 				skipScroll: true,
-				zIndex: 53
+				zIndex: 53,
+				// Guided flows opt out of ESC / overlay-click dismissal so a
+				// stray key or click cannot mark the exercise skipped.
+				...(tour.dismissible === false && {
+					dismissKeyAction: false,
+					overlayClickAction: false
+				})
 			}}
 		/>
 	);

@@ -461,4 +461,55 @@ describe('ProductTourAdapter', () => {
 			]);
 		});
 	});
+
+	describe('dismiss safety', () => {
+		it('keeps joyride defaults for ordinary tours so ESC and overlay clicks close them', async () => {
+			renderAdapter();
+
+			await waitFor(() => expect(joyrideProps).not.toBeNull());
+			const options = (joyrideProps as any).options;
+			expect(options).not.toHaveProperty('dismissKeyAction');
+			expect(options).not.toHaveProperty('overlayClickAction');
+		});
+
+		it('disables ESC and overlay clicks for a non-dismissible tour', async () => {
+			renderAdapter({ tour: { ...tour, dismissible: false } });
+
+			await waitFor(() => expect(joyrideProps).not.toBeNull());
+			const options = (joyrideProps as any).options;
+			expect(options.dismissKeyAction).toBe(false);
+			expect(options.overlayClickAction).toBe(false);
+		});
+
+		it('keeps the highlighted target clickable', async () => {
+			renderAdapter({ tour: { ...tour, dismissible: false } });
+
+			await waitFor(() => expect(joyrideProps).not.toBeNull());
+			expect(
+				(joyrideProps as any).options.blockTargetInteraction
+			).not.toBe(true);
+		});
+
+		it('still ends a non-dismissible tour through the explicit close button', async () => {
+			const { onTerminal } = renderAdapter({
+				tour: { ...tour, dismissible: false }
+			});
+			await waitFor(() => expect(joyrideProps!.run).toBe(true));
+
+			act(() => {
+				joyrideProps!.onEvent({
+					action: 'skip',
+					index: 0,
+					status: 'skipped',
+					type: 'tour:end'
+				});
+			});
+
+			await waitFor(() =>
+				expect(onTerminal).toHaveBeenCalledWith(
+					expect.objectContaining({ status: 'skipped' })
+				)
+			);
+		});
+	});
 });
