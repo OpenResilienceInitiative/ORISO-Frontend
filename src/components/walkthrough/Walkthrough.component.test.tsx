@@ -4,12 +4,18 @@ import { act, cleanup, render, waitFor } from '@testing-library/react';
 import { createStore, Provider } from 'jotai';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiPatchConsultantData } from '../../api';
-import { TenantContext, UserDataContext } from '../../globalState';
+import { AUTHORITIES, TenantContext, UserDataContext } from '../../globalState';
 import { frontendTours } from '../productTour/tourDefinitions';
 import { tourLaunchRequestAtom } from '../productTour/tourLaunchState';
 import { registerTourHostHooks } from '../productTour/tourHostHooks';
 import { versionedTourProgressRepository } from '../productTour/versionedTourProgressRepository';
 import type { TourDefinition } from '../productTour/types';
+import {
+	exitPracticeMode,
+	getPracticeSnapshot
+} from '../../practice/practiceMode';
+import { registerPracticeTourHostHooks } from '../../practice/practiceTourHostHooks';
+import { practiceTourProgressAtom } from '../../practice/usePracticeTourProgress';
 import { Walkthrough } from './Walkthrough';
 
 let adapterProps: any = null;
@@ -35,7 +41,50 @@ vi.mock('../productTour/versionedTourProgressRepository', () => ({
 // The globalState barrel pulls lottie (crashes in jsdom): stub the player.
 vi.mock('lottie-react', () => ({ default: () => null }));
 
-const appConfig: { enableWalkthrough: boolean } = { enableWalkthrough: true };
+const appConfig: {
+	enableWalkthrough: boolean;
+	releaseToggles?: { enablePracticeArea?: boolean };
+} = { enableWalkthrough: true };
+
+// Stand-ins for the practice tours of S5/S6: one step is a Träger variant.
+vi.mock('../../practice/practiceToursSource', () => {
+	const step = (id: string, extra: object = {}) => ({
+		id,
+		target: '',
+		titleKey: `${id}.title`,
+		contentKey: `${id}.content`,
+		...extra
+	});
+	const base = {
+		version: 1,
+		surface: 'frontend',
+		audiences: ['consultant'],
+		titleKey: 'practice.test.title',
+		summaryKey: 'practice.test.summary',
+		dismissible: false
+	};
+	return {
+		practiceTours: [
+			{
+				...base,
+				id: 'consultant-practice-accept',
+				steps: [
+					step('p1'),
+					step('p2', {
+						when: { flag: 'featureTeamDiscussionEnabled' }
+					}),
+					step('p3'),
+					step('p4')
+				]
+			},
+			{
+				...base,
+				id: 'consultant-practice-supervision',
+				steps: [step('s1'), step('s2')]
+			}
+		]
+	};
+});
 vi.mock('../../hooks/useAppConfig', () => ({
 	useAppConfig: () => appConfig
 }));
@@ -78,8 +127,10 @@ const flushProgressRead = () => act(async () => {});
 
 afterEach(() => {
 	cleanup();
+	exitPracticeMode();
 	adapterProps = null;
 	appConfig.enableWalkthrough = true;
+	delete appConfig.releaseToggles;
 	vi.clearAllMocks();
 });
 
@@ -586,6 +637,217 @@ describe('Walkthrough', () => {
 			} finally {
 				unregister();
 			}
+		});
+	});
+
+	describe('practice tours (#1622)', () => {
+		const consultant = {
+			grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT]
+		};
+		const accept = (requestedAt = 40) => ({
+			tourId: 'consultant-practice-accept',
+			mode: 'start',
+			requestedAt
+		});
+		const practiceOn = () => {
+			appConfig.releaseToggles = { enablePracticeArea: true };
+		};
+
+		it('hosts a requested practice tour with the personal switch off', () => {
+			practiceOn();
+			renderWalkthrough(
+				{ ...consultant, isWalkThroughEnabled: false },
+				accept()
+			);
+
+			expect(adapterProps.tour.id).toBe('consultant-practice-accept');
+			expect(adapterProps.active).toBe(true);
+			expect(adapterProps.tour.dismissible).toBe(false);
+		});
+
+		it('ignores a practice request while the release flag is off', () => {
+			const { queryByTestId } = renderWalkthrough(
+				{ ...consultant, isWalkThroughEnabled: false },
+				accept()
+			);
+
+			expect(queryByTestId('product-tour-adapter')).toBeNull();
+		});
+
+		it('ignores a practice request while the master switch is off', () => {
+			practiceOn();
+			appConfig.enableWalkthrough = false;
+			const { queryByTestId } = renderWalkthrough(consultant, accept());
+
+			expect(queryByTestId('product-tour-adapter')).toBeNull();
+		});
+
+		it('ignores a practice request from anybody but a counsellor', () => {
+			practiceOn();
+			const { queryByTestId } = renderWalkthrough(
+				{ grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+				accept()
+			);
+
+			expect(queryByTestId('product-tour-adapter')).toBeNull();
+		});
+
+		it('ignores a Supervision request when the Träger switched Supervision off', () => {
+			practiceOn();
+			const { queryByTestId } = renderWalkthrough(
+				consultant,
+				{
+					tourId: 'consultant-practice-supervision',
+					mode: 'start',
+					requestedAt: 41
+				},
+				{ featureSupervisionEnabled: false }
+			);
+
+			expect(queryByTestId('product-tour-adapter')).toBeNull();
+		});
+
+		it('never auto-runs a practice tour, whatever the flags say', async () => {
+			practiceOn();
+			renderWalkthrough({ ...consultant, isWalkThroughEnabled: true });
+
+			await waitFor(() => expect(adapterProps).not.toBeNull());
+			expect(adapterProps.tour.id).toBe('consultant-walkthrough');
+		});
+
+		it('hands the adapter the steps of this tenant, so the count matches what the user walks', () => {
+			practiceOn();
+			renderWalkthrough(consultant, accept(), {
+				featureTeamDiscussionEnabled: false
+			});
+
+			expect(
+				adapterProps.tour.steps.map((s: { id: string }) => s.id)
+			).toEqual(['p1', 'p3', 'p4']);
+		});
+
+		it('keeps the banner count in step with the tour that runs', async () => {
+			practiceOn();
+			const { store } = renderWalkthrough(consultant, accept(), {
+				featureTeamDiscussionEnabled: false
+			});
+			await waitFor(() =>
+				expect(store.get(practiceTourProgressAtom)).toEqual({
+					tourId: 'consultant-practice-accept',
+					stepIndex: 0,
+					stepCount: 3
+				})
+			);
+
+			act(() =>
+				adapterProps.onEvent('step_viewed', {
+					id: 'p4',
+					target: '',
+					titleKey: 't',
+					contentKey: 'c'
+				})
+			);
+
+			expect(store.get(practiceTourProgressAtom)).toEqual({
+				tourId: 'consultant-practice-accept',
+				stepIndex: 2,
+				stepCount: 3
+			});
+		});
+
+		it('forgets the progress when the run ends', async () => {
+			practiceOn();
+			const { store, unmount } = renderWalkthrough(consultant, accept());
+			await waitFor(() =>
+				expect(store.get(practiceTourProgressAtom)).not.toBeNull()
+			);
+
+			unmount();
+
+			expect(store.get(practiceTourProgressAtom)).toBeNull();
+		});
+
+		it('does not feed the practice banner for the ordinary tours', async () => {
+			practiceOn();
+			const { store } = renderWalkthrough(consultant, {
+				tourId: 'consultant-mail-counselling',
+				mode: 'start',
+				requestedAt: 42
+			});
+
+			expect(store.get(practiceTourProgressAtom)).toBeNull();
+		});
+
+		it('persists progress under the practice tour id', async () => {
+			practiceOn();
+			const { store } = renderWalkthrough(consultant, accept());
+
+			adapterProps.onEvent('step_completed', { id: 'p1' });
+			await act(() =>
+				adapterProps.onTerminalStatus({
+					tourId: 'consultant-practice-accept',
+					tourVersion: 1,
+					status: 'completed'
+				})
+			);
+
+			expect(
+				versionedTourProgressRepository.saveProgress
+			).toHaveBeenCalledWith({
+				tourId: 'consultant-practice-accept',
+				tourVersion: 1,
+				status: 'in_progress',
+				currentStepId: 'p1'
+			});
+			expect(
+				versionedTourProgressRepository.saveProgress
+			).toHaveBeenCalledWith(
+				expect.objectContaining({
+					tourId: 'consultant-practice-accept',
+					status: 'completed'
+				})
+			);
+			expect(store.get(tourLaunchRequestAtom)).toBeNull();
+		});
+
+		describe('with the practice host hooks registered', () => {
+			it('enters practice mode for the tour before it starts and leaves it when it ends', async () => {
+				practiceOn();
+				const unregister = registerPracticeTourHostHooks();
+				try {
+					renderWalkthrough(consultant, accept());
+
+					await adapterProps.onBeforeStart();
+					expect(getPracticeSnapshot().session?.tourId).toBe(
+						'consultant-practice-accept'
+					);
+
+					adapterProps.onEnd();
+					expect(getPracticeSnapshot().status).toBe('inactive');
+				} finally {
+					unregister();
+				}
+			});
+
+			it('hands the Supervision tour its own session', async () => {
+				practiceOn();
+				const unregister = registerPracticeTourHostHooks();
+				try {
+					renderWalkthrough(consultant, {
+						tourId: 'consultant-practice-supervision',
+						mode: 'start',
+						requestedAt: 43
+					});
+
+					await adapterProps.onBeforeStart();
+
+					expect(getPracticeSnapshot().session?.tourId).toBe(
+						'consultant-practice-supervision'
+					);
+				} finally {
+					unregister();
+				}
+			});
 		});
 	});
 });

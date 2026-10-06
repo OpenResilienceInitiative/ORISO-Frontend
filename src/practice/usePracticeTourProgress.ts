@@ -31,7 +31,8 @@ export const usePracticeTourProgressReporter = (
 	tour: TourDefinition | undefined
 ): ((event: TourEvent, step?: TourStep) => void) => {
 	const setProgress = useSetAtom(practiceTourProgressAtom);
-	const isPractice = !!tour && isPracticeTourId(tour.id);
+	const isPractice =
+		!!tour && isPracticeTourId(tour.id) && tour.steps.length > 0;
 
 	useEffect(() => {
 		if (!tour || !isPractice) {

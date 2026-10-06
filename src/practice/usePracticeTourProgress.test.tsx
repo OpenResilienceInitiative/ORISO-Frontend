@@ -92,6 +92,12 @@ describe('practice tour progress', () => {
 		expect(reader.result.current).toBeNull();
 	});
 
+	it('does not track a run that has no steps (nothing starts)', () => {
+		const { reader } = setup(practiceTour([]));
+
+		expect(reader.result.current).toBeNull();
+	});
+
 	it('does not track anything without a tour', () => {
 		const { reader } = setup(undefined);
 

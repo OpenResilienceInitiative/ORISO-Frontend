@@ -20,6 +20,11 @@ import type {
 	TourStep
 } from '../productTour/types';
 import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
+import { canUsePractice } from '../../practice/practiceAccess';
+import { isPracticeTourId } from '../../practice/practiceTourIds';
+import { isPracticeTourAvailable } from '../../practice/practiceTourAvailability';
+import { practiceTours } from '../../practice/practiceToursSource';
+import { usePracticeTourProgressReporter } from '../../practice/usePracticeTourProgress';
 
 type AutoRunState = 'unknown' | 'due' | 'not_due';
 
@@ -46,8 +51,15 @@ export const Walkthrough = () => {
 	const [launchRequest, setLaunchRequest] = useAtom(tourLaunchRequestAtom);
 	const [autoRunState, setAutoRunState] = useState<AutoRunState>('unknown');
 
+	const tenantSettings = useTenant()?.settings;
+	// A practice tour is hosted only by deliberate request, and only where
+	// the practice area is open to this counsellor (spec 3.1); the auto-run
+	// below stays hard-wired to the intro tour.
 	const requestedTour = launchRequest
-		? frontendTours.find((tour) => tour.id === launchRequest.tourId)
+		? (frontendTours.find((tour) => tour.id === launchRequest.tourId) ??
+			(canUsePractice(settings, userData)
+				? practiceTours.find((tour) => tour.id === launchRequest.tourId)
+				: undefined))
 		: undefined;
 	// Auto-run only when nothing was requested at all: a stale or unknown
 	// request must not fall back to starting an unrelated tour.
@@ -96,7 +108,6 @@ export const Walkthrough = () => {
 
 	// Variants resolve once per run, so the adapter, its reducer and the
 	// last-step check below all count the same steps.
-	const tenantSettings = useTenant()?.settings;
 	const runKey = `${activeTour?.id}-${launchRequest?.requestedAt ?? 'auto'}`;
 	const resolvedRunRef = useRef<{
 		key: string;
@@ -109,9 +120,15 @@ export const Walkthrough = () => {
 			key: runKey,
 			tour: {
 				...activeTour,
-				steps: resolveTourSteps(activeTour, {
-					flags: { ...tenantSettings }
-				})
+				// A practice tour the Träger switched off (Supervision) has
+				// no steps, so nothing starts; no mid-run flip changes that.
+				steps:
+					isPracticeTourId(activeTour.id) &&
+					!isPracticeTourAvailable(activeTour, { ...tenantSettings })
+						? []
+						: resolveTourSteps(activeTour, {
+								flags: { ...tenantSettings }
+							})
 			}
 		};
 	}
@@ -119,11 +136,15 @@ export const Walkthrough = () => {
 
 	const lastStepId = runTour?.steps[runTour.steps.length - 1]?.id;
 
+	// Feeds the practice banner's "Step i of N"; inert for the ordinary tours.
+	const reportPracticeProgress = usePracticeTourProgressReporter(runTour);
+
 	const persistStepProgress = useCallback(
 		(event: TourEvent, step?: TourStep) => {
 			if (!runTour) {
 				return;
 			}
+			reportPracticeProgress(event, step);
 			if (event === 'step_completed' && step && step.id !== lastStepId) {
 				// Fire-and-forget: step progress powers the carousel's
 				// continue state but must never block the tour.
@@ -147,7 +168,7 @@ export const Walkthrough = () => {
 					.catch(() => {});
 			}
 		},
-		[runTour, lastStepId, launchRequest?.mode]
+		[runTour, lastStepId, launchRequest?.mode, reportPracticeProgress]
 	);
 
 	const handleTerminalStatus = useCallback(
