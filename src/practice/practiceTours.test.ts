@@ -310,6 +310,25 @@ describe('practiceSupervisionTour (flow F2)', () => {
 		expect(intro).toMatch(/bestätigen/);
 	});
 
+	// The add dialog refuses to confirm without a reason (reasonError); the
+	// words are those of its reason field in each language.
+	it.each([
+		['de', deTranslations, /Grund/],
+		['de@informal', deInformalTranslations, /Grund/],
+		['en', enTranslations, /reason/],
+		['fr', frTranslations, /motif/],
+		['ru', ruTranslations, /причин/],
+		['ti', tiTranslations, /ምኽንያት/],
+		['tr', trTranslations, /neden/]
+	] as const)(
+		'asks for the short reason the add dialog requires (%s)',
+		(_locale, bundle, reasonWord) => {
+			expect(resolveKey(bundle, first.contentKey) as string).toMatch(
+				reasonWord
+			);
+		}
+	);
+
 	it('keeps the retired picker step out of every locale', () => {
 		bundledLocales.forEach(([locale, bundle]) => {
 			expect(

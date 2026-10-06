@@ -132,7 +132,7 @@ export const practiceSupervisionTour: TourDefinition = {
 		{
 			// One step for the whole add. The real picker is a modal above the
 			// tooltip (z-index 9999 vs 53), so a second step could not be seen:
-			// the intro names click, choose and confirm, and the confirm advances.
+			// the intro names click, choose, reason and confirm; the confirm advances.
 			id: 'add-supervisor',
 			route: practiceAcceptedSessionRoute(),
 			target: 'session-supervisor-add',
