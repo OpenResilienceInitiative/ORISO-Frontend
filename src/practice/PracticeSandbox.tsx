@@ -19,7 +19,11 @@ import {
 	setMatrixClientServiceRef
 } from '../services/matrixClientRegistry';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
-import { holdPracticeExit } from './practiceMode';
+import {
+	holdPracticeExit,
+	isPracticeMode,
+	onPracticeExit
+} from './practiceMode';
 import { isPracticeId } from './practiceIds';
 import { PracticeBlockedRequestError } from './networkGuard';
 import { isSafeMethod, redactUrl } from './requestPolicy';
@@ -53,6 +57,8 @@ interface Installation {
 	inFlight: number;
 	/** Keeps `endPractice` from removing the guard underneath this layer. */
 	releaseExitHold: () => void;
+	/** Synchronous Matrix restore for auth expiry, while REST can still drain. */
+	removeExitTeardown?: () => void;
 }
 
 let installation: Installation | null = null;
@@ -183,6 +189,19 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 	};
 	window.fetch = patchedFetch;
 	setMatrixClientServiceRef(asService(world));
+	if (isPracticeMode()) {
+		const current = installation;
+		current.removeExitTeardown = onPracticeExit(() => {
+			// Session teardown must see the real client in this same turn so
+			// its pollers/calls stop before login renders. Keep the fake REST
+			// layer for pending requests and practice-addressed unmount writes.
+			current.draining = true;
+			if (getMatrixClientService() === asService(current.world)) {
+				setMatrixClientServiceRef(current.previousService);
+			}
+			current.previousService = null;
+		});
+	}
 	// A render that never commits must not leave practice mode behind.
 	scheduleUninstallCheck();
 };
@@ -191,6 +210,7 @@ const uninstallIfIdle = () => {
 	const current = installation;
 	if (!current || current.depth > 0 || current.inFlight > 0) return;
 	installation = null;
+	current.removeExitTeardown?.();
 	if (window.fetch === current.patchedFetch) {
 		window.fetch = current.previousFetch;
 	}

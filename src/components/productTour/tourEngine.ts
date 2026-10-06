@@ -145,12 +145,14 @@ export interface TourReduction {
  * without a terminal status so it stays resumable. A missing final OPTIONAL
  * target (per `steps` metadata) completes the tour when moving forward —
  * trailing optional steps must never trap a fresh account in `in_progress`.
+ * Guided tours can stop on every missing required target via their policy.
  */
 export const reduceTourCallback = (
 	state: TourRunState,
 	cb: TourCallbackInput,
 	stepCount: number,
-	steps?: ReadonlyArray<Pick<TourStep, 'optional'>>
+	steps?: ReadonlyArray<Pick<TourStep, 'optional'>>,
+	requiredTargetPolicy: TourDefinition['requiredTargetPolicy'] = 'skip'
 ): TourReduction => {
 	const events: TourEvent[] = [];
 	const next = { ...state };
@@ -171,6 +173,10 @@ export const reduceTourCallback = (
 	if (cb.type === EVENTS.TARGET_NOT_FOUND) {
 		const isOptional = !!steps?.[cb.index]?.optional;
 		events.push(isOptional ? 'optional_step_skipped' : 'target_missing');
+		if (!isOptional && requiredTargetPolicy === 'stop') {
+			next.run = false;
+			return { state: next, events };
+		}
 		const direction = cb.action === ACTIONS.PREV ? -1 : 1;
 		const nextIndex = cb.index + direction;
 		if (nextIndex < 0 || nextIndex >= stepCount) {

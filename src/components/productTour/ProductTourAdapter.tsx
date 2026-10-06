@@ -187,7 +187,8 @@ export const ProductTourAdapter = ({
 	 * without completion — unless only OPTIONAL steps were missing while
 	 * moving forward past shown steps, which completes the tour (trailing
 	 * optional anchors must not trap a fresh account in `in_progress`).
-	 * Resolves true when a step became presentable.
+	 * Guided tours with `requiredTargetPolicy: 'stop'` instead interrupt as
+	 * soon as a required action target is missing. Resolves true when ready.
 	 */
 	const prepareStep = useCallback(
 		async (index: number, direction: 1 | -1 = 1): Promise<boolean> => {
@@ -220,6 +221,14 @@ export const ProductTourAdapter = ({
 						} else {
 							requiredMissing = true;
 							emit('target_missing', step);
+							if (tour.requiredTargetPolicy === 'stop') {
+								applyRunState({
+									...runStateRef.current,
+									run: false
+								});
+								endTour();
+								return false;
+							}
 						}
 						lastSkipped = step;
 						continue;
@@ -272,7 +281,8 @@ export const ProductTourAdapter = ({
 			navigate,
 			reportTerminal,
 			steps,
-			targetTimeoutMs
+			targetTimeoutMs,
+			tour.requiredTargetPolicy
 		]
 	);
 
@@ -321,6 +331,7 @@ export const ProductTourAdapter = ({
 
 	const handleCallback = useCallback(
 		(data: TourCallbackInput) => {
+			if (hostRef.current.ended) return;
 			const stepForIndex = (index: number): TourStep | undefined =>
 				steps[index];
 
@@ -334,7 +345,8 @@ export const ProductTourAdapter = ({
 					type: data.type
 				},
 				steps.length,
-				steps
+				steps,
+				tour.requiredTargetPolicy
 			);
 
 			events.forEach((event) => {
@@ -370,7 +382,15 @@ export const ProductTourAdapter = ({
 				endTour();
 			}
 		},
-		[applyRunState, emit, endTour, prepareStep, reportTerminal, steps]
+		[
+			applyRunState,
+			emit,
+			endTour,
+			prepareStep,
+			reportTerminal,
+			steps,
+			tour.requiredTargetPolicy
+		]
 	);
 
 	// A step with `advanceOn` finishes through the user's own action instead of

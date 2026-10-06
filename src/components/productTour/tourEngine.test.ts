@@ -303,6 +303,23 @@ describe('reduceTourCallback', () => {
 		expect(state.run).toBe(true);
 	});
 
+	it('stops a guided action when its required target disappears during the run', () => {
+		const { state, events } = reduceTourCallback(
+			{ status: 'in_progress', stepIndex: 1, run: true },
+			cb({ type: EVENTS.TARGET_NOT_FOUND, index: 1 }),
+			4,
+			[{}, {}, {}, {}],
+			'stop'
+		);
+
+		expect(state).toEqual({
+			status: 'in_progress',
+			stepIndex: 1,
+			run: false
+		});
+		expect(events).toEqual(['target_missing']);
+	});
+
 	it('closes without completion when the final step target is missing', () => {
 		const { state, events } = reduceTourCallback(
 			{ ...initialTourRunState, status: 'in_progress', stepIndex: 4 },

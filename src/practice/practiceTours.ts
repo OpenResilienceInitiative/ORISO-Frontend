@@ -34,6 +34,7 @@ export const practiceAcceptTour: TourDefinition = {
 	titleKey: 'tour.practiceAccept.title',
 	summaryKey: 'tour.practiceAccept.summary',
 	dismissible: false,
+	requiredTargetPolicy: 'stop',
 	steps: [
 		{
 			id: 'nav-enquiries',
@@ -127,6 +128,7 @@ export const practiceSupervisionTour: TourDefinition = {
 	titleKey: 'tour.practiceSupervision.title',
 	summaryKey: 'tour.practiceSupervision.summary',
 	dismissible: false,
+	requiredTargetPolicy: 'stop',
 	when: SUPERVISION_ON,
 	steps: [
 		{

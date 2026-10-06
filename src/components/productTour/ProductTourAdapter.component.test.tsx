@@ -18,6 +18,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ProductTourAdapter } from './ProductTourAdapter';
 import { emitTourEvent } from './tourEvents';
 import type { TourDefinition, TourEvent } from './types';
+import { practiceSupervisionTour } from '../../practice/practiceTours';
+import { apiUpsertTutorialProgress } from '../../api/apiTutorialProgress';
 
 interface CapturedJoyrideProps {
 	run: boolean;
@@ -130,6 +132,7 @@ afterEach(() => {
 	joyrideProps = null;
 	document.body.innerHTML = '';
 	vi.clearAllMocks();
+	vi.unstubAllGlobals();
 });
 
 describe('ProductTourAdapter', () => {
@@ -229,6 +232,57 @@ describe('ProductTourAdapter', () => {
 				})
 			)
 		);
+	});
+
+	it('does not write completed progress when F2 supervisor controls are absent', async () => {
+		const writes: string[] = [];
+		vi.stubGlobal(
+			'fetch',
+			vi.fn(async (request: Request) => {
+				writes.push(JSON.parse(await request.clone().text()).status);
+				return new Response('{}', { status: 200 });
+			})
+		);
+		const ended = vi.fn();
+		renderAdapter({
+			tour: practiceSupervisionTour,
+			targetTimeoutMs: 20,
+			onEnd: ended,
+			onTerminalStatus: (progress) =>
+				apiUpsertTutorialProgress({
+					surface: 'frontend',
+					...progress
+				}).then(() => undefined)
+		});
+		// The failed controls must stop the run. Before the fix they fell
+		// through to the two centered explanations, which could be finished.
+		await waitFor(() => {
+			expect(
+				ended.mock.calls.length > 0 || joyrideProps?.stepIndex === 2
+			).toBe(true);
+		});
+		if (!ended.mock.calls.length) {
+			act(() =>
+				joyrideProps!.onEvent({
+					action: 'next',
+					index: 2,
+					status: 'running',
+					type: 'step:after'
+				})
+			);
+			await waitFor(() => expect(joyrideProps!.stepIndex).toBe(3));
+			act(() =>
+				joyrideProps!.onEvent({
+					action: 'next',
+					index: 3,
+					status: 'running',
+					type: 'step:after'
+				})
+			);
+		}
+		await waitFor(() => expect(ended).toHaveBeenCalledOnce());
+		expect(writes).not.toContain('completed');
+		expect(joyrideProps!.run).toBe(false);
 	});
 
 	it('waits for a delayed first-step target before running joyride', async () => {

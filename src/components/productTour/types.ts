@@ -119,6 +119,8 @@ export interface TourDefinition {
 	 * guided flows where an accidental dismissal would abort the exercise.
 	 */
 	dismissible?: boolean;
+	/** Guided actions cannot be skipped when their required control is absent. */
+	requiredTargetPolicy?: 'skip' | 'stop';
 }
 
 export interface TourProgress {
