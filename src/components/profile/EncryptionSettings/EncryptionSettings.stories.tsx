@@ -211,10 +211,8 @@ export const PasswordRecoveryForm: Story = {
 	],
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const password = await canvas.findByLabelText(
-			'Aktuelles Login-Passwort'
-		);
-		const repeat = canvas.getByLabelText('Login-Passwort wiederholen');
+		const password = await canvas.findByLabelText('Aktuelles Passwort');
+		const repeat = canvas.getByLabelText('Passwort wiederholen');
 		const otp = canvas.getByLabelText('Einmalcode');
 		await expect(password).toHaveAttribute(
 			'autocomplete',
