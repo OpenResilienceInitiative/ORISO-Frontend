@@ -11,6 +11,7 @@ import {
 import { tourLaunchRequestAtom } from '../components/productTour/tourLaunchState';
 import type { TourDefinition } from '../components/productTour/types';
 import { usePractice } from './PracticeProvider';
+import { nextPracticeLaunchRequest } from './practiceLaunch';
 import { runPracticeRestartHandlers } from './practiceRestart';
 import { practiceTours } from './practiceToursSource';
 import { usePracticeTourProgress } from './usePracticeTourProgress';
@@ -204,12 +205,9 @@ export const PracticeBanner = ({
 		}
 		const tourId = practice.tourId;
 		runPracticeRestartHandlers();
-		// The host remounts the run on a new `requestedAt`; never reuse one.
-		setLaunchRequest((previous) => ({
-			tourId,
-			mode: 'restart',
-			requestedAt: Math.max(Date.now(), (previous?.requestedAt ?? 0) + 1)
-		}));
+		setLaunchRequest((previous) =>
+			nextPracticeLaunchRequest(tourId, 'restart', previous)
+		);
 	}, [practice.tourId, setLaunchRequest]);
 
 	if (!isActive) {

@@ -30,7 +30,7 @@ export interface TourOverviewCarouselProps {
  * on Pre-Dev during gate run e2e-20260720-1507. Tags are dropped rather than
  * rendered so the card never becomes an HTML sink.
  */
-const toPlainText = (value: string): string =>
+export const toPlainText = (value: string): string =>
 	value
 		.replace(/<[^>]*>/g, ' ')
 		.replace(/\s+/g, ' ')
