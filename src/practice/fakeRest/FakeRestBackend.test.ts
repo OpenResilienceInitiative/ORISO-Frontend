@@ -220,6 +220,18 @@ describe('FakeRestBackend', () => {
 				)
 			)
 		).toMatchObject({ text: 'Entwurf' });
+		// The drafts list and the timeline read `items` (IUserDraftFeedResponse).
+		expect(
+			await json(
+				await backend.handle(
+					new Request(`${endpoints.userDrafts}?page=0&perPage=200`)
+				)
+			)
+		).toMatchObject({
+			items: [expect.objectContaining({ text: 'Entwurf' })],
+			page: 0,
+			perPage: 200
+		});
 		expect(
 			(
 				await backend.handle(

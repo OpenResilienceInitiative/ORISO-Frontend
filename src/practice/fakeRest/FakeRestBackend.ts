@@ -19,6 +19,13 @@ import {
 	PRACTICE_TEAM_ROOM_ID
 } from '../practiceIds';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import { endpoints } from '../../resources/scripts/endpoints';
+import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
+import type { EventNotificationFeedResponse } from '../../api/apiEventNotifications';
+import type {
+	IUserDraftFeedResponse,
+	IUserDraftItem
+} from '../../api/apiUserDrafts';
 
 export interface FakeRestHooks {
 	onEnquiryAccepted?: (sessionId: number) => void;
@@ -90,6 +97,28 @@ const noContent = () => new Response(null, { status: 204 });
 /** Practice ids are negative; a positive id is never answered from memory. */
 const PRACTICE_ID_SEGMENT = `(${PRACTICE_NUMERIC_ID_PATTERN})`;
 
+const escapeRegExp = (value: string) =>
+	value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The path of an `endpoints` entry: a moved endpoint moves the fake too. */
+const pathOf = (endpoint: string) =>
+	new URL(endpoint, window.location.href).pathname;
+
+/** Exactly this endpoint's path, plus an optional regex suffix. */
+const at = (endpoint: string, suffix = '') =>
+	new RegExp(`^${escapeRegExp(pathOf(endpoint))}${suffix}$`);
+
+/** An endpoint that takes a session id, which must be a practice id. */
+const atSession = (endpoint: (sessionId: number) => string) => {
+	const marker = String(Number.MAX_SAFE_INTEGER);
+	const [before, after] = pathOf(endpoint(Number.MAX_SAFE_INTEGER)).split(
+		marker
+	);
+	return new RegExp(
+		`^${escapeRegExp(before)}${PRACTICE_ID_SEGMENT}${escapeRegExp(after)}$`
+	);
+};
+
 const parseRequest = (
 	input: RequestInfo | URL,
 	init?: RequestInit
@@ -127,7 +156,7 @@ export const createFakeRestBackend = ({
 	hooks = {}
 }: FakeRestBackendOptions): FakeRestBackend => {
 	let practiceCase: PracticeCaseState;
-	let drafts: Map<string, unknown>;
+	let drafts: Map<string, IUserDraftItem>;
 	let supervisorSeq: number;
 	const served: ServedRequest[] = [];
 
@@ -161,45 +190,47 @@ export const createFakeRestBackend = ({
 				} satisfies UserService.Schemas.ConsultantSessionListResponseDTO)
 			: noContent();
 
+	const roomList = () =>
+		({
+			sessions: [listItem()]
+		}) satisfies UserService.Schemas.GroupSessionListResponseDTO;
+
 	const isCase = (id: string) =>
 		Number(id) === practiceCase.session.id && isPracticeId(id);
 
 	const routes: Route[] = [
 		{
 			method: 'GET',
-			path: /\/service\/conversations\/consultants\/enquiries\/registered$/,
+			path: at(endpoints.consultantEnquiriesBase, 'registered'),
 			viewWide: true,
 			handle: () => sessionList(STATUS_ENQUIRY)
 		},
 		{
 			method: 'GET',
-			path: /\/service\/conversations\/consultants\/enquiries\/anonymous$/,
+			path: at(endpoints.consultantEnquiriesBase, 'anonymous'),
 			viewWide: true,
 			handle: () => noContent()
 		},
 		{
 			method: 'GET',
-			path: /\/service\/users\/sessions\/consultants$/,
+			path: at(endpoints.consultantSessions),
 			viewWide: true,
 			handle: () => sessionList(STATUS_ACTIVE)
 		},
 		{
 			method: 'GET',
-			path: /\/service\/conversations\/consultants\/mymessages\/archive$/,
+			path: at(endpoints.myMessagesBase, 'archive'),
 			viewWide: true,
 			handle: () => noContent()
 		},
 		{
 			method: 'GET',
-			path: new RegExp(
-				`/service/users/sessions/room/${PRACTICE_ID_SEGMENT}$`
-			),
-			handle: (_request, [, id]) =>
-				isCase(id) ? ok({ sessions: [listItem()] }) : null
+			path: at(endpoints.sessionRooms, `/${PRACTICE_ID_SEGMENT}`),
+			handle: (_request, [, id]) => (isCase(id) ? ok(roomList()) : null)
 		},
 		{
 			method: 'GET',
-			path: /\/service\/users\/sessions\/room$/,
+			path: at(endpoints.sessionRooms),
 			handle: ({ url }) => {
 				const roomIds = (url.searchParams.get('roomIds[]') || '')
 					.split(',')
@@ -208,15 +239,13 @@ export const createFakeRestBackend = ({
 					return null;
 				}
 				return roomIds.includes(practiceCase.session.matrixRoomId)
-					? ok({ sessions: [listItem()] })
+					? ok(roomList())
 					: noContent();
 			}
 		},
 		{
 			method: 'PUT',
-			path: new RegExp(
-				`/service/users/sessions/new/${PRACTICE_ID_SEGMENT}$`
-			),
+			path: at(endpoints.sessionBase, `/new/${PRACTICE_ID_SEGMENT}`),
 			handle: (_request, [, id]) => {
 				if (!isCase(id)) return null;
 				if (practiceCase.session.status === STATUS_ENQUIRY) {
@@ -242,50 +271,51 @@ export const createFakeRestBackend = ({
 		},
 		{
 			method: 'GET',
-			path: new RegExp(
-				`/service/users/sessions/${PRACTICE_ID_SEGMENT}/team-discussion$`
-			),
+			path: atSession(endpoints.teamDiscussion),
 			handle: (_request, [, id]) =>
 				isCase(id)
 					? practiceCase.teamDiscussion
-						? ok(practiceCase.teamDiscussion)
+						? ok(
+								practiceCase.teamDiscussion satisfies TeamDiscussion
+							)
 						: noContent()
 					: null
 		},
 		{
 			method: 'POST',
-			path: new RegExp(
-				`/service/users/sessions/${PRACTICE_ID_SEGMENT}/team-discussion$`
-			),
+			path: atSession(endpoints.teamDiscussion),
 			handle: (_request, [, id]) => {
 				if (!isCase(id)) return null;
-				if (!practiceCase.teamDiscussion) {
-					practiceCase = {
-						...practiceCase,
-						teamDiscussion: {
-							matrixRoomId: PRACTICE_TEAM_ROOM_ID,
-							status:
-								practiceCase.session.status === STATUS_ENQUIRY
-									? 'OPEN'
-									: 'ARCHIVED'
-						}
+				const teamDiscussion: TeamDiscussion =
+					practiceCase.teamDiscussion ?? {
+						matrixRoomId: PRACTICE_TEAM_ROOM_ID,
+						status:
+							practiceCase.session.status === STATUS_ENQUIRY
+								? 'OPEN'
+								: 'ARCHIVED'
 					};
-				}
-				return ok(practiceCase.teamDiscussion);
+				practiceCase = { ...practiceCase, teamDiscussion };
+				return ok(teamDiscussion);
 			}
 		},
 		{
 			method: 'GET',
-			path: new RegExp(
-				`/service/users/sessions/${PRACTICE_ID_SEGMENT}/supervisors$`
+			path: at(
+				endpoints.sessionBase,
+				`/${PRACTICE_ID_SEGMENT}/supervisors`
 			),
 			handle: (_request, [, id]) =>
-				isCase(id) ? ok(practiceCase.supervisors) : null
+				isCase(id)
+					? ok(
+							practiceCase.supervisors satisfies UserService.Schemas.SessionSupervisorResponseDTO[]
+						)
+					: null
 		},
 		{
 			method: 'POST',
-			path: new RegExp(
-				`/service/users/sessions/${PRACTICE_ID_SEGMENT}/supervisors$`
+			path: at(
+				endpoints.sessionBase,
+				`/${PRACTICE_ID_SEGMENT}/supervisors`
 			),
 			handle: async (request, [, id]) => {
 				if (!isCase(id)) return null;
@@ -320,7 +350,7 @@ export const createFakeRestBackend = ({
 		},
 		{
 			method: 'GET',
-			path: /\/service\/users\/consultants$/,
+			path: at(endpoints.agencyConsultants),
 			handle: ({ url }) =>
 				Number(url.searchParams.get('agencyId')) === PRACTICE_AGENCY_ID
 					? ok(
@@ -334,13 +364,13 @@ export const createFakeRestBackend = ({
 									isSupervisor:
 										person.id === script.cast.supervisor.id
 								})
-							)
+							) satisfies UserService.Schemas.ConsultantResponseDTO[]
 						)
 					: null
 		},
 		{
 			method: 'GET',
-			path: new RegExp(`/service/agencies/${PRACTICE_ID_SEGMENT}$`),
+			path: at(endpoints.agencyServiceBase, `/${PRACTICE_ID_SEGMENT}`),
 			handle: (_request, [, id]) =>
 				Number(id) === PRACTICE_AGENCY_ID
 					? ok({
@@ -359,7 +389,7 @@ export const createFakeRestBackend = ({
 		// while practising, so real drafts are neither shown nor rewritten.
 		{
 			method: 'GET',
-			path: /\/service\/users\/drafts\/single$/,
+			path: at(endpoints.userDrafts, '/single'),
 			viewWide: true,
 			handle: ({ url }) => {
 				const draft = drafts.get(
@@ -370,13 +400,18 @@ export const createFakeRestBackend = ({
 		},
 		{
 			method: 'GET',
-			path: /\/service\/users\/drafts$/,
+			path: at(endpoints.userDrafts),
 			viewWide: true,
-			handle: () => ok([...drafts.values()])
+			handle: ({ url }) =>
+				ok({
+					items: [...drafts.values()],
+					page: Number(url.searchParams.get('page') || 0),
+					perPage: Number(url.searchParams.get('perPage') || 200)
+				} satisfies IUserDraftFeedResponse)
 		},
 		{
 			method: 'PATCH',
-			path: /\/service\/users\/drafts$/,
+			path: at(endpoints.userDrafts),
 			viewWide: true,
 			handle: async ({ url, body }) => {
 				const scopeKey = url.searchParams.get('scopeKey') || '';
@@ -386,7 +421,7 @@ export const createFakeRestBackend = ({
 		},
 		{
 			method: 'DELETE',
-			path: /\/service\/users\/drafts$/,
+			path: at(endpoints.userDrafts),
 			viewWide: true,
 			handle: ({ url }) => {
 				drafts.delete(url.searchParams.get('scopeKey') || '');
@@ -395,7 +430,7 @@ export const createFakeRestBackend = ({
 		},
 		{
 			method: 'GET',
-			path: /\/service\/users\/event-notifications$/,
+			path: at(endpoints.eventNotifications),
 			viewWide: true,
 			handle: ({ url }) =>
 				ok({
@@ -403,45 +438,47 @@ export const createFakeRestBackend = ({
 					unreadCount: 0,
 					page: Number(url.searchParams.get('page') || 0),
 					perPage: Number(url.searchParams.get('perPage') || 20)
-				})
+				} satisfies EventNotificationFeedResponse)
 		},
 		{
 			method: 'GET',
-			path: /\/service\/users\/event-notifications\/unread-count$/,
+			path: at(endpoints.eventNotifications, '/unread-count'),
 			viewWide: true,
-			handle: () => ok({ unreadCount: 0 })
+			handle: () =>
+				ok({ unreadCount: 0 } satisfies Pick<
+					EventNotificationFeedResponse,
+					'unreadCount'
+				>)
 		},
 		{
 			method: 'PATCH',
-			path: /\/service\/users\/event-notifications\/active-view$/,
+			path: at(endpoints.eventNotifications, '/active-view'),
 			handle: async ({ body }) =>
 				isPracticeRoomId((await body())?.roomId) ? noContent() : null
 		},
 		{
 			method: 'POST',
-			path: /\/service\/users\/event-notifications\/message-events$/,
+			path: at(endpoints.eventNotifications, '/message-events'),
 			handle: async ({ body }) =>
 				isPracticeRoomId((await body())?.roomId) ? noContent() : null
 		},
 		{
 			method: 'POST',
-			path: new RegExp(
-				`/service/matrix/sync/register/${PRACTICE_ID_SEGMENT}$`
-			),
+			path: atSession(endpoints.matrixSyncRegister),
 			handle: (_request, [, id]) =>
 				isPracticeId(id) ? noContent() : null
 		},
 		// Crash reports from the practice view may quote practice content.
 		{
 			method: 'POST',
-			path: /\/service\/error-reports$/,
+			path: at(endpoints.error),
 			viewWide: true,
 			handle: () => noContent()
 		},
 		// Erstantwort "add e-mail": accepted and discarded, never persisted.
 		{
 			method: 'PUT',
-			path: /\/service\/users\/email$/,
+			path: at(endpoints.email),
 			viewWide: true,
 			handle: () => noContent()
 		}

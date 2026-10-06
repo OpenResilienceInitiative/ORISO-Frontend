@@ -25,6 +25,7 @@ import {
 	type PracticePerson
 } from './practiceCast';
 import type { ScriptEngine } from '../script/ScriptEngine';
+import type { TeamDiscussion } from '../../api/apiTeamDiscussion';
 
 /** F1 starts with an open enquiry, F2 with an already accepted case. */
 export type PracticeStart = 'enquiry' | 'acceptedCase';
@@ -63,18 +64,13 @@ export interface PracticeRoomSeed {
 	messages: PracticeMessageSeed[];
 }
 
-export interface PracticeTeamDiscussion {
-	matrixRoomId: string;
-	status: 'OPEN' | 'ARCHIVED';
-}
-
 /** The REST-side truth of the one practice case. */
 export interface PracticeCaseState {
 	session: UserService.Schemas.SessionDTO;
 	user: UserService.Schemas.SessionUserDTO;
 	consultant?: UserService.Schemas.SessionConsultantForConsultantDTO;
 	latestMessage: number;
-	teamDiscussion: PracticeTeamDiscussion | null;
+	teamDiscussion: TeamDiscussion | null;
 	supervisors: UserService.Schemas.SessionSupervisorResponseDTO[];
 }
 
