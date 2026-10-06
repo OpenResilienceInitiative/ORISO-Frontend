@@ -225,6 +225,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
+import {
+	usePracticeActive,
+	usePracticeSupervisorsRevision
+} from '../../practice';
 const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
@@ -881,6 +885,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		]
 	);
 
+	// Practice only: bumps when the learner adds a supervisor under this case.
+	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
 	// Check if current user is a supervisor. The response stays tied to the
 	// session that requested it: a late lookup must never expose the previous
 	// case's side room to the new session.
@@ -947,7 +953,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item.id,
 		isConsultantUser,
 		isSupervisionEnabledForCurrentChat,
-		userData.userId
+		userData.userId,
+		practiceSupervisorsRevision
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
@@ -2605,8 +2612,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
+	// Practice: no calls (safety invariant 5).
+	const isPracticing = usePracticeActive();
 	const mayCallInSideRoom =
-		isConsultantUser && !isOnlyEnquiry && !activeSession.isEnquiry;
+		isConsultantUser &&
+		!isOnlyEnquiry &&
+		!activeSession.isEnquiry &&
+		!isPracticing;
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({

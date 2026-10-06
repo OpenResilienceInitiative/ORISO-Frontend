@@ -68,6 +68,7 @@ import {
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
 import { formatToHHMM } from '../../utils/dateHelpers';
+import { usePracticeSupervisorsRevision } from '../../practice';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 
@@ -352,6 +353,9 @@ export const SessionStream = ({
 		!caseHandoverCurtainNeeded ||
 		caseHandoverStatus?.canViewContent === true;
 
+	// Practice only: bumps when the learner adds a supervisor under this case.
+	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
 	// authorized callers, so non-members never receive one and asides stay
@@ -399,7 +403,7 @@ export const SessionStream = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession.item?.id, userData]);
+	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
 
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
