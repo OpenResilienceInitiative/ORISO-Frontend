@@ -110,7 +110,10 @@ export const PracticeBanner = ({
 	const [position, setPosition] = useState<Position | null>(null);
 
 	const isActive = practice.isPractice;
-	const tour = tours.find((candidate) => candidate.id === practice.tourId);
+	// No registry lookup outside practice (release flag off: none at all).
+	const tour = isActive
+		? tours.find((candidate) => candidate.id === practice.tourId)
+		: undefined;
 
 	useEffect(() => {
 		if (!position) {

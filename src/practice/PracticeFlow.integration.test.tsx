@@ -54,6 +54,8 @@ import { config } from '../resources/scripts/config';
 import { PracticeLayer } from './PracticeLayer';
 import { PracticeBanner } from './PracticeBanner';
 import { PracticeSurface } from './PracticeSurface';
+import { PracticeOverviewSection } from './PracticeOverviewSection';
+import { getPracticeTour, practiceTours } from './practiceTours';
 import { practiceCounsellorFixture } from './fixtures/practiceCounsellorFixture';
 import {
 	PRACTICE_MAIN_ROOM_ID,
@@ -200,16 +202,23 @@ function RouteProbe() {
 }
 const route = () => screen.getByTestId('route').textContent;
 
-const renderApp = ({ teamDiscussion = true } = {}) => {
+const renderApp = ({ teamDiscussion = true, practiceArea = true } = {}) => {
+	const settings = {
+		...appConfig,
+		releaseToggles: {
+			...appConfig.releaseToggles,
+			enablePracticeArea: practiceArea
+		}
+	};
 	const flags = {
 		featureTeamDiscussionEnabled: teamDiscussion,
 		featureSupervisionEnabled: true
 	};
 	setTenantSettings(flags as any);
 	const store = createStore();
-	const routerConfig = RouterConfigConsultant(appConfig);
+	const routerConfig = RouterConfigConsultant(settings);
 	const providers: [React.Context<any>, any][] = [
-		[AppConfigContext, appConfig],
+		[AppConfigContext, settings],
 		[ResponsiveContext, { width: 1440 }],
 		[UserDataContext, { userData: counsellor, setUserData: vi.fn() }],
 		[TenantContext, { tenant: { id: 1, settings: flags }, setTenant() {} }],
@@ -280,7 +289,9 @@ const renderApp = ({ teamDiscussion = true } = {}) => {
 									<Route
 										path="*"
 										element={
-											<p data-testid="help-page">Hilfe</p>
+											<div data-testid="help-page">
+												<PracticeOverviewSection />
+											</div>
 										}
 									/>
 								</Routes>
@@ -291,7 +302,20 @@ const renderApp = ({ teamDiscussion = true } = {}) => {
 			</JotaiProvider>
 		</I18nextProvider>
 	);
-	const start = (tourId: string) =>
+	/** Starts a flow from its real card on the Help page. */
+	const start = async (tourId: string) => {
+		const title = getPracticeTour(tourId)!.titleKey;
+		const card = (
+			await screen.findByRole('heading', { name: title }, SLOW)
+		).closest('li')!;
+		fireEvent.click(
+			within(card).getByRole('button', {
+				name: 'practice.cards.action.start'
+			})
+		);
+	};
+	/** A launch request that did not come from a card (e.g. a stale one). */
+	const request = (tourId: string) =>
 		act(() =>
 			store.set(tourLaunchRequestAtom, {
 				tourId,
@@ -299,7 +323,7 @@ const renderApp = ({ teamDiscussion = true } = {}) => {
 				requestedAt: Date.now()
 			})
 		);
-	return { ...view, store, start };
+	return { ...view, store, start, request };
 };
 
 beforeEach(async () => {
@@ -548,7 +572,7 @@ const banner = () =>
 describe('practice flows on the real app shell', () => {
 	it('F1 with the team step: every anchor is live when its step shows, and the real actions advance the tour', async () => {
 		const app = renderApp({ teamDiscussion: true });
-		app.start(ACCEPT);
+		await app.start(ACCEPT);
 		await openThePracticeEnquiry();
 		expect(joyride!.steps).toHaveLength(8);
 
@@ -579,7 +603,7 @@ describe('practice flows on the real app shell', () => {
 
 	it('F1 without the team step (Träger switched it off): six steps, no team anchor, the same real actions', async () => {
 		const app = renderApp({ teamDiscussion: false });
-		app.start(ACCEPT);
+		await app.start(ACCEPT);
 		await openThePracticeEnquiry();
 		expect(joyride!.steps).toHaveLength(6);
 
@@ -596,7 +620,7 @@ describe('practice flows on the real app shell', () => {
 
 	it('F2: the accepted case opens, the real picker adds the supervisor, and the reply shows in the side thread', async () => {
 		const app = renderApp();
-		app.start(SUPERVISION);
+		await app.start(SUPERVISION);
 
 		// 1: the add-supervisor button of the accepted case; click, pick, confirm.
 		const add = await expectStep(0);
@@ -659,7 +683,7 @@ describe('practice flows on the real app shell', () => {
 	}, 120000);
 	it('banner Restart mid-flow: same guard, fresh case with the accept available again, tour back at step 1', async () => {
 		const app = renderApp({ teamDiscussion: false });
-		app.start(ACCEPT);
+		await app.start(ACCEPT);
 		await openThePracticeEnquiry();
 		const accept = await expectStep(2);
 		await afterWorldEvent(
@@ -695,7 +719,7 @@ describe('practice flows on the real app shell', () => {
 
 	it('banner End mid-flow: the real page comes back where practice started, and the run is not marked done', async () => {
 		const app = renderApp();
-		app.start(ACCEPT);
+		await app.start(ACCEPT);
 		await openThePracticeEnquiry();
 		await expectStep(2);
 
@@ -718,4 +742,27 @@ describe('practice flows on the real app shell', () => {
 		expect(window.fetch).toBe(networkFetch);
 		expectNothingLeftThePracticeWorld();
 	}, 120000);
+	it('release flag off: no card, no registry lookup, no sandbox, and a stray launch request reaches nothing', async () => {
+		const lookup = vi.spyOn(practiceTours, 'find');
+		const app = renderApp({ practiceArea: false });
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+		expect(
+			screen.queryByRole('list', { name: 'practice.cards.title' })
+		).toBeNull();
+
+		app.request(ACCEPT);
+		await act(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
+		expect(lookup).not.toHaveBeenCalled();
+		expect(joyride).toBeNull();
+		expect(getPracticeSnapshot().status).toBe('inactive');
+		expect(getPracticeNetworkGuard()).toBeNull();
+		expect(window.fetch).toBe(networkFetch);
+		expect(getMatrixClientService()).toBe(realMatrixService);
+		expect(
+			screen.queryByRole('status', { name: 'practice.banner.title' })
+		).toBeNull();
+		expect(route()).toBe(HELP_ROUTE);
+		expectNothingLeftThePracticeWorld();
+	});
 });
