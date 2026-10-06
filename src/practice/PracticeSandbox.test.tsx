@@ -89,6 +89,25 @@ describe('PracticeSandbox', () => {
 		expect(pageFetch).not.toHaveBeenCalled();
 	});
 
+	it('never passes on a request for a practice id the fake does not know: it is answered 404 in the page', async () => {
+		render(sandbox());
+
+		const unknownCase = await window.fetch(
+			`${endpoints.sessionRooms}?rcGroupIds=-7`
+		);
+		const search = await window.fetch(
+			`${endpoints.caseHandoverCandidates}?query=-7&offset=0&count=15`
+		);
+		const room = await window.fetch(
+			`${endpoints.sessionBase}/${encodeURIComponent('!practice-9:practice.invalid')}/x`
+		);
+
+		expect([unknownCase.status, search.status, room.status]).toEqual([
+			404, 404, 404
+		]);
+		expect(baseFetch).not.toHaveBeenCalled();
+	});
+
 	it('patches fetch during render so the first child effect already reaches the fake', async () => {
 		const seen: number[] = [];
 		const Child = () => {

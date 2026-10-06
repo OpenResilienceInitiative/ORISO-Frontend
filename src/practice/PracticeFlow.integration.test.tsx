@@ -69,6 +69,7 @@ import {
 	practiceScriptBlock
 } from './script/scriptTestSupport';
 import { PRACTICE_ENQUIRIES_ROUTE } from './practiceRoutes';
+import { isPracticeId } from './practiceIds';
 
 vi.hoisted(() => {
 	Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
@@ -427,17 +428,22 @@ const typeAndSend = async (scope: () => HTMLElement | null, text: string) => {
 const textOf = (selector: string) =>
 	document.querySelector(selector)?.textContent ?? '';
 
+/** A practice id anywhere in the path or the query, e.g. a search for "-1". */
+const addressesPractice = (href: string) => {
+	const url = new URL(href, 'http://localhost');
+	return [
+		...url.pathname.split('/').map(decodeURIComponent),
+		...url.searchParams.values()
+	].some((part) => isPracticeId(part) || part.includes('practice'));
+};
+
 /** The page-level safety net: nothing of the practice world left the page. */
 const expectNothingLeftThePracticeWorld = () => {
 	const writes = network.filter(({ method }) => method !== 'GET');
 	expect(
 		writes.filter(({ url }) => !url.includes(TUTORIAL_PROGRESS))
 	).toEqual([]);
-	expect(
-		network.filter(({ url }) =>
-			/\/(-\d+)(\/|$|\?)|practice/.test(decodeURIComponent(url))
-		)
-	).toEqual([]);
+	expect(network.filter(({ url }) => addressesPractice(url))).toEqual([]);
 	expect(realMatrixWrites).toEqual([]);
 	expect(storageWrites).toEqual([]);
 	expect(appNotifications.addEventNotification).not.toHaveBeenCalled();

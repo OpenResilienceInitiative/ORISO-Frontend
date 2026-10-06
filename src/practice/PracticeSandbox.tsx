@@ -20,6 +20,7 @@ import {
 } from '../services/matrixClientRegistry';
 import { createPracticeWorld, type PracticeWorld } from './practiceWorld';
 import { holdPracticeExit } from './practiceMode';
+import { isPracticeId } from './practiceIds';
 import {
 	createPracticeTopic,
 	type PracticeStart
@@ -81,6 +82,26 @@ const restoreActiveSessionContext = ({
 	if (had) (window as any)[ACTIVE_SESSION_KEY] = value;
 };
 
+/** A practice id in the path or a query value (a search for "-1" as well). */
+const addressesPractice = (input: RequestInfo | URL): boolean => {
+	const href = input instanceof Request ? input.url : String(input);
+	let url: URL;
+	try {
+		url = new URL(href, window.location.href);
+	} catch {
+		return false;
+	}
+	return [...url.pathname.split('/'), ...url.searchParams.values()].some(
+		(part) => {
+			try {
+				return isPracticeId(decodeURIComponent(part));
+			} catch {
+				return false;
+			}
+		}
+	);
+};
+
 const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 	if (installation) {
 		if (installation.world !== world) {
@@ -115,7 +136,11 @@ const ensureInstalled = (world: PracticeWorld, baseFetch?: Fetch) => {
 				scheduleUninstallCheck();
 			}
 		}
-		return response ?? current.baseFetch(input as RequestInfo, init);
+		if (response) return response;
+		// Practice ids are the fake's, even the ones it does not know.
+		return addressesPractice(input)
+			? new Response(null, { status: 404 })
+			: current.baseFetch(input as RequestInfo, init);
 	};
 	installation = {
 		world,
