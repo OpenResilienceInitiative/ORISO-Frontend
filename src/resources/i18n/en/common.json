@@ -2716,7 +2716,8 @@
 			},
 			"help": {
 				"title": "Help",
-				"videoCall": "Video-Call"
+				"videoCall": "Video-Call",
+				"tours": "Tours"
 			},
 			"notifications": {
 				"email": "E-mail notification",
@@ -3385,6 +3386,10 @@
 				"text": "Sorry, something went wrong. Please reload the page and try again.",
 				"title": "Oops!"
 			}
+		},
+		"accountCreated": {
+			"login": "Your account has been created, but signing you in automatically did not work. Please log in with your username and password.",
+			"retry": "Your access has been created, but signing you in did not work. Please try again."
 		}
 	},
 	"releaseNote": {
@@ -4574,12 +4579,16 @@
 		},
 		"subtitle": "To explain the individual functions, we have prepared a short tour for you <br /> You can cancel it at any time or start it again in your profile.",
 		"switch": {
-			"active": {
-				"label": "Tour active"
+			"hint": {
+				"off": "Off: tours do not start on their own. You can start them here at any time.",
+				"on": "On: the intro tour starts on its own until you complete or skip it. You can start any tour here at any time."
 			},
-			"deactive": {
-				"label": "Tour activated"
-			}
+			"label": {
+				"off": "Off",
+				"on": "On"
+			},
+			"subtitle": "Short tours show you where to find things.",
+			"title": "Start tours automatically"
 		},
 		"title": "Tour"
 	},

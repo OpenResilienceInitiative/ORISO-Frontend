@@ -2733,7 +2733,8 @@
 			},
 			"help": {
 				"title": "Aide",
-				"videoCall": "Appel vidéo"
+				"videoCall": "Appel vidéo",
+				"tours": "Visites guidées"
 			},
 			"notifications": {
 				"email": "Notification par e-mail",
@@ -3419,6 +3420,10 @@
 		"stepper": {
 			"progress": "Étape {{current}} sur {{total}}",
 			"progressShort": "Étape {{current}}/{{total}}"
+		},
+		"accountCreated": {
+			"login": "Votre compte a été créé, mais la connexion automatique n’a pas fonctionné. Veuillez vous connecter avec votre nom d’utilisateur et votre mot de passe.",
+			"retry": "Votre accès a été créé, mais la connexion n’a pas fonctionné. Veuillez réessayer."
 		}
 	},
 	"releaseNote": {
@@ -4609,12 +4614,16 @@
 		},
 		"subtitle": "Pour vous expliquer les différentes fonctions, nous vous avons préparé une petite visite guidée. <br /> Vous pouvez l'interrompre à tout moment ou la relancer dans votre profil.",
 		"switch": {
-			"active": {
-				"label": "Circuit actif"
+			"hint": {
+				"off": "Désactivé : les visites guidées ne démarrent pas d'elles-mêmes. Vous pouvez les lancer ici à tout moment.",
+				"on": "Activé : la visite d'introduction démarre d'elle-même jusqu'à ce que vous l'ayez terminée ou passée. Vous pouvez lancer toutes les visites guidées ici à tout moment."
 			},
-			"deactive": {
-				"label": "Tour d'horizon activé"
-			}
+			"label": {
+				"off": "Désactivé",
+				"on": "Activé"
+			},
+			"subtitle": "De courtes visites guidées vous montrent où trouver chaque chose.",
+			"title": "Lancer les visites guidées automatiquement"
 		},
 		"title": "Visite guidée"
 	},
