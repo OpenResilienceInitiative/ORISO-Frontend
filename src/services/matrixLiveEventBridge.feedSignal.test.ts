@@ -65,6 +65,9 @@ const createFakeMatrixClient = (userId = MY_USER_ID) => {
 		removeAllListeners: (event: string) => {
 			listeners.delete(event);
 		},
+		removeListener: (event: string, listener: Listener) => {
+			listeners.get(event)?.delete(listener);
+		},
 		getUserId: () => userId,
 		listenerCount: (event: string) => listeners.get(event)?.size || 0,
 		emit: (event: string, ...args: any[]) => {
@@ -199,6 +202,30 @@ describe('MatrixLiveEventBridge — feed update signal (P2)', () => {
 		expect(client.listenerCount('receivedToDeviceMessage')).toBe(0);
 		expect(client.listenerCount('toDeviceEvent')).toBe(0);
 	});
+
+	it.each(['detach', 'replace'] as const)(
+		'preserves other key/crypto subscribers when the bridge is %s',
+		(action) => {
+			const keyHandler = vi.fn();
+			const legacyKeyHandler = vi.fn();
+			client.on('receivedToDeviceMessage', keyHandler);
+			client.on('toDeviceEvent', legacyKeyHandler);
+			bridge.initialize(client as any);
+			const feedHandler = vi.fn();
+			bridge.on(FEED_UPDATE_BRIDGE_EVENT, feedHandler);
+			if (action === 'detach') bridge.detach();
+			else bridge.reinitialize(createFakeMatrixClient() as any);
+			client.emit('receivedToDeviceMessage', {
+				message: { type: FEED_UPDATE_EVENT_TYPE, content: {} }
+			});
+			client.emit('toDeviceEvent', {
+				getType: () => FEED_UPDATE_EVENT_TYPE
+			});
+			expect(keyHandler).toHaveBeenCalledOnce();
+			expect(legacyKeyHandler).toHaveBeenCalledOnce();
+			expect(feedHandler).not.toHaveBeenCalled();
+		}
+	);
 
 	// --- deprecated `toDeviceEvent` fallback (older matrix-js-sdk) ---------
 

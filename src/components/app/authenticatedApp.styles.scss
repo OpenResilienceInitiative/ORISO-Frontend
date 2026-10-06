@@ -53,6 +53,23 @@ a {
 }
 
 .app {
+	// Recovery notices share the viewport with the application, rather than
+	// adding their height above a full-height conversation and its controls.
+	&:has(> .encryption-recovery-notice) {
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+
+		> .encryption-recovery-notice {
+			flex-shrink: 0;
+		}
+
+		> .app__wrapper {
+			flex: 1;
+			min-height: 0;
+		}
+	}
+
 	&--blur {
 		> *:not(.notifications) {
 			filter: blur(5px);
@@ -267,6 +284,18 @@ a {
 				// `card` variant is a `.session` too — never indent it.
 				.session:not(.sidePanel),
 				.enquiry__wrapper {
+					margin-left: calc(
+						var(--pane-gap) - var(--pane-inner-gutter)
+					);
+				}
+
+				// The create/edit-chat card sits in the same frame as the
+				// chat card: 24px top/right/bottom (Frank 2026-09-21). Its
+				// own `height: 100%` would push the margin off-screen.
+				.conversationCreate {
+					height: auto;
+					min-height: 0;
+					margin: var(--session-card-margin, 24px);
 					margin-left: calc(
 						var(--pane-gap) - var(--pane-inner-gutter)
 					);

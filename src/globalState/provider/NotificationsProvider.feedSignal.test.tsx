@@ -38,6 +38,7 @@ vi.mock('../../api/apiEventNotifications', () => ({
 }));
 
 vi.mock('../../components/sessionCookie/accessSessionCookie', () => ({
+	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
 	getValueFromCookie: () => 'fake-token'
 }));
 
@@ -58,7 +59,9 @@ const createFakeMatrixClient = () => {
 		getSyncState: () => 'PREPARED',
 		getAccountData: () => ({ getContent: () => DEFAULT_DISPLAY_FILTERS }),
 		setAccountData: vi.fn(() => Promise.resolve()),
-		removeListener: () => undefined,
+		removeListener: (event: string, listener: Listener) => {
+			listeners.get(event)?.delete(listener);
+		},
 		emit: (event: string, ...args: any[]) => {
 			listeners.get(event)?.forEach((listener) => listener(...args));
 		}

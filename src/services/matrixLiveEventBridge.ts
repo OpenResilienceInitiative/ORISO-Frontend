@@ -49,6 +49,18 @@ export class MatrixLiveEventBridge {
 	// message, synchronously. We listen to both so an older SDK still works, and
 	// collapse the pair with a per-tick guard.
 	private feedSignalHandledInTick = false;
+	private readonly onFeedDeviceMessage = (payload: {
+		message?: { type?: string };
+	}): void => {
+		if (payload?.message?.type === FEED_UPDATE_EVENT_TYPE) {
+			this.handleFeedUpdateSignal();
+		}
+	};
+	private readonly onLegacyFeedDeviceEvent = (event: MatrixEvent): void => {
+		if (event?.getType?.() === FEED_UPDATE_EVENT_TYPE) {
+			this.handleFeedUpdateSignal();
+		}
+	};
 	private pendingEncryptedEvents = new Map<
 		MatrixEvent,
 		{
@@ -74,8 +86,14 @@ export class MatrixLiveEventBridge {
 		if (this.client && this.client !== client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
-			this.client.removeAllListeners('receivedToDeviceMessage' as any);
-			this.client.removeAllListeners('toDeviceEvent' as any);
+			this.client.removeListener(
+				'receivedToDeviceMessage' as any,
+				this.onFeedDeviceMessage
+			);
+			this.client.removeListener(
+				'toDeviceEvent' as any,
+				this.onLegacyFeedDeviceEvent
+			);
 			this.clearPendingEncryptedEvents();
 		}
 
@@ -114,20 +132,12 @@ export class MatrixLiveEventBridge {
 		// timeline, and reaches every logged-in device of the recipient.
 		this.client.on(
 			'receivedToDeviceMessage' as any,
-			(payload: { message?: { type?: string } }) => {
-				if (payload?.message?.type === FEED_UPDATE_EVENT_TYPE) {
-					this.handleFeedUpdateSignal();
-				}
-			}
+			this.onFeedDeviceMessage
 		);
 
 		// Deprecated in matrix-js-sdk v38 but the only to-device channel in older
 		// versions. Guarded against double-handling by handleFeedUpdateSignal.
-		this.client.on('toDeviceEvent' as any, (event: MatrixEvent) => {
-			if (event?.getType?.() === FEED_UPDATE_EVENT_TYPE) {
-				this.handleFeedUpdateSignal();
-			}
-		});
+		this.client.on('toDeviceEvent' as any, this.onLegacyFeedDeviceEvent);
 
 		// Listen to sync state changes
 		this.client.on(
@@ -593,8 +603,14 @@ export class MatrixLiveEventBridge {
 		if (this.client) {
 			this.client.removeAllListeners('Room.timeline' as any);
 			this.client.removeAllListeners('sync' as any);
-			this.client.removeAllListeners('receivedToDeviceMessage' as any);
-			this.client.removeAllListeners('toDeviceEvent' as any);
+			this.client.removeListener(
+				'receivedToDeviceMessage' as any,
+				this.onFeedDeviceMessage
+			);
+			this.client.removeListener(
+				'toDeviceEvent' as any,
+				this.onLegacyFeedDeviceEvent
+			);
 		}
 		this.clearPendingEncryptedEvents();
 		this.processedCallInvites.clear();

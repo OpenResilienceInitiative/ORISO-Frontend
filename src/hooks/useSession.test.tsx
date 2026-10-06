@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	apiGetSessionRoomBySessionId,
@@ -11,9 +11,11 @@ import { buildExtendedSession } from '../globalState';
 import { chatTransportService } from '../services/chatTransportService';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import { useSession } from './useSession';
+import { messageEventEmitter } from '../services/messageEventEmitter';
+import { buildExtendedSession as realBuildExtendedSession } from '../globalState/helpers/stateHelpers';
 
 vi.mock('../api', () => ({
-	FETCH_ERRORS: { ABORT: 'ABORT' }
+	FETCH_ERRORS: { ABORT: 'ABORT', EMPTY: 'EMPTY', FORBIDDEN: 'FORBIDDEN' }
 }));
 
 vi.mock('../api/apiGetSessionRooms', () => ({
@@ -201,5 +203,280 @@ describe('useSession', () => {
 
 			expect(chatTransportService.markRoomAsRead).not.toHaveBeenCalled();
 		});
+	});
+});
+
+it('reloads an eligible accepted session by id when the room lookup has no content', async () => {
+	const raw = { session: { id: 109, status: 2 } };
+	const extended = { item: raw.session, isEnquiry: false };
+	vi.mocked(apiGetSessionRoomsByRoomIds).mockRejectedValue(
+		new Error('EMPTY')
+	);
+	vi.mocked(apiGetSessionRoomBySessionId).mockResolvedValue({
+		sessions: [raw]
+	} as any);
+	vi.mocked(buildExtendedSession).mockReturnValue(extended as any);
+	const { result } = renderHook(() => useSession('!room:test', 109));
+	await waitFor(() => expect(result.current.ready).toBe(true));
+	expect(result.current.session).toBe(extended);
+});
+
+describe('pending registered enquiry reconciliation', () => {
+	beforeEach(() => {
+		vi.resetAllMocks();
+		vi.useFakeTimers();
+		vi.mocked(buildExtendedSession).mockImplementation(
+			realBuildExtendedSession
+		);
+	});
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
+	});
+	it('updates acceptance without reloading and stops polling the accepted conversation', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [
+					{
+						session: {
+							id: 7,
+							status: 1,
+							modality: 'AGENCY_COUNSELLING'
+						}
+					}
+				]
+			} as any)
+			.mockResolvedValue({
+				sessions: [{ session: { id: 7, status: 2 } }]
+			} as any);
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		expect(result.current.session.isEnquiry).toBe(true);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(result.current.session.isEnquiry).toBe(false);
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(30000);
+		});
+		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledTimes(2);
+	});
+	it('keeps the current enquiry readable when a background request fails', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session: { id: 7, status: 1 } }]
+			} as any)
+			.mockRejectedValue(new Error('network unavailable'));
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		const displayed = result.current.session;
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(result.current.session).toBe(displayed);
+		expect(result.current.ready).toBe(true);
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+	});
+
+	it('ignores a late response from the previously opened conversation', async () => {
+		let finish!: (value: any) => void;
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					finish = resolve;
+				})
+			)
+			.mockResolvedValue({
+				sessions: [{ session: { id: 8, status: 1 } }]
+			} as any);
+		const { result, rerender } = renderHook(
+			({ id }) => useSession(null, id, undefined, true),
+			{ initialProps: { id: 7 } }
+		);
+		rerender({ id: 8 });
+		await act(async () => {});
+		await act(async () => {
+			finish({ sessions: [{ session: { id: 7, status: 2 } }] });
+		});
+		expect(result.current.session.item.id).toBe(8);
+		expect(result.current.session.isEnquiry).toBe(true);
+	});
+
+	it('coalesces focus and reconnect during a slow refresh and reconciles the latest state afterwards', async () => {
+		let finish!: (value: any) => void;
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session: { id: 7, status: 1 } }]
+			} as any)
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					finish = resolve;
+				})
+			)
+			.mockResolvedValue({
+				sessions: [{ session: { id: 7, status: 2 } }]
+			} as any);
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		act(() => window.dispatchEvent(new Event('online')));
+		const signal = vi.mocked(apiGetSessionRoomBySessionId).mock.calls[1][1];
+		act(() => {
+			window.dispatchEvent(new Event('focus'));
+			window.dispatchEvent(new Event('online'));
+		});
+		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledTimes(2);
+		expect(signal.aborted).toBe(false);
+		await act(async () => {
+			finish({ sessions: [{ session: { id: 7, status: 1 } }] });
+		});
+		expect(result.current.session.isEnquiry).toBe(false);
+		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledTimes(3);
+	});
+
+	it('uses a matching Matrix signal to show acceptance before the next poll', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [
+					{ session: { id: 7, status: 1, matrixRoomId: '!case:hs' } }
+				]
+			} as any)
+			.mockResolvedValue({
+				sessions: [
+					{ session: { id: 7, status: 2, matrixRoomId: '!case:hs' } }
+				]
+			} as any);
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		await act(async () => {
+			messageEventEmitter.emit({ roomId: '!other:hs' });
+		});
+		expect(result.current.session.isEnquiry).toBe(true);
+		await act(async () => {
+			messageEventEmitter.emit({ roomId: '!case:hs' });
+		});
+		expect(result.current.session.isEnquiry).toBe(false);
+	});
+
+	it('refreshes immediately on returning to a hidden tab without polling in the background', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session: { id: 7, status: 1 } }]
+			} as any)
+			.mockResolvedValue({
+				sessions: [{ session: { id: 7, status: 2 } }]
+			} as any);
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		const visibility = vi
+			.spyOn(document, 'visibilityState', 'get')
+			.mockReturnValue('hidden');
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(30000);
+		});
+		expect(apiGetSessionRoomBySessionId).toHaveBeenCalledTimes(1);
+		visibility.mockReturnValue('visible');
+		await act(async () => {
+			document.dispatchEvent(new Event('visibilitychange'));
+		});
+		expect(result.current.session.isEnquiry).toBe(false);
+		visibility.mockRestore();
+	});
+	it.each([
+		[false, 'AGENCY_COUNSELLING'],
+		[true, 'LIVE_CHAT']
+	])(
+		'does not add polling outside registered asker enquiries (enabled=%s, modality=%s)',
+		async (enabled, conversationType) => {
+			vi.mocked(apiGetSessionRoomBySessionId).mockResolvedValue({
+				sessions: [{ session: { id: 7, status: 1, conversationType } }]
+			} as any);
+			renderHook(() =>
+				useSession(null, 7, undefined, enabled as boolean)
+			);
+			await act(async () => {});
+			await act(async () => {
+				await vi.advanceTimersByTimeAsync(30000);
+				window.dispatchEvent(new Event('online'));
+			});
+			expect(apiGetSessionRoomBySessionId).toHaveBeenCalledTimes(1);
+		}
+	);
+	it('clears revoked session access instead of treating it as a temporary outage', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session: { id: 7, status: 1 } }]
+			} as any)
+			.mockRejectedValue(new Error('FORBIDDEN'));
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(15000);
+		});
+		expect(result.current.session).toBeNull();
+		expect(apiGetCaseHandoverCandidates).not.toHaveBeenCalled();
+	});
+	it('clears the current session after an explicit reload finds neither room nor fallback session', async () => {
+		vi.mocked(apiGetSessionRoomsByRoomIds)
+			.mockResolvedValueOnce({
+				sessions: [
+					{ session: { id: 7, status: 1, matrixRoomId: '!room:hs' } }
+				]
+			} as any)
+			.mockRejectedValue(new Error('EMPTY'));
+		vi.mocked(apiGetSessionRoomBySessionId).mockRejectedValue(
+			new Error('EMPTY')
+		);
+		vi.mocked(apiGetCaseHandoverCandidates).mockResolvedValue({
+			sessions: []
+		} as any);
+		const { result } = renderHook(() => useSession('!room:hs', 7));
+		await act(async () => {});
+		expect(result.current.session.item.id).toBe(7);
+		await act(async () => {
+			await Promise.resolve({ acknowledged: true }).then(
+				result.current.reload
+			);
+		});
+		expect(result.current.session).toBeNull();
+		expect(result.current.ready).toBe(true);
+	});
+	it('reconciles a matching accepted-session feed signal without waiting for polling', async () => {
+		vi.mocked(apiGetSessionRoomBySessionId)
+			.mockResolvedValueOnce({
+				sessions: [{ session: { id: 7, status: 1 } }]
+			} as any)
+			.mockResolvedValue({
+				sessions: [{ session: { id: 7, status: 2 } }]
+			} as any);
+		const { result } = renderHook(() =>
+			useSession(null, 7, undefined, true)
+		);
+		await act(async () => {});
+		await act(async () => {
+			messageEventEmitter.emit({
+				changedSessionId: 8,
+				source: 'notification-feed'
+			});
+		});
+		expect(result.current.session.isEnquiry).toBe(true);
+		await act(async () => {
+			messageEventEmitter.emit({
+				changedSessionId: 7,
+				source: 'notification-feed'
+			});
+		});
+		expect(result.current.session.isEnquiry).toBe(false);
 	});
 });

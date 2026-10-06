@@ -17,8 +17,16 @@ import { Button, BUTTON_TYPES } from '../button/Button';
 import { logout } from '../logout/logout';
 import {
 	inputValuesFit,
-	strengthIndicator
+	strengthIndicator,
+	validatePasswordCriteria
 } from '../../utils/validateInputValue';
+import {
+	AccountSetupField,
+	CheckMarkIcon,
+	PendingDotIcon
+} from '../twoFactorAuth/accountSetupDialogChrome';
+import { ReactComponent as ShowPasswordIcon } from '../../resources/img/icons/eye.svg';
+import { ReactComponent as HidePasswordIcon } from '../../resources/img/icons/eye-closed.svg';
 import { CheckAnimation } from '../animatedIllustration/AnimatedIllustration';
 import './passwordReset.styles';
 import { Headline } from '../headline/Headline';
@@ -32,6 +40,29 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { apiUpdatePasswordAppointments } from '../../api/apiUpdatePasswordAppointments';
+import {
+	ACCOUNT_SETUP_STEPS,
+	resolveAccountSetupStep
+} from '../twoFactorAuth/accountSetupStep';
+
+/**
+ * The chat identity this password change would have to rotate key-backup
+ * material through is not reachable. Distinct from a rejected password: the
+ * credentials were never tried, and nothing changed.
+ */
+class ChatRecoveryUnavailableError extends Error {}
+
+/**
+ * The Matrix client, or `null` when there is none to be had — no chat identity, the homeserver
+ * down, or the client never finished syncing. The caller decides what that means.
+ */
+const getReadyRecoveryClient = async () => {
+	try {
+		return (await getMatrixClientService()?.getReadyClient()) ?? null;
+	} catch {
+		return null;
+	}
+};
 
 const passwordChangeErrorKey = (
 	error: unknown,
@@ -43,12 +74,79 @@ const passwordChangeErrorKey = (
 		return 'encryption.passwordRecovery.repairBlocked';
 	if (error instanceof PasswordRecoveryWorkLimitError)
 		return 'encryption.passwordRecovery.retryable-failure';
+	if (error instanceof ChatRecoveryUnavailableError)
+		return 'encryption.passwordRecovery.chatUnavailable';
 	return passwordRecoveryEnabled
 		? 'encryption.passwordRecovery.passwordChangeFailed'
 		: 'profile.functions.password.reset.old.incorrect';
 };
 
-export const PasswordReset = () => {
+interface PasswordResetProps {
+	/** Inside the account-setup dialog the surrounding dialog already carries the title and the
+	 *  reason, and "if you like, you can change your password" would contradict it. */
+	hideIntro?: boolean;
+	/** `dialog` is the account-setup presentation; the profile page keeps its own form. */
+	variant?: 'profile' | 'dialog';
+}
+
+interface DialogPasswordFieldProps {
+	errorMessage?: string;
+	hint?: string;
+	id: string;
+	label: string;
+	name: string;
+	onChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+	successMessage?: string;
+	value: string;
+}
+
+/** The shared dialog field plus the show/hide toggle only a password needs. */
+const DialogPasswordField = ({
+	errorMessage,
+	hint,
+	id,
+	label,
+	name,
+	onChange,
+	successMessage,
+	value
+}: DialogPasswordFieldProps) => {
+	const { t: translate } = useTranslation();
+	const [isVisible, setIsVisible] = useState(false);
+
+	return (
+		<AccountSetupField
+			adornment={
+				<button
+					aria-label={translate(
+						isVisible
+							? 'login.password.hide'
+							: 'login.password.show'
+					)}
+					className="setupField__adornment"
+					onClick={() => setIsVisible(!isVisible)}
+					type="button"
+				>
+					{isVisible ? <HidePasswordIcon /> : <ShowPasswordIcon />}
+				</button>
+			}
+			errorMessage={errorMessage}
+			hint={hint}
+			id={id}
+			label={label}
+			name={name}
+			onChange={onChange}
+			successMessage={successMessage}
+			type={isVisible ? 'text' : 'password'}
+			value={value}
+		/>
+	);
+};
+
+export const PasswordReset = ({
+	hideIntro = false,
+	variant = 'profile'
+}: PasswordResetProps) => {
 	const { t: translate } = useTranslation();
 	const { featureAppointmentsEnabled } = getTenantSettings();
 	const { userData } = useContext(UserDataContext);
@@ -155,6 +253,7 @@ export const PasswordReset = () => {
 	const handleInputOldChange = (event) => {
 		setOldPasswordErrorMessage('');
 		setOldPassword(event.target.value);
+		validateNewPassword(newPassword, event.target.value);
 	};
 
 	const handleInputNewChange = (event) => {
@@ -168,9 +267,19 @@ export const PasswordReset = () => {
 		setConfirmPassword(event.target.value);
 	};
 
-	const validateNewPassword = (newPassword: string) => {
+	const validateNewPassword = (
+		newPassword: string,
+		currentPassword: string = oldPassword
+	) => {
 		let passwordStrength = strengthIndicator(newPassword);
-		if (newPassword.length >= 1 && passwordStrength < 4) {
+		if (newPassword.length >= 1 && newPassword === currentPassword) {
+			// A "change" to the same password would leave the account on the one its
+			// administrator knows. The server refuses it too; this says so before the round trip.
+			setNewPasswordSuccessMessage('');
+			setNewPasswordErrorMessage(
+				translate('profile.functions.password.reset.sameAsOld')
+			);
+		} else if (newPassword.length >= 1 && passwordStrength < 4) {
 			setNewPasswordSuccessMessage('');
 			setNewPasswordErrorMessage(
 				translate('profile.functions.password.reset.insecure')
@@ -229,21 +338,54 @@ export const PasswordReset = () => {
 				);
 				if (policy.mode === 'RECOVERY_KEY')
 					return apiUpdatePassword(oldPassword, newPassword);
-				const client = await getMatrixClientService()?.getReadyClient();
+				/* The account-setup gate's own step. `passwordChangeRequired`
+				   is set exactly once — when an administrator provisions the
+				   account — so this is the account's FIRST password change:
+				   the old password is the administrator's, nothing of the
+				   counsellor's own is sealed under it, and there is no
+				   key-backup material of theirs to rotate. The gate offers no
+				   way on but logging out, so this step must not be able to
+				   dead-end (#1481). */
+				const firstChange =
+					resolveAccountSetupStep(userData) ===
+					ACCOUNT_SETUP_STEPS.PASSWORD;
+				const client = await getReadyRecoveryClient();
 				const id = client?.getUserId();
-				if (!client || !id)
-					throw new Error('Recovery client unavailable');
-				await withRecoverySetupLock(id, () =>
-					changePasswordWithRecovery(
-						client,
-						oldPassword,
-						newPassword,
-						() => apiUpdatePassword(oldPassword, newPassword),
-						(error) =>
-							error instanceof Error &&
-							error.message === FETCH_ERRORS.BAD_REQUEST
+				if (!client || !id) {
+					/* Nothing was ever sealed, so a plain update loses
+					   nothing. For an established account it would: the
+					   envelope would stay sealed under the old password and
+					   the counsellor's history would need a recovery key they
+					   may never have saved. Refuse, and say so. */
+					if (firstChange)
+						return apiUpdatePassword(oldPassword, newPassword);
+					throw new ChatRecoveryUnavailableError();
+				}
+				try {
+					await withRecoverySetupLock(id, () =>
+						changePasswordWithRecovery(
+							client,
+							oldPassword,
+							newPassword,
+							() => apiUpdatePassword(oldPassword, newPassword),
+							(error) =>
+								error instanceof Error &&
+								error.message === FETCH_ERRORS.BAD_REQUEST
+						)
+					);
+				} catch (error) {
+					/* No envelope exists at all — thrown before the password
+					   API is ever called, so there is no double change to
+					   fear. Outside the gate this points at the security
+					   settings; behind it those are unreachable, and there is
+					   still nothing to rotate. */
+					if (
+						firstChange &&
+						error instanceof PasswordRecoveryRepairRequiredError
 					)
-				);
+						return apiUpdatePassword(oldPassword, newPassword);
+					throw error;
+				}
 			})()
 				.then(async () => {
 					// Must complete BEFORE logout clears the auth cookies —
@@ -290,21 +432,156 @@ export const PasswordReset = () => {
 		window.location.href = settings.urls.toLogin;
 	};
 
+	if (variant === 'dialog') {
+		// Live checklist: each rule turns green as the typed password meets it.
+		const criteria = validatePasswordCriteria(newPassword);
+		const criteriaItems = [
+			{
+				key: 'mixedCase',
+				isMet: criteria.hasUpperLowerCase,
+				labelKey: 'profile.functions.password.reset.criteria.mixedCase'
+			},
+			{
+				key: 'number',
+				isMet: criteria.hasNumber,
+				labelKey: 'profile.functions.password.reset.criteria.number'
+			},
+			{
+				key: 'specialChar',
+				isMet: criteria.hasSpecialChar,
+				labelKey:
+					'profile.functions.password.reset.criteria.specialChar'
+			},
+			{
+				key: 'minLength',
+				isMet: criteria.hasMinLength,
+				labelKey: 'profile.functions.password.reset.criteria.minLength'
+			}
+		];
+
+		return (
+			<div
+				id="passwordReset"
+				className="passwordReset passwordReset--dialog"
+			>
+				{repairRequired && (
+					<p className="passwordReset__error" role="alert">
+						{translate(
+							'encryption.passwordRecovery.repairRequired'
+						)}{' '}
+						<Link to="/profile/einstellungen/sicherheit">
+							{translate('encryption.passwordRecovery.settings')}
+						</Link>
+					</p>
+				)}
+				<DialogPasswordField
+					errorMessage={oldPasswordErrorMessage}
+					hint={translate(
+						'profile.functions.password.reset.old.hint'
+					)}
+					id="passwordResetOld"
+					label={translate(
+						'profile.functions.password.reset.old.dialogLabel'
+					)}
+					name="passwordResetOld"
+					onChange={handleInputOldChange}
+					successMessage={oldPasswordSuccessMessage}
+					value={oldPassword}
+				/>
+				<div className="passwordReset__fieldPair">
+					<DialogPasswordField
+						errorMessage={newPasswordErrorMessage}
+						id="passwordResetNew"
+						label={translate(
+							'profile.functions.password.reset.new.label'
+						)}
+						name="passwordResetNew"
+						onChange={handleInputNewChange}
+						successMessage={newPasswordSuccessMessage}
+						value={newPassword}
+					/>
+					<DialogPasswordField
+						errorMessage={confirmPasswordErrorMessage}
+						id="passwordResetConfirm"
+						label={translate(
+							'profile.functions.password.reset.confirm.dialogLabel'
+						)}
+						name="passwordResetConfirm"
+						onChange={handleInputConfirmChange}
+						successMessage={confirmPasswordSuccessMessage}
+						value={confirmPassword}
+					/>
+				</div>
+				<div className="passwordReset__criteria">
+					<p className="passwordReset__criteriaTitle">
+						{translate(
+							'profile.functions.password.reset.criteria.title'
+						)}
+					</p>
+					<ul className="passwordReset__criteriaList">
+						{criteriaItems.map((item) => (
+							<li
+								className={[
+									'passwordReset__criterion',
+									item.isMet &&
+										'passwordReset__criterion--met'
+								]
+									.filter(Boolean)
+									.join(' ')}
+								key={item.key}
+							>
+								{item.isMet ? (
+									<CheckMarkIcon size={16} />
+								) : (
+									<PendingDotIcon />
+								)}
+								<span>{translate(item.labelKey)}</span>
+								{item.isMet && (
+									<span className="twoFactorSetupDialog__srOnly">
+										{` ${translate('profile.functions.password.reset.criteria.met')}`}
+									</span>
+								)}
+							</li>
+						))}
+					</ul>
+				</div>
+				<Button
+					item={{
+						label: translate(
+							'profile.functions.password.reset.submitAndContinue'
+						),
+						type: BUTTON_TYPES.PRIMARY
+					}}
+					buttonHandle={handleSubmit}
+					className="passwordReset__submit"
+					disabled={!isValid}
+				/>
+				{overlayActive ? (
+					<Overlay item={overlayItem} handleOverlay={handleSuccess} />
+				) : null}
+			</div>
+		);
+	}
+
 	return (
 		<div id="passwordReset" className="passwordReset">
-			<div className="profile__content__title">
-				<Headline
-					text={translate('profile.functions.password.reset.title')}
-					semanticLevel="5"
-				/>
-				<Text
-					text={translate(
-						'profile.functions.password.reset.subtitle'
-					)}
-					type="standard"
-					className="tertiary"
-				/>
-			</div>
+			{!hideIntro && (
+				<div className="profile__content__title">
+					<Headline
+						text={translate(
+							'profile.functions.password.reset.title'
+						)}
+						semanticLevel="5"
+					/>
+					<Text
+						text={translate(
+							'profile.functions.password.reset.subtitle'
+						)}
+						type="standard"
+						className="tertiary"
+					/>
+				</div>
+			)}
 			<div className="generalInformation">
 				{repairRequired && (
 					<p role="alert">

@@ -13,19 +13,33 @@ import {
 	EmailLocale
 } from './content/emailCatalogue';
 import { en } from './content/en';
+import { fr } from './content/fr';
+import { ru } from './content/ru';
+import { ti } from './content/ti';
+import { tr } from './content/tr';
 import {
 	EmailDialect,
 	toEmailDialectHtml,
 	toEmailDialectText
 } from './kit/emailDialect';
 import {
+	emailAssurance,
+	emailCallToAction,
+	emailFootnote
+} from './kit/emailMolecules';
+import {
 	EmailContent,
 	renderEmailHtml,
 	renderEmailText
 } from './kit/emailTemplate';
-import { EmailBrand, emailDefaultBrand } from './kit/emailTokens';
+import {
+	EmailBrand,
+	emailDefaultBrand,
+	emailSampleBrand
+} from './kit/emailTokens';
 
 export * from './content/emailCatalogue';
+export * from './content/emailTranslationSync';
 export * from './kit/emailDialect';
 export * from './kit/emailTokens';
 export type { EmailContent } from './kit/emailTemplate';
@@ -36,13 +50,21 @@ export const EMAIL_CONTENT: Record<
 > = {
 	'de-sie': deSie,
 	'de-du': deDu,
-	en
+	en,
+	fr,
+	ru,
+	ti,
+	tr
 };
 
 export const getEmailContent = (
 	id: EmailId,
 	locale: EmailLocale
-): EmailContent => EMAIL_CONTENT[locale][id];
+): EmailContent => {
+	const content = EMAIL_CONTENT[locale]?.[id];
+	if (!content) throw new Error(`Missing e-mail copy: ${locale}/${id}`);
+	return content;
+};
 
 export interface BuildEmailOptions {
 	/** Defaults to the placeholder brand, i.e. a send-ready template file. */
@@ -87,7 +109,10 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	messageUrl: 'https://beratung.example.org/nachrichten',
 	loginUrl: 'https://beratung.example.org/login',
 	resetUrl: 'https://beratung.example.org/passwort/neu?token=8f3a',
+	setupUrl:
+		'https://beratung.example.org/admin/counsellor-onboarding/example-token',
 	appointmentUrl: 'https://beratung.example.org/termine',
+	callUrl: 'https://beratung.example.org/gespraeche/anruf',
 	requestUrl: 'https://beratung.example.org/anfragen/4711',
 	statusUrl: 'https://status.example.org',
 	settingsUrl: 'https://beratung.example.org/einstellungen',
@@ -95,7 +120,6 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 	imprintUrl: 'https://beratung.example.org/impressum',
 	unsubscribeUrl:
 		'https://beratung.example.org/einstellungen/benachrichtigungen',
-	bookingUrl: 'https://beratung.example.org/termine/buchen',
 	username: 'ruhiges-yak-1428',
 	expiryHours: '24',
 	appointmentDate: 'Dienstag, 4. August 2026',
@@ -140,12 +164,49 @@ export const EMAIL_SAMPLE_VALUES: Record<string, string> = {
 
 	// Invitations and the DPA.
 	tenantName: 'Caritasverband Mainz',
+	tenantNameDative: 'Caritasverband Mainz',
+	// The offered-by line names the platform, never the Träger…
+	offeringName: 'Online-Beratung',
+	// …and its operator (Admin → Dokument-Stammdaten → Betreiber), never the Träger.
+	operatorName: 'Sunflower Care e.V.',
 	agencyName: 'Beratungsstelle Mainz-Neustadt',
 	inviteUrl: 'https://beratung.example.org/einladung?token=1c9d',
 	inviteExpiresAt: '10. August 2026, 23:59',
 	dpaUrl: 'https://beratung.example.org/avv/2026-0044',
 	dpaProvidedAt: '3. August 2026',
 	dpaExpiresAt: '17. August 2026, 23:59',
+
+	// The invite an operator writes themselves. UserService fills these: the
+	// sanitised body, its text twin, and the action block it builds from the
+	// kit's button and a copy-link fallback.
+	subject: 'Einladung zur Beratung in Mainz-Neustadt',
+	preheader:
+		'Wir laden Sie ein, unser Team in der Online-Beratung zu verstärken.',
+	bodyHtml:
+		'<p style="margin:0 0 16px 0;">Guten Tag,</p>' +
+		'<p style="margin:0 0 16px 0;">wir laden Sie ein, unser Team in der Online-Beratung der Beratungsstelle Mainz-Neustadt zu verstärken.</p>' +
+		'<p style="margin:0 0 16px 0;">Mit freundlichen Grüßen<br>K. Reuter</p>',
+	bodyText:
+		'Guten Tag,\n\nwir laden Sie ein, unser Team in der Online-Beratung der Beratungsstelle Mainz-Neustadt zu verstärken.\n\nMit freundlichen Grüßen\nK. Reuter',
+	ctaBlock:
+		emailCallToAction(
+			{
+				label: 'Einladung annehmen',
+				href: 'https://beratung.example.org/einladung?token=1c9d'
+			},
+			emailSampleBrand
+		) +
+		emailFootnote(
+			'Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser: https://beratung.example.org/einladung?token=1c9d'
+		),
+	// The previewed invite has an action, so the fine print and the footer
+	// note are the invitation's. Without one, UserService leaves
+	// {{assuranceBlock}} empty and sends a neutral "sent automatically" note.
+	assuranceBlock: emailAssurance(
+		'Wir fragen Sie nie per E-Mail nach Ihrem Passwort. Geben Sie diesen Link an niemanden weiter.'
+	),
+	footerNote:
+		'Diese E-Mail gehört zu Ihrer Einladung und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.',
 
 	// Team and platform operations.
 	teamChangeStatement:

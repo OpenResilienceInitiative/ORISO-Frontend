@@ -154,6 +154,7 @@ export interface GroupChatEditSource {
 	startDate: string;
 	startTime?: string;
 	startDateWithTime?: string;
+	timezone?: string;
 	repetitive?: boolean;
 	repeatCount?: number;
 	chatInterval?: GroupChatInterval;
@@ -169,6 +170,8 @@ export interface GroupChatEditSource {
 export interface GroupChatEditDraft {
 	topic: string;
 	agencyId: number | null;
+	/** The group's own zone; startDate/startTime are wall-clock time in it. */
+	timezone?: string;
 	seriesFields: {
 		startDate: string;
 		startTime: string;
@@ -185,6 +188,33 @@ export interface GroupChatEditDraft {
 	consultantIds: string[];
 }
 
+const DATE_PART = /^(\d{4}-\d{2}-\d{2})/;
+const TIME_PART = /^(\d{2}:\d{2})/;
+
+/**
+ * startDate + startTime are already the group's wall clock (#1499). Parsing
+ * them with `new Date()` would read the date as UTC midnight.
+ */
+const readEditStart = (
+	source: GroupChatEditSource
+): { startDate: string; startTime: string } | null => {
+	const date = DATE_PART.exec(source.startDate || '')?.[1];
+	const time = TIME_PART.exec(source.startTime || '')?.[1];
+	if (date && time && !Number.isNaN(new Date(`${date}T${time}`).getTime())) {
+		return { startDate: date, startTime: time };
+	}
+	if (!source.startDateWithTime) {
+		return null;
+	}
+	const legacy = new Date(source.startDateWithTime);
+	return Number.isNaN(legacy.getTime())
+		? null
+		: {
+				startDate: getValidDateFormatForSelectedDate(legacy),
+				startTime: getValidTimeFormatForSelectedTime(legacy)
+			};
+};
+
 /**
  * Turn a persisted group-chat series item into a fully-populated edit draft.
  *
@@ -198,9 +228,8 @@ export const buildGroupChatEditDraft = (
 	source: GroupChatEditSource,
 	fallbackLanguage = 'de'
 ): GroupChatEditDraft => {
-	const startSource = source.startDateWithTime || source.startDate;
-	const start = new Date(startSource);
-	if (Number.isNaN(start.getTime())) {
+	const start = readEditStart(source);
+	if (!start) {
 		throw new Error(
 			'A valid series start is required to edit the schedule'
 		);
@@ -223,9 +252,10 @@ export const buildGroupChatEditDraft = (
 	return {
 		topic: source.topic,
 		agencyId: source.assignedAgencies?.[0]?.id ?? null,
+		timezone: source.timezone || undefined,
 		seriesFields: {
-			startDate: getValidDateFormatForSelectedDate(start),
-			startTime: getValidTimeFormatForSelectedTime(start),
+			startDate: start.startDate,
+			startTime: start.startTime,
 			duration: source.duration,
 			repeatCount,
 			interval: source.chatInterval || 'WEEKLY',

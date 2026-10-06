@@ -16,6 +16,11 @@ import {
 	APP_ORISO_CHAT_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
+import {
+	RuntimeSessionCard,
+	RuntimeSessionProviders,
+	runtimeSession
+} from '../sessionsListItem/__storybook__/runtimeSessionCard';
 import './sessionsList.styles.scss';
 
 const shell: React.CSSProperties = {
@@ -343,7 +348,9 @@ export const WithDisplayFilter: Story = {
 	render: () => <ToolbarWithDisplayFilter />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const button = canvas.getByRole('button', { name: 'Anzeige-Filter' });
+		const button = canvas.getByRole('button', {
+			name: 'Ansicht einstellen'
+		});
 		await expect(
 			button.querySelector('.displayFilterButton__dot')
 		).not.toBeNull();
@@ -376,9 +383,8 @@ export const NoConsultantActions: Story = {
  *
  * These stories run the toolbar against `sessionMatchesToolbar`, the same
  * selector `SessionsList.tsx` filters with, over fixtures built by the real
- * `buildExtendedSession`. The row strip below the toolbar is a deliberately
- * plain stand-in for the session list — the subject here is the chip → filter
- * wiring, not the list item's own presentation, which has its own stories.
+ * `buildExtendedSession`. The rows are the real session cards
+ * (`SessionListItemComponent`), not stand-ins (Frank 2026-09-21).
  * ------------------------------------------------------------------------- */
 
 const SUPERVISION_VIEWER_ID = 'consultant-me';
@@ -405,11 +411,22 @@ const supervisionRow = (
 	name,
 	note,
 	raw: {
-		consultant: { id: consultantId } as ListItemInterface['consultant'],
-		user: { username: name } as ListItemInterface['user'],
+		...runtimeSession,
+		consultant: {
+			...runtimeSession.consultant,
+			consultantId,
+			id: consultantId
+		},
+		user: {
+			...runtimeSession.user,
+			username: name,
+			displayName: name
+		},
 		session: {
+			...runtimeSession.session,
 			id,
-			matrixRoomId: `!supervision-demo-${id}:oriso.org`,
+			matrixRoomId: `!supervision-demo-${id}:example.org`,
+			lastMessage: note,
 			messagesRead: true,
 			conversationType: 'AGENCY_COUNSELLING',
 			...(supervision ? { supervision } : {})
@@ -519,42 +536,39 @@ function SupervisionChipFilterDemo({
 				createGroupChatActive={false}
 				chipCounts={{ supervision: SUPERVISED_BY_ME_COUNT }}
 			/>
-			<ul
-				data-cy="supervision-filter-demo-list"
-				style={{
-					listStyle: 'none',
-					margin: '12px 0 0',
-					padding: 0,
-					display: 'flex',
-					flexDirection: 'column',
-					gap: 8
-				}}
+			<RuntimeSessionProviders
+				sessions={visibleRows.map((row) => row.raw)}
+				viewerId={SUPERVISION_VIEWER_ID}
 			>
-				{visibleRows.map((row) => (
-					<li
-						key={row.name}
-						data-cy="supervision-filter-demo-row"
-						style={{
-							background: '#ffffff',
-							borderRadius: 8,
-							padding: '10px 12px'
-						}}
-					>
-						<strong style={{ display: 'block' }}>{row.name}</strong>
-						<span style={{ color: '#5b5b5b' }}>{row.note}</span>
-					</li>
-				))}
-			</ul>
+				<div
+					data-cy="supervision-filter-demo-list"
+					className="sessionsList__scrollContainer"
+					style={{ margin: '12px 0 0' }}
+				>
+					{visibleRows.map((row, index) => (
+						<div
+							key={row.name}
+							data-cy="supervision-filter-demo-row"
+							data-name={row.name}
+						>
+							<RuntimeSessionCard
+								session={row.raw}
+								index={index}
+							/>
+						</div>
+					))}
+				</div>
+			</RuntimeSessionProviders>
 		</div>
 	);
 }
 
 const demoRowNames = (canvasElement: HTMLElement) =>
 	Array.from(
-		canvasElement.querySelectorAll(
-			'[data-cy="supervision-filter-demo-row"] strong'
+		canvasElement.querySelectorAll<HTMLElement>(
+			'[data-cy="supervision-filter-demo-row"]'
 		)
-	).map((element) => element.textContent);
+	).map((element) => element.dataset.name);
 
 const supervisionChipButton = (canvasElement: HTMLElement) =>
 	canvasElement.querySelector<HTMLButtonElement>(
@@ -657,8 +671,96 @@ export const SupervisionChipMobile390: Story = {
 		await waitFor(() =>
 			expect(label.getBoundingClientRect().width).toBeGreaterThan(0)
 		);
+		// Frank 2026-09-21: the selected chip scrolls itself fully into view.
+		const scroller = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="sessions-list-chips"]'
+		)!;
+		await waitFor(
+			() => {
+				const box = scroller.getBoundingClientRect();
+				const rect = chip.getBoundingClientRect();
+				// 1px slack for sub-pixel chip widths.
+				expect(rect.left).toBeGreaterThanOrEqual(box.left - 1);
+				expect(rect.right).toBeLessThanOrEqual(box.right + 1);
+			},
+			{ timeout: 2000 }
+		);
 		await expect(demoRowNames(canvasElement).length).toBe(
 			SUPERVISED_BY_ME_COUNT
 		);
 	}
 };
+
+/** Frank 2026-09-16: compact text pills, auto-sort puts Mail (2) first. */
+export const TextViewAutoSorted: Story = {
+	render: () => <ToolbarChipMenuPreset view="text" />
+};
+
+/**
+ * The Träger switched Gesprächskreise off while one still exists: the
+ * groups chip stays as a locked pill; its click reports to the list.
+ */
+export const TraegerDeactivatedCircle: Story = {
+	render: () => <ToolbarChipMenuPreset deactivatedGroups />
+};
+
+function ToolbarChipMenuPreset({
+	view = 'icons',
+	deactivatedGroups = false
+}: {
+	view?: 'icons' | 'text';
+	deactivatedGroups?: boolean;
+}) {
+	const { t } = useTranslation();
+	const [search, setSearch] = useState('');
+	const [activeChip, setActiveChip] =
+		useState<SessionToolbarChipFilter | null>(null);
+	const [notice, setNotice] = useState<string | null>(null);
+	return (
+		<div style={shell}>
+			<SessionsListToolbar
+				translate={t}
+				searchValue={search}
+				onSearchChange={setSearch}
+				activeChip={activeChip}
+				onChipToggle={(chip) =>
+					setActiveChip((p) => (p === chip ? null : chip))
+				}
+				showConsultantActions
+				showCreateGroupChatAction
+				showSupervisionChip
+				showGroupChip={!deactivatedGroups}
+				showInternalGroupChip
+				createGroupChatPath="/sessions/consultant/sessionView/createGroupChat"
+				archiveTabPath="/sessions/consultant/sessionView?sessionListTab=archive"
+				archiveTabActive={false}
+				createGroupChatActive={false}
+				chipCounts={{ unread: 3, drafts: 1, nearby: 2, groups: 1 }}
+				chipView={view}
+				chipAutoSort
+				deactivatedKindChips={deactivatedGroups ? { groups: true } : {}}
+				deactivatedChipLabel={(name) =>
+					`${name} (vom Träger abgeschaltet)`
+				}
+				onDeactivatedChipClick={() =>
+					setNotice(
+						'Gesprächskreis ist für Ihren Träger abgeschaltet. Bestehende Gespräche bleiben sichtbar, bis sie archiviert sind; neue können nicht angelegt werden.'
+					)
+				}
+				displayFilter={{
+					label: 'Ansicht einstellen',
+					customisedLabel: 'Filter angepasst',
+					customised: false,
+					open: false,
+					controlsId: 'sessions-display-filter-dialog',
+					onOpen: () => undefined
+				}}
+			/>
+			{notice && (
+				<p role="status" style={{ margin: '12px 16px', fontSize: 14 }}>
+					{notice}
+				</p>
+			)}
+		</div>
+	);
+}

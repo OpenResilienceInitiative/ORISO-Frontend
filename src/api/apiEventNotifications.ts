@@ -48,7 +48,9 @@ export const apiGetEventNotifications = async (
 			'excludeEventTypes',
 			excludeEventTypes
 		)}`,
-		method: FETCH_METHODS.GET
+		// Transient polling failures stay local; 401 retains session handling.
+		method: FETCH_METHODS.GET,
+		responseHandling: []
 	});
 
 /** #1377 slice 7: the unread total without hidden kinds (exact badge). */
@@ -60,7 +62,9 @@ export const apiGetEventNotificationsUnreadCount = async (
 			'excludeEventTypes',
 			excludeEventTypes
 		)}`,
-		method: FETCH_METHODS.GET
+		// Transient polling failures stay local; 401 retains session handling.
+		method: FETCH_METHODS.GET,
+		responseHandling: []
 	});
 
 /**

@@ -1,0 +1,27 @@
+Hesabınız zaten oluşturuldu
+===========================
+
+${platformName!''} üzerinde sizin için bir hesap zaten oluşturuldu.
+
+Kendi şifrenizi belirlemek için bu bağlantıyı kullanın. Ardından her zamanki gibi giriş yapın; gerekli güvenlik kontrolleri uygulanmaya devam eder.
+
+Bağlantının geçerlilik sonu: ${inviteExpiresAt!''}
+
+Şifre belirle:
+${setupUrl!''}
+
+Bu kurulumu beklemiyorsanız bağlantıyı kullanmayın ve yöneticinizle iletişime geçin.
+
+----------------------------------------------------------------
+Şifrenizi hiçbir zaman e-postayla sormayız. Bu bağlantıyı kimseyle paylaşmayın.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${offeringName!''}, ${operatorName!''} tarafından sunulan bir hizmettir.
+
+Veri koruma: ${privacyUrl!''}
+Künye: ${imprintUrl!''}
+
+Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.

@@ -12,14 +12,42 @@ import { buildMentionsContent } from './messageMentions';
  * transport (content building) and the timeline formatter (reading).
  */
 
-export interface TextMessageContentOptions {
+export interface MessageRelationOptions {
 	/** Event id of the message being replied to (rich reply). */
 	replyToEventId?: string | null;
 	/** MSC3440: root event id when the message belongs to a thread. */
 	threadRootId?: string | null;
+}
+
+export interface TextMessageContentOptions extends MessageRelationOptions {
 	/** Resolved Matrix user ids to intentionally mention (m.mentions). */
 	mentionedUserIds?: string[];
 }
+
+export const buildMessageRelationContent = (
+	options?: MessageRelationOptions
+): Record<string, unknown> => {
+	if (options?.threadRootId) {
+		return {
+			'm.relates_to': {
+				'rel_type': 'm.thread',
+				'event_id': options.threadRootId,
+				'is_falling_back': !options.replyToEventId,
+				'm.in_reply_to': {
+					event_id: options.replyToEventId || options.threadRootId
+				}
+			}
+		};
+	}
+	if (options?.replyToEventId) {
+		return {
+			'm.relates_to': {
+				'm.in_reply_to': { event_id: options.replyToEventId }
+			}
+		};
+	}
+	return {};
+};
 
 /**
  * Build `m.room.message` content, attaching relations when given.
@@ -39,20 +67,7 @@ export const buildTextMessageContent = (
 		msgtype: 'm.text',
 		body: message
 	};
-	if (options?.threadRootId) {
-		content['m.relates_to'] = {
-			'rel_type': 'm.thread',
-			'event_id': options.threadRootId,
-			'is_falling_back': !options.replyToEventId,
-			'm.in_reply_to': {
-				event_id: options.replyToEventId || options.threadRootId
-			}
-		};
-	} else if (options?.replyToEventId) {
-		content['m.relates_to'] = {
-			'm.in_reply_to': { event_id: options.replyToEventId }
-		};
-	}
+	Object.assign(content, buildMessageRelationContent(options));
 	Object.assign(content, buildMentionsContent(options?.mentionedUserIds));
 	return content;
 };
