@@ -1,3 +1,4 @@
+import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import {
 	useCallback,
@@ -1290,14 +1291,7 @@ export const SessionStream = ({
 						'Consent response does not match the request'
 					);
 				}
-				if (
-					[
-						'PENDING',
-						'PENDING_CLIENT_CONSENT',
-						'GRANTED_PENDING_CLIENT_OPTOUT'
-					].includes(confirmedStatus.status)
-				)
-					return;
+				if (isPendingCaseHandoverStatus(confirmedStatus.status)) return;
 				notificationsContext?.markNotificationAsRead(
 					pendingCaseHandoverConsent.id
 				);

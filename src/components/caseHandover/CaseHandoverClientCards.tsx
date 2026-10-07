@@ -1,3 +1,4 @@
+import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
@@ -301,13 +302,7 @@ export const CaseHandoverConsentCard = ({
 	const { t: translate } = useTranslation();
 	const isOptOut = mode === 'OPT_OUT';
 	const isInformational = mode === 'NONE';
-	const isResolved =
-		!!status &&
-		![
-			'PENDING_CLIENT_CONSENT',
-			'GRANTED_PENDING_CLIENT_OPTOUT',
-			'PENDING'
-		].includes(status);
+	const isResolved = !!status && !isPendingCaseHandoverStatus(status);
 	const [infoOpen, setInfoOpen] = React.useState(false);
 	/*
 	 * `Switch` is fully controlled — its `<input>` renders whatever `checked`

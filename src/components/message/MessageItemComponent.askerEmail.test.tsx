@@ -53,6 +53,11 @@ const erstantwortEvent = `[SYSTEM_NOTIFICATION]${JSON.stringify({
 	bausteine: [
 		{ id: 'greeting', body: GREETING_BAUSTEIN_BODY },
 		{
+			id: 'whoReadsAlong',
+			headline: 'Wer liest meine Nachricht?',
+			body: 'Nur die zuständige Stelle liest diese Anfrage.'
+		},
+		{
 			id: 'emailNotification',
 			body: EMAIL_BAUSTEIN_BODY,
 			action: { kind: 'ADD_EMAIL', label: 'E-Mail-Adresse angeben' }
@@ -73,7 +78,18 @@ const tenantWith = (featureAskerEmailEnabled?: boolean): TenantDataInterface =>
 		}
 	}) as unknown as TenantDataInterface;
 
-const renderErstantwortMessage = (tenant: TenantDataInterface) =>
+const renderErstantwortMessage = (
+	tenant: TenantDataInterface,
+	{
+		raw = erstantwortEvent,
+		account = {},
+		modality = 'AGENCY_COUNSELLING'
+	} = {} as {
+		raw?: string;
+		account?: Record<string, unknown>;
+		modality?: string;
+	}
+) =>
 	render(
 		<MemoryRouter>
 			<TenantContext.Provider value={{ tenant, setTenant: () => {} }}>
@@ -86,7 +102,8 @@ const renderErstantwortMessage = (tenant: TenantDataInterface) =>
 								{
 									userData: mockUserData({
 										userId: MOCK_ASKER_MATRIX_ID,
-										email: undefined
+										email: undefined,
+										...account
 									} as any),
 									setUserData: () => {},
 									reloadUserData: async () => null as any
@@ -96,7 +113,13 @@ const renderErstantwortMessage = (tenant: TenantDataInterface) =>
 							<ActiveSessionContext.Provider
 								value={
 									{
-										activeSession: mockActiveSession1on1(),
+										activeSession: {
+											...mockActiveSession1on1(),
+											item: {
+												...mockActiveSession1on1().item,
+												conversationType: modality
+											}
+										},
 										reloadActiveSession: () => {},
 										readActiveSession: () => {}
 									} as any
@@ -104,7 +127,7 @@ const renderErstantwortMessage = (tenant: TenantDataInterface) =>
 							>
 								<MessageItemComponent
 									{...mockMessageItemComponentProps({
-										message: erstantwortEvent,
+										message: raw,
 										/* Old enough that the stagger is skipped —
 										   the whole sequence must be in the DOM
 										   synchronously for a truthful assertion. */
@@ -123,7 +146,10 @@ const renderErstantwortMessage = (tenant: TenantDataInterface) =>
 		</MemoryRouter>
 	);
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.unstubAllGlobals();
+});
 
 describe('MessageItemComponent — Träger switch for the asker e-mail', () => {
 	it('drops the e-mail Baustein when the Träger switched the invitation off', () => {
@@ -143,7 +169,7 @@ describe('MessageItemComponent — Träger switch for the asker e-mail', () => {
 
 		expect(screen.getByText(EMAIL_BAUSTEIN_BODY)).toBeTruthy();
 		expect(
-			screen.getByRole('button', { name: 'E-Mail-Adresse angeben' })
+			screen.getByRole('button', { name: /notificationChoice.email/ })
 		).toBeTruthy();
 	});
 
@@ -163,3 +189,78 @@ describe('MessageItemComponent — Träger switch for the asker e-mail', () => {
 		expect(screen.getByText(EMAIL_BAUSTEIN_BODY)).toBeTruthy();
 	});
 });
+
+it('offers the regular channels after the frozen FAQ without an optional popup', () => {
+	vi.stubGlobal('Notification', {
+		permission: 'default',
+		requestPermission: vi.fn()
+	});
+	renderErstantwortMessage(tenantWith(true));
+	const faq = screen.getByText('Wer liest meine Nachricht?');
+	const choice = screen.getByRole('button', {
+		name: /notificationChoice.both/
+	});
+	expect(faq.tagName).toBe('SUMMARY');
+	expect(
+		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
+	).toBeTruthy();
+	expect(screen.getByText(EMAIL_BAUSTEIN_BODY)).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: 'E-Mail-Adresse angeben' })
+	).toBeNull();
+	expect(screen.queryByRole('dialog')).toBeNull();
+	vi.unstubAllGlobals();
+});
+
+it('retains browser-only regular continuation with tenant email disabled', () => {
+	vi.stubGlobal('Notification', {
+		permission: 'default',
+		requestPermission: vi.fn()
+	});
+	renderErstantwortMessage(tenantWith(false));
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.both/ })
+	).toBeNull();
+	expect(screen.queryByText(EMAIL_BAUSTEIN_BODY)).toBeNull();
+});
+it('reads saved email activation through the persisted regular call site', () => {
+	renderErstantwortMessage(tenantWith(true), {
+		account: {
+			email: 'asker@example.org',
+			emailNotifications: {
+				emailNotificationsEnabled: true,
+				settings: { newChatMessageNotificationEnabled: true }
+			}
+		}
+	});
+	expect(
+		screen
+			.getByRole('button', { name: /notificationChoice.email / })
+			.getAttribute('aria-pressed')
+	).toBe('true');
+	expect(screen.getByText(EMAIL_BAUSTEIN_BODY)).toBeTruthy();
+});
+for (const testCase of [
+	{ raw: erstantwortEvent.replace('"version":1', '"version":2') },
+	{ modality: 'LIVE_CHAT' },
+	{
+		raw: `[SYSTEM_NOTIFICATION]${JSON.stringify({ type: 'FIRST_RESPONSE', version: 1, bausteine: [{ id: 'greeting', body: GREETING_BAUSTEIN_BODY }] })}`
+	}
+]) {
+	it(`does not invent an async invitation for ${JSON.stringify(testCase)}`, () => {
+		vi.stubGlobal('Notification', {
+			permission: 'default',
+			requestPermission: vi.fn()
+		});
+		renderErstantwortMessage(tenantWith(true), testCase);
+		expect(
+			screen.queryByRole('button', { name: /notificationChoice/ })
+		).toBeNull();
+	});
+}

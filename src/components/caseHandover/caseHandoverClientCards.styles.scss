@@ -221,13 +221,13 @@
 	padding: 8px 0;
 	border: 0;
 	background: transparent;
-	color: var(--m3-primary);
+	color: var(--m3-primary, #a5000a);
 	font: inherit;
 	font-weight: 500;
 	cursor: pointer;
 
 	&:focus-visible {
-		outline: 2px solid var(--m3-primary);
+		outline: 2px solid var(--m3-primary, #a5000a);
 		outline-offset: 2px;
 	}
 }
@@ -245,7 +245,7 @@
 	svg {
 		width: 32px;
 		height: 32px;
-		color: var(--m3-primary);
+		color: var(--m3-primary, #a5000a);
 	}
 
 	h3 {

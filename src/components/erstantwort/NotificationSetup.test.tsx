@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -200,3 +201,38 @@ it('saving a new address enables email before offering the browser step', async 
 	).toBe('true');
 	expect(request).not.toHaveBeenCalled();
 });
+
+for (const abandoned of ['cancel', 'unmount'] as const) {
+	it(`does not enable notifications when an email PUT finishes after ${abandoned}`, async () => {
+		let resolveSave!: () => void;
+		putEmail.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					resolveSave = resolve;
+				})
+		);
+		const view = setup({ ...account, email: undefined });
+		fireEvent.click(
+			screen.getByRole('button', { name: /notificationChoice.both/ })
+		);
+		fireEvent.change(await screen.findByRole('textbox'), {
+			target: { value: 'asker@example.org' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'furtherSteps.email.overlay.button1.label'
+			})
+		);
+		expect(putEmail).toHaveBeenCalledOnce();
+		if (abandoned === 'cancel')
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'furtherSteps.email.overlay.button2.label'
+				})
+			);
+		else view.unmount();
+		await act(async () => resolveSave());
+		expect(patch).not.toHaveBeenCalled();
+		expect(request).not.toHaveBeenCalled();
+	});
+}

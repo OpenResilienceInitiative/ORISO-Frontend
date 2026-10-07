@@ -12,7 +12,10 @@ import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { NotificationSetup } from './NotificationSetup';
 import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
-import { ErstantwortActionKind } from './erstantwortPayload';
+import {
+	ErstantwortActionKind,
+	parseErstantwortPayload
+} from './erstantwortPayload';
 import {
 	ErstantwortLiveState,
 	resolveErstantwortBausteine
@@ -76,7 +79,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		]
 	);
 
-	const { bausteine } = useMemo(
+	const { bausteine: resolvedBausteine } = useMemo(
 		() =>
 			resolveErstantwortBausteine({
 				rawMessage,
@@ -87,6 +90,41 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			}),
 		[rawMessage, trigger, conversationType, deadlineDays, t, state]
 	);
+
+	// A supported, frozen first-response invitation owns this live continuation.
+	// Keep its words and links, but use the same channel chooser as post-dispatch.
+	// Do not invent invitations for payloads that omitted them or for live chat.
+	const parsed = parseErstantwortPayload(rawMessage);
+	const persistedInvitation =
+		conversationType !== 'LIVE_CHAT' &&
+		parsed.status === 'ok' &&
+		parsed.bausteine.some((item) => item.id === 'emailNotification');
+	const hasChoice = resolvedBausteine.some(
+		(item) => item.id === 'notificationChoice'
+	);
+	const bausteine =
+		persistedInvitation && !hasChoice
+			? resolvedBausteine.map((item) =>
+					item.id === 'emailNotification'
+						? { ...item, action: undefined }
+						: item
+				)
+			: [...resolvedBausteine];
+	if (
+		persistedInvitation &&
+		!hasChoice &&
+		!bausteine.some((item) => item.id === 'emailNotification')
+	) {
+		// Tenant email-off silences the frozen email invitation; browser remains
+		// an independent option through a distinct, current setup message.
+		const choice = resolveErstantwortBausteine({
+			trigger: 'AFTER_ENQUIRY_DISPATCHED',
+			context: { conversationType },
+			translate: (key, defaultValue) => t(key, defaultValue),
+			state
+		}).bausteine.find((item) => item.id === 'notificationChoice');
+		if (choice) bausteine.push(choice);
+	}
 
 	const handleAction = useCallback(
 		(kind: ErstantwortActionKind) => {
@@ -134,6 +172,12 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				onFirstReveal={onFirstReveal}
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
+					emailNotification:
+						persistedInvitation && !hasChoice ? (
+							<NotificationSetup
+								isEmailEnabled={isAskerEmailEnabled}
+							/>
+						) : undefined,
 					notificationChoice: (
 						<NotificationSetup
 							isEmailEnabled={isAskerEmailEnabled}
