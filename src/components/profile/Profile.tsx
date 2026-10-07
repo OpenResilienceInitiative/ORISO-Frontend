@@ -13,6 +13,8 @@ import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg'
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
 import { UserAvatar } from '../message/UserAvatar';
+import { ProfileAvatarChoice } from './ProfileAvatarChoice';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import './profile.styles';
 import profileRoutes from './profile.routes';
@@ -271,6 +273,7 @@ export const Profile = () => {
 										}
 										userId={ownAvatarUserId}
 										size="56px"
+										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
 								<h3 className="text--nowrap text--ellipsis">
@@ -357,6 +360,9 @@ export const Profile = () => {
 						)}
 					</div>
 				</div>
+				{(fromL || !subpage) && (
+					<ProfileAvatarChoice avatarUserId={ownAvatarUserId} />
+				)}
 			</div>
 			<div className="profile__innerWrapper">
 				<div>
