@@ -2299,6 +2299,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Sign-in & account",
+				"description": "Manage your password and keep your sign-in secure."
+			},
+			"recovery": {
+				"title": "Recovering old messages",
+				"description": "Your vault protects old messages. Keep your recovery key safe so you can open them on a new device."
+			},
+			"privacy": {
+				"title": "Privacy",
+				"description": "Manage your personal information and your account."
+			},
+			"displayNameDescription": "People seeking advice see this name during counselling."
+		},
 		"avatar": {
 			"label": "Your picture",
 			"default": "Default"
@@ -2845,7 +2860,7 @@
 				"busy": "Your recovery key is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
 				"error": "Setup failed. Please try again.",
 				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
-				"cta": "Set up recovery key"
+				"cta": "Set up vault"
 			},
 			"showKey": {
 				"silentExplainer": "Your recovery key was set up automatically when you signed in. Save it now in a safe place, for example a password manager. We will not show it again afterwards.",
@@ -2856,7 +2871,8 @@
 				"done": "Done"
 			},
 			"status": {
-				"ok": "✓ Your recovery key is set up. Your history stays readable on new devices."
+				"notSetUp": "Not set up",
+				"ok": "Vault set up"
 			},
 			"changeKey": {
 				"cta": "Change recovery key"
@@ -2869,11 +2885,11 @@
 				"invalidKey": "This recovery key is invalid. Please check your entry.",
 				"error": "Recovery failed. Please try again.",
 				"success": "{{count}} message keys restored.",
-				"cta": "Restore history"
+				"cta": "Open vault"
 			},
 			"reset": {
 				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
-				"cta": "Reset encryption",
+				"cta": "Reset vault",
 				"confirmWarning": "Are you sure? Resetting creates a new encryption identity. Messages that were only readable with the old backup remain permanently unreadable.",
 				"confirmCta": "Yes, reset",
 				"cancel": "Cancel",

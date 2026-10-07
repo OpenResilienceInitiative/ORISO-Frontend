@@ -9,6 +9,10 @@ import type {
 } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 
+vi.mock('./SecurityPrivacySettings', () => ({
+	SecurityPrivacySettings: () => null
+}));
+
 // Route tables only — keep the real component trees out of the test.
 const { stub } = vi.hoisted(() => ({
 	stub: (name: string) => () => ({ [name]: () => null })

@@ -1,0 +1,51 @@
+.securityPrivacySettings {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-three;
+	min-width: 0;
+
+	&__description {
+		margin: $grid-base 0 $grid-base-two;
+		overflow-wrap: anywhere;
+	}
+
+	&__cards {
+		display: grid;
+		gap: $grid-base-two;
+		min-width: 0;
+
+		@include breakpoint($fromLarge) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+
+			> :only-child {
+				grid-column: 1 / -1;
+			}
+		}
+	}
+}
+
+// Leave the existing edit actions room when translated headings wrap.
+.securityPrivacySettings .profile__card__body {
+	.twoFactorAuth__head,
+	.displayNameSettings .profile__content__title > div:first-child {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: $grid-base;
+		align-items: start;
+
+		.headline {
+			overflow-wrap: anywhere;
+		}
+
+		> button {
+			position: static;
+		}
+	}
+
+	.encryptionSettings .button__item {
+		max-width: 100%;
+		height: auto;
+		min-height: 40px;
+		white-space: normal;
+	}
+}

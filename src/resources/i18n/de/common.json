@@ -2323,6 +2323,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Anmeldung & Konto",
+				"description": "Verwalten Sie Ihr Passwort und den Schutz Ihrer Anmeldung."
+			},
+			"recovery": {
+				"title": "Wiederherstellung alter Nachrichten",
+				"description": "Ihr Tresor schützt alte Nachrichten. Bewahren Sie Ihren Ersatzschlüssel sicher auf, damit Sie diese auf einem neuen Gerät wieder öffnen können."
+			},
+			"privacy": {
+				"title": "Privatsphäre",
+				"description": "Verwalten Sie Ihre persönlichen Angaben und Ihr Konto."
+			},
+			"displayNameDescription": "Unter diesem Namen sehen Ratsuchende Sie in der Beratung."
+		},
 		"avatar": {
 			"label": "Ihr Bild",
 			"default": "Standard"
@@ -2883,7 +2898,7 @@
 				"busy": "Ihr Ersatzschlüssel wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.",
 				"error": "Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
 				"explainer": "Richten Sie einmalig einen Ersatzschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.",
-				"cta": "Ersatzschlüssel einrichten"
+				"cta": "Tresor einrichten"
 			},
 			"showKey": {
 				"silentExplainer": "Ihr Ersatzschlüssel wurde beim Anmelden automatisch eingerichtet. Speichern Sie ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
@@ -2894,7 +2909,8 @@
 				"done": "Fertig"
 			},
 			"status": {
-				"ok": "✓ Ihr Ersatzschlüssel ist eingerichtet. Ihr Verlauf bleibt auf neuen Geräten lesbar."
+				"notSetUp": "Nicht eingerichtet",
+				"ok": "Tresor eingerichtet"
 			},
 			"changeKey": {
 				"cta": "Ersatzschlüssel ändern"
@@ -2907,11 +2923,11 @@
 				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.",
 				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt.",
-				"cta": "Verlauf wiederherstellen"
+				"cta": "Tresor öffnen"
 			},
 			"reset": {
 				"explainer": "Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
-				"cta": "Verschlüsselung zurücksetzen",
+				"cta": "Tresor zurücksetzen",
 				"confirmWarning": "Sind Sie sicher? Das Zurücksetzen erstellt eine neue Verschlüsselungsidentität. Nachrichten, die nur mit der alten Sicherung lesbar waren, bleiben dauerhaft unlesbar.",
 				"confirmCta": "Ja, zurücksetzen",
 				"cancel": "Abbrechen",
