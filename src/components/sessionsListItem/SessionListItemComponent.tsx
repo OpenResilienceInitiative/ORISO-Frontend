@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
@@ -1036,7 +1037,7 @@ export const SessionListItemComponent = ({
 					activeSession.item.matrixRoomId ||
 					String(activeSession.item.id ?? 'group')
 				}
-				size="40px"
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		) : !isAsker ? (
@@ -1050,14 +1051,14 @@ export const SessionListItemComponent = ({
 				}
 				username={activeSession.user?.username || ''}
 				displayName={railName}
-				size={40}
+				size={AVATAR_SIZES.session}
 			/>
 		) : (
 			<UserAvatar
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
 				userId={activeSession.consultant?.id || 'unknown'}
-				size="40px"
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		);
@@ -1496,7 +1497,7 @@ export const SessionListItemComponent = ({
 							) : isAsker && !hasConsultantData ? (
 								/* Points right, into the card's width, so the card's corner clip never cuts the beam. */
 								<ConsultantSearchLoader
-									size="40px"
+									size={AVATAR_SIZES.session}
 									animated={isSearchingForConsultant}
 								/>
 							) : !isAsker ? (

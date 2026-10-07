@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, waitFor } from 'storybook/test';
+import { AVATAR_SIZE_OPTIONS } from '../pseudonym/avatarSizes';
 import { UserAvatar } from './UserAvatar';
 
 const meta: Meta<typeof UserAvatar> = {
@@ -22,17 +23,7 @@ const meta: Meta<typeof UserAvatar> = {
 		},
 		size: {
 			control: 'select',
-			options: [
-				'24px',
-				'28px',
-				'32px',
-				'36px',
-				'40px',
-				'48px',
-				'56px',
-				'64px',
-				'80px'
-			],
+			options: AVATAR_SIZE_OPTIONS.map((size) => `${size}px`),
 			description: 'Avatar size — the OUTER footprint, ring included'
 		},
 		ring: {

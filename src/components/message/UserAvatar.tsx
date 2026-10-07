@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useMemo } from 'react';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
 import { formatMessagePersonName } from './messageNameUtils';
@@ -10,7 +11,7 @@ interface UserAvatarProps {
 	firstName?: string;
 	lastName?: string;
 	userId: string;
-	size?: string;
+	size?: string | number;
 	/**
 	 * Wraps the avatar in a white circle (per design, all user icons must have
 	 * a white circle around them). Defaults to `true`. Pass `false` where the
@@ -33,7 +34,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	firstName,
 	lastName,
 	userId,
-	size = '32px',
+	size = AVATAR_SIZES.default,
 	ring = true,
 	outline = true
 }) => {
@@ -49,7 +50,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	// Keep the overall footprint equal to `size` so existing fixed-size
 	// containers don't shift; the white ring is created by shrinking the inner
 	// avatar and padding the difference with a white circular background.
-	const totalSize = parseInt(size, 10) || 32;
+	const totalSize =
+		(typeof size === 'number' ? size : parseInt(size, 10)) ||
+		AVATAR_SIZES.default;
 	const ringWidth = Math.max(3, Math.round(totalSize * 0.125));
 	const innerSize = ring ? totalSize - ringWidth * 2 : totalSize;
 

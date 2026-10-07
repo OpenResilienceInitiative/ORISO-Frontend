@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	ChatMenuDropdown,
 	ChatMenuDropdownItem
@@ -2605,7 +2606,7 @@ export const MessageItemComponent = ({
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 									/>
 								</div>
 								<button
@@ -2758,7 +2759,7 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 									/>
 								</div>
 							</div>
