@@ -9,36 +9,23 @@
 		overflow-wrap: anywhere;
 	}
 
-	&__cards {
-		display: grid;
-		gap: $grid-base-two;
-		min-width: 0;
+	// Reuse the approved flowing columns; each card keeps its own height.
+	&__cards.profile__cards {
+		padding: 0;
 
-		@include breakpoint($fromLarge) {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-
-			> :only-child {
-				grid-column: 1 / -1;
-			}
+		> :only-child {
+			column-span: all;
 		}
 	}
 }
 
-// Leave the existing edit actions room when translated headings wrap.
+// Keep the original top-right edit action while headings wrap beside it.
 .securityPrivacySettings .profile__card__body {
 	.twoFactorAuth__head,
 	.displayNameSettings .profile__content__title > div:first-child {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		gap: $grid-base;
-		align-items: start;
-
 		.headline {
+			padding-inline: $grid-base-five;
 			overflow-wrap: anywhere;
-		}
-
-		> button {
-			position: static;
 		}
 	}
 

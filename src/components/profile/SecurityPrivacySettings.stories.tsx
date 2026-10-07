@@ -85,11 +85,14 @@ export const AskerNotSetUp: Story = {
 	play: async (context) => {
 		await meta.play(context);
 		await expect(
-			context.canvas.findByText('Nicht eingerichtet')
+			context.canvas.findByText(
+				'Ihr Ersatzschlüssel ist noch nicht eingerichtet.'
+			)
 		).resolves.toBeVisible();
 	}
 };
 export const ConsultantHealthy: Story = {
+	globals: { viewport: { value: 'desktop1440' } },
 	decorators: [withUser(true)],
 	args: {
 		encryptionSettingsProps: {
@@ -99,6 +102,25 @@ export const ConsultantHealthy: Story = {
 	},
 	play: async (context) => {
 		await meta.play(context);
+		const account = context.canvas.getByRole('region', {
+			name: 'Anmeldung & Konto'
+		});
+		const [passwordCard, twoFactorCard] =
+			account.querySelectorAll('.profile__card');
+		await expect(twoFactorCard.getBoundingClientRect().height).toBeLessThan(
+			passwordCard.getBoundingClientRect().height
+		);
+		const twoFactorHeading = within(account).getByRole('heading', {
+			name: 'Zwei-Faktor-Authentifizierung'
+		});
+		const edit = within(twoFactorCard as HTMLElement).getByRole('button', {
+			name: 'Bearbeiten'
+		});
+		const headingText = document.createRange();
+		headingText.selectNodeContents(twoFactorHeading);
+		await expect(edit.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			headingText.getBoundingClientRect().right
+		);
 		const privacy = context.canvas.getByRole('region', {
 			name: 'Privatsphäre'
 		});
@@ -110,7 +132,9 @@ export const ConsultantHealthy: Story = {
 			within(privacy).getByRole('button', { name: 'Abbrechen' })
 		);
 		await expect(
-			context.canvas.findByText('Tresor eingerichtet')
+			context.canvas.findByText(
+				'✓ Ihr Ersatzschlüssel ist eingerichtet. Ihr Verlauf bleibt auf neuen Geräten lesbar.'
+			)
 		).resolves.toBeVisible();
 	}
 };
@@ -135,7 +159,9 @@ export const AskerNeedsRecovery: Story = {
 			'invalid key'
 		);
 		await userEvent.click(
-			within(recovery).getByRole('button', { name: 'Tresor öffnen' })
+			within(recovery).getByRole('button', {
+				name: 'Verlauf wiederherstellen'
+			})
 		);
 		await waitFor(() =>
 			expect(
@@ -155,7 +181,15 @@ export const AskerUnavailable: Story = {
 export const English: Story = {
 	globals: { locale: 'en' },
 	decorators: [withUser(true)],
-	args: ConsultantHealthy.args
+	args: ConsultantHealthy.args,
+	play: async (context) => {
+		await meta.play(context);
+		await expect(
+			context.canvas.findByText(
+				'✓ Your recovery key is set up. Your history stays readable on new devices.'
+			)
+		).resolves.toBeVisible();
+	}
 };
 export const LongNamePhone: Story = {
 	decorators: [withUser(true, true)],

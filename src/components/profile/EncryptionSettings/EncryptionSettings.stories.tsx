@@ -65,7 +65,9 @@ export const SetupFlow: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: /tresor einrichten/i })
+			await canvas.findByRole('button', {
+				name: /ersatzschlüssel einrichten/i
+			})
 		);
 		await expect(
 			canvas.findByText(DEMO_RECOVERY_KEY)

@@ -48,7 +48,7 @@ export const SecurityPrivacySettings = ({
 				<p className="securityPrivacySettings__description">
 					{t('profile.securityPrivacy.account.description')}
 				</p>
-				<div className="securityPrivacySettings__cards">
+				<div className="profile__cards securityPrivacySettings__cards">
 					<ProfileCard icon={LockOutlinedIcon}>
 						<PasswordReset />
 					</ProfileCard>
@@ -66,7 +66,7 @@ export const SecurityPrivacySettings = ({
 				<p className="securityPrivacySettings__description">
 					{t('profile.securityPrivacy.recovery.description')}
 				</p>
-				<div className="securityPrivacySettings__cards">
+				<div className="profile__cards securityPrivacySettings__cards">
 					<ProfileCard icon={KeyOutlinedIcon}>
 						<EncryptionSettingsPanel
 							{...encryptionSettingsProps}
@@ -82,7 +82,7 @@ export const SecurityPrivacySettings = ({
 				<p className="securityPrivacySettings__description">
 					{t('profile.securityPrivacy.privacy.description')}
 				</p>
-				<div className="securityPrivacySettings__cards">
+				<div className="profile__cards securityPrivacySettings__cards">
 					{consultant && (
 						<ProfileCard icon={PersonOutlineIcon}>
 							<DisplayNameSettings />

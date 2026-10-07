@@ -2306,7 +2306,7 @@
 			},
 			"recovery": {
 				"title": "Recovering old messages",
-				"description": "Your vault protects old messages. Keep your recovery key safe so you can open them on a new device."
+				"description": "Keep your recovery key safe so you can open old messages on a new device."
 			},
 			"privacy": {
 				"title": "Privacy",
@@ -2860,7 +2860,7 @@
 				"busy": "Your recovery key is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
 				"error": "Setup failed. Please try again.",
 				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
-				"cta": "Set up vault"
+				"cta": "Set up recovery key"
 			},
 			"showKey": {
 				"silentExplainer": "Your recovery key was set up automatically when you signed in. Save it now in a safe place, for example a password manager. We will not show it again afterwards.",
@@ -2871,8 +2871,8 @@
 				"done": "Done"
 			},
 			"status": {
-				"notSetUp": "Not set up",
-				"ok": "Vault set up"
+				"notSetUp": "Your recovery key is not set up yet.",
+				"ok": "✓ Your recovery key is set up. Your history stays readable on new devices."
 			},
 			"changeKey": {
 				"cta": "Change recovery key"
@@ -2885,11 +2885,11 @@
 				"invalidKey": "This recovery key is invalid. Please check your entry.",
 				"error": "Recovery failed. Please try again.",
 				"success": "{{count}} message keys restored.",
-				"cta": "Open vault"
+				"cta": "Restore history"
 			},
 			"reset": {
 				"explainer": "Forgotten your recovery key? You can reset your encryption identity. Warning: previously encrypted history may then be permanently unreadable.",
-				"cta": "Reset vault",
+				"cta": "Reset encryption",
 				"confirmWarning": "Are you sure? Resetting creates a new encryption identity. Messages that were only readable with the old backup remain permanently unreadable.",
 				"confirmCta": "Yes, reset",
 				"cancel": "Cancel",
