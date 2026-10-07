@@ -9,9 +9,15 @@
  * side-by-side buttons is the classic way to lose them.
  */
 
+.notificationChoiceHost {
+	width: 100%;
+	min-width: 0;
+	container: notification-choice / inline-size;
+}
+
 .notificationChoiceCard {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: 8px;
 	margin-top: 12px;
 	font-family: $font-family-sans-serif;
@@ -24,6 +30,9 @@
 	flex-direction: column;
 	gap: 2px;
 	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	overflow-wrap: anywhere;
 	text-align: left;
 
 	/* Comfortably above the 44px touch minimum — two lines of copy at the
@@ -49,4 +58,14 @@
 	line-height: 1.45;
 	font-weight: 400;
 	opacity: 0.85;
+}
+
+@container notification-choice (min-width: 560px) {
+	.notificationChoiceCard {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.notificationChoiceCard__option--both {
+		grid-column: 1 / -1;
+	}
 }

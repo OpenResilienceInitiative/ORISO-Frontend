@@ -1,0 +1,19 @@
+.carimatMessageHost {
+	width: 100%;
+	min-width: 0;
+	container: carimat-message-host / inline-size;
+}
+
+.carimatMessageContainer {
+	width: 100%;
+	max-width: 720px;
+	min-width: 0;
+	box-sizing: border-box;
+	overflow-wrap: anywhere;
+}
+
+@container carimat-message-host (min-width: 600px) and (max-width: 899px) {
+	.carimatMessageContainer {
+		max-width: 640px;
+	}
+}

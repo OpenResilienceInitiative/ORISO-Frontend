@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
@@ -153,7 +154,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	if (!total) return null;
 
 	return (
-		<div
+		<CarimatMessageContainer
 			className="erstantwort"
 			aria-live="polite"
 			data-testid="erstantwort-sequence"
@@ -278,6 +279,6 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					</div>
 				</div>
 			</div>
-		</div>
+		</CarimatMessageContainer>
 	);
 };
