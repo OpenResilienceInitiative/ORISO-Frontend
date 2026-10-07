@@ -277,7 +277,7 @@ export const ru: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Рассмотреть запрос', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {

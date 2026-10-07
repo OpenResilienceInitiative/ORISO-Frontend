@@ -1019,14 +1019,12 @@
 		},
 		"uebergabe-angefragt": {
 			"audience": "asker",
-			"class": "operational",
-			"unsubscribable": true,
+			"class": "consent",
+			"unsubscribable": false,
 			"placeholders": [
 				"{{requestUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
