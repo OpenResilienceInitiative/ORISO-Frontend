@@ -229,7 +229,7 @@ it('retains browser-only regular continuation with tenant email disabled', () =>
 	).toBeNull();
 	expect(screen.queryByText(EMAIL_BAUSTEIN_BODY)).toBeNull();
 });
-it('reads saved email activation through the persisted regular call site', () => {
+it('suppresses repeated setup through the persisted regular call site when email is already active', () => {
 	renderErstantwortMessage(tenantWith(true), {
 		account: {
 			email: 'asker@example.org',
@@ -240,10 +240,8 @@ it('reads saved email activation through the persisted regular call site', () =>
 		}
 	});
 	expect(
-		screen
-			.getByRole('button', { name: /notificationChoice.email / })
-			.getAttribute('aria-pressed')
-	).toBe('true');
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
 	expect(screen.getByText(EMAIL_BAUSTEIN_BODY)).toBeTruthy();
 });
 for (const testCase of [
