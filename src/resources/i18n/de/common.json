@@ -3498,10 +3498,29 @@
 			"decline": "Zugriff verweigern",
 			"optOut": {
 				"title": "Datenschutzhinweis zur Fallübergabe",
-				"prompt": "Bitte lesen Sie die Informationen und treffen Sie anschließend Ihre Entscheidung.",
+				"prompt": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
 				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
-				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
+				"switchLabel": "Zugriff für diese Anfrage erlauben"
+			},
+			"info": {
+				"more": "Mehr erfahren",
+				"title": "Einsichtnahme in Ihre Beratung",
+				"noticeTitle": "Unterstützung für Ihre Beratung",
+				"noticeCopy": "Eine weitere Fachkraft Ihrer Beratungsstelle erhält für diese Anfrage Einsicht. Eine vorherige Einwilligung wird bei dieser Einstellung nicht erfragt.",
+				"needTitle": "Bei Bedarf",
+				"needCopy": "Für eine fachliche Rückfrage kann eine weitere Fachkraft kurz unterstützen, zum Beispiel für einige Stunden. Bei Urlaub oder Krankheit kann eine andere Fachkraft Ihrer Stelle die Beratung übernehmen. Die Dauer hängt von der konkreten Anfrage ab.",
+				"choiceTitle": "Ihre Einwilligung",
+				"OPT_IN": "Für diese Anfrage ist zuerst Ihre Zustimmung nötig. Ohne Ihre Zustimmung erhält die anfragende Fachkraft keinen Zugriff. Diese Entscheidung gilt für diese Anfrage, nicht für alle künftigen Anfragen.",
+				"OPT_OUT": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"NONE": "Für diese Anfrage wird keine Entscheidung erfragt. Die Nachricht informiert Sie über die Einsichtnahme ohne vorherige Einwilligung.",
+				"accessTitle": "Geschützter Zugriff",
+				"accessCopy": "Die Freigabe betrifft die zuständige Beratungsstelle und die konkret berechtigte Fachkraft. Sie gibt Außenstehenden oder dem Plattformbetreiber keinen Zugang zu Ihrer Session.",
+				"notificationsCopy": "Wenn Ihre Zustimmung gebraucht wird, empfehlen wir E-Mail- oder Browser-Benachrichtigungen. So erfahren Sie rechtzeitig von einer Anfrage und können reagieren.",
+				"notificationsAction": "Benachrichtigungen einrichten",
+				"granted": "Der Zugriff wurde bestätigt.",
+				"closed": "Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.",
+				"takeoverContinues": "Ihr Widerspruch wurde gespeichert. Die bereits abgeschlossene Übernahme bleibt bestehen."
 			}
 		},
 		"denied": {

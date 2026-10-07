@@ -93,30 +93,35 @@ export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 			(choice === 'EMAIL' || isBrowserNotificationSupported)
 	);
 	return (
-		<div className="notificationChoiceCard" data-cy="notification-choice">
-			{options.map((option) => (
-				<button
-					key={option.choice}
-					type="button"
-					disabled={busy}
-					className={`notificationChoiceCard__option${
-						currentSelection === option.choice
-							? ' notificationChoiceCard__option--selected'
-							: ''
-					}`}
-					aria-pressed={currentSelection === option.choice}
-					onClick={() => choose(option.choice)}
-				>
-					<span className="notificationChoiceCard__label">
-						{option.label}
-					</span>
-					{option.hint && (
-						<span className="notificationChoiceCard__hint">
-							{option.hint}
+		<div className="notificationChoiceHost">
+			<div
+				className="notificationChoiceCard"
+				data-cy="notification-choice"
+			>
+				{options.map((option) => (
+					<button
+						key={option.choice}
+						type="button"
+						disabled={busy}
+						className={`notificationChoiceCard__option${option.choice === 'BOTH' ? ' notificationChoiceCard__option--both' : ''}${
+							currentSelection === option.choice
+								? ' notificationChoiceCard__option--selected'
+								: ''
+						}`}
+						aria-pressed={currentSelection === option.choice}
+						onClick={() => choose(option.choice)}
+					>
+						<span className="notificationChoiceCard__label">
+							{option.label}
 						</span>
-					)}
-				</button>
-			))}
+						{option.hint && (
+							<span className="notificationChoiceCard__hint">
+								{option.hint}
+							</span>
+						)}
+					</button>
+				))}
+			</div>
 		</div>
 	);
 };

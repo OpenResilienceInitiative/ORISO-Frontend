@@ -10,6 +10,7 @@ import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
 } from './erstantwortPayload';
+import { ERSTANTWORT_CATALOGUE } from './erstantwortCatalogue';
 import { resolveErstantwortBausteine } from './erstantwortResolve';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { phone390Globals } from '../message/messageStoryShell';
@@ -73,7 +74,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const translate = (_key: string, defaultValue?: string) => defaultValue ?? '';
+const catalogueCopy = new Map<string, string>();
+for (const entry of ERSTANTWORT_CATALOGUE) {
+	catalogueCopy.set(entry.bodyKey, entry.defaultBody);
+	if (entry.headlineKey)
+		catalogueCopy.set(entry.headlineKey, entry.defaultHeadline ?? '');
+	if (entry.action)
+		catalogueCopy.set(entry.action.labelKey, entry.action.defaultLabel);
+}
+const translate = (key: string) => catalogueCopy.get(key) ?? '';
 
 const platformDefaults = (state: {
 	hasEmail: boolean;
@@ -376,7 +385,7 @@ export const CompactFaq: Story = {
 	args: { bausteine: platformDefaults(OPEN_STATE), skipAnimation: true },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const question = canvas.getByText('Wer Ihre Nachricht liest');
+		const question = await canvas.findByText('Wer Ihre Nachricht liest');
 		const detail = question.closest('details');
 		await expect(detail).not.toHaveAttribute('open');
 		await userEvent.click(question);
@@ -388,5 +397,94 @@ export const CompactFaq: Story = {
 		await expect(detail).not.toHaveAttribute('open');
 		// Crisis numbers stay outside the collapsed FAQ.
 		await expect(canvas.getByText(/0800 111 0 111/)).toBeVisible();
+	}
+};
+
+/** Actual split-panel widths, independent of the browser viewport. */
+export const StructuredMessageWidths: Story = {
+	args: { bausteine: [] },
+	parameters: { layout: 'fullscreen' },
+	render: () => (
+		<div>
+			{[320, 390, 412, 820, 1440, 360].map((width) => (
+				<div
+					key={width}
+					data-testid={`chat-column-${width}`}
+					style={{ width, maxWidth: '100%' }}
+				>
+					<ErstantwortSequence
+						skipAnimation
+						bausteine={[
+							{
+								id: 'short',
+								body: 'Ihre Nachricht ist angekommen.'
+							},
+							{
+								id: 'notificationChoice',
+								body: 'Wie sollen wir Sie erreichen? Sie können E-Mail, Browser oder beides wählen.'
+							}
+						]}
+						slots={{
+							notificationChoice: (
+								<NotificationChoiceCard
+									onChoose={() => undefined}
+								/>
+							)
+						}}
+					/>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		for (const width of [320, 390, 412, 820, 1440, 360]) {
+			const host = canvas.getByTestId(`chat-column-${width}`);
+			const first = within(host).getByText(
+				'Ihre Nachricht ist angekommen.'
+			).parentElement!;
+			const second = within(host).getByText(
+				'Wie sollen wir Sie erreichen? Sie können E-Mail, Browser oder beides wählen.'
+			).parentElement!;
+			expect(
+				Math.abs(
+					first.getBoundingClientRect().width -
+						second.getBoundingClientRect().width
+				)
+			).toBeLessThan(1);
+			expect(first.getBoundingClientRect().left).toBe(
+				second.getBoundingClientRect().left
+			);
+			expect(second.getBoundingClientRect().right).toBeLessThanOrEqual(
+				host.getBoundingClientRect().right + 1
+			);
+			expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth + 1);
+			const buttons = within(second).getAllByRole('button');
+			const optionHost = buttons[0].parentElement!.parentElement!;
+			const wide = optionHost.clientWidth >= 560;
+			const message = canvas
+				.getByTestId(`chat-column-${width}`)
+				.querySelector('[data-testid="erstantwort-sequence"]')!;
+			const actualWidth = host.clientWidth;
+			expect(message.getBoundingClientRect().width).toBe(
+				Math.min(
+					actualWidth,
+					actualWidth >= 600 && actualWidth <= 899 ? 640 : 720
+				)
+			);
+			expect(
+				parseFloat(getComputedStyle(second).borderBottomRightRadius)
+			).toBeGreaterThan(0);
+			expect(
+				Math.abs(
+					buttons[0].getBoundingClientRect().top -
+						buttons[1].getBoundingClientRect().top
+				) < 1
+			).toBe(wide);
+			if (wide)
+				expect(
+					buttons[2].getBoundingClientRect().width
+				).toBeGreaterThan(buttons[0].getBoundingClientRect().width);
+		}
 	}
 };

@@ -8,6 +8,11 @@ import { ReactComponent as CheckIcon } from '../../resources/img/icons/check.svg
 import { ReactComponent as CloseIcon } from '../../resources/img/icons/close.svg';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
+import PersonOutline from '@mui/icons-material/PersonOutline';
+import LockOutlined from '@mui/icons-material/LockOutlined';
 import { Switch } from '../Switch';
 import '../message/message.styles.scss';
 import './caseHandoverClientCards.styles';
@@ -255,7 +260,11 @@ export const CaseHandoverSystemMessageCard = ({
 
 interface CaseHandoverConsentCardProps {
 	/** Reuses this system-message surface before access (OPT_IN) or after access starts (OPT_OUT). */
-	mode?: 'OPT_IN' | 'OPT_OUT';
+	mode?: 'OPT_IN' | 'OPT_OUT' | 'NONE';
+	/** Server-confirmed terminal outcome, never an optimistic client decision. */
+	status?: string;
+	auditOutcome?: string;
+	onSetupNotifications?: () => void;
 	isSubmitting?: boolean;
 	error?: string;
 	onApprove: () => void;
@@ -284,10 +293,22 @@ export const CaseHandoverConsentCard = ({
 	onApprove,
 	onDecline,
 	timestamp,
-	consentGranted
+	consentGranted,
+	status,
+	auditOutcome,
+	onSetupNotifications
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
 	const isOptOut = mode === 'OPT_OUT';
+	const isInformational = mode === 'NONE';
+	const isResolved =
+		!!status &&
+		![
+			'PENDING_CLIENT_CONSENT',
+			'GRANTED_PENDING_CLIENT_OPTOUT',
+			'PENDING'
+		].includes(status);
+	const [infoOpen, setInfoOpen] = React.useState(false);
 	/*
 	 * `Switch` is fully controlled — its `<input>` renders whatever `checked`
 	 * says, so a hard-coded `checked` made every toggle snap straight back and
@@ -310,15 +331,19 @@ export const CaseHandoverConsentCard = ({
 			onDecline();
 		}
 	};
-	const messageTitle = isOptOut
-		? translate('caseHandover.consent.optOut.title')
-		: translate('caseHandover.consent.title');
-	const messageCopy = isOptOut
-		? translate('caseHandover.consent.optOut.prompt')
-		: translate('caseHandover.consent.copy');
+	const messageTitle = isInformational
+		? translate('caseHandover.consent.info.noticeTitle')
+		: isOptOut
+			? translate('caseHandover.consent.optOut.title')
+			: translate('caseHandover.consent.title');
+	const messageCopy = isInformational
+		? translate('caseHandover.consent.info.noticeCopy')
+		: isOptOut
+			? translate('caseHandover.consent.optOut.prompt')
+			: translate('caseHandover.consent.copy');
 
 	return (
-		<div
+		<CarimatMessageContainer
 			className={clsx(
 				'caseHandoverInlineConsent',
 				!isOptOut && 'caseHandoverInlineConsent--choice'
@@ -338,16 +363,19 @@ export const CaseHandoverConsentCard = ({
 						{messageCopy}
 					</p>
 				</div>
-				{isOptOut ? (
+				{isResolved ? (
+					<p role="status">
+						{translate(
+							auditOutcome ===
+								'CLIENT_OPTOUT_DECLINED_AFTER_TAKEOVER'
+								? 'caseHandover.consent.info.takeoverContinues'
+								: status === 'GRANTED'
+									? 'caseHandover.consent.info.granted'
+									: 'caseHandover.consent.info.closed'
+						)}
+					</p>
+				) : isInformational ? null : isOptOut ? (
 					<>
-						<p className="caseHandoverMessage__optOutCopy">
-							{translate('caseHandover.consent.optOut.copy')}
-						</p>
-						<p className="caseHandoverMessage__optOutCopy">
-							{translate(
-								'caseHandover.consent.optOut.revocationCopy'
-							)}
-						</p>
 						<div className="caseHandoverMessage__optOutSwitch">
 							<span>
 								{translate(
@@ -410,12 +438,103 @@ export const CaseHandoverConsentCard = ({
 						/>
 					</>
 				)}
+				<button
+					type="button"
+					className="caseHandoverMessage__more"
+					onClick={() => setInfoOpen(true)}
+					aria-haspopup="dialog"
+				>
+					{translate('caseHandover.consent.info.more')}
+				</button>
 				{error && (
 					<p className="caseHandoverMessage__error" role="alert">
 						{error}
 					</p>
 				)}
 			</CaseHandoverSystemMessageCard>
-		</div>
+			<M3Dialog
+				open={infoOpen}
+				onClose={() => setInfoOpen(false)}
+				closeLabel={translate('app.close')}
+				title={translate('caseHandover.consent.info.title')}
+				icon={<VisibilityOutlined />}
+				width={880}
+				actions={[
+					{
+						label: translate('app.close'),
+						onClick: () => setInfoOpen(false)
+					},
+					...(onSetupNotifications
+						? [
+								{
+									label: translate(
+										'caseHandover.consent.info.notificationsAction'
+									),
+									primary: true,
+									onClick: () => {
+										setInfoOpen(false);
+										onSetupNotifications();
+									}
+								}
+							]
+						: [])
+				]}
+			>
+				<div className="caseHandoverConsentInfo__sections">
+					<section>
+						<VisibilityOutlined aria-hidden />
+						<h3>
+							{translate('caseHandover.consent.info.needTitle')}
+						</h3>
+						<p>{translate('caseHandover.consent.info.needCopy')}</p>
+					</section>
+					<section>
+						<PersonOutline aria-hidden />
+						<h3>
+							{translate('caseHandover.consent.info.choiceTitle')}
+						</h3>
+						<p>{translate(`caseHandover.consent.info.${mode}`)}</p>
+						{!isInformational && !isResolved && (
+							<div className="caseHandoverMessage__optOutSwitch">
+								<span>
+									{translate(
+										'caseHandover.consent.optOut.switchLabel'
+									)}
+								</span>
+								<Switch
+									checked={
+										isOptOut
+											? isConsentGranted
+											: (consentGranted ?? false)
+									}
+									disabled={isSubmitting}
+									aria-label={translate(
+										'caseHandover.consent.optOut.switchLabel'
+									)}
+									onChange={handleConsentChange}
+								/>
+							</div>
+						)}
+					</section>
+					<section>
+						<LockOutlined aria-hidden />
+						<h3>
+							{translate('caseHandover.consent.info.accessTitle')}
+						</h3>
+						<p>
+							{translate('caseHandover.consent.info.accessCopy')}
+						</p>
+					</section>
+				</div>
+				{mode === 'OPT_IN' && (
+					<p className="caseHandoverConsentInfo__recommendation">
+						{translate(
+							'caseHandover.consent.info.notificationsCopy'
+						)}
+					</p>
+				)}
+				{error && <p role="alert">{error}</p>}
+			</M3Dialog>
+		</CarimatMessageContainer>
 	);
 };
