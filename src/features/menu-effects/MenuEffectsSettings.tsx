@@ -2,6 +2,7 @@ import React from 'react';
 import { Stack, Typography } from '@mui/material';
 import { Switch } from '../../components/Switch';
 import { useTranslation } from 'react-i18next';
+import { Headline } from '../../components/headline/Headline';
 import { useMenuEffects } from './useMenuEffects';
 
 export const MenuEffectsSettings = () => {
@@ -9,9 +10,9 @@ export const MenuEffectsSettings = () => {
 	const { enabled, setEnabled } = useMenuEffects();
 	return (
 		<Stack spacing={1}>
-			<Typography variant="h6" component="h2">
-				{t('menuEffects.title')}
-			</Typography>
+			<div className="profile__content__title">
+				<Headline text={t('menuEffects.title')} semanticLevel="5" />
+			</div>
 			<Switch
 				checked={enabled}
 				onChange={setEnabled}

@@ -3,6 +3,10 @@ import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import {
+	SupervisorManagementDialog,
+	SUPERVISOR_DIALOG_TITLE_ID
+} from './SupervisorManagementDialog';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -92,6 +96,7 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { notifyPracticeSupervisorsChanged } from '../../practice';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
@@ -464,6 +469,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			);
 			await postSupervisorAddedSystemMessage(selectedSupervisorName);
 			await loadSupervisors();
+			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
 			setSupervisionReason('');
 			setSupervisionReasonError(false);
@@ -1247,43 +1253,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			{isSupervisionEnabledForCurrentChat &&
 				isSupervisorModalOpen &&
 				createPortal(
-					<div
-						style={{
-							position: 'fixed',
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							backgroundColor: 'rgba(0, 0, 0, 0.5)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							zIndex: 9999,
-							pointerEvents: 'auto'
-						}}
-						onClick={(e) => {
-							if (e.target === e.currentTarget) {
-								setIsSupervisorModalOpen(false);
-							}
-						}}
+					<SupervisorManagementDialog
+						onClose={() => setIsSupervisorModalOpen(false)}
 					>
-						<div
-							style={{
-								backgroundColor: 'white',
-								borderRadius: '8px',
-								padding: '24px',
-								maxWidth: '500px',
-								width: '90%',
-								maxHeight: '80vh',
-								overflowY: 'auto',
-								position: 'relative',
-								zIndex: 10000,
-								boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-							}}
-							onClick={(e) => {
-								e.stopPropagation();
-							}}
-						>
+						<div>
 							<div
 								style={{
 									display: 'flex',
@@ -1292,12 +1265,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									marginBottom: '20px'
 								}}
 							>
-								<h2 style={{ margin: 0 }}>
+								<h2
+									id={SUPERVISOR_DIALOG_TITLE_ID}
+									style={{ margin: 0 }}
+								>
 									{translate(
 										'sessionHeader.supervisor.modal.title'
 									)}
 								</h2>
 								<button
+									aria-label={translate('app.close')}
 									onClick={() =>
 										setIsSupervisorModalOpen(false)
 									}
@@ -1562,7 +1539,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									)}
 							</div>
 						</div>
-					</div>,
+					</SupervisorManagementDialog>,
 					document.body
 				)}
 

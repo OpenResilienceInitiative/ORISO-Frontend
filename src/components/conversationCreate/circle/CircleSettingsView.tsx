@@ -321,7 +321,6 @@ export const CircleSettingsView = ({
 				label: language.toUpperCase()
 			}))}
 			valuesAreChosen={Boolean(prefill)}
-			isEditMode={isEditMode}
 		/>
 	);
 

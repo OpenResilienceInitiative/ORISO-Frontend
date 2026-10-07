@@ -242,6 +242,55 @@ describe('buildGroupChatEditDraft', () => {
 		expect(draft.seriesFields.startTime).toBe('09:05');
 	});
 
+	// Date normalizes 2026-02-30 to 2 March and 24:00 to the next day; the
+	// form must never be handed a wall-clock value that does not exist.
+	it.each([
+		['2026-02-30', '18:30'],
+		['2026-13-01', '18:30'],
+		['2026-09-21', '24:00'],
+		['2026-09-21', '18:60']
+	])('rejects the impossible start %s %s', (startDate, startTime) => {
+		expect(() =>
+			buildGroupChatEditDraft({
+				...fullSeriesItem,
+				startDate,
+				startTime,
+				startDateWithTime: undefined
+			})
+		).toThrow();
+	});
+
+	it('uses startDateWithTime when the split start does not exist', () => {
+		const draft = buildGroupChatEditDraft({
+			...fullSeriesItem,
+			startDate: '2026-02-30',
+			startTime: '18:30',
+			startDateWithTime: '2027-01-05T09:05:00'
+		});
+		expect(draft.seriesFields.startDate).toBe('2027-01-05');
+		expect(draft.seriesFields.startTime).toBe('09:05');
+	});
+
+	it('keeps a start inside the local DST gap (stored wall-clock time)', () => {
+		const draft = buildGroupChatEditDraft({
+			...fullSeriesItem,
+			startDate: '2026-03-29',
+			startTime: '02:30',
+			startDateWithTime: undefined
+		});
+		expect(draft.seriesFields.startTime).toBe('02:30');
+	});
+
+	it('keeps a real leap day', () => {
+		const draft = buildGroupChatEditDraft({
+			...fullSeriesItem,
+			startDate: '2028-02-29',
+			startTime: '00:00'
+		});
+		expect(draft.seriesFields.startDate).toBe('2028-02-29');
+		expect(draft.seriesFields.startTime).toBe('00:00');
+	});
+
 	it('falls back to a single-language hint map when translations are absent', () => {
 		const draft = buildGroupChatEditDraft({
 			topic: 'One-off',

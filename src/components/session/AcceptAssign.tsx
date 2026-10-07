@@ -275,6 +275,9 @@ export const AcceptAssign = ({
 					buttonHandle={() =>
 						handleButtonClick(activeSession.item.id)
 					}
+					// The button itself, not the wrapper: the team action beside
+					// it must not count as a click on "accept" for a tour.
+					tourTarget="enquiry-accept-button"
 				/>
 				{secondaryAction}
 			</div>
