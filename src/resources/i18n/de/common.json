@@ -2323,6 +2323,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Ihr Bild",
+			"default": "Standard"
+		},
 		"appLanguage": {
 			"info": "Stellen Sie hier die Sprache der Anwendung ein.",
 			"title": "Sprache"

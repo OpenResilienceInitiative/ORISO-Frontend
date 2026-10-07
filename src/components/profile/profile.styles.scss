@@ -65,6 +65,13 @@ $profile-footer-justify-content: center !default;
 		height: 100%;
 	}
 
+	// #878 phase 4: the avatar row under the header line, full width.
+	&__avatarChoice {
+		width: 100%;
+		min-width: 0;
+		margin-top: $grid-base;
+	}
+
 	&__header {
 		flex: 0;
 		width: 100%;
