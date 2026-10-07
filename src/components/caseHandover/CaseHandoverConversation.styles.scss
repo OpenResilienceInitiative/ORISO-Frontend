@@ -7,3 +7,14 @@
 		flex: 0 0 24px;
 	}
 }
+
+/* Focus remains visible on the actual rounded message surface, rather than
+   drawing a browser rectangle across the entire available conversation column. */
+.caseHandoverNotificationMessage:focus {
+	outline: none;
+
+	.erstantwort__bubble {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: -2px;
+	}
+}

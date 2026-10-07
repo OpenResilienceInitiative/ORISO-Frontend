@@ -270,3 +270,22 @@
 	font-size: 14px;
 	line-height: 20px;
 }
+
+/* Both structured message renderers inherit one rail from their shared host. */
+.caseHandoverInlineConsent {
+	.messageItem__messageWrap {
+		gap: var(--carimat-avatar-gap, 4px);
+	}
+
+	.messageItem__sideColumn--left {
+		margin-left: var(--carimat-avatar-ring-offset, -6px);
+	}
+
+	.messageItem__content {
+		margin-left: calc(-1 * var(--carimat-avatar-overlap, 24px));
+	}
+
+	.messageItem__systemNotificationHeaderText {
+		padding-left: var(--carimat-header-inset, 28px);
+	}
+}

@@ -47,7 +47,13 @@ const persistedFirstResponse = `[SYSTEM_NOTIFICATION]${JSON.stringify({
 /** Real renderers and real account APIs. Only the external HTTP and OS-permission
  * boundaries are fixtures. The in-memory account survives fixture remounts;
  * this proves UI continuation/readback, not backend/Dev persistence or delivery. */
-function Journey({ regular = false }: { regular?: boolean }) {
+function Journey({
+	regular = false,
+	hostWidth
+}: {
+	regular?: boolean;
+	hostWidth?: number;
+}) {
 	const saved = React.useRef(
 		mockUserData({ userId: MOCK_ASKER_MATRIX_ID, email: undefined })
 	);
@@ -147,57 +153,66 @@ function Journey({ regular = false }: { regular?: boolean }) {
 	if (!ready) return null;
 	return (
 		<MessageContextShell userData={userData}>
-			<UserDataContext.Provider
-				value={{ userData, setUserData, reloadUserData }}
+			<div
+				style={{
+					width: hostWidth
+						? Math.min(hostWidth, window.innerWidth - 32)
+						: undefined,
+					maxWidth: '100%'
+				}}
 			>
-				<TenantContext.Provider
-					value={{
-						tenant: {
-							id: 1,
-							settings: { featureAskerEmailEnabled: true }
-						} as TenantDataInterface,
-						setTenant: () => {},
-						updateTenantSettings: () => {}
-					}}
+				<UserDataContext.Provider
+					value={{ userData, setUserData, reloadUserData }}
 				>
-					<ModalProvider>
-						<div
-							role="region"
-							aria-label="Fixture conversation"
-							key={reloadKey}
-						>
-							{regular ? (
-								<MessageItemComponent
-									{...mockMessageItemComponentProps({
-										message: persistedFirstResponse,
-										messageTime: '1',
-										t: null
-									})}
-									handleDecryptionErrors={() => {}}
-									handleDecryptionSuccess={() => {}}
-									e2eeParams={mockE2eeParams()}
-								/>
-							) : (
-								<CaseHandoverConversation
-									mode="OPT_IN"
-									consentGranted={consent}
-									onApprove={() => setConsent(true)}
-									onDecline={() => setConsent(false)}
-								/>
-							)}
-						</div>
-						<button
-							type="button"
-							onClick={() => {
-								setUserData(saved.current);
-								setReloadKey((key) => key + 1);
-							}}
-						>
-							Fixture: reload conversation
-						</button>
-					</ModalProvider>
-				</TenantContext.Provider>
-			</UserDataContext.Provider>
+					<TenantContext.Provider
+						value={{
+							tenant: {
+								id: 1,
+								settings: { featureAskerEmailEnabled: true }
+							} as TenantDataInterface,
+							setTenant: () => {},
+							updateTenantSettings: () => {}
+						}}
+					>
+						<ModalProvider>
+							<div
+								role="region"
+								aria-label="Fixture conversation"
+								key={reloadKey}
+							>
+								{regular ? (
+									<MessageItemComponent
+										{...mockMessageItemComponentProps({
+											message: persistedFirstResponse,
+											messageTime: '1',
+											t: null
+										})}
+										handleDecryptionErrors={() => {}}
+										handleDecryptionSuccess={() => {}}
+										e2eeParams={mockE2eeParams()}
+									/>
+								) : (
+									<CaseHandoverConversation
+										mode="OPT_IN"
+										consentGranted={consent}
+										onApprove={() => setConsent(true)}
+										onDecline={() => setConsent(false)}
+									/>
+								)}
+							</div>
+							<button
+								type="button"
+								onClick={() => {
+									setUserData(saved.current);
+									setReloadKey((key) => key + 1);
+								}}
+							>
+								Fixture: reload conversation
+							</button>
+						</ModalProvider>
+					</TenantContext.Provider>
+				</UserDataContext.Provider>
+			</div>
 		</MessageContextShell>
 	);
 }
@@ -227,7 +242,13 @@ const meta: Meta<typeof Journey> = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const shortcut: Story['play'] = async ({ canvasElement }) => {
+const shortcut: Story['play'] = async ({ canvasElement, globals }) => {
+	const expectedViewport: Record<string, number> = {
+		phone390: 390,
+		tablet820: 820,
+		desktop1440: 1440
+	};
+	expect(window.innerWidth).toBe(expectedViewport[globals.viewport.value]);
 	const canvas = within(canvasElement);
 	const page = within(canvasElement.ownerDocument.body);
 	const more = await canvas.findByRole('button', { name: 'Mehr erfahren' });
@@ -259,6 +280,56 @@ const shortcut: Story['play'] = async ({ canvasElement }) => {
 				name: 'Benachrichtigungen einrichten'
 			})
 		).toHaveLength(1);
+		const consentBubble = canvasElement.querySelector(
+			'.caseHandoverInlineConsent .messageItem__message--systemNotification'
+		)!;
+		const notificationBubble = message.querySelector(
+			'.erstantwort__bubble'
+		)!;
+		const consentBounds = consentBubble.getBoundingClientRect();
+		const notificationBounds = notificationBubble.getBoundingClientRect();
+		expect(
+			Math.abs(consentBounds.left - notificationBounds.left)
+		).toBeLessThanOrEqual(1);
+		expect(
+			Math.abs(consentBounds.width - notificationBounds.width)
+		).toBeLessThanOrEqual(1);
+
+		const heading = message.querySelector(
+			'.caseHandoverNotificationTitle'
+		)!;
+		const titleText = Array.from(heading.childNodes).find(
+			(node) =>
+				node.nodeType === Node.TEXT_NODE &&
+				node.textContent?.includes('Benachrichtigungen')
+		)!;
+		const word = 'Benachrichtigungen';
+		const wordStart = titleText.textContent!.indexOf(word);
+		const range = document.createRange();
+		range.setStart(titleText, wordStart);
+		range.setEnd(titleText, wordStart + word.length);
+		expect(range.getClientRects()).toHaveLength(1);
+		expect(range.getBoundingClientRect().right).toBeLessThanOrEqual(
+			notificationBounds.right + 1
+		);
+
+		const focusStyle = getComputedStyle(notificationBubble);
+		expect(focusStyle.outlineStyle).not.toBe('none');
+		expect(parseFloat(focusStyle.outlineWidth)).toBeGreaterThanOrEqual(2);
+		expect(parseFloat(focusStyle.outlineOffset)).toBeLessThanOrEqual(-2);
+		const consentHeader = canvasElement.querySelector(
+			'.caseHandoverInlineConsent .messageItem__sendFailedTitle'
+		)!;
+		const notificationHeader = message.querySelector(
+			'.pseudonymCard__headerName'
+		)!;
+		expect(
+			Math.abs(
+				consentHeader.getBoundingClientRect().left -
+					notificationHeader.getBoundingClientRect().left
+			)
+		).toBeLessThanOrEqual(1);
+
 		return within(message);
 	};
 	let choice = await openSetup();
@@ -388,4 +459,10 @@ export const RegularBothTablet820: Story = {
 	parameters: { journeyChoice: 'BOTH' },
 	globals: { viewport: { value: 'tablet820', isRotated: false } },
 	play: regular
+};
+
+export const ShortcutNarrowDesktop360: Story = {
+	args: { hostWidth: 360 },
+	globals: desktop1440Globals,
+	play: shortcut
 };
