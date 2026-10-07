@@ -3513,9 +3513,9 @@
 			"decline": "Refuser l'accès",
 			"optOut": {
 				"copy": "Dans le cadre du transfert de dossier, un autre conseiller ou une autre conseillère du même centre de conseil peut consulter temporairement cette conversation. Cela implique le traitement de données personnelles issues de l'entretien. Votre conseiller ou conseillère actuel(le) reste responsable de vous.",
-				"prompt": "Veuillez lire les informations, puis prendre votre décision.",
-				"revocationCopy": "En activant l'interrupteur, vous consentez à l'accès temporaire et au traitement des données nécessaire à cet effet. Vous pouvez retirer votre consentement à tout moment ; l'accès actif prend alors fin immédiatement. Votre suivi se poursuit indépendamment de cela.",
-				"switchLabel": "J'accepte le traitement des données pour ce transfert de dossier",
+				"prompt": "La consultation commence sans consentement préalable. Vous pouvez vous opposer à cette demande. Un transfert déjà effectué n’est pas annulé pour autant.",
+				"revocationCopy": "L’interrupteur concerne cette demande. Vous pouvez vous y opposer ; cela n’annule pas un transfert déjà effectué.",
+				"switchLabel": "Autoriser l’accès pour cette demande",
 				"title": "Avis de confidentialité relatif au transfert de dossier"
 			},
 			"sender": "Carimat",
@@ -3531,7 +3531,7 @@
 				"granted": "L’accès a été confirmé.",
 				"more": "En savoir plus",
 				"needCopy": "Un autre professionnel peut apporter brièvement son aide pour une question spécialisée, par exemple pendant quelques heures. En cas de congé ou de maladie, un autre professionnel de votre service peut reprendre le conseil. La durée dépend de la demande précise.",
-				"needTitle": "En cas de besoin",
+				"needTitle": "Quand cela peut aider",
 				"noticeCopy": "Un autre professionnel de votre service de conseil peut consulter cette demande. Avec ce réglage, aucun consentement préalable n’est demandé.",
 				"noticeTitle": "Un soutien pour votre conseil",
 				"notificationsAction": "Configurer les notifications",

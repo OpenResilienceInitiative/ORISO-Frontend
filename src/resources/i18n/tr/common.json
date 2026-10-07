@@ -3513,9 +3513,9 @@
 			"decline": "Erişimi reddet",
 			"optOut": {
 				"copy": "Vaka devri kapsamında, aynı danışmanlık merkezinden başka bir danışman bu görüşmeyi sınırlı bir süre için okuyabilir. Bu sırada danışmanlıktan elde edilen kişisel veriler işlenir. Mevcut danışmanınız sizden sorumlu olmaya devam eder.",
-				"prompt": "Lütfen bilgileri okuyun ve ardından kararınızı verin.",
-				"revocationCopy": "Anahtarı açarak, geçici erişime ve bunun için gerekli veri işlemeye onay vermiş olursunuz. Onayınızı istediğiniz zaman geri çekebilirsiniz; bu durumda aktif erişim hemen sona erer. Danışmanlığınız bundan bağımsız olarak devam eder.",
-				"switchLabel": "Bu vaka devri için veri işlenmesini kabul ediyorum",
+				"prompt": "İnceleme önceden onay alınmadan başlar. Bu talebe itiraz edebilirsiniz. Ancak tamamlanmış bir devir bu şekilde geri alınmaz.",
+				"revocationCopy": "Anahtar bu talep için geçerlidir. İtiraz edebilirsiniz; bu, tamamlanmış bir devri geri almaz.",
+				"switchLabel": "Bu talep için erişime izin ver",
 				"title": "Vaka devrine ilişkin gizlilik bildirimi"
 			},
 			"sender": "Carimat",
@@ -3531,7 +3531,7 @@
 				"granted": "Erişim onaylandı.",
 				"more": "Daha fazla bilgi",
 				"needCopy": "Mesleki bir konuda görüş almak için başka bir uzman kısa süreli, örneğin birkaç saatliğine destek verebilir. Tatil veya hastalık durumunda merkezinizdeki başka bir uzman danışmanlığı devralabilir. Süre, ilgili talebe bağlıdır.",
-				"needTitle": "Gerektiğinde",
+				"needTitle": "Ne zaman yararlı olur",
 				"noticeCopy": "Danışmanlık merkezinizdeki başka bir uzmana bu talep için inceleme erişimi verilir. Bu ayarda önceden onayınız istenmez.",
 				"noticeTitle": "Danışmanlığınız için destek",
 				"notificationsAction": "Bildirimleri ayarla",
