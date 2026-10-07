@@ -27,6 +27,10 @@ const leafKeys = (value: unknown, prefix = ''): string[] =>
 			: leafKeys(child, `${prefix}${key}.`)
 	);
 const journeyKeys = [
+	...leafKeys(
+		de.caseHandover.standingPreference,
+		'caseHandover.standingPreference.'
+	),
 	...leafKeys(de.caseHandover.consent, 'caseHandover.consent.'),
 	...leafKeys(de.erstantwort, 'erstantwort.'),
 	...leafKeys(de.furtherSteps.email, 'furtherSteps.email.'),

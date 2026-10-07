@@ -3645,6 +3645,15 @@
 			"importantTitle": "ኣገዳሲ መልእኽቲ",
 			"supervisionTitle": "ምክትታል ተነቓቒሑ!",
 			"supervisionBody": "{{advisor}} ከም ተቖጻጻሪ ኣማኻሪ ናብዚ ቻት ተወሲኹ።"
+		},
+		"standingPreference": {
+			"label": "ቅድሚ ተወሳኺ መእተዊ ምሃብ ኩሉ ግዜ ሕተቱ",
+			"description": "ኣብዚ ዝርርብ ንዝመጹ ሕቶታት ይምልከት። ናይ ሕጂ ሕቶታትን ኣቐዲሙ ዝተዋህበ መእተውን ኣይቅየርን።",
+			"baselineDescription": "እንተ ተዓጽዩ፣ ቅጥዕታት ናይ መማኸሪ ማእከልኩም ይሰርሑ። እቲ ማእከል ዝጠልቦ ፍቓድ ኣሁን እውን የድሊ።",
+			"saving": "ይዕቀብ ኣሎ …",
+			"saved": "ቅጥዒ ተዓቂቡ።",
+			"saveFailed": "እቲ ቅጥዒ ክረጋገጽ ኣይተኻእለን። በጃኹም እንደገና ፈትኑ።",
+			"loading": "ቅጥዒ ይጽዓን ኣሎ …"
 		}
 	},
 	"session": {
