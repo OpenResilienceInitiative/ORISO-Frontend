@@ -131,3 +131,28 @@ export const apiDecideCaseHandoverClientConsent = async (
 		bodyData: JSON.stringify({ approved }),
 		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
 	});
+
+export interface CaseHandoverConsentPreference {
+	sessionId: number;
+	alwaysAskBeforeAdditionalAccess: boolean;
+}
+
+export const apiGetCaseHandoverConsentPreference = (
+	sessionId: number
+): Promise<CaseHandoverConsentPreference> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN]
+	});
+
+export const apiSaveCaseHandoverConsentPreference = (
+	sessionId: number,
+	alwaysAskBeforeAdditionalAccess: boolean
+): Promise<CaseHandoverConsentPreference> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ alwaysAskBeforeAdditionalAccess }),
+		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+	});
