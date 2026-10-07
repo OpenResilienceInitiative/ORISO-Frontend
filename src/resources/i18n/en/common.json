@@ -775,7 +775,8 @@
 					"title": "Link copied"
 				},
 				"text": "Copy invitation link",
-				"title": "Copy invitation link to clipboard"
+				"title": "Copy invitation link to clipboard",
+				"unavailable": "The invitation link for this group is not available yet."
 			}
 		},
 		"create": {
@@ -3440,6 +3441,13 @@
 		"accountCreated": {
 			"login": "Your account has been created, but signing you in automatically did not work. Please log in with your username and password.",
 			"retry": "Your access has been created, but signing you in did not work. Please try again."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "The invitation could not be loaded right now.",
+				"body": "Please check your connection and try again. Your invitation link stays valid."
+			},
+			"loading": "Loading the invitation …"
 		}
 	},
 	"releaseNote": {

@@ -792,7 +792,8 @@
 					"title": "Lien copié"
 				},
 				"text": "Copier le lien d'invitation",
-				"title": "Copier le lien d'invitation dans le presse-papiers"
+				"title": "Copier le lien d'invitation dans le presse-papiers",
+				"unavailable": "Le lien d'invitation de ce groupe n'est pas encore disponible."
 			}
 		},
 		"create": {
@@ -3474,6 +3475,13 @@
 		"accountCreated": {
 			"login": "Votre compte a été créé, mais la connexion automatique n’a pas fonctionné. Veuillez vous connecter avec votre nom d’utilisateur et votre mot de passe.",
 			"retry": "Votre accès a été créé, mais la connexion n’a pas fonctionné. Veuillez réessayer."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "L'invitation n'a pas pu être chargée pour le moment.",
+				"body": "Veuillez vérifier votre connexion et réessayer. Votre lien d'invitation reste valable."
+			},
+			"loading": "Chargement de l'invitation …"
 		}
 	},
 	"releaseNote": {

@@ -29,12 +29,20 @@ export const parseGroupChatInviteId = (
 		: { seriesId: match[1] };
 };
 
+/**
+ * The invite link, or null while the group has no invite token: the server
+ * rejects a number-only join (ORISO-UserService#1248), so such a link could
+ * only lead to an error. Old number-only links are still parsed above.
+ */
 export const buildGroupChatInviteLink = (
 	loginUrl: string,
 	seriesId: number,
 	agencyId?: number | null,
 	inviteToken?: string | null
-) => {
+): string | null => {
+	if (!inviteToken) {
+		return null;
+	}
 	const url = new URL(loginUrl);
 	url.searchParams.set(
 		'gcid',
@@ -59,7 +67,7 @@ export const buildGroupChatInviteLinkForOrigin = (
 	seriesId: number,
 	agencyId?: number | null,
 	inviteToken?: string | null
-) =>
+): string | null =>
 	buildGroupChatInviteLink(
 		`${origin.replace(/\/+$/, '')}/login`,
 		seriesId,
@@ -71,7 +79,7 @@ export const currentHostGroupChatInviteLink = (
 	seriesId: number,
 	agencyId?: number | null,
 	inviteToken?: string | null
-) =>
+): string | null =>
 	buildGroupChatInviteLinkForOrigin(
 		window.location.origin,
 		seriesId,

@@ -1288,6 +1288,11 @@
 		"accountCreated": {
 			"login": "Dein Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melde dich mit deinem Benutzernamen und deinem Passwort an.",
 			"retry": "Dein Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal."
+		},
+		"groupInvite": {
+			"loadError": {
+				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			}
 		}
 	},
 	"session": {

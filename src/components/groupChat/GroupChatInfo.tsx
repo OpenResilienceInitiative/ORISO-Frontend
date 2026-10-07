@@ -501,6 +501,7 @@ const GroupChatInfoM3Connected = ({
 				onCopyInviteLink={
 					showInviteActions ? copyRegistrationLink : undefined
 				}
+				inviteLinkUnavailable={!url}
 			/>
 			<Menu
 				anchorEl={menu?.anchor ?? null}
@@ -511,7 +512,7 @@ const GroupChatInfoM3Connected = ({
 					{translate('banUser.ban.trigger')}
 				</MenuItem>
 			</Menu>
-			{showInviteActions && (
+			{showInviteActions && url && (
 				<GenerateQrCode
 					url={url}
 					headline={translate('groupChat.qrCode.headline')}

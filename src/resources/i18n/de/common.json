@@ -787,7 +787,8 @@
 					"title": "Link kopiert"
 				},
 				"text": "Einladungs-Link kopieren",
-				"title": "Einladungs-Link in Zwischenablage kopieren"
+				"title": "Einladungs-Link in Zwischenablage kopieren",
+				"unavailable": "Der Einladungslink ist für diese Gruppe noch nicht verfügbar."
 			}
 		},
 		"create": {
@@ -3494,6 +3495,13 @@
 		"accountCreated": {
 			"login": "Ihr Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melden Sie sich mit Ihrem Benutzernamen und Ihrem Passwort an.",
 			"retry": "Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "Die Einladung konnte gerade nicht geladen werden.",
+				"body": "Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut. Ihr Einladungslink bleibt gültig."
+			},
+			"loading": "Die Einladung wird geladen …"
 		}
 	},
 	"releaseNote": {
