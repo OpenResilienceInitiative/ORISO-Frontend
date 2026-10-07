@@ -2504,6 +2504,9 @@ export const MessageItemComponent = ({
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
+					isAskerEmailEnabled={
+						tenant?.settings?.featureAskerEmailEnabled
+					}
 					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
