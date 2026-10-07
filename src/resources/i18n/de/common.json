@@ -3537,7 +3537,7 @@
 				"title": "Datenschutzhinweis zur Fallübergabe",
 				"prompt": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
-				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
+				"revocationCopy": "Der Schalter gilt für diese Anfrage. Sie können widersprechen; eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"switchLabel": "Zugriff für diese Anfrage erlauben"
 			},
 			"info": {

@@ -3483,7 +3483,7 @@
 				"title": "Privacy notice for case handover",
 				"prompt": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
 				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
-				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
+				"revocationCopy": "The switch applies to this request. You can object; this does not undo a takeover that has already been completed.",
 				"switchLabel": "Allow access for this request"
 			},
 			"info": {
