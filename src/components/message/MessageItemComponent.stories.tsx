@@ -1429,9 +1429,56 @@ export const ThreadEntryWithLastReply: Story = {
 			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
 		);
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
-		await userEvent.click(entry);
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message'
+		)!;
+		const bubbleRect = bubble.getBoundingClientRect();
+		const entryRect = entry.getBoundingClientRect();
+		await expect(Math.abs(entryRect.left - bubbleRect.left)).toBeLessThan(
+			1
+		);
+		await expect(Math.abs(entryRect.right - bubbleRect.right)).toBeLessThan(
+			1
+		);
+		await expect(getComputedStyle(entry).borderRadius).toBe(
+			getComputedStyle(bubble).borderRadius
+		);
+		await expect(entry.scrollWidth).toBeLessThanOrEqual(entry.clientWidth);
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
 		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
 	}
+};
+
+/** Same reply-entry contract in constrained conversation columns. */
+export const ThreadEntryPhone: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — phone alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 320, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
+};
+
+export const ThreadEntryOutgoing: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — outgoing short message alignment (W02)',
+	args: {
+		...ThreadEntryWithLastReply.args,
+		isMyMessage: true,
+		message: 'Danke.'
+	}
+};
+
+export const ThreadEntryTablet: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — tablet alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 820, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
 };
 
 /* ---------------------------------------------------------------------------

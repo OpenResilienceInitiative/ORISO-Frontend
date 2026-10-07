@@ -30,6 +30,7 @@ import './ErstantwortSequence.styles.scss';
 
 export interface ErstantwortSequenceProps {
 	bausteine: ResolvedBaustein[];
+	compactFaq?: boolean;
 	/** Delay between two bubbles. Also the typing-dots duration. */
 	staggerMs?: number;
 	/** Render everything at once — Storybook, tests, and re-renders of history. */
@@ -55,6 +56,14 @@ export interface ErstantwortSequenceProps {
 }
 
 const DEFAULT_STAGGER_MS = 1400;
+// Presentation only: the persisted text stays the source of every answer.
+const FAQ_IDS = new Set([
+	'whoReadsAlong',
+	'responseDeadline',
+	'modalityNote',
+	'noPersonalData',
+	'dataProtection'
+]);
 
 /**
  * No handler, no button. An enabled control that does nothing is worse than an
@@ -78,6 +87,7 @@ const renderAction = (
 
 export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	bausteine,
+	compactFaq = true,
 	staggerMs = DEFAULT_STAGGER_MS,
 	skipAnimation = false,
 	onFirstReveal,
@@ -168,39 +178,97 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 							</span>
 						</div>
 
-						{visible.map((baustein) => (
-							<div
-								key={baustein.id}
-								className="pseudonymCard__bubble erstantwort__bubble"
-							>
-								{baustein.headline && (
-									<h4 className="erstantwort__headline">
-										{baustein.headline}
-									</h4>
-								)}
-								<p className="pseudonymCard__bubbleText erstantwort__body">
-									{baustein.body}
-								</p>
-								{baustein.links?.length ? (
-									<ul className="erstantwort__links">
-										{baustein.links.map((link) => (
-											<li key={link.url}>
-												<a
-													href={link.url}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													{link.label}
-												</a>
-											</li>
+						{visible.map((baustein) => {
+							const faq = compactFaq && FAQ_IDS.has(baustein.id);
+							const faqItems = visible.filter((item) =>
+								FAQ_IDS.has(item.id)
+							);
+							if (faq && baustein.id !== faqItems[0]?.id)
+								return null;
+							if (faq)
+								return (
+									<div
+										key="faq"
+										className="pseudonymCard__bubble erstantwort__bubble"
+									>
+										<h4 className="erstantwort__headline">
+											{t(
+												'erstantwort.faq.title',
+												'Häufige Fragen'
+											)}
+										</h4>
+										{faqItems.map((item) => (
+											<details
+												key={item.id}
+												className="erstantwort__faq"
+											>
+												<summary>
+													{item.headline ??
+														t(
+															`erstantwort.faq.${item.id}`,
+															item.id ===
+																'modalityNote'
+																? 'Wie läuft die Beratung ab?'
+																: 'Was passiert mit meinen Daten?'
+														)}
+												</summary>
+												<p className="pseudonymCard__bubbleText erstantwort__body">
+													{item.body}
+												</p>
+												{item.links?.map((link) => (
+													<a
+														key={link.url}
+														href={link.url}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{link.label}
+													</a>
+												))}
+												{slots?.[item.id]}
+												{item.action &&
+													renderAction(
+														item.action,
+														onAction
+													)}
+											</details>
 										))}
-									</ul>
-								) : null}
-								{slots?.[baustein.id]}
-								{baustein.action &&
-									renderAction(baustein.action, onAction)}
-							</div>
-						))}
+									</div>
+								);
+							return (
+								<div
+									key={baustein.id}
+									className="pseudonymCard__bubble erstantwort__bubble"
+								>
+									{baustein.headline && (
+										<h4 className="erstantwort__headline">
+											{baustein.headline}
+										</h4>
+									)}
+									<p className="pseudonymCard__bubbleText erstantwort__body">
+										{baustein.body}
+									</p>
+									{baustein.links?.length ? (
+										<ul className="erstantwort__links">
+											{baustein.links.map((link) => (
+												<li key={link.url}>
+													<a
+														href={link.url}
+														target="_blank"
+														rel="noopener noreferrer"
+													>
+														{link.label}
+													</a>
+												</li>
+											))}
+										</ul>
+									) : null}
+									{slots?.[baustein.id]}
+									{baustein.action &&
+										renderAction(baustein.action, onAction)}
+								</div>
+							);
+						})}
 
 						{isTyping && (
 							<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--typing">
