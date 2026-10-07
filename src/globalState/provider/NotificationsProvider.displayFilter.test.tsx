@@ -560,6 +560,11 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		await waitFor(() =>
 			expect(apiMarkEventNotificationRead).toHaveBeenCalledWith('2')
 		);
+		// A confirmed DELETE also empties the following server fetch.
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
 		// Logout/clear while that PATCH is still in flight …
 		act(() => {
 			screen.getByText('clear').click();
@@ -729,6 +734,13 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		apiMarkEventNotificationRead.mockResolvedValue({});
 		renderProvider();
 		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				item(1, 'message.new', '2026-09-12T11:00:00Z'),
+				item(2, 'message.new')
+			],
+			unreadCount: 1
+		});
 		act(() => {
 			screen.getByText('read1').click();
 		});

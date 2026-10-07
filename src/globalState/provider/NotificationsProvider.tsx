@@ -13,6 +13,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import { t } from 'i18next';
 import { sendNotification } from '../../utils/notificationHelpers';
+import { parseJwt } from '../../utils/parseJWT';
 import {
 	IncomingVideoCallProps,
 	NotificationTypeCall
@@ -319,6 +320,28 @@ const mergeNotificationFeed = (
 	return capLocalItems(sortNewestFirst(Array.from(byId.values())));
 };
 
+/** Session identity survives token refresh, but never account/session replacement. */
+const notificationSessionKey = (token: string | null): string | null => {
+	if (!token) return null;
+	const claims = parseJwt(token);
+	const subject = claims?.sub;
+	const session = claims?.session_state ?? claims?.sid;
+	if (
+		typeof subject !== 'string' ||
+		!subject.trim() ||
+		typeof session !== 'string' ||
+		!session.trim()
+	) {
+		// Opaque or incomplete tokens cannot establish continuity safely.
+		return token;
+	}
+	return JSON.stringify([
+		subject,
+		session,
+		claims?.tenantId == null ? null : String(claims.tenantId)
+	]);
+};
+
 export function NotificationsProvider(props) {
 	const [notifications, setNotifications] = useState([]);
 	const [notificationFeed, setNotificationFeed] = useState<
@@ -342,6 +365,9 @@ export function NotificationsProvider(props) {
 	const highestLoadedPageRef = useRef(0);
 	const loadingOlderRef = useRef(false);
 	const feedEpochRef = useRef(0);
+	const feedSessionKeyRef = useRef(
+		notificationSessionKey(getValueFromCookie('keycloak'))
+	);
 	// Keep the initial backlog silent and observe every subsequently new id,
 	// including requests sorted beneath another event in the same feed page.
 	const observedEventIdsRef = useRef<Set<string> | null>(null);
@@ -359,6 +385,8 @@ export function NotificationsProvider(props) {
 	const readSettledFloorRef = useRef(0);
 	const pendingReadCountRef = useRef(0);
 	const pendingReadIdsRef = useRef<Set<string>>(new Set());
+	const readAllPendingRef = useRef(false);
+	const clearPendingRef = useRef(false);
 	// A 404 from the bulk endpoint means an older server: fall back silently.
 	const bulkReadUnsupportedRef = useRef(false);
 	const bulkReadScheduledRef = useRef(false);
@@ -404,6 +432,8 @@ export function NotificationsProvider(props) {
 		// first page nor settle into it (its completions check the epoch).
 		pendingReadCountRef.current = 0;
 		pendingReadIdsRef.current = new Set();
+		readAllPendingRef.current = false;
+		clearPendingRef.current = false;
 		settlementRef.current = { anySuccess: false, failed: [] };
 		bulkReadPendingRef.current = false;
 		bulkReadScheduledRef.current = false;
@@ -728,6 +758,12 @@ export function NotificationsProvider(props) {
 
 	const refreshNotificationFeed = useCallback(async () => {
 		const accessToken = getValueFromCookie('keycloak');
+		const sessionKey = notificationSessionKey(accessToken);
+		if (sessionKey !== feedSessionKeyRef.current) {
+			feedSessionKeyRef.current = sessionKey;
+			feedEpochRef.current += 1;
+			resetFeedState();
+		}
 		if (!accessToken) {
 			feedEpochRef.current += 1;
 			// Do not hit protected endpoint before auth is available.
@@ -803,9 +839,10 @@ export function NotificationsProvider(props) {
 	const markNotificationsReadConfirmed = useCallback(
 		async (ids: string[]) => {
 			const accessToken = getValueFromCookie('keycloak');
-			if (!accessToken) {
-				return;
-			}
+			if (!accessToken) return;
+			// An opened card is a separate read intent, even during read-all or
+			// clear. Pending counts serialize both requests; a confirmed clear
+			// invalidates this completion through the epoch.
 			const localIds = ids.filter((id) => id.startsWith('local-'));
 			if (localIds.length > 0) {
 				// Client-only rows: no request, never in the server total.
@@ -857,9 +894,15 @@ export function NotificationsProvider(props) {
 											: item
 									)
 								);
-								setServerUnreadTotal((value) =>
-									Math.max(0, value - 1)
-								);
+								const wasUnread =
+									notificationFeedRef.current.some(
+										(item) => item.id === id && !item.readAt
+									);
+								if (wasUnread) {
+									setServerUnreadTotal((value) =>
+										Math.max(0, value - 1)
+									);
+								}
 								settlementRef.current.anySuccess = true;
 							})
 							.catch(() => {
@@ -898,7 +941,12 @@ export function NotificationsProvider(props) {
 			if (bulkReadUnsupportedRef.current || eventTypes.length === 0) {
 				return 'done';
 			}
-			if (bulkReadPendingRef.current || !getValueFromCookie('keycloak')) {
+			if (
+				bulkReadPendingRef.current ||
+				readAllPendingRef.current ||
+				clearPendingRef.current ||
+				!getValueFromCookie('keycloak')
+			) {
 				// Not done yet: the effect runs again once the pending request
 				// has settled (`bulkReadGeneration`) and retries with the
 				// current set, so a filter changed mid-request is not skipped.
@@ -1105,9 +1153,9 @@ export function NotificationsProvider(props) {
 	}, [refreshNotificationFeedSafe, exclusionRefreshGeneration]);
 
 	// This provider lives above the router, so it outlives the session. When
-	// the auth session is torn down (sign-out, expired refresh token) the
-	// feed is reset at once and in-flight responses are dropped through the
-	// epoch, instead of polling on with a leftover token until the next tick.
+	// session changes (including a direct switch to another account), refresh
+	// resets the feed and invalidates outstanding requests. Token refresh for
+	// the same principal/session preserves pending mutations.
 	useEffect(() => {
 		window.addEventListener(
 			AUTH_SESSION_CHANGE_EVENT,
@@ -1119,6 +1167,13 @@ export function NotificationsProvider(props) {
 				refreshNotificationFeedSafe
 			);
 	}, [refreshNotificationFeedSafe]);
+
+	useEffect(
+		() => () => {
+			feedEpochRef.current += 1;
+		},
+		[]
+	);
 
 	// Slice 7: an exact total describes one exclusion set. When the set
 	// changes, the stored total is at best a bound (the v1 formula applies)
@@ -1248,60 +1303,88 @@ export function NotificationsProvider(props) {
 		[hasNotification, notifications]
 	);
 
-	const markNotificationAsRead = useCallback((id: string) => {
-		const accessToken = getValueFromCookie('keycloak');
-		if (!accessToken) {
-			return;
-		}
-		// Opening an already-read card calls this too: the totals move only
-		// on an unread → read transition of a row we know.
-		const row = notificationFeedRef.current.find((item) => item.id === id);
-		const wasUnread = !!row && !row.readAt;
-		// Update the callback snapshot synchronously: repeated reads in one
-		// React batch must decrement the badge only once.
-		const now = new Date().toISOString();
-		notificationFeedRef.current = notificationFeedRef.current.map((item) =>
-			item.id === id && !item.readAt ? { ...item, readAt: now } : item
-		);
-		if (!id.startsWith('local-')) {
-			apiMarkEventNotificationRead(id).catch(() => undefined);
-			if (wasUnread) {
-				setServerUnreadTotal((value) => Math.max(0, value - 1));
-			}
-		}
-		setNotificationFeed((existing) =>
-			existing.map((item) =>
-				item.id === id && !item.readAt
-					? { ...item, readAt: new Date().toISOString() }
-					: item
+	const markNotificationAsRead = useCallback(
+		(id: string) => {
+			if (
+				notificationFeedRef.current.find((item) => item.id === id)
+					?.readAt
 			)
-		);
-	}, []);
+				return;
+			// An explicit retry need not wait for the automatic hidden-read cooldown.
+			cooldownRef.current.delete(id);
+			void markNotificationsReadConfirmed([id]);
+		},
+		[markNotificationsReadConfirmed]
+	);
 
 	const markAllNotificationsAsRead = useCallback(() => {
-		const accessToken = getValueFromCookie('keycloak');
-		if (!accessToken) {
+		if (
+			!getValueFromCookie('keycloak') ||
+			readAllPendingRef.current ||
+			clearPendingRef.current
+		) {
 			return;
 		}
-		apiMarkAllEventNotificationsRead().catch(() => undefined);
-		const now = new Date().toISOString();
-		setNotificationFeed((existing) =>
-			existing.map((item) =>
-				item.readAt ? item : { ...item, readAt: now }
-			)
+		const feedEpoch = feedEpochRef.current;
+		// Only client-only rows present at invocation belong to this action.
+		const localIds = new Set(
+			notificationFeedRef.current
+				.filter(isLocalItem)
+				.map((item) => item.id)
 		);
-		setServerUnreadTotal(0);
-		setUnfilteredUnreadTotal(null);
-	}, []);
+		readAllPendingRef.current = true;
+		pendingReadCountRef.current += 1;
+		void apiMarkAllEventNotificationsRead()
+			.then(() => {
+				if (feedEpoch !== feedEpochRef.current) return;
+				const now = new Date().toISOString();
+				setNotificationFeed((existing) =>
+					existing.map((item) =>
+						!item.readAt &&
+						(!isLocalItem(item) || localIds.has(item.id))
+							? { ...item, readAt: now }
+							: item
+					)
+				);
+				setServerUnreadTotal(0);
+				setUnfilteredUnreadTotal(null);
+				settlementRef.current.anySuccess = true;
+			})
+			.catch(() => {
+				// A failed mutation leaves the feed and its unread badge intact.
+			})
+			.finally(() => {
+				if (feedEpoch !== feedEpochRef.current) return;
+				readAllPendingRef.current = false;
+				pendingReadCountRef.current -= 1;
+				if (pendingReadCountRef.current === 0) settlePendingReads();
+			});
+	}, [settlePendingReads]);
 
 	const clearNotificationFeed = useCallback(() => {
-		feedEpochRef.current += 1;
-		const accessToken = getValueFromCookie('keycloak');
-		if (accessToken) {
-			apiClearEventNotifications().catch(() => undefined);
-		}
-		resetFeedState();
-	}, [resetFeedState]);
+		if (!getValueFromCookie('keycloak') || clearPendingRef.current) return;
+		const feedEpoch = feedEpochRef.current;
+		clearPendingRef.current = true;
+		// Reuse read serialization: polls and older pages wait for the DELETE.
+		pendingReadCountRef.current += 1;
+		void apiClearEventNotifications()
+			.then(() => {
+				if (feedEpoch !== feedEpochRef.current) return;
+				// Only a confirmed clear may invalidate requests and remove rows.
+				feedEpochRef.current += 1;
+				resetFeedState();
+				void fetchFeedPage(0).catch(() => undefined);
+			})
+			.catch(() => {
+				// Failure keeps rows, counts, and pagination; the user may retry.
+			})
+			.finally(() => {
+				if (feedEpoch !== feedEpochRef.current) return;
+				clearPendingRef.current = false;
+				pendingReadCountRef.current -= 1;
+				if (pendingReadCountRef.current === 0) settlePendingReads();
+			});
+	}, [fetchFeedPage, resetFeedState, settlePendingReads]);
 
 	return (
 		<NotificationsContext.Provider
