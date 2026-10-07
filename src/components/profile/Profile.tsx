@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
 import { logout } from '../logout/logout';
@@ -270,7 +271,7 @@ export const Profile = () => {
 											userData.userName
 										}
 										userId={ownAvatarUserId}
-										size="56px"
+										size={AVATAR_SIZES.profile}
 									/>
 								</div>
 								<h3 className="text--nowrap text--ellipsis">

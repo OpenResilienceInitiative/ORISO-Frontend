@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { UserAvatar } from './UserAvatar';
 
 export interface MessageAvatarProps {
@@ -27,8 +28,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 	displayName,
 	firstName,
 	lastName,
-	size = 32,
-	outline = true
+	size = AVATAR_SIZES.message,
+	outline = false
 }) => {
 	if (isSystemNotification) {
 		return null;
@@ -41,7 +42,7 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 			firstName={firstName}
 			lastName={lastName}
 			userId={userId}
-			size={`${size}px`}
+			size={size}
 			ring={false}
 			outline={outline}
 		/>
