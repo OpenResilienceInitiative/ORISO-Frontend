@@ -6,6 +6,7 @@ import { MessageItemComponent } from './MessageItemComponent';
 import { MessageContextShell } from './messageStoryShell';
 import {
 	mockActiveSessionGroup,
+	mockActiveSession1on1,
 	mockMessageItemComponentProps
 } from './MessageItemComponent.mocks';
 
@@ -81,4 +82,24 @@ describe('group message recipient avatar', () => {
 		expect(screen.queryByTestId('counsellor-avatar')).toBeNull();
 		expect(screen.getByTestId('user-avatar')).not.toBeNull();
 	});
+});
+
+it('does not show the assigned counsellor motif on a historical direct-chat author', () => {
+	const session = mockActiveSession1on1();
+	session.item.consultantMatrixUserId = '@assigned:example.org';
+	session.consultant.avatarKind = 'ICON';
+	session.consultant.avatarId = 'fox';
+	render(
+		<MessageContextShell activeSession={session}>
+			<MessageItemComponent
+				{...mockMessageItemComponentProps({
+					userId: '@previous:example.org',
+					username: 'previous',
+					message: 'A historical direct message'
+				})}
+			/>
+		</MessageContextShell>
+	);
+	expect(screen.queryByTestId('counsellor-avatar')).toBeNull();
+	expect(screen.getByTestId('user-avatar')).not.toBeNull();
 });
