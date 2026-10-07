@@ -69,7 +69,7 @@ import {
 	NotificationsContext,
 	NotificationFeedItem
 } from '../../globalState/provider/NotificationsProvider';
-import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
+import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversation';
 import { formatToHHMM } from '../../utils/dateHelpers';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
@@ -1347,7 +1347,8 @@ export const SessionStream = ({
 					caseHandoverRequestIdFromPath(
 						displayedConsent.actionPath
 					) !== null && (
-						<CaseHandoverConsentCard
+						<CaseHandoverConversation
+							key={String(activeSession.item?.id)}
 							status={
 								displayedConsent.id ===
 								confirmedConsent?.notification.id

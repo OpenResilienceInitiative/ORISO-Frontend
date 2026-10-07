@@ -307,6 +307,32 @@ describe('SessionStream Matrix room lifecycle', () => {
 		cleanup();
 	});
 
+	it('offers notification setup from the optional handover dialog without deciding consent', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			await screen.findByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		).toBeTruthy();
+		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+	});
+
 	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
 		renderSessionStream({
 			isGroup: false,
