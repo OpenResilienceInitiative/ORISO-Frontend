@@ -233,6 +233,9 @@ const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 );
 
 interface SessionItemProps {
+	/** Current-session Carimat continuation inside the main scrolling timeline. */
+	mainTimelineSupplement?: React.ReactNode;
+	mainTimelineSupplementTime?: number;
 	isTyping?: Function;
 	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
@@ -3268,11 +3271,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									</div>
 								</div>
 							)}
+							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<MessageTimeline
 									messages={messages}
 									renderMode="main"
+									supplement={props.mainTimelineSupplement}
+									supplementTime={
+										props.mainTimelineSupplementTime
+									}
 									clientName={
 										getContact(activeSession)?.username ||
 										translate(

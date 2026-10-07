@@ -23,6 +23,7 @@
 	align-items: flex-start;
 	gap: 8px;
 	min-width: 0;
+	max-width: none;
 }
 
 .erstantwort__bubble {
@@ -31,13 +32,9 @@
 	   rounded, the same idiom the message list uses for a run of messages. */
 	border-radius: 14px;
 
-	/* Shrink to the text. A bubble stretched to the full column reads as a
-	   document block rather than as somebody talking — most visible on the
-	   one-line Bausteine, where a full-width box for four words looks like a
-	   form field. `fit-content` keeps the chat grammar; the cap keeps the long
-	   Bausteine at a readable measure. */
-	width: fit-content;
-	max-width: min(100%, 34rem);
+	width: 100%;
+	min-width: 0;
+	max-width: none;
 }
 
 /* The flat top-left corner belongs to the *first bubble*, which is the sibling
@@ -59,6 +56,7 @@
 	   card holding a pseudonym and a dice but absurd around three dots — it
 	   rendered as a wide empty box. The typing placeholder sizes to the dots. */
 	min-width: 0;
+	width: fit-content;
 }
 
 .erstantwort__headline {

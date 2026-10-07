@@ -65,7 +65,10 @@ import {
 	isUndecryptedRoomEvent,
 	matrixRoomHistoryKeyTransfer
 } from '../../services/matrixRoomHistoryKeyTransfer';
-import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
+import {
+	NotificationsContext,
+	NotificationFeedItem
+} from '../../globalState/provider/NotificationsProvider';
 import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
 import { formatToHHMM } from '../../utils/dateHelpers';
 
@@ -185,6 +188,10 @@ export const SessionStream = ({
 		resolvedCaseHandoverNotificationId,
 		setResolvedCaseHandoverNotificationId
 	] = useState<string | null>(null);
+	const [confirmedConsent, setConfirmedConsent] = useState<{
+		notification: NotificationFeedItem;
+		status: CaseHandoverStatus;
+	} | null>(null);
 	const pendingCaseHandoverConsent = useMemo(() => {
 		if (
 			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
@@ -214,6 +221,20 @@ export const SessionStream = ({
 		resolvedCaseHandoverNotificationId,
 		userData
 	]);
+	const displayedConsent =
+		pendingCaseHandoverConsent ||
+		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		confirmedConsent?.status.sessionId === activeSession.item?.id
+			? confirmedConsent.notification
+			: null);
+
+	const displayedConsentMode =
+		displayedConsent?.id === confirmedConsent?.notification.id
+			? (confirmedConsent?.status.clientConsent ??
+				displayedConsent?.params?.clientConsent)
+			: displayedConsent?.params?.clientConsent;
+
 	const pendingCaseHandoverRequestId = useMemo(
 		() =>
 			caseHandoverRequestIdFromPath(
@@ -1254,7 +1275,29 @@ export const SessionStream = ({
 			pendingCaseHandoverRequestId,
 			approved
 		)
-			.then(() => {
+			.then((confirmedStatus) => {
+				if (
+					confirmedStatus?.status &&
+					confirmedStatus.sessionId === activeSession.item.id &&
+					confirmedStatus.requestId === pendingCaseHandoverRequestId
+				) {
+					setConfirmedConsent({
+						notification: pendingCaseHandoverConsent,
+						status: confirmedStatus
+					});
+				} else {
+					throw new Error(
+						'Consent response does not match the request'
+					);
+				}
+				if (
+					[
+						'PENDING',
+						'PENDING_CLIENT_CONSENT',
+						'GRANTED_PENDING_CLIENT_OPTOUT'
+					].includes(confirmedStatus.status)
+				)
+					return;
 				notificationsContext?.markNotificationAsRead(
 					pendingCaseHandoverConsent.id
 				);
@@ -1298,33 +1341,58 @@ export const SessionStream = ({
 					/>
 				</div>
 			)}
-			{pendingCaseHandoverConsent &&
-				pendingCaseHandoverRequestId !== null && (
-					<CaseHandoverConsentCard
-						mode={
-							pendingCaseHandoverConsent.params?.clientConsent ===
-							'OPT_OUT'
-								? 'OPT_OUT'
-								: 'OPT_IN'
-						}
-						isSubmitting={caseHandoverConsentSubmitting}
-						error={caseHandoverConsentError}
-						timestamp={formatToHHMM(
-							String(
-								new Date(
-									pendingCaseHandoverConsent.createdAt
-								).getTime()
-							)
-						)}
-						onApprove={() =>
-							handleCaseHandoverConsentDecision(true)
-						}
-						onDecline={() =>
-							handleCaseHandoverConsentDecision(false)
-						}
-					/>
-				)}
 			<SessionItemComponent
+				mainTimelineSupplement={
+					displayedConsent &&
+					caseHandoverRequestIdFromPath(
+						displayedConsent.actionPath
+					) !== null && (
+						<CaseHandoverConsentCard
+							status={
+								displayedConsent.id ===
+								confirmedConsent?.notification.id
+									? confirmedConsent.status.status
+									: undefined
+							}
+							auditOutcome={
+								displayedConsent.id ===
+								confirmedConsent?.notification.id
+									? confirmedConsent.status.auditOutcome
+									: undefined
+							}
+							consentGranted={
+								displayedConsent.params?.clientConsent ===
+								'OPT_OUT'
+							}
+							mode={
+								displayedConsentMode === 'NONE' ||
+								displayedConsentMode === 'OPT_OUT'
+									? displayedConsentMode
+									: 'OPT_IN'
+							}
+							isSubmitting={caseHandoverConsentSubmitting}
+							error={caseHandoverConsentError}
+							timestamp={formatToHHMM(
+								String(
+									new Date(
+										displayedConsent.createdAt
+									).getTime()
+								)
+							)}
+							onApprove={() =>
+								handleCaseHandoverConsentDecision(true)
+							}
+							onDecline={() =>
+								handleCaseHandoverConsentDecision(false)
+							}
+						/>
+					)
+				}
+				mainTimelineSupplementTime={
+					displayedConsent
+						? new Date(displayedConsent.createdAt).getTime()
+						: undefined
+				}
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
 				}

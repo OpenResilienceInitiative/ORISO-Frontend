@@ -90,7 +90,15 @@ vi.mock('../../api', () => ({
 	apiGetAgencyConsultantList: vi.fn(() => Promise.resolve([])),
 	apiGetSessionSupervisors: mocks.getSessionSupervisors,
 	apiGetCaseHandoverStatus: mocks.getCaseHandoverStatus,
-	apiDecideCaseHandoverClientConsent: vi.fn(() => Promise.resolve({})),
+	apiDecideCaseHandoverClientConsent: vi.fn(() =>
+		Promise.resolve({
+			sessionId: 1,
+			requestId: 11,
+			status: 'CLIENT_CONSENT_DECLINED',
+			canViewContent: false,
+			clientConsentRequired: true
+		})
+	),
 	FETCH_ERRORS: { ABORT: 'ABORT' }
 }));
 
@@ -166,7 +174,9 @@ vi.mock('../../globalState/context/MatrixClientContext', () => ({
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
 		mocks.sessionItemProps = props;
-		return <div data-testid="session-item" />;
+		return (
+			<div data-testid="session-item">{props.mainTimelineSupplement}</div>
+		);
 	}
 }));
 
@@ -314,6 +324,9 @@ describe('SessionStream Matrix room lifecycle', () => {
 		const consentCard = await screen.findByTestId(
 			'case-handover-inline-consent'
 		);
+		expect(screen.getByTestId('session-item').contains(consentCard)).toBe(
+			true
+		);
 		fireEvent.click(
 			within(consentCard).getByRole('button', {
 				name: 'caseHandover.consent.approve'
@@ -329,6 +342,60 @@ describe('SessionStream Matrix room lifecycle', () => {
 		});
 	});
 
+	it('reports the confirmed takeover outcome instead of promising revocation', async () => {
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockResolvedValueOnce({
+			sessionId: 1,
+			requestId: 11,
+			status: 'GRANTED',
+			canViewContent: true,
+			clientConsentRequired: false,
+			clientConsent: 'OPT_OUT',
+			auditOutcome: 'CLIENT_OPTOUT_DECLINED_AFTER_TAKEOVER'
+		});
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11',
+					params: { clientConsent: 'OPT_OUT' }
+				}
+			]
+		});
+		fireEvent.click(await screen.findByRole('switch'));
+		expect((await screen.findByRole('status')).textContent).toBe(
+			'caseHandover.consent.info.takeoverContinues'
+		);
+		expect(screen.queryByRole('switch')).toBeNull();
+	});
+
+	it('keeps the real request available when saving fails', async () => {
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+			new Error('Server failed')
+		);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11',
+					params: { clientConsent: 'OPT_OUT' }
+				}
+			]
+		});
+		fireEvent.click(await screen.findByRole('switch'));
+		expect(await screen.findByRole('alert')).toBeTruthy();
+		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
+			true
+		);
+	});
+
 	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {
 		renderSessionStream({ isGroup: false });
 
@@ -338,7 +405,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(mocks.sessionItemProps).not.toHaveProperty('systemMessages');
 	});
 
-	it('lets the asker decline the request and removes the card afterwards', async () => {
+	it('lets the asker decline the request and shows the confirmed result', async () => {
 		renderSessionStream({
 			isGroup: false,
 			notificationFeed: [
@@ -369,9 +436,9 @@ describe('SessionStream Matrix room lifecycle', () => {
 			);
 		});
 		await waitFor(() => {
-			expect(
-				screen.queryByTestId('case-handover-inline-consent')
-			).toBeNull();
+			expect(screen.getByRole('status').textContent).toBe(
+				'caseHandover.consent.info.closed'
+			);
 		});
 	});
 

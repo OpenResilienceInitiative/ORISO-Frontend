@@ -390,3 +390,77 @@ export const CompactFaq: Story = {
 		await expect(canvas.getByText(/0800 111 0 111/)).toBeVisible();
 	}
 };
+
+/** Actual split-panel widths, independent of the browser viewport. */
+export const StructuredMessageWidths: Story = {
+	parameters: { layout: 'fullscreen' },
+	render: () => (
+		<div>
+			{[320, 390, 412, 820, 1440, 360].map((width) => (
+				<div
+					key={width}
+					data-testid={`chat-column-${width}`}
+					style={{ width, maxWidth: '100%' }}
+				>
+					<ErstantwortSequence
+						skipAnimation
+						bausteine={[
+							{
+								id: 'short',
+								body: 'Ihre Nachricht ist angekommen.'
+							},
+							{
+								id: 'notificationChoice',
+								body: 'Wie sollen wir Sie erreichen? Sie können E-Mail, Browser oder beides wählen.'
+							}
+						]}
+						slots={{
+							notificationChoice: (
+								<NotificationChoiceCard
+									onChoose={() => undefined}
+								/>
+							)
+						}}
+					/>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		for (const width of [320, 390, 412, 820, 1440, 360]) {
+			const host = canvas.getByTestId(`chat-column-${width}`);
+			const first = within(host).getByText(
+				'Ihre Nachricht ist angekommen.'
+			).parentElement!;
+			const second = within(host).getByText(
+				'Wie sollen wir Sie erreichen? Sie können E-Mail, Browser oder beides wählen.'
+			).parentElement!;
+			expect(
+				Math.abs(
+					first.getBoundingClientRect().width -
+						second.getBoundingClientRect().width
+				)
+			).toBeLessThan(1);
+			expect(first.getBoundingClientRect().left).toBe(
+				second.getBoundingClientRect().left
+			);
+			expect(second.getBoundingClientRect().right).toBeLessThanOrEqual(
+				host.getBoundingClientRect().right + 1
+			);
+			expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth + 1);
+			const buttons = within(second).getAllByRole('button');
+			const wide = second.clientWidth - 44 >= 560;
+			expect(
+				Math.abs(
+					buttons[0].getBoundingClientRect().top -
+						buttons[1].getBoundingClientRect().top
+				) < 1
+			).toBe(wide);
+			if (wide)
+				expect(
+					buttons[2].getBoundingClientRect().width
+				).toBeGreaterThan(buttons[0].getBoundingClientRect().width);
+		}
+	}
+};
