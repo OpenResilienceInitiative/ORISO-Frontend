@@ -286,7 +286,7 @@ export const deSie: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
