@@ -1,3 +1,4 @@
+import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -93,11 +94,12 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	skipAnimation = false,
 	onFirstReveal,
 	onAction,
-	name = 'Carimat',
+	name,
 	subtitle,
 	slots
 }) => {
 	const { t } = useTranslation();
+	const assistant = useAssistantIdentity();
 	const total = bausteine.length;
 
 	/* How many bubbles have revealed so far. With the animation skipped every
@@ -172,7 +174,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					<div className="pseudonymCard__contentCol erstantwort__content">
 						<div className="pseudonymCard__header">
 							<span className="pseudonymCard__headerName">
-								{name}
+								{name ?? assistant.name}
 							</span>
 							<span className="pseudonymCard__headerSubtitle">
 								{subtitle ?? t('erstantwort.subtitle')}

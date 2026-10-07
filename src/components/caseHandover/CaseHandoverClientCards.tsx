@@ -1,3 +1,4 @@
+import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -337,6 +338,7 @@ export const CaseHandoverConsentCard = ({
 			? translate('caseHandover.consent.optOut.prompt')
 			: translate('caseHandover.consent.copy');
 
+	const assistant = useAssistantIdentity();
 	return (
 		<CarimatMessageContainer
 			className={clsx(
@@ -346,7 +348,7 @@ export const CaseHandoverConsentCard = ({
 			data-testid="case-handover-inline-consent"
 		>
 			<CaseHandoverSystemMessageCard
-				title={translate('caseHandover.consent.sender')}
+				title={assistant.name}
 				subtitle={translate('caseHandover.consent.senderRole')}
 				timestamp={timestamp}
 			>
