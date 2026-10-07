@@ -264,6 +264,19 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melde dich an.',
+		headline: 'Eine Anfrage zu deiner Beratung',
+		paragraphs: [
+			'Eine weitere Fachkraft Deiner Beratungsstelle bittet um Deine Zustimmung zu einer zeitlich begrenzten Einsichtnahme.',
+			'Prüfe die Anfrage im geschützten Bereich. Deine bisherige Fachkraft bleibt für Deine Beratung zuständig.'
+		],
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
+		footer
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Neue Benachrichtigung',
 		preheader: 'Bitte melde dich an.',

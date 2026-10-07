@@ -81,6 +81,10 @@
 					"source": "9376afc54dd80011",
 					"target": "00e1b2067386b3ba"
 				},
+				"einsicht-angefragt": {
+					"source": "2505ce98afd6545c",
+					"target": "b0230c58ee95b36c"
+				},
 				"uebergabe-angefragt": {
 					"source": "372c6b1cd5edd8a0",
 					"target": "37745b254b9ed119"
@@ -230,6 +234,10 @@
 				"tagesuebersicht": {
 					"source": "9376afc54dd80011",
 					"target": "7175de640ba30df0"
+				},
+				"einsicht-angefragt": {
+					"source": "2505ce98afd6545c",
+					"target": "fe8b27d4efc69c40"
 				},
 				"uebergabe-angefragt": {
 					"source": "372c6b1cd5edd8a0",
@@ -381,6 +389,10 @@
 					"source": "9376afc54dd80011",
 					"target": "32b665729b2d9596"
 				},
+				"einsicht-angefragt": {
+					"source": "2505ce98afd6545c",
+					"target": "124726da4827be2e"
+				},
 				"uebergabe-angefragt": {
 					"source": "372c6b1cd5edd8a0",
 					"target": "624714ca7f7bc146"
@@ -530,6 +542,10 @@
 				"tagesuebersicht": {
 					"source": "9376afc54dd80011",
 					"target": "48ea56792737ff1d"
+				},
+				"einsicht-angefragt": {
+					"source": "2505ce98afd6545c",
+					"target": "3110f5691f47c6cd"
 				},
 				"uebergabe-angefragt": {
 					"source": "372c6b1cd5edd8a0",
@@ -681,6 +697,10 @@
 					"source": "9376afc54dd80011",
 					"target": "69da48b6f78e6a2a"
 				},
+				"einsicht-angefragt": {
+					"source": "2505ce98afd6545c",
+					"target": "7a21634b9dbea2d7"
+				},
 				"uebergabe-angefragt": {
 					"source": "372c6b1cd5edd8a0",
 					"target": "36dfd47b1fe752df"
@@ -830,6 +850,10 @@
 				"tagesuebersicht": {
 					"source": "9376afc54dd80011",
 					"target": "1a2de758b0669d9c"
+				},
+				"einsicht-angefragt": {
+					"source": "2505ce98afd6545c",
+					"target": "77b4d4205dd89a0c"
 				},
 				"uebergabe-angefragt": {
 					"source": "372c6b1cd5edd8a0",
