@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, userEvent, within } from 'storybook/test';
 
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
@@ -128,6 +129,7 @@ export const AllAtOnce: Story = {
  */
 export const LiveChat: Story = {
 	args: {
+		compactFaq: false,
 		bausteine: resolveErstantwortBausteine({
 			trigger: 'AFTER_FIRST_MESSAGE',
 			context: { conversationType: 'LIVE_CHAT' },
@@ -367,4 +369,24 @@ export const UnsupportedPayloadVersion: Story = {
 export const Mobile: Story = {
 	args: { ...PlatformDefaults.args, skipAnimation: true },
 	globals: phone390Globals
+};
+
+/** Frozen content can be read without leaving the chat or opening setup. */
+export const CompactFaq: Story = {
+	args: { bausteine: platformDefaults(OPEN_STATE), skipAnimation: true },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const question = canvas.getByText('Wer Ihre Nachricht liest');
+		const detail = question.closest('details');
+		await expect(detail).not.toHaveAttribute('open');
+		await userEvent.click(question);
+		await expect(detail).toHaveAttribute('open');
+		await expect(
+			canvas.getByText(/Ihre Nachricht lesen ausschließlich/)
+		).toBeVisible();
+		await userEvent.click(question);
+		await expect(detail).not.toHaveAttribute('open');
+		// Crisis numbers stay outside the collapsed FAQ.
+		await expect(canvas.getByText(/0800 111 0 111/)).toBeVisible();
+	}
 };
