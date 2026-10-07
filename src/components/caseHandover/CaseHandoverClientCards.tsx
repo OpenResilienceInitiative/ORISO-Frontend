@@ -516,7 +516,6 @@ export const CaseHandoverConsentCard = ({
 						</span>
 						<Switch
 							className="caseHandoverConsentInfo__switch"
-							showIcon={false}
 							checked={
 								isOptOut
 									? isConsentGranted
