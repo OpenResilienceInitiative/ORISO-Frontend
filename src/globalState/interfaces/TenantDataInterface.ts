@@ -4,6 +4,8 @@ export interface TenantDataInterface {
 	id: number | null;
 	name: string;
 	theming: {
+		assistantName?: string | null;
+		assistantIcon?: string | null;
 		logo: string;
 		associationLogo: string | null;
 		/**

@@ -1320,6 +1320,70 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:robot-1184077:400",
+		"family": "robot-1184077",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-1184077-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-1184077-400.svg",
+		"exportNames": ["Robot1184077Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:robot-3548536:400",
+		"family": "robot-3548536",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-3548536-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-3548536-400.svg",
+		"exportNames": ["Robot3548536Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:robot-5475944:400",
+		"family": "robot-5475944",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-5475944-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-5475944-400.svg",
+		"exportNames": ["Robot5475944Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:robot-7341990:400",
+		"family": "robot-7341990",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-7341990-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-7341990-400.svg",
+		"exportNames": ["Robot7341990Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:audio-off:base",
 		"family": "audio-off",
 		"state": "base",

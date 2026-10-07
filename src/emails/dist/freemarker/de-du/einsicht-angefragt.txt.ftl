@@ -1,0 +1,25 @@
+Eine Anfrage zu deiner Beratung
+===============================
+
+Eine weitere Fachkraft Deiner Beratungsstelle bittet um Deine Zustimmung zu einer zeitlich begrenzten Einsichtnahme.
+
+Prüfe die Anfrage im geschützten Bereich. Deine bisherige Fachkraft bleibt für Deine Beratung zuständig.
+
+Anfrage prüfen:
+${requestUrl!''}
+
+----------------------------------------------------------------
+Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Niemand außer dir und deiner Beratung kann sie lesen – auch wir nicht.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} ist ein Angebot von ${orgName!''}.
+
+Einstellungen: ${settingsUrl!''}
+Datenschutz: ${privacyUrl!''}
+Impressum: ${imprintUrl!''}
+Benachrichtigungen abbestellen: ${unsubscribeUrl!''}
+
+Diese E-Mail wurde automatisch versendet. Bitte antworte nicht darauf.

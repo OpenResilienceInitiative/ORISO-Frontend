@@ -276,6 +276,19 @@ export const deSie: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melden Sie sich an.',
+		headline: 'Eine Anfrage zu Ihrer Beratung',
+		paragraphs: [
+			'Eine weitere Fachkraft Ihrer Beratungsstelle bittet um Ihre Zustimmung zu einer zeitlich begrenzten Einsichtnahme.',
+			'Prüfen Sie die Anfrage im geschützten Bereich. Ihre bisherige Fachkraft bleibt für Ihre Beratung zuständig.'
+		],
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
+		footer
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Neue Benachrichtigung',
 		preheader: 'Bitte melden Sie sich an.',
