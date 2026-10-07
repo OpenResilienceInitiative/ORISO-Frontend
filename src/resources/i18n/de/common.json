@@ -2942,6 +2942,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (Übung)",
+			"colleague": "Alex (Übung)",
+			"supervisor": "Robin (Übung)"
+		},
+		"asker": {
+			"firstMessage": "Guten Tag, ich habe eine allgemeine Frage zu Ihrem Angebot. Wie läuft eine Beratung bei Ihnen ab, und wie schnell bekomme ich eine Antwort? Vielen Dank.",
+			"reply": "Vielen Dank für Ihre Antwort. Das hilft mir weiter. Ich melde mich, wenn ich noch Fragen habe."
+		},
+		"colleague": {
+			"teamMessage": "Ich bin heute im Termin und schaffe die Antwort nicht mehr. Kannst du die Anfrage übernehmen?"
+		},
+		"supervisor": {
+			"reply": "Das klingt gut so. Frag ruhig nach, was die Person genau wissen möchte. Ich lese mit und melde mich, wenn mir etwas auffällt."
+		},
+		"erstantwort": {
+			"greeting": "Ihre Anfrage ist bei uns eingegangen. Eine Beraterin oder ein Berater meldet sich bei Ihnen."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Guten Tag, danke für Ihre Nachricht. Eine Beratung läuft hier schriftlich und vertraulich ab."
+		},
+		"names": {
+			"agency": "Übungsstelle",
+			"topic": "Übung",
+			"teamRoom": "Team-Besprechung (Übung)",
+			"supervisionRoom": "Supervision (Übung)"
+		}
+	},
 	"registration": {
 		"accordion": {
 			"item": {
@@ -4665,9 +4694,13 @@
 				"on": "An"
 			},
 			"subtitle": "Kurze Rundgänge zeigen Ihnen, wo Sie was finden.",
-			"title": "Rundgänge automatisch starten"
+			"title": "Einführung automatisch starten"
 		},
-		"title": "Rundgang"
+		"title": "Rundgang",
+		"introduction": {
+			"title": "Einführung",
+			"summary": "Lernen Sie die Bereiche der Anwendung kennen. Sie können die Einführung jederzeit erneut starten."
+		}
 	},
 	"banner": {
 		"ie": {
@@ -5300,6 +5333,66 @@
 					"intro": "Abgeschlossene Beratungen verschieben Sie wie bisher ins Archiv — es liegt jetzt in diesem Tab."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Übung: Anfrage annehmen",
+			"summary": "Üben Sie im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"navEnquiries": {
+					"title": "Anfragen öffnen",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen finden Sie hier unter „Anfragen“."
+				},
+				"openEnquiry": {
+					"title": "Anfrage öffnen",
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicken Sie darauf, um sie zu öffnen."
+				},
+				"openTeam": {
+					"title": "Teambesprechung öffnen",
+					"intro": "Bei Ihnen ist die Teambesprechung aktiviert: Damit stimmen Sie sich mit Ihrem Team ab, bevor Sie annehmen. Klicken Sie auf „Teambesprechung öffnen“."
+				},
+				"teamReply": {
+					"title": "Im Team antworten",
+					"intro": "Lesen Sie die Nachricht aus dem Team und schreiben Sie eine Antwort. Wenn Sie die Anfrage annehmen, wird die Teambesprechung geschlossen."
+				},
+				"accept": {
+					"title": "Anfrage annehmen",
+					"intro": "Klicken Sie auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für Ihr Team nicht mehr in der Liste."
+				},
+				"firstAnswer": {
+					"title": "Erstantwort und erste Nachricht",
+					"intro": "Die Anfrage gehört jetzt Ihnen. Im Chat sehen Sie die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
+				},
+				"reply": {
+					"title": "Erste Antwort schreiben",
+					"intro": "Schreiben Sie der ratsuchenden Person eine kurze Antwort und senden Sie sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Gut gemacht: Sie haben eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Übung: Supervision hinzufügen",
+			"summary": "Üben Sie im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"addSupervisor": {
+					"title": "Supervisor:in hinzufügen",
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicken Sie auf das „+“, wählen Sie die Supervisor:in aus, nennen Sie kurz den Grund und bestätigen Sie."
+				},
+				"supervisorReply": {
+					"title": "Antwort der Supervision",
+					"intro": "Ihre Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten sehen nur Sie beide — die ratsuchende Person sieht sie nicht."
+				},
+				"standingAssignment": {
+					"title": "Feste Zuordnung",
+					"intro": "Hat Ihre Administration Ihnen eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür müssen Sie nichts tun."
+				},
+				"done": {
+					"title": "Geschafft!",
+					"intro": "Sie haben eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beenden Sie die Übung."
+				}
+			}
 		}
 	},
 	"weekday": {
@@ -5607,6 +5700,35 @@
 			"region": "Benachrichtigungen",
 			"more": "{{count}} weitere anzeigen",
 			"less": "Weniger anzeigen"
+		}
+	},
+	"practice": {
+		"banner": {
+			"title": "Übungsmodus",
+			"progress": "Schritt {{current}} von {{total}}",
+			"note": "Übungsfall, keine echten Daten",
+			"end": "Übung beenden",
+			"restart": "Neu starten",
+			"moveHandle": "Hinweis verschieben (Pfeiltasten)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Eine Anfrage annehmen und eine erste Antwort schreiben.",
+				"supervision": "Eine Supervisor:in auswählen und einer Beratung hinzufügen."
+			},
+			"title": "Übungsbereich",
+			"subtitle": "Üben Sie Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was Sie hier eingeben, wird nicht gespeichert.",
+			"empty": "Aktuell sind keine Übungen für Sie verfügbar.",
+			"badge": "Übung",
+			"phoneHint": "Bitte üben Sie am Computer.",
+			"windowHint": "Bitte vergrößern Sie das Browserfenster für diese Übung.",
+			"action": {
+				"start": "Übung starten",
+				"restart": "Noch einmal üben"
+			}
+		},
+		"error": {
+			"start": "Die Übung konnte nicht gestartet werden. Bitte versuchen Sie es erneut."
 		}
 	},
 	"counselling": {

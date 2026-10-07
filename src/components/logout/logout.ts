@@ -31,6 +31,11 @@ import {
 } from '../../services/clientStorageHygiene';
 import { withTimeout } from '../../utils/promiseTimeout';
 import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import {
+	endPractice,
+	exitPracticeMode,
+	isPracticeMode
+} from '../../practice/practiceMode';
 
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 	MATRIX_USER_ID_STORAGE_KEY,
@@ -94,6 +99,14 @@ export const logout = async (
 	// second, redirecting sign-out racing this one.
 	isRequestInProgress = true;
 
+	// Practice mode's network guard blocks every write, among them the pre-logout
+	// draft flush and the Keycloak logout POST. Leave it first (#1622), the
+	// regular way: the practice views unmount and drain before the guard goes.
+	if (isPracticeMode()) {
+		await endPractice();
+	}
+	exitPracticeMode();
+
 	// With the session already torn down (auth guard, expired refresh token)
 	// there is nothing the handlers or the availability call could still do
 	// with the backend — they would only produce 401s.
@@ -154,6 +167,9 @@ export const logout = async (
  * providers above the router drop their session-bound state.
  */
 export const teardownLocalSession = (): void => {
+	// The login form's requests are writes too (#1622). Immediate on purpose:
+	// the session is already gone, nothing practice can still write matters.
+	exitPracticeMode();
 	void getMatrixClientService()
 		?.logout()
 		.catch(() => {});

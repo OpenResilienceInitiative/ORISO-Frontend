@@ -71,13 +71,13 @@ afterEach(() => {
 });
 
 describe('EnableWalkthrough (#1526)', () => {
-	it('names the one switch for all tours in the plural', () => {
+	it('names the introduction as the only automatically started tour', () => {
 		renderSwitch(false);
 
-		expect(screen.getByText('Rundgänge automatisch starten')).toBeTruthy();
+		expect(screen.getByText('Einführung automatisch starten')).toBeTruthy();
 		expect(
 			screen.getByRole('switch', {
-				name: 'Rundgänge automatisch starten'
+				name: 'Einführung automatisch starten'
 			})
 		).toBeTruthy();
 	});
