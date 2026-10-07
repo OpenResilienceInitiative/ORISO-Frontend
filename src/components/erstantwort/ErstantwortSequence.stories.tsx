@@ -10,6 +10,7 @@ import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
 } from './erstantwortPayload';
+import { ERSTANTWORT_CATALOGUE } from './erstantwortCatalogue';
 import { resolveErstantwortBausteine } from './erstantwortResolve';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { phone390Globals } from '../message/messageStoryShell';
@@ -73,7 +74,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const translate = (_key: string, defaultValue?: string) => defaultValue ?? '';
+const catalogueCopy = new Map<string, string>();
+for (const entry of ERSTANTWORT_CATALOGUE) {
+	catalogueCopy.set(entry.bodyKey, entry.defaultBody);
+	if (entry.headlineKey)
+		catalogueCopy.set(entry.headlineKey, entry.defaultHeadline ?? '');
+	if (entry.action)
+		catalogueCopy.set(entry.action.labelKey, entry.action.defaultLabel);
+}
+const translate = (key: string) => catalogueCopy.get(key) ?? '';
 
 const platformDefaults = (state: {
 	hasEmail: boolean;
@@ -376,7 +385,7 @@ export const CompactFaq: Story = {
 	args: { bausteine: platformDefaults(OPEN_STATE), skipAnimation: true },
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const question = canvas.getByText('Wer Ihre Nachricht liest');
+		const question = await canvas.findByText('Wer Ihre Nachricht liest');
 		const detail = question.closest('details');
 		await expect(detail).not.toHaveAttribute('open');
 		await userEvent.click(question);
@@ -393,6 +402,7 @@ export const CompactFaq: Story = {
 
 /** Actual split-panel widths, independent of the browser viewport. */
 export const StructuredMessageWidths: Story = {
+	args: { bausteine: [] },
 	parameters: { layout: 'fullscreen' },
 	render: () => (
 		<div>
@@ -450,7 +460,21 @@ export const StructuredMessageWidths: Story = {
 			);
 			expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth + 1);
 			const buttons = within(second).getAllByRole('button');
-			const wide = second.clientWidth - 44 >= 560;
+			const optionHost = buttons[0].parentElement!.parentElement!;
+			const wide = optionHost.clientWidth >= 560;
+			const message = canvas
+				.getByTestId(`chat-column-${width}`)
+				.querySelector('[data-testid="erstantwort-sequence"]')!;
+			const actualWidth = host.clientWidth;
+			expect(message.getBoundingClientRect().width).toBe(
+				Math.min(
+					actualWidth,
+					actualWidth >= 600 && actualWidth <= 899 ? 640 : 720
+				)
+			);
+			expect(
+				parseFloat(getComputedStyle(second).borderBottomRightRadius)
+			).toBeGreaterThan(0);
 			expect(
 				Math.abs(
 					buttons[0].getBoundingClientRect().top -
