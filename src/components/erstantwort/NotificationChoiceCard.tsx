@@ -1,4 +1,7 @@
 import * as React from 'react';
+import MailOutline from '@mui/icons-material/MailOutline';
+import WebOutlined from '@mui/icons-material/WebOutlined';
+import DevicesOutlined from '@mui/icons-material/DevicesOutlined';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './NotificationChoiceCard.styles.scss';
@@ -111,6 +114,18 @@ export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 						aria-pressed={currentSelection === option.choice}
 						onClick={() => choose(option.choice)}
 					>
+						<span
+							className="notificationChoiceCard__icon"
+							aria-hidden
+						>
+							{option.choice === 'EMAIL' ? (
+								<MailOutline />
+							) : option.choice === 'BROWSER' ? (
+								<WebOutlined />
+							) : (
+								<DevicesOutlined />
+							)}
+						</span>
 						<span className="notificationChoiceCard__label">
 							{option.label}
 						</span>
