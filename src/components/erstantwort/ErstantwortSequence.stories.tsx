@@ -10,6 +10,7 @@ import {
 	ERSTANTWORT_PAYLOAD_VERSION,
 	SYSTEM_NOTIFICATION_FIRST_RESPONSE
 } from './erstantwortPayload';
+import { ERSTANTWORT_CATALOGUE } from './erstantwortCatalogue';
 import { resolveErstantwortBausteine } from './erstantwortResolve';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { phone390Globals } from '../message/messageStoryShell';
@@ -73,7 +74,15 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const translate = (_key: string, defaultValue?: string) => defaultValue ?? '';
+const catalogueCopy = new Map<string, string>();
+for (const entry of ERSTANTWORT_CATALOGUE) {
+	catalogueCopy.set(entry.bodyKey, entry.defaultBody);
+	if (entry.headlineKey)
+		catalogueCopy.set(entry.headlineKey, entry.defaultHeadline ?? '');
+	if (entry.action)
+		catalogueCopy.set(entry.action.labelKey, entry.action.defaultLabel);
+}
+const translate = (key: string) => catalogueCopy.get(key) ?? '';
 
 const platformDefaults = (state: {
 	hasEmail: boolean;
