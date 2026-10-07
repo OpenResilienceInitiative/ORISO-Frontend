@@ -528,6 +528,19 @@ export const SystemNotification: Story = {
 			message: mockSystemNotificationMessage
 		}),
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__avatar--bot'
+			)!;
+			const title = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__sendFailedTitle'
+			)!;
+			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+				avatar.getBoundingClientRect().right + 8
+			);
+		});
 	}
 };
 
@@ -1538,6 +1551,42 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	return notice;
 };
 
+/** Header labels must clear the entire avatar frame, including its backdrop. */
+const expectReadableCarimatHeader = async (notice: HTMLElement) => {
+	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const avatar = notice.querySelector<HTMLElement>(
+		'.pseudonymCard__avatarFrame'
+	)!;
+	const labels = notice.querySelectorAll<HTMLElement>(
+		'.pseudonymCard__headerName, .pseudonymCard__headerSubtitle'
+	);
+	const originalWidth = card.style.width;
+	const originalMaxWidth = card.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			card.style.width = `${width}px`;
+			card.style.maxWidth = '100%';
+			await waitFor(() => {
+				for (const label of labels) {
+					const rect = label.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(
+						avatar.getBoundingClientRect().right + 8
+					);
+					expect(rect.right).toBeLessThanOrEqual(
+						card.getBoundingClientRect().right + 1
+					);
+					expect(label.scrollWidth).toBeLessThanOrEqual(
+						label.clientWidth + 1
+					);
+				}
+			});
+		}
+	} finally {
+		card.style.width = originalWidth;
+		card.style.maxWidth = originalMaxWidth;
+	}
+};
+
 export const SupervisionNotice: Story = {
 	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
 	parameters: {
@@ -1557,8 +1606,35 @@ export const SupervisionNotice: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
+		await expectReadableCarimatHeader(notice);
 		// The day pill moves onto the notice when the room already has history.
 		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeLongHeader: Story = {
+	...SupervisionNotice,
+	name: 'Supervision notice — long translated header',
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionTimeline([], {
+				roomId: SUPERVISION_ROOM_ID,
+				title: 'Supervision und gemeinsame fachliche Beratung innerhalb der Beratungsstelle',
+				description: SUPERVISION_NOTICE_TEXT,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+			})[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageItem--supervisionNotice'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expectReadableCarimatHeader(notice);
 	}
 };
 
