@@ -16,7 +16,7 @@ export const notificationConversationType = (
 				: undefined;
 	if (session) {
 		if (session.conversationType != null) return session.conversationType;
-		return session.registrationType === 'ANONYMOUS'
+		return String(session.registrationType) === 'ANONYMOUS'
 			? 'LIVE_CHAT'
 			: 'AGENCY_COUNSELLING';
 	}

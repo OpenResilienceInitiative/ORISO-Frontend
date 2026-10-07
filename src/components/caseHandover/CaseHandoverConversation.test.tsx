@@ -69,7 +69,8 @@ const decline = vi.fn();
 function setup(
 	initial = account,
 	isEmailEnabled?: boolean,
-	conversationType?: string
+	conversationType?: string,
+	contextSettings: Record<string, boolean> = {}
 ) {
 	const TestAccount = ({
 		sessionKey = '1',
@@ -91,7 +92,8 @@ function setup(
 					value={{
 						tenant: {
 							settings: {
-								featureAskerEmailEnabled: emailEnabled
+								featureAskerEmailEnabled: emailEnabled,
+								...contextSettings
 							}
 						} as TenantDataInterface,
 						setTenant: () => {},
@@ -354,6 +356,38 @@ it('an unknown future conversation cannot open an empty notification flow', asyn
 	await screen.findByRole('dialog');
 	expect(
 		screen.queryByRole('button', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+	expect(
+		screen.queryByText('caseHandover.consent.info.notificationsCopy')
+	).toBeNull();
+	expect(
+		screen.queryByRole('region', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+});
+
+it('does not recommend or open setup when actual context policy forbids both channels', async () => {
+	setup(account, true, 'AGENCY_COUNSELLING', {
+		featureAskerEmailAgencyCounsellingEnabled: false,
+		featureAskerBrowserAgencyCounsellingEnabled: false
+	});
+	fireEvent.click(
+		screen.getByRole('button', { name: 'caseHandover.consent.info.more' })
+	);
+	await screen.findByRole('dialog');
+	expect(
+		screen.queryByRole('button', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+	expect(
+		screen.queryByText('caseHandover.consent.info.notificationsCopy')
+	).toBeNull();
+	expect(
+		screen.queryByRole('region', {
 			name: 'caseHandover.consent.info.notificationsAction'
 		})
 	).toBeNull();
