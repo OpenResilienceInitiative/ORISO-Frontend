@@ -179,11 +179,27 @@ export const AskerUnavailable: Story = {
 	}
 };
 export const English: Story = {
-	globals: { locale: 'en' },
+	globals: { locale: 'en', viewport: { value: 'desktop1440' } },
 	decorators: [withUser(true)],
 	args: ConsultantHealthy.args,
 	play: async (context) => {
 		await meta.play(context);
+		const account = context.canvas.getByRole('region', {
+			name: 'Sign-in & account'
+		});
+		const twoFactorCard = account.querySelectorAll('.profile__card')[1];
+		const heading = within(twoFactorCard as HTMLElement).getByRole(
+			'heading',
+			{ name: 'Two-factor authentication' }
+		);
+		const edit = within(twoFactorCard as HTMLElement).getByRole('button', {
+			name: 'edit'
+		});
+		const headingText = document.createRange();
+		headingText.selectNodeContents(heading);
+		await expect(edit.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+			headingText.getBoundingClientRect().right
+		);
 		await expect(
 			context.canvas.findByText(
 				'✓ Your recovery key is set up. Your history stays readable on new devices.'

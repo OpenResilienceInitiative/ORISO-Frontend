@@ -21,7 +21,7 @@
 
 // Keep the original top-right edit action while headings wrap beside it.
 .securityPrivacySettings .profile__card__body {
-	.twoFactorAuth__head,
+	.profile__content__title:first-child > .twoFactorAuth__head,
 	.displayNameSettings .profile__content__title > div:first-child {
 		.headline {
 			padding-inline: $grid-base-five;
