@@ -70,6 +70,10 @@ export { ReactComponent as CalDav } from '../../resources/img/icons/caldav.svg';
 export { ReactComponent as GoogleCalendar } from '../../resources/img/icons/googlecalendar.svg';
 export { ReactComponent as Office365 } from '../../resources/img/icons/office365.svg';
 
+export { ReactComponent as Robot7341990Icon } from './icons/assistant/robot-7341990-400.svg';
+export { ReactComponent as Robot1184077Icon } from './icons/assistant/robot-1184077-400.svg';
+export { ReactComponent as Robot3548536Icon } from './icons/assistant/robot-3548536-400.svg';
+export { ReactComponent as Robot5475944Icon } from './icons/assistant/robot-5475944-400.svg';
 // Approved consent artwork: 400 is resting; filled is reserved for selected states.
 export { ReactComponent as SurveillanceConsentIcon } from './icons/consent/surveillance-consent-400.svg';
 export { ReactComponent as SurveillanceConsentFilledIcon } from './icons/consent/surveillance-consent-filled.svg';
