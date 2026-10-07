@@ -11,12 +11,14 @@ interface EmailToggleProps {
 	name: string;
 	titleKey: string;
 	descriptionKey?: string;
+	defaultChecked?: boolean;
 }
 
 export const EmailToggle = ({
 	name,
 	titleKey,
-	descriptionKey
+	descriptionKey,
+	defaultChecked = false
 }: EmailToggleProps) => {
 	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext);
@@ -35,9 +37,10 @@ export const EmailToggle = ({
 	});
 
 	useEffect(() => {
-		const checked = get(userData?.emailNotifications, name, false);
+		const checked =
+			get(userData?.emailNotifications, name) ?? defaultChecked;
 		setInternalChecked(checked);
-	}, [userData.emailNotifications, name]);
+	}, [userData.emailNotifications, name, defaultChecked]);
 
 	const onChange = useCallback(
 		(checked) => {

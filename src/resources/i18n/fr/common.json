@@ -2698,6 +2698,10 @@
 					"feedback": {
 						"title": "Échange professionnel",
 						"description": "Une réponse vous attend dans l'échange professionnel protégé."
+					},
+					"internalChat": {
+						"title": "Messages internes",
+						"description": "Un nouveau message dans une discussion interne avec les autres conseillers."
 					}
 				},
 				"shared": {

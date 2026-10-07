@@ -13,8 +13,8 @@
 /**
  * Where a switch's value actually lives.
  *
- * Two mechanisms, because the platform has two. Four occasions sit in the
- * `notificationsSettings` JSON blob on the user; the counsellor's two
+ * Two mechanisms, because the platform has two. Settings-backed occasions sit
+ * in the `notificationsSettings` JSON blob on the user; the counsellor's two
  * most-used ones are columns on the consultant, reached through
  * `emailToggles`. Unifying them is a migration — this presents one coherent
  * list over both.
@@ -36,6 +36,8 @@ export interface NotificationSwitch {
 	id: string;
 	titleKey: string;
 	descriptionKey: string;
+	/** Default for a setting absent from an older account. Explicit false wins. */
+	defaultEnabled?: boolean;
 	source: NotificationSource;
 	/**
 	 * The occasions this one switch covers. Several occasions deliberately
@@ -118,6 +120,15 @@ export const CONSULTANT_SWITCHES: NotificationSwitch[] = [
 			type: 'NEW_CHAT_MESSAGE_FROM_ADVICE_SEEKER'
 		},
 		occasions: ['neue-nachricht', 'neue-nachricht-beratung']
+	},
+	{
+		id: 'internalChat',
+		titleKey: 'profile.notifications.matrix.consultant.internalChat.title',
+		descriptionKey:
+			'profile.notifications.matrix.consultant.internalChat.description',
+		source: { kind: 'settings', field: 'internalChatNotificationEnabled' },
+		defaultEnabled: true,
+		occasions: ['interne-nachricht']
 	},
 	{
 		id: 'assignment',
