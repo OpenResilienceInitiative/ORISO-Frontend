@@ -67,7 +67,7 @@ const Fixture = (args: React.ComponentProps<typeof StandingAccessSettings>) => {
 		};
 	}, [args.sessionId]);
 	return (
-		<MessageContextShell width="100%">
+		<MessageContextShell>
 			<UserDataContext.Provider
 				value={{
 					userData,
