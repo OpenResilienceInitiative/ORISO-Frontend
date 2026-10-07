@@ -66,7 +66,11 @@ const account = {
 let saved: UserDataInterface;
 const approve = vi.fn();
 const decline = vi.fn();
-function setup(initial = account, isEmailEnabled?: boolean) {
+function setup(
+	initial = account,
+	isEmailEnabled?: boolean,
+	conversationType?: string
+) {
 	const TestAccount = ({
 		sessionKey = '1',
 		emailEnabled = isEmailEnabled
@@ -97,6 +101,7 @@ function setup(initial = account, isEmailEnabled?: boolean) {
 					<ModalProvider>
 						<CaseHandoverConversation
 							key={sessionKey}
+							conversationType={conversationType}
 							onApprove={approve}
 							onDecline={decline}
 							consentGranted={false}
@@ -322,3 +327,34 @@ for (const change of ['session', 'tenant'] as const) {
 		expect(request).not.toHaveBeenCalled();
 	});
 }
+
+it.each([
+	['AGENCY_COUNSELLING', true],
+	['LIVE_CHAT', false],
+	['SELF_HELP', true]
+])(
+	'manual handover setup uses the actual %s channel context',
+	async (context, emailAllowed) => {
+		setup(account, true, context);
+		await openSetup();
+		expect(
+			Boolean(
+				screen.queryByRole('button', {
+					name: /notificationChoice.email/
+				})
+			)
+		).toBe(emailAllowed);
+	}
+);
+it('an unknown future conversation cannot open an empty notification flow', async () => {
+	setup(account, true, 'UNKNOWN_FUTURE');
+	fireEvent.click(
+		screen.getByRole('button', { name: 'caseHandover.consent.info.more' })
+	);
+	await screen.findByRole('dialog');
+	expect(
+		screen.queryByRole('button', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+});

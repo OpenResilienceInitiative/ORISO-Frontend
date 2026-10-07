@@ -83,11 +83,13 @@ const renderErstantwortMessage = (
 	{
 		raw = erstantwortEvent,
 		account = {},
-		modality = 'AGENCY_COUNSELLING'
+		modality = 'AGENCY_COUNSELLING',
+		session = {}
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
 		modality?: string;
+		session?: Record<string, unknown>;
 	}
 ) =>
 	render(
@@ -117,7 +119,8 @@ const renderErstantwortMessage = (
 											...mockActiveSession1on1(),
 											item: {
 												...mockActiveSession1on1().item,
-												conversationType: modality
+												conversationType: modality,
+												...session
 											}
 										},
 										reloadActiveSession: () => {},
@@ -262,3 +265,35 @@ for (const testCase of [
 		).toBeNull();
 	});
 }
+
+it.each([
+	[
+		'legacy team agency',
+		{
+			conversationType: undefined,
+			teamSession: true,
+			registrationType: 'REGISTERED'
+		},
+		true
+	],
+	[
+		'legacy anonymous',
+		{ conversationType: undefined, registrationType: 'ANONYMOUS' },
+		false
+	],
+	['explicit self help', { conversationType: 'SELF_HELP' }, true],
+	['explicit internal', { conversationType: 'INTERNAL_GROUP' }, false],
+	['future unknown', { conversationType: 'FUTURE_MODE' }, false]
+])(
+	'uses the server channel context at the real message caller: %s',
+	(_label, session, allowsEmail) => {
+		renderErstantwortMessage(tenantWith(true), { session });
+		expect(
+			Boolean(
+				screen.queryByRole('button', {
+					name: /notificationChoice.email/
+				})
+			)
+		).toBe(allowsEmail);
+	}
+);

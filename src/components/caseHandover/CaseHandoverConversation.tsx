@@ -44,53 +44,60 @@ export const CaseHandoverConversation = ({
 		<>
 			<CaseHandoverConsentCard
 				{...consent}
-				onSetupNotifications={() => {
-					setNotificationsOpen(true);
-					setFocusRequest((value) => value + 1);
-				}}
-			/>
-			{notificationsOpen && (
-				<div
-					ref={notificationMessage}
-					className="caseHandoverNotificationMessage"
-					tabIndex={-1}
-					role="region"
-					aria-label={t(
-						'caseHandover.consent.info.notificationsAction'
-					)}
-				>
-					<ErstantwortSequence
-						skipAnimation
-						bausteine={[
-							{
-								id: 'handoverNotifications',
-								body: '',
-								headline: ''
+				onSetupNotifications={
+					channels.emailAllowed || channels.browserAllowed
+						? () => {
+								setNotificationsOpen(true);
+								setFocusRequest((value) => value + 1);
 							}
-						]}
-						slots={{
-							handoverNotifications: (
-								<>
-									<h3 className="caseHandoverNotificationTitle">
-										<NotificationsNoneOutlined
-											aria-hidden
+						: undefined
+				}
+			/>
+			{notificationsOpen &&
+				(channels.emailAllowed || channels.browserAllowed) && (
+					<div
+						ref={notificationMessage}
+						className="caseHandoverNotificationMessage"
+						tabIndex={-1}
+						role="region"
+						aria-label={t(
+							'caseHandover.consent.info.notificationsAction'
+						)}
+					>
+						<ErstantwortSequence
+							skipAnimation
+							bausteine={[
+								{
+									id: 'handoverNotifications',
+									body: '',
+									headline: ''
+								}
+							]}
+							slots={{
+								handoverNotifications: (
+									<>
+										<h3 className="caseHandoverNotificationTitle">
+											<NotificationsNoneOutlined
+												aria-hidden
+											/>
+											{t(
+												'caseHandover.consent.info.notificationsAction'
+											)}
+										</h3>
+										<NotificationSetup
+											isBrowserEnabled={
+												channels.browserAllowed
+											}
+											isEmailEnabled={
+												channels.emailAllowed
+											}
 										/>
-										{t(
-											'caseHandover.consent.info.notificationsAction'
-										)}
-									</h3>
-									<NotificationSetup
-										isBrowserEnabled={
-											channels.browserAllowed
-										}
-										isEmailEnabled={channels.emailAllowed}
-									/>
-								</>
-							)
-						}}
-					/>
-				</div>
-			)}
+									</>
+								)
+							}}
+						/>
+					</div>
+				)}
 		</>
 	);
 };
