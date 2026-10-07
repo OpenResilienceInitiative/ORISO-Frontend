@@ -367,7 +367,7 @@ export const ActiveClientOptOut: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const control = canvas.getByRole('switch', {
-			name: 'I consent to data processing for this case handover'
+			name: 'Allow access for this request'
 		});
 		const track = control.nextElementSibling as HTMLElement;
 		const target = track.firstElementChild as HTMLElement;
@@ -401,7 +401,7 @@ export const ActiveClientOptOutToggle: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const control = canvas.getByRole('switch', {
-			name: 'I consent to data processing for this case handover'
+			name: 'Allow access for this request'
 		});
 		const label = control.closest('label') as HTMLElement;
 
@@ -606,4 +606,63 @@ export const SendingMessageFailedMobile: Story = {
 			<TookOverNotice />
 		</Stream>
 	)
+};
+
+export const Informational: Story = {
+	name: 'Information only — no consent control',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="NONE"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		expect(canvas.queryByRole('switch')).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		expect(within(dialog).queryByRole('switch')).toBeNull();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+	}
+};
+
+export const OptionalConsentDialog: Story = {
+	name: 'Consent — optional M3 overview',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		await waitFor(() =>
+			expect(within(dialog).getByText('Bei Bedarf')).toBeVisible()
+		);
+		expect(within(dialog).getByText('Ihre Einwilligung')).toBeVisible();
+		expect(within(dialog).getByText('Geschützter Zugriff')).toBeVisible();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Mehr erfahren' })
+			).toHaveFocus()
+		);
+	}
 };
