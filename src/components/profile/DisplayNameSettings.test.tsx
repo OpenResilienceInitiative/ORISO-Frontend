@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { createContext } from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -87,6 +88,68 @@ describe('Moved display-name editor', () => {
 		);
 		await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
 	});
+
+	it.each(['success', 'failure'] as const)(
+		'ignores repeated saves while pending and permits another edit after %s',
+		async (result) => {
+			let resolvePatch: () => void;
+			let rejectPatch: (reason: Error) => void;
+			const pendingPatch = new Promise<void>((resolve, reject) => {
+				resolvePatch = resolve;
+				rejectPatch = reject;
+			});
+			vi.mocked(apiPatchUserData).mockReturnValueOnce(pendingPatch);
+			mount();
+			const edit = () =>
+				fireEvent.click(
+					screen.getByRole('button', {
+						name: 'profile.data.edit.button.edit'
+					})
+				);
+			edit();
+			fireEvent.change(screen.getByRole('textbox'), {
+				target: { value: 'Mara Neu' }
+			});
+			const save = screen.getByRole('button', {
+				name: 'profile.data.edit.button.save'
+			});
+			// Both events arrive before React commits the pending-state render.
+			act(() => {
+				save.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				save.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+			expect(apiPatchUserData).toHaveBeenCalledTimes(1);
+			expect(save.hasAttribute('disabled')).toBe(true);
+			expect(screen.getByRole('textbox').hasAttribute('disabled')).toBe(
+				true
+			);
+			expect(
+				screen
+					.getByRole('button', {
+						name: 'profile.data.edit.button.cancel'
+					})
+					.hasAttribute('disabled')
+			).toBe(true);
+			expect(reload).not.toHaveBeenCalled();
+			expect(notify).not.toHaveBeenCalled();
+			await act(async () => {
+				if (result === 'success') resolvePatch();
+				else rejectPatch(new Error('Request failed'));
+			});
+			expect(reload).toHaveBeenCalledTimes(result === 'success' ? 1 : 0);
+			expect(notify).toHaveBeenCalledTimes(result === 'failure' ? 1 : 0);
+			vi.mocked(apiPatchUserData).mockResolvedValueOnce(undefined);
+			edit();
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'profile.data.edit.button.save'
+				})
+			);
+			await waitFor(() =>
+				expect(apiPatchUserData).toHaveBeenCalledTimes(2)
+			);
+		}
+	);
 
 	it('preserves empty-name validation and cancellation without a request', () => {
 		mount();

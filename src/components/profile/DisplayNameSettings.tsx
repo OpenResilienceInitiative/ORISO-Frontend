@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCallback, useContext, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	AUTHORITIES,
@@ -23,6 +23,8 @@ export const DisplayNameSettings = () => {
 	const [isEditEnabled, setIsEditEnabled] = useState(false);
 	const [editedDisplayName, setEditedDisplayName] = useState('');
 	const [initialDisplayName, setInitialDisplayName] = useState('');
+	const saveInFlight = useRef(false);
+	const [isSaving, setIsSaving] = useState(false);
 	const cancelEditButton: ButtonItem = {
 		label: translate('profile.data.edit.button.cancel'),
 		type: BUTTON_TYPES.LINK
@@ -46,6 +48,11 @@ export const DisplayNameSettings = () => {
 	};
 
 	const handleSaveEditButton = () => {
+		if (saveInFlight.current) {
+			return;
+		}
+		saveInFlight.current = true;
+		setIsSaving(true);
 		apiPatchUserData({ displayName: editedDisplayName })
 			.then(() => {
 				reloadUserData().catch((error) => {
@@ -64,6 +71,8 @@ export const DisplayNameSettings = () => {
 				// console.error('Error while patching consultant', error);
 			})
 			.finally(() => {
+				saveInFlight.current = false;
+				setIsSaving(false);
 				setIsEditEnabled(false);
 			});
 	};
@@ -121,17 +130,21 @@ export const DisplayNameSettings = () => {
 				label={translate('profile.data.displayName')}
 				type="text"
 				initialValue={initialDisplayName}
-				isDisabled={!isDisplayNameFeatureEnabled || !isEditEnabled}
+				isDisabled={
+					!isDisplayNameFeatureEnabled || !isEditEnabled || isSaving
+				}
 				onValueIsValid={handleValidDisplayName}
 			/>
 			{isDisplayNameFeatureEnabled && isEditEnabled && (
 				<div className="editableData__buttonSet editableData__buttonSet--edit">
 					<Button
 						item={cancelEditButton}
+						disabled={isSaving}
 						buttonHandle={handleCancelEditButton}
 					/>
 					<Button
 						item={saveEditButton}
+						disabled={isSaving}
 						buttonHandle={handleSaveEditButton}
 					/>
 				</div>
