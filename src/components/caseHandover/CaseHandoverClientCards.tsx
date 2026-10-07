@@ -449,6 +449,7 @@ export const CaseHandoverConsentCard = ({
 			</CaseHandoverSystemMessageCard>
 			<M3Dialog
 				open={infoOpen}
+				className="caseHandoverConsentInfo"
 				onClose={() => setInfoOpen(false)}
 				closeLabel={translate('app.close')}
 				title={translate('caseHandover.consent.info.title')}
@@ -465,7 +466,7 @@ export const CaseHandoverConsentCard = ({
 									label: translate(
 										'caseHandover.consent.info.notificationsAction'
 									),
-									primary: true,
+									primary: false,
 									onClick: () => {
 										setInfoOpen(false);
 										onSetupNotifications();
@@ -490,13 +491,15 @@ export const CaseHandoverConsentCard = ({
 						</h3>
 						<p>{translate(`caseHandover.consent.info.${mode}`)}</p>
 						{!isInformational && !isResolved && (
-							<div className="caseHandoverMessage__optOutSwitch">
+							<div className="caseHandoverConsentInfo__switchRow">
 								<span>
 									{translate(
 										'caseHandover.consent.optOut.switchLabel'
 									)}
 								</span>
 								<Switch
+									className="caseHandoverConsentInfo__switch"
+									showIcon={false}
 									checked={
 										isOptOut
 											? isConsentGranted
