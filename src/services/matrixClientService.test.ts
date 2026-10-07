@@ -21,6 +21,7 @@ const mockedMatrixClient = vi.hoisted(() => ({
 	on: vi.fn(),
 	off: vi.fn(),
 	removeAllListeners: vi.fn(),
+	removeListener: vi.fn(),
 	getRoom: vi.fn(),
 	getCrypto: vi.fn(),
 	joinRoom: vi.fn(),
@@ -526,6 +527,7 @@ describe('MatrixClientService', () => {
 				if (event === 'sync') syncListeners.push(listener);
 			}),
 			removeAllListeners: vi.fn(),
+			removeListener: vi.fn(),
 			startClient: vi.fn(),
 			stopClient: vi.fn()
 		};
@@ -582,6 +584,7 @@ describe('MatrixClientService', () => {
 				if (event === 'sync') syncListeners.push(listener);
 			}),
 			removeAllListeners: vi.fn(),
+			removeListener: vi.fn(),
 			startClient: vi.fn(),
 			stopClient: vi.fn()
 		};
@@ -1117,7 +1120,8 @@ describe('MatrixClientService', () => {
 			joinRoom: firstJoin,
 			sendMessage: vi.fn(),
 			stopClient: vi.fn(),
-			removeAllListeners: vi.fn()
+			removeAllListeners: vi.fn(),
+			removeListener: vi.fn()
 		});
 		vi.mocked(getMatrixAccessToken).mockResolvedValueOnce({
 			userId: '@alice:matrix.localhost',
