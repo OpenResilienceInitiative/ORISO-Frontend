@@ -285,7 +285,7 @@
 }
 
 .caseHandoverConsentInfo__recommendation {
-	border-top: 1px solid var(--m3-outline-variant);
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 	padding-top: 16px;
 	margin: 20px 0 0;
 	font-size: 14px;
@@ -322,7 +322,7 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 16px;
-		border-top: 1px solid var(--m3-outline-variant);
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
 		padding-top: 16px;
 		margin-top: 20px;
 		font-size: 14px;

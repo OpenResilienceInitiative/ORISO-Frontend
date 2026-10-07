@@ -225,17 +225,8 @@
 			"overlay": {
 				"input": {
 					"invalid": "Deine E-Mail-Adresse ist nicht gültig.",
-					"valid": "Deine E-Mail-Adresse ist gültig.",
-					"label": "E-Mail",
-					"unavailable": "Diese E-Mail-Adresse ist bereits registriert."
-				},
-				"button1": {
-					"label": "Speichern"
-				},
-				"button2": {
-					"label": "Schließen"
-				},
-				"headline": "E-Mail-Adresse angeben"
+					"valid": "Deine E-Mail-Adresse ist gültig."
+				}
 			},
 			"success": {
 				"overlay": {
@@ -621,12 +612,6 @@
 		},
 		"thread": {
 			"unknownRoot": "Frühere Nachricht"
-		},
-		"menu": {
-			"open": "Weitere Optionen"
-		},
-		"deliveryStatus": {
-			"sent": "Gesendet"
 		}
 	},
 	"notification": {
@@ -948,7 +933,6 @@
 						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
 					},
 					"consentRequest": {
-						"title": "Anfragen zu Einsicht und Übergabe",
 						"description": "Erhalte eine E-Mail, wenn deine Zustimmung zu einer Einsichtnahme oder Übergabe angefragt wird."
 					}
 				},
@@ -2223,8 +2207,7 @@
 			"mobileHeadline": "Hier ist Raum für dein Anliegen.",
 			"carrierLogoAlt": "Karte der Standorte von {{name}} anzeigen"
 		},
-		"stop": "Stopp",
-		"close": "Schließen"
+		"stop": "Stopp"
 	},
 	"login": {
 		"register": {
@@ -2333,25 +2316,10 @@
 			"email": "Schreib mir eine E-Mail",
 			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
 			"browser": "Gib mir hier ein Signal",
-			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
-			"enableBrowser": "Browser aktivieren",
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfe die Berechtigung in deinem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
-			"active": "Aktiviert: {{channel}}",
-			"bothSetup": "Beides einrichten",
-			"bothSetupHint": "E-Mail und zusätzlich ein Signal auf diesem Gerät.",
-			"browserUnsupported": "Dieser Browser unterstützt keine Browser-Benachrichtigungen.",
-			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet.",
-			"channelBoth": "E-Mail und Browser auf diesem Gerät",
-			"channelEmail": "E-Mail",
-			"channelBrowser": "Browser auf diesem Gerät"
-		},
-		"faq": {
-			"title": "Häufige Fragen",
-			"modalityNote": "Wie läuft die Beratung ab?",
-			"dataProtection": "Was passiert mit meinen Daten?"
-		},
-		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
+			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
+		}
 	},
 	"caseHandover": {
 		"accepted": {
@@ -2362,43 +2330,28 @@
 			"organisationFallback": "deiner Beratungsstelle"
 		},
 		"consent": {
-			"sender": "Carimat",
 			"senderRole": "Kurze Orientierung",
 			"title": "Eine Fachkraft bittet um Zugriff auf dieses Gespräch",
 			"copy": "Bitte erlaube den Zugriff oder lehne ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
 			"approve": "Zugriff erlauben",
-			"decline": "Zugriff verweigern",
 			"optOut": {
-				"title": "Datenschutzhinweis zur Fallübergabe",
 				"prompt": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Du kannst dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"copy": "Für die Fallübergabe darf eine weitere Fachkraft derselben Beratungsstelle dieses Gespräch zeitlich begrenzt einsehen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Deine bisherige Fachkraft bleibt weiterhin für dich zuständig.",
-				"revocationCopy": "Der Schalter gilt für diese Anfrage. Du kannst widersprechen; eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
-				"switchLabel": "Zugriff für diese Anfrage erlauben"
+				"revocationCopy": "Der Schalter gilt für diese Anfrage. Du kannst widersprechen; eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht."
 			},
 			"info": {
-				"more": "Mehr erfahren",
 				"title": "Einsichtnahme in deine Beratung",
 				"noticeTitle": "Unterstützung für deine Beratung",
 				"noticeCopy": "Eine weitere Fachkraft deiner Beratungsstelle erhält für diese Anfrage Einsicht. Eine vorherige Einwilligung wird bei dieser Einstellung nicht erfragt.",
-				"needTitle": "Wann hilfreich",
 				"needCopy": "Eine weitere Fachkraft kann kurz unterstützen, etwa für einige Stunden. Bei Urlaub oder Krankheit kann jemand aus deiner Beratungsstelle übernehmen.",
 				"choiceTitle": "Deine Einwilligung",
 				"OPT_IN": "Für diese Anfrage ist deine Zustimmung nötig. Ohne sie erhält die anfragende Fachkraft keinen Zugriff. Deine Entscheidung gilt nur für diese Anfrage.",
 				"OPT_OUT": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Du kannst dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"NONE": "Für diese Anfrage wird keine Entscheidung erfragt. Die Nachricht informiert dich über die Einsichtnahme ohne vorherige Einwilligung.",
-				"accessTitle": "Geschützter Zugriff",
-				"accessCopy": "Nur die zuständige Stelle und die konkret berechtigte Fachkraft erhalten Einsicht. Außenstehende und der Plattformbetreiber erhalten keinen Zugang.",
 				"notificationsCopy": "Wenn deine Zustimmung gebraucht wird, empfehlen wir E-Mail- oder Browser-Benachrichtigungen. So erfährst du rechtzeitig von einer Anfrage und kannst reagieren.",
-				"notificationsAction": "Benachrichtigungen einrichten",
-				"granted": "Der Zugriff wurde bestätigt.",
-				"closed": "Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.",
 				"takeoverContinues": "Dein Widerspruch wurde gespeichert. Die bereits abgeschlossene Übernahme bleibt bestehen.",
 				"description": "Für fachliche Rücksprache und Vertretung in deiner Beratungsstelle."
 			}
-		},
-		"systemMessage": {
-			"selectedReason": "Ausgewählter Grund: {{reason}}",
-			"explanation": "Erläuterung: {{explanation}}"
 		}
 	},
 	"dpaSign": {
