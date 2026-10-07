@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, within } from 'storybook/test';
 
 import {
 	HistoricalReassignMessage,
@@ -84,6 +85,28 @@ export const RequestMobile: Story = {
 
 export const HistoricalBlankNames: Story = {
 	name: 'Historical record — blank counsellor names',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByLabelText('Information')).toBeInTheDocument();
+		const notice = canvasElement.querySelector<HTMLElement>(
+			'.reassignRequestMessage'
+		);
+		if (!notice) throw new Error('Historical notice is missing');
+		for (const width of [320, 390, 412, 820, 1440]) {
+			canvasElement.style.width = `${width}px`;
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			await expect(notice.scrollWidth).toBeLessThanOrEqual(
+				notice.clientWidth + 1
+			);
+			await expect(
+				notice.getBoundingClientRect().right
+			).toBeLessThanOrEqual(
+				canvasElement.getBoundingClientRect().right + 1
+			);
+		}
+		canvasElement.style.removeProperty('width');
+	},
+
 	render: () => (
 		<HistoricalReassignMessage
 			message={JSON.stringify({

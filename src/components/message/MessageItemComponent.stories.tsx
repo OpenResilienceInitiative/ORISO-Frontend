@@ -1925,6 +1925,33 @@ export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
 			).toBeGreaterThan(0);
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvas.getByLabelText('Information')).toBeInTheDocument();
+		const notice = canvasElement.querySelector<HTMLElement>(
+			'.reassignRequestMessage'
+		);
+		const host =
+			notice?.closest<HTMLElement>('.messageItem')?.parentElement;
+		if (!notice || !host) throw new Error('Historical message is missing');
+		const originalWidth = host.style.width;
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const icon = notice.querySelector<SVGElement>('svg');
+			const title = notice.querySelector<HTMLElement>('strong');
+			if (!icon || !title)
+				throw new Error('Historical info header is missing');
+			await expect(
+				title.getBoundingClientRect().left
+			).toBeGreaterThanOrEqual(icon.getBoundingClientRect().right + 8);
+
+			await expect(notice.scrollWidth).toBeLessThanOrEqual(
+				notice.clientWidth + 1
+			);
+			await expect(
+				notice.getBoundingClientRect().right
+			).toBeLessThanOrEqual(host.getBoundingClientRect().right + 1);
+		}
+		host.style.width = originalWidth;
 	}
 };
 
