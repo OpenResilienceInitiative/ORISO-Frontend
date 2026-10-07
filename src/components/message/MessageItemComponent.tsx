@@ -344,7 +344,7 @@ interface MessageItemComponentProps extends MessageItem {
 		replyCount: number;
 		lastReplyText: string;
 	};
-	onOpenThread?: () => void;
+	onOpenThread?: (opener?: HTMLElement) => void;
 	/** Relations foundation (#435): this message replies to that event. */
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
@@ -2814,7 +2814,7 @@ export const MessageItemComponent = ({
 								onClick={(event) => {
 									event.preventDefault();
 									event.stopPropagation();
-									onOpenThread?.();
+									onOpenThread?.(event.currentTarget);
 								}}
 							>
 								<ThreadEntryIcon

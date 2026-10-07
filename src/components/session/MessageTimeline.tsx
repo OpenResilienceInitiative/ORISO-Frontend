@@ -50,7 +50,7 @@ export interface MessageTimelineProps {
 	threadSummaryFor?: (
 		messageId: string
 	) => MessageItemProps['threadSummary'] | undefined;
-	onOpenThread?: (message: MessageItem) => void;
+	onOpenThread?: (message: MessageItem, opener?: HTMLElement) => void;
 	resolveReplyQuote?: (
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
@@ -134,7 +134,7 @@ export const MessageTimeline = ({
 							threadSummary={threadSummaryFor?.(message._id)}
 							onOpenThread={
 								onOpenThread
-									? () => onOpenThread(message)
+									? (opener) => onOpenThread(message, opener)
 									: undefined
 							}
 							replyQuote={resolveReplyQuote?.(
