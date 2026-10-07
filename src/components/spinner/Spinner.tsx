@@ -7,12 +7,13 @@ interface SpinnerProps {
 	className?: string;
 }
 
-export const Spinner = ({ className }: SpinnerProps) => {
+export const Spinner = ({ isDark, className }: SpinnerProps) => {
 	return (
 		<Loading
 			layout="inline"
 			size="medium"
 			delayMs={0}
+			isDark={isDark}
 			className={className}
 		/>
 	);

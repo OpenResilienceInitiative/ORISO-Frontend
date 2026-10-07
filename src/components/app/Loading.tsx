@@ -10,6 +10,7 @@ export interface LoadingProps {
 	size?: 'small' | 'medium' | 'large';
 	delayMs?: number;
 	label?: string;
+	isDark?: boolean;
 	className?: string;
 }
 
@@ -18,6 +19,7 @@ export const Loading = ({
 	size = 'large',
 	delayMs = 200,
 	label,
+	isDark = false,
 	className
 }: LoadingProps) => {
 	const { t } = useTranslation();
@@ -48,7 +50,7 @@ export const Loading = ({
 				<OrbitalTrails
 					label={text}
 					variant="single"
-					palette="brand"
+					palette={isDark ? 'neutral' : 'brand'}
 					warmupFrames={40}
 				/>
 			</div>
