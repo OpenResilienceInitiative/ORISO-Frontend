@@ -2299,6 +2299,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Your picture",
+			"default": "Default"
+		},
 		"appLanguage": {
 			"info": "Set the language of the application here.",
 			"title": "Language"

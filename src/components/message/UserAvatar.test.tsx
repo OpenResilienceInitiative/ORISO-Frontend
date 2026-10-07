@@ -103,3 +103,40 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 		expect(avatar.getAttribute('aria-hidden')).toBe('true');
 	});
 });
+
+describe('UserAvatar with a profile choice (#1240)', () => {
+	afterEach(cleanup);
+
+	it('puts a counsellor motif on primary', () => {
+		render(
+			<UserAvatar
+				username="c"
+				displayName="C"
+				userId="@c:x"
+				choice={{ file: 'fox.svg', onPrimary: true }}
+			/>
+		);
+		expect(animalBackground(screen.getByTestId('user-avatar'))).toBe(
+			'var(--m3-primary)'
+		);
+	});
+
+	it('keeps the advice seeker colours and only swaps the animal', () => {
+		const { unmount } = render(
+			<UserAvatar username="a" displayName="A" userId="@a:x" />
+		);
+		const derived = animalBackground(screen.getByTestId('user-avatar'));
+		unmount();
+		render(
+			<UserAvatar
+				username="a"
+				displayName="A"
+				userId="@a:x"
+				choice={{ file: 'fox.svg', onPrimary: false }}
+			/>
+		);
+		expect(animalBackground(screen.getByTestId('user-avatar'))).toBe(
+			derived
+		);
+	});
+});

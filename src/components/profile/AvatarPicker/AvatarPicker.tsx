@@ -14,13 +14,24 @@ export type AvatarPickerRole = 'asker' | 'consultant';
 
 interface AvatarPickerProps {
 	role: AvatarPickerRole;
-	/** Selected animal file, e.g. `magpie.svg`. */
+	/** Selected animal file, e.g. `magpie.svg`; null selects the default tile. */
 	value?: string | null;
-	onChange: (file: string) => void;
+	/** The chosen file, or null for the default tile. */
+	onChange: (file: string | null) => void;
 	/** Accessible name of the grid. */
 	label: string;
 	/** Defaults to every animal the app ships. */
 	files?: string[];
+	/** `row`: one horizontally scrolling line, as in the profile header (#878). */
+	layout?: 'grid' | 'row';
+	/** First tile: the avatar the app derives from the user id, which clears the choice. */
+	defaultTile?: { avatar: Avatar; label: string };
+	/**
+	 * Advice seekers keep the colours derived from their id, so each tile is
+	 * previewed in them; without it every tile gets its own colour.
+	 */
+	askerColors?: Pick<Avatar, 'bg' | 'iconColor'>;
+	disabled?: boolean;
 }
 
 /**
@@ -34,7 +45,11 @@ export const AvatarPicker = ({
 	value,
 	onChange,
 	label,
-	files = ALL_ANIMAL_FILES
+	files = ALL_ANIMAL_FILES,
+	layout = 'grid',
+	defaultTile,
+	askerColors,
+	disabled = false
 }: AvatarPickerProps) => {
 	const avatars = useMemo<Avatar[]>(
 		() =>
@@ -47,18 +62,39 @@ export const AvatarPicker = ({
 						iconColor: 'currentColor'
 					};
 				}
+				if (askerColors) return { file, ...askerColors };
 				const bg = AVATAR_COLORS[i % AVATAR_COLORS.length];
 				return { file, bg, iconColor: pickIconColor(bg) };
 			}),
-		[files, role]
+		[files, role, askerColors]
 	);
 
 	return (
 		<div
-			className={`avatarPicker avatarPicker--${role}`}
+			className={`avatarPicker avatarPicker--${role} avatarPicker--${layout}`}
 			role="radiogroup"
 			aria-label={label}
 		>
+			{defaultTile && (
+				<button
+					type="button"
+					role="radio"
+					aria-checked={!value}
+					aria-label={defaultTile.label}
+					disabled={disabled}
+					className={`avatarPicker__tile avatarPicker__tile--default${
+						!value ? ' avatarPicker__tile--selected' : ''
+					}`}
+					onClick={() => onChange(null)}
+				>
+					<AnimalAvatar avatar={defaultTile.avatar} size={52} />
+					{!value && (
+						<span className="avatarPicker__check">
+							<CheckRoundedIcon aria-hidden="true" />
+						</span>
+					)}
+				</button>
+			)}
 			{avatars.map((avatar) => {
 				const selected = avatar.file === value;
 				return (
@@ -68,6 +104,7 @@ export const AvatarPicker = ({
 						role="radio"
 						aria-checked={selected}
 						aria-label={avatar.file.replace(/\.svg$/, '')}
+						disabled={disabled}
 						className={`avatarPicker__tile${
 							selected ? ' avatarPicker__tile--selected' : ''
 						}`}

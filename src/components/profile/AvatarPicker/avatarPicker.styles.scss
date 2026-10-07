@@ -11,6 +11,25 @@
 		color: var(--m3-on-primary, #ffffff);
 	}
 
+	// Profile header (#878): one line that scrolls sideways instead of a grid.
+	&--row {
+		display: flex;
+		gap: 10px;
+		max-height: none;
+		overflow-x: auto;
+		overflow-y: hidden;
+		overscroll-behavior-x: contain;
+		scroll-snap-type: x proximity;
+		scrollbar-width: thin;
+		scrollbar-color: var(--m3-outline-variant, #c4c7c8) transparent;
+		padding: 8px 6px;
+
+		.avatarPicker__tile {
+			flex: 0 0 auto;
+			scroll-snap-align: start;
+		}
+	}
+
 	&__tile {
 		position: relative;
 		padding: 0;
@@ -23,6 +42,15 @@
 		&:focus-visible {
 			outline: 2px solid var(--m3-primary, #a5000a);
 			outline-offset: 3px;
+		}
+
+		&:disabled {
+			cursor: progress;
+		}
+
+		// The default tile shows the user's own colours, not the counsellor tone.
+		&--default {
+			color: initial;
 		}
 
 		&--selected {
