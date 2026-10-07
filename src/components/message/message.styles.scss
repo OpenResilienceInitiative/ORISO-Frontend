@@ -1169,23 +1169,15 @@ $message-avatar-overlap: -19px;
 	 * the body only. See ORISO-Frontend#892.
 	 */
 
-	/*
-	 * MessageSendFailed puts its avatar in a real side column, so its header
-	 * needs no indent. Here the avatar deliberately overlaps the content column
-	 * (see the 19px-overlap note above), which is why the name line carries
-	 * `padding-left: 20px`. The system-notice header sits in the same slot and
-	 * needs the same clearance — without it the title runs under the avatar.
-	 */
-	// Geometry, not a round number: the content column overlaps the avatar
-	// column by $message-avatar-overlap (-19px), so it starts 41px from the
-	// wrap edge while the visible 48px avatar circle ends at 54px (6px ring).
-	// 17px of indent puts the title exactly 8px past the avatar — the
-	// avatar-to-name gap measured on Figma App.Oriso 8498-32373. The 12px
-	// bottom margin plus the bubble's own 4px top margin make the 16px
-	// name-to-bubble gap from the same frame.
+	// The incoming content overlaps the avatar by 19px and its wrap has a
+	// 4px gap. Clear the complete avatar frame plus the shared 8px header gap.
 	&__systemNotificationHeaderText {
-		padding-left: 17px;
+		padding-left: -$message-avatar-overlap - 4px + 8px;
 		margin-bottom: 12px;
+		min-width: 0;
+		max-width: 100%;
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
 	}
 
 	&__systemNotificationDescription {
@@ -1794,7 +1786,7 @@ $message-avatar-overlap: -19px;
 	// the generic 12px inter-message gap makes the bubble start at y=44 and
 	// tuck 16px beneath the avatar, matching Figma's -48px layer overlap.
 	.messageItem__systemNotificationHeaderText {
-		padding-left: 24px;
+		padding-left: 28px;
 		margin-bottom: 0;
 	}
 
