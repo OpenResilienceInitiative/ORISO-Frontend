@@ -5,10 +5,10 @@ import { createInstance } from 'i18next';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, expect, it, vi } from 'vitest';
 import de from '../../resources/i18n/de/common.json';
+import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 // jsdom has no canvas. The unrelated third-party animation boundary is not
 // part of this notice seam; its actual recovery UI is covered in Chromium.
 vi.mock('lottie-react', () => ({ default: () => null }));
-import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 
 const i18n = createInstance();
 await i18n.init({
