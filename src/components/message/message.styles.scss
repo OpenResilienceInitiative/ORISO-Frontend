@@ -1211,7 +1211,23 @@ $message-avatar-overlap: -19px;
 	// T21: thread entry under a root message — "N Antworten" and, on one
 	// line, "Autor: letzte Nachricht…". Opens the thread. Chip tokens from
 	// the room header (primary-fixed hairline, secondary text).
+	// A reply entry belongs to its root bubble. Let the bubble determine the
+	// track width; the preview must not widen a short outgoing message.
+	&__content:has(> .messageItem__threadButton) {
+		display: grid;
+		grid-template-columns: minmax(0, max-content);
+		justify-content: start;
+	}
+
+	&--right .messageItem__content:has(> .messageItem__threadButton) {
+		justify-content: end;
+	}
+
 	&__threadButton {
+		contain: inline-size;
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
@@ -1219,7 +1235,7 @@ $message-avatar-overlap: -19px;
 		margin-top: 6px;
 		padding: 6px 12px;
 		border: 1px solid var(--m3-primary-fixed, #ffdad5);
-		border-radius: 12px;
+		border-radius: 0 12px 12px 12px;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-secondary, #4c555f);
 		font-family: inherit;
@@ -1243,6 +1259,7 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__threadButton--right {
+		border-radius: 12px 12px 0 12px;
 		align-self: flex-end;
 	}
 
@@ -1262,7 +1279,6 @@ $message-avatar-overlap: -19px;
 	&__threadButtonMeta {
 		flex: 0 1 auto;
 		min-width: 0;
-		max-width: 320px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
