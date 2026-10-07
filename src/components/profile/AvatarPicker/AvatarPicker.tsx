@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import {
@@ -33,6 +33,18 @@ interface AvatarPickerProps {
 	askerColors?: Pick<Avatar, 'bg' | 'iconColor'>;
 	disabled?: boolean;
 }
+
+/** Keys that move focus inside the group; the picked tile stays the group's only tab stop. */
+const FOCUS_KEYS: Readonly<
+	Record<string, (index: number, last: number) => number>
+> = {
+	ArrowRight: (index) => index + 1,
+	ArrowDown: (index) => index + 1,
+	ArrowLeft: (index) => index - 1,
+	ArrowUp: (index) => index - 1,
+	Home: () => 0,
+	End: (_index, last) => last
+};
 
 /**
  * Grid of the app's animal avatars (#1540). Advice seekers pick an animal on
@@ -68,12 +80,42 @@ export const AvatarPicker = ({
 			}),
 		[files, role, askerColors]
 	);
+	const groupRef = useRef<HTMLDivElement>(null);
+	const hasPickedTile = !!value && avatars.some(({ file }) => file === value);
+	// The group is one tab stop (ARIA radio group): the picked tile, else the first.
+	const isTabStop = (file: string | null, index: number) =>
+		file === null
+			? !value || (!hasPickedTile && index === 0)
+			: file === value || (!hasPickedTile && !defaultTile && index === 0);
+
+	// Arrows only move focus; Enter or Space picks, because every pick is saved at once.
+	const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		const move = FOCUS_KEYS[event.key];
+		const tiles = Array.from(
+			groupRef.current?.querySelectorAll<HTMLButtonElement>(
+				'[role="radio"]'
+			) ?? []
+		);
+		const current = tiles.indexOf(
+			document.activeElement as HTMLButtonElement
+		);
+		if (!move || current < 0) return;
+		event.preventDefault();
+		const last = tiles.length - 1;
+		tiles[Math.min(Math.max(move(current, last), 0), last)].focus();
+	};
+	const pick = (file: string | null) => {
+		if (!disabled) onChange(file);
+	};
 
 	return (
 		<div
+			ref={groupRef}
 			className={`avatarPicker avatarPicker--${role} avatarPicker--${layout}`}
 			role="radiogroup"
 			aria-label={label}
+			aria-busy={disabled || undefined}
+			onKeyDown={onKeyDown}
 		>
 			{defaultTile && (
 				<button
@@ -81,11 +123,12 @@ export const AvatarPicker = ({
 					role="radio"
 					aria-checked={!value}
 					aria-label={defaultTile.label}
-					disabled={disabled}
+					aria-disabled={disabled || undefined}
+					tabIndex={isTabStop(null, 0) ? 0 : -1}
 					className={`avatarPicker__tile avatarPicker__tile--default${
 						!value ? ' avatarPicker__tile--selected' : ''
 					}`}
-					onClick={() => onChange(null)}
+					onClick={() => pick(null)}
 				>
 					<AnimalAvatar avatar={defaultTile.avatar} size={52} />
 					{!value && (
@@ -95,7 +138,7 @@ export const AvatarPicker = ({
 					)}
 				</button>
 			)}
-			{avatars.map((avatar) => {
+			{avatars.map((avatar, index) => {
 				const selected = avatar.file === value;
 				return (
 					<button
@@ -104,11 +147,12 @@ export const AvatarPicker = ({
 						role="radio"
 						aria-checked={selected}
 						aria-label={avatar.file.replace(/\.svg$/, '')}
-						disabled={disabled}
+						aria-disabled={disabled || undefined}
+						tabIndex={isTabStop(avatar.file, index) ? 0 : -1}
 						className={`avatarPicker__tile${
 							selected ? ' avatarPicker__tile--selected' : ''
 						}`}
-						onClick={() => onChange(avatar.file)}
+						onClick={() => pick(avatar.file)}
 					>
 						<AnimalAvatar avatar={avatar} size={52} />
 						{selected && (

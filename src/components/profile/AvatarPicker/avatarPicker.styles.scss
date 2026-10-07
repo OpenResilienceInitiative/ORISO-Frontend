@@ -44,7 +44,7 @@
 			outline-offset: 3px;
 		}
 
-		&:disabled {
+		&[aria-disabled='true'] {
 			cursor: progress;
 		}
 
