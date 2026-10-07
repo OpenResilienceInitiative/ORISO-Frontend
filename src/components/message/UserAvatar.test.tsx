@@ -107,6 +107,24 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 describe('UserAvatar with a profile choice (#1240)', () => {
 	afterEach(cleanup);
 
+	it('names the avatar after its person while the session caption remains separate', () => {
+		render(
+			<UserAvatar
+				username="lisa"
+				displayName="Support session"
+				avatarDisplayName="Lisa Simpson"
+				userId="@lisa:x"
+				choice={{ kind: 'initials' }}
+			/>
+		);
+		expect(
+			screen.getByRole('img', { name: 'Lisa Simpson' }).textContent
+		).toBe('LS');
+		expect(
+			screen.queryByRole('img', { name: 'Support session' })
+		).toBeNull();
+	});
+
 	it('puts a counsellor motif on primary', () => {
 		render(
 			<UserAvatar

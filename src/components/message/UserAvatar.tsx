@@ -9,7 +9,7 @@ import { formatMessagePersonName } from './messageNameUtils';
 interface UserAvatarProps {
 	username: string;
 	displayName?: string;
-	/** Person's public name when the accessible label is a session caption. */
+	/** Person's name when displayName is a separate session caption. */
 	avatarDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
@@ -44,7 +44,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	choice
 }) => {
 	const resolvedName = formatMessagePersonName(
-		displayName,
+		avatarDisplayName ?? displayName,
 		username,
 		firstName,
 		lastName

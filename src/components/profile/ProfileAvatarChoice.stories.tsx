@@ -222,6 +222,10 @@ export const CounsellorWithInitials1440: Story = {
 		await expect(standard).toHaveAttribute('tabindex', '0');
 		await expect(
 			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+				?.textContent
+		).toBe('KB');
+		await expect(
+			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
 		).not.toBeNull();
 		await userEvent.click(standard);
 		await waitFor(() => {

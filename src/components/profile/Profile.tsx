@@ -268,6 +268,17 @@ export const Profile = () => {
 										}
 										firstName={userData.firstName}
 										lastName={userData.lastName}
+										avatarDisplayName={
+											userData.displayName ||
+											(isConsultant
+												? [
+														userData.firstName,
+														userData.lastName
+													]
+														.filter(Boolean)
+														.join(' ')
+												: userData.userName)
+										}
 										userId={ownAvatarUserId}
 										// Saved choices and the stable default share
 										// the same renderer as recipient views.
