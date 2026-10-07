@@ -199,6 +199,31 @@ export const AdviceSeeker390: Story = {
 	parameters: { router: { initialPath: '/profile' } }
 };
 
+/** Admin initials stay explicit until Standard is chosen and read back. */
+export const CounsellorWithInitials1440: Story = {
+	decorators: [
+		withStage({ ...consultant, avatarKind: 'INITIALS', avatarId: null })
+	],
+	globals: desktop1440,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const row = await canvas.findByRole('radiogroup', { name: 'Ihr Bild' });
+		const standard = within(row).getByRole('radio', { name: 'Standard' });
+		await expect(standard).toHaveAttribute('aria-checked', 'false');
+		await expect(standard).toHaveAttribute('tabindex', '0');
+		await expect(
+			canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+		).not.toBeNull();
+		await userEvent.click(standard);
+		await waitFor(() => {
+			expect(standard).toHaveAttribute('aria-checked', 'true');
+			expect(
+				canvasElement.querySelector('[data-testid="counsellor-avatar"]')
+			).toBeNull();
+		});
+	}
+};
+
 export const AdviceSeeker834: Story = {
 	decorators: [withStage(asker)],
 	globals: { viewport: { value: 'tablet834' } }

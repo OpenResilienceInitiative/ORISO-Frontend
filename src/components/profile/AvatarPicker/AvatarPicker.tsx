@@ -25,7 +25,7 @@ interface AvatarPickerProps {
 	/** `row`: one horizontally scrolling line, as in the profile header (#878). */
 	layout?: 'grid' | 'row';
 	/** First tile: the avatar the app derives from the user id, which clears the choice. */
-	defaultTile?: { avatar: Avatar; label: string };
+	defaultTile?: { avatar: Avatar; label: string; selected?: boolean };
 	/**
 	 * Advice seekers keep the colours derived from their id, so each tile is
 	 * previewed in them; without it every tile gets its own colour.
@@ -82,6 +82,7 @@ export const AvatarPicker = ({
 	);
 	const groupRef = useRef<HTMLDivElement>(null);
 	const hasPickedTile = !!value && avatars.some(({ file }) => file === value);
+	const defaultSelected = defaultTile?.selected ?? !value;
 	// The group is one tab stop (ARIA radio group): the picked tile, else the first.
 	const isTabStop = (file: string | null, index: number) =>
 		file === null
@@ -121,17 +122,17 @@ export const AvatarPicker = ({
 				<button
 					type="button"
 					role="radio"
-					aria-checked={!value}
+					aria-checked={defaultSelected}
 					aria-label={defaultTile.label}
 					aria-disabled={disabled || undefined}
 					tabIndex={isTabStop(null, 0) ? 0 : -1}
 					className={`avatarPicker__tile avatarPicker__tile--default${
-						!value ? ' avatarPicker__tile--selected' : ''
+						defaultSelected ? ' avatarPicker__tile--selected' : ''
 					}`}
 					onClick={() => pick(null)}
 				>
 					<AnimalAvatar avatar={defaultTile.avatar} size={52} />
-					{!value && (
+					{defaultSelected && (
 						<span className="avatarPicker__check">
 							<CheckRoundedIcon aria-hidden="true" />
 						</span>

@@ -91,7 +91,11 @@ export const ProfileAvatarChoice = ({
 				label={translate('profile.avatar.label')}
 				defaultTile={{
 					avatar: derived,
-					label: translate('profile.avatar.default')
+					label: translate('profile.avatar.default'),
+					selected:
+						pending !== undefined
+							? pending === null
+							: choice === null
 				}}
 				askerColors={isConsultant ? undefined : askerColors}
 				disabled={loading}
