@@ -129,3 +129,18 @@
 	align-self: flex-start;
 	margin-top: 12px;
 }
+
+.erstantwort__faq {
+	border-top: 1px solid var(--md-sys-color-outline-variant, #ddd);
+	padding: 12px 0;
+
+	summary {
+		cursor: pointer;
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	p {
+		margin-top: 12px;
+	}
+}
