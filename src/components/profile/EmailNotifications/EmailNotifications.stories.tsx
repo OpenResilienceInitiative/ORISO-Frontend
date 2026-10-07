@@ -76,7 +76,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const AdviceSeeker: Story = {
-	name: 'Advice seeker (3 switches)',
+	name: 'Advice seeker (4 switches)',
 	decorators: [withUser(userData())]
 };
 
