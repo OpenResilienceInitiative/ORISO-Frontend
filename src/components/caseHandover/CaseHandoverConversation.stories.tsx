@@ -379,7 +379,13 @@ const regular: Story['play'] = async ({ canvasElement, parameters }) => {
 			: channel === 'BROWSER'
 				? /Geben Sie mir hier ein Signal/
 				: /Schreiben Sie mir eine E-Mail/;
-	const choice = canvas.getByRole('button', { name: label });
+	// The real renderer reveals the FAQ before the final channel-choice bubble.
+	// Wait for that continuation, including when the conversation is remounted.
+	const choice = await canvas.findByRole(
+		'button',
+		{ name: label },
+		{ timeout: 10_000 }
+	);
 	expect(faq.tagName).toBe('SUMMARY');
 	expect(
 		faq.compareDocumentPosition(choice) & Node.DOCUMENT_POSITION_FOLLOWING
@@ -409,17 +415,28 @@ const regular: Story['play'] = async ({ canvasElement, parameters }) => {
 	await userEvent.click(
 		canvas.getByRole('button', { name: 'Fixture: reload conversation' })
 	);
-	expect(canvas.getByRole('button', { name: label })).toHaveAttribute(
-		'aria-pressed',
-		'true'
+	// History retains its frozen words, while saved reachability suppresses a
+	// new automatic invitation. The choice was confirmed before this reload.
+	await waitFor(
+		() =>
+			expect(
+				canvas.getByText(
+					'Der Inhalt der Beratung steht nie in dieser E-Mail.'
+				)
+			).toBeVisible(),
+		{ timeout: 10_000 }
 	);
-	await waitFor(() =>
-		expect(
-			canvas.getByText(
-				'Der Inhalt der Beratung steht nie in dieser E-Mail.'
-			)
-		).toBeVisible()
-	);
+	expect(canvas.queryByRole('button', { name: label })).toBeNull();
+	expect(
+		canvas.queryByRole('button', { name: /Schreiben Sie mir eine E-Mail/ })
+	).toBeNull();
+	expect(
+		canvas.queryByRole('button', { name: /Geben Sie mir hier ein Signal/ })
+	).toBeNull();
+	expect(
+		canvas.queryByRole('button', { name: /Beides einrichten/ })
+	).toBeNull();
+	expect(page.queryByRole('textbox')).toBeNull();
 };
 export const ShortcutPhone390: Story = {
 	globals: phone390Globals,
