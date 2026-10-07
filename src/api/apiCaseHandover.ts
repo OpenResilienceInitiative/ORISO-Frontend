@@ -1,6 +1,11 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { ListItemsResponseInterface } from '../globalState/interfaces';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 export type CaseHandoverStatusValue =
 	| 'NOT_REQUESTED'
@@ -154,5 +159,9 @@ export const apiSaveCaseHandoverConsentPreference = (
 		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
 		method: FETCH_METHODS.PUT,
 		bodyData: JSON.stringify({ alwaysAskBeforeAdditionalAccess }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_SUCCESS.CONTENT
+		]
 	});

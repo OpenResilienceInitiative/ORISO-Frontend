@@ -44,10 +44,19 @@ const Fixture = (args: React.ComponentProps<typeof StandingAccessSettings>) => {
 						? input.href
 						: input.url;
 			if (url.endsWith(path)) {
-				if (init?.method === 'PUT')
+				const method =
+					init?.method ??
+					(input instanceof Request ? input.method : 'GET');
+				if (method === 'PUT') {
+					const body =
+						init?.body ??
+						(input instanceof Request
+							? await input.clone().text()
+							: '');
 					saved.current = JSON.parse(
-						String(init.body)
+						String(body)
 					).alwaysAskBeforeAdditionalAccess;
+				}
 				return new Response(
 					JSON.stringify({
 						sessionId: args.sessionId,
