@@ -2682,6 +2682,10 @@
 					"appointment": {
 						"title": "Appointments",
 						"description": "An appointment was confirmed, moved or cancelled — and the reminder before it."
+					},
+					"consentRequest": {
+						"title": "Access and handover requests",
+						"description": "Receive an email when your consent to access or handover is requested."
 					}
 				},
 				"consultant": {

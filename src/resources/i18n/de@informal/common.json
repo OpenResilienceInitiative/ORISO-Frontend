@@ -943,6 +943,10 @@
 					"appointment": {
 						"title": "Termine",
 						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					},
+					"consentRequest": {
+						"title": "Anfragen zu Einsicht und Übergabe",
+						"description": "Erhalte eine E-Mail, wenn deine Zustimmung zu einer Einsichtnahme oder Übergabe angefragt wird."
 					}
 				},
 				"consultant": {

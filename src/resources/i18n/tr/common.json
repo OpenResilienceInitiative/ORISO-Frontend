@@ -2668,6 +2668,10 @@
 					"appointment": {
 						"title": "Randevular",
 						"description": "Bir randevu onaylandı, ertelendi veya iptal edildi – ve öncesindeki hatırlatma."
+					},
+					"consentRequest": {
+						"title": "Erişim ve devir talepleri",
+						"description": "Erişim veya devir için onayınız istendiğinde e-posta alın."
 					}
 				},
 				"consultant": {
