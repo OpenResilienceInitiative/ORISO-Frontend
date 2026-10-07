@@ -1,54 +1,47 @@
 import * as React from 'react';
 import { useMemo } from 'react';
+import { CounsellorAvatar } from './CounsellorAvatar';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 import { formatMessagePersonName } from './messageNameUtils';
-import { CounsellorAvatar } from './CounsellorAvatar';
-import {
-	type CounsellorAvatarChoice,
-	hasCounsellorAvatar
-} from '../../utils/counsellorAvatar';
 
-interface UserAvatarProps extends CounsellorAvatarChoice {
+interface UserAvatarProps {
 	username: string;
 	displayName?: string;
+	/** Person's public name when the accessible label is a session caption. */
+	avatarDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
 	userId: string;
 	size?: string;
-	/**
-	 * Name the INITIALS are read from, when it differs from `displayName`.
-	 * Some call sites label the avatar with the session topic or a rail
-	 * caption; initials taken from those would spell the wrong person.
-	 */
-	avatarDisplayName?: string;
 	/**
 	 * Wraps the avatar in a white circle (per design, all user icons must have
 	 * a white circle around them). Defaults to `true`. Pass `false` where the
 	 * surrounding container already provides the white ring (e.g. chat messages).
 	 */
 	ring?: boolean;
+	/** The animal circle's own grey outline; see `AnimalAvatar`. */
+	outline?: boolean;
+	/** The avatar the user picked in their profile (#1240); default when absent. */
+	choice?: AvatarChoice | null;
 }
 
 /**
- * User avatar, and the single choke point for the counsellor avatar (#1047).
- *
- * A counsellor who CHOSE an avatar (`avatarKind` ICON or INITIALS) renders that
- * choice, tinted to the tenant's brand. Everyone else — every advice seeker,
- * and every counsellor who never chose — keeps the deterministic animal icon
- * derived from the user id (#1193 Job 4), so nothing regresses.
+ * The canonical saved choice renders consistently across profile and recipients.
+ * Without a choice, the stable user id determines the animal and palette.
  */
 export const UserAvatar: React.FC<UserAvatarProps> = ({
 	username,
 	displayName,
+	avatarDisplayName,
 	firstName,
 	lastName,
 	userId,
 	size = '32px',
 	ring = true,
-	avatarKind,
-	avatarId,
-	avatarDisplayName
+	outline = true,
+	choice
 }) => {
 	const resolvedName = formatMessagePersonName(
 		displayName,
@@ -57,7 +50,12 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 		lastName
 	);
 	const avatarKey = userId || username || 'unknown';
-	const avatar = useMemo(() => generateAvatarForUser(avatarKey), [avatarKey]);
+	const chosenFile = choice?.kind === 'animal' ? choice.file : undefined;
+	const avatar = useMemo(() => {
+		const derived = generateAvatarForUser(avatarKey);
+		if (!chosenFile) return derived;
+		return { ...derived, file: chosenFile };
+	}, [avatarKey, chosenFile]);
 
 	// Keep the overall footprint equal to `size` so existing fixed-size
 	// containers don't shift; the white ring is created by shrinking the inner
@@ -65,7 +63,6 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	const totalSize = parseInt(size, 10) || 32;
 	const ringWidth = Math.max(3, Math.round(totalSize * 0.125));
 	const innerSize = ring ? totalSize - ringWidth * 2 : totalSize;
-	const chosenByCounsellor = hasCounsellorAvatar({ avatarKind, avatarId });
 
 	return (
 		<span
@@ -85,13 +82,16 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				background: ring ? '#fff' : 'transparent',
 				boxShadow: ring ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
 				boxSizing: 'border-box',
-				flexShrink: 0
+				flexShrink: 0,
+				color:
+					choice && choice.kind !== 'animal'
+						? 'var(--m3-on-primary)'
+						: undefined
 			}}
 		>
-			{chosenByCounsellor ? (
+			{choice && choice.kind !== 'animal' ? (
 				<CounsellorAvatar
-					avatarKind={avatarKind}
-					avatarId={avatarId}
+					choice={choice}
 					displayName={avatarDisplayName ?? displayName}
 					firstName={firstName}
 					lastName={lastName}
@@ -99,7 +99,11 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 					size={innerSize}
 				/>
 			) : (
-				<AnimalAvatar avatar={avatar} size={innerSize} />
+				<AnimalAvatar
+					avatar={avatar}
+					size={innerSize}
+					outline={outline}
+				/>
 			)}
 		</span>
 	);

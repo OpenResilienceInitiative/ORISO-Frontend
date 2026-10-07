@@ -11,13 +11,13 @@ ${msg("orisoOtpFootnote")}
 ----------------------------------------------------------------
 ${msg("orisoOtpAssurance")}
 
-${(properties.orisoOrgName)!'ORISO'}
+${properties.orisoOrgName}
 ${(properties.orisoOrgAddress)!''}
 ${(properties.orisoContactLine)!''}
 
-${msg("orisoOtpOfferedBy", (properties.orisoPlatformName)!'Online-Beratung', (properties.orisoOrgName)!'ORISO')}
+${msg("orisoOtpOfferedBy", properties.orisoPlatformName, properties.orisoOrgName)}
 
-${msg("orisoOtpFooterLink1")}: ${(properties.orisoPrivacyUrl)!'https://app.oriso.org/datenschutz'}
-${msg("orisoOtpFooterLink2")}: ${(properties.orisoImprintUrl)!'https://app.oriso.org/impressum'}
+${msg("orisoOtpFooterLink1")}: ${properties.orisoPrivacyUrl}
+${msg("orisoOtpFooterLink2")}: ${properties.orisoImprintUrl}
 
 ${msg("orisoOtpAutomatedNote")}

@@ -8,7 +8,7 @@ import {
 	screen,
 	waitFor
 } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PasswordReset } from './PasswordReset';
 const state = vi.hoisted(() => ({
 	userData: {
@@ -58,7 +58,10 @@ vi.mock('../../hooks/useAppConfig', () => ({
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));
-vi.mock('../../utils/validateInputValue', () => ({
+vi.mock('../../utils/validateInputValue', async (importOriginal) => ({
+	// The live criteria checklist reads the real rules; only the overall
+	// strength verdict is pinned so the recovery paths stay the subject here.
+	...((await importOriginal()) as Record<string, unknown>),
 	strengthIndicator: () => 4,
 	inputValuesFit: (a: string, b: string) => a === b
 }));
@@ -234,4 +237,149 @@ it('refuses an established account’s change when the chat client is unavailabl
 	expect(state.update).not.toHaveBeenCalled();
 	expect(state.logout).not.toHaveBeenCalled();
 	expect(state.change).not.toHaveBeenCalled();
+});
+
+describe('when the new password is the current one', () => {
+	const fill = (oldValue: string, newValue: string) => {
+		render(
+			<MemoryRouter>
+				<PasswordReset />
+			</MemoryRouter>
+		);
+		fireEvent.change(screen.getByLabelText('passwordResetOld'), {
+			target: { value: oldValue }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetNew'), {
+			target: { value: newValue }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetConfirm'), {
+			target: { value: newValue }
+		});
+	};
+
+	it('says so, keeps the button disabled and never calls the password API', () => {
+		fill('same-synthetic', 'same-synthetic');
+
+		expect(
+			screen.getByText(/profile\.functions\.password\.reset\.sameAsOld/)
+		).not.toBeNull();
+		const save = screen.getByText('save-password') as HTMLButtonElement;
+		expect(save.disabled).toBe(true);
+
+		fireEvent.click(save);
+		expect(state.update).not.toHaveBeenCalled();
+		expect(state.change).not.toHaveBeenCalled();
+	});
+
+	it('notices it too when the current password is typed last', () => {
+		render(
+			<MemoryRouter>
+				<PasswordReset />
+			</MemoryRouter>
+		);
+		fireEvent.change(screen.getByLabelText('passwordResetNew'), {
+			target: { value: 'same-synthetic' }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetConfirm'), {
+			target: { value: 'same-synthetic' }
+		});
+		fireEvent.change(screen.getByLabelText('passwordResetOld'), {
+			target: { value: 'same-synthetic' }
+		});
+
+		expect(
+			(screen.getByText('save-password') as HTMLButtonElement).disabled
+		).toBe(true);
+	});
+
+	it('leaves the intro out inside the account-setup dialog', () => {
+		render(
+			<MemoryRouter>
+				<PasswordReset hideIntro />
+			</MemoryRouter>
+		);
+
+		expect(
+			screen.queryByText('profile.functions.password.reset.subtitle')
+		).toBeNull();
+	});
+});
+
+describe('inside the account-setup dialog', () => {
+	const K = 'profile.functions.password.reset.';
+
+	const renderDialog = () => {
+		render(
+			<MemoryRouter>
+				<PasswordReset hideIntro variant="dialog" />
+			</MemoryRouter>
+		);
+
+		return {
+			type: (label: string, value: string) =>
+				fireEvent.change(screen.getByLabelText(label), {
+					target: { value }
+				})
+		};
+	};
+
+	const criterion = (labelKey: string) =>
+		screen.getByText(labelKey).closest('li') as HTMLLIElement;
+
+	it('names the field the user just signed in with', () => {
+		renderDialog();
+
+		expect(screen.getByText(`${K}old.hint`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}old.dialogLabel`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}new.label`)).not.toBeNull();
+		expect(screen.getByLabelText(`${K}confirm.dialogLabel`)).not.toBeNull();
+	});
+
+	// The checklist is the only feedback while the password is still being
+	// typed, so each rule has to answer for itself, not for the whole verdict.
+	it('ticks each criterion off as the typed password meets it', () => {
+		const { type } = renderDialog();
+		const met = () =>
+			[
+				`${K}criteria.mixedCase`,
+				`${K}criteria.number`,
+				`${K}criteria.specialChar`,
+				`${K}criteria.minLength`
+			].map((key) =>
+				criterion(key).className.includes(
+					'passwordReset__criterion--met'
+				)
+			);
+
+		expect(met()).toEqual([false, false, false, false]);
+
+		type(`${K}new.label`, 'ab');
+		expect(met()).toEqual([false, false, false, false]);
+
+		type(`${K}new.label`, 'aB');
+		expect(met()).toEqual([true, false, false, false]);
+
+		type(`${K}new.label`, 'aB3');
+		expect(met()).toEqual([true, true, false, false]);
+
+		type(`${K}new.label`, 'aB3!');
+		expect(met()).toEqual([true, true, true, false]);
+
+		type(`${K}new.label`, 'aB3!aB3!aB');
+		expect(met()).toEqual([true, true, true, true]);
+	});
+
+	it('refuses the administrator’s password here too', () => {
+		const { type } = renderDialog();
+
+		type(`${K}old.dialogLabel`, 'same-synthetic');
+		type(`${K}new.label`, 'same-synthetic');
+		type(`${K}confirm.dialogLabel`, 'same-synthetic');
+
+		expect(screen.getByText(`${K}sameAsOld`)).not.toBeNull();
+		expect(
+			(screen.getByText('save-password') as HTMLButtonElement).disabled
+		).toBe(true);
+		expect(state.update).not.toHaveBeenCalled();
+	});
 });

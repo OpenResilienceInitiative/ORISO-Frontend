@@ -14,7 +14,7 @@ import { redeemInviteLink } from '../../api/apiRedeemInviteLink';
 import { apiPostRegistration } from '../../api/apiPostRegistration';
 import { LocaleContext, TenantContext } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
-import { redirectToApp } from '../registration/autoLogin';
+import { autoLogin, redirectToApp } from '../registration/autoLogin';
 import {
 	applyRedeemSessionCredentials,
 	assignInviteSessionDisplayName,
@@ -44,7 +44,8 @@ vi.mock('../../api/apiGetAnonymousEnquiryDetails', () => ({
 }));
 
 vi.mock('../registration/autoLogin', () => ({
-	redirectToApp: vi.fn()
+	redirectToApp: vi.fn(),
+	autoLogin: vi.fn()
 }));
 
 /* The room owns the pre-session flow; here only what it is handed matters. */
@@ -90,10 +91,25 @@ vi.mock('../pseudonym/AnimalAvatar', () => ({
 	AnimalAvatar: () => <div data-testid="animal-avatar" />
 }));
 
+/* One stable t, as i18next gives: InviteLink lists t in effect and callback
+   deps, so a fresh function per render would re-run them in tests only. */
+const i18nMock = vi.hoisted(() => {
+	const catalogue: Record<string, string> = {
+		'registration.account.username.label': 'User-ID',
+		'registration.registering': 'Registrierung läuft...',
+		'anonymousChat.pseudonym.changeName': 'Name ändern',
+		'anonymousChat.pseudonym.continueWithSelection': 'Weiter mit Auswahl',
+		'liveChat.entry.staff.headline': 'Sie sind als Beraterin angemeldet.',
+		'inviteLink.error.title': 'This invite link can no longer be used',
+		'inviteLink.resume.retry': 'Erneut versuchen',
+		'registration.accountCreated.retry':
+			'Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
+	};
+	return { t: (key: string) => catalogue[key] ?? key };
+});
+
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key
-	})
+	useTranslation: () => i18nMock
 }));
 
 const { InviteLink } = await import('./InviteLink');
@@ -178,10 +194,59 @@ describe('InviteLink legacy identity', () => {
 					preferredLanguage: 'de'
 				}),
 				false,
-				tenantValue.tenant
+				tenantValue.tenant,
+				expect.any(Function)
 			)
 		);
 		expect(redirectToApp).toHaveBeenCalled();
+	});
+
+	it('only logs in again when the account was created and the login failed', async () => {
+		/* The User-ID and password on this screen were generated here. Once
+		   the account exists, "this invite link can no longer be used" is not
+		   true, and registering again would make a second account — the same
+		   button has to try the login again, with the same credentials
+		   (#1533). */
+		vi.mocked(apiPostRegistration).mockImplementationOnce(
+			(_url, _data, _multi, _tenant, onAccountCreated) => {
+				onAccountCreated?.();
+				return Promise.reject(new Error('auto-login failed'));
+			}
+		);
+		renderInvite();
+
+		const usernameField = await screen.findByLabelText('User-ID');
+		const username = (usernameField as HTMLInputElement).value;
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		expect(
+			await screen.findByText(
+				'Ihr Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuchen Sie es noch einmal.'
+			)
+		).toBeTruthy();
+		expect(
+			screen.queryByText('This invite link can no longer be used')
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'Name ändern' }),
+			'the account exists under this User-ID — it can no longer be re-rolled'
+		).toBeNull();
+		expect(redirectToApp).not.toHaveBeenCalled();
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Weiter mit Auswahl' })
+		);
+
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		expect(apiPostRegistration).toHaveBeenCalledTimes(1);
+		expect(autoLogin).toHaveBeenCalledWith(
+			expect.objectContaining({
+				username,
+				tenantData: tenantValue.tenant
+			})
+		);
 	});
 
 	it('opens the entry room on this page for a topic-based redeem, no redirect', async () => {

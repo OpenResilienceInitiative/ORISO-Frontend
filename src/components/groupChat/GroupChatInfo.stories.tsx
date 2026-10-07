@@ -11,6 +11,7 @@ import {
 	GROUP_STAGE_CHAT_ID,
 	GROUP_STAGE_ROOM_ID,
 	GroupChatStage,
+	groupStageAsker,
 	groupStageConsultant
 } from './groupChatStageStoryShell';
 import {
@@ -28,10 +29,11 @@ import {
 
 const INFO_PATH = `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}/groupChatInfo`;
 
-const buildListItem = (): ListItemInterface => {
-	const item = buildGroupStageListItem(3600);
+const buildListItem = (inviteToken: string | null = 'Ab3_x-Yz') => {
+	const item: ListItemInterface = buildGroupStageListItem(3600);
 	Object.assign(item.chat as object, {
 		modality: 'TEXT',
+		inviteToken,
 		participants: [
 			{
 				consultantId: groupStageConsultant.userId,
@@ -51,11 +53,11 @@ const buildListItem = (): ListItemInterface => {
 
 const MEMBERS = [
 	{
-		userId: '@beraterin_admin_1_sep21:oriso.org',
+		userId: '@beraterin_admin_1_sep21:example.org',
 		name: 'beraterin_admin_1_sep21'
 	},
-	{ userId: '@sanftes-alpaka-mika:oriso.org', name: 'sanftes Alpaka Mika' },
-	{ userId: '@ruhiges-yak-kim:oriso.org', name: 'ruhiges Yak Kim' }
+	{ userId: '@sanftes-alpaka-mika:example.org', name: 'sanftes Alpaka Mika' },
+	{ userId: '@ruhiges-yak-kim:example.org', name: 'ruhiges Yak Kim' }
 ];
 
 /**
@@ -108,8 +110,19 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 	);
 };
 
-const WiredChatInfo = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
-	const listItem = React.useMemo(buildListItem, []);
+const WiredChatInfo = ({
+	layout,
+	inviteToken,
+	asAsker = false
+}: {
+	layout: 'desktop' | 'mobile';
+	inviteToken?: string | null;
+	asAsker?: boolean;
+}) => {
+	const listItem = React.useMemo(
+		() => buildListItem(inviteToken),
+		[inviteToken]
+	);
 	useBackendMocks(listItem);
 	return (
 		<TenantContext.Provider
@@ -123,7 +136,11 @@ const WiredChatInfo = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
 				} as any
 			}
 		>
-			<GroupChatStage listItem={listItem} layout={layout}>
+			<GroupChatStage
+				listItem={listItem}
+				layout={layout}
+				viewer={asAsker ? groupStageAsker : undefined}
+			>
 				<Routes>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
@@ -214,6 +231,48 @@ export const Wired390: Story = {
 		).toBeVisible();
 		await expect(
 			canvas.getByRole('button', { name: /Einladungs-Link kopieren/ })
-		).toBeVisible();
+		).toBeEnabled();
+	}
+};
+
+/** A group without an invite token: no link to copy or scan yet (#1499). */
+export const WiredNoInviteToken: Story = {
+	name: 'Wired · no invite token yet',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" inviteToken={null} />,
+	play: async ({ canvas }) => {
+		await canvas.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+		await expect(
+			canvas.getByRole('button', { name: /QR-Code anzeigen/ })
+		).toBeDisabled();
+		await expect(
+			canvas.getByRole('button', { name: /Einladungs-Link kopieren/ })
+		).toBeDisabled();
+	}
+};
+
+/** An advice seeker sees the members but not the team roles, the creator or the invite ways. */
+export const WiredAsAsker: Story = {
+	name: 'Wired · advice seeker sees no roles, creator or invite',
+	globals: desktop1440Globals,
+	render: () => <WiredChatInfo layout="desktop" asAsker />,
+	play: async ({ canvas }) => {
+		await canvas.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+		await expect(
+			canvas.queryByLabelText('Rolle für Berater Jonas Weber')
+		).toBeNull();
+		await expect(canvas.queryByText('Berater Jonas Weber')).toBeNull();
+		await expect(canvas.queryByText('Beraterin_Admin_1 Sep21')).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: /QR-Code anzeigen/ })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+		).toBeNull();
+		await expect(
+			canvas.queryByRole('button', {
+				name: 'Optionen für sanftes Alpaka Mika'
+			})
+		).toBeNull();
 	}
 };

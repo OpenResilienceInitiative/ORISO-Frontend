@@ -1,12 +1,12 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, waitFor } from 'storybook/test';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { UserAvatar } from './UserAvatar';
 
 /**
- * Der gewählte Beratenden-Avatar (#1046/#1047): das Motiv oder die Initialen,
- * immer auf dem Primary-Container-Paar des Trägers — nie auf einem
- * Farb-Hash. Beratende ohne Auswahl behalten ihr bisheriges Tier-Icon.
+ * A chosen counsellor motif or explicit initials uses the tenant primary pair.
+ * A cleared choice uses the same derived animal as every recipient view.
  */
 const meta: Meta<typeof UserAvatar> = {
 	title: 'Chat/Atoms/CounsellorAvatar',
@@ -23,11 +23,11 @@ const meta: Meta<typeof UserAvatar> = {
 export default meta;
 type Story = StoryObj<typeof UserAvatar>;
 
-/** Ein gewähltes Motiv, in den Farben des Trägers. */
+/** A selected motif uses the tenant colours. */
 export const Motiv: Story = {
-	args: { avatarKind: 'ICON', avatarId: 'fox' },
+	args: { choice: chosenAvatarOf({ avatarKind: 'ICON', avatarId: 'fox' }) },
 	play: async ({ canvasElement }) => {
-		// AnimalAvatar und CounsellorAvatar laden ihr SVG asynchron.
+		// Both avatar renderers load their SVG asynchronously.
 		await waitFor(async () => {
 			const avatar = canvasElement.querySelector(
 				'[data-testid="counsellor-avatar"]'
@@ -38,21 +38,19 @@ export const Motiv: Story = {
 	}
 };
 
-/** Initialen — immer auf dem Primary-Container-Paar. */
+/** Explicit initials use the tenant primary pair. */
 export const Initialen: Story = {
-	args: { avatarKind: 'INITIALS' },
+	args: { choice: chosenAvatarOf({ avatarKind: 'INITIALS' }) },
 	play: async ({ canvasElement }) => {
-		const avatar = canvasElement.querySelector(
+		const avatar = canvasElement.querySelector<HTMLElement>(
 			'[data-testid="counsellor-avatar"]'
-		) as HTMLElement;
-		await expect(avatar.textContent).toBe('LB');
-		await expect(avatar.style.background).toContain(
-			'--m3-primary-container'
 		);
+		await expect(avatar?.textContent).toBe('LB');
+		await expect(avatar?.style.background).toContain('--m3-primary');
 	}
 };
 
-/** Ohne Auswahl bleibt alles wie bisher: das generierte Tier-Icon. */
+/** No saved choice uses the derived animal. */
 export const OhneAuswahl: Story = {
 	play: async ({ canvasElement }) => {
 		await expect(
@@ -61,9 +59,9 @@ export const OhneAuswahl: Story = {
 	}
 };
 
-/** Die Größen der App: Nachricht, Listenzeile, Kopfzeile, Profil. */
+/** The message, list, header and profile sizes. */
 export const Groessen: Story = {
-	args: { avatarKind: 'ICON', avatarId: 'owl' },
+	args: { choice: chosenAvatarOf({ avatarKind: 'ICON', avatarId: 'owl' }) },
 	render: (args) => (
 		<div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
 			{['24px', '32px', '40px', '48px', '56px'].map((size) => (

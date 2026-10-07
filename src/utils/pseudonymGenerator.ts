@@ -6,6 +6,11 @@ const svgCache = new Map<string, string>();
 // Serve under /static (not /assets): on the main host /assets is routed to the
 // Element Call Vite bundle, so /assets/anon-animals/* 404s (#840).
 const baseUrl = `${process.env.PUBLIC_URL || ''}/static/anon-animals`;
+// The SVGs are served from /static with a one-day max-age and are not
+// content-hashed. Bump this whenever their artwork or viewBox changes, so a
+// browser never pairs new sizing code with a stale file (rev 2: viewBox
+// cropped to the artwork, #1059).
+export const AVATAR_ART_REVISION = 2;
 
 function assertValidSvg(svgText: string, file: string): void {
 	const trimmedSvg = svgText.trim();
@@ -30,7 +35,7 @@ function assertValidSvg(svgText: string, file: string): void {
 }
 
 export async function renderAvatarSvg(avatar: Avatar): Promise<string> {
-	const url = `${baseUrl}/${avatar.file}`;
+	const url = `${baseUrl}/${avatar.file}?v=${AVATAR_ART_REVISION}`;
 	let svg = svgCache.get(url);
 
 	if (!svg) {
@@ -45,31 +50,4 @@ export async function renderAvatarSvg(avatar: Avatar): Promise<string> {
 	}
 
 	return recolorSvg(svg, avatar.iconColor);
-}
-
-/**
- * Loads a CHOSEN counsellor motif (#1047) and recolours it to `currentColor`,
- * so the render site's `color` — the tenant's `--m3-on-primary-container` —
- * drives the glyph. Deliberately NOT `renderAvatarSvg`: that one bakes in a
- * concrete hex from the anonymous-name engine's colour hash, which is exactly
- * the behaviour the counsellor avatar replaces. Shares the same SVG cache.
- *
- * @param file animal SVG file name, e.g. `fox.svg`
- */
-export async function loadCounsellorMotifSvg(file: string): Promise<string> {
-	const url = `${baseUrl}/${file}`;
-	let svg = svgCache.get(url);
-
-	if (!svg) {
-		const response = await fetch(url);
-		const contentType = response.headers.get('content-type') || '';
-		if (!response.ok || !contentType.toLowerCase().includes('image/svg')) {
-			throw new Error(`Failed to load counsellor motif: ${file}`);
-		}
-		svg = await response.text();
-		assertValidSvg(svg, file);
-		svgCache.set(url, svg);
-	}
-
-	return recolorSvg(svg, 'currentColor');
 }

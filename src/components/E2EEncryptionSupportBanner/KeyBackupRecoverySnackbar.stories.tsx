@@ -18,7 +18,7 @@ const service = {
 /**
  * The login-time recovery notice as an M3 snackbar. It used to be a strip
  * pinned above the app shell; now it floats bottom-centre, carries one action
- * ("Tresor öffnen") and a ✕, comes back on every reload and login until the
+ * ("Verlauf wiederherstellen") and a ✕, comes back on every reload and login until the
  * history is readable, and never pushes the layout.
  */
 const meta = {

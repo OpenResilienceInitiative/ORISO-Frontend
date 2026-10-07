@@ -18,6 +18,7 @@ import type { MatrixClientService } from '../../services/matrixClientService';
 import { getMatrixAccessToken } from '../sessionCookie/getMatrixAccessToken';
 import { fetchData } from '../../api/fetchData';
 import { clearLiveChatAvailabilityPreference } from '../../utils/liveChatAvailabilityStorage';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
 
 vi.mock('../../api/apiLogoutKeycloak', () => ({
 	apiKeycloakLogout: vi.fn().mockResolvedValue(undefined)
@@ -133,6 +134,19 @@ describe('teardownLocalSession', () => {
 		teardownLocalSession();
 
 		expect(clearLiveChatAvailabilityPreference).toHaveBeenCalledTimes(1);
+	});
+
+	// #1499 review: the app-wide stack outlives the host; a join request or a
+	// failure note naming someone must not greet the next person to sign in.
+	it('forgets the snackbars of the session that ended', () => {
+		appSnackbarStack.enqueue({
+			announcement: 'Anna Berg möchte beitreten',
+			render: () => null
+		});
+
+		teardownLocalSession();
+
+		expect(appSnackbarStack.getSnapshot()).toEqual([]);
 	});
 
 	it('is idempotent, so the auth guard and logout() can both call it', () => {

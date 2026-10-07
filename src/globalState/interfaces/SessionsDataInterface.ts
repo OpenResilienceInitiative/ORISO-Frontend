@@ -39,7 +39,7 @@ export interface SessionConsultantInterface {
 	 * seeker sees. Absent for counsellors who never chose; the deterministic
 	 * animal is then rendered as before.
 	 */
-	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	avatarKind?: string | null;
 	avatarId?: string | null;
 }
 
@@ -128,6 +128,11 @@ export interface GroupChatItemInterface {
 	duration: number;
 	matrixRoomId: string;
 	hintMessage: string;
+	/**
+	 * Secret part of the invite link (ORISO-UserService#1237). Only sent to
+	 * counsellors who may see the group; absent for advice seekers.
+	 */
+	inviteToken?: string;
 	sourceLanguage?: string;
 	hintMessageTranslations?: Record<string, string>;
 	groupChatRulesTranslations?: Record<string, string[]>;
@@ -162,6 +167,7 @@ export interface GroupChatItemInterface {
 }
 
 export interface SessionUserInterface {
+	avatarId?: string | null;
 	username: string;
 	displayName?: string;
 	sessionData: SessionUserDataInterface;

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { UserAvatar } from './UserAvatar';
-import type { CounsellorAvatarChoice } from '../../utils/counsellorAvatar';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 
-export interface MessageAvatarProps extends CounsellorAvatarChoice {
+export interface MessageAvatarProps {
 	/** Kept for API stability; since #1193 groups use the same animal avatar. */
 	isGroup: boolean;
 	isSystemNotification: boolean;
@@ -12,6 +12,10 @@ export interface MessageAvatarProps extends CounsellorAvatarChoice {
 	firstName?: string;
 	lastName?: string;
 	size?: number;
+	/** The animal circle's grey outline; see `AnimalAvatar`. */
+	outline?: boolean;
+	/** The sender's own pick, for the user's own messages (#1240). */
+	choice?: AvatarChoice | null;
 }
 
 /**
@@ -27,8 +31,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 	firstName,
 	lastName,
 	size = 32,
-	avatarKind,
-	avatarId
+	outline = true,
+	choice
 }) => {
 	if (isSystemNotification) {
 		return null;
@@ -43,8 +47,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 			userId={userId}
 			size={`${size}px`}
 			ring={false}
-			avatarKind={avatarKind}
-			avatarId={avatarId}
+			outline={outline}
+			choice={choice}
 		/>
 	);
 };

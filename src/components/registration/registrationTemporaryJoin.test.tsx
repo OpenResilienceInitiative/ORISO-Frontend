@@ -41,7 +41,10 @@ const availableSteps = [
 	{ name: 'account-data', component: Step }
 ];
 
-const renderAccountStep = (search: string) =>
+const renderAccountStep = (
+	search: string,
+	registrationData: Record<string, unknown> = {}
+) =>
 	render(
 		<AppConfigContext.Provider value={{} as any}>
 			<GlobalComponentContext.Provider
@@ -58,7 +61,7 @@ const renderAccountStep = (search: string) =>
 										disabledNextButton: false,
 										setDisabledNextButton: () => undefined,
 										updateRegistrationData: () => undefined,
-										registrationData: {},
+										registrationData,
 										availableSteps,
 										registrationConsultingType: null
 									} as any
@@ -88,11 +91,13 @@ const renderAccountStep = (search: string) =>
 const primaryLabel = () =>
 	document.querySelector('[data-cy="button-register"]')?.textContent;
 
-/* No i18next instance is initialised in this environment, so `t(key)` returns
-   the key and `t(key, fallback)` returns the fallback. The assertions below
-   therefore name the fallback for the new keys and the key for the existing
-   `registration.register` — which is exactly what tells the two apart. */
+/* No i18next instance is initialised here, so `t(key)` returns the key.
+   That is enough to tell the two ways on apart: the ordinary primary stays
+   `registration.register`; the temporary path uses its own keys. */
 const REGISTER = 'registration.register';
+const TOGGLE_ON = 'registration.account.temporary.toggleOn';
+const TOGGLE_OFF = 'registration.account.temporary.toggleOff';
+const JOIN = 'registration.account.temporary.join';
 
 const toggles = () =>
 	Array.from(document.querySelectorAll('[data-cy="button-temporary-join"]'));
@@ -104,18 +109,19 @@ afterEach(() => {
 
 describe('registration — temporary join', () => {
 	it('offers the temporary join and renames the way on when a group-chat link brought the person here', () => {
-		renderAccountStep('?gcid=15');
+		// A valid invite: the link names the agency the person registers at.
+		renderAccountStep('?gcid=15&aid=88', { agency: { id: 88 } });
 
 		expect(toggles().length, 'the toggle is in the footer').toBeGreaterThan(
 			0
 		);
-		expect(toggles()[0].textContent).toBe('Ohne Konto beitreten');
+		expect(toggles()[0].textContent).toBe(TOGGLE_ON);
 		expect(primaryLabel()).toBe(REGISTER);
 
 		fireEvent.click(toggles()[0]);
 
-		expect(toggles()[0].textContent).toBe('Konto anlegen');
-		expect(primaryLabel()).toBe('Beitreten');
+		expect(toggles()[0].textContent).toBe(TOGGLE_OFF);
+		expect(primaryLabel()).toBe(JOIN);
 
 		fireEvent.click(toggles()[0]);
 

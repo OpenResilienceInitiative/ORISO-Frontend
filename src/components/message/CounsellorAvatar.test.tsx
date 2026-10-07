@@ -3,17 +3,17 @@ import React from 'react';
 import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UserAvatar } from './UserAvatar';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 
 vi.mock('../../utils/pseudonymGenerator', async (importOriginal) => {
 	const actual =
 		await importOriginal<typeof import('../../utils/pseudonymGenerator')>();
 	return {
 		...actual,
-		renderAvatarSvg: vi.fn(() => Promise.resolve('<svg></svg>')),
-		loadCounsellorMotifSvg: vi.fn((file: string) =>
-			file === 'fox.svg'
-				? Promise.resolve('<svg data-testid="motif"></svg>')
-				: Promise.reject(new Error('missing'))
+		renderAvatarSvg: vi.fn((avatar: { file: string }) =>
+			avatar.file === 'turtle.svg'
+				? Promise.reject(new Error('missing'))
+				: Promise.resolve('<svg data-testid="motif"></svg>')
 		)
 	};
 });
@@ -27,8 +27,7 @@ describe('counsellor avatar (#1047)', () => {
 				username="lena"
 				displayName="Lena Beispiel"
 				userId="@lena:oriso.example"
-				avatarKind="ICON"
-				avatarId="fox"
+				choice={chosenAvatarOf({ avatarKind: 'ICON', avatarId: 'fox' })}
 			/>
 		);
 
@@ -39,21 +38,21 @@ describe('counsellor avatar (#1047)', () => {
 		expect(avatar.querySelector('svg')).not.toBeNull();
 	});
 
-	it('renders the initials on the tenant primary-container pair', () => {
+	it('renders the initials on the tenant primary pair', () => {
 		render(
 			<UserAvatar
 				username="lena"
 				displayName="Lena Beispiel"
 				userId="@lena:oriso.example"
-				avatarKind="INITIALS"
+				choice={chosenAvatarOf({ avatarKind: 'INITIALS' })}
 			/>
 		);
 
 		const avatar = screen.getByTestId('counsellor-avatar');
 		expect(avatar.textContent).toBe('LB');
 		// CI-conform by construction: never a hashed colour.
-		expect(avatar.style.background).toContain('--m3-primary-container');
-		expect(avatar.style.color).toContain('--m3-on-primary-container');
+		expect(avatar.style.background).toContain('--m3-primary');
+		expect(avatar.style.color).toContain('--m3-on-primary');
 	});
 
 	it('reads the initials from the avatar name when the label is something else', () => {
@@ -64,7 +63,7 @@ describe('counsellor avatar (#1047)', () => {
 				displayName="Schuldnerberatung"
 				avatarDisplayName="Lena Beispiel"
 				userId="@lena:oriso.example"
-				avatarKind="INITIALS"
+				choice={chosenAvatarOf({ avatarKind: 'INITIALS' })}
 			/>
 		);
 
@@ -77,8 +76,10 @@ describe('counsellor avatar (#1047)', () => {
 				username="lena"
 				displayName="Lena Beispiel"
 				userId="@lena:oriso.example"
-				avatarKind="ICON"
-				avatarId="unicorn"
+				choice={chosenAvatarOf({
+					avatarKind: 'ICON',
+					avatarId: 'turtle'
+				})}
 			/>
 		);
 
@@ -105,8 +106,10 @@ describe('counsellor avatar (#1047)', () => {
 				username="lena"
 				displayName="Lena Beispiel"
 				userId="@lena:oriso.example"
-				avatarKind="PICTURE"
-				avatarId="picture-1"
+				choice={chosenAvatarOf({
+					avatarKind: 'PICTURE',
+					avatarId: 'picture-1'
+				})}
 			/>
 		);
 

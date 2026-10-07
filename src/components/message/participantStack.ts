@@ -22,7 +22,7 @@ export interface StackParticipant {
 	 */
 	isAsker?: boolean;
 	/** The counsellor's chosen avatar (#1046/#1047); absent = no choice made. */
-	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	avatarKind?: string | null;
 	avatarId?: string | null;
 	/** Timestamp (ms) of the participant's last message, if known. */
 	lastActivity?: number;

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ThreadSummary } from '../../utils/threadSummaries';
 import { ResizableHandle } from '../sessionsList/ResizableHandle';
 // The handle's own styles travel with it — same as SessionSearchPanel,
@@ -29,11 +30,16 @@ export type ThreadListPanelProps = {
 export const ThreadListPanel = ({
 	summaries,
 	unreadRootIds,
-	unknownRootLabel = 'Frühere Nachricht',
-	repliesLabel = (count) => `${count} replies`,
+	unknownRootLabel,
+	repliesLabel,
 	onSelectRoot
 }: ThreadListPanelProps) => {
 	const scrollRef = useRef<HTMLDivElement | null>(null);
+	const { t } = useTranslation();
+	const resolvedUnknown = unknownRootLabel ?? t('message.thread.unknownRoot');
+	const resolvedReplies =
+		repliesLabel ??
+		((count: number) => t('message.thread.replies', { count }));
 
 	return (
 		<div className="session__threadListPanel">
@@ -57,10 +63,10 @@ export const ThreadListPanel = ({
 							/>
 						)}
 						<span className="session__threadListEntryPreview">
-							{summary.rootPreview || unknownRootLabel}
+							{summary.rootPreview || resolvedUnknown}
 						</span>
 						<span className="session__threadListEntryMeta">
-							{repliesLabel(summary.replyCount)}
+							{resolvedReplies(summary.replyCount)}
 						</span>
 					</button>
 				))}

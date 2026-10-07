@@ -206,6 +206,51 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 		}
 	});
 
+	it('reconciles a newly accepted session once without replaying history or refreshing counsellor lists', async () => {
+		const accepted = (id: number, sourceSessionId: number) => ({
+			...feedItem(id, '2026-09-28T12:00:00Z'),
+			eventType: 'inquiry.accepted',
+			sourceSessionId
+		});
+		apiGetEventNotifications.mockResolvedValue({
+			items: [accepted(1, 4)],
+			unreadCount: 1
+		});
+		const signals = vi.fn();
+		messageEventEmitter.on(signals);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(signals).not.toHaveBeenCalled();
+			apiGetEventNotifications.mockResolvedValue({
+				items: [accepted(2, 7), accepted(1, 4)],
+				unreadCount: 2
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(signals).toHaveBeenCalledWith({
+					changedSessionId: 7,
+					source: 'notification-feed'
+				})
+			);
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			await new Promise((resolve) => setTimeout(resolve, 500));
+			expect(signals).toHaveBeenCalledTimes(1);
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(3);
+		} finally {
+			messageEventEmitter.off(signals);
+		}
+	});
+
 	it('refetches the feed when a live directMessage event fires, without waiting for the 15s poll', async () => {
 		render(
 			<NotificationsProvider>
@@ -447,6 +492,59 @@ describe('NotificationsProvider announcements', () => {
 		}
 	);
 
+	// #876 (Frank, 2 Oct 2026): a planned maintenance notice always stays in
+	// the feed; a switched-off browser channel only suppresses the pop-up.
+	it.each([
+		['on', true, 1],
+		['off', false, 0]
+	] as const)(
+		'keeps a planned service notice in the feed with the system channel %s',
+		async (_label, system, expectedBanners) => {
+			notificationSettingsStore.updateSettings({ families: { system } });
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					{
+						...feedItem(1, '2026-09-14T12:00:00Z'),
+						eventType: 'service.notice.planned',
+						category: 'system',
+						title: 'Planned maintenance',
+						text: 'Planned maintenance on 2026-10-15 from 22:00 to 23:30. Current status: https://status.example.org/',
+						params: {
+							campaignKey: 'maint-2026-10-15',
+							maintenanceDate: '2026-10-15',
+							maintenanceStart: '22:00',
+							maintenanceEnd: '23:30',
+							statusUrl: 'https://status.example.org/'
+						}
+					}
+				],
+				unreadCount: 1
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(banners).toHaveBeenCalledTimes(expectedBanners);
+			if (expectedBanners) {
+				expect(banners.mock.calls[0][1]).toMatchObject({
+					family: 'system',
+					eventType: 'service.notice.planned'
+				});
+			}
+			expect(JSON.stringify(banners.mock.calls)).not.toContain(
+				'status.example.org'
+			);
+		}
+	);
+
 	it('still displays the new feed when the browser cannot construct a notification', async () => {
 		vi.stubGlobal(
 			'Notification',
@@ -480,6 +578,79 @@ describe('NotificationsProvider announcements', () => {
 			expect(screen.getByTestId('ids').textContent).toBe('1')
 		);
 	});
+
+	it.each([
+		[
+			'mapped recipient',
+			'message.new',
+			'user',
+			'conversations',
+			'standard'
+		],
+		[
+			'mail-unmapped event',
+			'inquiry.accepted',
+			'user',
+			'requests',
+			'standard'
+		],
+		[
+			'unknown recipient',
+			'message.new',
+			'future-role',
+			'conversations',
+			'standard'
+		]
+	] as const)(
+		'keeps %s in the feed and browser channel independently of legacy email flags',
+		async (_label, eventType, recipientRole, area, kind) => {
+			let config =
+				notificationSettingsStore.getState().settings
+					.notificationConfig;
+			config = setKindField(config, area, kind, 'sound', 'chime');
+			config = setKindField(config, area, kind, 'banner', 'persistent');
+			// This old Matrix config flag is not an SMTP preference. It must
+			// never decide whether a browser banner or sound may be delivered.
+			config = setKindField(config, area, kind, 'email', false);
+			notificationSettingsStore.updateSettings({
+				notificationConfig: config
+			});
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					{
+						...feedItem(1, '2026-09-14T12:00:00Z'),
+						eventType,
+						title: 'PRIVATE PERSON',
+						text: 'PRIVATE COUNSELLING CONTENT',
+						params: { recipientRole }
+					}
+				],
+				unreadCount: 1
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(banners).toHaveBeenCalledTimes(1);
+			expect(banners.mock.calls[0][1].requireInteraction).toBe(true);
+			expect(play).toHaveBeenCalledTimes(1);
+			expect(JSON.stringify(banners.mock.calls)).not.toContain('PRIVATE');
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			expect(banners).toHaveBeenCalledTimes(1);
+			expect(play).toHaveBeenCalledTimes(1);
+		}
+	);
 });
 
 describe('NotificationsProvider read accounting', () => {

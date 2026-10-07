@@ -18,7 +18,7 @@ import { LANGUAGE_DATA, type NickLang } from './data';
 // reaches a WCAG contrast ratio ≥ 4.5 against it (see pickIconColor); muddy
 // mid-tones where neither is crisp were deliberately excluded. One random pick
 // per generation; the animal is recoloured to contrast the background.
-const AVATAR_COLORS = [
+export const AVATAR_COLORS = [
 	// --- Light (pairs with a near-black animal) ---
 	'#FCE7E6', // JP Sakura
 	'#F6BFBC', // JP Toki
@@ -264,12 +264,6 @@ export function generateAvatar(lang = 'de'): Avatar {
 	return avatarFor(pick(pick(dataFor(lang).groups).animals).svg);
 }
 
-/**
- * Every animal SVG file name the app ships, deduplicated across languages.
- * Exported since #1047: the counsellor avatar resolves a CHOSEN motif id
- * against this list, so an id that is not in the set falls back to initials
- * instead of fetch-404ing into an empty circle.
- */
 export const ALL_ANIMAL_FILES = [
 	...new Set(
 		Object.values(LANGUAGE_DATA)
