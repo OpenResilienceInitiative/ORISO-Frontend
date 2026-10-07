@@ -3,7 +3,11 @@
 	padding: $grid-base-two;
 	overflow-wrap: anywhere;
 
-	.systemMessage__subjectWrapper > div {
+	.systemMessage__subjectWrapper > div:first-child {
+		flex: 0 0 auto;
+	}
+
+	.systemMessage__subjectWrapper > div:last-child {
 		min-width: 0;
 	}
 

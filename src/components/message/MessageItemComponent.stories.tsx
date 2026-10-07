@@ -1860,6 +1860,14 @@ export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
 		for (const width of [320, 390, 412, 820, 1440]) {
 			host.style.width = `${width}px`;
 			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const icon = notice.querySelector<SVGElement>('svg');
+			const title = notice.querySelector<HTMLElement>('strong');
+			if (!icon || !title)
+				throw new Error('Historical info header is missing');
+			await expect(
+				title.getBoundingClientRect().left
+			).toBeGreaterThanOrEqual(icon.getBoundingClientRect().right + 8);
+
 			await expect(notice.scrollWidth).toBeLessThanOrEqual(
 				notice.clientWidth + 1
 			);
