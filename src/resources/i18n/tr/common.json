@@ -3645,6 +3645,15 @@
 			"importantTitle": "Önemli bildirim",
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",
 			"supervisionBody": "{{advisor}} bu sohbete süpervizör danışman olarak eklendi."
+		},
+		"standingPreference": {
+			"label": "Ek erişimden önce her zaman sor",
+			"description": "Bu görüşmedeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
+			"baselineDescription": "Kapalıyken danışmanlık merkezinizin ayarları geçerlidir. Merkezin gerekli gördüğü onay yine gereklidir.",
+			"saving": "Kaydediliyor …",
+			"saved": "Ayar kaydedildi.",
+			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"loading": "Ayar yükleniyor …"
 		}
 	},
 	"session": {

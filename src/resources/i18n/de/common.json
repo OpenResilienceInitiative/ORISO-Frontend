@@ -3665,6 +3665,15 @@
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		},
+		"standingPreference": {
+			"label": "Vor zusätzlichem Zugriff immer fragen",
+			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
+			"saving": "Wird gespeichert …",
+			"saved": "Einstellung gespeichert.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
+			"loading": "Einstellung wird geladen …"
 		}
 	},
 	"session": {

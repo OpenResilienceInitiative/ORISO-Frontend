@@ -3645,6 +3645,15 @@
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",
 			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
+		},
+		"standingPreference": {
+			"label": "Toujours demander avant un accès supplémentaire",
+			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
+			"baselineDescription": "Si cette option est désactivée, les paramètres de votre service de conseil s’appliquent. Tout consentement requis par ce service reste nécessaire.",
+			"saving": "Enregistrement …",
+			"saved": "Paramètre enregistré.",
+			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
+			"loading": "Chargement du paramètre …"
 		}
 	},
 	"session": {

@@ -3611,6 +3611,15 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"standingPreference": {
+			"label": "Always ask before additional access",
+			"description": "Applies to future requests in this conversation. Current requests and access already granted remain unchanged.",
+			"baselineDescription": "When off, your counselling agency’s settings apply. Any consent required by the agency is still required.",
+			"saving": "Saving …",
+			"saved": "Setting saved.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"loading": "Loading setting …"
 		}
 	},
 	"session": {
