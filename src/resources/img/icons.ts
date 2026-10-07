@@ -74,3 +74,9 @@ export { ReactComponent as Robot7341990Icon } from './icons/assistant/robot-7341
 export { ReactComponent as Robot1184077Icon } from './icons/assistant/robot-1184077-400.svg';
 export { ReactComponent as Robot3548536Icon } from './icons/assistant/robot-3548536-400.svg';
 export { ReactComponent as Robot5475944Icon } from './icons/assistant/robot-5475944-400.svg';
+// Approved consent artwork: 400 is resting; filled is reserved for selected states.
+export { ReactComponent as SurveillanceConsentIcon } from './icons/consent/surveillance-consent-400.svg';
+export { ReactComponent as SurveillanceConsentFilledIcon } from './icons/consent/surveillance-consent-filled.svg';
+export { ReactComponent as ProtectedAccessIcon } from './icons/consent/access-400.svg';
+export { ReactComponent as UserConsentIcon } from './icons/consent/user-consent-400.svg';
+export { ReactComponent as WhenUsefulIcon } from './icons/consent/when-400.svg';

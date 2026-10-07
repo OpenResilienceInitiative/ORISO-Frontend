@@ -30,7 +30,8 @@ import './message.styles.scss';
  * `ConsultantListContext`, so they are wrapped in the shared context shell.
  */
 const meta = {
-	title: 'Components/Chat/ReassignMessage',
+	id: 'components-chat-reassignmessage',
+	title: 'Chat/System messages/Reassignment',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
