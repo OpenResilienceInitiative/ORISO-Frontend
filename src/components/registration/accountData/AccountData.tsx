@@ -1,4 +1,5 @@
 import {
+	Alert,
 	Box,
 	Button,
 	Checkbox,
@@ -17,6 +18,8 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useMemo,
+	useRef,
 	useState
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +34,7 @@ import {
 	RegistrationContext,
 	RegistrationData
 } from '../../../globalState/provider/RegistrationProvider';
+import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { TenantContext } from '../../../globalState/provider/TenantProvider';
 import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import { REGISTRATION_DATA_VALIDATION } from '../registrationDataValidation';
@@ -70,6 +74,8 @@ import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.
 import { DataProtectionConsentLabel } from './DataProtectionConsentLabel';
 import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
+import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
+import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
 
 const suggestButtonSx = (filled: boolean) =>
 	({
@@ -206,7 +212,9 @@ export const AccountData: FC<{
 	const [username, setUsername] = useState<string>(
 		restoredDraft?.username ?? ''
 	);
+	const currentUsername = useRef(username);
 	const { tenant } = useContext(TenantContext);
+	const legalLinks = useContext(LegalLinksContext);
 	const emailVisible = tenant?.settings?.emailVisible ?? false;
 	const emailRequired = tenant?.settings?.emailRequired ?? false;
 	const [email, setEmail] = useState<string>(restoredDraft?.email ?? '');
@@ -292,9 +300,14 @@ export const AccountData: FC<{
 		effectiveConsent.status === 'resolved' &&
 		!!effectiveConsent.consentText &&
 		!traegerSentence;
+	const platformSentenceUnavailable =
+		effectiveConsent.status === 'resolved' &&
+		!effectiveConsent.consentText &&
+		!legalLinks.some((link) => link.registration);
 	const isConsentSentenceResolved =
 		mayAcceptConsent(effectiveConsent, consentInputs) &&
-		!traegerSentenceUnrenderable;
+		!traegerSentenceUnrenderable &&
+		!platformSentenceUnavailable;
 	/* Which consent is on offer right now. Null while the sentence is unknown —
 	   there is nothing to accept yet. */
 	const currentConsentBinding =
@@ -343,8 +356,12 @@ export const AccountData: FC<{
 	const applyGeneratedUsername = useCallback(
 		(nextIdentity: Pseudonym) => {
 			setIdentity(nextIdentity);
-			setUsername(toRegistrationUsername(nextIdentity));
-			resetUsernameAvailability();
+			const nextUsername = toRegistrationUsername(nextIdentity);
+			if (nextUsername !== currentUsername.current) {
+				currentUsername.current = nextUsername;
+				setUsername(nextUsername);
+				resetUsernameAvailability();
+			}
 		},
 		[resetUsernameAvailability]
 	);
@@ -396,6 +413,15 @@ export const AccountData: FC<{
 		wasBlurred: emailWasBlurred,
 		email
 	});
+	const otherAnswersReady =
+		Boolean(identity.avatar) &&
+		usernameAvailabilityChecked &&
+		!usernameAvailabilityFailed &&
+		isUsernameAvailable &&
+		isUsernameLongEnough &&
+		isPasswordValid &&
+		password === repeatPassword &&
+		emailFeedback.isSatisfied;
 
 	useEffect(() => {
 		if (!isUsernameLongEnough) {
@@ -435,18 +461,12 @@ export const AccountData: FC<{
 
 	useEffect(() => {
 		if (
-			usernameAvailabilityChecked &&
-			!usernameAvailabilityFailed &&
-			isUsernameAvailable &&
-			isUsernameLongEnough &&
-			isPasswordValid &&
-			password === repeatPassword &&
+			otherAnswersReady &&
 			// Not merely "the box is ticked": the box may only count once the
 			// sentence it sits next to is actually on screen. With the
 			// snackbar there is no box and nothing to wait for — the note is
 			// stated here and the consent is taken later, in the waiting room.
-			consentSatisfied &&
-			emailFeedback.isSatisfied
+			consentSatisfied
 		) {
 			const trimmedEmail = email.trim();
 			setDisabledNextButton(false);
@@ -463,6 +483,7 @@ export const AccountData: FC<{
 		password,
 		repeatPassword,
 		consentSatisfied,
+		otherAnswersReady,
 		isUsernameAvailable,
 		usernameAvailabilityChecked,
 		usernameAvailabilityFailed,
@@ -599,6 +620,59 @@ export const AccountData: FC<{
 
 	const gap = (full: string) =>
 		compact ? `${parseInt(full, 10) / 2}px` : full;
+	const completionContent = useMemo(
+		() =>
+			dataProtection === 'checkbox' ? (
+				<>
+					<ConsentCompletionPanel
+						visible={otherAnswersReady && isConsentSentenceResolved}
+						ariaLabel={t('chatFlyout.dataProtection')}
+						checked={dataProtectionChecked}
+						disabled={!isConsentSentenceResolved}
+						onChange={() =>
+							setAcceptedConsentBinding(
+								dataProtectionChecked
+									? null
+									: currentConsentBinding
+							)
+						}
+						label={
+							<DataProtectionConsentLabel
+								agency={agency}
+								topic={mainTopic}
+								onResolutionChange={setConsentResolution}
+							/>
+						}
+					/>
+					{otherAnswersReady &&
+						(effectiveConsent.status === 'unavailable' ||
+							platformSentenceUnavailable ||
+							traegerSentenceUnrenderable) && (
+							<Alert severity="error" sx={{ my: 1 }}>
+								{t(
+									traegerSentenceUnrenderable
+										? 'registration.dataProtection.unrenderable'
+										: 'registration.agency.legal.unavailable'
+								)}
+							</Alert>
+						)}
+				</>
+			) : null,
+		[
+			effectiveConsent.status,
+			traegerSentenceUnrenderable,
+			platformSentenceUnavailable,
+			dataProtection,
+			otherAnswersReady,
+			t,
+			dataProtectionChecked,
+			isConsentSentenceResolved,
+			currentConsentBinding,
+			agency,
+			mainTopic
+		]
+	);
+	const inlineCompletion = useRegistrationCompletion(completionContent);
 
 	return (
 		<Box sx={{ maxWidth: 540, width: '100%', mx: 'auto', ...surfaceSx }}>
@@ -637,7 +711,7 @@ export const AccountData: FC<{
 				<Box
 					sx={{
 						'flexShrink': 0,
-						'mt': { xs: '-4px', md: '-8px' },
+						'mt': { xs: '8px', md: '4px' },
 						'& > div': {
 							width: { xs: 88, sm: 104 },
 							height: { xs: 88, sm: 104 }
@@ -714,8 +788,7 @@ export const AccountData: FC<{
 								{t('registration.account.suggest.allShort')}
 							</Box>
 						</>,
-						suggestAll,
-						true
+						suggestAll
 					)}
 			</Box>
 
@@ -725,6 +798,8 @@ export const AccountData: FC<{
 					const normalizedVal = event.target.value
 						.toLowerCase()
 						.replace(/[^a-z0-9_-]/g, '');
+					if (normalizedVal === currentUsername.current) return;
+					currentUsername.current = normalizedVal;
 					setUsername(normalizedVal);
 					setUsernameAvailabilityChecked(false);
 					setIsUsernameAvailable(true);
@@ -1002,37 +1077,7 @@ export const AccountData: FC<{
 				   gone, the statement is not (ORISO-Frontend#1341, item 5). */
 				<DataProtectionSnackbar sx={{ mt: gap('20px') }} />
 			) : (
-				<FormGroup sx={{ mt: gap('20px') }}>
-					<FormControlLabel
-						sx={{ alignItems: 'flex-start' }}
-						control={
-							<Checkbox
-								checked={dataProtectionChecked}
-								disabled={!isConsentSentenceResolved}
-								onClick={() => {
-									setAcceptedConsentBinding(
-										dataProtectionChecked
-											? null
-											: currentConsentBinding
-									);
-								}}
-								sx={{ mt: '-9px' }}
-							/>
-						}
-						label={
-							/* The sentence itself is resolved in its own
-							   component: a Träger-authored consent text when
-							   the selected Fachbereich has one (ADR-021),
-							   otherwise exactly the three-fragment sentence
-							   this used to assemble inline. */
-							<DataProtectionConsentLabel
-								agency={agency}
-								topic={mainTopic}
-								onResolutionChange={setConsentResolution}
-							/>
-						}
-					/>
-				</FormGroup>
+				inlineCompletion
 			)}
 		</Box>
 	);

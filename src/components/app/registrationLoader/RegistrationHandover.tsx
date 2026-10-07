@@ -384,35 +384,7 @@ export const RegistrationHandover = ({
 					px: { xs: 2, sm: 5 }
 				}}
 			>
-				{/* Desktop: the gate is the registration button carrying on, so it
-				    keeps that button's right edge (40px inset, same as `px`) and
-				    grows leftwards out of it instead of appearing as a new
-				    full-width bar. 196px is `RegistrationFooterPrimaryButton`'s
-				    md `minWidth` — the width it is stretching *from*.
-				    Mobile keeps the full-width bar: there the register button is
-				    full width too, so there is nothing to stretch out of. */}
-				<Box
-					sx={{
-						'width': '100%',
-						'maxWidth': { xs: '100%', sm: 480 },
-						'ml': { xs: 0, sm: 'auto' },
-						'mr': 0,
-						'@keyframes handoverGateStretch': {
-							from: { maxWidth: '196px' },
-							to: { maxWidth: '480px' }
-						},
-						/* Desktop only, and only where the stretch has something
-						   to stretch out of. Animating `max-width` rather than
-						   `width` keeps the mobile full-width case untouched —
-						   animating `width` there resolved against the wrong box
-						   and pushed the button off-screen. */
-						'@media (min-width: 600px) and (prefers-reduced-motion: no-preference)':
-							{
-								animation:
-									'handoverGateStretch 420ms cubic-bezier(0.4, 0, 0.2, 1)'
-							}
-					}}
-				>
+				<Box sx={{ width: '100%', minWidth: 0 }}>
 					<HandoverGateButton
 						state={state}
 						onEnter={handleEnter}
