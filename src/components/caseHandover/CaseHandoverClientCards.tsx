@@ -530,7 +530,7 @@ export const CaseHandoverConsentCard = ({
 						/>
 					</div>
 				)}
-				{mode === 'OPT_IN' && (
+				{mode === 'OPT_IN' && onSetupNotifications && (
 					<p className="caseHandoverConsentInfo__recommendation">
 						{translate(
 							'caseHandover.consent.info.notificationsCopy'

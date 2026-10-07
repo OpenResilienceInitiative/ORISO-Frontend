@@ -1,3 +1,4 @@
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import {
@@ -1350,7 +1351,9 @@ export const SessionStream = ({
 						displayedConsent.actionPath
 					) !== null && (
 						<CaseHandoverConversation
-							conversationType={getModality(activeSession)}
+							conversationType={notificationConversationType(
+								activeSession
+							)}
 							key={String(activeSession.item?.id)}
 							status={
 								displayedConsent.id ===

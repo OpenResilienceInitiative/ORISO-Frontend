@@ -1,3 +1,4 @@
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	ChatMenuDropdown,
@@ -39,11 +40,7 @@ import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRo
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
-import {
-	getModality,
-	getModalityIfKnown,
-	Modality
-} from '../session/getModality';
+import { getModality, Modality } from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
 	type MediaChatType
@@ -1206,7 +1203,7 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const erstantwortModality = useMemo(
-		() => (activeSession ? getModalityIfKnown(activeSession) : undefined),
+		() => notificationConversationType(activeSession),
 		[activeSession]
 	);
 	/* An Erstantwort in an internal counsellor room would be a category error —
