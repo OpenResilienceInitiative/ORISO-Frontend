@@ -49,7 +49,8 @@ vi.mock('focus-trap-react', () => ({
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
+		t: (key: string, fallback?: unknown) =>
+			typeof fallback === 'string' ? fallback : key
 	})
 }));
 const account = {
@@ -126,7 +127,10 @@ beforeEach(() => {
 		emailNotifications: {
 			...account.emailNotifications,
 			emailNotificationsEnabled: true,
-			settings: { newChatMessageNotificationEnabled: true }
+			settings: {
+				newChatMessageNotificationEnabled: true,
+				reassignmentNotificationEnabled: true
+			}
 		}
 	};
 	patch.mockResolvedValue(undefined);
@@ -279,7 +283,7 @@ it('both channels wait for saved email and a separate browser gesture through th
 		screen.getByRole('button', { name: /notificationChoice.both/ })
 	);
 	const activate = await screen.findByRole('button', {
-		name: 'Browser aktivieren'
+		name: 'erstantwort.notificationChoice.enableBrowser'
 	});
 	expect(request).not.toHaveBeenCalled();
 	fireEvent.click(activate);

@@ -18,7 +18,8 @@ vi.hoisted(() => {
 });
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
+		t: (key: string, fallback?: unknown) =>
+			typeof fallback === 'string' ? fallback : key
 	})
 }));
 vi.mock('../../hooks/useOpenTwoFactorSettings', () => ({
@@ -138,7 +139,7 @@ it('does not invite live-chat participants to collect an email address', () => {
 	).toBeNull();
 });
 it('respects the current tenant email-off policy without inventing per-type settings', () => {
-	setup(false, 'ASYNCHRONOUS', false);
+	setup(false, 'AGENCY_COUNSELLING', false);
 	expect(
 		screen.queryByRole('button', { name: /notificationChoice.email / })
 	).toBeNull();
@@ -166,7 +167,7 @@ it('keeps frozen FAQ and invitation words when the saved channel suppresses its 
 				}
 			]
 		});
-	setup(true, 'ASYNCHRONOUS', true, rawMessage);
+	setup(true, 'AGENCY_COUNSELLING', true, rawMessage);
 	expect(screen.getByText('Who reads this?').tagName).toBe('SUMMARY');
 	expect(screen.getByText('You can add an email address.')).toBeTruthy();
 	expect(

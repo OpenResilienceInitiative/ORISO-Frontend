@@ -105,6 +105,13 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
 	/** ORISO-Admin#602: explicit false disables asker email invitation; absent keeps legacy behavior. */
 	featureAskerEmailEnabled?: boolean;
+	featureAskerEmailAgencyCounsellingEnabled?: boolean;
+	featureAskerEmailLiveChatEnabled?: boolean;
+	featureAskerEmailSelfHelpEnabled?: boolean;
+	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
+	featureAskerBrowserLiveChatEnabled?: boolean;
+	featureAskerBrowserSelfHelpEnabled?: boolean;
+
 	emailVisible?: boolean;
 	emailRequired?: boolean;
 }
