@@ -95,6 +95,11 @@ describe('ProfileAvatarChoice (#878 phase 4, US#1240)', () => {
 		expect(
 			screen.getByRole('radiogroup', { name: 'Ihr Bild' })
 		).toBeTruthy();
+		expect(
+			screen
+				.getByRole('radiogroup', { name: 'Ihr Bild' })
+				.classList.contains('avatarPicker--grid')
+		).toBe(true);
 		expect(tile('Standard').getAttribute('aria-checked')).toBe('true');
 
 		fireEvent.click(tile('magpie'));

@@ -22,6 +22,7 @@ import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { apiPutConsultantData } from '../../api/apiPutConsultantData';
 import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
+import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 
 const PUBLIC_SLUG_PATTERN = /^[a-z]+(-[a-z]+)*$/;
 
@@ -236,6 +237,7 @@ export const ConsultantInformation = () => {
 					className="tertiary"
 				/>
 			</div>
+			<ProfileAvatarChoice />
 			<EditableData
 				label={translate('profile.data.displayName')}
 				type="text"

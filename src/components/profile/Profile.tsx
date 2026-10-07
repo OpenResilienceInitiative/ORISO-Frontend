@@ -13,9 +13,8 @@ import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg'
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
 import { UserAvatar } from '../message/UserAvatar';
-import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
-import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
+import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
 import './profile.styles';
 import profileRoutes from './profile.routes';
 import {
@@ -67,11 +66,7 @@ export const Profile = () => {
 	const { userData } = useContext(UserDataContext);
 	// #1193 Job 4: the profile shows the same animal other participants see in
 	// the chat, which is derived from the Matrix user id when the client is up.
-	const matrixClientContext = useContext(MatrixClientContext);
-	const ownAvatarUserId =
-		matrixClientContext?.matrixClientService
-			?.getClient?.()
-			?.getUserId?.() || userData.userId;
+	const ownAvatarUserId = useOwnAvatarUserId();
 	const { consultingTypes } = useContext(ConsultingTypesContext);
 
 	const visibleElements = (
@@ -364,9 +359,6 @@ export const Profile = () => {
 						)}
 					</div>
 				</div>
-				{(fromL || !subpage) && (
-					<ProfileAvatarChoice avatarUserId={ownAvatarUserId} />
-				)}
 			</div>
 			<div className="profile__innerWrapper">
 				<div>

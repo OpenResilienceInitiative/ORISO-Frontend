@@ -22,7 +22,7 @@ interface AvatarPickerProps {
 	label: string;
 	/** Defaults to every animal the app ships. */
 	files?: string[];
-	/** `row`: one horizontally scrolling line, as in the profile header (#878). */
+	/** Optional `row` layout: one horizontally scrolling line. */
 	layout?: 'grid' | 'row';
 	/** First tile: the avatar the app derives from the user id, which clears the choice. */
 	defaultTile?: { avatar: Avatar; label: string; selected?: boolean };
