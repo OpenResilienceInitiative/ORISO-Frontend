@@ -711,6 +711,9 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Dein Bild"
+		},
 		"appLanguage": {
 			"info": "Stelle hier die Sprache der Anwendung ein."
 		},
@@ -1288,6 +1291,11 @@
 		"accountCreated": {
 			"login": "Dein Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melde dich mit deinem Benutzernamen und deinem Passwort an.",
 			"retry": "Dein Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal."
+		},
+		"groupInvite": {
+			"loadError": {
+				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
+			}
 		}
 	},
 	"session": {
@@ -1853,6 +1861,9 @@
 				"on": "An: Der Einführungsrundgang startet von selbst, bis du ihn abgeschlossen oder übersprungen hast. Alle Rundgänge kannst du hier jederzeit starten."
 			},
 			"subtitle": "Kurze Rundgänge zeigen Dir, wo Du was findest."
+		},
+		"introduction": {
+			"summary": "Lerne die Bereiche der Anwendung kennen. Du kannst die Einführung jederzeit erneut starten."
 		}
 	},
 	"anonymousChat": {
@@ -2390,6 +2401,52 @@
 					"intro": "Abgeschlossene Beratungen verschiebst du wie bisher ins Archiv — es liegt jetzt in diesem Tab."
 				}
 			}
+		},
+		"practiceAccept": {
+			"summary": "Übe im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"navEnquiries": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen findest du hier unter „Anfragen“."
+				},
+				"openEnquiry": {
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
+				},
+				"openTeam": {
+					"intro": "Bei dir ist die Teambesprechung aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Teambesprechung öffnen“."
+				},
+				"teamReply": {
+					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird die Teambesprechung geschlossen."
+				},
+				"accept": {
+					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
+				},
+				"firstAnswer": {
+					"intro": "Die Anfrage gehört jetzt dir. Im Chat siehst du die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
+				},
+				"reply": {
+					"intro": "Schreibe der ratsuchenden Person eine kurze Antwort und sende sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"done": {
+					"intro": "Gut gemacht: Du hast eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"addSupervisor": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus, nenne kurz den Grund und bestätige."
+				},
+				"supervisorReply": {
+					"intro": "Deine Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei — die ratsuchende Person sieht sie nicht."
+				},
+				"standingAssignment": {
+					"intro": "Hat deine Administration dir eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür musst du nichts tun."
+				},
+				"done": {
+					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
 		}
 	},
 	"liveChat": {
@@ -2499,6 +2556,21 @@
 		"required": {
 			"copy": "Dein Zugang wurde für Dich angelegt – das erste Passwort kennt deshalb noch jemand anderes. Vergib jetzt eines, das nur Du kennst.",
 			"title": "Dein eigenes Passwort"
+		}
+	},
+	"practice": {
+		"cards": {
+			"summary": {
+				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
+				"supervision": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen."
+			},
+			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
+			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
+			"phoneHint": "Bitte übe am Computer.",
+			"windowHint": "Bitte vergrößere dein Browserfenster für diese Übung."
+		},
+		"error": {
+			"start": "Die Übung konnte nicht gestartet werden. Bitte versuche es erneut."
 		}
 	},
 	"counselling": {

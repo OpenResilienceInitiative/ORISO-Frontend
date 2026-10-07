@@ -775,7 +775,8 @@
 					"title": "Link copied"
 				},
 				"text": "Copy invitation link",
-				"title": "Copy invitation link to clipboard"
+				"title": "Copy invitation link to clipboard",
+				"unavailable": "The invitation link for this group is not available yet."
 			}
 		},
 		"create": {
@@ -2298,6 +2299,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Your picture",
+			"default": "Default"
+		},
 		"appLanguage": {
 			"info": "Set the language of the application here.",
 			"title": "Language"
@@ -2904,6 +2909,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (practice)",
+			"colleague": "Alex (practice)",
+			"supervisor": "Robin (practice)"
+		},
+		"asker": {
+			"firstMessage": "Hello, I have a general question about your service. How does counselling work with you, and how quickly can I expect an answer? Thank you.",
+			"reply": "Thank you for your reply. That helps me. I’ll get in touch if I have any more questions."
+		},
+		"colleague": {
+			"teamMessage": "I’m in an appointment today and won’t be able to reply in time. Could you take over the request?"
+		},
+		"supervisor": {
+			"reply": "That sounds good to me. Do ask what exactly the person wants to know. I’m reading along and will get in touch if anything stands out."
+		},
+		"erstantwort": {
+			"greeting": "Your request has reached us. A counsellor will get back to you."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Hello, thank you for your message. Counselling here is written and confidential."
+		},
+		"names": {
+			"agency": "Practice agency",
+			"topic": "Practice",
+			"teamRoom": "Team discussion (practice)",
+			"supervisionRoom": "Supervision (practice)"
+		}
+	},
 	"registration": {
 		"accordion": {
 			"item": {
@@ -3411,6 +3445,13 @@
 		"accountCreated": {
 			"login": "Your account has been created, but signing you in automatically did not work. Please log in with your username and password.",
 			"retry": "Your access has been created, but signing you in did not work. Please try again."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "The invitation could not be loaded right now.",
+				"body": "Please check your connection and try again. Your invitation link stays valid."
+			},
+			"loading": "Loading the invitation …"
 		}
 	},
 	"releaseNote": {
@@ -4613,9 +4654,13 @@
 				"on": "On"
 			},
 			"subtitle": "Short tours show you where to find things.",
-			"title": "Start tours automatically"
+			"title": "Start the introduction automatically"
 		},
-		"title": "Tour"
+		"title": "Tour",
+		"introduction": {
+			"title": "Introduction",
+			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		}
 	},
 	"anonymousChat": {
 		"headline": "Anonymous Consultation",
@@ -5225,6 +5270,66 @@
 					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Practice: Accept a request",
+			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
+			"step": {
+				"navEnquiries": {
+					"title": "Open the requests",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. You will find new requests here under “Requests”."
+				},
+				"openEnquiry": {
+					"title": "Open the request",
+					"intro": "A practice request is waiting in the list. Click it to open it."
+				},
+				"openTeam": {
+					"title": "Open the team discussion",
+					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+				},
+				"teamReply": {
+					"title": "Reply in the team",
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+				},
+				"accept": {
+					"title": "Accept the request",
+					"intro": "Click “Accept request”: the request moves to “My consultations” and disappears from your team’s list."
+				},
+				"firstAnswer": {
+					"title": "First response and first message",
+					"intro": "The request is now yours. In the chat you can see the automatic first response and the advice seeker’s first message."
+				},
+				"reply": {
+					"title": "Write your first reply",
+					"intro": "Write the advice seeker a short reply and send it. It stays in the practice and is not saved anywhere."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "Well done: you accepted a request and replied to it. Use the button below to end the practice."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Practice: Add a supervisor",
+			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
+			"step": {
+				"addSupervisor": {
+					"title": "Add a supervisor",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor, give a short reason and confirm."
+				},
+				"supervisorReply": {
+					"title": "The supervisor’s reply",
+					"intro": "Your supervisor has replied in the side chat. Only the two of you can see these messages — the advice seeker cannot."
+				},
+				"standingAssignment": {
+					"title": "Fixed assignment",
+					"intro": "If your administrator has assigned a fixed supervisor to you, they are added automatically when you accept a request. You do not need to do anything."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
+				}
+			}
 		}
 	},
 	"weekday": {
@@ -5532,6 +5637,35 @@
 			"region": "Notifications",
 			"more": "Show {{count}} more",
 			"less": "Show less"
+		}
+	},
+	"practice": {
+		"banner": {
+			"title": "Practice mode",
+			"progress": "Step {{current}} of {{total}}",
+			"note": "Practice case, no real data",
+			"end": "End practice",
+			"restart": "Restart",
+			"moveHandle": "Move banner (arrow keys)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Accept an enquiry and write a first reply.",
+				"supervision": "Choose a supervisor and add them to a counselling session."
+			},
+			"title": "Practice area",
+			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",
+			"empty": "There are currently no practice flows available for you.",
+			"badge": "Practice",
+			"phoneHint": "Please practise on a computer.",
+			"windowHint": "Please widen your browser window for this exercise.",
+			"action": {
+				"start": "Start practice",
+				"restart": "Practise again"
+			}
+		},
+		"error": {
+			"start": "The practice could not be started. Please try again."
 		}
 	},
 	"counselling": {

@@ -44,6 +44,7 @@ export const Loading = ({
 				className
 			)}
 			role="status"
+			aria-label={text}
 			aria-live="polite"
 		>
 			<div className="loading__animation" aria-hidden="true">

@@ -27,6 +27,31 @@ The initial pairs01–03 are historical animation replacement proof, from dev aa
 
 All images are actual local Chromium Storybook captures. They demonstrate appearance and position; runtime persistence, translations, reduced motion and adapter behavior are covered by tests. They do not establish deployment or Dev acceptance.
 
+## Current-dev integration repair — 8 October
+
+The group-invitation loading screen added on dev wrapped the shared loader in a second accessible status. The complete PR CI therefore failed the existing strict loading-state test. This was reproduced after bringing current dev b527b8bc into the feature branch. The assertion remains strict: one status, the translated invitation message, and the busy loading region.
+
+Loading now owns the single named status. The invitation uses that same section loader with its existing translated message. Its loading-only layout fills the area between the header/hero and footer, without adding a full-height column below the header. Other registration and error layouts are unchanged.
+
+Pairs17 and18 compare the same full-height Storybook host, before and after the source fix, on desktop and mobile. Before uses the failing merge candidate (13b02c9b plus current dev); after uses the repaired source. The capture-only harness is restored byte-for-byte and is not committed. Images demonstrate placement and the visible message; tests establish uniqueness, busy state and measured centering.
+
+**For developers — fresh local verification:**
+
+```text
+RED: existing groupInviteEntryFlow integration seam, 1 failed /20 passed.
+GREEN: focused Loading/Spinner/OrbitalTrails/i18n/invite unit checks, 5 files /74 tests.
+Full unit gate:666 files /11804 tests PASS.
+Focused browser/a11y gate:5 files /16 tests PASS.
+Matching before capture run:two loading stories fail on duplicate status; error/retry stories pass.
+Matching after capture run:all4 invitation loading/error stories PASS.
+Browser geometry:animation plus message centered horizontally and vertically;
+loading pane fits between header/hero and footer; stage equals viewport height.
+Full script/TypeScript lint, style lint, Storybook typecheck and production build PASS.
+Independent read-only source/accessibility/security review: no findings.
+No authentication, API, data or session policy change. Verification is local only.
+Current CI run and commit are recorded in PR1645; no merge, deployment or Dev acceptance is claimed.
+```
+
 ## Reproduce
 
 ```bash

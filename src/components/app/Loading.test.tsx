@@ -33,6 +33,11 @@ describe('Loading', () => {
 			<Loading label="Wir schauen, wer gerade live ist …" delayMs={0} />
 		);
 		expect(screen.getAllByRole('status')).toHaveLength(1);
+		expect(
+			screen.getByRole('status', {
+				name: 'Wir schauen, wer gerade live ist …'
+			})
+		).toBeDefined();
 		expect(screen.getByRole('status').textContent).toBe(
 			'Wir schauen, wer gerade live ist …'
 		);
@@ -43,6 +48,9 @@ describe('Loading', () => {
 			<Loading label="Wir warten auf eine freie Stelle …" delayMs={0} />
 		);
 		expect(screen.getByRole('status').textContent).toBe(
+			'Wir warten auf eine freie Stelle …'
+		);
+		expect(screen.getByRole('status').getAttribute('aria-label')).toBe(
 			'Wir warten auf eine freie Stelle …'
 		);
 	});

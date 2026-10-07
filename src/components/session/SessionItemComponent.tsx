@@ -226,6 +226,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
+import {
+	usePracticeActive,
+	usePracticeSupervisorsRevision
+} from '../../practice';
 const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
@@ -899,6 +903,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		]
 	);
 
+	// Practice only: bumps when the learner adds a supervisor under this case.
+	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
 	// Check if current user is a supervisor. The response stays tied to the
 	// session that requested it: a late lookup must never expose the previous
 	// case's side room to the new session.
@@ -965,7 +971,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item.id,
 		isConsultantUser,
 		isSupervisionEnabledForCurrentChat,
-		userData.userId
+		userData.userId,
+		practiceSupervisorsRevision
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
@@ -2228,6 +2235,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// lands on the closed main chat instead of re-opening (review D-3).
 	// The decision itself is pure: `decideAutoOpen` (channelRoute.ts).
 	const autoOpenedForSessionRef = useRef<string | number | null>(null);
+	// Practice (FE#1622): the tour teaches opening the team discussion; a panel
+	// opening by itself would remove the button its step points at.
+	const isPracticing = usePracticeActive();
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
 		if (!sessionId || !isSupervisionPanelViewer) {
@@ -2244,7 +2254,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			hasTeamSideRoom,
 			teamDiscussionResolved: props.teamDiscussionResolved,
 			canStartTeamDiscussion:
-				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
+				Boolean(activeSession.isEnquiry) &&
+				canOpenTeamSideRoom &&
+				!isPracticing
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2261,6 +2273,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		props.teamDiscussionResolved,
 		activeSession.isEnquiry,
 		canOpenTeamSideRoom,
+		isPracticing,
 		messages,
 		setChannelRoute
 	]);
@@ -2623,8 +2636,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
+	// Practice: no calls; there is nobody real to call.
 	const mayCallInSideRoom =
-		isConsultantUser && !isOnlyEnquiry && !activeSession.isEnquiry;
+		isConsultantUser &&
+		!isOnlyEnquiry &&
+		!activeSession.isEnquiry &&
+		!isPracticing;
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({
@@ -3449,6 +3466,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 										className="session__teamDiscussionAction"
 										testingAttribute="enquiry-open-team"
+										tourTarget="enquiry-team-button"
 										buttonHandle={() =>
 											selectChannelFromFab(
 												channelId({ kind: 'team' })
@@ -3636,6 +3654,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							</Suspense>
 						)}
 						{areRobotMessagesComplete &&
+							// Practice: no attachments; an upload would leave the page.
+							!isPracticing &&
 							hasMediaUploadFeature(
 								tenantData?.settings,
 								chatType
@@ -4064,6 +4084,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: translate('supervision.panel.title')
 				})}
 				data-cy="stage-panel"
+				data-tour-target="supervision-panel"
 				header={
 					<PanelHeader
 						kind="supervision"
@@ -4242,6 +4263,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: teamChannelTitle
 				})}
 				data-cy="stage-panel"
+				data-tour-target="team-discussion-panel"
 				header={
 					<PanelHeader
 						kind="team"

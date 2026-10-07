@@ -41,7 +41,10 @@ const availableSteps = [
 	{ name: 'account-data', component: Step }
 ];
 
-const renderAccountStep = (search: string) =>
+const renderAccountStep = (
+	search: string,
+	registrationData: Record<string, unknown> = {}
+) =>
 	render(
 		<AppConfigContext.Provider value={{} as any}>
 			<GlobalComponentContext.Provider
@@ -58,7 +61,7 @@ const renderAccountStep = (search: string) =>
 										disabledNextButton: false,
 										setDisabledNextButton: () => undefined,
 										updateRegistrationData: () => undefined,
-										registrationData: {},
+										registrationData,
 										availableSteps,
 										registrationConsultingType: null
 									} as any
@@ -106,7 +109,8 @@ afterEach(() => {
 
 describe('registration — temporary join', () => {
 	it('offers the temporary join and renames the way on when a group-chat link brought the person here', () => {
-		renderAccountStep('?gcid=15');
+		// A valid invite: the link names the agency the person registers at.
+		renderAccountStep('?gcid=15&aid=88', { agency: { id: 88 } });
 
 		expect(toggles().length, 'the toggle is in the footer').toBeGreaterThan(
 			0
