@@ -2698,6 +2698,10 @@
 					"feedback": {
 						"title": "Mesleki paylaşım",
 						"description": "Korumalı mesleki paylaşımda sizin için bir geri bildirim var."
+					},
+					"internalChat": {
+						"title": "Dahili mesajlar",
+						"description": "Diğer danışmanlarla yapılan dahili sohbette yeni bir mesaj."
 					}
 				},
 				"shared": {

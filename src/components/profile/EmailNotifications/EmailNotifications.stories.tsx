@@ -7,7 +7,7 @@ import { UserDataContext } from '../../../globalState';
 import { APP_ORISO_FIGMA_URL } from '../../storybookDesignLinks';
 
 /**
- * The two lists side by side is the whole point of ADR-019, so the stories are
+ * The two lists side by side is the whole point of ADR-024, so the stories are
  * built to be compared rather than to demonstrate a component.
  */
 const userData = (
@@ -28,6 +28,7 @@ const userData = (
 			appointmentNotificationEnabled: true,
 			assignmentNotificationEnabled: true,
 			feedbackNotificationEnabled: true,
+			internalChatNotificationEnabled: true,
 			serviceNoticeNotificationEnabled: true
 		}
 	},
@@ -66,7 +67,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'E-mail notification settings, per ADR-019. Advice seekers and counsellors get two separate lists rather than one filtered by role — three switches against eight — because an advice seeker uses ORISO a handful of times in a situation they did not choose, and a counsellor works in it daily.\n\nThe screen also names what is sent regardless. Someone arriving from an unsubscribe link on a password-reset mail should read *why* there is no switch, instead of searching the list for one that does not exist.'
+					'E-mail notification settings, per ADR-024. Advice seekers and counsellors get two separate lists rather than one filtered by role — three occasion switches against nine — because an advice seeker uses ORISO a handful of times in a situation they did not choose, and a counsellor works in it daily.\n\nThe screen also names what is sent regardless. Someone arriving from an unsubscribe link on a password-reset mail should read *why* there is no switch, instead of searching the list for one that does not exist.'
 			}
 		}
 	}
@@ -81,7 +82,7 @@ export const AdviceSeeker: Story = {
 };
 
 export const Consultant: Story = {
-	name: 'Counsellor (8 switches)',
+	name: 'Counsellor (9 occasion switches)',
 	decorators: [
 		withUser(
 			userData({
@@ -135,10 +136,12 @@ export const OnPhone: Story = {
 };
 
 /** Local browser fixture: the real PATCH/GET client persists only the fixture's preference. */
-const AppointmentPreferenceFixture = ({
-	children
+const EmailPreferenceFixture = ({
+	children,
+	storageKey = 'storybook.selfhelp.appointment.preference'
 }: {
 	children: React.ReactNode;
+	storageKey?: string;
 }) => {
 	const [data, setData] = React.useState(
 		() =>
@@ -153,7 +156,7 @@ const AppointmentPreferenceFixture = ({
 	}, []);
 	React.useEffect(() => {
 		const originalFetch = window.fetch;
-		const key = 'storybook.selfhelp.appointment.preference';
+		const key = storageKey;
 		const initial = data;
 		window.fetch = async (input, init) => {
 			const url = input instanceof Request ? input.url : String(input);
@@ -196,7 +199,7 @@ const AppointmentPreferenceFixture = ({
 		};
 		// Initial data seeds only the local fixture; reload reads its persisted state.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [reload]);
+	}, [reload, storageKey]);
 	return (
 		<UserDataContext.Provider
 			value={
@@ -216,9 +219,9 @@ export const CounsellorAppointmentPreference: Story = {
 	name: 'Counsellor appointment preference (local save/reload fixture)',
 	decorators: [
 		(Story) => (
-			<AppointmentPreferenceFixture>
+			<EmailPreferenceFixture>
 				<Story />
-			</AppointmentPreferenceFixture>
+			</EmailPreferenceFixture>
 		)
 	],
 	parameters: {
@@ -229,6 +232,27 @@ export const CounsellorAppointmentPreference: Story = {
 		docs: {
 			description: {
 				story: 'Local browser fixture only. Toggle the existing appointment preference, then reload this story. The real PATCH/GET client is used with an in-memory browser fixture; this does not send mail or contact Dev.'
+			}
+		}
+	}
+};
+
+export const CounsellorInternalChatPreference: Story = {
+	name: 'Counsellor internal-chat preference (local save/reload fixture)',
+	decorators: [
+		(Story) => (
+			<EmailPreferenceFixture storageKey="storybook.internal-chat.preference">
+				<Story />
+			</EmailPreferenceFixture>
+		)
+	],
+	parameters: {
+		router: {
+			initialPath: '/profile/notifications/email?mail=interne-nachricht'
+		},
+		docs: {
+			description: {
+				story: 'Local browser fixture only. The internal counsellor-chat preference is independent of protected feedback and browser notifications. Toggle this preference and reload to observe the fixture saving it; no mail or Dev request is sent.'
 			}
 		}
 	}

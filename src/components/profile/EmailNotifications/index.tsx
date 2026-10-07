@@ -24,10 +24,11 @@ import {
 } from './notificationMatrix';
 
 /**
- * E-mail notification settings, as ADR-019 specifies them.
+ * E-mail notification settings follow ADR-024's role boundary, with the
+ * ordinary internal-chat occasion added by UserService#1375.
  *
  * Two lists rather than one filtered by role — three switches for an advice
- * seeker, eight for a counsellor. See `notificationMatrix.ts` for why that
+ * seeker, nine for a counsellor. See `notificationMatrix.ts` for why that
  * distinction is the point rather than an implementation detail.
  */
 export const EmailNotification = () => {

@@ -2712,6 +2712,10 @@
 					"feedback": {
 						"title": "Professional exchange",
 						"description": "A reply is waiting for you in the protected professional exchange."
+					},
+					"internalChat": {
+						"title": "Internal messages",
+						"description": "A new message in an internal chat with other counsellors."
 					}
 				},
 				"shared": {

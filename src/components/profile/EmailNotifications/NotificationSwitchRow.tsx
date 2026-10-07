@@ -46,6 +46,7 @@ export const NotificationSwitchRow = ({
 					name={`settings.${entry.source.field}`}
 					titleKey={entry.titleKey}
 					descriptionKey={entry.descriptionKey}
+					defaultChecked={entry.defaultEnabled}
 				/>
 			) : (
 				<EmailTypeToggle

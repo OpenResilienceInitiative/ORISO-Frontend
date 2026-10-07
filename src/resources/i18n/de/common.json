@@ -2750,6 +2750,10 @@
 					"feedback": {
 						"title": "Fachaustausch",
 						"description": "Im geschützten Fachaustausch liegt eine Rückmeldung für Sie."
+					},
+					"internalChat": {
+						"title": "Interne Nachrichten",
+						"description": "Eine neue Nachricht in einem internen Chat mit anderen Beratenden."
 					}
 				},
 				"shared": {
