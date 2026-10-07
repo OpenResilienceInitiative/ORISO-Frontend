@@ -1,6 +1,6 @@
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import * as React from 'react';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetCaseHandoverConsentPreference,
@@ -44,7 +44,7 @@ export const StandingAccessSettings = ({
 	const [setupStarted, setSetupStarted] = useState(false);
 	const generation = useRef(0);
 	const strengthened = useRef(false);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		generation.current += 1;
 		setOpen(false);
 		setLoading(false);
