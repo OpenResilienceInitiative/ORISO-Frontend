@@ -821,6 +821,15 @@ $message-avatar-overlap: -19px;
 		max-width: 100%;
 		min-width: 200px;
 
+		// Reactions have a large intrinsic width. In the outgoing, end-aligned
+		// content column, an auto-sized bubble can keep that intrinsic width
+		// and extend past the start of the chat. Give the bubble its column's
+		// width so the reaction rail, rather than the message, owns overflow.
+		&:has(.messageItem__reactions) {
+			width: 100%;
+			min-width: 0;
+		}
+
 		// Improvement report (desktop): bubbles default to 460px so lines
 		// stay readable; texts beyond ~4 lines widen to 770px. Mobile keeps
 		// the fluid width from the wrap.

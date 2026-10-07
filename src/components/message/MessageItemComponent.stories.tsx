@@ -800,30 +800,85 @@ export const OutgoingWithReactions: Story = {
 async function assertReactionRailScrollsHorizontally(
 	canvasElement: HTMLElement
 ) {
-	await waitFor(() => {
-		const rail = canvasElement.querySelector(
-			'.messageItem__reactions'
-		) as HTMLElement | null;
-		expect(rail).toBeTruthy();
-		const pills = Array.from(
-			rail!.querySelectorAll('.messageItem__reactionPill')
-		) as HTMLElement[];
-		expect(pills.length).toBeGreaterThan(3);
+	await waitForMessageEnterAnimation(canvasElement);
+	const item = canvasElement.querySelector<HTMLElement>('.messageItem')!;
+	const bubble = item.querySelector<HTMLElement>('.messageItem__message')!;
+	const rail = item.querySelector<HTMLElement>('.messageItem__reactions')!;
+	const pills = Array.from(
+		rail.querySelectorAll<HTMLButtonElement>('button')
+	);
+	expect(pills.length).toBeGreaterThan(3);
 
-		// Single row: every pill shares the same top edge (no vertical stack).
-		const firstTop = pills[0].offsetTop;
-		pills.forEach((pill) => {
-			expect(pill.offsetTop).toBe(firstTop);
-			expect(getComputedStyle(pill).flexShrink).toBe('0');
+	// Constrain the real message's host, rather than asserting CSS declarations.
+	const host = item.parentElement!;
+	const originalWidth = host.style.width;
+	const originalMaxWidth = host.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			host.style.maxWidth = '100%';
+			await waitFor(() => {
+				const bounds = host.getBoundingClientRect();
+				for (const element of [
+					bubble,
+					item.querySelector<HTMLElement>('.messageItem__avatar')!,
+					item.querySelector<HTMLElement>(
+						'.messageItem__kebabButton'
+					)!
+				]) {
+					const rect = element.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 1);
+					expect(rect.right).toBeLessThanOrEqual(bounds.right + 1);
+				}
+				expect(bubble.scrollWidth).toBeLessThanOrEqual(
+					bubble.clientWidth + 1
+				);
+				pills.forEach((pill) =>
+					expect(pill.offsetTop).toBe(pills[0].offsetTop)
+				);
+			});
+		}
+
+		host.style.width = '320px';
+		expect(rail.scrollWidth).toBeGreaterThan(rail.clientWidth);
+		const initialBubble = bubble.getBoundingClientRect();
+		// Tabbing into an off-screen reaction must bring it into view without
+		// moving the whole message. This is the native button/scroll-container path.
+		pills[0].focus();
+		for (let index = 1; index < pills.length; index++)
+			await userEvent.tab();
+		expect(document.activeElement).toBe(pills[pills.length - 1]);
+		await waitFor(() => {
+			const last = pills[pills.length - 1].getBoundingClientRect();
+			const visible = rail.getBoundingClientRect();
+			expect(last.left).toBeGreaterThanOrEqual(visible.left - 1);
+			expect(last.right).toBeLessThanOrEqual(visible.right + 1);
 		});
-
-		const style = getComputedStyle(rail!);
-		expect(style.flexWrap).toBe('nowrap');
-		expect(style.overflowX).toMatch(/auto|scroll/);
-		expect(style.overflowY).toBe('hidden');
-		// Overflow content must be wider than the visible rail (scrollable).
-		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
-	});
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+		pills[0].focus();
+		await waitFor(() => expect(rail.scrollLeft).toBe(0));
+		const kebab = item.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				document.querySelector('.messageItem__actionMenuReactionEmoji')
+			).not.toBeNull()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(document.activeElement).toBe(kebab));
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+	} finally {
+		host.style.width = originalWidth;
+		host.style.maxWidth = originalMaxWidth;
+	}
 }
 
 export const OutgoingWithManyReactions: Story = {
