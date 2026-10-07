@@ -456,6 +456,7 @@ export const CaseHandoverConsentCard = ({
 				onClose={() => setInfoOpen(false)}
 				closeLabel={translate('app.close')}
 				title={translate('caseHandover.consent.info.title')}
+				description={translate('caseHandover.consent.info.description')}
 				icon={<SurveillanceConsentIcon aria-hidden focusable="false" />}
 				width={880}
 				actions={[
@@ -493,29 +494,6 @@ export const CaseHandoverConsentCard = ({
 							{translate('caseHandover.consent.info.choiceTitle')}
 						</h3>
 						<p>{translate(`caseHandover.consent.info.${mode}`)}</p>
-						{!isInformational && !isResolved && (
-							<div className="caseHandoverConsentInfo__switchRow">
-								<span>
-									{translate(
-										'caseHandover.consent.optOut.switchLabel'
-									)}
-								</span>
-								<Switch
-									className="caseHandoverConsentInfo__switch"
-									showIcon={false}
-									checked={
-										isOptOut
-											? isConsentGranted
-											: (consentGranted ?? false)
-									}
-									disabled={isSubmitting}
-									aria-label={translate(
-										'caseHandover.consent.optOut.switchLabel'
-									)}
-									onChange={handleConsentChange}
-								/>
-							</div>
-						)}
 					</section>
 					<section>
 						<ProtectedAccessIcon aria-hidden focusable="false" />
@@ -527,6 +505,29 @@ export const CaseHandoverConsentCard = ({
 						</p>
 					</section>
 				</div>
+				{!isInformational && !isResolved && (
+					<div className="caseHandoverConsentInfo__switchRow">
+						<span>
+							{translate(
+								'caseHandover.consent.optOut.switchLabel'
+							)}
+						</span>
+						<Switch
+							className="caseHandoverConsentInfo__switch"
+							showIcon={false}
+							checked={
+								isOptOut
+									? isConsentGranted
+									: (consentGranted ?? false)
+							}
+							disabled={isSubmitting}
+							aria-label={translate(
+								'caseHandover.consent.optOut.switchLabel'
+							)}
+							onChange={handleConsentChange}
+						/>
+					</div>
+				)}
 				{mode === 'OPT_IN' && (
 					<p className="caseHandoverConsentInfo__recommendation">
 						{translate(

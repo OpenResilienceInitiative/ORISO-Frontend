@@ -3522,22 +3522,23 @@
 			"senderRole": "Guide rapide",
 			"info": {
 				"NONE": "Aucune décision n’est demandée pour cette demande. Ce message vous informe de la consultation sans consentement préalable.",
-				"OPT_IN": "Votre accord est nécessaire avant de donner suite à cette demande. Sans votre accord, le professionnel qui la fait n’obtient aucun accès. Cette décision concerne cette demande, pas toutes les demandes à venir.",
+				"OPT_IN": "Cette demande nécessite votre accord. Sans lui, le professionnel demandeur n’a pas accès. Votre décision concerne uniquement cette demande.",
 				"OPT_OUT": "La consultation commence sans consentement préalable. Vous pouvez vous opposer à cette demande. Un transfert déjà effectué n’est pas annulé pour autant.",
-				"accessCopy": "L’autorisation concerne le service de conseil compétent et le professionnel expressément autorisé. Elle ne donne accès à votre session ni aux personnes extérieures ni à l’exploitant de la plateforme.",
+				"accessCopy": "Seuls le service compétent et le professionnel expressément autorisé ont accès. Ni les personnes extérieures ni l’exploitant de la plateforme n’y ont accès.",
 				"accessTitle": "Accès protégé",
 				"choiceTitle": "Votre consentement",
 				"closed": "Cette demande est terminée. Aucune autre décision n’est attendue.",
 				"granted": "L’accès a été confirmé.",
 				"more": "En savoir plus",
-				"needCopy": "Un autre professionnel peut apporter brièvement son aide pour une question spécialisée, par exemple pendant quelques heures. En cas de congé ou de maladie, un autre professionnel de votre service peut reprendre le conseil. La durée dépend de la demande précise.",
+				"needCopy": "Un autre professionnel peut aider quelques heures. Une personne de votre service peut prendre le relais en cas de congé ou de maladie.",
 				"needTitle": "En cas de besoin",
 				"noticeCopy": "Un autre professionnel de votre service de conseil peut consulter cette demande. Avec ce réglage, aucun consentement préalable n’est demandé.",
 				"noticeTitle": "Un soutien pour votre conseil",
 				"notificationsAction": "Configurer les notifications",
 				"notificationsCopy": "Si votre accord est nécessaire, nous recommandons les notifications par e-mail ou par navigateur. Vous serez ainsi informé à temps d’une demande et pourrez y répondre.",
 				"takeoverContinues": "Votre opposition a été enregistrée. Le transfert déjà effectué reste en vigueur.",
-				"title": "Consultation de votre conseil"
+				"title": "Consultation de votre conseil",
+				"description": "Pour les échanges professionnels et les remplacements dans votre service de conseil."
 			}
 		},
 		"denied": {

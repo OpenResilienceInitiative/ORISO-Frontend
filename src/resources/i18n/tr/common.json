@@ -3522,22 +3522,23 @@
 			"senderRole": "Hızlı Kılavuz",
 			"info": {
 				"NONE": "Bu talep için bir karar istenmez. Mesaj, önceden onay alınmadan yapılan inceleme hakkında sizi bilgilendirir.",
-				"OPT_IN": "Bu talep için önce onayınız gerekir. Onayınız olmadan talepte bulunan uzman erişim elde edemez. Bu karar yalnızca bu talep için geçerlidir; gelecekteki tüm talepler için geçerli değildir.",
+				"OPT_IN": "Bu talep için onayınız gerekir. Onay olmadan talepte bulunan uzman erişemez. Kararınız yalnızca bu talep için geçerlidir.",
 				"OPT_OUT": "İnceleme önceden onay alınmadan başlar. Bu talebe itiraz edebilirsiniz. Ancak tamamlanmış bir devir bu şekilde geri alınmaz.",
-				"accessCopy": "İzin, sorumlu danışmanlık merkezini ve açıkça yetkilendirilmiş uzmanı kapsar. Dışarıdan kişilere veya platform işletmecisine oturumunuza erişim sağlamaz.",
+				"accessCopy": "Yalnızca sorumlu merkez ve özel olarak yetkilendirilmiş uzman erişebilir. Dışarıdan kişiler ve platform işletmecisi erişemez.",
 				"accessTitle": "Korumalı erişim",
 				"choiceTitle": "Onayınız",
 				"closed": "Bu talep tamamlandı. Başka bir karar beklenmiyor.",
 				"granted": "Erişim onaylandı.",
 				"more": "Daha fazla bilgi",
-				"needCopy": "Mesleki bir konuda görüş almak için başka bir uzman kısa süreli, örneğin birkaç saatliğine destek verebilir. Tatil veya hastalık durumunda merkezinizdeki başka bir uzman danışmanlığı devralabilir. Süre, ilgili talebe bağlıdır.",
+				"needCopy": "Başka bir uzman birkaç saat destek verebilir. Tatil veya hastalık sırasında merkezinizden biri danışmanlığı devralabilir.",
 				"needTitle": "Gerektiğinde",
 				"noticeCopy": "Danışmanlık merkezinizdeki başka bir uzmana bu talep için inceleme erişimi verilir. Bu ayarda önceden onayınız istenmez.",
 				"noticeTitle": "Danışmanlığınız için destek",
 				"notificationsAction": "Bildirimleri ayarla",
 				"notificationsCopy": "Onayınız gerektiğinde e-posta veya tarayıcı bildirimlerini öneriyoruz. Böylece bir talepten zamanında haberdar olur ve yanıt verebilirsiniz.",
 				"takeoverContinues": "İtirazınız kaydedildi. Daha önce tamamlanmış olan devir geçerliliğini korur.",
-				"title": "Danışmanlığınıza erişim"
+				"title": "Danışmanlığınıza erişim",
+				"description": "Danışmanlık merkezinizde uzman görüşü ve görev devri için."
 			}
 		},
 		"denied": {

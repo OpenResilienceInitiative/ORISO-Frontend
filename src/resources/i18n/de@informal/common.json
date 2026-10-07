@@ -2314,6 +2314,14 @@
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"consent": {
+			"info": {
+				"description": "Für fachliche Rücksprache und Vertretung in deiner Beratungsstelle.",
+				"needCopy": "Eine weitere Fachkraft kann kurz unterstützen, etwa für einige Stunden. Bei Urlaub oder Krankheit kann jemand aus deiner Beratungsstelle übernehmen.",
+				"accessCopy": "Nur die zuständige Stelle und die konkret berechtigte Fachkraft erhalten Einsicht. Außenstehende und der Plattformbetreiber erhalten keinen Zugang.",
+				"OPT_IN": "Für diese Anfrage ist deine Zustimmung nötig. Ohne sie erhält die anfragende Fachkraft keinen Zugriff. Deine Entscheidung gilt nur für diese Anfrage."
+			}
 		}
 	},
 	"dpaSign": {
