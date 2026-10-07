@@ -10,7 +10,10 @@ import {
 /** Account/device capability shared by automatic invitations and manual setup.
  * An address alone is not an active channel; a silenced browser is not reachable.
  */
-export const useNotificationChannels = (isEmailEnabled = true) => {
+export const useNotificationChannels = (
+	isEmailEnabled = true,
+	isBrowserEnabled = true
+) => {
 	const { userData } = useContext(UserDataContext);
 	const { settings, isSuppressed } = useNotificationSettings();
 	const emailActive =
@@ -21,7 +24,15 @@ export const useNotificationChannels = (isEmailEnabled = true) => {
 				userData?.emailNotifications?.settings
 					?.newChatMessageNotificationEnabled
 		);
-	const browserSupported = Boolean(isSupported());
+	const consentEmailActive =
+		isEmailEnabled &&
+		Boolean(
+			userData?.email &&
+				userData?.emailNotifications?.emailNotificationsEnabled &&
+				userData?.emailNotifications?.settings
+					?.reassignmentNotificationEnabled
+		);
+	const browserSupported = isBrowserEnabled && Boolean(isSupported());
 	const browserActive = Boolean(
 		browserSupported &&
 			Notification.permission === 'granted' &&
@@ -32,6 +43,7 @@ export const useNotificationChannels = (isEmailEnabled = true) => {
 	const browserSilenced = isSuppressed('messages');
 	return {
 		emailActive,
+		consentEmailActive,
 		browserActive,
 		browserSupported,
 		browserSilenced,

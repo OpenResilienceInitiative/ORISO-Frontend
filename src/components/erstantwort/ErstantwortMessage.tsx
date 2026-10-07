@@ -11,6 +11,8 @@ import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { NotificationSetup } from './NotificationSetup';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import { notificationChannelPolicy } from './notificationChannelPolicy';
 import { useNotificationChannels } from './useNotificationChannels';
 import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
 import {
@@ -63,14 +65,23 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
-	const { hasReachableChannel } =
-		useNotificationChannels(isAskerEmailEnabled);
+	const tenant = useTenant();
+	const channels = notificationChannelPolicy(
+		tenant?.settings,
+		conversationType
+	);
+	const emailAllowed = isAskerEmailEnabled !== false && channels.emailAllowed;
+	const { hasReachableChannel } = useNotificationChannels(
+		emailAllowed,
+		channels.browserAllowed
+	);
 	const [notificationSetupStarted, setNotificationSetupStarted] =
 		useState(false);
 	// Keep an in-progress setup visible through its saved confirmation. On reload,
 	// existing reachability suppresses automatic invitations again.
 	const offerNotificationSetup =
-		notificationSetupStarted || !hasReachableChannel;
+		(emailAllowed || channels.browserAllowed) &&
+		(notificationSetupStarted || !hasReachableChannel);
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
 
 	const state: ErstantwortLiveState = useMemo(
@@ -78,13 +89,13 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			hasEmail: Boolean(userData?.email),
 			isTwoFactorEnabled: Boolean(userData?.twoFactorAuth?.isEnabled),
 			isTwoFactorActive: Boolean(userData?.twoFactorAuth?.isActive),
-			isAskerEmailEnabled
+			isAskerEmailEnabled: emailAllowed
 		}),
 		[
 			userData?.email,
 			userData?.twoFactorAuth?.isEnabled,
 			userData?.twoFactorAuth?.isActive,
-			isAskerEmailEnabled
+			emailAllowed
 		]
 	);
 
@@ -193,7 +204,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						!hasChoice &&
 						offerNotificationSetup ? (
 							<NotificationSetup
-								isEmailEnabled={isAskerEmailEnabled}
+								isEmailEnabled={emailAllowed}
+								isBrowserEnabled={channels.browserAllowed}
 								onStart={() =>
 									setNotificationSetupStarted(true)
 								}
@@ -201,7 +213,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 						) : undefined,
 					notificationChoice: offerNotificationSetup ? (
 						<NotificationSetup
-							isEmailEnabled={isAskerEmailEnabled}
+							isEmailEnabled={emailAllowed}
+							isBrowserEnabled={channels.browserAllowed}
 							onStart={() => setNotificationSetupStarted(true)}
 						/>
 					) : undefined,

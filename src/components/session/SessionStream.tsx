@@ -1350,6 +1350,7 @@ export const SessionStream = ({
 						displayedConsent.actionPath
 					) !== null && (
 						<CaseHandoverConversation
+							conversationType={getModality(activeSession)}
 							key={String(activeSession.item?.id)}
 							status={
 								displayedConsent.id ===

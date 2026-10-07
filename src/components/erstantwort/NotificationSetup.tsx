@@ -17,17 +17,24 @@ import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
  */
 export const NotificationSetup = ({
 	isEmailEnabled = true,
+	isBrowserEnabled = true,
 	onStart
 }: {
 	isEmailEnabled?: boolean;
+	isBrowserEnabled?: boolean;
 	onStart?: () => void;
 }) => {
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const tenant = useTenant();
 	const continuation = useRef(0);
-	const { emailActive, browserActive, browserSupported, browserSilenced } =
-		useNotificationChannels(isEmailEnabled);
+	const {
+		emailActive,
+		consentEmailActive,
+		browserActive,
+		browserSupported,
+		browserSilenced
+	} = useNotificationChannels(isEmailEnabled, isBrowserEnabled);
 	const [pending, setPending] = useState<NotificationChoice | null>(null);
 	const [emailOpen, setEmailOpen] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -52,7 +59,7 @@ export const NotificationSetup = ({
 		return () => {
 			continuation.current += 1;
 		};
-	}, [isEmailEnabled, tenant?.id, userData?.userId]);
+	}, [isEmailEnabled, isBrowserEnabled, tenant?.id, userData?.userId]);
 
 	const finish = async (choice: NotificationChoice) => {
 		if (
@@ -65,14 +72,15 @@ export const NotificationSetup = ({
 		setBusy(true);
 		setError(null);
 		try {
-			if (choice !== 'BROWSER' && !emailActive) {
+			if (choice !== 'BROWSER' && (!emailActive || !consentEmailActive)) {
 				await apiPatchUserData({
 					emailNotifications: {
 						...userData?.emailNotifications,
 						emailNotificationsEnabled: true,
 						settings: {
 							...userData?.emailNotifications?.settings,
-							newChatMessageNotificationEnabled: true
+							newChatMessageNotificationEnabled: true,
+							reassignmentNotificationEnabled: true
 						}
 					}
 				});
@@ -83,11 +91,17 @@ export const NotificationSetup = ({
 					!saved?.email ||
 					!saved?.emailNotifications?.emailNotificationsEnabled ||
 					!saved?.emailNotifications?.settings
-						?.newChatMessageNotificationEnabled
+						?.newChatMessageNotificationEnabled ||
+					!saved?.emailNotifications?.settings
+						?.reassignmentNotificationEnabled
 				)
 					throw new Error('Not confirmed');
 			}
-			if (choice === 'BOTH' && !emailActive && !browserActive) {
+			if (
+				choice === 'BOTH' &&
+				(!emailActive || !consentEmailActive) &&
+				!browserActive
+			) {
 				// OS prompts need a fresh user gesture after the async email save.
 				setAwaitingBrowser(true);
 				return;
@@ -97,22 +111,12 @@ export const NotificationSetup = ({
 				if (!current()) return;
 				setAwaitingBrowser(false);
 				if (Notification.permission !== 'granted') {
-					setError(
-						t(
-							'erstantwort.notificationChoice.browserDenied',
-							'Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.'
-						)
-					);
+					setError(t('erstantwort.notificationChoice.browserDenied'));
 				}
 			}
 		} catch {
 			if (!current()) return;
-			setError(
-				t(
-					'erstantwort.notificationChoice.saveFailed',
-					'Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.'
-				)
-			);
+			setError(t('erstantwort.notificationChoice.saveFailed'));
 		} finally {
 			if (current()) {
 				setPending(null);
@@ -137,6 +141,7 @@ export const NotificationSetup = ({
 		} else void finish(choice);
 	};
 
+	if (!isEmailEnabled && !isBrowserEnabled) return null;
 	return (
 		<>
 			<NotificationChoiceCard
@@ -154,49 +159,34 @@ export const NotificationSetup = ({
 					disabled={busy}
 					onClick={() => void finish('BROWSER')}
 				>
-					{t(
-						'erstantwort.notificationChoice.enableBrowser',
-						'Browser aktivieren'
-					)}
+					{t('erstantwort.notificationChoice.enableBrowser')}
 				</button>
 			)}
-			{!browserSupported && (
-				<p>
-					{t(
-						'erstantwort.notificationChoice.browserUnsupported',
-						'Dieser Browser unterstützt keine Browser-Benachrichtigungen.'
-					)}
-				</p>
+			{isBrowserEnabled && !browserSupported && (
+				<p>{t('erstantwort.notificationChoice.browserUnsupported')}</p>
 			)}
 			{browserActive && browserSilenced && (
 				<p role="status">
-					{t(
-						'erstantwort.notificationChoice.browserSilenced',
-						'Browser-Benachrichtigungen sind in Ihren Benachrichtigungseinstellungen stummgeschaltet.'
-					)}
+					{t('erstantwort.notificationChoice.browserSilenced')}
 				</p>
 			)}
 			{error && <p role="alert">{error}</p>}
 			{chosen && (
 				<p role="status">
-					{t(
-						'erstantwort.notificationChoice.active',
-						'Aktiviert: {{channel}}',
-						{
-							channel:
-								chosen === 'BOTH'
+					{t('erstantwort.notificationChoice.active', {
+						channel:
+							chosen === 'BOTH'
+								? t(
+										'erstantwort.notificationChoice.channelBoth'
+									)
+								: chosen === 'EMAIL'
 									? t(
-											'erstantwort.notificationChoice.channelBoth'
+											'erstantwort.notificationChoice.channelEmail'
 										)
-									: chosen === 'EMAIL'
-										? t(
-												'erstantwort.notificationChoice.channelEmail'
-											)
-										: t(
-												'erstantwort.notificationChoice.channelBrowser'
-											)
-						}
-					)}
+									: t(
+											'erstantwort.notificationChoice.channelBrowser'
+										)
+					})}
 				</p>
 			)}
 			{emailOpen && (

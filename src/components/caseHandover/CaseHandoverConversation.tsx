@@ -6,15 +6,23 @@ import { useTenant } from '../../globalState/provider/TenantProvider';
 import { useTranslation } from 'react-i18next';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
+import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { NotificationSetup } from '../erstantwort/NotificationSetup';
 
 /** The caller keys this continuation by session, so transient setup never moves
  * into another conversation. Account/device settings remain their existing stores. */
-export const CaseHandoverConversation = (
-	consent: React.ComponentProps<typeof CaseHandoverConsentCard>
-) => {
+export const CaseHandoverConversation = ({
+	conversationType,
+	...consent
+}: React.ComponentProps<typeof CaseHandoverConsentCard> & {
+	conversationType?: string;
+}) => {
 	const { t } = useTranslation();
 	const tenant = useTenant();
+	const channels = notificationChannelPolicy(
+		tenant?.settings,
+		conversationType
+	);
 	const [notificationsOpen, setNotificationsOpen] = useState(false);
 	const [focusRequest, setFocusRequest] = useState(0);
 	const notificationMessage = useRef<HTMLDivElement>(null);
@@ -72,10 +80,10 @@ export const CaseHandoverConversation = (
 										)}
 									</h3>
 									<NotificationSetup
-										isEmailEnabled={
-											tenant?.settings
-												?.featureAskerEmailEnabled
+										isBrowserEnabled={
+											channels.browserAllowed
 										}
+										isEmailEnabled={channels.emailAllowed}
 									/>
 								</>
 							)

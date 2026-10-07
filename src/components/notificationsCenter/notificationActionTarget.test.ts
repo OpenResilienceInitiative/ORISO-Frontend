@@ -134,6 +134,7 @@ describe('shared params contract (#846)', () => {
 				'senderDisplayName',
 				'contentClass',
 				'recipientRole',
+				'conversationType',
 				'clientConsent',
 				'threadRootId',
 				'mentioned',
