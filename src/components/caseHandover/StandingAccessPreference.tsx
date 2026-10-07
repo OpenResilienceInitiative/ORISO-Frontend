@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch } from '../Switch';
 import './caseHandoverClientCards.styles.scss';
@@ -29,7 +29,7 @@ export const StandingAccessPreference = ({
 	const [state, setState] = useState<'idle' | 'saving' | 'saved' | 'error'>(
 		'idle'
 	);
-	useEffect(() => {
+	useLayoutEffect(() => {
 		operation.current += 1;
 		saving.current = false;
 		setState('idle');
