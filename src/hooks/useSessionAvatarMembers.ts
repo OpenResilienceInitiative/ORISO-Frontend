@@ -14,6 +14,8 @@ export const useSessionAvatarMembers = (
 	}>({ key: null, members: [] });
 
 	useEffect(() => {
+		// Discard earlier keys, including a return to an account before a request settles.
+		setResult({ key, members: [] });
 		if (!key || chatId === undefined) return;
 		let cancelled = false;
 		apiGetChatMembers(chatId)

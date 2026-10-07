@@ -78,3 +78,16 @@ describe('active chat avatar metadata', () => {
 		expect(api).toHaveBeenCalledTimes(2);
 	});
 });
+
+it('does not resurrect old metadata when returning to an earlier account before a replacement resolves', async () => {
+	api.mockResolvedValueOnce({ members });
+	const { result, rerender } = renderHook(
+		({ accountId }) => useSessionAvatarMembers(42, accountId),
+		{ initialProps: { accountId: 'account-a' } }
+	);
+	await waitFor(() => expect(result.current).toEqual(members));
+	api.mockImplementation(() => new Promise(() => {}));
+	rerender({ accountId: 'account-b' });
+	rerender({ accountId: 'account-a' });
+	expect(result.current).toEqual([]);
+});
