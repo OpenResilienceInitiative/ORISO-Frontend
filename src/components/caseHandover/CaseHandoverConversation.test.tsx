@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -65,7 +66,13 @@ let saved: UserDataInterface;
 const approve = vi.fn();
 const decline = vi.fn();
 function setup(initial = account, isEmailEnabled?: boolean) {
-	const TestAccount = ({ sessionKey = '1' }: { sessionKey?: string }) => {
+	const TestAccount = ({
+		sessionKey = '1',
+		emailEnabled = isEmailEnabled
+	}: {
+		sessionKey?: string;
+		emailEnabled?: boolean;
+	}) => {
 		const [userData, setUserData] = React.useState(initial);
 		const reloadUserData = async () => {
 			setUserData(saved);
@@ -79,7 +86,7 @@ function setup(initial = account, isEmailEnabled?: boolean) {
 					value={{
 						tenant: {
 							settings: {
-								featureAskerEmailEnabled: isEmailEnabled
+								featureAskerEmailEnabled: emailEnabled
 							}
 						} as TenantDataInterface,
 						setTenant: () => {},
@@ -102,7 +109,8 @@ function setup(initial = account, isEmailEnabled?: boolean) {
 	return {
 		...view,
 		switchSession: (id: string) =>
-			view.rerender(<TestAccount sessionKey={id} />)
+			view.rerender(<TestAccount sessionKey={id} />),
+		disableEmail: () => view.rerender(<TestAccount emailEnabled={false} />)
 	};
 }
 beforeEach(() => {
@@ -279,3 +287,34 @@ it('both channels wait for saved email and a separate browser gesture through th
 	expect(approve).not.toHaveBeenCalled();
 	expect(decline).not.toHaveBeenCalled();
 });
+
+for (const change of ['session', 'tenant'] as const) {
+	it(`does not activate notifications when delayed address save finishes after ${change} changes`, async () => {
+		let resolveSave!: () => void;
+		putEmail.mockImplementation(
+			() =>
+				new Promise<void>((resolve) => {
+					resolveSave = resolve;
+				})
+		);
+		const view = setup({ ...account, email: undefined });
+		await openSetup();
+		fireEvent.click(
+			screen.getByRole('button', { name: /notificationChoice.both/ })
+		);
+		fireEvent.change(await screen.findByRole('textbox'), {
+			target: { value: 'asker@example.org' }
+		});
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'furtherSteps.email.overlay.button1.label'
+			})
+		);
+		expect(putEmail).toHaveBeenCalledOnce();
+		if (change === 'session') view.switchSession('2');
+		else view.disableEmail();
+		await act(async () => resolveSave());
+		expect(patch).not.toHaveBeenCalled();
+		expect(request).not.toHaveBeenCalled();
+	});
+}

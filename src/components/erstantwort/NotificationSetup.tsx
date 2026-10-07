@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
+import { useTenant } from '../../globalState/provider/TenantProvider';
 import { appConfig } from '../../utils/appConfig';
 import {
 	browserNotificationsSettings,
@@ -26,6 +27,8 @@ export const NotificationSetup = ({
 }) => {
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
+	const tenant = useTenant();
+	const continuation = useRef(0);
 	const { settings, isSuppressed } = useNotificationSettings();
 	const [pending, setPending] = useState<NotificationChoice | null>(null);
 	const [emailOpen, setEmailOpen] = useState(false);
@@ -57,11 +60,16 @@ export const NotificationSetup = ({
 					: null;
 
 	useEffect(() => {
-		if (!isEmailEnabled) {
-			setEmailOpen(false);
-			setPending(null);
-		}
-	}, [isEmailEnabled]);
+		continuation.current += 1;
+		setEmailOpen(false);
+		setPending(null);
+		setBusy(false);
+		setAwaitingBrowser(false);
+		setError(null);
+		return () => {
+			continuation.current += 1;
+		};
+	}, [isEmailEnabled, tenant?.id, userData?.userId]);
 
 	const finish = async (choice: NotificationChoice) => {
 		if (
@@ -69,6 +77,8 @@ export const NotificationSetup = ({
 			(choice !== 'EMAIL' && !browserSupported)
 		)
 			return;
+		const operation = continuation.current;
+		const current = () => continuation.current === operation;
 		setBusy(true);
 		setError(null);
 		try {
@@ -83,7 +93,9 @@ export const NotificationSetup = ({
 						}
 					}
 				});
+				if (!current()) return;
 				const saved = await reloadUserData();
+				if (!current()) return;
 				if (
 					!saved?.email ||
 					!saved?.emailNotifications?.emailNotificationsEnabled ||
@@ -99,6 +111,7 @@ export const NotificationSetup = ({
 			}
 			if (choice !== 'EMAIL' && !browserActive) {
 				await optInToBrowserNotifications();
+				if (!current()) return;
 				setAwaitingBrowser(false);
 				if (Notification.permission !== 'granted') {
 					setError(
@@ -110,6 +123,7 @@ export const NotificationSetup = ({
 				}
 			}
 		} catch {
+			if (!current()) return;
 			setError(
 				t(
 					'erstantwort.notificationChoice.saveFailed',
@@ -117,8 +131,10 @@ export const NotificationSetup = ({
 				)
 			);
 		} finally {
-			setPending(null);
-			setBusy(false);
+			if (current()) {
+				setPending(null);
+				setBusy(false);
+			}
 		}
 	};
 
@@ -202,6 +218,7 @@ export const NotificationSetup = ({
 			{emailOpen && (
 				<ErstantwortEmailOverlay
 					onClose={() => {
+						continuation.current += 1;
 						setEmailOpen(false);
 						setPending(null);
 					}}

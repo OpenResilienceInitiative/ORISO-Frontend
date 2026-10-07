@@ -215,7 +215,8 @@ export const PendingClientConsent: Story = {
 		expect(Math.round(bubbleBounds.left - avatarBounds.left)).toBe(40);
 		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(44);
 		expect(
-			Math.abs(senderBounds.left - avatarBounds.left - 64)
+			// 40px content origin + 28px header inset = 68px (60px avatar + 8px clearance).
+			Math.abs(senderBounds.left - avatarBounds.left - 68)
 		).toBeLessThanOrEqual(1);
 		expect(bubbleBounds.left).toBeLessThan(avatarBounds.right);
 		expect(bubbleBounds.top).toBeLessThan(avatarBounds.bottom);

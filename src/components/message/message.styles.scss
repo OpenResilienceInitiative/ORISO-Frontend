@@ -1782,7 +1782,8 @@ $message-avatar-overlap: -19px;
 
 	// Figma 9596:35524 layers the 60px avatar/header row above the bubble:
 	// the chat container begins 40px from the rail edge while the sender copy
-	// starts at 64px. The shared incoming-message overlap is 19px; this
+	// starts at 68px (40px + 28px), clearing the 60px avatar by 8px.
+	// The shared incoming-message overlap is 19px; this
 	// standalone composition needs 24px because its wrap has the Figma 4px
 	// avatar/content gap (60 + 4 - 24 = 40).
 	.messageItem__content {

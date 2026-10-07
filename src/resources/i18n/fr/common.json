@@ -3482,7 +3482,26 @@
 				"title": "Avis de confidentialité relatif au transfert de dossier"
 			},
 			"sender": "Carimat",
-			"senderRole": "Guide rapide"
+			"senderRole": "Guide rapide",
+			"info": {
+				"NONE": "Aucune décision n’est demandée pour cette demande. Ce message vous informe de la consultation sans consentement préalable.",
+				"OPT_IN": "Votre accord est nécessaire avant de donner suite à cette demande. Sans votre accord, le professionnel qui la fait n’obtient aucun accès. Cette décision concerne cette demande, pas toutes les demandes à venir.",
+				"OPT_OUT": "La consultation commence sans consentement préalable. Vous pouvez vous opposer à cette demande. Un transfert déjà effectué n’est pas annulé pour autant.",
+				"accessCopy": "L’autorisation concerne le service de conseil compétent et le professionnel expressément autorisé. Elle ne donne accès à votre session ni aux personnes extérieures ni à l’exploitant de la plateforme.",
+				"accessTitle": "Accès protégé",
+				"choiceTitle": "Votre consentement",
+				"closed": "Cette demande est terminée. Aucune autre décision n’est attendue.",
+				"granted": "L’accès a été confirmé.",
+				"more": "En savoir plus",
+				"needCopy": "Un autre professionnel peut apporter brièvement son aide pour une question spécialisée, par exemple pendant quelques heures. En cas de congé ou de maladie, un autre professionnel de votre service peut reprendre le conseil. La durée dépend de la demande précise.",
+				"needTitle": "En cas de besoin",
+				"noticeCopy": "Un autre professionnel de votre service de conseil peut consulter cette demande. Avec ce réglage, aucun consentement préalable n’est demandé.",
+				"noticeTitle": "Un soutien pour votre conseil",
+				"notificationsAction": "Configurer les notifications",
+				"notificationsCopy": "Si votre accord est nécessaire, nous recommandons les notifications par e-mail ou par navigateur. Vous serez ainsi informé à temps d’une demande et pourrez y répondre.",
+				"takeoverContinues": "Votre opposition a été enregistrée. Le transfert déjà effectué reste en vigueur.",
+				"title": "Consultation de votre conseil"
+			}
 		},
 		"denied": {
 			"copy": "La demande précédente n'a pas donné accès au contenu.",
@@ -5137,9 +5156,25 @@
 			"browser": "Envoyez-moi un signal ici",
 			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
 			"email": "Envoyez-moi un e-mail",
-			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
+			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail.",
+			"active": "Activé : {{channel}}",
+			"bothSetup": "Configurer les deux",
+			"bothSetupHint": "Un e-mail et, en plus, un signal sur cet appareil.",
+			"browserDenied": "Les notifications du navigateur ne sont pas activées. Veuillez vérifier l’autorisation dans votre navigateur.",
+			"browserSilenced": "Les notifications du navigateur sont désactivées dans vos paramètres de notification.",
+			"browserUnsupported": "Ce navigateur ne prend pas en charge les notifications.",
+			"channelBoth": "E-mail et navigateur sur cet appareil",
+			"channelBrowser": "Navigateur sur cet appareil",
+			"channelEmail": "E-mail",
+			"enableBrowser": "Activer le navigateur",
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
 		},
-		"unavailableInRoom": "Première réponse – non disponible dans cet espace."
+		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
+		"faq": {
+			"dataProtection": "Que deviennent mes données ?",
+			"modalityNote": "Comment se déroule le conseil ?",
+			"title": "Questions fréquentes"
+		}
 	},
 	"legal": {
 		"notice": {
