@@ -1,3 +1,4 @@
+import { formatDpaDate } from './formatDpaDate';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import {
 	Alert,
@@ -43,8 +44,6 @@ const INITIAL_FORM_STATE: FormState = {
 	language: 'de',
 	accepted: false
 };
-
-const DPA_DATE_FORMATTERS = new Map<string, Intl.DateTimeFormat>();
 
 export const DpaSign = () => {
 	const { token } = useParams<{ token: string }>();
@@ -438,25 +437,6 @@ export const DpaSign = () => {
 			</Paper>
 		</Box>
 	);
-};
-
-const formatDpaDate = (value: string, language: string) => {
-	const date = new Date(value);
-	if (Number.isNaN(date.getTime())) {
-		return value;
-	}
-
-	const locale = language === 'en' ? 'en-GB' : 'de-DE';
-	let formatter = DPA_DATE_FORMATTERS.get(locale);
-	if (!formatter) {
-		formatter = new Intl.DateTimeFormat(locale, {
-			dateStyle: 'long',
-			timeStyle: 'short'
-		});
-		DPA_DATE_FORMATTERS.set(locale, formatter);
-	}
-
-	return formatter.format(date);
 };
 
 // A `PreviewErrorKind` names *why* the preview failed without committing to

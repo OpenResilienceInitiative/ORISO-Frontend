@@ -1836,6 +1836,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null>(null);
 	// Read the live retry request inside the (non-memoised) success handler,
 	// which the composer may invoke from a closure captured a render earlier.
@@ -1852,7 +1853,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			isAside = false,
 			replyToEventId?: string | null,
 			mentionedUserIds: string[] = [],
-			targetRoomId: string | null = null
+			targetRoomId: string | null = null,
+			feedbackMailIntent = false
 		) => {
 			if (
 				sessionIdentity &&
@@ -1878,7 +1880,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										isAside,
 										replyToEventId,
 										mentionedUserIds,
-										targetRoomId
+										targetRoomId,
+										feedbackMailIntent
 									}
 								: failed
 						);
@@ -1895,7 +1898,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						isAside,
 						replyToEventId: replyToEventId || null,
 						mentionedUserIds,
-						targetRoomId: targetRoomId || null
+						targetRoomId: targetRoomId || null,
+						feedbackMailIntent
 					}
 				];
 			});
@@ -1922,7 +1926,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							isAside: failed.isAside,
 							replyToEventId: failed.replyToEventId || null,
 							mentionedUserIds: failed.mentionedUserIds,
-							targetRoomId: failed.targetRoomId || null
+							targetRoomId: failed.targetRoomId || null,
+							feedbackMailIntent: failed.feedbackMailIntent
 						}
 					: null;
 			});
@@ -1950,7 +1955,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			isAside?: boolean,
 			replyToEventId?: string | null,
 			mentionedUserIds?: string[],
-			targetRoomId?: string | null
+			targetRoomId?: string | null,
+			feedbackMailIntent?: boolean
 		) =>
 			handleSendError(
 				message,
@@ -1962,7 +1968,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				isAside,
 				replyToEventId,
 				mentionedUserIds,
-				targetRoomId ?? null
+				targetRoomId ?? null,
+				feedbackMailIntent
 			),
 		[activeSessionIdentity, handleSendError]
 	);
@@ -4178,6 +4185,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						hideSupervisorAudience
 						autoFocusEditor={!focusPanelHeader}
 						flushCorner={panelComposerFlush}
+						feedbackMailIntent
 						accent="supervision"
 						onMobileNavigateBack={
 							isPhoneLayout ? closeChannel : undefined
@@ -4223,8 +4231,22 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				banner={
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
-							title={teamText('chatStage.panel.team.empty.title')}
-							text={teamText('chatStage.panel.team.empty.text')}
+							title={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.title'
+										)
+									: teamChannelTitle
+							}
+							text={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.text'
+										)
+									: translate(
+											'notifications.center.preview.empty'
+										)
+							}
 						/>
 					) : undefined
 				}
