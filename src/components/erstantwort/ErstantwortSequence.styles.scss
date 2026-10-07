@@ -142,3 +142,23 @@
 		margin-top: 12px;
 	}
 }
+
+/* Structured Carimat rows use the same 60px avatar rail and overlap as the
+   consent notice. The human-bubble wrap cap must not shorten this surface. */
+.erstantwort .erstantwort__row .pseudonymCard__wrap {
+	gap: var(--carimat-avatar-gap, 4px);
+	max-width: none;
+}
+
+.erstantwort .pseudonymCard__avatarCol {
+	margin-left: var(--carimat-avatar-ring-offset, -6px);
+}
+
+.erstantwort .erstantwort__content {
+	margin-left: calc(-1 * var(--carimat-avatar-overlap, 24px));
+	max-width: none;
+}
+
+.erstantwort .pseudonymCard__header {
+	padding-left: var(--carimat-header-inset, 28px);
+}

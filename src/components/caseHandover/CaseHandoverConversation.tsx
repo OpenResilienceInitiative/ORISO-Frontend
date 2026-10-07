@@ -44,6 +44,7 @@ export const CaseHandoverConversation = (
 			{notificationsOpen && (
 				<div
 					ref={notificationMessage}
+					className="caseHandoverNotificationMessage"
 					tabIndex={-1}
 					role="region"
 					aria-label={t(
