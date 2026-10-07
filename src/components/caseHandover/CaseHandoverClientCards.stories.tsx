@@ -42,7 +42,8 @@ const Stream = ({
 }) => <MessageStoryShell compact={compact}>{children}</MessageStoryShell>;
 
 const meta: Meta = {
-	title: 'Organisms/CaseHandover/ClientCards',
+	id: 'organisms-casehandover-clientcards',
+	title: 'Chat/System messages/Consent',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
@@ -125,6 +126,7 @@ export const InquiryAcceptedTablet: Story = {
 };
 
 export const InquiryAcceptedMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Inquiry accepted — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -254,6 +256,7 @@ export const PendingClientConsent: Story = {
 };
 
 export const PendingClientConsentMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Pending client consent — phone 390',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
@@ -330,6 +333,7 @@ export const PendingClientConsentGerman: Story = {
 };
 
 export const PendingClientConsentGermanMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Ausstehende Zustimmung — Telefon 390 (Deutsch)',
 	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
@@ -420,6 +424,7 @@ export const ActiveClientOptOutToggle: Story = {
 };
 
 export const ActiveClientOptOutMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Active access — client opt-out — phone 390',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
@@ -448,6 +453,7 @@ export const ActiveClientOptOutGerman: Story = {
 };
 
 export const ActiveClientOptOutGermanMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Aktiver Zugriff — Opt-out — Telefon 390 (Deutsch)',
 	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
@@ -536,6 +542,7 @@ export const NewCounsellorTookOverTablet: Story = {
 };
 
 export const NewCounsellorTookOverMobile: Story = {
+	tags: ['device-regression'],
 	name: 'New counsellor took over — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -570,6 +577,7 @@ export const ImportantNotification: Story = {
 };
 
 export const ImportantNotificationMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Important notification — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -599,6 +607,7 @@ export const SendingMessageFailed: Story = {
 };
 
 export const SendingMessageFailedMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Sending message failed — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -655,7 +664,7 @@ export const OptionalConsentDialog: Story = {
 			'dialog'
 		);
 		await waitFor(() =>
-			expect(within(dialog).getByText('Bei Bedarf')).toBeVisible()
+			expect(within(dialog).getByText('Wann hilfreich')).toBeVisible()
 		);
 		expect(within(dialog).getByText('Ihre Einwilligung')).toBeVisible();
 		expect(within(dialog).getByText('Geschützter Zugriff')).toBeVisible();
@@ -666,4 +675,50 @@ export const OptionalConsentDialog: Story = {
 			).toHaveFocus()
 		);
 	}
+};
+
+const resolvedConsent = (status: string): Story => ({
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByRole('status')).toBeVisible());
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff erlauben' })
+		).toBeNull();
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+		).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		expect(within(dialog).queryByRole('switch')).toBeNull();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+	}
+});
+
+export const ConsentSaved: Story = {
+	...resolvedConsent('GRANTED'),
+	name: 'Consent — server-confirmed approval'
+};
+
+export const ConsentDenied: Story = {
+	...resolvedConsent('DENIED'),
+	name: 'Consent — server-confirmed refusal'
+};
+
+export const ConsentExpired: Story = {
+	...resolvedConsent('EXPIRED'),
+	name: 'Consent — expired request'
 };

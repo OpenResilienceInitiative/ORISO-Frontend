@@ -218,7 +218,8 @@ function Journey({
 }
 
 const meta: Meta<typeof Journey> = {
-	title: 'Organisms/CaseHandover/ConversationJourney',
+	id: 'organisms-casehandover-conversationjourney',
+	title: 'Chat/System messages/Handover journey',
 	component: Journey,
 	parameters: {
 		layout: 'fullscreen',

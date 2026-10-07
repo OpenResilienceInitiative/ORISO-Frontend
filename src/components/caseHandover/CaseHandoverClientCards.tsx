@@ -1,3 +1,9 @@
+import {
+	SurveillanceConsentIcon,
+	ProtectedAccessIcon,
+	UserConsentIcon,
+	WhenUsefulIcon
+} from '../../resources/img/icons';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,9 +17,6 @@ import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
-import VisibilityOutlined from '@mui/icons-material/VisibilityOutlined';
-import PersonOutline from '@mui/icons-material/PersonOutline';
-import LockOutlined from '@mui/icons-material/LockOutlined';
 import { Switch } from '../Switch';
 import '../message/message.styles.scss';
 import './caseHandoverClientCards.styles';
@@ -453,7 +456,7 @@ export const CaseHandoverConsentCard = ({
 				onClose={() => setInfoOpen(false)}
 				closeLabel={translate('app.close')}
 				title={translate('caseHandover.consent.info.title')}
-				icon={<VisibilityOutlined />}
+				icon={<SurveillanceConsentIcon aria-hidden focusable="false" />}
 				width={880}
 				actions={[
 					{
@@ -478,14 +481,14 @@ export const CaseHandoverConsentCard = ({
 			>
 				<div className="caseHandoverConsentInfo__sections">
 					<section>
-						<VisibilityOutlined aria-hidden />
+						<WhenUsefulIcon aria-hidden focusable="false" />
 						<h3>
 							{translate('caseHandover.consent.info.needTitle')}
 						</h3>
 						<p>{translate('caseHandover.consent.info.needCopy')}</p>
 					</section>
 					<section>
-						<PersonOutline aria-hidden />
+						<UserConsentIcon aria-hidden focusable="false" />
 						<h3>
 							{translate('caseHandover.consent.info.choiceTitle')}
 						</h3>
@@ -515,7 +518,7 @@ export const CaseHandoverConsentCard = ({
 						)}
 					</section>
 					<section>
-						<LockOutlined aria-hidden />
+						<ProtectedAccessIcon aria-hidden focusable="false" />
 						<h3>
 							{translate('caseHandover.consent.info.accessTitle')}
 						</h3>
