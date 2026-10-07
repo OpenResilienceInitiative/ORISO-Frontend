@@ -32,8 +32,18 @@ describe('consent notification preference locales', () => {
 			const i18n = createInstance();
 			await i18n.use(initReactI18next).init({
 				lng: locale,
-				fallbackLng: false,
-				resources: { [locale]: { translation: catalogue } }
+				fallbackLng: locale === 'de@informal' ? 'de' : false,
+				resources: {
+					de: {
+						translation: JSON.parse(
+							readFileSync(
+								'src/resources/i18n/de/common.json',
+								'utf8'
+							)
+						)
+					},
+					[locale]: { translation: catalogue }
+				}
 			});
 			const entry = ADVICE_SEEKER_SWITCHES.find(
 				(row) => row.id === 'reassignment'

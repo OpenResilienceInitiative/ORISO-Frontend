@@ -41,13 +41,18 @@ const journeyKeys = [
 
 describe('Carimat journey in each supported language (#1660)', () => {
 	it.each(Object.entries(catalogues))(
-		'%s resolves its own journey without German fallback',
+		'%s resolves its journey through its supported locale resources',
 		async (locale, catalogue) => {
 			const language = createInstance();
 			await language.init({
 				lng: locale,
-				fallbackLng: false,
-				resources: { [locale]: { translation: catalogue } }
+				// de@informal is a sparse overlay in the public loader; shared
+				// German text comes from de, while other languages stay standalone.
+				fallbackLng: locale === 'de@informal' ? 'de' : false,
+				resources: {
+					de: { translation: de },
+					[locale]: { translation: catalogue }
+				}
 			});
 			for (const key of journeyKeys) {
 				expect(language.exists(key), `${locale}: ${key}`).toBe(true);
@@ -56,6 +61,11 @@ describe('Carimat journey in each supported language (#1660)', () => {
 			expect(language.t('caseHandover.consent.optOut.switchLabel')).toBe(
 				requestSwitchLabels[locale]
 			);
+			if (locale === 'de@informal') {
+				expect(
+					language.t('caseHandover.consent.info.OPT_IN')
+				).toContain('deine Zustimmung');
+			}
 			const deadline = language.t('erstantwort.responseDeadline.body', {
 				deadlineDays: 7
 			});

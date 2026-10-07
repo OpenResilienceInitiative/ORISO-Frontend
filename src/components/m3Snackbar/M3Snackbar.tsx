@@ -65,6 +65,7 @@ export const m3SnackbarActionSx = {
 	'color': m3SnackbarColors.action,
 	'textTransform': 'none',
 	'minWidth': 0,
+	'minHeight': 44,
 	'px': 1,
 	'py': 0.5,
 	/* The label is one word, not a paragraph. Without this the flex row
