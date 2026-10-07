@@ -45,7 +45,7 @@ export const LiveChatChecking = ({ text }: LiveChatCheckingProps) => (
 			sx={{
 				fontSize: 16,
 				fontWeight: 500,
-				color: registrationMd3.onSurfaceVariant,
+				color: `var(--m3-on-surface-variant, ${registrationMd3.onSurfaceVariant})`,
 				maxWidth: 360
 			}}
 		>
