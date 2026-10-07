@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { TFunction } from 'i18next';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { ModalContext } from '../../../globalState/context/ModalContext';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
@@ -69,6 +70,19 @@ export const ComposerToolbar = ({
 }: ComposerToolbarProps) => {
 	const [openMenu, setOpenMenu] = useState<ComposerToolbarMenu>(null);
 	const anchorRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+
+	// The dropdown menus are portalled to document.body, so they are not
+	// covered by app overlays (e.g. the "group chat stopped" overlay while the
+	// composer stays mounted underneath). Close any open menu as soon as an
+	// overlay registers itself in the ModalContext (issue #458). Optional
+	// chaining: the context has no default provider (Storybook/tests).
+	const modalContext = useContext(ModalContext);
+	const hasActiveOverlay = (modalContext?.overlays?.length ?? 0) > 0;
+	useEffect(() => {
+		if (hasActiveOverlay) {
+			setOpenMenu(null);
+		}
+	}, [hasActiveOverlay]);
 
 	const toggleMenu = useCallback(
 		(menu: Exclude<ComposerToolbarMenu, null>) =>
