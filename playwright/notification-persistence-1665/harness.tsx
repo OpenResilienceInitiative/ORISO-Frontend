@@ -15,6 +15,9 @@ import {
 	NotificationsContext
 } from '../../src/globalState/provider/NotificationsProvider';
 import { NotificationsCenter } from '../../src/components/notificationsCenter/NotificationsCenter';
+import { Notifications } from '../../src/components/notifications/Notifications';
+import { displayFilterStore } from '../../src/utils/displayFilter/store';
+import { DEFAULT_DISPLAY_FILTERS } from '../../src/utils/displayFilter/model';
 import { UserDataContext, SessionsDataContext } from '../../src/globalState';
 import { setAppConfig } from '../../src/utils/appConfig';
 const lang = new URLSearchParams(location.search).get('locale') || 'de';
@@ -40,9 +43,33 @@ const token =
 	'.fixture';
 document.cookie = 'keycloak=' + token + ';path=/';
 setAppConfig({ releaseToggles: { enableNewNotifications: true } } as any);
+function FixtureAlerts() {
+	const ctx = React.useContext(NotificationsContext)!;
+	return <Notifications notifications={ctx.notifications} />;
+}
 function FixtureControls() {
 	const ctx = React.useContext(NotificationsContext)!;
-	(window as any).fixture = { refresh: ctx.refreshNotificationFeed };
+	(window as any).fixture = {
+		refresh: ctx.refreshNotificationFeed,
+		hideSystemWithAutoRead: () => {
+			// Synthetic synced Matrix boundary; the real store/provider perform
+			// filter resolution and hidden-read scheduling.
+			displayFilterStore.attachClient({
+				getUserId: () => '@local-synthetic-1665:fixture',
+				getSyncState: () => 'PREPARED',
+				getAccountData: () => ({
+					getContent: () => DEFAULT_DISPLAY_FILTERS
+				}),
+				setAccountData: () => Promise.resolve(),
+				on: () => undefined,
+				removeListener: () => undefined
+			} as any);
+			displayFilterStore.setSection('timeline', {
+				kinds: { system: { show: false, pill: false } },
+				autoReadHidden: true
+			});
+		}
+	};
 	return (
 		<aside
 			style={{
@@ -105,6 +132,7 @@ createRoot(document.getElementById('root')!).render(
 							<NotificationsProvider>
 								<FixtureControls />
 								<NotificationsCenter />
+								<FixtureAlerts />
 							</NotificationsProvider>
 						</SessionsDataContext.Provider>
 					</UserDataContext.Provider>

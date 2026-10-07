@@ -17,10 +17,13 @@ import {
 import { displayFilterStore, mirrorKey } from '../../utils/displayFilter/store';
 import { DEFAULT_DISPLAY_FILTERS } from '../../utils/displayFilter/model';
 
+const authSession = vi.hoisted(() => ({ token: 'fake-token' }));
 const apiGetEventNotifications = vi.fn();
 const apiMarkEventNotificationRead = vi.fn();
 const apiMarkEventNotificationsReadByTypes = vi.fn();
 const apiGetEventNotificationsUnreadCount = vi.fn();
+const apiMarkAllEventNotificationsRead = vi.fn();
+const apiClearEventNotifications = vi.fn();
 
 vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: (...args: unknown[]) =>
@@ -31,13 +34,15 @@ vi.mock('../../api/apiEventNotifications', () => ({
 		apiMarkEventNotificationsReadByTypes(...args),
 	apiGetEventNotificationsUnreadCount: (...args: unknown[]) =>
 		apiGetEventNotificationsUnreadCount(...args),
-	apiMarkAllEventNotificationsRead: vi.fn(),
-	apiClearEventNotifications: vi.fn(() => Promise.resolve())
+	apiMarkAllEventNotificationsRead: (...args: unknown[]) =>
+		apiMarkAllEventNotificationsRead(...args),
+	apiClearEventNotifications: (...args: unknown[]) =>
+		apiClearEventNotifications(...args)
 }));
 
 vi.mock('../../components/sessionCookie/accessSessionCookie', () => ({
 	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
-	getValueFromCookie: () => 'fake-token'
+	getValueFromCookie: () => authSession.token
 }));
 
 const item = (
@@ -89,6 +94,9 @@ const Probe = () => {
 			</button>
 			<button onClick={() => void context.refreshNotificationFeed()}>
 				refresh
+			</button>
+			<button onClick={() => context.markAllNotificationsAsRead()}>
+				read-all
 			</button>
 			<button onClick={() => context.clearNotificationFeed()}>
 				clear
@@ -165,7 +173,12 @@ const waitFor = async (assertion: () => void) => {
 describe('NotificationsProvider × display filter (#1377)', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		authSession.token = 'fake-token';
 		apiGetEventNotifications.mockReset();
+		apiMarkAllEventNotificationsRead
+			.mockReset()
+			.mockResolvedValue(undefined);
+		apiClearEventNotifications.mockReset().mockResolvedValue(undefined);
 		apiMarkEventNotificationRead.mockReset();
 		apiMarkEventNotificationsReadByTypes.mockReset();
 		apiGetEventNotificationsUnreadCount.mockReset();
@@ -964,5 +977,126 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		});
 		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+	});
+	it.each(['read-all', 'clear'])(
+		'resumes a hidden bulk read deferred by a rejected %s',
+		async (action) => {
+			const pending = deferred<void>();
+			if (action === 'read-all')
+				apiMarkAllEventNotificationsRead.mockReturnValue(
+					pending.promise
+				);
+			else apiClearEventNotifications.mockReturnValue(pending.promise);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [item(1, 'message.new')],
+				unreadCount: 25
+			});
+			apiMarkEventNotificationsReadByTypes.mockResolvedValue({
+				updated: 24
+			});
+			renderProvider();
+			await waitFor(() => expect(rows()).toBe('1:u'));
+			act(() => screen.getByText(action).click());
+			act(() =>
+				displayFilterStore.setSection('timeline', hideSystemAutoRead)
+			);
+			await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+			expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
+			await act(async () =>
+				pending.reject(new Error('bulk unavailable'))
+			);
+			await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				1
+			);
+			expect(
+				apiMarkEventNotificationsReadByTypes.mock.calls[0][0]
+			).toContain('supervisor.added');
+		}
+	);
+	it('resumes hidden auto-read after a confirmed clear resets the feed epoch', async () => {
+		const pending = deferred<void>();
+		apiClearEventNotifications.mockReturnValue(pending.promise);
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 25
+		});
+		apiMarkEventNotificationsReadByTypes.mockResolvedValue({ updated: 0 });
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() => screen.getByText('clear').click());
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
+		await act(async () => pending.resolve());
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+	});
+
+	it('restarts hidden auto-read for a replacement account and ignores an old 404 completion', async () => {
+		const previous = deferred<unknown>();
+		apiMarkEventNotificationsReadByTypes
+			.mockReturnValueOnce(previous.promise)
+			.mockResolvedValue({ updated: 24 });
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 25
+		});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+		authSession.token = 'replacement-account-token';
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(7, 'message.new')],
+			unreadCount: 25
+		});
+		await act(async () =>
+			window.dispatchEvent(new Event('oriso:auth-session-change'))
+		);
+		await waitFor(() => expect(rows()).toBe('7:u'));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(2);
+		await act(async () => previous.reject({ status: 404 }));
+		act(() =>
+			displayFilterStore.setSection('timeline', {
+				kinds: {},
+				autoReadHidden: false
+			})
+		);
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(3);
+	});
+	it('does not wake a deferred hidden-read after its provider unmounts', async () => {
+		const pending = deferred<void>();
+		apiMarkAllEventNotificationsRead.mockReturnValue(pending.promise);
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 25
+		});
+		apiMarkEventNotificationsReadByTypes.mockResolvedValue({ updated: 24 });
+		const view = renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() => screen.getByText('read-all').click());
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		view.unmount();
+		await act(async () => pending.reject(new Error('old bulk failure')));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
 	});
 });

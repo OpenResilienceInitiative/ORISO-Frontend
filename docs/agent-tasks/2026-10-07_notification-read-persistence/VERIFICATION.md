@@ -82,15 +82,51 @@ c574390ae9215f0688b030f3c2c28bc31892184b254584971f35b178c6baddfe NotificationsPr
 
 ## Remaining gates
 
-Local targeted checks only. Full project gates, independent review, PR creation, CI, human merge, deployment, and real-browser reload acceptance are still required. No deployed environment was changed or tested by this slice.
+PR1667 is open. The candidate below passed local project/browser checks. Later PR review corrections require a new frozen-candidate rerun; CI, human approval, merge, deployment and Dev acceptance are separate gates. No deployed environment was changed by this slice.
 
 ## Final project gates and independent browser review
 
-Frozen candidate provider SHA25623e7c8da66eb9f94c1b0f2673e5a351f6781aa00d20e81940e25f3d06d1c8117.
+Previously verified candidate provider SHA-256: 23e7c8da66eb9f94c1b0f2673e5a351f6781aa00d20e81940e25f3d06d1c8117.
 
-- Full unit suite:664files /11822tests passed,220.62seconds, exit0.
-- Full lint:scripts (ESLint +TypeScript), lint:style and production build+hardcoded-host validation: exit0.
-- Independent actual-component Chromium:30/30assertions, DE/EN, mobile390x844/tablet820x1180/desktop1440x900; no page errors.
-- Independent source review:both initial findings corrected; no remaining actionable findings in touched scope.
+- Full unit suite: 664 files / 11,822 tests passed, 220.62 seconds, exit 0.
+- Full `lint:scripts` (ESLint + TypeScript), `lint:style` and production build + hardcoded-host validation: exit 0.
+- Independent actual-component Chromium: 30/30 assertions, DE/EN, mobile 390x844 / tablet 820x1180 / desktop 1440x900; no page errors.
+- Independent source review: both initial findings corrected at that candidate. Later PR review findings are being corrected and require new-candidate evidence.
 
 Local synthetics only; CI, human merge, normal Dev deployment and full notification recipient acceptance remain open.
+
+## PR review correction checkpoint
+
+The deferred hidden-read worker now retries when read-all or clear settles. Delayed hidden-read responses cannot mark a replacement account unsupported or overwrite its completion key. The existing toolbar and menu expose disabled / aria-busy state during bulk mutations. Explicit read, read-all and clear failures use existing localized DE/EN retry alerts; no raw server detail is displayed. No new clear button or notification channel was added.
+
+For developers — regression proof before the next full gate:
+
+```text
+Hidden-read wakeup: RED 3 failed / 20 passed; GREEN 23 passed.
+Replacement-account hidden 404: RED 1 failed / 24 passed.
+Mutation feedback: RED 10 failed / 51 passed.
+Final targeted: 108 / 108 tests, six suites, including practice checks.
+Touched ESLint, Prettier and whitespace checks: PASS.
+Frozen provider SHA-256:
+704259ebb1758722456faa5de52496b6e10d1cee50c9e5099852e4f4f7a147c8
+```
+
+Full new-candidate unit, lint/build, independent review, committed browser proof and CI must be recorded separately. Earlier evidence above belongs to the prior candidate.
+
+The first full review-candidate run passed 11,833 tests and failed only four catalogue drift guards: the three new error messages were absent from FR/RU/TI/TR. Those twelve translations were added without changing budgets or guards. The i18n suite then passed 44/44; the provider hash above remains unchanged. The full candidate gates are rerunning after this correction.
+
+## Complete local gates after PR corrections
+
+The final frozen provider and all six locale catalogues passed the required local gates. The independent source reviewer found no actionable issue in the correction. Committed browser proof and new-head CI are subsequent gates.
+
+For developers — final measured local run:
+
+```text
+Full unit: 664 / 664 files, 11,837 / 11,837 tests, 210.14 seconds, exit 0.
+Full lint:scripts (ESLint + TypeScript): exit 0.
+Full lint:style: exit 0; no styles changed by the locale correction.
+Production build + hardcoded-host validation: exit 0.
+Targeted corrections: 108 / 108 tests; i18n guard: 44 / 44.
+Frozen provider SHA-256:
+704259ebb1758722456faa5de52496b6e10d1cee50c9e5099852e4f4f7a147c8
+```

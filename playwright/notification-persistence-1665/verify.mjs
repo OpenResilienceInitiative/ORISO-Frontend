@@ -5,6 +5,15 @@ import crypto from 'node:crypto';
 import { readFileSync } from 'node:fs';
 const output = 'docs/agent-tasks/2026-10-07_notification-persistence-browser';
 await mkdir(output, { recursive: true });
+// Durable evidence must belong to a committed candidate, not a mutable
+// provider/component/translation worktree. The parent freezes the revision.
+const dirtyApplication = execFileSync(
+	'git',
+	['status', '--porcelain', '--', 'src'],
+	{ encoding: 'utf8' }
+).trim();
+if (dirtyApplication)
+	throw new Error('Commit/freeze application source before browser proof.');
 const browser = await chromium.launch({ headless: true });
 const results = [];
 const fixtureLabel =
@@ -18,6 +27,24 @@ const row = (id) => ({
 	createdAt: new Date(Date.now() - id * 60000).toISOString(),
 	readAt: null
 });
+const localeCatalogues = Object.fromEntries(
+	['de', 'en'].map((locale) => [
+		locale,
+		JSON.parse(
+			readFileSync(`src/resources/i18n/${locale}/common.json`, 'utf8')
+		)
+	])
+);
+const markAllLabel = (locale) =>
+	localeCatalogues[locale].notifications.center.markAllRead;
+const failureText = (locale, operation) =>
+	localeCatalogues[locale].notifications.center[
+		operation === 'read'
+			? 'markReadFailed'
+			: operation === 'read-all'
+				? 'markAllReadFailed'
+				: 'clearFailed'
+	];
 const assertions = [];
 function check(name, actual, expected) {
 	const pass = actual === expected;
@@ -30,7 +57,10 @@ async function mount({
 	locale = 'de',
 	viewport = { width: 390, height: 844 },
 	mode = 'reject',
-	trace = false
+	trace = false,
+	feedRows = [row(1), row(2)],
+	loadedIds = null,
+	readyId = '2'
 } = {}) {
 	const context = await browser.newContext({
 		viewport,
@@ -45,7 +75,8 @@ async function mount({
 	const page = await context.newPage();
 	const api = {
 		mode,
-		rows: [row(1), row(2)],
+		rows: feedRows,
+		loadedIds,
 		replacementRows: [row(9)],
 		requests: [],
 		pending: [],
@@ -82,6 +113,7 @@ async function mount({
 		api.requests.push({
 			method: req.method(),
 			path: url.pathname,
+			query: url.search,
 			principal
 		});
 		if (req.method() === 'GET') {
@@ -92,7 +124,11 @@ async function mount({
 								.length
 						}
 					: {
-							items: actorRows(),
+							items: api.loadedIds
+								? actorRows().filter((x) =>
+										api.loadedIds.includes(x.id)
+									)
+								: actorRows(),
 							unreadCount: actorRows().filter((x) => !x.readAt)
 								.length,
 							page: 0,
@@ -116,6 +152,25 @@ async function mount({
 				status: 503,
 				json: { message: 'Synthetic unavailable' }
 			});
+		if (
+			url.pathname.endsWith('/read') &&
+			url.searchParams.has('eventTypes')
+		) {
+			const types = new Set(
+				url.searchParams.get('eventTypes').split(',')
+			);
+			const updated = actorRows().filter(
+				(x) => !x.readAt && types.has(x.eventType)
+			).length;
+			saveRows(
+				actorRows().map((x) =>
+					types.has(x.eventType)
+						? { ...x, readAt: new Date().toISOString() }
+						: x
+				)
+			);
+			return route.fulfill({ json: { updated, eventTypes: [...types] } });
+		}
 		if (req.method() === 'DELETE') saveRows([]);
 		else if (url.pathname.endsWith('/read-all'))
 			saveRows(
@@ -138,7 +193,7 @@ async function mount({
 		`http://127.0.0.1:${version === 'base' ? 9018 : 9017}/playwright/notification-persistence-1665/index.html?locale=${locale}`
 	);
 	await page
-		.locator('[data-notification-id="2"]')
+		.locator(`[data-notification-id="${readyId}"]`)
 		.waitFor({ timeout: 45000 });
 	return {
 		context,
@@ -229,6 +284,14 @@ try {
 				await f.state(),
 				'Unread 2 · 1:unread,2:unread'
 			);
+			// Dismiss through the actual alert's close control before retrying.
+			for (const alert of await f.page.getByRole('alert').all())
+				await alert
+					.getByRole('button', {
+						name: localeCatalogues.de.app.close,
+						exact: true
+					})
+					.click();
 			f.api.mode = 'success';
 			await button.click();
 			await waitState(
@@ -423,6 +486,190 @@ try {
 	} finally {
 		await refresh.context.close();
 	}
+	// New review regressions supplement, rather than replace, the original
+	// 30 assertions above. The toolbar and alerts are real app components.
+	for (const locale of ['de', 'en']) {
+		for (const operation of ['read', 'read-all', 'clear']) {
+			const f = await mount({ locale, mode: 'pending' });
+			try {
+				const toolbar = f.page.getByRole('button', {
+					name: markAllLabel(locale),
+					exact: true
+				});
+				const trigger =
+					operation === 'read'
+						? f.page.locator('[data-notification-id="2"]')
+						: operation === 'read-all'
+							? toolbar
+							: f.page.getByRole('button', {
+									name: 'Fixture clear',
+									exact: true
+								});
+				await trigger.click();
+				for (let i = 0; i < 100 && !f.api.pending.length; i++)
+					await f.page.waitForTimeout(10);
+				check(
+					`${locale}/${operation} submitted at HTTP boundary`,
+					f.api.pending.length,
+					1
+				);
+				if (operation !== 'read') {
+					check(
+						`${locale}/${operation} disables real mark-all toolbar while pending`,
+						await toolbar.isDisabled(),
+						true
+					);
+					check(
+						`${locale}/${operation} exposes real mark-all toolbar aria-busy`,
+						await toolbar.getAttribute('aria-busy'),
+						'true'
+					);
+					const pendingShot = `after-${operation}-${locale}-pending-toolbar.png`;
+					await f.page.screenshot({
+						path: output + '/' + pendingShot,
+						fullPage: false
+					});
+					results.push({
+						scenario: `${operation} real pending toolbar`,
+						version: 'after',
+						locale,
+						state: await f.state(),
+						errors: f.errors,
+						requests: [...f.api.requests],
+						screenshot: pendingShot
+					});
+				}
+				await settle(f, 'reject');
+				const alert = f.page
+					.getByRole('alert')
+					.filter({ hasText: failureText(locale, operation) });
+				await alert.waitFor();
+				check(
+					`${locale}/${operation} shows existing localized error alert`,
+					await alert.isVisible(),
+					true
+				);
+				check(
+					`${locale}/${operation} preserves unread after error feedback`,
+					await f.state(),
+					'Unread 2 · 1:unread,2:unread'
+				);
+				if (operation !== 'read') {
+					check(
+						`${locale}/${operation} enables real mark-all toolbar after failure`,
+						await toolbar.isEnabled(),
+						true
+					);
+					check(
+						`${locale}/${operation} clears real mark-all toolbar aria-busy`,
+						await toolbar.getAttribute('aria-busy'),
+						'false'
+					);
+				}
+				const shot = `after-${operation}-${locale}-localized-failure.png`;
+				await f.page.screenshot({
+					path: output + '/' + shot,
+					fullPage: false
+				});
+				results.push({
+					scenario: `${operation} pending toolbar/localized existing alert`,
+					version: 'after',
+					locale,
+					state: await f.state(),
+					errors: f.errors,
+					requests: f.api.requests,
+					screenshot: shot
+				});
+			} finally {
+				await f.context.close();
+			}
+		}
+	}
+	for (const [operation, outcome] of [
+		['read-all', 'reject'],
+		['clear', 'reject'],
+		['clear', 'success']
+	]) {
+		const f = await mount({
+			mode: 'pending',
+			readyId: '1',
+			loadedIds: [1],
+			feedRows: [
+				{ ...row(1), eventType: 'message.new', category: 'message' },
+				{ ...row(2), eventType: 'supervisor.added' }
+			]
+		});
+		try {
+			await f.page
+				.getByRole('button', {
+					name:
+						operation === 'read-all'
+							? markAllLabel('de')
+							: 'Fixture clear',
+					exact: true
+				})
+				.click();
+			for (let i = 0; i < 100 && !f.api.pending.length; i++)
+				await f.page.waitForTimeout(10);
+			await f.page.evaluate(() =>
+				window.fixture.hideSystemWithAutoRead()
+			);
+			await f.page.waitForTimeout(450);
+			const hiddenRequests = () =>
+				f.api.requests.filter(
+					(x) =>
+						x.method === 'PATCH' &&
+						x.path.endsWith('/read') &&
+						x.query.includes('eventTypes=')
+				);
+			check(
+				`hidden read is deferred during pending ${operation}/${outcome}`,
+				hiddenRequests().length,
+				0
+			);
+			f.api.mode = 'success';
+			await settle(f, outcome);
+			for (let i = 0; i < 100 && !hiddenRequests().length; i++)
+				await f.page.waitForTimeout(20);
+			check(
+				`hidden read wakes after ${operation}/${outcome} settles`,
+				hiddenRequests().length,
+				1
+			);
+			check(
+				`hidden read carries unloaded eligible system type after ${operation}/${outcome}`,
+				new URLSearchParams(hiddenRequests()[0]?.query)
+					.get('eventTypes')
+					?.split(',')
+					.includes('supervisor.added'),
+				true
+			);
+			await waitState(
+				f,
+				outcome === 'success' ? 'Unread 0 · ' : 'Unread 1 · 1:unread'
+			);
+			check(
+				`hidden read reconciles real provider count after ${operation}/${outcome}`,
+				await f.state(),
+				outcome === 'success' ? 'Unread 0 · ' : 'Unread 1 · 1:unread'
+			);
+			results.push({
+				scenario: `deferred hidden read after ${operation}/${outcome}`,
+				version: 'after',
+				locale: 'de',
+				state: await f.state(),
+				errors: f.errors,
+				requests: f.api.requests
+			});
+		} finally {
+			await f.context.close();
+		}
+	}
+	check(
+		'all actual-component browser scenarios have zero page errors',
+		results.flatMap((x) => x.errors).length,
+		0
+	);
 	const source = readFileSync(
 		'src/globalState/provider/NotificationsProvider.tsx'
 	);

@@ -56,4 +56,20 @@ describe('MarkAllReadButton (#1200)', () => {
 		expect(button.getAttribute('title')).toBe('Alle als gelesen');
 		expect(screen.getByTestId('done-all-icon')).toBeTruthy();
 	});
+	it('announces a pending mutation and prevents duplicate toolbar activation', () => {
+		const onClick = vi.fn();
+		render(
+			<MarkAllReadButton
+				hasUnread
+				busy
+				onClick={onClick}
+				label="Mark all as read"
+			/>
+		);
+		const button = screen.getByRole('button', { name: 'Mark all as read' });
+		expect(button.getAttribute('aria-busy')).toBe('true');
+		expect(button.hasAttribute('disabled')).toBe(true);
+		fireEvent.click(button);
+		expect(onClick).not.toHaveBeenCalled();
+	});
 });

@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
 import React, { useContext } from 'react';
+import i18n from 'i18next';
+import de from '../../resources/i18n/de/common.json';
+import en from '../../resources/i18n/en/common.json';
+import { MarkAllReadButton } from '../../components/notificationsCenter/MarkAllReadButton';
 import {
 	act,
 	cleanup,
@@ -122,9 +126,19 @@ const ReadAccountingProbe = () => {
 			<button onClick={() => context.markNotificationAsRead('2')}>
 				read-two
 			</button>
-			<button onClick={context.markAllNotificationsAsRead}>
-				read-all
-			</button>
+			<MarkAllReadButton
+				hasUnread={context.hasUnreadNotifications}
+				onClick={context.markAllNotificationsAsRead}
+				label="read-all"
+				busy={context.isMarkingAllRead || context.isClearingFeed}
+			/>
+			<div data-testid="mutation-status">
+				{String(context.isMarkingAllRead)}:
+				{String(context.isClearingFeed)}
+			</div>
+			<div data-testid="feedback">
+				{JSON.stringify(context.notifications)}
+			</div>
 			<button onClick={context.clearNotificationFeed}>clear</button>
 			<button onClick={() => context.markNotificationAsRead('unknown')}>
 				read-unknown
@@ -1109,8 +1123,8 @@ describe('NotificationsProvider confirmed persistence', () => {
 		const request = deferred();
 		apiMarkAllEventNotificationsRead.mockReturnValueOnce(request.promise);
 		await mountFeed();
-		fireEvent.click(screen.getByText('read-all'));
-		fireEvent.click(screen.getByText('read-all'));
+		fireEvent.click(screen.getByRole('button', { name: 'read-all' }));
+		fireEvent.click(screen.getByRole('button', { name: 'read-all' }));
 		expectUnread();
 		expect(apiMarkAllEventNotificationsRead).toHaveBeenCalledTimes(1);
 		await act(async () =>
@@ -1126,7 +1140,9 @@ describe('NotificationsProvider confirmed persistence', () => {
 			],
 			unreadCount: 0
 		});
-		await act(async () => fireEvent.click(screen.getByText('read-all')));
+		await act(async () =>
+			fireEvent.click(screen.getByRole('button', { name: 'read-all' }))
+		);
 		await waitFor(() =>
 			expect(screen.getByTestId('read-state').textContent).toBe('1:read')
 		);
@@ -1156,7 +1172,7 @@ describe('NotificationsProvider confirmed persistence', () => {
 		const request = deferred();
 		apiMarkAllEventNotificationsRead.mockReturnValue(request.promise);
 		await mountFeed();
-		fireEvent.click(screen.getByText('read-all'));
+		fireEvent.click(screen.getByRole('button', { name: 'read-all' }));
 		authSession.token = null;
 		await act(async () =>
 			window.dispatchEvent(new Event('oriso:auth-session-change'))
@@ -1243,7 +1259,7 @@ describe('NotificationsProvider confirmed persistence', () => {
 		const request = deferred();
 		apiMarkAllEventNotificationsRead.mockReturnValue(request.promise);
 		await mountFeed();
-		fireEvent.click(screen.getByText('read-all'));
+		fireEvent.click(screen.getByRole('button', { name: 'read-all' }));
 		apiGetEventNotifications.mockResolvedValue({
 			items: [
 				feedItem(2, '2026-09-12T12:00:00Z'),
@@ -1268,7 +1284,7 @@ describe('NotificationsProvider confirmed persistence', () => {
 		const request = deferred();
 		apiMarkAllEventNotificationsRead.mockReturnValue(request.promise);
 		await mountFeed();
-		fireEvent.click(screen.getByText('read-all'));
+		fireEvent.click(screen.getByRole('button', { name: 'read-all' }));
 		fireEvent.click(screen.getByText('add-local'));
 		apiGetEventNotifications.mockResolvedValue({
 			items: [
@@ -1338,7 +1354,7 @@ describe('NotificationsProvider confirmed persistence', () => {
 			if (action === 'clear')
 				apiClearEventNotifications.mockReturnValue(request.promise);
 			await mountFeed();
-			fireEvent.click(screen.getByText(action));
+			fireEvent.click(screen.getByRole('button', { name: action }));
 			authSession.token = tokenFor({
 				...identity,
 				sub: 'user-b',
@@ -1434,7 +1450,7 @@ describe('NotificationsProvider confirmed persistence', () => {
 			else apiClearEventNotifications.mockReturnValue(bulk.promise);
 			apiMarkEventNotificationRead.mockReturnValue(individual.promise);
 			await mountFeed();
-			fireEvent.click(screen.getByText(action));
+			fireEvent.click(screen.getByRole('button', { name: action }));
 			fireEvent.click(screen.getByText('read-one-twice'));
 			expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1);
 			expectUnread();
@@ -1468,7 +1484,7 @@ describe('NotificationsProvider confirmed persistence', () => {
 			else apiClearEventNotifications.mockReturnValue(bulk.promise);
 			apiMarkEventNotificationRead.mockReturnValue(individual.promise);
 			await mountFeed();
-			fireEvent.click(screen.getByText(action));
+			fireEvent.click(screen.getByRole('button', { name: action }));
 			fireEvent.click(screen.getByText('read-one'));
 			expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1);
 			apiGetEventNotifications.mockResolvedValue({
@@ -1514,5 +1530,131 @@ describe('NotificationsProvider confirmed persistence', () => {
 		);
 		await act(async () => request.resolve());
 		expect(screen.getByTestId('read-state').textContent).toBe('2:unread');
+	});
+	it.each(['read-all', 'clear'])(
+		'exposes truthful pending state and disables the bulk toolbar during %s',
+		async (action) => {
+			const pending = deferred();
+			if (action === 'read-all')
+				apiMarkAllEventNotificationsRead.mockReturnValue(
+					pending.promise
+				);
+			else apiClearEventNotifications.mockReturnValue(pending.promise);
+			await mountFeed();
+			fireEvent.click(screen.getByRole('button', { name: action }));
+			expect(screen.getByTestId('mutation-status').textContent).toBe(
+				action === 'read-all' ? 'true:false' : 'false:true'
+			);
+			const toolbar = screen.getByRole('button', { name: 'read-all' });
+			expect(toolbar.hasAttribute('disabled')).toBe(true);
+			expect(toolbar.getAttribute('aria-busy')).toBe('true');
+			await act(async () =>
+				pending.reject(new Error('private provider failure'))
+			);
+			expect(screen.getByTestId('mutation-status').textContent).toBe(
+				'false:false'
+			);
+			expect(toolbar.hasAttribute('disabled')).toBe(false);
+			expect(toolbar.getAttribute('aria-busy')).toBe('false');
+		}
+	);
+	it.each([
+		[
+			'en',
+			'read-one',
+			'The notification could not be marked as read. Please try again.'
+		],
+		[
+			'en',
+			'read-all',
+			'Notifications could not be marked as read. Please try again.'
+		],
+		['en', 'clear', 'Activity could not be cleared. Please try again.'],
+		[
+			'de',
+			'read-one',
+			'Die Benachrichtigung konnte nicht als gelesen markiert werden. Bitte erneut versuchen.'
+		],
+		[
+			'de',
+			'read-all',
+			'Benachrichtigungen konnten nicht als gelesen markiert werden. Bitte erneut versuchen.'
+		],
+		[
+			'de',
+			'clear',
+			'Aktivität konnte nicht gelöscht werden. Bitte erneut versuchen.'
+		]
+	])(
+		'reports a localized %s retry message after rejected %s',
+		async (language, action, expected) => {
+			await i18n.init({
+				lng: language,
+				resources: { de: { translation: de }, en: { translation: en } },
+				interpolation: { escapeValue: false }
+			});
+			const failure = new Error(
+				'private SMTP reply user@example.org credential-canary'
+			);
+			if (action === 'read-one')
+				apiMarkEventNotificationRead.mockRejectedValue(failure);
+			if (action === 'read-all')
+				apiMarkAllEventNotificationsRead.mockRejectedValue(failure);
+			if (action === 'clear')
+				apiClearEventNotifications.mockRejectedValue(failure);
+			await mountFeed();
+			await act(async () =>
+				fireEvent.click(screen.getByRole('button', { name: action }))
+			);
+			expectUnread();
+			expect(screen.getByTestId('feedback').textContent).toContain(
+				expected
+			);
+			expect(screen.getByTestId('feedback').textContent).toContain(
+				'"announce":"alert"'
+			);
+			expect(screen.getByTestId('feedback').textContent).not.toContain(
+				'user@example.org'
+			);
+			expect(screen.getByTestId('feedback').textContent).not.toContain(
+				'credential-canary'
+			);
+		}
+	);
+	it('does not report a stale mutation failure into another account or reset its pending state', async () => {
+		const old = deferred();
+		const current = deferred();
+		apiClearEventNotifications
+			.mockReturnValueOnce(old.promise)
+			.mockReturnValueOnce(current.promise);
+		await mountFeed();
+		fireEvent.click(screen.getByText('clear'));
+		authSession.token = 'new-account-token';
+		apiGetEventNotifications.mockResolvedValue({
+			items: [feedItem(2, '2026-09-12T12:00:00Z')],
+			unreadCount: 1
+		});
+		await act(async () =>
+			window.dispatchEvent(new Event('oriso:auth-session-change'))
+		);
+		await waitFor(() =>
+			expect(screen.getByTestId('read-state').textContent).toBe(
+				'2:unread'
+			)
+		);
+		fireEvent.click(screen.getByText('clear'));
+		await act(async () => old.reject(new Error('old account failure')));
+		expect(screen.getByTestId('mutation-status').textContent).toBe(
+			'false:true'
+		);
+		expect(screen.getByTestId('feedback').textContent).toBe('[]');
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
+		await act(async () => current.resolve());
+		expect(screen.getByTestId('mutation-status').textContent).toBe(
+			'false:false'
+		);
 	});
 });

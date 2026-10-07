@@ -214,6 +214,9 @@ type NotificationsContextProps = {
 	 * PATCH and updates `readAt` and the server total only on success.
 	 */
 	markNotificationsReadConfirmed: (ids: string[]) => Promise<void>;
+	/** Pending mutation state; optional for static Storybook/practice contexts. */
+	isMarkingAllRead?: boolean;
+	isClearingFeed?: boolean;
 	markAllNotificationsAsRead: () => void;
 	clearNotificationFeed: () => void;
 };
@@ -387,6 +390,8 @@ export function NotificationsProvider(props) {
 	const pendingReadIdsRef = useRef<Set<string>>(new Set());
 	const readAllPendingRef = useRef(false);
 	const clearPendingRef = useRef(false);
+	const [isMarkingAllRead, setIsMarkingAllRead] = useState(false);
+	const [isClearingFeed, setIsClearingFeed] = useState(false);
 	// A 404 from the bulk endpoint means an older server: fall back silently.
 	const bulkReadUnsupportedRef = useRef(false);
 	const bulkReadScheduledRef = useRef(false);
@@ -434,6 +439,9 @@ export function NotificationsProvider(props) {
 		pendingReadIdsRef.current = new Set();
 		readAllPendingRef.current = false;
 		clearPendingRef.current = false;
+		setIsMarkingAllRead(false);
+		setIsClearingFeed(false);
+		setBulkReadGeneration((value) => value + 1);
 		settlementRef.current = { anySuccess: false, failed: [] };
 		bulkReadPendingRef.current = false;
 		bulkReadScheduledRef.current = false;
@@ -836,8 +844,52 @@ export function NotificationsProvider(props) {
 		older.forEach((response) => applyFeedResponse(response));
 	}, [applyFeedResponse, fetchFeedPage]);
 
+	const addNotification = useCallback(
+		(
+			notification:
+				| NotificationType
+				| NotificationDefaultType
+				| IncomingVideoCallProps
+		) => {
+			const newNotification = { ...notification };
+			if (!notification.id) {
+				newNotification.id = uuid();
+				if (!notification.timeout)
+					newNotification.timeout = NOTIFICATION_DEFAULT_TIMEOUT;
+			}
+			setNotifications((existing) => {
+				if (
+					notification.id &&
+					existing.some(
+						(item) =>
+							item.id === notification.id &&
+							item.notificationType ===
+								notification.notificationType
+					)
+				)
+					return existing;
+				return [...existing, newNotification];
+			});
+		},
+		[]
+	);
+
+	const reportMutationFailure = useCallback(
+		(key: string) => {
+			addNotification({
+				notificationType: NOTIFICATION_TYPE_ERROR,
+				title: t('notification.error'),
+				text: t(key),
+				closeable: true,
+				announce: 'alert',
+				timeout: 60000
+			});
+		},
+		[addNotification]
+	);
+
 	const markNotificationsReadConfirmed = useCallback(
-		async (ids: string[]) => {
+		async (ids: string[], options: { reportFailure?: boolean } = {}) => {
 			const accessToken = getValueFromCookie('keycloak');
 			if (!accessToken) return;
 			// An opened card is a separate read intent, even during read-all or
@@ -906,7 +958,12 @@ export function NotificationsProvider(props) {
 								settlementRef.current.anySuccess = true;
 							})
 							.catch(() => {
+								if (feedEpoch !== feedEpochRef.current) return;
 								settlementRef.current.failed.push(id);
+								if (options.reportFailure)
+									reportMutationFailure(
+										'notifications.center.markReadFailed'
+									);
 							})
 							.finally(() => {
 								if (feedEpoch !== feedEpochRef.current) {
@@ -924,7 +981,7 @@ export function NotificationsProvider(props) {
 				);
 			}
 		},
-		[settlePendingReads]
+		[reportMutationFailure, settlePendingReads]
 	);
 
 	/**
@@ -1000,6 +1057,7 @@ export function NotificationsProvider(props) {
 				}
 				return 'done';
 			} catch (error) {
+				if (feedEpoch !== feedEpochRef.current) return 'pending';
 				const message = (error as { message?: string })?.message;
 				if (
 					message === FETCH_ERRORS.NO_MATCH ||
@@ -1020,8 +1078,8 @@ export function NotificationsProvider(props) {
 					if (pendingReadCountRef.current === 0) {
 						settlePendingReads();
 					}
+					setBulkReadGeneration((value) => value + 1);
 				}
-				setBulkReadGeneration((value) => value + 1);
 			}
 		},
 		[settlePendingReads]
@@ -1050,12 +1108,15 @@ export function NotificationsProvider(props) {
 		}
 		// Claimed synchronously so a per-id timer created in the same commit
 		// leaves these rows to the bulk read whatever the timer order.
+		const feedEpoch = feedEpochRef.current;
 		bulkReadScheduledRef.current = true;
 		const timer = window.setTimeout(() => {
+			if (feedEpoch !== feedEpochRef.current) return;
 			bulkReadScheduledRef.current = false;
 			// Recorded only once the request succeeded or the server is known
 			// to be older; a failed request must not count as done.
 			void markHiddenReadOnServer(hiddenEventTypes).then((result) => {
+				if (feedEpoch !== feedEpochRef.current) return;
 				if (result === 'done') {
 					lastBulkReadKeyRef.current = key;
 				} else if (result === 'failed') {
@@ -1235,28 +1296,6 @@ export function NotificationsProvider(props) {
 		[notifications]
 	);
 
-	const addNotification = useCallback(
-		(notification: NotificationType) => {
-			if (
-				notification.id &&
-				hasNotification(notification.id, notification.notificationType)
-			) {
-				return;
-			}
-
-			let newNotification = { ...notification };
-			if (!notification.id) {
-				newNotification.id = uuid();
-				if (!notification.timeout) {
-					newNotification.timeout = NOTIFICATION_DEFAULT_TIMEOUT;
-				}
-			}
-
-			setNotifications([...notifications, newNotification]);
-		},
-		[hasNotification, notifications]
-	);
-
 	const addEventNotification = useCallback(
 		(event: EventNotificationInput) => {
 			// Fallback for local-only events until every producer is fully backend-backed.
@@ -1312,7 +1351,7 @@ export function NotificationsProvider(props) {
 				return;
 			// An explicit retry need not wait for the automatic hidden-read cooldown.
 			cooldownRef.current.delete(id);
-			void markNotificationsReadConfirmed([id]);
+			void markNotificationsReadConfirmed([id], { reportFailure: true });
 		},
 		[markNotificationsReadConfirmed]
 	);
@@ -1333,6 +1372,7 @@ export function NotificationsProvider(props) {
 				.map((item) => item.id)
 		);
 		readAllPendingRef.current = true;
+		setIsMarkingAllRead(true);
 		pendingReadCountRef.current += 1;
 		void apiMarkAllEventNotificationsRead()
 			.then(() => {
@@ -1351,20 +1391,26 @@ export function NotificationsProvider(props) {
 				settlementRef.current.anySuccess = true;
 			})
 			.catch(() => {
-				// A failed mutation leaves the feed and its unread badge intact.
+				if (feedEpoch === feedEpochRef.current)
+					reportMutationFailure(
+						'notifications.center.markAllReadFailed'
+					);
 			})
 			.finally(() => {
 				if (feedEpoch !== feedEpochRef.current) return;
 				readAllPendingRef.current = false;
+				setIsMarkingAllRead(false);
 				pendingReadCountRef.current -= 1;
 				if (pendingReadCountRef.current === 0) settlePendingReads();
+				setBulkReadGeneration((value) => value + 1);
 			});
-	}, [settlePendingReads]);
+	}, [reportMutationFailure, settlePendingReads]);
 
 	const clearNotificationFeed = useCallback(() => {
 		if (!getValueFromCookie('keycloak') || clearPendingRef.current) return;
 		const feedEpoch = feedEpochRef.current;
 		clearPendingRef.current = true;
+		setIsClearingFeed(true);
 		// Reuse read serialization: polls and older pages wait for the DELETE.
 		pendingReadCountRef.current += 1;
 		void apiClearEventNotifications()
@@ -1376,15 +1422,23 @@ export function NotificationsProvider(props) {
 				void fetchFeedPage(0).catch(() => undefined);
 			})
 			.catch(() => {
-				// Failure keeps rows, counts, and pagination; the user may retry.
+				if (feedEpoch === feedEpochRef.current)
+					reportMutationFailure('notifications.center.clearFailed');
 			})
 			.finally(() => {
 				if (feedEpoch !== feedEpochRef.current) return;
 				clearPendingRef.current = false;
+				setIsClearingFeed(false);
 				pendingReadCountRef.current -= 1;
 				if (pendingReadCountRef.current === 0) settlePendingReads();
+				setBulkReadGeneration((value) => value + 1);
 			});
-	}, [fetchFeedPage, resetFeedState, settlePendingReads]);
+	}, [
+		fetchFeedPage,
+		reportMutationFailure,
+		resetFeedState,
+		settlePendingReads
+	]);
 
 	return (
 		<NotificationsContext.Provider
@@ -1413,6 +1467,8 @@ export function NotificationsProvider(props) {
 				removeNotification,
 				markNotificationAsRead,
 				markNotificationsReadConfirmed,
+				isMarkingAllRead,
+				isClearingFeed,
 				markAllNotificationsAsRead,
 				clearNotificationFeed
 			}}
