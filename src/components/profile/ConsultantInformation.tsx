@@ -236,8 +236,8 @@ export const ConsultantInformation = () => {
 					type="standard"
 					className="tertiary"
 				/>
+				<ProfileAvatarChoice />
 			</div>
-			<ProfileAvatarChoice />
 			<EditableData
 				label={translate('profile.data.displayName')}
 				type="text"
