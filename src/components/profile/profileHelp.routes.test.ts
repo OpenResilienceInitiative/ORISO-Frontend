@@ -4,8 +4,7 @@ import { AUTHORITIES } from '../../globalState';
 import { isTabGroup, solveGroupConditions } from '../../utils/tabsHelper';
 import { profileRoutesHelp } from './profileHelp.routes';
 import profileRoutes from './profile.routes';
-import { EnableWalkthrough } from './EnableWalkthrough';
-import { TourOverviewSection } from '../productTour/TourOverviewSection';
+import { HelpToursSection } from './HelpToursSection';
 
 // The globalState barrel pulls lottie (crashes in jsdom): stub the player.
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -35,7 +34,7 @@ describe('Profile → Help → Tours (#1526)', () => {
 		expect(solveGroupConditions(toursGroup(true), asker, [])).toBe(false);
 	});
 
-	it('mounts the tour switch and the tour list nowhere else in the profile', () => {
+	it('mounts the shared learning card nowhere else in the profile', () => {
 		const settings = { enableWalkthrough: true } as never;
 		const mounts = profileRoutes(settings, null, ['de'], false)
 			.flatMap((tab) =>
@@ -48,13 +47,9 @@ describe('Profile → Help → Tours (#1526)', () => {
 						: [{ url: tab.url, component: element.component }]
 				)
 			)
-			.filter(
-				({ component }) =>
-					component === EnableWalkthrough ||
-					component === TourOverviewSection
-			)
+			.filter(({ component }) => component === HelpToursSection)
 			.map(({ url }) => url);
 
-		expect(mounts).toEqual(['/hilfe/rundgaenge', '/hilfe/rundgaenge']);
+		expect(mounts).toEqual(['/hilfe/rundgaenge']);
 	});
 });

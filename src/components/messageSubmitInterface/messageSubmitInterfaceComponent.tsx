@@ -16,6 +16,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
@@ -82,6 +83,7 @@ import {
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
@@ -654,13 +656,9 @@ export const MessageSubmitInterfaceComponent = ({
 		counsellors: true,
 		moderators: true
 	});
-	const audienceSelectionStorageKey = useMemo(() => {
-		const sessionId = activeSession?.item?.id;
-		if (!sessionId) {
-			return '';
-		}
-		return `oriso.audienceSelection.${sessionId}`;
-	}, [activeSession?.item?.id]);
+	const audienceSelectionStorageKey = audienceSelectionStorageKeyFor(
+		activeSession?.item?.id
+	);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -2264,7 +2262,10 @@ export const MessageSubmitInterfaceComponent = ({
 					? 'anonymous'
 					: 'oneOnOne';
 	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
+	const isPracticing = usePracticeActive();
 	const hasUploadFunctionality =
+		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {

@@ -518,7 +518,9 @@ export const Login = () => {
 					recordLoginFailure({
 						outcome: 'rate_limited',
 						transport: describeLoginTransport(
-							error as Parameters<typeof describeLoginTransport>[0]
+							error as Parameters<
+								typeof describeLoginTransport
+							>[0]
 						),
 						stage: isOtpRequired || otp ? 'otp' : 'password'
 					});

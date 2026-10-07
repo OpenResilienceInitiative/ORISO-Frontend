@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../api/apiLogoutKeycloak', () => ({
 	apiKeycloakLogout: vi.fn().mockResolvedValue(undefined)
@@ -172,5 +172,115 @@ describe('logout storage sweep (#1071)', () => {
 		expect(availabilitySignal?.aborted).toBe(true);
 		expect(keycloakSignal?.aborted).toBe(true);
 		vi.useRealTimers();
+	});
+
+	// The Keycloak logout is a POST and the draft flush writes: both would be
+	// blocked while the practice network guard is still on (#1622).
+	describe('while practice mode is on', () => {
+		const started: Array<() => void> = [];
+		const startPractice = async () => {
+			const practice = await import('../../practice/practiceMode');
+			practice.enterPracticeMode({
+				tourId: 'consultant-practice-accept'
+			});
+			started.push(practice.exitPracticeMode);
+			return practice;
+		};
+
+		// The guard patches the real globals: never leave it on between tests.
+		afterEach(() => {
+			started.splice(0).forEach((exit) => exit());
+		});
+
+		it('leaves practice mode before any pre-logout handler runs', async () => {
+			const practice = await startPractice();
+			const { callEventListeners } = await import(
+				'../../utils/eventHandler'
+			);
+			const seen: boolean[] = [];
+			vi.mocked(callEventListeners).mockImplementationOnce(() => {
+				seen.push(practice.isPracticeMode());
+				return Promise.resolve(false) as never;
+			});
+
+			const { logout } = await import('./logout');
+			await logout(false);
+			await flush();
+
+			expect(seen).toEqual([false]);
+		});
+
+		it('leaves practice mode before the Keycloak logout is sent', async () => {
+			const practice = await startPractice();
+			const { apiKeycloakLogout } = await import(
+				'../../api/apiLogoutKeycloak'
+			);
+			const seen: boolean[] = [];
+			vi.mocked(apiKeycloakLogout).mockImplementationOnce(() => {
+				seen.push(practice.isPracticeMode());
+				return Promise.resolve() as never;
+			});
+
+			const { logout } = await import('./logout');
+			await logout(false);
+			await flush();
+
+			expect(seen).toEqual([false]);
+		});
+
+		it('lets the practice views drain before the guard comes off, then signs out', async () => {
+			const practice = await startPractice();
+			const releaseSandbox = practice.holdPracticeExit();
+			const order: string[] = [];
+			practice.onPracticeExit(() => order.push('layers down'));
+			const { apiKeycloakLogout } = await import(
+				'../../api/apiLogoutKeycloak'
+			);
+			vi.mocked(apiKeycloakLogout).mockImplementationOnce(() => {
+				order.push('keycloak logout');
+				return Promise.resolve() as never;
+			});
+
+			const { logout } = await import('./logout');
+			const signingOut = logout(false);
+			await flush();
+			expect(practice.isPracticeMode()).toBe(true);
+
+			order.push('sandbox drained');
+			releaseSandbox();
+			await signingOut;
+			await flush();
+
+			expect(order).toEqual([
+				'sandbox drained',
+				'layers down',
+				'keycloak logout'
+			]);
+		});
+
+		it('also leaves it when there is no session left to sign out of', async () => {
+			const practice = await startPractice();
+			const { getValueFromCookie } = await import(
+				'../sessionCookie/accessSessionCookie'
+			);
+			vi.mocked(getValueFromCookie).mockReturnValueOnce(
+				undefined as never
+			);
+
+			const { logout } = await import('./logout');
+			await logout(false);
+			await flush();
+
+			expect(practice.isPracticeMode()).toBe(false);
+		});
+
+		it('leaves it when the auth guard tears the session down before the login form', async () => {
+			const practice = await startPractice();
+
+			const { teardownLocalSession } = await import('./logout');
+			teardownLocalSession();
+
+			expect(practice.isPracticeMode()).toBe(false);
+		});
 	});
 });
