@@ -245,7 +245,7 @@
 	svg {
 		width: 32px;
 		height: 32px;
-		color: var(--m3-primary, #a5000a);
+		color: var(--m3-on-surface-variant, #444748);
 	}
 
 	h3 {
@@ -287,5 +287,34 @@
 
 	.messageItem__systemNotificationHeaderText {
 		padding-left: var(--carimat-header-inset, 28px);
+	}
+}
+
+/* Optional overview uses quiet M3 roles; the chat consent controls stay intact. */
+.caseHandoverConsentInfo {
+	.m3Dialog__heroIcon {
+		color: var(--m3-secondary, #4c555f);
+	}
+
+	.caseHandoverConsentInfo__switchRow {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 12px;
+		margin-top: 16px;
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: 500;
+	}
+
+	.caseHandoverConsentInfo__switch {
+		--m3-primary: var(--m3-secondary, #4c555f);
+		--switch-primary: var(--m3-secondary, #4c555f);
+		--switch-primary-container: var(--m3-secondary-container, #646d78);
+		--switch-on-primary: var(--m3-on-secondary, #ffffff);
+		--switch-on-primary-container: var(
+			--m3-on-secondary-container,
+			#e7effc
+		);
 	}
 }
