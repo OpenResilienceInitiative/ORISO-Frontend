@@ -1497,7 +1497,7 @@ export const SessionListItemComponent = ({
 							) : isAsker && !hasConsultantData ? (
 								/* Points right, into the card's width, so the card's corner clip never cuts the beam. */
 								<ConsultantSearchLoader
-									size={AVATAR_SIZES.session}
+									size="40px"
 									animated={isSearchingForConsultant}
 								/>
 							) : !isAsker ? (
