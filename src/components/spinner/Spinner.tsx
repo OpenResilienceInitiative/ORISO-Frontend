@@ -1,18 +1,19 @@
 import '../../polyfill';
 import * as React from 'react';
-import clsx from 'clsx';
-import './spinner.styles.scss';
+import { Loading } from '../app/Loading';
 
 interface SpinnerProps {
 	isDark?: boolean;
 	className?: string;
 }
 
-export const Spinner = ({ isDark, className }: SpinnerProps) => {
+export const Spinner = ({ className }: SpinnerProps) => {
 	return (
-		<div className={clsx('spinner', isDark && 'dark', className)}>
-			<div className="double-bounce1" />
-			<div className="double-bounce2" />
-		</div>
+		<Loading
+			layout="inline"
+			size="medium"
+			delayMs={0}
+			className={className}
+		/>
 	);
 };

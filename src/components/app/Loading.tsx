@@ -1,24 +1,58 @@
 import clsx from 'clsx';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
+import { useTranslation } from 'react-i18next';
+import { OrbitalTrails } from '../orbitalTrails/OrbitalTrails';
 import './loading.styles.scss';
 
-export const Loading = () => {
-	const [isVisible, setIsVisible] = useState(false);
+export interface LoadingProps {
+	layout?: 'page' | 'section' | 'inline';
+	size?: 'small' | 'medium' | 'large';
+	delayMs?: number;
+	label?: string;
+	className?: string;
+}
+
+export const Loading = ({
+	layout = 'section',
+	size = 'large',
+	delayMs = 200,
+	label,
+	className
+}: LoadingProps) => {
+	const { t } = useTranslation();
+	const text = label ?? t('app.wait');
+	const [isVisible, setIsVisible] = useState(delayMs === 0);
 
 	useEffect(() => {
-		// Delay showing the loading indicator, but hide it again if loading takes too long
-		const timeoutIds = [
-			setTimeout(() => setIsVisible(true), 200),
-			setTimeout(() => setIsVisible(false), 2000)
-		];
-		return () => timeoutIds.forEach(clearTimeout);
-	}, []);
+		setIsVisible(delayMs === 0);
+		if (delayMs === 0) return;
+		const timeout = window.setTimeout(() => setIsVisible(true), delayMs);
+		return () => window.clearTimeout(timeout);
+	}, [delayMs]);
+
+	if (!isVisible) return null;
 
 	return (
-		<div className={clsx('loading', isVisible && 'loading--visible')}>
-			<LoadingIndicator />
+		<div
+			className={clsx(
+				'loading',
+				`loading--${layout}`,
+				`loading--${size}`,
+				className
+			)}
+			role="status"
+			aria-live="polite"
+		>
+			<div className="loading__animation" aria-hidden="true">
+				<OrbitalTrails
+					label={text}
+					variant="single"
+					palette="brand"
+					warmupFrames={40}
+				/>
+			</div>
+			<span className="loading__label">{text}</span>
 		</div>
 	);
 };

@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Spinner component for loading states.'
+				component:
+					'Compatibility entry point for shared orbital loading in the stage and theme loader.'
 			}
 		}
 	}

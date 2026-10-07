@@ -8,7 +8,8 @@ const meta = {
 	parameters: {
 		docs: {
 			description: {
-				component: 'Animated bouncing loading spinner indicator.'
+				component:
+					'Compatibility entry point for the shared orbital Loading component.'
 			}
 		}
 	}
