@@ -133,7 +133,8 @@ const WiredInviteEntry = () => {
 };
 
 const meta = {
-	title: 'Group chat/Self-help entry room — wired',
+	id: 'group-chat-self-help-entry-room-wired',
+	title: 'Entry flows/Self-help groups/Invitation flow',
 	component: WiredInviteEntry,
 	parameters: {
 		layout: 'fullscreen',

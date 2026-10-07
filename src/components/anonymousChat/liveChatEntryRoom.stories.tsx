@@ -29,7 +29,8 @@ import { phone375Globals } from '../message/messageStoryShell';
  * poll, so what Storybook shows is what the link shows.
  */
 const meta: Meta = {
-	title: 'Live chat/Entry room',
+	id: 'live-chat-entry-room',
+	title: 'Entry flows/Live chat/Entry room',
 	parameters: {
 		docs: {
 			description: {

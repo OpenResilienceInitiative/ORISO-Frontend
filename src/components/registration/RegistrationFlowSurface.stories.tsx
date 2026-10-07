@@ -29,7 +29,7 @@ import {
  * fixtures in `.storybook/preview.tsx`.
  *
  * The routed flow with real step navigation lives in
- * `REGISTRATION/Registration runtime`; this surface exists to review all four
+ * `Entry flows/Postcode counselling/Routed registration`; this surface exists to review all four
  * steps at once without clicking through them.
  */
 
@@ -240,7 +240,8 @@ function RegistrationFlowSurface({
 }
 
 const meta = {
-	title: 'REGISTRATION/Registration flow surface',
+	id: 'registration-registration-flow-surface',
+	title: 'Entry flows/Postcode counselling/Registration steps',
 	component: RegistrationFlowSurface,
 	tags: ['autodocs'],
 	parameters: {
@@ -260,7 +261,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'All four registration steps rendered from the **product components** inside the real `RegistrationProvider` and the real header/footer chrome — no story-local rebuild, no fake topic or agency data. Use the switcher to move between steps. The routed flow with real navigation is in `REGISTRATION/Registration runtime`.'
+					'All four registration steps rendered from the **product components** inside the real `RegistrationProvider` and the real header/footer chrome — no story-local rebuild, no fake topic or agency data. Use the switcher to move between steps. The routed flow with real navigation is in `Entry flows/Postcode counselling/Routed registration`.'
 			}
 		}
 	}

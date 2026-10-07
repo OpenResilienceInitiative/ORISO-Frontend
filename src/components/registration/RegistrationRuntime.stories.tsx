@@ -84,7 +84,8 @@ function RegistrationRuntimeStory() {
 }
 
 const meta = {
-	title: 'REGISTRATION/Registration runtime',
+	id: 'registration-registration-runtime',
+	title: 'Entry flows/Postcode counselling/Routed registration',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
