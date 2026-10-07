@@ -225,14 +225,12 @@ export const M3Snackbar = ({
 				'minWidth': 0,
 				'px': 1,
 				'py': 0.5,
-				/* The label is one word, not a paragraph. Without this the flex
-				   row squeezes it into a column of single letters as soon as
-				   the message beside it needs the room — and a longer language
-				   needs it sooner than German does. A label that will not fit
-				   belongs on its own line (`actionOnOwnLine`), not broken
-				   apart. */
-				'whiteSpace': 'nowrap',
-				'flexShrink': 0,
+				/* Translated labels may exceed a narrow chat column. Wrap the
+				   complete action within its available row rather than scrolling. */
+				'whiteSpace': 'normal',
+				'overflowWrap': 'anywhere',
+				'maxWidth': '100%',
+				'flexShrink': 1,
 				'&:hover': {
 					backgroundColor: 'rgba(255, 255, 255, 0.08)'
 				},
@@ -279,7 +277,15 @@ export const M3Snackbar = ({
 		actionOnOwnLine && action ? (
 			closeButton || undefined
 		) : action || onClose ? (
-			<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+			<Box
+				sx={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 0.5,
+					minWidth: 0,
+					maxWidth: '100%'
+				}}
+			>
 				{actionButton}
 				{closeButton}
 			</Box>
@@ -300,13 +306,18 @@ export const M3Snackbar = ({
 				'borderRadius': '4px',
 				'boxShadow': elevation3,
 				'alignItems': 'center',
+				'flexWrap': 'wrap',
+				'minWidth': 0,
 				'px': 2,
 				'py': 1,
 				/* MUI reserves a right gutter for the action slot; with the ✕
 				   already carrying its own padding that reads as a hole. */
 				'& .MuiAlert-action': {
 					alignItems: 'center',
-					flexShrink: 0,
+					flexShrink: 1,
+					minWidth: 0,
+					maxWidth: '100%',
+					ml: 'auto',
 					mr: 0,
 					pt: 0,
 					pl: 1
@@ -315,6 +326,8 @@ export const M3Snackbar = ({
 					...messageTypography,
 					py: '6px',
 					minWidth: 0,
+					flex: '1 1 160px',
+					overflow: 'visible',
 					overflowWrap: 'anywhere'
 				},
 				...sx
@@ -327,7 +340,8 @@ export const M3Snackbar = ({
 						display: 'flex',
 						justifyContent: 'flex-end',
 						mt: 0.5,
-						mr: -1
+						minWidth: 0,
+						maxWidth: '100%'
 					}}
 				>
 					{actionButton}
@@ -355,7 +369,7 @@ export const M3Snackbar = ({
 				onClose?.();
 			}}
 			sx={[
-				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' },
+				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: 'calc(100% - 32px)' },
 				...(Array.isArray(containerSx) ? containerSx : [containerSx])
 			]}
 		>
