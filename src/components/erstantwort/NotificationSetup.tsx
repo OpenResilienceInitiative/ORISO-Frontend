@@ -3,14 +3,9 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { apiPatchUserData } from '../../api/apiPatchUserData';
-import { useNotificationSettings } from '../../hooks/useNotificationSettings';
+import { useNotificationChannels } from './useNotificationChannels';
 import { useTenant } from '../../globalState/provider/TenantProvider';
-import { appConfig } from '../../utils/appConfig';
-import {
-	browserNotificationsSettings,
-	isSupported,
-	optInToBrowserNotifications
-} from '../../utils/notificationHelpers';
+import { optInToBrowserNotifications } from '../../utils/notificationHelpers';
 import {
 	NotificationChoice,
 	NotificationChoiceCard
@@ -21,35 +16,23 @@ import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
  * Choice is derived from live account settings; a click is never completion.
  */
 export const NotificationSetup = ({
-	isEmailEnabled = true
+	isEmailEnabled = true,
+	onStart
 }: {
 	isEmailEnabled?: boolean;
+	onStart?: () => void;
 }) => {
 	const { t } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const tenant = useTenant();
 	const continuation = useRef(0);
-	const { settings, isSuppressed } = useNotificationSettings();
+	const { emailActive, browserActive, browserSupported, browserSilenced } =
+		useNotificationChannels(isEmailEnabled);
 	const [pending, setPending] = useState<NotificationChoice | null>(null);
 	const [emailOpen, setEmailOpen] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [awaitingBrowser, setAwaitingBrowser] = useState(false);
-	const emailActive =
-		isEmailEnabled &&
-		Boolean(
-			userData?.email &&
-				userData?.emailNotifications?.emailNotificationsEnabled &&
-				userData?.emailNotifications?.settings
-					?.newChatMessageNotificationEnabled
-		);
-	const browserSupported = Boolean(isSupported());
-	const browserActive =
-		browserSupported &&
-		Notification.permission === 'granted' &&
-		(appConfig?.releaseToggles?.enableNewNotifications === true
-			? settings.browserNotifications?.enabled
-			: browserNotificationsSettings().enabled);
 	const chosen: NotificationChoice | null =
 		emailActive && browserActive
 			? 'BOTH'
@@ -146,6 +129,7 @@ export const NotificationSetup = ({
 			(choice !== 'EMAIL' && !browserSupported)
 		)
 			return;
+		onStart?.();
 		setError(null);
 		if (choice !== 'BROWSER' && !userData?.email) {
 			setPending(choice);
@@ -184,7 +168,7 @@ export const NotificationSetup = ({
 					)}
 				</p>
 			)}
-			{browserActive && isSuppressed('messages') && (
+			{browserActive && browserSilenced && (
 				<p role="status">
 					{t(
 						'erstantwort.notificationChoice.browserSilenced',

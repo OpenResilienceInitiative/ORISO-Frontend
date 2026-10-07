@@ -11,6 +11,7 @@ import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { NotificationSetup } from './NotificationSetup';
+import { useNotificationChannels } from './useNotificationChannels';
 import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
 import {
 	ErstantwortActionKind,
@@ -62,6 +63,14 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
+	const { hasReachableChannel } =
+		useNotificationChannels(isAskerEmailEnabled);
+	const [notificationSetupStarted, setNotificationSetupStarted] =
+		useState(false);
+	// Keep an in-progress setup visible through its saved confirmation. On reload,
+	// existing reachability suppresses automatic invitations again.
+	const offerNotificationSetup =
+		notificationSetupStarted || !hasReachableChannel;
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
 
 	const state: ErstantwortLiveState = useMemo(
@@ -102,16 +111,23 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const hasChoice = resolvedBausteine.some(
 		(item) => item.id === 'notificationChoice'
 	);
+	const offeredBausteine =
+		offerNotificationSetup || parsed.status === 'ok'
+			? resolvedBausteine
+			: resolvedBausteine.filter(
+					(item) => item.id !== 'notificationChoice'
+				);
 	const bausteine =
 		persistedInvitation && !hasChoice
-			? resolvedBausteine.map((item) =>
+			? offeredBausteine.map((item) =>
 					item.id === 'emailNotification'
 						? { ...item, action: undefined }
 						: item
 				)
-			: [...resolvedBausteine];
+			: [...offeredBausteine];
 	if (
 		persistedInvitation &&
+		offerNotificationSetup &&
 		!hasChoice &&
 		!bausteine.some((item) => item.id === 'emailNotification')
 	) {
@@ -173,16 +189,22 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
 					emailNotification:
-						persistedInvitation && !hasChoice ? (
+						persistedInvitation &&
+						!hasChoice &&
+						offerNotificationSetup ? (
 							<NotificationSetup
 								isEmailEnabled={isAskerEmailEnabled}
+								onStart={() =>
+									setNotificationSetupStarted(true)
+								}
 							/>
 						) : undefined,
-					notificationChoice: (
+					notificationChoice: offerNotificationSetup ? (
 						<NotificationSetup
 							isEmailEnabled={isAskerEmailEnabled}
+							onStart={() => setNotificationSetupStarted(true)}
 						/>
-					),
+					) : undefined,
 					saveCredentials: (
 						<SaveCredentialsCard
 							userName={userData?.userName ?? ''}
