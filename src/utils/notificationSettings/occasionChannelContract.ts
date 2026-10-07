@@ -62,6 +62,7 @@ const BROWSER_ASSOCIATIONS: Record<
 	'neue-anfrage': { kind: 'descriptor', eventTypes: ['request.new'] },
 	'direkte-anfrage': { kind: 'unmapped' },
 	'tagesuebersicht': { kind: 'unmapped' },
+	'einsicht-angefragt': { kind: 'unmapped' },
 	'uebergabe-angefragt': {
 		kind: 'descriptor',
 		eventTypes: ['handover.requested']

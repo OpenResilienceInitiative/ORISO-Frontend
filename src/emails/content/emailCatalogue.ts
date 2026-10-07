@@ -32,6 +32,7 @@ export const EMAIL_IDS = [
 	'tagesuebersicht',
 
 	// Handover and supervision (#864).
+	'einsicht-angefragt',
 	'uebergabe-angefragt',
 	'uebergabe-bestaetigt',
 	'rueckmeldung',
@@ -256,6 +257,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'neue-anfrage': 'Neue Anfrage in der Beratungsstelle',
 	'direkte-anfrage': 'Direkte Anfrage',
 	'tagesuebersicht': 'Tagesübersicht',
+	'einsicht-angefragt': 'Einsicht angefragt',
 	'uebergabe-angefragt': 'Übergabe angefragt',
 	'uebergabe-bestaetigt': 'Übergabe bestätigt',
 	'rueckmeldung': 'Rückmeldung im Fachaustausch',
@@ -308,6 +310,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'neue-anfrage': 'consultant',
 		'direkte-anfrage': 'consultant',
 		'tagesuebersicht': 'consultant',
+		'einsicht-angefragt': 'asker',
 		'uebergabe-angefragt': 'asker',
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
@@ -363,6 +366,7 @@ export const EMAIL_CLASS: Record<
 	'neue-anfrage': 'operational',
 	'direkte-anfrage': 'operational',
 	'tagesuebersicht': 'operational',
+	'einsicht-angefragt': 'operational',
 	// Frank, 8 October 2026: mail only when personal consent is required.
 	// The consent mode governs delivery; there is no separate email opt-out.
 	'uebergabe-angefragt': 'consent',

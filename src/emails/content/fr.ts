@@ -269,6 +269,19 @@ export const fr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Nouvelle notification',
+		preheader: 'Veuillez vous connecter.',
+		headline: 'Une demande concernant votre accompagnement',
+		paragraphs: [
+			'Un autre professionnel de votre service de conseil demande votre consentement pour consulter temporairement votre conversation.',
+			'Examinez la demande dans l’espace protégé. La personne qui vous accompagne actuellement reste responsable de votre suivi.'
+		],
+		cta: { label: 'Examiner la demande', href: '{{requestUrl}}' },
+		assurance,
+		footer
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Nouvelle notification',
 		preheader: 'Veuillez vous connecter.',

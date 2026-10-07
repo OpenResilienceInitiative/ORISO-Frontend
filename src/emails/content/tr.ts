@@ -269,6 +269,19 @@ export const tr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Yeni bildirim',
+		preheader: 'Lütfen giriş yapın.',
+		headline: 'Danışmanlığınızla ilgili bir talep',
+		paragraphs: [
+			'Danışmanlık merkezinizdeki başka bir uzman, görüşmenize geçici erişim için onayınızı istiyor.',
+			'Talebi korumalı alanda inceleyin. Mevcut danışmanınız danışmanlığınızdan sorumlu olmaya devam eder.'
+		],
+		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
+		assurance,
+		footer
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Yeni bildirim',
 		preheader: 'Lütfen giriş yapın.',
