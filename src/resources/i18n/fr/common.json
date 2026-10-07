@@ -2668,6 +2668,10 @@
 					"appointment": {
 						"title": "Rendez-vous",
 						"description": "Un rendez-vous a été confirmé, déplacé ou annulé – ainsi que le rappel qui le précède."
+					},
+					"consentRequest": {
+						"title": "Demandes d’accès et de transfert",
+						"description": "Recevez un e-mail lorsque votre accord pour un accès ou un transfert est demandé."
 					}
 				},
 				"consultant": {
