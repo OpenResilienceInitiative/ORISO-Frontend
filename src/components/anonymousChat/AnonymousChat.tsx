@@ -1,3 +1,4 @@
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import * as React from 'react';
 import { useState, useEffect, useContext, FC, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,7 +31,6 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
-import { apiPostRegistration } from '../../api/apiPostRegistration';
 import {
 	generatePseudonym,
 	generatePassword,
@@ -38,7 +38,7 @@ import {
 } from '../../utils/anonName/engine';
 import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { redirectToApp } from '../registration/autoLogin';
-import { endpoints } from '../../resources/scripts/endpoints';
+import { useRegisterThenLogin } from '../registration/useRegisterThenLogin';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import {
 	TenantContext,
@@ -94,6 +94,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 	const [identity] = useState<Pseudonym>(() => generatePseudonym(locale));
 	const [username] = useState<string>(() => toRegistrationUsername(identity));
 	const [password] = useState<string>(() => generatePassword());
+	const registerThenLogin = useRegisterThenLogin();
+	/* The account — and the enquiry with it — exists; only the login after it
+	   failed (#1533). From here on "start" only logs in again, so the topic
+	   and the counselling centre are fixed and nothing about them is checked
+	   again (CodeRabbit on #1567). */
+	const [loginRetry, setLoginRetry] = useState(false);
 	const [noAvailabilityModalTopic, setNoAvailabilityModalTopic] =
 		useState<TopicsDataInterface | null>(null);
 	const [noAvailabilityModalOpen, setNoAvailabilityModalOpen] =
@@ -160,6 +166,12 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 			apiGetConsultantAvailability(topic.id, consultingTypeId)
 				.then((res) => {
 					if (res && res.available === false) {
+						/* A check started before the account existed can
+						   answer after it: the enquiry is made, so no alert
+						   over the login retry (CodeRabbit on #1567). */
+						if (registerThenLogin.accountCreated()) {
+							return false;
+						}
 						if (force) {
 							openNoAvailabilityModal(topic);
 						} else {
@@ -178,7 +190,7 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 					return true;
 				})
 				.catch(() => true),
-		[openNoAvailabilityModal]
+		[openNoAvailabilityModal, registerThenLogin]
 	);
 
 	// Load agencies for a specific topic
@@ -222,6 +234,14 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, uniqueAgencies);
 							return newMap;
 						});
+						/* An answer that arrives after the account was created
+						   (a topic opened before "start") only fills its list:
+						   the choice the account was made for stays, and no
+						   availability alert opens over the login retry
+						   (CodeRabbit on #1567). */
+						if (registerThenLogin.accountCreated()) {
+							return;
+						}
 						// Auto-select first agency if none selected
 						if (!selectedAgency && uniqueAgencies.length > 0) {
 							setSelectedAgency(uniqueAgencies[0]);
@@ -239,6 +259,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 							newMap.set(topic.id, []);
 							return newMap;
 						});
+						if (registerThenLogin.accountCreated()) {
+							return;
+						}
 						setSelectedTopic(topic);
 						setSelectedAgency(null);
 						setShownNoAvailabilityTopics((prev) => {
@@ -265,6 +288,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						newMap.set(topic.id, []);
 						return newMap;
 					});
+					if (registerThenLogin.accountCreated()) {
+						return;
+					}
 					setSelectedTopic(topic);
 					setSelectedAgency(null);
 				})
@@ -280,11 +306,21 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 				abortController.abort();
 			};
 		},
-		[topicAgencies, selectedAgency, checkConsultantAvailability]
+		[
+			topicAgencies,
+			selectedAgency,
+			checkConsultantAvailability,
+			registerThenLogin
+		]
 	);
 
 	// Handle topic expansion
 	const handleTopicToggle = (topic: TopicsDataInterface) => {
+		/* Opening another topic auto-selects or clears the counselling centre,
+		   which would take the start button away from a login retry. */
+		if (loginRetry) {
+			return;
+		}
 		setExpandedTopics((prev) => {
 			const newSet = new Set(prev);
 			if (newSet.has(topic.id)) {
@@ -334,24 +370,48 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 						: {})
 			};
 
-			apiPostRegistration(
-				endpoints.registerAsker,
-				registrationData,
-				settings.multitenancyWithSingleDomainEnabled,
-				tenant
-			)
+			/* The first press registers and logs in; once the account
+			   exists, a press only logs in again with the same generated
+			   credentials — so the button can come back after any failure
+			   without ever making a second account (#1533). */
+			registerThenLogin
+				.submit(
+					registrationData,
+					settings.multitenancyWithSingleDomainEnabled,
+					tenant
+				)
 				.then(() => {
 					// Registration successful, auto-login completed by apiPostRegistration
 					// Redirect to app (same as normal registration)
 					redirectToApp(undefined, { navigate });
 				})
 				.catch((error) => {
-					// console.error('Anonymous chat registration failed:', error);
 					setIsRegistering(false);
+					if (registerThenLogin.accountCreated()) {
+						/* An agency answer that arrived while the account was
+						   still being created may have cleared the choice or
+						   opened the alert. The retry logs in with what was
+						   submitted, so put that back (CodeRabbit on #1567). */
+						setSelectedAgency(selectedAgency);
+						setSelectedTopic(selectedTopic);
+						setNoAvailabilityModalOpen(false);
+						setLoginRetry(true);
+					}
+					/* A DPA refusal comes from the registration; once the
+					   account exists, only the login retry notice applies. */
+					const dpaNotice = registerThenLogin.accountCreated()
+						? null
+						: getCounsellingDpaNotification(error, t);
+					if (dpaNotice) {
+						addNotification(dpaNotice);
+						return;
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
-						text: t('registration.errors.ups.text'),
+						text: registerThenLogin.accountCreated()
+							? t('registration.accountCreated.retry')
+							: t('registration.errors.ups.text'),
 						closeable: true,
 						timeout: 3000
 					});
@@ -360,8 +420,10 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 
 		// Re-verify availability at the moment of starting — presence can change
 		// between selecting the topic and clicking start. Block and show the
-		// alert when no counsellor is available.
-		if (selectedTopic) {
+		// alert when no counsellor is available. Not for a login retry: the
+		// enquiry already exists, and a counsellor going offline meanwhile must
+		// not keep the person out of it.
+		if (selectedTopic && !registerThenLogin.accountCreated()) {
 			checkConsultantAvailability(
 				selectedTopic,
 				selectedAgency.consultingType,
@@ -388,7 +450,8 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 		isRegistering,
 		t,
 		addNotification,
-		navigate
+		navigate,
+		registerThenLogin
 	]);
 
 	const canRegister = selectedAgency && selectedTopic && !isRegistering;
@@ -746,6 +809,9 @@ export const AnonymousChat: FC<AnonymousChatProps> = ({ onBack }) => {
 																			}}
 																		>
 																			<FormControlLabel
+																				disabled={
+																					loginRetry
+																				}
 																				value={
 																					agency.id
 																				}

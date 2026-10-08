@@ -23,7 +23,7 @@ const ONE_LANGUAGE_FALLBACKS = [
 	/'Wird geladen …'/,
 	/'Die Verschlüsselungseinstellungen sind gerade nicht verfügbar/,
 	/'Richten Sie einmalig einen Ersatzschlüssel ein/,
-	/'Ihr Tresor wird gerade schon eingerichtet/,
+	/'Ihr Ersatzschlüssel wird gerade schon eingerichtet/,
 	/'Die Einrichtung ist fehlgeschlagen/,
 	/'Dieser Ersatzschlüssel ist ungültig/,
 	/'Die Wiederherstellung ist fehlgeschlagen/,

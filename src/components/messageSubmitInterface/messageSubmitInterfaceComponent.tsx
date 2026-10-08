@@ -1,3 +1,5 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
+import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {
@@ -14,8 +16,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
@@ -57,6 +61,7 @@ import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
 	resolveAskerMessageTransport,
+	resolveEnquiryMatrixRoom,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
@@ -71,12 +76,14 @@ import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
@@ -132,7 +139,11 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
-import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
+import {
+	apiPostError,
+	ERROR_LEVEL_ERROR,
+	ERROR_LEVEL_WARN
+} from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { Overlay } from '../overlay/Overlay';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
@@ -202,6 +213,9 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
+	DPA_RESTRICTED: 'DPA_RESTRICTED',
+	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
@@ -237,6 +251,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	targetChannelKind?: SideRoomChannelKind;
 	/** Marks notifications from the internal ADR-016 team room. */
 	teamDiscussion?: boolean;
+	/** Set only by the dedicated protected feedback composer, never a generic aside. */
+	feedbackMailIntent?: boolean;
 	/**
 	 * T35: dual mode (a side panel is open) — the composer rests at ONE
 	 * line on the desktop as well and grows while typing (`composerResize`
@@ -309,7 +325,8 @@ export interface MessageSubmitInterfaceComponentProps {
 		isAside?: boolean,
 		replyToEventId?: string | null,
 		mentionedUserIds?: string[],
-		targetRoomId?: string | null
+		targetRoomId?: string | null,
+		feedbackMailIntent?: boolean
 	) => void;
 	/** A user-triggered retry. One request id is handled at most once. */
 	retryRequest?: {
@@ -322,6 +339,7 @@ export interface MessageSubmitInterfaceComponentProps {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
 }
@@ -442,6 +460,7 @@ export const MessageSubmitInterfaceComponent = ({
 	targetRoomId,
 	targetChannelKind,
 	teamDiscussion = false,
+	feedbackMailIntent = false,
 	compactHeight = false,
 	flushCorner,
 	accent = 'default',
@@ -637,13 +656,9 @@ export const MessageSubmitInterfaceComponent = ({
 		counsellors: true,
 		moderators: true
 	});
-	const audienceSelectionStorageKey = useMemo(() => {
-		const sessionId = activeSession?.item?.id;
-		if (!sessionId) {
-			return '';
-		}
-		return `oriso.audienceSelection.${sessionId}`;
-	}, [activeSession?.item?.id]);
+	const audienceSelectionStorageKey = audienceSelectionStorageKeyFor(
+		activeSession?.item?.id
+	);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -1250,9 +1265,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 		return scheduleComposerAutoFocus(() => {
 			// Review v6: never pull focus off an open menu or a
-			// `data-keeps-focus` region (the side-panel header) — the
-			// alignLeft chain below focuses the editor on its own, so the
-			// check has to come first.
+			// `data-keeps-focus` region (the side-panel header).
 			if (isFocusProtected(document.activeElement)) {
 				return;
 			}
@@ -1270,7 +1283,9 @@ export const MessageSubmitInterfaceComponent = ({
 			// Frank (16.09.): this cursor is the app's, not the reader's —
 			// the card is marked so it does not count as writing.
 			focusComposerAutomatically(composerCardRef.current, () => {
-				composerRef.current?.runAction('alignLeft');
+				// Not runAction('alignLeft'): its focus lands a frame later,
+				// past the checks above, and took the other composer's focus.
+				composerRef.current?.resetTextAlign();
 				focusEditorInput();
 			});
 		}, autoFocusEditor);
@@ -1289,29 +1304,59 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message) => {
+		async (message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
-				return Promise.resolve();
+				return;
 			}
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (!matrixRoomId || !matrixClientService) {
+			if (!matrixClientService) {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
-			try {
-				assertMatrixRoomEncrypted(
-					matrixClientService.getClient(),
-					matrixRoomId
-				);
-			} catch {
+			// #1401: the session may show no Matrix room yet (list fetched before
+			// registration persisted the holding room) or none at all (the agency
+			// has no Matrix service account on this deployment). Re-read the
+			// session and give /sync a moment before deciding; a definite miss is
+			// reported with its reason instead of the generic retry prompt.
+			const roomResolution = await resolveEnquiryMatrixRoom({
+				knownRoomId: resolvedChatSession.matrixRoomId,
+				fetchSessionRoomId: () =>
+					apiGetSessionRoomBySessionId(activeSession.item.id).then(
+						(response) =>
+							response?.sessions?.[0]?.session?.matrixRoomId ??
+							null
+					),
+				isRoomEncrypted: (roomId) => {
+					const client = matrixClientService.getClient();
+					return !!client && isMatrixRoomEncrypted(client, roomId);
+				}
+			});
+			if (roomResolution.status === 'lookup-failed') {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
+			if (roomResolution.status !== 'ready') {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE);
+				apiPostError({
+					name:
+						roomResolution.status === 'room-missing'
+							? 'EnquiryMatrixRoomMissing'
+							: 'EnquiryMatrixRoomNotEncrypted',
+					message:
+						roomResolution.status === 'room-missing'
+							? `Enquiry session ${activeSession.item.id} (agency ${activeSession.item.agencyId}) has no Matrix room; registration did not provision the agency holding room`
+							: `Matrix room ${roomResolution.roomId} of enquiry session ${activeSession.item.id} did not become an encrypted room in time`,
+					level: ERROR_LEVEL_ERROR
+				}).then();
+				return;
+			}
+			const matrixRoomId = roomResolution.roomId;
 			const submissionUserId = matrixClientService
 				.getClient()
 				?.getUserId();
@@ -1363,7 +1408,14 @@ export const MessageSubmitInterfaceComponent = ({
 				.catch((error) => {
 					enquirySubmissionGuard.markFailed();
 					setIsRequestInProgress(false);
-					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					const failure = getCounsellingDpaFailure(error);
+					setActiveInfo(
+						failure
+							? failure.retryable
+								? INFO_TYPES.DPA_UNAVAILABLE
+								: INFO_TYPES.DPA_RESTRICTED
+							: INFO_TYPES.MESSAGE_SEND_ERROR
+					);
 					apiPostError({
 						name: error?.name || 'EnquiryMessageSendError',
 						message:
@@ -1374,6 +1426,7 @@ export const MessageSubmitInterfaceComponent = ({
 				});
 		},
 		[
+			activeSession.item.agencyId,
 			activeSession.item.id,
 			enquirySubmissionGuard,
 			encryptRoom,
@@ -1452,7 +1505,8 @@ export const MessageSubmitInterfaceComponent = ({
 			preserveComposerOnSuccess = false,
 			retryReplyToEventId?: string | null,
 			retryMentionedUserIds?: string[],
-			retryTargetRoomId?: string | null
+			retryTargetRoomId?: string | null,
+			sentFeedbackMailIntent = false
 		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
@@ -1552,6 +1606,7 @@ export const MessageSubmitInterfaceComponent = ({
 								uploadProgress: setUploadProgress,
 								threadRootId: threadRootId || null,
 								supervisorMessage: !!isSupervisor,
+								feedbackMailIntent: sentFeedbackMailIntent,
 								senderDisplayName:
 									userData?.displayName ||
 									userData?.userName ||
@@ -1624,7 +1679,8 @@ export const MessageSubmitInterfaceComponent = ({
 						? retryReplyToEventId || null
 						: replyTo?.eventId || null,
 					mentionedUserIds,
-					teamDiscussion
+					teamDiscussion,
+					sentFeedbackMailIntent
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -1652,7 +1708,8 @@ export const MessageSubmitInterfaceComponent = ({
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
 							mentionedUserIds,
-							matrixRoomId ?? targetRoomId ?? null
+							matrixRoomId ?? targetRoomId ?? null,
+							sentFeedbackMailIntent
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1709,6 +1766,7 @@ export const MessageSubmitInterfaceComponent = ({
 				replyToEventId?: string | null;
 				mentionedUserIds: string[];
 				targetRoomId?: string | null;
+				feedbackMailIntent?: boolean;
 			}
 		) => {
 			const attachmentInput: any = attachmentInputRef.current;
@@ -1749,6 +1807,12 @@ export const MessageSubmitInterfaceComponent = ({
 				? retryContext.transportMessage
 				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
+			const sentFeedbackMailIntent = resolveFeedbackMailIntent({
+				explicitFeedbackComposer: feedbackMailIntent,
+				supervisorFeedbackAction: !!isSupervisor,
+				teamDiscussion,
+				retry: retryContext
+			});
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
 			// MSC3440 m.thread relation on the event (see chatTransportService),
@@ -1847,7 +1911,8 @@ export const MessageSubmitInterfaceComponent = ({
 					preserveComposerOnSuccess,
 					retryContext?.replyToEventId || null,
 					retryContext?.mentionedUserIds || [],
-					retryContext?.targetRoomId
+					retryContext?.targetRoomId,
+					sentFeedbackMailIntent
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
@@ -1873,6 +1938,8 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession.isGroup,
 			attachmentSelected,
+			feedbackMailIntent,
+			teamDiscussion,
 			audienceOptions,
 			editingMessageId,
 			getTypedMarkdownMessage,
@@ -1975,7 +2042,8 @@ export const MessageSubmitInterfaceComponent = ({
 			isAside: retryRequest.isAside,
 			replyToEventId: retryRequest.replyToEventId,
 			mentionedUserIds: retryRequest.mentionedUserIds,
-			targetRoomId: retryRequest.targetRoomId
+			targetRoomId: retryRequest.targetRoomId,
+			feedbackMailIntent: retryRequest.feedbackMailIntent
 		})
 			.catch(() => {
 				// Send failures are surfaced through onSendError. This catch only
@@ -2135,11 +2203,34 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
 			};
+		} else if (
+			activeInfo === INFO_TYPES.DPA_RESTRICTED ||
+			activeInfo === INFO_TYPES.DPA_UNAVAILABLE
+		) {
+			const key =
+				activeInfo === INFO_TYPES.DPA_RESTRICTED
+					? 'counselling.dpa.restricted'
+					: 'counselling.dpa.unavailable';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.title`),
+				infoMessage: translate(`${key}.text`)
+			};
 		} else if (activeInfo === INFO_TYPES.MESSAGE_SEND_ERROR) {
 			infoData = {
 				isInfo: false,
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
+			};
+		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(
+					'statusOverlay.enquiryRoomUnavailable.headline'
+				),
+				infoMessage: translate(
+					'statusOverlay.enquiryRoomUnavailable.text'
+				)
 			};
 		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
 			infoData = {
@@ -2170,7 +2261,11 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
+	const isPracticing = usePracticeActive();
 	const hasUploadFunctionality =
+		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
@@ -2592,7 +2687,14 @@ export const MessageSubmitInterfaceComponent = ({
 			consultantIds: [
 				activeSession?.consultant?.username,
 				activeSession?.consultant?.id,
-				contact?.username
+				contact?.username,
+				...(activeSession?.item?.participants || []).flatMap(
+					(participant) => [
+						participant.consultantId,
+						agencyConsultantDirectory.get(participant.consultantId)
+							?.username
+					]
+				)
 			],
 			supervisorIds: sessionSupervisors.flatMap((supervisor) => [
 				supervisor.id,
@@ -2613,7 +2715,14 @@ export const MessageSubmitInterfaceComponent = ({
 						: label,
 					kind: supervisorLabel
 						? ('supervisor' as AudienceKind)
-						: classifyAudienceKind(value, roster)
+						: classifyAudienceKind(
+								value,
+								roster,
+								unmatchedMemberKind(
+									isSelfHelpGroup,
+									mentionDirectoryState
+								)
+							)
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label))
@@ -2647,6 +2756,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerMatrixUserId,
+		activeSession?.item?.participants,
 		activeSession?.user?.username,
 		activeSession?.item?.id,
 		contact?.username,
@@ -2656,7 +2766,9 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceRefreshTick,
 		sessionSupervisors,
 		agencyConsultantDirectory,
+		mentionDirectoryState,
 		currentChatType,
+		isSelfHelpGroup,
 		activeSession?.isGroup,
 		hideSupervisorAudience,
 		translate,
@@ -3017,6 +3129,11 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
+		const recordedFeedbackMailIntent = resolveFeedbackMailIntent({
+			explicitFeedbackComposer: feedbackMailIntent,
+			supervisorFeedbackAction: !!isSupervisor,
+			teamDiscussion
+		});
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true
@@ -3078,7 +3195,19 @@ export const MessageSubmitInterfaceComponent = ({
 					);
 					if (sendAfterStop) {
 						setIsRequestInProgress(true);
-						sendMessage('', voiceFile, isE2eeEnabled);
+						sendMessage(
+							'',
+							voiceFile,
+							isE2eeEnabled,
+							!!isSupervisor,
+							undefined,
+							undefined,
+							false,
+							undefined,
+							undefined,
+							undefined,
+							recordedFeedbackMailIntent
+						);
 					} else {
 						if (voicePreviewUrl) {
 							URL.revokeObjectURL(voicePreviewUrl);
@@ -3126,6 +3255,9 @@ export const MessageSubmitInterfaceComponent = ({
 		stopVoiceRecording,
 		sendMessage,
 		isE2eeEnabled,
+		isSupervisor,
+		feedbackMailIntent,
+		teamDiscussion,
 		voicePreviewUrl
 	]);
 

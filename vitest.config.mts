@@ -130,7 +130,9 @@ export default defineConfig({
 				// surfaces as a handful of unrelated stories failing at random.
 				optimizeDeps: {
 					include: [
-						'@storybook/addon-docs > @storybook/react-dom-shim'
+						'@storybook/addon-docs > @storybook/react-dom-shim',
+						// Loaded by the Help/Profile route; discover before stories run.
+						'@mui/icons-material/AnimationOutlined'
 					]
 				},
 				test: {

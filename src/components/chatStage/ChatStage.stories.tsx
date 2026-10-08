@@ -9,7 +9,10 @@
  */
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
-import { ConsultantSessionStage } from './__storybook__/ConsultantSessionStage';
+import {
+	ConsultantSessionStage,
+	MOUNT_SETTLE_MS
+} from './__storybook__/ConsultantSessionStage';
 import { PANEL_WIDTH_STORAGE_KEY, STAGE_LAYOUT } from './stageLayout';
 import { BOTTOM_TOLERANCE_PX } from '../messageSubmitInterface/timelineFollow';
 import {
@@ -1677,8 +1680,26 @@ export const PanelOpensAfterMountComposersSettleEqual: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
-		// Let the 240 ms framed→flush transition run out before measuring.
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		// #1613: measure once the re-frame has run out. It is not one 240 ms
+		// transition: the mid-flight lock (138) animates in first, and the
+		// settle re-measure animates on to 106 — on a slow runner that took
+		// longer than a fixed pause. Wait for both shells to be compact and
+		// no longer animating; a height that stays wrong still fails below.
+		await waitFor(
+			() => {
+				for (const shell of canvasElement.querySelectorAll<HTMLElement>(
+					'.textarea__wrapper-send-message'
+				)) {
+					expect(
+						shell.classList.contains(
+							'textarea__wrapper-send-message--compact'
+						)
+					).toBe(true);
+					expect(shell.getAnimations()).toHaveLength(0);
+				}
+			},
+			{ timeout: 5_000 }
+		);
 		await expectCompactComposers(canvasElement);
 	}
 };
@@ -1884,12 +1905,13 @@ const expectPhoneHeaderRules = async (
 			'.sessionMenu__icon--mobile'
 		)!;
 		await userEvent.click(kebab);
+		// The flyout is portalled to <body>, outside the canvas.
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).not.toBeNull()
 		);
-		const flyout = canvasElement.querySelector<HTMLElement>(
+		const flyout = document.querySelector<HTMLElement>(
 			'.sessionMenu__content--open'
 		)!;
 		const videoRow = flyout.querySelector<HTMLElement>(
@@ -1918,7 +1940,7 @@ const expectPhoneHeaderRules = async (
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector('.sessionMenu__content--open')
+				document.querySelector('.sessionMenu__content--open')
 			).toBeNull()
 		);
 	}
@@ -2650,13 +2672,13 @@ export const MainChatAtTheDragFloor320: Story = {
 		await userEvent.click(kebab);
 		await waitFor(() =>
 			expect(
-				canvasElement.querySelector(
+				document.querySelector(
 					'[data-cy="session-menu-start-video-call"]'
 				)
 			).not.toBeNull()
 		);
 		await expect(
-			canvasElement.querySelector('[data-cy="session-menu-start-call"]')
+			document.querySelector('[data-cy="session-menu-start-call"]')
 		).not.toBeNull();
 		await userEvent.click(kebab);
 		// The title column is no longer squeezed to 20 px: it keeps enough
@@ -2991,17 +3013,19 @@ export const NewMessagesFollowWhileWatching: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		const timeline = mainTimeline(canvasElement);
 		for (const body of ARRIVALS) {
 			await userEvent.click(deliverNext(canvasElement));
 			await canvas.findByText(body);
+			// The stage lands a frame after each arrival; delivering sooner
+			// measures the timeline mid-landing and reads "scrolled up".
+			await waitFor(() =>
+				expect(
+					timeline.scrollHeight -
+						(timeline.scrollTop + timeline.clientHeight)
+				).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
+			);
 		}
-		const timeline = mainTimeline(canvasElement);
-		await waitFor(() =>
-			expect(
-				timeline.scrollHeight -
-					(timeline.scrollTop + timeline.clientHeight)
-			).toBeLessThanOrEqual(BOTTOM_TOLERANCE_PX)
-		);
 		// Nothing waits below the fold, so the arrow stays the quiet one.
 		await expect(scrollArrow(canvasElement).className).not.toContain(
 			'composerToolbar__button--scrollToNewest--unread'
@@ -3025,6 +3049,9 @@ const waitForAutomaticCursor = async (canvasElement: HTMLElement) => {
 		expect(card.hasAttribute('data-auto-focused')).toBe(true);
 		expect(card.contains(document.activeElement)).toBe(true);
 	});
+	// The stage scrolls to the end once more after mount; landing after an
+	// arrival, that scroll moves a view the story expects to stay put.
+	await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 	const timeline = mainTimeline(canvasElement);
 	await waitFor(() =>
 		expect(
@@ -3136,6 +3163,9 @@ export const NewMessagesLightTheArrowWhileWriting: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
+		// See waitForAutomaticCursor: the stage's second mount scroll must
+		// not land after the arrival this story expects the view to ignore.
+		await new Promise((resolve) => setTimeout(resolve, MOUNT_SETTLE_MS));
 		const editor = canvasElement.querySelector<HTMLElement>(
 			'[data-cy="stage-main"] .tiptap'
 		)!;

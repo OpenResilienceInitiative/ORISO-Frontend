@@ -54,6 +54,8 @@ graphify-out/*
 # chromatic build log
 build-storybook.log
 docs/*
+!docs/architecture/
+!docs/architecture/**
 !docs/storybook/
 !docs/storybook/**
 !docs/agent-tasks/

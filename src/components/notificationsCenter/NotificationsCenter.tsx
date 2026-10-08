@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import OpenInFullIcon from '@mui/icons-material/OpenInFull';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import MarkChatUnreadOutlinedIcon from '@mui/icons-material/MarkChatUnreadOutlined';
 import { Menu, MenuItem } from '@mui/material';
 import {
@@ -26,6 +27,7 @@ import {
 } from './eventDescriptors';
 import {
 	resolveNotificationActionPath,
+	resolveStatusPageAction,
 	toInterpolationValues
 } from './notificationActionTarget';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
@@ -91,11 +93,18 @@ import { ConversationPreview } from './ConversationPreview';
 import { MarkAllReadButton } from './MarkAllReadButton';
 import { getNextNotificationId } from './notificationQueue';
 import {
+	isTimelineDraftId,
+	mergeDraftsIntoFeed,
+	toNonEmbeddedPath
+} from './timelineDrafts';
+import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import {
 	formatAbsoluteTime,
 	formatClockParts,
 	formatRelativeTime
 } from './timelineTime';
 import { ActivityTimelineEmptyState } from './ActivityTimelineEmptyState';
+import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath';
 import '../sessionsList/sessionsList.styles';
 import './notificationsCenter.styles';
 
@@ -148,7 +157,8 @@ const resolveItemCategory = (item: any): 'system' | 'message' =>
 // server-provided title/text until the strict text-free migration (Slice 2).
 const describeItem = (
 	item: any,
-	translate: (key: string, options?: Record<string, unknown>) => string
+	translate: (key: string, options?: Record<string, unknown>) => string,
+	language?: string
 ) => {
 	const descriptor = getEventDescriptor(item?.eventType);
 	const { title, text } = renderEventStrings(descriptor, translate, {
@@ -156,9 +166,15 @@ const describeItem = (
 		fallbackText: item?.text,
 		// #846: params metadata feeds template placeholders such as
 		// {{senderDisplayName}} — previously they rendered unresolved.
-		interpolation: toInterpolationValues(item?.params)
+		interpolation: toInterpolationValues(item?.params, language)
 	});
 	return { descriptor, title, text };
+};
+
+// #876: a planned maintenance notice links out to the public status page
+// instead of an in-app origin, so it never falls back to the sessions list.
+const openStatusPage = (url: string) => {
+	window.open(url, '_blank', 'noopener,noreferrer');
 };
 
 const resolveSessionId = (item: any): string | null => {
@@ -232,17 +248,6 @@ const parseNumericId = (value?: string | null): number | null => {
 	return Number.isSafeInteger(parsed) ? parsed : null;
 };
 
-const toNonEmbeddedPath = (path?: string | null): string | null => {
-	if (!path) {
-		return null;
-	}
-	const [basePath, queryString = ''] = String(path).split('?');
-	const query = new URLSearchParams(queryString);
-	query.delete('embeddedNotifications');
-	const finalQuery = query.toString();
-	return `${basePath}${finalQuery ? `?${finalQuery}` : ''}`;
-};
-
 export const NotificationsCenter = () => {
 	const { t: translate, i18n } = useTranslation();
 	const navigate = useNavigate();
@@ -256,9 +261,9 @@ export const NotificationsCenter = () => {
 	const sessionsContext = useContext(SessionsDataContext);
 	const sessions = sessionsContext?.sessions;
 	const {
-		notificationFeed,
+		notificationFeed: serverFeed,
 		hasUnreadNotifications,
-		markNotificationAsRead,
+		markNotificationAsRead: markServerNotificationAsRead,
 		markAllNotificationsAsRead,
 		refreshNotificationFeed,
 		loadOlderNotifications,
@@ -266,6 +271,18 @@ export const NotificationsCenter = () => {
 		isLoadingOlderNotifications,
 		olderNotificationsError
 	} = useContext(NotificationsContext);
+	// #1535: unsent drafts join the list here only, not the provider feed.
+	const timelineDrafts = useTimelineDrafts();
+	const notificationFeed = useMemo(
+		() => mergeDraftsIntoFeed(serverFeed, timelineDrafts),
+		[serverFeed, timelineDrafts]
+	);
+	const markNotificationAsRead = useCallback(
+		(id: string) => {
+			if (!isTimelineDraftId(id)) markServerNotificationAsRead(id);
+		},
+		[markServerNotificationAsRead]
+	);
 	// #1377 slice 3: the user's display filter for this list (spec §4/§5.1).
 	const {
 		effective: timelineFilter,
@@ -525,7 +542,11 @@ export const NotificationsCenter = () => {
 						roomRef,
 						matrixEventId,
 						senderName: item.params?.senderName,
-						fallbackText: describeItem(item, translate).text,
+						fallbackText: describeItem(
+							item,
+							translate,
+							i18n.language
+						).text,
 						labels: previewLabels,
 						sessionId,
 						needsCaseHandoverCheck: requiresCaseHandoverCheck(
@@ -535,7 +556,14 @@ export const NotificationsCenter = () => {
 					}
 				];
 			}),
-		[notificationFeed, previewLabels, sessions, translate, userData?.userId]
+		[
+			notificationFeed,
+			previewLabels,
+			sessions,
+			translate,
+			i18n.language,
+			userData?.userId
+		]
 	);
 	// Only sessions that could be curtained cost a status request; a group
 	// chat, an enquiry or one's own case previews without one.
@@ -653,7 +681,11 @@ export const NotificationsCenter = () => {
 					)
 				},
 				(item) => {
-					const { title, text } = describeItem(item, translate);
+					const { title, text } = describeItem(
+						item,
+						translate,
+						i18n.language
+					);
 					return `${title} ${visiblePreview(item.id)?.text || text}`;
 				}
 			),
@@ -665,6 +697,7 @@ export const NotificationsCenter = () => {
 			searchQuery,
 			unreadOnly,
 			translate,
+			i18n.language,
 			visiblePreview
 		]
 	);
@@ -768,14 +801,31 @@ export const NotificationsCenter = () => {
 	const selectedDisplay = useMemo(
 		() =>
 			selectedNotification
-				? describeItem(selectedNotification, translate)
+				? describeItem(selectedNotification, translate, i18n.language)
 				: null,
-		[selectedNotification, translate]
+		[selectedNotification, translate, i18n.language]
 	);
 	const selectedSessionId = useMemo(
 		() => resolveSessionId(selectedNotification),
 		[selectedNotification]
 	);
+	const {
+		linksToStatusPage: selectedLinksToStatusPage,
+		url: selectedStatusPageUrl
+	} = useMemo(
+		() => resolveStatusPageAction(selectedNotification),
+		[selectedNotification]
+	);
+	const selectedOpenLabel = selectedLinksToStatusPage
+		? translate('notifications.center.openStatusPage')
+		: selectedNotification?.actionLabel ||
+			translate(
+				selectedNotification?.eventType === 'group_chat.opened'
+					? 'notifications.center.join'
+					: 'notifications.center.open'
+			);
+	const canOpenSelected =
+		!selectedLinksToStatusPage || selectedStatusPageUrl !== null;
 	const selectedThreadRootId = useMemo(
 		() => resolveThreadRootId(selectedNotification),
 		[selectedNotification]
@@ -837,6 +887,13 @@ export const NotificationsCenter = () => {
 
 	const openNotification = (item: (typeof notificationFeed)[number]) => {
 		markNotificationAsRead(item.id);
+		const statusPage = resolveStatusPageAction(item);
+		if (untilL && statusPage.linksToStatusPage) {
+			if (statusPage.url) {
+				openStatusPage(statusPage.url);
+			}
+			return;
+		}
 		if (untilL) {
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
@@ -851,6 +908,13 @@ export const NotificationsCenter = () => {
 
 	const handleOpenAction = () => {
 		if (!selectedNotification) return;
+		if (selectedLinksToStatusPage) {
+			markNotificationAsRead(selectedNotification.id);
+			if (selectedStatusPageUrl) {
+				openStatusPage(selectedStatusPageUrl);
+			}
+			return;
+		}
 		const nextUnreadId = getNextNotificationId(
 			filteredFeed,
 			selectedNotification.id,
@@ -949,9 +1013,6 @@ export const NotificationsCenter = () => {
 					<ListSearchField
 						leading={
 							<DisplayFilterButton
-								icon={
-									<NavActivityIcon className="sessionsListToolbar__chipIconSvg" />
-								}
 								label={displayFilterLabels.buttonLabel}
 								customised={displayFilterCustomised}
 								customisedLabel={
@@ -1063,7 +1124,7 @@ export const NotificationsCenter = () => {
 					}}
 					onOpenProfile={() => {
 						setDisplayFilterOpen(false);
-						navigate('/profile/notifications/browser');
+						navigate(NOTIFICATION_SETTINGS_PATH);
 					}}
 					labels={displayFilterLabels.dialogLabels}
 				/>
@@ -1088,7 +1149,8 @@ export const NotificationsCenter = () => {
 								activeIndex !== -1 && index === activeIndex + 1;
 							const { descriptor, title, text } = describeItem(
 								item,
-								translate
+								translate,
+								i18n.language
 							);
 							const hydratedPreview = visiblePreview(item.id);
 							const visibleText = hydratedPreview?.text || text;
@@ -1197,15 +1259,17 @@ export const NotificationsCenter = () => {
 									    origin (Figma arrow affordance) — it no longer
 									    toggles the preview, which is open by default
 									    for chat events. */}
-									{isActive && (
+									{isActive && canOpenSelected && (
 										<button
 											type="button"
 											className="notificationsCenter__expander"
 											aria-label={
-												item.actionLabel ||
-												translate(
-													'notifications.center.open'
-												)
+												selectedLinksToStatusPage
+													? `${selectedOpenLabel} ${translate('notifications.center.opensInNewTab')}`
+													: item.actionLabel ||
+														translate(
+															'notifications.center.open'
+														)
 											}
 											onClick={handleOpenAction}
 										>
@@ -1271,20 +1335,16 @@ export const NotificationsCenter = () => {
 					}}
 					transformOrigin={{ vertical: 'top', horizontal: 'right' }}
 				>
-					<MenuItem
-						onClick={() => {
-							setCardMenuAnchor(null);
-							handleOpenAction();
-						}}
-					>
-						{selectedNotification?.actionLabel ||
-							translate(
-								selectedNotification?.eventType ===
-									'group_chat.opened'
-									? 'notifications.center.join'
-									: 'notifications.center.open'
-							)}
-					</MenuItem>
+					{canOpenSelected && (
+						<MenuItem
+							onClick={() => {
+								setCardMenuAnchor(null);
+								handleOpenAction();
+							}}
+						>
+							{selectedOpenLabel}
+						</MenuItem>
+					)}
 					{canShowChatPreview && (
 						<MenuItem
 							onClick={() => {
@@ -1428,20 +1488,39 @@ export const NotificationsCenter = () => {
 								</div>
 							)}
 							<div className="notificationsCenter__detailActions">
-								<button
-									type="button"
-									className="notificationsCenter__openButton"
-									onClick={handleOpenAction}
-								>
-									<OpenInFullIcon />
-									{selectedNotification.actionLabel ||
-										translate(
-											selectedNotification.eventType ===
-												'group_chat.opened'
-												? 'notifications.center.join'
-												: 'notifications.center.open'
-										)}
-								</button>
+								{selectedLinksToStatusPage ? (
+									selectedStatusPageUrl && (
+										<a
+											className="notificationsCenter__openButton"
+											href={selectedStatusPageUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											onClick={() =>
+												markNotificationAsRead(
+													selectedNotification.id
+												)
+											}
+										>
+											<OpenInNewIcon aria-hidden="true" />
+											{selectedOpenLabel}
+											<span className="sr-only">
+												{' '}
+												{translate(
+													'notifications.center.opensInNewTab'
+												)}
+											</span>
+										</a>
+									)
+								) : (
+									<button
+										type="button"
+										className="notificationsCenter__openButton"
+										onClick={handleOpenAction}
+									>
+										<OpenInFullIcon />
+										{selectedOpenLabel}
+									</button>
+								)}
 								<button
 									type="button"
 									className="notificationsCenter__nextButton"

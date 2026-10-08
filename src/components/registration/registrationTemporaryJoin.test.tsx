@@ -56,7 +56,10 @@ beforeAll(async () => {
 	});
 });
 
-const renderAccountStep = (search: string) =>
+const renderAccountStep = (
+	search: string,
+	registrationData: Record<string, unknown> = {}
+) =>
 	render(
 		<I18nextProvider i18n={i18n}>
 			<AppConfigContext.Provider value={{} as any}>
@@ -78,7 +81,7 @@ const renderAccountStep = (search: string) =>
 												undefined,
 											updateRegistrationData: () =>
 												undefined,
-											registrationData: {},
+											registrationData,
 											availableSteps,
 											registrationConsultingType: null
 										} as any
@@ -121,7 +124,8 @@ afterEach(() => {
 
 describe('registration — temporary join', () => {
 	it('offers the temporary join and renames the way on when a group-chat link brought the person here', () => {
-		renderAccountStep('?gcid=15');
+		// A valid invite names the agency the person registers at.
+		renderAccountStep('?gcid=15&aid=88', { agency: { id: 88 } });
 
 		expect(toggles().length, 'the toggle is in the footer').toBeGreaterThan(
 			0
