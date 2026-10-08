@@ -69,6 +69,21 @@ export const getKeycloakAccessToken = (
 					// console.log("🔐 DEBUG: UNAUTHORIZED - 401 response");
 					// console.log("🔐 DEBUG: UNAUTHORIZED - Response text:", response.statusText);
 					reject(new Error(FETCH_ERRORS.UNAUTHORIZED));
+				} else if (response.status === 429) {
+					// Keycloak refuses further codes or attempts for now (#1338).
+					// Its code limit sends the challenge with the 429; an ingress
+					// limit sends HTML, so the body may not parse.
+					Promise.resolve()
+						.then(() => response.json())
+						.catch(() => ({}))
+						.then((data) => {
+							reject(
+								new FetchErrorWithOptions(
+									FETCH_ERRORS.TOO_MANY_REQUESTS,
+									{ data }
+								)
+							);
+						});
 				} else {
 					// console.log("🔐 DEBUG: UNEXPECTED STATUS -", response.status);
 					reject(new Error(`Unexpected status: ${response.status}`));

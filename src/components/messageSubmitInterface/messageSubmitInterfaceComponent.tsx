@@ -1,3 +1,6 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
+import { resolveFeedbackMailIntent } from './feedbackMailIntent';
+import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {
 	useCallback,
@@ -13,12 +16,29 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
+import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
+import {
+	isFocusProtected,
+	isTypingElsewhere,
+	scheduleComposerAutoFocus
+} from './focusGuards';
+import {
+	AUTO_FOCUS_ATTRIBUTE,
+	focusComposerAutomatically
+} from './timelineFollow';
+import {
+	buildSessionChannelPath,
+	resolveComposerChannel,
+	type SideRoomChannelKind
+} from '../../utils/channelRoute';
 import { EmojiPickerPopup } from './inputField/EmojiPickerPopup';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import { rememberEmoji } from '../../utils/recentEmojis';
@@ -36,13 +56,15 @@ import {
 	getExplicitAudienceValues,
 	shouldShowAudienceSelector
 } from './audienceSelectorVisibility';
+import { useComposerDock } from './useComposerDock';
 import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
 	resolveAskerMessageTransport,
+	resolveEnquiryMatrixRoom,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
-import { resolveAsideTargetRoomId } from './asideRouting';
+import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
 import { reloadSessionAfterSendIfNeeded } from './sessionRefreshAfterSend';
 import { chatTransportService } from '../../services/chatTransportService';
 import { extractMentionedUserIds } from '../../utils/messageMentions';
@@ -54,12 +76,14 @@ import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
@@ -115,7 +139,11 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
-import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
+import {
+	apiPostError,
+	ERROR_LEVEL_ERROR,
+	ERROR_LEVEL_WARN
+} from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { Overlay } from '../overlay/Overlay';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
@@ -185,6 +213,9 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
+	DPA_RESTRICTED: 'DPA_RESTRICTED',
+	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
@@ -202,6 +233,54 @@ export interface MessageSubmitInterfaceComponentProps {
 	isSupervisor?: boolean;
 	/** ADR-008: per-session supervision side room id; aside sends go here, never the client room. */
 	supervisionRoomId?: string;
+	/**
+	 * WP-B2: the supervision parallel panel owns the side room, so the main
+	 * composer no longer offers the supervisor as an audience in 1:1
+	 * sessions. Group-chat audiences are untouched. `asideRouting` stays as
+	 * the safety net for anything that still carries an aside.
+	 */
+	hideSupervisorAudience?: boolean;
+	/**
+	 * Side panel (supervision room, Figma "second Chat Room Desktop"): the
+	 * room every send of THIS composer goes to. Overrides the active
+	 * session's client room; aside routing (`asideRouting`) still applies on
+	 * top. Unset = today's behaviour.
+	 */
+	targetRoomId?: string;
+	/** URL/draft identity for targetRoomId; supervision remains the default. */
+	targetChannelKind?: SideRoomChannelKind;
+	/** Marks notifications from the internal ADR-016 team room. */
+	teamDiscussion?: boolean;
+	/** Set only by the dedicated protected feedback composer, never a generic aside. */
+	feedbackMailIntent?: boolean;
+	/**
+	 * T35: dual mode (a side panel is open) — the composer rests at ONE
+	 * line on the desktop as well and grows while typing (`composerResize`
+	 * compact bounds). The phone rests at one line regardless.
+	 */
+	compactHeight?: boolean;
+	/**
+	 * T40 (Frank, round 6): dual mode — the composer loses its outer
+	 * frame (border + 24 px radius) and its 16 px inner inset; the field
+	 * sits directly in the dock with 4 px corners, and only the card's
+	 * OUTER bottom corner stays rounded: `bottom-left` for the main
+	 * column, `bottom-right` for the side panel. Implies the one-line
+	 * rule (`composerResize.ts` MIN_HEIGHT_FLUSH_DESKTOP = 106). Desktop
+	 * only — the phone already runs edge to edge (T10/T31).
+	 */
+	flushCorner?: 'bottom-left' | 'bottom-right';
+	/**
+	 * T41: the supervision room's composer wears the supervision accent —
+	 * `primary-fixed-dim` field border — so the channel is unmistakable
+	 * while writing. Default: the neutral `primary-fixed` hairline.
+	 */
+	accent?: 'default' | 'supervision' | 'team';
+	/**
+	 * Whether this composer should claim focus after its draft is ready.
+	 * Side panels set this to false when a channel-switch action has explicitly
+	 * handed focus to the panel header.
+	 */
+	autoFocusEditor?: boolean;
 	threadRootId?: string | null;
 	threadParentPreview?: string | null;
 	/**
@@ -245,7 +324,9 @@ export interface MessageSubmitInterfaceComponentProps {
 		transportMessage?: string,
 		isAside?: boolean,
 		replyToEventId?: string | null,
-		mentionedUserIds?: string[]
+		mentionedUserIds?: string[],
+		targetRoomId?: string | null,
+		feedbackMailIntent?: boolean
 	) => void;
 	/** A user-triggered retry. One request id is handled at most once. */
 	retryRequest?: {
@@ -257,6 +338,8 @@ export interface MessageSubmitInterfaceComponentProps {
 		isAside: boolean;
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
+		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
 }
@@ -273,32 +356,6 @@ export interface MessageSubmitInterfaceComponentProps {
  * None of them closes over anything from the component; the chevron takes the
  * only prop. Keep them here.
  */
-const ComposerMobileBackIcon = () => (
-	<svg
-		width="5"
-		height="10"
-		viewBox="0 0 5 10"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 10L0 5L5 0V10Z" fill="#1D1B20" />
-	</svg>
-);
-
-const ComposerMobileDownIcon = () => (
-	<svg
-		width="10"
-		height="5"
-		viewBox="0 0 10 5"
-		fill="none"
-		xmlns="http://www.w3.org/2000/svg"
-		aria-hidden="true"
-	>
-		<path d="M5 5L0 0H10L5 5Z" fill="#1D1B20" />
-	</svg>
-);
-
 const AudienceAllMultiIcon = () => (
 	<svg
 		width="19"
@@ -399,6 +456,15 @@ export const MessageSubmitInterfaceComponent = ({
 	isAnonymousLiveChat = false,
 	isSupervisor,
 	supervisionRoomId,
+	hideSupervisorAudience = false,
+	targetRoomId,
+	targetChannelKind,
+	teamDiscussion = false,
+	feedbackMailIntent = false,
+	compactHeight = false,
+	flushCorner,
+	accent = 'default',
+	autoFocusEditor = true,
 	threadRootId,
 	threadParentPreview,
 	replyTo,
@@ -432,6 +498,20 @@ export const MessageSubmitInterfaceComponent = ({
 	const location = useLocation();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
+	const composerCardRef = useRef<HTMLDivElement>(null);
+	// A click or a keystroke makes the focus the reader's own; leaving the
+	// card ends it. Either way the automatic-focus mark goes.
+	const clearAutoFocusMark = useCallback(() => {
+		composerCardRef.current?.removeAttribute(AUTO_FOCUS_ATTRIBUTE);
+	}, []);
+	const handleComposerCardBlur = useCallback(
+		(event: React.FocusEvent<HTMLDivElement>) => {
+			if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+				clearAutoFocusMark();
+			}
+		},
+		[clearAutoFocusMark]
+	);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
 	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -499,6 +579,13 @@ export const MessageSubmitInterfaceComponent = ({
 	const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null);
 	const [isEmojiStripOpen, setIsEmojiStripOpen] = useState(false);
 	const figmaToolbarRef = useRef<HTMLDivElement | null>(null);
+	/**
+	 * The docked wrapper (info bar + previews + composer card). Its height is
+	 * what the timeline has to keep free, and its host's height is what caps
+	 * the composer's growth — both published as CSS variables (T41).
+	 */
+	const dockedWrapperRef = useRef<HTMLDivElement | null>(null);
+	const composerHostHeight = useComposerDock(dockedWrapperRef);
 	const [emojiPickerAnchorEl, setEmojiPickerAnchorEl] =
 		useState<HTMLElement | null>(null);
 	const [isCompactActionStripOpen, setIsCompactActionStripOpen] =
@@ -514,6 +601,11 @@ export const MessageSubmitInterfaceComponent = ({
 	const [autoComposerHeight, setAutoComposerHeight] = useState<number | null>(
 		null
 	);
+	// Review B2 N-1: the framed→flush re-frame (side panel opening AFTER
+	// mount) animates the shell height over 240 ms. Measuring during that
+	// transition reads the old chrome and locks a mid-flight height into
+	// `--composer-height`; every ended height transition re-measures.
+	const [composerSettleTick, setComposerSettleTick] = useState(0);
 	const [isComposerResizing, setIsComposerResizing] = useState(false);
 	const [isComposerSelected, setIsComposerSelected] = useState(false);
 	const composerResizeStartRef = useRef<{
@@ -564,13 +656,9 @@ export const MessageSubmitInterfaceComponent = ({
 		counsellors: true,
 		moderators: true
 	});
-	const audienceSelectionStorageKey = useMemo(() => {
-		const sessionId = activeSession?.item?.id;
-		if (!sessionId) {
-			return '';
-		}
-		return `oriso.audienceSelection.${sessionId}`;
-	}, [activeSession?.item?.id]);
+	const audienceSelectionStorageKey = audienceSelectionStorageKeyFor(
+		activeSession?.item?.id
+	);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -598,16 +686,12 @@ export const MessageSubmitInterfaceComponent = ({
 		}
 
 		const activeElement = document.activeElement as HTMLElement | null;
-		const activeTagName = activeElement?.tagName?.toLowerCase();
-		const isTypingInAnotherInput =
-			!!activeElement &&
-			!inputElement.contains(activeElement) &&
-			(activeElement.isContentEditable ||
-				activeTagName === 'input' ||
-				activeTagName === 'textarea' ||
-				activeTagName === 'select');
-
-		if (isTypingInAnotherInput) {
+		// Review v6: an open menu (the channel card) and regions marked
+		// `data-keeps-focus` (the side-panel header) keep their focus.
+		if (isFocusProtected(activeElement)) {
+			return;
+		}
+		if (isTypingElsewhere(activeElement, inputElement)) {
 			return;
 		}
 
@@ -655,14 +739,26 @@ export const MessageSubmitInterfaceComponent = ({
 		const params = new URLSearchParams(location.search);
 		params.delete('embeddedNotifications');
 		params.delete('draftScopeKey');
-		if (threadRootId) {
-			params.set('threadRootId', threadRootId);
-		} else {
-			params.delete('threadRootId');
-		}
 		const query = params.toString();
-		return `${location.pathname}${query ? `?${query}` : ''}`;
-	}, [location.pathname, location.search, threadRootId]);
+		// B2 / T24: a draft resumes INSIDE its channel via the one channel
+		// parameter — `?channel=thread:<root>` for a thread reply,
+		// `?channel=supervision` for the side room's composer
+		// (`targetRoomId`) — never the legacy pair.
+		return buildSessionChannelPath(
+			`${location.pathname}${query ? `?${query}` : ''}`,
+			resolveComposerChannel({
+				threadRootId,
+				targetRoomId,
+				targetChannelKind
+			})
+		);
+	}, [
+		location.pathname,
+		location.search,
+		targetChannelKind,
+		targetRoomId,
+		threadRootId
+	]);
 
 	const contact = getContact(activeSession);
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
@@ -678,10 +774,15 @@ export const MessageSubmitInterfaceComponent = ({
 	const forcedDraftScopeKey = useMemo(() => {
 		const params = new URLSearchParams(location.search);
 		const allScopeKeys = params.getAll('draftScopeKey');
-		return allScopeKeys.length
-			? allScopeKeys[allScopeKeys.length - 1]
+		if (allScopeKeys.length) {
+			return allScopeKeys[allScopeKeys.length - 1];
+		}
+		// B2: the side room's composer keeps its own draft — scoped to the
+		// side room, never to the client room the main composer writes to.
+		return targetRoomId && !threadRootId
+			? `scope:${targetRoomId}|thread:main`
 			: null;
-	}, [location.search]);
+	}, [location.search, targetRoomId, threadRootId]);
 
 	const loadDraftIntoComposer = useCallback(
 		(loadedState: EditorState, rawDraft?: string) => {
@@ -1144,15 +1245,6 @@ export const MessageSubmitInterfaceComponent = ({
 			: textInputStyles;
 		textInput?.setAttribute('style', textInputStyles);
 
-		const textareaContainer = textInput?.closest('.textarea');
-		const textareaContainerHeight = textareaContainer?.offsetHeight;
-		const scrollButton = textareaContainer
-			?.closest('.session')
-			?.getElementsByClassName('session__scrollToBottom')[0];
-		if (scrollButton) {
-			scrollButton.style.bottom = textareaContainerHeight + 24 + 'px';
-		}
-
 		// Auto-scroll to bottom after resize completes (especially important for bullet lists)
 		scrollEditorToBottom();
 	}, [attachmentSelected, editorState, scrollEditorToBottom]);
@@ -1171,15 +1263,36 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
-		const timeoutId = window.setTimeout(() => {
-			composerRef.current?.runAction('alignLeft');
-			focusEditorInput();
-		}, 0);
-
-		return () => window.clearTimeout(timeoutId);
+		return scheduleComposerAutoFocus(() => {
+			// Review v6: never pull focus off an open menu or a
+			// `data-keeps-focus` region (the side-panel header).
+			if (isFocusProtected(document.activeElement)) {
+				return;
+			}
+			// Nor off another editor the person is typing in: chat card and
+			// side panel each run this once their draft has loaded, and the
+			// later one used to pull focus out mid-word.
+			if (
+				isTypingElsewhere(
+					document.activeElement,
+					textareaInputRef.current
+				)
+			) {
+				return;
+			}
+			// Frank (16.09.): this cursor is the app's, not the reader's —
+			// the card is marked so it does not count as writing.
+			focusComposerAutomatically(composerCardRef.current, () => {
+				// Not runAction('alignLeft'): its focus lands a frame later,
+				// past the checks above, and took the other composer's focus.
+				composerRef.current?.resetTextAlign();
+				focusEditorInput();
+			});
+		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
 		activeSession.item.id,
+		autoFocusEditor,
 		draftLoaded,
 		focusEditorInput,
 		threadRootId
@@ -1191,31 +1304,75 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message) => {
+		async (message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
-				return Promise.resolve();
+				return;
 			}
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (!matrixRoomId || !matrixClientService) {
+			if (!matrixClientService) {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
-			try {
-				assertMatrixRoomEncrypted(
-					matrixClientService.getClient(),
-					matrixRoomId
-				);
-			} catch {
+			// #1401: the session may show no Matrix room yet (list fetched before
+			// registration persisted the holding room) or none at all (the agency
+			// has no Matrix service account on this deployment). Re-read the
+			// session and give /sync a moment before deciding; a definite miss is
+			// reported with its reason instead of the generic retry prompt.
+			const roomResolution = await resolveEnquiryMatrixRoom({
+				knownRoomId: resolvedChatSession.matrixRoomId,
+				fetchSessionRoomId: () =>
+					apiGetSessionRoomBySessionId(activeSession.item.id).then(
+						(response) =>
+							response?.sessions?.[0]?.session?.matrixRoomId ??
+							null
+					),
+				isRoomEncrypted: (roomId) => {
+					const client = matrixClientService.getClient();
+					return !!client && isMatrixRoomEncrypted(client, roomId);
+				}
+			});
+			if (roomResolution.status === 'lookup-failed') {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
+			if (roomResolution.status !== 'ready') {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE);
+				apiPostError({
+					name:
+						roomResolution.status === 'room-missing'
+							? 'EnquiryMatrixRoomMissing'
+							: 'EnquiryMatrixRoomNotEncrypted',
+					message:
+						roomResolution.status === 'room-missing'
+							? `Enquiry session ${activeSession.item.id} (agency ${activeSession.item.agencyId}) has no Matrix room; registration did not provision the agency holding room`
+							: `Matrix room ${roomResolution.roomId} of enquiry session ${activeSession.item.id} did not become an encrypted room in time`,
+					level: ERROR_LEVEL_ERROR
+				}).then();
+				return;
+			}
+			const matrixRoomId = roomResolution.roomId;
+			const submissionUserId = matrixClientService
+				.getClient()
+				?.getUserId();
 			return sendEncryptedInitialEnquiry({
 				sessionId: activeSession.item.id,
+				onFinalized: () => {
+					if (
+						submissionUserId &&
+						matrixClientService.getClient()?.getUserId() ===
+							submissionUserId
+					)
+						markEnquiryFinalized(
+							submissionUserId,
+							activeSession.item.id
+						);
+				},
 				sendEncryptedMatrixMessage: (transactionId) =>
 					matrixClientService.sendMessage(
 						matrixRoomId,
@@ -1251,7 +1408,14 @@ export const MessageSubmitInterfaceComponent = ({
 				.catch((error) => {
 					enquirySubmissionGuard.markFailed();
 					setIsRequestInProgress(false);
-					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					const failure = getCounsellingDpaFailure(error);
+					setActiveInfo(
+						failure
+							? failure.retryable
+								? INFO_TYPES.DPA_UNAVAILABLE
+								: INFO_TYPES.DPA_RESTRICTED
+							: INFO_TYPES.MESSAGE_SEND_ERROR
+					);
 					apiPostError({
 						name: error?.name || 'EnquiryMessageSendError',
 						message:
@@ -1262,6 +1426,7 @@ export const MessageSubmitInterfaceComponent = ({
 				});
 		},
 		[
+			activeSession.item.agencyId,
 			activeSession.item.id,
 			enquirySubmissionGuard,
 			encryptRoom,
@@ -1339,7 +1504,9 @@ export const MessageSubmitInterfaceComponent = ({
 			rawMessage?: string,
 			preserveComposerOnSuccess = false,
 			retryReplyToEventId?: string | null,
-			retryMentionedUserIds?: string[]
+			retryMentionedUserIds?: string[],
+			retryTargetRoomId?: string | null,
+			sentFeedbackMailIntent = false
 		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
@@ -1349,7 +1516,10 @@ export const MessageSubmitInterfaceComponent = ({
 				? resolveMatrixSessionId(resolvedChatSession.sessionId)
 				: undefined;
 			const clientRoomId = isMatrixSession
-				? resolvedChatSession.matrixRoomId
+				? resolvePrimaryRoomId({
+						targetRoomId,
+						clientRoomId: resolvedChatSession.matrixRoomId
+					})
 				: undefined;
 			// ADR-008: aside messages (supervisor feedback / explicit VISIBLE_TO)
 			// go to the supervision side room, never the client-facing room.
@@ -1371,7 +1541,10 @@ export const MessageSubmitInterfaceComponent = ({
 				}).then();
 				return;
 			}
-			const matrixRoomId = asideRouting.targetRoomId ?? undefined;
+			const matrixRoomId =
+				(retryOfId && retryTargetRoomId) ||
+				asideRouting.targetRoomId ||
+				undefined;
 			const getSendMailNotificationStatus = () => !activeSession.isGroup;
 
 			// Editing (m.replace, #435): replaces the target event's content;
@@ -1433,11 +1606,13 @@ export const MessageSubmitInterfaceComponent = ({
 								uploadProgress: setUploadProgress,
 								threadRootId: threadRootId || null,
 								supervisorMessage: !!isSupervisor,
+								feedbackMailIntent: sentFeedbackMailIntent,
 								senderDisplayName:
 									userData?.displayName ||
 									userData?.userName ||
 									`${userData?.firstName || ''} ${userData?.lastName || ''}`.trim() ||
-									'User'
+									'User',
+								teamDiscussion
 							}
 						);
 					} catch (error: any) {
@@ -1503,7 +1678,9 @@ export const MessageSubmitInterfaceComponent = ({
 					retryOfId
 						? retryReplyToEventId || null
 						: replyTo?.eventId || null,
-					mentionedUserIds
+					mentionedUserIds,
+					teamDiscussion,
+					sentFeedbackMailIntent
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -1530,7 +1707,9 @@ export const MessageSubmitInterfaceComponent = ({
 							retryOfId
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
-							mentionedUserIds
+							mentionedUserIds,
+							matrixRoomId ?? targetRoomId ?? null,
+							sentFeedbackMailIntent
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1563,6 +1742,8 @@ export const MessageSubmitInterfaceComponent = ({
 			resolvedChatSession,
 			setE2EEState,
 			supervisionRoomId,
+			targetRoomId,
+			teamDiscussion,
 			threadRootId,
 			replyTo?.eventId,
 			onCancelReply,
@@ -1584,6 +1765,8 @@ export const MessageSubmitInterfaceComponent = ({
 				isAside: boolean;
 				replyToEventId?: string | null;
 				mentionedUserIds: string[];
+				targetRoomId?: string | null;
+				feedbackMailIntent?: boolean;
 			}
 		) => {
 			const attachmentInput: any = attachmentInputRef.current;
@@ -1624,6 +1807,12 @@ export const MessageSubmitInterfaceComponent = ({
 				? retryContext.transportMessage
 				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
+			const sentFeedbackMailIntent = resolveFeedbackMailIntent({
+				explicitFeedbackComposer: feedbackMailIntent,
+				supervisorFeedbackAction: !!isSupervisor,
+				teamDiscussion,
+				retry: retryContext
+			});
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
 			// MSC3440 m.thread relation on the event (see chatTransportService),
@@ -1684,11 +1873,18 @@ export const MessageSubmitInterfaceComponent = ({
 
 			// Shortcut: edit an existing message via Matrix m.replace
 			if (editingMessageId && !retryOfId) {
-				const matrixRoomId = resolvedChatSession.matrixRoomId;
-				if (matrixRoomId && matrixClientService) {
+				// The shortcut edits a message from this composer, so it must use
+				// the same explicit side-room target as a normal send. Falling back
+				// directly to the active session here would leak supervision edits
+				// into the client room.
+				const editRoomId = resolvePrimaryRoomId({
+					targetRoomId,
+					clientRoomId: resolvedChatSession.matrixRoomId
+				});
+				if (editRoomId && matrixClientService) {
 					try {
 						await matrixClientService.editMessage(
-							matrixRoomId,
+							editRoomId,
 							editingMessageId,
 							getPlainTextFromComposerValue(message) || message
 						);
@@ -1714,7 +1910,9 @@ export const MessageSubmitInterfaceComponent = ({
 					currentTypedMessage,
 					preserveComposerOnSuccess,
 					retryContext?.replyToEventId || null,
-					retryContext?.mentionedUserIds || []
+					retryContext?.mentionedUserIds || [],
+					retryContext?.targetRoomId,
+					sentFeedbackMailIntent
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
@@ -1740,6 +1938,8 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession.isGroup,
 			attachmentSelected,
+			feedbackMailIntent,
+			teamDiscussion,
 			audienceOptions,
 			editingMessageId,
 			getTypedMarkdownMessage,
@@ -1754,6 +1954,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues,
 			sendEnquiry,
 			sendMessage,
+			targetRoomId,
 			userData
 		]
 	);
@@ -1840,7 +2041,9 @@ export const MessageSubmitInterfaceComponent = ({
 			transportMessage: retryRequest.transportMessage,
 			isAside: retryRequest.isAside,
 			replyToEventId: retryRequest.replyToEventId,
-			mentionedUserIds: retryRequest.mentionedUserIds
+			mentionedUserIds: retryRequest.mentionedUserIds,
+			targetRoomId: retryRequest.targetRoomId,
+			feedbackMailIntent: retryRequest.feedbackMailIntent
 		})
 			.catch(() => {
 				// Send failures are surfaced through onSendError. This catch only
@@ -2000,23 +2203,40 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
 			};
+		} else if (
+			activeInfo === INFO_TYPES.DPA_RESTRICTED ||
+			activeInfo === INFO_TYPES.DPA_UNAVAILABLE
+		) {
+			const key =
+				activeInfo === INFO_TYPES.DPA_RESTRICTED
+					? 'counselling.dpa.restricted'
+					: 'counselling.dpa.unavailable';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.title`),
+				infoMessage: translate(`${key}.text`)
+			};
 		} else if (activeInfo === INFO_TYPES.MESSAGE_SEND_ERROR) {
 			infoData = {
 				isInfo: false,
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
 			};
-		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
+		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
 			infoData = {
 				isInfo: false,
 				infoHeadline: translate(
-					'voice.recording.error.headline',
-					'Voice recording is unavailable'
+					'statusOverlay.enquiryRoomUnavailable.headline'
 				),
 				infoMessage: translate(
-					'voice.recording.error.message',
-					'Please allow microphone access and try again.'
+					'statusOverlay.enquiryRoomUnavailable.text'
 				)
+			};
+		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate('voice.recording.error.headline'),
+				infoMessage: translate('voice.recording.error.message')
 			};
 		} else if (activeInfo === INFO_TYPES.ARCHIVED) {
 			infoData = {
@@ -2041,7 +2261,11 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
+	const isPracticing = usePracticeActive();
 	const hasUploadFunctionality =
+		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
@@ -2111,7 +2335,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * The audience selector no longer uses it: it splits an id on
 	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:oriso.org` yields `oriso` — a token every account on the
+	 * `@consultant42:example.org` yields `example` — a token every account on the
 	 * homeserver shares. As an identity test that is worthless, which is why
 	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
 	 *
@@ -2319,7 +2543,7 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		const defaultOption: AudienceOption = {
 			value: AUDIENCE_ALL,
-			label: translate('message.audience.sendToAll', 'Send to all'),
+			label: translate('message.audience.sendToAll'),
 			kind: 'all'
 		};
 		const isInquiryNotAccepted =
@@ -2334,7 +2558,7 @@ export const MessageSubmitInterfaceComponent = ({
 		 * Strict identity throughout: both "is this me?" and "have I already
 		 * got this person?" used to run through `getComparableAudienceIds`,
 		 * whose 4+ character tokens include the homeserver — so every account
-		 * on `oriso.org` matched every other one. See #894.
+		 * on `example.org` matched every other one. See #894.
 		 */
 		const audience = createAudienceCollector([
 			getCurrentMatrixUserId(),
@@ -2463,7 +2687,14 @@ export const MessageSubmitInterfaceComponent = ({
 			consultantIds: [
 				activeSession?.consultant?.username,
 				activeSession?.consultant?.id,
-				contact?.username
+				contact?.username,
+				...(activeSession?.item?.participants || []).flatMap(
+					(participant) => [
+						participant.consultantId,
+						agencyConsultantDirectory.get(participant.consultantId)
+							?.username
+					]
+				)
 			],
 			supervisorIds: sessionSupervisors.flatMap((supervisor) => [
 				supervisor.id,
@@ -2484,10 +2715,27 @@ export const MessageSubmitInterfaceComponent = ({
 						: label,
 					kind: supervisorLabel
 						? ('supervisor' as AudienceKind)
-						: classifyAudienceKind(value, roster)
+						: classifyAudienceKind(
+								value,
+								roster,
+								unmatchedMemberKind(
+									isSelfHelpGroup,
+									mentionDirectoryState
+								)
+							)
 				};
 			})
-			.sort((a, b) => a.label.localeCompare(b.label));
+			.sort((a, b) => a.label.localeCompare(b.label))
+			// WP-B2: with the parallel panel the supervisor is reached through
+			// the side room, not through a "send to" choice in the client chat.
+			.filter(
+				(option) =>
+					!(
+						hideSupervisorAudience &&
+						!activeSession?.isGroup &&
+						option.kind === 'supervisor'
+					)
+			);
 		// The audience selector (and thus any VISIBLE_TO targeting) is meant for
 		// group/supervision conversations with more than one human counterpart.
 		// A 1:1 conversation has no real targets here (the asker is filtered out
@@ -2508,6 +2756,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerMatrixUserId,
+		activeSession?.item?.participants,
 		activeSession?.user?.username,
 		activeSession?.item?.id,
 		contact?.username,
@@ -2517,8 +2766,11 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceRefreshTick,
 		sessionSupervisors,
 		agencyConsultantDirectory,
+		mentionDirectoryState,
 		currentChatType,
+		isSelfHelpGroup,
 		activeSession?.isGroup,
+		hideSupervisorAudience,
 		translate,
 		userData?.displayName,
 		userData?.userName,
@@ -2651,7 +2903,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
-			return [translate('message.audience.sendToAll', 'Send to all')];
+			return [translate('message.audience.sendToAll')];
 		}
 		const labels = selectedAudienceValues
 			.map(
@@ -2679,14 +2931,13 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
-			return translate('message.audience.all', 'Alle');
+			return translate('message.audience.all');
 		}
 		if (selectedAudienceLabels.length === 1) {
 			return selectedAudienceLabels[0];
 		}
-		return translate('message.audience.multiCount', '{{count}} Personen', {
-			count: selectedAudienceLabels.length,
-			defaultValue: `${selectedAudienceLabels.length} Personen`
+		return translate('message.audience.multiCount', {
+			count: selectedAudienceLabels.length
 		});
 	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
 	const audienceTargetCount = useMemo(
@@ -2771,7 +3022,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * This used to re-derive the roles here with `getComparableAudienceIds`,
 	 * whose 4+ character tokens include the homeserver name — every
-	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * participant on `example.org` shares the token `example`, so one supervisor in
 	 * the room could pull unrelated people into the moderator section, and the
 	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
 	 */
@@ -2878,6 +3129,11 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
+		const recordedFeedbackMailIntent = resolveFeedbackMailIntent({
+			explicitFeedbackComposer: feedbackMailIntent,
+			supervisorFeedbackAction: !!isSupervisor,
+			teamDiscussion
+		});
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true
@@ -2939,7 +3195,19 @@ export const MessageSubmitInterfaceComponent = ({
 					);
 					if (sendAfterStop) {
 						setIsRequestInProgress(true);
-						sendMessage('', voiceFile, isE2eeEnabled);
+						sendMessage(
+							'',
+							voiceFile,
+							isE2eeEnabled,
+							!!isSupervisor,
+							undefined,
+							undefined,
+							false,
+							undefined,
+							undefined,
+							undefined,
+							recordedFeedbackMailIntent
+						);
 					} else {
 						if (voicePreviewUrl) {
 							URL.revokeObjectURL(voicePreviewUrl);
@@ -2987,6 +3255,9 @@ export const MessageSubmitInterfaceComponent = ({
 		stopVoiceRecording,
 		sendMessage,
 		isE2eeEnabled,
+		isSupervisor,
+		feedbackMailIntent,
+		teamDiscussion,
 		voicePreviewUrl
 	]);
 
@@ -3042,15 +3313,9 @@ export const MessageSubmitInterfaceComponent = ({
 		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
 	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
 	const characterCounterAnnouncement = isMessageOverLimit
-		? translate(
-				'message.submit.characterCounter.overLimit',
-				'Message is over the character limit.'
-			)
+		? translate('message.submit.characterCounter.overLimit')
 		: isMessageLengthWarning
-			? translate(
-					'message.submit.characterCounter.warning',
-					'Message is approaching the character limit.'
-				)
+			? translate('message.submit.characterCounter.warning')
 			: '';
 	const canSendMessage =
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
@@ -3391,21 +3656,12 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionProvider = useMemo(
 		() => ({
 			selfId: userData?.userId,
-			notInChatLabel: translate(
-				'message.mention.notInChat',
-				'nicht im Chat'
-			),
+			notInChatLabel: translate('message.mention.notInChat'),
 			// #993: the popup says why it is empty instead of rendering nothing.
 			getDirectoryState: () => mentionDataRef.current.directoryState,
-			emptyLabel: translate('message.mention.empty', 'Niemand gefunden'),
-			unavailableLabel: translate(
-				'message.mention.unavailable',
-				'Liste konnte nicht geladen werden'
-			),
-			loadingLabel: translate(
-				'message.mention.loading',
-				'Wird geladen …'
-			),
+			emptyLabel: translate('message.mention.empty'),
+			unavailableLabel: translate('message.mention.unavailable'),
+			loadingLabel: translate('message.mention.loading'),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -3459,17 +3715,27 @@ export const MessageSubmitInterfaceComponent = ({
 	const handleMobileBackNavigation = useCallback(() => {
 		onMobileNavigateBack?.();
 	}, [onMobileNavigateBack]);
+	// T16: the scroll-to-newest arrow in the action bar (every width). The
+	// app passes its own handler; without one the composer scrolls the
+	// timeline of the card / side panel it is docked to.
 	const handleMobileBottomNavigation = useCallback(() => {
-		onMobileNavigateBottom?.();
+		if (onMobileNavigateBottom) {
+			onMobileNavigateBottom();
+			return;
+		}
+		scrollTimelineToNewest(figmaToolbarRef.current);
 	}, [onMobileNavigateBottom]);
 
 	const getComposerHeightBounds = useCallback(
 		() =>
 			getComposerHeightBoundsPure({
 				viewportWidth: window.innerWidth,
-				viewportHeight: window.innerHeight
+				viewportHeight: window.innerHeight,
+				compact: compactHeight,
+				flush: flushCorner !== undefined,
+				hostHeight: composerHostHeight
 			}),
-		[]
+		[compactHeight, flushCorner, composerHostHeight]
 	);
 
 	const clampComposerHeight = useCallback(
@@ -3530,11 +3796,22 @@ export const MessageSubmitInterfaceComponent = ({
 		);
 	}, [
 		attachmentSelected,
+		composerSettleTick,
 		composerText,
 		getComposerHeightBounds,
 		isExpandedComposer,
 		isMobileViewport
 	]);
+
+	const handleComposerShellTransitionEnd = useCallback(
+		(e: React.TransitionEvent<HTMLDivElement>) => {
+			if (e.target !== e.currentTarget || e.propertyName !== 'height') {
+				return;
+			}
+			setComposerSettleTick((tick) => tick + 1);
+		},
+		[]
+	);
 
 	const handleComposerResizePointerDown = useCallback(
 		(e: React.PointerEvent<HTMLButtonElement>) => {
@@ -3645,6 +3922,7 @@ export const MessageSubmitInterfaceComponent = ({
 
 	return (
 		<div
+			ref={dockedWrapperRef}
 			className={clsx(
 				className,
 				'messageSubmit__wrapper',
@@ -3655,11 +3933,30 @@ export const MessageSubmitInterfaceComponent = ({
 			style={expandedComposerStyle}
 		>
 			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{threadRootId && (
+				<div
+					className="messageSubmit__target"
+					data-cy="composer-target"
+					role="status"
+				>
+					<strong className="messageSubmit__targetLabel">
+						{translate('message.thread.targetLabel')}
+					</strong>
+					<span
+						className="messageSubmit__targetPreview"
+						title={
+							threadParentPreview ||
+							translate('message.thread.unknownRoot')
+						}
+					>
+						{threadParentPreview ||
+							translate('message.thread.unknownRoot')}
+					</span>
+				</div>
+			)}
 			{highlightedSnippet && (
 				<div className="textarea__snippetInfo">
-					{translate('chat.highlightSnippet.ready', {
-						defaultValue: 'Text snippet added to your reply'
-					})}
+					{translate('chat.highlightSnippet.ready', {})}
 				</div>
 			)}
 
@@ -3670,10 +3967,7 @@ export const MessageSubmitInterfaceComponent = ({
 					<div className="messageSubmit__replyPreview" role="status">
 						<div className="messageSubmit__replyPreviewContent">
 							<span className="messageSubmit__replyPreviewLabel">
-								{translate(
-									'message.reply.previewLabel',
-									'Antwort an'
-								)}{' '}
+								{translate('message.reply.previewLabel')}{' '}
 								<strong>{replyTo.author}</strong>
 							</span>
 							<span className="messageSubmit__replyPreviewText">
@@ -3684,10 +3978,7 @@ export const MessageSubmitInterfaceComponent = ({
 							type="button"
 							className="messageSubmit__replyPreviewCancel"
 							onClick={() => onCancelReply && onCancelReply()}
-							aria-label={translate(
-								'message.reply.cancel',
-								'Antwort verwerfen'
-							)}
+							aria-label={translate('message.reply.cancel')}
 						>
 							×
 						</button>
@@ -3703,19 +3994,13 @@ export const MessageSubmitInterfaceComponent = ({
 							type="button"
 							className="messageSubmit__editPreviewCancel"
 							onClick={() => onCancelEdit && onCancelEdit()}
-							aria-label={translate(
-								'message.edit.cancel',
-								'Bearbeiten abbrechen'
-							)}
+							aria-label={translate('message.edit.cancel')}
 						>
 							<HighlightOffIcon fontSize="inherit" />
 						</button>
 						<span className="messageSubmit__editPreviewText">
 							<span className="messageSubmit__editPreviewLabel">
-								{translate(
-									'message.edit.previewLabel',
-									'Nachricht bearbeiten'
-								)}
+								{translate('message.edit.previewLabel')}
 							</span>{' '}
 							<span className="messageSubmit__editPreviewQuote">
 								{editingMessage.text}
@@ -3740,8 +4025,23 @@ export const MessageSubmitInterfaceComponent = ({
 							isExpandedComposer &&
 								'textarea__wrapper-send-message--expanded',
 							isComposerResizing &&
-								'textarea__wrapper-send-message--resizing'
+								'textarea__wrapper-send-message--resizing',
+							compactHeight &&
+								'textarea__wrapper-send-message--compact',
+							flushCorner &&
+								'textarea__wrapper-send-message--flush',
+							flushCorner &&
+								`textarea__wrapper-send-message--flush-${flushCorner}`,
+							accent !== 'default' &&
+								`textarea__wrapper-send-message--${accent}`
 						)}
+						ref={composerCardRef}
+						data-flush-corner={flushCorner}
+						data-accent={accent}
+						onPointerDownCapture={clearAutoFocusMark}
+						onKeyDownCapture={clearAutoFocusMark}
+						onBlur={handleComposerCardBlur}
+						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
 								? ({
@@ -3750,70 +4050,27 @@ export const MessageSubmitInterfaceComponent = ({
 								: undefined
 						}
 					>
-						{!isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<DragHandle
-									onPointerDown={
-										handleComposerResizePointerDown
-									}
-									onKeyDown={handleComposerResizeKeyDown}
-									touched={isComposerResizing}
-									ariaLabel={translate(
-										'message.mobileNav.dragToExpand',
-										'Drag to resize composer'
-									)}
-								/>
-							)}
-						{isMobileViewport &&
-							!threadRootId &&
-							!isExpandedComposer && (
-								<div className="textarea__mobileNavigator">
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--left"
-										onClick={handleMobileBackNavigation}
-										aria-label={translate(
-											'message.mobileNav.back',
-											'Navigate up'
-										)}
-									>
-										<ComposerMobileBackIcon />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorCenter"
-										onPointerDown={
-											handleComposerResizePointerDown
-										}
-										onKeyDown={handleComposerResizeKeyDown}
-										aria-label={translate(
-											'message.mobileNav.dragToExpand',
-											'Drag to resize composer'
-										)}
-									>
-										<span className="textarea__mobileNavigatorHandle" />
-									</button>
-									<button
-										type="button"
-										className="textarea__mobileNavigatorButton textarea__mobileNavigatorButton--right"
-										onClick={handleMobileBottomNavigation}
-										aria-label={translate(
-											'message.mobileNav.scrollToBottom',
-											'Scroll to bottom'
-										)}
-									>
-										<ComposerMobileDownIcon />
-										{unreadMobileBadgeCount > 0 && (
-											<span className="textarea__mobileNavigatorBadge">
-												{unreadMobileBadgeCount > 99
-													? '99+'
-													: unreadMobileBadgeCount}
-											</span>
-										)}
-									</button>
-								</div>
-							)}
+						{/* T6/T16: the drag pill belongs to every docked composer —
+						    main chat, supervision room and thread panel, on the
+						    phone too (the navigator row that carried it is gone). */}
+						{!isExpandedComposer && (
+							<DragHandle
+								onPointerDown={handleComposerResizePointerDown}
+								onKeyDown={handleComposerResizeKeyDown}
+								touched={isComposerResizing}
+								// T31: phone — pill on the card's top edge; T40:
+								// the flush desktop field has no frame above the
+								// field either, so the pill sits on its edge too.
+								position={
+									isMobileViewport || flushCorner
+										? 'edge'
+										: 'inside'
+								}
+								ariaLabel={translate(
+									'message.mobileNav.dragToExpand'
+								)}
+							/>
+						)}
 						{showAudienceSelector && (
 							<div
 								className="textarea__audienceSelector"
@@ -3833,8 +4090,7 @@ export const MessageSubmitInterfaceComponent = ({
 										)
 									}
 									chevronLabel={translate(
-										'message.audience.openMenu',
-										'Open send-to menu'
+										'message.audience.openMenu'
 									)}
 								/>
 								{isAudienceMenuOpen && (
@@ -3859,8 +4115,7 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__audienceSelectorMenu"
 											role="dialog"
 											aria-label={translate(
-												'message.audience.menuAriaLabel',
-												'Send to selector'
+												'message.audience.menuAriaLabel'
 											)}
 										>
 											<button
@@ -3870,8 +4125,7 @@ export const MessageSubmitInterfaceComponent = ({
 													setIsAudienceMenuOpen(false)
 												}
 												aria-label={translate(
-													'message.audience.closeMenu',
-													'Close send-to menu'
+													'message.audience.closeMenu'
 												)}
 											>
 												<svg
@@ -3899,14 +4153,12 @@ export const MessageSubmitInterfaceComponent = ({
 											</button>
 											<p className="textarea__audienceSelectorMenuSubheading">
 												{translate(
-													'message.audience.menuSubheading',
-													'Wähle wer diese Nachricht sehen soll'
+													'message.audience.menuSubheading'
 												)}
 											</p>
 											<p className="textarea__audienceSelectorMenuHeading">
 												{translate(
-													'message.audience.menuHeading',
-													'Adressaten wählen'
+													'message.audience.menuHeading'
 												)}
 											</p>
 											<div className="textarea__audienceSelectorMenuDivider" />
@@ -3947,7 +4199,6 @@ export const MessageSubmitInterfaceComponent = ({
 																	'clients'
 																	? translate(
 																			'message.audience.clientsSelected',
-																			'{{count}} Clients Selected',
 																			{
 																				count: selectedCount
 																			}
@@ -3956,14 +4207,12 @@ export const MessageSubmitInterfaceComponent = ({
 																		  'counsellors'
 																		? translate(
 																				'message.audience.counsellorsSelected',
-																				'{{count}} Counsellors Selected',
 																				{
 																					count: selectedCount
 																				}
 																			)
 																		: translate(
 																				'message.audience.moderatorsSelected',
-																				'{{count}} Moderators Selected',
 																				{
 																					count: selectedCount
 																				}
@@ -3971,18 +4220,15 @@ export const MessageSubmitInterfaceComponent = ({
 																: sectionDefinition.key ===
 																	  'clients'
 																	? translate(
-																			'message.audience.clientsSelectAll',
-																			'Select All Clients'
+																			'message.audience.clientsSelectAll'
 																		)
 																	: sectionDefinition.key ===
 																		  'counsellors'
 																		? translate(
-																				'message.audience.counsellorsSelect',
-																				'Select All Counsellors'
+																				'message.audience.counsellorsSelect'
 																			)
 																		: translate(
-																				'message.audience.moderatorsSelect',
-																				'Select All Moderators'
+																				'message.audience.moderatorsSelect'
 																			);
 														return (
 															<div
@@ -4038,8 +4284,7 @@ export const MessageSubmitInterfaceComponent = ({
 																			)
 																		}
 																		aria-label={translate(
-																			'message.audience.toggleSection',
-																			'Toggle section'
+																			'message.audience.toggleSection'
 																		)}
 																		aria-expanded={
 																			expandedAudienceSections[
@@ -4076,18 +4321,15 @@ export const MessageSubmitInterfaceComponent = ({
 																			{sectionDefinition.key ===
 																			'clients'
 																				? translate(
-																						'message.audience.clientsEmpty',
-																						'No clients are in this room'
+																						'message.audience.clientsEmpty'
 																					)
 																				: sectionDefinition.key ===
 																					  'counsellors'
 																					? translate(
-																							'message.audience.counsellorsEmpty',
-																							'No counsellors are in this room'
+																							'message.audience.counsellorsEmpty'
 																						)
 																					: translate(
-																							'message.audience.moderatorsEmpty',
-																							'No moderators are in this room'
+																							'message.audience.moderatorsEmpty'
 																						)}
 																		</div>
 																	) : (
@@ -4180,8 +4422,7 @@ export const MessageSubmitInterfaceComponent = ({
 													/>
 													<span>
 														{translate(
-															'message.audience.selectAllBottom',
-															'Select All'
+															'message.audience.selectAllBottom'
 														)}
 													</span>
 												</button>
@@ -4333,6 +4574,21 @@ export const MessageSubmitInterfaceComponent = ({
 											{isCompactActionStripOpen ? (
 												<span className="composerToolbar__menuAnchor composerToolbar__menuAnchor--bar">
 													<DefaultActionBar
+														showBack={
+															isMobileViewport &&
+															Boolean(
+																onMobileNavigateBack
+															)
+														}
+														onBack={
+															handleMobileBackNavigation
+														}
+														onScrollToNewest={
+															handleMobileBottomNavigation
+														}
+														unreadCount={
+															unreadMobileBadgeCount
+														}
 														onOpenTools={
 															closeCompactActionStrip
 														}
@@ -4392,6 +4648,21 @@ export const MessageSubmitInterfaceComponent = ({
 												</span>
 											) : (
 												<ComposerToolbar
+													showBack={
+														isMobileViewport &&
+														Boolean(
+															onMobileNavigateBack
+														)
+													}
+													onBack={
+														handleMobileBackNavigation
+													}
+													onScrollToNewest={
+														handleMobileBottomNavigation
+													}
+													unreadCount={
+														unreadMobileBadgeCount
+													}
 													direction={
 														composerMenuDirection
 													}
@@ -4467,8 +4738,7 @@ export const MessageSubmitInterfaceComponent = ({
 											<span className="textarea__voiceRecordingDot"></span>
 											<span className="textarea__voiceRecordingLabel">
 												{translate(
-													'voice.recording.active',
-													'Recording...'
+													'voice.recording.active'
 												)}
 											</span>
 											<span className="textarea__voiceRecordButton__timer">
@@ -4485,10 +4755,7 @@ export const MessageSubmitInterfaceComponent = ({
 													})
 												}
 											>
-												{translate(
-													'app.cancel',
-													'Cancel'
-												)}
+												{translate('app.cancel')}
 											</button>
 											<button
 												type="button"
@@ -4499,7 +4766,7 @@ export const MessageSubmitInterfaceComponent = ({
 													})
 												}
 											>
-												{translate('app.stop', 'Stop')}
+												{translate('app.stop')}
 											</button>
 										</span>
 									</span>
@@ -4511,8 +4778,7 @@ export const MessageSubmitInterfaceComponent = ({
 												<AudioOnIcon />
 												<span>
 													{translate(
-														'voice.recording.preview',
-														'Voice message'
+														'voice.recording.preview'
 													)}
 												</span>
 												<span className="textarea__voicePreview__duration">

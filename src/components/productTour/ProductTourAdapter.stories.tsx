@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, screen, userEvent, waitFor } from 'storybook/test';
 import { ProductTourAdapter } from './ProductTourAdapter';
 import { ProductTourTooltip } from './ProductTourTooltip';
 import {
@@ -393,5 +394,145 @@ export const CompoundMailCounsellingTour: Story = {
 				story: 'TOUR-10: the six-step Mail-Beratung tour for consultants migrating from the legacy platform, difference-first copy. The composer step is optional — in the real app it is skipped silently when no session is open, and the tour still completes.'
 			}
 		}
+	}
+};
+
+const demoIntro: TourStep = {
+	id: 'intro',
+	target: '',
+	placement: 'center',
+	titleKey: 'walkthrough.step.0.title',
+	contentKey: 'walkthrough.step.0.intro'
+};
+
+const progressText = () =>
+	document.querySelector('.productTourTooltip__progress')?.textContent ?? '';
+
+export const AdvanceOnClick: Story = {
+	render: () => (
+		<TourPlayground
+			tour={demoTour([
+				demoIntro,
+				{
+					id: 'press',
+					target: 'storybook-demo-button',
+					placement: 'bottom',
+					titleKey: 'walkthrough.step.1.title',
+					contentKey: 'walkthrough.step.1.intro',
+					advanceOn: { type: 'click' }
+				},
+				{ ...demoIntro, id: 'done' }
+			])}
+		>
+			<button
+				type="button"
+				data-tour-target="storybook-demo-button"
+				style={{ display: 'block', margin: '40vh auto', padding: 12 }}
+			>
+				Anfrage annehmen (Demo)
+			</button>
+		</TourPlayground>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: 'The middle step has no Next: it finishes when the highlighted button is really pressed, and the button stays clickable through the overlay.'
+			}
+		}
+	},
+	play: async ({ canvas }) => {
+		await userEvent.click(
+			await screen.findByRole('button', { name: 'Weiter' })
+		);
+		await waitFor(() => expect(progressText()).toMatch(/2\D+3/));
+		expect(screen.queryByRole('button', { name: 'Weiter' })).toBeNull();
+
+		const button = canvas.getByRole('button', { name: /Anfrage annehmen/ });
+		const rect = button.getBoundingClientRect();
+		const hit = document.elementFromPoint(
+			rect.left + rect.width / 2,
+			rect.top + rect.height / 2
+		);
+		expect(button.contains(hit)).toBe(true);
+
+		await userEvent.click(button);
+		await waitFor(() => expect(progressText()).toMatch(/3\D+3/));
+		expect(
+			canvas.getByRole('region', { name: 'Tour event log' }).textContent
+		).toContain('step_completed (press)');
+	}
+};
+
+export const NonDismissibleIgnoresEscapeAndOverlayClick: Story = {
+	render: () => (
+		<TourPlayground
+			tour={{
+				...demoTour([demoIntro, anchoredStep('bottom')]),
+				dismissible: false
+			}}
+		>
+			<DemoAnchor />
+		</TourPlayground>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: 'A tour with dismissible=false: ESC and a click on the dimmed overlay leave it running, so a stray key cannot mark a guided flow skipped. The close button still ends it.'
+			}
+		}
+	},
+	play: async ({ canvas }) => {
+		await screen.findByRole('alertdialog');
+
+		await userEvent.keyboard('{Escape}');
+		// The click lands on whatever receives pointer events at a corner far
+		// from the spotlight: the overlay's click layer.
+		const corner = document.elementFromPoint(4, 4);
+		if (corner) {
+			await userEvent.click(corner);
+		}
+		await new Promise((resolve) => {
+			setTimeout(resolve, 300);
+		});
+
+		expect(screen.getByRole('alertdialog')).toBeTruthy();
+		expect(
+			canvas.getByRole('region', { name: 'Tour event log' }).textContent
+		).not.toContain('tour_skipped');
+
+		await userEvent.click(screen.getByLabelText('Rundgang schließen'));
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('region', { name: 'Tour event log' })
+					.textContent
+			).toContain('tour_skipped')
+		);
+	}
+};
+
+export const DismissibleByDefaultSkipsOnEscape: Story = {
+	render: () => (
+		<TourPlayground tour={demoTour([demoIntro, anchoredStep('bottom')])}>
+			<DemoAnchor />
+		</TourPlayground>
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: 'The unchanged default (dismissible not set): ESC closes the tour and records it as skipped. Contrast with the non-dismissible story.'
+			}
+		}
+	},
+	play: async ({ canvas }) => {
+		await screen.findByRole('alertdialog');
+
+		await userEvent.keyboard('{Escape}');
+
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('region', { name: 'Tour event log' })
+					.textContent
+			).toContain('tour_skipped')
+		);
 	}
 };

@@ -1,4 +1,17 @@
 {
+	"contactSheet": {
+		"missingEmail": "Hinterlege zuerst eine E-Mail-Adresse in deinem Profil.",
+		"failed": "Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut."
+	},
+	"chatStage": {
+		"panel": {
+			"team": {
+				"empty": {
+					"text": "Schreibe unten die erste Nachricht an dein Team."
+				}
+			}
+		}
+	},
 	"absence": {
 		"input": {
 			"infoText": "Ratsuchende sehen diese Abwesenheitsnachricht, können Dir aber weiterhin schreiben."
@@ -84,6 +97,11 @@
 		}
 	},
 	"booking": {
+		"appointment": {
+			"noTimes": "An diesem Tag ist keine Zeit frei. Bitte wähle einen anderen Tag.",
+			"pickDay": "Bitte wähle zuerst einen Tag im Kalender.",
+			"subline": "Wähle einen Tag und danach eine Uhrzeit."
+		},
 		"availability": {
 			"description": "Gib hier Deine allgemeine Verfügbarkeit an, damit Ratsuchende Termine bei Dir buchen können.",
 			"title": "Deine Verfügbarkeit"
@@ -249,6 +267,7 @@
 				"countdown": {
 					"greetingLabel": "Begrüßung deiner Beratung",
 					"headline": "Dein Gruppen-Chat beginnt {{eta}}.",
+					"moderatorSubtitle": "Du kannst den Chat starten, sobald du bereit bist.",
 					"overdueHeadline": "Wir sind gleich für dich da.",
 					"overdueSubtitle": "Deine Beratung öffnet den Raum gleich — bitte hab noch einen Moment Geduld.",
 					"subtitle": "Klick auf eine Zahl — dahinter warten Begrüßung und Netiquette."
@@ -320,9 +339,14 @@
 				"increase": "{{field}} erhöhen",
 				"decrease": "{{field}} verringern",
 				"openList": "{{field}} auswählen",
-				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} mal",
-				"repeatValue_other": "{{count}} mal"
+				"durationValue": "{{count}} h"
+			},
+			"moderatorHelpDialog": {
+				"description": "Gerade kann keine weitere Fachkraft deines Trägers ausgewählt werden. Du kannst den Gesprächskreis trotzdem erstellen und Co-Moderator:innen danach hinzufügen.",
+				"step1": "Öffne den Gesprächskreis in deiner Liste und dort die Chat-Info.",
+				"step2": "Wähle unter „Chatraum Einstellungen“ die Schaltfläche „Bearbeiten“.",
+				"step3": "Füge unter „Weitere Moderation“ Kolleg:innen hinzu und speichere.",
+				"note": "Bearbeiten kann nur, wer den Gesprächskreis erstellt hat, und nur solange er gerade nicht läuft. Zur Auswahl stehen alle aktiven Fachkräfte deines Trägers."
 			}
 		},
 		"create": {
@@ -335,6 +359,59 @@
 				"addRule": "Regel hinzufügen",
 				"ruleChip": "Regel Nr. {{index}}"
 			}
+		},
+		"entry": {
+			"moreOpen": "Die Moderation hat die Gruppe geöffnet. Mit „Beitreten“ bist du im Gespräch.",
+			"moreWaiting": "Sobald die Moderation die Gruppe öffnet, wird „Beitreten“ hier frei. Du musst nichts tun.",
+			"missing": "Diese Gruppe gibt es nicht mehr oder du hast keinen Zugang."
+		},
+		"info": {
+			"gallery": {
+				"steps": {
+					"formats": {
+						"text": "Am Namen erkennst du, ob ihr schreibt, sprecht, euch seht oder alles kombiniert. Ton und Kamera schaltest du bei Bedarf dazu."
+					},
+					"alias": {
+						"text": "Alles ist Ende-zu-Ende verschlüsselt. Nenne trotzdem keine echten Namen – das schützt alle."
+					},
+					"dates": {
+						"text": "Im Link-Bereich findest du regelmäßig frische Treffen und gelangst direkt zum nächsten Termin."
+					}
+				}
+			}
+		},
+		"shareDialog": {
+			"description": "Teile diesen Link mit den Teilnehmenden. Er führt in den Warteraum, bis der Termin beginnt.",
+			"copyFailed": "Kopieren hat nicht geklappt. Bitte versuch es erneut."
+		},
+		"notMember": {
+			"headline": "Du bist nicht Teil dieses Gesprächskreises.",
+			"body": "Diesen Gesprächskreis öffnet nur die Moderation und wen sie dazuholt. Wenn du mitmoderieren sollst, bitte die Moderation, dich hinzuzufügen.",
+			"knockBody": "Du kannst die Moderation bitten, dich hereinzulassen. Bis dahin siehst du nichts aus diesem Gesprächskreis.",
+			"requestFailed": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"pendingBody": "Sobald jemand aus der Moderation dich hereinlässt, geht es hier weiter. Lass diese Seite dafür einfach offen.",
+			"admittedHeadline": "Du bist dabei.",
+			"admittedBody": "Die Moderation hat dich in den Gesprächskreis gelassen.",
+			"declinedBody": "Die Moderation hat deine Anfrage nicht angenommen. Bei Fragen wende dich an die Person, die dir den Link geschickt hat.",
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte frag die Moderation nach einem neuen Link."
+		},
+		"joinRequest": {
+			"failed": "Das hat nicht geklappt. Bitte versuche es erneut.",
+			"dialog": {
+				"description": "Entscheide, ob {{name}} in „{{group}}“ dazukommt.",
+				"privacy": "Bis du entscheidest, sieht {{name}} nichts aus diesem Gesprächskreis."
+			}
+		},
+		"joinHandover": {
+			"status": {
+				"ready": "Alles bereit — du kannst zur Gruppe"
+			}
+		},
+		"consent": {
+			"headline": "Bevor du schreibst",
+			"description": "Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimme ihrer Datenschutzerklärung zu, bevor du in der Gruppe schreibst.",
+			"rejected": "Ohne deine Zustimmung kannst du in dieser Gruppe nicht schreiben. Du kannst jederzeit später zustimmen.",
+			"saveFailed": "Deine Zustimmung konnte nicht gespeichert werden. Bitte versuche es erneut."
 		}
 	},
 	"help": {
@@ -608,6 +685,10 @@
 			"teamDiscussionNew": {
 				"title": "Team-Besprechung",
 				"text": "{{senderDisplayName}} hat in der Team-Besprechung geschrieben"
+			},
+			"firstResponseReceived": {
+				"title": "Deine ersten Schritte",
+				"text": "Wir haben dir im Chat die wichtigsten Informationen geschrieben."
 			}
 		}
 	},
@@ -630,6 +711,9 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Dein Bild"
+		},
 		"appLanguage": {
 			"info": "Stelle hier die Sprache der Anwendung ein."
 		},
@@ -696,7 +780,14 @@
 			"liveChat": {
 				"title": "Meine Live-Chat Verfügbarkeit",
 				"description": "Aktiviere Deine Verfügbarkeit und sieh in den Erstanfragen unter „Live-Chat Anfragen“ die wartenden anonymen Ratsuchenden.",
-				"toggleLabel": "Bin verfügbar"
+				"toggleLabel": "Bin verfügbar",
+				"lost": {
+					"title": "Du bist im Live-Chat nicht mehr erreichbar",
+					"refused": "Der Server hat Deine Verfügbarkeit abgelehnt. Schalte den Live-Chat wieder ein. Klappt das nicht, melde Dich neu an.",
+					"sessionExpired": "Deine Anmeldung ist abgelaufen. Melde Dich neu an und schalte den Live-Chat danach wieder ein.",
+					"leaseLost": "Der Server führt Dich nicht mehr als verfügbar. Schalte den Live-Chat wieder ein, um erreichbar zu sein.",
+					"connectionLost": "Die Verbindung zum Server war länger als zwei Minuten unterbrochen. Schalte den Live-Chat wieder ein, sobald die Verbindung wieder steht."
+				}
 			},
 			"masterKey": {
 				"saveError": "Beim Ändern des Passworts ist ein Problem aufgetaucht. Bitte versuche es erneut."
@@ -709,14 +800,19 @@
 						"same": "Dein Passwort ist nicht identisch."
 					},
 					"old": {
-						"incorrect": "Dein Passwort ist nicht korrekt."
+						"incorrect": "Dein Passwort ist nicht korrekt.",
+						"hint": "Das Passwort, mit dem Du Dich gerade angemeldet hast."
 					},
 					"overlay": {
 						"headline": "Du hast Dein Passwort erfolgreich geändert. Du wirst nun zum Login weitergeleitet."
 					},
 					"same": "Dein Passwort ist identisch.",
+					"sameAsOld": "Bitte wähle ein neues Passwort – dieses ist dein bisheriges.",
 					"secure": "Dein Passwort ist sicher.",
-					"subtitle": "Wenn Du möchtest, kannst Du hier Dein Passwort ändern. Gebe erst Dein aktuelles Passwort ein, um ein Neues festzulegen."
+					"subtitle": "Wenn Du möchtest, kannst Du hier Dein Passwort ändern. Gebe erst Dein aktuelles Passwort ein, um ein Neues festzulegen.",
+					"criteria": {
+						"title": "Dein neues Passwort braucht"
+					}
 				}
 			},
 			"spokenLanguages": {
@@ -765,7 +861,7 @@
 			},
 			"dnd": {
 				"title": "Nicht stören",
-				"description": "Pausiere alle Benachrichtigungen (Ton, Pop-ups, E-Mails) für eine gewählte Zeit. Dein Verlauf füllt sich weiter.",
+				"description": "Pausiere Benachrichtigungen (Ton, Pop-ups) für eine gewählte Zeit. Dein Verlauf füllt sich weiter.",
 				"activeUntil": "Aktiv bis {{time}}",
 				"option": {
 					"off": "Aus",
@@ -783,6 +879,9 @@
 				"sendByEmail": "Per E-Mail senden",
 				"confirm": "Bestätigen",
 				"cancel": "Abbrechen",
+				"discardChanges": {
+					"description": "Deine Benachrichtigungseinstellungen sind noch nicht gespeichert. Wenn du fortfährst, gehen deine Änderungen verloren."
+				},
 				"area": {
 					"requests": "Anfrage",
 					"conversations": "Gespräch",
@@ -869,7 +968,7 @@
 				"alwaysSent": {
 					"title": "Diese E-Mails bekommst du immer:",
 					"security": "Anmeldung und Zugang – Passwort zurücksetzen, Anmeldelink, Einmalcode, Änderungen an deinem Zugang.",
-					"legal": "Vertragliches – zum Beispiel ein Auftragsverarbeitungsvertrag zur Unterschrift.",
+					"legal": "Vertragliches – zum Beispiel Vertragsunterlagen zur Bestätigung.",
 					"outage": "Störungen der Plattform."
 				}
 			}
@@ -933,38 +1032,38 @@
 		},
 		"encryption": {
 			"title": "Verschlüsselung & Wiederherstellung",
-			"description": "Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Wiederherstellungsschlüssel kannst du deinen Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.",
+			"description": "Deine Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Ersatzschlüssel kannst du deinen Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.",
 			"loading": "Wird geladen …",
 			"unavailable": "Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte lade die Seite neu.",
 			"setup": {
-				"busy": "Dein Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warte einen Moment und lade die Seite neu.",
+				"busy": "Dein Ersatzschlüssel wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warte einen Moment und lade die Seite neu.",
 				"error": "Die Einrichtung ist fehlgeschlagen. Bitte versuche es erneut.",
-				"explainer": "Richte einmalig einen Wiederherstellungsschlüssel ein. Bewahre ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Dein Verlauf bei Geräteverlust nicht wiederherstellbar.",
-				"cta": "Wiederherstellungsschlüssel einrichten"
+				"explainer": "Richte einmalig einen Ersatzschlüssel ein. Bewahre ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Dein Verlauf bei Geräteverlust nicht wiederherstellbar.",
+				"cta": "Ersatzschlüssel einrichten"
 			},
 			"showKey": {
-				"silentExplainer": "Dein Tresor wurde beim Anmelden automatisch eingerichtet. Das ist dein Wiederherstellungsschlüssel — speichere ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
-				"explainer": "Das ist dein Wiederherstellungsschlüssel. Er wird nur dieses eine Mal angezeigt. Speichere ihn jetzt an einem sicheren Ort.",
+				"silentExplainer": "Dein Ersatzschlüssel wurde beim Anmelden automatisch eingerichtet. Speichere ihn jetzt an einem sicheren Ort, zum Beispiel in einem Passwort-Manager. Danach zeigen wir ihn nicht mehr an.",
+				"explainer": "Das ist dein Ersatzschlüssel. Er wird nur dieses eine Mal angezeigt. Speichere ihn jetzt an einem sicheren Ort.",
 				"copy": "Schlüssel kopieren",
 				"confirmLabel": "Ich habe den Schlüssel sicher gespeichert."
 			},
 			"status": {
-				"ok": "✓ Schlüsselsicherung ist aktiv. Dein Verlauf bleibt auf neuen Geräten lesbar."
+				"ok": "✓ Dein Ersatzschlüssel ist eingerichtet. Dein Verlauf bleibt auf neuen Geräten lesbar."
 			},
 			"changeKey": {
-				"cta": "Wiederherstellungsschlüssel ändern"
+				"cta": "Ersatzschlüssel ändern"
 			},
 			"outOfSync": {
-				"warning": "Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Gib deinen Wiederherstellungsschlüssel ein, damit dein Verlauf hier lesbar wird."
+				"warning": "Auf diesem Gerät fehlt noch dein Ersatzschlüssel. Gib ihn ein, damit dein Verlauf hier lesbar wird."
 			},
 			"recover": {
-				"inputLabel": "Wiederherstellungsschlüssel",
-				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfe die Eingabe.",
+				"inputLabel": "Ersatzschlüssel",
+				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfe die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuche es erneut.",
 				"success": "{{count}} Nachrichtenschlüssel wiederhergestellt."
 			},
 			"reset": {
-				"explainer": "Wiederherstellungsschlüssel vergessen? Du kannst deine Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
+				"explainer": "Ersatzschlüssel vergessen? Du kannst deine Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.",
 				"cta": "Verschlüsselung zurücksetzen",
 				"confirmWarning": "Bist du sicher? Das Zurücksetzen erstellt eine neue Verschlüsselungsidentität. Nachrichten, die nur mit der alten Sicherung lesbar waren, bleiben dauerhaft unlesbar.",
 				"confirmCta": "Ja, zurücksetzen",
@@ -1133,6 +1232,10 @@
 				},
 				"info": "Anonymer Login-Name. Bitte keine echten Namen oder Initialen verwenden.",
 				"success": "Dein Benutzername ist geeignet."
+			},
+			"temporary": {
+				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
+				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
 			}
 		},
 		"errors": {
@@ -1147,7 +1250,10 @@
 		"topic": {
 			"headline": "Zu welchem Thema suchst Du Beratung?",
 			"subline": "Wähle ein Thema aus unserem Beratungsangebot aus.",
-			"summary": "Dein Thema:"
+			"summary": "Dein Thema:",
+			"search": {
+				"noResults": "Kein passendes Thema gefunden. Versuch es mit einem anderen Wort."
+			}
 		},
 		"zipcode": {
 			"bullet1": "• die Hilfen rund um Deinen Wohnort kennen",
@@ -1180,6 +1286,15 @@
 				"queued": "Gleich bist du an der Reihe …",
 				"ready": "Alles bereit — du kannst schreiben",
 				"entering": "Dein Beratungsraum wird geöffnet …"
+			}
+		},
+		"accountCreated": {
+			"login": "Dein Konto wurde angelegt, aber die automatische Anmeldung hat nicht geklappt. Bitte melde dich mit deinem Benutzernamen und deinem Passwort an.",
+			"retry": "Dein Zugang wurde angelegt, aber die Anmeldung hat nicht geklappt. Bitte versuche es noch einmal."
+		},
+		"groupInvite": {
+			"loadError": {
+				"body": "Bitte prüfe deine Verbindung und versuche es erneut. Dein Einladungslink bleibt gültig."
 			}
 		}
 	},
@@ -1436,9 +1551,16 @@
 		},
 		"anonymous": {
 			"tag": "Anonymous"
+		},
+		"supervision": {
+			"badge": "Supervision – Du liest in diesem Chat mit"
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Deine Anfrage kann noch nicht gesendet werden",
+			"text": "Der verschlüsselte Chat für diese Beratungsstelle ist noch nicht eingerichtet. Dein Text bleibt in diesem Feld erhalten – bitte versuche es später erneut oder wende dich direkt an die Beratungsstelle."
+		},
 		"error": {
 			"text": "Es ist ein Problem aufgetreten, bitte versuche es erneut"
 		},
@@ -1486,7 +1608,9 @@
 					"info": "Du kannst nur eine E-Mail-Adresse bei uns hinterlegen. Falls Du die E-Mail-Adresse hier änderst, erhältst Du auf diese E-Mail-Adresse zukünftig auch die Benachrichtigungen."
 				},
 				"resend": {
-					"hint": "Wir haben Dir einen Code an Deine E-Mail-Adresse geschickt. Bitte gib den Code ein."
+					"hint": "Wir haben Dir einen Code an Deine E-Mail-Adresse geschickt. Bitte gib den Code ein.",
+					"failed": "Der Code konnte nicht gesendet werden. Bitte versuch es erneut.",
+					"tooMany": "Zu viele Codes angefordert. Bitte warte einige Minuten, bevor Du einen neuen anforderst."
 				},
 				"step2": {
 					"copy": "Bitte gib hier Deine E-Mail-Adresse an."
@@ -1564,7 +1688,7 @@
 				},
 				"install": {
 					"android": "Download im Google Play Store",
-					"copy": "Installiere Google Authenticator oder Microsoft Authenticator auf Deinem Smartphone oder Tablet. Beide Apps unterstützen den Sicherheitscode für die Online-Beratung.",
+					"copy": "Du brauchst eine der beiden Apps auf Deinem Smartphone oder Tablet. Schon installiert? Dann direkt weiter.",
 					"google": {
 						"android": "https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2",
 						"ios": "https://apps.apple.com/de/app/google-authenticator/id388497605",
@@ -1625,14 +1749,16 @@
 				"install": "Installieren",
 				"select": "Auswählen",
 				"verify": "Prüfen"
-			},
-			"title": "Welche Verbindung möchtest Du verwenden?"
+			}
 		},
 		"subtitle": "Nutze neben Deinem Passwort einen zweiten Faktor für die Anmeldung. Dadurch wird Dein Konto zusätzlich abgesichert.",
 		"switch": {
 			"type": {
 				"label": "Dein zweiter Faktor"
 			}
+		},
+		"required": {
+			"copy": "Bitte hinterlege jetzt einen zweiten Faktor (App oder E-Mail). Erst danach gehört dein Konto allein dir und du kannst mit der Beratung beginnen."
 		}
 	},
 	"userProfile": {
@@ -1728,7 +1854,17 @@
 				"intro": "Im Profilbereich kannst Du persönliche und öffentliche Informationen verwalten, die Abwesenheitsnachricht während Deines Urlaubs aktivieren, Dein Passwort ändern und viele andere Funktionen (wie die Einrichtung der 2-Faktor-Authentifizierung) nutzen."
 			}
 		},
-		"subtitle": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten."
+		"subtitle": "Um Dir die einzelnen Funktionen zu erklären, haben wir einen kurzen Rundgang für Dich vorbereitet. <br /> Du kannst ihn jederzeit abbrechen oder in Deinem Profil erneut starten.",
+		"switch": {
+			"hint": {
+				"off": "Aus: Rundgänge starten nicht von selbst. Du kannst sie hier jederzeit starten.",
+				"on": "An: Der Einführungsrundgang startet von selbst, bis du ihn abgeschlossen oder übersprungen hast. Alle Rundgänge kannst du hier jederzeit starten."
+			},
+			"subtitle": "Kurze Rundgänge zeigen Dir, wo Du was findest."
+		},
+		"introduction": {
+			"summary": "Lerne die Bereiche der Anwendung kennen. Du kannst die Einführung jederzeit erneut starten."
+		}
 	},
 	"anonymousChat": {
 		"headline": "Anonyme Beratung",
@@ -1817,6 +1953,7 @@
 		}
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "Wir suchen eine Beratung für dich.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Konto löschen",
@@ -2029,6 +2166,13 @@
 			"cmd": "Cmd"
 		}
 	},
+	"supervision": {
+		"panel": {
+			"empty": {
+				"hint": "Hier sprichst du vertraulich mit {{name}} über diese Beratung."
+			}
+		}
+	},
 	"teamDiscussion": {
 		"title": "Team-Besprechung",
 		"startHint": "Besprechung starten",
@@ -2097,6 +2241,11 @@
 				"impressum": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nPlatzhalter: Dies ist noch nicht das veröffentlichte Impressum. Der Text steht hier, bis der Plattformbetreiber seine Angaben hinterlegt hat.\n\nBetreiber der Plattform: [Name und Rechtsform]. Sitz: [Anschrift]. Vertreten durch: [vertretungsberechtigte Personen]. Registereintrag: [Registergericht und Registernummer]. Umsatzsteuer-Identifikationsnummer: [USt-IdNr.]. Kontakt: [E-Mail-Adresse], [Telefonnummer].\n\nDie Beratung leistet der Plattformbetreiber nicht. Auf der Plattform gibt es verschiedene Beratungsangebote und Fachbereiche; getragen werden sie von eigenständigen Trägern und deren Beratungsstellen. Diese sind für die Beratung selbst verantwortlich und haben ein eigenes Impressum. Der Plattformbetreiber stellt die Technik bereit, betreibt sie und vermittelt deine Anfrage an die zuständige Beratungsstelle.\n\nDas Impressum deiner Beratungsstelle siehst du, sobald du eine gewählt hast.",
 				"dataprotection": "Du bist hier noch bei keiner Beratungsstelle angemeldet — dieser Hinweis gilt für die Plattform selbst.\n\nPlatzhalter: Dies ist noch nicht die veröffentlichte Datenschutzerklärung. Der Text steht hier, bis der Plattformbetreiber seine Angaben hinterlegt hat.\n\nVerantwortlich für die Plattform: [Name, Rechtsform, Anschrift]. Datenschutzbeauftragte Stelle: [Name, Kontakt]. Zuständige Aufsicht: [Name und Anschrift der Aufsichtsbehörde].\n\nZum Anmelden verarbeiten wir nur, was dafür nötig ist. Deine Nachrichten sind Ende-zu-Ende verschlüsselt: lesbar werden sie nur auf deinem Gerät und bei deiner Beratungsstelle. Beratungsinhalte kann der Plattformbetreiber technisch nicht einsehen.\n\nAuf der Plattform gibt es verschiedene Beratungsangebote und Fachbereiche. Die Beratung leisten eigenständige Träger und deren Beratungsstellen; die Daten deiner Beratung verarbeiten sie überwiegend selbst und in eigener Verantwortung. Der Plattformbetreiber stellt die Technik bereit, betreibt sie und übernimmt die Weiterleitung beziehungsweise Vermittlung deiner Anfrage. Wo beide gemeinsam über Zwecke und Mittel entscheiden, geschieht das in gemeinsamer Verantwortlichkeit; wer welche Pflicht erfüllt, regelt die Vereinbarung zwischen Plattformbetreiber und Träger.\n\nWelche Daten deine Beratungsstelle darüber hinaus verarbeitet, steht in ihrer eigenen Datenschutzerklärung. Die siehst du, bevor du deine erste Nachricht schreibst.\n\nDeine Rechte: Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit, Widerspruch und Beschwerde bei der Aufsichtsbehörde. Wende dich dafür an [Kontaktweg für Betroffenenanfragen].",
 				"fullText": "Vollständigen Text öffnen"
+			}
+		},
+		"warning": {
+			"failed": {
+				"tooManyRequests": "Zu viele Versuche. Bitte warte einige Minuten und versuch es dann erneut."
 			}
 		}
 	},
@@ -2171,13 +2320,13 @@
 		}
 	},
 	"dpaSign": {
-		"title": "Vertragsunterlagen unterzeichnen",
-		"subtitle": "Bitte lies die Vertragsunterlagen vollständig und bestätige anschließend die Angaben zur unterzeichnenden Person.",
+		"title": "Vertragsunterlagen prüfen und bestätigen",
+		"subtitle": "Bitte lies die Vertragsunterlagen vollständig, mache Angaben zur Person und bestätige sie anschließend.",
 		"loadingContract": "Vertragsunterlagen werden geladen...",
 		"signerHeading": "Bestätigung der vertretungsberechtigten Person",
-		"signingFor": "Du unterzeichnest im Namen von:",
+		"signingFor": "Du handelst im Namen von:",
 		"accept": "Ich habe die oben angezeigten Vertragsunterlagen gelesen und bestätige sie verbindlich.",
-		"submit": "Verbindlich bestätigen",
+		"submit": "Bestätigung absenden",
 		"submitting": "Speichern...",
 		"success": "Die Bestätigung der Vertragsunterlagen wurde gespeichert.",
 		"error": {
@@ -2192,15 +2341,28 @@
 	"encryption": {
 		"keyBackup": {
 			"dialog": {
-				"invalidKey": "Dieser Wiederherstellungsschlüssel ist ungültig. Bitte prüfe die Eingabe.",
+				"invalidKey": "Dieser Ersatzschlüssel ist ungültig. Bitte prüfe die Eingabe.",
 				"error": "Die Wiederherstellung ist fehlgeschlagen. Bitte versuche es erneut.",
 				"recoveryTitle": "Schön, dass du wieder da bist",
-				"recoveryCopy": "Du bist auf einem neuen Gerät angemeldet. Dein bisheriger Gesprächsverlauf liegt sicher verschlossen in deinem Tresor.",
-				"recoveryInstruction": "Gib deinen Wiederherstellungsschlüssel ein, um deine Nachrichten hier weiterzulesen.",
-				"keyLabel": "Wiederherstellungsschlüssel",
+				"recoveryCopy": "Du bist auf einem neuen Gerät angemeldet. Dein bisheriger Gesprächsverlauf ist sicher verschlüsselt. Mit deinem Ersatzschlüssel machst du ihn hier wieder lesbar.",
+				"recoveryInstruction": "Gib deinen Ersatzschlüssel ein, um deine Nachrichten hier weiterzulesen.",
+				"keyLabel": "Ersatzschlüssel",
 				"later": "Später",
-				"openVault": "Tresor öffnen"
+				"openVault": "Verlauf wiederherstellen"
 			}
+		},
+		"saveReminder": {
+			"pending": "Deine Anfrage wurde gesendet. Die Wiederherstellung mit deinem Passwort wird noch eingerichtet.",
+			"unavailable": "Deine Anfrage wurde gesendet. Die Wiederherstellung mit deinem Passwort ist noch nicht bereit."
+		},
+		"passwordRecovery": {
+			"needs-password": "Die Wiederherstellung mit deinem Passwort wurde in dieser Sitzung noch nicht bestätigt. Melde dich erneut an oder richte sie mit deinem vorhandenen Ersatzschlüssel ein.",
+			"needs-recovery-key": "Dein bisheriger Verlauf benötigt auf diesem Gerät deinen Ersatzschlüssel.",
+			"retryable-failure": "Die Wiederherstellung mit deinem Passwort konnte nicht eingerichtet werden. Du kannst deine Anfrage trotzdem schreiben und die Einrichtung in den Sicherheitseinstellungen erneut prüfen.",
+			"passwordChangeFailed": "Das Passwort konnte nicht sicher geändert werden. Prüfe das alte Passwort und stelle gegebenenfalls zuerst deinen Gesprächsverlauf mit dem Ersatzschlüssel wieder her. Bei einem Verbindungsabbruch kann das Passwort bereits geändert sein.",
+			"enrollmentFailed": "Die Einrichtung konnte nicht abgeschlossen werden. Prüfe Passwort und gegebenenfalls Einmalcode und versuche es erneut.",
+			"enrollmentExplanation": "Schütze deinen vorhandenen Ersatzschlüssel zusätzlich mit deinem aktuellen Passwort. Dein gespeicherter Ersatzschlüssel bleibt gültig. Ein gestohlenes verschlüsseltes Backup kann mit dem Passwort auch ohne zweiten Faktor geöffnet werden.",
+			"repairBlocked": "Die vorhandenen Passwortsicherungen können hier nicht sicher ersetzt werden. Dein Gesprächsverlauf bleibt mit dem Ersatzschlüssel zugänglich. Die Einrichtung mit einem neuen Passwort ist vorerst nicht möglich."
 		}
 	},
 	"accountInvite": {
@@ -2238,6 +2400,187 @@
 				"archive": {
 					"intro": "Abgeschlossene Beratungen verschiebst du wie bisher ins Archiv — es liegt jetzt in diesem Tab."
 				}
+			}
+		},
+		"practiceAccept": {
+			"summary": "Übe im geschützten Übungsbereich, eine Anfrage anzunehmen und die erste Antwort zu schreiben. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"navEnquiries": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Neue Anfragen findest du hier unter „Anfragen“."
+				},
+				"openEnquiry": {
+					"intro": "In der Liste wartet eine Übungsanfrage. Klicke darauf, um sie zu öffnen."
+				},
+				"openTeam": {
+					"intro": "Bei dir ist die Teambesprechung aktiviert: Damit stimmst du dich mit deinem Team ab, bevor du annimmst. Klicke auf „Teambesprechung öffnen“."
+				},
+				"teamReply": {
+					"intro": "Lies die Nachricht aus dem Team und schreibe eine Antwort. Wenn du die Anfrage annimmst, wird die Teambesprechung geschlossen."
+				},
+				"accept": {
+					"intro": "Klicke auf „Anfrage annehmen“: Die Anfrage wandert in „Meine Beratungen“ und ist für dein Team nicht mehr in der Liste."
+				},
+				"firstAnswer": {
+					"intro": "Die Anfrage gehört jetzt dir. Im Chat siehst du die automatische Erstantwort und die erste Nachricht der ratsuchenden Person."
+				},
+				"reply": {
+					"intro": "Schreibe der ratsuchenden Person eine kurze Antwort und sende sie ab. Sie bleibt in der Übung und wird nirgends gespeichert."
+				},
+				"done": {
+					"intro": "Gut gemacht: Du hast eine Anfrage angenommen und beantwortet. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"summary": "Übe im geschützten Übungsbereich, einer Beratung eine Supervisor:in hinzuzufügen. Alle Personen und Inhalte sind erfunden.",
+			"step": {
+				"addSupervisor": {
+					"intro": "Das ist eine Übung: Alle Personen sind erfunden, nichts wird gesendet oder gespeichert. Klicke auf das „+“, wähle die Supervisor:in aus, nenne kurz den Grund und bestätige."
+				},
+				"supervisorReply": {
+					"intro": "Deine Supervisor:in hat im Seitenchat geantwortet. Diese Nachrichten seht nur ihr zwei — die ratsuchende Person sieht sie nicht."
+				},
+				"standingAssignment": {
+					"intro": "Hat deine Administration dir eine feste Supervisor:in zugewiesen, wird sie beim Annehmen einer Anfrage automatisch hinzugefügt. Dafür musst du nichts tun."
+				},
+				"done": {
+					"intro": "Du hast eine Supervisor:in hinzugefügt und ihre Antwort gelesen. Mit der Schaltfläche unten beendest du die Übung."
+				}
+			}
+		}
+	},
+	"liveChat": {
+		"breathing": {
+			"title": "Deine Atempause",
+			"introTitle": "Ein Moment für dich.",
+			"intro": {
+				"0": "Folge der Bewegung.",
+				"1": "Atme so, wie es sich angenehm anfühlt."
+			},
+			"reducedIntro": {
+				"0": "Atme in deinem Tempo.",
+				"1": "Die Anleitung begleitet dich."
+			},
+			"pausedHint": {
+				"0": "Atme in deinem Rhythmus.",
+				"1": "Du kannst gleich weitermachen."
+			},
+			"finishTitle": "Nimm mit, was dir guttut.",
+			"guidance": {
+				"0": {
+					"1": "Dein Bauch darf sich heben."
+				},
+				"1": {
+					"0": "Lass die Schultern locker.",
+					"1": "Nur so lange es dir guttut."
+				},
+				"2": {
+					"1": "Dein Bauch darf wieder sinken."
+				}
+			},
+			"alternative": {
+				"0": {
+					"0": "Lass den Atem kommen.",
+					"1": "Du musst nichts erzwingen."
+				},
+				"1": {
+					"0": "Nimm deine Schultern wahr.",
+					"1": "Lass sie ein wenig sinken."
+				},
+				"2": {
+					"0": "Lass den Atem ziehen."
+				},
+				"3": {
+					"0": "Spüre, wie du gerade sitzt.",
+					"1": "Du darfst dir Zeit lassen."
+				}
+			},
+			"voiceHint": "Mit der Stimme deines Geräts",
+			"audioError": "Klang ist gerade nicht verfügbar. Du kannst ohne Klang weiteratmen.",
+			"voiceError": "Die Ansage ist nicht verfügbar. Der Atemwind begleitet dich weiter."
+		},
+		"entry": {
+			"status": {
+				"access": "Dein Zugang für dieses Gespräch",
+				"accepted": "Eine Beraterin hat dein Gespräch angenommen"
+			},
+			"access": {
+				"headline": "Dein Name für heute.",
+				"subline": "Anonym, ohne Konto. Wähle eine User-ID — oder würfle neue.",
+				"temporary": "Dieser Zugang gilt nur für dieses Gespräch. Danach löschen wir ihn — samt aller Nachrichten, spätestens nach 48 Stunden. Bleib in diesem Fenster, bis du dran bist."
+			},
+			"waiting": {
+				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"aheadNone": "Du bist als Nächstes dran.",
+				"aheadOne": "Eine Person vor dir",
+				"aheadMany": "{{count}} Personen vor dir",
+				"barStatusUnknown": "Du musst nichts tun",
+				"barStatus": "{{count}} vor dir — du musst nichts tun",
+				"yourTurn": "Du bist dran.",
+				"yourTurnSub": "Eine Beraterin hat dein Gespräch angenommen und wartet auf dich.",
+				"consentRequired": "Bitte stimme erst zu — ohne deine Zustimmung kann das Gespräch nicht beginnen.",
+				"startStatus": "Deine Beraterin wartet auf dich",
+				"declineConfirm": "Bist du sicher, dass du abbrechen und schließen willst?"
+			},
+			"closed": {
+				"text": "Gerade ist niemand im Live-Chat. Schreib uns — wir antworten innerhalb von zwei Arbeitstagen.",
+				"textShort": "Schreib uns — Antwort in zwei Arbeitstagen."
+			},
+			"steps": {
+				"wait": {
+					"title": "Du wartest, bis jemand frei ist"
+				},
+				"consent": {
+					"title": "Dann stimmst du einmal zu",
+					"text": "Sobald eine Stelle dein Gespräch annimmt, siehst du ihren Datenschutz."
+				},
+				"anonymous": {
+					"text": "Nur deine User-ID ist sichtbar. Nach 48 Stunden ist alles gelöscht."
+				}
+			},
+			"checking": {
+				"waiting": "Wir warten mit dir, bis jemand live ist …"
+			},
+			"staff": {
+				"headline": "Du bist als Beraterin angemeldet.",
+				"text": "Dieser Link würde dich hier abmelden und du wärst nicht mehr live. Öffne ihn zum Testen bitte in einem privaten Fenster."
+			}
+		}
+	},
+	"inviteLink": {
+		"resume": {
+			"message": "Die Sitzung konnte gerade nicht geladen werden. Bitte versuche es erneut."
+		}
+	},
+	"passwordChange": {
+		"required": {
+			"copy": "Dein Zugang wurde für Dich angelegt – das erste Passwort kennt deshalb noch jemand anderes. Vergib jetzt eines, das nur Du kennst.",
+			"title": "Dein eigenes Passwort"
+		}
+	},
+	"practice": {
+		"cards": {
+			"summary": {
+				"accept": "Übe, eine Anfrage anzunehmen und eine erste Antwort zu schreiben.",
+				"supervision": "Übe, eine Supervisor:in auszuwählen und einer Beratung hinzuzufügen."
+			},
+			"subtitle": "Übe Abläufe an einem erfundenen Fall. Es werden keine echten Daten verwendet, und was du hier eingibst, wird nicht gespeichert.",
+			"empty": "Aktuell sind keine Übungen für dich verfügbar.",
+			"phoneHint": "Bitte übe am Computer.",
+			"windowHint": "Bitte vergrößere dein Browserfenster für diese Übung."
+		},
+		"error": {
+			"start": "Die Übung konnte nicht gestartet werden. Bitte versuche es erneut."
+		}
+	},
+	"counselling": {
+		"dpa": {
+			"restricted": {
+				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wende Dich an Deine Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"unavailable": {
+				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuche es erneut. Deine Eingaben bleiben erhalten.",
+				"inviteText": "Die Vertragsbestätigung konnte gerade nicht geprüft werden. Bitte versuche es erneut."
 			}
 		}
 	}

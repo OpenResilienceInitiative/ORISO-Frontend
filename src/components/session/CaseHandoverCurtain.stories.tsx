@@ -13,31 +13,27 @@ import {
 } from '../storybookDesignLinks';
 import './caseHandoverCurtain.styles.scss';
 
+// The four neutral codes UserService serves (#1536).
 const reasons: CaseHandoverReason[] = [
 	{
-		code: 'COUNSELLOR_ASKED_FOR_ADVICE',
-		label: 'Counsellor asked for advice',
+		code: 'PLANNED_ABSENCE',
+		label: 'Planned absence',
+		clientConsentRequired: false
+	},
+	{
+		code: 'UNPLANNED_ABSENCE',
+		label: 'Unplanned absence',
+		clientConsentRequired: false
+	},
+	{
+		code: 'ASSIGNMENT_ENDED',
+		label: 'Assignment ended',
+		clientConsentRequired: false
+	},
+	{
+		code: 'ADVICE_REQUESTED',
+		label: 'Advice requested',
 		clientConsentRequired: true
-	},
-	{
-		code: 'COUNSELLOR_ON_HOLIDAY',
-		label: 'Counsellor is on holiday',
-		clientConsentRequired: false
-	},
-	{
-		code: 'OTHER_EMERGENCY',
-		label: 'Other emergency',
-		clientConsentRequired: false
-	},
-	{
-		code: 'COUNSELLOR_IS_ILL',
-		label: 'Counsellor is ill',
-		clientConsentRequired: false
-	},
-	{
-		code: 'COUNSELLOR_LEFT',
-		label: "Counsellor doesn't work here anymore",
-		clientConsentRequired: false
 	}
 ];
 
@@ -126,7 +122,7 @@ export const SelectReasonWithSelection: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="reason"
-			initialReasonCode="OTHER_EMERGENCY"
+			initialReasonCode="PLANNED_ABSENCE"
 		/>
 	)
 };
@@ -135,7 +131,7 @@ export const ConsentReasonSelected: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="reason"
-			initialReasonCode="COUNSELLOR_ASKED_FOR_ADVICE"
+			initialReasonCode="ADVICE_REQUESTED"
 		/>
 	)
 };
@@ -144,8 +140,8 @@ export const DescribeReason: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="describe"
-			initialReasonCode="OTHER_EMERGENCY"
-			initialExplanation="My colleague's kids are ill, so I decided it is better if I take care of this client."
+			initialReasonCode="PLANNED_ABSENCE"
+			initialExplanation="My colleague is away this week, so I will take care of this client."
 		/>
 	)
 };
@@ -166,7 +162,7 @@ export const ErrorState: Story = {
 	render: () => (
 		<CurtainPlayground
 			initialStep="describe"
-			initialReasonCode="OTHER_EMERGENCY"
+			initialReasonCode="PLANNED_ABSENCE"
 			error="Something went wrong. Please try again."
 		/>
 	)
@@ -183,14 +179,14 @@ export const WizardWalkthrough: Story = {
 			})
 		);
 		const reason = await canvas.findByRole('radio', {
-			name: /Other emergency/
+			name: /Planned absence|Geplant abwesend/
 		});
 		await userEvent.click(reason);
 		await expect(reason).toHaveAttribute('aria-checked', 'true');
 		const next = canvas.getByRole('button', { name: /Next|Weiter/i });
 		await userEvent.click(next);
 		const textarea = await canvas.findByRole('textbox');
-		await userEvent.type(textarea, 'Covering for a sick colleague.');
+		await userEvent.type(textarea, 'Covering while my colleague is away.');
 		await userEvent.click(
 			canvas.getByRole('button', {
 				name: /Request access|Zugriff anfragen/i
