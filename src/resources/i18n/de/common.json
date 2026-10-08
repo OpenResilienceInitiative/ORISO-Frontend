@@ -1212,7 +1212,9 @@
 			"openGroup": "Gesprächskreis öffnen",
 			"declinedHeadline": "Diesmal hat es nicht geklappt.",
 			"declinedBody": "Die Moderation hat Ihre Anfrage nicht angenommen. Bei Fragen wenden Sie sich an die Person, die Ihnen den Link geschickt hat.",
-			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link."
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte fragen Sie die Moderation nach einem neuen Link.",
+			"admittingHeadline": "Ihre Anfrage ist angenommen.",
+			"admittingBody": "Der Gruppenzugang wird noch eingerichtet. Lassen Sie diese Seite dafür offen."
 		},
 		"accessUnavailable": {
 			"headline": "Dieser Gesprächskreis lässt sich gerade nicht öffnen.",
@@ -1250,7 +1252,9 @@
 				"coModeratorOwnerOnly": "Co-Moderation vergibt nur die Leitung des Gesprächskreises.",
 				"coModeratorSameTenant": "Co-Moderation ist Fachkräften des eigenen Trägers vorbehalten.",
 				"privacy": "Bis Sie entscheiden, sieht {{name}} nichts aus diesem Gesprächskreis."
-			}
+			},
+			"admissionQueued": "Die Zulassung von {{name}} ist bestätigt. Der Gruppenzugang muss noch bestätigt werden.",
+			"coModerationQueued": "Die Co-Moderation von {{name}} ist bestätigt. Der Gruppenzugang muss noch bestätigt werden."
 		},
 		"joinHandover": {
 			"badge": "Gesprächskreis",

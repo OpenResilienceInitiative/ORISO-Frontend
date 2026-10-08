@@ -1217,7 +1217,9 @@
 			"openGroup": "Sohbet grubunu aç",
 			"declinedHeadline": "Bu sefer olmadı.",
 			"declinedBody": "Moderatörler isteğinizi kabul etmedi. Sorularınız varsa size bağlantıyı gönderen kişiye başvurun.",
-			"linkInvalid": "Bu davet bağlantısı artık geçerli değil. Lütfen moderatörlerden yeni bir bağlantı isteyin."
+			"linkInvalid": "Bu davet bağlantısı artık geçerli değil. Lütfen moderatörlerden yeni bir bağlantı isteyin.",
+			"admittingHeadline": "Başvurunuz onaylandı.",
+			"admittingBody": "Gruba erişiminiz hazırlanıyor. Bu sayfayı açık tutun."
 		},
 		"accessUnavailable": {
 			"headline": "Bu konuşma grubu şu anda açılamıyor.",
@@ -1255,7 +1257,9 @@
 				"coModeratorOwnerOnly": "Ortak moderatörlüğü yalnızca grup yöneticisi verebilir.",
 				"coModeratorSameTenant": "Ortak moderatörlük yalnızca kendi kuruluşunuzun uzmanlarına açıktır.",
 				"privacy": "Siz karar verene kadar {{name}} bu sohbet grubundan hiçbir şey görmez."
-			}
+			},
+			"admissionQueued": "{{name}} için katılım onaylandı. Gruba erişimin ayrıca doğrulanması gerekiyor.",
+			"coModerationQueued": "{{name}} için ortak moderatörlük onaylandı. Gruba erişimin ayrıca doğrulanması gerekiyor."
 		},
 		"joinHandover": {
 			"badge": "Sohbet grubu",

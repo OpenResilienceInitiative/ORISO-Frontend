@@ -244,6 +244,25 @@ export const ProductTourAdapter = ({
 	 */
 	const prepareStep = useCallback(
 		async (index: number, direction: 1 | -1 = 1): Promise<boolean> => {
+			if (
+				process.env.NODE_ENV === 'test' &&
+				process.env.ORISO_FE1317_TRACE === 'active'
+			)
+				console.info(
+					'[1317diag]',
+					JSON.stringify({
+						at: performance.now(),
+						event: 'prepare-enter',
+						index,
+						token: prepareTokenRef.current,
+						runState: {
+							run: runStateRef.current.run,
+							stepIndex: runStateRef.current.stepIndex
+						},
+						mounted: mountedRef.current,
+						ended: hostRef.current.ended
+					})
+				);
 			if (!mountedRef.current || hostRef.current.ended) return false;
 			actionFocusCleanupRef.current?.();
 			actionFocusCleanupRef.current = undefined;
@@ -267,6 +286,24 @@ export const ProductTourAdapter = ({
 						tourTargetSelector(step.target),
 						{ timeoutMs: targetTimeoutMs }
 					);
+					if (
+						process.env.NODE_ENV === 'test' &&
+						process.env.ORISO_FE1317_TRACE === 'active'
+					)
+						console.info(
+							'[1317diag]',
+							JSON.stringify({
+								at: performance.now(),
+								event: 'prepare-target-result',
+								index: i,
+								found,
+								token,
+								currentToken: prepareTokenRef.current,
+								targetConnected: !!document.querySelector(
+									tourTargetSelector(step.target)
+								)?.isConnected
+							})
+						);
 					if (
 						!mountedRef.current ||
 						hostRef.current.ended ||
@@ -486,12 +523,41 @@ export const ProductTourAdapter = ({
 
 	const advanceFrom = useCallback((index: number) => {
 		if (
+			process.env.NODE_ENV === 'test' &&
+			process.env.ORISO_FE1317_TRACE === 'active'
+		)
+			console.info(
+				'[1317diag]',
+				JSON.stringify({
+					at: performance.now(),
+					event: 'advance-attempt',
+					index,
+					runState: {
+						run: runStateRef.current.run,
+						stepIndex: runStateRef.current.stepIndex
+					},
+					advancedFrom: advancedFromRef.current
+				})
+			);
+		if (
 			advancedFromRef.current === index ||
 			runStateRef.current.stepIndex !== index ||
 			!runStateRef.current.run
 		) {
 			return;
 		}
+		if (
+			process.env.NODE_ENV === 'test' &&
+			process.env.ORISO_FE1317_TRACE === 'active'
+		)
+			console.info(
+				'[1317diag]',
+				JSON.stringify({
+					at: performance.now(),
+					event: 'advance-accepted',
+					index
+				})
+			);
 		advancedFromRef.current = index;
 		handleCallbackRef.current({
 			action: ACTIONS.NEXT,
@@ -507,6 +573,20 @@ export const ProductTourAdapter = ({
 	const listening = runState.run && !paused;
 
 	useEffect(() => {
+		if (
+			process.env.NODE_ENV === 'test' &&
+			process.env.ORISO_FE1317_TRACE === 'active'
+		)
+			console.info(
+				'[1317diag]',
+				JSON.stringify({
+					at: performance.now(),
+					event: 'listener-effect',
+					readyIndex,
+					listening,
+					advanceType: currentAdvanceOn?.type
+				})
+			);
 		if (!currentAdvanceOn || !listening) {
 			return undefined;
 		}
@@ -525,6 +605,7 @@ export const ProductTourAdapter = ({
 		}
 		const selector = tourTargetSelector(targetName);
 		let timer: number | undefined;
+		let diagnosticTimerFired = false;
 		// Capture phase: sees the click even if the target stops propagation.
 		const onClick = (event: MouseEvent) => {
 			if (
@@ -534,11 +615,69 @@ export const ProductTourAdapter = ({
 			) {
 				// A macrotask later, so the target handles its own click before
 				// the tour navigates or re-renders around it.
-				timer = window.setTimeout(() => advanceFrom(index), 0);
+				if (
+					process.env.NODE_ENV === 'test' &&
+					process.env.ORISO_FE1317_TRACE === 'active'
+				)
+					console.info(
+						'[1317diag]',
+						JSON.stringify({
+							at: performance.now(),
+							event: 'click-captured',
+							index,
+							selector,
+							targetConnected:
+								event.target instanceof Element &&
+								event.target.isConnected
+						})
+					);
+				timer = window.setTimeout(() => {
+					diagnosticTimerFired = true;
+					if (
+						process.env.NODE_ENV === 'test' &&
+						process.env.ORISO_FE1317_TRACE === 'active'
+					)
+						console.info(
+							'[1317diag]',
+							JSON.stringify({
+								at: performance.now(),
+								event: 'timer-fired',
+								index
+							})
+						);
+					advanceFrom(index);
+				}, 0);
 			}
 		};
+		if (
+			process.env.NODE_ENV === 'test' &&
+			process.env.ORISO_FE1317_TRACE === 'active'
+		)
+			console.info(
+				'[1317diag]',
+				JSON.stringify({
+					at: performance.now(),
+					event: 'listener-installed',
+					index,
+					selector
+				})
+			);
 		document.addEventListener('click', onClick, true);
 		return () => {
+			if (
+				process.env.NODE_ENV === 'test' &&
+				process.env.ORISO_FE1317_TRACE === 'active'
+			)
+				console.info(
+					'[1317diag]',
+					JSON.stringify({
+						at: performance.now(),
+						event: 'listener-cleanup',
+						index,
+						timerScheduled: timer !== undefined,
+						timerFired: diagnosticTimerFired
+					})
+				);
 			document.removeEventListener('click', onClick, true);
 			window.clearTimeout(timer);
 		};
