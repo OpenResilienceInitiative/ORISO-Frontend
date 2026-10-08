@@ -1694,6 +1694,21 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						const dpaFailure = getCounsellingDpaFailure(error);
+						if (dpaFailure) {
+							setActiveInfo(
+								dpaFailure.retryable
+									? INFO_TYPES.DPA_UNAVAILABLE
+									: INFO_TYPES.DPA_RESTRICTED
+							);
+							return;
+						}
+						setActiveInfo((info) =>
+							info === INFO_TYPES.DPA_RESTRICTED ||
+							info === INFO_TYPES.DPA_UNAVAILABLE
+								? ''
+								: info
+						);
 						// Surface the failure in the timeline ("Sending message
 						// failed"); the composer keeps the text so the user can
 						// resend without retyping.
