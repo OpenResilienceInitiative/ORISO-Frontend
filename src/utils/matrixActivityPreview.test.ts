@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
+import { MatrixEvent } from 'matrix-js-sdk';
 import {
 	buildMatrixActivityTextPreview,
 	getMatrixActivityPreviewKind
@@ -34,6 +35,65 @@ describe('buildMatrixActivityTextPreview', () => {
 		roomUnavailable: 'Conversation unavailable on this device',
 		eventUnavailable: 'Message unavailable in local history'
 	};
+	it('shows the first-response greeting instead of its serialized envelope', () => {
+		const event = new MatrixEvent({
+			type: 'm.room.message',
+			content: {
+				msgtype: 'm.text',
+				body: '[SYSTEM_NOTIFICATION]{"type":"FIRST_RESPONSE","version":1,"bausteine":[{"id":"greeting","body":"<p>Schön, dass Sie sich <strong>gemeldet</strong> haben.</p>"},{"id":"privacy","body":"Weitere Hinweise"}]}'
+			}
+		});
+
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event },
+				'Lisa',
+				'New message',
+				labels
+			)
+		).toBe('Lisa: Schön, dass Sie sich gemeldet haben.');
+	});
+
+	it.each([
+		'{"type":"FIRST_RESPONSE","version":2,"bausteine":[{"id":"greeting","body":"Future body"}]}',
+		'{"type":"FIRST_RESPONSE","bausteine":[{"id":"greeting","body":"Unversioned body"}]}'
+	])('hides an unsupported first-response envelope: %s', (payload) => {
+		const event = new MatrixEvent({
+			type: 'm.room.message',
+			content: {
+				msgtype: 'm.text',
+				body: `[SYSTEM_NOTIFICATION]${payload}`
+			}
+		});
+
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event },
+				'Lisa',
+				'New message',
+				labels
+			)
+		).toBe('Lisa: Unsupported message');
+	});
+
+	it('uses the localized notice label for a first response without valid blocks', () => {
+		const event = new MatrixEvent({
+			type: 'm.room.message',
+			content: {
+				msgtype: 'm.text',
+				body: '[SYSTEM_NOTIFICATION]{"type":"FIRST_RESPONSE","version":1,"bausteine":[]}'
+			}
+		});
+
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event },
+				'Lisa',
+				'New message',
+				labels
+			)
+		).toBe('Lisa: Notice');
+	});
 	it('renders the sender and normalized plain-text body of the resolved event', () => {
 		const event = {
 			getType: () => 'm.room.message',
