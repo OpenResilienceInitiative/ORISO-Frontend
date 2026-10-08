@@ -95,6 +95,11 @@ describe('ProfileAvatarChoice (#878 phase 4, US#1240)', () => {
 		expect(
 			screen.getByRole('radiogroup', { name: 'Ihr Bild' })
 		).toBeTruthy();
+		expect(
+			screen
+				.getByRole('radiogroup', { name: 'Ihr Bild' })
+				.classList.contains('avatarPicker--grid')
+		).toBe(true);
 		expect(tile('Standard').getAttribute('aria-checked')).toBe('true');
 
 		fireEvent.click(tile('magpie'));
@@ -141,7 +146,6 @@ describe('ProfileAvatarChoice (#878 phase 4, US#1240)', () => {
 		fireEvent.click(tile('Standard'));
 		await waitFor(() =>
 			expect(apiPatchUserData).toHaveBeenLastCalledWith({
-				avatarKind: 'INITIALS',
 				avatarId: ''
 			})
 		);
@@ -160,4 +164,31 @@ describe('ProfileAvatarChoice (#878 phase 4, US#1240)', () => {
 			)
 		);
 	});
+});
+
+it('does not label explicit admin initials as Standard, but selects a pending clear', () => {
+	vi.mocked(apiPatchUserData).mockReturnValueOnce(new Promise(() => {}));
+	renderChoice({
+		userId: 'consultant',
+		userName: 'consultant',
+		grantedAuthorities: COUNSELLOR,
+		avatarKind: 'INITIALS',
+		avatarId: null
+	});
+	expect(
+		screen
+			.getByRole('radio', { name: 'Standard' })
+			.getAttribute('aria-checked')
+	).toBe('false');
+	expect(screen.getByRole('radio', { name: 'Standard' }).tabIndex).toBe(0);
+	expect(
+		screen.getAllByRole('radio').filter((radio) => radio.tabIndex === 0)
+	).toHaveLength(1);
+	const standard = screen.getByRole('radio', { name: 'Standard' });
+	standard.focus();
+	fireEvent.keyDown(standard, { key: 'ArrowRight' });
+	expect(document.activeElement).toBe(screen.getAllByRole('radio')[1]);
+	fireEvent.click(standard);
+	expect(standard.getAttribute('aria-checked')).toBe('true');
+	expect(apiPatchUserData).toHaveBeenLastCalledWith({ avatarId: '' });
 });

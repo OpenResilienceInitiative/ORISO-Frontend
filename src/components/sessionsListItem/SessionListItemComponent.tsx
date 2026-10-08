@@ -20,6 +20,7 @@ import {
 } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
@@ -1050,13 +1051,21 @@ export const SessionListItemComponent = ({
 				}
 				username={activeSession.user?.username || ''}
 				displayName={railName}
+				choice={chosenAvatarOf(activeSession.user)}
 				size={40}
 			/>
 		) : (
 			<UserAvatar
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
-				userId={activeSession.consultant?.id || 'unknown'}
+				userId={
+					activeSession.item.consultantMatrixUserId ||
+					activeSession.consultant?.id ||
+					activeSession.consultant?.consultantId ||
+					'unknown'
+				}
+				choice={chosenAvatarOf(activeSession.consultant)}
+				avatarDisplayName={activeSession.consultant?.displayName}
 				size="40px"
 				ring={false}
 			/>
@@ -1522,6 +1531,7 @@ export const SessionListItemComponent = ({
 										activeSession.user?.username || ''
 									}
 									displayName={sessionTopic}
+									choice={chosenAvatarOf(activeSession.user)}
 									size={48}
 									outline={false}
 								/>
@@ -1533,8 +1543,18 @@ export const SessionListItemComponent = ({
 									}
 									displayName={sessionTopic}
 									userId={
+										activeSession.item
+											.consultantMatrixUserId ||
 										activeSession.consultant?.id ||
+										activeSession.consultant
+											?.consultantId ||
 										'unknown'
+									}
+									choice={chosenAvatarOf(
+										activeSession.consultant
+									)}
+									avatarDisplayName={
+										activeSession.consultant?.displayName
 									}
 									size="48px"
 									ring={false}
