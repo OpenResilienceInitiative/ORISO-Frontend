@@ -14,6 +14,7 @@ export interface ToolbarButtonProps {
 	'children': React.ReactNode;
 	/** Extra attrs for outside-click / toggle coordination. */
 	'data-emoji-picker-toggle'?: string;
+	'data-cy'?: string;
 }
 
 /** 38×32 icon button, radius 12, per Figma Tip Tap menu buttons. */
@@ -27,7 +28,8 @@ export const ToolbarButton = ({
 	text,
 	className,
 	children,
-	'data-emoji-picker-toggle': emojiPickerToggle
+	'data-emoji-picker-toggle': emojiPickerToggle,
+	'data-cy': dataCy
 }: ToolbarButtonProps) => (
 	<button
 		type="button"
@@ -40,6 +42,7 @@ export const ToolbarButton = ({
 		disabled={disabled}
 		onClick={onClick}
 		data-emoji-picker-toggle={emojiPickerToggle}
+		data-cy={dataCy}
 		className={[
 			'composerToolbar__button',
 			text && 'composerToolbar__button--labeled',

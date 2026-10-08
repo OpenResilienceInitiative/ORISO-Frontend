@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { EMAIL_IDS, EMAIL_LOCALES, buildEmail } from './index';
+import {
+	EMAIL_IDS,
+	EMAIL_LOCALES,
+	EMAIL_LOCALE_DIR,
+	EMAIL_LOCALE_LANG,
+	buildEmail
+} from './index';
+import { emailLogoLockup } from './kit/emailAtoms';
+import { emailSampleBrand } from './kit/emailTokens';
 
 /**
  * Static compatibility check against what e-mail clients actually support.
@@ -32,7 +40,7 @@ const styleBlock = (html: string): string =>
 const body = (html: string): string => html.split('</head>')[1] ?? '';
 
 describe('e-mail client compatibility', () => {
-	describe.each(cases)('$locale/$id', ({ html }) => {
+	describe.each(cases)('$locale/$id', ({ html, locale }) => {
 		it('lays out with tables, not with CSS layout', () => {
 			// Outlook's Word rendering engine supports neither, and Gmail
 			// strips `position` outright.
@@ -73,7 +81,10 @@ describe('e-mail client compatibility', () => {
 		it('gives every image an alt text and a size', () => {
 			for (const img of html.match(/<img[^>]*>/g) ?? []) {
 				expect(img, `alt missing: ${img}`).toMatch(/\salt="/);
-				expect(img, `width missing: ${img}`).toMatch(/\swidth="/);
+				// Without intrinsic dimensions, width:auto preserves the logo shape.
+				expect(img, `proportional width missing: ${img}`).toMatch(
+					/\swidth="|width:auto/
+				);
 				expect(img, `height missing: ${img}`).toMatch(/\sheight="/);
 			}
 		});
@@ -95,8 +106,20 @@ describe('e-mail client compatibility', () => {
 		});
 
 		it('states a language and a character set', () => {
-			expect(html).toMatch(/<html lang="(de|en)">/);
+			// Read from the catalogue rather than spelled out here, so adding
+			// a language is one table edit and not a test edit as well.
+			expect(html).toContain(
+				`<html lang="${EMAIL_LOCALE_LANG[locale]}">`
+			);
 			expect(html).toMatch(/<meta charset="utf-8">/i);
+		});
+
+		it('does not need a mirrored layout', () => {
+			// The kit lays out with tables and left-aligned padding. A genuine
+			// right-to-left language would need every one of those mirrored,
+			// so the catalogue has to say `ltr` for this to hold. Tigrinya is
+			// the one people expect to be RTL and is not.
+			expect(EMAIL_LOCALE_DIR[locale]).toBe('ltr');
 		});
 
 		it('declares how it wants to be treated in dark mode', () => {
@@ -110,11 +133,47 @@ describe('e-mail client compatibility', () => {
 			expect(styleBlock(html)).toMatch(/a\[x-apple-data-detectors\]/);
 		});
 
+		it('opts bordered rounded tables out of border-collapse', () => {
+			// The stylesheet resets table{border-collapse:collapse}, and
+			// border-radius has no effect on a collapsed-border table: clients
+			// round the background but draw the 1px outline square (observed
+			// in Roundcube). Every table combining a radius with a border must
+			// therefore carry border-collapse:separate inline.
+			for (const table of body(html).match(/<table[^>]*>/g) ?? []) {
+				if (/border-radius/.test(table) && /border:1px/.test(table)) {
+					expect(table, `border-collapse missing: ${table}`).toMatch(
+						/border-collapse:separate/
+					);
+				}
+			}
+		});
+
 		it('stays under the Gmail clipping threshold', () => {
 			// Gmail clips a message past ~102KB and hides the rest behind a
 			// "View entire message" link — which, on these mails, would hide
 			// the privacy promise and the unsubscribe link.
 			expect(Buffer.byteLength(html, 'utf8')).toBeLessThan(102_000);
 		});
+	});
+});
+
+describe('header logo lockup', () => {
+	// The brand name always stands beside the logo, so the logo is decorative:
+	// a failed image must not repeat the name as alt text next to itself.
+	it('shows the logo and the name, with a decorative empty alt', () => {
+		const header = emailLogoLockup(emailSampleBrand);
+		const img = header.match(/<img [^>]*>/)?.[0] ?? '';
+		expect(img).toContain('src="/logo512.png"');
+		expect(img).toContain(' alt=""');
+		expect(img).toContain('height="48"');
+		expect(img).toContain('width:auto;height:48px;');
+		expect(img).toContain('border:0');
+		expect(header).toContain('>Online-Beratung</td>');
+	});
+
+	it('emits no <img> at all without a logo, only the name', () => {
+		const header = emailLogoLockup({ ...emailSampleBrand, logoUrl: '' });
+		expect(header).not.toContain('<img');
+		expect(header).toContain('>Online-Beratung</td>');
 	});
 });

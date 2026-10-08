@@ -8,6 +8,10 @@ import {
 	SESSION_LIST_TAB_ARCHIVE,
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
+import {
+	isActiveSupervisorOf,
+	SupervisionMarker
+} from '../sessionsListItem/supervisionListState';
 
 export const CASE_HANDOVER_PENDING_STATUSES = [
 	'PENDING',
@@ -22,6 +26,8 @@ export const CASE_HANDOVER_DENIED_STATUSES = [
 interface CaseHandoverSessionInput {
 	item?: {
 		status?: number | string;
+		/** ADR-008 marker — an active supervisor already has read access. */
+		supervision?: SupervisionMarker | null;
 	};
 	consultant?: {
 		id?: string | number;
@@ -69,6 +75,11 @@ export const isCaseHandoverAccessControlled = ({
 		activeSession.isEmptyEnquiry ||
 		activeSession.item.status === STATUS_ENQUIRY
 	) {
+		return false;
+	}
+	// An active supervisor is a non-owner by definition, but already reads the
+	// room (ADR-008) — offering "request access" to them is the bug this guards.
+	if (isActiveSupervisorOf(activeSession, userData.userId)) {
 		return false;
 	}
 	const ownerId = activeSession.consultant?.id;

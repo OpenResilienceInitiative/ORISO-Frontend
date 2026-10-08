@@ -3,16 +3,20 @@ import {
 	formatAgencyLine,
 	formatAgencyLineWithI18n,
 	formatMessagePersonName,
-	getMessagePersonInitials,
 	resolveIncomingConsultantNameForAsker,
 	resolveOwnConsultantName
 } from './messageNameUtils';
 
 describe('formatMessagePersonName', () => {
-	it('prefers the real name when present', () => {
+	it('prefers the display name over the real name (#1486)', () => {
 		expect(
-			formatMessagePersonName('ignored', 'ignored', 'Karina', 'P')
-		).toBe('Karina P');
+			formatMessagePersonName(
+				'sanftes Alpaka Kim',
+				'karina.p',
+				'Karina',
+				'P'
+			)
+		).toBe('sanftes Alpaka Kim');
 	});
 
 	it('keeps anonymous display names untouched', () => {
@@ -139,27 +143,21 @@ describe('resolveOwnConsultantName', () => {
 		).toBe('Beratende Person Kim');
 	});
 
-	it('falls back to firstName and lastName, then username', () => {
+	it('falls back to the username before the legal name', () => {
 		expect(
 			resolveOwnConsultantName({
 				firstName: 'Karina',
 				lastName: 'P',
 				username: 'karina.p'
 			})
-		).toEqual({ firstName: 'Karina', lastName: 'P' });
-		expect(
-			resolveOwnConsultantName({
-				username: 'karina.p'
-			})
 		).toEqual({ displayName: 'karina.p' });
 	});
-});
 
-describe('getMessagePersonInitials', () => {
-	it('uses first letters of the humanized name', () => {
+	it('uses the legal name only when nothing else is known', () => {
 		expect(
-			getMessagePersonInitials(undefined, 'free_bee_frankie_821')
-		).toBe('FB');
+			resolveOwnConsultantName({ firstName: 'Karina', lastName: 'P' })
+		).toEqual({ firstName: 'Karina', lastName: 'P' });
+		expect(resolveOwnConsultantName({})).toEqual({});
 	});
 });
 
@@ -246,5 +244,115 @@ describe('formatAgencyLineWithI18n', () => {
 				translate
 			)
 		).toBe('54222 Tenant Overlay');
+	});
+});
+
+describe('anonymous User-IDs (#1209)', () => {
+	// Humanising these dropped the trailing digits, so every guest in a room
+	// rendered as the same bare "anon" and the bubble disagreed with the
+	// header and session list, which show the User-ID raw.
+	it('keeps a backend-minted anonymous User-ID intact', () => {
+		expect(formatMessagePersonName(undefined, 'anon_5')).toBe('anon_5');
+		expect(formatMessagePersonName(undefined, 'anon_12')).toBe('anon_12');
+	});
+
+	it('keeps two anonymous guests distinguishable', () => {
+		expect(formatMessagePersonName(undefined, 'anon_5')).not.toBe(
+			formatMessagePersonName(undefined, 'anon_12')
+		);
+	});
+
+	it('keeps a historical Anonymous-timestamp User-ID intact', () => {
+		expect(formatMessagePersonName(undefined, 'Anonymous-1699999999')).toBe(
+			'Anonymous-1699999999'
+		);
+	});
+
+	it('prefers the animal display name once one is set', () => {
+		expect(
+			formatMessagePersonName('freundliche Katze Mika', 'anon_5')
+		).toBe('freundliche Katze Mika');
+	});
+
+	it('still humanises technical consultant usernames', () => {
+		expect(formatMessagePersonName(undefined, 'ruhiges_Yak_Kim_234')).toBe(
+			'ruhiges Yak Kim'
+		);
+	});
+});
+
+/**
+ * ADR-002 §2 — the published identity is the public display name. The real
+ * name used to be checked first in `resolvePreferredName`, so it overrode the
+ * display name on every surface, including the chat bubble an advice seeker
+ * reads. See OpenResilienceInitiative/ORISO-Frontend#1486.
+ */
+describe('display name over real name (#1486)', () => {
+	it('shows the display name when a real name is present too', () => {
+		expect(
+			formatMessagePersonName(
+				'sanftes Alpaka Kim',
+				'karina.p',
+				'Karina',
+				'Perez'
+			)
+		).toBe('sanftes Alpaka Kim');
+	});
+
+	it('never lets the real name reach the rendered name', () => {
+		const rendered = formatMessagePersonName(
+			'Beratende Person Kim',
+			'karina.p',
+			'Karina',
+			'Perez'
+		);
+		expect(rendered).not.toContain('Karina');
+		expect(rendered).not.toContain('Perez');
+	});
+
+	it('falls back to the identity anchor, not the real name', () => {
+		expect(
+			formatMessagePersonName(undefined, 'anon_5', 'Karina', 'Perez')
+		).toBe('anon_5');
+		expect(
+			formatMessagePersonName(
+				undefined,
+				'ruhiges_Yak_Kim_234',
+				'Karina',
+				'Perez'
+			)
+		).toBe('ruhiges Yak Kim');
+	});
+
+	it('uses the real name only when there is no name and no anchor at all', () => {
+		expect(
+			formatMessagePersonName(undefined, undefined, 'Karina', 'Perez')
+		).toBe('Karina Perez');
+		expect(formatMessagePersonName('   ', '  ', 'Karina', '')).toBe(
+			'Karina'
+		);
+	});
+
+	/**
+	 * The three identity layers must agree. The chat header and the session
+	 * list resolve an incoming counsellor as `displayName || username`; the
+	 * bubble has to land on the same string for the same person.
+	 */
+	it('agrees with the chat header and the session list', () => {
+		const counsellor = {
+			displayName: 'sanftes Alpaka Kim',
+			username: 'karina.p',
+			firstName: 'Karina',
+			lastName: 'Perez'
+		};
+		const headerAndListName = counsellor.displayName || counsellor.username;
+		expect(
+			formatMessagePersonName(
+				counsellor.displayName,
+				counsellor.username,
+				counsellor.firstName,
+				counsellor.lastName
+			)
+		).toBe(headerAndListName);
 	});
 });

@@ -19,6 +19,33 @@ export const hasLegalLinksToken = (sentence: string): boolean =>
 	new RegExp(LEGAL_LINKS_TOKEN.source).test(sentence);
 
 /**
+ * Client-side fallback for `{{Beratungsstelle}}` and `{{Thema}}`.
+ *
+ * ADR-021 decision 5 assigns these to the server: AgencyService should render
+ * them before the text ever reaches this browser. In practice `GET
+ * /agencies/{id}/topics/{tid}/legal` returns the raw text on today's backend
+ * (issue #1263) — a help-seeker then sees `{{Thema}}` next to a checkbox they
+ * must tick.
+ *
+ * Substitute them here so the reader gets real names, and leave the token
+ * dialect alone: matching only `{{key}}` (not `${key}`) so nothing that comes
+ * from a Träger template is ever executed. Whitespace inside the braces is
+ * tolerated — same rule as `{{legal_links}}`.
+ * ponytail: client fallback for a server defect. Remove once AgencyService
+ * substitutes both tokens on `/agencies/{id}/topics/{tid}/legal`.
+ */
+export const substituteConsentContext = (
+	sentence: string,
+	{ agencyName, topicName }: { agencyName?: string; topicName?: string }
+): string =>
+	sentence
+		.replace(
+			/\{\{\s*Beratungsstelle\s*\}\}/g,
+			agencyName ?? '{{Beratungsstelle}}'
+		)
+		.replace(/\{\{\s*Thema\s*\}\}/g, topicName ?? '{{Thema}}');
+
+/**
  * Replaces `{{legal_links}}` with the rendered links markup.
  *
  * Two details that are easy to get wrong:

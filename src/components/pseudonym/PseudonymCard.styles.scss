@@ -10,9 +10,10 @@
  *   avatar, matching the existing robot onboarding messages.
  */
 
-/* Inputs for the header inset below — the avatar overlap this card is built on. */
-$avatar-visible-edge: 54px;
+/* Shared geometry: the header clears the avatar, while the bubble overlaps it. */
 $content-column-overlap: 32px;
+$avatar-content-gap: 12px;
+$header-avatar-gap: 8px;
 
 .pseudonymCard {
 	width: 100%;
@@ -21,10 +22,10 @@ $content-column-overlap: 32px;
 	padding: 0;
 }
 
-.pseudonymCard__wrap {
+.pseudonymCard .pseudonymCard__wrap {
 	display: flex;
 	align-items: flex-start;
-	gap: 12px;
+	gap: $avatar-content-gap;
 	width: 100%;
 }
 
@@ -95,26 +96,24 @@ $content-column-overlap: 32px;
 
 	/* Pull content left so the bubble slides a little under the avatar,
 	   giving the avatar a "sitting on top-left corner" overlap effect. */
-	margin-left: -32px;
+	margin-left: -$content-column-overlap;
 	position: relative;
 	z-index: 1;
 }
 
-/* Header: Carimat on one line, subtitle stacked below.
-   The content column slides 32px under the avatar column and the avatar frame
-   paints its own white background on top of it (z-index 2 over 1), so any
-   header text starting before 60px is hidden behind the avatar — that is what
-   swallowed the leading "I" of "Ihre ersten Schritte". */
+/* Clear the entire avatar frame, including its white backdrop. The bubble
+   retains its overlap; translated header labels wrap in the remaining space. */
 .pseudonymCard__header {
 	display: flex;
 	flex-direction: column;
-	align-items: baseline;
-	flex-wrap: wrap;
+	align-items: stretch;
 	gap: 2px;
-	/* Derived, not chosen: the visible circle ends 54px from the card's left
-	   edge, and the content column already starts 32px in, so the header has
-	   to clear the remaining 22px to escape the avatar's white backdrop. */
-	padding-left: $avatar-visible-edge - $content-column-overlap;
+	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	padding-left: $content-column-overlap - $avatar-content-gap +
+		$header-avatar-gap;
+	overflow-wrap: anywhere;
 }
 
 .pseudonymCard__headerName {

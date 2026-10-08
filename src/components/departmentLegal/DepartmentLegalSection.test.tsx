@@ -9,6 +9,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DepartmentLegalSection } from './DepartmentLegalSection';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { clearDepartmentLegalCache } from '../../api/apiGetDepartmentLegal';
 import { fetchData } from '../../api/fetchData';
 import {
@@ -16,9 +17,25 @@ import {
 	TopicsDataInterface
 } from '../../globalState/interfaces';
 
+// Isolate app configuration: this suite supplies the real legal-link context directly.
+vi.mock('../../hooks/useAppConfig', () => ({
+	useAppConfig: () => ({ legalLinks: [] })
+}));
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) =>
+			({
+				'registration.agency.legal.headline':
+					'Datenschutzhinweise der Beratungsstelle',
+				'registration.agency.legal.department': 'Fachbereich',
+				'registration.agency.legal.unavailable':
+					'Die Datenschutzhinweise können derzeit nicht geladen werden.',
+				'legal.modal.missing.text':
+					'Für dieses Angebot ist hier kein Rechtstext hinterlegt.',
+				'registration.agency.legal.imprintHeadline':
+					'Impressum der Beratungsstelle'
+			})[key] ?? key,
 		i18n: { language: 'de' }
 	})
 }));
@@ -277,6 +294,63 @@ describe('DepartmentLegalSection', () => {
 			mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
 		});
 
+		it.each([true, false])(
+			'preserves the approved missing notice and configured-link availability (%s) in the profile modal',
+			async (configured) => {
+				vi.mocked(fetchData).mockResolvedValue(null);
+				mockTenant.content.privacy = '';
+				const getUrl = vi.fn(
+					() => 'https://traeger.example/datenschutz'
+				);
+				try {
+					render(
+						<LegalLinksContext.Provider
+							value={
+								configured
+									? [
+											{
+												label: 'login.legal.infoText.dataprotection',
+												getUrl
+											}
+										]
+									: []
+							}
+						>
+							<DepartmentLegalSection
+								agency={agencyWithBoth}
+								topic={topic}
+								variant="modal"
+							/>
+						</LegalLinksContext.Provider>
+					);
+					fireEvent.click(
+						screen.getByRole('button', {
+							name: 'Datenschutzhinweise der Beratungsstelle'
+						})
+					);
+					expect(
+						await screen.findByText(
+							'Für dieses Angebot ist hier kein Rechtstext hinterlegt.'
+						)
+					).toBeDefined();
+					if (configured) {
+						expect(
+							screen.getByRole('link').getAttribute('href')
+						).toBe('https://traeger.example/datenschutz');
+						expect(getUrl).toHaveBeenCalledWith();
+						expect(
+							screen.getByRole('link').getAttribute('href')
+						).not.toContain('aid=');
+					} else {
+						expect(screen.queryByRole('link')).toBeNull();
+						expect(getUrl).not.toHaveBeenCalled();
+					}
+				} finally {
+					mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+				}
+			}
+		);
+
 		it('opens agency privacy in LegalLinkModal, not the tenant text', async () => {
 			render(
 				<DepartmentLegalSection
@@ -293,7 +367,10 @@ describe('DepartmentLegalSection', () => {
 				})
 			);
 
-			expect(await screen.findByTestId('legal-agency')).toBeDefined();
+			expect(
+				await screen.findByText('Fachbereich DPP der Stelle.')
+			).toBeDefined();
+			expect(screen.getByRole('dialog')).toBeDefined();
 			expect(
 				screen.getByText('Fachbereich DPP der Stelle.')
 			).toBeDefined();

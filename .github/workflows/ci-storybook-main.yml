@@ -11,6 +11,12 @@ env:
   REGISTRY: ghcr.io
   ORG: openresilienceinitiative
 
+# A publishing run must finish: cancelling one halfway is worse
+# than paying for it.
+concurrency:
+  group: frontend-storybook-main-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
     name: lint, type-check, build and publish Storybook image
@@ -36,6 +42,11 @@ jobs:
         uses: ./.github/actions/node-build
         with:
           node_version: '22'
+
+      # The image copies this output instead of rebuilding Storybook inside
+      # Docker; see the header of Dockerfile.storybook.
+      - name: Build Storybook static output
+        run: npm run build-storybook
 
       - name: Publish Storybook Docker image
         uses: ./.github/actions/docker-build-push

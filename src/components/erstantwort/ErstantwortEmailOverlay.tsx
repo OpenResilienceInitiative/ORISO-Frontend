@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -37,6 +37,13 @@ export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
 > = ({ onClose, onSaved }) => {
 	const { t } = useTranslation();
+	const active = useRef(true);
+	useEffect(() => {
+		active.current = true;
+		return () => {
+			active.current = false;
+		};
+	}, []);
 	const [email, setEmail] = useState('');
 	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
 	const [errorText, setErrorText] = useState<string | null>(null);
@@ -60,8 +67,7 @@ export const ErstantwortEmailOverlay: React.FC<
 		content: email,
 		icon: <EnvelopeIcon />,
 		id: 'erstantwortEmail',
-		label:
-			errorText ?? t('furtherSteps.email.overlay.input.label', 'E-mail'),
+		label: errorText ?? t('furtherSteps.email.overlay.input.label'),
 		name: 'email',
 		type: 'text',
 		labelState: errorText ? 'invalid' : labelState
@@ -73,24 +79,47 @@ export const ErstantwortEmailOverlay: React.FC<
 		setErrorText(null);
 		apiPutEmail(email)
 			.then(() => {
+				if (!active.current) return;
 				setIsSaving(false);
 				setIsSaved(true);
 				onSaved();
 			})
-			.catch((error: Response) => {
+			.catch((error: unknown) => {
+				if (!active.current) return;
 				setIsSaving(false);
-				const reason = error?.headers?.get(FETCH_ERRORS.X_REASON);
 				setLabelState('invalid');
+
+				if (error instanceof Error) {
+					if (error.message === FETCH_ERRORS.FORBIDDEN) {
+						setErrorText(
+							t('erstantwort.emailNotification.notAllowed')
+						);
+						return;
+					}
+					if (
+						error.message === FETCH_ERRORS.ABORTED ||
+						error.message === FETCH_ERRORS.GATEWAY_TIMEOUT ||
+						error.message === FETCH_ERRORS.TIMEOUT ||
+						error instanceof TypeError
+					) {
+						setErrorText(
+							t(
+								'profile.notifications.noEmail.modal.errorMessage'
+							)
+						);
+						return;
+					}
+					setErrorText(t('erstantwort.emailNotification.saveFailed'));
+					return;
+				}
+
+				const reason = (error as Response)?.headers?.get(
+					FETCH_ERRORS.X_REASON
+				);
 				setErrorText(
 					reason === X_REASON.EMAIL_NOT_AVAILABLE
-						? t(
-								'furtherSteps.email.overlay.input.unavailable',
-								'This e-mail address is already registered.'
-							)
-						: t(
-								'erstantwort.emailNotification.saveFailed',
-								'Saving failed. Please try again.'
-							)
+						? t('furtherSteps.email.overlay.input.unavailable')
+						: t('erstantwort.emailNotification.saveFailed')
 				);
 			});
 	};
@@ -98,15 +127,12 @@ export const ErstantwortEmailOverlay: React.FC<
 	const successItem: OverlayItem = {
 		buttonSet: [
 			{
-				label: t('furtherSteps.email.overlay.button2.label', 'Close'),
+				label: t('furtherSteps.email.overlay.button2.label'),
 				function: OVERLAY_FUNCTIONS.CLOSE,
 				type: BUTTON_TYPES.PRIMARY
 			}
 		],
-		headline: t(
-			'furtherSteps.email.success.overlay.headline',
-			'Your e-mail address has been saved.'
-		),
+		headline: t('furtherSteps.email.success.overlay.headline'),
 		svg: SuccessIllustration
 	};
 
@@ -114,19 +140,16 @@ export const ErstantwortEmailOverlay: React.FC<
 		buttonSet: [
 			{
 				disabled: !isValid || isSaving,
-				label: t('furtherSteps.email.overlay.button1.label', 'Save'),
+				label: t('furtherSteps.email.overlay.button1.label'),
 				type: BUTTON_TYPES.PRIMARY
 			},
 			{
-				label: t('furtherSteps.email.overlay.button2.label', 'Close'),
+				label: t('furtherSteps.email.overlay.button2.label'),
 				function: OVERLAY_FUNCTIONS.CLOSE,
 				type: BUTTON_TYPES.SECONDARY
 			}
 		],
-		headline: t(
-			'furtherSteps.email.overlay.headline',
-			'Add an e-mail address'
-		),
+		headline: t('furtherSteps.email.overlay.headline'),
 		/* The failure text belongs on the field label, next to the input that
 		   caused it — not duplicated into the overlay copy above it.
 		   The live region is separate and visually hidden: after pressing Save
@@ -148,6 +171,7 @@ export const ErstantwortEmailOverlay: React.FC<
 			item={isSaved ? successItem : formItem}
 			handleOverlay={(buttonFunction: string) => {
 				if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+					active.current = false;
 					onClose();
 					return;
 				}

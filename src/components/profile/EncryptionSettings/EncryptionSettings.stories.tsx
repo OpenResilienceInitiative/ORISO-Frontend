@@ -1,8 +1,13 @@
 import * as React from 'react';
+import { expect, userEvent, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { MatrixClient } from 'matrix-js-sdk';
+import { UserDataContext } from '../../../globalState';
+import {
+	clearPendingRecoveryKey,
+	savePendingRecoveryKey
+} from '../../../services/pendingRecoveryKeyStore';
+import { setRecoveryRuntimeStatus } from '../../../services/recoveryReminderState';
 import { EncryptionSettingsPanel } from './index';
-import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupService';
 
 /**
  * #437 Key backup + recovery UX. Stories inject a fake Matrix client (only the
@@ -10,57 +15,13 @@ import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupSer
  * every phase renders without a homeserver.
  */
 
-const DEMO_RECOVERY_KEY = 'EsTc XKzB 4Dcp 8xWm Jvqa 2S9d Hn3f Ky6R pQ7u Vw1z';
-
-const buildFakeClient = (
-	overrides: Partial<Record<string, unknown>> = {}
-): MatrixClient => {
-	const crypto = {
-		isSecretStorageReady: async () => true,
-		isCrossSigningReady: async () => true,
-		getActiveSessionBackupVersion: async () => '3',
-		getKeyBackupInfo: async () => ({ version: '3' }),
-		getSessionBackupPrivateKey: async () => new Uint8Array(32),
-		createRecoveryKeyFromPassphrase: async () => ({
-			encodedPrivateKey: DEMO_RECOVERY_KEY,
-			privateKey: new Uint8Array(32),
-			keyInfo: {}
-		}),
-		bootstrapCrossSigning: async () => undefined,
-		bootstrapSecretStorage: async () => undefined,
-		resetKeyBackup: async () => undefined,
-		checkKeyBackupAndEnable: async () => ({}),
-		loadSessionBackupPrivateKeyFromSecretStorage: async () => undefined,
-		restoreKeyBackup: async () => ({ imported: 42, total: 42 }),
-		resetEncryption: async () => undefined,
-		...overrides
-	};
-	return { getCrypto: () => crypto } as unknown as MatrixClient;
-};
-
-const statusNotSetUp: EncryptionSetupStatus = {
-	secretStorageReady: false,
-	crossSigningReady: false,
-	activeBackupVersion: null,
-	serverBackupExists: false,
-	keyStorageOutOfSync: false
-};
-
-const statusHealthy: EncryptionSetupStatus = {
-	secretStorageReady: true,
-	crossSigningReady: true,
-	activeBackupVersion: '3',
-	serverBackupExists: true,
-	keyStorageOutOfSync: false
-};
-
-const statusOutOfSync: EncryptionSetupStatus = {
-	secretStorageReady: false,
-	crossSigningReady: false,
-	activeBackupVersion: null,
-	serverBackupExists: true,
-	keyStorageOutOfSync: true
-};
+import {
+	DEMO_RECOVERY_KEY,
+	buildFakeClient,
+	statusNotSetUp,
+	statusHealthy,
+	statusOutOfSync
+} from './EncryptionSettings.fixtures';
 
 const meta = {
 	title: 'Organisms/EncryptionSettingsPanel',
@@ -101,6 +62,17 @@ export const NotSetUp: Story = {
  */
 export const SetupFlow: Story = {
 	name: 'Setup flow (click CTA → one-time key display)',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /ersatzschlüssel einrichten/i
+			})
+		);
+		await expect(
+			canvas.findByText(DEMO_RECOVERY_KEY)
+		).resolves.toBeVisible();
+	},
 	args: {
 		clientOverride: buildFakeClient(),
 		initialStatusOverride: statusNotSetUp
@@ -147,5 +119,59 @@ export const Unavailable: Story = {
 	args: {
 		clientOverride: null,
 		initialStatusOverride: null
+	}
+};
+
+/** Recovered account can attach its login password; all values are synthetic. */
+export const PasswordRecoveryForm: Story = {
+	args: { clientOverride: buildFakeClient() },
+	beforeEach: () => {
+		const id = '@encryption-story:example.test';
+		setRecoveryRuntimeStatus(id, 'needs-password');
+		savePendingRecoveryKey(id, DEMO_RECOVERY_KEY);
+		return () => {
+			clearPendingRecoveryKey(id);
+			setRecoveryRuntimeStatus(id, 'idle');
+		};
+	},
+	decorators: [
+		(Story) => {
+			const parent = React.useContext(UserDataContext);
+			return (
+				<UserDataContext.Provider
+					value={{
+						...parent,
+						userData: {
+							...parent.userData,
+							chatRecoveryMode: 'LOGIN_PASSWORD',
+							chatRecoveryPolicyRevision: 1,
+							twoFactorAuth: {
+								...parent.userData.twoFactorAuth,
+								isActive: true
+							}
+						}
+					}}
+				>
+					<Story />
+				</UserDataContext.Provider>
+			);
+		}
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const password = await canvas.findByLabelText('Aktuelles Passwort');
+		const repeat = canvas.getByLabelText('Passwort wiederholen');
+		const otp = canvas.getByLabelText('Einmalcode');
+		await expect(password).toHaveAttribute(
+			'autocomplete',
+			'current-password'
+		);
+		await expect(otp).toHaveAttribute('autocomplete', 'one-time-code');
+		await userEvent.type(password, 'synthetic-password');
+		await userEvent.type(repeat, 'different-password');
+		await expect(repeat).toHaveAttribute('aria-invalid', 'true');
+		await expect(
+			canvas.getByText('Ihr Passwort ist nicht identisch.')
+		).toBeVisible();
 	}
 };

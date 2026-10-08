@@ -2,6 +2,8 @@ import { ConsultingTypeInterface } from './ConsultingTypeInterface';
 import { TWO_FACTOR_TYPES } from '../../components/twoFactorAuth/twoFactorAuthConstants';
 
 export interface UserDataInterface {
+	chatRecoveryMode?: 'RECOVERY_KEY' | 'LOGIN_PASSWORD' | null;
+	chatRecoveryPolicyRevision?: number | null;
 	absenceMessage?: string;
 	absent?: boolean;
 	agencies: AgencyDataInterface[];
@@ -21,11 +23,30 @@ export interface UserDataInterface {
 	isWalkThroughEnabled?: boolean;
 	languages?: string[];
 	lastName?: string;
+	/**
+	 * Consultant preference "Live Chat über Menü Leiste aktivieren": show the
+	 * Live Chat availability toggle in the navigation (desktop and mobile).
+	 * Optional: UserService builds before this field never send it — the
+	 * frontend then falls back to the old browser-only value.
+	 */
+	liveChatViaSidebar?: boolean;
+	/** Counsellors (#1046): ICON shows the motif in `avatarId`; otherwise the default avatar. */
+	avatarKind?: 'ICON' | 'INITIALS' | 'PICTURE' | null;
+	/**
+	 * The avatar picked in the profile (#1240), as the lower-case file stem
+	 * (`magpie`): a counsellor motif, or an advice seeker's animal.
+	 */
+	avatarId?: string | null;
 	publicSlug?: string;
 	pendingPublicSlug?: string;
 	publicSlugStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
 	preferredLanguage: string;
 	twoFactorAuth?: TwoFactorAuthInterface;
+	/**
+	 * The account still carries the password its administrator chose. Optional: backends
+	 * predating the flag never send it.
+	 */
+	passwordChangeRequired?: boolean;
 	userId: string;
 	userName: string;
 	userRoles: string[];
@@ -50,6 +71,8 @@ export interface AgencyDataInterface {
 	postcode: string;
 	street?: string;
 	houseNumber?: string;
+	lat?: number | null;
+	lng?: number | null;
 	phone?: string;
 	openingHours?: string;
 	url?: string;
@@ -70,6 +93,19 @@ export interface AgencyDataInterface {
 	 * AgencyService #90 - older backends simply never send it.
 	 */
 	departments?: AgencyDepartmentDataInterface[];
+	/**
+	 * The agency's feature settings from the public agency response. The
+	 * group-chat flags are the effective values (Träger AND Beratungsstelle
+	 * combined, AgencyService #293); `null` means no restriction from this
+	 * agency. Older backends omit them.
+	 */
+	settings?: AgencySettingsInterface | null;
+}
+
+export interface AgencySettingsInterface {
+	featureGroupChatV2Enabled?: boolean | null;
+	featureInternalGroupChatEnabled?: boolean | null;
+	featureSelfHelpGroupsEnabled?: boolean | null;
 }
 
 export interface AgencyDepartmentDataInterface {
@@ -94,6 +130,11 @@ export interface ConsultingTypeDataInterface {
 export interface TwoFactorAuthInterface {
 	isEnabled: boolean;
 	isActive: boolean;
+	/**
+	 * The account may not be used until a factor is active. Optional: backends predating the
+	 * flag never send it.
+	 */
+	isRequired?: boolean;
 	secret: string;
 	qrCode: string;
 	isShown: boolean;

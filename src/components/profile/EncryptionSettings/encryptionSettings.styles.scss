@@ -76,3 +76,11 @@
 		margin: $grid-base 0;
 	}
 }
+
+.encryptionSettings__passwordRecovery {
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: $grid-base-two;
+	}
+}

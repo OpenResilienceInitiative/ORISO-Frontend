@@ -37,7 +37,7 @@ An **activity event** whose actor is the signed-in user themselves — something
 A **self-event** representing one of _your_ open, unsent message drafts, so you can find a draft you started and abandoned — without remembering whether it was in a request or which conversation. Its **action target** resumes the draft exactly where it lives (reusing the existing `forcedScopeKey` resume nav). Recommended implementation: **a live overlay rendered from the existing client-side draft index** (`scope:__draft-index__`), _not_ a persisted `event_notification` row — the index is already deduplicated and self-resolves (an entry vanishes when the draft is sent or discarded), so it sidesteps the append-only limitation. The draft body is _your own_ unsent text, hydrated client-side. A dedicated **`DraftsCenter`** / `/drafts` section already exists; the open decision is whether the timeline's Drafts family **replaces** it. _Only the author's own drafts — never "someone else created a draft"._
 
 **Event family**:
-The grouping an **event type** belongs to, used for the filter chips and shared iconography: Requests ("Anfragen"), Messages ("Nachrichten"), Drafts ("Entwürfe"), Appointments ("Termine"), Handover (the Reassign flow), Calls, System. Exactly one family chip can be active to scope the timeline; "Alle" shows everything.
+The grouping an **event type** belongs to, used for the filter chips and shared iconography: Requests ("Anfragen"), Messages ("Nachrichten"), Drafts ("Entwürfe"), Appointments ("Termine"), Handover (the Reassign flow), Calls, System. Exactly one family chip can be active to scope the timeline. There is **no dedicated "Alle" chip** (design feedback 2026-07-12): no selection means everything, and clicking the active chip clears it. Chips render **only for families present in the loaded feed** (`getFamiliesInFeed`), so a sparse feed shows few chips — that is the full "extended" filter bar, not a missing one (#1200). The **Unread** toggle is a separate dimension that composes with the chip and the search; the double-check button next to it is not a filter but the bulk **"Mark all as read"** action on activity-event read state (never Matrix read receipts); it stays visible and is **enabled only while the server-side unread count is > 0**, disabled otherwise.
 
 **PrivacyEnvelope**:
 The metadata-only representation of a Matrix message that reaches the backend — `messageId`, `roomId`, `senderId`, `timestamp`, `hasAttachment`, `contentClass`, and **never the plaintext body**. The contract that lets the server know "a message happened" without reading it.
@@ -166,3 +166,17 @@ _Avoid_: the retired `featureAttachmentUploadDisabled` (replaced, inverted seman
 **Composer inline preview**:
 The scaled image preview shown inside the TipTap composer before sending. Purely a composer affordance: **on the wire every image is its own `m.image` event** (Element model); received text messages never contain image HTML.
 _Avoid_: "inline image" for received messages
+
+# Practice area (Übungsbereich)
+
+A frontend-only simulation for counsellors (epic #1622,
+`docs/architecture/adr-020-practice-area-frontend-only-simulation.md`).
+
+## Language
+
+**Practice area** (Übungsbereich):
+Guided practice flows that run the real app UI on fixed fictional people, inside the counsellor's own browser tab: accept an enquiry with a Team-Besprechung, add a supervisor. Nothing is written to a server and nothing is stored; ending practice drops it all. Started only by a deliberate click, desktop only.
+_Avoid_: "demo mode", "sandbox" for the whole feature (the sandbox is one layer inside it), "test case" (it is a practice case, not test data).
+
+**Practice case** (Übungsfall):
+The fictional enquiry a practice flow works on. Its ids are negative or carry a non-routable prefix, so it can never be taken for a real case.

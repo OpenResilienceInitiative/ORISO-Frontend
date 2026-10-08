@@ -1,0 +1,32 @@
+/* Registration consent: a legal link that sits in the sentence as
+   underlined primary-coloured text, not a chip/box. The login footer keeps
+   `.button-as-link` + its own stage/layout reset. */
+
+.legalLinkButton--inline {
+	display: inline;
+	padding: 0;
+	margin: 0;
+	border: none;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	font: inherit;
+	color: var(--m3-primary, #a5000a);
+	text-decoration: underline;
+	cursor: pointer;
+	vertical-align: baseline;
+	white-space: normal;
+
+	&:hover {
+		color: var(--m3-primary-hover, #820006);
+	}
+
+	&:focus {
+		outline: $focus-outline;
+		border-radius: 4px;
+	}
+
+	&:focus:not(:focus-visible) {
+		outline: none;
+	}
+}

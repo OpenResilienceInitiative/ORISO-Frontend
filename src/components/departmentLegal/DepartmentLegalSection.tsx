@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useContext, useState } from 'react';
 import {
 	Box,
 	Button,
@@ -14,6 +14,7 @@ import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { pickConsentPrivacyContent } from '../../utils/legalContent';
 import { LegalContentRenderer } from '../legalContent/LegalContentRenderer';
@@ -69,6 +70,7 @@ export const DepartmentLegalSection = ({
 }: DepartmentLegalSectionProps) => {
 	const { t } = useTranslation();
 	const tenant = useTenant();
+	const legalLinks = useContext(LegalLinksContext);
 	const [open, setOpen] = useState(false);
 	const [modalKind, setModalKind] = useState<AgencyLegalKind | null>(null);
 
@@ -156,7 +158,15 @@ export const DepartmentLegalSection = ({
 									)
 						}
 						rawLabel={AGENCY_LEGAL_RAW_LABEL[modalKind]}
-						url=""
+						url={
+							legalLinks
+								.find(
+									({ label }) =>
+										label ===
+										AGENCY_LEGAL_RAW_LABEL[modalKind]
+								)
+								?.getUrl() ?? ''
+						}
 						scope="agency"
 						agencyId={agency.id}
 						topicId={topic.id}
@@ -213,17 +223,14 @@ export const DepartmentLegalSection = ({
 				}
 				sx={LEGAL_BUTTON_SX}
 			>
-				{t(
-					'registration.agency.legal.headline',
-					'Datenschutzhinweise der Beratungsstelle'
-				)}
+				{t('registration.agency.legal.headline')}
 			</Button>
 			{topicDisplayName(topic) && (
 				<Typography
 					variant="body2"
 					sx={{ color: 'text.secondary', mt: 0.25 }}
 				>
-					{t('registration.agency.legal.department', 'Fachbereich')}
+					{t('registration.agency.legal.department')}
 					{': '}
 					{topicDisplayName(topic)}
 				</Typography>
@@ -234,14 +241,14 @@ export const DepartmentLegalSection = ({
 					sx={{ pt: 1.5, pb: 0.5 }}
 				>
 					{isLoading && (
-						<CircularProgress size={20} aria-label="loading" />
+						<CircularProgress
+							size={20}
+							aria-label={t('registration.agency.legal.loading')}
+						/>
 					)}
 					{nothingLoaded && (
 						<Typography variant="body2">
-							{t(
-								'registration.agency.legal.unavailable',
-								'Die Datenschutzhinweise können derzeit nicht geladen werden.'
-							)}
+							{t('registration.agency.legal.unavailable')}
 						</Typography>
 					)}
 					{variant === 'consent' ? (
@@ -265,8 +272,7 @@ export const DepartmentLegalSection = ({
 										sx={{ fontWeight: 700, mt: 2, mb: 1 }}
 									>
 										{t(
-											'registration.agency.legal.imprintHeadline',
-											'Impressum der Beratungsstelle'
+											'registration.agency.legal.imprintHeadline'
 										)}
 									</Typography>
 									<LegalContentRenderer

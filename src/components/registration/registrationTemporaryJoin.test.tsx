@@ -1,0 +1,153 @@
+// @vitest-environment jsdom
+import * as React from 'react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { createInstance } from 'i18next';
+import { I18nextProvider, initReactI18next } from 'react-i18next';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { Registration } from './Registration';
+import {
+	AppConfigContext,
+	LocaleContext,
+	NotificationsContext,
+	RegistrationContext,
+	TenantContext
+} from '../../globalState';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import deCommon from '../../resources/i18n/de/common.json';
+
+/** Lottie touches a canvas 2d context at module load; jsdom has none. */
+vi.mock('lottie-react', () => ({ default: () => null }));
+
+vi.mock('../../components/stageLayout/StageLayout', () => ({
+	StageLayout: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="stage-layout">{children}</div>
+	)
+}));
+
+/**
+ * # What this file is for
+ *
+ * A `gcid` in the URL means an invitation link brought this person to a group
+ * chat. Only then does the account step offer the second way on — join without
+ * ever choosing a password — and only then does the way on stop being called
+ * "Registrieren".
+ *
+ * The step body is stubbed: this is about the decision the footer offers, not
+ * about the account form, which has its own tests. What matters is that the
+ * ordinary registration — no `gcid` — is left exactly as it was.
+ */
+const Step = () => <div data-testid="step-body" />;
+
+const availableSteps = [
+	{ name: 'topic-selection', component: Step },
+	{ name: 'account-data', component: Step }
+];
+
+// The real German catalogue: the labels below are what a person reads.
+const i18n = createInstance().use(initReactI18next);
+beforeAll(async () => {
+	await i18n.init({
+		lng: 'de',
+		ns: ['common'],
+		defaultNS: 'common',
+		resources: { de: { common: deCommon } },
+		interpolation: { escapeValue: false }
+	});
+});
+
+const renderAccountStep = (
+	search: string,
+	registrationData: Record<string, unknown> = {}
+) =>
+	render(
+		<I18nextProvider i18n={i18n}>
+			<AppConfigContext.Provider value={{} as any}>
+				<GlobalComponentContext.Provider
+					value={{ Stage: () => <div /> } as any}
+				>
+					<NotificationsContext.Provider
+						value={{ addNotification: () => undefined } as any}
+					>
+						<TenantContext.Provider value={{ tenant: null } as any}>
+							<LocaleContext.Provider
+								value={{ locale: 'de' } as any}
+							>
+								<RegistrationContext.Provider
+									value={
+										{
+											disabledNextButton: false,
+											setDisabledNextButton: () =>
+												undefined,
+											updateRegistrationData: () =>
+												undefined,
+											registrationData,
+											availableSteps,
+											registrationConsultingType: null
+										} as any
+									}
+								>
+									<MemoryRouter
+										initialEntries={[
+											`/registration/account-data${search}`
+										]}
+									>
+										<Routes>
+											<Route
+												path="/registration/:step"
+												element={<Registration />}
+											/>
+										</Routes>
+									</MemoryRouter>
+								</RegistrationContext.Provider>
+							</LocaleContext.Provider>
+						</TenantContext.Provider>
+					</NotificationsContext.Provider>
+				</GlobalComponentContext.Provider>
+			</AppConfigContext.Provider>
+		</I18nextProvider>
+	);
+
+/** The wide-layout primary action — the way on. */
+const primaryLabel = () =>
+	document.querySelector('[data-cy="button-register"]')?.textContent;
+
+const REGISTER = 'Registrieren';
+
+const toggles = () =>
+	Array.from(document.querySelectorAll('[data-cy="button-temporary-join"]'));
+
+afterEach(() => {
+	sessionStorage.clear();
+	cleanup();
+});
+
+describe('registration — temporary join', () => {
+	it('offers the temporary join and renames the way on when a group-chat link brought the person here', () => {
+		// A valid invite names the agency the person registers at.
+		renderAccountStep('?gcid=15&aid=88', { agency: { id: 88 } });
+
+		expect(toggles().length, 'the toggle is in the footer').toBeGreaterThan(
+			0
+		);
+		expect(toggles()[0].textContent).toBe('Ohne Konto beitreten');
+		expect(primaryLabel()).toBe(REGISTER);
+
+		fireEvent.click(toggles()[0]);
+
+		expect(toggles()[0].textContent).toBe('Konto anlegen');
+		expect(primaryLabel()).toBe('Beitreten');
+
+		fireEvent.click(toggles()[0]);
+
+		expect(primaryLabel()).toBe(REGISTER);
+	});
+
+	it('leaves the ordinary registration untouched — no link, no second way on', () => {
+		renderAccountStep('');
+
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+		expect(toggles().length, 'no temporary join without a gcid').toBe(0);
+		expect(primaryLabel()).toBe(REGISTER);
+	});
+});

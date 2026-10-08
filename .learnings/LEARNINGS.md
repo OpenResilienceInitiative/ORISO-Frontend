@@ -16,6 +16,13 @@ Format:
 - Context: #1213 (`docs/agent-tasks/` already ignored via `docs/agent-tasks/*`)
 - Lesson: Leave new task folders gitignored. Do not add a `.gitignore` negation for the current task unless the user explicitly wants those docs in the PR.
 
+## 2026-08-31 — positional t() second args hide leftover English
+
+- Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
+- Lesson: After dropping `t(key, 'literal')`, still search for `t(key, variable)` whose variable holds DE/EN (preset labels, `phase.charAt(0)…`). A SLICE_FILES scan that only matches quoted literals will call the platform clean while those fallbacks still snap the UI.
+
+## 2026-08-30 — Storybook retry must drain pipes before `close`
+
 ## 2026-08-02 — PR screenshots need a non-ignored docs path
 
 - Context: #834 Threads list plain preview (`docs/agent-tasks/` is covered by `docs/*` ignore)
@@ -59,3 +66,7 @@ App handlers for Cmd/Ctrl+F, Cmd/Ctrl+Shift+N, Cmd/Ctrl+K must listen in the cap
 ## 2026-07-08 — matrix-js-sdk production logging
 
 `matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
+
+## 2026-10-08 — #1213 approved legal hierarchy reconciliation
+
+Earlier dated entries above describe their historical branch/revision, including the original no-carrier-fallback policy. Frank explicitly approved preserving the merged shared dialog hierarchy: own Beratungsstelle text first, then Träger text, otherwise the current missing-text notice and the configured address when available. The profile modal now reuses the existing legal-link provider without agency URL parameters. Profile modal wiring and agency/topic snapshot isolation remain; the shared Dev dialog runtime is unchanged. Focused current proof: 42 unit cases in five files, four synthetic Chromium stories with the unchanged axe gate, scoped lint and TypeScript passed. Full current-head CI, human review and live environment acceptance remain separate gates.

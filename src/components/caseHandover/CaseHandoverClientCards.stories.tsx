@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { useTranslation } from 'react-i18next';
 import {
 	CaseHandoverAcceptedCard,
@@ -42,7 +42,8 @@ const Stream = ({
 }) => <MessageStoryShell compact={compact}>{children}</MessageStoryShell>;
 
 const meta: Meta = {
-	title: 'Organisms/CaseHandover/ClientCards',
+	id: 'organisms-casehandover-clientcards',
+	title: 'Chat/System messages/Consent',
 	tags: ['autodocs'],
 	parameters: {
 		layout: 'fullscreen',
@@ -125,6 +126,7 @@ export const InquiryAcceptedTablet: Story = {
 };
 
 export const InquiryAcceptedMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Inquiry accepted — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -215,7 +217,8 @@ export const PendingClientConsent: Story = {
 		expect(Math.round(bubbleBounds.left - avatarBounds.left)).toBe(40);
 		expect(Math.round(bubbleBounds.top - avatarBounds.top)).toBe(44);
 		expect(
-			Math.abs(senderBounds.left - avatarBounds.left - 64)
+			// 40px content origin + 28px header inset = 68px (60px avatar + 8px clearance).
+			Math.abs(senderBounds.left - avatarBounds.left - 68)
 		).toBeLessThanOrEqual(1);
 		expect(bubbleBounds.left).toBeLessThan(avatarBounds.right);
 		expect(bubbleBounds.top).toBeLessThan(avatarBounds.bottom);
@@ -253,6 +256,7 @@ export const PendingClientConsent: Story = {
 };
 
 export const PendingClientConsentMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Pending client consent — phone 390',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
@@ -329,6 +333,7 @@ export const PendingClientConsentGerman: Story = {
 };
 
 export const PendingClientConsentGermanMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Ausstehende Zustimmung — Telefon 390 (Deutsch)',
 	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
@@ -367,7 +372,7 @@ export const ActiveClientOptOut: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		const control = canvas.getByRole('switch', {
-			name: 'I consent to data processing for this case handover'
+			name: 'Allow access for this request'
 		});
 		const track = control.nextElementSibling as HTMLElement;
 		const target = track.firstElementChild as HTMLElement;
@@ -381,7 +386,45 @@ export const ActiveClientOptOut: Story = {
 	}
 };
 
+/**
+ * Regression guard for ORISO-Frontend#1329: the consent switch has to follow
+ * the click. It used to be hard-coded to `checked`, so every toggle snapped
+ * straight back and the client never saw their withdrawal register.
+ */
+export const ActiveClientOptOutToggle: Story = {
+	name: 'Active access — client opt-out — switch follows the click',
+	globals: { locale: 'en' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const control = canvas.getByRole('switch', {
+			name: 'Allow access for this request'
+		});
+		const label = control.closest('label') as HTMLElement;
+
+		// Opt-out starts granted.
+		expect(control).toBeChecked();
+
+		// Withdrawing consent turns the switch off and keeps it off.
+		await userEvent.click(label);
+		await waitFor(() => expect(control).not.toBeChecked());
+
+		// Granting it again turns the switch back on.
+		await userEvent.click(label);
+		await waitFor(() => expect(control).toBeChecked());
+	}
+};
+
 export const ActiveClientOptOutMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Active access — client opt-out — phone 390',
 	globals: { ...phone390Globals, locale: 'en' },
 	render: () => (
@@ -410,6 +453,7 @@ export const ActiveClientOptOutGerman: Story = {
 };
 
 export const ActiveClientOptOutGermanMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Aktiver Zugriff — Opt-out — Telefon 390 (Deutsch)',
 	globals: { ...phone390Globals, locale: 'de' },
 	render: () => (
@@ -498,6 +542,7 @@ export const NewCounsellorTookOverTablet: Story = {
 };
 
 export const NewCounsellorTookOverMobile: Story = {
+	tags: ['device-regression'],
 	name: 'New counsellor took over — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -532,6 +577,7 @@ export const ImportantNotification: Story = {
 };
 
 export const ImportantNotificationMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Important notification — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -561,6 +607,7 @@ export const SendingMessageFailed: Story = {
 };
 
 export const SendingMessageFailedMobile: Story = {
+	tags: ['device-regression'],
 	name: 'Sending message failed — phone 390',
 	globals: phone390Globals,
 	render: () => (
@@ -569,4 +616,109 @@ export const SendingMessageFailedMobile: Story = {
 			<TookOverNotice />
 		</Stream>
 	)
+};
+
+export const Informational: Story = {
+	name: 'Information only — no consent control',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				mode="NONE"
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		expect(canvas.queryByRole('switch')).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		expect(within(dialog).queryByRole('switch')).toBeNull();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+	}
+};
+
+export const OptionalConsentDialog: Story = {
+	name: 'Consent — optional M3 overview',
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		await waitFor(() =>
+			expect(within(dialog).getByText('Wann hilfreich')).toBeVisible()
+		);
+		expect(within(dialog).getByText('Ihre Einwilligung')).toBeVisible();
+		expect(within(dialog).getByText('Geschützter Zugriff')).toBeVisible();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Mehr erfahren' })
+			).toHaveFocus()
+		);
+	}
+};
+
+const resolvedConsent = (status: string): Story => ({
+	globals: { locale: 'de' },
+	render: () => (
+		<Stream>
+			<CaseHandoverConsentCard
+				status={status}
+				onApprove={() => {}}
+				onDecline={() => {}}
+			/>
+		</Stream>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByRole('status')).toBeVisible());
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff erlauben' })
+		).toBeNull();
+		expect(
+			canvas.queryByRole('button', { name: 'Zugriff verweigern' })
+		).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Mehr erfahren' })
+		);
+		const dialog = within(canvasElement.ownerDocument.body).getByRole(
+			'dialog'
+		);
+		expect(within(dialog).queryByRole('switch')).toBeNull();
+		await userEvent.click(within(dialog).getByTestId('m3-dialog-close'));
+	}
+});
+
+export const ConsentSaved: Story = {
+	...resolvedConsent('GRANTED'),
+	name: 'Consent — server-confirmed approval'
+};
+
+export const ConsentDenied: Story = {
+	...resolvedConsent('DENIED'),
+	name: 'Consent — server-confirmed refusal'
+};
+
+export const ConsentExpired: Story = {
+	...resolvedConsent('EXPIRED'),
+	name: 'Consent — expired request'
 };

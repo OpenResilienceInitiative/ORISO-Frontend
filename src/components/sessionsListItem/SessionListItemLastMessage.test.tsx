@@ -38,4 +38,32 @@ describe('SessionListItemLastMessage', () => {
 		).toBe('DE | Wichtige Notiz');
 		expect(screen.queryByText(/VISIBLE_TO|\[\[hl:/i)).toBeNull();
 	});
+	it('marks a thread reply with the thread glyph instead of a word', () => {
+		const { container } = render(
+			<SessionListItemLastMessage
+				lastMessage="Ja, das passt."
+				glyphs={['thread']}
+			/>
+		);
+
+		const glyph = screen.getByRole('img', {
+			name: 'chatStage.switcher.kind.thread'
+		});
+		const subject = container.querySelector('.sessionsListItem__subject')!;
+		expect(subject.firstElementChild).toBe(glyph);
+		expect(subject.textContent).toBe('Ja, das passt.');
+	});
+
+	it('shows a voice message whose length is unknown as its glyph alone', () => {
+		const { container } = render(
+			<SessionListItemLastMessage lastMessage="" glyphs={['voice']} />
+		);
+
+		expect(
+			screen.getByRole('img', { name: 'sessionList.preview.voice' })
+		).not.toBeNull();
+		expect(
+			container.querySelector('.sessionsListItem__subject')?.textContent
+		).toBe('');
+	});
 });

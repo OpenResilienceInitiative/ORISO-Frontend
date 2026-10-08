@@ -57,7 +57,26 @@ export { ReactComponent as ValidIcon } from '../../resources/img/icons/checkmark
 export { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
 export { ReactComponent as AddShieldIcon } from '../../resources/img/icons/add-shield.svg';
 export { ReactComponent as ShieldIcon } from '../../resources/img/icons/shield.svg';
+/* Imprint artboard from the same Icons Master File set as `gdpr.svg` (40px
+   grid). Both are the artboards the Admin panel's legal cards use, so the two
+   surfaces draw imprint and privacy identically. */
+export { ReactComponent as ImprintIcon } from '../../resources/img/icons/imprint.svg';
+/* Fullscreen reading mode of the legal reader — the same two artboards the
+   Admin panel's rich-text card uses for its maximize/restore control. */
+export { ReactComponent as MaximizeContentIcon } from '../../resources/img/icons/maximize-content.svg';
+export { ReactComponent as MinimizeContentIcon } from '../../resources/img/icons/minimize-content.svg';
 export { ReactComponent as AppleIcon } from '../../resources/img/icons/apple.svg';
 export { ReactComponent as CalDav } from '../../resources/img/icons/caldav.svg';
 export { ReactComponent as GoogleCalendar } from '../../resources/img/icons/googlecalendar.svg';
 export { ReactComponent as Office365 } from '../../resources/img/icons/office365.svg';
+
+export { ReactComponent as Robot7341990Icon } from './icons/assistant/robot-7341990-400.svg';
+export { ReactComponent as Robot1184077Icon } from './icons/assistant/robot-1184077-400.svg';
+export { ReactComponent as Robot3548536Icon } from './icons/assistant/robot-3548536-400.svg';
+export { ReactComponent as Robot5475944Icon } from './icons/assistant/robot-5475944-400.svg';
+// Approved consent artwork: 400 is resting; filled is reserved for selected states.
+export { ReactComponent as SurveillanceConsentIcon } from './icons/consent/surveillance-consent-400.svg';
+export { ReactComponent as SurveillanceConsentFilledIcon } from './icons/consent/surveillance-consent-filled.svg';
+export { ReactComponent as ProtectedAccessIcon } from './icons/consent/access-400.svg';
+export { ReactComponent as UserConsentIcon } from './icons/consent/user-consent-400.svg';
+export { ReactComponent as WhenUsefulIcon } from './icons/consent/when-400.svg';

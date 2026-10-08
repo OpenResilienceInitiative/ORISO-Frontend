@@ -1,0 +1,525 @@
+// @vitest-environment jsdom
+import * as React from 'react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
+import { ACTIVE_HEADING_ATTRIBUTE, LegalTextReader } from './LegalTextReader';
+
+let mockLanguage = 'de';
+
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string) =>
+			({
+				'legal.notice.fallbackLanguage':
+					'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.',
+				'legal.notice.machineTranslated':
+					'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.',
+				'legal.notice.showOriginal': 'Original anzeigen',
+				'legal.notice.showingOriginal':
+					'Sie sehen die Originalfassung.',
+				'legal.notice.showTranslation': 'Übersetzung anzeigen'
+			})[key] ?? key,
+		i18n: { language: mockLanguage }
+	})
+}));
+
+/** A machine-translated map, so the renderer offers "Original anzeigen". */
+const TRANSLATED = JSON.stringify({
+	de: '<h2>Erstes Kapitel</h2><p>Verbindliche deutsche Fassung.</p><h2>Zweites Kapitel</h2>',
+	en: '<h2>First chapter</h2><p>Machine translated text.</p><h2>Second chapter</h2>',
+	en__meta: JSON.stringify({ mt: true, src: 'de' })
+});
+
+const POLICY = [
+	'<h1>Datenschutzerklärung</h1>',
+	'<p>Einleitung.</p>',
+	'<h2>1. Verantwortlich</h2><p>Wer verantwortlich ist.</p>',
+	'<h2>2. Ihre Rechte</h2><p>Auskunft, Berichtigung, Löschung.</p>'
+].join('');
+
+/** The chapter chip with this label — the heading carries the same text. */
+const chip = (label: string): HTMLElement =>
+	within(screen.getByTestId('legal-anchor-chips')).getByRole('button', {
+		name: label
+	});
+
+describe('LegalTextReader', () => {
+	afterEach(() => {
+		cleanup();
+		mockLanguage = 'de';
+	});
+
+	it('offers one chip per chapter of the document, in document order', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+
+		const chips = within(screen.getByTestId('legal-anchor-chips'))
+			.getAllByRole('button')
+			.map((chip) => chip.textContent);
+
+		expect(chips).toEqual([
+			'Datenschutzerklärung',
+			'1. Verantwortlich',
+			'2. Ihre Rechte'
+		]);
+	});
+
+	/**
+	 * One chapter is a label, not a navigation. A row with a single chip is
+	 * chrome that costs a line of screen and buys nothing.
+	 */
+	it('shows no chapter row for a text without chapters', () => {
+		render(
+			<LegalTextReader
+				content="<p>Ein kurzer Hinweis.</p>"
+				label="Hinweis"
+			/>
+		);
+
+		expect(screen.queryByTestId('legal-anchor-chips')).toBeNull();
+	});
+
+	/**
+	 * Focus, not just scroll: a keyboard or screen-reader user who picks a
+	 * chapter and is left reading the previous one has not navigated anywhere.
+	 */
+	it('moves focus to the chapter that was picked', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+
+		fireEvent.click(chip('2. Ihre Rechte'));
+
+		expect(document.activeElement?.id).toBe('2-ihre-rechte');
+		expect(document.activeElement?.tagName).toBe('H2');
+	});
+
+	it('marks the picked chapter as the selected chip', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+
+		fireEvent.click(chip('2. Ihre Rechte'));
+
+		expect(chip('2. Ihre Rechte').getAttribute('aria-pressed')).toBe(
+			'true'
+		);
+	});
+
+	/** The heading the marker sits on, or `null` while nothing is marked. */
+	const markedHeadingId = (): string | null =>
+		document.querySelector(`[${ACTIVE_HEADING_ATTRIBUTE}='true']`)?.id ??
+		null;
+
+	/**
+	 * The chapter cue must not be focus-bound. A chip clicked with the MOUSE
+	 * gives the heading focus but not `:focus-visible`, so a cue drawn off the
+	 * focus ring alone would show for keyboard readers and for nobody else.
+	 */
+	it('marks the picked chapter heading and unmarks the previous one', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+
+		// A freshly opened document shows no line at all: the cue is a position
+		// the reader navigated to, not decoration on the first heading.
+		expect(markedHeadingId()).toBeNull();
+
+		fireEvent.click(chip('2. Ihre Rechte'));
+
+		expect(markedHeadingId()).toBe('2-ihre-rechte');
+		expect(
+			document
+				.getElementById('datenschutzerklarung')
+				?.hasAttribute(ACTIVE_HEADING_ATTRIBUTE)
+		).toBe(false);
+
+		fireEvent.click(chip('1. Verantwortlich'));
+
+		expect(markedHeadingId()).toBe('1-verantwortlich');
+		expect(
+			document
+				.getElementById('2-ihre-rechte')
+				?.hasAttribute(ACTIVE_HEADING_ATTRIBUTE)
+		).toBe(false);
+	});
+
+	/**
+	 * Scrolling changes the chapter without touching focus at all — the case the
+	 * marker exists for. Only ONE heading may carry it, or the line appears
+	 * under a chapter the reader has already left.
+	 */
+	it('moves the chapter marker as the reader scrolls', async () => {
+		const scrollHeight = vi
+			.spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host') ? 1400 : 0;
+			});
+		const clientHeight = vi
+			.spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host') ? 400 : 0;
+			});
+		// The host stays put and the headings travel through it, which is what
+		// scrolling does. (The mock in the test below deliberately moves both,
+		// because it exercises the reached-the-bottom branch instead.)
+		const bounds = vi
+			.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+			.mockImplementation(function () {
+				const chapterTops: Record<string, number> = {
+					'datenschutzerklarung': 0,
+					'1-verantwortlich': 200,
+					'2-ihre-rechte': 500
+				};
+				const host = document.querySelector(
+					'.scroll-host'
+				) as HTMLElement;
+				const top = this.classList.contains('scroll-host')
+					? 0
+					: (chapterTops[this.id] ?? 0) - (host?.scrollTop ?? 0);
+				return {
+					top,
+					bottom: top,
+					left: 0,
+					right: 0,
+					width: 0,
+					height: 0,
+					x: 0,
+					y: top,
+					toJSON: () => ({})
+				};
+			});
+
+		try {
+			render(
+				<div className="scroll-host" style={{ overflowY: 'auto' }}>
+					<LegalTextReader content={POLICY} label="Datenschutz" />
+				</div>
+			);
+			const host = document.querySelector('.scroll-host') as HTMLElement;
+
+			// The measurement that runs on open reports where the reader already
+			// is. It is not a move, so it marks nothing.
+			expect(markedHeadingId()).toBeNull();
+
+			host.scrollTop = 250;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(markedHeadingId()).toBe('1-verantwortlich')
+			);
+
+			host.scrollTop = 550;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(markedHeadingId()).toBe('2-ihre-rechte')
+			);
+
+			expect(
+				document.querySelectorAll(
+					`[${ACTIVE_HEADING_ATTRIBUTE}='true']`
+				)
+			).toHaveLength(1);
+		} finally {
+			scrollHeight.mockRestore();
+			clientHeight.mockRestore();
+			bounds.mockRestore();
+		}
+	});
+
+	it('keeps the final chapter selected when the scrollport reaches its maximum', async () => {
+		let mockedScrollHeight = 700;
+		let mockedClientHeight = 400;
+		const scrollHeight = vi
+			.spyOn(HTMLElement.prototype, 'scrollHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host')
+					? mockedScrollHeight
+					: 0;
+			});
+		const clientHeight = vi
+			.spyOn(HTMLElement.prototype, 'clientHeight', 'get')
+			.mockImplementation(function () {
+				return this.classList.contains('scroll-host')
+					? mockedClientHeight
+					: 0;
+			});
+		const bounds = vi
+			.spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+			.mockImplementation(function () {
+				const chapterTops: Record<string, number> = {
+					'datenschutzerklarung': 0,
+					'1-verantwortlich': 200,
+					'2-ihre-rechte': 500
+				};
+				const host = document.querySelector(
+					'.scroll-host'
+				) as HTMLElement;
+				const top =
+					(chapterTops[this.id] ?? 0) - (host?.scrollTop ?? 0);
+				return {
+					top,
+					bottom: top,
+					left: 0,
+					right: 0,
+					width: 0,
+					height: 0,
+					x: 0,
+					y: top,
+					toJSON: () => ({})
+				};
+			});
+
+		try {
+			render(
+				<div className="scroll-host" style={{ overflowY: 'auto' }}>
+					<LegalTextReader content={POLICY} label="Datenschutz" />
+				</div>
+			);
+			const host = document.querySelector('.scroll-host') as HTMLElement;
+			const last = chip('2. Ihre Rechte');
+
+			fireEvent.click(last);
+			host.scrollTop = 300;
+			fireEvent.scroll(host);
+
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
+
+			// Responsive/content changes can remove the overflow after this host
+			// was captured as the scroll parent. Zero scrollable distance is the
+			// top of the document, not the bottom of its final chapter.
+			mockedScrollHeight = 400;
+			mockedClientHeight = 400;
+			host.scrollTop = 0;
+			fireEvent.scroll(host);
+
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+
+			mockedScrollHeight = 401;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(
+					chip('Datenschutzerklärung').getAttribute('aria-pressed')
+				).toBe('true')
+			);
+			host.scrollTop = 1;
+			fireEvent.scroll(host);
+			await waitFor(() =>
+				expect(last.getAttribute('aria-pressed')).toBe('true')
+			);
+		} finally {
+			scrollHeight.mockRestore();
+			clientHeight.mockRestore();
+			bounds.mockRestore();
+		}
+	});
+
+	it('opens and closes the fullscreen reading mode', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		expect(screen.queryByTestId('legal-reader-fullscreen')).toBeNull();
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		const fullscreen = screen.getByTestId('legal-reader-fullscreen');
+		// It has to be a dialog to assistive technology, or a screen-reader user
+		// is dropped into a text with no announced boundary.
+		expect(fullscreen.getAttribute('role')).toBe('dialog');
+		expect(fullscreen.getAttribute('aria-label')).toBe('Datenschutz');
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		expect(screen.queryByTestId('legal-reader-fullscreen')).toBeNull();
+	});
+
+	/**
+	 * The toggle has broken more than once, so both directions are pinned, not
+	 * just the opening one.
+	 */
+	it('returns focus to the toggle when fullscreen is left', async () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		const toggle = screen.getByTestId('legal-reader-fullscreen-toggle');
+		toggle.focus();
+
+		fireEvent.click(toggle);
+		// The layer takes focus, so a keyboard reader is inside the document.
+		expect(document.activeElement).toBe(
+			screen.getByTestId('legal-reader-fullscreen')
+		);
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		await waitFor(() =>
+			expect(document.activeElement).toBe(
+				screen.getByTestId('legal-reader-fullscreen-toggle')
+			)
+		);
+	});
+
+	it('leaves fullscreen on Escape', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		expect(screen.getByTestId('legal-reader-fullscreen')).toBeTruthy();
+
+		fireEvent.keyDown(document, { key: 'Escape' });
+
+		expect(screen.queryByTestId('legal-reader-fullscreen')).toBeNull();
+	});
+
+	/**
+	 * Fullscreen covers the host dialog's own ✕, so without this the only way
+	 * out of a full-screen legal text is to leave fullscreen first.
+	 */
+	it('offers a close control in fullscreen when the host gives it one', () => {
+		const onClose = vi.fn();
+		render(
+			<LegalTextReader
+				content={POLICY}
+				label="Datenschutz"
+				onClose={onClose}
+			/>
+		);
+		expect(screen.queryByTestId('legal-reader-close')).toBeNull();
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		fireEvent.click(screen.getByTestId('legal-reader-close'));
+
+		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it('marks the fullscreen control as the exit variant while it is open', () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		const toggle = () =>
+			screen.getByTestId('legal-reader-fullscreen-toggle');
+		expect(toggle().className).not.toContain('--exit');
+
+		fireEvent.click(toggle());
+
+		expect(toggle().className).toContain('--exit');
+	});
+
+	/**
+	 * `LegalContentRenderer` swaps its whole subtree from its OWN state when a
+	 * reader flips a machine-translated document to the original. No prop of the
+	 * reader changes, so without watching the DOM the chips would keep the
+	 * previous language's labels and point at headings that are gone.
+	 */
+	it('re-reads the chapters when the rendered text is swapped underneath it', async () => {
+		render(<LegalTextReader content={POLICY} label="Datenschutz" />);
+		expect(chip('2. Ihre Rechte')).toBeTruthy();
+
+		const text = document.querySelector('.legalTextReader__text');
+		const rendered = text?.firstElementChild as HTMLElement;
+		rendered.innerHTML = '<h2>Chapter one</h2><h2>Chapter two</h2>';
+
+		await waitFor(() => expect(chip('Chapter one')).toBeTruthy());
+		expect(chip('Chapter two')).toBeTruthy();
+		expect(
+			within(screen.getByTestId('legal-anchor-chips')).queryByRole(
+				'button',
+				{ name: '2. Ihre Rechte' }
+			)
+		).toBeNull();
+	});
+
+	/**
+	 * The layer covers the host dialog but renders inside it, so without a trap
+	 * Tab walks on to the host's close/Back/Confirm buttons behind the overlay —
+	 * which is exactly what its `aria-modal` tells a screen reader cannot happen.
+	 */
+	it('keeps Tab inside the fullscreen layer', () => {
+		render(
+			<LegalTextReader
+				content={POLICY}
+				label="Datenschutz"
+				onClose={() => undefined}
+			/>
+		);
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+		const layer = screen.getByTestId('legal-reader-fullscreen');
+		expect(layer.getAttribute('aria-modal')).toBe('true');
+
+		// jsdom reports `offsetParent` as null for everything, so without this
+		// the trap finds no focusable controls and falls back to focusing the
+		// layer — the test would pass through the wrong branch and prove
+		// nothing about wrapping.
+		layer.querySelectorAll('button').forEach((button) =>
+			Object.defineProperty(button, 'offsetParent', {
+				configurable: true,
+				get: () => layer
+			})
+		);
+
+		const buttons = Array.from(layer.querySelectorAll('button'));
+		const first = buttons[0];
+		const last = buttons[buttons.length - 1];
+		last.focus();
+
+		// Tab off the LAST control wraps to the first instead of leaving.
+		fireEvent.keyDown(document, { key: 'Tab' });
+		expect(document.activeElement).toBe(first);
+
+		// ...and Shift+Tab off the first wraps back to the last.
+		fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+		expect(document.activeElement).toBe(last);
+	});
+
+	/**
+	 * The reason the fullscreen toggle "kept breaking": returning a bare body
+	 * when windowed and a wrapped one in fullscreen changed the returned
+	 * element's TYPE, so React unmounted the whole subtree on every toggle —
+	 * including `LegalContentRenderer`'s own show-original state. A reader who
+	 * had switched a machine-translated document to the binding German original
+	 * was silently flipped back to the translation by pressing fullscreen.
+	 */
+	it('keeps the show-original choice across a fullscreen toggle', () => {
+		// English UI, so the machine-translated English version is the one
+		// shown and the "show original" escape hatch is offered.
+		mockLanguage = 'en';
+		render(<LegalTextReader content={TRANSLATED} label="Datenschutz" />);
+
+		fireEvent.click(screen.getByText('Original anzeigen'));
+		expect(screen.getByText('Verbindliche deutsche Fassung.')).toBeTruthy();
+
+		fireEvent.click(screen.getByTestId('legal-reader-fullscreen-toggle'));
+
+		expect(screen.getByText('Verbindliche deutsche Fassung.')).toBeTruthy();
+		expect(screen.queryByText('Machine translated text.')).toBeNull();
+	});
+
+	/**
+	 * A heading edit that slugs to the SAME id — a capitalisation or punctuation
+	 * change, or a translation that happens to slug identically — still has to
+	 * reach the chips, or they keep announcing the old wording.
+	 */
+	it('picks up a heading whose text changed but whose id did not', async () => {
+		render(
+			<LegalTextReader
+				content="<h2>Ihre Rechte</h2><h2>Kontakt</h2>"
+				label="Datenschutz"
+			/>
+		);
+		expect(chip('Ihre Rechte')).toBeTruthy();
+
+		const rendered = document.querySelector('.legalTextReader__text')
+			?.firstElementChild as HTMLElement;
+		rendered.innerHTML = '<h2>IHRE RECHTE</h2><h2>Kontakt</h2>';
+
+		await waitFor(() => expect(chip('IHRE RECHTE')).toBeTruthy());
+	});
+
+	it('hides the fullscreen affordance where the host has no room for it', () => {
+		render(
+			<LegalTextReader
+				content={POLICY}
+				label="Datenschutz"
+				allowFullscreen={false}
+			/>
+		);
+
+		expect(
+			screen.queryByTestId('legal-reader-fullscreen-toggle')
+		).toBeNull();
+	});
+});

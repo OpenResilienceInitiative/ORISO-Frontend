@@ -1,9 +1,10 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import {
 	ActiveSessionContext,
+	AUTHORITIES,
 	E2EEContext,
 	UserDataContext,
 	type ExtendedSessionInterface
@@ -11,7 +12,8 @@ import {
 import { ConsultantListContext } from '../../globalState/provider/ConsultantListProvider';
 import { ServerSettingsContext } from '../../globalState/provider/ServerSettingsProvider';
 import type { UserDataInterface } from '../../globalState/interfaces';
-import { MessageItemComponent } from './MessageItemComponent';
+import { MessageItemComponent, type MessageItem } from './MessageItemComponent';
+import { buildSupervisionTimeline } from '../session/sessionHelpers';
 import {
 	MOCK_ASKER_MATRIX_ID,
 	MOCK_CONSULTANT_MATRIX_ID,
@@ -23,6 +25,7 @@ import {
 	mockE2EEContext,
 	mockE2eeParams,
 	mockLongGermanMessage,
+	mockMessageItem,
 	mockMessageItemComponentProps,
 	mockServerSettingsContext,
 	mockCaseHandoverGrantedMessage,
@@ -41,25 +44,50 @@ import {
 } from './messageStoryShell';
 import './message.styles.scss';
 
+/** The shape of a consultant-list entry the bubble reads names from. */
+type ConsultantListEntry = {
+	value?: string;
+	username?: string;
+	rawUsername?: string;
+	consultantDisplayName?: string;
+	firstName?: string;
+	lastName?: string;
+	/** Legal-name label as `prepareConsultantDataForSelect` builds it. */
+	label?: string;
+};
+
 type MessageItemStoryParameters = {
 	activeSession?: ExtendedSessionInterface;
 	userData?: UserDataInterface;
+	/**
+	 * Entries for `ConsultantListContext`. This is the list the bubble used to
+	 * pull a counsellor's legal name out of (#1486), so a story has to be able
+	 * to seed it with one.
+	 */
+	consultantList?: ConsultantListEntry[];
 };
 
 function MessageItemContextDecorator({
 	activeSession,
 	userData,
+	consultantList,
 	children,
 	compact = false
 }: {
 	activeSession: ExtendedSessionInterface;
 	userData: UserDataInterface;
+	consultantList?: ConsultantListEntry[];
 	children: React.ReactNode;
 	compact?: boolean;
 }) {
+	const consultantListContextValue = consultantList
+		? { ...mockConsultantListContext(), consultantList }
+		: mockConsultantListContext();
 	return (
 		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
-			<ConsultantListContext.Provider value={mockConsultantListContext()}>
+			<ConsultantListContext.Provider
+				value={consultantListContextValue as never}
+			>
 				<E2EEContext.Provider value={mockE2EEContext()}>
 					<UserDataContext.Provider
 						value={{
@@ -198,6 +226,9 @@ const meta = {
 					(parameters as MessageItemStoryParameters).userData ??
 					mockUserData()
 				}
+				consultantList={
+					(parameters as MessageItemStoryParameters).consultantList
+				}
 				compact={Boolean(
 					(parameters as { compactShell?: boolean }).compactShell
 				)}
@@ -316,6 +347,116 @@ export const AndroidCompactKebabTouchZone: Story = {
 	}
 };
 
+/** #1254: the last row must not stretch its controls into composer clearance. */
+export const LastMessageSideColumn: Story = {
+	name: 'Last message — avatar and menu beside bubble — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'Incoming and outgoing messages above reserved composer space. Avatar and menu positions must follow their own message row, including after the menu opens.'
+			}
+		}
+	},
+	render: () => (
+		<div
+			data-testid="last-message-timeline"
+			style={{
+				height: 500,
+				overflowY: 'auto'
+			}}
+		>
+			<div
+				style={{
+					minHeight: 900,
+					paddingBottom: 196,
+					boxSizing: 'border-box'
+				}}
+			>
+				{[false, true].map((isMyMessage) => (
+					<MessageItemComponent
+						key={String(isMyMessage)}
+						{...mockMessageItemComponentProps({
+							_id: `side-column-${isMyMessage ? 'outgoing' : 'incoming'}`,
+							isMyMessage,
+							userId: isMyMessage
+								? MOCK_CONSULTANT_MATRIX_ID
+								: MOCK_ASKER_MATRIX_ID,
+							message: isMyMessage
+								? 'Danke, dass du dich meldest. Wir nehmen uns Zeit für deine Fragen.'
+								: 'Ich brauche Hilfe.'
+						})}
+						{...baseHandlers}
+					/>
+				))}
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		const verifyControls = () => {
+			const rows = canvasElement.querySelectorAll(
+				'.messageItem__messageWrap'
+			);
+			expect(rows.length).toBe(2);
+			rows.forEach((row) => {
+				const bubble = row.querySelector('.messageItem__message')!;
+				const column = row.querySelector('.messageItem__sideColumn')!;
+				const bubbleRect = bubble.getBoundingClientRect();
+				const rowRect = row.getBoundingClientRect();
+				const columnRect = column.getBoundingClientRect();
+				expect(
+					Math.abs(columnRect.top - rowRect.top)
+				).toBeLessThanOrEqual(1);
+				expect(
+					Math.abs(columnRect.bottom - rowRect.bottom)
+				).toBeLessThanOrEqual(1);
+				for (const selector of [
+					'.messageItem__avatar',
+					'.messageItem__kebabButton'
+				]) {
+					const control = row
+						.querySelector(selector)!
+						.getBoundingClientRect();
+					expect(control.top).toBeLessThan(bubbleRect.bottom + 40);
+					expect(control.bottom).toBeGreaterThan(bubbleRect.top - 40);
+				}
+			});
+		};
+		await waitFor(verifyControls);
+		const buttons = canvasElement.querySelectorAll<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		await userEvent.click(buttons[buttons.length - 1]);
+		await waitFor(verifyControls);
+		const lastButton = buttons[buttons.length - 1];
+		const timeline = within(canvasElement).getByTestId(
+			'last-message-timeline'
+		);
+		const menu = canvasElement.ownerDocument.querySelector<HTMLElement>(
+			'.messageItem__actionMenu'
+		)!;
+		await waitFor(() => {
+			const menuRect = menu.getBoundingClientRect();
+			const viewportHeight =
+				canvasElement.ownerDocument.defaultView!.innerHeight;
+			expect(menuRect.top).toBeGreaterThanOrEqual(0);
+			expect(menuRect.bottom).toBeLessThanOrEqual(viewportHeight);
+		});
+		const buttonTop = lastButton.getBoundingClientRect().top;
+		const menuTop = menu.getBoundingClientRect().top;
+		timeline.scrollTop = 100;
+		await waitFor(() => {
+			const buttonDelta =
+				lastButton.getBoundingClientRect().top - buttonTop;
+			const menuDelta = menu.getBoundingClientRect().top - menuTop;
+			expect(buttonDelta).toBeLessThan(-20);
+			expect(Math.abs(menuDelta - buttonDelta)).toBeLessThanOrEqual(2);
+		});
+	}
+};
+
 export const GroupIncoming: Story = {
 	name: 'Group incoming (initials avatar)',
 	parameters: {
@@ -387,6 +528,19 @@ export const SystemNotification: Story = {
 			message: mockSystemNotificationMessage
 		}),
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__avatar--bot'
+			)!;
+			const title = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__sendFailedTitle'
+			)!;
+			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+				avatar.getBoundingClientRect().right + 8
+			);
+		});
 	}
 };
 
@@ -405,6 +559,15 @@ export const CaseHandoverGranted: Story = {
 			message: mockCaseHandoverGrantedMessage
 		}),
 		...baseHandlers
+	},
+	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		// Rendered inside the collapsed details panel.
+		await expect(
+			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
+		).toBeInTheDocument();
+		await expect(canvas.queryByText(/is ill|erkrankt/i)).toBeNull();
 	}
 };
 
@@ -590,6 +753,40 @@ export const IncomingWithReactions: Story = {
 	}
 };
 
+/** Un-reacting from the menu closes it and hands focus back to the kebab. */
+export const UnreactFromMenuReturnsFocus: Story = {
+	name: 'Un-react from menu — focus back on the kebab',
+	parameters: IncomingWithReactions.parameters,
+	args: {
+		...IncomingWithReactions.args,
+		onUnreact: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const kebab = canvasElement.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		expect(kebab).not.toBeNull();
+		await userEvent.click(kebab!);
+		const mine = await waitFor(() => {
+			const button = document.querySelector<HTMLButtonElement>(
+				'.messageItem__actionMenuReactionEmoji--mine'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await userEvent.click(mine);
+		expect(args.onUnreact).toHaveBeenCalledWith('$own-reaction-1');
+		await waitFor(() => {
+			expect(
+				document.querySelector(
+					'.messageItem__actionMenuReactionEmoji--mine'
+				)
+			).toBeNull();
+			expect(document.activeElement).toBe(kebab);
+		});
+	}
+};
+
 export const OutgoingWithReactions: Story = {
 	name: 'Outgoing with reactions (delivered)',
 	parameters: {
@@ -616,30 +813,85 @@ export const OutgoingWithReactions: Story = {
 async function assertReactionRailScrollsHorizontally(
 	canvasElement: HTMLElement
 ) {
-	await waitFor(() => {
-		const rail = canvasElement.querySelector(
-			'.messageItem__reactions'
-		) as HTMLElement | null;
-		expect(rail).toBeTruthy();
-		const pills = Array.from(
-			rail!.querySelectorAll('.messageItem__reactionPill')
-		) as HTMLElement[];
-		expect(pills.length).toBeGreaterThan(3);
+	await waitForMessageEnterAnimation(canvasElement);
+	const item = canvasElement.querySelector<HTMLElement>('.messageItem')!;
+	const bubble = item.querySelector<HTMLElement>('.messageItem__message')!;
+	const rail = item.querySelector<HTMLElement>('.messageItem__reactions')!;
+	const pills = Array.from(
+		rail.querySelectorAll<HTMLButtonElement>('button')
+	);
+	expect(pills.length).toBeGreaterThan(3);
 
-		// Single row: every pill shares the same top edge (no vertical stack).
-		const firstTop = pills[0].offsetTop;
-		pills.forEach((pill) => {
-			expect(pill.offsetTop).toBe(firstTop);
-			expect(getComputedStyle(pill).flexShrink).toBe('0');
+	// Constrain the real message's host, rather than asserting CSS declarations.
+	const host = item.parentElement!;
+	const originalWidth = host.style.width;
+	const originalMaxWidth = host.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			host.style.maxWidth = '100%';
+			await waitFor(() => {
+				const bounds = host.getBoundingClientRect();
+				for (const element of [
+					bubble,
+					item.querySelector<HTMLElement>('.messageItem__avatar')!,
+					item.querySelector<HTMLElement>(
+						'.messageItem__kebabButton'
+					)!
+				]) {
+					const rect = element.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 1);
+					expect(rect.right).toBeLessThanOrEqual(bounds.right + 1);
+				}
+				expect(bubble.scrollWidth).toBeLessThanOrEqual(
+					bubble.clientWidth + 1
+				);
+				pills.forEach((pill) =>
+					expect(pill.offsetTop).toBe(pills[0].offsetTop)
+				);
+			});
+		}
+
+		host.style.width = '320px';
+		expect(rail.scrollWidth).toBeGreaterThan(rail.clientWidth);
+		const initialBubble = bubble.getBoundingClientRect();
+		// Tabbing into an off-screen reaction must bring it into view without
+		// moving the whole message. This is the native button/scroll-container path.
+		pills[0].focus();
+		for (let index = 1; index < pills.length; index++)
+			await userEvent.tab();
+		expect(document.activeElement).toBe(pills[pills.length - 1]);
+		await waitFor(() => {
+			const last = pills[pills.length - 1].getBoundingClientRect();
+			const visible = rail.getBoundingClientRect();
+			expect(last.left).toBeGreaterThanOrEqual(visible.left - 1);
+			expect(last.right).toBeLessThanOrEqual(visible.right + 1);
 		});
-
-		const style = getComputedStyle(rail!);
-		expect(style.flexWrap).toBe('nowrap');
-		expect(style.overflowX).toMatch(/auto|scroll/);
-		expect(style.overflowY).toBe('hidden');
-		// Overflow content must be wider than the visible rail (scrollable).
-		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
-	});
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+		pills[0].focus();
+		await waitFor(() => expect(rail.scrollLeft).toBe(0));
+		const kebab = item.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				document.querySelector('.messageItem__actionMenuReactionEmoji')
+			).not.toBeNull()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(document.activeElement).toBe(kebab));
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+	} finally {
+		host.style.width = originalWidth;
+		host.style.maxWidth = originalMaxWidth;
+	}
 }
 
 export const OutgoingWithManyReactions: Story = {
@@ -1137,4 +1389,850 @@ export const KebabMenuFollowsScroll: Story = {
 		expect(rect.left).toBeGreaterThanOrEqual(0);
 		expect(rect.right).toBeLessThanOrEqual(window.innerWidth);
 	}
+};
+
+/**
+ * T21: the thread entry under a root message — reply count and
+ * "Author: last reply…" on one line — opens the thread.
+ */
+export const ThreadEntryWithLastReply: Story = {
+	name: 'Thread entry — replies + "Author: last reply…" (T21)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData()
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_ASKER_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: 'Sanftes Alpaka Kala',
+			username: 'sanftes.alpaka.kala@oriso.invalid',
+			message:
+				'Es sind ein paar Briefe gekommen, die ich nicht aufgemacht habe. Mahnbescheide, glaube ich.'
+		}),
+		...baseHandlers,
+		renderMode: 'main',
+		threadsEnabled: true,
+		threadSummary: {
+			replyCount: 2,
+			lastReplyText:
+				'Sanftes Alpaka Kala: Okay. Vielleicht nächste Woche, wenn ich weiß, wie es mit dem Vertrag weitergeht.'
+		},
+		onOpenThread: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const entry = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLButtonElement>(
+				'[data-cy="thread-entry"]'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expect(entry.textContent).toContain('2 Antworten');
+		const preview = entry.querySelector<HTMLElement>(
+			'[data-cy="thread-entry-preview"]'
+		)!;
+		await expect(preview.textContent).toContain('Sanftes Alpaka Kala:');
+		// One line, ellipsis — never a second line (D1: the entry follows
+		// the chat text scale, label/medium 12/16 — one line-height plus rounding).
+		await expect(
+			preview.getBoundingClientRect().height
+		).toBeLessThanOrEqual(
+			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
+		);
+		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message'
+		)!;
+		const bubbleRect = bubble.getBoundingClientRect();
+		const entryRect = entry.getBoundingClientRect();
+		await expect(Math.abs(entryRect.left - bubbleRect.left)).toBeLessThan(
+			1
+		);
+		await expect(Math.abs(entryRect.right - bubbleRect.right)).toBeLessThan(
+			1
+		);
+		await expect(getComputedStyle(entry).borderRadius).toBe(
+			getComputedStyle(bubble).borderRadius
+		);
+		await expect(entry.scrollWidth).toBeLessThanOrEqual(entry.clientWidth);
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
+		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
+	}
+};
+
+/** Same reply-entry contract in constrained conversation columns. */
+export const ThreadEntryPhone: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — phone alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 320, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
+};
+
+export const ThreadEntryOutgoing: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — outgoing short message alignment (W02)',
+	args: {
+		...ThreadEntryWithLastReply.args,
+		isMyMessage: true,
+		message: 'Danke.'
+	}
+};
+
+export const ThreadEntryTablet: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — tablet alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 820, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
+};
+
+/* ---------------------------------------------------------------------------
+ * T49 — the supervision side room's system notice.
+ *
+ * The notice is not a message someone wrote: `buildSupervisionTimeline`
+ * (session/sessionHelpers.ts) builds it in the frontend and prepends it to the
+ * side room's timeline. Its `[SYSTEM_NOTIFICATION]` payload carries
+ * `type: 'SUPERVISION_NOTICE'`, and that type is what makes
+ * `MessageItemComponent` return the **Carimat organism** (`ErstantwortSequence`
+ * → `pseudonymCard`) instead of the generic system-notification chrome.
+ *
+ * That was the promise in T49, and until now it could only be seen two levels
+ * up — in `Components/Session/SidePanel` "first visit, empty side room" and in
+ * the stage story "(a2)". Here it stands at the block that actually renders it.
+ *
+ * The fixtures come from `buildSupervisionTimeline` itself rather than a
+ * hand-written payload, so a change to the builder shows up here instead of
+ * quietly passing against a copy of what it used to emit.
+ * ------------------------------------------------------------------------- */
+
+const SUPERVISION_ROOM_ID = '!storybook-supervision:example.org';
+const SUPERVISION_NOTICE_TITLE = 'Supervision';
+const SUPERVISION_NOTICE_TEXT =
+	'Supervision durch Angela K. ist aktiv. Eine andere Supervisorin oder einen anderen Supervisor können Sie über das Plus neben dem Mail-Symbol anfragen.';
+
+const buildSupervisionNoticeTimeline = (messages: MessageItem[] = []) =>
+	buildSupervisionTimeline(messages, {
+		roomId: SUPERVISION_ROOM_ID,
+		title: SUPERVISION_NOTICE_TITLE,
+		description: SUPERVISION_NOTICE_TEXT,
+		askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+	});
+
+/** One counsellor line under the notice — the side room's first real message. */
+const supervisionFirstMessage = (): MessageItem =>
+	mockMessageItem({
+		_id: 'supervision-msg-1',
+		rid: SUPERVISION_ROOM_ID,
+		userId: MOCK_CONSULTANT_MATRIX_ID,
+		displayName: 'Beratende Person Kim G.',
+		username: 'kim.g@oriso.invalid',
+		message:
+			'Ich komme beim Thema Mahnbescheide nicht weiter und hätte gern einen zweiten Blick darauf.',
+		messageDate: { str: 'Heute', date: null }
+	});
+
+const renderSupervisionTimeline = (items: MessageItem[]) => (
+	<div style={{ display: 'flex', flexDirection: 'column' }}>
+		{items.map((item) => (
+			<MessageItemComponent
+				key={item._id}
+				{...mockMessageItemComponentProps(item)}
+				{...baseHandlers}
+			/>
+		))}
+	</div>
+);
+
+/**
+ * The whole point of T49, asserted rather than eyeballed: the notice is drawn
+ * with the Carimat organism and carries **none** of the generic system chrome.
+ *
+ * Every negative check is scoped to the notice's own subtree — in the story
+ * where a real message sits below it, a kebab and a bubble legitimately exist
+ * on that message, and an unscoped `querySelector` would pass for the wrong
+ * reason (or fail for one).
+ */
+const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
+	const notice = await waitFor(() => {
+		const element = canvasElement.querySelector<HTMLElement>(
+			'.messageItem--supervisionNotice'
+		);
+		expect(element).not.toBeNull();
+		return element!;
+	});
+
+	// Carimat structure: the staged sequence and its pseudonym card.
+	expect(
+		notice.querySelector('[data-testid="erstantwort-sequence"]')
+	).not.toBeNull();
+	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
+	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
+			?.textContent
+	).toBe(SUPERVISION_NOTICE_TITLE);
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
+			?.textContent
+	).toMatch(/^(Systembenachrichtigung|System Notification)$/);
+	expect(
+		notice.querySelector<HTMLElement>('.pseudonymCard__bubbleText')
+			?.textContent
+	).toBe(SUPERVISION_NOTICE_TEXT);
+
+	// No generic system-notification chrome: no kebab, no notification bubble
+	// class, no bot avatar, no two-line notification header.
+	expect(notice.querySelector('.messageItem__kebabButton')).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__message--systemNotification')
+	).toBeNull();
+	expect(notice.querySelector('.messageItem__avatar--bot')).toBeNull();
+	expect(notice.querySelector('.messageItem__botAvatarIcon')).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__systemNotificationHeaderText')
+	).toBeNull();
+	expect(
+		notice.querySelector('.messageItem__systemNotificationDescription')
+	).toBeNull();
+
+	return notice;
+};
+
+/** Header labels must clear the entire avatar frame, including its backdrop. */
+const expectReadableCarimatHeader = async (notice: HTMLElement) => {
+	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const avatar = notice.querySelector<HTMLElement>(
+		'.pseudonymCard__avatarFrame'
+	)!;
+	const labels = notice.querySelectorAll<HTMLElement>(
+		'.pseudonymCard__headerName, .pseudonymCard__headerSubtitle'
+	);
+	const originalWidth = card.style.width;
+	const originalMaxWidth = card.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			card.style.width = `${width}px`;
+			card.style.maxWidth = '100%';
+			await waitFor(() => {
+				for (const label of labels) {
+					const rect = label.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(
+						avatar.getBoundingClientRect().right + 8
+					);
+					expect(rect.right).toBeLessThanOrEqual(
+						card.getBoundingClientRect().right + 1
+					);
+					expect(label.scrollWidth).toBeLessThanOrEqual(
+						label.clientWidth + 1
+					);
+				}
+			});
+		}
+	} finally {
+		card.style.width = originalWidth;
+		card.style.maxWidth = originalMaxWidth;
+	}
+};
+
+export const SupervisionNotice: Story = {
+	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'The side room notice `SUPERVISION_NOTICE`, rendered by `MessageItemComponent` as the **Carimat** sequence (`ErstantwortSequence` → `pseudonymCard`) under the room name — never with the generic system-notification chrome (kebab, bot avatar, `messageItem__message--systemNotification`).'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		await expectReadableCarimatHeader(notice);
+		// The day pill moves onto the notice when the room already has history.
+		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeLongHeader: Story = {
+	...SupervisionNotice,
+	name: 'Supervision notice — long translated header',
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionTimeline([], {
+				roomId: SUPERVISION_ROOM_ID,
+				title: 'Supervision und gemeinsame fachliche Beratung innerhalb der Beratungsstelle',
+				description: SUPERVISION_NOTICE_TEXT,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+			})[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageItem--supervisionNotice'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expectReadableCarimatHeader(notice);
+	}
+};
+
+export const SupervisionNoticeAboveMessage: Story = {
+	name: 'Supervision notice — above the first real message (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'Notice plus the counsellor line beneath it. The day pill sits on the notice and the message below gives its own up, so the same day is never drawn twice — and the message keeps its ordinary chrome (kebab, bubble) while the notice keeps none of it.'
+			}
+		}
+	},
+	render: () =>
+		renderSupervisionTimeline(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])
+		),
+	play: async ({ canvasElement }) => {
+		await expectCarimatNoticeStructure(canvasElement);
+
+		const rows = canvasElement.querySelectorAll(
+			'.messageItem:not(.pseudonymCard)'
+		);
+		expect(rows.length).toBe(2);
+		expect(rows[0].classList).toContain('messageItem--supervisionNotice');
+
+		// Exactly one day pill in the pair, and it belongs to the notice.
+		expect(
+			canvasElement.querySelectorAll('.messageDateDivider').length
+		).toBe(1);
+		expect(rows[0].querySelector('.messageDateDivider')).not.toBeNull();
+
+		// The ordinary message below is untouched — it still has its kebab,
+		// which is what makes the notice's missing one meaningful.
+		await waitFor(() =>
+			expect(
+				rows[1].querySelector('.messageItem__kebabButton')
+			).not.toBeNull()
+		);
+	}
+};
+
+export const SupervisionNoticeEmptyRoom: Story = {
+	name: 'Supervision notice — empty side room, no day pill (T49)',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		docs: {
+			description: {
+				story: 'What a freshly assigned standing supervisor sees before anyone has written. N-2: `buildSupervisionTimeline` sets an explicit empty `PrettyDate` here — the earlier version cloned `list[0]`, left `messageDate` undefined on an empty room and crashed the timeline.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(buildSupervisionNoticeTimeline()[0]),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		// No history, so no day pill — and no crash on the empty date.
+		expect(notice.querySelector('.messageDateDivider')).toBeNull();
+		expect(
+			canvasElement.querySelectorAll('.messageItem:not(.pseudonymCard)')
+				.length
+		).toBe(1);
+	}
+};
+
+export const SupervisionNoticeMobile390: Story = {
+	name: 'Supervision notice — phone 390 (T49)',
+	globals: phone390Globals,
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData(),
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'The notice at 390px, where the side room is a full-width sheet. The card and its text stay inside the column — the notice is the first thing in that room, so a horizontal overflow here would be the first thing anyone sees.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionNoticeTimeline([supervisionFirstMessage()])[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await expectCarimatNoticeStructure(canvasElement);
+		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const shell = notice.parentElement!;
+		await waitFor(() => {
+			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
+			expect(card.getBoundingClientRect().right).toBeLessThanOrEqual(
+				shell.getBoundingClientRect().right + 1
+			);
+		});
+	}
+};
+
+// ---------------------------------------------------------------------------
+// Identity: the name a counsellor is published under (#1486)
+// ---------------------------------------------------------------------------
+
+/** A counsellor whose legal name is on file and whose public name is not. */
+const consultantWithRealName: ConsultantListEntry[] = [
+	{
+		value: 'consultant-storybook',
+		username: 'karina.p@oriso.invalid',
+		rawUsername: 'karina.p',
+		consultantDisplayName: 'Karina P',
+		firstName: 'Karina',
+		lastName: 'P'
+	}
+];
+
+/**
+ * The leak this issue is about, at the surface an advice seeker reads.
+ *
+ * An anonymous Live Chat guest is granted `ANONYMOUS_DEFAULT`, not
+ * `ASKER_DEFAULT`, so the asker-facing name resolution never ran for them and
+ * the bubble fell through to the consultant list — printing the counsellor's
+ * legal name ("Karina P") above the message, overriding the public display
+ * name the session carries. ADR-002 §2: the published identity is the display
+ * name. See OpenResilienceInitiative/ORISO-Frontend#1486.
+ */
+export const AnonymousGuestSeesDisplayName: Story = {
+	name: 'Identity — anonymous guest sees the display name, never the real name',
+	parameters: {
+		activeSession: mockActiveSession1on1({
+			consultant: {
+				consultantId: 'consultant-storybook',
+				id: 'consultant-storybook',
+				username: 'karina.p@oriso.invalid',
+				displayName: 'sanftes Alpaka Kim',
+				firstName: 'Karina',
+				lastName: 'P',
+				absent: false
+			} as never
+		}),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: consultantWithRealName,
+		docs: {
+			description: {
+				story: 'Display name and real name are both available to the client. The bubble must show "sanftes Alpaka Kim" — the counsellor\'s legal name must not appear anywhere in the thread.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			// The Matrix member event carries the legal name too — a third
+			// identity layer that must not win either.
+			displayName: 'Karina P',
+			username: 'karina.p@oriso.invalid',
+			message:
+				'Danke, dass du dich meldest. Lass uns die nächsten Schritte sortieren.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getByText('sanftes Alpaka Kim')
+			).toBeInTheDocument();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+	}
+};
+
+/**
+ * A historical REASSIGN_CONSULTANT record seen by an anonymous guest: the
+ * card must use the names stored in the record, never the consultant list's
+ * legal-name label (#1536, #1486).
+ */
+export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
+	name: 'Identity — anonymous guest, historical reassign record, no real name',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: [
+			{
+				...consultantWithRealName[0],
+				label: 'Karina P (karina.p)'
+			}
+		]
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: JSON.stringify({
+				status: 'CONFIRMED',
+				fromConsultantId: 'consultant-storybook',
+				fromConsultantName: 'sanftes Alpaka Kim',
+				toConsultantId: 'consultant-storybook',
+				toConsultantName: 'sanftes Alpaka Kim',
+				toAskerName: 'anon_5'
+			}),
+			alias: {
+				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT
+			}
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getAllByText(/sanftes Alpaka Kim/).length
+			).toBeGreaterThan(0);
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvas.getByLabelText('Information')).toBeInTheDocument();
+		const notice = canvasElement.querySelector<HTMLElement>(
+			'.reassignRequestMessage'
+		);
+		const host =
+			notice?.closest<HTMLElement>('.messageItem')?.parentElement;
+		if (!notice || !host) throw new Error('Historical message is missing');
+		const originalWidth = host.style.width;
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const icon = notice.querySelector<SVGElement>('svg');
+			const title = notice.querySelector<HTMLElement>('strong');
+			if (!icon || !title)
+				throw new Error('Historical info header is missing');
+			await expect(
+				title.getBoundingClientRect().left
+			).toBeGreaterThanOrEqual(icon.getBoundingClientRect().right + 8);
+
+			await expect(notice.scrollWidth).toBeLessThanOrEqual(
+				notice.clientWidth + 1
+			);
+			await expect(
+				notice.getBoundingClientRect().right
+			).toBeLessThanOrEqual(host.getBoundingClientRect().right + 1);
+		}
+		host.style.width = originalWidth;
+	}
+};
+
+/**
+ * Same counsellor with no public display name: the bubble falls back to the
+ * User-ID — the identity anchor the chat header and the session list already
+ * show — and still not to the legal name (#1486).
+ */
+export const AnonymousGuestWithoutDisplayNameSeesTheAnchor: Story = {
+	name: 'Identity — no display name falls back to the User-ID, not the real name',
+	parameters: {
+		activeSession: mockActiveSession1on1({
+			consultant: {
+				consultantId: 'consultant-storybook',
+				id: 'consultant-storybook',
+				username: 'karina.p@oriso.invalid',
+				displayName: '',
+				firstName: 'Karina',
+				lastName: 'P',
+				absent: false
+			} as never
+		}),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: consultantWithRealName,
+		docs: {
+			description: {
+				story: 'With the public display name cleared, the counsellor is named by their User-ID. The legal name stays out of the thread entirely.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_CONSULTANT_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: undefined,
+			username: 'karina.p@oriso.invalid',
+			message: 'Ich bin da. Erzähl mir, was gerade am dringendsten ist.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+		await expect(canvasElement.textContent).toContain('karina p');
+	}
+};
+
+/**
+ * The counsellor-internal view of the same rule (#1486).
+ *
+ * The bubble used to reach into `ConsultantListContext` for a colleague's
+ * `firstName`/`lastName`, while the chat header and the session list resolve
+ * the same colleague as display name → User-ID. One person, two names, one
+ * conversation. The bubble now passes no name parts at all, so all three
+ * surfaces land on the same string.
+ */
+export const InternalGroupColleagueName: Story = {
+	name: 'Identity — colleague in an internal group chat is named like the header',
+	parameters: {
+		activeSession: mockActiveSessionGroup(),
+		userData: mockUserData(),
+		consultantList: [
+			{
+				value: 'consultant-angela',
+				username: 'angela.k@oriso.invalid',
+				rawUsername: 'angela.k',
+				// No public display name on file — the leak used to fill the
+				// gap with the legal name instead of the User-ID.
+				firstName: 'Angela',
+				lastName: 'K'
+			}
+		],
+		docs: {
+			description: {
+				story: 'A colleague with a legal name on file and no published display name. The bubble names them by their User-ID, exactly as the chat header and the session list do.'
+			}
+		}
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: MOCK_GROUP_MODERATOR_MATRIX_ID,
+			askerMatrixUserId: MOCK_ASKER_MATRIX_ID,
+			displayName: undefined,
+			username: 'angela.k@oriso.invalid',
+			message:
+				'Ich übernehme die Fallübergabe und melde mich nach der Supervision.'
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(canvasElement.querySelector('.messageItem')).not.toBeNull();
+		});
+		await expect(canvasElement.textContent).not.toContain('Angela K');
+		await expect(canvasElement.textContent).toContain('angela k');
+	}
+};
+
+export const InformationalGrantedForAsker: Story = {
+	name: 'Persisted handover — passive informational grant',
+	globals: { ...desktop1440Globals, locale: 'de' },
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: MOCK_ASKER_MATRIX_ID,
+			grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+		})
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'CASE_HANDOVER_GRANTED',
+					description:
+						'Ihre neue Fachkraft hat die Beratung übernommen.',
+					handover: {
+						requestId: 42,
+						clientConsent: 'NONE',
+						accessType: 'TAKEOVER'
+					}
+				})
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Ihre neue Fachkraft hat die Beratung übernommen.'
+			)
+		).toBeInTheDocument();
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const header = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__systemNotificationHeaderText'
+		)!;
+		const more = canvas.getByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await waitFor(() => {
+			expect(
+				bubble.getBoundingClientRect().top -
+					header.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(5);
+			expect(more.getBoundingClientRect().width).toBeLessThan(200);
+		});
+		await expect(more).toHaveClass('button__link');
+		await expect(more).toHaveAttribute('aria-haspopup', 'dialog');
+		more.focus();
+		await waitFor(() => {
+			const style = getComputedStyle(more);
+			expect(parseFloat(style.outlineWidth)).toBeGreaterThan(0);
+			expect(parseFloat(style.borderRadius)).toBeGreaterThan(0);
+			expect(more.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				44
+			);
+			const copy = bubble.querySelector<HTMLElement>(
+				'.messageItem__systemNotificationDescription'
+			)!;
+			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
+				copy.getBoundingClientRect().height +
+					more.getBoundingClientRect().height +
+					32
+			);
+		});
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await expect(dialog.queryByRole('switch')).toBeNull();
+	}
+};
+export const InformationalGrantedForAskerMobile: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...InformationalGrantedForAsker.parameters,
+		...mobileParameters
+	}
+};
+
+export const InformationalGrantedForAskerTablet: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const InformationalGrantedForAskerRussianMobile: Story = {
+	...InformationalGrantedForAskerMobile,
+	name: 'Persisted informational grant — Russian phone',
+	globals: { ...phone390Globals, locale: 'ru' },
+	play: async ({ canvasElement }) => {
+		const more = canvasElement.querySelector<HTMLButtonElement>(
+			'.caseHandoverInformational__more button'
+		);
+		await waitFor(() => expect(more).toBeTruthy());
+		await userEvent.click(more!);
+		const dialog = await within(document.body).findByRole('dialog');
+		await expect(within(dialog).queryByRole('switch')).toBeNull();
+		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
+			dialog.clientWidth + 1
+		);
+	}
+};
+export const InformationalGrantedNotificationContinuation: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — manual notification continuation',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvasElement.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Mehr erfahren|Learn more/
+			})
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await userEvent.click(
+			dialog.getByRole('button', {
+				name: /Benachrichtigungen einrichten|Set up notifications/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.notificationChoiceHost')
+			).toBeTruthy()
+		);
+		await expect(
+			canvasElement
+				.querySelector('.notificationChoiceHost')
+				?.closest('.messageItem__message')
+		).toBeNull();
+		const grant = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const setup = canvasElement
+			.querySelector<HTMLElement>('.notificationChoiceHost')!
+			.closest<HTMLElement>('.erstantwort__bubble')!;
+		await waitFor(() => {
+			const grantBounds = grant.getBoundingClientRect();
+			const setupBounds = setup.getBoundingClientRect();
+			expect(
+				Math.abs(grantBounds.width - setupBounds.width)
+			).toBeLessThanOrEqual(1);
+			expect(
+				Math.abs(grantBounds.left - setupBounds.left)
+			).toBeLessThanOrEqual(1);
+			expect(grant.scrollWidth).toBeLessThanOrEqual(
+				grant.clientWidth + 1
+			);
+		});
+	}
+};
+
+export const InformationalGrantedNotificationContinuationMobile: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — phone 390',
+	globals: { ...phone390Globals, locale: 'de' }
+};
+export const InformationalGrantedNotificationContinuationTablet: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
 };

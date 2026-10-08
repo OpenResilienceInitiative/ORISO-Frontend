@@ -1,0 +1,25 @@
+/* Body of the group consent dialog: the sentence is read, not shouted —
+   body-medium at normal weight, links inline in the primary colour. */
+.groupConsentGate {
+	.groupConsentGate__sentence {
+		margin: 0;
+		color: var(--m3-on-surface, #1b1b1c);
+		font-size: 14px;
+		font-weight: 400;
+		letter-spacing: 0.25px;
+		line-height: 20px;
+
+		a {
+			color: var(--m3-primary, #a5000a);
+			font-weight: 500;
+			text-decoration: underline;
+		}
+	}
+
+	.groupConsentGate__rejected {
+		margin: 12px 0 0;
+		color: var(--m3-error, #cc0000);
+		font-size: 14px;
+		line-height: 20px;
+	}
+}

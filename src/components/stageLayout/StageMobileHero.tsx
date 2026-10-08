@@ -6,6 +6,7 @@ import { LocaleSwitchPill } from '../localeSwitch/LocaleSwitchPill';
 export interface StageMobileHeroProps {
 	/** Optional trailing action, e.g. the "to login" icon button. */
 	action?: ReactNode;
+	leadingAction?: ReactNode;
 	/**
 	 * `hero` (default) is the 230px head of the login screens (design 2e):
 	 * brand row, headline, claim. `bar` is the same brand row alone on the
@@ -30,6 +31,7 @@ export interface StageMobileHeroProps {
  */
 export const StageMobileHero = ({
 	action,
+	leadingAction,
 	variant = 'hero'
 }: StageMobileHeroProps) => {
 	const { t: translate } = useTranslation();
@@ -63,6 +65,7 @@ export const StageMobileHero = ({
 					{translate('app.stage.title')}
 				</span>
 				<span className="stageMobileHero__actions">
+					{leadingAction}
 					<LocaleSwitchPill variant="circle" />
 					{action}
 				</span>

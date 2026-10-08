@@ -89,12 +89,14 @@ export function MessageContextShell({
 	children,
 	compact = false,
 	activeSession = mockActiveSession1on1(),
-	userData = mockUserData()
+	userData = mockUserData(),
+	avatarMembers = []
 }: {
 	children: React.ReactNode;
 	compact?: boolean;
 	activeSession?: ExtendedSessionInterface;
 	userData?: UserDataInterface;
+	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
 }) {
 	return (
 		<ServerSettingsContext.Provider value={mockServerSettingsContext()}>
@@ -110,6 +112,7 @@ export function MessageContextShell({
 						<ActiveSessionContext.Provider
 							value={{
 								activeSession,
+								avatarMembers,
 								reloadActiveSession: () => {},
 								readActiveSession: () => {}
 							}}
@@ -170,6 +173,10 @@ export const withMessageContexts = (
 export const mobileParameters = { compactShell: true };
 export const phone390Globals = { viewport: { value: 'phone390' } };
 export const phone375Globals = { viewport: { value: 'phone375' } };
+/** Short viewport (landscape phone / software keyboard): height <= 420px. */
+export const phone390LandscapeGlobals = {
+	viewport: { value: 'phone390Landscape' }
+};
 /** Tablet portrait — still the narrow (<900px) message layout. */
 export const tablet834Globals = { viewport: { value: 'tablet834' } };
 /** Desktop evidence viewport required by the ORISO Storybook gate. */

@@ -1,0 +1,28 @@
+Comment joindre votre service de conseil
+========================================
+
+Vous avez demandé les coordonnées de votre service de conseil. Les moyens de contact disponibles figurent ci-dessous.
+
+Service de conseil: {{consultantName}}
+Ligne directe: {{consultantPhone}}
+Horaires: {{consultantHours}}
+E-mail: {{consultantEmail}}
+
+Aller au chat protégé:
+{{messageUrl}}
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

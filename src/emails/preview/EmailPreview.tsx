@@ -144,6 +144,7 @@ export const EmailPreview: React.FC<EmailPreviewProps> = ({
 				onLoad={measure}
 				style={{
 					width,
+					boxSizing: 'content-box',
 					maxWidth: '100%',
 					height,
 					border: `1px solid ${emailColor.outline}`,

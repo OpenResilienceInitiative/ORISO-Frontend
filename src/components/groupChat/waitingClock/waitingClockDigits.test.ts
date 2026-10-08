@@ -31,6 +31,12 @@ describe('waitingClockDigits', () => {
 		expect(twoDigits(59)).toEqual([5, 9]);
 	});
 
+	it('twoDigits clamps at 99 so the face and the motionless fallback agree', () => {
+		expect(twoDigits(99)).toEqual([9, 9]);
+		expect(twoDigits(100)).toEqual([9, 9]);
+		expect(twoDigits(250)).toEqual([9, 9]);
+	});
+
 	it('twoDigits clamps negatives and floors fractions', () => {
 		expect(twoDigits(-5)).toEqual([0, 0]);
 		expect(twoDigits(23.9)).toEqual([2, 3]);

@@ -8,6 +8,8 @@ const TRANSLATIONS: Record<string, string> = {
 	'registration.dataProtection.label.and': ' und ',
 	'registration.dataProtection.label.suffix':
 		' zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies.',
+	'registration.agency.legal.unavailable':
+		'Die Datenschutzhinweise können derzeit nicht geladen werden.',
 	'registration.dataProtection.loading':
 		'Der Einwilligungstext wird geladen …',
 	'registration.dataProtection.cookieNotice':
@@ -111,20 +113,46 @@ describe('DataProtectionConsentLabel — fallback is today, unchanged', () => {
 			expect(screen.getByText(/Ich habe die/)).toBeDefined()
 		);
 		expect(
-			screen.getByRole('link', { name: 'Datenschutzerklärung' })
+			screen.getByRole('button', { name: 'Datenschutzerklärung' })
 		).toBeDefined();
-		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
+		expect(screen.getByRole('button', { name: 'Impressum' })).toBeDefined();
 		/* The non-registration link stays out — `filter` semantics preserved.
-		   Asserted as a count: the mocked `t` returns the raw key for anything
-		   absent from TRANSLATIONS, so a name query for the excluded link could
-		   never match and would pass even if `filter` stopped filtering. */
-		expect(screen.getAllByRole('link')).toHaveLength(2);
+		   Legal links now render as `LegalLinkButton` (M3 modal, not a new
+		   tab), so the count is asserted over `[data-cy-link]` rather than
+		   role='link'. */
+		expect(document.querySelectorAll('[data-cy-link]')).toHaveLength(2);
 		expect(
 			screen.getByText(
 				/Für Authentifizierung und Navigation verwendet diese Webseite Cookies\./
 			)
 		).toBeDefined();
 		expect(apiGetConsentText).not.toHaveBeenCalled();
+	});
+
+	it('renders legal links as inline sentence hyperlinks, not chips or new-tab anchors', async () => {
+		renderLabel(undefined);
+
+		await waitFor(() =>
+			expect(screen.getByText(/Ich habe die/)).toBeDefined()
+		);
+
+		const privacy = screen.getByRole('button', {
+			name: 'Datenschutzerklärung'
+		});
+		const imprint = screen.getByRole('button', { name: 'Impressum' });
+
+		expect(privacy.tagName).toBe('BUTTON');
+		expect(imprint.tagName).toBe('BUTTON');
+		expect(privacy.getAttribute('target')).toBeNull();
+		expect(imprint.getAttribute('target')).toBeNull();
+		expect(document.querySelector('a[target="_blank"]')).toBeNull();
+		expect(privacy.querySelector('p')).toBeNull();
+		expect(imprint.querySelector('p')).toBeNull();
+		expect(privacy.className).toMatch(/legalLinkButton--inline/);
+		expect(imprint.className).toMatch(/legalLinkButton--inline/);
+		expect(document.body.textContent).toMatch(
+			/Ich habe die .*Datenschutzerklärung.*Impressum.*zur Kenntnis genommen/
+		);
 	});
 
 	it('falls back when the backend has a policy but no consent sentence', async () => {
@@ -182,23 +210,19 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		// the platform sentence (ADR-021 decision 2), it is not appended to it.
 		expect(screen.queryByText(/Ich habe die/)).toBeNull();
 
-		const policyLink = screen.getByRole('link', {
+		/* Legal links open the shared M3 dialog (issue #1263), not a new tab,
+		   so they render as `LegalLinkButton` — `data-cy-link` carries the
+		   target URL for tooling that used to read `href`. */
+		const policyLink = screen.getByRole('button', {
 			name: 'Datenschutzerklärung'
 		});
-		expect(policyLink.getAttribute('href')).toBe(
+		expect(policyLink.getAttribute('data-cy-link')).toBe(
 			'https://oriso.test/datenschutz'
 		);
-		expect(policyLink.getAttribute('target')).toBe('_blank');
-		/* `target="_blank"` without `rel` would leave `window.opener` reachable
-		   from the target document. `LegalLinks` emits `noreferrer`; the
-		   sanitiser then forces `noopener noreferrer` on every anchor, so an
-		   authored `rel="opener"` cannot hand the opened page a live handle on
-		   the registration tab (ORISO-Frontend#1110). What is asserted here is
-		   that the allowlist does not strip the attribute on the way through —
-		   it drops `class`, and the two are adjacent in the same options
-		   object. */
-		expect(policyLink.getAttribute('rel')).toBe('noopener noreferrer');
-		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
+		expect(policyLink.getAttribute('target')).toBeNull();
+		expect(policyLink.querySelector('p')).toBeNull();
+		expect(policyLink.className).toMatch(/legalLinkButton--inline/);
+		expect(screen.getByRole('button', { name: 'Impressum' })).toBeDefined();
 	});
 
 	it('renders the cookie/authentication notice as a fixed addendum beneath it', async () => {
@@ -337,11 +361,11 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 		expect(
 			(window as unknown as Record<string, unknown>).__consentXss
 		).toBeUndefined();
-		// …and the links still work.
+		// …and the links still work (rendered as `LegalLinkButton`).
 		expect(
 			screen
-				.getByRole('link', { name: 'Datenschutzerklärung' })
-				.getAttribute('href')
+				.getByRole('button', { name: 'Datenschutzerklärung' })
+				.getAttribute('data-cy-link')
 		).toBe('https://oriso.test/datenschutz');
 	});
 
@@ -365,9 +389,9 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 			expect(screen.getByText(/Ich willige ein/)).toBeDefined()
 		);
 		expect(
-			screen.getByRole('link', { name: 'Datenschutzerklärung' })
+			screen.getByRole('button', { name: 'Datenschutzerklärung' })
 		).toBeDefined();
-		expect(screen.getByRole('link', { name: 'Impressum' })).toBeDefined();
+		expect(screen.getByRole('button', { name: 'Impressum' })).toBeDefined();
 	});
 
 	it('keeps the links reachable even if a sentence without the mandatory token slips through', async () => {
@@ -384,7 +408,7 @@ describe('DataProtectionConsentLabel — the Träger sentence', () => {
 			expect(screen.getByText(/Trägersatz ganz ohne/)).toBeDefined()
 		);
 		expect(
-			screen.getByRole('link', { name: 'Datenschutzerklärung' })
+			screen.getByRole('button', { name: 'Datenschutzerklärung' })
 		).toBeDefined();
 	});
 
