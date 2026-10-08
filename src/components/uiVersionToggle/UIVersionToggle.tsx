@@ -51,9 +51,7 @@ export const UIVersionToggle = () => {
 		if (newVersion === 'new') {
 			const elementUrl = getElementUrl();
 			if (!elementUrl) {
-				alert(
-					'REACT_APP_ELEMENT_URL is not set; cannot open the Element UI.'
-				);
+				alert(t('calls.error.elementUrlMissing'));
 				return;
 			}
 

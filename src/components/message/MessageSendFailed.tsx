@@ -32,37 +32,16 @@ export const MessageSendFailed = ({
 	const { t: translate } = useTranslation();
 	const copy = isDecryptionFailure
 		? {
-				title: translate(
-					'message.decryptionFailed.title',
-					'Message decryption failed'
-				),
-				subtitle: translate(
-					'message.decryptionFailed.subtitle',
-					'Incoming message unavailable'
-				),
-				body: translate(
-					'message.decryptionFailed.body',
-					'This incoming message could not be decrypted. Ask the sender to send it again, or try reloading the conversation.'
-				),
-				status: translate(
-					'message.decryptionFailed.status',
-					'could not be decrypted'
-				)
+				title: translate('message.decryptionFailed.title'),
+				subtitle: translate('message.decryptionFailed.subtitle'),
+				body: translate('message.decryptionFailed.body'),
+				status: translate('message.decryptionFailed.status')
 			}
 		: {
-				title: translate(
-					'message.sendFailed.title',
-					'Sending message failed'
-				),
-				subtitle: translate(
-					'message.sendFailed.subtitle',
-					'Resend your message again'
-				),
-				body: translate(
-					'message.sendFailed.body',
-					'There was a problem with sending the message, likely due to encryption or a transfer error. Select Try again to retry once. Check the status: one check means sent, two checks mean read, and a cross means it didn’t reach the server.'
-				),
-				status: translate('message.sendFailed.status', 'not delivered')
+				title: translate('message.sendFailed.title'),
+				subtitle: translate('message.sendFailed.subtitle'),
+				body: translate('message.sendFailed.body'),
+				status: translate('message.sendFailed.status')
 			};
 
 	return (
@@ -101,10 +80,7 @@ export const MessageSendFailed = ({
 									onClick={onRetry}
 									disabled={retryPending || retryDisabled}
 								>
-									{translate(
-										'message.sendFailed.retry',
-										'Try again'
-									)}
+									{translate('message.sendFailed.retry')}
 								</button>
 							)}
 							<span className="messageItem__messageTime">

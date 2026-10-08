@@ -287,11 +287,13 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 		align-items: flex-end;
 		align-content: flex-end;
 		justify-content: center;
+
 		// Twice the design file's 14/18px: at the file's gap the seven marks
 		// read as one cluster on the real panel (Frank, 2026-08-18). Five marks
 		// still fit one row; the last two centre underneath.
 		gap: 24px 30px;
 		width: 312px;
+
 		// The band sits low on the panel, a grid step above the legal links —
 		// not floating mid-height with 120px of red under it.
 		margin: 0 auto $grid-base-two;
@@ -350,7 +352,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 			cursor: pointer;
 			padding: 0;
 			white-space: nowrap;
-			color: rgb(255 255 255 / 92%);
+			color: rgba(255, 255, 255, 0.92);
 			text-decoration: underline;
 			text-underline-offset: 3px;
 			pointer-events: auto;
@@ -377,7 +379,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__legalLinksItem {
-		color: rgb(255 255 255 / 92%);
+		color: rgba(255, 255, 255, 0.92);
 
 		&:hover {
 			color: $white;

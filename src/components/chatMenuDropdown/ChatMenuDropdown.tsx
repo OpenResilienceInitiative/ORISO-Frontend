@@ -5,35 +5,48 @@ import './chatMenuDropdown.styles';
 export const ChatMenuDropdown = React.forwardRef<
 	HTMLDivElement,
 	{
-		id?: string;
-		children: React.ReactNode;
-		className?: string;
-		style?: React.CSSProperties;
-		ariaLabel?: string;
-		onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
-		role?: string;
+		'id'?: string;
+		'density'?: 'default' | 'compact';
+		'children': React.ReactNode;
+		'className'?: string;
+		'style'?: React.CSSProperties;
+		'ariaLabel'?: string;
+		'onKeyDown'?: React.KeyboardEventHandler<HTMLDivElement>;
+		/** Focus leaving the card (a host that owns focus watches this). */
+		'onBlur'?: React.FocusEventHandler<HTMLDivElement>;
+		'role'?: string;
+		'data-cy'?: string;
 	}
 >(
 	(
 		{
 			id,
+			density = 'default',
 			children,
 			className,
 			style,
 			ariaLabel,
 			onKeyDown,
-			role = 'dialog'
+			onBlur,
+			role = 'dialog',
+			'data-cy': dataCy
 		},
 		ref
 	) => (
 		<div
 			id={id}
 			ref={ref}
-			className={clsx('chatMenuDropdown', className)}
+			className={clsx(
+				'chatMenuDropdown',
+				density === 'compact' && 'chatMenuDropdown--compact',
+				className
+			)}
 			style={style}
 			role={role}
 			aria-label={ariaLabel}
 			onKeyDown={onKeyDown}
+			onBlur={onBlur}
+			data-cy={dataCy}
 		>
 			{children}
 		</div>

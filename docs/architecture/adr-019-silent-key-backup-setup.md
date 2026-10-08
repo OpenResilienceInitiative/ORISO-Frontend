@@ -44,7 +44,7 @@ Split them.
 Its session-scoped dismissal is bound to the user who dismissed it, and it
 silences nothing but the dialog: a different account logging into the same tab
 still gets its own answer, and the background bootstrap always runs when it is
-eligible — nobody dismissed *that*.
+eligible — nobody dismissed _that_.
 
 Silent bootstrap is deliberately restricted to `!serverBackupExists &&
 !secretStorageReady` (`canBootstrapSilently`). Bootstrapping replaces secret
@@ -69,7 +69,7 @@ starting a rival bootstrap.
 - Nothing interrupts registration or the Anfrage. The backup exists anyway.
 - The backup is created at the one moment it reliably can be: right after a
   password login, while the device-signing UIA callback is still registered.
-  A user who clicked "Später" previously ended up with *no* backup at all.
+  A user who clicked "Später" previously ended up with _no_ backup at all.
 - The recovery key survives a reload before the user has written it down —
   today the manual flow shows it once and loses it if the tab closes.
 
@@ -78,7 +78,7 @@ starting a rival bootstrap.
 - The recovery key sits in `localStorage` until confirmed. It lives next to the
   Rust crypto store, which already holds this device's Megolm keys, so an
   attacker with local access gains little — but an XSS that reaches the parked
-  key gains durable access to *future* history too, which the crypto store
+  key gains durable access to _future_ history too, which the crypto store
   alone would not give. The window is bounded by the user's confirmation, and
   the key is per user and never sent anywhere.
 - A user who never opens Sicherheit never learns their recovery key. They are
@@ -106,3 +106,95 @@ starting a rival bootstrap.
   can restore — worse than the current state, because it looks safe.
 
 [#839]: https://github.com/OpenResilienceInitiative/ORISO-Frontend/issues/839
+
+## Password recovery extension (2026-09-10)
+
+Authenticated `userData.chatRecoveryMode` and `chatRecoveryPolicyRevision` are
+immutable account-creation snapshots. Missing/null mode means `RECOVERY_KEY`;
+current platform defaults never migrate existing identities. Anonymous identities
+are excluded. `LOGIN_PASSWORD` adds a native SDK Secret Storage envelope
+`org.oriso.password_recovery.v1` around the **same random encoded recovery key**.
+The wrapping key is never made the default root; backup version and cross-signing
+identity remain unchanged. Saving an optional recovery code does not remove the
+password envelope or change the account mode.
+
+The complete Keycloak login (including required OTP) and Matrix login stage a
+one-use, identity-bound memory handoff with a 120-second maximum lifetime. Only
+the authenticated application's sole PREPARED Matrix client consumes it. Reloads
+without credentials use device keys and offer explicit recovery/reauthentication;
+no password is serialized. Temporary SDK callback keys are scoped to each client
+and validated against each requested key description. Logout/client teardown
+clears these scopes.
+
+A password change writes and verifies a separate native-SDK encrypted candidate
+`org.oriso.password_recovery_candidate.v1.<passwordKeyId>` before calling the
+account password API. Each immutable ciphertext holds the same root payload,
+policy revision, observed predecessor candidate IDs and a legacy-envelope
+retirement flag. These additional fields are inside the encrypted payload.
+The original shared envelope is never rewritten by candidate activation.
+
+This corrects the original two-wrappers-in-one-secret plan: Matrix account data
+has no compare-and-swap, and a rejected change on another device could overwrite
+the only wrapper for a password already accepted by the login server. Candidate
+inventory comes from a separate, bounded `/sync` request with no `since`, no rooms
+and an account-data type filter. Its `next_batch` is never acknowledged or reused
+by the main client. Candidate decryption uses the native Secret Storage SDK with
+a fresh HTTP read adapter, so cached PREPARED state cannot hide a committed
+candidate. Invalid or failed inventory is a retryable error, never a fresh user.
+
+On definite password rejection only that attempt's own candidate is tombstoned.
+An uncertain response preserves it. Successful change or subsequent authenticated
+login retires only predecessors explicitly observed and decrypted with the prior
+password, including their recorded ancestors. A delayed success cannot recreate
+an older shared wrapper or delete an unknown concurrent candidate. Public,
+unreferenced wrapping-key descriptions may remain; retired candidate ciphertext
+is removed. Candidates with unknown credential outcomes remain available until
+they can be safely reconciled. A bounded inventory limit fails safely instead of
+silently discarding candidates.
+
+Password derivation uses the installed SDK's PBKDF2-SHA512 defaults (500,000
+iterations, 256 bits). Each operation shares a budget of 4,000,000 iterations
+across candidate scans, legacy fallback, generation and verification; a single
+derivation may consume at most 1,000,000. The budget is checked before SDK work,
+because an application deadline cannot cancel an active derivation. Exceeding it
+is a retryable work-limit error, not evidence of a wrong password or permission
+to discard candidates. Accounts with unusually many or expensive stale wrappers
+retain recovery-key restoration. SDK generation parameters are checked before
+persisting a new wrapper; an SDK upgrade requires reviewing these bounds.
+
+Forgotten-password recovery requires the existing recovery code. Explicit
+re-enrollment verifies the current password and required OTP online. If any
+existing candidate cannot be opened with that password, its outcome cannot be
+safely classified: re-enrollment is blocked before any new candidate is written.
+Key-based history restoration remains available and the UI explains this limit.
+The app does not claim that older copied encrypted data has been revoked.
+
+Recovery no longer calls `bootstrapCrossSigning`, because the SDK may generate a
+new identity when even one stored private cross-signing secret is missing.
+Instead it reads all three existing secrets with the server-backed SDK adapter,
+queries the published public keys, imports the existing SDK secrets bundle, and
+compares all imported/public signing IDs again before signing the device. Missing
+or mismatched identity material fails without publishing a replacement identity.
+
+Background setup rechecks the server root, backup and password-envelope evidence
+inside the setup lock. Web Locks provide same-browser serialization where
+available, with the existing localStorage lease fallback. Account-data writes
+have no distributed compare-and-swap: fingerprint checks detect observed remote
+identity changes but cannot promise cross-device transactions. Unknown metadata,
+network failures or an interrupted envelope are never fresh-identity signals.
+
+Enquiry finalization now marks a user-scoped optional, nonmodal key-save invitation.
+Matrix-send-only success does not qualify. The invitation distinguishes pending
+backup from a usable parked recovery key and survives navigation. “Later” keeps
+the key in settings; explicit confirmation clears it. Manual recovery is reachable
+inline and from security settings without interrupting enquiry composition.
+
+The original alternative rejecting a password-derived **root** still stands.
+The extra envelope resolves password-lifecycle handling without replacing that
+root. OTP protects online access; stolen password-encrypted backup data remains
+subject to offline password guessing. Rewrapping cannot revoke copied old data.
+
+Validation boundary: native-SDK envelope tests use real derivation/encryption and
+independent Secret Storage instances with in-memory account-data transport and
+controlled backup API fixtures. They do not prove server-side Megolm history
+restoration, deployed login/OTP behavior, or fresh-browser acceptance.

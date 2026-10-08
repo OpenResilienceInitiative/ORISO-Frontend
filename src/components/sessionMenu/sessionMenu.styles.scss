@@ -209,8 +209,8 @@ $iconSize: 20px;
 	}
 
 	&__icon--desktop {
-		width: 48px;
-		height: 32px;
+		width: 44px;
+		height: 44px;
 		border-radius: 32px;
 		border: 1px solid #ffd1d1;
 		background: #fff;
@@ -218,20 +218,14 @@ $iconSize: 20px;
 		align-items: center;
 		justify-content: center;
 		box-sizing: border-box;
-		transition:
-			width 160ms ease,
-			height 160ms ease,
-			border-color 160ms ease;
+		transition: border-color 160ms ease;
 
 		@include breakpoint($fromLarge) {
 			display: inline-flex;
 		}
 
-		// Flyout open (#597): vertical shape + 2px primary-container border
+		// Highlight the open state without changing the trigger geometry.
 		&[aria-expanded='true'] {
-			width: 32px;
-			height: 48px;
-
 			@include list-item-active-menu-border;
 		}
 	}
@@ -244,27 +238,21 @@ $iconSize: 20px;
 
 	&__icon--mobile {
 		display: inline-flex;
-		width: 48px;
-		height: 32px;
+		width: 44px;
+		height: 44px;
 		border-radius: 32px;
 		border: 1px solid #ffd1d1;
 		background: #fff;
 		align-items: center;
 		justify-content: center;
 		box-sizing: border-box;
-		transition:
-			width 160ms ease,
-			height 160ms ease,
-			border-color 160ms ease;
+		transition: border-color 160ms ease;
 
 		@include breakpoint($fromLarge) {
 			display: none;
 		}
 
 		&[aria-expanded='true'] {
-			width: 32px;
-			height: 48px;
-
 			@include list-item-active-menu-border;
 		}
 	}

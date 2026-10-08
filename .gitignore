@@ -14,6 +14,7 @@
 /test-results
 /playwright/.cache
 /.playwright-cli/
+/.playwright-mcp/
 /output/playwright/
 
 # production
@@ -53,6 +54,8 @@ graphify-out/*
 # chromatic build log
 build-storybook.log
 docs/*
+!docs/architecture/
+!docs/architecture/**
 !docs/storybook/
 !docs/storybook/**
 !docs/agent-tasks/
@@ -65,6 +68,16 @@ docs/agent-tasks/*
 !docs/agent-tasks/2026-09-06_issue-1188-proactive-handover/**
 !docs/agent-tasks/2026-09-06_issue-1210-absence-banner/
 !docs/agent-tasks/2026-09-06_issue-1210-absence-banner/**
+!docs/agent-tasks/2026-09-06_issue-1206-live-session-list/
+!docs/agent-tasks/2026-09-06_issue-1206-live-session-list/**
+!docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/
+!docs/agent-tasks/2026-09-06_issue-1211-notification-matrix/**
+!docs/agent-tasks/2026-09-06_issue-1248-composer-visual-viewport/
+!docs/agent-tasks/2026-09-06_issue-1248-composer-visual-viewport/**
+!docs/agent-tasks/2026-09-06_issue-1249-composer-toggle-lockup/
+!docs/agent-tasks/2026-09-06_issue-1249-composer-toggle-lockup/**
+!docs/agent-tasks/2026-09-06_issue-1250-toolbar-menu-collision/
+!docs/agent-tasks/2026-09-06_issue-1250-toolbar-menu-collision/**
 !docs/cursor-orchestrator/
 docs/cursor-orchestrator/*
 !docs/cursor-orchestrator/index.md
@@ -81,3 +94,10 @@ storybook-static/
 .ds-sync/
 ds-bundle/
 index.d.ts
+
+# Local screenshot/evidence scratch dir (evidence lives on the PR, not in git)
+_shots/
+!docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/
+!docs/agent-tasks/2026-09-14_issue-1377-timeline-display-filter/**
+!docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/
+!docs/agent-tasks/2026-09-15_pr1378-coderabbit-timers/**

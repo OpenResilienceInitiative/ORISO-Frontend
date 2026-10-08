@@ -33,6 +33,26 @@ export const isRoomUnread = (matrixRoomId?: string | null): boolean => {
 };
 
 /**
+ * HOW MANY unread notifications the room has, not just whether it has any.
+ *
+ * `isRoomUnread` above already asks Matrix for this number and throws it away
+ * by comparing it to zero. Frank, 10.09.2026, asked the rail's unread dot to
+ * say "number of new messages", so the number is exposed rather than derived
+ * a second time somewhere else — one source, two readers.
+ */
+export const getRoomUnreadCount = (matrixRoomId?: string | null): number => {
+	if (!matrixRoomId) {
+		return 0;
+	}
+	try {
+		const room = getMatrixClientService()?.getRoom(matrixRoomId);
+		return room ? room.getUnreadNotificationCount() : 0;
+	} catch {
+		return 0;
+	}
+};
+
+/**
  * Unread state for a session/chat list item (SessionItemInterface or
  * GroupChatItemInterface). Joins on `matrixRoomId`; deliberately ignores the
  * item's `messagesRead` flag, which the backend hard-codes to `true`.

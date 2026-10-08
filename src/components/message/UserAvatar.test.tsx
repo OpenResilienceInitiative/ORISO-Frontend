@@ -65,6 +65,30 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 		);
 	});
 
+	it('keeps the grey outline unless it is switched off', () => {
+		const { rerender } = render(
+			<UserAvatar username="u" userId="@u:x" ring={false} />
+		);
+		const circle = () =>
+			screen.getByTestId('user-avatar').firstElementChild as HTMLElement;
+		expect(circle().style.borderWidth).toBe('2px');
+		expect(circle().style.borderStyle).toBe('solid');
+		expect(circle().style.boxShadow).not.toBe('none');
+
+		rerender(
+			<UserAvatar
+				username="u"
+				userId="@u:x"
+				ring={false}
+				outline={false}
+			/>
+		);
+		expect(circle().style.borderWidth).toBe('0px');
+		expect(circle().style.boxShadow).toBe('none');
+		// The footprint does not move when the outline goes.
+		expect(circle().style.width).toBe('32px');
+	});
+
 	it('falls back to the username when there is no user id', () => {
 		render(<UserAvatar username="fallback-user" userId="" />);
 		expect(animalBackground(screen.getByTestId('user-avatar'))).toMatch(
@@ -77,5 +101,42 @@ describe('UserAvatar (#1193 Job 4: animal icon, no monogram)', () => {
 		const avatar = screen.getByTestId('user-avatar');
 		expect(avatar.getAttribute('aria-label')).toBeNull();
 		expect(avatar.getAttribute('aria-hidden')).toBe('true');
+	});
+});
+
+describe('UserAvatar with a profile choice (#1240)', () => {
+	afterEach(cleanup);
+
+	it('puts a counsellor motif on primary', () => {
+		render(
+			<UserAvatar
+				username="c"
+				displayName="C"
+				userId="@c:x"
+				choice={{ file: 'fox.svg', onPrimary: true }}
+			/>
+		);
+		expect(animalBackground(screen.getByTestId('user-avatar'))).toBe(
+			'var(--m3-primary)'
+		);
+	});
+
+	it('keeps the advice seeker colours and only swaps the animal', () => {
+		const { unmount } = render(
+			<UserAvatar username="a" displayName="A" userId="@a:x" />
+		);
+		const derived = animalBackground(screen.getByTestId('user-avatar'));
+		unmount();
+		render(
+			<UserAvatar
+				username="a"
+				displayName="A"
+				userId="@a:x"
+				choice={{ file: 'fox.svg', onPrimary: false }}
+			/>
+		);
+		expect(animalBackground(screen.getByTestId('user-avatar'))).toBe(
+			derived
+		);
 	});
 });

@@ -13,17 +13,33 @@ interface GenerateQrCodeProps {
 	headline: string;
 	text?: string;
 	filename: string;
+	/**
+	 * Controlled mode (#1499): the screen draws its own trigger, so the
+	 * built-in link is hidden and the overlay follows `open`.
+	 */
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
 }
 
 export const GenerateQrCode: React.FC<GenerateQrCodeProps> = ({
 	url,
 	headline,
 	text,
-	filename
+	filename,
+	open,
+	onOpenChange
 }) => {
 	const { t: translate } = useTranslation();
 	const [qr, setQr] = useState('');
-	const [overlayActive, setOverlayActive] = useState(false);
+	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+	const controlled = open !== undefined;
+	const overlayActive = controlled ? open : uncontrolledOpen;
+	const setOverlayActive = (next: boolean) => {
+		if (!controlled) {
+			setUncontrolledOpen(next);
+		}
+		onOpenChange?.(next);
+	};
 	const generateQrCodeRef = useRef<any>(null);
 
 	const backgroundColor = '#ffffff';
@@ -72,18 +88,20 @@ export const GenerateQrCode: React.FC<GenerateQrCodeProps> = ({
 
 	return (
 		<div className="generateQrCode" ref={generateQrCodeRef}>
-			<button
-				className="button-as-link"
-				onClick={() => {
-					setOverlayActive(true);
-				}}
-			>
-				<QRCodeIcon
-					title={translate('qrCode.iconTitle')}
-					aria-label={translate('qrCode.iconTitle')}
-				/>
-				{translate('qrCode.link.text')}
-			</button>
+			{!controlled && (
+				<button
+					className="button-as-link"
+					onClick={() => {
+						setOverlayActive(true);
+					}}
+				>
+					<QRCodeIcon
+						title={translate('qrCode.iconTitle')}
+						aria-label={translate('qrCode.iconTitle')}
+					/>
+					{translate('qrCode.link.text')}
+				</button>
+			)}
 			{overlayActive ? (
 				<Overlay
 					className="generateQrCode__overlay"

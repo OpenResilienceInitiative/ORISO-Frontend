@@ -110,78 +110,6 @@ export const DepartmentOverrides: Story = {
 	}
 };
 
-/** The payload the admin panel writes into the `openingHours` string. */
-const structuredHours = (
-	slots: Array<{
-		fromDay: string;
-		from: string;
-		untilDay: string;
-		until: string;
-	}>
-) => JSON.stringify({ version: 1, openingHours: slots });
-
-const agencyWithStructuredHours: AgencyDataInterface = {
-	...agencyWithBackendFields,
-	id: 104,
-	name: 'Beratungszentrum mit Zeitfenstern',
-	openingHours: structuredHours([
-		{
-			fromDay: 'MONDAY',
-			from: '10:00',
-			untilDay: 'MONDAY',
-			until: '11:00'
-		},
-		{
-			fromDay: 'WEDNESDAY',
-			from: '14:00',
-			untilDay: 'WEDNESDAY',
-			until: '16:00'
-		}
-	])
-};
-
-const agencyWithOvernightHours: AgencyDataInterface = {
-	...agencyWithBackendFields,
-	id: 105,
-	name: 'Nachtberatung',
-	openingHours: structuredHours([
-		{
-			fromDay: 'FRIDAY',
-			from: '22:00',
-			untilDay: 'SATURDAY',
-			until: '02:00'
-		}
-	])
-};
-
-export const StructuredOpeningHours: Story = {
-	args: {
-		agency: agencyWithStructuredHours,
-		open: true
-	},
-	parameters: {
-		docs: {
-			description: {
-				story: 'Opening hours maintained as structured timeslots in the admin panel (ORISO-Admin #849) are stored as JSON inside the same string field. They are formatted for display here — a seeker never sees the raw payload.'
-			}
-		}
-	}
-};
-
-export const OpeningHoursCrossingMidnight: Story = {
-	args: {
-		agency: agencyWithOvernightHours,
-		open: true
-	},
-	parameters: {
-		docs: {
-			description: {
-				story: 'A timeslot carries a weekday on both edges, so it may cross midnight. The second weekday is only named when the slot actually changes day.'
-			}
-		}
-	}
-};
-
 export const EmptyState: Story = {
 	args: {
 		agency: agencyWithoutOptionalFields,
@@ -190,7 +118,7 @@ export const EmptyState: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'An agency without optional DTO fields: address, hours, phone, website and about rows are hidden entirely — no placeholder values.'
+				story: 'An agency without optional DTO fields: address, phone, website and about rows are hidden entirely — no placeholder values. Languages always render.'
 			}
 		}
 	}

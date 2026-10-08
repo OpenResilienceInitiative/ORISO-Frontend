@@ -1,3 +1,4 @@
+import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { chatTransportService } from './chatTransportService';
@@ -28,8 +29,8 @@ vi.mock('../api/apiGetSessionRooms', () => ({
 		apiGetSessionRoomBySessionId(sessionId)
 }));
 
-const ROOM_ID = '!room:matrix.oriso.org';
-const OTHER_ROOM_ID = '!other:matrix.oriso.org';
+const ROOM_ID = '!room:matrix.example.org';
+const OTHER_ROOM_ID = '!other:matrix.example.org';
 
 describe('chatTransportService session resolution', () => {
 	it('preserves session id zero for Matrix-backed group attachments', () => {
@@ -83,11 +84,14 @@ const createFakeMatrixClient = (room: any = null) => {
 	};
 };
 
-const createFakeEncryptedMatrixEvent = () => {
+const createFakeEncryptedMatrixEvent = (failed = false) => {
 	const decryptionListeners = new Set<Listener>();
-	let eventType = 'm.room.encrypted';
+	let eventType = failed ? 'm.room.message' : 'm.room.encrypted';
+	let decryptionFailure = failed;
 	const event = {
 		getType: () => eventType,
+		isEncrypted: () => true,
+		isDecryptionFailure: () => decryptionFailure,
 		on: (name: string, listener: Listener) => {
 			if (name === 'Event.decrypted') decryptionListeners.add(listener);
 		},
@@ -96,7 +100,10 @@ const createFakeEncryptedMatrixEvent = () => {
 				decryptionListeners.delete(listener);
 		},
 		emitDecrypted: (error?: Error) => {
-			if (!error) eventType = 'm.room.message';
+			if (!error) {
+				eventType = 'm.room.message';
+				decryptionFailure = false;
+			}
 			decryptionListeners.forEach((listener) => listener(event, error));
 		}
 	};
@@ -141,6 +148,58 @@ describe('chatTransportService Matrix timeline', () => {
 		expect(fakeClient.listenerCount('Room.timeline')).toBe(0);
 	});
 
+	it('refreshes an initial-sync historical event when decryption finishes later', () => {
+		const { event } = createFakeEncryptedMatrixEvent();
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		fakeClient.emit('Room.timeline', event, { roomId: ROOM_ID }, true);
+		event.emitDecrypted();
+		expect(listener).toHaveBeenLastCalledWith(
+			event,
+			{ roomId: ROOM_ID },
+			false
+		);
+		detach?.();
+	});
+	it('watches cached encrypted events when the reload view attaches after timeline hydration', () => {
+		const { event, decryptionListeners } = createFakeEncryptedMatrixEvent();
+		const room = { roomId: ROOM_ID, timeline: [event] };
+		fakeClient = createFakeMatrixClient(room);
+		setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+		const listener = vi.fn();
+		const detach = chatTransportService.onMatrixTimeline(ROOM_ID, listener);
+		event.emitDecrypted();
+		expect(listener).toHaveBeenLastCalledWith(event, room, false);
+		detach?.();
+		expect(decryptionListeners.size).toBe(0);
+	});
+	it.each([true, false])(
+		'keeps failed-decryption placeholders subscribed until original-key restoration succeeds (cached: %s)',
+		(cached) => {
+			const { event, decryptionListeners } =
+				createFakeEncryptedMatrixEvent(true);
+			const room = { roomId: ROOM_ID, timeline: cached ? [event] : [] };
+			fakeClient = createFakeMatrixClient(room);
+			setMatrixClientServiceRef({ getClient: () => fakeClient } as any);
+			const listener = vi.fn();
+			const detach = chatTransportService.onMatrixTimeline(
+				ROOM_ID,
+				listener
+			);
+			if (!cached) fakeClient.emit('Room.timeline', event, room, false);
+			expect(event.getType()).toBe('m.room.message');
+			expect(decryptionListeners.size).toBe(1);
+			listener.mockClear();
+			// SDK failure state remains authoritative even when the callback has no error argument.
+			decryptionListeners.forEach((callback) => callback(event));
+			expect(listener).not.toHaveBeenCalled();
+			expect(decryptionListeners.size).toBe(1);
+			event.emitDecrypted();
+			expect(listener).toHaveBeenCalledWith(event, room, false);
+			expect(decryptionListeners.size).toBe(0);
+			detach?.();
+		}
+	);
 	it('notifies again when a live encrypted event decrypts after first delivery', () => {
 		const { decryptionListeners, event } = createFakeEncryptedMatrixEvent();
 		const room = { roomId: ROOM_ID };
@@ -473,7 +532,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 			sessions: [{ session: { id: 42, matrixRoomId: ROOM_ID } }]
 		});
 		const sendMessage = vi.fn(() =>
-			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+			Promise.resolve({ event_id: '$evt:matrix.example.org' })
 		);
 		const override = {
 			getClient: () => createFakeMatrixClient(),
@@ -522,7 +581,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 
 	it('sends via the Matrix client with the room id and message when a room id is present', async () => {
 		const sendMessage = vi.fn(() =>
-			Promise.resolve({ event_id: '$evt:matrix.oriso.org' })
+			Promise.resolve({ event_id: '$evt:matrix.example.org' })
 		);
 		const override = {
 			getClient: () => createFakeMatrixClient(),
@@ -544,7 +603,7 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 		});
 		expect(result).toEqual({
 			success: true,
-			event_id: '$evt:matrix.oriso.org'
+			event_id: '$evt:matrix.example.org'
 		});
 
 		// A metadata-only notification fires, and it never carries the
@@ -557,6 +616,82 @@ describe('chatTransportService sendTextMessage (Matrix-only transport)', () => {
 			matrixRoom: true
 		});
 		expect(JSON.stringify(notificationArg)).not.toContain('hello world');
+	});
+
+	it('marks team-room text notifications without exposing message content', async () => {
+		const override = {
+			getClient: () => createFakeMatrixClient(),
+			sendMessage: vi.fn(() => Promise.resolve({ event_id: '$team' }))
+		} as any;
+
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			message: 'internal team text',
+			sendMailNotification: false,
+			isEncrypted: false,
+			matrixRoomId: ROOM_ID,
+			teamDiscussion: true,
+			matrixClientServiceOverride: override
+		});
+
+		expect(apiPostMessageEventNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ roomId: ROOM_ID, teamDiscussion: true })
+		);
+		expect(
+			JSON.stringify(apiPostMessageEventNotification.mock.calls[0][0])
+		).not.toContain('internal team text');
+	});
+});
+
+describe('chatTransportService team attachment notifications', () => {
+	afterEach(() => setMatrixClientServiceRef(null));
+
+	it('marks an attachment sent in the team room as teamDiscussion', async () => {
+		const postNotification = vi.fn(() => Promise.resolve({}));
+		setMatrixClientServiceRef({
+			getClient: () => ({}),
+			sendFileMessage: vi.fn(() => Promise.resolve({ event_id: '$file' }))
+		} as any);
+
+		await chatTransportService.sendFileMessage(
+			ROOM_ID,
+			new File(['x'], 'note.txt'),
+			{
+				teamDiscussion: true,
+				postMessageEventNotification: postNotification
+			}
+		);
+
+		expect(postNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ roomId: ROOM_ID, teamDiscussion: true })
+		);
+	});
+
+	it('forwards the thread root to the Matrix file sender', async () => {
+		const sendFileMessage = vi.fn(() =>
+			Promise.resolve({ event_id: '$file' })
+		);
+		setMatrixClientServiceRef({
+			getClient: () => ({}),
+			sendFileMessage
+		} as any);
+
+		await chatTransportService.sendFileMessage(
+			ROOM_ID,
+			new File(['x'], 'photo.png', { type: 'image/png' }),
+			{
+				threadRootId: '$thread-root:example.org',
+				postMessageEventNotification: vi.fn(() => Promise.resolve({}))
+			}
+		);
+
+		expect(sendFileMessage).toHaveBeenCalledWith(
+			ROOM_ID,
+			expect.any(File),
+			expect.objectContaining({
+				threadRootId: '$thread-root:example.org'
+			})
+		);
 	});
 });
 
@@ -842,5 +977,125 @@ describe('chatTransportService sendTextMessage mentions (#435)', () => {
 			threadRootId: null,
 			mentionedUserIds: undefined
 		});
+	});
+});
+
+describe('explicit feedback metadata after successful Matrix delivery', () => {
+	const userId = '@owner:example.org';
+	beforeEach(() => {
+		localStorage.clear();
+		apiPostMessageEventNotification.mockReset().mockResolvedValue({});
+	});
+	afterEach(() => {
+		feedbackMailIntentQueue.stop();
+		setMatrixClientServiceRef(null);
+		localStorage.clear();
+	});
+	const service = () => {
+		const sendMessage = vi
+			.fn()
+			.mockResolvedValue({ event_id: '$feedback-text' });
+		const sendFileMessage = vi
+			.fn()
+			.mockResolvedValue({ event_id: '$feedback-file' });
+		const value = {
+			getClient: () => ({ getUserId: () => userId }),
+			sendMessage,
+			sendFileMessage
+		} as any;
+		setMatrixClientServiceRef(value);
+		feedbackMailIntentQueue.start(userId);
+		return value;
+	};
+	it('preserves explicit feedback on a text thread and retries only metadata after POST fails', async () => {
+		vi.useFakeTimers();
+		const client = service();
+		apiPostMessageEventNotification.mockRejectedValueOnce(
+			new Error('offline')
+		);
+		const result = await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			matrixRoomId: ROOM_ID,
+			message: '[SUPERVISOR_FEEDBACK] private counselling',
+			sendMailNotification: true,
+			isEncrypted: true,
+			feedbackMailIntent: true,
+			threadRootId: '$root',
+			matrixClientServiceOverride: client
+		});
+		expect(result).toEqual({ success: true, event_id: '$feedback-text' });
+		await vi.advanceTimersByTimeAsync(1000);
+		expect(client.sendMessage).toHaveBeenCalledOnce();
+		expect(apiPostMessageEventNotification).toHaveBeenCalledTimes(2);
+		expect(apiPostMessageEventNotification.mock.calls[1][0]).toEqual({
+			roomId: ROOM_ID,
+			matrixEventId: '$feedback-text',
+			matrixRoom: true,
+			threadRootId: '$root',
+			feedbackMailIntent: true
+		});
+		expect(
+			JSON.stringify(apiPostMessageEventNotification.mock.calls)
+		).not.toContain('private');
+		vi.useRealTimers();
+	});
+	it('preserves explicit feedback for a threaded attachment without file contents or names in metadata', async () => {
+		const client = service();
+		await chatTransportService.sendFileMessage(
+			ROOM_ID,
+			new File(['private counselling'], 'private.pdf'),
+			{
+				feedbackMailIntent: true,
+				threadRootId: '$root',
+				senderDisplayName: 'private person'
+			}
+		);
+		await feedbackMailIntentQueue.flush();
+		expect(client.sendFileMessage).toHaveBeenCalledOnce();
+		expect(apiPostMessageEventNotification).toHaveBeenCalledWith({
+			roomId: ROOM_ID,
+			matrixEventId: '$feedback-file',
+			matrixRoom: true,
+			threadRootId: '$root',
+			feedbackMailIntent: true
+		});
+		expect(
+			JSON.stringify(apiPostMessageEventNotification.mock.calls)
+		).not.toContain('private');
+	});
+	it('does not infer feedback from a VISIBLE_TO aside or a supervisor metadata flag', async () => {
+		const client = service();
+		await chatTransportService.sendTextMessage({
+			roomIdOrSessionId: ROOM_ID,
+			matrixRoomId: ROOM_ID,
+			message: '[VISIBLE_TO:someone] private aside',
+			supervisorMessage: true,
+			sendMailNotification: true,
+			isEncrypted: true,
+			matrixClientServiceOverride: client
+		});
+		expect(
+			apiPostMessageEventNotification.mock.calls[0][0]
+		).not.toHaveProperty('feedbackMailIntent', true);
+		expect(localStorage.length).toBe(0);
+	});
+	it('never creates feedback metadata or a queue hint when Matrix delivery fails', async () => {
+		const client = service();
+		client.sendMessage.mockRejectedValueOnce(
+			new Error('Matrix unavailable')
+		);
+		await expect(
+			chatTransportService.sendTextMessage({
+				roomIdOrSessionId: ROOM_ID,
+				matrixRoomId: ROOM_ID,
+				message: 'private',
+				sendMailNotification: true,
+				isEncrypted: true,
+				feedbackMailIntent: true,
+				matrixClientServiceOverride: client
+			})
+		).rejects.toThrow('Matrix unavailable');
+		expect(apiPostMessageEventNotification).not.toHaveBeenCalled();
+		expect(localStorage.length).toBe(0);
 	});
 });

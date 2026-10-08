@@ -14,6 +14,7 @@
  * (ADR-AT-01 — the server record is text-free).
  */
 
+import { rewriteLegacyChannelPath } from '../../../utils/channelRoute';
 import {
 	EventActionParams,
 	EventActionTarget,
@@ -45,9 +46,12 @@ const buildConversationPath = (params: EventActionParams): string | null => {
 	return null;
 };
 
+// B2 / T24: server action paths may still carry the legacy `threadRootId`
+// (UserService B2 pending) — the frontend contract is `?channel=thread:<id>`,
+// rewritten once here at the boundary.
 const conversationTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'conversation',
-	path: buildConversationPath(params)
+	path: rewriteLegacyChannelPath(buildConversationPath(params))
 });
 
 const groupChatJoinTarget = (params: EventActionParams): EventActionTarget => ({
@@ -74,6 +78,11 @@ const joinTarget = (params: EventActionParams): EventActionTarget => ({
 	kind: 'join',
 	callRoomId: params.callRoomId ?? params.roomRef ?? null,
 	isVideo: !!params.isVideo
+});
+
+const statusPageTarget = (params: EventActionParams): EventActionTarget => ({
+	kind: 'statusPage',
+	url: params.statusUrl ?? null
 });
 
 // --- Descriptor factory --------------------------------------------------
@@ -133,6 +142,24 @@ const seeds: EventDescriptor[] = [
 		category: 'message',
 		icon: 'message',
 		i18nKey: 'messageNew',
+		resolveActionTarget: conversationTarget
+	}),
+	// #1535: UserService emits both; without a descriptor they rendered as
+	// the generic "Activity" card. The asker receives the first one only.
+	descriptor('first_response.received', {
+		family: 'messages',
+		category: 'system',
+		icon: 'message',
+		i18nKey: 'firstResponseReceived',
+		resolveActionTarget: conversationTarget
+	}),
+	// Sent to whichever side did not end it, and on automatic clean-up to
+	// both — hence the text does not say who ended the chat.
+	descriptor('conversation.finished', {
+		family: 'messages',
+		category: 'system',
+		icon: 'message',
+		i18nKey: 'conversationFinished',
 		resolveActionTarget: conversationTarget
 	}),
 	descriptor('thread.reply.new', {
@@ -359,6 +386,17 @@ const seeds: EventDescriptor[] = [
 		icon: 'appointment',
 		i18nKey: 'groupChatCancelled',
 		resolveActionTarget: conversationTarget
+	}),
+
+	// ----- Platform operations (#876) -----
+	// A planned maintenance notice to counselling-centre admins. System family:
+	// the single system switch decides the pop-up; the feed row always stays.
+	descriptor('service.notice.planned', {
+		family: 'system',
+		category: 'system',
+		icon: 'system',
+		i18nKey: 'serviceNoticePlanned',
+		resolveActionTarget: statusPageTarget
 	})
 ];
 

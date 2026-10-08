@@ -68,6 +68,8 @@ export interface SessionItemInterface {
 		| 'SELF_HELP';
 	agencyId: number;
 	askerMatrixUserId: string;
+	/** Matrix id of the assigned consultant (SessionDTO); absent on group chats. */
+	consultantMatrixUserId?: string;
 	attachment: UserService.Schemas.SessionAttachmentDTO;
 	consultingType: number;
 	matrixRoomId: string;
@@ -99,6 +101,11 @@ export interface SessionItemInterface {
 	videoCallMessageDTO: VideoCallMessageDTO;
 	language?: string;
 	topic: TopicSessionInterface;
+	/**
+	 * ADR-008 supervision marker. `undefined` on backends that predate the
+	 * field — consumers fall back to heuristics, never to "not supervised".
+	 */
+	supervision?: UserService.Schemas.SessionSupervisionDTO;
 }
 
 export interface GroupChatItemInterface {
@@ -114,6 +121,11 @@ export interface GroupChatItemInterface {
 	duration: number;
 	matrixRoomId: string;
 	hintMessage: string;
+	/**
+	 * Secret part of the invite link (ORISO-UserService#1237). Only sent to
+	 * counsellors who may see the group; absent for advice seekers.
+	 */
+	inviteToken?: string;
 	sourceLanguage?: string;
 	hintMessageTranslations?: Record<string, string>;
 	groupChatRulesTranslations?: Record<string, string[]>;

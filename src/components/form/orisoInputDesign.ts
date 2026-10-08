@@ -43,7 +43,13 @@ export const orisoTextFieldSx = {
 		letterSpacing: '0.5px'
 	},
 	'& .MuiInputLabel-root.MuiInputLabel-shrink': {
-		backgroundColor: orisoInputColors.surface,
+		/* No background patch. MUI already cuts a notch into the outline for the
+		   floating label; painting a fixed `surface` behind it as well only
+		   works while the field sits on a `surface`-coloured page. Inside the
+		   grey M3 dialog it showed as a white box around every label
+		   (Frank, 2026-09-04). Transparent lets the notch do its job on any
+		   surface. */
+		backgroundColor: 'transparent',
 		color: orisoInputColors.onSurfaceVariant,
 		fontSize: '12px',
 		lineHeight: '16px',
@@ -144,7 +150,13 @@ export const orisoSelectSx = {
 		letterSpacing: '0.5px'
 	},
 	'& .MuiInputLabel-root.MuiInputLabel-shrink': {
-		backgroundColor: orisoInputColors.surface,
+		/* No background patch. MUI already cuts a notch into the outline for the
+		   floating label; painting a fixed `surface` behind it as well only
+		   works while the field sits on a `surface`-coloured page. Inside the
+		   grey M3 dialog it showed as a white box around every label
+		   (Frank, 2026-09-04). Transparent lets the notch do its job on any
+		   surface. */
+		backgroundColor: 'transparent',
 		color: orisoInputColors.onSurfaceVariant,
 		fontSize: '12px',
 		lineHeight: '16px',

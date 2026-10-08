@@ -1,29 +1,17 @@
 import { fetchData, FETCH_METHODS, FETCH_ERRORS } from './fetchData';
 import { endpoints } from '../resources/scripts/endpoints';
 import { TenantDataInterface } from '../globalState/interfaces';
-import { getValueFromCookie } from '../components/sessionCookie/accessSessionCookie';
-import { parseJwt } from '../utils/parseJWT';
+import { getAuthenticatedTenantId } from '../utils/authenticatedTenant';
 
 export const apiGetTenantTheming = async (): Promise<TenantDataInterface> => {
-	const accessToken = getValueFromCookie('keycloak');
-	let tenantId: number | null = null;
+	// One reader of the tenant claim for the whole app: the same value decides
+	// which tenant is fetched here and when `useTenantTheming` re-resolves it.
+	// Two readers that disagree would either loop or never refresh.
+	const tenantId = getAuthenticatedTenantId();
 
-	if (accessToken) {
-		const jwtPayload = parseJwt(accessToken);
-		if (typeof jwtPayload?.tenantId === 'number') {
-			tenantId = jwtPayload.tenantId;
-		} else if (
-			typeof jwtPayload?.tenantId === 'string' &&
-			jwtPayload.tenantId.trim() !== ''
-		) {
-			tenantId = Number(jwtPayload.tenantId);
-		}
-	}
-
-	const url =
-		tenantId && tenantId > 0
-			? `${endpoints.tenantServiceBase}/public/id/${tenantId}`
-			: `${endpoints.tenantServiceBase}/public/`;
+	const url = tenantId
+		? `${endpoints.tenantServiceBase}/public/id/${tenantId}`
+		: `${endpoints.tenantServiceBase}/public/`;
 
 	return fetchData({
 		url,

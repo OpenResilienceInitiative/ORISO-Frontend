@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
+import { expect, within } from 'storybook/test';
 
 import { MessageDisplayName } from './MessageDisplayName';
 import {
@@ -73,13 +74,67 @@ export const AdviceSeekerUsernameFallback: Story = {
 	}
 };
 
-export const Consultant: Story = {
-	name: 'Counsellor — first + last name',
+/**
+ * The case the identity leak used to get wrong (#1486).
+ *
+ * The counsellor has both a published display name and a real name on file.
+ * ADR-002 §2 says the published identity is the display name — the bubble used
+ * to check `firstName`/`lastName` first and name the counsellor to the advice
+ * seeker instead. The header must read "sanftes Alpaka Kim", never "Karina P".
+ */
+export const ConsultantDisplayNameWinsOverRealName: Story = {
+	name: 'Counsellor — display name wins over real name',
 	args: {
 		type: 'consultant',
+		isUser: false,
 		username: 'karina.p@oriso.invalid',
+		displayName: 'sanftes Alpaka Kim',
+		firstName: 'Karina',
+		lastName: 'P',
+		subtitle: '54222 Caritas Mainz'
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'Display name and real name are both available. The published display name wins; the real name must not appear. See #1486.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.getByText('sanftes Alpaka Kim')
+		).toBeInTheDocument();
+		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+	}
+};
+
+/**
+ * No published display name: the header falls back to the identity anchor —
+ * the User-ID the chat header and the session list already show — and still
+ * not to the real name (#1486).
+ */
+export const ConsultantWithoutDisplayName: Story = {
+	name: 'Counsellor — no display name (identity anchor, never the real name)',
+	args: {
+		type: 'consultant',
+		isUser: false,
+		username: 'karina.p@oriso.invalid',
+		displayName: undefined,
 		firstName: 'Karina',
 		lastName: 'P'
+	},
+	parameters: {
+		docs: {
+			description: {
+				story: 'With the display name cleared the counsellor is shown under their User-ID, the same name the chat header and the session list resolve. The real name stays out of the thread. See #1486.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await expect(canvasElement.textContent).not.toContain('Karina P');
+		await expect(canvasElement.textContent).toContain('karina p');
 	}
 };
 
