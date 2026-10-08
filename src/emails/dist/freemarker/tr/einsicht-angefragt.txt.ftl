@@ -17,9 +17,7 @@ ${contactLine!''}
 
 ${platformName!''}, ${orgName!''} tarafından sunulan bir hizmettir.
 
-Ayarlar: ${settingsUrl!''}
 Veri koruma: ${privacyUrl!''}
 Künye: ${imprintUrl!''}
-Bildirimlerden çık: ${unsubscribeUrl!''}
 
 Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.

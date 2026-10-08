@@ -316,15 +316,21 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 	};
 
 /**
- * Switchability class, from ADR-019.
+ * Switchability class, from ADR-024 and the required-consent decision of 8 October 2026.
  *
- * The footer of a `security` or `legal` mail must not offer an unsubscribe
+ * The footer of a `security`, `legal` or required `consent` mail must not offer an unsubscribe
  * link: there is no switch behind it, and sending the recipient to a settings
  * screen to look for one is worse than saying so.
  */
 export const EMAIL_CLASS: Record<
 	EmailId,
-	'security' | 'legal' | 'personal' | 'operational' | 'requested' | 'service'
+	| 'security'
+	| 'legal'
+	| 'consent'
+	| 'personal'
+	| 'operational'
+	| 'requested'
+	| 'service'
 > = {
 	'neue-nachricht': 'personal',
 	'neue-nachricht-beratung': 'operational',
@@ -345,8 +351,8 @@ export const EMAIL_CLASS: Record<
 	'neue-anfrage': 'operational',
 	'direkte-anfrage': 'operational',
 	'tagesuebersicht': 'operational',
-	'einsicht-angefragt': 'operational',
-	'uebergabe-angefragt': 'operational',
+	'einsicht-angefragt': 'consent',
+	'uebergabe-angefragt': 'consent',
 	'uebergabe-bestaetigt': 'operational',
 	'rueckmeldung': 'operational',
 	'mitteilung': 'service',
@@ -367,7 +373,9 @@ export const EMAIL_CLASS: Record<
 
 /** Mails whose footer carries no unsubscribe link, because nothing switches them off. */
 export const emailIsUnsubscribable = (id: EmailId): boolean =>
-	EMAIL_CLASS[id] !== 'security' && EMAIL_CLASS[id] !== 'legal';
+	EMAIL_CLASS[id] !== 'security' &&
+	EMAIL_CLASS[id] !== 'legal' &&
+	EMAIL_CLASS[id] !== 'consent';
 
 /**
  * Mails that ship in the `plain` dialect only.

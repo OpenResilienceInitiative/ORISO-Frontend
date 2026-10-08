@@ -16,16 +16,15 @@ const read = (name: string, suffix: string) =>
 	readFileSync(path.join(mailservice, `${name}${suffix}.html`), 'utf8');
 
 /**
- * The two handover mails still go through the upstream MailService. Their
- * unsubscribe link used to point at `${url}` — the app's start page — so it
- * named neither the settings screen nor the mail it came from (#872).
+ * The optional counsellor confirmation goes through the upstream MailService.
+ * Its unsubscribe link must name the occasion, rather than the app start page.
+ * The seeker consent request is required and has no unrelated email opt-out.
  */
 describe('MailService unsubscribe link', () => {
 	it.each(
-		[
-			'reassign-request-notification',
-			'reassign-confirmation-notification'
-		].flatMap((name) => SUFFIXES.map((suffix) => [name, suffix]))
+		['reassign-confirmation-notification'].flatMap((name) =>
+			SUFFIXES.map((suffix) => [name, suffix])
+		)
 	)(
 		'%s%s links unsubscribe to the occasion URL UserService sends',
 		(name, suffix) => {
@@ -33,6 +32,16 @@ describe('MailService unsubscribe link', () => {
 			expect(
 				html.match(/th:href="\|\$\{unsubscribe_url\}\|"/g)
 			).toHaveLength(1);
+		}
+	);
+
+	it.each(SUFFIXES)(
+		'required seeker consent request%s has no unrelated email opt-out',
+		(suffix) => {
+			const html = read('reassign-request-notification', suffix);
+			expect(html).not.toContain('unsubscribe_url');
+			expect(html).not.toContain('{{unsubscribeUrl}}');
+			expect(html).toContain('th:href="|${url}|"');
 		}
 	);
 

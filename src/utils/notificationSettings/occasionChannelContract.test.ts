@@ -124,6 +124,16 @@ describe('occasion channel contract', () => {
 		});
 	});
 
+	it('keeps the temporary-access mail inventory explicit without inventing a browser route', () => {
+		expect(occasionChannelContract('einsicht-angefragt').roles).toEqual([
+			'asker'
+		]);
+		expect(occasionChannelContract('einsicht-angefragt', 'asker')).toEqual({
+			emailPreference: { kind: 'no-switch' },
+			browser: { kind: 'unmapped' }
+		});
+	});
+
 	it('never treats security or legal mail as user-switchable', () => {
 		for (const id of [
 			'passwort-zuruecksetzen',

@@ -51,6 +51,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -100,6 +102,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -149,6 +153,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{username}}",
 				"{{loginUrl}}",
 				"{{settingsUrl}}",
@@ -200,6 +206,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{expiryHours}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{resetUrl}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
@@ -250,6 +258,8 @@
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
 				"{{appointmentType}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{locationName}}",
 				"{{locationAddress}}",
 				"{{appointmentUrl}}",
@@ -304,6 +314,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -355,6 +367,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -406,6 +420,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -457,6 +473,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -508,6 +526,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -559,6 +579,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -610,6 +632,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -661,6 +685,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -710,6 +736,8 @@
 			"class": "requested",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{consultantName}}",
 				"{{consultantPhone}}",
 				"{{consultantHours}}",
@@ -763,6 +791,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestTopic}}",
 				"{{requestPostcode}}",
 				"{{requestReceivedAt}}",
@@ -818,6 +848,8 @@
 				"{{maintenanceDate}}",
 				"{{maintenanceStart}}",
 				"{{maintenanceEnd}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{statusUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -867,6 +899,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestTopic}}",
 				"{{requestPostcode}}",
 				"{{requestReceivedAt}}",
@@ -919,6 +953,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestTopic}}",
 				"{{requestReceivedAt}}",
 				"{{requestUrl}}",
@@ -970,6 +1006,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{openRequestCount}}",
 				"{{oldestRequestAge}}",
 				"{{digestGeneratedAt}}",
@@ -1019,14 +1057,14 @@
 		},
 		"einsicht-angefragt": {
 			"audience": "asker",
-			"class": "operational",
-			"unsubscribable": true,
+			"class": "consent",
+			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
@@ -1068,14 +1106,14 @@
 		},
 		"uebergabe-angefragt": {
 			"audience": "asker",
-			"class": "operational",
-			"unsubscribable": true,
+			"class": "consent",
+			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
@@ -1120,6 +1158,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1169,6 +1209,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1218,6 +1260,8 @@
 			"class": "service",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageHeadline}}",
 				"{{messageBody}}",
 				"{{loginUrl}}",
@@ -1269,6 +1313,8 @@
 			"class": "security",
 			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{inviteExpiresAt}}",
 				"{{setupUrl}}",
 				"{{offeringName}}",
@@ -1320,6 +1366,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{expiryMinutes}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{loginUrl}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
@@ -1368,6 +1416,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{expiryMinutes}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{otpCode}}",
 				"{{loginUrl}}",
 				"{{privacyUrl}}",
@@ -1416,6 +1466,8 @@
 			"class": "security",
 			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{username}}",
 				"{{appUrl}}",
 				"{{privacyUrl}}",
@@ -1465,6 +1517,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{tenantName}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{inviteExpiresAt}}",
 				"{{inviteUrl}}",
 				"{{privacyUrl}}",
@@ -1513,6 +1567,8 @@
 			"class": "security",
 			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{agencyName}}",
 				"{{inviteExpiresAt}}",
 				"{{inviteUrl}}",
@@ -1563,6 +1619,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{tenantName}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{dpaProvidedAt}}",
 				"{{dpaExpiresAt}}",
 				"{{dpaUrl}}",
@@ -1617,6 +1675,8 @@
 			"placeholders": [
 				"{{subject}}",
 				"{{preheader}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{bodyHtml}}",
 				"{{ctaBlock}}",
 				"{{assuranceBlock}}",
@@ -1669,6 +1729,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{teamChangeStatement}}",
 				"{{caseReference}}",
 				"{{teamChangedAt}}",
@@ -1722,6 +1784,8 @@
 			"unsubscribable": true,
 			"placeholders": [
 				"{{smtpHost}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{smtpFrom}}",
 				"{{sentAt}}",
 				"{{appUrl}}",
@@ -1773,6 +1837,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{callUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1822,6 +1888,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{callUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1871,6 +1939,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{callUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",

@@ -279,7 +279,7 @@ export const tr: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-angefragt': {
@@ -292,7 +292,7 @@ export const tr: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Talebi incele', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {

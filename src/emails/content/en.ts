@@ -268,7 +268,7 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Review request', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-angefragt': {
@@ -281,7 +281,7 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Review request', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
