@@ -67,7 +67,10 @@ export const AskerInfoContent = () => {
 				<Box>
 					<div className="askerInfo__assign">
 						<AskerInfoAssign
-							showLegacyAssignment={isSessionAssignAvailable}
+							showLegacyAssignment={
+								isSessionAssignAvailable &&
+								!isOwnerHandoverAvailable
+							}
 							handoverEnabled={isOwnerHandoverAvailable}
 						/>
 					</div>
