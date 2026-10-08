@@ -38,7 +38,6 @@ export interface MatrixLoginData {
 }
 
 const MATRIX_DEVICE_ID_PREFIX = 'ORISO_WEB_';
-const MATRIX_DISABLED_ERROR = 'MATRIX_DISABLED';
 
 const MATRIX_TOKEN_REUSE_BUFFER_MS = 2 * 60 * 1000;
 const MATRIX_DEVICE_ID_PATTERN = /^[A-Za-z0-9._=-]{1,255}$/;
@@ -54,10 +53,6 @@ interface InFlightTokenBootstrap {
 
 let inFlightTokenBootstrap: InFlightTokenBootstrap | null = null;
 let deviceBootstrapGeneration = 0;
-
-const isMatrixTokenBootstrapDisabled = (): boolean =>
-	process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === '1' ||
-	process.env.REACT_APP_DISABLE_LIVE_WEBSOCKET === 'true';
 
 const createBrowserDeviceId = (
 	prefix: string = MATRIX_DEVICE_ID_PREFIX
@@ -293,10 +288,6 @@ const requestMatrixAccessToken = (): Promise<MatrixLoginData> => {
 export const getMatrixAccessToken = (
 	options: MatrixTokenBootstrapOptions = {}
 ): Promise<MatrixLoginData> => {
-	if (isMatrixTokenBootstrapDisabled()) {
-		return Promise.reject(new Error(MATRIX_DISABLED_ERROR));
-	}
-
 	const currentAuthSubject = getCurrentAuthSubject();
 	if (
 		currentAuthSubject &&
