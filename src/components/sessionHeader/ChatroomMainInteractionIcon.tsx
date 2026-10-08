@@ -75,6 +75,7 @@ export const ChatroomMainInteractionIcon = ({
 						type="button"
 						className="chatroomMainInteractionIcon__add chatroomMainInteractionIcon__add--interactive"
 						aria-label={addLabel}
+						data-tour-target="session-supervisor-add"
 						onClick={onAddClick}
 					>
 						{addContent}

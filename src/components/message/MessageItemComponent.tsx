@@ -107,6 +107,11 @@ import { MessageDateDivider } from './MessageDateDivider';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
 import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
+import {
+	directAvatarChoice,
+	memberAvatarChoice
+} from '../../utils/sessionAvatarChoice';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -419,7 +424,8 @@ export const MessageItemComponent = ({
 	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, avatarMembers = [] } =
+		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -1734,6 +1740,11 @@ export const MessageItemComponent = ({
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('USER') ||
 		(userData?.userRoles || []).includes('ANONYMOUS');
+	const incomingAvatarChoice = activeSession?.isGroup
+		? memberAvatarChoice(userId, avatarMembers)
+		: activeSession
+			? directAvatarChoice(userId, activeSession)
+			: null;
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -2602,6 +2613,7 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
+										choice={incomingAvatarChoice}
 										displayName={
 											resolvedIncomingDisplayName
 										}
@@ -2759,6 +2771,7 @@ export const MessageItemComponent = ({
 												: userData?.lastName
 										}
 										size={48}
+										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
 							</div>

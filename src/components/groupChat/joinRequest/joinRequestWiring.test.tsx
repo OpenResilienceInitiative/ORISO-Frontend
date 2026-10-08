@@ -32,6 +32,9 @@ const { useOwnJoinRequest } = await import('./useOwnJoinRequest');
 const { JoinRequestCenter } = await import('./JoinRequestCenter');
 const { M3SnackbarHost } = await import('../../m3Snackbar/M3SnackbarHost');
 const { createSnackbarStack } = await import('../../m3Snackbar/snackbarStack');
+const { AUTH_SESSION_CHANGE_EVENT } = await import(
+	'../../sessionCookie/accessSessionCookie'
+);
 
 afterEach(cleanup);
 
@@ -422,5 +425,67 @@ describe('JoinRequestCenter — the moderator who is knocked on', () => {
 				.getByRole('button', { name: 'groupChat.joinRequest.admit' })
 				.hasAttribute('disabled')
 		).toBe(false);
+	});
+});
+
+/*
+ * The app-wide snackbar stack outlives the session. A decision that answers
+ * after sign-out must not show the last requester's name to whoever signs in
+ * next on this device.
+ */
+describe('JoinRequestCenter — a decision that answers after the session ended', () => {
+	const setup = () => {
+		const transport = createFakeJoinRequestTransport();
+		let settle: { resolve: () => void; reject: (e: Error) => void };
+		transport.admit = () =>
+			new Promise<void>((resolve, reject) => {
+				settle = { resolve, reject };
+			});
+		const stack = createSnackbarStack();
+		const view = render(
+			<>
+				<M3SnackbarHost stack={stack} maxVisible={4} />
+				<JoinRequestCenter transport={transport} stack={stack} />
+			</>
+		);
+		const letIn = async () => {
+			act(() => transport.setPending([pending(1, 'Anna Berg')]));
+			const card = await screen.findByRole('group', {
+				name: /Anna Berg/
+			});
+			await userEvent.click(
+				within(card).getByRole('button', {
+					name: 'groupChat.joinRequest.admit'
+				})
+			);
+		};
+		const notices = () =>
+			stack
+				.getSnapshot()
+				.filter((entry) => !entry.id.startsWith('join-request-'));
+		return { view, stack, letIn, notices, settle: () => settle };
+	};
+
+	it('shows no confirmation once the session changed', async () => {
+		const { stack, letIn, notices, settle } = setup();
+		await letIn();
+
+		act(() => {
+			window.dispatchEvent(new Event(AUTH_SESSION_CHANGE_EVENT));
+			stack.clear();
+		});
+		await act(async () => settle().resolve());
+
+		expect(notices()).toEqual([]);
+	});
+
+	it('shows no failure notice once the center is gone', async () => {
+		const { view, letIn, notices, settle } = setup();
+		await letIn();
+
+		view.unmount();
+		await act(async () => settle().reject(new Error('offline')));
+
+		expect(notices()).toEqual([]);
 	});
 });

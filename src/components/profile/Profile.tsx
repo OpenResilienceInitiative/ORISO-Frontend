@@ -13,7 +13,8 @@ import { ReactComponent as LogoutIcon } from '../../resources/img/icons/out.svg'
 import { ReactComponent as BackIcon } from '../../resources/img/icons/arrow-left.svg';
 import { Text } from '../text/Text';
 import { UserAvatar } from '../message/UserAvatar';
-import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
+import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
 import './profile.styles';
 import profileRoutes from './profile.routes';
 import {
@@ -26,6 +27,7 @@ import {
 	generatePath
 } from 'react-router-dom';
 import { Box } from '../box/Box';
+import { ProfileCardList } from './ProfileCardList';
 import { useResponsive } from '../../hooks/useResponsive';
 import {
 	isLinkMenuComponent,
@@ -64,12 +66,29 @@ export const Profile = () => {
 	const { userData } = useContext(UserDataContext);
 	// #1193 Job 4: the profile shows the same animal other participants see in
 	// the chat, which is derived from the Matrix user id when the client is up.
-	const matrixClientContext = useContext(MatrixClientContext);
-	const ownAvatarUserId =
-		matrixClientContext?.matrixClientService
-			?.getClient?.()
-			?.getUserId?.() || userData.userId;
+	const ownAvatarUserId = useOwnAvatarUserId();
 	const { consultingTypes } = useContext(ConsultingTypesContext);
+
+	const visibleElements = (
+		elements: (TabGroups | SingleComponentType | null)[] = []
+	): SingleComponentType[] =>
+		elements
+			.reduce(
+				(acc: SingleComponentType[], element) =>
+					element
+						? acc.concat(
+								isTabGroup(element) ? element.elements : element
+							)
+						: acc,
+				[]
+			)
+			.filter((element) =>
+				solveCondition(
+					element.condition,
+					userData,
+					consultingTypes ?? []
+				)
+			);
 
 	const [mobileMenu, setMobileMenu] = useState<
 		(LinkMenuGroupType | LinkMenuItemType | LinkMenuComponentType)[]
@@ -247,8 +266,24 @@ export const Profile = () => {
 											userData.displayName ||
 											userData.userName
 										}
+										firstName={userData.firstName}
+										lastName={userData.lastName}
+										avatarDisplayName={
+											userData.displayName ||
+											(isConsultant
+												? [
+														userData.firstName,
+														userData.lastName
+													]
+														.filter(Boolean)
+														.join(' ')
+												: userData.userName)
+										}
 										userId={ownAvatarUserId}
+										// Saved choices and the stable default share
+										// the same renderer as recipient views.
 										size="56px"
+										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
 								<h3 className="text--nowrap text--ellipsis">
@@ -360,44 +395,40 @@ export const Profile = () => {
 											key={`/profile${tab.url}`}
 											element={
 												<div className="profile__content">
-													{tab.elements
-														.reduce(
-															(
-																acc: SingleComponentType[],
-																element
-															) =>
-																acc.concat(
-																	isTabGroup(
-																		element
-																	)
-																		? element.elements
-																		: element
-																),
-															[]
+													{tab.layout === 'cards' ? (
+														<ProfileCardList
+															elements={visibleElements(
+																tab.elements
+															)}
+														/>
+													) : (
+														visibleElements(
+															tab.elements
 														)
-														.filter((element) =>
-															solveCondition(
-																element.condition,
-																userData,
-																consultingTypes ??
-																	[]
+															.sort(
+																(a, b) =>
+																	(a?.order ||
+																		99) -
+																	(b?.order ||
+																		99)
 															)
-														)
-														.sort(
-															(a, b) =>
-																(a?.order ||
-																	99) -
-																(b?.order || 99)
-														)
-														.map((element, i) => (
-															<ProfileItem
-																key={i}
-																element={
-																	element
-																}
-																index={i}
-															/>
-														))}
+															.map(
+																(
+																	element,
+																	i
+																) => (
+																	<ProfileItem
+																		key={i}
+																		element={
+																			element
+																		}
+																		index={
+																			i
+																		}
+																	/>
+																)
+															)
+													)}
 												</div>
 											}
 										/>
@@ -464,10 +495,21 @@ export const Profile = () => {
 													key={`/profile${tab.url}${element.url}`}
 													element={
 														<div className="profile__content">
-															<ProfileGroup
-																group={element}
-																key={`/profile${tab.url}${element.url}`}
-															/>
+															{tab.layout ===
+															'cards' ? (
+																<ProfileCardList
+																	elements={visibleElements(
+																		element.elements
+																	)}
+																/>
+															) : (
+																<ProfileGroup
+																	group={
+																		element
+																	}
+																	key={`/profile${tab.url}${element.url}`}
+																/>
+															)}
 														</div>
 													}
 												/>
