@@ -330,6 +330,65 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 		}
 	});
 
+	it('reconciles denied enquiry history on initial load and a new denial once without replaying notification banners', async () => {
+		const AnnouncementCount = () => (
+			<output data-testid="denied-banner-count">
+				{useContext(NotificationsContext)!.notifications.length}
+			</output>
+		);
+		const denied = (id: number, sourceSessionId: number) => ({
+			...feedItem(id, '2026-10-08T12:00:00Z'),
+			eventType: 'request.denied',
+			sourceSessionId
+		});
+		apiGetEventNotifications.mockResolvedValue({
+			items: [denied(1, 4711)],
+			unreadCount: 1
+		});
+		const signals = vi.fn();
+		messageEventEmitter.on(signals);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+					<AnnouncementCount />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(screen.getByTestId('denied-banner-count').textContent).toBe(
+				'0'
+			);
+			expect(signals).toHaveBeenCalledWith({
+				changedSessionId: 4711,
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			expect(signals).toHaveBeenCalledTimes(1);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [denied(2, 4712), denied(1, 4711)],
+				unreadCount: 2
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() => expect(signals).toHaveBeenCalledTimes(2));
+			expect(signals).toHaveBeenLastCalledWith({
+				changedSessionId: 4712,
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			expect(signals).toHaveBeenCalledTimes(2);
+		} finally {
+			messageEventEmitter.off(signals);
+		}
+	});
+
 	it.each([
 		['waiting_room.client.joined', { refreshEnquiryList: true }],
 		[

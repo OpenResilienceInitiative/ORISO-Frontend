@@ -8,6 +8,7 @@ import {
 	STATUS_ARCHIVED,
 	STATUS_EMPTY,
 	STATUS_ENQUIRY,
+	STATUS_REJECTED,
 	TopicSessionInterface
 } from '../interfaces/SessionsDataInterface';
 import {
@@ -33,6 +34,7 @@ export type ExtendedSessionInterface = Omit<
 	isEmptyEnquiry?: boolean;
 	isNonEmptyEnquiry?: boolean;
 	isArchive?: boolean;
+	isRejected?: boolean;
 };
 
 export const buildExtendedSession = (
@@ -57,6 +59,7 @@ export const buildExtendedSession = (
 		isEmptyEnquiry: sessionChat && sessionChat.status === STATUS_EMPTY,
 		isNonEmptyEnquiry: sessionChat && sessionChat.status === STATUS_ENQUIRY,
 		isArchive: sessionChat && sessionChat.status === STATUS_ARCHIVED,
+		isRejected: sessionChat && sessionChat.status === STATUS_REJECTED,
 		rid
 	};
 };

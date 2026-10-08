@@ -655,6 +655,17 @@
 				"copy": "ኣብ ውሽጢ 2 ናይ ስራሕ መዓልቲ ካባና መልሲ ክትረኽቡ ኢኹም።",
 				"headline": "ስለቲ መልእኽትኹም የቐንየልና!"
 			}
+		},
+		"rejection": {
+			"action": "ሕቶ ንጸግ",
+			"confirmTitle": "ነዚ ሕቶ ክትነጽጎ ትደሊ ዲኻ?",
+			"description": "እቲ ሕቶ ክንጸግ እዩ። እቲ ሓገዝ ዝሓተተ ሰብ ናይ ቀደም ዝርርብ ምንባብ ክቕጽል ይኽእል።",
+			"confirm": "ሕቶ ንጸግ",
+			"error": "ምንጻግ እቲ ሕቶ ክሳብ ሕጂ ብምሉእ ኣይተረጋገጸን። እቲ ውሳነ ድሮ ተዓቂቡ ክኸውን ይኽእል። በጃኻ እንደገና ፈትን።",
+			"conflict": "እቲ ሕቶ ተቐይሩ ወይ ድሕሪ ሕጂ ኣይርከብን እዩ። በጃኻ ነቲ ናይ ሕጂ ገጽ እንደገና ጽዓኖ።",
+			"closed": "እዚ ሕቶ ተነጺጉ እዩ።",
+			"inProgress": "ምንጻግ እቲ ሕቶ ይዛዘም ኣሎ…",
+			"cancel": "ሰርዝ"
 		}
 	},
 	"error": {
@@ -1916,7 +1927,10 @@
 		"showLess": "ኣነስ ኣርእይ",
 		"showMore": "ብዝሓት ኣርእይ",
 		"callLifecycle": {
-			"type": { "audio": "ናይ ድምጺ ጻውዒት", "video": "ናይ ቪድዮ ጻውዒት" },
+			"type": {
+				"audio": "ናይ ድምጺ ጻውዒት",
+				"video": "ናይ ቪድዮ ጻውዒት"
+			},
 			"state": {
 				"running": "ይካየድ ኣሎ",
 				"ended": "ተወዲኡ",
@@ -1927,7 +1941,10 @@
 				"ended": "እቲ ጻውዒት ኣብ {{start}} ጀሚሩ።",
 				"missed": "እቲ ጻውዒት ኣይተመለሰን።"
 			},
-			"participants": { "current": "ኣብ ጻውዒት", "attended": "ተሳቲፎም" }
+			"participants": {
+				"current": "ኣብ ጻውዒት",
+				"attended": "ተሳቲፎም"
+			}
 		},
 		"systemNotification": "መፍለጢ ሲስተም",
 		"systemNotificationTitle": "መፍለጢ ሲስተም",
@@ -2180,7 +2197,7 @@
 			},
 			"requestDenied": {
 				"title": "ሕቶ ተነጺጉ",
-				"text": "ናይቲ ተገልጋሊ ሕቶ ተነጺጉ።"
+				"text": "እዚ ሕቶ ተነጺጉ እዩ።"
 			},
 			"waitingRoomClientJoined": {
 				"title": "ተገልጋሊ ኣብ መጸበዪ ክፍሊ",
