@@ -1,25 +1,63 @@
 import clsx from 'clsx';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { Spinner } from '../spinner/Spinner';
-import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
+import { useTranslation } from 'react-i18next';
+import { OrbitalTrails } from '../orbitalTrails/OrbitalTrails';
 import './loading.styles.scss';
 
-export const Loading = ({ compact = false }: { compact?: boolean }) => {
-	const [isVisible, setIsVisible] = useState(false);
+export interface LoadingProps {
+	compact?: boolean;
+	layout?: 'page' | 'section' | 'inline';
+	size?: 'small' | 'medium' | 'large';
+	delayMs?: number;
+	label?: string;
+	isDark?: boolean;
+	className?: string;
+}
+
+export const Loading = ({
+	compact = false,
+	layout = 'section',
+	size = 'large',
+	delayMs = 200,
+	label,
+	isDark = false,
+	className
+}: LoadingProps) => {
+	const { t } = useTranslation();
+	const text = label ?? t('app.wait');
+	const [isVisible, setIsVisible] = useState(delayMs === 0);
 
 	useEffect(() => {
-		// Avoid flashing on fast loads; completion is owned by the mounting caller.
-		const timeoutId = setTimeout(() => setIsVisible(true), 200);
-		return () => clearTimeout(timeoutId);
-	}, []);
+		setIsVisible(delayMs === 0);
+		if (delayMs === 0) return;
+		const timeout = window.setTimeout(() => setIsVisible(true), delayMs);
+		return () => window.clearTimeout(timeout);
+	}, [delayMs]);
+
+	if (!isVisible) return null;
 
 	return (
 		<div
-			className={clsx('loading', isVisible && 'loading--visible')}
-			aria-hidden={!isVisible}
+			className={clsx(
+				'loading',
+				`loading--${compact ? 'inline' : layout}`,
+				`loading--${compact ? 'small' : size}`,
+				className
+			)}
+			role="status"
+			aria-label={text}
+			aria-live="polite"
 		>
-			{compact ? <LoadingIndicator /> : <Spinner />}
+			<div className="loading__animation" aria-hidden="true">
+				<OrbitalTrails
+					label={text}
+					variant="single"
+					palette={isDark ? 'neutral' : 'brand'}
+					warmupFrames={40}
+				/>
+			</div>
+			<span className="loading__label">{text}</span>
 		</div>
 	);
 };
