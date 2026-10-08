@@ -16,28 +16,16 @@ jobs:
     name: lint, type-check, test, build and Docker validation
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    # Temporary trace-only capture for #1317; no test filtering or gate change.
-    env:
-      ORISO_FE1317_TRACE: '1'
-      TRACE_PR_HEAD: ${{ github.event.pull_request.head.sha }}
-      TRACE_PR_BASE: ${{ github.event.pull_request.base.sha }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Record temporary practice diagnostic environment
-        run: |
-          printf 'checkout='; git rev-parse HEAD
-          printf 'event-head=%s event-base=%s\n' "$TRACE_PR_HEAD" "$TRACE_PR_BASE"
-          uname -sm
-          cat /etc/os-release
-
       # Runs lint, type-check, unit tests and the app build.
       - name: Run frontend validation and build
         uses: ./.github/actions/node-build
         with:
-          node_version: '22.23.3'
+          node_version: '22'
 
       # Native amd64 only: this image is thrown away, so emulating arm64 under
       # QEMU buys nothing but wall-clock. The publish workflow still builds both

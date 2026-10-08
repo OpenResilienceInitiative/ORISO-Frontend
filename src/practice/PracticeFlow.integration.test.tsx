@@ -411,29 +411,10 @@ afterEach(async () => {
 	vi.restoreAllMocks();
 });
 
-// Restore the temporary trace opt-in even if the existing case assertion fails.
-afterEach(() => vi.unstubAllEnvs());
-
 const SLOW = { timeout: 15000 };
 
 /** The step the tour shows now: its index, and its anchor live in the page. */
 const expectStep = async (index: number) => {
-	if (
-		process.env.NODE_ENV === 'test' &&
-		process.env.ORISO_FE1317_TRACE === 'active'
-	)
-		console.info(
-			'[1317diag]',
-			JSON.stringify({
-				at: performance.now(),
-				event: 'expect-step-enter',
-				index,
-				practiceStatus: getPracticeSnapshot().status,
-				runId: getPracticeSnapshot().session?.runId,
-				currentStep: joyride?.stepIndex,
-				route: route()
-			})
-		);
 	await waitFor(() => {
 		expect(
 			joyride?.run,
@@ -543,21 +524,6 @@ const openThePracticeEnquiry = async () => {
 
 	// 2: the practice enquiry, the only row of the real list; click it.
 	const row = await expectStep(1);
-	if (
-		process.env.NODE_ENV === 'test' &&
-		process.env.ORISO_FE1317_TRACE === 'active'
-	)
-		console.info(
-			'[1317diag]',
-			JSON.stringify({
-				at: performance.now(),
-				event: 'open-row-before-click',
-				rowConnected: row?.isConnected,
-				practiceStatus: getPracticeSnapshot().status,
-				runId: getPracticeSnapshot().session?.runId,
-				route: route()
-			})
-		);
 	expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
 	expect(
 		document.querySelectorAll('[data-cy="session-list-item"]')
@@ -879,51 +845,9 @@ describe('practice flows on the real app shell', () => {
 	}, 120000);
 
 	it('banner Restart mid-flow: same guard, fresh case with the accept available again, tour back at step 1', async () => {
-		if (process.env.ORISO_FE1317_TRACE === '1')
-			vi.stubEnv('ORISO_FE1317_TRACE', 'active');
-		if (process.env.ORISO_FE1317_TRACE === 'active')
-			console.info(
-				'[1317diag]',
-				JSON.stringify({
-					at: performance.now(),
-					event: 'environment',
-					node: process.version,
-					platform: process.platform,
-					arch: process.arch
-				})
-			);
 		const app = renderApp({ teamDiscussion: false });
 		await app.start(ACCEPT);
-		if (
-			process.env.NODE_ENV === 'test' &&
-			process.env.ORISO_FE1317_TRACE === 'active'
-		)
-			console.info(
-				'[1317diag]',
-				JSON.stringify({
-					at: performance.now(),
-					event: 'before-open',
-					practiceStatus: getPracticeSnapshot().status,
-					runId: getPracticeSnapshot().session?.runId,
-					route: route()
-				})
-			);
 		await openThePracticeEnquiry();
-		if (
-			process.env.NODE_ENV === 'test' &&
-			process.env.ORISO_FE1317_TRACE === 'active'
-		)
-			console.info(
-				'[1317diag]',
-				JSON.stringify({
-					at: performance.now(),
-					event: 'after-open',
-					practiceStatus: getPracticeSnapshot().status,
-					runId: getPracticeSnapshot().session?.runId,
-					stepIndex: joyride?.stepIndex,
-					route: route()
-				})
-			);
 		const accept = await expectStep(2);
 		await afterWorldEvent(
 			PRACTICE_TOUR_EVENTS.enquiryAccepted,
@@ -939,53 +863,10 @@ describe('practice flows on the real app shell', () => {
 		);
 
 		await expectStep(0);
-		if (
-			process.env.NODE_ENV === 'test' &&
-			process.env.ORISO_FE1317_TRACE === 'active'
-		)
-			console.info(
-				'[1317diag]',
-				JSON.stringify({
-					at: performance.now(),
-					event: 'restart-step0',
-					practiceStatus: getPracticeSnapshot().status,
-					runId: getPracticeSnapshot().session?.runId,
-					route: route()
-				})
-			);
 		expect(getPracticeSnapshot().status).toBe('active');
 		expect(getPracticeNetworkGuard()).toBe(guard);
 		// The accepted case is an open enquiry again.
-		if (
-			process.env.NODE_ENV === 'test' &&
-			process.env.ORISO_FE1317_TRACE === 'active'
-		)
-			console.info(
-				'[1317diag]',
-				JSON.stringify({
-					at: performance.now(),
-					event: 'before-open',
-					practiceStatus: getPracticeSnapshot().status,
-					runId: getPracticeSnapshot().session?.runId,
-					route: route()
-				})
-			);
 		await openThePracticeEnquiry();
-		if (
-			process.env.NODE_ENV === 'test' &&
-			process.env.ORISO_FE1317_TRACE === 'active'
-		)
-			console.info(
-				'[1317diag]',
-				JSON.stringify({
-					at: performance.now(),
-					event: 'after-open',
-					practiceStatus: getPracticeSnapshot().status,
-					runId: getPracticeSnapshot().session?.runId,
-					stepIndex: joyride?.stepIndex,
-					route: route()
-				})
-			);
 		await expectStep(2);
 
 		fireEvent.click(
