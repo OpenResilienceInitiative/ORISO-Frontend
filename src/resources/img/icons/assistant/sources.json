@@ -5,7 +5,8 @@
 		"sourceSha256": "5e8afea8f0a75d46b1809b2c10aab0093f865e9b2fb1351789db13f7ea7833ae",
 		"attribution": [],
 		"providedBy": "Frank, 2026-10-07",
-		"adaptation": "400 resting variant; preserve viewBox and paths; remove out-of-view attribution text from rendering, retain it here; inherit currentColor"
+		"adaptation": "400 resting variant; preserve viewBox and paths; inherit currentColor. No attribution text is recorded in this metadata.",
+		"licenseStatus": "Unverified: user-provided source; no applicable license or creator attribution was supplied with the attachment."
 	},
 	{
 		"file": "robot-7341990-400.svg",
@@ -13,7 +14,8 @@
 		"sourceSha256": "ccdf168156aa31d08675d286de51f45fcff5b08943745e4ab0603da4c358358f",
 		"attribution": [],
 		"providedBy": "Frank, 2026-10-07",
-		"adaptation": "400 resting variant; preserve viewBox and paths; remove out-of-view attribution text from rendering, retain it here; inherit currentColor"
+		"adaptation": "400 resting variant; preserve viewBox and paths; inherit currentColor. No attribution text is recorded in this metadata.",
+		"licenseStatus": "Unverified: user-provided source; no applicable license or creator attribution was supplied with the attachment."
 	},
 	{
 		"file": "robot-1184077-400.svg",
@@ -21,7 +23,8 @@
 		"sourceSha256": "07e16dec716694e813838071ee81051dfa89c4785b4e247557f5876c4d1afea7",
 		"attribution": [],
 		"providedBy": "Frank, 2026-10-07",
-		"adaptation": "400 resting variant; preserve viewBox and paths; remove out-of-view attribution text from rendering, retain it here; inherit currentColor"
+		"adaptation": "400 resting variant; preserve viewBox and paths; inherit currentColor. No attribution text is recorded in this metadata.",
+		"licenseStatus": "Unverified: user-provided source; no applicable license or creator attribution was supplied with the attachment."
 	},
 	{
 		"file": "robot-5475944-400.svg",
@@ -29,6 +32,7 @@
 		"sourceSha256": "7a49770bd8f2623b15156f52cb67733733f15a26a47288d2a0ca69176be63b50",
 		"attribution": [],
 		"providedBy": "Frank, 2026-10-07",
-		"adaptation": "400 resting variant; preserve viewBox and paths; remove out-of-view attribution text from rendering, retain it here; inherit currentColor"
+		"adaptation": "400 resting variant; preserve viewBox and paths; inherit currentColor. No attribution text is recorded in this metadata.",
+		"licenseStatus": "Unverified: user-provided source; no applicable license or creator attribution was supplied with the attachment."
 	}
 ]

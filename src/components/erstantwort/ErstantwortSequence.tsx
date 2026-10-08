@@ -87,6 +87,39 @@ const renderAction = (
 		</button>
 	) : null;
 
+const BausteinContent = ({
+	baustein,
+	slots,
+	onAction
+}: {
+	baustein: ResolvedBaustein;
+	slots?: Record<string, React.ReactNode>;
+	onAction?: (kind: ErstantwortActionKind) => void;
+}) => (
+	<>
+		<p className="pseudonymCard__bubbleText erstantwort__body">
+			{baustein.body}
+		</p>
+		{baustein.links?.length ? (
+			<ul className="erstantwort__links">
+				{baustein.links.map((link) => (
+					<li key={link.url}>
+						<a
+							href={link.url}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{link.label}
+						</a>
+					</li>
+				))}
+			</ul>
+		) : null}
+		{slots?.[baustein.id]}
+		{baustein.action && renderAction(baustein.action, onAction)}
+	</>
+);
+
 export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	bausteine,
 	compactFaq = true,
@@ -215,25 +248,11 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 																: 'Was passiert mit meinen Daten?'
 														)}
 												</summary>
-												<p className="pseudonymCard__bubbleText erstantwort__body">
-													{item.body}
-												</p>
-												{item.links?.map((link) => (
-													<a
-														key={link.url}
-														href={link.url}
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														{link.label}
-													</a>
-												))}
-												{slots?.[item.id]}
-												{item.action &&
-													renderAction(
-														item.action,
-														onAction
-													)}
+												<BausteinContent
+													baustein={item}
+													slots={slots}
+													onAction={onAction}
+												/>
 											</details>
 										))}
 									</div>
@@ -248,27 +267,11 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 											{baustein.headline}
 										</h4>
 									)}
-									<p className="pseudonymCard__bubbleText erstantwort__body">
-										{baustein.body}
-									</p>
-									{baustein.links?.length ? (
-										<ul className="erstantwort__links">
-											{baustein.links.map((link) => (
-												<li key={link.url}>
-													<a
-														href={link.url}
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														{link.label}
-													</a>
-												</li>
-											))}
-										</ul>
-									) : null}
-									{slots?.[baustein.id]}
-									{baustein.action &&
-										renderAction(baustein.action, onAction)}
+									<BausteinContent
+										baustein={baustein}
+										slots={slots}
+										onAction={onAction}
+									/>
 								</div>
 							);
 						})}

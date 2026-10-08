@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
+import { CaseHandoverInformationalBody } from './CaseHandoverInformationalBody';
 
 vi.mock('react-i18next', () => {
 	const catalogue: Record<string, string> = {
@@ -207,5 +208,52 @@ describe('CaseHandoverConsentCard', () => {
 
 		fireEvent.click(optOutSwitch);
 		expect(optOutSwitch.checked).toBe(true);
+	});
+});
+
+describe('persisted informational handover body', () => {
+	it('retains completed takeover copy and offers only a passive optional dialog', () => {
+		const setup = vi.fn();
+		render(
+			<CaseHandoverInformationalBody
+				description="The counsellor has taken over."
+				sessionId={42}
+				onSetupNotifications={setup}
+			/>
+		);
+		expect(screen.getByText('The counsellor has taken over.')).toBeTruthy();
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(setup).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		const dialog = within(screen.getByRole('dialog'));
+		expect(dialog.queryByRole('switch')).toBeNull();
+		fireEvent.click(
+			dialog.getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		expect(setup).toHaveBeenCalledOnce();
+	});
+	it('does not offer notification setup when no channel is allowed', () => {
+		render(
+			<CaseHandoverInformationalBody
+				description="Temporary access granted."
+				sessionId={42}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			within(screen.getByRole('dialog')).queryByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		).toBeNull();
 	});
 });

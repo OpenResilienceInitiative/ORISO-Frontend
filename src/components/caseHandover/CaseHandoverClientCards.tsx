@@ -452,61 +452,12 @@ export const CaseHandoverConsentCard = ({
 					</p>
 				)}
 			</CaseHandoverSystemMessageCard>
-			<M3Dialog
+			<CaseHandoverInfoDialog
 				open={infoOpen}
-				className="caseHandoverConsentInfo"
+				mode={mode}
 				onClose={() => setInfoOpen(false)}
-				closeLabel={translate('app.close')}
-				title={translate('caseHandover.consent.info.title')}
-				description={translate('caseHandover.consent.info.description')}
-				icon={<SurveillanceConsentIcon aria-hidden focusable="false" />}
-				width={880}
-				actions={[
-					{
-						label: translate('app.close'),
-						onClick: () => setInfoOpen(false)
-					},
-					...(onSetupNotifications
-						? [
-								{
-									label: translate(
-										'caseHandover.consent.info.notificationsAction'
-									),
-									primary: false,
-									onClick: () => {
-										setInfoOpen(false);
-										onSetupNotifications();
-									}
-								}
-							]
-						: [])
-				]}
+				onSetupNotifications={onSetupNotifications}
 			>
-				<div className="caseHandoverConsentInfo__sections">
-					<section>
-						<WhenUsefulIcon aria-hidden focusable="false" />
-						<h3>
-							{translate('caseHandover.consent.info.needTitle')}
-						</h3>
-						<p>{translate('caseHandover.consent.info.needCopy')}</p>
-					</section>
-					<section>
-						<UserConsentIcon aria-hidden focusable="false" />
-						<h3>
-							{translate('caseHandover.consent.info.choiceTitle')}
-						</h3>
-						<p>{translate(`caseHandover.consent.info.${mode}`)}</p>
-					</section>
-					<section>
-						<ProtectedAccessIcon aria-hidden focusable="false" />
-						<h3>
-							{translate('caseHandover.consent.info.accessTitle')}
-						</h3>
-						<p>
-							{translate('caseHandover.consent.info.accessCopy')}
-						</p>
-					</section>
-				</div>
 				{!isInformational && !isResolved && (
 					<div className="caseHandoverConsentInfo__switchRow">
 						<span>
@@ -529,15 +480,85 @@ export const CaseHandoverConsentCard = ({
 						/>
 					</div>
 				)}
-				{mode === 'OPT_IN' && onSetupNotifications && (
-					<p className="caseHandoverConsentInfo__recommendation">
-						{translate(
-							'caseHandover.consent.info.notificationsCopy'
-						)}
-					</p>
-				)}
 				{error && <p role="alert">{error}</p>}
-			</M3Dialog>
+			</CaseHandoverInfoDialog>
 		</CarimatMessageContainer>
+	);
+};
+
+/** Shared optional explanation; children supply only still-applicable request controls. */
+export const CaseHandoverInfoDialog = ({
+	open,
+	mode,
+	onClose,
+	onSetupNotifications,
+	children
+}: {
+	open: boolean;
+	mode: 'OPT_IN' | 'OPT_OUT' | 'NONE';
+	onClose: () => void;
+	onSetupNotifications?: () => void;
+	children?: React.ReactNode;
+}) => {
+	const { t: translate } = useTranslation();
+	return (
+		<M3Dialog
+			open={open}
+			className="caseHandoverConsentInfo"
+			onClose={onClose}
+			closeLabel={translate('app.close')}
+			title={translate('caseHandover.consent.info.title')}
+			description={translate('caseHandover.consent.info.description')}
+			icon={<SurveillanceConsentIcon aria-hidden focusable="false" />}
+			width={880}
+			actions={[
+				{
+					label: translate('app.close'),
+					onClick: onClose
+				},
+				...(onSetupNotifications
+					? [
+							{
+								label: translate(
+									'caseHandover.consent.info.notificationsAction'
+								),
+								primary: false,
+								onClick: () => {
+									onClose();
+									onSetupNotifications();
+								}
+							}
+						]
+					: [])
+			]}
+		>
+			<div className="caseHandoverConsentInfo__sections">
+				<section>
+					<WhenUsefulIcon aria-hidden focusable="false" />
+					<h3>{translate('caseHandover.consent.info.needTitle')}</h3>
+					<p>{translate('caseHandover.consent.info.needCopy')}</p>
+				</section>
+				<section>
+					<UserConsentIcon aria-hidden focusable="false" />
+					<h3>
+						{translate('caseHandover.consent.info.choiceTitle')}
+					</h3>
+					<p>{translate(`caseHandover.consent.info.${mode}`)}</p>
+				</section>
+				<section>
+					<ProtectedAccessIcon aria-hidden focusable="false" />
+					<h3>
+						{translate('caseHandover.consent.info.accessTitle')}
+					</h3>
+					<p>{translate('caseHandover.consent.info.accessCopy')}</p>
+				</section>
+			</div>
+			{children}
+			{mode === 'OPT_IN' && onSetupNotifications && (
+				<p className="caseHandoverConsentInfo__recommendation">
+					{translate('caseHandover.consent.info.notificationsCopy')}
+				</p>
+			)}
+		</M3Dialog>
 	);
 };

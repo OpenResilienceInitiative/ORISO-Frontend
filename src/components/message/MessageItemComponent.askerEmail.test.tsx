@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	ActiveSessionContext,
+	AUTHORITIES,
 	E2EEContext,
 	ServerSettingsContext,
 	TenantContext,
@@ -297,3 +304,64 @@ it.each([
 		).toBe(allowsEmail);
 	}
 );
+
+describe('persisted NONE grant notification continuation', () => {
+	const grant = (handover?: unknown) =>
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description: 'The counsellor has taken over.',
+			...(handover ? { handover } : {})
+		});
+	it('shows completed takeover details and adds notification setup only after a manual dialog action', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+			raw: grant({
+				requestId: 42,
+				clientConsent: 'NONE',
+				accessType: 'TAKEOVER'
+			})
+		});
+		expect(screen.getByText('The counsellor has taken over.')).toBeTruthy();
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(
+			result.container.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			within(screen.getByRole('dialog')).queryByRole('switch')
+		).toBeNull();
+		fireEvent.click(
+			within(screen.getByRole('dialog')).getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		const setup = result.container.querySelector('.notificationChoiceHost');
+		expect(setup).toBeTruthy();
+		expect(setup?.closest('.messageItem__message')).toBeNull();
+	});
+	it.each([
+		undefined,
+		{ requestId: 42, clientConsent: 'UNKNOWN', accessType: 'TAKEOVER' }
+	])(
+		'preserves legacy or malformed grant descriptions without reconstructing current policy',
+		(metadata) => {
+			renderErstantwortMessage(tenantWith(true), {
+				account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+				raw: grant(metadata)
+			});
+			expect(
+				screen.getByText('The counsellor has taken over.')
+			).toBeTruthy();
+			expect(
+				screen.queryByRole('button', {
+					name: 'caseHandover.consent.info.more'
+				})
+			).toBeNull();
+		}
+	);
+});

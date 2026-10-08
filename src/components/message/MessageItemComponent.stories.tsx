@@ -2061,3 +2061,113 @@ export const InternalGroupColleagueName: Story = {
 		await expect(canvasElement.textContent).toContain('angela k');
 	}
 };
+
+export const InformationalGrantedForAsker: Story = {
+	name: 'Persisted handover — passive informational grant',
+	globals: { ...desktop1440Globals, locale: 'de' },
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: MOCK_ASKER_MATRIX_ID,
+			grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+		})
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'CASE_HANDOVER_GRANTED',
+					description:
+						'Ihre neue Fachkraft hat die Beratung übernommen.',
+					handover: {
+						requestId: 42,
+						clientConsent: 'NONE',
+						accessType: 'TAKEOVER'
+					}
+				})
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Ihre neue Fachkraft hat die Beratung übernommen.'
+			)
+		).toBeInTheDocument();
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await expect(dialog.queryByRole('switch')).toBeNull();
+	}
+};
+export const InformationalGrantedForAskerMobile: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...InformationalGrantedForAsker.parameters,
+		...mobileParameters
+	}
+};
+
+export const InformationalGrantedForAskerTablet: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const InformationalGrantedForAskerRussianMobile: Story = {
+	...InformationalGrantedForAskerMobile,
+	name: 'Persisted informational grant — Russian phone',
+	globals: { ...phone390Globals, locale: 'ru' },
+	play: async ({ canvasElement }) => {
+		const more = canvasElement.querySelector<HTMLButtonElement>(
+			'.caseHandoverMessage__more'
+		);
+		await waitFor(() => expect(more).toBeTruthy());
+		await userEvent.click(more!);
+		const dialog = await within(document.body).findByRole('dialog');
+		await expect(within(dialog).queryByRole('switch')).toBeNull();
+		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
+			dialog.clientWidth + 1
+		);
+	}
+};
+export const InformationalGrantedNotificationContinuation: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — manual notification continuation',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvasElement.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Mehr erfahren|Learn more/
+			})
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await userEvent.click(
+			dialog.getByRole('button', {
+				name: /Benachrichtigungen einrichten|Set up notifications/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.notificationChoiceHost')
+			).toBeTruthy()
+		);
+		await expect(
+			canvasElement
+				.querySelector('.notificationChoiceHost')
+				?.closest('.messageItem__message')
+		).toBeNull();
+	}
+};
