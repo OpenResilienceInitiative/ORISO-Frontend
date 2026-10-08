@@ -287,7 +287,7 @@ function openEnquiry(
 		threadChannel?: boolean;
 		id?: number;
 		registrationType?: string;
-		conversationType?: string;
+		conversationType?: string | null;
 		agencyId?: number;
 		assigned?: boolean;
 	} = {}
@@ -1062,16 +1062,32 @@ it.each([
 	20000
 );
 
-it('retains ordinary rejection for a legacy submitted enquiry without an explicit modality', async () => {
-	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
-		conversationType: undefined
-	});
-	await waitFor(() =>
-		expect(view.container.textContent).toContain(
-			'Meine vollständige Anfrage:'
-		)
-	);
-	expect(
-		screen.getByRole('button', { name: 'Anfrage ablehnen' })
-	).toBeTruthy();
-});
+it.each([
+	['absent', undefined],
+	['public legacy null', null]
+])(
+	'retains ordinary rejection for a legacy submitted enquiry with %s modality',
+	async (_name, conversationType) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			conversationType,
+			reloadedStatus: 5
+		});
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anfrage ablehnen' })
+		);
+		expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+		);
+		await waitFor(() =>
+			expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1)
+		);
+		expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
+		await waitFor(() => expect(boundary.reload).toHaveBeenCalledTimes(1));
+	}
+);
