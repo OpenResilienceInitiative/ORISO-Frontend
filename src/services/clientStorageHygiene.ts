@@ -9,6 +9,7 @@
  */
 
 import { getCookieDomain } from '../resources/scripts/runtimeConfig';
+import { purgeParkedRecoveryKeys } from './pendingRecoveryKeyStore';
 
 /** Namespace every key this app owns is written under. */
 export const APP_STORAGE_PREFIX = 'oriso.';
@@ -41,7 +42,10 @@ export const LEGACY_DRAFT_STORAGE_KEY = 'oriso.chatDrafts.v1';
 export const RETAINED_STORAGE_PREFIXES = [
 	'oriso.pendingRecoveryKey.',
 	'oriso.recoverySetupInFlight.',
-	'oriso.lastOpenSession.'
+	'oriso.lastOpenSession.',
+	// Pending protected-feedback metadata contains IDs only, expires after 24h,
+	// and is retried only after the same Matrix account authenticates again.
+	'oriso.feedbackMailHint.'
 ] as const;
 
 /**
@@ -96,6 +100,8 @@ export const purgeLegacyDraftStorage = (): void =>
  * registration wizard's answers, which are per-visit by definition.
  */
 export const purgeAppWebStorage = (): void => {
+	// Password-protected copies are conveniences; RECOVERY_KEY-mode keys stay.
+	purgeParkedRecoveryKeys('passwordProtected');
 	withStorage(
 		() => window.localStorage,
 		(storage) => {

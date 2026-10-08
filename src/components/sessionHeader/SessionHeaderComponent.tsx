@@ -3,6 +3,10 @@ import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import {
+	SupervisorManagementDialog,
+	SUPERVISOR_DIALOG_TITLE_ID
+} from './SupervisorManagementDialog';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -36,6 +40,10 @@ import {
 	SessionConsultantInterface,
 	TopicSessionInterface
 } from '../../globalState/interfaces';
+import {
+	STATUS_ENQUIRY,
+	STATUS_ACTIVE
+} from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	getViewPathForType,
 	SESSION_LIST_TAB,
@@ -74,7 +82,7 @@ import {
 } from '../message/visibleParticipants';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
-import { ConsultantSearchLoader } from './ConsultantSearchLoader';
+import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
@@ -88,6 +96,7 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { notifyPracticeSupervisorsChanged } from '../../practice';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
@@ -263,12 +272,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate(
-					'sessionHeader.supervisor.error.loadConsultants.title',
-					'Fehler'
+					'sessionHeader.supervisor.error.loadConsultants.title'
 				),
 				text: translate(
-					'sessionHeader.supervisor.error.loadConsultants.text',
-					'Berater konnten nicht geladen werden.'
+					'sessionHeader.supervisor.error.loadConsultants.text'
 				),
 				closeable: true,
 				timeout: 5000
@@ -280,14 +287,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const addSupervisorButton: ButtonItem = React.useMemo(
 		() => ({
 			label: isAddingSupervisor
-				? translate(
-						'sessionHeader.supervisor.modal.adding',
-						'Hinzufügen...'
-					)
-				: translate(
-						'sessionHeader.supervisor.modal.addButton',
-						'Hinzufügen'
-					),
+				? translate('sessionHeader.supervisor.modal.adding')
+				: translate('sessionHeader.supervisor.modal.addButton'),
 			function: '',
 			type: BUTTON_TYPES.PRIMARY,
 			disabled: !selectedConsultant || isAddingSupervisor
@@ -408,15 +409,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			return;
 		}
 		const payload = JSON.stringify({
-			title: translate(
-				'message.supervisionEnabledTitle',
-				'Supervision Enabled!'
-			),
-			description: translate(
-				'message.supervisionEnabledDescription',
-				'{{name}} was added as a consultant supervisor to this chat.',
-				{ name: supervisorName }
-			)
+			title: translate('message.supervisionEnabledTitle'),
+			description: translate('message.supervisionEnabledDescription', {
+				name: supervisorName
+			})
 		});
 		try {
 			const client = matrixClientService?.getClient?.();
@@ -450,12 +446,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate(
-					'sessionHeader.supervisor.error.reasonRequired.title',
-					'Grund erforderlich'
+					'sessionHeader.supervisor.error.reasonRequired.title'
 				),
 				text: translate(
-					'sessionHeader.supervisor.error.reasonRequired.text',
-					'Bitte geben Sie den Grund für die Supervision an.'
+					'sessionHeader.supervisor.error.reasonRequired.text'
 				),
 				closeable: true,
 				timeout: 5000
@@ -475,18 +469,15 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			);
 			await postSupervisorAddedSystemMessage(selectedSupervisorName);
 			await loadSupervisors();
+			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
 			setSupervisionReason('');
 			setSupervisionReasonError(false);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
-				title: translate(
-					'sessionHeader.supervisor.success.add.title',
-					'Supervisor hinzugefügt'
-				),
+				title: translate('sessionHeader.supervisor.success.add.title'),
 				text: `${translate(
-					'sessionHeader.supervisor.success.add.text',
-					'Der Supervisor wurde erfolgreich hinzugefügt.'
+					'sessionHeader.supervisor.success.add.text'
 				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
 				closeable: true,
 				timeout: 5000
@@ -494,19 +485,12 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addEventNotification({
 				type: NOTIFICATION_TYPE_SUCCESS,
 				eventType: 'supervisor.added',
-				title: translate(
-					'sessionHeader.supervisor.success.add.title',
-					'Supervisor hinzugefügt'
-				),
+				title: translate('sessionHeader.supervisor.success.add.title'),
 				text: `${translate(
-					'sessionHeader.supervisor.success.add.text',
-					'Der Supervisor wurde erfolgreich hinzugefügt.'
+					'sessionHeader.supervisor.success.add.text'
 				)} (${selectedSupervisorName} -> ${chatDisplayName})`,
 				actionPath: getCanonicalConversationActionPath(),
-				actionLabel: translate(
-					'notifications.center.open',
-					'Open chat'
-				),
+				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
 				category: 'system'
 			});
@@ -516,14 +500,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			// console.error('Failed to add supervisor:', error);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.add.title',
-					'Fehler'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.add.text',
-					'Supervisor konnte nicht hinzugefügt werden.'
-				),
+				title: translate('sessionHeader.supervisor.error.add.title'),
+				text: translate('sessionHeader.supervisor.error.add.text'),
 				closeable: true,
 				timeout: 5000
 			});
@@ -536,10 +514,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		if (!activeSession.item.id) return;
 		if (
 			!window.confirm(
-				translate(
-					'sessionHeader.supervisor.remove.confirm',
-					'Möchten Sie diesen Supervisor wirklich entfernen?'
-				)
+				translate('sessionHeader.supervisor.remove.confirm')
 			)
 		) {
 			return;
@@ -561,12 +536,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
-					'sessionHeader.supervisor.success.remove.title',
-					'Supervisor entfernt'
+					'sessionHeader.supervisor.success.remove.title'
 				),
 				text: `${translate(
-					'sessionHeader.supervisor.success.remove.text',
-					'Der Supervisor wurde erfolgreich entfernt.'
+					'sessionHeader.supervisor.success.remove.text'
 				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
 				closeable: true,
 				timeout: 5000
@@ -575,18 +548,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				type: NOTIFICATION_TYPE_SUCCESS,
 				eventType: 'supervisor.removed',
 				title: translate(
-					'sessionHeader.supervisor.success.remove.title',
-					'Supervisor entfernt'
+					'sessionHeader.supervisor.success.remove.title'
 				),
 				text: `${translate(
-					'sessionHeader.supervisor.success.remove.text',
-					'Der Supervisor wurde erfolgreich entfernt.'
+					'sessionHeader.supervisor.success.remove.text'
 				)} (${supervisorToRemoveName} <- ${chatDisplayName})`,
 				actionPath: getCanonicalConversationActionPath(),
-				actionLabel: translate(
-					'notifications.center.open',
-					'Open chat'
-				),
+				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
 				category: 'system'
 			});
@@ -596,14 +564,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			// console.error('Failed to remove supervisor:', error);
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
-				title: translate(
-					'sessionHeader.supervisor.error.remove.title',
-					'Fehler'
-				),
-				text: translate(
-					'sessionHeader.supervisor.error.remove.text',
-					'Supervisor konnte nicht entfernt werden.'
-				),
+				title: translate('sessionHeader.supervisor.error.remove.title'),
+				text: translate('sessionHeader.supervisor.error.remove.text'),
 				closeable: true,
 				timeout: 5000
 			});
@@ -943,10 +905,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 
 		if (
 			!window.confirm(
-				translate(
-					'sessionHeader.anonymous.deleteAccount.confirm',
-					'Möchten Sie das Konto dieses anonymen Benutzers wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
-				)
+				translate('sessionHeader.anonymous.deleteAccount.confirm')
 			)
 		) {
 			return;
@@ -961,12 +920,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
 				title: translate(
-					'sessionHeader.anonymous.deleteAccount.success.title',
-					'Konto gelöscht'
+					'sessionHeader.anonymous.deleteAccount.success.title'
 				),
 				text: `${translate(
-					'sessionHeader.anonymous.deleteAccount.success.text',
-					'Das anonyme Benutzerkonto wurde erfolgreich gelöscht.'
+					'sessionHeader.anonymous.deleteAccount.success.text'
 				)} (${contact?.username || 'Anonymous'} | Session ${activeSession.item.id})`,
 				closeable: true,
 				timeout: 5000
@@ -975,18 +932,13 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				type: NOTIFICATION_TYPE_SUCCESS,
 				eventType: 'anonymous.account.deleted',
 				title: translate(
-					'sessionHeader.anonymous.deleteAccount.success.title',
-					'Konto gelöscht'
+					'sessionHeader.anonymous.deleteAccount.success.title'
 				),
 				text: `${translate(
-					'sessionHeader.anonymous.deleteAccount.success.text',
-					'Das anonyme Benutzerkonto wurde erfolgreich gelöscht.'
+					'sessionHeader.anonymous.deleteAccount.success.text'
 				)} (${contact?.username || 'Anonymous'} | Session ${activeSession.item.id})`,
 				actionPath: listPath + getSessionListTab(),
-				actionLabel: translate(
-					'notifications.center.open',
-					'Open chat'
-				),
+				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
 				category: 'system'
 			});
@@ -998,12 +950,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: translate(
-					'sessionHeader.anonymous.deleteAccount.error.title',
-					'Fehler beim Löschen'
+					'sessionHeader.anonymous.deleteAccount.error.title'
 				),
 				text: translate(
-					'sessionHeader.anonymous.deleteAccount.error.text',
-					'Das Konto konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.'
+					'sessionHeader.anonymous.deleteAccount.error.text'
 				),
 				closeable: true,
 				timeout: 5000
@@ -1100,10 +1050,23 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
+						/* FE#1115: only an unaccepted enquiry sweeps; empty ones and waiting
+						   live chats keep their avatar stack. No empty slot is reserved. */
+						const isSearchingForConsultant =
+							sessionHeaderConversationIconType === 'inquiry' &&
+							hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+							!activeSession.consultant;
 						return (
 							<div className="sessionInfo__memberStack sessionInfo__memberStack--single">
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
+									isSearching={isSearchingForConsultant}
+									searchingLabel={translate(
+										'sessionHeader.searchingForConsultant'
+									)}
 									showAddIcon={
 										props.showAddButton ??
 										!activeSession.isEnquiry
@@ -1120,14 +1083,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											: undefined
 									}
 								/>
-								{hasUserAuthority(
-									AUTHORITIES.ASKER_DEFAULT,
-									userData
-								) && !activeSession.consultant ? (
-									<div className="sessionInfo__memberBubble">
-										<ConsultantSearchLoader size="32px" />
-									</div>
-								) : (
+								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
 										participants={headerParticipants}
 										/* Phone (< 900 px): one avatar + a
@@ -1195,12 +1151,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							<span>
 								{supervisors.length > 0
 									? translate(
-											'sessionHeader.supervisor.status.on',
-											'Supervision On'
+											'sessionHeader.supervisor.status.on'
 										)
 									: translate(
-											'sessionHeader.supervisor.status.off',
-											'Supervision Off'
+											'sessionHeader.supervisor.status.off'
 										)}
 							</span>
 						</button>
@@ -1280,48 +1234,29 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 				</div>
 			)}
+			{isAskerUser &&
+				!isConsultantUser &&
+				activeSession.isSession &&
+				!isChatFinished &&
+				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
+					activeSession.item.status
+				) &&
+				activeSession.item.agencyId && (
+					<ContactSheetRequest
+						key={activeSession.item.id}
+						sessionId={activeSession.item.id}
+						email={userData.email}
+					/>
+				)}
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
 			{isSupervisionEnabledForCurrentChat &&
 				isSupervisorModalOpen &&
 				createPortal(
-					<div
-						style={{
-							position: 'fixed',
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							backgroundColor: 'rgba(0, 0, 0, 0.5)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							zIndex: 9999,
-							pointerEvents: 'auto'
-						}}
-						onClick={(e) => {
-							if (e.target === e.currentTarget) {
-								setIsSupervisorModalOpen(false);
-							}
-						}}
+					<SupervisorManagementDialog
+						onClose={() => setIsSupervisorModalOpen(false)}
 					>
-						<div
-							style={{
-								backgroundColor: 'white',
-								borderRadius: '8px',
-								padding: '24px',
-								maxWidth: '500px',
-								width: '90%',
-								maxHeight: '80vh',
-								overflowY: 'auto',
-								position: 'relative',
-								zIndex: 10000,
-								boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-							}}
-							onClick={(e) => {
-								e.stopPropagation();
-							}}
-						>
+						<div>
 							<div
 								style={{
 									display: 'flex',
@@ -1330,13 +1265,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									marginBottom: '20px'
 								}}
 							>
-								<h2 style={{ margin: 0 }}>
+								<h2
+									id={SUPERVISOR_DIALOG_TITLE_ID}
+									style={{ margin: 0 }}
+								>
 									{translate(
-										'sessionHeader.supervisor.modal.title',
-										'Supervisor verwalten'
+										'sessionHeader.supervisor.modal.title'
 									)}
 								</h2>
 								<button
+									aria-label={translate('app.close')}
 									onClick={() =>
 										setIsSupervisorModalOpen(false)
 									}
@@ -1362,8 +1300,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									}}
 								>
 									{translate(
-										'sessionHeader.supervisor.modal.current',
-										'Aktuelle Supervisor'
+										'sessionHeader.supervisor.modal.current'
 									)}
 								</h3>
 								<div
@@ -1374,22 +1311,19 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									}}
 								>
 									{translate(
-										'sessionHeader.supervisor.modal.note',
-										'If you want any supervisors to supervise in future, you can add them in advance.'
+										'sessionHeader.supervisor.modal.note'
 									)}
 								</div>
 								{isLoadingSupervisors ? (
 									<div>
 										{translate(
-											'sessionHeader.supervisor.modal.loading',
-											'Lädt...'
+											'sessionHeader.supervisor.modal.loading'
 										)}
 									</div>
 								) : supervisors.length === 0 ? (
 									<div style={{ color: '#666' }}>
 										{translate(
-											'sessionHeader.supervisor.modal.noSupervisors',
-											'Keine Supervisor hinzugefügt'
+											'sessionHeader.supervisor.modal.noSupervisors'
 										)}
 									</div>
 								) : (
@@ -1436,8 +1370,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														}}
 													>
 														{translate(
-															'sessionHeader.supervisor.modal.added',
-															'Hinzugefügt'
+															'sessionHeader.supervisor.modal.added'
 														)}
 														:{' '}
 														{new Date(
@@ -1458,8 +1391,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														>
 															<strong>
 																{translate(
-																	'sessionHeader.supervisor.modal.reason',
-																	'Grund'
+																	'sessionHeader.supervisor.modal.reason'
 																)}
 																:
 															</strong>{' '}
@@ -1485,13 +1417,11 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														fontWeight: '500'
 													}}
 													title={translate(
-														'sessionHeader.supervisor.modal.remove',
-														'Entfernen'
+														'sessionHeader.supervisor.modal.remove'
 													)}
 												>
 													{translate(
-														'sessionHeader.supervisor.modal.remove',
-														'Entfernen'
+														'sessionHeader.supervisor.modal.remove'
 													)}
 												</button>
 											</div>
@@ -1510,8 +1440,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									}}
 								>
 									{translate(
-										'sessionHeader.supervisor.modal.add',
-										'Supervisor hinzufügen'
+										'sessionHeader.supervisor.modal.add'
 									)}
 								</h3>
 								<SupervisorConsultantPicker
@@ -1521,20 +1450,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									onChange={setSelectedConsultantId}
 									labels={{
 										loading: translate(
-											'sessionHeader.supervisor.modal.loadingConsultants',
-											'Lädt Berater...'
+											'sessionHeader.supervisor.modal.loadingConsultants'
 										),
 										error: translate(
-											'sessionHeader.supervisor.error.loadConsultants.text',
-											'Berater konnten nicht geladen werden.'
+											'sessionHeader.supervisor.error.loadConsultants.text'
 										),
 										empty: translate(
-											'sessionHeader.supervisor.modal.noConsultants',
-											'Keine verfügbaren Berater'
+											'sessionHeader.supervisor.modal.noConsultants'
 										),
 										select: translate(
-											'sessionHeader.supervisor.modal.selectConsultant',
-											'Berater auswählen...'
+											'sessionHeader.supervisor.modal.selectConsultant'
 										)
 									}}
 								/>
@@ -1546,8 +1471,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 													style={{ display: 'none' }}
 												>
 													{translate(
-														'sessionHeader.supervisor.modal.reasonLabel',
-														'Grund für die Supervision'
+														'sessionHeader.supervisor.modal.reasonLabel'
 													)}
 												</span>
 												<OrisoTextarea
@@ -1568,12 +1492,10 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														}
 													}}
 													label={translate(
-														'sessionHeader.supervisor.modal.reasonLabel',
-														'Grund für die Supervision'
+														'sessionHeader.supervisor.modal.reasonLabel'
 													)}
 													placeholder={translate(
-														'sessionHeader.supervisor.modal.reasonPlaceholder',
-														'Bitte geben Sie den Grund für die Supervision an...'
+														'sessionHeader.supervisor.modal.reasonPlaceholder'
 													)}
 													error={
 														supervisionReasonError
@@ -1589,8 +1511,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 														}}
 													>
 														{translate(
-															'sessionHeader.supervisor.modal.reasonError',
-															'Bitte geben Sie einen Grund an.'
+															'sessionHeader.supervisor.modal.reasonError'
 														)}
 													</div>
 												)}
@@ -1618,7 +1539,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									)}
 							</div>
 						</div>
-					</div>,
+					</SupervisorManagementDialog>,
 					document.body
 				)}
 

@@ -1,3 +1,5 @@
+import type { ElementType } from 'react';
+
 export interface TabType {
 	title: string;
 	url: string;
@@ -5,6 +7,8 @@ export interface TabType {
 	elements: (TabGroups | SingleComponentType | null)[];
 	notificationBubble?: boolean;
 	externalLink?: boolean;
+	/** `cards` renders every section as its own card with a leading icon (#878). */
+	layout?: 'cards';
 }
 
 export interface TabGroups {
@@ -25,6 +29,8 @@ export type SingleComponentType = {
 	order?: number;
 	column?: typeof COLUMN_LEFT | typeof COLUMN_RIGHT;
 	fullWidth?: boolean;
+	/** Leading icon of the section card; only read by the `cards` layout. */
+	icon?: ElementType;
 };
 
 export type TabsType = TabType[];

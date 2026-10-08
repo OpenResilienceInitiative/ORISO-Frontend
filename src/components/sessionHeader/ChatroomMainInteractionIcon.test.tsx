@@ -30,6 +30,35 @@ describe('ChatroomMainInteractionIcon', () => {
 		expect(onAddClick).toHaveBeenCalledTimes(1);
 	});
 
+	it('anchors the interactive add button for product tours, but not the disabled one', () => {
+		const { rerender } = render(
+			<ChatroomMainInteractionIcon
+				type="nearby"
+				showAddIcon
+				addLabel="Supervisor verwalten"
+				onAddClick={vi.fn()}
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: 'Supervisor verwalten' })
+				.getAttribute('data-tour-target')
+		).toBe('session-supervisor-add');
+
+		rerender(
+			<ChatroomMainInteractionIcon
+				type="nearby"
+				showAddIcon
+				addLabel="Supervisor verwalten"
+			/>
+		);
+		expect(
+			screen
+				.getByRole('button', { name: 'Supervisor verwalten' })
+				.hasAttribute('data-tour-target')
+		).toBe(false);
+	});
+
 	it('renders a disabled button with an honest tooltip when no handler is provided', () => {
 		render(
 			<ChatroomMainInteractionIcon

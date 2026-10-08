@@ -23,7 +23,7 @@ import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 
-const ROOM_ID = '!session:matrix.oriso.org';
+const ROOM_ID = '!session:matrix.example.org';
 const LIST_PATH = '/sessions/user/view';
 
 const mocks = vi.hoisted(() => {
@@ -646,7 +646,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 				id: 7,
 				supervisorConsultantId: 'supervisor-1',
 				supervisorUsername: 'supervisor@example.invalid',
-				matrixRoomId: '!supervision:matrix.oriso.org'
+				matrixRoomId: '!supervision:matrix.example.org'
 			}
 		]);
 		const activeSession = {
@@ -707,7 +707,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		await waitFor(() => {
 			expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(ROOM_ID);
 			expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(
-				'!supervision:matrix.oriso.org'
+				'!supervision:matrix.example.org'
 			);
 		});
 	});

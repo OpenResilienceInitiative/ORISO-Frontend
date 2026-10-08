@@ -5,7 +5,9 @@ import { Loading } from '../app/Loading';
 import {
 	SessionTypeContext,
 	UserDataContext,
-	ActiveSessionProvider
+	ActiveSessionProvider,
+	AUTHORITIES,
+	hasUserAuthority
 } from '../../globalState';
 import {
 	desktopView,
@@ -25,6 +27,12 @@ import { useSetAtom } from 'jotai';
 import { agencyLogoAtom } from '../../store/agencyLogoAtom';
 import { shouldShowGroupChatJoinView } from '../groupChat/groupChatHelpers';
 import { rememberLastOpenSession } from '../../utils/lastOpenSession';
+import { useGroupChatAccess } from '../groupChat/useGroupChatAccess';
+import { GroupChatNotMember } from '../groupChat/GroupChatNotMember';
+import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
+import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
+import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
+import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
 import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
 
 const positiveInteger = (value: string | null | undefined): number | null => {
@@ -111,18 +119,61 @@ const SessionViewBody = () => {
 		read: readActiveSession
 	} = useSession(
 		groupIdFromParam,
-		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined
+		sessionIdFromParam ? parseInt(sessionIdFromParam) : undefined,
+		undefined,
+		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
+			(userData?.userRoles || []).includes('USER')) &&
+			!(
+				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
+				(userData?.userRoles || []).includes('CONSULTANT')
+			)
 	);
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
+	// #1499: a counsellor can reach a group she is not part of through its
+	// invite link; the server refuses her the group, the room list does not.
+	const { access: groupAccess, retry: retryGroupAccess } = useGroupChatAccess(
+		{
+			chatId: activeSession?.item?.id,
+			isGroup: Boolean(activeSession?.isGroup),
+			subscribed: activeSession?.item?.subscribed,
+			isConsultant: hasUserAuthority(
+				AUTHORITIES.CONSULTANT_DEFAULT,
+				userData
+			)
+		}
+	);
+	// …and may knock on a self-help group (never a team chat); once a
+	// moderator lets her in, the group is asked again.
+	const inviteToken = activeSession?.item?.id
+		? groupInviteTokenFor(activeSession.item.id)
+		: undefined;
+	const joinRequest = useOwnJoinRequest(
+		knockableGroupId(activeSession, groupAccess, inviteToken),
+		inviteToken,
+		httpJoinRequestTransport,
+		{
+			onOpenGroup: () => {
+				reloadActiveSession?.();
+				retryGroupAccess();
+			}
+		}
+	);
+
 	// #1193 Job 3: remember the session the counsellor is looking at so the next
 	// sign-in resumes it. The helper only accepts consultant session routes.
 	useEffect(() => {
-		if (activeSessionReady && activeSession) {
+		if (activeSessionReady && activeSession && groupAccess === 'member') {
 			rememberLastOpenSession(userData?.userId, pathname);
 		}
-	}, [activeSessionReady, activeSession, pathname, userData?.userId]);
+	}, [
+		activeSessionReady,
+		activeSession,
+		groupAccess,
+		pathname,
+		userData?.userId
+	]);
 
 	const checkMutedUserForThisSession = useCallback(() => {
 		setForceBannedOverlay(false);
@@ -207,8 +258,28 @@ const SessionViewBody = () => {
 		};
 	}, [activeSession?.item?.agencyId, setAgencyLogo]);
 
-	if (loading || !activeSession) {
+	if (loading || !activeSession || groupAccess === 'checking') {
 		return <Loading />;
+	}
+
+	if (groupAccess === 'notMember' || groupAccess === 'unavailable') {
+		return (
+			<GroupChatNotMember
+				joinRequest={joinRequest}
+				onRetry={
+					groupAccess === 'unavailable' ? retryGroupAccess : undefined
+				}
+				onBack={() =>
+					navigate(
+						listPath +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: ''),
+						{ replace: true }
+					)
+				}
+			/>
+		);
 	}
 
 	if (

@@ -1,4 +1,7 @@
-import { getConversationFormatAvailability } from '../conversationCreate/formatAvailability';
+import {
+	AgencyFormatSource,
+	getConversationFormatAvailability
+} from '../conversationCreate/formatAvailability';
 
 interface FormatChipVisibility {
 	/** The "Neue Unterhaltung erstellen" entry in the toolbar. */
@@ -20,9 +23,10 @@ interface FormatChipVisibility {
  */
 export const getFormatChipVisibility = (
 	tenant: Parameters<typeof getConversationFormatAvailability>[0],
-	showConsultantToolbarActions: boolean
+	showConsultantToolbarActions: boolean,
+	agencies: AgencyFormatSource[] = []
 ): FormatChipVisibility => {
-	const availability = getConversationFormatAvailability(tenant);
+	const availability = getConversationFormatAvailability(tenant, agencies);
 
 	return {
 		// The create flow opens straight into whichever single format is left,

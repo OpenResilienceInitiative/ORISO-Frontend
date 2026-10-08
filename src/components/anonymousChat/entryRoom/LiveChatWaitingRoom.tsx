@@ -23,7 +23,7 @@ import { BreathingCompanionHost } from '../../pseudonym/breathingCompanion/Breat
 import { LeaveQueueDialog } from '../../pseudonym/LeaveQueueDialog';
 import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
 import { consentBindingKey } from '../../registration/accountData/consentAcceptance';
-import htmlParser from '../../../resources/scripts/util/htmlParser';
+import { useLegalHtmlWithDialogs } from '../../legalLinks/useLegalHtmlWithDialogs';
 import { liveChatArtwork } from '../../../resources/img/registration-md3/registrationArtwork';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -40,6 +40,12 @@ export interface LiveChatWaitingRoomProps {
 	 * through the ADR-022 sanitizer, never raw.
 	 */
 	consentHtml: string;
+	/**
+	 * The accepting centre's department (ADR-003: agency × topic), once known.
+	 * Its legal links then open that department's documents; before, the
+	 * platform's (ADR-022: no Beratungsstelle is assigned yet).
+	 */
+	department?: { agencyId: number; topicId: number } | null;
 	onAccept: () => void;
 	/** The way out: finish the enquiry and delete the access. */
 	onLeave: () => Promise<void> | void;
@@ -112,6 +118,7 @@ export const LiveChatWaitingRoom = ({
 	accepted,
 	counsellorLine,
 	consentHtml,
+	department,
 	onAccept,
 	onLeave,
 	onMailCounselling,
@@ -140,6 +147,15 @@ export const LiveChatWaitingRoom = ({
 	   language and the sentence changes, the binding stops matching, and the
 	   box unticks instead of carrying agreement onto words nobody read. */
 	const consentBinding = consentBindingKey(null, null, null, consentHtml);
+	const renderConsentHtml = useLegalHtmlWithDialogs(
+		department
+			? {
+					scope: 'agency',
+					agencyId: department.agencyId,
+					topicId: department.topicId
+				}
+			: { scope: 'platform' }
+	);
 	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
 		string | null
 	>(null);
@@ -406,7 +422,7 @@ export const LiveChatWaitingRoom = ({
 												}
 											}}
 										>
-											{htmlParser(
+											{renderConsentHtml(
 												sanitizeConsentHtml(consentHtml)
 											)}
 										</Typography>

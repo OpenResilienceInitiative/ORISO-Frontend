@@ -1,0 +1,25 @@
+Devir onaylandı
+===============
+
+Artık bu danışmanlıktan siz sorumlusunuz.
+
+Dosyayı güvenli danışmanlık alanında açın.
+
+Dosyayı aç:
+${requestUrl!''}
+
+----------------------------------------------------------------
+Danışmanlık içerikleri hiçbir zaman e-postada yer almaz. Onları yalnızca oturum açtıktan sonra şifreli olarak görürsünüz.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''}, ${orgName!''} tarafından sunulan bir hizmettir.
+
+Ayarlar: ${settingsUrl!''}
+Veri koruma: ${privacyUrl!''}
+Künye: ${imprintUrl!''}
+Bildirimlerden çık: ${unsubscribeUrl!''}
+
+Bu e-posta otomatik olarak gönderilmiştir. Lütfen yanıtlamayınız.
