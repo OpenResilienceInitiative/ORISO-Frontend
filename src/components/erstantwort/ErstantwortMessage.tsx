@@ -24,7 +24,7 @@ import {
 import { ErstantwortTrigger } from './erstantwortCatalogue';
 import {
 	isSupported as isNotificationSupported,
-	requestPermissions
+	optInToBrowserNotifications
 } from '../../utils/notificationHelpers';
 
 /**
@@ -106,7 +106,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const handleNotificationChoice = useCallback(
 		(choice: NotificationChoice) => {
 			if (choice === 'BROWSER' || choice === 'BOTH') {
-				void requestPermissions();
+				void optInToBrowserNotifications();
 			}
 			if (choice === 'EMAIL' || choice === 'BOTH') {
 				setIsEmailOverlayOpen(true);

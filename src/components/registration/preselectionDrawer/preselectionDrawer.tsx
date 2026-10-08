@@ -27,10 +27,7 @@ const ConsultantPreslection = ({ hasError }) => {
 				}}
 			>
 				{consultant?.absent
-					? t(
-							'registration.consultantlinkAbsent',
-							'This counselor is currently absent. You can still send your request to the counseling center.'
-						)
+					? t('registration.consultantlinkAbsent')
 					: t('registration.consultantlink')}
 			</Typography>
 			{consultant?.absent && consultant.absenceMessage && (

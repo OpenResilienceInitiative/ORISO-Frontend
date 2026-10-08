@@ -10,6 +10,7 @@ import {
 import type { MatrixClient } from 'matrix-js-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	clearPendingRecoveryKey,
 	getPendingRecoveryKey,
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
@@ -63,6 +64,7 @@ afterEach(cleanup);
 describe('BackupKeyAfterTwoFactorDialog', () => {
 	beforeEach(() => {
 		localStorage.clear();
+		clearPendingRecoveryKey(USER_ID);
 		getEncryptionStatus.mockReset();
 		setUpRecovery.mockClear();
 		setUpRecovery.mockResolvedValue('fresh-recovery-key');

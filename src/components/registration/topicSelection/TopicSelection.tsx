@@ -42,6 +42,7 @@ import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvide
 import {
 	buildRegistrationTopicPresentationGroups,
 	getRegistrationTopicDisplay,
+	getRegistrationTopicKey,
 	getRegistrationTopicIcon,
 	registrationMd3,
 	registrationMotion,
@@ -49,6 +50,9 @@ import {
 	registrationScreenTitleSx,
 	RegistrationTopicPresentationGroup
 } from '../registrationDesign/registrationDesign';
+import { RegistrationTopicSearchContext } from '../topicSearch/RegistrationTopicSearchContext';
+import { buildTopicSearchIndex } from '../topicSearch/topicSearchEngine';
+import { buildTopicSearchDocuments } from '../topicSearch/topicSearchDocuments';
 
 export const TopicSelection: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -83,12 +87,21 @@ export const TopicSelection: FC<{
 		number[]
 	>([]);
 	const topicGroupRefs = useRef<Record<number, HTMLDivElement | null>>({});
-	const firstGroupedPlacementId = useMemo(
-		() =>
-			topicGroups?.flatMap((topicGroup) => topicGroup.topics)[0]
-				?.placementId,
-		[topicGroups]
-	);
+	/* The roving tabindex needs a placement that is actually rendered. With
+	   every group closed on first paint and `unmountOnExit`, a fallback to
+	   the very first placement pointed into a collapsed group: the open
+	   group's radios all got `tabIndex={-1}` and nobody could Tab into the
+	   step. So the fallback follows what is open. */
+	const firstGroupedPlacementId = useMemo(() => {
+		const placements = topicGroups?.flatMap(
+			(topicGroup) => topicGroup.topics
+		);
+		return (
+			placements?.find((placement) =>
+				expandedTopicGroupIds.includes(placement.topicGroupId)
+			)?.placementId ?? placements?.[0]?.placementId
+		);
+	}, [expandedTopicGroupIds, topicGroups]);
 	const activeGroupedPlacementId = useMemo(() => {
 		if (selectedPlacementId) {
 			return selectedPlacementId;
@@ -134,9 +147,9 @@ export const TopicSelection: FC<{
 			const prefersReducedMotion =
 				typeof window.matchMedia === 'function' &&
 				window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-			if (prefersReducedMotion) {
-				return;
-			}
+			const behavior: ScrollBehavior = prefersReducedMotion
+				? 'auto'
+				: 'smooth';
 
 			const rect = node.getBoundingClientRect();
 			const stickyStepper = document.querySelector<HTMLElement>(
@@ -164,11 +177,11 @@ export const TopicSelection: FC<{
 				scrollRoot &&
 				scrollRoot.scrollHeight > scrollRoot.clientHeight
 			) {
-				scrollRoot.scrollTo({ top, behavior: 'smooth' });
+				scrollRoot.scrollTo({ top, behavior });
 				return;
 			}
 
-			window.scrollTo({ top, behavior: 'smooth' });
+			window.scrollTo({ top, behavior });
 		}, 160);
 	}, []);
 
@@ -186,6 +199,125 @@ export const TopicSelection: FC<{
 		},
 		[expandedTopicGroupIds, scrollTopicGroupIntoView]
 	);
+
+	// A header-search pick takes the same path as a click on the topic's row.
+	const registerTopicSearch = useContext(RegistrationTopicSearchContext);
+	const selectTopicFromSearch = useCallback(
+		(topicId: number) => {
+			const topic = topics?.find(({ id }) => id === topicId);
+			if (!topic) {
+				return;
+			}
+
+			if (listView || !topicGroups?.length) {
+				setValue(topic.id);
+				setTopicGroupId(undefined);
+				setSelectedPlacementId(`list/${topic.id}`);
+				onChange({ mainTopic: topic, topicGroupId: undefined });
+				return;
+			}
+
+			const placements = topicGroups.flatMap(
+				(topicGroup) => topicGroup.topics
+			);
+			const placement =
+				placements.find(
+					(candidate) =>
+						candidate.topic.id === topicId &&
+						expandedTopicGroupIds.includes(candidate.topicGroupId)
+				) ||
+				placements.find((candidate) => candidate.topic.id === topicId);
+			if (!placement) {
+				return;
+			}
+
+			setValue(topic.id);
+			setTopicGroupId(placement.topicGroupId);
+			setSelectedPlacementId(placement.placementId);
+			onChange({
+				mainTopic: placement.topic,
+				topicGroupId: placement.topicGroupId
+			});
+			setExpandedTopicGroupIds((currentIds) =>
+				currentIds.includes(placement.topicGroupId)
+					? currentIds
+					: [...currentIds, placement.topicGroupId]
+			);
+			scrollTopicGroupIntoView(placement.topicGroupId);
+		},
+		[
+			expandedTopicGroupIds,
+			listView,
+			onChange,
+			scrollTopicGroupIntoView,
+			topicGroups,
+			topics
+		]
+	);
+	const topicSearchData = useMemo(() => {
+		if (!topics || topics.length < 2) {
+			return null;
+		}
+
+		const groupsByTopicId = new Map<
+			number,
+			RegistrationTopicPresentationGroup[]
+		>();
+		(topicGroups || []).forEach((topicGroup) =>
+			topicGroup.topicIds.forEach((id) =>
+				groupsByTopicId.set(id, [
+					...(groupsByTopicId.get(id) || []),
+					topicGroup
+				])
+			)
+		);
+
+		// Grouped view: a topic without a placement cannot be selected.
+		const searchable =
+			listView || !topicGroups?.length
+				? topics
+				: topics.filter(({ id }) => groupsByTopicId.has(id));
+
+		return {
+			entries: searchable.map((topic) => ({
+				topicId: topic.id,
+				title: getRegistrationTopicDisplay(topic, locale).title,
+				category: groupsByTopicId.get(topic.id)?.[0]?.name,
+				icon: getRegistrationTopicIcon(topic)
+			})),
+			index: buildTopicSearchIndex(
+				buildTopicSearchDocuments(
+					searchable.map((topic) => ({
+						id: topic.id,
+						key: getRegistrationTopicKey(topic),
+						extraTitles: [
+							topic.name,
+							topic.titles?.long,
+							topic.titles?.short
+						].filter(Boolean),
+						extraDescription: topic.description
+					}))
+				)
+			)
+		};
+	}, [listView, locale, topicGroups, topics]);
+	// Avoids re-registering the search on every group expand.
+	const selectTopicFromSearchRef = useRef(selectTopicFromSearch);
+	useEffect(() => {
+		selectTopicFromSearchRef.current = selectTopicFromSearch;
+	}, [selectTopicFromSearch]);
+	useEffect(() => {
+		if (!topicSearchData) {
+			registerTopicSearch(null);
+			return;
+		}
+
+		registerTopicSearch({
+			...topicSearchData,
+			select: (topicId) => selectTopicFromSearchRef.current(topicId)
+		});
+		return () => registerTopicSearch(null);
+	}, [registerTopicSearch, topicSearchData]);
 
 	useEffect(() => {
 		if (!topicGroups?.length) {
@@ -212,7 +344,11 @@ export const TopicSelection: FC<{
 				setTopicGroupId(selectedGroupId);
 			}
 
-			return [selectedGroupId || topicGroups[0].id];
+			// Frank, 2026-09-07: every group starts closed. Only a group that
+			// already holds the visitor's choice opens, so a return to this
+			// step still shows what was picked. Opening the first group by
+			// default made the list look decided before anyone had decided.
+			return selectedGroupId ? [selectedGroupId] : [];
 		});
 
 		if (!selectedPlacementId && value != null) {
@@ -265,9 +401,13 @@ export const TopicSelection: FC<{
 			return;
 		}
 
+		/* Show the carried-over pick, but do not confirm it here: this effect
+		   cannot see the list, so it used to enable Next for a subject area
+		   this centre does not offer and never renders (#1524). The effect
+		   above already enables Next once the value is in what is on screen,
+		   which is the only place that knows. */
 		setValue(registrationData.mainTopic.id);
-		setDisabledNextButton(false);
-	}, [registrationData?.mainTopic, setDisabledNextButton]);
+	}, [registrationData?.mainTopic]);
 
 	useEffect(() => {
 		const consultantTopicIds = [
@@ -339,9 +479,8 @@ export const TopicSelection: FC<{
 						return existingIds;
 					}
 
-					return presentationGroups[0]?.id
-						? [presentationGroups[0].id]
-						: [];
+					// All closed on first paint (see the effect above).
+					return [];
 				});
 				setTopicGroups(presentationGroups);
 				setListView(nextListView);

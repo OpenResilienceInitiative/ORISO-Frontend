@@ -7,7 +7,8 @@ import { describe, it, expect } from 'vitest';
 import {
 	filterTimelineItems,
 	getFamiliesInFeed,
-	TIMELINE_FAMILY_ORDER
+	TIMELINE_FAMILY_ORDER,
+	TIMELINE_KIND_ORDER
 } from './timelineFilter';
 
 // Minimal feed items: only `eventType` + a `text` used as the search source.
@@ -36,13 +37,14 @@ describe('WP-06 timeline filter', () => {
 				'drafts',
 				'handover',
 				'calls',
-				'system'
+				'system',
+				'other'
 			]);
 		});
 
-		it('maps unknown event types to the system family', () => {
+		it('maps unknown event types to the "other" kind (#1377 §5.1)', () => {
 			expect(getFamiliesInFeed([{ eventType: 'nope' }])).to.deep.equal([
-				'system'
+				'other'
 			]);
 		});
 
@@ -50,10 +52,13 @@ describe('WP-06 timeline filter', () => {
 			expect(getFamiliesInFeed([])).to.deep.equal([]);
 		});
 
-		it('only lists families from the canonical order', () => {
+		it('only lists kinds from the canonical order (families, then other)', () => {
 			getFamiliesInFeed(feed).forEach((family) =>
-				expect(TIMELINE_FAMILY_ORDER).to.include(family)
+				expect(TIMELINE_KIND_ORDER).to.include(family)
 			);
+			expect(TIMELINE_KIND_ORDER.slice(0, -1)).to.deep.equal([
+				...TIMELINE_FAMILY_ORDER
+			]);
 		});
 	});
 
@@ -91,7 +96,16 @@ describe('WP-06 timeline filter', () => {
 			).to.deep.equal(['4']);
 		});
 
-		it('puts unknown event types under the system chip', () => {
+		it('puts unknown event types under the "other" chip, not "system"', () => {
+			expect(
+				ids(
+					filterTimelineItems(
+						feed,
+						{ family: 'other', query: '' },
+						searchText
+					)
+				)
+			).to.deep.equal(['8']);
 			expect(
 				ids(
 					filterTimelineItems(
@@ -100,7 +114,7 @@ describe('WP-06 timeline filter', () => {
 						searchText
 					)
 				)
-			).to.include('8');
+			).not.to.include('8');
 		});
 
 		it('search is a case-insensitive substring over getSearchText', () => {
@@ -237,5 +251,23 @@ describe('WP-06 timeline filter', () => {
 				)
 			).to.have.length(0);
 		});
+	});
+});
+
+describe('Sonstiges chip bundles kinds without their own pill (Frank 2026-09-16)', () => {
+	it('matches unseeded rows and rows of the bundled families when Sonstiges is active', () => {
+		const items = [
+			{ id: 'a', eventType: 'message.new', readAt: null },
+			{ id: 'b', eventType: 'totally.unknown.type', readAt: null },
+			{ id: 'c', eventType: 'request.new', readAt: null }
+		];
+		const kept = filterTimelineItems(
+			items,
+			{ family: 'other', query: '', bundledUnderOther: ['messages'] },
+			() => ''
+		).map((item) => item.id);
+		expect(kept).toContain('b');
+		expect(kept).toContain('a');
+		expect(kept).not.toContain('c');
 	});
 });

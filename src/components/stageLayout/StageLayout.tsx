@@ -25,20 +25,43 @@ import { registrationMotion } from '../registration/registrationDesign/registrat
 import { Link as RouterLink, useInRouterContext } from 'react-router-dom';
 import { toSameOriginRoute } from './stageLayoutRoutes';
 import CenterFocusStrongRoundedIcon from '@mui/icons-material/CenterFocusStrongRounded';
-import { getPlatformVersion } from '../../resources/scripts/runtimeConfig';
+import {
+	getBuildCommit,
+	getPlatformVersion
+} from '../../resources/scripts/runtimeConfig';
+
+import { BuildIdentity, useBuildIdentityOwner } from '../app/BuildIdentity';
 
 interface StageLayoutProps {
 	className?: string;
 	children: ReactNode;
 	stage: ReactNode;
 	showLegalLinks?: boolean;
+	/**
+	 * The department (agency × topic) whose documents the footer legal links
+	 * open. Absent on public pages, where the platform note applies because no
+	 * counselling centre is known; set once one is (ADR-022 gate 2).
+	 */
+	legalDepartment?: { agencyId: number; topicId: number } | null;
 	showLoginLink?: boolean;
 	showRegistrationLink?: boolean;
 	loginParams?: string;
+	/** Router state for the login link (the invite entry marks a chosen login). */
+	loginState?: unknown;
 	registrationUrl?: string;
 	showRegistrationInfoDrawer?: boolean;
 	/** Mobile head presentation — `bar` is the slim 8a brand row. */
 	mobileHero?: 'hero' | 'bar';
+	/**
+	 * Content at the start of the desktop header row, opposite the language
+	 * and login controls — the waiting area puts the group's topic and name
+	 * there (Frank, 2026-09-05: "im Header das Thema der Gruppe"). Desktop
+	 * only; below the `lg` breakpoint the header row does not exist and the
+	 * caller places it in the column.
+	 */
+	headerStart?: ReactNode;
+	/** Control before the language switch; rendered per tone, CSS shows one. */
+	renderHeaderAction?: (tone: 'surface' | 'onPrimary') => ReactNode;
 }
 
 export const StageLayout = ({
@@ -46,12 +69,16 @@ export const StageLayout = ({
 	children,
 	stage,
 	showLegalLinks,
+	legalDepartment,
 	showLoginLink,
 	showRegistrationLink,
 	loginParams,
+	loginState,
 	registrationUrl,
 	showRegistrationInfoDrawer,
-	mobileHero = 'hero'
+	mobileHero = 'hero',
+	headerStart,
+	renderHeaderAction
 }: StageLayoutProps) => {
 	const trigger = useScrollTrigger();
 	const { t: translate } = useTranslation();
@@ -71,18 +98,22 @@ export const StageLayout = ({
 	const registrationRoute = toSameOriginRoute(resolvedRegistrationUrl);
 	const registrationHref = registrationRoute || resolvedRegistrationUrl;
 	const platformVersion = getPlatformVersion();
+	const identityOwner = useBuildIdentityOwner();
+	const showIdentity = Boolean(platformVersion || getBuildCommit());
 
 	return (
 		<div className={clsx('stageLayout', className)}>
 			<StageMobileHero
 				variant={mobileHero}
+				leadingAction={renderHeaderAction?.('onPrimary')}
 				action={
 					showLoginLink && (
 						<IconButton
 							{...(loginRoute && routerContext
 								? {
 										component: RouterLink,
-										to: loginRoute
+										to: loginRoute,
+										state: loginState
 									}
 								: { href: loginRoute || loginUrl })}
 							color="inherit"
@@ -133,6 +164,30 @@ export const StageLayout = ({
 						}
 					}}
 				>
+					{headerStart && (
+						<Box
+							className="stageLayout__headerStart"
+							/* The header row spans the whole page, the white
+							   column only its right 60vw (the same split the
+							   footer bar uses). Without the offset the slot
+							   lands over the red stage. */
+							sx={{
+								mr: 'auto',
+								ml: { lg: '40vw' },
+								minWidth: 0
+							}}
+						>
+							{headerStart}
+						</Box>
+					)}
+					{renderHeaderAction && (
+						<Box
+							className="stageLayout__headerAction"
+							sx={{ display: { xs: 'none', lg: 'block' } }}
+						>
+							{renderHeaderAction('surface')}
+						</Box>
+					)}
 					{selectableLocales.length > 1 && (
 						<Box sx={{ display: { xs: 'none', lg: 'block' } }}>
 							<LocaleSwitchPill />
@@ -148,7 +203,8 @@ export const StageLayout = ({
 								{...(loginRoute && routerContext
 									? {
 											component: RouterLink,
-											to: loginRoute
+											to: loginRoute,
+											state: loginState
 										}
 									: {
 											component: 'a',
@@ -256,8 +312,12 @@ export const StageLayout = ({
 					{children}
 				</Box>
 
-				{(showLegalLinks || platformVersion) && (
-					<div className="stageLayout__footer">
+				{(showLegalLinks || showIdentity) && (
+					<div
+						className={clsx('stageLayout__footer', {
+							'stageLayout__footer--withIdentity': showIdentity
+						})}
+					>
 						{showLegalLinks && (
 							<div className={`stageLayout__legalLinks`}>
 								<LegalLinks
@@ -277,18 +337,26 @@ export const StageLayout = ({
 											rawLabel={rawLabel}
 											url={url}
 											textClassName="stageLayout__legalLinksItem"
+											{...(legalDepartment
+												? {
+														scope: 'agency' as const,
+														agencyId:
+															legalDepartment.agencyId,
+														topicId:
+															legalDepartment.topicId
+													}
+												: {})}
 										/>
 									)}
 								</LegalLinks>
 							</div>
 						)}
-						{platformVersion && (
-							<Text
-								className="stageLayout__platformVersion"
-								type="infoSmall"
-								text={platformVersion}
-							/>
-						)}
+						{showIdentity &&
+							(identityOwner ? (
+								<div ref={identityOwner.setStageTarget} />
+							) : (
+								<BuildIdentity variant="stage" />
+							))}
 					</div>
 				)}
 			</Box>

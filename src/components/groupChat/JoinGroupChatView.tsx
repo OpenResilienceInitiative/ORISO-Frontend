@@ -6,9 +6,10 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
-	ActiveSessionContext,
-	useTopic
+	NotificationsContext,
+	ActiveSessionContext
 } from '../../globalState';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
@@ -32,14 +33,16 @@ import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
 import { OVERLAY_REQUEST } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
-import { FALLBACK_LNG } from '../../i18n';
 import { WaitingAreaRules } from './WaitingAreaRules';
-import { WaitingAreaCountdown } from './waitingClock/WaitingAreaCountdown';
+import {
+	WaitingAreaCountdown,
+	WaitingAreaMotionToggle
+} from './waitingClock/WaitingAreaCountdown';
+import { usePrefersReducedMotion } from '../../hooks/usePrefersReducedMotion';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
-import { resolveGroupChatAuthorContent } from './groupChatAuthorContent';
+import { useGroupChatAuthorContent } from './useGroupChatAuthorContent';
 import { getGroupChatPlannedStart } from './groupChatDate';
 import { getGroupChatWaitingAreaVisibility } from './groupChatHelpers';
-import { translateWithFallback } from '../../utils/translationFallback';
 
 interface JoinGroupChatViewProps {
 	forceBannedOverlay?: boolean;
@@ -50,23 +53,15 @@ export const JoinGroupChatView = ({
 	forceBannedOverlay = false,
 	bannedUsers = []
 }: JoinGroupChatViewProps) => {
-	const { t: translate, i18n } = useTranslation([
-		'common',
-		'consultingTypes'
-	]);
-	const tr = useCallback(
-		(key: string, fallback: string, options?: Record<string, unknown>) =>
-			translateWithFallback(translate, key, fallback, options),
-		[translate]
-	);
+	const { t: translate } = useTranslation(['common', 'consultingTypes']);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const notifications = useContext(NotificationsContext);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
 	const consultingType = useConsultingType(activeSession.item.consultingType);
-	const topic = useTopic(activeSession.item.consultingType);
 
 	const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
@@ -238,7 +233,12 @@ export const JoinGroupChatView = ({
 				: GROUP_CHAT_API.JOIN;
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
-			.catch(() => {
+			.catch((error) => {
+				const notice = getCounsellingDpaNotification(error, translate);
+				if (notice && notifications) {
+					notifications.addNotification(notice);
+					return;
+				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
 			})
@@ -266,58 +266,30 @@ export const JoinGroupChatView = ({
 		}
 	}, [forceBannedOverlay, bannedUserOverlay]);
 
-	const legacyGroupChatRules = useMemo(() => {
-		const transKeys = [
-			`consultingType.${topic?.id ?? 'noConsultingType'}.groupChatRules`,
-			`consultingType.fallback.groupChatRules`
-		];
-
-		// Get groupChat rules from fallback_lng to get the count and make i18n
-		// fallback chain working for non translated rules (de -> de@informal)
-		const groupChatRuleKeys = Object.keys(
-			translate(transKeys, {
-				returnObjects: true,
-				defaultValue: consultingType?.groupChat?.groupChatRules || [],
-				lng: FALLBACK_LNG,
-				ns: 'consultingTypes'
-			})
-		);
-
-		// Then translate every rule by its own translation
-		return groupChatRuleKeys.map((key) =>
-			translate(
-				transKeys.map((transKey) => `${transKey}.${key}`),
-				{ ns: 'consultingTypes' }
-			)
-		);
-	}, [consultingType?.groupChat?.groupChatRules, topic?.id, translate]);
-
-	const authorContent = useMemo(
-		() =>
-			resolveGroupChatAuthorContent({
-				language: i18n.resolvedLanguage || i18n.language,
-				sourceLanguage: activeSession.item.sourceLanguage,
-				hintMessageTranslations:
-					activeSession.item.hintMessageTranslations,
-				groupChatRulesTranslations:
-					activeSession.item.groupChatRulesTranslations,
-				legacyHintMessage: activeSession.item.hintMessage,
-				legacyRules: legacyGroupChatRules
-			}),
-		[
-			activeSession.item.groupChatRulesTranslations,
-			activeSession.item.hintMessage,
-			activeSession.item.hintMessageTranslations,
-			activeSession.item.sourceLanguage,
-			i18n.language,
-			i18n.resolvedLanguage,
-			legacyGroupChatRules
-		]
-	);
+	const authorContent = useGroupChatAuthorContent({
+		consultingType: activeSession.item.consultingType,
+		sourceLanguage: activeSession.item.sourceLanguage,
+		hintMessage: activeSession.item.hintMessage,
+		hintMessageTranslations: activeSession.item.hintMessageTranslations,
+		groupChatRulesTranslations:
+			activeSession.item.groupChatRulesTranslations
+	});
 	const groupChatRules = authorContent.rules;
 	const plannedStart = getGroupChatPlannedStart(activeSession.item);
 	const { showCountdown, showRules, showRulesHeadline } =
 		getGroupChatWaitingAreaVisibility(activeSession, plannedStart);
+	const [animationOff, setAnimationOff] = useState(false);
+	const prefersReducedMotion = usePrefersReducedMotion();
+	// The counsellor who opens the room gets her own waiting text (#1499).
+	const canStartChat =
+		hasUserAuthority(AUTHORITIES.CREATE_NEW_CHAT, userData) &&
+		!activeSession.item.active;
+	// Calendar action and motion switch sit in the footer next to the main
+	// button, not above and below the clock: every row stacked around the
+	// clock is height the LED clock cannot have (#1499, Frank: the effect only
+	// works when the clock is big — make room before shrinking it).
+	const showCalendar =
+		showCountdown && !!plannedStart && plannedStart.getTime() > Date.now();
 
 	if (redirectToSessionsList) {
 		mobileListView();
@@ -353,24 +325,21 @@ export const JoinGroupChatView = ({
 							plannedStart={plannedStart}
 							welcomeText={authorContent.hintMessage || undefined}
 							rules={groupChatRules}
-							calendarSlot={
-								<GroupChatCalendarMenu
-									start={plannedStart}
-									durationMinutes={
-										activeSession.item.duration
-									}
-									eventId={activeSession.item.id}
-								/>
+							animationOff={animationOff}
+							onAnimationOffChange={setAnimationOff}
+							audience={
+								canStartChat ? 'moderator' : 'participant'
 							}
+							hideMotionToggle
 						/>
 					</div>
 				)}
 				{showRules && (
 					<WaitingAreaRules
 						rules={groupChatRules}
-						ariaLabel={tr(
-							'groupChat.join.waitingArea.rulesLabel',
-							'Chat rules'
+						animationOff={animationOff}
+						ariaLabel={translate(
+							'groupChat.join.waitingArea.rulesLabel'
 						)}
 					/>
 				)}
@@ -390,11 +359,36 @@ export const JoinGroupChatView = ({
 							)}
 						</p>
 					)}
-				<Button
-					item={buttonItem}
-					buttonHandle={handleButtonClick}
-					disabled={isButtonDisabled}
-				/>
+				<div className="joinChat__actions">
+					{showCalendar && (
+						<div className="joinChat__actionsStart">
+							<GroupChatCalendarMenu
+								start={plannedStart}
+								durationMinutes={activeSession.item.duration}
+								eventId={activeSession.item.id}
+							/>
+						</div>
+					)}
+					<div className="joinChat__actionsMain">
+						<Button
+							item={buttonItem}
+							buttonHandle={handleButtonClick}
+							disabled={isButtonDisabled}
+						/>
+					</div>
+					{showCountdown && plannedStart && (
+						<div className="joinChat__actionsEnd">
+							<WaitingAreaMotionToggle
+								label={translate(
+									'groupChat.join.waitingArea.countdown.toggleLabel'
+								)}
+								checked={animationOff || prefersReducedMotion}
+								disabled={prefersReducedMotion}
+								onChange={setAnimationOff}
+							/>
+						</div>
+					)}
+				</div>
 			</div>
 
 			{requestOverlayVisible && (

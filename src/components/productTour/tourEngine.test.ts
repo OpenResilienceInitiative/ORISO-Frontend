@@ -3,10 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
 	effectivePlacement,
 	initialTourRunState,
+	isTourAvailable,
 	mapStepsToJoyride,
-	reduceTourCallback
+	reduceTourCallback,
+	resolveTourSteps,
+	routeMatches
 } from './tourEngine';
-import type { TourStep } from './types';
+import type { TourDefinition, TourStep } from './types';
 
 describe('mapStepsToJoyride', () => {
 	it('maps a centered step without target to a body-centered joyride step', () => {
@@ -66,6 +69,128 @@ describe('mapStepsToJoyride', () => {
 
 		expect(joyrideSteps[0].placement).toBe('bottom');
 		expect(joyrideSteps[1].placement).toBe('right');
+	});
+});
+
+describe('mapStepsToJoyride advanceOn', () => {
+	it('carries advanceOn into the joyride step data so the tooltip can hide Next', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{
+				id: 'accept',
+				target: 'enquiry-accept-button',
+				titleKey: 't',
+				contentKey: 'c',
+				advanceOn: { type: 'click' }
+			}
+		]);
+
+		expect(joyrideSteps[0].data).toEqual({ advanceOn: { type: 'click' } });
+	});
+
+	it('leaves the step data untouched for ordinary steps', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{ id: 'a', target: 'a-target', titleKey: 't', contentKey: 'c' }
+		]);
+
+		expect(joyrideSteps[0]).not.toHaveProperty('data');
+	});
+});
+
+describe('mapStepsToJoyride hideBack', () => {
+	it('carries hideBack into the joyride step data so the tooltip can hide Back', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{
+				id: 'after-accept',
+				target: '',
+				titleKey: 't',
+				contentKey: 'c',
+				hideBack: true
+			}
+		]);
+
+		expect(joyrideSteps[0].data).toEqual({ hideBack: true });
+	});
+
+	it('keeps advanceOn and hideBack side by side', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{
+				id: 'a',
+				target: 'a-target',
+				titleKey: 't',
+				contentKey: 'c',
+				advanceOn: { type: 'click' },
+				hideBack: true
+			}
+		]);
+
+		expect(joyrideSteps[0].data).toEqual({
+			advanceOn: { type: 'click' },
+			hideBack: true
+		});
+	});
+
+	it('leaves the step data untouched when hideBack is not set', () => {
+		const joyrideSteps = mapStepsToJoyride([
+			{ id: 'a', target: 'a-target', titleKey: 't', contentKey: 'c' }
+		]);
+
+		expect(joyrideSteps[0]).not.toHaveProperty('data');
+	});
+});
+
+describe('routeMatches', () => {
+	const at = (pathname: string, search = '') => ({ pathname, search });
+
+	it('matches an exact path', () => {
+		expect(
+			routeMatches(
+				'/sessions/consultant/sessionPreview',
+				at('/sessions/consultant/sessionPreview')
+			)
+		).toBe(true);
+	});
+
+	it('does not match another path or a longer one', () => {
+		expect(routeMatches('/sessions/consultant', at('/profile'))).toBe(
+			false
+		);
+		expect(
+			routeMatches(
+				'/sessions/consultant',
+				at('/sessions/consultant/sessionView')
+			)
+		).toBe(false);
+	});
+
+	it('matches dynamic segments of a router pattern', () => {
+		const path = '/sessions/consultant/sessionView/:roomId/:sessionId';
+
+		expect(
+			routeMatches(path, at('/sessions/consultant/sessionView/abc/42'))
+		).toBe(true);
+		expect(
+			routeMatches(path, at('/sessions/consultant/sessionView/abc'))
+		).toBe(false);
+	});
+
+	it('ignores a trailing slash', () => {
+		expect(routeMatches('/profile', at('/profile/'))).toBe(true);
+	});
+
+	it('ignores the location query when the path names none', () => {
+		expect(routeMatches('/profile', at('/profile', '?tab=help'))).toBe(
+			true
+		);
+	});
+
+	it('requires every query param the path names', () => {
+		const path = '/sessions/consultant/sessionView/:rid/:id?channel=team';
+		const base = '/sessions/consultant/sessionView/a/1';
+
+		expect(routeMatches(path, at(base, '?channel=team'))).toBe(true);
+		expect(routeMatches(path, at(base, '?x=1&channel=team'))).toBe(true);
+		expect(routeMatches(path, at(base, '?channel=main'))).toBe(false);
+		expect(routeMatches(path, at(base))).toBe(false);
 	});
 });
 
@@ -176,6 +301,23 @@ describe('reduceTourCallback', () => {
 		expect(events).toContain('target_missing');
 		expect(state.stepIndex).toBe(2);
 		expect(state.run).toBe(true);
+	});
+
+	it('stops a guided action when its required target disappears during the run', () => {
+		const { state, events } = reduceTourCallback(
+			{ status: 'in_progress', stepIndex: 1, run: true },
+			cb({ type: EVENTS.TARGET_NOT_FOUND, index: 1 }),
+			4,
+			[{}, {}, {}, {}],
+			'stop'
+		);
+
+		expect(state).toEqual({
+			status: 'in_progress',
+			stepIndex: 1,
+			run: false
+		});
+		expect(events).toEqual(['target_missing']);
 	});
 
 	it('closes without completion when the final step target is missing', () => {
@@ -376,5 +518,109 @@ describe('effectivePlacement axis-specific coverage', () => {
 				{ width: 390, height: 844 }
 			)
 		).toBe('center');
+	});
+});
+
+describe('resolveTourSteps', () => {
+	const step = (id: string, when?: TourStep['when']): TourStep => ({
+		id,
+		target: '',
+		titleKey: `t.${id}`,
+		contentKey: `c.${id}`,
+		...(when ? { when } : {})
+	});
+	const tour = (
+		steps: TourStep[],
+		when?: TourDefinition['when']
+	): TourDefinition => ({
+		id: 'variant-tour',
+		version: 1,
+		surface: 'frontend',
+		audiences: ['consultant'],
+		titleKey: 't',
+		summaryKey: 's',
+		steps,
+		...(when ? { when } : {})
+	});
+	const team = { flag: 'featureTeamDiscussionEnabled' };
+
+	it('keeps steps without a condition and returns them unchanged', () => {
+		const plain = [step('a'), step('b')];
+
+		expect(resolveTourSteps(tour(plain), {})).toEqual(plain);
+	});
+
+	it('treats an unset flag as ON, so a step needing the flag stays', () => {
+		const steps = [step('a'), step('team', team), step('b')];
+
+		const resolved = resolveTourSteps(tour(steps), { flags: {} });
+
+		expect(resolved.map((s) => s.id)).toEqual(['a', 'team', 'b']);
+	});
+
+	it('drops a step whose flag is explicitly off and keeps the order of the rest', () => {
+		const steps = [step('a'), step('team', team), step('b')];
+
+		const resolved = resolveTourSteps(tour(steps), {
+			flags: { featureTeamDiscussionEnabled: false }
+		});
+
+		expect(resolved.map((s) => s.id)).toEqual(['a', 'b']);
+	});
+
+	it('supports a step that only shows while the flag is off', () => {
+		const steps = [
+			step('a'),
+			step('no-team', { ...team, equals: false }),
+			step('b')
+		];
+
+		expect(
+			resolveTourSteps(tour(steps), {
+				flags: { featureTeamDiscussionEnabled: false }
+			}).map((s) => s.id)
+		).toEqual(['a', 'no-team', 'b']);
+		expect(
+			resolveTourSteps(tour(steps), {
+				flags: { featureTeamDiscussionEnabled: true }
+			}).map((s) => s.id)
+		).toEqual(['a', 'b']);
+	});
+
+	it('requires every condition of a list', () => {
+		const steps = [
+			step('both', [team, { flag: 'featureSupervisionEnabled' }])
+		];
+
+		expect(
+			resolveTourSteps(tour(steps), {
+				flags: { featureSupervisionEnabled: false }
+			})
+		).toEqual([]);
+		expect(resolveTourSteps(tour(steps), {})).toHaveLength(1);
+	});
+
+	it('returns no steps when the tour-level condition fails', () => {
+		const supervision = { flag: 'featureSupervisionEnabled' };
+		const t = tour([step('a')], supervision);
+
+		expect(
+			resolveTourSteps(t, { flags: { featureSupervisionEnabled: false } })
+		).toEqual([]);
+		expect(
+			isTourAvailable(t, { flags: { featureSupervisionEnabled: false } })
+		).toBe(false);
+		expect(isTourAvailable(t, {})).toBe(true);
+	});
+
+	it('strips resolved conditions so resolving twice cannot disagree', () => {
+		const steps = [step('a'), step('no-team', { ...team, equals: false })];
+		const flagsOff = { flags: { featureTeamDiscussionEnabled: false } };
+
+		const once = resolveTourSteps(tour(steps), flagsOff);
+		const twice = resolveTourSteps(tour(once), {});
+
+		expect(once.every((s) => s.when === undefined)).toBe(true);
+		expect(twice.map((s) => s.id)).toEqual(['a', 'no-team']);
 	});
 });

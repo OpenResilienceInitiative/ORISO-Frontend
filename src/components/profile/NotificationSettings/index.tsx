@@ -7,6 +7,7 @@ import { Switch } from '../../Switch';
 import { NotificationDenied } from '../BrowserNotifications/NotificationDenied';
 import { useNotificationSettings } from '../../../hooks/useNotificationSettings';
 import { DoNotDisturbControl } from './DoNotDisturbControl';
+import { DisplayFilterProfileSection } from './DisplayFilterProfileSection';
 import { NotificationConfigView } from './NotificationConfigDialog';
 import { familyLabelKey } from '../../notificationsCenter/eventDescriptors/registry';
 import {
@@ -75,17 +76,11 @@ export const NotificationSettingsPanel = () => {
 		<div className="notifications__content">
 			<div className="profile__content__title">
 				<Headline
-					text={t(
-						'profile.notificationSettings.title',
-						'Benachrichtigungen'
-					)}
+					text={t('profile.notificationSettings.title')}
 					semanticLevel="5"
 				/>
 				<Text
-					text={t(
-						'profile.notificationSettings.description',
-						'Diese Einstellungen gelten für Ihr Konto auf allen Geräten und Browsern.'
-					)}
+					text={t('profile.notificationSettings.description')}
 					type="standard"
 					className="tertiary"
 				/>
@@ -162,6 +157,11 @@ export const NotificationSettingsPanel = () => {
 				}
 				onPreview={previewNotificationSound}
 			/>
+
+			<hr />
+
+			{/* #1377 slice 6: per-list display-filter defaults + #593 per-event-type view. */}
+			<DisplayFilterProfileSection />
 
 			<hr />
 

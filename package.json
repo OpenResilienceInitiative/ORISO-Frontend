@@ -33,7 +33,6 @@
 		"@opentelemetry/exporter-metrics-otlp-http": "^0.220.0",
 		"@opentelemetry/resources": "^2.9.0",
 		"@opentelemetry/sdk-metrics": "^2.9.0",
-		"@stomp/stompjs": "^7.0.0",
 		"@storybook/addon-designs": "^11.1.3",
 		"@storybook/addon-mcp": "^0.6.0",
 		"@storybook/react-vite": "^10.5.7",
@@ -112,7 +111,6 @@
 		"resolve-url-loader": "^5.0.0",
 		"sanitize-html": "^2.17.5",
 		"semver": "^7.5.4",
-		"sockjs-client": "^1.6.1",
 		"source-map-loader": "^5.0.0",
 		"stacktrace-js": "^2.0.2",
 		"styled-components": "^6.4.4",
@@ -265,8 +263,11 @@
 		"generate:call-theme": "vite-node -c vitest.config.mts scripts/generate-call-theme.ts",
 		"test:credentials": "playwright test --config playwright.credentials.config.ts",
 		"emails:build": "vite-node src/emails/scripts/buildEmails.mts",
+		"emails:verify-call-binding": "vite-node src/emails/scripts/verifyCallEmailBinding.mts",
 		"emails:keycloak": "vite-node src/emails/scripts/buildKeycloakTheme.mts",
-		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts"
+		"emails:mailservice": "vite-node src/emails/scripts/buildMailServiceTemplates.mts",
+		"test:enquiry-team": "cross-env REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001 REACT_APP_KEYCLOAK_REALM=online-beratung REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test CYPRESS_WS_URL=http://127.0.0.1:9002 concurrently --names server,test --kill-others --success command-test \"npm run cypress:start-cra\" \"wait-on --timeout 300000 http://127.0.0.1:9001 && cypress run --browser chrome --spec cypress/e2e/enquiry-team-panel.cy.ts --config retries=0,defaultCommandTimeout=10000,baseUrl=http://127.0.0.1:9001 --env REACT_APP_API_URL=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_ORIGIN=http://127.0.0.1:9001,REACT_APP_KEYCLOAK_REALM=online-beratung,REACT_APP_MATRIX_HOMESERVER_URL=https://matrix.test\"",
+		"emails:sync": "vite-node src/emails/scripts/syncEmailTranslations.mts"
 	},
 	"eslintConfig": {
 		"extends": [

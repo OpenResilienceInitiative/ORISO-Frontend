@@ -85,4 +85,32 @@ describe('toRegistrationUsername', () => {
 			true
 		);
 	});
+
+	/* German spells its umlauts out when it cannot draw the dots: Löwe is
+	   loewe, not lowe (Frank, 2026-09-10). The live chat's door shows this
+	   string to the guest, so a swallowed umlaut is a visible typo. */
+	it('spells out umlauts instead of stripping them', () => {
+		const built = toRegistrationUsername({
+			displayName: 'stiller Löwe Shin',
+			animalLabel: 'Löwe',
+			name: 'Shin'
+		} as never);
+		expect(built).toMatch(/^loewe_shin_\d{4}$/);
+
+		expect(
+			toRegistrationUsername({
+				displayName: 'kleiner Käfer Uli',
+				animalLabel: 'Käfer',
+				name: 'Uli'
+			} as never)
+		).toMatch(/^kaefer_uli_\d{4}$/);
+
+		expect(
+			toRegistrationUsername({
+				displayName: 'weiße Möwe Bo',
+				animalLabel: 'Möwe',
+				name: 'Straße'
+			} as never)
+		).toMatch(/^moewe_strasse_\d{4}$/);
+	});
 });

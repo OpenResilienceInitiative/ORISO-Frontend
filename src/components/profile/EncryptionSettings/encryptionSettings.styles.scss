@@ -92,3 +92,11 @@
 	overflow-y: auto;
 	background: var(--m3-surface, #fcf9f9);
 }
+
+.encryptionSettings__passwordRecovery {
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: $grid-base-two;
+	}
+}

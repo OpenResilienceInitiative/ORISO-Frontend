@@ -21,10 +21,12 @@ Format:
 - Context: #1194 enquiry phase (`docs/agent-tasks/2026-09-04_1194-enquiry-phase/`)
 - Lesson: `test:unit` (6GB) plus `build` (8GB) in parallel can stall the last Vitest worker (TipTap `emojiInsert.test.tsx` GC thrash). Isolated, that file is 47ms. Run the two gates sequentially. Use `./node_modules/.bin/vitest`, not `npx vitest` (npx may fetch Vitest 5).
 
-## 2026-08-30 — Storybook retry must drain pipes before `close`
+## 2026-08-31 — positional t() second args hide leftover English
 
-- Context: PR #1229 Storybook CI (`scripts/run-storybook-tests.mjs`)
-- Lesson: The Vitest disconnect line is the last stderr chunk. Resolving the wrapper on `close` without waiting for stdout/stderr `end` drops it, so the retry never fires. Drain both streams; also treat `132 passed (171)` + `Errors 1 error` as the abort signal.
+- Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
+- Lesson: After dropping `t(key, 'literal')`, still search for `t(key, variable)` whose variable holds DE/EN (preset labels, `phase.charAt(0)…`). A SLICE_FILES scan that only matches quoted literals will call the platform clean while those fallbacks still snap the UI.
+
+## 2026-08-30 — Storybook retry must drain pipes before `close`
 
 ## 2026-08-02 — PR screenshots need a non-ignored docs path
 

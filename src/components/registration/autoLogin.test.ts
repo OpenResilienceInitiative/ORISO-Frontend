@@ -1,3 +1,8 @@
+import {
+	clearLoginRecoveryPassword,
+	consumeLoginRecoveryPassword,
+	stageLoginRecoveryPassword
+} from '../../services/loginRecoveryHandoff';
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -86,6 +91,7 @@ const matrixResponse = {
 describe('autoLogin', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		clearLoginRecoveryPassword();
 		mockAppConfig.multitenancyWithSingleDomainEnabled = false;
 		mockAppConfig.useTenantService = false;
 		mockAppConfig.blockConsultantAppLogin = false;
@@ -93,6 +99,41 @@ describe('autoLogin', () => {
 		vi.mocked(getKeycloakAccessToken).mockResolvedValue(keycloakResponse);
 		vi.mocked(getMatrixAccessToken).mockResolvedValue(matrixResponse);
 		vi.mocked(isConsultantAccessToken).mockReturnValue(false);
+	});
+
+	it('stages a one-use password only after complete OTP authentication and Matrix login', async () => {
+		await autoLogin({
+			username: 'synthetic',
+			password: 'synthetic-password',
+			otp: '123456'
+		});
+		expect(getKeycloakAccessToken).toHaveBeenCalledWith(
+			'synthetic',
+			'synthetic-password',
+			'123456'
+		);
+		expect(await consumeLoginRecoveryPassword(matrixResponse.userId)).toBe(
+			'synthetic-password'
+		);
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
+	});
+	it('clears a stale handoff and never stages credentials when OTP is required or rejected', async () => {
+		await stageLoginRecoveryPassword(
+			matrixResponse.userId,
+			'stale-synthetic'
+		);
+		vi.mocked(getKeycloakAccessToken).mockRejectedValue(
+			new Error('OTP_REQUIRED')
+		);
+		await expect(
+			autoLogin({ username: 'synthetic', password: 'synthetic-password' })
+		).rejects.toThrow();
+		expect(
+			await consumeLoginRecoveryPassword(matrixResponse.userId)
+		).toBeNull();
+		expect(getMatrixAccessToken).not.toHaveBeenCalled();
 	});
 
 	// The consultant login block (PR #273 originally blocked EVERY counsellor
@@ -167,10 +208,7 @@ describe('autoLogin', () => {
 			'keycloak-refresh',
 			600
 		);
-		expect(getMatrixAccessToken).toHaveBeenCalledWith(
-			'shanzae@example.com',
-			'secret!'
-		);
+		expect(getMatrixAccessToken).toHaveBeenCalledWith();
 		expect(persistMatrixLoginData).toHaveBeenCalledWith(matrixResponse);
 	});
 
@@ -322,6 +360,28 @@ describe('redirectToApp', () => {
 });
 
 describe('redirectToApp restorePath (#1193 Job 3: resume last session)', () => {
+	it('returns to the selected email switch after login', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				'/sessions/consultant/sessionView/session/3363',
+				'/profile/einstellungen/email?mail=tagesuebersicht'
+			)
+		).toBe('/profile/einstellungen/email?mail=tagesuebersicht');
+	});
+
+	it('rejects an external email-settings return target', () => {
+		expect(
+			buildAppRedirectPath(
+				undefined,
+				undefined,
+				null,
+				'https://evil.example/profile/einstellungen/email'
+			)
+		).toBe('/sessions');
+	});
+
 	it('lands on the remembered consultant session', () => {
 		expect(
 			buildAppRedirectPath(

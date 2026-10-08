@@ -32,6 +32,7 @@
 
 	&--withIcon & {
 		&__icon {
+			margin-right: $grid-base;
 			display: flex;
 			align-items: center;
 			justify-content: center;

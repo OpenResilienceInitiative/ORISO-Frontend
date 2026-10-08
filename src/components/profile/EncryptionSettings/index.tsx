@@ -1,11 +1,27 @@
+import { reauthenticateRecovery } from '../../../services/reauthenticateRecovery';
+import {
+	enrollPasswordRecoveryAfterKeyRecovery,
+	PasswordRecoveryRepairBlockedError,
+	PasswordRecoveryWorkLimitError
+} from '../../../services/matrixPasswordRecoveryService';
+import { getChatRecoveryPolicy } from '../../../services/chatRecoveryPolicy';
+import { setRecoveryRuntimeStatus } from '../../../services/recoveryReminderState';
+import { UserDataContext } from '../../../globalState';
+import {
+	dismissRecoveryReminder,
+	useRecoveryRuntimeStatus,
+	subscribeRecoveryState
+} from '../../../services/recoveryReminderState';
+import { logout } from '../../logout/logout';
 import * as React from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { Headline } from '../../headline/Headline';
 import { Text } from '../../text/Text';
 import { Button, BUTTON_TYPES } from '../../button/Button';
 import { InputField, InputFieldItem } from '../../inputField/InputField';
+import { OrisoTextField } from '../../form/OrisoTextField';
 import { getMatrixClientService } from '../../../services/matrixClientRegistry';
 import {
 	EncryptionSetupStatus,
@@ -19,7 +35,8 @@ import {
 } from '../../../services/matrixKeyBackupService';
 import {
 	clearPendingRecoveryKey,
-	getPendingRecoveryKey,
+	loadPendingRecoveryKey,
+	markPendingRecoveryKeyPasswordProtected,
 	RecoverySetupBusyError,
 	savePendingRecoveryKey,
 	withRecoverySetupLock
@@ -64,7 +81,10 @@ export const EncryptionSettingsPanel = ({
 	clientOverride,
 	initialStatusOverride
 }: EncryptionSettingsPanelProps = {}) => {
+	const enrollmentForm = useRef<HTMLFormElement>(null);
 	const { t } = useTranslation();
+	const userData = useContext(UserDataContext)?.userData;
+	const passwordMode = userData?.chatRecoveryMode === 'LOGIN_PASSWORD';
 	const [phase, setPhase] = useState<PanelPhase>('loading');
 	const [status, setStatus] = useState<EncryptionSetupStatus | null>(
 		initialStatusOverride ?? null
@@ -81,6 +101,19 @@ export const EncryptionSettingsPanel = ({
 	const [recoveredCount, setRecoveredCount] = useState<number | null>(null);
 	const [userId, setUserId] = useState<string | null>(null);
 	const [keyFromSilentSetup, setKeyFromSilentSetup] = useState(false);
+	const [loginPassword, setLoginPassword] = useState('');
+	const [confirmLoginPassword, setConfirmLoginPassword] = useState('');
+	const [recoveryOtp, setRecoveryOtp] = useState('');
+	const passwordMismatch =
+		confirmLoginPassword.length > 0 &&
+		loginPassword !== confirmLoginPassword;
+	const passwordStatus = useRecoveryRuntimeStatus(userId ?? '');
+	const canOfferPasswordRecovery = ![
+		'idle',
+		'pending',
+		'busy',
+		'ready'
+	].includes(passwordStatus);
 
 	const getReadyClient = useCallback(
 		(): Promise<MatrixClient | null> =>
@@ -111,7 +144,7 @@ export const EncryptionSettingsPanel = ({
 			const currentUserId = client.getUserId();
 			setUserId(currentUserId);
 			const pendingKey = currentUserId
-				? getPendingRecoveryKey(currentUserId)
+				? await loadPendingRecoveryKey(currentUserId)
 				: null;
 			// The background setup had no dialog to show the key in, so this
 			// panel is where the user finally gets to see and save it.
@@ -141,6 +174,14 @@ export const EncryptionSettingsPanel = ({
 		}
 		void refreshStatus();
 	}, [refreshStatus, initialStatusOverride]);
+
+	useEffect(
+		() =>
+			subscribeRecoveryState(() => {
+				void refreshStatus();
+			}),
+		[refreshStatus]
+	);
 
 	const onSetUp = useCallback(async () => {
 		setBusy(true);
@@ -172,12 +213,7 @@ export const EncryptionSettingsPanel = ({
 			setPhase('showKey');
 		} catch (setupError) {
 			if (setupError instanceof RecoverySetupBusyError) {
-				setError(
-					t(
-						'profile.encryption.setup.busy',
-						'Ihr Tresor wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund. Bitte warten Sie einen Moment und laden Sie die Seite neu.'
-					)
-				);
+				setError(t('profile.encryption.setup.busy'));
 				return;
 			}
 			setSetupFailurePhase(
@@ -187,12 +223,7 @@ export const EncryptionSettingsPanel = ({
 						? setupError.stage
 						: 'unknown'
 			);
-			setError(
-				t(
-					'profile.encryption.setup.error',
-					'Die Einrichtung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
-				)
-			);
+			setError(t('profile.encryption.setup.error'));
 		} finally {
 			setBusy(false);
 		}
@@ -203,6 +234,7 @@ export const EncryptionSettingsPanel = ({
 		// the moment the user confirms it is stored safely.
 		if (userId) {
 			clearPendingRecoveryKey(userId);
+			dismissRecoveryReminder(userId);
 		}
 		setRecoveryKeyToShow(null);
 		setKeyFromSilentSetup(false);
@@ -220,7 +252,18 @@ export const EncryptionSettingsPanel = ({
 			const result = await executeWithReadyEncryptionClient(
 				clientOverride,
 				getMatrixClientService(),
-				(client) => recoverWithKey(client, recoveryInput)
+				async (client) => {
+					const recovered = await recoverWithKey(
+						client,
+						recoveryInput
+					);
+					if (passwordMode && client.getUserId())
+						savePendingRecoveryKey(
+							client.getUserId()!,
+							recoveryInput
+						);
+					return recovered;
+				}
 			);
 			if (!result) {
 				setPhase('unavailable');
@@ -232,19 +275,13 @@ export const EncryptionSettingsPanel = ({
 		} catch (recoverError) {
 			setError(
 				recoverError instanceof InvalidRecoveryKeyError
-					? t(
-							'profile.encryption.recover.invalidKey',
-							'Dieser Ersatzschlüssel ist ungültig. Bitte prüfen Sie die Eingabe.'
-						)
-					: t(
-							'profile.encryption.recover.error',
-							'Die Wiederherstellung ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
-						)
+					? t('profile.encryption.recover.invalidKey')
+					: t('profile.encryption.recover.error')
 			);
 		} finally {
 			setBusy(false);
 		}
-	}, [clientOverride, recoveryInput, refreshStatus, t]);
+	}, [clientOverride, recoveryInput, refreshStatus, t, passwordMode]);
 
 	const onReset = useCallback(async () => {
 		setBusy(true);
@@ -258,12 +295,7 @@ export const EncryptionSettingsPanel = ({
 			);
 			await refreshStatus();
 		} catch {
-			setError(
-				t(
-					'profile.encryption.reset.error',
-					'Das Zurücksetzen ist fehlgeschlagen. Bitte versuchen Sie es erneut.'
-				)
-			);
+			setError(t('profile.encryption.reset.error'));
 		} finally {
 			setBusy(false);
 		}
@@ -273,24 +305,15 @@ export const EncryptionSettingsPanel = ({
 		id: 'encryptionRecoveryKey',
 		name: 'encryptionRecoveryKey',
 		type: 'text',
-		label: t('profile.encryption.recover.inputLabel', 'Ersatzschlüssel'),
+		label: t('profile.encryption.recover.inputLabel'),
 		content: recoveryInput
 	};
 
 	const renderHeader = () => (
 		<div className="profile__content__title">
-			<Headline
-				text={t(
-					'profile.encryption.title',
-					'Verschlüsselung & Wiederherstellung'
-				)}
-				semanticLevel="5"
-			/>
+			<Headline text={t('profile.encryption.title')} semanticLevel="5" />
 			<Text
-				text={t(
-					'profile.encryption.description',
-					'Ihre Nachrichten sind Ende-zu-Ende verschlüsselt. Mit einem Ersatzschlüssel können Sie Ihren Gesprächsverlauf auch auf einem neuen Gerät weiterlesen.'
-				)}
+				text={t('profile.encryption.description')}
 				type="standard"
 				className="tertiary"
 			/>
@@ -302,7 +325,7 @@ export const EncryptionSettingsPanel = ({
 			<div className="encryptionSettings">
 				{renderHeader()}
 				<Text
-					text={t('profile.encryption.loading', 'Wird geladen …')}
+					text={t('profile.encryption.loading')}
 					type="standard"
 					className="tertiary"
 				/>
@@ -315,10 +338,7 @@ export const EncryptionSettingsPanel = ({
 			<div className="encryptionSettings">
 				{renderHeader()}
 				<Text
-					text={t(
-						'profile.encryption.unavailable',
-						'Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.'
-					)}
+					text={t('profile.encryption.unavailable')}
 					type="standard"
 					className="tertiary"
 				/>
@@ -344,24 +364,176 @@ export const EncryptionSettingsPanel = ({
 			{phase === 'notSetUp' && (
 				<>
 					<Text
-						text={t(
-							'profile.encryption.setup.explainer',
-							'Richten Sie einmalig einen Ersatzschlüssel ein. Bewahren Sie ihn sicher auf — zum Beispiel in einem Passwort-Manager. Ohne ihn ist Ihr Verlauf bei Geräteverlust nicht wiederherstellbar.'
-						)}
+						text={t('profile.encryption.setup.explainer')}
 						type="standard"
 					/>
 					<Button
 						item={{
-							label: t(
-								'profile.encryption.setup.cta',
-								'Ersatzschlüssel einrichten'
-							),
+							label: t('profile.encryption.setup.cta'),
 							type: BUTTON_TYPES.PRIMARY,
 							disabled: busy
 						}}
 						buttonHandle={onSetUp}
 					/>
 				</>
+			)}
+
+			{passwordMode && (
+				<div
+					className="encryptionSettings__passwordRecovery"
+					data-cy="password-recovery-status"
+				>
+					<p role="status">
+						{t(
+							'encryption.passwordRecovery.' +
+								(passwordStatus === 'device-ready'
+									? 'deviceReady'
+									: passwordStatus)
+						)}
+					</p>
+					{canOfferPasswordRecovery && recoveryKeyToShow && (
+						<form
+							ref={enrollmentForm}
+							onSubmit={async (event) => {
+								event.preventDefault();
+								if (
+									busy ||
+									!loginPassword ||
+									loginPassword !== confirmLoginPassword
+								)
+									return;
+								setBusy(true);
+								setError(null);
+								try {
+									await reauthenticateRecovery(
+										loginPassword,
+										recoveryOtp
+									);
+									const client = await getReadyClient();
+									const policy =
+										getChatRecoveryPolicy(userData);
+									if (
+										!client ||
+										!userId ||
+										client.getUserId() !== userId ||
+										policy.mode !== 'LOGIN_PASSWORD'
+									)
+										throw new Error('Recovery unavailable');
+									await withRecoverySetupLock(userId, () =>
+										enrollPasswordRecoveryAfterKeyRecovery(
+											client,
+											loginPassword,
+											recoveryKeyToShow,
+											policy.revision
+										)
+									);
+									markPendingRecoveryKeyPasswordProtected(
+										userId
+									);
+									setRecoveryRuntimeStatus(userId, 'ready');
+								} catch (error) {
+									setError(
+										t(
+											error instanceof
+												RecoverySetupBusyError
+												? 'profile.encryption.setup.busy'
+												: error instanceof
+													  PasswordRecoveryRepairBlockedError
+													? 'encryption.passwordRecovery.repairBlocked'
+													: error instanceof
+														  PasswordRecoveryWorkLimitError
+														? 'encryption.passwordRecovery.retryable-failure'
+														: 'encryption.passwordRecovery.enrollmentFailed'
+										)
+									);
+								} finally {
+									setLoginPassword('');
+									setConfirmLoginPassword('');
+									setRecoveryOtp('');
+									setBusy(false);
+								}
+							}}
+						>
+							<p>
+								{t(
+									'encryption.passwordRecovery.enrollmentExplanation'
+								)}
+							</p>
+							<OrisoTextField
+								label={t(
+									'encryption.passwordRecovery.loginPassword'
+								)}
+								type="password"
+								autoComplete="current-password"
+								value={loginPassword}
+								disabled={busy}
+								onChange={(event) =>
+									setLoginPassword(event.target.value)
+								}
+							/>
+							<OrisoTextField
+								label={t(
+									'encryption.passwordRecovery.repeatPassword'
+								)}
+								type="password"
+								autoComplete="current-password"
+								error={passwordMismatch}
+								helperText={
+									passwordMismatch
+										? t(
+												'registration.account.repeatPassword.error'
+											)
+										: undefined
+								}
+								value={confirmLoginPassword}
+								disabled={busy}
+								onChange={(event) =>
+									setConfirmLoginPassword(event.target.value)
+								}
+							/>
+							{userData?.twoFactorAuth?.isActive && (
+								<OrisoTextField
+									label={t('encryption.passwordRecovery.otp')}
+									inputProps={{ inputMode: 'numeric' }}
+									autoComplete="one-time-code"
+									value={recoveryOtp}
+									disabled={busy}
+									onChange={(event) =>
+										setRecoveryOtp(event.target.value)
+									}
+								/>
+							)}
+							<Button
+								item={{
+									type: BUTTON_TYPES.PRIMARY,
+									label: t(
+										'encryption.passwordRecovery.enroll'
+									)
+								}}
+								disabled={
+									busy ||
+									!loginPassword ||
+									loginPassword !== confirmLoginPassword
+								}
+								buttonHandle={() =>
+									enrollmentForm.current?.requestSubmit()
+								}
+							/>
+						</form>
+					)}
+					{canOfferPasswordRecovery && (
+						<Button
+							item={{
+								type: BUTTON_TYPES.SECONDARY,
+								label: t(
+									'encryption.passwordRecovery.reauthenticate'
+								)
+							}}
+							disabled={busy}
+							buttonHandle={() => void logout()}
+						/>
+					)}
+				</div>
 			)}
 
 			{phase === 'showKey' && recoveryKeyToShow && (
@@ -379,50 +551,38 @@ export const EncryptionSettingsPanel = ({
 						data-cy="encryption-status-ok"
 					>
 						<Text
-							text={t(
-								'profile.encryption.status.ok',
-								'✓ Schlüsselsicherung ist aktiv. Ihr Verlauf bleibt auf neuen Geräten lesbar.'
-							)}
+							text={t('profile.encryption.status.ok')}
 							type="standard"
 						/>
 					</div>
 					{recoveredCount !== null && (
 						<Text
-							text={t(
-								'profile.encryption.recover.success',
-								'{{count}} Nachrichtenschlüssel wiederhergestellt.',
-								{ count: recoveredCount }
-							)}
+							text={t('profile.encryption.recover.success', {
+								count: recoveredCount
+							})}
 							type="standard"
 							className="tertiary"
 						/>
 					)}
-					<Button
-						item={{
-							label: t(
-								'profile.encryption.changeKey.cta',
-								'Ersatzschlüssel ändern'
-							),
-							type: BUTTON_TYPES.SECONDARY,
-							disabled: busy
-						}}
-						buttonHandle={onSetUp}
-					/>
+					{!passwordMode && (
+						<Button
+							item={{
+								label: t('profile.encryption.changeKey.cta'),
+								type: BUTTON_TYPES.SECONDARY,
+								disabled: busy
+							}}
+							buttonHandle={onSetUp}
+						/>
+					)}
 					<hr />
 					<Text
-						text={t(
-							'profile.encryption.reset.explainer',
-							'Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
-						)}
+						text={t('profile.encryption.reset.explainer')}
 						type="standard"
 						className="tertiary"
 					/>
 					<Button
 						item={{
-							label: t(
-								'profile.encryption.reset.cta',
-								'Verschlüsselung zurücksetzen'
-							),
+							label: t('profile.encryption.reset.cta'),
 							type: BUTTON_TYPES.TERTIARY,
 							disabled: busy
 						}}
@@ -442,10 +602,7 @@ export const EncryptionSettingsPanel = ({
 						data-cy="encryption-status-out-of-sync"
 					>
 						<Text
-							text={t(
-								'profile.encryption.outOfSync.warning',
-								'Die Schlüsselsicherung ist auf diesem Gerät nicht eingerichtet. Geben Sie Ihren Ersatzschlüssel ein, damit Ihr Verlauf hier lesbar wird.'
-							)}
+							text={t('profile.encryption.outOfSync.warning')}
 							type="standard"
 						/>
 					</div>
@@ -457,10 +614,7 @@ export const EncryptionSettingsPanel = ({
 					/>
 					<Button
 						item={{
-							label: t(
-								'profile.encryption.recover.cta',
-								'Verlauf wiederherstellen'
-							),
+							label: t('profile.encryption.recover.cta'),
 							type: BUTTON_TYPES.PRIMARY,
 							disabled: busy || !recoveryInput.trim()
 						}}
@@ -468,19 +622,13 @@ export const EncryptionSettingsPanel = ({
 					/>
 					<hr />
 					<Text
-						text={t(
-							'profile.encryption.reset.explainer',
-							'Ersatzschlüssel vergessen? Sie können Ihre Verschlüsselungsidentität zurücksetzen. Achtung: Bisher verschlüsselter Verlauf kann danach dauerhaft unlesbar sein.'
-						)}
+						text={t('profile.encryption.reset.explainer')}
 						type="standard"
 						className="tertiary"
 					/>
 					<Button
 						item={{
-							label: t(
-								'profile.encryption.reset.cta',
-								'Verschlüsselung zurücksetzen'
-							),
+							label: t('profile.encryption.reset.cta'),
 							type: BUTTON_TYPES.TERTIARY,
 							disabled: busy
 						}}
@@ -498,19 +646,13 @@ export const EncryptionSettingsPanel = ({
 					data-cy="encryption-reset-confirm"
 				>
 					<Text
-						text={t(
-							'profile.encryption.reset.confirmWarning',
-							'Sind Sie sicher? Das Zurücksetzen erstellt eine neue Verschlüsselungsidentität. Nachrichten, die nur mit der alten Sicherung lesbar waren, bleiben dauerhaft unlesbar.'
-						)}
+						text={t('profile.encryption.reset.confirmWarning')}
 						type="standard"
 					/>
 					<div className="encryptionSettings__resetActions">
 						<Button
 							item={{
-								label: t(
-									'profile.encryption.reset.confirmCta',
-									'Ja, zurücksetzen'
-								),
+								label: t('profile.encryption.reset.confirmCta'),
 								type: BUTTON_TYPES.PRIMARY,
 								disabled: busy
 							}}
@@ -518,10 +660,7 @@ export const EncryptionSettingsPanel = ({
 						/>
 						<Button
 							item={{
-								label: t(
-									'profile.encryption.reset.cancel',
-									'Abbrechen'
-								),
+								label: t('profile.encryption.reset.cancel'),
 								type: BUTTON_TYPES.SECONDARY,
 								disabled: busy
 							}}
