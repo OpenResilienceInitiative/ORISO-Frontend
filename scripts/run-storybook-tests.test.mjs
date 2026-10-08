@@ -3,10 +3,12 @@ import test from 'node:test';
 
 import {
 	DEFAULT_STORYBOOK_SHARDS,
+	createSuiteFailureTracker,
 	MAX_BROWSER_DISCONNECT_RETRIES,
 	looksLikeBrowserDisconnect,
 	looksLikeImportCrash,
 	resolveShardCount,
+	runStorybookTests,
 	shouldRetryStorybookRun,
 	storybookShardArgs,
 	storybookVitestArgs
@@ -196,4 +198,114 @@ test('reads the shard count from STORYBOOK_TEST_SHARDS and falls back to the def
 		DEFAULT_STORYBOOK_SHARDS
 	);
 	assert.equal(resolveShardCount({}), DEFAULT_STORYBOOK_SHARDS);
+});
+
+test('does not retry a genuine suite error mixed with a separate import crash', () => {
+	const realFailure =
+		' FAIL src/Real.stories.tsx\nTypeError: broken story setup';
+	const importFailure =
+		' FAIL src/Import.stories.tsx\nFailed to import test file';
+	for (const blocks of [
+		[realFailure, importFailure],
+		[importFailure, realFailure]
+	]) {
+		assert.equal(
+			shouldRetryStorybookRun(
+				1,
+				[...blocks, ' Test Files 2 failed', disconnect].join('\n')
+			),
+			false
+		);
+	}
+});
+
+test('does not let a lone import signature explain a missing failed suite', () => {
+	assert.equal(
+		shouldRetryStorybookRun(
+			1,
+			[
+				' FAIL src/Import.stories.tsx',
+				'Failed to import test file',
+				' Test Files 2 failed',
+				disconnect
+			].join('\n')
+		),
+		false
+	);
+});
+
+test('retains an early non-assertion suite failure after the captured tail is truncated', () => {
+	const tracker = createSuiteFailureTracker();
+	const chunks = [
+		' FAIL src/Real.stories.tsx\nTypeError: broken story setup\n',
+		'x'.repeat(500_001) + '\n',
+		' FAIL src/Import.stories.tsx\nFailed to import test file\n',
+		disconnect
+	];
+	for (const chunk of chunks) tracker.append(chunk);
+	const tail = chunks.join('').slice(-500_000);
+	assert.equal(tail.includes('broken story setup'), false);
+	assert.equal(
+		shouldRetryStorybookRun(1, tail, {
+			failureDetected: tracker.finish(),
+			outputTruncated: true
+		}),
+		false
+	);
+});
+
+test('preserves import-only retries across chunk boundaries and interleaved streams', () => {
+	const tracker = createSuiteFailureTracker();
+	tracker.append(' \u001b[31mFA', 'stderr');
+	tracker.append('Test Files 1 failed\n', 'stdout');
+	tracker.append(
+		'IL src/Import.stories.tsx\u001b[39m\nFailed to im',
+		'stderr'
+	);
+	tracker.append('808 tests passed\n', 'stdout');
+	tracker.append('port test file', 'stderr');
+	assert.equal(tracker.finish(), false);
+	assert.equal(
+		shouldRetryStorybookRun(1, pr1297ImportCrash, {
+			failureDetected: tracker.finish()
+		}),
+		true
+	);
+});
+
+test('retries when every independently reported failed suite is an import crash', () => {
+	const output = [
+		' FAIL first.stories.tsx',
+		'Failed to import test file',
+		' FAIL second.stories.tsx',
+		'Failed to fetch dynamically imported module',
+		'Test Files 2 failed',
+		disconnect
+	].join('\n');
+	assert.equal(shouldRetryStorybookRun(1, output), true);
+});
+
+test('the live child-output capture cannot erase a genuine failed suite before an import crash', async () => {
+	const script = `process.stdout.write([
+  ' FAIL src/Real.stories.tsx', 'TypeError: early genuine suite failure',
+  'x'.repeat(500_001),
+  ' FAIL src/Import.stories.tsx', 'Failed to import test file',
+  ${JSON.stringify(disconnect)}
+ ].join('\\n')); process.exitCode = 1;`;
+	const discardedOutput = { write: () => true };
+	const result = await runStorybookTests(['-e', script], {
+		stdout: discardedOutput,
+		stderr: discardedOutput
+	});
+	assert.equal(result.code, 1);
+	assert.equal(result.outputTruncated, true);
+	assert.equal(result.failureDetected, true);
+	assert.equal(
+		result.capturedOutput.includes('early genuine suite failure'),
+		false
+	);
+	assert.equal(
+		shouldRetryStorybookRun(result.code, result.capturedOutput, result),
+		false
+	);
 });

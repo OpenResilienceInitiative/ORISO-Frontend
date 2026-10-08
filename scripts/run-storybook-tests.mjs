@@ -11,10 +11,6 @@ const ASSERTION_FAILURE_SIGNATURES = [
 	/\bTests\s+[1-9]\d*\s+failed\b/i,
 	/\bAssertionError\b/
 ];
-const SUITE_FAIL_SIGNATURES = [
-	/(?:^|\n)\s*FAIL\s+/m,
-	/\bTest Files\s+\d+\s+failed\b/i
-];
 const IMPORT_CRASH_SIGNATURES = [
 	/Failed to import test file/i,
 	/Failed to fetch dynamically imported module/i,
@@ -67,12 +63,70 @@ const hasAssertionFailure = (output) =>
 		signature.test(stripAnsi(output))
 	);
 
+/** Classify each failed suite before its output can leave the rolling buffer. */
+export const createSuiteFailureTracker = () => {
+	const pendingLines = new Map();
+	let activeSuite = null;
+	let genuineFailure = false;
+	let importFailures = 0;
+	let reportedFailedSuites = 0;
+
+	const finishSuite = () => {
+		if (activeSuite !== null) {
+			if (activeSuite.importCrash) {
+				importFailures += 1;
+			} else {
+				genuineFailure = true;
+			}
+			activeSuite = null;
+		}
+	};
+	const inspectLine = (line) => {
+		const plain = stripAnsi(line);
+		if (/^\s*FAIL\s+/.test(plain)) {
+			finishSuite();
+			activeSuite = { importCrash: false };
+		}
+		if (activeSuite !== null && looksLikeImportCrash(plain)) {
+			activeSuite.importCrash = true;
+		}
+		const summary = plain.match(/\bTest Files\s+(\d+)\s+failed\b/i);
+		if (summary) {
+			reportedFailedSuites = Math.max(
+				reportedFailedSuites,
+				Number(summary[1])
+			);
+		}
+	};
+	return {
+		append(chunk, stream = 'stdout') {
+			// Separate incomplete stdout/stderr lines so interleaving cannot
+			// splice a suite header or import signature into an unrelated line.
+			const lines = `${pendingLines.get(stream) ?? ''}${chunk}`.split(
+				'\n'
+			);
+			pendingLines.set(stream, lines.pop());
+			for (const line of lines) {
+				inspectLine(line);
+			}
+		},
+		finish() {
+			for (const line of pendingLines.values()) {
+				inspectLine(line);
+			}
+			pendingLines.clear();
+			finishSuite();
+			// An import crash cannot explain any additional failed suite whose
+			// block was absent from the captured tail or otherwise unclassified.
+			return genuineFailure || reportedFailedSuites > importFailures;
+		}
+	};
+};
+
 const hasUnexplainedSuiteFail = (output) => {
-	if (looksLikeImportCrash(output)) {
-		return false;
-	}
-	const plain = stripAnsi(output);
-	return SUITE_FAIL_SIGNATURES.some((signature) => signature.test(plain));
+	const tracker = createSuiteFailureTracker();
+	tracker.append(output);
+	return tracker.finish();
 };
 
 /**
@@ -108,14 +162,10 @@ export const looksLikeBrowserDisconnect = (output) => {
 /*
  * `outputTruncated` deliberately does NOT gate the retry.
  *
- * It used to, on the reasoning that a truncated log "can have removed an
- * earlier failure". It cannot: `failureDetected` is latched in `forwardOutput`
- * against the rolling window (retained tail + the arriving chunk) on every
- * `data` event, so every `Tests n failed` / AssertionError line is
- * scanned at the moment it streams — truncation only ever discards text that
- * has already been examined. A `FAIL` from "Failed to import test file" is
- * Chrome dying mid-collect, not an assertion, and must not latch. A chunk is far smaller than MAX_CAPTURED_OUTPUT,
- * so the retained tail also heals signatures that straddle a chunk boundary.
+ * Assertion failures are latched as chunks arrive. Failed suite blocks are
+ * classified independently by a streaming tracker, which retains their outcome
+ * even after the rolling output drops the original text. Only import-crash
+ * blocks may retry; a genuine or unclassified failed suite stops the retry.
  *
  * Gating on it made the retry unreachable in CI: the Storybook run emits
  * thousands of "Module … has been externalized for browser compatibility"
@@ -151,11 +201,15 @@ const sleep = (ms) =>
 		setTimeout(resolve, ms);
 	});
 
-const runStorybookTests = (args = storybookVitestArgs) =>
+export const runStorybookTests = (
+	args = storybookVitestArgs,
+	{ stdout = process.stdout, stderr = process.stderr } = {}
+) =>
 	new Promise((resolve) => {
 		let capturedOutput = '';
 		let failureDetected = false;
 		let outputTruncated = false;
+		const suiteFailures = createSuiteFailureTracker();
 		let exitCode = 1;
 		let stdoutDone = false;
 		let stderrDone = false;
@@ -174,6 +228,7 @@ const runStorybookTests = (args = storybookVitestArgs) =>
 				return;
 			}
 			settled = true;
+			failureDetected ||= suiteFailures.finish();
 			resolve({
 				code: exitCode,
 				capturedOutput,
@@ -182,9 +237,10 @@ const runStorybookTests = (args = storybookVitestArgs) =>
 			});
 		};
 
-		const forwardOutput = (stream, destination, onEnd) => {
+		const forwardOutput = (stream, destination, streamName, onEnd) => {
 			stream.on('data', (chunk) => {
 				destination.write(chunk);
+				suiteFailures.append(chunk, streamName);
 				const combinedOutput = `${capturedOutput}${chunk}`;
 				failureDetected ||= hasAssertionFailure(combinedOutput);
 				outputTruncated ||= combinedOutput.length > MAX_CAPTURED_OUTPUT;
@@ -193,11 +249,11 @@ const runStorybookTests = (args = storybookVitestArgs) =>
 			stream.on('end', onEnd);
 		};
 
-		forwardOutput(child.stdout, process.stdout, () => {
+		forwardOutput(child.stdout, stdout, 'stdout', () => {
 			stdoutDone = true;
 			settle();
 		});
-		forwardOutput(child.stderr, process.stderr, () => {
+		forwardOutput(child.stderr, stderr, 'stderr', () => {
 			stderrDone = true;
 			settle();
 		});
