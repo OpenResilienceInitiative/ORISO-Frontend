@@ -10,8 +10,8 @@ interface SpinnerProps {
 export const Spinner = ({ isDark, className }: SpinnerProps) => {
 	return (
 		<Loading
-			layout="inline"
-			size="medium"
+			layout="section"
+			size="large"
 			delayMs={0}
 			isDark={isDark}
 			className={className}

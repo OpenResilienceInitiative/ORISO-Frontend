@@ -6,6 +6,7 @@ import { OrbitalTrails } from '../orbitalTrails/OrbitalTrails';
 import './loading.styles.scss';
 
 export interface LoadingProps {
+	compact?: boolean;
 	layout?: 'page' | 'section' | 'inline';
 	size?: 'small' | 'medium' | 'large';
 	delayMs?: number;
@@ -15,6 +16,7 @@ export interface LoadingProps {
 }
 
 export const Loading = ({
+	compact = false,
 	layout = 'section',
 	size = 'large',
 	delayMs = 200,
@@ -39,8 +41,8 @@ export const Loading = ({
 		<div
 			className={clsx(
 				'loading',
-				`loading--${layout}`,
-				`loading--${size}`,
+				`loading--${compact ? 'inline' : layout}`,
+				`loading--${compact ? 'small' : size}`,
 				className
 			)}
 			role="status"

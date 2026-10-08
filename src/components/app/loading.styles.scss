@@ -60,3 +60,9 @@
 		width: 260px;
 	}
 }
+
+@media (prefers-reduced-motion: reduce) {
+	.loading {
+		transition: none;
+	}
+}

@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	ChatMenuDropdown,
 	ChatMenuDropdownItem
@@ -107,6 +108,10 @@ import { MessageDateDivider } from './MessageDateDivider';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
 import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
+import {
+	directAvatarChoice,
+	memberAvatarChoice
+} from '../../utils/sessionAvatarChoice';
 import { chosenAvatarOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
@@ -344,7 +349,7 @@ interface MessageItemComponentProps extends MessageItem {
 		replyCount: number;
 		lastReplyText: string;
 	};
-	onOpenThread?: () => void;
+	onOpenThread?: (opener?: HTMLElement) => void;
 	/** Relations foundation (#435): this message replies to that event. */
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
@@ -420,7 +425,8 @@ export const MessageItemComponent = ({
 	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, avatarMembers = [] } =
+		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
@@ -1735,6 +1741,11 @@ export const MessageItemComponent = ({
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('USER') ||
 		(userData?.userRoles || []).includes('ANONYMOUS');
+	const incomingAvatarChoice = activeSession?.isGroup
+		? memberAvatarChoice(userId, avatarMembers)
+		: activeSession
+			? directAvatarChoice(userId, activeSession)
+			: null;
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -2504,6 +2515,9 @@ export const MessageItemComponent = ({
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
+					isAskerEmailEnabled={
+						tenant?.settings?.featureAskerEmailEnabled
+					}
 					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
@@ -2603,10 +2617,11 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
+										choice={incomingAvatarChoice}
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 									/>
 								</div>
 								<button
@@ -2759,7 +2774,7 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
@@ -2812,7 +2827,7 @@ export const MessageItemComponent = ({
 								onClick={(event) => {
 									event.preventDefault();
 									event.stopPropagation();
-									onOpenThread?.();
+									onOpenThread?.(event.currentTarget);
 								}}
 							>
 								<ThreadEntryIcon
