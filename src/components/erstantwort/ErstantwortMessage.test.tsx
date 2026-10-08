@@ -1,5 +1,8 @@
 // @vitest-environment jsdom
 import * as React from 'react';
+import { createInstance } from 'i18next';
+import { I18nextProvider } from 'react-i18next';
+import german from '../../resources/i18n/de/common.json';
 import { MemoryRouter } from 'react-router-dom';
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -9,12 +12,14 @@ import { ErstantwortMessage } from './ErstantwortMessage';
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('lottie-web', () => ({ default: {} }));
 
-vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key,
-		i18n: { language: 'de' }
-	})
-}));
+const i18n = createInstance();
+void i18n.init({
+	lng: 'de',
+	fallbackLng: 'de',
+	resources: { de: { translation: german } },
+	initImmediate: false,
+	interpolation: { escapeValue: false }
+});
 
 const openTwoFactorSettings = vi.hoisted(() => vi.fn());
 
@@ -77,21 +82,23 @@ const userData = {
 
 const renderMessage = () =>
 	render(
-		<MemoryRouter>
-			<UserDataContext.Provider
-				value={
-					{
-						userData,
-						reloadUserData: vi.fn()
-					} as React.ContextType<typeof UserDataContext>
-				}
-			>
-				<ErstantwortMessage
-					trigger="AFTER_FIRST_MESSAGE"
-					skipAnimation
-				/>
-			</UserDataContext.Provider>
-		</MemoryRouter>
+		<I18nextProvider i18n={i18n}>
+			<MemoryRouter>
+				<UserDataContext.Provider
+					value={
+						{
+							userData,
+							reloadUserData: vi.fn()
+						} as React.ContextType<typeof UserDataContext>
+					}
+				>
+					<ErstantwortMessage
+						trigger="AFTER_FIRST_MESSAGE"
+						skipAnimation
+					/>
+				</UserDataContext.Provider>
+			</MemoryRouter>
+		</I18nextProvider>
 	);
 
 describe('ErstantwortMessage email action', () => {
@@ -99,7 +106,7 @@ describe('ErstantwortMessage email action', () => {
 		renderMessage();
 
 		expect(
-			screen.queryByRole('heading', { name: 'Add an e-mail address' })
+			screen.queryByRole('heading', { name: 'E-Mail-Adresse angeben' })
 		).toBeNull();
 
 		act(() => {
@@ -109,7 +116,7 @@ describe('ErstantwortMessage email action', () => {
 		});
 
 		expect(
-			screen.getByRole('heading', { name: 'Add an e-mail address' })
+			screen.getByRole('heading', { name: 'E-Mail-Adresse angeben' })
 		).toBeTruthy();
 		expect(screen.getByRole('textbox')).toBeTruthy();
 	});
@@ -128,21 +135,23 @@ describe('ErstantwortMessage email action', () => {
 
 	it('opens the display-name overlay when Namen ändern is pressed', () => {
 		render(
-			<MemoryRouter>
-				<UserDataContext.Provider
-					value={
-						{
-							userData,
-							reloadUserData: vi.fn()
-						} as React.ContextType<typeof UserDataContext>
-					}
-				>
-					<ErstantwortMessage
-						trigger="AFTER_ENQUIRY_DISPATCHED"
-						skipAnimation
-					/>
-				</UserDataContext.Provider>
-			</MemoryRouter>
+			<I18nextProvider i18n={i18n}>
+				<MemoryRouter>
+					<UserDataContext.Provider
+						value={
+							{
+								userData,
+								reloadUserData: vi.fn()
+							} as React.ContextType<typeof UserDataContext>
+						}
+					>
+						<ErstantwortMessage
+							trigger="AFTER_ENQUIRY_DISPATCHED"
+							skipAnimation
+						/>
+					</UserDataContext.Provider>
+				</MemoryRouter>
+			</I18nextProvider>
 		);
 
 		act(() => {
