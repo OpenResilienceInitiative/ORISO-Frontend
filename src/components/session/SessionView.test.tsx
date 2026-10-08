@@ -134,7 +134,12 @@ describe('SessionView case handover route boundary', () => {
 		});
 
 		await waitFor(() =>
-			expect(useSession).toHaveBeenCalledWith(undefined, 41)
+			expect(useSession).toHaveBeenCalledWith(
+				undefined,
+				41,
+				undefined,
+				false
+			)
 		);
 	});
 
@@ -142,7 +147,12 @@ describe('SessionView case handover route boundary', () => {
 		renderAt('/sessions/consultant/sessionView/session/41');
 
 		await waitFor(() =>
-			expect(useSession).toHaveBeenCalledWith(undefined, 41)
+			expect(useSession).toHaveBeenCalledWith(
+				undefined,
+				41,
+				undefined,
+				false
+			)
 		);
 		expect(apiGetCaseHandoverRequestStatus).not.toHaveBeenCalled();
 	});
