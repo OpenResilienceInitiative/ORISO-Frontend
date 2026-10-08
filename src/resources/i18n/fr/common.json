@@ -2225,6 +2225,9 @@
 			"title": "Centre de notifications",
 			"subtitle": "Activités récentes et mises à jour de vos chats.",
 			"markAllRead": "Tout marquer comme lu",
+			"markReadFailed": "La notification n’a pas pu être marquée comme lue. Veuillez réessayer.",
+			"markAllReadFailed": "Les notifications n’ont pas pu être marquées comme lues. Veuillez réessayer.",
+			"clearFailed": "L’activité n’a pas pu être effacée. Veuillez réessayer.",
 			"clearAll": "Tout effacer",
 			"empty": "Aucune notification pour le moment.",
 			"emptyDetail": "Sélectionnez une notification pour voir les détails.",
@@ -2302,6 +2305,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Connexion et compte",
+				"description": "Gérez votre mot de passe et sécurisez votre connexion."
+			},
+			"recovery": {
+				"title": "Récupération des anciens messages",
+				"description": "Conservez votre clé de récupération en lieu sûr pour pouvoir ouvrir vos anciens messages sur un nouvel appareil."
+			},
+			"privacy": {
+				"title": "Vie privée",
+				"description": "Gérez vos informations personnelles et votre compte."
+			},
+			"displayNameDescription": "Les personnes qui demandent conseil voient ce nom pendant la consultation."
+		},
 		"avatar": {
 			"label": "Votre image",
 			"default": "Par défaut"
@@ -2672,6 +2690,10 @@
 					"appointment": {
 						"title": "Rendez-vous",
 						"description": "Un rendez-vous a été confirmé, déplacé ou annulé – ainsi que le rappel qui le précède."
+					},
+					"consentRequest": {
+						"title": "Demandes d’accès et de transfert",
+						"description": "Recevez un e-mail lorsque votre accord pour un accès ou un transfert est demandé."
 					}
 				},
 				"consultant": {
@@ -2873,7 +2895,8 @@
 				"done": "Terminé"
 			},
 			"status": {
-				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils."
+				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils.",
+				"notSetUp": "Votre clé de récupération n’est pas encore configurée."
 			},
 			"changeKey": {
 				"cta": "Modifier la clé de récupération"
@@ -3517,13 +3540,33 @@
 			"decline": "Refuser l'accès",
 			"optOut": {
 				"copy": "Dans le cadre du transfert de dossier, un autre conseiller ou une autre conseillère du même centre de conseil peut consulter temporairement cette conversation. Cela implique le traitement de données personnelles issues de l'entretien. Votre conseiller ou conseillère actuel(le) reste responsable de vous.",
-				"prompt": "Veuillez lire les informations, puis prendre votre décision.",
-				"revocationCopy": "En activant l'interrupteur, vous consentez à l'accès temporaire et au traitement des données nécessaire à cet effet. Vous pouvez retirer votre consentement à tout moment ; l'accès actif prend alors fin immédiatement. Votre suivi se poursuit indépendamment de cela.",
-				"switchLabel": "J'accepte le traitement des données pour ce transfert de dossier",
+				"prompt": "La consultation commence sans consentement préalable. Vous pouvez vous opposer à cette demande. Un transfert déjà effectué n’est pas annulé pour autant.",
+				"revocationCopy": "L’interrupteur concerne cette demande. Vous pouvez vous y opposer ; cela n’annule pas un transfert déjà effectué.",
+				"switchLabel": "Autoriser l’accès pour cette demande",
 				"title": "Avis de confidentialité relatif au transfert de dossier"
 			},
 			"sender": "Carimat",
-			"senderRole": "Guide rapide"
+			"senderRole": "Guide rapide",
+			"info": {
+				"NONE": "Aucune décision n’est demandée pour cette demande. Ce message vous informe de la consultation sans consentement préalable.",
+				"OPT_IN": "Cette demande nécessite votre accord. Sans lui, le professionnel demandeur n’a pas accès. Votre décision concerne uniquement cette demande.",
+				"OPT_OUT": "La consultation commence sans consentement préalable. Vous pouvez vous opposer à cette demande. Un transfert déjà effectué n’est pas annulé pour autant.",
+				"accessCopy": "Seuls le service compétent et le professionnel expressément autorisé ont accès. Ni les personnes extérieures ni l’exploitant de la plateforme n’y ont accès.",
+				"accessTitle": "Accès protégé",
+				"choiceTitle": "Votre consentement",
+				"closed": "Cette demande est terminée. Aucune autre décision n’est attendue.",
+				"granted": "L’accès a été confirmé.",
+				"more": "En savoir plus",
+				"needCopy": "Un autre professionnel peut aider quelques heures. Une personne de votre service peut prendre le relais en cas de congé ou de maladie.",
+				"needTitle": "Quand cela peut aider",
+				"noticeCopy": "Un autre professionnel de votre service de conseil peut consulter cette demande. Avec ce réglage, aucun consentement préalable n’est demandé.",
+				"noticeTitle": "Un soutien pour votre conseil",
+				"notificationsAction": "Configurer les notifications",
+				"notificationsCopy": "Si votre accord est nécessaire, nous recommandons les notifications par e-mail ou par navigateur. Vous serez ainsi informé à temps d’une demande et pourrez y répondre.",
+				"takeoverContinues": "Votre opposition a été enregistrée. Le transfert déjà effectué reste en vigueur.",
+				"title": "Consultation de votre conseil",
+				"description": "Pour les échanges professionnels et les remplacements dans votre service de conseil."
+			}
 		},
 		"denied": {
 			"copy": "La demande précédente n'a pas donné accès au contenu.",
@@ -3621,6 +3664,15 @@
 			"importantTitle": "Information importante",
 			"supervisionTitle": "Supervision activée !",
 			"supervisionBody": "{{advisor}} a été ajouté·e à ce chat en tant que superviseur·e de la consultation."
+		},
+		"standingPreference": {
+			"label": "Toujours demander avant un accès supplémentaire",
+			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
+			"baselineDescription": "Si cette option est désactivée, les paramètres de votre service de conseil s’appliquent. Tout consentement requis par ce service reste nécessaire.",
+			"saving": "Enregistrement …",
+			"saved": "Paramètre enregistré.",
+			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
+			"loading": "Chargement du paramètre …"
 		}
 	},
 	"session": {
@@ -5182,9 +5234,25 @@
 			"browser": "Envoyez-moi un signal ici",
 			"browserHint": "Aucune adresse nécessaire — mais cela ne fonctionne que sur cet appareil.",
 			"email": "Envoyez-moi un e-mail",
-			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail."
+			"emailHint": "Ce que vous évoquez ici n'apparaît jamais dans cet e-mail.",
+			"active": "Activé : {{channel}}",
+			"bothSetup": "Configurer les deux",
+			"bothSetupHint": "Un e-mail et, en plus, un signal sur cet appareil.",
+			"browserDenied": "Les notifications du navigateur ne sont pas activées. Veuillez vérifier l’autorisation dans votre navigateur.",
+			"browserSilenced": "Les notifications du navigateur sont désactivées dans vos paramètres de notification.",
+			"browserUnsupported": "Ce navigateur ne prend pas en charge les notifications.",
+			"channelBoth": "E-mail et navigateur sur cet appareil",
+			"channelBrowser": "Navigateur sur cet appareil",
+			"channelEmail": "E-mail",
+			"enableBrowser": "Activer le navigateur",
+			"saveFailed": "Le réglage n’a pas pu être confirmé. Veuillez réessayer."
 		},
-		"unavailableInRoom": "Première réponse – non disponible dans cet espace."
+		"unavailableInRoom": "Première réponse – non disponible dans cet espace.",
+		"faq": {
+			"dataProtection": "Que deviennent mes données ?",
+			"modalityNote": "Comment se déroule le conseil ?",
+			"title": "Questions fréquentes"
+		}
 	},
 	"legal": {
 		"notice": {

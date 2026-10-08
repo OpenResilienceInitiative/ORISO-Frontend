@@ -3,6 +3,7 @@ import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
 import { HistoricalReassignMessage } from './ReassignMessage';
+import { ConsultantListContext } from '../../globalState';
 
 vi.mock('../../globalState', async () => {
 	const { createContext } = await import('react');
@@ -47,6 +48,17 @@ describe('HistoricalReassignMessage', () => {
 			container.querySelector('.reassignRequestMessage')
 		).not.toBeNull();
 		expect(screen.queryAllByRole('button')).toHaveLength(0);
+	});
+
+	it('labels a historical record with the standard information icon', () => {
+		render(
+			<HistoricalReassignMessage
+				message={payload()}
+				isAsker
+				isMySession={false}
+			/>
+		);
+		expect(screen.getByLabelText('notifications.info')).not.toBeNull();
 	});
 
 	it('no longer asks the advice seeker to accept or decline', () => {
@@ -107,6 +119,48 @@ describe('HistoricalReassignMessage', () => {
 		expect(container.textContent).toContain(
 			'"newConsultant":"caseHandover.history.unknownConsultant"'
 		);
+	});
+
+	it.each(['sanftes Alpaka Kim', ''])(
+		'never exposes a legal-name lookup to an anonymous guest (stored: %s)',
+		(storedName) => {
+			const { container } = render(
+				<ConsultantListContext.Provider
+					value={{
+						consultantList: [
+							{
+								value: 'c2',
+								label: 'Karina Legal (karina.private)'
+							}
+						],
+						setConsultantList: () => {}
+					}}
+				>
+					<HistoricalReassignMessage
+						message={payload({
+							status: 'CONFIRMED',
+							toConsultantName: storedName
+						})}
+						isAsker
+						isMySession={false}
+					/>
+				</ConsultantListContext.Provider>
+			);
+			expect(container.textContent).toContain(storedName || 'c2');
+			expect(container.textContent).not.toContain('Karina Legal');
+			expect(container.textContent).not.toContain('karina.private');
+		}
+	);
+
+	it('uses the User-ID when an advice seeker has no stored display name', () => {
+		const { container } = render(
+			<HistoricalReassignMessage
+				message={payload({ status: 'CONFIRMED', toConsultantName: '' })}
+				isAsker
+				isMySession={false}
+			/>
+		);
+		expect(container.textContent).toContain('"newConsultant":"c2"');
 	});
 
 	it('keeps the stored name when the consultant list cannot resolve it', () => {

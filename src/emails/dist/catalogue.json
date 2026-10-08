@@ -51,6 +51,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -100,6 +102,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -149,6 +153,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{username}}",
 				"{{loginUrl}}",
 				"{{settingsUrl}}",
@@ -200,6 +206,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{expiryHours}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{resetUrl}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
@@ -250,6 +258,8 @@
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
 				"{{appointmentType}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{locationName}}",
 				"{{locationAddress}}",
 				"{{appointmentUrl}}",
@@ -304,6 +314,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -355,6 +367,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -406,6 +420,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -457,6 +473,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -508,6 +526,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -559,6 +579,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -610,6 +632,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -661,6 +685,8 @@
 			"placeholders": [
 				"{{appointmentDate}}",
 				"{{appointmentTime}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{appointmentUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -710,6 +736,8 @@
 			"class": "requested",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{consultantName}}",
 				"{{consultantPhone}}",
 				"{{consultantHours}}",
@@ -763,6 +791,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestTopic}}",
 				"{{requestPostcode}}",
 				"{{requestReceivedAt}}",
@@ -818,6 +848,8 @@
 				"{{maintenanceDate}}",
 				"{{maintenanceStart}}",
 				"{{maintenanceEnd}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{statusUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -867,6 +899,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestTopic}}",
 				"{{requestPostcode}}",
 				"{{requestReceivedAt}}",
@@ -919,6 +953,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestTopic}}",
 				"{{requestReceivedAt}}",
 				"{{requestUrl}}",
@@ -970,6 +1006,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{openRequestCount}}",
 				"{{oldestRequestAge}}",
 				"{{digestGeneratedAt}}",
@@ -1017,16 +1055,65 @@
 				}
 			}
 		},
+		"einsicht-angefragt": {
+			"audience": "asker",
+			"class": "consent",
+			"unsubscribable": false,
+			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
+				"{{requestUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Neue Benachrichtigung",
+					"preheader": "Bitte melden Sie sich an."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Neue Benachrichtigung",
+					"preheader": "Bitte melde dich an."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "New notification",
+					"preheader": "Please sign in."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Nouvelle notification",
+					"preheader": "Veuillez vous connecter."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Новое уведомление",
+					"preheader": "Пожалуйста, войдите."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓድሽ ምልክታ",
+					"preheader": "በጃኹም እተዉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Yeni bildirim",
+					"preheader": "Lütfen giriş yapın."
+				}
+			}
+		},
 		"uebergabe-angefragt": {
 			"audience": "asker",
-			"class": "operational",
-			"unsubscribable": true,
+			"class": "consent",
+			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {
@@ -1071,6 +1158,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{requestUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1120,6 +1209,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1169,6 +1260,8 @@
 			"class": "service",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{messageHeadline}}",
 				"{{messageBody}}",
 				"{{loginUrl}}",
@@ -1220,6 +1313,8 @@
 			"class": "security",
 			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{inviteExpiresAt}}",
 				"{{setupUrl}}",
 				"{{offeringName}}",
@@ -1271,6 +1366,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{expiryMinutes}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{loginUrl}}",
 				"{{privacyUrl}}",
 				"{{imprintUrl}}"
@@ -1319,6 +1416,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{expiryMinutes}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{otpCode}}",
 				"{{loginUrl}}",
 				"{{privacyUrl}}",
@@ -1327,37 +1426,37 @@
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Ihr Einmalcode für die Anmeldung",
+					"subject": "Ihr Einmalcode",
 					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Dein Einmalcode für die Anmeldung",
+					"subject": "Dein Einmalcode",
 					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "Your one-time code for signing in",
+					"subject": "Your one-time code",
 					"preheader": "The code is valid for {{expiryMinutes}} minutes."
 				},
 				"fr": {
 					"lang": "fr",
-					"subject": "Votre code à usage unique pour la connexion",
+					"subject": "Votre code à usage unique",
 					"preheader": "Le code est valable {{expiryMinutes}} minutes."
 				},
 				"ru": {
 					"lang": "ru",
-					"subject": "Ваш одноразовый код для входа",
+					"subject": "Ваш одноразовый код",
 					"preheader": "Код действует {{expiryMinutes}} минут."
 				},
 				"ti": {
 					"lang": "ti",
-					"subject": "ንመእተዊ ዝኸውን ናይ ሓደ ግዜ ኮድኩም",
+					"subject": "ናይ ሓደ ግዜ ኮድኩም",
 					"preheader": "እቲ ኮድ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
 				},
 				"tr": {
 					"lang": "tr",
-					"subject": "Giriş için tek kullanımlık kodunuz",
+					"subject": "Tek kullanımlık kodunuz",
 					"preheader": "Kod {{expiryMinutes}} dakika geçerlidir."
 				}
 			}
@@ -1367,6 +1466,8 @@
 			"class": "security",
 			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{username}}",
 				"{{appUrl}}",
 				"{{privacyUrl}}",
@@ -1416,6 +1517,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{tenantName}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{inviteExpiresAt}}",
 				"{{inviteUrl}}",
 				"{{privacyUrl}}",
@@ -1464,6 +1567,8 @@
 			"class": "security",
 			"unsubscribable": false,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{agencyName}}",
 				"{{inviteExpiresAt}}",
 				"{{inviteUrl}}",
@@ -1514,6 +1619,8 @@
 			"unsubscribable": false,
 			"placeholders": [
 				"{{tenantName}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{dpaProvidedAt}}",
 				"{{dpaExpiresAt}}",
 				"{{dpaUrl}}",
@@ -1568,6 +1675,8 @@
 			"placeholders": [
 				"{{subject}}",
 				"{{preheader}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{bodyHtml}}",
 				"{{ctaBlock}}",
 				"{{assuranceBlock}}",
@@ -1620,6 +1729,8 @@
 			"class": "operational",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{teamChangeStatement}}",
 				"{{caseReference}}",
 				"{{teamChangedAt}}",
@@ -1673,6 +1784,8 @@
 			"unsubscribable": true,
 			"placeholders": [
 				"{{smtpHost}}",
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{smtpFrom}}",
 				"{{sentAt}}",
 				"{{appUrl}}",
@@ -1724,6 +1837,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{callUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1773,6 +1888,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{callUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",
@@ -1822,6 +1939,8 @@
 			"class": "personal",
 			"unsubscribable": true,
 			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
 				"{{callUrl}}",
 				"{{settingsUrl}}",
 				"{{privacyUrl}}",

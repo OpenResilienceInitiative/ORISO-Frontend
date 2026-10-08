@@ -1,18 +1,25 @@
+import {
+	verifyEmailLogoVariants,
+	verifyLongEmailWordmark
+} from '../../../.storybook/emailLogoAssertions';
+import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
 import { EmailFragment, emailFragmentArgTypes } from '../preview/EmailFragment';
 import { emailHeaderBar } from '../kit/emailMolecules';
 import { emailSampleBrand } from '../kit/emailTokens';
+import { emailLogoFixtures, emailLogoFixtureBrand } from './emailLogoFixtures';
 
 const meta = {
 	title: 'Email/Atoms/LogoLockup',
 	component: EmailFragment,
+	args: { fragment: emailHeaderBar(emailSampleBrand) },
 	argTypes: emailFragmentArgTypes,
 	tags: ['autodocs'],
 	parameters: {
 		docs: {
 			description: {
 				component:
-					'36×36 logo plus the platform name, above the card on the bare canvas. The name is real text, not part of the image, so the mail is still identifiable when images are blocked — which is the default in Outlook and in many corporate clients.'
+					'Every logo is scaled to 48px high without cropping. Logos up to 3:1 keep the adjacent platform name on phones. Wider logos hide that name on phones and retain an accessible image label. Intrinsic dimensions select the layout; unknown dimensions keep the name visible. Without a logo, the name remains. Check 320px and 375px alongside tablet and desktop. Synthetic fixtures are preview-only.'
 			}
 		}
 	}
@@ -74,4 +81,88 @@ export const OnPhone: Story = {
 		onCard: false,
 		width: 375
 	}
+};
+
+const variants = (width: number) => (
+	<div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+		{emailLogoFixtures.map((fixture) => (
+			<section key={fixture.file} aria-label={fixture.name}>
+				<h2 style={{ fontSize: 16 }}>
+					{fixture.name} · {width}px viewport
+				</h2>
+				<EmailFragment
+					fragment={emailHeaderBar(emailLogoFixtureBrand(fixture))}
+					onCard={false}
+					width={width}
+				/>
+			</section>
+		))}
+	</div>
+);
+
+export const DesktopVariants: Story = {
+	render: () => variants(700),
+	play: verifyEmailLogoVariants
+};
+export const TabletVariants: Story = {
+	render: () => variants(820),
+	play: verifyEmailLogoVariants
+};
+export const PhoneVariants: Story = {
+	render: () => variants(375),
+	play: verifyEmailLogoVariants
+};
+export const NarrowPhoneVariants: Story = {
+	render: () => variants(320),
+	play: verifyEmailLogoVariants
+};
+
+export const VeryWideOnPhone: Story = {
+	args: {
+		fragment: emailHeaderBar(emailLogoFixtureBrand(emailLogoFixtures[3])),
+		onCard: false,
+		width: 320
+	}
+};
+
+export const WideBoundaryOnPhone: Story = {
+	args: {
+		fragment: emailHeaderBar(emailLogoFixtureBrand(emailLogoFixtures[2])),
+		onCard: false,
+		width: 320
+	}
+};
+
+export const VeryWideImagesBlocked: Story = {
+	args: {
+		fragment: emailHeaderBar({
+			...emailLogoFixtureBrand(emailLogoFixtures[3]),
+			logoUrl: '/deliberately-missing-wide-logo.png'
+		}),
+		onCard: false,
+		width: 320
+	}
+};
+
+export const LongNameOnPhone: Story = {
+	args: {
+		fragment: emailHeaderBar({
+			...emailLogoFixtureBrand(emailLogoFixtures[2]),
+			platformName: 'Online-Beratung der Caritas Mainz'
+		}),
+		onCard: false,
+		width: 320
+	}
+};
+
+export const LongUnbrokenNameOnPhone: Story = {
+	args: {
+		fragment: emailHeaderBar({
+			...emailLogoFixtureBrand(emailLogoFixtures[2]),
+			platformName: 'OnlineBeratungCaritasMainzSozialberatung'
+		}),
+		onCard: false,
+		width: 320
+	},
+	play: verifyLongEmailWordmark
 };

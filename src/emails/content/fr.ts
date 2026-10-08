@@ -269,6 +269,19 @@ export const fr: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Nouvelle notification',
+		preheader: 'Veuillez vous connecter.',
+		headline: 'Une demande concernant votre accompagnement',
+		paragraphs: [
+			'Un autre professionnel de votre service de conseil demande votre consentement pour consulter temporairement votre conversation.',
+			'Examinez la demande dans l’espace protégé. La personne qui vous accompagne actuellement reste responsable de votre suivi.'
+		],
+		cta: { label: 'Examiner la demande', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Nouvelle notification',
 		preheader: 'Veuillez vous connecter.',
@@ -279,7 +292,7 @@ export const fr: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Examiner la demande', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
@@ -359,16 +372,20 @@ export const fr: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Votre code à usage unique pour la connexion',
+		subject: 'Votre code à usage unique',
 		preheader: 'Le code est valable {{expiryMinutes}} minutes.',
 		headline: 'Votre code à usage unique',
-		paragraphs: ['Saisissez ce code dans la fenêtre de connexion.'],
+		paragraphs: ['Saisissez ce code dans {{platformName}}.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Aller à la connexion', href: '{{loginUrl}}' },
+		cta: { label: 'Ouvrir {{platformName}}', href: '{{loginUrl}}' },
 		footnote:
-			'Si vous ne vouliez pas vous connecter, changez votre mot de passe.',
+			'Si vous n’avez pas demandé ce code, vous pouvez ignorer cet e-mail.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Cet e-mail contient un code de sécurité et ne peut pas être désactivé. Merci de ne pas y répondre.'
+		}
 	},
 
 	'einladung-traeger': {
