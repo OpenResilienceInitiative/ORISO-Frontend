@@ -163,7 +163,7 @@ describe('BackupKeyAfterTwoFactorDialog', () => {
 		expect(setUpRecovery).toHaveBeenCalledTimes(2);
 	});
 
-	it('lets the person close the recovery-key step after a setup error', async () => {
+	it('uses the German missing-catalogue fallback and closes after a setup error', async () => {
 		getEncryptionStatus.mockResolvedValue(notSetUp);
 		setUpRecovery.mockRejectedValueOnce(new Error('setup failed'));
 		const onClose = vi.fn();
@@ -182,7 +182,7 @@ describe('BackupKeyAfterTwoFactorDialog', () => {
 			)
 		).toBeTruthy();
 
-		fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+		fireEvent.click(screen.getByRole('button', { name: 'Schließen' }));
 		expect(onClose).toHaveBeenCalledTimes(1);
 	});
 });

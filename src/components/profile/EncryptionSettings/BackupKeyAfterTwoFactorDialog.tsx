@@ -256,7 +256,7 @@ export const BackupKeyAfterTwoFactorDialog: React.FC<
 							item={{
 								label: t(
 									'furtherSteps.email.overlay.button2.label',
-									'Close'
+									'Schließen'
 								),
 								type: BUTTON_TYPES.PRIMARY
 							}}
