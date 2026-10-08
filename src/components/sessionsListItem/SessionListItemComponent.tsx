@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
@@ -20,6 +21,7 @@ import {
 } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
@@ -1036,7 +1038,7 @@ export const SessionListItemComponent = ({
 					activeSession.item.matrixRoomId ||
 					String(activeSession.item.id ?? 'group')
 				}
-				size="40px"
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		) : !isAsker ? (
@@ -1050,14 +1052,22 @@ export const SessionListItemComponent = ({
 				}
 				username={activeSession.user?.username || ''}
 				displayName={railName}
-				size={40}
+				choice={chosenAvatarOf(activeSession.user)}
+				size={AVATAR_SIZES.session}
 			/>
 		) : (
 			<UserAvatar
 				username={activeSession.consultant?.username || 'User'}
 				displayName={railName}
-				userId={activeSession.consultant?.id || 'unknown'}
-				size="40px"
+				userId={
+					activeSession.item.consultantMatrixUserId ||
+					activeSession.consultant?.id ||
+					activeSession.consultant?.consultantId ||
+					'unknown'
+				}
+				choice={chosenAvatarOf(activeSession.consultant)}
+				avatarDisplayName={activeSession.consultant?.displayName}
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		);
@@ -1522,6 +1532,7 @@ export const SessionListItemComponent = ({
 										activeSession.user?.username || ''
 									}
 									displayName={sessionTopic}
+									choice={chosenAvatarOf(activeSession.user)}
 									size={48}
 									outline={false}
 								/>
@@ -1533,8 +1544,18 @@ export const SessionListItemComponent = ({
 									}
 									displayName={sessionTopic}
 									userId={
+										activeSession.item
+											.consultantMatrixUserId ||
 										activeSession.consultant?.id ||
+										activeSession.consultant
+											?.consultantId ||
 										'unknown'
+									}
+									choice={chosenAvatarOf(
+										activeSession.consultant
+									)}
+									avatarDisplayName={
+										activeSession.consultant?.displayName
 									}
 									size="48px"
 									ring={false}

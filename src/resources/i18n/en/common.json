@@ -2222,6 +2222,9 @@
 			"title": "Notifications",
 			"subtitle": "Recent activities and updates from your chats.",
 			"markAllRead": "Mark all as read",
+			"markReadFailed": "The notification could not be marked as read. Please try again.",
+			"markAllReadFailed": "Notifications could not be marked as read. Please try again.",
+			"clearFailed": "Activity could not be cleared. Please try again.",
 			"clearAll": "Clear all",
 			"empty": "No notifications yet.",
 			"emptyDetail": "Select a notification to see the details.",
@@ -2299,6 +2302,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Sign-in & account",
+				"description": "Manage your password and keep your sign-in secure."
+			},
+			"recovery": {
+				"title": "Recovering old messages",
+				"description": "Keep your recovery key safe so you can open old messages on a new device."
+			},
+			"privacy": {
+				"title": "Privacy",
+				"description": "Manage your personal information and your account."
+			},
+			"displayNameDescription": "People seeking advice see this name during counselling."
+		},
 		"avatar": {
 			"label": "Your picture",
 			"default": "Default"
@@ -2686,6 +2704,10 @@
 					"appointment": {
 						"title": "Appointments",
 						"description": "An appointment was confirmed, moved or cancelled — and the reminder before it."
+					},
+					"consentRequest": {
+						"title": "Access and handover requests",
+						"description": "Receive an email when your consent to access or handover is requested."
 					}
 				},
 				"consultant": {
@@ -2856,6 +2878,7 @@
 				"done": "Done"
 			},
 			"status": {
+				"notSetUp": "Your recovery key is not set up yet.",
 				"ok": "✓ Your recovery key is set up. Your history stays readable on new devices."
 			},
 			"changeKey": {
@@ -3485,10 +3508,30 @@
 			"decline": "Decline access",
 			"optOut": {
 				"title": "Privacy notice for case handover",
-				"prompt": "Please read the information and then make your decision.",
+				"prompt": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
 				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
-				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
-				"switchLabel": "I consent to data processing for this case handover"
+				"revocationCopy": "The switch applies to this request. You can object; this does not undo a takeover that has already been completed.",
+				"switchLabel": "Allow access for this request"
+			},
+			"info": {
+				"more": "Learn more",
+				"title": "Access to your counselling conversation",
+				"noticeTitle": "Support for your consultation",
+				"noticeCopy": "Another professional at your counselling centre receives access for this request. This policy does not ask for prior consent.",
+				"needTitle": "When useful",
+				"needCopy": "Another professional can help for a few hours. During holidays or illness, someone from your counselling service can take over.",
+				"choiceTitle": "Your consent",
+				"OPT_IN": "This request needs your consent. Without it, the requesting professional has no access. Your decision applies only to this request.",
+				"OPT_OUT": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
+				"NONE": "No decision is requested for this request. This message informs you about access without prior consent.",
+				"accessTitle": "Protected access",
+				"accessCopy": "Only the responsible service and the specifically authorised professional get access. Outsiders and the platform operator do not.",
+				"notificationsCopy": "When your approval is needed, we recommend email or browser notifications so you can respond to a request in time.",
+				"notificationsAction": "Set up notifications",
+				"granted": "Access has been confirmed.",
+				"closed": "This request is complete. No further decision is pending.",
+				"takeoverContinues": "Your objection was recorded. The completed takeover remains in place.",
+				"description": "For professional consultation and cover within your counselling service."
 			}
 		},
 		"denied": {
@@ -3587,6 +3630,15 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"standingPreference": {
+			"label": "Always ask before additional access",
+			"description": "Applies to future requests in this conversation. Current requests and access already granted remain unchanged.",
+			"baselineDescription": "When off, your counselling agency’s settings apply. Any consent required by the agency is still required.",
+			"saving": "Saving …",
+			"saved": "Setting saved.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"loading": "Loading setting …"
 		}
 	},
 	"session": {
@@ -5069,8 +5121,17 @@
 			"emailHint": "What you discuss here never appears in that email.",
 			"browser": "Give me a signal here",
 			"browserHint": "No address needed — but it only works on this device.",
-			"both": "Both, and let me set a password now",
-			"bothHint": "Recommended. That way you can get back in if you forget something."
+			"enableBrowser": "Enable browser notifications",
+			"browserDenied": "Browser notifications are not enabled. Please check your browser permission.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"active": "Enabled: {{channel}}",
+			"bothSetup": "Set up both",
+			"bothSetupHint": "Email and an additional signal on this device.",
+			"browserUnsupported": "This browser does not support browser notifications.",
+			"browserSilenced": "Browser notifications are silenced in your notification settings.",
+			"channelBoth": "Email and browser on this device",
+			"channelEmail": "Email",
+			"channelBrowser": "Browser on this device"
 		},
 		"subtitle": "Your first steps",
 		"greeting": {
@@ -5131,7 +5192,12 @@
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
 		},
-		"unavailableInRoom": "First response – not available in this room."
+		"unavailableInRoom": "First response – not available in this room.",
+		"faq": {
+			"title": "Frequently asked questions",
+			"modalityNote": "How does counselling work?",
+			"dataProtection": "What happens to my data?"
+		}
 	},
 	"dpaSign": {
 		"title": "Review and confirm contract documents",
