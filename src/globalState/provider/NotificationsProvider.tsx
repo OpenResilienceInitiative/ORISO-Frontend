@@ -566,7 +566,11 @@ export function NotificationsProvider(props) {
 						showAlways: descriptor.family === 'requests',
 						onclick: () => window.focus()
 					},
-					event.params?.recipientRole
+					event.params?.recipientRole ??
+						(event.actionPath?.startsWith('/sessions/user/')
+							? 'user'
+							: undefined),
+					event.params?.conversationType
 				);
 			} catch {
 				// Some browsers expose Notification but reject its constructor.

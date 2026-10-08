@@ -4,6 +4,8 @@ export interface TenantDataInterface {
 	id: number | null;
 	name: string;
 	theming: {
+		assistantName?: string | null;
+		assistantIcon?: string | null;
 		logo: string;
 		associationLogo: string | null;
 		/**
@@ -105,6 +107,13 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
 	/** ORISO-Admin#602: explicit false disables asker email invitation; absent keeps legacy behavior. */
 	featureAskerEmailEnabled?: boolean;
+	featureAskerEmailAgencyCounsellingEnabled?: boolean;
+	featureAskerEmailLiveChatEnabled?: boolean;
+	featureAskerEmailSelfHelpEnabled?: boolean;
+	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
+	featureAskerBrowserLiveChatEnabled?: boolean;
+	featureAskerBrowserSelfHelpEnabled?: boolean;
+
 	emailVisible?: boolean;
 	emailRequired?: boolean;
 }

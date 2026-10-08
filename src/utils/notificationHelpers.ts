@@ -1,3 +1,5 @@
+import { notificationChannelPolicy } from '../components/erstantwort/notificationChannelPolicy';
+import { getTenantSettings } from './tenantSettingsHelper';
 import { v4 as uuidv4 } from 'uuid';
 import { appConfig } from './appConfig';
 import { isNotificationSuppressed } from './notificationSettings/model';
@@ -115,13 +117,20 @@ export const sendNotification = (
 	title: string,
 	opts?: NotificationOptions & ExtraNotificationOptions,
 	/** Internal feed metadata; never copied to the OS notification options. */
-	recipientRole?: string | null
+	recipientRole?: string | null,
+	conversationType?: string | null
 ): void => {
 	// If permissions not granted just ignore the notification because we only asking consultants
 	if (!isSupported() || !hasPermissions(PERMISSION_GRANTED)) {
 		return;
 	}
 
+	if (
+		(recipientRole === 'user' || recipientRole === 'asker') &&
+		!notificationChannelPolicy(getTenantSettings(), conversationType)
+			.browserAllowed
+	)
+		return;
 	const options = opts || {};
 
 	// WP-06 Slice 6a: honour the cross-device settings (account-wide mute,

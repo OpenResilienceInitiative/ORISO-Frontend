@@ -22,7 +22,8 @@ import './message.styles.scss';
  * history is gone, so both wordings are worth having side by side.
  */
 const meta = {
-	title: 'Components/Chat/MasterKeyLostMessage',
+	id: 'components-chat-masterkeylostmessage',
+	title: 'Chat/System messages/Key loss',
 	component: MasterKeyLostMessage,
 	tags: ['autodocs'],
 	parameters: {

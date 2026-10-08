@@ -1,3 +1,5 @@
+import { StandingAccessSettings } from '../caseHandover/StandingAccessSettings';
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import {
@@ -1343,6 +1345,19 @@ export const SessionStream = ({
 					/>
 				</div>
 			)}
+			{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+				!activeSession.isGroup &&
+				notificationConversationType(activeSession) ===
+					'AGENCY_COUNSELLING' &&
+				activeSession.item?.id && (
+					<StandingAccessSettings
+						key={activeSession.item.id}
+						sessionId={activeSession.item.id}
+						conversationType={notificationConversationType(
+							activeSession
+						)}
+					/>
+				)}
 			<SessionItemComponent
 				mainTimelineSupplement={
 					displayedConsent &&
@@ -1350,6 +1365,9 @@ export const SessionStream = ({
 						displayedConsent.actionPath
 					) !== null && (
 						<CaseHandoverConversation
+							conversationType={notificationConversationType(
+								activeSession
+							)}
 							key={String(activeSession.item?.id)}
 							status={
 								displayedConsent.id ===

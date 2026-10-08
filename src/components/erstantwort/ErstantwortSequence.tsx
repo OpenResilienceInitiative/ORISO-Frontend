@@ -1,3 +1,4 @@
+import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -86,6 +87,39 @@ const renderAction = (
 		</button>
 	) : null;
 
+const BausteinContent = ({
+	baustein,
+	slots,
+	onAction
+}: {
+	baustein: ResolvedBaustein;
+	slots?: Record<string, React.ReactNode>;
+	onAction?: (kind: ErstantwortActionKind) => void;
+}) => (
+	<>
+		<p className="pseudonymCard__bubbleText erstantwort__body">
+			{baustein.body}
+		</p>
+		{baustein.links?.length ? (
+			<ul className="erstantwort__links">
+				{baustein.links.map((link) => (
+					<li key={link.url}>
+						<a
+							href={link.url}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{link.label}
+						</a>
+					</li>
+				))}
+			</ul>
+		) : null}
+		{slots?.[baustein.id]}
+		{baustein.action && renderAction(baustein.action, onAction)}
+	</>
+);
+
 export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	bausteine,
 	compactFaq = true,
@@ -93,11 +127,12 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	skipAnimation = false,
 	onFirstReveal,
 	onAction,
-	name = 'Carimat',
+	name,
 	subtitle,
 	slots
 }) => {
 	const { t } = useTranslation();
+	const assistant = useAssistantIdentity();
 	const total = bausteine.length;
 
 	/* How many bubbles have revealed so far. With the animation skipped every
@@ -172,7 +207,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					<div className="pseudonymCard__contentCol erstantwort__content">
 						<div className="pseudonymCard__header">
 							<span className="pseudonymCard__headerName">
-								{name}
+								{name ?? assistant.name}
 							</span>
 							<span className="pseudonymCard__headerSubtitle">
 								{subtitle ?? t('erstantwort.subtitle')}
@@ -213,25 +248,11 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 																: 'Was passiert mit meinen Daten?'
 														)}
 												</summary>
-												<p className="pseudonymCard__bubbleText erstantwort__body">
-													{item.body}
-												</p>
-												{item.links?.map((link) => (
-													<a
-														key={link.url}
-														href={link.url}
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														{link.label}
-													</a>
-												))}
-												{slots?.[item.id]}
-												{item.action &&
-													renderAction(
-														item.action,
-														onAction
-													)}
+												<BausteinContent
+													baustein={item}
+													slots={slots}
+													onAction={onAction}
+												/>
 											</details>
 										))}
 									</div>
@@ -246,27 +267,11 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 											{baustein.headline}
 										</h4>
 									)}
-									<p className="pseudonymCard__bubbleText erstantwort__body">
-										{baustein.body}
-									</p>
-									{baustein.links?.length ? (
-										<ul className="erstantwort__links">
-											{baustein.links.map((link) => (
-												<li key={link.url}>
-													<a
-														href={link.url}
-														target="_blank"
-														rel="noopener noreferrer"
-													>
-														{link.label}
-													</a>
-												</li>
-											))}
-										</ul>
-									) : null}
-									{slots?.[baustein.id]}
-									{baustein.action &&
-										renderAction(baustein.action, onAction)}
+									<BausteinContent
+										baustein={baustein}
+										slots={slots}
+										onAction={onAction}
+									/>
 								</div>
 							);
 						})}

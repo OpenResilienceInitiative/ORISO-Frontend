@@ -2690,6 +2690,10 @@
 					"appointment": {
 						"title": "Randevular",
 						"description": "Bir randevu onaylandı, ertelendi veya iptal edildi – ve öncesindeki hatırlatma."
+					},
+					"consentRequest": {
+						"title": "Erişim ve devir talepleri",
+						"description": "Erişim veya devir için onayınız istendiğinde e-posta alın."
 					}
 				},
 				"consultant": {
@@ -3536,31 +3540,32 @@
 			"decline": "Erişimi reddet",
 			"optOut": {
 				"copy": "Vaka devri kapsamında, aynı danışmanlık merkezinden başka bir danışman bu görüşmeyi sınırlı bir süre için okuyabilir. Bu sırada danışmanlıktan elde edilen kişisel veriler işlenir. Mevcut danışmanınız sizden sorumlu olmaya devam eder.",
-				"prompt": "Lütfen bilgileri okuyun ve ardından kararınızı verin.",
-				"revocationCopy": "Anahtarı açarak, geçici erişime ve bunun için gerekli veri işlemeye onay vermiş olursunuz. Onayınızı istediğiniz zaman geri çekebilirsiniz; bu durumda aktif erişim hemen sona erer. Danışmanlığınız bundan bağımsız olarak devam eder.",
-				"switchLabel": "Bu vaka devri için veri işlenmesini kabul ediyorum",
+				"prompt": "İnceleme önceden onay alınmadan başlar. Bu talebe itiraz edebilirsiniz. Ancak tamamlanmış bir devir bu şekilde geri alınmaz.",
+				"revocationCopy": "Anahtar bu talep için geçerlidir. İtiraz edebilirsiniz; bu, tamamlanmış bir devri geri almaz.",
+				"switchLabel": "Bu talep için erişime izin ver",
 				"title": "Vaka devrine ilişkin gizlilik bildirimi"
 			},
 			"sender": "Carimat",
 			"senderRole": "Hızlı Kılavuz",
 			"info": {
 				"NONE": "Bu talep için bir karar istenmez. Mesaj, önceden onay alınmadan yapılan inceleme hakkında sizi bilgilendirir.",
-				"OPT_IN": "Bu talep için önce onayınız gerekir. Onayınız olmadan talepte bulunan uzman erişim elde edemez. Bu karar yalnızca bu talep için geçerlidir; gelecekteki tüm talepler için geçerli değildir.",
+				"OPT_IN": "Bu talep için onayınız gerekir. Onay olmadan talepte bulunan uzman erişemez. Kararınız yalnızca bu talep için geçerlidir.",
 				"OPT_OUT": "İnceleme önceden onay alınmadan başlar. Bu talebe itiraz edebilirsiniz. Ancak tamamlanmış bir devir bu şekilde geri alınmaz.",
-				"accessCopy": "İzin, sorumlu danışmanlık merkezini ve açıkça yetkilendirilmiş uzmanı kapsar. Dışarıdan kişilere veya platform işletmecisine oturumunuza erişim sağlamaz.",
+				"accessCopy": "Yalnızca sorumlu merkez ve özel olarak yetkilendirilmiş uzman erişebilir. Dışarıdan kişiler ve platform işletmecisi erişemez.",
 				"accessTitle": "Korumalı erişim",
 				"choiceTitle": "Onayınız",
 				"closed": "Bu talep tamamlandı. Başka bir karar beklenmiyor.",
 				"granted": "Erişim onaylandı.",
 				"more": "Daha fazla bilgi",
-				"needCopy": "Mesleki bir konuda görüş almak için başka bir uzman kısa süreli, örneğin birkaç saatliğine destek verebilir. Tatil veya hastalık durumunda merkezinizdeki başka bir uzman danışmanlığı devralabilir. Süre, ilgili talebe bağlıdır.",
-				"needTitle": "Gerektiğinde",
+				"needCopy": "Başka bir uzman birkaç saat destek verebilir. Tatil veya hastalık sırasında merkezinizden biri danışmanlığı devralabilir.",
+				"needTitle": "Ne zaman yararlı olur",
 				"noticeCopy": "Danışmanlık merkezinizdeki başka bir uzmana bu talep için inceleme erişimi verilir. Bu ayarda önceden onayınız istenmez.",
 				"noticeTitle": "Danışmanlığınız için destek",
 				"notificationsAction": "Bildirimleri ayarla",
 				"notificationsCopy": "Onayınız gerektiğinde e-posta veya tarayıcı bildirimlerini öneriyoruz. Böylece bir talepten zamanında haberdar olur ve yanıt verebilirsiniz.",
 				"takeoverContinues": "İtirazınız kaydedildi. Daha önce tamamlanmış olan devir geçerliliğini korur.",
-				"title": "Danışmanlığınıza erişim"
+				"title": "Danışmanlığınıza erişim",
+				"description": "Danışmanlık merkezinizde uzman görüşü ve görev devri için."
 			}
 		},
 		"denied": {
@@ -3659,6 +3664,15 @@
 			"importantTitle": "Önemli bildirim",
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",
 			"supervisionBody": "{{advisor}} bu sohbete süpervizör danışman olarak eklendi."
+		},
+		"standingPreference": {
+			"label": "Ek erişimden önce her zaman sor",
+			"description": "Bu görüşmedeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",
+			"baselineDescription": "Kapalıyken danışmanlık merkezinizin ayarları geçerlidir. Merkezin gerekli gördüğü onay yine gereklidir.",
+			"saving": "Kaydediliyor …",
+			"saved": "Ayar kaydedildi.",
+			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
+			"loading": "Ayar yükleniyor …"
 		}
 	},
 	"session": {
