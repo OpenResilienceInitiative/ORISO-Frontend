@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import * as React from 'react';
+import { expect } from 'storybook/test';
 import { OrbitalTrails } from './OrbitalTrails';
 
 const storySurface: React.CSSProperties = {
@@ -123,4 +124,52 @@ export const VariantComparison: Story = {
 			))}
 		</div>
 	)
+};
+
+/** Coloured and changing surfaces must remain visible through the loader. */
+export const TransparentSurfaces: Story = {
+	decorators: [],
+	render: () => (
+		<div style={{ display: 'flex', flexWrap: 'wrap', gap: 24 }}>
+			{[
+				'var(--m3-surface-container)',
+				'var(--m3-primary-container)',
+				'var(--m3-inverse-surface)'
+			].map((background) => (
+				<div
+					key={background}
+					style={{ width: 220, padding: 16, background }}
+				>
+					<OrbitalTrails
+						label="Orbital animation"
+						variant="single"
+						warmupFrames={180}
+						paused
+					/>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const roots =
+			canvasElement.querySelectorAll<HTMLElement>('.orbitalTrails');
+		expect(roots).toHaveLength(3);
+		for (const root of roots) {
+			expect(getComputedStyle(root).backgroundColor).toBe(
+				'rgba(0, 0, 0, 0)'
+			);
+			const canvas = root.querySelector('canvas')!;
+			const context = canvas.getContext('2d')!;
+			expect(context.getImageData(0, 0, 1, 1).data[3]).toBe(0);
+			const pixels = context.getImageData(
+				0,
+				0,
+				canvas.width,
+				canvas.height
+			).data;
+			expect(
+				pixels.some((value, index) => index % 4 === 3 && value > 0)
+			).toBe(true);
+		}
+	}
 };

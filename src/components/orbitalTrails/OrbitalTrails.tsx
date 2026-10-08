@@ -109,6 +109,9 @@ const drawFrame = (
 		trailsContext.stroke();
 	});
 
+	// Replace the visible frame while retaining accumulated trails separately.
+	// Both canvases stay transparent so any surface can show through.
+	context.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 	context.globalAlpha = 1;
 	context.drawImage(trailsCanvas, 0, 0);
 
@@ -171,11 +174,6 @@ export const OrbitalTrails = ({
 		if (!trailsContext) return;
 
 		const styles = window.getComputedStyle(root);
-		const background = cssVariable(
-			styles,
-			'--orbital-trails-background',
-			'#fcf9f9'
-		);
 		const colors = [
 			cssVariable(styles, '--orbital-trails-color-1', '#b3261e'),
 			cssVariable(styles, '--orbital-trails-color-2', '#77565a'),
@@ -187,10 +185,6 @@ export const OrbitalTrails = ({
 		canvas.width = CANVAS_SIZE * pixelRatio;
 		canvas.height = CANVAS_SIZE * pixelRatio;
 		context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-		context.fillStyle = background;
-		context.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
-		trailsContext.fillStyle = background;
-		trailsContext.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
 
 		const systems = createOrbitalSystems(seed, variant);
 		const initialFrames = Math.min(Math.max(warmupFrames, 0), MAX_FRAMES);
