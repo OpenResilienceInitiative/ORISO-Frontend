@@ -548,7 +548,15 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			.should('be.visible')
 			.and('contain.text', 'Teambesprechung öffnen');
 		cy.get('.session__acceptance button').should((buttons) => {
-			expect(buttons).to.have.length(2);
+			expect(buttons).to.have.length(3);
+			expect(buttons[0].getAttribute('data-tour-target')).to.equal(
+				'enquiry-accept-button'
+			);
+			expect(buttons[1].getAttribute('data-cy')).to.equal(
+				'enquiry-open-team'
+			);
+			expect(buttons[2].textContent.trim()).to.equal('Anfrage ablehnen');
+			expect(buttons.eq(2).prop('disabled')).to.equal(false);
 			expect(buttons[0].getBoundingClientRect().height).to.equal(
 				buttons[1].getBoundingClientRect().height
 			);
@@ -571,7 +579,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 					accept.top
 				);
 				expect(
-					footerRect.right - team.right,
+					footerRect.right - buttons[2].getBoundingClientRect().right,
 					'comfortable right inset'
 				).to.be.closeTo(32, 1);
 			} else if (accept.width + team.width + 16 > footerRect.width - 32) {

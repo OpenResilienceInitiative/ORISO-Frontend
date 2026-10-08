@@ -291,9 +291,11 @@ export const Confirmed: Story = {
 			within(doc.getByRole('dialog')).getAllByRole('button').at(-1)!
 		);
 		await waitFor(() => expect(doc.queryByRole('dialog')).toBeNull());
-		await expect(
-			within(ctx.canvasElement).getByTestId('rejection-proof')
-		).toHaveTextContent('1:/sessions/consultant/sessionPreview');
+		await waitFor(() =>
+			expect(
+				within(ctx.canvasElement).getByTestId('rejection-proof')
+			).toHaveTextContent('1:/sessions/consultant/sessionPreview')
+		);
 	}
 };
 export const SeekerReadOnlyHistory: Story = {
