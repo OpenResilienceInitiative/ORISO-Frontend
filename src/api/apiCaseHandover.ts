@@ -12,6 +12,12 @@ export type CaseHandoverStatusValue =
 	| 'CLIENT_CONSENT_DECLINED'
 	| (string & {});
 
+/** Pending requests retain their decision controls and feed acknowledgement. */
+export const isPendingCaseHandoverStatus = (status: CaseHandoverStatusValue) =>
+	status === 'PENDING' ||
+	status === 'PENDING_CLIENT_CONSENT' ||
+	status === 'GRANTED_PENDING_CLIENT_OPTOUT';
+
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 
 export interface CaseHandoverReason {

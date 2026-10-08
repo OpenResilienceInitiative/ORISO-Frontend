@@ -576,6 +576,19 @@ export const SystemNotification: Story = {
 			message: mockSystemNotificationMessage
 		}),
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__avatar--bot'
+			)!;
+			const title = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__sendFailedTitle'
+			)!;
+			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+				avatar.getBoundingClientRect().right + 8
+			);
+		});
 	}
 };
 
@@ -848,30 +861,85 @@ export const OutgoingWithReactions: Story = {
 async function assertReactionRailScrollsHorizontally(
 	canvasElement: HTMLElement
 ) {
-	await waitFor(() => {
-		const rail = canvasElement.querySelector(
-			'.messageItem__reactions'
-		) as HTMLElement | null;
-		expect(rail).toBeTruthy();
-		const pills = Array.from(
-			rail!.querySelectorAll('.messageItem__reactionPill')
-		) as HTMLElement[];
-		expect(pills.length).toBeGreaterThan(3);
+	await waitForMessageEnterAnimation(canvasElement);
+	const item = canvasElement.querySelector<HTMLElement>('.messageItem')!;
+	const bubble = item.querySelector<HTMLElement>('.messageItem__message')!;
+	const rail = item.querySelector<HTMLElement>('.messageItem__reactions')!;
+	const pills = Array.from(
+		rail.querySelectorAll<HTMLButtonElement>('button')
+	);
+	expect(pills.length).toBeGreaterThan(3);
 
-		// Single row: every pill shares the same top edge (no vertical stack).
-		const firstTop = pills[0].offsetTop;
-		pills.forEach((pill) => {
-			expect(pill.offsetTop).toBe(firstTop);
-			expect(getComputedStyle(pill).flexShrink).toBe('0');
+	// Constrain the real message's host, rather than asserting CSS declarations.
+	const host = item.parentElement!;
+	const originalWidth = host.style.width;
+	const originalMaxWidth = host.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			host.style.maxWidth = '100%';
+			await waitFor(() => {
+				const bounds = host.getBoundingClientRect();
+				for (const element of [
+					bubble,
+					item.querySelector<HTMLElement>('.messageItem__avatar')!,
+					item.querySelector<HTMLElement>(
+						'.messageItem__kebabButton'
+					)!
+				]) {
+					const rect = element.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 1);
+					expect(rect.right).toBeLessThanOrEqual(bounds.right + 1);
+				}
+				expect(bubble.scrollWidth).toBeLessThanOrEqual(
+					bubble.clientWidth + 1
+				);
+				pills.forEach((pill) =>
+					expect(pill.offsetTop).toBe(pills[0].offsetTop)
+				);
+			});
+		}
+
+		host.style.width = '320px';
+		expect(rail.scrollWidth).toBeGreaterThan(rail.clientWidth);
+		const initialBubble = bubble.getBoundingClientRect();
+		// Tabbing into an off-screen reaction must bring it into view without
+		// moving the whole message. This is the native button/scroll-container path.
+		pills[0].focus();
+		for (let index = 1; index < pills.length; index++)
+			await userEvent.tab();
+		expect(document.activeElement).toBe(pills[pills.length - 1]);
+		await waitFor(() => {
+			const last = pills[pills.length - 1].getBoundingClientRect();
+			const visible = rail.getBoundingClientRect();
+			expect(last.left).toBeGreaterThanOrEqual(visible.left - 1);
+			expect(last.right).toBeLessThanOrEqual(visible.right + 1);
 		});
-
-		const style = getComputedStyle(rail!);
-		expect(style.flexWrap).toBe('nowrap');
-		expect(style.overflowX).toMatch(/auto|scroll/);
-		expect(style.overflowY).toBe('hidden');
-		// Overflow content must be wider than the visible rail (scrollable).
-		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
-	});
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+		pills[0].focus();
+		await waitFor(() => expect(rail.scrollLeft).toBe(0));
+		const kebab = item.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				document.querySelector('.messageItem__actionMenuReactionEmoji')
+			).not.toBeNull()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(document.activeElement).toBe(kebab));
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+	} finally {
+		host.style.width = originalWidth;
+		host.style.maxWidth = originalMaxWidth;
+	}
 }
 
 export const OutgoingWithManyReactions: Story = {
@@ -1422,9 +1490,56 @@ export const ThreadEntryWithLastReply: Story = {
 			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
 		);
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
-		await userEvent.click(entry);
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message'
+		)!;
+		const bubbleRect = bubble.getBoundingClientRect();
+		const entryRect = entry.getBoundingClientRect();
+		await expect(Math.abs(entryRect.left - bubbleRect.left)).toBeLessThan(
+			1
+		);
+		await expect(Math.abs(entryRect.right - bubbleRect.right)).toBeLessThan(
+			1
+		);
+		await expect(getComputedStyle(entry).borderRadius).toBe(
+			getComputedStyle(bubble).borderRadius
+		);
+		await expect(entry.scrollWidth).toBeLessThanOrEqual(entry.clientWidth);
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
 		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
 	}
+};
+
+/** Same reply-entry contract in constrained conversation columns. */
+export const ThreadEntryPhone: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — phone alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 320, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
+};
+
+export const ThreadEntryOutgoing: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — outgoing short message alignment (W02)',
+	args: {
+		...ThreadEntryWithLastReply.args,
+		isMyMessage: true,
+		message: 'Danke.'
+	}
+};
+
+export const ThreadEntryTablet: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — tablet alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 820, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
 };
 
 /* ---------------------------------------------------------------------------
@@ -1539,6 +1654,42 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	return notice;
 };
 
+/** Header labels must clear the entire avatar frame, including its backdrop. */
+const expectReadableCarimatHeader = async (notice: HTMLElement) => {
+	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const avatar = notice.querySelector<HTMLElement>(
+		'.pseudonymCard__avatarFrame'
+	)!;
+	const labels = notice.querySelectorAll<HTMLElement>(
+		'.pseudonymCard__headerName, .pseudonymCard__headerSubtitle'
+	);
+	const originalWidth = card.style.width;
+	const originalMaxWidth = card.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			card.style.width = `${width}px`;
+			card.style.maxWidth = '100%';
+			await waitFor(() => {
+				for (const label of labels) {
+					const rect = label.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(
+						avatar.getBoundingClientRect().right + 8
+					);
+					expect(rect.right).toBeLessThanOrEqual(
+						card.getBoundingClientRect().right + 1
+					);
+					expect(label.scrollWidth).toBeLessThanOrEqual(
+						label.clientWidth + 1
+					);
+				}
+			});
+		}
+	} finally {
+		card.style.width = originalWidth;
+		card.style.maxWidth = originalMaxWidth;
+	}
+};
+
 export const SupervisionNotice: Story = {
 	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
 	parameters: {
@@ -1558,8 +1709,35 @@ export const SupervisionNotice: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
+		await expectReadableCarimatHeader(notice);
 		// The day pill moves onto the notice when the room already has history.
 		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeLongHeader: Story = {
+	...SupervisionNotice,
+	name: 'Supervision notice — long translated header',
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionTimeline([], {
+				roomId: SUPERVISION_ROOM_ID,
+				title: 'Supervision und gemeinsame fachliche Beratung innerhalb der Beratungsstelle',
+				description: SUPERVISION_NOTICE_TEXT,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+			})[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageItem--supervisionNotice'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expectReadableCarimatHeader(notice);
 	}
 };
 
@@ -1795,6 +1973,33 @@ export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
 			).toBeGreaterThan(0);
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvas.getByLabelText('Information')).toBeInTheDocument();
+		const notice = canvasElement.querySelector<HTMLElement>(
+			'.reassignRequestMessage'
+		);
+		const host =
+			notice?.closest<HTMLElement>('.messageItem')?.parentElement;
+		if (!notice || !host) throw new Error('Historical message is missing');
+		const originalWidth = host.style.width;
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const icon = notice.querySelector<SVGElement>('svg');
+			const title = notice.querySelector<HTMLElement>('strong');
+			if (!icon || !title)
+				throw new Error('Historical info header is missing');
+			await expect(
+				title.getBoundingClientRect().left
+			).toBeGreaterThanOrEqual(icon.getBoundingClientRect().right + 8);
+
+			await expect(notice.scrollWidth).toBeLessThanOrEqual(
+				notice.clientWidth + 1
+			);
+			await expect(
+				notice.getBoundingClientRect().right
+			).toBeLessThanOrEqual(host.getBoundingClientRect().right + 1);
+		}
+		host.style.width = originalWidth;
 	}
 };
 

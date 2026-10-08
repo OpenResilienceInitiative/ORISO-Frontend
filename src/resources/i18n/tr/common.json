@@ -3577,7 +3577,26 @@
 				"title": "Vaka devrine ilişkin gizlilik bildirimi"
 			},
 			"sender": "Carimat",
-			"senderRole": "Hızlı Kılavuz"
+			"senderRole": "Hızlı Kılavuz",
+			"info": {
+				"NONE": "Bu talep için bir karar istenmez. Mesaj, önceden onay alınmadan yapılan inceleme hakkında sizi bilgilendirir.",
+				"OPT_IN": "Bu talep için önce onayınız gerekir. Onayınız olmadan talepte bulunan uzman erişim elde edemez. Bu karar yalnızca bu talep için geçerlidir; gelecekteki tüm talepler için geçerli değildir.",
+				"OPT_OUT": "İnceleme önceden onay alınmadan başlar. Bu talebe itiraz edebilirsiniz. Ancak tamamlanmış bir devir bu şekilde geri alınmaz.",
+				"accessCopy": "İzin, sorumlu danışmanlık merkezini ve açıkça yetkilendirilmiş uzmanı kapsar. Dışarıdan kişilere veya platform işletmecisine oturumunuza erişim sağlamaz.",
+				"accessTitle": "Korumalı erişim",
+				"choiceTitle": "Onayınız",
+				"closed": "Bu talep tamamlandı. Başka bir karar beklenmiyor.",
+				"granted": "Erişim onaylandı.",
+				"more": "Daha fazla bilgi",
+				"needCopy": "Mesleki bir konuda görüş almak için başka bir uzman kısa süreli, örneğin birkaç saatliğine destek verebilir. Tatil veya hastalık durumunda merkezinizdeki başka bir uzman danışmanlığı devralabilir. Süre, ilgili talebe bağlıdır.",
+				"needTitle": "Gerektiğinde",
+				"noticeCopy": "Danışmanlık merkezinizdeki başka bir uzmana bu talep için inceleme erişimi verilir. Bu ayarda önceden onayınız istenmez.",
+				"noticeTitle": "Danışmanlığınız için destek",
+				"notificationsAction": "Bildirimleri ayarla",
+				"notificationsCopy": "Onayınız gerektiğinde e-posta veya tarayıcı bildirimlerini öneriyoruz. Böylece bir talepten zamanında haberdar olur ve yanıt verebilirsiniz.",
+				"takeoverContinues": "İtirazınız kaydedildi. Daha önce tamamlanmış olan devir geçerliliğini korur.",
+				"title": "Danışmanlığınıza erişim"
+			}
 		},
 		"denied": {
 			"copy": "Önceki talep, içeriklerin görüntülenmesini açmadı.",
@@ -5251,9 +5270,25 @@
 			"browser": "Bana burada bir sinyal verin",
 			"browserHint": "Adres gerekmez — ancak yalnızca bu cihazda çalışır.",
 			"email": "Bana bir e-posta yazın",
-			"emailHint": "Burada konuştuklarınız asla bu e-postada yer almaz."
+			"emailHint": "Burada konuştuklarınız asla bu e-postada yer almaz.",
+			"active": "Etkin: {{channel}}",
+			"bothSetup": "İkisini de ayarla",
+			"bothSetupHint": "E-posta ve ayrıca bu cihazda bir bildirim.",
+			"browserDenied": "Tarayıcı bildirimleri etkin değil. Lütfen tarayıcınızın izinlerini kontrol edin.",
+			"browserSilenced": "Tarayıcı bildirimleri bildirim ayarlarınızda sessize alınmış.",
+			"browserUnsupported": "Bu tarayıcı bildirimleri desteklemiyor.",
+			"channelBoth": "E-posta ve bu cihazdaki tarayıcı",
+			"channelBrowser": "Bu cihazdaki tarayıcı",
+			"channelEmail": "E-posta",
+			"enableBrowser": "Tarayıcı bildirimlerini etkinleştir",
+			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin."
 		},
-		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor."
+		"unavailableInRoom": "İlk yanıt – bu odada kullanılamıyor.",
+		"faq": {
+			"dataProtection": "Verilerime ne olur?",
+			"modalityNote": "Danışmanlık nasıl ilerler?",
+			"title": "Sık sorulan sorular"
+		}
 	},
 	"legal": {
 		"notice": {

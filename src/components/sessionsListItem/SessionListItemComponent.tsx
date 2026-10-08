@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
@@ -1037,7 +1038,7 @@ export const SessionListItemComponent = ({
 					activeSession.item.matrixRoomId ||
 					String(activeSession.item.id ?? 'group')
 				}
-				size="40px"
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		) : !isAsker ? (
@@ -1052,7 +1053,7 @@ export const SessionListItemComponent = ({
 				username={activeSession.user?.username || ''}
 				displayName={railName}
 				choice={chosenAvatarOf(activeSession.user)}
-				size={40}
+				size={AVATAR_SIZES.session}
 			/>
 		) : (
 			<UserAvatar
@@ -1066,7 +1067,7 @@ export const SessionListItemComponent = ({
 				}
 				choice={chosenAvatarOf(activeSession.consultant)}
 				avatarDisplayName={activeSession.consultant?.displayName}
-				size="40px"
+				size={AVATAR_SIZES.session}
 				ring={false}
 			/>
 		);

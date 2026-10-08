@@ -3539,10 +3539,29 @@
 			"decline": "Decline access",
 			"optOut": {
 				"title": "Privacy notice for case handover",
-				"prompt": "Please read the information and then make your decision.",
+				"prompt": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
 				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
 				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
-				"switchLabel": "I consent to data processing for this case handover"
+				"switchLabel": "Allow access for this request"
+			},
+			"info": {
+				"more": "Learn more",
+				"title": "Access to your counselling conversation",
+				"noticeTitle": "Support for your consultation",
+				"noticeCopy": "Another professional at your counselling centre receives access for this request. This policy does not ask for prior consent.",
+				"needTitle": "When needed",
+				"needCopy": "Another professional may briefly help with a question, for example for a few hours. During holidays or illness, another professional at your centre may take over. The actual duration depends on the request.",
+				"choiceTitle": "Your consent",
+				"OPT_IN": "This request needs your approval first. Without it, the requesting professional receives no access. Your decision applies to this request, not to every future request.",
+				"OPT_OUT": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
+				"NONE": "No decision is requested for this request. This message informs you about access without prior consent.",
+				"accessTitle": "Protected access",
+				"accessCopy": "The grant concerns the responsible counselling centre and the specifically authorised professional. It does not grant outsiders or the platform operator access to your session.",
+				"notificationsCopy": "When your approval is needed, we recommend email or browser notifications so you can respond to a request in time.",
+				"notificationsAction": "Set up notifications",
+				"granted": "Access has been confirmed.",
+				"closed": "This request is complete. No further decision is pending.",
+				"takeoverContinues": "Your objection was recorded. The completed takeover remains in place."
 			}
 		},
 		"denied": {
@@ -5138,8 +5157,17 @@
 			"emailHint": "What you discuss here never appears in that email.",
 			"browser": "Give me a signal here",
 			"browserHint": "No address needed — but it only works on this device.",
-			"both": "Both, and let me set a password now",
-			"bothHint": "Recommended. That way you can get back in if you forget something."
+			"enableBrowser": "Enable browser notifications",
+			"browserDenied": "Browser notifications are not enabled. Please check your browser permission.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"active": "Enabled: {{channel}}",
+			"bothSetup": "Set up both",
+			"bothSetupHint": "Email and an additional signal on this device.",
+			"browserUnsupported": "This browser does not support browser notifications.",
+			"browserSilenced": "Browser notifications are silenced in your notification settings.",
+			"channelBoth": "Email and browser on this device",
+			"channelEmail": "Email",
+			"channelBrowser": "Browser on this device"
 		},
 		"subtitle": "Your first steps",
 		"greeting": {
@@ -5200,7 +5228,12 @@
 			"body": "In the conversation you appear under a randomly generated name. You can roll a new one at any time.",
 			"action": "Change my name"
 		},
-		"unavailableInRoom": "First response – not available in this room."
+		"unavailableInRoom": "First response – not available in this room.",
+		"faq": {
+			"title": "Frequently asked questions",
+			"modalityNote": "How does counselling work?",
+			"dataProtection": "What happens to my data?"
+		}
 	},
 	"dpaSign": {
 		"title": "Review and confirm contract documents",
