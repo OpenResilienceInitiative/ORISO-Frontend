@@ -36,7 +36,7 @@
 - Dual call stacks (Element Call vs native) make warm-up stream ownership easy to get wrong when one path is retired but the store/release still assumes the other.
 - #1189: the `verifier` subagent reported "acceptance criteria 1 and 3 have no executable coverage" and the branch was pushed anyway, on the strength of reading the condition instead of rendering it. The `qa` subagent then found the defect within minutes of actually mounting a group row. When a reviewer names a missing class of evidence, produce that evidence — do not substitute reasoning for it.
 
-## Last session
+## Historical sessions — validation applies only to each recorded revision
 
 - 2026-09-04: #1194 Jobs 1–3 (email icon, 2FA backup-key step, in-chat display-name re-roll). Job 4 deferred (#928/#1140); email save stays on #1255. Branch `cursor/1194/enquiry-email-backup-display`. Gate: `test:unit` 3991 PASS, `lint:scripts` PASS, `build` PASS with `REACT_APP_KEYCLOAK_REALM=oriso` so postbuild does not see local `.env` `online-beratung`, `lint:style` FAIL on pre-existing SCSS only. Next: PR against `origin/dev`, issue proof comment, no merge.
 - 2026-08-31: #1154 independent audit of `cursor/1154/calls-forms-i18n` (#1243 on #1242). Plan “rescan clean” was false: mini-game still passed English as `t()` second args; nav unread aria, composer error, and level/thread chrome were raw DE/EN. Fixed + test extended. Gate: `callsFormsI18n` 31 PASS, `i18n.test.ts` 31 PASS, `test:unit` 3738 PASS, `lint:scripts` PASS, local only. Still out of repo: API `agency.name`/`topic.name`, ConsultingTypeService `option.label`, Ukrainian UI locale. Do not merge the stack or close #1154 without asking.
