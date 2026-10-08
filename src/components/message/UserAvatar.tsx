@@ -1,12 +1,16 @@
 import * as React from 'react';
 import { useMemo } from 'react';
+import { CounsellorAvatar } from './CounsellorAvatar';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 import { formatMessagePersonName } from './messageNameUtils';
 
 interface UserAvatarProps {
 	username: string;
 	displayName?: string;
+	/** Person's name when displayName is a separate session caption. */
+	avatarDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
 	userId: string;
@@ -19,32 +23,39 @@ interface UserAvatarProps {
 	ring?: boolean;
 	/** The animal circle's own grey outline; see `AnimalAvatar`. */
 	outline?: boolean;
+	/** The avatar the user picked in their profile (#1240); default when absent. */
+	choice?: AvatarChoice | null;
 }
 
 /**
- * User avatar: the deterministic animal icon derived from the user id
- * (#1193 Job 4). The former letter-monogram fallback is gone — every user,
- * client or counsellor, gets the same animal wherever they appear, so a
- * person is recognisable across header, list, chat and profile.
+ * The canonical saved choice renders consistently across profile and recipients.
+ * Without a choice, the stable user id determines the animal and palette.
  */
 export const UserAvatar: React.FC<UserAvatarProps> = ({
 	username,
 	displayName,
+	avatarDisplayName,
 	firstName,
 	lastName,
 	userId,
 	size = '32px',
 	ring = true,
-	outline = true
+	outline = true,
+	choice
 }) => {
 	const resolvedName = formatMessagePersonName(
-		displayName,
+		avatarDisplayName ?? displayName,
 		username,
 		firstName,
 		lastName
 	);
 	const avatarKey = userId || username || 'unknown';
-	const avatar = useMemo(() => generateAvatarForUser(avatarKey), [avatarKey]);
+	const chosenFile = choice?.kind === 'animal' ? choice.file : undefined;
+	const avatar = useMemo(() => {
+		const derived = generateAvatarForUser(avatarKey);
+		if (!chosenFile) return derived;
+		return { ...derived, file: chosenFile };
+	}, [avatarKey, chosenFile]);
 
 	// Keep the overall footprint equal to `size` so existing fixed-size
 	// containers don't shift; the white ring is created by shrinking the inner
@@ -71,10 +82,29 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				background: ring ? '#fff' : 'transparent',
 				boxShadow: ring ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
 				boxSizing: 'border-box',
-				flexShrink: 0
+				flexShrink: 0,
+				color:
+					choice && choice.kind !== 'animal'
+						? 'var(--m3-on-primary)'
+						: undefined
 			}}
 		>
-			<AnimalAvatar avatar={avatar} size={innerSize} outline={outline} />
+			{choice && choice.kind !== 'animal' ? (
+				<CounsellorAvatar
+					choice={choice}
+					displayName={avatarDisplayName ?? displayName}
+					firstName={firstName}
+					lastName={lastName}
+					username={username}
+					size={innerSize}
+				/>
+			) : (
+				<AnimalAvatar
+					avatar={avatar}
+					size={innerSize}
+					outline={outline}
+				/>
+			)}
 		</span>
 	);
 };

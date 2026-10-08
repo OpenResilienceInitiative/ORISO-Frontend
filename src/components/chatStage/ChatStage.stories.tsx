@@ -1680,8 +1680,26 @@ export const PanelOpensAfterMountComposersSettleEqual: Story = {
 			composers: 2,
 			bubblesAtLeast: 6
 		});
-		// Let the 240 ms framed→flush transition run out before measuring.
-		await new Promise((resolve) => setTimeout(resolve, 400));
+		// #1613: measure once the re-frame has run out. It is not one 240 ms
+		// transition: the mid-flight lock (138) animates in first, and the
+		// settle re-measure animates on to 106 — on a slow runner that took
+		// longer than a fixed pause. Wait for both shells to be compact and
+		// no longer animating; a height that stays wrong still fails below.
+		await waitFor(
+			() => {
+				for (const shell of canvasElement.querySelectorAll<HTMLElement>(
+					'.textarea__wrapper-send-message'
+				)) {
+					expect(
+						shell.classList.contains(
+							'textarea__wrapper-send-message--compact'
+						)
+					).toBe(true);
+					expect(shell.getAnimations()).toHaveLength(0);
+				}
+			},
+			{ timeout: 5_000 }
+		);
 		await expectCompactComposers(canvasElement);
 	}
 };

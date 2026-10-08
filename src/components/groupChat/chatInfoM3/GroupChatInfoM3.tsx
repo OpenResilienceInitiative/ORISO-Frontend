@@ -103,6 +103,8 @@ export interface GroupChatInfoM3Props {
 	participantMenuLabel?: (name: string) => string;
 	onShowQrCode?: () => void;
 	onCopyInviteLink?: () => void;
+	/** No invite token yet: the actions stay visible but cannot be used. */
+	inviteLinkUnavailable?: boolean;
 	teamRoles?: GroupChatInfoTeamMember[];
 	/**
 	 * Replaces the read-only `teamRoles` list with interactive content (the
@@ -230,6 +232,7 @@ export const GroupChatInfoM3 = ({
 	participantMenuLabel = (name) => `Optionen für ${name}`,
 	onShowQrCode,
 	onCopyInviteLink,
+	inviteLinkUnavailable = false,
 	teamRoles = [],
 	teamRolesSlot,
 	primaryAction,
@@ -454,6 +457,7 @@ export const GroupChatInfoM3 = ({
 													<QrCode2RoundedIcon />
 												}
 												onClick={onShowQrCode}
+												disabled={inviteLinkUnavailable}
 												sx={outlinedActionSx}
 											>
 												{translate('qrCode.link.text')}
@@ -466,12 +470,26 @@ export const GroupChatInfoM3 = ({
 													<ContentCopyRoundedIcon />
 												}
 												onClick={onCopyInviteLink}
+												disabled={inviteLinkUnavailable}
 												sx={outlinedActionSx}
 											>
 												{translate(
 													'groupChat.copy.link.text'
 												)}
 											</Button>
+										)}
+										{inviteLinkUnavailable && (
+											<Typography
+												sx={{
+													...type.bodyMedium,
+													color: onSurfaceVariant,
+													flexBasis: '100%'
+												}}
+											>
+												{translate(
+													'groupChat.copy.link.unavailable'
+												)}
+											</Typography>
 										)}
 									</Box>
 								)}
