@@ -107,6 +107,7 @@ import { MessageDateDivider } from './MessageDateDivider';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
 import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -2759,6 +2760,7 @@ export const MessageItemComponent = ({
 												: userData?.lastName
 										}
 										size={48}
+										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
 							</div>

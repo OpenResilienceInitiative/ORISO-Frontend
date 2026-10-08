@@ -25,6 +25,7 @@ import LanguageOutlinedIcon from '@mui/icons-material/LanguageOutlined';
 import KeyboardOutlinedIcon from '@mui/icons-material/KeyboardOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import NotificationsActiveOutlinedIcon from '@mui/icons-material/NotificationsActiveOutlined';
+import AnimationOutlinedIcon from '@mui/icons-material/AnimationOutlined';
 import { BrowserNotification } from './BrowserNotifications';
 import { isSupported as isBrowserNotificationSupported } from '../../utils/notificationHelpers';
 
@@ -110,7 +111,12 @@ export const profileRoutesSettings = (
 		title: 'profile.routes.display',
 		url: '/anzeige',
 		elements: [
-			{ component: MenuEffectsSettings, column: COLUMN_RIGHT, order: 2 },
+			{
+				component: MenuEffectsSettings,
+				icon: AnimationOutlinedIcon,
+				column: COLUMN_RIGHT,
+				order: 2
+			},
 			{
 				condition: () => selectableLocales.length > 1,
 				component: Locale,

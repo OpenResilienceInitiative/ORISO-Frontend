@@ -792,7 +792,8 @@
 					"title": "Lien copié"
 				},
 				"text": "Copier le lien d'invitation",
-				"title": "Copier le lien d'invitation dans le presse-papiers"
+				"title": "Copier le lien d'invitation dans le presse-papiers",
+				"unavailable": "Le lien d'invitation de ce groupe n'est pas encore disponible."
 			}
 		},
 		"create": {
@@ -1152,8 +1153,7 @@
 				"decrease": "Diminuer {{field}}",
 				"openList": "Choisir {{field}}",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} fois",
-				"repeatValue_other": "{{count}} fois"
+				"repeatDates": "{{count}} séances"
 			},
 			"noModeratorAvailable": "Aucune personne disponible",
 			"moderatorHelp": "Aide",
@@ -1177,7 +1177,8 @@
 			"moreOpen": "La modération a ouvert le groupe. « Rejoindre » vous amène dans la conversation.",
 			"moreWaiting": "Dès que la modération ouvre le groupe, « Rejoindre » devient disponible ici. Vous n'avez rien à faire.",
 			"missing": "Ce groupe n'existe plus ou vous n'y avez pas accès.",
-			"backToCountdown": "Retour au compte à rebours"
+			"backToCountdown": "Retour au compte à rebours",
+			"legalMenu": "Mentions légales"
 		},
 		"shareDialog": {
 			"title_text": "Cercle créé",
@@ -1255,6 +1256,26 @@
 				"coModeratorSameTenant": "La co-modération est réservée aux professionnel·les de votre propre organisme.",
 				"privacy": "Tant que vous n’avez pas décidé, {{name}} ne voit rien de ce groupe de parole."
 			}
+		},
+		"joinHandover": {
+			"badge": "Groupe de parole",
+			"subline": "Comment se déroule le groupe :",
+			"encryption": "Chiffré : seuls les membres du groupe voient ce qui y est écrit.",
+			"cta": "Vers le groupe",
+			"status": {
+				"preparing": "Préparation de l'espace du groupe …",
+				"ready": "Tout est prêt — vous pouvez rejoindre le groupe",
+				"slow": "Cela prend plus de temps que d'habitude",
+				"entering": "Ouverture de l'espace du groupe …"
+			}
+		},
+		"consent": {
+			"headline": "Avant d'écrire",
+			"description": "Ce groupe est animé par un centre de conseil. Veuillez accepter sa politique de confidentialité avant d'écrire dans le groupe.",
+			"reject": "Refuser",
+			"accept": "J'accepte",
+			"rejected": "Sans votre accord, vous ne pouvez pas écrire dans ce groupe. Vous pouvez donner votre accord plus tard à tout moment.",
+			"saveFailed": "Votre accord n'a pas pu être enregistré. Veuillez réessayer."
 		}
 	},
 	"help": {
@@ -2281,6 +2302,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Votre image",
+			"default": "Par défaut"
+		},
 		"appLanguage": {
 			"info": "Définissez ici la langue de l'application.",
 			"title": "Langue"
@@ -2901,6 +2926,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (exercice)",
+			"colleague": "Alex (exercice)",
+			"supervisor": "Robin (exercice)"
+		},
+		"asker": {
+			"firstMessage": "Bonjour, j’ai une question générale sur votre offre. Comment se déroule un accompagnement chez vous, et sous quel délai puis-je espérer une réponse ? Merci d’avance.",
+			"reply": "Merci beaucoup pour votre réponse, elle m’aide. Je reviendrai vers vous si j’ai d’autres questions."
+		},
+		"colleague": {
+			"teamMessage": "Je suis en rendez-vous aujourd’hui et je n’aurai pas le temps de répondre. Peux-tu reprendre la demande ?"
+		},
+		"supervisor": {
+			"reply": "Ça me paraît bien. N’hésite pas à demander ce que la personne souhaite savoir exactement. Je lis en même temps et je te fais signe si quelque chose me frappe."
+		},
+		"erstantwort": {
+			"greeting": "Votre demande nous est bien parvenue. Une conseillère ou un conseiller vous répondra prochainement."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Bonjour, merci pour votre message. Ici, l’accompagnement se fait par écrit et en toute confidentialité."
+		},
+		"names": {
+			"agency": "Service d’exercice",
+			"topic": "Exercice",
+			"teamRoom": "Réunion d’équipe (exercice)",
+			"supervisionRoom": "Supervision (exercice)"
+		}
+	},
 	"registration": {
 		"selectedLabel": "Sélectionné",
 		"noneSelected": "Veuillez choisir un thème pour continuer.",
@@ -3425,6 +3479,13 @@
 		"accountCreated": {
 			"login": "Votre compte a été créé, mais la connexion automatique n’a pas fonctionné. Veuillez vous connecter avec votre nom d’utilisateur et votre mot de passe.",
 			"retry": "Votre accès a été créé, mais la connexion n’a pas fonctionné. Veuillez réessayer."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "L'invitation n'a pas pu être chargée pour le moment.",
+				"body": "Veuillez vérifier votre connexion et réessayer. Votre lien d'invitation reste valable."
+			},
+			"loading": "Chargement de l'invitation …"
 		}
 	},
 	"releaseNote": {
@@ -3997,6 +4058,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Votre demande ne peut pas encore être envoyée",
+			"text": "Le chat chiffré de ce centre de conseil n’est pas encore configuré. Votre texte reste dans ce champ – veuillez réessayer plus tard ou contacter directement le centre de conseil."
+		},
 		"error": {
 			"headline": "Une erreur s'est produite lors de l'envoi du message.",
 			"text": "Un problème est survenu, veuillez réessayer"
@@ -4624,9 +4689,13 @@
 				"on": "Activé"
 			},
 			"subtitle": "De courtes visites guidées vous montrent où trouver chaque chose.",
-			"title": "Lancer les visites guidées automatiquement"
+			"title": "Lancer l’introduction automatiquement"
 		},
-		"title": "Visite guidée"
+		"title": "Visite guidée",
+		"introduction": {
+			"title": "Visite d’introduction",
+			"summary": "Découvrez les différentes parties de l’application. Vous pouvez relancer l’introduction à tout moment."
+		}
 	},
 	"consultingTypes": {
 		"title": "Welcome to Caritas online counselling",
@@ -5284,6 +5353,66 @@
 					"intro": "Les consultations terminées sont déplacées vers les archives comme avant — elles se trouvent désormais dans cet onglet."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Exercice : accepter une demande",
+			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à accepter une demande et à écrire la première réponse. Toutes les personnes et tous les contenus sont fictifs.",
+			"step": {
+				"navEnquiries": {
+					"title": "Ouvrir les demandes",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Vous trouverez ici, sous « Demandes », les nouvelles demandes."
+				},
+				"openEnquiry": {
+					"title": "Ouvrir la demande",
+					"intro": "Une demande d’exercice vous attend dans la liste. Cliquez dessus pour l’ouvrir."
+				},
+				"openTeam": {
+					"title": "Ouvrir la discussion d’équipe",
+					"intro": "La discussion d’équipe est activée chez vous : elle permet de vous concerter avec votre équipe avant d’accepter. Cliquez sur « Ouvrir la discussion d’équipe »."
+				},
+				"teamReply": {
+					"title": "Répondre à l’équipe",
+					"intro": "Lisez le message de l’équipe et écrivez une réponse. Quand vous acceptez la demande, la discussion d’équipe se ferme."
+				},
+				"accept": {
+					"title": "Accepter la demande",
+					"intro": "Cliquez sur « Accepter la demande » : elle passe dans « Mes consultations » et disparaît de la liste de votre équipe."
+				},
+				"firstAnswer": {
+					"title": "Première réponse et premier message",
+					"intro": "La demande est maintenant la vôtre. Dans le chat, vous voyez la première réponse automatique et le premier message de la personne qui cherche conseil."
+				},
+				"reply": {
+					"title": "Écrire votre première réponse",
+					"intro": "Écrivez une courte réponse à cette personne et envoyez-la. Elle reste dans l’exercice et n’est enregistrée nulle part."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Bien joué : vous avez accepté une demande et y avez répondu. Terminez l’exercice avec le bouton ci-dessous."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Exercice : ajouter un·e superviseur·e",
+			"summary": "Entraînez-vous, dans un espace d’exercice protégé, à ajouter un·e superviseur·e à une consultation. Toutes les personnes et tous les contenus sont fictifs.",
+			"step": {
+				"addSupervisor": {
+					"title": "Ajouter un·e superviseur·e",
+					"intro": "Ceci est un exercice : toutes les personnes sont fictives, rien n’est envoyé ni enregistré. Cliquez sur le « + », choisissez le ou la superviseur·e, indiquez brièvement le motif et confirmez."
+				},
+				"supervisorReply": {
+					"title": "Réponse du ou de la superviseur·e",
+					"intro": "Votre superviseur·e a répondu dans le chat latéral. Seuls vous deux voyez ces messages, la personne qui cherche conseil ne les voit pas."
+				},
+				"standingAssignment": {
+					"title": "Attribution fixe",
+					"intro": "Si votre administration vous a attribué un·e superviseur·e fixe, il ou elle est ajouté·e automatiquement quand vous acceptez une demande. Vous n’avez rien à faire."
+				},
+				"done": {
+					"title": "Bravo !",
+					"intro": "Vous avez ajouté un·e superviseur·e et lu sa réponse. Terminez l’exercice avec le bouton ci-dessous."
+				}
+			}
 		}
 	},
 	"weekday": {
@@ -5591,6 +5720,35 @@
 			"region": "Notifications",
 			"more": "Afficher {{count}} de plus",
 			"less": "Afficher moins"
+		}
+	},
+	"practice": {
+		"banner": {
+			"title": "Mode exercice",
+			"progress": "Étape {{current}} sur {{total}}",
+			"note": "Cas d'exercice, aucune donnée réelle",
+			"end": "Terminer l'exercice",
+			"restart": "Recommencer",
+			"moveHandle": "Déplacer le bandeau (flèches du clavier)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Accepter une demande et rédiger une première réponse.",
+				"supervision": "Choisir une personne de supervision et l’ajouter à un entretien."
+			},
+			"title": "Espace d'exercice",
+			"subtitle": "Entraînez-vous à des procédures sur un cas fictif. Aucune donnée réelle n'est utilisée et rien de ce que vous saisissez ici n'est enregistré.",
+			"empty": "Aucun exercice n'est disponible pour vous pour le moment.",
+			"badge": "Exercice",
+			"phoneHint": "Merci de vous exercer sur un ordinateur.",
+			"windowHint": "Veuillez agrandir la fenêtre de votre navigateur pour cet exercice.",
+			"action": {
+				"start": "Commencer l'exercice",
+				"restart": "S'exercer à nouveau"
+			}
+		},
+		"error": {
+			"start": "L'exercice n'a pas pu démarrer. Veuillez réessayer."
 		}
 	},
 	"counselling": {

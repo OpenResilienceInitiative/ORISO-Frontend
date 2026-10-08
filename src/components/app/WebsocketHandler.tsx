@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { matrixLiveEventBridge } from '../../services/matrixLiveEventBridge';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { bindFeedUpdateSignal } from '../../services/feedUpdateSignalBridge';
 
 /** Matrix refresh metadata only; the persisted feed owns announcements. */
 export const WebsocketHandler = () => {
@@ -21,8 +22,10 @@ export const WebsocketHandler = () => {
 			if (!event?.isOwnMessage) setIncomingRefreshPending(true);
 		};
 		matrixLiveEventBridge.on('directMessage', onDirectMessage);
+		const unbindFeedSignal = bindFeedUpdateSignal();
 		return () => {
 			matrixLiveEventBridge.off('directMessage', onDirectMessage);
+			unbindFeedSignal();
 		};
 	}, []);
 	useEffect(() => {

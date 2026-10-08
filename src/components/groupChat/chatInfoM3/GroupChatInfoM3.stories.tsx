@@ -226,3 +226,30 @@ export const NoParticipants: Story = {
 		).toBeVisible();
 	}
 };
+
+/**
+ * A group without an invite token (#1499, UserService#1248): the server turns
+ * a number-only link away, so the invite actions stay visible but disabled,
+ * with the reason below them.
+ */
+export const InviteLinkUnavailable: Story = {
+	name: 'Stage · invite link not available yet',
+	globals: desktop1440Globals,
+	args: { inviteLinkUnavailable: true },
+	render: StageRender('desktop'),
+	play: async ({ canvas, args }) => {
+		const copy = canvas.getByRole('button', {
+			name: /Einladungs-Link kopieren/
+		});
+		const qr = canvas.getByRole('button', { name: /QR-Code anzeigen/ });
+		await expect(copy).toBeDisabled();
+		await expect(qr).toBeDisabled();
+		await expect(
+			canvas.getByText(
+				'Der Einladungslink ist für diese Gruppe noch nicht verfügbar.'
+			)
+		).toBeVisible();
+		await userEvent.click(copy, { pointerEventsCheck: 0 });
+		await expect(args.onCopyInviteLink).not.toHaveBeenCalled();
+	}
+};

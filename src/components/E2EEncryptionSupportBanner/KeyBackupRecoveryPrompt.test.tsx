@@ -54,7 +54,9 @@ it('never opens a restore modal before enquiry, including an out-of-sync device'
 		</MemoryRouter>
 	);
 	expect(screen.queryByRole('dialog')).toBeNull();
-	fireEvent.click(screen.getByRole('button', { name: 'Tresor öffnen' }));
+	fireEvent.click(
+		screen.getByRole('button', { name: 'Verlauf wiederherstellen' })
+	);
 	expect(screen.getByRole('dialog')).toBeTruthy();
 });
 it.each(['pending', 'device-ready', 'ready'] as const)(

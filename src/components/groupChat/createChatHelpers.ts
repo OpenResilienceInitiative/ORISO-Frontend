@@ -195,12 +195,29 @@ const TIME_PART = /^(\d{2}:\d{2})/;
  * startDate + startTime are already the group's wall clock (#1499). Parsing
  * them with `new Date()` would read the date as UTC midnight.
  */
+/**
+ * Date silently rolls 2026-02-30 and 24:00 over; only an exact round trip is
+ * real. UTC, so a local DST gap cannot reject a stored wall-clock time.
+ */
+const isRealWallClock = (date: string, time: string): boolean => {
+	const [year, month, day] = date.split('-').map(Number);
+	const [hours, minutes] = time.split(':').map(Number);
+	const parsed = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+	return (
+		parsed.getUTCFullYear() === year &&
+		parsed.getUTCMonth() === month - 1 &&
+		parsed.getUTCDate() === day &&
+		parsed.getUTCHours() === hours &&
+		parsed.getUTCMinutes() === minutes
+	);
+};
+
 const readEditStart = (
 	source: GroupChatEditSource
 ): { startDate: string; startTime: string } | null => {
 	const date = DATE_PART.exec(source.startDate || '')?.[1];
 	const time = TIME_PART.exec(source.startTime || '')?.[1];
-	if (date && time && !Number.isNaN(new Date(`${date}T${time}`).getTime())) {
+	if (date && time && isRealWallClock(date, time)) {
 		return { startDate: date, startTime: time };
 	}
 	if (!source.startDateWithTime) {
