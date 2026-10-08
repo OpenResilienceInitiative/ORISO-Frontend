@@ -1,0 +1,151 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Chat/System messages/Inventory" />
+
+# System messages
+
+Carimat is the rendering identity of system messages, not a separate message transport.
+This inventory opens the maintained production components. Use the viewport and locale
+controls to inspect the same responsive implementation on phone, tablet and desktop.
+
+<table>
+	<thead>
+		<tr>
+			<th>Notice</th>
+			<th>Maintained scenarios</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>First response, FAQ and notification choices</td>
+			<td>
+				<a href="?path=/story/components-chat-erstantwort--platform-defaults">
+					First response and FAQ
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Consent before access</td>
+			<td>
+				<a href="?path=/story/organisms-casehandover-clientcards--pending-client-consent">
+					Pending opt-in
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Access with an objection option</td>
+			<td>
+				<a href="?path=/story/organisms-casehandover-clientcards--active-client-opt-out">
+					Active opt-out
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>All consent states and optional information dialog</td>
+			<td>
+				<a href="?path=/docs/organisms-casehandover-clientcards--docs">
+					Consent documentation
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Handover, saved decisions and notification continuation</td>
+			<td>
+				<a href="?path=/docs/organisms-casehandover-conversationjourney--docs">
+					Real component journey
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Supervision</td>
+			<td>
+				<a href="?path=/story/components-chat-messageitem--supervision-notice">
+					Supervision notice
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Historical assignment</td>
+			<td>
+				<a href="?path=/docs/components-chat-reassignmessage--docs">
+					Reassignment
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>General information notices</td>
+			<td>
+				<a href="?path=/docs/components-chat-systemmessage--docs">
+					System message
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Lost encryption keys</td>
+			<td>
+				<a href="?path=/docs/components-chat-masterkeylostmessage--docs">
+					Key-loss notices
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Activated encryption</td>
+			<td>
+				<a href="?path=/docs/components-chat-e2eeactivatedmessage--docs">
+					Encryption notice
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Delivery failure</td>
+			<td>
+				<a href="?path=/docs/components-chat-messagesendfailed--docs">
+					Failed message
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Live-chat availability</td>
+			<td>
+				<a href="?path=/docs/components-notifications-live-chat-loss-notice--docs">
+					Live-chat loss notice
+				</a>
+			</td>
+		</tr>
+		<tr>
+			<td>Security and recovery actions</td>
+			<td>
+				<a href="?path=/docs/organisms-recoverykeysavereminder--docs">
+					Recovery reminder
+				</a>
+				,{' '}
+				<a href="?path=/docs/organisms-keybackuprecoverydialog--docs">
+					recovery dialog
+				</a>
+				,{' '}
+				<a href="?path=/docs/organisms-keybackuprecoverysnackbar--docs">
+					recovery snackbar
+				</a>
+			</td>
+		</tr>
+	</tbody>
+</table>
+
+## Existing links and device coverage
+
+Category names have changed, but explicit story IDs preserve existing URLs.
+The consent stories tagged **device-regression** remain for existing links and
+browser checks (including narrow action alignment); they are regression scenarios,
+not separate mobile components. Select a viewport on the main state stories for
+ordinary design review. Pending, saved, denied, expired and informational behavior
+is exercised by the handover journey as well as the consent scenarios.
+
+## Approved icon family
+
+The consent dialog uses the supplied **400** artwork for Einsicht, When useful,
+Your consent and Protected access. The additional filled surveillance-consent
+asset is catalogued for future selected-state use. Find both in
+[Icons & Avatars](?path=/docs/design-system-icons-avatars--docs).
+
+Storybook is component evidence. Persistence, event timing and real chat placement
+must additionally be checked in the running application.

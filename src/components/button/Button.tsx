@@ -56,6 +56,7 @@ export interface ButtonProps {
 	tabIndex?: number;
 	/** Semantic product-tour anchor, rendered as `data-tour-target`. */
 	tourTarget?: string;
+	ariaHasPopup?: React.AriaAttributes['aria-haspopup'];
 }
 
 export const Button = (props: ButtonProps) => {
@@ -135,6 +136,7 @@ export const Button = (props: ButtonProps) => {
 				disabled={props.disabled}
 				title={item.title}
 				aria-label={item.title}
+				aria-haspopup={props.ariaHasPopup}
 				className={`
 					button__item
 					${getButtonClassName(item.type)}

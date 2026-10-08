@@ -1,6 +1,8 @@
+import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
@@ -30,6 +32,7 @@ import './ErstantwortSequence.styles.scss';
 
 export interface ErstantwortSequenceProps {
 	bausteine: ResolvedBaustein[];
+	compactFaq?: boolean;
 	/** Delay between two bubbles. Also the typing-dots duration. */
 	staggerMs?: number;
 	/** Render everything at once — Storybook, tests, and re-renders of history. */
@@ -55,6 +58,14 @@ export interface ErstantwortSequenceProps {
 }
 
 const DEFAULT_STAGGER_MS = 1400;
+// Presentation only: the persisted text stays the source of every answer.
+const FAQ_IDS = new Set([
+	'whoReadsAlong',
+	'responseDeadline',
+	'modalityNote',
+	'noPersonalData',
+	'dataProtection'
+]);
 
 /**
  * No handler, no button. An enabled control that does nothing is worse than an
@@ -76,17 +87,52 @@ const renderAction = (
 		</button>
 	) : null;
 
+const BausteinContent = ({
+	baustein,
+	slots,
+	onAction
+}: {
+	baustein: ResolvedBaustein;
+	slots?: Record<string, React.ReactNode>;
+	onAction?: (kind: ErstantwortActionKind) => void;
+}) => (
+	<>
+		<p className="pseudonymCard__bubbleText erstantwort__body">
+			{baustein.body}
+		</p>
+		{baustein.links?.length ? (
+			<ul className="erstantwort__links">
+				{baustein.links.map((link) => (
+					<li key={link.url}>
+						<a
+							href={link.url}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{link.label}
+						</a>
+					</li>
+				))}
+			</ul>
+		) : null}
+		{slots?.[baustein.id]}
+		{baustein.action && renderAction(baustein.action, onAction)}
+	</>
+);
+
 export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	bausteine,
+	compactFaq = true,
 	staggerMs = DEFAULT_STAGGER_MS,
 	skipAnimation = false,
 	onFirstReveal,
 	onAction,
-	name = 'Carimat',
+	name,
 	subtitle,
 	slots
 }) => {
 	const { t } = useTranslation();
+	const assistant = useAssistantIdentity();
 	const total = bausteine.length;
 
 	/* How many bubbles have revealed so far. With the animation skipped every
@@ -143,7 +189,7 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	if (!total) return null;
 
 	return (
-		<div
+		<CarimatMessageContainer
 			className="erstantwort"
 			aria-live="polite"
 			data-testid="erstantwort-sequence"
@@ -161,46 +207,74 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					<div className="pseudonymCard__contentCol erstantwort__content">
 						<div className="pseudonymCard__header">
 							<span className="pseudonymCard__headerName">
-								{name}
+								{name ?? assistant.name}
 							</span>
 							<span className="pseudonymCard__headerSubtitle">
 								{subtitle ?? t('erstantwort.subtitle')}
 							</span>
 						</div>
 
-						{visible.map((baustein) => (
-							<div
-								key={baustein.id}
-								className="pseudonymCard__bubble erstantwort__bubble"
-							>
-								{baustein.headline && (
-									<h4 className="erstantwort__headline">
-										{baustein.headline}
-									</h4>
-								)}
-								<p className="pseudonymCard__bubbleText erstantwort__body">
-									{baustein.body}
-								</p>
-								{baustein.links?.length ? (
-									<ul className="erstantwort__links">
-										{baustein.links.map((link) => (
-											<li key={link.url}>
-												<a
-													href={link.url}
-													target="_blank"
-													rel="noopener noreferrer"
-												>
-													{link.label}
-												</a>
-											</li>
+						{visible.map((baustein) => {
+							const faq = compactFaq && FAQ_IDS.has(baustein.id);
+							const faqItems = visible.filter((item) =>
+								FAQ_IDS.has(item.id)
+							);
+							if (faq && baustein.id !== faqItems[0]?.id)
+								return null;
+							if (faq)
+								return (
+									<div
+										key="faq"
+										className="pseudonymCard__bubble erstantwort__bubble"
+									>
+										<h4 className="erstantwort__headline">
+											{t(
+												'erstantwort.faq.title',
+												'Häufige Fragen'
+											)}
+										</h4>
+										{faqItems.map((item) => (
+											<details
+												key={item.id}
+												className="erstantwort__faq"
+											>
+												<summary>
+													{item.headline ??
+														t(
+															`erstantwort.faq.${item.id}`,
+															item.id ===
+																'modalityNote'
+																? 'Wie läuft die Beratung ab?'
+																: 'Was passiert mit meinen Daten?'
+														)}
+												</summary>
+												<BausteinContent
+													baustein={item}
+													slots={slots}
+													onAction={onAction}
+												/>
+											</details>
 										))}
-									</ul>
-								) : null}
-								{slots?.[baustein.id]}
-								{baustein.action &&
-									renderAction(baustein.action, onAction)}
-							</div>
-						))}
+									</div>
+								);
+							return (
+								<div
+									key={baustein.id}
+									className="pseudonymCard__bubble erstantwort__bubble"
+								>
+									{baustein.headline && (
+										<h4 className="erstantwort__headline">
+											{baustein.headline}
+										</h4>
+									)}
+									<BausteinContent
+										baustein={baustein}
+										slots={slots}
+										onAction={onAction}
+									/>
+								</div>
+							);
+						})}
 
 						{isTyping && (
 							<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--typing">
@@ -210,6 +284,6 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 					</div>
 				</div>
 			</div>
-		</div>
+		</CarimatMessageContainer>
 	);
 };

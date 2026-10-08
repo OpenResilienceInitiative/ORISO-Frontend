@@ -1,6 +1,7 @@
 import React, { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import './reassignRequestMessage.styles';
+import { ICON_INFO, SystemMessage } from './SystemMessage';
 import { ConsultantListContext } from '../../globalState';
 import {
 	type ConsultantReassignment,
@@ -9,7 +10,8 @@ import {
 
 /**
  * Name for a counsellor in a reassignment record: the live consultant list
- * first, then the name stored in the message, then a neutral placeholder.
+ * for staff. Advice seekers see the stored display name or User-ID only;
+ * unresolved staff records use a neutral placeholder.
  */
 const useConsultantName = (
 	consultantId: string | undefined,
@@ -30,6 +32,7 @@ const useConsultantName = (
 		}
 		return (
 			storedName?.trim() ||
+			(!lookUp && consultantId?.trim()) ||
 			translate('caseHandover.history.unknownConsultant')
 		);
 	}, [consultantId, consultantList, lookUp, storedName, translate]);
@@ -38,35 +41,42 @@ const useConsultantName = (
 export const ReassignRequestMessage: React.FC<{
 	fromConsultantName: string;
 	toConsultantName: string;
+	fromConsultantId?: string;
+	toConsultantId?: string;
 }> = (props) => {
 	const { t: translate } = useTranslation();
 	const oldConsultant = useConsultantName(
-		undefined,
+		props.fromConsultantId,
 		props.fromConsultantName,
 		false
 	);
 	const newConsultant = useConsultantName(
-		undefined,
+		props.toConsultantId,
 		props.toConsultantName,
 		false
 	);
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				<h5>
-					{translate(
-						'session.reassign.system.message.reassign.title',
-						{ oldConsultant, newConsultant }
-					)}
-				</h5>
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
+					<>
+						<strong>
+							{translate(
+								'session.reassign.system.message.reassign.title',
+								{ oldConsultant, newConsultant }
+							)}
+						</strong>
 
-				<span className="description">
-					{translate(
-						'session.reassign.system.message.reassign.historical'
-					)}
-				</span>
-			</div>
+						<span className="description">
+							{translate(
+								'session.reassign.system.message.reassign.historical'
+							)}
+						</span>
+					</>
+				}
+			/>
 		</div>
 	);
 };
@@ -82,18 +92,23 @@ export const ReassignRequestSentMessage: React.FC<{
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				<h5>
-					{translate(
-						'session.reassign.system.message.reassign.sent.title'
-					)}
-				</h5>
-				<span className="description">
-					{translate(
-						'session.reassign.system.message.reassign.historical'
-					)}
-				</span>
-			</div>
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
+					<>
+						<strong>
+							{translate(
+								'session.reassign.system.message.reassign.sent.title'
+							)}
+						</strong>
+						<span className="description">
+							{translate(
+								'session.reassign.system.message.reassign.historical'
+							)}
+						</span>
+					</>
+				}
+			/>
 		</div>
 	);
 };
@@ -124,49 +139,54 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				{props.isAsker ? (
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
 					<>
-						<h5>
-							{translate(
-								'session.reassign.system.message.reassign.accepted.consultant.title',
-								{ newConsultant: toConsultantName }
-							)}
-						</h5>
-						<span className="description">
-							{translate(
-								'session.reassign.system.message.reassign.accepted.new.consultant.description',
-								{
-									newConsultant1: toConsultantName,
-									newConsultant2: toConsultantName
-								}
-							)}
-						</span>
+						{props.isAsker ? (
+							<>
+								<strong>
+									{translate(
+										'session.reassign.system.message.reassign.accepted.consultant.title',
+										{ newConsultant: toConsultantName }
+									)}
+								</strong>
+								<span className="description">
+									{translate(
+										'session.reassign.system.message.reassign.accepted.new.consultant.description',
+										{
+											newConsultant1: toConsultantName,
+											newConsultant2: toConsultantName
+										}
+									)}
+								</span>
+							</>
+						) : (
+							<>
+								<strong>
+									{translate(
+										`session.reassign.system.message.reassign.accepted.title.${forWhichConsultant}`,
+										{
+											oldConsultant: fromConsultantName,
+											newConsultant: toConsultantName,
+											client: props.toAskerName
+										}
+									)}
+								</strong>
+								<span className="description">
+									{translate(
+										`session.reassign.system.message.reassign.accepted.description.${forWhichConsultant}`,
+										{
+											client: props.toAskerName,
+											consultant: toConsultantName
+										}
+									)}
+								</span>
+							</>
+						)}
 					</>
-				) : (
-					<>
-						<h5>
-							{translate(
-								`session.reassign.system.message.reassign.accepted.title.${forWhichConsultant}`,
-								{
-									oldConsultant: fromConsultantName,
-									newConsultant: toConsultantName,
-									client: props.toAskerName
-								}
-							)}
-						</h5>
-						<span className="description">
-							{translate(
-								`session.reassign.system.message.reassign.accepted.description.${forWhichConsultant}`,
-								{
-									client: props.toAskerName,
-									consultant: toConsultantName
-								}
-							)}
-						</span>
-					</>
-				)}
-			</div>
+				}
+			/>
 		</div>
 	);
 };
@@ -189,34 +209,39 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				{props.isAsker ? (
-					<h5>
-						{translate(
-							'session.reassign.system.message.reassign.declined.old.consultant.title',
-							{ oldConsultant: fromConsultantName }
-						)}
-					</h5>
-				) : (
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
 					<>
-						<h5>
-							{translate(
-								'session.reassign.system.message.reassign.declined.title',
-								{ client: props.toAskerName }
-							)}
-						</h5>
-						<span className="description">
-							{translate(
-								`session.reassign.system.message.reassign.declined.description.${forWhichConsultant}`,
-								{
-									client: props.toAskerName,
-									consultant: fromConsultantName
-								}
-							)}
-						</span>
+						{props.isAsker ? (
+							<strong>
+								{translate(
+									'session.reassign.system.message.reassign.declined.old.consultant.title',
+									{ oldConsultant: fromConsultantName }
+								)}
+							</strong>
+						) : (
+							<>
+								<strong>
+									{translate(
+										'session.reassign.system.message.reassign.declined.title',
+										{ client: props.toAskerName }
+									)}
+								</strong>
+								<span className="description">
+									{translate(
+										`session.reassign.system.message.reassign.declined.description.${forWhichConsultant}`,
+										{
+											client: props.toAskerName,
+											consultant: fromConsultantName
+										}
+									)}
+								</span>
+							</>
+						)}
 					</>
-				)}
-			</div>
+				}
+			/>
 		</div>
 	);
 };

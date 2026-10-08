@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from './avatarSizes';
 import React, { useEffect, useState } from 'react';
 import { type Avatar, renderAvatarSvg } from '../../utils/pseudonymGenerator';
 
@@ -50,7 +51,7 @@ const artworkFraction = (padding: number) =>
  */
 export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	avatar,
-	size = 108,
+	size = AVATAR_SIZES.illustration,
 	outline = true
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
