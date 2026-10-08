@@ -1718,6 +1718,7 @@
 					}
 				},
 				"accountDeleted": "Bu hesap silindi ve artık kullanılamıyor. Danışmanlık hizmetini kullanmaya devam etmek isterseniz, istediğiniz zaman yeniden kayıt olabilirsiniz.",
+				"setupIncomplete": "Hesabınızın kurulumu henüz tamamlanmadı. Kurulumu bitirmek için davet e-postanızdaki bağlantıyı kullanın veya „Şifrenizi mi unuttunuz?“ ile şifrenizi sıfırlayın.",
 				"unavailable": "Şu anda giriş yapılamıyor. Lütfen birkaç dakika sonra tekrar deneyin.",
 				"unauthorized": {
 					"otp": "Erişim verileriniz doğru değil. Lütfen tekrar deneyin.",
