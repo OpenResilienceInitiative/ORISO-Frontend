@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	ChatMenuDropdown,
 	ChatMenuDropdownItem
@@ -348,7 +349,7 @@ interface MessageItemComponentProps extends MessageItem {
 		replyCount: number;
 		lastReplyText: string;
 	};
-	onOpenThread?: () => void;
+	onOpenThread?: (opener?: HTMLElement) => void;
 	/** Relations foundation (#435): this message replies to that event. */
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
@@ -2514,6 +2515,9 @@ export const MessageItemComponent = ({
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
+					isAskerEmailEnabled={
+						tenant?.settings?.featureAskerEmailEnabled
+					}
 					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
@@ -2617,7 +2621,7 @@ export const MessageItemComponent = ({
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 									/>
 								</div>
 								<button
@@ -2770,7 +2774,7 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
@@ -2823,7 +2827,7 @@ export const MessageItemComponent = ({
 								onClick={(event) => {
 									event.preventDefault();
 									event.stopPropagation();
-									onOpenThread?.();
+									onOpenThread?.(event.currentTarget);
 								}}
 							>
 								<ThreadEntryIcon

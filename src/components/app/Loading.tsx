@@ -1,24 +1,25 @@
 import clsx from 'clsx';
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { Spinner } from '../spinner/Spinner';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
 import './loading.styles.scss';
 
-export const Loading = () => {
+export const Loading = ({ compact = false }: { compact?: boolean }) => {
 	const [isVisible, setIsVisible] = useState(false);
 
 	useEffect(() => {
-		// Delay showing the loading indicator, but hide it again if loading takes too long
-		const timeoutIds = [
-			setTimeout(() => setIsVisible(true), 200),
-			setTimeout(() => setIsVisible(false), 2000)
-		];
-		return () => timeoutIds.forEach(clearTimeout);
+		// Avoid flashing on fast loads; completion is owned by the mounting caller.
+		const timeoutId = setTimeout(() => setIsVisible(true), 200);
+		return () => clearTimeout(timeoutId);
 	}, []);
 
 	return (
-		<div className={clsx('loading', isVisible && 'loading--visible')}>
-			<LoadingIndicator />
+		<div
+			className={clsx('loading', isVisible && 'loading--visible')}
+			aria-hidden={!isVisible}
+		>
+			{compact ? <LoadingIndicator /> : <Spinner />}
 		</div>
 	);
 };

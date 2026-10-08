@@ -35,6 +35,23 @@ vi.mock('react-i18next', () => {
 afterEach(cleanup);
 
 describe('CaseHandoverConsentCard', () => {
+	it('opens an optional information dialog without deciding the request', () => {
+		const approve = vi.fn();
+		const decline = vi.fn();
+		render(
+			<CaseHandoverConsentCard onApprove={approve} onDecline={decline} />
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(screen.getByRole('dialog')).toBeTruthy();
+		fireEvent.click(screen.getByTestId('m3-dialog-close'));
+		expect(approve).not.toHaveBeenCalled();
+		expect(decline).not.toHaveBeenCalled();
+	});
+
 	it('keeps the consent explanation and icon actions inside one Carimat message bubble', () => {
 		render(
 			<CaseHandoverConsentCard
@@ -92,16 +109,6 @@ describe('CaseHandoverConsentCard', () => {
 				'Please read the information and then make your decision.'
 			)
 		).toBeTruthy();
-		expect(
-			screen.getByText(
-				'For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.'
-			)
-		).toBeTruthy();
-		expect(
-			screen.getByText(
-				'By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.'
-			)
-		).toBeTruthy();
 		const optOutSwitch = screen.getByRole('switch', {
 			name: 'I consent to data processing for this case handover'
 		}) as HTMLInputElement;
@@ -113,6 +120,35 @@ describe('CaseHandoverConsentCard', () => {
 		fireEvent.click(optOutSwitch);
 		expect(onDecline).toHaveBeenCalledOnce();
 		expect(onApprove).not.toHaveBeenCalled();
+	});
+
+	it('keeps informational mode read-only and a controlled decision unchanged on failure', () => {
+		const approve = vi.fn();
+		const decline = vi.fn();
+		const { rerender } = render(
+			<CaseHandoverConsentCard
+				mode="NONE"
+				onApprove={approve}
+				onDecline={decline}
+			/>
+		);
+		expect(screen.queryByRole('switch')).toBeNull();
+		expect(screen.queryByRole('group')).toBeNull();
+		rerender(
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				consentGranted
+				onApprove={approve}
+				onDecline={decline}
+				error="Save failed"
+			/>
+		);
+		fireEvent.click(screen.getByRole('switch'));
+		expect(decline).toHaveBeenCalledOnce();
+		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
+			true
+		);
+		expect(screen.getByRole('alert').textContent).toBe('Save failed');
 	});
 
 	it('flips the consent switch to off when the client withdraws consent', () => {
