@@ -2,7 +2,8 @@ import * as React from 'react';
 import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { Loading } from '../../app/Loading';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetAskerSessionList,
@@ -84,7 +85,7 @@ const EntryRoomLoading = () => (
 		}}
 		data-cy="group-entry-loading"
 	>
-		<CircularProgress />
+		<Loading layout="page" />
 	</Box>
 );
 

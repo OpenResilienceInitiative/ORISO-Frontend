@@ -27,12 +27,12 @@ describe('avatarChoice (#1240)', () => {
 	it('reads an advice seeker animal and a counsellor motif', () => {
 		expect(chosenAvatarOf({ avatarId: 'fox' })).toEqual({
 			file: 'fox.svg',
-			onPrimary: false
+			kind: 'animal'
 		});
 		expect(chosenAvatarOf({ avatarKind: 'ICON', avatarId: 'fox' })).toEqual(
 			{
 				file: 'fox.svg',
-				onPrimary: true
+				kind: 'motif'
 			}
 		);
 	});
@@ -42,9 +42,12 @@ describe('avatarChoice (#1240)', () => {
 		expect(chosenAvatarOf(null)).toBeNull();
 		expect(
 			chosenAvatarOf({ avatarKind: 'INITIALS', avatarId: null })
-		).toBeNull();
+		).toEqual({ kind: 'initials' });
 		expect(
 			chosenAvatarOf({ avatarKind: 'ICON', avatarId: 'unicorn' })
+		).toEqual({ kind: 'initials' });
+		expect(
+			chosenAvatarOf({ avatarKind: 'PICTURE', avatarId: 'picture-1' })
 		).toBeNull();
 	});
 });

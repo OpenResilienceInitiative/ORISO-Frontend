@@ -544,9 +544,12 @@ describe('newcomer entry for a self-help group link', () => {
 
 		expect(screen.queryByRole('alert')).toBeNull();
 		expect(screen.queryByTestId('step-body')).toBeNull();
-		expect(screen.getByRole('status').getAttribute('aria-label')).toBe(
+		const loading = screen.getByRole('status');
+		expect(loading.getAttribute('aria-label')).toBe(
 			'registration.groupInvite.loading'
 		);
+		expect(loading.textContent).toBe('registration.groupInvite.loading');
+		expect(loading.closest('[aria-busy="true"]')).not.toBeNull();
 	});
 
 	it('leaves an ordinary registration untouched', () => {

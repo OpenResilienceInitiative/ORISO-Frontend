@@ -17,7 +17,8 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	@include list-item-active-menu-border;
 	border-radius: 8px;
 	box-shadow: $menu-elevation;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 	z-index: 99999;
 	display: flex;
 	flex-direction: column;
@@ -26,6 +27,11 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	transform-origin: top right;
 	color: var(--m3-on-surface, #1b1b1c);
 	overscroll-behavior: contain;
+
+	// Constrained tall menus scroll; their children keep their content height.
+	> * {
+		flex-shrink: 0;
+	}
 
 	&__header {
 		display: flex;
@@ -67,6 +73,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__item {
+		flex-shrink: 0;
 		display: flex;
 		align-items: flex-start;
 		gap: 12px;
@@ -155,6 +162,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__itemTitle {
+		overflow-wrap: anywhere;
 		font-size: 16px;
 		font-weight: 400;
 		color: var(--m3-on-surface, #1b1b1c);
@@ -184,6 +192,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__itemDescription {
+		overflow-wrap: anywhere;
 		font-size: 12px;
 		color: var(--m3-on-surface-variant, #444748);
 		line-height: 17px;
