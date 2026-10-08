@@ -2101,6 +2101,41 @@ export const InformationalGrantedForAsker: Story = {
 			)
 		).toBeInTheDocument();
 		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const header = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__systemNotificationHeaderText'
+		)!;
+		const more = canvas.getByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await waitFor(() => {
+			expect(
+				bubble.getBoundingClientRect().top -
+					header.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(5);
+			expect(more.getBoundingClientRect().width).toBeLessThan(200);
+		});
+		await expect(more).toHaveClass('button__link');
+		await expect(more).toHaveAttribute('aria-haspopup', 'dialog');
+		more.focus();
+		await waitFor(() => {
+			const style = getComputedStyle(more);
+			expect(parseFloat(style.outlineWidth)).toBeGreaterThan(0);
+			expect(parseFloat(style.borderRadius)).toBeGreaterThan(0);
+			expect(more.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				44
+			);
+			const copy = bubble.querySelector<HTMLElement>(
+				'.messageItem__systemNotificationDescription'
+			)!;
+			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
+				copy.getBoundingClientRect().height +
+					more.getBoundingClientRect().height +
+					32
+			);
+		});
 		await userEvent.click(
 			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
 		);
@@ -2129,7 +2164,7 @@ export const InformationalGrantedForAskerRussianMobile: Story = {
 	globals: { ...phone390Globals, locale: 'ru' },
 	play: async ({ canvasElement }) => {
 		const more = canvasElement.querySelector<HTMLButtonElement>(
-			'.caseHandoverMessage__more'
+			'.caseHandoverInformational__more button'
 		);
 		await waitFor(() => expect(more).toBeTruthy());
 		await userEvent.click(more!);

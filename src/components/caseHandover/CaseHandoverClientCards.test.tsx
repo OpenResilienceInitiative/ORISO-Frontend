@@ -12,6 +12,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { CaseHandoverInformationalBody } from './CaseHandoverInformationalBody';
 
+// The shared Button atom imports this constant through Overlay's canvas renderer.
+vi.mock('../overlay/Overlay', () => ({ OVERLAY_RESET_TIME: 10000 }));
+
 vi.mock('react-i18next', () => {
 	const catalogue: Record<string, string> = {
 		'caseHandover.consent.sender': 'Carimat',

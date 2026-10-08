@@ -1,3 +1,4 @@
+import { Button, BUTTON_TYPES } from '../button/Button';
 import * as React from 'react';
 import { useLayoutEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -23,14 +24,15 @@ export const CaseHandoverInformationalBody = ({
 			<p className="messageItem__systemNotificationDescription">
 				{description}
 			</p>
-			<button
-				type="button"
-				className="caseHandoverMessage__more"
-				aria-haspopup="dialog"
-				onClick={() => setOpen(true)}
-			>
-				{t('caseHandover.consent.info.more')}
-			</button>
+			<Button
+				className="caseHandoverInformational__more"
+				ariaHasPopup="dialog"
+				item={{
+					type: BUTTON_TYPES.LINK_INLINE,
+					label: t('caseHandover.consent.info.more')
+				}}
+				buttonHandle={() => setOpen(true)}
+			/>
 			<CaseHandoverInfoDialog
 				open={open}
 				mode="NONE"
