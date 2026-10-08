@@ -203,15 +203,20 @@ describe('ProductTourAdapter', () => {
 			});
 		});
 
-		await waitFor(() => expect(joyrideProps!.stepIndex).toBe(2), {
-			timeout: 3000
-		});
-		expect(
-			events.some(
-				(e) => e.event === 'target_missing' && e.stepId === 'second'
-			)
-		).toBe(true);
-		expect(paths).toContain('/third');
+		await waitFor(
+			() => {
+				expect(joyrideProps!.stepIndex).toBe(2);
+				expect(
+					events.some(
+						(e) =>
+							e.event === 'target_missing' &&
+							e.stepId === 'second'
+					)
+				).toBe(true);
+				expect(paths).toContain('/third');
+			},
+			{ timeout: 3000 }
+		);
 	});
 
 	it('persists completed through the terminal callback', async () => {

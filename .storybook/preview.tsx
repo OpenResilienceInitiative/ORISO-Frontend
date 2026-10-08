@@ -801,6 +801,22 @@ init(config.i18n, null);
 
 const preview: Preview = {
 	parameters: {
+		options: {
+			storySort: {
+				order: [
+					'Entry flows',
+					[
+						'Overview',
+						'Postcode counselling',
+						'Live chat',
+						'Self-help groups',
+						'Temporary guests',
+						'Existing account'
+					],
+					'*'
+				]
+			}
+		},
 		i18n,
 		a11y: {
 			options: {
