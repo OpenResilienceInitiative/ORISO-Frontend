@@ -2087,6 +2087,7 @@
 		"exportNames": ["SurveillanceConsentIcon"],
 		"usageFiles": [
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/caseHandover/StandingAccessSettings.tsx",
 			"src/resources/img/icons.ts"
 		],
 		"usage": "app-used"
