@@ -479,6 +479,12 @@ export const NavigationBar = ({
 										)}
 										to={item.to}
 										aria-label={linkLabel}
+										data-tour-target={
+											item.to ===
+											'/sessions/consultant/sessionPreview'
+												? 'nav-enquiries'
+												: undefined
+										}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}

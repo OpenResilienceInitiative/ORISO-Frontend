@@ -9,6 +9,10 @@ import type {
 } from '../../globalState/interfaces';
 import { isTabGroup, solveCondition } from '../../utils/tabsHelper';
 
+vi.mock('./SecurityPrivacySettings', () => ({
+	SecurityPrivacySettings: () => null
+}));
+
 // Route tables only — keep the real component trees out of the test.
 const { stub } = vi.hoisted(() => ({
 	stub: (name: string) => () => ({ [name]: () => null })
@@ -41,6 +45,10 @@ vi.mock('./AbsenceFormular', stub('AbsenceFormular'));
 vi.mock('./LiveChatAvailability', stub('LiveChatAvailability'));
 vi.mock('./EnableWalkthrough', stub('EnableWalkthrough'));
 vi.mock('../productTour/TourOverviewSection', stub('TourOverviewSection'));
+vi.mock(
+	'../../practice/PracticeOverviewSection',
+	stub('PracticeOverviewSection')
+);
 vi.mock('./OverviewMobile/Bookings', stub('OverviewBookings'));
 vi.mock('./OverviewMobile/Sessions', stub('OverviewSessions'));
 vi.mock('./AdditionalEnquiry/AdditionalEnquiry', stub('AdditionalEnquiry'));

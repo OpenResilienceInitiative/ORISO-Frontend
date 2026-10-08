@@ -104,6 +104,7 @@ export interface EventActionParams {
 	contentClass?: string | null;
 	/** Which role received this row (user / consultant). */
 	recipientRole?: string | null;
+	conversationType?: string | null;
 	/** Case Handover consent variant; metadata only, never conversation content. */
 	clientConsent?: 'OPT_IN' | 'OPT_OUT' | 'NONE' | null;
 	/** Agency the enquiry belongs to (request events). */
@@ -124,6 +125,16 @@ export interface EventActionParams {
 	sessionsBasePath?: string | null;
 	/** Base path for the request/enquiry list, when different from sessions. */
 	requestsBasePath?: string | null;
+	/** #876 planned maintenance: operator campaign key (not displayed). */
+	campaignKey?: string | null;
+	/** #876 planned maintenance day, ISO `YYYY-MM-DD` (operator wall clock). */
+	maintenanceDate?: string | null;
+	/** #876 planned maintenance start, `HH:mm`. */
+	maintenanceStart?: string | null;
+	/** #876 planned maintenance end, `HH:mm`. */
+	maintenanceEnd?: string | null;
+	/** #876 public status page; only http(s) survives parsing. */
+	statusUrl?: string | null;
 }
 
 /**
@@ -141,6 +152,8 @@ export type EventActionTarget =
 	| { kind: 'request'; path: string | null }
 	| { kind: 'draft'; forcedScopeKey: string | null; path: string | null }
 	| { kind: 'join'; callRoomId: string | null; isVideo: boolean }
+	// #876: opens the public status page in a new tab; never an in-app route.
+	| { kind: 'statusPage'; url: string | null }
 	| { kind: 'none' };
 
 /**

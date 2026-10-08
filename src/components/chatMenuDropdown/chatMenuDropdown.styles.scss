@@ -17,7 +17,8 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	@include list-item-active-menu-border;
 	border-radius: 8px;
 	box-shadow: $menu-elevation;
-	overflow: auto;
+	overflow-x: hidden;
+	overflow-y: auto;
 	z-index: 99999;
 	display: flex;
 	flex-direction: column;
@@ -25,6 +26,12 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	max-height: min(520px, calc(100vh - 32px));
 	transform-origin: top right;
 	color: var(--m3-on-surface, #1b1b1c);
+	overscroll-behavior: contain;
+
+	// Constrained tall menus scroll; their children keep their content height.
+	> * {
+		flex-shrink: 0;
+	}
 
 	&__header {
 		display: flex;
@@ -66,10 +73,12 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__item {
+		flex-shrink: 0;
 		display: flex;
 		align-items: flex-start;
 		gap: 12px;
-		padding: 8px 8px 12px;
+		padding: 12px 8px;
+		min-height: 44px;
 		cursor: pointer;
 		transition:
 			background-color 150ms ease,
@@ -153,6 +162,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__itemTitle {
+		overflow-wrap: anywhere;
 		font-size: 16px;
 		font-weight: 400;
 		color: var(--m3-on-surface, #1b1b1c);
@@ -182,6 +192,7 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 	}
 
 	&__itemDescription {
+		overflow-wrap: anywhere;
 		font-size: 12px;
 		color: var(--m3-on-surface-variant, #444748);
 		line-height: 17px;
@@ -190,5 +201,21 @@ $menu-elevation: 0 4px 12px rgba(0, 0, 0, 0.12);
 		&--disabled {
 			color: var(--m3-outline, #747878);
 		}
+	}
+}
+
+// Compact action menus share the same surface and states without explanatory rows.
+.chatMenuDropdown--compact {
+	width: 240px;
+	padding: 8px;
+
+	.chatMenuDropdown__item {
+		align-items: center;
+		padding: 8px;
+		min-height: 44px;
+	}
+
+	.chatMenuDropdown__itemIcon {
+		margin-top: 0;
 	}
 }

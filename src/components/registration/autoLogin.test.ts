@@ -208,10 +208,7 @@ describe('autoLogin', () => {
 			'keycloak-refresh',
 			600
 		);
-		expect(getMatrixAccessToken).toHaveBeenCalledWith(
-			'shanzae@example.com',
-			'secret!'
-		);
+		expect(getMatrixAccessToken).toHaveBeenCalledWith();
 		expect(persistMatrixLoginData).toHaveBeenCalledWith(matrixResponse);
 	});
 

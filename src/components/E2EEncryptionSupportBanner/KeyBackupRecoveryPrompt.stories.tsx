@@ -4,7 +4,8 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { KeyBackupRecoveryDialog } from './KeyBackupRecoveryPrompt';
 
 const meta = {
-	title: 'Organisms/KeyBackupRecoveryDialog',
+	id: 'organisms-keybackuprecoverydialog',
+	title: 'Chat/System messages/Recovery dialog',
 	component: KeyBackupRecoveryDialog,
 	parameters: {
 		docs: {

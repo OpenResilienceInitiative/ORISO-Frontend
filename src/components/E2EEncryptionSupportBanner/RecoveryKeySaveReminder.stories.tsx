@@ -20,7 +20,8 @@ const service = {
 	getClient: () => ({ getUserId: () => USER_ID })
 } as unknown as MatrixClientService;
 const meta = {
-	title: 'Organisms/RecoveryKeySaveReminder',
+	id: 'organisms-recoverykeysavereminder',
+	title: 'Chat/System messages/Recovery reminder',
 	component: RecoveryKeySaveReminder,
 	decorators: [
 		(Story) => (
