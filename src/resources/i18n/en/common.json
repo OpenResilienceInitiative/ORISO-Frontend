@@ -1,4 +1,18 @@
 {
+	"menuEffects": {
+		"title": "Menu appearance",
+		"label": "Backdrop and gentle menu animations",
+		"description": "Lightens the background behind open chat menus and gently animates the menu. Animations are skipped when reduced motion is enabled.",
+		"scope": "Applies to this account in this browser. Enabled by default."
+	},
+	"contactSheet": {
+		"request": "Email me the contact details",
+		"sending": "Sending…",
+		"recipient": "The email will go to {{email}}.",
+		"missingEmail": "Add an email address to your profile first.",
+		"sent": "The contact details were sent to {{email}}.",
+		"failed": "The email could not be sent. Please try again."
+	},
 	"absence": {
 		"checkbox": {
 			"label": "Inform advice seekers about my absence"
@@ -373,7 +387,7 @@
 		"dearchiveDescription": "Restore chat from archive.",
 		"editGroupChat": "Chat settings",
 		"editGroupChatDescription": "Change this chat's topic, schedule and moderation.",
-		"groupChatInfo": "Chat info",
+		"groupChatInfo": "Information & settings",
 		"imprint": "Imprint",
 		"leaveGroupChat": "Leave chat",
 		"mute": "Mute",
@@ -707,7 +721,12 @@
 			"google": "Google Calendar",
 			"outlook": "Outlook Calendar",
 			"titleLabel": "Neutral calendar title",
-			"addShort": "Calendar"
+			"addShort": "Calendar",
+			"copyGoogle": "Copy Google Calendar link",
+			"copyOutlook": "Copy Outlook Calendar link",
+			"linkCopied": "Calendar link copied.",
+			"copyError": "The calendar link could not be copied. Please try again.",
+			"shareHint": "Calendar links for your website: one appointment, without an invitation link or automatic updates."
 		},
 		"futureTimeline": {
 			"appointmentFallback": "Appointment",
@@ -756,7 +775,8 @@
 					"title": "Link copied"
 				},
 				"text": "Copy invitation link",
-				"title": "Copy invitation link to clipboard"
+				"title": "Copy invitation link to clipboard",
+				"unavailable": "The invitation link for this group is not available yet."
 			}
 		},
 		"create": {
@@ -902,8 +922,7 @@
 				"decrease": "Decrease {{field}}",
 				"openList": "Choose {{field}}",
 				"durationValue": "{{count}} h",
-				"repeatValue_one": "{{count}} time",
-				"repeatValue_other": "{{count}} times"
+				"repeatDates": "{{count}} sessions"
 			},
 			"noModeratorAvailable": "No person available",
 			"moderatorHelp": "Help",
@@ -949,7 +968,7 @@
 				"hintMessage": "Hint",
 				"repetition": {
 					"label": "Repetitions",
-					"single": "unique",
+					"single": "once",
 					"weekly": "weekly"
 				},
 				"startDate": "Date",
@@ -1135,7 +1154,8 @@
 			"moreOpen": "The moderator has opened the group. “Join” takes you into the conversation.",
 			"moreWaiting": "As soon as the moderator opens the group, “Join” becomes available here. Nothing to do on your side.",
 			"missing": "This group no longer exists or you have no access to it.",
-			"backToCountdown": "Back to the countdown"
+			"backToCountdown": "Back to the countdown",
+			"legalMenu": "Legal"
 		},
 		"shareDialog": {
 			"title_text": "Circle created",
@@ -1213,6 +1233,26 @@
 				"coModeratorSameTenant": "Co-moderation is reserved for professionals of your own organisation.",
 				"privacy": "Until you decide, {{name}} sees nothing of this group."
 			}
+		},
+		"joinHandover": {
+			"badge": "Group",
+			"subline": "How the group works:",
+			"encryption": "Encrypted: only the group's members see what is written in the group.",
+			"cta": "To the group",
+			"status": {
+				"preparing": "Preparing the group room …",
+				"ready": "All set — you can go to the group",
+				"slow": "This is taking longer than usual",
+				"entering": "Opening the group room …"
+			}
+		},
+		"consent": {
+			"headline": "Before you write",
+			"description": "This group is run by a counselling centre. Please agree to its privacy policy before you write in the group.",
+			"reject": "Decline",
+			"accept": "Agree",
+			"rejected": "Without your agreement you cannot write in this group. You can agree at any time later.",
+			"saveFailed": "Your agreement could not be saved. Please try again."
 		}
 	},
 	"help": {
@@ -1685,7 +1725,8 @@
 					"otp": "Your access data is not correct. Please try again.",
 					"text": "Username or password are not correct. Please try again."
 				},
-				"consultantBlocked": "Consultant accounts cannot sign in here."
+				"consultantBlocked": "Consultant accounts cannot sign in here.",
+				"tooManyRequests": "Too many attempts. Please wait a few minutes and try again."
 			}
 		},
 		"mobile": {
@@ -2151,6 +2192,18 @@
 			"teamDiscussionNew": {
 				"title": "Team discussion",
 				"text": "{{senderDisplayName}} posted in the team discussion"
+			},
+			"firstResponseReceived": {
+				"title": "Your first steps",
+				"text": "We have sent you the most important information in the chat."
+			},
+			"conversationFinished": {
+				"title": "Chat ended",
+				"text": "The anonymous chat has ended."
+			},
+			"serviceNoticePlanned": {
+				"title": "Scheduled maintenance",
+				"text": "On {{maintenanceDate}}, the platform will be unavailable between {{maintenanceStart}} and {{maintenanceEnd}}. Messages you have already written will not be lost."
 			}
 		},
 		"error": "failed",
@@ -2200,7 +2253,9 @@
 			"loadingOlder": "Loading older activity…",
 			"olderError": "Could not load older activity.",
 			"retryOlder": "Try again",
-			"endOfHistory": "End of activity history"
+			"endOfHistory": "End of activity history",
+			"openStatusPage": "View status page",
+			"opensInNewTab": "(opens in a new tab)"
 		},
 		"threadReply": {
 			"title": "New thread reply"
@@ -2244,6 +2299,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Your picture",
+			"default": "Default"
+		},
 		"appLanguage": {
 			"info": "Set the language of the application here.",
 			"title": "Language"
@@ -2555,7 +2614,7 @@
 			},
 			"dnd": {
 				"title": "Do not disturb",
-				"description": "Pause all notifications (sound, pop-ups, emails) for a chosen time. Your history keeps filling.",
+				"description": "Pause notifications (sound, pop-ups) for a chosen time. Your history keeps filling.",
 				"activeUntil": "Active until {{time}}",
 				"option": {
 					"off": "Off",
@@ -2683,7 +2742,8 @@
 			},
 			"help": {
 				"title": "Help",
-				"videoCall": "Video-Call"
+				"videoCall": "Video-Call",
+				"tours": "Tours"
 			},
 			"notifications": {
 				"email": "E-mail notification",
@@ -2782,13 +2842,13 @@
 			"loading": "Loading …",
 			"unavailable": "Encryption settings are unavailable right now. Please reload the page.",
 			"setup": {
-				"busy": "Your vault is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
+				"busy": "Your recovery key is already being set up — in another tab or in the background. Please wait a moment and reload the page.",
 				"error": "Setup failed. Please try again.",
 				"explainer": "Set up a recovery key once. Keep it safe — for example in a password manager. Without it, your history cannot be restored if you lose your device.",
 				"cta": "Set up recovery key"
 			},
 			"showKey": {
-				"silentExplainer": "Your vault was set up automatically when you signed in. This is your recovery key — save it now in a safe place, for example a password manager. We will not show it again afterwards.",
+				"silentExplainer": "Your recovery key was set up automatically when you signed in. Save it now in a safe place, for example a password manager. We will not show it again afterwards.",
 				"explainer": "This is your recovery key. It is shown only this once. Save it now in a safe place.",
 				"copy": "Copy key",
 				"confirmLabel": "I have saved the key securely.",
@@ -2796,13 +2856,13 @@
 				"done": "Done"
 			},
 			"status": {
-				"ok": "✓ Key backup is active. Your history stays readable on new devices."
+				"ok": "✓ Your recovery key is set up. Your history stays readable on new devices."
 			},
 			"changeKey": {
 				"cta": "Change recovery key"
 			},
 			"outOfSync": {
-				"warning": "Key backup is not set up on this device. Enter your recovery key so your history becomes readable here."
+				"warning": "Your recovery key is still missing on this device. Enter it so your history becomes readable here."
 			},
 			"recover": {
 				"inputLabel": "Recovery key",
@@ -2847,6 +2907,35 @@
 				"headline": "Your personal QR code",
 				"info": "If you share your QR code with someone, they can scan it with their phone camera to contact you directly. Alternatively, you can download the code."
 			}
+		}
+	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (practice)",
+			"colleague": "Alex (practice)",
+			"supervisor": "Robin (practice)"
+		},
+		"asker": {
+			"firstMessage": "Hello, I have a general question about your service. How does counselling work with you, and how quickly can I expect an answer? Thank you.",
+			"reply": "Thank you for your reply. That helps me. I’ll get in touch if I have any more questions."
+		},
+		"colleague": {
+			"teamMessage": "I’m in an appointment today and won’t be able to reply in time. Could you take over the request?"
+		},
+		"supervisor": {
+			"reply": "That sounds good to me. Do ask what exactly the person wants to know. I’m reading along and will get in touch if anything stands out."
+		},
+		"erstantwort": {
+			"greeting": "Your request has reached us. A counsellor will get back to you."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Hello, thank you for your message. Counselling here is written and confidential."
+		},
+		"names": {
+			"agency": "Practice agency",
+			"topic": "Practice",
+			"teamRoom": "Team discussion (practice)",
+			"supervisionRoom": "Supervision (practice)"
 		}
 	},
 	"registration": {
@@ -3352,6 +3441,17 @@
 				"text": "Sorry, something went wrong. Please reload the page and try again.",
 				"title": "Oops!"
 			}
+		},
+		"accountCreated": {
+			"login": "Your account has been created, but signing you in automatically did not work. Please log in with your username and password.",
+			"retry": "Your access has been created, but signing you in did not work. Please try again."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "The invitation could not be loaded right now.",
+				"body": "Please check your connection and try again. Your invitation link stays valid."
+			},
+			"loading": "Loading the invitation …"
 		}
 	},
 	"releaseNote": {
@@ -3424,6 +3524,16 @@
 		},
 		"reasons": {
 			"loading": "Loading reasons"
+		},
+		"reason": {
+			"PLANNED_ABSENCE": "Planned absence",
+			"UNPLANNED_ABSENCE": "Unplanned absence",
+			"ASSIGNMENT_ENDED": "Assignment ended",
+			"ADVICE_REQUESTED": "Advice requested",
+			"retired": "Not specified"
+		},
+		"history": {
+			"unknownConsultant": "A former counsellor"
 		},
 		"submit": "Request access",
 		"submitSending": "Sending",
@@ -3751,6 +3861,7 @@
 						"description": {
 							"noTeam": "{{newConsultant}} can thus read the complete message history and is responsible for you. {{oldConsultant}} no longer has access to the messages."
 						},
+						"historical": "This is an earlier request. It can no longer be answered here.",
 						"question": "Do you agree to the transfer?",
 						"sent": {
 							"description": {
@@ -3913,6 +4024,10 @@
 		}
 	},
 	"statusOverlay": {
+		"enquiryRoomUnavailable": {
+			"headline": "Your request cannot be sent yet",
+			"text": "The encrypted chat for this counselling centre has not been set up yet. Your text stays in this field – please try again later or contact the counselling centre directly."
+		},
 		"error": {
 			"headline": "An error occurred while sending the message",
 			"text": "A problem has occurred, please try again"
@@ -4035,7 +4150,11 @@
 					"headline": "It did not work?",
 					"hint": "We have sent you a code to your email address. Please enter the code.",
 					"new": "Send new code",
-					"sent": "New code sent"
+					"sent": "New code sent",
+					"countdown": "Send new code ({{time}})",
+					"onlyLatest": "Only the most recently sent code is valid.",
+					"failed": "The code could not be sent. Please try again.",
+					"tooMany": "Too many codes requested. Please wait a few minutes before requesting a new one."
 				},
 				"step2": {
 					"copy": "Please enter your e-mail address here.",
@@ -4526,14 +4645,22 @@
 		},
 		"subtitle": "To explain the individual functions, we have prepared a short tour for you <br /> You can cancel it at any time or start it again in your profile.",
 		"switch": {
-			"active": {
-				"label": "Tour active"
+			"hint": {
+				"off": "Off: tours do not start on their own. You can start them here at any time.",
+				"on": "On: the intro tour starts on its own until you complete or skip it. You can start any tour here at any time."
 			},
-			"deactive": {
-				"label": "Tour activated"
-			}
+			"label": {
+				"off": "Off",
+				"on": "On"
+			},
+			"subtitle": "Short tours show you where to find things.",
+			"title": "Start the introduction automatically"
 		},
-		"title": "Tour"
+		"title": "Tour",
+		"introduction": {
+			"title": "Introduction",
+			"summary": "Get to know the areas of the application. You can restart the introduction at any time."
+		}
 	},
 	"anonymousChat": {
 		"headline": "Anonymous Consultation",
@@ -4634,6 +4761,7 @@
 		"requestAdvice": "Ask for advice"
 	},
 	"sessionHeader": {
+		"searchingForConsultant": "We are looking for a counsellor for you.",
 		"anonymous": {
 			"deleteAccount": {
 				"label": "Delete Account",
@@ -5037,11 +5165,11 @@
 				"invalidKey": "This recovery key is invalid. Please check your entry.",
 				"error": "Recovery failed. Please try again.",
 				"recoveryTitle": "Welcome back",
-				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely locked in your vault.",
+				"recoveryCopy": "You are signed in on a new device. Your previous conversation history is safely encrypted. Your recovery key makes it readable here again.",
 				"recoveryInstruction": "Enter your recovery key to continue reading your messages here.",
 				"keyLabel": "Recovery key",
 				"later": "Later",
-				"openVault": "Open vault",
+				"openVault": "Restore history",
 				"restoring": "Restoring…"
 			},
 			"snackbar": {
@@ -5050,8 +5178,8 @@
 		},
 		"saveReminder": {
 			"title": "Save an additional recovery key",
-			"pending": "Your enquiry was sent. Key backup is still being set up.",
-			"unavailable": "Your enquiry was sent. The additional key backup is not ready yet.",
+			"pending": "Your enquiry was sent. Recovery with your password is still being set up.",
+			"unavailable": "Your enquiry was sent. Recovery with your password is not ready yet.",
 			"show": "Show key",
 			"later": "Later",
 			"confirm": "I have stored the key safely",
@@ -5059,17 +5187,17 @@
 			"busy": "Your enquiry was sent successfully. Recovery is currently being processed in another tab or in the background."
 		},
 		"passwordRecovery": {
-			"ready": "Recovery using your login password is set up. An additional saved recovery key remains valid.",
-			"needs-password": "Password recovery has not been verified in this session. Sign in again or set it up with your existing recovery key.",
+			"ready": "Recovery with your password is set up. A saved recovery key also stays valid.",
+			"needs-password": "Recovery with your password has not been confirmed in this session. Sign in again or set it up with your existing recovery key.",
 			"needs-recovery-key": "Your previous history needs your recovery key on this device.",
-			"retryable-failure": "Key backup could not be completed. You can still write your enquiry and check backup again in security settings.",
+			"retryable-failure": "Recovery with your password could not be set up. You can still write your enquiry and check the setup again in security settings.",
 			"settings": "Security settings",
 			"reauthenticate": "Sign out and sign in again",
 			"passwordChangeFailed": "The password could not be changed safely. Check the old password and, if needed, restore your history with the recovery key first. After a connection loss the password may already have changed.",
 			"enrollmentFailed": "Setup could not be completed. Check your password and one-time code if required, then try again.",
-			"enrollmentExplanation": "Protect your existing recovery key with your current login password. Your saved key remains valid. A stolen encrypted backup can be opened using the password without a second factor.",
-			"loginPassword": "Current login password",
-			"repeatPassword": "Repeat login password",
+			"enrollmentExplanation": "Protect your existing recovery key with your current password as well. Your saved recovery key remains valid. A stolen encrypted backup can be opened using the password without a second factor.",
+			"loginPassword": "Current password",
+			"repeatPassword": "Repeat password",
 			"otp": "One-time code",
 			"enroll": "Confirm password and set up recovery",
 			"device-ready": "This device can use its existing keys. Password recovery will be verified at the next password login.",
@@ -5077,7 +5205,7 @@
 			"idle": "Recovery status has not been checked yet.",
 			"pending": "Recovery is being checked. You can continue using the app.",
 			"busy": "Recovery is currently being processed in another tab or in the background. Please try again shortly.",
-			"repairRequired": "Repair chat recovery in security settings before changing your password. Your login password has not changed.",
+			"repairRequired": "Repair chat recovery in security settings before changing your password. Your password has not changed.",
 			"chatUnavailable": "The chat connection is currently unavailable, so your password cannot be changed securely. Your password has not been changed. Please try again later, and contact your administrator if the problem persists."
 		}
 	},
@@ -5140,6 +5268,66 @@
 				"archive": {
 					"title": "Archive",
 					"intro": "Finished consultations move to the archive as before — it now lives in this tab."
+				}
+			}
+		},
+		"practiceAccept": {
+			"title": "Practice: Accept a request",
+			"summary": "Practise accepting a request and writing the first reply in a protected practice area. All people and content are invented.",
+			"step": {
+				"navEnquiries": {
+					"title": "Open the requests",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. You will find new requests here under “Requests”."
+				},
+				"openEnquiry": {
+					"title": "Open the request",
+					"intro": "A practice request is waiting in the list. Click it to open it."
+				},
+				"openTeam": {
+					"title": "Open the team discussion",
+					"intro": "The team discussion is switched on for you: use it to check with your team before you accept. Click “Open team discussion”."
+				},
+				"teamReply": {
+					"title": "Reply in the team",
+					"intro": "Read the message from your team and write a reply. When you accept the request, the team discussion is closed."
+				},
+				"accept": {
+					"title": "Accept the request",
+					"intro": "Click “Accept request”: the request moves to “My consultations” and disappears from your team’s list."
+				},
+				"firstAnswer": {
+					"title": "First response and first message",
+					"intro": "The request is now yours. In the chat you can see the automatic first response and the advice seeker’s first message."
+				},
+				"reply": {
+					"title": "Write your first reply",
+					"intro": "Write the advice seeker a short reply and send it. It stays in the practice and is not saved anywhere."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "Well done: you accepted a request and replied to it. Use the button below to end the practice."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Practice: Add a supervisor",
+			"summary": "Practise adding a supervisor to a consultation in a protected practice area. All people and content are invented.",
+			"step": {
+				"addSupervisor": {
+					"title": "Add a supervisor",
+					"intro": "This is practice: all people are invented, and nothing is sent or saved. Click the “+”, choose the supervisor, give a short reason and confirm."
+				},
+				"supervisorReply": {
+					"title": "The supervisor’s reply",
+					"intro": "Your supervisor has replied in the side chat. Only the two of you can see these messages — the advice seeker cannot."
+				},
+				"standingAssignment": {
+					"title": "Fixed assignment",
+					"intro": "If your administrator has assigned a fixed supervisor to you, they are added automatically when you accept a request. You do not need to do anything."
+				},
+				"done": {
+					"title": "Well done!",
+					"intro": "You added a supervisor and read their reply. Use the button below to end the practice."
 				}
 			}
 		}
@@ -5449,6 +5637,35 @@
 			"region": "Notifications",
 			"more": "Show {{count}} more",
 			"less": "Show less"
+		}
+	},
+	"practice": {
+		"banner": {
+			"title": "Practice mode",
+			"progress": "Step {{current}} of {{total}}",
+			"note": "Practice case, no real data",
+			"end": "End practice",
+			"restart": "Restart",
+			"moveHandle": "Move banner (arrow keys)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Accept an enquiry and write a first reply.",
+				"supervision": "Choose a supervisor and add them to a counselling session."
+			},
+			"title": "Practice area",
+			"subtitle": "Practise workflows on an invented case. No real data is used, and nothing you type here is saved.",
+			"empty": "There are currently no practice flows available for you.",
+			"badge": "Practice",
+			"phoneHint": "Please practise on a computer.",
+			"windowHint": "Please widen your browser window for this exercise.",
+			"action": {
+				"start": "Start practice",
+				"restart": "Practise again"
+			}
+		},
+		"error": {
+			"start": "The practice could not be started. Please try again."
 		}
 	},
 	"counselling": {
