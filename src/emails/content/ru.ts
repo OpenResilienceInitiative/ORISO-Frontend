@@ -357,15 +357,20 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Ваш одноразовый код для входа',
+		subject: 'Ваш одноразовый код',
 		preheader: 'Код действует {{expiryMinutes}} минут.',
 		headline: 'Ваш одноразовый код',
-		paragraphs: ['Введите этот код в окне входа.'],
+		paragraphs: ['Введите этот код в {{platformName}}.'],
 		code: { label: 'Код', value: '{{otpCode}}' },
-		cta: { label: 'К окну входа', href: '{{loginUrl}}' },
-		footnote: 'Если Вы не собирались входить, пожалуйста, смените пароль.',
+		cta: { label: 'Открыть {{platformName}}', href: '{{loginUrl}}' },
+		footnote:
+			'Если Вы не запрашивали этот код, просто не обращайте внимания на это письмо.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Это письмо содержит код безопасности, от него нельзя отписаться. Пожалуйста, не отвечайте на него.'
+		}
 	},
 
 	'einladung-traeger': {
