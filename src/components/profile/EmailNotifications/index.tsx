@@ -33,7 +33,8 @@ import {
 export const EmailNotification = () => {
 	const { userData } = React.useContext(UserDataContext);
 	const { t } = useTranslation();
-	const { search } = useLocation();
+	const { search, hash } = useLocation();
+	const rootRef = React.useRef<HTMLDivElement>(null);
 
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -49,8 +50,16 @@ export const EmailNotification = () => {
 	const occasion = new URLSearchParams(search).get('mail');
 	const highlighted = switchForOccasion(switches, occasion);
 
+	// The router does not scroll to anchors; the notification dialog links here.
+	React.useEffect(() => {
+		if (hash === '#email-notifications') {
+			rootRef.current?.scrollIntoView({ block: 'start' });
+		}
+	}, [hash]);
+
 	return (
 		<div
+			ref={rootRef}
 			id="email-notifications"
 			className="notifications__content notifications__content--enhanced"
 		>

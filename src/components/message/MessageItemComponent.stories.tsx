@@ -52,6 +52,8 @@ type ConsultantListEntry = {
 	consultantDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
+	/** Legal-name label as `prepareConsultantDataForSelect` builds it. */
+	label?: string;
 };
 
 type MessageItemStoryParameters = {
@@ -345,6 +347,116 @@ export const AndroidCompactKebabTouchZone: Story = {
 	}
 };
 
+/** #1254: the last row must not stretch its controls into composer clearance. */
+export const LastMessageSideColumn: Story = {
+	name: 'Last message — avatar and menu beside bubble — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'Incoming and outgoing messages above reserved composer space. Avatar and menu positions must follow their own message row, including after the menu opens.'
+			}
+		}
+	},
+	render: () => (
+		<div
+			data-testid="last-message-timeline"
+			style={{
+				height: 500,
+				overflowY: 'auto'
+			}}
+		>
+			<div
+				style={{
+					minHeight: 900,
+					paddingBottom: 196,
+					boxSizing: 'border-box'
+				}}
+			>
+				{[false, true].map((isMyMessage) => (
+					<MessageItemComponent
+						key={String(isMyMessage)}
+						{...mockMessageItemComponentProps({
+							_id: `side-column-${isMyMessage ? 'outgoing' : 'incoming'}`,
+							isMyMessage,
+							userId: isMyMessage
+								? MOCK_CONSULTANT_MATRIX_ID
+								: MOCK_ASKER_MATRIX_ID,
+							message: isMyMessage
+								? 'Danke, dass du dich meldest. Wir nehmen uns Zeit für deine Fragen.'
+								: 'Ich brauche Hilfe.'
+						})}
+						{...baseHandlers}
+					/>
+				))}
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		const verifyControls = () => {
+			const rows = canvasElement.querySelectorAll(
+				'.messageItem__messageWrap'
+			);
+			expect(rows.length).toBe(2);
+			rows.forEach((row) => {
+				const bubble = row.querySelector('.messageItem__message')!;
+				const column = row.querySelector('.messageItem__sideColumn')!;
+				const bubbleRect = bubble.getBoundingClientRect();
+				const rowRect = row.getBoundingClientRect();
+				const columnRect = column.getBoundingClientRect();
+				expect(
+					Math.abs(columnRect.top - rowRect.top)
+				).toBeLessThanOrEqual(1);
+				expect(
+					Math.abs(columnRect.bottom - rowRect.bottom)
+				).toBeLessThanOrEqual(1);
+				for (const selector of [
+					'.messageItem__avatar',
+					'.messageItem__kebabButton'
+				]) {
+					const control = row
+						.querySelector(selector)!
+						.getBoundingClientRect();
+					expect(control.top).toBeLessThan(bubbleRect.bottom + 40);
+					expect(control.bottom).toBeGreaterThan(bubbleRect.top - 40);
+				}
+			});
+		};
+		await waitFor(verifyControls);
+		const buttons = canvasElement.querySelectorAll<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		await userEvent.click(buttons[buttons.length - 1]);
+		await waitFor(verifyControls);
+		const lastButton = buttons[buttons.length - 1];
+		const timeline = within(canvasElement).getByTestId(
+			'last-message-timeline'
+		);
+		const menu = canvasElement.ownerDocument.querySelector<HTMLElement>(
+			'.messageItem__actionMenu'
+		)!;
+		await waitFor(() => {
+			const menuRect = menu.getBoundingClientRect();
+			const viewportHeight =
+				canvasElement.ownerDocument.defaultView!.innerHeight;
+			expect(menuRect.top).toBeGreaterThanOrEqual(0);
+			expect(menuRect.bottom).toBeLessThanOrEqual(viewportHeight);
+		});
+		const buttonTop = lastButton.getBoundingClientRect().top;
+		const menuTop = menu.getBoundingClientRect().top;
+		timeline.scrollTop = 100;
+		await waitFor(() => {
+			const buttonDelta =
+				lastButton.getBoundingClientRect().top - buttonTop;
+			const menuDelta = menu.getBoundingClientRect().top - menuTop;
+			expect(buttonDelta).toBeLessThan(-20);
+			expect(Math.abs(menuDelta - buttonDelta)).toBeLessThanOrEqual(2);
+		});
+	}
+};
+
 export const GroupIncoming: Story = {
 	name: 'Group incoming (initials avatar)',
 	parameters: {
@@ -434,6 +546,15 @@ export const CaseHandoverGranted: Story = {
 			message: mockCaseHandoverGrantedMessage
 		}),
 		...baseHandlers
+	},
+	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		// Rendered inside the collapsed details panel.
+		await expect(
+			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
+		).toBeInTheDocument();
+		await expect(canvas.queryByText(/is ill|erkrankt/i)).toBeNull();
 	}
 };
 
@@ -616,6 +737,40 @@ export const IncomingWithReactions: Story = {
 		onReact: () => {},
 		onUnreact: () => {},
 		...baseHandlers
+	}
+};
+
+/** Un-reacting from the menu closes it and hands focus back to the kebab. */
+export const UnreactFromMenuReturnsFocus: Story = {
+	name: 'Un-react from menu — focus back on the kebab',
+	parameters: IncomingWithReactions.parameters,
+	args: {
+		...IncomingWithReactions.args,
+		onUnreact: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const kebab = canvasElement.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		expect(kebab).not.toBeNull();
+		await userEvent.click(kebab!);
+		const mine = await waitFor(() => {
+			const button = document.querySelector<HTMLButtonElement>(
+				'.messageItem__actionMenuReactionEmoji--mine'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await userEvent.click(mine);
+		expect(args.onUnreact).toHaveBeenCalledWith('$own-reaction-1');
+		await waitFor(() => {
+			expect(
+				document.querySelector(
+					'.messageItem__actionMenuReactionEmoji--mine'
+				)
+			).toBeNull();
+			expect(document.activeElement).toBe(kebab);
+		});
 	}
 };
 
@@ -1534,6 +1689,62 @@ export const AnonymousGuestSeesDisplayName: Story = {
 			await expect(
 				canvas.getByText('sanftes Alpaka Kim')
 			).toBeInTheDocument();
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+	}
+};
+
+/**
+ * A historical REASSIGN_CONSULTANT record seen by an anonymous guest: the
+ * card must use the names stored in the record, never the consultant list's
+ * legal-name label (#1536, #1486).
+ */
+export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
+	name: 'Identity — anonymous guest, historical reassign record, no real name',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: [
+			{
+				...consultantWithRealName[0],
+				label: 'Karina P (karina.p)'
+			}
+		]
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: JSON.stringify({
+				status: 'CONFIRMED',
+				fromConsultantId: 'consultant-storybook',
+				fromConsultantName: 'sanftes Alpaka Kim',
+				toConsultantId: 'consultant-storybook',
+				toConsultantName: 'sanftes Alpaka Kim',
+				toAskerName: 'anon_5'
+			}),
+			alias: {
+				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT
+			}
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getAllByText(/sanftes Alpaka Kim/).length
+			).toBeGreaterThan(0);
 		});
 		await expect(canvasElement.textContent).not.toContain('Karina');
 	}

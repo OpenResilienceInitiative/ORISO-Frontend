@@ -214,6 +214,8 @@ export interface NotificationConfigViewProps {
 		value: SoundId | BannerMode | boolean | number
 	) => void;
 	onPreview: (soundId: SoundId, volume: number) => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigView = ({
@@ -222,7 +224,8 @@ export const NotificationConfigView = ({
 	onEmailPreferencesClick,
 	onAreaChange,
 	onChange,
-	onPreview
+	onPreview,
+	showEmailLink = true
 }: NotificationConfigViewProps) => {
 	const { t } = useTranslation();
 	return (
@@ -230,17 +233,19 @@ export const NotificationConfigView = ({
 			<p className="notifConfig__intro">
 				{t('profile.notifications.config.intro')}
 			</p>
-			<p className="notifConfig__emailNote">
-				<a
-					href={`${EMAIL_PREFERENCES_PATH}#email-notifications`}
-					onClick={onEmailPreferencesClick}
-				>
-					{t(
-						'profile.notifications.title',
-						'E-Mail-Benachrichtigungen'
-					)}
-				</a>
-			</p>
+			{showEmailLink && (
+				<p className="notifConfig__emailNote">
+					<a
+						href={`${EMAIL_PREFERENCES_PATH}#email-notifications`}
+						onClick={onEmailPreferencesClick}
+					>
+						{t(
+							'profile.notifications.title',
+							'E-Mail-Benachrichtigungen'
+						)}
+					</a>
+				</p>
+			)}
 
 			<div className="notifConfig__tabs" role="tablist">
 				{NOTIFICATION_AREAS.map((area) => {
@@ -339,13 +344,16 @@ interface NotificationConfigDialogProps {
 	config: NotificationConfig;
 	onConfirm: (config: NotificationConfig) => void;
 	onClose: () => void;
+	/** False when the settings screen has no email panel for this user. */
+	showEmailLink?: boolean;
 }
 
 export const NotificationConfigDialog = ({
 	open,
 	config,
 	onConfirm,
-	onClose
+	onClose,
+	showEmailLink = true
 }: NotificationConfigDialogProps) => {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
@@ -440,6 +448,7 @@ export const NotificationConfigDialog = ({
 					onAreaChange={setActiveArea}
 					onChange={handleChange}
 					onPreview={handlePreview}
+					showEmailLink={showEmailLink}
 				/>
 			</M3Dialog>
 			<M3Dialog

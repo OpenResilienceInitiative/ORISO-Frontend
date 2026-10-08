@@ -14,6 +14,7 @@ import {
 	isNotificationSuppressed
 } from '../utils/notificationSettings/model';
 import { notificationSettingsStore } from '../utils/notificationSettings/store';
+import { isSandboxedMatrixClient } from '../services/matrixClientRegistry';
 import { EventFamily } from '../components/notificationsCenter/eventDescriptors/types';
 
 export const useNotificationSettings = () => {
@@ -22,7 +23,8 @@ export const useNotificationSettings = () => {
 	const client = matrixContext?.matrixClientService?.getClient?.() ?? null;
 
 	useEffect(() => {
-		if (client) {
+		// A practice client would replace the real account binding app-wide.
+		if (client && !isSandboxedMatrixClient(client)) {
 			notificationSettingsStore.attachClient(client);
 		}
 	}, [client]);
