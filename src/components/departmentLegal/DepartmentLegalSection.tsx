@@ -122,10 +122,7 @@ export const DepartmentLegalSection = ({
 						}}
 						sx={LEGAL_BUTTON_SX}
 					>
-						{t(
-							'registration.agency.legal.headline',
-							'Datenschutzhinweise der Beratungsstelle'
-						)}
+						{t('registration.agency.legal.headline')}
 					</Button>
 				)}
 				{hasPublishedImprint && (
@@ -138,24 +135,15 @@ export const DepartmentLegalSection = ({
 						}}
 						sx={LEGAL_BUTTON_SX}
 					>
-						{t(
-							'registration.agency.legal.imprintHeadline',
-							'Impressum der Beratungsstelle'
-						)}
+						{t('registration.agency.legal.imprintHeadline')}
 					</Button>
 				)}
 				{modalKind && agency?.id != null && topic?.id != null && (
 					<LegalLinkModal
 						title={
 							modalKind === 'privacy'
-								? t(
-										'registration.agency.legal.headline',
-										'Datenschutzhinweise der Beratungsstelle'
-									)
-								: t(
-										'registration.agency.legal.imprintHeadline',
-										'Impressum der Beratungsstelle'
-									)
+								? t('registration.agency.legal.headline')
+								: t('registration.agency.legal.imprintHeadline')
 						}
 						rawLabel={AGENCY_LEGAL_RAW_LABEL[modalKind]}
 						url={

@@ -11,6 +11,11 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
+## 2026-10-08 — #1213 approved legal hierarchy reconciliation
+
+- Context: #1213 legal hierarchy and profile modal integration.
+- Lesson: Preserve the shared dialog hierarchy: own Beratungsstelle text first, then Träger text, otherwise the existing missing-text notice and configured address when available. Keep profile modal agency/topic snapshots isolated and reuse the existing raw-label legal-link provider without agency URL parameters.
+
 ## 2026-09-01 — do not un-ignore agent-task folders unless asked
 
 - Context: #1213 (`docs/agent-tasks/` already ignored via `docs/agent-tasks/*`)
@@ -66,7 +71,3 @@ App handlers for Cmd/Ctrl+F, Cmd/Ctrl+Shift+N, Cmd/Ctrl+K must listen in the cap
 ## 2026-07-08 — matrix-js-sdk production logging
 
 `matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
-
-## 2026-10-08 — #1213 approved legal hierarchy reconciliation
-
-Earlier dated entries above describe their historical branch/revision, including the original no-carrier-fallback policy. Frank explicitly approved preserving the merged shared dialog hierarchy: own Beratungsstelle text first, then Träger text, otherwise the current missing-text notice and the configured address when available. The profile modal now reuses the existing legal-link provider without agency URL parameters. Profile modal wiring and agency/topic snapshot isolation remain; the shared Dev dialog runtime is unchanged. Focused current proof: 42 unit cases in five files, four synthetic Chromium stories with the unchanged axe gate, scoped lint and TypeScript passed. Full current-head CI, human review and live environment acceptance remain separate gates.
