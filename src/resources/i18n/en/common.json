@@ -638,6 +638,17 @@
 				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
+		},
+		"rejection": {
+			"action": "Decline request",
+			"confirmTitle": "Decline this request?",
+			"description": "The request will be declined. The advice seeker can still read the existing conversation.",
+			"confirm": "Decline request",
+			"error": "The decline could not yet be fully confirmed. The decision may already be saved. Please try again.",
+			"conflict": "The request has changed or is no longer available. Please reload the current view.",
+			"closed": "This request was declined.",
+			"inProgress": "Completing the decline…",
+			"cancel": "Cancel"
 		}
 	},
 	"error": {
@@ -1922,7 +1933,10 @@
 		"showLess": "Show less",
 		"showMore": "Show more",
 		"callLifecycle": {
-			"type": { "audio": "Audio call", "video": "Video call" },
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			},
 			"state": {
 				"running": "In progress",
 				"ended": "Ended",
@@ -1933,7 +1947,10 @@
 				"ended": "The call started at {{start}}.",
 				"missed": "The call was not answered."
 			},
-			"participants": { "current": "In the call", "attended": "Attended" }
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			}
 		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
@@ -2176,8 +2193,8 @@
 				"text": "The online appointment was cancelled."
 			},
 			"requestDenied": {
-				"title": "Request denied",
-				"text": "The client request was denied."
+				"title": "Request declined",
+				"text": "This request was declined."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client joined waiting room",

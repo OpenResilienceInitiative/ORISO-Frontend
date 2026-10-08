@@ -655,6 +655,17 @@
 				"copy": "Mesajınızı aldık.",
 				"headline": "Mesajınız için teşekkür ederiz!"
 			}
+		},
+		"rejection": {
+			"action": "Talebi reddet",
+			"confirmTitle": "Bu talep reddedilsin mi?",
+			"description": "Talep reddedilecektir. Danışan mevcut konuşmayı okumaya devam edebilir.",
+			"confirm": "Talebi reddet",
+			"error": "Reddetme işlemi henüz tamamen doğrulanamadı. Karar zaten kaydedilmiş olabilir. Lütfen tekrar deneyin.",
+			"conflict": "Talep değişti veya artık kullanılamıyor. Lütfen mevcut görünümü yeniden yükleyin.",
+			"closed": "Bu talep reddedildi.",
+			"inProgress": "Reddetme işlemi tamamlanıyor…",
+			"cancel": "İptal"
 		}
 	},
 	"error": {
@@ -1916,7 +1927,10 @@
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
 		"callLifecycle": {
-			"type": { "audio": "Sesli arama", "video": "Görüntülü arama" },
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
 			"state": {
 				"running": "Devam ediyor",
 				"ended": "Sona erdi",
@@ -1927,7 +1941,10 @@
 				"ended": "Arama {{start}} saatinde başladı.",
 				"missed": "Arama yanıtlanmadı."
 			},
-			"participants": { "current": "Aramada", "attended": "Katıldı" }
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			}
 		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
@@ -2180,7 +2197,7 @@
 			},
 			"requestDenied": {
 				"title": "Talep reddedildi",
-				"text": "Danışan talebi reddedildi."
+				"text": "Bu talep reddedildi."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Bekleme odasında bir danışan var",

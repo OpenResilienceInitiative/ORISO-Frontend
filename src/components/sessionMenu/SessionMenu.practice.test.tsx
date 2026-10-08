@@ -65,10 +65,12 @@ const counsellor = {
 
 const Menu = ({
 	callsInMenu = false,
-	userData = counsellor
+	userData = counsellor,
+	status = 2
 }: {
 	callsInMenu?: boolean;
 	userData?: object;
+	status?: number;
 }) => (
 	<MemoryRouter>
 		<SessionTypeContext.Provider
@@ -82,7 +84,13 @@ const Menu = ({
 			<UserDataContext.Provider value={{ userData } as any}>
 				<ActiveSessionContext.Provider
 					value={
-						{ activeSession, reloadActiveSession: vi.fn() } as any
+						{
+							activeSession: {
+								...activeSession,
+								item: { ...activeSession.item, status }
+							},
+							reloadActiveSession: vi.fn()
+						} as any
 					}
 				>
 					<ConsultingTypesContext.Provider
@@ -137,6 +145,13 @@ afterEach(() => {
 });
 
 describe('SessionMenu calls and practice mode (no calls)', () => {
+	it.each([false, true])(
+		'offers no call control for rejected enquiry history (callsInMenu %s)',
+		(callsInMenu) => {
+			render(<Menu callsInMenu={callsInMenu} status={5} />);
+			expect(callControls()).toHaveLength(0);
+		}
+	);
 	it('offers the call buttons in the header row outside practice', () => {
 		render(<Menu />);
 

@@ -655,6 +655,17 @@
 				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
+		},
+		"rejection": {
+			"action": "Refuser la demande",
+			"confirmTitle": "Refuser cette demande ?",
+			"description": "La demande sera refusée. La personne qui demande conseil pourra toujours lire la conversation existante.",
+			"confirm": "Refuser la demande",
+			"error": "Le refus n’a pas encore pu être entièrement confirmé. La décision est peut-être déjà enregistrée. Veuillez réessayer.",
+			"conflict": "La demande a changé ou n’est plus disponible. Veuillez recharger la vue actuelle.",
+			"closed": "Cette demande a été refusée.",
+			"inProgress": "Finalisation du refus…",
+			"cancel": "Annuler"
 		}
 	},
 	"error": {
@@ -1916,7 +1927,10 @@
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
 		"callLifecycle": {
-			"type": { "audio": "Appel audio", "video": "Appel vidéo" },
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			},
 			"state": {
 				"running": "En cours",
 				"ended": "Terminé",
@@ -2183,7 +2197,7 @@
 			},
 			"requestDenied": {
 				"title": "Demande refusée",
-				"text": "La demande du·de la client·e a été refusée."
+				"text": "Cette demande a été refusée."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client·e dans la salle d'attente",

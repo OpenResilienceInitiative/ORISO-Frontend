@@ -650,6 +650,17 @@
 				"copy": "Wir haben Ihre Nachricht erhalten.",
 				"headline": "Vielen Dank für Ihre Nachricht!"
 			}
+		},
+		"rejection": {
+			"action": "Anfrage ablehnen",
+			"confirmTitle": "Diese Anfrage ablehnen?",
+			"description": "Die Anfrage wird abgelehnt. Der bisherige Verlauf bleibt für die ratsuchende Person lesbar.",
+			"confirm": "Anfrage ablehnen",
+			"error": "Die Ablehnung konnte noch nicht vollständig bestätigt werden. Die Entscheidung kann bereits gespeichert sein. Bitte versuchen Sie es erneut.",
+			"conflict": "Die Anfrage hat sich geändert oder ist nicht mehr verfügbar. Bitte laden Sie die aktuelle Ansicht.",
+			"closed": "Diese Anfrage wurde abgelehnt.",
+			"inProgress": "Die Ablehnung wird abgeschlossen…",
+			"cancel": "Abbrechen"
 		}
 	},
 	"error": {
@@ -1937,7 +1948,10 @@
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
 		"callLifecycle": {
-			"type": { "audio": "Audioanruf", "video": "Videoanruf" },
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
 			"state": {
 				"running": "Läuft",
 				"ended": "Beendet",
@@ -2204,7 +2218,7 @@
 			},
 			"requestDenied": {
 				"title": "Anfrage abgelehnt",
-				"text": "Die Klient:innen-Anfrage wurde abgelehnt."
+				"text": "Diese Anfrage wurde abgelehnt."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Klient:in im Warteraum",
