@@ -1335,6 +1335,13 @@ export const SessionListItemComponent = ({
 			)}
 			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"
+			// The first enquiry card: the only case of the practice flow, and
+			// harmless on a real list (the tour never targets it there).
+			data-tour-target={
+				index === 0 && activeSession.isEnquiry
+					? 'enquiry-list-item'
+					: undefined
+			}
 		>
 			<div
 				className={clsx(

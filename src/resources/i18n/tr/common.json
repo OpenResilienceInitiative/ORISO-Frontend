@@ -792,7 +792,8 @@
 					"title": "Bağlantı kopyalandı"
 				},
 				"text": "Davetiye bağlantısını kopyala",
-				"title": "Davet bağlantısını panoya kopyala"
+				"title": "Davet bağlantısını panoya kopyala",
+				"unavailable": "Bu grubun davet bağlantısı henüz kullanılamıyor."
 			}
 		},
 		"create": {
@@ -2301,6 +2302,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Resminiz",
+			"default": "Varsayılan"
+		},
 		"appLanguage": {
 			"info": "Uygulamanın dilini buradan ayarlayın.",
 			"title": "Dil"
@@ -2921,6 +2926,35 @@
 			}
 		}
 	},
+	"practiceScript": {
+		"cast": {
+			"asker": "Sam Muster (alıştırma)",
+			"colleague": "Alex (alıştırma)",
+			"supervisor": "Robin (alıştırma)"
+		},
+		"asker": {
+			"firstMessage": "Merhaba, sunduğunuz hizmet hakkında genel bir sorum var. Danışmanlık sizde nasıl işliyor ve yanıtı ne kadar çabuk alabilirim? Teşekkür ederim.",
+			"reply": "Yanıtınız için çok teşekkür ederim, bu bana yardımcı oldu. Başka sorum olursa size yazarım."
+		},
+		"colleague": {
+			"teamMessage": "Bugün görüşmedeyim, yanıtı yetiştiremeyeceğim. Talebi sen devralabilir misin?"
+		},
+		"supervisor": {
+			"reply": "Kulağa iyi geliyor. Kişinin tam olarak ne öğrenmek istediğini rahatça sor. Ben de okuyorum, dikkatimi çeken bir şey olursa sana haber veririm."
+		},
+		"erstantwort": {
+			"greeting": "Talebiniz bize ulaştı. Bir danışman en kısa sürede size dönüş yapacak."
+		},
+		"counsellor": {
+			"acceptedCaseMessage": "Merhaba, mesajınız için teşekkürler. Danışmanlık burada yazılı ve gizli olarak yürütülür."
+		},
+		"names": {
+			"agency": "Alıştırma danışma merkezi",
+			"topic": "Alıştırma",
+			"teamRoom": "Ekip görüşmesi (alıştırma)",
+			"supervisionRoom": "Süpervizyon (alıştırma)"
+		}
+	},
 	"registration": {
 		"accordion": {
 			"item": {
@@ -3445,6 +3479,13 @@
 		"accountCreated": {
 			"login": "Hesabınız oluşturuldu, ancak otomatik giriş yapılamadı. Lütfen kullanıcı adınız ve şifrenizle giriş yapın.",
 			"retry": "Erişiminiz oluşturuldu, ancak giriş yapılamadı. Lütfen tekrar deneyin."
+		},
+		"groupInvite": {
+			"loadError": {
+				"headline": "Davet şu anda yüklenemedi.",
+				"body": "Lütfen bağlantınızı kontrol edip tekrar deneyin. Davet bağlantınız geçerliliğini korur."
+			},
+			"loading": "Davet yükleniyor …"
 		}
 	},
 	"releaseNote": {
@@ -4648,9 +4689,13 @@
 				"on": "Açık"
 			},
 			"subtitle": "Kısa turlar size neyin nerede olduğunu gösterir.",
-			"title": "Turları otomatik başlat"
+			"title": "Tanıtım turunu otomatik başlat"
 		},
-		"title": "Tur"
+		"title": "Tur",
+		"introduction": {
+			"title": "Tanıtım",
+			"summary": "Uygulamanın bölümlerini tanıyın. Tanıtım turunu istediğiniz zaman yeniden başlatabilirsiniz."
+		}
 	},
 	"consultingTypes": {
 		"title": "Welcome to Caritas online counselling",
@@ -5308,6 +5353,66 @@
 					"intro": "Tamamlanan danışmanlıklar eskisi gibi arşive taşınır — arşiv artık bu sekmede."
 				}
 			}
+		},
+		"practiceAccept": {
+			"title": "Alıştırma: Talebi kabul etme",
+			"summary": "Korumalı alıştırma alanında bir talebi kabul etmeyi ve ilk yanıtı yazmayı deneyin. Tüm kişiler ve içerikler kurgusaldır.",
+			"step": {
+				"navEnquiries": {
+					"title": "Talepleri açın",
+					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. Yeni talepleri burada, “Talepler” altında bulursunuz."
+				},
+				"openEnquiry": {
+					"title": "Talebi açın",
+					"intro": "Listede sizi bir alıştırma talebi bekliyor. Açmak için üzerine tıklayın."
+				},
+				"openTeam": {
+					"title": "Ekip görüşmesini açın",
+					"intro": "Ekip görüşmesi sizde etkin: kabul etmeden önce ekibinizle konuşmanızı sağlar. “Ekip görüşmesini aç” düğmesine tıklayın."
+				},
+				"teamReply": {
+					"title": "Ekibe yanıt verin",
+					"intro": "Ekipten gelen mesajı okuyun ve bir yanıt yazın. Talebi kabul ettiğinizde ekip görüşmesi kapanır."
+				},
+				"accept": {
+					"title": "Talebi kabul edin",
+					"intro": "“Sorguyu kabul et” düğmesine tıklayın: talep danışmanlıklarınıza geçer ve ekibinizin listesinden kalkar."
+				},
+				"firstAnswer": {
+					"title": "İlk yanıt ve ilk mesaj",
+					"intro": "Talep artık sizin. Sohbette otomatik ilk yanıtı ve danışanın ilk mesajını görürsünüz."
+				},
+				"reply": {
+					"title": "İlk yanıtınızı yazın",
+					"intro": "Danışana kısa bir yanıt yazıp gönderin. Yanıt alıştırmada kalır ve hiçbir yere kaydedilmez."
+				},
+				"done": {
+					"title": "Tebrikler!",
+					"intro": "Güzel iş: bir talebi kabul ettiniz ve yanıtladınız. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
+				}
+			}
+		},
+		"practiceSupervision": {
+			"title": "Alıştırma: Süpervizör ekleme",
+			"summary": "Korumalı alıştırma alanında bir danışmanlığa süpervizör eklemeyi deneyin. Tüm kişiler ve içerikler kurgusaldır.",
+			"step": {
+				"addSupervisor": {
+					"title": "Süpervizör ekleyin",
+					"intro": "Bu bir alıştırmadır: tüm kişiler kurgusaldır, hiçbir şey gönderilmez veya kaydedilmez. “+” işaretine tıklayın, süpervizörü seçin, nedenini kısaca yazın ve onaylayın."
+				},
+				"supervisorReply": {
+					"title": "Süpervizörün yanıtı",
+					"intro": "Süpervizörünüz yan sohbette yanıt verdi. Bu mesajları yalnızca ikiniz görürsünüz, danışan göremez."
+				},
+				"standingAssignment": {
+					"title": "Sabit atama",
+					"intro": "Yöneticiniz size sabit bir süpervizör atadıysa, bir talebi kabul ettiğinizde süpervizör otomatik olarak eklenir. Sizin bir şey yapmanız gerekmez."
+				},
+				"done": {
+					"title": "Tebrikler!",
+					"intro": "Bir süpervizör eklediniz ve yanıtını okudunuz. Alıştırmayı bitirmek için aşağıdaki düğmeyi kullanın."
+				}
+			}
 		}
 	},
 	"weekday": {
@@ -5615,6 +5720,35 @@
 			"region": "Bildirimler",
 			"more": "{{count}} tane daha göster",
 			"less": "Daha az göster"
+		}
+	},
+	"practice": {
+		"banner": {
+			"title": "Alıştırma modu",
+			"progress": "Adım {{current}} / {{total}}",
+			"note": "Alıştırma vakası, gerçek veri yok",
+			"end": "Alıştırmayı bitir",
+			"restart": "Yeniden başlat",
+			"moveHandle": "Bildirimi taşı (ok tuşları)"
+		},
+		"cards": {
+			"summary": {
+				"accept": "Bir sorguyu kabul edin ve ilk yanıtı yazın.",
+				"supervision": "Bir süpervizör seçin ve danışmanlık oturumuna ekleyin."
+			},
+			"title": "Alıştırma alanı",
+			"subtitle": "İş akışlarını kurgusal bir vaka üzerinde deneyin. Gerçek veri kullanılmaz ve burada yazdıklarınız kaydedilmez.",
+			"empty": "Şu anda sizin için alıştırma yok.",
+			"badge": "Alıştırma",
+			"phoneHint": "Lütfen bilgisayarda alıştırma yapın.",
+			"windowHint": "Bu alıştırma için lütfen tarayıcı pencerenizi genişletin.",
+			"action": {
+				"start": "Alıştırmayı başlat",
+				"restart": "Yeniden alıştırma yap"
+			}
+		},
+		"error": {
+			"start": "Alıştırma başlatılamadı. Lütfen tekrar deneyin."
 		}
 	},
 	"counselling": {
