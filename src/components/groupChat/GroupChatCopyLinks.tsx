@@ -35,6 +35,9 @@ export const useGroupChatInviteLink = (
 	const { t: translate } = useTranslation();
 
 	const copyRegistrationLink = useCallback(async () => {
+		if (!url) {
+			return;
+		}
 		await copyTextToClipboard(url, () => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
@@ -59,6 +62,10 @@ export const GroupChatCopyLinks = ({
 		agencyId,
 		inviteToken
 	);
+
+	if (!url) {
+		return null;
+	}
 
 	return (
 		<div className="GroupChatCopyLinks">

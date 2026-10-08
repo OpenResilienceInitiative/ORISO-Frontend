@@ -5,12 +5,12 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { AvatarPicker, type AvatarPickerRole } from './AvatarPicker';
 
 /**
- * #1540: avatar choice in the profile. Saving is not wired yet — advice
- * seekers need #1126, counsellors a self-service endpoint (today only the
- * admin API sets `avatarKind`/`avatarId`).
+ * #1540: avatar choice in the profile. The profile header uses it as one
+ * scrolling row with a default tile (#878 phase 4, see "Pages/Profile avatar
+ * choice"); saving goes through `PATCH /users/data` (US#1240).
  */
 const Picker = ({ role }: { role: AvatarPickerRole }) => {
-	const [value, setValue] = useState<string>('magpie.svg');
+	const [value, setValue] = useState<string | null>('magpie.svg');
 	return (
 		<div
 			style={{

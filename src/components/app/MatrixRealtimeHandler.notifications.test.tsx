@@ -30,7 +30,8 @@ const bridge = vi.hoisted(() => {
 });
 
 vi.mock('../../services/matrixLiveEventBridge', () => ({
-	matrixLiveEventBridge: bridge
+	matrixLiveEventBridge: bridge,
+	FEED_UPDATE_BRIDGE_EVENT: 'feedUpdated'
 }));
 const getFeed = vi.hoisted(() => vi.fn());
 vi.mock('../../api/apiEventNotifications', () => ({
