@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within
+} from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	ActiveSessionContext,
+	AUTHORITIES,
 	E2EEContext,
 	ServerSettingsContext,
 	TenantContext,
@@ -83,11 +90,13 @@ const renderErstantwortMessage = (
 	{
 		raw = erstantwortEvent,
 		account = {},
-		modality = 'AGENCY_COUNSELLING'
+		modality = 'AGENCY_COUNSELLING',
+		session = {}
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
 		modality?: string;
+		session?: Record<string, unknown>;
 	}
 ) =>
 	render(
@@ -117,7 +126,8 @@ const renderErstantwortMessage = (
 											...mockActiveSession1on1(),
 											item: {
 												...mockActiveSession1on1().item,
-												conversationType: modality
+												conversationType: modality,
+												...session
 											}
 										},
 										reloadActiveSession: () => {},
@@ -229,7 +239,7 @@ it('retains browser-only regular continuation with tenant email disabled', () =>
 	).toBeNull();
 	expect(screen.queryByText(EMAIL_BAUSTEIN_BODY)).toBeNull();
 });
-it('reads saved email activation through the persisted regular call site', () => {
+it('suppresses repeated setup through the persisted regular call site when email is already active', () => {
 	renderErstantwortMessage(tenantWith(true), {
 		account: {
 			email: 'asker@example.org',
@@ -240,10 +250,8 @@ it('reads saved email activation through the persisted regular call site', () =>
 		}
 	});
 	expect(
-		screen
-			.getByRole('button', { name: /notificationChoice.email / })
-			.getAttribute('aria-pressed')
-	).toBe('true');
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
 	expect(screen.getByText(EMAIL_BAUSTEIN_BODY)).toBeTruthy();
 });
 for (const testCase of [
@@ -264,3 +272,96 @@ for (const testCase of [
 		).toBeNull();
 	});
 }
+
+it.each([
+	[
+		'legacy team agency',
+		{
+			conversationType: undefined,
+			teamSession: true,
+			registrationType: 'REGISTERED'
+		},
+		true
+	],
+	[
+		'legacy anonymous',
+		{ conversationType: undefined, registrationType: 'ANONYMOUS' },
+		false
+	],
+	['explicit self help', { conversationType: 'SELF_HELP' }, true],
+	['explicit internal', { conversationType: 'INTERNAL_GROUP' }, false],
+	['future unknown', { conversationType: 'FUTURE_MODE' }, false]
+])(
+	'uses the server channel context at the real message caller: %s',
+	(_label, session, allowsEmail) => {
+		renderErstantwortMessage(tenantWith(true), { session });
+		expect(
+			Boolean(
+				screen.queryByRole('button', {
+					name: /notificationChoice.email/
+				})
+			)
+		).toBe(allowsEmail);
+	}
+);
+
+describe('persisted NONE grant notification continuation', () => {
+	const grant = (handover?: unknown) =>
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description: 'The counsellor has taken over.',
+			...(handover ? { handover } : {})
+		});
+	it('shows completed takeover details and adds notification setup only after a manual dialog action', () => {
+		const result = renderErstantwortMessage(tenantWith(true), {
+			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+			raw: grant({
+				requestId: 42,
+				clientConsent: 'NONE',
+				accessType: 'TAKEOVER'
+			})
+		});
+		expect(screen.getByText('The counsellor has taken over.')).toBeTruthy();
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(
+			result.container.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			within(screen.getByRole('dialog')).queryByRole('switch')
+		).toBeNull();
+		fireEvent.click(
+			within(screen.getByRole('dialog')).getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		const setup = result.container.querySelector('.notificationChoiceHost');
+		expect(setup).toBeTruthy();
+		expect(setup?.closest('.messageItem__message')).toBeNull();
+	});
+	it.each([
+		undefined,
+		{ requestId: 42, clientConsent: 'UNKNOWN', accessType: 'TAKEOVER' }
+	])(
+		'preserves legacy or malformed grant descriptions without reconstructing current policy',
+		(metadata) => {
+			renderErstantwortMessage(tenantWith(true), {
+				account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] },
+				raw: grant(metadata)
+			});
+			expect(
+				screen.getByText('The counsellor has taken over.')
+			).toBeTruthy();
+			expect(
+				screen.queryByRole('button', {
+					name: 'caseHandover.consent.info.more'
+				})
+			).toBeNull();
+		}
+	);
+});

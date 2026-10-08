@@ -258,6 +258,19 @@ export const en: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'New notification',
+		preheader: 'Please sign in.',
+		headline: 'A request about your counselling',
+		paragraphs: [
+			'Another professional at your counselling centre asks for your consent to temporarily access your conversation.',
+			'Review the request in the protected area. Your current counsellor remains responsible for your counselling.'
+		],
+		cta: { label: 'Review request', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'New notification',
 		preheader: 'Please sign in.',
@@ -268,7 +281,7 @@ export const en: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Review request', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {

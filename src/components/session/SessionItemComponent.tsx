@@ -1,3 +1,4 @@
+import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import * as React from 'react';
 import {
 	useCallback,
@@ -1859,6 +1860,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}`;
 	const activeSessionIdentityRef = useRef(activeSessionIdentity);
 	activeSessionIdentityRef.current = activeSessionIdentity;
+	const scheduleMessageRefresh = useDelayedSessionRefresh(
+		activeSessionIdentity,
+		props.refreshMessages
+	);
 	const [retryRequest, setRetryRequest] = useState<{
 		requestId: string;
 		failedSendId: string;
@@ -2039,11 +2044,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		setRetryRequest(null);
 
-		if (props.refreshMessages) {
-			setTimeout(() => {
-				props.refreshMessages();
-			}, 500);
-		}
+		scheduleMessageRefresh(sessionIdentity);
 	};
 
 	// Route writer (B2 / T24): opening a channel PUSHES a history entry
