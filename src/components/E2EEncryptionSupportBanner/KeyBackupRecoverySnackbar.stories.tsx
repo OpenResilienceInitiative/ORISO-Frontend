@@ -22,7 +22,8 @@ const service = {
  * history is readable, and never pushes the layout.
  */
 const meta = {
-	title: 'Organisms/KeyBackupRecoverySnackbar',
+	id: 'organisms-keybackuprecoverysnackbar',
+	title: 'Chat/System messages/Recovery snackbar',
 	component: KeyBackupRecoveryPrompt,
 	parameters: { layout: 'fullscreen' },
 	decorators: [

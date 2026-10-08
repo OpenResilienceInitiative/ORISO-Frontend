@@ -11,21 +11,20 @@ import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 import { ErstantwortDisplayNameOverlay } from './ErstantwortDisplayNameOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
-import {
-	NotificationChoice,
-	NotificationChoiceCard
-} from './NotificationChoiceCard';
+import { NotificationSetup } from './NotificationSetup';
+import { useTenant } from '../../globalState/provider/TenantProvider';
+import { notificationChannelPolicy } from './notificationChannelPolicy';
+import { useNotificationChannels } from './useNotificationChannels';
 import { EnquiryReceivedIllustration } from './EnquiryReceivedIllustration';
-import { ErstantwortActionKind } from './erstantwortPayload';
+import {
+	ErstantwortActionKind,
+	parseErstantwortPayload
+} from './erstantwortPayload';
 import {
 	ErstantwortLiveState,
 	resolveErstantwortBausteine
 } from './erstantwortResolve';
 import { ErstantwortTrigger } from './erstantwortCatalogue';
-import {
-	isSupported as isNotificationSupported,
-	optInToBrowserNotifications
-} from '../../utils/notificationHelpers';
 
 /**
  * The chat-side container for the Erstantwort (ADR-018, ORISO-Frontend#772).
@@ -67,6 +66,23 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
+	const tenant = useTenant();
+	const channels = notificationChannelPolicy(
+		tenant?.settings,
+		conversationType
+	);
+	const emailAllowed = isAskerEmailEnabled !== false && channels.emailAllowed;
+	const { hasReachableChannel } = useNotificationChannels(
+		emailAllowed,
+		channels.browserAllowed
+	);
+	const [notificationSetupStarted, setNotificationSetupStarted] =
+		useState(false);
+	// Keep an in-progress setup visible through its saved confirmation. On reload,
+	// existing reachability suppresses automatic invitations again.
+	const offerNotificationSetup =
+		(emailAllowed || channels.browserAllowed) &&
+		(notificationSetupStarted || !hasReachableChannel);
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
 	const [isDisplayNameOverlayOpen, setIsDisplayNameOverlayOpen] =
 		useState(false);
@@ -76,17 +92,17 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			hasEmail: Boolean(userData?.email),
 			isTwoFactorEnabled: Boolean(userData?.twoFactorAuth?.isEnabled),
 			isTwoFactorActive: Boolean(userData?.twoFactorAuth?.isActive),
-			isAskerEmailEnabled
+			isAskerEmailEnabled: emailAllowed
 		}),
 		[
 			userData?.email,
 			userData?.twoFactorAuth?.isEnabled,
 			userData?.twoFactorAuth?.isActive,
-			isAskerEmailEnabled
+			emailAllowed
 		]
 	);
 
-	const { bausteine } = useMemo(
+	const { bausteine: resolvedBausteine } = useMemo(
 		() =>
 			resolveErstantwortBausteine({
 				rawMessage,
@@ -98,25 +114,47 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		[rawMessage, trigger, conversationType, deadlineDays, t, state]
 	);
 
-	/* Browsers that cannot deliver a notification at all must not be offered
-	   as an option — an unkept promise here means a person waits for a signal
-	   that will never come. */
-	const isBrowserNotificationSupported = Boolean(isNotificationSupported());
-
-	const handleNotificationChoice = useCallback(
-		(choice: NotificationChoice) => {
-			if (choice === 'BROWSER' || choice === 'BOTH') {
-				void optInToBrowserNotifications();
-			}
-			if (choice === 'EMAIL' || choice === 'BOTH') {
-				setIsEmailOverlayOpen(true);
-				return;
-			}
-			/* Browser-only: nothing else to collect, so the person is left in
-			   the conversation rather than pushed into settings. */
-		},
-		[]
+	// A supported, frozen first-response invitation owns this live continuation.
+	// Keep its words and links, but use the same channel chooser as post-dispatch.
+	// Do not invent invitations for payloads that omitted them or for live chat.
+	const parsed = parseErstantwortPayload(rawMessage);
+	const persistedInvitation =
+		conversationType !== 'LIVE_CHAT' &&
+		parsed.status === 'ok' &&
+		parsed.bausteine.some((item) => item.id === 'emailNotification');
+	const hasChoice = resolvedBausteine.some(
+		(item) => item.id === 'notificationChoice'
 	);
+	const offeredBausteine =
+		offerNotificationSetup || parsed.status === 'ok'
+			? resolvedBausteine
+			: resolvedBausteine.filter(
+					(item) => item.id !== 'notificationChoice'
+				);
+	const bausteine =
+		persistedInvitation && !hasChoice
+			? offeredBausteine.map((item) =>
+					item.id === 'emailNotification'
+						? { ...item, action: undefined }
+						: item
+				)
+			: [...offeredBausteine];
+	if (
+		persistedInvitation &&
+		offerNotificationSetup &&
+		!hasChoice &&
+		!bausteine.some((item) => item.id === 'emailNotification')
+	) {
+		// Tenant email-off silences the frozen email invitation; browser remains
+		// an independent option through a distinct, current setup message.
+		const choice = resolveErstantwortBausteine({
+			trigger: 'AFTER_ENQUIRY_DISPATCHED',
+			context: { conversationType },
+			translate: (key, defaultValue) => t(key, defaultValue),
+			state
+		}).bausteine.find((item) => item.id === 'notificationChoice');
+		if (choice) bausteine.push(choice);
+	}
 
 	const handleAction = useCallback(
 		(kind: ErstantwortActionKind) => {
@@ -154,19 +192,31 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		<>
 			<ErstantwortSequence
 				bausteine={bausteine}
+				compactFaq={conversationType !== 'LIVE_CHAT'}
 				skipAnimation={skipAnimation}
 				onAction={handleAction}
 				onFirstReveal={onFirstReveal}
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
-					notificationChoice: (
-						<NotificationChoiceCard
-							isBrowserNotificationSupported={
-								isBrowserNotificationSupported
-							}
-							onChoose={handleNotificationChoice}
+					emailNotification:
+						persistedInvitation &&
+						!hasChoice &&
+						offerNotificationSetup ? (
+							<NotificationSetup
+								isEmailEnabled={emailAllowed}
+								isBrowserEnabled={channels.browserAllowed}
+								onStart={() =>
+									setNotificationSetupStarted(true)
+								}
+							/>
+						) : undefined,
+					notificationChoice: offerNotificationSetup ? (
+						<NotificationSetup
+							isEmailEnabled={emailAllowed}
+							isBrowserEnabled={channels.browserAllowed}
+							onStart={() => setNotificationSetupStarted(true)}
 						/>
-					),
+					) : undefined,
 					saveCredentials: (
 						<SaveCredentialsCard
 							userName={userData?.userName ?? ''}

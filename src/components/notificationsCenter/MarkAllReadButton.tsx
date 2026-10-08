@@ -7,6 +7,8 @@ interface MarkAllReadButtonProps {
 	 * `unreadNotificationCount`), not just the loaded page.
 	 */
 	hasUnread: boolean;
+	/** Another bulk mutation is awaiting server acknowledgement. */
+	busy?: boolean;
 	onClick: () => void;
 	/** Localised "Mark all as read"; used as tooltip and accessible name. */
 	label: string;
@@ -21,6 +23,7 @@ interface MarkAllReadButtonProps {
  */
 export const MarkAllReadButton: React.FC<MarkAllReadButtonProps> = ({
 	hasUnread,
+	busy = false,
 	onClick,
 	label
 }) => (
@@ -28,7 +31,8 @@ export const MarkAllReadButton: React.FC<MarkAllReadButtonProps> = ({
 		type="button"
 		className="sessionsListToolbar__chip sessionsListToolbar__chip--iconOnly"
 		onClick={onClick}
-		disabled={!hasUnread}
+		disabled={!hasUnread || busy}
+		aria-busy={busy}
 		title={label}
 		aria-label={label}
 	>

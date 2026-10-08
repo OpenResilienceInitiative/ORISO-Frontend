@@ -2246,6 +2246,9 @@
 			"title": "Benachrichtigungen",
 			"subtitle": "Aktuelle Ereignisse und Updates aus Ihren Chats.",
 			"markAllRead": "Alle als gelesen markieren",
+			"markReadFailed": "Die Benachrichtigung konnte nicht als gelesen markiert werden. Bitte erneut versuchen.",
+			"markAllReadFailed": "Benachrichtigungen konnten nicht als gelesen markiert werden. Bitte erneut versuchen.",
+			"clearFailed": "Aktivität konnte nicht gelöscht werden. Bitte erneut versuchen.",
 			"clearAll": "Alle löschen",
 			"empty": "Noch keine Benachrichtigungen.",
 			"emptyDetail": "Wählen Sie eine Benachrichtigung aus, um Details zu sehen.",
@@ -2323,6 +2326,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Anmeldung & Konto",
+				"description": "Verwalten Sie Ihr Passwort und den Schutz Ihrer Anmeldung."
+			},
+			"recovery": {
+				"title": "Wiederherstellung alter Nachrichten",
+				"description": "Bewahren Sie Ihren Ersatzschlüssel sicher auf, damit Sie alte Nachrichten auf einem neuen Gerät wieder öffnen können."
+			},
+			"privacy": {
+				"title": "Privatsphäre",
+				"description": "Verwalten Sie Ihre persönlichen Angaben und Ihr Konto."
+			},
+			"displayNameDescription": "Unter diesem Namen sehen Ratsuchende Sie in der Beratung."
+		},
 		"avatar": {
 			"label": "Ihr Bild",
 			"default": "Standard"
@@ -2724,6 +2742,10 @@
 					"appointment": {
 						"title": "Termine",
 						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					},
+					"consentRequest": {
+						"title": "Anfragen zu Einsicht und Übergabe",
+						"description": "Erhalten Sie eine E-Mail, wenn Ihre Zustimmung zu einer Einsichtnahme oder Übergabe angefragt wird."
 					}
 				},
 				"consultant": {
@@ -2895,6 +2917,7 @@
 				"done": "Fertig"
 			},
 			"status": {
+				"notSetUp": "Ihr Ersatzschlüssel ist noch nicht eingerichtet.",
 				"ok": "✓ Ihr Ersatzschlüssel ist eingerichtet. Ihr Verlauf bleibt auf neuen Geräten lesbar."
 			},
 			"changeKey": {
@@ -3540,10 +3563,30 @@
 			"decline": "Zugriff verweigern",
 			"optOut": {
 				"title": "Datenschutzhinweis zur Fallübergabe",
-				"prompt": "Bitte lesen Sie die Informationen und treffen Sie anschließend Ihre Entscheidung.",
+				"prompt": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
 				"copy": "Für die Fallübergabe darf eine weitere Beratungskraft derselben Beratungsstelle diese Unterhaltung zeitlich begrenzt mitlesen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Ihre bisherige Beratungskraft bleibt weiterhin für Sie zuständig.",
-				"revocationCopy": "Mit dem eingeschalteten Schalter stimmen Sie dem zeitlich begrenzten Einblick und der dafür erforderlichen Datenverarbeitung zu. Sie können Ihre Zustimmung jederzeit zurücknehmen; der aktive Zugriff endet dann sofort. Ihre Beratung läuft unabhängig davon weiter.",
-				"switchLabel": "Ich stimme der Datenverarbeitung für diese Fallübergabe zu"
+				"revocationCopy": "Der Schalter gilt für diese Anfrage. Sie können widersprechen; eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"switchLabel": "Zugriff für diese Anfrage erlauben"
+			},
+			"info": {
+				"more": "Mehr erfahren",
+				"title": "Einsichtnahme in Ihre Beratung",
+				"noticeTitle": "Unterstützung für Ihre Beratung",
+				"noticeCopy": "Eine weitere Fachkraft Ihrer Beratungsstelle erhält für diese Anfrage Einsicht. Eine vorherige Einwilligung wird bei dieser Einstellung nicht erfragt.",
+				"needTitle": "Wann hilfreich",
+				"needCopy": "Eine weitere Fachkraft kann kurz unterstützen, etwa für einige Stunden. Bei Urlaub oder Krankheit kann jemand aus Ihrer Beratungsstelle übernehmen.",
+				"choiceTitle": "Ihre Einwilligung",
+				"OPT_IN": "Für diese Anfrage ist Ihre Zustimmung nötig. Ohne sie erhält die anfragende Fachkraft keinen Zugriff. Ihre Entscheidung gilt nur für diese Anfrage.",
+				"OPT_OUT": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Sie können dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"NONE": "Für diese Anfrage wird keine Entscheidung erfragt. Die Nachricht informiert Sie über die Einsichtnahme ohne vorherige Einwilligung.",
+				"accessTitle": "Geschützter Zugriff",
+				"accessCopy": "Nur die zuständige Stelle und die konkret berechtigte Fachkraft erhalten Einsicht. Außenstehende und der Plattformbetreiber erhalten keinen Zugang.",
+				"notificationsCopy": "Wenn Ihre Zustimmung gebraucht wird, empfehlen wir E-Mail- oder Browser-Benachrichtigungen. So erfahren Sie rechtzeitig von einer Anfrage und können reagieren.",
+				"notificationsAction": "Benachrichtigungen einrichten",
+				"granted": "Der Zugriff wurde bestätigt.",
+				"closed": "Diese Anfrage ist abgeschlossen. Es steht keine weitere Entscheidung aus.",
+				"takeoverContinues": "Ihr Widerspruch wurde gespeichert. Die bereits abgeschlossene Übernahme bleibt bestehen.",
+				"description": "Für fachliche Rücksprache und Vertretung in Ihrer Beratungsstelle."
 			}
 		},
 		"denied": {
@@ -3642,6 +3685,15 @@
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		},
+		"standingPreference": {
+			"label": "Vor zusätzlichem Zugriff immer fragen",
+			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",
+			"baselineDescription": "Ausgeschaltet gelten die Einstellungen Ihrer Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
+			"saving": "Wird gespeichert …",
+			"saved": "Einstellung gespeichert.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
+			"loading": "Einstellung wird geladen …"
 		}
 	},
 	"session": {
@@ -5145,8 +5197,17 @@
 			"emailHint": "Was Sie hier besprechen, steht nie in dieser E-Mail.",
 			"browser": "Geben Sie mir hier ein Signal",
 			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
-			"both": "Beides, und Passwort jetzt selbst festlegen",
-			"bothHint": "Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen."
+			"enableBrowser": "Browser aktivieren",
+			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
+			"active": "Aktiviert: {{channel}}",
+			"bothSetup": "Beides einrichten",
+			"bothSetupHint": "E-Mail und zusätzlich ein Signal auf diesem Gerät.",
+			"browserUnsupported": "Dieser Browser unterstützt keine Browser-Benachrichtigungen.",
+			"browserSilenced": "Browser-Benachrichtigungen sind in Ihren Benachrichtigungseinstellungen stummgeschaltet.",
+			"channelBoth": "E-Mail und Browser auf diesem Gerät",
+			"channelEmail": "E-Mail",
+			"channelBrowser": "Browser auf diesem Gerät"
 		},
 		"subtitle": "Ihre ersten Schritte",
 		"greeting": {
@@ -5214,7 +5275,12 @@
 				"saveFailed": "Speichern fehlgeschlagen. Bitte versuchen Sie es erneut."
 			}
 		},
-		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar."
+		"unavailableInRoom": "Erstantwort – in diesem Raum nicht verfügbar.",
+		"faq": {
+			"title": "Häufige Fragen",
+			"modalityNote": "Wie läuft die Beratung ab?",
+			"dataProtection": "Was passiert mit meinen Daten?"
+		}
 	},
 	"dpaSign": {
 		"title": "Vertragsunterlagen prüfen und bestätigen",

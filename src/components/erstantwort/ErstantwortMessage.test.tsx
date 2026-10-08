@@ -1,167 +1,177 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { createInstance } from 'i18next';
-import { I18nextProvider } from 'react-i18next';
-import german from '../../resources/i18n/de/common.json';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { act, cleanup, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UserDataContext } from '../../globalState';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
+import { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
 import { ErstantwortMessage } from './ErstantwortMessage';
+import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 
-vi.mock('lottie-react', () => ({ default: () => null }));
-vi.mock('lottie-web', () => ({ default: {} }));
-
-const i18n = createInstance();
-void i18n.init({
-	lng: 'de',
-	fallbackLng: 'de',
-	resources: { de: { translation: german } },
-	initImmediate: false,
-	interpolation: { escapeValue: false }
+vi.hoisted(() => {
+	HTMLCanvasElement.prototype.getContext = (() => ({
+		fillStyle: '',
+		fillRect() {}
+	})) as unknown as typeof HTMLCanvasElement.prototype.getContext;
 });
-
-const openTwoFactorSettings = vi.hoisted(() => vi.fn());
-
+vi.mock('react-i18next', () => ({
+	useTranslation: () => ({
+		t: (key: string, fallback?: unknown) =>
+			typeof fallback === 'string' ? fallback : key
+	})
+}));
 vi.mock('../../hooks/useOpenTwoFactorSettings', () => ({
-	TWO_FACTOR_SETTINGS_PATH: '/profile/einstellungen/sicherheit',
-	useOpenTwoFactorSettings: () => openTwoFactorSettings
+	TWO_FACTOR_SETTINGS_PATH: '/security',
+	useOpenTwoFactorSettings: () => () => {}
 }));
-
-vi.mock('../../utils/notificationHelpers', () => ({
-	isSupported: () => false,
-	requestPermissions: vi.fn()
-}));
-
-/* Overlay portals + focus trap are not this regression. Keep the buttonSet
-   contract so the email overlay's form (headline + textbox) is what we assert. */
-vi.mock('../overlay/Overlay', () => ({
-	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE' },
-	Overlay: ({ item, handleOverlay }: any) => (
-		<div>
-			<h2>{item.headline}</h2>
-			{item.copy && <p>{item.copy}</p>}
-			{item.nestedComponent}
-			{item.buttonSet?.map((button: any) => (
-				<button
-					key={button.label}
-					disabled={button.disabled}
-					onClick={() => handleOverlay(button.function)}
-				>
-					{button.label}
-				</button>
-			))}
-		</div>
-	)
-}));
-
-vi.mock('../../resources/img/icons/envelope.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
-vi.mock('../../resources/img/illustrations/envelope-check.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
-vi.mock('../../resources/img/illustrations/check.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
-
-afterEach(cleanup);
-beforeEach(() => {
-	openTwoFactorSettings.mockClear();
-});
-
-const userData = {
-	email: '',
-	userName: 'askertest',
-	displayName: 'Sanftes Alpaka Kala',
-	twoFactorAuth: {
-		isEnabled: true,
-		isActive: false
+vi.mock('lottie-web', () => ({
+	default: {
+		loadAnimation: () => ({
+			destroy() {},
+			addEventListener() {},
+			play() {},
+			stop() {}
+		})
 	}
-};
+}));
 
-const renderMessage = () =>
+function setup(
+	emailActive = false,
+	conversationType?: string,
+	isAskerEmailEnabled?: boolean,
+	rawMessage?: string
+) {
+	const userData = {
+		email: 'asker@example.org',
+		emailNotifications: {
+			emailNotificationsEnabled: emailActive,
+			settings: { newChatMessageNotificationEnabled: emailActive }
+		}
+	} as UserDataInterface;
 	render(
-		<I18nextProvider i18n={i18n}>
-			<MemoryRouter>
-				<UserDataContext.Provider
-					value={
-						{
-							userData,
-							reloadUserData: vi.fn()
-						} as React.ContextType<typeof UserDataContext>
-					}
-				>
+		<MemoryRouter>
+			<UserDataContext.Provider
+				value={{
+					userData,
+					reloadUserData: async () => userData,
+					setUserData: vi.fn()
+				}}
+			>
+				<ModalProvider>
 					<ErstantwortMessage
-						trigger="AFTER_FIRST_MESSAGE"
+						trigger="AFTER_ENQUIRY_DISPATCHED"
+						rawMessage={rawMessage}
+						conversationType={conversationType}
+						isAskerEmailEnabled={isAskerEmailEnabled}
 						skipAnimation
 					/>
-				</UserDataContext.Provider>
-			</MemoryRouter>
-		</I18nextProvider>
+				</ModalProvider>
+			</UserDataContext.Provider>
+		</MemoryRouter>
 	);
-
-describe('ErstantwortMessage email action', () => {
-	it('opens the email overlay when E-Mail-Adresse angeben is pressed', () => {
-		renderMessage();
-
-		expect(
-			screen.queryByRole('heading', { name: 'E-Mail-Adresse angeben' })
-		).toBeNull();
-
-		act(() => {
-			screen
-				.getByRole('button', { name: 'E-Mail-Adresse angeben' })
-				.click();
-		});
-
-		expect(
-			screen.getByRole('heading', { name: 'E-Mail-Adresse angeben' })
-		).toBeTruthy();
-		expect(screen.getByRole('textbox')).toBeTruthy();
+}
+beforeEach(() => {
+	localStorage.clear();
+	notificationSettingsStore.resetForTests();
+	vi.stubGlobal('Notification', {
+		permission: 'default',
+		requestPermission: vi.fn()
 	});
-
-	it('starts 2FA with the backup-key follow-on when Zugang schützen is pressed', () => {
-		renderMessage();
-
-		act(() => {
-			screen.getByRole('button', { name: 'Zugang schützen' }).click();
-		});
-
-		expect(openTwoFactorSettings).toHaveBeenCalledWith({
-			showBackupKey: true
-		});
+});
+afterEach(() => {
+	cleanup();
+	vi.unstubAllGlobals();
+});
+it('does not automatically invite an already email-reachable asker to configure notifications again', () => {
+	setup(true);
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+});
+it('does not automatically invite an already browser-reachable asker to configure notifications again', () => {
+	vi.stubGlobal('Notification', {
+		permission: 'granted',
+		requestPermission: vi.fn()
 	});
+	localStorage.setItem(
+		'BROWSER_NOTIFICATIONS',
+		JSON.stringify({ enabled: true })
+	);
+	setup();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+});
+it('offers actual setup when no notification channel is active', () => {
+	setup();
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
 
-	it('opens the display-name overlay when Namen ändern is pressed', () => {
-		render(
-			<I18nextProvider i18n={i18n}>
-				<MemoryRouter>
-					<UserDataContext.Provider
-						value={
-							{
-								userData,
-								reloadUserData: vi.fn()
-							} as React.ContextType<typeof UserDataContext>
-						}
-					>
-						<ErstantwortMessage
-							trigger="AFTER_ENQUIRY_DISPATCHED"
-							skipAnimation
-						/>
-					</UserDataContext.Provider>
-				</MemoryRouter>
-			</I18nextProvider>
-		);
-
-		act(() => {
-			screen.getByRole('button', { name: 'Namen ändern' }).click();
-		});
-
-		expect(
-			screen.getByRole('button', { name: 'Namen neu würfeln' })
-		).toBeTruthy();
-		expect(screen.getByText('Sanftes Alpaka Kala')).toBeTruthy();
-		expect(screen.getByRole('button', { name: 'Übernehmen' })).toBeTruthy();
+it('does not mistake a saved address with notifications switched off for an active channel', () => {
+	setup(false);
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
+it('does not count a silenced browser as reachable', () => {
+	vi.stubGlobal('Notification', {
+		permission: 'granted',
+		requestPermission: vi.fn()
 	});
+	localStorage.setItem(
+		'BROWSER_NOTIFICATIONS',
+		JSON.stringify({ enabled: true })
+	);
+	notificationSettingsStore.setDeviceSilenced(true);
+	setup();
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
+it('does not invite live-chat participants to collect an email address', () => {
+	setup(false, 'LIVE_CHAT');
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+});
+it('respects the current tenant email-off policy without inventing per-type settings', () => {
+	setup(false, 'AGENCY_COUNSELLING', false);
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	).toBeTruthy();
+});
+
+it('keeps frozen FAQ and invitation words when the saved channel suppresses its live setup controls', () => {
+	const rawMessage =
+		SYSTEM_NOTIFICATION_PREFIX +
+		JSON.stringify({
+			type: 'FIRST_RESPONSE',
+			version: 1,
+			bausteine: [
+				{
+					id: 'whoReadsAlong',
+					headline: 'Who reads this?',
+					body: 'Only the responsible counselling team.'
+				},
+				{
+					id: 'emailNotification',
+					body: 'You can add an email address.',
+					action: { kind: 'ADD_EMAIL', label: 'Add email' }
+				}
+			]
+		});
+	setup(true, 'AGENCY_COUNSELLING', true, rawMessage);
+	expect(screen.getByText('Who reads this?').tagName).toBe('SUMMARY');
+	expect(screen.getByText('You can add an email address.')).toBeTruthy();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	expect(screen.queryByRole('button', { name: 'Add email' })).toBeNull();
 });

@@ -67,7 +67,8 @@ const LossNoticeHarness = ({
 };
 
 const meta = {
-	title: 'Components/Notifications/Live chat loss notice',
+	id: 'components-notifications-live-chat-loss-notice',
+	title: 'Chat/System messages/Live chat availability',
 	component: LossNoticeHarness,
 	tags: ['autodocs'],
 	parameters: {

@@ -21,6 +21,30 @@ const LEGACY_THREAD_PREFIX = '[THREAD:';
 export const buildVisibleToPrefix = (recipientIds: string[]) =>
 	`${VISIBLE_TO_PREFIX}${recipientIds.join(',')}${PREFIX_SUFFIX}`;
 
+/** Immutable facts carried by a persisted grant, never reconstructed from current policy. */
+export interface HandoverGrantMetadata {
+	requestId: number;
+	clientConsent: 'OPT_IN' | 'OPT_OUT' | 'NONE';
+	accessType: 'CO_ACCESS' | 'TAKEOVER';
+}
+
+const parseHandoverGrantMetadata = (
+	value: unknown
+): HandoverGrantMetadata | null => {
+	if (!value || typeof value !== 'object') return null;
+	const metadata = value as HandoverGrantMetadata;
+	return Number.isSafeInteger(metadata.requestId) &&
+		metadata.requestId > 0 &&
+		['OPT_IN', 'OPT_OUT', 'NONE'].includes(metadata.clientConsent) &&
+		['CO_ACCESS', 'TAKEOVER'].includes(metadata.accessType)
+		? {
+				requestId: metadata.requestId,
+				clientConsent: metadata.clientConsent,
+				accessType: metadata.accessType
+			}
+		: null;
+};
+
 export const parseMessagePrefixes = (message?: string | null) => {
 	if (!message) {
 		return {
@@ -33,6 +57,8 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationUsername: '',
 			systemNotificationReasonLabel: '',
 			systemNotificationExplanation: '',
+			systemNotificationHandoverGrant:
+				null as HandoverGrantMetadata | null,
 			visibleToUserIds: [] as string[]
 		};
 	}
@@ -46,6 +72,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 	let systemNotificationUsername = '';
 	let systemNotificationReasonLabel = '';
 	let systemNotificationExplanation = '';
+	let systemNotificationHandoverGrant: HandoverGrantMetadata | null = null;
 	let visibleToUserIds: string[] = [];
 
 	let keepParsingPrefixes = true;
@@ -109,6 +136,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 				username?: string;
 				reasonLabel?: string;
 				explanation?: string;
+				handover?: unknown;
 			};
 			systemNotificationType = parsed?.type?.trim() || null;
 			systemNotificationUsername = parsed?.username?.trim() || '';
@@ -116,6 +144,14 @@ export const parseMessagePrefixes = (message?: string | null) => {
 			systemNotificationDescription = parsed?.description?.trim() || '';
 			systemNotificationReasonLabel = parsed?.reasonLabel?.trim() || '';
 			systemNotificationExplanation = parsed?.explanation?.trim() || '';
+			if (
+				systemNotificationType ===
+				SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED
+			) {
+				systemNotificationHandoverGrant = parseHandoverGrantMetadata(
+					parsed?.handover
+				);
+			}
 		} catch (_error) {
 			const lines = payload
 				.split('\n')
@@ -138,6 +174,7 @@ export const parseMessagePrefixes = (message?: string | null) => {
 		systemNotificationUsername,
 		systemNotificationReasonLabel,
 		systemNotificationExplanation,
+		systemNotificationHandoverGrant,
 		visibleToUserIds
 	};
 };
