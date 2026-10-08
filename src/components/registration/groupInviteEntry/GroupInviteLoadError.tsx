@@ -3,8 +3,9 @@ import { ReactElement } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
-import { LoadingIndicator } from '../../loadingIndicator/LoadingIndicator';
+import { Loading } from '../../app/Loading';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import './groupInviteLoading.styles.scss';
 
 interface InviteStageProps {
 	stage: ReactElement;
@@ -17,10 +18,11 @@ const InviteStage = ({
 	stage,
 	gcid,
 	aid,
-	children
-}: InviteStageProps & { children: ReactElement }) => (
+	children,
+	isLoading = false
+}: InviteStageProps & { children: ReactElement; isLoading?: boolean }) => (
 	<StageLayout
-		className="stageLayout--registration"
+		className={`stageLayout--registration${isLoading ? ' stageLayout--inviteLoading' : ''}`}
 		showLegalLinks={true}
 		showLoginLink={true}
 		showRegistrationLink={false}
@@ -38,15 +40,17 @@ export const GroupInviteLoading = (props: InviteStageProps) => {
 	const { t } = useTranslation();
 
 	return (
-		<InviteStage {...props}>
+		<InviteStage {...props} isLoading>
 			<Box
-				role="status"
 				aria-busy="true"
-				aria-label={t('registration.groupInvite.loading')}
 				data-cy="group-invite-loading"
-				sx={{ display: 'flex', justifyContent: 'center', py: 6 }}
+				sx={{ display: 'flex', flex: 1, width: '100%', minHeight: 0 }}
 			>
-				<LoadingIndicator />
+				<Loading
+					layout="section"
+					delayMs={0}
+					label={t('registration.groupInvite.loading')}
+				/>
 			</Box>
 		</InviteStage>
 	);
