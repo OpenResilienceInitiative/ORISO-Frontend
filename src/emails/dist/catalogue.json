@@ -1055,18 +1055,65 @@
 				}
 			}
 		},
-		"uebergabe-angefragt": {
+		"einsicht-angefragt": {
 			"audience": "asker",
-			"class": "operational",
-			"unsubscribable": true,
+			"class": "consent",
+			"unsubscribable": false,
 			"placeholders": [
 				"{{logoHeaderClass}}",
 				"{{logoWordmarkClass}}",
 				"{{requestUrl}}",
-				"{{settingsUrl}}",
 				"{{privacyUrl}}",
-				"{{imprintUrl}}",
-				"{{unsubscribeUrl}}"
+				"{{imprintUrl}}"
+			],
+			"tones": {
+				"de-sie": {
+					"lang": "de",
+					"subject": "Neue Benachrichtigung",
+					"preheader": "Bitte melden Sie sich an."
+				},
+				"de-du": {
+					"lang": "de",
+					"subject": "Neue Benachrichtigung",
+					"preheader": "Bitte melde dich an."
+				},
+				"en": {
+					"lang": "en",
+					"subject": "New notification",
+					"preheader": "Please sign in."
+				},
+				"fr": {
+					"lang": "fr",
+					"subject": "Nouvelle notification",
+					"preheader": "Veuillez vous connecter."
+				},
+				"ru": {
+					"lang": "ru",
+					"subject": "Новое уведомление",
+					"preheader": "Пожалуйста, войдите."
+				},
+				"ti": {
+					"lang": "ti",
+					"subject": "ሓድሽ ምልክታ",
+					"preheader": "በጃኹም እተዉ።"
+				},
+				"tr": {
+					"lang": "tr",
+					"subject": "Yeni bildirim",
+					"preheader": "Lütfen giriş yapın."
+				}
+			}
+		},
+		"uebergabe-angefragt": {
+			"audience": "asker",
+			"class": "consent",
+			"unsubscribable": false,
+			"placeholders": [
+				"{{logoHeaderClass}}",
+				"{{logoWordmarkClass}}",
+				"{{requestUrl}}",
+				"{{privacyUrl}}",
+				"{{imprintUrl}}"
 			],
 			"tones": {
 				"de-sie": {

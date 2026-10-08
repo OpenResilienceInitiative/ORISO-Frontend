@@ -37,6 +37,7 @@ import {
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from './MessageTimeline';
+import { useThreadFocusReturn } from './useThreadFocusReturn';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import {
 	FailedSend,
@@ -237,6 +238,9 @@ const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 );
 
 interface SessionItemProps {
+	/** Current-session Carimat continuation inside the main scrolling timeline. */
+	mainTimelineSupplement?: React.ReactNode;
+	mainTimelineSupplementTime?: number;
 	isTyping?: Function;
 	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
@@ -783,6 +787,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => parseChannel(location.search),
 		[location.search]
 	);
+	const rememberThreadOpener = useThreadFocusReturn({
+		channel: routeChannel,
+		sessionId: activeSession.item.id,
+		timelineRef: scrollContainerRef
+	});
 	// A gate hides threads too: the panel has its own timeline and composer.
 	const activeThreadRootId =
 		isThreadsEnabled &&
@@ -2086,7 +2095,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	const handleOpenThread = useCallback(
-		(message: MessageItem) => {
+		(message: MessageItem, opener?: HTMLElement) => {
+			rememberThreadOpener(message._id, opener);
 			openChannel({ kind: 'thread', rootId: message._id }, 'header');
 			setIsThreadListOpen(false);
 			// Per-thread unread (#435): opening a thread marks it read up to
@@ -2101,7 +2111,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setThreadReadVersion((version) => version + 1);
 			}
 		},
-		[threadSummariesRaw, resolvedMatrixRoomId, openChannel]
+		[
+			threadSummariesRaw,
+			resolvedMatrixRoomId,
+			openChannel,
+			rememberThreadOpener
+		]
 	);
 
 	const handleCloseThread = useCallback(() => {
@@ -3285,11 +3300,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									</div>
 								</div>
 							)}
+							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<MessageTimeline
 									messages={messages}
 									renderMode="main"
+									supplement={props.mainTimelineSupplement}
+									supplementTime={
+										props.mainTimelineSupplementTime
+									}
 									clientName={
 										getContact(activeSession)?.username ||
 										translate(

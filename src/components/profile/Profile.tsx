@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useState, useRef, useContext, useEffect } from 'react';
 import { logout } from '../logout/logout';
@@ -282,7 +283,7 @@ export const Profile = () => {
 										userId={ownAvatarUserId}
 										// Saved choices and the stable default share
 										// the same renderer as recipient views.
-										size="56px"
+										size={AVATAR_SIZES.profile}
 										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
