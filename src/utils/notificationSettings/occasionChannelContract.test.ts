@@ -124,14 +124,26 @@ describe('occasion channel contract', () => {
 		});
 	});
 
-	it('keeps the temporary-access mail inventory explicit without inventing a browser route', () => {
+	it('keeps temporary-access mail asker-only on the established consent channels', () => {
 		expect(occasionChannelContract('einsicht-angefragt').roles).toEqual([
 			'asker'
 		]);
 		expect(occasionChannelContract('einsicht-angefragt', 'asker')).toEqual({
-			emailPreference: { kind: 'no-switch' },
-			browser: { kind: 'unmapped' }
+			emailPreference: {
+				kind: 'switch',
+				source: {
+					kind: 'settings',
+					field: 'reassignmentNotificationEnabled'
+				}
+			},
+			browser: {
+				kind: 'descriptor',
+				eventTypes: ['case.handover.consent.requested']
+			}
 		});
+		expect(
+			occasionChannelContract('einsicht-angefragt', 'consultant')
+		).toBeUndefined();
 	});
 
 	it('never treats security or legal mail as user-switchable', () => {
