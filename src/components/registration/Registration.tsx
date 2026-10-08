@@ -59,6 +59,8 @@ import {
 } from './topicSearch/RegistrationTopicSearchContext';
 import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
+import { RegistrationCompletionProvider } from './consentCompletion/RegistrationCompletionContext';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
@@ -897,247 +899,314 @@ export const Registration = () => {
 										content="noindex"
 									></meta>
 								</Helmet>
-								<form
-									onSubmit={handleSubmit}
-									// Part of the same chain: a plain block form
-									// would swallow the growth again.
-									style={{
-										flex: 1,
-										minHeight: 0,
-										display: 'flex',
-										flexDirection: 'column'
-									}}
-									data-cy="registration-form"
-									data-cy-step={step}
-									data-cy-steps={availableSteps
-										.map(({ name }) => name)
-										.join(',')}
-								>
-									<Box
-										sx={{
-											// The stage column is a flex column that
-											// fills the viewport, but every box below
-											// it defaulted to `flex: 0 1 auto`, so the
-											// step body stopped at its own height and
-											// the leftover space was dead. Passing the
-											// growth down lets a step centre itself in
-											// what is actually left (see the postcode
-											// step) without anyone computing a height.
+								<RegistrationCompletionProvider>
+									<form
+										onSubmit={handleSubmit}
+										// Part of the same chain: a plain block form
+										// would swallow the growth again.
+										style={{
 											flex: 1,
 											minHeight: 0,
 											display: 'flex',
-											flexDirection: 'column',
-											marginBottom: {
-												xs: '144px',
-												sm: '112px'
-											}
+											flexDirection: 'column'
 										}}
+										data-cy="registration-form"
+										data-cy-step={step}
+										data-cy-steps={availableSteps
+											.map(({ name }) => name)
+											.join(',')}
 									>
-										<PreselectionBox hasDrawer={false} />
-										<RegistrationHeader
-											currentStepName={step}
-											visibleStepNames={availableSteps.map(
-												({ name }) => name
-											)}
-											clickableStepNames={
-												clickableStepperStepNames
-											}
-											onStepClick={onStepperClick}
-											chips={headerChips}
-											fullBleed
-										/>
-
 										<Box
 											sx={{
-												'flex': 1,
-												'minHeight': 0,
-												'display': 'flex',
-												'flexDirection': 'column',
-												'width': '100%',
-												'maxWidth': '780px',
-												'mx': 'auto',
-												'px': { xs: 2, sm: 3, lg: 4 },
-												// The band above is opaque and sits
-												// flush; without this the first line of
-												// every step starts hard against its
-												// lower edge.
-												'pt': 1.5,
-												'& > *': { minHeight: 0 }
+												// The stage column is a flex column that
+												// fills the viewport, but every box below
+												// it defaulted to `flex: 0 1 auto`, so the
+												// step body stopped at its own height and
+												// the leftover space was dead. Passing the
+												// growth down lets a step centre itself in
+												// what is actually left (see the postcode
+												// step) without anyone computing a height.
+												flex: 1,
+												minHeight: 0,
+												display: 'flex',
+												flexDirection: 'column',
+												marginBottom: {
+													xs: '144px',
+													sm: '112px'
+												}
 											}}
 										>
-											{(() => {
-												const StepComponent =
-													activeStep.component;
-												return (
-													<StepComponent
-														key={`${activeStep.name}-${clearSelectionVersion}`}
-														onChange={setStepData}
-														onNextClick={
-															onNextClick
-														}
-														nextStepUrl={
-															nextStepUrl
-														}
-														temporary={
-															temporaryJoin
-														}
-													/>
-												);
-											})()}
+											<PreselectionBox
+												hasDrawer={false}
+											/>
+											<RegistrationHeader
+												currentStepName={step}
+												visibleStepNames={availableSteps.map(
+													({ name }) => name
+												)}
+												clickableStepNames={
+													clickableStepperStepNames
+												}
+												onStepClick={onStepperClick}
+												chips={headerChips}
+												fullBleed
+											/>
+
+											<Box
+												sx={{
+													'flex': 1,
+													'minHeight': 0,
+													'display': 'flex',
+													'flexDirection': 'column',
+													'width': '100%',
+													'maxWidth': '780px',
+													'mx': 'auto',
+													'px': {
+														xs: 2,
+														sm: 3,
+														lg: 4
+													},
+													// The band above is opaque and sits
+													// flush; without this the first line of
+													// every step starts hard against its
+													// lower edge.
+													'pt': 1.5,
+													'& > *': { minHeight: 0 }
+												}}
+											>
+												{(() => {
+													const StepComponent =
+														activeStep.component;
+													return (
+														<StepComponent
+															key={`${activeStep.name}-${clearSelectionVersion}`}
+															onChange={
+																setStepData
+															}
+															onNextClick={
+																onNextClick
+															}
+															nextStepUrl={
+																nextStepUrl
+															}
+															temporary={
+																temporaryJoin
+															}
+														/>
+													);
+												})()}
+											</Box>
 										</Box>
-									</Box>
-									{/* The bar itself — fixed, translucent, hairline,
+										{/* The bar itself — fixed, translucent, hairline,
 								    safe-area — is `RegistrationFooter`. This
 								    screen hands in its whole navigation as
 								    children and takes no `primary`: the wide
 								    layout's next button and the compact step
 								    nav below already are the way on. */}
-									<RegistrationFooter animateIn>
-										<Box
-											sx={{
-												width: '100%',
-												maxWidth: '780px',
-												minWidth: 0,
-												// The bar spans the content column;
-												// auto margins keep this centred in
-												// it, as the bar's own
-												// `justifyContent` used to.
-												mx: 'auto'
-											}}
-										>
+										<RegistrationFooter animateIn>
 											<Box
 												sx={{
-													display: {
-														xs: 'none',
-														sm: 'grid'
-													},
-													gridTemplateColumns:
-														'auto minmax(0, 1fr) auto',
-													alignItems: 'center',
-													columnGap: {
-														sm: 2.5,
-														md: 3
-													},
-													rowGap: 1
+													width: '100%',
+													maxWidth: isAccountDataStep
+														? 'none'
+														: '780px',
+													minWidth: 0,
+													// The bar spans the content column;
+													// auto margins keep this centred in
+													// it, as the bar's own
+													// `justifyContent` used to.
+													mx: 'auto'
 												}}
 											>
-												<RegistrationFooterBackLink
-													to={prevStepUrl}
-													onClick={onPrevClick}
-													label={t(
-														'registration.back'
-													)}
-												/>
-												<RegistrationFooterChips
-													chips={footerChips}
-													selectedPrefix={
-														selectedPrefix
-													}
-													emptyLabel={
-														footerEmptyLabel
-													}
-												/>
 												<Box
 													sx={{
-														display: 'flex',
+														display: {
+															xs: 'none',
+															sm: 'grid'
+														},
+														gridTemplateColumns:
+															isAccountDataStep
+																? 'minmax(0, 1fr)'
+																: 'auto minmax(0, 1fr) auto',
 														alignItems: 'center',
-														gap: 2,
-														minWidth: 0
+														columnGap: {
+															sm: 2.5,
+															md: 3
+														},
+														rowGap: 1
 													}}
 												>
-													{canJoinTemporarily && (
-														<TemporaryJoinToggle
-															label={
-																temporaryToggleLabel
-															}
+													{!isAccountDataStep && (
+														<RegistrationFooterBackLink
+															to={prevStepUrl}
 															onClick={
-																toggleTemporaryJoin
+																onPrevClick
 															}
-															disabled={
-																isRegistering
+															label={t(
+																'registration.back'
+															)}
+														/>
+													)}
+													{!isAccountDataStep && (
+														<RegistrationFooterChips
+															chips={footerChips}
+															selectedPrefix={
+																selectedPrefix
+															}
+															emptyLabel={
+																footerEmptyLabel
 															}
 														/>
 													)}
-													<RegistrationFooterPrimaryButton
+													<Box
+														sx={{
+															display: 'flex',
+															flexDirection:
+																isAccountDataStep
+																	? 'column'
+																	: 'row',
+															alignItems:
+																isAccountDataStep
+																	? 'stretch'
+																	: 'center',
+															gap: 2,
+															minWidth: 0
+														}}
+													>
+														{canJoinTemporarily && (
+															<TemporaryJoinToggle
+																label={
+																	temporaryToggleLabel
+																}
+																onClick={
+																	toggleTemporaryJoin
+																}
+																disabled={
+																	isRegistering
+																}
+															/>
+														)}
+														{isAccountDataStep ? (
+															<RegistrationStepNav
+																prevStepUrl={
+																	currStepIndex ===
+																	0
+																		? null
+																		: prevStepUrl
+																}
+																onPrevClick={
+																	onPrevClick
+																}
+																backLabel={t(
+																	'registration.back'
+																)}
+																nextStepUrl={
+																	nextStepUrl
+																}
+																nextLabel={t(
+																	'registration.next'
+																)}
+																registerLabel={
+																	primaryActionLabel
+																}
+																registeringLabel={t(
+																	'registration.registering'
+																)}
+																disabledNext={
+																	disabledNextButton
+																}
+																isRegistering={
+																	isRegistering
+																}
+																testingAttribute="button-register"
+															/>
+														) : (
+															<RegistrationFooterPrimaryButton
+																nextStepUrl={
+																	nextStepUrl
+																}
+																disabledNextButton={
+																	disabledNextButton
+																}
+																isRegistering={
+																	isRegistering
+																}
+																registerLabel={
+																	primaryActionLabel
+																}
+																registeringLabel={t(
+																	'registration.registering'
+																)}
+																nextLabel={t(
+																	'registration.next'
+																)}
+															/>
+														)}
+													</Box>
+												</Box>
+												<Box
+													sx={{
+														display: {
+															xs: 'block',
+															sm: 'none'
+														}
+													}}
+												>
+													{/* F3: the picks live in the
+											    header chip row on mobile, so
+											    the footer is navigation only. */}
+													{canJoinTemporarily && (
+														<Box sx={{ mb: 1.25 }}>
+															<TemporaryJoinToggle
+																label={
+																	temporaryToggleLabel
+																}
+																onClick={
+																	toggleTemporaryJoin
+																}
+																disabled={
+																	isRegistering
+																}
+																fullWidth
+															/>
+														</Box>
+													)}
+													<RegistrationStepNav
+														prevStepUrl={
+															currStepIndex === 0
+																? null
+																: prevStepUrl
+														}
+														onPrevClick={
+															onPrevClick
+														}
+														backLabel={t(
+															'registration.back'
+														)}
 														nextStepUrl={
 															nextStepUrl
 														}
-														disabledNextButton={
-															disabledNextButton
-														}
-														isRegistering={
-															isRegistering
-														}
+														nextLabel={t(
+															'registration.next'
+														)}
 														registerLabel={
 															primaryActionLabel
 														}
 														registeringLabel={t(
 															'registration.registering'
 														)}
-														nextLabel={t(
-															'registration.next'
-														)}
+														disabledNext={
+															disabledNextButton
+														}
+														isRegistering={
+															isRegistering
+														}
 													/>
 												</Box>
 											</Box>
-											<Box
-												sx={{
-													display: {
-														xs: 'block',
-														sm: 'none'
-													}
-												}}
-											>
-												{/* F3: the picks live in the
-											    header chip row on mobile, so
-											    the footer is navigation only. */}
-												{canJoinTemporarily && (
-													<Box sx={{ mb: 1.25 }}>
-														<TemporaryJoinToggle
-															label={
-																temporaryToggleLabel
-															}
-															onClick={
-																toggleTemporaryJoin
-															}
-															disabled={
-																isRegistering
-															}
-															fullWidth
-														/>
-													</Box>
-												)}
-												<RegistrationStepNav
-													prevStepUrl={
-														currStepIndex === 0
-															? null
-															: prevStepUrl
-													}
-													onPrevClick={onPrevClick}
-													backLabel={t(
-														'registration.back'
-													)}
-													nextStepUrl={nextStepUrl}
-													nextLabel={t(
-														'registration.next'
-													)}
-													registerLabel={
-														primaryActionLabel
-													}
-													registeringLabel={t(
-														'registration.registering'
-													)}
-													disabledNext={
-														disabledNextButton
-													}
-													isRegistering={
-														isRegistering
-													}
-												/>
-											</Box>
-										</Box>
-									</RegistrationFooter>
-								</form>
+										</RegistrationFooter>
+									</form>
+								</RegistrationCompletionProvider>
 							</>
 						) : (
 							<Navigate to={firstStepUrl} replace />
@@ -1431,14 +1500,21 @@ const RegistrationFooterPrimaryButton = ({
 			{nextLabel}
 		</Button>
 	) : (
-		<Button
-			data-cy="button-register"
-			disabled={disabled}
-			variant="contained"
-			type={disabled ? 'button' : 'submit'}
-			sx={buttonSx}
-		>
-			{isRegistering ? registeringLabel : registerLabel}
-		</Button>
+		<Box sx={{ width: '100%', flex: 1, minWidth: 0 }}>
+			<HandoverGateButton
+				state={
+					isRegistering
+						? 'entering'
+						: disabled
+							? 'preparing'
+							: 'ready'
+				}
+				type={disabled ? 'button' : 'submit'}
+				label={isRegistering ? registeringLabel : registerLabel}
+				testingAttribute="button-register"
+				status=""
+				indeterminate={isRegistering}
+			/>
+		</Box>
 	);
 };

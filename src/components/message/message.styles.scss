@@ -247,6 +247,13 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
+	// Keep the60px layout slot while exposing the animal circle without a rim.
+	// Bot chrome and focus/status indicators retain their existing treatment.
+	&__avatar:not(.messageItem__avatar--bot) {
+		border: 0;
+		background: transparent;
+	}
+
 	/*
 	 * Photo avatars must be clipped to the circle. The Carimat robot must not:
 	 * `overflow: hidden` clips against the *padding* box, i.e. the 48px inner
@@ -821,6 +828,15 @@ $message-avatar-overlap: -19px;
 		max-width: 100%;
 		min-width: 200px;
 
+		// Reactions have a large intrinsic width. In the outgoing, end-aligned
+		// content column, an auto-sized bubble can keep that intrinsic width
+		// and extend past the start of the chat. Give the bubble its column's
+		// width so the reaction rail, rather than the message, owns overflow.
+		&:has(.messageItem__reactions) {
+			width: 100%;
+			min-width: 0;
+		}
+
 		// Improvement report (desktop): bubbles default to 460px so lines
 		// stay readable; texts beyond ~4 lines widen to 770px. Mobile keeps
 		// the fluid width from the wrap.
@@ -1160,23 +1176,15 @@ $message-avatar-overlap: -19px;
 	 * the body only. See ORISO-Frontend#892.
 	 */
 
-	/*
-	 * MessageSendFailed puts its avatar in a real side column, so its header
-	 * needs no indent. Here the avatar deliberately overlaps the content column
-	 * (see the 19px-overlap note above), which is why the name line carries
-	 * `padding-left: 20px`. The system-notice header sits in the same slot and
-	 * needs the same clearance — without it the title runs under the avatar.
-	 */
-	// Geometry, not a round number: the content column overlaps the avatar
-	// column by $message-avatar-overlap (-19px), so it starts 41px from the
-	// wrap edge while the visible 48px avatar circle ends at 54px (6px ring).
-	// 17px of indent puts the title exactly 8px past the avatar — the
-	// avatar-to-name gap measured on Figma App.Oriso 8498-32373. The 12px
-	// bottom margin plus the bubble's own 4px top margin make the 16px
-	// name-to-bubble gap from the same frame.
+	// The incoming content overlaps the avatar by 19px and its wrap has a
+	// 4px gap. Clear the complete avatar frame plus the shared 8px header gap.
 	&__systemNotificationHeaderText {
-		padding-left: 17px;
+		padding-left: -$message-avatar-overlap - 4px + 8px;
 		margin-bottom: 12px;
+		min-width: 0;
+		max-width: 100%;
+		box-sizing: border-box;
+		overflow-wrap: anywhere;
 	}
 
 	&__systemNotificationDescription {
@@ -1211,7 +1219,23 @@ $message-avatar-overlap: -19px;
 	// T21: thread entry under a root message — "N Antworten" and, on one
 	// line, "Autor: letzte Nachricht…". Opens the thread. Chip tokens from
 	// the room header (primary-fixed hairline, secondary text).
+	// A reply entry belongs to its root bubble. Let the bubble determine the
+	// track width; the preview must not widen a short outgoing message.
+	&__content:has(> .messageItem__threadButton) {
+		display: grid;
+		grid-template-columns: minmax(0, max-content);
+		justify-content: start;
+	}
+
+	&--right .messageItem__content:has(> .messageItem__threadButton) {
+		justify-content: end;
+	}
+
 	&__threadButton {
+		contain: inline-size;
+		width: 100%;
+		min-width: 0;
+		box-sizing: border-box;
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
@@ -1219,7 +1243,7 @@ $message-avatar-overlap: -19px;
 		margin-top: 6px;
 		padding: 6px 12px;
 		border: 1px solid var(--m3-primary-fixed, #ffdad5);
-		border-radius: 12px;
+		border-radius: 0 12px 12px 12px;
 		background: var(--m3-surface-container-lowest, #fff);
 		color: var(--m3-secondary, #4c555f);
 		font-family: inherit;
@@ -1243,6 +1267,7 @@ $message-avatar-overlap: -19px;
 	}
 
 	&__threadButton--right {
+		border-radius: 12px 12px 0 12px;
 		align-self: flex-end;
 	}
 
@@ -1262,7 +1287,6 @@ $message-avatar-overlap: -19px;
 	&__threadButtonMeta {
 		flex: 0 1 auto;
 		min-width: 0;
-		max-width: 320px;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -1758,7 +1782,8 @@ $message-avatar-overlap: -19px;
 
 	// Figma 9596:35524 layers the 60px avatar/header row above the bubble:
 	// the chat container begins 40px from the rail edge while the sender copy
-	// starts at 64px. The shared incoming-message overlap is 19px; this
+	// starts at 68px (40px + 28px), clearing the 60px avatar by 8px.
+	// The shared incoming-message overlap is 19px; this
 	// standalone composition needs 24px because its wrap has the Figma 4px
 	// avatar/content gap (60 + 4 - 24 = 40).
 	.messageItem__content {
@@ -1769,7 +1794,7 @@ $message-avatar-overlap: -19px;
 	// the generic 12px inter-message gap makes the bubble start at y=44 and
 	// tuck 16px beneath the avatar, matching Figma's -48px layer overlap.
 	.messageItem__systemNotificationHeaderText {
-		padding-left: 24px;
+		padding-left: 28px;
 		margin-bottom: 0;
 	}
 

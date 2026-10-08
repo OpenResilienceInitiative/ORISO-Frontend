@@ -1,17 +1,8 @@
 import React from 'react';
-import './LoadingSpinner.styles';
-import { useTranslation } from 'react-i18next';
+import { Loading } from '../app/Loading';
 
 interface LoadingSpinnerProps {}
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = () => {
-	const { t: translate } = useTranslation();
-	return (
-		<div className="loadingSpinner" title={translate('app.wait')}>
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
-		</div>
-	);
+	return <Loading layout="inline" size="small" delayMs={0} />;
 };

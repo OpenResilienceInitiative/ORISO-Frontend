@@ -477,7 +477,10 @@
 		"fileName": "magpie.svg",
 		"sourcePath": "public/static/anon-animals/magpie.svg",
 		"exportNames": [],
-		"usageFiles": ["src/utils/anonName/data.ts"],
+		"usageFiles": [
+			"src/components/profile/AvatarPicker/AvatarPicker.tsx",
+			"src/utils/anonName/data.ts"
+		],
 		"usage": "app-used"
 	},
 	{
@@ -1317,6 +1320,70 @@
 		"usage": "catalogued-only"
 	},
 	{
+		"id": "ui-icon:robot-1184077:400",
+		"family": "robot-1184077",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-1184077-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-1184077-400.svg",
+		"exportNames": ["Robot1184077Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:robot-3548536:400",
+		"family": "robot-3548536",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-3548536-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-3548536-400.svg",
+		"exportNames": ["Robot3548536Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:robot-5475944:400",
+		"family": "robot-5475944",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-5475944-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-5475944-400.svg",
+		"exportNames": ["Robot5475944Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:robot-7341990:400",
+		"family": "robot-7341990",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "robot-7341990-400.svg",
+		"sourcePath": "src/resources/img/icons/assistant/robot-7341990-400.svg",
+		"exportNames": ["Robot7341990Icon"],
+		"usageFiles": [
+			"src/components/carimat/AssistantIdentity.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:audio-off:base",
 		"family": "audio-off",
 		"state": "base",
@@ -1993,6 +2060,84 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:access:400",
+		"family": "access",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "access-400.svg",
+		"sourcePath": "src/resources/img/icons/consent/access-400.svg",
+		"exportNames": ["ProtectedAccessIcon"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:surveillance-consent:400",
+		"family": "surveillance-consent",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "surveillance-consent-400.svg",
+		"sourcePath": "src/resources/img/icons/consent/surveillance-consent-400.svg",
+		"exportNames": ["SurveillanceConsentIcon"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/components/caseHandover/StandingAccessSettings.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:surveillance-consent:filled",
+		"family": "surveillance-consent",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "surveillance-consent-filled.svg",
+		"sourcePath": "src/resources/img/icons/consent/surveillance-consent-filled.svg",
+		"exportNames": ["SurveillanceConsentFilledIcon"],
+		"usageFiles": ["src/resources/img/icons.ts"],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:user-consent:400",
+		"family": "user-consent",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "user-consent-400.svg",
+		"sourcePath": "src/resources/img/icons/consent/user-consent-400.svg",
+		"exportNames": ["UserConsentIcon"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
+		"id": "ui-icon:when:400",
+		"family": "when",
+		"state": "400",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "when-400.svg",
+		"sourcePath": "src/resources/img/icons/consent/when-400.svg",
+		"exportNames": ["WhenUsefulIcon"],
+		"usageFiles": [
+			"src/components/caseHandover/CaseHandoverClientCards.tsx",
+			"src/resources/img/icons.ts"
+		],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:corner-left-down:base",
 		"family": "corner-left-down",
 		"state": "base",
@@ -2498,6 +2643,7 @@
 		"sourcePath": "src/resources/img/icons/gdpr.svg",
 		"exportNames": ["GdprIcon"],
 		"usageFiles": [
+			"src/components/groupChat/consent/GroupConsentGate.tsx",
 			"src/components/legalLinks/LegalLinkMenuIcon.tsx",
 			"src/components/legalLinks/LegalLinkModal.tsx",
 			"src/resources/img/icons.ts"
@@ -2616,6 +2762,7 @@
 			"src/components/sessionHeader/GroupChatHeader/index.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",
+			"src/components/twoFactorAuth/TwoFactorAuthResendMail.tsx",
 			"src/containers/bookings/components/Event/LocationType/index.tsx",
 			"src/resources/img/icons.ts",
 			"src/utils/anonName/data.ts"
@@ -2797,8 +2944,8 @@
 		"fileName": "language_filled.svg",
 		"sourcePath": "src/resources/img/icons/language_filled.svg",
 		"exportNames": [],
-		"usageFiles": ["src/components/profile/Locale.tsx"],
-		"usage": "app-used"
+		"usageFiles": [],
+		"usage": "catalogued-only"
 	},
 	{
 		"id": "sidebar-icon:language:outline",
@@ -2825,6 +2972,19 @@
 		"exportNames": [],
 		"usageFiles": [],
 		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:live-conv-type:base",
+		"family": "live-conv-type",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "live_conv_type.svg",
+		"sourcePath": "src/resources/img/icons/live_conv_type.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/profile/profile.routes.ts"],
+		"usage": "app-used"
 	},
 	{
 		"id": "ui-icon:live-chats:base",

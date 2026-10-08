@@ -249,7 +249,7 @@ export const AdmitAndDecline1440: Story = {
 			within(yusuf).getByRole('button', { name: 'Reinlassen' })
 		);
 		await body().findByText(
-			'Yusuf Demir-Hoffmann ist jetzt im Gesprächskreis.',
+			'Die Zulassung von Yusuf Demir-Hoffmann ist bestätigt. Der Gruppenzugang muss noch bestätigt werden.',
 			{ selector: '.MuiAlert-message' }
 		);
 		const mira = body().getByRole('group', { name: 'Mira Sommer' });

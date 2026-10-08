@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { useState } from 'react';
+import MailOutline from '@mui/icons-material/MailOutline';
+import WebOutlined from '@mui/icons-material/WebOutlined';
+import DevicesOutlined from '@mui/icons-material/DevicesOutlined';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './NotificationChoiceCard.styles.scss';
 
@@ -35,22 +38,33 @@ export interface NotificationChoiceCardProps {
 	isBrowserNotificationSupported?: boolean;
 	/** Reflects a choice already made, so the card does not ask twice. */
 	chosen?: NotificationChoice | null;
+	isEmailEnabled?: boolean;
+	busy?: boolean;
+	controlled?: boolean;
 }
 
 export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 	onChoose,
 	isBrowserNotificationSupported = true,
-	chosen = null
+	chosen = null,
+	isEmailEnabled = true,
+	busy = false,
+	controlled = false
 }) => {
 	const { t } = useTranslation();
 	const [selected, setSelected] = useState<NotificationChoice | null>(chosen);
 
+	useEffect(() => setSelected(chosen), [chosen]);
+
+	const currentSelection = controlled ? chosen : selected;
+
 	const choose = (choice: NotificationChoice) => {
-		setSelected(choice);
+		// A controlled choice reflects saved state, never a pending request.
+		if (!controlled) setSelected(choice);
 		onChoose(choice);
 	};
 
-	const options: {
+	const allOptions: {
 		choice: NotificationChoice;
 		label: string;
 		hint?: string;
@@ -71,35 +85,58 @@ export const NotificationChoiceCard: React.FC<NotificationChoiceCardProps> = ({
 			: []),
 		{
 			choice: 'BOTH',
-			label: t('erstantwort.notificationChoice.both'),
-			hint: t('erstantwort.notificationChoice.bothHint')
+			label: t('erstantwort.notificationChoice.bothSetup'),
+			hint: t('erstantwort.notificationChoice.bothSetupHint')
 		}
 	];
 
+	const options = allOptions.filter(
+		({ choice }) =>
+			(choice === 'BROWSER' || isEmailEnabled) &&
+			(choice === 'EMAIL' || isBrowserNotificationSupported)
+	);
 	return (
-		<div className="notificationChoiceCard" data-cy="notification-choice">
-			{options.map((option) => (
-				<button
-					key={option.choice}
-					type="button"
-					className={`notificationChoiceCard__option${
-						selected === option.choice
-							? ' notificationChoiceCard__option--selected'
-							: ''
-					}`}
-					aria-pressed={selected === option.choice}
-					onClick={() => choose(option.choice)}
-				>
-					<span className="notificationChoiceCard__label">
-						{option.label}
-					</span>
-					{option.hint && (
-						<span className="notificationChoiceCard__hint">
-							{option.hint}
+		<div className="notificationChoiceHost">
+			<div
+				className="notificationChoiceCard"
+				data-cy="notification-choice"
+			>
+				{options.map((option) => (
+					<button
+						key={option.choice}
+						type="button"
+						disabled={busy}
+						className={`notificationChoiceCard__option${option.choice === 'BOTH' ? ' notificationChoiceCard__option--both' : ''}${
+							currentSelection === option.choice
+								? ' notificationChoiceCard__option--selected'
+								: ''
+						}`}
+						aria-pressed={currentSelection === option.choice}
+						onClick={() => choose(option.choice)}
+					>
+						<span
+							className="notificationChoiceCard__icon"
+							aria-hidden
+						>
+							{option.choice === 'EMAIL' ? (
+								<MailOutline />
+							) : option.choice === 'BROWSER' ? (
+								<WebOutlined />
+							) : (
+								<DevicesOutlined />
+							)}
 						</span>
-					)}
-				</button>
-			))}
+						<span className="notificationChoiceCard__label">
+							{option.label}
+						</span>
+						{option.hint && (
+							<span className="notificationChoiceCard__hint">
+								{option.hint}
+							</span>
+						)}
+					</button>
+				))}
+			</div>
 		</div>
 	);
 };
