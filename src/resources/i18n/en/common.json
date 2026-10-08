@@ -2299,6 +2299,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Sign-in & account",
+				"description": "Manage your password and keep your sign-in secure."
+			},
+			"recovery": {
+				"title": "Recovering old messages",
+				"description": "Keep your recovery key safe so you can open old messages on a new device."
+			},
+			"privacy": {
+				"title": "Privacy",
+				"description": "Manage your personal information and your account."
+			},
+			"displayNameDescription": "People seeking advice see this name during counselling."
+		},
 		"avatar": {
 			"label": "Your picture",
 			"default": "Default"
@@ -2860,6 +2875,7 @@
 				"done": "Done"
 			},
 			"status": {
+				"notSetUp": "Your recovery key is not set up yet.",
 				"ok": "✓ Your recovery key is set up. Your history stays readable on new devices."
 			},
 			"changeKey": {

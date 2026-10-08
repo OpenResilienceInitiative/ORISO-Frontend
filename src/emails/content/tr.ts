@@ -377,15 +377,23 @@ export const tr: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Giriş için tek kullanımlık kodunuz',
+		subject: 'Tek kullanımlık kodunuz',
 		preheader: 'Kod {{expiryMinutes}} dakika geçerlidir.',
 		headline: 'Tek kullanımlık kodunuz',
-		paragraphs: ['Bu kodu giriş penceresine yazın.'],
+		paragraphs: ['Bu kodu {{platformName}} platformuna girin.'],
 		code: { label: 'Kod', value: '{{otpCode}}' },
-		cta: { label: 'Girişe git', href: '{{loginUrl}}' },
-		footnote: 'Giriş yapmak istemediyseniz lütfen şifrenizi değiştirin.',
+		cta: {
+			label: '{{platformName}} platformunu açın',
+			href: '{{loginUrl}}'
+		},
+		footnote:
+			'Bu kodu siz talep etmediyseniz bu e-postayı dikkate almayın.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Bu e-posta bir güvenlik kodu içerir ve iptal edilemez. Lütfen yanıtlamayınız.'
+		}
 	},
 
 	'einladung-traeger': {

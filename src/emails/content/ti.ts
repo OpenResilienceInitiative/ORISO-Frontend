@@ -357,15 +357,19 @@ export const ti: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'ንመእተዊ ዝኸውን ናይ ሓደ ግዜ ኮድኩም',
+		subject: 'ናይ ሓደ ግዜ ኮድኩም',
 		preheader: 'እቲ ኮድ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።',
 		headline: 'ናይ ሓደ ግዜ ኮድኩም',
-		paragraphs: ['ነዚ ኮድ ኣብቲ መእተዊ መስኮት ኣእትውዎ።'],
+		paragraphs: ['ነዚ ኮድ ኣብ {{platformName}} ኣእትውዎ።'],
 		code: { label: 'ኮድ', value: '{{otpCode}}' },
-		cta: { label: 'ናብ መእተዊ', href: '{{loginUrl}}' },
-		footnote: 'ክትኣትዉ ዘይደለኹም እንተኾይኑ፣ በጃኹም መሕለፊ ቃልኩም ቀይሩ።',
+		cta: { label: '{{platformName}} ክፈቱ', href: '{{loginUrl}}' },
+		footnote: 'ነዚ ኮድ ዘይሓተትኩምዎ እንተኾይኑ፣ ነዛ ኢመይል ግደፍዋ።',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'እዛ ኢመይል ናይ ድሕንነት ኮድ ስለዘለዋ ክትስረዝ ኣይትኽእልን። በጃኹም ኣይትምለስዋ።'
+		}
 	},
 
 	'einladung-traeger': {
