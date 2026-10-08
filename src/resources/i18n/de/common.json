@@ -2327,6 +2327,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Anmeldung & Konto",
+				"description": "Verwalten Sie Ihr Passwort und den Schutz Ihrer Anmeldung."
+			},
+			"recovery": {
+				"title": "Wiederherstellung alter Nachrichten",
+				"description": "Bewahren Sie Ihren Ersatzschlüssel sicher auf, damit Sie alte Nachrichten auf einem neuen Gerät wieder öffnen können."
+			},
+			"privacy": {
+				"title": "Privatsphäre",
+				"description": "Verwalten Sie Ihre persönlichen Angaben und Ihr Konto."
+			},
+			"displayNameDescription": "Unter diesem Namen sehen Ratsuchende Sie in der Beratung."
+		},
 		"avatar": {
 			"label": "Ihr Bild",
 			"default": "Standard"
@@ -2898,6 +2913,7 @@
 				"done": "Fertig"
 			},
 			"status": {
+				"notSetUp": "Ihr Ersatzschlüssel ist noch nicht eingerichtet.",
 				"ok": "✓ Ihr Ersatzschlüssel ist eingerichtet. Ihr Verlauf bleibt auf neuen Geräten lesbar."
 			},
 			"changeKey": {

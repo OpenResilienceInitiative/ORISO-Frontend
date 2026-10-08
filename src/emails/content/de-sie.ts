@@ -359,16 +359,22 @@ export const deSie: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Ihr Einmalcode für die Anmeldung',
+		subject: 'Ihr Einmalcode',
 		preheader: 'Der Code gilt {{expiryMinutes}} Minuten.',
 		headline: 'Ihr Einmalcode',
-		paragraphs: ['Geben Sie diesen Code im Anmeldefenster ein.'],
+		paragraphs: ['Geben Sie diesen Code in {{platformName}} ein.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Zur Anmeldung', href: '{{loginUrl}}' },
+		cta: { label: '{{platformName}} öffnen', href: '{{loginUrl}}' },
+		// Also sent when someone sets up email two-factor login, so the copy
+		// names no purpose and asks for no password change.
 		footnote:
-			'Wenn Sie sich nicht anmelden wollten, ändern Sie bitte Ihr Passwort.',
+			'Wenn Sie diesen Code nicht angefordert haben, können Sie diese E-Mail ignorieren.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail enthält einen Sicherheitscode und lässt sich nicht abbestellen. Bitte antworten Sie nicht darauf.'
+		}
 	},
 
 	'einladung-traeger': {

@@ -33,6 +33,7 @@ import { useOwnJoinRequest } from '../groupChat/joinRequest/useOwnJoinRequest';
 import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinRequestTransport';
 import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
 import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
+import { useSessionAvatarMembers } from '../../hooks/useSessionAvatarMembers';
 import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
 
 const positiveInteger = (value: string | null | undefined): number | null => {
@@ -144,6 +145,14 @@ const SessionViewBody = () => {
 			)
 		}
 	);
+	// Only the open conversation requests members; list-row providers stay passive.
+	const avatarMembers = useSessionAvatarMembers(
+		activeSession?.isGroup && groupAccess === 'member'
+			? activeSession.item.id
+			: undefined,
+		userData?.userId
+	);
+
 	// …and may knock on a self-help group (never a team chat); once a
 	// moderator lets her in, the group is asked again.
 	const inviteToken = activeSession?.item?.id
@@ -307,6 +316,7 @@ const SessionViewBody = () => {
 		<ActiveSessionProvider
 			activeSession={activeSession}
 			readActiveSession={readActiveSession}
+			avatarMembers={avatarMembers}
 			reloadActiveSession={reloadActiveSession}
 		>
 			<SessionStream
