@@ -711,6 +711,9 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "Dein Bild"
+		},
 		"appLanguage": {
 			"info": "Stelle hier die Sprache der Anwendung ein."
 		},

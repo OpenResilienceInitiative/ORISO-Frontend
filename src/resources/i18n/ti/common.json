@@ -2302,6 +2302,10 @@
 		}
 	},
 	"profile": {
+		"avatar": {
+			"label": "ስእልኹም",
+			"default": "ነባሪ"
+		},
 		"appLanguage": {
 			"info": "ቋንቋ ናይቲ መተግበሪ ኣብዚ ኣቐምጥ።",
 			"title": "ቋንቋ"

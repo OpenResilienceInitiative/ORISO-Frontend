@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import { UserAvatar } from './UserAvatar';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 
 export interface MessageAvatarProps {
 	/** Kept for API stability; since #1193 groups use the same animal avatar. */
@@ -14,6 +15,8 @@ export interface MessageAvatarProps {
 	size?: number;
 	/** The animal circle's grey outline; see `AnimalAvatar`. */
 	outline?: boolean;
+	/** The sender's own pick, for the user's own messages (#1240). */
+	choice?: AvatarChoice | null;
 }
 
 /**
@@ -29,7 +32,8 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 	firstName,
 	lastName,
 	size = AVATAR_SIZES.message,
-	outline = false
+	outline = false,
+	choice
 }) => {
 	if (isSystemNotification) {
 		return null;
@@ -45,6 +49,7 @@ export const MessageAvatar: React.FC<MessageAvatarProps> = ({
 			size={size}
 			ring={false}
 			outline={outline}
+			choice={choice}
 		/>
 	);
 };
