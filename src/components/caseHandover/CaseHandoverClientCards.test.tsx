@@ -1,8 +1,19 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
+import { CaseHandoverInformationalBody } from './CaseHandoverInformationalBody';
+
+// The shared Button atom imports this constant through Overlay's canvas renderer.
+vi.mock('../overlay/Overlay', () => ({ OVERLAY_RESET_TIME: 10000 }));
 
 vi.mock('react-i18next', () => {
 	const catalogue: Record<string, string> = {
@@ -50,6 +61,36 @@ describe('CaseHandoverConsentCard', () => {
 		fireEvent.click(screen.getByTestId('m3-dialog-close'));
 		expect(approve).not.toHaveBeenCalled();
 		expect(decline).not.toHaveBeenCalled();
+	});
+
+	it('keeps the optional overview decision and notification continuation actionable', async () => {
+		const approve = vi.fn();
+		const setup = vi.fn();
+		render(
+			<CaseHandoverConsentCard
+				onApprove={approve}
+				onDecline={vi.fn()}
+				onSetupNotifications={setup}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		const dialog = within(screen.getByRole('dialog'));
+		expect(
+			dialog.getByText('caseHandover.consent.info.description')
+		).toBeTruthy();
+		fireEvent.click(dialog.getByRole('switch'));
+		expect(approve).toHaveBeenCalledOnce();
+		fireEvent.click(
+			dialog.getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		expect(setup).toHaveBeenCalledOnce();
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 	});
 
 	it('keeps the consent explanation and icon actions inside one Carimat message bubble', () => {
@@ -170,5 +211,52 @@ describe('CaseHandoverConsentCard', () => {
 
 		fireEvent.click(optOutSwitch);
 		expect(optOutSwitch.checked).toBe(true);
+	});
+});
+
+describe('persisted informational handover body', () => {
+	it('retains completed takeover copy and offers only a passive optional dialog', () => {
+		const setup = vi.fn();
+		render(
+			<CaseHandoverInformationalBody
+				description="The counsellor has taken over."
+				sessionId={42}
+				onSetupNotifications={setup}
+			/>
+		);
+		expect(screen.getByText('The counsellor has taken over.')).toBeTruthy();
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(setup).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		const dialog = within(screen.getByRole('dialog'));
+		expect(dialog.queryByRole('switch')).toBeNull();
+		fireEvent.click(
+			dialog.getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		expect(setup).toHaveBeenCalledOnce();
+	});
+	it('does not offer notification setup when no channel is allowed', () => {
+		render(
+			<CaseHandoverInformationalBody
+				description="Temporary access granted."
+				sessionId={42}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			within(screen.getByRole('dialog')).queryByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		).toBeNull();
 	});
 });

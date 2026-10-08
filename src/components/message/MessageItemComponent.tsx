@@ -1,3 +1,8 @@
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	ChatMenuDropdown,
@@ -43,11 +48,7 @@ import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRo
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
-import {
-	getModality,
-	getModalityIfKnown,
-	Modality
-} from '../session/getModality';
+import { getModality, Modality } from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
 	type MediaChatType
@@ -438,6 +439,7 @@ export const MessageItemComponent = ({
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
 	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const [showGrantNotifications, setShowGrantNotifications] = useState(false);
 	const [deleteOverlay, setDeleteOverlay] = useState(false);
 	const [isDeleteRequestInProgress, setIsDeleteRequestInProgress] =
 		useState(false);
@@ -1209,6 +1211,12 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	const persistedHandoverGrant =
+		parsedMessage.systemNotificationHandoverGrant;
+	const isInformationalHandoverGrant =
+		persistedHandoverGrant?.clientConsent === 'NONE' &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup;
 	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
 	   `parsedMessage.systemNotificationType`, because the payload version has to
 	   be inspected too: an event from a newer server must render nothing at all
@@ -1219,8 +1227,16 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const erstantwortModality = useMemo(
-		() => (activeSession ? getModalityIfKnown(activeSession) : undefined),
+		() => notificationConversationType(activeSession),
 		[activeSession]
+	);
+	const grantNotificationPolicy = notificationChannelPolicy(
+		tenant?.settings,
+		erstantwortModality
+	);
+	useEffect(
+		() => setShowGrantNotifications(false),
+		[activeSession.item.id, userData?.userId, tenant?.id, _id]
 	);
 	/* An Erstantwort in an internal counsellor room would be a category error —
 	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
@@ -2126,12 +2142,33 @@ export const MessageItemComponent = ({
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
-										{systemNotificationRawDescription && (
-											<p className="messageItem__systemNotificationDescription">
-												{
+										{isInformationalHandoverGrant ? (
+											<CaseHandoverInformationalBody
+												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+												description={
 													systemNotificationRawDescription
 												}
-											</p>
+												sessionId={
+													activeSession.item.id
+												}
+												onSetupNotifications={
+													grantNotificationPolicy.emailAllowed ||
+													grantNotificationPolicy.browserAllowed
+														? () =>
+																setShowGrantNotifications(
+																	true
+																)
+														: undefined
+												}
+											/>
+										) : (
+											systemNotificationRawDescription && (
+												<p className="messageItem__systemNotificationDescription">
+													{
+														systemNotificationRawDescription
+													}
+												</p>
+											)
 										)}
 									</CaseHandoverSystemMessageBody>
 								)}
@@ -2611,7 +2648,42 @@ export const MessageItemComponent = ({
 		return null;
 	}
 
-	return (
+	const withGrantNotifications = (message: React.ReactNode) => (
+		<>
+			{isInformationalHandoverGrant ? (
+				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
+					{message}
+				</CarimatMessageContainer>
+			) : (
+				message
+			)}
+			{showGrantNotifications &&
+				(grantNotificationPolicy.emailAllowed ||
+					grantNotificationPolicy.browserAllowed) && (
+					<ErstantwortSequence
+						skipAnimation
+						subtitle={translate('profile.notifications.title')}
+						bausteine={[
+							{ id: 'grantNotifications', headline: '', body: '' }
+						]}
+						slots={{
+							grantNotifications: (
+								<NotificationSetup
+									isEmailEnabled={
+										grantNotificationPolicy.emailAllowed
+									}
+									isBrowserEnabled={
+										grantNotificationPolicy.browserAllowed
+									}
+								/>
+							)
+						}}
+					/>
+				)}
+		</>
+	);
+
+	return withGrantNotifications(
 		<div
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
@@ -2626,14 +2698,14 @@ export const MessageItemComponent = ({
 			{getMessageDate()}
 			<div
 				className={`
-					messageItem__messageWrap
-					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
-					${
-						isE2EEActivatedMessage
-							? 'messageItem__messageWrap--e2eeActivatedMessage'
-							: ''
-					}
-				`}
+				messageItem__messageWrap
+				${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
+				${
+					isE2EEActivatedMessage
+						? 'messageItem__messageWrap--e2eeActivatedMessage'
+						: ''
+				}
+			`}
 			>
 				{!alias?.messageType &&
 					!isMyMessage &&
@@ -2828,7 +2900,7 @@ export const MessageItemComponent = ({
 						</div>
 					)}
 					{/* T21: the thread entry under a root message — reply count
-					    and "Author: last reply…" on one line, opens the thread. */}
+				    and "Author: last reply…" on one line, opens the thread. */}
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&

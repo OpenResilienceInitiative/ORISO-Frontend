@@ -67,7 +67,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'E-mail notification settings, per ADR-024. Advice seekers and counsellors get two separate lists rather than one filtered by role — three occasion switches against nine — because an advice seeker uses ORISO a handful of times in a situation they did not choose, and a counsellor works in it daily.\n\nThe screen also names what is sent regardless. Someone arriving from an unsubscribe link on a password-reset mail should read *why* there is no switch, instead of searching the list for one that does not exist.'
+					'E-mail notification settings, per ADR-024. Advice seekers and counsellors get two separate lists rather than one filtered by role — four occasion switches against nine — because an advice seeker uses ORISO a handful of times in a situation they did not choose, and a counsellor works in it daily.\n\nThe screen also names what is sent regardless. Someone arriving from an unsubscribe link on a password-reset mail should read *why* there is no switch, instead of searching the list for one that does not exist.'
 			}
 		}
 	}
@@ -77,7 +77,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const AdviceSeeker: Story = {
-	name: 'Advice seeker (3 switches)',
+	name: 'Advice seeker (4 switches)',
 	decorators: [withUser(userData())]
 };
 

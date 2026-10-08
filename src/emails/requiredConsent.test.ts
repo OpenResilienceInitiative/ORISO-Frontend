@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { buildEmail, EMAIL_LOCALES } from './index';
 
 describe('required personal consent mail', () => {
-	it.each(EMAIL_LOCALES)(
-		'%s offers protected consent without an unrelated email opt-out',
-		(locale) => {
-			const mail = buildEmail('uebergabe-angefragt', locale);
+	it.each(
+		(['uebergabe-angefragt', 'einsicht-angefragt'] as const).flatMap((id) =>
+			EMAIL_LOCALES.map((locale) => [id, locale] as const)
+		)
+	)(
+		'%s %s offers protected consent without an unrelated email opt-out',
+		(id, locale) => {
+			const mail = buildEmail(id, locale);
 			expect(mail.html).toContain('href="{{requestUrl}}"');
 			expect(mail.text).toContain('{{requestUrl}}');
 			expect(mail.html + mail.text).not.toContain('{{unsubscribeUrl}}');

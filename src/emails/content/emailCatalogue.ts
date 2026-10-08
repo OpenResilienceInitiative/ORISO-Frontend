@@ -366,9 +366,7 @@ export const EMAIL_CLASS: Record<
 	'neue-anfrage': 'operational',
 	'direkte-anfrage': 'operational',
 	'tagesuebersicht': 'operational',
-	'einsicht-angefragt': 'operational',
-	// Frank, 8 October 2026: mail only when personal consent is required.
-	// The consent mode governs delivery; there is no separate email opt-out.
+	'einsicht-angefragt': 'consent',
 	'uebergabe-angefragt': 'consent',
 	'uebergabe-bestaetigt': 'operational',
 	'rueckmeldung': 'operational',

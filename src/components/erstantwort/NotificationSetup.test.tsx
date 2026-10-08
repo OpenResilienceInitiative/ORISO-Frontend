@@ -47,7 +47,8 @@ vi.mock('focus-trap-react', () => ({
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
+		t: (key: string, fallback?: unknown) =>
+			typeof fallback === 'string' ? fallback : key
 	})
 }));
 const account = {
@@ -61,7 +62,10 @@ const account = {
 	}
 } as UserDataInterface;
 let saved: UserDataInterface;
-function setup(initial = account) {
+function setup(
+	initial = account,
+	props: { isEmailEnabled?: boolean; isBrowserEnabled?: boolean } = {}
+) {
 	const TestAccount = () => {
 		const [userData, setUserData] = React.useState(initial);
 		const reloadUserData = async () => {
@@ -73,7 +77,7 @@ function setup(initial = account) {
 				value={{ userData, reloadUserData, setUserData }}
 			>
 				<ModalProvider>
-					<NotificationSetup />
+					<NotificationSetup {...props} />
 				</ModalProvider>
 			</UserDataContext.Provider>
 		);
@@ -91,7 +95,10 @@ beforeEach(() => {
 		emailNotifications: {
 			...account.emailNotifications,
 			emailNotificationsEnabled: true,
-			settings: { newChatMessageNotificationEnabled: true }
+			settings: {
+				newChatMessageNotificationEnabled: true,
+				reassignmentNotificationEnabled: true
+			}
 		}
 	};
 	patch.mockResolvedValue(undefined);
@@ -117,9 +124,15 @@ it('keeps browser permission behind the email step for both channels', async () 
 	fireEvent.click(
 		screen.getByRole('button', { name: /notificationChoice.both/ })
 	);
-	await screen.findByRole('button', { name: 'Browser aktivieren' });
+	await screen.findByRole('button', {
+		name: 'erstantwort.notificationChoice.enableBrowser'
+	});
 	expect(request).not.toHaveBeenCalled();
-	fireEvent.click(screen.getByRole('button', { name: 'Browser aktivieren' }));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
 	await waitFor(() =>
 		expect(
 			JSON.parse(localStorage.getItem('BROWSER_NOTIFICATIONS')!).enabled
@@ -135,7 +148,9 @@ it('keeps browser setup untouched when the email save fails', async () => {
 	await screen.findByRole('alert');
 	expect(request).not.toHaveBeenCalled();
 	expect(
-		screen.queryByRole('button', { name: 'Browser aktivieren' })
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
 	).toBeNull();
 });
 it('does not present declined browser permission as activated', async () => {
@@ -192,7 +207,9 @@ it('saving a new address enables email before offering the browser step', async 
 			name: 'furtherSteps.email.overlay.button1.label'
 		})
 	);
-	await screen.findByRole('button', { name: 'Browser aktivieren' });
+	await screen.findByRole('button', {
+		name: 'erstantwort.notificationChoice.enableBrowser'
+	});
 	expect(screen.queryByRole('textbox')).toBeNull();
 	expect(
 		screen
@@ -236,3 +253,70 @@ for (const abandoned of ['cancel', 'unmount'] as const) {
 		expect(request).not.toHaveBeenCalled();
 	});
 }
+
+it('does not offer a browser channel forbidden by the current conversation policy', () => {
+	setup(account, { isBrowserEnabled: false });
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.browser / })
+	).toBeNull();
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.both/ })
+	).toBeNull();
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
+
+it('upgrades reply-only email to consent notifications and keeps BOTH behind a fresh browser gesture', async () => {
+	const replyOnly = {
+		...saved,
+		emailNotifications: {
+			...saved.emailNotifications,
+			settings: {
+				newChatMessageNotificationEnabled: true,
+				reassignmentNotificationEnabled: false
+			}
+		}
+	};
+	setup(replyOnly);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.both/ })
+	);
+	await screen.findByRole('button', {
+		name: 'erstantwort.notificationChoice.enableBrowser'
+	});
+	expect(patch).toHaveBeenCalledWith(
+		expect.objectContaining({
+			emailNotifications: expect.objectContaining({
+				settings: expect.objectContaining({
+					newChatMessageNotificationEnabled: true,
+					reassignmentNotificationEnabled: true
+				})
+			})
+		})
+	);
+	expect(request).not.toHaveBeenCalled();
+});
+it('does not confirm consent email or continue BOTH when consent subscription was not saved', async () => {
+	saved = {
+		...saved,
+		emailNotifications: {
+			...saved.emailNotifications,
+			settings: {
+				newChatMessageNotificationEnabled: true,
+				reassignmentNotificationEnabled: false
+			}
+		}
+	};
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.both/ })
+	);
+	await screen.findByRole('alert');
+	expect(request).not.toHaveBeenCalled();
+	expect(
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	).toBeNull();
+});

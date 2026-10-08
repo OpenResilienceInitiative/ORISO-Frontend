@@ -20,6 +20,7 @@ import {
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { setKindField } from '../../utils/notificationSettings/notificationConfig';
+import { replaceTenantSettings } from '../../utils/tenantSettingsHelper';
 import { __resetSoundThrottlesForTests } from '../../utils/notificationSettings/soundPlayback';
 
 const apiGetEventNotifications = vi.fn();
@@ -536,6 +537,7 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 });
 
 describe('NotificationsProvider announcements', () => {
+	afterEach(() => replaceTenantSettings());
 	const banners = vi.fn();
 	const play = vi.fn(() => Promise.resolve());
 	beforeEach(() => {
@@ -589,6 +591,42 @@ describe('NotificationsProvider announcements', () => {
 		vi.unstubAllGlobals();
 		notificationSettingsStore.resetForTests();
 	});
+
+	it.each([
+		['user', '/sessions/user/view/session/42'],
+		[undefined, '/sessions/user/view/session/42']
+	] as const)(
+		'passes canonical server context to the OS policy gate for consent events (role=%s)',
+		async (recipientRole, actionPath) => {
+			replaceTenantSettings({
+				featureAskerBrowserLiveChatEnabled: false
+			});
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(1)
+			);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [
+					{
+						...feedItem(1, '2026-09-14T12:00:00Z'),
+						eventType: 'case.handover.consent.requested',
+						actionPath,
+						params: { recipientRole, conversationType: 'LIVE_CHAT' }
+					}
+				],
+				unreadCount: 1
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(banners).not.toHaveBeenCalled();
+		}
+	);
 
 	it.each([false, true])(
 		'only announces the matching incoming event before initialization (own=%s)',

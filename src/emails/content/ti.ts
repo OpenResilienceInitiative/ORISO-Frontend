@@ -268,7 +268,7 @@ export const ti: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'ሕቶ ርኣዩ', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-angefragt': {

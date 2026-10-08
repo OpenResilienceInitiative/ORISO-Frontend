@@ -2109,3 +2109,178 @@ export const InternalGroupColleagueName: Story = {
 		await expect(canvasElement.textContent).toContain('angela k');
 	}
 };
+
+export const InformationalGrantedForAsker: Story = {
+	name: 'Persisted handover — passive informational grant',
+	globals: { ...desktop1440Globals, locale: 'de' },
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: MOCK_ASKER_MATRIX_ID,
+			grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+		})
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'CASE_HANDOVER_GRANTED',
+					description:
+						'Ihre neue Fachkraft hat die Beratung übernommen.',
+					handover: {
+						requestId: 42,
+						clientConsent: 'NONE',
+						accessType: 'TAKEOVER'
+					}
+				})
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Ihre neue Fachkraft hat die Beratung übernommen.'
+			)
+		).toBeInTheDocument();
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const header = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__systemNotificationHeaderText'
+		)!;
+		const more = canvas.getByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await waitFor(() => {
+			expect(
+				bubble.getBoundingClientRect().top -
+					header.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(5);
+			expect(more.getBoundingClientRect().width).toBeLessThan(200);
+		});
+		await expect(more).toHaveClass('button__link');
+		await expect(more).toHaveAttribute('aria-haspopup', 'dialog');
+		more.focus();
+		await waitFor(() => {
+			const style = getComputedStyle(more);
+			expect(parseFloat(style.outlineWidth)).toBeGreaterThan(0);
+			expect(parseFloat(style.borderRadius)).toBeGreaterThan(0);
+			expect(more.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				44
+			);
+			const copy = bubble.querySelector<HTMLElement>(
+				'.messageItem__systemNotificationDescription'
+			)!;
+			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
+				copy.getBoundingClientRect().height +
+					more.getBoundingClientRect().height +
+					32
+			);
+		});
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await expect(dialog.queryByRole('switch')).toBeNull();
+	}
+};
+export const InformationalGrantedForAskerMobile: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...InformationalGrantedForAsker.parameters,
+		...mobileParameters
+	}
+};
+
+export const InformationalGrantedForAskerTablet: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const InformationalGrantedForAskerRussianMobile: Story = {
+	...InformationalGrantedForAskerMobile,
+	name: 'Persisted informational grant — Russian phone',
+	globals: { ...phone390Globals, locale: 'ru' },
+	play: async ({ canvasElement }) => {
+		const more = canvasElement.querySelector<HTMLButtonElement>(
+			'.caseHandoverInformational__more button'
+		);
+		await waitFor(() => expect(more).toBeTruthy());
+		await userEvent.click(more!);
+		const dialog = await within(document.body).findByRole('dialog');
+		await expect(within(dialog).queryByRole('switch')).toBeNull();
+		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
+			dialog.clientWidth + 1
+		);
+	}
+};
+export const InformationalGrantedNotificationContinuation: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — manual notification continuation',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvasElement.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Mehr erfahren|Learn more/
+			})
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await userEvent.click(
+			dialog.getByRole('button', {
+				name: /Benachrichtigungen einrichten|Set up notifications/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.notificationChoiceHost')
+			).toBeTruthy()
+		);
+		await expect(
+			canvasElement
+				.querySelector('.notificationChoiceHost')
+				?.closest('.messageItem__message')
+		).toBeNull();
+		const grant = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const setup = canvasElement
+			.querySelector<HTMLElement>('.notificationChoiceHost')!
+			.closest<HTMLElement>('.erstantwort__bubble')!;
+		await waitFor(() => {
+			const grantBounds = grant.getBoundingClientRect();
+			const setupBounds = setup.getBoundingClientRect();
+			expect(
+				Math.abs(grantBounds.width - setupBounds.width)
+			).toBeLessThanOrEqual(1);
+			expect(
+				Math.abs(grantBounds.left - setupBounds.left)
+			).toBeLessThanOrEqual(1);
+			expect(grant.scrollWidth).toBeLessThanOrEqual(
+				grant.clientWidth + 1
+			);
+		});
+	}
+};
+
+export const InformationalGrantedNotificationContinuationMobile: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — phone 390',
+	globals: { ...phone390Globals, locale: 'de' }
+};
+export const InformationalGrantedNotificationContinuationTablet: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};

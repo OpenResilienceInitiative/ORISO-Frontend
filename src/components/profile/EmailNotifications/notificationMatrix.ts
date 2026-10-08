@@ -48,9 +48,9 @@ export interface NotificationSwitch {
 }
 
 /**
- * Advice seekers: three switches.
+ * Advice seekers: four switches.
  *
- * Deliberately short. Everything else that reaches an advice seeker is either
+ * Deliberately short. Other occasions that reach an advice seeker are either
  * account access, which nobody may switch off, or in-app only.
  */
 export const ADVICE_SEEKER_SWITCHES: NotificationSwitch[] = [
@@ -86,6 +86,14 @@ export const ADVICE_SEEKER_SWITCHES: NotificationSwitch[] = [
 			'profile.notifications.matrix.shared.serviceNotice.description',
 		source: { kind: 'settings', field: 'serviceNoticeNotificationEnabled' },
 		occasions: ['systemhinweis']
+	},
+	{
+		id: 'reassignment',
+		titleKey: 'profile.notifications.matrix.asker.consentRequest.title',
+		descriptionKey:
+			'profile.notifications.matrix.asker.consentRequest.description',
+		source: { kind: 'settings', field: 'reassignmentNotificationEnabled' },
+		occasions: ['einsicht-angefragt', 'uebergabe-angefragt']
 	}
 ];
 

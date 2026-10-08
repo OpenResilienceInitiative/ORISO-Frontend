@@ -49,7 +49,8 @@ vi.mock('focus-trap-react', () => ({
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
+		t: (key: string, fallback?: unknown) =>
+			typeof fallback === 'string' ? fallback : key
 	})
 }));
 const account = {
@@ -65,7 +66,12 @@ const account = {
 let saved: UserDataInterface;
 const approve = vi.fn();
 const decline = vi.fn();
-function setup(initial = account, isEmailEnabled?: boolean) {
+function setup(
+	initial = account,
+	isEmailEnabled?: boolean,
+	conversationType?: string,
+	contextSettings: Record<string, boolean> = {}
+) {
 	const TestAccount = ({
 		sessionKey = '1',
 		emailEnabled = isEmailEnabled
@@ -86,7 +92,8 @@ function setup(initial = account, isEmailEnabled?: boolean) {
 					value={{
 						tenant: {
 							settings: {
-								featureAskerEmailEnabled: emailEnabled
+								featureAskerEmailEnabled: emailEnabled,
+								...contextSettings
 							}
 						} as TenantDataInterface,
 						setTenant: () => {},
@@ -96,6 +103,7 @@ function setup(initial = account, isEmailEnabled?: boolean) {
 					<ModalProvider>
 						<CaseHandoverConversation
 							key={sessionKey}
+							conversationType={conversationType}
 							onApprove={approve}
 							onDecline={decline}
 							consentGranted={false}
@@ -126,7 +134,10 @@ beforeEach(() => {
 		emailNotifications: {
 			...account.emailNotifications,
 			emailNotificationsEnabled: true,
-			settings: { newChatMessageNotificationEnabled: true }
+			settings: {
+				newChatMessageNotificationEnabled: true,
+				reassignmentNotificationEnabled: true
+			}
 		}
 	};
 	patch.mockResolvedValue(undefined);
@@ -279,7 +290,7 @@ it('both channels wait for saved email and a separate browser gesture through th
 		screen.getByRole('button', { name: /notificationChoice.both/ })
 	);
 	const activate = await screen.findByRole('button', {
-		name: 'Browser aktivieren'
+		name: 'erstantwort.notificationChoice.enableBrowser'
 	});
 	expect(request).not.toHaveBeenCalled();
 	fireEvent.click(activate);
@@ -318,3 +329,66 @@ for (const change of ['session', 'tenant'] as const) {
 		expect(request).not.toHaveBeenCalled();
 	});
 }
+
+it.each([
+	['AGENCY_COUNSELLING', true],
+	['LIVE_CHAT', false],
+	['SELF_HELP', true]
+])(
+	'manual handover setup uses the actual %s channel context',
+	async (context, emailAllowed) => {
+		setup(account, true, context);
+		await openSetup();
+		expect(
+			Boolean(
+				screen.queryByRole('button', {
+					name: /notificationChoice.email/
+				})
+			)
+		).toBe(emailAllowed);
+	}
+);
+it('an unknown future conversation cannot open an empty notification flow', async () => {
+	setup(account, true, 'UNKNOWN_FUTURE');
+	fireEvent.click(
+		screen.getByRole('button', { name: 'caseHandover.consent.info.more' })
+	);
+	await screen.findByRole('dialog');
+	expect(
+		screen.queryByRole('button', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+	expect(
+		screen.queryByText('caseHandover.consent.info.notificationsCopy')
+	).toBeNull();
+	expect(
+		screen.queryByRole('region', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+});
+
+it('does not recommend or open setup when actual context policy forbids both channels', async () => {
+	setup(account, true, 'AGENCY_COUNSELLING', {
+		featureAskerEmailAgencyCounsellingEnabled: false,
+		featureAskerBrowserAgencyCounsellingEnabled: false
+	});
+	fireEvent.click(
+		screen.getByRole('button', { name: 'caseHandover.consent.info.more' })
+	);
+	await screen.findByRole('dialog');
+	expect(
+		screen.queryByRole('button', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+	expect(
+		screen.queryByText('caseHandover.consent.info.notificationsCopy')
+	).toBeNull();
+	expect(
+		screen.queryByRole('region', {
+			name: 'caseHandover.consent.info.notificationsAction'
+		})
+	).toBeNull();
+});

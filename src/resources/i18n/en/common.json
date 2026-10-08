@@ -2735,6 +2735,10 @@
 					"appointment": {
 						"title": "Appointments",
 						"description": "An appointment was confirmed, moved or cancelled — and the reminder before it."
+					},
+					"consentRequest": {
+						"title": "Access and handover requests",
+						"description": "Receive an email when your consent to access or handover is requested."
 					}
 				},
 				"consultant": {
@@ -3541,7 +3545,7 @@
 				"title": "Privacy notice for case handover",
 				"prompt": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
 				"copy": "For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.",
-				"revocationCopy": "By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.",
+				"revocationCopy": "The switch applies to this request. You can object; this does not undo a takeover that has already been completed.",
 				"switchLabel": "Allow access for this request"
 			},
 			"info": {
@@ -3549,19 +3553,20 @@
 				"title": "Access to your counselling conversation",
 				"noticeTitle": "Support for your consultation",
 				"noticeCopy": "Another professional at your counselling centre receives access for this request. This policy does not ask for prior consent.",
-				"needTitle": "When needed",
-				"needCopy": "Another professional may briefly help with a question, for example for a few hours. During holidays or illness, another professional at your centre may take over. The actual duration depends on the request.",
+				"needTitle": "When useful",
+				"needCopy": "Another professional can help for a few hours. During holidays or illness, someone from your counselling service can take over.",
 				"choiceTitle": "Your consent",
-				"OPT_IN": "This request needs your approval first. Without it, the requesting professional receives no access. Your decision applies to this request, not to every future request.",
+				"OPT_IN": "This request needs your consent. Without it, the requesting professional has no access. Your decision applies only to this request.",
 				"OPT_OUT": "Access starts without prior consent. You can object to this request. An already completed takeover is not reversed by that objection.",
 				"NONE": "No decision is requested for this request. This message informs you about access without prior consent.",
 				"accessTitle": "Protected access",
-				"accessCopy": "The grant concerns the responsible counselling centre and the specifically authorised professional. It does not grant outsiders or the platform operator access to your session.",
+				"accessCopy": "Only the responsible service and the specifically authorised professional get access. Outsiders and the platform operator do not.",
 				"notificationsCopy": "When your approval is needed, we recommend email or browser notifications so you can respond to a request in time.",
 				"notificationsAction": "Set up notifications",
 				"granted": "Access has been confirmed.",
 				"closed": "This request is complete. No further decision is pending.",
-				"takeoverContinues": "Your objection was recorded. The completed takeover remains in place."
+				"takeoverContinues": "Your objection was recorded. The completed takeover remains in place.",
+				"description": "For professional consultation and cover within your counselling service."
 			}
 		},
 		"denied": {
@@ -3660,6 +3665,15 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"standingPreference": {
+			"label": "Always ask before additional access",
+			"description": "Applies to future requests in this conversation. Current requests and access already granted remain unchanged.",
+			"baselineDescription": "When off, your counselling agency’s settings apply. Any consent required by the agency is still required.",
+			"saving": "Saving …",
+			"saved": "Setting saved.",
+			"saveFailed": "The setting could not be confirmed. Please try again.",
+			"loading": "Loading setting …"
 		}
 	},
 	"session": {

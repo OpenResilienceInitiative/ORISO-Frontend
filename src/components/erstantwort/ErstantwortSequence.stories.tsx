@@ -40,7 +40,8 @@ import './ErstantwortSequence.styles.scss';
  *   `EverythingAlreadyDone` below.
  */
 const meta = {
-	title: 'Components/Chat/Erstantwort',
+	id: 'components-chat-erstantwort',
+	title: 'Chat/System messages/First response and FAQ',
 	component: ErstantwortSequence,
 	tags: ['autodocs'],
 	parameters: {

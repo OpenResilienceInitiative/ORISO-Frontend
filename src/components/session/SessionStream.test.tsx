@@ -79,7 +79,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('react-router-dom', async (importOriginal) => {
-	const actual = await importOriginal<any>();
+	const actual =
+		await importOriginal<
+			typeof import('../../globalState/context/MatrixClientContext')
+		>();
 	return {
 		...actual,
 		useNavigate: () => mocks.navigate
@@ -133,7 +136,10 @@ vi.mock('../../services/chatTransportService', () => ({
 vi.mock(
 	'../../services/matrixRoomHistoryKeyTransfer',
 	async (importOriginal) => {
-		const actual = await importOriginal<any>();
+		const actual =
+			await importOriginal<
+				typeof import('../../globalState/context/MatrixClientContext')
+			>();
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
@@ -147,6 +153,9 @@ vi.mock(
 // the contexts and helpers SessionStream consumes.
 vi.mock('../../globalState', async () => {
 	const ReactModule = await import('react');
+	const { UserDataContext } = await import(
+		'../../globalState/context/UserDataContext'
+	);
 	return {
 		AUTHORITIES: {
 			ASKER_DEFAULT: 'AUTHORIZATION_USER_DEFAULT',
@@ -159,17 +168,23 @@ vi.mock('../../globalState', async () => {
 			setConsultantList: () => {}
 		}),
 		SessionTypeContext: ReactModule.createContext(null),
-		UserDataContext: ReactModule.createContext(null),
+		UserDataContext,
 		ActiveSessionContext: ReactModule.createContext(null),
 		useTopic: () => null
 	};
 });
 
-vi.mock('../../globalState/context/MatrixClientContext', () => ({
-	useMatrixClient: () => ({
-		matrixClientService: mocks.matrixClientService
+vi.mock(
+	'../../globalState/context/MatrixClientContext',
+	async (importOriginal) => ({
+		...(await importOriginal<
+			typeof import('../../globalState/context/MatrixClientContext')
+		>()),
+		useMatrixClient: () => ({
+			matrixClientService: mocks.matrixClientService
+		})
 	})
-}));
+);
 
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {

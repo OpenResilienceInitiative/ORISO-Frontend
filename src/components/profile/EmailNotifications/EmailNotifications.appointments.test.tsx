@@ -67,11 +67,50 @@ describe('counsellor self-help appointment preference', () => {
 		);
 	});
 
-	it('keeps the separate three-switch asker list and does not highlight a counsellor occasion', () => {
+	it('keeps the separate four-switch asker list and does not highlight a counsellor occasion', () => {
 		const { container } = renderSettings('asker');
-		expect(screen.getAllByRole('switch')).toHaveLength(4);
+		expect(screen.getAllByRole('switch')).toHaveLength(5);
 		expect(
 			container.querySelector('.notifications__row--highlighted')
 		).toBeNull();
 	});
+});
+
+describe('asker consent request mail preference', () => {
+	it.each(['einsicht-angefragt', 'uebergabe-angefragt'])(
+		'highlights and saves the existing preference from %s',
+		async (occasion) => {
+			const view = renderSettings('asker', occasion);
+			const toggle = screen.getByRole<HTMLInputElement>('switch', {
+				name: 'profile.notifications.matrix.asker.consentRequest.title'
+			});
+			expect(toggle.checked).toBe(true);
+			expect(
+				view.container.querySelector(
+					'[data-cy="notification-switch-reassignment"]'
+				)
+			).toHaveProperty(
+				'className',
+				'notifications__row notifications__row--highlighted'
+			);
+			fireEvent.click(toggle);
+			await waitFor(() => expect(reload).toHaveBeenCalledOnce());
+			expect(apiPatchUserData).toHaveBeenCalledWith({
+				emailNotifications: {
+					...initialNotifications(),
+					settings: {
+						...initialNotifications().settings,
+						reassignmentNotificationEnabled: false
+					}
+				}
+			});
+			view.unmount();
+			renderSettings('asker', occasion);
+			expect(
+				screen.getByRole<HTMLInputElement>('switch', {
+					name: 'profile.notifications.matrix.asker.consentRequest.title'
+				}).checked
+			).toBe(false);
+		}
+	);
 });

@@ -279,7 +279,7 @@ export const fr: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Examiner la demande', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-angefragt': {

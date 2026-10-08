@@ -30,7 +30,10 @@ export const createEmailSettingsFixture = (occasion: string) => {
 		'scrollIntoView'
 	);
 
-	const renderSettings = (role: 'consultant' | 'asker' = 'consultant') => {
+	const renderSettings = (
+		role: 'consultant' | 'asker' = 'consultant',
+		requestedOccasion = occasion
+	) => {
 		const Fixture = () => {
 			const [notifications, setNotifications] = React.useState(() =>
 				structuredClone(stored)
@@ -63,7 +66,7 @@ export const createEmailSettingsFixture = (occasion: string) => {
 		return render(
 			<MemoryRouter
 				initialEntries={[
-					`/profile/notifications/email?mail=${occasion}`
+					`/profile/notifications/email?mail=${requestedOccasion}`
 				]}
 			>
 				<NotificationsContext.Provider
