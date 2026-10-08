@@ -62,6 +62,7 @@ import { useMatrixRoomUsers } from '../../hooks/useMatrixRoomUsers';
 import { GroupChatCalendarMenu } from './GroupChatCalendarMenu';
 import { GroupChatRoleManager } from './GroupChatRoleManager';
 import { getGroupChatPlannedStart } from './groupChatDate';
+import { getGroupChatRepeatLabel } from './groupChatRepeatLabel';
 
 export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const settings = useAppConfig();
@@ -232,9 +233,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		},
 		{
 			label: translate('groupChat.info.settings.repetition.label'),
-			value: activeSession.item.repetitive
-				? translate('groupChat.info.settings.repetition.weekly')
-				: translate('groupChat.info.settings.repetition.single')
+			value: getGroupChatRepeatLabel(activeSession.item, translate)
 		},
 		{
 			label: translate('groupChat.info.settings.agency'),
@@ -502,6 +501,7 @@ const GroupChatInfoM3Connected = ({
 				onCopyInviteLink={
 					showInviteActions ? copyRegistrationLink : undefined
 				}
+				inviteLinkUnavailable={!url}
 			/>
 			<Menu
 				anchorEl={menu?.anchor ?? null}
@@ -512,7 +512,7 @@ const GroupChatInfoM3Connected = ({
 					{translate('banUser.ban.trigger')}
 				</MenuItem>
 			</Menu>
-			{showInviteActions && (
+			{showInviteActions && url && (
 				<GenerateQrCode
 					url={url}
 					headline={translate('groupChat.qrCode.headline')}
