@@ -71,6 +71,8 @@ type PanelPhase =
 	| 'resetConfirm';
 
 export type EncryptionSettingsPanelProps = {
+	/** Hide the standalone heading when the recovery group already labels the card. */
+	showHeading?: boolean;
 	/** Storybook/tests: inject a client instead of the singleton service. */
 	clientOverride?: MatrixClient | null;
 	/** Storybook: start in a fixed phase instead of probing the client. */
@@ -79,7 +81,8 @@ export type EncryptionSettingsPanelProps = {
 
 export const EncryptionSettingsPanel = ({
 	clientOverride,
-	initialStatusOverride
+	initialStatusOverride,
+	showHeading = true
 }: EncryptionSettingsPanelProps = {}) => {
 	const enrollmentForm = useRef<HTMLFormElement>(null);
 	const { t } = useTranslation();
@@ -328,16 +331,20 @@ export const EncryptionSettingsPanel = ({
 		content: recoveryInput
 	};
 
-	const renderHeader = () => (
-		<div className="profile__content__title">
-			<Headline text={t('profile.encryption.title')} semanticLevel="5" />
-			<Text
-				text={t('profile.encryption.description')}
-				type="standard"
-				className="tertiary"
-			/>
-		</div>
-	);
+	const renderHeader = () =>
+		showHeading && (
+			<div className="profile__content__title">
+				<Headline
+					text={t('profile.encryption.title')}
+					semanticLevel="5"
+				/>
+				<Text
+					text={t('profile.encryption.description')}
+					type="standard"
+					className="tertiary"
+				/>
+			</div>
+		);
 
 	if (phase === 'loading') {
 		return (
@@ -382,6 +389,9 @@ export const EncryptionSettingsPanel = ({
 
 			{phase === 'notSetUp' && (
 				<>
+					<p role="status">
+						{t('profile.encryption.status.notSetUp')}
+					</p>
 					<Text
 						text={t('profile.encryption.setup.explainer')}
 						type="standard"

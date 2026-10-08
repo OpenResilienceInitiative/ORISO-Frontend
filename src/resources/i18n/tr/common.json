@@ -2302,6 +2302,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Giriş ve hesap",
+				"description": "Şifrenizi ve giriş güvenliğinizi yönetin."
+			},
+			"recovery": {
+				"title": "Eski mesajları kurtarma",
+				"description": "Eski mesajları yeni bir cihazda açabilmek için kurtarma anahtarınızı güvenli bir yerde saklayın."
+			},
+			"privacy": {
+				"title": "Gizlilik",
+				"description": "Kişisel bilgilerinizi ve hesabınızı yönetin."
+			},
+			"displayNameDescription": "Danışmanlık sırasında yardım isteyen kişiler bu adı görür."
+		},
 		"avatar": {
 			"label": "Resminiz",
 			"default": "Varsayılan"
@@ -2873,7 +2888,8 @@
 				"done": "Tamam"
 			},
 			"status": {
-				"ok": "✓ Anahtar yedeklemesi etkin. Geçmişiniz yeni cihazlarda okunabilir kalır."
+				"ok": "✓ Anahtar yedeklemesi etkin. Geçmişiniz yeni cihazlarda okunabilir kalır.",
+				"notSetUp": "Kurtarma anahtarınız henüz ayarlanmadı."
 			},
 			"changeKey": {
 				"cta": "Kurtarma anahtarını değiştir"
