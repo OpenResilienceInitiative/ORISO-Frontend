@@ -778,6 +778,11 @@ $profile-footer-justify-content: center !default;
 	}
 }
 
+.profile__avatarChoice {
+	max-width: 560px;
+	min-width: 0;
+}
+
 // Inside cards, option labels read as body text, not as brand-red links.
 .profile__cards .checkbox__label {
 	color: var(--m3-on-surface, #1b1b1c);
@@ -794,4 +799,8 @@ $profile-footer-justify-content: center !default;
 		padding: 0 24px;
 		white-space: nowrap;
 	}
+}
+
+.profile__card--fullWidth {
+	column-span: all;
 }

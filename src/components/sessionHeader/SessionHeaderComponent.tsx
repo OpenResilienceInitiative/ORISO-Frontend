@@ -1,4 +1,5 @@
 import * as React from 'react';
+import type { AvatarIdentity } from '../../utils/avatarChoice';
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -150,7 +151,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		'consultingTypes',
 		'agencies'
 	]);
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, avatarMembers = [] } =
+		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
@@ -779,17 +781,48 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			matrixClientService
 		]
 	);
+	const ownMatrixUserId = matrixClientService?.getClient?.()?.getUserId?.();
 	const visibleRoomParticipants = React.useMemo(
 		() =>
 			filterVisibleParticipants(
 				roomParticipants,
 				visibleParticipantRules
-			),
-		[roomParticipants, visibleParticipantRules]
+			).map((participant) => {
+				let identity: AvatarIdentity | undefined;
+				if (participant.userId === ownMatrixUserId) {
+					identity = userData;
+				} else if (activeSession.isGroup) {
+					identity = avatarMembers.find(
+						(member) => member._id === participant.userId
+					);
+				} else if (participant.userId === askerMatrixUserId) {
+					identity = activeSession.user;
+				} else if (
+					participant.userId ===
+					activeSession.item?.consultantMatrixUserId
+				) {
+					identity = activeSession.consultant;
+				}
+				return {
+					...participant,
+					avatarKind: identity?.avatarKind,
+					avatarId: identity?.avatarId
+				};
+			}),
+		[
+			roomParticipants,
+			visibleParticipantRules,
+			ownMatrixUserId,
+			userData,
+			activeSession,
+			avatarMembers,
+			askerMatrixUserId
+		]
 	);
 
 	// Without Matrix members (enquiry, offline) the header still shows the
-	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
+	// contact: the asker as animal, a counsellor as their chosen avatar when
+	// they picked one (#1047), otherwise the same animal as before.
 	const headerParticipants: StackParticipant[] =
 		visibleRoomParticipants.length > 0
 			? visibleRoomParticipants
@@ -797,16 +830,23 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				? [
 						{
 							userId:
-								askerMatrixUserId ||
+								(isAskerUser
+									? activeSession.item?.consultantMatrixUserId
+									: askerMatrixUserId) ||
 								contact.username ||
 								'unknown',
 							username: contact.username || 'User',
 							displayName:
 								headerAvatarDisplayName || headerFallbackLabel,
-							isAsker: !hasUserAuthority(
-								AUTHORITIES.ASKER_DEFAULT,
-								userData
-							)
+							isAsker: !isAskerUser,
+							// For an advice seeker the contact IS the counsellor,
+							// so their chosen avatar belongs on the header too.
+							avatarKind: isAskerUser
+								? activeSession.consultant?.avatarKind
+								: undefined,
+							avatarId: isAskerUser
+								? activeSession.consultant?.avatarId
+								: activeSession.user?.avatarId
 						}
 					]
 				: [];

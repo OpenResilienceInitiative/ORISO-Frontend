@@ -2336,6 +2336,21 @@
 		}
 	},
 	"profile": {
+		"securityPrivacy": {
+			"account": {
+				"title": "Connexion et compte",
+				"description": "Gérez votre mot de passe et sécurisez votre connexion."
+			},
+			"recovery": {
+				"title": "Récupération des anciens messages",
+				"description": "Conservez votre clé de récupération en lieu sûr pour pouvoir ouvrir vos anciens messages sur un nouvel appareil."
+			},
+			"privacy": {
+				"title": "Vie privée",
+				"description": "Gérez vos informations personnelles et votre compte."
+			},
+			"displayNameDescription": "Les personnes qui demandent conseil voient ce nom pendant la consultation."
+		},
 		"avatar": {
 			"label": "Votre image",
 			"default": "Par défaut"
@@ -2911,7 +2926,8 @@
 				"done": "Terminé"
 			},
 			"status": {
-				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils."
+				"ok": "✓ La sauvegarde des clés est active. Votre historique reste lisible sur de nouveaux appareils.",
+				"notSetUp": "Votre clé de récupération n’est pas encore configurée."
 			},
 			"changeKey": {
 				"cta": "Modifier la clé de récupération"

@@ -1325,37 +1325,37 @@
 			"tones": {
 				"de-sie": {
 					"lang": "de",
-					"subject": "Ihr Einmalcode für die Anmeldung",
+					"subject": "Ihr Einmalcode",
 					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
 				},
 				"de-du": {
 					"lang": "de",
-					"subject": "Dein Einmalcode für die Anmeldung",
+					"subject": "Dein Einmalcode",
 					"preheader": "Der Code gilt {{expiryMinutes}} Minuten."
 				},
 				"en": {
 					"lang": "en",
-					"subject": "Your one-time code for signing in",
+					"subject": "Your one-time code",
 					"preheader": "The code is valid for {{expiryMinutes}} minutes."
 				},
 				"fr": {
 					"lang": "fr",
-					"subject": "Votre code à usage unique pour la connexion",
+					"subject": "Votre code à usage unique",
 					"preheader": "Le code est valable {{expiryMinutes}} minutes."
 				},
 				"ru": {
 					"lang": "ru",
-					"subject": "Ваш одноразовый код для входа",
+					"subject": "Ваш одноразовый код",
 					"preheader": "Код действует {{expiryMinutes}} минут."
 				},
 				"ti": {
 					"lang": "ti",
-					"subject": "ንመእተዊ ዝኸውን ናይ ሓደ ግዜ ኮድኩም",
+					"subject": "ናይ ሓደ ግዜ ኮድኩም",
 					"preheader": "እቲ ኮድ ን{{expiryMinutes}} ደቓይቕ ይሰርሕ።"
 				},
 				"tr": {
 					"lang": "tr",
-					"subject": "Giriş için tek kullanımlık kodunuz",
+					"subject": "Tek kullanımlık kodunuz",
 					"preheader": "Kod {{expiryMinutes}} dakika geçerlidir."
 				}
 			}
