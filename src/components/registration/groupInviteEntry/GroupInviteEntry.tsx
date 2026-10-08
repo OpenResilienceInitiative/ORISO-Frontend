@@ -9,6 +9,7 @@ import { RegistrationHandover } from '../../app/registrationLoader/RegistrationH
 import type { RegistrationData } from '../../../globalState';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
 import { useGroupJoinHandoverCopy } from '../../groupChat/groupJoinHandoverCopy';
+import { RegistrationCompletionProvider } from '../consentCompletion/RegistrationCompletionContext';
 
 /**
  * The newcomer entry of a self-help group link, as designed in Storybook
@@ -41,67 +42,72 @@ export const GroupInviteEntry = ({
 	const handoverCopy = useGroupJoinHandoverCopy();
 
 	return (
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
-			showLoginLink={true}
-			showRegistrationLink={false}
-			loginParams={new URLSearchParams({ gcid, aid }).toString()}
-			loginState={INVITE_LOGIN_STATE}
-			stage={stage}
-			mobileHero="bar"
-		>
-			{busy ? (
-				<RegistrationHandover
-					ready={false}
-					forcedState="preparing"
-					variant="inline"
-					onEnter={() => undefined}
-					copy={handoverCopy}
-				/>
-			) : (
-				<Box
-					data-cy="group-invite-entry"
-					sx={{
-						width: '100%',
-						minWidth: 0,
-						maxWidth: '100%',
-						px: { xs: 2.5, sm: 5 },
-						pt: { xs: 3, sm: 4 },
-						pb: { xs: '128px', sm: '136px' }
-					}}
-				>
-					<AccountData
-						onChange={onChange}
-						entry="link"
-						temporary={temporary}
+		<RegistrationCompletionProvider>
+			<StageLayout
+				className="stageLayout--registration"
+				showLegalLinks={true}
+				showLoginLink={true}
+				showRegistrationLink={false}
+				loginParams={new URLSearchParams({ gcid, aid }).toString()}
+				loginState={INVITE_LOGIN_STATE}
+				stage={stage}
+				mobileHero="bar"
+			>
+				{busy ? (
+					<RegistrationHandover
+						ready={false}
+						forcedState="preparing"
+						variant="inline"
+						onEnter={() => undefined}
+						copy={handoverCopy}
 					/>
-					<RegistrationFooter
-						secondary={{
-							label: temporary
-								? t(
-										'registration.account.temporary.toggleOff',
-										'Konto anlegen'
-									)
-								: t(
-										'registration.account.temporary.toggleOn',
-										'Ohne Konto beitreten'
-									),
-							onClick: onToggleTemporary
+				) : (
+					<Box
+						data-cy="group-invite-entry"
+						sx={{
+							width: '100%',
+							minWidth: 0,
+							maxWidth: '100%',
+							px: { xs: 2.5, sm: 5 },
+							pt: { xs: 3, sm: 4 },
+							pb: 2
 						}}
-						primary={{
-							label: temporary
-								? t(
-										'registration.account.temporary.joinGroup',
-										'Der Gruppe beitreten'
-									)
-								: t('registration.register'),
-							onClick: onJoin,
-							disabled: joinDisabled
-						}}
-					/>
-				</Box>
-			)}
-		</StageLayout>
+					>
+						<AccountData
+							onChange={onChange}
+							entry="link"
+							temporary={temporary}
+						/>
+						<RegistrationFooter
+							secondary={{
+								compact: true,
+								label: temporary
+									? t(
+											'registration.account.temporary.toggleOff',
+											'Konto anlegen'
+										)
+									: t(
+											'registration.account.temporary.toggleOn',
+											'Ohne Konto beitreten'
+										),
+								onClick: onToggleTemporary
+							}}
+							primary={{
+								label: temporary
+									? t(
+											'registration.account.temporary.joinGroup',
+											'Der Gruppe beitreten'
+										)
+									: t('registration.register'),
+								onClick: () => {
+									if (!joinDisabled && !busy) onJoin();
+								},
+								disabled: joinDisabled || busy
+							}}
+						/>
+					</Box>
+				)}
+			</StageLayout>
+		</RegistrationCompletionProvider>
 	);
 };
