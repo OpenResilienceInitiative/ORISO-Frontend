@@ -264,6 +264,19 @@ export const deDu: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Neue Benachrichtigung',
+		preheader: 'Bitte melde dich an.',
+		headline: 'Eine Anfrage zu deiner Beratung',
+		paragraphs: [
+			'Eine weitere Fachkraft Deiner Beratungsstelle bittet um Deine Zustimmung zu einer zeitlich begrenzten Einsichtnahme.',
+			'Prüfe die Anfrage im geschützten Bereich. Deine bisherige Fachkraft bleibt für Deine Beratung zuständig.'
+		],
+		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Neue Benachrichtigung',
 		preheader: 'Bitte melde dich an.',
@@ -274,7 +287,7 @@ export const deDu: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Anfrage prüfen', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
@@ -347,16 +360,20 @@ export const deDu: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Dein Einmalcode für die Anmeldung',
+		subject: 'Dein Einmalcode',
 		preheader: 'Der Code gilt {{expiryMinutes}} Minuten.',
 		headline: 'Dein Einmalcode',
-		paragraphs: ['Gib diesen Code im Anmeldefenster ein.'],
+		paragraphs: ['Gib diesen Code in {{platformName}} ein.'],
 		code: { label: 'Code', value: '{{otpCode}}' },
-		cta: { label: 'Zur Anmeldung', href: '{{loginUrl}}' },
+		cta: { label: '{{platformName}} öffnen', href: '{{loginUrl}}' },
 		footnote:
-			'Wenn du dich nicht anmelden wolltest, ändere bitte dein Passwort.',
+			'Wenn du diesen Code nicht angefordert hast, kannst du diese E-Mail ignorieren.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Diese E-Mail enthält einen Sicherheitscode und lässt sich nicht abbestellen. Bitte antworte nicht darauf.'
+		}
 	},
 
 	'einladung-traeger': {

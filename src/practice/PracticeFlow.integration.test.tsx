@@ -416,7 +416,10 @@ const SLOW = { timeout: 15000 };
 /** The step the tour shows now: its index, and its anchor live in the page. */
 const expectStep = async (index: number) => {
 	await waitFor(() => {
-		expect(joyride?.run).toBe(true);
+		expect(
+			joyride?.run,
+			`Expected active step ${index}; current index ${joyride?.stepIndex}; route ${route()}`
+		).toBe(true);
 		expect(joyride?.stepIndex).toBe(index);
 	}, SLOW);
 	const { target } = joyride!.steps[index];

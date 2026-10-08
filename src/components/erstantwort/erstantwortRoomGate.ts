@@ -1,8 +1,5 @@
-import {
-	getModalityIfKnown,
-	Modality,
-	type ModalityInput
-} from '../session/getModality';
+import { notificationConversationType } from './notificationConversationType';
+import { Modality, type ModalityInput } from '../session/getModality';
 
 /**
  * How a recognised Erstantwort (`FIRST_RESPONSE`) event is drawn in a room.
@@ -29,12 +26,16 @@ const EXCLUDED_MODALITIES: ReadonlySet<Modality> = new Set([
 
 export const getErstantwortRenderMode = (
 	isErstantwortEvent: boolean,
-	modality: Modality | undefined
+	modality: string | undefined
 ): ErstantwortRenderMode => {
 	if (!isErstantwortEvent) {
 		return 'none';
 	}
-	if (modality === undefined || EXCLUDED_MODALITIES.has(modality)) {
+	if (
+		modality === undefined ||
+		!(Object.values(Modality) as string[]).includes(modality) ||
+		EXCLUDED_MODALITIES.has(modality as Modality)
+	) {
 		return 'unavailable';
 	}
 	return 'sequence';
@@ -47,5 +48,5 @@ export const getErstantwortRenderModeForSession = (
 ): ErstantwortRenderMode =>
 	getErstantwortRenderMode(
 		isErstantwortEvent,
-		session ? getModalityIfKnown(session) : undefined
+		notificationConversationType(session)
 	);

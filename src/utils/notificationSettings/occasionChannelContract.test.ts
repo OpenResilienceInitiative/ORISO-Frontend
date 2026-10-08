@@ -28,6 +28,30 @@ describe('occasion channel contract', () => {
 		}
 	});
 
+	it('maps asker consent mail to its real event and existing switch', () => {
+		for (const id of [
+			'einsicht-angefragt',
+			'uebergabe-angefragt'
+		] as const) {
+			const contract = occasionChannelContract(id, 'asker');
+			expect(contract?.emailPreference).toEqual({
+				kind: 'switch',
+				source: {
+					kind: 'settings',
+					field: 'reassignmentNotificationEnabled'
+				}
+			});
+			expect(contract?.browser.kind).toBe('descriptor');
+			if (contract?.browser.kind === 'descriptor')
+				expect(contract.browser.eventTypes).toContain(
+					'case.handover.consent.requested'
+				);
+		}
+		expect(
+			occasionChannelContract('uebergabe-bestaetigt', 'asker')
+		).toBeUndefined();
+	});
+
 	it('keeps the two new-message recipients on their own email switches', () => {
 		const asker = occasionChannelContract('neue-nachricht', 'asker');
 		const consultant = occasionChannelContract(
@@ -97,6 +121,16 @@ describe('occasion channel contract', () => {
 		});
 		expect(occasionChannelContract('termin', 'asker')?.browser).toEqual({
 			kind: 'unmapped'
+		});
+	});
+
+	it('keeps the temporary-access mail inventory explicit without inventing a browser route', () => {
+		expect(occasionChannelContract('einsicht-angefragt').roles).toEqual([
+			'asker'
+		]);
+		expect(occasionChannelContract('einsicht-angefragt', 'asker')).toEqual({
+			emailPreference: { kind: 'no-switch' },
+			browser: { kind: 'unmapped' }
 		});
 	});
 
