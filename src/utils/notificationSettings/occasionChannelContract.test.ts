@@ -29,6 +29,9 @@ describe('occasion channel contract', () => {
 	});
 
 	it('maps asker consent mail to its real event and existing switch', () => {
+		expect(occasionChannelContract('einsicht-angefragt').roles).toEqual([
+			'asker'
+		]);
 		for (const id of [
 			'einsicht-angefragt',
 			'uebergabe-angefragt'
@@ -121,16 +124,6 @@ describe('occasion channel contract', () => {
 		});
 		expect(occasionChannelContract('termin', 'asker')?.browser).toEqual({
 			kind: 'unmapped'
-		});
-	});
-
-	it('keeps the temporary-access mail inventory explicit without inventing a browser route', () => {
-		expect(occasionChannelContract('einsicht-angefragt').roles).toEqual([
-			'asker'
-		]);
-		expect(occasionChannelContract('einsicht-angefragt', 'asker')).toEqual({
-			emailPreference: { kind: 'no-switch' },
-			browser: { kind: 'unmapped' }
 		});
 	});
 
