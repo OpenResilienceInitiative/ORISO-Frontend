@@ -1,3 +1,4 @@
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { NotificationSetup } from '../erstantwort/NotificationSetup';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
@@ -1200,6 +1201,10 @@ export const MessageItemComponent = ({
 	const isSystemNotification = parsedMessage.isSystemNotification;
 	const persistedHandoverGrant =
 		parsedMessage.systemNotificationHandoverGrant;
+	const isInformationalHandoverGrant =
+		persistedHandoverGrant?.clientConsent === 'NONE' &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup;
 	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
 	   `parsedMessage.systemNotificationType`, because the payload version has to
 	   be inspected too: an event from a newer server must render nothing at all
@@ -2120,13 +2125,7 @@ export const MessageItemComponent = ({
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
-										{persistedHandoverGrant?.clientConsent ===
-											'NONE' &&
-										hasUserAuthority(
-											AUTHORITIES.ASKER_DEFAULT,
-											userData
-										) &&
-										!activeSession.isGroup ? (
+										{isInformationalHandoverGrant ? (
 											<CaseHandoverInformationalBody
 												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
 												description={
@@ -2612,7 +2611,13 @@ export const MessageItemComponent = ({
 
 	const withGrantNotifications = (message: React.ReactNode) => (
 		<>
-			{message}
+			{isInformationalHandoverGrant ? (
+				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
+					{message}
+				</CarimatMessageContainer>
+			) : (
+				message
+			)}
 			{showGrantNotifications &&
 				(grantNotificationPolicy.emailAllowed ||
 					grantNotificationPolicy.browserAllowed) && (

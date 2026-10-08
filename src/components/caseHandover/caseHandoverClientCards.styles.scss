@@ -341,3 +341,9 @@
 		);
 	}
 }
+
+/* Persisted informational grants share the same structured rail as their
+   following notification message; legacy system notices keep their measure. */
+.caseHandoverPersistedGrant .messageItem__messageWrap {
+	max-width: 100%;
+}

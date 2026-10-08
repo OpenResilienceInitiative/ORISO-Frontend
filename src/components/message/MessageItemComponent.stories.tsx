@@ -2169,5 +2169,35 @@ export const InformationalGrantedNotificationContinuation: Story = {
 				.querySelector('.notificationChoiceHost')
 				?.closest('.messageItem__message')
 		).toBeNull();
+		const grant = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const setup = canvasElement
+			.querySelector<HTMLElement>('.notificationChoiceHost')!
+			.closest<HTMLElement>('.erstantwort__bubble')!;
+		await waitFor(() => {
+			const grantBounds = grant.getBoundingClientRect();
+			const setupBounds = setup.getBoundingClientRect();
+			expect(
+				Math.abs(grantBounds.width - setupBounds.width)
+			).toBeLessThanOrEqual(1);
+			expect(
+				Math.abs(grantBounds.left - setupBounds.left)
+			).toBeLessThanOrEqual(1);
+			expect(grant.scrollWidth).toBeLessThanOrEqual(
+				grant.clientWidth + 1
+			);
+		});
 	}
+};
+
+export const InformationalGrantedNotificationContinuationMobile: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — phone 390',
+	globals: { ...phone390Globals, locale: 'de' }
+};
+export const InformationalGrantedNotificationContinuationTablet: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
 };
