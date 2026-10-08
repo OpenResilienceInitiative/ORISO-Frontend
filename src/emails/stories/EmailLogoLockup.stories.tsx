@@ -43,8 +43,9 @@ export const LongPlatformName: Story = {
 export const ImagesBlocked: Story = {
 	name: 'Images blocked',
 	args: {
-		// Deliberately unresolvable, so the story shows what Outlook's default
-		// (and every "load images?" prompt) actually renders: the alt text.
+		// Deliberately unresolvable. The logo is decorative (alt=""), so a
+		// failed image leaves an empty spot and the name beside it stays;
+		// clients still draw their own placeholder frame (Outlook a box).
 		fragment: emailHeaderBar({
 			...emailSampleBrand,
 			logoUrl: '/deliberately-missing-logo.png'

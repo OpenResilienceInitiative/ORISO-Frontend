@@ -253,3 +253,21 @@ describe('WP-06 timeline filter', () => {
 		});
 	});
 });
+
+describe('Sonstiges chip bundles kinds without their own pill (Frank 2026-09-16)', () => {
+	it('matches unseeded rows and rows of the bundled families when Sonstiges is active', () => {
+		const items = [
+			{ id: 'a', eventType: 'message.new', readAt: null },
+			{ id: 'b', eventType: 'totally.unknown.type', readAt: null },
+			{ id: 'c', eventType: 'request.new', readAt: null }
+		];
+		const kept = filterTimelineItems(
+			items,
+			{ family: 'other', query: '', bundledUnderOther: ['messages'] },
+			() => ''
+		).map((item) => item.id);
+		expect(kept).toContain('b');
+		expect(kept).toContain('a');
+		expect(kept).not.toContain('c');
+	});
+});

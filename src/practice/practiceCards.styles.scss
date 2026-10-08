@@ -1,0 +1,29 @@
+.practiceCards {
+	&__card {
+		// A dashed edge sets practice apart from the tours of the screens.
+		border-style: dashed;
+	}
+
+	&__badges {
+		display: flex;
+		flex-wrap: wrap;
+		gap: $grid-base;
+	}
+
+	&__badge {
+		align-self: flex-start;
+		padding: 2px $grid-base;
+		border-radius: $button-border-radius;
+		font-size: $font-size-secondary;
+		font-weight: $font-weight-bold;
+		background-color: var(--m3-secondary-container, $form-input-border);
+		color: var(--m3-on-secondary-container, $primary);
+	}
+
+	&__phoneHint {
+		margin: 0;
+		font-size: $font-size-secondary;
+		line-height: $line-height-primary;
+		color: var(--m3-on-surface-variant, $tertiary);
+	}
+}

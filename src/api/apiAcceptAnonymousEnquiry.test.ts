@@ -11,7 +11,10 @@ vi.mock('../resources/scripts/endpoints', () => ({
 
 vi.mock('./fetchData', () => ({
 	FETCH_METHODS: { PUT: 'PUT' },
-	FETCH_ERRORS: { CONFLICT: 'CONFLICT' },
+	FETCH_ERRORS: {
+		CONFLICT: 'CONFLICT',
+		COUNSELLING_DPA_RESPONSE: 'COUNSELLING_DPA_RESPONSE'
+	},
 	fetchData: vi.fn(() => Promise.resolve())
 }));
 
@@ -22,7 +25,7 @@ describe('apiAcceptAnonymousEnquiry', () => {
 		expect(fetchData).toHaveBeenCalledWith({
 			url: '/service/conversations/askers/anonymous/103507/accept',
 			method: 'PUT',
-			responseHandling: ['CONFLICT']
+			responseHandling: ['CONFLICT', 'COUNSELLING_DPA_RESPONSE']
 		});
 	});
 });

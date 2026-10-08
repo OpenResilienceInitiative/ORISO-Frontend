@@ -97,12 +97,18 @@ Two independent switches per kind (Frank, 2026-09-14):
   in the history — "as if the event class did not exist for me" (example:
   drafts in the chat history — Slack does not show them, some counsellors
   want them).
-- **Pille (pill)** — whether the kind gets a chip in the chip row. A pill is
-  rendered **only while the kind has unread/new items** in the loaded feed
-  (e.g. a request in a group chat → the "Gruppen" pill appears at the top
-  with a count badge); it disappears again when nothing new is left, unless
-  it is the active chip. Pill requires Show; hiding a kind greys out its
-  pill switch.
+- **Pille (pill)** — whether the kind gets a chip in the chip row.
+  **Amended 2026-09-16 (Frank):** the chip is a menu entry and stays as long
+  as the pill is on; unread items are shown as a marker/count badge on the
+  chip, the chip never comes and goes with the count. Pill requires Show;
+  hiding a kind greys out its pill switch but keeps the stored intent, so
+  re-showing the kind brings its chip back. The row's **view** (icon pills
+  that expand when active, or compact text pills) and **auto-sort** (kinds
+  with unread items float left) are two further per-section settings edited
+  in this dialog (`view`: `icons` | `labels` | `text`, `autoSort`; defaults
+  icons + on). A kind whose pill is off is **bundled under Sonstiges**: its
+  unread items count on the Sonstiges chip and that chip filters to those
+  rows. Column captions are "In der Liste" and "Als Pille".
 - **Sonstiges (other)** — the catch-all for every kind/event the section does
   not map explicitly (new backend event types, future families). It is
   **always shown** (switch fixed on) so nothing can silently vanish, and it
@@ -187,10 +193,10 @@ Rules:
   runs, so their chip disappears from the row (no chip for what you cannot
   see). The chip row does **not** grow a "hidden" chip; the filter button's
   dot is the only hint (Q3 decided).
-- The chip row is now **user-gated**: a family chip renders only if
-  `kinds[family].pill` is on **and** the family has unread items in the
-  loaded feed (count badge), or it is the active chip. Today's "one chip per
-  family present" rule becomes the default (`pill: true` everywhere).
+- The chip row is **user-gated**: a family chip renders if
+  `kinds[family].pill` is on (**amended 2026-09-16**: no longer only while
+  unread items exist — the unread count is the badge). Default `pill: true`
+  everywhere.
 - **Sonstiges**: event types without a family mapping (today none — every
   seeded type has a family — but the registry falls back to `system` for
   unknown types, `registry.ts:99`) are classified as `other`, always shown,
@@ -219,7 +225,12 @@ Rules:
 Rules:
 
 - A kind that the tenant does not enable is not listed (same gating as the
-  chips, `SessionsListToolbar.tsx:392-415`). Implemented (slice 4) in
+  chips, `SessionsListToolbar.tsx:392-415`). **Amended 2026-09-16 (Frank):**
+  for the Träger feature switches (circles, internal groups) this holds only
+  while no rows of that kind exist (`absent`); with rows still loaded the
+  kind is `deactivated` — listed, both switches locked, hint in the row,
+  chip locked, chip click opens a snackbar naming the switched-off format.
+  Nothing vanishes silently. Implemented (slice 4) in
   `SessionsList.displayFilterKinds`: live chat needs the availability
   toggle, internal groups the supervision feature, circles and the future
   timeline the group-chat feature, supervision the viewer eligibility.
@@ -790,3 +801,17 @@ Additional product input that changed the spec (same conversation):
    unread-count with exclusions.
 
 Each slice is a separate PR with Storybook before/after screenshots.
+
+### Amendment 2026-09-16 (round 7)
+
+- **Gespräche rows = toolbar chips.** Chat erstellen, Ungelesen, Entwürfe, Mail-Beratung, Live-Chat, Interner
+  Gruppenchat, Gesprächskreis, Supervision, Archiviert, Termine (placeholder), Sonstiges. Erstellen/Ungelesen/
+  Entwürfe/Archiviert are pill-only: no rows of their own, no tone, never bundled under "Weitere". The Erstellen
+  row is absent when the Träger has the create flow off.
+- **Live-Chat pill modes** (`KindSetting.pillMode`): `dynamic` (default) = availability on or an asker wrote
+  something new; `session` = also while any live chat is in the list; `fixed` = always. The open live chat keeps
+  its chip in every mode.
+- **Rail Live-Chat button**: turning availability on while a live chat is open navigates into that conversation;
+  otherwise into the queue with the chip active (unchanged). Turning off never navigates.
+- **Tone picker**: Standard, Klingelton, Ton 1–6 (plus the stored tone if outside), Stumm.
+- **Legend**: "Filter-Button Anzeige-Optionen".

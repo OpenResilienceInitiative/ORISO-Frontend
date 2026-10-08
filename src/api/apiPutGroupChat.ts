@@ -14,13 +14,25 @@ export const GROUP_CHAT_API = {
 
 export const apiPutGroupChat = async (
 	groupChatId: number | string,
-	groupChatApi: string
+	groupChatApi: string,
+	query?: Record<string, string>
 ): Promise<any> => {
-	const url = endpoints.groupChatBase + groupChatId + groupChatApi;
+	const search = query ? `?${new URLSearchParams(query).toString()}` : '';
+	const url = endpoints.groupChatBase + groupChatId + groupChatApi + search;
 
 	return fetchData({
 		url: url,
 		method: FETCH_METHODS.PUT,
-		responseHandling: [FETCH_ERRORS.CONFLICT, FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [
+			FETCH_ERRORS.CONFLICT,
+			FETCH_ERRORS.CATCH_ALL,
+			...([
+				GROUP_CHAT_API.START,
+				GROUP_CHAT_API.JOIN,
+				GROUP_CHAT_API.ASSIGN
+			].includes(groupChatApi)
+				? [FETCH_ERRORS.COUNSELLING_DPA_RESPONSE]
+				: [])
+		]
 	});
 };

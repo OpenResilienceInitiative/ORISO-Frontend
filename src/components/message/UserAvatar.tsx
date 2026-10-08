@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useMemo } from 'react';
 import { AnimalAvatar } from '../pseudonym/AnimalAvatar';
 import { generateAvatarForUser } from '../../utils/pseudonymGenerator';
+import type { AvatarChoice } from '../../utils/avatarChoice';
 import { formatMessagePersonName } from './messageNameUtils';
 
 interface UserAvatarProps {
@@ -17,6 +18,10 @@ interface UserAvatarProps {
 	 * surrounding container already provides the white ring (e.g. chat messages).
 	 */
 	ring?: boolean;
+	/** The animal circle's own grey outline; see `AnimalAvatar`. */
+	outline?: boolean;
+	/** The avatar the user picked in their profile (#1240); default when absent. */
+	choice?: AvatarChoice | null;
 }
 
 /**
@@ -32,7 +37,9 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 	lastName,
 	userId,
 	size = '32px',
-	ring = true
+	ring = true,
+	outline = true,
+	choice
 }) => {
 	const resolvedName = formatMessagePersonName(
 		displayName,
@@ -41,7 +48,21 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 		lastName
 	);
 	const avatarKey = userId || username || 'unknown';
-	const avatar = useMemo(() => generateAvatarForUser(avatarKey), [avatarKey]);
+	const chosenFile = choice?.file;
+	const onPrimary = !!choice?.onPrimary;
+	const avatar = useMemo(() => {
+		const derived = generateAvatarForUser(avatarKey);
+		if (!chosenFile) return derived;
+		// A counsellor motif sits on primary / on-primary (#1046); an advice
+		// seeker keeps the colours derived from their id, only the animal changes.
+		return onPrimary
+			? {
+					file: chosenFile,
+					bg: 'var(--m3-primary)',
+					iconColor: 'currentColor'
+				}
+			: { ...derived, file: chosenFile };
+	}, [avatarKey, chosenFile, onPrimary]);
 
 	// Keep the overall footprint equal to `size` so existing fixed-size
 	// containers don't shift; the white ring is created by shrinking the inner
@@ -68,10 +89,11 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 				background: ring ? '#fff' : 'transparent',
 				boxShadow: ring ? '0 2px 8px 0 rgba(0, 0, 0, 0.10)' : 'none',
 				boxSizing: 'border-box',
-				flexShrink: 0
+				flexShrink: 0,
+				color: onPrimary ? 'var(--m3-on-primary, #ffffff)' : undefined
 			}}
 		>
-			<AnimalAvatar avatar={avatar} size={innerSize} />
+			<AnimalAvatar avatar={avatar} size={innerSize} outline={outline} />
 		</span>
 	);
 };
