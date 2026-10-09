@@ -1,3 +1,4 @@
+import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import * as React from 'react';
 import {
 	useCallback,
@@ -37,6 +38,7 @@ import {
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from './MessageTimeline';
+import { useThreadFocusReturn } from './useThreadFocusReturn';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import {
 	FailedSend,
@@ -200,6 +202,7 @@ import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
+import { GroupConsentGate } from '../groupChat/consent/GroupConsentGate';
 import {
 	generatePseudonym,
 	regeneratePseudonym,
@@ -225,6 +228,10 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
+import {
+	usePracticeActive,
+	usePracticeSupervisorsRevision
+} from '../../practice';
 const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
@@ -232,6 +239,9 @@ const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 );
 
 interface SessionItemProps {
+	/** Current-session Carimat continuation inside the main scrolling timeline. */
+	mainTimelineSupplement?: React.ReactNode;
+	mainTimelineSupplementTime?: number;
 	isTyping?: Function;
 	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
@@ -585,6 +595,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldFadeSessionChrome = false;
 	const shouldShowConsentGate =
 		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	/* ADR-022 gate 2 in a self-help group (#1499): the group's Beratungsstelle
+	   statement, before the first message, for a client whose agreement is not
+	   on record. Decided by the recorded state, never by guessing whether the
+	   account is temporary — a group join records none at registration. */
+	const [groupConsentAccepted, setGroupConsentAccepted] = useState(false);
+	const shouldShowGroupConsentGate =
+		Boolean(activeSession.isGroup) &&
+		isAskerUser &&
+		!isConsultantUser &&
+		!privacyAcceptanceRecorded &&
+		!groupConsentAccepted;
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
@@ -600,6 +621,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		requiresPseudonymConfirmation,
 		isInAnonymousWaitingQueuePhase
 	});
+	/* Either gate hides the conversation and the composer until it is passed. */
+	const blocksConversation =
+		shouldBlockAnonymousInquiryChat || shouldShowGroupConsentGate;
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
@@ -764,8 +788,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => parseChannel(location.search),
 		[location.search]
 	);
+	const rememberThreadOpener = useThreadFocusReturn({
+		channel: routeChannel,
+		sessionId: activeSession.item.id,
+		timelineRef: scrollContainerRef
+	});
+	// A gate hides threads too: the panel has its own timeline and composer.
 	const activeThreadRootId =
-		isThreadsEnabled && routeChannel?.kind === 'thread'
+		isThreadsEnabled &&
+		!blocksConversation &&
+		routeChannel?.kind === 'thread'
 			? routeChannel.rootId
 			: null;
 	const activeThreadRootMessage = useMemo<MessageItem | null>(
@@ -881,6 +913,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		]
 	);
 
+	// Practice only: bumps when the learner adds a supervisor under this case.
+	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
 	// Check if current user is a supervisor. The response stays tied to the
 	// session that requested it: a late lookup must never expose the previous
 	// case's side room to the new session.
@@ -947,7 +981,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item.id,
 		isConsultantUser,
 		isSupervisionEnabledForCurrentChat,
-		userData.userId
+		userData.userId,
+		practiceSupervisorsRevision
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
@@ -1825,6 +1860,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}`;
 	const activeSessionIdentityRef = useRef(activeSessionIdentity);
 	activeSessionIdentityRef.current = activeSessionIdentity;
+	const scheduleMessageRefresh = useDelayedSessionRefresh(
+		activeSessionIdentity,
+		props.refreshMessages
+	);
 	const [retryRequest, setRetryRequest] = useState<{
 		requestId: string;
 		failedSendId: string;
@@ -1836,6 +1875,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null>(null);
 	// Read the live retry request inside the (non-memoised) success handler,
 	// which the composer may invoke from a closure captured a render earlier.
@@ -1852,7 +1892,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			isAside = false,
 			replyToEventId?: string | null,
 			mentionedUserIds: string[] = [],
-			targetRoomId: string | null = null
+			targetRoomId: string | null = null,
+			feedbackMailIntent = false
 		) => {
 			if (
 				sessionIdentity &&
@@ -1878,7 +1919,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										isAside,
 										replyToEventId,
 										mentionedUserIds,
-										targetRoomId
+										targetRoomId,
+										feedbackMailIntent
 									}
 								: failed
 						);
@@ -1895,7 +1937,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						isAside,
 						replyToEventId: replyToEventId || null,
 						mentionedUserIds,
-						targetRoomId: targetRoomId || null
+						targetRoomId: targetRoomId || null,
+						feedbackMailIntent
 					}
 				];
 			});
@@ -1922,7 +1965,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							isAside: failed.isAside,
 							replyToEventId: failed.replyToEventId || null,
 							mentionedUserIds: failed.mentionedUserIds,
-							targetRoomId: failed.targetRoomId || null
+							targetRoomId: failed.targetRoomId || null,
+							feedbackMailIntent: failed.feedbackMailIntent
 						}
 					: null;
 			});
@@ -1950,7 +1994,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			isAside?: boolean,
 			replyToEventId?: string | null,
 			mentionedUserIds?: string[],
-			targetRoomId?: string | null
+			targetRoomId?: string | null,
+			feedbackMailIntent?: boolean
 		) =>
 			handleSendError(
 				message,
@@ -1962,7 +2007,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				isAside,
 				replyToEventId,
 				mentionedUserIds,
-				targetRoomId ?? null
+				targetRoomId ?? null,
+				feedbackMailIntent
 			),
 		[activeSessionIdentity, handleSendError]
 	);
@@ -1998,11 +2044,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		setRetryRequest(null);
 
-		if (props.refreshMessages) {
-			setTimeout(() => {
-				props.refreshMessages();
-			}, 500);
-		}
+		scheduleMessageRefresh(sessionIdentity);
 	};
 
 	// Route writer (B2 / T24): opening a channel PUSHES a history entry
@@ -2054,7 +2096,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	const handleOpenThread = useCallback(
-		(message: MessageItem) => {
+		(message: MessageItem, opener?: HTMLElement) => {
+			rememberThreadOpener(message._id, opener);
 			openChannel({ kind: 'thread', rootId: message._id }, 'header');
 			setIsThreadListOpen(false);
 			// Per-thread unread (#435): opening a thread marks it read up to
@@ -2069,7 +2112,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setThreadReadVersion((version) => version + 1);
 			}
 		},
-		[threadSummariesRaw, resolvedMatrixRoomId, openChannel]
+		[
+			threadSummariesRaw,
+			resolvedMatrixRoomId,
+			openChannel,
+			rememberThreadOpener
+		]
 	);
 
 	const handleCloseThread = useCallback(() => {
@@ -2203,6 +2251,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// lands on the closed main chat instead of re-opening (review D-3).
 	// The decision itself is pure: `decideAutoOpen` (channelRoute.ts).
 	const autoOpenedForSessionRef = useRef<string | number | null>(null);
+	// Practice (FE#1622): the tour teaches opening the team discussion; a panel
+	// opening by itself would remove the button its step points at.
+	const isPracticing = usePracticeActive();
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
 		if (!sessionId || !isSupervisionPanelViewer) {
@@ -2219,7 +2270,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			hasTeamSideRoom,
 			teamDiscussionResolved: props.teamDiscussionResolved,
 			canStartTeamDiscussion:
-				Boolean(activeSession.isEnquiry) && canOpenTeamSideRoom
+				Boolean(activeSession.isEnquiry) &&
+				canOpenTeamSideRoom &&
+				!isPracticing
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2236,6 +2289,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		props.teamDiscussionResolved,
 		activeSession.isEnquiry,
 		canOpenTeamSideRoom,
+		isPracticing,
 		messages,
 		setChannelRoute
 	]);
@@ -2598,8 +2652,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
+	// Practice: no calls; there is nobody real to call.
 	const mayCallInSideRoom =
-		isConsultantUser && !isOnlyEnquiry && !activeSession.isEnquiry;
+		isConsultantUser &&
+		!isOnlyEnquiry &&
+		!activeSession.isEnquiry &&
+		!isPracticing;
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({
@@ -2990,6 +3048,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{/* Thread-panel-UX (#435): per-room list of all threads. */}
 				{!isEmbeddedNotificationsView &&
 					isThreadsEnabled &&
+					!blocksConversation &&
 					threadSummariesRaw.size > 0 && (
 						<div className="session__threadListBar">
 							<button
@@ -3072,6 +3131,19 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							onAccept={handleAnonymousInquiryConsentAccept}
 						/>
 					)}
+					{shouldShowGroupConsentGate && (
+						<GroupConsentGate
+							agencyId={
+								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							onAccepted={() => {
+								setGroupConsentAccepted(true);
+								apiGetUserData()
+									.then((fresh) => setUserData(fresh))
+									.catch(() => undefined);
+							}}
+						/>
+					)}
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
@@ -3081,7 +3153,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							{pseudonymConfirmed && <PrivacyMessageCard />}
 						</div>
 					)}
-					{!shouldBlockAnonymousInquiryChat && (
+					{!blocksConversation && (
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
@@ -3114,7 +3186,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 								/>
 							</div>
 						)}
-					{!shouldBlockAnonymousInquiryChat && (
+					{!blocksConversation && (
 						<div className={'message-holder'}>
 							{shouldShowRobotMessages &&
 								!showWaitingMiniGame &&
@@ -3229,11 +3301,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 									</div>
 								</div>
 							)}
+							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<MessageTimeline
 									messages={messages}
 									renderMode="main"
+									supplement={props.mainTimelineSupplement}
+									supplementTime={
+										props.mainTimelineSupplementTime
+									}
 									clientName={
 										getContact(activeSession)?.username ||
 										translate(
@@ -3410,6 +3487,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										}}
 										className="session__teamDiscussionAction"
 										testingAttribute="enquiry-open-team"
+										tourTarget="enquiry-team-button"
 										buttonHandle={() =>
 											selectChannelFromFab(
 												channelId({ kind: 'team' })
@@ -3505,7 +3583,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				{canRenderClientComposer({
 					canWriteMessage,
 					isSupervisor: isSupervisorView,
-					shouldBlockAnonymousInquiryChat
+					shouldBlockAnonymousInquiryChat: blocksConversation
 				}) && (
 					<div
 						className={clsx(
@@ -3597,6 +3675,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							</Suspense>
 						)}
 						{areRobotMessagesComplete &&
+							// Practice: no attachments; an upload would leave the page.
+							!isPracticing &&
 							hasMediaUploadFeature(
 								tenantData?.settings,
 								chatType
@@ -4025,6 +4105,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: translate('supervision.panel.title')
 				})}
 				data-cy="stage-panel"
+				data-tour-target="supervision-panel"
 				header={
 					<PanelHeader
 						kind="supervision"
@@ -4178,6 +4259,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						hideSupervisorAudience
 						autoFocusEditor={!focusPanelHeader}
 						flushCorner={panelComposerFlush}
+						feedbackMailIntent
 						accent="supervision"
 						onMobileNavigateBack={
 							isPhoneLayout ? closeChannel : undefined
@@ -4202,6 +4284,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					title: teamChannelTitle
 				})}
 				data-cy="stage-panel"
+				data-tour-target="team-discussion-panel"
 				header={
 					<PanelHeader
 						kind="team"

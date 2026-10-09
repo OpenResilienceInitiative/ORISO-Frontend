@@ -15,9 +15,9 @@ vi.mock('react-i18next', () => ({
 				'Geben Sie mir hier ein Signal',
 			'erstantwort.notificationChoice.browserHint':
 				'Ohne Adresse — funktioniert aber nur auf diesem Gerät.',
-			'erstantwort.notificationChoice.both':
+			'erstantwort.notificationChoice.bothSetup':
 				'Beides, und Passwort jetzt selbst festlegen',
-			'erstantwort.notificationChoice.bothHint':
+			'erstantwort.notificationChoice.bothSetupHint':
 				'Empfohlen. Dann kommen Sie auch wieder herein, wenn Sie etwas vergessen.'
 		};
 		return {
@@ -56,7 +56,8 @@ describe('NotificationChoiceCard (#825 post-dispatch)', () => {
 		);
 
 		expect(screen.queryByText(/Geben Sie mir hier ein Signal/i)).toBeNull();
-		expect(screen.getAllByRole('button')).toHaveLength(2);
+		expect(screen.getAllByRole('button')).toHaveLength(1);
+		expect(screen.queryByText(/Beides/i)).toBeNull();
 	});
 
 	it('says out loud that the browser signal only reaches this device', () => {
@@ -72,5 +73,32 @@ describe('NotificationChoiceCard (#825 post-dispatch)', () => {
 		fireEvent.click(both as HTMLButtonElement);
 
 		expect(both?.getAttribute('aria-pressed')).toBe('true');
+	});
+	it('does not invite an email when the tenant disables it', () => {
+		render(
+			<NotificationChoiceCard
+				isEmailEnabled={false}
+				onChoose={() => undefined}
+			/>
+		);
+		expect(screen.queryByText(/Schreiben Sie mir eine E-Mail/i)).toBeNull();
+		expect(screen.queryByText(/Beides/i)).toBeNull();
+	});
+	it('updates selection when saved settings arrive', () => {
+		const { rerender } = render(
+			<NotificationChoiceCard chosen="EMAIL" onChoose={() => undefined} />
+		);
+		rerender(
+			<NotificationChoiceCard
+				chosen="BROWSER"
+				onChoose={() => undefined}
+			/>
+		);
+		expect(
+			screen
+				.getByText(/Geben Sie mir hier ein Signal/i)
+				.closest('button')
+				?.getAttribute('aria-pressed')
+		).toBe('true');
 	});
 });

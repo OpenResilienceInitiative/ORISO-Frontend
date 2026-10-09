@@ -76,6 +76,63 @@ describe('M3Dialog', () => {
 		expect(onConfirm).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps completion outside the scrolling body and retains default actions', () => {
+		const onConfirm = vi.fn();
+		render(
+			<M3Dialog
+				title="Termin buchen"
+				onClose={() => undefined}
+				footerContent={
+					<label>
+						<input type="checkbox" />
+						Zustimmung
+					</label>
+				}
+				actions={[
+					{ label: 'Beitreten', onClick: onConfirm, primary: true }
+				]}
+			>
+				<p>Anmeldedaten.</p>
+			</M3Dialog>
+		);
+
+		const checkbox = screen.getByRole('checkbox', { name: 'Zustimmung' });
+		expect(checkbox.closest('.m3Dialog__body')).toBeNull();
+		expect(checkbox.closest('.m3Dialog__footer')).toBeTruthy();
+		expect(
+			screen
+				.getByText('Anmeldedaten.')
+				.closest('.m3Dialog__body')
+				?.getAttribute('tabindex')
+		).toBe('0');
+		fireEvent.click(screen.getByRole('button', { name: 'Beitreten' }));
+		expect(onConfirm).toHaveBeenCalledTimes(1);
+	});
+
+	it('allows a custom completion action in the pinned action row', () => {
+		render(
+			<M3Dialog
+				title="Termin buchen"
+				onClose={() => undefined}
+				actions={[
+					{ label: 'Default action', onClick: () => undefined }
+				]}
+				actionsContent={
+					<button type="button">Gespräch beginnen</button>
+				}
+			/>
+		);
+
+		expect(
+			screen.queryByRole('button', { name: 'Default action' })
+		).toBeNull();
+		const action = screen.getByRole('button', {
+			name: 'Gespräch beginnen'
+		});
+		expect(action.closest('.m3Dialog__actions')).toBeTruthy();
+		expect(action.closest('.m3Dialog__body')).toBeNull();
+	});
+
 	/**
 	 * Only the confirming action carries colour. A row where every button is
 	 * primary reads as "all equally likely", which is exactly what the M3

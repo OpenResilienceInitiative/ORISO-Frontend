@@ -1,3 +1,15 @@
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
+import {
+	ChatMenuDropdown,
+	ChatMenuDropdownItem
+} from '../chatMenuDropdown/ChatMenuDropdown';
+import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
+import { useMenuEffects } from '../../features/menu-effects/useMenuEffects';
 import * as React from 'react';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import sanitizeHtml from 'sanitize-html';
@@ -13,7 +25,6 @@ import {
 	useTenant
 } from '../../globalState';
 import { STATUS_ARCHIVED } from '../../globalState/interfaces';
-import { isUserModerator } from '../session/sessionHelpers';
 import { MessageDisplayName } from './MessageDisplayName';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { markdownToDraft } from 'markdown-draft-js';
@@ -33,11 +44,7 @@ import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRo
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
-import {
-	getModality,
-	getModalityIfKnown,
-	Modality
-} from '../session/getModality';
+import { getModality, Modality } from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
 	type MediaChatType
@@ -47,25 +54,12 @@ import { Appointment } from './Appointment';
 import { decryptText, MissingKeyError } from '../../utils/encryptionHelpers';
 import { e2eeParams } from '../../hooks/useE2EE';
 import { E2EEActivatedMessage } from './E2EEActivatedMessage';
-import {
-	ReassignRequestAcceptedMessage,
-	ReassignRequestDeclinedMessage,
-	ReassignRequestMessage,
-	ReassignRequestSentMessage
-} from './ReassignMessage';
-import {
-	apiSendAliasMessage,
-	ConsultantReassignment,
-	ReassignStatus
-} from '../../api/apiSendAliasMessage';
-import { apiPatchMessage } from '../../api/apiPatchMessage';
-import { apiSessionAssign } from '../../api';
+import { HistoricalReassignMessage } from './ReassignMessage';
 
 import { MasterKeyLostMessage } from './MasterKeyLostMessage';
 import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
-import { ReactComponent as TrashIcon } from '../../resources/img/icons/trash.svg';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
 import {
 	IBooleanSetting,
@@ -74,9 +68,6 @@ import {
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { ReactComponent as XIllustration } from '../../resources/img/illustrations/x.svg';
 import { BUTTON_TYPES } from '../button/Button';
-import { apiDeleteMessage } from '../../api/apiDeleteMessage';
-import { FlyoutMenu } from '../flyoutMenu/FlyoutMenu';
-import { BanUser, BanUserOverlay } from '../banUser/BanUser';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { VideoChatDetails, VideoChatDetailsAlias } from './VideoChatDetails';
 import { MessageAvatar } from './MessageAvatar';
@@ -90,6 +81,7 @@ import {
 } from './messageConstants';
 import { CaseHandoverSystemMessageBody } from '../caseHandover/CaseHandoverClientCards';
 import { getVisibleCaseHandoverInternalDetailsForViewer } from '../caseHandover/caseHandoverPrivacy';
+import { neutralLegacyReasonLabel } from '../caseHandover/caseHandoverReasons';
 import { createPortal } from 'react-dom';
 import {
 	autoUpdate,
@@ -117,6 +109,11 @@ import { MessageDateDivider } from './MessageDateDivider';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
 import { getQuickEmojis, rememberEmoji } from '../../utils/recentEmojis';
+import {
+	directAvatarChoice,
+	memberAvatarChoice
+} from '../../utils/sessionAvatarChoice';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -353,7 +350,7 @@ interface MessageItemComponentProps extends MessageItem {
 		replyCount: number;
 		lastReplyText: string;
 	};
-	onOpenThread?: () => void;
+	onOpenThread?: (opener?: HTMLElement) => void;
 	/** Relations foundation (#435): this message replies to that event. */
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
@@ -403,7 +400,6 @@ export const MessageItemComponent = ({
 	attachments,
 	file,
 	isNotRead,
-	isUserBanned,
 	t,
 	rid,
 	handleDecryptionErrors,
@@ -430,12 +426,13 @@ export const MessageItemComponent = ({
 	encryptionBroke
 }: MessageItemComponentProps) => {
 	const { t: translate } = useTranslation();
-	const { activeSession, reloadActiveSession } =
+	const { activeSession, avatarMembers = [] } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
 	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const [showGrantNotifications, setShowGrantNotifications] = useState(false);
 	const [deleteOverlay, setDeleteOverlay] = useState(false);
 	const [isDeleteRequestInProgress, setIsDeleteRequestInProgress] =
 		useState(false);
@@ -478,6 +475,7 @@ export const MessageItemComponent = ({
 	}, [getComparableRecipientIds, userData?.displayName, userData?.userName]);
 
 	const [isExpanded, setIsExpanded] = useState(false);
+	const { motionEnabled } = useMenuEffects();
 	const [isActionMenuOpen, setIsActionMenuOpen] = useState(false);
 	const [actionMenuPosition, setActionMenuPosition] = useState<{
 		top: number;
@@ -493,6 +491,7 @@ export const MessageItemComponent = ({
 	>(null);
 	const [actionMenuPlacement, setActionMenuPlacement] =
 		useState<Placement>('right-start');
+	const [actionMenuOrigin, setActionMenuOrigin] = useState('left top');
 	// Quick-reaction row: the user's own recent picks, refreshed every time the
 	// menu opens, plus the "more" button that hands over to the full picker.
 	const [quickEmojis, setQuickEmojis] = useState<string[]>(getQuickEmojis);
@@ -507,7 +506,88 @@ export const MessageItemComponent = ({
 	const [visibilityMenuAnchor, setVisibilityMenuAnchor] =
 		useState<Element | null>(null);
 	const [visibilityMenuPlacement, setVisibilityMenuPlacement] =
-		useState<Placement>('top-start');
+		useState<Placement>('right-start');
+	const [visibilityMenuOrigin, setVisibilityMenuOrigin] =
+		useState('left top');
+	const resetMessageMenus = useCallback(() => {
+		setIsActionMenuOpen(false);
+		setIsVisibilityMenuOpen(false);
+		setActionMenuPosition(null);
+		setVisibilityMenuPosition(null);
+	}, []);
+	const closeMessageMenus = useCallback(() => {
+		const anchor = isActionMenuOpen
+			? actionMenuAnchor
+			: visibilityMenuAnchor;
+		resetMessageMenus();
+		if (anchor instanceof HTMLElement) anchor.focus();
+	}, [
+		isActionMenuOpen,
+		actionMenuAnchor,
+		visibilityMenuAnchor,
+		resetMessageMenus
+	]);
+	useEffect(() => {
+		if (!isActionMenuOpen && !isVisibilityMenuOpen) return;
+		const onKey = (event: KeyboardEvent) => {
+			const menu = isActionMenuOpen
+				? actionMenuRef.current
+				: visibilityMenuRef.current;
+			if (
+				menu?.contains(event.target as Node) &&
+				['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)
+			) {
+				const items = Array.from(
+					menu.querySelectorAll<HTMLElement>(
+						'button:not(:disabled), a[href]'
+					)
+				);
+				const index = items.indexOf(
+					document.activeElement as HTMLElement
+				);
+				const next =
+					event.key === 'Home'
+						? 0
+						: event.key === 'End'
+							? items.length - 1
+							: (index +
+									(event.key === 'ArrowDown' ? 1 : -1) +
+									items.length) %
+								items.length;
+				event.preventDefault();
+				items[next]?.focus();
+			}
+
+			if (
+				event.key === 'Escape' &&
+				!event.defaultPrevented &&
+				!isQuickEmojiPickerOpen
+			) {
+				event.preventDefault();
+				closeMessageMenus();
+			}
+		};
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+	}, [
+		isActionMenuOpen,
+		isVisibilityMenuOpen,
+		isQuickEmojiPickerOpen,
+		closeMessageMenus
+	]);
+	const actionMenuReady = isActionMenuOpen && Boolean(actionMenuPosition);
+	const visibilityMenuReady =
+		isVisibilityMenuOpen && Boolean(visibilityMenuPosition);
+	useEffect(() => {
+		const menu = actionMenuReady
+			? actionMenuRef.current
+			: visibilityMenuReady
+				? visibilityMenuRef.current
+				: null;
+		menu?.querySelector<HTMLElement>(
+			'button:not(:disabled), a[href]'
+		)?.focus();
+	}, [actionMenuReady, visibilityMenuReady]);
 	// Slack-style long-press on the bubble opens the action menu (mobile).
 	const longPressTimerRef = React.useRef<number | null>(null);
 	const longPressStartRef = React.useRef<{ x: number; y: number } | null>(
@@ -547,7 +627,7 @@ export const MessageItemComponent = ({
 			return;
 		}
 		setIsQuickEmojiPickerOpen(false);
-	}, [isActionMenuOpen]);
+	}, [isActionMenuOpen, closeMessageMenus, actionMenuAnchor]);
 
 	/** React with `emoji` and promote it to the front of the recent list. */
 	const applyQuickReaction = useCallback(
@@ -556,9 +636,9 @@ export const MessageItemComponent = ({
 			setQuickEmojis(getQuickEmojis());
 			onReact?.(emoji);
 			setIsQuickEmojiPickerOpen(false);
-			setIsActionMenuOpen(false);
+			closeMessageMenus();
 		},
-		[onReact]
+		[onReact, closeMessageMenus]
 	);
 
 	useEffect(() => {
@@ -580,14 +660,21 @@ export const MessageItemComponent = ({
 			) {
 				return;
 			}
-			if (!actionMenuRef.current?.contains(target)) {
-				setIsActionMenuOpen(false);
+			if (
+				!actionMenuRef.current?.contains(target) &&
+				!(
+					actionMenuAnchor instanceof HTMLElement &&
+					actionMenuAnchor.contains(target)
+				)
+			) {
+				event.preventDefault();
+				closeMessageMenus();
 			}
 		};
 		document.addEventListener('mousedown', handleOutsideClick);
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isActionMenuOpen]);
+	}, [isActionMenuOpen, closeMessageMenus, actionMenuAnchor]);
 
 	useEffect(() => {
 		if (!isVisibilityMenuOpen) {
@@ -598,15 +685,19 @@ export const MessageItemComponent = ({
 			if (!target) {
 				return;
 			}
-			if (!visibilityMenuRef.current?.contains(target)) {
-				setIsVisibilityMenuOpen(false);
+			if (
+				!visibilityMenuRef.current?.contains(target) &&
+				!visibilityMenuAnchor?.contains(target)
+			) {
+				event.preventDefault();
+				closeMessageMenus();
 				setVisibilityMenuPosition(null);
 			}
 		};
 		document.addEventListener('mousedown', handleOutsideClick);
 		return () =>
 			document.removeEventListener('mousedown', handleOutsideClick);
-	}, [isVisibilityMenuOpen]);
+	}, [isVisibilityMenuOpen, closeMessageMenus, visibilityMenuAnchor]);
 
 	useEffect(
 		() => () => {
@@ -1113,6 +1204,12 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	const persistedHandoverGrant =
+		parsedMessage.systemNotificationHandoverGrant;
+	const isInformationalHandoverGrant =
+		persistedHandoverGrant?.clientConsent === 'NONE' &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup;
 	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
 	   `parsedMessage.systemNotificationType`, because the payload version has to
 	   be inspected too: an event from a newer server must render nothing at all
@@ -1123,8 +1220,16 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const erstantwortModality = useMemo(
-		() => (activeSession ? getModalityIfKnown(activeSession) : undefined),
+		() => notificationConversationType(activeSession),
 		[activeSession]
+	);
+	const grantNotificationPolicy = notificationChannelPolicy(
+		tenant?.settings,
+		erstantwortModality
+	);
+	useEffect(
+		() => setShowGrantNotifications(false),
+		[activeSession.item.id, userData?.userId, tenant?.id, _id]
 	);
 	/* An Erstantwort in an internal counsellor room would be a category error —
 	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
@@ -1170,8 +1275,10 @@ export const MessageItemComponent = ({
 	const systemNotificationDescription =
 		parsedMessage.systemNotificationDescription ||
 		parsedMessage.cleanedMessage;
-	const systemNotificationReasonLabel =
-		parsedMessage.systemNotificationReasonLabel;
+	const systemNotificationReasonLabel = neutralLegacyReasonLabel(
+		translate,
+		parsedMessage.systemNotificationReasonLabel
+	);
 	const systemNotificationExplanation =
 		parsedMessage.systemNotificationExplanation;
 	const visibleCaseHandoverInternalDetails =
@@ -1234,39 +1341,6 @@ export const MessageItemComponent = ({
 			return 'user';
 		}
 		return 'consultant';
-	};
-
-	const clickReassignRequestMessage = (accepted, toConsultantId) => {
-		if (accepted) {
-			apiSessionAssign(activeSession.item.id, toConsultantId)
-				.then(() => {
-					apiPatchMessage(
-						toConsultantId,
-						ReassignStatus.CONFIRMED,
-						_id
-					)
-						.then(() => {
-							// WORKAROUND for an issue with reassignment and old users breaking the lastMessage for this session
-							apiSendAliasMessage({
-								matrixRoomId: activeSession.rid,
-								type: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT_RESET_LAST_MESSAGE
-							});
-							reloadActiveSession();
-						})
-						.catch((error) => {
-							/* console.log(error); */
-						});
-				})
-				.catch((error) => {
-					/* console.log(error); */
-				});
-		} else {
-			apiPatchMessage(toConsultantId, ReassignStatus.REJECTED, _id).catch(
-				(error) => {
-					/* console.log(error); */
-				}
-			);
-		}
 	};
 
 	const isUserMessage = () =>
@@ -1382,7 +1456,7 @@ export const MessageItemComponent = ({
 
 	const handleActionMenuItemClick = useCallback(
 		(actionKey: string) => {
-			setIsActionMenuOpen(false);
+			closeMessageMenus();
 			if (actionKey === 'reply-thread' && onOpenThread) {
 				onOpenThread();
 			}
@@ -1397,7 +1471,13 @@ export const MessageItemComponent = ({
 				setDeleteOverlay(true);
 			}
 		},
-		[onOpenThread, onReplyDirect, onEditDirect, onDeleteDirect]
+		[
+			onOpenThread,
+			onReplyDirect,
+			onEditDirect,
+			onDeleteDirect,
+			closeMessageMenus
+		]
 	);
 
 	const confirmDeleteMessage = useCallback(() => {
@@ -1477,14 +1557,12 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
+			// The trigger keeps focus, so reset without the closer's focus move.
+			resetMessageMenus();
 			if (isActionMenuOpen) {
-				setIsActionMenuOpen(false);
-				setActionMenuPosition(null);
 				setActionMenuAnchor(null);
 				return;
 			}
-			setIsVisibilityMenuOpen(false);
-			setVisibilityMenuPosition(null);
 			setVisibilityMenuAnchor(null);
 			// The kebab sits outside the bubble, so the menu opens away from it:
 			// to the right on the incoming side, to the left on the outgoing one.
@@ -1494,7 +1572,7 @@ export const MessageItemComponent = ({
 			setActionMenuAnchor(event.currentTarget);
 			setIsActionMenuOpen(true);
 		},
-		[isActionMenuOpen]
+		[isActionMenuOpen, resetMessageMenus]
 	);
 
 	// Keeps the action menu on its anchor across scroll, resize and any change
@@ -1507,9 +1585,15 @@ export const MessageItemComponent = ({
 		}
 		return autoUpdate(actionMenuAnchor, menuEl, () => {
 			computePosition(actionMenuAnchor, menuEl, {
+				strategy: 'fixed',
 				placement: actionMenuPlacement,
 				middleware: [offset(10), flip(), shift({ padding: 12 })]
-			}).then(({ x, y }) => setActionMenuPosition({ left: x, top: y }));
+			}).then(({ x, y, placement }) => {
+				setActionMenuPosition({ left: x, top: y });
+				setActionMenuOrigin(
+					placement.startsWith('left') ? 'right top' : 'left top'
+				);
+			});
 		});
 	}, [isActionMenuOpen, actionMenuAnchor, actionMenuPlacement]);
 
@@ -1520,11 +1604,15 @@ export const MessageItemComponent = ({
 		}
 		return autoUpdate(visibilityMenuAnchor, menuEl, () => {
 			computePosition(visibilityMenuAnchor, menuEl, {
+				strategy: 'fixed',
 				placement: visibilityMenuPlacement,
 				middleware: [offset(6), flip(), shift({ padding: 12 })]
-			}).then(({ x, y }) =>
-				setVisibilityMenuPosition({ left: x, top: y })
-			);
+			}).then(({ x, y, placement }) => {
+				setVisibilityMenuPosition({ left: x, top: y });
+				setVisibilityMenuOrigin(
+					placement.startsWith('left') ? 'right top' : 'left top'
+				);
+			});
 		});
 	}, [isVisibilityMenuOpen, visibilityMenuAnchor, visibilityMenuPlacement]);
 
@@ -1603,23 +1691,20 @@ export const MessageItemComponent = ({
 		) => {
 			event.preventDefault();
 			event.stopPropagation();
+			resetMessageMenus();
 			if (isVisibilityMenuOpen) {
-				setIsVisibilityMenuOpen(false);
-				setVisibilityMenuPosition(null);
 				setVisibilityMenuAnchor(null);
 				return;
 			}
-			setIsActionMenuOpen(false);
-			setActionMenuPosition(null);
 			setActionMenuAnchor(null);
-			// The menu rises from the +N chip, aligned to the side the chip is on.
+			// Open beside the chip, then flip if the viewport edge requires it.
 			setVisibilityMenuPlacement(
-				side === 'left' ? 'top-start' : 'top-end'
+				side === 'left' ? 'right-start' : 'left-start'
 			);
 			setVisibilityMenuAnchor(event.currentTarget);
 			setIsVisibilityMenuOpen(true);
 		},
-		[isVisibilityMenuOpen]
+		[isVisibilityMenuOpen, resetMessageMenus]
 	);
 	const toggleVisibilitySection = useCallback(
 		(section: 'clients' | 'counsellors' | 'moderators') => {
@@ -1672,6 +1757,11 @@ export const MessageItemComponent = ({
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('USER') ||
 		(userData?.userRoles || []).includes('ANONYMOUS');
+	const incomingAvatarChoice = activeSession?.isGroup
+		? memberAvatarChoice(userId, avatarMembers)
+		: activeSession
+			? directAvatarChoice(userId, activeSession)
+			: null;
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -1874,51 +1964,15 @@ export const MessageItemComponent = ({
 			case isE2EEActivatedMessage:
 				return <E2EEActivatedMessage />;
 			case isReassignmentMessage:
-				if (message) {
-					const isAsker = hasUserAuthority(
-						AUTHORITIES.ASKER_DEFAULT,
-						userData
-					);
-
-					const reassignmentParams: ConsultantReassignment =
-						JSON.parse(message);
-					switch (reassignmentParams.status) {
-						case ReassignStatus.REQUESTED:
-							return isAsker ? (
-								<ReassignRequestMessage
-									{...reassignmentParams}
-									onClick={(accepted) =>
-										clickReassignRequestMessage(
-											accepted,
-											reassignmentParams.toConsultantId
-										)
-									}
-								/>
-							) : (
-								<ReassignRequestSentMessage
-									{...reassignmentParams}
-									isMySession={isMySession}
-								/>
-							);
-						case ReassignStatus.CONFIRMED:
-							return (
-								<ReassignRequestAcceptedMessage
-									isAsker={isAsker}
-									isMySession={isMySession}
-									{...reassignmentParams}
-								/>
-							);
-						case ReassignStatus.REJECTED:
-							return (
-								<ReassignRequestDeclinedMessage
-									isAsker={isAsker}
-									isMySession={isMySession}
-									{...reassignmentParams}
-								/>
-							);
-					}
-				}
-				return;
+				// `decryptedMessage` is the plaintext in E2EE and plain rooms alike.
+				return (
+					<HistoricalReassignMessage
+						message={decryptedMessage || ''}
+						// Includes anonymous guests: no legal-name lookup (#1486).
+						isAsker={isAskerViewer}
+						isMySession={isMySession}
+					/>
+				);
 			case isAppointmentSet:
 				return (
 					<Appointment
@@ -2027,20 +2081,6 @@ export const MessageItemComponent = ({
 										}
 									/>
 								)}
-								{/* MATRIX MIGRATION: Temporarily hide message menu */}
-								{false && (
-									<MessageFlyoutMenu
-										_id={_id}
-										userId={userId}
-										username={username}
-										isUserBanned={isUserBanned}
-										isMyMessage={isMyMessage}
-										isArchived={
-											activeSession.item.status ===
-											STATUS_ARCHIVED
-										}
-									/>
-								)}
 							</div>
 						)}
 
@@ -2095,12 +2135,33 @@ export const MessageItemComponent = ({
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
-										{systemNotificationRawDescription && (
-											<p className="messageItem__systemNotificationDescription">
-												{
+										{isInformationalHandoverGrant ? (
+											<CaseHandoverInformationalBody
+												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+												description={
 													systemNotificationRawDescription
 												}
-											</p>
+												sessionId={
+													activeSession.item.id
+												}
+												onSetupNotifications={
+													grantNotificationPolicy.emailAllowed ||
+													grantNotificationPolicy.browserAllowed
+														? () =>
+																setShowGrantNotifications(
+																	true
+																)
+														: undefined
+												}
+											/>
+										) : (
+											systemNotificationRawDescription && (
+												<p className="messageItem__systemNotificationDescription">
+													{
+														systemNotificationRawDescription
+													}
+												</p>
+											)
 										)}
 									</CaseHandoverSystemMessageBody>
 								)}
@@ -2491,6 +2552,9 @@ export const MessageItemComponent = ({
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
+					isAskerEmailEnabled={
+						tenant?.settings?.featureAskerEmailEnabled
+					}
 					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
@@ -2555,7 +2619,42 @@ export const MessageItemComponent = ({
 		return null;
 	}
 
-	return (
+	const withGrantNotifications = (message: React.ReactNode) => (
+		<>
+			{isInformationalHandoverGrant ? (
+				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
+					{message}
+				</CarimatMessageContainer>
+			) : (
+				message
+			)}
+			{showGrantNotifications &&
+				(grantNotificationPolicy.emailAllowed ||
+					grantNotificationPolicy.browserAllowed) && (
+					<ErstantwortSequence
+						skipAnimation
+						subtitle={translate('profile.notifications.title')}
+						bausteine={[
+							{ id: 'grantNotifications', headline: '', body: '' }
+						]}
+						slots={{
+							grantNotifications: (
+								<NotificationSetup
+									isEmailEnabled={
+										grantNotificationPolicy.emailAllowed
+									}
+									isBrowserEnabled={
+										grantNotificationPolicy.browserAllowed
+									}
+								/>
+							)
+						}}
+					/>
+				)}
+		</>
+	);
+
+	return withGrantNotifications(
 		<div
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
@@ -2570,14 +2669,14 @@ export const MessageItemComponent = ({
 			{getMessageDate()}
 			<div
 				className={`
-					messageItem__messageWrap
-					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
-					${
-						isE2EEActivatedMessage
-							? 'messageItem__messageWrap--e2eeActivatedMessage'
-							: ''
-					}
-				`}
+				messageItem__messageWrap
+				${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
+				${
+					isE2EEActivatedMessage
+						? 'messageItem__messageWrap--e2eeActivatedMessage'
+						: ''
+				}
+			`}
 			>
 				{!alias?.messageType &&
 					!isMyMessage &&
@@ -2590,10 +2689,11 @@ export const MessageItemComponent = ({
 										isSystemNotification={false}
 										userId={userId}
 										username={username}
+										choice={incomingAvatarChoice}
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 									/>
 								</div>
 								<button
@@ -2746,7 +2846,8 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
+										choice={chosenAvatarOf(userData)}
 									/>
 								</div>
 							</div>
@@ -2770,7 +2871,7 @@ export const MessageItemComponent = ({
 						</div>
 					)}
 					{/* T21: the thread entry under a root message — reply count
-					    and "Author: last reply…" on one line, opens the thread. */}
+				    and "Author: last reply…" on one line, opens the thread. */}
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&
@@ -2798,7 +2899,7 @@ export const MessageItemComponent = ({
 								onClick={(event) => {
 									event.preventDefault();
 									event.stopPropagation();
-									onOpenThread?.();
+									onOpenThread?.(event.currentTarget);
 								}}
 							>
 								<ThreadEntryIcon
@@ -2822,18 +2923,30 @@ export const MessageItemComponent = ({
 						)}
 				</div>
 			</div>
+			{/* Mounted only while a menu is open: one per message would subscribe the whole timeline. */}
+			{(isActionMenuOpen || isVisibilityMenuOpen) && (
+				<MenuBackdrop open zIndex={8999} onClose={closeMessageMenus} />
+			)}
 			{isActionMenuOpen
 				? createPortal(
-						<div
+						<ChatMenuDropdown
+							density="compact"
 							className="messageItem__actionMenu"
 							ref={actionMenuRef}
 							role="menu"
 							style={{
 								position: 'fixed',
+								maxHeight: 'calc(100vh - 24px)',
+								overflowY: 'auto',
 								// Off-screen until floating-ui has measured the
 								// rendered menu — it needs the real element, so
 								// the first paint cannot already know where it
 								// goes (same pattern as ToolbarMenu).
+								animation:
+									motionEnabled && actionMenuPosition
+										? 'oriso-menu-reveal 160ms ease-out both'
+										: 'none',
+								transformOrigin: actionMenuOrigin,
 								top: `${actionMenuPosition?.top ?? -9999}px`,
 								left: `${actionMenuPosition?.left ?? -9999}px`,
 								zIndex: 99999
@@ -2872,9 +2985,7 @@ export const MessageItemComponent = ({
 														onUnreact?.(
 															ownReaction.ownEventId
 														);
-														setIsActionMenuOpen(
-															false
-														);
+														closeMessageMenus();
 														return;
 													}
 													applyQuickReaction(emoji);
@@ -2926,24 +3037,18 @@ export const MessageItemComponent = ({
 								</div>
 							)}
 							{actionMenuItems.map((item) => (
-								<button
+								<ChatMenuDropdownItem
 									key={item.key}
-									type="button"
-									role="menuitem"
 									className="messageItem__actionMenuItem"
+									role="menuitem"
+									icon={item.icon}
+									title={item.label}
 									onClick={() =>
 										handleActionMenuItemClick(item.key)
 									}
-								>
-									<span className="messageItem__actionMenuItemIcon">
-										{item.icon}
-									</span>
-									<span className="messageItem__actionMenuItemLabel">
-										{item.label}
-									</span>
-								</button>
+								/>
 							))}
-						</div>,
+						</ChatMenuDropdown>,
 						document.body
 					)
 				: null}
@@ -2955,6 +3060,13 @@ export const MessageItemComponent = ({
 							role="menu"
 							style={{
 								position: 'fixed',
+								maxHeight: 'calc(100vh - 24px)',
+								overflowY: 'auto',
+								animation:
+									motionEnabled && visibilityMenuPosition
+										? 'oriso-menu-reveal 160ms ease-out both'
+										: 'none',
+								transformOrigin: visibilityMenuOrigin,
 								top: `${visibilityMenuPosition?.top ?? -9999}px`,
 								left: `${visibilityMenuPosition?.left ?? -9999}px`,
 								zIndex: 9000
@@ -3128,151 +3240,5 @@ export const MessageItemComponent = ({
 				/>
 			)}
 		</div>
-	);
-};
-
-const MessageFlyoutMenu = ({
-	_id,
-	userId,
-	isUserBanned,
-	isMyMessage,
-	isArchived,
-	username
-}: {
-	_id: string;
-	userId: string;
-	username: string;
-	isUserBanned: boolean;
-	isMyMessage: boolean;
-	isArchived: boolean;
-}) => {
-	const { activeSession } = useContext(ActiveSessionContext);
-	const { getSetting } = useContext(ServerSettingsContext);
-	const [isUserBanOverlayOpen, setIsUserBanOverlayOpen] =
-		useState<boolean>(false);
-
-	const currentUserIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		matrixUserId: getCurrentMatrixUserId()
-	});
-
-	const subscriberIsModerator = isUserModerator({
-		chatItem: activeSession.item,
-		matrixUserId: userId
-	});
-
-	return (
-		<>
-			<FlyoutMenu position={isMyMessage ? 'left-top' : 'right-top'}>
-				{currentUserIsModerator &&
-					!subscriberIsModerator &&
-					!isUserBanned && (
-						<BanUser
-							userName={username}
-							matrixUserId={userId}
-							chatId={activeSession.item.id}
-							handleUserBan={() => {
-								setIsUserBanOverlayOpen(true);
-							}}
-						/>
-					)}
-
-				{isMyMessage &&
-					!isArchived &&
-					getSetting<IBooleanSetting>(
-						SETTING_MESSAGE_ALLOWDELETING
-					) && (
-						<DeleteMessage
-							messageId={_id}
-							className="flyoutMenu__item--delete"
-						/>
-					)}
-			</FlyoutMenu>
-			<BanUserOverlay
-				overlayActive={isUserBanOverlayOpen}
-				userName={username}
-				handleOverlay={() => {
-					setIsUserBanOverlayOpen(false);
-				}}
-			></BanUserOverlay>
-		</>
-	);
-};
-
-const DeleteMessage = ({
-	messageId,
-	className
-}: {
-	messageId: string;
-	className?: string;
-}) => {
-	const { t: translate } = useTranslation();
-	const [deleteOverlay, setDeleteOverlay] = useState(false);
-	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
-
-	const deleteMessage = useCallback(() => {
-		setIsRequestInProgress(true);
-		apiDeleteMessage(messageId)
-			.then(() => setDeleteOverlay(false))
-			.then(() => setIsRequestInProgress(false));
-	}, [messageId]);
-
-	const deleteOverlayItem: OverlayItem = useMemo(
-		() => ({
-			headline: translate('message.delete.overlay.headline'),
-			copy: translate('message.delete.overlay.copy'),
-			svg: XIllustration,
-			illustrationBackground: 'neutral',
-			buttonSet: [
-				{
-					label: translate('message.delete.overlay.cancel'),
-					function: OVERLAY_FUNCTIONS.CLOSE,
-					type: BUTTON_TYPES.SECONDARY,
-					disabled: isRequestInProgress
-				},
-				{
-					label: translate('message.delete.overlay.confirm'),
-					function: 'CONFIRM',
-					type: BUTTON_TYPES.PRIMARY,
-					disabled: isRequestInProgress
-				}
-			],
-			handleOverlay: (functionName) => {
-				if (functionName === 'CONFIRM') {
-					deleteMessage();
-					return;
-				}
-				setDeleteOverlay(false);
-			}
-		}),
-		[deleteMessage, isRequestInProgress, translate]
-	);
-
-	return (
-		<>
-			<button
-				onClick={() => setDeleteOverlay(true)}
-				className={`flex ${className}`}
-			>
-				<div className="mr--1">
-					<TrashIcon
-						width={24}
-						height={24}
-						style={{ display: 'block', padding: '2px 0' }}
-						aria-hidden="true"
-						focusable="false"
-					/>
-				</div>
-				<div>{translate('message.delete.delete')}</div>
-			</button>
-			{deleteOverlay && (
-				<Overlay
-					item={deleteOverlayItem}
-					handleOverlayClose={() => {
-						setDeleteOverlay(false);
-					}}
-				/>
-			)}
-		</>
 	);
 };

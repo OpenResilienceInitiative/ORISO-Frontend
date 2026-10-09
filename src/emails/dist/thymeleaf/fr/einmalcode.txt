@@ -1,0 +1,25 @@
+Votre code à usage unique
+=========================
+
+Saisissez ce code dans [[${platformName}]].
+
+Code: [[${otpCode}]]
+
+Ouvrir [[${platformName}]]:
+[[${loginUrl}]]
+
+Si vous n’avez pas demandé ce code, vous pouvez ignorer cet e-mail.
+
+----------------------------------------------------------------
+Nous ne vous demandons jamais votre mot de passe par e-mail. Ne transmettez ce code à personne.
+
+[[${orgName}]]
+[[${orgAddress}]]
+[[${contactLine}]]
+
+[[${platformName}]] est un service proposé par [[${orgName}]].
+
+Protection des données: [[${privacyUrl}]]
+Mentions légales: [[${imprintUrl}]]
+
+Cet e-mail contient un code de sécurité et ne peut pas être désactivé. Merci de ne pas y répondre.
