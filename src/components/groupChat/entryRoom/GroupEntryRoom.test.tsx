@@ -121,6 +121,11 @@ const renderRoomAsCounsellor = (path = '/groups/15/entry') =>
 	);
 
 const CLIENT = { grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT'] };
+/* The client's agreement to the group's privacy statement is on record. */
+const CLIENT_AGREED = {
+	...CLIENT,
+	dataPrivacyConfirmation: '2026-09-23T10:00:00Z'
+};
 const COUNSELLOR = { grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'] };
 
 const roomFor = (userData: unknown) => (
@@ -140,7 +145,8 @@ const roomFor = (userData: unknown) => (
 	</UserDataContext.Provider>
 );
 
-const renderRoom = () => render(roomFor(CLIENT));
+const renderRoom = (userData: unknown = CLIENT_AGREED) =>
+	render(roomFor(userData));
 
 describe('GroupEntryRoom', () => {
 	afterEach(cleanup);
@@ -155,6 +161,20 @@ describe('GroupEntryRoom', () => {
 		const room = await screen.findByTestId('waiting-room');
 		expect(room.textContent).toContain('Trauerbegleitung');
 		expect(room.textContent).toContain('Caritas Berlin');
+	});
+
+	it('hides the topic until the client has agreed to the privacy statement', async () => {
+		renderRoom(CLIENT);
+		const room = await screen.findByTestId('waiting-room');
+		expect(room.textContent).not.toContain('Trauerbegleitung');
+		// Everything else about the group stays.
+		expect(room.textContent).toContain('Caritas Berlin');
+	});
+
+	it('treats a blank agreement as none', async () => {
+		renderRoom({ ...CLIENT, dataPrivacyConfirmation: '  ' });
+		const room = await screen.findByTestId('waiting-room');
+		expect(room.textContent).not.toContain('Trauerbegleitung');
 	});
 
 	it('joins on "Beitreten" and hands over to the chat route', async () => {
