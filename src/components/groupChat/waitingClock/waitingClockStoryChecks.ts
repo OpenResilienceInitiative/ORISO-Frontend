@@ -159,7 +159,8 @@ export const expectHandsVisible = async (root: HTMLElement, minimum = 3) => {
 		'--m3-primary-fixed'
 	];
 	for (const face of faces) {
-		const ratio = contrast(ink, token(root, face));
+		// Read the faces where the hand is: a Träger's tokens sit on a wrapper.
+		const ratio = contrast(ink, token(hand, face));
 		if (ratio < minimum) {
 			fail(
 				`hands (${ink}) only reach ${ratio.toFixed(2)}:1 on ${face} — needs ${minimum}:1`
