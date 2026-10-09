@@ -359,6 +359,10 @@ const sendReply = async (scope: HTMLElement, text: string) => {
 		return button;
 	}, SLOW);
 	await userEvent.click(send);
+	await waitFor(() => {
+		expect(editor.textContent?.trim()).toBe('');
+		expect(send).toBeDisabled();
+	}, SLOW);
 };
 
 const next = async (label = 'Weiter') =>

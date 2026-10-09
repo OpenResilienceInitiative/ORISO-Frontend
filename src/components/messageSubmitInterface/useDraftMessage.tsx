@@ -74,6 +74,7 @@ export const useDraftMessage = (
 	const draftSaveTimeout = useRef(null);
 	const loadVersionRef = useRef(0);
 	const clearVersionRef = useRef(0);
+	const pendingDraftWritesRef = useRef(new Set<Promise<unknown>>());
 	const latestMessageRef = useRef<string>('');
 	const skipNextCleanupSaveRef = useRef(false);
 	/*
@@ -324,7 +325,7 @@ export const useDraftMessage = (
 					if (stillCurrent) {
 						hasRemoteDraftRef.current = true;
 					}
-					await upsertUserDraft(
+					const write = upsertUserDraft(
 						capturedScope,
 						{
 							text: message,
@@ -336,8 +337,17 @@ export const useDraftMessage = (
 						},
 						signal
 					);
+					pendingDraftWritesRef.current.add(write);
+					try {
+						await write;
+					} finally {
+						pendingDraftWritesRef.current.delete(write);
+					}
 				}
-				if (!signal?.aborted) {
+				if (
+					!signal?.aborted &&
+					capturedClearVersion === clearVersionRef.current
+				) {
 					await updateRemoteDraftIndex(
 						draftMessage,
 						capturedScope,
@@ -693,6 +703,9 @@ export const useDraftMessage = (
 		setMessageRes(null);
 		setLoaded(true);
 		if (canUseRemoteApi) {
+			// A PATCH already on the wire can outlive the Matrix send. Delete
+			// after it settles so it cannot recreate the text we just sent.
+			await Promise.allSettled([...pendingDraftWritesRef.current]);
 			await Promise.allSettled([
 				...scopeKeysToTry.map((scopeKey) =>
 					apiDeleteUserDraft(scopeKey)
