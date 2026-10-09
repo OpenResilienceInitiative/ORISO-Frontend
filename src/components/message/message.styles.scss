@@ -247,13 +247,6 @@ $message-avatar-overlap: -19px;
 		}
 	}
 
-	// Keep the60px layout slot while exposing the animal circle without a rim.
-	// Bot chrome and focus/status indicators retain their existing treatment.
-	&__avatar:not(.messageItem__avatar--bot) {
-		border: 0;
-		background: transparent;
-	}
-
 	/*
 	 * Photo avatars must be clipped to the circle. The Carimat robot must not:
 	 * `overflow: hidden` clips against the *padding* box, i.e. the 48px inner
