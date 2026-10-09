@@ -424,14 +424,16 @@ $room-header-gap-top: 2px;
 
 		&__content {
 			font-size: 12px;
-			color: var(--m3-secondary-container, #646d78);
 			line-height: 16px;
 			display: inline-flex;
 			align-items: center;
 			padding: 1px 8px;
 			border-bottom-left-radius: 5px;
 			border-bottom-right-radius: 5px;
-			background: #ffd1d1;
+
+			// The member chip's pairing: grey text reached 3.8:1 on the pink fill.
+			background: var(--m3-primary-fixed, #ffd1d1);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 			@include breakpoint($fromSmall) {
 				position: relative;
