@@ -1,6 +1,7 @@
 import clsx from 'clsx';
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
+import { THEME_APPLIED_EVENT } from '../../utils/theme/themeEvents';
 import './orbitalTrails.styles.scss';
 
 const CANVAS_SIZE = 480;
@@ -83,12 +84,30 @@ const cssVariable = (
 	fallback: string
 ) => styles.getPropertyValue(name).trim() || fallback;
 
+const cssOpacity = (
+	styles: CSSStyleDeclaration,
+	name: string,
+	fallback: number
+) => {
+	const value = Number(cssVariable(styles, name, String(fallback)));
+	return Number.isFinite(value) && value >= 0 && value <= 1
+		? value
+		: fallback;
+};
+
+interface OrbitalOpacity {
+	trail: number;
+	orbit: number;
+	dot: number;
+}
+
 const drawFrame = (
 	context: CanvasRenderingContext2D,
 	trailsContext: CanvasRenderingContext2D,
 	trailsCanvas: HTMLCanvasElement,
 	systems: OrbitalSystem[],
-	colors: string[]
+	colors: string[],
+	opacity: OrbitalOpacity
 ) => {
 	systems.forEach((system, systemIndex) => {
 		const color = colors[systemIndex % colors.length];
@@ -99,7 +118,7 @@ const drawFrame = (
 
 		trailsContext.strokeStyle = color;
 		trailsContext.lineWidth = 0.65;
-		trailsContext.globalAlpha = 0.045;
+		trailsContext.globalAlpha = opacity.trail;
 		trailsContext.beginPath();
 		points.forEach((point, pointIndex) => {
 			if (pointIndex === 0) trailsContext.moveTo(point.x, point.y);
@@ -125,13 +144,13 @@ const drawFrame = (
 		context.lineWidth = 0.75;
 
 		system.radii.forEach((radius, orbitIndex) => {
-			context.globalAlpha = 0.48;
+			context.globalAlpha = opacity.orbit;
 			context.beginPath();
 			context.arc(system.center[0], system.center[1], radius, 0, TWO_PI);
 			context.stroke();
 
 			context.fillStyle = color;
-			context.globalAlpha = 0.9;
+			context.globalAlpha = opacity.dot;
 			context.beginPath();
 			context.arc(
 				points[orbitIndex].x,
@@ -161,6 +180,16 @@ export const OrbitalTrails = ({
 }: OrbitalTrailsProps) => {
 	const rootRef = useRef<HTMLDivElement>(null);
 	const canvasRef = useRef<HTMLCanvasElement>(null);
+	const [themeVersion, refreshTheme] = useReducer(
+		(version: number) => version + 1,
+		0
+	);
+
+	useEffect(() => {
+		window.addEventListener(THEME_APPLIED_EVENT, refreshTheme);
+		return () =>
+			window.removeEventListener(THEME_APPLIED_EVENT, refreshTheme);
+	}, []);
 
 	useEffect(() => {
 		const root = rootRef.current;
@@ -180,6 +209,11 @@ export const OrbitalTrails = ({
 			cssVariable(styles, '--orbital-trails-color-3', '#755a2f'),
 			cssVariable(styles, '--orbital-trails-color-4', '#49454f')
 		];
+		const opacity: OrbitalOpacity = {
+			trail: cssOpacity(styles, '--oriso-loader-trail-opacity', 0.045),
+			orbit: cssOpacity(styles, '--oriso-loader-orbit-opacity', 0.48),
+			dot: cssOpacity(styles, '--oriso-loader-dot-opacity', 0.9)
+		};
 		const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
 		canvas.width = CANVAS_SIZE * pixelRatio;
@@ -189,7 +223,14 @@ export const OrbitalTrails = ({
 		const systems = createOrbitalSystems(seed, variant);
 		const initialFrames = Math.min(Math.max(warmupFrames, 0), MAX_FRAMES);
 		for (let frame = 0; frame < initialFrames; frame += 1) {
-			drawFrame(context, trailsContext, trailsCanvas, systems, colors);
+			drawFrame(
+				context,
+				trailsContext,
+				trailsCanvas,
+				systems,
+				colors,
+				opacity
+			);
 		}
 
 		const reducedMotion = window.matchMedia?.(
@@ -203,7 +244,8 @@ export const OrbitalTrails = ({
 						trailsContext,
 						trailsCanvas,
 						systems,
-						colors
+						colors,
+						opacity
 					);
 				}
 			}
@@ -237,7 +279,8 @@ export const OrbitalTrails = ({
 					trailsContext,
 					trailsCanvas,
 					systems,
-					colors
+					colors,
+					opacity
 				);
 				drawnFrames += 1;
 				lastFrameTime = time;
@@ -268,7 +311,9 @@ export const OrbitalTrails = ({
 			observer?.disconnect();
 			window.cancelAnimationFrame(animationFrame);
 		};
-	}, [palette, paused, seed, variant, warmupFrames]);
+		// Rebuild both canvases on a theme update: accumulated old-colour trails
+		// must not remain behind the new tenant colour, even when motion is off.
+	}, [palette, paused, seed, variant, warmupFrames, themeVersion]);
 
 	return (
 		<div
