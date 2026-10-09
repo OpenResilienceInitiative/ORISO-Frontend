@@ -31,8 +31,10 @@ BEFORE images are actual Dev484 screenshots for the synthetic Lisa test actor. A
 | [25-after-takeover-label-stress-mobile-412-ru.png](25-after-takeover-label-stress-mobile-412-ru.png)               | PASS component layout                      | local Storybook,412x844,ru  |
 | [26-after-takeover-label-stress-mobile-412-ru-dialog.png](26-after-takeover-label-stress-mobile-412-ru-dialog.png) | PASS layout / keyboard focus return        | local Storybook,412x844,ru  |
 
-All images were captured after CSS animations finished and visually inspected. Dialog bodies scroll normally at320px. Existing German grant-message descriptions remain unchanged when UI locale switches to English/French/Russian.
+The standalone screenshot runner loads the story iframe directly and explicitly sets the browser viewport to 820 × 1180 for tablet captures. The Storybook manager preset is 834px; it does not control these iframe captures. The filenames and table report the measured capture viewport, confirmed in visual-receipt-final.json.
 
-Actual keyboard/save/readback fixture: initially false → Space → scoped PUT and confirmed GET → close/reopen reads true. Dialog accessible name is present; focus returns to its exact opener. Final axe dialog scan reports0violations and one incomplete color-contrast check; this is not a full screen-reader or WCAG certification.
+All images were captured after CSS animations finished and visually inspected. Dialog bodies scroll normally at 320px. Existing German grant-message descriptions remain unchanged when UI locale switches to English/French/Russian.
+
+Actual keyboard/save/readback fixture: initially false → Space → scoped PUT and confirmed GET → close/reopen reads true. Dialog accessible name is present; focus returns to its exact opener. Final axe dialog scan reports 0 violations and one incomplete color-contrast check; this is not a full screen-reader or WCAG certification.
 
 Missing/incorrect acceptance metadata, other roles/modality, pending-request consent and stale loading remain covered by meaningful unit regressions. Human reviewer checkboxes remain unchecked.
