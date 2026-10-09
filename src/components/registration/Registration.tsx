@@ -41,7 +41,11 @@ import {
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
-import { apiGetAskerSessionList, apiPostRegistration } from '../../api';
+import {
+	accountExistsAfterTimeout,
+	apiGetAskerSessionList,
+	apiPostRegistration
+} from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
 import {
@@ -728,9 +732,12 @@ export const Registration = () => {
 						{ sessionId }
 					);
 				})
-				.catch((error) => {
+				.catch(async (error) => {
 					// console.error('Registration failed:', error);
-					if (accountCreated) {
+					if (
+						accountCreated ||
+						(await accountExistsAfterTimeout(error, data.username))
+					) {
 						/* The account is real; what failed is the automatic
 						   login or the way into the app. Putting the form back
 						   would offer a second registration to someone who
