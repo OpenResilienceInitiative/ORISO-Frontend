@@ -146,59 +146,99 @@ describe('useDraftMessage', () => {
 		vi.useRealTimers();
 	});
 
-	it('clears a save already on the wire before reloading after sending', async () => {
-		const scope = 'scope:session-42|thread:main';
-		const drafts = new Map<string, DraftPayload>();
-		let finishSave: () => void;
-		mocks.apiGetUserDraft.mockImplementation(async (key) => {
-			if (!drafts.has(key)) throw new Error('EMPTY');
-			return drafts.get(key)!;
-		});
-		mocks.apiDeleteUserDraft.mockImplementation(async (key) => {
-			drafts.delete(key);
-		});
-		mocks.apiUpsertUserDraft.mockImplementation(async (key, payload) => {
-			if (payload.text === '<p>Sent practice reply</p>') {
-				await new Promise<void>((resolve) => {
-					finishSave = resolve;
-				});
+	it.each([false, true])(
+		'clears outgoing save without losing next draft (typed while clearing=%s)',
+		async (typedWhileClearing) => {
+			const scope = 'scope:session-42|thread:main';
+			const drafts = new Map<string, DraftPayload>();
+			let finishSave: () => void;
+			mocks.apiGetUserDraft.mockImplementation(async (key) => {
+				if (!drafts.has(key)) throw new Error('EMPTY');
+				return drafts.get(key)!;
+			});
+			mocks.apiDeleteUserDraft.mockImplementation(async (key) => {
+				drafts.delete(key);
+			});
+			mocks.apiUpsertUserDraft.mockImplementation(
+				async (key, payload) => {
+					if (payload.text === '<p>Sent practice reply</p>') {
+						await new Promise<void>((resolve) => {
+							finishSave = resolve;
+						});
+					}
+					drafts.set(key, payload);
+				}
+			);
+			const loadDraft = vi.fn();
+			const { result, rerender } = renderHook(
+				({ enabled }) =>
+					useDraftMessage(enabled, loadDraft, {
+						forcedScopeKey: scope
+					}),
+				{ wrapper, initialProps: { enabled: true } }
+			);
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			act(() => result.current.onChange('<p>Sent practice reply</p>'));
+			// Sending temporarily disables draft persistence; its cleanup flushes
+			// the outgoing buffer while the Matrix send completes independently.
+			rerender({ enabled: false });
+			await waitFor(() =>
+				expect(mocks.apiUpsertUserDraft).toHaveBeenCalled()
+			);
+			let cleared: Promise<void>;
+			await act(async () => {
+				cleared = result.current.clearDraftMessage();
+				await Promise.resolve();
+			});
+			if (typedWhileClearing) {
+				act(() => result.current.onChange('<p>Next unsent reply</p>'));
 			}
-			drafts.set(key, payload);
-		});
+			await act(async () => {
+				finishSave!();
+				await cleared!;
+			});
+			rerender({ enabled: true });
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			expect(loadDraft).not.toHaveBeenCalled();
+			if (!typedWhileClearing) {
+				expect(drafts.has(scope)).toBe(false);
+				act(() => result.current.onChange('<p>Next unsent reply</p>'));
+				rerender({ enabled: false });
+			}
+			await waitFor(() =>
+				expect(drafts.get(scope)?.text).toBe('<p>Next unsent reply</p>')
+			);
+		}
+	);
+
+	it('does not resume a disabled buffer into a different conversation', async () => {
 		const loadDraft = vi.fn();
 		const { result, rerender } = renderHook(
-			({ enabled }) =>
-				useDraftMessage(enabled, loadDraft, {
-					forcedScopeKey: scope
-				}),
-			{ wrapper, initialProps: { enabled: true } }
+			({ enabled, scope }) =>
+				useDraftMessage(enabled, loadDraft, { forcedScopeKey: scope }),
+			{
+				wrapper,
+				initialProps: {
+					enabled: false,
+					scope: 'scope:original|thread:main'
+				}
+			}
 		);
 		await waitFor(() => expect(result.current.loaded).toBe(true));
-		act(() => result.current.onChange('<p>Sent practice reply</p>'));
-		// Sending temporarily disables draft persistence; its cleanup flushes
-		// the outgoing buffer while the Matrix send completes independently.
-		rerender({ enabled: false });
-		await waitFor(() =>
-			expect(mocks.apiUpsertUserDraft).toHaveBeenCalled()
-		);
-		let cleared: Promise<void>;
+		act(() => result.current.onChange('<p>Private next reply</p>'));
+		rerender({ enabled: true, scope: 'scope:other|thread:main' });
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		rerender({ enabled: false, scope: 'scope:other|thread:main' });
 		await act(async () => {
-			cleared = result.current.clearDraftMessage();
 			await Promise.resolve();
 		});
-		await act(async () => {
-			finishSave!();
-			await cleared!;
-		});
-		rerender({ enabled: true });
-		await waitFor(() => expect(result.current.loaded).toBe(true));
-		expect(drafts.has(scope)).toBe(false);
-		expect(loadDraft).not.toHaveBeenCalled();
-		act(() => result.current.onChange('<p>Next unsent reply</p>'));
-		rerender({ enabled: false });
-		await waitFor(() =>
-			expect(drafts.get(scope)?.text).toBe('<p>Next unsent reply</p>')
-		);
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(
+				([scope, payload]) =>
+					scope === 'scope:other|thread:main' &&
+					payload.text === '<p>Private next reply</p>'
+			)
+		).toBe(false);
 	});
 
 	it('cancels pending autosave when clearing a sent draft', async () => {

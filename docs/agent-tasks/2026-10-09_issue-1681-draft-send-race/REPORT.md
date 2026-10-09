@@ -49,3 +49,16 @@ The synthetic story now uses an 1800 ms PATCH and asserts sending is still disab
 Review regressions cover text send, rejected draft clear, voice-only send, next text retained while waiting, and persistence of a new reply after the old draft clears. Targeted units: 30 passed. Chromium interaction/a11y stories: 5 passed. Script lint plus TypeScript, style lint, production build/postbuild deployment scan and Storybook typecheck passed. Full unit gate: 701 files and 12,309 tests passed on the final source (215 seconds).
 
 The existing HTTP timeout bounds individual requests; slow transport can delay re-enabling Send beyond the previous fixed cooldown. Clear failures retain the existing best-effort deletion behavior and do not prove remote deletion. Outstanding writes are still tracked per mounted hook. No live backend or deployed image was used.
+
+
+### Preserve replies typed during the slow clear
+
+A second real-hook regression confirmed that text typed while draft persistence was disabled stayed visible but was not saved after re-enabling: the load effect reset the local buffer on every transition. The slow-clear barrier made this existing window longer. Resuming the same conversation now preserves that buffer, suppresses any incoming old draft, and flushes the new reply when loading settles. Switching conversation still resets the buffer; a regression explicitly verifies the private text is not upserted into the other scope.
+
+The new `NextReplyDuringSlowClear` browser story keeps the editor editable, types the next reply while the old clear is pending, and verifies the next PATCH completes while that text stays in the editor. The simple harness now uses production `hasDraftContent` when disabling an empty Send button, including styled empty paragraphs. Targeted units: 32 passed (18 hook, 5 text composer, 9 voice composer). Final full gate: 701 files and 12,311 unit tests passed (223 seconds). All six Chromium interaction/a11y stories passed. Script lint plus TypeScript, style lint, Storybook typecheck and production build/postbuild deployment scan also passed on the final source.
+
+
+Final independent source/privacy review passed. Manual Chrome verification against a static Storybook build confirmed an empty disabled composer after the 1800 ms save/clear, and retained next-reply text with a completed second PATCH when typed during clearing. These local fixture images prove the editor states; request ordering and cross-scope non-disclosure are covered by the regressions above.
+
+![After: slow clear completes before draft loading resumes](../../storybook/issue-1681-draft-send-race/03-after-slow-clear.jpg)
+![Next reply typed during clearing stays visible and persists](../../storybook/issue-1681-draft-send-race/04-next-reply-during-clear.jpg)

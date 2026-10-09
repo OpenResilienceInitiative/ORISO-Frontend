@@ -7,6 +7,7 @@ import { endpoints } from '../../resources/scripts/endpoints';
 import { TipTapComposer, TipTapComposerRef } from './TipTapComposer';
 import './TipTapComposer.styles.scss';
 import { useDraftMessage } from './useDraftMessage';
+import { hasDraftContent } from '../../services/draftStore';
 import { buildMockActiveSession } from './__storybook__/composerStoryDecorator';
 
 /** In-memory HTTP endpoint, with a PATCH that finishes after the send's DELETE. */
@@ -104,7 +105,7 @@ function DraftSendStage() {
 					value={value}
 					placeholder="Write a reply"
 					showToolbar={false}
-					readOnly={sending}
+					readOnly={false}
 					onChange={(text) => {
 						setValue(text);
 						draft.onChange(text);
@@ -114,7 +115,7 @@ function DraftSendStage() {
 			</div>
 			<button
 				onClick={send}
-				disabled={sending || !value || value === '<p></p>'}
+				disabled={sending || !hasDraftContent(value)}
 			>
 				Send reply
 			</button>
@@ -170,5 +171,40 @@ export const DelayedSaveAfterSend: Story = {
 		);
 		await new Promise((resolve) => setTimeout(resolve, 1600));
 		await waitFor(() => expect(editor.textContent?.trim()).toBe(''));
+	}
+};
+
+export const NextReplyDuringSlowClear: Story = {
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const editor =
+			canvasElement.querySelector<HTMLElement>('.ProseMirror')!;
+		await userEvent.click(editor);
+		await userEvent.keyboard('Reply that was sent.');
+		await userEvent.click(
+			canvas.getByRole('button', { name: 'Send reply' })
+		);
+		await waitFor(() => expect(editor.textContent?.trim()).toBe(''));
+		await userEvent.click(editor);
+		await userEvent.keyboard('Next unsent reply stays here.');
+		await new Promise((resolve) => setTimeout(resolve, 1350));
+		await expect(
+			canvas.getByRole('button', { name: 'Send reply' })
+		).toBeDisabled();
+		await waitFor(
+			() => {
+				const sequence =
+					canvas.getByLabelText('Draft request sequence')
+						.textContent || '';
+				expect(sequence.match(/PATCH completed/g)?.length).toBe(2);
+			},
+			{ timeout: 6000 }
+		);
+		await expect(editor.textContent?.trim()).toBe(
+			'Next unsent reply stays here.'
+		);
+		await expect(
+			canvas.getByRole('button', { name: 'Send reply' })
+		).toBeEnabled();
 	}
 };

@@ -75,6 +75,7 @@ export const useDraftMessage = (
 	const loadVersionRef = useRef(0);
 	const clearVersionRef = useRef(0);
 	const pendingDraftWritesRef = useRef(new Set<Promise<unknown>>());
+	const lastDraftLoadRef = useRef<{ enabled: boolean; scope: string }>(null);
 	const latestMessageRef = useRef<string>('');
 	const skipNextCleanupSaveRef = useRef(false);
 	/*
@@ -429,6 +430,12 @@ export const useDraftMessage = (
 	// Load the draft message from the api but do not show it because its encrypted
 	useEffect(() => {
 		const abortController = new AbortController();
+		const resumeTypedDraft =
+			enabled &&
+			lastDraftLoadRef.current?.enabled === false &&
+			lastDraftLoadRef.current?.scope === remoteScopeKey &&
+			hasDraftContent(latestMessageRef.current);
+		lastDraftLoadRef.current = { enabled, scope: remoteScopeKey };
 		const currentLoadVersion = ++loadVersionRef.current;
 		setLoaded(false);
 		setMessageRes(null);
@@ -445,9 +452,14 @@ export const useDraftMessage = (
 		 * saveDraftMessage refused to run until `loaded` and this reset ran
 		 * before the unmount cleanup could see the text.
 		 */
-		latestMessageRef.current = '';
-		typedBeforeLoadRef.current = false;
-		pendingPreLoadSaveRef.current = false;
+		// A same-conversation resume may follow a slow sent-draft clear.
+		// Preserve text typed while saving was disabled and flush it after
+		// loading, while conversation changes still retire the old buffer.
+		if (!resumeTypedDraft) {
+			latestMessageRef.current = '';
+		}
+		typedBeforeLoadRef.current = resumeTypedDraft;
+		pendingPreLoadSaveRef.current = resumeTypedDraft;
 		if (!enabled || !canUseRemoteApi) {
 			setLoaded(true);
 			return () => {
@@ -491,6 +503,7 @@ export const useDraftMessage = (
 	}, [
 		enabled,
 		canUseRemoteApi,
+		remoteScopeKey,
 		scopeKeysToTry,
 		setEditorWithDraftString,
 		persistOutgoingDraftOnLeave
