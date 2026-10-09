@@ -10,7 +10,7 @@
 		line-height: 20px;
 
 		a {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			font-weight: 500;
 			text-decoration: underline;
 		}

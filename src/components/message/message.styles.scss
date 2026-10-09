@@ -1555,7 +1555,10 @@ $message-avatar-overlap: -19px;
 		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 			text-decoration: none;
 		}
 

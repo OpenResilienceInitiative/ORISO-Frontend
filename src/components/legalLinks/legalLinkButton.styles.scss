@@ -18,7 +18,10 @@
 	white-space: normal;
 
 	&:hover {
-		color: var(--m3-primary-hover, #820006);
+		color: var(
+			--oriso-primary-text-hover,
+			var(--m3-primary-hover, #820006)
+		);
 	}
 
 	&:focus {

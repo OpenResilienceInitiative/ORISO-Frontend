@@ -86,6 +86,8 @@ interface BrandFamily {
 	onRole: string;
 	/** The role as a text/icon colour on light surfaces; always AA. */
 	text: string;
+	/** Hover of `text`: a step darker than it, so hover never fades. */
+	textHover: string;
 	container: string;
 	onContainer: string;
 	inverse: string;
@@ -141,6 +143,14 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 			hct.tone <= MAX_LEGIBLE_TEXT_TONE
 				? seedHex
 				: hex(palette.tone(MAX_LEGIBLE_TEXT_TONE)),
+		textHover: hex(
+			palette.tone(
+				clampTone(
+					Math.min(Math.round(hct.tone), MAX_LEGIBLE_TEXT_TONE) +
+						HOVER_TONE_SHIFT
+				)
+			)
+		),
 		container: hex(boosted.tone(containerTone)),
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
@@ -194,6 +204,9 @@ const darkBrandFamily = (seedHex: string): BrandFamily => {
 		role: hex(palette.tone(DARK_BRAND_TONES.role)),
 		onRole: hex(palette.tone(DARK_BRAND_TONES.onRole)),
 		text: hex(palette.tone(DARK_BRAND_TONES.role)),
+		textHover: hex(
+			palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT))
+		),
 		container: hex(palette.tone(DARK_BRAND_TONES.container)),
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
@@ -356,6 +369,7 @@ export const computeOrisoPalette = (
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
 		'--oriso-primary-text': brand.text,
+		'--oriso-primary-text-hover': brand.textHover,
 		'--m3-hover-layer': scheme === 'light' ? '#f9eff0' : '#331f21',
 		'--m3-selected-layer': scheme === 'light' ? '#f5e6e7' : '#4a292c',
 		'--m3-primary-fixed': brand.fixed,

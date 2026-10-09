@@ -519,7 +519,10 @@ $room-header-gap-top: 2px;
 
 					&:hover {
 						background-color: $hover-select;
-						color: var(--m3-primary-hover, $hover-primary);
+						color: var(
+							--oriso-primary-text-hover,
+							var(--m3-primary-hover, $hover-primary)
+						);
 					}
 
 					span {

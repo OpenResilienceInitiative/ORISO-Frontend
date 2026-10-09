@@ -21,7 +21,10 @@
 		&:disabled {
 			cursor: default;
 			opacity: 1;
-			-webkit-text-fill-color: var(--m3-primary, $secondary);
+			-webkit-text-fill-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $secondary)
+			);
 		}
 
 		&:focus-visible,
