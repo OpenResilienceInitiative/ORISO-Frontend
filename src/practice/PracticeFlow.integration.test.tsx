@@ -902,6 +902,7 @@ describe('practice flows on the real app shell', () => {
 		).toBeNull();
 		expect(progressWrites()).not.toContain('completed');
 		expect(progressWrites()).not.toContain('skipped');
+		expect(progressWrites().at(-1)).toBe('not_started');
 		expect(window.fetch).toBe(networkFetch);
 		expectNothingLeftThePracticeWorld();
 	}, 120000);

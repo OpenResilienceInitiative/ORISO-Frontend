@@ -34,6 +34,7 @@ import { replaceTenantSettings } from '../../utils/tenantSettingsHelper';
 import { PracticeBanner } from '../../practice/PracticeBanner';
 import { PracticeLayer } from '../../practice/PracticeLayer';
 import { PracticeSurface } from '../../practice/PracticeSurface';
+import type { ITutorialProgressItem } from '../../api/apiTutorialProgress';
 import { practiceCounsellorFixture } from '../../practice/fixtures/practiceCounsellorFixture';
 import {
 	getPracticeNetworkGuard,
@@ -85,6 +86,7 @@ const RecordedNetwork = ({ children }: { children: React.ReactNode }) => {
 		const pageFetch = window.fetch;
 		requestLog.length = 0;
 		realMatrixWrites.length = 0;
+		const progress = new Map<string, ITutorialProgressItem>();
 		window.fetch = (async (
 			input: RequestInfo | URL,
 			init?: RequestInit
@@ -93,16 +95,19 @@ const RecordedNetwork = ({ children }: { children: React.ReactNode }) => {
 			const progressWrite =
 				request.method === 'PUT' &&
 				request.url.includes(TUTORIAL_PROGRESS);
+			const saved = progressWrite
+				? ((await request.clone().json()) as ITutorialProgressItem)
+				: undefined;
+			if (saved)
+				progress.set(`${saved.tourId}:${saved.tourVersion}`, saved);
 			requestLog.push({
 				method: request.method,
 				url: request.url,
-				status: progressWrite
-					? (await request.clone().json()).status
-					: undefined
+				status: saved?.status
 			});
 			if (request.url.includes(TUTORIAL_PROGRESS)) {
 				return request.method === 'GET'
-					? new Response('[]', {
+					? new Response(JSON.stringify([...progress.values()]), {
 							status: 200,
 							headers: { 'content-type': 'application/json' }
 						})
@@ -368,7 +373,8 @@ const next = async (label = 'Weiter') =>
 
 /** No practice data or action may reach the real page's network or storage. */
 const expectIsolated = async (
-	storageBefore: ReturnType<typeof storageSnapshot>
+	storageBefore: ReturnType<typeof storageSnapshot>,
+	terminalStatus = 'completed'
 ) => {
 	await expect(
 		requestLog.filter(
@@ -382,7 +388,7 @@ const expectIsolated = async (
 			({ method, url, status }) =>
 				method === 'PUT' &&
 				url.includes(TUTORIAL_PROGRESS) &&
-				status === 'completed'
+				status === terminalStatus
 		)
 	).toBe(true);
 	await expect(
@@ -396,7 +402,8 @@ const expectIsolated = async (
 
 const expectExited = async (
 	canvas: ReturnType<typeof within>,
-	storageBefore: ReturnType<typeof storageSnapshot>
+	storageBefore: ReturnType<typeof storageSnapshot>,
+	terminalStatus = 'completed'
 ) => {
 	await waitFor(
 		() => expect(getPracticeSnapshot().status).toBe('inactive'),
@@ -412,7 +419,7 @@ const expectExited = async (
 	await expect(
 		screen.queryByRole('status', { name: 'Übungsmodus' })
 	).toBeNull();
-	await expectIsolated(storageBefore);
+	await expectIsolated(storageBefore, terminalStatus);
 };
 
 const acceptAnEnquiry: NonNullable<Story['play']> = async ({
@@ -535,6 +542,39 @@ export const AcceptAnEnquiryWithTeamDiscussion: Story = {
 		}
 	},
 	play: acceptAnEnquiry
+};
+
+export const CancelAnExercise: Story = {
+	name: 'End resets an interrupted exercise · desktop',
+	play: async ({ canvas }) => {
+		const storageBefore = storageSnapshot();
+		const card = (
+			await canvas.findByRole(
+				'heading',
+				{ name: 'Übung: Anfrage annehmen' },
+				SLOW
+			)
+		).closest('li')!;
+		await userEvent.click(
+			within(card).getByRole('button', { name: 'Übung starten' })
+		);
+		await expectStep(1, 6);
+		await next();
+		await expectStep(2, 6);
+		await userEvent.click(
+			screen.getByRole('button', { name: 'Übung beenden' })
+		);
+		await expectExited(canvas, storageBefore, 'not_started');
+		const restored = canvas
+			.getByRole('heading', { name: 'Übung: Anfrage annehmen' })
+			.closest('li')!;
+		await expect(
+			within(restored).getByText('Nicht gestartet')
+		).toBeVisible();
+		await expect(
+			requestLog.filter(({ method }) => method === 'PUT').at(-1)?.status
+		).toBe('not_started');
+	}
 };
 
 export const AddASupervisor: Story = {
