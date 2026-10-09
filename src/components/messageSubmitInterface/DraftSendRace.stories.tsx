@@ -35,7 +35,7 @@ function SlowDraftBackend({ children }: { children: React.ReactNode }) {
 			setOperations((previous) => [...previous, request.method]);
 			if (request.method === 'PATCH') {
 				const body = await request.json();
-				await new Promise((resolve) => setTimeout(resolve, 250));
+				await new Promise((resolve) => setTimeout(resolve, 1800));
 				drafts.set(key, body);
 				setOperations((previous) => [...previous, 'PATCH completed']);
 				return new Response(null, { status: 204 });
@@ -82,8 +82,10 @@ function DraftSendStage() {
 		setTimeout(() => {
 			setValue('');
 			ref.current?.clear();
-			void draft.clearDraftMessage();
-			setTimeout(() => setSending(false), 1200);
+			void Promise.allSettled([
+				draft.clearDraftMessage(),
+				new Promise<void>((resolve) => setTimeout(resolve, 1200))
+			]).then(() => setSending(false));
 		}, 50);
 	};
 	return (
@@ -153,12 +155,18 @@ export const DelayedSaveAfterSend: Story = {
 		await userEvent.click(
 			canvas.getByRole('button', { name: 'Send reply' })
 		);
+		await new Promise((resolve) => setTimeout(resolve, 1350));
+		await expect(
+			canvas.getByRole('button', { name: 'Send reply' })
+		).toBeDisabled();
 		// Wait beyond the production composer's 1200 ms request reset, when
 		// re-enabling the draft hook used to load the late PATCH back in.
-		await waitFor(() =>
-			expect(
-				canvas.getByLabelText('Draft request sequence').textContent
-			).toContain('PATCH completed')
+		await waitFor(
+			() =>
+				expect(
+					canvas.getByLabelText('Draft request sequence').textContent
+				).toContain('PATCH completed'),
+			{ timeout: 5000 }
 		);
 		await new Promise((resolve) => setTimeout(resolve, 1600));
 		await waitFor(() => expect(editor.textContent?.trim()).toBe(''));

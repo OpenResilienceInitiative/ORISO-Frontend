@@ -157,15 +157,14 @@ describe('useDraftMessage', () => {
 		mocks.apiDeleteUserDraft.mockImplementation(async (key) => {
 			drafts.delete(key);
 		});
-		mocks.apiUpsertUserDraft.mockImplementation(
-			(key, payload) =>
-				new Promise<void>((resolve) => {
-					finishSave = () => {
-						drafts.set(key, payload);
-						resolve();
-					};
-				})
-		);
+		mocks.apiUpsertUserDraft.mockImplementation(async (key, payload) => {
+			if (payload.text === '<p>Sent practice reply</p>') {
+				await new Promise<void>((resolve) => {
+					finishSave = resolve;
+				});
+			}
+			drafts.set(key, payload);
+		});
 		const loadDraft = vi.fn();
 		const { result, rerender } = renderHook(
 			({ enabled }) =>
@@ -195,6 +194,11 @@ describe('useDraftMessage', () => {
 		await waitFor(() => expect(result.current.loaded).toBe(true));
 		expect(drafts.has(scope)).toBe(false);
 		expect(loadDraft).not.toHaveBeenCalled();
+		act(() => result.current.onChange('<p>Next unsent reply</p>'));
+		rerender({ enabled: false });
+		await waitFor(() =>
+			expect(drafts.get(scope)?.text).toBe('<p>Next unsent reply</p>')
+		);
 	});
 
 	it('cancels pending autosave when clearing a sent draft', async () => {
