@@ -159,7 +159,10 @@ export const RuleChipsEditor = ({
 								onClick={() => {
 									setDraft(rule);
 									setEditingIndex(index);
-									setEditingIsNew(false);
+									// Its own chip keeps the rule being written new.
+									setEditingIsNew(
+										editingIsNew && editingIndex === index
+									);
 								}}
 							>
 								{t(
