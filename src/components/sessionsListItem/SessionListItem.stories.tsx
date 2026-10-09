@@ -1265,7 +1265,6 @@ export const AskerSearchingRow: Story = {
 
 const PRIMARY = 'rgb(165, 0, 10)';
 const PRIMARY_CONTAINER = 'rgb(204, 30, 28)';
-const WHITE = 'rgb(255, 255, 255)';
 const ON_PRIMARY_CONTAINER = 'rgb(255, 226, 222)';
 
 /** Waits for the row to render and ends its entrance, so colours are read settled. */
