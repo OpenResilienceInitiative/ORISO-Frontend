@@ -139,14 +139,33 @@ $message-avatar-overlap: -19px;
 	 * an agency to name, so every other message keeps its one-line header.
 	 * See OpenResilienceInitiative/ORISO-Frontend#895.
 	 */
+	// Name above centre. The header is a flex row, so without this block the
+	// two sat side by side and squeezed the name into three lines.
+	&__nameBlock {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		min-width: 0;
+	}
+
+	// Figma 783:19926 (Beratungsstelle row): 16px house-heart icon, 2px gap,
+	// Inter Medium 12/12 in #646d78, under the semibold name.
 	&__usernameSubtitle {
+		display: flex;
+		align-items: center;
+		gap: 2px;
 		padding-left: 20px;
 		margin-top: 2px;
 		font-size: 12px;
+		font-weight: 500;
 		line-height: 14px;
-		color: var(--m3-secondary, #4c555f);
+		color: var(--m3-secondary-container, #646d78);
 		text-align: left;
 		overflow-wrap: anywhere;
+	}
+
+	&__usernameSubtitleIcon {
+		flex-shrink: 0;
 	}
 
 	&__header {
@@ -1131,6 +1150,7 @@ $message-avatar-overlap: -19px;
 		align-items: center;
 		gap: 2px;
 		font-size: 12px;
+		font-weight: 500;
 		line-height: 12px;
 		color: var(--m3-secondary-container, #646d78);
 		min-width: 0;
@@ -1139,14 +1159,10 @@ $message-avatar-overlap: -19px;
 		text-align: right;
 	}
 
+	// Figma 783:19835: the house-heart icon follows the centre text, 16px.
 	&__senderInfoMetaIcon {
-		width: 12px;
-		height: 12px;
 		display: inline-block;
-
-		path {
-			fill: var(--m3-secondary-container, #646d78);
-		}
+		flex-shrink: 0;
 	}
 
 	&__feedbackTag {

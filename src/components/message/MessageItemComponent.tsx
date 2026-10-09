@@ -62,6 +62,7 @@ import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
+import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
 import {
 	IBooleanSetting,
 	SETTING_MESSAGE_ALLOWDELETING
@@ -2922,6 +2923,11 @@ export const MessageItemComponent = ({
 							{profileSubtitle ? (
 								<div className="messageItem__senderInfoSubtitle">
 									<span>{profileSubtitle}</span>
+									<AgencyIcon
+										className="messageItem__senderInfoMetaIcon"
+										aria-hidden="true"
+										focusable="false"
+									/>
 								</div>
 							) : null}
 						</div>
