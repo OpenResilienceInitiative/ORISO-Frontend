@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
+import {
 	ActiveSessionContext,
 	AUTHORITIES,
 	buildExtendedSession,
@@ -707,6 +711,40 @@ export const ActiveConversation: Story = {
 			expect(canvasElement.textContent).not.toContain('•••');
 		});
 	}
+};
+
+/* The topic tag under the title is small text on a tinted fill: it must reach
+   4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
+const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+				.length
+		).toBeGreaterThan(0)
+	);
+	canvasElement
+		.querySelectorAll('.sessionInfo__metaInfo__content')
+		.forEach((tag) => {
+			expect(
+				wcagContrast(
+					getComputedStyle(tag).color,
+					effectiveBackground(tag)
+				)
+			).toBeGreaterThanOrEqual(4.5);
+		});
+};
+
+export const TopicTagLegible: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1',
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
+export const TopicTagLegibleLightBrandColour: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1 with a light Träger colour',
+	parameters: { orisoSeed: '#b4ddee' },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
 };
 
 /**
