@@ -39,6 +39,7 @@ import {
 	TERTIARY_TONES,
 	TOO_PALE_CHROMA
 } from './orisoTuning';
+import { wcagContrast } from './wcagContrast';
 
 export type OrisoSchemeName = 'light' | 'dark' | 'inverted';
 
@@ -152,6 +153,37 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 		fixedDim: hex(palette.tone(80)),
 		onFixed: hex(palette.tone(10)),
 		onFixedVariant: hex(palette.tone(30))
+	};
+};
+
+/**
+ * The global topic tag ("Themenberatung", e.g. "Familienberatung") is one
+ * pill everywhere: the session list, the session header, the group views.
+ * Resting: the brand's light "fixed" tone with its tone-30 ink (about 7:1,
+ * same hue as the Träger). Emphasised (selected or hovered card): the
+ * brand container with its own on-container ink. The ink falls back to the
+ * darkest tone when a recipe change ever drops the pair below AA, so the
+ * guard lives with the tokens, not in each consumer.
+ */
+const topicTagTokens = (brand: BrandFamily): Record<string, string> => {
+	const ink = (fill: string, preferred: string, fallback: string): string =>
+		wcagContrast(preferred, fill) >= CONTRAST_AA ? preferred : fallback;
+	return {
+		'--oriso-topic-tag-bg': brand.fixed,
+		'--oriso-topic-tag-fg': ink(
+			brand.fixed,
+			brand.onFixedVariant,
+			brand.onFixed
+		),
+		'--oriso-topic-tag-active-bg': brand.container,
+		'--oriso-topic-tag-active-fg': ink(
+			brand.container,
+			brand.onContainer,
+			wcagContrast('#ffffff', brand.container) >=
+				wcagContrast('#000000', brand.container)
+				? '#ffffff'
+				: '#000000'
+		)
 	};
 };
 
@@ -405,6 +437,7 @@ export const computeOrisoPalette = (
 		'--oriso-primary-fixed-dim': brand.fixedDim,
 		'--oriso-on-primary-fixed': brand.onFixed,
 		'--oriso-on-primary-fixed-variant': brand.onFixedVariant,
+		...topicTagTokens(brand),
 		'--oriso-app-action': brand.role,
 		'--oriso-lottie-accent-color': brand.fixedDim,
 		'--oriso-lottie-secondary-color': secondary.container,

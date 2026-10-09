@@ -722,6 +722,12 @@ const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
 				.length
 		).toBeGreaterThan(0)
 	);
+	// The topic is the shared <TopicTag> (global --oriso-topic-tag-* tokens).
+	expect(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		).length
+	).toBeGreaterThan(0);
 	canvasElement
 		.querySelectorAll('.sessionInfo__metaInfo__content')
 		.forEach((tag) => {

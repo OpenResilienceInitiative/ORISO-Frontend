@@ -35,6 +35,12 @@
 	--oriso-primary-fixed-dim: #ffb4aa;
 	--oriso-on-primary-fixed: #410001;
 	--oriso-on-primary-fixed-variant: #930008;
+	// Global topic tag (Themenberatung): the engine emits these per Träger;
+	// the literals are the #a5000a result (guarded in orisoScheme.test.ts).
+	--oriso-topic-tag-bg: #ffdad5;
+	--oriso-topic-tag-fg: #930008;
+	--oriso-topic-tag-active-bg: #cc1e1c;
+	--oriso-topic-tag-active-fg: #ffe2de;
 	--m3-secondary: #4c555f;
 	--m3-on-secondary: #{$white};
 	--m3-secondary-container: #646d78;
