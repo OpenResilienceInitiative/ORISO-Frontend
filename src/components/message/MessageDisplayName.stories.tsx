@@ -305,6 +305,9 @@ export const CounsellorNameAboveCentreInRealHeader: Story = {
 		const centreBox = centre.getBoundingClientRect();
 		await expect(centreBox.top).toBeGreaterThanOrEqual(nameBox.bottom - 1);
 		await expect(
+			Math.abs(centreBox.left - nameBox.left)
+		).toBeLessThanOrEqual(1);
+		await expect(
 			centre.querySelector('[data-testid="agency-icon"]')
 		).not.toBeNull();
 	}
