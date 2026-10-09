@@ -3379,6 +3379,7 @@
 			"temporary": {
 				"join": "Katıl",
 				"joinGroup": "Gruba katıl",
+				"incompleteLink": "Bu davet bağlantısı eksik olduğundan hesap açmadan katılmak mümkün değil. Lütfen bir hesapla kayıt olun veya yeni bir bağlantı isteyin.",
 				"toggleOff": "Hesap oluştur",
 				"toggleOn": "Hesap açmadan katıl",
 				"title": "Bu oturum tarayıcıyı kapattığınızda sona erer.",
