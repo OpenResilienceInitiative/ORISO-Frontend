@@ -82,3 +82,28 @@ describe('persisted handover grant metadata', () => {
 		}
 	);
 });
+
+describe('persisted initial acceptance metadata', () => {
+	const event = (acceptance: unknown) =>
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({ type: 'INQUIRY_ACCEPTED', acceptance });
+	it('keeps the exact immutable acceptance scope and timestamp', () => {
+		expect(
+			parseMessagePrefixes(
+				event({ sessionId: 73, acceptedAt: '2026-10-09T10:20:00Z' })
+			).systemNotificationAcceptance
+		).toEqual({ sessionId: 73, acceptedAt: '2026-10-09T10:20:00Z' });
+	});
+	it.each([
+		undefined,
+		{},
+		{ sessionId: 0, acceptedAt: '2026-10-09T10:20:00Z' },
+		{ sessionId: 73, acceptedAt: 'not-a-date' },
+		{ sessionId: 73, acceptedAt: '2026-02-30T10:20:00Z' },
+		{ sessionId: 73, acceptedAt: '2026-10-09T10:20:00' }
+	])('rejects incomplete or invalid acceptance metadata: %j', (metadata) => {
+		expect(
+			parseMessagePrefixes(event(metadata)).systemNotificationAcceptance
+		).toBeNull();
+	});
+});

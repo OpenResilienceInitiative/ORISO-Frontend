@@ -1,6 +1,7 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { NotificationSetup } from '../erstantwort/NotificationSetup';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { StandingAccessSettings } from '../caseHandover/StandingAccessSettings';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
@@ -76,6 +77,7 @@ import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
+	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED,
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
@@ -1206,10 +1208,17 @@ export const MessageItemComponent = ({
 	const isSystemNotification = parsedMessage.isSystemNotification;
 	const persistedHandoverGrant =
 		parsedMessage.systemNotificationHandoverGrant;
-	const isInformationalHandoverGrant =
-		persistedHandoverGrant?.clientConsent === 'NONE' &&
+	const isPersistedGrantForAsker =
+		Boolean(persistedHandoverGrant) &&
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-		!activeSession.isGroup;
+		!activeSession.isGroup &&
+		notificationConversationType(activeSession) === 'AGENCY_COUNSELLING';
+	const persistedAcceptance = parsedMessage.systemNotificationAcceptance;
+	const isAcceptedNoticeForAsker =
+		persistedAcceptance?.sessionId === activeSession.item.id &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		notificationConversationType(activeSession) === 'AGENCY_COUNSELLING';
 	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
 	   `parsedMessage.systemNotificationType`, because the payload version has to
 	   be inspected too: an event from a newer server must render nothing at all
@@ -1254,6 +1263,9 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
+	const isInquiryAcceptedEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED;
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
@@ -1291,6 +1303,9 @@ export const MessageItemComponent = ({
 		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
+	const acceptedDescription =
+		systemNotificationRawDescription ||
+		translate('notifications.events.inquiryAccepted.text');
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -2047,9 +2062,16 @@ export const MessageItemComponent = ({
 										<div className="messageItem__sendFailedTitle">
 											{isCaseHandoverGrantedEvent
 												? translate(
-														'caseHandover.systemMessage.tookOverTitle'
+														persistedHandoverGrant?.accessType ===
+															'CO_ACCESS'
+															? 'caseHandover.consent.info.noticeTitle'
+															: 'caseHandover.systemMessage.tookOverTitle'
 													)
-												: systemNotificationTitle}
+												: isInquiryAcceptedEvent
+													? translate(
+															'caseHandover.accepted.title'
+														)
+													: systemNotificationTitle}
 										</div>
 										<div className="messageItem__sendFailedSubtitle">
 											{isCaseHandoverGrantedEvent
@@ -2131,12 +2153,35 @@ export const MessageItemComponent = ({
 							onContextMenu={handleBubbleContextMenu}
 						>
 							{isSystemNotification &&
-								isCaseHandoverGrantedEvent && (
+								(isCaseHandoverGrantedEvent ||
+									isInquiryAcceptedEvent) && (
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
-										{isInformationalHandoverGrant ? (
+										{isAcceptedNoticeForAsker ? (
+											<>
+												<p className="messageItem__systemNotificationDescription">
+													{acceptedDescription}
+												</p>
+												<StandingAccessSettings
+													key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+													sessionId={
+														activeSession.item.id
+													}
+													conversationType={
+														erstantwortModality
+													}
+													compact
+												/>
+											</>
+										) : isPersistedGrantForAsker ? (
 											<CaseHandoverInformationalBody
+												mode={
+													persistedHandoverGrant.clientConsent
+												}
+												conversationType={
+													erstantwortModality
+												}
 												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
 												description={
 													systemNotificationRawDescription
@@ -2175,6 +2220,7 @@ export const MessageItemComponent = ({
 							 */}
 							{isSystemNotification &&
 								!isCaseHandoverGrantedEvent &&
+								!isInquiryAcceptedEvent &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
 										{systemNotificationDescription}
@@ -2621,7 +2667,7 @@ export const MessageItemComponent = ({
 
 	const withGrantNotifications = (message: React.ReactNode) => (
 		<>
-			{isInformationalHandoverGrant ? (
+			{isPersistedGrantForAsker || isAcceptedNoticeForAsker ? (
 				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
 					{message}
 				</CarimatMessageContainer>

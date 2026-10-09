@@ -225,10 +225,12 @@ const askerUserData = {
 
 const renderSessionStream = ({
 	isGroup,
-	notificationFeed = []
+	notificationFeed = [],
+	status = 2
 }: {
 	isGroup: boolean;
 	notificationFeed?: any[];
+	status?: number;
 }) => {
 	const activeSession = {
 		rid: ROOM_ID,
@@ -237,7 +239,9 @@ const renderSessionStream = ({
 		item: {
 			id: 1,
 			matrixRoomId: ROOM_ID,
-			active: true
+			active: true,
+			status,
+			conversationType: 'AGENCY_COUNSELLING'
 		}
 	} as any;
 
@@ -321,6 +325,24 @@ describe('SessionStream Matrix room lifecycle', () => {
 	afterEach(() => {
 		cleanup();
 	});
+
+	it.each([0, 1, 2])(
+		'never mounts an access setting outside the message rail (session status %s)',
+		(status) => {
+			const { container } = renderSessionStream({
+				isGroup: false,
+				status
+			});
+			expect(
+				container.querySelector('.session__wrapper > button')
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'caseHandover.consent.info.title'
+				})
+			).toBeNull();
+		}
+	);
 
 	it('offers notification setup from the optional handover dialog without deciding consent', async () => {
 		renderSessionStream({
