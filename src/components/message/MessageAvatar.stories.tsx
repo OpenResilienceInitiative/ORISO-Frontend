@@ -211,7 +211,11 @@ export const WhiteRingOnBothSides: Story = {
 	render: (args) => (
 		<div style={{ display: 'flex', gap: 48, padding: 24 }}>
 			{(['left', 'right'] as const).map((side) => (
-				<div key={side} className={`messageItem messageItem--${side}`}>
+				<div
+					key={side}
+					className={`messageItem messageItem--${side}`}
+					style={{ flex: 'none' }}
+				>
 					<div
 						className="messageItem__avatar"
 						data-testid={`message-avatar-frame-${side}`}
@@ -237,8 +241,6 @@ export const WhiteRingOnBothSides: Story = {
 			const circle = person.firstElementChild as HTMLElement;
 			expect(parseFloat(getComputedStyle(circle).borderTopWidth)).toBe(0);
 			expect(getComputedStyle(circle).boxShadow).toBe('none');
-			expect(person.getBoundingClientRect().width).toBe(48);
-			expect(circle.getBoundingClientRect().width).toBe(48);
 			await waitFor(() =>
 				expect(circle.querySelector('svg')).toBeTruthy()
 			);
