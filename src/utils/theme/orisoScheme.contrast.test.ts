@@ -67,6 +67,21 @@ describe('brand text stays legible for light Träger seeds (#1499)', () => {
 		}
 	);
 
+	it.each(LIGHT_SEEDS)(
+		'%s: hovered brand text does not fade (4.5:1 on white)',
+		(seed) => {
+			const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
+			expect(
+				wcagContrast(tokens['--oriso-primary-text-hover'], '#ffffff')
+			).toBeGreaterThanOrEqual(4.5);
+			expect(
+				wcagContrast(tokens['--oriso-primary-text-hover'], '#ffffff')
+			).toBeGreaterThanOrEqual(
+				wcagContrast(tokens['--oriso-primary-text'], '#ffffff')
+			);
+		}
+	);
+
 	it('keeps the Träger hue in the text tone', () => {
 		const { tokens } = computeOrisoPalette(
 			{ primary: TRAEGER_2_SEED },

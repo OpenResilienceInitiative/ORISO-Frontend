@@ -129,14 +129,20 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// Mail keeps the primary colour when active: it is the modality's colour, not a highlight.
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
-			color: var(--m3-primary, $primary) !important;
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			) !important;
 		}
 
 		.sessionsListItem__consultingTypeIcon--nearbyIcon {
 			// The mask already paints it; the black-to-red filter the other
 			// modalities use would double up on it.
 			filter: none;
-			background-color: var(--m3-primary, $primary);
+			background-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			);
 		}
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
@@ -1002,7 +1008,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 24px !important;
 			flex-shrink: 0;
 			display: block;
-			background-color: var(--m3-primary, $primary);
+			background-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			);
 			mask-image: var(--nearby-icon-url);
 			mask-size: contain;
 			mask-position: center;
@@ -1017,7 +1026,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
 			font-weight: 600;
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			line-height: 20px;
 			letter-spacing: 0;
 		}

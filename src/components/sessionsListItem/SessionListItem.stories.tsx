@@ -1817,11 +1817,11 @@ export const TenantPrimaryColour: Story = {
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 					.color
-			).toBe(tenant('--m3-primary'));
+			).toBe(tenant('--oriso-primary-text'));
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
 					.backgroundColor
-			).toBe(tenant('--m3-primary'));
+			).toBe(tenant('--oriso-primary-text'));
 		}
 	}
 };

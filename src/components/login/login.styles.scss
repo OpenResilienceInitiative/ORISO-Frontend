@@ -218,7 +218,10 @@ $link-hover-text-decoration: $link-text-decoration !default;
 
 		&:hover {
 			cursor: pointer;
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 		}
 	}
 
