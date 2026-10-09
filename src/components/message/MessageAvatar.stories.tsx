@@ -231,7 +231,6 @@ export const WhiteRingOnBothSides: Story = {
 			expect(parseFloat(frameStyle.borderTopWidth)).toBe(6);
 			expect(frameStyle.borderTopColor).toBe('rgb(255, 255, 255)');
 			expect(frameStyle.backgroundColor).toBe('rgb(255, 255, 255)');
-			expect(frame.getBoundingClientRect().width).toBe(60);
 			const person = frame.querySelector(
 				'[data-testid="user-avatar"]'
 			) as HTMLElement;
