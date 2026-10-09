@@ -88,3 +88,57 @@ describe('brand text stays legible for light Träger seeds (#1499)', () => {
 		}
 	});
 });
+
+/**
+ * The global topic tag: one named token pair for every place that draws
+ * the topic as a pill. Frank (#1499): the tag follows the primary logic,
+ * the tokens are named and used everywhere, contrast is guarded here.
+ */
+describe('global topic tag tokens (--oriso-topic-tag-*)', () => {
+	const SEEDS = [...LIGHT_SEEDS, '#a5000a', '#0b5394', '#1a1a1a'];
+	const SCHEMES = ['light', 'dark', 'inverted'] as const;
+
+	it.each(SEEDS)(
+		'%s: resting and emphasised tag reach 4.5:1 in every scheme',
+		(seed) => {
+			for (const scheme of SCHEMES) {
+				const { tokens } = computeOrisoPalette(
+					{ primary: seed },
+					scheme
+				);
+				expect(
+					wcagContrast(
+						tokens['--oriso-topic-tag-fg'],
+						tokens['--oriso-topic-tag-bg']
+					),
+					`${seed} ${scheme} resting`
+				).toBeGreaterThanOrEqual(4.5);
+				expect(
+					wcagContrast(
+						tokens['--oriso-topic-tag-active-fg'],
+						tokens['--oriso-topic-tag-active-bg']
+					),
+					`${seed} ${scheme} emphasised`
+				).toBeGreaterThanOrEqual(4.5);
+			}
+		}
+	);
+
+	it('follows the primary logic: the resting fill is the primary-fixed tone', () => {
+		const { tokens } = computeOrisoPalette(
+			{ primary: TRAEGER_2_SEED },
+			'light'
+		);
+		expect(tokens['--oriso-topic-tag-bg']).toBe(
+			tokens['--m3-primary-fixed']
+		);
+		expect(tokens['--oriso-topic-tag-active-bg']).toBe(
+			tokens['--m3-primary-container']
+		);
+		expect(
+			Math.abs(
+				hueOf(tokens['--oriso-topic-tag-bg']) - hueOf(TRAEGER_2_SEED)
+			)
+		).toBeLessThan(8);
+	});
+});

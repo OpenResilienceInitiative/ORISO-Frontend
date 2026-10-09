@@ -428,12 +428,12 @@ $room-header-gap-top: 2px;
 			display: inline-flex;
 			align-items: center;
 			padding: 1px 8px;
-			border-bottom-left-radius: 5px;
-			border-bottom-right-radius: 5px;
+			border-radius: 0 0 5px 5px;
 
-			// The member chip's pairing: grey text reached 3.8:1 on the pink fill.
-			background: var(--m3-primary-fixed, #ffd1d1);
-			color: var(--oriso-primary-text, var(--m3-primary, $primary));
+			// The global topic tag colours (--oriso-topic-tag-*, _topicTag.scss),
+			// guarded for 4.5:1 per Träger. The agency line beside it is the
+			// same pill, so the two read as a pair.
+			@include topic-tag-colors;
 
 			@include breakpoint($fromSmall) {
 				position: relative;
