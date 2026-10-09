@@ -113,7 +113,7 @@ import {
 	directAvatarChoice,
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
-import { chosenAvatarOf } from '../../utils/avatarChoice';
+import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -1757,11 +1757,15 @@ export const MessageItemComponent = ({
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('USER') ||
 		(userData?.userRoles || []).includes('ANONYMOUS');
-	const incomingAvatarChoice = activeSession?.isGroup
+	const resolvedIncomingAvatarChoice = activeSession?.isGroup
 		? memberAvatarChoice(userId, avatarMembers)
 		: activeSession
 			? directAvatarChoice(userId, activeSession)
 			: null;
+	// A counsellor always sits on the tenant's primary pair, picked or not.
+	const incomingAvatarChoice = isUserMessage()
+		? resolvedIncomingAvatarChoice
+		: counsellorChoiceOf(resolvedIncomingAvatarChoice);
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -2847,7 +2851,13 @@ export const MessageItemComponent = ({
 												: userData?.lastName
 										}
 										size={AVATAR_SIZES.message}
-										choice={chosenAvatarOf(userData)}
+										choice={
+											isUserMessage()
+												? chosenAvatarOf(userData)
+												: counsellorChoiceOf(
+														chosenAvatarOf(userData)
+													)
+										}
 									/>
 								</div>
 							</div>
