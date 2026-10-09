@@ -1718,6 +1718,7 @@
 					}
 				},
 				"accountDeleted": "Ce compte a été supprimé et n'est plus disponible. Si vous souhaitez continuer à utiliser le service de conseil, vous pouvez vous réinscrire à tout moment.",
+				"setupIncomplete": "Votre compte n'est pas encore entièrement configuré. Veuillez utiliser le lien de votre e-mail d'invitation ou réinitialiser votre mot de passe via « Mot de passe oublié ? » pour terminer la configuration.",
 				"unavailable": "La connexion n'est pas possible pour le moment. Veuillez réessayer dans quelques minutes.",
 				"unauthorized": {
 					"otp": "Vos données d'accès ne sont pas correctes. Veuillez réessayer.",

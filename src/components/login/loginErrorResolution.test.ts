@@ -24,6 +24,18 @@ const accountDisabledError = () => ({
 	}
 });
 
+// The password grant cannot complete a Keycloak required action, e.g. the
+// first-login password change for admin-chosen passwords (#1670).
+const setupIncompleteError = () => ({
+	message: FETCH_ERRORS.BAD_REQUEST,
+	options: {
+		data: {
+			error: 'invalid_grant',
+			error_description: 'Account is not fully set up'
+		}
+	}
+});
+
 const translationAt = (catalogue: any, key: string) =>
 	key.split('.').reduce((node, segment) => node?.[segment], catalogue);
 
@@ -53,6 +65,34 @@ describe('resolveLoginError', () => {
 			messageKey: LOGIN_ERROR_KEYS.ACCOUNT_DELETED,
 			outcome: 'account_disabled'
 		});
+	});
+
+	it('explains the unfinished setup instead of blaming the password (#1670)', () => {
+		expect(resolveLoginError(setupIncompleteError(), false)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.SETUP_INCOMPLETE,
+			outcome: 'setup_incomplete'
+		});
+	});
+
+	it('keeps the setup message after a second factor was submitted (#1670)', () => {
+		expect(resolveLoginError(setupIncompleteError(), true)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.SETUP_INCOMPLETE,
+			outcome: 'setup_incomplete'
+		});
+	});
+
+	it('translates the setup message in every shipped locale (#1670)', () => {
+		[deCommon, enCommon, frCommon, ruCommon, tiCommon, trCommon].forEach(
+			(catalogue) =>
+				expect(
+					typeof translationAt(
+						catalogue,
+						LOGIN_ERROR_KEYS.SETUP_INCOMPLETE
+					)
+				).toBe('string')
+		);
 	});
 
 	it('asks for the second factor instead of showing an error', () => {

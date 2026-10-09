@@ -1719,6 +1719,7 @@
 					}
 				},
 				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
+				"setupIncomplete": "Your account is not fully set up yet. Please use the link in your invitation email, or reset your password via “Forgot password?” to finish the setup.",
 				"unavailable": "Signing in is not possible right now. Please try again in a few minutes.",
 				"email": {
 					"otp": {

@@ -1734,6 +1734,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"setupIncomplete": "Ihr Konto ist noch nicht vollständig eingerichtet. Bitte nutzen Sie den Link aus Ihrer Einladungs-E-Mail oder setzen Sie Ihr Passwort über „Passwort vergessen?“ zurück, um die Einrichtung abzuschließen.",
 				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
