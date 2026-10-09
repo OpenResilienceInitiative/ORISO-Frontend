@@ -202,32 +202,53 @@ export const AllVariants: Story = {
 	}
 };
 
-/** The maintained message wrapper must leave the coloured animal circle clear. */
-export const ClearMessageCircle: Story = {
+/**
+ * The 60px message frame draws the white ring (Figma 7539-29194, 6px) on BOTH
+ * sides; the animal circle inside it stays 48px and carries no grey outline.
+ */
+export const WhiteRingOnBothSides: Story = {
 	args: { ...baseIdentity, isGroup: false, size: undefined },
 	render: (args) => (
-		<div className="messageItem__avatar" data-testid="message-avatar-frame">
-			<MessageAvatar {...args} />
+		<div style={{ display: 'flex', gap: 48, padding: 24 }}>
+			{(['left', 'right'] as const).map((side) => (
+				<div
+					key={side}
+					className={`messageItem messageItem--${side}`}
+					style={{ flex: 'none' }}
+				>
+					<div
+						className="messageItem__avatar"
+						data-testid={`message-avatar-frame-${side}`}
+					>
+						<MessageAvatar {...args} />
+					</div>
+				</div>
+			))}
 		</div>
 	),
 	play: async ({ canvasElement }) => {
-		const frame = canvasElement.querySelector(
-			'[data-testid="message-avatar-frame"]'
-		) as HTMLElement;
-		const person = frame.querySelector(
-			'[data-testid="user-avatar"]'
-		) as HTMLElement;
-		const circle = person.firstElementChild as HTMLElement;
-		expect(parseFloat(getComputedStyle(frame).borderTopWidth)).toBe(0);
-		expect(parseFloat(getComputedStyle(circle).borderTopWidth)).toBe(0);
-		expect(getComputedStyle(circle).boxShadow).toBe('none');
-		expect(person.getBoundingClientRect().width).toBe(48);
-		expect(circle.getBoundingClientRect().width).toBe(48);
-		await waitFor(() => expect(circle.querySelector('svg')).toBeTruthy());
+		for (const side of ['left', 'right']) {
+			const frame = canvasElement.querySelector(
+				`[data-testid="message-avatar-frame-${side}"]`
+			) as HTMLElement;
+			const frameStyle = getComputedStyle(frame);
+			expect(parseFloat(frameStyle.borderTopWidth)).toBe(6);
+			expect(frameStyle.borderTopColor).toBe('rgb(255, 255, 255)');
+			expect(frameStyle.backgroundColor).toBe('rgb(255, 255, 255)');
+			const person = frame.querySelector(
+				'[data-testid="user-avatar"]'
+			) as HTMLElement;
+			const circle = person.firstElementChild as HTMLElement;
+			expect(parseFloat(getComputedStyle(circle).borderTopWidth)).toBe(0);
+			expect(getComputedStyle(circle).boxShadow).toBe('none');
+			await waitFor(() =>
+				expect(circle.querySelector('svg')).toBeTruthy()
+			);
+		}
 	}
 };
 
-/** Same person at every maintained footprint; message artwork has no outer rim. */
+/** Same person at every maintained footprint; the animal circle itself has no grey outline. */
 export const SupportedSizes: Story = {
 	render: () => (
 		<div

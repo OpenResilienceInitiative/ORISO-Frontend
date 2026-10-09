@@ -40,3 +40,17 @@ export const chosenAvatarOf = (
 	const file = avatarFileOfId(identity?.avatarId);
 	return file ? { kind: 'animal', file } : null;
 };
+
+/**
+ * Counsellors always render on the tenant's primary pair (Figma: counsellor
+ * circle is the primary colour). A pick becomes a motif, anything else initials,
+ * so the derived animal palette is reserved for advice seekers.
+ */
+export const counsellorChoiceOf = (
+	choice?: AvatarChoice | null
+): Exclude<AvatarChoice, { kind: 'animal' }> => {
+	if (choice?.kind === 'motif' || choice?.kind === 'initials') return choice;
+	if (choice?.kind === 'animal' && avatarIdOfFile(choice.file) !== 'crane')
+		return { kind: 'motif', file: choice.file };
+	return { kind: 'initials' };
+};
