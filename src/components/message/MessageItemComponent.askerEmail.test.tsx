@@ -522,6 +522,50 @@ describe('initial acceptance is its own persisted chat event', () => {
 			)
 		).toHaveLength(1);
 	});
+	it('shows the translated acceptance text, never the description frozen in the server language', () => {
+		renderErstantwortMessage(tenantWith(true), {
+			raw:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'INQUIRY_ACCEPTED',
+					description: 'Die Anfrage wurde angenommen.',
+					acceptance: {
+						sessionId: 73,
+						acceptedAt: '2026-10-09T10:20:00Z'
+					}
+				}),
+			session: { id: 73, status: 2 },
+			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] }
+		});
+		expect(
+			screen.getByText('notifications.events.inquiryAccepted.text')
+		).toBeTruthy();
+		expect(screen.queryByText('Die Anfrage wurde angenommen.')).toBeNull();
+	});
+	it('opens the full three-column explanation, not the reduced dialog', async () => {
+		preferenceApi.get.mockReset().mockResolvedValue({
+			sessionId: 73,
+			alwaysAskBeforeAdditionalAccess: true
+		});
+		renderErstantwortMessage(tenantWith(true), {
+			raw: acceptance(),
+			session: { id: 73, status: 2 },
+			account: { grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT] }
+		});
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		await screen.findByRole('switch');
+		const dialog = screen.getByRole('dialog');
+		expect(
+			dialog.querySelectorAll(
+				'.caseHandoverConsentInfo__sections section'
+			)
+		).toHaveLength(3);
+		expect(dialog.querySelector('.caseHandoverConsentInfo')).toBeTruthy();
+	});
 	it.each([
 		undefined,
 		{},
@@ -617,7 +661,9 @@ it('keeps initial acceptance in the real chronological message rail on remount, 
 		const rows = [...result.container.querySelectorAll('.messageItem')];
 		expect(rows.map((row) => row.textContent)).toEqual([
 			expect.stringContaining('Original enquiry'),
-			expect.stringContaining('Accepted in the timeline'),
+			expect.stringContaining(
+				'notifications.events.inquiryAccepted.text'
+			),
 			expect.stringContaining('The later answer')
 		]);
 		expect(

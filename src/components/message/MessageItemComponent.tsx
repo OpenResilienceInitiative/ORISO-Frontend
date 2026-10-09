@@ -1,7 +1,6 @@
 import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { NotificationSetup } from '../erstantwort/NotificationSetup';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
-import { StandingAccessSettings } from '../caseHandover/StandingAccessSettings';
 import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
@@ -1303,9 +1302,11 @@ export const MessageItemComponent = ({
 		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
-	const acceptedDescription =
-		systemNotificationRawDescription ||
-		translate('notifications.events.inquiryAccepted.text');
+	/* The stored description is frozen in the server's language; the header is
+	   translated here, so the body must be too or the bubble mixes languages. */
+	const acceptedDescription = translate(
+		'notifications.events.inquiryAccepted.text'
+	);
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -2163,21 +2164,28 @@ export const MessageItemComponent = ({
 										{...visibleCaseHandoverInternalDetails}
 									>
 										{isAcceptedNoticeForAsker ? (
-											<>
-												<p className="messageItem__systemNotificationDescription">
-													{acceptedDescription}
-												</p>
-												<StandingAccessSettings
-													key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
-													sessionId={
-														activeSession.item.id
-													}
-													conversationType={
-														erstantwortModality
-													}
-													compact
-												/>
-											</>
+											<CaseHandoverInformationalBody
+												mode="OPT_IN"
+												conversationType={
+													erstantwortModality
+												}
+												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+												description={
+													acceptedDescription
+												}
+												sessionId={
+													activeSession.item.id
+												}
+												onSetupNotifications={
+													grantNotificationPolicy.emailAllowed ||
+													grantNotificationPolicy.browserAllowed
+														? () =>
+																setShowGrantNotifications(
+																	true
+																)
+														: undefined
+												}
+											/>
 										) : isPersistedGrantForAsker ? (
 											<CaseHandoverInformationalBody
 												mode={
