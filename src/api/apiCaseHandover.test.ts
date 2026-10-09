@@ -18,6 +18,7 @@ vi.mock('../resources/scripts/endpoints', () => ({
 
 vi.mock('./fetchData', () => ({
 	FETCH_METHODS: { GET: 'GET', POST: 'POST' },
+	FETCH_SUCCESS: { CONTENT: 'CONTENT' },
 	FETCH_ERRORS: {
 		BAD_REQUEST: 'BAD_REQUEST',
 		CONFLICT: 'CONFLICT',
@@ -61,7 +62,12 @@ describe('apiCaseHandover mutation contracts', () => {
 				expectedOwnershipRevision: 7,
 				operationId: '4f0e98b6-264c-4e0a-879d-4898d1ddc0d1'
 			}),
-			responseHandling: ['BAD_REQUEST', 'FORBIDDEN', 'CONFLICT']
+			responseHandling: [
+				'CONTENT',
+				'BAD_REQUEST',
+				'FORBIDDEN',
+				'CONFLICT'
+			]
 		});
 	});
 
@@ -102,7 +108,12 @@ describe('apiCaseHandover mutation contracts', () => {
 					}
 				]
 			}),
-			responseHandling: ['BAD_REQUEST', 'FORBIDDEN', 'CONFLICT']
+			responseHandling: [
+				'CONTENT',
+				'BAD_REQUEST',
+				'FORBIDDEN',
+				'CONFLICT'
+			]
 		});
 	});
 
@@ -123,7 +134,12 @@ describe('apiCaseHandover mutation contracts', () => {
 				expectedOwnershipRevision: 7,
 				operationId: '4f0e98b6-264c-4e0a-879d-4898d1ddc0d1'
 			}),
-			responseHandling: ['BAD_REQUEST', 'FORBIDDEN', 'CONFLICT']
+			responseHandling: [
+				'CONTENT',
+				'BAD_REQUEST',
+				'FORBIDDEN',
+				'CONFLICT'
+			]
 		});
 	});
 
@@ -140,7 +156,12 @@ describe('apiCaseHandover mutation contracts', () => {
 			url: 'https://api.test/service/users/sessions/41/case-handover/501/recipient-decision',
 			method: 'POST',
 			bodyData: JSON.stringify({ approved: false }),
-			responseHandling: ['BAD_REQUEST', 'FORBIDDEN', 'CONFLICT']
+			responseHandling: [
+				'CONTENT',
+				'BAD_REQUEST',
+				'FORBIDDEN',
+				'CONFLICT'
+			]
 		});
 	});
 });

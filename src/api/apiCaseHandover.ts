@@ -1,6 +1,11 @@
 import { endpoints } from '../resources/scripts/endpoints';
 import { ListItemsResponseInterface } from '../globalState/interfaces';
-import { fetchData, FETCH_ERRORS, FETCH_METHODS } from './fetchData';
+import {
+	fetchData,
+	FETCH_ERRORS,
+	FETCH_METHODS,
+	FETCH_SUCCESS
+} from './fetchData';
 
 export type CaseHandoverStatusValue =
 	| 'NOT_REQUESTED'
@@ -131,6 +136,7 @@ export const apiRequestCaseHandoverAccess = async (
 			operationId
 		}),
 		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FORBIDDEN,
 			FETCH_ERRORS.CONFLICT
@@ -147,6 +153,7 @@ export const apiRequestCaseHandoverBatchAccess = async (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ reasonCode, explanation, operations }),
 		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FORBIDDEN,
 			FETCH_ERRORS.CONFLICT
@@ -162,6 +169,7 @@ export const apiCreateCaseHandoverOffer = async (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify(input),
 		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FORBIDDEN,
 			FETCH_ERRORS.CONFLICT
@@ -209,6 +217,7 @@ export const apiDecideCaseHandoverRecipient = async (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ approved }),
 		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FORBIDDEN,
 			FETCH_ERRORS.CONFLICT
@@ -224,5 +233,9 @@ export const apiDecideCaseHandoverClientConsent = async (
 		url: `${endpoints.sessionBase}/${sessionId}/case-handover/${requestId}/client-consent`,
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify({ approved }),
-		responseHandling: [FETCH_ERRORS.BAD_REQUEST, FETCH_ERRORS.FORBIDDEN]
+		responseHandling: [
+			FETCH_SUCCESS.CONTENT,
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN
+		]
 	});
