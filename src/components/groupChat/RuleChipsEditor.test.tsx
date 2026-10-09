@@ -157,6 +157,35 @@ describe('RuleChipsEditor', () => {
 		expect((ruleInput() as HTMLTextAreaElement).disabled).toBe(false);
 	});
 
+	it('frees the last slot when the new rule is cleared after selecting its own chip', () => {
+		let latest = DEFAULT_RULES;
+		const view = render(
+			<Harness
+				maxRules={3}
+				resetKey="de"
+				onRules={(rules) => (latest = rules)}
+			/>
+		);
+
+		fireEvent.change(ruleInput(), { target: { value: 'Handys aus.' } });
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.create.authorContent.editRule 3'
+			})
+		);
+		fireEvent.change(ruleInput(), { target: { value: '' } });
+
+		expect(latest).toEqual(DEFAULT_RULES);
+		view.rerender(
+			<Harness
+				maxRules={3}
+				resetKey="en"
+				onRules={(rules) => (latest = rules)}
+			/>
+		);
+		expect((ruleInput() as HTMLTextAreaElement).disabled).toBe(false);
+	});
+
 	it('keeps an existing rule in place when its text is cleared while editing', () => {
 		let latest = DEFAULT_RULES;
 		render(<Harness onRules={(rules) => (latest = rules)} />);
