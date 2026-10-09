@@ -3041,6 +3041,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							bannedUsers={props.bannedUsers}
 							hideBackButton={isPhoneLayout}
 							callsInMenu={isPhoneLayout}
+							hideGroupTopic={shouldShowGroupConsentGate}
 						/>
 					)}
 				</div>
