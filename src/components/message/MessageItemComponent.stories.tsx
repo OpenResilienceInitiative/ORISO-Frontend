@@ -42,7 +42,10 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
+import { StandingAccessPreferenceStoryFixture } from '../caseHandover/standingAccessPreferenceStoryFixture';
 import './message.styles.scss';
+import englishCatalogue from '../../resources/i18n/en/common.json';
+import frenchCatalogue from '../../resources/i18n/fr/common.json';
 
 /** The shape of a consultant-list entry the bubble reads names from. */
 type ConsultantListEntry = {
@@ -2064,6 +2067,15 @@ export const InternalGroupColleagueName: Story = {
 
 export const InformationalGrantedForAsker: Story = {
 	name: 'Persisted handover — passive informational grant',
+	decorators: [
+		(Story) => (
+			<StandingAccessPreferenceStoryFixture
+				sessionId={mockActiveSession1on1().item.id}
+			>
+				<Story />
+			</StandingAccessPreferenceStoryFixture>
+		)
+	],
 	globals: { ...desktop1440Globals, locale: 'de' },
 	parameters: {
 		activeSession: mockActiveSession1on1(),
@@ -2140,7 +2152,7 @@ export const InformationalGrantedForAsker: Story = {
 			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
 		);
 		const dialog = within(await within(document.body).findByRole('dialog'));
-		await expect(dialog.queryByRole('switch')).toBeNull();
+		await expect(await dialog.findByRole('switch')).not.toBeChecked();
 	}
 };
 export const InformationalGrantedForAskerMobile: Story = {
@@ -2169,7 +2181,9 @@ export const InformationalGrantedForAskerRussianMobile: Story = {
 		await waitFor(() => expect(more).toBeTruthy());
 		await userEvent.click(more!);
 		const dialog = await within(document.body).findByRole('dialog');
-		await expect(within(dialog).queryByRole('switch')).toBeNull();
+		await expect(
+			await within(dialog).findByRole('switch')
+		).not.toBeChecked();
 		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
 			dialog.clientWidth + 1
 		);
@@ -2235,4 +2249,189 @@ export const InformationalGrantedNotificationContinuationTablet: Story = {
 	...InformationalGrantedNotificationContinuation,
 	name: 'Persisted notification continuation — tablet 834',
 	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const GrantedPreferenceSaveAndReadBack: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted grant — scoped preference save and readback',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const more = await canvas.findByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await expect(
+			more.closest('.messageItem__message--systemNotification')
+		).toBeTruthy();
+		await expect(
+			canvasElement.querySelectorAll(
+				'.messageItem__message--systemNotification'
+			)
+		).toHaveLength(1);
+		await userEvent.click(more);
+		const page = within(document.body);
+		const control = await page.findByRole('switch');
+		await expect(control).not.toBeChecked();
+		await userEvent.click(control);
+		await waitFor(() =>
+			expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+		);
+		await userEvent.click(more);
+		await expect(await page.findByRole('switch')).toBeChecked();
+	}
+};
+export const GrantedPreferenceSaveAndReadBackMobile: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...GrantedPreferenceSaveAndReadBack.parameters,
+		...mobileParameters
+	}
+};
+export const GrantedPreferenceSaveAndReadBackTablet: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const InitialAcceptanceWithScopedPreference: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Initial acceptance — persisted scoped settings notice',
+	args: {
+		...GrantedPreferenceSaveAndReadBack.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'INQUIRY_ACCEPTED',
+				title: 'Anfrage angenommen',
+				description:
+					'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.',
+				username: 'freundliches Alpaka Mika',
+				acceptance: {
+					sessionId: mockActiveSession1on1().item.id,
+					acceptedAt: '2026-10-09T10:20:00Z'
+				}
+			})
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceMobile: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...InitialAcceptanceWithScopedPreference.parameters,
+		...mobileParameters
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Static entry states: capture these before any save or notification continuation.
+export const InitialAcceptanceDefault: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	name: 'Initial acceptance — default chat notice',
+	play: undefined
+};
+export const InitialAcceptanceDefaultMobile: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...InitialAcceptanceDefault.parameters, ...mobileParameters }
+};
+export const InitialAcceptanceDefaultTablet: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const GrantedPreferenceDefault: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Persisted handover — default chat notice',
+	play: undefined
+};
+export const GrantedPreferenceDefaultMobile: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...GrantedPreferenceDefault.parameters, ...mobileParameters }
+};
+export const GrantedPreferenceDefaultTablet: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const CoAccessPreferenceDefault: Story = {
+	...GrantedPreferenceDefault,
+	name: 'Persisted co-access — support notice, no takeover claim',
+	args: {
+		...GrantedPreferenceDefault.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'CASE_HANDOVER_GRANTED',
+				description:
+					'Eine weitere Fachkraft hat Zugriff auf diese Beratung erhalten.',
+				handover: {
+					requestId: 42,
+					clientConsent: 'NONE',
+					accessType: 'CO_ACCESS'
+				}
+			})
+	}
+};
+export const CoAccessPreferenceDefaultMobile: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...CoAccessPreferenceDefault.parameters, ...mobileParameters }
+};
+export const CoAccessPreferenceDefaultTablet: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Locale-only variants retain the same production rendering and scoped HTTP fixture.
+const localizedAcceptance = (copy: { title: string; text: string }) => ({
+	...InitialAcceptanceDefault.args,
+	message:
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			...JSON.parse(
+				(InitialAcceptanceDefault.args!.message as string).replace(
+					'[SYSTEM_NOTIFICATION]',
+					''
+				)
+			),
+			title: copy.title,
+			description: copy.text
+		})
+});
+export const InitialAcceptanceDefaultEnglish: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' },
+	args: localizedAcceptance(
+		englishCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const InitialAcceptanceDefaultLongestTranslation: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' },
+	args: localizedAcceptance(
+		frenchCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const GrantedPreferenceDefaultEnglish: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const GrantedPreferenceDefaultLongestTranslation: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+export const CoAccessPreferenceDefaultEnglish: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const CoAccessPreferenceDefaultLongestTranslation: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+
+export const GrantedPreferenceDefaultRussianLabelStress: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'ru' }
 };
