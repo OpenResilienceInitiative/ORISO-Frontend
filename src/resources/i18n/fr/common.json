@@ -3369,6 +3369,7 @@
 			"temporary": {
 				"join": "Rejoindre",
 				"joinGroup": "Rejoindre le groupe",
+				"incompleteLink": "Ce lien d’invitation est incomplet : il n’est donc pas possible de rejoindre sans compte. Veuillez créer un compte ou demander un nouveau lien.",
 				"toggleOff": "Créer un compte",
 				"toggleOn": "Rejoindre sans compte",
 				"title": "Cette session se termine à la fermeture du navigateur.",

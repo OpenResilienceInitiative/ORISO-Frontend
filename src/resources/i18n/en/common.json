@@ -3351,6 +3351,7 @@
 			"temporary": {
 				"join": "Join",
 				"joinGroup": "Join the group",
+				"incompleteLink": "This invite link is incomplete, so joining without an account is not available. Please register with an account or ask for a new link.",
 				"toggleOff": "Create an account",
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",

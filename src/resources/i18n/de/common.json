@@ -3323,6 +3323,7 @@
 			"temporary": {
 				"join": "Beitreten",
 				"joinGroup": "Der Gruppe beitreten",
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registrieren Sie sich mit einem Konto oder fragen Sie nach einem neuen Link.",
 				"toggleOff": "Konto anlegen",
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
