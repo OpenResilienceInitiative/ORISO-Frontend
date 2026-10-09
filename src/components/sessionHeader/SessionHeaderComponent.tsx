@@ -134,6 +134,12 @@ export interface SessionHeaderProps {
 	 * header row (the title needs the width) and live in the kebab menu.
 	 */
 	callsInMenu?: boolean;
+	/**
+	 * #1499: a self-help group's topic stays out of the header until the
+	 * client has agreed to the group's privacy statement. Only the group
+	 * header reads it.
+	 */
+	hideGroupTopic?: boolean;
 }
 
 type SupervisorSnapshot = {
@@ -1034,6 +1040,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				}
 				isJoinGroupChatView={props.isJoinGroupChatView}
 				bannedUsers={props.bannedUsers}
+				hideTopic={props.hideGroupTopic}
 			/>
 		);
 	}
