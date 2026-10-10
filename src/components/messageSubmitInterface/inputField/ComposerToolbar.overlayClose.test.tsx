@@ -66,7 +66,11 @@ const Harness = ({
 };
 
 const openTextStyleMenu = () =>
-	fireEvent.click(screen.getByRole('button', { name: 'Text style' }));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'message.submit.toolbar.heading'
+		})
+	);
 
 const simulateOverlay = () =>
 	act(() => {
@@ -77,18 +81,18 @@ describe('ComposerToolbar floating menu vs. overlay transitions (#458)', () => {
 	it('closes an open menu as soon as an overlay becomes active', () => {
 		render(<Harness />);
 		openTextStyleMenu();
-		expect(screen.getByRole('menu')).toBeInTheDocument();
+		expect(screen.getByRole('menu')).toBeTruthy();
 
 		simulateOverlay();
 
-		expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+		expect(screen.queryByRole('menu')).toBeNull();
 	});
 
 	it('stays open while no overlay is active', () => {
 		render(<Harness />);
 		openTextStyleMenu();
 
-		expect(screen.getByRole('menu')).toBeInTheDocument();
+		expect(screen.getByRole('menu')).toBeTruthy();
 	});
 
 	it('opens and works normally with no ModalProvider in the tree at all', () => {
@@ -107,9 +111,11 @@ describe('ComposerToolbar floating menu vs. overlay transitions (#458)', () => {
 		);
 		openTextStyleMenu();
 
-		expect(screen.getByRole('menu')).toBeInTheDocument();
+		expect(screen.getByRole('menu')).toBeTruthy();
 		fireEvent.click(
-			screen.getByRole('menuitemradio', { name: 'Normal text' })
+			screen.getByRole('menuitemradio', {
+				name: 'message.submit.toolbar.paragraph'
+			})
 		);
 		expect(onAction).toHaveBeenCalledWith('paragraph');
 	});

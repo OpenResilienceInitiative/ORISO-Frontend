@@ -9,7 +9,7 @@ import {
 	shift,
 	size
 } from '@floating-ui/dom';
-import { ModalContext } from '../../../globalState';
+import { ModalContext } from '../../../globalState/context/ModalContext';
 import type { MenuDirection } from './menuDirection';
 
 export interface ToolbarMenuItem {
