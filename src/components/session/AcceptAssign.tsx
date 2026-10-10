@@ -9,19 +9,38 @@ import {
 	useState
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ActiveSessionContext, buildExtendedSession } from '../../globalState';
+import {
+	ActiveSessionContext,
+	buildExtendedSession,
+	UserDataContext,
+	SessionTypeContext,
+	hasUserAuthority,
+	AUTHORITIES
+} from '../../globalState';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import './session.styles';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { SESSION_LIST_TAB } from './sessionHelpers';
 import { useE2EE } from '../../hooks/useE2EE';
-import { apiEnquiryAcceptance, FETCH_ERRORS } from '../../api';
+import {
+	apiEnquiryAcceptance,
+	apiRejectEnquiry,
+	FETCH_ERRORS
+} from '../../api';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import {
+	AUTH_SESSION_CHANGE_EVENT,
+	getValueFromCookie
+} from '../sessionCookie/accessSessionCookie';
+import { usePracticeActive } from '../../practice';
+import { STATUS_REJECTED } from '../../globalState/interfaces';
+import { parseJwt } from '../../utils/parseJWT';
 import { apiAcceptAnonymousEnquiry } from '../../api/apiAcceptAnonymousEnquiry';
 import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
 import { useWatcher } from '../../hooks/useWatcher';
 import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
-import { getModality, Modality } from './getModality';
+import { getModality, getModalityIfKnown, Modality } from './getModality';
 import { ReactComponent as XIcon } from '../../resources/img/illustrations/x.svg';
 import { useTranslation } from 'react-i18next';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
@@ -32,6 +51,15 @@ import {
 	OVERLAY_E2EE,
 	OVERLAY_REQUEST
 } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
+
+const authIdentity = () => {
+	const token = getValueFromCookie('keycloak');
+	const claims = parseJwt(token);
+	const session = claims?.session_state ?? claims?.sid;
+	return typeof claims?.sub === 'string' && typeof session === 'string'
+		? JSON.stringify([claims.sub, session, claims.tenantId ?? null])
+		: token;
+};
 
 interface AcceptAssignProps {
 	assigned?: boolean;
@@ -50,10 +78,139 @@ export const AcceptAssign = ({
 
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
+	const { userData } = useContext(UserDataContext);
+	const { path: listPath } = useContext(SessionTypeContext);
 	const abortController = useRef<AbortController>(null);
 
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+	const [showRejectionConfirmation, setShowRejectionConfirmation] =
+		useState(false);
+	const [rejectionError, setRejectionError] = useState('');
+	const [rejectionRetryable, setRejectionRetryable] = useState(true);
+	const isPractice = usePracticeActive();
+	const requestPending = useRef(false);
+	const mounted = useRef(true);
+	const contextKey = `${activeSession.item.id}:${userData?.userId}`;
+	const currentContext = useRef(contextKey);
+	const operationEpoch = useRef(0);
+	if (currentContext.current !== contextKey) {
+		currentContext.current = contextKey;
+		operationEpoch.current += 1;
+	}
+	const currentAuth = useRef(authIdentity());
+	const openedFor = useRef<{
+		context: string;
+		auth: string | null;
+		epoch: number;
+	}>(null);
+	const hasRejectionAuthority =
+		!isPractice &&
+		activeSession.isSession &&
+		!activeSession.isGroup &&
+		Number.isSafeInteger(activeSession.item.id) &&
+		activeSession.item.id > 0 &&
+		getModalityIfKnown(activeSession) === Modality.AGENCY_COUNSELLING &&
+		activeSession.item.registrationType === 'REGISTERED' &&
+		!activeSession.consultant &&
+		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		userData.agencies?.some(
+			(agency) => agency.id === activeSession.item.agencyId
+		);
+	const canReject = hasRejectionAuthority && activeSession.isNonEmptyEnquiry;
+	const canConfirmRejection =
+		hasRejectionAuthority &&
+		rejectionRetryable &&
+		(canReject || Number(activeSession.item.status) === STATUS_REJECTED);
+	const resetRejection = useCallback(() => {
+		openedFor.current = null;
+		requestPending.current = false;
+		setShowRejectionConfirmation(false);
+		setRejectionError('');
+		setRejectionRetryable(true);
+		setIsRequestInProgress(false);
+	}, []);
+	useEffect(() => {
+		const onAuthChange = () => {
+			const next = authIdentity();
+			if (currentAuth.current !== next) {
+				currentAuth.current = next;
+				operationEpoch.current += 1;
+				resetRejection();
+			}
+		};
+		window.addEventListener(AUTH_SESSION_CHANGE_EVENT, onAuthChange);
+		return () =>
+			window.removeEventListener(AUTH_SESSION_CHANGE_EVENT, onAuthChange);
+	}, [resetRejection]);
+	useEffect(() => {
+		mounted.current = true;
+		return () => {
+			mounted.current = false;
+		};
+	}, []);
+	useEffect(resetRejection, [contextKey, resetRejection]);
+	const rejectionContextIsCurrent = (context: {
+		context: string;
+		auth: string | null;
+		epoch: number;
+	}) =>
+		mounted.current &&
+		operationEpoch.current === context.epoch &&
+		currentContext.current === context.context &&
+		authIdentity() === context.auth;
+	const refreshRejectedCase = () => {
+		reloadActiveSession?.();
+		messageEventEmitter.emit({
+			refreshEnquiryList: true,
+			refreshSessionList: true,
+			changedSessionId: activeSession.item.id
+		});
+	};
+	const confirmRejection = async () => {
+		const context = openedFor.current;
+		if (
+			!context ||
+			!canConfirmRejection ||
+			!rejectionContextIsCurrent(context) ||
+			requestPending.current
+		)
+			return;
+		requestPending.current = true;
+		setIsRequestInProgress(true);
+		setRejectionError('');
+		try {
+			await apiRejectEnquiry(activeSession.item.id);
+			if (!rejectionContextIsCurrent(context)) return;
+			refreshRejectedCase();
+			setShowRejectionConfirmation(false);
+			navigate(`${listPath}${getSessionListTab()}`);
+		} catch (error) {
+			if (!rejectionContextIsCurrent(context)) return;
+			const errorCode =
+				error instanceof Error ? error.message : FETCH_ERRORS.CATCH_ALL;
+			const retryable =
+				errorCode !== FETCH_ERRORS.CONFLICT &&
+				errorCode !== FETCH_ERRORS.FORBIDDEN &&
+				errorCode !== FETCH_ERRORS.NO_MATCH;
+			setRejectionRetryable(retryable);
+			setRejectionError(
+				translate(
+					!retryable
+						? 'enquiry.rejection.conflict'
+						: 'enquiry.rejection.error'
+				)
+			);
+			// A failed remote closure may already have durably saved status5.
+			// Reload the matching case; only HTTP204 confirms completion.
+			refreshRejectedCase();
+		} finally {
+			if (rejectionContextIsCurrent(context)) {
+				requestPending.current = false;
+				setIsRequestInProgress(false);
+			}
+		}
+	};
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 	const getSessionListTab = useCallback(
 		() => `${sessionListTab ? `?sessionListTab=${sessionListTab}` : ''}`,
@@ -70,7 +227,7 @@ export const AcceptAssign = ({
 
 	const { visible: requestOverlayVisible, overlay: requestOverlay } =
 		useTimeoutOverlay(
-			isRequestInProgress,
+			isRequestInProgress && !showRejectionConfirmation,
 			null,
 			translate('session.assignSelf.inProgress')
 		);
@@ -205,9 +362,14 @@ export const AcceptAssign = ({
 	}, [isWatcherRunning, overlayItem, startWatcher, stopWatcher]);
 
 	const handleButtonClick = (sessionId: any) => {
-		if (isRequestInProgress) {
+		if (
+			isRequestInProgress ||
+			requestPending.current ||
+			showRejectionConfirmation
+		) {
 			return null;
 		}
+		requestPending.current = true;
 		setIsRequestInProgress(true);
 
 		// Live chats assign through the dedicated cross-tenant anonymous path;
@@ -227,10 +389,12 @@ export const AcceptAssign = ({
 			.then((routing) => {
 				reloadActiveSession?.();
 				setIsRequestInProgress(false);
+				requestPending.current = false;
 				redirectToAcceptedSession(routing);
 			})
 			.catch((error) => {
 				setIsRequestInProgress(false);
+				requestPending.current = false;
 				const failure = getCounsellingDpaFailure(error);
 				if (failure) {
 					setOverlayItem({
@@ -270,17 +434,76 @@ export const AcceptAssign = ({
 			<div
 				className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
 			>
-				<Button
-					item={buttonItem}
-					buttonHandle={() =>
-						handleButtonClick(activeSession.item.id)
-					}
-					// The button itself, not the wrapper: the team action beside
-					// it must not count as a click on "accept" for a tour.
-					tourTarget="enquiry-accept-button"
-				/>
+				{activeSession.isEnquiry && (
+					<Button
+						item={buttonItem}
+						disabled={
+							isRequestInProgress || showRejectionConfirmation
+						}
+						buttonHandle={() =>
+							handleButtonClick(activeSession.item.id)
+						}
+						// The button itself, not the wrapper: the team action beside
+						// it must not count as a click on "accept" for a tour.
+						tourTarget="enquiry-accept-button"
+					/>
+				)}
 				{secondaryAction}
+				{canReject && (
+					<Button
+						item={{
+							label: 'enquiry.rejection.action',
+							type: BUTTON_TYPES.SECONDARY
+						}}
+						disabled={
+							isRequestInProgress || showRejectionConfirmation
+						}
+						buttonHandle={() => {
+							openedFor.current = {
+								context: contextKey,
+								auth: authIdentity(),
+								epoch: operationEpoch.current
+							};
+							setRejectionError('');
+							setRejectionRetryable(true);
+							setShowRejectionConfirmation(true);
+						}}
+					/>
+				)}
 			</div>
+			{showRejectionConfirmation && (
+				<M3Dialog
+					title={translate('enquiry.rejection.confirmTitle')}
+					description={translate('enquiry.rejection.description')}
+					closeLabel={translate('app.close')}
+					onClose={() => {
+						if (!requestPending.current)
+							setShowRejectionConfirmation(false);
+					}}
+					closable={!isRequestInProgress}
+					actions={[
+						{
+							label: translate('enquiry.rejection.cancel'),
+							onClick: () => setShowRejectionConfirmation(false),
+							disabled: isRequestInProgress
+						},
+						{
+							label: translate('enquiry.rejection.confirm'),
+							onClick: confirmRejection,
+							primary: true,
+							disabled:
+								isRequestInProgress || !canConfirmRejection
+						}
+					]}
+				>
+					{isRequestInProgress && (
+						<p role="status">
+							{translate('enquiry.rejection.inProgress')}
+						</p>
+					)}
+					{rejectionError && <p role="alert">{rejectionError}</p>}
+				</M3Dialog>
+			)}
 
 			{requestOverlayVisible && (
 				<Overlay item={requestOverlay} name={OVERLAY_REQUEST} />

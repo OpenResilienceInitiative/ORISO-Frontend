@@ -650,6 +650,17 @@
 				"copy": "Wir haben Ihre Nachricht erhalten.",
 				"headline": "Vielen Dank für Ihre Nachricht!"
 			}
+		},
+		"rejection": {
+			"action": "Anfrage ablehnen",
+			"confirmTitle": "Diese Anfrage ablehnen?",
+			"description": "Die Anfrage wird abgelehnt. Der bisherige Verlauf bleibt für die ratsuchende Person lesbar.",
+			"confirm": "Anfrage ablehnen",
+			"error": "Die Ablehnung konnte noch nicht vollständig bestätigt werden. Die Entscheidung kann bereits gespeichert sein. Bitte versuchen Sie es erneut.",
+			"conflict": "Die Anfrage hat sich geändert oder ist nicht mehr verfügbar. Bitte laden Sie die aktuelle Ansicht.",
+			"closed": "Diese Anfrage wurde abgelehnt.",
+			"inProgress": "Die Ablehnung wird abgeschlossen…",
+			"cancel": "Abbrechen"
 		}
 	},
 	"error": {
@@ -1941,6 +1952,26 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
+			"state": {
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"description": {
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			}
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
@@ -2192,7 +2223,7 @@
 			},
 			"requestDenied": {
 				"title": "Anfrage abgelehnt",
-				"text": "Die Klient:innen-Anfrage wurde abgelehnt."
+				"text": "Diese Anfrage wurde abgelehnt."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Klient:in im Warteraum",
@@ -2777,6 +2808,10 @@
 					"feedback": {
 						"title": "Fachaustausch",
 						"description": "Im geschützten Fachaustausch liegt eine Rückmeldung für Sie."
+					},
+					"internalChat": {
+						"title": "Interne Nachrichten",
+						"description": "Eine neue Nachricht in einem internen Chat mit anderen Beratenden."
 					}
 				},
 				"shared": {
@@ -4637,6 +4672,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",

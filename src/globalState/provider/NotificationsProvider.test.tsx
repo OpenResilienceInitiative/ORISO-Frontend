@@ -75,6 +75,17 @@ const PaginationProbe = () => {
 	);
 };
 
+const ConfirmedReadProbe = () => {
+	const context = useContext(NotificationsContext)!;
+	return (
+		<button
+			onClick={() => void context.markNotificationsReadConfirmed(['1'])}
+		>
+			confirmed-read
+		</button>
+	);
+};
+
 const ReadAccountingProbe = () => {
 	const context = useContext(NotificationsContext)!;
 	return (
@@ -200,6 +211,42 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 	// stale listeners don't fire on the next test's emit.
 	afterEach(() => cleanup());
 
+	it('reconciles a finished conversation in the first feed after the list loaded', async () => {
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				{
+					...feedItem(1, '2026-10-06T12:00:00Z'),
+					eventType: 'conversation.finished'
+				}
+			],
+			unreadCount: 1
+		});
+		const listRefresh = vi.fn();
+		messageEventEmitter.on(listRefresh);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(listRefresh).toHaveBeenCalledWith({
+					refreshEnquiryList: true,
+					refreshSessionList: true,
+					source: 'notification-feed'
+				})
+			);
+			expect(listRefresh).toHaveBeenCalledTimes(1);
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(2)
+			);
+			expect(listRefresh).toHaveBeenCalledTimes(1);
+		} finally {
+			messageEventEmitter.off(listRefresh);
+		}
+	});
+
 	it('refreshes enquiry lists for a newly submitted request below another event without a feed loop', async () => {
 		const listRefresh = vi.fn();
 		const listener = (event) => {
@@ -283,6 +330,164 @@ describe('NotificationsProvider real-time refresh (#473)', () => {
 			messageEventEmitter.off(signals);
 		}
 	});
+
+	it('reconciles denied enquiry history on initial load and a new denial once without replaying notification banners', async () => {
+		const AnnouncementCount = () => (
+			<output data-testid="denied-banner-count">
+				{useContext(NotificationsContext)!.notifications.length}
+			</output>
+		);
+		const denied = (id: number, sourceSessionId: number) => ({
+			...feedItem(id, '2026-10-08T12:00:00Z'),
+			eventType: 'request.denied',
+			sourceSessionId
+		});
+		apiGetEventNotifications.mockResolvedValue({
+			items: [denied(1, 4711)],
+			unreadCount: 1
+		});
+		const signals = vi.fn();
+		messageEventEmitter.on(signals);
+		try {
+			render(
+				<NotificationsProvider>
+					<PaginationProbe />
+					<AnnouncementCount />
+				</NotificationsProvider>
+			);
+			await waitFor(() =>
+				expect(screen.getByTestId('ids').textContent).toBe('1')
+			);
+			expect(screen.getByTestId('denied-banner-count').textContent).toBe(
+				'0'
+			);
+			expect(signals).toHaveBeenCalledWith({
+				changedSessionId: 4711,
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			expect(signals).toHaveBeenCalledTimes(1);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [denied(2, 4712), denied(1, 4711)],
+				unreadCount: 2
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() => expect(signals).toHaveBeenCalledTimes(2));
+			expect(signals).toHaveBeenLastCalledWith({
+				changedSessionId: 4712,
+				refreshEnquiryList: true,
+				refreshSessionList: true,
+				source: 'notification-feed'
+			});
+			fireEvent.click(screen.getByText('refresh'));
+			await waitFor(() =>
+				expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+			);
+			expect(signals).toHaveBeenCalledTimes(2);
+		} finally {
+			messageEventEmitter.off(signals);
+		}
+	});
+
+	it.each([
+		['waiting_room.client.joined', { refreshEnquiryList: true }],
+		[
+			'conversation.finished',
+			{ refreshEnquiryList: true, refreshSessionList: true }
+		]
+	])(
+		'refreshes lists once for a new %s event without replaying history',
+		async (eventType, flags) => {
+			const item = (id: number) => ({
+				...feedItem(id, '2026-10-06T12:00:00Z'),
+				eventType
+			});
+			apiGetEventNotifications.mockResolvedValue({
+				items: [item(1)],
+				unreadCount: 1
+			});
+			const signals = vi.fn();
+			messageEventEmitter.on(signals);
+			try {
+				render(
+					<NotificationsProvider>
+						<PaginationProbe />
+					</NotificationsProvider>
+				);
+				await waitFor(() =>
+					expect(screen.getByTestId('ids').textContent).toBe('1')
+				);
+				if (eventType === 'conversation.finished') {
+					expect(signals).toHaveBeenCalledTimes(1);
+				} else {
+					expect(signals).not.toHaveBeenCalled();
+				}
+				signals.mockClear();
+				apiGetEventNotifications.mockResolvedValue({
+					items: [item(2), item(1)],
+					unreadCount: 2
+				});
+				fireEvent.click(screen.getByText('refresh'));
+				await waitFor(() =>
+					expect(signals).toHaveBeenCalledWith({
+						...flags,
+						source: 'notification-feed'
+					})
+				);
+				fireEvent.click(screen.getByText('refresh'));
+				await waitFor(() =>
+					expect(apiGetEventNotifications).toHaveBeenCalledTimes(3)
+				);
+				expect(signals).toHaveBeenCalledTimes(1);
+			} finally {
+				messageEventEmitter.off(signals);
+			}
+		}
+	);
+
+	it.each(['waiting_room.client.joined', 'conversation.finished'])(
+		'handles a new %s event during mark-read reconciliation',
+		async (eventType) => {
+			apiGetEventNotifications.mockResolvedValue({
+				items: [feedItem(1, '2026-10-06T12:00:00Z')],
+				unreadCount: 1
+			});
+			const signals = vi.fn();
+			messageEventEmitter.on(signals);
+			try {
+				render(
+					<NotificationsProvider>
+						<ReadAccountingProbe />
+						<ConfirmedReadProbe />
+					</NotificationsProvider>
+				);
+				await waitFor(() =>
+					expect(screen.getByTestId('read-state').textContent).toBe(
+						'1:unread'
+					)
+				);
+				apiGetEventNotifications.mockResolvedValue({
+					items: [
+						{ ...feedItem(2, '2026-10-06T12:00:01Z'), eventType },
+						feedItem(1, '2026-10-06T12:00:00Z')
+					],
+					unreadCount: 1
+				});
+				fireEvent.click(screen.getByText('confirmed-read'));
+				await waitFor(() =>
+					expect(signals).toHaveBeenCalledWith(
+						expect.objectContaining({
+							refreshEnquiryList: true,
+							source: 'notification-feed'
+						})
+					)
+				);
+			} finally {
+				messageEventEmitter.off(signals);
+			}
+		}
+	);
 
 	it('refetches the feed when a live directMessage event fires, without waiting for the 15s poll', async () => {
 		render(

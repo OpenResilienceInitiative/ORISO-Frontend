@@ -655,6 +655,17 @@
 				"copy": "Nous avons bien reçu votre message.",
 				"headline": "Merci beaucoup pour votre message !"
 			}
+		},
+		"rejection": {
+			"action": "Refuser la demande",
+			"confirmTitle": "Refuser cette demande ?",
+			"description": "La demande sera refusée. La personne qui demande conseil pourra toujours lire la conversation existante.",
+			"confirm": "Refuser la demande",
+			"error": "Le refus n’a pas encore pu être entièrement confirmé. La décision est peut-être déjà enregistrée. Veuillez réessayer.",
+			"conflict": "La demande a changé ou n’est plus disponible. Veuillez recharger la vue actuelle.",
+			"closed": "Cette demande a été refusée.",
+			"inProgress": "Finalisation du refus…",
+			"cancel": "Annuler"
 		}
 	},
 	"error": {
@@ -1920,6 +1931,26 @@
 		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"callLifecycle": {
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			},
+			"state": {
+				"running": "En cours",
+				"ended": "Terminé",
+				"missed": "Manqué"
+			},
+			"description": {
+				"running": "L’appel est en cours depuis {{start}}.",
+				"ended": "L’appel a commencé à {{start}}.",
+				"missed": "L’appel n’a pas reçu de réponse."
+			},
+			"participants": {
+				"current": "Dans l’appel",
+				"attended": "A participé"
+			}
+		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
@@ -2171,7 +2202,7 @@
 			},
 			"requestDenied": {
 				"title": "Demande refusée",
-				"text": "La demande du·de la client·e a été refusée."
+				"text": "Cette demande a été refusée."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client·e dans la salle d'attente",
@@ -2725,6 +2756,10 @@
 					"feedback": {
 						"title": "Échange professionnel",
 						"description": "Une réponse vous attend dans l'échange professionnel protégé."
+					},
+					"internalChat": {
+						"title": "Messages internes",
+						"description": "Un nouveau message dans une discussion interne avec les autres conseillers."
 					}
 				},
 				"shared": {
@@ -4620,6 +4655,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Rejoindre l’appel",
+			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"video": {
+				"running": "Appel vidéo en cours",
+				"ended": "Appel vidéo terminé",
+				"missed": "Appel vidéo manqué"
+			},
+			"audio": {
+				"running": "Appel audio en cours",
+				"ended": "Appel audio terminé",
+				"missed": "Appel audio manqué"
+			},
+			"duration": "Durée : {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accepter un appel vidéo",
 			"answerVideoCall": "Accepter un appel vidéo",

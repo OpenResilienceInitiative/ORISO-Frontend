@@ -638,6 +638,17 @@
 				"copy": "We have received your message.",
 				"headline": "Thank you for your message!"
 			}
+		},
+		"rejection": {
+			"action": "Decline request",
+			"confirmTitle": "Decline this request?",
+			"description": "The request will be declined. The advice seeker can still read the existing conversation.",
+			"confirm": "Decline request",
+			"error": "The decline could not yet be fully confirmed. The decision may already be saved. Please try again.",
+			"conflict": "The request has changed or is no longer available. Please reload the current view.",
+			"closed": "This request was declined.",
+			"inProgress": "Completing the decline…",
+			"cancel": "Cancel"
 		}
 	},
 	"error": {
@@ -1926,6 +1937,26 @@
 		"visibleOnlyTo": "visible only to:",
 		"showLess": "Show less",
 		"showMore": "Show more",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audio call",
+				"video": "Video call"
+			},
+			"state": {
+				"running": "In progress",
+				"ended": "Ended",
+				"missed": "Missed"
+			},
+			"description": {
+				"running": "The call has been running since {{start}}.",
+				"ended": "The call started at {{start}}.",
+				"missed": "The call was not answered."
+			},
+			"participants": {
+				"current": "In the call",
+				"attended": "Attended"
+			}
+		},
 		"systemNotification": "System Notification",
 		"systemNotificationTitle": "System notification",
 		"userLeftChat": "User has left the chat",
@@ -2167,8 +2198,8 @@
 				"text": "The online appointment was cancelled."
 			},
 			"requestDenied": {
-				"title": "Request denied",
-				"text": "The client request was denied."
+				"title": "Request declined",
+				"text": "This request was declined."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Client joined waiting room",
@@ -2739,6 +2770,10 @@
 					"feedback": {
 						"title": "Professional exchange",
 						"description": "A reply is waiting for you in the protected professional exchange."
+					},
+					"internalChat": {
+						"title": "Internal messages",
+						"description": "A new message in an internal chat with other counsellors."
 					}
 				},
 				"shared": {
@@ -4585,6 +4620,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Join call",
+			"joinFailed": "Unable to join right now. End any other active call and try again.",
+			"video": {
+				"running": "Video call in progress",
+				"ended": "Video call ended",
+				"missed": "Missed video call"
+			},
+			"audio": {
+				"running": "Audio call in progress",
+				"ended": "Audio call ended",
+				"missed": "Missed audio call"
+			},
+			"duration": "Duration: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accept audio call",
 			"answerVideoCall": "Accept video call",

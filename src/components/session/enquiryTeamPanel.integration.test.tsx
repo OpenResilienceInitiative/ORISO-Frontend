@@ -10,7 +10,8 @@ import {
 	screen,
 	waitFor,
 	cleanup,
-	fireEvent
+	fireEvent,
+	act
 } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -38,6 +39,13 @@ import { LocaleContext } from '../../globalState/context/LocaleContext';
 import { MatrixClientContext } from '../../globalState/context/MatrixClientContext';
 import { MatrixClientService } from '../../services/matrixClientService';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
+import { enterPracticeMode, exitPracticeMode } from '../../practice';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
+import { FETCH_ERRORS } from '../../api/fetchData';
+import {
+	setValueInCookie,
+	deleteCookieByName
+} from '../sessionCookie/accessSessionCookie';
 import { setTenantSettings } from '../../utils/tenantSettingsHelper';
 
 const boundary = vi.hoisted(() => {
@@ -60,9 +68,16 @@ const boundary = vi.hoisted(() => {
 		getTeam: vi.fn(),
 		sessionRoom: vi.fn(),
 		fetch: vi.fn(),
+		rejectEnquiry: vi.fn(),
+		reload: vi.fn(),
+		changeCase: null as ((id: number) => void) | null,
 		client: null as any
 	};
 });
+vi.mock('../../api', async (original) => ({
+	...(await original<any>()),
+	apiRejectEnquiry: (...args: any[]) => boundary.rejectEnquiry(...args)
+}));
 vi.mock('matrix-js-sdk', async (original) => ({
 	...(await original<any>()),
 	createClient: () => boundary.client
@@ -151,7 +166,25 @@ beforeEach(async () => {
 	await translations.init({
 		lng: 'de',
 		fallbackLng: 'de',
-		resources: { de: { translation: {} } },
+		resources: {
+			de: {
+				translation: {
+					enquiry: {
+						rejection: {
+							action: 'Anfrage ablehnen',
+							confirmTitle: 'Diese Anfrage ablehnen?',
+							confirm: 'Anfrage ablehnen',
+							cancel: 'Abbrechen',
+							inProgress: 'Die Ablehnung wird abgeschlossen…',
+							error: 'Die Ablehnung konnte noch nicht vollständig abgeschlossen werden. Bitte versuchen Sie es erneut.',
+							conflict:
+								'Die Anfrage hat sich geändert. Bitte laden Sie die aktuelle Ansicht.',
+							closed: 'Diese Anfrage wurde abgelehnt.'
+						}
+					}
+				}
+			}
+		},
 		interpolation: { escapeValue: false }
 	});
 	localStorage.clear();
@@ -215,6 +248,8 @@ beforeEach(async () => {
 	boundary.getTeam.mockReset().mockResolvedValue(null);
 	boundary.sessionRoom.mockReset().mockResolvedValue({ sessions: [] });
 	boundary.fetch.mockClear();
+	boundary.reload.mockReset();
+	boundary.rejectEnquiry.mockReset().mockResolvedValue(undefined);
 	setTenantSettings({ featureTeamDiscussionEnabled: true } as any);
 	service = new MatrixClientService();
 	await service.initializeClient({
@@ -226,6 +261,7 @@ beforeEach(async () => {
 	setMatrixClientServiceRef(service);
 });
 afterEach(() => {
+	exitPracticeMode();
 	cleanup();
 	service?.stopAndCleanup();
 	setMatrixClientServiceRef(null);
@@ -235,37 +271,80 @@ afterEach(() => {
 });
 
 function RouteProbe() {
-	return <output data-testid="route">{useLocation().search}</output>;
+	return (
+		<output data-testid="route">
+			{useLocation().pathname + useLocation().search}
+		</output>
+	);
 }
-function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
+function openEnquiry(
+	type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY,
+	options: {
+		status?: number;
+		seeker?: boolean;
+		reloadedStatus?: number;
+		teamChannel?: boolean;
+		threadChannel?: boolean;
+		id?: number;
+		registrationType?: string;
+		conversationType?: string | null;
+		agencyId?: number;
+		assigned?: boolean;
+	} = {}
+) {
+	const status = options.status ?? 1;
 	const activeSession = {
 		isGroup: false,
 		isSession: true,
-		isEnquiry: true,
+		isEnquiry: status === 0 || status === 1,
+		isEmptyEnquiry: status === 0,
+		isNonEmptyEnquiry: status === 1,
+		isRejected: status === 5,
 		user: { username: 'Ratsuchende', userId: 'asker' },
+		...(options.assigned
+			? {
+					consultant: {
+						id: 'colleague',
+						consultantId: 'colleague',
+						username: 'colleague'
+					}
+				}
+			: {}),
 		item: {
-			id: 4711,
+			id: options.id ?? 4711,
 			topic: {},
 			matrixRoomId: MAIN,
-			status: 1,
+			status,
+			registrationType: options.registrationType ?? 'REGISTERED',
 			active: true,
-			agencyId: 1,
+			agencyId: options.agencyId ?? 1,
 			consultingType: 0,
-			conversationType: 'AGENCY_COUNSELLING',
+			conversationType:
+				'conversationType' in options
+					? options.conversationType
+					: 'AGENCY_COUNSELLING',
 			askerMatrixUserId: '@asker:test'
 		}
 	};
 	function LiveSession({ children }: { children: React.ReactNode }) {
 		const [current, setCurrent] = React.useState(activeSession);
+		boundary.changeCase = (id) =>
+			setCurrent({
+				...activeSession,
+				item: { ...activeSession.item, id }
+			});
 		return (
 			<ActiveSessionContext.Provider
 				value={{
 					activeSession: current as any,
 					reloadActiveSession: () => {
+						boundary.reload();
+						const reloaded = options.reloadedStatus ?? 2;
 						setCurrent({
 							...activeSession,
 							isEnquiry: false,
-							item: { ...activeSession.item, status: 2 }
+							isRejected: reloaded === 5,
+							item: { ...activeSession.item, status: reloaded }
 						});
 					},
 					readActiveSession: vi.fn()
@@ -281,9 +360,13 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 			UserDataContext,
 			{
 				userData: {
-					userId: 'consultant',
+					userId: options.seeker ? 'asker' : 'consultant',
 					userName: 'Beraterin',
-					grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT'],
+					grantedAuthorities: [
+						options.seeker
+							? 'AUTHORIZATION_USER_DEFAULT'
+							: 'AUTHORIZATION_CONSULTANT_DEFAULT'
+					],
 					agencies: [{ id: 1 }]
 				},
 				setUserData: vi.fn()
@@ -320,7 +403,11 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 		],
 		[
 			NotificationsContext,
-			{ notifications: [], addEventNotification: vi.fn() }
+			{
+				notifications: [],
+				notificationFeed: [],
+				addEventNotification: vi.fn()
+			}
 		],
 		[LocaleContext, { locale: 'de' }],
 		[
@@ -331,7 +418,14 @@ function openEnquiry(type: SESSION_LIST_TYPES = SESSION_LIST_TYPES.ENQUIRY) {
 	return render(
 		<I18nextProvider i18n={translations}>
 			<MemoryRouter
-				initialEntries={['/sessions/consultant/sessionPreview/4711']}
+				initialEntries={[
+					'/sessions/consultant/sessionPreview/4711' +
+						(options.teamChannel
+							? '?channel=team'
+							: options.threadChannel
+								? '?channel=thread:%24original'
+								: '')
+				]}
 			>
 				{providers.reduceRight(
 					(child, [Context, value]) => (
@@ -621,3 +715,379 @@ it('keeps focus the reader moved away right after the panel composer focused its
 
 	expect(document.activeElement).toBe(elsewhere);
 }, 20000);
+
+it('declines an ordinary incoming enquiry only after explicit confirmation and refreshes its preview', async () => {
+	const view = openEnquiry();
+	await waitFor(() =>
+		expect(view.container.textContent).toContain('ENDE DER ORIGINALANFRAGE')
+	);
+	fireEvent.click(screen.getByRole('button', { name: 'Anfrage ablehnen' }));
+	const dialog = screen.getByRole('dialog', {
+		name: 'Diese Anfrage ablehnen?'
+	});
+	expect(dialog.querySelector('textarea')).toBeNull();
+	expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole('button', { name: 'Abbrechen' }));
+	expect(screen.queryByRole('dialog')).toBeNull();
+	expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+	fireEvent.click(screen.getByRole('button', { name: 'Anfrage ablehnen' }));
+	fireEvent.click(
+		screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+	);
+	await waitFor(() =>
+		expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1)
+	);
+	expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
+	await waitFor(() =>
+		expect(
+			screen.queryByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeNull()
+	);
+}, 20000);
+
+it.each([2, 5])(
+	'retains the seeker history at status %s and permits writing only in the active state',
+	async (status) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+			status,
+			seeker: true
+		});
+		await waitFor(
+			() =>
+				expect(view.container.textContent).toContain(
+					'Meine vollständige Anfrage:'
+				),
+			{ timeout: 15000 }
+		);
+		if (status === 2) {
+			await waitFor(() =>
+				expect(
+					view.container.querySelector('[contenteditable="true"]')
+				).not.toBeNull()
+			);
+		} else {
+			expect(
+				view.container.querySelector('[contenteditable="true"]')
+			).toBeNull();
+			expect(view.container.textContent).toContain(
+				'Diese Anfrage wurde abgelehnt.'
+			);
+			expect(
+				screen.queryByRole('button', { name: 'Anfrage ablehnen' })
+			).toBeNull();
+		}
+	},
+	20000
+);
+
+it('blocks writing in retained team history immediately when its enquiry is rejected even before room lookup reconciles', async () => {
+	boundary.getTeam.mockResolvedValue({ matrixRoomId: TEAM, status: 'OPEN' });
+	const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+		status: 5,
+		teamChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__panel .sidePanel')
+			).not.toBeNull(),
+		{ timeout: 15000 }
+	);
+	expect(
+		view.container.querySelector(
+			'.chatStage__panel [contenteditable="true"]'
+		)
+	).toBeNull();
+	expect(
+		screen.queryByRole('button', { name: 'enquiry.acceptButton.known' })
+	).toBeNull();
+}, 20000);
+
+const deferredRejection = () => {
+	let resolve!: () => void;
+	let reject!: (error: Error) => void;
+	const promise = new Promise<void>((yes, no) => {
+		resolve = yes;
+		reject = no;
+	});
+	boundary.rejectEnquiry.mockReturnValueOnce(promise);
+	return { resolve, reject };
+};
+const confirmRejection = async () => {
+	fireEvent.click(
+		await screen.findByRole('button', { name: 'Anfrage ablehnen' })
+	);
+	fireEvent.click(
+		screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+	);
+};
+it('keeps a pending decision single and blocks simultaneous acceptance until confirmed', async () => {
+	const pending = deferredRejection();
+	openEnquiry();
+	await confirmRejection();
+	const confirm = screen
+		.getAllByRole('button', { name: 'Anfrage ablehnen' })
+		.at(-1)!;
+	expect((confirm as HTMLButtonElement).disabled).toBe(true);
+	expect(
+		(
+			screen.getByRole('button', {
+				name: 'enquiry.acceptButton.known',
+				hidden: true
+			}) as HTMLButtonElement
+		).disabled
+	).toBe(true);
+	fireEvent.click(confirm);
+	expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1);
+	expect(boundary.reload).not.toHaveBeenCalled();
+	expect(screen.getByTestId('route').textContent).toContain('/4711');
+	await act(async () => pending.resolve());
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	expect(screen.getByTestId('route').textContent).toBe(
+		'/sessions/consultant/sessionPreview'
+	);
+}, 20000);
+it.each([FETCH_ERRORS.CATCH_ALL])(
+	'resyncs durable rejection after incomplete closure, retains honest retry and confirms only a successful retry',
+	async (error) => {
+		boundary.rejectEnquiry.mockRejectedValueOnce(new Error(error));
+		const events = vi.spyOn(messageEventEmitter, 'emit');
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			reloadedStatus: 5
+		});
+		await confirmRejection();
+		await screen.findByRole('alert');
+		expect(screen.getByRole('alert').textContent).toContain(
+			'noch nicht vollständig'
+		);
+		expect(screen.getByRole('dialog')).toBeTruthy();
+		expect(screen.getByTestId('route').textContent).toContain('/4711');
+		expect(boundary.reload).toHaveBeenCalledTimes(1);
+		expect(events).toHaveBeenCalledWith(
+			expect.objectContaining({
+				changedSessionId: 4711,
+				refreshEnquiryList: true,
+				refreshSessionList: true
+			})
+		);
+		expect(
+			view.container.querySelector('[contenteditable="true"]')
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', { name: 'enquiry.acceptButton.known' })
+		).toBeNull();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anfrage ablehnen' })
+		);
+		await waitFor(() =>
+			expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(2)
+		);
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+		expect(boundary.reload).toHaveBeenCalledTimes(2);
+	},
+	20000
+);
+it('does not offer retry after a conflicting rejection by another counsellor', async () => {
+	boundary.rejectEnquiry.mockRejectedValueOnce(
+		new Error(FETCH_ERRORS.CONFLICT)
+	);
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { reloadedStatus: 5 });
+	await confirmRejection();
+	await screen.findByRole('alert');
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.getByRole('alert').textContent).toContain(
+		'hat sich geändert'
+	);
+	expect(
+		(
+			screen.getByRole('button', {
+				name: 'Anfrage ablehnen'
+			}) as HTMLButtonElement
+		).disabled
+	).toBe(true);
+	fireEvent.click(screen.getByRole('button', { name: 'Anfrage ablehnen' }));
+	expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1);
+}, 20000);
+it.each(['case change', 'case round trip', 'account change', 'unmount'])(
+	'discards an old completion after %s',
+	async (change) => {
+		const pending = deferredRejection();
+		const view = openEnquiry();
+		await confirmRejection();
+		if (change === 'case change') act(() => boundary.changeCase!(4712));
+		if (change === 'case round trip') {
+			act(() => boundary.changeCase!(4712));
+			act(() => boundary.changeCase!(4711));
+		}
+		if (change === 'account change')
+			act(() => setValueInCookie('keycloak', 'new-account'));
+		if (change === 'unmount') view.unmount();
+		await act(async () => pending.resolve());
+		expect(boundary.reload).not.toHaveBeenCalled();
+		if (change !== 'unmount')
+			expect(screen.getByTestId('route').textContent).toContain('/4711');
+		deleteCookieByName('keycloak');
+	},
+	20000
+);
+it('keeps practice enquiries free of the new real rejection command', async () => {
+	enterPracticeMode({ tourId: 'consultant-practice-accept' });
+	openEnquiry(SESSION_LIST_TYPES.ENQUIRY, { id: -4711 });
+	await screen.findByRole('button', { name: 'enquiry.acceptButton.known' });
+	expect(
+		screen.queryByRole('button', { name: 'Anfrage ablehnen' })
+	).toBeNull();
+	expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+}, 20000);
+
+it('preserves a pending confirmation through a token refresh for the same principal and auth session', async () => {
+	const token = (iat: number) =>
+		'e30.' +
+		btoa(
+			JSON.stringify({
+				sub: 'consultant',
+				sid: 'sessionA',
+				tenantId: 1,
+				iat
+			})
+		) +
+		'.signature';
+	setValueInCookie('keycloak', token(1));
+	const pending = deferredRejection();
+	openEnquiry();
+	await confirmRejection();
+	act(() => setValueInCookie('keycloak', token(2)));
+	await act(async () => pending.resolve());
+	expect(boundary.reload).toHaveBeenCalledTimes(1);
+	expect(screen.queryByRole('dialog')).toBeNull();
+	deleteCookieByName('keycloak');
+}, 20000);
+
+it.each([2, 5])(
+	'retains the header supervision button but permits management only for active cases (status%s)',
+	async (status) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status });
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		const name =
+			status === 2
+				? 'sessionHeader.supervisor.modal.title'
+				: 'sessionHeader.supervisor.add.disabledUnavailable';
+		const button = await screen.findByRole('button', { name });
+		expect((button as HTMLButtonElement).disabled).toBe(status === 5);
+	},
+	20000
+);
+
+it.each([2, 5])(
+	'keeps message history menus but permits reply and reactions only in active cases (status%s)',
+	async (status) => {
+		openEnquiry(SESSION_LIST_TYPES.MY_SESSION, { status, seeker: true });
+		fireEvent.click(
+			await screen.findByRole('button', { name: 'message.menu.open' })
+		);
+		if (status === 2) {
+			expect(
+				screen.getByRole('menuitem', {
+					name: 'message.menu.replyDirect'
+				})
+			).toBeTruthy();
+			expect(
+				screen.getByRole('group', { name: 'message.reaction.add' })
+			).toBeTruthy();
+		} else {
+			expect(
+				screen.queryByRole('menuitem', {
+					name: 'message.menu.replyDirect'
+				})
+			).toBeNull();
+			expect(
+				screen.queryByRole('group', { name: 'message.reaction.add' })
+			).toBeNull();
+		}
+		expect(
+			screen.getByRole('menuitem', { name: 'message.menu.markText' })
+		).toBeTruthy();
+	},
+	20000
+);
+it('keeps a rejected thread history readable without a thread composer even through its direct URL', async () => {
+	const view = openEnquiry(SESSION_LIST_TYPES.MY_SESSION, {
+		status: 5,
+		seeker: true,
+		threadChannel: true
+	});
+	await waitFor(
+		() =>
+			expect(
+				view.container.querySelector('.chatStage__panel .sidePanel')
+			).not.toBeNull(),
+		{ timeout: 15000 }
+	);
+	expect(
+		view.container.querySelector('.chatStage__panel .sidePanel')
+			?.textContent
+	).toContain('Meine vollständige Anfrage:');
+	expect(
+		view.container.querySelector(
+			'.chatStage__panel [contenteditable="true"]'
+		)
+	).toBeNull();
+}, 20000);
+
+it.each([
+	['unsubmitted draft', { status: 0 }],
+	['unsupported modality', { conversationType: 'FUTURE_UNKNOWN' }],
+	['anonymous', { registrationType: 'ANONYMOUS' }],
+	['another agency', { agencyId: 2 }],
+	['already assigned', { assigned: true }]
+])(
+	'does not offer ordinary rejection for a %s enquiry',
+	async (_name, options) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, options);
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		expect(
+			screen.queryByRole('button', { name: 'Anfrage ablehnen' })
+		).toBeNull();
+		expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+	},
+	20000
+);
+
+it.each([
+	['absent', undefined],
+	['public legacy null', null]
+])(
+	'retains ordinary rejection for a legacy submitted enquiry with %s modality',
+	async (_name, conversationType) => {
+		const view = openEnquiry(SESSION_LIST_TYPES.ENQUIRY, {
+			conversationType,
+			reloadedStatus: 5
+		});
+		await waitFor(() =>
+			expect(view.container.textContent).toContain(
+				'Meine vollständige Anfrage:'
+			)
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Anfrage ablehnen' })
+		);
+		expect(boundary.rejectEnquiry).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getAllByRole('button', { name: 'Anfrage ablehnen' }).at(-1)!
+		);
+		await waitFor(() =>
+			expect(boundary.rejectEnquiry).toHaveBeenCalledTimes(1)
+		);
+		expect(boundary.rejectEnquiry.mock.calls[0][0]).toBe(4711);
+		await waitFor(() => expect(boundary.reload).toHaveBeenCalledTimes(1));
+	}
+);

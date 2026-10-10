@@ -98,6 +98,8 @@ import {
 	toNonEmbeddedPath
 } from './timelineDrafts';
 import { useTimelineDrafts } from '../../hooks/useTimelineDrafts';
+import { callManager } from '../../services/CallManager';
+import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
 import {
 	formatAbsoluteTime,
 	formatClockParts,
@@ -246,6 +248,39 @@ const parseNumericId = (value?: string | null): number | null => {
 	}
 	const parsed = Number(value);
 	return Number.isSafeInteger(parsed) ? parsed : null;
+};
+
+/** Call cards join their existing authorized binding; incomplete cards never navigate. */
+const joinNotificationCall = (item: NotificationFeedItem): boolean => {
+	const params = item.params || {};
+	if (
+		getEventDescriptor(item.eventType).resolveActionTarget(params).kind !==
+		'join'
+	) {
+		return false;
+	}
+	if (
+		typeof params.callId !== 'string' ||
+		!params.callId.trim() ||
+		typeof params.roomRef !== 'string' ||
+		!params.roomRef.trim() ||
+		typeof params.callRoomId !== 'string' ||
+		!params.callRoomId.trim() ||
+		(params.callType !== 'audio' && params.callType !== 'video')
+	)
+		return true;
+	void callManager.joinExistingCall(
+		{
+			callId: params.callId,
+			roomRef: params.roomRef,
+			callRoomId: params.callRoomId,
+			callType: params.callType,
+			state: 'running',
+			participants: []
+		},
+		params.seriesId != null
+	);
+	return true;
 };
 
 export const NotificationsCenter = () => {
@@ -897,6 +932,7 @@ export const NotificationsCenter = () => {
 			return;
 		}
 		if (untilL) {
+			if (joinNotificationCall(item)) return;
 			const directPath = getNotificationActionPath(item);
 			if (directPath) {
 				navigate(directPath);
@@ -926,6 +962,7 @@ export const NotificationsCenter = () => {
 		if (nextUnreadId && nextUnreadId !== selectedNotification.id) {
 			setSelectedNotificationId(nextUnreadId);
 		}
+		if (joinNotificationCall(selectedNotification)) return;
 		const directPath = getNotificationActionPath(selectedNotification);
 		if (directPath) {
 			navigate(directPath);

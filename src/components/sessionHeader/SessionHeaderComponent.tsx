@@ -43,7 +43,8 @@ import {
 } from '../../globalState/interfaces';
 import {
 	STATUS_ENQUIRY,
-	STATUS_ACTIVE
+	STATUS_ACTIVE,
+	STATUS_REJECTED
 } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	getViewPathForType,
@@ -211,6 +212,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 	const isAnonymousChat = getModality(activeSession) === Modality.LIVE_CHAT;
 	const isSupervisionEnabledForCurrentChat =
 		featureSupervisionEnabled !== false &&
+		Number(activeSession.item.status) !== STATUS_REJECTED &&
 		(isAnonymousChat
 			? featureSupervisionAnonymousChatsEnabled !== false
 			: featureSupervisionOneOnOneChatsEnabled !== false);

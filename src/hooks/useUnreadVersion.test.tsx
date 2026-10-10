@@ -7,11 +7,19 @@
  * so list consumers re-run `isChatItemUnread` without polling the backend.
  */
 
-import { act, renderHook } from '@testing-library/react';
+import React from 'react';
+import {
+	act,
+	cleanup,
+	render,
+	screen,
+	renderHook
+} from '@testing-library/react';
 import { RoomEvent } from 'matrix-js-sdk';
 import { afterEach, describe, expect, it } from 'vitest';
 import { setMatrixClientServiceRef } from '../services/matrixClientRegistry';
 import { useUnreadVersion } from './useUnreadVersion';
+import { getRoomUnreadCount } from '../utils/sessionUnread';
 
 type Listener = (...args: unknown[]) => void;
 
@@ -36,6 +44,7 @@ const buildFakeClient = () => {
 
 describe('useUnreadVersion', () => {
 	afterEach(() => {
+		cleanup();
 		setMatrixClientServiceRef(null);
 	});
 
@@ -78,6 +87,80 @@ describe('useUnreadVersion', () => {
 
 		expect(client.listenerCount(RoomEvent.UnreadNotifications)).toBe(0);
 		expect(client.listenerCount(RoomEvent.Receipt)).toBe(0);
+	});
+
+	it('updates the mounted Conversations unread count after the same service replaces its Matrix client', () => {
+		const first = buildFakeClient();
+		const replacement = buildFakeClient();
+		let client: ReturnType<typeof buildFakeClient> | null = first;
+		let unread = 0;
+		const clientChanges = new Set<Listener>();
+		setMatrixClientServiceRef({
+			getClient: () => client,
+			getRoom: () =>
+				client ? { getUnreadNotificationCount: () => unread } : null,
+			onClientChange: (listener: Listener) => {
+				clientChanges.add(listener);
+				return () => clientChanges.delete(listener);
+			}
+		} as any);
+		const ConversationsUnread = () => {
+			useUnreadVersion();
+			return (
+				<output aria-label="Unread messages">
+					{getRoomUnreadCount('!live:oriso')}
+				</output>
+			);
+		};
+		const { unmount } = render(<ConversationsUnread />);
+		expect(screen.getByLabelText('Unread messages').textContent).toBe('0');
+		act(() => {
+			client = replacement;
+			unread = 3;
+			clientChanges.forEach((listener) => listener(replacement));
+		});
+		expect(screen.getByLabelText('Unread messages').textContent).toBe('3');
+		act(() => {
+			unread = 4;
+			first.emit(RoomEvent.UnreadNotifications);
+			first.emit(RoomEvent.Receipt);
+		});
+		expect(screen.getByLabelText('Unread messages').textContent).toBe('3');
+		act(() => {
+			unread = 2;
+			replacement.emit(RoomEvent.UnreadNotifications);
+		});
+		expect(screen.getByLabelText('Unread messages').textContent).toBe('2');
+		expect(first.listenerCount(RoomEvent.UnreadNotifications)).toBe(0);
+		expect(first.listenerCount(RoomEvent.Receipt)).toBe(0);
+		act(() => {
+			unread = 0;
+			replacement.emit(RoomEvent.Receipt);
+		});
+		expect(screen.getByLabelText('Unread messages').textContent).toBe('0');
+		act(() => {
+			client = null;
+			clientChanges.forEach((listener) => listener(null));
+		});
+		expect(replacement.listenerCount(RoomEvent.UnreadNotifications)).toBe(
+			0
+		);
+		expect(replacement.listenerCount(RoomEvent.Receipt)).toBe(0);
+		const recovered = buildFakeClient();
+		act(() => {
+			client = recovered;
+			unread = 6;
+			clientChanges.forEach((listener) => listener(recovered));
+		});
+		expect(screen.getByLabelText('Unread messages').textContent).toBe('6');
+		unmount();
+		expect(recovered.listenerCount(RoomEvent.UnreadNotifications)).toBe(0);
+		expect(recovered.listenerCount(RoomEvent.Receipt)).toBe(0);
+		expect(replacement.listenerCount(RoomEvent.UnreadNotifications)).toBe(
+			0
+		);
+		expect(replacement.listenerCount(RoomEvent.Receipt)).toBe(0);
+		expect(clientChanges.size).toBe(0);
 	});
 
 	it('stays inert without a Matrix client', () => {

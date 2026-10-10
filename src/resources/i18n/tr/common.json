@@ -655,6 +655,17 @@
 				"copy": "Mesajınızı aldık.",
 				"headline": "Mesajınız için teşekkür ederiz!"
 			}
+		},
+		"rejection": {
+			"action": "Talebi reddet",
+			"confirmTitle": "Bu talep reddedilsin mi?",
+			"description": "Talep reddedilecektir. Danışan mevcut konuşmayı okumaya devam edebilir.",
+			"confirm": "Talebi reddet",
+			"error": "Reddetme işlemi henüz tamamen doğrulanamadı. Karar zaten kaydedilmiş olabilir. Lütfen tekrar deneyin.",
+			"conflict": "Talep değişti veya artık kullanılamıyor. Lütfen mevcut görünümü yeniden yükleyin.",
+			"closed": "Bu talep reddedildi.",
+			"inProgress": "Reddetme işlemi tamamlanıyor…",
+			"cancel": "İptal"
 		}
 	},
 	"error": {
@@ -1920,6 +1931,26 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
+			"state": {
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"description": {
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			}
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
@@ -2171,7 +2202,7 @@
 			},
 			"requestDenied": {
 				"title": "Talep reddedildi",
-				"text": "Danışan talebi reddedildi."
+				"text": "Bu talep reddedildi."
 			},
 			"waitingRoomClientJoined": {
 				"title": "Bekleme odasında bir danışan var",
@@ -2725,6 +2756,10 @@
 					"feedback": {
 						"title": "Mesleki paylaşım",
 						"description": "Korumalı mesleki paylaşımda sizin için bir geri bildirim var."
+					},
+					"internalChat": {
+						"title": "Dahili mesajlar",
+						"description": "Diğer danışmanlarla yapılan dahili sohbette yeni bir mesaj."
 					}
 				},
 				"shared": {
@@ -4620,6 +4655,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",
