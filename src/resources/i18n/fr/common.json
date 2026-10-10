@@ -3747,7 +3747,7 @@
 			"change": "Le nouveau superviseur remplace le précédent.",
 			"handover": "Le collègue sélectionné décide d’abord. Si la politique l’exige, le client est ensuite consulté. Vous restez responsable jusqu’à toutes les décisions requises."
 		},
-		"handoverPending": "La demande est d’abord envoyée au collègue sélectionné.",
+		"handoverPending": "La demande est d’abord envoyée au collègue sélectionné. Elle ne prend effet qu’après toutes les décisions requises.",
 		"confirm": {
 			"add": "Demander",
 			"change": "Demander le changement",

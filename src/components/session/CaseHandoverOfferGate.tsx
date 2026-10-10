@@ -21,6 +21,14 @@ interface CaseHandoverOfferGateProps {
 
 type OfferError = 'forbidden' | 'notFound' | 'generic';
 
+const matchesScopedHandoverResponse = (
+	response: CaseHandoverStatus,
+	sessionId: number,
+	requestId: number
+) =>
+	response.sessionId === sessionId &&
+	(response.requestId == null || response.requestId === requestId);
+
 interface ScopedOffer {
 	identity: string;
 	status: CaseHandoverStatus;
@@ -66,8 +74,7 @@ export const CaseHandoverOfferGate = ({
 				requestId
 			);
 			if (
-				response.sessionId !== sessionId ||
-				response.requestId !== requestId
+				!matchesScopedHandoverResponse(response, sessionId, requestId)
 			) {
 				throw new Error(FETCH_ERRORS.NO_MATCH);
 			}
@@ -130,6 +137,7 @@ export const CaseHandoverOfferGate = ({
 	});
 
 	const decide = async (approved: boolean) => {
+		if (decidingRef.current) return;
 		const generation = generationRef.current;
 		const sequence = ++decisionSequenceRef.current;
 		loadSequenceRef.current += 1;
@@ -142,8 +150,7 @@ export const CaseHandoverOfferGate = ({
 				approved
 			);
 			if (
-				response.sessionId !== sessionId ||
-				response.requestId !== requestId
+				!matchesScopedHandoverResponse(response, sessionId, requestId)
 			) {
 				throw new Error(FETCH_ERRORS.NO_MATCH);
 			}

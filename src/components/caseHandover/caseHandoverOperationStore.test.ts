@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	clearCaseHandoverActorOperations,
 	getOrCreateCaseHandoverOperation,
+	recordCaseHandoverOperationStatus,
 	resetCaseHandoverOperationStoreForTests
 } from './caseHandoverOperationStore';
 
@@ -118,5 +119,55 @@ describe('caseHandoverOperationStore', () => {
 				explanation: 'Cover now'
 			}).operationId
 		).toBe(secondActor.operationId);
+	});
+
+	it('never evicts an unresolved operation to make room for a later one', () => {
+		const unresolved = Array.from({ length: 50 }, (_, sessionId) =>
+			getOrCreateCaseHandoverOperation({
+				actorId: 'consultant-1',
+				sessionId: sessionId + 1,
+				kind: 'PULL',
+				expectedOwnershipRevision: 1,
+				reasonCode: 'OTHER_EMERGENCY',
+				explanation: 'Cover now'
+			})
+		);
+		const first = unresolved[0];
+		recordCaseHandoverOperationStatus(first, first.operationId, {
+			sessionId: 1,
+			status: 'GRANTED',
+			canViewContent: true,
+			clientConsentRequired: false
+		});
+		const overflow = getOrCreateCaseHandoverOperation({
+			actorId: 'consultant-1',
+			sessionId: 99,
+			kind: 'PULL',
+			expectedOwnershipRevision: 1,
+			reasonCode: 'OTHER_EMERGENCY',
+			explanation: 'Cover now'
+		});
+
+		expect(
+			getOrCreateCaseHandoverOperation({
+				actorId: 'consultant-1',
+				sessionId: 2,
+				kind: 'PULL',
+				expectedOwnershipRevision: 1,
+				reasonCode: 'OTHER_EMERGENCY',
+				explanation: 'Cover now'
+			}).operationId
+		).toBe(unresolved[1].operationId);
+		expect(overflow.sessionId).toBe(99);
+		expect(
+			getOrCreateCaseHandoverOperation({
+				actorId: 'consultant-1',
+				sessionId: 1,
+				kind: 'PULL',
+				expectedOwnershipRevision: 1,
+				reasonCode: 'OTHER_EMERGENCY',
+				explanation: 'Cover now'
+			}).operationId
+		).not.toBe(first.operationId);
 	});
 });

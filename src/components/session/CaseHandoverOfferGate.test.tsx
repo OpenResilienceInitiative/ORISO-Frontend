@@ -252,6 +252,56 @@ describe('CaseHandoverOfferGate', () => {
 		expect(renderPrivate).toHaveBeenCalledTimes(1);
 	});
 
+	it('sends only one recipient decision when accept is clicked twice', async () => {
+		const decision = deferred<CaseHandoverStatus>();
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(status());
+		vi.mocked(apiDecideCaseHandoverRecipient).mockReturnValue(
+			decision.promise
+		);
+		render(
+			<CaseHandoverOfferGate
+				actorId="recipient-a"
+				sessionId={41}
+				requestId={501}
+				onClose={vi.fn()}
+			>
+				<div data-testid="normal-session">private</div>
+			</CaseHandoverOfferGate>
+		);
+		await screen.findByTestId('case-handover-offer-accept');
+
+		fireEvent.click(screen.getByTestId('case-handover-offer-accept'));
+		fireEvent.click(screen.getByTestId('case-handover-offer-accept'));
+		expect(apiDecideCaseHandoverRecipient).toHaveBeenCalledTimes(1);
+		await act(async () => {
+			decision.resolve(
+				status({ status: 'GRANTED', canViewContent: true })
+			);
+		});
+		expect(await screen.findByTestId('normal-session')).toBeTruthy();
+	});
+
+	it('accepts a matching session when the status omits requestId', async () => {
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+			status({
+				requestId: undefined,
+				status: 'GRANTED',
+				canViewContent: true
+			})
+		);
+		render(
+			<CaseHandoverOfferGate
+				actorId="recipient-a"
+				sessionId={41}
+				requestId={501}
+				onClose={vi.fn()}
+			>
+				<div data-testid="normal-session">private</div>
+			</CaseHandoverOfferGate>
+		);
+		expect(await screen.findByTestId('normal-session')).toBeTruthy();
+	});
+
 	it('does not let a focus refresh supersede an in-flight recipient decision', async () => {
 		const decision = deferred<CaseHandoverStatus>();
 		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(status());

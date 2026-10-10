@@ -1982,7 +1982,7 @@ export const SessionsList = ({
 			setCaseHandoverReviewOpen(false);
 			setCaseHandoverWizardStep('reason');
 		}
-		if (granted > 0) void refetchSessionList();
+		if (granted > 0 || pending > 0) void refetchSessionList();
 	}, [caseHandoverBatch.outcome, refetchSessionList, translate]);
 	useEffect(() => {
 		if (caseHandoverBatch.error) {
@@ -2478,6 +2478,7 @@ export const SessionsList = ({
 										);
 										setCaseHandoverReviewOpen(false);
 										setCaseHandoverWizardStep('reason');
+										setCaseHandoverBatchSummary('');
 									}}
 								>
 									{translate('caseHandover.batch.cancel')}

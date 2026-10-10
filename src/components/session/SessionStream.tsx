@@ -701,6 +701,13 @@ export const SessionStream = ({
 					return;
 				}
 				if (String(nextStatus.sessionId) !== String(sessionId)) {
+					setCaseHandoverStatus({
+						sessionId,
+						status: 'DENIED',
+						canViewContent: false,
+						clientConsentRequired: false,
+						auditOutcome: 'ACCESS_DENIED'
+					});
 					setLoading(false);
 					return;
 				}

@@ -175,12 +175,20 @@ export const AskerInfoAssign = ({
 			const retained = getCaseHandoverOperation(identity);
 			if (retained?.status) {
 				setOfferStatus(retained.status);
+				setSelectedId(retained.targetConsultantId || '');
+				setReasonCode(retained.reasonCode);
 				return;
 			}
 			if (retained) {
 				setSelectedId(retained.targetConsultantId || '');
 				setReasonCode(retained.reasonCode);
+			} else {
+				setSelectedId('');
+				setReasonCode('');
 			}
+		} else {
+			setSelectedId('');
+			setReasonCode('');
 		}
 		void loadForm();
 	};
@@ -190,6 +198,7 @@ export const AskerInfoAssign = ({
 		sequenceRef.current = 0;
 		submittingRef.current = false;
 		setBusy(false);
+		setError('');
 		setOpen(false);
 	};
 
@@ -302,6 +311,7 @@ export const AskerInfoAssign = ({
 					submissionError.message === FETCH_ERRORS.CONFLICT
 				) {
 					clearCaseHandoverOperation(identity);
+					setStatus(undefined);
 					submittingRef.current = false;
 					setBusy(false);
 					await loadForm();

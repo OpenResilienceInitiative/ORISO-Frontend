@@ -3747,7 +3747,7 @@
 			"change": "Yeni süpervizör öncekinin yerini alır.",
 			"handover": "Önce seçilen meslektaş karar verir. Politika gerektiriyorsa ardından danışana sorulur. Gerekli kararlar tamamlanana kadar sorumluluk sizdedir."
 		},
-		"handoverPending": "İstek önce seçilen meslektaşa gönderilir.",
+		"handoverPending": "İstek önce seçilen meslektaşa gönderilir. Devir ancak tüm gerekli kararlardan sonra geçerli olur.",
 		"confirm": {
 			"add": "İstek gönder",
 			"change": "Değişiklik iste",

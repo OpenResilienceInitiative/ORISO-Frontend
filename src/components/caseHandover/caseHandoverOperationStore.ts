@@ -22,6 +22,16 @@ const MAX_OPERATIONS = 50;
 const operations = new Map<string, StoredCaseHandoverOperation>();
 let activeActorId: string | null = null;
 
+const TERMINAL_OPERATION_STATUSES = new Set([
+	'GRANTED',
+	'DENIED',
+	'CLIENT_CONSENT_DECLINED',
+	'RECIPIENT_DECLINED'
+]);
+
+const isTerminalOperation = (status?: CaseHandoverStatus) =>
+	Boolean(status?.status && TERMINAL_OPERATION_STATUSES.has(status.status));
+
 const keyFor = ({
 	actorId,
 	sessionId,
@@ -52,9 +62,14 @@ export const getOrCreateCaseHandoverOperation = (
 	operations.delete(key);
 	operations.set(key, operation);
 	while (operations.size > MAX_OPERATIONS) {
-		const oldestKey = operations.keys().next().value as string | undefined;
-		if (!oldestKey) break;
-		operations.delete(oldestKey);
+		let evicted = false;
+		for (const [key, stored] of operations) {
+			if (!isTerminalOperation(stored.status)) continue;
+			operations.delete(key);
+			evicted = true;
+			break;
+		}
+		if (!evicted) break;
 	}
 	return operation;
 };

@@ -2387,7 +2387,7 @@
 			"add": "Eine Supervisor:in unterstützt dich in einem getrennten Teambereich.",
 			"handover": "Zuerst entscheidet die ausgewählte Kolleg:in. Falls die Richtlinie es verlangt, wird danach die ratsuchende Person gefragt. Bis alle nötigen Entscheidungen vorliegen, bleibst du zuständig."
 		},
-		"handoverPending": "Die Anfrage geht zuerst an die ausgewählte Kolleg:in."
+		"handoverPending": "Die Anfrage geht zuerst an die ausgewählte Kolleg:in. Sie wird erst nach allen erforderlichen Entscheidungen wirksam."
 	},
 	"dpaSign": {
 		"title": "Vertragsunterlagen prüfen und bestätigen",

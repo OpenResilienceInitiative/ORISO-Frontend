@@ -126,6 +126,10 @@ export const useCaseHandoverBatch = ({ actorId }: { actorId: string }) => {
 					}
 					if (isCaseHandoverDenied(resultStatus.status)) {
 						deniedIds.add(operation.sessionId);
+						clearCaseHandoverOperationIfMatches(
+							operation,
+							operation.operationId
+						);
 						continue;
 					}
 					if (isCaseHandoverPending(resultStatus.status)) {
