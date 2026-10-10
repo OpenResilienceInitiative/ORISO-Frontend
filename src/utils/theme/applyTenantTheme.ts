@@ -12,9 +12,9 @@ import {
 	OrisoSeeds,
 	computeOrisoPalette
 } from './orisoScheme';
+import { THEME_APPLIED_EVENT } from './themeEvents';
 
-/** Dispatched on window after a palette landed at :root. */
-export const THEME_APPLIED_EVENT = 'oriso:theme-applied';
+export { THEME_APPLIED_EVENT } from './themeEvents';
 
 /**
  * Scheme activation flags: dark stays off until the dark end-user
