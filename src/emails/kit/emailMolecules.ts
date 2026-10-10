@@ -12,6 +12,8 @@ import {
 	emailButton,
 	emailCaptionStyle,
 	emailCodeMarkup,
+	emailCopyLink,
+	emailCopyLinkStyle,
 	emailDataRowMarkup,
 	emailDivider,
 	emailEscape,
@@ -20,6 +22,7 @@ import {
 	emailFootnoteStyle,
 	emailHeadline,
 	emailLogoLockup,
+	emailLogoIsWide,
 	emailTextLink
 } from './emailAtoms';
 import {
@@ -35,7 +38,10 @@ const G = emailSpace.gutter;
 
 /** Logo and platform name, sitting above the card on the bare canvas. */
 export const emailHeaderBar = (brand: EmailBrand): string =>
-	emailBlock(emailLogoLockup(brand), { padding: [0, G, 20, G] });
+	emailBlock(emailLogoLockup(brand), {
+		padding: [0, G, 20, G],
+		className: `logo-header${emailLogoIsWide(brand) ? ' logo-header-wide' : ''}`
+	});
 
 /** The accent stroke plus the headline it belongs to. */
 export const emailTitleGroup = (headline: string, brand: EmailBrand): string =>
@@ -46,15 +52,34 @@ export const emailTitleGroup = (headline: string, brand: EmailBrand): string =>
  * Body copy. The final paragraph gets the larger bottom gap because whatever
  * follows it (panel or button) starts a new visual group.
  */
-export const emailProse = (paragraphs: string[]): string =>
+export const emailProse = (
+	paragraphs: string[],
+	wrapLongTokens = false
+): string =>
 	paragraphs
 		.map((text, index) =>
 			emailBlock(emailEscape(text), {
 				padding: [0, G, index === paragraphs.length - 1 ? 28 : 16, G],
-				style: emailBodyTextStyle()
+				style:
+					emailBodyTextStyle() +
+					(wrapLongTokens ? ';word-break:break-word' : '')
 			})
 		)
 		.join('');
+
+/**
+ * Body copy the sender supplies as sanitised HTML, in one cell.
+ *
+ * Inserted unescaped: the markup is the point. The bottom gap is 12px rather
+ * than prose's 28px because the authored body arrives wrapped in `<p>`
+ * elements whose own bottom margin stacks on the cell padding — 12px plus that
+ * margin lands on the same distance to the button as `emailProse` does.
+ */
+export const emailAuthoredProse = (html: string): string =>
+	emailBlock(html, {
+		padding: [0, G, 12, G],
+		style: emailBodyTextStyle()
+	});
 
 /**
  * The tinted label/value panel: appointment details, the assigned request, the
@@ -93,14 +118,28 @@ export const emailCodePanel = (row: EmailDataRow): string =>
 
 /** The primary action. Left-aligned on desktop, full width on phones. */
 export const emailCallToAction = (
-	cta: { href: string; label: string },
+	cta: { href: string; label: string; fallbackHint?: string },
 	brand: EmailBrand
 ): string =>
 	emailBlock(emailButton(cta, brand), {
 		padding: [20, G, 0, G],
 		className: 'btn',
 		align: 'left'
-	});
+	}) + (cta.fallbackHint ? emailCopyLinkFallback(cta, brand) : '');
+
+/**
+ * The button's URL spelled out under it, for mail clients that break the
+ * button. Only for links the recipient cannot find again anywhere else — a
+ * single-use contract link, not a link into the app.
+ */
+export const emailCopyLinkFallback = (
+	{ href, fallbackHint }: { href: string; fallbackHint?: string },
+	brand: EmailBrand
+): string =>
+	emailBlock(
+		`${emailEscape(fallbackHint ?? '')}<br>${emailCopyLink(href, brand)}`,
+		{ padding: [16, G, 0, G], style: emailCopyLinkStyle() }
+	);
 
 /** An optional second, lower-weight action directly under the button. */
 export const emailSecondaryAction = (

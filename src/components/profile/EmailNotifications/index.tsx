@@ -26,14 +26,15 @@ import {
 /**
  * E-mail notification settings, as ADR-019 specifies them.
  *
- * Two lists rather than one filtered by role — three switches for an advice
- * seeker, seven for a counsellor. See `notificationMatrix.ts` for why that
+ * Two lists rather than one filtered by role — four switches for an advice
+ * seeker, eight for a counsellor. See `notificationMatrix.ts` for why that
  * distinction is the point rather than an implementation detail.
  */
 export const EmailNotification = () => {
 	const { userData } = React.useContext(UserDataContext);
 	const { t } = useTranslation();
-	const { search } = useLocation();
+	const { search, hash } = useLocation();
+	const rootRef = React.useRef<HTMLDivElement>(null);
 
 	const isConsultant = hasUserAuthority(
 		AUTHORITIES.CONSULTANT_DEFAULT,
@@ -49,8 +50,19 @@ export const EmailNotification = () => {
 	const occasion = new URLSearchParams(search).get('mail');
 	const highlighted = switchForOccasion(switches, occasion);
 
+	// The router does not scroll to anchors; the notification dialog links here.
+	React.useEffect(() => {
+		if (hash === '#email-notifications') {
+			rootRef.current?.scrollIntoView({ block: 'start' });
+		}
+	}, [hash]);
+
 	return (
-		<div className="notifications__content notifications__content--enhanced">
+		<div
+			ref={rootRef}
+			id="email-notifications"
+			className="notifications__content notifications__content--enhanced"
+		>
 			<div className="profile__content__title notifications__hero">
 				<Headline
 					text={t('profile.notifications.title')}

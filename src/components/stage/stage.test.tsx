@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 
 import * as React from 'react';
-import { cleanup, render } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { TenantContext } from '../../globalState/provider/TenantProvider';
 import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { TenantDataInterface } from '../../globalState/interfaces';
-import { Stage } from './stage';
+import { Stage, StageProps } from './stage';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key }),
@@ -33,14 +33,19 @@ const tenantWith = (
 		content: {}
 	}) as TenantDataInterface;
 
+const stageView = (
+	tenant: TenantDataInterface | undefined,
+	props: StageProps = {}
+) => (
+	<TenantContext.Provider value={{ tenant, setTenant: vi.fn() }}>
+		<LegalLinksContext.Provider value={[]}>
+			<Stage {...props} />
+		</LegalLinksContext.Provider>
+	</TenantContext.Provider>
+);
+
 const renderStage = (tenant: TenantDataInterface | undefined) =>
-	render(
-		<TenantContext.Provider value={{ tenant, setTenant: vi.fn() }}>
-			<LegalLinksContext.Provider value={[]}>
-				<Stage />
-			</LegalLinksContext.Provider>
-		</TenantContext.Provider>
-	);
+	render(stageView(tenant));
 
 /**
  * The stage centre carries the animated composition (lamp map) and nothing
@@ -71,5 +76,27 @@ describe('Stage centre branding', () => {
 		expect(
 			container.querySelector('[data-cy="stage-carrier-logos"]')
 		).toBeTruthy();
+	});
+
+	it('keeps the loading decoration until the stage is ready, then removes it', () => {
+		vi.useFakeTimers();
+		const canvas = vi
+			.spyOn(HTMLCanvasElement.prototype, 'getContext')
+			.mockReturnValue(null);
+		try {
+			const { rerender } = render(
+				stageView(undefined, { hasAnimation: true, isReady: false })
+			);
+			expect(screen.getByText('app.wait')).toBeTruthy();
+			act(() => vi.advanceTimersByTime(10000));
+			expect(screen.getByText('app.wait')).toBeTruthy();
+			rerender(
+				stageView(undefined, { hasAnimation: true, isReady: true })
+			);
+			expect(screen.queryByText('app.wait')).toBeNull();
+		} finally {
+			canvas.mockRestore();
+			vi.useRealTimers();
+		}
 	});
 });

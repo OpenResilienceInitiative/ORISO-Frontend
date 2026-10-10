@@ -14,6 +14,7 @@ import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupSer
 import {
 	beginRecoverySetup,
 	getPendingRecoveryKey,
+	resetPendingRecoveryKeyCacheForTests,
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
 import {
@@ -43,9 +44,26 @@ vi.mock('../../../services/reauthenticateRecovery', () => ({
 }));
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key
-	})
+	useTranslation: () => {
+		const catalogue: Record<string, string> = {
+			'profile.encryption.setup.cta': 'Ersatzschlüssel einrichten',
+			'profile.encryption.showKey.confirmLabel':
+				'Ich habe den Schlüssel sicher gespeichert.',
+			'profile.encryption.showKey.copy': 'Schlüssel kopieren',
+			'profile.encryption.showKey.done': 'Fertig',
+			'profile.encryption.unavailable':
+				'Die Verschlüsselungseinstellungen sind gerade nicht verfügbar. Bitte laden Sie die Seite neu.',
+			'profile.encryption.recover.inputLabel': 'Ersatzschlüssel',
+			'profile.encryption.recover.cta': 'Verlauf wiederherstellen',
+			'profile.encryption.showKey.silentExplainer':
+				'Ihr Ersatzschlüssel wurde beim Anmelden automatisch eingerichtet.',
+			'profile.encryption.setup.busy':
+				'Ihr Ersatzschlüssel wird gerade schon eingerichtet — in einem anderen Tab oder im Hintergrund.'
+		};
+		return {
+			t: (key: string) => catalogue[key] ?? key
+		};
+	}
 }));
 
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -87,6 +105,38 @@ const UNAVAILABLE_TEXT =
 
 describe('EncryptionSettingsPanel', () => {
 	afterEach(cleanup);
+
+	it('keeps typed recovery input when its surrounding group rerenders', () => {
+		const client = {} as MatrixClient;
+		const { rerender } = render(
+			<EncryptionSettingsPanel
+				clientOverride={client}
+				initialStatusOverride={outOfSync}
+				showHeading={false}
+			/>
+		);
+		const input = screen.getByRole('textbox', { name: 'Ersatzschlüssel' });
+		fireEvent.change(input, {
+			target: { value: 'unfinished recovery key' }
+		});
+		rerender(
+			<EncryptionSettingsPanel
+				clientOverride={client}
+				initialStatusOverride={outOfSync}
+				showHeading={false}
+			/>
+		);
+		expect(
+			(
+				screen.getByRole('textbox', {
+					name: 'Ersatzschlüssel'
+				}) as HTMLInputElement
+			).value
+		).toBe('unfinished recovery key');
+		expect(
+			screen.queryByRole('heading', { name: 'profile.encryption.title' })
+		).toBeNull();
+	});
 
 	it('uses the shared M3 checkbox for recovery-key confirmation', async () => {
 		render(
@@ -153,12 +203,13 @@ describe('EncryptionSettingsPanel', () => {
 	});
 
 	describe('recovery key parked by the silent setup (#839 follow-up)', () => {
-		const USER_ID = '@abe.simpson:oriso.org';
+		const USER_ID = '@abe.simpson:example.org';
 		const PARKED_KEY = 'EsTc 1111 2222 3333 4444';
 		const clientWithUser = { getUserId: () => USER_ID } as MatrixClient;
 
 		beforeEach(() => {
 			localStorage.clear();
+			resetPendingRecoveryKeyCacheForTests();
 			getEncryptionStatus.mockReset();
 			setUpRecovery.mockClear();
 		});
@@ -306,6 +357,7 @@ afterEach(() => {
 	cleanup();
 	clearRecoveryRuntimeState();
 	localStorage.clear();
+	resetPendingRecoveryKeyCacheForTests();
 });
 it.each([
 	'idle',
@@ -391,7 +443,7 @@ it.each(['busy', 'work-limit'])(
 		expect(
 			await screen.findByText(
 				kind === 'busy'
-					? 'profile.encryption.setup.busy'
+					? /gerade schon eingerichtet/
 					: 'encryption.passwordRecovery.retryable-failure'
 			)
 		).toBeTruthy();

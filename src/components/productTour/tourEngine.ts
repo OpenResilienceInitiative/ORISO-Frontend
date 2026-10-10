@@ -1,9 +1,70 @@
 import { ACTIONS, EVENTS, STATUS } from 'react-joyride';
+import { matchPath } from 'react-router-dom';
 import type { Step } from 'react-joyride';
-import type { TourEvent, TourStatus, TourStep } from './types';
+import type {
+	TourCondition,
+	TourDefinition,
+	TourEvent,
+	TourResolveContext,
+	TourStatus,
+	TourStep,
+	TourWhen
+} from './types';
 
 export const tourTargetSelector = (target: string) =>
 	`[data-tour-target="${target}"]`;
+
+/**
+ * Whether a location reached an `advanceOn: { type: 'route' }` path: a router
+ * pattern for the pathname, plus every query param the path names.
+ */
+export const routeMatches = (
+	path: string,
+	location: { pathname: string; search: string }
+): boolean => {
+	const [pattern, query = ''] = path.split('?');
+	if (!matchPath({ path: pattern, end: true }, location.pathname)) {
+		return false;
+	}
+	const current = new URLSearchParams(location.search);
+	return [...new URLSearchParams(query)].every(
+		([key, value]) => current.get(key) === value
+	);
+};
+
+const conditionHolds = (
+	condition: TourCondition,
+	ctx: TourResolveContext
+): boolean =>
+	(ctx.flags?.[condition.flag] !== false) === (condition.equals ?? true);
+
+const whenHolds = (when: TourWhen | undefined, ctx: TourResolveContext) =>
+	when === undefined || [when].flat().every((c) => conditionHolds(c, ctx));
+
+/** Tour-level condition only; steps are not looked at. */
+export const isTourAvailable = (
+	tour: Pick<TourDefinition, 'when'>,
+	ctx: TourResolveContext = {}
+): boolean => whenHolds(tour.when, ctx);
+
+/**
+ * The steps of a tour for one run: those whose conditions hold, in order, or
+ * none when the tour-level condition fails. Resolve once when the tour
+ * starts and hand the result to everything that counts steps (adapter,
+ * reducer, host) so they agree. Resolved steps carry no `when`, which keeps
+ * a second resolution harmless.
+ */
+export const resolveTourSteps = (
+	tour: Pick<TourDefinition, 'steps' | 'when'>,
+	ctx: TourResolveContext = {}
+): TourStep[] => {
+	if (!isTourAvailable(tour, ctx)) {
+		return [];
+	}
+	return tour.steps
+		.filter((step) => whenHolds(step.when, ctx))
+		.map(({ when: _when, ...step }) => step);
+};
 
 export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 	steps.map((step) => ({
@@ -11,7 +72,17 @@ export const mapStepsToJoyride = (steps: TourStep[]): Step[] =>
 		target: step.target ? tourTargetSelector(step.target) : 'body',
 		placement: step.placement ?? (step.target ? 'bottom' : 'center'),
 		title: step.titleKey,
-		content: step.contentKey
+		content: step.contentKey,
+		// An action step requires keyboard access to the highlighted app UI.
+		...(step.advanceOn && { disableFocusTrap: true }),
+		// Read by the tooltip: no Next on a self-advancing step, no Back after
+		// an action that cannot be undone.
+		...((step.advanceOn || step.hideBack) && {
+			data: {
+				...(step.advanceOn && { advanceOn: step.advanceOn }),
+				...(step.hideBack && { hideBack: true })
+			}
+		})
 	}));
 
 /**
@@ -76,12 +147,14 @@ export interface TourReduction {
  * without a terminal status so it stays resumable. A missing final OPTIONAL
  * target (per `steps` metadata) completes the tour when moving forward —
  * trailing optional steps must never trap a fresh account in `in_progress`.
+ * Guided tours can stop on every missing required target via their policy.
  */
 export const reduceTourCallback = (
 	state: TourRunState,
 	cb: TourCallbackInput,
 	stepCount: number,
-	steps?: ReadonlyArray<Pick<TourStep, 'optional'>>
+	steps?: ReadonlyArray<Pick<TourStep, 'optional'>>,
+	requiredTargetPolicy: TourDefinition['requiredTargetPolicy'] = 'skip'
 ): TourReduction => {
 	const events: TourEvent[] = [];
 	const next = { ...state };
@@ -102,6 +175,10 @@ export const reduceTourCallback = (
 	if (cb.type === EVENTS.TARGET_NOT_FOUND) {
 		const isOptional = !!steps?.[cb.index]?.optional;
 		events.push(isOptional ? 'optional_step_skipped' : 'target_missing');
+		if (!isOptional && requiredTargetPolicy === 'stop') {
+			next.run = false;
+			return { state: next, events };
+		}
 		const direction = cb.action === ACTIONS.PREV ? -1 : 1;
 		const nextIndex = cb.index + direction;
 		if (nextIndex < 0 || nextIndex >= stepCount) {

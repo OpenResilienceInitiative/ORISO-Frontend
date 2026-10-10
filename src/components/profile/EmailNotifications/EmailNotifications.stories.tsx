@@ -1,5 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { apiGetUserData } from '../../../api';
+import { UserDataInterface } from '../../../globalState/interfaces';
 import { EmailNotification } from './index';
 import { UserDataContext } from '../../../globalState';
 import { APP_ORISO_FIGMA_URL } from '../../storybookDesignLinks';
@@ -64,7 +66,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'E-mail notification settings, per ADR-019. Advice seekers and counsellors get two separate lists rather than one filtered by role — three switches against seven — because an advice seeker uses ORISO a handful of times in a situation they did not choose, and a counsellor works in it daily.\n\nThe screen also names what is sent regardless. Someone arriving from an unsubscribe link on a password-reset mail should read *why* there is no switch, instead of searching the list for one that does not exist.'
+					'E-mail notification settings, per ADR-019. Advice seekers and counsellors get two separate lists rather than one filtered by role — four switches against eight — because an advice seeker uses ORISO a handful of times in a situation they did not choose, and a counsellor works in it daily.\n\nThe screen also names what is sent regardless. Someone arriving from an unsubscribe link on a password-reset mail should read *why* there is no switch, instead of searching the list for one that does not exist.'
 			}
 		}
 	}
@@ -74,12 +76,12 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const AdviceSeeker: Story = {
-	name: 'Advice seeker (3 switches)',
+	name: 'Advice seeker (4 switches)',
 	decorators: [withUser(userData())]
 };
 
 export const Consultant: Story = {
-	name: 'Counsellor (7 switches)',
+	name: 'Counsellor (8 switches)',
 	decorators: [
 		withUser(
 			userData({
@@ -130,4 +132,104 @@ export const OnPhone: Story = {
 			})
 		)
 	]
+};
+
+/** Local browser fixture: the real PATCH/GET client persists only the fixture's preference. */
+const AppointmentPreferenceFixture = ({
+	children
+}: {
+	children: React.ReactNode;
+}) => {
+	const [data, setData] = React.useState(
+		() =>
+			userData({
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			}) as unknown as UserDataInterface
+	);
+	const reload = React.useCallback(async () => {
+		const saved = await apiGetUserData();
+		setData(saved);
+		return saved;
+	}, []);
+	React.useEffect(() => {
+		const originalFetch = window.fetch;
+		const key = 'storybook.selfhelp.appointment.preference';
+		const initial = data;
+		window.fetch = async (input, init) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (
+				new URL(url, window.location.href).pathname !==
+				'/service/users/data'
+			) {
+				return originalFetch(input, init);
+			}
+			const stored =
+				JSON.parse(window.sessionStorage.getItem(key) || 'null') ||
+				initial;
+			const method =
+				init?.method ||
+				(input instanceof Request ? input.method : 'GET');
+			if (method === 'PATCH') {
+				const body = init?.body
+					? String(init.body)
+					: input instanceof Request
+						? await input.clone().text()
+						: '{}';
+				const patch = JSON.parse(body);
+				window.sessionStorage.setItem(
+					key,
+					JSON.stringify({ ...stored, ...patch })
+				);
+				return new Response('{}', {
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				});
+			}
+			return new Response(JSON.stringify(stored), {
+				status: 200,
+				headers: { 'Content-Type': 'application/json' }
+			});
+		};
+		void reload();
+		return () => {
+			window.fetch = originalFetch;
+		};
+		// Initial data seeds only the local fixture; reload reads its persisted state.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [reload]);
+	return (
+		<UserDataContext.Provider
+			value={
+				{
+					userData: data,
+					reloadUserData: reload,
+					setUserData: setData
+				} as never
+			}
+		>
+			<div style={{ maxWidth: 640, padding: 16 }}>{children}</div>
+		</UserDataContext.Provider>
+	);
+};
+
+export const CounsellorAppointmentPreference: Story = {
+	name: 'Counsellor appointment preference (local save/reload fixture)',
+	decorators: [
+		(Story) => (
+			<AppointmentPreferenceFixture>
+				<Story />
+			</AppointmentPreferenceFixture>
+		)
+	],
+	parameters: {
+		router: {
+			initialPath:
+				'/profile/notifications/email?mail=selbsthilfe-termin-erinnerung-beratung'
+		},
+		docs: {
+			description: {
+				story: 'Local browser fixture only. Toggle the existing appointment preference, then reload this story. The real PATCH/GET client is used with an in-memory browser fixture; this does not send mail or contact Dev.'
+			}
+		}
+	}
 };

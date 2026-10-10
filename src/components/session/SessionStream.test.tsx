@@ -23,7 +23,7 @@ import { chatTransportService } from '../../services/chatTransportService';
 import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
 import { apiDecideCaseHandoverClientConsent } from '../../api';
 
-const ROOM_ID = '!session:matrix.oriso.org';
+const ROOM_ID = '!session:matrix.example.org';
 const LIST_PATH = '/sessions/user/view';
 
 const mocks = vi.hoisted(() => {
@@ -79,7 +79,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('react-router-dom', async (importOriginal) => {
-	const actual = await importOriginal<any>();
+	const actual =
+		await importOriginal<
+			typeof import('../../globalState/context/MatrixClientContext')
+		>();
 	return {
 		...actual,
 		useNavigate: () => mocks.navigate
@@ -90,7 +93,15 @@ vi.mock('../../api', () => ({
 	apiGetAgencyConsultantList: vi.fn(() => Promise.resolve([])),
 	apiGetSessionSupervisors: mocks.getSessionSupervisors,
 	apiGetCaseHandoverStatus: mocks.getCaseHandoverStatus,
-	apiDecideCaseHandoverClientConsent: vi.fn(() => Promise.resolve({})),
+	apiDecideCaseHandoverClientConsent: vi.fn(() =>
+		Promise.resolve({
+			sessionId: 1,
+			requestId: 11,
+			status: 'CLIENT_CONSENT_DECLINED',
+			canViewContent: false,
+			clientConsentRequired: true
+		})
+	),
 	FETCH_ERRORS: { ABORT: 'ABORT' }
 }));
 
@@ -125,7 +136,10 @@ vi.mock('../../services/chatTransportService', () => ({
 vi.mock(
 	'../../services/matrixRoomHistoryKeyTransfer',
 	async (importOriginal) => {
-		const actual = await importOriginal<any>();
+		const actual =
+			await importOriginal<
+				typeof import('../../globalState/context/MatrixClientContext')
+			>();
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
@@ -139,6 +153,9 @@ vi.mock(
 // the contexts and helpers SessionStream consumes.
 vi.mock('../../globalState', async () => {
 	const ReactModule = await import('react');
+	const { UserDataContext } = await import(
+		'../../globalState/context/UserDataContext'
+	);
 	return {
 		AUTHORITIES: {
 			ASKER_DEFAULT: 'AUTHORIZATION_USER_DEFAULT',
@@ -151,22 +168,30 @@ vi.mock('../../globalState', async () => {
 			setConsultantList: () => {}
 		}),
 		SessionTypeContext: ReactModule.createContext(null),
-		UserDataContext: ReactModule.createContext(null),
+		UserDataContext,
 		ActiveSessionContext: ReactModule.createContext(null),
 		useTopic: () => null
 	};
 });
 
-vi.mock('../../globalState/context/MatrixClientContext', () => ({
-	useMatrixClient: () => ({
-		matrixClientService: mocks.matrixClientService
+vi.mock(
+	'../../globalState/context/MatrixClientContext',
+	async (importOriginal) => ({
+		...(await importOriginal<
+			typeof import('../../globalState/context/MatrixClientContext')
+		>()),
+		useMatrixClient: () => ({
+			matrixClientService: mocks.matrixClientService
+		})
 	})
-}));
+);
 
 vi.mock('./SessionItemComponent', () => ({
 	SessionItemComponent: (props: any) => {
 		mocks.sessionItemProps = props;
-		return <div data-testid="session-item" />;
+		return (
+			<div data-testid="session-item">{props.mainTimelineSupplement}</div>
+		);
 	}
 }));
 
@@ -200,10 +225,12 @@ const askerUserData = {
 
 const renderSessionStream = ({
 	isGroup,
-	notificationFeed = []
+	notificationFeed = [],
+	status = 2
 }: {
 	isGroup: boolean;
 	notificationFeed?: any[];
+	status?: number;
 }) => {
 	const activeSession = {
 		rid: ROOM_ID,
@@ -212,7 +239,9 @@ const renderSessionStream = ({
 		item: {
 			id: 1,
 			matrixRoomId: ROOM_ID,
-			active: true
+			active: true,
+			status,
+			conversationType: 'AGENCY_COUNSELLING'
 		}
 	} as any;
 
@@ -297,6 +326,50 @@ describe('SessionStream Matrix room lifecycle', () => {
 		cleanup();
 	});
 
+	it.each([0, 1, 2])(
+		'never mounts an access setting outside the message rail (session status %s)',
+		(status) => {
+			const { container } = renderSessionStream({
+				isGroup: false,
+				status
+			});
+			expect(
+				container.querySelector('.session__wrapper > button')
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'caseHandover.consent.info.title'
+				})
+			).toBeNull();
+		}
+	);
+
+	it('offers notification setup from the optional handover dialog without deciding consent', async () => {
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			await screen.findByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		).toBeTruthy();
+		expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+	});
+
 	it('lets the asker decide pending case-handover consent inside the conversation', async () => {
 		renderSessionStream({
 			isGroup: false,
@@ -314,6 +387,9 @@ describe('SessionStream Matrix room lifecycle', () => {
 		const consentCard = await screen.findByTestId(
 			'case-handover-inline-consent'
 		);
+		expect(screen.getByTestId('session-item').contains(consentCard)).toBe(
+			true
+		);
 		fireEvent.click(
 			within(consentCard).getByRole('button', {
 				name: 'caseHandover.consent.approve'
@@ -329,6 +405,60 @@ describe('SessionStream Matrix room lifecycle', () => {
 		});
 	});
 
+	it('reports the confirmed takeover outcome instead of promising revocation', async () => {
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockResolvedValueOnce({
+			sessionId: 1,
+			requestId: 11,
+			status: 'GRANTED',
+			canViewContent: true,
+			clientConsentRequired: false,
+			clientConsent: 'OPT_OUT',
+			auditOutcome: 'CLIENT_OPTOUT_DECLINED_AFTER_TAKEOVER'
+		});
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11',
+					params: { clientConsent: 'OPT_OUT' }
+				}
+			]
+		});
+		fireEvent.click(await screen.findByRole('switch'));
+		expect((await screen.findByRole('status')).textContent).toBe(
+			'caseHandover.consent.info.takeoverContinues'
+		);
+		expect(screen.queryByRole('switch')).toBeNull();
+	});
+
+	it('keeps the real request available when saving fails', async () => {
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+			new Error('Server failed')
+		);
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11',
+					params: { clientConsent: 'OPT_OUT' }
+				}
+			]
+		});
+		fireEvent.click(await screen.findByRole('switch'));
+		expect(await screen.findByRole('alert')).toBeTruthy();
+		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
+			true
+		);
+	});
+
 	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {
 		renderSessionStream({ isGroup: false });
 
@@ -338,7 +468,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(mocks.sessionItemProps).not.toHaveProperty('systemMessages');
 	});
 
-	it('lets the asker decline the request and removes the card afterwards', async () => {
+	it('lets the asker decline the request and shows the confirmed result', async () => {
 		renderSessionStream({
 			isGroup: false,
 			notificationFeed: [
@@ -369,9 +499,9 @@ describe('SessionStream Matrix room lifecycle', () => {
 			);
 		});
 		await waitFor(() => {
-			expect(
-				screen.queryByTestId('case-handover-inline-consent')
-			).toBeNull();
+			expect(screen.getByRole('status').textContent).toBe(
+				'caseHandover.consent.info.closed'
+			);
 		});
 	});
 
@@ -569,7 +699,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 				id: 7,
 				supervisorConsultantId: 'supervisor-1',
 				supervisorUsername: 'supervisor@example.invalid',
-				matrixRoomId: '!supervision:matrix.oriso.org'
+				matrixRoomId: '!supervision:matrix.example.org'
 			}
 		]);
 		const activeSession = {
@@ -630,7 +760,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		await waitFor(() => {
 			expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(ROOM_ID);
 			expect(mocks.requestHistoryKeys).toHaveBeenCalledWith(
-				'!supervision:matrix.oriso.org'
+				'!supervision:matrix.example.org'
 			);
 		});
 	});
@@ -699,5 +829,208 @@ describe('SessionStream Matrix room lifecycle', () => {
 		);
 		expect(mocks.requestHistoryKeys).not.toHaveBeenCalled();
 		expect(chatTransportService.onMatrixTimeline).not.toHaveBeenCalled();
+	});
+});
+
+describe('SessionStream — co-access expiry (#200)', () => {
+	const NOW = new Date('2026-09-25T07:00:00Z');
+	const coAccess = (sessionId: number, expiresAt: string) => ({
+		sessionId,
+		requestId: 38,
+		status: 'GRANTED',
+		canViewContent: true,
+		clientConsentRequired: false,
+		accessType: 'CO_ACCESS',
+		expiresAt
+	});
+	const expired = (sessionId: number) => ({
+		sessionId,
+		requestId: 38,
+		status: 'EXPIRED',
+		canViewContent: false,
+		clientConsentRequired: false,
+		accessType: 'CO_ACCESS'
+	});
+
+	const tree = (sessionId: number, ownerId = 'owner-2') => (
+		<MemoryRouter>
+			<UserDataContext.Provider
+				value={
+					{
+						userData: {
+							userId: 'consultant-1',
+							grantedAuthorities: [
+								'AUTHORIZATION_CONSULTANT_DEFAULT'
+							]
+						}
+					} as any
+				}
+			>
+				<SessionTypeContext.Provider
+					value={{
+						type: SESSION_LIST_TYPES.MY_SESSION,
+						path: LIST_PATH
+					}}
+				>
+					<ConsultantListContext.Provider
+						value={
+							{
+								consultantList: [],
+								setConsultantList: () => {}
+							} as any
+						}
+					>
+						<ActiveSessionContext.Provider
+							value={
+								{
+									activeSession: {
+										rid: ROOM_ID,
+										isGroup: false,
+										isSession: true,
+										consultant: { id: ownerId },
+										item: {
+											id: sessionId,
+											matrixRoomId: ROOM_ID,
+											active: true,
+											status: 2
+										}
+									},
+									readActiveSession: () => {}
+								} as any
+							}
+						>
+							<SessionStream
+								readonly={false}
+								checkMutedUserForThisSession={() => {}}
+								bannedUsers={[]}
+							/>
+						</ActiveSessionContext.Provider>
+					</ConsultantListContext.Provider>
+				</SessionTypeContext.Provider>
+			</UserDataContext.Provider>
+		</MemoryRouter>
+	);
+
+	const advance = (ms: number) =>
+		act(async () => {
+			await vi.advanceTimersByTimeAsync(ms);
+		});
+	const statusCallsFor = (sessionId: number) =>
+		mocks.getCaseHandoverStatus.mock.calls.filter(
+			(call: any[]) => call[0] === sessionId
+		).length;
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] });
+		vi.setSystemTime(NOW);
+		mocks.sessionItemProps = null;
+		mocks.timelineListeners.length = 0;
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
+	});
+
+	it('asks again 5 s after co-access expires and closes the curtain', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-09-25T07:10:00'))
+			.mockResolvedValueOnce(expired(1));
+
+		render(tree(1));
+		await advance(0);
+		expect(screen.getByTestId('session-item')).toBeDefined();
+		expect(statusCallsFor(1)).toBe(1);
+		expect(mocks.timelineListeners.length).toBeGreaterThan(0);
+
+		await advance(10 * 60_000 + 4_999);
+		expect(statusCallsFor(1)).toBe(1);
+
+		await advance(1);
+		expect(statusCallsFor(1)).toBe(2);
+		expect(screen.getByTestId('case-handover-curtain')).toBeDefined();
+		expect(screen.queryByTestId('session-item')).toBeNull();
+		// New Matrix events stop arriving once access ends.
+		expect(mocks.timelineListeners.length).toBe(0);
+	});
+
+	it('asks right away when the expiry has already passed', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-09-25T06:59:00'))
+			.mockResolvedValueOnce(expired(1));
+
+		render(tree(1));
+		await advance(0);
+		await advance(0);
+
+		expect(statusCallsFor(1)).toBe(2);
+		expect(screen.getByTestId('case-handover-curtain')).toBeDefined();
+	});
+
+	it('waits past the setTimeout maximum instead of firing early', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-10-25T07:00:00'))
+			.mockResolvedValueOnce(expired(1));
+
+		render(tree(1));
+		await advance(0);
+		await advance(2 ** 31 - 1);
+		expect(statusCallsFor(1)).toBe(1);
+
+		await advance(30 * 24 * 60 * 60_000 + 5_000 - (2 ** 31 - 1));
+		expect(statusCallsFor(1)).toBe(2);
+	});
+
+	it('clears the timer on unmount', async () => {
+		mocks.getCaseHandoverStatus.mockResolvedValueOnce(
+			coAccess(1, '2026-09-25T07:10:00')
+		);
+
+		const { unmount } = render(tree(1));
+		await advance(0);
+		unmount();
+		await advance(11 * 60_000);
+
+		expect(statusCallsFor(1)).toBe(1);
+	});
+
+	it('clears the timer when another session opens', async () => {
+		mocks.getCaseHandoverStatus
+			.mockResolvedValueOnce(coAccess(1, '2026-09-25T07:10:00'))
+			.mockResolvedValueOnce({
+				sessionId: 2,
+				status: 'PENDING',
+				canViewContent: false,
+				clientConsentRequired: false
+			});
+
+		const { rerender } = render(tree(1));
+		await advance(0);
+		rerender(tree(2));
+		await advance(11 * 60_000);
+
+		expect(statusCallsFor(1)).toBe(1);
+		expect(statusCallsFor(2)).toBe(1);
+	});
+
+	it('schedules nothing for a TAKEOVER recipient', async () => {
+		mocks.getCaseHandoverStatus.mockResolvedValueOnce({
+			...coAccess(1, '2026-09-25T07:10:00'),
+			accessType: 'TAKEOVER'
+		});
+
+		render(tree(1));
+		await advance(0);
+		await advance(24 * 60 * 60_000);
+
+		expect(statusCallsFor(1)).toBe(1);
+	});
+
+	it('schedules nothing for the case owner', async () => {
+		render(tree(1, 'consultant-1'));
+		await advance(24 * 60 * 60_000);
+
+		expect(mocks.getCaseHandoverStatus).not.toHaveBeenCalled();
 	});
 });

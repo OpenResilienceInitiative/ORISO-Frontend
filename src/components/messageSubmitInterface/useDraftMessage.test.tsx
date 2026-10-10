@@ -1,23 +1,29 @@
 // @vitest-environment jsdom
 import React, { PropsWithChildren } from 'react';
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { ActiveSessionContext, E2EEContext } from '../../globalState';
 import { useDraftMessage } from './useDraftMessage';
+import { getEventListeners } from '../../utils/eventHandler';
+import { EVENT_PRE_LOGOUT } from '../logout/logout';
 
 type DraftPayload = {
 	text?: string;
 	[key: string]: unknown;
 };
 
-type DeleteDraftMock = (scopeKey: string) => Promise<void>;
+type DeleteDraftMock = (
+	scopeKey: string,
+	signal?: AbortSignal
+) => Promise<void>;
 type GetDraftMock = (
 	scopeKey: string,
 	signal?: AbortSignal
 ) => Promise<DraftPayload>;
 type UpsertDraftMock = (
 	scopeKey: string,
-	payload: DraftPayload
+	payload: DraftPayload,
+	signal?: AbortSignal
 ) => Promise<void>;
 
 const mocks = vi.hoisted(() => {
@@ -42,12 +48,20 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('../../api', () => ({
-	apiDeleteUserDraft: (scopeKey: string) =>
-		mocks.apiDeleteUserDraft(scopeKey),
+	apiDeleteUserDraft: (scopeKey: string, signal?: AbortSignal) =>
+		signal
+			? mocks.apiDeleteUserDraft(scopeKey, signal)
+			: mocks.apiDeleteUserDraft(scopeKey),
 	apiGetUserDraft: (scopeKey: string, signal?: AbortSignal) =>
 		mocks.apiGetUserDraft(scopeKey, signal),
-	apiUpsertUserDraft: (scopeKey: string, payload: DraftPayload) =>
-		mocks.apiUpsertUserDraft(scopeKey, payload),
+	apiUpsertUserDraft: (
+		scopeKey: string,
+		payload: DraftPayload,
+		signal?: AbortSignal
+	) =>
+		signal
+			? mocks.apiUpsertUserDraft(scopeKey, payload, signal)
+			: mocks.apiUpsertUserDraft(scopeKey, payload),
 	FETCH_ERRORS: { EMPTY: 'EMPTY' }
 }));
 
@@ -126,7 +140,105 @@ describe('useDraftMessage', () => {
 	});
 
 	afterEach(() => {
+		// No vitest globals, so RTL does not auto-unmount: a hook left mounted
+		// fires its autosave timer after jsdom is torn down (CI: window is not defined).
+		cleanup();
 		vi.useRealTimers();
+	});
+
+	it.each([false, true])(
+		'clears outgoing save without losing next draft (typed while clearing=%s)',
+		async (typedWhileClearing) => {
+			const scope = 'scope:session-42|thread:main';
+			const drafts = new Map<string, DraftPayload>();
+			let finishSave: () => void;
+			mocks.apiGetUserDraft.mockImplementation(async (key) => {
+				if (!drafts.has(key)) throw new Error('EMPTY');
+				return drafts.get(key)!;
+			});
+			mocks.apiDeleteUserDraft.mockImplementation(async (key) => {
+				drafts.delete(key);
+			});
+			mocks.apiUpsertUserDraft.mockImplementation(
+				async (key, payload) => {
+					if (payload.text === '<p>Sent practice reply</p>') {
+						await new Promise<void>((resolve) => {
+							finishSave = resolve;
+						});
+					}
+					drafts.set(key, payload);
+				}
+			);
+			const loadDraft = vi.fn();
+			const { result, rerender } = renderHook(
+				({ enabled }) =>
+					useDraftMessage(enabled, loadDraft, {
+						forcedScopeKey: scope
+					}),
+				{ wrapper, initialProps: { enabled: true } }
+			);
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			act(() => result.current.onChange('<p>Sent practice reply</p>'));
+			// Sending temporarily disables draft persistence; its cleanup flushes
+			// the outgoing buffer while the Matrix send completes independently.
+			rerender({ enabled: false });
+			await waitFor(() =>
+				expect(mocks.apiUpsertUserDraft).toHaveBeenCalled()
+			);
+			let cleared: Promise<void>;
+			await act(async () => {
+				cleared = result.current.clearDraftMessage();
+				await Promise.resolve();
+			});
+			if (typedWhileClearing) {
+				act(() => result.current.onChange('<p>Next unsent reply</p>'));
+			}
+			await act(async () => {
+				finishSave!();
+				await cleared!;
+			});
+			rerender({ enabled: true });
+			await waitFor(() => expect(result.current.loaded).toBe(true));
+			expect(loadDraft).not.toHaveBeenCalled();
+			if (!typedWhileClearing) {
+				expect(drafts.has(scope)).toBe(false);
+				act(() => result.current.onChange('<p>Next unsent reply</p>'));
+				rerender({ enabled: false });
+			}
+			await waitFor(() =>
+				expect(drafts.get(scope)?.text).toBe('<p>Next unsent reply</p>')
+			);
+		}
+	);
+
+	it('does not resume a disabled buffer into a different conversation', async () => {
+		const loadDraft = vi.fn();
+		const { result, rerender } = renderHook(
+			({ enabled, scope }) =>
+				useDraftMessage(enabled, loadDraft, { forcedScopeKey: scope }),
+			{
+				wrapper,
+				initialProps: {
+					enabled: false,
+					scope: 'scope:original|thread:main'
+				}
+			}
+		);
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		act(() => result.current.onChange('<p>Private next reply</p>'));
+		rerender({ enabled: true, scope: 'scope:other|thread:main' });
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		rerender({ enabled: false, scope: 'scope:other|thread:main' });
+		await act(async () => {
+			await Promise.resolve();
+		});
+		expect(
+			mocks.apiUpsertUserDraft.mock.calls.some(
+				([scope, payload]) =>
+					scope === 'scope:other|thread:main' &&
+					payload.text === '<p>Private next reply</p>'
+			)
+		).toBe(false);
 	});
 
 	it('cancels pending autosave when clearing a sent draft', async () => {
@@ -727,5 +839,29 @@ describe('useDraftMessage', () => {
 					payload?.text === '<p>Nur einmal speichern</p>'
 			)
 		).toHaveLength(1);
+	});
+
+	it('does not start a draft write after logout cancellation', async () => {
+		const { result } = renderHook(
+			() =>
+				useDraftMessage(true, vi.fn(), {
+					forcedScopeKey: 'scope:session-42|thread:main'
+				}),
+			{ wrapper }
+		);
+		await waitFor(() => expect(result.current.loaded).toBe(true));
+		vi.useFakeTimers();
+		act(() => result.current.onChange('<p>Do not write after logout</p>'));
+		// Ignore setup/load bookkeeping: this assertion is specifically about
+		// work started by the cancelled pre-logout handler.
+		mocks.apiUpsertUserDraft.mockClear();
+
+		const controller = new AbortController();
+		controller.abort();
+		const listener = getEventListeners(EVENT_PRE_LOGOUT).at(-1);
+		expect(listener).toBeDefined();
+		await listener?.handler(controller.signal);
+
+		expect(mocks.apiUpsertUserDraft).not.toHaveBeenCalled();
 	});
 });

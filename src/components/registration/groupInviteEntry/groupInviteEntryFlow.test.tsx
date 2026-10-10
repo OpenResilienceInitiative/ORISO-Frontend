@@ -1,0 +1,569 @@
+// @vitest-environment jsdom
+import * as React from 'react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Registration } from '../Registration';
+import {
+	AppConfigContext,
+	LocaleContext,
+	NotificationsContext,
+	RegistrationContext,
+	TenantContext
+} from '../../../globalState';
+import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
+import { UrlParamsContext } from '../../../globalState/provider/UrlParamsProvider';
+import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { clearRegistrationSubmitting } from '../registrationSubmission';
+
+vi.mock('lottie-react', () => ({ default: () => null }));
+
+/* The layout is captured, not drawn: what matters is what the entry asks of it
+   (login link keeps the invite, no stepper, footer actions). */
+const stageProps: Record<string, unknown>[] = [];
+vi.mock('../../stageLayout/StageLayout', () => ({
+	StageLayout: (props: Record<string, unknown>) => {
+		stageProps.push(props);
+		return (
+			<div data-testid="stage-layout">
+				{props.children as React.ReactNode}
+			</div>
+		);
+	}
+}));
+
+vi.mock('../accountData/AccountData', () => ({
+	AccountData: ({
+		entry,
+		temporary
+	}: {
+		entry?: string;
+		temporary?: boolean;
+	}) => (
+		<div
+			data-testid="account-data"
+			data-entry={entry}
+			data-temporary={String(temporary)}
+		/>
+	)
+}));
+
+const apiPostRegistration = vi.fn(() => Promise.resolve());
+vi.mock('../../../api', async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	apiPostRegistration: (...args: unknown[]) =>
+		(apiPostRegistration as any)(...args),
+	apiGetAskerSessionList: () =>
+		Promise.resolve({ sessions: [{ session: { id: 211 } }] })
+}));
+
+const redirectToApp = vi.fn();
+vi.mock('../autoLogin', async (importOriginal) => ({
+	...(await importOriginal<Record<string, unknown>>()),
+	redirectToApp: (...args: unknown[]) => redirectToApp(...args)
+}));
+
+/**
+ * # The designed newcomer entry, wired (#1499, FE#1289)
+ *
+ * `/login?gcid=19&aid=19` hands a newcomer to `/registration/account-data`
+ * with the link. There the registration shows Storybook's "0a — Eintritt: ohne
+ * Konto" instead of the four steps: one screen, temporary join by default,
+ * "Konto anlegen" switches to 0b. Joining runs the ordinary registration and
+ * hands the link on, which leads into `/groups/19/entry`.
+ */
+/* A step may hand its pick up through onChange without committing it, as the
+   agency selection does on the last step. */
+let stepPick: Record<string, unknown> | null = null;
+const Step = ({
+	onChange
+}: {
+	onChange: (data: Record<string, unknown>) => void;
+}) => {
+	React.useEffect(() => {
+		if (stepPick) onChange(stepPick);
+	}, [onChange]);
+	return <div data-testid="step-body" />;
+};
+const steps = [
+	{
+		name: 'topic-selection',
+		component: Step,
+		mandatoryFields: ['mainTopic']
+	},
+	{ name: 'account-data', component: Step }
+];
+const agency = {
+	id: 19,
+	name: 'Beratungstelle',
+	topicIds: [17],
+	consultingType: 1
+};
+const grief = { id: 17, name: 'Trauerberatung' };
+
+const renderAt = (
+	search: string,
+	registrationData: Record<string, unknown> = {
+		agency,
+		mainTopic: grief,
+		zipcode: '00000',
+		username: 'ente_yuki_7984',
+		password: 'Minted-in-the-test-1'
+	},
+	context: Record<string, unknown> = {}
+) =>
+	render(
+		<AppConfigContext.Provider
+			value={
+				{ urls: {}, multitenancyWithSingleDomainEnabled: false } as any
+			}
+		>
+			<GlobalComponentContext.Provider
+				value={{ Stage: () => <div /> } as any}
+			>
+				<NotificationsContext.Provider
+					value={{ addNotification: () => undefined } as any}
+				>
+					<TenantContext.Provider value={{ tenant: null } as any}>
+						<LocaleContext.Provider value={{ locale: 'de' } as any}>
+							<UrlParamsContext.Provider
+								value={
+									{
+										agency:
+											(registrationData.agency as object) ??
+											agency,
+										loaded: true
+									} as any
+								}
+							>
+								<RegistrationContext.Provider
+									value={
+										{
+											disabledNextButton: false,
+											setDisabledNextButton: () =>
+												undefined,
+											updateRegistrationData: () =>
+												undefined,
+											registrationData,
+											availableSteps: steps,
+											registrationConsultingType: {},
+											...context
+										} as any
+									}
+								>
+									<MemoryRouter
+										initialEntries={[
+											`/registration/account-data${search}`
+										]}
+									>
+										<Routes>
+											<Route
+												path="/registration/:step"
+												element={<Registration />}
+											/>
+										</Routes>
+									</MemoryRouter>
+								</RegistrationContext.Provider>
+							</UrlParamsContext.Provider>
+						</LocaleContext.Provider>
+					</TenantContext.Provider>
+				</NotificationsContext.Provider>
+			</GlobalComponentContext.Provider>
+		</AppConfigContext.Provider>
+	);
+
+const primary = () => screen.getByTestId('registration-footer-primary');
+const secondary = () => screen.getByTestId('registration-footer-secondary');
+const lastStage = () => stageProps[stageProps.length - 1];
+
+beforeEach(() => {
+	stepPick = null;
+	stageProps.length = 0;
+	apiPostRegistration.mockClear();
+	redirectToApp.mockClear();
+});
+
+afterEach(() => {
+	sessionStorage.clear();
+	// A successful submit keeps this document-lived flag up until the redirect.
+	clearRegistrationSubmitting();
+	cleanup();
+	// A successful join keeps the flag until the document reload, which the
+	// mocked `redirectToApp` never does; the next test must not inherit it.
+	clearRegistrationSubmitting();
+});
+
+describe('newcomer entry for a self-help group link', () => {
+	it('opens on 0a: temporary join, "Der Gruppe beitreten", no steps', () => {
+		renderAt('?gcid=19&aid=19');
+
+		const account = screen.getByTestId('account-data');
+		expect(account.dataset.entry).toBe('link');
+		expect(account.dataset.temporary).toBe('true');
+		expect(primary().textContent).toBe('Der Gruppe beitreten');
+		expect(secondary().textContent).toBe('Konto anlegen');
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		expect(
+			document.querySelector('[data-cy="registration-form"]'),
+			'no four-step form, no stepper, no footer chips'
+		).toBeNull();
+		expect(lastStage().showRegistrationLink).toBe(false);
+	});
+
+	it('"Konto anlegen" switches to 0b with a password, and back', () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(secondary());
+		expect(screen.getByTestId('account-data').dataset.temporary).toBe(
+			'false'
+		);
+		expect(primary().textContent).toBe('registration.register');
+		expect(secondary().textContent).toBe('Ohne Konto beitreten');
+
+		fireEvent.click(secondary());
+		expect(screen.getByTestId('account-data').dataset.temporary).toBe(
+			'true'
+		);
+	});
+
+	it('"Einloggen" returns to the login with gcid and aid and the login choice', () => {
+		renderAt('?gcid=19&aid=19');
+
+		expect(lastStage().showLoginLink).toBe(true);
+		expect(lastStage().loginParams).toBe('gcid=19&aid=19');
+		expect(lastStage().loginState).toEqual(INVITE_LOGIN_STATE);
+	});
+
+	it('joining registers at the group agency and hands the link on to the entry room', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(redirectToApp).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.agencyId).toBe('19');
+		expect(body.mainTopicId).toBe('17');
+		expect(redirectToApp).toHaveBeenCalledWith('19', { sessionId: '211' });
+	});
+
+	it('joining names the group, so the registration opens no counselling enquiry', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.groupChatId).toBe(19);
+	});
+
+	it('hands the invite token from the link on with the group', async () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.groupChatId).toBe(19);
+		expect(body.groupChatInviteToken).toBe('q2Vx8mK4TzJ1bR7n');
+	});
+
+	it('does not name the group when the person registers at another agency', async () => {
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, id: 7 },
+			mainTopic: grief,
+			zipcode: '10115',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.agencyId).toBe('7');
+		expect(body).not.toHaveProperty('groupChatId');
+	});
+
+	it('while joining, the screen speaks about the group, not about a counselling enquiry', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="registration-handover"]')
+			).not.toBeNull()
+		);
+		const handover = document.querySelector(
+			'[data-cy="registration-handover"]'
+		) as HTMLElement;
+		const text = handover.textContent ?? '';
+		// The cards carry no German fallback any more (dev 939ee899), so the
+		// untranslated test run shows keys: the group's cards, none of the
+		// counselling handover's (which promise an answer and an enquiry).
+		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).not.toContain('registration.handover.steps.');
+	});
+
+	it('joining through the steps also speaks about the group while it registers', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() =>
+			expect(
+				document.querySelector('[data-cy="registration-handover"]')
+			).not.toBeNull()
+		);
+		const text =
+			document.querySelector('[data-cy="registration-handover"]')
+				?.textContent ?? '';
+		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).not.toContain('registration.handover.steps.');
+	});
+
+	/* The minted password is never shown, so once the browser is closed nobody
+	   can log in again. The backend deletes such an account after a while
+	   (ORISO-UserService#1001) and needs to know which one it is. */
+	it('joining without an account registers a temporary account', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.temporary).toBe(true);
+	});
+
+	it('"Konto anlegen" registers a permanent account', async () => {
+		renderAt('?gcid=19&aid=19');
+
+		fireEvent.click(secondary());
+		fireEvent.click(primary());
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.temporary).toBe(false);
+	});
+
+	it('a link with an invite token still registers a temporary account, and "Konto anlegen" a permanent one', async () => {
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		fireEvent.click(primary());
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, temporaryBody] = apiPostRegistration.mock
+			.calls[0] as unknown as [string, Record<string, unknown>];
+		expect(temporaryBody.temporary).toBe(true);
+		expect(temporaryBody.groupChatInviteToken).toBe('q2Vx8mK4TzJ1bR7n');
+
+		cleanup();
+		clearRegistrationSubmitting();
+		apiPostRegistration.mockClear();
+		renderAt('?gcid=19.q2Vx8mK4TzJ1bR7n&aid=19');
+		fireEvent.click(secondary());
+		fireEvent.click(primary());
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, permanentBody] = apiPostRegistration.mock
+			.calls[0] as unknown as [string, Record<string, unknown>];
+		expect(permanentBody.temporary).toBe(false);
+	});
+
+	it('the four-step fallback marks the account temporary too when "Ohne Konto beitreten" is chosen', async () => {
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector(
+				'[data-cy="button-temporary-join"]'
+			) as HTMLElement
+		);
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as HTMLElement
+		);
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.temporary).toBe(true);
+	});
+
+	/* The backend refuses `temporary` without a valid group invite (US#1247):
+	   a link without `aid`, or another agency picked in the steps, is an
+	   ordinary registration and must not offer or send the temporary path. */
+	it.each([
+		['the link names no agency', '?gcid=19', 19, true],
+		['another agency was picked in the steps', '?gcid=19&aid=19', 7, false]
+	])(
+		'offers no working temporary join and never sends one when %s',
+		async (_, search, agencyId, showsDisabledToggle) => {
+			renderAt(search, {
+				agency: { ...agency, id: agencyId, topicIds: [17, 18] },
+				mainTopic: grief,
+				zipcode: '00000',
+				username: 'ente_yuki_7984',
+				password: 'Minted-in-the-test-1'
+			});
+
+			const toggle = document.querySelector(
+				'[data-cy="button-temporary-join"]'
+			) as HTMLButtonElement | null;
+			if (showsDisabledToggle) {
+				// An incomplete link keeps the toggle, disabled and explained.
+				expect(toggle?.disabled).toBe(true);
+				expect(
+					document.querySelector('[data-cy="temporary-join-hint"]')
+				).not.toBeNull();
+			} else {
+				expect(toggle).toBeNull();
+			}
+			fireEvent.click(
+				document.querySelector(
+					'[data-cy="button-register"]'
+				) as HTMLElement
+			);
+
+			await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+			const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+				string,
+				Record<string, unknown>
+			];
+			expect(body).not.toHaveProperty('groupChatId');
+			expect(body.temporary).not.toBe(true);
+		}
+	);
+
+	it('speaks about the group when the last step picks the invited agency without committing it', async () => {
+		apiPostRegistration.mockImplementationOnce(
+			() => new Promise<void>(() => undefined)
+		);
+		stepPick = { agency: { ...agency, topicIds: [17, 18] } };
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, id: 7, topicIds: [17, 18] },
+			mainTopic: grief,
+			zipcode: '00000',
+			username: 'ente_yuki_7984',
+			password: 'Minted-in-the-test-1'
+		});
+
+		fireEvent.click(
+			document.querySelector('[data-cy="button-register"]') as Element
+		);
+
+		await waitFor(() => expect(apiPostRegistration).toHaveBeenCalled());
+		const [, body] = apiPostRegistration.mock.calls[0] as unknown as [
+			string,
+			Record<string, unknown>
+		];
+		expect(body.groupChatId).toBe(19);
+		const text =
+			document.querySelector('[data-cy="registration-handover"]')
+				?.textContent ?? '';
+		expect(text).toContain('groupChat.info.gallery.steps.alias.title');
+		expect(text).not.toContain('registration.handover.steps.');
+	});
+
+	it('keeps the four steps when the topic cannot be told from the agency', () => {
+		renderAt('?gcid=19&aid=19', {
+			agency: { ...agency, topicIds: [17, 18] }
+		});
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+	});
+
+	it('shows a retry instead of a blank page when the group topic failed to load', () => {
+		const retryRegistrationData = vi.fn();
+		renderAt(
+			'?gcid=19&aid=19',
+			{ agency, zipcode: '00000' },
+			{ hasRegistrationDataError: true, retryRegistrationData }
+		);
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		const alert = screen.getByRole('alert');
+		// Unit tests run without catalogues, so the keys stand for the copy.
+		expect(alert.textContent).toContain(
+			'registration.groupInvite.loadError.headline'
+		);
+		fireEvent.click(
+			screen.getByRole('button', { name: 'groupChat.loadError.retry' })
+		);
+		expect(retryRegistrationData).toHaveBeenCalledTimes(1);
+	});
+
+	it('shows the same retry when the consulting type failed to load', () => {
+		renderAt('?gcid=19&aid=19', undefined, {
+			registrationConsultingType: null,
+			hasRegistrationDataError: true,
+			retryRegistrationData: () => undefined
+		});
+
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.getByRole('alert')).toBeTruthy();
+	});
+
+	it('shows a loading indicator, not a blank page, while the entry data loads', () => {
+		renderAt('?gcid=19&aid=19', { agency, zipcode: '00000' });
+
+		expect(screen.queryByRole('alert')).toBeNull();
+		expect(screen.queryByTestId('step-body')).toBeNull();
+		const loading = screen.getByRole('status');
+		expect(loading.getAttribute('aria-label')).toBe(
+			'registration.groupInvite.loading'
+		);
+		expect(loading.textContent).toBe('registration.groupInvite.loading');
+		expect(loading.closest('[aria-busy="true"]')).not.toBeNull();
+	});
+
+	it('leaves an ordinary registration untouched', () => {
+		renderAt('');
+		expect(screen.queryByTestId('account-data')).toBeNull();
+		expect(screen.getByTestId('step-body')).toBeTruthy();
+	});
+});

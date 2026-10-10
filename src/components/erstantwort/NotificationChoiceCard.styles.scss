@@ -3,15 +3,20 @@
 
 /* "Wie sollen wir Sie erreichen?" — ORISO-Frontend#825.
  *
- * Sits inside an Erstantwort bubble and only styles what the bubble does not
- * provide. Stacked full-width targets on every viewport, not just the narrow
- * one: the reference user is older and often on a phone, and a row of small
- * side-by-side buttons is the classic way to lose them.
+ * Sits inside a structured Carimat bubble. Options stack in narrow chat
+ * columns; email and browser share a row only when the actual inner space
+ * can hold both. The combined choice always spans the available row.
  */
 
+.notificationChoiceHost {
+	width: 100%;
+	min-width: 0;
+	container: notification-choice / inline-size;
+}
+
 .notificationChoiceCard {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: 8px;
 	margin-top: 12px;
 	font-family: $font-family-sans-serif;
@@ -24,6 +29,9 @@
 	flex-direction: column;
 	gap: 2px;
 	width: 100%;
+	min-width: 0;
+	box-sizing: border-box;
+	overflow-wrap: anywhere;
 	text-align: left;
 
 	/* Comfortably above the 44px touch minimum — two lines of copy at the
@@ -49,4 +57,19 @@
 	line-height: 1.45;
 	font-weight: 400;
 	opacity: 0.85;
+}
+
+@container notification-choice (min-width: 560px) {
+	.notificationChoiceCard {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.notificationChoiceCard__option--both {
+		grid-column: 1 / -1;
+	}
+}
+
+.notificationChoiceCard__icon {
+	display: block;
+	margin-bottom: 4px;
 }

@@ -1,8 +1,9 @@
 import * as React from 'react';
+import { verifyConsentOpening } from '../../../.storybook/consentCompletionStoryPlay';
 import { renderToString } from 'react-dom/server';
 import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { generatePseudonym } from '../../utils/pseudonymGenerator';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../globalState';
@@ -17,8 +18,14 @@ import type { GuestName } from './entryRoom/LiveChatEntryRoom';
 import { toRegistrationUsername } from '../registration/accountData/registrationUsername';
 import { LiveChatWaitingRoom } from './entryRoom/LiveChatWaitingRoom';
 import { LiveChatClosed } from './entryRoom/LiveChatClosed';
+import { LiveChatChecking } from './entryRoom/LiveChatChecking';
+import { EntryRoomView } from './entryRoom/EntryRoomView';
 import LegalLinks from '../legalLinks/LegalLinks';
-import { phone375Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone375Globals,
+	tablet834Globals
+} from '../message/messageStoryShell';
 
 /**
  * The **live chat** entry room — the real views (`entryRoom/`), which the
@@ -27,7 +34,8 @@ import { phone375Globals } from '../message/messageStoryShell';
  * poll, so what Storybook shows is what the link shows.
  */
 const meta: Meta = {
-	title: 'Live chat/Entry room',
+	id: 'live-chat-entry-room',
+	title: 'Entry flows/Live chat/Entry room',
 	parameters: {
 		docs: {
 			description: {
@@ -171,11 +179,111 @@ const Closed = () => (
 	</Shell>
 );
 
+const Checking = () => {
+	const { t } = useTranslation();
+	return (
+		<Shell statusKey="liveChat.entry.status.checking">
+			<LiveChatChecking text={t('liveChat.entry.checking.text')} />
+		</Shell>
+	);
+};
+
+/* The door as the link plays it: look, nobody → closed; „Ich warte" → look
+   again; somebody comes online → the names. Timed, so the slides are visible. */
+const DoorFlow = () => {
+	const { t } = useTranslation();
+	const [view, setView] = React.useState<
+		'checking' | 'closed' | 'waitingForLive' | 'access'
+	>('checking');
+	const [names, setNames] = React.useState(rollFour);
+	const [selected, setSelected] = React.useState(0);
+	React.useEffect(() => {
+		const next =
+			view === 'checking'
+				? 'closed'
+				: view === 'waitingForLive'
+					? 'access'
+					: null;
+		if (!next) return undefined;
+		const timer = window.setTimeout(() => setView(next), 1800);
+		return () => window.clearTimeout(timer);
+	}, [view]);
+	return (
+		<Shell
+			statusKey={
+				view === 'closed'
+					? 'liveChat.entry.status.closed'
+					: view === 'access'
+						? 'liveChat.entry.status.access'
+						: view === 'waitingForLive'
+							? 'liveChat.entry.status.waitingForLive'
+							: 'liveChat.entry.status.checking'
+			}
+		>
+			<EntryRoomView key={view}>
+				{(view === 'checking' || view === 'waitingForLive') && (
+					<LiveChatChecking
+						text={t(
+							view === 'checking'
+								? 'liveChat.entry.checking.text'
+								: 'liveChat.entry.checking.waiting'
+						)}
+					/>
+				)}
+				{view === 'closed' && (
+					<LiveChatClosed
+						onMailCounselling={() => undefined}
+						onLater={() => setView('waitingForLive')}
+					/>
+				)}
+				{view === 'access' && (
+					<LiveChatAccess
+						names={names}
+						selectedIndex={selected}
+						onSelect={setSelected}
+						onReroll={() => {
+							setNames(rollFour());
+							setSelected(0);
+						}}
+						onContinue={() => setView('checking')}
+					/>
+				)}
+			</EntryRoomView>
+		</Shell>
+	);
+};
+
 const full = (story: string) => ({
 	layout: 'fullscreen' as const,
 	docs: { description: { story } }
 });
 
+export const StepChecking: StoryObj = {
+	name: '0 — Wer ist live?',
+	render: () => <Checking />,
+	parameters: full(
+		'Das Erste, was der Link zeigt: der Orbital-Loader mittig im weißen Bereich, darunter ein Satz. Noch ist nichts angelegt — kein Konto, kein Platz in der Schlange. In der App: `GET /service/users/invitelinks/{token}/context` (öffentlich) für das Thema, dann `GET /service/conversations/anonymous/availability?topicId=…` (öffentlich). Eine 0 wird nach 1 s ein zweites Mal gefragt, weil der Server einen Fehler als 0 meldet.'
+	)
+};
+export const StepCheckingMobile: StoryObj = {
+	name: '0 — Wer ist live?, mobil',
+	globals: phone375Globals,
+	render: () => <Checking />,
+	parameters: { layout: 'fullscreen' }
+};
+export const Door: StoryObj = {
+	name: '0 → C → A — Die Tür, als Ablauf',
+	render: () => <DoorFlow />,
+	parameters: full(
+		'Der Ablauf mit echten Übergängen: Loader → niemand live → „Geschlossen" gleitet ein (Desktop von rechts, mobil von unten; die Bühne links bleibt stehen). „Ich warte" → der Loader wartet weiter → jemand kommt online → die Namen gleiten ein. Erst „Zum Warteraum" löst den Link ein. Zeiten hier fest (1,8 s), in der App der Poll alle 4 s.'
+	)
+};
+export const DoorMobile: StoryObj = {
+	name: '0 → C → A — Die Tür, mobil',
+	globals: phone375Globals,
+	render: () => <DoorFlow />,
+	parameters: { layout: 'fullscreen' }
+};
 export const StepAccess: StoryObj = {
 	name: 'A — Der Zugang',
 	render: () => <Access />,
@@ -192,6 +300,7 @@ export const StepAccessMobile: StoryObj = {
 	)
 };
 export const StepWaiting: StoryObj = {
+	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
 	parameters: full(
@@ -217,9 +326,42 @@ export const StepCompanionMobile: StoryObj = {
 	render: () => <Waiting companionStart />,
 	parameters: { layout: 'fullscreen' }
 };
+const verifyAcceptedLayout: NonNullable<StoryObj['play']> = async ({
+	canvasElement
+}) => {
+	const canvas = within(canvasElement);
+	const panel = await canvas.findByRole('region', { name: 'Sie sind dran.' });
+	await verifyConsentOpening(panel);
+	const checkbox = within(panel).getByRole('checkbox');
+	const action = canvas.getByRole('button', { name: /Gespräch beginnen/i });
+	await waitFor(() => {
+		const panelRect = panel.getBoundingClientRect();
+		const labelRect = checkbox.closest('label')!.getBoundingClientRect();
+		const consentTextRect = within(panel)
+			.getByText(/Ich habe die/)
+			.getBoundingClientRect();
+		const headingRect = within(panel)
+			.getByRole('heading', { level: 2 })
+			.getBoundingClientRect();
+		const actionRect = action.getBoundingClientRect();
+		expect(Math.abs(headingRect.left - consentTextRect.left)).toBeLessThan(
+			1
+		);
+		expect(checkbox).not.toBeChecked();
+		expect(Math.abs(labelRect.left - panelRect.left)).toBeLessThan(1);
+		expect(Math.abs(labelRect.width - panelRect.width)).toBeLessThan(1);
+		expect(Math.abs(actionRect.width - panelRect.width)).toBeLessThan(1);
+		expect(actionRect.bottom).toBeLessThanOrEqual(
+			document.documentElement.clientHeight + 1
+		);
+	});
+};
+
 export const StepAccepted: StoryObj = {
 	name: 'B — Warteraum: Beraterin ist da',
+	globals: desktop1440Globals,
 	render: () => <Waiting accepted />,
+	play: verifyAcceptedLayout,
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
 	)
@@ -285,13 +427,21 @@ export const StepAcceptedMobile: StoryObj = {
 	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting accepted />,
+	play: verifyAcceptedLayout,
+	parameters: { layout: 'fullscreen' }
+};
+export const StepAcceptedTablet: StoryObj = {
+	name: 'B — Beraterin ist da, Tablet',
+	globals: tablet834Globals,
+	render: () => <Waiting accepted />,
+	play: verifyAcceptedLayout,
 	parameters: { layout: 'fullscreen' }
 };
 export const StepClosed: StoryObj = {
 	name: 'C — Geschlossen',
 	render: () => <Closed />,
 	parameters: full(
-		'Kein Berater verfügbar (`numAvailableConsultants === 0`). Woche als Leiste aus `LIVE_CHAT_OPENING_HOURS`, Fuß: Später · Anfrage schreiben (→ Registrierung). Steigt zurück in den Warteraum, sobald jemand verfügbar ist.'
+		'Kein Berater verfügbar (`numAvailableConsultants === 0`). Woche als Leiste aus `LIVE_CHAT_OPENING_HOURS`, Fuß: Ich warte · Anfrage schreiben (→ Registrierung). Erscheint schon vor der Namenswahl, ohne dass etwas angelegt wurde. „Ich warte" statt „Später": eine Seite kann einen Tab, den die Person selbst geöffnet hat, nicht schließen — der Knopf sagt, was er tut. Steigt weiter, sobald jemand live ist.'
 	)
 };
 export const StepClosedMobile: StoryObj = {

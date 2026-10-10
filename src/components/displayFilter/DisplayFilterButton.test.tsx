@@ -4,10 +4,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { DisplayFilterButton } from './DisplayFilterButton';
 
-vi.mock('@mui/icons-material/Tune', () => ({
-	default: () => <svg data-testid="tune-icon" />
-}));
-
 describe('DisplayFilterButton (#1377)', () => {
 	afterEach(cleanup);
 
@@ -54,5 +50,21 @@ describe('DisplayFilterButton (#1377)', () => {
 			document.getElementById(describedBy as string)?.textContent
 		).toBe('Filter angepasst');
 		expect(button.getAttribute('aria-label')).toBe('Anzeige-Filter');
+	});
+
+	it('renders as a bare glyph in the compact form', () => {
+		render(
+			<DisplayFilterButton
+				label="Anzeige-Filter"
+				customised
+				customisedLabel="Filter angepasst"
+				open={false}
+				onClick={() => undefined}
+				compact
+			/>
+		);
+		expect(
+			screen.getByRole('button', { name: 'Anzeige-Filter' }).className
+		).toContain('displayFilterButton--compact');
 	});
 });

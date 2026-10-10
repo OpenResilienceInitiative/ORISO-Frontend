@@ -7,6 +7,7 @@
 		"fr:registration.state.options.7",
 		"fr:shortcuts.categories.application",
 		"fr:shortcuts.keys.ctrl",
+		"fr:snackbar.stack.region",
 		"fr:user.userU25.state.7"
 	],
 	"placeholderDriftKeys": ["en:banUser.banned.info"],
@@ -100,8 +101,6 @@
 		"groupChat.circle.rows.mediumLabel",
 		"groupChat.circle.rows.openList",
 		"groupChat.circle.rows.repeatLabel",
-		"groupChat.circle.rows.repeatValue_one",
-		"groupChat.circle.rows.repeatValue_other",
 		"groupChat.circle.rows.timeLabel",
 		"groupChat.create.authorContent.addRule",
 		"groupChat.create.authorContent.defaultRule2",
@@ -625,13 +624,9 @@
 		"dpaSign.signerPosition",
 		"dpaSign.version",
 		"groupChat.circle.moderatorCount",
-		"groupChat.circle.rows.repeatValue",
 		"groupChat.internal.personCount",
 		"inviteLink.error.title",
 		"legal.termsAndConditions.label",
-		"profile.encryption.recover.cta",
-		"profile.encryption.showKey.copied",
-		"profile.encryption.showKey.done",
 		"registration.state.options",
 		"registration.zipcode.remaining"
 	]
