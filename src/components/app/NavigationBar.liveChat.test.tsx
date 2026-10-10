@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NavigationBar } from './NavigationBar';
@@ -70,6 +70,9 @@ describe('NavigationBar live-chat entry follows the profile preference', () => {
 	});
 
 	afterEach(() => {
+		// Unmount so the language menu's MutationObserver on document.body is
+		// disconnected before jsdom is torn down.
+		cleanup();
 		vi.clearAllMocks();
 	});
 

@@ -25,6 +25,10 @@ const artworkBox = (size: number, file?: string) => {
 	return parseFloat(inner.style.width);
 };
 
+// The SVG loads asynchronously. Unmount after each test so the pending
+// setAvatarHtml is cancelled and cannot reach React after jsdom is torn down.
+afterEach(cleanup);
+
 describe('AnimalAvatar artwork size (#1059)', () => {
 	// Unmount after each test: the SVG loads asynchronously, and a render
 	// landing after the file's jsdom teardown fails CI with `window is not defined`.
