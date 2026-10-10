@@ -212,7 +212,18 @@ export const useElementCallWidget = (
 			// unconditionally would tear the media out of a live call.
 			const previous = attachedIframeRef.current;
 			if (previous && previous !== iframe) {
-				releaseIframeDevices(previous);
+				if (iframe) {
+					releaseIframeDevices(previous);
+				} else {
+					// A ref replacement is null -> same node within one React
+					// commit. Only a node still detached after that commit ended
+					// its call; blanking it sooner destroys a live widget.
+					queueMicrotask(() => {
+						if (attachedIframeRef.current !== previous) {
+							releaseIframeDevices(previous);
+						}
+					});
+				}
 			}
 			attachedIframeRef.current = null;
 			if (messageGuardRef.current) {
