@@ -10,9 +10,13 @@ import clsx from 'clsx';
 import FocusTrap from 'focus-trap-react';
 import './overlay.styles';
 import { useTranslation } from 'react-i18next';
-import { ModalContext } from '../../globalState';
+import { ModalContext } from '../../globalState/context/ModalContext';
 import { OVERLAY_TYPES } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
+import {
+	shouldActivateOverlayFocusTrap,
+	useForeignMuiModalOpen
+} from './useForeignMuiModalOpen';
 
 export const OVERLAY_FUNCTIONS = {
 	CLOSE: 'CLOSE',
@@ -112,26 +116,7 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 			? { ...props.item, ...props.handleOverlay }
 			: props.items[activeStep]
 	);
-	// #1326: a MUI `Dialog` (e.g. the key-backup recovery prompt) can be open
-	// at the same time as this overlay, each running its own focus trap
-	// (MUI's FocusTrap here, focus-trap-react there). Two active traps pull
-	// focus back and forth until the call stack overflows. The overlay and
-	// the MUI dialog mount from unrelated parts of the tree, so a plain
-	// `document.querySelector` computed at render time can be stale — a
-	// MutationObserver keeps it correct across both the synchronous
-	// (Storybook, both mounted at once) and the racy real-app case (the MUI
-	// dialog appearing after this overlay already rendered).
-	const [foreignModalOpen, setForeignModalOpen] = useState(false);
-	useEffect(() => {
-		const checkForeignModal = () =>
-			setForeignModalOpen(
-				document.querySelectorAll('.MuiModal-root').length > 0
-			);
-		checkForeignModal();
-		const observer = new MutationObserver(checkForeignModal);
-		observer.observe(document.body, { childList: true, subtree: true });
-		return () => observer.disconnect();
-	}, []);
+	const foreignModalOpen = useForeignMuiModalOpen();
 
 	useEffect(() => {
 		setActiveOverlay(
@@ -200,11 +185,13 @@ const OverlayContent: FC<Omit<OverlayProps, 'name'>> = (props) => {
 	return (
 		<FocusTrap
 			focusTrapOptions={{ allowOutsideClick: true }}
-			active={
-				(props.forceActiveFocusTrap ||
-					activeOverlay.buttonSet?.length > 0) &&
-				!foreignModalOpen
-			}
+			active={shouldActivateOverlayFocusTrap(
+				Boolean(
+					props.forceActiveFocusTrap ||
+						activeOverlay.buttonSet?.length > 0
+				),
+				foreignModalOpen
+			)}
 		>
 			<div
 				className={clsx(

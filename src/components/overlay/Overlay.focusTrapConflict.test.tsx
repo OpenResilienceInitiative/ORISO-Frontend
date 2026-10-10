@@ -1,76 +1,42 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { useState } from 'react';
-import { act, cleanup, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ModalContext, TOverlay } from '../../globalState/context/ModalContext';
-import { OVERLAY_TWO_FACTOR_NAG } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
-import { BUTTON_TYPES } from '../button/Button';
-import { Overlay } from './Overlay';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, describe, expect, it } from 'vitest';
+import {
+	shouldActivateOverlayFocusTrap,
+	useForeignMuiModalOpen
+} from './useForeignMuiModalOpen';
 
 /**
- * #1326: a MUI `Dialog` (e.g. the key-backup recovery prompt) and this
- * overlay can both be mounted at once, each running its own focus trap —
- * MUI's `FocusTrap` and `focus-trap-react` fight over focus until the call
- * stack overflows. `focus-trap-react` is mocked here so the test asserts on
- * exactly what Overlay.tsx controls (the `active` prop it computes), rather
- * than fighting the real focus-trap library's jsdom limitations.
+ * #1326: a MUI `Dialog` (e.g. the key-backup recovery prompt) and Overlay
+ * can both be mounted at once, each running its own focus trap. These
+ * helpers are what Overlay.tsx uses to release `focus-trap-react` while a
+ * foreign modal is open. The test stays on the helpers so jsdom never
+ * loads Overlay's Button / globalState / lottie graph.
  */
-const activeSpy = vi.fn();
-vi.mock('focus-trap-react', () => ({
-	default: ({
-		active,
-		children
-	}: {
-		active: boolean;
-		children: React.ReactNode;
-	}) => {
-		activeSpy(active);
-		return <>{children}</>;
-	}
-}));
-
-const Harness = () => {
-	const [overlays, setOverlays] = useState<TOverlay[]>([]);
-	const addOverlay = (overlay: TOverlay) =>
-		setOverlays((current) => [...current, overlay]);
-	const removeOverlay = (id: string) =>
-		setOverlays((current) => current.filter((o) => o.id !== id));
-
+const Probe = () => {
+	const foreignModalOpen = useForeignMuiModalOpen();
 	return (
-		<ModalContext.Provider
-			value={{ overlays, setOverlays, addOverlay, removeOverlay }}
-		>
-			<div id="overlay" />
-			<Overlay
-				name={OVERLAY_TWO_FACTOR_NAG}
-				item={{
-					headline: 'overlay.headline',
-					buttonSet: [{ label: 'ok', type: BUTTON_TYPES.PRIMARY }]
-				}}
-			/>
-		</ModalContext.Provider>
+		<div data-testid="trap-active">
+			{String(shouldActivateOverlayFocusTrap(true, foreignModalOpen))}
+		</div>
 	);
 };
 
 describe('Overlay focus trap vs. a foreign MUI modal (#1326)', () => {
 	afterEach(() => {
 		cleanup();
-		activeSpy.mockClear();
 		document
 			.querySelectorAll('.MuiModal-root')
 			.forEach((el) => el.remove());
 	});
 
-	beforeEach(() => {
-		activeSpy.mockClear();
-	});
+	it('keeps the trap active when no foreign modal is present', async () => {
+		render(<Probe />);
 
-	it('traps focus when no foreign modal is present', async () => {
-		render(<Harness />);
-
-		await waitFor(() => expect(activeSpy).toHaveBeenCalled());
-		expect(activeSpy).toHaveBeenLastCalledWith(true);
+		expect((await screen.findByTestId('trap-active')).textContent).toBe(
+			'true'
+		);
 	});
 
 	it('releases the trap while a MUI modal (e.g. the key-backup prompt) is open', async () => {
@@ -78,10 +44,11 @@ describe('Overlay focus trap vs. a foreign MUI modal (#1326)', () => {
 		muiModal.className = 'MuiModal-root';
 		document.body.appendChild(muiModal);
 
-		render(<Harness />);
+		render(<Probe />);
 
-		await waitFor(() => expect(activeSpy).toHaveBeenCalled());
-		expect(activeSpy).toHaveBeenLastCalledWith(false);
+		expect((await screen.findByTestId('trap-active')).textContent).toBe(
+			'false'
+		);
 	});
 
 	it('re-traps focus once the foreign MUI modal closes', async () => {
@@ -89,13 +56,23 @@ describe('Overlay focus trap vs. a foreign MUI modal (#1326)', () => {
 		muiModal.className = 'MuiModal-root';
 		document.body.appendChild(muiModal);
 
-		render(<Harness />);
-		await waitFor(() => expect(activeSpy).toHaveBeenLastCalledWith(false));
+		render(<Probe />);
+		expect((await screen.findByTestId('trap-active')).textContent).toBe(
+			'false'
+		);
 
 		act(() => {
 			muiModal.remove();
 		});
 
-		await waitFor(() => expect(activeSpy).toHaveBeenLastCalledWith(true));
+		await waitFor(() =>
+			expect(screen.getByTestId('trap-active').textContent).toBe('true')
+		);
+	});
+
+	it('activates the trap only when Overlay wants one and no foreign modal is open', () => {
+		expect(shouldActivateOverlayFocusTrap(true, false)).toBe(true);
+		expect(shouldActivateOverlayFocusTrap(true, true)).toBe(false);
+		expect(shouldActivateOverlayFocusTrap(false, false)).toBe(false);
 	});
 });
