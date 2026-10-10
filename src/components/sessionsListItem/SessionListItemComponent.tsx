@@ -1725,7 +1725,29 @@ export const SessionListItemComponent = ({
 							{/* Consulting-type modality icon (Mail / Live Chat / Interna
 						    / Gesprächskreis) — always shown, including alongside the
 						    case-handover action button (Figma node 115). */}
-							{
+							{isSupervisedByMe ? (
+								<div
+									className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--supervision"
+									data-testid="supervision-modality"
+								>
+									<SupervisionIcon
+										aria-hidden="true"
+										focusable="false"
+									/>
+									<span
+										className="sessionsListItem__consultingTypeIcon--supervisionLabel"
+										title={translate(
+											'sessionList.supervision.badge',
+											'Supervision'
+										)}
+									>
+										{translate(
+											'sessionList.toolbar.chips.supervision',
+											'Supervision'
+										)}
+									</span>
+								</div>
+							) : (
 								<>
 									{modality === Modality.LIVE_CHAT && (
 										<div
@@ -1802,19 +1824,6 @@ export const SessionListItemComponent = ({
 											</span>
 										</div>
 									)}
-									{/* FE#514: team-only discussion exists on this
-								    enquiry (consultants only, ADR-016). */}
-									{!isAsker &&
-										activeSession.isEnquiry &&
-										modality ===
-											Modality.AGENCY_COUNSELLING &&
-										activeSession.item?.id && (
-											<TeamDiscussionBadge
-												sessionId={
-													activeSession.item.id
-												}
-											/>
-										)}
 									{modality === Modality.SELF_HELP && (
 										<div
 											className={clsx(
@@ -1837,7 +1846,17 @@ export const SessionListItemComponent = ({
 										</div>
 									)}
 								</>
-							}
+							)}
+							{/* FE#514: team-only discussion exists on this
+								    enquiry (consultants only, ADR-016). */}
+							{!isAsker &&
+								activeSession.isEnquiry &&
+								modality === Modality.AGENCY_COUNSELLING &&
+								activeSession.item?.id && (
+									<TeamDiscussionBadge
+										sessionId={activeSession.item.id}
+									/>
+								)}
 						</>
 					}
 				/>

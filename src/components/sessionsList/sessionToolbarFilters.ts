@@ -5,7 +5,7 @@ import type {
 } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
-import { isChatItemUnread } from '../../utils/sessionUnread';
+import { isChatItemUnread, isRoomUnread } from '../../utils/sessionUnread';
 import {
 	getSupervisionListState,
 	hasSupervisionMarker
@@ -198,6 +198,27 @@ export const draftMatchesSession = (
 		candidateValues.has(identity)
 	);
 };
+
+/**
+ * Counts unread cases explicitly supervised by this viewer. The display
+ * filter owns which rows are eligible, so callers pass its unread source.
+ * Legacy ownership guesses still affect filtering but never inflate this
+ * notification count.
+ */
+export const countUnreadSupervisedSessions = (
+	pairs: ReadonlyArray<{
+		raw: ListItemInterface;
+		extended: ExtendedSessionInterface;
+	}>,
+	currentUserId?: string
+): number =>
+	pairs.filter(
+		({ raw, extended }) =>
+			getSupervisionListState(extended, currentUserId) ===
+				'supervisedByMe' &&
+			(isChatItemUnread(getToolbarChatItem(raw)) ||
+				isRoomUnread(extended.item?.supervision?.sideRoomId))
+	).length;
 
 export function sessionMatchesToolbar(
 	raw: ListItemInterface,

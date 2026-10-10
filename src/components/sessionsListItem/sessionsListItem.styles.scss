@@ -146,6 +146,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		.sessionsListItem__consultingTypeIcon--selfHelpLabel {
 			color: #da5248 !important;
 		}
+
+		.sessionsListItem__consultingTypeIcon--supervisionLabel {
+			color: var(--m3-primary, $primary);
+		}
 	}
 
 	// Read state: muted gray background for sessions the counselor has already read
@@ -968,6 +972,37 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			// Additional styling if needed
 			width: 100%;
 			height: 38px;
+		}
+
+		/* #1306: the supervisor's row reads "Supervision" where the
+		   consulting type would be. Same shape as --liveChat (icon + word,
+		   kept inside the card), with one difference: the label TRUNCATES.
+		   "Supervision" fits, but a longer translation must not push the
+		   date out of the card — the full word stays on `title`. */
+		&--supervision {
+			margin-right: 0;
+			padding-right: 12px;
+			gap: 8px;
+			height: 38px;
+			min-width: 0;
+			align-items: center;
+
+			svg {
+				width: $icon-size-small;
+				height: $icon-size-small;
+				flex-shrink: 0;
+
+				* {
+					fill: var(--m3-secondary, $secondary);
+				}
+			}
+		}
+
+		&--supervisionLabel {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 11ch;
 		}
 
 		&--liveChat {
