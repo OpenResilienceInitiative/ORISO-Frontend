@@ -422,10 +422,13 @@ export const NotificationsCenter = () => {
 		localStorage.setItem(TIMELINE_WIDTH_STORAGE_KEY, width.toString());
 	}, []);
 
-	// Kinds actually present in the VISIBLE feed, in canonical order.
+	// Kinds actually present in the feed, in canonical order — the RAW feed,
+	// not the display-filtered one: a dedicated family chip must stay offered
+	// even when every instance of that kind is individually hidden from
+	// "Alle" by the profile's per-event-type filter (#594).
 	const familiesInFeed = useMemo(
-		() => getFamiliesInFeed(visibleFeed),
-		[visibleFeed]
+		() => getFamiliesInFeed(notificationFeed),
+		[notificationFeed]
 	);
 	// The dialog rows: every kind, "Termine" only once such an event exists
 	// (§5.1), with the visible unread count per kind for the pill badges and
@@ -669,40 +672,45 @@ export const NotificationsCenter = () => {
 
 	// WP-06 Slice 1: client-side filter (family chip + search). Search matches
 	// the client-rendered strings only — ADR-AT-01 forbids server full-text.
-	const filteredFeed = useMemo(
-		() =>
-			filterTimelineItems(
-				visibleFeed,
-				{
-					family: activeFamily,
-					query: searchQuery,
-					unreadOnly,
-					bundledUnderOther: kindsUnderOther(
-						timelineFilter,
-						timelineKinds
-					)
-				},
-				(item) => {
-					const { title, text } = describeItem(
-						item,
-						translate,
-						i18n.language
-					);
-					return `${title} ${visiblePreview(item.id)?.text || text}`;
-				}
-			),
-		[
-			visibleFeed,
-			activeFamily,
-			timelineFilter,
-			timelineKinds,
-			searchQuery,
-			unreadOnly,
-			translate,
-			i18n.language,
-			visiblePreview
-		]
-	);
+	// The profile display filter narrows Alle. Dedicated family chips read
+	// the raw feed while retaining Dev's Other bundling and localized search.
+	const filteredFeed = useMemo(() => {
+		const sourceFeed =
+			activeFamily && activeFamily !== 'all'
+				? notificationFeed
+				: visibleFeed;
+		return filterTimelineItems(
+			sourceFeed,
+			{
+				family: activeFamily,
+				query: searchQuery,
+				unreadOnly,
+				bundledUnderOther: kindsUnderOther(
+					timelineFilter,
+					timelineKinds
+				)
+			},
+			(item) => {
+				const { title, text } = describeItem(
+					item,
+					translate,
+					i18n.language
+				);
+				return `${title} ${visiblePreview(item.id)?.text || text}`;
+			}
+		);
+	}, [
+		notificationFeed,
+		visibleFeed,
+		activeFamily,
+		timelineFilter,
+		timelineKinds,
+		searchQuery,
+		unreadOnly,
+		translate,
+		i18n.language,
+		visiblePreview
+	]);
 
 	// Keep the master-detail selection inside the visible (filtered) feed.
 	// Mobile never auto-selects (see selectedNotificationId above).
