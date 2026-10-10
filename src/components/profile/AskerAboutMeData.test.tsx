@@ -13,6 +13,9 @@ import { AskerAboutMeData } from './AskerAboutMeData';
 
 const apiPutEmailMock = vi.fn();
 
+// Real Profile stories cover the avatar editor; this test owns email retry.
+vi.mock('./ProfileAvatarChoice', () => ({ ProfileAvatarChoice: () => null }));
+
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({ t: (key: string) => key })
 }));

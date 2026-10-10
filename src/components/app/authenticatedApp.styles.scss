@@ -288,6 +288,18 @@ a {
 						var(--pane-gap) - var(--pane-inner-gutter)
 					);
 				}
+
+				// The create/edit-chat card sits in the same frame as the
+				// chat card: 24px top/right/bottom (Frank 2026-09-21). Its
+				// own `height: 100%` would push the margin off-screen.
+				.conversationCreate {
+					height: auto;
+					min-height: 0;
+					margin: var(--session-card-margin, 24px);
+					margin-left: calc(
+						var(--pane-gap) - var(--pane-inner-gutter)
+					);
+				}
 			}
 
 			&--smallInactive {
@@ -346,10 +358,15 @@ a {
 .app__platformVersion {
 	position: fixed;
 	right: 12px;
-	bottom: 8px;
+	// Keep build identity clear of the mobile navigation labels and home inset.
+	bottom: calc(#{$navHeight} + 16px + env(safe-area-inset-bottom, 0px));
 	z-index: 20;
 	color: var(--m3-on-surface-variant, #4f565d);
 	font-size: 12px;
 	line-height: 1.2;
 	pointer-events: none;
+
+	@include breakpoint($fromLarge) {
+		bottom: 8px;
+	}
 }

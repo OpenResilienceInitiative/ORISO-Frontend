@@ -5,6 +5,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Registration } from './Registration';
 import { AgencySpecificContext, RegistrationProvider } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { config } from '../../resources/scripts/config';
 import { registrationSessionStorageKey } from '../../globalState/provider/RegistrationProvider';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../stage/stage';
@@ -84,8 +86,16 @@ function RegistrationRuntimeStory() {
 }
 
 const meta = {
-	title: 'REGISTRATION/Registration runtime',
+	id: 'registration-registration-runtime',
+	title: 'Entry flows/Postcode counselling/Routed registration',
 	tags: ['autodocs'],
+	decorators: [
+		(Story) => (
+			<LegalLinksProvider legalLinks={config.legalLinks}>
+				<Story />
+			</LegalLinksProvider>
+		)
+	],
 	parameters: {
 		layout: 'fullscreen',
 		backgrounds: { default: 'light' },

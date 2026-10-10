@@ -31,6 +31,15 @@ const generated = () =>
  * environment's host (ORISO-Helm#366).
  */
 describe('generated Keycloak e-mail theme', () => {
+	it('points settings links at the active profile routes', () => {
+		expect(KEYCLOAK_LINK_PATHS.orisoSettingsUrl).toBe(
+			'/profile/einstellungen'
+		);
+		expect(KEYCLOAK_LINK_PATHS.orisoUnsubscribeUrl).toBe(
+			'/profile/einstellungen/email'
+		);
+	});
+
 	it('names no host and defaults no URL', () => {
 		expect(findHardcodedUrls(generated())).toEqual([]);
 	});
@@ -143,7 +152,7 @@ const htmlDir = path.resolve(__dirname, 'dist/keycloak/email/html');
 const read = (name: string) => readFileSync(path.join(htmlDir, name), 'utf8');
 
 const LOGO_BRANCH = /<#if orisoLogoSrc\?has_content>([\s\S]*?)<\/#if>/;
-const NAME_CELL = />\$\{\(properties\.orisoPlatformName\)[^}]*\}<\/td>/;
+const NAME_CELL = />\$\{properties\.orisoPlatformName\}<\/td>/;
 
 describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 	'Keycloak theme %s',
@@ -167,7 +176,9 @@ describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 			const img = template.match(/<img [^>]*>/)?.[0] ?? '';
 			expect(img).toContain('src="${orisoLogoSrc}"');
 			expect(img).toContain(' alt=""');
-			expect(img).toContain('width="36" height="36"');
+			expect(img).toContain('height="48"');
+			expect(img).toContain('width:auto;height:48px;');
+			expect(img).not.toContain('width="');
 			expect(img).toContain('border:0');
 			expect(img).not.toContain('font-family');
 		});
@@ -200,6 +211,64 @@ describe.each(['otp-email.ftl', 'password-reset.ftl'])(
 );
 
 describe('Keycloak theme.properties', () => {
+	it('requires separate configured product and legal organisation names without defaults', () => {
+		const properties = readFileSync(
+			path.join(themeDir, 'theme.properties'),
+			'utf8'
+		);
+		expect(properties).toContain(
+			'\norisoPlatformName=${env.EMAIL_BRANDING_NAME}\n'
+		);
+		expect(properties).toContain(
+			'\norisoOrgName=${env.EMAIL_LEGAL_ORGANISATION_NAME}\n'
+		);
+		for (const { name, content } of generated().filter((file) =>
+			file.name.endsWith('.ftl')
+		)) {
+			expect(content, name).not.toContain("!'Online-Beratung'");
+			expect(content, name).not.toContain("!'ORISO'");
+		}
+	});
+
+	it('escapes configured names before trusted HTML messages are inserted', () => {
+		for (const name of ['otp-email.ftl', 'password-reset.ftl']) {
+			const html = read(name);
+			expect(html).toContain(
+				'properties.orisoPlatformName?esc?markup_string'
+			);
+			expect(html).toContain('properties.orisoOrgName?esc?markup_string');
+			const text = readFileSync(
+				path.join(themeDir, 'text', name),
+				'utf8'
+			);
+			expect(text).not.toContain('?esc');
+		}
+	});
+
+	it('declares every generated language and the pending review state', () => {
+		const properties = readFileSync(
+			path.join(themeDir, 'theme.properties'),
+			'utf8'
+		);
+		expect(properties).toContain('locales=de,en,fr,ru,ti,tr');
+		expect(properties).toContain(
+			'Human language review pending: fr, ru, ti, tr'
+		);
+		for (const locale of ['fr', 'ru', 'ti', 'tr']) {
+			const messages = readFileSync(
+				path.join(
+					themeDir,
+					'messages',
+					`messages_${locale}.properties`
+				),
+				'utf8'
+			);
+			expect(messages).toContain(
+				'Human language review: pending-human-review'
+			);
+		}
+	});
+
 	it('takes the platform logo from ORISO_LOGO_URL with no default', () => {
 		const properties = readFileSync(
 			path.join(themeDir, 'theme.properties'),

@@ -23,6 +23,19 @@ vi.mock('../../api', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../api')>()),
 	apiGetConsultantSessionList: getList
 }));
+// Unmocked, these hit the network and settle after jsdom teardown
+// (CI: unhandled "window is not defined" from requestCollector).
+vi.mock('../../api/apiUserDrafts', async (importOriginal) => ({
+	...(await importOriginal<typeof import('../../api/apiUserDrafts')>()),
+	apiGetUserDrafts: () =>
+		Promise.resolve({ items: [], page: 0, perPage: 200 })
+}));
+vi.mock('../../api/apiSetLiveChatAvailability', async (importOriginal) => ({
+	...(await importOriginal<
+		typeof import('../../api/apiSetLiveChatAvailability')
+	>()),
+	apiGetLiveChatAvailability: () => Promise.resolve(false)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../globalState', async (importOriginal) => ({
 	...(await importOriginal<typeof import('../../globalState')>()),
@@ -172,3 +185,27 @@ it.each([
 		expect(view.container.querySelector('.skeleton')).toBeNull();
 	}
 );
+
+it('reconciles on reconnect and coalesces repeated wake-ups without aborting the refresh', async () => {
+	getList.mockReset();
+	getList.mockResolvedValue({ sessions: [], total: 0 });
+	const view = renderEnquiries();
+	await waitFor(() =>
+		expect(view.container.querySelector('.skeleton')).toBeNull()
+	);
+	let finish!: (value: { sessions: []; total: number }) => void;
+	getList.mockReturnValueOnce(
+		new Promise((resolve) => {
+			finish = resolve;
+		})
+	);
+	fireEvent(window, new Event('online'));
+	await waitFor(() => expect(getList).toHaveBeenCalledTimes(2));
+	const signal = getList.mock.calls[1][0].signal;
+	fireEvent(window, new Event('focus'));
+	fireEvent(document, new Event('visibilitychange'));
+	expect(getList).toHaveBeenCalledTimes(2);
+	expect(signal.aborted).toBe(false);
+	await act(async () => finish({ sessions: [], total: 0 }));
+	await waitFor(() => expect(getList).toHaveBeenCalledTimes(3));
+});

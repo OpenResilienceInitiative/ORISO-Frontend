@@ -134,6 +134,7 @@ describe('shared params contract (#846)', () => {
 				'senderDisplayName',
 				'contentClass',
 				'recipientRole',
+				'conversationType',
 				'clientConsent',
 				'threadRootId',
 				'mentioned',
@@ -143,7 +144,13 @@ describe('shared params contract (#846)', () => {
 				'callRoomId',
 				'isVideo',
 				'forcedScopeKey',
-				'matrixEventId'
+				'matrixEventId',
+				// #876: planned maintenance notice (ORISO-UserService#1343).
+				'campaignKey',
+				'maintenanceDate',
+				'maintenanceStart',
+				'maintenanceEnd',
+				'statusUrl'
 			].sort()
 		);
 	});

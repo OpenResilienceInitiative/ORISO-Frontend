@@ -1,8 +1,58 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render as renderUI,
+	screen,
+	waitFor,
+	within
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
+import { CaseHandoverInformationalBody } from './CaseHandoverInformationalBody';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import type { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
+vi.hoisted(() => {
+	HTMLCanvasElement.prototype.getContext = (() => ({
+		fillStyle: '',
+		fillRect() {}
+	})) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+});
+// The scoped preference dialog now shares the real notification continuation.
+vi.mock('lottie-web', () => ({
+	default: {
+		loadAnimation: () => ({
+			destroy() {},
+			addEventListener() {},
+			play() {},
+			stop() {}
+		})
+	}
+}));
+vi.mock('../../api/apiCaseHandover', async (original) => ({
+	...(await original<typeof import('../../api/apiCaseHandover')>()),
+	apiGetCaseHandoverConsentPreference: vi.fn(async (sessionId: number) => ({
+		sessionId,
+		alwaysAskBeforeAdditionalAccess: false
+	}))
+}));
+const render = (ui: React.ReactElement) =>
+	renderUI(
+		<UserDataContext.Provider
+			value={{
+				userData: { userId: 'asker-dialog-test' } as UserDataInterface,
+				reloadUserData: async () =>
+					({ userId: 'asker-dialog-test' }) as UserDataInterface,
+				setUserData: () => {}
+			}}
+		>
+			{ui}
+		</UserDataContext.Provider>
+	);
+
+// The shared Button atom imports this constant through Overlay's canvas renderer.
+vi.mock('../overlay/Overlay', () => ({ OVERLAY_RESET_TIME: 10000 }));
 
 vi.mock('react-i18next', () => {
 	const catalogue: Record<string, string> = {
@@ -35,6 +85,53 @@ vi.mock('react-i18next', () => {
 afterEach(cleanup);
 
 describe('CaseHandoverConsentCard', () => {
+	it('opens an optional information dialog without deciding the request', () => {
+		const approve = vi.fn();
+		const decline = vi.fn();
+		render(
+			<CaseHandoverConsentCard onApprove={approve} onDecline={decline} />
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(screen.getByRole('dialog')).toBeTruthy();
+		fireEvent.click(screen.getByTestId('m3-dialog-close'));
+		expect(approve).not.toHaveBeenCalled();
+		expect(decline).not.toHaveBeenCalled();
+	});
+
+	it('keeps the optional overview decision and notification continuation actionable', async () => {
+		const approve = vi.fn();
+		const setup = vi.fn();
+		render(
+			<CaseHandoverConsentCard
+				onApprove={approve}
+				onDecline={vi.fn()}
+				onSetupNotifications={setup}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		const dialog = within(screen.getByRole('dialog'));
+		expect(
+			dialog.getByText('caseHandover.consent.info.description')
+		).toBeTruthy();
+		fireEvent.click(dialog.getByRole('switch'));
+		expect(approve).toHaveBeenCalledOnce();
+		fireEvent.click(
+			dialog.getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		expect(setup).toHaveBeenCalledOnce();
+		await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+	});
+
 	it('keeps the consent explanation and icon actions inside one Carimat message bubble', () => {
 		render(
 			<CaseHandoverConsentCard
@@ -92,16 +189,6 @@ describe('CaseHandoverConsentCard', () => {
 				'Please read the information and then make your decision.'
 			)
 		).toBeTruthy();
-		expect(
-			screen.getByText(
-				'For the case handover, another counsellor from the same counselling centre may temporarily read this conversation. This processes personal data contained in the consultation. Your current counsellor remains responsible for you.'
-			)
-		).toBeTruthy();
-		expect(
-			screen.getByText(
-				'By turning on the switch, you consent to the temporary access and the data processing required for it. You may withdraw your consent at any time; active access then ends immediately. Your consultation continues either way.'
-			)
-		).toBeTruthy();
 		const optOutSwitch = screen.getByRole('switch', {
 			name: 'I consent to data processing for this case handover'
 		}) as HTMLInputElement;
@@ -113,6 +200,35 @@ describe('CaseHandoverConsentCard', () => {
 		fireEvent.click(optOutSwitch);
 		expect(onDecline).toHaveBeenCalledOnce();
 		expect(onApprove).not.toHaveBeenCalled();
+	});
+
+	it('keeps informational mode read-only and a controlled decision unchanged on failure', () => {
+		const approve = vi.fn();
+		const decline = vi.fn();
+		const { rerender } = render(
+			<CaseHandoverConsentCard
+				mode="NONE"
+				onApprove={approve}
+				onDecline={decline}
+			/>
+		);
+		expect(screen.queryByRole('switch')).toBeNull();
+		expect(screen.queryByRole('group')).toBeNull();
+		rerender(
+			<CaseHandoverConsentCard
+				mode="OPT_OUT"
+				consentGranted
+				onApprove={approve}
+				onDecline={decline}
+				error="Save failed"
+			/>
+		);
+		fireEvent.click(screen.getByRole('switch'));
+		expect(decline).toHaveBeenCalledOnce();
+		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
+			true
+		);
+		expect(screen.getByRole('alert').textContent).toBe('Save failed');
 	});
 
 	it('flips the consent switch to off when the client withdraws consent', () => {
@@ -134,5 +250,57 @@ describe('CaseHandoverConsentCard', () => {
 
 		fireEvent.click(optOutSwitch);
 		expect(optOutSwitch.checked).toBe(true);
+	});
+});
+
+describe('persisted informational handover body', () => {
+	it('retains completed takeover copy and keeps future preference separate from the completed grant', async () => {
+		const setup = vi.fn();
+		render(
+			<CaseHandoverInformationalBody
+				description="The counsellor has taken over."
+				sessionId={42}
+				onSetupNotifications={setup}
+			/>
+		);
+		expect(screen.getByText('The counsellor has taken over.')).toBeTruthy();
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(setup).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		const dialog = within(screen.getByRole('dialog'));
+		expect((await dialog.findByRole('switch')).matches(':checked')).toBe(
+			false
+		);
+		expect(
+			dialog.queryByRole('button', { name: 'Approve access' })
+		).toBeNull();
+		fireEvent.click(
+			dialog.getByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		);
+		expect(setup).toHaveBeenCalledOnce();
+	});
+	it('does not offer notification setup when no channel is allowed', () => {
+		render(
+			<CaseHandoverInformationalBody
+				description="Temporary access granted."
+				sessionId={42}
+			/>
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+		expect(
+			within(screen.getByRole('dialog')).queryByRole('button', {
+				name: 'caseHandover.consent.info.notificationsAction'
+			})
+		).toBeNull();
 	});
 });

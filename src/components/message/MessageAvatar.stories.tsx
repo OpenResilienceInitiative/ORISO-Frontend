@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, waitFor } from 'storybook/test';
+import { AVATAR_SIZES, AVATAR_SIZE_OPTIONS } from '../pseudonym/avatarSizes';
 import { MessageAvatar } from './MessageAvatar';
 import './message.styles.scss';
 
@@ -21,7 +22,8 @@ const meta: Meta<typeof MessageAvatar> = {
 			description: 'System notifications render no avatar here'
 		},
 		size: {
-			control: { type: 'number', min: 24, max: 64, step: 4 },
+			control: 'select',
+			options: AVATAR_SIZE_OPTIONS,
 			description: 'Avatar size in pixels'
 		}
 	}
@@ -36,13 +38,13 @@ const baseIdentity = {
 	displayName: 'Sanftes Alpaka Kala',
 	firstName: 'Sanftes',
 	lastName: 'Alpaka Kala',
-	size: 32,
+	size: AVATAR_SIZES.message,
 	isSystemNotification: false
 };
 
 /**
  * Client in a 1-on-1 chat — shows the generated animal pseudonym avatar.
- * At 32px the animal SVG inner area is 20px (visible after AnimalAvatar padding fix).
+ * Uses the same48px shared message size as the real timeline.
  */
 export const ClientIn1on1Chat: Story = {
 	args: {
@@ -88,7 +90,7 @@ export const ConsultantIn1on1Chat: Story = {
 };
 
 /**
- * Consultant or moderator in an internal group chat — initials avatar.
+ * Consultant or moderator in an internal group chat — animal avatar.
  */
 export const InternalGroupChat: Story = {
 	args: {
@@ -103,7 +105,7 @@ export const InternalGroupChat: Story = {
 };
 
 /**
- * Client in a group chat — group context overrides animal; shows initials.
+ * Client in a group chat — uses the same animal identity in the group.
  */
 export const ClientInGroupChat: Story = {
 	args: {
@@ -127,7 +129,7 @@ export const AllVariants: Story = {
 					userId: 'user-1',
 					username: 'sanftes.alpaka',
 					displayName: 'Sanftes Alpaka',
-					size: 32
+					size: AVATAR_SIZES.message
 				}
 			},
 			{
@@ -140,11 +142,11 @@ export const AllVariants: Story = {
 					displayName: 'Karina P',
 					firstName: 'Karina',
 					lastName: 'P',
-					size: 32
+					size: AVATAR_SIZES.message
 				}
 			},
 			{
-				label: 'Internal Group',
+				label: 'Internal Group (animal)',
 				props: {
 					isGroup: true,
 					isSystemNotification: false,
@@ -153,7 +155,7 @@ export const AllVariants: Story = {
 					displayName: 'Angela K',
 					firstName: 'Angela',
 					lastName: 'K',
-					size: 32
+					size: AVATAR_SIZES.message
 				}
 			},
 			{
@@ -164,7 +166,7 @@ export const AllVariants: Story = {
 					userId: 'user-2',
 					username: 'freundliche.katze',
 					displayName: 'Freundliche Katze',
-					size: 32
+					size: AVATAR_SIZES.message
 				}
 			}
 		];
@@ -174,6 +176,7 @@ export const AllVariants: Story = {
 				style={{
 					display: 'flex',
 					gap: '32px',
+					flexWrap: 'wrap',
 					alignItems: 'flex-start',
 					padding: '24px'
 				}}
@@ -188,21 +191,7 @@ export const AllVariants: Story = {
 							gap: '8px'
 						}}
 					>
-						<div
-							style={{
-								width: '48px',
-								height: '48px',
-								border: '10px solid #fff',
-								borderRadius: '999px',
-								background: '#ffd9d9',
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								boxSizing: 'border-box'
-							}}
-						>
-							<MessageAvatar {...variant.props} />
-						</div>
+						<MessageAvatar {...variant.props} />
 						<small style={{ fontSize: '11px', color: '#666' }}>
 							{variant.label}
 						</small>
@@ -210,5 +199,105 @@ export const AllVariants: Story = {
 				))}
 			</div>
 		);
+	}
+};
+
+/**
+ * The 60px message frame draws the white ring (Figma 7539-29194, 6px) on BOTH
+ * sides; the animal circle inside it stays 48px and carries no grey outline.
+ */
+export const WhiteRingOnBothSides: Story = {
+	args: { ...baseIdentity, isGroup: false, size: undefined },
+	render: (args) => (
+		<div style={{ display: 'flex', gap: 48, padding: 24 }}>
+			{(['left', 'right'] as const).map((side) => (
+				<div
+					key={side}
+					className={`messageItem messageItem--${side}`}
+					style={{ flex: 'none' }}
+				>
+					<div
+						className="messageItem__avatar"
+						data-testid={`message-avatar-frame-${side}`}
+					>
+						<MessageAvatar {...args} />
+					</div>
+				</div>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		for (const side of ['left', 'right']) {
+			const frame = canvasElement.querySelector(
+				`[data-testid="message-avatar-frame-${side}"]`
+			) as HTMLElement;
+			const frameStyle = getComputedStyle(frame);
+			expect(parseFloat(frameStyle.borderTopWidth)).toBe(6);
+			expect(frameStyle.borderTopColor).toBe('rgb(255, 255, 255)');
+			expect(frameStyle.backgroundColor).toBe('rgb(255, 255, 255)');
+			const person = frame.querySelector(
+				'[data-testid="user-avatar"]'
+			) as HTMLElement;
+			const circle = person.firstElementChild as HTMLElement;
+			expect(parseFloat(getComputedStyle(circle).borderTopWidth)).toBe(0);
+			expect(getComputedStyle(circle).boxShadow).toBe('none');
+			await waitFor(() =>
+				expect(circle.querySelector('svg')).toBeTruthy()
+			);
+		}
+	}
+};
+
+/** Same person at every maintained footprint; the animal circle itself has no grey outline. */
+export const SupportedSizes: Story = {
+	render: () => (
+		<div
+			style={{
+				display: 'flex',
+				flexWrap: 'wrap',
+				gap: 24,
+				width: 320,
+				maxWidth: '100%'
+			}}
+		>
+			{AVATAR_SIZE_OPTIONS.map((size) => (
+				<figure key={size} style={{ margin: 0, textAlign: 'center' }}>
+					<MessageAvatar
+						{...baseIdentity}
+						isGroup={false}
+						size={size}
+					/>
+					<figcaption>{size}px</figcaption>
+				</figure>
+			))}
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const avatars = canvasElement.querySelectorAll(
+			'[data-testid="user-avatar"]'
+		);
+		expect(avatars.length).toBe(AVATAR_SIZE_OPTIONS.length);
+		const backgrounds: string[] = [];
+		for (const [index, avatar] of Array.from(avatars).entries()) {
+			const circle = avatar.firstElementChild as HTMLElement;
+			expect(avatar.getBoundingClientRect().width).toBe(
+				AVATAR_SIZE_OPTIONS[index]
+			);
+			expect(avatar.getBoundingClientRect().height).toBe(
+				AVATAR_SIZE_OPTIONS[index]
+			);
+			expect(getComputedStyle(circle).borderTopWidth).toBe('0px');
+			backgrounds.push(getComputedStyle(circle).backgroundColor);
+			await waitFor(() =>
+				expect(circle.querySelector('svg')).toBeTruthy()
+			);
+		}
+		expect(new Set(backgrounds).size).toBe(1);
+		const host = avatars[0].parentElement!.parentElement!;
+		expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth);
+		for (const avatar of avatars)
+			expect(avatar.getBoundingClientRect().right).toBeLessThanOrEqual(
+				host.getBoundingClientRect().right
+			);
 	}
 };

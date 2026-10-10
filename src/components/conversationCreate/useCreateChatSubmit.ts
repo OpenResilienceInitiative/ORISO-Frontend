@@ -1,6 +1,12 @@
 import { useCallback, useContext, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SessionsDataContext, UPDATE_SESSIONS } from '../../globalState';
+import {
+	NotificationsContext,
+	SessionsDataContext,
+	UPDATE_SESSIONS
+} from '../../globalState';
+import { useTranslation } from 'react-i18next';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import {
 	apiCreateGroupChat,
 	apiUpdateGroupChat,
@@ -29,7 +35,11 @@ interface SubmitOptions {
 	 * `true` to stay on the screen — e.g. to show the share dialog (#1499) —
 	 * and call `leave()` when done; otherwise the hook navigates as before.
 	 */
-	holdAfterSuccess?: (saved: { seriesId: number | null }) => boolean;
+	holdAfterSuccess?: (saved: {
+		seriesId: number | null;
+		/** Secret part of the invite link (ORISO-UserService#1237). */
+		inviteToken?: string | null;
+	}) => boolean;
 }
 
 const SESSION_VIEW_PATH = '/sessions/consultant/sessionView';
@@ -37,6 +47,8 @@ const SESSION_VIEW_PATH = '/sessions/consultant/sessionView';
 export const useCreateChatSubmit = () => {
 	const navigate = useNavigate();
 	const { dispatch } = useContext(SessionsDataContext);
+	const notifications = useContext(NotificationsContext);
+	const { t: translate } = useTranslation();
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [hasError, setHasError] = useState(false);
 	// Synchronous guard against duplicate POST/PUTs: React state updates are
@@ -64,6 +76,7 @@ export const useCreateChatSubmit = () => {
 				.then((response) => {
 					onSuccess?.();
 					let seriesId: number | null = null;
+					let inviteToken: string | null = null;
 					return apiGetSessionRoomsByRoomIds([response.matrixRoomId])
 						.then(({ sessions }) => {
 							dispatch({
@@ -76,19 +89,28 @@ export const useCreateChatSubmit = () => {
 									response.matrixRoomId
 							);
 							seriesId = saved?.chat?.id ?? null;
+							inviteToken = saved?.chat?.inviteToken ?? null;
 						})
 						.catch(() => {
 							// The chat was created — a failed list refresh must
 							// not strand the user on the create screen.
 						})
 						.finally(() => {
-							if (holdAfterSuccess?.({ seriesId })) {
+							if (holdAfterSuccess?.({ seriesId, inviteToken })) {
 								return;
 							}
 							navigate(SESSION_VIEW_PATH);
 						});
 				})
-				.catch(() => {
+				.catch((error) => {
+					const notice = getCounsellingDpaNotification(
+						error,
+						translate
+					);
+					if (notice && notifications) {
+						notifications.addNotification(notice);
+						return;
+					}
 					setHasError(true);
 				})
 				.finally(() => {
@@ -96,7 +118,7 @@ export const useCreateChatSubmit = () => {
 					setIsSubmitting(false);
 				});
 		},
-		[dispatch, navigate]
+		[dispatch, navigate, notifications, translate]
 	);
 
 	return {

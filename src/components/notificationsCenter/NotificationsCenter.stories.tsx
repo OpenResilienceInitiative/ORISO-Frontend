@@ -1,20 +1,28 @@
 import * as React from 'react';
+import { MatrixEvent } from 'matrix-js-sdk';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { NotificationsCenter } from './NotificationsCenter';
 import { KNOWN_EVENT_TYPES } from './eventDescriptors';
 import { APP_ORISO_FIGMA_URL } from '../storybookDesignLinks';
 import {
 	NotificationsContext,
+	SessionsDataContext,
 	UserDataContext,
 	AUTHORITIES
 } from '../../globalState';
 import type { NotificationFeedItem } from '../../globalState/provider/NotificationsProvider';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import type { IUserDraftItem } from '../../api/apiUserDrafts';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import {
 	DEFAULT_DISPLAY_FILTERS,
 	withSectionOverride
 } from '../../utils/displayFilter/model';
 import { withDisplayFilterStore } from '../displayFilter/displayFilterStoryStore';
+import {
+	getMatrixClientService,
+	setMatrixClientServiceRef
+} from '../../services/matrixClientRegistry';
+import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 
 /**
  * WP-06 Activity Timeline mock feed. Covers every seeded event family
@@ -243,11 +251,64 @@ const withTimelineData =
 		</UserDataContext.Provider>
 	);
 
+/**
+ * #1535: the timeline loads unsent drafts from `/users/drafts` itself. The
+ * fetch patch answers only that path, and only while a story is mounted.
+ */
+let storyDrafts: IUserDraftItem[] | null = null;
+let draftsFetchPatched = false;
+const patchDraftsFetch = () => {
+	if (draftsFetchPatched) return;
+	draftsFetchPatched = true;
+	const originalFetch = globalThis.fetch.bind(globalThis);
+	globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+		const url =
+			typeof input === 'string'
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		if (storyDrafts && url.includes('/service/users/drafts')) {
+			return new Response(
+				JSON.stringify({ items: storyDrafts, page: 0, perPage: 200 }),
+				{ status: 200, headers: { 'Content-Type': 'application/json' } }
+			);
+		}
+		return originalFetch(input, init);
+	};
+};
+
+// Set during render: the timeline's own effect fetches before a parent effect runs.
+const ServerDraftsScope = ({
+	drafts,
+	children
+}: {
+	drafts: IUserDraftItem[];
+	children: React.ReactNode;
+}) => {
+	patchDraftsFetch();
+	storyDrafts = drafts;
+	// Layout effects run before the timeline's fetch effect; re-set after a prior scope's cleanup.
+	React.useLayoutEffect(() => {
+		storyDrafts = drafts;
+		return () => {
+			storyDrafts = null;
+		};
+	}, [drafts]);
+	return <>{children}</>;
+};
+
+const withServerDrafts = (Story: React.ComponentType, context: any) => (
+	<ServerDraftsScope drafts={context.parameters.serverDrafts ?? []}>
+		<Story />
+	</ServerDraftsScope>
+);
+
 const meta = {
 	title: 'Organisms/NotificationsCenter',
 	component: NotificationsCenter,
 	tags: ['autodocs'],
-	decorators: [withDisplayFilterStore],
+	decorators: [withDisplayFilterStore, withServerDrafts],
 	parameters: {
 		layout: 'fullscreen',
 		router: { initialPath: '/notifications' },
@@ -270,6 +331,112 @@ type Story = StoryObj<typeof meta>;
 /** Consultant view with a feed across all event families, mixed read/unread. */
 export const FilledTimeline: Story = {
 	decorators: [withTimelineData(mockFeed)]
+};
+
+const firstResponseRoomId = '!timeline-first-response:matrix.storybook.test';
+const firstResponseEventId = '$timeline-first-response';
+const firstResponseSession: ListItemInterface = {
+	consultant: {
+		id: 'sb-consultant',
+		consultantId: 'sb-consultant',
+		username: 'storybook-consultant',
+		absent: false,
+		absenceMessage: ''
+	},
+	session: {
+		id: 1117,
+		agencyId: 1,
+		askerMatrixUserId: '@asker:matrix.storybook.test',
+		attachment: null,
+		consultingType: 1,
+		matrixRoomId: firstResponseRoomId,
+		e2eLastMessage: null,
+		messageDate: 0,
+		createDate: '2026-10-08T08:00:00.000Z',
+		messagesRead: true,
+		postcode: 10115,
+		registrationType: 'REGISTERED',
+		status: 2,
+		videoCallMessageDTO: null,
+		topic: { id: 1, name: 'Beratung', description: '' }
+	}
+};
+
+/** #1117: the actual Matrix hydrator formats a structured first response for the timeline and search. */
+export const StructuredFirstResponse: Story = {
+	beforeEach: () => {
+		const originalService = getMatrixClientService();
+		const event = new MatrixEvent({
+			event_id: firstResponseEventId,
+			room_id: firstResponseRoomId,
+			type: 'm.room.message',
+			sender: '@carimat:matrix.storybook.test',
+			origin_server_ts: Date.parse('2026-10-08T08:01:00.000Z'),
+			content: {
+				msgtype: 'm.text',
+				body: '[SYSTEM_NOTIFICATION]{"type":"FIRST_RESPONSE","version":1,"bausteine":[{"id":"greeting","body":"Schön, dass Sie sich gemeldet haben."}]}'
+			}
+		});
+		const room = {
+			roomId: firstResponseRoomId,
+			findEventById: (id: string) =>
+				id === firstResponseEventId ? event : null
+		};
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				getUserId: () => '@storybook:matrix.storybook.test',
+				getRoom: (id: string) =>
+					id === firstResponseRoomId ? room : null,
+				on: noop,
+				off: noop
+			})
+		} as any);
+		return () => setMatrixClientServiceRef(originalService);
+	},
+	decorators: [
+		withTimelineData([
+			feedItem({
+				id: 'first-response-1117',
+				eventType: 'message.new',
+				category: 'message',
+				createdAt: minutesAgo(4),
+				sourceSessionId: '1117',
+				params: {
+					roomRef: firstResponseRoomId,
+					matrixEventId: firstResponseEventId,
+					senderName: 'Carimat'
+				}
+			})
+		]),
+		(Story) => (
+			<SessionsDataContext.Provider
+				value={{
+					sessions: [firstResponseSession],
+					ready: true,
+					dispatch: noop
+				}}
+			>
+				<Story />
+			</SessionsDataContext.Provider>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Carimat: Schön, dass Sie sich gemeldet haben.'
+			)
+		).toBeVisible();
+		await expect(canvasElement).not.toHaveTextContent('FIRST_RESPONSE');
+		const search = canvas.getByRole('searchbox', {
+			name: 'Aktivität durchsuchen…'
+		});
+		await userEvent.type(search, 'Schön, dass Sie sich gemeldet haben.');
+		await expect(
+			canvas.getByText('Carimat: Schön, dass Sie sich gemeldet haben.')
+		).toBeVisible();
+		await userEvent.clear(search);
+	}
 };
 
 /** Client (asker) view — includes the two-button case-handover consent card. */
@@ -340,7 +507,7 @@ export const Empty: Story = {
 };
 
 /**
- * QA sweep: one card per seeded event type (all 30, unread), so every
+ * QA sweep: one card per seeded event type (all 32, unread), so every
  * descriptor's icon, i18n strings and detail rendering can be checked in one
  * place. Order follows the registry.
  */
@@ -368,4 +535,193 @@ export const AllEventTypes: Story = {
 			)
 		)
 	]
+};
+
+/**
+ * #876: a planned maintenance notice to counselling-centre admins. Title and
+ * text render from the locale catalogue with the window from the event params
+ * (the server title/text below are only the English fallback and must not
+ * show). The action opens the public status page in a new tab.
+ */
+const plannedServiceNotice = (
+	params: NotificationFeedItem['params']
+): NotificationFeedItem =>
+	feedItem({
+		id: 'notice-1',
+		eventType: 'service.notice.planned',
+		createdAt: minutesAgo(3),
+		title: 'Planned maintenance',
+		text: 'Planned maintenance on 2026-10-15 from 22:00 to 23:30. Current status: https://status.example.org/',
+		params
+	});
+
+const plannedServiceNoticeFeed = (params: NotificationFeedItem['params']) => [
+	plannedServiceNotice(params),
+	...mockFeed.slice(0, 3)
+];
+
+const PLANNED_NOTICE_PARAMS = {
+	campaignKey: 'maint-2026-10-15',
+	maintenanceDate: '2026-10-15',
+	maintenanceStart: '22:00',
+	maintenanceEnd: '23:30',
+	statusUrl: 'https://status.example.org/'
+};
+
+export const PlannedServiceNotice: Story = {
+	decorators: [
+		withTimelineData(plannedServiceNoticeFeed(PLANNED_NOTICE_PARAMS))
+	],
+	// The detail pane with the status-page link exists from 1200 px upwards.
+	globals: { viewport: { value: 'desktop1440' } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText(/Geplante Wartung|Scheduled maintenance/)
+					.length
+			).toBeGreaterThan(0)
+		);
+		await expect(canvas.getAllByText(/22:00/).length).toBeGreaterThan(0);
+		await expect(
+			canvas.queryByText(/Current status:/)
+		).not.toBeInTheDocument();
+		const link = await canvas.findByRole('link', {
+			name: /Statusseite ansehen|View status page/
+		});
+		await expect(link).toHaveAttribute(
+			'href',
+			'https://status.example.org/'
+		);
+		await expect(link).toHaveAttribute('target', '_blank');
+		await expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+		await expect(link).toHaveAccessibleName(
+			/(öffnet in einem neuen Tab|opens in a new tab)/
+		);
+	}
+};
+
+/**
+ * On a phone the card has no detail pane: tapping it opens the status page in
+ * a new tab instead of jumping into the conversation list.
+ */
+export const PlannedServiceNoticeOnPhone: Story = {
+	decorators: [
+		withTimelineData(plannedServiceNoticeFeed(PLANNED_NOTICE_PARAMS))
+	],
+	globals: { viewport: { value: 'phone390' } },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const view = canvasElement.ownerDocument.defaultView!;
+		const open = fn();
+		const original = view.open;
+		view.open = open as unknown as typeof view.open;
+		try {
+			const title = await canvas.findByText(
+				/Geplante Wartung|Scheduled maintenance/
+			);
+			await userEvent.click(title);
+			await expect(open).toHaveBeenCalledTimes(1);
+			await expect(open).toHaveBeenCalledWith(
+				'https://status.example.org/',
+				'_blank',
+				'noopener,noreferrer'
+			);
+		} finally {
+			view.open = original;
+		}
+	}
+};
+
+/** Without a valid status link the notice still shows, with no open action. */
+export const PlannedServiceNoticeWithoutStatusLink: Story = {
+	decorators: [
+		withTimelineData(
+			plannedServiceNoticeFeed({
+				...PLANNED_NOTICE_PARAMS,
+				statusUrl: undefined
+			})
+		)
+	],
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText(/Geplante Wartung|Scheduled maintenance/)
+					.length
+			).toBeGreaterThan(0)
+		);
+		await expect(
+			canvas.queryByRole('link', {
+				name: /Statusseite ansehen|View status page/
+			})
+		).not.toBeInTheDocument();
+		await expect(
+			canvas.queryByRole('button', { name: /Chat öffnen|Open chat/ })
+		).not.toBeInTheDocument();
+	}
+};
+
+/**
+ * #1535: an unsent draft loaded from the server sits in the timeline next to
+ * the two events that used to show as a bare "Activity" card — the asker's
+ * first reply ("Ihre ersten Schritte") and the end of an anonymous chat.
+ */
+export const DraftAndChatEvents: Story = {
+	decorators: [
+		withTimelineData(
+			[
+				feedItem({
+					id: 'first-response',
+					eventType: 'first_response.received',
+					createdAt: minutesAgo(3),
+					sourceSessionId: '103',
+					actionPath: '/sessions/user/view/session/103'
+				}),
+				feedItem({
+					id: 'finished',
+					eventType: 'conversation.finished',
+					createdAt: minutesAgo(40),
+					sourceSessionId: '104',
+					params: {
+						sourceSessionId: '104',
+						roomRef: '!anon:matrix.example'
+					}
+				})
+			],
+			{
+				...consultantUserData,
+				userId: 'sb-client',
+				userName: 'Storybook Client',
+				grantedAuthorities: []
+			}
+		)
+	],
+	parameters: {
+		serverDrafts: [
+			{
+				scopeKey: 'scope:!room103:matrix.example|thread:main',
+				text: 'Opaque draft ciphertext',
+				actionPath: '/sessions/user/view/session/103',
+				sourceSessionId: 103,
+				roomRef: '!room103:matrix.example',
+				updatedAt: minutesAgo(15)
+			}
+		]
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getAllByText('Entwurf gespeichert').length
+			).toBeGreaterThan(0)
+		);
+		await expect(
+			canvas.getAllByText('Ihre ersten Schritte').length
+		).toBeGreaterThan(0);
+		await expect(
+			canvas.getAllByText('Chat beendet').length
+		).toBeGreaterThan(0);
+		await expect(canvas.queryByText(/ciphertext/)).not.toBeInTheDocument();
+	}
 };
