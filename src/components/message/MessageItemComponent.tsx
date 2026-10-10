@@ -61,6 +61,7 @@ import { ALIAS_MESSAGE_TYPES } from '../../api/apiSendAliasMessage';
 import { useTranslation } from 'react-i18next';
 import { ERROR_LEVEL_WARN, TError } from '../../api/apiPostError';
 import { ReactComponent as DeletedIcon } from '../../resources/img/icons/deleted.svg';
+import { ReactComponent as AgencyIcon } from '../../resources/img/icons/chat-agency-house-heart.svg';
 import {
 	IBooleanSetting,
 	SETTING_MESSAGE_ALLOWDELETING
@@ -76,6 +77,7 @@ import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
+	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED,
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
@@ -113,7 +115,7 @@ import {
 	directAvatarChoice,
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
-import { chosenAvatarOf } from '../../utils/avatarChoice';
+import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -1206,10 +1208,17 @@ export const MessageItemComponent = ({
 	const isSystemNotification = parsedMessage.isSystemNotification;
 	const persistedHandoverGrant =
 		parsedMessage.systemNotificationHandoverGrant;
-	const isInformationalHandoverGrant =
-		persistedHandoverGrant?.clientConsent === 'NONE' &&
+	const isPersistedGrantForAsker =
+		Boolean(persistedHandoverGrant) &&
 		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-		!activeSession.isGroup;
+		!activeSession.isGroup &&
+		notificationConversationType(activeSession) === 'AGENCY_COUNSELLING';
+	const persistedAcceptance = parsedMessage.systemNotificationAcceptance;
+	const isAcceptedNoticeForAsker =
+		persistedAcceptance?.sessionId === activeSession.item.id &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		notificationConversationType(activeSession) === 'AGENCY_COUNSELLING';
 	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
 	   `parsedMessage.systemNotificationType`, because the payload version has to
 	   be inspected too: an event from a newer server must render nothing at all
@@ -1254,6 +1263,9 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
+	const isInquiryAcceptedEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED;
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
@@ -1291,6 +1303,11 @@ export const MessageItemComponent = ({
 		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
+	/* The stored description is frozen in the server's language; the header is
+	   translated here, so the body must be too or the bubble mixes languages. */
+	const acceptedDescription = translate(
+		'notifications.events.inquiryAccepted.text'
+	);
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -1757,11 +1774,15 @@ export const MessageItemComponent = ({
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('USER') ||
 		(userData?.userRoles || []).includes('ANONYMOUS');
-	const incomingAvatarChoice = activeSession?.isGroup
+	const resolvedIncomingAvatarChoice = activeSession?.isGroup
 		? memberAvatarChoice(userId, avatarMembers)
 		: activeSession
 			? directAvatarChoice(userId, activeSession)
 			: null;
+	// A counsellor always sits on the tenant's primary pair, picked or not.
+	const incomingAvatarChoice = isUserMessage()
+		? resolvedIncomingAvatarChoice
+		: counsellorChoiceOf(resolvedIncomingAvatarChoice);
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -2047,9 +2068,16 @@ export const MessageItemComponent = ({
 										<div className="messageItem__sendFailedTitle">
 											{isCaseHandoverGrantedEvent
 												? translate(
-														'caseHandover.systemMessage.tookOverTitle'
+														persistedHandoverGrant?.accessType ===
+															'CO_ACCESS'
+															? 'caseHandover.consent.info.noticeTitle'
+															: 'caseHandover.systemMessage.tookOverTitle'
 													)
-												: systemNotificationTitle}
+												: isInquiryAcceptedEvent
+													? translate(
+															'caseHandover.accepted.title'
+														)
+													: systemNotificationTitle}
 										</div>
 										<div className="messageItem__sendFailedSubtitle">
 											{isCaseHandoverGrantedEvent
@@ -2131,12 +2159,42 @@ export const MessageItemComponent = ({
 							onContextMenu={handleBubbleContextMenu}
 						>
 							{isSystemNotification &&
-								isCaseHandoverGrantedEvent && (
+								(isCaseHandoverGrantedEvent ||
+									isInquiryAcceptedEvent) && (
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
-										{isInformationalHandoverGrant ? (
+										{isAcceptedNoticeForAsker ? (
 											<CaseHandoverInformationalBody
+												mode="OPT_IN"
+												conversationType={
+													erstantwortModality
+												}
+												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+												description={
+													acceptedDescription
+												}
+												sessionId={
+													activeSession.item.id
+												}
+												onSetupNotifications={
+													grantNotificationPolicy.emailAllowed ||
+													grantNotificationPolicy.browserAllowed
+														? () =>
+																setShowGrantNotifications(
+																	true
+																)
+														: undefined
+												}
+											/>
+										) : isPersistedGrantForAsker ? (
+											<CaseHandoverInformationalBody
+												mode={
+													persistedHandoverGrant.clientConsent
+												}
+												conversationType={
+													erstantwortModality
+												}
 												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
 												description={
 													systemNotificationRawDescription
@@ -2175,6 +2233,7 @@ export const MessageItemComponent = ({
 							 */}
 							{isSystemNotification &&
 								!isCaseHandoverGrantedEvent &&
+								!isInquiryAcceptedEvent &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
 										{systemNotificationDescription}
@@ -2621,7 +2680,7 @@ export const MessageItemComponent = ({
 
 	const withGrantNotifications = (message: React.ReactNode) => (
 		<>
-			{isInformationalHandoverGrant ? (
+			{isPersistedGrantForAsker || isAcceptedNoticeForAsker ? (
 				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
 					{message}
 				</CarimatMessageContainer>
@@ -2847,7 +2906,13 @@ export const MessageItemComponent = ({
 												: userData?.lastName
 										}
 										size={AVATAR_SIZES.message}
-										choice={chosenAvatarOf(userData)}
+										choice={
+											isUserMessage()
+												? chosenAvatarOf(userData)
+												: counsellorChoiceOf(
+														chosenAvatarOf(userData)
+													)
+										}
 									/>
 								</div>
 							</div>
@@ -2866,6 +2931,11 @@ export const MessageItemComponent = ({
 							{profileSubtitle ? (
 								<div className="messageItem__senderInfoSubtitle">
 									<span>{profileSubtitle}</span>
+									<AgencyIcon
+										className="messageItem__senderInfoMetaIcon"
+										aria-hidden="true"
+										focusable="false"
+									/>
 								</div>
 							) : null}
 						</div>

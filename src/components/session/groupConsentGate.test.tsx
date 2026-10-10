@@ -98,7 +98,16 @@ vi.mock('../pseudonym/ConsultantAcceptedActionBar', () => ({
 	)
 }));
 vi.mock('../sessionHeader/SessionHeaderComponent', () => ({
-	SessionHeaderComponent: () => <div data-testid="session-header" />
+	SessionHeaderComponent: ({
+		hideGroupTopic
+	}: {
+		hideGroupTopic?: boolean;
+	}) => (
+		<div
+			data-testid="session-header"
+			data-hide-group-topic={String(Boolean(hideGroupTopic))}
+		/>
+	)
 }));
 vi.mock('./EncryptionBanner', () => ({
 	EncryptionBanner: () => null
@@ -280,6 +289,24 @@ describe('SessionItemComponent — privacy gate in a self-help group', () => {
 		const gate = await screen.findByTestId('group-consent-gate');
 		expect(gate.dataset.agency).toBe('19');
 		expect(screen.queryByTestId('composer')).toBeNull();
+	});
+
+	it('keeps the group topic out of the header until the agreement is recorded', async () => {
+		renderGroup(client(null));
+
+		await screen.findByTestId('group-consent-gate');
+		expect(
+			screen.getByTestId('session-header').dataset.hideGroupTopic
+		).toBe('true');
+	});
+
+	it('shows the group topic in the header once the agreement is recorded', async () => {
+		renderGroup(client('2026-09-23T10:00:00Z'));
+
+		await screen.findByTestId('composer');
+		expect(
+			screen.getByTestId('session-header').dataset.hideGroupTopic
+		).toBe('false');
 	});
 
 	it('lets a client whose agreement is recorded write straight away', async () => {

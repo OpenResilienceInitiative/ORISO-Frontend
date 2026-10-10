@@ -358,10 +358,15 @@ a {
 .app__platformVersion {
 	position: fixed;
 	right: 12px;
-	bottom: 8px;
+	// Keep build identity clear of the mobile navigation labels and home inset.
+	bottom: calc(#{$navHeight} + 16px + env(safe-area-inset-bottom, 0px));
 	z-index: 20;
 	color: var(--m3-on-surface-variant, #4f565d);
 	font-size: 12px;
 	line-height: 1.2;
 	pointer-events: none;
+
+	@include breakpoint($fromLarge) {
+		bottom: 8px;
+	}
 }

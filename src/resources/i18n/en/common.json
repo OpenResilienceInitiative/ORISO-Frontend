@@ -1719,6 +1719,7 @@
 					}
 				},
 				"accountDeleted": "This account has been deleted and is no longer available. If you would like to continue using the counselling service, you can register again at any time.",
+				"setupIncomplete": "Your account is not fully set up yet. Please use the link in your invitation email, or reset your password via “Forgot password?” to finish the setup.",
 				"unavailable": "Signing in is not possible right now. Please try again in a few minutes.",
 				"email": {
 					"otp": {
@@ -3351,6 +3352,7 @@
 			"temporary": {
 				"join": "Join",
 				"joinGroup": "Join the group",
+				"incompleteLink": "This invite link is incomplete, so joining without an account is not available. Please register with an account or ask for a new link.",
 				"toggleOff": "Create an account",
 				"toggleOn": "Join without an account",
 				"title": "This session ends when you close the browser.",
@@ -3634,6 +3636,10 @@
 			"importantTitle": "Important notification",
 			"supervisionTitle": "Supervision activated!",
 			"supervisionBody": "{{advisor}} has been added to this chat as a supervising advisor."
+		},
+		"readOnly": {
+			"notice": "Read-only access: you can follow this conversation but cannot send messages.",
+			"noticeUntil": "Read-only access until {{until}}: you can follow this conversation but cannot send messages."
 		},
 		"standingPreference": {
 			"label": "Always ask before additional access",

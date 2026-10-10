@@ -1241,6 +1241,7 @@
 				"success": "Dein Benutzername ist geeignet."
 			},
 			"temporary": {
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
 			}
@@ -2332,6 +2333,10 @@
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
 		},
 		"consent": {
 			"senderRole": "Kurze Orientierung",

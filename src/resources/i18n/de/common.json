@@ -1734,6 +1734,7 @@
 					}
 				},
 				"accountDeleted": "Dieser Account wurde gelöscht und steht nicht mehr zur Verfügung. Wenn Sie die Beratung weiterhin nutzen möchten, können Sie sich jederzeit neu registrieren.",
+				"setupIncomplete": "Ihr Konto ist noch nicht vollständig eingerichtet. Bitte nutzen Sie den Link aus Ihrer Einladungs-E-Mail oder setzen Sie Ihr Passwort über „Passwort vergessen?“ zurück, um die Einrichtung abzuschließen.",
 				"unavailable": "Die Anmeldung ist derzeit nicht möglich. Bitte versuchen Sie es in einigen Minuten erneut.",
 				"email": {
 					"otp": {
@@ -3323,6 +3324,7 @@
 			"temporary": {
 				"join": "Beitreten",
 				"joinGroup": "Der Gruppe beitreten",
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registrieren Sie sich mit einem Konto oder fragen Sie nach einem neuen Link.",
 				"toggleOff": "Konto anlegen",
 				"toggleOn": "Ohne Konto beitreten",
 				"title": "Diese Sitzung endet, wenn Sie den Browser schließen.",
@@ -3688,6 +3690,10 @@
 			"importantTitle": "Wichtige Mitteilung",
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
+		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden."
 		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",

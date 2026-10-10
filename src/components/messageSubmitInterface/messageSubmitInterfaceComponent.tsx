@@ -1467,7 +1467,7 @@ export const MessageSubmitInterfaceComponent = ({
 			 * visible while it is in force.
 			 */
 			setIsAudienceMenuOpen(false);
-			clearDraftMessage();
+			const draftCleared = clearDraftMessage();
 			setActiveInfo('');
 			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
 			setTimeout(() => {
@@ -1482,7 +1482,12 @@ export const MessageSubmitInterfaceComponent = ({
 			setTimeout(() => {
 				resizeTextarea();
 			}, 200);
-			setTimeout(() => setIsRequestInProgress(false), 1200);
+			// Loading or saving the next draft must not cross the pending
+			// outgoing PATCH → DELETE, even when transport takes over 1200 ms.
+			void Promise.allSettled([
+				draftCleared,
+				new Promise<void>((resolve) => setTimeout(resolve, 1200))
+			]).then(() => setIsRequestInProgress(false));
 		},
 		[
 			clearDraftMessage,
@@ -1740,7 +1745,6 @@ export const MessageSubmitInterfaceComponent = ({
 				onSendButton && onSendButton();
 				handleMessageSendSuccess();
 				cleanupAttachment();
-				setIsRequestInProgress(false);
 			}
 		},
 		[

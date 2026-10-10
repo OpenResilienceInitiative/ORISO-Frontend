@@ -41,7 +41,11 @@ import {
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
-import { apiGetAskerSessionList, apiPostRegistration } from '../../api';
+import {
+	accountExistsAfterTimeout,
+	apiGetAskerSessionList,
+	apiPostRegistration
+} from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
 import {
@@ -88,6 +92,8 @@ import {
 	getGroupJoin,
 	resolveGroupInviteEntry
 } from './groupInviteEntry/groupInviteEntryState';
+import { parseGroupChatInviteId } from '../groupChat/groupChatInviteLink';
+import { TemporaryJoinToggle } from './TemporaryJoinToggle';
 
 /**
  * This type of registration is currently not supporting:
@@ -214,12 +220,25 @@ export const Registration = () => {
 				agencyId: registrationData?.agency?.id
 			})
 		);
+	/* A group link without the Beratungsstelle id (`aid`) cannot be joined
+	   without an account: the backend refuses `temporary` then. The toggle
+	   stays visible but disabled, with the reason beside it, so the person
+	   is not left wondering why the option from the invite is missing. */
+	const inviteLinkIncomplete =
+		isAccountDataStep &&
+		Boolean(parseGroupChatInviteId(groupChatId)) &&
+		!inviteAgencyId?.trim();
+	const showTemporaryToggle = canJoinTemporarily || inviteLinkIncomplete;
 	const [temporaryJoinChosen, setTemporaryJoinChosen] =
 		useState<boolean>(false);
-	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
+	const temporaryJoin =
+		canJoinTemporarily && !inviteLinkIncomplete && temporaryJoinChosen;
 	const temporaryToggleLabel = temporaryJoin
 		? t('registration.account.temporary.toggleOff')
 		: t('registration.account.temporary.toggleOn');
+	const temporaryToggleHint = inviteLinkIncomplete
+		? t('registration.account.temporary.incompleteLink')
+		: undefined;
 	/* The way on is the same action either way — only what it is called
 	   changes, because "Registrieren" would name something that is not
 	   happening. */
@@ -658,7 +677,8 @@ export const Registration = () => {
 					}
 				: {}),
 			// Never temporary without the group: the backend answers 400.
-			temporary: Boolean(groupJoin) && joinsTemporarily
+			temporary:
+				Boolean(groupJoin) && joinsTemporarily && !inviteLinkIncomplete
 		};
 
 		if (
@@ -712,9 +732,12 @@ export const Registration = () => {
 						{ sessionId }
 					);
 				})
-				.catch((error) => {
+				.catch(async (error) => {
 					// console.error('Registration failed:', error);
-					if (accountCreated) {
+					if (
+						accountCreated ||
+						(await accountExistsAfterTimeout(error, data.username))
+					) {
 						/* The account is real; what failed is the automatic
 						   login or the way into the app. Putting the form back
 						   would offer a second registration to someone who
@@ -767,7 +790,8 @@ export const Registration = () => {
 		location.search,
 		groupChatId,
 		inviteAgencyId,
-		joinsTemporarily
+		joinsTemporarily,
+		inviteLinkIncomplete
 	]);
 
 	const handleSubmit = useCallback(
@@ -1073,7 +1097,7 @@ export const Registration = () => {
 															minWidth: 0
 														}}
 													>
-														{canJoinTemporarily && (
+														{showTemporaryToggle && (
 															<TemporaryJoinToggle
 																label={
 																	temporaryToggleLabel
@@ -1082,7 +1106,11 @@ export const Registration = () => {
 																	toggleTemporaryJoin
 																}
 																disabled={
-																	isRegistering
+																	isRegistering ||
+																	inviteLinkIncomplete
+																}
+																hint={
+																	temporaryToggleHint
 																}
 															/>
 														)}
@@ -1155,7 +1183,7 @@ export const Registration = () => {
 													{/* F3: the picks live in the
 											    header chip row on mobile, so
 											    the footer is navigation only. */}
-													{canJoinTemporarily && (
+													{showTemporaryToggle && (
 														<Box sx={{ mb: 1.25 }}>
 															<TemporaryJoinToggle
 																label={
@@ -1165,7 +1193,11 @@ export const Registration = () => {
 																	toggleTemporaryJoin
 																}
 																disabled={
-																	isRegistering
+																	isRegistering ||
+																	inviteLinkIncomplete
+																}
+																hint={
+																	temporaryToggleHint
 																}
 																fullWidth
 															/>
@@ -1217,47 +1249,6 @@ export const Registration = () => {
 		</>
 	);
 };
-
-/**
- * The second way on for a link entry: join without a password, or go back to
- * creating a full account. It is a toggle, not a submit — it never leaves the
- * screen, it only changes what the screen is asking for.
- *
- * Painted by the theme's `outlined` MuiButton and nothing else, so it reads as
- * the quieter sibling of the primary without a second colour system beside it.
- */
-const TemporaryJoinToggle = ({
-	label,
-	onClick,
-	disabled,
-	fullWidth = false
-}: {
-	label: string;
-	onClick: () => void;
-	disabled?: boolean;
-	fullWidth?: boolean;
-}) => (
-	<Button
-		data-cy="button-temporary-join"
-		type="button"
-		variant="outlined"
-		disabled={disabled}
-		onClick={onClick}
-		fullWidth={fullWidth}
-		sx={{
-			borderRadius: '999px',
-			px: { xs: 2.5, sm: 3 },
-			py: 1.35,
-			fontSize: 16,
-			fontWeight: 600,
-			whiteSpace: 'nowrap',
-			overflow: 'hidden',
-			textOverflow: 'ellipsis'
-		}}
-	>
-		{label}
-	</Button>
-);
 
 const RegistrationFooterBackLink = ({
 	to,

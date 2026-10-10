@@ -1,4 +1,3 @@
-import { StandingAccessSettings } from '../caseHandover/StandingAccessSettings';
 import { notificationConversationType } from '../erstantwort/notificationConversationType';
 import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
@@ -62,7 +61,11 @@ import {
 } from '../../utils/matrixTimelineEventFormatter';
 import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
-import { isCaseHandoverAccessControlled } from './caseHandoverHelpers';
+import {
+	isCaseHandoverAccessControlled,
+	isCaseHandoverCoAccess
+} from './caseHandoverHelpers';
+import { normalizeServerTimestamp } from '../notificationsCenter/timelineTime';
 import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	isUndecryptedRoomEvent,
@@ -78,6 +81,8 @@ import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
+/** Browsers fire a longer setTimeout immediately. */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 // Practice rooms (FE#1622) have no keys to fetch; parked in the real
 // key-transfer singleton they would be retried on the real client.
@@ -715,6 +720,52 @@ export const SessionStream = ({
 		loadAfterCaseHandoverGranted
 	]);
 
+	// #200: co-access ends at `expiresAt` and the backend then denies, but an
+	// open tab never asks again — re-ask once, 5 s after expiry, so the curtain
+	// closes. ponytail: one re-fetch; a client clock >5 s ahead of the server
+	// leaves the tab open until reload.
+	const coAccessExpiresAt = isCaseHandoverCoAccess(caseHandoverStatus)
+		? caseHandoverStatus?.expiresAt
+		: undefined;
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		const refetchAt =
+			new Date(
+				normalizeServerTimestamp(coAccessExpiresAt || '')
+			).getTime() + 5_000;
+		if (!sessionId || Number.isNaN(refetchAt)) {
+			return;
+		}
+
+		let cancelled = false;
+		let timer: ReturnType<typeof setTimeout>;
+		const schedule = () => {
+			const delay = refetchAt - Date.now();
+			if (delay > MAX_TIMEOUT_MS) {
+				timer = setTimeout(schedule, MAX_TIMEOUT_MS);
+				return;
+			}
+			timer = setTimeout(
+				() => {
+					apiGetCaseHandoverStatus(sessionId)
+						.then((nextStatus) => {
+							if (!cancelled) {
+								setCaseHandoverStatus(nextStatus);
+							}
+						})
+						.catch(() => {});
+				},
+				Math.max(0, delay)
+			);
+		};
+		schedule();
+
+		return () => {
+			cancelled = true;
+			clearTimeout(timer);
+		};
+	}, [activeSession.item?.id, coAccessExpiresAt]);
+
 	// Real-time message sync via the Matrix timeline listener.
 	useEffect(() => {
 		// Only for Matrix sessions.
@@ -1345,19 +1396,6 @@ export const SessionStream = ({
 					/>
 				</div>
 			)}
-			{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
-				!activeSession.isGroup &&
-				notificationConversationType(activeSession) ===
-					'AGENCY_COUNSELLING' &&
-				activeSession.item?.id && (
-					<StandingAccessSettings
-						key={activeSession.item.id}
-						sessionId={activeSession.item.id}
-						conversationType={notificationConversationType(
-							activeSession
-						)}
-					/>
-				)}
 			<SessionItemComponent
 				mainTimelineSupplement={
 					displayedConsent &&
@@ -1434,6 +1472,7 @@ export const SessionStream = ({
 				teamDiscussionError={!!teamDiscussionError}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
+				caseHandoverStatus={caseHandoverStatus}
 			/>
 			{isOverlayActive && (
 				<Overlay

@@ -255,10 +255,10 @@ export const PrivacyGate390: Story = {
 
 const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 
-const WaitingRoom = () => (
+const WaitingRoom = ({ showTopic = true }: { showTopic?: boolean }) => (
 	<StageProviders>
 		<GroupWaitingRoom
-			topicName="Trauerbegleitung"
+			topicName={showTopic ? 'Trauerbegleitung' : undefined}
 			agencyName="Caritas Berlin, Selbsthilfegruppe Trauer"
 			agencyId={null}
 			plannedStart={new Date(NOW + 3 * 24 * 3600e3 + 5 * 3600e3)}
@@ -276,6 +276,30 @@ export const WaitingRoom1440: Story = {
 	name: '1b · Client waiting room — legal links in the stage · 1440',
 	globals: desktop1440Globals,
 	render: () => <WaitingRoom />
+};
+
+/* Before the privacy statement is agreed to, `GroupEntryRoom` hands the
+   waiting room no topic: it is left out, not greyed (#1499). */
+export const WaitingRoomBeforeConsentNoTopic1440: Story = {
+	name: '1b · Client waiting room — topic hidden before consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <WaitingRoom showTopic={false} />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await canvas.findAllByText(/Caritas Berlin/);
+		await expect(canvas.queryAllByText('Trauerbegleitung')).toHaveLength(0);
+	}
+};
+
+export const WaitingRoomAfterConsentShowsTopic1440: Story = {
+	name: '1b · Client waiting room — topic shown after consent · 1440',
+	globals: desktop1440Globals,
+	render: () => <WaitingRoom />,
+	play: async ({ canvasElement }) => {
+		const topics =
+			await within(canvasElement).findAllByText('Trauerbegleitung');
+		await expect(topics.length).toBeGreaterThan(0);
+	}
 };
 
 export const WaitingRoomLegalMenu390: Story = {

@@ -6,17 +6,16 @@ import { StandingAccessSettings } from './StandingAccessSettings';
 import {
 	MessageContextShell,
 	desktop1440Globals,
-	phone390Globals
+	phone390Globals,
+	tablet834Globals
 } from '../message/messageStoryShell';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { mockUserData } from '../message/MessageItemComponent.mocks';
-import { endpoints } from '../../resources/scripts/endpoints';
+import { StandingAccessPreferenceStoryFixture } from './standingAccessPreferenceStoryFixture';
 
 /** Only the HTTP preference boundary is a fixture; the M3 dialog, shared
  * switch and save/readback continuation are production components. */
 const Fixture = (args: React.ComponentProps<typeof StandingAccessSettings>) => {
-	const saved = React.useRef(false);
-	const [ready, setReady] = React.useState(false);
 	const userData = React.useMemo(
 		() =>
 			mockUserData({
@@ -33,48 +32,6 @@ const Fixture = (args: React.ComponentProps<typeof StandingAccessSettings>) => {
 			}),
 		[]
 	);
-	React.useEffect(() => {
-		const previous = globalThis.fetch;
-		const path = `${endpoints.sessionBase}/${args.sessionId}/case-handover/consent-preference`;
-		globalThis.fetch = async (input, init) => {
-			const url =
-				typeof input === 'string'
-					? input
-					: input instanceof URL
-						? input.href
-						: input.url;
-			if (url.endsWith(path)) {
-				const method =
-					init?.method ??
-					(input instanceof Request ? input.method : 'GET');
-				if (method === 'PUT') {
-					const body =
-						init?.body ??
-						(input instanceof Request
-							? await input.clone().text()
-							: '');
-					saved.current = JSON.parse(
-						String(body)
-					).alwaysAskBeforeAdditionalAccess;
-				}
-				return new Response(
-					JSON.stringify({
-						sessionId: args.sessionId,
-						alwaysAskBeforeAdditionalAccess: saved.current
-					}),
-					{
-						status: 200,
-						headers: { 'Content-Type': 'application/json' }
-					}
-				);
-			}
-			return previous(input, init);
-		};
-		setReady(true);
-		return () => {
-			globalThis.fetch = previous;
-		};
-	}, [args.sessionId]);
 	return (
 		<MessageContextShell>
 			<UserDataContext.Provider
@@ -84,7 +41,11 @@ const Fixture = (args: React.ComponentProps<typeof StandingAccessSettings>) => {
 					reloadUserData: async () => userData
 				}}
 			>
-				{ready && <StandingAccessSettings {...args} />}
+				<StandingAccessPreferenceStoryFixture
+					sessionId={args.sessionId}
+				>
+					<StandingAccessSettings {...args} />
+				</StandingAccessPreferenceStoryFixture>
 			</UserDataContext.Provider>
 		</MessageContextShell>
 	);
@@ -115,3 +76,8 @@ export const SaveAndReadBack: Story = {
 	}
 };
 export const Phone390: Story = { ...SaveAndReadBack, globals: phone390Globals };
+
+export const Tablet834: Story = {
+	...SaveAndReadBack,
+	globals: tablet834Globals
+};

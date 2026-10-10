@@ -22,6 +22,7 @@ import { apiSendMatrixAttachmentMessage, apiSendMessage } from '../../api';
 const mocks = vi.hoisted(() => ({
 	clearDraft: vi.fn().mockResolvedValue(undefined),
 	draftChange: vi.fn(),
+	draftEnabled: vi.fn(),
 	encryptRoom: vi.fn().mockResolvedValue(undefined),
 	translate: (key: string) => key,
 	matrixService: { getClient: () => null }
@@ -73,11 +74,14 @@ vi.mock('../../hooks/useTimeoutOverlay', () => ({
 	useTimeoutOverlay: () => ({ visible: false })
 }));
 vi.mock('./useDraftMessage', () => ({
-	useDraftMessage: () => ({
-		loaded: true,
-		onChange: mocks.draftChange,
-		clearDraftMessage: mocks.clearDraft
-	})
+	useDraftMessage: (enabled: boolean) => {
+		mocks.draftEnabled(enabled);
+		return {
+			loaded: true,
+			onChange: mocks.draftChange,
+			clearDraftMessage: mocks.clearDraft
+		};
+	}
 }));
 vi.mock('./TipTapComposer', async () => {
 	const react = await import('react');
@@ -178,6 +182,7 @@ function Composer(
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mocks.clearDraft.mockResolvedValue(undefined);
 	vi.stubGlobal('MediaRecorder', Recorder);
 	Object.defineProperty(navigator, 'mediaDevices', {
 		configurable: true,
@@ -357,5 +362,29 @@ describe('recorded feedback stop-and-send', () => {
 			await waitFor(() => expect(onSendError).toHaveBeenCalledOnce());
 			expect(onSendError.mock.calls[0][9]).toBe(originalIntent);
 		}
+	);
+});
+
+it('keeps voice-only draft loading disabled until the outgoing clear settles', async () => {
+	let settleClear: () => void;
+	mocks.clearDraft.mockImplementation(
+		() =>
+			new Promise<void>((resolve) => {
+				settleClear = resolve;
+			})
+	);
+	render(<Composer />);
+	await recordAndSend();
+	await waitFor(() => expect(mocks.clearDraft).toHaveBeenCalledOnce());
+	expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(false);
+	await act(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 1350));
+	});
+	expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(false);
+	await act(async () => {
+		settleClear!();
+	});
+	await waitFor(() =>
+		expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(true)
 	);
 });
