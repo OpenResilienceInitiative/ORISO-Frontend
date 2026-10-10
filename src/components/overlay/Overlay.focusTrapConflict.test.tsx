@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ModalContext, TOverlay } from '../../globalState/context/ModalContext';
 import { OVERLAY_TWO_FACTOR_NAG } from '../../globalState/interfaces/AppConfig/OverlaysConfigInterface';
 import { BUTTON_TYPES } from '../button/Button';
+import { Overlay } from './Overlay';
 
 /**
  * #1326: a MUI `Dialog` (e.g. the key-backup recovery prompt) and this
@@ -28,8 +29,6 @@ vi.mock('focus-trap-react', () => ({
 		return <>{children}</>;
 	}
 }));
-
-import { Overlay } from './Overlay';
 
 const Harness = () => {
 	const [overlays, setOverlays] = useState<TOverlay[]>([]);
