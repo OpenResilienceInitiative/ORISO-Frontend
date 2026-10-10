@@ -30,6 +30,10 @@ const artworkBox = (size: number, file?: string) => {
 afterEach(cleanup);
 
 describe('AnimalAvatar artwork size (#1059)', () => {
+	// Unmount after each test: the SVG loads asynchronously, and a render
+	// landing after the file's jsdom teardown fails CI with `window is not defined`.
+	afterEach(cleanup);
+
 	it.each([24, 40, 48, 104, 108])(
 		'gives the artwork about two thirds of a %ipx circle',
 		(size) => {

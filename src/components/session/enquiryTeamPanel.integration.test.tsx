@@ -369,6 +369,12 @@ it('opens the enquiry with its complete original text and the shared team panel 
 	expect(
 		screen.getByRole('button', { name: 'enquiry.acceptButton.known' })
 	).toBeTruthy();
+	expect(view.container.querySelector('.sidePanel')?.textContent).toContain(
+		'chatStage.panel.team.empty.text'
+	);
+	expect(
+		view.container.querySelector('.sidePanel')?.textContent
+	).not.toContain('notifications.center.preview.empty');
 }, 20000);
 
 it('shows the complete enquiry text when opened outside the enquiry list', async () => {
@@ -439,6 +445,33 @@ it('keeps the original enquiry available after an opening error and retries into
 	);
 	expect(view.container.textContent).toContain(TEXT);
 	expect(screen.queryByRole('alert')).toBeNull();
+}, 20000);
+
+it('shows an empty archived team discussion without inviting the counsellor to write', async () => {
+	boundary.open.mockResolvedValue({ matrixRoomId: TEAM, status: 'ARCHIVED' });
+	const view = openEnquiry();
+	await waitFor(
+		() => {
+			const panel = view.container.querySelector(
+				'.chatStage__panel .sidePanel'
+			);
+			expect(panel?.textContent).toContain(
+				'notifications.center.preview.empty'
+			);
+			expect(panel?.textContent).not.toContain(
+				'chatStage.panel.team.empty.title'
+			);
+			expect(panel?.textContent).not.toContain(
+				'chatStage.panel.team.empty.text'
+			);
+			expect(
+				panel?.querySelector(
+					'[contenteditable="true"], textarea, [role="textbox"]'
+				)
+			).toBeNull();
+		},
+		{ timeout: 15000 }
+	);
 }, 20000);
 
 it('keeps archived team history readable without a composer when the server reports acceptance', async () => {
@@ -552,4 +585,39 @@ it('updates an already open enquiry when another colleague accepts it', async ()
 		},
 		{ timeout: 10000 }
 	);
+}, 20000);
+
+it('keeps focus the reader moved away right after the panel composer focused itself', async () => {
+	// The desktop autofocus must not leave a focus behind for a later frame
+	// (#1443): TipTap's chain().focus() lands one frame after the call.
+	const frames: FrameRequestCallback[] = [];
+	vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+		frames.push(callback);
+		return frames.length;
+	});
+	vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+	const flushFrames = () =>
+		frames.splice(0).forEach((callback) => callback(0));
+	const view = openEnquiry();
+	await waitFor(
+		() => {
+			const card = view.container.querySelector<HTMLElement>(
+				'.chatStage__panel .textarea__wrapper-send-message'
+			);
+			// Earlier frames may carry the mount; the autofocus's own frame
+			// must stay queued until the reader has moved away.
+			if (!card?.hasAttribute('data-auto-focused')) flushFrames();
+			expect(card?.hasAttribute('data-auto-focused')).toBe(true);
+		},
+		{ timeout: 15000 }
+	);
+	const elsewhere = screen.getByRole('button', {
+		name: 'enquiry.acceptButton.known'
+	});
+	elsewhere.focus();
+
+	flushFrames();
+	flushFrames();
+
+	expect(document.activeElement).toBe(elsewhere);
 }, 20000);

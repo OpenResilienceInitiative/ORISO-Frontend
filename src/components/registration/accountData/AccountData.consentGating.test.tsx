@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	waitFor
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('react-i18next', () => ({
@@ -12,6 +18,7 @@ vi.mock('react-i18next', () => ({
 		   that gets it right. */
 		t: (key: string, options?: Record<string, unknown>) => {
 			const catalogue: Record<string, string> = {
+				'chatFlyout.dataProtection': 'Datenschutz',
 				'registration.dataProtection.machineTranslated':
 					'Maschinell übersetzt — rechtlich verbindlich ist die Originalfassung ({{language}}).'
 			};
@@ -48,6 +55,7 @@ vi.mock('../../../globalState/provider/RegistrationProvider', async () => {
 
 /* eslint-disable import/first -- must load after the vi.mock calls above. */
 import { AccountData } from './AccountData';
+import { apiGetIsUsernameAvailable } from '../../../api/apiGetIsUsernameAvailable';
 import {
 	apiGetConsentText,
 	ConsentTextData
@@ -111,14 +119,16 @@ const stepTree = ({
 	hasPublishedDpp,
 	setDisabledNextButton = () => {},
 	agencyId = AGENCY_A,
-	locale = 'de'
+	locale = 'de',
+	registrationLinks = legalLinks
 }: {
 	hasPublishedDpp: boolean;
 	setDisabledNextButton?: (disabled: boolean) => void;
 	agencyId?: number;
 	locale?: string;
+	registrationLinks?: typeof legalLinks;
 }) => (
-	<LegalLinksContext.Provider value={legalLinks}>
+	<LegalLinksContext.Provider value={registrationLinks}>
 		<LocaleContext.Provider
 			value={
 				{
@@ -166,6 +176,91 @@ const consentCheckbox = () =>
 
 const anyCheckbox = () =>
 	document.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+
+describe('AccountData — the finishing consent appears when the other answers are ready', () => {
+	it('waits for actual platform links instead of offering a blank consent', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
+		draftAccepting(null);
+		const view = renderStep({
+			hasPublishedDpp: false,
+			registrationLinks: []
+		});
+		await screen.findByText('registration.account.username.success');
+		expect(screen.queryByRole('checkbox')).toBeNull();
+		expect(await screen.findByRole('alert')).toHaveProperty(
+			'textContent',
+			'registration.agency.legal.unavailable'
+		);
+		view.rerender(stepTree({ hasPublishedDpp: false }));
+		const checkbox = await screen.findByRole('checkbox');
+		expect((checkbox as HTMLInputElement).disabled).toBe(false);
+		expect((checkbox as HTMLInputElement).checked).toBe(false);
+	});
+
+	it('waits for usable legal wording before offering the checkbox', async () => {
+		let resolveConsent!: (result: ReturnType<typeof ok>) => void;
+		vi.mocked(apiGetConsentText).mockReturnValue(
+			new Promise((resolve) => {
+				resolveConsent = resolve;
+			})
+		);
+		draftAccepting(null);
+		renderStep({ hasPublishedDpp: true });
+		await waitFor(() =>
+			expect(apiGetIsUsernameAvailable).toHaveBeenCalled()
+		);
+		await screen.findByText('registration.account.username.success');
+		expect(screen.queryByRole('checkbox')).toBeNull();
+		resolveConsent(ok(null));
+		const checkbox = await screen.findByRole('checkbox');
+		expect((checkbox as HTMLInputElement).disabled).toBe(false);
+	});
+
+	it('keeps consent out of the way until the real password fields are valid, then requires an explicit tick', async () => {
+		vi.mocked(apiGetConsentText).mockResolvedValue(ok(null));
+		const setDisabledNextButton = vi.fn();
+		renderStep({ hasPublishedDpp: false, setDisabledNextButton });
+
+		expect(screen.queryByRole('checkbox')).toBeNull();
+		fireEvent.change(
+			screen.getByLabelText('registration.account.password.label'),
+			{
+				target: { value: VALID_PASSWORD }
+			}
+		);
+		expect(screen.queryByRole('checkbox')).toBeNull();
+		fireEvent.change(
+			screen.getByLabelText('registration.account.repeatPassword.label'),
+			{
+				target: { value: VALID_PASSWORD }
+			}
+		);
+
+		const checkbox = await screen.findByRole('checkbox');
+		expect((checkbox as HTMLInputElement).checked).toBe(false);
+		expect(
+			screen
+				.getByRole('region', { name: 'Datenschutz' })
+				.contains(checkbox)
+		).toBe(true);
+		expect(setDisabledNextButton).not.toHaveBeenCalledWith(false);
+		fireEvent.click(checkbox);
+		await waitFor(() =>
+			expect(setDisabledNextButton).toHaveBeenLastCalledWith(false)
+		);
+
+		fireEvent.change(
+			screen.getByLabelText('registration.account.repeatPassword.label'),
+			{
+				target: { value: 'does-not-match' }
+			}
+		);
+		await waitFor(() =>
+			expect(setDisabledNextButton).toHaveBeenLastCalledWith(true)
+		);
+		expect(screen.queryByRole('checkbox')).toBeNull();
+	});
+});
 
 afterEach(() => {
 	cleanup();

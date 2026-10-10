@@ -1,4 +1,5 @@
 import { AUTHORITIES, hasUserAuthority } from '../../globalState';
+import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import {
 	STATUS_ENQUIRY,
 	UserDataInterface
@@ -105,3 +106,13 @@ export const isCaseHandoverPending = (status?: string | null): boolean =>
 
 export const isCaseHandoverDenied = (status?: string | null): boolean =>
 	Boolean(status && CASE_HANDOVER_DENIED_STATUSES.includes(status));
+
+/** #200: an "advice needed" grant lets the colleague read, never write. */
+export const isCaseHandoverCoAccess = (
+	status?: CaseHandoverStatus | null
+): boolean =>
+	Boolean(
+		status?.canViewContent &&
+			status.accessType === 'CO_ACCESS' &&
+			['GRANTED', 'GRANTED_PENDING_CLIENT_OPTOUT'].includes(status.status)
+	);

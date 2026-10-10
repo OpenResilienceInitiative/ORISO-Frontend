@@ -1,3 +1,4 @@
+import { assertAppLocaleCoverage } from './appLocaleCoverage';
 /**
  * Emits the Keycloak e-mail theme from the design system.
  *
@@ -26,7 +27,14 @@
 import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { EMAIL_CONTENT, EmailId, EmailLocale } from '../index';
+import {
+	EMAIL_CONTENT,
+	EMAIL_LANGUAGE_LOCALES,
+	EMAIL_LOCALE_LANG,
+	EMAIL_LOCALE_RELEASE,
+	EmailId,
+	EmailLocale
+} from '../index';
 import {
 	EmailContent,
 	renderEmailHtml,
@@ -47,6 +55,7 @@ import {
 	keycloakLinkProperties,
 	keycloakLogoProperty
 } from '../kit/keycloakThemeLinks';
+import { assertKeycloakMessageParity } from './keycloakMessageParity';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, '../dist/keycloak/email');
@@ -65,19 +74,22 @@ const outDir = path.resolve(here, '../dist/keycloak/email');
  * host written here would be every environment's host (ORISO-Helm#366).
  */
 const themeDefaults: Record<string, string> = {
-	orisoPlatformName: 'Online-Beratung',
-	orisoOrgName: 'ORISO',
 	orisoOrgAddress: '',
 	orisoContactLine: '',
 	orisoPrimaryColor: '#a5000a',
 	orisoAccentColor: '#cc1e1c'
 };
 
+const requiredThemeProperties: Record<string, string> = {
+	orisoPlatformName: '${env.EMAIL_BRANDING_NAME}',
+	orisoOrgName: '${env.EMAIL_LEGAL_ORGANISATION_NAME}'
+};
+
 const themeProperty = (placeholder: string) =>
 	`oriso${placeholder.charAt(0).toUpperCase()}${placeholder.slice(1)}`;
 
 /**
- * A theme-property lookup that carries its own default.
+ * A theme-property lookup with defaults only for optional visual values.
  *
  * `theme.properties` is an *override*, not a requirement: the Helm chart mounts
  * `email/{html,messages,text}` and no theme.properties at all, so a template
@@ -85,12 +97,15 @@ const themeProperty = (placeholder: string) =>
  * that is, no button. The parentheses matter too: `${properties.x!''}` defaults
  * only the last step and dies if `properties` itself is missing.
  *
- * Links are the exception: they get no default, so a theme without its
- * properties fails to render instead of linking to some other environment.
+ * Links and installation names have no fallback: missing configuration must
+ * fail the render rather than emit a wrong URL or legal identity.
  */
 const themeLookup = (placeholder: string): string => {
 	const key = themeProperty(placeholder);
 	if (key in KEYCLOAK_LINK_PATHS) {
+		return `properties.${key}`;
+	}
+	if (key in requiredThemeProperties) {
 		return `properties.${key}`;
 	}
 	const fallback = (themeDefaults[key] ?? '').replace(/'/g, "\\'");
@@ -317,10 +332,17 @@ const finish = (
 	);
 
 	// Marker → message lookup, carrying whatever theme properties that string
-	// interpolates. `?no_esc` because the bundle is ours, not user input.
+	// interpolates. The bundle's markup is trusted; configured names are escaped.
 	out = out.replace(/@@([A-Za-z0-9]+)@@/g, (_, key: string) => {
 		const args = (messageArgs[key] ?? [])
-			.map((expression) => `, ${expression}`)
+			.map((expression) => {
+				// Message bundle markup is trusted, but configured names are not.
+				// Escape them before the complete message is inserted as HTML.
+				const brandName = Object.keys(requiredThemeProperties).some(
+					(property) => expression === `properties.${property}`
+				);
+				return `, ${freemarkerEscape && brandName ? `${expression}?esc?markup_string` : expression}`;
+			})
 			.join('');
 		const call = `msg("${key}"${args})`;
 		return freemarkerEscape ? `\${${call}?no_esc}` : `\${${call}}`;
@@ -374,12 +396,16 @@ const propertiesValue = (value: string): string =>
 		.replace(/:/g, '\\:')
 		.replace(/=/g, '\\=');
 
-const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] = [
-	{ locale: 'de-sie', lang: 'de' },
-	{ locale: 'en', lang: 'en' }
-];
+/** One bundle per App language. Review status is recorded in catalogue.json;
+ * pending human language review does not suppress generated files. */
+const KEYCLOAK_LOCALES: { locale: EmailLocale; lang: string }[] =
+	EMAIL_LANGUAGE_LOCALES.map((locale) => ({
+		locale,
+		lang: EMAIL_LOCALE_LANG[locale]
+	}));
 
 const run = async () => {
+	assertAppLocaleCoverage();
 	await rm(outDir, { recursive: true, force: true });
 	await mkdir(path.join(outDir, 'html'), { recursive: true });
 	await mkdir(path.join(outDir, 'text'), { recursive: true });
@@ -402,6 +428,11 @@ const run = async () => {
 		// The skeleton is language-independent: the copy is looked up at render
 		// time, so one file serves every locale Keycloak knows.
 		const KEYS = keysFor(template.name, template.subjectKey);
+		const sourceMessages = messages(
+			EMAIL_CONTENT['de-sie'][template.id],
+			KEYS,
+			template.dropCta === true
+		);
 		const skeleton = keyed(
 			EMAIL_CONTENT['de-sie'][template.id],
 			KEYS,
@@ -419,6 +450,12 @@ const run = async () => {
 				EMAIL_CONTENT[locale][template.id],
 				KEYS,
 				template.dropCta === true
+			);
+			assertKeycloakMessageParity(
+				sourceMessages,
+				raw,
+				locale,
+				template.id
 			);
 			const converted: Record<string, string> = {};
 			for (const [key, value] of Object.entries(raw)) {
@@ -477,7 +514,7 @@ const run = async () => {
 		written += 2;
 	}
 
-	for (const { lang } of KEYCLOAK_LOCALES) {
+	for (const { lang, locale } of KEYCLOAK_LOCALES) {
 		const body = Object.entries(bundles[lang])
 			.map(([key, value]) => `${key}=${propertiesValue(value)}`)
 			.join('\n');
@@ -485,6 +522,7 @@ const run = async () => {
 			path.join(outDir, 'messages', `messages_${lang}.properties`),
 			`# Generated from the ORISO e-mail design system — do not edit by hand.\n` +
 				`# Run 'npm run emails:keycloak' in ORISO-Frontend after changing the copy.\n` +
+				`# Human language review: ${EMAIL_LOCALE_RELEASE[locale]}.\n` +
 				`${body}\n`,
 			'utf8'
 		);
@@ -495,7 +533,18 @@ const run = async () => {
 		path.join(outDir, 'theme.properties'),
 		'parent=base\n' +
 			'# Generated from the ORISO e-mail design system — do not edit by hand.\n' +
-			'# Brand defaults; an operator may override them in the image.\n' +
+			`locales=${KEYCLOAK_LOCALES.map(({ lang }) => lang).join(',')}\n` +
+			`# Human language review pending: ${KEYCLOAK_LOCALES.filter(
+				({ locale }) => EMAIL_LOCALE_RELEASE[locale] !== 'released'
+			)
+				.map(({ lang }) => lang)
+				.join(', ')}.\n` +
+			'# Required installation names; the image refuses to start without them.\n' +
+			Object.entries(requiredThemeProperties)
+				.map(([key, value]) => `${key}=${value}`)
+				.join('\n') +
+			'\n' +
+			'# Optional brand defaults; an operator may override them in the image.\n' +
 			Object.entries(themeDefaults)
 				.map(([key, value]) => `${key}=${value}`)
 				.join('\n') +

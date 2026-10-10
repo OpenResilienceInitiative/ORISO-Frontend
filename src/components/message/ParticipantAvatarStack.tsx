@@ -12,6 +12,7 @@
 import * as React from 'react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { chosenAvatarOf } from '../../utils/avatarChoice';
 import { MessageAvatar } from './MessageAvatar';
 import {
 	resolveParticipantStack,
@@ -142,6 +143,7 @@ export const ParticipantAvatarStack = ({
 								displayName={participant.displayName}
 								firstName={participant.firstName}
 								lastName={participant.lastName}
+								choice={chosenAvatarOf(participant)}
 								size={size}
 							/>
 						</span>

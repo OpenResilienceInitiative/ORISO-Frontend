@@ -1,8 +1,13 @@
 import * as React from 'react';
+import type { AvatarIdentity } from '../../utils/avatarChoice';
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
+import {
+	SupervisorManagementDialog,
+	SUPERVISOR_DIALOG_TITLE_ID
+} from './SupervisorManagementDialog';
 import { mobileListView } from '../app/navigationHandler';
 import { stripChannelParams } from '../../utils/channelRoute';
 import { apiDeleteSessionAndUser } from '../../api/apiDeleteSessionAndUser';
@@ -36,6 +41,10 @@ import {
 	SessionConsultantInterface,
 	TopicSessionInterface
 } from '../../globalState/interfaces';
+import {
+	STATUS_ENQUIRY,
+	STATUS_ACTIVE
+} from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	getViewPathForType,
 	SESSION_LIST_TAB,
@@ -74,7 +83,7 @@ import {
 } from '../message/visibleParticipants';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { isSystemMatrixUser } from '../../utils/systemMatrixUsers';
-import { ConsultantSearchLoader } from './ConsultantSearchLoader';
+import { ContactSheetRequest } from './ContactSheetRequest';
 import './sessionHeader.styles';
 import { useSearchParam } from '../../hooks/useSearchParams';
 import { useTranslation } from 'react-i18next';
@@ -88,6 +97,7 @@ import { getTenantSettings } from '../../utils/tenantSettingsHelper';
 import { SYSTEM_NOTIFICATION_PREFIX } from '../message/messageConstants';
 import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
+import { notifyPracticeSupervisorsChanged } from '../../practice';
 import useMeasure from 'react-use-measure';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
@@ -124,6 +134,12 @@ export interface SessionHeaderProps {
 	 * header row (the title needs the width) and live in the kebab menu.
 	 */
 	callsInMenu?: boolean;
+	/**
+	 * #1499: a self-help group's topic stays out of the header until the
+	 * client has agreed to the group's privacy statement. Only the group
+	 * header reads it.
+	 */
+	hideGroupTopic?: boolean;
 }
 
 type SupervisorSnapshot = {
@@ -140,7 +156,8 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 		'consultingTypes',
 		'agencies'
 	]);
-	const { activeSession } = useContext(ActiveSessionContext);
+	const { activeSession, avatarMembers = [] } =
+		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
 	const sessionsDataContext = useContext(SessionsDataContext);
 	const { addNotification, addEventNotification } =
@@ -460,6 +477,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			);
 			await postSupervisorAddedSystemMessage(selectedSupervisorName);
 			await loadSupervisors();
+			notifyPracticeSupervisorsChanged();
 			setSelectedConsultantId('');
 			setSupervisionReason('');
 			setSupervisionReasonError(false);
@@ -767,17 +785,48 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 			matrixClientService
 		]
 	);
+	const ownMatrixUserId = matrixClientService?.getClient?.()?.getUserId?.();
 	const visibleRoomParticipants = React.useMemo(
 		() =>
 			filterVisibleParticipants(
 				roomParticipants,
 				visibleParticipantRules
-			),
-		[roomParticipants, visibleParticipantRules]
+			).map((participant) => {
+				let identity: AvatarIdentity | undefined;
+				if (participant.userId === ownMatrixUserId) {
+					identity = userData;
+				} else if (activeSession.isGroup) {
+					identity = avatarMembers.find(
+						(member) => member._id === participant.userId
+					);
+				} else if (participant.userId === askerMatrixUserId) {
+					identity = activeSession.user;
+				} else if (
+					participant.userId ===
+					activeSession.item?.consultantMatrixUserId
+				) {
+					identity = activeSession.consultant;
+				}
+				return {
+					...participant,
+					avatarKind: identity?.avatarKind,
+					avatarId: identity?.avatarId
+				};
+			}),
+		[
+			roomParticipants,
+			visibleParticipantRules,
+			ownMatrixUserId,
+			userData,
+			activeSession,
+			avatarMembers,
+			askerMatrixUserId
+		]
 	);
 
 	// Without Matrix members (enquiry, offline) the header still shows the
-	// contact: the asker as animal, a counsellor as monogram (#1193 Job 4).
+	// contact: the asker as animal, a counsellor as their chosen avatar when
+	// they picked one (#1047), otherwise the same animal as before.
 	const headerParticipants: StackParticipant[] =
 		visibleRoomParticipants.length > 0
 			? visibleRoomParticipants
@@ -785,16 +834,23 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				? [
 						{
 							userId:
-								askerMatrixUserId ||
+								(isAskerUser
+									? activeSession.item?.consultantMatrixUserId
+									: askerMatrixUserId) ||
 								contact.username ||
 								'unknown',
 							username: contact.username || 'User',
 							displayName:
 								headerAvatarDisplayName || headerFallbackLabel,
-							isAsker: !hasUserAuthority(
-								AUTHORITIES.ASKER_DEFAULT,
-								userData
-							)
+							isAsker: !isAskerUser,
+							// For an advice seeker the contact IS the counsellor,
+							// so their chosen avatar belongs on the header too.
+							avatarKind: isAskerUser
+								? activeSession.consultant?.avatarKind
+								: undefined,
+							avatarId: isAskerUser
+								? activeSession.consultant?.avatarId
+								: activeSession.user?.avatarId
 						}
 					]
 				: [];
@@ -984,6 +1040,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 				}
 				isJoinGroupChatView={props.isJoinGroupChatView}
 				bannedUsers={props.bannedUsers}
+				hideTopic={props.hideGroupTopic}
 			/>
 		);
 	}
@@ -1040,10 +1097,23 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 						});
 						const canOpenSupervisorModal =
 							supervisorAddState.mode === 'interactive';
+						/* FE#1115: only an unaccepted enquiry sweeps; empty ones and waiting
+						   live chats keep their avatar stack. No empty slot is reserved. */
+						const isSearchingForConsultant =
+							sessionHeaderConversationIconType === 'inquiry' &&
+							hasUserAuthority(
+								AUTHORITIES.ASKER_DEFAULT,
+								userData
+							) &&
+							!activeSession.consultant;
 						return (
 							<div className="sessionInfo__memberStack sessionInfo__memberStack--single">
 								<ChatroomMainInteractionIcon
 									type={sessionHeaderConversationIconType}
+									isSearching={isSearchingForConsultant}
+									searchingLabel={translate(
+										'sessionHeader.searchingForConsultant'
+									)}
 									showAddIcon={
 										props.showAddButton ??
 										!activeSession.isEnquiry
@@ -1060,14 +1130,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 											: undefined
 									}
 								/>
-								{hasUserAuthority(
-									AUTHORITIES.ASKER_DEFAULT,
-									userData
-								) && !activeSession.consultant ? (
-									<div className="sessionInfo__memberBubble">
-										<ConsultantSearchLoader size="32px" />
-									</div>
-								) : (
+								{!isSearchingForConsultant && (
 									<ParticipantAvatarStack
 										participants={headerParticipants}
 										/* Phone (< 900 px): one avatar + a
@@ -1218,48 +1281,29 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 					)}
 				</div>
 			)}
+			{isAskerUser &&
+				!isConsultantUser &&
+				activeSession.isSession &&
+				!isChatFinished &&
+				[STATUS_ENQUIRY, STATUS_ACTIVE].includes(
+					activeSession.item.status
+				) &&
+				activeSession.item.agencyId && (
+					<ContactSheetRequest
+						key={activeSession.item.id}
+						sessionId={activeSession.item.id}
+						email={userData.email}
+					/>
+				)}
 
 			{/* Supervisor Management Modal - Rendered via Portal */}
 			{isSupervisionEnabledForCurrentChat &&
 				isSupervisorModalOpen &&
 				createPortal(
-					<div
-						style={{
-							position: 'fixed',
-							top: 0,
-							left: 0,
-							right: 0,
-							bottom: 0,
-							backgroundColor: 'rgba(0, 0, 0, 0.5)',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							zIndex: 9999,
-							pointerEvents: 'auto'
-						}}
-						onClick={(e) => {
-							if (e.target === e.currentTarget) {
-								setIsSupervisorModalOpen(false);
-							}
-						}}
+					<SupervisorManagementDialog
+						onClose={() => setIsSupervisorModalOpen(false)}
 					>
-						<div
-							style={{
-								backgroundColor: 'white',
-								borderRadius: '8px',
-								padding: '24px',
-								maxWidth: '500px',
-								width: '90%',
-								maxHeight: '80vh',
-								overflowY: 'auto',
-								position: 'relative',
-								zIndex: 10000,
-								boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)'
-							}}
-							onClick={(e) => {
-								e.stopPropagation();
-							}}
-						>
+						<div>
 							<div
 								style={{
 									display: 'flex',
@@ -1268,12 +1312,16 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									marginBottom: '20px'
 								}}
 							>
-								<h2 style={{ margin: 0 }}>
+								<h2
+									id={SUPERVISOR_DIALOG_TITLE_ID}
+									style={{ margin: 0 }}
+								>
 									{translate(
 										'sessionHeader.supervisor.modal.title'
 									)}
 								</h2>
 								<button
+									aria-label={translate('app.close')}
 									onClick={() =>
 										setIsSupervisorModalOpen(false)
 									}
@@ -1538,7 +1586,7 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 									)}
 							</div>
 						</div>
-					</div>,
+					</SupervisorManagementDialog>,
 					document.body
 				)}
 

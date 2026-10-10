@@ -28,8 +28,10 @@ import { buildGroupChatInviteLinkForOrigin } from './groupChatInviteLink';
    runs on (`currentHostGroupChatInviteLink`), never a production URL. */
 const LINK = buildGroupChatInviteLinkForOrigin(
 	'https://dev.oriso.example',
-	4711
-);
+	4711,
+	undefined,
+	'Ab3_x-Yz'
+) as string;
 
 const VIDEO_DETAILS = {
 	topic: 'Sucht',

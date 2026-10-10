@@ -15,6 +15,11 @@
  */
 import { useLayoutEffect, useState } from 'react';
 import type { RefObject } from 'react';
+import { useTheme } from '@mui/material/styles';
+import {
+	removeComposerClearance,
+	updateComposerClearance
+} from '../m3Snackbar/composerClearance';
 
 /** Same hosts `scrollToNewest` knows: a side panel, else the chat card. */
 export const COMPOSER_HOST_SELECTOR = '.sidePanel, .session, .enquiry__wrapper';
@@ -34,6 +39,8 @@ export const useComposerDock = (
 	wrapperRef: RefObject<HTMLElement | null>
 ): number => {
 	const [hostHeight, setHostHeight] = useState(0);
+	const theme = useTheme();
+	const noticeGap = parseFloat(theme.spacing(2));
 
 	useLayoutEffect(() => {
 		const wrapper = wrapperRef.current;
@@ -63,6 +70,7 @@ export const useComposerDock = (
 			);
 			host.style.setProperty('--composer-dock-height', `${dock}px`);
 			host.style.setProperty('--composer-host-height', `${shared}px`);
+			updateComposerClearance(wrapper, noticeGap);
 			// Only on a real change: the observer fires for every frame of a
 			// composer resize, and re-rendering the composer on each of them
 			// swallowed keystrokes (the editor lost its input mid-word).
@@ -73,23 +81,37 @@ export const useComposerDock = (
 		// CSS variables and React state resize the observed composer itself.
 		// Apply those writes in the next frame, outside observer delivery.
 		let frame = 0;
-		const observer = new ResizeObserver(() => {
+		const scheduleMeasure = () => {
 			if (frame) return;
 			frame = window.requestAnimationFrame(() => {
 				frame = 0;
 				measure();
 			});
-		});
+		};
+		const observer = new ResizeObserver(scheduleMeasure);
 		measure();
 		observer.observe(wrapper);
 		observer.observe(host);
+		window.addEventListener('resize', scheduleMeasure);
+		window.visualViewport?.addEventListener('resize', scheduleMeasure);
+		window.visualViewport?.addEventListener('scroll', scheduleMeasure);
 		return () => {
 			window.cancelAnimationFrame(frame);
 			observer.disconnect();
+			window.removeEventListener('resize', scheduleMeasure);
+			window.visualViewport?.removeEventListener(
+				'resize',
+				scheduleMeasure
+			);
+			window.visualViewport?.removeEventListener(
+				'scroll',
+				scheduleMeasure
+			);
+			removeComposerClearance(wrapper);
 			host.style.removeProperty('--composer-dock-height');
 			host.style.removeProperty('--composer-host-height');
 		};
-	}, [wrapperRef]);
+	}, [wrapperRef, noticeGap]);
 
 	return hostHeight;
 };

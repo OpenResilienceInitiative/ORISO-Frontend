@@ -35,6 +35,8 @@ import {
 	shouldMockStorybookRealtimeUrl,
 	StorybookWebSocketMock
 } from './storybookRealtimeMocks';
+import { entryFormDemoGlobalTypes } from './consentCompletionStoryPlay';
+import { WithEntryFormDemo } from './withEntryFormDemo';
 import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
@@ -799,6 +801,22 @@ init(config.i18n, null);
 
 const preview: Preview = {
 	parameters: {
+		options: {
+			storySort: {
+				order: [
+					'Entry flows',
+					[
+						'Overview',
+						'Postcode counselling',
+						'Live chat',
+						'Self-help groups',
+						'Temporary guests',
+						'Existing account'
+					],
+					'*'
+				]
+			}
+		},
 		i18n,
 		a11y: {
 			options: {
@@ -886,19 +904,20 @@ const preview: Preview = {
 			]
 		}
 	},
-	globalTypes: orisoSchemeGlobalType,
+	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
-		scheme: 'light'
+		scheme: 'light',
+		entryFormDemo: 'manual'
 	},
 	tags: ['autodocs'],
-	// The scheme decorator runs outermost so its custom properties are in
-	// place before any component reads them.
-	decorators: [withMuiTheme, withOrisoScheme]
+	// The scheme decorator installs custom properties before the story
+	// components read them.
+	decorators: [withMuiTheme, withOrisoScheme, WithEntryFormDemo]
 };
 
 export default preview;

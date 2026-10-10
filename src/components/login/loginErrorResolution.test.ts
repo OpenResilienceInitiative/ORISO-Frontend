@@ -4,6 +4,7 @@ import { FETCH_ERRORS } from '../../api/fetchData';
 import {
 	describeLoginTransport,
 	LOGIN_ERROR_KEYS,
+	resolveEmailCodeResend,
 	resolveLoginError
 } from './loginErrorResolution';
 import deCommon from '../../resources/i18n/de/common.json';
@@ -19,6 +20,18 @@ const accountDisabledError = () => ({
 		data: {
 			error: 'invalid_grant',
 			error_description: 'Account disabled'
+		}
+	}
+});
+
+// The password grant cannot complete a Keycloak required action, e.g. the
+// first-login password change for admin-chosen passwords (#1670).
+const setupIncompleteError = () => ({
+	message: FETCH_ERRORS.BAD_REQUEST,
+	options: {
+		data: {
+			error: 'invalid_grant',
+			error_description: 'Account is not fully set up'
 		}
 	}
 });
@@ -52,6 +65,34 @@ describe('resolveLoginError', () => {
 			messageKey: LOGIN_ERROR_KEYS.ACCOUNT_DELETED,
 			outcome: 'account_disabled'
 		});
+	});
+
+	it('explains the unfinished setup instead of blaming the password (#1670)', () => {
+		expect(resolveLoginError(setupIncompleteError(), false)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.SETUP_INCOMPLETE,
+			outcome: 'setup_incomplete'
+		});
+	});
+
+	it('keeps the setup message after a second factor was submitted (#1670)', () => {
+		expect(resolveLoginError(setupIncompleteError(), true)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.SETUP_INCOMPLETE,
+			outcome: 'setup_incomplete'
+		});
+	});
+
+	it('translates the setup message in every shipped locale (#1670)', () => {
+		[deCommon, enCommon, frCommon, ruCommon, tiCommon, trCommon].forEach(
+			(catalogue) =>
+				expect(
+					typeof translationAt(
+						catalogue,
+						LOGIN_ERROR_KEYS.SETUP_INCOMPLETE
+					)
+				).toBe('string')
+		);
 	});
 
 	it('asks for the second factor instead of showing an error', () => {
@@ -152,6 +193,124 @@ describe('resolveLoginError', () => {
 				messageKey: LOGIN_ERROR_KEYS.UNAVAILABLE,
 				outcome: 'unavailable'
 			})
+		);
+	});
+
+	it('passes on the wait time Keycloak sends with the e-mail challenge (#1338)', () => {
+		expect(
+			resolveLoginError(
+				{
+					message: FETCH_ERRORS.BAD_REQUEST,
+					options: {
+						data: {
+							otpType: 'EMAIL' as never,
+							resendAvailableInSeconds: 17
+						}
+					}
+				},
+				false
+			)
+		).toEqual({
+			kind: 'otpRequired',
+			otpType: 'EMAIL',
+			outcome: 'otp_required',
+			resendAvailableInSeconds: 17
+		});
+	});
+
+	it('ignores a wait time that is not a usable number of seconds', () => {
+		[-1, Number.NaN, '20', 86400].forEach((value) =>
+			expect(
+				resolveLoginError(
+					{
+						message: FETCH_ERRORS.BAD_REQUEST,
+						options: {
+							data: {
+								otpType: 'EMAIL' as never,
+								resendAvailableInSeconds: value as never
+							}
+						}
+					},
+					false
+				)
+			).not.toHaveProperty('resendAvailableInSeconds')
+		);
+	});
+
+	it('explains the limit instead of an outage when Keycloak answers 429 (#1338)', () => {
+		[false, true].forEach((hasOtp) =>
+			expect(
+				resolveLoginError(
+					{ message: FETCH_ERRORS.TOO_MANY_REQUESTS },
+					hasOtp
+				)
+			).toEqual({
+				kind: 'message',
+				messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+				outcome: 'rate_limited'
+			})
+		);
+	});
+
+	/*
+	 * Review of ORISO-Admin#1124: once the mail cap is used up, Keycloak
+	 * answers a password-only request with 429, otpType EMAIL and the wait.
+	 * The code from the last mail still works, so the code step must show.
+	 */
+	const codeLimit = {
+		message: FETCH_ERRORS.TOO_MANY_REQUESTS,
+		options: {
+			data: {
+				error: 'invalid_grant',
+				error_description: 'Too many codes requested',
+				otpType: 'EMAIL' as never,
+				resendAvailableInSeconds: 745
+			}
+		}
+	};
+
+	it('shows the code step when a password-only request hits the e-mail code limit (#1338)', () => {
+		expect(resolveLoginError(codeLimit, false)).toEqual({
+			kind: 'otpRequired',
+			otpType: 'EMAIL',
+			outcome: 'otp_required',
+			resendAvailableInSeconds: 745,
+			codeLimitReached: true
+		});
+	});
+
+	it('keeps the limit message when a submitted code meets a 429 with a challenge', () => {
+		expect(resolveLoginError(codeLimit, true)).toEqual({
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			outcome: 'rate_limited'
+		});
+	});
+
+	it('reports a resend refused by the code limit as "too many", with the server wait', () => {
+		expect(
+			resolveEmailCodeResend(resolveLoginError(codeLimit, false))
+		).toEqual({ kind: 'tooMany', resendAvailableInSeconds: 745 });
+	});
+
+	it('translates the e-mail code resend texts in every shipped locale (#1338)', () => {
+		[
+			LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			'twoFactorAuth.activate.email.resend.countdown',
+			'twoFactorAuth.activate.email.resend.onlyLatest',
+			'twoFactorAuth.activate.email.resend.failed',
+			'twoFactorAuth.activate.email.resend.tooMany'
+		].forEach((key) =>
+			[
+				deCommon,
+				enCommon,
+				frCommon,
+				ruCommon,
+				tiCommon,
+				trCommon
+			].forEach((catalogue) =>
+				expect(typeof translationAt(catalogue, key), key).toBe('string')
+			)
 		);
 	});
 
