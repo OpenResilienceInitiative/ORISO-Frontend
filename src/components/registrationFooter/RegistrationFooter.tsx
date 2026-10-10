@@ -1,16 +1,22 @@
 import * as React from 'react';
 import { Box, Button, IconButton } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { ResizeObserver as PolyfillResizeObserver } from '@juggle/resize-observer';
 import {
 	registrationMd3,
 	registrationMotion
 } from '../registration/registrationDesign/registrationDesign';
+import { useKeyboardInset } from '../../utils/useKeyboardInset';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
+import { useRegistrationCompletionContent } from '../registration/consentCompletion/RegistrationCompletionContext';
 
 export interface RegistrationFooterAction {
 	/** Already translated. This component never calls `t`. */
 	label: string;
 	onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 	disabled?: boolean;
+	busy?: boolean;
+	status?: string;
 	/**
 	 * Full label for the tooltip when the visible one is truncated. Defaults to
 	 * `label`, which is what you want in every normal case.
@@ -19,9 +25,7 @@ export interface RegistrationFooterAction {
 	/** Overrides the generated `data-testid`. */
 	testId?: string;
 	/**
-	 * Take only the room the label needs and leave the rest to the other
-	 * action. For a quiet exit beside a long, important way on (Frank,
-	 * 2026-09-05: "der andere muss ja nicht gleich groß sein").
+	 * A quiet alternative above the primary action, using only its label width.
 	 */
 	compact?: boolean;
 	/**
@@ -54,6 +58,8 @@ export interface RegistrationFooterProps {
 	 * A reader who asked for reduced motion gets no movement either way.
 	 */
 	animateIn?: boolean;
+	/** Consent is above the action row, never squeezed into a button column. */
+	consent?: React.ReactNode;
 }
 
 /**
@@ -75,113 +81,203 @@ export interface RegistrationFooterProps {
  * secondary label vanished under the cursor. This component sets layout only,
  * so that cannot happen again (Frank, 2026-09-04: "MUI ist unsere Hauptbasis").
  *
- * **Two actions, not one.** `RegistrationStepNav` is built for a single
- * stretched pill with the arrow in its own disc; beside a second button the two
- * read as different species. A link entry has two equal choices, so both get one
- * geometry and only the role differs.
- *
- * Seven languages share these buttons and German is not the longest of them, so
- * a label that no longer fits is cut with an ellipsis rather than pushing the
- * button out of the bar. The whole text stays reachable through `title`.
+ * The primary reuses the handover's animated gate. A round exit stays beside
+ * it; a written alternative has its own row so the primary retains the pane's
+ * full width, including on small phones. Consent occupies a separate row above
+ * navigation, and the spacer tracks the complete footer's measured height.
  */
 export const RegistrationFooter = ({
 	primary,
 	secondary,
 	children,
-	animateIn = false
-}: RegistrationFooterProps) => (
-	<Box
-		data-cy="registration-footer"
-		sx={{
-			...(animateIn ? footerEnterSx : {}),
-			position: 'fixed',
-			bottom: 0,
-			right: 0,
-			/* Matches the stage split: full width below the breakpoint, the
-			   content column above it, so the bar stops at the red panel and
-			   never covers its legal links. */
-			width: { xs: '100vw', lg: '60vw' },
-			minHeight: { sm: '96px' },
-			backgroundColor: 'rgba(255, 255, 255, 0.94)',
-			backdropFilter: 'blur(8px)',
-			borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-			display: 'flex',
-			alignItems: 'center',
-			gap: 2,
-			pt: { xs: 1.5, sm: 0 },
-			pb: {
-				xs: 'calc(12px + env(safe-area-inset-bottom))',
-				sm: 0
-			},
-			px: { xs: 2, sm: 3, lg: 4 },
-			zIndex: 65
-		}}
-	>
-		{children}
-		{primary && secondary && secondary.round && (
-			<IconButton
-				aria-label={secondary.label}
-				title={secondary.title ?? secondary.label}
-				onClick={secondary.onClick}
-				disabled={secondary.disabled}
-				data-testid={
-					secondary.testId ?? 'registration-footer-secondary'
+	animateIn = false,
+	consent
+}: RegistrationFooterProps) => {
+	/* The bar rides above the software keyboard instead of disappearing behind
+	   it — see `useKeyboardInset`. Written as an inline style rather than into
+	   `sx` below because it changes many times per second while the keyboard
+	   animates, and a new emotion class per frame is a stylesheet insert per
+	   frame. */
+	const keyboardInset = useKeyboardInset();
+	const stackedActions = Boolean(primary && secondary && !secondary.round);
+	const completion = useRegistrationCompletionContent();
+	const footerRef = React.useRef<HTMLDivElement>(null);
+	const [footerHeight, setFooterHeight] = React.useState(96);
+	React.useLayoutEffect(() => {
+		const footer = footerRef.current;
+		if (!footer) return;
+		const measure = () => {
+			const height = footer.getBoundingClientRect().height;
+			if (height > 0) setFooterHeight(Math.ceil(height));
+		};
+		measure();
+		const RO = globalThis.ResizeObserver ?? PolyfillResizeObserver;
+		const observer = new RO(measure);
+		observer.observe(footer);
+		return () => observer.disconnect();
+	}, []);
+
+	return (
+		<>
+			{/* Reserve the real height, including long/mobile consent wording. */}
+			<Box
+				aria-hidden
+				sx={{ height: footerHeight, width: '100%', flexShrink: 0 }}
+			/>
+			<Box
+				ref={footerRef}
+				data-cy="registration-footer"
+				data-keyboard-inset={keyboardInset || undefined}
+				style={
+					keyboardInset ? { bottom: `${keyboardInset}px` } : undefined
 				}
 				sx={{
-					width: 56,
-					height: 56,
-					flexShrink: 0,
-					border: `1.5px solid ${registrationMd3.outline}`,
-					color: registrationMd3.onSurfaceVariant
+					...(animateIn ? footerEnterSx : {}),
+					'position': 'fixed',
+					'bottom': 0,
+					'right': 0,
+					/* Matches the stage split: full width below the breakpoint, the
+				   content column above it, so the bar stops at the red panel
+				   and never covers its legal links. */
+					'width': { xs: '100vw', lg: '60vw' },
+					'minHeight': { sm: '96px' },
+					'backgroundColor': 'rgba(255, 255, 255, 0.94)',
+					'backdropFilter': 'blur(8px)',
+					'borderTop': `1px solid ${registrationMd3.outlineVariant}`,
+					'display': 'flex',
+					'flexDirection': 'column',
+					'alignItems': 'stretch',
+					'pt': { xs: 1.5, sm: 0 },
+					/* The safe area belongs to the bottom edge of the screen. Once
+				   the bar has left that edge to sit on the keyboard, reserving
+				   it would be padding against a notch that is no longer under
+				   the bar. */
+					'pb': keyboardInset
+						? '12px'
+						: {
+								xs: 'calc(12px + env(safe-area-inset-bottom))',
+								sm: 0
+							},
+					'px': { xs: 2, sm: 3, lg: 4 },
+					/* Travel with the keyboard rather than jumping to meet it. A
+				   reader who asked for less motion still gets the position,
+				   just at once. */
+					'transition': `bottom ${registrationMotion.standard} ${registrationMotion.easeOut}`,
+					/* One block for every motion this bar has — the entrance above
+				   and the keyboard travel here. Two `@media` keys in one `sx`
+				   are one key: the later would silently replace the earlier,
+				   and the entrance would keep animating for a reader who asked
+				   it not to. */
+					'@media (prefers-reduced-motion: reduce)': {
+						animation: 'none',
+						transition: 'none'
+					},
+					'zIndex': 65
 				}}
 			>
-				<CloseRoundedIcon />
-			</IconButton>
-		)}
-		{primary && secondary && !secondary.round && (
-			<Button
-				variant="outlined"
-				onClick={secondary.onClick}
-				disabled={secondary.disabled}
-				title={secondary.title ?? secondary.label}
-				data-testid={
-					secondary.testId ?? 'registration-footer-secondary'
-				}
-				sx={{
-					...footerActionSx,
-					...(secondary.compact ? { flex: '0 0 auto', px: 3 } : {})
-				}}
-			>
-				{secondary.label}
-			</Button>
-		)}
-		{primary && (
-			<Button
-				variant="contained"
-				onClick={primary.onClick}
-				disabled={primary.disabled}
-				title={primary.title ?? primary.label}
-				data-testid={primary.testId ?? 'registration-footer-primary'}
-				sx={footerActionSx}
-			>
-				{primary.label}
-			</Button>
-		)}
-	</Box>
-);
+				{consent ?? completion}
+				<Box
+					sx={{
+						display: 'flex',
+						alignItems: stackedActions ? 'stretch' : 'center',
+						flexDirection: stackedActions ? 'column' : 'row',
+						gap: 2,
+						width: '100%',
+						minWidth: 0,
+						py: 1.5
+					}}
+				>
+					{children}
+					{primary && secondary && secondary.round && (
+						<IconButton
+							aria-label={secondary.label}
+							title={secondary.title ?? secondary.label}
+							onClick={secondary.onClick}
+							disabled={secondary.disabled}
+							data-testid={
+								secondary.testId ??
+								'registration-footer-secondary'
+							}
+							sx={{
+								width: 56,
+								height: 56,
+								flexShrink: 0,
+								border: `1.5px solid ${registrationMd3.outline}`,
+								color: registrationMd3.onSurfaceVariant
+							}}
+						>
+							<CloseRoundedIcon />
+						</IconButton>
+					)}
+					{primary && secondary && !secondary.round && (
+						<Button
+							variant={secondary.compact ? 'text' : 'outlined'}
+							onClick={secondary.onClick}
+							disabled={secondary.disabled}
+							title={secondary.title ?? secondary.label}
+							data-testid={
+								secondary.testId ??
+								'registration-footer-secondary'
+							}
+							sx={{
+								...footerActionSx,
+								...(secondary.compact
+									? {
+											flex: '0 0 auto',
+											alignSelf: 'flex-start',
+											minHeight: 36,
+											px: 1.5
+										}
+									: {})
+							}}
+						>
+							{secondary.label}
+						</Button>
+					)}
+					{primary && (
+						<Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+							<HandoverGateButton
+								state={
+									primary.busy
+										? 'entering'
+										: primary.disabled
+											? 'preparing'
+											: 'ready'
+								}
+								onEnter={primary.onClick}
+								label={primary.label}
+								status={primary.status ?? ''}
+								indeterminate={primary.busy}
+								title={primary.title ?? primary.label}
+								testId={
+									primary.testId ??
+									'registration-footer-primary'
+								}
+							/>
+						</Box>
+					)}
+				</Box>
+			</Box>
+		</>
+	);
+};
 
 /**
  * Motion, not paint: the bar slides up from below its own edge and fades in,
  * once. Spread first so the layout declarations below still win if the two ever
  * name the same property.
+ *
+ * The reduced-motion answer is deliberately not here but in the one
+ * `@media (prefers-reduced-motion: reduce)` block of the bar's own `sx`: two
+ * blocks would be two keys of the same name in one object, and only the last
+ * would survive.
  */
 const footerEnterSx = {
 	'animation': `registrationFooterEnter ${registrationMotion.slow} ${registrationMotion.easeOut} both`,
 	'@keyframes registrationFooterEnter': {
 		'0%': { opacity: 0, transform: 'translateY(18px)' },
 		'100%': { opacity: 1, transform: 'translateY(0)' }
-	},
-	'@media (prefers-reduced-motion: reduce)': { animation: 'none' }
+	}
 } as const;
 
 /** Layout only — see the note above about not painting. */

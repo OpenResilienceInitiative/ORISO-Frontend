@@ -17,10 +17,13 @@ import {
 import { displayFilterStore, mirrorKey } from '../../utils/displayFilter/store';
 import { DEFAULT_DISPLAY_FILTERS } from '../../utils/displayFilter/model';
 
+const authSession = vi.hoisted(() => ({ token: 'fake-token' }));
 const apiGetEventNotifications = vi.fn();
 const apiMarkEventNotificationRead = vi.fn();
 const apiMarkEventNotificationsReadByTypes = vi.fn();
 const apiGetEventNotificationsUnreadCount = vi.fn();
+const apiMarkAllEventNotificationsRead = vi.fn();
+const apiClearEventNotifications = vi.fn();
 
 vi.mock('../../api/apiEventNotifications', () => ({
 	apiGetEventNotifications: (...args: unknown[]) =>
@@ -31,12 +34,15 @@ vi.mock('../../api/apiEventNotifications', () => ({
 		apiMarkEventNotificationsReadByTypes(...args),
 	apiGetEventNotificationsUnreadCount: (...args: unknown[]) =>
 		apiGetEventNotificationsUnreadCount(...args),
-	apiMarkAllEventNotificationsRead: vi.fn(),
-	apiClearEventNotifications: vi.fn(() => Promise.resolve())
+	apiMarkAllEventNotificationsRead: (...args: unknown[]) =>
+		apiMarkAllEventNotificationsRead(...args),
+	apiClearEventNotifications: (...args: unknown[]) =>
+		apiClearEventNotifications(...args)
 }));
 
 vi.mock('../../components/sessionCookie/accessSessionCookie', () => ({
-	getValueFromCookie: () => 'fake-token'
+	AUTH_SESSION_CHANGE_EVENT: 'oriso:auth-session-change',
+	getValueFromCookie: () => authSession.token
 }));
 
 const item = (
@@ -88,6 +94,9 @@ const Probe = () => {
 			</button>
 			<button onClick={() => void context.refreshNotificationFeed()}>
 				refresh
+			</button>
+			<button onClick={() => context.markAllNotificationsAsRead()}>
+				read-all
 			</button>
 			<button onClick={() => context.clearNotificationFeed()}>
 				clear
@@ -164,7 +173,12 @@ const waitFor = async (assertion: () => void) => {
 describe('NotificationsProvider × display filter (#1377)', () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		authSession.token = 'fake-token';
 		apiGetEventNotifications.mockReset();
+		apiMarkAllEventNotificationsRead
+			.mockReset()
+			.mockResolvedValue(undefined);
+		apiClearEventNotifications.mockReset().mockResolvedValue(undefined);
 		apiMarkEventNotificationRead.mockReset();
 		apiMarkEventNotificationsReadByTypes.mockReset();
 		apiGetEventNotificationsUnreadCount.mockReset();
@@ -559,6 +573,11 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		await waitFor(() =>
 			expect(apiMarkEventNotificationRead).toHaveBeenCalledWith('2')
 		);
+		// A confirmed DELETE also empties the following server fetch.
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
 		// Logout/clear while that PATCH is still in flight …
 		act(() => {
 			screen.getByText('clear').click();
@@ -728,6 +747,13 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		apiMarkEventNotificationRead.mockResolvedValue({});
 		renderProvider();
 		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		apiGetEventNotifications.mockResolvedValue({
+			items: [
+				item(1, 'message.new', '2026-09-12T11:00:00Z'),
+				item(2, 'message.new')
+			],
+			unreadCount: 1
+		});
 		act(() => {
 			screen.getByText('read1').click();
 		});
@@ -776,9 +802,9 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(2);
 	});
 
-	it('a response for a previous exclusion set never makes the new set exact', async () => {
+	it('discards an old exclusion response without removing visible rows and refreshes the current set', async () => {
 		apiGetEventNotifications.mockResolvedValue({
-			items: [item(1, 'message.new')],
+			items: [item(1, 'supervisor.added')],
 			unreadCount: 9,
 			excludedEventTypes: []
 		});
@@ -786,37 +812,99 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		await waitFor(() => expect(rows()).toBe('1:u'));
 		const late = deferred<unknown>();
 		apiGetEventNotifications.mockReturnValueOnce(late.promise);
-		act(() => {
+		act(() =>
 			displayFilterStore.setSection('timeline', {
 				...hideSystemAutoRead,
 				autoReadHidden: false
-			});
-		});
+			})
+		);
 		const { messageEventEmitter } = await import(
 			'../../services/messageEventEmitter'
 		);
-		messageEventEmitter.emit({}); // request for set A, still in flight
+		act(() => messageEventEmitter.emit({}));
+		await advanceTimers(400);
 		const requestedA = apiGetEventNotifications.mock.calls.at(-1)![2];
-		act(() => {
+		expect(requestedA).toContain('supervisor.added');
+		act(() =>
 			displayFilterStore.setSection('timeline', {
 				kinds: {
-					system: { show: false, pill: false },
+					system: { show: true, pill: true },
 					calls: { show: false, pill: false }
 				},
 				autoReadHidden: false
-			}); // set B
+			})
+		);
+		const fresh = deferred<unknown>();
+		apiGetEventNotifications.mockReturnValueOnce(fresh.promise);
+		const before = apiGetEventNotifications.mock.calls.length;
+		await act(async () =>
+			late.resolve({
+				items: [],
+				unreadCount: 3,
+				excludedEventTypes: [...requestedA]
+			})
+		);
+		expect(rows()).toBe('1:u');
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(before + 1)
+		);
+		const requestedB = apiGetEventNotifications.mock.calls.at(-1)![2];
+		expect(requestedB).not.toContain('supervisor.added');
+		await act(async () =>
+			fresh.resolve({
+				items: [item(2, 'message.new')],
+				unreadCount: 4,
+				excludedEventTypes: requestedB
+			})
+		);
+		expect(rows()).toBe('2:u');
+		expect(screen.getByTestId('server-total').textContent).toBe('4');
+		expect(screen.getByTestId('exact').textContent).toBe('exact');
+	});
+
+	it('rechecks a parked response against a filter changed before failed reads settle', async () => {
+		apiGetEventNotifications.mockResolvedValueOnce({
+			items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+			unreadCount: 2
 		});
-		late.resolve({
-			items: [item(1, 'message.new')],
-			unreadCount: 3,
-			excludedEventTypes: [...requestedA]
+		const patch = deferred<unknown>();
+		apiMarkEventNotificationRead.mockReturnValue(patch.promise);
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u,2:u'));
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await waitFor(() =>
+			expect(apiMarkEventNotificationRead).toHaveBeenCalledTimes(1)
+		);
+		apiGetEventNotifications.mockResolvedValueOnce({
+			items: [],
+			unreadCount: 0
 		});
+		act(() => screen.getByText('refresh').click());
 		await advanceTimers(0);
-		await waitFor(() => expect(rows()).toBe('1:u'));
-		// The rows apply; the total for set A is dropped (it is neither exact
-		// nor a bound for B), the previous total and its exactness stay.
-		expect(screen.getByTestId('server-total').textContent).toBe('9');
-		expect(screen.getByTestId('exact').textContent).toBe('bound');
+		expect(rows()).toBe('1:u,2:u');
+		act(() =>
+			displayFilterStore.setSection('timeline', {
+				kinds: { system: { show: true, pill: true } },
+				autoReadHidden: false
+			})
+		);
+		const fresh = deferred<unknown>();
+		apiGetEventNotifications.mockReturnValueOnce(fresh.promise);
+		const before = apiGetEventNotifications.mock.calls.length;
+		await act(async () => patch.reject(new Error('offline')));
+		expect(rows()).toBe('1:u,2:u');
+		await waitFor(() =>
+			expect(apiGetEventNotifications).toHaveBeenCalledTimes(before + 1)
+		);
+		await act(async () =>
+			fresh.resolve({
+				items: [item(1, 'message.new'), item(2, 'supervisor.added')],
+				unreadCount: 2
+			})
+		);
+		expect(rows()).toBe('1:u,2:u');
 	});
 
 	it('an exact total of 0 asks for the unfiltered total so ✓✓ stays actionable', async () => {
@@ -889,5 +977,126 @@ describe('NotificationsProvider × display filter (#1377)', () => {
 		});
 		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
 		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+	});
+	it.each(['read-all', 'clear'])(
+		'resumes a hidden bulk read deferred by a rejected %s',
+		async (action) => {
+			const pending = deferred<void>();
+			if (action === 'read-all')
+				apiMarkAllEventNotificationsRead.mockReturnValue(
+					pending.promise
+				);
+			else apiClearEventNotifications.mockReturnValue(pending.promise);
+			apiGetEventNotifications.mockResolvedValue({
+				items: [item(1, 'message.new')],
+				unreadCount: 25
+			});
+			apiMarkEventNotificationsReadByTypes.mockResolvedValue({
+				updated: 24
+			});
+			renderProvider();
+			await waitFor(() => expect(rows()).toBe('1:u'));
+			act(() => screen.getByText(action).click());
+			act(() =>
+				displayFilterStore.setSection('timeline', hideSystemAutoRead)
+			);
+			await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+			expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
+			await act(async () =>
+				pending.reject(new Error('bulk unavailable'))
+			);
+			await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+			expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(
+				1
+			);
+			expect(
+				apiMarkEventNotificationsReadByTypes.mock.calls[0][0]
+			).toContain('supervisor.added');
+		}
+	);
+	it('resumes hidden auto-read after a confirmed clear resets the feed epoch', async () => {
+		const pending = deferred<void>();
+		apiClearEventNotifications.mockReturnValue(pending.promise);
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 25
+		});
+		apiMarkEventNotificationsReadByTypes.mockResolvedValue({ updated: 0 });
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() => screen.getByText('clear').click());
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
+		apiGetEventNotifications.mockResolvedValue({
+			items: [],
+			unreadCount: 0
+		});
+		await act(async () => pending.resolve());
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+	});
+
+	it('restarts hidden auto-read for a replacement account and ignores an old 404 completion', async () => {
+		const previous = deferred<unknown>();
+		apiMarkEventNotificationsReadByTypes
+			.mockReturnValueOnce(previous.promise)
+			.mockResolvedValue({ updated: 24 });
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 25
+		});
+		renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(1);
+		authSession.token = 'replacement-account-token';
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(7, 'message.new')],
+			unreadCount: 25
+		});
+		await act(async () =>
+			window.dispatchEvent(new Event('oriso:auth-session-change'))
+		);
+		await waitFor(() => expect(rows()).toBe('7:u'));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(2);
+		await act(async () => previous.reject({ status: 404 }));
+		act(() =>
+			displayFilterStore.setSection('timeline', {
+				kinds: {},
+				autoReadHidden: false
+			})
+		);
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).toHaveBeenCalledTimes(3);
+	});
+	it('does not wake a deferred hidden-read after its provider unmounts', async () => {
+		const pending = deferred<void>();
+		apiMarkAllEventNotificationsRead.mockReturnValue(pending.promise);
+		apiGetEventNotifications.mockResolvedValue({
+			items: [item(1, 'message.new')],
+			unreadCount: 25
+		});
+		apiMarkEventNotificationsReadByTypes.mockResolvedValue({ updated: 24 });
+		const view = renderProvider();
+		await waitFor(() => expect(rows()).toBe('1:u'));
+		act(() => screen.getByText('read-all').click());
+		act(() =>
+			displayFilterStore.setSection('timeline', hideSystemAutoRead)
+		);
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		view.unmount();
+		await act(async () => pending.reject(new Error('old bulk failure')));
+		await advanceTimers(AUTO_READ_DEBOUNCE_MS);
+		expect(apiMarkEventNotificationsReadByTypes).not.toHaveBeenCalled();
 	});
 });

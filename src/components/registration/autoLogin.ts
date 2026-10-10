@@ -4,6 +4,7 @@ import {
 } from '../../services/loginRecoveryHandoff';
 import { getKeycloakAccessToken } from '../sessionCookie/getKeycloakAccessToken';
 import { isRestorableSessionPath } from '../../utils/lastOpenSession';
+import { emailPreferencesReturnPath } from '../../utils/emailPreferencesReturn';
 import { encodeUsername } from '../../utils/encryptionHelpers';
 import { setTokens } from '../auth/auth';
 import { FETCH_ERRORS } from '../../api';
@@ -136,10 +137,7 @@ export const autoLogin = async ({
 		);
 
 		// console.log('🔷 Calling getMatrixAccessToken...');
-		const matrixLoginData = await getMatrixAccessToken(
-			autoLoginProps.username,
-			password
-		);
+		const matrixLoginData = await getMatrixAccessToken();
 
 		// Only persist the Matrix login data here. The actual Matrix client is
 		// created and registered exactly once by AuthenticatedApp on the
@@ -147,7 +145,8 @@ export const autoLogin = async ({
 		// client (that produced a second orphan sync loop that was never torn
 		// down on logout).
 		persistMatrixLoginData(matrixLoginData);
-		stageLoginRecoveryPassword(matrixLoginData.userId, password);
+		// Awaited: the caller leaves this document right after autoLogin resolves.
+		await stageLoginRecoveryPassword(matrixLoginData.userId, password);
 	} catch (error) {
 		// Continue without Matrix login data - the app boots and shows the
 		// session list; chat features recover on the next successful login.
@@ -195,6 +194,8 @@ type RedirectToAppOptions = {
 	 * Ignored unless it is a consultant session detail route.
 	 */
 	restorePath?: string | null;
+	/** A mail footer's exact settings route, validated before navigation. */
+	returnTo?: string | null;
 };
 
 const toRouterPath = (configured: string): string => {
@@ -208,7 +209,8 @@ const toRouterPath = (configured: string): string => {
 export const buildAppRedirectPath = (
 	gcid?: string,
 	sessionId?: string | number,
-	restorePath?: string | null
+	restorePath?: string | null,
+	returnTo?: string | null
 ): string => {
 	const value = gcid?.trim();
 	const search = value
@@ -217,6 +219,11 @@ export const buildAppRedirectPath = (
 
 	if (sessionId != null && String(sessionId).trim() !== '') {
 		return `/sessions/user/view/session/${sessionId}${search}`;
+	}
+
+	if (!value) {
+		const emailSettings = emailPreferencesReturnPath(returnTo);
+		if (emailSettings) return emailSettings;
 	}
 
 	if (isRestorableSessionPath(restorePath)) {
@@ -233,11 +240,23 @@ export const redirectToApp = (
 	const path = buildAppRedirectPath(
 		gcid,
 		options?.sessionId,
-		options?.restorePath
+		options?.restorePath,
+		options?.returnTo
 	);
 	if (options?.navigate) {
 		options.navigate(path);
 		return;
 	}
 	window.location.assign(path);
+};
+
+/**
+ * Leaves for the login page with a document load, like `redirectToApp` (#1402).
+ * For a registration that created the account but could not log it in: the
+ * account is real, so the form must not come back, and the handover screen has
+ * nothing left that would end it — logging in is the one step that can still
+ * work. The load also drops everything this document half-set on the way.
+ */
+export const redirectToLogin = () => {
+	window.location.assign(appConfig.urls.toLogin);
 };

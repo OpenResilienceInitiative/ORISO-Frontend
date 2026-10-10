@@ -1,3 +1,5 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
+import { resolveFeedbackMailIntent } from './feedbackMailIntent';
 import { markEnquiryFinalized } from '../../services/recoveryReminderState';
 import * as React from 'react';
 import {
@@ -14,14 +16,24 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 import { SendButton } from './inputField/SendButton';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
+import { usePracticeActive } from '../../practice';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
-import { assertMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { isMatrixRoomEncrypted } from '../../utils/matrixRoomEncryption';
+import { apiGetSessionRoomBySessionId } from '../../api/apiGetSessionRooms';
 import { deriveSendButtonState } from './inputField/sendButtonState';
 import { DragHandle } from './inputField/DragHandle';
 import { scrollTimelineToNewest } from './scrollToNewest';
 import { ComposerToolbar } from './inputField/ComposerToolbar';
 import { DefaultActionBar } from './inputField/DefaultActionBar';
-import { isFocusProtected, scheduleComposerAutoFocus } from './focusGuards';
+import {
+	isFocusProtected,
+	isTypingElsewhere,
+	scheduleComposerAutoFocus
+} from './focusGuards';
+import {
+	AUTO_FOCUS_ATTRIBUTE,
+	focusComposerAutomatically
+} from './timelineFollow';
 import {
 	buildSessionChannelPath,
 	resolveComposerChannel,
@@ -49,6 +61,7 @@ import {
 	createEnquirySubmissionGuard,
 	dispatchAskerMessageTransport,
 	resolveAskerMessageTransport,
+	resolveEnquiryMatrixRoom,
 	sendEncryptedInitialEnquiry
 } from './messageEncryptionMode';
 import { resolveAsideTargetRoomId, resolvePrimaryRoomId } from './asideRouting';
@@ -63,12 +76,14 @@ import {
 	AUDIENCE_ALL,
 	buildAudienceRoster,
 	classifyAudienceKind,
+	unmatchedMemberKind,
 	createAudienceCollector,
 	createIdentityLookup,
 	defaultAudienceSelection,
 	reconcileAudienceSelection,
 	restoreAudienceSelection,
 	audienceOptionsReady,
+	audienceSelectionStorageKeyFor,
 	groupAudienceOptions,
 	type AudienceKind,
 	type AudienceOption
@@ -124,7 +139,11 @@ import {
 	buildVisibleToPrefix
 } from '../message/messageConstants';
 import { useE2EE } from '../../hooks/useE2EE';
-import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
+import {
+	apiPostError,
+	ERROR_LEVEL_ERROR,
+	ERROR_LEVEL_WARN
+} from '../../api/apiPostError';
 import { useE2EEViewElements } from '../../hooks/useE2EEViewElements';
 import { Overlay } from '../overlay/Overlay';
 import { useTimeoutOverlay } from '../../hooks/useTimeoutOverlay';
@@ -194,6 +213,9 @@ const INFO_TYPES = {
 	ATTACHMENT_QUOTA_REACHED_ERROR: 'ATTACHMENT_QUOTA_REACHED_ERROR',
 	ATTACHMENT_OTHER_ERROR: 'ATTACHMENT_OTHER_ERROR',
 	MESSAGE_SEND_ERROR: 'MESSAGE_SEND_ERROR',
+	ENQUIRY_ROOM_UNAVAILABLE: 'ENQUIRY_ROOM_UNAVAILABLE',
+	DPA_RESTRICTED: 'DPA_RESTRICTED',
+	DPA_UNAVAILABLE: 'DPA_UNAVAILABLE',
 	VOICE_RECORDING_ERROR: 'VOICE_RECORDING_ERROR'
 };
 
@@ -229,6 +251,8 @@ export interface MessageSubmitInterfaceComponentProps {
 	targetChannelKind?: SideRoomChannelKind;
 	/** Marks notifications from the internal ADR-016 team room. */
 	teamDiscussion?: boolean;
+	/** Set only by the dedicated protected feedback composer, never a generic aside. */
+	feedbackMailIntent?: boolean;
 	/**
 	 * T35: dual mode (a side panel is open) — the composer rests at ONE
 	 * line on the desktop as well and grows while typing (`composerResize`
@@ -301,7 +325,8 @@ export interface MessageSubmitInterfaceComponentProps {
 		isAside?: boolean,
 		replyToEventId?: string | null,
 		mentionedUserIds?: string[],
-		targetRoomId?: string | null
+		targetRoomId?: string | null,
+		feedbackMailIntent?: boolean
 	) => void;
 	/** A user-triggered retry. One request id is handled at most once. */
 	retryRequest?: {
@@ -314,6 +339,7 @@ export interface MessageSubmitInterfaceComponentProps {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null;
 	onRetrySettled?: (requestId: string) => void;
 }
@@ -434,6 +460,7 @@ export const MessageSubmitInterfaceComponent = ({
 	targetRoomId,
 	targetChannelKind,
 	teamDiscussion = false,
+	feedbackMailIntent = false,
 	compactHeight = false,
 	flushCorner,
 	accent = 'default',
@@ -471,6 +498,20 @@ export const MessageSubmitInterfaceComponent = ({
 	const location = useLocation();
 
 	const textareaInputRef = useRef<HTMLDivElement>(null);
+	const composerCardRef = useRef<HTMLDivElement>(null);
+	// A click or a keystroke makes the focus the reader's own; leaving the
+	// card ends it. Either way the automatic-focus mark goes.
+	const clearAutoFocusMark = useCallback(() => {
+		composerCardRef.current?.removeAttribute(AUTO_FOCUS_ATTRIBUTE);
+	}, []);
+	const handleComposerCardBlur = useCallback(
+		(event: React.FocusEvent<HTMLDivElement>) => {
+			if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+				clearAutoFocusMark();
+			}
+		},
+		[clearAutoFocusMark]
+	);
 	const inputWrapperRef = useRef<HTMLSpanElement>(null);
 	const audienceMenuRef = useRef<HTMLDivElement>(null);
 	const attachmentInputRef = useRef<HTMLInputElement>(null);
@@ -615,13 +656,9 @@ export const MessageSubmitInterfaceComponent = ({
 		counsellors: true,
 		moderators: true
 	});
-	const audienceSelectionStorageKey = useMemo(() => {
-		const sessionId = activeSession?.item?.id;
-		if (!sessionId) {
-			return '';
-		}
-		return `oriso.audienceSelection.${sessionId}`;
-	}, [activeSession?.item?.id]);
+	const audienceSelectionStorageKey = audienceSelectionStorageKeyFor(
+		activeSession?.item?.id
+	);
 
 	const normalizeInitialAlignment = useCallback((rawValue: string) => {
 		if (!rawValue) {
@@ -654,16 +691,7 @@ export const MessageSubmitInterfaceComponent = ({
 		if (isFocusProtected(activeElement)) {
 			return;
 		}
-		const activeTagName = activeElement?.tagName?.toLowerCase();
-		const isTypingInAnotherInput =
-			!!activeElement &&
-			!inputElement.contains(activeElement) &&
-			(activeElement.isContentEditable ||
-				activeTagName === 'input' ||
-				activeTagName === 'textarea' ||
-				activeTagName === 'select');
-
-		if (isTypingInAnotherInput) {
+		if (isTypingElsewhere(activeElement, inputElement)) {
 			return;
 		}
 
@@ -1237,14 +1265,29 @@ export const MessageSubmitInterfaceComponent = ({
 
 		return scheduleComposerAutoFocus(() => {
 			// Review v6: never pull focus off an open menu or a
-			// `data-keeps-focus` region (the side-panel header) — the
-			// alignLeft chain below focuses the editor on its own, so the
-			// check has to come first.
+			// `data-keeps-focus` region (the side-panel header).
 			if (isFocusProtected(document.activeElement)) {
 				return;
 			}
-			composerRef.current?.runAction('alignLeft');
-			focusEditorInput();
+			// Nor off another editor the person is typing in: chat card and
+			// side panel each run this once their draft has loaded, and the
+			// later one used to pull focus out mid-word.
+			if (
+				isTypingElsewhere(
+					document.activeElement,
+					textareaInputRef.current
+				)
+			) {
+				return;
+			}
+			// Frank (16.09.): this cursor is the app's, not the reader's —
+			// the card is marked so it does not count as writing.
+			focusComposerAutomatically(composerCardRef.current, () => {
+				// Not runAction('alignLeft'): its focus lands a frame later,
+				// past the checks above, and took the other composer's focus.
+				composerRef.current?.resetTextAlign();
+				focusEditorInput();
+			});
 		}, autoFocusEditor);
 	}, [
 		activeSession.item.matrixRoomId,
@@ -1261,29 +1304,59 @@ export const MessageSubmitInterfaceComponent = ({
 	}, []);
 
 	const sendEnquiry = useCallback(
-		(message) => {
+		async (message) => {
 			if (!enquirySubmissionGuard.tryStart()) {
 				setIsRequestInProgress(false);
-				return Promise.resolve();
+				return;
 			}
-			const matrixRoomId = resolvedChatSession.matrixRoomId;
-			if (!matrixRoomId || !matrixClientService) {
+			if (!matrixClientService) {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
-			try {
-				assertMatrixRoomEncrypted(
-					matrixClientService.getClient(),
-					matrixRoomId
-				);
-			} catch {
+			// #1401: the session may show no Matrix room yet (list fetched before
+			// registration persisted the holding room) or none at all (the agency
+			// has no Matrix service account on this deployment). Re-read the
+			// session and give /sync a moment before deciding; a definite miss is
+			// reported with its reason instead of the generic retry prompt.
+			const roomResolution = await resolveEnquiryMatrixRoom({
+				knownRoomId: resolvedChatSession.matrixRoomId,
+				fetchSessionRoomId: () =>
+					apiGetSessionRoomBySessionId(activeSession.item.id).then(
+						(response) =>
+							response?.sessions?.[0]?.session?.matrixRoomId ??
+							null
+					),
+				isRoomEncrypted: (roomId) => {
+					const client = matrixClientService.getClient();
+					return !!client && isMatrixRoomEncrypted(client, roomId);
+				}
+			});
+			if (roomResolution.status === 'lookup-failed') {
 				enquirySubmissionGuard.markFailed();
 				setIsRequestInProgress(false);
 				setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
-				return Promise.resolve();
+				return;
 			}
+			if (roomResolution.status !== 'ready') {
+				enquirySubmissionGuard.markFailed();
+				setIsRequestInProgress(false);
+				setActiveInfo(INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE);
+				apiPostError({
+					name:
+						roomResolution.status === 'room-missing'
+							? 'EnquiryMatrixRoomMissing'
+							: 'EnquiryMatrixRoomNotEncrypted',
+					message:
+						roomResolution.status === 'room-missing'
+							? `Enquiry session ${activeSession.item.id} (agency ${activeSession.item.agencyId}) has no Matrix room; registration did not provision the agency holding room`
+							: `Matrix room ${roomResolution.roomId} of enquiry session ${activeSession.item.id} did not become an encrypted room in time`,
+					level: ERROR_LEVEL_ERROR
+				}).then();
+				return;
+			}
+			const matrixRoomId = roomResolution.roomId;
 			const submissionUserId = matrixClientService
 				.getClient()
 				?.getUserId();
@@ -1335,7 +1408,14 @@ export const MessageSubmitInterfaceComponent = ({
 				.catch((error) => {
 					enquirySubmissionGuard.markFailed();
 					setIsRequestInProgress(false);
-					setActiveInfo(INFO_TYPES.MESSAGE_SEND_ERROR);
+					const failure = getCounsellingDpaFailure(error);
+					setActiveInfo(
+						failure
+							? failure.retryable
+								? INFO_TYPES.DPA_UNAVAILABLE
+								: INFO_TYPES.DPA_RESTRICTED
+							: INFO_TYPES.MESSAGE_SEND_ERROR
+					);
 					apiPostError({
 						name: error?.name || 'EnquiryMessageSendError',
 						message:
@@ -1346,6 +1426,7 @@ export const MessageSubmitInterfaceComponent = ({
 				});
 		},
 		[
+			activeSession.item.agencyId,
 			activeSession.item.id,
 			enquirySubmissionGuard,
 			encryptRoom,
@@ -1386,7 +1467,7 @@ export const MessageSubmitInterfaceComponent = ({
 			 * visible while it is in force.
 			 */
 			setIsAudienceMenuOpen(false);
-			clearDraftMessage();
+			const draftCleared = clearDraftMessage();
 			setActiveInfo('');
 			// Force reset to default height after clearing - use multiple timeouts to ensure DOM updates
 			setTimeout(() => {
@@ -1401,7 +1482,12 @@ export const MessageSubmitInterfaceComponent = ({
 			setTimeout(() => {
 				resizeTextarea();
 			}, 200);
-			setTimeout(() => setIsRequestInProgress(false), 1200);
+			// Loading or saving the next draft must not cross the pending
+			// outgoing PATCH → DELETE, even when transport takes over 1200 ms.
+			void Promise.allSettled([
+				draftCleared,
+				new Promise<void>((resolve) => setTimeout(resolve, 1200))
+			]).then(() => setIsRequestInProgress(false));
 		},
 		[
 			clearDraftMessage,
@@ -1424,7 +1510,8 @@ export const MessageSubmitInterfaceComponent = ({
 			preserveComposerOnSuccess = false,
 			retryReplyToEventId?: string | null,
 			retryMentionedUserIds?: string[],
-			retryTargetRoomId?: string | null
+			retryTargetRoomId?: string | null,
+			sentFeedbackMailIntent = false
 		) => {
 			const sendToRoomWithId = activeSession.rid || activeSession.item.id;
 			// Determine if this is a Matrix-backed session.
@@ -1524,6 +1611,7 @@ export const MessageSubmitInterfaceComponent = ({
 								uploadProgress: setUploadProgress,
 								threadRootId: threadRootId || null,
 								supervisorMessage: !!isSupervisor,
+								feedbackMailIntent: sentFeedbackMailIntent,
 								senderDisplayName:
 									userData?.displayName ||
 									userData?.userName ||
@@ -1596,7 +1684,8 @@ export const MessageSubmitInterfaceComponent = ({
 						? retryReplyToEventId || null
 						: replyTo?.eventId || null,
 					mentionedUserIds,
-					teamDiscussion
+					teamDiscussion,
+					sentFeedbackMailIntent
 				)
 					.then(() => encryptRoom(setE2EEState))
 					.then(() => {
@@ -1610,6 +1699,21 @@ export const MessageSubmitInterfaceComponent = ({
 					})
 					.catch((error) => {
 						setIsRequestInProgress(false);
+						const dpaFailure = getCounsellingDpaFailure(error);
+						if (dpaFailure) {
+							setActiveInfo(
+								dpaFailure.retryable
+									? INFO_TYPES.DPA_UNAVAILABLE
+									: INFO_TYPES.DPA_RESTRICTED
+							);
+							return;
+						}
+						setActiveInfo((info) =>
+							info === INFO_TYPES.DPA_RESTRICTED ||
+							info === INFO_TYPES.DPA_UNAVAILABLE
+								? ''
+								: info
+						);
 						// Surface the failure in the timeline ("Sending message
 						// failed"); the composer keeps the text so the user can
 						// resend without retyping.
@@ -1624,7 +1728,8 @@ export const MessageSubmitInterfaceComponent = ({
 								? retryReplyToEventId || null
 								: replyTo?.eventId || null,
 							mentionedUserIds,
-							matrixRoomId ?? targetRoomId ?? null
+							matrixRoomId ?? targetRoomId ?? null,
+							sentFeedbackMailIntent
 						);
 						apiPostError({
 							name: error?.name || 'MatrixMessageSendError',
@@ -1640,7 +1745,6 @@ export const MessageSubmitInterfaceComponent = ({
 				onSendButton && onSendButton();
 				handleMessageSendSuccess();
 				cleanupAttachment();
-				setIsRequestInProgress(false);
 			}
 		},
 		[
@@ -1681,6 +1785,7 @@ export const MessageSubmitInterfaceComponent = ({
 				replyToEventId?: string | null;
 				mentionedUserIds: string[];
 				targetRoomId?: string | null;
+				feedbackMailIntent?: boolean;
 			}
 		) => {
 			const attachmentInput: any = attachmentInputRef.current;
@@ -1721,6 +1826,12 @@ export const MessageSubmitInterfaceComponent = ({
 				? retryContext.transportMessage
 				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
+			const sentFeedbackMailIntent = resolveFeedbackMailIntent({
+				explicitFeedbackComposer: feedbackMailIntent,
+				supervisorFeedbackAction: !!isSupervisor,
+				teamDiscussion,
+				retry: retryContext
+			});
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
 			// MSC3440 m.thread relation on the event (see chatTransportService),
@@ -1819,7 +1930,8 @@ export const MessageSubmitInterfaceComponent = ({
 					preserveComposerOnSuccess,
 					retryContext?.replyToEventId || null,
 					retryContext?.mentionedUserIds || [],
-					retryContext?.targetRoomId
+					retryContext?.targetRoomId,
+					sentFeedbackMailIntent
 				);
 			const handledAskerTransport = await dispatchAskerMessageTransport({
 				transport: askerMessageTransport,
@@ -1845,6 +1957,8 @@ export const MessageSubmitInterfaceComponent = ({
 		[
 			activeSession.isGroup,
 			attachmentSelected,
+			feedbackMailIntent,
+			teamDiscussion,
 			audienceOptions,
 			editingMessageId,
 			getTypedMarkdownMessage,
@@ -1947,7 +2061,8 @@ export const MessageSubmitInterfaceComponent = ({
 			isAside: retryRequest.isAside,
 			replyToEventId: retryRequest.replyToEventId,
 			mentionedUserIds: retryRequest.mentionedUserIds,
-			targetRoomId: retryRequest.targetRoomId
+			targetRoomId: retryRequest.targetRoomId,
+			feedbackMailIntent: retryRequest.feedbackMailIntent
 		})
 			.catch(() => {
 				// Send failures are surfaced through onSendError. This catch only
@@ -2107,23 +2222,40 @@ export const MessageSubmitInterfaceComponent = ({
 				infoHeadline: translate('attachments.error.other.headline'),
 				infoMessage: translate('attachments.error.other.message')
 			};
+		} else if (
+			activeInfo === INFO_TYPES.DPA_RESTRICTED ||
+			activeInfo === INFO_TYPES.DPA_UNAVAILABLE
+		) {
+			const key =
+				activeInfo === INFO_TYPES.DPA_RESTRICTED
+					? 'counselling.dpa.restricted'
+					: 'counselling.dpa.unavailable';
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate(`${key}.title`),
+				infoMessage: translate(`${key}.text`)
+			};
 		} else if (activeInfo === INFO_TYPES.MESSAGE_SEND_ERROR) {
 			infoData = {
 				isInfo: false,
 				infoHeadline: translate('statusOverlay.error.headline'),
 				infoMessage: translate('statusOverlay.error.text')
 			};
-		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
+		} else if (activeInfo === INFO_TYPES.ENQUIRY_ROOM_UNAVAILABLE) {
 			infoData = {
 				isInfo: false,
 				infoHeadline: translate(
-					'voice.recording.error.headline',
-					'Voice recording is unavailable'
+					'statusOverlay.enquiryRoomUnavailable.headline'
 				),
 				infoMessage: translate(
-					'voice.recording.error.message',
-					'Please allow microphone access and try again.'
+					'statusOverlay.enquiryRoomUnavailable.text'
 				)
+			};
+		} else if (activeInfo === INFO_TYPES.VOICE_RECORDING_ERROR) {
+			infoData = {
+				isInfo: false,
+				infoHeadline: translate('voice.recording.error.headline'),
+				infoMessage: translate('voice.recording.error.message')
 			};
 		} else if (activeInfo === INFO_TYPES.ARCHIVED) {
 			infoData = {
@@ -2148,7 +2280,11 @@ export const MessageSubmitInterfaceComponent = ({
 				: isAnonymousChat
 					? 'anonymous'
 					: 'oneOnOne';
+	const isSelfHelpGroup = getModality(activeSession) === Modality.SELF_HELP;
+	// Practice: no uploads and no voice (one gate for buttons, input, paste, shortcuts).
+	const isPracticing = usePracticeActive();
 	const hasUploadFunctionality =
+		!isPracticing &&
 		askerMessageTransport !== 'enquiry' &&
 		hasMediaUploadFeature(tenant?.settings, currentChatType);
 	const {
@@ -2218,7 +2354,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * The audience selector no longer uses it: it splits an id on
 	 * non-alphanumerics and keeps every token of four or more characters, so
-	 * `@consultant42:oriso.org` yields `oriso` — a token every account on the
+	 * `@consultant42:example.org` yields `example` — a token every account on the
 	 * homeserver shares. As an identity test that is worthless, which is why
 	 * recipient collection now runs on `audienceIdentityKeys` instead (#894).
 	 *
@@ -2426,7 +2562,7 @@ export const MessageSubmitInterfaceComponent = ({
 	useEffect(() => {
 		const defaultOption: AudienceOption = {
 			value: AUDIENCE_ALL,
-			label: translate('message.audience.sendToAll', 'Send to all'),
+			label: translate('message.audience.sendToAll'),
 			kind: 'all'
 		};
 		const isInquiryNotAccepted =
@@ -2441,7 +2577,7 @@ export const MessageSubmitInterfaceComponent = ({
 		 * Strict identity throughout: both "is this me?" and "have I already
 		 * got this person?" used to run through `getComparableAudienceIds`,
 		 * whose 4+ character tokens include the homeserver — so every account
-		 * on `oriso.org` matched every other one. See #894.
+		 * on `example.org` matched every other one. See #894.
 		 */
 		const audience = createAudienceCollector([
 			getCurrentMatrixUserId(),
@@ -2570,7 +2706,14 @@ export const MessageSubmitInterfaceComponent = ({
 			consultantIds: [
 				activeSession?.consultant?.username,
 				activeSession?.consultant?.id,
-				contact?.username
+				contact?.username,
+				...(activeSession?.item?.participants || []).flatMap(
+					(participant) => [
+						participant.consultantId,
+						agencyConsultantDirectory.get(participant.consultantId)
+							?.username
+					]
+				)
 			],
 			supervisorIds: sessionSupervisors.flatMap((supervisor) => [
 				supervisor.id,
@@ -2591,7 +2734,14 @@ export const MessageSubmitInterfaceComponent = ({
 						: label,
 					kind: supervisorLabel
 						? ('supervisor' as AudienceKind)
-						: classifyAudienceKind(value, roster)
+						: classifyAudienceKind(
+								value,
+								roster,
+								unmatchedMemberKind(
+									isSelfHelpGroup,
+									mentionDirectoryState
+								)
+							)
 				};
 			})
 			.sort((a, b) => a.label.localeCompare(b.label))
@@ -2625,6 +2775,7 @@ export const MessageSubmitInterfaceComponent = ({
 		activeSession?.consultant?.displayName,
 		activeSession?.consultant?.id,
 		activeSession?.item?.askerMatrixUserId,
+		activeSession?.item?.participants,
 		activeSession?.user?.username,
 		activeSession?.item?.id,
 		contact?.username,
@@ -2634,7 +2785,9 @@ export const MessageSubmitInterfaceComponent = ({
 		audienceRefreshTick,
 		sessionSupervisors,
 		agencyConsultantDirectory,
+		mentionDirectoryState,
 		currentChatType,
+		isSelfHelpGroup,
 		activeSession?.isGroup,
 		hideSupervisorAudience,
 		translate,
@@ -2769,7 +2922,7 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
-			return [translate('message.audience.sendToAll', 'Send to all')];
+			return [translate('message.audience.sendToAll')];
 		}
 		const labels = selectedAudienceValues
 			.map(
@@ -2797,14 +2950,13 @@ export const MessageSubmitInterfaceComponent = ({
 			selectedAudienceValues.length === 0 ||
 			selectedAudienceValues.includes(AUDIENCE_ALL);
 		if (isAllSelected) {
-			return translate('message.audience.all', 'Alle');
+			return translate('message.audience.all');
 		}
 		if (selectedAudienceLabels.length === 1) {
 			return selectedAudienceLabels[0];
 		}
-		return translate('message.audience.multiCount', '{{count}} Personen', {
-			count: selectedAudienceLabels.length,
-			defaultValue: `${selectedAudienceLabels.length} Personen`
+		return translate('message.audience.multiCount', {
+			count: selectedAudienceLabels.length
 		});
 	}, [selectedAudienceLabels, selectedAudienceValues, translate]);
 	const audienceTargetCount = useMemo(
@@ -2889,7 +3041,7 @@ export const MessageSubmitInterfaceComponent = ({
 	 *
 	 * This used to re-derive the roles here with `getComparableAudienceIds`,
 	 * whose 4+ character tokens include the homeserver name — every
-	 * participant on `oriso.org` shares the token `oriso`, so one supervisor in
+	 * participant on `example.org` shares the token `example`, so one supervisor in
 	 * the room could pull unrelated people into the moderator section, and the
 	 * section is what decides their pill icon. Reported by CodeRabbit on #948.
 	 */
@@ -2996,6 +3148,11 @@ export const MessageSubmitInterfaceComponent = ({
 			return;
 		}
 
+		const recordedFeedbackMailIntent = resolveFeedbackMailIntent({
+			explicitFeedbackComposer: feedbackMailIntent,
+			supervisorFeedbackAction: !!isSupervisor,
+			teamDiscussion
+		});
 		try {
 			const stream = await navigator.mediaDevices.getUserMedia({
 				audio: true
@@ -3057,7 +3214,19 @@ export const MessageSubmitInterfaceComponent = ({
 					);
 					if (sendAfterStop) {
 						setIsRequestInProgress(true);
-						sendMessage('', voiceFile, isE2eeEnabled);
+						sendMessage(
+							'',
+							voiceFile,
+							isE2eeEnabled,
+							!!isSupervisor,
+							undefined,
+							undefined,
+							false,
+							undefined,
+							undefined,
+							undefined,
+							recordedFeedbackMailIntent
+						);
 					} else {
 						if (voicePreviewUrl) {
 							URL.revokeObjectURL(voicePreviewUrl);
@@ -3105,6 +3274,9 @@ export const MessageSubmitInterfaceComponent = ({
 		stopVoiceRecording,
 		sendMessage,
 		isE2eeEnabled,
+		isSupervisor,
+		feedbackMailIntent,
+		teamDiscussion,
 		voicePreviewUrl
 	]);
 
@@ -3160,15 +3332,9 @@ export const MessageSubmitInterfaceComponent = ({
 		typedMessageLength >= MESSAGE_LENGTH_WARNING_THRESHOLD;
 	const isMessageOverLimit = typedMessageLength > INPUT_MAX_LENGTH;
 	const characterCounterAnnouncement = isMessageOverLimit
-		? translate(
-				'message.submit.characterCounter.overLimit',
-				'Message is over the character limit.'
-			)
+		? translate('message.submit.characterCounter.overLimit')
 		: isMessageLengthWarning
-			? translate(
-					'message.submit.characterCounter.warning',
-					'Message is approaching the character limit.'
-				)
+			? translate('message.submit.characterCounter.warning')
 			: '';
 	const canSendMessage =
 		(!!attachmentSelected || hasMessageContent(typedMessage)) &&
@@ -3509,21 +3675,12 @@ export const MessageSubmitInterfaceComponent = ({
 	const mentionProvider = useMemo(
 		() => ({
 			selfId: userData?.userId,
-			notInChatLabel: translate(
-				'message.mention.notInChat',
-				'nicht im Chat'
-			),
+			notInChatLabel: translate('message.mention.notInChat'),
 			// #993: the popup says why it is empty instead of rendering nothing.
 			getDirectoryState: () => mentionDataRef.current.directoryState,
-			emptyLabel: translate('message.mention.empty', 'Niemand gefunden'),
-			unavailableLabel: translate(
-				'message.mention.unavailable',
-				'Liste konnte nicht geladen werden'
-			),
-			loadingLabel: translate(
-				'message.mention.loading',
-				'Wird geladen …'
-			),
+			emptyLabel: translate('message.mention.empty'),
+			unavailableLabel: translate('message.mention.unavailable'),
+			loadingLabel: translate('message.mention.loading'),
 			getCandidates: () => {
 				const { directory, inRoomValues, matrixUserIdByComparableId } =
 					mentionDataRef.current;
@@ -3795,11 +3952,30 @@ export const MessageSubmitInterfaceComponent = ({
 			style={expandedComposerStyle}
 		>
 			{activeInfo && <MessageSubmitInfo {...getMessageSubmitInfo()} />}
+			{threadRootId && (
+				<div
+					className="messageSubmit__target"
+					data-cy="composer-target"
+					role="status"
+				>
+					<strong className="messageSubmit__targetLabel">
+						{translate('message.thread.targetLabel')}
+					</strong>
+					<span
+						className="messageSubmit__targetPreview"
+						title={
+							threadParentPreview ||
+							translate('message.thread.unknownRoot')
+						}
+					>
+						{threadParentPreview ||
+							translate('message.thread.unknownRoot')}
+					</span>
+				</div>
+			)}
 			{highlightedSnippet && (
 				<div className="textarea__snippetInfo">
-					{translate('chat.highlightSnippet.ready', {
-						defaultValue: 'Text snippet added to your reply'
-					})}
+					{translate('chat.highlightSnippet.ready', {})}
 				</div>
 			)}
 
@@ -3810,10 +3986,7 @@ export const MessageSubmitInterfaceComponent = ({
 					<div className="messageSubmit__replyPreview" role="status">
 						<div className="messageSubmit__replyPreviewContent">
 							<span className="messageSubmit__replyPreviewLabel">
-								{translate(
-									'message.reply.previewLabel',
-									'Antwort an'
-								)}{' '}
+								{translate('message.reply.previewLabel')}{' '}
 								<strong>{replyTo.author}</strong>
 							</span>
 							<span className="messageSubmit__replyPreviewText">
@@ -3824,10 +3997,7 @@ export const MessageSubmitInterfaceComponent = ({
 							type="button"
 							className="messageSubmit__replyPreviewCancel"
 							onClick={() => onCancelReply && onCancelReply()}
-							aria-label={translate(
-								'message.reply.cancel',
-								'Antwort verwerfen'
-							)}
+							aria-label={translate('message.reply.cancel')}
 						>
 							×
 						</button>
@@ -3843,19 +4013,13 @@ export const MessageSubmitInterfaceComponent = ({
 							type="button"
 							className="messageSubmit__editPreviewCancel"
 							onClick={() => onCancelEdit && onCancelEdit()}
-							aria-label={translate(
-								'message.edit.cancel',
-								'Bearbeiten abbrechen'
-							)}
+							aria-label={translate('message.edit.cancel')}
 						>
 							<HighlightOffIcon fontSize="inherit" />
 						</button>
 						<span className="messageSubmit__editPreviewText">
 							<span className="messageSubmit__editPreviewLabel">
-								{translate(
-									'message.edit.previewLabel',
-									'Nachricht bearbeiten'
-								)}
+								{translate('message.edit.previewLabel')}
 							</span>{' '}
 							<span className="messageSubmit__editPreviewQuote">
 								{editingMessage.text}
@@ -3890,8 +4054,12 @@ export const MessageSubmitInterfaceComponent = ({
 							accent !== 'default' &&
 								`textarea__wrapper-send-message--${accent}`
 						)}
+						ref={composerCardRef}
 						data-flush-corner={flushCorner}
 						data-accent={accent}
+						onPointerDownCapture={clearAutoFocusMark}
+						onKeyDownCapture={clearAutoFocusMark}
+						onBlur={handleComposerCardBlur}
 						onTransitionEnd={handleComposerShellTransitionEnd}
 						style={
 							!isExpandedComposer && effectiveComposerHeight
@@ -3918,8 +4086,7 @@ export const MessageSubmitInterfaceComponent = ({
 										: 'inside'
 								}
 								ariaLabel={translate(
-									'message.mobileNav.dragToExpand',
-									'Drag to resize composer'
+									'message.mobileNav.dragToExpand'
 								)}
 							/>
 						)}
@@ -3942,8 +4109,7 @@ export const MessageSubmitInterfaceComponent = ({
 										)
 									}
 									chevronLabel={translate(
-										'message.audience.openMenu',
-										'Open send-to menu'
+										'message.audience.openMenu'
 									)}
 								/>
 								{isAudienceMenuOpen && (
@@ -3968,8 +4134,7 @@ export const MessageSubmitInterfaceComponent = ({
 											className="textarea__audienceSelectorMenu"
 											role="dialog"
 											aria-label={translate(
-												'message.audience.menuAriaLabel',
-												'Send to selector'
+												'message.audience.menuAriaLabel'
 											)}
 										>
 											<button
@@ -3979,8 +4144,7 @@ export const MessageSubmitInterfaceComponent = ({
 													setIsAudienceMenuOpen(false)
 												}
 												aria-label={translate(
-													'message.audience.closeMenu',
-													'Close send-to menu'
+													'message.audience.closeMenu'
 												)}
 											>
 												<svg
@@ -4008,14 +4172,12 @@ export const MessageSubmitInterfaceComponent = ({
 											</button>
 											<p className="textarea__audienceSelectorMenuSubheading">
 												{translate(
-													'message.audience.menuSubheading',
-													'Wähle wer diese Nachricht sehen soll'
+													'message.audience.menuSubheading'
 												)}
 											</p>
 											<p className="textarea__audienceSelectorMenuHeading">
 												{translate(
-													'message.audience.menuHeading',
-													'Adressaten wählen'
+													'message.audience.menuHeading'
 												)}
 											</p>
 											<div className="textarea__audienceSelectorMenuDivider" />
@@ -4056,7 +4218,6 @@ export const MessageSubmitInterfaceComponent = ({
 																	'clients'
 																	? translate(
 																			'message.audience.clientsSelected',
-																			'{{count}} Clients Selected',
 																			{
 																				count: selectedCount
 																			}
@@ -4065,14 +4226,12 @@ export const MessageSubmitInterfaceComponent = ({
 																		  'counsellors'
 																		? translate(
 																				'message.audience.counsellorsSelected',
-																				'{{count}} Counsellors Selected',
 																				{
 																					count: selectedCount
 																				}
 																			)
 																		: translate(
 																				'message.audience.moderatorsSelected',
-																				'{{count}} Moderators Selected',
 																				{
 																					count: selectedCount
 																				}
@@ -4080,18 +4239,15 @@ export const MessageSubmitInterfaceComponent = ({
 																: sectionDefinition.key ===
 																	  'clients'
 																	? translate(
-																			'message.audience.clientsSelectAll',
-																			'Select All Clients'
+																			'message.audience.clientsSelectAll'
 																		)
 																	: sectionDefinition.key ===
 																		  'counsellors'
 																		? translate(
-																				'message.audience.counsellorsSelect',
-																				'Select All Counsellors'
+																				'message.audience.counsellorsSelect'
 																			)
 																		: translate(
-																				'message.audience.moderatorsSelect',
-																				'Select All Moderators'
+																				'message.audience.moderatorsSelect'
 																			);
 														return (
 															<div
@@ -4147,8 +4303,7 @@ export const MessageSubmitInterfaceComponent = ({
 																			)
 																		}
 																		aria-label={translate(
-																			'message.audience.toggleSection',
-																			'Toggle section'
+																			'message.audience.toggleSection'
 																		)}
 																		aria-expanded={
 																			expandedAudienceSections[
@@ -4185,18 +4340,15 @@ export const MessageSubmitInterfaceComponent = ({
 																			{sectionDefinition.key ===
 																			'clients'
 																				? translate(
-																						'message.audience.clientsEmpty',
-																						'No clients are in this room'
+																						'message.audience.clientsEmpty'
 																					)
 																				: sectionDefinition.key ===
 																					  'counsellors'
 																					? translate(
-																							'message.audience.counsellorsEmpty',
-																							'No counsellors are in this room'
+																							'message.audience.counsellorsEmpty'
 																						)
 																					: translate(
-																							'message.audience.moderatorsEmpty',
-																							'No moderators are in this room'
+																							'message.audience.moderatorsEmpty'
 																						)}
 																		</div>
 																	) : (
@@ -4289,8 +4441,7 @@ export const MessageSubmitInterfaceComponent = ({
 													/>
 													<span>
 														{translate(
-															'message.audience.selectAllBottom',
-															'Select All'
+															'message.audience.selectAllBottom'
 														)}
 													</span>
 												</button>
@@ -4606,8 +4757,7 @@ export const MessageSubmitInterfaceComponent = ({
 											<span className="textarea__voiceRecordingDot"></span>
 											<span className="textarea__voiceRecordingLabel">
 												{translate(
-													'voice.recording.active',
-													'Recording...'
+													'voice.recording.active'
 												)}
 											</span>
 											<span className="textarea__voiceRecordButton__timer">
@@ -4624,10 +4774,7 @@ export const MessageSubmitInterfaceComponent = ({
 													})
 												}
 											>
-												{translate(
-													'app.cancel',
-													'Cancel'
-												)}
+												{translate('app.cancel')}
 											</button>
 											<button
 												type="button"
@@ -4638,7 +4785,7 @@ export const MessageSubmitInterfaceComponent = ({
 													})
 												}
 											>
-												{translate('app.stop', 'Stop')}
+												{translate('app.stop')}
 											</button>
 										</span>
 									</span>
@@ -4650,8 +4797,7 @@ export const MessageSubmitInterfaceComponent = ({
 												<AudioOnIcon />
 												<span>
 													{translate(
-														'voice.recording.preview',
-														'Voice message'
+														'voice.recording.preview'
 													)}
 												</span>
 												<span className="textarea__voicePreview__duration">

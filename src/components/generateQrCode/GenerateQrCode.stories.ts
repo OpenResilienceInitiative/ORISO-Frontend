@@ -20,7 +20,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
 	args: {
-		url: 'https://oriso.org/registration',
+		url: 'https://example.org/registration',
 		headline: 'Scan to register',
 		filename: 'oriso-registration'
 	}
@@ -28,7 +28,7 @@ export const Default: Story = {
 
 export const WithText: Story = {
 	args: {
-		url: 'https://oriso.org/registration',
+		url: 'https://example.org/registration',
 		headline: 'Scan to register',
 		text: 'Point your phone camera at the QR code to open the registration page.',
 		filename: 'oriso-registration'

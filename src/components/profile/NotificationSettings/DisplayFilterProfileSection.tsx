@@ -12,6 +12,8 @@ import {
 } from '../../../globalState/helpers/stateHelpers';
 import { useTenant } from '../../../globalState/provider/TenantProvider';
 import { useDisplayFilter } from '../../../hooks/useDisplayFilter';
+import { useCounsellorAgencyFormats } from '../../../hooks/useCounsellorAgencyFormats';
+import { getConversationFormatAvailability } from '../../conversationCreate/formatAvailability';
 import {
 	DisplayFilterKindOption,
 	DisplayFilterValue
@@ -30,6 +32,7 @@ import {
 } from '../../../utils/displayFilter/model';
 import {
 	REQUEST_KIND_ORDER,
+	PILL_ONLY_SESSION_KINDS,
 	SESSION_KIND_ORDER
 } from '../../../utils/displayFilter/sessions';
 import {
@@ -58,9 +61,17 @@ export const DisplayFilterProfileSection = () => {
 		!!userData &&
 		!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
-	const showGroups = tenant?.settings?.featureGroupChatV2Enabled === true;
-	const showInternalGroups =
-		tenant?.settings?.featureSupervisionEnabled === true;
+	// The circle and internal-chat kinds follow the same answer as the
+	// create entry: the Träger AND at least one of the counsellor's
+	// Beratungsstellen must allow the format (#1440).
+	const { agencies: agencyFormats, isLoading: agencyFormatsLoading } =
+		useCounsellorAgencyFormats(canSupervise);
+	const availability = getConversationFormatAvailability(
+		tenant,
+		agencyFormats
+	);
+	const showGroups = !agencyFormatsLoading && availability.circle;
+	const showInternalGroups = !agencyFormatsLoading && availability.internal;
 
 	const timeline = useDisplayFilter('timeline');
 	const sessions = useDisplayFilter('sessions');
@@ -84,6 +95,8 @@ export const DisplayFilterProfileSection = () => {
 		() =>
 			SESSION_KIND_ORDER.filter((kind) => {
 				switch (kind) {
+					case 'create':
+						return showGroups || showInternalGroups;
 					case 'internalGroup':
 						return showInternalGroups;
 					case 'circle':
@@ -98,7 +111,10 @@ export const DisplayFilterProfileSection = () => {
 				id: kind,
 				label: sessionKindLabel(t, kind),
 				icon: SESSION_KIND_ICONS[kind],
-				showOnly: kind === 'futureTimeline'
+				showOnly: kind === 'futureTimeline',
+				modes: kind === 'liveChat',
+				pillOnly: PILL_ONLY_SESSION_KINDS.includes(kind),
+				placeholder: kind === 'appointments'
 			})),
 		[canSupervise, showGroups, showInternalGroups, t]
 	);

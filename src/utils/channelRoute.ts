@@ -24,6 +24,8 @@
  * memory of the last open channel.
  */
 
+import { isPracticeId } from '../practice/practiceIds';
+
 export type SessionChannel =
 	| { kind: 'supervision' }
 	| { kind: 'team' }
@@ -285,6 +287,8 @@ export interface AutoOpenInput {
 	hasTeamSideRoom?: boolean;
 	/** Whether the Teamberatung lookup definitively completed for this session. */
 	teamDiscussionResolved?: boolean;
+	/** Eligible unaccepted enquiry; selecting team creates/joins its room. */
+	canStartTeamDiscussion?: boolean;
 }
 
 export interface AutoOpenDecision {
@@ -308,8 +312,8 @@ const KEEP_WAITING: AutoOpenDecision = { settle: false, open: null };
  * Frank, 09.09.: "für den Nutzer [wird] immer die letzte Einstellung
  * gespeichert" — so a remembered `team` comes back as team, not as
  * supervision. With nothing remembered at all (first visit) the supervision
- * room keeps today's precedence; the Teamberatung is then one click away in
- * the channel card or the FAB.
+ * room opens for active cases. An eligible unaccepted enquiry instead opens
+ * its team discussion through the same channel route and room-opening contract.
  */
 export const decideAutoOpen = ({
 	routeChannel,
@@ -318,7 +322,8 @@ export const decideAutoOpen = ({
 	loadedRootIds,
 	hasSupervisionSideRoom,
 	hasTeamSideRoom = false,
-	teamDiscussionResolved = false
+	teamDiscussionResolved = false,
+	canStartTeamDiscussion = false
 }: AutoOpenInput): AutoOpenDecision => {
 	if (routeChannel) {
 		return { settle: true, open: null };
@@ -338,11 +343,14 @@ export const decideAutoOpen = ({
 			open: loadedRootIds.includes(remembered.rootId) ? remembered : null
 		};
 	}
-	// Nothing remembered → the first visit still belongs to the supervision
-	// room (unchanged behaviour); a remembered side room wins over it.
-	const wanted: SessionChannel = remembered ?? { kind: 'supervision' };
+	// Explicit choices win; an enquiry starts with its team discussion.
+	const wanted: SessionChannel = remembered ?? {
+		kind: canStartTeamDiscussion ? 'team' : 'supervision'
+	};
 	const exists =
-		wanted.kind === 'team' ? hasTeamSideRoom : hasSupervisionSideRoom;
+		wanted.kind === 'team'
+			? hasTeamSideRoom || canStartTeamDiscussion
+			: hasSupervisionSideRoom;
 	if (!exists) {
 		if (wanted.kind === 'team' && teamDiscussionResolved) {
 			return { settle: true, open: null };
@@ -425,6 +433,8 @@ export const writeLastChannel = (
 	if (!storage || sessionId === null || sessionId === undefined) {
 		return;
 	}
+	// Practice cases (FE#1622) never persist.
+	if (isPracticeId(sessionId)) return;
 	try {
 		storage.setItem(
 			lastChannelKey(sessionId),

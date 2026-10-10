@@ -1,18 +1,12 @@
 Die Übergabe ist bestätigt
 ==========================
 
-Die Beratung wurde übernommen. Ab sofort ist [[${toConsultantName}]] zuständig.
+Du bist jetzt für diese Beratung zuständig.
 
-Die ratsuchende Person wurde in der Anwendung darüber informiert.
-
-Fall: [[${caseReference}]]
-Neue Zuständigkeit: [[${toConsultantName}]]
-Übergeben am: [[${handoverAt}]]
+Öffne die Beratung im geschützten Bereich.
 
 Beratung öffnen:
 [[${requestUrl}]]
-
-Dein Zugriff auf den bisherigen Verlauf endet mit der Übergabe.
 
 ----------------------------------------------------------------
 Inhalte aus Beratungen stehen nie in einer E-Mail. Du siehst sie ausschließlich verschlüsselt nach der Anmeldung.

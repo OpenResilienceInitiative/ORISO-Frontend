@@ -52,6 +52,11 @@ export interface TimelineFilterState {
 	 * chips act as refinements on top of the search, not as modes).
 	 */
 	unreadOnly?: boolean;
+	/**
+	 * Kinds whose own pill is off and that therefore travel with the
+	 * Sonstiges chip (Frank 2026-09-16, `kindsUnderOther`).
+	 */
+	bundledUnderOther?: ReadonlyArray<string>;
 }
 
 /** Minimal shape the filter needs from a feed item. */
@@ -82,8 +87,18 @@ const normalize = (value: string): string => value.trim().toLowerCase();
 
 const matchesFamily = (
 	item: TimelineFilterableItem,
-	family: TimelineFamilyFilter
-): boolean => family === null || family === 'all' || familyOf(item) === family;
+	family: TimelineFamilyFilter,
+	bundledUnderOther: ReadonlyArray<string> = []
+): boolean => {
+	if (family === null || family === 'all') {
+		return true;
+	}
+	const kind = familyOf(item);
+	if (family === OTHER_TIMELINE_KIND) {
+		return kind === OTHER_TIMELINE_KIND || bundledUnderOther.includes(kind);
+	}
+	return kind === family;
+};
 
 /**
  * The families actually present in the feed, in canonical order. Used to render
@@ -108,7 +123,7 @@ export const filterTimelineItems = <T extends TimelineFilterableItem>(
 ): T[] => {
 	const query = normalize(state.query || '');
 	return items.filter((item) => {
-		if (!matchesFamily(item, state.family)) {
+		if (!matchesFamily(item, state.family, state.bundledUnderOther)) {
 			return false;
 		}
 		if (state.unreadOnly && item.readAt) {

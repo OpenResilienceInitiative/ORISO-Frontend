@@ -83,13 +83,19 @@ const foldLine = (line: string): string => {
 	return out;
 };
 
+// RFC 5545 suggests the generating host as the uid domain. `.invalid` only
+// outside a browser (tests, SSR); never a fixed platform domain (#368).
+const uidDomain = (): string =>
+	(typeof window !== 'undefined' && window.location?.hostname) ||
+	'calendar.invalid';
+
 /** Deterministic, dependency-free uid so repeated exports stay stable. */
 const generateUid = (start: Date, title: string): string => {
 	let hash = 0;
 	for (let i = 0; i < title.length; i++) {
 		hash = (hash * 31 + title.charCodeAt(i)) | 0;
 	}
-	return `${start.getTime()}-${(hash >>> 0).toString(36)}@oriso.org`;
+	return `${start.getTime()}-${(hash >>> 0).toString(36)}@${uidDomain()}`;
 };
 
 export const buildAppointmentIcs = (input: AppointmentIcsInput): string => {

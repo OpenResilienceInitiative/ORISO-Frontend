@@ -54,6 +54,11 @@ import {
 	LiveChatToggleActiveIcon,
 	LiveChatToggleInactiveIcon
 } from './LiveChatToggleIcons';
+import { resolveLiveChatRailTarget } from './liveChatRailTarget';
+import {
+	LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS,
+	useLiveChatAvailabilityLossNotice
+} from './useLiveChatAvailabilityLossNotice';
 
 export interface NavigationBarProps {
 	onLogout: any;
@@ -113,7 +118,8 @@ export const NavigationBar = ({
 		{
 			loading: liveChatLoading,
 			pending: liveChatPending,
-			error: liveChatError
+			error: liveChatError,
+			lostReason: liveChatLostReason
 		}
 	] = useLiveChatAvailable();
 	const [liveChatViaSidebar] = useLiveChatViaSidebar();
@@ -125,6 +131,8 @@ export const NavigationBar = ({
 		useNotificationSettings();
 	const notifMuted = notifSettings.globalMute;
 	useLiveChatAvailabilityHeartbeat(isConsultant, liveChatAvailable);
+	// #1485: the one heartbeat owner is also the one that says why it stopped.
+	useLiveChatAvailabilityLossNotice(liveChatLostReason);
 	const { tenant } = useContext(TenantContext);
 
 	const ref_menu = useRef<any[]>([]);
@@ -150,23 +158,26 @@ export const NavigationBar = ({
 		const nextActive = !liveChatAvailable;
 		try {
 			await setLiveChatAvailable(nextActive);
-			if (nextActive) {
-				navigate('/sessions/consultant/sessionPreview?chip=liveChat');
+			// Frank 2026-09-16 (Variante 1): with a live chat already open the
+			// button leads back into that conversation, not the empty queue.
+			const target = resolveLiveChatRailTarget({ nextActive, sessions });
+			if (target) {
+				navigate(target);
 			}
 		} catch {
 			// The hook retains the acknowledged state and exposes a localized error.
 		}
-	}, [liveChatAvailable, navigate, setLiveChatAvailable]);
+	}, [liveChatAvailable, navigate, sessions, setLiveChatAvailable]);
 
 	const figmaConsultantNav = true;
 	/**
-	 * Live Chat rail toggle:
-	 * - Desktop: only when the consultant opted into "control from the menu
-	 *   bar" in My Profile (Frank / viaSidebar preference).
-	 * - Mobile/tablet: always for consultants so Live Chat stays reachable in
-	 *   the scrollable bottom bar without hunting through Profile.
+	 * Live Chat rail toggle: only when the consultant opted into "Live Chat
+	 * über Menü Leiste aktivieren" in My Profile (profile preference
+	 * `liveChatViaSidebar`). Same rule on every breakpoint — the earlier
+	 * "always on mobile" exception was dropped by the product owner; without
+	 * the preference, availability is switched in My Profile.
 	 */
-	const showLiveChatNav = isConsultant && (liveChatViaSidebar || !fromL);
+	const showLiveChatNav = isConsultant && liveChatViaSidebar;
 	const languageMenuPlacement = fromL
 		? MENUPLACEMENT_RIGHT
 		: MENUPLACEMENT_TOP;
@@ -468,6 +479,12 @@ export const NavigationBar = ({
 										)}
 										to={item.to}
 										aria-label={linkLabel}
+										data-tour-target={
+											item.to ===
+											'/sessions/consultant/sessionPreview'
+												? 'nav-enquiries'
+												: undefined
+										}
 										onMouseEnter={() =>
 											setHoveredNavItem(item.to)
 										}
@@ -613,11 +630,17 @@ export const NavigationBar = ({
 							aria-busy={liveChatPending}
 							disabled={liveChatLoading || liveChatPending}
 							title={
-								liveChatError
+								liveChatLostReason
 									? translate(
-											'error.statusCodes.500.description'
+											LIVE_CHAT_AVAILABILITY_LOSS_TEXT_KEYS[
+												liveChatLostReason
+											]
 										)
-									: undefined
+									: liveChatError
+										? translate(
+												'error.statusCodes.500.description'
+											)
+										: undefined
 							}
 							onClick={handleLiveChatToggle}
 						>

@@ -25,6 +25,7 @@ import {
 } from './memberActivity';
 import { getTenantSettings } from '../../../utils/tenantSettingsHelper';
 import { stopMediaStreamTracks } from '../../../utils/callMediaStreamCleanup';
+import { callMediaErrorMessage } from '../../../utils/callMediaErrorMessage';
 import { ChatroomMainInteractionIcon } from '../ChatroomMainInteractionIcon';
 import { groupChatCallCapabilities } from './groupChatCallCapabilities';
 import { SessionMenu } from '../../sessionMenu/SessionMenu';
@@ -40,12 +41,19 @@ interface GroupChatHeaderProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	isJoinGroupChatView: boolean;
 	bannedUsers: string[];
+	/**
+	 * Leave the group's topic out of the header. Set while the group's
+	 * privacy gate is open: nothing about the group's topic is shown to
+	 * someone who has not yet agreed (#1499). Hidden, not dimmed.
+	 */
+	hideTopic?: boolean;
 }
 
 export const GroupChatHeader = ({
 	hasUserInitiatedStopOrLeaveRequest,
 	isJoinGroupChatView,
-	bannedUsers
+	bannedUsers,
+	hideTopic = false
 }: GroupChatHeaderProps) => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -179,9 +187,7 @@ export const GroupChatHeader = ({
 
 			if (!roomId) {
 				// console.error('❌ No Matrix room ID found for session');
-				alert(
-					'Cannot start call: No Matrix room found for this session'
-				);
+				alert(t('calls.error.noRoom'));
 				return;
 			}
 
@@ -192,11 +198,7 @@ export const GroupChatHeader = ({
 					'http://',
 					'https://'
 				);
-				if (
-					window.confirm(
-						'Camera/microphone access requires HTTPS. Redirect to secure connection?'
-					)
-				) {
+				if (window.confirm(t('calls.error.httpsRequired'))) {
 					window.location.href = httpsUrl;
 				}
 				return;
@@ -219,20 +221,7 @@ export const GroupChatHeader = ({
 			} catch (mediaError: any) {
 				// console.error('❌ Media permission denied:', mediaError);
 
-				let errorMsg = 'Cannot access camera/microphone. ';
-				if (mediaError.name === 'NotAllowedError') {
-					errorMsg +=
-						'Please grant permissions in your browser settings.';
-				} else if (mediaError.name === 'NotFoundError') {
-					errorMsg += 'No camera/microphone found on this device.';
-				} else if (mediaError.name === 'NotSupportedError') {
-					errorMsg +=
-						'Your browser does not support this feature. Please use HTTPS.';
-				} else {
-					errorMsg += mediaError.message || 'Unknown error.';
-				}
-
-				alert(errorMsg);
+				alert(callMediaErrorMessage(mediaError));
 				return;
 			}
 
@@ -247,7 +236,12 @@ export const GroupChatHeader = ({
 		} catch (error) {
 			// console.error('💥 ERROR in handleStartVideoCall:', error);
 			alert(
-				`Call failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+				t('calls.error.callFailed', {
+					message:
+						error instanceof Error
+							? error.message
+							: t('calls.error.unknown')
+				})
 			);
 		}
 		// console.log("═══════════════════════════════════════════════");
@@ -361,11 +355,13 @@ export const GroupChatHeader = ({
 								}
 							/>
 						</div>
-						<h3>
-							{typeof activeSession.item.topic === 'string'
-								? activeSession.item.topic
-								: activeSession.item.topic?.name || ''}
-						</h3>
+						{!hideTopic && (
+							<h3 data-cy="group-header-topic">
+								{typeof activeSession.item.topic === 'string'
+									? activeSession.item.topic
+									: activeSession.item.topic?.name || ''}
+							</h3>
+						)}
 					</div>
 					{/* Matrix room participants */}
 					{isLoadingMembers ? (

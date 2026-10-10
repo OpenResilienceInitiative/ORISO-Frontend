@@ -1,0 +1,45 @@
+.helpTours {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-two;
+	min-width: 0;
+
+	&__preference {
+		padding-bottom: $grid-base-two;
+		border-bottom: 1px solid var(--m3-outline-variant, $form-input-border);
+
+		@include breakpoint($fromLarge) {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			align-items: center;
+			gap: $grid-base $grid-base-two;
+
+			> .tertiary {
+				grid-column: 1 / -1;
+			}
+		}
+	}
+
+	&__preferenceTitle {
+		font-weight: $font-weight-bold;
+	}
+
+	&__practiceTitle {
+		margin: 0 0 $grid-base;
+		font-size: $font-size-h5;
+		font-weight: $font-weight-bold;
+		color: var(--m3-on-surface, $primary);
+	}
+
+	.tourOverview__list {
+		margin-top: 0;
+	}
+}
+
+// The shared card header already has its own space above the content.
+.profile__cards
+	.profile__card__body
+	> .helpTours
+	> .profile__content__title:first-child {
+	margin-bottom: 0;
+}
