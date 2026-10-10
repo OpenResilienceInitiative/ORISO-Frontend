@@ -44,6 +44,14 @@ export const AskerInfoContent = () => {
 			userData
 		);
 	}, [activeSession, type, userData]);
+	const isOwnerHandoverAvailable = useMemo(
+		() =>
+			type === SESSION_LIST_TYPES.MY_SESSION &&
+			!activeSession.isGroup &&
+			hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+			activeSession.consultant?.id === userData.userId,
+		[activeSession, type, userData]
+	);
 
 	return (
 		<>
@@ -55,10 +63,16 @@ export const AskerInfoContent = () => {
 					<AskerInfoTools />
 				</Box>
 			)}
-			{isSessionAssignAvailable && (
+			{(isSessionAssignAvailable || isOwnerHandoverAvailable) && (
 				<Box>
 					<div className="askerInfo__assign">
-						<AskerInfoAssign />
+						<AskerInfoAssign
+							showLegacyAssignment={
+								isSessionAssignAvailable &&
+								!isOwnerHandoverAvailable
+							}
+							handoverEnabled={isOwnerHandoverAvailable}
+						/>
 					</div>
 				</Box>
 			)}

@@ -38,6 +38,7 @@ export const EVENT_PARAM_KEYS = [
 	'recipientRole',
 	'conversationType',
 	'clientConsent',
+	'caseHandoverRequestId',
 	'threadRootId',
 	'mentioned',
 	'seriesId',
@@ -143,6 +144,9 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 		clientConsent === 'NONE'
 	) {
 		params.clientConsent = clientConsent;
+	}
+	if (isIdentifier(source.caseHandoverRequestId)) {
+		params.caseHandoverRequestId = source.caseHandoverRequestId;
 	}
 	if (isIdentifier(source.agencyId)) {
 		params.agencyId = source.agencyId;
