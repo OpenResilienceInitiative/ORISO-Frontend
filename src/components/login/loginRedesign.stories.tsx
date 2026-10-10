@@ -426,3 +426,79 @@ export const EmailCodeResendLimit = emailCodeStory(
 		);
 	}
 );
+
+/**
+ * ORISO-Frontend#1670: an account created with an admin-chosen password keeps
+ * Keycloak's `UPDATE_PASSWORD` required action, and the password grant answers
+ * it with 400 "Account is not fully set up". The password is right, so the
+ * screen must point to the setup link instead of "wrong password".
+ */
+const SetupIncompleteTokenStub = ({
+	children
+}: {
+	children: React.ReactNode;
+}) => {
+	const [isReady, setIsReady] = React.useState(false);
+	React.useLayoutEffect(() => {
+		const realFetch = window.fetch;
+		window.fetch = (async (
+			input: RequestInfo | URL,
+			init?: RequestInit
+		) => {
+			const url = String(
+				typeof input === 'string' || input instanceof URL
+					? input
+					: input.url
+			);
+			if (!url.includes('/protocol/openid-connect/token')) {
+				return realFetch(input as RequestInfo, init);
+			}
+			return jsonResponse(400, {
+				error: 'invalid_grant',
+				error_description: 'Account is not fully set up'
+			});
+		}) as typeof window.fetch;
+		setIsReady(true);
+		return () => {
+			window.fetch = realFetch;
+		};
+	}, []);
+	return isReady ? <>{children}</> : null;
+};
+
+export const SetupIncomplete: StoryObj = {
+	name: 'Konto noch nicht eingerichtet (#1670)',
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Ein neu angelegtes Konto mit vom Admin gesetztem Passwort trägt in Keycloak noch die Pflichtaktion „Passwort ändern“. Keycloak antwortet 400 „Account is not fully set up“: Das Passwort stimmt, deshalb verweist die Meldung auf den Einladungslink oder „Passwort vergessen?“ und markiert die Felder nicht als falsch.'
+			}
+		}
+	},
+	render: () => (
+		<SetupIncompleteTokenStub>
+			<LoginScreen />
+		</SetupIncompleteTokenStub>
+	),
+	play: async ({ canvasElement }) => {
+		const username = canvasElement.querySelector(
+			'#username'
+		) as HTMLInputElement;
+		const password = canvasElement.querySelector(
+			'#passwordInput'
+		) as HTMLInputElement;
+		await userEvent.type(username, 'neue-beraterin@example.org');
+		await userEvent.type(password, 'story-only{Enter}');
+		await waitFor(
+			() =>
+				expect(canvasElement).toHaveTextContent(
+					/noch nicht vollständig eingerichtet|not fully set up yet/
+				),
+			{ timeout: 4000 }
+		);
+		await expect(canvasElement).not.toHaveTextContent(
+			/Benutzername oder Passwort sind nicht korrekt|Username or password are not correct/
+		);
+	}
+};

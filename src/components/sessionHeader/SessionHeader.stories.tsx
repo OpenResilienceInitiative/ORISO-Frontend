@@ -444,15 +444,19 @@ const StoryProviders = ({
 
 const noopRef = { current: false };
 
-const renderGroupHeader = (preset: {
-	session: ExtendedSessionInterface;
-	members?: MockMember[];
-}) => (
+const renderGroupHeader = (
+	preset: {
+		session: ExtendedSessionInterface;
+		members?: MockMember[];
+	},
+	hideTopic = false
+) => (
 	<StoryProviders session={preset.session} members={preset.members}>
 		<GroupChatHeader
 			hasUserInitiatedStopOrLeaveRequest={noopRef}
 			isJoinGroupChatView={false}
 			bannedUsers={[]}
+			hideTopic={hideTopic}
 		/>
 	</StoryProviders>
 );
@@ -684,6 +688,36 @@ export const GroupChatLarge: Story = {
 				canvasElement.querySelectorAll('.sessionInfo__memberBubble')
 					.length
 			).toBe(4);
+		});
+	}
+};
+
+/**
+ * Group chat while the privacy gate is open (#1499, Frank's decision): the
+ * group's topic is left out of the header, not dimmed, until the client has
+ * agreed. The avatars stay.
+ */
+export const GroupChatBeforeConsentHidesTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.sessionInfo__memberStack')
+			).toBeTruthy();
+		});
+		expect(canvasElement.querySelector('h3')).toBeNull();
+		expect(within(canvasElement).queryByText('Team Austausch')).toBeNull();
+	}
+};
+
+/** After consent the header shows the group's topic as it always did. */
+export const GroupChatAfterConsentShowsTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				within(canvasElement).getByText('Team Austausch')
+			).toBeVisible();
 		});
 	}
 };

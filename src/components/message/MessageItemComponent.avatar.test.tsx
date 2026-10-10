@@ -84,7 +84,7 @@ describe('group message recipient avatar', () => {
 	});
 });
 
-it('does not show the assigned counsellor motif on a historical direct-chat author', () => {
+it('shows a historical direct-chat counsellor as initials on primary, never the assigned motif', () => {
 	const session = mockActiveSession1on1();
 	session.item.consultantMatrixUserId = '@assigned:example.org';
 	session.consultant.avatarKind = 'ICON';
@@ -100,6 +100,25 @@ it('does not show the assigned counsellor motif on a historical direct-chat auth
 			/>
 		</MessageContextShell>
 	);
-	expect(screen.queryByTestId('counsellor-avatar')).toBeNull();
-	expect(screen.getByTestId('user-avatar')).not.toBeNull();
+	const avatar = screen.getByTestId('counsellor-avatar');
+	expect(avatar.getAttribute('data-avatar-kind')).toBe('INITIALS');
+	expect(avatar.getAttribute('data-avatar-id')).toBeNull();
+});
+
+it('renders an own counsellor message on primary even without a saved choice', () => {
+	render(
+		<MessageContextShell activeSession={mockActiveSession1on1()}>
+			<MessageItemComponent
+				{...mockMessageItemComponentProps({
+					userId: '@assigned:example.org',
+					username: 'assigned',
+					message: 'An own counsellor message',
+					isMyMessage: true
+				})}
+			/>
+		</MessageContextShell>
+	);
+	expect(
+		screen.getByTestId('counsellor-avatar').getAttribute('data-avatar-kind')
+	).toBe('INITIALS');
 });

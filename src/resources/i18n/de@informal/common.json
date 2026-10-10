@@ -393,14 +393,18 @@
 			"admittedHeadline": "Du bist dabei.",
 			"admittedBody": "Die Moderation hat dich in den Gesprächskreis gelassen.",
 			"declinedBody": "Die Moderation hat deine Anfrage nicht angenommen. Bei Fragen wende dich an die Person, die dir den Link geschickt hat.",
-			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte frag die Moderation nach einem neuen Link."
+			"linkInvalid": "Dieser Einladungslink ist nicht mehr gültig. Bitte frag die Moderation nach einem neuen Link.",
+			"admittingHeadline": "Deine Anfrage ist angenommen.",
+			"admittingBody": "Der Gruppenzugang wird noch eingerichtet. Lass diese Seite dafür offen."
 		},
 		"joinRequest": {
 			"failed": "Das hat nicht geklappt. Bitte versuche es erneut.",
 			"dialog": {
 				"description": "Entscheide, ob {{name}} in „{{group}}“ dazukommt.",
 				"privacy": "Bis du entscheidest, sieht {{name}} nichts aus diesem Gesprächskreis."
-			}
+			},
+			"admissionQueued": "Du hast die Zulassung von {{name}} bestätigt. Der Gruppenzugang muss noch bestätigt werden.",
+			"coModerationQueued": "Du hast die Co-Moderation von {{name}} bestätigt. Der Gruppenzugang muss noch bestätigt werden."
 		},
 		"joinHandover": {
 			"status": {
@@ -931,6 +935,9 @@
 					"appointment": {
 						"title": "Termine",
 						"description": "Ein Termin wurde bestätigt, verschoben oder abgesagt – und die Erinnerung davor."
+					},
+					"consentRequest": {
+						"description": "Erhalte eine E-Mail, wenn deine Zustimmung zu einer Einsichtnahme oder Übergabe angefragt wird."
 					}
 				},
 				"consultant": {
@@ -1234,6 +1241,7 @@
 				"success": "Dein Benutzername ist geeignet."
 			},
 			"temporary": {
+				"incompleteLink": "Dieser Einladungslink ist unvollständig, daher ist das Beitreten ohne Konto nicht möglich. Bitte registriere dich mit einem Konto oder frag nach einem neuen Link.",
 				"title": "Diese Sitzung endet, wenn du den Browser schließt.",
 				"note": "Bis dahin schreibst du ganz normal, und deine Nachrichten bleiben für die anderen erhalten. Du selbst kannst danach nicht mehr in dieses Gespräch zurück."
 			}
@@ -2308,6 +2316,14 @@
 			"headline": "Dein angezeigter Name",
 			"body": "Im Gespräch erscheinst Du unter einem zufällig erzeugten Namen. Du kannst ihn jederzeit neu würfeln.",
 			"action": "Namen ändern"
+		},
+		"notificationChoice": {
+			"email": "Schreib mir eine E-Mail",
+			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
+			"browser": "Gib mir hier ein Signal",
+			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfe die Berechtigung in deinem Browser.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
+			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
 		}
 	},
 	"caseHandover": {
@@ -2325,6 +2341,38 @@
 			"cta": "Zum Gespräch",
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
+		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
+		},
+		"consent": {
+			"senderRole": "Kurze Orientierung",
+			"title": "Eine Fachkraft bittet um Zugriff auf dieses Gespräch",
+			"copy": "Bitte erlaube den Zugriff oder lehne ihn ab, damit die Fallübergabe fortgesetzt werden kann.",
+			"approve": "Zugriff erlauben",
+			"optOut": {
+				"prompt": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Du kannst dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"copy": "Für die Fallübergabe darf eine weitere Fachkraft derselben Beratungsstelle dieses Gespräch zeitlich begrenzt einsehen. Dabei werden personenbezogene Daten aus der Beratung verarbeitet. Deine bisherige Fachkraft bleibt weiterhin für dich zuständig.",
+				"revocationCopy": "Der Schalter gilt für diese Anfrage. Du kannst widersprechen; eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht."
+			},
+			"info": {
+				"title": "Einsichtnahme in deine Beratung",
+				"noticeTitle": "Unterstützung für deine Beratung",
+				"noticeCopy": "Eine weitere Fachkraft deiner Beratungsstelle erhält für diese Anfrage Einsicht. Eine vorherige Einwilligung wird bei dieser Einstellung nicht erfragt.",
+				"needCopy": "Eine weitere Fachkraft kann kurz unterstützen, etwa für einige Stunden. Bei Urlaub oder Krankheit kann jemand aus deiner Beratungsstelle übernehmen.",
+				"choiceTitle": "Deine Einwilligung",
+				"OPT_IN": "Für diese Anfrage ist deine Zustimmung nötig. Ohne sie erhält die anfragende Fachkraft keinen Zugriff. Deine Entscheidung gilt nur für diese Anfrage.",
+				"OPT_OUT": "Die Einsichtnahme beginnt ohne vorherige Einwilligung. Du kannst dieser Anfrage widersprechen. Eine bereits abgeschlossene Übernahme wird dadurch nicht rückgängig gemacht.",
+				"NONE": "Für diese Anfrage wird keine Entscheidung erfragt. Die Nachricht informiert dich über die Einsichtnahme ohne vorherige Einwilligung.",
+				"notificationsCopy": "Wenn deine Zustimmung gebraucht wird, empfehlen wir E-Mail- oder Browser-Benachrichtigungen. So erfährst du rechtzeitig von einer Anfrage und kannst reagieren.",
+				"takeoverContinues": "Dein Widerspruch wurde gespeichert. Die bereits abgeschlossene Übernahme bleibt bestehen.",
+				"description": "Für fachliche Rücksprache und Vertretung in deiner Beratungsstelle."
+			}
+		},
+		"standingPreference": {
+			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
+			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
 		}
 	},
 	"supervisorDialog": {

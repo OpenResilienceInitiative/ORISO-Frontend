@@ -1,0 +1,1 @@
+Independent verifier: PASS. Presentation-only change; no new storage, API writes, network, authentication or privacy boundary changes. Completed/skipped states retained; ordinary introduction untouched.

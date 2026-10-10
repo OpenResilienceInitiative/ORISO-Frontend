@@ -333,7 +333,7 @@ describe('JoinRequestCenter — the moderator who is knocked on', () => {
 		]);
 		expect(
 			inStack().getByText(
-				'groupChat.joinRequest.admitted(name=Anna Berg)'
+				'groupChat.joinRequest.admissionQueued(name=Anna Berg)'
 			)
 		).toBeTruthy();
 	});

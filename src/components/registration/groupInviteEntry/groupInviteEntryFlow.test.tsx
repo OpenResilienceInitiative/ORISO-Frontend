@@ -437,11 +437,11 @@ describe('newcomer entry for a self-help group link', () => {
 	   a link without `aid`, or another agency picked in the steps, is an
 	   ordinary registration and must not offer or send the temporary path. */
 	it.each([
-		['the link names no agency', '?gcid=19', 19],
-		['another agency was picked in the steps', '?gcid=19&aid=19', 7]
+		['the link names no agency', '?gcid=19', 19, true],
+		['another agency was picked in the steps', '?gcid=19&aid=19', 7, false]
 	])(
-		'offers no temporary join and never sends one when %s',
-		async (_, search, agencyId) => {
+		'offers no working temporary join and never sends one when %s',
+		async (_, search, agencyId, showsDisabledToggle) => {
 			renderAt(search, {
 				agency: { ...agency, id: agencyId, topicIds: [17, 18] },
 				mainTopic: grief,
@@ -450,9 +450,18 @@ describe('newcomer entry for a self-help group link', () => {
 				password: 'Minted-in-the-test-1'
 			});
 
-			expect(
-				document.querySelector('[data-cy="button-temporary-join"]')
-			).toBeNull();
+			const toggle = document.querySelector(
+				'[data-cy="button-temporary-join"]'
+			) as HTMLButtonElement | null;
+			if (showsDisabledToggle) {
+				// An incomplete link keeps the toggle, disabled and explained.
+				expect(toggle?.disabled).toBe(true);
+				expect(
+					document.querySelector('[data-cy="temporary-join-hint"]')
+				).not.toBeNull();
+			} else {
+				expect(toggle).toBeNull();
+			}
 			fireEvent.click(
 				document.querySelector(
 					'[data-cy="button-register"]'
@@ -544,9 +553,12 @@ describe('newcomer entry for a self-help group link', () => {
 
 		expect(screen.queryByRole('alert')).toBeNull();
 		expect(screen.queryByTestId('step-body')).toBeNull();
-		expect(screen.getByRole('status').getAttribute('aria-label')).toBe(
+		const loading = screen.getByRole('status');
+		expect(loading.getAttribute('aria-label')).toBe(
 			'registration.groupInvite.loading'
 		);
+		expect(loading.textContent).toBe('registration.groupInvite.loading');
+		expect(loading.closest('[aria-busy="true"]')).not.toBeNull();
 	});
 
 	it('leaves an ordinary registration untouched', () => {

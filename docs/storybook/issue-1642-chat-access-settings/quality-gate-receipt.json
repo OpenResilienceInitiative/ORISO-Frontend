@@ -1,0 +1,27 @@
+[
+	{
+		"phase": "final-review-unit",
+		"exitCode": 0,
+		"seconds": 214.1
+	},
+	{
+		"phase": "final-review-scriptlint",
+		"exitCode": 0,
+		"seconds": 19.5
+	},
+	{
+		"phase": "final-review-stylelint",
+		"exitCode": 0,
+		"seconds": 0.6
+	},
+	{
+		"phase": "final-review-storytypes",
+		"exitCode": 0,
+		"seconds": 9.6
+	},
+	{
+		"phase": "final-review-build",
+		"exitCode": 0,
+		"seconds": 34.6
+	}
+]

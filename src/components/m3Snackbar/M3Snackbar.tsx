@@ -3,6 +3,7 @@ import { ReactNode, useEffect, useId, useSyncExternalStore } from 'react';
 import { Alert, Box, Button, IconButton, Snackbar } from '@mui/material';
 import type { SnackbarOrigin, SxProps, Theme } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import { COMPOSER_BOTTOM_CLEARANCE } from './composerClearance';
 
 /**
  * The M3 snackbar roles, as the design system publishes them
@@ -65,6 +66,7 @@ export const m3SnackbarActionSx = {
 	'color': m3SnackbarColors.action,
 	'textTransform': 'none',
 	'minWidth': 0,
+	'minHeight': 44,
 	'px': 1,
 	'py': 0.5,
 	/* The label is one word, not a paragraph. Without this the flex row
@@ -197,8 +199,7 @@ export const useFloatingSnackbarPresence = (active: boolean) => {
  */
 export const M3_SNACKBAR_PHONE_QUERY = '(max-width: 899.98px)';
 export const M3_SNACKBAR_PHONE_MEDIA = `@media ${M3_SNACKBAR_PHONE_QUERY}`;
-export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM =
-	'calc(88px + env(safe-area-inset-bottom, 0px))';
+export const M3_SNACKBAR_ABOVE_NAVIGATION_BOTTOM = `max(calc(88px + env(safe-area-inset-bottom, 0px)), ${COMPOSER_BOTTOM_CLEARANCE})`;
 
 /** For surfaces that share the snackbar's role but not its anatomy (the join request). */
 export const M3_SNACKBAR_ELEVATION = elevation3;
@@ -291,7 +292,15 @@ export const M3Snackbar = ({
 		actionOnOwnLine && action ? (
 			closeButton || undefined
 		) : action || onClose ? (
-			<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+			<Box
+				sx={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 0.5,
+					minWidth: 0,
+					maxWidth: '100%'
+				}}
+			>
 				{actionButton}
 				{closeButton}
 			</Box>
@@ -312,13 +321,18 @@ export const M3Snackbar = ({
 				'borderRadius': M3_SNACKBAR_SHAPE,
 				'boxShadow': elevation3,
 				'alignItems': 'center',
+				'flexWrap': 'wrap',
+				'minWidth': 0,
 				'px': 2,
 				'py': 1,
 				/* MUI reserves a right gutter for the action slot; with the ✕
 				   already carrying its own padding that reads as a hole. */
 				'& .MuiAlert-action': {
 					alignItems: 'center',
-					flexShrink: 0,
+					flexShrink: 1,
+					minWidth: 0,
+					maxWidth: '100%',
+					ml: 'auto',
 					mr: 0,
 					pt: 0,
 					pl: 1
@@ -327,6 +341,8 @@ export const M3Snackbar = ({
 					...messageTypography,
 					py: '6px',
 					minWidth: 0,
+					flex: '1 1 160px',
+					overflow: 'visible',
 					overflowWrap: 'anywhere'
 				},
 				...sx
@@ -339,7 +355,8 @@ export const M3Snackbar = ({
 						display: 'flex',
 						justifyContent: 'flex-end',
 						mt: 0.5,
-						mr: -1
+						minWidth: 0,
+						maxWidth: '100%'
 					}}
 				>
 					{actionButton}
@@ -367,7 +384,16 @@ export const M3Snackbar = ({
 				onClose?.();
 			}}
 			sx={[
-				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' },
+				{
+					maxWidth: M3_SNACKBAR_MAX_WIDTH,
+					width: 'calc(100% - 32px)',
+					...(anchorOrigin.vertical === 'bottom' && {
+						bottom: (theme: Theme) => ({
+							xs: `max(${theme.spacing(1)}, ${COMPOSER_BOTTOM_CLEARANCE})`,
+							sm: `max(${theme.spacing(3)}, ${COMPOSER_BOTTOM_CLEARANCE})`
+						})
+					})
+				},
 				...(Array.isArray(containerSx) ? containerSx : [containerSx])
 			]}
 		>

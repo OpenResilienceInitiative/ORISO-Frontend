@@ -258,6 +258,19 @@ export const ti: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'ሓድሽ ምልክታ',
+		preheader: 'በጃኹም እተዉ።',
+		headline: 'ሕቶ ብዛዕባ ምኽርኹም',
+		paragraphs: [
+			'ካልእ ክኢላ ናይ ማእከል ምኽርኹም ንግዝያዊ ምርኣይ ዝርርብኩም ፍቓድኩም ይሓትት።',
+			'ነቲ ሕቶ ኣብቲ ዝተሓለወ ቦታ መርምሩ። ናይ ሕጂ ክኢላኹም ሓላፍነት ምኽርኹም ይቕጽል።'
+		],
+		cta: { label: 'ሕቶ ርኣዩ', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'ሓድሽ ምልክታ',
 		preheader: 'በጃኹም እተዉ።',
@@ -268,7 +281,7 @@ export const ti: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'ሕቶ ርኣዩ', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {

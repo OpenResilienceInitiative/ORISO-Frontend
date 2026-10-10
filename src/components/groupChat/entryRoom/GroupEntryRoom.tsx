@@ -2,7 +2,8 @@ import * as React from 'react';
 import dayjs from 'dayjs';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { Loading } from '../../app/Loading';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetAskerSessionList,
@@ -84,7 +85,7 @@ const EntryRoomLoading = () => (
 		}}
 		data-cy="group-entry-loading"
 	>
-		<CircularProgress />
+		<Loading layout="page" />
 	</Box>
 );
 
@@ -99,6 +100,7 @@ const ClientGroupEntryRoom = () => {
 			translateWithFallback(t, `groupChat.entry.${key}`, fallback),
 		[t]
 	);
+	const userData = useContext(UserDataContext)?.userData;
 	const { session, ready, reload } = useGroupChatSession(chatId);
 	const [joinBusy, setJoinBusy] = useState(false);
 	const [joinFailed, setJoinFailed] = useState(false);
@@ -226,8 +228,17 @@ const ClientGroupEntryRoom = () => {
 		);
 	}
 
-	const topicName =
-		typeof item.topic === 'string' ? item.topic : item.topic?.name;
+	/* #1499: the group's topic stays out of the waiting room until the
+	   client's agreement to the group's privacy statement is on record. */
+	const privacyAcceptanceRecorded = Boolean(
+		userData?.dataPrivacyConfirmation &&
+			String(userData.dataPrivacyConfirmation).trim() !== ''
+	);
+	const topicName = privacyAcceptanceRecorded
+		? typeof item.topic === 'string'
+			? item.topic
+			: item.topic?.name
+		: undefined;
 	const agencyName = item.assignedAgencies?.[0]?.name;
 
 	return (

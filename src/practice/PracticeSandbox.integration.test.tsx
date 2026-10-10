@@ -125,14 +125,23 @@ const networkFetch = vi.fn(
 
 /** Fails loudly when anything reaches the real Matrix service. */
 const realMatrixTouches: string[] = [];
+const realMatrixTouchStacks: string[] = [];
 const realMatrixService = new Proxy(
 	{},
 	{
 		get: (_target, key) => {
 			if (typeof key === 'string' && key !== 'then') {
 				realMatrixTouches.push(key);
+				realMatrixTouchStacks.push(
+					new Error(String(key)).stack ?? String(key)
+				);
 			}
-			return () => null;
+			return (...args: unknown[]) => {
+				realMatrixTouchStacks.push(
+					`call ${String(key)} ${JSON.stringify(args)}`
+				);
+				return null;
+			};
 		}
 	}
 );
@@ -262,6 +271,7 @@ beforeEach(async () => {
 	});
 	network.length = 0;
 	realMatrixTouches.length = 0;
+	realMatrixTouchStacks.length = 0;
 	storageWrites.length = 0;
 	networkFetch.mockClear();
 	indexedDbOpens.mockClear();
@@ -405,7 +415,7 @@ const expectNothingLeftThePracticeWorld = () => {
 	);
 	expect(practiceOnNetwork).toEqual([]);
 	expect(network.filter(({ method }) => method !== 'GET')).toEqual([]);
-	expect(realMatrixTouches).toEqual([]);
+	expect(realMatrixTouches, realMatrixTouchStacks.join('\n')).toEqual([]);
 	expect(storageWrites).toEqual([]);
 	expect(indexedDbOpens).not.toHaveBeenCalled();
 	expect(appNotifications.addEventNotification).not.toHaveBeenCalled();
@@ -612,8 +622,10 @@ describe('practice sandbox on the real session containers', () => {
 			expect(getPracticeNetworkGuard()?.blockedRequests).toEqual([]);
 			expect(window.fetch).not.toBe(guardedFetch);
 			cleanup();
+			// A successful send schedules hydration500ms later. Wait past it:
+			// practice room callbacks must not use the restored real client.
 			await act(
-				() => new Promise<void>((resolve) => setTimeout(resolve, 0))
+				() => new Promise<void>((resolve) => setTimeout(resolve, 600))
 			);
 			expect(window.fetch).toBe(guardedFetch);
 		} finally {

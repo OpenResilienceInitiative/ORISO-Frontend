@@ -36,6 +36,7 @@ export const EVENT_PARAM_KEYS = [
 	'senderDisplayName',
 	'contentClass',
 	'recipientRole',
+	'conversationType',
 	'clientConsent',
 	'caseHandoverRequestId',
 	'threadRootId',
@@ -135,6 +136,7 @@ export const parseEventActionParams = (raw: unknown): EventActionParams => {
 	params.senderDisplayName = asNullableString(source.senderDisplayName);
 	params.contentClass = asNullableString(source.contentClass);
 	params.recipientRole = asNullableString(source.recipientRole);
+	params.conversationType = asNullableString(source.conversationType);
 	const clientConsent = asNullableString(source.clientConsent);
 	if (
 		clientConsent === 'OPT_IN' ||

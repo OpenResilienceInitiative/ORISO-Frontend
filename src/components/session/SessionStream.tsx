@@ -1,3 +1,5 @@
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
+import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import {
 	useCallback,
@@ -61,21 +63,28 @@ import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import {
 	isCaseHandoverAccessControlled,
+	isCaseHandoverCoAccess,
 	isCaseHandoverPending
 } from './caseHandoverHelpers';
+import { normalizeServerTimestamp } from '../notificationsCenter/timelineTime';
 import {
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
 	isUndecryptedRoomEvent,
 	matrixRoomHistoryKeyTransfer
 } from '../../services/matrixRoomHistoryKeyTransfer';
-import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
-import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
+import {
+	NotificationsContext,
+	NotificationFeedItem
+} from '../../globalState/provider/NotificationsProvider';
+import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversation';
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
+/** Browsers fire a longer setTimeout immediately. */
+const MAX_TIMEOUT_MS = 2 ** 31 - 1;
 
 // Practice rooms (FE#1622) have no keys to fetch; parked in the real
 // key-transfer singleton they would be retried on the real client.
@@ -199,6 +208,10 @@ export const SessionStream = ({
 		resolvedCaseHandoverNotificationId,
 		setResolvedCaseHandoverNotificationId
 	] = useState<string | null>(null);
+	const [confirmedConsent, setConfirmedConsent] = useState<{
+		notification: NotificationFeedItem;
+		status: CaseHandoverStatus;
+	} | null>(null);
 	const pendingCaseHandoverConsent = useMemo(() => {
 		if (
 			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
@@ -228,6 +241,20 @@ export const SessionStream = ({
 		resolvedCaseHandoverNotificationId,
 		userData
 	]);
+	const displayedConsent =
+		pendingCaseHandoverConsent ||
+		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		confirmedConsent?.status.sessionId === activeSession.item?.id
+			? confirmedConsent.notification
+			: null);
+
+	const displayedConsentMode =
+		displayedConsent?.id === confirmedConsent?.notification.id
+			? (confirmedConsent?.status.clientConsent ??
+				displayedConsent?.params?.clientConsent)
+			: displayedConsent?.params?.clientConsent;
+
 	const pendingCaseHandoverRequestId = useMemo(
 		() =>
 			caseHandoverRequestIdFromPath(
@@ -713,6 +740,52 @@ export const SessionStream = ({
 		hasSupervisionAccess,
 		loadAfterCaseHandoverGranted
 	]);
+
+	// #200: co-access ends at `expiresAt` and the backend then denies, but an
+	// open tab never asks again — re-ask once, 5 s after expiry, so the curtain
+	// closes. ponytail: one re-fetch; a client clock >5 s ahead of the server
+	// leaves the tab open until reload.
+	const coAccessExpiresAt = isCaseHandoverCoAccess(caseHandoverStatus)
+		? caseHandoverStatus?.expiresAt
+		: undefined;
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		const refetchAt =
+			new Date(
+				normalizeServerTimestamp(coAccessExpiresAt || '')
+			).getTime() + 5_000;
+		if (!sessionId || Number.isNaN(refetchAt)) {
+			return;
+		}
+
+		let cancelled = false;
+		let timer: ReturnType<typeof setTimeout>;
+		const schedule = () => {
+			const delay = refetchAt - Date.now();
+			if (delay > MAX_TIMEOUT_MS) {
+				timer = setTimeout(schedule, MAX_TIMEOUT_MS);
+				return;
+			}
+			timer = setTimeout(
+				() => {
+					apiGetCaseHandoverStatus(sessionId)
+						.then((nextStatus) => {
+							if (!cancelled) {
+								setCaseHandoverStatus(nextStatus);
+							}
+						})
+						.catch(() => {});
+				},
+				Math.max(0, delay)
+			);
+		};
+		schedule();
+
+		return () => {
+			cancelled = true;
+			clearTimeout(timer);
+		};
+	}, [activeSession.item?.id, coAccessExpiresAt]);
 
 	// Real-time message sync via the Matrix timeline listener.
 	useEffect(() => {
@@ -1278,7 +1351,22 @@ export const SessionStream = ({
 			pendingCaseHandoverRequestId,
 			approved
 		)
-			.then(() => {
+			.then((confirmedStatus) => {
+				if (
+					confirmedStatus?.status &&
+					confirmedStatus.sessionId === activeSession.item.id &&
+					confirmedStatus.requestId === pendingCaseHandoverRequestId
+				) {
+					setConfirmedConsent({
+						notification: pendingCaseHandoverConsent,
+						status: confirmedStatus
+					});
+				} else {
+					throw new Error(
+						'Consent response does not match the request'
+					);
+				}
+				if (isPendingCaseHandoverStatus(confirmedStatus.status)) return;
 				notificationsContext?.markNotificationAsRead(
 					pendingCaseHandoverConsent.id
 				);
@@ -1323,33 +1411,62 @@ export const SessionStream = ({
 					/>
 				</div>
 			)}
-			{pendingCaseHandoverConsent &&
-				pendingCaseHandoverRequestId !== null && (
-					<CaseHandoverConsentCard
-						mode={
-							pendingCaseHandoverConsent.params?.clientConsent ===
-							'OPT_OUT'
-								? 'OPT_OUT'
-								: 'OPT_IN'
-						}
-						isSubmitting={caseHandoverConsentSubmitting}
-						error={caseHandoverConsentError}
-						timestamp={formatToHHMM(
-							String(
-								new Date(
-									pendingCaseHandoverConsent.createdAt
-								).getTime()
-							)
-						)}
-						onApprove={() =>
-							handleCaseHandoverConsentDecision(true)
-						}
-						onDecline={() =>
-							handleCaseHandoverConsentDecision(false)
-						}
-					/>
-				)}
 			<SessionItemComponent
+				mainTimelineSupplement={
+					displayedConsent &&
+					caseHandoverRequestIdFromPath(
+						displayedConsent.actionPath
+					) !== null && (
+						<CaseHandoverConversation
+							conversationType={notificationConversationType(
+								activeSession
+							)}
+							key={String(activeSession.item?.id)}
+							status={
+								displayedConsent.id ===
+								confirmedConsent?.notification.id
+									? confirmedConsent.status.status
+									: undefined
+							}
+							auditOutcome={
+								displayedConsent.id ===
+								confirmedConsent?.notification.id
+									? confirmedConsent.status.auditOutcome
+									: undefined
+							}
+							consentGranted={
+								displayedConsent.params?.clientConsent ===
+								'OPT_OUT'
+							}
+							mode={
+								displayedConsentMode === 'NONE' ||
+								displayedConsentMode === 'OPT_OUT'
+									? displayedConsentMode
+									: 'OPT_IN'
+							}
+							isSubmitting={caseHandoverConsentSubmitting}
+							error={caseHandoverConsentError}
+							timestamp={formatToHHMM(
+								String(
+									new Date(
+										displayedConsent.createdAt
+									).getTime()
+								)
+							)}
+							onApprove={() =>
+								handleCaseHandoverConsentDecision(true)
+							}
+							onDecline={() =>
+								handleCaseHandoverConsentDecision(false)
+							}
+						/>
+					)
+				}
+				mainTimelineSupplementTime={
+					displayedConsent
+						? new Date(displayedConsent.createdAt).getTime()
+						: undefined
+				}
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
 				}
@@ -1370,6 +1487,7 @@ export const SessionStream = ({
 				teamDiscussionError={!!teamDiscussionError}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
+				caseHandoverStatus={caseHandoverStatus}
 			/>
 			{isOverlayActive && (
 				<Overlay

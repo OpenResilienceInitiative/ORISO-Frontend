@@ -1,3 +1,9 @@
+import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
+import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
+import { CaseHandoverInformationalBody } from '../caseHandover/CaseHandoverInformationalBody';
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import {
 	ChatMenuDropdown,
 	ChatMenuDropdownItem
@@ -38,11 +44,7 @@ import { getErstantwortRenderModeForSession } from '../erstantwort/erstantwortRo
 import { MessageAttachment } from './MessageAttachment';
 import type { MediaCheckState } from './MessageAttachment';
 import type { ChatAttachment, ChatFile } from './chatAttachmentTypes';
-import {
-	getModality,
-	getModalityIfKnown,
-	Modality
-} from '../session/getModality';
+import { getModality, Modality } from '../session/getModality';
 import {
 	hasMediaInlineDisplayFeature,
 	type MediaChatType
@@ -74,6 +76,7 @@ import { ReactComponent as ThreadEntryIcon } from '../../resources/img/icons/fab
 import {
 	parseMessagePrefixes,
 	SYSTEM_NOTIFICATION_USER_LEFT_CHAT,
+	SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED,
 	SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED,
 	SYSTEM_NOTIFICATION_SUPERVISION_NOTICE
 } from './messageConstants';
@@ -111,7 +114,7 @@ import {
 	directAvatarChoice,
 	memberAvatarChoice
 } from '../../utils/sessionAvatarChoice';
-import { chosenAvatarOf } from '../../utils/avatarChoice';
+import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 
 /* How recently an Erstantwort event must have arrived for its staged reveal to
    play. Generous on purpose: the cost of skipping the animation on a genuinely
@@ -348,7 +351,7 @@ interface MessageItemComponentProps extends MessageItem {
 		replyCount: number;
 		lastReplyText: string;
 	};
-	onOpenThread?: () => void;
+	onOpenThread?: (opener?: HTMLElement) => void;
 	/** Relations foundation (#435): this message replies to that event. */
 	replyToEventId?: string | null;
 	/** Resolved quote of the replied-to message (author + text), if known. */
@@ -430,6 +433,7 @@ export const MessageItemComponent = ({
 	const { getSetting } = useContext(ServerSettingsContext);
 	const tenant = useTenant();
 	const matrixRoomUsersContext = useMatrixRoomUsers();
+	const [showGrantNotifications, setShowGrantNotifications] = useState(false);
 	const [deleteOverlay, setDeleteOverlay] = useState(false);
 	const [isDeleteRequestInProgress, setIsDeleteRequestInProgress] =
 		useState(false);
@@ -1201,6 +1205,19 @@ export const MessageItemComponent = ({
 
 	const isSupervisorFeedback = parsedMessage.isSupervisorFeedback;
 	const isSystemNotification = parsedMessage.isSystemNotification;
+	const persistedHandoverGrant =
+		parsedMessage.systemNotificationHandoverGrant;
+	const isPersistedGrantForAsker =
+		Boolean(persistedHandoverGrant) &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		notificationConversationType(activeSession) === 'AGENCY_COUNSELLING';
+	const persistedAcceptance = parsedMessage.systemNotificationAcceptance;
+	const isAcceptedNoticeForAsker =
+		persistedAcceptance?.sessionId === activeSession.item.id &&
+		hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		notificationConversationType(activeSession) === 'AGENCY_COUNSELLING';
 	/* ADR-018 / ORISO-Frontend#772. Keyed off the raw body rather than off
 	   `parsedMessage.systemNotificationType`, because the payload version has to
 	   be inspected too: an event from a newer server must render nothing at all
@@ -1211,8 +1228,16 @@ export const MessageItemComponent = ({
 		[decryptedMessage]
 	);
 	const erstantwortModality = useMemo(
-		() => (activeSession ? getModalityIfKnown(activeSession) : undefined),
+		() => notificationConversationType(activeSession),
 		[activeSession]
+	);
+	const grantNotificationPolicy = notificationChannelPolicy(
+		tenant?.settings,
+		erstantwortModality
+	);
+	useEffect(
+		() => setShowGrantNotifications(false),
+		[activeSession.item.id, userData?.userId, tenant?.id, _id]
 	);
 	/* An Erstantwort in an internal counsellor room would be a category error —
 	   INTERNAL_GROUP has no advice seeker to greet — and the catalogue silently
@@ -1237,6 +1262,9 @@ export const MessageItemComponent = ({
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
+	const isInquiryAcceptedEvent =
+		parsedMessage.systemNotificationType ===
+		SYSTEM_NOTIFICATION_INQUIRY_ACCEPTED;
 	const isCaseHandoverGrantedEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_CASE_HANDOVER_GRANTED;
@@ -1274,6 +1302,11 @@ export const MessageItemComponent = ({
 		);
 	const systemNotificationRawDescription =
 		parsedMessage.systemNotificationDescription;
+	/* The stored description is frozen in the server's language; the header is
+	   translated here, so the body must be too or the bubble mixes languages. */
+	const acceptedDescription = translate(
+		'notifications.events.inquiryAccepted.text'
+	);
 	const renderedMessageWithoutPrefix = renderedMessage;
 
 	const hasRenderedMessage =
@@ -1740,11 +1773,15 @@ export const MessageItemComponent = ({
 		hasUserAuthority(AUTHORITIES.ANONYMOUS_DEFAULT, userData) ||
 		(userData?.userRoles || []).includes('USER') ||
 		(userData?.userRoles || []).includes('ANONYMOUS');
-	const incomingAvatarChoice = activeSession?.isGroup
+	const resolvedIncomingAvatarChoice = activeSession?.isGroup
 		? memberAvatarChoice(userId, avatarMembers)
 		: activeSession
 			? directAvatarChoice(userId, activeSession)
 			: null;
+	// A counsellor always sits on the tenant's primary pair, picked or not.
+	const incomingAvatarChoice = isUserMessage()
+		? resolvedIncomingAvatarChoice
+		: counsellorChoiceOf(resolvedIncomingAvatarChoice);
 	const askerIncomingConsultantName =
 		!isMyMessage && isAskerViewer
 			? resolveIncomingConsultantNameForAsker({
@@ -2030,9 +2067,16 @@ export const MessageItemComponent = ({
 										<div className="messageItem__sendFailedTitle">
 											{isCaseHandoverGrantedEvent
 												? translate(
-														'caseHandover.systemMessage.tookOverTitle'
+														persistedHandoverGrant?.accessType ===
+															'CO_ACCESS'
+															? 'caseHandover.consent.info.noticeTitle'
+															: 'caseHandover.systemMessage.tookOverTitle'
 													)
-												: systemNotificationTitle}
+												: isInquiryAcceptedEvent
+													? translate(
+															'caseHandover.accepted.title'
+														)
+													: systemNotificationTitle}
 										</div>
 										<div className="messageItem__sendFailedSubtitle">
 											{isCaseHandoverGrantedEvent
@@ -2114,16 +2158,67 @@ export const MessageItemComponent = ({
 							onContextMenu={handleBubbleContextMenu}
 						>
 							{isSystemNotification &&
-								isCaseHandoverGrantedEvent && (
+								(isCaseHandoverGrantedEvent ||
+									isInquiryAcceptedEvent) && (
 									<CaseHandoverSystemMessageBody
 										{...visibleCaseHandoverInternalDetails}
 									>
-										{systemNotificationRawDescription && (
-											<p className="messageItem__systemNotificationDescription">
-												{
+										{isAcceptedNoticeForAsker ? (
+											<CaseHandoverInformationalBody
+												mode="OPT_IN"
+												conversationType={
+													erstantwortModality
+												}
+												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+												description={
+													acceptedDescription
+												}
+												sessionId={
+													activeSession.item.id
+												}
+												onSetupNotifications={
+													grantNotificationPolicy.emailAllowed ||
+													grantNotificationPolicy.browserAllowed
+														? () =>
+																setShowGrantNotifications(
+																	true
+																)
+														: undefined
+												}
+											/>
+										) : isPersistedGrantForAsker ? (
+											<CaseHandoverInformationalBody
+												mode={
+													persistedHandoverGrant.clientConsent
+												}
+												conversationType={
+													erstantwortModality
+												}
+												key={`${activeSession.item.id}:${tenant?.id}:${userData?.userId}`}
+												description={
 													systemNotificationRawDescription
 												}
-											</p>
+												sessionId={
+													activeSession.item.id
+												}
+												onSetupNotifications={
+													grantNotificationPolicy.emailAllowed ||
+													grantNotificationPolicy.browserAllowed
+														? () =>
+																setShowGrantNotifications(
+																	true
+																)
+														: undefined
+												}
+											/>
+										) : (
+											systemNotificationRawDescription && (
+												<p className="messageItem__systemNotificationDescription">
+													{
+														systemNotificationRawDescription
+													}
+												</p>
+											)
 										)}
 									</CaseHandoverSystemMessageBody>
 								)}
@@ -2137,6 +2232,7 @@ export const MessageItemComponent = ({
 							 */}
 							{isSystemNotification &&
 								!isCaseHandoverGrantedEvent &&
+								!isInquiryAcceptedEvent &&
 								systemNotificationDescription && (
 									<div className="messageItem__systemNotificationDescription">
 										{systemNotificationDescription}
@@ -2514,6 +2610,9 @@ export const MessageItemComponent = ({
 				<ErstantwortMessage
 					rawMessage={decryptedMessage}
 					conversationType={erstantwortModality}
+					isAskerEmailEnabled={
+						tenant?.settings?.featureAskerEmailEnabled
+					}
 					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
@@ -2578,7 +2677,42 @@ export const MessageItemComponent = ({
 		return null;
 	}
 
-	return (
+	const withGrantNotifications = (message: React.ReactNode) => (
+		<>
+			{isPersistedGrantForAsker || isAcceptedNoticeForAsker ? (
+				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
+					{message}
+				</CarimatMessageContainer>
+			) : (
+				message
+			)}
+			{showGrantNotifications &&
+				(grantNotificationPolicy.emailAllowed ||
+					grantNotificationPolicy.browserAllowed) && (
+					<ErstantwortSequence
+						skipAnimation
+						subtitle={translate('profile.notifications.title')}
+						bausteine={[
+							{ id: 'grantNotifications', headline: '', body: '' }
+						]}
+						slots={{
+							grantNotifications: (
+								<NotificationSetup
+									isEmailEnabled={
+										grantNotificationPolicy.emailAllowed
+									}
+									isBrowserEnabled={
+										grantNotificationPolicy.browserAllowed
+									}
+								/>
+							)
+						}}
+					/>
+				)}
+		</>
+	);
+
+	return withGrantNotifications(
 		<div
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
@@ -2593,14 +2727,14 @@ export const MessageItemComponent = ({
 			{getMessageDate()}
 			<div
 				className={`
-					messageItem__messageWrap
-					${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
-					${
-						isE2EEActivatedMessage
-							? 'messageItem__messageWrap--e2eeActivatedMessage'
-							: ''
-					}
-				`}
+				messageItem__messageWrap
+				${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
+				${
+					isE2EEActivatedMessage
+						? 'messageItem__messageWrap--e2eeActivatedMessage'
+						: ''
+				}
+			`}
 			>
 				{!alias?.messageType &&
 					!isMyMessage &&
@@ -2617,7 +2751,7 @@ export const MessageItemComponent = ({
 										displayName={
 											resolvedIncomingDisplayName
 										}
-										size={48}
+										size={AVATAR_SIZES.message}
 									/>
 								</div>
 								<button
@@ -2770,8 +2904,14 @@ export const MessageItemComponent = ({
 												? ownConsultantName.lastName
 												: userData?.lastName
 										}
-										size={48}
-										choice={chosenAvatarOf(userData)}
+										size={AVATAR_SIZES.message}
+										choice={
+											isUserMessage()
+												? chosenAvatarOf(userData)
+												: counsellorChoiceOf(
+														chosenAvatarOf(userData)
+													)
+										}
 									/>
 								</div>
 							</div>
@@ -2795,7 +2935,7 @@ export const MessageItemComponent = ({
 						</div>
 					)}
 					{/* T21: the thread entry under a root message — reply count
-					    and "Author: last reply…" on one line, opens the thread. */}
+				    and "Author: last reply…" on one line, opens the thread. */}
 					{renderMode === 'main' &&
 						threadsEnabled &&
 						!alias?.messageType &&
@@ -2823,7 +2963,7 @@ export const MessageItemComponent = ({
 								onClick={(event) => {
 									event.preventDefault();
 									event.stopPropagation();
-									onOpenThread?.();
+									onOpenThread?.(event.currentTarget);
 								}}
 							>
 								<ThreadEntryIcon

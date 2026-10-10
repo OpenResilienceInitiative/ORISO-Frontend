@@ -9,6 +9,7 @@ import {
 } from '../../services/recoveryReminderState';
 import { M3Snackbar } from '../m3Snackbar/M3Snackbar';
 import { KeyBackupRecoveryPrompt } from './KeyBackupRecoveryPrompt';
+import { useComposerDock } from '../messageSubmitInterface/useComposerDock';
 
 const USER_ID = '@recovery-snackbar-story:example.test';
 const service = {
@@ -22,7 +23,8 @@ const service = {
  * history is readable, and never pushes the layout.
  */
 const meta = {
-	title: 'Organisms/KeyBackupRecoverySnackbar',
+	id: 'organisms-keybackuprecoverysnackbar',
+	title: 'Chat/System messages/Recovery snackbar',
 	component: KeyBackupRecoveryPrompt,
 	parameters: { layout: 'fullscreen' },
 	decorators: [
@@ -157,4 +159,95 @@ export const ReturnsWhenOtherSnackbarCloses: Story = {
 			expect(page.queryByTestId('other-snackbar')).not.toBeInTheDocument()
 		);
 	}
+};
+
+/** A real measured dock: the standing notice must leave its input usable. */
+const RecoveryWithComposer = () => {
+	const ref = React.useRef<HTMLDivElement>(null);
+	const [expanded, setExpanded] = React.useState(false);
+	useComposerDock(ref);
+	const phone = window.matchMedia('(max-width: 899px)').matches;
+	return (
+		<>
+			<KeyBackupRecoveryPrompt />
+			<div className="session" style={{ height: '100vh', margin: 0 }}>
+				<div className="session__content" />
+				<div
+					ref={ref}
+					data-testid="recovery-story-composer"
+					style={{
+						position: 'fixed',
+						left: 16,
+						right: 16,
+						bottom: phone ? 72 : 24,
+						height: expanded ? 260 : 156,
+						padding: 16,
+						boxSizing: 'border-box',
+						background: 'var(--m3-surface-container-lowest, white)',
+						border: '1px solid var(--m3-outline-variant, #cac4d0)'
+					}}
+				>
+					<label>
+						Nachricht schreiben
+						<textarea aria-label="Nachricht schreiben" />
+					</label>
+					<button
+						type="button"
+						onClick={() => setExpanded(!expanded)}
+					>
+						{expanded
+							? 'Eingabe verkleinern'
+							: 'Eingabe vergrößern'}
+					</button>
+				</div>
+			</div>
+		</>
+	);
+};
+
+export const LeavesComposerUsable: Story = {
+	name: 'Recovery stays above the growing composer',
+	globals: { viewport: { value: 'phone390' } },
+	render: () => <RecoveryWithComposer />,
+	play: async () => {
+		const page = within(document.body);
+		const notice = await page.findByTestId('key-backup-recovery-action');
+		const composer = page.getByTestId('recovery-story-composer');
+		const assertClearance = () =>
+			waitFor(() => {
+				expect(
+					notice.getBoundingClientRect().bottom
+				).toBeLessThanOrEqual(
+					composer.getBoundingClientRect().top - 16
+				);
+			});
+		await assertClearance();
+		await userEvent.click(
+			page.getByRole('button', { name: 'Eingabe vergrößern' })
+		);
+		await assertClearance();
+		await userEvent.type(
+			page.getByRole('textbox'),
+			'Nachricht bleibt erreichbar'
+		);
+		await expect(page.getByRole('textbox')).toHaveValue(
+			'Nachricht bleibt erreichbar'
+		);
+		await userEvent.click(
+			page.getByRole('button', { name: 'Eingabe verkleinern' })
+		);
+		await assertClearance();
+	}
+};
+
+export const LeavesComposerUsableTablet: Story = {
+	...LeavesComposerUsable,
+	name: 'Recovery stays above the growing composer — tablet',
+	globals: { viewport: { value: 'tablet834' } }
+};
+
+export const LeavesComposerUsableDesktop: Story = {
+	...LeavesComposerUsable,
+	name: 'Recovery stays above the growing composer — desktop',
+	globals: { viewport: { value: 'desktop1440' } }
 };

@@ -2535,7 +2535,7 @@ export const SessionsList = ({
 								index
 							) => (
 								<ActiveSessionProvider
-									key={activeSession.item.id}
+									key={`${activeSession.isGroup ? 'chat' : 'session'}:${activeSession.item.id}`}
 									activeSession={activeSession}
 								>
 									<div
