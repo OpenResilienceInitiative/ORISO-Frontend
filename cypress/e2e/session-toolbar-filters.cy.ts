@@ -1,22 +1,8 @@
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 
 describe('Session toolbar filters', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
 	beforeEach(() => {
 		cy.viewport(1455, 860);
-		mockWebSocket();
 	});
 
 	it('filters unread sessions, drafts, internal group chats, supervision, and conversation circles', () => {

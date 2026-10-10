@@ -1,9 +1,4 @@
 import merge from 'lodash.merge';
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../../support/websocket';
 import { config } from '../../../src/resources/scripts/config';
 
 const generateConsultingTypes = (base, variations) =>
@@ -18,18 +13,6 @@ const generateAgencies = (base, variations) =>
 let consultingTypes, agencies, topics;
 
 describe('Registration', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
-	beforeEach(() => {
-		mockWebSocket();
-	});
-
 	describe('ConsultingType', () => {
 		beforeEach(() => {
 			cy.fixture('registration/consultingType')

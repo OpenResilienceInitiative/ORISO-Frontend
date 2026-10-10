@@ -11,17 +11,19 @@ afterEach(() => {
 });
 
 describe('Storybook realtime mocks', () => {
-	it('preserves the LiveService WebSocket lifecycle without protocol replies', () => {
+	it('preserves first-party realtime widget lifecycles without protocol replies', () => {
 		vi.useFakeTimers();
 
 		expect(
 			shouldMockStorybookRealtimeUrl(
-				'/service/live/websocket',
+				'wss://livekit.storybook.test/rtc',
 				'https://storybook.local/iframe.html'
 			)
 		).toBe(true);
 
-		const socket = new StorybookWebSocketMock('/service/live/websocket');
+		const socket = new StorybookWebSocketMock(
+			'wss://livekit.storybook.test/rtc'
+		);
 		const onOpen = vi.fn();
 		const openListener = vi.fn();
 		const onMessage = vi.fn();

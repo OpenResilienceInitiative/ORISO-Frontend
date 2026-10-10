@@ -1,9 +1,4 @@
 import { endpoints } from '../../../src/resources/scripts/endpoints';
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../../support/websocket';
 
 const checkForGenericRegistrationElements = () => {
 	cy.get('#loginLogoWrapper').should('exist');
@@ -21,17 +16,7 @@ const checkForGenericRegistrationElements = () => {
 let agencies = [];
 
 describe('registration', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
 	beforeEach(() => {
-		mockWebSocket();
-
 		cy.fixture('service.agencies.json').then((data) => {
 			agencies = data;
 			cy.intercept(

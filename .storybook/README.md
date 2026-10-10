@@ -44,7 +44,7 @@ Storybook was migrated from 7 (custom webpack) to 10 on **Vite**, decoupled from
   `import { ReactComponent } from './x.svg'` work.
 
 `preview.tsx` wraps every story in the full app shell (MUI theme + i18n + router +
-mocked Matrix/LiveService/LiveKit realtime services plus E2EE, Registration, and
+mocked Matrix and LiveKit realtime services plus E2EE, Registration, and
 UserData context providers) so context-driven components render.
 
 ## Story taxonomy (mirrors Figma)
