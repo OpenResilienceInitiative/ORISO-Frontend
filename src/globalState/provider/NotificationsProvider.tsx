@@ -603,22 +603,44 @@ export function NotificationsProvider(props) {
 				const stateEvents = items.filter(
 					(item) =>
 						item.eventType === 'request.new' ||
-						item.eventType === 'inquiry.accepted'
+						item.eventType === 'inquiry.accepted' ||
+						item.eventType === 'waiting_room.client.joined' ||
+						item.eventType === 'conversation.finished'
 				);
 				const observed = observedReconciliationIdsRef.current;
+				// Lists may have loaded before a finish appeared in the first feed.
+				// Announcement history is seeded separately, so this stays silent.
 				const newEvents =
 					observed === null
-						? []
+						? stateEvents.filter(
+								(item) =>
+									item.eventType === 'conversation.finished'
+							)
 						: stateEvents.filter((item) => !observed.has(item.id));
 				observedReconciliationIdsRef.current ??= new Set();
 				stateEvents.forEach((item) =>
 					observedReconciliationIdsRef.current.add(item.id)
 				);
 				if (
-					newEvents.some((item) => item.eventType === 'request.new')
+					newEvents.some(
+						(item) =>
+							item.eventType === 'request.new' ||
+							item.eventType === 'waiting_room.client.joined'
+					)
 				) {
 					messageEventEmitter.emit({
 						refreshEnquiryList: true,
+						source: 'notification-feed'
+					});
+				}
+				if (
+					newEvents.some(
+						(item) => item.eventType === 'conversation.finished'
+					)
+				) {
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						refreshSessionList: true,
 						source: 'notification-feed'
 					});
 				}
