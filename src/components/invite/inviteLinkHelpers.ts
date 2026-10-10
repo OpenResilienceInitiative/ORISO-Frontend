@@ -58,7 +58,10 @@ export const assignInviteSessionDisplayName = async (
 		const timeoutPromise = new Promise<boolean>((resolve) => {
 			timeoutId = setTimeout(() => resolve(false), 5_000);
 		});
-		const stored = await Promise.race([storePromise, timeoutPromise]).finally(() => {
+		const stored = await Promise.race([
+			storePromise,
+			timeoutPromise
+		]).finally(() => {
 			if (timeoutId !== undefined) {
 				clearTimeout(timeoutId);
 			}

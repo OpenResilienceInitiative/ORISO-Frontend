@@ -9,12 +9,18 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DepartmentLegalSection } from './DepartmentLegalSection';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { clearDepartmentLegalCache } from '../../api/apiGetDepartmentLegal';
 import { fetchData } from '../../api/fetchData';
 import {
 	AgencyDataInterface,
 	TopicsDataInterface
 } from '../../globalState/interfaces';
+
+// Isolate app configuration: this suite supplies the real legal-link context directly.
+vi.mock('../../hooks/useAppConfig', () => ({
+	useAppConfig: () => ({ legalLinks: [] })
+}));
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -25,6 +31,8 @@ vi.mock('react-i18next', () => ({
 				'registration.agency.legal.department': 'Fachbereich',
 				'registration.agency.legal.unavailable':
 					'Die Datenschutzhinweise können derzeit nicht geladen werden.',
+				'legal.modal.missing.text':
+					'Für dieses Angebot ist hier kein Rechtstext hinterlegt.',
 				'registration.agency.legal.imprintHeadline':
 					'Impressum der Beratungsstelle'
 			})[key] ?? key,
@@ -255,5 +263,169 @@ describe('DepartmentLegalSection', () => {
 		);
 
 		mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+	});
+
+	describe('modal variant (profile agency card, #1213)', () => {
+		const agencyWithBoth = {
+			id: 42,
+			name: 'Beratungsstelle',
+			departments: [
+				{
+					topicId: 7,
+					hasPublishedDpp: true,
+					hasPublishedImprint: true
+				}
+			]
+		} as unknown as AgencyDataInterface;
+
+		beforeEach(() => {
+			vi.mocked(fetchData).mockResolvedValue({
+				dpp: {
+					content: JSON.stringify({
+						de: '<p>Fachbereich DPP der Stelle.</p>'
+					})
+				},
+				imprint: {
+					content: JSON.stringify({
+						de: '<p>Impressum der Beratungsstelle 42.</p>'
+					})
+				}
+			});
+			mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+		});
+
+		it.each([true, false])(
+			'preserves the approved missing notice and configured-link availability (%s) in the profile modal',
+			async (configured) => {
+				vi.mocked(fetchData).mockResolvedValue(null);
+				mockTenant.content.privacy = '';
+				const getUrl = vi.fn(
+					() => 'https://traeger.example/datenschutz'
+				);
+				try {
+					render(
+						<LegalLinksContext.Provider
+							value={
+								configured
+									? [
+											{
+												label: 'login.legal.infoText.dataprotection',
+												getUrl
+											}
+										]
+									: []
+							}
+						>
+							<DepartmentLegalSection
+								agency={agencyWithBoth}
+								topic={topic}
+								variant="modal"
+							/>
+						</LegalLinksContext.Provider>
+					);
+					fireEvent.click(
+						screen.getByRole('button', {
+							name: 'Datenschutzhinweise der Beratungsstelle'
+						})
+					);
+					expect(
+						await screen.findByText(
+							'Für dieses Angebot ist hier kein Rechtstext hinterlegt.'
+						)
+					).toBeDefined();
+					if (configured) {
+						expect(
+							screen.getByRole('link').getAttribute('href')
+						).toBe('https://traeger.example/datenschutz');
+						expect(getUrl).toHaveBeenCalledWith();
+						expect(
+							screen.getByRole('link').getAttribute('href')
+						).not.toContain('aid=');
+					} else {
+						expect(screen.queryByRole('link')).toBeNull();
+						expect(getUrl).not.toHaveBeenCalled();
+					}
+				} finally {
+					mockTenant.content.privacy = '<p>Träger Datenschutz</p>';
+				}
+			}
+		);
+
+		it('opens agency privacy in LegalLinkModal, not the tenant text', async () => {
+			render(
+				<DepartmentLegalSection
+					agency={agencyWithBoth}
+					topic={topic}
+					variant="modal"
+				/>
+			);
+
+			expect(fetchData).not.toHaveBeenCalled();
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'Datenschutzhinweise der Beratungsstelle'
+				})
+			);
+
+			expect(
+				await screen.findByText('Fachbereich DPP der Stelle.')
+			).toBeDefined();
+			expect(screen.getByRole('dialog')).toBeDefined();
+			expect(
+				screen.getByText('Fachbereich DPP der Stelle.')
+			).toBeDefined();
+			expect(screen.queryByText('Träger Datenschutz')).toBeNull();
+			expect(fetchData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					url: expect.stringMatching(/agencies\/42\/topics\/7\/legal/)
+				})
+			);
+		});
+
+		it('opens that agency’s imprint when a second department is selected', async () => {
+			const secondAgency = {
+				id: 99,
+				name: 'Andere Stelle',
+				departments: [
+					{
+						topicId: 7,
+						hasPublishedDpp: false,
+						hasPublishedImprint: true
+					}
+				]
+			} as unknown as AgencyDataInterface;
+
+			vi.mocked(fetchData).mockResolvedValue({
+				dpp: { content: null },
+				imprint: {
+					content: JSON.stringify({
+						de: '<p>Impressum der Beratungsstelle 99.</p>'
+					})
+				}
+			});
+
+			render(
+				<DepartmentLegalSection
+					agency={secondAgency}
+					topic={topic}
+					variant="modal"
+				/>
+			);
+
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'Impressum der Beratungsstelle'
+				})
+			);
+
+			expect(
+				await screen.findByText('Impressum der Beratungsstelle 99.')
+			).toBeDefined();
+			expect(fetchData).toHaveBeenCalledWith(
+				expect.objectContaining({
+					url: expect.stringMatching(/agencies\/99\/topics\/7\/legal/)
+				})
+			);
+		});
 	});
 });
