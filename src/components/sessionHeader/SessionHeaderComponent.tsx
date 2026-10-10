@@ -112,6 +112,7 @@ import {
 } from './SupervisorConsultantPicker';
 import { useSupervisorConsultantDirectory } from './useSupervisorConsultantDirectory';
 import { resolveRoomHeaderDensity } from './roomHeaderDensity';
+import { TopicTag } from '../topicTag/TopicTag';
 export interface SessionHeaderProps {
 	consultantAbsent?: SessionConsultantInterface;
 	hasUserInitiatedStopOrLeaveRequest?: React.MutableRefObject<boolean>;
@@ -1274,11 +1275,9 @@ export const SessionHeaderComponent = (props: SessionHeaderProps) => {
 							{agencyLine}
 						</div>
 					)}
-					{topic?.name && (
-						<div className="sessionInfo__metaInfo__content">
-							{topic.name}
-						</div>
-					)}
+					<TopicTag className="sessionInfo__metaInfo__content">
+						{topic?.name}
+					</TopicTag>
 				</div>
 			)}
 			{isAskerUser &&

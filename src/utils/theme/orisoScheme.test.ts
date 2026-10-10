@@ -204,7 +204,11 @@ describe('static :root brand mirrors the engine (#a5000a)', () => {
 		'--m3-primary-hover',
 		'--m3-primary-container',
 		'--m3-on-primary-container',
-		'--m3-primary-outline'
+		'--m3-primary-outline',
+		'--oriso-topic-tag-bg',
+		'--oriso-topic-tag-fg',
+		'--oriso-topic-tag-active-bg',
+		'--oriso-topic-tag-active-fg'
 	])('%s static literal equals the engine value', (token) => {
 		expect(staticValue(token)).toBe(engine[token].toLowerCase());
 	});

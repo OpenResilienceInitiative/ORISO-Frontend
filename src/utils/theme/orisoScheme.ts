@@ -32,12 +32,14 @@ import {
 	LIGHT_NEUTRAL_TONES,
 	NEUTRAL,
 	NEUTRAL_VARIANT,
+	PRIMARY_TEXT_SURFACE_TONE,
 	SECONDARY_TONES,
 	SLATE,
 	SUCCESS_ANCHOR,
 	TERTIARY_TONES,
 	TOO_PALE_CHROMA
 } from './orisoTuning';
+import { wcagContrast } from './wcagContrast';
 
 export type OrisoSchemeName = 'light' | 'dark' | 'inverted';
 
@@ -82,6 +84,10 @@ const clampTone = (tone: number): number => Math.min(100, Math.max(0, tone));
 interface BrandFamily {
 	role: string;
 	onRole: string;
+	/** The role as a text/icon colour on light surfaces; always AA. */
+	text: string;
+	/** Hover of `text`: a step darker than it, so hover never fades. */
+	textHover: string;
 	container: string;
 	onContainer: string;
 	inverse: string;
@@ -92,6 +98,14 @@ interface BrandFamily {
 	onFixed: string;
 	onFixedVariant: string;
 }
+
+/**
+ * Lightest tone brand-coloured text may have: AA on the darkest light
+ * surface that carries it. Floored so hex rounding cannot dip below.
+ */
+const MAX_LEGIBLE_TEXT_TONE = Math.floor(
+	Contrast.darker(PRIMARY_TEXT_SURFACE_TONE, CONTRAST_AA)
+);
 
 /**
  * The Oriso brand recipe (light): the seed itself is the role colour —
@@ -123,6 +137,20 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 	return {
 		role: seedHex,
 		onRole,
+		// Fills keep the seed; text drawn IN the brand colour steps down the
+		// seed's own palette when the seed is too light to read (#1499).
+		text:
+			hct.tone <= MAX_LEGIBLE_TEXT_TONE
+				? seedHex
+				: hex(palette.tone(MAX_LEGIBLE_TEXT_TONE)),
+		textHover: hex(
+			palette.tone(
+				clampTone(
+					Math.min(Math.round(hct.tone), MAX_LEGIBLE_TEXT_TONE) +
+						HOVER_TONE_SHIFT
+				)
+			)
+		),
 		container: hex(boosted.tone(containerTone)),
 		onContainer: hex(palette.tone(onContainerTone)),
 		inverse: hex(palette.tone(80)),
@@ -138,12 +166,47 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
 	};
 };
 
+/**
+ * The global topic tag ("Themenberatung", e.g. "Familienberatung") is one
+ * pill everywhere: the session list, the session header, the group views.
+ * Resting: the brand's light "fixed" tone with its tone-30 ink (about 7:1,
+ * same hue as the Träger). Emphasised (selected or hovered card): the
+ * brand container with its own on-container ink. The ink falls back to the
+ * darkest tone when a recipe change ever drops the pair below AA, so the
+ * guard lives with the tokens, not in each consumer.
+ */
+const topicTagTokens = (brand: BrandFamily): Record<string, string> => {
+	const ink = (fill: string, preferred: string, fallback: string): string =>
+		wcagContrast(preferred, fill) >= CONTRAST_AA ? preferred : fallback;
+	return {
+		'--oriso-topic-tag-bg': brand.fixed,
+		'--oriso-topic-tag-fg': ink(
+			brand.fixed,
+			brand.onFixedVariant,
+			brand.onFixed
+		),
+		'--oriso-topic-tag-active-bg': brand.container,
+		'--oriso-topic-tag-active-fg': ink(
+			brand.container,
+			brand.onContainer,
+			wcagContrast('#ffffff', brand.container) >=
+				wcagContrast('#000000', brand.container)
+				? '#ffffff'
+				: '#000000'
+		)
+	};
+};
+
 const darkBrandFamily = (seedHex: string): BrandFamily => {
 	const argb = argbFromHex(seedHex);
 	const palette = TonalPalette.fromInt(argb);
 	return {
 		role: hex(palette.tone(DARK_BRAND_TONES.role)),
 		onRole: hex(palette.tone(DARK_BRAND_TONES.onRole)),
+		text: hex(palette.tone(DARK_BRAND_TONES.role)),
+		textHover: hex(
+			palette.tone(clampTone(DARK_BRAND_TONES.role - HOVER_TONE_SHIFT))
+		),
 		container: hex(palette.tone(DARK_BRAND_TONES.container)),
 		onContainer: hex(palette.tone(DARK_BRAND_TONES.onContainer)),
 		inverse: hex(palette.tone(40)),
@@ -305,6 +368,8 @@ export const computeOrisoPalette = (
 		'--m3-primary-container': brand.container,
 		'--m3-on-primary-container': brand.onContainer,
 		'--m3-primary-hover': brand.hover,
+		'--oriso-primary-text': brand.text,
+		'--oriso-primary-text-hover': brand.textHover,
 		'--m3-hover-layer': scheme === 'light' ? '#f9eff0' : '#331f21',
 		'--m3-selected-layer': scheme === 'light' ? '#f5e6e7' : '#4a292c',
 		'--m3-primary-fixed': brand.fixed,
@@ -386,6 +451,7 @@ export const computeOrisoPalette = (
 		'--oriso-primary-fixed-dim': brand.fixedDim,
 		'--oriso-on-primary-fixed': brand.onFixed,
 		'--oriso-on-primary-fixed-variant': brand.onFixedVariant,
+		...topicTagTokens(brand),
 		'--oriso-app-action': brand.role,
 		'--oriso-lottie-accent-color': brand.fixedDim,
 		'--oriso-lottie-secondary-color': secondary.container,
@@ -395,7 +461,7 @@ export const computeOrisoPalette = (
 		'--hover-primary': brand.hover,
 		'--skin-color-primary': brand.role,
 		'--skin-color-primary-hover': brand.hover,
-		'--skin-color-primary-contrast-safe': brand.role,
+		'--skin-color-primary-contrast-safe': brand.text,
 		'--skin-color-secondary': secondary.role,
 		'--skin-color-secondary-contrast-safe': secondary.role,
 		'--skin-color-default': secondary.role

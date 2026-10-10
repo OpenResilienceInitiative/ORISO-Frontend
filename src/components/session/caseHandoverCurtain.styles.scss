@@ -208,7 +208,7 @@
 .caseHandoverCurtain__reasonConsentHint {
 	font-size: 12px;
 	line-height: 16px;
-	color: var(--m3-primary, #a5000a);
+	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	max-width: 220px;
 	text-align: right;
 }
@@ -242,7 +242,7 @@
 
 .caseHandoverCurtain__error {
 	margin: 8px 0 0;
-	color: var(--m3-primary, #a5000a);
+	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	font-weight: 600;
 }
 
