@@ -5210,6 +5210,12 @@
 		}
 	},
 	"dpaSign": {
+		"print": "Print / save as PDF",
+		"confirmedBy": "Confirmed by",
+		"confirmedAt": "Confirmed on (Europe/Berlin)",
+		"organisation": "Organisation",
+		"printHint": "You can save as PDF in the print dialog. Turn off headers and footers to keep the link address out of the printed document.",
+		"printUnavailable": "Your confirmation was saved. The print view is unavailable because the confirmation details are incomplete.",
 		"title": "Review and confirm contract documents",
 		"subtitle": "Please read the contract documents in full, provide your details, and then confirm.",
 		"signerName": "Full name",
