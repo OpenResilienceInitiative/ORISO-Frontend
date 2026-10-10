@@ -3691,6 +3691,10 @@
 			"supervisionTitle": "Supervision aktiviert!",
 			"supervisionBody": "{{advisor}} wurde diesem Chat als beratende Supervisor:in hinzugefügt."
 		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Sie können diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Sie können diese Beratung mitlesen, aber keine Nachrichten senden."
+		},
 		"standingPreference": {
 			"label": "Vor zusätzlichem Zugriff immer fragen",
 			"description": "Gilt für künftige Anfragen in diesem Gespräch. Aktuelle Anfragen und bereits erteilte Freigaben bleiben unverändert.",

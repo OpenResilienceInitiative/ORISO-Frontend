@@ -3671,6 +3671,10 @@
 			"supervisionTitle": "Süpervizyon etkinleştirildi!",
 			"supervisionBody": "{{advisor}} bu sohbete süpervizör danışman olarak eklendi."
 		},
+		"readOnly": {
+			"notice": "Salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz.",
+			"noticeUntil": "{{until}} tarihine kadar salt okuma erişimi: bu görüşmeyi takip edebilirsiniz ancak mesaj gönderemezsiniz."
+		},
 		"standingPreference": {
 			"label": "Ek erişimden önce her zaman sor",
 			"description": "Bu görüşmedeki gelecekteki talepler için geçerlidir. Mevcut talepler ve önceden verilen erişim değişmez.",

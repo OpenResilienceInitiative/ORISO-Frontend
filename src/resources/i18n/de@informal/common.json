@@ -2334,6 +2334,10 @@
 			"advisorFallback": "Eine Berater:in",
 			"organisationFallback": "deiner Beratungsstelle"
 		},
+		"readOnly": {
+			"notice": "Nur Lesezugriff: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden.",
+			"noticeUntil": "Nur Lesezugriff bis {{until}}: Du kannst diese Beratung mitlesen, aber keine Nachrichten senden."
+		},
 		"consent": {
 			"senderRole": "Kurze Orientierung",
 			"title": "Eine Fachkraft bittet um Zugriff auf dieses Gespräch",
