@@ -1016,6 +1016,9 @@ export const SessionMenu = (props: SessionMenuProps) => {
 									handleLeaveGroupChat={handleLeaveGroupChat}
 									handleStopGroupChat={handleStopGroupChat}
 									bannedUsers={props.bannedUsers}
+									isJoinGroupChatView={
+										props.isJoinGroupChatView
+									}
 								/>
 							)}
 
@@ -1102,7 +1105,8 @@ const SessionMenuFlyoutGroup = ({
 	editGroupChatSettingsLink,
 	handleLeaveGroupChat,
 	handleStopGroupChat,
-	bannedUsers
+	bannedUsers,
+	isJoinGroupChatView
 }: {
 	groupChatInfoLink: string;
 	onOpenInfo: () => void;
@@ -1110,6 +1114,7 @@ const SessionMenuFlyoutGroup = ({
 	handleStopGroupChat: MouseEventHandler;
 	handleLeaveGroupChat: MouseEventHandler;
 	bannedUsers: string[];
+	isJoinGroupChatView?: boolean;
 }) => {
 	const { t: translate } = useTranslation();
 	const { userData } = useContext(UserDataContext);
@@ -1117,9 +1122,15 @@ const SessionMenuFlyoutGroup = ({
 	const matrixRoomUsersContext = useMatrixRoomUsers();
 	const moderators = matrixRoomUsersContext?.moderators || [];
 
+	// Leave/stop only mean something in a running group the user has joined;
+	// the waiting room and the join view show this menu on phones too (#1499).
+	const isRunning =
+		Boolean(activeSession.item.active) && !isJoinGroupChatView;
+
 	return (
 		<>
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				!bannedUsers?.includes(userData.userName) &&
 				moderators.length > 1 && (
 					<div
@@ -1154,7 +1165,8 @@ const SessionMenuFlyoutGroup = ({
 					/>
 				</Link>
 			)}
-			{activeSession.item.subscribed &&
+			{isRunning &&
+				activeSession.item.subscribed &&
 				hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
 				canModerateGroupChat(activeSession, userData) && (
 					<div

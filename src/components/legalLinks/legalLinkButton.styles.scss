@@ -11,14 +11,17 @@
 	background: none;
 	box-shadow: none;
 	font: inherit;
-	color: var(--m3-primary, #a5000a);
+	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	text-decoration: underline;
 	cursor: pointer;
 	vertical-align: baseline;
 	white-space: normal;
 
 	&:hover {
-		color: var(--m3-primary-hover, #820006);
+		color: var(
+			--oriso-primary-text-hover,
+			var(--m3-primary-hover, #820006)
+		);
 	}
 
 	&:focus {

@@ -1265,7 +1265,7 @@ export const AskerSearchingRow: Story = {
 
 const PRIMARY = 'rgb(165, 0, 10)';
 const PRIMARY_CONTAINER = 'rgb(204, 30, 28)';
-const WHITE = 'rgb(255, 255, 255)';
+const ON_PRIMARY_CONTAINER = 'rgb(255, 226, 222)';
 
 /** Waits for the row to render and ends its entrance, so colours are read settled. */
 const settledRows = async (canvasElement: HTMLElement, count = 1) => {
@@ -1368,7 +1368,8 @@ export const ConsultantSelected: Story = {
 		await expect(card.borderTopWidth).toBe('2px');
 		const topic = getComputedStyle(part(row, '.sessionsListItem__topic'));
 		await expect(topic.backgroundColor).toBe(PRIMARY_CONTAINER);
-		await expect(topic.color).toBe(WHITE);
+		// The global topic tag token (--oriso-topic-tag-active-fg).
+		await expect(topic.color).toBe(ON_PRIMARY_CONTAINER);
 		const postcode = getComputedStyle(
 			part(row, '.sessionsListItem__postcode')
 		);
@@ -1793,14 +1794,16 @@ export const TenantPrimaryColour: Story = {
 
 		const selectedChip = style(selected, '.sessionsListItem__topic');
 		await expect(selectedChip.backgroundColor).toBe(
-			tenant('--m3-primary-container')
+			tenant('--oriso-topic-tag-active-bg')
 		);
-		await expect(selectedChip.color).toBe(tenant('--m3-on-primary'));
+		await expect(selectedChip.color).toBe(
+			tenant('--oriso-topic-tag-active-fg')
+		);
 		const restingChip = style(resting, '.sessionsListItem__topic');
 		await expect(restingChip.backgroundColor).toBe(
-			tenant('--m3-primary-fixed-dim')
+			tenant('--oriso-topic-tag-bg')
 		);
-		await expect(restingChip.color).toBe(tenant('--m3-on-primary-fixed'));
+		await expect(restingChip.color).toBe(tenant('--oriso-topic-tag-fg'));
 		const restingPostcode = style(resting, '.sessionsListItem__postcode');
 		await expect(restingPostcode.borderTopColor).toBe(
 			tenant('--m3-primary-fixed-dim')
@@ -1813,11 +1816,11 @@ export const TenantPrimaryColour: Story = {
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyLabel')
 					.color
-			).toBe(tenant('--m3-primary'));
+			).toBe(tenant('--oriso-primary-text'));
 			await expect(
 				style(row, '.sessionsListItem__consultingTypeIcon--nearbyIcon')
 					.backgroundColor
-			).toBe(tenant('--m3-primary'));
+			).toBe(tenant('--oriso-primary-text'));
 		}
 	}
 };

@@ -15,10 +15,7 @@ $session-light-border: #fff;
 $session-selected-border: var(--m3-primary, #a5000a);
 $session-active-border: var(--m3-primary-container, #cc1e1c);
 $session-focus-ring: var(--m3-primary-fixed, #ffdad5);
-$session-topic-chip-bg: var(--m3-primary-fixed-dim, #ffb4aa);
-$session-topic-chip-color: var(--m3-on-primary-fixed, #410001);
 $session-chip-hover-bg: var(--m3-primary-container, #cc1e1c);
-$session-chip-hover-color: var(--m3-on-primary, #ffffff);
 $session-postcode-border: var(--m3-primary-fixed-dim, #ffb4aa);
 $session-postcode-color: var(--m3-primary-container, #cc1e1c);
 $case-handover-action: var(--m3-primary, $primary);
@@ -103,8 +100,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// Make tags red when card is active
 		.sessionsListItem__topic {
-			background-color: $session-active-border !important;
-			color: var(--m3-on-primary, #ffffff) !important;
+			background-color: $topic-tag-active-bg !important;
+			color: $topic-tag-active-fg !important;
 		}
 
 		.sessionsListItem__menuIcon {
@@ -132,14 +129,20 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// Mail keeps the primary colour when active: it is the modality's colour, not a highlight.
 		.sessionsListItem__consultingTypeIcon--nearbyLabel {
-			color: var(--m3-primary, $primary) !important;
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			) !important;
 		}
 
 		.sessionsListItem__consultingTypeIcon--nearbyIcon {
 			// The mask already paints it; the black-to-red filter the other
 			// modalities use would double up on it.
 			filter: none;
-			background-color: var(--m3-primary, $primary);
+			background-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			);
 		}
 
 		.sessionsListItem__consultingTypeIcon--internalLabel,
@@ -152,10 +155,6 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&--read {
 		.sessionsListItem__content {
 			background-color: $session-card-bg;
-		}
-
-		.sessionsListItem__topic {
-			background-color: $session-topic-chip-bg;
 		}
 
 		.sessionsListItem__username {
@@ -208,8 +207,8 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		.sessionsListItem__topic {
-			background-color: $session-active-border !important;
-			color: var(--m3-on-primary, #ffffff) !important;
+			background-color: $topic-tag-active-bg !important;
+			color: $topic-tag-active-fg !important;
 		}
 	}
 
@@ -272,8 +271,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 	&:not(.sessionsListItem--active, .sessionsListItem--menuOpen)
 		.sessionsListItem__content:hover {
 		.sessionsListItem__topic {
-			background-color: $session-chip-hover-bg;
-			color: $session-chip-hover-color;
+			@include topic-tag-colors-emphasis;
 		}
 
 		.sessionsListItem__postcode {
@@ -304,7 +302,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		display: flex;
 
 		gap: 12px;
-		color: var(--m3-primary, $secondary);
+		color: var(--oriso-primary-text, var(--m3-primary, $secondary));
 		min-width: 0;
 
 		&:first-child {
@@ -563,7 +561,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -580,7 +578,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 			.sessionsListItem__dropdownOptionTitle,
 			.sessionsListItem__dropdownOptionShortcut {
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			.sessionsListItem__dropdownOptionDescription {
@@ -695,29 +693,19 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		padding: 2px 12px;
 	}
 
+	// Shape, type and colours come from <TopicTag> (topicTag.styles.scss);
+	// this only places it in the card.
 	&__topic {
-		border-radius: 12px;
-		padding: 2px 12px;
 		text-align: left;
-		color: $session-topic-chip-color;
-		background-color: $session-topic-chip-bg;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 		align-self: flex-start;
-		min-width: 0;
-		max-width: 100%;
 		flex: 0 1 auto;
-		font-size: 12px;
-		line-height: 16px;
-		font-weight: 500;
-		letter-spacing: 0.5px;
+
+		@include topic-tag-colors;
 
 		@media screen and (width <= 899px) {
 			// Give tag text slightly more room on compact screens.
 			padding-left: 6px;
 			padding-right: 6px;
-			font-size: 12px;
 		}
 	}
 
@@ -1020,7 +1008,10 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			height: 24px !important;
 			flex-shrink: 0;
 			display: block;
-			background-color: var(--m3-primary, $primary);
+			background-color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $primary)
+			);
 			mask-image: var(--nearby-icon-url);
 			mask-size: contain;
 			mask-position: center;
@@ -1035,7 +1026,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 			font-family: $font-family-sans-serif;
 			font-size: 14px;
 			font-weight: 600;
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			line-height: 20px;
 			letter-spacing: 0;
 		}

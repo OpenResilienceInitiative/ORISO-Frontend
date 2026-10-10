@@ -39,12 +39,12 @@ h5 {
 
 /* Global link styles */
 a {
-	color: var(--m3-primary, $primary);
+	color: var(--oriso-primary-text, var(--m3-primary, $primary));
 	text-decoration: none;
 	transition: all 0.6s ease;
 
 	&:hover {
-		color: $link-hover-color-default;
+		color: var(--oriso-primary-text, $link-hover-color-default);
 		transition: all 0.3s ease;
 	}
 }
