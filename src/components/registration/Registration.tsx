@@ -721,12 +721,11 @@ export const Registration = () => {
 					} catch {
 						sessionId = undefined;
 					}
-					/* Document load, not a client-side navigate (same cause as
-					   #1402): under a React transition the registration form
-					   stays painted while the URL already reads the app route,
-					   and the user is stuck on a form whose User-ID is now
-					   taken. The welcome animation survives the load via
-					   POST_REGISTRATION_LOADER_KEY. */
+					/* Keep a document load for both registration handover and
+					   the browser's password-save signal (#1208, #1402).
+					   A client-side transition can leave the submitted form
+					   painted while the app URL already shows. The welcome
+					   animation survives via POST_REGISTRATION_LOADER_KEY. */
 					redirectToApp(
 						getPostRegistrationGroupChatId(location.search),
 						{ sessionId }
