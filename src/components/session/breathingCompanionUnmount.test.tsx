@@ -27,7 +27,7 @@ import {
 import { SESSION_LIST_TYPES } from './sessionHelpers';
 
 const SESSION_ID = 4711;
-const ROOM_ID = '!live-chat:matrix.oriso.org';
+const ROOM_ID = '!live-chat:matrix.example.org';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
@@ -198,7 +198,7 @@ const buildActiveSession = (status: number) =>
 			conversationType: 'LIVE_CHAT',
 			status,
 			active: true,
-			askerMatrixUserId: '@anon_7:matrix.oriso.org'
+			askerMatrixUserId: '@anon_7:matrix.example.org'
 		}
 	}) as any;
 

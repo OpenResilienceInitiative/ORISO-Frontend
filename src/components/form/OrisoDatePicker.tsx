@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import dayjs, { Dayjs } from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { IconButton, InputAdornment, Popover } from '@mui/material';
@@ -45,6 +46,7 @@ export const OrisoDatePicker = ({
 	placeholder,
 	id
 }: OrisoDatePickerProps) => {
+	const { t } = useTranslation();
 	const [anchorEl, setAnchorEl] = React.useState<HTMLElement | null>(null);
 	// Figma docked picker: day clicks are a draft, committed with OK.
 	const [draft, setDraft] = React.useState<Dayjs | null>(null);
@@ -105,7 +107,7 @@ export const OrisoDatePicker = ({
 					endAdornment: (
 						<InputAdornment position="end">
 							<IconButton
-								aria-label="Open calendar"
+								aria-label={t('form.datePicker.openCalendar')}
 								edge="end"
 								disabled={disabled}
 								onClick={(event) =>

@@ -35,6 +35,8 @@ import {
 	shouldMockStorybookRealtimeUrl,
 	StorybookWebSocketMock
 } from './storybookRealtimeMocks';
+import { entryFormDemoGlobalTypes } from './consentCompletionStoryPlay';
+import { WithEntryFormDemo } from './withEntryFormDemo';
 import { orisoSchemeGlobalType, withOrisoScheme } from './withOrisoScheme';
 
 // Some component deps (html parsing in the legal/stage tree) expect Node's Buffer,
@@ -649,7 +651,8 @@ function MuiStoryShell({
 				<TenantContext.Provider
 					value={{
 						tenant: null,
-						setTenant: () => {}
+						setTenant: () => {},
+						updateTenantSettings: () => {}
 					}}
 				>
 					<UserDataContext.Provider
@@ -689,6 +692,17 @@ function MuiStoryShell({
 											notifications: [],
 											notificationFeed: [],
 											unreadNotificationCount: 0,
+											serverUnreadTotal: 0,
+											serverUnreadTotalExcludesHidden: false,
+											hasUnreadNotifications: false,
+											timelineDisplayFilter: {
+												kinds: {},
+												autoReadHidden: false
+											},
+											visibleUnreadCount: 0,
+											hiddenUnreadInLoadedPages: 0,
+											markNotificationsReadConfirmed:
+												async () => {},
 											setNotifications: () => {},
 											hasNotification: () => false,
 											addNotification: () => {},
@@ -787,6 +801,22 @@ init(config.i18n, null);
 
 const preview: Preview = {
 	parameters: {
+		options: {
+			storySort: {
+				order: [
+					'Entry flows',
+					[
+						'Overview',
+						'Postcode counselling',
+						'Live chat',
+						'Self-help groups',
+						'Temporary guests',
+						'Existing account'
+					],
+					'*'
+				]
+			}
+		},
 		i18n,
 		a11y: {
 			options: {
@@ -834,10 +864,20 @@ const preview: Preview = {
 					styles: { width: '390px', height: '844px' },
 					type: 'mobile'
 				},
+				phone390Landscape: {
+					name: 'Phone 390 landscape (844×390)',
+					styles: { width: '844px', height: '390px' },
+					type: 'mobile'
+				},
 				tablet834: {
 					name: 'Tablet 834 (iPad Air portrait)',
 					styles: { width: '834px', height: '1194px' },
 					type: 'tablet'
+				},
+				desktop1280: {
+					name: 'Desktop 1280',
+					styles: { width: '1280px', height: '800px' },
+					type: 'desktop'
 				},
 				desktop1440: {
 					name: 'Desktop 1440',
@@ -864,19 +904,20 @@ const preview: Preview = {
 			]
 		}
 	},
-	globalTypes: orisoSchemeGlobalType,
+	globalTypes: { ...orisoSchemeGlobalType, ...entryFormDemoGlobalTypes },
 	initialGlobals: {
 		locale: FALLBACK_LNG,
 		locales: {
 			de: { icon: '🇩🇪', title: 'Deutsch', right: 'DE' },
 			en: { icon: '🇺🇸', title: 'Englisch', right: 'EN' }
 		},
-		scheme: 'light'
+		scheme: 'light',
+		entryFormDemo: 'manual'
 	},
 	tags: ['autodocs'],
-	// The scheme decorator runs outermost so its custom properties are in
-	// place before any component reads them.
-	decorators: [withMuiTheme, withOrisoScheme]
+	// The scheme decorator installs custom properties before the story
+	// components read them.
+	decorators: [withMuiTheme, withOrisoScheme, WithEntryFormDemo]
 };
 
 export default preview;

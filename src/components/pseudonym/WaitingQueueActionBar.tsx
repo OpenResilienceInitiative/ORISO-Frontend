@@ -109,21 +109,16 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 
 	const hasQueuePosition = Boolean(queuePosition && queuePosition > 0);
 	const calmCompanionHintDesktop = t(
-		'anonymousChat.queue.calmCompanionHintDesktop',
-		'Bis der Chat beginnt, eine kurze ruhige Begleitung. Direkt hier im Chatraum'
+		'anonymousChat.queue.calmCompanionHintDesktop'
 	);
 
 	const queueStatusLabel = hasQueuePosition
 		? t('anonymousChat.queue.positionCount', {
-				count: queuePosition,
-				defaultValue: '{{count}} Personen vor Ihnen'
+				count: queuePosition
 			})
-		: t('anonymousChat.queue.connecting', 'Wird verbunden …');
+		: t('anonymousChat.queue.connecting');
 
-	const queueStatusSuffix = t(
-		'anonymousChat.queue.positionCountSuffix',
-		'Noch vor Ihnen'
-	);
+	const queueStatusSuffix = t('anonymousChat.queue.positionCountSuffix');
 
 	const queueStatusProps = {
 		hasQueuePosition,
@@ -136,10 +131,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 		<div
 			className="waitingQueueActionBar"
 			role="group"
-			aria-label={t(
-				'anonymousChat.queue.actionsLabel',
-				'Wartebereich-Aktionen'
-			)}
+			aria-label={t('anonymousChat.queue.actionsLabel')}
 		>
 			<div className="waitingQueueActionBar__mobileTopHint">
 				<span
@@ -150,16 +142,10 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 				</span>
 				<div className="waitingQueueActionBar__mobileHintText">
 					<p className="waitingQueueActionBar__hintText">
-						{t(
-							'anonymousChat.queue.calmCompanionHintMobileLine1',
-							'Bis der Chat beginnt, eine kurze'
-						)}
+						{t('anonymousChat.queue.calmCompanionHintMobileLine1')}
 					</p>
 					<p className="waitingQueueActionBar__hintText">
-						{t(
-							'anonymousChat.queue.calmCompanionHintMobileLine2',
-							'interaktive ruhige Begleitung.'
-						)}
+						{t('anonymousChat.queue.calmCompanionHintMobileLine2')}
 					</p>
 				</div>
 			</div>
@@ -172,10 +158,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 							className="waitingQueueActionBar__smiley"
 							onClick={onOpenCalmCompanion}
 							disabled={disabled || !onOpenCalmCompanion}
-							aria-label={t(
-								'anonymousChat.queue.calmCompanion',
-								'Kurze ruhige Begleitung öffnen'
-							)}
+							aria-label={t('anonymousChat.queue.calmCompanion')}
 						>
 							<span className="waitingQueueActionBar__smileyIcon">
 								<SentimentCalmIcon />
@@ -204,10 +187,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 					<div className="waitingQueueActionBar__localSection">
 						<div className="waitingQueueActionBar__insteadHint waitingQueueActionBar__insteadHint--desktop">
 							<span className="waitingQueueActionBar__insteadText">
-								{t(
-									'anonymousChat.queue.insteadOfWaiting',
-									'Statt zu warten'
-								)}
+								{t('anonymousChat.queue.insteadOfWaiting')}
 							</span>
 							<ArrowRightM3Icon
 								className="waitingQueueActionBar__insteadArrow"
@@ -225,19 +205,13 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 								<LocalCounselorMailIcon />
 							</span>
 							<span className="waitingQueueActionBar__localLabel">
-								{t(
-									'anonymousChat.queue.requestLocalCounselor',
-									'Mail Beratung starten'
-								)}
+								{t('anonymousChat.queue.requestLocalCounselor')}
 							</span>
 						</button>
 
 						<div className="waitingQueueActionBar__insteadHint waitingQueueActionBar__insteadHint--mobile">
 							<span className="waitingQueueActionBar__insteadText">
-								{t(
-									'anonymousChat.queue.insteadOfWaiting',
-									'Statt zu warten'
-								)}
+								{t('anonymousChat.queue.insteadOfWaiting')}
 							</span>
 							<span
 								className="waitingQueueActionBar__hintArrow"
@@ -264,7 +238,7 @@ export const WaitingQueueActionBar: React.FC<WaitingQueueActionBarProps> = ({
 						onClick={onLeaveQueue}
 						disabled={disabled}
 					>
-						{t('anonymousChat.queue.leave', 'Chat verlassen')}
+						{t('anonymousChat.queue.leave')}
 					</button>
 				</div>
 			)}

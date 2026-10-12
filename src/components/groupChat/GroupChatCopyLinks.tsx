@@ -14,15 +14,30 @@ import { buildGroupChatInviteLink } from './groupChatInviteLink';
 
 type GroupChatCopyLinksProps = {
 	seriesId: number;
+	agencyId?: number | null;
+	inviteToken?: string | null;
 };
 
-export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
+/** Invite URL of a group series plus the copy action with its snackbar. */
+export const useGroupChatInviteLink = (
+	seriesId: number,
+	agencyId?: number | null,
+	inviteToken?: string | null
+) => {
 	const settings = useAppConfig();
-	const url = buildGroupChatInviteLink(settings.urls.toLogin, seriesId);
+	const url = buildGroupChatInviteLink(
+		settings.urls.toLogin,
+		seriesId,
+		agencyId,
+		inviteToken
+	);
 	const { addNotification } = useContext(NotificationsContext);
 	const { t: translate } = useTranslation();
 
 	const copyRegistrationLink = useCallback(async () => {
+		if (!url) {
+			return;
+		}
 		await copyTextToClipboard(url, () => {
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_SUCCESS,
@@ -32,6 +47,25 @@ export const GroupChatCopyLinks = ({ seriesId }: GroupChatCopyLinksProps) => {
 			});
 		});
 	}, [url, addNotification, translate]);
+
+	return { url, copyRegistrationLink };
+};
+
+export const GroupChatCopyLinks = ({
+	seriesId,
+	agencyId,
+	inviteToken
+}: GroupChatCopyLinksProps) => {
+	const { t: translate } = useTranslation();
+	const { url, copyRegistrationLink } = useGroupChatInviteLink(
+		seriesId,
+		agencyId,
+		inviteToken
+	);
+
+	if (!url) {
+		return null;
+	}
 
 	return (
 		<div className="GroupChatCopyLinks">

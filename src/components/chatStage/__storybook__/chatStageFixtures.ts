@@ -113,6 +113,18 @@ const withDayPill = (messages: MessageItem[]): MessageItem[] =>
 	);
 
 /** The client chat — the only timeline where the client name appears. */
+/**
+ * A message that arrives while the story is on screen (T41): the stage uses
+ * it to show what happens to a reader who is watching versus one who is
+ * writing when the client answers.
+ */
+export const arrivingClientMessage = (
+	index: number,
+	body: string,
+	time: string
+): MessageItem =>
+	message(`$arrival${index}`, 'client', body, time, CLIENT_ROOM_ID);
+
 export const mainChatMessages = (): MessageItem[] =>
 	withDayPill([
 		message(

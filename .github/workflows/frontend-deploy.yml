@@ -21,6 +21,7 @@ jobs:
   deploy-dev:
     if: ${{ github.event.inputs.environment == 'dev' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: development
     steps:
       - name: Deploy to development server
@@ -43,6 +44,7 @@ jobs:
   deploy-prod:
     if: ${{ github.event.inputs.environment == 'prod' }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     steps:
       - name: Deploy to production server

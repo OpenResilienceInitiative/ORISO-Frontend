@@ -108,3 +108,123 @@
 		}
 	}
 }
+
+// #1540: compact click-through video-call card.
+.help__carousel {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-two;
+}
+
+.help__slide {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base;
+	min-height: 140px;
+	padding: 20px;
+	border-radius: 20px;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-sizing: border-box;
+	font-size: 16px;
+	line-height: 24px;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.help__slideKicker {
+	display: flex;
+	align-items: center;
+	gap: $grid-base;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.help__slideStep {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	background: var(--m3-primary-fixed, #ffdad5);
+	color: var(--m3-on-primary-fixed-variant, #930008);
+	font-weight: 600;
+}
+
+.help__slideBody {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: $grid-base-two;
+}
+
+.help__tips {
+	margin: 0;
+	padding-left: 20px;
+
+	li + li {
+		margin-top: $grid-base;
+	}
+}
+
+.help__copyLink {
+	display: inline-flex;
+	align-items: center;
+	gap: $grid-base;
+	height: 40px;
+	padding: 0 20px;
+	border: none;
+	border-radius: 20px;
+	background: var(--m3-secondary-container, #656e79);
+	color: var(--m3-on-secondary-container, #e6effb);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+
+	svg {
+		width: 18px;
+		height: 18px;
+		fill: currentColor;
+	}
+}
+
+.help__slideNav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.help__slideArrow {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 44px;
+	height: 44px;
+	border: 1px solid var(--m3-outline, #747878);
+	border-radius: 50%;
+	background: transparent;
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-hover-layer, #f9eff0);
+	}
+}
+
+.help__slideDots {
+	display: flex;
+	gap: $grid-base;
+}
+
+.help__slideDot {
+	width: 8px;
+	height: 8px;
+	border-radius: 4px;
+	background: var(--m3-outline-variant, #c4c7c8);
+	transition: width 0.2s ease;
+
+	&--active {
+		width: 24px;
+		background: var(--m3-primary, #a5000a);
+	}
+}

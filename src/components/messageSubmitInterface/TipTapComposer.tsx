@@ -1,10 +1,10 @@
 import React, {
+	useCallback,
 	forwardRef,
 	useEffect,
 	useImperativeHandle,
 	useMemo,
-	useRef,
-	useState
+	useRef
 } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { Mark } from '@tiptap/core';
@@ -32,6 +32,7 @@ import {
 	Redo,
 	ChevronRight
 } from '@mui/icons-material';
+import { useTranslation } from 'react-i18next';
 import { useChatComposerShortcuts } from '../../features/keyboard-shortcuts/hooks/useChatComposerShortcuts';
 import {
 	filesFromDataTransfer,
@@ -65,6 +66,8 @@ export interface TipTapComposerRef {
 	setInsertionMarker: (visible: boolean) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
+	/** Left-aligns without focusing: `runAction` focuses a frame later. */
+	resetTextAlign: () => void;
 	isActionActive: (action: string) => boolean;
 }
 
@@ -139,6 +142,11 @@ const getAvailableInputLength = (
 	return maxLength - (currentLength - selectedLength);
 };
 
+/* How many of the editor's own recent states count as echoes. A parent can lag
+   a few keystrokes behind under load; more than this would be a stale value
+   from long ago, and treating it as news is the lesser harm. */
+const OWN_STATES_KEPT = 50;
+
 const enforceEditorMaxLength = (
 	editorLike: any,
 	maxLength?: number
@@ -201,7 +209,29 @@ export const TipTapComposer = forwardRef<
 		},
 		ref
 	) => {
-		const [isSyncingFromValue, setIsSyncingFromValue] = useState(false);
+		const { t } = useTranslation();
+		const isSyncingFromValue = useRef(false);
+		/* The editor's own recent states, as it reported them. `value` comes back
+		   from the parent a render later — under load, several keystrokes later.
+		   Such a value is an echo of where the editor already was, and writing
+		   it back erases what was typed since (CI: "Wir besp" → "Wir bes",
+		   leaving "Wir besrechen"). Only a value the editor never produced —
+		   a draft, a reset — is news. */
+		const ownStates = useRef<string[]>([]);
+		/* #1613: the value the sync last handled, per editor. A re-run for a
+		   new onChange alone carries no news and must not write it back. */
+		const lastSynced = useRef<{ editor: unknown; value?: string } | null>(
+			null
+		);
+		const emit = useCallback(
+			(html: string) => {
+				ownStates.current.push(html);
+				if (ownStates.current.length > OWN_STATES_KEPT)
+					ownStates.current.shift();
+				onChange(html);
+			},
+			[onChange]
+		);
 
 		const { handleComposerKeyDown } = useChatComposerShortcuts({
 			onSend: onSubmitShortcut,
@@ -357,14 +387,18 @@ export const TipTapComposer = forwardRef<
 				// (send, clear, draft switch) drops it.
 			},
 			onUpdate: ({ editor: currentEditor }) => {
-				if (isSyncingFromValue || !isEditorReady(currentEditor)) {
+				if (
+					isSyncingFromValue.current ||
+					!isEditorReady(currentEditor)
+				) {
 					return;
 				}
+				// The truncating setContent emits its own update, which already
+				// reports the shortened text.
 				if (enforceEditorMaxLength(currentEditor, maxLength)) {
-					onChange(currentEditor.getHTML());
 					return;
 				}
-				onChange(currentEditor.getHTML());
+				emit(currentEditor.getHTML());
 			},
 			onSelectionUpdate: ({ editor: currentEditor }) => {
 				if (!onSelectionSnippet || !isEditorReady(currentEditor)) {
@@ -397,6 +431,13 @@ export const TipTapComposer = forwardRef<
 			if (!isEditorReady(editor)) {
 				return;
 			}
+			if (
+				lastSynced.current?.editor === editor &&
+				lastSynced.current.value === value
+			) {
+				return;
+			}
+			lastSynced.current = { editor, value };
 			const normalizedValue = (value || '')
 				.replace(/text-align\s*:\s*right/gi, 'text-align: left')
 				.replace(
@@ -409,15 +450,24 @@ export const TipTapComposer = forwardRef<
 			}
 			const current = editor.getHTML();
 			if (normalizedValue === current) {
+				// The parent has caught up: nothing earlier can still be an echo.
+				ownStates.current = [];
 				return;
 			}
-			setIsSyncingFromValue(true);
+			if (
+				ownStates.current.includes(value || '') ||
+				ownStates.current.includes(normalizedValue)
+			) {
+				return;
+			}
+			isSyncingFromValue.current = true;
 			try {
 				clearInsertionMarker(editor);
+				ownStates.current = [];
 				editor.commands.setContent(normalizedValue);
 				editor.commands.setTextAlign('left');
 				if (enforceEditorMaxLength(editor, maxLength)) {
-					onChange(editor.getHTML());
+					emit(editor.getHTML());
 				}
 			} catch {
 				try {
@@ -425,13 +475,15 @@ export const TipTapComposer = forwardRef<
 				} catch {
 					// Ignore — a corrupt stored draft must never break the composer.
 				}
+			} finally {
+				isSyncingFromValue.current = false;
 			}
-			setTimeout(() => setIsSyncingFromValue(false), 0);
-		}, [editor, maxLength, onChange, value]);
+		}, [editor, emit, maxLength, value]);
 
 		useImperativeHandle(ref, () => ({
 			clear: () => {
 				if (isEditorReady(editor)) {
+					ownStates.current = [];
 					editor.commands.clearContent();
 				}
 			},
@@ -443,6 +495,7 @@ export const TipTapComposer = forwardRef<
 			setText: (nextValue: string) => {
 				if (isEditorReady(editor)) {
 					clearInsertionMarker(editor);
+					ownStates.current = [];
 					editor.commands.setContent(nextValue || '');
 				}
 			},
@@ -506,6 +559,12 @@ export const TipTapComposer = forwardRef<
 					.unsetHighlight()
 					.insertContent(anchorMeta)
 					.run();
+			},
+			resetTextAlign: () => {
+				if (!isEditorReady(editor)) {
+					return;
+				}
+				editor.chain().setTextAlign('left').run();
 			},
 			runAction: (action: string) => {
 				if (!isEditorReady(editor)) {
@@ -640,7 +699,10 @@ export const TipTapComposer = forwardRef<
 						editor.chain().focus().insertContent('🙂').run();
 						return;
 					case 'insertImageMarker': {
-						const imageUrl = window.prompt('Image URL', '');
+						const imageUrl = window.prompt(
+							t('message.submit.toolbar.imageUrlPrompt'),
+							''
+						);
 						if (imageUrl === null || !imageUrl.trim()) {
 							return;
 						}
@@ -684,7 +746,10 @@ export const TipTapComposer = forwardRef<
 					case 'setLink': {
 						const previousUrl =
 							editor.getAttributes('link').href || '';
-						const url = window.prompt('URL', previousUrl);
+						const url = window.prompt(
+							t('message.submit.toolbar.urlPrompt'),
+							previousUrl
+						);
 						if (url === null) {
 							return;
 						}
@@ -789,7 +854,7 @@ export const TipTapComposer = forwardRef<
 							type="button"
 							onClick={() => editor.chain().focus().undo().run()}
 							disabled={!editor.can().undo()}
-							aria-label="Undo"
+							aria-label={t('message.submit.toolbar.undo')}
 						>
 							<Undo fontSize="small" />
 						</button>
@@ -797,7 +862,7 @@ export const TipTapComposer = forwardRef<
 							type="button"
 							onClick={() => editor.chain().focus().redo().run()}
 							disabled={!editor.can().redo()}
-							aria-label="Redo"
+							aria-label={t('message.submit.toolbar.redo')}
 						>
 							<Redo fontSize="small" />
 						</button>
@@ -809,7 +874,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('bold') ? 'is-active' : ''
 							}
-							aria-label="Bold"
+							aria-label={t('message.submit.toolbar.bold')}
 						>
 							<FormatBold fontSize="small" />
 						</button>
@@ -821,7 +886,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('bulletList') ? 'is-active' : ''
 							}
-							aria-label="Bullet List"
+							aria-label={t('message.submit.toolbar.bulletList')}
 						>
 							<FormatListBulleted fontSize="small" />
 						</button>
@@ -835,7 +900,7 @@ export const TipTapComposer = forwardRef<
 									? 'is-active'
 									: ''
 							}
-							aria-label="Ordered List"
+							aria-label={t('message.submit.toolbar.orderedList')}
 						>
 							<FilterList fontSize="small" />
 						</button>
@@ -851,7 +916,7 @@ export const TipTapComposer = forwardRef<
 							className={
 								editor.isActive('link') ? 'is-active' : ''
 							}
-							aria-label="Quick Link"
+							aria-label={t('message.submit.toolbar.link')}
 						>
 							<ChevronRight fontSize="small" />
 						</button>

@@ -8,7 +8,17 @@ let mockLanguage = 'de';
 
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string, fallback?: string) => fallback ?? key,
+		t: (key: string) =>
+			({
+				'legal.notice.fallbackLanguage':
+					'Dieser Text liegt nicht in Ihrer Sprache vor und wird in seiner Originalsprache angezeigt.',
+				'legal.notice.machineTranslated':
+					'Maschinell übersetzt — rechtlich verbindlich ist die deutsche Fassung.',
+				'legal.notice.showOriginal': 'Original anzeigen',
+				'legal.notice.showingOriginal':
+					'Sie sehen die Originalfassung.',
+				'legal.notice.showTranslation': 'Übersetzung anzeigen'
+			})[key] ?? key,
 		i18n: {
 			get language() {
 				return mockLanguage;
@@ -119,7 +129,7 @@ describe('LegalContentRenderer', () => {
 						'<p onclick="window.__xss = true"><strong>Sicherer Text</strong></p>',
 						'<script>window.__xss = true</script>',
 						'<a href="javascript:alert(1)">Unsicher</a>',
-						'<a href="https://oriso.org/legal">Sicher</a>'
+						'<a href="https://example.org/legal">Sicher</a>'
 					].join('')
 				})}
 			/>
@@ -131,7 +141,7 @@ describe('LegalContentRenderer', () => {
 		expect(container.querySelector('[onclick]')).toBeNull();
 		expect(screen.getByText('Unsicher').getAttribute('href')).toBeNull();
 		expect(screen.getByText('Sicher').getAttribute('href')).toBe(
-			'https://oriso.org/legal'
+			'https://example.org/legal'
 		);
 	});
 });

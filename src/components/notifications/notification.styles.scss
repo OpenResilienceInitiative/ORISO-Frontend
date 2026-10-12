@@ -16,7 +16,28 @@
 	}
 
 	&__close {
+		/* One title line high, icon centred: where the old <div> put it. */
+		display: flex;
+		flex: 0 0 $grid-base-three;
+		align-self: flex-start;
+		align-items: center;
+		justify-content: center;
+		width: $grid-base-three;
+		height: $grid-base-three;
+		margin-left: $grid-base;
+		padding: 0;
+		border: 0;
+		background: none;
 		color: $white;
+		cursor: pointer;
+
+		/* The shared focus treatment, like every other control. */
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+			border-radius: 2px;
+		}
+
 		svg {
 			width: 14px;
 			height: 14px;
@@ -25,6 +46,7 @@
 
 	&__title {
 		flex: 1;
+		min-width: 0;
 		min-height: 24px;
 		line-height: 24px;
 		font-size: $font-size-h5;
@@ -48,7 +70,9 @@
 		font-size: $font-size-tertiary;
 
 		a,
-		a:hover {
+		a:hover,
+		.button__link:not([disabled]),
+		.button__link:not([disabled]):hover {
 			color: $white;
 			text-decoration: underline;
 		}

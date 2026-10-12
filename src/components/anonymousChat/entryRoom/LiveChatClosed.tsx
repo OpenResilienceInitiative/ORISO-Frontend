@@ -9,7 +9,10 @@ import { translateWithFallback } from '../../../utils/translationFallback';
 
 export interface LiveChatClosedProps {
 	onMailCounselling: () => void;
-	/** The quiet exit — back to waiting (availability can recover). */
+	/**
+	 * „Ich warte" — stay; the room steps on by itself once someone is live. A
+	 * page cannot close a tab the guest opened, so this is waiting, not leaving.
+	 */
 	onLater: () => void;
 }
 
@@ -165,9 +168,10 @@ export const LiveChatClosed = ({
 			</Box>
 			<RegistrationFooter
 				secondary={{
-					label: tr('later', 'Später'),
+					label: tr('wait', 'Ich warte'),
+					/* Never the round close icon, even on a phone: this keeps
+					   the page open, and an X would say the opposite. */
 					compact: true,
-					round: narrow,
 					onClick: onLater
 				}}
 				primary={{

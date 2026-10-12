@@ -16,6 +16,119 @@ const makeEvent = (content: Record<string, unknown>) => ({
 	getTs: () => 1700000000000
 });
 
+const makeEncryptedEvent = (
+	content: Record<string, unknown>,
+	decryptionFailure = false,
+	/*
+	 * CodeRabbit on #1336: with clear content always present, the
+	 * "encrypted event that never decrypted" branch of
+	 * `isUndecryptedRoomEvent` was never reached by any test.
+	 */
+	withClearContent = true
+) => ({
+	...makeEvent(content),
+	getType: () => 'm.room.encrypted',
+	getClearContent: () => (withClearContent ? content : undefined),
+	isDecryptionFailure: () => decryptionFailure
+});
+
+describe('formatMatrixTimelineEvent undecrypted messages (#1191)', () => {
+	it.each([
+		[
+			'SDK failure state',
+			makeEncryptedEvent(
+				{ msgtype: 'm.text', body: 'leaked SDK body' },
+				true
+			)
+		],
+		[
+			'm.bad.encrypted placeholder',
+			makeEncryptedEvent({
+				msgtype: 'm.bad.encrypted',
+				body: '** Unable to decrypt: DecryptionError: missing room key **'
+			})
+		],
+		[
+			'SDK-normalised failure with clear content',
+			makeEncryptedEvent({
+				msgtype: 'm.bad.encrypted',
+				body: '** Unable to decrypt: DecryptionError: missing room key **'
+			})
+		]
+	])('uses the localized fallback for %s', (_label, event) => {
+		const formatted = formatMatrixTimelineEvent(
+			event,
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+		expect(formatted.msg).not.toContain('Unable to decrypt');
+	});
+
+	it('uses the fallback for a raw encrypted event with no clear content', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEncryptedEvent(
+				{ algorithm: 'm.megolm.v1.aes-sha2', ciphertext: 'AwgAEnB...' },
+				false,
+				false
+			),
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe('Nachricht verschlüsselt');
+	});
+
+	it('keeps a plain text message whose body mentions the SDK error', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEvent({
+				msgtype: 'm.text',
+				body: 'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
+			}),
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe(
+			'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
+		);
+		expect(formatted.msg).not.toBe('Nachricht verschlüsselt');
+	});
+
+	it('preserves diagnostic quotations after decrypting an encrypted wire event', () => {
+		const content = {
+			msgtype: 'm.text',
+			body: 'Bei mir stand: Unable to decrypt: DecryptionError — was heißt das?'
+		};
+		const event = {
+			...makeEvent(content),
+			getClearContent: () => content,
+			getWireType: () => 'm.room.encrypted',
+			isEncrypted: () => true,
+			isDecryptionFailure: () => false
+		};
+
+		expect(
+			formatMatrixTimelineEvent(event, null, 'Nachricht verschlüsselt')
+				.msg
+		).toBe(content.body);
+	});
+
+	it('preserves the body of a successfully decrypted text message', () => {
+		const formatted = formatMatrixTimelineEvent(
+			makeEncryptedEvent({
+				msgtype: 'm.text',
+				body: 'Vertraulicher Text'
+			}),
+			null,
+			'Nachricht verschlüsselt'
+		);
+
+		expect(formatted.msg).toBe('Vertraulicher Text');
+	});
+});
+
 describe('formatMatrixTimelineEvent redacted events (#827)', () => {
 	it('maps isRedacted() events to t: rm', () => {
 		const formatted = formatMatrixTimelineEvent(

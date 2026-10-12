@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../../../hooks/useAppConfig';
 
 export const BookingCancellation = () => {
+	const { t } = useTranslation();
 	const settings = useAppConfig();
 
 	const location = useLocation();
@@ -21,7 +23,7 @@ export const BookingCancellation = () => {
 				scrolling="false"
 				width="100%"
 				height="100%"
-				title="booking-cancellation"
+				title={t('booking.cancellation.iframeTitle')}
 			/>
 		)) ||
 		null

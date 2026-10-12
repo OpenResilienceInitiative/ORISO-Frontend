@@ -1,109 +1,114 @@
 import React, { useContext, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, BUTTON_TYPES } from '../button/Button';
 import './reassignRequestMessage.styles';
+import { ICON_INFO, SystemMessage } from './SystemMessage';
 import { ConsultantListContext } from '../../globalState';
+import {
+	type ConsultantReassignment,
+	ReassignStatus
+} from '../../api/apiSendAliasMessage';
+
+/**
+ * Name for a counsellor in a reassignment record: the live consultant list
+ * for staff. Advice seekers see the stored display name or User-ID only;
+ * unresolved staff records use a neutral placeholder.
+ */
+const useConsultantName = (
+	consultantId: string | undefined,
+	storedName: string | undefined,
+	lookUp = true
+): string => {
+	const { t: translate } = useTranslation();
+	const { consultantList } = useContext(ConsultantListContext);
+
+	return useMemo(() => {
+		if (lookUp && consultantId && consultantList?.length > 0) {
+			const consultant = consultantList.find(
+				(entry) => entry.value === consultantId
+			);
+			if (consultant) {
+				return consultant.label;
+			}
+		}
+		return (
+			storedName?.trim() ||
+			(!lookUp && consultantId?.trim()) ||
+			translate('caseHandover.history.unknownConsultant')
+		);
+	}, [consultantId, consultantList, lookUp, storedName, translate]);
+};
 
 export const ReassignRequestMessage: React.FC<{
 	fromConsultantName: string;
 	toConsultantName: string;
-	onClick: (accepted: boolean) => void;
+	fromConsultantId?: string;
+	toConsultantId?: string;
 }> = (props) => {
 	const { t: translate } = useTranslation();
+	const oldConsultant = useConsultantName(
+		props.fromConsultantId,
+		props.fromConsultantName,
+		false
+	);
+	const newConsultant = useConsultantName(
+		props.toConsultantId,
+		props.toConsultantName,
+		false
+	);
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				<h5>
-					{translate(
-						'session.reassign.system.message.reassign.title',
-						{
-							oldConsultant: props.fromConsultantName,
-							newConsultant: props.toConsultantName
-						}
-					)}
-				</h5>
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
+					<>
+						<strong>
+							{translate(
+								'session.reassign.system.message.reassign.title',
+								{ oldConsultant, newConsultant }
+							)}
+						</strong>
 
-				<span className="description">
-					{translate(
-						'session.reassign.system.message.reassign.description.noTeam',
-						{
-							oldConsultant: props.fromConsultantName,
-							newConsultant: props.toConsultantName
-						}
-					)}
-				</span>
-				<span className="description">
-					{translate(
-						'session.reassign.system.message.reassign.question'
-					)}
-				</span>
-				<div className="buttons">
-					<Button
-						item={{
-							label: translate(
-								'session.reassign.system.message.reassign.accept'
-							),
-							type: BUTTON_TYPES.PRIMARY
-						}}
-						buttonHandle={() => props.onClick(true)}
-					/>
-					<Button
-						item={{
-							label: translate(
-								'session.reassign.system.message.reassign.decline'
-							),
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						buttonHandle={() => props.onClick(false)}
-					/>
-				</div>
-			</div>
+						<span className="description">
+							{translate(
+								'session.reassign.system.message.reassign.historical'
+							)}
+						</span>
+					</>
+				}
+			/>
 		</div>
 	);
 };
 
 export const ReassignRequestSentMessage: React.FC<{
-	toAskerName: string;
-	fromConsultantId: string;
-	toConsultantId: string;
+	toAskerName?: string;
+	fromConsultantId?: string;
+	toConsultantId?: string;
+	toConsultantName?: string;
 	isMySession: boolean;
-}> = (props) => {
+}> = () => {
 	const { t: translate } = useTranslation();
-	const { consultantList } = useContext(ConsultantListContext);
-
-	const toConsultantName = useMemo(() => {
-		if (props.toConsultantId && consultantList.length > 0) {
-			const toConsultant = consultantList.find(
-				(consultant) => consultant.value === props.toConsultantId
-			);
-			if (toConsultant) {
-				return toConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.toConsultantId]);
-
-	let descriptionToTranslate =
-		'session.reassign.system.message.reassign.sent.description.noTeam';
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				<h5>
-					{translate(
-						'session.reassign.system.message.reassign.sent.title'
-					)}
-				</h5>
-				<span className="description">
-					{translate(descriptionToTranslate, {
-						client1: props.toAskerName,
-						client2: props.toAskerName,
-						newConsultant: toConsultantName
-					})}
-				</span>
-			</div>
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
+					<>
+						<strong>
+							{translate(
+								'session.reassign.system.message.reassign.sent.title'
+							)}
+						</strong>
+						<span className="description">
+							{translate(
+								'session.reassign.system.message.reassign.historical'
+							)}
+						</span>
+					</>
+				}
+			/>
 		</div>
 	);
 };
@@ -114,93 +119,74 @@ export const ReassignRequestAcceptedMessage: React.FC<{
 	toConsultantId: string;
 	isAsker: boolean;
 	fromConsultantId: string;
+	fromConsultantName?: string;
 	isMySession: boolean;
 }> = (props) => {
 	const { t: translate } = useTranslation();
-	const { consultantList } = useContext(ConsultantListContext);
-	const fromConsultantName = useMemo(() => {
-		if (
-			props.fromConsultantId &&
-			!props.isAsker &&
-			consultantList.length > 0
-		) {
-			const fromConsultant = consultantList.find(
-				(consultant) => consultant.value === props.fromConsultantId
-			);
-			if (fromConsultant) {
-				return fromConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.fromConsultantId, props.isAsker]);
-
-	const toConsultantName = useMemo(() => {
-		if (
-			props.toConsultantId &&
-			!props.isAsker &&
-			consultantList.length > 0
-		) {
-			const toConsultant = consultantList.find(
-				(consultant) => consultant.value === props.toConsultantId
-			);
-			if (toConsultant) {
-				return toConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.isAsker, props.toConsultantId]);
+	// Advice seekers never see staff lookups, only the stored names.
+	const fromConsultantName = useConsultantName(
+		props.fromConsultantId,
+		props.fromConsultantName,
+		!props.isAsker
+	);
+	const toConsultantName = useConsultantName(
+		props.toConsultantId,
+		props.toConsultantName,
+		!props.isAsker
+	);
 
 	const forWhichConsultant = props.isMySession ? 'self' : 'other';
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				{props.isAsker ? (
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
 					<>
-						<h5>
-							{translate(
-								'session.reassign.system.message.reassign.accepted.consultant.title',
-								{
-									newConsultant: props.toConsultantName
-								}
-							)}
-						</h5>
-						<span className="description">
-							{translate(
-								'session.reassign.system.message.reassign.accepted.new.consultant.description',
-								{
-									newConsultant1: props.toConsultantName,
-									newConsultant2: props.toConsultantName
-								}
-							)}
-						</span>
+						{props.isAsker ? (
+							<>
+								<strong>
+									{translate(
+										'session.reassign.system.message.reassign.accepted.consultant.title',
+										{ newConsultant: toConsultantName }
+									)}
+								</strong>
+								<span className="description">
+									{translate(
+										'session.reassign.system.message.reassign.accepted.new.consultant.description',
+										{
+											newConsultant1: toConsultantName,
+											newConsultant2: toConsultantName
+										}
+									)}
+								</span>
+							</>
+						) : (
+							<>
+								<strong>
+									{translate(
+										`session.reassign.system.message.reassign.accepted.title.${forWhichConsultant}`,
+										{
+											oldConsultant: fromConsultantName,
+											newConsultant: toConsultantName,
+											client: props.toAskerName
+										}
+									)}
+								</strong>
+								<span className="description">
+									{translate(
+										`session.reassign.system.message.reassign.accepted.description.${forWhichConsultant}`,
+										{
+											client: props.toAskerName,
+											consultant: toConsultantName
+										}
+									)}
+								</span>
+							</>
+						)}
 					</>
-				) : (
-					<>
-						<h5>
-							{translate(
-								`session.reassign.system.message.reassign.accepted.title.${forWhichConsultant}`,
-								{
-									oldConsultant: fromConsultantName,
-									newConsultant: toConsultantName,
-									client: props.toAskerName
-								}
-							)}
-						</h5>
-						<span className="description">
-							{translate(
-								`session.reassign.system.message.reassign.accepted.description.${forWhichConsultant}`,
-								{
-									client: props.toAskerName,
-									consultant: toConsultantName
-								}
-							)}
-						</span>
-					</>
-				)}
-			</div>
+				}
+			/>
 		</div>
 	);
 };
@@ -213,60 +199,101 @@ export const ReassignRequestDeclinedMessage: React.FC<{
 	fromConsultantId: string;
 }> = (props) => {
 	const { t: translate } = useTranslation();
-	const { consultantList } = useContext(ConsultantListContext);
-	const fromConsultantName = useMemo(() => {
-		if (
-			props.fromConsultantId &&
-			!props.isAsker &&
-			consultantList.length > 0
-		) {
-			const fromConsultant = consultantList.find(
-				(consultant) => consultant.value === props.fromConsultantId
-			);
-			if (fromConsultant) {
-				return fromConsultant.label;
-			}
-		}
-
-		return '';
-	}, [consultantList, props.fromConsultantId, props.isAsker]);
+	const fromConsultantName = useConsultantName(
+		props.fromConsultantId,
+		props.fromConsultantName,
+		!props.isAsker
+	);
 
 	const forWhichConsultant = props.isMySession ? 'self' : 'other';
 
 	return (
 		<div className="reassignRequestMessage">
-			<div className="wrapper">
-				{props.isAsker ? (
-					<h5>
-						{translate(
-							'session.reassign.system.message.reassign.declined.old.consultant.title',
-							{
-								oldConsultant: props.fromConsultantName
-							}
-						)}
-					</h5>
-				) : (
+			<SystemMessage
+				icon={ICON_INFO}
+				subject={
 					<>
-						<h5>
-							{translate(
-								'session.reassign.system.message.reassign.declined.title',
-								{
-									client: props.toAskerName
-								}
-							)}
-						</h5>
-						<span className="description">
-							{translate(
-								`session.reassign.system.message.reassign.declined.description.${forWhichConsultant}`,
-								{
-									client: props.toAskerName,
-									consultant: fromConsultantName
-								}
-							)}
-						</span>
+						{props.isAsker ? (
+							<strong>
+								{translate(
+									'session.reassign.system.message.reassign.declined.old.consultant.title',
+									{ oldConsultant: fromConsultantName }
+								)}
+							</strong>
+						) : (
+							<>
+								<strong>
+									{translate(
+										'session.reassign.system.message.reassign.declined.title',
+										{ client: props.toAskerName }
+									)}
+								</strong>
+								<span className="description">
+									{translate(
+										`session.reassign.system.message.reassign.declined.description.${forWhichConsultant}`,
+										{
+											client: props.toAskerName,
+											consultant: fromConsultantName
+										}
+									)}
+								</span>
+							</>
+						)}
 					</>
-				)}
-			</div>
+				}
+			/>
 		</div>
 	);
+};
+
+/**
+ * Legacy REASSIGN_CONSULTANT record, read-only. Nothing on dev can still
+ * create or answer one (no /service/messages handler), so no buttons.
+ */
+export const HistoricalReassignMessage = ({
+	message,
+	isAsker,
+	isMySession
+}: {
+	message: string;
+	isAsker: boolean;
+	isMySession: boolean;
+}) => {
+	let params: ConsultantReassignment;
+	try {
+		params = JSON.parse(message);
+	} catch {
+		return null;
+	}
+	if (!params || typeof params !== 'object') return null;
+
+	switch (params.status) {
+		case ReassignStatus.REQUESTED:
+			return isAsker ? (
+				<ReassignRequestMessage {...params} />
+			) : (
+				<ReassignRequestSentMessage
+					{...params}
+					isMySession={isMySession}
+				/>
+			);
+		case ReassignStatus.CONFIRMED:
+			return (
+				<ReassignRequestAcceptedMessage
+					{...params}
+					isAsker={isAsker}
+					isMySession={isMySession}
+				/>
+			);
+		case ReassignStatus.REJECTED:
+			return (
+				<ReassignRequestDeclinedMessage
+					{...params}
+					isAsker={isAsker}
+					isMySession={isMySession}
+				/>
+			);
+		default:
+			return null;
+	}
 };

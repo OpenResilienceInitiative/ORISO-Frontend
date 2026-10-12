@@ -1,0 +1,9 @@
+# This image copies one directory, so exclude everything else: the context
+# stays a few MB instead of the whole working tree, and nothing but the
+# freshly built Storybook output can end up in the image.
+#
+# A dedicated ignore file (BuildKit reads <dockerfile>.dockerignore) rather
+# than editing .dockerignore, which excludes /storybook-static for the sake of
+# the frontend image and must keep doing so.
+*
+!storybook-static

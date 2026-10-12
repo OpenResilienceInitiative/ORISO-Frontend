@@ -36,9 +36,7 @@ export const AccountInviteAcceptance = () => {
 	useEffect(() => {
 		let active = true;
 		if (!token) {
-			setError(
-				t('accountInvite.invalid', 'Der Einladungslink ist ungültig.')
-			);
+			setError(t('accountInvite.invalid'));
 			setLoading(false);
 			return () => {
 				active = false;
@@ -51,12 +49,7 @@ export const AccountInviteAcceptance = () => {
 			})
 			.catch(() => {
 				if (active) {
-					setError(
-						t(
-							'accountInvite.invalid',
-							'Der Einladungslink ist ungültig oder abgelaufen.'
-						)
-					);
+					setError(t('accountInvite.invalid'));
 				}
 			})
 			.finally(() => {
@@ -90,12 +83,7 @@ export const AccountInviteAcceptance = () => {
 			}
 			setCompleted(true);
 		} catch (_error) {
-			setError(
-				t(
-					'accountInvite.createFailed',
-					'Das Beratungskonto konnte nicht erstellt werden. Bitte versuchen Sie es erneut.'
-				)
-			);
+			setError(t('accountInvite.createFailed'));
 		} finally {
 			setSubmitting(false);
 		}
@@ -107,10 +95,7 @@ export const AccountInviteAcceptance = () => {
 				<Box className="loginForm__inner">
 					{loading ? (
 						<CircularProgress
-							aria-label={t(
-								'accountInvite.loading',
-								'Einladung wird geladen'
-							)}
+							aria-label={t('accountInvite.loading')}
 						/>
 					) : completed ? (
 						<Box>
@@ -119,23 +104,17 @@ export const AccountInviteAcceptance = () => {
 								variant="h4"
 								gutterBottom
 							>
-								{t(
-									'accountInvite.successTitle',
-									'Konto erstellt'
-								)}
+								{t('accountInvite.successTitle')}
 							</Typography>
 							<Typography paragraph>
-								{t(
-									'accountInvite.success',
-									'Ihr Beratungskonto wurde erstellt.'
-								)}
+								{t('accountInvite.success')}
 							</Typography>
 							<Button
 								component={Link}
 								to="/login"
 								variant="contained"
 							>
-								{t('accountInvite.toLogin', 'Zur Anmeldung')}
+								{t('accountInvite.toLogin')}
 							</Button>
 						</Box>
 					) : (
@@ -145,35 +124,23 @@ export const AccountInviteAcceptance = () => {
 								variant="h4"
 								gutterBottom
 							>
-								{t(
-									'accountInvite.title',
-									'Beratungskonto erstellen'
-								)}
+								{t('accountInvite.title')}
 							</Typography>
 							<Typography paragraph>
-								{t(
-									'accountInvite.description',
-									'Vervollständigen Sie Ihre Einladung mit einem Benutzernamen und Passwort.'
-								)}
+								{t('accountInvite.description')}
 							</Typography>
 							{error && <Alert severity="error">{error}</Alert>}
 							{invite && (
 								<>
 									<OrisoTextField
-										label={t(
-											'accountInvite.email',
-											'E-Mail-Adresse'
-										)}
+										label={t('accountInvite.email')}
 										value={invite.recipientEmail}
 										disabled
 										fullWidth
 										margin="normal"
 									/>
 									<OrisoTextField
-										label={t(
-											'accountInvite.username',
-											'Benutzername'
-										)}
+										label={t('accountInvite.username')}
 										value={username}
 										onChange={(event) =>
 											setUsername(event.target.value)
@@ -183,10 +150,7 @@ export const AccountInviteAcceptance = () => {
 										margin="normal"
 									/>
 									<OrisoTextField
-										label={t(
-											'accountInvite.password',
-											'Passwort'
-										)}
+										label={t('accountInvite.password')}
 										type="password"
 										value={password}
 										onChange={(event) =>
@@ -196,14 +160,12 @@ export const AccountInviteAcceptance = () => {
 										fullWidth
 										margin="normal"
 										helperText={t(
-											'accountInvite.passwordHint',
-											'Mindestens 16 Zeichen mit Groß- und Kleinbuchstaben, Zahl und Sonderzeichen.'
+											'accountInvite.passwordHint'
 										)}
 									/>
 									<OrisoTextField
 										label={t(
-											'accountInvite.repeatPassword',
-											'Passwort wiederholen'
+											'accountInvite.repeatPassword'
 										)}
 										type="password"
 										value={repeatedPassword}
@@ -222,10 +184,7 @@ export const AccountInviteAcceptance = () => {
 										disabled={!valid || submitting}
 										sx={{ mt: 2 }}
 									>
-										{t(
-											'accountInvite.submit',
-											'Konto erstellen'
-										)}
+										{t('accountInvite.submit')}
 									</Button>
 								</>
 							)}

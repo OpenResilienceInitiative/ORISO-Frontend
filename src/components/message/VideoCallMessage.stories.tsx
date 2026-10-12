@@ -18,7 +18,8 @@ import './message.styles.scss';
  * the same event seen from the two sides of the conversation.
  */
 const meta = {
-	title: 'Components/Chat/VideoCallMessage',
+	id: 'components-chat-videocallmessage',
+	title: 'Chat/System messages/Video call',
 	component: VideoCallMessage,
 	tags: ['autodocs'],
 	parameters: {

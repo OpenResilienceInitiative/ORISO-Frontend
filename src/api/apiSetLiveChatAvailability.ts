@@ -12,12 +12,16 @@ import {
  * The promise rejects when Redis-backed availability was not acknowledged. Callers
  * must not present or persist the requested state before this resolves.
  */
-export const apiSetLiveChatAvailability = (available: boolean): Promise<void> =>
+export const apiSetLiveChatAvailability = (
+	available: boolean,
+	signal?: AbortSignal
+): Promise<void> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailability,
 		method: FETCH_METHODS.PUT,
 		bodyData: JSON.stringify({ available }),
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+		responseHandling: [FETCH_ERRORS.CATCH_ALL],
+		...(signal && { signal })
 	}).then(() => undefined);
 
 export const apiGetLiveChatAvailability = (): Promise<boolean> =>
@@ -28,12 +32,28 @@ export const apiGetLiveChatAvailability = (): Promise<boolean> =>
 		Boolean(response?.available)
 	);
 
-/** Refreshes an existing backend lease and can never enable availability. */
-export const apiHeartbeatLiveChatAvailability = (): Promise<boolean> =>
+/**
+ * A heartbeat that has not answered by then counts as failed (`TIMEOUT`), so
+ * the client can retry, or give up, well inside the 120 s lease (#1485).
+ */
+export const LIVE_CHAT_HEARTBEAT_TIMEOUT_MS = 5_000;
+
+/**
+ * Refreshes an existing backend lease and can never enable availability.
+ *
+ * A 403 rejects with `FETCH_ERRORS.FORBIDDEN` and a 401 with
+ * `FETCH_ERRORS.UNAUTHORIZED`, so the caller can tell a refusal from a
+ * transient failure (#1485).
+ */
+export const apiHeartbeatLiveChatAvailability = (
+	signal?: AbortSignal
+): Promise<boolean> =>
 	fetchData({
 		url: endpoints.consultantLiveChatAvailabilityHeartbeat,
 		method: FETCH_METHODS.POST,
-		responseHandling: [FETCH_SUCCESS.CONTENT]
+		responseHandling: [FETCH_SUCCESS.CONTENT, FETCH_ERRORS.FORBIDDEN],
+		timeout: LIVE_CHAT_HEARTBEAT_TIMEOUT_MS,
+		signal
 	}).then((response: { available?: boolean }) =>
 		Boolean(response?.available)
 	);

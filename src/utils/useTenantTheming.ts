@@ -1,4 +1,12 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+	useSyncExternalStore
+} from 'react';
 import { apiGetTenantTheming } from '../api/apiGetTenantTheming';
 import { TenantContext, useLocaleData } from '../globalState';
 import { TenantDataInterface } from '../globalState/interfaces';
@@ -7,6 +15,10 @@ import decodeHTML from './decodeHTML';
 import decodeTenantAsset from './decodeTenantAsset';
 import getSafeFaviconUrl from './getSafeFaviconUrl';
 import applyBrandingFavicon from './applyBrandingFavicon';
+import {
+	getAuthenticatedTenantId,
+	subscribeToAuthenticatedTenant
+} from './authenticatedTenant';
 import { useAppConfig } from '../hooks/useAppConfig';
 import {
 	applyPreviewFromLocation,
@@ -89,9 +101,20 @@ const useTenantTheming = () => {
 	const tenantContext = useContext(TenantContext);
 	const { locale } = useLocaleData();
 	const { subdomain } = getLocationVariables();
+	// Resolved from the access token, so it is `null` for an anonymous visitor
+	// and the user's own tenant once they sign in. The providers above the
+	// router do not remount on login, so without this the app would keep
+	// serving the tenant it resolved on the login screen.
+	const authenticatedTenantId = useSyncExternalStore(
+		subscribeToAuthenticatedTenant,
+		getAuthenticatedTenantId
+	);
 	const [isLoadingTenant, setIsLoadingTenant] = useState(
 		settings.useTenantService
 	);
+	// Which tenant the state currently in the context was resolved for. Only
+	// meaningful once a resolution has succeeded.
+	const appliedTenantId = useRef<number | null | undefined>(undefined);
 
 	const cypressTenantEnabled = useMemo(
 		() => (window as any).Cypress?.env('TENANT_ENABLED'),
@@ -166,17 +189,62 @@ const useTenantTheming = () => {
 			return;
 		}
 
+		// Sign-in and sign-out start a second resolution while the first may
+		// still be in flight. Whoever answers last would otherwise win: a slow
+		// anonymous response landing after the signed-in one puts the
+		// subdomain tenant back, which is the leak this hook exists to close.
+		let active = true;
+		const requestedTenantId = authenticatedTenantId;
+
+		// The switch starts the moment the token changes, not when the answer
+		// arrives. Until then the context would still hand out the previous
+		// Träger's branding and feature flags, so it is emptied up front and
+		// consumers read `null` for the duration. `undefined` means "never
+		// resolved" and is left alone, so the first load still shows its
+		// loading state instead of a hard "no tenant".
+		if (
+			appliedTenantId.current !== undefined &&
+			appliedTenantId.current !== requestedTenantId
+		) {
+			setIsLoadingTenant(true);
+			tenantContext?.setTenant(null as any);
+		}
+
 		apiGetTenantTheming()
-			.then(onTenantServiceResponse)
-			.catch((error) => {
-				// console.log('Theme could not be loaded', error);
+			.then((tenant) => {
+				if (!active) {
+					return;
+				}
+				appliedTenantId.current = requestedTenantId;
+				onTenantServiceResponse(tenant);
+			})
+			.catch(() => {
+				if (!active) {
+					return;
+				}
+				// The tenant changed and the new one could not be resolved.
+				// Keeping the previous one would go on serving another
+				// Träger's branding and feature flags to this counsellor, so
+				// the app serves none: consumers read `null` and gate every
+				// tenant feature off rather than guessing.
+				if (appliedTenantId.current !== requestedTenantId) {
+					appliedTenantId.current = requestedTenantId;
+					tenantContext?.setTenant(null as any);
+				}
 			})
 			.finally(() => {
+				if (!active) {
+					return;
+				}
 				setIsLoadingTenant(false);
 			});
+
+		return () => {
+			active = false;
+		};
 		// False positive
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [tenantContext?.setTenant, subdomain, locale]);
+	}, [tenantContext?.setTenant, subdomain, locale, authenticatedTenantId]);
 
 	return isLoadingTenant;
 };

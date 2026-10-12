@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import { useSessionListRail } from './SessionListRailContext';
 import {
 	apiGetChatOccurrences,
 	apiSkipChatOccurrence,
@@ -34,6 +37,11 @@ export const FutureTimelinePanel = ({
 	onDuplicateOccurrence
 }: FutureTimelinePanelProps) => {
 	const { t: translate, i18n } = useTranslation();
+	// T41b (Frank, 15.09.): in the 80 px rail the label "Zukünftige Termine
+	// anzeigen" had nowhere to go and was set one letter per line. There it
+	// becomes the arrow alone — placeholder until the rail gets its own
+	// design — while the full sentence stays as the accessible name.
+	const rail = useSessionListRail();
 	const [expanded, setExpanded] = useState(false);
 	const [months, setMonths] = useState(3);
 	const [occurrences, setOccurrences] = useState<ChatOccurrence[]>([]);
@@ -184,21 +192,36 @@ export const FutureTimelinePanel = ({
 		}
 	};
 
+	const toggleLabel = translate(
+		expanded
+			? 'groupChat.futureTimeline.hide'
+			: 'groupChat.futureTimeline.show'
+	);
+
 	return (
 		<section
-			className="futureTimeline"
+			className={`futureTimeline${rail ? ' futureTimeline--rail' : ''}`}
 			aria-label={translate('groupChat.futureTimeline.ariaLabel')}
 		>
 			<div className="futureTimeline__divider">
-				<span>{translate('groupChat.futureTimeline.now')}</span>
+				{!rail && (
+					<span>{translate('groupChat.futureTimeline.now')}</span>
+				)}
 				<button
 					type="button"
 					onClick={() => setExpanded((value) => !value)}
+					aria-label={rail ? toggleLabel : undefined}
+					aria-expanded={expanded}
+					title={rail ? toggleLabel : undefined}
 				>
-					{translate(
-						expanded
-							? 'groupChat.futureTimeline.hide'
-							: 'groupChat.futureTimeline.show'
+					{rail ? (
+						expanded ? (
+							<ArrowDownwardIcon fontSize="small" />
+						) : (
+							<ArrowUpwardIcon fontSize="small" />
+						)
+					) : (
+						toggleLabel
 					)}
 				</button>
 			</div>

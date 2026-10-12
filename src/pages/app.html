@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="no-js" lang="de">
+<html class="no-js" lang="de" translate="no">
 	<head>
 		<meta charset="utf-8" />
 
@@ -9,6 +9,9 @@
 			content="Beratung & Hilfe – Online. Anonym. Sicher."
 		/>
 		<meta name="referrer" content="same-origin" />
+		<!-- The app ships its own translations; browser page translation rewrites
+		     React-managed DOM nodes and crashes rendering (removeChild NotFoundError). -->
+		<meta name="google" content="notranslate" />
 
 		<meta
 			property="og:title"

@@ -1,0 +1,19 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+{{assuranceBlock}}
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} is a service provided by {{operatorName}}.
+
+Privacy: {{privacyUrl}}
+Imprint: {{imprintUrl}}
+
+{{footerNote}}

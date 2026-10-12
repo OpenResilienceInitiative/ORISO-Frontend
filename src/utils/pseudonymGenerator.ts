@@ -6,6 +6,11 @@ const svgCache = new Map<string, string>();
 // Serve under /static (not /assets): on the main host /assets is routed to the
 // Element Call Vite bundle, so /assets/anon-animals/* 404s (#840).
 const baseUrl = `${process.env.PUBLIC_URL || ''}/static/anon-animals`;
+// The SVGs are served from /static with a one-day max-age and are not
+// content-hashed. Bump this whenever their artwork or viewBox changes, so a
+// browser never pairs new sizing code with a stale file (rev 2: viewBox
+// cropped to the artwork, #1059).
+export const AVATAR_ART_REVISION = 2;
 
 function assertValidSvg(svgText: string, file: string): void {
 	const trimmedSvg = svgText.trim();
@@ -30,7 +35,7 @@ function assertValidSvg(svgText: string, file: string): void {
 }
 
 export async function renderAvatarSvg(avatar: Avatar): Promise<string> {
-	const url = `${baseUrl}/${avatar.file}`;
+	const url = `${baseUrl}/${avatar.file}?v=${AVATAR_ART_REVISION}`;
 	let svg = svgCache.get(url);
 
 	if (!svg) {

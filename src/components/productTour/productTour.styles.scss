@@ -182,3 +182,53 @@
 		}
 	}
 }
+
+// The Help learning card owns the outer shell. Its launch options fit that
+// column and stack on phones, so no action is hidden beyond a scroller.
+.tourOverview--embedded {
+	.tourOverview__list {
+		flex-direction: column;
+		overflow-x: visible;
+
+		@include breakpoint($fromXLarge) {
+			flex-direction: row;
+		}
+	}
+
+	.tourOverview__card {
+		flex: 1 1 0;
+		min-width: 0;
+	}
+
+	.tourOverview__card--compact {
+		@include breakpoint($fromXLarge) {
+			display: grid;
+			grid-template-columns: auto minmax(0, 1fr) auto;
+			column-gap: $grid-base-two;
+
+			.tourOverview__status {
+				grid-column: 1;
+				justify-self: start;
+			}
+
+			.tourOverview__cardTitle {
+				grid-column: 2;
+				align-self: center;
+			}
+
+			.tourOverview__cardSummary {
+				grid-column: 1 / span 2;
+			}
+
+			.tourOverview__action {
+				grid-column: 3;
+				grid-row: 1 / span 2;
+				align-self: center;
+
+				.button__item {
+					width: auto;
+				}
+			}
+		}
+	}
+}

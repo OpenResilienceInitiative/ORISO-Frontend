@@ -56,3 +56,35 @@ export const scheduleComposerAutoFocus = (
 
 	return () => window.clearTimeout(timeoutId);
 };
+
+/**
+ * True while the person is typing somewhere outside `ownComposer` — in
+ * another editor (a second composer on the same view) or a form field.
+ * A composer's automatic focus must yield to that: with the chat card and
+ * the supervision panel open side by side, the later composer's autofocus
+ * used to pull focus out of the editor mid-word and swallow the rest.
+ */
+export const isTypingElsewhere = (
+	activeElement: Element | null | undefined,
+	ownComposer: Element | null | undefined
+): boolean => {
+	if (!activeElement || activeElement === document.body) {
+		return false;
+	}
+	if (ownComposer?.contains(activeElement)) {
+		return false;
+	}
+	const tagName = activeElement.tagName.toLowerCase();
+	return (
+		(activeElement as HTMLElement).isContentEditable === true ||
+		// jsdom has no `isContentEditable`; the attribute says the same.
+		Boolean(
+			activeElement.closest(
+				'[contenteditable=""], [contenteditable="true"]'
+			)
+		) ||
+		tagName === 'input' ||
+		tagName === 'textarea' ||
+		tagName === 'select'
+	);
+};

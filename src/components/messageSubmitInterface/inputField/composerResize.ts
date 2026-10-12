@@ -25,6 +25,14 @@ const MIN_HEIGHT_COMPACT_DESKTOP = 138;
 // + 1 px border = 106 px. Flush implies the one-line rule.
 const MIN_HEIGHT_FLUSH_DESKTOP = 106;
 
+/**
+ * T41 (Frank, 14.09.): whatever the composer grows to, this much of the
+ * timeline stays visible above it. The composer is absolutely positioned
+ * over the timeline, so without a floor the two-thirds rule let it cover
+ * the chat in the dual view, where a pane is half a window tall.
+ */
+export const MIN_TIMELINE_VISIBLE = 200;
+
 const STEP_SMALL = 24;
 const STEP_LARGE = 48;
 
@@ -74,7 +82,8 @@ export const getComposerHeightBounds = ({
 	viewportWidth,
 	viewportHeight,
 	compact = false,
-	flush = false
+	flush = false,
+	hostHeight
 }: {
 	viewportWidth: number;
 	viewportHeight: number;
@@ -82,6 +91,14 @@ export const getComposerHeightBounds = ({
 	compact?: boolean;
 	/** T40: dual mode without the outer frame — one line, 32 px less inset. */
 	flush?: boolean;
+	/**
+	 * T41: height of the scrolling timeline the composer lies over
+	 * (`.session__content` / `.sidePanel__timeline`, measured by
+	 * `useComposerDock`). In the dual view that is far shorter than the
+	 * window, so the two-thirds rule alone would hand the composer more room
+	 * than the chat has. Omitted (or 0) → viewport rule only, as before.
+	 */
+	hostHeight?: number;
 }): ComposerHeightBounds => {
 	const minHeight =
 		viewportWidth <= COMPOSER_MOBILE_BREAKPOINT
@@ -91,10 +108,14 @@ export const getComposerHeightBounds = ({
 				: compact
 					? MIN_HEIGHT_COMPACT_DESKTOP
 					: MIN_HEIGHT_DESKTOP;
-	const maxHeight = Math.max(
-		minHeight,
-		Math.round(viewportHeight * COMPOSER_MAX_VIEWPORT_FRACTION)
+	const viewportCap = Math.round(
+		viewportHeight * COMPOSER_MAX_VIEWPORT_FRACTION
 	);
+	const hostCap =
+		hostHeight && hostHeight > 0
+			? hostHeight - MIN_TIMELINE_VISIBLE
+			: viewportCap;
+	const maxHeight = Math.max(minHeight, Math.min(viewportCap, hostCap));
 	return { minHeight, maxHeight };
 };
 

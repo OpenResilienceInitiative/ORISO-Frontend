@@ -67,3 +67,55 @@ describe('useNotificationPermission', () => {
 		expect(requestPermission).not.toHaveBeenCalled();
 	});
 });
+
+/**
+ * The account-setup gate replaces the app for a counsellor whose login an
+ * administrator provisioned. Its sibling request — `requestPermissions()` in
+ * AuthenticatedApp — is already withheld until setup is settled; this one used
+ * to fire anyway, so the browser still popped its permission dialog over a
+ * screen that exists to say the account is not usable yet.
+ */
+describe('useNotificationPermission while account setup is pending', () => {
+	let requestPermission: ReturnType<typeof vi.fn>;
+
+	beforeEach(() => {
+		requestPermission = vi.fn().mockResolvedValue('granted');
+		vi.stubGlobal(
+			'Notification',
+			class {
+				static get permission(): NotificationPermission {
+					return 'default';
+				}
+				static requestPermission = requestPermission;
+			}
+		);
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.unstubAllGlobals();
+	});
+
+	it('never asks while it is disabled', () => {
+		renderHook(() => useNotificationPermission(false));
+
+		window.dispatchEvent(new Event('pointerdown'));
+
+		expect(requestPermission).not.toHaveBeenCalled();
+	});
+
+	it('asks once it is enabled', () => {
+		const { rerender } = renderHook(
+			({ enabled }) => useNotificationPermission(enabled),
+			{ initialProps: { enabled: false } }
+		);
+
+		window.dispatchEvent(new Event('pointerdown'));
+		expect(requestPermission).not.toHaveBeenCalled();
+
+		rerender({ enabled: true });
+		window.dispatchEvent(new Event('pointerdown'));
+
+		expect(requestPermission).toHaveBeenCalledTimes(1);
+	});
+});

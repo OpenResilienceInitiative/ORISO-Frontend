@@ -107,7 +107,7 @@ const mockActiveSession = {
 		id: 0,
 		agencyId: undefined,
 		askerMatrixUserId: 'alice',
-		matrixRoomId: '!storybook:oriso.org',
+		matrixRoomId: '!storybook:example.org',
 		postcode: 10115,
 		registrationType: REGISTRATION_TYPE_REGISTERED,
 		status: STATUS_ACTIVE,
@@ -700,6 +700,17 @@ function AppOrisoRoutingRuntimeProviders({
 												notifications: [],
 												notificationFeed: [],
 												unreadNotificationCount: 0,
+												serverUnreadTotal: 0,
+												serverUnreadTotalExcludesHidden: false,
+												hasUnreadNotifications: false,
+												timelineDisplayFilter: {
+													kinds: {},
+													autoReadHidden: false
+												},
+												visibleUnreadCount: 0,
+												hiddenUnreadInLoadedPages: 0,
+												markNotificationsReadConfirmed:
+													async () => {},
 												setNotifications:
 													notificationNoop,
 												hasNotification: () => false,

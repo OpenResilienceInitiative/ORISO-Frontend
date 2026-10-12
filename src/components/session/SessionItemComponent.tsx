@@ -1,3 +1,4 @@
+import { useDelayedSessionRefresh } from './useDelayedSessionRefresh';
 import * as React from 'react';
 import {
 	useCallback,
@@ -6,10 +7,10 @@ import {
 	useMemo,
 	useRef,
 	useState,
-	lazy,
 	Suspense
 } from 'react';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { lazyWithReload } from '../../utils/chunkLoadRecovery';
 import {
 	requiresAnonymousInquiryConsent as requiresAnonymousInquiryConsentFor,
 	shouldBlockAnonymousInquiryChat as shouldBlockAnonymousInquiryChatFor
@@ -22,6 +23,13 @@ import {
 	SESSION_LIST_TYPES
 } from './sessionHelpers';
 import { getModality, Modality } from './getModality';
+import {
+	isComposerBusy,
+	isTimelineAtBottom,
+	shouldClearAtBottomAfterSuppressedFollow,
+	shouldFollowNewMessage,
+	unreadCountAfterArrival
+} from '../messageSubmitInterface/timelineFollow';
 import { hasMediaUploadFeature } from '../../utils/mediaUploadHelpers';
 import {
 	isMatrixRoom,
@@ -30,6 +38,7 @@ import {
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { MessageItem } from '../message/MessageItemComponent';
 import { MessageTimeline } from './MessageTimeline';
+import { useThreadFocusReturn } from './useThreadFocusReturn';
 import { useMatrixDecryptionFailures } from '../../hooks/useMatrixDecryptionFailures';
 import {
 	FailedSend,
@@ -56,6 +65,8 @@ import {
 import { SidePanel, InfoBanner } from '../chatStage/SidePanel';
 import { teamCopy } from '../chatStage/teamChannelCopy';
 import { PanelHeader } from '../chatStage/PanelHeader';
+import { Button, BUTTON_TYPES } from '../button/Button';
+import { ReactComponent as TeamActionGlyph } from '../../resources/img/icons/speech-bubble-team.svg';
 import { ChannelSwitcherFab } from '../chatStage/ChannelSwitcherFab';
 import {
 	resolveChannelLabel,
@@ -191,6 +202,7 @@ import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
 import { AnonymousConsentGate } from '../pseudonym/AnonymousConsentGate';
+import { GroupConsentGate } from '../groupChat/consent/GroupConsentGate';
 import {
 	generatePseudonym,
 	regeneratePseudonym,
@@ -215,14 +227,24 @@ import NorthEastIcon from '@mui/icons-material/NorthEast';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import { canRenderClientComposer } from './clientComposerPolicy';
+import { isCaseHandoverCoAccess } from './caseHandoverHelpers';
+import { CaseHandoverReadOnlyNotice } from './CaseHandoverReadOnlyNotice';
+import type { CaseHandoverStatus } from '../../api/apiCaseHandover';
 import type { TeamDiscussionStatus } from '../../api/apiTeamDiscussion';
-const MessageSubmitInterfaceComponent = lazy(() =>
+import {
+	usePracticeActive,
+	usePracticeSupervisorsRevision
+} from '../../practice';
+const MessageSubmitInterfaceComponent = lazyWithReload(() =>
 	import('../messageSubmitInterface/messageSubmitInterfaceComponent').then(
 		(m) => ({ default: m.MessageSubmitInterfaceComponent })
 	)
 );
 
 interface SessionItemProps {
+	/** Current-session Carimat continuation inside the main scrolling timeline. */
+	mainTimelineSupplement?: React.ReactNode;
+	mainTimelineSupplementTime?: number;
 	isTyping?: Function;
 	isTypingInRoom?: (isCleared: boolean, roomId: string) => void;
 	messages?: MessageItem[];
@@ -250,6 +272,8 @@ interface SessionItemProps {
 	hasUserInitiatedStopOrLeaveRequest: React.MutableRefObject<boolean>;
 	bannedUsers: string[];
 	refreshMessages?: () => void;
+	/** The viewer's case-handover grant; a CO_ACCESS grant is read-only (#200). */
+	caseHandoverStatus?: CaseHandoverStatus | null;
 }
 
 let initMessageCount: number;
@@ -276,6 +300,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const [isSupervisor, setIsSupervisor] = useState(false);
 	const isSupervisorView =
 		isSupervisor || isActiveSupervisorOf(activeSession, userData?.userId);
+	const isCoAccessViewer = isCaseHandoverCoAccess(props.caseHandoverStatus);
 	// ADR-008: per-session supervision side room id (shared by all supervisor
 	// entries). Aside sends are routed here so the client never receives them.
 	const [supervisionRoomLookup, setSupervisionRoomLookup] =
@@ -516,10 +541,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				(value) => !value.toLowerCase().startsWith('anonymous-')
 			) || resolvedCandidates[0];
 		if (!resolved || resolved.toLowerCase() === 'system') {
-			return translate(
-				'session.waitingMiniGame.robotUsernameFallback',
-				'Ratsuchende_r 9'
-			);
+			return translate('session.waitingMiniGame.robotUsernameFallback');
 		}
 		return resolved;
 	}, [
@@ -543,55 +565,29 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => [
 			{
 				_id: 'robot-system-1',
-				title: translate(
-					'session.waitingMiniGame.robotCard1Title',
-					'Bitte haben Sie etwas Geduld'
-				),
-				description: translate(
-					'session.waitingMiniGame.robotCard1Body',
-					'Derzeit sind alle Berater_innen im Gespräch. Wir sind schnellstmöglich für Sie da.'
-				)
+				title: translate('session.waitingMiniGame.robotCard1Title'),
+				description: translate('session.waitingMiniGame.robotCard1Body')
 			},
 			{
 				_id: 'robot-system-2',
-				title: `${translate(
-					'session.waitingMiniGame.robotCard2TitlePrefix',
-					'Ihr Benutzername lautet:'
-				)} ${robotIncomingUsername}`,
-				description: translate(
-					'session.waitingMiniGame.robotCard2Body',
-					'Um Ihre Anonymität zu schützen, löschen wir Ihre Nachrichten spätestens 48 Stunden nachdem der Chat beendet wurde.'
-				)
+				title: `${translate('session.waitingMiniGame.robotCard2TitlePrefix')} ${robotIncomingUsername}`,
+				description: translate('session.waitingMiniGame.robotCard2Body')
 			},
 			{
 				_id: 'robot-system-3',
-				title: translate(
-					'session.waitingMiniGame.robotCard3Title',
-					'Sie benötigen nicht sofort eine Antwort? Und wollen nicht auf einen freien Chat warten?'
-				),
+				title: translate('session.waitingMiniGame.robotCard3Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard3Body',
-					'Registrieren Sie sich und hinterlassen Sie uns eine Nachricht. Wir melden uns innerhalb von 2 Werktagen bei Ihnen.'
+					'session.waitingMiniGame.robotCard3Body'
 				),
-				cta: translate(
-					'session.waitingMiniGame.robotCard3Cta',
-					'Gehen Sie zur Registrierung'
-				)
+				cta: translate('session.waitingMiniGame.robotCard3Cta')
 			},
 			{
 				_id: 'robot-system-4',
-				title: translate(
-					'session.waitingMiniGame.robotCard4Title',
-					'Wollen Sie die Wartezeit sinnvoll nutzen?'
-				),
+				title: translate('session.waitingMiniGame.robotCard4Title'),
 				description: translate(
-					'session.waitingMiniGame.robotCard4Body',
-					'Dann spielen Sie in der Zwischenzeit unser kurzes Inhale-Exhale-Spiel.'
+					'session.waitingMiniGame.robotCard4Body'
 				),
-				playLabel: translate(
-					'session.waitingMiniGame.robotCard4Play',
-					'Spiel starten'
-				)
+				playLabel: translate('session.waitingMiniGame.robotCard4Play')
 			}
 		],
 		[robotIncomingUsername, translate]
@@ -605,6 +601,17 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	const shouldFadeSessionChrome = false;
 	const shouldShowConsentGate =
 		requiresAnonymousInquiryConsent && !anonymousInquiryConsentAccepted;
+	/* ADR-022 gate 2 in a self-help group (#1499): the group's Beratungsstelle
+	   statement, before the first message, for a client whose agreement is not
+	   on record. Decided by the recorded state, never by guessing whether the
+	   account is temporary — a group join records none at registration. */
+	const [groupConsentAccepted, setGroupConsentAccepted] = useState(false);
+	const shouldShowGroupConsentGate =
+		Boolean(activeSession.isGroup) &&
+		isAskerUser &&
+		!isConsultantUser &&
+		!privacyAcceptanceRecorded &&
+		!groupConsentAccepted;
 	const shouldShowPseudonymGate =
 		!shouldShowConsentGate &&
 		(requiresPseudonymConfirmation || isInAnonymousWaitingQueuePhase);
@@ -620,6 +627,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		requiresPseudonymConfirmation,
 		isInAnonymousWaitingQueuePhase
 	});
+	/* Either gate hides the conversation and the composer until it is passed. */
+	const blocksConversation =
+		shouldBlockAnonymousInquiryChat || shouldShowGroupConsentGate;
 	/**
 	 * The four system-notification "robot" cards
 	 * ("Bitte haben Sie etwas Geduld", "Ihr Benutzername lautet…",
@@ -784,8 +794,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		() => parseChannel(location.search),
 		[location.search]
 	);
+	const rememberThreadOpener = useThreadFocusReturn({
+		channel: routeChannel,
+		sessionId: activeSession.item.id,
+		timelineRef: scrollContainerRef
+	});
+	// A gate hides threads too: the panel has its own timeline and composer.
 	const activeThreadRootId =
-		isThreadsEnabled && routeChannel?.kind === 'thread'
+		isThreadsEnabled &&
+		!blocksConversation &&
+		routeChannel?.kind === 'thread'
 			? routeChannel.rootId
 			: null;
 	const activeThreadRootMessage = useMemo<MessageItem | null>(
@@ -901,6 +919,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		]
 	);
 
+	// Practice only: bumps when the learner adds a supervisor under this case.
+	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
 	// Check if current user is a supervisor. The response stays tied to the
 	// session that requested it: a late lookup must never expose the previous
 	// case's side room to the new session.
@@ -967,7 +987,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		activeSession.item.id,
 		isConsultantUser,
 		isSupervisionEnabledForCurrentChat,
-		userData.userId
+		userData.userId,
+		practiceSupervisorsRevision
 	]);
 
 	// WP-B2 (#996): resolve the responsible consultant's display name for the
@@ -1016,10 +1037,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	useEffect(() => {
 		const canWrite =
-			type !== SESSION_LIST_TYPES.ENQUIRY ||
-			(isAnonymousAskerExperience && waitingGateDismissed);
+			!isCoAccessViewer &&
+			(type !== SESSION_LIST_TYPES.ENQUIRY ||
+				(isAnonymousAskerExperience && waitingGateDismissed));
 		setCanWriteMessage(canWrite);
 	}, [
+		isCoAccessViewer,
 		type,
 		isAnonymousAskerExperience,
 		waitingGateDismissed,
@@ -1515,16 +1538,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			addEventNotification({
 				type: NOTIFICATION_TYPE_INFO,
 				eventType: 'thread.reply.new',
-				title: translate(
-					'notifications.threadReply.title',
-					'New thread reply'
-				),
-				text: `${contactName}: ${snippet || 'New reply in thread'}`,
+				title: translate('notifications.threadReply.title'),
+				text: `${contactName}: ${snippet || translate('notifications.events.threadReplyNew.text')}`,
 				actionPath,
-				actionLabel: translate(
-					'notifications.center.open',
-					'Open chat'
-				),
+				actionLabel: translate('notifications.center.open'),
 				sourceSessionId: activeSession.item.id,
 				category: 'message'
 			});
@@ -1604,10 +1621,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			return;
 		}
 
-		if (
-			initialScrollCompleted &&
-			isMyMessageMatrix(messages[messages.length - 1]?.userId)
-		) {
+		const isOwnMessage = isMyMessageMatrix(
+			messages[messages.length - 1]?.userId
+		);
+		// Frank (14.09.): a reader who is not writing gets carried to the
+		// newest message; a reader who IS writing keeps their place and the
+		// composer's arrow lights up instead.
+		const composing = isComposerBusy(
+			scrollContainerRef.current
+				?.closest('.session')
+				?.querySelector('.textarea__wrapper-send-message') ?? null,
+			document.activeElement
+		);
+
+		if (initialScrollCompleted && isOwnMessage) {
 			resetUnreadCount();
 			scrollToEnd(0, true);
 		} else {
@@ -1630,17 +1657,57 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				}
 			}
 
-			if (isScrolledToBottom && initialScrollCompleted) {
+			const shouldFollow =
+				initialScrollCompleted &&
+				shouldFollowNewMessage({
+					isOwnMessage,
+					atBottom: isScrolledToBottom,
+					isComposing: composing
+				});
+			if (shouldFollow) {
 				resetUnreadCount();
 				scrollToEnd(0, true);
+			} else if (
+				shouldClearAtBottomAfterSuppressedFollow({
+					initialScrollCompleted,
+					followed: shouldFollow,
+					atBottom: isScrolledToBottom
+				})
+			) {
+				// Review (CodeRabbit): appending a row fires no scroll event,
+				// so the flag would still say "at the bottom" although the
+				// newest message now sits below the fold. The composer-resize
+				// observer reads that flag — a writer whose composer grows one
+				// line would be scrolled to the newest message after all,
+				// which is exactly what declining to follow avoided. Do not
+				// clear during the first paint: the first remote message on
+				// an empty timeline would then stop later arrivals following.
+				setIsScrolledToBottom(false);
 			}
 
-			setNewMessages(messages.length - initMessageCount);
+			setNewMessages(
+				unreadCountAfterArrival(
+					messages.length,
+					initMessageCount,
+					initialScrollCompleted
+				)
+			);
 		}
 	}, [messages?.length]); // eslint-disable-line
 
 	useEffect(() => {
-		if (isScrolledToBottom) {
+		if (!isScrolledToBottom) {
+			return;
+		}
+		// …unless the reader is writing: then the badge on the composer's
+		// arrow is the only signal they get (Frank, 14.09.).
+		const composing = isComposerBusy(
+			scrollContainerRef.current
+				?.closest('.session')
+				?.querySelector('.textarea__wrapper-send-message') ?? null,
+			document.activeElement
+		);
+		if (!composing) {
 			resetUnreadCount();
 		}
 	}, [isScrolledToBottom]); // eslint-disable-line
@@ -1658,17 +1725,49 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	/* eslint-disable */
 	const handleScroll = useDebouncedCallback((e) => {
-		const scrollPosition = Math.round(
-			e.target.scrollHeight - e.target.scrollTop
+		// The ±1 px window this used to require was missed by every composer
+		// resize (auto-grow while typing, the drag handle, an info bar
+		// appearing) and by fractional layout heights — after which the chat
+		// silently stopped following new messages (T41).
+		setIsScrolledToBottom(
+			isTimelineAtBottom({
+				scrollTop: e.target.scrollTop,
+				scrollHeight: e.target.scrollHeight,
+				clientHeight: e.target.clientHeight
+			})
 		);
-		const containerHeight = e.target.clientHeight;
-		const isBottom =
-			scrollPosition >= containerHeight - 1 &&
-			scrollPosition <= containerHeight + 1;
-
-		setIsScrolledToBottom(isBottom);
 	}, 100);
 	/* eslint-enable */
+
+	/**
+	 * T41: the composer is absolutely positioned over the timeline and the
+	 * timeline reserves its measured height at the bottom. When it grows —
+	 * auto-grow while typing, the drag handle, an info bar — that reservation
+	 * grows with it, which pushes the last message up and out of sight for a
+	 * reader who was resting at the end. Follow the composer instead.
+	 */
+	const isScrolledToBottomRef = useRef(isScrolledToBottom);
+	isScrolledToBottomRef.current = isScrolledToBottom;
+	useEffect(() => {
+		const container = scrollContainerRef.current;
+		const dock = container
+			?.closest('.session')
+			?.querySelector<HTMLElement>('.messageSubmit__wrapper');
+		if (!container || !dock || typeof ResizeObserver === 'undefined') {
+			return undefined;
+		}
+		let previousHeight = dock.getBoundingClientRect().height;
+		const observer = new ResizeObserver(() => {
+			const height = dock.getBoundingClientRect().height;
+			const grew = height > previousHeight;
+			previousHeight = height;
+			if (grew && isScrolledToBottomRef.current) {
+				container.scrollTop = container.scrollHeight;
+			}
+		});
+		observer.observe(dock);
+		return () => observer.disconnect();
+	}, [activeSession?.rid]); // eslint-disable-line
 
 	const handleScrollToBottomButtonClick = () => {
 		const scrollContainer = scrollContainerRef.current;
@@ -1725,6 +1824,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			setInitialScrollCompleted(true);
 			// Initial open should snap only the message container, without animated jumps.
 			scrollToEnd(0, false);
+			// Review (CodeRabbit): the first remote row can land before this
+			// flag flips, and the arrival effect would leave an unread count
+			// on a view that is about to jump to that message.
+			resetUnreadCount();
 		}
 	};
 
@@ -1765,6 +1868,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	}`;
 	const activeSessionIdentityRef = useRef(activeSessionIdentity);
 	activeSessionIdentityRef.current = activeSessionIdentity;
+	const scheduleMessageRefresh = useDelayedSessionRefresh(
+		activeSessionIdentity,
+		props.refreshMessages
+	);
 	const [retryRequest, setRetryRequest] = useState<{
 		requestId: string;
 		failedSendId: string;
@@ -1776,6 +1883,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		replyToEventId?: string | null;
 		mentionedUserIds: string[];
 		targetRoomId?: string | null;
+		feedbackMailIntent?: boolean;
 	} | null>(null);
 	// Read the live retry request inside the (non-memoised) success handler,
 	// which the composer may invoke from a closure captured a render earlier.
@@ -1792,7 +1900,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			isAside = false,
 			replyToEventId?: string | null,
 			mentionedUserIds: string[] = [],
-			targetRoomId: string | null = null
+			targetRoomId: string | null = null,
+			feedbackMailIntent = false
 		) => {
 			if (
 				sessionIdentity &&
@@ -1818,7 +1927,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 										isAside,
 										replyToEventId,
 										mentionedUserIds,
-										targetRoomId
+										targetRoomId,
+										feedbackMailIntent
 									}
 								: failed
 						);
@@ -1835,7 +1945,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						isAside,
 						replyToEventId: replyToEventId || null,
 						mentionedUserIds,
-						targetRoomId: targetRoomId || null
+						targetRoomId: targetRoomId || null,
+						feedbackMailIntent
 					}
 				];
 			});
@@ -1862,7 +1973,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							isAside: failed.isAside,
 							replyToEventId: failed.replyToEventId || null,
 							mentionedUserIds: failed.mentionedUserIds,
-							targetRoomId: failed.targetRoomId || null
+							targetRoomId: failed.targetRoomId || null,
+							feedbackMailIntent: failed.feedbackMailIntent
 						}
 					: null;
 			});
@@ -1890,7 +2002,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			isAside?: boolean,
 			replyToEventId?: string | null,
 			mentionedUserIds?: string[],
-			targetRoomId?: string | null
+			targetRoomId?: string | null,
+			feedbackMailIntent?: boolean
 		) =>
 			handleSendError(
 				message,
@@ -1902,7 +2015,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				isAside,
 				replyToEventId,
 				mentionedUserIds,
-				targetRoomId ?? null
+				targetRoomId ?? null,
+				feedbackMailIntent
 			),
 		[activeSessionIdentity, handleSendError]
 	);
@@ -1938,11 +2052,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		}
 		setRetryRequest(null);
 
-		if (props.refreshMessages) {
-			setTimeout(() => {
-				props.refreshMessages();
-			}, 500);
-		}
+		scheduleMessageRefresh(sessionIdentity);
 	};
 
 	// Route writer (B2 / T24): opening a channel PUSHES a history entry
@@ -1994,7 +2104,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	);
 
 	const handleOpenThread = useCallback(
-		(message: MessageItem) => {
+		(message: MessageItem, opener?: HTMLElement) => {
+			rememberThreadOpener(message._id, opener);
 			openChannel({ kind: 'thread', rootId: message._id }, 'header');
 			setIsThreadListOpen(false);
 			// Per-thread unread (#435): opening a thread marks it read up to
@@ -2009,7 +2120,12 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				setThreadReadVersion((version) => version + 1);
 			}
 		},
-		[threadSummariesRaw, resolvedMatrixRoomId, openChannel]
+		[
+			threadSummariesRaw,
+			resolvedMatrixRoomId,
+			openChannel,
+			rememberThreadOpener
+		]
 	);
 
 	const handleCloseThread = useCallback(() => {
@@ -2143,6 +2259,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 	// lands on the closed main chat instead of re-opening (review D-3).
 	// The decision itself is pure: `decideAutoOpen` (channelRoute.ts).
 	const autoOpenedForSessionRef = useRef<string | number | null>(null);
+	// Practice (FE#1622): the tour teaches opening the team discussion; a panel
+	// opening by itself would remove the button its step points at.
+	const isPracticing = usePracticeActive();
 	useEffect(() => {
 		const sessionId = activeSession.item?.id;
 		if (!sessionId || !isSupervisionPanelViewer) {
@@ -2157,7 +2276,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 				: null,
 			hasSupervisionSideRoom,
 			hasTeamSideRoom,
-			teamDiscussionResolved: props.teamDiscussionResolved
+			teamDiscussionResolved: props.teamDiscussionResolved,
+			canStartTeamDiscussion:
+				Boolean(activeSession.isEnquiry) &&
+				canOpenTeamSideRoom &&
+				!isPracticing
 		});
 		if (decision.settle) {
 			autoOpenedForSessionRef.current = sessionId;
@@ -2172,6 +2295,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		hasSupervisionSideRoom,
 		hasTeamSideRoom,
 		props.teamDiscussionResolved,
+		activeSession.isEnquiry,
+		canOpenTeamSideRoom,
+		isPracticing,
 		messages,
 		setChannelRoute
 	]);
@@ -2208,7 +2334,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 	// The same three steps for the team room — one counter each, so an
 	// unread badge on one channel never silences the other.
-const [teamSeenAt, setTeamSeenAt] = useState(0);
+	const [teamSeenAt, setTeamSeenAt] = useState(0);
 	useEffect(() => {
 		setTeamSeenAt(0);
 	}, [activeSession.item?.id]);
@@ -2534,8 +2660,12 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 	// Role/session eligibility is separate from the feature-policy helper.
 	// Supervision intentionally does not inherit the client-facing consulting-
 	// type gate; it is an internal room with dedicated tenant flags.
+	// Practice: no calls; there is nobody real to call.
 	const mayCallInSideRoom =
-		isConsultantUser && !isOnlyEnquiry && !activeSession.isEnquiry;
+		isConsultantUser &&
+		!isOnlyEnquiry &&
+		!activeSession.isEnquiry &&
+		!isPracticing;
 	const startSupervisionCall = useCallback(
 		(isVideo: boolean) => {
 			startRoomCall({
@@ -2629,6 +2759,17 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 
 	// Main pane: the FAB clears the docked composer; on the phone it steps
 	// back while the composer has focus (T10).
+	const showEnquiryTeamAction =
+		type === SESSION_LIST_TYPES.ENQUIRY &&
+		activeSession.isEnquiry &&
+		!shouldBlockAnonymousInquiryChat &&
+		!isAnonymousAskerExperience &&
+		canOpenTeamSideRoom &&
+		!canRenderClientComposer({
+			canWriteMessage,
+			isSupervisor: isSupervisorView,
+			shouldBlockAnonymousInquiryChat
+		});
 	const mainPaneRef = useRef<HTMLDivElement | null>(null);
 	const fabOffset = useDockedComposerOffset(mainPaneRef);
 	const composing = useComposerFocus(mainPaneRef);
@@ -2908,6 +3049,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							bannedUsers={props.bannedUsers}
 							hideBackButton={isPhoneLayout}
 							callsInMenu={isPhoneLayout}
+							hideGroupTopic={shouldShowGroupConsentGate}
 						/>
 					)}
 				</div>
@@ -2915,6 +3057,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 				{/* Thread-panel-UX (#435): per-room list of all threads. */}
 				{!isEmbeddedNotificationsView &&
 					isThreadsEnabled &&
+					!blocksConversation &&
 					threadSummariesRaw.size > 0 && (
 						<div className="session__threadListBar">
 							<button
@@ -2928,10 +3071,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 									setIsThreadListOpen((open) => !open)
 								}
 							>
-								{translate(
-									'message.thread.listToggle',
-									'Threads'
-								)}
+								{translate('message.thread.listToggle')}
 								{' ('}
 								{threadSummariesRaw.size}
 								{')'}
@@ -2958,15 +3098,12 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 										)
 									}
 									unknownRootLabel={translate(
-										'message.thread.unknownRoot',
-										'Frühere Nachricht'
+										'message.thread.unknownRoot'
 									)}
 									repliesLabel={(count) =>
-										translate(
-											'message.thread.replies',
-											'{{count}} replies',
-											{ count }
-										)
+										translate('message.thread.replies', {
+											count
+										})
 									}
 									onSelectRoot={(rootId) => {
 										const rootMessage =
@@ -3003,6 +3140,19 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							onAccept={handleAnonymousInquiryConsentAccept}
 						/>
 					)}
+					{shouldShowGroupConsentGate && (
+						<GroupConsentGate
+							agencyId={
+								activeSession.item?.assignedAgencies?.[0]?.id
+							}
+							onAccepted={() => {
+								setGroupConsentAccepted(true);
+								apiGetUserData()
+									.then((fresh) => setUserData(fresh))
+									.catch(() => undefined);
+							}}
+						/>
+					)}
 					{shouldShowPseudonymGate && (
 						<div className="session__pseudonymGate">
 							<PseudonymCard
@@ -3012,7 +3162,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							{pseudonymConfirmed && <PrivacyMessageCard />}
 						</div>
 					)}
-					{!shouldBlockAnonymousInquiryChat && (
+					{!blocksConversation && (
 						<div className="session__gameChromeFadeTarget">
 							<EncryptionBanner />
 						</div>
@@ -3026,8 +3176,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 								className="session__waitingCompanionInline"
 								role="region"
 								aria-label={translate(
-									'liveChat.breathing.title',
-									'Ihre Atempause'
+									'liveChat.breathing.title'
 								)}
 							>
 								{/* The breathing companion (single-file handoff, 2026-09-06)
@@ -3046,7 +3195,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 								/>
 							</div>
 						)}
-					{!shouldBlockAnonymousInquiryChat && (
+					{!blocksConversation && (
 						<div className={'message-holder'}>
 							{shouldShowRobotMessages &&
 								!showWaitingMiniGame &&
@@ -3072,8 +3221,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 													<div className="messageItem__header">
 														<div className="messageItem__username messageItem__username--system">
 															{translate(
-																'message.systemNotification',
-																'System Notification'
+																'message.systemNotification'
 															)}
 														</div>
 														<span className="messageItem__headerTime">
@@ -3085,8 +3233,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 													{index === 0 && (
 														<div className="messageItem__systemNotificationTag">
 															{translate(
-																'message.systemNotification',
-																'System Notification'
+																'message.systemNotification'
 															)}
 														</div>
 													)}
@@ -3163,11 +3310,16 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 									</div>
 								</div>
 							)}
+							{!messages && props.mainTimelineSupplement}
 							{/* MATRIX MIGRATION: For Matrix sessions (no rid), skip E2EE ready check */}
 							{messages && (ready || !activeSession.rid) && (
 								<MessageTimeline
 									messages={messages}
 									renderMode="main"
+									supplement={props.mainTimelineSupplement}
+									supplementTime={
+										props.mainTimelineSupplementTime
+									}
 									clientName={
 										getContact(activeSession)?.username ||
 										translate(
@@ -3186,6 +3338,15 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 													.askerMatrixUserId
 									}
 									isOnlyEnquiry={isOnlyEnquiry}
+									hideSystemMessages={
+										isConsultantUser &&
+										(isOnlyEnquiry ||
+											Boolean(activeSession.isEnquiry))
+									}
+									showFullContent={
+										isOnlyEnquiry ||
+										Boolean(activeSession.isEnquiry)
+									}
 									isMyMessage={isMyMessageMatrix}
 									isUserBanned={(username) =>
 										props.bannedUsers.includes(username)
@@ -3217,12 +3378,24 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 											: undefined
 									}
 									resolveReplyQuote={resolveReplyQuote}
-									onReplyDirect={handleReplyDirect}
+									onReplyDirect={
+										isCoAccessViewer
+											? undefined
+											: handleReplyDirect
+									}
 									onEditDirect={handleEditDirect}
 									onDeleteDirect={handleDeleteDirect}
 									reactionsFor={getReactionsFor}
-									onReact={handleReact}
-									onUnreact={handleUnreact}
+									onReact={
+										isCoAccessViewer
+											? undefined
+											: handleReact
+									}
+									onUnreact={
+										isCoAccessViewer
+											? undefined
+											: handleUnreact
+									}
 								/>
 							)}
 							{/* "Sending message failed" cards for sends that never
@@ -3318,9 +3491,33 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 				</div>
 
 				{type === SESSION_LIST_TYPES.ENQUIRY &&
+					activeSession.isEnquiry &&
 					!shouldBlockAnonymousInquiryChat &&
 					!isAnonymousAskerExperience && (
-						<AcceptAssign btnLabel={'enquiry.acceptButton.known'} />
+						<AcceptAssign
+							btnLabel={'enquiry.acceptButton.known'}
+							secondaryAction={
+								showEnquiryTeamAction && openPanel === null ? (
+									<Button
+										item={{
+											type: BUTTON_TYPES.SECONDARY,
+											label: 'enquiry.teamDiscussion.open',
+											icon: (
+												<TeamActionGlyph aria-hidden="true" />
+											)
+										}}
+										className="session__teamDiscussionAction"
+										testingAttribute="enquiry-open-team"
+										tourTarget="enquiry-team-button"
+										buttonHandle={() =>
+											selectChannelFromFab(
+												channelId({ kind: 'team' })
+											)
+										}
+									/>
+								) : undefined
+							}
+						/>
 					)}
 
 				{shouldShowPseudonymGate && !pseudonymConfirmed && (
@@ -3341,10 +3538,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 								className="session__anonymousEnquiryClosedNote"
 								role="status"
 							>
-								{translate(
-									'anonymousChat.enquiryClosed',
-									'Dieser Live-Chat wurde beendet. Um einen neuen Chat zu starten, öffnen Sie bitte Ihren Einladungslink erneut.'
-								)}
+								{translate('anonymousChat.enquiryClosed')}
 							</div>
 						</div>
 					)}
@@ -3388,8 +3582,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							errorMessage={
 								leaveQueueFailed
 									? translate(
-											'anonymousChat.leaveQueue.error',
-											'Der Chat konnte gerade nicht beendet werden. Bitte versuchen Sie es noch einmal.'
+											'anonymousChat.leaveQueue.error'
 										)
 									: undefined
 							}
@@ -3408,10 +3601,16 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 						</div>
 					)}
 
+				{isCoAccessViewer && (
+					<CaseHandoverReadOnlyNotice
+						expiresAt={props.caseHandoverStatus?.expiresAt}
+					/>
+				)}
+
 				{canRenderClientComposer({
 					canWriteMessage,
 					isSupervisor: isSupervisorView,
-					shouldBlockAnonymousInquiryChat
+					shouldBlockAnonymousInquiryChat: blocksConversation
 				}) && (
 					<div
 						className={clsx(
@@ -3503,6 +3702,8 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							</Suspense>
 						)}
 						{areRobotMessagesComplete &&
+							// Practice: no attachments; an upload would leave the page.
+							!isPracticing &&
 							hasMediaUploadFeature(
 								tenantData?.settings,
 								chatType
@@ -3523,7 +3724,10 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 				{/* T1/T15: the channel switcher FAB — every secondary channel not
 			    on screen; hidden while a panel is open (its header offers the
 			    channels) and, on the phone, while the composer has focus. */}
-				{otherChannels.length > 0 && (
+				{otherChannels.some(
+					(channel) =>
+						!showEnquiryTeamAction || channel.kind !== 'team'
+				) && (
 					<ChannelSwitcherFab
 						channels={secondaryChannels}
 						activeChannelId={shownChannelId}
@@ -3579,18 +3783,12 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
-							{translate(
-								'anonymousChat.noAvailability.title',
-								'Live-Chat ist zurzeit leider geschlossen'
-							)}
+							{translate('anonymousChat.noAvailability.title')}
 						</MuiTypography>
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
-						{translate(
-							'anonymousChat.noAvailability.subtitle',
-							'Wenn Sie ohne Registrierung beraten werden möchten, kommen Sie bitte zu den Öffnungszeiten wieder.'
-						)}
+						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
 					<MuiBox
@@ -3631,8 +3829,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 									}}
 								>
 									{translate(
-										'anonymousChat.noAvailability.openingHours',
-										'Reguläre Öffnungszeiten anzeigen'
+										'anonymousChat.noAvailability.openingHours'
 									)}
 								</MuiTypography>
 							</MuiBox>
@@ -3668,8 +3865,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 										}}
 									>
 										{translate(
-											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`,
-											entry.day
+											`anonymousChat.noAvailability.weekdays.${entry.dayKey}`
 										)}
 									</MuiTypography>
 									<MuiTypography
@@ -3686,20 +3882,14 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 					</MuiBox>
 
 					<MuiTypography variant="body1" sx={{ mb: '8px' }}>
-						{translate(
-							'anonymousChat.noAvailability.mailHint',
-							'Oder starten Sie jederzeit die anonyme Mail-Beratung: Mit Ihrer Postleitzahl finden Sie eine Beratungsstelle in Ihrer Nähe und schreiben Ihre Anfrage. Für die Antwort brauchen Sie nur eine E-Mail-Adresse - keinen echten Namen.'
-						)}
+						{translate('anonymousChat.noAvailability.mailHint')}
 					</MuiTypography>
 
 					<MuiTypography
 						variant="body2"
 						sx={{ fontWeight: 700, mb: '16px' }}
 					>
-						{translate(
-							'anonymousChat.noAvailability.tip',
-							'Tipp: Nutzen Sie eine E-Mail-Adresse, auf die nur Sie Zugriff haben.'
-						)}
+						{translate('anonymousChat.noAvailability.tip')}
 					</MuiTypography>
 
 					<MuiButton
@@ -3715,8 +3905,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 						startIcon={<NorthEastIcon />}
 					>
 						{translate(
-							'anonymousChat.noAvailability.startMailCounseling',
-							'anonyme Mail-Beratung starten'
+							'anonymousChat.noAvailability.startMailCounseling'
 						)}
 					</MuiButton>
 
@@ -3729,10 +3918,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							mb: '16px'
 						}}
 					>
-						{translate(
-							'anonymousChat.noAvailability.responseTime',
-							'Antwort innerhalb von 2 Werktagen'
-						)}
+						{translate('anonymousChat.noAvailability.responseTime')}
 					</MuiTypography>
 
 					<MuiBox sx={{ display: 'flex', gap: '10px' }}>
@@ -3748,10 +3934,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 								color: '#4C555F'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.back',
-								'Zurück zur vorherigen Seite'
-							)}
+							{translate('anonymousChat.noAvailability.back')}
 						</MuiButton>
 						<MuiButton
 							fullWidth
@@ -3765,10 +3948,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 								color: '#A5000A'
 							}}
 						>
-							{translate(
-								'anonymousChat.noAvailability.later',
-								'Später wiederkommen'
-							)}
+							{translate('anonymousChat.noAvailability.later')}
 						</MuiButton>
 					</MuiBox>
 				</MuiBox>
@@ -3854,8 +4034,10 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							e2eeParams={e2eeParams}
 							decryptionFailures={decryptionFailures}
 							reactionsFor={getReactionsFor}
-							onReact={handleReact}
-							onUnreact={handleUnreact}
+							onReact={isCoAccessViewer ? undefined : handleReact}
+							onUnreact={
+								isCoAccessViewer ? undefined : handleUnreact
+							}
 						/>
 						{failedSends
 							.filter((failed) =>
@@ -3906,41 +4088,42 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 					</>
 				}
 				composer={
-					<MessageSubmitInterfaceComponent
-						isTyping={props.isTyping}
-						placeholder={translate(
-							'message.thread.placeholder',
-							'Reply in thread'
-						)}
-						typingUsers={props.typingUsers}
-						handleMessageSendSuccess={handleMessageSendSuccess}
-						onSendError={handleComposerSendError}
-						retryRequest={
-							retryRequest &&
-							failedSendBelongsTo(retryRequest, {
-								kind: 'thread',
-								rootId: activeThreadRootId
-							})
-								? retryRequest
-								: null
-						}
-						onRetrySettled={handleComposerRetrySettled}
-						isSupervisor={isSupervisor}
-						supervisionRoomId={supervisionRoomId}
-						hideSupervisorAudience={hasSupervisionSideRoom}
-						threadRootId={activeThreadRootId}
-						threadParentPreview={toMessagePreviewText(
-							activeThreadRootMessage.message
-						)}
-						autoFocusEditor={!focusPanelHeader}
-						flushCorner={panelComposerFlush}
-						onMobileNavigateBack={
-							isPhoneLayout ? closeChannel : undefined
-						}
-						messages={messages}
-						onCloseThread={handleCloseThread}
-						isOwnMessage={isMyMessageMatrix}
-					/>
+					!isCoAccessViewer && (
+						<MessageSubmitInterfaceComponent
+							isTyping={props.isTyping}
+							placeholder={translate(
+								'message.thread.placeholder'
+							)}
+							typingUsers={props.typingUsers}
+							handleMessageSendSuccess={handleMessageSendSuccess}
+							onSendError={handleComposerSendError}
+							retryRequest={
+								retryRequest &&
+								failedSendBelongsTo(retryRequest, {
+									kind: 'thread',
+									rootId: activeThreadRootId
+								})
+									? retryRequest
+									: null
+							}
+							onRetrySettled={handleComposerRetrySettled}
+							isSupervisor={isSupervisor}
+							supervisionRoomId={supervisionRoomId}
+							hideSupervisorAudience={hasSupervisionSideRoom}
+							threadRootId={activeThreadRootId}
+							threadParentPreview={toMessagePreviewText(
+								activeThreadRootMessage.message
+							)}
+							autoFocusEditor={!focusPanelHeader}
+							flushCorner={panelComposerFlush}
+							onMobileNavigateBack={
+								isPhoneLayout ? closeChannel : undefined
+							}
+							messages={messages}
+							onCloseThread={handleCloseThread}
+							isOwnMessage={isMyMessageMatrix}
+						/>
+					)
 				}
 				switcher={phoneBackFab}
 			/>
@@ -3955,6 +4138,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 					title: translate('supervision.panel.title')
 				})}
 				data-cy="stage-panel"
+				data-tour-target="supervision-panel"
 				header={
 					<PanelHeader
 						kind="supervision"
@@ -4000,10 +4184,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 				banner={
 					isSupervisor && supervisionReason ? (
 						<InfoBanner
-							title={translate(
-								'session.supervisor.reason.title',
-								'Supervisionsgrund'
-							)}
+							title={translate('session.supervisor.reason.title')}
 							text={supervisionReason}
 						/>
 					) : isSupervisor &&
@@ -4011,12 +4192,10 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 							supervisionMessages.length === 0) ? (
 						<InfoBanner
 							title={translate(
-								'session.supervisor.startChat.title',
-								'Chat starten'
+								'session.supervisor.startChat.title'
 							)}
 							text={translate(
-								'session.supervisor.startChat.hint',
-								'Use the message field at the bottom to send the first supervision message.'
+								'session.supervisor.startChat.hint'
 							)}
 						/>
 					) : undefined
@@ -4113,6 +4292,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 						hideSupervisorAudience
 						autoFocusEditor={!focusPanelHeader}
 						flushCorner={panelComposerFlush}
+						feedbackMailIntent
 						accent="supervision"
 						onMobileNavigateBack={
 							isPhoneLayout ? closeChannel : undefined
@@ -4137,6 +4317,7 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 					title: teamChannelTitle
 				})}
 				data-cy="stage-panel"
+				data-tour-target="team-discussion-panel"
 				header={
 					<PanelHeader
 						kind="team"
@@ -4158,8 +4339,22 @@ const [teamSeenAt, setTeamSeenAt] = useState(0);
 				banner={
 					!teamMessages || teamMessages.length === 0 ? (
 						<InfoBanner
-							title={teamText('chatStage.panel.team.empty.title')}
-							text={teamText('chatStage.panel.team.empty.text')}
+							title={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.title'
+										)
+									: teamChannelTitle
+							}
+							text={
+								props.teamDiscussionStatus === 'OPEN'
+									? teamText(
+											'chatStage.panel.team.empty.text'
+										)
+									: translate(
+											'notifications.center.preview.empty'
+										)
+							}
 						/>
 					) : undefined
 				}

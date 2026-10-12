@@ -11,7 +11,10 @@ import {
 	CryptoUnavailableError,
 	RecoverySetupPhaseError
 } from './matrixKeyBackupService';
-import { registerDeviceSigningAuth } from './matrixInteractiveAuth';
+import {
+	registerDeviceSigningAuth,
+	registerDeviceSigningPassword
+} from './matrixInteractiveAuth';
 
 vi.mock('./matrixRecoveryAccountData', async (original) => ({
 	...(await original<any>()),
@@ -67,6 +70,7 @@ const buildCrypto = (overrides: Record<string, unknown> = {}) => ({
 
 const buildClient = (crypto: unknown) => {
 	const client = {
+		clientRunning: true,
 		getCrypto: () => crypto,
 		getUserId: () => '@synthetic:test',
 		getDeviceId: () => 'synthetic-device',
@@ -327,6 +331,74 @@ describe('matrixKeyBackupService (#437)', () => {
 			const crypto = buildCrypto();
 			await resetCryptoIdentity(buildClient(crypto));
 			expect(crypto.resetEncryption).toHaveBeenCalled();
+		});
+
+		/**
+		 * resetEncryption deletes the key backup and secret storage BEFORE it
+		 * needs the password. A stale password therefore left the account
+		 * half-reset on dev (21.09.): backup gone, no new identity.
+		 */
+		it('leaves the account untouched when no current password can be had', async () => {
+			const crypto = buildCrypto();
+			const client = buildClient(crypto);
+			registerDeviceSigningPassword(client, '@synthetic:test', () =>
+				Promise.reject(new Error('token endpoint down'))
+			);
+
+			await expect(resetCryptoIdentity(client)).rejects.toThrow();
+
+			expect(crypto.resetEncryption).not.toHaveBeenCalled();
+		});
+
+		/**
+		 * A same-tab token refresh can stop this client while the password is
+		 * being settled. The reset must not start its destructive steps on the
+		 * detached client (#1504 review).
+		 */
+		it('does not start on a client that was replaced while the password was settled', async () => {
+			const crypto = buildCrypto();
+			const client = buildClient(crypto);
+			client.clientRunning = true;
+			registerDeviceSigningPassword(
+				client,
+				'@synthetic:test',
+				async () => {
+					client.clientRunning = false;
+					return 'current';
+				}
+			);
+
+			await expect(resetCryptoIdentity(client)).rejects.toThrow();
+
+			expect(crypto.resetEncryption).not.toHaveBeenCalled();
+		});
+
+		it('signs the new identity with the password current at the start of the reset', async () => {
+			const makeRequest = vi
+				.fn()
+				.mockRejectedValueOnce({ data: { session: 'uia' } })
+				.mockResolvedValueOnce(undefined);
+			const crypto = buildCrypto({
+				resetEncryption: vi.fn(async (auth: any) => auth(makeRequest))
+			});
+			const client = buildClient(crypto);
+			client.clientRunning = true;
+			const currentPassword = vi
+				.fn()
+				.mockResolvedValueOnce('current')
+				.mockResolvedValue('rotated-again');
+			registerDeviceSigningPassword(
+				client,
+				'@synthetic:test',
+				currentPassword
+			);
+
+			await resetCryptoIdentity(client);
+
+			expect(currentPassword).toHaveBeenCalledOnce();
+			expect(makeRequest).toHaveBeenLastCalledWith(
+				expect.objectContaining({ password: 'current' })
+			);
 		});
 	});
 });

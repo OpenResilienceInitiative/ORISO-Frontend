@@ -63,10 +63,7 @@ export const PseudonymActionBar: React.FC<PseudonymActionBarProps> = ({
 		<div
 			className="pseudonymActionBar"
 			role="group"
-			aria-label={t(
-				'anonymousChat.pseudonym.actionsLabel',
-				'Pseudonym-Aktionen'
-			)}
+			aria-label={t('anonymousChat.pseudonym.actionsLabel')}
 		>
 			<button
 				type="button"
@@ -76,7 +73,7 @@ export const PseudonymActionBar: React.FC<PseudonymActionBarProps> = ({
 			>
 				<DicePatternIcon />
 				<span className="pseudonymActionBar__btnChangeLabel">
-					{t('anonymousChat.pseudonym.changeName', 'Name ändern')}
+					{t('anonymousChat.pseudonym.changeName')}
 				</span>
 			</button>
 
@@ -87,10 +84,7 @@ export const PseudonymActionBar: React.FC<PseudonymActionBarProps> = ({
 				disabled={disabled}
 			>
 				<span className="pseudonymActionBar__btnContinueLabel">
-					{t(
-						'anonymousChat.pseudonym.continueWithSelection',
-						'Weiter mit Auswahl'
-					)}
+					{t('anonymousChat.pseudonym.continueWithSelection')}
 				</span>
 			</button>
 		</div>

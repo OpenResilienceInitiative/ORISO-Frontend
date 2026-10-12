@@ -46,15 +46,11 @@ export function getAgencyDetails(
 	const phone = trimmed(agency.phone);
 	const phoneExtension = trimmed(department?.phoneExtension);
 
-	// No geo fields exist on the public DTO today. The map renders only when
-	// a record really carries coordinates — never derived from a postcode.
-	const record = agency as AgencyDataInterface & Record<string, unknown>;
-
 	return {
 		address,
 		floorLocation: trimmed(department?.floorLocation),
-		lat: finiteNumber(record.lat),
-		lng: finiteNumber(record.lng),
+		lat: finiteNumber(agency.lat),
+		lng: finiteNumber(agency.lng),
 		phone: phone && phoneExtension ? `${phone}-${phoneExtension}` : phone,
 		hours:
 			trimmed(department?.openingHours) ?? trimmed(agency.openingHours),

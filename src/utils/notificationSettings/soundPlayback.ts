@@ -24,7 +24,7 @@ import {
 	OrisoNotificationSettings,
 	SoundId
 } from './model';
-import { soundSettingForEvent } from './notificationConfig';
+import { resolveEventChannelContract } from './occasionChannelContract';
 import { onFirstUserGesture } from '../onFirstUserGesture';
 
 /**
@@ -208,20 +208,27 @@ export const playNotificationSound = (
 	family: EventFamily,
 	eventType: string,
 	isMention: boolean,
-	now: number = Date.now()
+	now: number = Date.now(),
+	/** Per-kind tone from the list's display filter (#1377 "Ton"). */
+	override?: SoundId,
+	/** Server recipient metadata classifies the occasion, never permission. */
+	recipientRole?: string | null
 ): void => {
 	if (isNotificationSuppressed(settings, device, family)) {
 		return;
 	}
 	// Harmonised model: EVERY family (incl. calls, which default to the
 	// dedicated ring) resolves through the config tabs.
-	const kindConfig = soundSettingForEvent(
-		settings.notificationConfig,
-		family,
+	const { area, kind } = resolveEventChannelContract(
 		eventType,
-		isMention
-	);
-	const asset = soundAssetFor(kindConfig.sound);
+		recipientRole,
+		{
+			family,
+			mentioned: isMention
+		}
+	).browser;
+	const kindConfig = settings.notificationConfig[area][kind];
+	const asset = soundAssetFor(override ?? kindConfig.sound);
 	const volume = kindConfig.volume;
 	if (!asset || !('Audio' in window)) {
 		return;

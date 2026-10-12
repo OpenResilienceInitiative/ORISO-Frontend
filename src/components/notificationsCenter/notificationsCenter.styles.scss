@@ -519,6 +519,9 @@
 		color: var(--m3-on-primary, #ffffff);
 		font-size: 16px;
 		font-weight: 600;
+
+		// #876: the status-page action is a link; it must look like the button.
+		text-decoration: none;
 		cursor: pointer;
 		transition: background-color 140ms ease;
 
@@ -529,6 +532,7 @@
 
 		&:hover {
 			background: var(--m3-primary-hover, #7e0008);
+			color: var(--m3-on-primary, #ffffff);
 		}
 
 		&:focus-visible {

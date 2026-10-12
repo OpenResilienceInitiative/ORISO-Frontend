@@ -29,7 +29,7 @@ describe('Session toolbar filters', () => {
 		cy.consultantSession({
 			chat: {
 				id: 4101,
-				groupId: '!internal-group-room:oriso.org',
+				groupId: '!internal-group-room:example.org',
 				topic: 'Interner Gruppenchat',
 				hintMessage: 'internal group metadata only',
 				lastMessage: 'matrix clear body must stay hidden',

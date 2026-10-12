@@ -2024,9 +2024,47 @@ $inputBoxShadow: inset 0 2px 0 0 #ffffff;
  * the overlay, which is its own change.
  */
 .messageSubmit__wrapper--expanded {
+	.messageSubmit__target {
+		display: none;
+	}
+
 	.messageSubmit__replyPreview,
 	.messageSubmit__editPreview {
 		display: none;
+	}
+}
+
+// Parallel-chat safety cue: when the main conversation and a thread are both
+// visible, name the destination immediately above the thread composer. It is
+// deliberately compact and ellipsizes the root-message preview so it never
+// steals timeline height from the narrower pane.
+.messageSubmit__target {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	width: calc(100% - 32px);
+	max-width: var(--composer-max-width, 895px);
+	margin: 0 auto 4px;
+	padding: 4px 10px;
+	box-sizing: border-box;
+	border-radius: 8px;
+	background: var(--m3-surface-container, #f0edee);
+	color: var(--m3-on-surface-variant, #534343);
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.4px;
+
+	&Label {
+		flex: 0 0 auto;
+		color: var(--m3-on-surface, #211a1a);
+		font-weight: 600;
+	}
+
+	&Preview {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 }
 

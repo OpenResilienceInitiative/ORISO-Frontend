@@ -276,21 +276,13 @@ $inputMaxWidth: 500px;
 	}
 }
 
+// #1499: the role list is an M3 list inside the Chat-Info section card; the
+// rows are laid out by MUI, this only resets the old grid spacing.
 .groupChatInfo__roles {
-	margin-top: $grid-base-three;
-	display: grid;
-	gap: $grid-base-two;
+	margin: 0;
 }
 
-.groupChatInfo__roleRow {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: $grid-base-two;
-	flex-wrap: wrap;
-
-	select,
-	button {
-		min-height: $input-field-height;
-	}
+.groupChatInfo__card {
+	// The Chat-Info scrolls inside its own card body, never the card itself.
+	min-height: 0;
 }

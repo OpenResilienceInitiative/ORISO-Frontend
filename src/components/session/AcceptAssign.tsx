@@ -1,3 +1,4 @@
+import { getCounsellingDpaFailure } from '../../api/counsellingDpaFailure';
 import * as React from 'react';
 import {
 	useCallback,
@@ -8,7 +9,8 @@ import {
 	useState
 } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ActiveSessionContext } from '../../globalState';
+import { ActiveSessionContext, buildExtendedSession } from '../../globalState';
+import { messageEventEmitter } from '../../services/messageEventEmitter';
 import './session.styles';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -34,9 +36,14 @@ import {
 interface AcceptAssignProps {
 	assigned?: boolean;
 	btnLabel: string;
+	secondaryAction?: React.ReactNode;
 }
 
-export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
+export const AcceptAssign = ({
+	assigned,
+	btnLabel,
+	secondaryAction
+}: AcceptAssignProps) => {
 	const { t: translate } = useTranslation();
 	const { groupId: groupIdFromParam } = useParams<{ groupId: string }>();
 	const navigate = useNavigate();
@@ -134,17 +141,47 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 		abortController.current = new AbortController();
 
-		return apiGetSessionRoomBySessionId(
-			activeSession.item.id,
-			abortController.current.signal
-		).catch((e) => {
-			if (e.message === FETCH_ERRORS.ABORT) {
-				return;
-			} else if (e.message === FETCH_ERRORS.FORBIDDEN) {
-				setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
-			}
-		});
-	}, [activeSession.item.id, enquiryTakenByOtherConsultantOverlayItem]);
+		const signal = abortController.current.signal;
+		return apiGetSessionRoomBySessionId(activeSession.item.id, signal)
+			.then(({ sessions }) => {
+				const refreshed = sessions.find(
+					(entry) => entry.session?.id === activeSession.item.id
+				);
+				if (
+					!signal.aborted &&
+					activeSession.isEnquiry &&
+					refreshed &&
+					!buildExtendedSession(refreshed).isEnquiry
+				) {
+					reloadActiveSession?.();
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						refreshSessionList: true
+					});
+				}
+			})
+			.catch((e) => {
+				if (e.message === FETCH_ERRORS.ABORT) return;
+				if (e.message === FETCH_ERRORS.EMPTY) {
+					// An accepted case can leave this colleague's authorized lookup.
+					// Reload through the existing access-aware session boundary.
+					reloadActiveSession?.();
+					messageEventEmitter.emit({
+						refreshEnquiryList: true,
+						refreshSessionList: true
+					});
+					return;
+				}
+				if (e.message === FETCH_ERRORS.FORBIDDEN) {
+					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
+				}
+			});
+	}, [
+		activeSession.item.id,
+		activeSession.isEnquiry,
+		reloadActiveSession,
+		enquiryTakenByOtherConsultantOverlayItem
+	]);
 
 	const [startWatcher, stopWatcher, isWatcherRunning] = useWatcher(
 		updateActiveSession,
@@ -194,7 +231,14 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 			})
 			.catch((error) => {
 				setIsRequestInProgress(false);
-				if (error.message === FETCH_ERRORS.CONFLICT) {
+				const failure = getCounsellingDpaFailure(error);
+				if (failure) {
+					setOverlayItem({
+						...enquiryTakenByOtherConsultantOverlayItem,
+						headline: translate(`${failure.key}.title`),
+						copy: translate(`${failure.key}.text`)
+					});
+				} else if (error.message === FETCH_ERRORS.CONFLICT) {
 					setOverlayItem(enquiryTakenByOtherConsultantOverlayItem);
 				} else {
 					// console.log(error);
@@ -223,13 +267,19 @@ export const AcceptAssign = ({ assigned, btnLabel }: AcceptAssignProps) => {
 
 	return (
 		<>
-			<div className="session__acceptance messageItem">
+			<div
+				className={`session__acceptance messageItem${secondaryAction ? ' session__acceptance--withTeamAction' : ''}`}
+			>
 				<Button
 					item={buttonItem}
 					buttonHandle={() =>
 						handleButtonClick(activeSession.item.id)
 					}
+					// The button itself, not the wrapper: the team action beside
+					// it must not count as a click on "accept" for a tour.
+					tourTarget="enquiry-accept-button"
 				/>
+				{secondaryAction}
 			</div>
 
 			{requestOverlayVisible && (

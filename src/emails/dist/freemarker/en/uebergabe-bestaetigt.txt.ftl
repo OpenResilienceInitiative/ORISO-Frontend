@@ -1,18 +1,12 @@
 The handover is confirmed
 =========================
 
-The counselling case has been taken on. ${toConsultantName!''} is now responsible.
+You are now responsible for this counselling case.
 
-The person seeking advice has been informed in the application.
+Open the case in the secure counselling area.
 
-Case: ${caseReference!''}
-Now with: ${toConsultantName!''}
-Handed over on: ${handoverAt!''}
-
-Open counselling:
+Open counselling case:
 ${requestUrl!''}
-
-Your access to the previous conversation ends with the handover.
 
 ----------------------------------------------------------------
 Counselling content never appears in an email. You only ever see it encrypted, after signing in.

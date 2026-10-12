@@ -5,12 +5,15 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+	browserNotificationsSettings,
+	optInToBrowserNotifications,
 	requestNotificationPermissionSafe,
 	saveBrowserNotificationsSettings,
 	sendNotification
 } from './notificationHelpers';
 import { notificationSettingsStore } from './notificationSettings/store';
 import { setKindField } from './notificationSettings/notificationConfig';
+import { replaceTenantSettings } from './tenantSettingsHelper';
 import { setAppConfig } from './appConfig';
 
 const constructed: Array<{ title: string; options: any }> = [];
@@ -50,6 +53,7 @@ const routePanel = (crossDevice: boolean) =>
 
 beforeEach(() => {
 	constructed.length = 0;
+	replaceTenantSettings();
 	localStorage.clear();
 	// The store is a module singleton, so opt-in state would otherwise leak
 	// from one test into the next.
@@ -293,4 +297,81 @@ describe('requestNotificationPermissionSafe', () => {
 			'denied'
 		);
 	});
+});
+
+describe('optInToBrowserNotifications (#1551)', () => {
+	it('records the opt-in once the browser grants permission', async () => {
+		stubNotification('default');
+		await optInToBrowserNotifications();
+		expect(browserNotificationsSettings().enabled).toBe(true);
+		expect(
+			notificationSettingsStore.getState().settings.browserNotifications
+				.enabled
+		).toBe(true);
+	});
+
+	it('records nothing when the browser refuses', async () => {
+		vi.stubGlobal(
+			'Notification',
+			class {
+				static permission = 'default';
+				static requestPermission() {
+					return Promise.resolve('denied');
+				}
+			}
+		);
+		await optInToBrowserNotifications();
+		expect(browserNotificationsSettings().enabled).toBe(false);
+	});
+});
+
+it('checks fresh effective browser policy at the actual OS delivery boundary without changing consultant subscriptions', () => {
+	stubNotification('granted');
+	saveBrowserNotificationsSettings({ enabled: true, newMessage: true });
+	replaceTenantSettings({
+		featureAskerBrowserAgencyCounsellingEnabled: false
+	});
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(0);
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'consultant',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(1);
+	replaceTenantSettings({
+		featureAskerBrowserAgencyCounsellingEnabled: true
+	});
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(2);
+	saveBrowserNotificationsSettings({ enabled: false });
+	sendNotification(
+		'Update',
+		{ showAlways: true },
+		'user',
+		'AGENCY_COUNSELLING'
+	);
+	expect(constructed).toHaveLength(2);
+});
+it('applies browser context defaults and denies an unsupported future session context', () => {
+	stubNotification('granted');
+	saveBrowserNotificationsSettings({ enabled: true });
+	sendNotification('Update', { showAlways: true }, 'asker', null);
+	expect(constructed).toHaveLength(1);
+	sendNotification('Update', { showAlways: true }, 'asker', 'UNKNOWN');
+	expect(constructed).toHaveLength(1);
+	replaceTenantSettings({ featureAskerBrowserLiveChatEnabled: false });
+	sendNotification('Update', { showAlways: true }, 'asker', 'LIVE_CHAT');
+	expect(constructed).toHaveLength(1);
 });

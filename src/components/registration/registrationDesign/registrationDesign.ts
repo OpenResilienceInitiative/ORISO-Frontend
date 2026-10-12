@@ -736,7 +736,7 @@ export const getRegistrationCategoryName = (
 	);
 };
 
-const getRegistrationTopicKey = (
+export const getRegistrationTopicKey = (
 	topic?: Pick<TopicsDataInterface, 'slug' | 'internalIdentifier'>
 ) =>
 	topic?.slug ||

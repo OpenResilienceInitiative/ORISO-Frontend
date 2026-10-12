@@ -204,8 +204,7 @@ export const resolveMenuShortcut = (
 	const sideRoom = SIDE_ROOM_KINDS.find(
 		(kind) =>
 			code === `Key${SIDE_ROOM_SHORTCUT_KEY[kind].toUpperCase()}` ||
-			(!code.startsWith('Key') &&
-				typed === SIDE_ROOM_SHORTCUT_KEY[kind])
+			(!code.startsWith('Key') && typed === SIDE_ROOM_SHORTCUT_KEY[kind])
 	);
 	if (sideRoom) {
 		return rows.find((row) => row.kind === sideRoom) ?? null;

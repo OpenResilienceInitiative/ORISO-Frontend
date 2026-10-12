@@ -3,10 +3,12 @@ import {
 	createContext,
 	useCallback,
 	useContext,
+	useEffect,
 	useMemo,
 	useState
 } from 'react';
 import { MatrixClientService } from '../../services/matrixClientService';
+import { feedbackMailIntentQueue } from '../../services/feedbackMailIntentQueue';
 import { setMatrixClientServiceRef } from '../../services/matrixClientRegistry';
 
 export type TMatrixClientContext = {
@@ -33,6 +35,19 @@ export function MatrixClientProvider({ children }: MatrixClientProviderProps) {
 		},
 		[]
 	);
+
+	useEffect(() => {
+		const syncAccount = () =>
+			feedbackMailIntentQueue.start(
+				matrixClientService?.getClient()?.getUserId() || null
+			);
+		syncAccount();
+		const unsubscribe = matrixClientService?.onClientChange(syncAccount);
+		return () => {
+			unsubscribe?.();
+			feedbackMailIntentQueue.stop();
+		};
+	}, [matrixClientService]);
 
 	const value = useMemo(
 		() => ({

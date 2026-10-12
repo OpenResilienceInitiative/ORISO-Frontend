@@ -5,9 +5,6 @@ There is a new reply in the protected professional exchange about one of your co
 
 You will see the content encrypted, after signing in.
 
-Case: [[${caseReference}]]
-Received: [[${requestReceivedAt}]]
-
 Read reply:
 [[${messageUrl}]]
 

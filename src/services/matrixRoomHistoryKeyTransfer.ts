@@ -7,6 +7,8 @@ import {
 import type { IMegolmSessionData } from 'matrix-js-sdk/lib/@types/crypto';
 import { isInvisibleCryptoEnabledForClient } from './matrixDeviceIsolation';
 
+export { isUndecryptedRoomEvent } from '../utils/matrixDecryptionFailure';
+
 const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
 const REQUEST_THROTTLE_MS = 30_000;
@@ -42,18 +44,6 @@ type KeyBundle = {
 
 const isNonEmptyString = (value: unknown): value is string =>
 	typeof value === 'string' && value.length > 0;
-
-export const isUndecryptedRoomEvent = (event: any): boolean => {
-	const clearContent = event?.getClearContent?.();
-	const sdkFailureBody = (clearContent || event?.getContent?.())?.body;
-	return (
-		event?.isDecryptionFailure?.() === true ||
-		event?.getContent?.()?.msgtype === 'm.bad.encrypted' ||
-		(event?.getType?.() === 'm.room.encrypted' && !clearContent?.msgtype) ||
-		(typeof sdkFailureBody === 'string' &&
-			sdkFailureBody.includes('Unable to decrypt: DecryptionError'))
-	);
-};
 
 /**
  * Transfers only the Megolm sessions for one room, device-to-device over Olm.

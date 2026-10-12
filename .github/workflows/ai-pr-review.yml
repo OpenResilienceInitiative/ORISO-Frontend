@@ -25,6 +25,7 @@ jobs:
   coderabbit:
     name: CodeRabbit trigger
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Trigger CodeRabbit reviews
         env:
@@ -85,6 +86,7 @@ jobs:
   cursor:
     name: Cursor thermonuclear review
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: ${{ github.event_name == 'pull_request' }}
     steps:
       - name: Check Cursor prerequisites
@@ -119,6 +121,80 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
           token: ${{ github.token }}
+
+      - name: Refresh the knowledge graph from the published channel
+        if: steps.guard.outputs.run == 'true'
+        id: ua_graph
+        # The graph committed in this repository is refreshed by hand and has been
+        # months behind before. The review prompt below calls it mandatory context, so
+        # a stale copy makes the reviewer reason confidently about code that no longer
+        # exists. ORISO-Docs rebuilds it daily and publishes it; this step takes the
+        # current generation instead.
+        #
+        # Two properties this step has to hold, because the job it feeds holds a
+        # write-capable token and runs a third-party CLI:
+        #   * the bytes must be provably built by the publishing workflow, not merely
+        #     served over HTTPS from a rolling tag;
+        #   * the committed graph is replaced only after the whole generation has been
+        #     validated, so a truncated archive degrades to the fallback rather than
+        #     mixing two generations.
+        #
+        # Fail-soft by design (no `set -e`): every failure above falls back to the
+        # committed copy and reports it. A review must not die because a download did.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UA_CHANNEL: https://github.com/OpenResilienceInitiative/ORISO-Docs/releases/download/ua-graph-latest
+        run: |
+          set -uo pipefail
+          repo="${GITHUB_REPOSITORY##*/}"
+          work="$(mktemp -d)"
+          staged="${work}/${repo}/.understand-anything"
+          state="committed copy (no refresh)"
+
+          refresh() {
+            curl -fsSL --retry 3 --retry-delay 2 --max-time 180 \
+              "${UA_CHANNEL}/${repo}.tar.gz" -o "${work}/graph.tar.gz" || return 1
+
+            # The channel is a rolling tag and this job holds a write-capable token, so
+            # HTTPS proves only who served the bytes, not that they are a graph this
+            # organisation built. Verify the publishing workflow's provenance before
+            # anything is unpacked.
+            gh attestation verify "${work}/graph.tar.gz" \
+              --repo OpenResilienceInitiative/ORISO-Docs \
+              --signer-workflow OpenResilienceInitiative/ORISO-Docs/.github/workflows/ua-graph-refresh.yml \
+              >/dev/null 2>&1 || return 1
+
+            tar -xzf "${work}/graph.tar.gz" -C "${work}" || return 1
+
+            # Validate the complete set BEFORE replacing anything: a truncated archive
+            # must leave the committed graph alone rather than mixing two generations.
+            for file in knowledge-graph.json fingerprints.json meta.json; do
+              [ -s "${staged}/${file}" ] || return 1
+            done
+            python3 -c 'import json,sys
+          m = json.load(open(sys.argv[1]))
+          assert isinstance(m.get("gitCommitHash"), str) and len(m["gitCommitHash"]) == 40
+          assert m.get("lastAnalyzedAt")' "${staged}/meta.json" || return 1
+
+            mkdir -p .understand-anything
+            # Per-file move on the same filesystem, after validation, so a failure here
+            # cannot leave a half-written JSON behind.
+            for file in "${staged}"/*; do
+              mv -f "${file}" .understand-anything/ || return 1
+            done
+          }
+
+          if refresh; then
+            built="$(python3 -c 'import json;m=json.load(open(".understand-anything/meta.json"));print(m["gitCommitHash"][:12], m["lastAnalyzedAt"])')"
+            behind="$(git rev-list --count "${built%% *}..HEAD" 2>/dev/null || echo "?")"
+            state="built from ${built} (${behind} commits behind this branch)"
+          else
+            echo "::warning::Could not obtain a verified current graph for ${repo}; using the committed copy, which may be far behind."
+          fi
+
+          rm -rf "${work}"
+          echo "state=${state}" >> "$GITHUB_OUTPUT"
+          echo "Knowledge graph: ${state}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Configure git author
         if: steps.guard.outputs.run == 'true'
@@ -156,6 +232,9 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           BASE_REF: ${{ github.base_ref }}
           CURSOR_MODEL: ${{ vars.CURSOR_MODEL }}
+          # Interpolated into the prompt so the reviewer is told how current its
+          # index is instead of assuming it matches the branch under review.
+          UA_GRAPH_STATE: ${{ steps.ua_graph.outputs.state }}
         run: |
           set -euo pipefail
 
@@ -176,6 +255,10 @@ jobs:
           - Use .understand-anything/README.md, .understand-anything/ARCHITECTURE.md,
             .understand-anything/ORISO-ECOSYSTEM.md, and .understand-anything/knowledge-graph.json
             when they help you understand the code quickly.
+            That graph is ${UA_GRAPH_STATE}. It is an index, not the truth: read the
+            actual file before reporting anything based on it, and never report a
+            finding whose evidence is only in the graph. Any summary marked
+            "[Dated orientation; ...]" is unverified prose — treat it as a hint.
           - Compare this PR against origin/${BASE_REF:-dev}.
 
           Review focus:

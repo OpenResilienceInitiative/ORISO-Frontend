@@ -1,0 +1,29 @@
+Une nouvelle demande vous attend
+================================
+
+Une nouvelle demande de conseil vous a été attribuée. Vous en verrez le détail dans l’espace de consultation, après connexion.
+
+Sujet: {{requestTopic}}
+Code postal: {{requestPostcode}}
+Reçue le: {{requestReceivedAt}}
+
+Ouvrir la demande:
+{{requestUrl}}
+
+Merci d’accepter la demande sous 2 jours ouvrés.
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

@@ -1,6 +1,6 @@
 import { appConfig } from '../../utils/appConfig';
 
-export const calcomLogout = () => {
+export const calcomLogout = (signal?: AbortSignal) => {
 	const calcomUrl = appConfig.calcomUrl;
 
 	return fetch(`${calcomUrl}/api/auth/csrf`, {
@@ -8,7 +8,8 @@ export const calcomLogout = () => {
 			'content-type': 'application/x-www-form-urlencoded'
 		},
 		method: 'GET',
-		credentials: 'include'
+		credentials: 'include',
+		signal
 	})
 		.then((response) => response.json())
 		.then(({ csrfToken }) =>
@@ -18,7 +19,8 @@ export const calcomLogout = () => {
 				},
 				body: `csrfToken=${csrfToken}`,
 				method: 'POST',
-				credentials: 'include'
+				credentials: 'include',
+				signal
 			})
 		);
 };

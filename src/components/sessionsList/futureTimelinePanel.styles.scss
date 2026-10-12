@@ -20,6 +20,21 @@
 		}
 	}
 
+	// T41b: the 80 px rail has no room for the label — one centred arrow
+	// instead of a column of single letters.
+	&--rail {
+		padding: $grid-base 4px;
+
+		.futureTimeline__divider {
+			grid-template-columns: 1fr;
+			justify-items: center;
+		}
+
+		.futureTimeline__events {
+			max-height: 200px;
+		}
+	}
+
 	&__events {
 		display: grid;
 		gap: $grid-base;

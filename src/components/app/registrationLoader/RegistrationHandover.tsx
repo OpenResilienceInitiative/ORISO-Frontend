@@ -48,6 +48,8 @@ export interface RegistrationHandoverProps {
 		subline?: string;
 		encryption?: string;
 		cta?: string;
+		/** The gate button's status line per state; unset states keep theirs. */
+		status?: Partial<Record<HandoverGateState, string>>;
 		steps?: HandoverStep[];
 	};
 }
@@ -216,8 +218,7 @@ export const RegistrationHandover = ({
 								color: registrationMd3.primary
 							}}
 						>
-							{copy?.badge ??
-								t('registration.handover.badge', 'Registriert')}
+							{copy?.badge ?? t('registration.handover.badge')}
 						</Typography>
 					</Box>
 					{/* Frank, 2026-09-01: "wir sollten aus dem 'Geschafft, so
@@ -246,14 +247,8 @@ export const RegistrationHandover = ({
 							const text = own
 								? own
 								: done
-									? t(
-											'registration.handover.headline',
-											'Geschafft.'
-										)
-									: t(
-											'registration.handover.headlineAlmost',
-											'Fast geschafft.'
-										);
+									? t('registration.handover.headline')
+									: t('registration.handover.headlineAlmost');
 							const shown = own ? done : done === handoverDone;
 							if (own && !done) {
 								return null;
@@ -305,11 +300,7 @@ export const RegistrationHandover = ({
 							color: registrationMd3.onSurfaceVariant
 						}}
 					>
-						{copy?.subline ??
-							t(
-								'registration.handover.subline',
-								'So geht es weiter:'
-							)}
+						{copy?.subline ?? t('registration.handover.subline')}
 					</Typography>
 				</Box>
 
@@ -356,10 +347,7 @@ export const RegistrationHandover = ({
 					/>
 					<Typography component="span" sx={{ fontSize: 'inherit' }}>
 						{copy?.encryption ??
-							t(
-								'registration.handover.encryption',
-								'Verschlüsselt: Nur Sie und die Mitarbeiterinnen Ihrer Beratungsstelle können Ihre Anfrage einsehen.'
-							)}
+							t('registration.handover.encryption')}
 					</Typography>
 				</Box>
 			</Box>
@@ -396,39 +384,12 @@ export const RegistrationHandover = ({
 					px: { xs: 2, sm: 5 }
 				}}
 			>
-				{/* Desktop: the gate is the registration button carrying on, so it
-				    keeps that button's right edge (40px inset, same as `px`) and
-				    grows leftwards out of it instead of appearing as a new
-				    full-width bar. 196px is `RegistrationFooterPrimaryButton`'s
-				    md `minWidth` — the width it is stretching *from*.
-				    Mobile keeps the full-width bar: there the register button is
-				    full width too, so there is nothing to stretch out of. */}
-				<Box
-					sx={{
-						'width': '100%',
-						'maxWidth': { xs: '100%', sm: 480 },
-						'ml': { xs: 0, sm: 'auto' },
-						'mr': 0,
-						'@keyframes handoverGateStretch': {
-							from: { maxWidth: '196px' },
-							to: { maxWidth: '480px' }
-						},
-						/* Desktop only, and only where the stretch has something
-						   to stretch out of. Animating `max-width` rather than
-						   `width` keeps the mobile full-width case untouched —
-						   animating `width` there resolved against the wrong box
-						   and pushed the button off-screen. */
-						'@media (min-width: 600px) and (prefers-reduced-motion: no-preference)':
-							{
-								animation:
-									'handoverGateStretch 420ms cubic-bezier(0.4, 0, 0.2, 1)'
-							}
-					}}
-				>
+				<Box sx={{ width: '100%', minWidth: 0 }}>
 					<HandoverGateButton
 						state={state}
 						onEnter={handleEnter}
 						label={copy?.cta}
+						status={copy?.status?.[state]}
 					/>
 				</Box>
 			</Box>

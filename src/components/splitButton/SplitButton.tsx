@@ -51,6 +51,10 @@ export interface SplitButtonProps {
 	incrementLabel?: string;
 	id?: string;
 	className?: string;
+	/** `small` = 32px control for dense rows (#1377 sound picker). */
+	size?: 'medium' | 'small';
+	/** Accessible name of the main segment when the visible label is not enough. */
+	mainLabel?: string;
 }
 
 export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
@@ -72,7 +76,9 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 			decrementLabel,
 			incrementLabel,
 			id,
-			className
+			className,
+			size = 'medium',
+			mainLabel
 		},
 		ref
 	) => {
@@ -81,6 +87,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 		const classes = [
 			'splitButton',
 			`splitButton--${variant}`,
+			size === 'small' && 'splitButton--small',
 			fullWidth && 'splitButton--fullWidth',
 			disabled && 'splitButton--disabled',
 			open && !disabled && 'splitButton--open',
@@ -96,6 +103,7 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 					className="splitButton__segment splitButton__main"
 					disabled={disabled || mainDisabled}
 					onClick={onClick}
+					aria-label={mainLabel}
 					aria-expanded={hasMenu && mainOpensMenu ? open : undefined}
 					aria-haspopup={
 						hasMenu && mainOpensMenu ? 'listbox' : undefined

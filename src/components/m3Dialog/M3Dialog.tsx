@@ -34,6 +34,10 @@ export interface M3DialogProps {
 	'children'?: ReactNode;
 	/** Up to two actions, rendered right-aligned as M3 text buttons. */
 	'actions'?: M3DialogAction[];
+	/** Completion content above the actions, outside the scrolling body. */
+	'footerContent'?: ReactNode;
+	/** Custom action row, for a shared completion button with its own states. */
+	'actionsContent'?: ReactNode;
 	'onClose': () => void;
 	/** Full-width divider between content and actions. Defaults to true. */
 	'showDivider'?: boolean;
@@ -54,7 +58,16 @@ export interface M3DialogProps {
 	'severity'?: M3DialogSeverity;
 	/** Dialog width in px. Defaults to the M3 basic-dialog 560px. */
 	'width'?: number;
+	/**
+	 * M3 full-screen dialog (phones): the sheet fills the viewport with no
+	 * margin and no corner radius. Callers decide the breakpoint
+	 * (`useResponsive().untilL` in the app); this component stays media-query
+	 * free so Storybook can render both presentations side by side.
+	 */
+	'fullScreen'?: boolean;
 	'className'?: string;
+	/** DOM id of the dialog surface, for a trigger's `aria-controls`. */
+	'id'?: string;
 	'data-testid'?: string;
 }
 
@@ -85,13 +98,17 @@ export const M3Dialog = ({
 	icon,
 	children,
 	actions = [],
+	footerContent,
+	actionsContent,
 	onClose,
 	showDivider = true,
 	closable = true,
 	closeLabel = 'Close',
 	severity = 'info',
 	width = 560,
+	fullScreen = false,
 	className,
+	id,
 	'data-testid': testId
 }: M3DialogProps) => {
 	const titleId = useId();
@@ -104,17 +121,20 @@ export const M3Dialog = ({
 			aria-labelledby={titleId}
 			aria-describedby={description ? descriptionId : undefined}
 			maxWidth={false}
+			fullScreen={fullScreen}
 			className={clsx(
 				'm3Dialog',
 				severity === 'error' && 'm3Dialog--error',
+				fullScreen && 'm3Dialog--fullScreen',
 				className
 			)}
 			/* `PaperProps` / `BackdropProps`, not `slotProps`: this is MUI v5,
 			   where `slotProps.paper` is not yet wired on `Dialog`. */
 			BackdropProps={{ className: 'm3Dialog__backdrop' }}
 			PaperProps={{
+				'id': id,
 				'className': 'm3Dialog__surface',
-				'style': { maxWidth: `${width}px` },
+				'style': fullScreen ? undefined : { maxWidth: `${width}px` },
 				'data-testid': testId
 			}}
 		>
@@ -155,28 +175,32 @@ export const M3Dialog = ({
 				</div>
 			)}
 
-			{actions.length > 0 && (
+			{(actions.length > 0 ||
+				footerContent != null ||
+				actionsContent != null) && (
 				<div className="m3Dialog__footer">
 					{showDivider && (
 						<div className="m3Dialog__divider" aria-hidden="true" />
 					)}
+					{footerContent}
 					<div className="m3Dialog__actions">
-						{actions.map((action) => (
-							<button
-								key={action.label}
-								type="button"
-								className={clsx(
-									'm3Dialog__action',
-									action.primary &&
-										'm3Dialog__action--primary'
-								)}
-								disabled={action.disabled}
-								onClick={action.onClick}
-								data-testid={action.testId}
-							>
-								{action.label}
-							</button>
-						))}
+						{actionsContent ??
+							actions.map((action) => (
+								<button
+									key={action.label}
+									type="button"
+									className={clsx(
+										'm3Dialog__action',
+										action.primary &&
+											'm3Dialog__action--primary'
+									)}
+									disabled={action.disabled}
+									onClick={action.onClick}
+									data-testid={action.testId}
+								>
+									{action.label}
+								</button>
+							))}
 					</div>
 				</div>
 			)}

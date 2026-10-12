@@ -20,4 +20,4 @@ ${platformName!''} ist ein Angebot von ${orgName!''}.
 Datenschutz: ${privacyUrl!''}
 Impressum: ${imprintUrl!''}
 
-Diese E-Mail gehört zur Anmeldung und lässt sich nicht abbestellen. Bitte antworte nicht darauf.
+Diese E-Mail informiert dich über eine Änderung deiner E-Mail-Adresse und lässt sich nicht abbestellen. Bitte antworte nicht darauf.

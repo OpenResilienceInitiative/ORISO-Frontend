@@ -2,7 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { MessageSendFailed } from './MessageSendFailed';
 
 const meta = {
-	title: 'Components/Chat/MessageSendFailed',
+	id: 'components-chat-messagesendfailed',
+	title: 'Chat/System messages/Delivery failure',
 	component: MessageSendFailed,
 	tags: ['autodocs'],
 	parameters: {

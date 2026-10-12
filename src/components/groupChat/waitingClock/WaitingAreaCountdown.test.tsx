@@ -2,13 +2,33 @@
 import React from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import de from '../../../resources/i18n/de/common.json';
+import deInformal from '../../../resources/i18n/de@informal/common.json';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
 
-// Return the key untranslated so translateWithFallback serves the German
-// fallback strings — the assertions below match those.
+const readKey = (catalogue: unknown, path: string): unknown =>
+	path.split('.').reduce<unknown>((value, part) => {
+		if (!value || typeof value !== 'object') {
+			return undefined;
+		}
+		return (value as Record<string, unknown>)[part];
+	}, catalogue);
+
+const interpolate = (value: string, options?: Record<string, unknown>) =>
+	value.replace(/\{\{(\w+)\}\}/g, (_, token: string) =>
+		options?.[token] == null ? '' : String(options[token])
+	);
+
+// Resolve informal overlay over formal German so the suite keeps asserting
+// the waiting-area copy the design uses for *du*.
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (key: string) => key
+		t: (key: string, options?: Record<string, unknown>) => {
+			const value = readKey(deInformal, key) ?? readKey(de, key);
+			return typeof value === 'string'
+				? interpolate(value, options)
+				: key;
+		}
 	})
 }));
 
@@ -150,9 +170,7 @@ describe('WaitingAreaCountdown', () => {
 		// Static fallback: plain padded digits, no flip card anymore.
 		expect(screen.getByText('02')).toBeTruthy();
 		expect(screen.getByText('03')).toBeTruthy();
-		expect(
-			screen.queryByRole('button', { name: /Uhr umdrehen/ })
-		).toBeNull();
+		expect(container.querySelector('[aria-pressed]')).toBeNull();
 		const still = container.querySelector('.waitingClock__still');
 		expect(still).toBeTruthy();
 		expect(
@@ -165,10 +183,11 @@ describe('WaitingAreaCountdown', () => {
 		expect(screen.queryByText(WELCOME)).toBeNull();
 		/* The tiles keep `role="timer"`, so the way to the card is its own
 		   button underneath them — a button wrapped around the numbers would
-		   take their place in the accessibility tree. */
+		   take their place in the accessibility tree. The still-view control
+		   reuses cardOpenAria ("Uhr umdrehen, Begrüßung und Netiquette lesen"). */
 		fireEvent.click(
 			screen.getByRole('button', {
-				name: /Begrüßung und Netiquette anzeigen/
+				name: 'Uhr umdrehen, Begrüßung und Netiquette lesen'
 			})
 		);
 		expect(screen.getByText(WELCOME)).toBeTruthy();

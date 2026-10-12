@@ -11,10 +11,12 @@ Format:
 - Lesson: <what to do differently next time>
 ```
 
-## 2026-08-30 — Storybook retry must drain pipes before `close`
+## 2026-08-31 — positional t() second args hide leftover English
 
-- Context: PR #1229 Storybook CI (`scripts/run-storybook-tests.mjs`)
-- Lesson: The Vitest disconnect line is the last stderr chunk. Resolving the wrapper on `close` without waiting for stdout/stderr `end` drops it, so the retry never fires. Drain both streams; also treat `132 passed (171)` + `Errors 1 error` as the abort signal.
+- Context: `docs/agent-tasks/2026-08-30_issue-1154-i18n-consistency/` (#1154 audit)
+- Lesson: After dropping `t(key, 'literal')`, still search for `t(key, variable)` whose variable holds DE/EN (preset labels, `phase.charAt(0)…`). A SLICE_FILES scan that only matches quoted literals will call the platform clean while those fallbacks still snap the UI.
+
+## 2026-08-30 — Storybook retry must drain pipes before `close`
 
 ## 2026-08-02 — PR screenshots need a non-ignored docs path
 
@@ -59,3 +61,7 @@ App handlers for Cmd/Ctrl+F, Cmd/Ctrl+Shift+N, Cmd/Ctrl+K must listen in the cap
 ## 2026-07-08 — matrix-js-sdk production logging
 
 `matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
+
+## 2026-10-09 — memory-only practice status
+
+A persisted step marker cannot reconstruct a fictional case that lives only in memory. Offer a truthful fresh-start state after interruption unless both the case and progress can be restored safely; leave ordinary tutorial resume semantics separate.

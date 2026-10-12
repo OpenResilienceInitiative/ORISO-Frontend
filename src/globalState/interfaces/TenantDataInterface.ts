@@ -1,7 +1,11 @@
+import type { TraegerDpo } from '../../utils/traegerDpo';
+
 export interface TenantDataInterface {
 	id: number | null;
 	name: string;
 	theming: {
+		assistantName?: string | null;
+		assistantIcon?: string | null;
 		logo: string;
 		associationLogo: string | null;
 		/**
@@ -46,6 +50,8 @@ export interface TenantDataInterface {
 		privacyLanguages?: Record<string, string>;
 	};
 	settings?: TenantDataSettingsInterface;
+	/** Optional DPO of the Träger, public on the restricted tenant read (ORISO-Admin#1067). */
+	dataProtectionOfficer?: TraegerDpo | null;
 }
 
 export interface TenantDataSettingsInterface {
@@ -99,6 +105,15 @@ export interface TenantDataSettingsInterface {
 	featureVoiceMessagesOneOnOneChatsEnabled?: boolean;
 	featureVoiceMessagesGroupChatsEnabled?: boolean;
 	featureVoiceMessagesSupervisionChatsEnabled?: boolean;
+	/** ORISO-Admin#602: explicit false disables asker email invitation; absent keeps legacy behavior. */
+	featureAskerEmailEnabled?: boolean;
+	featureAskerEmailAgencyCounsellingEnabled?: boolean;
+	featureAskerEmailLiveChatEnabled?: boolean;
+	featureAskerEmailSelfHelpEnabled?: boolean;
+	featureAskerBrowserAgencyCounsellingEnabled?: boolean;
+	featureAskerBrowserLiveChatEnabled?: boolean;
+	featureAskerBrowserSelfHelpEnabled?: boolean;
+
 	emailVisible?: boolean;
 	emailRequired?: boolean;
 }

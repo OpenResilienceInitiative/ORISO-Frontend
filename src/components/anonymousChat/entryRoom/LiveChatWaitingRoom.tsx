@@ -1,19 +1,13 @@
 import * as React from 'react';
 import { useRef, useState } from 'react';
-import {
-	Box,
-	ButtonBase,
-	Checkbox,
-	FormControlLabel,
-	Typography
-} from '@mui/material';
+import { Box, ButtonBase, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SentimentSatisfiedAltOutlinedIcon from '@mui/icons-material/SentimentSatisfiedAltOutlined';
+import WavingHandOutlinedIcon from '@mui/icons-material/WavingHandOutlined';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { ConsentCompletionPanel } from '../../registration/consentCompletion/ConsentCompletionPanel';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import {
 	HandoverCarousel,
@@ -23,7 +17,7 @@ import { BreathingCompanionHost } from '../../pseudonym/breathingCompanion/Breat
 import { LeaveQueueDialog } from '../../pseudonym/LeaveQueueDialog';
 import { sanitizeConsentHtml } from '../../legalContent/legalHtmlSanitizer';
 import { consentBindingKey } from '../../registration/accountData/consentAcceptance';
-import htmlParser from '../../../resources/scripts/util/htmlParser';
+import { useLegalHtmlWithDialogs } from '../../legalLinks/useLegalHtmlWithDialogs';
 import { liveChatArtwork } from '../../../resources/img/registration-md3/registrationArtwork';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { translateWithFallback } from '../../../utils/translationFallback';
@@ -40,6 +34,12 @@ export interface LiveChatWaitingRoomProps {
 	 * through the ADR-022 sanitizer, never raw.
 	 */
 	consentHtml: string;
+	/**
+	 * The accepting centre's department (ADR-003: agency × topic), once known.
+	 * Its legal links then open that department's documents; before, the
+	 * platform's (ADR-022: no Beratungsstelle is assigned yet).
+	 */
+	department?: { agencyId: number; topicId: number } | null;
 	onAccept: () => void;
 	/** The way out: finish the enquiry and delete the access. */
 	onLeave: () => Promise<void> | void;
@@ -112,6 +112,7 @@ export const LiveChatWaitingRoom = ({
 	accepted,
 	counsellorLine,
 	consentHtml,
+	department,
 	onAccept,
 	onLeave,
 	onMailCounselling,
@@ -140,6 +141,15 @@ export const LiveChatWaitingRoom = ({
 	   language and the sentence changes, the binding stops matching, and the
 	   box unticks instead of carrying agreement onto words nobody read. */
 	const consentBinding = consentBindingKey(null, null, null, consentHtml);
+	const renderConsentHtml = useLegalHtmlWithDialogs(
+		department
+			? {
+					scope: 'agency',
+					agencyId: department.agencyId,
+					topicId: department.topicId
+				}
+			: { scope: 'platform' }
+	);
 	const [acceptedConsentBinding, setAcceptedConsentBinding] = useState<
 		string | null
 	>(null);
@@ -321,182 +331,99 @@ export const LiveChatWaitingRoom = ({
 			)}
 
 			{accepted && (
-				<RegistrationFooter animateIn>
-					<Box
-						data-cy="live-chat-consent"
-						sx={{ flex: 1, minWidth: 0, py: { xs: 1, sm: 2 } }}
-					>
-						<Box
-							sx={{
-								display: 'flex',
-								gap: 2,
-								alignItems: 'flex-start'
-							}}
-						>
-							<ShieldOutlinedIcon
-								aria-hidden
-								sx={{
-									fontSize: 40,
-									color: registrationMd3.primary,
-									flexShrink: 0
-								}}
-							/>
-							<Box sx={{ minWidth: 0 }}>
-								<Typography
-									sx={{ fontSize: 22, fontWeight: 700 }}
-								>
-									{tr('yourTurn', 'Sie sind dran.')}
-								</Typography>
-								<Typography
-									sx={{
-										mt: 0.5,
-										fontSize: 15,
-										color: registrationMd3.onSurfaceVariant
-									}}
-								>
-									{counsellorLine ??
-										tr(
-											'yourTurnSub',
-											'Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.'
+				<RegistrationFooter
+					animateIn
+					consent={
+						<ConsentCompletionPanel
+							ariaLabel={tr('yourTurn', 'Sie sind dran.')}
+							status={{
+								heading: tr('yourTurn', 'Sie sind dran.'),
+								icon: <WavingHandOutlinedIcon />,
+								subtitle:
+									counsellorLine ??
+									tr(
+										'yourTurnSub',
+										'Eine Beraterin hat Ihr Gespräch angenommen und wartet auf Sie.'
+									),
+								trailingAction: (
+									<ButtonBase
+										aria-label={tr(
+											'decline',
+											'Nicht zustimmen und Chat verlassen'
 										)}
-								</Typography>
-								<FormControlLabel
-									sx={{
-										alignItems: 'flex-start',
-										mt: 1,
-										mr: 0
-									}}
-									control={
-										<Checkbox
-											inputRef={consentBoxRef}
-											checked={consentAccepted}
-											disabled={busy}
-											onChange={() => {
-												setAcceptedConsentBinding(
-													consentAccepted
-														? null
-														: consentBinding
-												);
-												setConsentMissing(false);
-											}}
-											inputProps={{
-												'aria-invalid': consentMissing,
-												'aria-describedby':
-													consentMissing
-														? CONSENT_ERROR_ID
-														: undefined
-											}}
-											sx={{
-												mt: '-9px',
-												color: consentMissing
-													? registrationMd3.error
-													: undefined
-											}}
-										/>
-									}
-									label={
-										<Typography
-											component="div"
-											sx={{
-												'fontSize': 14,
-												'lineHeight': '20px',
-												'fontWeight': 600,
-												'& a': {
-													color: registrationMd3.primary
-												}
-											}}
-										>
-											{htmlParser(
-												sanitizeConsentHtml(consentHtml)
-											)}
-										</Typography>
-									}
-								/>
-								{consentMissing && (
-									<Box
-										id={CONSENT_ERROR_ID}
-										role="alert"
+										onClick={() => setLeaving(true)}
+										disabled={busy}
 										sx={{
-											display: 'flex',
-											alignItems: 'flex-start',
-											gap: 1,
-											mt: 0.5,
-											color: registrationMd3.error
+											width: 48,
+											height: 48,
+											flexShrink: 0,
+											borderRadius: '50%',
+											border: `1.5px solid ${registrationMd3.outline}`,
+											color: registrationMd3.onSurfaceVariant
 										}}
 									>
-										<ErrorOutlineIcon
-											sx={{
-												fontSize: 20,
-												flexShrink: 0,
-												mt: '1px'
-											}}
-										/>
-										<Typography
-											sx={{
-												fontSize: 14,
-												lineHeight: '20px',
-												fontWeight: 600,
-												color: 'inherit'
-											}}
-										>
-											{tr(
-												'consentRequired',
-												'Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.'
-											)}
-										</Typography>
-									</Box>
-								)}
-							</Box>
-						</Box>
-						<Box
-							sx={{
-								display: 'flex',
-								alignItems: 'center',
-								gap: 2,
-								mt: 2
+										<CloseRoundedIcon />
+									</ButtonBase>
+								)
 							}}
-						>
-							<ButtonBase
-								aria-label={tr(
-									'decline',
-									'Nicht zustimmen und Chat verlassen'
-								)}
-								onClick={() => setLeaving(true)}
-								disabled={busy}
-								sx={{
-									width: 56,
-									height: 56,
-									flexShrink: 0,
-									borderRadius: '50%',
-									border: `1.5px solid ${registrationMd3.outline}`,
-									color: registrationMd3.onSurfaceVariant
-								}}
-							>
-								<CloseRoundedIcon />
-							</ButtonBase>
-							<Box sx={{ flex: 1, minWidth: 0 }}>
-								{/* TODO(#1341 item 4): landing *in the message
-								    box* still needs the session side. The
-								    hand-over in
-								    `LiveChatEntryRoom.handleAccept` is a full
-								    reload to `buildInviteSessionAppUrl`, so no
-								    router state survives it — it would have to
-								    leave a per-session mark (the way it already
-								    marks `anonymous-inquiry-consent-*`) that
-								    `messageSubmitInterfaceComponent` reads on
-								    mount to call `composerRef.current.focus()`.
-								    Both files belong to other work in flight,
-								    so this change stops at the rename. */}
-								<HandoverGateButton
-									state={busy ? 'entering' : 'ready'}
-									onEnter={handleStart}
-									label={tr('start', 'Gespräch beginnen')}
-									status={tr(
-										'startStatus',
-										'Ihre Beraterin wartet auf Sie'
+							checked={consentAccepted}
+							disabled={busy}
+							inputRef={consentBoxRef}
+							onChange={() => {
+								setAcceptedConsentBinding(
+									consentAccepted ? null : consentBinding
+								);
+								setConsentMissing(false);
+							}}
+							label={
+								<Typography
+									component="div"
+									sx={{
+										'fontSize': 14,
+										'lineHeight': '20px',
+										'fontWeight': 600,
+										'& a': {
+											color: registrationMd3.primary
+										}
+									}}
+								>
+									{renderConsentHtml(
+										sanitizeConsentHtml(consentHtml)
 									)}
-								/>
-							</Box>
+								</Typography>
+							}
+							errorId={CONSENT_ERROR_ID}
+							error={
+								consentMissing
+									? tr(
+											'consentRequired',
+											'Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.'
+										)
+									: undefined
+							}
+						/>
+					}
+				>
+					<Box
+						data-cy="live-chat-consent"
+						sx={{
+							display: 'flex',
+							alignItems: 'center',
+							gap: 2,
+							width: '100%',
+							minWidth: 0
+						}}
+					>
+						<Box sx={{ flex: 1, minWidth: 0 }}>
+							<HandoverGateButton
+								state={busy ? 'entering' : 'ready'}
+								onEnter={handleStart}
+								label={tr('start', 'Gespräch beginnen')}
+								status={tr(
+									'startStatus',
+									'Ihre Beraterin wartet auf Sie'
+								)}
+							/>
 						</Box>
 					</Box>
 				</RegistrationFooter>

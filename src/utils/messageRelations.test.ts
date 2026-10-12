@@ -69,13 +69,13 @@ describe('reply relations (m.relates_to / m.in_reply_to)', () => {
 		it('attaches the m.in_reply_to relation when replying', () => {
 			expect(
 				buildTextMessageContent('antwort', {
-					replyToEventId: '$abc:matrix.oriso.org'
+					replyToEventId: '$abc:matrix.example.org'
 				})
 			).toEqual({
 				'msgtype': 'm.text',
 				'body': 'antwort',
 				'm.relates_to': {
-					'm.in_reply_to': { event_id: '$abc:matrix.oriso.org' }
+					'm.in_reply_to': { event_id: '$abc:matrix.example.org' }
 				}
 			});
 		});

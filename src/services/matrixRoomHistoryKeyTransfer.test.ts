@@ -158,7 +158,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				isDecryptionFailure: () => false,
 				getType: () => 'm.room.message',
 				getClearContent: () => ({
-					msgtype: 'm.text',
+					msgtype: 'm.bad.encrypted',
 					body: '** Unable to decrypt: DecryptionError: missing room key **'
 				})
 			})
@@ -168,7 +168,7 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				isDecryptionFailure: () => false,
 				getType: () => 'm.room.message',
 				getContent: () => ({
-					msgtype: 'm.text',
+					msgtype: 'm.bad.encrypted',
 					body: '** Unable to decrypt: DecryptionError: missing room key **'
 				})
 			})

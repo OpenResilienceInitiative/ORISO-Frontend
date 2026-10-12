@@ -76,6 +76,63 @@ describe('M3Dialog', () => {
 		expect(onConfirm).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps completion outside the scrolling body and retains default actions', () => {
+		const onConfirm = vi.fn();
+		render(
+			<M3Dialog
+				title="Termin buchen"
+				onClose={() => undefined}
+				footerContent={
+					<label>
+						<input type="checkbox" />
+						Zustimmung
+					</label>
+				}
+				actions={[
+					{ label: 'Beitreten', onClick: onConfirm, primary: true }
+				]}
+			>
+				<p>Anmeldedaten.</p>
+			</M3Dialog>
+		);
+
+		const checkbox = screen.getByRole('checkbox', { name: 'Zustimmung' });
+		expect(checkbox.closest('.m3Dialog__body')).toBeNull();
+		expect(checkbox.closest('.m3Dialog__footer')).toBeTruthy();
+		expect(
+			screen
+				.getByText('Anmeldedaten.')
+				.closest('.m3Dialog__body')
+				?.getAttribute('tabindex')
+		).toBe('0');
+		fireEvent.click(screen.getByRole('button', { name: 'Beitreten' }));
+		expect(onConfirm).toHaveBeenCalledTimes(1);
+	});
+
+	it('allows a custom completion action in the pinned action row', () => {
+		render(
+			<M3Dialog
+				title="Termin buchen"
+				onClose={() => undefined}
+				actions={[
+					{ label: 'Default action', onClick: () => undefined }
+				]}
+				actionsContent={
+					<button type="button">Gespräch beginnen</button>
+				}
+			/>
+		);
+
+		expect(
+			screen.queryByRole('button', { name: 'Default action' })
+		).toBeNull();
+		const action = screen.getByRole('button', {
+			name: 'Gespräch beginnen'
+		});
+		expect(action.closest('.m3Dialog__actions')).toBeTruthy();
+		expect(action.closest('.m3Dialog__body')).toBeNull();
+	});
+
 	/**
 	 * Only the confirming action carries colour. A row where every button is
 	 * primary reads as "all equally likely", which is exactly what the M3
@@ -173,5 +230,20 @@ describe('M3Dialog', () => {
 		expect(dialog.getAttribute('aria-describedby')).toBe(
 			screen.getByText('Wer die Plattform betreibt.').getAttribute('id')
 		);
+	});
+
+	it('renders full-screen with a DOM id when asked (#1377)', () => {
+		render(
+			<M3Dialog
+				title="Filter"
+				id="filter-dialog"
+				fullScreen
+				onClose={() => undefined}
+			/>
+		);
+		const surface = document.getElementById('filter-dialog');
+		expect(surface).not.toBeNull();
+		expect(surface?.className).toContain('m3Dialog__surface');
+		expect(document.querySelector('.m3Dialog--fullScreen')).not.toBeNull();
 	});
 });

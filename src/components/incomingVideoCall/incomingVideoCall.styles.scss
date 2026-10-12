@@ -9,6 +9,31 @@ $userIconSize: 62px;
 		}
 	}
 
+	/* The header's reject control is a real button now: strip the browser's
+	   button look so it reads exactly as the icon did, and give keyboard focus
+	   the shared focus ring. */
+	&__reject {
+		/* A button stretches with the header's flex row; the icon sat at the
+		   top as a div, so pin it there and keep the ring tight around it. */
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: inherit;
+		line-height: 0;
+		cursor: pointer;
+
+		/* The shared focus treatment, like every other control. */
+		&:focus-visible {
+			outline: $focus-outline;
+			outline-offset: 2px;
+			border-radius: 2px;
+		}
+	}
+
 	&__description,
 	&__hint {
 		color: $white;

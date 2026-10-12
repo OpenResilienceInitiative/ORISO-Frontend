@@ -1,16 +1,13 @@
 import * as React from 'react';
 import { expect, userEvent, within } from 'storybook/test';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { MatrixClient } from 'matrix-js-sdk';
 import { UserDataContext } from '../../../globalState';
-import { registerDeviceSigningAuth } from '../../../services/matrixInteractiveAuth';
 import {
 	clearPendingRecoveryKey,
 	savePendingRecoveryKey
 } from '../../../services/pendingRecoveryKeyStore';
 import { setRecoveryRuntimeStatus } from '../../../services/recoveryReminderState';
 import { EncryptionSettingsPanel } from './index';
-import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupService';
 
 /**
  * #437 Key backup + recovery UX. Stories inject a fake Matrix client (only the
@@ -18,63 +15,13 @@ import type { EncryptionSetupStatus } from '../../../services/matrixKeyBackupSer
  * every phase renders without a homeserver.
  */
 
-const DEMO_RECOVERY_KEY = 'EsTc XKzB 4Dcp 8xWm Jvqa 2S9d Hn3f Ky6R pQ7u Vw1z';
-
-const buildFakeClient = (
-	overrides: Partial<Record<string, unknown>> = {}
-): MatrixClient => {
-	const crypto = {
-		isSecretStorageReady: async () => true,
-		isCrossSigningReady: async () => true,
-		getActiveSessionBackupVersion: async () => '3',
-		getKeyBackupInfo: async () => ({ version: '3' }),
-		getSessionBackupPrivateKey: async () => new Uint8Array(32),
-		createRecoveryKeyFromPassphrase: async () => ({
-			encodedPrivateKey: DEMO_RECOVERY_KEY,
-			privateKey: new Uint8Array(32),
-			keyInfo: {}
-		}),
-		bootstrapCrossSigning: async () => undefined,
-		bootstrapSecretStorage: async () => undefined,
-		resetKeyBackup: async () => undefined,
-		checkKeyBackupAndEnable: async () => ({}),
-		loadSessionBackupPrivateKeyFromSecretStorage: async () => undefined,
-		restoreKeyBackup: async () => ({ imported: 42, total: 42 }),
-		resetEncryption: async () => undefined,
-		...overrides
-	};
-	const client = {
-		getCrypto: () => crypto,
-		getUserId: () => '@encryption-story:example.test',
-		secretStorage: { checkKey: async () => true }
-	} as unknown as MatrixClient;
-	registerDeviceSigningAuth(client, async (makeRequest) => makeRequest(null));
-	return client;
-};
-
-const statusNotSetUp: EncryptionSetupStatus = {
-	secretStorageReady: false,
-	crossSigningReady: false,
-	activeBackupVersion: null,
-	serverBackupExists: false,
-	keyStorageOutOfSync: false
-};
-
-const statusHealthy: EncryptionSetupStatus = {
-	secretStorageReady: true,
-	crossSigningReady: true,
-	activeBackupVersion: '3',
-	serverBackupExists: true,
-	keyStorageOutOfSync: false
-};
-
-const statusOutOfSync: EncryptionSetupStatus = {
-	secretStorageReady: false,
-	crossSigningReady: false,
-	activeBackupVersion: null,
-	serverBackupExists: true,
-	keyStorageOutOfSync: true
-};
+import {
+	DEMO_RECOVERY_KEY,
+	buildFakeClient,
+	statusNotSetUp,
+	statusHealthy,
+	statusOutOfSync
+} from './EncryptionSettings.fixtures';
 
 const meta = {
 	title: 'Organisms/EncryptionSettingsPanel',
@@ -118,7 +65,9 @@ export const SetupFlow: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(
-			await canvas.findByRole('button', { name: /schlüssel einrichten/i })
+			await canvas.findByRole('button', {
+				name: /ersatzschlüssel einrichten/i
+			})
 		);
 		await expect(
 			canvas.findByText(DEMO_RECOVERY_KEY)
@@ -210,10 +159,8 @@ export const PasswordRecoveryForm: Story = {
 	],
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const password = await canvas.findByLabelText(
-			'Aktuelles Login-Passwort'
-		);
-		const repeat = canvas.getByLabelText('Login-Passwort wiederholen');
+		const password = await canvas.findByLabelText('Aktuelles Passwort');
+		const repeat = canvas.getByLabelText('Passwort wiederholen');
 		const otp = canvas.getByLabelText('Einmalcode');
 		await expect(password).toHaveAttribute(
 			'autocomplete',

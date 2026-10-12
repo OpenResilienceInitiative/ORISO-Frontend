@@ -1,0 +1,38 @@
+.securityPrivacySettings {
+	display: flex;
+	flex-direction: column;
+	gap: $grid-base-three;
+	min-width: 0;
+
+	&__description {
+		margin: $grid-base 0 $grid-base-two;
+		overflow-wrap: anywhere;
+	}
+
+	// Reuse the approved flowing columns; each card keeps its own height.
+	&__cards.profile__cards {
+		padding: 0;
+
+		> :only-child {
+			column-span: all;
+		}
+	}
+}
+
+// Keep the original top-right edit action while headings wrap beside it.
+.securityPrivacySettings .profile__card__body {
+	.profile__content__title:first-child > .twoFactorAuth__head,
+	.displayNameSettings .profile__content__title > div:first-child {
+		.headline {
+			padding-inline: $grid-base-five;
+			overflow-wrap: anywhere;
+		}
+	}
+
+	.encryptionSettings .button__item {
+		max-width: 100%;
+		height: auto;
+		min-height: 40px;
+		white-space: normal;
+	}
+}

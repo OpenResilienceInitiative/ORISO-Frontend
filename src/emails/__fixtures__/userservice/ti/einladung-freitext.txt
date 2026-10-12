@@ -1,0 +1,19 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+{{assuranceBlock}}
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}} ብ{{operatorName}} ዝቐርብ ኣገልግሎት እዩ።
+
+ሓለዋ ዳታ: {{privacyUrl}}
+ሕጋዊ ሓበሬታ: {{imprintUrl}}
+
+{{footerNote}}

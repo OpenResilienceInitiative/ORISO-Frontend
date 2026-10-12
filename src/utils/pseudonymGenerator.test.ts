@@ -1,6 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { renderAvatarSvg, type Avatar } from './pseudonymGenerator';
+import {
+	AVATAR_ART_REVISION,
+	renderAvatarSvg,
+	type Avatar
+} from './pseudonymGenerator';
 
 const avatar = (file: string): Avatar => ({
 	file,
@@ -28,8 +32,9 @@ describe('renderAvatarSvg', () => {
 
 		expect(svg).toContain('#123456');
 		// #840: must not use /assets (Element Call owns that prefix on the main host).
+		// The revision busts the one-day /static cache when the artwork changes.
 		expect(fetchMock).toHaveBeenCalledWith(
-			'/static/anon-animals/valid-test.svg'
+			`/static/anon-animals/valid-test.svg?v=${AVATAR_ART_REVISION}`
 		);
 	});
 

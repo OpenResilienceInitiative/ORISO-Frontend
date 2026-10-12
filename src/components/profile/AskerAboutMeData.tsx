@@ -17,6 +17,7 @@ import { apiDeleteEmail } from '../../api/apiDeleteEmail';
 import { TWO_FACTOR_TYPES } from '../twoFactorAuth/twoFactorAuthConstants';
 import { Headline } from '../headline/Headline';
 import { useTranslation } from 'react-i18next';
+import { ProfileAvatarChoice } from './ProfileAvatarChoice';
 
 export const AskerAboutMeData = () => {
 	const { t: translate } = useTranslation();
@@ -270,6 +271,7 @@ export const AskerAboutMeData = () => {
 					className="tertiary"
 				/>
 			</div>
+			<ProfileAvatarChoice />
 			<EditableData
 				label={translate('profile.data.userName')}
 				initialValue={userData.userName}

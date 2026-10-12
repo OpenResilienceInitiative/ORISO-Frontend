@@ -31,7 +31,7 @@ describe('MessageDisplayName', () => {
 		);
 
 		const identity = container.querySelector(
-			'.messageItem__senderIdentity'
+			'.messageItem__nameBlock'
 		);
 		expect(identity).toBeTruthy();
 		expect(identity?.children).toHaveLength(2);
@@ -41,17 +41,13 @@ describe('MessageDisplayName', () => {
 		);
 	});
 
-	it('keeps an advice-seeker identity to a single name row', () => {
+	it('keeps an identity without an agency to a single name row', () => {
 		const { container } = render(
-			<MessageDisplayName
-				{...baseProps}
-				type="user"
-				subtitle="14055 Caritasverband Musterstadt"
-			/>
+			<MessageDisplayName {...baseProps} type="user" subtitle="" />
 		);
 
 		const identity = container.querySelector(
-			'.messageItem__senderIdentity'
+			'.messageItem__nameBlock'
 		);
 		expect(identity).toBeTruthy();
 		expect(identity?.children).toHaveLength(1);
