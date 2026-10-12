@@ -281,6 +281,26 @@ describe('CaseHandoverOfferGate', () => {
 		expect(await screen.findByTestId('normal-session')).toBeTruthy();
 	});
 
+	it('opens the conversation for an opt-out grant the recipient may already use', async () => {
+		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
+			status({
+				status: 'GRANTED_PENDING_CLIENT_OPTOUT',
+				canViewContent: true
+			})
+		);
+		render(
+			<CaseHandoverOfferGate
+				actorId="recipient-a"
+				sessionId={41}
+				requestId={501}
+				onClose={vi.fn()}
+			>
+				<div data-testid="normal-session">private</div>
+			</CaseHandoverOfferGate>
+		);
+		expect(await screen.findByTestId('normal-session')).toBeTruthy();
+	});
+
 	it('accepts a matching session when the status omits requestId', async () => {
 		vi.mocked(apiGetCaseHandoverRequestStatus).mockResolvedValue(
 			status({

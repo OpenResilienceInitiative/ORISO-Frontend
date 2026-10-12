@@ -49,6 +49,8 @@ export interface SupervisorDialogProps {
 	'reason'?: string;
 	'reasonRequired'?: boolean;
 	'busy'?: boolean;
+	/** Shown inside the dialog: a page-level alert would sit behind the modal. */
+	'error'?: string;
 	'onSelect': (id: string) => void;
 	'onReasonChange': (reason: string) => void;
 	'onConfirm': () => void;
@@ -66,6 +68,7 @@ export const SupervisorDialog = ({
 	reason = '',
 	reasonRequired = true,
 	busy = false,
+	error,
 	onSelect,
 	onReasonChange,
 	onConfirm,
@@ -118,6 +121,15 @@ export const SupervisorDialog = ({
 			>
 				{copy.explanation[mode]}
 			</p>
+			{error && (
+				<p
+					className="supervisorDialog__error"
+					role="alert"
+					data-testid={`${testId}-error`}
+				>
+					{error}
+				</p>
+			)}
 
 			{mode !== 'handover' && (
 				<section className="supervisorDialog__section">

@@ -48,6 +48,16 @@ vi.mock('../supervisorDialog/SupervisorDialog', () => ({
 			</button>
 			<button onClick={props.onClose}>close-dialog</button>
 			<div data-testid="dialog-busy">{String(props.busy)}</div>
+			{props.error && (
+				<p role="alert" data-testid="dialog-error">
+					{props.error}
+				</p>
+			)}
+			<div data-testid="reason-codes">
+				{(props.reasons || [])
+					.map((reason: any) => reason.code)
+					.join(',')}
+			</div>
 			<div>
 				{props.candidates
 					.map((candidate: any) => candidate.name)
@@ -277,6 +287,9 @@ describe('AskerInfoAssign owner handover', () => {
 			expect(apiGetCaseHandoverStatus).toHaveBeenCalledTimes(2)
 		);
 		await screen.findByTestId('handover-dialog');
+		expect(screen.getByTestId('dialog-error').textContent).toBe(
+			'caseHandover.offer.conflict'
+		);
 
 		fireEvent.click(screen.getByText('confirm'));
 		await waitFor(() =>
@@ -286,6 +299,41 @@ describe('AskerInfoAssign owner handover', () => {
 		expect(calls[0][1].expectedOwnershipRevision).toBe(7);
 		expect(calls[1][1].expectedOwnershipRevision).toBe(8);
 		expect(calls[1][1].operationId).not.toBe(calls[0][1].operationId);
+	});
+
+	it('offers only reasons the server accepts for an offer', async () => {
+		vi.mocked(apiGetCaseHandoverReasons).mockResolvedValue([
+			{
+				code: 'ADVICE_REQUESTED',
+				label: 'Advice',
+				clientConsentRequired: false
+			},
+			{
+				code: 'COUNSELLOR_ASKED_FOR_ADVICE',
+				label: 'Advice (legacy)',
+				clientConsentRequired: false
+			},
+			{
+				code: 'NO_ACCESS',
+				label: 'No access',
+				clientConsentRequired: false,
+				accessAllowed: false
+			},
+			{
+				code: 'OTHER_EMERGENCY',
+				label: 'Emergency',
+				clientConsentRequired: false
+			}
+		]);
+		renderAssign();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'caseHandover.offer.open' })
+		);
+		await screen.findByTestId('handover-dialog');
+
+		expect(screen.getByTestId('reason-codes').textContent).toBe(
+			'OTHER_EMERGENCY'
+		);
 	});
 
 	it('offers exactly the session-eligible recipients and filters nobody itself', async () => {

@@ -11,6 +11,11 @@ import { useCaseHandoverResolutionEvents } from '../caseHandover/useCaseHandover
 import { Loading } from '../app/Loading';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 
+// For the counsellors an opt-out grant is already in effect; only the advice
+// seeker can still object.
+const isGrantedCaseHandoverStatus = (status?: string) =>
+	status === 'GRANTED' || status === 'GRANTED_PENDING_CLIENT_OPTOUT';
+
 interface CaseHandoverOfferGateProps {
 	actorId: string;
 	sessionId: number;
@@ -180,7 +185,7 @@ export const CaseHandoverOfferGate = ({
 		}
 	};
 
-	if (offer?.status === 'GRANTED' && offer.canViewContent) {
+	if (isGrantedCaseHandoverStatus(offer?.status) && offer?.canViewContent) {
 		return <>{children}</>;
 	}
 
@@ -199,7 +204,10 @@ export const CaseHandoverOfferGate = ({
 		messageKey = 'caseHandover.offer.denied';
 	} else if (offer?.status === 'CLIENT_CONSENT_DECLINED') {
 		messageKey = 'caseHandover.offer.clientConsentDeclined';
-	} else if (offer?.status === 'GRANTED' && !offer.canViewContent) {
+	} else if (
+		isGrantedCaseHandoverStatus(offer?.status) &&
+		!offer?.canViewContent
+	) {
 		messageKey = 'caseHandover.offer.noContent';
 	}
 

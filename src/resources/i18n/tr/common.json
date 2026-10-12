@@ -3550,6 +3550,7 @@
 			"loadForbidden": "Uygun meslektaşları yükleme yetkiniz yok.",
 			"loadError": "Devir formu yüklenemedi.",
 			"submitError": "Devir isteği gönderilemedi.",
+			"conflict": "Bu danışmanlık için zaten açık bir devir teklifi var veya danışmanlık değişti. Yeni bir teklif göndermeden önce güncel durumu kontrol edin.",
 			"status": {
 				"PENDING_RECIPIENT_ACCEPTANCE": "Seçilen meslektaş bekleniyor.",
 				"PENDING_CLIENT_CONSENT": "Meslektaş kabul etti. Danışan onayı bekleniyor.",

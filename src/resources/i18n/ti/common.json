@@ -3550,6 +3550,7 @@
 			"loadForbidden": "ብቑዓት መሳርሕቲ ንምጽዓን ፍቓድ የብልኩምን።",
 			"loadError": "እቲ ቅጥዒ ክጽዓን ኣይከኣለን።",
 			"submitError": "እቲ ሕቶ ክለኣኽ ኣይከኣለን።",
+			"conflict": "ነዚ ምኽሪ ድሮ ክፉት ሕቶ ምርካብ ኣለዎ፣ ወይ ተቐይሩ እዩ። ሓድሽ ሕቶ ቅድሚ ምልኣኽኩም ናይ ሕጂ ኩነታት ፈትሹ።",
 			"status": {
 				"PENDING_RECIPIENT_ACCEPTANCE": "እቲ ዝተመርጸ መሳርሕቲ ይጽበ ኣሎ።",
 				"PENDING_CLIENT_CONSENT": "መሳርሕቲ ተቐቢሉ። ናይ ዓሚል ፍቓድ ይጽበ ኣሎ።",

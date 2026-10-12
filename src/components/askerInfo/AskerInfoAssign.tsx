@@ -47,8 +47,19 @@ interface AskerInfoAssignProps {
 	handoverEnabled?: boolean;
 }
 
+// For the counsellors an opt-out grant is already in effect; only the advice
+// seeker can still object.
+const isGrantedCaseHandoverStatus = (status?: string) =>
+	status === 'GRANTED' || status === 'GRANTED_PENDING_CLIENT_OPTOUT';
+
+// The server rejects co-access ("advice") reasons and reasons without access for offers (403).
+const ADVICE_REASON_CODES = ['ADVICE_REQUESTED', 'COUNSELLOR_ASKED_FOR_ADVICE'];
+const isOfferableReason = (reason: CaseHandoverReason) =>
+	!ADVICE_REASON_CODES.includes(reason.code) &&
+	reason.accessAllowed !== false;
+
 const terminalOfferStatus = (status: string) =>
-	status === 'GRANTED' ||
+	isGrantedCaseHandoverStatus(status) ||
 	status === 'RECIPIENT_DECLINED' ||
 	status === 'DENIED' ||
 	status === 'CLIENT_CONSENT_DECLINED';
@@ -101,7 +112,8 @@ export const AskerInfoAssign = ({
 			setOfferStatus(nextStatus);
 			if (terminalOfferStatus(nextStatus.status) && identity) {
 				clearCaseHandoverOperation(identity);
-				if (nextStatus.status === 'GRANTED') reloadActiveSession?.();
+				if (isGrantedCaseHandoverStatus(nextStatus.status))
+					reloadActiveSession?.();
 			}
 		},
 		[identity, reloadActiveSession, sessionId]
@@ -315,6 +327,7 @@ export const AskerInfoAssign = ({
 					submittingRef.current = false;
 					setBusy(false);
 					await loadForm();
+					setError(translate('caseHandover.offer.conflict'));
 					return;
 				}
 				setError(translate('caseHandover.offer.submitError'));
@@ -331,6 +344,7 @@ export const AskerInfoAssign = ({
 	};
 
 	const copy = buildDialogCopy(translate);
+	const showOfferDialog = open && !loading && Boolean(status) && !offerStatus;
 	const showLegacy =
 		showLegacyAssignment &&
 		hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
@@ -361,7 +375,7 @@ export const AskerInfoAssign = ({
 					disabled={loading}
 				/>
 			)}
-			{error && <p role="alert">{error}</p>}
+			{error && !showOfferDialog && <p role="alert">{error}</p>}
 			{open && error && !loading && !status && (
 				<Button
 					item={{
@@ -371,18 +385,21 @@ export const AskerInfoAssign = ({
 					buttonHandle={() => void loadForm()}
 				/>
 			)}
-			{open && !loading && status && !offerStatus && (
+			{showOfferDialog && (
 				<SupervisorDialog
 					mode="handover"
 					copy={copy}
 					candidates={candidates}
-					reasons={reasons.map((reason) => ({
-						code: reason.code,
-						label: reason.label
-					}))}
+					reasons={reasons
+						.filter(isOfferableReason)
+						.map((reason) => ({
+							code: reason.code,
+							label: reason.label
+						}))}
 					selectedId={selectedId}
 					reason={reasonCode}
 					busy={busy}
+					error={error}
 					onSelect={setSelectedId}
 					onReasonChange={setReasonCode}
 					onConfirm={() => void submitOffer()}
@@ -392,7 +409,11 @@ export const AskerInfoAssign = ({
 			{open && offerStatus && (
 				<p role="status">
 					{translate(
-						`caseHandover.offer.status.${offerStatus.status}`
+						`caseHandover.offer.status.${
+							isGrantedCaseHandoverStatus(offerStatus.status)
+								? 'GRANTED'
+								: offerStatus.status
+						}`
 					)}
 				</p>
 			)}

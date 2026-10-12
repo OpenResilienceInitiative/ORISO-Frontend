@@ -3550,6 +3550,7 @@
 			"loadForbidden": "Vous n’êtes pas autorisé à charger les collègues éligibles.",
 			"loadError": "Le formulaire n’a pas pu être chargé.",
 			"submitError": "La demande n’a pas pu être envoyée.",
+			"conflict": "Cette consultation a déjà une offre de transfert en attente, ou elle a été modifiée. Vérifiez l’état actuel avant d’envoyer une nouvelle offre.",
 			"status": {
 				"PENDING_RECIPIENT_ACCEPTANCE": "En attente du collègue sélectionné.",
 				"PENDING_CLIENT_CONSENT": "Le collègue a accepté. En attente du consentement du client.",
