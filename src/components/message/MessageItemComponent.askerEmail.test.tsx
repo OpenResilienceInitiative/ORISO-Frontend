@@ -102,7 +102,8 @@ const renderErstantwortMessage = (
 		modality = 'AGENCY_COUNSELLING',
 		session = {},
 		agency,
-		timelineMessages
+		timelineMessages,
+		ownEvent = false
 	} = {} as {
 		raw?: string;
 		account?: Record<string, unknown>;
@@ -110,6 +111,7 @@ const renderErstantwortMessage = (
 		session?: Record<string, unknown>;
 		agency?: Record<string, unknown>;
 		timelineMessages?: MessageItem[];
+		ownEvent?: boolean;
 	}
 ) =>
 	render(
@@ -162,6 +164,7 @@ const renderErstantwortMessage = (
 									<MessageItemComponent
 										{...mockMessageItemComponentProps({
 											message: raw,
+											isMyMessage: ownEvent,
 											/* Old enough that the stagger is skipped —
 										   the whole sequence must be in the DOM
 										   synchronously for a truthful assertion. */
@@ -714,3 +717,44 @@ it.each([
 			);
 	}
 );
+
+describe('a takeover notice is a system message for its sender too (#1188)', () => {
+	const takeover =
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description:
+				'Wegen eines Ausfalls hat Maggie deinen Fall übernommen.',
+			handover: {
+				requestId: 7,
+				clientConsent: 'NONE',
+				accessType: 'TAKEOVER'
+			}
+		});
+
+	it('keeps the system header and the incoming side for the counsellor who posted it', () => {
+		const { container } = renderErstantwortMessage(tenantWith(true), {
+			account: { grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT] },
+			raw: takeover,
+			ownEvent: true
+		});
+
+		expect(
+			screen.getByText('caseHandover.systemMessage.tookOverTitle')
+		).toBeTruthy();
+		expect(container.querySelector('.messageItem--right')).toBeNull();
+		expect(
+			container.querySelector('.messageItem__message--myMessage')
+		).toBeNull();
+	});
+
+	it('still puts an ordinary own message on the right', () => {
+		const { container } = renderErstantwortMessage(tenantWith(true), {
+			account: { grantedAuthorities: [AUTHORITIES.CONSULTANT_DEFAULT] },
+			raw: 'Hallo Lisa, hier ist Maggie.',
+			ownEvent: true
+		});
+
+		expect(container.querySelector('.messageItem--right')).toBeTruthy();
+	});
+});

@@ -393,7 +393,7 @@ export const MessageItemComponent = ({
 	message,
 	messageDate,
 	messageTime,
-	isMyMessage,
+	isMyMessage: isOwnEvent,
 	showFullContent = false,
 	hideSystemMessages = false,
 	displayName,
@@ -769,6 +769,10 @@ export const MessageItemComponent = ({
 		() => parseMessagePrefixes(decryptedMessage),
 		[decryptedMessage]
 	);
+	/* #1188: a system notice belongs to the conversation, not to the account
+	   that happened to post it. Laid out as "mine", the takeover notice lost
+	   its header and sat on the right for the counsellor who took the case. */
+	const isMyMessage = isOwnEvent && !parsedMessage.isSystemNotification;
 	const roomUser = useMemo(() => {
 		if (!matrixRoomUsersContext?.users?.length) {
 			return null;
