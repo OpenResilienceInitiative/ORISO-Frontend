@@ -1,3 +1,4 @@
+import { parseGroupChatInviteId } from '../../groupChat/groupChatInviteLink';
 /**
  * Self-help group invite entry (#1499, FE#1289): `/login?gcid=<id>&aid=<agency>`
  * brings a newcomer to the designed entry screen (Storybook "0a — Eintritt:
@@ -85,4 +86,29 @@ export const resolveGroupInviteEntry = ({
 		return 'steps';
 	}
 	return mainTopic?.id === topicId ? 'entry' : 'pending';
+};
+
+/**
+ * The group a registration joins instead of opening a counselling enquiry
+ * (#1499), with the invite token its link carries (`gcid=<id>.<token>`,
+ * ORISO-UserService#1237). Only when the person registers at the agency the
+ * link names; an agency picked in the steps is an ordinary counselling
+ * registration.
+ */
+export const getGroupJoin = ({
+	gcid,
+	aid,
+	agencyId
+}: {
+	gcid?: string | null;
+	aid?: string | null;
+	agencyId?: string | number | null;
+}): { chatId: number; inviteToken?: string } | undefined => {
+	const invite = parseGroupChatInviteId(gcid);
+	if (!invite || !present(aid) || String(agencyId ?? '') !== aid.trim()) {
+		return undefined;
+	}
+	return invite.inviteToken
+		? { chatId: Number(invite.seriesId), inviteToken: invite.inviteToken }
+		: { chatId: Number(invite.seriesId) };
 };

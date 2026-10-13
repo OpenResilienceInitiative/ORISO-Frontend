@@ -90,6 +90,41 @@ describe('TipTapComposer — a value that lags behind the editor', () => {
 		expect(mocks.editor.html).toBe('<p>Wir besp</p>');
 	});
 
+	/* #1613, CI trace (Enquiry team panel spec): the parent had caught up
+	   with "Wir", the space was typed, and the parent re-rendered with a new
+	   onChange but still "Wir". The sync re-ran on the new callback and wrote
+	   "Wir" back: "Wirbesprechendiese Anfrage im Team." */
+	it('keeps every space when the parent re-renders one keystroke behind', () => {
+		const sentence = 'Wir besprechen diese Anfrage im Team.';
+		const view = render(
+			<TipTapComposer {...props} value="" onChange={vi.fn()} />
+		);
+		let typed = '';
+		for (const character of sentence) {
+			// The parent catches up with every keystroke so far …
+			view.rerender(
+				<TipTapComposer
+					{...props}
+					value={typed ? `<p>${typed}</p>` : ''}
+					onChange={vi.fn()}
+				/>
+			);
+			typed += character;
+			type(`<p>${typed}</p>`);
+			// … then renders once more, still a keystroke behind, with a
+			// fresh callback (a draft load or typing status changed it).
+			view.rerender(
+				<TipTapComposer
+					{...props}
+					value={`<p>${typed.slice(0, -1)}</p>`}
+					onChange={vi.fn()}
+				/>
+			);
+		}
+
+		expect(mocks.editor.html).toBe(`<p>${sentence}</p>`);
+	});
+
 	it('still applies a value the editor never produced (a draft, a reset)', () => {
 		const onChange = vi.fn();
 		const view = render(

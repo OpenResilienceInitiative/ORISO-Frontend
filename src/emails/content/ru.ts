@@ -267,6 +267,19 @@ export const ru: Record<EmailId, EmailContent> = {
 		footer
 	},
 
+	'einsicht-angefragt': {
+		subject: 'Новое уведомление',
+		preheader: 'Пожалуйста, войдите.',
+		headline: 'Запрос по Вашей консультации',
+		paragraphs: [
+			'Другой специалист вашей консультационной службы просит вашего согласия на временный доступ к вашей беседе.',
+			'Рассмотрите запрос в защищённом разделе. Ваш нынешний специалист остаётся ответственным за вашу консультацию.'
+		],
+		cta: { label: 'Рассмотреть запрос', href: '{{requestUrl}}' },
+		assurance,
+		footer: { ...footer, links: securityFooter.links }
+	},
+
 	'uebergabe-angefragt': {
 		subject: 'Новое уведомление',
 		preheader: 'Пожалуйста, войдите.',
@@ -277,7 +290,7 @@ export const ru: Record<EmailId, EmailContent> = {
 		],
 		cta: { label: 'Рассмотреть запрос', href: '{{requestUrl}}' },
 		assurance,
-		footer
+		footer: { ...footer, links: securityFooter.links }
 	},
 
 	'uebergabe-bestaetigt': {
@@ -357,15 +370,20 @@ export const ru: Record<EmailId, EmailContent> = {
 	},
 
 	'einmalcode': {
-		subject: 'Ваш одноразовый код для входа',
+		subject: 'Ваш одноразовый код',
 		preheader: 'Код действует {{expiryMinutes}} минут.',
 		headline: 'Ваш одноразовый код',
-		paragraphs: ['Введите этот код в окне входа.'],
+		paragraphs: ['Введите этот код в {{platformName}}.'],
 		code: { label: 'Код', value: '{{otpCode}}' },
-		cta: { label: 'К окну входа', href: '{{loginUrl}}' },
-		footnote: 'Если Вы не собирались входить, пожалуйста, смените пароль.',
+		cta: { label: 'Открыть {{platformName}}', href: '{{loginUrl}}' },
+		footnote:
+			'Если Вы не запрашивали этот код, просто не обращайте внимания на это письмо.',
 		assurance: codeAssurance,
-		footer: securityFooter
+		footer: {
+			...securityFooter,
+			automatedNote:
+				'Это письмо содержит код безопасности, от него нельзя отписаться. Пожалуйста, не отвечайте на него.'
+		}
 	},
 
 	'einladung-traeger': {

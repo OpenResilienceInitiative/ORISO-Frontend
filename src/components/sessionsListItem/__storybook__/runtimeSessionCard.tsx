@@ -138,13 +138,23 @@ export const runtimeUserData = {
 export function RuntimeSessionProviders({
 	sessions,
 	viewerId = runtimeUserData.userId,
+	asAsker = false,
 	children
 }: {
 	sessions: ListItemInterface[];
 	viewerId?: string;
+	/** Log in as an advice seeker instead of the consultant. */
+	asAsker?: boolean;
 	children: React.ReactNode;
 }) {
-	const userData = { ...runtimeUserData, userId: viewerId };
+	const userData = asAsker
+		? {
+				...runtimeUserData,
+				userId: 'asker-4401',
+				grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+				userRoles: ['USER']
+			}
+		: { ...runtimeUserData, userId: viewerId };
 	return (
 		<UserDataContext.Provider
 			value={{

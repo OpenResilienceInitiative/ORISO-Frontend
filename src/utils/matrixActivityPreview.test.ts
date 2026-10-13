@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import {
 	buildMatrixActivityTextPreview,
@@ -5,6 +6,23 @@ import {
 } from './matrixActivityPreview';
 
 describe('buildMatrixActivityTextPreview', () => {
+	it('shows composer transport text without alignment or HTML markup', () => {
+		const event = {
+			getType: () => 'm.room.message',
+			getContent: () => ({
+				msgtype: 'm.text',
+				body: '[[align:left]]<p>Hallo Lisa, dies ist eine <strong>Testnachricht</strong>.</p>[[/align]]'
+			})
+		};
+		expect(
+			buildMatrixActivityTextPreview(
+				{ status: 'resolved', event } as any,
+				'Marge',
+				'New message'
+			)
+		).toBe('Marge: Hallo Lisa, dies ist eine Testnachricht.');
+	});
+
 	const labels = {
 		image: 'Image',
 		file: 'File',

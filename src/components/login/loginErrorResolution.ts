@@ -1,5 +1,8 @@
 import { FETCH_ERRORS } from '../../api/fetchData';
-import { TwoFactorType } from '../twoFactorAuth/twoFactorAuthConstants';
+import {
+	TWO_FACTOR_TYPES,
+	TwoFactorType
+} from '../twoFactorAuth/twoFactorAuthConstants';
 
 /**
  * Keycloak answers the password grant of a disabled account with
@@ -27,6 +30,8 @@ export const LOGIN_ERROR_KEYS = {
 	ACCOUNT_DELETED: 'login.warning.failed.accountDeleted',
 	UNAUTHORIZED: 'login.warning.failed.unauthorized.text',
 	UNAUTHORIZED_OTP: 'login.warning.failed.unauthorized.otp',
+	/** Keycloak answered 429: too many codes or attempts for now (#1338). */
+	TOO_MANY_REQUESTS: 'login.warning.failed.tooManyRequests',
 	/** Anything that is not the user's fault: network, 5xx, malformed answers. */
 	UNAVAILABLE: 'login.warning.failed.unavailable'
 } as const;
@@ -39,13 +44,22 @@ export type LoginFailureOutcome =
 	| 'credentials'
 	| 'otp_required'
 	| 'account_disabled'
+	| 'rate_limited'
 	| 'unavailable';
 
 export type LoginErrorResolution =
 	/** Show `messageKey` as the login error. */
 	| { kind: 'message'; messageKey: string; outcome: LoginFailureOutcome }
 	/** Credentials were fine, a second factor is required. */
-	| { kind: 'otpRequired'; otpType: TwoFactorType; outcome: 'otp_required' }
+	| {
+			kind: 'otpRequired';
+			otpType: TwoFactorType;
+			outcome: 'otp_required';
+			/** Server-side wait before another code may be mailed, if sent. */
+			resendAvailableInSeconds?: number;
+			/** 429: no new mail went out, the last code still works. */
+			codeLimitReached?: true;
+	  }
 	/** Nothing failed (no error object at all). */
 	| { kind: 'none' };
 
@@ -56,6 +70,7 @@ interface LoginErrorLike {
 			error?: string;
 			error_description?: string;
 			otpType?: TwoFactorType;
+			resendAvailableInSeconds?: unknown;
 		};
 	};
 }
@@ -93,6 +108,17 @@ const credentialsMessage = (hasOtp: boolean): LoginErrorResolution => ({
 	outcome: 'credentials'
 });
 
+/** Anything beyond an hour is not a cooldown we could have configured. */
+const MAX_RESEND_WAIT_SECONDS = 3600;
+
+const readResendWait = (value: unknown): number | undefined =>
+	typeof value === 'number' &&
+	Number.isFinite(value) &&
+	value >= 0 &&
+	value <= MAX_RESEND_WAIT_SECONDS
+		? Math.ceil(value)
+		: undefined;
+
 const unavailableMessage = (): LoginErrorResolution => ({
 	kind: 'message',
 	messageKey: LOGIN_ERROR_KEYS.UNAVAILABLE,
@@ -126,6 +152,31 @@ export const resolveLoginError = (
 		return unavailableMessage();
 	}
 
+	if (error.message === FETCH_ERRORS.TOO_MANY_REQUESTS) {
+		const data = error.options?.data;
+		// The e-mail code limit answers a password-only request with 429 and
+		// the challenge: the code from the last mail still works.
+		if (data?.otpType === TWO_FACTOR_TYPES.EMAIL && !hasOtp) {
+			const resendAvailableInSeconds = readResendWait(
+				data.resendAvailableInSeconds
+			);
+			return {
+				kind: 'otpRequired',
+				otpType: data.otpType,
+				outcome: 'otp_required',
+				...(resendAvailableInSeconds === undefined
+					? {}
+					: { resendAvailableInSeconds }),
+				codeLimitReached: true
+			};
+		}
+		return {
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.TOO_MANY_REQUESTS,
+			outcome: 'rate_limited'
+		};
+	}
+
 	if (error.message !== FETCH_ERRORS.BAD_REQUEST) {
 		// Network failure, 5xx, unparsable body: nothing the user can fix.
 		return unavailableMessage();
@@ -153,10 +204,16 @@ export const resolveLoginError = (
 	 * a code attached is a credential problem and says so.
 	 */
 	if (data?.otpType && !hasOtp) {
+		const resendAvailableInSeconds = readResendWait(
+			data.resendAvailableInSeconds
+		);
 		return {
 			kind: 'otpRequired',
 			otpType: data.otpType,
-			outcome: 'otp_required'
+			outcome: 'otp_required',
+			...(resendAvailableInSeconds === undefined
+				? {}
+				: { resendAvailableInSeconds })
 		};
 	}
 
@@ -166,4 +223,45 @@ export const resolveLoginError = (
 
 	// e.g. `invalid_client`: a deployment problem, not a user mistake.
 	return unavailableMessage();
+};
+
+/**
+ * What the "send new code" link tells the user after asking Keycloak for a
+ * new e-mail code. Asking means a password grant without a code: the 400
+ * challenge is the server's confirmation that it mailed one (#1338).
+ */
+export type EmailCodeResendResult =
+	| { kind: 'sent'; resendAvailableInSeconds?: number }
+	| { kind: 'tooMany'; resendAvailableInSeconds?: number }
+	| { kind: 'failed' }
+	/** Nothing to announce: signed in, or a newer attempt took over. */
+	| { kind: 'none' };
+
+export const resolveEmailCodeResend = (
+	resolution: LoginErrorResolution | null
+): EmailCodeResendResult => {
+	if (!resolution || resolution.kind === 'none') {
+		return { kind: 'none' };
+	}
+	if (resolution.kind === 'otpRequired' && resolution.codeLimitReached) {
+		return resolution.resendAvailableInSeconds === undefined
+			? { kind: 'tooMany' }
+			: {
+					kind: 'tooMany',
+					resendAvailableInSeconds:
+						resolution.resendAvailableInSeconds
+				};
+	}
+	if (resolution.kind === 'otpRequired') {
+		return resolution.resendAvailableInSeconds === undefined
+			? { kind: 'sent' }
+			: {
+					kind: 'sent',
+					resendAvailableInSeconds:
+						resolution.resendAvailableInSeconds
+				};
+	}
+	return resolution.outcome === 'rate_limited'
+		? { kind: 'tooMany' }
+		: { kind: 'failed' };
 };

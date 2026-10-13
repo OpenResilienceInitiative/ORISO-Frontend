@@ -32,6 +32,7 @@ export const EMAIL_IDS = [
 	'tagesuebersicht',
 
 	// Handover and supervision (#864).
+	'einsicht-angefragt',
 	'uebergabe-angefragt',
 	'uebergabe-bestaetigt',
 	'rueckmeldung',
@@ -241,6 +242,7 @@ export const EMAIL_LABELS: Record<EmailId, string> = {
 	'neue-anfrage': 'Neue Anfrage in der Beratungsstelle',
 	'direkte-anfrage': 'Direkte Anfrage',
 	'tagesuebersicht': 'Tagesübersicht',
+	'einsicht-angefragt': 'Einsicht angefragt',
 	'uebergabe-angefragt': 'Übergabe angefragt',
 	'uebergabe-bestaetigt': 'Übergabe bestätigt',
 	'rueckmeldung': 'Rückmeldung im Fachaustausch',
@@ -293,6 +295,7 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 		'neue-anfrage': 'consultant',
 		'direkte-anfrage': 'consultant',
 		'tagesuebersicht': 'consultant',
+		'einsicht-angefragt': 'asker',
 		'uebergabe-angefragt': 'asker',
 		'uebergabe-bestaetigt': 'consultant',
 		'rueckmeldung': 'consultant',
@@ -313,15 +316,21 @@ export const EMAIL_AUDIENCE: Record<EmailId, 'asker' | 'consultant' | 'admin'> =
 	};
 
 /**
- * Switchability class, from ADR-019.
+ * Switchability class, from ADR-024 and the required-consent decision of 8 October 2026.
  *
- * The footer of a `security` or `legal` mail must not offer an unsubscribe
+ * The footer of a `security`, `legal` or required `consent` mail must not offer an unsubscribe
  * link: there is no switch behind it, and sending the recipient to a settings
  * screen to look for one is worse than saying so.
  */
 export const EMAIL_CLASS: Record<
 	EmailId,
-	'security' | 'legal' | 'personal' | 'operational' | 'requested' | 'service'
+	| 'security'
+	| 'legal'
+	| 'consent'
+	| 'personal'
+	| 'operational'
+	| 'requested'
+	| 'service'
 > = {
 	'neue-nachricht': 'personal',
 	'neue-nachricht-beratung': 'operational',
@@ -342,7 +351,8 @@ export const EMAIL_CLASS: Record<
 	'neue-anfrage': 'operational',
 	'direkte-anfrage': 'operational',
 	'tagesuebersicht': 'operational',
-	'uebergabe-angefragt': 'operational',
+	'einsicht-angefragt': 'consent',
+	'uebergabe-angefragt': 'consent',
 	'uebergabe-bestaetigt': 'operational',
 	'rueckmeldung': 'operational',
 	'mitteilung': 'service',
@@ -363,7 +373,9 @@ export const EMAIL_CLASS: Record<
 
 /** Mails whose footer carries no unsubscribe link, because nothing switches them off. */
 export const emailIsUnsubscribable = (id: EmailId): boolean =>
-	EMAIL_CLASS[id] !== 'security' && EMAIL_CLASS[id] !== 'legal';
+	EMAIL_CLASS[id] !== 'security' &&
+	EMAIL_CLASS[id] !== 'legal' &&
+	EMAIL_CLASS[id] !== 'consent';
 
 /**
  * Mails that ship in the `plain` dialect only.

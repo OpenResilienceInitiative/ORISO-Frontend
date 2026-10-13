@@ -22,6 +22,12 @@ export const ProductTourTooltip = ({
 }: TooltipRenderProps) => {
 	const { t: translate } = useTranslation();
 
+	// A self-advancing step finishes through the user's own action, so it has
+	// no Next; Back and close stay. `hideBack` marks the step after an action
+	// that cannot be undone.
+	const showNext = !step.data?.advanceOn;
+	const showBack = index > 0 && !step.data?.hideBack;
+
 	const nextLabel = isLastStep
 		? translate('walkthrough.step.done')
 		: translate('walkthrough.step.next');
@@ -32,6 +38,7 @@ export const ProductTourTooltip = ({
 			role="alertdialog"
 			aria-label={translate(String(step.title))}
 			{...tooltipProps}
+			aria-modal={showNext ? tooltipProps['aria-modal'] : undefined}
 		>
 			<div className="productTourTooltip__header">
 				<h2 className="productTourTooltip__title">
@@ -57,26 +64,30 @@ export const ProductTourTooltip = ({
 					})
 				}}
 			/>
-			<div className="productTourTooltip__actions">
-				{index > 0 && (
-					<Button
-						item={{
-							label: translate('walkthrough.step.prev'),
-							type: BUTTON_TYPES.SECONDARY
-						}}
-						buttonHandle={() => controls.prev()}
-						className="productTourTooltip__back"
-					/>
-				)}
-				<Button
-					item={{
-						label: nextLabel,
-						type: BUTTON_TYPES.PRIMARY
-					}}
-					buttonHandle={() => controls.next()}
-					className="productTourTooltip__next"
-				/>
-			</div>
+			{(showBack || showNext) && (
+				<div className="productTourTooltip__actions">
+					{showBack && (
+						<Button
+							item={{
+								label: translate('walkthrough.step.prev'),
+								type: BUTTON_TYPES.SECONDARY
+							}}
+							buttonHandle={() => controls.prev()}
+							className="productTourTooltip__back"
+						/>
+					)}
+					{showNext && (
+						<Button
+							item={{
+								label: nextLabel,
+								type: BUTTON_TYPES.PRIMARY
+							}}
+							buttonHandle={() => controls.next()}
+							className="productTourTooltip__next"
+						/>
+					)}
+				</div>
+			)}
 			<div className="productTourTooltip__footer">
 				<span
 					className="productTourTooltip__progress"

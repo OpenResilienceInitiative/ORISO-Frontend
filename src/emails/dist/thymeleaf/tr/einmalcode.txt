@@ -1,14 +1,14 @@
 Tek kullanımlık kodunuz
 =======================
 
-Bu kodu giriş penceresine yazın.
+Bu kodu [[${platformName}]] platformuna girin.
 
 Kod: [[${otpCode}]]
 
-Girişe git:
+[[${platformName}]] platformunu açın:
 [[${loginUrl}]]
 
-Giriş yapmak istemediyseniz lütfen şifrenizi değiştirin.
+Bu kodu siz talep etmediyseniz bu e-postayı dikkate almayın.
 
 ----------------------------------------------------------------
 Şifrenizi hiçbir zaman e-postayla sormayız. Bu kodu kimseyle paylaşmayın.
@@ -22,4 +22,4 @@ Giriş yapmak istemediyseniz lütfen şifrenizi değiştirin.
 Veri koruma: [[${privacyUrl}]]
 Künye: [[${imprintUrl}]]
 
-Bu e-posta oturum açma sürecinin bir parçasıdır ve iptal edilemez. Lütfen yanıtlamayınız.
+Bu e-posta bir güvenlik kodu içerir ve iptal edilemez. Lütfen yanıtlamayınız.

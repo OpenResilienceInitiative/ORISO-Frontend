@@ -1,16 +1,11 @@
 /**
  * Actual enquiry screen with HTTP fixtures for UserService and Matrix.
- * Uses the existing LiveService websocket test helper. This verifies browser
- * interaction and rendering, not encryption or access with real accounts.
+ * This verifies browser interaction and rendering with Matrix HTTP fixtures,
+ * not encryption or access with real accounts.
  * Run with npm run test:enquiry-team, also used by PR CI.
  * The bundled Electron 114 lacks Promise.withResolvers
  * required by the Matrix SDK send scheduler.
  */
-import {
-	startWebSocketServer,
-	closeWebSocketServer,
-	mockWebSocket
-} from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 import { generateConsultantSession } from '../support/sessions';
 import { SESSION_LIST_TYPES } from '../../src/components/session/sessionHelpers';
@@ -242,9 +237,6 @@ const syncRoom = (id: string, original: boolean) => ({
 });
 
 describe('Enquiry team panel — actual app with local service fixtures', () => {
-	before(() => startWebSocketServer());
-	after(() => closeWebSocketServer());
-	beforeEach(() => mockWebSocket());
 	const verifyTeamPanel = (archived: boolean) => () => {
 		const width = Number(Cypress.env('enquiryViewportWidth') || 1440);
 		const height = Number(Cypress.env('enquiryViewportHeight') || 1000);
@@ -341,6 +333,7 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 			matrixRoomId: teamRoomId,
 			status: archived ? 'ARCHIVED' : 'OPEN'
 		}).as('openTeam');
+		cy.intercept('GET', '**/service/users/chat-series/join-requests', []);
 		cy.fastLogin({ userId: USER_CONSULTANT });
 		cy.visit('/sessions/consultant/sessionPreview');
 		cy.get('[data-cy="session-list-item"]').first().click();
@@ -401,6 +394,12 @@ describe('Enquiry team panel — actual app with local service fixtures', () => 
 		);
 		cy.intercept('PATCH', '**/service/users/drafts*', { statusCode: 204 });
 		cy.intercept('DELETE', '**/service/users/drafts*', { statusCode: 204 });
+		// #1613: type only into a settled editor — focused and still empty —
+		// so no late mount focus or draft restore lands mid-keystroke.
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').click();
+		cy.get('[data-cy="stage-panel"] [contenteditable="true"]')
+			.should('be.focused')
+			.and('have.text', '');
 		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').type(reply);
 		cy.get('[data-cy="stage-panel"] [contenteditable="true"]').should(
 			'have.text',

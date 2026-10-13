@@ -8,6 +8,7 @@ import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter'
 import { RegistrationHandover } from '../../app/registrationLoader/RegistrationHandover';
 import type { RegistrationData } from '../../../globalState';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
+import { useGroupJoinHandoverCopy } from '../../groupChat/groupJoinHandoverCopy';
 
 /**
  * The newcomer entry of a self-help group link, as designed in Storybook
@@ -37,6 +38,7 @@ export const GroupInviteEntry = ({
 	busy: boolean;
 }) => {
 	const { t } = useTranslation();
+	const handoverCopy = useGroupJoinHandoverCopy();
 
 	return (
 		<StageLayout
@@ -55,6 +57,7 @@ export const GroupInviteEntry = ({
 					forcedState="preparing"
 					variant="inline"
 					onEnter={() => undefined}
+					copy={handoverCopy}
 				/>
 			) : (
 				<Box

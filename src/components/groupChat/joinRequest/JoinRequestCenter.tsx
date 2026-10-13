@@ -13,6 +13,7 @@ import {
 	GroupChatJoinRequest
 } from './joinRequestModel';
 import { JoinRequestTransport } from './joinRequestTransport';
+import { AUTH_SESSION_CHANGE_EVENT } from '../../sessionCookie/accessSessionCookie';
 
 export interface JoinRequestCenterProps {
 	transport: JoinRequestTransport;
@@ -60,8 +61,22 @@ export const JoinRequestCenter = ({
 	const [busy, setBusy] = useState<ReadonlySet<number>>(new Set());
 	const [detailsId, setDetailsId] = useState<number | null>(null);
 	const enqueued = useRef(new Set<string>());
+	/* The stack outlives the session: a decision answering after sign-out or
+	   unmount must not show the requester's name to the next user. */
+	const session = useRef(0);
 
 	useEffect(() => transport.watchPending(setPending), [transport]);
+
+	useEffect(() => {
+		const invalidate = () => {
+			session.current += 1;
+		};
+		window.addEventListener(AUTH_SESSION_CHANGE_EVENT, invalidate);
+		return () => {
+			window.removeEventListener(AUTH_SESSION_CHANGE_EVENT, invalidate);
+			invalidate();
+		};
+	}, []);
 
 	const note = useCallback(
 		(message: string, autoHideDuration: number) =>
@@ -98,17 +113,21 @@ export const JoinRequestCenter = ({
 			confirmation: string
 		) => {
 			setBusyFor(request.id, true);
+			const startedIn = session.current;
+			const live = () => session.current === startedIn;
 			decision
 				.then(() => {
 					setPending((current) =>
 						current.filter((item) => item.id !== request.id)
 					);
 					setDetailsId((id) => (id === request.id ? null : id));
-					note(confirmation, CONFIRMATION_MS);
+					if (live()) note(confirmation, CONFIRMATION_MS);
 				})
-				.catch(() =>
-					note(t('groupChat.joinRequest.failed'), FAILURE_MS)
-				)
+				.catch(() => {
+					if (live()) {
+						note(t('groupChat.joinRequest.failed'), FAILURE_MS);
+					}
+				})
 				.finally(() => setBusyFor(request.id, false));
 		},
 		[note, setBusyFor, t]

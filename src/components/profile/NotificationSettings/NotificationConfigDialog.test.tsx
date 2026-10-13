@@ -48,6 +48,7 @@ vi.mock('../../../resources/img/icons/keyboard_arrow_down.svg', () => ({
 	ReactComponent: () => null
 }));
 
+// The email link is a router Link.
 const baseProps = {
 	config: DEFAULT_NOTIFICATION_CONFIG,
 	activeArea: 'requests' as const,
@@ -210,6 +211,25 @@ describe('NotificationConfigDialog', () => {
 			)
 		).toBeNull();
 		expect(onClose).toHaveBeenCalledTimes(1);
+	});
+
+	it.each([true, false])('email link shown=%s', (showEmailLink) => {
+		render(
+			<MemoryRouter>
+				<NotificationConfigDialog
+					open
+					config={DEFAULT_NOTIFICATION_CONFIG}
+					onConfirm={vi.fn()}
+					onClose={vi.fn()}
+					showEmailLink={showEmailLink}
+				/>
+			</MemoryRouter>
+		);
+		expect(
+			!!screen.queryByRole('link', {
+				name: 'profile.notifications.title'
+			})
+		).toBe(showEmailLink);
 	});
 });
 

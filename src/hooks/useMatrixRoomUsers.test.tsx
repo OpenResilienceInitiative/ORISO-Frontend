@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { PropsWithChildren } from 'react';
-import { renderHook, waitFor, act } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, renderHook, waitFor, act } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActiveSessionContext } from '../globalState';
 import { useMatrixRoomUsers } from './useMatrixRoomUsers';
 
@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => {
 		loadMatrixRoomMembers: vi.fn<() => Promise<any[]>>(() =>
 			Promise.resolve([])
 		),
+		getMatrixRoom: vi.fn<() => { membersLoaded: () => boolean } | null>(
+			() => ({ membersLoaded: () => true })
+		),
 		onMatrixRoomMembers: vi.fn<
 			(roomId: string, listener: () => void) => (() => void) | null
 		>(() => () => {})
@@ -31,6 +34,7 @@ vi.mock('../services/chatTransportService', () => ({
 	chatTransportService: {
 		resolveSession: mocks.resolveSession,
 		loadMatrixRoomMembers: mocks.loadMatrixRoomMembers,
+		getMatrixRoom: mocks.getMatrixRoom,
 		onMatrixRoomMembers: mocks.onMatrixRoomMembers
 	}
 }));
@@ -66,6 +70,12 @@ describe('useMatrixRoomUsers', () => {
 			sessionId: 1
 		});
 		mocks.onMatrixRoomMembers.mockReturnValue(() => {});
+		mocks.getMatrixRoom.mockReturnValue({ membersLoaded: () => true });
+	});
+
+	afterEach(() => {
+		cleanup();
+		vi.useRealTimers();
 	});
 
 	it('returns the complete member set after the lazy load resolved', async () => {
@@ -128,6 +138,147 @@ describe('useMatrixRoomUsers', () => {
 			username: 'joined',
 			displayName: 'Late Joiner'
 		});
+	});
+
+	it('reloads once more when a membership event lands during a load', async () => {
+		let membershipListener: (() => void) | null = null;
+		mocks.onMatrixRoomMembers.mockImplementation(
+			(_roomId: string, listener: () => void) => {
+				membershipListener = listener;
+				return () => {};
+			}
+		);
+		let resolveFirst: (members: any[]) => void = () => {};
+		mocks.loadMatrixRoomMembers
+			.mockReturnValueOnce(
+				new Promise((resolve) => {
+					resolveFirst = resolve;
+				})
+			)
+			.mockResolvedValue([
+				{ userId: '@asker:x', name: 'Asker' },
+				{ userId: '@joined:x', name: 'Late Joiner' }
+			]);
+
+		const { result } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		act(() => {
+			membershipListener?.();
+		});
+		await act(async () => {
+			resolveFirst([{ userId: '@asker:x', name: 'Asker' }]);
+		});
+
+		await waitFor(() => {
+			expect(result.current.users).toHaveLength(2);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(2);
+	});
+
+	it('retries when the client exists before the room reaches the sync store', async () => {
+		mocks.getMatrixRoom
+			.mockReturnValueOnce(null)
+			.mockReturnValue({ membersLoaded: () => true });
+		mocks.loadMatrixRoomMembers
+			.mockResolvedValueOnce([])
+			.mockResolvedValue([
+				{ userId: '@late:x', name: 'Late room member' }
+			]);
+
+		const { result } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await waitFor(() => expect(result.current.users).toHaveLength(1), {
+			timeout: 2000
+		});
+		expect(result.current.users[0].username).toBe('late');
+	});
+
+	it('keeps one member refresh in flight across retry ticks', async () => {
+		vi.useFakeTimers();
+		let resolveMembers: (members: any[]) => void = () => {};
+		mocks.loadMatrixRoomMembers.mockReturnValue(
+			new Promise((resolve) => {
+				resolveMembers = resolve;
+			})
+		);
+
+		const { unmount } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(1500);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(1);
+
+		await act(async () => {
+			resolveMembers([{ userId: '@late:x', name: 'Late room member' }]);
+			await Promise.resolve();
+		});
+
+		unmount();
+		vi.useRealTimers();
+	});
+
+	it('stops polling with backoff when the room never reaches the sync store', async () => {
+		vi.useFakeTimers();
+		mocks.getMatrixRoom.mockReturnValue(null);
+		mocks.loadMatrixRoomMembers.mockResolvedValue([]);
+
+		const { unmount } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(2000);
+		});
+		// Backoff: 0 ms, 500 ms, 1500 ms — not one load per 500 ms tick.
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(3);
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+		});
+		const callsAtLimit = mocks.loadMatrixRoomMembers.mock.calls.length;
+		expect(callsAtLimit).toBeLessThanOrEqual(10);
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(10 * 60 * 1000);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(callsAtLimit);
+
+		unmount();
+		vi.useRealTimers();
+	});
+
+	it('keeps retrying while the member load failed although the room exists', async () => {
+		vi.useFakeTimers();
+		let membersLoaded = false;
+		mocks.getMatrixRoom.mockReturnValue({
+			membersLoaded: () => membersLoaded
+		});
+		mocks.loadMatrixRoomMembers.mockResolvedValue([
+			{ userId: '@cached:x', name: 'Cached' }
+		]);
+
+		const { unmount } = renderHook(() => useMatrixRoomUsers(), { wrapper });
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(2000);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(3);
+
+		membersLoaded = true;
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(2000);
+		});
+		const callsAfterSuccess = mocks.loadMatrixRoomMembers.mock.calls.length;
+		expect(callsAfterSuccess).toBe(4);
+
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(60 * 1000);
+		});
+		expect(mocks.loadMatrixRoomMembers).toHaveBeenCalledTimes(
+			callsAfterSuccess
+		);
+
+		unmount();
+		vi.useRealTimers();
 	});
 
 	it('detaches the membership listener on unmount', async () => {

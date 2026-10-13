@@ -28,6 +28,11 @@ export const NotificationSwitchRow = ({
 	useEffect(() => {
 		if (highlighted && ref.current) {
 			ref.current.scrollIntoView({ block: 'center' });
+			// Focus, not only scroll: keyboard and screen-reader users land on
+			// the switch itself and hear its name (#872).
+			ref.current
+				.querySelector<HTMLInputElement>('input[role="switch"]')
+				?.focus({ preventScroll: true });
 		}
 	}, [highlighted]);
 

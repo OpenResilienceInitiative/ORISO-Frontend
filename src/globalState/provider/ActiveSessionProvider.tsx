@@ -7,6 +7,7 @@ type ActiveSessionContextProps = {
 	activeSession: ExtendedSessionInterface | null;
 	reloadActiveSession?: () => void;
 	readActiveSession?: () => void;
+	avatarMembers?: UserService.Schemas.ChatMemberResponseDTO[];
 };
 
 export const ActiveSessionContext =
@@ -16,11 +17,17 @@ export const ActiveSessionProvider: React.FC<ActiveSessionContextProps> = ({
 	children,
 	activeSession,
 	reloadActiveSession,
-	readActiveSession
+	readActiveSession,
+	avatarMembers
 }) => {
 	const contextValue = useMemo(
-		() => ({ activeSession, reloadActiveSession, readActiveSession }),
-		[activeSession, reloadActiveSession, readActiveSession]
+		() => ({
+			activeSession,
+			reloadActiveSession,
+			readActiveSession,
+			avatarMembers
+		}),
+		[activeSession, reloadActiveSession, readActiveSession, avatarMembers]
 	);
 
 	// Expose active session globally for CallManager to access

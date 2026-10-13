@@ -40,3 +40,45 @@ describe('parseMessagePrefixes — ADR-017 thread cosmetic strip', () => {
 		expect(parsed.cleanedMessage).toBe('inhalt');
 	});
 });
+
+describe('persisted handover grant metadata', () => {
+	const event = (metadata: unknown) =>
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			type: 'CASE_HANDOVER_GRANTED',
+			description: 'The counsellor has taken over.',
+			handover: metadata
+		});
+	it('keeps the event-time NONE and completed takeover metadata', () => {
+		expect(
+			parseMessagePrefixes(
+				event({
+					requestId: 42,
+					clientConsent: 'NONE',
+					accessType: 'TAKEOVER'
+				})
+			).systemNotificationHandoverGrant
+		).toEqual({
+			requestId: 42,
+			clientConsent: 'NONE',
+			accessType: 'TAKEOVER'
+		});
+	});
+	it.each([
+		undefined,
+		null,
+		{},
+		{ requestId: 0, clientConsent: 'NONE', accessType: 'TAKEOVER' },
+		{ requestId: 42, clientConsent: 'UNKNOWN', accessType: 'TAKEOVER' },
+		{ requestId: 42, clientConsent: 'NONE', accessType: 'UNKNOWN' }
+	])(
+		'does not infer a policy for missing or malformed metadata: %j',
+		(metadata) => {
+			const parsed = parseMessagePrefixes(event(metadata));
+			expect(parsed.systemNotificationHandoverGrant).toBeNull();
+			expect(parsed.systemNotificationDescription).toBe(
+				'The counsellor has taken over.'
+			);
+		}
+	);
+});

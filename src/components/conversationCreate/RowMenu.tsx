@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MenuPortal, useAnchoredMenuLayout } from './anchoredMenu';
 import { resolveListboxKey } from './listboxKeyboard';
 
@@ -28,6 +28,29 @@ interface RowMenuProps {
 
 const DEFAULT_MENU_HEIGHT = 320;
 
+/*
+ * The menu moves focus into itself by script, and browsers may draw a focus
+ * ring for that even after a tap. Remember how the author last interacted,
+ * so the ring only appears for keyboard use.
+ */
+let lastInputWasKeyboard = false;
+if (typeof document !== 'undefined') {
+	document.addEventListener(
+		'keydown',
+		() => {
+			lastInputWasKeyboard = true;
+		},
+		true
+	);
+	document.addEventListener(
+		'pointerdown',
+		() => {
+			lastInputWasKeyboard = false;
+		},
+		true
+	);
+}
+
 export const RowMenu = ({
 	options,
 	value,
@@ -39,6 +62,7 @@ export const RowMenu = ({
 	preferredHeight = DEFAULT_MENU_HEIGHT
 }: RowMenuProps) => {
 	const menuRef = useRef<HTMLDivElement | null>(null);
+	const [keyboardUse, setKeyboardUse] = useState(lastInputWasKeyboard);
 	const { direction, style } = useAnchoredMenuLayout(
 		anchorRef,
 		preferredHeight,
@@ -71,12 +95,29 @@ export const RowMenu = ({
 			) ?? []
 		);
 
+	/*
+	 * The menu mounts hidden until it is measured, and a hidden button cannot
+	 * take focus; so focus the chosen option (else the first) once the menu is
+	 * visible.
+	 */
+	const focusedRef = useRef(false);
 	useEffect(() => {
-		optionButtons()[0]?.focus();
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		if (focusedRef.current || style.visibility === 'hidden') {
+			return;
+		}
+		const buttons = optionButtons();
+		const target =
+			buttons.find(
+				(button) => button.getAttribute('aria-selected') === 'true'
+			) ?? buttons[0];
+		if (target) {
+			target.focus();
+			focusedRef.current = true;
+		}
+	}, [style]);
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+		setKeyboardUse(true);
 		const buttons = optionButtons();
 		const currentIndex = buttons.findIndex(
 			(button) => button === document.activeElement
@@ -104,7 +145,9 @@ export const RowMenu = ({
 		<MenuPortal>
 			<div
 				ref={menuRef}
-				className={`rowMenu rowMenu--${direction}`}
+				className={`rowMenu rowMenu--${direction}${
+					keyboardUse ? ' rowMenu--keyboard' : ''
+				}`}
 				style={style}
 				role={children ? 'dialog' : 'listbox'}
 				aria-labelledby={labelledBy}

@@ -47,6 +47,41 @@ const actionTypography = {
 const elevation3 =
 	'0 1px 3px 0 rgba(0, 0, 0, 0.30), 0 4px 8px 3px rgba(0, 0, 0, 0.15)';
 
+/** M3 extra-small shape, the snackbar's corner radius. */
+export const M3_SNACKBAR_SHAPE = '4px';
+
+/** M3 hover state layer on the inverse surface (on-surface at 8 %). */
+export const M3_SNACKBAR_HOVER_LAYER = 'rgba(255, 255, 255, 0.08)';
+
+/** The focus ring every control on the snackbar surface draws. */
+export const m3SnackbarFocusRing = (color: string, offset = 2) => ({
+	outline: `2px solid ${color}`,
+	outlineOffset: offset
+});
+
+/** The text action (M3 `label/large`), shared with surfaces in the snackbar role. */
+export const m3SnackbarActionSx = {
+	...actionTypography,
+	'color': m3SnackbarColors.action,
+	'textTransform': 'none',
+	'minWidth': 0,
+	'minHeight': 44,
+	'px': 1,
+	'py': 0.5,
+	/* The label is one word, not a paragraph. Without this the flex row
+	   squeezes it into a column of single letters as soon as the message
+	   beside it needs the room — and a longer language needs it sooner than
+	   German does. A label that will not fit belongs on its own line
+	   (`actionOnOwnLine`), not broken apart. */
+	'whiteSpace': 'nowrap',
+	'flexShrink': 0,
+	'&:hover': { backgroundColor: M3_SNACKBAR_HOVER_LAYER },
+	'&:focus-visible': m3SnackbarFocusRing(m3SnackbarColors.action)
+} as const;
+
+/** M3 `body/medium`, the snackbar message. */
+export const M3_SNACKBAR_MESSAGE_TYPOGRAPHY = messageTypography;
+
 /** The widest the design system draws it. Below that it takes what it gets. */
 export const M3_SNACKBAR_MAX_WIDTH = 344;
 
@@ -218,29 +253,7 @@ export const M3Snackbar = ({
 			variant="text"
 			onClick={action.onClick}
 			data-testid={action.testId ?? `${testId}-action`}
-			sx={{
-				...actionTypography,
-				'color': m3SnackbarColors.action,
-				'textTransform': 'none',
-				'minWidth': 0,
-				'px': 1,
-				'py': 0.5,
-				/* The label is one word, not a paragraph. Without this the flex
-				   row squeezes it into a column of single letters as soon as
-				   the message beside it needs the room — and a longer language
-				   needs it sooner than German does. A label that will not fit
-				   belongs on its own line (`actionOnOwnLine`), not broken
-				   apart. */
-				'whiteSpace': 'nowrap',
-				'flexShrink': 0,
-				'&:hover': {
-					backgroundColor: 'rgba(255, 255, 255, 0.08)'
-				},
-				'&:focus-visible': {
-					outline: `2px solid ${m3SnackbarColors.action}`,
-					outlineOffset: 2
-				}
-			}}
+			sx={m3SnackbarActionSx}
 		>
 			{action.label}
 		</Button>
@@ -259,12 +272,12 @@ export const M3Snackbar = ({
 				   state layer M3 asks for instead, and keep the glyph. */
 				'&:hover': {
 					color: m3SnackbarColors.onSurface,
-					backgroundColor: 'rgba(255, 255, 255, 0.08)'
+					backgroundColor: M3_SNACKBAR_HOVER_LAYER
 				},
-				'&:focus-visible': {
-					outline: `2px solid ${m3SnackbarColors.onSurface}`,
-					outlineOffset: -2
-				}
+				'&:focus-visible': m3SnackbarFocusRing(
+					m3SnackbarColors.onSurface,
+					-2
+				)
 			}}
 		>
 			<CloseRoundedIcon sx={{ fontSize: 20 }} />
@@ -279,7 +292,15 @@ export const M3Snackbar = ({
 		actionOnOwnLine && action ? (
 			closeButton || undefined
 		) : action || onClose ? (
-			<Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+			<Box
+				sx={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: 0.5,
+					minWidth: 0,
+					maxWidth: '100%'
+				}}
+			>
 				{actionButton}
 				{closeButton}
 			</Box>
@@ -297,16 +318,21 @@ export const M3Snackbar = ({
 				'boxSizing': 'border-box',
 				'backgroundColor': m3SnackbarColors.surface,
 				'color': m3SnackbarColors.onSurface,
-				'borderRadius': '4px',
+				'borderRadius': M3_SNACKBAR_SHAPE,
 				'boxShadow': elevation3,
 				'alignItems': 'center',
+				'flexWrap': 'wrap',
+				'minWidth': 0,
 				'px': 2,
 				'py': 1,
 				/* MUI reserves a right gutter for the action slot; with the ✕
 				   already carrying its own padding that reads as a hole. */
 				'& .MuiAlert-action': {
 					alignItems: 'center',
-					flexShrink: 0,
+					flexShrink: 1,
+					minWidth: 0,
+					maxWidth: '100%',
+					ml: 'auto',
 					mr: 0,
 					pt: 0,
 					pl: 1
@@ -315,6 +341,8 @@ export const M3Snackbar = ({
 					...messageTypography,
 					py: '6px',
 					minWidth: 0,
+					flex: '1 1 160px',
+					overflow: 'visible',
 					overflowWrap: 'anywhere'
 				},
 				...sx
@@ -327,7 +355,8 @@ export const M3Snackbar = ({
 						display: 'flex',
 						justifyContent: 'flex-end',
 						mt: 0.5,
-						mr: -1
+						minWidth: 0,
+						maxWidth: '100%'
 					}}
 				>
 					{actionButton}
@@ -355,7 +384,7 @@ export const M3Snackbar = ({
 				onClose?.();
 			}}
 			sx={[
-				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: '100%' },
+				{ maxWidth: M3_SNACKBAR_MAX_WIDTH, width: 'calc(100% - 32px)' },
 				...(Array.isArray(containerSx) ? containerSx : [containerSx])
 			]}
 		>

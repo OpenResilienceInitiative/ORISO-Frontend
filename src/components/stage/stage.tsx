@@ -223,7 +223,11 @@ export const Stage = ({
 						text={translate('app.claim')}
 					/>
 				</div>
-				{hasAnimation ? <Spinner className="stage__spinner" /> : null}
+				{hasAnimation && !isReady ? (
+					<div aria-hidden="true">
+						<Spinner className="stage__spinner" />
+					</div>
+				) : null}
 				{/* The centre of the panel belongs to the lamp-map composition.
 				    The tenant/association mark that used to sit here was removed
 				    on the owner's decision (2026-08-19): it doubled branding that

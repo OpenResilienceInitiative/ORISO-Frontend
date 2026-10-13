@@ -65,6 +65,7 @@ import {
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import { stageAccountCreatedLogin } from './accountCreatedLogin';
 import {
 	clearRegistrationSubmitting,
 	isRegistrationSubmitting,
@@ -76,7 +77,15 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
-import { resolveGroupInviteEntry } from './groupInviteEntry/groupInviteEntryState';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
+import {
+	GroupInviteLoadError,
+	GroupInviteLoading
+} from './groupInviteEntry/GroupInviteLoadError';
+import {
+	getGroupJoin,
+	resolveGroupInviteEntry
+} from './groupInviteEntry/groupInviteEntryState';
 
 /**
  * This type of registration is currently not supporting:
@@ -147,7 +156,9 @@ export const Registration = () => {
 		updateRegistrationData,
 		registrationData,
 		availableSteps,
-		registrationConsultingType
+		registrationConsultingType,
+		hasRegistrationDataError,
+		retryRegistrationData
 	} = useContext(RegistrationContext);
 	const { consultant: preselectedConsultant, agency: urlParamsAgency } =
 		useContext(UrlParamsContext);
@@ -187,8 +198,20 @@ export const Registration = () => {
 	   it is a decision about *this* screen, not a value that is registered, and
 	   the account draft already carries the minted password across steps. */
 	const groupChatId = getPostRegistrationGroupChatId(location.search);
+	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const isAccountDataStep = step === 'account-data';
-	const canJoinTemporarily = Boolean(groupChatId) && isAccountDataStep;
+	/* The backend accepts `temporary` only with a valid group invite
+	   (UserService#1247): no `aid`, or another agency, is an ordinary
+	   registration without this way on. */
+	const canJoinTemporarily =
+		isAccountDataStep &&
+		Boolean(
+			getGroupJoin({
+				gcid: groupChatId,
+				aid: inviteAgencyId,
+				agencyId: registrationData?.agency?.id
+			})
+		);
 	const [temporaryJoinChosen, setTemporaryJoinChosen] =
 		useState<boolean>(false);
 	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
@@ -210,7 +233,6 @@ export const Registration = () => {
 	   #1289 link variant — no stepper, no chips — is `GroupInviteEntry`, shown
 	   when the link also names the agency (`aid`) and the topic follows from
 	   it. Without that the four steps below still run, with this toggle. */
-	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const inviteEntry = resolveGroupInviteEntry({
 		gcid: groupChatId,
 		aid: inviteAgencyId,
@@ -225,8 +247,16 @@ export const Registration = () => {
 			!urlParamsAgency?.consultingType ||
 			registrationConsultingType != null
 	});
+	/* Someone joining the group through the steps sees the group's words
+	   while the registration runs, not the counselling enquiry's (#1499). */
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
 	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	/* The minted password is never shown, so nobody can log in again once the
+	   browser is closed; the backend deletes such an account later
+	   (ORISO-UserService#1001). */
+	const joinsTemporarily =
+		inviteEntry === 'entry' ? !inviteWithAccount : temporaryJoin;
 	const toggleInviteWithAccount = useCallback(
 		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
@@ -340,6 +370,13 @@ export const Registration = () => {
 		}),
 		[registrationData, stepData]
 	);
+	// Same data the payload reads, so the copy and the request agree.
+	const joinsTheGroup =
+		getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedRegistrationData.agency?.id
+		}) !== undefined;
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
@@ -586,6 +623,11 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const groupJoin = getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedData.agency?.id
+		});
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -602,7 +644,19 @@ export const Registration = () => {
 			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
-				: {})
+				: {}),
+			/* Joining a self-help group is not a request for counselling: the
+			   backend assigns the group and opens no enquiry. */
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
+				: {}),
+			// Never temporary without the group: the backend answers 400.
+			temporary: Boolean(groupJoin) && joinsTemporarily
 		};
 
 		if (
@@ -665,7 +719,10 @@ export const Registration = () => {
 						   already has one, and keeping the handover up would
 						   leave them on "Fast geschafft." for good — nothing
 						   else ends it. The login is the step that can still
-						   work, and the flag stays set until that load. */
+						   work, and the flag stays set until that load. The
+						   login page is told why the person is there and which
+						   User-ID they chose — never the password (#1533). */
+						stageAccountCreatedLogin(data.username || '');
 						redirectToLogin();
 						return;
 					}
@@ -705,7 +762,10 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		groupChatId,
+		inviteAgencyId,
+		joinsTemporarily
 	]);
 
 	const handleSubmit = useCallback(
@@ -730,7 +790,20 @@ export const Registration = () => {
 	);
 
 	if (inviteEntry === 'pending') {
-		return null;
+		return hasRegistrationDataError && retryRegistrationData ? (
+			<GroupInviteLoadError
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				onRetry={retryRegistrationData}
+			/>
+		) : (
+			<GroupInviteLoading
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+			/>
+		);
 	}
 
 	if (inviteEntry === 'entry') {
@@ -810,6 +883,11 @@ export const Registration = () => {
 								forcedState="preparing"
 								variant="inline"
 								onEnter={() => undefined}
+								copy={
+									joinsTheGroup
+										? groupJoinHandoverCopy
+										: undefined
+								}
 							/>
 						) : activeStep ? (
 							<>

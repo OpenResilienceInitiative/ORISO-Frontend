@@ -9,7 +9,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'LoadingSpinner component for displaying loading states.'
+					'Compact attachment loading using the shared orbital Loading component.'
 			}
 		}
 	}

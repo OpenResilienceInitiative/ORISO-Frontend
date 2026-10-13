@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { ResolvedBaustein } from './erstantwortResolve';
@@ -36,6 +42,19 @@ const runSequence = () =>
 	});
 
 describe('ErstantwortSequence', () => {
+	it('keeps frozen FAQ wording available inside expandable chat content', () => {
+		render(<ErstantwortSequence bausteine={bausteine} skipAnimation />);
+		const question = screen.getByText('Wann Sie eine Antwort erhalten');
+		expect(question.tagName).toBe('SUMMARY');
+		fireEvent.click(question);
+		expect(question.closest('details')?.open).toBe(true);
+		expect(
+			screen.getByText(
+				'Sie erhalten innerhalb von 2 Werktagen eine Antwort.'
+			)
+		).toBeTruthy();
+	});
+
 	it('reveals the bubbles one after another rather than all at once', () => {
 		render(<ErstantwortSequence bausteine={bausteine} staggerMs={800} />);
 
@@ -133,8 +152,14 @@ describe('ErstantwortSequence', () => {
 		expect(link.getAttribute('rel')).toContain('noopener');
 	});
 
-	it('renders headlines only where the Baustein has one', () => {
-		render(<ErstantwortSequence bausteine={bausteine} skipAnimation />);
+	it('renders legacy headlines outside the compact FAQ presentation', () => {
+		render(
+			<ErstantwortSequence
+				bausteine={bausteine}
+				skipAnimation
+				compactFaq={false}
+			/>
+		);
 
 		expect(
 			screen.getByRole('heading', {

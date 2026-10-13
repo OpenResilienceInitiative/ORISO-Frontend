@@ -6,11 +6,18 @@ import {
 	parseGroupChatInviteId
 } from './groupChatInviteLink';
 
+const TOKEN = 'Ab3_x-Yz';
+
 describe('buildGroupChatInviteLink', () => {
 	it('uses the stable numeric Series id as gcid', () => {
 		expect(
-			buildGroupChatInviteLink('https://app.oriso-dev.site/login', 1013)
-		).toBe('https://app.oriso-dev.site/login?gcid=1013');
+			buildGroupChatInviteLink(
+				'https://app.oriso-dev.site/login',
+				1013,
+				undefined,
+				TOKEN
+			)
+		).toBe(`https://app.oriso-dev.site/login?gcid=1013.${TOKEN}`);
 	});
 
 	/* A newcomer who follows the link cannot see the group before logging in,
@@ -20,8 +27,13 @@ describe('buildGroupChatInviteLink', () => {
 	   Online-Beratungsstelle gefunden"). */
 	it("names the group's agency so registration can preselect it", () => {
 		expect(
-			buildGroupChatInviteLink('https://dev.oriso.org/login', 19, 19)
-		).toBe('https://dev.oriso.org/login?gcid=19&aid=19');
+			buildGroupChatInviteLink(
+				'https://dev.oriso.org/login',
+				19,
+				19,
+				TOKEN
+			)
+		).toBe(`https://dev.oriso.org/login?gcid=19.${TOKEN}&aid=19`);
 	});
 
 	it.each([undefined, null])(
@@ -31,9 +43,10 @@ describe('buildGroupChatInviteLink', () => {
 				buildGroupChatInviteLink(
 					'https://dev.oriso.org/login',
 					19,
-					agencyId
+					agencyId,
+					TOKEN
 				)
-			).toBe('https://dev.oriso.org/login?gcid=19');
+			).toBe(`https://dev.oriso.org/login?gcid=19.${TOKEN}`);
 		}
 	);
 });
@@ -43,29 +56,46 @@ describe('invite link for the current host (#1499)', () => {
 
 	it('builds the link on the origin it is given', () => {
 		expect(
-			buildGroupChatInviteLinkForOrigin('https://dev.example.org', 7)
-		).toBe('https://dev.example.org/login?gcid=7');
+			buildGroupChatInviteLinkForOrigin(
+				'https://dev.example.org',
+				7,
+				undefined,
+				TOKEN
+			)
+		).toBe(`https://dev.example.org/login?gcid=7.${TOKEN}`);
 	});
 
 	it('tolerates a trailing slash and keeps a port', () => {
 		expect(
-			buildGroupChatInviteLinkForOrigin('http://localhost:9001/', 7)
-		).toBe('http://localhost:9001/login?gcid=7');
+			buildGroupChatInviteLinkForOrigin(
+				'http://localhost:9001/',
+				7,
+				undefined,
+				TOKEN
+			)
+		).toBe(`http://localhost:9001/login?gcid=7.${TOKEN}`);
 	});
 
 	it('follows the host the app runs on, never the production host', () => {
 		vi.stubGlobal('window', {
 			location: { origin: 'https://predev.example.org' }
 		});
-		const link = currentHostGroupChatInviteLink(4711);
-		expect(link).toBe('https://predev.example.org/login?gcid=4711');
+		const link = currentHostGroupChatInviteLink(4711, undefined, TOKEN);
+		expect(link).toBe(
+			`https://predev.example.org/login?gcid=4711.${TOKEN}`
+		);
 		expect(link).not.toContain('app.oriso.org');
 	});
 
 	it('carries the agency on the current host as well', () => {
 		expect(
-			buildGroupChatInviteLinkForOrigin('https://dev.oriso.org', 19, 19)
-		).toBe('https://dev.oriso.org/login?gcid=19&aid=19');
+			buildGroupChatInviteLinkForOrigin(
+				'https://dev.oriso.org',
+				19,
+				19,
+				TOKEN
+			)
+		).toBe(`https://dev.oriso.org/login?gcid=19.${TOKEN}&aid=19`);
 	});
 });
 
@@ -84,6 +114,30 @@ describe('invite token in the link (#1237)', () => {
 			)
 		).toBe('https://dev.oriso.org/login?gcid=19.Ab3_x-Yz&aid=19');
 	});
+
+	/* UserService#1248 answers a number-only join with 403, so a new link
+	   without the token would only ever lead to an error. */
+	it.each([undefined, null, ''])(
+		'builds no link while the token is missing (%s)',
+		(token) => {
+			expect(
+				buildGroupChatInviteLink(
+					'https://dev.oriso.org/login',
+					19,
+					19,
+					token
+				)
+			).toBeNull();
+			expect(
+				buildGroupChatInviteLinkForOrigin(
+					'https://dev.oriso.org',
+					19,
+					19,
+					token
+				)
+			).toBeNull();
+		}
+	);
 
 	it('reads the group number and the token back out of gcid', () => {
 		expect(parseGroupChatInviteId('19.Ab3_x-Yz')).toEqual({

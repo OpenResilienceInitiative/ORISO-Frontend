@@ -1,3 +1,6 @@
+import { StandingAccessSettings } from '../caseHandover/StandingAccessSettings';
+import { notificationConversationType } from '../erstantwort/notificationConversationType';
+import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import {
 	useCallback,
@@ -65,11 +68,24 @@ import {
 	isUndecryptedRoomEvent,
 	matrixRoomHistoryKeyTransfer
 } from '../../services/matrixRoomHistoryKeyTransfer';
-import { NotificationsContext } from '../../globalState/provider/NotificationsProvider';
-import { CaseHandoverConsentCard } from '../caseHandover/CaseHandoverClientCards';
+import {
+	NotificationsContext,
+	NotificationFeedItem
+} from '../../globalState/provider/NotificationsProvider';
+import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversation';
 import { formatToHHMM } from '../../utils/dateHelpers';
+import { usePracticeSupervisorsRevision } from '../../practice';
+import { isPracticeRoomId } from '../../practice/practiceIds';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
+
+// Practice rooms (FE#1622) have no keys to fetch; parked in the real
+// key-transfer singleton they would be retried on the real client.
+const requestHistoryKeys = (roomId: string) => {
+	if (!isPracticeRoomId(roomId)) {
+		void matrixRoomHistoryKeyTransfer.requestKeys(roomId);
+	}
+};
 
 const caseHandoverRequestIdFromPath = (actionPath?: string): number | null => {
 	if (!actionPath?.includes('?')) {
@@ -185,6 +201,10 @@ export const SessionStream = ({
 		resolvedCaseHandoverNotificationId,
 		setResolvedCaseHandoverNotificationId
 	] = useState<string | null>(null);
+	const [confirmedConsent, setConfirmedConsent] = useState<{
+		notification: NotificationFeedItem;
+		status: CaseHandoverStatus;
+	} | null>(null);
 	const pendingCaseHandoverConsent = useMemo(() => {
 		if (
 			!hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) ||
@@ -214,6 +234,20 @@ export const SessionStream = ({
 		resolvedCaseHandoverNotificationId,
 		userData
 	]);
+	const displayedConsent =
+		pendingCaseHandoverConsent ||
+		(hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+		!activeSession.isGroup &&
+		confirmedConsent?.status.sessionId === activeSession.item?.id
+			? confirmedConsent.notification
+			: null);
+
+	const displayedConsentMode =
+		displayedConsent?.id === confirmedConsent?.notification.id
+			? (confirmedConsent?.status.clientConsent ??
+				displayedConsent?.params?.clientConsent)
+			: displayedConsent?.params?.clientConsent;
+
 	const pendingCaseHandoverRequestId = useMemo(
 		() =>
 			caseHandoverRequestIdFromPath(
@@ -352,6 +386,9 @@ export const SessionStream = ({
 		!caseHandoverCurtainNeeded ||
 		caseHandoverStatus?.canViewContent === true;
 
+	// Practice only: bumps when the learner adds a supervisor under this case.
+	const practiceSupervisorsRevision = usePracticeSupervisorsRevision();
+
 	// ADR-008: resolve the per-session supervision side room id for members.
 	// The backend only returns supervisor entries (with the side room id) to
 	// authorized callers, so non-members never receive one and asides stay
@@ -399,7 +436,7 @@ export const SessionStream = ({
 		return () => {
 			cancelled = true;
 		};
-	}, [activeSession.item?.id, userData]);
+	}, [activeSession.item?.id, userData, practiceSupervisorsRevision]);
 
 	const fetchSessionMessages = useCallback(
 		(forceCaseHandoverAccess = false): Promise<boolean> => {
@@ -488,9 +525,7 @@ export const SessionStream = ({
 							roomId &&
 							(events as any[]).some(isUndecryptedRoomEvent)
 						) {
-							void matrixRoomHistoryKeyTransfer.requestKeys(
-								roomId as string
-							);
+							requestHistoryKeys(roomId as string);
 						}
 					});
 				}
@@ -778,10 +813,7 @@ export const SessionStream = ({
 				// time React sees it. Request this room's existing keys once per
 				// client generation instead of depending on a particular failure
 				// event shape.
-				watchedRoomIds.forEach(
-					(roomId) =>
-						void matrixRoomHistoryKeyTransfer.requestKeys(roomId)
-				);
+				watchedRoomIds.forEach(requestHistoryKeys);
 				refreshMessages();
 			}
 			return true;
@@ -1254,7 +1286,22 @@ export const SessionStream = ({
 			pendingCaseHandoverRequestId,
 			approved
 		)
-			.then(() => {
+			.then((confirmedStatus) => {
+				if (
+					confirmedStatus?.status &&
+					confirmedStatus.sessionId === activeSession.item.id &&
+					confirmedStatus.requestId === pendingCaseHandoverRequestId
+				) {
+					setConfirmedConsent({
+						notification: pendingCaseHandoverConsent,
+						status: confirmedStatus
+					});
+				} else {
+					throw new Error(
+						'Consent response does not match the request'
+					);
+				}
+				if (isPendingCaseHandoverStatus(confirmedStatus.status)) return;
 				notificationsContext?.markNotificationAsRead(
 					pendingCaseHandoverConsent.id
 				);
@@ -1298,33 +1345,75 @@ export const SessionStream = ({
 					/>
 				</div>
 			)}
-			{pendingCaseHandoverConsent &&
-				pendingCaseHandoverRequestId !== null && (
-					<CaseHandoverConsentCard
-						mode={
-							pendingCaseHandoverConsent.params?.clientConsent ===
-							'OPT_OUT'
-								? 'OPT_OUT'
-								: 'OPT_IN'
-						}
-						isSubmitting={caseHandoverConsentSubmitting}
-						error={caseHandoverConsentError}
-						timestamp={formatToHHMM(
-							String(
-								new Date(
-									pendingCaseHandoverConsent.createdAt
-								).getTime()
-							)
+			{hasUserAuthority(AUTHORITIES.ASKER_DEFAULT, userData) &&
+				!activeSession.isGroup &&
+				notificationConversationType(activeSession) ===
+					'AGENCY_COUNSELLING' &&
+				activeSession.item?.id && (
+					<StandingAccessSettings
+						key={activeSession.item.id}
+						sessionId={activeSession.item.id}
+						conversationType={notificationConversationType(
+							activeSession
 						)}
-						onApprove={() =>
-							handleCaseHandoverConsentDecision(true)
-						}
-						onDecline={() =>
-							handleCaseHandoverConsentDecision(false)
-						}
 					/>
 				)}
 			<SessionItemComponent
+				mainTimelineSupplement={
+					displayedConsent &&
+					caseHandoverRequestIdFromPath(
+						displayedConsent.actionPath
+					) !== null && (
+						<CaseHandoverConversation
+							conversationType={notificationConversationType(
+								activeSession
+							)}
+							key={String(activeSession.item?.id)}
+							status={
+								displayedConsent.id ===
+								confirmedConsent?.notification.id
+									? confirmedConsent.status.status
+									: undefined
+							}
+							auditOutcome={
+								displayedConsent.id ===
+								confirmedConsent?.notification.id
+									? confirmedConsent.status.auditOutcome
+									: undefined
+							}
+							consentGranted={
+								displayedConsent.params?.clientConsent ===
+								'OPT_OUT'
+							}
+							mode={
+								displayedConsentMode === 'NONE' ||
+								displayedConsentMode === 'OPT_OUT'
+									? displayedConsentMode
+									: 'OPT_IN'
+							}
+							isSubmitting={caseHandoverConsentSubmitting}
+							error={caseHandoverConsentError}
+							timestamp={formatToHHMM(
+								String(
+									new Date(
+										displayedConsent.createdAt
+									).getTime()
+								)
+							)}
+							onApprove={() =>
+								handleCaseHandoverConsentDecision(true)
+							}
+							onDecline={() =>
+								handleCaseHandoverConsentDecision(false)
+							}
+						/>
+					)
+				}
+				mainTimelineSupplementTime={
+					displayedConsent
+						? new Date(displayedConsent.createdAt).getTime()
+						: undefined
+				}
 				hasUserInitiatedStopOrLeaveRequest={
 					hasUserInitiatedStopOrLeaveRequest
 				}

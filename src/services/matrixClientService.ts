@@ -344,7 +344,7 @@ export class MatrixClientService {
 		}
 
 		this.refreshingToken = this.heldCryptoOperationsSettled()
-			.then(() => getMatrixAccessToken())
+			.then(() => getMatrixAccessToken({ forceRefresh: true }))
 			.then(async (loginData) => {
 				// getMatrixAccessToken only returns transport fields. A session's
 				// anonymity is stable across refreshes, so carry the existing flag

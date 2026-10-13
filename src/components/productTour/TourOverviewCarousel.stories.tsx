@@ -74,7 +74,7 @@ export const BothConsultantTours: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'The shipped consultant catalog: the completed legacy walkthrough offers a restart while the new Mail-Beratung tour (TOUR-10) is offered as not started.'
+				story: 'Compatibility catalog: the completed introduction offers a restart alongside the legacy Mail-Beratung tour (TOUR-10). Production Help offers the introduction and gated practice exercises; this legacy tour definition and its progress remain available to existing callers.'
 			}
 		}
 	}

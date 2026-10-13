@@ -66,6 +66,8 @@ export interface TipTapComposerRef {
 	setInsertionMarker: (visible: boolean) => void;
 	insertSnippet: (payload: HighlightSnippetPayload) => void;
 	runAction: (action: string) => void;
+	/** Left-aligns without focusing: `runAction` focuses a frame later. */
+	resetTextAlign: () => void;
 	isActionActive: (action: string) => boolean;
 }
 
@@ -216,6 +218,11 @@ export const TipTapComposer = forwardRef<
 		   leaving "Wir besrechen"). Only a value the editor never produced —
 		   a draft, a reset — is news. */
 		const ownStates = useRef<string[]>([]);
+		/* #1613: the value the sync last handled, per editor. A re-run for a
+		   new onChange alone carries no news and must not write it back. */
+		const lastSynced = useRef<{ editor: unknown; value?: string } | null>(
+			null
+		);
 		const emit = useCallback(
 			(html: string) => {
 				ownStates.current.push(html);
@@ -424,6 +431,13 @@ export const TipTapComposer = forwardRef<
 			if (!isEditorReady(editor)) {
 				return;
 			}
+			if (
+				lastSynced.current?.editor === editor &&
+				lastSynced.current.value === value
+			) {
+				return;
+			}
+			lastSynced.current = { editor, value };
 			const normalizedValue = (value || '')
 				.replace(/text-align\s*:\s*right/gi, 'text-align: left')
 				.replace(
@@ -545,6 +559,12 @@ export const TipTapComposer = forwardRef<
 					.unsetHighlight()
 					.insertContent(anchorMeta)
 					.run();
+			},
+			resetTextAlign: () => {
+				if (!isEditorReady(editor)) {
+					return;
+				}
+				editor.chain().setTextAlign('left').run();
 			},
 			runAction: (action: string) => {
 				if (!isEditorReady(editor)) {
