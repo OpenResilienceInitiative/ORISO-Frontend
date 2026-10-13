@@ -274,6 +274,28 @@
 			"react-app",
 			"plugin:cypress/recommended"
 		],
+		"rules": {
+			"no-restricted-imports": [
+				"error",
+				{
+					"paths": [
+						{
+							"name": "antd",
+							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+						}
+					],
+					"patterns": [
+						{
+							"group": [
+								"antd/*",
+								"@ant-design/*"
+							],
+							"message": "The Frontend does not use Ant Design (ORISO-Admin#1171). Use MUI or the design-system components from Storybook instead."
+						}
+					]
+				}
+			]
+		},
 		"overrides": [
 			{
 				"files": "*.spec.ts",
