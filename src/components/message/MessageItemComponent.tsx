@@ -1986,6 +1986,28 @@ export const MessageItemComponent = ({
 
 	const MessageBubble = isSystemNotification ? CarimatMessageBubble : 'div';
 
+	const assistantBubbleProps: React.ComponentProps<
+		typeof CarimatMessageBubble
+	> = isSystemNotification
+		? {
+				variant: 'notice',
+				topic: isCaseHandoverGrantedEvent
+					? translate(
+							persistedHandoverGrant?.accessType === 'CO_ACCESS'
+								? 'caseHandover.consent.info.noticeTitle'
+								: 'caseHandover.systemMessage.tookOverTitle'
+						)
+					: isInquiryAcceptedEvent
+						? translate('caseHandover.accepted.title')
+						: systemNotificationTitle,
+				topicIcon: isCaseHandoverGrantedEvent ? (
+					<HandoverTopicIcon />
+				) : isInquiryAcceptedEvent ? (
+					<AcceptanceTopicIcon />
+				) : undefined
+			}
+		: {};
+
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
 			case isMasterKeyLostMessage:
@@ -2135,32 +2157,7 @@ export const MessageItemComponent = ({
 							</div>
 						)}
 						<MessageBubble
-							variant={
-								isSystemNotification ? 'notice' : undefined
-							}
-							topic={
-								isSystemNotification
-									? isCaseHandoverGrantedEvent
-										? translate(
-												persistedHandoverGrant?.accessType ===
-													'CO_ACCESS'
-													? 'caseHandover.consent.info.noticeTitle'
-													: 'caseHandover.systemMessage.tookOverTitle'
-											)
-										: isInquiryAcceptedEvent
-											? translate(
-													'caseHandover.accepted.title'
-												)
-											: systemNotificationTitle
-									: undefined
-							}
-							topicIcon={
-								isCaseHandoverGrantedEvent ? (
-									<HandoverTopicIcon />
-								) : isInquiryAcceptedEvent ? (
-									<AcceptanceTopicIcon />
-								) : undefined
-							}
+							{...assistantBubbleProps}
 							className={`${
 								isMyMessage
 									? 'messageItem__message messageItem__message--myMessage'
