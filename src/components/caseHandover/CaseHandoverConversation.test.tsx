@@ -17,6 +17,7 @@ import type { TenantDataInterface } from '../../globalState/interfaces/TenantDat
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import { CaseHandoverConversation } from './CaseHandoverConversation';
 import { StandingAccessSettings } from './StandingAccessSettings';
+import { useStandingAccessPreference } from './useStandingAccessPreference';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
 
@@ -726,6 +727,98 @@ it('serializes a pending future-preference HTTP mutation across close and reopen
 		expect(confirmed).toHaveProperty('checked', true);
 		expect(confirmed).toHaveProperty('disabled', false);
 	});
+	expect(httpRequests.filter((item) => item.method === 'PUT')).toHaveLength(
+		1
+	);
+	expect(httpRequests.some((item) => item.method === 'POST')).toBe(false);
+});
+
+it('confirms a same-conversation HTTP save after presentation close and reload without reporting a false failure', async () => {
+	const transport = globalThis.fetch;
+	let releasePut!: () => void;
+	vi.stubGlobal(
+		'fetch',
+		async (input: RequestInfo | URL, init?: RequestInit) => {
+			const method =
+				init?.method ??
+				(input instanceof Request ? input.method : 'GET');
+			if (method === 'PUT')
+				await new Promise<void>((resolve) => {
+					releasePut = resolve;
+				});
+			return transport(input, init);
+		}
+	);
+	const PreferenceConsumer = () => {
+		const future = useStandingAccessPreference(1, true);
+		const [open, setOpen] = React.useState(true);
+		const [result, setResult] = React.useState('');
+		return (
+			<>
+				<button
+					onClick={() => {
+						future.invalidate();
+						setOpen(false);
+					}}
+				>
+					Close preference
+				</button>
+				<button
+					onClick={() => {
+						setOpen(true);
+						void future.load();
+					}}
+				>
+					Reopen preference
+				</button>
+				{open && future.preference && (
+					<button
+						disabled={future.saving || future.loading}
+						onClick={async () => {
+							try {
+								const saved = await future.save(true);
+								setResult(
+									saved && future.didStrengthen()
+										? 'Confirmed stronger future gate'
+										: 'Unconfirmed future gate'
+								);
+							} catch {
+								setResult('Save failed');
+							}
+						}}
+					>
+						Require future agreement
+					</button>
+				)}
+				<output>{result}</output>
+			</>
+		);
+	};
+	render(
+		<UserDataContext.Provider
+			value={{
+				userData: account,
+				reloadUserData: async () => account,
+				setUserData: () => {}
+			}}
+		>
+			<PreferenceConsumer />
+		</UserDataContext.Provider>
+	);
+	fireEvent.click(
+		await screen.findByRole('button', { name: 'Require future agreement' })
+	);
+	await waitFor(() => expect(releasePut).toBeTypeOf('function'));
+	fireEvent.click(screen.getByRole('button', { name: 'Close preference' }));
+	fireEvent.click(screen.getByRole('button', { name: 'Reopen preference' }));
+	await waitFor(() =>
+		expect(
+			screen.getByRole('button', { name: 'Require future agreement' })
+		).toHaveProperty('disabled', true)
+	);
+	await act(async () => releasePut());
+	await screen.findByText('Confirmed stronger future gate');
+	expect(screen.queryByText('Save failed')).toBeNull();
 	expect(httpRequests.filter((item) => item.method === 'PUT')).toHaveLength(
 		1
 	);

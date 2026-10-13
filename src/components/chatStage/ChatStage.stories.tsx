@@ -514,35 +514,30 @@ const expectSingleBoxComposers = async (canvasElement: HTMLElement) => {
  * channel tag carry the pink accent, the supervision composer's field
  * border too; a thread header stays neutral.
  */
-/**
- * T49: the side room's system notice is the Carimat organism — the exact
- * class skeleton `ErstantwortSequence` draws for the main chat's "Carimat /
- * Ihre ersten Schritte" message. One selector per structural part, plus the
- * two absences that distinguish it from the generic system chrome.
- */
+/** T49: supervision uses the canonical assistant presentation, with the
+ * recorded supervision topic separate from the configurable assistant sender.
+ * The notice remains first in the timeline and has no generic system chrome. */
 const CARIMAT_ORGANISM_PARTS = [
-	'.erstantwort',
-	'.messageItem.pseudonymCard.erstantwort__row',
-	'.pseudonymCard__wrap',
-	'.pseudonymCard__avatarCol > .pseudonymCard__avatarFrame > .pseudonymCard__avatarIcon > svg',
-	'.pseudonymCard__contentCol.erstantwort__content',
-	'.pseudonymCard__header > .pseudonymCard__headerName',
-	'.pseudonymCard__header > .pseudonymCard__headerSubtitle',
-	'.pseudonymCard__bubble.erstantwort__bubble > .pseudonymCard__bubbleText'
+	'.carimatMessageFrame.erstantwort',
+	'.carimatMessageFrame__row',
+	'.carimatMessageFrame__avatarColumn > .carimatMessageFrame__avatar > .carimatMessageFrame__avatarIcon > svg',
+	'.carimatMessageFrame__content',
+	'.carimatMessageFrame__header > .carimatMessageFrame__name',
+	'.carimatMessageFrame__header > .carimatMessageFrame__subtitle',
+	'.carimatMessageFrame__bubble.erstantwort__bubble > .pseudonymCard__bubbleText',
+	'.carimatMessageFrame__bubble > .carimatMessageFrame__topic'
 ];
 const expectCarimatOrganism = async (
 	item: HTMLElement,
-	{ name, subtitle }: { name: string; subtitle: string }
+	{ topic, subtitle }: { topic: string; subtitle: string }
 ) => {
 	for (const part of CARIMAT_ORGANISM_PARTS) {
 		await expect(item.querySelector(part), part).not.toBeNull();
 	}
-	await expect(
-		item.querySelector('.pseudonymCard__headerName')!.textContent
-	).toBe(name);
-	await expect(
-		item.querySelector('.pseudonymCard__headerSubtitle')!.textContent
-	).toBe(subtitle);
+	const message = within(item);
+	await expect(message.getByText('Carimat', { exact: true })).toBeVisible();
+	await expect(message.getByText(topic, { exact: true })).toBeVisible();
+	await expect(message.getByText(subtitle, { exact: true })).toBeVisible();
 	await expect(item.querySelector('.messageItem__kebabButton')).toBeNull();
 	await expect(
 		item.querySelector('.messageItem__message--systemNotification')
@@ -998,14 +993,15 @@ export const SupervisionSystemNoticeAtTheTop: Story = {
 		);
 		// First item of the supervision timeline. T49 (Frank, 06.09.): it is
 		// the SAME organism as the main chat's Carimat message ("Carimat /
-		// Ihre ersten Schritte", `ErstantwortSequence` → `pseudonymCard`):
-		// robot in the ringed avatar frame, name + subtitle kicker, bubble —
+		// Ihre ersten Schritte", `ErstantwortSequence` → `CarimatMessageFrame`):
+		// robot in the ringed avatar frame, assistant name + subtitle kicker,
+		// recorded supervision topic inside the bubble —
 		// and, like Carimat, no kebab and none of the generic
 		// system-notification chrome.
 		const firstItem = timeline.querySelector<HTMLElement>('.messageItem')!;
 		await expect(firstItem.contains(notice)).toBe(true);
 		await expectCarimatOrganism(firstItem, {
-			name: 'Supervision',
+			topic: 'Supervision',
 			subtitle: 'Systembenachrichtigung'
 		});
 		// Wording matches the UI: the plus sits next to the mail glyph.

@@ -102,12 +102,14 @@ export const useStandingAccessPreference = (
 				await apiGetCaseHandoverConsentPreference(sessionId)
 			);
 			if (
-				!current() ||
+				scope !== generation.current ||
 				saved.alwaysAskBeforeAdditionalAccess !== alwaysAsk
 			)
 				throw new Error('Preference was not confirmed');
 			strengthened.current = alwaysAsk && !previous;
-			setPreference(saved);
+			// A presentation reload does not invalidate a confirmed mutation.
+			// Its newer read still owns the visible state until the final refresh.
+			if (current()) setPreference(saved);
 			return saved.alwaysAskBeforeAdditionalAccess;
 		} catch (failure) {
 			if (current()) setError(true);
