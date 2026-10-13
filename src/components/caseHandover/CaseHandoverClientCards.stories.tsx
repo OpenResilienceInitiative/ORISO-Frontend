@@ -219,7 +219,9 @@ export const PendingClientConsent: Story = {
 		expect(avatarStyle.width).toBe('60px');
 		expect(avatarStyle.height).toBe('60px');
 		expect(avatarStyle.borderTopWidth).toBe('6px');
-		expect(avatarStyle.borderTopColor).toBe(avatarStyle.backgroundColor);
+		expect(avatarStyle.borderTopColor).toBe('rgba(0, 0, 0, 0)');
+		expect(avatarStyle.backgroundClip).toBe('border-box');
+		expect(avatarStyle.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
 		expect(getComputedStyle(icon!).width).toBe('32px');
 		expect(getComputedStyle(icon!).height).toBe('36px');
 		expect(getComputedStyle(glyph!).width).toBe('32px');
