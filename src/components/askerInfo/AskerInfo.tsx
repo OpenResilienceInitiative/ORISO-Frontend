@@ -1,3 +1,4 @@
+import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
 import { useContext, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -58,7 +59,7 @@ export const AskerInfo = () => {
 	const { fromL, fromM } = useResponsive();
 	// 100px is the Figma avatar; it drops with the row below $fromMedium
 	// (600px), matching the SCSS breakpoint for the same row.
-	const avatarSize = fromM ? 100 : 64;
+	const avatarSize = fromM ? AVATAR_SIZES.detail : AVATAR_SIZES.phone;
 	useEffect(() => {
 		if (!fromL) {
 			mobileUserProfileView();

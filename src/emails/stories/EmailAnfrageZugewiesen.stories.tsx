@@ -1,5 +1,9 @@
+import { verifyEmailLogoVariants } from '../../../.storybook/emailLogoAssertions';
 import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
+import { buildEmail } from '../index';
+import { EmailPreview } from '../preview/EmailPreview';
+import { emailLogoFixtures, emailLogoFixtureBrand } from './emailLogoFixtures';
 import {
 	EmailPage,
 	EmailToneRow,
@@ -68,4 +72,79 @@ export const TenantColours: Story = {
 export const AsTemplateFile: Story = {
 	name: 'Template file (placeholders)',
 	args: { filled: false }
+};
+
+/** A complete page proves that the header cannot widen the card on phones. */
+export const VeryWideLogoOnNarrowPhone: Story = {
+	name: 'Very wide logo · phone (320px)',
+	render: (args) => {
+		const built = buildEmail(args.id, args.locale ?? 'de-sie', {
+			brand: emailLogoFixtureBrand(emailLogoFixtures[3])
+		});
+		return (
+			<EmailPreview
+				html={built.html}
+				width={320}
+				subject={built.subject}
+				preheader={built.preheader}
+			/>
+		);
+	}
+};
+
+export const WideLogoBoundaryOnNarrowPhone: Story = {
+	name: '3:1 logo boundary · phone (320px)',
+	render: (args) => {
+		const built = buildEmail(args.id, args.locale ?? 'de-sie', {
+			brand: emailLogoFixtureBrand(emailLogoFixtures[2])
+		});
+		return (
+			<EmailPreview
+				html={built.html}
+				width={320}
+				subject={built.subject}
+				preheader={built.preheader}
+			/>
+		);
+	}
+};
+
+const logoPages = (width: number) => (
+	<div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+		{emailLogoFixtures.map((fixture) => {
+			const built = buildEmail('anfrage-zugewiesen', 'de-sie', {
+				brand: emailLogoFixtureBrand(fixture)
+			});
+			return (
+				<section key={fixture.file} aria-label={fixture.name}>
+					<h2 style={{ fontSize: 16 }}>
+						{fixture.name} · {width}px viewport
+					</h2>
+					<EmailPreview
+						html={built.html}
+						width={width}
+						subject={built.subject}
+						preheader={built.preheader}
+					/>
+				</section>
+			);
+		})}
+	</div>
+);
+
+export const LogoVariantsDesktop: Story = {
+	render: () => logoPages(700),
+	play: verifyEmailLogoVariants
+};
+export const LogoVariantsTablet: Story = {
+	render: () => logoPages(820),
+	play: verifyEmailLogoVariants
+};
+export const LogoVariantsPhone: Story = {
+	render: () => logoPages(375),
+	play: verifyEmailLogoVariants
+};
+export const LogoVariantsNarrowPhone: Story = {
+	render: () => logoPages(320),
+	play: verifyEmailLogoVariants
 };

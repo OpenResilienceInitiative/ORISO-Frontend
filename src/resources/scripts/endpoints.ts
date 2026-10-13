@@ -90,6 +90,9 @@ export const endpoints = {
 	userDrafts: userServiceOrigin + '/service/users/drafts',
 	tutorialProgress: userServiceOrigin + '/service/users/tutorials/progress',
 	email: userServiceOrigin + '/service/users/email',
+	contactSheetEmail: (sessionId: number) =>
+		userServiceOrigin +
+		`/service/users/sessions/${sessionId}/contact-sheet-email`,
 	// logstash intake was retired; client crash reports now go to UserService's
 	// OBS-P3 error-intake endpoint, which logs them into SigNoz (ORISO-Helm#62).
 	error: userServiceOrigin + '/service/error-reports',

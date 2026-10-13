@@ -24,6 +24,8 @@ type MessageItemProps = React.ComponentProps<typeof MessageItemComponent>;
 
 export interface MessageTimelineProps {
 	messages: MessageItem[];
+	supplement?: React.ReactNode;
+	supplementTime?: number;
 	renderMode?: MessageItemProps['renderMode'];
 	/** Key namespace when several timelines render the same ids (thread panel). */
 	keyPrefix?: string;
@@ -48,7 +50,7 @@ export interface MessageTimelineProps {
 	threadSummaryFor?: (
 		messageId: string
 	) => MessageItemProps['threadSummary'] | undefined;
-	onOpenThread?: (message: MessageItem) => void;
+	onOpenThread?: (message: MessageItem, opener?: HTMLElement) => void;
 	resolveReplyQuote?: (
 		replyToEventId?: string | null
 	) => MessageItemProps['replyQuote'];
@@ -66,6 +68,8 @@ const never = () => false;
 
 export const MessageTimeline = ({
 	messages,
+	supplement,
+	supplementTime,
 	renderMode = 'main',
 	keyPrefix = '',
 	clientName,
@@ -92,77 +96,89 @@ export const MessageTimeline = ({
 	reactionsFor,
 	onReact,
 	onUnreact
-}: MessageTimelineProps) => (
-	<>
-		{messages.map((message: MessageItem) => {
-			const own = isMyMessage(message.userId);
-			const broke = decryptionFailures?.has(message._id) ?? false;
-			return (
-				<React.Fragment key={`${keyPrefix}${message._id}`}>
-					<MessageItemComponent
-						{...message}
-						clientName={clientName}
-						askerMatrixUserId={
-							askerMatrixUserIdFor
-								? askerMatrixUserIdFor(message)
-								: message.askerMatrixUserId
-						}
-						isOnlyEnquiry={isOnlyEnquiry}
-						showFullContent={showFullContent}
-						hideSystemMessages={hideSystemMessages}
-						isMyMessage={own}
-						isUserBanned={isUserBanned(message.username)}
-						handleDecryptionErrors={handleDecryptionErrors}
-						handleDecryptionSuccess={handleDecryptionSuccess}
-						e2eeParams={e2eeParams}
-						renderMode={renderMode}
-						threadsEnabled={threadsEnabled}
-						threadRootId={threadRootId}
-						forceShow={forceShow}
-						threadSummary={threadSummaryFor?.(message._id)}
-						onOpenThread={
-							onOpenThread
-								? () => onOpenThread(message)
-								: undefined
-						}
-						replyQuote={resolveReplyQuote?.(message.replyToEventId)}
-						onReplyDirect={
-							onReplyDirect
-								? () => onReplyDirect(message)
-								: undefined
-						}
-						onEditDirect={
-							own && onEditDirect
-								? () => onEditDirect(message)
-								: undefined
-						}
-						onDeleteDirect={
-							own && onDeleteDirect
-								? () => onDeleteDirect(message)
-								: undefined
-						}
-						reactions={reactionsFor?.(message._id)}
-						onReact={
-							onReact
-								? (key: string) => onReact(message._id, key)
-								: undefined
-						}
-						onUnreact={onUnreact}
-						encryptionBroke={broke}
-					/>
-					{broke &&
-						(showDecryptionCardFor
-							? showDecryptionCardFor(message)
-							: true) && (
-							<MessageSendFailed
-								messageTime={message.messageTime}
-								isDecryptionFailure
-							/>
-						)}
-				</React.Fragment>
-			);
-		})}
-	</>
-);
+}: MessageTimelineProps) => {
+	const supplementIndex =
+		supplementTime === undefined
+			? -1
+			: messages.findIndex(
+					(message) => Number(message.messageTime) > supplementTime
+				);
+	return (
+		<>
+			{messages.map((message: MessageItem, index) => {
+				const own = isMyMessage(message.userId);
+				const broke = decryptionFailures?.has(message._id) ?? false;
+				return (
+					<React.Fragment key={`${keyPrefix}${message._id}`}>
+						{index === supplementIndex && supplement}
+						<MessageItemComponent
+							{...message}
+							clientName={clientName}
+							askerMatrixUserId={
+								askerMatrixUserIdFor
+									? askerMatrixUserIdFor(message)
+									: message.askerMatrixUserId
+							}
+							isOnlyEnquiry={isOnlyEnquiry}
+							showFullContent={showFullContent}
+							hideSystemMessages={hideSystemMessages}
+							isMyMessage={own}
+							isUserBanned={isUserBanned(message.username)}
+							handleDecryptionErrors={handleDecryptionErrors}
+							handleDecryptionSuccess={handleDecryptionSuccess}
+							e2eeParams={e2eeParams}
+							renderMode={renderMode}
+							threadsEnabled={threadsEnabled}
+							threadRootId={threadRootId}
+							forceShow={forceShow}
+							threadSummary={threadSummaryFor?.(message._id)}
+							onOpenThread={
+								onOpenThread
+									? (opener) => onOpenThread(message, opener)
+									: undefined
+							}
+							replyQuote={resolveReplyQuote?.(
+								message.replyToEventId
+							)}
+							onReplyDirect={
+								onReplyDirect
+									? () => onReplyDirect(message)
+									: undefined
+							}
+							onEditDirect={
+								own && onEditDirect
+									? () => onEditDirect(message)
+									: undefined
+							}
+							onDeleteDirect={
+								own && onDeleteDirect
+									? () => onDeleteDirect(message)
+									: undefined
+							}
+							reactions={reactionsFor?.(message._id)}
+							onReact={
+								onReact
+									? (key: string) => onReact(message._id, key)
+									: undefined
+							}
+							onUnreact={onUnreact}
+							encryptionBroke={broke}
+						/>
+						{broke &&
+							(showDecryptionCardFor
+								? showDecryptionCardFor(message)
+								: true) && (
+								<MessageSendFailed
+									messageTime={message.messageTime}
+									isDecryptionFailure
+								/>
+							)}
+					</React.Fragment>
+				);
+			})}
+			{supplementIndex === -1 && supplement}
+		</>
+	);
+};
 
 export default MessageTimeline;

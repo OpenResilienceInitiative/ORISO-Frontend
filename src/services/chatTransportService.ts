@@ -1,3 +1,4 @@
+import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
 import { MatrixEvent, Room } from 'matrix-js-sdk';
 import {
 	apiPostMessageEventNotification,
@@ -53,6 +54,7 @@ export interface SendTextMessageOptions {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
+	feedbackMailIntent?: boolean;
 	matrixClientServiceOverride?: MatrixClientService | null;
 }
 
@@ -86,6 +88,7 @@ export interface SendFileMessageOptions extends MatrixFileMessageOptions {
 	supervisorMessage?: boolean;
 	senderDisplayName?: string | null;
 	teamDiscussion?: boolean;
+	feedbackMailIntent?: boolean;
 	postMessageEventNotification?: (
 		input: MessageEventNotificationInput
 	) => Promise<any>;
@@ -139,6 +142,7 @@ class ChatTransportService {
 		supervisorMessage,
 		senderDisplayName,
 		teamDiscussion,
+		feedbackMailIntent,
 		matrixClientServiceOverride
 	}: SendTextMessageOptions): Promise<any> {
 		let resolvedMatrixRoomId = matrixRoomId;
@@ -164,6 +168,10 @@ class ChatTransportService {
 			return Promise.reject(new Error('Matrix client not initialized'));
 		}
 
+		const matrixSenderUserId =
+			feedbackMailIntent && !teamDiscussion
+				? matrixClientService.getClient()?.getUserId() || null
+				: null;
 		const response = await matrixClientService.sendMessage(
 			resolvedMatrixRoomId,
 			message,
@@ -177,18 +185,26 @@ class ChatTransportService {
 		// SECURITY (FE-H01): never forward plaintext message content
 		// (messagePreview / threadParentPreview) across the Matrix privacy
 		// boundary. Only non-content metadata is sent.
-		apiPostMessageEventNotification({
-			roomId: resolvedMatrixRoomId,
-			matrixRoom: true,
-			threadRootId: threadRootId || null,
-			supervisorMessage: !!supervisorMessage,
-			senderDisplayName: senderDisplayName || null,
-			teamDiscussion: !!teamDiscussion,
-			mentionedUserIds: mentionedUserIds || null,
-			// #942: the event id keys backend deduplication against the
-			// server-side Matrix listener announcing the same message.
-			matrixEventId: response?.event_id || null
-		}).catch(() => undefined);
+		if (feedbackMailIntent && !teamDiscussion) {
+			// Matrix succeeded. Only its immutable IDs are retried; never the message.
+			void feedbackMailIntentQueue.enqueue(matrixSenderUserId, {
+				roomId: resolvedMatrixRoomId,
+				matrixEventId: response?.event_id || '',
+				threadRootId
+			});
+		} else
+			apiPostMessageEventNotification({
+				roomId: resolvedMatrixRoomId,
+				matrixRoom: true,
+				threadRootId: threadRootId || null,
+				supervisorMessage: !!supervisorMessage,
+				senderDisplayName: senderDisplayName || null,
+				teamDiscussion: !!teamDiscussion,
+				mentionedUserIds: mentionedUserIds || null,
+				// #942: the event id keys backend deduplication against the
+				// server-side Matrix listener announcing the same message.
+				matrixEventId: response?.event_id || null
+			}).catch(() => undefined);
 
 		return { success: true, event_id: response.event_id };
 	}
@@ -282,7 +298,12 @@ class ChatTransportService {
 		file: File,
 		options: SendFileMessageOptions = {}
 	): Promise<any> {
-		const response = await getMatrixClientService()?.sendFileMessage(
+		const matrixClientService = getMatrixClientService();
+		const matrixSenderUserId =
+			options.feedbackMailIntent && !options.teamDiscussion
+				? matrixClientService?.getClient()?.getUserId() || null
+				: null;
+		const response = await matrixClientService?.sendFileMessage(
 			matrixRoomId,
 			file,
 			{
@@ -297,15 +318,22 @@ class ChatTransportService {
 			options.postMessageEventNotification ||
 			apiPostMessageEventNotification;
 
-		postMessageEventNotification({
-			roomId: matrixRoomId,
-			matrixRoom: true,
-			threadRootId: options.threadRootId || null,
-			supervisorMessage: !!options.supervisorMessage,
-			teamDiscussion: !!options.teamDiscussion,
-			senderDisplayName: options.senderDisplayName || null,
-			matrixEventId: response?.event_id || null
-		}).catch(() => undefined);
+		if (options.feedbackMailIntent && !options.teamDiscussion) {
+			void feedbackMailIntentQueue.enqueue(matrixSenderUserId, {
+				roomId: matrixRoomId,
+				matrixEventId: response?.event_id || '',
+				threadRootId: options.threadRootId
+			});
+		} else
+			postMessageEventNotification({
+				roomId: matrixRoomId,
+				matrixRoom: true,
+				threadRootId: options.threadRootId || null,
+				supervisorMessage: !!options.supervisorMessage,
+				teamDiscussion: !!options.teamDiscussion,
+				senderDisplayName: options.senderDisplayName || null,
+				matrixEventId: response?.event_id || null
+			}).catch(() => undefined);
 
 		return response;
 	}
@@ -315,6 +343,10 @@ class ChatTransportService {
 			getMatrixClientService()?.getClient?.()?.getRoom?.(matrixRoomId) ||
 			null
 		);
+	}
+
+	public hasMatrixRoom(matrixRoomId: string): boolean {
+		return Boolean(this.getMatrixRoom(matrixRoomId));
 	}
 
 	public getMatrixRoomMessages(

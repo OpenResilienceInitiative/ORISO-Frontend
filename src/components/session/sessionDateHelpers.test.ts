@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	getChatDate,
 	getGroupChatDate,
 	getGroupChatTimezoneSuffix
 } from './sessionDateHelpers';
@@ -98,5 +99,29 @@ describe('getGroupChatDate carries the timezone into what the reader sees', () =
 		const suffix = getGroupChatTimezoneSuffix(FOREIGN_ZONE);
 		expect(value.endsWith(suffix)).toBe(true);
 		expect(value.split(suffix.trim()).length - 1).toBe(1);
+	});
+});
+
+describe('getChatDate keeps the stored calendar day (#1499)', () => {
+	it('does not read a plain date as UTC midnight west of Greenwich', () => {
+		const previous = process.env.TZ;
+		process.env.TZ = 'America/New_York';
+		try {
+			const date = getChatDate('2026-09-25', '18:00:00');
+			expect(date.getDate()).toBe(25);
+			expect(date.getHours()).toBe(18);
+		} finally {
+			if (previous === undefined) {
+				delete process.env.TZ;
+			} else {
+				process.env.TZ = previous;
+			}
+		}
+	});
+
+	it('still accepts a full ISO startDate', () => {
+		const date = getChatDate('2019-10-23T00:00:00.000Z', '18:00');
+		expect(date.getDate()).toBe(23);
+		expect(date.getMinutes()).toBe(0);
 	});
 });

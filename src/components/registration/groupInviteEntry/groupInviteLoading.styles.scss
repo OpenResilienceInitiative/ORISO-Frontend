@@ -1,0 +1,10 @@
+.stageLayout--inviteLoading {
+	height: 100%;
+
+	.stageLayout__contentWrapper {
+		// Fill the space left by the hero/header instead of adding another
+		// full-height column underneath it.
+		min-height: 0;
+		flex: 1;
+	}
+}

@@ -1,7 +1,16 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+	MemoryRouter,
+	Routes,
+	Route,
+	Link,
+	useNavigate,
+	useLocation,
+	useParams,
+	generatePath
+} from 'react-router-dom';
 import { afterEach, describe, it, expect } from 'vitest';
 import { SessionsZone } from './SessionsZone';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
@@ -30,6 +39,19 @@ const consultantConfig = {
 		}
 	],
 	userProfileRoutes: [
+		// Enquiry (sessionPreview) first, mirroring RouterConfig: an enquiry
+		// that has not started yet has no group id, and SessionMenu builds its
+		// links from the ENQUIRY list path.
+		{
+			path: '/sessions/consultant/sessionPreview/session/:sessionId/userProfile',
+			component: stub('askerInfoEnquiry'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
+		{
+			path: '/sessions/consultant/sessionPreview/:groupId/:sessionId/userProfile',
+			component: stub('askerInfoEnquiry'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
 		{
 			path: '/sessions/consultant/sessionView/session/:sessionId/userProfile',
 			component: stub('askerInfo'),
@@ -42,6 +64,11 @@ const consultantConfig = {
 		}
 	],
 	detailRoutes: [
+		{
+			path: '/sessions/consultant/sessionPreview/session/:sessionId',
+			component: stub('sessionPreview'),
+			type: SESSION_LIST_TYPES.ENQUIRY
+		},
 		{
 			path: '/sessions/consultant/sessionView/session/:sessionId',
 			component: stub('sessionView'),
@@ -60,6 +87,51 @@ const consultantConfig = {
 	]
 };
 
+const sessionPath = '/sessions/consultant/sessionView/!room%3Adev.oriso.org/42';
+const StatefulSession = () => {
+	const [draft, setDraft] = React.useState('');
+	return (
+		<div>
+			<input
+				aria-label="Draft"
+				value={draft}
+				onChange={(event) => setDraft(event.target.value)}
+			/>
+			<Link to={`${sessionPath}/groupChatInfo?sessionListTab=active`}>
+				Open info
+			</Link>
+		</div>
+	);
+};
+const InfoDialog = ({ dialog }: { dialog?: boolean }) => {
+	const navigate = useNavigate();
+	const location = useLocation();
+	const { groupId, sessionId } = useParams();
+	return (
+		<div role="dialog" data-dialog-flag={String(dialog)}>
+			<span>
+				{groupId}:{sessionId}
+				{location.search}
+			</span>
+			<button onClick={() => navigate(-1)}>Back</button>
+		</div>
+	);
+};
+const modalConfig = {
+	...consultantConfig,
+	detailRoutes: consultantConfig.detailRoutes.map((route) => ({
+		...route,
+		component: StatefulSession
+	})),
+	dialogRoutes: [
+		{
+			path: '/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo',
+			component: InfoDialog,
+			type: SESSION_LIST_TYPES.MY_SESSION
+		}
+	]
+};
+
 const userData = {
 	userId: 'c1',
 	grantedAuthorities: ['anonymous'],
@@ -68,7 +140,7 @@ const userData = {
 
 // Mount SessionsZone under a `sessions/*` parent route exactly as Routing.tsx
 // does, so its descendant <Routes> resolve relative to /sessions/.
-const renderAt = (path: string) =>
+const renderAt = (path: string, config = consultantConfig) =>
 	render(
 		<UserDataContext.Provider
 			value={{ userData, reloadUserData: async () => userData } as any}
@@ -77,9 +149,7 @@ const renderAt = (path: string) =>
 				<Routes>
 					<Route
 						path="/sessions/*"
-						element={
-							<SessionsZone routerConfig={consultantConfig} />
-						}
+						element={<SessionsZone routerConfig={config} />}
 					/>
 				</Routes>
 			</MemoryRouter>
@@ -118,9 +188,44 @@ describe('SessionsZone v7 routing — consultant', () => {
 	});
 
 	it('prefers the more specific userProfile route over the detail route', () => {
-		renderAt('/sessions/consultant/sessionView/session/42/userProfile');
+		renderAt(
+			'/sessions/consultant/sessionView/session/42/userProfile',
+			modalConfig
+		);
 		expect(screen.getByTestId('askerInfo')).toBeDefined();
 		expect(screen.queryByTestId('sessionView')).toBeNull();
+	});
+
+	it('renders the session behind a direct chat-info link with decoded params and search', () => {
+		renderAt(
+			`${sessionPath}/groupChatInfo?sessionListTab=active`,
+			modalConfig
+		);
+		expect(screen.getByLabelText('Draft')).toBeDefined();
+		expect(screen.getByRole('dialog').textContent).toContain(
+			'!room:dev.oriso.org:42?sessionListTab=active'
+		);
+	});
+
+	it('tells the dialog route component that it renders as a dialog', () => {
+		renderAt(`${sessionPath}/groupChatInfo`, modalConfig);
+		expect(
+			screen.getByRole('dialog').getAttribute('data-dialog-flag')
+		).toBe('true');
+	});
+
+	it('preserves the mounted session and its draft across opening and browser back', () => {
+		renderAt(sessionPath, modalConfig);
+		const draft = screen.getByLabelText('Draft') as HTMLInputElement;
+		fireEvent.change(draft, { target: { value: 'Unsent message' } });
+		fireEvent.click(screen.getByText('Open info'));
+		expect(screen.getByRole('dialog')).toBeDefined();
+		expect(screen.getByLabelText('Draft')).toBe(draft);
+		expect(draft.value).toBe('Unsent message');
+		fireEvent.click(screen.getByText('Back'));
+		expect(screen.queryByRole('dialog')).toBeNull();
+		expect(screen.getByLabelText('Draft')).toBe(draft);
+		expect(draft.value).toBe('Unsent message');
 	});
 
 	it('renders the empty session view on the bare list path', () => {
@@ -225,5 +330,83 @@ describe('SessionsZone v7 routing — asker (user)', () => {
 	it('renders the empty session view on the bare list path', () => {
 		renderUserAt('/sessions/user/view/');
 		expect(screen.getByTestId('empty')).toBeDefined();
+	});
+});
+
+/**
+ * #1188 job 1 — "no menu entry leads to a page-not-found screen".
+ *
+ * The chatroom-settings menu builds its targets with `generatePath` on
+ * `${listPath}/:groupId/:id/:subRoute?/:extraPath?` (or the `session/:id`
+ * variant for an enquiry that has no Matrix room yet). Matrix room ids carry
+ * `!` and `:` (`!abc:matrix.oriso.org`), which `generatePath`
+ * percent-encodes — the route has to survive that, otherwise the entry is the
+ * dead end the report shows. Every sub-route the menu can produce is asserted
+ * here so a future route rename cannot silently reintroduce a 404.
+ */
+describe('SessionsZone v7 routing — chatroom-settings menu targets (#1188)', () => {
+	afterEach(() => cleanup());
+
+	const MATRIX_ROOM_ID = '!qOTUeQBiuXBstjnBmR:matrix.oriso.org';
+	const withRoom = '/sessions/consultant/sessionView/:groupId/:id/:subRoute?';
+	// SessionMenu's listPath is the ENQUIRY list path for an enquiry, so a
+	// room-less enquiry links into sessionPreview, not sessionView.
+	const withoutRoomEnquiry =
+		'/sessions/consultant/sessionPreview/session/:id/:subRoute?';
+
+	it('resolves the advice-seeker profile for a session with a Matrix room', () => {
+		renderAt(
+			generatePath(withRoom, {
+				groupId: MATRIX_ROOM_ID,
+				id: '3363',
+				subRoute: 'userProfile'
+			})
+		);
+		expect(screen.getByTestId('askerInfo')).toBeDefined();
+	});
+
+	it('resolves the advice-seeker profile for an enquiry without a Matrix room', () => {
+		renderAt(
+			generatePath(withoutRoomEnquiry, {
+				id: '3363',
+				subRoute: 'userProfile'
+			})
+		);
+		expect(screen.getByTestId('askerInfoEnquiry')).toBeDefined();
+	});
+
+	it('resolves the advice-seeker profile for an enquiry that already has a room', () => {
+		renderAt(
+			generatePath(
+				'/sessions/consultant/sessionPreview/:groupId/:id/:subRoute?',
+				{
+					groupId: MATRIX_ROOM_ID,
+					id: '3363',
+					subRoute: 'userProfile'
+				}
+			)
+		);
+		expect(screen.getByTestId('askerInfoEnquiry')).toBeDefined();
+	});
+
+	it('resolves the session itself when the menu closes back to the chat', () => {
+		renderAt(
+			generatePath(withRoom, {
+				groupId: MATRIX_ROOM_ID,
+				id: '3363',
+				subRoute: undefined
+			})
+		);
+		expect(screen.getByTestId('sessionView')).toBeDefined();
+	});
+
+	it('keeps the encoded room id addressable (no bare-colon regression)', () => {
+		const link = generatePath(withRoom, {
+			groupId: MATRIX_ROOM_ID,
+			id: '3363',
+			subRoute: 'userProfile'
+		});
+		expect(link).toContain('%3A');
+		expect(link).not.toContain(':matrix.oriso.org');
 	});
 });

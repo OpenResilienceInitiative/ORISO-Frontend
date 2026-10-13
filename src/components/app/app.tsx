@@ -138,8 +138,6 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 	const settings = useAppConfig();
 
 	const [startWebsocket, setStartWebsocket] = useState<boolean>(false);
-	const [disconnectWebsocket, setDisconnectWebsocket] =
-		useState<boolean>(false);
 	const [failedPreCondition, setFailedPreCondition] =
 		useState(preConditionsMet());
 
@@ -155,11 +153,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<CallProvider>
 					<MatrixClientProvider>
 						<TenantThemingLoader />
-						{startWebsocket && (
-							<WebsocketHandler
-								disconnect={disconnectWebsocket}
-							/>
-						)}
+						{startWebsocket && <WebsocketHandler />}
 						<Suspense fallback={<Loading />}>
 							<Routes>
 								{settings.urls.landingpage !== '/' && (
@@ -254,7 +248,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 												setStartWebsocket(true)
 											}
 											onLogout={() =>
-												setDisconnectWebsocket(true)
+												setStartWebsocket(false)
 											}
 										/>
 									}

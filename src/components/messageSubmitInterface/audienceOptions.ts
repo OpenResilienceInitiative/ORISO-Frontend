@@ -11,8 +11,21 @@
  * See OpenResilienceInitiative/ORISO-Frontend#894 (rule D).
  */
 
+import { isPracticeId } from '../../practice/practiceIds';
+
 /** Sentinel option value meaning "everyone in this conversation". */
 export const AUDIENCE_ALL = '__all__';
+
+/**
+ * Where the selection of one chat is remembered; empty means "do not store".
+ * Practice cases never persist.
+ */
+export const audienceSelectionStorageKeyFor = (
+	sessionId: number | undefined
+): string =>
+	!sessionId || isPracticeId(sessionId)
+		? ''
+		: `oriso.audienceSelection.${sessionId}`;
 
 /**
  * What a recipient *is*, decided while the options are built rather than
@@ -266,9 +279,24 @@ export const buildAudienceRoster = ({
  * consultant who is also supervising this conversation is a moderator here,
  * and the icon has to say the more restrictive thing.
  */
+/**
+ * Kind for a self-help member no roster entry matches. Only once counsellor
+ * identities are resolved may the rest count as clients; otherwise an
+ * unmatched counsellor could land in "all clients".
+ */
+export const unmatchedMemberKind = (
+	isSelfHelpGroup: boolean,
+	directoryState: 'loading' | 'ready' | 'error' | 'unavailable'
+): AudienceKind =>
+	isSelfHelpGroup &&
+	(directoryState === 'ready' || directoryState === 'unavailable')
+		? 'asker'
+		: 'person';
+
 export const classifyAudienceKind = (
 	value: string,
-	roster: AudienceRoster
+	roster: AudienceRoster,
+	fallback: AudienceKind = 'person'
 ): AudienceKind => {
 	if (value === AUDIENCE_ALL) {
 		return 'all';
@@ -283,7 +311,7 @@ export const classifyAudienceKind = (
 	if (keys.some((key) => roster.consultant.has(key))) {
 		return 'consultant';
 	}
-	return 'person';
+	return fallback;
 };
 
 /**

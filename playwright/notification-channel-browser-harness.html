@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Isolated notification channel contract fixture</title>
+	</head>
+	<body>
+		<h1>Notification channel fixture</h1>
+		<label
+			><input id="banner" type="checkbox" checked /> Browser banner</label
+		>
+		<label
+			><input id="sound" type="checkbox" checked /> Notification
+			sound</label
+		>
+		<label
+			><input id="email" type="checkbox" /> Legacy Matrix email
+			flag</label
+		>
+		<label><input id="mute" type="checkbox" /> Mute this device</label>
+		<label
+			><input id="permission" type="checkbox" checked /> Browser
+			permission</label
+		>
+		<button id="message">Emit message for advice seeker</button>
+		<button id="unmapped">Emit existing mail-unmapped event</button>
+		<button id="unknown">Emit message for unknown recipient</button>
+		<output id="result" aria-live="polite">Preparing fixture</output>
+		<script
+			type="module"
+			src="/playwright/notification-channel-browser-harness.ts"
+		></script>
+	</body>
+</html>

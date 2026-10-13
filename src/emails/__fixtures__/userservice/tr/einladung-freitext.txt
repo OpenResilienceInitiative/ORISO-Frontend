@@ -1,0 +1,19 @@
+{{subject}}
+================================================================
+
+{{bodyText}}
+
+{{ctaBlock}}
+
+{{assuranceBlock}}
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{offeringName}}, {{operatorName}} tarafından sunulur.
+
+Veri koruma: {{privacyUrl}}
+Künye: {{imprintUrl}}
+
+{{footerNote}}

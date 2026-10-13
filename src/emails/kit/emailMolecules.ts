@@ -22,6 +22,7 @@ import {
 	emailFootnoteStyle,
 	emailHeadline,
 	emailLogoLockup,
+	emailLogoIsWide,
 	emailTextLink
 } from './emailAtoms';
 import {
@@ -37,7 +38,10 @@ const G = emailSpace.gutter;
 
 /** Logo and platform name, sitting above the card on the bare canvas. */
 export const emailHeaderBar = (brand: EmailBrand): string =>
-	emailBlock(emailLogoLockup(brand), { padding: [0, G, 20, G] });
+	emailBlock(emailLogoLockup(brand), {
+		padding: [0, G, 20, G],
+		className: `logo-header${emailLogoIsWide(brand) ? ' logo-header-wide' : ''}`
+	});
 
 /** The accent stroke plus the headline it belongs to. */
 export const emailTitleGroup = (headline: string, brand: EmailBrand): string =>
@@ -48,12 +52,17 @@ export const emailTitleGroup = (headline: string, brand: EmailBrand): string =>
  * Body copy. The final paragraph gets the larger bottom gap because whatever
  * follows it (panel or button) starts a new visual group.
  */
-export const emailProse = (paragraphs: string[]): string =>
+export const emailProse = (
+	paragraphs: string[],
+	wrapLongTokens = false
+): string =>
 	paragraphs
 		.map((text, index) =>
 			emailBlock(emailEscape(text), {
 				padding: [0, G, index === paragraphs.length - 1 ? 28 : 16, G],
-				style: emailBodyTextStyle()
+				style:
+					emailBodyTextStyle() +
+					(wrapLongTokens ? ';word-break:break-word' : '')
 			})
 		)
 		.join('');

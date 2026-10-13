@@ -1,3 +1,4 @@
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { Avatar, Box, Button, Chip, Link, Typography } from '@mui/material';
 import * as React from 'react';
 import {
@@ -6,6 +7,7 @@ import {
 	useContext,
 	useCallback,
 	useMemo,
+	useSyncExternalStore,
 	FormEvent
 } from 'react';
 import {
@@ -32,13 +34,18 @@ import {
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import {
 	redirectToApp,
+	redirectToLogin,
 	getPostRegistrationGroupChatId,
 	getPostRegistrationSessionId,
 	POST_REGISTRATION_LOADER_KEY
 } from '../../components/registration/autoLogin';
 import { PreselectionBox } from './preselectionBox/PreselectionBox';
 import { endpoints } from '../../resources/scripts/endpoints';
-import { apiGetAskerSessionList, apiPostRegistration } from '../../api';
+import {
+	accountExistsAfterTimeout,
+	apiGetAskerSessionList,
+	apiPostRegistration
+} from '../../api';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { REGISTRATION_DATA_VALIDATION } from './registrationDataValidation';
 import {
@@ -56,16 +63,37 @@ import {
 } from './topicSearch/RegistrationTopicSearchContext';
 import { RegistrationStepNav } from './registrationStepNav/RegistrationStepNav';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
+import { RegistrationCompletionProvider } from './consentCompletion/RegistrationCompletionContext';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import {
 	getRegistrationTopicDisplay,
 	getRegistrationTopicIconForGroup,
 	registrationMd3
 } from './registrationDesign/registrationDesign';
 import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import { stageAccountCreatedLogin } from './accountCreatedLogin';
+import {
+	clearRegistrationSubmitting,
+	isRegistrationSubmitting,
+	markRegistrationSubmitting,
+	subscribeRegistrationSubmitting
+} from './registrationSubmission';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
+import { GroupInviteEntry } from './groupInviteEntry/GroupInviteEntry';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
+import {
+	GroupInviteLoadError,
+	GroupInviteLoading
+} from './groupInviteEntry/GroupInviteLoadError';
+import {
+	getGroupJoin,
+	resolveGroupInviteEntry
+} from './groupInviteEntry/groupInviteEntryState';
+import { parseGroupChatInviteId } from '../groupChat/groupChatInviteLink';
+import { TemporaryJoinToggle } from './TemporaryJoinToggle';
 
 /**
  * This type of registration is currently not supporting:
@@ -80,6 +108,27 @@ import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
  */
 
 const registrationMaxStepSessionStorageKey = 'registrationMaxStepReached';
+
+/**
+ * Clears what the finished registration left behind and asks the app for the
+ * welcome animation. Every write is best-effort: Web Storage throws when it is
+ * disabled or full, and the account exists either way — a person must not be
+ * held back from their counselling session because a browser refused to forget
+ * a draft. The in-memory draft is cleared outside the guard; it cannot throw.
+ */
+const forgetRegistrationDraft = () => {
+	clearAccountDataDraft();
+	try {
+		sessionStorage.removeItem(registrationSessionStorageKey);
+		sessionStorage.removeItem(registrationMaxStepSessionStorageKey);
+		// Skip the manual "registration successful" overlay: flag the app to
+		// play the welcome loading animation and go straight into the chat
+		// room (autoLogin already ran inside apiPostRegistration).
+		sessionStorage.setItem(POST_REGISTRATION_LOADER_KEY, 'true');
+	} catch {
+		/* non-fatal — the app still opens, just without the animation */
+	}
+};
 
 export const Registration = () => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
@@ -115,14 +164,30 @@ export const Registration = () => {
 		updateRegistrationData,
 		registrationData,
 		availableSteps,
-		registrationConsultingType
+		registrationConsultingType,
+		hasRegistrationDataError,
+		retryRegistrationData
 	} = useContext(RegistrationContext);
-	const { consultant: preselectedConsultant } = useContext(UrlParamsContext);
+	const { consultant: preselectedConsultant, agency: urlParamsAgency } =
+		useContext(UrlParamsContext);
 	const { tenant } = useContext(TenantContext);
 	const { locale } = useContext(LocaleContext);
 
 	const [stepData, setStepData] = useState<Partial<RegistrationData>>({});
-	const [isRegistering, setIsRegistering] = useState<boolean>(false);
+	/* Read from the submission module, not held here: this screen is remounted
+	   while the account is being created (see `registrationSubmission`), and
+	   local state starts over at `false` — putting the account form, password
+	   and all, back in front of someone who has already registered.
+
+	   Subscribed rather than sampled once, because the submit can also *fail*
+	   after such a remount: the `catch` then runs in the closure of the screen
+	   that is gone, and a screen holding a stale `true` would keep the handover
+	   up with no way back to the form. */
+	const isRegistering = useSyncExternalStore(
+		subscribeRegistrationSubmitting,
+		isRegistrationSubmitting,
+		isRegistrationSubmitting
+	);
 	// Set by the topic step while mounted; the header shows the search only then.
 	const [topicSearch, setTopicSearch] =
 		useState<RegistrationTopicSearchApi | null>(null);
@@ -141,14 +206,39 @@ export const Registration = () => {
 	   it is a decision about *this* screen, not a value that is registered, and
 	   the account draft already carries the minted password across steps. */
 	const groupChatId = getPostRegistrationGroupChatId(location.search);
+	const inviteAgencyId = new URLSearchParams(location.search).get('aid');
 	const isAccountDataStep = step === 'account-data';
-	const canJoinTemporarily = Boolean(groupChatId) && isAccountDataStep;
+	/* The backend accepts `temporary` only with a valid group invite
+	   (UserService#1247): no `aid`, or another agency, is an ordinary
+	   registration without this way on. */
+	const canJoinTemporarily =
+		isAccountDataStep &&
+		Boolean(
+			getGroupJoin({
+				gcid: groupChatId,
+				aid: inviteAgencyId,
+				agencyId: registrationData?.agency?.id
+			})
+		);
+	/* A group link without the Beratungsstelle id (`aid`) cannot be joined
+	   without an account: the backend refuses `temporary` then. The toggle
+	   stays visible but disabled, with the reason beside it, so the person
+	   is not left wondering why the option from the invite is missing. */
+	const inviteLinkIncomplete =
+		isAccountDataStep &&
+		Boolean(parseGroupChatInviteId(groupChatId)) &&
+		!inviteAgencyId?.trim();
+	const showTemporaryToggle = canJoinTemporarily || inviteLinkIncomplete;
 	const [temporaryJoinChosen, setTemporaryJoinChosen] =
 		useState<boolean>(false);
-	const temporaryJoin = canJoinTemporarily && temporaryJoinChosen;
+	const temporaryJoin =
+		canJoinTemporarily && !inviteLinkIncomplete && temporaryJoinChosen;
 	const temporaryToggleLabel = temporaryJoin
 		? t('registration.account.temporary.toggleOff')
 		: t('registration.account.temporary.toggleOn');
+	const temporaryToggleHint = inviteLinkIncomplete
+		? t('registration.account.temporary.incompleteLink')
+		: undefined;
 	/* The way on is the same action either way — only what it is called
 	   changes, because "Registrieren" would name something that is not
 	   happening. */
@@ -157,6 +247,39 @@ export const Registration = () => {
 		: t('registration.register');
 	const toggleTemporaryJoin = useCallback(
 		() => setTemporaryJoinChosen((chosen) => !chosen),
+		[]
+	);
+
+	/* Correction (#1499): the comment above describes the fallback only. The
+	   #1289 link variant — no stepper, no chips — is `GroupInviteEntry`, shown
+	   when the link also names the agency (`aid`) and the topic follows from
+	   it. Without that the four steps below still run, with this toggle. */
+	const inviteEntry = resolveGroupInviteEntry({
+		gcid: groupChatId,
+		aid: inviteAgencyId,
+		agency:
+			urlParamsAgency &&
+			String(urlParamsAgency.id) === inviteAgencyId?.trim()
+				? urlParamsAgency
+				: null,
+		mainTopic: registrationData?.mainTopic,
+		stepNames: availableSteps.map(({ name }) => name),
+		consultingTypeReady:
+			!urlParamsAgency?.consultingType ||
+			registrationConsultingType != null
+	});
+	/* Someone joining the group through the steps sees the group's words
+	   while the registration runs, not the counselling enquiry's (#1499). */
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
+	/* The entry opens on 0a (temporary join); "Konto anlegen" leads to 0b. */
+	const [inviteWithAccount, setInviteWithAccount] = useState<boolean>(false);
+	/* The minted password is never shown, so nobody can log in again once the
+	   browser is closed; the backend deletes such an account later
+	   (ORISO-UserService#1001). */
+	const joinsTemporarily =
+		inviteEntry === 'entry' ? !inviteWithAccount : temporaryJoin;
+	const toggleInviteWithAccount = useCallback(
+		() => setInviteWithAccount((withAccount) => !withAccount),
 		[]
 	);
 
@@ -268,6 +391,13 @@ export const Registration = () => {
 		}),
 		[registrationData, stepData]
 	);
+	// Same data the payload reads, so the copy and the request agree.
+	const joinsTheGroup =
+		getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedRegistrationData.agency?.id
+		}) !== undefined;
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
@@ -452,6 +582,10 @@ export const Registration = () => {
 	);
 
 	useEffect(() => {
+		// The invite entry asks for nothing the steps would bounce back to.
+		if (inviteEntry === 'entry' || inviteEntry === 'pending') {
+			return;
+		}
 		// Check if mandatory fields from previous steps are missing
 		const missingPreviousSteps = checkForStepsWithMissingMandatoryFields()
 			.sort()
@@ -467,7 +601,8 @@ export const Registration = () => {
 		checkForStepsWithMissingMandatoryFields,
 		navigate,
 		makeStepUrl,
-		currStepIndex
+		currStepIndex,
+		inviteEntry
 	]);
 
 	useEffect(() => {
@@ -509,6 +644,11 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		const groupJoin = getGroupJoin({
+			gcid: groupChatId,
+			aid: inviteAgencyId,
+			agencyId: mergedData.agency?.id
+		});
 		const data = {
 			...mergedData,
 			mainTopicId: selectedTopic?.id?.toString(),
@@ -525,7 +665,20 @@ export const Registration = () => {
 			),
 			...(preselectedConsultant && !preselectedConsultant.absent
 				? { consultantId: preselectedConsultant?.consultantId }
-				: {})
+				: {}),
+			/* Joining a self-help group is not a request for counselling: the
+			   backend assigns the group and opens no enquiry. */
+			...(groupJoin
+				? {
+						groupChatId: groupJoin.chatId,
+						...(groupJoin.inviteToken
+							? { groupChatInviteToken: groupJoin.inviteToken }
+							: {})
+					}
+				: {}),
+			// Never temporary without the group: the backend answers 400.
+			temporary:
+				Boolean(groupJoin) && joinsTemporarily && !inviteLinkIncomplete
 		};
 
 		if (
@@ -533,26 +686,33 @@ export const Registration = () => {
 				REGISTRATION_DATA_VALIDATION[item].validation(data[item])
 			)
 		) {
-			setIsRegistering(true);
+			markRegistrationSubmitting();
+			/* The account either exists or it does not, and only the request
+			   below decides that. Everything after it is tidying up and
+			   leaving; a failure there must never be reported as a failed
+			   registration, or the form comes back and invites a second
+			   account for a person who already has one (CodeRabbit on #1514).
+			   The automatic login is part of that "everything after": it runs
+			   inside `apiPostRegistration`, after the account was created, and
+			   shares its promise — which is why the account is marked through
+			   the callback rather than in `then`, one step too late. */
+			let accountCreated = false;
 			apiPostRegistration(
 				endpoints.registerAsker,
 				data,
 				settings.multitenancyWithSingleDomainEnabled,
-				tenant
+				tenant,
+				() => {
+					accountCreated = true;
+				}
 			)
 				.then(async () => {
-					sessionStorage.removeItem(registrationSessionStorageKey);
-					sessionStorage.removeItem(
-						registrationMaxStepSessionStorageKey
-					);
-					clearAccountDataDraft();
-					// Skip the manual "registration successful" overlay: flag the app
-					// to play the welcome loading animation and go straight into the
-					// chat room (autoLogin already ran inside apiPostRegistration).
-					sessionStorage.setItem(
-						POST_REGISTRATION_LOADER_KEY,
-						'true'
-					);
+					/* Best-effort, every one of them: Web Storage throws when
+					   it is disabled or full (Safari's private mode is the
+					   classic), and none of this is worth not arriving in the
+					   app for. The welcome animation is the only thing lost,
+					   and only if its key is the one that failed. */
+					forgetRegistrationDraft();
 					let sessionId: string | undefined;
 					try {
 						sessionId = getPostRegistrationSessionId(
@@ -561,20 +721,41 @@ export const Registration = () => {
 					} catch {
 						sessionId = undefined;
 					}
-					/* Document load, not a client-side navigate (same cause as
-					   #1402): under a React transition the registration form
-					   stays painted while the URL already reads the app route,
-					   and the user is stuck on a form whose User-ID is now
-					   taken. The welcome animation survives the load via
-					   POST_REGISTRATION_LOADER_KEY. */
+					/* Keep a document load for both registration handover and
+					   the browser's password-save signal (#1208, #1402).
+					   A client-side transition can leave the submitted form
+					   painted while the app URL already shows. The welcome
+					   animation survives via POST_REGISTRATION_LOADER_KEY. */
 					redirectToApp(
 						getPostRegistrationGroupChatId(location.search),
 						{ sessionId }
 					);
 				})
-				.catch((error) => {
+				.catch(async (error) => {
 					// console.error('Registration failed:', error);
-					setIsRegistering(false);
+					if (
+						accountCreated ||
+						(await accountExistsAfterTimeout(error, data.username))
+					) {
+						/* The account is real; what failed is the automatic
+						   login or the way into the app. Putting the form back
+						   would offer a second registration to someone who
+						   already has one, and keeping the handover up would
+						   leave them on "Fast geschafft." for good — nothing
+						   else ends it. The login is the step that can still
+						   work, and the flag stays set until that load. The
+						   login page is told why the person is there and which
+						   User-ID they chose — never the password (#1533). */
+						stageAccountCreatedLogin(data.username || '');
+						redirectToLogin();
+						return;
+					}
+					clearRegistrationSubmitting();
+					const dpaNotice = getCounsellingDpaNotification(error, t);
+					if (dpaNotice) {
+						addNotification(dpaNotice);
+						return;
+					}
 					addNotification({
 						notificationType: NOTIFICATION_TYPE_ERROR,
 						title: t('registration.errors.ups.title'),
@@ -584,6 +765,7 @@ export const Registration = () => {
 					});
 				});
 		} else {
+			clearRegistrationSubmitting();
 			addNotification({
 				notificationType: NOTIFICATION_TYPE_ERROR,
 				title: t('registration.errors.ups.title'),
@@ -604,7 +786,11 @@ export const Registration = () => {
 		isRegistering,
 		availableSteps,
 		registrationConsultingType,
-		location.search
+		location.search,
+		groupChatId,
+		inviteAgencyId,
+		joinsTemporarily,
+		inviteLinkIncomplete
 	]);
 
 	const handleSubmit = useCallback(
@@ -627,6 +813,39 @@ export const Registration = () => {
 			onRegisterClick
 		]
 	);
+
+	if (inviteEntry === 'pending') {
+		return hasRegistrationDataError && retryRegistrationData ? (
+			<GroupInviteLoadError
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				onRetry={retryRegistrationData}
+			/>
+		) : (
+			<GroupInviteLoading
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+			/>
+		);
+	}
+
+	if (inviteEntry === 'entry') {
+		return (
+			<GroupInviteEntry
+				stage={<Stage hasAnimation={isFirstVisit} />}
+				gcid={groupChatId}
+				aid={inviteAgencyId}
+				temporary={!inviteWithAccount}
+				onToggleTemporary={toggleInviteWithAccount}
+				onChange={setStepData}
+				onJoin={onRegisterClick}
+				joinDisabled={Boolean(disabledNextButton) || isRegistering}
+				busy={isRegistering}
+			/>
+		);
+	}
 
 	return (
 		<>
@@ -689,6 +908,11 @@ export const Registration = () => {
 								forcedState="preparing"
 								variant="inline"
 								onEnter={() => undefined}
+								copy={
+									joinsTheGroup
+										? groupJoinHandoverCopy
+										: undefined
+								}
 							/>
 						) : activeStep ? (
 							<>
@@ -698,247 +922,322 @@ export const Registration = () => {
 										content="noindex"
 									></meta>
 								</Helmet>
-								<form
-									onSubmit={handleSubmit}
-									// Part of the same chain: a plain block form
-									// would swallow the growth again.
-									style={{
-										flex: 1,
-										minHeight: 0,
-										display: 'flex',
-										flexDirection: 'column'
-									}}
-									data-cy="registration-form"
-									data-cy-step={step}
-									data-cy-steps={availableSteps
-										.map(({ name }) => name)
-										.join(',')}
-								>
-									<Box
-										sx={{
-											// The stage column is a flex column that
-											// fills the viewport, but every box below
-											// it defaulted to `flex: 0 1 auto`, so the
-											// step body stopped at its own height and
-											// the leftover space was dead. Passing the
-											// growth down lets a step centre itself in
-											// what is actually left (see the postcode
-											// step) without anyone computing a height.
+								<RegistrationCompletionProvider>
+									<form
+										onSubmit={handleSubmit}
+										// Part of the same chain: a plain block form
+										// would swallow the growth again.
+										style={{
 											flex: 1,
 											minHeight: 0,
 											display: 'flex',
-											flexDirection: 'column',
-											marginBottom: {
-												xs: '144px',
-												sm: '112px'
-											}
+											flexDirection: 'column'
 										}}
+										data-cy="registration-form"
+										data-cy-step={step}
+										data-cy-steps={availableSteps
+											.map(({ name }) => name)
+											.join(',')}
 									>
-										<PreselectionBox hasDrawer={false} />
-										<RegistrationHeader
-											currentStepName={step}
-											visibleStepNames={availableSteps.map(
-												({ name }) => name
-											)}
-											clickableStepNames={
-												clickableStepperStepNames
-											}
-											onStepClick={onStepperClick}
-											chips={headerChips}
-											fullBleed
-										/>
-
 										<Box
 											sx={{
-												'flex': 1,
-												'minHeight': 0,
-												'display': 'flex',
-												'flexDirection': 'column',
-												'width': '100%',
-												'maxWidth': '780px',
-												'mx': 'auto',
-												'px': { xs: 2, sm: 3, lg: 4 },
-												// The band above is opaque and sits
-												// flush; without this the first line of
-												// every step starts hard against its
-												// lower edge.
-												'pt': 1.5,
-												'& > *': { minHeight: 0 }
+												// The stage column is a flex column that
+												// fills the viewport, but every box below
+												// it defaulted to `flex: 0 1 auto`, so the
+												// step body stopped at its own height and
+												// the leftover space was dead. Passing the
+												// growth down lets a step centre itself in
+												// what is actually left (see the postcode
+												// step) without anyone computing a height.
+												flex: 1,
+												minHeight: 0,
+												display: 'flex',
+												flexDirection: 'column',
+												marginBottom: {
+													xs: '144px',
+													sm: '112px'
+												}
 											}}
 										>
-											{(() => {
-												const StepComponent =
-													activeStep.component;
-												return (
-													<StepComponent
-														key={`${activeStep.name}-${clearSelectionVersion}`}
-														onChange={setStepData}
-														onNextClick={
-															onNextClick
-														}
-														nextStepUrl={
-															nextStepUrl
-														}
-														temporary={
-															temporaryJoin
-														}
-													/>
-												);
-											})()}
+											<PreselectionBox
+												hasDrawer={false}
+											/>
+											<RegistrationHeader
+												currentStepName={step}
+												visibleStepNames={availableSteps.map(
+													({ name }) => name
+												)}
+												clickableStepNames={
+													clickableStepperStepNames
+												}
+												onStepClick={onStepperClick}
+												chips={headerChips}
+												fullBleed
+											/>
+
+											<Box
+												sx={{
+													'flex': 1,
+													'minHeight': 0,
+													'display': 'flex',
+													'flexDirection': 'column',
+													'width': '100%',
+													'maxWidth': '780px',
+													'mx': 'auto',
+													'px': {
+														xs: 2,
+														sm: 3,
+														lg: 4
+													},
+													// The band above is opaque and sits
+													// flush; without this the first line of
+													// every step starts hard against its
+													// lower edge.
+													'pt': 1.5,
+													'& > *': { minHeight: 0 }
+												}}
+											>
+												{(() => {
+													const StepComponent =
+														activeStep.component;
+													return (
+														<StepComponent
+															key={`${activeStep.name}-${clearSelectionVersion}`}
+															onChange={
+																setStepData
+															}
+															onNextClick={
+																onNextClick
+															}
+															nextStepUrl={
+																nextStepUrl
+															}
+															temporary={
+																temporaryJoin
+															}
+														/>
+													);
+												})()}
+											</Box>
 										</Box>
-									</Box>
-									{/* The bar itself — fixed, translucent, hairline,
+										{/* The bar itself — fixed, translucent, hairline,
 								    safe-area — is `RegistrationFooter`. This
 								    screen hands in its whole navigation as
 								    children and takes no `primary`: the wide
 								    layout's next button and the compact step
 								    nav below already are the way on. */}
-									<RegistrationFooter animateIn>
-										<Box
-											sx={{
-												width: '100%',
-												maxWidth: '780px',
-												minWidth: 0,
-												// The bar spans the content column;
-												// auto margins keep this centred in
-												// it, as the bar's own
-												// `justifyContent` used to.
-												mx: 'auto'
-											}}
-										>
+										<RegistrationFooter animateIn>
 											<Box
 												sx={{
-													display: {
-														xs: 'none',
-														sm: 'grid'
-													},
-													gridTemplateColumns:
-														'auto minmax(0, 1fr) auto',
-													alignItems: 'center',
-													columnGap: {
-														sm: 2.5,
-														md: 3
-													},
-													rowGap: 1
+													width: '100%',
+													maxWidth: isAccountDataStep
+														? 'none'
+														: '780px',
+													minWidth: 0,
+													// The bar spans the content column;
+													// auto margins keep this centred in
+													// it, as the bar's own
+													// `justifyContent` used to.
+													mx: 'auto'
 												}}
 											>
-												<RegistrationFooterBackLink
-													to={prevStepUrl}
-													onClick={onPrevClick}
-													label={t(
-														'registration.back'
-													)}
-												/>
-												<RegistrationFooterChips
-													chips={footerChips}
-													selectedPrefix={
-														selectedPrefix
-													}
-													emptyLabel={
-														footerEmptyLabel
-													}
-												/>
 												<Box
 													sx={{
-														display: 'flex',
+														display: {
+															xs: 'none',
+															sm: 'grid'
+														},
+														gridTemplateColumns:
+															isAccountDataStep
+																? 'minmax(0, 1fr)'
+																: 'auto minmax(0, 1fr) auto',
 														alignItems: 'center',
-														gap: 2,
-														minWidth: 0
+														columnGap: {
+															sm: 2.5,
+															md: 3
+														},
+														rowGap: 1
 													}}
 												>
-													{canJoinTemporarily && (
-														<TemporaryJoinToggle
-															label={
-																temporaryToggleLabel
-															}
+													{!isAccountDataStep && (
+														<RegistrationFooterBackLink
+															to={prevStepUrl}
 															onClick={
-																toggleTemporaryJoin
+																onPrevClick
 															}
-															disabled={
-																isRegistering
+															label={t(
+																'registration.back'
+															)}
+														/>
+													)}
+													{!isAccountDataStep && (
+														<RegistrationFooterChips
+															chips={footerChips}
+															selectedPrefix={
+																selectedPrefix
+															}
+															emptyLabel={
+																footerEmptyLabel
 															}
 														/>
 													)}
-													<RegistrationFooterPrimaryButton
+													<Box
+														sx={{
+															display: 'flex',
+															flexDirection:
+																isAccountDataStep
+																	? 'column'
+																	: 'row',
+															alignItems:
+																isAccountDataStep
+																	? 'stretch'
+																	: 'center',
+															gap: 2,
+															minWidth: 0
+														}}
+													>
+														{showTemporaryToggle && (
+															<TemporaryJoinToggle
+																label={
+																	temporaryToggleLabel
+																}
+																onClick={
+																	toggleTemporaryJoin
+																}
+																disabled={
+																	isRegistering ||
+																	inviteLinkIncomplete
+																}
+																hint={
+																	temporaryToggleHint
+																}
+															/>
+														)}
+														{isAccountDataStep ? (
+															<RegistrationStepNav
+																prevStepUrl={
+																	currStepIndex ===
+																	0
+																		? null
+																		: prevStepUrl
+																}
+																onPrevClick={
+																	onPrevClick
+																}
+																backLabel={t(
+																	'registration.back'
+																)}
+																nextStepUrl={
+																	nextStepUrl
+																}
+																nextLabel={t(
+																	'registration.next'
+																)}
+																registerLabel={
+																	primaryActionLabel
+																}
+																registeringLabel={t(
+																	'registration.registering'
+																)}
+																disabledNext={
+																	disabledNextButton
+																}
+																isRegistering={
+																	isRegistering
+																}
+																testingAttribute="button-register"
+															/>
+														) : (
+															<RegistrationFooterPrimaryButton
+																nextStepUrl={
+																	nextStepUrl
+																}
+																disabledNextButton={
+																	disabledNextButton
+																}
+																isRegistering={
+																	isRegistering
+																}
+																registerLabel={
+																	primaryActionLabel
+																}
+																registeringLabel={t(
+																	'registration.registering'
+																)}
+																nextLabel={t(
+																	'registration.next'
+																)}
+															/>
+														)}
+													</Box>
+												</Box>
+												<Box
+													sx={{
+														display: {
+															xs: 'block',
+															sm: 'none'
+														}
+													}}
+												>
+													{/* F3: the picks live in the
+											    header chip row on mobile, so
+											    the footer is navigation only. */}
+													{showTemporaryToggle && (
+														<Box sx={{ mb: 1.25 }}>
+															<TemporaryJoinToggle
+																label={
+																	temporaryToggleLabel
+																}
+																onClick={
+																	toggleTemporaryJoin
+																}
+																disabled={
+																	isRegistering ||
+																	inviteLinkIncomplete
+																}
+																hint={
+																	temporaryToggleHint
+																}
+																fullWidth
+															/>
+														</Box>
+													)}
+													<RegistrationStepNav
+														prevStepUrl={
+															currStepIndex === 0
+																? null
+																: prevStepUrl
+														}
+														onPrevClick={
+															onPrevClick
+														}
+														backLabel={t(
+															'registration.back'
+														)}
 														nextStepUrl={
 															nextStepUrl
 														}
-														disabledNextButton={
-															disabledNextButton
-														}
-														isRegistering={
-															isRegistering
-														}
+														nextLabel={t(
+															'registration.next'
+														)}
 														registerLabel={
 															primaryActionLabel
 														}
 														registeringLabel={t(
 															'registration.registering'
 														)}
-														nextLabel={t(
-															'registration.next'
-														)}
+														disabledNext={
+															disabledNextButton
+														}
+														isRegistering={
+															isRegistering
+														}
 													/>
 												</Box>
 											</Box>
-											<Box
-												sx={{
-													display: {
-														xs: 'block',
-														sm: 'none'
-													}
-												}}
-											>
-												{/* F3: the picks live in the
-											    header chip row on mobile, so
-											    the footer is navigation only. */}
-												{canJoinTemporarily && (
-													<Box sx={{ mb: 1.25 }}>
-														<TemporaryJoinToggle
-															label={
-																temporaryToggleLabel
-															}
-															onClick={
-																toggleTemporaryJoin
-															}
-															disabled={
-																isRegistering
-															}
-															fullWidth
-														/>
-													</Box>
-												)}
-												<RegistrationStepNav
-													prevStepUrl={
-														currStepIndex === 0
-															? null
-															: prevStepUrl
-													}
-													onPrevClick={onPrevClick}
-													backLabel={t(
-														'registration.back'
-													)}
-													nextStepUrl={nextStepUrl}
-													nextLabel={t(
-														'registration.next'
-													)}
-													registerLabel={
-														primaryActionLabel
-													}
-													registeringLabel={t(
-														'registration.registering'
-													)}
-													disabledNext={
-														disabledNextButton
-													}
-													isRegistering={
-														isRegistering
-													}
-												/>
-											</Box>
-										</Box>
-									</RegistrationFooter>
-								</form>
+										</RegistrationFooter>
+									</form>
+								</RegistrationCompletionProvider>
 							</>
 						) : (
 							<Navigate to={firstStepUrl} replace />
@@ -949,47 +1248,6 @@ export const Registration = () => {
 		</>
 	);
 };
-
-/**
- * The second way on for a link entry: join without a password, or go back to
- * creating a full account. It is a toggle, not a submit — it never leaves the
- * screen, it only changes what the screen is asking for.
- *
- * Painted by the theme's `outlined` MuiButton and nothing else, so it reads as
- * the quieter sibling of the primary without a second colour system beside it.
- */
-const TemporaryJoinToggle = ({
-	label,
-	onClick,
-	disabled,
-	fullWidth = false
-}: {
-	label: string;
-	onClick: () => void;
-	disabled?: boolean;
-	fullWidth?: boolean;
-}) => (
-	<Button
-		data-cy="button-temporary-join"
-		type="button"
-		variant="outlined"
-		disabled={disabled}
-		onClick={onClick}
-		fullWidth={fullWidth}
-		sx={{
-			borderRadius: '999px',
-			px: { xs: 2.5, sm: 3 },
-			py: 1.35,
-			fontSize: 16,
-			fontWeight: 600,
-			whiteSpace: 'nowrap',
-			overflow: 'hidden',
-			textOverflow: 'ellipsis'
-		}}
-	>
-		{label}
-	</Button>
-);
 
 const RegistrationFooterBackLink = ({
 	to,
@@ -1232,14 +1490,21 @@ const RegistrationFooterPrimaryButton = ({
 			{nextLabel}
 		</Button>
 	) : (
-		<Button
-			data-cy="button-register"
-			disabled={disabled}
-			variant="contained"
-			type={disabled ? 'button' : 'submit'}
-			sx={buttonSx}
-		>
-			{isRegistering ? registeringLabel : registerLabel}
-		</Button>
+		<Box sx={{ width: '100%', flex: 1, minWidth: 0 }}>
+			<HandoverGateButton
+				state={
+					isRegistering
+						? 'entering'
+						: disabled
+							? 'preparing'
+							: 'ready'
+				}
+				type={disabled ? 'button' : 'submit'}
+				label={isRegistering ? registeringLabel : registerLabel}
+				testingAttribute="button-register"
+				status=""
+				indeterminate={isRegistering}
+			/>
+		</Box>
 	);
 };

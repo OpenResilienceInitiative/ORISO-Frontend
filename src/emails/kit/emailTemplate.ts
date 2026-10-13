@@ -47,6 +47,8 @@ interface EmailContentBase {
 	headline: string;
 	/** One or more body paragraphs, in reading order. */
 	paragraphs: string[];
+	/** Allow long account identifiers to wrap in this mail's prose cells. */
+	wrapLongTokens?: boolean;
 	/**
 	 * Body copy the sender supplies already rendered, instead of `paragraphs`:
 	 * a mail whose text an operator wrote (the free-text invite). `html` is
@@ -122,7 +124,7 @@ export const renderEmailHtml = (
 		emailTitleGroup(content.headline, brand) +
 		(content.authoredBody
 			? emailAuthoredProse(content.authoredBody.html)
-			: emailProse(content.paragraphs)) +
+			: emailProse(content.paragraphs, content.wrapLongTokens)) +
 		(content.panel ? emailDataPanel(content.panel) : '') +
 		(content.code ? emailCodePanel(content.code) : '') +
 		(content.cta ? emailCallToAction(content.cta, brand) : '') +

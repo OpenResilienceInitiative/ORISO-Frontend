@@ -326,7 +326,7 @@ const sessionsDispatch = vi.fn();
 const renderItem = (
 	activeSession: any,
 	userData = makeUserData(),
-	{ rail = false }: { rail?: boolean } = {}
+	{ rail = false, index = 0 }: { rail?: boolean; index?: number } = {}
 ) => {
 	const sessionTypeValue = {
 		type: SESSION_LIST_TYPES.MY_SESSION,
@@ -363,7 +363,7 @@ const renderItem = (
 									<SessionListRailProvider rail={rail}>
 										<SessionListItemComponent
 											defaultLanguage="de"
-											index={0}
+											index={index}
 										/>
 									</SessionListRailProvider>
 								</LegalLinksContext.Provider>
@@ -655,5 +655,35 @@ describe('SessionListItemComponent — collapsed rail row', () => {
 		const pill = document.querySelector('[data-cy="session-rail-pill"]');
 		expect(pill).not.toBeNull();
 		expect(pill.textContent).toContain('Test group chat');
+	});
+});
+
+describe('SessionListItemComponent — product-tour anchor (FE#1622)', () => {
+	const card = () => document.querySelector('[data-cy="session-list-item"]');
+	const enquiry = () => ({
+		...makeSession(),
+		isEnquiry: true,
+		isNonEmptyEnquiry: true,
+		isSession: true
+	});
+
+	it('marks the first enquiry card as enquiry-list-item', () => {
+		renderItem(enquiry());
+
+		expect(card()?.getAttribute('data-tour-target')).toBe(
+			'enquiry-list-item'
+		);
+	});
+
+	it('does not mark an enquiry further down the list', () => {
+		renderItem(enquiry(), makeUserData(), { index: 1 });
+
+		expect(card()?.hasAttribute('data-tour-target')).toBe(false);
+	});
+
+	it('does not mark a first card that is not an enquiry', () => {
+		renderItem(makeSession());
+
+		expect(card()?.hasAttribute('data-tour-target')).toBe(false);
 	});
 });

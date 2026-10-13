@@ -5,7 +5,10 @@ import {
 	type MatrixEvent
 } from 'matrix-js-sdk';
 import { DecryptionFailureCode } from 'matrix-js-sdk/lib/crypto-api';
-import { getMatrixClientService } from '../../services/matrixClientRegistry';
+import {
+	getMatrixClientService,
+	isSandboxedMatrixClient
+} from '../../services/matrixClientRegistry';
 
 /**
  * "Unable To Decrypt" (UTD) failure tracking (OBS-P9, ORISO-Helm#62,
@@ -230,7 +233,11 @@ export const initUtdTracking = (): void => {
 			try {
 				const client = getMatrixClientService()?.getClient?.() ?? null;
 
-				if (client === attachedClient) {
+				// Practice mode (FE#1622): keep counting on the real client.
+				if (
+					client === attachedClient ||
+					isSandboxedMatrixClient(client)
+				) {
 					return;
 				}
 

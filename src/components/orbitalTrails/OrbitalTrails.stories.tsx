@@ -12,7 +12,8 @@ const storySurface: React.CSSProperties = {
 };
 
 const meta = {
-	title: 'Experiments/OrbitalTrails',
+	id: 'experiments-orbitaltrails',
+	title: 'FEEDBACK/Orbital trails',
 	component: OrbitalTrails,
 	tags: ['autodocs'],
 	decorators: [
@@ -27,8 +28,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					"Canvas experiment based on Zevan Rosser's accumulating orbital trails. It uses the active Material 3 background and semantic colour roles.\n\n" +
-					'Not wired into any production loading state yet — this is a design candidate for the registration/agency-selection loading animation (see FE#1067 follow-up). Storybook-only for now.'
+					"Canvas renderer based on Zevan Rosser's accumulating orbital trails. The shared Loading component uses the single brand orbit for app and entry-flow loading. This gallery also shows the renderer's other variants."
 			}
 		}
 	},
@@ -47,10 +47,11 @@ type Story = StoryObj<typeof meta>;
 export const LiveEvolution: Story = {};
 
 export const AsLoadingIndicator: Story = {
-	name: 'As a loading indicator (candidate)',
+	name: 'Shared loading orbit',
 	args: {
 		label: 'Wird geladen',
 		palette: 'brand',
+		variant: 'single',
 		warmupFrames: 40
 	},
 	decorators: [
@@ -75,7 +76,7 @@ export const AsLoadingIndicator: Story = {
 	parameters: {
 		docs: {
 			description: {
-				story: 'Sized and centered the way it would sit in a loading slot such as the registration agency-selection results panel. Not yet used there — this story is for design review only.'
+				story: 'The same single brand orbit used by the global Loading component and live-chat checking state.'
 			}
 		}
 	}

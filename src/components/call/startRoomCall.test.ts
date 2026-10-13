@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { enterPracticeMode, exitPracticeMode } from '../../practice';
 import { startRoomCall } from './startRoomCall';
 
 const SIDE_ROOM = '!supervision-side:oriso.invalid';
@@ -43,7 +44,24 @@ describe('startRoomCall', () => {
 	});
 
 	afterEach(() => {
+		exitPracticeMode();
 		vi.unstubAllGlobals();
+	});
+
+	it('starts nothing, asks for no device and says nothing while practising', async () => {
+		enterPracticeMode({ tourId: 'consultant-practice-accept' });
+
+		await startRoomCall({
+			roomId: CLIENT_ROOM,
+			isVideo: true,
+			isGroup: false,
+			notify,
+			getCallManager
+		});
+
+		expect(started).toEqual([]);
+		expect(notified).toEqual([]);
+		expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
 	});
 
 	/** The supervision call must target the side room's own Matrix room id. */

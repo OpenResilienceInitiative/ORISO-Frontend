@@ -314,23 +314,7 @@ $animation-easing-title: cubic-bezier(0, 0, 0.5, 1);
 	}
 
 	&__spinner {
-		animation-delay: 2s;
-		animation: hideSpinner 4s ease forwards;
 		margin: 0 auto;
-
-		@include breakpoint($fromXLarge) {
-			animation-duration: 2s;
-		}
-
-		@keyframes hideSpinner {
-			from {
-				opacity: 1;
-			}
-
-			to {
-				opacity: 0;
-			}
-		}
 	}
 
 	&__legalLinks {

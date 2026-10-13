@@ -185,24 +185,23 @@
 .caseHandoverInlineConsent {
 	display: flex;
 	justify-content: flex-start;
-	padding: 16px 16px 0;
+	padding: 16px 0 0;
 }
 
-/*
- * The 444px cap on `--systemNotification` is measured off a text-only notice
- * (App.Oriso 8498-32373). The consent notice is the one that carries a button
- * group, and its own frame — App.Oriso 9564-86125 — sizes the bubble
- * min 440 / max 720 so the answer pair fits on one line. Left at 444px the
- * group's stacking fallback fires on a desktop stream too, which is not the
- * layout that was signed off.
- */
-.caseHandoverInlineConsent--choice .messageItem__message--systemNotification {
-	// The wide message has room for the horizontal filled pair; the same bubble
-	// becomes fluid below that width and its existing ButtonGroup stacks.
-	width: min(720px, 100%);
-	min-width: min(440px, 100%);
-	max-width: min(720px, 100%);
-	container: case-handover-consent / inline-size;
+.caseHandoverInlineConsent {
+	.messageItem,
+	.messageItem__messageWrap,
+	.messageItem__content {
+		width: 100%;
+		min-width: 0;
+	}
+
+	.messageItem__message--systemNotification {
+		width: 100%;
+		min-width: 0;
+		max-width: 100%;
+		container: case-handover-consent / inline-size;
+	}
 }
 
 /* Figma 9596-35524: on a narrow message both answers are neutral outline
@@ -213,5 +212,195 @@
 		border-color: var(--m3-outline-variant, #c4c7c8);
 		background-color: transparent;
 		color: var(--m3-on-surface-variant, #444748);
+	}
+}
+
+.caseHandoverMessage__more {
+	align-self: flex-start;
+	margin-top: 12px;
+	padding: 8px 0;
+	border: 0;
+	background: transparent;
+	color: var(--m3-primary, #a5000a);
+	font: inherit;
+	font-weight: 500;
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+	}
+}
+
+.caseHandoverConsentInfo__sections {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 24px;
+
+	section {
+		min-width: 0;
+		text-align: left;
+	}
+
+	svg {
+		display: block;
+		width: 48px;
+		height: 48px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	h3 {
+		margin: 16px 0 10px;
+		font-weight: 600;
+		font-size: 16px;
+		line-height: 24px;
+	}
+
+	p {
+		margin: 0;
+		font-size: 14px;
+		line-height: 21px;
+	}
+
+	@media (width < 700px) {
+		grid-template-columns: 1fr;
+		gap: 20px;
+
+		section {
+			display: grid;
+			grid-template-columns: 40px 1fr;
+			column-gap: 16px;
+		}
+
+		svg {
+			grid-row: 1 / 3;
+			width: 40px;
+			height: 40px;
+		}
+
+		h3 {
+			margin: 0 0 6px;
+		}
+	}
+}
+
+.caseHandoverConsentInfo__recommendation {
+	border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+	padding-top: 16px;
+	margin: 20px 0 0;
+	font-size: 14px;
+	line-height: 21px;
+}
+
+/* Both structured message renderers inherit one rail from their shared host. */
+.caseHandoverInlineConsent {
+	.messageItem__messageWrap {
+		gap: var(--carimat-avatar-gap, 4px);
+	}
+
+	.messageItem__sideColumn--left {
+		margin-left: var(--carimat-avatar-ring-offset, -6px);
+	}
+
+	.messageItem__content {
+		margin-left: calc(-1 * var(--carimat-avatar-overlap, 24px));
+	}
+
+	.messageItem__systemNotificationHeaderText {
+		padding-left: var(--carimat-header-inset, 28px);
+	}
+}
+
+/* Optional overview uses quiet M3 roles; the chat consent controls stay intact. */
+.caseHandoverConsentInfo {
+	.m3Dialog__heroIcon {
+		color: var(--m3-secondary, #4c555f);
+	}
+
+	.caseHandoverConsentInfo__switchRow {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		border-top: 1px solid var(--m3-outline-variant, #c4c7c8);
+		padding-top: 16px;
+		margin-top: 20px;
+		font-size: 14px;
+		line-height: 20px;
+		font-weight: 500;
+	}
+
+	.caseHandoverConsentInfo__switch {
+		--m3-primary: var(--m3-secondary, #4c555f);
+		--switch-primary: var(--m3-secondary, #4c555f);
+		--switch-primary-container: var(--m3-on-secondary, #ffffff);
+		--switch-on-primary: var(--m3-on-secondary, #ffffff);
+		--switch-on-primary-container: var(
+			--m3-on-secondary-container,
+			#e7effc
+		);
+	}
+}
+
+/* Persisted informational grants share the same structured rail as their
+   following notification message; legacy system notices keep their measure. */
+.caseHandoverPersistedGrant .messageItem__messageWrap {
+	max-width: 100%;
+}
+
+/* Match the approved standalone notice's 4px head-to-bubble overlap. */
+.caseHandoverPersistedGrant {
+	.messageItem__systemNotificationHeaderText {
+		margin-bottom: 0;
+	}
+
+	.messageItem__sideColumnGroup--left {
+		translate: none;
+	}
+
+	.messageItem__message--systemNotification {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 4px 12px;
+		padding: 12px 16px;
+		border-radius: 4px 14px 14px 14px;
+	}
+
+	.caseHandoverMessage__body {
+		display: contents;
+	}
+
+	.caseHandoverMessage__body > p {
+		grid-column: 1 / -1;
+	}
+
+	.caseHandoverInformational__more {
+		grid-column: 1;
+		width: fit-content;
+		max-width: 100%;
+	}
+
+	.caseHandoverInformational__more .button__item {
+		min-width: 0;
+		max-width: 100%;
+		min-height: 44px;
+		height: auto;
+		padding: 8px 12px;
+		border-radius: 22px;
+		font: inherit;
+		font-weight: 500;
+		white-space: normal;
+	}
+
+	.messageItem__timeRail {
+		grid-column: 2;
+		align-self: end;
+		width: auto;
+		margin-top: 0;
+		padding-bottom: 10px;
+	}
+
+	.messageItem__messageTime {
+		padding-top: 0;
 	}
 }

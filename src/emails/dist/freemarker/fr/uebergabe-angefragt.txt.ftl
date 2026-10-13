@@ -1,0 +1,23 @@
+Une demande concernant votre accompagnement
+===========================================
+
+Une personne chargée de votre accompagnement demande votre accord pour un changement.
+
+Connectez-vous pour examiner la demande dans votre espace sécurisé.
+
+Examiner la demande:
+${requestUrl!''}
+
+----------------------------------------------------------------
+Vos messages sont chiffrés de bout en bout. Personne d’autre que vous et votre service de conseil ne peut les lire – nous non plus.
+
+${orgName!''}
+${orgAddress!''}
+${contactLine!''}
+
+${platformName!''} est un service proposé par ${orgName!''}.
+
+Protection des données: ${privacyUrl!''}
+Mentions légales: ${imprintUrl!''}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

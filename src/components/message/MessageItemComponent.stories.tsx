@@ -42,7 +42,10 @@ import {
 	phone390Globals,
 	tablet834Globals
 } from './messageStoryShell';
+import { StandingAccessPreferenceStoryFixture } from '../caseHandover/standingAccessPreferenceStoryFixture';
 import './message.styles.scss';
+import englishCatalogue from '../../resources/i18n/en/common.json';
+import frenchCatalogue from '../../resources/i18n/fr/common.json';
 
 /** The shape of a consultant-list entry the bubble reads names from. */
 type ConsultantListEntry = {
@@ -52,6 +55,8 @@ type ConsultantListEntry = {
 	consultantDisplayName?: string;
 	firstName?: string;
 	lastName?: string;
+	/** Legal-name label as `prepareConsultantDataForSelect` builds it. */
+	label?: string;
 };
 
 type MessageItemStoryParameters = {
@@ -345,6 +350,116 @@ export const AndroidCompactKebabTouchZone: Story = {
 	}
 };
 
+/** #1254: the last row must not stretch its controls into composer clearance. */
+export const LastMessageSideColumn: Story = {
+	name: 'Last message — avatar and menu beside bubble — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...mobileParameters,
+		docs: {
+			description: {
+				story: 'Incoming and outgoing messages above reserved composer space. Avatar and menu positions must follow their own message row, including after the menu opens.'
+			}
+		}
+	},
+	render: () => (
+		<div
+			data-testid="last-message-timeline"
+			style={{
+				height: 500,
+				overflowY: 'auto'
+			}}
+		>
+			<div
+				style={{
+					minHeight: 900,
+					paddingBottom: 196,
+					boxSizing: 'border-box'
+				}}
+			>
+				{[false, true].map((isMyMessage) => (
+					<MessageItemComponent
+						key={String(isMyMessage)}
+						{...mockMessageItemComponentProps({
+							_id: `side-column-${isMyMessage ? 'outgoing' : 'incoming'}`,
+							isMyMessage,
+							userId: isMyMessage
+								? MOCK_CONSULTANT_MATRIX_ID
+								: MOCK_ASKER_MATRIX_ID,
+							message: isMyMessage
+								? 'Danke, dass du dich meldest. Wir nehmen uns Zeit für deine Fragen.'
+								: 'Ich brauche Hilfe.'
+						})}
+						{...baseHandlers}
+					/>
+				))}
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		await waitForMessageEnterAnimation(canvasElement);
+		const verifyControls = () => {
+			const rows = canvasElement.querySelectorAll(
+				'.messageItem__messageWrap'
+			);
+			expect(rows.length).toBe(2);
+			rows.forEach((row) => {
+				const bubble = row.querySelector('.messageItem__message')!;
+				const column = row.querySelector('.messageItem__sideColumn')!;
+				const bubbleRect = bubble.getBoundingClientRect();
+				const rowRect = row.getBoundingClientRect();
+				const columnRect = column.getBoundingClientRect();
+				expect(
+					Math.abs(columnRect.top - rowRect.top)
+				).toBeLessThanOrEqual(1);
+				expect(
+					Math.abs(columnRect.bottom - rowRect.bottom)
+				).toBeLessThanOrEqual(1);
+				for (const selector of [
+					'.messageItem__avatar',
+					'.messageItem__kebabButton'
+				]) {
+					const control = row
+						.querySelector(selector)!
+						.getBoundingClientRect();
+					expect(control.top).toBeLessThan(bubbleRect.bottom + 40);
+					expect(control.bottom).toBeGreaterThan(bubbleRect.top - 40);
+				}
+			});
+		};
+		await waitFor(verifyControls);
+		const buttons = canvasElement.querySelectorAll<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		await userEvent.click(buttons[buttons.length - 1]);
+		await waitFor(verifyControls);
+		const lastButton = buttons[buttons.length - 1];
+		const timeline = within(canvasElement).getByTestId(
+			'last-message-timeline'
+		);
+		const menu = canvasElement.ownerDocument.querySelector<HTMLElement>(
+			'.messageItem__actionMenu'
+		)!;
+		await waitFor(() => {
+			const menuRect = menu.getBoundingClientRect();
+			const viewportHeight =
+				canvasElement.ownerDocument.defaultView!.innerHeight;
+			expect(menuRect.top).toBeGreaterThanOrEqual(0);
+			expect(menuRect.bottom).toBeLessThanOrEqual(viewportHeight);
+		});
+		const buttonTop = lastButton.getBoundingClientRect().top;
+		const menuTop = menu.getBoundingClientRect().top;
+		timeline.scrollTop = 100;
+		await waitFor(() => {
+			const buttonDelta =
+				lastButton.getBoundingClientRect().top - buttonTop;
+			const menuDelta = menu.getBoundingClientRect().top - menuTop;
+			expect(buttonDelta).toBeLessThan(-20);
+			expect(Math.abs(menuDelta - buttonDelta)).toBeLessThanOrEqual(2);
+		});
+	}
+};
+
 export const GroupIncoming: Story = {
 	name: 'Group incoming (initials avatar)',
 	parameters: {
@@ -416,6 +531,19 @@ export const SystemNotification: Story = {
 			message: mockSystemNotificationMessage
 		}),
 		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			const avatar = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__avatar--bot'
+			)!;
+			const title = canvasElement.querySelector<HTMLElement>(
+				'.messageItem__sendFailedTitle'
+			)!;
+			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
+				avatar.getBoundingClientRect().right + 8
+			);
+		});
 	}
 };
 
@@ -434,6 +562,15 @@ export const CaseHandoverGranted: Story = {
 			message: mockCaseHandoverGrantedMessage
 		}),
 		...baseHandlers
+	},
+	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		// Rendered inside the collapsed details panel.
+		await expect(
+			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
+		).toBeInTheDocument();
+		await expect(canvas.queryByText(/is ill|erkrankt/i)).toBeNull();
 	}
 };
 
@@ -619,6 +756,40 @@ export const IncomingWithReactions: Story = {
 	}
 };
 
+/** Un-reacting from the menu closes it and hands focus back to the kebab. */
+export const UnreactFromMenuReturnsFocus: Story = {
+	name: 'Un-react from menu — focus back on the kebab',
+	parameters: IncomingWithReactions.parameters,
+	args: {
+		...IncomingWithReactions.args,
+		onUnreact: fn()
+	},
+	play: async ({ canvasElement, args }) => {
+		const kebab = canvasElement.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		);
+		expect(kebab).not.toBeNull();
+		await userEvent.click(kebab!);
+		const mine = await waitFor(() => {
+			const button = document.querySelector<HTMLButtonElement>(
+				'.messageItem__actionMenuReactionEmoji--mine'
+			);
+			expect(button).not.toBeNull();
+			return button!;
+		});
+		await userEvent.click(mine);
+		expect(args.onUnreact).toHaveBeenCalledWith('$own-reaction-1');
+		await waitFor(() => {
+			expect(
+				document.querySelector(
+					'.messageItem__actionMenuReactionEmoji--mine'
+				)
+			).toBeNull();
+			expect(document.activeElement).toBe(kebab);
+		});
+	}
+};
+
 export const OutgoingWithReactions: Story = {
 	name: 'Outgoing with reactions (delivered)',
 	parameters: {
@@ -645,30 +816,85 @@ export const OutgoingWithReactions: Story = {
 async function assertReactionRailScrollsHorizontally(
 	canvasElement: HTMLElement
 ) {
-	await waitFor(() => {
-		const rail = canvasElement.querySelector(
-			'.messageItem__reactions'
-		) as HTMLElement | null;
-		expect(rail).toBeTruthy();
-		const pills = Array.from(
-			rail!.querySelectorAll('.messageItem__reactionPill')
-		) as HTMLElement[];
-		expect(pills.length).toBeGreaterThan(3);
+	await waitForMessageEnterAnimation(canvasElement);
+	const item = canvasElement.querySelector<HTMLElement>('.messageItem')!;
+	const bubble = item.querySelector<HTMLElement>('.messageItem__message')!;
+	const rail = item.querySelector<HTMLElement>('.messageItem__reactions')!;
+	const pills = Array.from(
+		rail.querySelectorAll<HTMLButtonElement>('button')
+	);
+	expect(pills.length).toBeGreaterThan(3);
 
-		// Single row: every pill shares the same top edge (no vertical stack).
-		const firstTop = pills[0].offsetTop;
-		pills.forEach((pill) => {
-			expect(pill.offsetTop).toBe(firstTop);
-			expect(getComputedStyle(pill).flexShrink).toBe('0');
+	// Constrain the real message's host, rather than asserting CSS declarations.
+	const host = item.parentElement!;
+	const originalWidth = host.style.width;
+	const originalMaxWidth = host.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			host.style.maxWidth = '100%';
+			await waitFor(() => {
+				const bounds = host.getBoundingClientRect();
+				for (const element of [
+					bubble,
+					item.querySelector<HTMLElement>('.messageItem__avatar')!,
+					item.querySelector<HTMLElement>(
+						'.messageItem__kebabButton'
+					)!
+				]) {
+					const rect = element.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(bounds.left - 1);
+					expect(rect.right).toBeLessThanOrEqual(bounds.right + 1);
+				}
+				expect(bubble.scrollWidth).toBeLessThanOrEqual(
+					bubble.clientWidth + 1
+				);
+				pills.forEach((pill) =>
+					expect(pill.offsetTop).toBe(pills[0].offsetTop)
+				);
+			});
+		}
+
+		host.style.width = '320px';
+		expect(rail.scrollWidth).toBeGreaterThan(rail.clientWidth);
+		const initialBubble = bubble.getBoundingClientRect();
+		// Tabbing into an off-screen reaction must bring it into view without
+		// moving the whole message. This is the native button/scroll-container path.
+		pills[0].focus();
+		for (let index = 1; index < pills.length; index++)
+			await userEvent.tab();
+		expect(document.activeElement).toBe(pills[pills.length - 1]);
+		await waitFor(() => {
+			const last = pills[pills.length - 1].getBoundingClientRect();
+			const visible = rail.getBoundingClientRect();
+			expect(last.left).toBeGreaterThanOrEqual(visible.left - 1);
+			expect(last.right).toBeLessThanOrEqual(visible.right + 1);
 		});
-
-		const style = getComputedStyle(rail!);
-		expect(style.flexWrap).toBe('nowrap');
-		expect(style.overflowX).toMatch(/auto|scroll/);
-		expect(style.overflowY).toBe('hidden');
-		// Overflow content must be wider than the visible rail (scrollable).
-		expect(rail!.scrollWidth).toBeGreaterThan(rail!.clientWidth);
-	});
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+		pills[0].focus();
+		await waitFor(() => expect(rail.scrollLeft).toBe(0));
+		const kebab = item.querySelector<HTMLButtonElement>(
+			'.messageItem__kebabButton'
+		)!;
+		await userEvent.click(kebab);
+		await waitFor(() =>
+			expect(
+				document.querySelector('.messageItem__actionMenuReactionEmoji')
+			).not.toBeNull()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(document.activeElement).toBe(kebab));
+		expect(bubble.getBoundingClientRect().left).toBeCloseTo(
+			initialBubble.left,
+			0
+		);
+	} finally {
+		host.style.width = originalWidth;
+		host.style.maxWidth = originalMaxWidth;
+	}
 }
 
 export const OutgoingWithManyReactions: Story = {
@@ -1219,9 +1445,56 @@ export const ThreadEntryWithLastReply: Story = {
 			Number.parseFloat(getComputedStyle(preview).lineHeight) + 2
 		);
 		await expect(getComputedStyle(preview).textOverflow).toBe('ellipsis');
-		await userEvent.click(entry);
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message'
+		)!;
+		const bubbleRect = bubble.getBoundingClientRect();
+		const entryRect = entry.getBoundingClientRect();
+		await expect(Math.abs(entryRect.left - bubbleRect.left)).toBeLessThan(
+			1
+		);
+		await expect(Math.abs(entryRect.right - bubbleRect.right)).toBeLessThan(
+			1
+		);
+		await expect(getComputedStyle(entry).borderRadius).toBe(
+			getComputedStyle(bubble).borderRadius
+		);
+		await expect(entry.scrollWidth).toBeLessThanOrEqual(entry.clientWidth);
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
 		await expect(args.onOpenThread).toHaveBeenCalledTimes(1);
 	}
+};
+
+/** Same reply-entry contract in constrained conversation columns. */
+export const ThreadEntryPhone: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — phone alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 320, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
+};
+
+export const ThreadEntryOutgoing: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — outgoing short message alignment (W02)',
+	args: {
+		...ThreadEntryWithLastReply.args,
+		isMyMessage: true,
+		message: 'Danke.'
+	}
+};
+
+export const ThreadEntryTablet: Story = {
+	...ThreadEntryWithLastReply,
+	name: 'Thread entry — tablet alignment (W02)',
+	render: (args) => (
+		<div style={{ width: 820, maxWidth: '100%' }}>
+			<MessageItemComponent {...args} />
+		</div>
+	)
 };
 
 /* ---------------------------------------------------------------------------
@@ -1336,6 +1609,42 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	return notice;
 };
 
+/** Header labels must clear the entire avatar frame, including its backdrop. */
+const expectReadableCarimatHeader = async (notice: HTMLElement) => {
+	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const avatar = notice.querySelector<HTMLElement>(
+		'.pseudonymCard__avatarFrame'
+	)!;
+	const labels = notice.querySelectorAll<HTMLElement>(
+		'.pseudonymCard__headerName, .pseudonymCard__headerSubtitle'
+	);
+	const originalWidth = card.style.width;
+	const originalMaxWidth = card.style.maxWidth;
+	try {
+		for (const width of [320, 390, 412, 820, 1440]) {
+			card.style.width = `${width}px`;
+			card.style.maxWidth = '100%';
+			await waitFor(() => {
+				for (const label of labels) {
+					const rect = label.getBoundingClientRect();
+					expect(rect.left).toBeGreaterThanOrEqual(
+						avatar.getBoundingClientRect().right + 8
+					);
+					expect(rect.right).toBeLessThanOrEqual(
+						card.getBoundingClientRect().right + 1
+					);
+					expect(label.scrollWidth).toBeLessThanOrEqual(
+						label.clientWidth + 1
+					);
+				}
+			});
+		}
+	} finally {
+		card.style.width = originalWidth;
+		card.style.maxWidth = originalMaxWidth;
+	}
+};
+
 export const SupervisionNotice: Story = {
 	name: 'Supervision notice — Carimat organism, no system chrome (T49)',
 	parameters: {
@@ -1355,8 +1664,35 @@ export const SupervisionNotice: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
+		await expectReadableCarimatHeader(notice);
 		// The day pill moves onto the notice when the room already has history.
 		expect(notice.querySelector('.messageDateDivider')).not.toBeNull();
+	}
+};
+
+export const SupervisionNoticeLongHeader: Story = {
+	...SupervisionNotice,
+	name: 'Supervision notice — long translated header',
+	args: {
+		...mockMessageItemComponentProps(
+			buildSupervisionTimeline([], {
+				roomId: SUPERVISION_ROOM_ID,
+				title: 'Supervision und gemeinsame fachliche Beratung innerhalb der Beratungsstelle',
+				description: SUPERVISION_NOTICE_TEXT,
+				askerMatrixUserId: MOCK_ASKER_MATRIX_ID
+			})[0]
+		),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const notice = await waitFor(() => {
+			const element = canvasElement.querySelector<HTMLElement>(
+				'.messageItem--supervisionNotice'
+			);
+			expect(element).not.toBeNull();
+			return element!;
+		});
+		await expectReadableCarimatHeader(notice);
 	}
 };
 
@@ -1540,6 +1876,89 @@ export const AnonymousGuestSeesDisplayName: Story = {
 };
 
 /**
+ * A historical REASSIGN_CONSULTANT record seen by an anonymous guest: the
+ * card must use the names stored in the record, never the consultant list's
+ * legal-name label (#1536, #1486).
+ */
+export const AnonymousGuestSeesHistoricalReassignWithoutLegalName: Story = {
+	name: 'Identity — anonymous guest, historical reassign record, no real name',
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: 'anon-guest-storybook',
+			userName: 'anon_5',
+			displayName: undefined,
+			firstName: undefined,
+			lastName: undefined,
+			grantedAuthorities: [AUTHORITIES.ANONYMOUS_DEFAULT],
+			userRoles: ['ANONYMOUS']
+		}),
+		consultantList: [
+			{
+				...consultantWithRealName[0],
+				label: 'Karina P (karina.p)'
+			}
+		]
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message: JSON.stringify({
+				status: 'CONFIRMED',
+				fromConsultantId: 'consultant-storybook',
+				fromConsultantName: 'sanftes Alpaka Kim',
+				toConsultantId: 'consultant-storybook',
+				toConsultantName: 'sanftes Alpaka Kim',
+				toAskerName: 'anon_5'
+			}),
+			alias: {
+				messageType: ALIAS_MESSAGE_TYPES.REASSIGN_CONSULTANT
+			}
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(async () => {
+			await expect(
+				canvas.getAllByText(/sanftes Alpaka Kim/).length
+			).toBeGreaterThan(0);
+		});
+		await expect(canvasElement.textContent).not.toContain('Karina');
+		await expect(canvas.getByLabelText('Information')).toBeInTheDocument();
+		const notice = canvasElement.querySelector<HTMLElement>(
+			'.reassignRequestMessage'
+		);
+		const host =
+			notice?.closest<HTMLElement>('.messageItem')?.parentElement;
+		if (!notice || !host) throw new Error('Historical message is missing');
+		const originalWidth = host.style.width;
+		for (const width of [320, 390, 412, 820, 1440]) {
+			host.style.width = `${width}px`;
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+			const icon = notice.querySelector<SVGElement>('svg');
+			const title = notice.querySelector<HTMLElement>('strong');
+			if (!icon || !title)
+				throw new Error('Historical info header is missing');
+			await expect(
+				title.getBoundingClientRect().left
+			).toBeGreaterThanOrEqual(icon.getBoundingClientRect().right + 8);
+
+			await expect(notice.scrollWidth).toBeLessThanOrEqual(
+				notice.clientWidth + 1
+			);
+			await expect(
+				notice.getBoundingClientRect().right
+			).toBeLessThanOrEqual(host.getBoundingClientRect().right + 1);
+		}
+		host.style.width = originalWidth;
+	}
+};
+
+/**
  * Same counsellor with no public display name: the bubble falls back to the
  * User-ID — the identity anchor the chat header and the session list already
  * show — and still not to the legal name (#1486).
@@ -1644,4 +2063,375 @@ export const InternalGroupColleagueName: Story = {
 		await expect(canvasElement.textContent).not.toContain('Angela K');
 		await expect(canvasElement.textContent).toContain('angela k');
 	}
+};
+
+export const InformationalGrantedForAsker: Story = {
+	name: 'Persisted handover — passive informational grant',
+	decorators: [
+		(Story) => (
+			<StandingAccessPreferenceStoryFixture
+				sessionId={mockActiveSession1on1().item.id}
+			>
+				<Story />
+			</StandingAccessPreferenceStoryFixture>
+		)
+	],
+	globals: { ...desktop1440Globals, locale: 'de' },
+	parameters: {
+		activeSession: mockActiveSession1on1(),
+		userData: mockUserData({
+			userId: MOCK_ASKER_MATRIX_ID,
+			grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT]
+		})
+	},
+	args: {
+		...mockMessageItemComponentProps({
+			isMyMessage: false,
+			userId: 'system',
+			displayName: 'system',
+			username: 'system',
+			message:
+				'[SYSTEM_NOTIFICATION]' +
+				JSON.stringify({
+					type: 'CASE_HANDOVER_GRANTED',
+					description:
+						'Ihre neue Fachkraft hat die Beratung übernommen.',
+					handover: {
+						requestId: 42,
+						clientConsent: 'NONE',
+						accessType: 'TAKEOVER'
+					}
+				})
+		}),
+		...baseHandlers
+	},
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			await canvas.findByText(
+				'Ihre neue Fachkraft hat die Beratung übernommen.'
+			)
+		).toBeInTheDocument();
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		const bubble = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const header = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__systemNotificationHeaderText'
+		)!;
+		const more = canvas.getByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await waitFor(() => {
+			expect(
+				bubble.getBoundingClientRect().top -
+					header.getBoundingClientRect().bottom
+			).toBeLessThanOrEqual(5);
+			expect(more.getBoundingClientRect().width).toBeLessThan(200);
+		});
+		await expect(more).toHaveClass('button__link');
+		await expect(more).toHaveAttribute('aria-haspopup', 'dialog');
+		more.focus();
+		await waitFor(() => {
+			const style = getComputedStyle(more);
+			expect(parseFloat(style.outlineWidth)).toBeGreaterThan(0);
+			expect(parseFloat(style.borderRadius)).toBeGreaterThan(0);
+			expect(more.getBoundingClientRect().height).toBeGreaterThanOrEqual(
+				44
+			);
+			const copy = bubble.querySelector<HTMLElement>(
+				'.messageItem__systemNotificationDescription'
+			)!;
+			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
+				copy.getBoundingClientRect().height +
+					more.getBoundingClientRect().height +
+					32
+			);
+		});
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Mehr erfahren|Learn more/ })
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await expect(await dialog.findByRole('switch')).not.toBeChecked();
+	}
+};
+export const InformationalGrantedForAskerMobile: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — phone 390',
+	globals: phone390Globals,
+	parameters: {
+		...InformationalGrantedForAsker.parameters,
+		...mobileParameters
+	}
+};
+
+export const InformationalGrantedForAskerTablet: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const InformationalGrantedForAskerRussianMobile: Story = {
+	...InformationalGrantedForAskerMobile,
+	name: 'Persisted informational grant — Russian phone',
+	globals: { ...phone390Globals, locale: 'ru' },
+	play: async ({ canvasElement }) => {
+		const more = canvasElement.querySelector<HTMLButtonElement>(
+			'.caseHandoverInformational__more button'
+		);
+		await waitFor(() => expect(more).toBeTruthy());
+		await userEvent.click(more!);
+		const dialog = await within(document.body).findByRole('dialog');
+		await expect(
+			await within(dialog).findByRole('switch')
+		).not.toBeChecked();
+		await expect(dialog.scrollWidth).toBeLessThanOrEqual(
+			dialog.clientWidth + 1
+		);
+	}
+};
+export const InformationalGrantedNotificationContinuation: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted informational grant — manual notification continuation',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvasElement.querySelector('.notificationChoiceHost')
+		).toBeNull();
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /Mehr erfahren|Learn more/
+			})
+		);
+		const dialog = within(await within(document.body).findByRole('dialog'));
+		await userEvent.click(
+			dialog.getByRole('button', {
+				name: /Benachrichtigungen einrichten|Set up notifications/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvasElement.querySelector('.notificationChoiceHost')
+			).toBeTruthy()
+		);
+		await expect(
+			canvasElement
+				.querySelector('.notificationChoiceHost')
+				?.closest('.messageItem__message')
+		).toBeNull();
+		const grant = canvasElement.querySelector<HTMLElement>(
+			'.messageItem__message--systemNotification'
+		)!;
+		const setup = canvasElement
+			.querySelector<HTMLElement>('.notificationChoiceHost')!
+			.closest<HTMLElement>('.erstantwort__bubble')!;
+		await waitFor(() => {
+			const grantBounds = grant.getBoundingClientRect();
+			const setupBounds = setup.getBoundingClientRect();
+			expect(
+				Math.abs(grantBounds.width - setupBounds.width)
+			).toBeLessThanOrEqual(1);
+			expect(
+				Math.abs(grantBounds.left - setupBounds.left)
+			).toBeLessThanOrEqual(1);
+			expect(grant.scrollWidth).toBeLessThanOrEqual(
+				grant.clientWidth + 1
+			);
+		});
+	}
+};
+
+export const InformationalGrantedNotificationContinuationMobile: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — phone 390',
+	globals: { ...phone390Globals, locale: 'de' }
+};
+export const InformationalGrantedNotificationContinuationTablet: Story = {
+	...InformationalGrantedNotificationContinuation,
+	name: 'Persisted notification continuation — tablet 834',
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const GrantedPreferenceSaveAndReadBack: Story = {
+	...InformationalGrantedForAsker,
+	name: 'Persisted grant — scoped preference save and readback',
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const more = await canvas.findByRole('button', {
+			name: /Mehr erfahren|Learn more/
+		});
+		await expect(
+			more.closest('.messageItem__message--systemNotification')
+		).toBeTruthy();
+		await expect(
+			canvasElement.querySelectorAll(
+				'.messageItem__message--systemNotification'
+			)
+		).toHaveLength(1);
+		await userEvent.click(more);
+		const page = within(document.body);
+		const control = await page.findByRole('switch');
+		await expect(control).not.toBeChecked();
+		await userEvent.click(control);
+		await waitFor(() =>
+			expect(page.queryByRole('dialog')).not.toBeInTheDocument()
+		);
+		await userEvent.click(more);
+		await expect(await page.findByRole('switch')).toBeChecked();
+	}
+};
+export const GrantedPreferenceSaveAndReadBackMobile: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...GrantedPreferenceSaveAndReadBack.parameters,
+		...mobileParameters
+	}
+};
+export const GrantedPreferenceSaveAndReadBackTablet: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const InitialAcceptanceWithScopedPreference: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Initial acceptance — persisted scoped settings notice',
+	args: {
+		...GrantedPreferenceSaveAndReadBack.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'INQUIRY_ACCEPTED',
+				title: 'Anfrage angenommen',
+				description:
+					'Die Anfrage wurde angenommen. Sie können das Gespräch beginnen.',
+				username: 'freundliches Alpaka Mika',
+				acceptance: {
+					sessionId: mockActiveSession1on1().item.id,
+					acceptedAt: '2026-10-09T10:20:00Z'
+				}
+			})
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceMobile: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: {
+		...InitialAcceptanceWithScopedPreference.parameters,
+		...mobileParameters
+	}
+};
+export const InitialAcceptanceWithScopedPreferenceTablet: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Static entry states: capture these before any save or notification continuation.
+export const InitialAcceptanceDefault: Story = {
+	...InitialAcceptanceWithScopedPreference,
+	name: 'Initial acceptance — default chat notice',
+	play: undefined
+};
+export const InitialAcceptanceDefaultMobile: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...InitialAcceptanceDefault.parameters, ...mobileParameters }
+};
+export const InitialAcceptanceDefaultTablet: Story = {
+	...InitialAcceptanceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+export const GrantedPreferenceDefault: Story = {
+	...GrantedPreferenceSaveAndReadBack,
+	name: 'Persisted handover — default chat notice',
+	play: undefined
+};
+export const GrantedPreferenceDefaultMobile: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...GrantedPreferenceDefault.parameters, ...mobileParameters }
+};
+export const GrantedPreferenceDefaultTablet: Story = {
+	...GrantedPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+export const CoAccessPreferenceDefault: Story = {
+	...GrantedPreferenceDefault,
+	name: 'Persisted co-access — support notice, no takeover claim',
+	args: {
+		...GrantedPreferenceDefault.args,
+		message:
+			'[SYSTEM_NOTIFICATION]' +
+			JSON.stringify({
+				type: 'CASE_HANDOVER_GRANTED',
+				description:
+					'Eine weitere Fachkraft hat Zugriff auf diese Beratung erhalten.',
+				handover: {
+					requestId: 42,
+					clientConsent: 'NONE',
+					accessType: 'CO_ACCESS'
+				}
+			})
+	}
+};
+export const CoAccessPreferenceDefaultMobile: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...phone390Globals, locale: 'de' },
+	parameters: { ...CoAccessPreferenceDefault.parameters, ...mobileParameters }
+};
+export const CoAccessPreferenceDefaultTablet: Story = {
+	...CoAccessPreferenceDefault,
+	globals: { ...tablet834Globals, locale: 'de' }
+};
+
+// Locale-only variants retain the same production rendering and scoped HTTP fixture.
+const localizedAcceptance = (copy: { title: string; text: string }) => ({
+	...InitialAcceptanceDefault.args,
+	message:
+		'[SYSTEM_NOTIFICATION]' +
+		JSON.stringify({
+			...JSON.parse(
+				(InitialAcceptanceDefault.args!.message as string).replace(
+					'[SYSTEM_NOTIFICATION]',
+					''
+				)
+			),
+			title: copy.title,
+			description: copy.text
+		})
+});
+export const InitialAcceptanceDefaultEnglish: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' },
+	args: localizedAcceptance(
+		englishCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const InitialAcceptanceDefaultLongestTranslation: Story = {
+	...InitialAcceptanceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' },
+	args: localizedAcceptance(
+		frenchCatalogue.notifications.events.inquiryAccepted
+	)
+};
+export const GrantedPreferenceDefaultEnglish: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const GrantedPreferenceDefaultLongestTranslation: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+export const CoAccessPreferenceDefaultEnglish: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'en' }
+};
+export const CoAccessPreferenceDefaultLongestTranslation: Story = {
+	...CoAccessPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'fr' }
+};
+
+export const GrantedPreferenceDefaultRussianLabelStress: Story = {
+	...GrantedPreferenceDefaultMobile,
+	globals: { ...phone390Globals, locale: 'ru' }
 };

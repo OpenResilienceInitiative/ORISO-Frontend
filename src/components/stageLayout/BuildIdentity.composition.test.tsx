@@ -3,7 +3,11 @@ import * as React from 'react';
 import { render, cleanup, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, it, expect, vi } from 'vitest';
-import { AgencySpecificContext, LocaleContext } from '../../globalState';
+import {
+	AgencySpecificContext,
+	LocaleContext,
+	UserDataContext
+} from '../../globalState';
 import { StageLayout } from './StageLayout';
 import { AuthenticatedBuildIdentityBoundary } from '../app/BuildIdentity';
 import { GroupEntryRoom } from '../groupChat/entryRoom/GroupEntryRoom';
@@ -195,16 +199,22 @@ it.each(['ready', 'missing', 'failed'] as const)(
 					rejectList = reject;
 				})
 		);
+		// The entry room waits for the signed-in client before it loads (#1499).
+		const client = {
+			grantedAuthorities: ['AUTHORIZATION_USER_DEFAULT']
+		};
 		const { container } = render(
 			wrap(
-				<AuthenticatedBuildIdentityBoundary>
-					<Routes>
-						<Route
-							path="/groups/:chatId/entry"
-							element={<GroupEntryRoom />}
-						/>
-					</Routes>
-				</AuthenticatedBuildIdentityBoundary>,
+				<UserDataContext.Provider value={{ userData: client } as any}>
+					<AuthenticatedBuildIdentityBoundary>
+						<Routes>
+							<Route
+								path="/groups/:chatId/entry"
+								element={<GroupEntryRoom />}
+							/>
+						</Routes>
+					</AuthenticatedBuildIdentityBoundary>
+				</UserDataContext.Provider>,
 				'/groups/42/entry'
 			)
 		);

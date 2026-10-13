@@ -1,0 +1,29 @@
+Le test SMTP est bien arrivé
+============================
+
+Si vous lisez cet e-mail, l’envoi via les données SMTP enregistrées fonctionne.
+
+Serveur: {{smtpHost}}
+Expéditeur: {{smtpFrom}}
+Envoyé: {{sentAt}}
+
+Aller à l’administration:
+{{appUrl}}
+
+Cet e-mail n’est envoyé que sur demande depuis l’administration.
+
+----------------------------------------------------------------
+Le contenu des consultations n’apparaît jamais dans un e-mail. Vous ne le voyez que chiffré, après connexion.
+
+{{orgName}}
+{{orgAddress}}
+{{contactLine}}
+
+{{platformName}} est un service proposé par {{orgName}}.
+
+Paramètres: {{settingsUrl}}
+Protection des données: {{privacyUrl}}
+Mentions légales: {{imprintUrl}}
+Se désabonner des notifications: {{unsubscribeUrl}}
+
+Cet e-mail a été envoyé automatiquement. Merci de ne pas y répondre.

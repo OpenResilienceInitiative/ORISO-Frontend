@@ -49,7 +49,7 @@ const stubServer = () =>
 					status: 200,
 					json: async () => [
 						{
-							code: 'COUNSELLOR_IS_ILL',
+							code: 'UNPLANNED_ABSENCE',
 							label: 'Unplanned absence',
 							clientConsentRequired: false
 						}
@@ -118,12 +118,11 @@ describe('CaseHandoverCurtain passes the server status on', () => {
 		);
 
 		fireEvent.click(byCy('case-handover-curtain-start'));
-		fireEvent.click(
-			await screen.findByRole('radio', { name: /Unplanned absence/ })
-		);
+		await screen.findByRole('radio');
+		fireEvent.click(byCy('case-handover-reason-UNPLANNED_ABSENCE'));
 		fireEvent.click(byCy('case-handover-curtain-next'));
 		fireEvent.change(byCy('case-handover-curtain-explanation'), {
-			target: { value: 'Covering while the colleague is ill.' }
+			target: { value: 'Covering during an unplanned absence.' }
 		});
 		fireEvent.click(byCy('case-handover-curtain-next'));
 

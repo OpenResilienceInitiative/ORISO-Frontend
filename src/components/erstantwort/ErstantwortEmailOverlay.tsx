@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
 import { BUTTON_TYPES } from '../button/Button';
@@ -37,6 +37,13 @@ export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
 > = ({ onClose, onSaved }) => {
 	const { t } = useTranslation();
+	const active = useRef(true);
+	useEffect(() => {
+		active.current = true;
+		return () => {
+			active.current = false;
+		};
+	}, []);
 	const [email, setEmail] = useState('');
 	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
 	const [errorText, setErrorText] = useState<string | null>(null);
@@ -72,11 +79,13 @@ export const ErstantwortEmailOverlay: React.FC<
 		setErrorText(null);
 		apiPutEmail(email)
 			.then(() => {
+				if (!active.current) return;
 				setIsSaving(false);
 				setIsSaved(true);
 				onSaved();
 			})
 			.catch((error: unknown) => {
+				if (!active.current) return;
 				setIsSaving(false);
 				setLabelState('invalid');
 
@@ -162,6 +171,7 @@ export const ErstantwortEmailOverlay: React.FC<
 			item={isSaved ? successItem : formItem}
 			handleOverlay={(buttonFunction: string) => {
 				if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
+					active.current = false;
 					onClose();
 					return;
 				}

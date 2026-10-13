@@ -1,7 +1,10 @@
 import * as React from 'react';
+import { accountConsentPlay } from '../../../.storybook/consentCompletionStoryPlay';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
 import { AccountData } from '../registration/accountData/AccountData';
+import { clearAccountDataDraft } from '../registration/accountData/accountDataDraft';
+import { RegistrationCompletionProvider } from '../registration/consentCompletion/RegistrationCompletionContext';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { RegistrationContext } from '../../globalState/provider/RegistrationProvider';
 import {
@@ -16,7 +19,10 @@ import { StageLayout } from '../stageLayout/StageLayout';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
-import { phone375Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone375Globals
+} from '../message/messageStoryShell';
 
 /**
  * The self-help group entry room — every view a person passes through between
@@ -37,8 +43,11 @@ import { phone375Globals } from '../message/messageStoryShell';
  * are the proposal for that; the "full" ones are what an account holder sees.
  */
 const meta: Meta = {
-	title: 'Group chat/Self-help entry room',
+	id: 'group-chat-self-help-entry-room',
+	title: 'Entry flows/Self-help groups/Entry room',
+	beforeEach: () => clearAccountDataDraft(),
 	parameters: {
+		entryFormDemo: true,
 		docs: {
 			description: {
 				component:
@@ -126,6 +135,7 @@ const GroupEntry = ({
 	temporaryStart?: boolean;
 }) => {
 	const [temporary, setTemporary] = React.useState(temporaryStart);
+	const [disabledNextButton, setDisabledNextButton] = React.useState(true);
 	return (
 		<LegalLinksContext.Provider value={legalLinks}>
 			<RegistrationContext.Provider
@@ -134,62 +144,69 @@ const GroupEntry = ({
 						agency,
 						mainTopic: groupTopic
 					} as never,
-					setDisabledNextButton: () => undefined
+					disabledNextButton,
+					setDisabledNextButton
 				}}
 			>
-				<Box sx={{ minHeight: '100vh' }}>
-					<AgencySpecificContext.Provider
-						value={{
-							specificAgency: null,
-							setSpecificAgency: () => undefined
-						}}
-					>
-						<StageLayout
-							className="stageLayout--registration"
-							showLegalLinks={true}
-							showLoginLink={true}
-							showRegistrationLink={false}
-							stage={<Stage hasAnimation={false} />}
-							mobileHero="bar"
+				<RegistrationCompletionProvider>
+					<Box sx={{ minHeight: '100vh' }}>
+						<AgencySpecificContext.Provider
+							value={{
+								specificAgency: null,
+								setSpecificAgency: () => undefined
+							}}
 						>
-							<Box
-								sx={{
-									width: '100%',
-									minWidth: 0,
-									maxWidth: '100%',
-									px: { xs: 2.5, sm: 5 },
-									pt: { xs: 3, sm: 4 },
-									pb: { xs: '128px', sm: '136px' }
-								}}
+							<StageLayout
+								className="stageLayout--registration"
+								showLegalLinks={true}
+								showLoginLink={true}
+								showRegistrationLink={false}
+								stage={<Stage hasAnimation={false} />}
+								mobileHero="bar"
 							>
-								<AccountData
-									onChange={() => undefined}
-									entry="link"
-									temporary={temporary}
-								/>
-								<RegistrationFooter
-									secondary={{
-										label: temporary
-											? 'Konto anlegen'
-											: 'Ohne Konto beitreten',
-										onClick: () => setTemporary((v) => !v)
+								<Box
+									sx={{
+										width: '100%',
+										minWidth: 0,
+										maxWidth: '100%',
+										px: { xs: 2.5, sm: 5 },
+										pt: { xs: 3, sm: 4 },
+										pb: { xs: '128px', sm: '136px' }
 									}}
-									primary={{
-										label: temporary
-											? 'Der Gruppe beitreten'
-											: 'Registrieren'
-									}}
-								/>
-							</Box>
-						</StageLayout>
-					</AgencySpecificContext.Provider>
-				</Box>
+								>
+									<AccountData
+										onChange={() => undefined}
+										entry="link"
+										temporary={temporary}
+									/>
+									<RegistrationFooter
+										secondary={{
+											label: temporary
+												? 'Konto anlegen'
+												: 'Ohne Konto beitreten',
+											onClick: () =>
+												setTemporary((v) => !v)
+										}}
+										primary={{
+											label: temporary
+												? 'Der Gruppe beitreten'
+												: 'Registrieren',
+											disabled: disabledNextButton
+										}}
+									/>
+								</Box>
+							</StageLayout>
+						</AgencySpecificContext.Provider>
+					</Box>
+				</RegistrationCompletionProvider>
 			</RegistrationContext.Provider>
 		</LegalLinksContext.Provider>
 	);
 };
 
 export const EntryScreenTemporary: StoryObj = {
+	globals: desktop1440Globals,
+	play: accountConsentPlay(true),
 	name: '0a — Eintritt: ohne Konto',
 	render: () => <GroupEntry />,
 	parameters: {
@@ -203,6 +220,8 @@ export const EntryScreenTemporary: StoryObj = {
 };
 
 export const EntryScreenWithAccount: StoryObj = {
+	globals: desktop1440Globals,
+	play: accountConsentPlay(false),
 	name: '0b — Eintritt: mit Konto',
 	render: () => <GroupEntry temporaryStart={false} />,
 	parameters: {
@@ -213,6 +232,18 @@ export const EntryScreenWithAccount: StoryObj = {
 			}
 		}
 	}
+};
+
+export const EntryScreenTemporaryMobile: StoryObj = {
+	...EntryScreenTemporary,
+	name: '0a — Eintritt: ohne Konto, mobil',
+	globals: phone375Globals
+};
+
+export const EntryScreenWithAccountMobile: StoryObj = {
+	...EntryScreenWithAccount,
+	name: '0b — Eintritt: mit Konto, mobil',
+	globals: phone375Globals
 };
 
 /* ---------------------------------------------------------------------------

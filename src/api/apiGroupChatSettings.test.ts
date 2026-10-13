@@ -11,6 +11,7 @@ vi.mock('../resources/scripts/endpoints', () => ({
 vi.mock('./fetchData', () => ({
 	FETCH_METHODS: { POST: 'POST', PUT: 'PUT' },
 	FETCH_SUCCESS: { CONTENT: 'CONTENT' },
+	FETCH_ERRORS: { COUNSELLING_DPA_RESPONSE: 'COUNSELLING_DPA_RESPONSE' },
 	fetchData: vi.fn()
 }));
 
@@ -36,7 +37,7 @@ describe('group chat API helpers', () => {
 			url: 'https://api.oriso-dev.site/service/users/chat/new',
 			method: 'POST',
 			bodyData: JSON.stringify(groupChat),
-			responseHandling: ['CONTENT']
+			responseHandling: ['CONTENT', 'COUNSELLING_DPA_RESPONSE']
 		});
 	});
 
@@ -87,7 +88,7 @@ describe('group chat API helpers', () => {
 					timezone: 'Europe/Berlin',
 					consultantIds: ['co-mod-1']
 				}),
-				responseHandling: ['CONTENT']
+				responseHandling: ['CONTENT', 'COUNSELLING_DPA_RESPONSE']
 			})
 		);
 	});
@@ -101,7 +102,7 @@ describe('group chat API helpers', () => {
 			url: 'https://api.oriso-dev.site/service/users/chat/123/update',
 			method: 'PUT',
 			bodyData: JSON.stringify(groupChat),
-			responseHandling: ['CONTENT']
+			responseHandling: ['CONTENT', 'COUNSELLING_DPA_RESPONSE']
 		});
 	});
 });

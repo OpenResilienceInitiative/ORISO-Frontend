@@ -87,7 +87,7 @@ const renderMenu = ({
 		<MemoryRouter>
 			<SessionListItemMenu
 				flyoutOpen={flyoutOpen}
-				dropdownPosition={{ top: 0, left: 0 }}
+				onClose={noop}
 				menuIconRef={menuIconRef}
 				dropdownRef={dropdownRef}
 				dropdownId="test-menu"
