@@ -523,13 +523,23 @@ const openThePracticeEnquiry = async () => {
 	pressNext(0);
 
 	// 2: the practice enquiry, the only row of the real list; click it.
-	const row = await expectStep(1);
+	await expectStep(1);
 	expect(route()).toBe(PRACTICE_ENQUIRIES_ROUTE);
 	expect(
 		document.querySelectorAll('[data-cy="session-list-item"]')
 	).toHaveLength(1);
-	expect(row!.textContent).toContain(SCRIPT.cast.asker.displayName);
-	fireEvent.click(row!);
+	const listItemSelector = joyride!.steps[1].target;
+	// Restart remounts the sandbox list. A row captured before that swap is
+	// detached, and fireEvent on it never reaches the tour's document listener.
+	await waitFor(() => {
+		const row = document.querySelector<HTMLElement>(listItemSelector);
+		expect(row?.isConnected).toBe(true);
+		expect(row?.textContent).toContain(SCRIPT.cast.asker.displayName);
+	}, SLOW);
+	await act(async () => {
+		fireEvent.click(document.querySelector<HTMLElement>(listItemSelector)!);
+		await new Promise<void>((resolve) => setTimeout(resolve, 0));
+	});
 };
 
 /** F1 from the accept step on; `at` is the accept step's index. */
