@@ -42,7 +42,10 @@ export const LEGACY_DRAFT_STORAGE_KEY = 'oriso.chatDrafts.v1';
 export const RETAINED_STORAGE_PREFIXES = [
 	'oriso.pendingRecoveryKey.',
 	'oriso.recoverySetupInFlight.',
-	'oriso.lastOpenSession.'
+	'oriso.lastOpenSession.',
+	// Pending protected-feedback metadata contains IDs only, expires after 24h,
+	// and is retried only after the same Matrix account authenticates again.
+	'oriso.feedbackMailHint.'
 ] as const;
 
 /**

@@ -166,3 +166,17 @@ _Avoid_: the retired `featureAttachmentUploadDisabled` (replaced, inverted seman
 **Composer inline preview**:
 The scaled image preview shown inside the TipTap composer before sending. Purely a composer affordance: **on the wire every image is its own `m.image` event** (Element model); received text messages never contain image HTML.
 _Avoid_: "inline image" for received messages
+
+# Practice area (Übungsbereich)
+
+A frontend-only simulation for counsellors (epic #1622,
+`docs/architecture/adr-020-practice-area-frontend-only-simulation.md`).
+
+## Language
+
+**Practice area** (Übungsbereich):
+Guided practice flows that run the real app UI on fixed fictional people, inside the counsellor's own browser tab: accept an enquiry with a Team-Besprechung, add a supervisor. Nothing is written to a server and nothing is stored; ending practice drops it all. Started only by a deliberate click, desktop only.
+_Avoid_: "demo mode", "sandbox" for the whole feature (the sandbox is one layer inside it), "test case" (it is a practice case, not test data).
+
+**Practice case** (Übungsfall):
+The fictional enquiry a practice flow works on. Its ids are negative or carry a non-routable prefix, so it can never be taken for a real case.

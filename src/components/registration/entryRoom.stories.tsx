@@ -1,8 +1,15 @@
 import * as React from 'react';
+import { accountConsentPlay } from '../../../.storybook/consentCompletionStoryPlay';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box, SvgIcon } from '@mui/material';
 import { AccountData } from './accountData/AccountData';
+import { clearAccountDataDraft } from './accountData/accountDataDraft';
+import {
+	RegistrationCompletionProvider,
+	useRegistrationCompletionContent
+} from './consentCompletion/RegistrationCompletionContext';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
 import { ReactComponent as DoorOpenIcon } from '../../resources/img/icons/navigation/door_open_400.svg';
@@ -36,8 +43,11 @@ import {
  * missing is only who they are — and, if they want to come back, a password.
  */
 const meta: Meta = {
-	title: 'Registration/Entry room — link variant',
+	id: 'registration-entry-room-link-variant',
+	title: 'Entry flows/Temporary guests/Invitation entry',
+	beforeEach: () => clearAccountDataDraft(),
 	parameters: {
+		entryFormDemo: true,
 		docs: {
 			description: {
 				component:
@@ -93,19 +103,23 @@ const legalLinks: TProvidedLegalLink[] = [
 const WithRegistrationContext = ({
 	children
 }: {
-	children: React.ReactNode;
-}) => (
-	<LegalLinksContext.Provider value={legalLinks}>
-		<RegistrationContext.Provider
-			value={{
-				registrationData: { agency, mainTopic } as never,
-				setDisabledNextButton: () => undefined
-			}}
-		>
-			{children}
-		</RegistrationContext.Provider>
-	</LegalLinksContext.Provider>
-);
+	children: (disabledNextButton: boolean) => React.ReactNode;
+}) => {
+	const [disabledNextButton, setDisabledNextButton] = useState(true);
+	return (
+		<LegalLinksContext.Provider value={legalLinks}>
+			<RegistrationContext.Provider
+				value={{
+					registrationData: { agency, mainTopic } as never,
+					disabledNextButton,
+					setDisabledNextButton
+				}}
+			>
+				{children(disabledNextButton)}
+			</RegistrationContext.Provider>
+		</LegalLinksContext.Provider>
+	);
+};
 
 /**
  * The stage the link variant stands on.
@@ -178,17 +192,22 @@ const EntryStage = ({ children }: { children: React.ReactNode }) => (
  */
 const EntryFooter = ({
 	temporary,
-	onToggleTemporary
+	onToggleTemporary,
+	disabledNextButton
 }: {
 	temporary: boolean;
 	onToggleTemporary: () => void;
+	disabledNextButton: boolean;
 }) => (
 	<RegistrationFooter
 		secondary={{
 			label: temporary ? 'Konto anlegen' : 'Ohne Konto beitreten',
 			onClick: onToggleTemporary
 		}}
-		primary={{ label: temporary ? 'Beitreten' : 'Registrieren' }}
+		primary={{
+			label: temporary ? 'Beitreten' : 'Registrieren',
+			disabled: disabledNextButton
+		}}
 	/>
 );
 
@@ -200,17 +219,22 @@ const EntryScreen = ({
 	const [temporary, setTemporary] = useState(startTemporary);
 	return (
 		<WithRegistrationContext>
-			<EntryStage>
-				<AccountData
-					onChange={() => undefined}
-					entry="link"
-					temporary={temporary}
-				/>
-				<EntryFooter
-					temporary={temporary}
-					onToggleTemporary={() => setTemporary((v) => !v)}
-				/>
-			</EntryStage>
+			{(disabledNextButton) => (
+				<RegistrationCompletionProvider>
+					<EntryStage>
+						<AccountData
+							onChange={() => undefined}
+							entry="link"
+							temporary={temporary}
+						/>
+						<EntryFooter
+							temporary={temporary}
+							onToggleTemporary={() => setTemporary((v) => !v)}
+							disabledNextButton={disabledNextButton}
+						/>
+					</EntryStage>
+				</RegistrationCompletionProvider>
+			)}
 		</WithRegistrationContext>
 	);
 };
@@ -264,6 +288,7 @@ export const FreshlyLoadedMobile: StoryObj = {
 };
 
 export const TemporaryJoinDesktop: StoryObj = {
+	play: accountConsentPlay(true),
 	name: '2 — Temporär beitreten, Desktop',
 	globals: desktop1440Globals,
 	render: () => <EntryScreen startTemporary />,
@@ -278,6 +303,7 @@ export const TemporaryJoinDesktop: StoryObj = {
 };
 
 export const TemporaryJoinMobile: StoryObj = {
+	play: accountConsentPlay(true),
 	name: '2 — Temporär beitreten, mobil',
 	globals: phone390Globals,
 	render: () => <EntryScreen startTemporary />,
@@ -292,6 +318,7 @@ export const TemporaryJoinMobile: StoryObj = {
 };
 
 export const FullRegistrationDesktop: StoryObj = {
+	play: accountConsentPlay(false),
 	name: '3 — Volle Registrierung, Desktop',
 	globals: desktop1440Globals,
 	render: () => <EntryScreen />,
@@ -306,6 +333,7 @@ export const FullRegistrationDesktop: StoryObj = {
 };
 
 export const FullRegistrationMobile: StoryObj = {
+	play: accountConsentPlay(false),
 	name: '3 — Volle Registrierung, mobil',
 	globals: phone390Globals,
 	render: () => <EntryScreen />,
@@ -355,6 +383,66 @@ export const ExistingAccountMobile: StoryObj = {
  * the temporary state, which read as a decision it never was: the dialog needs
  * both ways too, and the consent sentence just the same.
  */
+const EntryDialogSurface = ({
+	temporary,
+	onToggleTemporary,
+	disabledNextButton
+}: {
+	temporary: boolean;
+	onToggleTemporary: () => void;
+	disabledNextButton: boolean;
+}) => {
+	const completion = useRegistrationCompletionContent();
+	return (
+		<Box sx={{ minHeight: '100vh', bgcolor: registrationMd3.surface }}>
+			<M3Dialog
+				open
+				icon={
+					<SvgIcon
+						component={DoorOpenIcon}
+						inheritViewBox
+						sx={{ fontSize: 32 }}
+					/>
+				}
+				title="Termin buchen"
+				description="Nur ein Name — alles Weitere bringt der Link mit."
+				onClose={() => undefined}
+				closeLabel="Schließen"
+				footerContent={completion}
+				actionsContent={
+					<Box sx={{ width: '100%', display: 'grid', gap: 1.5 }}>
+						<Box
+							component="button"
+							type="button"
+							className="m3Dialog__action"
+							onClick={onToggleTemporary}
+							sx={{ justifySelf: 'end' }}
+						>
+							{temporary
+								? 'Konto anlegen'
+								: 'Ohne Konto beitreten'}
+						</Box>
+						<HandoverGateButton
+							state={disabledNextButton ? 'preparing' : 'ready'}
+							label={temporary ? 'Beitreten' : 'Registrieren'}
+							status=""
+							testId="entry-dialog-primary"
+							onEnter={() => undefined}
+						/>
+					</Box>
+				}
+			>
+				<AccountData
+					onChange={() => undefined}
+					entry="link"
+					temporary={temporary}
+					compact
+				/>
+			</M3Dialog>
+		</Box>
+	);
+};
+
 const EntryDialog = ({
 	startTemporary = false
 }: {
@@ -363,47 +451,23 @@ const EntryDialog = ({
 	const [temporary, setTemporary] = useState(startTemporary);
 	return (
 		<WithRegistrationContext>
-			<Box sx={{ minHeight: '100vh', bgcolor: registrationMd3.surface }}>
-				<M3Dialog
-					open
-					icon={
-						<SvgIcon
-							component={DoorOpenIcon}
-							inheritViewBox
-							sx={{ fontSize: 32 }}
-						/>
-					}
-					title="Termin buchen"
-					description="Nur ein Name — alles Weitere bringt der Link mit."
-					onClose={() => undefined}
-					closeLabel="Schließen"
-					actions={[
-						{
-							label: temporary
-								? 'Konto anlegen'
-								: 'Ohne Konto beitreten',
-							onClick: () => setTemporary((v) => !v)
-						},
-						{
-							label: temporary ? 'Beitreten' : 'Registrieren',
-							onClick: () => undefined,
-							primary: true
-						}
-					]}
-				>
-					<AccountData
-						onChange={() => undefined}
-						entry="link"
+			{(disabledNextButton) => (
+				<RegistrationCompletionProvider>
+					<EntryDialogSurface
 						temporary={temporary}
-						compact
+						onToggleTemporary={() =>
+							setTemporary((value) => !value)
+						}
+						disabledNextButton={disabledNextButton}
 					/>
-				</M3Dialog>
-			</Box>
+				</RegistrationCompletionProvider>
+			)}
 		</WithRegistrationContext>
 	);
 };
 
 export const AsDialogDesktop: StoryObj = {
+	play: accountConsentPlay(false),
 	name: '5 — Als Dialog (mit Konto), Desktop',
 	globals: desktop1440Globals,
 	render: () => <EntryDialog />,
@@ -418,6 +482,7 @@ export const AsDialogDesktop: StoryObj = {
 };
 
 export const AsDialogMobile: StoryObj = {
+	play: accountConsentPlay(false),
 	name: '5 — Als Dialog (mit Konto), mobil',
 	globals: phone390Globals,
 	render: () => <EntryDialog />,
@@ -432,6 +497,7 @@ export const AsDialogMobile: StoryObj = {
 };
 
 export const AsDialogTemporaryDesktop: StoryObj = {
+	play: accountConsentPlay(true),
 	name: '6 — Als Dialog (temporär), Desktop',
 	globals: desktop1440Globals,
 	render: () => <EntryDialog startTemporary />,
@@ -446,6 +512,7 @@ export const AsDialogTemporaryDesktop: StoryObj = {
 };
 
 export const AsDialogTemporaryMobile: StoryObj = {
+	play: accountConsentPlay(true),
 	name: '6 — Als Dialog (temporär), mobil',
 	globals: phone390Globals,
 	render: () => <EntryDialog startTemporary />,

@@ -1,4 +1,5 @@
 import { endpoints } from '../resources/scripts/endpoints';
+import { DRAFTS_UPDATED_EVENT } from '../services/draftStore';
 import {
 	fetchData,
 	FETCH_ERRORS,
@@ -24,16 +25,23 @@ export interface IUserDraftFeedResponse {
 	perPage: number;
 }
 
+/** Rejects on failure, so callers can tell an error from an empty list. */
+export const apiFetchUserDrafts = (
+	page = 0,
+	perPage = 200
+): Promise<IUserDraftFeedResponse> =>
+	fetchData({
+		url: `${endpoints.userDrafts}?page=${page}&perPage=${perPage}`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.CATCH_ALL]
+	});
+
 export const apiGetUserDrafts = async (
 	page = 0,
 	perPage = 200
 ): Promise<IUserDraftFeedResponse> => {
 	try {
-		return await fetchData({
-			url: `${endpoints.userDrafts}?page=${page}&perPage=${perPage}`,
-			method: FETCH_METHODS.GET,
-			responseHandling: [FETCH_ERRORS.CATCH_ALL]
-		});
+		return await apiFetchUserDrafts(page, perPage);
 	} catch {
 		return { items: [], page, perPage };
 	}
@@ -75,6 +83,8 @@ export const apiUpsertUserDraft = async (
 			responseHandling: [FETCH_ERRORS.CATCH_ALL],
 			...(signal && { signal })
 		});
+		// Lists showing drafts (sessions, timeline) refetch; no content is sent along.
+		window.dispatchEvent(new Event(DRAFTS_UPDATED_EVENT));
 	} catch {
 		// Drafts are non-critical: a failed/conflicting autosave must never bubble up
 		// and break the chat. The next keystroke re-saves.
@@ -92,6 +102,7 @@ export const apiDeleteUserDraft = async (
 			responseHandling: [FETCH_ERRORS.CATCH_ALL],
 			...(signal && { signal })
 		});
+		window.dispatchEvent(new Event(DRAFTS_UPDATED_EVENT));
 	} catch {
 		// Non-critical cleanup; ignore failures.
 	}

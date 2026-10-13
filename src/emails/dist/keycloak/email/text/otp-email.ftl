@@ -2,7 +2,7 @@
 ${msg("orisoOtpHeadline")}
 ========================================
 
-${msg("orisoOtpBody1")}
+${msg("orisoOtpBody1", properties.orisoPlatformName)}
 
 ${msg("orisoOtpCodeLabel")}: ${otp}
 
@@ -11,11 +11,11 @@ ${msg("orisoOtpFootnote")}
 ----------------------------------------------------------------
 ${msg("orisoOtpAssurance")}
 
-${(properties.orisoOrgName)!'ORISO'}
+${properties.orisoOrgName}
 ${(properties.orisoOrgAddress)!''}
 ${(properties.orisoContactLine)!''}
 
-${msg("orisoOtpOfferedBy", (properties.orisoPlatformName)!'Online-Beratung', (properties.orisoOrgName)!'ORISO')}
+${msg("orisoOtpOfferedBy", properties.orisoPlatformName, properties.orisoOrgName)}
 
 ${msg("orisoOtpFooterLink1")}: ${properties.orisoPrivacyUrl}
 ${msg("orisoOtpFooterLink2")}: ${properties.orisoImprintUrl}

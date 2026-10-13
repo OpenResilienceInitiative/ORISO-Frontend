@@ -1,10 +1,12 @@
 import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react';
+import { buildEmail } from '../index';
 import {
 	EmailPage,
 	EmailToneRow,
 	emailPageArgTypes
 } from '../preview/EmailPage';
+import { EmailPreview } from '../preview/EmailPreview';
 
 const meta = {
 	title: 'Email/Pages/EmailGeaendert',
@@ -58,6 +60,24 @@ export const OnPhone: Story = {
 export const OnNarrowPhone: Story = {
 	name: 'Narrow phone (320px)',
 	args: { width: 320 }
+};
+
+export const LongLogin: Story = {
+	name: 'Long login (390px)',
+	render: () => {
+		const mail = buildEmail('email-geaendert', 'de-sie');
+		return (
+			<EmailPreview
+				html={mail.html.replaceAll(
+					'{{username}}',
+					`readable-${'abcdefghij'.repeat(24)}`
+				)}
+				width={390}
+				subject={mail.subject}
+				preheader={mail.preheader}
+			/>
+		);
+	}
 };
 
 export const TenantColours: Story = {

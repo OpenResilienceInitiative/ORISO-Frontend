@@ -18,6 +18,9 @@ export const apiAcceptAnonymousEnquiry = async (
 	return fetchData({
 		url,
 		method: FETCH_METHODS.PUT,
-		responseHandling: [FETCH_ERRORS.CONFLICT]
+		responseHandling: [
+			FETCH_ERRORS.CONFLICT,
+			FETCH_ERRORS.COUNSELLING_DPA_RESPONSE
+		]
 	});
 };

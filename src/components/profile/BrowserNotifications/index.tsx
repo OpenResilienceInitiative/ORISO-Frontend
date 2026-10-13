@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
 	browserNotificationsSettings,
@@ -10,6 +10,11 @@ import { Text } from '../../text/Text';
 import { NotificationDenied } from './NotificationDenied';
 import styles from './styles.module.scss';
 import useIsFirstVisit from '../../../utils/useIsFirstVisit';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext
+} from '../../../globalState';
 
 export const BrowserNotification = () => {
 	const isFirstVisit = useIsFirstVisit();
@@ -19,6 +24,12 @@ export const BrowserNotification = () => {
 	const isEnabled =
 		localBrowserSettings.enabled && Notification.permission === 'granted';
 	const { t } = useTranslation();
+	// Enquiry rows and "your counselees" copy only apply to counsellors.
+	const { userData } = useContext(UserDataContext);
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	const [checked, setChecked] = useState(isEnabled);
 
 	useEffect(() => {
@@ -78,16 +89,22 @@ export const BrowserNotification = () => {
 			{checked && (
 				<>
 					<hr />
-					<Switch
-						titleKey="profile.browserNotifications.initialEnquiry.title"
-						checked={!!localBrowserSettings.initialEnquiry}
-						onChange={(checked) =>
-							onChangeSetting('initialEnquiry', checked)
-						}
-					/>
+					{isConsultant && (
+						<Switch
+							titleKey="profile.browserNotifications.initialEnquiry.title"
+							checked={!!localBrowserSettings.initialEnquiry}
+							onChange={(checked) =>
+								onChangeSetting('initialEnquiry', checked)
+							}
+						/>
+					)}
 					<Switch
 						titleKey="profile.browserNotifications.newMessage.title"
-						descriptionKey="profile.browserNotifications.newMessage.description"
+						descriptionKey={
+							isConsultant
+								? 'profile.browserNotifications.newMessage.description'
+								: undefined
+						}
 						checked={!!localBrowserSettings.newMessage}
 						onChange={(checked) =>
 							onChangeSetting('newMessage', checked)

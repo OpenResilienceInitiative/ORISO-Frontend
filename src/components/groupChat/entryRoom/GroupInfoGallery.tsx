@@ -29,7 +29,7 @@ const SLIDE_MS = 320;
  * meaning of their own, so each card hands the carousel a description for
  * anyone who cannot see them.
  */
-const infoSteps: HandoverStep[] = [
+export const SELF_HELP_INFO_STEPS: HandoverStep[] = [
 	{
 		key: 'formats',
 		artwork: selfHelpArtwork.format,
@@ -107,7 +107,7 @@ export const GroupInfoGallery = ({
 	onBack,
 	onOpenAppointments,
 	upcomingDates,
-	steps = infoSteps
+	steps = SELF_HELP_INFO_STEPS
 }: GroupInfoGalleryProps) => {
 	const { t, i18n } = useTranslation();
 	/* The dates follow the language the person reads, not the browser's —

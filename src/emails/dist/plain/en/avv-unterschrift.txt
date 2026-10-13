@@ -15,7 +15,7 @@ Open contract:
 Without confirmation of the contract documents, counselling stays blocked for this organisation.
 
 ----------------------------------------------------------------
-This email is part of the contractual relationship between {{orgName}} and {{tenantName}}.
+This email is part of the contractual relationship between {{orgName}} and {{tenantNameDative}}.
 
 {{orgName}}
 {{orgAddress}}

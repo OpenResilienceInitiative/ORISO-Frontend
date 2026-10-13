@@ -717,6 +717,8 @@ declare namespace UserService {
 			bannedUsers?: string[];
 		}
 		export interface ChatMemberResponseDTO {
+			avatarKind?: string | null;
+			avatarId?: string | null;
 			_id?: string;
 			status?: string;
 			username?: string;
@@ -1509,11 +1511,15 @@ declare namespace UserService {
 			departments?: AgencyDepartmentDTO[];
 		}
 		export interface GroupChatParticipantDTO {
+			avatarKind?: string | null;
+			avatarId?: string | null;
 			consultantId: string;
 			role: 'OWNER' | 'CO_MODERATOR' | 'PARTICIPANT';
 			displayName: string;
 		}
 		export interface GroupSessionConsultantDTO {
+			avatarKind?: string | null;
+			avatarId?: string | null;
 			/**
 			 * example:
 			 * 153918
@@ -2147,6 +2153,8 @@ declare namespace UserService {
 			legalVersionId: number; // int64
 		}
 		export interface SessionConsultantForConsultantDTO {
+			avatarKind?: string | null;
+			avatarId?: string | null;
 			/**
 			 * example:
 			 * 153918
@@ -2174,6 +2182,8 @@ declare namespace UserService {
 			displayName?: string;
 		}
 		export interface SessionConsultantForUserDTO {
+			avatarKind?: string | null;
+			avatarId?: string | null;
 			/**
 			 * example:
 			 * consultantId
@@ -2414,6 +2424,7 @@ declare namespace UserService {
 			status?: string;
 		}
 		export interface SessionUserDTO {
+			avatarId?: string | null;
 			/**
 			 * example:
 			 * 926b9777-4eef-443d-925a-4aa534797bd7

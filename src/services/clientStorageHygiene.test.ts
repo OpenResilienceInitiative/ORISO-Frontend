@@ -139,7 +139,8 @@ describe('clientStorageHygiene (#1071)', () => {
 			expect(RETAINED_STORAGE_PREFIXES).toEqual([
 				'oriso.pendingRecoveryKey.',
 				'oriso.recoverySetupInFlight.',
-				'oriso.lastOpenSession.'
+				'oriso.lastOpenSession.',
+				'oriso.feedbackMailHint.'
 			]);
 		});
 
@@ -213,4 +214,19 @@ describe('clientStorageHygiene (#1071)', () => {
 			]);
 		});
 	});
+});
+
+it('retains only IDs of pending feedback events through logout for the original account retry', () => {
+	const key = 'oriso.feedbackMailHint.%40owner%3Aexample.org.%24event';
+	const hint = {
+		userId: '@owner:example.org',
+		roomId: '!protected:example.org',
+		matrixEventId: '$event',
+		expiresAt: Date.now() + 86400000
+	};
+	localStorage.setItem(key, JSON.stringify(hint));
+	localStorage.setItem('oriso.feedbackPrivateDraft', 'private');
+	purgeAppWebStorage();
+	expect(JSON.parse(localStorage.getItem(key)!)).toEqual(hint);
+	expect(localStorage.getItem('oriso.feedbackPrivateDraft')).toBeNull();
 });

@@ -22,6 +22,7 @@ import {
 import {
 	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
 	MATRIX_DEVICE_ID_STORAGE_KEY,
+	MATRIX_SESSION_SUBJECT_STORAGE_KEY,
 	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
 	MATRIX_USER_ID_STORAGE_KEY
 } from '../../utils/matrixStorageKeys';
@@ -30,12 +31,19 @@ import {
 	purgeAppWebStorage
 } from '../../services/clientStorageHygiene';
 import { withTimeout } from '../../utils/promiseTimeout';
+import { appSnackbarStack } from '../m3Snackbar/snackbarStack';
+import {
+	endPractice,
+	exitPracticeMode,
+	isPracticeMode
+} from '../../practice/practiceMode';
 
 const LEGACY_MATRIX_LOCAL_STORAGE_KEYS = [
 	MATRIX_USER_ID_STORAGE_KEY,
 	MATRIX_ACCESS_TOKEN_STORAGE_KEY,
 	MATRIX_DEVICE_ID_STORAGE_KEY,
-	MATRIX_TOKEN_EXPIRY_STORAGE_KEY
+	MATRIX_TOKEN_EXPIRY_STORAGE_KEY,
+	MATRIX_SESSION_SUBJECT_STORAGE_KEY
 ] as const;
 
 export const EVENT_PRE_LOGOUT = 'pre_logout';
@@ -92,6 +100,14 @@ export const logout = async (
 	// logout() again, and that re-entrant call must be a no-op rather than a
 	// second, redirecting sign-out racing this one.
 	isRequestInProgress = true;
+
+	// Practice mode's network guard blocks every write, among them the pre-logout
+	// draft flush and the Keycloak logout POST. Leave it first (#1622), the
+	// regular way: the practice views unmount and drain before the guard goes.
+	if (isPracticeMode()) {
+		await endPractice();
+	}
+	exitPracticeMode();
 
 	// With the session already torn down (auth guard, expired refresh token)
 	// there is nothing the handlers or the availability call could still do
@@ -153,6 +169,9 @@ export const logout = async (
  * providers above the router drop their session-bound state.
  */
 export const teardownLocalSession = (): void => {
+	// The login form's requests are writes too (#1622). Immediate on purpose:
+	// the session is already gone, nothing practice can still write matters.
+	exitPracticeMode();
 	void getMatrixClientService()
 		?.logout()
 		.catch(() => {});
@@ -167,6 +186,9 @@ export const teardownLocalSession = (): void => {
 	// the loss record are session-bound; an auth or bootstrap failure that
 	// tears down without logout() must not hand them to the next counsellor.
 	clearLiveChatAvailabilityPreference();
+	// The app-wide snackbars outlive the host; a join request naming someone
+	// must not greet the next person who signs in (#1499).
+	appSnackbarStack.clear();
 	LEGACY_MATRIX_LOCAL_STORAGE_KEYS.forEach((key) => {
 		localStorage.removeItem(key);
 	});

@@ -610,11 +610,17 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 
 		// Align the hairlines with the card gutter: 6px on mobile, 12px on
 		// desktop (matches the scrollContainer margins above).
+		// `width: auto`: the base `.emptyState` is `width: 100%`, which with
+		// the side margins pushed the hairline 12px past the column edge.
+		width: auto;
 		margin: 0 6px;
-		border-right: 1px solid #fff;
 
+		// Desktop: the hairline runs through the resize handle's centre
+		// (same formula as `&__resizeHandle--end`), so the pill sits on it.
 		@include breakpoint($fromLarge) {
-			margin: 0 12px;
+			margin: 0
+				calc(var(--pane-inner-gutter, 0px) - var(--pane-gap, 0px) / 2) 0
+				12px;
 		}
 	}
 
@@ -627,6 +633,26 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 			max-width: unset;
 			line-height: $grid-base-three;
 		}
+	}
+}
+
+// The list↔chat divider only while BOTH panes are empty, desktop only
+// (Frank 2026-09-21): next to an open chat or the create card there is no
+// line. The resize handle draws it: full column height, above the toolbar
+// (whose background hid a border on the empty state), centred under the pill.
+@include breakpoint($fromLarge) {
+	.contentWrapper:has(.contentWrapper__detail .session--empty):has(
+			.sessionsList__emptyState
+		)
+		.sessionsList__resizeHandle--end::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: calc(50% - 0.5px);
+		width: 1px;
+		background: #fff;
+		pointer-events: none;
 	}
 }
 

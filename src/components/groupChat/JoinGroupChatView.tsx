@@ -6,8 +6,10 @@ import {
 	SessionTypeContext,
 	useConsultingType,
 	UserDataContext,
+	NotificationsContext,
 	ActiveSessionContext
 } from '../../globalState';
+import { getCounsellingDpaNotification } from '../../utils/counsellingDpaNotification';
 import { mobileListView } from '../app/navigationHandler';
 import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import { SESSION_LIST_TAB } from '../session/sessionHelpers';
@@ -55,6 +57,7 @@ export const JoinGroupChatView = ({
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { userData } = useContext(UserDataContext);
+	const notifications = useContext(NotificationsContext);
 	const [overlayItem, setOverlayItem] = useState<OverlayItem>(null);
 	const [overlayActive, setOverlayActive] = useState(false);
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
@@ -230,7 +233,12 @@ export const JoinGroupChatView = ({
 				: GROUP_CHAT_API.JOIN;
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
-			.catch(() => {
+			.catch((error) => {
+				const notice = getCounsellingDpaNotification(error, translate);
+				if (notice && notifications) {
+					notifications.addNotification(notice);
+					return;
+				}
 				setOverlayItem(startJoinGroupChatErrorOverlay);
 				setOverlayActive(true);
 			})

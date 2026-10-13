@@ -17,6 +17,12 @@ export type CaseHandoverStatusValue =
 	| 'CLIENT_CONSENT_DECLINED'
 	| (string & {});
 
+/** Pending requests retain their decision controls and feed acknowledgement. */
+export const isPendingCaseHandoverStatus = (status: CaseHandoverStatusValue) =>
+	status === 'PENDING' ||
+	status === 'PENDING_CLIENT_CONSENT' ||
+	status === 'GRANTED_PENDING_CLIENT_OPTOUT';
+
 export type CaseHandoverConsentValue = 'OPT_IN' | 'OPT_OUT' | 'NONE';
 
 export interface CaseHandoverReason {
@@ -148,5 +154,34 @@ export const apiExtendCaseHandoverCoAccess = async (
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.CONFLICT,
 			FETCH_ERRORS.FORBIDDEN
+		]
+	});
+
+export interface CaseHandoverConsentPreference {
+	sessionId: number;
+	alwaysAskBeforeAdditionalAccess: boolean;
+}
+
+export const apiGetCaseHandoverConsentPreference = (
+	sessionId: number
+): Promise<CaseHandoverConsentPreference> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
+		method: FETCH_METHODS.GET,
+		responseHandling: [FETCH_ERRORS.FORBIDDEN]
+	});
+
+export const apiSaveCaseHandoverConsentPreference = (
+	sessionId: number,
+	alwaysAskBeforeAdditionalAccess: boolean
+): Promise<CaseHandoverConsentPreference> =>
+	fetchData({
+		url: `${endpoints.sessionBase}/${sessionId}/case-handover/consent-preference`,
+		method: FETCH_METHODS.PUT,
+		bodyData: JSON.stringify({ alwaysAskBeforeAdditionalAccess }),
+		responseHandling: [
+			FETCH_ERRORS.BAD_REQUEST,
+			FETCH_ERRORS.FORBIDDEN,
+			FETCH_SUCCESS.CONTENT
 		]
 	});

@@ -1,20 +1,201 @@
+/*
+ * FE#1115: one drawing for the enquiry glyph and the search indicator. The box stays
+ * `--csl-size` and the beam overflows it, so nothing in the row moves when the search ends.
+ */
+
 .consultantSearchLoader {
-	display: flex;
+	--csl-size: 24px;
+
+	// How far the arc travels past the magnet's box; the header capsule raises it.
+	--csl-reach: calc(var(--csl-size) * 0.9);
+	--csl-stroke: max(2.5px, calc(var(--csl-size) * 0.17));
+
+	// Where magnet and beam point (0deg = up). Right reads as an instrument, not as décor.
+	--csl-aim: 90deg;
+	--csl-magnet: #e5271f;
+
+	// Mid grey: the poles must read on the dark capsule and on a white ground.
+	--csl-pole: #aab1b8;
+	--csl-beam: #0097fc;
+
+	// Thinner than the magnet: an emitted arc, not a second object.
+	--csl-beam-stroke: max(2px, calc(var(--csl-size) * 0.1));
+
+	// One slow gesture: three swings, three arcs, then stop. Never on a timer, so
+	// several waiting requests on one screen cannot pulse in lockstep.
+	--csl-pulse: 2.6s;
+
+	// Spacing of the three arcs inside one sweep.
+	--csl-arc-gap: 0.42s;
+
+	position: relative;
+	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 100%;
-	height: 100%;
+	width: var(--csl-size);
+	height: var(--csl-size);
 	flex-shrink: 0;
 
-	&__circle {
-		width: 100%;
-		height: 100%;
+	// The beam leaves the magnet, capsule and header row; no ancestor may clip it.
+	overflow: visible;
+	pointer-events: none;
+
+	// Rotates magnet and beam together, so the beam leaves along the magnet's axis.
+	&__sweep {
+		position: absolute;
+		inset: 0;
+		display: block;
+		transform: rotate(var(--csl-aim));
+	}
+
+	&--pulsing &__sweep {
+		animation: consultantSearchLoaderSweep var(--csl-pulse) ease-in-out 1
+			both;
+	}
+
+	// A horseshoe from one element's borders, so nothing reads as a rectangle at 24 px.
+	&__magnet {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: calc(var(--csl-size) * 0.78);
+		height: calc(var(--csl-size) * 0.72);
+		margin-top: calc(var(--csl-size) * -0.36);
+		margin-left: calc(var(--csl-size) * -0.39);
+		box-sizing: border-box;
+		border: var(--csl-stroke) solid var(--csl-magnet);
+		border-top: 0;
+		border-radius: 0 0 calc(var(--csl-size) * 0.39)
+			calc(var(--csl-size) * 0.39);
+	}
+
+	&__pole {
+		position: absolute;
+		top: 0;
+		width: var(--csl-stroke);
+		height: calc(var(--csl-size) * 0.2);
+		background: var(--csl-pole);
+
+		&--left {
+			left: calc(var(--csl-stroke) * -1);
+		}
+
+		&--right {
+			right: calc(var(--csl-stroke) * -1);
+		}
+	}
+
+	// `--csl-arc` is the diameter; the keyframes already account for its radius.
+	&__beam {
+		--csl-arc: calc(var(--csl-size) * 0.86);
+
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: var(--csl-arc);
+		height: var(--csl-arc);
+		margin-top: calc(var(--csl-arc) / -2);
+		margin-left: calc(var(--csl-arc) / -2);
+		box-sizing: border-box;
+		border: var(--csl-beam-stroke) solid transparent;
+		border-top-color: var(--csl-beam);
 		border-radius: 50%;
-		background-color: #000000;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		position: relative;
-		overflow: hidden;
+		opacity: 0;
+	}
+
+	// Three arcs, leaving one after the other inside the sweep.
+	&--pulsing &__beam {
+		animation: consultantSearchLoaderBeam calc(var(--csl-pulse) * 0.46)
+			ease-out 1 both;
+
+		&--second {
+			animation-delay: var(--csl-arc-gap);
+		}
+
+		&--third {
+			animation-delay: calc(var(--csl-arc-gap) * 2);
+		}
+	}
+}
+
+// Three slow passes, then the magnet settles back onto its aim and stops.
+@keyframes consultantSearchLoaderSweep {
+	0% {
+		transform: rotate(var(--csl-aim));
+	}
+
+	16% {
+		transform: rotate(calc(var(--csl-aim) - 22deg));
+	}
+
+	38% {
+		transform: rotate(calc(var(--csl-aim) + 22deg));
+	}
+
+	58% {
+		transform: rotate(calc(var(--csl-aim) - 18deg));
+	}
+
+	78% {
+		transform: rotate(calc(var(--csl-aim) + 13deg));
+	}
+
+	100% {
+		transform: rotate(var(--csl-aim));
+	}
+}
+
+// From between the poles to `--csl-reach` beyond; full strength past the capsule,
+// so the fade happens in the open.
+@keyframes consultantSearchLoaderBeam {
+	0% {
+		transform: translateY(calc(var(--csl-size) * 0.06)) scale(0.5);
+		opacity: 0;
+	}
+
+	12% {
+		opacity: 1;
+	}
+
+	62% {
+		opacity: 0.95;
+	}
+
+	100% {
+		transform: translateY(calc(var(--csl-reach) * -1)) scale(1.25);
+		opacity: 0;
+	}
+}
+
+// Hover replay on the whole host surface. Living only under `:hover` makes the
+// animation apply afresh on every pointer entry.
+.consultantSearchLoaderHost:hover {
+	.consultantSearchLoader--animated .consultantSearchLoader__sweep {
+		animation: consultantSearchLoaderSweep var(--csl-pulse) ease-in-out 1
+			both;
+	}
+
+	.consultantSearchLoader--animated .consultantSearchLoader__beam {
+		animation: consultantSearchLoaderBeam calc(var(--csl-pulse) * 0.46)
+			ease-out 1 both;
+
+		&--second {
+			animation-delay: var(--csl-arc-gap);
+		}
+
+		&--third {
+			animation-delay: calc(var(--csl-arc-gap) * 2);
+		}
+	}
+}
+
+// Backstop: the component already skips the pulse under reduced motion.
+@media (prefers-reduced-motion: reduce) {
+	.consultantSearchLoader--pulsing,
+	.consultantSearchLoaderHost:hover .consultantSearchLoader {
+		.consultantSearchLoader__sweep,
+		.consultantSearchLoader__beam {
+			animation: none;
+		}
 	}
 }

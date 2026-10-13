@@ -1031,9 +1031,29 @@ body.conversationCreate--active .navigation__wrapper {
 			font-weight: 700;
 		}
 
+		/*
+		 * M3 focus state: a 10% state layer plus a rounded ring inside the
+		 * row, following the menu's curve. Only for keyboard use — a menu
+		 * opened by tap moves focus by script and must not look like a
+		 * second selection.
+		 */
+		position: relative;
+
 		&:focus-visible {
-			outline: 3px solid $cc-primary;
-			outline-offset: -3px;
+			outline: none;
+		}
+	}
+
+	&--keyboard &__option:focus-visible {
+		background-color: color-mix(in srgb, $cc-on-surface 10%, transparent);
+
+		&::after {
+			border: 2px solid $cc-secondary;
+			border-radius: 20px;
+			content: '';
+			inset: 2px 8px;
+			pointer-events: none;
+			position: absolute;
 		}
 	}
 }
@@ -1081,18 +1101,22 @@ body.conversationCreate--active .navigation__wrapper {
 		gap: 0;
 	}
 
+	/*
+	 * The two cards read as one: square where they meet and the same width.
+	 * The stacked-layout cap of 400px applied to the upper card only.
+	 */
 	.circleSettings__card {
 		border-bottom-left-radius: 0;
 		border-bottom-right-radius: 0;
 		border-bottom-width: 0;
+		max-width: none;
 		width: 100%;
 	}
 
 	.circleSettings__authorColumn {
 		background: $cc-surface-container-low;
 		border: 1px solid $cc-outline-variant;
-		border-bottom-left-radius: 28px;
-		border-bottom-right-radius: 28px;
+		border-radius: 0 0 28px 28px;
 		border-top-width: 0;
 		padding: 12px;
 	}

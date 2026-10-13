@@ -125,9 +125,12 @@ describe('Matrix-only active frontend artifacts', () => {
 		expect(runtimeDockerfile).toMatch(
 			/ARG NODE_VERSION=[^\s]+@sha256:[a-f0-9]{64}/
 		);
-		expect(storybookDockerfile).toMatch(
-			/ARG NODE_VERSION=[^\s]+@sha256:[a-f0-9]{64}/
-		);
+		// Dockerfile.storybook has no node base: it copies the storybook-static
+		// output the workflow builds. nginx is the only base it still pulls, so
+		// asserting a NODE_VERSION pin here would demand a stage that must not
+		// come back — an in-image `npm install` for linux/arm64 runs under QEMU
+		// and cost that workflow ~28 minutes per publish.
+		expect(storybookDockerfile).not.toMatch(/ARG NODE_VERSION=/);
 		expect(storybookDockerfile).toMatch(
 			/FROM nginx:[^\s]+@sha256:[a-f0-9]{64}/
 		);

@@ -4,6 +4,38 @@ import { TenantDataInterface } from '../globalState/interfaces';
 import { normalizePreferredLanguage } from '../utils/normalizePreferredLanguage';
 import { FETCH_ERRORS, FETCH_METHODS, fetchData } from './fetchData';
 import { COOKIE_KEY } from '../globalState';
+import { apiGetIsUsernameAvailable } from './apiGetIsUsernameAvailable';
+
+/**
+ * Registration creates the chat room and invites every counsellor of the
+ * centre one by one, and the chat server rate-limits those invites. On Dev a
+ * centre with 24 counsellors took 52 s (9 Oct 2026); the 30 s default abort
+ * turned that into "Oops" while the server went on to create the account.
+ */
+export const REGISTRATION_TIMEOUT_MS = 120_000;
+
+/**
+ * After a timeout only the server knows whether the account exists. A taken
+ * User-ID means it does, and the person must be sent to the login, never back
+ * to the form. Any doubt (other error, failed check) keeps today's behaviour.
+ */
+export const accountExistsAfterTimeout = async (
+	error: unknown,
+	username: string | undefined
+): Promise<boolean> => {
+	if (
+		!(error instanceof Error) ||
+		error.message !== FETCH_ERRORS.TIMEOUT ||
+		!username
+	) {
+		return false;
+	}
+	try {
+		return !(await apiGetIsUsernameAvailable(username));
+	} catch {
+		return false;
+	}
+};
 
 type RegistrationPayload = {
 	agencyId?: string;
@@ -44,6 +76,7 @@ export const apiPostRegistration = (
 		method: FETCH_METHODS.POST,
 		bodyData: JSON.stringify(requestData),
 		skipAuth: true,
+		timeout: REGISTRATION_TIMEOUT_MS,
 		...(useMultiTenancyWithSingleDomain &&
 			data.agencyId && {
 				headersData: { agencyId: data.agencyId }

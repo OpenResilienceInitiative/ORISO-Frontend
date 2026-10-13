@@ -19,31 +19,38 @@ import {
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { clearRegistrationSubmitting } from './registrationSubmission';
+import { readAccountCreatedLogin } from './accountCreatedLogin';
 
 /**
  * The registration request, controlled by each test. It stays in flight until a
  * test settles it, which is the state under test. Hoisted with the `vi.mock`
  * calls below, which run before this file's own imports are evaluated.
  */
-const { pendingRegistration, redirectToApp, redirectToLogin, settle } =
-	vi.hoisted(() => {
-		const settle: {
-			resolve?: () => void;
-			reject?: (error: Error) => void;
-		} = {};
-		return {
-			settle,
-			redirectToApp: vi.fn(),
-			redirectToLogin: vi.fn(),
-			pendingRegistration: vi.fn(
-				(..._args: unknown[]) =>
-					new Promise<void>((resolve, reject) => {
-						settle.resolve = resolve;
-						settle.reject = reject;
-					})
-			)
-		};
-	});
+const {
+	accountExists,
+	pendingRegistration,
+	redirectToApp,
+	redirectToLogin,
+	settle
+} = vi.hoisted(() => {
+	const settle: {
+		resolve?: () => void;
+		reject?: (error: Error) => void;
+	} = {};
+	return {
+		settle,
+		accountExists: vi.fn(async (..._args: unknown[]) => false),
+		redirectToApp: vi.fn(),
+		redirectToLogin: vi.fn(),
+		pendingRegistration: vi.fn(
+			(..._args: unknown[]) =>
+				new Promise<void>((resolve, reject) => {
+					settle.resolve = resolve;
+					settle.reject = reject;
+				})
+		)
+	};
+});
 
 /** Lottie touches a canvas 2d context at module load; jsdom has none. */
 vi.mock('lottie-react', () => ({ default: () => null }));
@@ -67,6 +74,8 @@ vi.mock('../../api', async (importOriginal) => {
 		...actual,
 		apiPostRegistration: (...args: unknown[]) =>
 			pendingRegistration(...args),
+		accountExistsAfterTimeout: (...args: unknown[]) =>
+			accountExists(...args),
 		apiGetAskerSessionList: vi.fn(async () => ({ sessions: [] }))
 	};
 });
@@ -167,6 +176,7 @@ const form = () => document.querySelector('[data-cy="registration-form"]');
 beforeEach(() => {
 	clearRegistrationSubmitting();
 	pendingRegistration.mockClear();
+	accountExists.mockClear();
 	redirectToApp.mockClear();
 	redirectToLogin.mockClear();
 	settle.reject = undefined;
@@ -232,6 +242,7 @@ describe('registration — a submit that is already in flight', () => {
 			redirectToLogin,
 			'no account was created — there is nothing to log in to'
 		).not.toHaveBeenCalled();
+		expect(readAccountCreatedLogin()).toBeNull();
 	});
 
 	it('keeps the handover when the account exists and only the tidy-up fails', async () => {
@@ -309,6 +320,38 @@ describe('registration — a submit that is already in flight', () => {
 			'the handover must end somewhere — the login is where the account can still be used'
 		).toHaveBeenCalledTimes(1);
 		expect(redirectToApp).not.toHaveBeenCalled();
+		expect(
+			readAccountCreatedLogin(),
+			'the login page has to know why the person is there, and which User-ID they chose (#1533)'
+		).toEqual({ username: 'blaue-wolke' });
+	});
+
+	it('sends the person to the login when the sign-up timed out but the account exists', async () => {
+		/* A centre with many counsellors makes sign-up slower than the browser
+		   waits, and the server still creates the account after the browser
+		   gave up (Dev, 9 Oct 2026: 52 s). The form would come back with
+		   "User-ID already taken" for a person who already has an account. */
+		accountExists.mockResolvedValueOnce(true);
+		renderAccountStep();
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		await act(async () => {
+			settle.reject?.(new Error('TIMEOUT'));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		await waitFor(() => expect(redirectToLogin).toHaveBeenCalledTimes(1));
+		expect(accountExists).toHaveBeenCalledWith(
+			expect.objectContaining({ message: 'TIMEOUT' }),
+			'blaue-wolke'
+		);
+		expect(
+			form(),
+			'the account exists — the form must not come back'
+		).toBeNull();
+		expect(readAccountCreatedLogin()).toEqual({ username: 'blaue-wolke' });
 	});
 
 	it('shows the form on a fresh visit, because no submit is in flight', async () => {

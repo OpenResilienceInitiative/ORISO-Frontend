@@ -16,7 +16,8 @@ import './message.styles.scss';
  * ever sent to Matrix; both live only in the sender's local timeline.
  */
 const meta = {
-	title: 'Components/Chat/FailedSendTimelineEntry',
+	id: 'components-chat-failedsendtimelineentry',
+	title: 'Chat/System messages/Failed-send timeline',
 	component: FailedSendTimelineEntry,
 	tags: ['autodocs'],
 	/* This entry renders a real MessageItemComponent, which reads the session,

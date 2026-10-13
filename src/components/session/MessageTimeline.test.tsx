@@ -6,10 +6,16 @@ import { MessageTimeline } from './MessageTimeline';
 
 vi.mock('../message/MessageItemComponent', () => ({
 	MessageItemComponent: ({
-		askerMatrixUserId
+		askerMatrixUserId,
+		message
 	}: {
 		askerMatrixUserId?: string;
-	}) => <div data-testid="message" data-asker-id={askerMatrixUserId} />
+		message?: string;
+	}) => (
+		<div data-testid="message" data-asker-id={askerMatrixUserId}>
+			{message}
+		</div>
+	)
 }));
 
 vi.mock('../message/MessageSendFailed', () => ({
@@ -19,6 +25,39 @@ vi.mock('../message/MessageSendFailed', () => ({
 afterEach(cleanup);
 
 describe('MessageTimeline identity overrides', () => {
+	it('places a consent continuation between older and newer chat messages', () => {
+		const message = (id: string, time: string) => ({
+			_id: id,
+			message: id,
+			messageDate: { str: '', date: null },
+			messageTime: time,
+			isNotRead: false,
+			t: null,
+			rid: '!main',
+			displayName: 'Client',
+			username: 'client',
+			userId: '@client'
+		});
+		const { container } = render(
+			<MessageTimeline
+				messages={[
+					message('Earlier message', '1000'),
+					message('Later message', '3000')
+				]}
+				clientName="Client"
+				isMyMessage={() => false}
+				handleDecryptionErrors={vi.fn()}
+				handleDecryptionSuccess={vi.fn()}
+				e2eeParams={{} as never}
+				supplement={<p>Consent request</p>}
+				supplementTime={2000}
+			/>
+		);
+		expect(container.textContent).toBe(
+			'Earlier messageConsent requestLater message'
+		);
+	});
+
 	it('uses the room-specific asker identity instead of the message fallback', () => {
 		render(
 			<MessageTimeline
