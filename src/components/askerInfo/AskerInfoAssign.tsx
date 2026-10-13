@@ -153,6 +153,15 @@ export const AskerInfoAssign = ({
 				}))
 			);
 			setReasons(nextReasons || []);
+			setReasonCode((selectedReason) =>
+				nextReasons?.some(
+					(reason) =>
+						reason.code === selectedReason &&
+						isOfferableReason(reason)
+				)
+					? selectedReason
+					: ''
+			);
 		} catch (loadError) {
 			if (
 				generation === generationRef.current &&
