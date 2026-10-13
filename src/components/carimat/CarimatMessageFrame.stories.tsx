@@ -135,10 +135,10 @@ const checkSharedPresentation: Story['play'] = async ({ canvasElement }) => {
 	await waitFor(() => {
 		const rects = regions.map((region) => {
 			const bubble = region.querySelector<HTMLElement>(
-				'.pseudonymCard__bubble'
+				'.carimatMessageFrame__bubble'
 			)!;
 			const avatar = region.querySelector<HTMLElement>(
-				'.pseudonymCard__avatarFrame'
+				'.carimatMessageFrame__avatar'
 			)!;
 			const header = within(region).getByText('Carimat');
 			return {

@@ -524,7 +524,7 @@ const CARIMAT_ORGANISM_PARTS = [
 	'.carimatMessageFrame__content',
 	'.carimatMessageFrame__header > .carimatMessageFrame__name',
 	'.carimatMessageFrame__header > .carimatMessageFrame__subtitle',
-	'.carimatMessageFrame__bubble.erstantwort__bubble > .pseudonymCard__bubbleText',
+	'.carimatMessageFrame__bubble.erstantwort__bubble > p',
 	'.carimatMessageFrame__bubble > .carimatMessageFrame__topic'
 ];
 const expectCarimatOrganism = async (
