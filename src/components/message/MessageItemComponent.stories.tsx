@@ -535,11 +535,9 @@ export const SystemNotification: Story = {
 	play: async ({ canvasElement }) => {
 		await waitFor(() => {
 			const avatar = canvasElement.querySelector<HTMLElement>(
-				'.messageItem__avatar--bot'
+				'.carimatMessageFrame__avatar'
 			)!;
-			const title = canvasElement.querySelector<HTMLElement>(
-				'.messageItem__sendFailedTitle'
-			)!;
+			const title = within(canvasElement).getByText('Carimat');
 			expect(title.getBoundingClientRect().left).toBeGreaterThanOrEqual(
 				avatar.getBoundingClientRect().right + 8
 			);
@@ -566,6 +564,7 @@ export const CaseHandoverGranted: Story = {
 	// Legacy notice label "Counsellor is ill" must render neutrally (#1536).
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByText('Carimat')).toBeVisible());
 		// Rendered inside the collapsed details panel.
 		await expect(
 			await canvas.findByText(/Unplanned absence|Ungeplant abwesend/)
@@ -1576,12 +1575,15 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 	expect(
 		notice.querySelector('[data-testid="erstantwort-sequence"]')
 	).not.toBeNull();
-	expect(notice.querySelector('.pseudonymCard')).not.toBeNull();
+	expect(notice.querySelector('.carimatMessageFrame')).not.toBeNull();
 	expect(notice.querySelector('.pseudonymCard__avatarFrame')).not.toBeNull();
 	expect(
 		notice.querySelector<HTMLElement>('.pseudonymCard__headerName')
 			?.textContent
-	).toBe(SUPERVISION_NOTICE_TITLE);
+	).toBe('Carimat');
+	await waitFor(() =>
+		expect(within(notice).getByText(SUPERVISION_NOTICE_TITLE)).toBeVisible()
+	);
 	expect(
 		notice.querySelector<HTMLElement>('.pseudonymCard__headerSubtitle')
 			?.textContent
@@ -1611,7 +1613,7 @@ const expectCarimatNoticeStructure = async (canvasElement: HTMLElement) => {
 
 /** Header labels must clear the entire avatar frame, including its backdrop. */
 const expectReadableCarimatHeader = async (notice: HTMLElement) => {
-	const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+	const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 	const avatar = notice.querySelector<HTMLElement>(
 		'.pseudonymCard__avatarFrame'
 	)!;
@@ -1783,7 +1785,7 @@ export const SupervisionNoticeMobile390: Story = {
 	},
 	play: async ({ canvasElement }) => {
 		const notice = await expectCarimatNoticeStructure(canvasElement);
-		const card = notice.querySelector<HTMLElement>('.pseudonymCard')!;
+		const card = notice.querySelector<HTMLElement>('.carimatMessageFrame')!;
 		const shell = notice.parentElement!;
 		await waitFor(() => {
 			expect(card.getBoundingClientRect().width).toBeGreaterThan(0);
@@ -2117,7 +2119,7 @@ export const InformationalGrantedForAsker: Story = {
 			'.messageItem__message--systemNotification'
 		)!;
 		const header = canvasElement.querySelector<HTMLElement>(
-			'.messageItem__systemNotificationHeaderText'
+			'.carimatMessageFrame__header'
 		)!;
 		const more = canvas.getByRole('button', {
 			name: /Mehr erfahren|Learn more/
@@ -2145,7 +2147,15 @@ export const InformationalGrantedForAsker: Story = {
 			expect(bubble.getBoundingClientRect().height).toBeLessThanOrEqual(
 				copy.getBoundingClientRect().height +
 					more.getBoundingClientRect().height +
-					32
+					bubble
+						.querySelector<HTMLElement>(
+							'.carimatMessageFrame__topic'
+						)!
+						.getBoundingClientRect().height +
+					bubble
+						.querySelector<HTMLElement>('.messageItem__timeRail')!
+						.getBoundingClientRect().height +
+					44
 			);
 		});
 		await userEvent.click(

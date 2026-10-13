@@ -1,9 +1,10 @@
-import { useAssistantIdentity } from '../carimat/AssistantIdentity';
 import * as React from 'react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
-import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import {
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
 import { ResolvedBaustein } from './erstantwortResolve';
@@ -42,8 +43,8 @@ export interface ErstantwortSequenceProps {
 	/** Fired when an action Baustein's button is pressed. */
 	onAction?: (kind: ErstantwortActionKind) => void;
 	/**
-	 * Sender shown in the kicker line. Defaults to "Carimat"; the supervision
-	 * side room's notice (T49) reuses this organism under its own name.
+	 * Optional recorded topic title shown in the first bubble (for example
+	 * supervision). The configurable assistant sender remains separate.
 	 */
 	name?: string;
 	/** Subtitle beside the Carimat name; defaults to the platform wording. */
@@ -132,7 +133,6 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	slots
 }) => {
 	const { t } = useTranslation();
-	const assistant = useAssistantIdentity();
 	const total = bausteine.length;
 
 	/* How many bubbles have revealed so far. With the animation skipped every
@@ -189,101 +189,74 @@ export const ErstantwortSequence: React.FC<ErstantwortSequenceProps> = ({
 	if (!total) return null;
 
 	return (
-		<CarimatMessageContainer
+		<CarimatMessageFrame
 			className="erstantwort"
+			subtitle={subtitle ?? t('erstantwort.subtitle')}
 			aria-live="polite"
 			data-testid="erstantwort-sequence"
 		>
-			<div className="messageItem pseudonymCard erstantwort__row">
-				<div className="messageItem__messageWrap pseudonymCard__wrap">
-					<div className="pseudonymCard__avatarCol">
-						<div className="pseudonymCard__avatarFrame">
-							<div className="pseudonymCard__avatarIcon">
-								<CarimatRobotIcon />
-							</div>
-						</div>
-					</div>
-
-					<div className="pseudonymCard__contentCol erstantwort__content">
-						<div className="pseudonymCard__header">
-							<span className="pseudonymCard__headerName">
-								{name ?? assistant.name}
-							</span>
-							<span className="pseudonymCard__headerSubtitle">
-								{subtitle ?? t('erstantwort.subtitle')}
-							</span>
-						</div>
-
-						{visible.map((baustein) => {
-							const faq = compactFaq && FAQ_IDS.has(baustein.id);
-							const faqItems = visible.filter((item) =>
-								FAQ_IDS.has(item.id)
-							);
-							if (faq && baustein.id !== faqItems[0]?.id)
-								return null;
-							if (faq)
-								return (
-									<div
-										key="faq"
-										className="pseudonymCard__bubble erstantwort__bubble"
-									>
-										<h4 className="erstantwort__headline">
-											{t(
-												'erstantwort.faq.title',
-												'Häufige Fragen'
-											)}
-										</h4>
-										{faqItems.map((item) => (
-											<details
-												key={item.id}
-												className="erstantwort__faq"
-											>
-												<summary>
-													{item.headline ??
-														t(
-															`erstantwort.faq.${item.id}`,
-															item.id ===
-																'modalityNote'
-																? 'Wie läuft die Beratung ab?'
-																: 'Was passiert mit meinen Daten?'
-														)}
-												</summary>
-												<BausteinContent
-													baustein={item}
-													slots={slots}
-													onAction={onAction}
-												/>
-											</details>
-										))}
-									</div>
-								);
-							return (
-								<div
-									key={baustein.id}
-									className="pseudonymCard__bubble erstantwort__bubble"
+			{visible.map((baustein, index) => {
+				const faq = compactFaq && FAQ_IDS.has(baustein.id);
+				const faqItems = visible.filter((item) => FAQ_IDS.has(item.id));
+				if (faq && baustein.id !== faqItems[0]?.id) return null;
+				if (faq)
+					return (
+						<CarimatMessageBubble
+							key="faq"
+							topic={index === 0 ? name : undefined}
+							className="erstantwort__bubble"
+						>
+							<h4 className="erstantwort__headline">
+								{t('erstantwort.faq.title', 'Häufige Fragen')}
+							</h4>
+							{faqItems.map((item) => (
+								<details
+									key={item.id}
+									className="erstantwort__faq"
 								>
-									{baustein.headline && (
-										<h4 className="erstantwort__headline">
-											{baustein.headline}
-										</h4>
-									)}
+									<summary>
+										{item.headline ??
+											t(
+												`erstantwort.faq.${item.id}`,
+												item.id === 'modalityNote'
+													? 'Wie läuft die Beratung ab?'
+													: 'Was passiert mit meinen Daten?'
+											)}
+									</summary>
 									<BausteinContent
-										baustein={baustein}
+										baustein={item}
 										slots={slots}
 										onAction={onAction}
 									/>
-								</div>
-							);
-						})}
-
-						{isTyping && (
-							<div className="pseudonymCard__bubble erstantwort__bubble erstantwort__bubble--typing">
-								<TypingDots />
-							</div>
+								</details>
+							))}
+						</CarimatMessageBubble>
+					);
+				return (
+					<CarimatMessageBubble
+						key={baustein.id}
+						topic={index === 0 ? name : undefined}
+						className="erstantwort__bubble"
+					>
+						{baustein.headline && (
+							<h4 className="erstantwort__headline">
+								{baustein.headline}
+							</h4>
 						)}
-					</div>
-				</div>
-			</div>
-		</CarimatMessageContainer>
+						<BausteinContent
+							baustein={baustein}
+							slots={slots}
+							onAction={onAction}
+						/>
+					</CarimatMessageBubble>
+				);
+			})}
+
+			{isTyping && (
+				<CarimatMessageBubble className="erstantwort__bubble erstantwort__bubble--typing">
+					<TypingDots />
+				</CarimatMessageBubble>
+			)}
+		</CarimatMessageFrame>
 	);
 };
