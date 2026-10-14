@@ -29,19 +29,20 @@ describe('CaseHandoverBulkBar — floating notices (FE#1725)', () => {
 			configurable: true,
 			value: 844
 		});
-		vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
-			{
-				top: 700,
-				bottom: 800,
-				left: 0,
-				right: 390,
-				width: 390,
-				height: 100,
-				x: 0,
-				y: 700,
-				toJSON: () => ({})
-			} as DOMRect
-		);
+		vi.spyOn(
+			HTMLElement.prototype,
+			'getBoundingClientRect'
+		).mockReturnValue({
+			top: 700,
+			bottom: 800,
+			left: 0,
+			right: 390,
+			width: 390,
+			height: 100,
+			x: 0,
+			y: 700,
+			toJSON: () => ({})
+		} as DOMRect);
 
 		const view = render(
 			<CaseHandoverBulkBar

@@ -9,6 +9,7 @@
 	position: relative;
 	box-sizing: border-box;
 	height: var(--card-body);
+
 	// Slot content (the case-handover action) adapts to the card's width.
 	container: session-card / inline-size;
 	padding: 0 var(--card-inset);

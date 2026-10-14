@@ -358,7 +358,8 @@ a {
 .app__platformVersion {
 	position: fixed;
 	right: 12px;
-	// Keep build identity clear of the mobile navigation labels and home inset.
+
+	// Keep build identity clear of the mobile navigation labels and home inset,
 	// and above a docked composer or case-selection bar (shared clearance).
 	bottom: max(
 		calc(#{$navHeight} + 16px + env(safe-area-inset-bottom, 0px)),

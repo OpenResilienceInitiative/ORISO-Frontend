@@ -438,7 +438,8 @@ export function buildSearchPeopleResults(
 			sessionKey,
 			sessionParts
 		);
-		entry.internalName ||= readable(internalNameOf(consultant)) || undefined;
+		entry.internalName ||=
+			readable(internalNameOf(consultant)) || undefined;
 		entry.agencyName ||= agencyName;
 		entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
 	};
