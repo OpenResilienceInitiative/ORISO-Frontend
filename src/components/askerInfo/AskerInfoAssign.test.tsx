@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -490,11 +491,16 @@ describe('AskerInfoAssign owner handover', () => {
 		await screen.findByTestId('handover-dialog');
 		fireEvent.click(screen.getByText('person'));
 		fireEvent.click(screen.getByText('reason'));
-		fireEvent.click(screen.getByText('confirm'));
+		await act(async () => {
+			fireEvent.click(screen.getByText('confirm'));
+		});
 		await screen.findByRole('status');
 		fireEvent(window, new Event('focus'));
 		await waitFor(() =>
-			expect(apiGetCaseHandoverRequestStatus).toHaveBeenCalled()
+			expect(apiGetCaseHandoverRequestStatus).toHaveBeenCalledWith(
+				41,
+				501
+			)
 		);
 
 		expect(reload).not.toHaveBeenCalled();
