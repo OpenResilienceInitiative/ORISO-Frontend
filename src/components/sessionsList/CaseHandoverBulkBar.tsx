@@ -1,6 +1,15 @@
 import * as React from 'react';
-import { forwardRef, useImperativeHandle, useRef } from 'react';
+import {
+	forwardRef,
+	useImperativeHandle,
+	useLayoutEffect,
+	useRef
+} from 'react';
 import { ButtonGroup } from '../buttonGroup/ButtonGroup';
+import {
+	removeComposerClearance,
+	updateComposerClearance
+} from '../m3Snackbar/composerClearance';
 import './caseHandoverBulkBar.styles.scss';
 
 export interface CaseHandoverBulkBarLabels {
@@ -13,6 +22,9 @@ export interface CaseHandoverBulkBarLabels {
 	/** Shown next to a disabled Continue while nothing is selected. */
 	emptyHint: string;
 }
+
+/** Gap between the bar and a floating notice above it (M3 16 dp). */
+const NOTICE_GAP = 16;
 
 interface CaseHandoverBulkBarProps {
 	count: number;
@@ -39,6 +51,25 @@ export const CaseHandoverBulkBar = forwardRef<
 				`[id="${continueId}"]`
 			) ?? null
 	);
+	// Floating snackbars (e.g. the recovery-key notice) rest above the bar,
+	// as they do above a chat composer, so Continue stays tappable.
+	useLayoutEffect(() => {
+		const bar = rootRef.current;
+		if (!bar) return undefined;
+		const measure = () => updateComposerClearance(bar, NOTICE_GAP);
+		measure();
+		const observer =
+			typeof ResizeObserver === 'undefined'
+				? null
+				: new ResizeObserver(measure);
+		observer?.observe(bar);
+		window.addEventListener('resize', measure);
+		return () => {
+			observer?.disconnect();
+			window.removeEventListener('resize', measure);
+			removeComposerClearance(bar);
+		};
+	}, []);
 	const empty = count === 0;
 	return (
 		<section
