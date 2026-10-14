@@ -763,7 +763,9 @@ const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
 		).length
 	).toBeGreaterThan(0);
 	for (const tag of Array.from(
-		canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		)
 	)) {
 		await expect(
 			wcagContrast(getComputedStyle(tag).color, effectiveBackground(tag))
