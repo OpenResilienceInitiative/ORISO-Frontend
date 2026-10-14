@@ -9,6 +9,7 @@ import {
 } from '../../hooks/useOpenTwoFactorSettings';
 import { ErstantwortSequence } from './ErstantwortSequence';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
+import { ErstantwortDisplayNameOverlay } from './ErstantwortDisplayNameOverlay';
 import { SaveCredentialsCard } from './SaveCredentialsCard';
 import { NotificationSetup } from './NotificationSetup';
 import { useTenant } from '../../globalState/provider/TenantProvider';
@@ -61,7 +62,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	skipAnimation,
 	onFirstReveal
 }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	const { userData, reloadUserData } = useContext(UserDataContext);
 	const openTwoFactorSettings = useOpenTwoFactorSettings();
 	const navigate = useNavigate();
@@ -83,6 +84,8 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 		(emailAllowed || channels.browserAllowed) &&
 		(notificationSetupStarted || !hasReachableChannel);
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
+	const [isDisplayNameOverlayOpen, setIsDisplayNameOverlayOpen] =
+		useState(false);
 
 	const state: ErstantwortLiveState = useMemo(
 		() => ({
@@ -160,14 +163,10 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 					setIsEmailOverlayOpen(true);
 					break;
 				case 'ENABLE_2FA':
-					openTwoFactorSettings();
+					openTwoFactorSettings({ showBackupKey: true });
 					break;
 				case 'SET_DISPLAY_NAME':
-					/* The display-name setting takes effect at assignment time
-					   and lives in the profile. Whether free entry is offered at
-					   all is governed by ORISO-Admin#602 switch 1; until that
-					   ships, the profile's own rules apply unchanged. */
-					navigate('/profile');
+					setIsDisplayNameOverlayOpen(true);
 					break;
 				case 'SAVE_CREDENTIALS':
 					/* Handled inline by SaveCredentialsCard — there is no dialog
@@ -228,6 +227,16 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 			{isEmailOverlayOpen && (
 				<ErstantwortEmailOverlay
 					onClose={() => setIsEmailOverlayOpen(false)}
+					onSaved={reloadUserData}
+				/>
+			)}
+			{isDisplayNameOverlayOpen && (
+				<ErstantwortDisplayNameOverlay
+					currentName={
+						userData?.displayName || userData?.userName || ''
+					}
+					locale={i18n.language || 'de'}
+					onClose={() => setIsDisplayNameOverlayOpen(false)}
 					onSaved={reloadUserData}
 				/>
 			)}
