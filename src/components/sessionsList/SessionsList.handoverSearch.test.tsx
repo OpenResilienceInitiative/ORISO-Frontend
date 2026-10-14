@@ -374,6 +374,25 @@ describe('case-handover search — people (FE#1725)', () => {
 		expect(listText(view)).not.toContain('Client fourteen');
 	});
 
+	it('narrows the picked person by a postcode appended to her name', async () => {
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		await waitFor(() => expect(listText(view)).toContain('Client twelve'));
+
+		type('patty 1000');
+		await waitFor(() =>
+			expect(listText(view)).not.toContain('Client twelve')
+		);
+		expect(listText(view)).toContain('Client eleven');
+		expect(listText(view)).toContain('Client thirteen');
+		expect(listText(view)).not.toContain('Client fourteen');
+	});
+
 	it('keeps narrowing by text that does not name a picked person', async () => {
 		const view = await ready(renderList());
 

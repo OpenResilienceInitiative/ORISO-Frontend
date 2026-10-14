@@ -296,21 +296,31 @@ const nameWordsOf = (person: NamedPerson) =>
 		});
 
 /**
- * Text axis of the list while people are picked (FE#1725 US3): text that
- * names a picked person (whole name or a word prefix) or a role word only
- * looked her up and stops narrowing; any other text keeps narrowing (AND).
+ * Text axis of the list while people are picked (FE#1725 US3): words that
+ * name a picked person (whole name or a word prefix) or are role words only
+ * looked her up and stop narrowing; the other words keep narrowing (AND),
+ * e.g. "patty 13055" narrows Patty's cases to postcode 13055.
  */
 export const textAxisQuery = (
 	query: string,
 	pickedPeople: NamedPerson[]
 ): string => {
-	const needle = query.trim().toLowerCase();
-	if (!needle || !pickedPeople.length) return query;
+	if (!query.trim() || !pickedPeople.length) return query;
 	if (roleOfSearchWord(query) !== null) return '';
-	const namesPicked = pickedPeople.some((person) =>
-		nameWordsOf(person).some((word) => word.startsWith(needle))
-	);
-	return namesPicked ? '' : query;
+	const nameWords = pickedPeople.flatMap(nameWordsOf);
+	const needle = query.trim().toLowerCase();
+	if (nameWords.some((word) => word.startsWith(needle))) return '';
+	return query
+		.trim()
+		.split(/\s+/)
+		.filter((word) => {
+			const lower = word.toLowerCase();
+			return (
+				roleOfSearchWord(word) === null &&
+				!nameWords.some((name) => name.startsWith(lower))
+			);
+		})
+		.join(' ');
 };
 
 /** Server queries that find all of a person's cases: username, else names. */
