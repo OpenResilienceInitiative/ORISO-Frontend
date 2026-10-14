@@ -79,7 +79,8 @@ export const CompletedAndInterrupted: Story = {
 	},
 	play: async ({ canvas, args }) => {
 		await expect(await canvas.findByText('Abgeschlossen')).toBeVisible();
-		await expect(canvas.getByText('In Bearbeitung')).toBeVisible();
+		await expect(canvas.getByText('Nicht gestartet')).toBeVisible();
+		await expect(canvas.queryByText('In Bearbeitung')).toBeNull();
 		await expect(
 			canvas.queryByRole('button', { name: /fortsetzen/i })
 		).toBeNull();

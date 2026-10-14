@@ -34,8 +34,71 @@ import { httpJoinRequestTransport } from '../groupChat/joinRequest/httpJoinReque
 import { knockableGroupId } from '../groupChat/joinRequest/knockableGroupId';
 import { groupInviteTokenFor } from '../groupChat/groupInviteTokenMemory';
 import { useSessionAvatarMembers } from '../../hooks/useSessionAvatarMembers';
+import { CaseHandoverOfferGate } from './CaseHandoverOfferGate';
+
+const positiveInteger = (value: string | null | undefined): number | null => {
+	if (!value || !/^\d+$/.test(value)) return null;
+	const parsed = Number(value);
+	return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+};
 
 export const SessionView = () => {
+	const { groupId, sessionId } = useParams<{
+		groupId: string;
+		sessionId: string;
+	}>();
+	const navigate = useNavigate();
+	const { pathname, search } = useLocation();
+	const sessionType = useContext(SessionTypeContext);
+	const { userData } = useContext(UserDataContext);
+	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
+	const { fromL } = useResponsive();
+
+	useEffect(() => {
+		if (!fromL) {
+			mobileDetailView();
+			return () => {
+				mobileListView();
+			};
+		}
+		desktopView();
+	}, [fromL]);
+
+	const parsedSessionId = positiveInteger(sessionId);
+	const requestId = positiveInteger(
+		new URLSearchParams(search).get('caseHandoverRequestId')
+	);
+	const isStableConsultantSessionRoute =
+		!groupId &&
+		parsedSessionId !== null &&
+		requestId !== null &&
+		pathname.includes('/sessions/consultant/sessionView/session/');
+
+	if (isStableConsultantSessionRoute) {
+		return (
+			<CaseHandoverOfferGate
+				actorId={userData.userId}
+				sessionId={parsedSessionId}
+				requestId={requestId}
+				onClose={() =>
+					navigate(
+						(sessionType?.path ||
+							'/sessions/consultant/sessionView') +
+							(sessionListTab
+								? `?sessionListTab=${sessionListTab}`
+								: '')
+					)
+				}
+			>
+				<SessionViewBody />
+			</CaseHandoverOfferGate>
+		);
+	}
+
+	return <SessionViewBody />;
+};
+
+const SessionViewBody = () => {
 	const { groupId: groupIdFromParam, sessionId: sessionIdFromParam } =
 		useParams<{ groupId: string; sessionId: string }>();
 	const navigate = useNavigate();
@@ -120,17 +183,6 @@ export const SessionView = () => {
 		pathname,
 		userData?.userId
 	]);
-
-	const { fromL } = useResponsive();
-	useEffect(() => {
-		if (!fromL) {
-			mobileDetailView();
-			return () => {
-				mobileListView();
-			};
-		}
-		desktopView();
-	}, [fromL]);
 
 	const checkMutedUserForThisSession = useCallback(() => {
 		setForceBannedOverlay(false);

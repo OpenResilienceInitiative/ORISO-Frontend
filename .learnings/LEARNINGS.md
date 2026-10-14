@@ -61,3 +61,7 @@ App handlers for Cmd/Ctrl+F, Cmd/Ctrl+Shift+N, Cmd/Ctrl+K must listen in the cap
 ## 2026-07-08 — matrix-js-sdk production logging
 
 `matrix-js-sdk` defaults child loggers to `DEBUG`, so `FetchHttpApi` sync lines appear even when app `console.log` calls are removed. Call `logger.setLevel('error')` at startup and patch `getChild` so child namespaces inherit the same level; pass `logger` into every `createClient` call.
+
+## 2026-10-09 — memory-only practice status
+
+A persisted step marker cannot reconstruct a fictional case that lives only in memory. Offer a truthful fresh-start state after interruption unless both the case and progress can be restored safely; leave ordinary tutorial resume semantics separate.

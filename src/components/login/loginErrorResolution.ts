@@ -16,6 +16,18 @@ import {
 const ACCOUNT_DISABLED_DESCRIPTION = /account disabled/i;
 
 /**
+ * Keycloak answers the password grant of an account that still carries a
+ * required action (e.g. `UPDATE_PASSWORD`, set for admin-chosen passwords
+ * since ORISO-UserService#1303) with
+ * `400 {"error":"invalid_grant","error_description":"Account is not fully set up"}`.
+ *
+ * The password is correct. The password grant can never complete a required
+ * action, so retyping it will never work; only the setup link from the
+ * invitation mail or a password reset clears it. See ORISO-Frontend#1670.
+ */
+const SETUP_INCOMPLETE_DESCRIPTION = /account is not fully set up/i;
+
+/**
  * Keycloak's password grant reports every credential problem - wrong
  * username, wrong password, wrong or missing one-time code - as
  * `400 {"error":"invalid_grant","error_description":"Invalid user credentials"}`.
@@ -28,6 +40,8 @@ const INVALID_GRANT = 'invalid_grant';
 
 export const LOGIN_ERROR_KEYS = {
 	ACCOUNT_DELETED: 'login.warning.failed.accountDeleted',
+	/** Correct password, but a Keycloak required action is pending (#1670). */
+	SETUP_INCOMPLETE: 'login.warning.failed.setupIncomplete',
 	UNAUTHORIZED: 'login.warning.failed.unauthorized.text',
 	UNAUTHORIZED_OTP: 'login.warning.failed.unauthorized.otp',
 	/** Keycloak answered 429: too many codes or attempts for now (#1338). */
@@ -44,6 +58,7 @@ export type LoginFailureOutcome =
 	| 'credentials'
 	| 'otp_required'
 	| 'account_disabled'
+	| 'setup_incomplete'
 	| 'rate_limited'
 	| 'unavailable';
 
@@ -195,6 +210,16 @@ export const resolveLoginError = (
 			kind: 'message',
 			messageKey: LOGIN_ERROR_KEYS.ACCOUNT_DELETED,
 			outcome: 'account_disabled'
+		};
+	}
+
+	// Same reasoning: the password was accepted, so neither the second factor
+	// nor the credentials message may claim otherwise.
+	if (SETUP_INCOMPLETE_DESCRIPTION.test(data?.error_description ?? '')) {
+		return {
+			kind: 'message',
+			messageKey: LOGIN_ERROR_KEYS.SETUP_INCOMPLETE,
+			outcome: 'setup_incomplete'
 		};
 	}
 

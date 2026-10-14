@@ -1,0 +1,29 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
+  1) playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 0
+    Received: 343
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      153 | 	const body = page.locator('.scrollableSection__body');
+      154 | 	const assertStepStartsVisible = async () => {
+    > 155 | 		await expect
+          | 		^
+      156 | 			.poll(() => body.evaluate((element) => element.scrollTop))
+      157 | 			.toBe(0);
+      158 | 		const viewport = (await body.boundingBox())!;
+        at assertStepStartsVisible (/Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/persistent-footer.spec.ts:155:3)
+        at /Users/frankgerhardt/ORISO/.worktrees/frontend-1187-responsive-handover-curtain/playwright/responsive-handover-1187/persistent-footer.spec.ts:186:2
+
+    Error Context: test-results/responsive-handover-1187/persistent-footer-each-wiz-c33cf-d-focus-stays-in-the-footer/error-context.md
+
+
+  1 failed
+    playwright/responsive-handover-1187/persistent-footer.spec.ts:144:5 › each wizard step starts at the top and keyboard focus stays in the footer
