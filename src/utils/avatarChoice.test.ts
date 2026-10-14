@@ -4,6 +4,7 @@ import {
 	avatarFileOfId,
 	avatarIdOfFile,
 	chosenAvatarOf,
+	counsellorChoiceOf,
 	COUNSELLOR_MOTIF_FILES
 } from './avatarChoice';
 
@@ -49,5 +50,37 @@ describe('avatarChoice (#1240)', () => {
 		expect(
 			chosenAvatarOf({ avatarKind: 'PICTURE', avatarId: 'picture-1' })
 		).toBeNull();
+	});
+});
+
+describe('counsellorChoiceOf', () => {
+	it('keeps a chosen motif and explicit initials', () => {
+		expect(counsellorChoiceOf({ kind: 'motif', file: 'fox.svg' })).toEqual({
+			kind: 'motif',
+			file: 'fox.svg'
+		});
+		expect(counsellorChoiceOf({ kind: 'initials' })).toEqual({
+			kind: 'initials'
+		});
+	});
+
+	it('shows a counsellor without any choice on the primary pair as initials', () => {
+		expect(counsellorChoiceOf(null)).toEqual({ kind: 'initials' });
+		expect(counsellorChoiceOf(undefined)).toEqual({ kind: 'initials' });
+	});
+
+	it('moves a legacy animal pick onto the primary pair, keeping the icon', () => {
+		expect(counsellorChoiceOf({ kind: 'animal', file: 'fox.svg' })).toEqual(
+			{
+				kind: 'motif',
+				file: 'fox.svg'
+			}
+		);
+	});
+
+	it('never offers the crane, which is outside the counsellor motif set', () => {
+		expect(
+			counsellorChoiceOf({ kind: 'animal', file: 'crane.svg' })
+		).toEqual({ kind: 'initials' });
 	});
 });

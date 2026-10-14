@@ -34,6 +34,10 @@ export interface M3DialogProps {
 	'children'?: ReactNode;
 	/** Up to two actions, rendered right-aligned as M3 text buttons. */
 	'actions'?: M3DialogAction[];
+	/** Completion content above the actions, outside the scrolling body. */
+	'footerContent'?: ReactNode;
+	/** Custom action row, for a shared completion button with its own states. */
+	'actionsContent'?: ReactNode;
 	'onClose': () => void;
 	/** Full-width divider between content and actions. Defaults to true. */
 	'showDivider'?: boolean;
@@ -94,6 +98,8 @@ export const M3Dialog = ({
 	icon,
 	children,
 	actions = [],
+	footerContent,
+	actionsContent,
 	onClose,
 	showDivider = true,
 	closable = true,
@@ -169,28 +175,32 @@ export const M3Dialog = ({
 				</div>
 			)}
 
-			{actions.length > 0 && (
+			{(actions.length > 0 ||
+				footerContent != null ||
+				actionsContent != null) && (
 				<div className="m3Dialog__footer">
 					{showDivider && (
 						<div className="m3Dialog__divider" aria-hidden="true" />
 					)}
+					{footerContent}
 					<div className="m3Dialog__actions">
-						{actions.map((action) => (
-							<button
-								key={action.label}
-								type="button"
-								className={clsx(
-									'm3Dialog__action',
-									action.primary &&
-										'm3Dialog__action--primary'
-								)}
-								disabled={action.disabled}
-								onClick={action.onClick}
-								data-testid={action.testId}
-							>
-								{action.label}
-							</button>
-						))}
+						{actionsContent ??
+							actions.map((action) => (
+								<button
+									key={action.label}
+									type="button"
+									className={clsx(
+										'm3Dialog__action',
+										action.primary &&
+											'm3Dialog__action--primary'
+									)}
+									disabled={action.disabled}
+									onClick={action.onClick}
+									data-testid={action.testId}
+								>
+									{action.label}
+								</button>
+							))}
 					</div>
 				</div>
 			)}

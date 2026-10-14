@@ -3,7 +3,7 @@ import * as React from 'react';
 import {
 	cleanup,
 	fireEvent,
-	render,
+	render as renderUI,
 	screen,
 	waitFor,
 	within
@@ -11,6 +11,45 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CaseHandoverConsentCard } from './CaseHandoverClientCards';
 import { CaseHandoverInformationalBody } from './CaseHandoverInformationalBody';
+import { UserDataContext } from '../../globalState/context/UserDataContext';
+import type { UserDataInterface } from '../../globalState/interfaces/UserDataInterface';
+vi.hoisted(() => {
+	HTMLCanvasElement.prototype.getContext = (() => ({
+		fillStyle: '',
+		fillRect() {}
+	})) as unknown as typeof HTMLCanvasElement.prototype.getContext;
+});
+// The scoped preference dialog now shares the real notification continuation.
+vi.mock('lottie-web', () => ({
+	default: {
+		loadAnimation: () => ({
+			destroy() {},
+			addEventListener() {},
+			play() {},
+			stop() {}
+		})
+	}
+}));
+vi.mock('../../api/apiCaseHandover', async (original) => ({
+	...(await original<typeof import('../../api/apiCaseHandover')>()),
+	apiGetCaseHandoverConsentPreference: vi.fn(async (sessionId: number) => ({
+		sessionId,
+		alwaysAskBeforeAdditionalAccess: false
+	}))
+}));
+const render = (ui: React.ReactElement) =>
+	renderUI(
+		<UserDataContext.Provider
+			value={{
+				userData: { userId: 'asker-dialog-test' } as UserDataInterface,
+				reloadUserData: async () =>
+					({ userId: 'asker-dialog-test' }) as UserDataInterface,
+				setUserData: () => {}
+			}}
+		>
+			{ui}
+		</UserDataContext.Provider>
+	);
 
 // The shared Button atom imports this constant through Overlay's canvas renderer.
 vi.mock('../overlay/Overlay', () => ({ OVERLAY_RESET_TIME: 10000 }));
@@ -215,7 +254,7 @@ describe('CaseHandoverConsentCard', () => {
 });
 
 describe('persisted informational handover body', () => {
-	it('retains completed takeover copy and offers only a passive optional dialog', () => {
+	it('retains completed takeover copy and keeps future preference separate from the completed grant', async () => {
 		const setup = vi.fn();
 		render(
 			<CaseHandoverInformationalBody
@@ -233,7 +272,12 @@ describe('persisted informational handover body', () => {
 			})
 		);
 		const dialog = within(screen.getByRole('dialog'));
-		expect(dialog.queryByRole('switch')).toBeNull();
+		expect((await dialog.findByRole('switch')).matches(':checked')).toBe(
+			false
+		);
+		expect(
+			dialog.queryByRole('button', { name: 'Approve access' })
+		).toBeNull();
 		fireEvent.click(
 			dialog.getByRole('button', {
 				name: 'caseHandover.consent.info.notificationsAction'

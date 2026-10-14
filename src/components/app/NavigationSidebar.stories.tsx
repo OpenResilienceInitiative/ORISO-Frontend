@@ -27,6 +27,7 @@ function RuntimeNavigationRail({
 	role,
 	layout = 'desktop',
 	railHeightPx,
+	fullMobileShell = false,
 	liveChatViaSidebar = true
 }: {
 	role: 'consultant' | 'asker';
@@ -35,6 +36,8 @@ function RuntimeNavigationRail({
 	liveChatViaSidebar?: boolean;
 	/** Desktop only: force a short rail to exercise vertical scroll + pinned logout */
 	railHeightPx?: number;
+	/** Exercise the production mobile shell and its version overlay. */
+	fullMobileShell?: boolean;
 }) {
 	const [logoutClicked, setLogoutClicked] = useState(false);
 	const isDesktop = layout === 'desktop';
@@ -58,7 +61,7 @@ function RuntimeNavigationRail({
 		: {
 				width: '100%',
 				maxWidth: '375px',
-				height: '76px',
+				height: fullMobileShell ? '100vh' : '76px',
 				background: '#eae7e8',
 				overflow: 'hidden'
 			};
@@ -77,6 +80,12 @@ function RuntimeNavigationRail({
 				data-logout-clicked={logoutClicked}
 				style={shellStyle}
 			>
+				{fullMobileShell && (
+					<div style={{ flex: 1, minHeight: 0, padding: 24 }}>
+						<h1>Meine Beratungen</h1>
+						<p>Mobile navigation at 375px</p>
+					</div>
+				)}
 				<style>
 					{`
 						.navigationSidebarStory.app__wrapper {
@@ -86,7 +95,7 @@ function RuntimeNavigationRail({
 
 						.navigationSidebarStory .navigation__wrapper {
 							width: ${isDesktop ? '85px' : '100%'};
-							height: 100%;
+							height: ${fullMobileShell ? 'auto' : '100%'};
 						}
 					`}
 				</style>
@@ -94,6 +103,9 @@ function RuntimeNavigationRail({
 					routerConfig={routerConfig}
 					onLogout={() => setLogoutClicked(true)}
 				/>
+				{fullMobileShell && (
+					<div className="app__platformVersion">2.9.14 - abc1234</div>
+				)}
 			</div>
 		</NavigationStoryProviders>
 	);
@@ -333,5 +345,54 @@ export const RuntimeAskerMobile: Story = {
 		router: {
 			initialPath: '/sessions/user/view/session/123'
 		}
+	}
+};
+
+/** Production shell geometry: scrolling keeps every action reachable at 375px. */
+export const RuntimeConsultantMobile375Shell: Story = {
+	args: { role: 'consultant', layout: 'mobile', fullMobileShell: true },
+	globals: { viewport: { value: 'phone375', isRotated: false } },
+	play: async ({ canvasElement }) => {
+		const container = canvasElement.querySelector(
+			'.navigation__itemContainer'
+		) as HTMLElement;
+		const nav = canvasElement.querySelector(
+			'.navigation__wrapper'
+		) as HTMLElement;
+		const version = canvasElement.querySelector(
+			'.app__platformVersion'
+		) as HTMLElement;
+		const navBounds = nav.getBoundingClientRect();
+		await expect(window.innerWidth).toBe(375);
+		await expect(
+			container.getBoundingClientRect().right
+		).toBeLessThanOrEqual(navBounds.right + 1);
+		await expect(
+			version.getBoundingClientRect().bottom
+		).toBeLessThanOrEqual(navBounds.top);
+		await expect(container.scrollWidth).toBeGreaterThan(
+			container.clientWidth
+		);
+		container.style.scrollBehavior = 'auto';
+		container.scrollLeft = container.scrollWidth;
+		await new Promise((resolve) => requestAnimationFrame(resolve));
+		for (const selector of [
+			'.navigation__item--nav-language',
+			'.navigation__item--nav-logout'
+		]) {
+			const action = canvasElement.querySelector(selector) as HTMLElement;
+			const bounds = action.getBoundingClientRect();
+			await expect(bounds.left).toBeGreaterThanOrEqual(navBounds.left);
+			await expect(bounds.right).toBeLessThanOrEqual(navBounds.right + 1);
+		}
+		const logout = canvasElement.querySelector(
+			'.navigation__item--nav-logout'
+		) as HTMLElement;
+		logout.focus();
+		await expect(logout).toHaveFocus();
+		await userEvent.keyboard('{Enter}');
+		await expect(
+			canvasElement.querySelector('.navigationSidebarStory')
+		).toHaveAttribute('data-logout-clicked', 'true');
 	}
 };

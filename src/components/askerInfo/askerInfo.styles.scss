@@ -3,21 +3,6 @@ $doubleNavHeightSmall: 168px;
 $imprintHeight: 40px;
 $iconSize: 24px;
 
-// Footer actions, from the Figma "Side Scroller Footer" component
-// (ORISO-Frontend#1192, job 2).
-$footerButtonWidth: 128px;
-$footerButtonWidthSmall: 96px;
-$footerButtonHeight: 96px;
-$footerButtonRadius: 100px;
-
-// The Figma values map exactly onto existing M3 tokens
-// (mui-variables-mapping.scss), so they follow theming rather than pinning the
-// light palette: #646d78 is --m3-secondary-container, #ffe2de is
-// --m3-on-primary-container. Both are used as plain values below, never inside
-// a colour function, so the var() indirection is safe.
-$footerButtonBackColor: var(--m3-secondary-container, #646d78);
-$footerButtonNextIdleColor: var(--m3-on-primary-container, #ffe2de);
-
 // Client-profile identity row, from the Figma "Frame 970" (Horizontal,
 // height 100, gap 16) and M3/headline/large for the username.
 $profileAvatarSize: 100px;
@@ -276,74 +261,4 @@ $profile-footer-justify-content: center !default;
 	/* "Side Scroller Footer" from the Figma Components page: two 128x96 pills,
 	   radius 100. Sits outside the scrolling inner wrapper so both stay
 	   reachable on a short viewport (ORISO-Frontend#1192, job 2). */
-	&__footer {
-		flex: 0 0 auto;
-		display: flex;
-		flex-direction: row;
-		align-items: center;
-		justify-content: space-between;
-		gap: $grid-base-two;
-		padding: $grid-base-two;
-		background-color: var(--m3-surface-container-low, $background-light);
-
-		@include breakpoint($fromMedium) {
-			padding: $grid-base-two $grid-base-three;
-		}
-
-		@include breakpoint($fromLarge) {
-			background-color: transparent;
-		}
-
-		&__button {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: $footerButtonWidth;
-			height: $footerButtonHeight;
-			padding: 0;
-			border: none;
-			border-radius: $footerButtonRadius;
-			cursor: pointer;
-			background-color: $footerButtonBackColor;
-
-			svg {
-				width: $iconSize;
-				height: $iconSize;
-				fill: $white;
-
-				path {
-					fill: $white;
-				}
-			}
-
-			&:focus-visible {
-				outline: 2px solid var(--m3-primary, $primary);
-				outline-offset: 2px;
-			}
-
-			/* Next is shown inert rather than hidden: the design keeps it on the
-			   page so the user can see there is a step to reach. The muted fill
-			   and the cursor - not colour alone - carry the state. */
-			&--back svg {
-				transform: scaleX(-1);
-			}
-
-			&--next {
-				background-color: $footerButtonNextIdleColor;
-				cursor: not-allowed;
-			}
-
-			&--primary {
-				background-color: var(--m3-primary, $primary);
-				cursor: pointer;
-			}
-		}
-
-		/* The pills are wider than a 320px phone can spare side by side. */
-		@media (width <= 360px) {
-			&__button {
-				width: $footerButtonWidthSmall;
-			}
-		}
-	}
 }
