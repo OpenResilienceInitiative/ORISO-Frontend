@@ -1,8 +1,10 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	accountExistsAfterTimeout,
 	apiPostRegistration,
+	AUTO_LOGIN_TIMEOUT_ERROR,
+	AUTO_LOGIN_TIMEOUT_MS,
 	REGISTRATION_TIMEOUT_MS
 } from './apiPostRegistration';
 import { autoLogin } from '../components/registration/autoLogin';
@@ -105,6 +107,47 @@ describe('apiPostRegistration', () => {
 			REGISTRATION_TIMEOUT_MS
 		);
 		expect(REGISTRATION_TIMEOUT_MS).toBeGreaterThan(30_000);
+	});
+});
+
+describe('apiPostRegistration auto-login deadline', () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it('rejects after the deadline when the automatic login never settles, with the account already reported', async () => {
+		vi.useFakeTimers();
+		vi.mocked(autoLogin).mockReturnValueOnce(new Promise(() => undefined));
+		const onAccountCreated = vi.fn();
+
+		const result = apiPostRegistration(
+			'/service/users/askers/new',
+			{ username: 'tender_frog_784', password: 'TestPass123!' },
+			false,
+			{} as any,
+			onAccountCreated
+		);
+		const settled = expect(result).rejects.toThrow(AUTO_LOGIN_TIMEOUT_ERROR);
+
+		await vi.advanceTimersByTimeAsync(AUTO_LOGIN_TIMEOUT_MS);
+
+		await settled;
+		expect(onAccountCreated).toHaveBeenCalledTimes(1);
+	});
+
+	it('passes a login that finishes in time straight through', async () => {
+		vi.useFakeTimers();
+		vi.mocked(autoLogin).mockResolvedValueOnce('logged-in');
+
+		const result = apiPostRegistration(
+			'/service/users/askers/new',
+			{ username: 'tender_frog_784', password: 'TestPass123!' },
+			false,
+			{} as any
+		);
+
+		await expect(result).resolves.toBe('logged-in');
+		expect(vi.getTimerCount()).toBe(0);
 	});
 });
 
