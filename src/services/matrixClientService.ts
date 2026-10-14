@@ -417,6 +417,13 @@ export class MatrixClientService {
 		return this.staleDeviceRecovery;
 	}
 
+	/** Await initial sync without confusing a not-yet-hydrated room with exhaustion. */
+	public waitUntilReady(): Promise<void> {
+		if (!this.client)
+			return Promise.reject(new Error('Matrix client is unavailable'));
+		return this.waitForClientPrepared(this.client);
+	}
+
 	private waitForClientPrepared(
 		expectedClient: MatrixClient,
 		timeoutMs: number = 30_000

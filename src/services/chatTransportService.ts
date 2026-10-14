@@ -1,5 +1,6 @@
 import { feedbackMailIntentQueue } from './feedbackMailIntentQueue';
-import { MatrixEvent, Room } from 'matrix-js-sdk';
+import { Direction, MatrixEvent, Room } from 'matrix-js-sdk';
+import { loadEarlierMatrixRoomHistory } from './matrixRoomHistory';
 import {
 	apiPostMessageEventNotification,
 	MessageEventNotificationInput
@@ -356,6 +357,22 @@ class ChatTransportService {
 		return (
 			getMatrixClientService()?.getRoomMessages?.(matrixRoomId, limit) ||
 			[]
+		);
+	}
+
+	public async loadEarlierMatrixRoomMessages(
+		matrixRoomId: string
+	): Promise<boolean> {
+		const service = getMatrixClientService();
+		const client = service?.getClient();
+		if (!client) throw new Error('Matrix client is unavailable');
+		await service.waitUntilReady();
+		await loadEarlierMatrixRoomHistory(client, matrixRoomId);
+		return (
+			client
+				.getRoom(matrixRoomId)
+				?.getLiveTimeline()
+				.getPaginationToken(Direction.Backward) != null
 		);
 	}
 
