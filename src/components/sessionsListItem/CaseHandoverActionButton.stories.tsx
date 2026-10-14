@@ -12,6 +12,7 @@ import {
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
 import { CaseHandoverBulkBar } from '../sessionsList/CaseHandoverBulkBar';
+import { SessionCardBody } from './SessionCardBody/SessionCardBody';
 import './sessionsListItem.styles.scss';
 
 const labels: CaseHandoverActionLabels = {
@@ -615,4 +616,128 @@ export const PhoneSelection320: Story = {
 	name: 'Phone 320 — selection with bulk bar',
 	render: () => <PhoneSelectionBoard width={320} />,
 	play: async ({ canvasElement }) => assertFitsPhone(canvasElement)
+};
+
+/** The real card body at phone width: the action beside the "Mail" mark. */
+const NarrowCard = ({
+	width,
+	children
+}: {
+	width: number;
+	children: React.ReactNode;
+}) => (
+	<div
+		className="sessionsListItem"
+		style={{ opacity: 1, animation: 'none', width }}
+		data-testid="narrow-card"
+	>
+		<div
+			className="sessionsListItem__content"
+			style={
+				{
+					'--card-trailing': '4px',
+					'background': '#fff',
+					'borderRadius': 24
+				} as React.CSSProperties
+			}
+		>
+			<SessionCardBody
+				avatar={<span />}
+				name={<span>lisa-simpson-okt-12</span>}
+				action={children}
+				trailing={
+					<div className="sessionsListItem__consultingTypeIcon sessionsListItem__consultingTypeIcon--nearby">
+						<span
+							className="sessionsListItem__consultingTypeIcon--nearbyIcon"
+							aria-hidden="true"
+						/>
+						<span className="sessionsListItem__consultingTypeIcon--nearbyLabel">
+							Mail
+						</span>
+					</div>
+				}
+			/>
+		</div>
+	</div>
+);
+
+const germanLabels: CaseHandoverActionLabels = {
+	...labels,
+	requestAccess: 'Zugriff anfragen',
+	selectCase: 'Fall auswählen'
+};
+
+/** Every split-button target is at least 40 px and nothing lies on top of it. */
+const assertCardTargetsFree = async (canvasElement: HTMLElement) => {
+	const cards = canvasElement.querySelectorAll<HTMLElement>(
+		'[data-testid="narrow-card"]'
+	);
+	await expect(cards.length).toBeGreaterThan(0);
+	for (const card of Array.from(cards)) {
+		const mark = card
+			.querySelector<HTMLElement>('.sessionCard__trailing')!
+			.getBoundingClientRect();
+		const split = card
+			.querySelector<HTMLElement>('.splitButton')!
+			.getBoundingClientRect();
+		await expect(split.right).toBeLessThanOrEqual(mark.left + 0.5);
+		// A label is either readable or hidden, never cut down to "Z…".
+		const label = card.querySelector<HTMLElement>(
+			'.splitButton__label, .m3Checkbox__label'
+		)!;
+		const shown = label.getBoundingClientRect().width;
+		await expect(shown <= 1 || shown >= 40).toBe(true);
+		for (const segment of Array.from(
+			card.querySelectorAll<HTMLElement>('.splitButton__segment')
+		)) {
+			const box = segment.getBoundingClientRect();
+			await expect(box.width).toBeGreaterThanOrEqual(40);
+			await expect(box.height).toBeGreaterThanOrEqual(40);
+			const hit = document.elementFromPoint(
+				box.left + box.width / 2,
+				box.top + box.height / 2
+			);
+			await expect(segment.contains(hit)).toBe(true);
+		}
+	}
+};
+
+const NarrowCards = ({ width }: { width: number }) => (
+	<div style={{ display: 'grid', gap: 8, padding: 8 }}>
+		<NarrowCard width={width}>
+			<CaseHandoverActionButton
+				labels={germanLabels}
+				state="requestAccess"
+			/>
+		</NarrowCard>
+		<NarrowCard width={width}>
+			<CaseHandoverActionButton
+				labels={germanLabels}
+				state="requestAccess"
+				batchMode
+			/>
+		</NarrowCard>
+		<NarrowCard width={width}>
+			<CaseHandoverActionButton
+				labels={germanLabels}
+				state="requestAccess"
+				batchMode
+				selected
+			/>
+		</NarrowCard>
+	</div>
+);
+
+/** 320 px phone (card 304 px): the Mail mark never covers the split arrow. */
+export const PhoneCard320: Story = {
+	name: 'Phone 320 — card action beside Mail',
+	render: () => <NarrowCards width={304} />,
+	play: async ({ canvasElement }) => assertCardTargetsFree(canvasElement)
+};
+
+/** 390 px phone (card 374 px): unchanged, everything fits beside Mail. */
+export const PhoneCard390: Story = {
+	name: 'Phone 390 — card action beside Mail',
+	render: () => <NarrowCards width={374} />,
+	play: async ({ canvasElement }) => assertCardTargetsFree(canvasElement)
 };

@@ -1084,6 +1084,47 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		.splitButton {
 			max-width: 100%;
+			min-width: 0;
+		}
+
+		// Narrow cards (320 px): the main segment gives way first, its label
+		// truncates, so the chevron is never pushed under the Mail mark.
+		.splitButton__main {
+			flex: 0 1 auto;
+			min-width: 40px;
+		}
+
+		.splitButton__label,
+		.m3Checkbox__label {
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.m3Checkbox--fill {
+			min-width: 0;
+		}
+
+		// 320 px phone: no room for a readable label beside Mail, so the main
+		// segment shows only its glyph or checkbox; the name stays for AT.
+		@container session-card (max-width: 340px) {
+			.splitButton__label,
+			.m3Checkbox__label {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				white-space: nowrap;
+			}
+
+			.splitButton__main {
+				padding: 0 12px;
+			}
+
+			.splitButton__main.splitButton__main--selection {
+				padding: 0;
+			}
 		}
 
 		&--status .splitButton__main,
