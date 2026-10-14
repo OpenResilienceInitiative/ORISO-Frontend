@@ -3676,7 +3676,8 @@
 			},
 			"reason": {
 				"title": "Lütfen bir neden seçin",
-				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz."
+				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz.",
+				"empty": "Danışma merkeziniz için vaka devri nedeni tanımlanmamış. Lütfen yöneticinize başvurun."
 			},
 			"describe": {
 				"title": "Lütfen nedeni açıklayın",
@@ -3715,6 +3716,13 @@
 			"saved": "Ayar kaydedildi.",
 			"saveFailed": "Ayar doğrulanamadı. Lütfen tekrar deneyin.",
 			"loading": "Ayar yükleniyor …"
+		},
+		"bulkBar": {
+			"label": "Vaka seçimi",
+			"selected": "{{count}} tanesi seçildi",
+			"continue": "Devam",
+			"cancel": "İptal",
+			"emptyHint": "En az bir vaka seçin."
 		}
 	},
 	"supervisorDialog": {

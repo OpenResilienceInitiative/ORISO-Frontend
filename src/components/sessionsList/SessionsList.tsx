@@ -53,6 +53,7 @@ import { isLiveChatChipVisible } from './liveChatChipVisibility';
 import { isMatrixRoom } from '../../utils/matrixRoomUtils';
 import { Button } from '../button/Button';
 import { CaseHandoverCurtainView } from '../session/CaseHandoverCurtain';
+import { CaseHandoverBulkBar } from './CaseHandoverBulkBar';
 import './sessionsList.styles';
 import { SCROLL_PAGINATE_THRESHOLD } from './sessionsListConfig';
 import clsx from 'clsx';
@@ -337,6 +338,8 @@ export const SessionsList = ({
 	const [caseHandoverReasons, setCaseHandoverReasons] = useState<
 		CaseHandoverReason[]
 	>([]);
+	const [caseHandoverReasonsLoaded, setCaseHandoverReasonsLoaded] =
+		useState(false);
 	const [caseHandoverReasonCode, setCaseHandoverReasonCode] = useState('');
 	const [caseHandoverExplanation, setCaseHandoverExplanation] = useState('');
 	const [caseHandoverBatchSummary, setCaseHandoverBatchSummary] =
@@ -1397,6 +1400,7 @@ export const SessionsList = ({
 		if (!caseHandoverBatchMode) {
 			return;
 		}
+		setCaseHandoverReasonsLoaded(false);
 		apiGetCaseHandoverReasons()
 			.then((items) => {
 				setCaseHandoverReasons(items || []);
@@ -1406,7 +1410,8 @@ export const SessionsList = ({
 			})
 			.catch(() => {
 				setCaseHandoverReasons([]);
-			});
+			})
+			.finally(() => setCaseHandoverReasonsLoaded(true));
 	}, [caseHandoverBatchMode]);
 
 	const handleOpenDraft = useCallback(
@@ -2174,6 +2179,27 @@ export const SessionsList = ({
 				: [...current, sessionId]
 		);
 	}, []);
+	const caseHandoverContinueRef = useRef<HTMLButtonElement | null>(null);
+	const caseHandoverWizardRef = useRef<HTMLDivElement | null>(null);
+	const caseHandoverWizardWasOpen = useRef(false);
+	// Focus into the wizard on open, back to the bar's Continue on close.
+	useEffect(() => {
+		if (caseHandoverReviewOpen) {
+			caseHandoverWizardWasOpen.current = true;
+			caseHandoverWizardRef.current?.focus();
+			return;
+		}
+		if (caseHandoverWizardWasOpen.current) {
+			caseHandoverWizardWasOpen.current = false;
+			caseHandoverContinueRef.current?.focus();
+		}
+	}, [caseHandoverReviewOpen]);
+	// Bulk bar Continue and the chevron's "Confirm selection" share this.
+	const handleOpenCaseHandoverWizard = useCallback(() => {
+		setCaseHandoverWizardStep('reason');
+		setCaseHandoverBatchSummary('');
+		setCaseHandoverReviewOpen(true);
+	}, []);
 	const handleCloseCaseHandoverBatch = useCallback(() => {
 		caseHandoverBatch.close(caseHandoverSelectedIds, true);
 		setCaseHandoverBatchMode(false);
@@ -2730,6 +2756,8 @@ export const SessionsList = ({
 						role="dialog"
 						aria-modal="true"
 						aria-label={translate('caseHandover.batch.title')}
+						ref={caseHandoverWizardRef}
+						tabIndex={-1}
 					>
 						<div className="sessionsList__caseHandoverWizardShell">
 							<div className="sessionsList__caseHandoverWizardBar">
@@ -2765,6 +2793,10 @@ export const SessionsList = ({
 								reasonCode={caseHandoverReasonCode}
 								explanation={caseHandoverExplanation}
 								isSubmitting={caseHandoverBatch.submitting}
+								reasonsUnavailable={
+									caseHandoverReasonsLoaded &&
+									caseHandoverReasons.length === 0
+								}
 								error={
 									caseHandoverReviewOpen &&
 									caseHandoverBatchSummary
@@ -2874,8 +2906,8 @@ export const SessionsList = ({
 												);
 												setCaseHandoverBatchSummary('');
 											}}
-											onCaseHandoverBatchConfirm={() =>
-												setCaseHandoverReviewOpen(true)
+											onCaseHandoverBatchConfirm={
+												handleOpenCaseHandoverWizard
 											}
 											onCaseHandoverBatchClose={
 												handleCloseCaseHandoverBatch
@@ -2931,6 +2963,30 @@ export const SessionsList = ({
 						}
 						sessionListTab={sessionListTab}
 						type={type}
+					/>
+				)}
+			{showCaseHandoverBatchUi &&
+				caseHandoverBatchMode &&
+				!caseHandoverReviewOpen && (
+					<CaseHandoverBulkBar
+						ref={caseHandoverContinueRef}
+						count={caseHandoverSelectedIds.length}
+						labels={{
+							region: translate('caseHandover.bulkBar.label'),
+							selected: translate(
+								'caseHandover.bulkBar.selected',
+								{ count: caseHandoverSelectedIds.length }
+							),
+							continueLabel: translate(
+								'caseHandover.bulkBar.continue'
+							),
+							cancel: translate('caseHandover.bulkBar.cancel'),
+							emptyHint: translate(
+								'caseHandover.bulkBar.emptyHint'
+							)
+						}}
+						onContinue={handleOpenCaseHandoverWizard}
+						onCancel={handleCloseCaseHandoverBatch}
 					/>
 				)}
 		</div>

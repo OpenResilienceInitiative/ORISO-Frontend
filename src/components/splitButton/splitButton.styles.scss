@@ -228,3 +228,79 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 		height: 16px;
 	}
 }
+
+/*
+ * Compact (FE#1725): 40px M3 small split button for the case-handover card.
+ * 20/4 silhouette, label-large 14/500.
+ */
+.splitButton--compact {
+	.splitButton__segment {
+		height: 40px;
+	}
+
+	.splitButton__main {
+		border-radius: 20px 4px 4px 20px;
+		font-size: 14px;
+		font-weight: 500;
+		line-height: 20px;
+		letter-spacing: 0.1px;
+		padding: 0 12px 0 16px;
+		gap: 8px;
+	}
+
+	.splitButton__trailing {
+		border-radius: 4px 20px 20px 4px;
+		width: 48px;
+	}
+
+	.splitButton__icon svg,
+	.splitButton__chevron {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+/*
+ * Selection main segment (FE#1725): the shared M3 checkbox fills the
+ * segment, so the whole segment toggles it. The checkbox's 40px target
+ * stands in for the left padding.
+ */
+.splitButton__main--selection {
+	padding: 0 !important;
+
+	.m3Checkbox {
+		height: 100%;
+		width: 100%;
+		padding-right: 16px;
+		gap: 0;
+		color: inherit;
+		font: inherit;
+		white-space: nowrap;
+	}
+
+	// The box's own `color` is the tick colour, so name the border colour.
+	.m3Checkbox__box {
+		border-color: $sb-on-surface-variant;
+	}
+
+	// Focus ring around the whole segment, like a button segment.
+	&:has(.m3Checkbox__input:focus-visible) {
+		outline: 3px solid var(--m3-primary, #a5000a);
+		outline-offset: 2px;
+		z-index: 1;
+	}
+}
+
+// On the filled primary segment the ticked box turns on-primary with a
+// primary tick, so it stays visible against the red.
+.splitButton--primary .splitButton__main--selection {
+	.m3Checkbox__input:checked + .m3Checkbox__box {
+		background: var(--m3-on-primary, #ffffff);
+		border-color: var(--m3-on-primary, #ffffff);
+		color: var(--m3-primary, #a5000a);
+	}
+
+	.m3Checkbox__target:hover::before {
+		background: rgba(255, 255, 255, 0.12);
+	}
+}

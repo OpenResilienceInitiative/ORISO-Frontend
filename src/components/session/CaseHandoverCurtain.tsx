@@ -66,6 +66,8 @@ export interface CaseHandoverCurtainViewProps {
 	explanation: string;
 	isSubmitting?: boolean;
 	error?: string;
+	/** Reasons finished loading and none came back (FE#1725 US26). */
+	reasonsUnavailable?: boolean;
 	onStart: () => void;
 	onBack: () => void;
 	onNext: () => void;
@@ -83,6 +85,7 @@ export const CaseHandoverCurtainView = ({
 	explanation,
 	isSubmitting = false,
 	error,
+	reasonsUnavailable = false,
 	onStart,
 	onBack,
 	onNext,
@@ -95,6 +98,8 @@ export const CaseHandoverCurtainView = ({
 		() => reasons.find((reason) => reason.code === reasonCode),
 		[reasons, reasonCode]
 	);
+	// No reasons: say so instead of offering a Next that can never enable.
+	const noReasons = step === 'reason' && reasonsUnavailable;
 
 	return (
 		<div className="caseHandoverCurtain" data-cy="case-handover-curtain">
@@ -183,6 +188,17 @@ export const CaseHandoverCurtainView = ({
 													'caseHandover.curtain.describe.subtitle'
 												)}
 									</p>
+									{noReasons && (
+										<p
+											className="caseHandoverCurtain__empty"
+											role="status"
+											data-cy="case-handover-curtain-no-reasons"
+										>
+											{translate(
+												'caseHandover.curtain.reason.empty'
+											)}
+										</p>
+									)}
 									<CaseHandoverReasonList
 										reasons={reasons}
 										reasonCode={reasonCode}
@@ -257,35 +273,40 @@ export const CaseHandoverCurtainView = ({
 						</div>
 					</ScrollableSectionBody>
 					<ScrollableSectionFooter>
-						{(step === 'reason' || step === 'describe') && (
-							<SideScrollerFooter
-								variant="wizard"
-								back={{
-									label: translate(
-										'caseHandover.curtain.back'
-									),
-									onClick: onBack,
-									disabled: step === 'reason',
-									dataCy: 'case-handover-curtain-back'
-								}}
-								next={{
-									label:
-										step === 'reason'
-											? translate(
-													'caseHandover.curtain.next'
-												)
-											: translate('caseHandover.submit'),
-									onClick:
-										step === 'reason' ? onNext : onSubmit,
-									disabled:
-										step === 'reason'
-											? !selectedReason
-											: !explanation.trim() ||
-												isSubmitting,
-									dataCy: 'case-handover-curtain-next'
-								}}
-							/>
-						)}
+						{(step === 'reason' || step === 'describe') &&
+							!noReasons && (
+								<SideScrollerFooter
+									variant="wizard"
+									back={{
+										label: translate(
+											'caseHandover.curtain.back'
+										),
+										onClick: onBack,
+										disabled: step === 'reason',
+										dataCy: 'case-handover-curtain-back'
+									}}
+									next={{
+										label:
+											step === 'reason'
+												? translate(
+														'caseHandover.curtain.next'
+													)
+												: translate(
+														'caseHandover.submit'
+													),
+										onClick:
+											step === 'reason'
+												? onNext
+												: onSubmit,
+										disabled:
+											step === 'reason'
+												? !selectedReason
+												: !explanation.trim() ||
+													isSubmitting,
+										dataCy: 'case-handover-curtain-next'
+									}}
+								/>
+							)}
 					</ScrollableSectionFooter>
 				</ScrollableSection>
 			</div>
@@ -312,6 +333,7 @@ export const CaseHandoverCurtain = ({
 	const { t: translate } = useTranslation();
 	const [step, setStep] = useState<CaseHandoverCurtainStep>('intro');
 	const [reasons, setReasons] = useState<CaseHandoverReason[]>([]);
+	const [reasonsLoaded, setReasonsLoaded] = useState(false);
 	const [reasonCode, setReasonCode] = useState('');
 	const [explanation, setExplanation] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -352,7 +374,8 @@ export const CaseHandoverCurtain = ({
 			.catch(() => {
 				setReasons([]);
 				setError(translate('caseHandover.error.failed'));
-			});
+			})
+			.finally(() => setReasonsLoaded(true));
 	}, [translate]);
 
 	const derivedStep: CaseHandoverCurtainStep = useMemo(() => {
@@ -459,6 +482,7 @@ export const CaseHandoverCurtain = ({
 			explanation={explanation}
 			isSubmitting={isSubmitting}
 			error={error}
+			reasonsUnavailable={reasonsLoaded && reasons.length === 0}
 			onStart={() => setStep('reason')}
 			onBack={() => setStep('reason')}
 			onNext={() => setStep('describe')}

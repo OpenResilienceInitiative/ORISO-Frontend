@@ -93,6 +93,20 @@ export const ErrorState: Story = {
 	)
 };
 
+/** No reasons configured: a message instead of a Next that never enables. */
+export const NoReasonsAvailable: Story = {
+	render: () => <CurtainPlayground initialStep="reason" noReasons />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(canvas.getByRole('status')).toHaveTextContent(
+			/keine Gründe|No case handover reasons/
+		);
+		await expect(
+			canvas.queryByRole('button', { name: /Weiter|Next/ })
+		).toBeNull();
+	}
+};
+
 /** Full wizard walk: intro → reason (radio) → describe → submit → pending. */
 export const WizardWalkthrough: Story = {
 	render: () => <CurtainPlayground />,

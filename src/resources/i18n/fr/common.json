@@ -3676,7 +3676,8 @@
 			},
 			"reason": {
 				"title": "Veuillez choisir un motif",
-				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande."
+				"subtitle": "Avant de continuer, vous devez choisir un motif pour votre demande.",
+				"empty": "Aucun motif de transfert de dossier n'est configuré pour votre centre de conseil. Veuillez contacter votre administration."
 			},
 			"describe": {
 				"title": "Veuillez décrire le motif",
@@ -3715,6 +3716,13 @@
 			"saved": "Paramètre enregistré.",
 			"saveFailed": "Le paramètre n’a pas pu être confirmé. Veuillez réessayer.",
 			"loading": "Chargement du paramètre …"
+		},
+		"bulkBar": {
+			"label": "Sélection des dossiers",
+			"selected": "{{count}} sélectionné(s)",
+			"continue": "Continuer",
+			"cancel": "Annuler",
+			"emptyHint": "Sélectionnez au moins un dossier."
 		}
 	},
 	"supervisorDialog": {

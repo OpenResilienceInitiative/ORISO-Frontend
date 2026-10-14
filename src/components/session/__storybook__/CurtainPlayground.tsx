@@ -44,6 +44,8 @@ type PlaygroundProps = {
 	initialExplanation?: string;
 	error?: string;
 	topicLabel?: string;
+	/** Simulates an empty reason list from the server (FE#1725 US26). */
+	noReasons?: boolean;
 };
 
 export function CurtainPlayground({
@@ -52,7 +54,8 @@ export function CurtainPlayground({
 	initialReasonCode = '',
 	initialExplanation = '',
 	error,
-	topicLabel = 'Schwangerschaftsberatung'
+	topicLabel = 'Schwangerschaftsberatung',
+	noReasons = false
 }: PlaygroundProps) {
 	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
 	const [reasonCode, setReasonCode] = useState(initialReasonCode);
@@ -62,7 +65,8 @@ export function CurtainPlayground({
 		<CaseHandoverCurtainView
 			step={step}
 			topicLabel={topicLabel}
-			reasons={reasons}
+			reasons={noReasons ? [] : reasons}
+			reasonsUnavailable={noReasons}
 			reasonCode={reasonCode}
 			explanation={explanation}
 			error={error}

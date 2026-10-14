@@ -221,6 +221,11 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		justify-content: center;
 		padding: 16px;
 		background: rgba(27, 27, 28, 0.4);
+
+		// Focus lands here programmatically; the shell is the visible frame.
+		&:focus {
+			outline: none;
+		}
 	}
 
 	&__caseHandoverWizardShell {

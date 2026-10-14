@@ -1,6 +1,6 @@
 import { AVATAR_SIZES } from '../pseudonym/avatarSizes';
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useId, useMemo, useState } from 'react';
 import { generatePath, useLocation, useNavigate } from 'react-router-dom';
 import { useActiveListItem } from '../../hooks/useActiveListItem';
 import { getDisplayablePostcode } from '../sessionsList/sessionClassification';
@@ -155,6 +155,8 @@ export const SessionListItemComponent = ({
 	// WP-06 Slice 0b: route-derived single source of truth for the active item
 	// (replaces the per-component rid/sessionId comparison below).
 	const { isActive } = useActiveListItem();
+	// Names the case for its selection checkbox (FE#1725 US27).
+	const caseNameId = useId();
 	const navigate = useNavigate();
 
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
@@ -1455,6 +1457,7 @@ export const SessionListItemComponent = ({
 				<SessionCardBody
 					name={
 						<div
+							id={caseNameId}
 							className={clsx(
 								'sessionsListItem__username',
 								!isItemUnread &&
@@ -1672,7 +1675,7 @@ export const SessionListItemComponent = ({
 									)
 								}}
 								state={caseHandoverActionState}
-								active={isChatActive}
+								describedBy={caseNameId}
 								surfaceRef={cardRef}
 								batchMode={caseHandoverBatchMode}
 								selected={caseHandoverSelected}

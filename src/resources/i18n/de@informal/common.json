@@ -2374,6 +2374,14 @@
 		"standingPreference": {
 			"baselineDescription": "Ausgeschaltet gelten die Einstellungen deiner Beratungsstelle. Eine dort erforderliche Zustimmung bleibt erforderlich.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut."
+		},
+		"bulkBar": {
+			"emptyHint": "Wähle mindestens einen Fall aus."
+		},
+		"curtain": {
+			"reason": {
+				"empty": "Für deine Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wende dich an deine Administration."
+			}
 		}
 	},
 	"supervisorDialog": {

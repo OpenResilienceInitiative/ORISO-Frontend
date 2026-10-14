@@ -3696,7 +3696,8 @@
 			},
 			"reason": {
 				"title": "Bitte wähle einen Grund",
-				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen."
+				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen.",
+				"empty": "Für Ihre Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wenden Sie sich an Ihre Administration."
 			},
 			"describe": {
 				"title": "Bitte beschreibe den Grund",
@@ -3735,6 +3736,13 @@
 			"saved": "Einstellung gespeichert.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
 			"loading": "Einstellung wird geladen …"
+		},
+		"bulkBar": {
+			"label": "Fallauswahl",
+			"selected": "{{count}} ausgewählt",
+			"continue": "Weiter",
+			"cancel": "Abbrechen",
+			"emptyHint": "Wählen Sie mindestens einen Fall aus."
 		}
 	},
 	"supervisorDialog": {

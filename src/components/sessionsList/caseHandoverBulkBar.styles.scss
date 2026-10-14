@@ -1,0 +1,97 @@
+// FE#1725 US23: sticky selection bar below the case list. M3 button tokens:
+// 40px height, 20px radius, label-large 14/500.
+.caseHandoverBulkBar {
+	position: sticky;
+	bottom: 0;
+	z-index: 5;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 4px 8px;
+	flex-shrink: 0;
+	margin: 0;
+	padding: 12px 16px;
+	border-radius: 16px 16px 0 0;
+	background: var(--m3-surface-container-lowest, #ffffff);
+	box-shadow:
+		0 -1px 3px rgba(0, 0, 0, 0.12),
+		0 -4px 8px 3px rgba(0, 0, 0, 0.06);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-size: 14px;
+	line-height: 20px;
+
+	&__count {
+		flex: 1 1 auto;
+		margin: 0;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+
+	&__hint {
+		order: 3;
+		flex: 1 1 100%;
+		margin: 0;
+		color: var(--m3-on-surface-variant, #444748);
+		font-size: 12px;
+		line-height: 16px;
+	}
+
+	&__actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-left: auto;
+	}
+
+	&__button {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 40px;
+		padding: 0 16px;
+		border: 0;
+		border-radius: 20px;
+		font: inherit;
+		font-weight: 500;
+		letter-spacing: 0.1px;
+		white-space: nowrap;
+		cursor: pointer;
+		-webkit-tap-highlight-color: transparent;
+
+		&:focus-visible {
+			outline: 3px solid var(--m3-primary, #a5000a);
+			outline-offset: 2px;
+		}
+
+		&--text {
+			background: transparent;
+			color: var(--m3-primary, #a5000a);
+
+			&:hover {
+				background: rgba(165, 0, 10, 0.08);
+			}
+		}
+
+		&--filled {
+			padding: 0 24px;
+			background: var(--m3-primary, #a5000a);
+			color: var(--m3-on-primary, #ffffff);
+
+			&:hover:not([aria-disabled='true']) {
+				background: var(--m3-primary-container, #cc1e1c);
+			}
+
+			&[aria-disabled='true'] {
+				background: rgba(27, 27, 28, 0.12);
+				color: rgba(27, 27, 28, 0.38);
+				cursor: not-allowed;
+			}
+		}
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.caseHandoverBulkBar__button {
+		transition: none;
+	}
+}

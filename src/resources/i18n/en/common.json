@@ -3642,7 +3642,8 @@
 			},
 			"reason": {
 				"title": "Please select a reason",
-				"subtitle": "Before you proceed, you need to select a reason to send an inquiry"
+				"subtitle": "Before you proceed, you need to select a reason to send an inquiry",
+				"empty": "No case handover reasons are set up for your counseling center. Please contact your administrator."
 			},
 			"describe": {
 				"title": "Please describe the reason",
@@ -3681,6 +3682,13 @@
 			"saved": "Setting saved.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"loading": "Loading setting …"
+		},
+		"bulkBar": {
+			"label": "Case selection",
+			"selected": "{{count}} selected",
+			"continue": "Continue",
+			"cancel": "Cancel",
+			"emptyHint": "Select at least one case."
 		}
 	},
 	"supervisorDialog": {

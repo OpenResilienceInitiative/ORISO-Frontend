@@ -156,6 +156,7 @@ const SEARCH_KEEP_OPEN_SELECTOR = [
 	'[role="dialog"]',
 	'[role="alert"]',
 	'[role="status"]',
+	'[data-search-keep-open]',
 	'.sessionsList__scrollContainer',
 	'.sessionsListItem'
 ].join(', ');
