@@ -41,12 +41,23 @@ const state = [
 	}
 ];
 
+interface HistoryFixtureOptions {
+	firstMessage?: number;
+	historicalThread?: boolean;
+	failFirstHistory?: boolean;
+	coldStart?: boolean;
+	firstHistoryGate?: Promise<void>;
+}
+
 const prepareHistory = async (
 	page: Page,
-	firstMessage = 121,
-	historicalThread = false,
-	failFirstHistory = false,
-	coldStart = false
+	{
+		firstMessage = 121,
+		historicalThread = false,
+		failFirstHistory = false,
+		coldStart = false,
+		firstHistoryGate
+	}: HistoryFixtureOptions = {}
 ) => {
 	let deliverLiveReply = false;
 	let liveReplyDelivered = false;
@@ -215,6 +226,8 @@ const prepareHistory = async (
 			return route.fulfill({ json: {} });
 		if (path.endsWith('/messages')) {
 			historyPages.push(url.searchParams.get('from') || '');
+			if (historyPages.length === 1 && firstHistoryGate)
+				await firstHistoryGate;
 			if (failFirstHistory && historyPages.length === 1)
 				return route.fulfill({
 					status: 500,
@@ -367,10 +380,9 @@ test('top-scroll reveals the complete earlier chat without duplicates or moving 
 test('a short initial window makes earlier messages accessible', async ({
 	page
 }) => {
-	const { unexpected, errors, historyPages } = await prepareHistory(
-		page,
-		140
-	);
+	const { unexpected, errors, historyPages } = await prepareHistory(page, {
+		firstMessage: 140
+	});
 	await page.goto('/playwright/history-pagination-1718/index.html');
 	const scroll = page.locator('#session-scroll-container');
 	await expect(scroll).toBeVisible({ timeout: 20000 });
@@ -389,7 +401,7 @@ test('older thread replies appear in history without announcing a new reply', as
 	page
 }) => {
 	const { unexpected, errors, historyPages, deliverThreadReply } =
-		await prepareHistory(page, 121, true);
+		await prepareHistory(page, { historicalThread: true });
 	await page.goto('/playwright/history-pagination-1718/index.html');
 	const scroll = page.locator('#session-scroll-container');
 	await expect(scroll).toBeVisible({ timeout: 20000 });
@@ -423,10 +435,9 @@ test('older thread replies appear in history without announcing a new reply', as
 test('a metadata-only initial window still reveals earlier counselling messages', async ({
 	page
 }) => {
-	const { unexpected, errors, historyPages } = await prepareHistory(
-		page,
-		141
-	);
+	const { unexpected, errors, historyPages } = await prepareHistory(page, {
+		firstMessage: 141
+	});
 	await page.goto('/playwright/history-pagination-1718/index.html');
 	const scroll = page.locator('#session-scroll-container');
 	await expect(scroll).toBeVisible({ timeout: 20000 });
@@ -441,12 +452,10 @@ test('a metadata-only initial window still reveals earlier counselling messages'
 test('a failed empty-window history load can retry through the normal mouse wheel', async ({
 	page
 }) => {
-	const { unexpected, errors, historyPages } = await prepareHistory(
-		page,
-		141,
-		false,
-		true
-	);
+	const { unexpected, errors, historyPages } = await prepareHistory(page, {
+		firstMessage: 141,
+		failFirstHistory: true
+	});
 	await page.goto('/playwright/history-pagination-1718/index.html');
 	const scroll = page.locator('#session-scroll-container');
 	await expect(scroll).toBeVisible({ timeout: 20000 });
@@ -467,13 +476,10 @@ test('a failed empty-window history load can retry through the normal mouse whee
 test('cold chat mount waits for initial Matrix sync before deciding history is exhausted', async ({
 	page
 }) => {
-	const { unexpected, errors, historyPages } = await prepareHistory(
-		page,
-		141,
-		false,
-		false,
-		true
-	);
+	const { unexpected, errors, historyPages } = await prepareHistory(page, {
+		firstMessage: 141,
+		coldStart: true
+	});
 	await page.goto('/playwright/history-pagination-1718/index.html?cold');
 	await expect(page.locator('#session-scroll-container')).toBeVisible({
 		timeout: 20000
@@ -486,3 +492,53 @@ test('cold chat mount waits for initial Matrix sync before deciding history is e
 	expect(unexpected).toEqual([]);
 	expect(errors).toEqual([]);
 });
+
+for (const navigateToNewest of [false, true]) {
+	test(`delayed older history preserves ${navigateToNewest ? 'the reader’s new position at the newest message' : 'a stationary reading anchor'}`, async ({
+		page
+	}) => {
+		let releaseHistory!: () => void;
+		const firstHistoryGate = new Promise<void>((resolve) => {
+			releaseHistory = resolve;
+		});
+		const { unexpected, errors, historyPages } = await prepareHistory(
+			page,
+			{ firstHistoryGate }
+		);
+		try {
+			await page.goto('/playwright/history-pagination-1718/index.html');
+			const scroll = page.locator('#session-scroll-container');
+			const rows = page.locator('[data-message-id^="$history-"]');
+			await expect(scroll).toBeVisible({ timeout: 20000 });
+			await expect(rows).toHaveCount(20);
+			await page.evaluate(async () => {
+				await document.fonts.ready;
+			});
+			await expect
+				.poll(() => scroll.evaluate((element) => element.scrollTop))
+				.toBeGreaterThan(100);
+			await scroll.hover();
+			await page.mouse.wheel(0, -100000);
+			await expect.poll(() => historyPages.length).toBe(1);
+			if (navigateToNewest) await page.mouse.wheel(0, 100000);
+			const chosenMessage = page.locator(
+				`[data-message-id="$history-${navigateToNewest ? 140 : 121}"]`
+			);
+			await expect(chosenMessage).toBeInViewport();
+			const chosenTop = (await chosenMessage.boundingBox())!.y;
+			releaseHistory();
+			await expect(rows).toHaveCount(69);
+			await expect(chosenMessage).toBeInViewport();
+			await expect
+				.poll(async () =>
+					Math.abs((await chosenMessage.boundingBox())!.y - chosenTop)
+				)
+				.toBeLessThanOrEqual(3);
+			expect(historyPages).toEqual(['before-121']);
+			expect(unexpected).toEqual([]);
+			expect(errors).toEqual([]);
+		} finally {
+			releaseHistory();
+		}
+	});
+}

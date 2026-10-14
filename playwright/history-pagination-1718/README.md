@@ -11,10 +11,11 @@ Run with Node22 and installed Chrome:
 npm run test:chat-history
 ```
 
-The six scenarios verify backward pagination past100 messages, chronological
+The eight scenarios verify backward pagination past100 messages, chronological
 uniqueness, retained reading position, cursor exhaustion, short and metadata-only
 initial windows, historical versus newly arriving thread replies, a normal wheel
-retry after HTTP500, and mounting before initial Matrix sync finishes. The public
+retry after HTTP500, mounting before initial Matrix sync finishes, and delayed-page completion after
+a stationary reader or a reader who navigates to the newest message. The public
 notification-context output contract is observed through a fixture output
 element. NotificationsContext contains synthetic application state.
 

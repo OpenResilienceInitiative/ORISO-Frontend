@@ -7,6 +7,8 @@ import {
 } from 'react';
 
 interface PendingPage {
+	container: HTMLElement;
+	stopTracking: () => void;
 	generation: number;
 	anchorId?: string;
 	anchorTop?: number;
@@ -15,6 +17,19 @@ interface PendingPage {
 	completed: boolean;
 	hasMore: boolean;
 }
+
+const captureReadingPosition = (container: HTMLElement) => {
+	const visibleTop = container.getBoundingClientRect().top;
+	const anchor = Array.from(
+		container.querySelectorAll<HTMLElement>('[data-message-id]')
+	).find((message) => message.getBoundingClientRect().bottom > visibleTop);
+	return {
+		anchorId: anchor?.dataset.messageId,
+		anchorTop: anchor?.getBoundingClientRect().top,
+		top: container.scrollTop,
+		height: container.scrollHeight
+	};
+};
 
 /** Keep the visible message anchored after React commits an older SDK page. */
 export const useChatHistoryPagination = (
@@ -33,8 +48,10 @@ export const useChatHistoryPagination = (
 		generation.current += 1;
 		busy.current = false;
 		exhausted.current = false;
+		pending.current?.stopTracking();
 		pending.current = null;
 		return () => {
+			pending.current?.stopTracking();
 			generation.current += 1;
 		};
 	}, [sessionId, loadEarlier]);
@@ -42,12 +59,13 @@ export const useChatHistoryPagination = (
 	useLayoutEffect(() => {
 		const page = pending.current;
 		const container = timeline.current;
-		if (
-			!page?.completed ||
-			!container ||
-			page.generation !== generation.current
-		)
-			return;
+		if (!page?.completed || page.generation !== generation.current) return;
+		page.stopTracking();
+		if (!container || container !== page.container) {
+			pending.current = null;
+			busy.current = false;
+			return; // A replacement card owns its own reading position.
+		}
 		const anchor = Array.from(
 			container.querySelectorAll<HTMLElement>('[data-message-id]')
 		).find((message) => message.dataset.messageId === page.anchorId);
@@ -77,22 +95,27 @@ export const useChatHistoryPagination = (
 			container.scrollTop > 48
 		)
 			return;
-		const visibleTop = container.getBoundingClientRect().top;
-		const anchor = Array.from(
-			container.querySelectorAll<HTMLElement>('[data-message-id]')
-		).find(
-			(message) => message.getBoundingClientRect().bottom > visibleTop
-		);
 		const page: PendingPage = {
+			container,
+			stopTracking: () =>
+				container.removeEventListener('scroll', trackNavigation),
 			generation: generation.current,
-			anchorId: anchor?.dataset.messageId,
-			anchorTop: anchor?.getBoundingClientRect().top,
-			top: container.scrollTop,
-			height: container.scrollHeight,
+			...captureReadingPosition(container),
 			completed: false,
 			hasMore: false
 		};
+		const trackNavigation = () => {
+			if (
+				pending.current !== page ||
+				container.scrollHeight !== page.height
+			)
+				return;
+			// Rebase while the original DOM is still present. A scroll caused by
+			// native anchoring after prepend must not replace this chosen position.
+			Object.assign(page, captureReadingPosition(container));
+		};
 		pending.current = page;
+		container.addEventListener('scroll', trackNavigation);
 		busy.current = true;
 		void loadEarlier()
 			.then((hasMore) => {
@@ -103,6 +126,7 @@ export const useChatHistoryPagination = (
 				setCompletedPage((count) => count + 1);
 			})
 			.catch(() => {
+				page.stopTracking();
 				// Retain loaded history and allow the next normal scroll to retry.
 				if (generation.current === page.generation) {
 					pending.current = null;
