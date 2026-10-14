@@ -7,8 +7,12 @@ const { apiPostRegistration, autoLogin } = vi.hoisted(() => ({
 	autoLogin: vi.fn()
 }));
 
-vi.mock('../../api/apiPostRegistration', () => ({ apiPostRegistration }));
-vi.mock('./autoLogin', () => ({ autoLogin }));
+// The retry goes through the deadline wrapper; the login behind it is what
+// these tests watch.
+vi.mock('../../api/apiPostRegistration', () => ({
+	apiPostRegistration,
+	autoLoginWithDeadline: autoLogin
+}));
 
 const { useRegisterThenLogin } = await import('./useRegisterThenLogin');
 
