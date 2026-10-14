@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { forwardRef } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { ButtonGroup } from '../buttonGroup/ButtonGroup';
 import './caseHandoverBulkBar.styles.scss';
 
 export interface CaseHandoverBulkBarLabels {
@@ -22,16 +23,26 @@ interface CaseHandoverBulkBarProps {
 
 /**
  * FE#1725 US23/24: sticky bar while batch mode is on. Always shows the way
- * forward ("N selected – Continue") and a way out ("Cancel").
+ * forward ("N selected – Continue") and a way out ("Cancel"). Buttons are
+ * the shared M3 ButtonGroup (outline + primary). The ref is Continue.
  */
 export const CaseHandoverBulkBar = forwardRef<
-	HTMLButtonElement,
+	HTMLButtonElement | null,
 	CaseHandoverBulkBarProps
 >(({ count, labels, onContinue, onCancel }, continueRef) => {
-	const hintId = React.useId();
+	const continueId = React.useId();
+	const rootRef = useRef<HTMLElement>(null);
+	useImperativeHandle(
+		continueRef,
+		() =>
+			rootRef.current?.querySelector<HTMLButtonElement>(
+				`[id="${continueId}"]`
+			) ?? null
+	);
 	const empty = count === 0;
 	return (
 		<section
+			ref={rootRef}
 			className="caseHandoverBulkBar"
 			aria-label={labels.region}
 			data-search-keep-open
@@ -41,34 +52,27 @@ export const CaseHandoverBulkBar = forwardRef<
 				{labels.selected}
 			</p>
 			{empty && (
-				<p id={hintId} className="caseHandoverBulkBar__hint">
-					{labels.emptyHint}
-				</p>
+				<p className="caseHandoverBulkBar__hint">{labels.emptyHint}</p>
 			)}
-			<div className="caseHandoverBulkBar__actions">
-				<button
-					type="button"
-					className="caseHandoverBulkBar__button caseHandoverBulkBar__button--text"
-					onClick={onCancel}
-					data-cy="case-handover-bulk-cancel"
-				>
-					{labels.cancel}
-				</button>
-				<button
-					ref={continueRef}
-					type="button"
-					className="caseHandoverBulkBar__button caseHandoverBulkBar__button--filled"
-					// aria-disabled keeps it focusable and explained by the hint.
-					aria-disabled={empty || undefined}
-					aria-describedby={empty ? hintId : undefined}
-					onClick={() => {
-						if (!empty) onContinue();
-					}}
-					data-cy="case-handover-bulk-continue"
-				>
-					{labels.continueLabel}
-				</button>
-			</div>
+			<ButtonGroup
+				className="caseHandoverBulkBar__actions"
+				items={[
+					{
+						label: labels.cancel,
+						variant: 'outline',
+						onClick: onCancel,
+						testingAttribute: 'case-handover-bulk-cancel'
+					},
+					{
+						id: continueId,
+						label: labels.continueLabel,
+						variant: 'primary',
+						disabled: empty,
+						onClick: onContinue,
+						testingAttribute: 'case-handover-bulk-continue'
+					}
+				]}
+			/>
 		</section>
 	);
 });

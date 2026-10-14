@@ -307,6 +307,8 @@ export const CaseHandoverActionButton = ({
 						className="sessionsListItem__handoverActionMenu"
 						role="menu"
 						id={menuId}
+						// Part of the card: keeps the search panel open.
+						data-search-keep-open
 						aria-label={labels.menuLabel}
 						data-placement={placement}
 						style={{ ...menuPosition, zIndex: CARD_MENU_LAYER }}

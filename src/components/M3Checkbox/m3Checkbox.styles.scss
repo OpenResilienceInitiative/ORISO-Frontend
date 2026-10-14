@@ -97,4 +97,40 @@
 			background: transparent;
 		}
 	}
+
+	// Takes the surrounding text colour (e.g. a split-button segment).
+	&--inherit,
+	&--onPrimary {
+		color: inherit;
+		font: inherit;
+
+		.m3Checkbox__box {
+			border-color: currentcolor;
+		}
+	}
+
+	// On a primary fill the ticked box inverts: on-primary box, primary tick.
+	&--onPrimary {
+		.m3Checkbox__input:checked + .m3Checkbox__box {
+			background: var(--m3-on-primary, #ffffff);
+			border-color: var(--m3-on-primary, #ffffff);
+			color: var(--m3-primary, #a5000a);
+		}
+
+		.m3Checkbox__target:hover::before,
+		.m3Checkbox__input:focus-visible + .m3Checkbox__box::before {
+			background: color-mix(
+				in srgb,
+				var(--m3-on-primary, #ffffff) 12%,
+				transparent
+			);
+		}
+	}
+
+	&--fill {
+		width: 100%;
+		height: 100%;
+		gap: 0;
+		white-space: nowrap;
+	}
 }

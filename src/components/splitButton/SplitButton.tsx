@@ -139,6 +139,10 @@ export const SplitButton = React.forwardRef<HTMLDivElement, SplitButtonProps>(
 							describedBy={selection.describedBy}
 							disabled={disabled || mainDisabled}
 							dataCy={selection.dataCy}
+							tone={
+								variant === 'primary' ? 'onPrimary' : 'inherit'
+							}
+							fill
 						/>
 					</div>
 				) : (

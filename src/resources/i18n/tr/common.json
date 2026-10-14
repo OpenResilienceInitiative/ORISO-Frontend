@@ -3677,7 +3677,9 @@
 			"reason": {
 				"title": "Lütfen bir neden seçin",
 				"subtitle": "Devam etmeden önce talebiniz için bir neden seçmelisiniz.",
-				"empty": "Danışma merkeziniz için vaka devri nedeni tanımlanmamış. Lütfen yöneticinize başvurun."
+				"empty": "Danışma merkeziniz için vaka devri nedeni tanımlanmamış. Lütfen yöneticinize başvurun.",
+				"loadFailed": "Vaka devri nedenleri yüklenemedi.",
+				"retry": "Tekrar dene"
 			},
 			"describe": {
 				"title": "Lütfen nedeni açıklayın",
@@ -4148,11 +4150,13 @@
 					"consultant": "Danışman"
 				},
 				"internalName": "Dahili ad",
+				"publicName": "Herkese açık ad",
 				"agencyGroup": "Danışma merkezi",
 				"topicGroup": "Konu",
 				"agencyFallback": "Danışma merkezi {{id}}",
 				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
-				"removeFilters": "Filtreleri kaldır"
+				"removeFilters": "Filtreleri kaldır",
+				"removeFiltersKeepSearch": "Filtreleri kaldır, aramayı koru"
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"

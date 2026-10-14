@@ -160,3 +160,10 @@
 	background: var(--m3-surface-container-low, #f6f3f3);
 	color: var(--m3-on-surface, #1b1b1c);
 }
+
+.caseHandoverCurtain__loadFailed {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 8px;
+}

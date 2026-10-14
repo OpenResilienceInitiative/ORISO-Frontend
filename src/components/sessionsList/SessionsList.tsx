@@ -41,10 +41,7 @@ import { SessionsListSkeleton } from '../sessionsListItem/SessionsListItemSkelet
 import { getModality, Modality } from '../session/getModality';
 import {
 	apiGetAskerSessionList,
-	apiGetCaseHandoverCandidates,
-	apiGetCaseHandoverReasons,
 	apiGetConsultantSessionList,
-	CaseHandoverReason,
 	FETCH_ERRORS,
 	SESSION_COUNT
 } from '../../api';
@@ -70,7 +67,6 @@ import { useForegroundRefresh } from '../../hooks/useForegroundRefresh';
 import {
 	buildArchiveTabPath,
 	buildCreateGroupChatPath,
-	SessionSearchPersonResult,
 	SessionsListToolbar,
 	DisplayFilterKindChip
 } from './SessionsListToolbar';
@@ -81,15 +77,12 @@ import {
 	sessionMatchesToolbar,
 	SessionToolbarChipFilter
 } from './sessionToolbarFilters';
+import { sessionMatchesAgency, textAxisQuery } from './sessionSearchPeople';
 import {
-	buildSearchPeopleResults,
-	personKeysOfSession,
-	queryNamesPerson,
-	roleOfSearchWord,
-	SessionSearchAgencyConsultant,
-	sessionMatchesAgency
-} from './sessionSearchPeople';
-import { apiGetAgencyConsultantList } from '../../api/apiGetAgencyConsultantList';
+	useCaseHandoverSearch,
+	useSearchPeopleResults
+} from './useCaseHandoverSearch';
+import { useCaseHandoverReasons } from '../caseHandover/useCaseHandoverReasons';
 import { useSessionListViewState } from './SessionListViewStateContext';
 import { apiGetUserDrafts, IUserDraftItem } from '../../api/apiUserDrafts';
 import {
@@ -153,29 +146,6 @@ import { NOTIFICATION_SETTINGS_PATH } from '../profile/notificationSettingsPath'
 /** Keep paging while the display filter hides rows and fewer than this are visible (§5.2). */
 const MIN_VISIBLE_SESSION_ROWS = 10;
 
-const listItemIdOf = (item: ListItemInterface) =>
-	item.session?.id !== undefined
-		? `session:${item.session.id}`
-		: item.chat?.id !== undefined
-			? `chat:${item.chat.id}`
-			: null;
-
-/** Concatenates list items; the first occurrence of an id wins. */
-const mergeListItems = (...lists: ListItemInterface[][]) => {
-	const seen = new Set<string>();
-	const merged: ListItemInterface[] = [];
-	lists.forEach((list) =>
-		list.forEach((item) => {
-			const id = listItemIdOf(item);
-			if (id !== null) {
-				if (seen.has(id)) return;
-				seen.add(id);
-			}
-			merged.push(item);
-		})
-	);
-	return merged;
-};
 const SESSIONS_DISPLAY_FILTER_DIALOG_ID = 'sessions-display-filter-dialog';
 
 const withDraftScopeParam = (path: string, draftScopeKey: string) => {
@@ -312,18 +282,6 @@ export const SessionsList = ({
 		useState<string | null>(null);
 	const [sessionToolbarSelectedAgency, setSessionToolbarSelectedAgency] =
 		useState<string | null>(null);
-	const [sessionToolbarSelectedPeople, setSessionToolbarSelectedPeople] =
-		useState<string[]>([]);
-	const [caseHandoverCandidateSessions, setCaseHandoverCandidateSessions] =
-		useState<ListItemInterface[]>([]);
-	/** Candidate sessions of picked people; they stay while the person is picked. */
-	const [pinnedCandidateSessions, setPinnedCandidateSessions] = useState<
-		Record<string, ListItemInterface[]>
-	>({});
-	/** Counsellors of my agencies, loaded on the first role-word search. */
-	const [agencyConsultants, setAgencyConsultants] = useState<
-		SessionSearchAgencyConsultant[] | null
-	>(null);
 	const [filteredOutNoticeDismissed, setFilteredOutNoticeDismissed] =
 		useState(false);
 	const [userDrafts, setUserDrafts] = useState<IUserDraftItem[]>([]);
@@ -335,11 +293,6 @@ export const SessionsList = ({
 	const [caseHandoverSelectedIds, setCaseHandoverSelectedIds] = useState<
 		number[]
 	>([]);
-	const [caseHandoverReasons, setCaseHandoverReasons] = useState<
-		CaseHandoverReason[]
-	>([]);
-	const [caseHandoverReasonsLoaded, setCaseHandoverReasonsLoaded] =
-		useState(false);
 	const [caseHandoverReasonCode, setCaseHandoverReasonCode] = useState('');
 	const [caseHandoverExplanation, setCaseHandoverExplanation] = useState('');
 	const [caseHandoverBatchSummary, setCaseHandoverBatchSummary] =
@@ -1266,98 +1219,14 @@ export const SessionsList = ({
 			),
 		[userDrafts]
 	);
-	useEffect(() => {
-		const query = sessionToolbarSearch.trim();
-
-		if (!showConsultantToolbarActions) {
-			setCaseHandoverCandidateSessions([]);
-			return;
-		}
-
-		// Batch mode keeps what was found so far; selected cases must not vanish.
-		if (!query) {
-			if (!caseHandoverBatchMode) {
-				setCaseHandoverCandidateSessions([]);
-			}
-			return;
-		}
-
-		const controller = new AbortController();
-		const timeoutId = window.setTimeout(() => {
-			apiGetCaseHandoverCandidates({
-				query,
-				count: 50,
-				archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
-				signal: controller.signal
-			})
-				.then(({ sessions: candidateSessions }) => {
-					setCaseHandoverCandidateSessions((prev) =>
-						caseHandoverBatchMode
-							? mergeListItems(candidateSessions || [], prev)
-							: candidateSessions || []
-					);
-				})
-				.catch((error) => {
-					if (
-						error?.message !== FETCH_ERRORS.ABORT &&
-						!caseHandoverBatchMode
-					) {
-						setCaseHandoverCandidateSessions([]);
-					}
-				});
-		}, 250);
-
-		return () => {
-			window.clearTimeout(timeoutId);
-			controller.abort();
-		};
-	}, [
-		caseHandoverBatchMode,
-		sessionListTab,
-		sessionToolbarSearch,
-		showConsultantToolbarActions
-	]);
-	// Role words list the counsellors of my agencies (FE#1725 US6).
-	const searchNamesConsultantRole =
-		roleOfSearchWord(sessionToolbarSearch) === 'consultant';
-	useEffect(() => {
-		if (
-			!searchNamesConsultantRole ||
-			!showConsultantToolbarActions ||
-			agencyConsultants !== null
-		) {
-			return;
-		}
-		const agencies = userData?.agencies ?? [];
-		let cancelled = false;
-		Promise.all(
-			agencies.map((agency) =>
-				apiGetAgencyConsultantList(String(agency.id))
-					.catch(() => [])
-					.then((consultants) =>
-						(Array.isArray(consultants) ? consultants : []).map(
-							(consultant) => ({
-								...consultant,
-								agencyId: agency.id,
-								agencyName: agency.name
-							})
-						)
-					)
-			)
-		).then((lists) => {
-			if (!cancelled) {
-				setAgencyConsultants(lists.flat());
-			}
-		});
-		return () => {
-			cancelled = true;
-		};
-	}, [
-		agencyConsultants,
-		searchNamesConsultantRole,
-		showConsultantToolbarActions,
-		userData
-	]);
+	const caseHandoverSearch = useCaseHandoverSearch({
+		enabled: showConsultantToolbarActions,
+		query: sessionToolbarSearch,
+		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
+		keepFound: caseHandoverBatchMode,
+		agencies: userData?.agencies
+	});
+	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
 	const loadUserDrafts = useCallback(async () => {
 		if (!showMySessionToolbar) {
 			setUserDrafts([]);
@@ -1396,23 +1265,16 @@ export const SessionsList = ({
 		};
 	}, [loadUserDrafts, showMySessionToolbar]);
 
+	const caseHandoverReasons = useCaseHandoverReasons(caseHandoverBatchMode);
+	// A chosen reason that is no longer offered is dropped.
+	const { reasons: loadedReasons, loaded: reasonsLoaded } =
+		caseHandoverReasons;
 	useEffect(() => {
-		if (!caseHandoverBatchMode) {
-			return;
-		}
-		setCaseHandoverReasonsLoaded(false);
-		apiGetCaseHandoverReasons()
-			.then((items) => {
-				setCaseHandoverReasons(items || []);
-				setCaseHandoverReasonCode((current) =>
-					items?.some((item) => item.code === current) ? current : ''
-				);
-			})
-			.catch(() => {
-				setCaseHandoverReasons([]);
-			})
-			.finally(() => setCaseHandoverReasonsLoaded(true));
-	}, [caseHandoverBatchMode]);
+		if (!reasonsLoaded) return;
+		setCaseHandoverReasonCode((current) =>
+			loadedReasons.some((item) => item.code === current) ? current : ''
+		);
+	}, [loadedReasons, reasonsLoaded]);
 
 	const handleOpenDraft = useCallback(
 		(draft: IUserDraftItem) => {
@@ -1666,10 +1528,7 @@ export const SessionsList = ({
 	};
 	const finalSessionsList = React.useMemo(() => {
 		const baseSessions = (sessions || []).filter(filterSessions);
-		const candidateSessions = mergeListItems(
-			caseHandoverCandidateSessions,
-			...Object.values(pinnedCandidateSessions)
-		);
+		const { candidateSessions } = caseHandoverSearch;
 		if (candidateSessions.length === 0) {
 			return baseSessions;
 		}
@@ -1688,12 +1547,7 @@ export const SessionsList = ({
 			});
 
 		return [...candidates, ...baseSessions];
-	}, [
-		caseHandoverCandidateSessions,
-		filterSessions,
-		pinnedCandidateSessions,
-		sessions
-	]);
+	}, [caseHandoverSearch, filterSessions, sessions]);
 	const sessionToolbarPairs = React.useMemo(
 		() =>
 			finalSessionsList.map((raw) => ({
@@ -1721,150 +1575,68 @@ export const SessionsList = ({
 			a.label.localeCompare(b.label)
 		);
 	}, [sessionToolbarPairs, sessionToolbarSelectedAgency]);
-	/**
-	 * People, not case rows (FE#1725 US1): one row per role + user + agency,
-	 * plus the counsellors of my agencies once a role word was typed.
-	 */
-	const toolbarSearchPeopleResults: SessionSearchPersonResult[] =
-		React.useMemo(
-			() =>
-				buildSearchPeopleResults(
-					sessionToolbarPairs,
-					{
-						asker: translate(
-							'sessionList.toolbar.search.role.asker'
-						),
-						consultant: translate(
-							'sessionList.toolbar.search.role.consultant'
-						),
-						unknown: translate('sessionList.user.consultantUnknown')
-					},
-					{
-						currentUser: {
-							id: userData?.userId,
-							name:
-								userData?.displayName ||
-								[userData?.firstName, userData?.lastName]
-									.filter(Boolean)
-									.join(' ') ||
-								userData?.userName
-						},
-						agencyConsultants:
-							searchNamesConsultantRole && agencyConsultants
-								? agencyConsultants
-								: []
-					}
-				),
-			[
-				agencyConsultants,
-				searchNamesConsultantRole,
-				sessionToolbarPairs,
-				translate,
-				userData
-			]
-		);
-	/**
-	 * While people are picked, a name or role word looks up people and does
-	 * not narrow their cases; other text (postcode, topic) still does.
-	 */
-	const listSearchQuery =
-		sessionToolbarSelectedPeople.length > 0 &&
-		queryNamesPerson(toolbarSearchPeopleResults, sessionToolbarSearch)
-			? ''
-			: sessionToolbarSearch;
-	/**
-	 * Picking a person keeps the text and the other filters (FE#1725 US3) and
-	 * pins her candidate sessions, so they stay listed while she is picked.
-	 */
-	const handleSelectedPeopleChange = useCallback(
-		(ids: string[]) => {
-			setSessionToolbarSelectedPeople(ids);
-			setPinnedCandidateSessions((prev) => {
-				const next: Record<string, ListItemInterface[]> = {};
-				ids.forEach((id) => {
-					next[id] =
-						prev[id] ??
-						caseHandoverCandidateSessions.filter((item) =>
-							personKeysOfSession(item).includes(id)
-						);
-				});
-				return next;
-			});
-			if (!showConsultantToolbarActions) {
-				return;
-			}
-			// People found by role word have no loaded cases yet: look them up.
-			ids.filter(
-				(id) =>
-					!sessionToolbarSelectedPeople.includes(id) &&
-					!finalSessionsList.some((item) =>
-						personKeysOfSession(item).includes(id)
-					)
-			).forEach((id) => {
-				const person = toolbarSearchPeopleResults.find(
-					(entry) => entry.id === id
-				);
-				const lookup = person?.lookupQuery || person?.name;
-				if (!lookup) {
-					return;
-				}
-				apiGetCaseHandoverCandidates({
-					query: lookup,
-					count: 50,
-					archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE
-				})
-					.then(({ sessions: found }) =>
-						setPinnedCandidateSessions((prev) =>
-							Object.prototype.hasOwnProperty.call(prev, id)
-								? {
-										...prev,
-										[id]: mergeListItems(
-											prev[id],
-											(found || []).filter((item) =>
-												personKeysOfSession(
-													item
-												).includes(id)
-											)
-										)
-									}
-								: prev
-						)
-					)
-					.catch(() => undefined);
-			});
+	const toolbarSearchPeopleResults = useSearchPeopleResults(
+		sessionToolbarPairs,
+		{
+			asker: translate('sessionList.toolbar.search.role.asker'),
+			consultant: translate('sessionList.toolbar.search.role.consultant'),
+			unknown: translate('sessionList.user.consultantUnknown')
 		},
-		[
-			caseHandoverCandidateSessions,
-			finalSessionsList,
-			sessionListTab,
-			sessionToolbarSelectedPeople,
-			showConsultantToolbarActions,
-			toolbarSearchPeopleResults
-		]
+		{
+			id: userData?.userId,
+			name:
+				userData?.displayName ||
+				[userData?.firstName, userData?.lastName]
+					.filter(Boolean)
+					.join(' ') ||
+				userData?.userName
+		},
+		caseHandoverSearch.agencyConsultants
+	);
+	const listSearchQuery = textAxisQuery(
+		sessionToolbarSearch,
+		caseHandoverSearch.pickedPeople
+	);
+	const { selectPeople } = caseHandoverSearch;
+	const handleSelectedPeopleChange = useCallback(
+		(ids: string[]) => selectPeople(ids, toolbarSearchPeopleResults),
+		[selectPeople, toolbarSearchPeopleResults]
 	);
 	const handleSelectedAgencyChange = useCallback((id: string | null) => {
 		setSessionToolbarSelectedAgency(id);
 		setSessionToolbarSelectedTopic(null);
 	}, []);
-	/** The search's X: text, people, type, centre, topic and archive-only (US14). */
-	const resetToolbarSearch = useCallback(() => {
-		setSessionToolbarSearch('');
-		setSessionToolbarSelectedPeople([]);
-		setPinnedCandidateSessions({});
-		setSessionToolbarSelectedTopic(null);
-		setSessionToolbarSelectedAgency(null);
-		setSessionToolbarChip(null);
-		const params = new URLSearchParams(location.search);
-		params.delete('chip');
-		params.delete('sessionListTab');
-		const search = params.toString() ? `?${params.toString()}` : '';
-		if (location.search !== search) {
-			navigate(
-				{ pathname: location.pathname, search },
-				{ replace: true }
-			);
-		}
-	}, [location.pathname, location.search, navigate]);
+	const { reset: resetPickedPeople } = caseHandoverSearch;
+	/**
+	 * Clears type, centre, topic and archive-only; `everything` also clears
+	 * text and people (the search's X, US14).
+	 */
+	const clearToolbarFilters = useCallback(
+		(everything: boolean) => {
+			if (everything) {
+				setSessionToolbarSearch('');
+				resetPickedPeople();
+			}
+			setSessionToolbarSelectedTopic(null);
+			setSessionToolbarSelectedAgency(null);
+			setSessionToolbarChip(null);
+			const params = new URLSearchParams(location.search);
+			params.delete('chip');
+			params.delete('sessionListTab');
+			const search = params.toString() ? `?${params.toString()}` : '';
+			if (location.search !== search) {
+				navigate(
+					{ pathname: location.pathname, search },
+					{ replace: true }
+				);
+			}
+		},
+		[location.pathname, location.search, navigate, resetPickedPeople]
+	);
+	const resetToolbarSearch = useCallback(
+		() => clearToolbarFilters(true),
+		[clearToolbarFilters]
+	);
 	const isSessionListItemActive = useCallback(
 		(session: ExtendedSessionInterface) =>
 			(session?.rid && session.rid === groupIdFromParam) ||
@@ -2452,11 +2224,6 @@ export const SessionsList = ({
 			visibleSessionCount: visibleListItemCount
 		});
 	}, [isLoading, setSessionListViewState, type, visibleListItemCount]);
-	/**
-	 * #1195 JOB2/JOB5 — clients and counsellors are separate roles, so a session
-	 * contributes one row per person instead of one row named after the client
-	 * but hard-coded to `Berater:in`.
-	 */
 	/** #1195 JOB1 — the counsellor's own agencies drive the two-agency filter. */
 	const toolbarSearchAgencyResults = React.useMemo(
 		() =>
@@ -2496,6 +2263,13 @@ export const SessionsList = ({
 		toolbarFilteredOutAll &&
 		hasToolbarSearchFilter &&
 		!filteredOutNoticeDismissed;
+	/** Filters that hide cases besides the search itself (US17). */
+	const hasHidingFilter = Boolean(
+		sessionToolbarSelectedTopic ||
+			sessionToolbarSelectedAgency ||
+			sessionToolbarChip ||
+			sessionListTab === SESSION_LIST_TAB_ARCHIVE
+	);
 	const futureTimelineSeries = React.useMemo(
 		() =>
 			futureSourceSessions
@@ -2673,13 +2447,23 @@ export const SessionsList = ({
 						'sessionList.toolbar.search.filteredOutAll'
 					)}
 					role="status"
-					action={{
-						label: translate(
-							'sessionList.toolbar.search.removeFilters'
-						),
-						onClick: resetToolbarSearch,
-						testId: 'session-search-filtered-out-reset'
-					}}
+					action={
+						hasHidingFilter
+							? {
+									label: translate(
+										'sessionList.toolbar.search.removeFiltersKeepSearch'
+									),
+									onClick: () => clearToolbarFilters(false),
+									testId: 'session-search-filtered-out-reset'
+								}
+							: {
+									label: translate(
+										'sessionList.toolbar.search.clear'
+									),
+									onClick: resetToolbarSearch,
+									testId: 'session-search-filtered-out-reset'
+								}
+					}
 					onClose={() => setFilteredOutNoticeDismissed(true)}
 					closeLabel={displayFilterLabels.dialogLabels.close}
 					testId="session-search-filtered-out-notice"
@@ -2789,14 +2573,15 @@ export const SessionsList = ({
 							</div>
 							<CaseHandoverCurtainView
 								step={caseHandoverWizardStep}
-								reasons={caseHandoverReasons}
+								reasons={caseHandoverReasons.reasons}
 								reasonCode={caseHandoverReasonCode}
 								explanation={caseHandoverExplanation}
 								isSubmitting={caseHandoverBatch.submitting}
 								reasonsUnavailable={
-									caseHandoverReasonsLoaded &&
-									caseHandoverReasons.length === 0
+									caseHandoverReasons.unavailable
 								}
+								reasonsLoadFailed={caseHandoverReasons.failed}
+								onRetryReasons={caseHandoverReasons.retry}
 								error={
 									caseHandoverReviewOpen &&
 									caseHandoverBatchSummary

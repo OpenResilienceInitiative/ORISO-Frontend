@@ -25,7 +25,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Sticky bar under the case list while batch mode is on (FE#1725 US23/24): "N selected", **Cancel** and **Continue**. Continue opens the request wizard for every selected case; with nothing selected it stays focusable but inert and says why. The phone layouts with cards live in `CaseHandoverActionButton` → Phone 320/390.'
+					'Sticky bar under the case list while batch mode is on (FE#1725 US23/24): "N selected", **Cancel** and **Continue**. Continue opens the request wizard for every selected case; with nothing selected it is disabled and the bar says why. Buttons are the shared `ButtonGroup` (outline Cancel, primary Continue). The phone layouts with cards live in `CaseHandoverActionButton` → Phone 320/390.'
 			}
 		}
 	}
@@ -84,11 +84,9 @@ export const BulkBarEmpty: Story = {
 			name: 'Case selection'
 		});
 		const next = within(bar).getByRole('button', { name: 'Continue' });
-		await expect(next).toHaveAttribute('aria-disabled', 'true');
-		await expect(next).toHaveAccessibleDescription(
-			'Select at least one case.'
-		);
-		await userEvent.click(next);
+		await expect(next).toBeDisabled();
+		await expect(bar).toHaveTextContent('Select at least one case.');
+		await userEvent.click(next, { pointerEventsCheck: 0 });
 		await expect(args.onContinue).not.toHaveBeenCalled();
 	}
 };

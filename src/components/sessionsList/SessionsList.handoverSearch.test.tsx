@@ -374,6 +374,28 @@ describe('case-handover search — people (FE#1725)', () => {
 		expect(listText(view)).not.toContain('Client fourteen');
 	});
 
+	it('keeps narrowing by text that does not name a picked person', async () => {
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		await waitFor(() => expect(listText(view)).toContain('Client eleven'));
+
+		type('pat');
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		expect(listText(view)).toContain('Client eleven');
+		expect(listText(view)).toContain('Client thirteen');
+
+		type('thirteen');
+		await waitFor(() =>
+			expect(listText(view)).not.toContain('Client eleven')
+		);
+		expect(listText(view)).toContain('Client thirteen');
+	});
+
 	it('picks several people one after another and lists the cases of all of them', async () => {
 		const view = await ready(renderList());
 
@@ -441,6 +463,67 @@ describe('case-handover search — people (FE#1725)', () => {
 		expect(personRowsNamed('Patty B.')[0].textContent).toContain(
 			'sessionList.toolbar.search.internalName'
 		);
+		expect(personRowsNamed('Patty B.')[0].textContent).toContain(
+			'sessionList.toolbar.search.publicName'
+		);
+	});
+
+	it('loads all cases of a colleague found through one of them', async () => {
+		const view = await ready(renderList());
+
+		type('10001');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(1)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		fireEvent.change(searchbox(), { target: { value: '' } });
+
+		await waitFor(() => {
+			const text = listText(view);
+			expect(text).toContain('Client eleven');
+			expect(text).toContain('Client twelve');
+			expect(text).toContain('Client thirteen');
+		});
+		expect(listText(view)).not.toContain('Client fourteen');
+	});
+
+	it("loads a colleague's cases beyond the first page of 50", async () => {
+		const bulkCases = Array.from({ length: 55 }, (_, index) =>
+			makeCase(
+				100 + index,
+				`Bulk client ${100 + index}`,
+				patty,
+				SPRINGFIELD,
+				60000
+			)
+		);
+		const all = [...pattyCases, ...bulkCases];
+		http.getCandidates.mockImplementation(
+			async ({ query, offset = 0, count = 15 }) => {
+				const found = all.filter((item) =>
+					[item.consultant?.username, item.consultant?.displayName]
+						.join(' ')
+						.toLowerCase()
+						.includes(query.toLowerCase())
+				);
+				return {
+					sessions: found.slice(offset, offset + count),
+					total: found.length
+				};
+			}
+		);
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+
+		await waitFor(() =>
+			expect(listText(view)).toContain('Bulk client 154')
+		);
+		expect(listText(view)).toContain('Client eleven');
 	});
 
 	it('shows counsellors with the counsellor avatar and the counsellor role, clients with an animal', async () => {
@@ -576,6 +659,63 @@ describe('case-handover search — counselling centre and topics (FE#1725)', () 
 	});
 });
 
+describe('case-handover search — centre and topic options follow the search (FE#1725)', () => {
+	it('keeps the chosen centre among the options when the text changes', async () => {
+		await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(screen.getByRole('tab', { name: /tabs\.centre/ }));
+		fireEvent.click(
+			within(
+				screen.getByRole('radiogroup', {
+					name: 'sessionList.toolbar.search.agencyGroup'
+				})
+			).getByRole('radio', { name: SHELBYVILLE.name })
+		);
+
+		type('marge');
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		const centres = screen.getByRole('radiogroup', {
+			name: 'sessionList.toolbar.search.agencyGroup'
+		});
+		expect(
+			within(centres)
+				.getByRole('radio', { name: SHELBYVILLE.name })
+				.getAttribute('aria-checked')
+		).toBe('true');
+	});
+
+	it('narrows the topic list by the typed text', async () => {
+		await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		fireEvent.click(personRowsNamed('Patty B.')[1]);
+		fireEvent.click(screen.getByRole('tab', { name: /tabs\.centre/ }));
+		const topicLabels = () =>
+			within(
+				screen.getByRole('radiogroup', {
+					name: 'sessionList.toolbar.search.topicGroup'
+				})
+			)
+				.getAllByRole('radio')
+				.map((option) => option.textContent);
+		await waitFor(() => expect(topicLabels()).toContain('Addiction'));
+		expect(topicLabels()).toContain('Debts');
+
+		type('addic');
+
+		await waitFor(() => expect(topicLabels()).toEqual(['Addiction']));
+	});
+});
+
 describe('case-handover search — older UserService without agency/internal name (C1 absent)', () => {
 	it('still groups by centre id and names unknown centres with a fallback', async () => {
 		http.getCandidates.mockImplementation(async ({ query }) => ({
@@ -627,13 +767,26 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 			view.container.querySelector('.sessionsList__scrollContainer')!
 		);
 		expect(
-			screen.getByTestId('session-search-results-scroll')
-		).toBeTruthy();
+			screen.queryByTestId('session-search-results-scroll')
+		).toBeNull();
+	});
 
-		fireEvent.mouseDown(document.body);
+	it('closes on a button outside the list, such as navigation', async () => {
+		await ready(renderList());
+		const navigation = document.createElement('button');
+		navigation.textContent = 'Profile';
+		document.body.appendChild(navigation);
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.mouseDown(navigation);
+
 		expect(
 			screen.queryByTestId('session-search-results-scroll')
 		).toBeNull();
+		navigation.remove();
 	});
 
 	it('resets text, people, centre and archive-only with the X', async () => {
@@ -712,6 +865,9 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 		expect(notice.textContent).toContain(
 			'sessionList.toolbar.search.filteredOutAll'
 		);
+		expect(
+			screen.getByTestId('session-search-filtered-out-reset').textContent
+		).toBe('sessionList.toolbar.search.clear');
 		fireEvent.click(
 			screen.getByTestId('session-search-filtered-out-reset')
 		);
@@ -723,6 +879,43 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 				screen.queryByTestId('session-search-filtered-out-notice')
 			).toBeNull()
 		);
+	});
+});
+
+describe('case-handover search — snackbar keeps the search (FE#1725)', () => {
+	it('removes only the centre, type, topic and archive filters and keeps text and people', async () => {
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		fireEvent.click(screen.getByRole('tab', { name: /tabs\.centre/ }));
+		fireEvent.click(
+			within(
+				screen.getByRole('radiogroup', {
+					name: 'sessionList.toolbar.search.agencyGroup'
+				})
+			).getByRole('radio', { name: SHELBYVILLE.name })
+		);
+
+		const action = await screen.findByTestId(
+			'session-search-filtered-out-reset'
+		);
+		expect(action.textContent).toBe(
+			'sessionList.toolbar.search.removeFiltersKeepSearch'
+		);
+		fireEvent.click(action);
+
+		expect((searchbox() as HTMLInputElement).value).toBe('patty');
+		expect(
+			view.container.querySelectorAll(
+				'.sessionsListToolbar__searchInlinePill'
+			)
+		).toHaveLength(1);
+		await waitFor(() => expect(listText(view)).toContain('Client eleven'));
+		expect(listText(view)).not.toContain('Own client');
 	});
 });
 
@@ -933,6 +1126,45 @@ describe('case-handover selection — bulk bar (FE#1725)', () => {
 				name: 'caseHandover.curtain.next'
 			})
 		).toBeNull();
+	});
+
+	it('says when the reasons could not be loaded and offers to try again', async () => {
+		http.getHandoverReasons.mockRejectedValueOnce(new Error('500'));
+		const view = await ready(renderList());
+		await listPattysSpringfieldCases(view);
+		await startBatchModeOn(view, 'Client eleven');
+		await waitFor(() =>
+			expect(caseCheckbox(view, 'Client eleven')).toBeTruthy()
+		);
+		fireEvent.click(caseCheckbox(view, 'Client eleven'));
+		fireEvent.click(
+			within(bulkBar()).getByRole('button', {
+				name: 'caseHandover.bulkBar.continue'
+			})
+		);
+
+		const wizard = await screen.findByRole('dialog', {
+			name: 'caseHandover.batch.title'
+		});
+		await waitFor(() =>
+			expect(wizard.textContent).toContain(
+				'caseHandover.curtain.reason.loadFailed'
+			)
+		);
+		expect(wizard.textContent).not.toContain(
+			'caseHandover.curtain.reason.empty'
+		);
+		fireEvent.click(
+			within(wizard).getByRole('button', {
+				name: 'caseHandover.curtain.reason.retry'
+			})
+		);
+		await waitFor(() =>
+			expect(wizard.textContent).toContain('Planned absence')
+		);
+		expect(wizard.textContent).not.toContain(
+			'caseHandover.curtain.reason.loadFailed'
+		);
 	});
 
 	it('moves keyboard focus into the wizard and back to Continue when it closes', async () => {

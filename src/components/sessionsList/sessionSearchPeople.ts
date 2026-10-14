@@ -83,6 +83,11 @@ const agencyOf = (raw: ListItemInterface) => ({
 	agencyName: raw.agency?.name
 });
 
+const postcodeOf = (raw: ListItemInterface) =>
+	raw.session?.postcode !== undefined && raw.session?.postcode !== null
+		? String(raw.session.postcode)
+		: '';
+
 const personKey = (
 	role: SessionSearchPersonRole,
 	userId: string,
@@ -121,12 +126,16 @@ export const personKeysOfSession = (raw: ListItemInterface): string[] => {
 };
 
 /** Single agency axis (FE#1725 US12). `null` means no agency filter. */
+export const agencyMatches = (
+	agencyId: number | string | null | undefined,
+	selectedAgencyId: string | null | undefined
+): boolean =>
+	!selectedAgencyId || String(agencyId ?? '') === String(selectedAgencyId);
+
 export const sessionMatchesAgency = (
 	raw: ListItemInterface,
 	selectedAgencyId: string | null | undefined
-): boolean =>
-	!selectedAgencyId ||
-	String(agencyOf(raw).agencyId ?? '') === String(selectedAgencyId);
+): boolean => agencyMatches(agencyOf(raw).agencyId, selectedAgencyId);
 
 /** Person axis: several people combine with OR. */
 export const sessionMatchesPeople = (
@@ -224,9 +233,7 @@ export const sessionSearchText = (
 		consultant?.lastName,
 		consultant?.internalName,
 		raw.agency?.name,
-		raw.session?.postcode !== undefined && raw.session?.postcode !== null
-			? String(raw.session.postcode)
-			: undefined
+		postcodeOf(raw)
 	]
 		.filter(Boolean)
 		.join(' ')
@@ -274,19 +281,49 @@ export function filterSearchPeople<
 	);
 }
 
-/** True when the query looks up one of these people by name. */
-export const queryNamesPerson = (
-	people: { name: string; internalName?: string }[],
-	query: string
-) =>
-	Boolean(query.trim()) &&
-	(roleOfSearchWord(query) !== null ||
-		people.some((person) =>
-			searchTextMatches(
-				`${person.name} ${person.internalName || ''}`,
-				query
-			)
-		));
+type NamedPerson = {
+	name: string;
+	internalName?: string;
+	lookupQuery?: string;
+};
+
+const nameWordsOf = (person: NamedPerson) =>
+	[person.name, person.internalName, person.lookupQuery]
+		.filter(Boolean)
+		.flatMap((name) => {
+			const lower = String(name).toLowerCase();
+			return [lower, ...lower.split(/\s+/)];
+		});
+
+/**
+ * Text axis of the list while people are picked (FE#1725 US3): text that
+ * names a picked person (whole name or a word prefix) or a role word only
+ * looked her up and stops narrowing; any other text keeps narrowing (AND).
+ */
+export const textAxisQuery = (
+	query: string,
+	pickedPeople: NamedPerson[]
+): string => {
+	const needle = query.trim().toLowerCase();
+	if (!needle || !pickedPeople.length) return query;
+	if (roleOfSearchWord(query) !== null) return '';
+	const namesPicked = pickedPeople.some((person) =>
+		nameWordsOf(person).some((word) => word.startsWith(needle))
+	);
+	return namesPicked ? '' : query;
+};
+
+/** Server queries that find all of a person's cases: username, else names. */
+export const lookupTermsOf = (person: NamedPerson): string[] =>
+	person.lookupQuery
+		? [person.lookupQuery]
+		: Array.from(
+				new Set(
+					[person.name, person.internalName].filter(
+						(name): name is string => Boolean(name)
+					)
+				)
+			);
 
 const subtitleOf = (roleLabel: string, agencyName: string | undefined) =>
 	[roleLabel, agencyName].filter(Boolean).join(' | ');
@@ -324,18 +361,54 @@ export function buildSearchPeopleResults(
 		return entry;
 	};
 
+	/** One row per counsellor + agency, from a session or the agency list. */
+	const upsertConsultant = (
+		consultant: Omit<SessionSearchAgencyConsultant, 'agencyId'> & {
+			internalName?: string | null;
+			avatar?: AvatarIdentity;
+		},
+		agencyId: number | undefined,
+		agencyName: string | undefined,
+		sessionKey?: string,
+		sessionParts?: string
+	) => {
+		const key = personKey('consultant', consultant.consultantId, agencyId);
+		const isMe =
+			options.currentUser &&
+			String(options.currentUser.id) === String(consultant.consultantId);
+		const entry = upsert(
+			key,
+			() => ({
+				id: key,
+				name:
+					consultant.displayName ||
+					(isMe && options.currentUser?.name) ||
+					consultant.username ||
+					labels.unknown,
+				subtitle: '',
+				role: 'consultant',
+				agencyId,
+				avatarSeed: consultant.consultantId,
+				avatar: consultant.avatar ?? {},
+				lookupQuery: consultant.username || consultant.displayName,
+				sessionKeys: [],
+				searchText: ''
+			}),
+			sessionKey,
+			sessionParts
+		);
+		entry.internalName ||= internalNameOf(consultant);
+		entry.agencyName ||= agencyName;
+		entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
+	};
+
 	pairs.forEach(({ raw, extended }) => {
 		const sessionKey = sessionSearchKeyOf(raw, extended);
 		if (!sessionKey) {
 			return;
 		}
 		const { agencyId, agencyName } = agencyOf(raw);
-		const postcode =
-			raw.session?.postcode !== undefined &&
-			raw.session?.postcode !== null
-				? String(raw.session.postcode)
-				: '';
-		const sessionParts = [postcode, topicNameOf(raw, extended)]
+		const sessionParts = [postcodeOf(raw), topicNameOf(raw, extended)]
 			.filter(Boolean)
 			.join(' ');
 
@@ -369,69 +442,27 @@ export function buildSearchPeopleResults(
 		}
 		const consultant = raw.consultant as ConsultantLike | undefined;
 		if (consultant) {
-			const consultantId =
-				consultantIdOf(consultant) || UNKNOWN_AVATAR_SEED;
-			const key = personKey('consultant', consultantId, agencyId);
-			const isMe =
-				options.currentUser &&
-				String(options.currentUser.id) === String(consultantId);
-			const entry = upsert(
-				key,
-				() => ({
-					id: key,
-					name:
-						consultant.displayName ||
-						(isMe && options.currentUser?.name) ||
-						consultant.username ||
-						labels.unknown,
-					internalName: internalNameOf(consultant),
-					subtitle: subtitleOf(labels.consultant, agencyName),
-					role: 'consultant',
-					agencyId,
-					agencyName,
-					avatarSeed: consultantId,
+			upsertConsultant(
+				{
+					...consultant,
+					consultantId:
+						consultantIdOf(consultant) || UNKNOWN_AVATAR_SEED,
 					avatar: {
 						avatarKind: consultant.avatarKind,
 						avatarId: consultant.avatarId
-					},
-					lookupQuery: consultant.username || consultant.displayName,
-					sessionKeys: [],
-					searchText: ''
-				}),
+					}
+				},
+				agencyId,
+				agencyName,
 				sessionKey,
 				sessionParts
 			);
-			entry.internalName ||= internalNameOf(consultant);
-			entry.agencyName ||= agencyName;
-			entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
 		}
 	});
 
-	(options.agencyConsultants ?? []).forEach((consultant) => {
-		const key = personKey(
-			'consultant',
-			consultant.consultantId,
-			consultant.agencyId
-		);
-		const entry = upsert(key, () => ({
-			id: key,
-			name:
-				consultant.displayName || consultant.username || labels.unknown,
-			internalName: internalNameOf(consultant),
-			subtitle: subtitleOf(labels.consultant, consultant.agencyName),
-			role: 'consultant',
-			agencyId: consultant.agencyId,
-			agencyName: consultant.agencyName,
-			avatarSeed: consultant.consultantId,
-			avatar: {},
-			lookupQuery: consultant.username || consultant.displayName,
-			sessionKeys: [],
-			searchText: ''
-		}));
-		entry.internalName ||= internalNameOf(consultant);
-		entry.agencyName ||= consultant.agencyName;
-		entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
-	});
+	(options.agencyConsultants ?? []).forEach((consultant) =>
+		upsertConsultant(consultant, consultant.agencyId, consultant.agencyName)
+	);
 
 	return Array.from(byKey.values()).map(({ parts, ...person }) => ({
 		...person,

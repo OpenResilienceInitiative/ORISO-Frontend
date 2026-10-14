@@ -125,6 +125,14 @@ function SessionsListToolbarPlayground({
 				searchPeopleResults={searchPeopleResults}
 				selectedPersonIds={selectedPersonIds}
 				onSelectedPersonIdsChange={setSelectedPersonIds}
+				onSearchReset={() => {
+					setSearch('');
+					setSelectedPersonIds([]);
+					setSelectedTopicId(null);
+					setSelectedTypeId(null);
+					setSelectedAgencyId(null);
+					setArchiveOnly(false);
+				}}
 				searchTopicResults={[
 					{
 						id: 'schulden',

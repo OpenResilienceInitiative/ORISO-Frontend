@@ -3697,7 +3697,9 @@
 			"reason": {
 				"title": "Bitte wähle einen Grund",
 				"subtitle": "Bevor du fortfährst, musst du einen Grund für deine Anfrage auswählen.",
-				"empty": "Für Ihre Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wenden Sie sich an Ihre Administration."
+				"empty": "Für Ihre Beratungsstelle sind keine Gründe für eine Fallübergabe hinterlegt. Bitte wenden Sie sich an Ihre Administration.",
+				"loadFailed": "Die Gründe für eine Fallübergabe konnten nicht geladen werden.",
+				"retry": "Erneut versuchen"
 			},
 			"describe": {
 				"title": "Bitte beschreibe den Grund",
@@ -4173,11 +4175,13 @@
 					"consultant": "Berater:in"
 				},
 				"internalName": "Interner Name",
+				"publicName": "Öffentlicher Name",
 				"agencyGroup": "Beratungsstelle",
 				"topicGroup": "Thema",
 				"agencyFallback": "Beratungsstelle {{id}}",
 				"filteredOutAll": "Ihre Suche und Filter blenden alle Beratungen aus.",
-				"removeFilters": "Filter entfernen"
+				"removeFilters": "Filter entfernen",
+				"removeFiltersKeepSearch": "Filter entfernen, Suche behalten"
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"

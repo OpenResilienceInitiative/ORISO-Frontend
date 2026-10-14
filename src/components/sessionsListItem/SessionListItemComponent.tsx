@@ -1090,6 +1090,7 @@ export const SessionListItemComponent = ({
 						: activeSession.item.matrixRoomId
 				}
 				data-cy="session-list-item"
+				data-search-keep-open
 			>
 				<SessionRailPill
 					name={railName}
@@ -1150,6 +1151,7 @@ export const SessionListItemComponent = ({
 				)}
 				data-group-id={activeSession.rid ? activeSession.rid : ''}
 				data-cy="session-list-item"
+				data-search-keep-open
 			>
 				<div
 					className={clsx(
@@ -1349,6 +1351,7 @@ export const SessionListItemComponent = ({
 			)}
 			data-group-id={activeSession.item.matrixRoomId}
 			data-cy="session-list-item"
+			data-search-keep-open
 			// The first enquiry card: the only case of the practice flow, and
 			// harmless on a real list (the tour never targets it there).
 			data-tour-target={

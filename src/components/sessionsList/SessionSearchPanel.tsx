@@ -88,6 +88,8 @@ export interface SessionSearchPanelLabels {
 	topicGroup?: string;
 	/** Prefix of the internal-name line, e.g. "Interner Name". */
 	internalName?: string;
+	/** Prefix of the public name when an internal name is shown too. */
+	publicName?: string;
 }
 
 interface SessionSearchPanelProps {
@@ -110,6 +112,9 @@ interface SessionSearchPanelProps {
 	selectedAgencyId?: string | null;
 	onAgencySelect?: (id: string | null) => void;
 }
+
+const hasBothNames = (person: SessionSearchPersonOption) =>
+	Boolean(person.internalName) && person.internalName !== person.name;
 
 const iconFill = (active: boolean) =>
 	active
@@ -354,19 +359,27 @@ export const SessionSearchPanel = ({
 									>
 										<PersonAvatar person={person} />
 										<div className="sessionsListToolbar__personMeta">
-											<div className="sessionsListToolbar__personName">
-												{person.name}
-											</div>
-											{person.internalName &&
-												person.internalName !==
-													person.name && (
+											{/* Both names labelled, so the counsellor knows which is which (US8). */}
+											{hasBothNames(person) ? (
+												<>
+													<div className="sessionsListToolbar__personName">
+														{labels.publicName
+															? `${labels.publicName}: `
+															: ''}
+														{person.name}
+													</div>
 													<div className="sessionsListToolbar__personSubtitle">
 														{labels.internalName
 															? `${labels.internalName}: `
 															: ''}
 														{person.internalName}
 													</div>
-												)}
+												</>
+											) : (
+												<div className="sessionsListToolbar__personName">
+													{person.name}
+												</div>
+											)}
 											<div className="sessionsListToolbar__personSubtitle">
 												{person.subtitle}
 											</div>

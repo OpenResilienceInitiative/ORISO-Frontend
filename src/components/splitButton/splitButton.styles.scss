@@ -262,45 +262,17 @@ $sb-secondary: var(--m3-secondary, #4c555f);
 
 /*
  * Selection main segment (FE#1725): the shared M3 checkbox fills the
- * segment, so the whole segment toggles it. The checkbox's 40px target
- * stands in for the left padding.
+ * segment (`fill`), so the whole segment toggles it; its 40px target stands
+ * in for the left padding. Colours come from the checkbox's own `tone`.
+ * Two classes outrank the compact padding without `!important`.
  */
-.splitButton__main--selection {
-	padding: 0 !important;
-
-	.m3Checkbox {
-		height: 100%;
-		width: 100%;
-		padding-right: 16px;
-		gap: 0;
-		color: inherit;
-		font: inherit;
-		white-space: nowrap;
-	}
-
-	// The box's own `color` is the tick colour, so name the border colour.
-	.m3Checkbox__box {
-		border-color: $sb-on-surface-variant;
-	}
+.splitButton__main.splitButton__main--selection {
+	padding: 0 16px 0 0;
 
 	// Focus ring around the whole segment, like a button segment.
-	&:has(.m3Checkbox__input:focus-visible) {
-		outline: 3px solid var(--m3-primary, #a5000a);
+	&:has(:focus-visible) {
+		outline: 3px solid $sb-primary;
 		outline-offset: 2px;
 		z-index: 1;
-	}
-}
-
-// On the filled primary segment the ticked box turns on-primary with a
-// primary tick, so it stays visible against the red.
-.splitButton--primary .splitButton__main--selection {
-	.m3Checkbox__input:checked + .m3Checkbox__box {
-		background: var(--m3-on-primary, #ffffff);
-		border-color: var(--m3-on-primary, #ffffff);
-		color: var(--m3-primary, #a5000a);
-	}
-
-	.m3Checkbox__target:hover::before {
-		background: rgba(255, 255, 255, 0.12);
 	}
 }

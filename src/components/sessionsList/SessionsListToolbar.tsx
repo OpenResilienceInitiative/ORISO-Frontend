@@ -24,7 +24,9 @@ import {
 	SessionSearchTypeOption
 } from './SessionSearchPanel';
 import {
+	agencyMatches,
 	filterSearchPeople,
+	searchTextMatches,
 	SessionSearchPersonResult
 } from './sessionSearchPeople';
 import { DisplayFilterButton } from '../displayFilter/DisplayFilterButton';
@@ -77,7 +79,7 @@ interface SessionsListToolbarProps {
 	searchAgencyResults?: SessionSearchAgencyOption[];
 	selectedAgencyId?: string | null;
 	onSelectedAgencyIdChange?: (id: string | null) => void;
-	/** The X: resets text, people, type, centre, topic and archive-only. */
+	/** The X and "clear": resets text, people, type, centre, topic and archive-only. */
 	onSearchReset?: () => void;
 	/** Topic options for the "Counselling centre" tab (radio single-select). */
 	searchTopicResults?: SessionSearchTopicOption[];
@@ -139,27 +141,11 @@ interface SessionsListToolbarProps {
 	showCreateChip?: boolean;
 }
 
-/** Pointer-downs on these keep the search panel open (FE#1725 US15). */
-const SEARCH_KEEP_OPEN_SELECTOR = [
-	'button',
-	'a',
-	'input',
-	'select',
-	'textarea',
-	'label',
-	'[role="button"]',
-	'[role="checkbox"]',
-	'[role="radio"]',
-	'[role="tab"]',
-	'[role="menuitem"]',
-	'[role="option"]',
-	'[role="dialog"]',
-	'[role="alert"]',
-	'[role="status"]',
-	'[data-search-keep-open]',
-	'.sessionsList__scrollContainer',
-	'.sessionsListItem'
-].join(', ');
+/**
+ * FE#1725 US15/16: outside the search, only elements marked with this
+ * attribute (case cards and their menu, the bulk bar) keep the panel open.
+ */
+export const SEARCH_KEEP_OPEN_ATTRIBUTE = 'data-search-keep-open';
 
 export const IconMenuDots = () => (
 	<svg
@@ -400,36 +386,56 @@ export const SessionsListToolbar = ({
 	);
 	const filteredPeople = React.useMemo(
 		() =>
-			selectedAgencyId
-				? foundPeople.filter(
-						(person) =>
-							String(person.agencyId ?? '') === selectedAgencyId
-					)
-				: foundPeople,
+			foundPeople.filter((person) =>
+				agencyMatches(person.agencyId, selectedAgencyId)
+			),
 		[foundPeople, selectedAgencyId]
 	);
-	/** My agencies plus the agencies of the people found (FE#1725 US11). */
+	/** Last known label per agency, so the chosen one keeps its name. */
+	const agencyLabelsRef = React.useRef(new Map<string, string>());
+	/**
+	 * My agencies plus the agencies of the people found (FE#1725 US11); the
+	 * chosen agency stays an option while chosen.
+	 */
 	const agencyOptions = React.useMemo(() => {
+		const labels = agencyLabelsRef.current;
 		const byId = new Map<string, SessionSearchAgencyOption>();
-		searchAgencyResults.forEach((agency) => byId.set(agency.id, agency));
-		foundPeople.forEach((person) => {
-			if (person.agencyId === undefined || person.agencyId === null) {
-				return;
-			}
-			const id = String(person.agencyId);
+		const add = (id: string, label?: string) => {
+			if (label) labels.set(id, label);
 			if (!byId.has(id)) {
 				byId.set(id, {
 					id,
 					label:
-						person.agencyName ||
+						labels.get(id) ||
 						translate('sessionList.toolbar.search.agencyFallback', {
 							id
 						})
 				});
 			}
+		};
+		searchAgencyResults.forEach((agency) => {
+			labels.set(agency.id, agency.label);
+			byId.set(agency.id, agency);
 		});
+		[...foundPeople, ...searchPeopleResults].forEach((person) => {
+			if (person.agencyId !== undefined && person.agencyId !== null) {
+				labels.set(String(person.agencyId), person.agencyName || '');
+			}
+		});
+		foundPeople.forEach((person) => {
+			if (person.agencyId !== undefined && person.agencyId !== null) {
+				add(String(person.agencyId), person.agencyName);
+			}
+		});
+		if (selectedAgencyId) add(selectedAgencyId);
 		return Array.from(byId.values());
-	}, [foundPeople, searchAgencyResults, translate]);
+	}, [
+		foundPeople,
+		searchAgencyResults,
+		searchPeopleResults,
+		selectedAgencyId,
+		translate
+	]);
 	const selectedPeople = React.useMemo(
 		() =>
 			selectedPersonIds
@@ -442,6 +448,20 @@ export const SessionsListToolbar = ({
 				),
 		[selectedPersonIds, searchPeopleResults]
 	);
+
+	/**
+	 * Typed text narrows the topics when it names one; a person or role
+	 * lookup leaves the topic list whole.
+	 */
+	const filteredTopics = React.useMemo(() => {
+		const matching = searchTopicResults.filter((topic) =>
+			searchTextMatches(
+				`${topic.label} ${topic.subtitle || ''}`,
+				searchValue
+			)
+		);
+		return matching.length > 0 ? matching : searchTopicResults;
+	}, [searchTopicResults, searchValue]);
 
 	const hasTypedQuery = searchValue.trim().length > 0;
 	const hasSelectedPeople = selectedPersonIds.length > 0;
@@ -465,32 +485,13 @@ export const SessionsListToolbar = ({
 		setIsSearchViewOpen(true);
 	}, []);
 	const resetSearch = React.useCallback(() => {
-		if (onSearchReset) {
-			onSearchReset();
-		} else {
-			onSearchChange('');
-			setSelectedPersonIds([]);
-			onSelectedTopicIdChange?.(null);
-			if (selectedTypeId) onSelectedTypeIdChange?.(null);
-			onSelectedAgencyIdChange?.(null);
-			if (searchArchiveOnly) onSearchArchiveOnlyChange?.(false);
-		}
+		onSearchReset?.();
 		setIsSearchViewOpen(false);
-	}, [
-		onSearchArchiveOnlyChange,
-		onSearchChange,
-		onSearchReset,
-		onSelectedAgencyIdChange,
-		onSelectedTopicIdChange,
-		onSelectedTypeIdChange,
-		searchArchiveOnly,
-		selectedTypeId,
-		setSelectedPersonIds
-	]);
+	}, [onSearchReset]);
 
 	/*
-	 * FE#1725 US15/16: only a pointer-down on an empty area closes the panel.
-	 * The list, cards, chips and any control keep it open while I select.
+	 * FE#1725 US15/16: a pointer-down anywhere else (empty list area,
+	 * navigation) closes the panel; cards and the bulk bar keep it open.
 	 */
 	React.useEffect(() => {
 		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
@@ -503,7 +504,7 @@ export const SessionsListToolbar = ({
 			}
 			if (
 				target instanceof Element &&
-				target.closest(SEARCH_KEEP_OPEN_SELECTOR)
+				target.closest(`[${SEARCH_KEEP_OPEN_ATTRIBUTE}]`)
 			) {
 				return;
 			}
@@ -788,6 +789,9 @@ export const SessionsListToolbar = ({
 							),
 							internalName: translate(
 								'sessionList.toolbar.search.internalName'
+							),
+							publicName: translate(
+								'sessionList.toolbar.search.publicName'
 							)
 						}}
 						activeTab={searchTab}
@@ -813,7 +817,7 @@ export const SessionsListToolbar = ({
 						types={searchTypeResults}
 						selectedTypeId={selectedTypeId}
 						onTypeSelect={(id) => onSelectedTypeIdChange?.(id)}
-						topics={searchTopicResults}
+						topics={filteredTopics}
 						selectedTopicId={selectedTopicId}
 						onTopicSelect={(id) => onSelectedTopicIdChange?.(id)}
 						agencies={agencyOptions}

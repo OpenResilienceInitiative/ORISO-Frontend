@@ -9,8 +9,7 @@ import {
 } from '../sessionsListItem/supervisionListState';
 import {
 	sessionMatchesPeople,
-	sessionMatchesSearchText,
-	sessionSearchText
+	sessionMatchesSearchText
 } from './sessionSearchPeople';
 
 export type SessionToolbarChipFilter =
@@ -70,17 +69,6 @@ export const isConversationCircleSession = (
 export const isInternalGroupChatSession = (
 	session: SessionToolbarGroupSession
 ): boolean => Boolean(session.isGroup && !isConversationCircleSession(session));
-
-/**
- * Search haystack for the session toolbar. Metadata-only by design —
- * Matrix/E2EE message bodies must never affect list search results.
- */
-export function buildSessionSearchHaystack(
-	raw: ListItemInterface,
-	extended: ExtendedSessionInterface
-): string {
-	return sessionSearchText(raw, extended);
-}
 
 /**
  * Live-chat / anonymous asker sessions on the registered-enquiry feed.
