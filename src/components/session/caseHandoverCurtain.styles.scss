@@ -15,7 +15,9 @@
 	border-radius: 24px;
 	background: var(--m3-surface, #ffffff);
 	box-shadow: 0 2px 10px rgba(45, 34, 33, 0.08);
-	overflow: hidden;
+	// Keep the rounded card edge while letting pointer and touch users reach
+	// the request controls when the wizard is taller than the active pane.
+	overflow: hidden auto;
 }
 
 .caseHandoverCurtain__header {
