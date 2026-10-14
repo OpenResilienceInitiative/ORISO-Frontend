@@ -1,0 +1,5 @@
+
+Running 1 test using 1 worker
+
+[1/1] playwright/responsive-handover-1187/persistent-footer.spec.ts:95:5 › short phone body scrolls normally in both directions while the footer stays fixed
+  1 passed (30.5s)

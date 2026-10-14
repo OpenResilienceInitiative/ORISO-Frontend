@@ -1,15 +1,36 @@
-# Frontend #1187 — responsive protected request form
+# Frontend #1187 / PR #1721 — persistent protected request wizard
 
-A counsellor needs to reach every request control without losing the ability to scroll back to the protection notice. On short phone screens, the description step exceeds the rounded card. The card hid the overflow and could only be scrolled indirectly by focusing a field; wheel and touch scrolling could not reach the request button.
+The protected request wizard must keep Back and Next visible while its long body scrolls. The topic belongs in the ordinary chat header strip. This implementation follows the approved desktop/mobile Figma hierarchy through existing Storybook components, while keeping access protection, reason order and mandatory explanation behavior unchanged.
 
-The user confirmed the public responsive request-form seam. The regression runs the real SessionsZone routes and production authenticated/session/list CSS, with fictional case data and the existing curtain wizard. It does not submit requests or grant access. The root agent separately owns actual Dev and candidate app verification.
+## Current scope and decisions
 
-## Current state
+The user confirmed the public full-app SessionsZone request-form seam and the fixed-footer/native-component scope. The Figma MoreMenu is omitted for now by explicit user decision (“Vorerst weglassen”); no actions are invented. Policy, backend, reason defaults, consent hints, unknown/retired reason handling and explanation validation are preserved. Other phone-menu and general UI defects are outside this package.
 
-1. RED: normal pointer scrolling failed to reveal the request button at 390×844 and 320×568; 820×1180 and 1440×900 passed. Phone card height 752px, content height 845px; request controls started at y769 outside the pane.
-2. Minimal production repair: the existing card keeps horizontal clipping and allows vertical scrolling. Widths, responsive breakpoints, routing and access behavior are unchanged.
-3. GREEN: all four viewports passed, including scrolling back to the protection heading. German, English and French all pass (12 browser cases); the entire protection heading must fit inside the pane after scrolling back.
-4. Required gates: script lint/typecheck, style lint, production build/postbuild, Storybook typecheck and focused Storybook (2 files, 13 tests plus axe) passed. The full unit suite passed 720 files / 12,532 tests. Independent review found no production finding; its requested full-heading bounds assertion is now implemented and passes.
+| Requirement | Implementation and proof | State |
+| --- | --- | --- |
+| R1–R4: real active session panel; readable phone/tablet/desktop and DE/EN/FR; protected notice reachable | Production SessionsZone shell, 35 public browser cases, complete title bounds | Passed |
+| R5–R8: persistent sibling footer; 128×96 actions; normal body scrolling; actual topic semantics | ScrollableSection + extracted SideScrollerFooter; real wheel movement negative control and fixed geometry; SessionTopic ordinary DOM | Passed |
+| R9–R12: existing native form components; exact scoped assets and Figma typography; unchanged profile/header consumers | OrisoTextarea, focused MUI ReasonList, existing shared styles/tokens; 57 Storybook tests including native consumers | Passed |
+| R13–R15: preserve access, reasons, keyboard shortcuts and mandatory explanation; no request submission; bounded shared API | Existing curtain/API tests; read-only reason story; wizard-only native-disabled focus fallback; no backend changes | Passed |
+| R16: each step opens at the body top without remounting header/footer or losing keyboard focus | Optional ScrollableSection bodyKey; public keyboard Enter/Back test; new native shared story | Passed |
+
+## Composition
+
+ScrollableSection owns fixed header/body/footer slots. Its optional bodyKey remounts only the body at a wizard step transition; its default preserves all other consumers. SideScrollerFooter extracts the existing AskerInfoFooter presentation and keeps that component as the business wrapper. The wizard variant uses the supplied 32px arrow and native disabled controls. Only a clicked, focused wizard action that becomes disabled transfers focus to its enabled sibling; field focus and arbitrary prop changes do not trigger it.
+
+SessionTopic extracts the existing noninteractive chat topic strip with the same DOM and styles. CaseHandoverReasonList composes MUI Radio/ListItemButton primitives for selection and read-only description. The explanation uses the existing OrisoTextarea. The supplied 100px handover asset is scoped to this curtain; global icons are preserved.
+
+## Current RED/GREEN proof
+
+- Persistent footer RED against immutable d5: short phone action bottom646 exceeded pane344. GREEN: sibling footer stays inside the active panel across 21 locale/viewport combinations.
+- Actual body-wheel RED: test-only overflow:hidden mutation leaves scrollTop0. GREEN: normal mousewheel moves the short body and returns it to0 while footer y remains fixed.
+- Step entry RED: old body retained scrollTop317 after navigation. GREEN: optional bodyKey resets body only; each first heading starts visible.
+- Keyboard focus RED: Next became disabled on description entry and lost focus. GREEN: Back remains focused; Back→Reason moves focus to enabled Next, without stealing textbox focus.
+- Independent final SPEC and standards follow-up both passed. Final public35 and Storybook57 passed. Full-unit/theme-contract follow-up passed:720 files /12,532 tests; the original profile-only compatibility token is retained unchanged and wizard backgrounds use surface roles.
+
+## Historical proof (superseded implementation)
+
+The d5 overflow-only repair initially passed 12 multilingual browser cases and 720 unit files /12,532 tests. It allowed the whole card to scroll. The user corrected that presentation: actions belong outside the body, the topic belongs in the native strip, and existing components must be reused. Those initial logs and images remain historical evidence; they do not describe the final production structure.
 
 ## Evidence boundary
 
@@ -32,4 +53,6 @@ repository engineering/component rules were read. This repair changes no domain 
 
 ## Resume here
 
-The source repair and public regression are GREEN. Final unit and trilingual responsive checks passed; create the local commit after the final focused Storybook readback. The root agent owns push, PR, reviewer requests, issue evidence and actual candidate verification. No deployment or live request submission has been performed by this worker.
+All final source gates passed: public35, native Storybook57, full unit720 files /12,532 tests, script/style lint, Storybook typecheck and production build/postbuild. Both independent final reviews passed. Eight final after screenshots and two matched d5 baselines are curated; the synthetic short-wheel video measures body0→672→0 and fixed footer y232. Create the normal local commit, then build with REACT_APP_BUILD_COMMIT set to that exact HEAD for root Docker provenance. No further source change is needed.
+
+Root owns push, current PR description/review/CI readback, evidence publication, actual Docker/Dev acceptance and deployment decisions. Old d5 remote CI/CodeRabbit approval does not cover the unpublished final source. This worker has not submitted a live request or changed accounts/data.

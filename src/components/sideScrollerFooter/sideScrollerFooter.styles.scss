@@ -1,0 +1,104 @@
+// Existing Side Scroller Footer dimensions, expressed through the shared grid.
+$side-scroller-button-width: $grid-base * 16;
+$side-scroller-button-height: $grid-base-twelve;
+$side-scroller-button-radius: $grid-base * 12.5;
+
+// Preserve the existing AskerInfoFooter profile paint during extraction.
+// This legacy constant is scoped to profile; wizard backgrounds use M3 surface roles.
+$footerButtonNextIdleColor: var(--m3-on-primary-container, #ffe2de);
+
+.sideScrollerFooter {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: $grid-base-two;
+	padding: $grid-base-two;
+	background-color: var(--m3-surface-container-low, $background-light);
+
+	@include breakpoint($fromMedium) {
+		padding: $grid-base-two $grid-base-three;
+	}
+
+	@include breakpoint($fromLarge) {
+		background-color: transparent;
+	}
+
+	&__button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: $side-scroller-button-width;
+		height: $side-scroller-button-height;
+		padding: 0;
+		border: none;
+		border-radius: $side-scroller-button-radius;
+		cursor: pointer;
+		background-color: var(--m3-secondary-container, #646d78);
+
+		svg {
+			fill: $white;
+
+			path {
+				fill: $white;
+			}
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--m3-primary, $primary);
+			outline-offset: 2px;
+		}
+
+		&--back svg {
+			transform: scaleX(-1);
+		}
+
+		&--next {
+			cursor: not-allowed;
+		}
+
+		&--primary {
+			background-color: var(--m3-primary, $primary);
+			cursor: pointer;
+		}
+
+		&:disabled,
+		&[aria-disabled='true'] {
+			cursor: not-allowed;
+		}
+	}
+
+	&--profile {
+		.sideScrollerFooter__button--next {
+			background-color: $footerButtonNextIdleColor;
+		}
+
+		.sideScrollerFooter__button--primary {
+			background-color: var(--m3-primary, $primary);
+		}
+
+		.sideScrollerFooter__button svg {
+			width: $grid-base-three;
+			height: $grid-base-three;
+		}
+
+		@media (width <= 360px) {
+			.sideScrollerFooter__button {
+				width: $grid-base-twelve;
+			}
+		}
+	}
+
+	&--wizard {
+		padding: 0;
+		background: transparent;
+
+		@include breakpoint($fromLarge) {
+			padding-inline: $grid-base-six;
+		}
+
+		.sideScrollerFooter__button:disabled {
+			background-color: var(--m3-surface-variant, #d9d9d9);
+		}
+	}
+}

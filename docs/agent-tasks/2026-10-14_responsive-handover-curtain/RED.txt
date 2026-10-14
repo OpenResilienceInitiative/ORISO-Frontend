@@ -2,7 +2,7 @@
 Running 4 tests using 1 worker
 
 [1/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px
-  1) playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px 
+  1) playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -27,7 +27,7 @@ Running 4 tests using 1 worker
 [2/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 820px
 [3/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 1440px
 [4/4] playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px
-  2) playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px 
+  2) playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -50,6 +50,6 @@ Running 4 tests using 1 worker
 
 
   2 failed
-    playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px 
-    playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px 
+    playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 390px
+    playwright/responsive-handover-1187/protected-request.spec.ts:9:6 › protected request controls remain readable and reachable at 320px
   2 passed (16.4s)

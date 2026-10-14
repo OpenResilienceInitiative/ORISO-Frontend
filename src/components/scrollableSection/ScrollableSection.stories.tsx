@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { expect, userEvent, within } from 'storybook/test';
 import { Meta, StoryObj } from '@storybook/react';
 import { ScrollableSection } from './ScrollableSection';
 
@@ -96,4 +97,40 @@ export const HeaderBodyFooter: Story = {
 			</div>
 		</ScrollableStoryFrame>
 	)
+};
+
+function StepBodyScrollReset() {
+	const [step, setStep] = useState(1);
+	return (
+		<ScrollableStoryFrame>
+			<div style={storyPanelStyle}>
+				<ScrollableSection bodyKey={step}>
+					<div>Persistent header</div>
+					<div>
+						{Array.from({ length: 18 }, (_, index) => (
+							<p key={index}>
+								Step {step}, row {index + 1}
+							</p>
+						))}
+					</div>
+					<button type="button" onClick={() => setStep(step + 1)}>
+						Next step
+					</button>
+				</ScrollableSection>
+			</div>
+		</ScrollableStoryFrame>
+	);
+}
+
+export const ChangedStepResetsOnlyBody: Story = {
+	args: { children: [] },
+	render: () => <StepBodyScrollReset />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const next = canvas.getByRole('button', { name: 'Next step' });
+		await userEvent.click(next);
+		await expect(canvas.getByText('Step 2, row 1')).toBeVisible();
+		await expect(next).toHaveFocus();
+		await expect(canvas.getByText('Persistent header')).toBeVisible();
+	}
 };
