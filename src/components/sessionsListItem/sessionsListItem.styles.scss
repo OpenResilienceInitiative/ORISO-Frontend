@@ -100,8 +100,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 
 		// Make tags red when card is active
 		.sessionsListItem__topic {
-			background-color: $topic-tag-active-bg !important;
-			color: $topic-tag-active-fg !important;
+			@include topic-tag-colors-emphasis;
 		}
 
 		.sessionsListItem__menuIcon {
@@ -207,8 +206,7 @@ $card-border-grow: $list-item-selected-border-width - 1px;
 		}
 
 		.sessionsListItem__topic {
-			background-color: $topic-tag-active-bg !important;
-			color: $topic-tag-active-fg !important;
+			@include topic-tag-colors-emphasis;
 		}
 	}
 

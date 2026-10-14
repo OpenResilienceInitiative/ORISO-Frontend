@@ -175,6 +175,17 @@ const lightBrandFamily = (seedHex: string): BrandFamily => {
  * darkest tone when a recipe change ever drops the pair below AA, so the
  * guard lives with the tokens, not in each consumer.
  */
+/**
+ * Brand-coloured ink for the light `primary-fixed` fill (member-count chip,
+ * unread arrow, count badges). The text tone is the Träger look in the
+ * light scheme; in dark and inverted it is a light tone (1.3:1 on the
+ * fixed fill), so the darkest-hue ink takes over when AA is missed.
+ */
+const textOnFixed = (brand: BrandFamily): string =>
+	wcagContrast(brand.text, brand.fixed) >= CONTRAST_AA
+		? brand.text
+		: brand.onFixedVariant;
+
 const topicTagTokens = (brand: BrandFamily): Record<string, string> => {
 	const ink = (fill: string, preferred: string, fallback: string): string =>
 		wcagContrast(preferred, fill) >= CONTRAST_AA ? preferred : fallback;
@@ -370,6 +381,7 @@ export const computeOrisoPalette = (
 		'--m3-primary-hover': brand.hover,
 		'--oriso-primary-text': brand.text,
 		'--oriso-primary-text-hover': brand.textHover,
+		'--oriso-primary-text-on-fixed': textOnFixed(brand),
 		'--m3-hover-layer': scheme === 'light' ? '#f9eff0' : '#331f21',
 		'--m3-selected-layer': scheme === 'light' ? '#f5e6e7' : '#4a292c',
 		'--m3-primary-fixed': brand.fixed,

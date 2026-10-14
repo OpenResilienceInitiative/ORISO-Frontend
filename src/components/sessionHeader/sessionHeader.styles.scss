@@ -639,7 +639,10 @@ $room-header-gap-top: 2px;
 
 		// Same pale brand tint, but the one the brand text is tested against.
 		background: var(--m3-primary-fixed, #ffd1d1);
-		color: var(--oriso-primary-text, var(--m3-primary, $primary));
+		color: var(
+			--oriso-primary-text-on-fixed,
+			var(--oriso-primary-text, var(--m3-primary, $primary))
+		);
 		flex: 0 0 auto;
 	}
 

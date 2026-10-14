@@ -757,21 +757,18 @@ const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
 		).toBeGreaterThan(0)
 	);
 	// The topic is the shared <TopicTag> (global --oriso-topic-tag-* tokens).
-	expect(
+	await expect(
 		canvasElement.querySelectorAll(
 			'.sessionInfo__metaInfo__content.topicTag'
 		).length
 	).toBeGreaterThan(0);
-	canvasElement
-		.querySelectorAll('.sessionInfo__metaInfo__content')
-		.forEach((tag) => {
-			expect(
-				wcagContrast(
-					getComputedStyle(tag).color,
-					effectiveBackground(tag)
-				)
-			).toBeGreaterThanOrEqual(4.5);
-		});
+	for (const tag of Array.from(
+		canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+	)) {
+		await expect(
+			wcagContrast(getComputedStyle(tag).color, effectiveBackground(tag))
+		).toBeGreaterThanOrEqual(4.5);
+	}
 };
 
 export const TopicTagLegible: Story = {
