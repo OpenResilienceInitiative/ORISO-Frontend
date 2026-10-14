@@ -1532,7 +1532,8 @@
 					"type": "Nach Typ",
 					"centre": "Beratungsstelle",
 					"archiveOnly": "Nur Archiv"
-				}
+				},
+				"filteredOutAll": "Deine Suche und Filter blenden alle Beratungen aus."
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"

@@ -4138,7 +4138,13 @@
 				"role": {
 					"asker": "Personne en quête de conseil",
 					"consultant": "Conseiller·ère"
-				}
+				},
+				"internalName": "Nom interne",
+				"agencyGroup": "Service de consultation",
+				"topicGroup": "Sujet",
+				"agencyFallback": "Service de consultation {{id}}",
+				"filteredOutAll": "Votre recherche et vos filtres masquent toutes les consultations.",
+				"removeFilters": "Supprimer les filtres"
 			},
 			"menu": {
 				"ariaLabel": "Options de liste"

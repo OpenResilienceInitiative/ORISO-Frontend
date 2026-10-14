@@ -64,13 +64,28 @@ describe('buildSearchPeopleResults — role separation (JOB5)', () => {
 		expect(consultant.subtitle).toContain('Berater:in');
 	});
 
-	it('keeps the session id recoverable from the row id', () => {
+	it('keys each row by role, person and agency (FE#1725)', () => {
 		const results = build([sessionWithBoth()]);
 
 		expect(results.map((entry) => entry.id)).toEqual([
-			'14055:asker',
-			'14055:consultant'
+			'asker:iene_lou_7575:77',
+			'consultant:c-1:77'
 		]);
+	});
+
+	it('shows a counsellor with several cases once, holding all of them', () => {
+		const second = {
+			...sessionWithBoth(),
+			user: { username: 'other_client' },
+			session: { id: 14056, agencyId: 77, postcode: '10001' }
+		} as unknown as ListItemInterface;
+
+		const counsellors = build([sessionWithBoth(), second]).filter(
+			(entry) => entry.role === 'consultant'
+		);
+
+		expect(counsellors).toHaveLength(1);
+		expect(counsellors[0].sessionKeys).toEqual(['14055', '14056']);
 	});
 
 	it('falls back to the unknown label when a present person has no name', () => {

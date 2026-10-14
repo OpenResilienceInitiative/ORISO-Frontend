@@ -4112,7 +4112,13 @@
 				"role": {
 					"asker": "Advice seeker",
 					"consultant": "Counsellor"
-				}
+				},
+				"internalName": "Internal name",
+				"agencyGroup": "Counseling center",
+				"topicGroup": "Topic",
+				"agencyFallback": "Counseling center {{id}}",
+				"filteredOutAll": "Your search and filters hide every consultation.",
+				"removeFilters": "Remove filters"
 			},
 			"menu": {
 				"ariaLabel": "List options"

@@ -4138,7 +4138,13 @@
 				"role": {
 					"asker": "Danışan",
 					"consultant": "Danışman"
-				}
+				},
+				"internalName": "Dahili ad",
+				"agencyGroup": "Danışma merkezi",
+				"topicGroup": "Konu",
+				"agencyFallback": "Danışma merkezi {{id}}",
+				"filteredOutAll": "Aramanız ve filtreleriniz tüm istişareleri gizliyor.",
+				"removeFilters": "Filtreleri kaldır"
 			},
 			"menu": {
 				"ariaLabel": "Liste seçenekleri"

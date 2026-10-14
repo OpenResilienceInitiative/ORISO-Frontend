@@ -33,7 +33,10 @@ const labelsEn: SessionSearchPanelLabels = {
 	tabArchiveOnly: 'Archive only',
 	emptyPeople: 'No matching people found.',
 	emptyTypes: 'No chat types available.',
-	emptyTopics: 'No topics found for your counseling centers.'
+	emptyTopics: 'No topics found for your counseling centers.',
+	agencyGroup: 'Counseling center',
+	topicGroup: 'Topic',
+	internalName: 'Internal name'
 };
 
 const labelsDe: SessionSearchPanelLabels = {
@@ -44,37 +47,60 @@ const labelsDe: SessionSearchPanelLabels = {
 	tabArchiveOnly: 'Nur Archiv',
 	emptyPeople: 'Keine passenden Personen gefunden.',
 	emptyTypes: 'Keine Chat-Typen verfügbar.',
-	emptyTopics: 'Keine Themen für deine Beratungsstellen gefunden.'
+	emptyTopics: 'Keine Themen für deine Beratungsstellen gefunden.',
+	agencyGroup: 'Beratungsstelle',
+	topicGroup: 'Thema',
+	internalName: 'Interner Name'
 };
 
+/**
+ * FE#1725 — one row per person per counselling centre. Ingrid works in two
+ * centres, so she appears twice; counsellors carry the primary avatar, the
+ * advice seeker keeps the animal.
+ */
 const people: SessionSearchPersonOption[] = [
 	{
-		id: 'ingrid-koschmider',
-		name: 'Ingrid Koschmider',
-		subtitle: 'Berater:in | Mainz 30232',
+		id: 'consultant:ingrid:77',
+		name: 'Ingrid K.',
+		internalName: 'Ingrid Koschmider',
+		subtitle: 'Berater:in | Beratungsstelle Mainz',
 		role: 'consultant',
-		avatarSeed: 'ingrid-koschmider'
+		agencyId: 77,
+		avatarSeed: 'ingrid'
 	},
 	{
-		id: 'hans-p',
+		id: 'consultant:ingrid:42',
+		name: 'Ingrid K.',
+		internalName: 'Ingrid Koschmider',
+		subtitle: 'Berater:in | Beratungsstelle Berlin',
+		role: 'consultant',
+		agencyId: 42,
+		avatarSeed: 'ingrid'
+	},
+	{
+		id: 'consultant:hans:42',
 		name: 'Hans P.',
-		subtitle: 'Berat. Person | Berlin 10117',
+		subtitle: 'Berater:in | Beratungsstelle Berlin',
 		role: 'consultant',
-		avatarSeed: 'hans-p'
+		agencyId: 42,
+		avatarSeed: 'hans',
+		avatar: { avatarKind: 'ICON', avatarId: 'magpie' }
 	},
 	{
-		id: 'iene-lou-7575',
+		id: 'asker:iene-lou-7575:77',
 		name: 'iene_lou_7575',
-		subtitle: 'Ratsuchende:r | Mainz 30232',
+		subtitle: 'Ratsuchende:r | Beratungsstelle Mainz',
 		role: 'asker',
+		agencyId: 77,
 		avatarSeed: 'iene-lou-7575'
 	},
 	{
-		id: 'rango-durango',
+		id: 'consultant:rango:77',
 		name: 'Rango Durango',
-		subtitle: 'Berater:in | Mainz 30232',
+		subtitle: 'Berater:in | Beratungsstelle Mainz',
 		role: 'consultant',
-		avatarSeed: 'rango-durango'
+		agencyId: 77,
+		avatarSeed: 'rango'
 	}
 ];
 
@@ -100,7 +126,7 @@ type PlaygroundProps = {
 	topics?: SessionSearchTopicOption[];
 	types?: SessionSearchTypeOption[];
 	agencies?: SessionSearchAgencyOption[];
-	initialSelectedAgencyIds?: string[];
+	initialSelectedAgencyId?: string | null;
 };
 
 function SessionSearchPanelPlayground({
@@ -113,7 +139,7 @@ function SessionSearchPanelPlayground({
 	topics: topicOptions = topics,
 	types: typeOptions = types,
 	agencies: agencyOptions = agencies,
-	initialSelectedAgencyIds = []
+	initialSelectedAgencyId = null
 }: PlaygroundProps) {
 	const [tab, setTab] = useState<SessionSearchTab>(initialTab);
 	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
@@ -124,8 +150,8 @@ function SessionSearchPanelPlayground({
 	);
 	const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
 	const [archiveOnly, setArchiveOnly] = useState(initialArchiveOnly);
-	const [selectedAgencyIds, setSelectedAgencyIds] = useState<string[]>(
-		initialSelectedAgencyIds
+	const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(
+		initialSelectedAgencyId
 	);
 
 	return (
@@ -153,21 +179,15 @@ function SessionSearchPanelPlayground({
 					selectedTopicId={selectedTopicId}
 					onTopicSelect={setSelectedTopicId}
 					agencies={agencyOptions}
-					selectedAgencyIds={selectedAgencyIds}
-					onAgencyToggle={(id) =>
-						setSelectedAgencyIds((prev) =>
-							prev.includes(id)
-								? prev.filter((entry) => entry !== id)
-								: [...prev, id]
-						)
-					}
+					selectedAgencyId={selectedAgencyId}
+					onAgencySelect={setSelectedAgencyId}
 				/>
 			</div>
 		</div>
 	);
 }
 
-/** #1195 JOB1 — a counsellor who belongs to two agencies. */
+/** My centres plus the centres of the people found (FE#1725). */
 const agencies: SessionSearchAgencyOption[] = [
 	{ id: '77', label: 'Beratungsstelle Mainz', subtitle: 'Mainz 30232' },
 	{ id: '42', label: 'Beratungsstelle Berlin', subtitle: 'Berlin 10117' }
@@ -205,7 +225,7 @@ const meta: Meta = {
 		docs: {
 			description: {
 				component:
-					'Search refinement panel for the session-list search pill (Case Handover flow). Tabs: **People** (checkbox multi-select), **By type** (radio), **Counseling center** (topic radio — one topic only, per Section 00: a person must never combine two topics), plus the independent **Archive only** toggle tab. Confirm affordance (red checkmark / Enter) lives in the search pill (`SessionsListToolbar`).'
+					'Search refinement panel for the session-list search pill (Case Handover flow). Tabs: **People** (checkbox multi-select, one row per person per counselling centre; counsellors with the primary avatar and their internal name, advice seekers with the animal), **By type** (radio), **Counseling center** (centre radio — a handover never crosses centres — and topic radio), plus the independent **Archive only** toggle tab. Confirm affordance (red checkmark / Enter) lives in the search pill (`SessionsListToolbar`).'
 			}
 		}
 	}
@@ -217,7 +237,7 @@ type Story = StoryObj<typeof meta>;
 export const PeopleTab: Story = {
 	render: () => (
 		<SessionSearchPanelPlayground
-			initialSelectedPersonIds={['ingrid-koschmider']}
+			initialSelectedPersonIds={['consultant:ingrid:77']}
 		/>
 	)
 };
@@ -226,7 +246,7 @@ export const PeopleTabEnglish: Story = {
 	render: () => (
 		<SessionSearchPanelPlayground
 			labels={labelsEn}
-			initialSelectedPersonIds={['ingrid-koschmider']}
+			initialSelectedPersonIds={['consultant:ingrid:77']}
 		/>
 	)
 };
@@ -240,17 +260,51 @@ export const CounselingCenterTab: Story = {
 	)
 };
 
-/**
- * #1195 JOB1 — both agencies of a two-agency counsellor are selectable at once,
- * above the single-select topic list.
- */
-export const TwoAgencyFilter: Story = {
+/** FE#1725 — one counselling centre at a time, above the topic list. */
+export const AgencyRadioIsExclusive: Story = {
 	render: () => (
 		<SessionSearchPanelPlayground
 			initialTab="centre"
-			initialSelectedAgencyIds={['77', '42']}
+			initialSelectedAgencyId="77"
 		/>
-	)
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const centres = await canvas.findByRole('radiogroup', {
+			name: 'Beratungsstelle'
+		});
+		const mainz = within(centres).getByRole('radio', {
+			name: /Beratungsstelle Mainz/
+		});
+		const berlin = within(centres).getByRole('radio', {
+			name: /Beratungsstelle Berlin/
+		});
+		await expect(mainz).toHaveAttribute('aria-checked', 'true');
+		await userEvent.click(berlin);
+		await expect(berlin).toHaveAttribute('aria-checked', 'true');
+		await expect(mainz).toHaveAttribute('aria-checked', 'false');
+	}
+};
+
+/** FE#1725 — counsellors on the primary avatar with their internal name. */
+export const CounsellorRows: Story = {
+	render: () => <SessionSearchPanelPlayground />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const [ingrid] = await canvas.findAllByRole('checkbox', {
+			name: /Ingrid K\./
+		});
+		await expect(ingrid).toHaveTextContent(
+			'Interner Name: Ingrid Koschmider'
+		);
+		await expect(
+			within(ingrid).getByTestId('counsellor-avatar')
+		).toBeInTheDocument();
+		const asker = canvas.getByRole('checkbox', { name: /iene_lou_7575/ });
+		await expect(
+			within(asker).queryByTestId('counsellor-avatar')
+		).not.toBeInTheDocument();
+	}
 };
 
 /**
@@ -269,7 +323,7 @@ export const ArchiveOnlyActive: Story = {
 	render: () => (
 		<SessionSearchPanelPlayground
 			initialArchiveOnly
-			initialSelectedPersonIds={['ingrid-koschmider']}
+			initialSelectedPersonIds={['consultant:ingrid:77']}
 		/>
 	)
 };
@@ -304,8 +358,8 @@ export const PeopleMultiSelect: Story = {
 	render: () => <SessionSearchPanelPlayground />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
-		const ingrid = await canvas.findByRole('checkbox', {
-			name: /Ingrid Koschmider/
+		const [ingrid] = await canvas.findAllByRole('checkbox', {
+			name: /Ingrid K\./
 		});
 		const hans = await canvas.findByRole('checkbox', { name: /Hans P/ });
 		await userEvent.click(ingrid);

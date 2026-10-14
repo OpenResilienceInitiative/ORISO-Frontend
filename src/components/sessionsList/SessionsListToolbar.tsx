@@ -71,12 +71,14 @@ interface SessionsListToolbarProps {
 	selectedPersonIds?: string[];
 	onSelectedPersonIdsChange?: (ids: string[]) => void;
 	/**
-	 * Agencies the signed-in counsellor belongs to (#1195 JOB1). Multi-select,
-	 * so a counsellor in two agencies can filter along both at once.
+	 * Agencies the signed-in counsellor belongs to. The panel adds the agencies
+	 * of the people found; one agency at a time (FE#1725 US11/US12).
 	 */
 	searchAgencyResults?: SessionSearchAgencyOption[];
-	selectedAgencyIds?: string[];
-	onSelectedAgencyIdsChange?: (ids: string[]) => void;
+	selectedAgencyId?: string | null;
+	onSelectedAgencyIdChange?: (id: string | null) => void;
+	/** The X: resets text, people, type, centre, topic and archive-only. */
+	onSearchReset?: () => void;
 	/** Topic options for the "Counselling centre" tab (radio single-select). */
 	searchTopicResults?: SessionSearchTopicOption[];
 	selectedTopicId?: string | null;
@@ -136,6 +138,27 @@ interface SessionsListToolbarProps {
 	/** Pill of the Erstellen row (display filter); the Träger gate stays `showCreateGroupChatAction`. */
 	showCreateChip?: boolean;
 }
+
+/** Pointer-downs on these keep the search panel open (FE#1725 US15). */
+const SEARCH_KEEP_OPEN_SELECTOR = [
+	'button',
+	'a',
+	'input',
+	'select',
+	'textarea',
+	'label',
+	'[role="button"]',
+	'[role="checkbox"]',
+	'[role="radio"]',
+	'[role="tab"]',
+	'[role="menuitem"]',
+	'[role="option"]',
+	'[role="dialog"]',
+	'[role="alert"]',
+	'[role="status"]',
+	'.sessionsList__scrollContainer',
+	'.sessionsListItem'
+].join(', ');
 
 export const IconMenuDots = () => (
 	<svg
@@ -310,8 +333,9 @@ export const SessionsListToolbar = ({
 	selectedPersonIds = [],
 	onSelectedPersonIdsChange,
 	searchAgencyResults = [],
-	selectedAgencyIds = [],
-	onSelectedAgencyIdsChange,
+	selectedAgencyId = null,
+	onSelectedAgencyIdChange,
+	onSearchReset,
 	searchTopicResults = [],
 	selectedTopicId = null,
 	onSelectedTopicIdChange,
@@ -366,15 +390,45 @@ export const SessionsListToolbar = ({
 	);
 
 	/**
-	 * JOB7 — selection state must not remove rows. The list previously
-	 * collapsed to the current selection whenever the query was empty (and
-	 * toggling a person clears the query), so a second person could never be
-	 * picked. The 10-per-page cap now lives in the panel's auto-pagination.
+	 * Selection never removes rows (JOB7); the text and, when chosen, the
+	 * counselling centre narrow them. Paging lives in the panel.
 	 */
-	const filteredPeople = React.useMemo(
+	const foundPeople = React.useMemo(
 		() => filterSearchPeople(searchPeopleResults, searchValue),
 		[searchPeopleResults, searchValue]
 	);
+	const filteredPeople = React.useMemo(
+		() =>
+			selectedAgencyId
+				? foundPeople.filter(
+						(person) =>
+							String(person.agencyId ?? '') === selectedAgencyId
+					)
+				: foundPeople,
+		[foundPeople, selectedAgencyId]
+	);
+	/** My agencies plus the agencies of the people found (FE#1725 US11). */
+	const agencyOptions = React.useMemo(() => {
+		const byId = new Map<string, SessionSearchAgencyOption>();
+		searchAgencyResults.forEach((agency) => byId.set(agency.id, agency));
+		foundPeople.forEach((person) => {
+			if (person.agencyId === undefined || person.agencyId === null) {
+				return;
+			}
+			const id = String(person.agencyId);
+			if (!byId.has(id)) {
+				byId.set(id, {
+					id,
+					label:
+						person.agencyName ||
+						translate('sessionList.toolbar.search.agencyFallback', {
+							id
+						})
+				});
+			}
+		});
+		return Array.from(byId.values());
+	}, [foundPeople, searchAgencyResults, translate]);
 	const selectedPeople = React.useMemo(
 		() =>
 			selectedPersonIds
@@ -388,24 +442,13 @@ export const SessionsListToolbar = ({
 		[selectedPersonIds, searchPeopleResults]
 	);
 
-	const filteredTopics = React.useMemo(() => {
-		const needle = searchValue.trim().toLowerCase();
-		if (!needle) {
-			return searchTopicResults;
-		}
-		return searchTopicResults.filter((topic) =>
-			`${topic.label} ${topic.subtitle || ''}`
-				.toLowerCase()
-				.includes(needle)
-		);
-	}, [searchTopicResults, searchValue]);
-
 	const hasTypedQuery = searchValue.trim().length > 0;
 	const hasSelectedPeople = selectedPersonIds.length > 0;
 	const hasSearchSelection =
 		hasSelectedPeople ||
 		Boolean(selectedTopicId) ||
 		Boolean(selectedTypeId) ||
+		Boolean(selectedAgencyId) ||
 		searchArchiveOnly;
 	/** Figma Section 07: checkmark hidden while nothing was typed/selected. */
 	const canConfirmSearch = hasTypedQuery || hasSearchSelection;
@@ -420,16 +463,50 @@ export const SessionsListToolbar = ({
 	const reopenSearchIfActive = React.useCallback(() => {
 		setIsSearchViewOpen(true);
 	}, []);
+	const resetSearch = React.useCallback(() => {
+		if (onSearchReset) {
+			onSearchReset();
+		} else {
+			onSearchChange('');
+			setSelectedPersonIds([]);
+			onSelectedTopicIdChange?.(null);
+			if (selectedTypeId) onSelectedTypeIdChange?.(null);
+			onSelectedAgencyIdChange?.(null);
+			if (searchArchiveOnly) onSearchArchiveOnlyChange?.(false);
+		}
+		setIsSearchViewOpen(false);
+	}, [
+		onSearchArchiveOnlyChange,
+		onSearchChange,
+		onSearchReset,
+		onSelectedAgencyIdChange,
+		onSelectedTopicIdChange,
+		onSelectedTypeIdChange,
+		searchArchiveOnly,
+		selectedTypeId,
+		setSelectedPersonIds
+	]);
 
+	/*
+	 * FE#1725 US15/16: only a pointer-down on an empty area closes the panel.
+	 * The list, cards, chips and any control keep it open while I select.
+	 */
 	React.useEffect(() => {
 		const handleOutsidePointer = (event: MouseEvent | TouchEvent) => {
 			if (!searchRootRef.current) {
 				return;
 			}
 			const target = event.target as Node | null;
-			if (target && !searchRootRef.current.contains(target)) {
-				setIsSearchViewOpen(false);
+			if (!target || searchRootRef.current.contains(target)) {
+				return;
 			}
+			if (
+				target instanceof Element &&
+				target.closest(SEARCH_KEEP_OPEN_SELECTOR)
+			) {
+				return;
+			}
+			setIsSearchViewOpen(false);
 		};
 
 		document.addEventListener('mousedown', handleOutsidePointer);
@@ -555,7 +632,11 @@ export const SessionsListToolbar = ({
 											'sessionList.toolbar.search.toggle'
 										)
 							}
-							onClick={() => setIsSearchViewOpen((prev) => !prev)}
+							onClick={() =>
+								showSearchDropdown
+									? resetSearch()
+									: setIsSearchViewOpen(true)
+							}
 						>
 							{showSearchDropdown ? (
 								<IconClose />
@@ -651,17 +732,11 @@ export const SessionsListToolbar = ({
 						>
 							<IconCheck />
 						</button>
-					) : hasTypedQuery || hasSelectedPeople ? (
+					) : hasTypedQuery || hasSearchSelection ? (
 						<button
 							type="button"
 							className="sessionsListToolbar__searchActionButton"
-							onClick={() => {
-								onSearchChange('');
-								setSelectedPersonIds([]);
-								onSelectedTopicIdChange?.(null);
-								onSelectedTypeIdChange?.(null);
-								setIsSearchViewOpen(false);
-							}}
+							onClick={resetSearch}
 							aria-label={translate(
 								'sessionList.toolbar.search.clear'
 							)}
@@ -703,6 +778,15 @@ export const SessionsListToolbar = ({
 							),
 							emptyTopics: translate(
 								'sessionList.toolbar.search.emptyTopics'
+							),
+							agencyGroup: translate(
+								'sessionList.toolbar.search.agencyGroup'
+							),
+							topicGroup: translate(
+								'sessionList.toolbar.search.topicGroup'
+							),
+							internalName: translate(
+								'sessionList.toolbar.search.internalName'
 							)
 						}}
 						activeTab={searchTab}
@@ -714,12 +798,12 @@ export const SessionsListToolbar = ({
 						people={filteredPeople}
 						selectedPersonIds={selectedPersonIds}
 						onPersonToggle={(personId) => {
+							// The typed text stays (FE#1725 US3).
 							setSelectedPersonIds((prev) =>
 								prev.includes(personId)
 									? prev.filter((id) => id !== personId)
 									: [...prev, personId]
 							);
-							onSearchChange('');
 							setIsSearchViewOpen(true);
 							requestAnimationFrame(() =>
 								searchInputRef.current?.focus()
@@ -728,19 +812,13 @@ export const SessionsListToolbar = ({
 						types={searchTypeResults}
 						selectedTypeId={selectedTypeId}
 						onTypeSelect={(id) => onSelectedTypeIdChange?.(id)}
-						topics={filteredTopics}
+						topics={searchTopicResults}
 						selectedTopicId={selectedTopicId}
 						onTopicSelect={(id) => onSelectedTopicIdChange?.(id)}
-						agencies={searchAgencyResults}
-						selectedAgencyIds={selectedAgencyIds}
-						onAgencyToggle={(agencyId) =>
-							onSelectedAgencyIdsChange?.(
-								selectedAgencyIds.includes(agencyId)
-									? selectedAgencyIds.filter(
-											(id) => id !== agencyId
-										)
-									: [...selectedAgencyIds, agencyId]
-							)
+						agencies={agencyOptions}
+						selectedAgencyId={selectedAgencyId}
+						onAgencySelect={(agencyId) =>
+							onSelectedAgencyIdChange?.(agencyId)
 						}
 					/>
 				)}

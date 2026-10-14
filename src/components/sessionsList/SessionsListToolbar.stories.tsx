@@ -40,36 +40,52 @@ type ToolbarDemoProps = {
 	initialSelectedPersonIds?: string[];
 };
 
-const searchPeopleResults: SessionSearchPersonResult[] = [
+const searchPeopleResultsBase: SessionSearchPersonResult[] = [
 	{
 		id: 'sanftes-alpaka-kala',
 		name: 'Sanftes Alpaka Kala',
 		subtitle: 'Suchtprobleme',
 		role: 'asker',
-		avatarSeed: 'sanftes-alpaka-kala'
+		avatarSeed: 'sanftes-alpaka-kala',
+		sessionKeys: [],
+		searchText: ''
 	},
 	{
 		id: 'ratsuchender-r3',
 		name: 'Ratsuchender R3',
 		subtitle: '1-1 Beratung',
 		role: 'asker',
-		avatarSeed: 'ratsuchender-r3'
+		avatarSeed: 'ratsuchender-r3',
+		sessionKeys: [],
+		searchText: ''
 	},
 	{
 		id: 'ruhiges-yak-kim',
 		name: 'ruhiges Yak Kim',
 		subtitle: 'Familienberatung',
 		role: 'asker',
-		avatarSeed: 'ruhiges-yak-kim'
+		avatarSeed: 'ruhiges-yak-kim',
+		sessionKeys: [],
+		searchText: ''
 	},
 	{
 		id: 'traeger-admins-caritas',
 		name: 'Träger Admins Caritas',
 		subtitle: 'Team Intern',
 		role: 'consultant',
-		avatarSeed: 'traeger-admins-caritas'
+		avatarSeed: 'traeger-admins-caritas',
+		sessionKeys: [],
+		searchText: ''
 	}
 ];
+
+// Same haystack shape the list builds: name + role/agency line.
+const searchPeopleResults = searchPeopleResultsBase.map((person) => ({
+	...person,
+	agencyId: 77,
+	agencyName: 'Beratungsstelle Mainz',
+	searchText: `${person.name} ${person.subtitle}`.toLowerCase()
+}));
 
 function SessionsListToolbarPlayground({
 	showConsultantActions = true,
@@ -90,6 +106,9 @@ function SessionsListToolbarPlayground({
 	const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
 	const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
 	const [archiveOnly, setArchiveOnly] = useState(false);
+	const [selectedAgencyId, setSelectedAgencyId] = useState<string | null>(
+		null
+	);
 
 	return (
 		<div style={shell}>
@@ -97,6 +116,12 @@ function SessionsListToolbarPlayground({
 				translate={t}
 				searchValue={search}
 				onSearchChange={setSearch}
+				searchAgencyResults={[
+					{ id: '77', label: 'Beratungsstelle Mainz' },
+					{ id: '42', label: 'Beratungsstelle Berlin' }
+				]}
+				selectedAgencyId={selectedAgencyId}
+				onSelectedAgencyIdChange={setSelectedAgencyId}
 				searchPeopleResults={searchPeopleResults}
 				selectedPersonIds={selectedPersonIds}
 				onSelectedPersonIdsChange={setSelectedPersonIds}
@@ -218,6 +243,56 @@ export const SearchPanelOpen: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('searchbox'));
+	}
+};
+
+/** FE#1725 — picking a person keeps the typed text and the panel open. */
+export const SearchKeepsTextWhenPickingPerson: Story = {
+	render: () => <SessionsListToolbarPlayground initialSearch="Ratsuch" />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const searchbox = canvas.getByRole('searchbox');
+		await userEvent.click(searchbox);
+		await userEvent.click(
+			await canvas.findByRole('checkbox', { name: /Ratsuchender R3/ })
+		);
+		await expect(searchbox).toHaveValue('Ratsuch');
+		await expect(
+			canvas.getByRole('checkbox', { name: /Ratsuchender R3/ })
+		).toHaveAttribute('aria-checked', 'true');
+	}
+};
+
+/** FE#1725 — the X clears text, people, centre and archive-only. */
+export const SearchXResetsEverything: Story = {
+	render: () => (
+		<SessionsListToolbarPlayground
+			initialSearch="Ratsuch"
+			initialSelectedPersonIds={['ratsuchender-r3']}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const searchbox = canvas.getByRole('searchbox');
+		await userEvent.click(searchbox);
+		await userEvent.click(
+			canvas.getByRole('tab', { name: /Beratungsstelle|Counsel/ })
+		);
+		const [centre] = canvas.getAllByRole('radio');
+		await userEvent.click(centre);
+		await expect(centre).toHaveAttribute('aria-checked', 'true');
+		await userEvent.click(
+			canvas.getByRole('button', { name: /Suche schließen|Close search/ })
+		);
+		await expect(searchbox).toHaveValue('');
+		await userEvent.click(searchbox);
+		await userEvent.click(
+			canvas.getByRole('tab', { name: /Beratungsstelle|Counsel/ })
+		);
+		await expect(canvas.getAllByRole('radio')[0]).toHaveAttribute(
+			'aria-checked',
+			'false'
+		);
 	}
 };
 

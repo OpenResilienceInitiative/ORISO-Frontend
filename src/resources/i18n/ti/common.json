@@ -3749,7 +3749,11 @@
 			"handover": "መጀመርታ እቲ ዝተመርጸ መሳርሕቲ ይውስን። ፖሊሲ እንተደልዩ ድሕሪኡ ዓሚል ይሕተት።"
 		},
 		"handoverPending": "እቲ ሕቶ መጀመርታ ናብ ዝተመርጸ መሳርሕቲ ይለኣኽ።",
-		"confirm": { "add": "ሕተት", "change": "ለውጢ ሕተት", "handover": "ሓሳብ ለኣኽ" },
+		"confirm": {
+			"add": "ሕተት",
+			"change": "ለውጢ ሕተት",
+			"handover": "ሓሳብ ለኣኽ"
+		},
 		"cancel": "ሰርዝ",
 		"close": "ዕጸው",
 		"emptyOption": "በጃኹም ምረጹ…"
@@ -4134,7 +4138,13 @@
 				"role": {
 					"asker": "ምኽሪ ዝደሊ",
 					"consultant": "ኣማኻሪ"
-				}
+				},
+				"internalName": "ውሽጣዊ ስም",
+				"agencyGroup": "ማእከል ምኽሪ",
+				"topicGroup": "ኣርእስቲ",
+				"agencyFallback": "ማእከል ምኽሪ {{id}}",
+				"filteredOutAll": "ምድላይኩምን መጻረዪታትኩምን ንኹሉ ምኽርታት ይሓብእዎ ኣለዉ።",
+				"removeFilters": "መጻረዪታት ኣልግስ"
 			},
 			"menu": {
 				"ariaLabel": "ዝርዝር ኣማራጺታት"

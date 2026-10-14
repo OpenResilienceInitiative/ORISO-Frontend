@@ -4163,7 +4163,13 @@
 				"role": {
 					"asker": "Ratsuchende:r",
 					"consultant": "Berater:in"
-				}
+				},
+				"internalName": "Interner Name",
+				"agencyGroup": "Beratungsstelle",
+				"topicGroup": "Thema",
+				"agencyFallback": "Beratungsstelle {{id}}",
+				"filteredOutAll": "Ihre Suche und Filter blenden alle Beratungen aus.",
+				"removeFilters": "Filter entfernen"
 			},
 			"menu": {
 				"ariaLabel": "Listenoptionen"

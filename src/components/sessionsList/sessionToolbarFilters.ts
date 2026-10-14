@@ -1,8 +1,5 @@
 import { getModality, Modality } from '../session/getModality';
-import type {
-	ListItemInterface,
-	TopicSessionInterface
-} from '../../globalState/interfaces/SessionsDataInterface';
+import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { IUserDraftItem } from '../../api/apiUserDrafts';
 import { isChatItemUnread } from '../../utils/sessionUnread';
@@ -11,8 +8,9 @@ import {
 	hasSupervisionMarker
 } from '../sessionsListItem/supervisionListState';
 import {
-	sessionKeyFromPersonId,
-	sessionSearchKeyOf
+	sessionMatchesPeople,
+	sessionMatchesSearchText,
+	sessionSearchText
 } from './sessionSearchPeople';
 
 export type SessionToolbarChipFilter =
@@ -81,29 +79,7 @@ export function buildSessionSearchHaystack(
 	raw: ListItemInterface,
 	extended: ExtendedSessionInterface
 ): string {
-	const parts: string[] = [];
-	const item = extended.item;
-
-	if (item?.topic) {
-		parts.push(
-			typeof item.topic === 'string'
-				? item.topic
-				: (item.topic as TopicSessionInterface).name || ''
-		);
-	}
-	if (raw.user?.username) {
-		parts.push(raw.user.username);
-	}
-	if (raw.consultant?.displayName) {
-		parts.push(raw.consultant.displayName);
-	}
-	if (raw.consultant?.username) {
-		parts.push(raw.consultant.username);
-	}
-	if (raw.agency?.name) {
-		parts.push(raw.agency.name);
-	}
-	return parts.filter(Boolean).join(' ');
+	return sessionSearchText(raw, extended);
 }
 
 /**
@@ -279,25 +255,11 @@ export function sessionMatchesToolbar(
 		}
 	}
 
-	// Person rows are `<sessionId>:<role>` since #1195 (clients and counsellors
-	// are separate rows), while this axis still filters whole sessions — so the
-	// role suffix is stripped before comparing.
-	const toolbarPersonId = sessionSearchKeyOf(raw, extended);
-	if (selectedPersonIds.length > 0) {
-		const selectedSessionKeys = selectedPersonIds.map(
-			sessionKeyFromPersonId
-		);
-		if (
-			!toolbarPersonId ||
-			!selectedSessionKeys.includes(toolbarPersonId)
-		) {
-			return false;
-		}
+	// Person rows are `<role>:<userId>:<agencyId>` (FE#1725); several
+	// selected people combine with OR.
+	if (!sessionMatchesPeople(raw, selectedPersonIds)) {
+		return false;
 	}
 
-	const q = query.trim().toLowerCase();
-	if (!q) {
-		return true;
-	}
-	return buildSessionSearchHaystack(raw, extended).toLowerCase().includes(q);
+	return sessionMatchesSearchText(raw, extended, query);
 }
