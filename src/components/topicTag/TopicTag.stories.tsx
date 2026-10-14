@@ -43,7 +43,7 @@ type Story = StoryObj<typeof meta>;
 export const Resting: Story = {
 	play: async ({ canvasElement }) => {
 		const tag = within(canvasElement).getByText('Familienberatung');
-		expectReadable(tag);
+		await expectReadable(tag);
 	}
 };
 
@@ -52,7 +52,7 @@ export const Emphasis: Story = {
 	args: { emphasis: true },
 	play: async ({ canvasElement }) => {
 		const tag = within(canvasElement).getByText('Familienberatung');
-		expectReadable(tag);
+		await expectReadable(tag);
 	}
 };
 
@@ -68,7 +68,9 @@ export const LightBrandColour: Story = {
 	play: async ({ canvasElement }) => {
 		const tags = canvasElement.querySelectorAll('.topicTag');
 		await expect(tags).toHaveLength(2);
-		tags.forEach(expectReadable);
+		for (const tag of Array.from(tags)) {
+			await expectReadable(tag);
+		}
 	}
 };
 
@@ -96,7 +98,9 @@ export const EveryTraeger: Story = {
 	play: async ({ canvasElement }) => {
 		const tags = canvasElement.querySelectorAll('.topicTag');
 		await expect(tags).toHaveLength(SEEDS.length * 2);
-		tags.forEach(expectReadable);
+		for (const tag of Array.from(tags)) {
+			await expectReadable(tag);
+		}
 	}
 };
 

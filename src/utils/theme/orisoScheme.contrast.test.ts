@@ -157,3 +157,31 @@ describe('global topic tag tokens (--oriso-topic-tag-*)', () => {
 		).toBeLessThan(8);
 	});
 });
+
+describe('brand ink on the primary-fixed fill (member-count chip, badges)', () => {
+	it.each([...LIGHT_SEEDS, '#a5000a', '#0b5394', '#1a1a1a'])(
+		'%s: --oriso-primary-text-on-fixed reaches 4.5:1 in every scheme',
+		(seed) => {
+			for (const scheme of ['light', 'dark', 'inverted'] as const) {
+				const { tokens } = computeOrisoPalette(
+					{ primary: seed },
+					scheme
+				);
+				expect(
+					wcagContrast(
+						tokens['--oriso-primary-text-on-fixed'],
+						tokens['--m3-primary-fixed']
+					),
+					`${seed} ${scheme}`
+				).toBeGreaterThanOrEqual(4.5);
+			}
+		}
+	);
+
+	it('keeps the Träger look (the text tone) in the light scheme', () => {
+		const { tokens } = computeOrisoPalette({ primary: '#a5000a' }, 'light');
+		expect(tokens['--oriso-primary-text-on-fixed']).toBe(
+			tokens['--oriso-primary-text']
+		);
+	});
+});

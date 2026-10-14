@@ -334,7 +334,10 @@ $room-actions-gap: 12px;
 			padding: 0 6px;
 			border-radius: 999px;
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
+			color: var(
+				--oriso-primary-text-on-fixed,
+				var(--oriso-primary-text, var(--m3-primary, #a5000a))
+			);
 		}
 	}
 
