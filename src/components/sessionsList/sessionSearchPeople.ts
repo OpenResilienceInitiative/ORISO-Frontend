@@ -15,6 +15,7 @@ import type {
 } from '../../globalState/interfaces/SessionsDataInterface';
 import type { ExtendedSessionInterface } from '../../globalState/helpers/stateHelpers';
 import type { AvatarIdentity } from '../../utils/avatarChoice';
+import { decodeUsername } from '../../utils/encryptionHelpers';
 
 export type SessionSearchPersonRole = 'asker' | 'consultant';
 
@@ -112,6 +113,35 @@ const internalNameOf = (consultant?: {
 	consultant?.internalName ||
 	[consultant?.firstName, consultant?.lastName].filter(Boolean).join(' ') ||
 	undefined;
+
+/** Never show an `enc.` username; empty stays empty. */
+const readable = (name?: string | null) =>
+	name ? decodeUsername(name).trim() : '';
+
+/**
+ * Name shown for a counsellor (rows, chips, avatar initials): the public
+ * name, unless it is only her username; then the internal name; then the
+ * decoded username.
+ */
+const consultantNameOf = (
+	consultant: {
+		displayName?: string;
+		username?: string;
+		internalName?: string | null;
+		firstName?: string;
+		lastName?: string;
+	},
+	ownName?: string
+) => {
+	const username = readable(consultant.username);
+	const publicName = readable(consultant.displayName);
+	return (
+		(publicName !== username && publicName) ||
+		readable(internalNameOf(consultant)) ||
+		ownName ||
+		username
+	);
+};
 
 /** Person keys of everyone taking part in this session. */
 export const personKeysOfSession = (raw: ListItemInterface): string[] => {
@@ -229,6 +259,7 @@ export const sessionSearchText = (
 		raw.user?.displayName,
 		consultant?.displayName,
 		consultant?.username,
+		readable(consultant?.username),
 		consultant?.firstName,
 		consultant?.lastName,
 		consultant?.internalName,
@@ -391,10 +422,10 @@ export function buildSearchPeopleResults(
 			() => ({
 				id: key,
 				name:
-					consultant.displayName ||
-					(isMe && options.currentUser?.name) ||
-					consultant.username ||
-					labels.unknown,
+					consultantNameOf(
+						consultant,
+						isMe ? options.currentUser?.name : undefined
+					) || labels.unknown,
 				subtitle: '',
 				role: 'consultant',
 				agencyId,
@@ -407,7 +438,7 @@ export function buildSearchPeopleResults(
 			sessionKey,
 			sessionParts
 		);
-		entry.internalName ||= internalNameOf(consultant);
+		entry.internalName ||= readable(internalNameOf(consultant)) || undefined;
 		entry.agencyName ||= agencyName;
 		entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
 	};
@@ -432,8 +463,8 @@ export function buildSearchPeopleResults(
 				() => ({
 					id: key,
 					name:
-						raw.user.displayName ||
-						raw.user.username ||
+						readable(raw.user.displayName) ||
+						readable(raw.user.username) ||
 						labels.unknown,
 					subtitle: subtitleOf(labels.asker, agencyName),
 					role: 'asker',

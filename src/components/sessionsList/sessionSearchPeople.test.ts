@@ -203,3 +203,54 @@ describe('filterSearchPeople — query narrowing', () => {
 		expect(filterSearchPeople).toHaveLength(2);
 	});
 });
+
+describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () => {
+	const encoded = 'enc.MFTWK3TDPFPWCZDNNFXDC...'; // agency_admin1
+
+	it('never shows an encoded username, using the internal name instead', () => {
+		const [person] = buildSearchPeopleResults([], labels, {
+			agencyConsultants: [
+				{
+					consultantId: 'c-9',
+					username: encoded,
+					displayName: encoded,
+					firstName: 'agency',
+					lastName: 'admin1',
+					agencyId: 2,
+					agencyName: 'Lichtenberg'
+				}
+			]
+		});
+
+		expect(person.name).toBe('agency admin1');
+		expect(person.lookupQuery).toBe(encoded);
+	});
+
+	it('shows the decoded username when no other name exists', () => {
+		const [person] = buildSearchPeopleResults([], labels, {
+			agencyConsultants: [
+				{ consultantId: 'c-9', username: encoded, agencyId: 2 }
+			]
+		});
+
+		expect(person.name).toBe('agency_admin1');
+	});
+
+	it('prefers the internal name over a public name that is only the username', () => {
+		const item = {
+			...sessionWithBoth(),
+			consultant: {
+				consultantId: 'c-2',
+				username: 'patty.bouvier_at_trail.ist',
+				displayName: 'patty.bouvier_at_trail.ist',
+				internalName: 'Patty Bouvier'
+			}
+		} as unknown as ListItemInterface;
+
+		const consultant = build([item]).find(
+			(entry) => entry.role === 'consultant'
+		);
+
+		expect(consultant?.name).toBe('Patty Bouvier');
+	});
+});
