@@ -501,12 +501,14 @@ export const Login = () => {
 						resolution.outcome === 'rate_limited');
 				if (!isShownAtResendLink) {
 					setShowLoginError(translate(resolution.messageKey));
-					// Only a credential problem marks the fields; an outage
-					// or a rate limit is not the user's input being wrong,
-					// and must not leave a stale mark behind.
+					// Only a credential problem marks the fields; an outage,
+					// a rate limit or an unfinished account setup is not the
+					// user's input being wrong, and must not leave a stale
+					// mark behind.
 					setLabelState(
 						resolution.outcome === 'unavailable' ||
-							resolution.outcome === 'rate_limited'
+							resolution.outcome === 'rate_limited' ||
+							resolution.outcome === 'setup_incomplete'
 							? null
 							: VALIDITY_INVALID
 					);

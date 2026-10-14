@@ -21,7 +21,7 @@ import {
 } from '../../utils/sessionUnread';
 import { useUnreadVersion } from '../../hooks/useUnreadVersion';
 import { resolveAnonymousChatDisplayName } from '../../utils/anonymousChatDisplayName';
-import { chosenAvatarOf } from '../../utils/avatarChoice';
+import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 import { UserAvatar } from '../message/UserAvatar';
 import { MessageAvatar } from '../message/MessageAvatar';
 import { formatMessagePersonName } from '../message/messageNameUtils';
@@ -1066,7 +1066,9 @@ export const SessionListItemComponent = ({
 					activeSession.consultant?.consultantId ||
 					'unknown'
 				}
-				choice={chosenAvatarOf(activeSession.consultant)}
+				choice={counsellorChoiceOf(
+					chosenAvatarOf(activeSession.consultant)
+				)}
 				avatarDisplayName={activeSession.consultant?.displayName}
 				size={AVATAR_SIZES.session}
 				ring={false}
@@ -1552,8 +1554,8 @@ export const SessionListItemComponent = ({
 											?.consultantId ||
 										'unknown'
 									}
-									choice={chosenAvatarOf(
-										activeSession.consultant
+									choice={counsellorChoiceOf(
+										chosenAvatarOf(activeSession.consultant)
 									)}
 									avatarDisplayName={
 										activeSession.consultant?.displayName
