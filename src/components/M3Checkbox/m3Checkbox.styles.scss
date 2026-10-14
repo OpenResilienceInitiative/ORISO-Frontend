@@ -115,21 +115,18 @@
 		border-color: var(--m3-on-primary, #ffffff);
 	}
 
-	// On a primary fill the ticked box inverts: on-primary box, primary tick.
+	// On a primary fill the ticked box inverts: a white box, primary tick.
+	// The state layer is the segment's on-primary text colour at 12 %.
 	&--onPrimary {
 		.m3Checkbox__input:checked + .m3Checkbox__box {
-			background: var(--m3-on-primary, #ffffff);
+			background: var(--m3-surface-container-lowest, #ffffff);
 			border-color: var(--m3-on-primary, #ffffff);
 			color: var(--m3-primary, #a5000a);
 		}
 
 		.m3Checkbox__target:hover::before,
 		.m3Checkbox__input:focus-visible + .m3Checkbox__box::before {
-			background: color-mix(
-				in srgb,
-				var(--m3-on-primary, #ffffff) 12%,
-				transparent
-			);
+			background: color-mix(in srgb, currentcolor 12%, transparent);
 		}
 	}
 
