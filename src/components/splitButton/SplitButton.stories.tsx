@@ -168,6 +168,15 @@ export const SelectionUnselected: Story = {
 		await expect(
 			canvasElement.querySelector('.splitButton--outlined')
 		).not.toBeNull();
+		// The empty box must stay visible on a white card (live check FE#1725).
+		const box = canvasElement.querySelector('.m3Checkbox__box')!;
+		const token = document.createElement('span');
+		token.style.color = 'var(--m3-on-surface-variant, #444748)';
+		canvasElement.appendChild(token);
+		await expect(getComputedStyle(box).borderTopColor).toBe(
+			getComputedStyle(token).color
+		);
+		token.remove();
 		await userEvent.click(checkbox);
 		await expect(checkbox).toBeChecked();
 		await expect(onSelectionChange).toHaveBeenCalledWith(true);

@@ -98,15 +98,21 @@
 		}
 	}
 
-	// Takes the surrounding text colour (e.g. a split-button segment).
+	// Label takes the surrounding text colour (e.g. a split-button segment).
+	// The box sets its own `color` (the tick), so `currentcolor` there would
+	// be white: name the outline token explicitly.
 	&--inherit,
 	&--onPrimary {
 		color: inherit;
 		font: inherit;
+	}
 
-		.m3Checkbox__box {
-			border-color: currentcolor;
-		}
+	&--inherit .m3Checkbox__box {
+		border-color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&--onPrimary .m3Checkbox__box {
+		border-color: var(--m3-on-primary, #ffffff);
 	}
 
 	// On a primary fill the ticked box inverts: on-primary box, primary tick.
