@@ -28,10 +28,6 @@ export const CaseHandoverReasonList = ({
 }: CaseHandoverReasonListProps) => {
 	const { t: translate } = useTranslation();
 	const id = useId();
-	const isMac =
-		typeof navigator !== 'undefined' &&
-		/mac/i.test(navigator.platform || '');
-	const shortcutPrefix = isMac ? '⌘R' : 'Ctrl+R';
 	return (
 		<RadioGroup
 			className="caseHandoverReasonList"
@@ -101,7 +97,7 @@ export const CaseHandoverReasonList = ({
 							</Typography>
 						)}
 						<kbd className="caseHandoverReasonList__shortcut">
-							{shortcutPrefix}+{index + 1}
+							{index + 1}
 						</kbd>
 					</ListItemButton>
 				);

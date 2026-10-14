@@ -2,13 +2,19 @@
 
 The protected request wizard must keep Back and Next visible while its long body scrolls. The topic belongs in the ordinary chat header strip. This implementation follows the approved desktop/mobile Figma hierarchy through existing Storybook components, while keeping access protection, reason order and mandatory explanation behavior unchanged.
 
+## CodeRabbit follow-up on reviewed 9e
+
+Two verified comments are fixed in this bounded follow-up. The displayed modifier/R prefix did not match the existing numeric handler; hints now show only1/2/3/4, and the public test presses those keys to select the corresponding reason. This is a deliberate truthful-label correction from Figma's unsupported prefix, not a new global hotkey.
+
+The reset tests now establish nonzero scroll before Next/Back and assert zero after. The native story's220px fixture is flex constrained so its body actually overflows. Temporarily omitting the keyed body makes both oracles fail (full-app scroll343; shared story572). The mutation was restored and is excluded from the commit. No bodyKey/focus production change or policy expansion was needed.
+
 ## Current scope and decisions
 
 The user confirmed the public full-app SessionsZone request-form seam and the fixed-footer/native-component scope. The Figma MoreMenu is omitted for now by explicit user decision (“Vorerst weglassen”); no actions are invented. Policy, backend, reason defaults, consent hints, unknown/retired reason handling and explanation validation are preserved. Other phone-menu and general UI defects are outside this package.
 
 | Requirement | Implementation and proof | State |
 | --- | --- | --- |
-| R1–R4: real active session panel; readable phone/tablet/desktop and DE/EN/FR; protected notice reachable | Production SessionsZone shell, 35 public browser cases, complete title bounds | Passed |
+| R1–R4: real active session panel; readable phone/tablet/desktop and DE/EN/FR; protected notice reachable | Production SessionsZone shell, 36 public browser cases, complete title bounds | Passed |
 | R5–R8: persistent sibling footer; 128×96 actions; normal body scrolling; actual topic semantics | ScrollableSection + extracted SideScrollerFooter; real wheel movement negative control and fixed geometry; SessionTopic ordinary DOM | Passed |
 | R9–R12: existing native form components; exact scoped assets and Figma typography; unchanged profile/header consumers | OrisoTextarea, focused MUI ReasonList, existing shared styles/tokens; 57 Storybook tests including native consumers | Passed |
 | R13–R15: preserve access, reasons, keyboard shortcuts and mandatory explanation; no request submission; bounded shared API | Existing curtain/API tests; read-only reason story; wizard-only native-disabled focus fallback; no backend changes | Passed |
@@ -26,7 +32,7 @@ SessionTopic extracts the existing noninteractive chat topic strip with the same
 - Actual body-wheel RED: test-only overflow:hidden mutation leaves scrollTop0. GREEN: normal mousewheel moves the short body and returns it to0 while footer y remains fixed.
 - Step entry RED: old body retained scrollTop317 after navigation. GREEN: optional bodyKey resets body only; each first heading starts visible.
 - Keyboard focus RED: Next became disabled on description entry and lost focus. GREEN: Back remains focused; Back→Reason moves focus to enabled Next, without stealing textbox focus.
-- Independent final SPEC and standards follow-up both passed. Final public35 and Storybook57 passed. Full-unit/theme-contract follow-up passed:720 files /12,532 tests; the original profile-only compatibility token is retained unchanged and wizard backgrounds use surface roles.
+- Independent final SPEC and standards follow-up both passed. Final public36 and Storybook57 passed. Full-unit/theme-contract follow-up passed:720 files /12,532 tests; the original profile-only compatibility token is retained unchanged and wizard backgrounds use surface roles.
 
 ## Historical proof (superseded implementation)
 
@@ -53,6 +59,6 @@ repository engineering/component rules were read. This repair changes no domain 
 
 ## Resume here
 
-All final source gates passed: public35, native Storybook57, full unit720 files /12,532 tests, script/style lint, Storybook typecheck and production build/postbuild. Both independent final reviews passed. Eight final after screenshots and two matched d5 baselines are curated; the synthetic short-wheel video measures body0→672→0 and fixed footer y232. Create the normal local commit, then build with REACT_APP_BUILD_COMMIT set to that exact HEAD for root Docker provenance. No further source change is needed.
+All follow-up gates passed:public36, native Storybook57, full unit720 files /12,532 tests, script/style lint, Storybook typecheck and production build/postbuild. Both independent follow-up reviews passed. Only the unsupported shortcut prefix changed in production; tests now prove nonzero pre-scroll and reset sensitivity. Eight selected after images and13-review wheel video are refreshed, with9e evidence preserved separately. Create the normal local follow-up commit, then build once with that exact new HEAD for root's candidate proof.
 
-Root owns push, current PR description/review/CI readback, evidence publication, actual Docker/Dev acceptance and deployment decisions. Old d5 remote CI/CodeRabbit approval does not cover the unpublished final source. This worker has not submitted a live request or changed accounts/data.
+The earlier9e commit was pushed and human reviewed; CodeRabbit requested the two corrections above. Root owns feedback replies, push, new-head CI/review, evidence publication and actual Docker/Dev acceptance. Earlier9e approval/CI/Docker acceptance does not cover this unpublished follow-up. No live requests, accounts/data or backend changes were made.

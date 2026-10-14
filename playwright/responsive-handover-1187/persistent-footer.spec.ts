@@ -164,8 +164,20 @@ test('each wizard step starts at the top and keyboard focus stays in the footer'
 			viewport.y + viewport.height
 		);
 	};
+	const scrollBodyDown = async () => {
+		const bounds = (await body.boundingBox())!;
+		await page.mouse.move(
+			bounds.x + bounds.width / 2,
+			bounds.y + bounds.height / 2
+		);
+		await page.mouse.wheel(0, 1000);
+		await expect
+			.poll(() => body.evaluate((element) => element.scrollTop))
+			.toBeGreaterThan(0);
+	};
 	await assertStepStartsVisible();
 	await page.getByRole('radio', { name: /Rat erbeten/ }).click();
+	await scrollBodyDown();
 	await page.keyboard.press('Tab');
 	await expect(
 		page.getByRole('button', { name: 'Weiter', exact: true })
@@ -176,6 +188,7 @@ test('each wizard step starts at the top and keyboard focus stays in the footer'
 		page.getByRole('button', { name: 'Zurück', exact: true })
 	).toBeFocused();
 	await page.getByRole('textbox').fill('Fictional advice request.');
+	await scrollBodyDown();
 	await page.keyboard.press('Tab');
 	await expect(
 		page.getByRole('button', { name: 'Zurück', exact: true })
@@ -185,4 +198,25 @@ test('each wizard step starts at the top and keyboard focus stays in the footer'
 	await expect(
 		page.getByRole('button', { name: 'Weiter', exact: true })
 	).toBeFocused();
+});
+
+test('reason shortcut hints show the bare digits that select reasons', async ({
+	page
+}) => {
+	await page.setViewportSize({ width: 1440, height: 900 });
+	await page.goto(
+		'http://127.0.0.1:6218/iframe.html?id=templates-sessions-protectedcaseresponsive--desktop&viewMode=story&globals=locale:en',
+		{ waitUntil: 'domcontentloaded' }
+	);
+	await page.getByRole('button', { name: /step by step/ }).click();
+	await expect(page.locator('kbd')).toHaveText(['1', '2', '3', '4']);
+	await page.getByRole('radio', { name: 'Advice requested' }).click();
+	await page.keyboard.press('1');
+	await expect(
+		page.getByRole('radio', { name: 'Planned absence', exact: true })
+	).toBeChecked();
+	await page.keyboard.press('2');
+	await expect(
+		page.getByRole('radio', { name: 'Unplanned absence', exact: true })
+	).toBeChecked();
 });

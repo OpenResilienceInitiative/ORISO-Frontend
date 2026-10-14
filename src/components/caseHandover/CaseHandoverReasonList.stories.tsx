@@ -62,6 +62,12 @@ type Story = StoryObj<typeof meta>;
 export const SelectWithPointerAndKeyboard: Story = {
 	play: async ({ canvasElement, args }) => {
 		const canvas = within(canvasElement);
+		await expect(
+			Array.from(
+				canvasElement.querySelectorAll('kbd'),
+				(hint) => hint.textContent
+			)
+		).toEqual(['1', '2', '3', '4']);
 		const advice = canvas.getByRole('radio', {
 			name: /Rat erbeten|Advice requested|Conseil demandé/
 		});

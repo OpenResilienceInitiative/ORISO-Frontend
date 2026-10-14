@@ -8,7 +8,7 @@ Run with Node22 from the repository root:
 npx playwright test --config playwright/responsive-handover-1187/playwright.config.mts --reporter=line
 ```
 
-The config starts or reuses Storybook6218. Thirty-five DPR1 browser cases cover DE/EN/FR at phone320×568 and390×844, tablet820×1180, desktop1440×900 and short390×420/820×480/1440×480. They prove active-panel fit, complete protection-heading bounds after returning to top, a noninteractive native topic, normal reason/explanation transitions, persistent footer bounds, actual mousewheel body movement and keyboard focus across native disabled actions.
+The config starts or reuses Storybook6218. Thirty-six DPR1 browser cases cover DE/EN/FR at phone320×568 and390×844, tablet820×1180, desktop1440×900 and short390×420/820×480/1440×480. They prove active-panel fit, complete protection-heading bounds after returning to top, a noninteractive native topic, normal reason/explanation transitions, persistent footer bounds, actual mousewheel body movement and keyboard focus across native disabled actions. The shortcut test checks the visible bare digits and presses1/2 to select the corresponding reasons. The step-entry test first proves nonzero mousewheel scroll before both Next and Back, then asserts zero after each transition.
 
 The body-wheel oracle has a deliberate test-only negative control:
 

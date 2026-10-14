@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { expect, userEvent, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Meta, StoryObj } from '@storybook/react';
 import { ScrollableSection } from './ScrollableSection';
 
@@ -29,7 +29,9 @@ const storyFrameStyle: React.CSSProperties = {
 };
 
 const storyPanelStyle: React.CSSProperties = {
-	height: '100%'
+	height: '100%',
+	display: 'flex',
+	flexDirection: 'column'
 };
 
 const longBodyItems = Array.from({ length: 18 }, (_, index) => (
@@ -127,8 +129,19 @@ export const ChangedStepResetsOnlyBody: Story = {
 	render: () => <StepBodyScrollReset />,
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
+		const getBody = () => {
+			const body = canvasElement.querySelector<HTMLElement>(
+				'.scrollableSection__body'
+			);
+			if (!body) throw new Error('Scrollable body is missing');
+			return body;
+		};
+		const body = getBody();
+		body.scrollTop = body.scrollHeight;
+		await expect(body.scrollTop).toBeGreaterThan(0);
 		const next = canvas.getByRole('button', { name: 'Next step' });
 		await userEvent.click(next);
+		await waitFor(() => expect(getBody().scrollTop).toBe(0));
 		await expect(canvas.getByText('Step 2, row 1')).toBeVisible();
 		await expect(next).toHaveFocus();
 		await expect(canvas.getByText('Persistent header')).toBeVisible();
