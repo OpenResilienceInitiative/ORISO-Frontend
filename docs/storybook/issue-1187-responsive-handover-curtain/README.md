@@ -17,7 +17,9 @@ All images use fictional data, the real SessionsZone and production shell CSS at
 
 The shortcut labels deliberately show the bare digits accepted by the existing handler, replacing Figma’s unsupported Cmd/Ctrl+R prefix. Historical9e images/video/receipt are preserved locally under `figma-design-1187/reviewed-9e-curated/`. The screenshots document layout. Public tests prove step transitions, required explanation, body scrolling, keyboard focus and fixed footer bounds. Access/submission logic remains under the existing unit/API tests. The MoreMenu is omitted by explicit user decision. These images do not prove deployed or authenticated acceptance.
 
-The preserved full42-image matrix and five historical overflow-only images live locally at `/Users/frankgerhardt/ORISO/_e2e-artifacts/e2e-20261013-handover-tdd/figma-design-1187/full-matrix/`. The final eight-image measurements are in `docs/agent-tasks/2026-10-14_responsive-handover-curtain/FINAL-FOOTER-GEOMETRY.json`. One fictional Storybook wheel video is `figma-design-1187/13-review-after-short-phone-scroll-de.webm`:390×420, scrollTop0→672→0, footer y232 throughout. Root publishes it with its Storybook-only layer label.
+The preserved full42-image matrix and five historical overflow-only images are kept in the evidence owner's local artifact directory and are not part of the repository. The final eight-image measurements are in `docs/agent-tasks/2026-10-14_responsive-handover-curtain/FINAL-FOOTER-GEOMETRY.json`. The fictional Storybook wheel video shows390×420, scrollTop0→672→0 and footer y232 throughout.
+
+[Published comparison, protected Docker screenshots and Storybook-only video](https://evidence.dreambau.com/r/vcrsho34epf7bfo34keotparxs46p6q4) identify each artifact's source revision and verification layer.
 
 Native component previews returned by local Storybook MCP:
 
