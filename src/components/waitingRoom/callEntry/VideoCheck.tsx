@@ -1,19 +1,21 @@
 import * as React from 'react';
 import { useEffect, useRef } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 import MicRoundedIcon from '@mui/icons-material/MicRounded';
 import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
 import VideocamRoundedIcon from '@mui/icons-material/VideocamRounded';
 import VideocamOffRoundedIcon from '@mui/icons-material/VideocamOffRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
-import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { MicLevelMeter } from './MicLevelMeter';
 import { DeviceToggle } from './DeviceToggle';
 import { callEntryCopy as copy } from './callEntryCopy';
-import { initialsOf } from './initialsOf';
+import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import type { Avatar } from '../../../utils/pseudonymGenerator';
 
 export interface VideoCheckProps {
 	name: string;
+	/** The person's animal: the picture whenever the camera is off. */
+	avatar: Avatar;
 	/** The live camera; without one the tile shows a neutral stand-in. */
 	stream?: MediaStream | null;
 	cameraOn: boolean;
@@ -31,6 +33,7 @@ export interface VideoCheckProps {
  */
 export const VideoCheck = ({
 	name,
+	avatar,
 	stream,
 	cameraOn,
 	micOn,
@@ -38,6 +41,7 @@ export const VideoCheck = ({
 	onToggleCamera,
 	onToggleMic
 }: VideoCheckProps) => {
+	const phone = useMediaQuery('(max-width: 599.95px)');
 	const videoRef = useRef<HTMLVideoElement>(null);
 	useEffect(() => {
 		if (videoRef.current) videoRef.current.srcObject = stream ?? null;
@@ -91,33 +95,34 @@ export const VideoCheck = ({
 				{!cameraOn && (
 					<Box
 						sx={{
+							/* Between the name chip (top) and the switches (bottom),
+							   so the animal never slides behind either. */
 							position: 'absolute',
-							inset: 0,
+							top: 48,
+							bottom: 68,
+							left: 0,
+							right: 0,
 							display: 'flex',
 							flexDirection: 'column',
 							alignItems: 'center',
 							justifyContent: 'center',
-							gap: 1.5,
-							color: '#fff'
+							gap: 1
 						}}
 					>
-						<Box
-							aria-hidden
+						<Box aria-hidden data-testid="video-avatar">
+							<AnimalAvatar
+								avatar={avatar}
+								size={phone ? 52 : 80}
+							/>
+						</Box>
+						<Typography
 							sx={{
-								width: { xs: 72, sm: 96 },
-								height: { xs: 72, sm: 96 },
-								borderRadius: '50%',
-								bgcolor: registrationMd3.primary,
-								display: 'flex',
-								alignItems: 'center',
-								justifyContent: 'center',
-								fontSize: { xs: 26, sm: 34 },
-								fontWeight: 600
+								display: { xs: 'none', sm: 'block' },
+								fontSize: 14,
+								color: '#fff',
+								opacity: 0.85
 							}}
 						>
-							{initialsOf(name)}
-						</Box>
-						<Typography sx={{ fontSize: 14, opacity: 0.85 }}>
 							{copy.cameraOff}
 						</Typography>
 					</Box>
@@ -138,6 +143,7 @@ export const VideoCheck = ({
 						color: '#fff'
 					}}
 				>
+					<AnimalAvatar avatar={avatar} size={22} outline={false} />
 					{micOn ? (
 						<MicLevelMeter
 							level={micLevel}
@@ -151,6 +157,7 @@ export const VideoCheck = ({
 						sx={{
 							fontSize: 13,
 							fontWeight: 600,
+							color: '#fff',
 							maxWidth: 160,
 							overflow: 'hidden',
 							textOverflow: 'ellipsis',

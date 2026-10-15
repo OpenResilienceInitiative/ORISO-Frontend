@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useMediaQuery } from '@mui/material';
 import MicRoundedIcon from '@mui/icons-material/MicRounded';
 import MicOffRoundedIcon from '@mui/icons-material/MicOffRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -12,10 +12,12 @@ import {
 import { DeviceToggle } from './DeviceToggle';
 import { SpeakerTest, SpeakerTestState } from './SpeakerTest';
 import { callEntryCopy as copy } from './callEntryCopy';
-import { initialsOf } from './initialsOf';
+import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import type { Avatar } from '../../../utils/pseudonymGenerator';
 
 export interface VoiceCheckProps {
 	name: string;
+	avatar: Avatar;
 	micOn: boolean;
 	micLevel: number;
 	/** The meter has moved at least once since the page opened. */
@@ -34,12 +36,13 @@ const RINGS = [0, 1, 2];
  * einfach ausgeblendet ist aus Faulheit").
  *
  * Without a picture, the voice is the person's presence, so the voice gets
- * the space: their initials in the middle, rings that breathe with what the
+ * the space: their animal avatar in the middle, rings that breathe with what the
  * microphone hears, and the two checks that matter on a phone call — "do
  * they hear me?" and "do I hear them?" — as two steps with their own result.
  */
 export const VoiceCheck = ({
 	name,
+	avatar,
 	micOn,
 	micLevel,
 	micHeard,
@@ -48,6 +51,7 @@ export const VoiceCheck = ({
 	onSpeakerTest,
 	playTone
 }: VoiceCheckProps) => {
+	const phone = useMediaQuery('(max-width: 599.95px)');
 	const level = micOn ? Math.min(1, Math.max(0, micLevel)) : 0;
 	const micLine = !micOn
 		? copy.micMuted
@@ -108,27 +112,17 @@ export const VoiceCheck = ({
 							}}
 						/>
 					))}
+					{/* Muted reads as a faded animal, not only a colour change. */}
 					<Box
 						aria-hidden
+						data-testid="voice-avatar"
 						sx={{
-							width: '56%',
-							height: '56%',
-							borderRadius: '50%',
-							bgcolor: micOn
-								? registrationMd3.primary
-								: registrationMd3.surfaceContainerHigh,
-							color: micOn
-								? registrationMd3.onPrimary
-								: registrationMd3.onSurfaceVariant,
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							fontSize: { xs: 30, sm: 36 },
-							fontWeight: 600,
-							transition: `background-color ${registrationMotion.standard} ${registrationMotion.easeOut}`
+							opacity: micOn ? 1 : 0.55,
+							filter: micOn ? 'none' : 'grayscale(1)',
+							transition: `opacity ${registrationMotion.standard} ${registrationMotion.easeOut}, filter ${registrationMotion.standard} ${registrationMotion.easeOut}`
 						}}
 					>
-						{initialsOf(name)}
+						<AnimalAvatar avatar={avatar} size={phone ? 84 : 104} />
 					</Box>
 				</Box>
 				<Typography

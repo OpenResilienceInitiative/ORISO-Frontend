@@ -17,6 +17,7 @@ import {
 import { expectWaitingRoomLayout } from '../../app/registrationLoader/waitingRoomLayoutContract';
 import { CallEntryRoom, CallEntryRoomProps } from './CallEntryRoom';
 import { CallDevices } from './callEntryTypes';
+import type { Pseudonym } from '../../../utils/pseudonymGenerator';
 import { useLiveCallDevices } from './useLiveCallDevices';
 
 /**
@@ -87,12 +88,22 @@ const devices: CallDevices = {
 	]
 };
 
+/** Fixed animal and User-ID, so screenshots and tests do not reroll. */
+const owl: Pseudonym = {
+	displayName: 'freundliche Eule Mika',
+	avatar: { file: 'owl.svg', bg: '#FCE2C4', iconColor: '#1b1b1c' },
+	animalLabel: 'Eule',
+	name: 'Mika'
+};
+
 /** The tone takes no time in tests; nothing is played. */
 const silentTone = () => Promise.resolve();
 
 const base: Partial<CallEntryRoomProps> = {
 	devices,
 	topic: 'Schuldnerberatung',
+	initialIdentity: owl,
+	initialUsername: 'eule_mika_4821',
 	playTone: silentTone,
 	onJoin: () => undefined,
 	onBlockerAction: () => undefined
@@ -100,8 +111,7 @@ const base: Partial<CallEntryRoomProps> = {
 
 const ready: Partial<CallEntryRoomProps> = {
 	...base,
-	initialName: 'Mara',
-	initialPassword: 'aus-der-einladung',
+	initialPassword: 'Sonnenblume-2026!',
 	initialMicHeard: true,
 	micLevel: 0.55
 };
@@ -139,6 +149,8 @@ export const VideoCameraOff: Story = {
 		await expectWaitingRoomLayout(canvasElement);
 		// The camera may stay off; the gate is still open.
 		await expect(canvas.getByText('Ihre Kamera ist aus')).toBeVisible();
+		// Without a picture the others see the chosen animal.
+		await expect(canvas.getByTestId('video-avatar')).toBeVisible();
 		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
 	}
 };
@@ -149,7 +161,6 @@ export const VideoPasswordMissing: Story = {
 	args: {
 		...base,
 		modality: 'video',
-		initialName: 'Mara',
 		initialMicHeard: true,
 		micLevel: 0.3
 	},
@@ -158,8 +169,10 @@ export const VideoPasswordMissing: Story = {
 		await expectProgress(canvasElement, 67);
 		await expect(canvas.getByText('Noch offen: Passwort')).toBeVisible();
 		await userEvent.type(
-			canvas.getByLabelText(/Passwort für dieses Gespräch/),
-			'aus-der-einladung'
+			canvasElement.querySelector<HTMLInputElement>(
+				'input[autocomplete="new-password"]'
+			)!,
+			'Sonnenblume-2026!'
 		);
 		await expectProgress(canvasElement, 100);
 		expect(gate(canvasElement).getAttribute('data-cy-state')).toBe('ready');
@@ -202,6 +215,26 @@ export const VideoChooseDevice: Story = {
 	}
 };
 
+export const VideoChangeAvatar: Story = {
+	name: 'Video · roll a new avatar and User-ID',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', initialCameraOn: false },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		const avatar = canvas.getByTestId('call-entry-avatar');
+		const before = avatar.innerHTML;
+		await userEvent.click(canvas.getByRole('button', { name: 'Avatar' }));
+		await waitFor(() => expect(avatar.innerHTML).not.toBe(before));
+		const userId = canvas.getByRole('textbox', { name: /User-ID/ });
+		await userEvent.click(canvas.getByRole('button', { name: 'User-ID' }));
+		await waitFor(() =>
+			expect((userId as HTMLInputElement).value).not.toBe(
+				'eule_mika_4821'
+			)
+		);
+	}
+};
+
 export const VideoPhone: Story = {
 	name: 'Video · phone',
 	globals: phone390Globals,
@@ -216,7 +249,7 @@ export const VideoPhone: Story = {
 export const AudioFirstLook: Story = {
 	name: 'Audio · first look',
 	globals: desktop1440Globals,
-	args: { ...base, modality: 'audio', initialName: 'Mara', micLevel: 0 },
+	args: { ...base, modality: 'audio', micLevel: 0 },
 	play: async ({ canvasElement, canvas }) => {
 		await expectWaitingRoomLayout(canvasElement);
 		await expect(canvas.getByTestId('voice-check')).toBeVisible();
@@ -248,8 +281,7 @@ export const AudioHeardOnceSpeaking: Story = {
 	args: {
 		...base,
 		modality: 'audio',
-		initialName: 'Mara',
-		initialPassword: 'aus-der-einladung',
+		initialPassword: 'Sonnenblume-2026!',
 		micLevel: 0.7
 	},
 	play: async ({ canvasElement, canvas }) => {
@@ -270,14 +302,12 @@ export const AudioMuted: Story = {
 	}
 };
 
-export const AudioSetPassword: Story = {
-	name: 'Audio · first-time guest sets a password',
+export const AudioPasswordTooWeak: Story = {
+	name: 'Audio · password does not meet the rules yet',
 	globals: desktop1440Globals,
 	args: {
 		...base,
 		modality: 'audio',
-		passwordMode: 'set',
-		initialName: 'Mara',
 		initialMicHeard: true,
 		initialPassword: 'kurz',
 		micLevel: 0.3
@@ -410,7 +440,7 @@ export const LiveVideo: Story = {
 	name: 'Live devices · video (asks for camera and mic)',
 	tags: ['!test'],
 	globals: desktop1440Globals,
-	args: { ...base, modality: 'video', initialName: 'Mara', micLevel: 0 },
+	args: { ...base, modality: 'video', micLevel: 0 },
 	render: (args) => <Live {...args} />
 };
 
@@ -418,6 +448,6 @@ export const LiveAudio: Story = {
 	name: 'Live devices · audio (asks for the mic)',
 	tags: ['!test'],
 	globals: desktop1440Globals,
-	args: { ...base, modality: 'audio', initialName: 'Mara', micLevel: 0 },
+	args: { ...base, modality: 'audio', micLevel: 0 },
 	render: (args) => <Live {...args} />
 };

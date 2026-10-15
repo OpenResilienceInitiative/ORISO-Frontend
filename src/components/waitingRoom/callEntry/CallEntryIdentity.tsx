@@ -1,77 +1,173 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { Box, IconButton, InputAdornment } from '@mui/material';
-import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
+import { Box, IconButton, InputAdornment, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import VpnKeyOutlinedIcon from '@mui/icons-material/VpnKeyOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { OrisoTextField } from '../../form/OrisoTextField';
+import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import { PasswordRuleChips } from '../../registration/accountData/PasswordRuleChips';
-import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
+import { IdentitySuggestButton } from '../../registration/accountData/IdentitySuggestButton';
+import { toRegistrationUsername } from '../../registration/accountData/registrationUsername';
+import {
+	registrationMd3,
+	registrationScreenKickerSx
+} from '../../registration/registrationDesign/registrationDesign';
+import {
+	generateAvatar,
+	generatePassword,
+	regeneratePseudonym,
+	type Pseudonym
+} from '../../../utils/pseudonymGenerator';
+import genUserIcon from '../../../resources/img/registration-md3/icons/gen-user.svg';
+import genKeyIcon from '../../../resources/img/registration-md3/icons/gen-key.svg';
+import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-avatar.svg';
+import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { callEntryCopy as copy } from './callEntryCopy';
-
-/**
- * `enter`: a password the person already has (from the invitation or their
- * account). `set`: a first-time guest chooses one, with the registration's
- * own rule chips. Which one the call link uses is still open (#1386).
- */
-export type CallPasswordMode = 'enter' | 'set';
+import { CallModality } from './callEntryTypes';
 
 export interface CallEntryIdentityProps {
-	name: string;
-	onNameChange: (name: string) => void;
+	modality: CallModality;
+	identity: Pseudonym;
+	onIdentityChange: (identity: Pseudonym) => void;
+	username: string;
+	onUsernameChange: (username: string) => void;
 	password: string;
 	onPasswordChange: (password: string) => void;
-	passwordMode: CallPasswordMode;
-	passwordError?: string;
 }
 
-const adornmentIconSx = { color: registrationMd3.onSurfaceVariant };
-
-/** Name and password, the same fields and icons as the registration. */
+/**
+ * Who the person is in the call: the registration's own identity block —
+ * animal avatar, the suggest buttons with their icons (User-ID, password,
+ * avatar, all three), the User-ID field and a password the guest sets with
+ * the rule chips. The avatar is what the others see whenever there is no
+ * picture: camera off, or a phone call (Frank, 2026-10-15).
+ */
 export const CallEntryIdentity = ({
-	name,
-	onNameChange,
+	modality,
+	identity,
+	onIdentityChange,
+	username,
+	onUsernameChange,
 	password,
-	onPasswordChange,
-	passwordMode,
-	passwordError
+	onPasswordChange
 }: CallEntryIdentityProps) => {
+	const { t, i18n } = useTranslation();
+	const locale = i18n.resolvedLanguage ?? 'de';
 	const [visible, setVisible] = useState(false);
+
+	const suggestUsername = () => {
+		const next = regeneratePseudonym(identity, locale);
+		onIdentityChange({ ...next, avatar: identity.avatar });
+		onUsernameChange(toRegistrationUsername(next));
+	};
+	const suggestAvatar = () =>
+		onIdentityChange({ ...identity, avatar: generateAvatar(locale) });
+	const suggestPassword = () => {
+		onPasswordChange(generatePassword());
+		setVisible(true);
+	};
+	const suggestAll = () => {
+		const next = regeneratePseudonym(identity, locale);
+		onIdentityChange(next);
+		onUsernameChange(toRegistrationUsername(next));
+		suggestPassword();
+	};
+	const visibilityLabel = t(
+		visible ? 'login.password.hide' : 'login.password.show'
+	);
+
 	return (
 		<Box data-testid="call-entry-identity">
+			<Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+				<Box data-testid="call-entry-avatar" sx={{ flexShrink: 0 }}>
+					<AnimalAvatar avatar={identity.avatar} size={64} />
+				</Box>
+				<Typography
+					sx={{
+						fontSize: 14,
+						lineHeight: '20px',
+						color: registrationMd3.onSurfaceVariant
+					}}
+				>
+					{copy.avatarHint[modality]}
+				</Typography>
+			</Box>
+
+			<Typography sx={{ ...registrationScreenKickerSx, mt: 2.5, mb: 1 }}>
+				{t('registration.account.autoSuggest')}
+			</Typography>
+			{/* The column beside the check is narrower than the registration's,
+			    so the four buttons go two by two there instead of truncating. */}
+			<Box
+				sx={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+					gap: 0.75
+				}}
+			>
+				<IdentitySuggestButton
+					icon={genUserIcon}
+					label={t('registration.account.suggest.username')}
+					onClick={suggestUsername}
+				/>
+				<IdentitySuggestButton
+					icon={genKeyIcon}
+					label={t('registration.account.suggest.password')}
+					onClick={suggestPassword}
+				/>
+				<IdentitySuggestButton
+					icon={genAvatarIcon}
+					label={t('registration.account.suggest.avatar')}
+					onClick={suggestAvatar}
+				/>
+				<IdentitySuggestButton
+					icon={genDiceIcon}
+					label={t('registration.account.suggest.allShort')}
+					onClick={suggestAll}
+				/>
+			</Box>
+
 			<OrisoTextField
-				value={name}
-				onChange={(event) => onNameChange(event.target.value)}
-				label={copy.nameLabel}
-				helperText={copy.nameHelper}
+				value={username}
+				onChange={(event) =>
+					onUsernameChange(
+						event.target.value
+							.toLowerCase()
+							.replace(/[^a-z0-9_-]/g, '')
+					)
+				}
+				label={t('registration.account.username.label')}
+				helperText={t('registration.account.username.info')}
 				fullWidth
-				autoComplete="nickname"
+				autoComplete="username"
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
-							<PersonOutlineRoundedIcon sx={adornmentIconSx} />
+							<PersonOutlineIcon
+								sx={{ color: registrationMd3.onSurfaceVariant }}
+							/>
 						</InputAdornment>
 					)
 				}}
-				sx={{ mt: 0 }}
 			/>
 			<OrisoTextField
 				value={password}
 				onChange={(event) => onPasswordChange(event.target.value)}
-				label={copy.passwordLabel[passwordMode]}
-				helperText={passwordError ?? copy.passwordHelper[passwordMode]}
-				error={Boolean(passwordError)}
+				label={t('registration.account.password.label')}
+				helperText={copy.passwordHelper}
 				type={visible ? 'text' : 'password'}
 				required
 				fullWidth
-				autoComplete={
-					passwordMode === 'set' ? 'new-password' : 'current-password'
-				}
+				autoComplete="new-password"
 				InputProps={{
 					startAdornment: (
 						<InputAdornment position="start">
-							<VpnKeyOutlinedIcon sx={adornmentIconSx} />
+							<VpnKeyOutlinedIcon
+								sx={{ color: registrationMd3.onSurfaceVariant }}
+							/>
 						</InputAdornment>
 					),
 					endAdornment: (
@@ -79,16 +175,8 @@ export const CallEntryIdentity = ({
 							<IconButton
 								edge="end"
 								onClick={() => setVisible(!visible)}
-								aria-label={
-									visible
-										? copy.hidePassword
-										: copy.showPassword
-								}
-								title={
-									visible
-										? copy.hidePassword
-										: copy.showPassword
-								}
+								aria-label={visibilityLabel}
+								title={visibilityLabel}
 							>
 								{visible ? (
 									<VisibilityOffIcon />
@@ -100,9 +188,7 @@ export const CallEntryIdentity = ({
 					)
 				}}
 			/>
-			{passwordMode === 'set' && (
-				<PasswordRuleChips password={password} />
-			)}
+			<PasswordRuleChips password={password} />
 		</Box>
 	);
 };

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
 import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
@@ -11,7 +12,12 @@ import {
 	registrationScreenIntroSx,
 	registrationScreenTitleSx
 } from '../../registration/registrationDesign/registrationDesign';
-import { CallEntryIdentity, CallPasswordMode } from './CallEntryIdentity';
+import { CallEntryIdentity } from './CallEntryIdentity';
+import { toRegistrationUsername } from '../../registration/accountData/registrationUsername';
+import {
+	generatePseudonym,
+	type Pseudonym
+} from '../../../utils/pseudonymGenerator';
 import { CallNotice } from './CallNotice';
 import { DevicePicker } from './DevicePicker';
 import { SpeakerTest, SpeakerTestState } from './SpeakerTest';
@@ -35,11 +41,13 @@ export interface CallEntryRoomProps {
 	/** 0–1, from the microphone's analyser (fixture in stories). */
 	micLevel: number;
 	stream?: MediaStream | null;
-	passwordMode?: CallPasswordMode;
 	blocker?: CallEntryBlocker;
 	/** Who the call is with, shown in the kicker, e.g. "Schuldnerberatung". */
 	topic?: string;
-	initialName?: string;
+	/** Animal and name to start from; a fresh one is rolled otherwise. */
+	initialIdentity?: Pseudonym;
+	/** Default: derived from the identity, like the registration. */
+	initialUsername?: string;
 	initialPassword?: string;
 	initialMicOn?: boolean;
 	initialCameraOn?: boolean;
@@ -58,7 +66,7 @@ export interface CallEntryRoomProps {
  * `HandoverGateButton`. Prototype in Storybook only; nothing calls Element
  * Call yet.
  *
- * The gate fills with what is really done — name, password, a microphone
+ * The gate fills with what is really done — User-ID, password, a microphone
  * that has been heard (or is muted on purpose) — and opens when all three
  * are. Nothing else blocks: the camera may stay off, and the speaker test is
  * offered, not required.
@@ -68,10 +76,10 @@ export const CallEntryRoom = ({
 	devices,
 	micLevel,
 	stream,
-	passwordMode = 'enter',
 	blocker,
 	topic,
-	initialName = '',
+	initialIdentity,
+	initialUsername,
 	initialPassword = '',
 	initialMicOn = true,
 	initialCameraOn = true,
@@ -83,7 +91,14 @@ export const CallEntryRoom = ({
 	onBlockerAction,
 	playTone
 }: CallEntryRoomProps) => {
-	const [name, setName] = useState(initialName);
+	const { i18n } = useTranslation();
+	const [identity, setIdentity] = useState<Pseudonym>(
+		() =>
+			initialIdentity ?? generatePseudonym(i18n.resolvedLanguage ?? 'de')
+	);
+	const [username, setUsername] = useState(
+		() => initialUsername ?? toRegistrationUsername(identity)
+	);
 	const [password, setPassword] = useState(initialPassword);
 	const [micOn, setMicOn] = useState(initialMicOn);
 	const [cameraOn, setCameraOn] = useState(initialCameraOn);
@@ -103,12 +118,9 @@ export const CallEntryRoom = ({
 	};
 
 	const conditions = [
-		{ done: name.trim().length > 0, missing: copy.missingName },
+		{ done: username.length > 0, missing: copy.missingName },
 		{
-			done:
-				passwordMode === 'set'
-					? allPasswordCriteriaPass(password)
-					: password.length > 0,
+			done: allPasswordCriteriaPass(password),
 			missing: copy.missingPassword
 		},
 		{ done: micHeard || !micOn, missing: copy.missingMicrophone }
@@ -176,7 +188,8 @@ export const CallEntryRoom = ({
 						{modality === 'video' ? (
 							<>
 								<VideoCheck
-									name={name}
+									name={username}
+									avatar={identity.avatar}
 									stream={stream}
 									cameraOn={cameraOn}
 									micOn={micOn}
@@ -195,7 +208,8 @@ export const CallEntryRoom = ({
 							</>
 						) : (
 							<VoiceCheck
-								name={name}
+								name={username}
+								avatar={identity.avatar}
 								micOn={micOn}
 								micLevel={micLevel}
 								micHeard={micHeard}
@@ -208,11 +222,13 @@ export const CallEntryRoom = ({
 					</Box>
 					<Box>
 						<CallEntryIdentity
-							name={name}
-							onNameChange={setName}
+							modality={modality}
+							identity={identity}
+							onIdentityChange={setIdentity}
+							username={username}
+							onUsernameChange={setUsername}
 							password={password}
 							onPasswordChange={setPassword}
-							passwordMode={passwordMode}
 						/>
 						<Box sx={{ mt: 3, display: 'grid', gap: 1 }}>
 							{pickerKinds.map((kind) => (

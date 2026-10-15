@@ -44,17 +44,11 @@ export const callEntryCopy = {
 		'Stellen Sie lauter oder wählen Sie oben ein anderes Gerät. Dann noch einmal.',
 	headsetTip:
 		'Mit Kopfhörern hört niemand in Ihrer Nähe mit, was Ihr Gegenüber sagt.',
-	nameLabel: 'Ihr Name im Gespräch',
-	nameHelper:
-		'So sieht Sie Ihr Gegenüber. Ein Vorname oder Spitzname reicht.',
-	passwordLabel: {
-		enter: 'Passwort für dieses Gespräch',
-		set: 'Ihr Passwort'
+	avatarHint: {
+		video: 'So sieht man Sie, wenn Ihre Kamera aus ist. Sie können Figur und User-ID jederzeit ändern.',
+		audio: 'So sieht man Sie im Gespräch. Sie können Figur und User-ID jederzeit ändern.'
 	},
-	passwordHelper: {
-		enter: 'Es steht in Ihrer Einladung.',
-		set: 'Damit kommen Sie später wieder in Ihr Postfach.'
-	},
+	passwordHelper: 'Damit kommen Sie später wieder in Ihr Postfach.',
 	showPassword: 'Passwort anzeigen',
 	hidePassword: 'Passwort verbergen',
 	join: {
@@ -62,7 +56,7 @@ export const callEntryCopy = {
 		audio: 'Telefongespräch beitreten'
 	},
 	missing: 'Noch offen: ',
-	missingName: 'Name',
+	missingName: 'User-ID',
 	missingPassword: 'Passwort',
 	missingMicrophone: 'Mikrofon',
 	allSet: 'Alles bereit',
