@@ -20,8 +20,24 @@ const STORIES = [
 	['call-stages-hain--mit-status', 'Hain-Status', 900],
 	['call-stages-hain--klein', 'Hain-4', 900],
 	['call-stages-hain--zu-zweit', 'Hain-2', 900],
-	['call-stages-hain--auf-dem-handy', 'Hain-Handy', 420]
+	['call-stages-hain--auf-dem-handy', 'Hain-Handy', 420],
+	['call-stages-hain--mit-atmosphaere', 'Hain-Atmosphaere', 900],
+	['call-stages-hain--dunkle-atmosphaere', 'Hain-Atmosphaere-dunkel', 900],
+	['call-atmosphere--alle-welten', 'Atmosphaeren-alle', 980],
+	['call-atmosphere--buehne', 'Atmosphaere-gross', 960]
 ];
+
+/** The atmosphere stories carry no participants; only the stages do. */
+const STAGE_STORIES = new Set([
+	'Hain-9-ruhig',
+	'Hain-9-spricht',
+	'Hain-Status',
+	'Hain-4',
+	'Hain-2',
+	'Hain-Handy',
+	'Hain-Atmosphaere',
+	'Hain-Atmosphaere-dunkel'
+]);
 
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({
@@ -45,17 +61,24 @@ for (const [id, name, width] of STORIES) {
 		`http://127.0.0.1:6006/iframe.html?id=${id}&viewMode=story`,
 		{ waitUntil: 'networkidle' }
 	);
-	await page.waitForSelector('[data-testid="hain-stage"]');
-	await page.waitForFunction(
-		() =>
-			document.querySelectorAll('[data-testid="participant"] svg')
-				.length > 0
-	);
-	await page.waitForTimeout(700);
+	if (STAGE_STORIES.has(name)) {
+		await page.waitForSelector('[data-testid="hain-stage"]');
+		await page.waitForFunction(
+			() =>
+				document.querySelectorAll('[data-testid="participant"] svg')
+					.length > 0
+		);
+	} else {
+		await page.waitForSelector('oriso-pond');
+	}
+	// The backdrop needs a moment of its slow clock to be worth looking at.
+	await page.waitForTimeout(1200);
 	await page.screenshot({ path: `${OUT}/${name}.png` });
 
 	const report = await page.evaluate(() => {
-		const pills = [...document.querySelectorAll('[data-testid="name-pill"]')];
+		const pills = [
+			...document.querySelectorAll('[data-testid="name-pill"]')
+		];
 		// The capsule is pointer-events:none so it cannot swallow a click meant
 		// for the tile. Switch that off for the hit test, or elementFromPoint
 		// reports the animal underneath and every name looks covered.
@@ -96,7 +119,9 @@ for (const [id, name, width] of STORIES) {
 		`${name.padEnd(16)} ${report.count} Pillen | verdeckt ${report.covered.length} | ragt über die Form ${report.overhanging.length} | gekürzt ${report.truncated.length}${report.truncated.length ? ': ' + report.truncated.join(' · ') : ''}\n`
 	);
 	if (report.covered.length)
-		failures.push(`${name}: verdeckte Namen — ${report.covered.join(', ')}`);
+		failures.push(
+			`${name}: verdeckte Namen — ${report.covered.join(', ')}`
+		);
 	if (report.overhanging.length)
 		failures.push(
 			`${name}: Pille breiter als ihre Form — ${report.overhanging.join(', ')}`

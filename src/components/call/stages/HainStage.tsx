@@ -2,6 +2,7 @@ import React from 'react';
 
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
 import { NamePill } from '../atoms/NamePill';
+import { type AtmosphereName, Atmosphere } from '../atmosphere/Atmosphere';
 import { type Avatar } from '../../../utils/pseudonymGenerator';
 import { packShapes } from '../engine/layout';
 
@@ -28,6 +29,13 @@ export interface HainStageProps {
 	participants: readonly CallParticipant[];
 	/** The stage is a square; the arrangements are built around one. */
 	box: number;
+	/**
+	 * The backdrop world. Chosen centrally by the counselling centre — never
+	 * by an advice seeker, and by a counsellor only from what the centre has
+	 * configured. Omitted here means a plain stage, which is what a story or
+	 * a test wants.
+	 */
+	atmosphere?: AtmosphereName;
 }
 
 /** A speaker's share, relative to a quiet participant's 1. */
@@ -72,7 +80,11 @@ export const nameMaxWidth = (shapeSize: number): number =>
  * unchanged. Speaking is weight, not a badge: the shape grows and physically
  * displaces the others, so the field re-settles when the turn passes on.
  */
-export const HainStage: React.FC<HainStageProps> = ({ participants, box }) => {
+export const HainStage: React.FC<HainStageProps> = ({
+	participants,
+	box,
+	atmosphere
+}) => {
 	const placed = packShapes(
 		participants.map((p) => p.name),
 		box,
@@ -82,8 +94,14 @@ export const HainStage: React.FC<HainStageProps> = ({ participants, box }) => {
 	return (
 		<div
 			data-testid="hain-stage"
-			style={{ position: 'relative', width: box, height: box }}
+			style={{
+				position: 'relative',
+				width: box,
+				height: box,
+				overflow: 'hidden'
+			}}
 		>
+			{atmosphere !== undefined && <Atmosphere palette={atmosphere} />}
 			{placed.map((spot, i) => (
 				<div
 					key={participants[i].name}

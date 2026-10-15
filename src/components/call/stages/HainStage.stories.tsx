@@ -70,6 +70,16 @@ export const Klein: Story = { args: { participants: room(4, 1), box: 660 } };
  */
 export const ZuZweit: Story = { args: { participants: room(2, 0), box: 660 } };
 
+/** Auf der lebenden Fläche, so wie der Call sie zeigt. */
+export const MitAtmosphaere: Story = {
+	args: { participants: room(9, 2), box: 660, atmosphere: 'fluss' }
+};
+
+/** Eine dunkle Welt, für ein Abendgespräch. */
+export const DunkleAtmosphaere: Story = {
+	args: { participants: room(6, 1), box: 660, atmosphere: 'nacht' }
+};
+
 /** Hand gehoben und Mikrofon aus — beides in derselben Kapsel. */
 export const MitStatus: Story = {
 	args: {
