@@ -5,9 +5,41 @@ const CARD_WIDTH = { xs: 300, sm: 372 };
 const SM_UP = '(min-width: 600px)';
 const STAGE_UP = '(min-width: 1200px)';
 
+const pixelsOf = (canvas: HTMLCanvasElement) =>
+	canvas.getContext('2d')!.getImageData(0, 0, canvas.width, canvas.height)
+		.data;
+
+const hasDrawnPixels = (canvas: HTMLCanvasElement) => {
+	const data = pixelsOf(canvas);
+	for (let i = 3; i < data.length; i += 4) {
+		if (data[i] > 40) {
+			return true;
+		}
+	}
+	return false;
+};
+
+/** Pixels that are clearly drawn and clearly red, whatever the glow. */
+const redDominantPixels = (canvas: HTMLCanvasElement) => {
+	const data = pixelsOf(canvas);
+	let count = 0;
+	for (let i = 0; i < data.length; i += 4) {
+		const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
+		if (a > 80 && r - b > 40 && r - g > 40) {
+			count += 1;
+		}
+	}
+	return count;
+};
+
 export interface WaitingRoomContractOptions {
 	/** The room stands in the split layout (brand stage beside the column). */
 	stage?: boolean;
+	/**
+	 * The story renders a non-red primary colour: no stage effect pixel may be
+	 * red-dominant (the dots used to be drawn in a fixed red).
+	 */
+	notRed?: boolean;
 	/** The gate button, when the room is in a state where it is open. */
 	gate?: () => HTMLElement | null;
 }
@@ -53,6 +85,21 @@ export const verifyWaitingRoomContract = async (
 			expect(
 				canvasElement.querySelector('.stageMobileHero')
 			).not.toBeNull();
+		}
+	}
+
+	if (options.notRed) {
+		const canvases = [
+			...canvasElement.querySelectorAll<HTMLCanvasElement>(
+				'.stageLayout__stage canvas'
+			)
+		];
+		expect(canvases.length).toBeGreaterThan(0);
+		await waitFor(() => {
+			expect(canvases.some(hasDrawnPixels)).toBe(true);
+		});
+		for (const canvas of canvases) {
+			expect(redDominantPixels(canvas)).toBe(0);
 		}
 	}
 

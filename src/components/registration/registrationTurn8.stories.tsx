@@ -544,3 +544,18 @@ export const PostRegistrationReady: StoryObj = {
 		});
 	}
 };
+
+/* The same waiting room with a blue primary colour (a Träger's own brand).
+   The stage dots and glow used to be drawn in a fixed red; the contract now
+   fails if any stage effect pixel is red-dominant. */
+export const PostRegistrationBluePrimary: StoryObj = {
+	name: '8f — Nach dem Reload, blaues Primary',
+	render: () => <PostRegistrationInStage ready />,
+	parameters: { layout: 'fullscreen', orisoSeed: '#1D4ED8' },
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, {
+			stage: true,
+			notRed: true
+		});
+	}
+};
