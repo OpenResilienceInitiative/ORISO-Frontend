@@ -70,6 +70,18 @@ export const Klein: Story = { args: { participants: room(4, 1), box: 660 } };
  */
 export const ZuZweit: Story = { args: { participants: room(2, 0), box: 660 } };
 
+/** Hand gehoben und Mikrofon aus — beides in derselben Kapsel. */
+export const MitStatus: Story = {
+	args: {
+		participants: room(6, 1).map((p, i) => ({
+			...p,
+			micOff: i === 3,
+			handRaisedForMs: i === 4 ? 95000 : null
+		})),
+		box: 660
+	}
+};
+
 /** On a phone, where the square fills the width. */
 export const AufDemHandy: Story = {
 	args: { participants: room(6, 3), box: 360 },
