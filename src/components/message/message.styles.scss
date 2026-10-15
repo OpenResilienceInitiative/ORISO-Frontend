@@ -56,7 +56,7 @@ $message-avatar-overlap: -19px;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			transition: unset;
 		}
 	}
@@ -76,7 +76,7 @@ $message-avatar-overlap: -19px;
 
 		.messageItem__message a,
 		.messageItem__message a:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 
 		.messageItem__divider {
@@ -773,7 +773,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--lastRead {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 			&::before,
 			&::after {
@@ -1033,7 +1033,7 @@ $message-avatar-overlap: -19px;
 			// (zugestellt), double check (gelesen) and the failure cross.
 			&--sent svg path,
 			&--read svg path {
-				fill: var(--m3-primary, #a5000a);
+				fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			// Not delivered: red cross, a touch larger to match the denser
@@ -1042,7 +1042,7 @@ $message-avatar-overlap: -19px;
 				height: 14px;
 
 				path {
-					fill: var(--m3-primary, #a5000a);
+					fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 				}
 			}
 		}
@@ -1063,7 +1063,7 @@ $message-avatar-overlap: -19px;
 
 			a,
 			a:hover {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			blockquote {
@@ -1266,7 +1266,7 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 
 		&:focus-visible {
@@ -1323,7 +1323,7 @@ $message-avatar-overlap: -19px;
 			}
 
 			&:hover path {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			&.success {
@@ -1561,10 +1561,13 @@ $message-avatar-overlap: -19px;
 
 	// Color for outgoing messages on the light pink bubble.
 	&--myMessage {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 			text-decoration: none;
 		}
 
@@ -1673,7 +1676,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--mine .messageItem__reactionPillCount {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 }
@@ -1747,7 +1750,7 @@ $message-avatar-overlap: -19px;
 	border: 0;
 	border-radius: 18px;
 	background: transparent;
-	color: var(--m3-primary, #a5000a);
+	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	font: inherit;
 	font-weight: 600;
 	cursor: pointer;
