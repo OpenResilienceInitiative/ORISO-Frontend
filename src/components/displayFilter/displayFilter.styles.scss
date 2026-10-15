@@ -380,10 +380,14 @@
 }
 
 /* The filter dialog is a settings sheet, not a confirm: let it use more of a
-   short desktop window (Frank's ~700px Safari) before the body scrolls. */
-.displayFilterDialog .m3Dialog__surface {
-	max-height: min(820px, 100vh - 48px);
-	margin: 24px 32px;
+   short desktop window (Frank's ~700px Safari) before the body scrolls.
+   Never on the full-screen phone sheet (it gave that sheet a 32px side band
+   on Dev, 2026-10-15) and never below the phone breakpoint. */
+@include breakpoint($fromMedium) {
+	.displayFilterDialog:not(.m3Dialog--fullScreen) .m3Dialog__surface {
+		max-height: min(820px, 100vh - 48px);
+		margin: 24px 32px;
+	}
 }
 
 .displayFilterDialog .displayFilterDialog__view {
@@ -504,4 +508,73 @@
 
 .displayFilterDialog__row .displayFilterDialog__cell {
 	padding: 6px 0 6px 8px;
+}
+
+/* Column titles inside the cells: phone layout only (see below). */
+.displayFilterDialog__cellLabel {
+	display: none;
+}
+
+/* Phone layout (2026-10-15): at 390px the table squeezed the kind names to
+   one letter per line and pushed "Anzeigen" past the edge. Below the medium
+   breakpoint every kind is a block: icon + full name on one line, its
+   controls underneath, each with its own small column title. The pickers
+   share the row (two side by side from ~300px, stacked below) at full cell
+   width, so "Standard" is not truncated. Works for any number of columns. */
+@media (width < #{$fromMedium}) {
+	.displayFilterDialog__table,
+	.displayFilterDialog__table tbody {
+		display: block;
+	}
+
+	/* The header row no longer aligns; keep it for screen readers only. */
+	.displayFilterDialog__table thead {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+
+	.displayFilterDialog__row {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+		gap: 4px 8px;
+		padding: 8px 0;
+	}
+
+	.displayFilterDialog__row .displayFilterDialog__kind {
+		grid-column: 1 / -1;
+		min-height: 24px;
+		padding: 0;
+	}
+
+	.displayFilterDialog__row .displayFilterDialog__cell {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 4px;
+		min-width: 0;
+		padding: 0;
+		text-align: left;
+	}
+
+	.displayFilterDialog__cellLabel {
+		display: block;
+		font-size: 12px;
+		font-weight: 500;
+		line-height: 16px;
+		letter-spacing: 0.5px;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	.displayFilterDialog__picker {
+		width: 100%;
+	}
+
+	.displayFilterDialog__noPill {
+		width: auto;
+		line-height: 32px;
+	}
 }

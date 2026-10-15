@@ -69,6 +69,18 @@ export interface DisplayFilterKindTableProps {
 const AREA_DEFAULT = '__default';
 
 /**
+ * The column title repeated inside each cell. Hidden on desktop, where the
+ * header row labels the columns; shown in the phone layout, where every kind
+ * is a block and the header row no longer lines up. `aria-hidden`: the
+ * controls already carry their full names ("Ton anhören: Mail").
+ */
+const CellLabel = ({ children }: { children: string }) => (
+	<span className="displayFilterDialog__cellLabel" aria-hidden="true">
+		{children}
+	</span>
+);
+
+/**
  * One row per kind (#1377 spec §3, reshaped 2026-09-16 with Frank): the
  * Zeitstrahl offers **In der Liste** + **Anzeigen**; Gespräche and Anfragen
  * offer **Ton** + **Anzeigen**. Both Ton and Anzeigen are small split-button
@@ -199,6 +211,7 @@ export const DisplayFilterKindTable = ({
 							</th>
 							{columns.show && (
 								<td className="displayFilterDialog__cell">
+									<CellLabel>{labels.showColumn}</CellLabel>
 									<M3Checkbox
 										checked={setting.show}
 										indeterminate={Boolean(
@@ -221,6 +234,7 @@ export const DisplayFilterKindTable = ({
 							)}
 							{columns.sound && (
 								<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
+									<CellLabel>{labels.soundColumn}</CellLabel>
 									{kind.pillOnly || kind.showOnly ? (
 										<span
 											className="displayFilterDialog__noPill"
@@ -308,6 +322,7 @@ export const DisplayFilterKindTable = ({
 								</td>
 							)}
 							<td className="displayFilterDialog__cell displayFilterDialog__cell--picker">
+								<CellLabel>{labels.pillColumn}</CellLabel>
 								{kind.showOnly ? (
 									<>
 										<span
