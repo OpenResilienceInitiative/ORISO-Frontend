@@ -9,6 +9,7 @@ import { ZipcodeInput } from './zipcodeInput/ZipcodeInput';
 import { TopicSelection } from './topicSelection/TopicSelection';
 import { WhyLocalDisclosure } from './zipcodeInput/WhyLocalDisclosure';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import { verifyWaitingRoomContract } from '../../../.storybook/waitingRoomContractPlay';
 import { PostRegistrationHandover } from '../app/registrationLoader/PostRegistrationHandover';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
@@ -532,5 +533,14 @@ export const PostRegistrationPreparing: StoryObj = {
 export const PostRegistrationReady: StoryObj = {
 	name: '8f — Nach dem Reload, echte Komponente (bereit)',
 	render: () => <PostRegistrationInStage ready />,
-	parameters: { layout: 'fullscreen' }
+	parameters: { layout: 'fullscreen' },
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, {
+			stage: true,
+			gate: () =>
+				canvasElement.querySelector<HTMLElement>(
+					'[data-cy-state="ready"]'
+				)
+		});
+	}
 };
