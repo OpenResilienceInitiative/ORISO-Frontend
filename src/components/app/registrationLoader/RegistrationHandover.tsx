@@ -152,23 +152,16 @@ export const RegistrationHandover = ({
 					display: 'flex',
 					flexDirection: 'column',
 					width: '100%',
-					/* 720 was too narrow from the first review on: three
-					   264 px cards plus their two 20 px gaps need 832 of
-					   content, and the column pads 40 a side — 912 in all. On
-					   a 1440 screen the third card was cut off before (Frank,
-					   turn 1: "das falsche Maß bei 1440"). Below `lg` it keeps
-					   720 and the cards scroll, which is what a phone wants.
-
-					   Only the overlay may take those 912: it owns the whole
-					   viewport. The inline variant stands in the white column
-					   beside the red stage, which is 60vw — 864 px at 1440 —
-					   so a 912 module would run into the stage (Frank,
-					   2026-09-07: "roter Bereich, Modul darf nie so breit
-					   sein"). It keeps 720 and lets the cards scroll. */
+					/* The overlay owns the viewport and may take 912: three 264 px
+					   cards plus gaps. The inline variant fills the white column
+					   beside the stage, like the live-chat waiting room does, so
+					   every room shows the same two full cards on a desktop
+					   (Frank, 2026-10-15). It never exceeds its column, so it
+					   cannot run into the red stage. */
 					maxWidth:
 						variant === 'overlay'
 							? { xs: '100%', sm: 720, lg: 912 }
-							: { xs: '100%', sm: 720 },
+							: '100%',
 					mx: 'auto',
 					px: { xs: 2.5, sm: 5 },
 					pt: { xs: 3, sm: 4 },
