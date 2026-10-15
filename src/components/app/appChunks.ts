@@ -20,15 +20,25 @@ export const loadWriteEnquiry = () =>
 		default: m.WriteEnquiry
 	}));
 
+export const loadGroupEntryRoom = () =>
+	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
+		default: m.GroupEntryRoom
+	}));
+
 const loadMatrixChunks = () =>
 	Promise.all([
 		import('../../services/matrixClientService'),
 		import('../../services/matrixLiveEventBridge')
 	]);
 
-/** The screens behind the waiting room's button. Resolves when both are in. */
-export const loadEntryScreens = () =>
-	Promise.all([loadSessionView(), loadWriteEnquiry()]);
+/**
+ * The screens behind the waiting room's button: the enquiry and its session,
+ * or the group's entry room for someone who came through a group link.
+ */
+export const loadEntryScreens = (forGroup = false) =>
+	forGroup
+		? loadGroupEntryRoom()
+		: Promise.all([loadSessionView(), loadWriteEnquiry()]);
 
 let warmed = false;
 
@@ -39,6 +49,7 @@ export const warmAppChunks = () => {
 	Promise.all([
 		loadAuthenticatedApp(),
 		loadEntryScreens(),
+		loadGroupEntryRoom(),
 		loadMatrixChunks()
 	]).catch(() => {
 		warmed = false;

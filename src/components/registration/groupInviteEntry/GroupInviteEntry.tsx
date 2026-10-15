@@ -51,7 +51,7 @@ export const GroupInviteEntry = ({
 				mobileHero="bar"
 			>
 				{/* Once `busy`, `Registration` swaps this whole screen for the
-				    shared waiting room (`HandoverStage`, #1219). */}
+				    shared waiting room (`WaitingRoomFrame`, #1219). */}
 				<Box
 					data-cy="group-invite-entry"
 					sx={{

@@ -26,6 +26,7 @@ import {
 	phone375Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 /**
  * The **live chat** entry room — the real views (`entryRoom/`), which the
@@ -300,6 +301,7 @@ export const StepAccessMobile: StoryObj = {
 	)
 };
 export const StepWaiting: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
@@ -308,6 +310,7 @@ export const StepWaiting: StoryObj = {
 	)
 };
 export const StepWaitingMobile: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: 'B — Warteraum, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting />,
@@ -361,7 +364,10 @@ export const StepAccepted: StoryObj = {
 	name: 'B — Warteraum: Beraterin ist da',
 	globals: desktop1440Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
 	)
@@ -427,14 +433,20 @@ export const StepAcceptedMobile: StoryObj = {
 	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: { layout: 'fullscreen' }
 };
 export const StepAcceptedTablet: StoryObj = {
 	name: 'B — Beraterin ist da, Tablet',
 	globals: tablet834Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: { layout: 'fullscreen' }
 };
 export const StepClosed: StoryObj = {

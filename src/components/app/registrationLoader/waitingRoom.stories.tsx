@@ -10,7 +10,7 @@ import {
 	desktop1440Globals,
 	phone390Globals
 } from '../../message/messageStoryShell';
-import { HandoverStage } from './HandoverStage';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { RegistrationHandover } from './RegistrationHandover';
 import {
 	HANDOVER_MILESTONES,
@@ -23,7 +23,7 @@ import { expectWaitingRoomLayout } from './waitingRoomLayoutContract';
 /**
  * The one waiting room between "Registrieren" and the message field (#1219).
  *
- * Every story renders the real `HandoverStage` — the frame both the
+ * Every story renders the real `WaitingRoomFrame` — the frame both the
  * registration and the app mount — so what you see here is what stands on
  * both sides of the document load. Each story checks the layout contract
  * (`waitingRoomLayoutContract.ts`): stage beside the column, the shared bar at
@@ -64,12 +64,12 @@ const Milestones = ({
 
 const Waiting = ({ finished }: { finished: number }) => (
 	<Milestones finished={finished}>
-		<HandoverStage>
+		<WaitingRoomFrame>
 			<RegistrationHandover
 				ready={finished >= HANDOVER_MILESTONES.length}
 				onEnter={() => undefined}
 			/>
-		</HandoverStage>
+		</WaitingRoomFrame>
 	</Milestones>
 );
 
@@ -155,14 +155,14 @@ const GroupJoin = () => {
 	const copy = useGroupJoinHandoverCopy();
 	return (
 		<Milestones finished={3}>
-			<HandoverStage>
+			<WaitingRoomFrame>
 				<RegistrationHandover
 					ready={false}
 					forcedState="preparing"
 					onEnter={() => undefined}
 					copy={copy}
 				/>
-			</HandoverStage>
+			</WaitingRoomFrame>
 		</Milestones>
 	);
 };
@@ -201,12 +201,12 @@ const Run = () => {
 	}, []);
 	return (
 		<>
-			<HandoverStage>
+			<WaitingRoomFrame>
 				<RegistrationHandover
 					ready={progress >= 100}
 					onEnter={() => undefined}
 				/>
-			</HandoverStage>
+			</WaitingRoomFrame>
 			<Typography
 				sx={{
 					position: 'fixed',

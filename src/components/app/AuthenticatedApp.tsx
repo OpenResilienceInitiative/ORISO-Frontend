@@ -22,12 +22,13 @@ import {
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
-import { HandoverStage } from './registrationLoader/HandoverStage';
+import { WaitingRoomFrame } from '../waitingRoom/WaitingRoomFrame';
 import {
 	markHandoverMilestone,
 	resetHandoverProgress
 } from './registrationLoader/handoverProgress';
 import { loadEntryScreens } from './appChunks';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import {
 	handleTokenRefresh,
@@ -118,21 +119,25 @@ export const AuthenticatedApp = ({
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
-	// Freshly-registered askers get a welcome loading animation bridging the
-	// bootstrap below (one-shot flag set just before the post-registration redirect).
+	// Freshly-registered askers keep the waiting room they saw before the
+	// document load, while the bootstrap below runs (one-shot flag set just
+	// before the post-registration redirect).
 	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
 		const flagged =
 			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
 		if (flagged) {
 			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
 		}
-		/* Someone who registered through a group link is not about to
-		   write an enquiry — the group's entry room is their handover. */
-		const cameForAGroup = Boolean(
-			new URLSearchParams(window.location.search).get('gcid')
-		);
-		return flagged && !cameForAGroup;
+		return flagged;
 	});
+	/* Someone who registered through a group link sees the group's words in
+	   the same waiting room, and its button opens the group's entry room
+	   instead of an enquiry. It used to get no waiting room at all here —
+	   a spinner page, then the group (#1219). */
+	const [postRegForGroup] = useState(() =>
+		Boolean(new URLSearchParams(window.location.search).get('gcid'))
+	);
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
@@ -158,7 +163,7 @@ export const AuthenticatedApp = ({
 			   a screen that is already loaded, so "ready" waits for these too.
 			   Started now, in parallel with everything below. */
 			const entryScreens = showPostRegLoader
-				? loadEntryScreens().then(
+				? loadEntryScreens(postRegForGroup).then(
 						() => markHandoverMilestone('screens'),
 						() => markHandoverMilestone('screens')
 					)
@@ -366,12 +371,13 @@ export const AuthenticatedApp = ({
 		/* The same frame and the same fill `Registration` showed before the
 		   document load, so the person sees one waiting room (#1219). */
 		return (
-			<HandoverStage>
+			<WaitingRoomFrame>
 				<RegistrationHandover
 					ready={appReady}
 					onEnter={handlePostRegLoaderFinish}
+					copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
 				/>
-			</HandoverStage>
+			</WaitingRoomFrame>
 		);
 	}
 

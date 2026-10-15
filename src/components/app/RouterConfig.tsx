@@ -46,13 +46,13 @@ import { BookingReschedule } from '../../containers/bookings/components/BookingR
 import { NotificationsCenter } from '../notificationsCenter/NotificationsCenter';
 import { DraftsCenter } from '../draftsCenter/DraftsCenter';
 import { lazyWithReload } from '../../utils/chunkLoadRecovery';
-import { loadSessionView, loadWriteEnquiry } from './appChunks';
+import {
+	loadGroupEntryRoom,
+	loadSessionView,
+	loadWriteEnquiry
+} from './appChunks';
 
-const GroupEntryRoom = lazyWithReload(() =>
-	import('../groupChat/entryRoom/GroupEntryRoom').then((m) => ({
-		default: m.GroupEntryRoom
-	}))
-);
+const GroupEntryRoom = lazyWithReload(loadGroupEntryRoom);
 const SessionView = lazyWithReload(loadSessionView);
 const WriteEnquiry = lazyWithReload(loadWriteEnquiry);
 

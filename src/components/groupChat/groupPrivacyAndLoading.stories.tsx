@@ -9,7 +9,7 @@ import {
 import { AgencySpecificContext, UserDataContext } from '../../globalState';
 import { Stage } from '../stage/stage';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
-import { HandoverStage } from '../app/registrationLoader/HandoverStage';
+import { WaitingRoomFrame } from '../waitingRoom/WaitingRoomFrame';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { useGroupJoinHandoverCopy } from './groupJoinHandoverCopy';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
@@ -92,31 +92,31 @@ const StageProviders = ({ children }: { children: React.ReactNode }) => (
    --------------------------------------------------------------------------- */
 
 /* Both render what `Registration` shows from the click on: the shared
-   `HandoverStage` frame (#1219). "Before" is the counselling copy the group
+   `WaitingRoomFrame` frame (#1219). "Before" is the counselling copy the group
    join used to show by mistake; "after" is the group's own. */
 const JoiningBefore = () => (
 	<StageProviders>
-		<HandoverStage>
+		<WaitingRoomFrame>
 			<RegistrationHandover
 				ready={false}
 				forcedState="preparing"
 				onEnter={() => undefined}
 			/>
-		</HandoverStage>
+		</WaitingRoomFrame>
 	</StageProviders>
 );
 
 const JoiningAfterScreen = () => {
 	const copy = useGroupJoinHandoverCopy();
 	return (
-		<HandoverStage>
+		<WaitingRoomFrame>
 			<RegistrationHandover
 				ready={false}
 				forcedState="preparing"
 				onEnter={() => undefined}
 				copy={copy}
 			/>
-		</HandoverStage>
+		</WaitingRoomFrame>
 	);
 };
 

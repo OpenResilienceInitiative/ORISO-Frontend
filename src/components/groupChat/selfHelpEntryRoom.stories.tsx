@@ -33,6 +33,7 @@ import {
 	effectiveBackground,
 	wcagContrast
 } from '../../utils/theme/wcagContrast';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 /**
  * The self-help group entry room — every view a person passes through between
@@ -298,6 +299,7 @@ const Room = ({ start = IN_THREE_DAYS }: { start?: Date }) => (
 );
 
 export const WaitingArea: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: '1 — Wartebereich',
 	render: () => <Room />,
 	parameters: {
@@ -311,6 +313,7 @@ export const WaitingArea: StoryObj = {
 };
 
 export const WaitingAreaOverdue: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: '2 — Läuft schon',
 	render: () => <Room start={OVERDUE} />,
 	parameters: {
@@ -368,6 +371,7 @@ export const WaitingAreaOverdue3DigitsMobile: StoryObj = {
 };
 
 export const WaitingAreaMobile: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: '3 — Wartebereich, mobil',
 	globals: phone375Globals,
 	render: () => <Room />,
