@@ -5908,6 +5908,10 @@
 				"title": "Yeni danışmanlık şu anda başlatılamıyor",
 				"text": "Danışmanlık kuruluşunun güncel veri işleme sözleşmesini onaylaması gerekiyor. Lütfen danışmanlık merkezinize başvurun. Başlamış danışmanlıklar devam eder."
 			},
+			"restrictedGroupJoin": {
+				"title": "Gruba katılım şu anda mümkün değil",
+				"text": "Bu gruba katılmak şu anda mümkün değil, çünkü danışmanlık kuruluşunun güncel veri işleme sözleşmesini henüz onaylaması gerekiyor. Lütfen danışmanlık merkezinize başvurun."
+			},
 			"unavailable": {
 				"title": "Danışmanlık durumu şu anda doğrulanamıyor",
 				"text": "Sözleşmenin onay durumu doğrulanamadı. Lütfen tekrar deneyin. Girdiğiniz bilgiler korunur.",

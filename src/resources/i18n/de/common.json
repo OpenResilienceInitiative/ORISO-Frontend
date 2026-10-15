@@ -5898,6 +5898,10 @@
 				"title": "Neue Beratung derzeit gesperrt",
 				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
 			},
+			"restrictedGroupJoin": {
+				"title": "Beitritt zur Gruppe derzeit nicht möglich",
+				"text": "Der Beitritt zu dieser Gruppe ist derzeit nicht möglich, weil die Beratungsorganisation die aktuelle Auftragsverarbeitungsvereinbarung (AVV) noch bestätigen muss. Bitte wenden Sie sich an Ihre Beratungsstelle."
+			},
 			"unavailable": {
 				"title": "Beratung derzeit nicht prüfbar",
 				"text": "Der Bestätigungsstatus der Vereinbarung konnte nicht geprüft werden. Bitte versuchen Sie es erneut. Ihre Eingaben bleiben erhalten.",
