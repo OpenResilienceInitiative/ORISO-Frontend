@@ -21,8 +21,18 @@ import { Stage } from '../stage/stage';
 import { AgencySpecificContext } from '../../globalState';
 import {
 	desktop1440Globals,
+	phone390Globals,
 	phone375Globals
 } from '../message/messageStoryShell';
+import {
+	expectCaptionClear,
+	expectOverdueClockOnOneRow
+} from './waitingClock/waitingClockStoryChecks';
+import { expect, within } from 'storybook/test';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
 
 /**
  * The self-help group entry room — every view a person passes through between
@@ -74,6 +84,10 @@ const WELCOME =
 const NOW = Date.UTC(2026, 8, 4, 14, 0, 0);
 const IN_THREE_DAYS = new Date(NOW + 3 * 24 * 3600e3 + 5 * 3600e3 + 12 * 60e3);
 const OVERDUE = new Date(NOW - 7 * 60e3);
+/* Bug A in #1499: a group two hours and twenty minutes past its start. Any
+   group created on Dev reaches this within minutes because UserService stores
+   the start two hours early, so this is the state a client most often sees. */
+const OVERDUE_3_DIGITS = new Date(NOW - (140 * 60 + 7) * 1000);
 
 /**
  * The waiting views on the split stage — Frank, 2026-09-04: "diese musst du jetzt
@@ -258,7 +272,7 @@ export const EntryScreenWithAccountMobile: StoryObj = {
    assignment. Here it gets fixtures instead of the chat; nothing else differs.
    --------------------------------------------------------------------------- */
 
-const Room = ({ overdue = false }: { overdue?: boolean }) => (
+const Room = ({ start = IN_THREE_DAYS }: { start?: Date }) => (
 	<LegalLinksContext.Provider value={legalLinks}>
 		<AgencySpecificContext.Provider
 			value={{
@@ -269,12 +283,12 @@ const Room = ({ overdue = false }: { overdue?: boolean }) => (
 			<GroupWaitingRoom
 				topicName={groupTopic.name}
 				agencyName={agency.name}
-				plannedStart={overdue ? OVERDUE : IN_THREE_DAYS}
+				plannedStart={start}
 				durationMinutes={90}
 				eventId={15}
 				welcomeText={WELCOME}
 				rules={RULES}
-				active={overdue}
+				active={start.getTime() <= NOW}
 				onJoin={() => undefined}
 				nowMs={NOW}
 				showLoginLink
@@ -298,7 +312,7 @@ export const WaitingArea: StoryObj = {
 
 export const WaitingAreaOverdue: StoryObj = {
 	name: '2 — Läuft schon',
-	render: () => <Room overdue />,
+	render: () => <Room start={OVERDUE} />,
 	parameters: {
 		layout: 'fullscreen',
 		docs: {
@@ -306,6 +320,50 @@ export const WaitingAreaOverdue: StoryObj = {
 				story: 'Der Termin ist vorbei: „Beitreten" im Fuß ist jetzt frei, sonst ändert sich an der Leiste nichts. Ob vor dem Eintritt noch ein Dialog fragt, ist weiter offen.'
 			}
 		}
+	}
+};
+
+/**
+ * #1499 bug A — the overdue clock at 1440 on the page a client lands on from
+ * the invite link. This is the exact state of Frank's screenshot of 22.09.2026:
+ * 140 minutes past the start. The two digit groups used to be allowed to wrap,
+ * and the seconds group dropped onto a second row and painted over the "Das
+ * Warten wird langsam etwas unangenehm …" caption. The minutes group now draws
+ * three digits and the row stays one row — the mini-clocks shrink instead.
+ */
+export const WaitingAreaOverdue3Digits: StoryObj = {
+	name: '2a — Läuft schon, über 99 Minuten (1440)',
+	globals: desktop1440Globals,
+	render: () => <Room start={OVERDUE_3_DIGITS} />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Zwei Stunden und zwanzig Minuten nach dem geplanten Start. Minuten und Sekunden stehen nebeneinander, die Uhr wird dafür eine Stufe kleiner, und der Satz darunter bleibt frei. Die Minuten zeigen 140 — früher stand dort 99, während die Vorlesehilfe 140 sagte.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+export const WaitingAreaOverdue3DigitsMobile: StoryObj = {
+	name: '2b — Läuft schon, über 99 Minuten (390)',
+	globals: phone390Globals,
+	render: () => <Room start={OVERDUE_3_DIGITS} />,
+	parameters: {
+		layout: 'fullscreen',
+		docs: {
+			description: {
+				story: 'Derselbe Fall auf 390 pt. Auch hier eine Reihe; die Miniaturuhren werden kleiner, nicht die Reihe zweizeilig.'
+			}
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
 	}
 };
 
@@ -319,6 +377,35 @@ export const WaitingAreaMobile: StoryObj = {
 			description: {
 				story: 'Derselbe Block auf 375 pt — ohne eigene Zahl. Die Uhr misst die Breite und schrumpft die Miniaturen, bis das Quadrat hineinpasst; nichts wird abgeschnitten, nichts wird zur Spalte. Das ist der Fehler, den Frank im Screenshot gesehen hat: eine Uhr mit fester Größe auf einem Bildschirm, für den sie nicht gerechnet war.'
 			}
+		}
+	}
+};
+
+/**
+ * Dev test of #1499: Träger 2's light-blue brand colour (#b4ddee) made
+ * "Zum Kalender hinzufügen" and "Mehr erfahren" unreadable (~1.4:1 on
+ * white). Their labels now use the legible brand text tone; filled areas
+ * such as the stage keep the Träger's pastel.
+ */
+export const WaitingAreaLightBrandColour: StoryObj = {
+	name: '1b — Wartebereich, helle Trägerfarbe (Träger 2) · 1440',
+	globals: desktop1440Globals,
+	render: () => <Room />,
+	parameters: { layout: 'fullscreen', orisoSeed: '#b4ddee' },
+	play: async ({ canvasElement }) => {
+		const calendar = within(canvasElement).getByRole('button', {
+			name: /Zum Kalender hinzufügen/
+		});
+		const more = within(canvasElement).getByRole('button', {
+			name: /Mehr erfahren/
+		});
+		for (const button of [calendar, more]) {
+			await expect(
+				wcagContrast(
+					getComputedStyle(button).color,
+					effectiveBackground(button)
+				)
+			).toBeGreaterThanOrEqual(4.5);
 		}
 	}
 };
