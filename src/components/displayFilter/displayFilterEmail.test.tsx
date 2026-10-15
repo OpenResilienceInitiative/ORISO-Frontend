@@ -148,6 +148,31 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		);
 	});
 
+	it('saves Supervision as the Fachaustausch switch of the profile', async () => {
+		const profile = render(withUser(<EmailNotification />));
+		fireEvent.click(
+			screen.getByRole('switch', {
+				name: 'profile.notifications.matrix.consultant.feedback.title'
+			})
+		);
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
+		const fromProfile = vi.mocked(apiPatchUserData).mock.calls[0][0];
+		profile.unmount();
+		vi.mocked(apiPatchUserData).mockClear();
+
+		render(withUser(<ConnectedDialog />));
+		fireEvent.click(
+			screen.getByRole('button', { name: 'E-Mail wählen: Supervision' })
+		);
+		fireEvent.click(screen.getByRole('menuitemradio', { name: 'An' }));
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
+		const fromDialog = vi.mocked(apiPatchUserData).mock.calls[0][0];
+		expect(fromDialog).toEqual(fromProfile);
+		expect(
+			fromDialog.emailNotifications.settings.feedbackNotificationEnabled
+		).toBe(true);
+	});
+
 	it('shows "nicht verfügbar" without a focus stop where no e-mail setting exists, and says why', () => {
 		render(withUser(<ConnectedDialog />));
 		const row = screen.getByRole('row', { name: /Live-Chat/ });

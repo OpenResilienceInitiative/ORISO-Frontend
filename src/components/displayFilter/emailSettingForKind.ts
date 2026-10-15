@@ -22,9 +22,11 @@ const SWITCH_BY_KIND: Record<
 	sessions: {
 		// Messages from advice seekers in a counselling conversation.
 		oneToOne: 'newMessage',
-		appointments: 'appointment'
-		// liveChat, internalGroup, circle, supervision, other: no stored
-		// switch (internalChatNotificationEnabled is not in this API yet).
+		appointments: 'appointment',
+		// Frank 2026-10-15: the Fachaustausch switch (counsellors only).
+		supervision: 'feedback'
+		// liveChat, internalGroup, circle, other: no stored switch
+		// (internalChatNotificationEnabled is not in this API yet).
 	},
 	requests: {
 		nearby: 'newEnquiry'

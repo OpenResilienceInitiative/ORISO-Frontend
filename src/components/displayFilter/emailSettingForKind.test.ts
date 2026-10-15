@@ -21,7 +21,8 @@ describe('emailSettingForKind (FE#1377 redesign, E-Mail column)', () => {
 		// integration branch (draft PR #1666), not in this API.
 		['internalGroup', null],
 		['circle', null],
-		['supervision', null],
+		// Frank 2026-10-15: Supervision → the profile's Fachaustausch switch.
+		['supervision', 'feedbackNotificationEnabled'],
 		['other', null],
 		['unread', null]
 	])('Gespräche, counsellor: %s → %s', (kind, expected) => {
@@ -54,6 +55,8 @@ describe('emailSettingForKind (FE#1377 redesign, E-Mail column)', () => {
 			'newChatMessageNotificationEnabled'
 		);
 		expect(stored('timeline', 'requests', 'asker')).toBeNull();
+		// Fachaustausch is a counsellor switch only.
+		expect(stored('sessions', 'supervision', 'asker')).toBeNull();
 		expect(stored('timeline', 'handover', 'asker')).toBe(
 			'reassignmentNotificationEnabled'
 		);

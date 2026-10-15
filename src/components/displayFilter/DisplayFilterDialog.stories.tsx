@@ -711,3 +711,45 @@ export const EmailChange: Story = {
 		await waitFor(() => expect(picker).toHaveTextContent('Aus'));
 	}
 };
+
+const supervisionEmailChange = fn();
+
+/**
+ * Frank 2026-10-15: Supervision's e-mail cell is the profile's
+ * Fachaustausch switch (`feedbackNotificationEnabled`) — an enabled picker.
+ */
+export const SupervisionEmail: Story = {
+	globals: desktop1440Globals,
+	args: { ...sessionsArgs, fullScreen: false },
+	render: (args) => (
+		<Controlled {...args} onEmailChange={supervisionEmailChange} />
+	),
+	play: async ({ canvasElement }) => {
+		supervisionEmailChange.mockClear();
+		const dialog = within(canvasElement.ownerDocument.body);
+		const row = await dialog.findByRole('row', { name: /Supervision/ });
+		await expect(
+			row.querySelector('.displayFilterDialog__unavailable')
+		).toBeNull();
+		const picker = within(row).getByRole('button', {
+			name: 'E-Mail: Supervision'
+		});
+		await expect(picker).toBeEnabled();
+		await userEvent.click(
+			within(row).getByRole('button', {
+				name: 'E-Mail wählen: Supervision'
+			})
+		);
+		const menu = await dialog.findByRole('menu', {
+			name: 'E-Mail wählen: Supervision'
+		});
+		await userEvent.click(
+			within(menu).getByRole('menuitemradio', { name: 'Aus' })
+		);
+		await expect(supervisionEmailChange).toHaveBeenCalledWith(
+			'supervision',
+			false
+		);
+		await waitFor(() => expect(picker).toHaveTextContent('Aus'));
+	}
+};
