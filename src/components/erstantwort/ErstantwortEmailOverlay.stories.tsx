@@ -62,3 +62,21 @@ export const InvalidAddress: Story = {
 export const Mobile: Story = {
 	globals: phone390Globals
 };
+
+/** With the login name: read-only field, copy button and the shared-device warning. */
+export const WithLoginName: Story = {
+	args: { userName: 'ratsuchend-4711' },
+	play: async () => {
+		await waitFor(() =>
+			expect(screen().getByDisplayValue('ratsuchend-4711')).toBeVisible()
+		);
+		await expect(
+			screen().getByRole('button', { name: /^(Copy|Kopieren)$/ })
+		).toBeEnabled();
+	}
+};
+
+export const WithLoginNameMobile: Story = {
+	...WithLoginName,
+	globals: phone390Globals
+};

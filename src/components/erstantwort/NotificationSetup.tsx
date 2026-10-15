@@ -250,6 +250,7 @@ export const NotificationSetup = ({
 			)}
 			{emailOpen && (
 				<ErstantwortEmailOverlay
+					userName={userData?.userName}
 					onClose={() => {
 						continuation.current += 1;
 						setEmailOpen(false);

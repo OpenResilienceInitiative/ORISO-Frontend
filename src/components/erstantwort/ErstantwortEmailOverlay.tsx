@@ -5,6 +5,7 @@ import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { OrisoTextField } from '../form/OrisoTextField';
 import { isStringValidEmail } from '../registration/registrationHelpers';
 import { apiPutEmail, FETCH_ERRORS, X_REASON } from '../../api';
+import './ErstantwortEmailOverlay.styles.scss';
 import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelope.svg';
 
 /**
@@ -24,11 +25,13 @@ export interface ErstantwortEmailOverlayProps {
 	onClose: () => void;
 	/** Called after the address was accepted, so the caller can reload userData. */
 	onSaved: () => void;
+	/** The immutable login name; shown with a copy button when given. */
+	userName?: string;
 }
 
 export const ErstantwortEmailOverlay: React.FC<
 	ErstantwortEmailOverlayProps
-> = ({ onClose, onSaved }) => {
+> = ({ onClose, onSaved, userName }) => {
 	const { t } = useTranslation();
 	const active = useRef(true);
 	useEffect(() => {
@@ -41,6 +44,23 @@ export const ErstantwortEmailOverlay: React.FC<
 	const [isInvalid, setIsInvalid] = useState(false);
 	const [errorText, setErrorText] = useState<string | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
+
+	const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>(
+		'idle'
+	);
+
+	/* The result is awaited: "copied" must never be announced for a write that
+	   was rejected (insecure context, no clipboard permission). */
+	const copyUserName = async () => {
+		try {
+			if (!userName || !navigator.clipboard?.writeText)
+				throw new Error('unavailable');
+			await navigator.clipboard.writeText(userName);
+			if (active.current) setCopyState('copied');
+		} catch {
+			if (active.current) setCopyState('failed');
+		}
+	};
 
 	const isValid = email.length > 0 && isStringValidEmail(email);
 
@@ -116,7 +136,8 @@ export const ErstantwortEmailOverlay: React.FC<
 			onClose={close}
 			icon={<EnvelopeIcon />}
 			closeLabel={t('app.close')}
-			title={t('furtherSteps.email.overlay.headline')}
+			title={t('erstantwort.emailNotification.dialogTitle')}
+			description={t('erstantwort.emailNotification.dialogDescription')}
 			actions={[
 				{
 					label: t('furtherSteps.email.overlay.button2.label'),
@@ -148,6 +169,33 @@ export const ErstantwortEmailOverlay: React.FC<
 						: '')
 				}
 			/>
+			{userName && (
+				<div className="erstantwortEmailOverlay__userName">
+					<OrisoTextField
+						id="erstantwortUserName"
+						name="username"
+						autoComplete="username"
+						fullWidth
+						label={t('erstantwort.saveCredentials.userNameLabel')}
+						value={userName}
+						InputProps={{ readOnly: true }}
+					/>
+					<button
+						type="button"
+						className="erstantwortEmailOverlay__copy"
+						onClick={() => void copyUserName()}
+					>
+						{t('erstantwort.saveCredentials.copy')}
+					</button>
+					<p role="status" aria-live="polite">
+						{copyState === 'copied' &&
+							t('erstantwort.saveCredentials.copied')}
+						{copyState === 'failed' &&
+							t('erstantwort.saveCredentials.copyFailed')}
+					</p>
+					<p>{t('erstantwort.saveCredentials.sharedDevice')}</p>
+				</div>
+			)}
 			<p role="alert" aria-live="polite" className="sr-only">
 				{errorText ?? ''}
 			</p>

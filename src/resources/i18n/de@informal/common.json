@@ -2291,6 +2291,8 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Du kannst freiwillig eine E-Mail-Adresse hinterlegen. Dann bekommst Du eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
+			"dialogTitle": "Zugang sichern",
+			"dialogDescription": "Hinterlege eine E-Mail-Adresse, damit du dein Passwort später zurücksetzen kannst und von Antworten erfährst. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuch es noch einmal.",
 			"notAllowed": "Für Dein Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktiere unseren Support."
 		},

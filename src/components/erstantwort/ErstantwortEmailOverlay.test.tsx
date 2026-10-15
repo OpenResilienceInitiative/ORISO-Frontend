@@ -5,7 +5,8 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,6 +21,11 @@ vi.mock('react-i18next', () => ({
 			'furtherSteps.email.overlay.button1.label': 'Speichern',
 			'furtherSteps.email.overlay.button2.label': 'Schließen',
 			'furtherSteps.email.overlay.headline': 'E-Mail-Adresse angeben',
+			'erstantwort.emailNotification.dialogTitle': 'Zugang sichern',
+			'erstantwort.saveCredentials.copy': 'Kopieren',
+			'erstantwort.saveCredentials.copied': 'Anmeldename kopiert.',
+			'erstantwort.saveCredentials.copyFailed':
+				'Kopieren hat nicht geklappt.',
 			'furtherSteps.email.success.overlay.headline':
 				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.',
 			'erstantwort.emailNotification.saveFailed':
@@ -73,9 +79,58 @@ describe('ErstantwortEmailOverlay', () => {
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 
 		const dialog = screen.getByRole('dialog', {
-			name: 'E-Mail-Adresse angeben'
+			name: 'Zugang sichern'
 		});
 		expect(dialog.querySelector('input[type="email"]')).not.toBeNull();
+	});
+
+	it('shows no login-name block without a login name', () => {
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		expect(screen.queryByRole('button', { name: 'Kopieren' })).toBeNull();
+	});
+
+	it('shows the login name read-only and confirms a copy only after it succeeded', async () => {
+		const writeText = vi.fn().mockResolvedValue(undefined);
+		vi.stubGlobal('navigator', { clipboard: { writeText } });
+		render(
+			<ErstantwortEmailOverlay
+				onClose={vi.fn()}
+				onSaved={vi.fn()}
+				userName="hugo.simpson"
+			/>
+		);
+
+		const field = screen.getByDisplayValue('hugo.simpson');
+		expect(field.hasAttribute('readonly')).toBe(true);
+		fireEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
+		await waitFor(() =>
+			expect(screen.getByText('Anmeldename kopiert.')).toBeTruthy()
+		);
+		expect(writeText).toHaveBeenCalledWith('hugo.simpson');
+		vi.unstubAllGlobals();
+	});
+
+	it('does not claim a copy when the clipboard write is rejected', async () => {
+		vi.stubGlobal('navigator', {
+			clipboard: { writeText: vi.fn().mockRejectedValue(new Error('no')) }
+		});
+		render(
+			<ErstantwortEmailOverlay
+				onClose={vi.fn()}
+				onSaved={vi.fn()}
+				userName="hugo.simpson"
+			/>
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
+		await waitFor(() =>
+			expect(
+				screen.getByText('Kopieren hat nicht geklappt.')
+			).toBeTruthy()
+		);
+		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
+		vi.unstubAllGlobals();
 	});
 
 	it('keeps saving disabled until the address is a valid one', () => {
