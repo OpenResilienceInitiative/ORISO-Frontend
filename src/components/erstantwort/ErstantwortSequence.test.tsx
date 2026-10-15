@@ -45,7 +45,7 @@ describe('ErstantwortSequence', () => {
 	it('keeps frozen FAQ wording available inside expandable chat content', () => {
 		render(<ErstantwortSequence bausteine={bausteine} skipAnimation />);
 		const question = screen.getByText('Wann Sie eine Antwort erhalten');
-		expect(question.tagName).toBe('SUMMARY');
+		expect(question.closest('summary')).not.toBeNull();
 		fireEvent.click(question);
 		expect(question.closest('details')?.open).toBe(true);
 		expect(
@@ -190,6 +190,113 @@ describe('ErstantwortSequence', () => {
 		runSequence();
 
 		expect(onFirstReveal).toHaveBeenCalledTimes(1);
+	});
+
+	describe('one complete message (Frank, 15.10.)', () => {
+		const platformDefaults: ResolvedBaustein[] = [
+			{ id: 'greeting', body: 'Ihre Nachricht ist bei uns angekommen.' },
+			{
+				id: 'whoReadsAlong',
+				headline: 'Wer Ihre Nachricht liest',
+				body: 'Ihre Nachricht lesen ausschließlich Fachkräfte.'
+			},
+			{
+				id: 'noPersonalData',
+				headline: 'Bitte keine persönlichen Daten senden',
+				body: 'Bitte nennen Sie keinen vollen Namen.'
+			},
+			{
+				id: 'emergencyNumbers',
+				headline: 'Wenn es nicht warten kann',
+				body: 'Telefonseelsorge 0800 111 0 111.'
+			},
+			{
+				id: 'dataProtection',
+				body: 'Ihre Daten bleiben geschützt.'
+			},
+			{
+				id: 'emailNotification',
+				headline: 'Benachrichtigung per E-Mail',
+				body: 'Sie können eine E-Mail-Adresse hinterlegen.'
+			},
+			{ id: 'closing', body: 'Bis bald.' }
+		];
+
+		const bubbleOf = (text: string) =>
+			screen.getByText(text).closest('.erstantwort__bubble');
+
+		it('puts greeting, questions, emergency numbers and closing into one bubble', () => {
+			render(
+				<ErstantwortSequence
+					bausteine={platformDefaults}
+					skipAnimation
+				/>
+			);
+
+			const message = bubbleOf('Ihre Nachricht ist bei uns angekommen.');
+			expect(message).not.toBeNull();
+			expect(bubbleOf('Wer Ihre Nachricht liest')).toBe(message);
+			expect(bubbleOf('Wenn es nicht warten kann')).toBe(message);
+			expect(bubbleOf('Bis bald.')).toBe(message);
+		});
+
+		it('keeps the optional e-mail invitation as its own message after it', () => {
+			const { container } = render(
+				<ErstantwortSequence
+					bausteine={platformDefaults}
+					skipAnimation
+				/>
+			);
+
+			const bubbles = container.querySelectorAll('.erstantwort__bubble');
+			expect(bubbles).toHaveLength(2);
+			expect(bubbles[1].textContent).toContain(
+				'Sie können eine E-Mail-Adresse hinterlegen.'
+			);
+		});
+
+		it('shows the emergency numbers as the last question, collapsed and marked', () => {
+			render(
+				<ErstantwortSequence
+					bausteine={platformDefaults}
+					skipAnimation
+				/>
+			);
+
+			const summary = screen.getByText('Wenn es nicht warten kann');
+			const row = summary.closest('details');
+			expect(summary.closest('summary')).not.toBeNull();
+			expect(row?.open).toBe(false);
+			expect(row?.className).toContain('erstantwort__faq--emergency');
+			// Not colour alone: the row also carries a phone icon.
+			expect(row?.querySelector('summary svg')).not.toBeNull();
+			const rows = summary
+				.closest('.erstantwort__bubble')
+				?.querySelectorAll('details');
+			expect(rows?.[rows.length - 1]).toBe(row);
+		});
+
+		it('takes every question from the delivered wording, not from the code', () => {
+			render(
+				<ErstantwortSequence
+					skipAnimation
+					bausteine={[
+						{
+							id: 'greeting',
+							body: 'Hallo aus der Beratungsstelle.'
+						},
+						{
+							id: 'emergencyNumbers',
+							headline: 'Notfall? Sofort Hilfe',
+							body: 'Rufen Sie 112.'
+						}
+					]}
+				/>
+			);
+
+			expect(screen.getByText('Notfall? Sofort Hilfe')).toBeTruthy();
+			expect(screen.queryByText('Wenn es nicht warten kann')).toBeNull();
+		});
 	});
 
 	it('announces the sequence politely to screen readers without trapping focus', () => {
