@@ -24,7 +24,15 @@ const STORIES = [
 	['call-stages-hain--mit-atmosphaere', 'Hain-Atmosphaere', 900],
 	['call-stages-hain--dunkle-atmosphaere', 'Hain-Atmosphaere-dunkel', 900],
 	['call-atmosphere--alle-welten', 'Atmosphaeren-alle', 980],
-	['call-atmosphere--buehne', 'Atmosphaere-gross', 960]
+	['call-atmosphere--buehne', 'Atmosphaere-gross', 960],
+	['call-stages-felder--zu-zweit', 'Felder-2', 960],
+	['call-stages-felder--vier-ruhig', 'Felder-4-ruhig', 960],
+	['call-stages-felder--vier-mit-sprecher', 'Felder-4-spricht', 960],
+	['call-stages-felder--acht', 'Felder-8', 960],
+	['call-stages-felder--neun-scrollt', 'Felder-9-scrollt', 960],
+	['call-stages-felder--zwanzig-mit-zwei-sprechern', 'Felder-20', 960],
+	['call-stages-felder--mit-atmosphaere', 'Felder-Atmosphaere', 960],
+	['call-stages-felder--auf-dem-handy', 'Felder-Handy', 420]
 ];
 
 /** The atmosphere stories carry no participants; only the stages do. */
@@ -37,6 +45,18 @@ const STAGE_STORIES = new Set([
 	'Hain-Handy',
 	'Hain-Atmosphaere',
 	'Hain-Atmosphaere-dunkel'
+]);
+
+/** Felder draws fields rather than packed shapes, so it waits on its own. */
+const FIELD_STORIES = new Set([
+	'Felder-2',
+	'Felder-4-ruhig',
+	'Felder-4-spricht',
+	'Felder-8',
+	'Felder-9-scrollt',
+	'Felder-20',
+	'Felder-Atmosphaere',
+	'Felder-Handy'
 ]);
 
 await mkdir(OUT, { recursive: true });
@@ -61,7 +81,14 @@ for (const [id, name, width] of STORIES) {
 		`http://127.0.0.1:6006/iframe.html?id=${id}&viewMode=story`,
 		{ waitUntil: 'networkidle' }
 	);
-	if (STAGE_STORIES.has(name)) {
+	if (FIELD_STORIES.has(name)) {
+		await page.waitForSelector('[data-testid="felder-stage"]');
+		await page.waitForFunction(
+			() =>
+				document.querySelectorAll('[data-testid="field"] svg').length >
+				0
+		);
+	} else if (STAGE_STORIES.has(name)) {
 		await page.waitForSelector('[data-testid="hain-stage"]');
 		await page.waitForFunction(
 			() =>
@@ -88,20 +115,55 @@ for (const [id, name, width] of STORIES) {
 			w.style.pointerEvents = 'auto';
 		});
 
+		// In a scrolling stage the tiles below the fold are clipped, and
+		// elementFromPoint answers for the viewport only. Something scrolled
+		// out of sight is not covered, so it is skipped rather than reported
+		// — the first run called three of twenty "covered" for exactly this.
+		const stage = document.querySelector(
+			'[data-testid="hain-stage"], [data-testid="felder-stage"]'
+		);
+		// The atmosphere stories are backdrops with nobody on them.
+		if (!stage)
+			return {
+				count: 0,
+				covered: [],
+				overhanging: [],
+				truncated: [],
+				offscreen: 0
+			};
+		const visible = stage.getBoundingClientRect();
+		const inView = (b) =>
+			b.top >= visible.top - 1 &&
+			b.bottom <= visible.bottom + 1 &&
+			b.left >= visible.left - 1 &&
+			b.right <= visible.right + 1;
+
 		const covered = [];
 		const overhanging = [];
 		const truncated = [];
+		let offscreen = 0;
 		for (const pill of pills) {
-			const slot = pill.closest('[data-testid="participant"]');
+			// Hain wraps a participant, Felder wraps a field. Either is "the
+			// box this capsule belongs to"; a capsule wider than its own box
+			// hangs over the neighbours in both.
+			const slot = pill.closest(
+				'[data-testid="participant"], [data-testid="field"]'
+			);
+			if (!slot) continue;
 			const pb = pill.getBoundingClientRect();
 			const sb = slot.getBoundingClientRect();
 			const label = pill.textContent.trim().slice(0, 24);
 
-			const top = document.elementFromPoint(
-				pb.left + pb.width / 2,
-				pb.top + pb.height / 2
-			);
-			if (top && !pill.contains(top) && top !== pill) covered.push(label);
+			if (!inView(pb)) {
+				offscreen += 1;
+			} else {
+				const top = document.elementFromPoint(
+					pb.left + pb.width / 2,
+					pb.top + pb.height / 2
+				);
+				if (top && !pill.contains(top) && top !== pill)
+					covered.push(label);
+			}
 			if (pb.width > sb.width + 1) overhanging.push(label);
 
 			const text = pill.querySelector('[data-testid="name-pill-text"]');
@@ -112,11 +174,17 @@ for (const [id, name, width] of STORIES) {
 		wrappers.forEach((w) => {
 			w.style.pointerEvents = w.dataset.pe;
 		});
-		return { count: pills.length, covered, overhanging, truncated };
+		return {
+			count: pills.length,
+			covered,
+			overhanging,
+			truncated,
+			offscreen
+		};
 	});
 
 	process.stdout.write(
-		`${name.padEnd(16)} ${report.count} Pillen | verdeckt ${report.covered.length} | ragt über die Form ${report.overhanging.length} | gekürzt ${report.truncated.length}${report.truncated.length ? ': ' + report.truncated.join(' · ') : ''}\n`
+		`${name.padEnd(22)} ${report.count} Pillen | verdeckt ${report.covered.length} | ragt über ${report.overhanging.length} | gekürzt ${report.truncated.length} | weggescrollt ${report.offscreen}${report.truncated.length ? ' · ' + report.truncated.join(' · ') : ''}\n`
 	);
 	if (report.covered.length)
 		failures.push(

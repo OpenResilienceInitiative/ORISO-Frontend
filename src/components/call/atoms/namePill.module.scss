@@ -14,6 +14,7 @@ capsule itself never changes, which is why it lives here and not in a stage.
 	block-size: 26px;
 	padding-inline: 10px;
 	border-radius: 13px;
+
 	/* The handoff's 132px as the default. An arrangement that knows how much
 	room the shape has may raise it — see --name-pill-max below. */
 	max-inline-size: var(--name-pill-max, 132px);
