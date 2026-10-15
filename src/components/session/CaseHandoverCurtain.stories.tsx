@@ -1,92 +1,13 @@
 import * as React from 'react';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, within } from 'storybook/test';
-import {
-	CaseHandoverCurtainStep,
-	CaseHandoverCurtainView
-} from './CaseHandoverCurtain';
-import type { CaseHandoverReason } from '../../api/apiCaseHandover';
+import { CurtainPlayground } from './__storybook__/CurtainPlayground';
 import {
 	CASE_HANDOVER_WIZARD_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
 import './caseHandoverCurtain.styles.scss';
-
-// The four neutral codes UserService serves (#1536).
-const reasons: CaseHandoverReason[] = [
-	{
-		code: 'PLANNED_ABSENCE',
-		label: 'Planned absence',
-		clientConsentRequired: false
-	},
-	{
-		code: 'UNPLANNED_ABSENCE',
-		label: 'Unplanned absence',
-		clientConsentRequired: false
-	},
-	{
-		code: 'ASSIGNMENT_ENDED',
-		label: 'Assignment ended',
-		clientConsentRequired: false
-	},
-	{
-		code: 'ADVICE_REQUESTED',
-		label: 'Advice requested',
-		clientConsentRequired: true
-	}
-];
-
-const shell: React.CSSProperties = {
-	backgroundColor: '#eae7e8',
-	padding: 16,
-	height: '100vh',
-	boxSizing: 'border-box'
-};
-
-type PlaygroundProps = {
-	initialStep?: CaseHandoverCurtainStep;
-	initialReasonCode?: string;
-	initialExplanation?: string;
-	error?: string;
-	topicLabel?: string;
-	canReclaim?: boolean;
-};
-
-function CurtainPlayground({
-	initialStep = 'intro',
-	initialReasonCode = '',
-	initialExplanation = '',
-	error,
-	topicLabel = 'Schwangerschaftsberatung',
-	canReclaim = false
-}: PlaygroundProps) {
-	const [step, setStep] = useState<CaseHandoverCurtainStep>(initialStep);
-	const [reasonCode, setReasonCode] = useState(initialReasonCode);
-	const [explanation, setExplanation] = useState(initialExplanation);
-
-	return (
-		<div style={shell}>
-			<CaseHandoverCurtainView
-				step={step}
-				topicLabel={topicLabel}
-				reasons={reasons}
-				reasonCode={reasonCode}
-				explanation={explanation}
-				error={error}
-				onStart={() => setStep('reason')}
-				onBack={() => setStep('reason')}
-				onNext={() => setStep('describe')}
-				onReasonSelect={setReasonCode}
-				onExplanationChange={setExplanation}
-				onSubmit={() => setStep('pending')}
-				canReclaim={canReclaim}
-				onReclaim={() => {}}
-			/>
-		</div>
-	);
-}
 
 const meta: Meta = {
 	title: 'Organisms/CaseHandover/CaseHandoverCurtain',
@@ -173,31 +94,6 @@ export const ErrorState: Story = {
 	)
 };
 
-/** ADR-002 reclaim: the counsellor a takeover moved the case away from is back. */
-export const ReclaimAvailable: Story = {
-	render: () => <CurtainPlayground canReclaim />
-};
-
-function ReclaimConflictPlayground() {
-	const { t: translate } = useTranslation();
-	return (
-		<CurtainPlayground
-			canReclaim
-			error={translate('caseHandover.curtain.reclaim.unavailable')}
-		/>
-	);
-}
-
-/** 409: a permanent reason, or the cover counsellor no longer owns the case. */
-export const ReclaimConflict: Story = {
-	render: () => <ReclaimConflictPlayground />
-};
-
-/** No reclaim offered: the normal "request access" intro, unchanged. */
-export const IntroWithoutReclaim: Story = {
-	render: () => <CurtainPlayground canReclaim={false} />
-};
-
 /** Full wizard walk: intro → reason (radio) → describe → submit → pending. */
 export const WizardWalkthrough: Story = {
 	render: () => <CurtainPlayground />,
@@ -226,4 +122,29 @@ export const WizardWalkthrough: Story = {
 			await canvas.findByText(/awaiting approval|warten auf freigabe/i)
 		).toBeVisible();
 	}
+};
+
+/** ADR-002 reclaim: the counsellor a takeover moved the case away from is back. */
+export const ReclaimAvailable: Story = {
+	render: () => <CurtainPlayground canReclaim />
+};
+
+function ReclaimConflictPlayground() {
+	const { t: translate } = useTranslation();
+	return (
+		<CurtainPlayground
+			canReclaim
+			error={translate('caseHandover.curtain.reclaim.unavailable')}
+		/>
+	);
+}
+
+/** 409: a permanent reason, or the cover counsellor no longer owns the case. */
+export const ReclaimConflict: Story = {
+	render: () => <ReclaimConflictPlayground />
+};
+
+/** No reclaim offered: the normal "request access" intro, unchanged. */
+export const IntroWithoutReclaim: Story = {
+	render: () => <CurtainPlayground canReclaim={false} />
 };

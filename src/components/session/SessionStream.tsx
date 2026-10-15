@@ -63,7 +63,8 @@ import { applyMessageEdits } from '../../utils/messageRelations';
 import { CaseHandoverCurtain } from './CaseHandoverCurtain';
 import {
 	isCaseHandoverAccessControlled,
-	isCaseHandoverCoAccess
+	isCaseHandoverCoAccess,
+	isCaseHandoverPending
 } from './caseHandoverHelpers';
 import { normalizeServerTimestamp } from '../notificationsCenter/timelineTime';
 import {
@@ -79,6 +80,7 @@ import { CaseHandoverConversation } from '../caseHandover/CaseHandoverConversati
 import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
+import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
 
 const EMPTY_MESSAGES: MessageItem[] = [];
 /** Browsers fire a longer setTimeout immediately. */
@@ -477,7 +479,7 @@ export const SessionStream = ({
 					}
 					return chatTransportService.getMatrixRoomMessages(
 						roomId,
-						100
+						roomId === resolvedMatrixRoomId ? Infinity : 100
 					);
 				};
 
@@ -605,6 +607,25 @@ export const SessionStream = ({
 		]
 	);
 	const fetchSessionMessagesRef = useUpdatingRef(fetchSessionMessages);
+	const historyScope = `${userData?.userId}:${matrixClientGeneration}:${activeSession.item.id}:${resolvedChatSession.matrixRoomId}`;
+	const historyScopeRef = useRef(historyScope);
+	historyScopeRef.current = historyScope;
+	const loadEarlierMessages = useCallback(async () => {
+		const roomId = resolvedChatSession.matrixRoomId;
+		if (!roomId || !mayRequestHistoryKeys || isPracticeRoomId(roomId))
+			return false;
+		const hasMore =
+			await chatTransportService.loadEarlierMatrixRoomMessages(roomId);
+		if (historyScopeRef.current !== historyScope) return false;
+		await fetchSessionMessagesRef.current();
+		return hasMore;
+	}, [
+		historyScope,
+		historyScopeRef,
+		fetchSessionMessagesRef,
+		mayRequestHistoryKeys,
+		resolvedChatSession.matrixRoomId
+	]);
 
 	useEffect(() => {
 		const onHistoryKeysImported = (rawEvent: Event) => {
@@ -651,6 +672,21 @@ export const SessionStream = ({
 			.catch(() => setMessagesItem({ messages: [] }))
 			.finally(() => setLoading(false));
 	}, [fetchSessionMessagesRef, setSessionRead]);
+	const handleCaseHandoverStatusChange = useCallback(
+		(nextStatus: CaseHandoverStatus) => setCaseHandoverStatus(nextStatus),
+		[]
+	);
+
+	useCaseHandoverStatusRefresh({
+		enabled:
+			caseHandoverCurtainNeeded &&
+			String(caseHandoverStatus?.sessionId) ===
+				String(activeSession.item?.id) &&
+			isCaseHandoverPending(caseHandoverStatus?.status),
+		sessionId: activeSession.item?.id,
+		notifications: notificationsContext?.notificationFeed,
+		onStatus: handleCaseHandoverStatusChange
+	});
 
 	useEffect(() => {
 		let cancelled = false;
@@ -681,6 +717,17 @@ export const SessionStream = ({
 		apiGetCaseHandoverStatus(sessionId)
 			.then((nextStatus) => {
 				if (cancelled) {
+					return;
+				}
+				if (String(nextStatus.sessionId) !== String(sessionId)) {
+					setCaseHandoverStatus({
+						sessionId,
+						status: 'DENIED',
+						canViewContent: false,
+						clientConsentRequired: false,
+						auditOutcome: 'ACCESS_DENIED'
+					});
+					setLoading(false);
 					return;
 				}
 				setCaseHandoverStatus(nextStatus);
@@ -791,6 +838,7 @@ export const SessionStream = ({
 		const initialHydrationKey = `${matrixClientGeneration}:${watchedRoomIds.join('|')}`;
 
 		let retryTimer: number | null = null;
+		let earlierRefreshTimer: number | null = null;
 		let detachTimelineListeners: Array<() => void> = [];
 		let lastRefreshAt = 0;
 		const refreshMessages = () => {
@@ -806,10 +854,7 @@ export const SessionStream = ({
 				room: any,
 				toStartOfTimeline: boolean
 			) => {
-				if (
-					toStartOfTimeline ||
-					!watchedRoomIds.includes(room?.roomId)
-				) {
+				if (!watchedRoomIds.includes(room?.roomId)) {
 					return;
 				}
 
@@ -823,6 +868,16 @@ export const SessionStream = ({
 					eventType !== 'm.reaction' &&
 					eventType !== 'm.room.redaction'
 				) {
+					return;
+				}
+
+				if (toStartOfTimeline) {
+					if (earlierRefreshTimer === null) {
+						earlierRefreshTimer = window.setTimeout(() => {
+							earlierRefreshTimer = null;
+							refreshMessages();
+						}, 0);
+					}
 					return;
 				}
 
@@ -852,10 +907,9 @@ export const SessionStream = ({
 			}
 
 			detachTimelineListeners = detachers;
-			// Initial-sync events arrive with toStartOfTimeline=true and are
-			// intentionally ignored by the live handler. Hydrate once after every
-			// successful attachment so late-join decryption failures can trigger
-			// their room-key request after the Matrix room actually exists.
+			// Initial-sync events may already be cached before this listener attaches.
+			// Hydrate once after every successful attachment so late-join decryption
+			// failures can trigger their room-key request after the room exists.
 			if (
 				initialTimelineHydrationKeyRef.current !== initialHydrationKey
 			) {
@@ -903,6 +957,8 @@ export const SessionStream = ({
 			if (retryTimer) {
 				window.clearInterval(retryTimer);
 			}
+			if (earlierRefreshTimer !== null)
+				window.clearTimeout(earlierRefreshTimer);
 			detachTimelineListeners.forEach((detach) => detach());
 		};
 		// matrixRoomId is derived from resolvedChatSession (already a dep).
@@ -1315,13 +1371,6 @@ export const SessionStream = ({
 		}
 	};
 
-	const handleCaseHandoverStatusChange = (nextStatus: CaseHandoverStatus) => {
-		setCaseHandoverStatus(nextStatus);
-		if (nextStatus.canViewContent) {
-			loadAfterCaseHandoverGranted();
-		}
-	};
-
 	const handleCaseHandoverConsentDecision = (approved: boolean) => {
 		if (
 			!pendingCaseHandoverConsent ||
@@ -1373,6 +1422,7 @@ export const SessionStream = ({
 		return (
 			<div className="session__wrapper">
 				<CaseHandoverCurtain
+					actorId={userData.userId}
 					sessionId={activeSession.item.id}
 					status={caseHandoverStatus}
 					onStatusChange={handleCaseHandoverStatusChange}
@@ -1472,6 +1522,7 @@ export const SessionStream = ({
 				teamDiscussionError={!!teamDiscussionError}
 				bannedUsers={bannedUsers}
 				refreshMessages={fetchSessionMessages}
+				onLoadEarlierMessages={loadEarlierMessages}
 				caseHandoverStatus={caseHandoverStatus}
 			/>
 			{isOverlayActive && (
