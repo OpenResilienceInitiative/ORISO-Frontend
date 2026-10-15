@@ -320,3 +320,45 @@ it('does not confirm consent email or continue BOTH when consent subscription wa
 		})
 	).toBeNull();
 });
+
+it('explains a blocked browser permission up front, without asking the browser again', () => {
+	Object.defineProperty(Notification, 'permission', {
+		value: 'denied',
+		configurable: true
+	});
+	setup();
+	expect(
+		screen.getByText('erstantwort.notificationChoice.browserBlockedHelp')
+	).toBeTruthy();
+	expect(request).not.toHaveBeenCalled();
+});
+it('swaps the generic denial for the unblock instructions when the browser stays blocked', async () => {
+	Object.defineProperty(Notification, 'permission', {
+		value: 'denied',
+		configurable: true
+	});
+	request.mockResolvedValue('denied');
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	const alert = await screen.findByRole('alert');
+	expect(alert.textContent).toBe(
+		'erstantwort.notificationChoice.browserBlockedHelp'
+	);
+	expect(
+		screen.getAllByText('erstantwort.notificationChoice.browserBlockedHelp')
+	).toHaveLength(1);
+});
+it('confirms the saved address and names the one remaining browser step for both channels', async () => {
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.both/ })
+	);
+	await screen.findByRole('button', {
+		name: 'erstantwort.notificationChoice.enableBrowser'
+	});
+	expect(
+		screen.getByText('erstantwort.notificationChoice.emailSavedNext')
+	).toBeTruthy();
+});

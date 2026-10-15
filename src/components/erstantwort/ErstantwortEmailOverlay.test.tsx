@@ -47,44 +47,14 @@ vi.mock('../../api', () => ({
 	X_REASON: { EMAIL_NOT_AVAILABLE: 'EMAIL_NOT_AVAILABLE' }
 }));
 
-/* The platform Overlay portals into a modal root and installs a focus trap.
-   Neither is what this test is about — it is about the form wiring: validation,
-   submit, and how each failure reaches the person. Stub the chrome, keep the
-   buttonSet contract (label / disabled / function) that the real one honours. */
-vi.mock('../overlay/Overlay', () => ({
-	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE' },
-	Overlay: ({ item, handleOverlay }: any) => (
-		<div>
-			<h2>{item.headline}</h2>
-			{item.copy && <p>{item.copy}</p>}
-			{item.nestedComponent}
-			{item.buttonSet?.map((button: any) => (
-				<button
-					key={button.label}
-					disabled={button.disabled}
-					onClick={() => handleOverlay(button.function)}
-				>
-					{button.label}
-				</button>
-			))}
-		</div>
-	)
-}));
-
 /* `vi.mock` factories are hoisted above every const in the module, so the
    factory has to be inlined rather than referenced by name. */
 vi.mock('../../resources/img/icons/envelope.svg', () => ({
 	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
-vi.mock('../../resources/img/illustrations/envelope-check.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
-vi.mock('../../resources/img/illustrations/check.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
 
 /* eslint-disable-next-line import/first -- must be imported after the vi.mock
-   calls above, otherwise the real Overlay and SVG modules load first. */
+   calls above, otherwise the real SVG module loads first. */
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 
 afterEach(cleanup);
@@ -99,6 +69,15 @@ const type = (value: string) =>
 const saveButton = () => screen.getByRole('button', { name: 'Speichern' });
 
 describe('ErstantwortEmailOverlay', () => {
+	it('is the house M3 dialog, named by its headline, with the field inside it', () => {
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		const dialog = screen.getByRole('dialog', {
+			name: 'E-Mail-Adresse angeben'
+		});
+		expect(dialog.querySelector('input[type="email"]')).not.toBeNull();
+	});
+
 	it('keeps saving disabled until the address is a valid one', () => {
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 
@@ -122,11 +101,6 @@ describe('ErstantwortEmailOverlay', () => {
 
 		expect(apiPutEmail).toHaveBeenCalledWith('jemand@example.test');
 		expect(onSaved).toHaveBeenCalled();
-		expect(
-			screen.getByText(
-				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.'
-			)
-		).toBeTruthy();
 	});
 
 	it('surfaces an already-registered address instead of failing silently', async () => {

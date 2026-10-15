@@ -1,18 +1,11 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Overlay, OverlayItem, OVERLAY_FUNCTIONS } from '../overlay/Overlay';
-import { BUTTON_TYPES } from '../button/Button';
-import {
-	InputField,
-	InputFieldItem,
-	InputFieldLabelState
-} from '../inputField/InputField';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { OrisoTextField } from '../form/OrisoTextField';
 import { isStringValidEmail } from '../registration/registrationHelpers';
 import { apiPutEmail, FETCH_ERRORS, X_REASON } from '../../api';
 import { ReactComponent as EnvelopeIcon } from '../../resources/img/icons/envelope.svg';
-import { ReactComponent as EnvelopeIllustration } from '../../resources/img/illustrations/envelope-check.svg';
-import { ReactComponent as SuccessIllustration } from '../../resources/img/illustrations/check.svg';
 
 /**
  * The "leave an e-mail address" dialog behind the Erstantwort's ADD_EMAIL
@@ -45,10 +38,9 @@ export const ErstantwortEmailOverlay: React.FC<
 		};
 	}, []);
 	const [email, setEmail] = useState('');
-	const [labelState, setLabelState] = useState<InputFieldLabelState>(null);
+	const [isInvalid, setIsInvalid] = useState(false);
 	const [errorText, setErrorText] = useState<string | null>(null);
 	const [isSaving, setIsSaving] = useState(false);
-	const [isSaved, setIsSaved] = useState(false);
 
 	const isValid = email.length > 0 && isStringValidEmail(email);
 
@@ -56,21 +48,7 @@ export const ErstantwortEmailOverlay: React.FC<
 		const value = event.target.value;
 		setEmail(value);
 		setErrorText(null);
-		if (!value.length) {
-			setLabelState(null);
-			return;
-		}
-		setLabelState(isStringValidEmail(value) ? 'valid' : 'invalid');
-	};
-
-	const inputItem: InputFieldItem = {
-		content: email,
-		icon: <EnvelopeIcon />,
-		id: 'erstantwortEmail',
-		label: errorText ?? t('furtherSteps.email.overlay.input.label'),
-		name: 'email',
-		type: 'text',
-		labelState: errorText ? 'invalid' : labelState
+		setIsInvalid(value.length > 0 && !isStringValidEmail(value));
 	};
 
 	const save = () => {
@@ -81,13 +59,12 @@ export const ErstantwortEmailOverlay: React.FC<
 			.then(() => {
 				if (!active.current) return;
 				setIsSaving(false);
-				setIsSaved(true);
 				onSaved();
 			})
 			.catch((error: unknown) => {
 				if (!active.current) return;
 				setIsSaving(false);
-				setLabelState('invalid');
+				setIsInvalid(true);
 
 				if (error instanceof Error) {
 					if (error.message === FETCH_ERRORS.FORBIDDEN) {
@@ -124,59 +101,56 @@ export const ErstantwortEmailOverlay: React.FC<
 			});
 	};
 
-	const successItem: OverlayItem = {
-		buttonSet: [
-			{
-				label: t('furtherSteps.email.overlay.button2.label'),
-				function: OVERLAY_FUNCTIONS.CLOSE,
-				type: BUTTON_TYPES.PRIMARY
-			}
-		],
-		headline: t('furtherSteps.email.success.overlay.headline'),
-		svg: SuccessIllustration
+	const close = () => {
+		active.current = false;
+		onClose();
 	};
 
-	const formItem: OverlayItem = {
-		buttonSet: [
-			{
-				disabled: !isValid || isSaving,
-				label: t('furtherSteps.email.overlay.button1.label'),
-				type: BUTTON_TYPES.PRIMARY
-			},
-			{
-				label: t('furtherSteps.email.overlay.button2.label'),
-				function: OVERLAY_FUNCTIONS.CLOSE,
-				type: BUTTON_TYPES.SECONDARY
-			}
-		],
-		headline: t('furtherSteps.email.overlay.headline'),
-		/* The failure text belongs on the field label, next to the input that
-		   caused it — not duplicated into the overlay copy above it.
-		   The live region is separate and visually hidden: after pressing Save
-		   focus stays on the button, so a label change alone announces nothing
-		   and the person can reasonably assume the save worked. */
-		nestedComponent: (
-			<>
-				<InputField item={inputItem} inputHandle={handleChange} />
-				<p role="alert" aria-live="polite" className="sr-only">
-					{errorText ?? ''}
-				</p>
-			</>
-		),
-		svg: EnvelopeIllustration
-	};
-
+	/* The failure text belongs on the field, next to the input that caused it.
+	   The live region is separate and visually hidden: after pressing Save
+	   focus stays on the button, so a helper-text change alone announces
+	   nothing and the person can reasonably assume the save worked. */
 	return (
-		<Overlay
-			item={isSaved ? successItem : formItem}
-			handleOverlay={(buttonFunction: string) => {
-				if (buttonFunction === OVERLAY_FUNCTIONS.CLOSE) {
-					active.current = false;
-					onClose();
-					return;
+		<M3Dialog
+			open
+			onClose={close}
+			icon={<EnvelopeIcon />}
+			closeLabel={t('app.close')}
+			title={t('furtherSteps.email.overlay.headline')}
+			actions={[
+				{
+					label: t('furtherSteps.email.overlay.button2.label'),
+					onClick: close
+				},
+				{
+					label: t('furtherSteps.email.overlay.button1.label'),
+					onClick: save,
+					disabled: !isValid || isSaving,
+					primary: true
 				}
-				save();
-			}}
-		/>
+			]}
+		>
+			<OrisoTextField
+				id="erstantwortEmail"
+				name="email"
+				type="email"
+				autoComplete="email"
+				autoFocus
+				fullWidth
+				label={t('furtherSteps.email.overlay.input.label')}
+				value={email}
+				onChange={handleChange}
+				error={Boolean(errorText) || isInvalid}
+				helperText={
+					errorText ??
+					(isInvalid
+						? t('furtherSteps.email.overlay.input.invalid')
+						: '')
+				}
+			/>
+			<p role="alert" aria-live="polite" className="sr-only">
+				{errorText ?? ''}
+			</p>
+		</M3Dialog>
 	);
 };

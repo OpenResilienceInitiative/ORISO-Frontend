@@ -257,6 +257,33 @@ export const NotificationChoiceWithoutBrowserSupport: Story = {
 };
 
 /**
+ * **A channel that already works says so.** The chosen option carries a check
+ * mark and the word "Active", so nobody has to wonder whether the browser
+ * signal is on. Derived from live account and browser state, never from a click.
+ */
+export const NotificationChoiceActive: Story = {
+	...NotificationChoice,
+	args: {
+		...NotificationChoice.args,
+		slots: {
+			notificationChoice: (
+				<NotificationChoiceCard
+					chosen="BROWSER"
+					controlled
+					onChoose={() => undefined}
+				/>
+			)
+		}
+	},
+	play: async ({ canvas }) => {
+		await expect(canvas.getAllByText(/^(Active|Aktiv)$/)).toHaveLength(1);
+		await expect(
+			canvas.getByRole('button', { pressed: true })
+		).toHaveTextContent(/Active|Aktiv/);
+	}
+};
+
+/**
  * **The device limit, said without scaring anyone.** The reassurance comes
  * first and the limit second, because the limit alone reads as "you are about
  * to lose everything".

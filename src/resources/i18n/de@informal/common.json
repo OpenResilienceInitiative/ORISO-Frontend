@@ -2322,6 +2322,9 @@
 			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
 			"browser": "Gib mir hier ein Signal",
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfe die Berechtigung in deinem Browser.",
+			"optionActive": "Aktiv",
+			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicke in der Adressleiste auf das Schloss-Symbol, öffne die Website-Einstellungen, stelle Benachrichtigungen auf Zulassen oder wähle Zurücksetzen, und versuche es dann erneut.",
+			"emailSavedNext": "Deine E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlaube Benachrichtigungen in deinem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuche es erneut.",
 			"browserSilenced": "Browser-Benachrichtigungen sind in deinen Benachrichtigungseinstellungen stummgeschaltet."
 		}

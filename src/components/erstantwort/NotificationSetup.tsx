@@ -40,6 +40,8 @@ export const NotificationSetup = ({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [awaitingBrowser, setAwaitingBrowser] = useState(false);
+	const browserBlocked =
+		browserSupported && Notification.permission === 'denied';
 	const chosen: NotificationChoice | null =
 		emailActive && browserActive
 			? 'BOTH'
@@ -111,7 +113,15 @@ export const NotificationSetup = ({
 				if (!current()) return;
 				setAwaitingBrowser(false);
 				if (Notification.permission !== 'granted') {
-					setError(t('erstantwort.notificationChoice.browserDenied'));
+					// A blocked site never shows the permission prompt again;
+					// the person has to lift the block in the address bar.
+					setError(
+						t(
+							Notification.permission === 'denied'
+								? 'erstantwort.notificationChoice.browserBlockedHelp'
+								: 'erstantwort.notificationChoice.browserDenied'
+						)
+					);
 				}
 			}
 		} catch {
@@ -153,14 +163,22 @@ export const NotificationSetup = ({
 				busy={busy || emailOpen}
 			/>
 			{awaitingBrowser && (
-				<button
-					type="button"
-					className="erstantwort__action"
-					disabled={busy}
-					onClick={() => void finish('BROWSER')}
-				>
-					{t('erstantwort.notificationChoice.enableBrowser')}
-				</button>
+				<>
+					<p role="status">
+						{t('erstantwort.notificationChoice.emailSavedNext')}
+					</p>
+					<button
+						type="button"
+						className="erstantwort__action"
+						disabled={busy}
+						onClick={() => void finish('BROWSER')}
+					>
+						{t('erstantwort.notificationChoice.enableBrowser')}
+					</button>
+				</>
+			)}
+			{browserBlocked && !error && (
+				<p>{t('erstantwort.notificationChoice.browserBlockedHelp')}</p>
 			)}
 			{isBrowserEnabled && !browserSupported && (
 				<p>{t('erstantwort.notificationChoice.browserUnsupported')}</p>
