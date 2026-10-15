@@ -5339,6 +5339,7 @@
 			"ready": "Recovery with your password is set up. A saved recovery key also stays valid.",
 			"needs-password": "Recovery with your password has not been confirmed in this session. Sign in again or set it up with your existing recovery key.",
 			"needs-recovery-key": "Your previous history needs your recovery key on this device.",
+			"needs-sign-in": "Your previous history opens on this device as soon as you sign in again with your password.",
 			"retryable-failure": "Recovery with your password could not be set up. You can still write your enquiry and check the setup again in security settings.",
 			"settings": "Security settings",
 			"reauthenticate": "Sign out and sign in again",
