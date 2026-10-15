@@ -11,6 +11,18 @@ interface AnimalAvatarProps {
 	 * as the outline would read as a 2 px gap. The circle keeps its size.
 	 */
 	outline?: boolean;
+	/**
+	 * A CSS `border-radius` from a call arrangement, e.g. the eight-value blob
+	 * `ownShape` derives from a participant's name. Omitted everywhere else, so
+	 * the avatar stays the circle it is throughout the rest of the app.
+	 *
+	 * A prop rather than a second component: the artwork, the colours and the
+	 * per-icon padding above are the same in a call as anywhere, and the
+	 * padding was judged by eye at 104px. Nobody is going to judge it twice.
+	 */
+	radius?: string;
+	/** Degrees the form leans by. The artwork is counter-rotated upright. */
+	tilt?: number;
 }
 
 /**
@@ -52,7 +64,9 @@ const artworkFraction = (padding: number) =>
 export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	avatar,
 	size = AVATAR_SIZES.illustration,
-	outline = true
+	outline = true,
+	radius,
+	tilt
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
 	const borderWidth = outline ? 2 : 0;
@@ -96,7 +110,9 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 				padding,
 				justifyContent: 'center',
 				alignItems: 'center',
-				borderRadius: size / 2,
+				borderRadius: radius ?? size / 2,
+				transform:
+					tilt === undefined ? undefined : `rotate(${tilt}deg)`,
 				background: avatar.bg,
 				width: size,
 				height: size,
@@ -115,7 +131,10 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 					display: 'flex',
 					alignItems: 'center',
 					justifyContent: 'center',
-					overflow: 'visible'
+					overflow: 'visible',
+					// A leaning form is the design; a leaning animal is not.
+					transform:
+						tilt === undefined ? undefined : `rotate(${-tilt}deg)`
 				}}
 				aria-hidden="true"
 				dangerouslySetInnerHTML={
