@@ -5,10 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { StageLayout } from '../../stageLayout/StageLayout';
 import { AccountData } from '../accountData/AccountData';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
-import { RegistrationHandover } from '../../app/registrationLoader/RegistrationHandover';
 import type { RegistrationData } from '../../../globalState';
 import { INVITE_LOGIN_STATE } from './groupInviteEntryState';
-import { useGroupJoinHandoverCopy } from '../../groupChat/groupJoinHandoverCopy';
 import { RegistrationCompletionProvider } from '../consentCompletion/RegistrationCompletionContext';
 
 /**
@@ -39,7 +37,6 @@ export const GroupInviteEntry = ({
 	busy: boolean;
 }) => {
 	const { t } = useTranslation();
-	const handoverCopy = useGroupJoinHandoverCopy();
 
 	return (
 		<RegistrationCompletionProvider>
@@ -53,60 +50,52 @@ export const GroupInviteEntry = ({
 				stage={stage}
 				mobileHero="bar"
 			>
-				{busy ? (
-					<RegistrationHandover
-						ready={false}
-						forcedState="preparing"
-						variant="inline"
-						onEnter={() => undefined}
-						copy={handoverCopy}
+				{/* Once `busy`, `Registration` swaps this whole screen for the
+				    shared waiting room (`HandoverStage`, #1219). */}
+				<Box
+					data-cy="group-invite-entry"
+					sx={{
+						width: '100%',
+						minWidth: 0,
+						maxWidth: '100%',
+						px: { xs: 2.5, sm: 5 },
+						pt: { xs: 3, sm: 4 },
+						pb: 2
+					}}
+				>
+					<AccountData
+						onChange={onChange}
+						entry="link"
+						temporary={temporary}
 					/>
-				) : (
-					<Box
-						data-cy="group-invite-entry"
-						sx={{
-							width: '100%',
-							minWidth: 0,
-							maxWidth: '100%',
-							px: { xs: 2.5, sm: 5 },
-							pt: { xs: 3, sm: 4 },
-							pb: 2
+					<RegistrationFooter
+						secondary={{
+							compact: true,
+							label: temporary
+								? t(
+										'registration.account.temporary.toggleOff',
+										'Konto anlegen'
+									)
+								: t(
+										'registration.account.temporary.toggleOn',
+										'Ohne Konto beitreten'
+									),
+							onClick: onToggleTemporary
 						}}
-					>
-						<AccountData
-							onChange={onChange}
-							entry="link"
-							temporary={temporary}
-						/>
-						<RegistrationFooter
-							secondary={{
-								compact: true,
-								label: temporary
-									? t(
-											'registration.account.temporary.toggleOff',
-											'Konto anlegen'
-										)
-									: t(
-											'registration.account.temporary.toggleOn',
-											'Ohne Konto beitreten'
-										),
-								onClick: onToggleTemporary
-							}}
-							primary={{
-								label: temporary
-									? t(
-											'registration.account.temporary.joinGroup',
-											'Der Gruppe beitreten'
-										)
-									: t('registration.register'),
-								onClick: () => {
-									if (!joinDisabled && !busy) onJoin();
-								},
-								disabled: joinDisabled || busy
-							}}
-						/>
-					</Box>
-				)}
+						primary={{
+							label: temporary
+								? t(
+										'registration.account.temporary.joinGroup',
+										'Der Gruppe beitreten'
+									)
+								: t('registration.register'),
+							onClick: () => {
+								if (!joinDisabled && !busy) onJoin();
+							},
+							disabled: joinDisabled || busy
+						}}
+					/>
+				</Box>
 			</StageLayout>
 		</RegistrationCompletionProvider>
 	);

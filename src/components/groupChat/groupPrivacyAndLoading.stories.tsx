@@ -7,10 +7,12 @@ import {
 	TProvidedLegalLink
 } from '../../globalState/provider/LegalLinksProvider';
 import { AgencySpecificContext, UserDataContext } from '../../globalState';
-import { StageLayout } from '../stageLayout/StageLayout';
 import { Stage } from '../stage/stage';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
-import { GroupInviteEntry } from '../registration/groupInviteEntry/GroupInviteEntry';
+import { HandoverStage } from '../app/registrationLoader/HandoverStage';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { useGroupJoinHandoverCopy } from './groupJoinHandoverCopy';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
 import { GroupConsentGate } from './consent/GroupConsentGate';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
@@ -78,7 +80,9 @@ const StageProviders = ({ children }: { children: React.ReactNode }) => (
 		<AgencySpecificContext.Provider
 			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
 		>
-			<Box sx={{ minHeight: '100vh' }}>{children}</Box>
+			<GlobalComponentContext.Provider value={{ Stage }}>
+				<Box sx={{ minHeight: '100vh' }}>{children}</Box>
+			</GlobalComponentContext.Provider>
 		</AgencySpecificContext.Provider>
 	</LegalLinksContext.Provider>
 );
@@ -87,38 +91,38 @@ const StageProviders = ({ children }: { children: React.ReactNode }) => (
    2 — while joining
    --------------------------------------------------------------------------- */
 
+/* Both render what `Registration` shows from the click on: the shared
+   `HandoverStage` frame (#1219). "Before" is the counselling copy the group
+   join used to show by mistake; "after" is the group's own. */
 const JoiningBefore = () => (
 	<StageProviders>
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
-			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} />}
-			mobileHero="bar"
-		>
+		<HandoverStage>
 			<RegistrationHandover
 				ready={false}
 				forcedState="preparing"
-				variant="inline"
 				onEnter={() => undefined}
 			/>
-		</StageLayout>
+		</HandoverStage>
 	</StageProviders>
 );
 
+const JoiningAfterScreen = () => {
+	const copy = useGroupJoinHandoverCopy();
+	return (
+		<HandoverStage>
+			<RegistrationHandover
+				ready={false}
+				forcedState="preparing"
+				onEnter={() => undefined}
+				copy={copy}
+			/>
+		</HandoverStage>
+	);
+};
+
 const JoiningAfter = () => (
 	<StageProviders>
-		<GroupInviteEntry
-			stage={<Stage hasAnimation={false} />}
-			gcid="20"
-			aid="19"
-			temporary={true}
-			onToggleTemporary={() => undefined}
-			onChange={() => undefined}
-			onJoin={() => undefined}
-			joinDisabled={true}
-			busy={true}
-		/>
+		<JoiningAfterScreen />
 	</StageProviders>
 );
 
@@ -127,6 +131,7 @@ const expectGroupWords = async (canvasElement: HTMLElement) => {
 	await expect(await canvas.findByText('Bitte nur mit Alias')).toBeVisible();
 	await expect(canvas.queryByText('Antwort in 2 Arbeitstagen')).toBeNull();
 	await expect(canvas.queryByText('Anfrage schreiben')).toBeNull();
+	await expectWaitingRoomLayout(canvasElement);
 };
 
 export const JoiningBefore1440: Story = {

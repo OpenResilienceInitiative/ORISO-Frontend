@@ -11,7 +11,8 @@ import {
 import { HandoverCarousel, HandoverStep } from './HandoverCarousel';
 import { HandoverGateButton } from './HandoverGateButton';
 import { HandoverGateState } from './handoverGate';
-import { useDeferredFlourish } from './useDeferredFlourish';
+import { useHandoverProgress } from './handoverProgress';
+import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 
 /** After this the gate opens regardless, labelled honestly as "taking longer". */
 const SLOW_AFTER_MS = 20000;
@@ -21,21 +22,14 @@ export interface RegistrationHandoverProps {
 	ready: boolean;
 	/** Called when the user opens the gate. Must land them in the message field. */
 	onEnter: () => void;
-	/** Test seam: force a gate state instead of deriving it from `ready`. */
+	/** Force a gate state instead of deriving it from `ready`. */
 	forcedState?: HandoverGateState;
 	/**
-	 * Where the screen lives.
-	 *
-	 * `overlay` (default) covers the viewport — `position: fixed` on the modal
-	 * layer. That is what `AuthenticatedApp` needs: by then the registration
-	 * page is gone and this screen *is* the page.
-	 *
-	 * `inline` fills the column it is placed in instead. Needed inside
-	 * `StageLayout`, where the brand panel must stay visible beside it — an
-	 * overlay would simply paint over the panel and leave
-	 * `.stageLayout__content` at height 0 (ORISO-Frontend#1219).
+	 * Fill while waiting, 0–100. Defaults to the share of finished handover
+	 * milestones (`handoverProgress`), so the bar moves when work finishes
+	 * and never on a timer.
 	 */
-	variant?: 'overlay' | 'inline';
+	progress?: number;
 	/**
 	 * The words and cards of another way in. All already translated; every
 	 * one defaults to the registration's. The live-chat entry room passes
@@ -55,28 +49,31 @@ export interface RegistrationHandoverProps {
 }
 
 /**
- * Post-registration handover screen. Replaces the old progress-bar loader.
+ * The waiting room between "Registrieren" and the message field.
  *
- * While the app bootstraps, the user reads what happens next instead of
- * watching a bar. The button underneath is the gate: it only opens once
- * everything behind it is loaded, so the click lands them in a chat room they
- * can type into immediately.
+ * It always stands in the white column of a `StageLayout`, on both sides of
+ * the document load that follows registration: `Registration` shows it from
+ * the click on, `AuthenticatedApp` shows it again after the load, in the same
+ * stage and at the same fill. To the person it is one screen (#1219). There is
+ * no overlay variant any more — one painted over the whole viewport and lost
+ * the red stage, which is the jump Frank saw on 2026-10-09.
  *
- * Loading priority (Frank, 2026-08-06):
- *   tier 1  this markup — no network, painted on the first frame
- *   tier 2  the three card motifs — lazy, boxes reserved, no reflow
- *   tier 3  decoration — see `useDeferredFlourish`, never before tiers 1–2
+ * The button underneath is the gate: it opens once everything behind it is
+ * loaded, so the click lands them in a room they can type into immediately.
+ *
+ * Loading priority (Frank, 2026-08-06): this markup paints on the first frame
+ * without network; the card motifs are lazy with reserved boxes.
  */
 export const RegistrationHandover = ({
 	ready,
 	onEnter,
 	forcedState,
-	variant = 'overlay',
+	progress,
 	copy
 }: RegistrationHandoverProps) => {
 	const { t } = useTranslation();
+	const milestoneProgress = useHandoverProgress();
 	const [slow, setSlow] = useState(false);
-	const [artworkSettled, setArtworkSettled] = useState(false);
 	const [entering, setEntering] = useState(false);
 	const enteredRef = useRef(false);
 
@@ -89,9 +86,12 @@ export const RegistrationHandover = ({
 		forcedState ??
 		(entering ? 'entering' : ready ? 'ready' : slow ? 'slow' : 'preparing');
 
-	// Tier 3 waits for both: the content the user came for, and the app behind
-	// the gate. Decoration must never compete with either.
-	const flourish = useDeferredFlourish(artworkSettled && ready);
+	/* While waiting the fill is the real share of finished work; once the
+	   gate opens the state's own 100 takes over. */
+	const fill =
+		state === 'preparing' || state === 'slow'
+			? (progress ?? milestoneProgress)
+			: undefined;
 	/* "Fast" goes away exactly when the way on is free — the same moment the
 	   gate button stops waiting. `forcedState` is a test seam, so it decides
 	   here too. */
@@ -109,40 +109,24 @@ export const RegistrationHandover = ({
 	return (
 		<Box
 			data-cy="registration-handover"
-			data-cy-flourish={flourish ? 'on' : 'off'}
+			data-cy-progress={fill ?? 100}
 			sx={{
-				...(variant === 'overlay'
-					? {
-							position: 'fixed',
-							inset: 0,
-							zIndex: (theme) => theme.zIndex.modal
-						}
-					: // Fill the column instead of the viewport, and stay in
-						// flow so the surrounding StageLayout keeps its height.
-						//
-						// `minWidth: 0` is load-bearing: a flex item defaults to
-						// `min-width: auto`, so without it the carousel's three
-						// 250px cards force this box to ~814px and it overflows a
-						// 390px column. The overlay variant never hit this because
-						// `inset: 0` pinned its width to the viewport.
-						{
-							position: 'relative',
-							flex: 1,
-							minHeight: 0,
-							minWidth: 0,
-							width: '100%'
-						}),
+				/* Fill the column and stay in flow so the StageLayout keeps its
+				   height. `minWidth: 0` is load-bearing: a flex item defaults to
+				   `min-width: auto`, and the carousel's three 250px cards would
+				   force this box to ~814px in a 390px column. */
+				position: 'relative',
+				flex: 1,
+				minHeight: 0,
+				minWidth: 0,
+				width: '100%',
 				display: 'flex',
 				flexDirection: 'column',
 				bgcolor: registrationMd3.surface,
 				color: registrationMd3.onSurface,
-				/* The overlay owns the viewport, so clipping is right there. The
-				   inline variant sits in a column that is taller than the screen
-				   on a phone (the mobile hero bar pushes it down), and clipping
-				   would cut off the space reserved for the fixed gate bar — the
-				   encryption line then sits behind it. Let it scroll instead,
-				   exactly as the registration steps do. */
-				overflow: variant === 'overlay' ? 'hidden' : 'visible'
+				/* Taller than the screen on a phone (the hero bar pushes it
+				   down): let it scroll like the registration steps do. */
+				overflow: 'visible'
 			}}
 		>
 			<Box
@@ -152,23 +136,11 @@ export const RegistrationHandover = ({
 					display: 'flex',
 					flexDirection: 'column',
 					width: '100%',
-					/* 720 was too narrow from the first review on: three
-					   264 px cards plus their two 20 px gaps need 832 of
-					   content, and the column pads 40 a side — 912 in all. On
-					   a 1440 screen the third card was cut off before (Frank,
-					   turn 1: "das falsche Maß bei 1440"). Below `lg` it keeps
-					   720 and the cards scroll, which is what a phone wants.
-
-					   Only the overlay may take those 912: it owns the whole
-					   viewport. The inline variant stands in the white column
-					   beside the red stage, which is 60vw — 864 px at 1440 —
-					   so a 912 module would run into the stage (Frank,
-					   2026-09-07: "roter Bereich, Modul darf nie so breit
-					   sein"). It keeps 720 and lets the cards scroll. */
-					maxWidth:
-						variant === 'overlay'
-							? { xs: '100%', sm: 720, lg: 912 }
-							: { xs: '100%', sm: 720 },
+					/* The white column beside the red stage is 60vw — 864 px at
+					   1440 — so the module keeps 720 and lets the cards scroll
+					   (Frank, 2026-09-07: "roter Bereich, Modul darf nie so
+					   breit sein"). */
+					maxWidth: { xs: '100%', sm: 720 },
 					mx: 'auto',
 					px: { xs: 2.5, sm: 5 },
 					pt: { xs: 3, sm: 4 },
@@ -313,10 +285,7 @@ export const RegistrationHandover = ({
 						pt: { xs: 2.25, sm: 2.5 }
 					}}
 				>
-					<HandoverCarousel
-						onArtworkSettled={() => setArtworkSettled(true)}
-						steps={copy?.steps}
-					/>
+					<HandoverCarousel steps={copy?.steps} />
 				</Box>
 
 				<Box
@@ -327,14 +296,6 @@ export const RegistrationHandover = ({
 						justifyContent: { xs: 'flex-start', sm: 'center' },
 						gap: 1.25,
 						py: { xs: 1.5, sm: 2 },
-						/* The inline gate bar is fixed, so it reserves no space of
-						   its own. Reserving it on the container would put the gap
-						   at the container's bottom edge — which on a phone sits
-						   below the fold, so the line still ended up behind the
-						   bar. Reserving it here works inside the flex
-						   distribution: the carousel gives up the height and the
-						   line moves up instead. */
-						mb: variant === 'inline' ? '104px' : 0,
 						fontSize: { xs: 12, sm: 13 },
 						lineHeight: { xs: '17px', sm: '18px' },
 						color: registrationMd3.onSurfaceVariant,
@@ -352,47 +313,20 @@ export const RegistrationHandover = ({
 				</Box>
 			</Box>
 
-			<Box
-				sx={{
-					...(variant === 'inline'
-						? /* Match the registration footer exactly — same fixed
-						     bar the other steps use (`Registration.tsx`, the
-						     `position: fixed` block). In flow it fell below the
-						     fold on a phone: the bar started at y=836 in an
-						     844px viewport, so the gate was simply not there. */
-							{
-								position: 'fixed',
-								bottom: 0,
-								right: 0,
-								width: { xs: '100vw', lg: '60vw' },
-								backgroundColor: 'rgba(255, 255, 255, 0.94)',
-								backdropFilter: 'blur(8px)',
-								zIndex: 65,
-								pt: 1.25,
-								pb: {
-									xs: 'calc(12px + env(safe-area-inset-bottom))',
-									sm: 1.75
-								}
-							}
-						: {
-								flex: 'none',
-								bgcolor: '#fff',
-								pt: 1.25,
-								pb: 1.75
-							}),
-					borderTop: `1px solid ${registrationMd3.outlineVariant}`,
-					px: { xs: 2, sm: 5 }
-				}}
-			>
-				<Box sx={{ width: '100%', minWidth: 0 }}>
+			{/* The same bar every registration-shaped screen uses, so the
+			    button does not move by a pixel between "Registrieren" and
+			    here. It reserves its own measured height in the flow. */}
+			<RegistrationFooter>
+				<Box sx={{ flex: '1 1 0', minWidth: 0 }}>
 					<HandoverGateButton
 						state={state}
 						onEnter={handleEnter}
 						label={copy?.cta}
 						status={copy?.status?.[state]}
+						progress={fill}
 					/>
 				</Box>
-			</Box>
+			</RegistrationFooter>
 		</Box>
 	);
 };

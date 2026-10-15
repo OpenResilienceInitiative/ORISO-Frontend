@@ -22,6 +22,12 @@ import {
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
+import { HandoverStage } from './registrationLoader/HandoverStage';
+import {
+	markHandoverMilestone,
+	resetHandoverProgress
+} from './registrationLoader/handoverProgress';
+import { loadEntryScreens } from './appChunks';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import {
 	handleTokenRefresh,
@@ -148,6 +154,15 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		if (!userDataRequested) {
 			setUserDataRequested(true);
+			/* Only for the waiting room: the click on its button must land in
+			   a screen that is already loaded, so "ready" waits for these too.
+			   Started now, in parallel with everything below. */
+			const entryScreens = showPostRegLoader
+				? loadEntryScreens().then(
+						() => markHandoverMilestone('screens'),
+						() => markHandoverMilestone('screens')
+					)
+				: Promise.resolve();
 
 			handleTokenRefresh(false)
 				.then(() => {
@@ -172,6 +187,7 @@ export const AuthenticatedApp = ({
 							if (userProfileData.preferredLanguage) {
 								setLocale(userProfileData.preferredLanguage);
 							}
+							markHandoverMilestone('profile');
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
@@ -211,6 +227,7 @@ export const AuthenticatedApp = ({
 											setMatrixClientService(
 												matrixClientService
 											);
+											markHandoverMilestone('chat');
 											(window as any).callContext =
 												callContext;
 
@@ -249,6 +266,7 @@ export const AuthenticatedApp = ({
 											matrixLiveEventBridge.initialize(
 												matrixClient
 											);
+											markHandoverMilestone('liveEvents');
 										}
 									})(),
 									15_000,
@@ -263,6 +281,11 @@ export const AuthenticatedApp = ({
 								);
 							}
 
+							/* Without chat (no homeserver, or a failed bootstrap)
+							   these steps are over, not pending. */
+							markHandoverMilestone('chat');
+							markHandoverMilestone('liveEvents');
+							await entryScreens;
 							setAppReady(true);
 						})
 						.catch((error) => {
@@ -332,6 +355,7 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		if (handoverEntered && appReady) {
 			setShowPostRegLoader(false);
+			resetHandoverProgress();
 		}
 	}, [handoverEntered, appReady]);
 
@@ -339,11 +363,15 @@ export const AuthenticatedApp = ({
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
 	// usual branches on error (loading=false, appReady=false → redirect to login).
 	if (showPostRegLoader && (loading || appReady)) {
+		/* The same frame and the same fill `Registration` showed before the
+		   document load, so the person sees one waiting room (#1219). */
 		return (
-			<RegistrationHandover
-				ready={appReady}
-				onEnter={handlePostRegLoaderFinish}
-			/>
+			<HandoverStage>
+				<RegistrationHandover
+					ready={appReady}
+					onEnter={handlePostRegLoaderFinish}
+				/>
+			</HandoverStage>
 		);
 	}
 
