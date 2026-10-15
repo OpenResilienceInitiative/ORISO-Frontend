@@ -74,3 +74,28 @@ describe('NamePill', () => {
 		expect(screen.getByText(/Hand gehoben/)).toBeDefined();
 	});
 });
+
+/*
+ * How wide the capsule may get.
+ *
+ * The handoff's 132px counts the glyphs too, so a hand with its duration left
+ * the name about forty pixels — "naher O…" instead of "naher Otter 303". A
+ * pseudonym lives on the number at the end, so that truncation removes the
+ * part that identifies.
+ *
+ * Wider, but not unboundedly: a capsule broader than the shape it sits on
+ * hangs over the neighbours, and the arrangements abut by design. So the
+ * ceiling is a custom property the arrangement sets from the shape, and the
+ * ellipsis stays as the guard behind it.
+ */
+describe('how wide the capsule may get', () => {
+	it('keeps the handoff width when nobody says otherwise', () => {
+		render(<NamePill name="ruhiger Fuchs 432" />);
+		expect(pill().style.getPropertyValue('--name-pill-max')).toBe('');
+	});
+
+	it('takes the ceiling the arrangement gives it', () => {
+		render(<NamePill name="ruhiger Fuchs 432" maxWidth={188} />);
+		expect(pill().style.getPropertyValue('--name-pill-max')).toBe('188px');
+	});
+});

@@ -46,6 +46,26 @@ export const NAME_BOTTOM_SHARE = 0.07;
 export const NAME_MIN_SHAPE = 84;
 
 /**
+ * How wide a name capsule may get on a Hain shape.
+ *
+ * The handoff's flat 132px counts the glyphs as well, so a raised hand with
+ * its duration left about forty pixels for the name — "naher O…" instead of
+ * "naher Otter 303". A pseudonym lives on the number at the end, so that
+ * truncation cut away the identifying part.
+ *
+ * Two ceilings instead, whichever is lower. The absolute one keeps a long
+ * name from becoming a banner. The relative one is the real rule: a capsule
+ * wider than its own shape hangs over the neighbours, and this arrangement
+ * packs shapes until they abut. The ellipsis stays behind both.
+ */
+export const NAME_MAX_PX = 208;
+export const NAME_SHAPE_SHARE = 0.92;
+
+/** The capsule's ceiling on a shape of this size. */
+export const nameMaxWidth = (shapeSize: number): number =>
+	Math.round(Math.min(NAME_MAX_PX, shapeSize * NAME_SHAPE_SHARE));
+
+/**
  * The Hain (4a) — the handoff's primary arrangement.
  *
  * Placement comes from `packShapes`, which is the prototype's own function,
@@ -101,6 +121,7 @@ export const HainStage: React.FC<HainStageProps> = ({ participants, box }) => {
 							}}
 						>
 							<NamePill
+								maxWidth={nameMaxWidth(spot.size)}
 								name={participants[i].name}
 								speaking={participants[i].speaking}
 								micOff={participants[i].micOff}

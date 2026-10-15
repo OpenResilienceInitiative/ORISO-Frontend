@@ -9,6 +9,19 @@ export interface NamePillProps {
 	handRaisedForMs?: number | null;
 	micOff?: boolean;
 	speaking?: boolean;
+	/**
+	 * How wide the capsule may get, in px.
+	 *
+	 * The handoff's 132px counts the glyphs, so a raised hand with its
+	 * duration leaves the name about forty pixels — "naher O…" instead of
+	 * "naher Otter 303", which removes the very part that identifies someone.
+	 *
+	 * Wider is better, but not without a ceiling: a capsule broader than the
+	 * shape it sits on hangs over the neighbours, and these arrangements abut
+	 * by design. So the arrangement, which knows the shape, sets this; the
+	 * ellipsis stays as the guard behind it.
+	 */
+	maxWidth?: number;
 	className?: string;
 }
 
@@ -70,6 +83,7 @@ export const NamePill: React.FC<NamePillProps> = ({
 	handRaisedForMs,
 	micOff = false,
 	speaking = false,
+	maxWidth,
 	className
 }) => {
 	const handUp = handRaisedForMs !== null && handRaisedForMs !== undefined;
@@ -79,6 +93,13 @@ export const NamePill: React.FC<NamePillProps> = ({
 			data-testid="name-pill"
 			data-speaking={speaking}
 			className={[styles.namePill, className].filter(Boolean).join(' ')}
+			style={
+				maxWidth === undefined
+					? undefined
+					: ({
+							'--name-pill-max': `${maxWidth}px`
+						} as React.CSSProperties)
+			}
 		>
 			{handUp && (
 				<span
@@ -100,7 +121,9 @@ export const NamePill: React.FC<NamePillProps> = ({
 					<span className={styles.srOnly}>Mikrofon aus</span>
 				</span>
 			)}
-			<span className={styles.name}>{name}</span>
+			<span data-testid="name-pill-text" className={styles.name}>
+				{name}
+			</span>
 		</span>
 	);
 };
