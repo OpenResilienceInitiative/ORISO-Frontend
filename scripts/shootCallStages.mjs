@@ -32,8 +32,28 @@ const STORIES = [
 	['call-stages-felder--neun-scrollt', 'Felder-9-scrollt', 960],
 	['call-stages-felder--zwanzig-mit-zwei-sprechern', 'Felder-20', 960],
 	['call-stages-felder--mit-atmosphaere', 'Felder-Atmosphaere', 960],
-	['call-stages-felder--auf-dem-handy', 'Felder-Handy', 420]
+	['call-stages-felder--auf-dem-handy', 'Felder-Handy', 420],
+	['call-stages-einzelgespräch--stille', 'Einzel-still', 700],
+	[
+		'call-stages-einzelgespräch--ratsuchende-spricht',
+		'Einzel-ratsuchend',
+		700
+	],
+	['call-stages-einzelgespräch--beraterin-spricht', 'Einzel-beraterin', 700],
+	['call-stages-einzelgespräch--mit-status', 'Einzel-status', 700],
+	['call-stages-einzelgespräch--mit-atmosphaere', 'Einzel-atmosphaere', 700],
+	['call-stages-einzelgespräch--auf-dem-handy', 'Einzel-handy', 400]
 ];
+
+/** The two-person circle has halves rather than participants or fields. */
+const PAIR_STORIES = new Set([
+	'Einzel-still',
+	'Einzel-ratsuchend',
+	'Einzel-beraterin',
+	'Einzel-status',
+	'Einzel-atmosphaere',
+	'Einzel-handy'
+]);
 
 /** The atmosphere stories carry no participants; only the stages do. */
 const STAGE_STORIES = new Set([
@@ -81,7 +101,14 @@ for (const [id, name, width] of STORIES) {
 		`http://127.0.0.1:6006/iframe.html?id=${id}&viewMode=story`,
 		{ waitUntil: 'networkidle' }
 	);
-	if (FIELD_STORIES.has(name)) {
+	if (PAIR_STORIES.has(name)) {
+		await page.waitForSelector('[data-testid="einzelgespraech-stage"]');
+		await page.waitForFunction(
+			() =>
+				document.querySelectorAll('[data-testid="animal"] svg').length >
+				0
+		);
+	} else if (FIELD_STORIES.has(name)) {
 		await page.waitForSelector('[data-testid="felder-stage"]');
 		await page.waitForFunction(
 			() =>
@@ -120,7 +147,7 @@ for (const [id, name, width] of STORIES) {
 		// out of sight is not covered, so it is skipped rather than reported
 		// — the first run called three of twenty "covered" for exactly this.
 		const stage = document.querySelector(
-			'[data-testid="hain-stage"], [data-testid="felder-stage"]'
+			'[data-testid="hain-stage"], [data-testid="felder-stage"], [data-testid="einzelgespraech-stage"]'
 		);
 		// The atmosphere stories are backdrops with nobody on them.
 		if (!stage)
@@ -147,7 +174,7 @@ for (const [id, name, width] of STORIES) {
 			// box this capsule belongs to"; a capsule wider than its own box
 			// hangs over the neighbours in both.
 			const slot = pill.closest(
-				'[data-testid="participant"], [data-testid="field"]'
+				'[data-testid="participant"], [data-testid="field"], [data-testid="einzelgespraech-stage"]'
 			);
 			if (!slot) continue;
 			const pb = pill.getBoundingClientRect();

@@ -1,0 +1,40 @@
+/*
+Einzelgespräch: a single circle split along a soft seam.
+
+Both names stay visible at all times, as the ticket requires — the quiet
+person has not left the conversation.
+*/
+.stage {
+	position: relative;
+	display: grid;
+	place-items: center;
+	overflow: hidden;
+}
+
+/* Sized in px by the component. A percentage here resolved against a grid
+row that is itself sized by its content, so the height collapsed and the
+circle came out a flat ellipse. */
+.circle {
+	position: relative;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+.half {
+	position: absolute;
+	inset: 0;
+}
+
+.animal {
+	position: absolute;
+	inset-block-start: 50%;
+	translate: -50% -50%;
+}
+
+/* Positioned against the STAGE, not the circle: inside the circle's
+overflow a name near the rim was sliced off by the clip. */
+.label {
+	position: absolute;
+	translate: -50% 0;
+	z-index: 2;
+}
