@@ -39,9 +39,8 @@ vi.mock('../../api/apiPostRegistration', () => ({
 	apiPostRegistration: vi.fn(),
 	// The retry goes through the deadline wrapper; the mocked login behind it
 	// is what these tests watch.
-	autoLoginWithDeadline: async (
-		props: Parameters<typeof autoLogin>[0]
-	) => (await import('../registration/autoLogin')).autoLogin(props)
+	autoLoginWithDeadline: async (props: Parameters<typeof autoLogin>[0]) =>
+		(await import('../registration/autoLogin')).autoLogin(props)
 }));
 
 vi.mock('../../api/apiGetAnonymousEnquiryDetails', () => ({

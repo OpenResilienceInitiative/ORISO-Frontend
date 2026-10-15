@@ -13,6 +13,10 @@ import { ReactComponent as PlusIcon } from '../../resources/img/icons/plus-mui.s
  * Selecting a chip loads that rule back into the editor so it can be changed;
  * the chip's × deletes it. Editing an existing rule replaces it in place
  * instead of appending a duplicate.
+ *
+ * Typing writes through to `rules` at once, like every other field of the
+ * form: text the author never confirmed with "+" used to be dropped silently
+ * on "Erstellen" (#1499). "+" only closes the rule and clears the field.
  */
 
 export const RULE_MAX_LENGTH = 120;
@@ -34,12 +38,39 @@ export const RuleChipsEditor = ({
 	const { t } = useTranslation();
 	const [draft, setDraft] = useState('');
 	const [editingIndex, setEditingIndex] = useState<number | null>(null);
+	/* A rule started in this field, not an existing one opened from its chip. */
+	const [editingIsNew, setEditingIsNew] = useState(false);
 	const inputRef = useRef<HTMLTextAreaElement>(null);
 
 	useEffect(() => {
 		setDraft('');
 		setEditingIndex(null);
 	}, [resetKey]);
+
+	const updateDraft = (text: string) => {
+		setDraft(text);
+		// A new rule cleared again is no rule: it must not hold a slot.
+		if (editingIndex !== null && editingIsNew && !text.trim()) {
+			onChange(rules.filter((_, index) => index !== editingIndex));
+			setEditingIndex(null);
+			setEditingIsNew(false);
+			return;
+		}
+		if (editingIndex !== null) {
+			onChange(
+				rules.map((rule, index) =>
+					index === editingIndex ? text : rule
+				)
+			);
+			return;
+		}
+		if (!text.trim() || rules.length >= maxRules) {
+			return;
+		}
+		setEditingIndex(rules.length);
+		setEditingIsNew(true);
+		onChange([...rules, text]);
+	};
 
 	const commit = () => {
 		const text = draft.trim();
@@ -72,6 +103,7 @@ export const RuleChipsEditor = ({
 			const nextIndex = rules.length;
 			onChange([...rules, '']);
 			setEditingIndex(nextIndex);
+			setEditingIsNew(true);
 			inputRef.current?.focus();
 			return;
 		}
@@ -83,6 +115,9 @@ export const RuleChipsEditor = ({
 		if (editingIndex === index) {
 			setDraft('');
 			setEditingIndex(null);
+		} else if (editingIndex !== null && index < editingIndex) {
+			// The rule being written moved up one place.
+			setEditingIndex(editingIndex - 1);
 		}
 	};
 
@@ -97,7 +132,10 @@ export const RuleChipsEditor = ({
 				maxLength={RULE_MAX_LENGTH}
 				placeholder={t('groupChat.create.authorContent.rule')}
 				value={draft}
-				onChange={(event) => setDraft(event.target.value)}
+				// At the limit a new rule has nowhere to go; a chip still opens
+				// its rule for editing.
+				disabled={isFull}
+				onChange={(event) => updateDraft(event.target.value)}
 			/>
 			<div className="ruleChipsEditor__row">
 				<ul className="ruleChipsEditor__chips">
@@ -121,6 +159,10 @@ export const RuleChipsEditor = ({
 								onClick={() => {
 									setDraft(rule);
 									setEditingIndex(index);
+									// Its own chip keeps the rule being written new.
+									setEditingIsNew(
+										editingIsNew && editingIndex === index
+									);
 								}}
 							>
 								{t(

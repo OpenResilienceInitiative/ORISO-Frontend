@@ -556,7 +556,10 @@
 			}
 
 			&:hover {
-				color: var(--m3-primary-hover, $hover-primary);
+				color: var(
+					--oriso-primary-text-hover,
+					var(--m3-primary-hover, $hover-primary)
+				);
 			}
 		}
 
@@ -573,7 +576,10 @@
 	&__legalLinksItem {
 		color: var(--m3-on-surface-variant, $tertiary);
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 		}
 	}
 
