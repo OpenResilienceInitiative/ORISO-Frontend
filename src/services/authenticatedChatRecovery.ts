@@ -135,7 +135,7 @@ export const initializeChatRecovery = async (
 	} finally {
 		clearTimeout(deadline);
 	}
-	return last;
+	return cancelled() ? undefined : last;
 };
 
 /** Validate before claiming this client or consuming its one-use credential. */
@@ -166,7 +166,13 @@ export const startAuthenticatedChatRecovery = (
 			cancelled
 		);
 		// Unfinished, not rejected: keep the password for a retry (#1741).
-		if (handoff && (outcome === 'retryable-failure' || outcome === 'busy'))
+		// Never after a cancel (logout, unmount) or for a replaced client.
+		if (
+			handoff &&
+			!cancelled() &&
+			client.clientRunning &&
+			(outcome === 'retryable-failure' || outcome === 'busy')
+		)
 			await restageLoginRecoveryPassword(
 				userId,
 				handoff.password,

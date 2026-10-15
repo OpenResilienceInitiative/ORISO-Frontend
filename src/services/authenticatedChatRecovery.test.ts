@@ -455,6 +455,32 @@ describe('no password in hand on a device without the backup key (#1741)', () =>
 		);
 	});
 
+	it('never hands the password back after the run was cancelled, for example by a logout', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		let cancelled = false;
+		recover.mockImplementation(async () => {
+			cancelled = true;
+			return { kind: 'retryable-failure' };
+		});
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet(),
+			() => cancelled
+		);
+		expect(
+			await consumeLoginRecoveryPassword('@synthetic:test')
+		).toBeNull();
+	});
+
 	it('does not keep the password once the unlock has worked or was rejected', async () => {
 		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
 			await import('./loginRecoveryHandoff');
