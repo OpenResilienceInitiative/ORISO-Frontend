@@ -1,7 +1,8 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { JoinGroupChatView } from './JoinGroupChatView';
+import { SessionHeaderComponent } from '../sessionHeader/SessionHeaderComponent';
 import {
 	buildGroupStageListItem,
 	GROUP_STAGE_CHAT_ID,
@@ -12,7 +13,15 @@ import {
 	desktop1440Globals,
 	phone390Globals
 } from '../message/messageStoryShell';
+import {
+	expectCaptionClear,
+	expectOverdueClockOnOneRow
+} from './waitingClock/waitingClockStoryChecks';
 import './joinChat.styles';
+import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
 
 /**
  * #1499 item 1 — the counsellor's view of a self-help group ("Gesprächskreis")
@@ -30,6 +39,10 @@ import './joinChat.styles';
  */
 
 const OVERDUE_SECONDS = -252;
+/* #1499 bug A: past 99 minutes the minutes group needs a third digit cell.
+   On Dev every freshly created group is there within minutes, because
+   UserService stores the start two hours early. */
+const OVERDUE_3_DIGIT_SECONDS = -(140 * 60 + 7);
 const FUTURE_SECONDS = 2 * 86400 + 3 * 3600 + 21 * 60 + 50;
 
 const desktop1280Globals = { viewport: { value: 'desktop1280' } };
@@ -123,6 +136,13 @@ const meta = {
 } satisfies Meta;
 
 export default meta;
+
+/* "Chat-Info" is now labelled "Informationen & Einstellungen" (#1465). */
+const CHAT_INFO = /Informationen & Einstellungen/;
+
+/* The session menu renders through a portal into the body (#1465). */
+const menuOf = (canvasElement: HTMLElement) =>
+	canvasElement.ownerDocument.querySelector<HTMLElement>('#flyout')!;
 type Story = StoryObj<typeof meta>;
 
 /** Frank's case: 1440, start time just passed (the counting-up clock). */
@@ -132,9 +152,16 @@ export const Overdue1440: Story = {
 	render: () => <Stage layout="desktop" deltaSeconds={OVERDUE_SECONDS} />,
 	play: async ({ canvasElement, canvas }) => {
 		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement);
+		await expectCaptionClear(canvasElement);
 		await expect(
 			canvas.getByRole('button', { name: 'Chat starten' })
 		).toBeVisible();
+		// Desktop keeps its "Chat-Info" link; the phone menu stays away.
+		await expect(
+			canvas.getByRole('link', { name: CHAT_INFO })
+		).toBeVisible();
+		await expect(canvasElement.querySelector('#iconV')).toBeNull();
 	}
 };
 
@@ -164,9 +191,130 @@ export const Overdue390: Story = {
 	render: () => <Stage layout="mobile" deltaSeconds={OVERDUE_SECONDS} />,
 	play: async ({ canvasElement, canvas }) => {
 		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement);
+		await expectCaptionClear(canvasElement);
 		await expect(
 			canvas.getByRole('button', { name: 'Chat starten' })
 		).toBeVisible();
+	}
+};
+
+/**
+ * #1499 bug A on the counsellor's side: the same group 140 minutes late. The
+ * minutes group draws three digits, minutes and seconds stay on one row, and
+ * the caption below stays clear.
+ */
+export const Overdue3Digits1440: Story = {
+	name: 'Overdue 140 min · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<Stage layout="desktop" deltaSeconds={OVERDUE_3_DIGIT_SECONDS} />
+	),
+	play: async ({ canvasElement }) => {
+		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+export const Overdue3Digits390: Story = {
+	name: 'Overdue 140 min · 390 mobile',
+	globals: phone390Globals,
+	render: () => (
+		<Stage layout="mobile" deltaSeconds={OVERDUE_3_DIGIT_SECONDS} />
+	),
+	play: async ({ canvasElement }) => {
+		await assertCentred(canvasElement);
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+/**
+ * Dev test of #1499: on a phone the waiting room had no way into Chat-Info,
+ * so the co-moderator help ("Chat-Info → Chatraum Einstellungen →
+ * Bearbeiten") was a dead end. The header now carries the same ⋮ menu as
+ * every other chat; "Chat beenden" stays out until the group runs.
+ */
+export const ChatInfoMenu390: Story = {
+	name: 'Chat-Info menu · 390 mobile',
+	globals: phone390Globals,
+	render: () => <Stage layout="mobile" deltaSeconds={OVERDUE_SECONDS} />,
+	play: async ({ canvasElement }) => {
+		const menuButton = canvasElement.querySelector<HTMLElement>('#iconV');
+		await expect(menuButton).not.toBeNull();
+		await expect(menuButton!).toBeVisible();
+		await userEvent.click(menuButton!);
+		const menu = within(menuOf(canvasElement));
+		await waitFor(() =>
+			expect(menu.getByRole('link', { name: CHAT_INFO })).toBeVisible()
+		);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+/** The same group once it runs: header with the ⋮ menu and its Chat-Info row. */
+const RunningStage = ({ layout }: { layout: 'desktop' | 'mobile' }) => {
+	const stopOrLeaveRef = React.useRef(false);
+	const listItem = React.useMemo(() => {
+		const item = buildGroupStageListItem(-15 * 60);
+		return {
+			...item,
+			chat: { ...item.chat, active: true, subscribed: true }
+		} as typeof item;
+	}, []);
+	return (
+		<GroupChatStage listItem={listItem} layout={layout}>
+			<div className="session">
+				<SessionHeaderComponent
+					isJoinGroupChatView={false}
+					bannedUsers={[]}
+					hasUserInitiatedStopOrLeaveRequest={stopOrLeaveRef}
+				/>
+				<div className="session__content" />
+			</div>
+		</GroupChatStage>
+	);
+};
+
+export const RunningChatInfoMenu390: Story = {
+	name: 'Running · Chat-Info menu · 390 mobile',
+	globals: phone390Globals,
+	render: () => <RunningStage layout="mobile" />,
+	play: async ({ canvasElement }) => {
+		const menuButton = canvasElement.querySelector<HTMLElement>('#iconV');
+		await expect(menuButton).not.toBeNull();
+		await userEvent.click(menuButton!);
+		const menu = within(menuOf(canvasElement));
+		await waitFor(() =>
+			expect(menu.getByRole('link', { name: CHAT_INFO })).toBeVisible()
+		);
+	}
+};
+
+/**
+ * Dev test of #1499 with Träger 2's light-blue brand colour (#b4ddee): the
+ * filled "Chat starten" keeps the Träger's pastel with a dark on-primary
+ * label on top (Frank: no dark re-colouring of filled areas).
+ */
+export const LightBrandColour390: Story = {
+	name: 'Light brand colour (Träger 2) · 390 mobile',
+	globals: phone390Globals,
+	parameters: { orisoSeed: '#b4ddee' },
+	render: () => <Stage layout="mobile" deltaSeconds={OVERDUE_SECONDS} />,
+	play: async ({ canvas }) => {
+		const start = canvas.getByRole('button', { name: 'Chat starten' });
+		await waitFor(() =>
+			expect(
+				wcagContrast(
+					getComputedStyle(start).color,
+					effectiveBackground(start)
+				)
+			).toBeGreaterThanOrEqual(4.5)
+		);
+		await expect(getComputedStyle(start).backgroundColor).toBe(
+			'rgb(180, 221, 238)'
+		);
 	}
 };
 

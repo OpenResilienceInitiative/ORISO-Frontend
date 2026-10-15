@@ -1,6 +1,12 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { WaitingAreaCountdown } from './WaitingAreaCountdown';
+import {
+	expectCaptionClear,
+	expectHandsVisible,
+	expectOverdueClockOnOneRow
+} from './waitingClockStoryChecks';
+import { computeOrisoPalette } from '../../../utils/theme/orisoScheme';
 import { phone375Globals } from '../../message/messageStoryShell';
 
 const WELCOME =
@@ -94,6 +100,114 @@ export const Overdue4b: Story = {
 		plannedStart: new Date(Date.now() - 252 * 1000),
 		welcomeText: WELCOME,
 		rules: RULES
+	}
+};
+
+/**
+ * #1499. Past 99 minutes the minutes group grows a third digit — it used to
+ * draw "99" while the timer label said the truth. The extra digit is paid for
+ * with a smaller mini-clock, never with a second row: the row sits in a flip
+ * card that is exactly one group tall, so anything that wraps lands on the
+ * caption below it.
+ */
+export const Overdue3Digits: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const Overdue3DigitsMobile: Story = {
+	args: {
+		...Overdue3Digits.args,
+		labelsOutside: true,
+		hideMotionToggle: true,
+		gap: 12
+	},
+	globals: phone375Globals,
+	parameters: { phoneFrame: true },
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+	}
+};
+
+/**
+ * The clock under other Träger brands (#1499). Hands and "+" are the brand
+ * colour: `--oriso-primary-text`, falling back to `--m3-primary`.
+ *
+ * Before #1528, #b4ddee had no `--oriso-primary-text` and its hands read at
+ * about 1.1:1; the palette now emits a legible tone, so no override here.
+ */
+const TRAEGER_2_SEED = '#b4ddee';
+
+const Brand = ({
+	seed,
+	children
+}: {
+	seed: string;
+	children: React.ReactNode;
+}) => {
+	const { tokens } = computeOrisoPalette({ primary: seed }, 'light');
+	return <div style={tokens as React.CSSProperties}>{children}</div>;
+};
+
+const lightBrand = (Story: React.ComponentType) => (
+	<Brand seed={TRAEGER_2_SEED}>
+		<Story />
+	</Brand>
+);
+
+export const LightBrandOverdue: Story = {
+	args: {
+		plannedStart: new Date(Date.now() - (140 * 60 + 7) * 1000),
+		welcomeText: WELCOME,
+		rules: RULES,
+		clockSize: 'fit',
+		spacing: 'tight'
+	},
+	decorators: [lightBrand],
+	play: async ({ canvasElement }) => {
+		await expectOverdueClockOnOneRow(canvasElement, 3);
+		await expectCaptionClear(canvasElement);
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+export const LightBrandFuture: Story = {
+	args: {
+		plannedStart: new Date(
+			Date.now() + (2 * 86400 + 3 * 3600 + 21 * 60 + 50) * 1000
+		),
+		welcomeText: WELCOME,
+		rules: RULES
+	},
+	decorators: [lightBrand],
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
+	}
+};
+
+/** A dark brand other than red: the fallback alone is enough here. */
+export const GreenBrandOverdue: Story = {
+	args: LightBrandOverdue.args,
+	decorators: [
+		(Story) => (
+			<Brand seed="#2e7d32">
+				<Story />
+			</Brand>
+		)
+	],
+	play: async ({ canvasElement }) => {
+		await expectHandsVisible(canvasElement);
 	}
 };
 

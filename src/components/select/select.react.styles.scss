@@ -62,7 +62,7 @@ $inputHeight: 50px;
 					--m3-hover-layer,
 					rgba(27, 27, 28, 0.04)
 				) !important;
-				color: var(--m3-primary, #a5000a);
+				color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 		}
 
@@ -97,16 +97,25 @@ $inputHeight: 50px;
 
 				.select__input__multi-value__label,
 				.select__input__multi-value__remove {
-					color: var(--m3-primary, #a5000a) !important;
+					color: var(
+						--oriso-primary-text,
+						var(--m3-primary, #a5000a)
+					) !important;
 				}
 			}
 
 			&__label {
-				color: var(--m3-primary, #a5000a) !important;
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, #a5000a)
+				) !important;
 			}
 
 			&__remove {
-				color: var(--m3-primary, #a5000a) !important;
+				color: var(
+					--oriso-primary-text,
+					var(--m3-primary, #a5000a)
+				) !important;
 			}
 		}
 
@@ -126,7 +135,10 @@ $inputHeight: 50px;
 		&:hover,
 		:focus {
 			background-color: $select-focus-background-color;
-			color: var(--m3-primary, $selection-focus-color);
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, $selection-focus-color)
+			);
 		}
 
 		&__icon {
