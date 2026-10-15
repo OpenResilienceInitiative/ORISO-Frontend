@@ -16,6 +16,7 @@ import {
 } from './displayFilterStoryData';
 import { ORISO_M3_FIGMA_URL } from '../storybookDesignLinks';
 import {
+	desktop1440Globals,
 	phone320Globals,
 	phone390Globals,
 	phone390LandscapeGlobals
@@ -405,4 +406,29 @@ export const PhoneTimeline320: Story = {
 	render: (args) => <Controlled {...args} />,
 	play: ({ canvasElement }) =>
 		expectPhoneLayout(canvasElement, 320, ['In der Liste', 'Anzeigen'])
+};
+
+/** Gespräche on desktop: the table layout is unchanged above the phone breakpoint. */
+export const SessionsDesktop: Story = {
+	globals: desktop1440Globals,
+	args: { ...sessionsArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		await waitFor(() =>
+			expect(
+				doc.querySelectorAll('.displayFilterDialog__row').length
+			).toBeGreaterThan(0)
+		);
+		// The shared header row labels the columns; the per-cell labels stay hidden.
+		const header = within(doc.body).getByRole('columnheader', {
+			name: 'Ton'
+		});
+		await expect(header.getBoundingClientRect().height).toBeGreaterThan(0);
+		for (const label of Array.from(
+			doc.querySelectorAll<HTMLElement>('.displayFilterDialog__cellLabel')
+		)) {
+			await expect(getComputedStyle(label).display).toBe('none');
+		}
+	}
 };
