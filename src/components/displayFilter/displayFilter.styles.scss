@@ -515,13 +515,180 @@
 	display: none;
 }
 
-/* Phone layout (2026-10-15): at 390px the table squeezed the kind names to
-   one letter per line and pushed "Anzeigen" past the edge. Below the medium
-   breakpoint every kind is a block: icon + full name on one line, its
-   controls underneath, each with its own small column title. The pickers
-   share the row (two side by side from ~300px, stacked below) at full cell
-   width, so "Standard" is not truncated. Works for any number of columns. */
+/* Redesign 2026-10-15 (Frank: "looks fantastic, adopt it"): legend row,
+   headed sections, one-line kind names, an E-Mail column. */
+.displayFilterDialog__legend {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+	gap: 8px;
+	margin: 0 0 16px;
+}
+
+.displayFilterDialog__legendItem {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	padding: 10px 12px;
+	border-radius: 12px;
+	background: var(--m3-surface-container-low, #f7f2f2);
+}
+
+.displayFilterDialog__legendTitle {
+	font-size: 13px;
+	font-weight: 600;
+	line-height: 18px;
+	color: var(--m3-on-surface, #1b1b1c);
+}
+
+.displayFilterDialog__legendText {
+	margin: 0;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.displayFilterDialog__section {
+	display: flex;
+	flex-direction: column;
+	margin: 0 0 16px;
+}
+
+.displayFilterDialog__sectionTitle {
+	margin: 0 0 4px;
+	font-size: 14px;
+	font-weight: 600;
+	line-height: 20px;
+	letter-spacing: 0.1px;
+	color: var(--m3-primary, #a5000a);
+}
+
+.displayFilterDialog__sectionNote {
+	margin: 0 0 4px;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+/* Desktop table: the visible "Art" header, hairlines between kinds, names
+   on one line ("Interner Gruppenchat"). */
+.displayFilterDialog__kindHead {
+	padding: 0 0 8px;
+	font-size: 12px;
+	font-weight: 500;
+	line-height: 16px;
+	letter-spacing: 0.5px;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.displayFilterDialog__table thead tr {
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
+}
+
+.displayFilterDialog__table .displayFilterDialog__row {
+	border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
+}
+
+.displayFilterDialog__table
+	.displayFilterDialog__row
+	.displayFilterDialog__kind {
+	min-height: 48px;
+}
+
+.displayFilterDialog__kindName {
+	white-space: nowrap;
+}
+
+.displayFilterDialog__colHead--sound {
+	width: 168px;
+}
+
+.displayFilterDialog__picker--sound {
+	width: 160px;
+}
+
+/* No stored e-mail setting for this kind: text, not a control. */
+.displayFilterDialog__unavailable {
+	display: inline-flex;
+	align-items: center;
+	box-sizing: border-box;
+	width: 128px;
+	min-height: 32px;
+	padding: 0 12px;
+	border: 1px dashed var(--m3-outline-variant, #c4c7c7);
+	border-radius: 16px;
+	font-size: 12px;
+	line-height: 16px;
+	color: var(--m3-on-surface-variant, #444748);
+	cursor: help;
+}
+
+/* Filter-only buttons: name and the "Im Filter" picker. */
+.displayFilterDialog__table--quick
+	.displayFilterDialog__row
+	.displayFilterDialog__kind {
+	min-height: 44px;
+}
+
+.displayFilterDialog__table--quick .displayFilterDialog__cell--picker {
+	width: 136px;
+}
+
+.displayFilterDialog__section .displayFilterDialog__view {
+	justify-content: flex-start;
+	margin-top: 4px;
+}
+
+/* The picker menus: the house menu surface in compact density (Storybook
+   "Components/Chat/MenuDropdown"), a caption over the tones and a divider
+   before the silent pop-up. */
+.kindOptionPicker__menu.chatMenuDropdown {
+	width: 272px;
+	max-height: min(520px, calc(100vh - 32px));
+}
+
+.kindOptionPicker__groupLabel.chatMenuDropdown__subtitle {
+	list-style: none;
+	padding: 4px 8px;
+	font-size: 12px;
+	line-height: 16px;
+}
+
+.kindOptionPicker__divider.chatMenuDropdown__divider {
+	list-style: none;
+	margin: 6px 0;
+}
+
+.kindOptionPicker__item.chatMenuDropdown__item {
+	white-space: normal;
+}
+
+/* The chosen option keeps the theme's selected menu row (red container,
+   light label — as in the approved mock); the row's texts and check follow it. */
+.kindOptionPicker__menu
+	.kindOptionPicker__item.chatMenuDropdown__item.Mui-selected {
+	&,
+	&:hover,
+	&.Mui-focusVisible {
+		background-color: var(--m3-primary-container, #cc1e1c);
+		color: var(--m3-primary-fixed, #ffdad5);
+	}
+
+	.chatMenuDropdown__itemTitle,
+	.chatMenuDropdown__itemDescription,
+	.chatMenuDropdown__itemIcon {
+		color: inherit;
+	}
+}
+
+/* Phone layout (2026-10-15, Phone.dc.html): every kind is a card — icon and
+   name as its heading, then one labelled row per column, label left and
+   picker right. The filter-only buttons stay plain rows. The legend is
+   left out: each row names its column. */
 @media (width < #{$fromMedium}) {
+	.displayFilterDialog__legend {
+		display: none;
+	}
+
 	.displayFilterDialog__table,
 	.displayFilterDialog__table tbody {
 		display: block;
@@ -537,24 +704,32 @@
 		white-space: nowrap;
 	}
 
-	.displayFilterDialog__row {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-		gap: 4px 8px;
-		padding: 8px 0;
-	}
-
-	.displayFilterDialog__row .displayFilterDialog__kind {
-		grid-column: 1 / -1;
-		min-height: 24px;
-		padding: 0;
-	}
-
-	.displayFilterDialog__row .displayFilterDialog__cell {
+	.displayFilterDialog__table .displayFilterDialog__row {
 		display: flex;
 		flex-direction: column;
-		align-items: flex-start;
-		gap: 4px;
+		gap: 8px;
+		margin: 0 0 8px;
+		padding: 12px 14px;
+		border: 0;
+		border-radius: 16px;
+		background: var(--m3-surface-container-low, #f7f2f2);
+	}
+
+	.displayFilterDialog__table
+		.displayFilterDialog__row
+		.displayFilterDialog__kind {
+		min-height: 24px;
+		padding: 0;
+		font-weight: 500;
+	}
+
+	.displayFilterDialog__table
+		.displayFilterDialog__row
+		.displayFilterDialog__cell {
+		display: grid;
+		grid-template-columns: 88px minmax(0, 1fr);
+		align-items: center;
+		column-gap: 8px;
 		min-width: 0;
 		padding: 0;
 		text-align: left;
@@ -562,19 +737,54 @@
 
 	.displayFilterDialog__cellLabel {
 		display: block;
-		font-size: 12px;
-		font-weight: 500;
-		line-height: 16px;
-		letter-spacing: 0.5px;
+		font-size: 13px;
+		line-height: 18px;
 		color: var(--m3-on-surface-variant, #444748);
 	}
 
-	.displayFilterDialog__picker {
+	.displayFilterDialog__picker,
+	.displayFilterDialog__picker--sound,
+	.displayFilterDialog__unavailable {
 		width: 100%;
+	}
+
+	.displayFilterDialog__unavailable {
+		border: 0;
+		padding: 0;
 	}
 
 	.displayFilterDialog__noPill {
 		width: auto;
 		line-height: 32px;
+	}
+
+	/* Filter-only buttons: name left, picker right, a hairline between. */
+	.displayFilterDialog__table--quick .displayFilterDialog__row {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		margin: 0;
+		padding: 4px 0;
+		border-radius: 0;
+		background: transparent;
+		border-bottom: 1px solid var(--m3-outline-variant, #c4c7c7);
+	}
+
+	.displayFilterDialog__table--quick
+		.displayFilterDialog__row
+		.displayFilterDialog__kind {
+		font-weight: 400;
+	}
+
+	.displayFilterDialog__table--quick
+		.displayFilterDialog__row
+		.displayFilterDialog__cell {
+		display: block;
+		width: 136px;
+		flex: 0 0 auto;
+	}
+
+	.displayFilterDialog__table--quick .displayFilterDialog__cellLabel {
+		display: none;
 	}
 }

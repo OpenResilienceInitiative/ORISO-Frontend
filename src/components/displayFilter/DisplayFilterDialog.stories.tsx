@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { DisplayFilterDialog, SESSION_COLUMNS } from './DisplayFilterDialog';
 import {
 	DisplayFilterValue,
@@ -10,10 +10,15 @@ import {
 } from './displayFilterTypes';
 import {
 	REQUEST_KINDS,
+	REQUEST_STORY_LABELS,
 	SESSION_KINDS,
+	SESSION_STORY_LABELS,
 	STORY_LABELS,
 	TIMELINE_KINDS
 } from './displayFilterStoryData';
+import { emailSettingForKind } from './emailSettingForKind';
+import type { DisplayFilterEmailColumn } from './DisplayFilterKindTable';
+import type { DisplayFilterSection } from '../../utils/displayFilter/model';
 import { ORISO_M3_FIGMA_URL } from '../storybookDesignLinks';
 import {
 	desktop1440Globals,
@@ -36,7 +41,7 @@ const meta = {
 		docs: {
 			description: {
 				component:
-					'Per-section display filter. "In der Liste" decides whether a kind appears in the list at all; "Als Pille" whether it gets a chip (kinds without a pill are bundled under Sonstiges). "Sonstiges" is the catch-all and can never be hidden. Presentational — the store (slice 2) owns the value.'
+					'Per-section display filter (redesign 2026-10-15). A legend names the columns: "In der Liste" (Zeitstrahl: the kind appears at all), "Im Filter" (a filter button above the list), "Browser" (pop-up on this device, with a tone or silent; Gespräche/Anfragen) and "E-Mail" (the profile\'s stored e-mail notice, or "nicht verfügbar"). Filter-only buttons get their own section. Every choice is the same split-button picker with the house menu. Presentational — the store owns the value, `useDisplayFilterEmailColumn` the e-mail column.'
 			}
 		}
 	},
@@ -54,11 +59,37 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/**
+ * A story stand-in for `useDisplayFilterEmailColumn`: the same kind →
+ * profile-switch mapping (counsellor), the stored values kept in memory.
+ * The real save path is covered by `displayFilterEmail.test.tsx`.
+ */
+const useStoryEmail = (
+	section: DisplayFilterSection | undefined,
+	onEmailChange?: (kindId: string, next: boolean) => void
+): DisplayFilterEmailColumn | undefined => {
+	const [stored, setStored] = useState<Record<string, boolean>>({});
+	if (!section) return undefined;
+	return {
+		cell: (kindId) =>
+			emailSettingForKind(section, kindId, 'consultant')
+				? { checked: stored[kindId] ?? true }
+				: null,
+		onChange: (kindId, next) => {
+			setStored((current) => ({ ...current, [kindId]: next }));
+			onEmailChange?.(kindId, next);
+		}
+	};
+};
+
 const Controlled = (
 	args: React.ComponentProps<typeof DisplayFilterDialog> & {
 		initialValue?: DisplayFilterValue;
+		emailSection?: DisplayFilterSection;
+		onEmailChange?: (kindId: string, next: boolean) => void;
 	}
 ) => {
+	const email = useStoryEmail(args.emailSection, args.onEmailChange);
 	// Mirrors the slice-2 store contract: the section override is a key that
 	// either exists or not (`null`); `canReset` is that presence, never
 	// inferred from the value's contents (an empty override still exists).
@@ -73,6 +104,7 @@ const Controlled = (
 			onChange={setOverride}
 			onReset={() => setOverride(null)}
 			onOpenProfile={() => undefined}
+			email={email ?? args.email}
 		/>
 	);
 };
@@ -97,7 +129,7 @@ export const Customised: Story = {
 	play: async ({ canvasElement }) => {
 		const dialog = within(canvasElement.ownerDocument.body);
 		const draftsPill = dialog.getByRole('button', {
-			name: 'Pille: Entwürfe'
+			name: 'Im Filter: Entwürfe'
 		});
 		await expect(draftsPill).toBeDisabled();
 		await expect(
@@ -120,7 +152,7 @@ export const HideAKind: Story = {
 			name: 'In der Liste: Anrufe'
 		});
 		const pillCalls = dialog.getByRole('button', {
-			name: 'Pille: Anrufe'
+			name: 'Im Filter: Anrufe'
 		});
 		await expect(pillCalls).toBeEnabled();
 		await userEvent.click(showCalls);
@@ -246,7 +278,7 @@ export const SessionsWithSoundColumn: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement.ownerDocument.body);
 		await expect(
-			canvas.getByRole('columnheader', { name: 'Ton' })
+			canvas.getByRole('columnheader', { name: 'Browser' })
 		).toBeTruthy();
 		await expect(
 			canvas.queryByRole('columnheader', { name: 'In der Liste' })
@@ -260,17 +292,18 @@ export const SessionsWithSoundColumn: Story = {
 			canvas.getByRole('button', { name: 'Ton anhören: Mail' })
 		).toHaveTextContent('Standard');
 		await expect(
-			canvas.getByRole('button', { name: 'Ton wählen: Live-Chat' })
+			canvas.getByRole('button', {
+				name: 'Browser-Benachrichtigung: Live-Chat'
+			})
 		).toBeTruthy();
 	}
 };
 
 /**
- * Phone layout (2026-10-15): the three-column table squeezed the kind names
- * to one letter per line and pushed "Anzeigen" past the right edge on Dev.
- * Below the phone breakpoint every kind is a block — icon and full name on
- * one line, its pickers underneath, each with its own small column label.
- * Measured through bounding boxes, so a regression shows as a number.
+ * Phone layout (Phone.dc.html): every kind is a card — icon and full name
+ * on one line as its heading, then one row per column with its label left
+ * and the picker right. Measured through bounding boxes, so a regression
+ * shows as a number.
  */
 const expectPhoneLayout = async (
 	canvasElement: HTMLElement,
@@ -278,10 +311,10 @@ const expectPhoneLayout = async (
 	columnLabels: string[]
 ) => {
 	const doc = canvasElement.ownerDocument;
+	const cardSelector =
+		'.displayFilterDialog__table:not(.displayFilterDialog__table--quick) .displayFilterDialog__row';
 	await waitFor(() =>
-		expect(
-			doc.querySelectorAll('.displayFilterDialog__row').length
-		).toBeGreaterThan(0)
+		expect(doc.querySelectorAll(cardSelector).length).toBeGreaterThan(0)
 	);
 	// The viewport must really be the phone, or nothing below is proven.
 	await expect(doc.defaultView!.innerWidth).toBe(width);
@@ -297,24 +330,22 @@ const expectPhoneLayout = async (
 	// Nothing scrolls sideways.
 	await expect(body.scrollWidth).toBeLessThanOrEqual(body.clientWidth);
 	const bodyBox = body.getBoundingClientRect();
-	const rows = Array.from(
+	for (const row of Array.from(
 		doc.querySelectorAll<HTMLElement>('.displayFilterDialog__row')
-	);
-	for (const row of rows) {
+	)) {
 		const name = row.querySelector(
-			'.displayFilterDialog__kindText > span'
+			'.displayFilterDialog__kindName'
 		) as HTMLElement;
 		const lineHeight = parseFloat(getComputedStyle(name).lineHeight);
 		// Full name on one line.
 		await expect(name.getBoundingClientRect().height).toBeLessThan(
 			lineHeight * 1.5
 		);
-		const controls = Array.from(
+		for (const control of Array.from(
 			row.querySelectorAll<HTMLElement>(
-				'.splitButton, .displayFilterDialog__cell input'
+				'.splitButton, .displayFilterDialog__cell input, .displayFilterDialog__unavailable'
 			)
-		);
-		for (const control of controls) {
+		)) {
 			const box = control.getBoundingClientRect();
 			await expect(box.left).toBeGreaterThanOrEqual(bodyBox.left);
 			await expect(box.right).toBeLessThanOrEqual(bodyBox.right);
@@ -327,23 +358,65 @@ const expectPhoneLayout = async (
 				label.clientWidth
 			);
 		}
-		// The shared header row no longer lines up: each control carries
-		// its own visible column label.
+	}
+	for (const card of Array.from(
+		doc.querySelectorAll<HTMLElement>(cardSelector)
+	)) {
 		// `waitFor`: the dialog fades in (opacity 0 on the first frame).
 		for (const columnLabel of columnLabels) {
 			await waitFor(() =>
-				expect(within(row).getByText(columnLabel)).toBeVisible()
+				expect(within(card).getByText(columnLabel)).toBeVisible()
 			);
+		}
+		// Label left, picker right, on one line.
+		for (const cell of Array.from(
+			card.querySelectorAll<HTMLElement>('.displayFilterDialog__cell')
+		)) {
+			const label = cell
+				.querySelector('.displayFilterDialog__cellLabel')!
+				.getBoundingClientRect();
+			const control = cell.lastElementChild!.getBoundingClientRect();
+			await expect(label.right).toBeLessThanOrEqual(control.left);
+			await expect(label.top).toBeLessThan(control.bottom);
+			await expect(control.top).toBeLessThan(label.bottom);
 		}
 	}
 };
+
+/** Section headings each area really has (derived from its kinds). */
+const expectSections = async (
+	canvasElement: HTMLElement,
+	headings: string[],
+	absent: string[] = []
+) => {
+	const dialog = within(canvasElement.ownerDocument.body);
+	for (const heading of headings) {
+		await expect(
+			dialog.getByRole('heading', { level: 3, name: heading })
+		).toBeTruthy();
+	}
+	for (const heading of absent) {
+		await expect(
+			dialog.queryByRole('heading', { level: 3, name: heading })
+		).toBeNull();
+	}
+};
+
+const SESSION_HEADINGS = [
+	'Gesprächsarten',
+	'Weitere Filter-Knöpfe',
+	'Darstellung der Filter-Knöpfe'
+];
+const SESSION_LABELS = ['Im Filter', 'Browser', 'E-Mail'];
+const TIMELINE_LABELS = ['In der Liste', 'Im Filter', 'E-Mail'];
 
 const sessionsArgs = {
 	fullScreen: true,
 	kinds: SESSION_KINDS,
 	columns: SESSION_COLUMNS,
 	showAutoRead: true,
-	labels: { ...STORY_LABELS, title: 'Ansicht · Gespräche' }
+	labels: SESSION_STORY_LABELS,
+	emailSection: 'sessions' as const
 };
 
 const requestsArgs = {
@@ -351,16 +424,24 @@ const requestsArgs = {
 	kinds: REQUEST_KINDS,
 	columns: SESSION_COLUMNS,
 	showAutoRead: false,
-	labels: { ...STORY_LABELS, title: 'Ansicht · Anfragen' }
+	labels: REQUEST_STORY_LABELS,
+	emailSection: 'requests' as const
 };
 
-/** Gespräche on a 390px phone (Ton + Anzeigen). */
+const timelineArgs = {
+	fullScreen: true,
+	emailSection: 'timeline' as const
+};
+
+/** Gespräche on a 390px phone: cards with Im Filter / Browser / E-Mail. */
 export const Phone390: Story = {
 	globals: phone390Globals,
 	args: sessionsArgs,
 	render: (args) => <Controlled {...args} />,
-	play: ({ canvasElement }) =>
-		expectPhoneLayout(canvasElement, 390, ['Ton', 'Anzeigen'])
+	play: async ({ canvasElement }) => {
+		await expectPhoneLayout(canvasElement, 390, SESSION_LABELS);
+		await expectSections(canvasElement, SESSION_HEADINGS);
+	}
 };
 
 /** Gespräche on the smallest supported phone. */
@@ -369,16 +450,22 @@ export const Phone320: Story = {
 	args: sessionsArgs,
 	render: (args) => <Controlled {...args} />,
 	play: ({ canvasElement }) =>
-		expectPhoneLayout(canvasElement, 320, ['Ton', 'Anzeigen'])
+		expectPhoneLayout(canvasElement, 320, SESSION_LABELS)
 };
 
-/** Anfragen on a 390px phone. */
+/** Anfragen on a 390px phone: no filter-only buttons, so no such section. */
 export const PhoneRequests390: Story = {
 	globals: phone390Globals,
 	args: requestsArgs,
 	render: (args) => <Controlled {...args} />,
-	play: ({ canvasElement }) =>
-		expectPhoneLayout(canvasElement, 390, ['Ton', 'Anzeigen'])
+	play: async ({ canvasElement }) => {
+		await expectPhoneLayout(canvasElement, 390, SESSION_LABELS);
+		await expectSections(
+			canvasElement,
+			['Anfragearten', 'Darstellung der Filter-Knöpfe'],
+			['Weitere Filter-Knöpfe']
+		);
+	}
 };
 
 /** Anfragen on the smallest supported phone. */
@@ -387,48 +474,240 @@ export const PhoneRequests320: Story = {
 	args: requestsArgs,
 	render: (args) => <Controlled {...args} />,
 	play: ({ canvasElement }) =>
-		expectPhoneLayout(canvasElement, 320, ['Ton', 'Anzeigen'])
+		expectPhoneLayout(canvasElement, 320, SESSION_LABELS)
 };
 
-/** Zeitstrahl on a 390px phone (In der Liste + Anzeigen). */
+/** Zeitstrahl on a 390px phone: In der Liste / Im Filter / E-Mail, no Browser. */
 export const PhoneTimeline390: Story = {
 	globals: phone390Globals,
-	args: { fullScreen: true },
+	args: timelineArgs,
 	render: (args) => <Controlled {...args} />,
-	play: ({ canvasElement }) =>
-		expectPhoneLayout(canvasElement, 390, ['In der Liste', 'Anzeigen'])
+	play: async ({ canvasElement }) => {
+		await expectPhoneLayout(canvasElement, 390, TIMELINE_LABELS);
+		await expectSections(
+			canvasElement,
+			['Ereignisarten', 'Darstellung der Filter-Knöpfe'],
+			['Weitere Filter-Knöpfe']
+		);
+		await expect(
+			within(canvasElement.ownerDocument.body).queryByText('Browser')
+		).toBeNull();
+	}
 };
 
 /** Zeitstrahl on the smallest supported phone. */
 export const PhoneTimeline320: Story = {
 	globals: phone320Globals,
-	args: { fullScreen: true },
+	args: timelineArgs,
 	render: (args) => <Controlled {...args} />,
 	play: ({ canvasElement }) =>
-		expectPhoneLayout(canvasElement, 320, ['In der Liste', 'Anzeigen'])
+		expectPhoneLayout(canvasElement, 320, TIMELINE_LABELS)
 };
 
-/** Gespräche on desktop: the table layout is unchanged above the phone breakpoint. */
+/** Desktop: the legend explains the columns, the header row labels them. */
+const expectDesktop = async (canvasElement: HTMLElement, columns: string[]) => {
+	const doc = canvasElement.ownerDocument;
+	await waitFor(() =>
+		expect(
+			doc.querySelectorAll('.displayFilterDialog__row').length
+		).toBeGreaterThan(0)
+	);
+	const dialog = within(doc.body);
+	const legend = doc.querySelector(
+		'.displayFilterDialog__legend'
+	) as HTMLElement;
+	await waitFor(() => expect(legend).toBeVisible());
+	await expect(
+		Array.from(legend.querySelectorAll('dt')).map((dt) => dt.textContent)
+	).toEqual(columns);
+	for (const column of ['Art', ...columns]) {
+		await expect(
+			dialog.getAllByRole('columnheader', { name: column })[0]
+		).toBeVisible();
+	}
+	for (const label of Array.from(
+		doc.querySelectorAll<HTMLElement>('.displayFilterDialog__cellLabel')
+	)) {
+		await expect(getComputedStyle(label).display).toBe('none');
+	}
+	// Kind names stay on one line ("Interner Gruppenchat").
+	for (const name of Array.from(
+		doc.querySelectorAll<HTMLElement>('.displayFilterDialog__kindName')
+	)) {
+		const lineHeight = parseFloat(getComputedStyle(name).lineHeight);
+		await expect(name.getBoundingClientRect().height).toBeLessThan(
+			lineHeight * 1.5
+		);
+	}
+	const body = doc.querySelector(
+		'.displayFilterDialog .m3Dialog__body'
+	) as HTMLElement;
+	await expect(body.scrollWidth).toBeLessThanOrEqual(body.clientWidth);
+};
+
+/** Gespräche on desktop: three sections, Im Filter / Browser / E-Mail. */
 export const SessionsDesktop: Story = {
 	globals: desktop1440Globals,
 	args: { ...sessionsArgs, fullScreen: false },
 	render: (args) => <Controlled {...args} />,
 	play: async ({ canvasElement }) => {
-		const doc = canvasElement.ownerDocument;
-		await waitFor(() =>
-			expect(
-				doc.querySelectorAll('.displayFilterDialog__row').length
-			).toBeGreaterThan(0)
+		await expectDesktop(canvasElement, SESSION_LABELS);
+		await expectSections(canvasElement, SESSION_HEADINGS);
+		const dialog = within(canvasElement.ownerDocument.body);
+		// Filter-only buttons: only "Im Filter", in their own section.
+		const archive = dialog.getByRole('row', { name: /Archiviert/ });
+		await expect(
+			within(archive).getByRole('button', {
+				name: 'Im Filter: Archiviert'
+			})
+		).toBeTruthy();
+		await expect(within(archive).queryAllByRole('button')).toHaveLength(2);
+	}
+};
+
+/** Anfragen on desktop: no filter-only section (Anfragen has none). */
+export const RequestsDesktop: Story = {
+	globals: desktop1440Globals,
+	args: { ...requestsArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		await expectDesktop(canvasElement, SESSION_LABELS);
+		await expectSections(
+			canvasElement,
+			['Anfragearten', 'Darstellung der Filter-Knöpfe'],
+			['Weitere Filter-Knöpfe']
 		);
-		// The shared header row labels the columns; the per-cell labels stay hidden.
-		const header = within(doc.body).getByRole('columnheader', {
-			name: 'Ton'
+	}
+};
+
+/** Zeitstrahl on desktop: In der Liste / Im Filter / E-Mail, no Browser. */
+export const TimelineDesktop: Story = {
+	globals: desktop1440Globals,
+	args: { ...timelineArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		await expectDesktop(canvasElement, TIMELINE_LABELS);
+		await expectSections(
+			canvasElement,
+			['Ereignisarten', 'Darstellung der Filter-Knöpfe'],
+			['Weitere Filter-Knöpfe']
+		);
+	}
+};
+
+/**
+ * The Browser menu: the house menu, adapted — "Pop-up mit Ton" over the
+ * tones, a divider, then "Pop-up ohne Ton" with its support line (the
+ * stored mute). No "Aus": a per-kind "no pop-up" cannot be stored.
+ */
+export const BrowserMenuOpen: Story = {
+	globals: desktop1440Globals,
+	args: { ...sessionsArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const doc = canvasElement.ownerDocument;
+		const dialog = within(doc.body);
+		await userEvent.click(
+			await dialog.findByRole('button', {
+				name: 'Browser-Benachrichtigung: Interner Gruppenchat'
+			})
+		);
+		const menu = await dialog.findByRole('menu', {
+			name: 'Browser-Benachrichtigung: Interner Gruppenchat'
 		});
-		await expect(header.getBoundingClientRect().height).toBeGreaterThan(0);
-		for (const label of Array.from(
-			doc.querySelectorAll<HTMLElement>('.displayFilterDialog__cellLabel')
-		)) {
-			await expect(getComputedStyle(label).display).toBe('none');
-		}
+		await expect(menu.closest('.chatMenuDropdown')).not.toBeNull();
+		// The menu fades in.
+		await waitFor(() =>
+			expect(within(menu).getByText('Pop-up mit Ton')).toBeVisible()
+		);
+		const items = within(menu).getAllByRole('menuitemradio');
+		await expect(items[0]).toHaveAttribute('aria-checked', 'true');
+		await expect(items[0]).toHaveTextContent('Standard');
+		await expect(within(menu).getByRole('separator')).toBeTruthy();
+		const silent = within(menu).getByRole('menuitemradio', {
+			name: /^Pop-up ohne Ton/
+		});
+		await expect(silent).toHaveTextContent('Nur das Fenster, kein Ton');
+		await expect(
+			within(menu).queryByRole('menuitemradio', { name: /^Aus/ })
+		).toBeNull();
+		// The divider comes right before the silent pop-up.
+		await expect(silent.previousElementSibling?.getAttribute('role')).toBe(
+			'separator'
+		);
+	}
+};
+
+/**
+ * No stored e-mail setting for Live-Chat: the cell is text, not a control.
+ * Tab skips it (no focus trap), and the reason is part of the cell's text.
+ */
+export const EmailUnavailable: Story = {
+	globals: desktop1440Globals,
+	args: { ...sessionsArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} />,
+	play: async ({ canvasElement }) => {
+		const dialog = within(canvasElement.ownerDocument.body);
+		const row = await dialog.findByRole('row', { name: /Live-Chat/ });
+		const cell = row.querySelector(
+			'.displayFilterDialog__unavailable'
+		) as HTMLElement;
+		await expect(cell).toHaveTextContent('nicht verfügbar');
+		await expect(cell).toHaveAttribute(
+			'title',
+			'Für diese Art gibt es noch keine E-Mail'
+		);
+		await expect(cell).toHaveTextContent(
+			'Für diese Art gibt es noch keine E-Mail'
+		);
+		await expect(
+			within(row).queryByRole('button', { name: /^E-Mail/ })
+		).toBeNull();
+		// Keyboard: from the Live-Chat browser menu button, Tab lands on the
+		// next row's first control — the unavailable cell is no stop.
+		within(row)
+			.getByRole('button', {
+				name: 'Browser-Benachrichtigung: Live-Chat'
+			})
+			.focus();
+		await userEvent.tab();
+		await expect(canvasElement.ownerDocument.activeElement).toBe(
+			dialog.getByRole('button', {
+				name: 'Im Filter: Interner Gruppenchat'
+			})
+		);
+	}
+};
+
+const emailChange = fn();
+
+/** Changing an e-mail cell hands the kind and the new value to the e-mail column. */
+export const EmailChange: Story = {
+	globals: desktop1440Globals,
+	args: { ...sessionsArgs, fullScreen: false },
+	render: (args) => <Controlled {...args} onEmailChange={emailChange} />,
+	play: async ({ canvasElement }) => {
+		emailChange.mockClear();
+		const dialog = within(canvasElement.ownerDocument.body);
+		const picker = await dialog.findByRole('button', {
+			name: 'E-Mail: Mail-Beratung'
+		});
+		await expect(picker).toHaveTextContent('An');
+		await userEvent.click(
+			dialog.getByRole('button', { name: 'E-Mail wählen: Mail-Beratung' })
+		);
+		const menu = await dialog.findByRole('menu', {
+			name: 'E-Mail wählen: Mail-Beratung'
+		});
+		await expect(
+			within(menu)
+				.getAllByRole('menuitemradio')
+				.map((item) => item.textContent)
+		).toEqual(['An', 'Aus']);
+		await userEvent.click(
+			within(menu).getByRole('menuitemradio', { name: 'Aus' })
+		);
+		await expect(emailChange).toHaveBeenCalledWith('oneToOne', false);
+		await waitFor(() => expect(picker).toHaveTextContent('Aus'));
 	}
 };

@@ -1,11 +1,7 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react';
-import clone from 'lodash/clone';
-import get from 'lodash/get';
-import set from 'lodash/set';
-import { NotificationsContext, UserDataContext } from '../../../../globalState';
-import { useUserMutate } from '../../../../hooks/useUserMutate';
+import { UserDataContext } from '../../../../globalState';
 import { Switch } from '../../../Switch';
-import { useTranslation } from 'react-i18next';
+import { readEmailSetting, useSaveEmailSetting } from '../emailSetting';
 
 interface EmailToggleProps {
 	name: string;
@@ -18,38 +14,23 @@ export const EmailToggle = ({
 	titleKey,
 	descriptionKey
 }: EmailToggleProps) => {
-	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const [internalChecked, setInternalChecked] = useState(false);
-	const { addNotification } = useContext(NotificationsContext);
-
-	const { mutate } = useUserMutate({
-		onError: (ex) => {
-			addNotification({
-				title: t('profile.notifications.toggleError.title'),
-				text: t('profile.notifications.toggleError.description'),
-				notificationType: 'error'
-			});
-			// console.error(ex);
-		}
-	});
+	// Shared with the display filter's E-Mail column: one write path.
+	const save = useSaveEmailSetting();
 
 	useEffect(() => {
-		const checked = get(userData?.emailNotifications, name, false);
-		setInternalChecked(checked);
-	}, [userData.emailNotifications, name]);
+		setInternalChecked(readEmailSetting(userData, { kind: 'path', name }));
+	}, [userData.emailNotifications, name]); // eslint-disable-line react-hooks/exhaustive-deps
 
 	const onChange = useCallback(
-		(checked) => {
+		async (checked: boolean) => {
 			setInternalChecked(checked);
-			const emailNotifications = set(
-				clone(userData.emailNotifications),
-				name,
-				checked
-			);
-			mutate({ emailNotifications });
+			if (!(await save({ kind: 'path', name }, checked))) {
+				setInternalChecked(!checked);
+			}
 		},
-		[mutate, name, userData.emailNotifications]
+		[name, save]
 	);
 
 	return (

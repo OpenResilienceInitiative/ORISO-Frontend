@@ -29,7 +29,9 @@ export const useDisplayFilterLabels = (
 				title: `${t('notifications.displayFilter.title')} · ${t(
 					`notifications.displayFilter.sections.${section}`
 				)}`,
-				description: t('notifications.displayFilter.description'),
+				description: t(
+					`notifications.displayFilter.descriptions.${section}`
+				),
 				showColumn: t('notifications.displayFilter.showColumn'),
 				pillColumn: t('notifications.displayFilter.pillColumn'),
 				showKind: (kind: string) =>
@@ -94,6 +96,35 @@ export const useDisplayFilterLabels = (
 				),
 				deactivatedHint: t(
 					'notifications.displayFilter.deactivatedHint'
+				),
+				kindColumn: t('notifications.displayFilter.kindColumn'),
+				legendShow: t('notifications.displayFilter.legendShow'),
+				legendPill: t('notifications.displayFilter.legendPill'),
+				legendSound: t('notifications.displayFilter.legendSound'),
+				legendEmail: t('notifications.displayFilter.legendEmail'),
+				kindsHeading: t(
+					`notifications.displayFilter.kindsHeadings.${section}`
+				),
+				quickHeading: t('notifications.displayFilter.quickHeading'),
+				quickNote: t('notifications.displayFilter.quickNote'),
+				presentationHeading: t(
+					'notifications.displayFilter.presentationHeading'
+				),
+				soundWithTone: t('notifications.displayFilter.soundWithTone'),
+				soundSilent: t('notifications.displayFilter.soundSilent'),
+				soundSilentDescription: t(
+					'notifications.displayFilter.soundSilentDescription'
+				),
+				emailColumn: t('notifications.displayFilter.emailColumn'),
+				emailKind: (kind: string) =>
+					t('notifications.displayFilter.emailKind', { kind }),
+				emailMenu: (kind: string) =>
+					t('notifications.displayFilter.emailMenu', { kind }),
+				emailUnavailable: t(
+					'notifications.displayFilter.emailUnavailable'
+				),
+				emailUnavailableReason: t(
+					'notifications.displayFilter.emailUnavailableReason'
 				)
 			}
 		}),
