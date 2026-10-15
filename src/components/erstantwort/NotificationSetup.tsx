@@ -11,6 +11,10 @@ import {
 	NotificationChoiceCard
 } from './NotificationChoiceCard';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
+import { NotificationBrowserDialog } from './NotificationBrowserDialog';
+import { notificationSettingsStore } from '../../utils/notificationSettings/store';
+import { AREA_KINDS } from '../../utils/notificationSettings/notificationConfig';
+import type { SoundId } from '../../utils/notificationSettings/model';
 
 /** Shared account/device setup, used by first enquiry and optional chat shortcuts.
  * Choice is derived from live account settings; a click is never completion.
@@ -40,6 +44,7 @@ export const NotificationSetup = ({
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
 	const [awaitingBrowser, setAwaitingBrowser] = useState(false);
+	const [browserDialogOpen, setBrowserDialogOpen] = useState(false);
 	const browserBlocked =
 		browserSupported && Notification.permission === 'denied';
 	const chosen: NotificationChoice | null =
@@ -57,6 +62,7 @@ export const NotificationSetup = ({
 		setPending(null);
 		setBusy(false);
 		setAwaitingBrowser(false);
+		setBrowserDialogOpen(false);
 		setError(null);
 		return () => {
 			continuation.current += 1;
@@ -106,6 +112,7 @@ export const NotificationSetup = ({
 			) {
 				// OS prompts need a fresh user gesture after the async email save.
 				setAwaitingBrowser(true);
+				setBrowserDialogOpen(true);
 				return;
 			}
 			if (choice !== 'EMAIL' && !browserActive) {
@@ -148,7 +155,32 @@ export const NotificationSetup = ({
 		if (choice !== 'BROWSER' && !userData?.email) {
 			setPending(choice);
 			setEmailOpen(true);
+		} else if (choice === 'BROWSER' && !browserActive) {
+			// The tone and the one permission click live in a dialog.
+			setBrowserDialogOpen(true);
 		} else void finish(choice);
+	};
+
+	/** Keep the chosen tone for the conversation and request areas. */
+	const rememberTone = (tone: SoundId) => {
+		const { notificationConfig } =
+			notificationSettingsStore.getState().settings;
+		const next = { ...notificationConfig };
+		(['requests', 'conversations'] as const).forEach((area) => {
+			next[area] = { ...next[area] };
+			AREA_KINDS[area].forEach((kind) => {
+				next[area][kind] = { ...next[area][kind], sound: tone };
+			});
+		});
+		notificationSettingsStore.updateSettings({
+			notificationConfig: next
+		});
+	};
+
+	const confirmBrowser = (tone: SoundId) => {
+		rememberTone(tone);
+		// No await before the permission request: it needs this click.
+		void finish('BROWSER').finally(() => setBrowserDialogOpen(false));
 	};
 
 	if (!isEmailEnabled && !isBrowserEnabled) return null;
@@ -162,7 +194,7 @@ export const NotificationSetup = ({
 				isBrowserNotificationSupported={browserSupported}
 				busy={busy || emailOpen}
 			/>
-			{awaitingBrowser && (
+			{awaitingBrowser && !browserDialogOpen && (
 				<>
 					<p role="status">
 						{t('erstantwort.notificationChoice.emailSavedNext')}
@@ -171,7 +203,7 @@ export const NotificationSetup = ({
 						type="button"
 						className="erstantwort__action"
 						disabled={busy}
-						onClick={() => void finish('BROWSER')}
+						onClick={() => setBrowserDialogOpen(true)}
 					>
 						{t('erstantwort.notificationChoice.enableBrowser')}
 					</button>
@@ -206,6 +238,15 @@ export const NotificationSetup = ({
 										)
 					})}
 				</p>
+			)}
+			{browserDialogOpen && (
+				<NotificationBrowserDialog
+					emailJustSaved={awaitingBrowser}
+					blocked={browserBlocked}
+					busy={busy}
+					onClose={() => setBrowserDialogOpen(false)}
+					onConfirm={confirmBrowser}
+				/>
 			)}
 			{emailOpen && (
 				<ErstantwortEmailOverlay

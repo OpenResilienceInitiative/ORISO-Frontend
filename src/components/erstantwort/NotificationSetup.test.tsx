@@ -159,6 +159,11 @@ it('does not present declined browser permission as activated', async () => {
 	fireEvent.click(
 		screen.getByRole('button', { name: /notificationChoice.browser / })
 	);
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
 	await screen.findByRole('alert');
 	expect(screen.queryByRole('status')).toBeNull();
 	expect(localStorage.getItem('BROWSER_NOTIFICATIONS')).toBeNull();
@@ -213,7 +218,10 @@ it('saving a new address enables email before offering the browser step', async 
 	expect(screen.queryByRole('textbox')).toBeNull();
 	expect(
 		screen
-			.getByRole('button', { name: /notificationChoice.email / })
+			.getByRole('button', {
+				name: /notificationChoice.email /,
+				hidden: true
+			})
 			.getAttribute('aria-pressed')
 	).toBe('true');
 	expect(request).not.toHaveBeenCalled();
@@ -342,13 +350,58 @@ it('swaps the generic denial for the unblock instructions when the browser stays
 	fireEvent.click(
 		screen.getByRole('button', { name: /notificationChoice.browser / })
 	);
+	// A blocked site cannot be asked again: the dialog only gives the way out.
 	const alert = await screen.findByRole('alert');
 	expect(alert.textContent).toBe(
 		'erstantwort.notificationChoice.browserBlockedHelp'
 	);
+	expect(request).not.toHaveBeenCalled();
 	expect(
-		screen.getAllByText('erstantwort.notificationChoice.browserBlockedHelp')
-	).toHaveLength(1);
+		(
+			screen.getByRole('button', {
+				name: 'erstantwort.notificationChoice.enableBrowser'
+			}) as HTMLButtonElement
+		).disabled
+	).toBe(true);
+});
+it('opens the tone dialog for browser-only and asks the browser only on its button', async () => {
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	await screen.findByRole('radiogroup');
+	expect(request).not.toHaveBeenCalled();
+	expect(
+		screen.getByText('erstantwort.notificationChoice.dialog.stayInBrowser')
+	).toBeTruthy();
+});
+it('remembers the chosen tone for requests and conversations and plays a preview', async () => {
+	const play = vi.fn().mockResolvedValue(undefined);
+	vi.stubGlobal(
+		'Audio',
+		class {
+			volume = 1;
+			constructor(public src: string) {}
+			play = play;
+		}
+	);
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	fireEvent.click(await screen.findByTestId('notificationTone-ton-5'));
+	expect(play).toHaveBeenCalledTimes(1);
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
+	await waitFor(() => expect(request).toHaveBeenCalled());
+	const { notificationConfig } =
+		notificationSettingsStore.getState().settings;
+	expect(notificationConfig.requests.new.sound).toBe('ton-5');
+	expect(notificationConfig.conversations.standard.sound).toBe('ton-5');
+	expect(notificationConfig.timeCritical.call.sound).toBe('ring');
 });
 it('confirms the saved address and names the one remaining browser step for both channels', async () => {
 	setup();

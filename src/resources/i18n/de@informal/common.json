@@ -2321,6 +2321,14 @@
 			"email": "Schreib mir eine E-Mail",
 			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
 			"browser": "Gib mir hier ein Signal",
+			"dialog": {
+				"title": "Browser-Benachrichtigungen einschalten",
+				"description": "Wähle den Ton, den du hören wirst, und erlaube dann Benachrichtigungen in deinem Browser.",
+				"stayInBrowser": "Das funktioniert, solange du an diesem Computer in diesem Browser bleibst – auch wenn dieser Tab geschlossen ist.",
+				"toneLabel": "Benachrichtigungston",
+				"tone": "Ton {{number}}",
+				"noTone": "Kein Ton"
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfe die Berechtigung in deinem Browser.",
 			"optionActive": "Aktiv",
 			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicke in der Adressleiste auf das Schloss-Symbol, öffne die Website-Einstellungen, stelle Benachrichtigungen auf Zulassen oder wähle Zurücksetzen, und versuche es dann erneut.",

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { NotificationSetup } from './NotificationSetup';
 import { UserDataContext } from '../../globalState/context/UserDataContext';
 import { ModalProvider } from '../../globalState/provider/ModalProvider';
@@ -89,4 +89,21 @@ export const BlockedInBrowser: Story = {
 export const BlockedInBrowserMobile: Story = {
 	...BlockedInBrowser,
 	globals: phone390Globals
+};
+
+/** "Browser only" opens the tone dialog first; the browser is asked on its button. */
+export const BrowserOnlyOpensToneDialog: Story = {
+	beforeEach: withPermission('default'),
+	play: async ({ canvas }) => {
+		await userEvent.click(
+			await canvas.findByRole('button', {
+				name: /^(Give me a signal|Geben Sie mir hier ein Signal)/i
+			})
+		);
+		const body = within(document.body);
+		await waitFor(() => expect(body.getByRole('radiogroup')).toBeTruthy());
+		await expect(
+			body.getByText(/even when this tab is closed|Tab geschlossen/i)
+		).toBeTruthy();
+	}
 };

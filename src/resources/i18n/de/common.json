@@ -5280,6 +5280,14 @@
 			"browser": "Geben Sie mir hier ein Signal",
 			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
 			"enableBrowser": "Browser aktivieren",
+			"dialog": {
+				"title": "Browser-Benachrichtigungen einschalten",
+				"description": "Wählen Sie den Ton, den Sie hören werden, und erlauben Sie dann Benachrichtigungen in Ihrem Browser.",
+				"stayInBrowser": "Das funktioniert, solange Sie an diesem Computer in diesem Browser bleiben – auch wenn dieser Tab geschlossen ist.",
+				"toneLabel": "Benachrichtigungston",
+				"tone": "Ton {{number}}",
+				"noTone": "Kein Ton"
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.",
 			"optionActive": "Aktiv",
 			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicken Sie in der Adressleiste auf das Schloss-Symbol, öffnen Sie die Website-Einstellungen, stellen Sie Benachrichtigungen auf Zulassen oder wählen Sie Zurücksetzen, und versuchen Sie es dann erneut.",
