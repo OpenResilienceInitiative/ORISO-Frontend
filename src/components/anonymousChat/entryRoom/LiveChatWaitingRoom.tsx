@@ -252,10 +252,7 @@ export const LiveChatWaitingRoom = ({
 						mx: { xs: -2.5, sm: 0 }
 					}}
 				>
-					<HandoverCarousel
-						steps={cards}
-						cardWidth={{ xs: 300, sm: 372 }}
-					/>
+					<HandoverCarousel steps={cards} />
 				</Box>
 			)}
 
