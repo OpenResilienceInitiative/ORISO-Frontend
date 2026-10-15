@@ -46,14 +46,16 @@ export const WaitingRoomFrame = ({
 	const Stage = useContext(GlobalComponentContext)?.Stage ?? DefaultStage;
 	return (
 		<StageLayout
-			className="stageLayout--registration"
+			className="stageLayout--registration stageLayout--waitingRoom"
 			showLegalLinks={true}
 			legalDepartment={legalDepartment}
 			showLoginLink={showLoginLink}
 			loginParams={loginParams}
 			loginState={loginState}
 			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} />}
+			stage={
+				<Stage hasAnimation={false} legalDepartment={legalDepartment} />
+			}
 			mobileHero="bar"
 			headerStart={headerStart}
 			renderHeaderAction={renderHeaderAction}

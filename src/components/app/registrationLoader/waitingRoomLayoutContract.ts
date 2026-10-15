@@ -36,6 +36,14 @@ const check = (canvasElement: HTMLElement): string | null => {
 		if (panel.width < viewport * 0.3 || panel.left > 1) {
 			return `stage stands at ${panel.left}px, ${panel.width}px wide`;
 		}
+		const shownLegalRows = [
+			...doc.querySelectorAll<HTMLElement>(
+				'.stage__legalLinks, .stageLayout__legalLinks'
+			)
+		].filter((row) => row.getClientRects().length > 0);
+		if (shownLegalRows.length !== 1) {
+			return `legal links are shown ${shownLegalRows.length} times, expected once`;
+		}
 	}
 	return null;
 };
@@ -50,6 +58,7 @@ const check = (canvasElement: HTMLElement): string | null => {
  * - The bar is fixed to the bottom edge: the full width on a phone, the
  *   white column (60vw) on a desktop, ending at the right edge.
  * - The gate button spans the bar's row, not a corner of it.
+ * - On a desktop the legal links stand once, on the stage.
  *
  * Plain DOM and plain errors, like `waitingClockStoryChecks.ts`, so this file
  * type-checks with the app and needs no `storybook/test`.
