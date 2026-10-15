@@ -9,6 +9,8 @@ import { ZipcodeInput } from './zipcodeInput/ZipcodeInput';
 import { TopicSelection } from './topicSelection/TopicSelection';
 import { WhyLocalDisclosure } from './zipcodeInput/WhyLocalDisclosure';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import { PostRegistrationHandover } from '../app/registrationLoader/PostRegistrationHandover';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { HandoverGateState } from '../app/registrationLoader/handoverGate';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
@@ -500,4 +502,35 @@ export const HandoverInStageReady: StoryObj = {
 			}
 		}
 	}
+};
+
+/* The real component `AuthenticatedApp` mounts after the hard reload that
+   follows sign-up — not a hand-built copy. Same split layout as the form
+   before it and the live-chat entry room, so nothing jumps. */
+const PostRegistrationInStage = ({ ready }: { ready: boolean }) => (
+	<Box sx={{ minHeight: '100vh' }}>
+		<AgencySpecificContext.Provider
+			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
+		>
+			<GlobalComponentContext.Provider value={{ Stage }}>
+				<PostRegistrationHandover
+					ready={ready}
+					forcedState={ready ? undefined : 'preparing'}
+					onEnter={() => undefined}
+				/>
+			</GlobalComponentContext.Provider>
+		</AgencySpecificContext.Provider>
+	</Box>
+);
+
+export const PostRegistrationPreparing: StoryObj = {
+	name: '8f — Nach dem Reload, echte Komponente (lädt)',
+	render: () => <PostRegistrationInStage ready={false} />,
+	parameters: { layout: 'fullscreen' }
+};
+
+export const PostRegistrationReady: StoryObj = {
+	name: '8f — Nach dem Reload, echte Komponente (bereit)',
+	render: () => <PostRegistrationInStage ready />,
+	parameters: { layout: 'fullscreen' }
 };
