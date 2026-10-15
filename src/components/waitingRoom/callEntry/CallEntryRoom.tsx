@@ -1,0 +1,284 @@
+import * as React from 'react';
+import { useEffect, useState } from 'react';
+import { Box, Typography } from '@mui/material';
+import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
+import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
+import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
+import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import {
+	registrationMd3,
+	registrationScreenIntroSx,
+	registrationScreenTitleSx
+} from '../../registration/registrationDesign/registrationDesign';
+import { CallEntryIdentity, CallPasswordMode } from './CallEntryIdentity';
+import { CallNotice } from './CallNotice';
+import { DevicePicker } from './DevicePicker';
+import { SpeakerTest, SpeakerTestState } from './SpeakerTest';
+import { VideoCheck } from './VideoCheck';
+import { VoiceCheck } from './VoiceCheck';
+import { callEntryCopy as copy } from './callEntryCopy';
+import {
+	CallDeviceKind,
+	CallDevices,
+	CallDeviceSelection,
+	CallEntryBlocker,
+	CallModality
+} from './callEntryTypes';
+
+/** A level above this once means the microphone demonstrably hears. */
+const HEARD_LEVEL = 0.15;
+
+export interface CallEntryRoomProps {
+	modality: CallModality;
+	devices: CallDevices;
+	/** 0–1, from the microphone's analyser (fixture in stories). */
+	micLevel: number;
+	stream?: MediaStream | null;
+	passwordMode?: CallPasswordMode;
+	blocker?: CallEntryBlocker;
+	/** Who the call is with, shown in the kicker, e.g. "Schuldnerberatung". */
+	topic?: string;
+	initialName?: string;
+	initialPassword?: string;
+	initialMicOn?: boolean;
+	initialCameraOn?: boolean;
+	initialSpeakerTest?: SpeakerTestState;
+	initialMicHeard?: boolean;
+	initialSelection?: CallDeviceSelection;
+	joining?: boolean;
+	onJoin?: () => void;
+	onBlockerAction?: () => void;
+	playTone?: () => Promise<void>;
+}
+
+/**
+ * The call entry (ORISO-Frontend#1386), built from the shared waiting-room
+ * parts: `EntryRoomShell` → `WaitingRoomFrame`, `RegistrationFooter`,
+ * `HandoverGateButton`. Prototype in Storybook only; nothing calls Element
+ * Call yet.
+ *
+ * The gate fills with what is really done — name, password, a microphone
+ * that has been heard (or is muted on purpose) — and opens when all three
+ * are. Nothing else blocks: the camera may stay off, and the speaker test is
+ * offered, not required.
+ */
+export const CallEntryRoom = ({
+	modality,
+	devices,
+	micLevel,
+	stream,
+	passwordMode = 'enter',
+	blocker,
+	topic,
+	initialName = '',
+	initialPassword = '',
+	initialMicOn = true,
+	initialCameraOn = true,
+	initialSpeakerTest = 'idle',
+	initialMicHeard = false,
+	initialSelection = {},
+	joining = false,
+	onJoin,
+	onBlockerAction,
+	playTone
+}: CallEntryRoomProps) => {
+	const [name, setName] = useState(initialName);
+	const [password, setPassword] = useState(initialPassword);
+	const [micOn, setMicOn] = useState(initialMicOn);
+	const [cameraOn, setCameraOn] = useState(initialCameraOn);
+	const [speakerTest, setSpeakerTest] = useState(initialSpeakerTest);
+	const [micHeard, setMicHeard] = useState(initialMicHeard);
+	const [selection, setSelection] = useState(initialSelection);
+
+	useEffect(() => {
+		if (micOn && micLevel > HEARD_LEVEL) setMicHeard(true);
+	}, [micLevel, micOn]);
+
+	const select = (kind: CallDeviceKind, id: string) => {
+		setSelection((current) => ({ ...current, [kind]: id }));
+		// A different microphone has not been heard yet.
+		if (kind === 'microphone') setMicHeard(false);
+		if (kind === 'speaker') setSpeakerTest('idle');
+	};
+
+	const conditions = [
+		{ done: name.trim().length > 0, missing: copy.missingName },
+		{
+			done:
+				passwordMode === 'set'
+					? allPasswordCriteriaPass(password)
+					: password.length > 0,
+			missing: copy.missingPassword
+		},
+		{ done: micHeard || !micOn, missing: copy.missingMicrophone }
+	];
+	const doneCount = conditions.filter((condition) => condition.done).length;
+	const ready = doneCount === conditions.length;
+	const missing = conditions
+		.filter((condition) => !condition.done)
+		.map((condition) => condition.missing)
+		.join(', ');
+
+	const kicker = topic
+		? `${copy.kicker[modality]} · ${topic}`
+		: copy.kicker[modality];
+
+	if (blocker) {
+		const text = copy.blocker[blocker];
+		const waiting = blocker === 'notOpenYet';
+		return (
+			<EntryRoomShell kicker={kicker} statusLine={text.title}>
+				<CallNotice blocker={blocker} />
+				<RegistrationFooter>
+					<Box sx={{ width: '100%' }}>
+						<HandoverGateButton
+							state={waiting ? 'queued' : 'ready'}
+							indeterminate={waiting}
+							onEnter={onBlockerAction}
+							label={text.action}
+							status=""
+							testingAttribute="call-entry-gate"
+						/>
+					</Box>
+				</RegistrationFooter>
+			</EntryRoomShell>
+		);
+	}
+
+	const pickerKinds: CallDeviceKind[] =
+		modality === 'video'
+			? ['camera', 'microphone', 'speaker']
+			: ['microphone', 'speaker'];
+
+	return (
+		<EntryRoomShell kicker={kicker} statusLine={copy.statusLine[modality]}>
+			<Box data-testid="call-entry-room" data-modality={modality}>
+				<Typography component="h1" sx={registrationScreenTitleSx}>
+					{copy.title[modality]}
+				</Typography>
+				<Typography sx={{ ...registrationScreenIntroSx, mt: 1 }}>
+					{copy.intro[modality]}
+				</Typography>
+				<Box
+					sx={{
+						mt: 3,
+						display: 'grid',
+						gap: { xs: 3, lg: 4 },
+						alignItems: 'start',
+						gridTemplateColumns: {
+							xs: 'minmax(0, 1fr)',
+							lg: 'minmax(0, 1.3fr) minmax(0, 1fr)'
+						}
+					}}
+				>
+					<Box>
+						{modality === 'video' ? (
+							<>
+								<VideoCheck
+									name={name}
+									stream={stream}
+									cameraOn={cameraOn}
+									micOn={micOn}
+									micLevel={micLevel}
+									onToggleCamera={() =>
+										setCameraOn(!cameraOn)
+									}
+									onToggleMic={() => setMicOn(!micOn)}
+								/>
+								<SpeakerTest
+									compact
+									state={speakerTest}
+									onChange={setSpeakerTest}
+									playTone={playTone}
+								/>
+							</>
+						) : (
+							<VoiceCheck
+								name={name}
+								micOn={micOn}
+								micLevel={micLevel}
+								micHeard={micHeard}
+								onToggleMic={() => setMicOn(!micOn)}
+								speakerTest={speakerTest}
+								onSpeakerTest={setSpeakerTest}
+								playTone={playTone}
+							/>
+						)}
+					</Box>
+					<Box>
+						<CallEntryIdentity
+							name={name}
+							onNameChange={setName}
+							password={password}
+							onPasswordChange={setPassword}
+							passwordMode={passwordMode}
+						/>
+						<Box sx={{ mt: 3, display: 'grid', gap: 1 }}>
+							{pickerKinds.map((kind) => (
+								<DevicePicker
+									key={kind}
+									kind={kind}
+									kindLabel={copy.devices[kind]}
+									devices={devices[kind]}
+									selectedId={selection[kind]}
+									onSelect={(id) => select(kind, id)}
+								/>
+							))}
+						</Box>
+						{modality === 'audio' && (
+							<Box
+								sx={{
+									mt: 2,
+									display: 'flex',
+									gap: 1.5,
+									alignItems: 'flex-start',
+									color: registrationMd3.onSurfaceVariant
+								}}
+							>
+								<HeadphonesRoundedIcon
+									sx={{ fontSize: 20, mt: '2px' }}
+								/>
+								<Typography
+									sx={{ fontSize: 14, lineHeight: '20px' }}
+								>
+									{copy.headsetTip}
+								</Typography>
+							</Box>
+						)}
+					</Box>
+				</Box>
+			</Box>
+			<RegistrationFooter>
+				<Box
+					sx={{ width: '100%' }}
+					data-cy-progress={Math.round(
+						(doneCount / conditions.length) * 100
+					)}
+				>
+					<HandoverGateButton
+						state={
+							joining ? 'entering' : ready ? 'ready' : 'preparing'
+						}
+						indeterminate={joining}
+						progress={
+							joining
+								? undefined
+								: (doneCount / conditions.length) * 100
+						}
+						onEnter={onJoin}
+						label={copy.join[modality]}
+						status={
+							joining
+								? copy.joining
+								: ready
+									? copy.allSet
+									: `${copy.missing}${missing}`
+						}
+						testingAttribute="call-entry-gate"
+					/>
+				</Box>
+			</RegistrationFooter>
+		</EntryRoomShell>
+	);
+};

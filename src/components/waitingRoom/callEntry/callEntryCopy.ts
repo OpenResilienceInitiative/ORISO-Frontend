@@ -1,0 +1,109 @@
+import { CallEntryBlocker } from './callEntryTypes';
+
+/**
+ * Prototype copy for ORISO-Frontend#1386. German only and not in i18n yet on
+ * purpose: the wording is part of what the product owner reviews in
+ * Storybook. It moves to `registration.callEntry.*` keys when the room is
+ * wired.
+ */
+export const callEntryCopy = {
+	kicker: { video: 'Videogespräch', audio: 'Telefongespräch' },
+	statusLine: {
+		video: 'Prüfen Sie Bild und Ton, dann treten Sie bei.',
+		audio: 'Prüfen Sie Ihren Ton, dann treten Sie bei.'
+	},
+	title: {
+		video: 'Sehen und hören Sie sich kurz an',
+		audio: 'Hört man Sie gut?'
+	},
+	intro: {
+		video: 'Niemand sieht Sie, bevor Sie beitreten. Die Vorschau sehen nur Sie.',
+		audio: 'Es gibt kein Bild, nur Ihre Stimme. Niemand hört Sie, bevor Sie beitreten.'
+	},
+	devices: {
+		camera: 'Kamera',
+		microphone: 'Mikrofon',
+		speaker: 'Lautsprecher'
+	},
+	cameraOff: 'Ihre Kamera ist aus',
+	micOn: 'Mikrofon an',
+	micOff: 'Mikrofon aus',
+	cameraOn: 'Kamera an',
+	cameraOffToggle: 'Kamera aus',
+	micMeter: 'Lautstärke Ihres Mikrofons',
+	micHeard: 'Wir hören Sie.',
+	micWaiting: 'Sagen Sie etwas, dann schlägt die Anzeige aus.',
+	micMuted: 'Sie treten stumm bei. Sie können sich jederzeit zuschalten.',
+	speakerTest: 'Testton abspielen',
+	speakerPlaying: 'Ton läuft …',
+	speakerQuestion: 'Haben Sie den Ton gehört?',
+	speakerYes: 'Ja',
+	speakerNo: 'Nein',
+	speakerHeard: 'Ihr Lautsprecher funktioniert.',
+	speakerNotHeard:
+		'Stellen Sie lauter oder wählen Sie oben ein anderes Gerät. Dann noch einmal.',
+	headsetTip:
+		'Mit Kopfhörern hört niemand in Ihrer Nähe mit, was Ihr Gegenüber sagt.',
+	nameLabel: 'Ihr Name im Gespräch',
+	nameHelper:
+		'So sieht Sie Ihr Gegenüber. Ein Vorname oder Spitzname reicht.',
+	passwordLabel: {
+		enter: 'Passwort für dieses Gespräch',
+		set: 'Ihr Passwort'
+	},
+	passwordHelper: {
+		enter: 'Es steht in Ihrer Einladung.',
+		set: 'Damit kommen Sie später wieder in Ihr Postfach.'
+	},
+	showPassword: 'Passwort anzeigen',
+	hidePassword: 'Passwort verbergen',
+	join: {
+		video: 'Videogespräch beitreten',
+		audio: 'Telefongespräch beitreten'
+	},
+	missing: 'Noch offen: ',
+	missingName: 'Name',
+	missingPassword: 'Passwort',
+	missingMicrophone: 'Mikrofon',
+	allSet: 'Alles bereit',
+	joining: 'Sie werden verbunden …',
+	blocker: {
+		permissionDenied: {
+			title: 'Ihr Browser hat das Mikrofon gesperrt',
+			body: 'Ohne Mikrofon kann Ihr Gegenüber Sie nicht hören.',
+			steps: [
+				'Klicken Sie links neben der Adresse auf das Schloss.',
+				'Erlauben Sie das Mikrofon (beim Videogespräch auch die Kamera).',
+				'Klicken Sie dann auf „Erneut prüfen“.'
+			],
+			action: 'Erneut prüfen'
+		},
+		noDevice: {
+			title: 'Wir finden kein Mikrofon',
+			body: 'Schließen Sie ein Headset an oder nutzen Sie Ihr Handy. Der Link funktioniert auch dort.',
+			steps: [],
+			action: 'Erneut prüfen'
+		},
+		notOpenYet: {
+			title: 'Der Raum öffnet um 14:00 Uhr',
+			body: 'Sie können die Seite offen lassen. Wir lassen Sie herein, sobald es so weit ist.',
+			steps: [],
+			action: 'Warten'
+		},
+		callEnded: {
+			title: 'Dieses Gespräch ist beendet',
+			body: 'Wenn Sie noch etwas sagen möchten, schreiben Sie Ihrer Beratung eine Nachricht.',
+			steps: [],
+			action: 'Zu meinen Nachrichten'
+		},
+		linkInvalid: {
+			title: 'Dieser Link gilt nicht mehr',
+			body: 'Bitten Sie Ihre Beratung um einen neuen Link.',
+			steps: [],
+			action: 'Zu meinen Nachrichten'
+		}
+	} satisfies Record<
+		CallEntryBlocker,
+		{ title: string; body: string; steps: string[]; action: string }
+	>
+} as const;
