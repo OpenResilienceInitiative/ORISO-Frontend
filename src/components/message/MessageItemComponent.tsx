@@ -117,13 +117,6 @@ import {
 } from '../../utils/sessionAvatarChoice';
 import { chosenAvatarOf, counsellorChoiceOf } from '../../utils/avatarChoice';
 
-/* How recently an Erstantwort event must have arrived for its staged reveal to
-   play. Generous on purpose: the cost of skipping the animation on a genuinely
-   new event is that the person sees the text immediately, while the cost of
-   replaying it on old history is a wall of text re-typing itself every time the
-   list scrolls. */
-const ERSTANTWORT_FRESH_WINDOW_MS = 60_000;
-
 // Slack-style long-press on the bubble opens the message action menu.
 const LONG_PRESS_MS = 500;
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
@@ -1254,16 +1247,6 @@ export const MessageItemComponent = ({
 		isErstantwortEvent,
 		activeSession
 	);
-	/* Only a freshly arrived event plays the stagger. The message list mounts and
-	   unmounts items on scroll and on pagination, and ErstantwortSequence resets
-	   `revealed` to 0 on every mount — so without this an event received days ago
-	   types itself out again each time it scrolls into view, and `onFirstReveal`
-	   fires again with it. */
-	const isRecentErstantwortEvent = useMemo(() => {
-		const timestamp = Number(messageTime);
-		if (!Number.isFinite(timestamp) || timestamp <= 0) return false;
-		return Date.now() - timestamp < ERSTANTWORT_FRESH_WINDOW_MS;
-	}, [messageTime]);
 	const isUserLeftChatEvent =
 		parsedMessage.systemNotificationType ===
 		SYSTEM_NOTIFICATION_USER_LEFT_CHAT;
@@ -2618,7 +2601,6 @@ export const MessageItemComponent = ({
 					isAskerEmailEnabled={
 						tenant?.settings?.featureAskerEmailEnabled
 					}
-					skipAnimation={!isRecentErstantwortEvent}
 				/>
 			</div>
 		);

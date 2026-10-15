@@ -41,7 +41,8 @@ function setup(
 	emailActive = false,
 	conversationType?: string,
 	isAskerEmailEnabled?: boolean,
-	rawMessage?: string
+	rawMessage?: string,
+	passSkipAnimation = true
 ) {
 	const userData = {
 		email: 'asker@example.org',
@@ -65,7 +66,7 @@ function setup(
 						rawMessage={rawMessage}
 						conversationType={conversationType}
 						isAskerEmailEnabled={isAskerEmailEnabled}
-						skipAnimation
+						{...(passSkipAnimation ? { skipAnimation: true } : {})}
 					/>
 				</ModalProvider>
 			</UserDataContext.Provider>
@@ -174,4 +175,15 @@ it('keeps frozen FAQ and invitation words when the saved channel suppresses its 
 		screen.queryByRole('button', { name: /notificationChoice.email / })
 	).toBeNull();
 	expect(screen.queryByRole('button', { name: 'Add email' })).toBeNull();
+});
+
+it('draws the whole first answer as one block, without staging the bubbles one by one', () => {
+	// Frank, 2026-10-14: the staged reveal (typing dots, 1.4 s per bubble) is far
+	// too slow. With no animation prop at all, everything is on screen at once.
+	vi.useFakeTimers();
+	setup(false, undefined, undefined, undefined, false);
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+	vi.useRealTimers();
 });

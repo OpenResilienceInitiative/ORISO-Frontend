@@ -47,7 +47,10 @@ export interface ErstantwortMessageProps {
 	 * must keep today's behaviour.
 	 */
 	isAskerEmailEnabled?: boolean;
-	/** Re-renders of history skip the stagger; a fresh event plays it. */
+	/**
+	 * The first answer is drawn as one block (Frank, 2026-10-14: the staged
+	 * reveal was far too slow). Pass `false` to bring the stagger back.
+	 */
 	skipAnimation?: boolean;
 	onFirstReveal?: () => void;
 }
@@ -58,7 +61,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	conversationType,
 	deadlineDays,
 	isAskerEmailEnabled,
-	skipAnimation,
+	skipAnimation = true,
 	onFirstReveal
 }) => {
 	const { t } = useTranslation();
