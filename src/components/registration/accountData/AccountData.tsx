@@ -1,7 +1,6 @@
 import {
 	Alert,
 	Box,
-	Button,
 	Checkbox,
 	FormControlLabel,
 	FormGroup,
@@ -13,7 +12,6 @@ import * as React from 'react';
 import {
 	Dispatch,
 	FC,
-	ReactNode,
 	SetStateAction,
 	useCallback,
 	useContext,
@@ -47,6 +45,7 @@ import {
 } from '../registrationDesign/registrationDesign';
 import { OrisoTextField } from '../../form/OrisoTextField';
 import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import { IdentitySuggestButton } from './IdentitySuggestButton';
 import {
 	generateAvatar,
 	generatePassword,
@@ -76,56 +75,6 @@ import { DataProtectionSnackbar } from './DataProtectionSnackbar';
 import { toRegistrationUsername } from './registrationUsername';
 import { ConsentCompletionPanel } from '../consentCompletion/ConsentCompletionPanel';
 import { useRegistrationCompletion } from '../consentCompletion/RegistrationCompletionContext';
-
-const suggestButtonSx = (filled: boolean) =>
-	({
-		'px': 1,
-		'py': 0.75,
-		'fontSize': 13.5,
-		'lineHeight': '20px',
-		'minWidth': 0,
-		'flex': '1 1 auto',
-		'borderRadius': '8px',
-		'textTransform': 'none',
-		'color': filled ? registrationMd3.onPrimary : registrationMd3.onSurface,
-		'borderColor': registrationMd3.outlineVariant,
-		'backgroundColor': filled ? registrationMd3.primary : undefined,
-		'& .MuiButton-startIcon': {
-			mr: 0.625
-		},
-		'& .registration-suggest-icon': {
-			filter: filled ? 'brightness(0) invert(1)' : 'none',
-			transition: 'filter 140ms ease'
-		},
-		'&:hover': filled
-			? {
-					backgroundColor: registrationMd3.primaryDark
-				}
-			: {
-					'color': registrationMd3.onSecondary,
-					'borderColor': registrationMd3.secondary,
-					'backgroundColor': registrationMd3.secondary,
-					'& .registration-suggest-icon': {
-						filter: 'brightness(0) invert(1)'
-					}
-				},
-		'&&:active, &&:active:hover': {
-			'color': registrationMd3.onPrimary,
-			'WebkitTextFillColor': registrationMd3.onPrimary,
-			'borderColor': registrationMd3.primary,
-			'backgroundColor': registrationMd3.primary,
-			'& .MuiButton-startIcon, & .MuiButton-endIcon': {
-				color: registrationMd3.onPrimary
-			},
-			'& .registration-suggest-icon': {
-				filter: 'brightness(0) invert(1)'
-			}
-		},
-		'&:focus-visible': {
-			outline: `2px solid ${registrationMd3.focus}`,
-			outlineOffset: 2
-		}
-	}) as const;
 
 export const AccountData: FC<{
 	onChange: Dispatch<SetStateAction<Partial<RegistrationData>>>;
@@ -585,39 +534,6 @@ export const AccountData: FC<{
 	const surfaceSx = {
 		'& .MuiOutlinedInput-root': { backgroundColor: 'transparent' }
 	};
-	const suggestButton = (
-		icon: string,
-		label: ReactNode,
-		onClick: () => void,
-		filled = false
-	) => (
-		<Button
-			variant={filled ? 'contained' : 'outlined'}
-			onClick={onClick}
-			startIcon={
-				<Box
-					component="img"
-					className="registration-suggest-icon"
-					src={icon}
-					alt=""
-					sx={{ width: 17, height: 17, flexShrink: 0 }}
-				/>
-			}
-			sx={suggestButtonSx(filled)}
-		>
-			<Box
-				component="span"
-				sx={{
-					overflow: 'hidden',
-					textOverflow: 'ellipsis',
-					whiteSpace: 'nowrap'
-				}}
-			>
-				{label}
-			</Box>
-		</Button>
-	);
-
 	const gap = (full: string) =>
 		compact ? `${parseInt(full, 10) / 2}px` : full;
 	const completionContent = useMemo(
@@ -741,55 +657,59 @@ export const AccountData: FC<{
 					containerType: 'inline-size'
 				}}
 			>
-				{suggestButton(
-					genUserIcon,
-					t('registration.account.suggest.username'),
-					suggestUsername
-				)}
+				<IdentitySuggestButton
+					icon={genUserIcon}
+					label={t('registration.account.suggest.username')}
+					onClick={suggestUsername}
+				/>
 				{/* A "suggest password" button next to no password field is an
 				    offer that leads nowhere. Same for "all three" — it would
 				    silently re-mint the hidden password the person already
 				    holds. Only identity stays adjustable on a temporary join. */}
-				{showPasswordFields &&
-					suggestButton(
-						genKeyIcon,
-						t('registration.account.suggest.password'),
-						suggestPassword
-					)}
-				{suggestButton(
-					genAvatarIcon,
-					t('registration.account.suggest.avatar'),
-					suggestAvatar
+				{showPasswordFields && (
+					<IdentitySuggestButton
+						icon={genKeyIcon}
+						label={t('registration.account.suggest.password')}
+						onClick={suggestPassword}
+					/>
 				)}
-				{showPasswordFields &&
-					suggestButton(
-						genDiceIcon,
-						<>
-							<Box
-								component="span"
-								sx={{
-									'display': 'none',
-									'@container (min-width: 520px)': {
-										display: 'inline'
-									}
-								}}
-							>
-								{t('registration.account.suggest.all')}
-							</Box>
-							<Box
-								component="span"
-								sx={{
-									'display': 'inline',
-									'@container (min-width: 520px)': {
-										display: 'none'
-									}
-								}}
-							>
-								{t('registration.account.suggest.allShort')}
-							</Box>
-						</>,
-						suggestAll
-					)}
+				<IdentitySuggestButton
+					icon={genAvatarIcon}
+					label={t('registration.account.suggest.avatar')}
+					onClick={suggestAvatar}
+				/>
+				{showPasswordFields && (
+					<IdentitySuggestButton
+						icon={genDiceIcon}
+						label={
+							<>
+								<Box
+									component="span"
+									sx={{
+										'display': 'none',
+										'@container (min-width: 520px)': {
+											display: 'inline'
+										}
+									}}
+								>
+									{t('registration.account.suggest.all')}
+								</Box>
+								<Box
+									component="span"
+									sx={{
+										'display': 'inline',
+										'@container (min-width: 520px)': {
+											display: 'none'
+										}
+									}}
+								>
+									{t('registration.account.suggest.allShort')}
+								</Box>
+							</>
+						}
+						onClick={suggestAll}
+					/>
+				)}
 			</Box>
 
 			<OrisoTextField
