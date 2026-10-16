@@ -405,7 +405,9 @@ export class MatrixRoomHistoryKeyTransfer {
 					const sameId = this.pendingApprovals.get(pending.requestId);
 					if (
 						sameId &&
-						(sameId.requesterUserId !== pending.requesterUserId ||
+						(sameId.roomId !== pending.roomId ||
+							sameId.requesterUserId !==
+								pending.requesterUserId ||
 							sameId.requesterDeviceId !==
 								pending.requesterDeviceId)
 					) {
