@@ -910,6 +910,7 @@
 			"headline": "ናይ ዕላል ሓበሬታ",
 			"settings": {
 				"agency": "ማእከል ምኽሪ",
+				"agencyLine": "ማእከል ምኽሪ: {{name}}",
 				"createDate": "ዕለት ምፍጣር",
 				"creator": "ፈጣሪ",
 				"duration": "ንውሓት ግዜ",

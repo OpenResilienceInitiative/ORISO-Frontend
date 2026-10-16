@@ -910,6 +910,7 @@
 			"headline": "Infos sur le chat",
 			"settings": {
 				"agency": "Service de consultation",
+				"agencyLine": "Service de consultation : {{name}}",
 				"createDate": "Date de création",
 				"creator": "Créateur",
 				"duration": "Durée",

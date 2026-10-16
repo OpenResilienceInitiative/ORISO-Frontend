@@ -259,7 +259,8 @@ export const GroupChatInfoM3 = ({
 	return (
 		<Box
 			component="section"
-			aria-labelledby={ids.title}
+			// Embedded, the dialog's own title names the region.
+			aria-labelledby={embedded ? undefined : ids.title}
 			data-testid="group-chat-info-m3"
 			sx={{
 				display: 'flex',
@@ -274,37 +275,39 @@ export const GroupChatInfoM3 = ({
 				containerType: 'inline-size'
 			}}
 		>
-			{/* M3 small top app bar */}
-			<Box
-				sx={{
-					display: embedded ? 'none' : 'flex',
-					alignItems: 'center',
-					gap: 0.5,
-					minHeight: 64,
-					px: 1,
-					borderBottom: '1px solid var(--m3-outline-variant)',
-					flex: '0 0 auto'
-				}}
-			>
-				{onBack && (
-					<IconButton
-						onClick={onBack}
-						aria-label={backLabel ?? translate('app.back')}
-						sx={{ color: onSurfaceVariant }}
-					>
-						<ArrowBackRoundedIcon />
-					</IconButton>
-				)}
-				<Box sx={{ minWidth: 0, pl: onBack ? 0.5 : 1.5 }}>
-					<Typography
-						id={ids.title}
-						component="h2"
-						sx={{ ...type.titleLarge, color: onSurface, m: 0 }}
-					>
-						{translate('groupChat.info.headline')}
-					</Typography>
+			{/* M3 small top app bar; the dialog brings its own. */}
+			{!embedded && (
+				<Box
+					sx={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: 0.5,
+						minHeight: 64,
+						px: 1,
+						borderBottom: '1px solid var(--m3-outline-variant)',
+						flex: '0 0 auto'
+					}}
+				>
+					{onBack && (
+						<IconButton
+							onClick={onBack}
+							aria-label={backLabel ?? translate('app.back')}
+							sx={{ color: onSurfaceVariant }}
+						>
+							<ArrowBackRoundedIcon />
+						</IconButton>
+					)}
+					<Box sx={{ minWidth: 0, pl: onBack ? 0.5 : 1.5 }}>
+						<Typography
+							id={ids.title}
+							component="h2"
+							sx={{ ...type.titleLarge, color: onSurface, m: 0 }}
+						>
+							{translate('groupChat.info.headline')}
+						</Typography>
+					</Box>
 				</Box>
-			</Box>
+			)}
 
 			<Box
 				sx={

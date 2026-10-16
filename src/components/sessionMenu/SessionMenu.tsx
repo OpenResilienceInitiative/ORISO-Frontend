@@ -1,3 +1,4 @@
+import { getSessionMenuAgency } from './sessionMenuAgency';
 import { createPortal } from 'react-dom';
 import { MenuBackdrop } from '../chatMenuDropdown/MenuBackdrop';
 import { useChatMenuPosition } from '../chatMenuDropdown/useChatMenuPosition';
@@ -415,12 +416,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//list item icons only shown on outside
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
-	// A group names its hosting agency only in `assignedAgencies`.
-	const menuAgency =
-		activeSession.agency ??
-		(activeSession.isGroup
-			? activeSession.item.assignedAgencies?.[0]
-			: undefined);
+	const menuAgency = getSessionMenuAgency(activeSession);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
@@ -622,7 +618,10 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							<ChatMenuDropdownHeader
 								subtitle={
 									activeSession.isGroup && menuAgency?.name
-										? `${translate('groupChat.info.settings.agency')}: ${menuAgency.name}`
+										? translate(
+												'groupChat.info.settings.agencyLine',
+												{ name: menuAgency.name }
+											)
 										: translate(
 												'groupChat.info.settings.subtitle'
 											)

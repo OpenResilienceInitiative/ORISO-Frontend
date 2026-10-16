@@ -973,6 +973,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Beratungsstelle",
+				"agencyLine": "Beratungsstelle: {{name}}",
 				"createDate": "Erstellungsdatum",
 				"creator": "Ersteller",
 				"duration": "Dauer",

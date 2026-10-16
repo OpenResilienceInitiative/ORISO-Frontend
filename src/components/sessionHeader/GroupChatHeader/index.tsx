@@ -172,8 +172,6 @@ export const GroupChatHeader = ({
 		AUTHORITIES.CONSULTANT_DEFAULT,
 		userData
 	);
-	// untilM (< 900 px) is the complement of the `$fromLarge` switch that
-	// shows the desktop-only "Chat-Info" link.
 
 	// Use CallManager for group calls (same as SessionMenu)
 	const handleStartVideoCall = async (isVideoActivated: boolean = true) => {

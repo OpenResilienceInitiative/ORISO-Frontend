@@ -391,33 +391,46 @@ export const Dialog375: Story = {
 
 /** The QR code is a legacy overlay: the dialog steps aside and comes back. */
 export const DialogQrCode: Story = {
-	name: 'Dialog · QR code shows above, dialog returns',
+	name: 'Dialog · QR code shows above, dialog returns unchanged',
 	globals: desktop1366Globals,
 	render: () => <WiredChatInfo layout="desktop" dialog />,
 	play: async () => {
 		const page = within(document.body);
 		const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
-		await userEvent.click(
-			await within(dialog).findByRole(
-				'button',
-				{ name: i18n.t('qrCode.link.text') },
-				{ timeout: 5000 }
-			)
+		await within(dialog).findByText(
+			'ruhiges Yak Kim',
+			{},
+			{ timeout: 5000 }
 		);
-		await page.findByAltText(i18n.t('qrCode.overlay.image.alt'));
+		// The Chat-Info must survive the overlay: same node, same scroll.
+		const content = within(dialog).getByTestId('group-chat-info-m3');
+		const body = dialog.querySelector<HTMLElement>('.m3Dialog__body')!;
+		body.scrollTop = 80;
+		const scrolled = body.scrollTop;
+		await userEvent.click(
+			within(dialog).getByRole('button', {
+				name: i18n.t('qrCode.link.text')
+			})
+		);
 		await waitFor(() =>
 			expect(
 				page.getByAltText(i18n.t('qrCode.overlay.image.alt'))
 			).toBeVisible()
 		);
 		await waitFor(() =>
-			expect(page.queryByTestId('group-chat-info-dialog')).toBeNull()
+			expect(page.getByTestId('group-chat-info-dialog')).not.toBeVisible()
 		);
 		// The legacy overlay's ✕ is an SVG with a label, not a button.
-		await userEvent.click(page.getByLabelText(i18n.t('app.close')));
+		const overlay = within(document.getElementById('overlay')!);
+		await userEvent.click(overlay.getByLabelText(i18n.t('app.close')));
 		await waitFor(() =>
 			expect(page.getByTestId('group-chat-info-dialog')).toBeVisible()
 		);
+		await expect(content.isConnected).toBe(true);
+		await expect(
+			within(document.body).getByTestId('group-chat-info-m3')
+		).toBe(content);
+		await expect(body.scrollTop).toBe(scrolled);
 	}
 };
 

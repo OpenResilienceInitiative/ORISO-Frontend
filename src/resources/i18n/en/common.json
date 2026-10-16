@@ -959,6 +959,7 @@
 			"headline": "Chat-Info",
 			"settings": {
 				"agency": "Agency",
+				"agencyLine": "Agency: {{name}}",
 				"createDate": "Creation date",
 				"creator": "Creator",
 				"duration": "Duration",
