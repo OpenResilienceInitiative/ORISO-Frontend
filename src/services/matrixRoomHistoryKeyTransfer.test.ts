@@ -797,6 +797,52 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			await expect(approval).resolves.toBe(true);
 		});
 
+		it('throttles reason requests per sender, whatever device id they claim', async () => {
+			const { harness, service } = setup();
+			for (const device of ['ASKER1', 'FAKE2', 'FAKE3']) {
+				harness.emitToDevice(
+					event('org.oriso.room_history_key_request', PEER, {
+						room_id: ROOM_ID,
+						request_id: `r-${device}`,
+						requester_user_id: PEER,
+						requester_device_id: device,
+						reason: 'hello'
+					})
+				);
+			}
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(
+				harness.crypto.getDeviceVerificationStatus
+			).toHaveBeenCalledTimes(1);
+		});
+
+		it('sends nothing when the client was replaced during the approval', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			let finishExport: (keys: unknown[]) => void = () => undefined;
+			harness.crypto.exportRoomKeys.mockImplementationOnce(
+				() => new Promise((resolve) => (finishExport = resolve))
+			);
+			const approval = service.approveRequest('reset-request');
+			await vi.waitFor(() =>
+				expect(harness.crypto.exportRoomKeys).toHaveBeenCalled()
+			);
+
+			service.detach();
+			finishExport([{ room_id: ROOM_ID, session_id: 'wanted' }]);
+
+			await expect(approval).resolves.toBe(false);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
 		it('forgets waiting requests when the client is detached', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));
