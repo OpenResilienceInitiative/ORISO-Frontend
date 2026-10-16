@@ -13,6 +13,7 @@ import { GlobalComponentContext } from '../../globalState/provider/GlobalCompone
 import { useGroupJoinHandoverCopy } from './groupJoinHandoverCopy';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import { GroupWaitingRoom } from './entryRoom/GroupWaitingRoom';
+import { EntryRoomLoading } from './entryRoom/GroupEntryRoom';
 import { GroupConsentGate } from './consent/GroupConsentGate';
 import { SessionMenu } from '../sessionMenu/SessionMenu';
 import { JoinGroupChatView } from './JoinGroupChatView';
@@ -299,6 +300,26 @@ export const WaitingRoomAfterConsentShowsTopic1440: Story = {
 		const topics =
 			await within(canvasElement).findAllByText('Trauerbegleitung');
 		await expect(topics.length).toBeGreaterThan(0);
+	}
+};
+
+/* While the group loads, the room already stands with its bar and a gate
+   that waits without a fill: nothing grows in once the data is there. */
+export const EntryRoomLoading1440: Story = {
+	name: '1b · Client entry room — loading · 1440',
+	globals: desktop1440Globals,
+	render: () => (
+		<StageProviders>
+			<EntryRoomLoading />
+		</StageProviders>
+	),
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		const gate =
+			canvasElement.ownerDocument.querySelector<HTMLButtonElement>(
+				'[data-cy="group-entry-loading-gate"]'
+			);
+		await expect(gate?.disabled).toBe(true);
 	}
 };
 

@@ -22,6 +22,7 @@ import {
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
+import { forgetHandoverDepartment } from './registrationLoader/handoverDepartment';
 import {
 	markHandoverMilestone,
 	resetHandoverProgress
@@ -86,7 +87,7 @@ export const AuthenticatedApp = ({
 	// detaches on logout, before the storage hygiene runs).
 	useDisplayFilterStoreBinding();
 	useAuthenticatedChatRecovery(matrixClientService, userData);
-	usePendingGroupChatJoin(userData);
+	const groupJoinSettled = usePendingGroupChatJoin(userData);
 	// Ask for notification permission (incoming calls) on the user's first
 	// gesture — but only inside the authenticated app. This used to sit at
 	// the router root, where the very first click on the LOGIN page popped
@@ -360,6 +361,7 @@ export const AuthenticatedApp = ({
 		if (handoverEntered && appReady) {
 			setShowPostRegLoader(false);
 			resetHandoverProgress();
+			forgetHandoverDepartment();
 		}
 	}, [handoverEntered, appReady]);
 
@@ -371,7 +373,9 @@ export const AuthenticatedApp = ({
 		   document load, so the person sees one waiting room (#1219). */
 		return (
 			<PostRegistrationHandover
-				ready={appReady}
+				/* After a group link the gate also waits for the assignment,
+				   so the click lands in the group's entry room. */
+				ready={appReady && groupJoinSettled}
 				onEnter={handlePostRegLoaderFinish}
 				copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
 			/>

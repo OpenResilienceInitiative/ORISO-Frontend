@@ -22,6 +22,10 @@ import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
 import {
+	HandoverDepartment,
+	rememberHandoverDepartment
+} from '../app/registrationLoader/handoverDepartment';
+import {
 	markHandoverMilestone,
 	resetHandoverProgress
 } from '../app/registrationLoader/handoverProgress';
@@ -420,6 +424,18 @@ export const Registration = () => {
 
 	const selectedTopic = mergedRegistrationData.mainTopic;
 	const selectedAgency = mergedRegistrationData.agency;
+	/* The waiting room's legal links open the chosen counselling centre's
+	   documents, before and after the document load (ADR-022). */
+	const registeredTopicId = (
+		mergedRegistrationData.topic || mergedRegistrationData.mainTopic
+	)?.id;
+	const handoverDepartment: HandoverDepartment | null =
+		selectedAgency?.id && registeredTopicId
+			? {
+					agencyId: Number(selectedAgency.id),
+					topicId: Number(registeredTopicId)
+				}
+			: null;
 	const selectedTopicLabel =
 		(selectedTopic
 			? getRegistrationTopicDisplay(selectedTopic, locale).title
@@ -663,6 +679,14 @@ export const Registration = () => {
 			...stepData
 		};
 		const selectedTopic = mergedData.topic || mergedData.mainTopic;
+		rememberHandoverDepartment(
+			mergedData.agency?.id && selectedTopic?.id
+				? {
+						agencyId: Number(mergedData.agency.id),
+						topicId: Number(selectedTopic.id)
+					}
+				: null
+		);
 		const groupJoin = getGroupJoin({
 			gcid: groupChatId,
 			aid: inviteAgencyId,
@@ -850,6 +874,7 @@ export const Registration = () => {
 				ready={false}
 				forcedState="preparing"
 				onEnter={() => undefined}
+				department={handoverDepartment}
 				copy={joinsTheGroup ? groupJoinHandoverCopy : undefined}
 			/>
 		);

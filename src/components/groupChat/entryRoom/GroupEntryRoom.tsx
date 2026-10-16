@@ -5,6 +5,8 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
+import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetAskerSessionList,
@@ -79,25 +81,60 @@ export const GroupEntryRoom = () => {
 /* The frame stands while the group loads, so the waiting room after
    "Registrieren" turns into the group's room by its column alone — no
    full-page spinner in between (#1219). */
-const EntryRoomLoading = () => (
-	<WaitingRoomFrame>
-		<Box
-			sx={{
-				flex: 1,
-				minHeight: {
-					xs: 'calc(100vh - 96px)',
-					lg: 'calc(100vh - 128px)'
-				},
-				display: 'flex',
-				alignItems: 'center',
-				justifyContent: 'center'
-			}}
-			data-cy="group-entry-loading"
-		>
-			<Loading />
-		</Box>
-	</WaitingRoomFrame>
-);
+export const EntryRoomLoading = () => {
+	const { t } = useTranslation();
+	return (
+		<WaitingRoomFrame>
+			{/* One column, like every room: the stage's rules for its direct
+			    children would otherwise size the bar as well. */}
+			<Box
+				sx={{
+					width: '100%',
+					minWidth: 0,
+					maxWidth: '100%',
+					flexGrow: 1,
+					minHeight: {
+						xs: 'calc(100vh - 96px)',
+						lg: 'calc(100vh - 128px)'
+					},
+					display: 'flex',
+					flexDirection: 'column'
+				}}
+				data-cy="group-entry-loading"
+			>
+				<Box
+					sx={{
+						flex: 1,
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center'
+					}}
+				>
+					<Loading />
+				</Box>
+				{/* The room's bar and gate are there from the first frame, so
+				    the room does not grow a footer once the group has loaded.
+				    Nothing here is measurable, so the gate waits without a
+				    fill. */}
+				<RegistrationFooter>
+					<Box sx={{ width: '100%' }}>
+						<HandoverGateButton
+							state="preparing"
+							indeterminate
+							label={translateWithFallback(
+								t,
+								'groupChat.entry.join',
+								'Beitreten'
+							)}
+							status=""
+							testingAttribute="group-entry-loading-gate"
+						/>
+					</Box>
+				</RegistrationFooter>
+			</Box>
+		</WaitingRoomFrame>
+	);
+};
 
 const ClientGroupEntryRoom = () => {
 	const { chatId: chatIdParam } = useParams<{ chatId: string }>();

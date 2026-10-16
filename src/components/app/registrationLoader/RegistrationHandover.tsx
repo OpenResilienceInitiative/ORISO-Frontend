@@ -19,6 +19,11 @@ export interface RegistrationHandoverProps {
 	ready: boolean;
 	/** Called when the user opens the gate. Must land them in the message field. */
 	onEnter: () => void;
+	/**
+	 * The department the person registered for (agency × topic): the legal
+	 * links open its documents instead of the platform's (ADR-022).
+	 */
+	department?: { agencyId: number; topicId: number } | null;
 	/** Force a gate state instead of deriving it from `ready`. */
 	forcedState?: HandoverGateState;
 	/**
@@ -66,7 +71,8 @@ export const RegistrationHandover = ({
 	onEnter,
 	forcedState,
 	progress,
-	copy
+	copy,
+	department
 }: RegistrationHandoverProps) => {
 	const { t } = useTranslation();
 	const milestoneProgress = useHandoverProgress();
@@ -116,6 +122,7 @@ export const RegistrationHandover = ({
 
 	return (
 		<EntryRoomShell
+			department={department}
 			kicker={copy?.badge ?? t('registration.handover.badge')}
 			statusLine={copy?.status?.[state] ?? t(GATE_STATUS_KEY[state])}
 		>
