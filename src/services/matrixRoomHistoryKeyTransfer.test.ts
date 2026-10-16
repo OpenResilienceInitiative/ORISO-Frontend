@@ -814,6 +814,49 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			}
 		});
 
+		it('refuses an approval after the request expired', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
+				await expect(
+					service.approveRequest('reset-request')
+				).resolves.toBe(false);
+				expect(
+					harness.client.encryptAndSendToDevice
+				).not.toHaveBeenCalled();
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('ignores a decline while the keys are being sent', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			let release: () => void = () => undefined;
+			harness.client.encryptAndSendToDevice.mockImplementationOnce(
+				() => new Promise<void>((resolve) => (release = resolve))
+			);
+			const approval = service.approveRequest('reset-request');
+			await vi.waitFor(() =>
+				expect(harness.client.encryptAndSendToDevice).toHaveBeenCalled()
+			);
+
+			service.declineRequest('reset-request');
+			expect(service.getPendingApprovals()).toHaveLength(1);
+			release();
+			await expect(approval).resolves.toBe(true);
+		});
+
 		it('forgets waiting requests when the client is detached', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));
