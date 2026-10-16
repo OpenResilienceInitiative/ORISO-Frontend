@@ -195,8 +195,11 @@ export const NotificationSetup = ({
 
 	const confirmBrowser = (tone: SoundId) => {
 		// No await before the permission request: it needs this click.
+		const operation = continuation.current;
 		void finish('BROWSER')
 			.then(() => {
+				// Another account or tenant may be active by now.
+				if (continuation.current !== operation) return;
 				// A tone is kept only when the browser said yes, and only a
 				// tone the person actually changed replaces their settings.
 				if (
