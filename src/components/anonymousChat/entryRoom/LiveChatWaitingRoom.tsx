@@ -161,13 +161,18 @@ export const LiveChatWaitingRoom = ({
 	/* The gate. The button stays live rather than going disabled: a dead
 	   primary action tells nobody why, and "why" is the whole point of the
 	   error state Frank asked for (#1341 item 2). */
-	const handleStart = () => {
+	const consentGiven = () => {
 		if (!consentAccepted) {
 			setConsentMissing(true);
 			consentBoxRef.current?.focus();
-			return;
+			return false;
 		}
-		onAccept();
+		return true;
+	};
+	const handleStart = () => {
+		if (consentGiven()) {
+			onAccept();
+		}
 	};
 	/* The contract: when counselling starts, unmount. Accepted wins over
 	   whatever the person was doing — the breathing companion included. */
@@ -414,7 +419,11 @@ export const LiveChatWaitingRoom = ({
 						<Box sx={{ flex: 1, minWidth: 0 }}>
 							<HandoverGateButton
 								state={busy ? 'entering' : 'ready'}
-								onEnter={handleStart}
+								/* Consent is asked before the closing animation
+								   starts, so the screen never closes on a "no". */
+								beforeEnter={consentGiven}
+								onEnter={() => onAccept()}
+								closing="messageField"
 								label={tr('start', 'Gespräch beginnen')}
 								status={tr(
 									'startStatus',

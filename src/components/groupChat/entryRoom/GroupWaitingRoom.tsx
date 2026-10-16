@@ -143,7 +143,9 @@ export const GroupWaitingRoom = ({
 		label: joinLabel,
 		onClick: onJoin,
 		disabled: !active || joinBusy,
-		testId: 'group-entry-join'
+		testId: 'group-entry-join',
+		// Joining ends in the group chat's message field.
+		closing: 'messageField' as const
 	};
 	const calendarAction = plannedStart
 		? {

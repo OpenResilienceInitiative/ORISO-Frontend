@@ -8,6 +8,7 @@ import {
 } from '../registration/registrationDesign/registrationDesign';
 import { useKeyboardInset } from '../../utils/useKeyboardInset';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
+import { ClosingFocal } from '../transition/closing/closingFocal';
 import { useRegistrationCompletionContent } from '../registration/consentCompletion/RegistrationCompletionContext';
 
 export interface RegistrationFooterAction {
@@ -34,6 +35,12 @@ export interface RegistrationFooterAction {
 	 * on (Frank, 2026-09-05: "make here just a round x button").
 	 */
 	round?: boolean;
+	/**
+	 * Where the person arrives after this action. Declared only by the way on
+	 * that leaves the room for a chat or a call; the platform's closing
+	 * animation then plays on the way (ORISO-Frontend#1737).
+	 */
+	closing?: ClosingFocal;
 }
 
 export interface RegistrationFooterProps {
@@ -245,6 +252,7 @@ export const RegistrationFooter = ({
 											: 'ready'
 								}
 								onEnter={primary.onClick}
+								closing={primary.closing}
 								label={primary.label}
 								status={primary.status ?? ''}
 								indeterminate={primary.busy}

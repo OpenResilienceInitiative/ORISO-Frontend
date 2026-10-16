@@ -9,6 +9,7 @@ import {
 	registrationMotion
 } from '../../registration/registrationDesign/registrationDesign';
 import { HandoverCarousel, HandoverStep } from './HandoverCarousel';
+import { ClosingFocal } from '../../transition/closing/closingFocal';
 import { HandoverGateButton } from './HandoverGateButton';
 import { HandoverGateState } from './handoverGate';
 import { useDeferredFlourish } from './useDeferredFlourish';
@@ -23,6 +24,12 @@ export interface RegistrationHandoverProps {
 	onEnter: () => void;
 	/** Test seam: force a gate state instead of deriving it from `ready`. */
 	forcedState?: HandoverGateState;
+	/**
+	 * Where the person ends up. The platform's closing animation plays on the
+	 * way and ends on this focal point (ORISO-Frontend#1737). A standard
+	 * counselling chat is the default; a video call says `call`.
+	 */
+	closing?: ClosingFocal;
 	/**
 	 * Where the screen lives.
 	 *
@@ -71,6 +78,7 @@ export const RegistrationHandover = ({
 	ready,
 	onEnter,
 	forcedState,
+	closing = 'messageField',
 	variant = 'overlay',
 	copy
 }: RegistrationHandoverProps) => {
@@ -381,6 +389,7 @@ export const RegistrationHandover = ({
 					<HandoverGateButton
 						state={state}
 						onEnter={handleEnter}
+						closing={closing}
 						label={copy?.cta}
 						status={copy?.status?.[state]}
 					/>

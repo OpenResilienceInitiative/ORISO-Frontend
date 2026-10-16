@@ -3,6 +3,8 @@ import { Box, ButtonBase, Typography } from '@mui/material';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useTranslation } from 'react-i18next';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
+import { ClosingFocal } from '../../transition/closing/closingFocal';
+import { useClosingAnimation } from '../../transition/closing/useClosingAnimation';
 import {
 	GATE_IS_OPEN,
 	GATE_PROGRESS,
@@ -38,6 +40,20 @@ export interface HandoverGateButtonProps {
 	indeterminate?: boolean;
 	/** Replaces the arrow — a turning clock while the queue moves. */
 	icon?: React.ReactNode;
+	/**
+	 * Where the person arrives after this button: the room declares it and the
+	 * platform's closing animation plays on the way (ORISO-Frontend#1737). The
+	 * button is `entering` from the press on, `onEnter` runs once the screen is
+	 * covered, and the animation ends on this focal point. Omit it for buttons
+	 * that do not leave the room, such as the registration form's submit.
+	 */
+	closing?: ClosingFocal;
+	/**
+	 * Asked before anything starts; `false` keeps the person where they are, no
+	 * animation, no `onEnter`. The live-chat room refuses here when consent is
+	 * missing, so the curtain never closes on a screen that then says "no".
+	 */
+	beforeEnter?: () => boolean;
 }
 
 /**
@@ -60,22 +76,58 @@ export const HandoverGateButton = ({
 	disabled = false,
 	title,
 	testId,
-	testingAttribute = 'handover-gate-button'
+	testingAttribute = 'handover-gate-button',
+	closing,
+	beforeEnter
 }: HandoverGateButtonProps) => {
 	const { t } = useTranslation();
-	const open = GATE_IS_OPEN[state] && !disabled;
-	const statusLabel = status ?? t(GATE_STATUS_KEY[state]);
+	const { play } = useClosingAnimation();
+	const [closingBusy, setClosingBusy] = React.useState(false);
+	const closingRef = React.useRef(false);
+	const shownState: HandoverGateState = closingBusy ? 'entering' : state;
+	const open = GATE_IS_OPEN[shownState] && !disabled;
+	const statusLabel = status ?? t(GATE_STATUS_KEY[shownState]);
+
+	const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+		if (!open) {
+			return;
+		}
+		if (beforeEnter && !beforeEnter()) {
+			return;
+		}
+		if (!closing) {
+			onEnter?.(event);
+			return;
+		}
+		if (closingRef.current) {
+			return;
+		}
+		closingRef.current = true;
+		setClosingBusy(true);
+		const rect = event.currentTarget.getBoundingClientRect();
+		void play({
+			focal: closing,
+			origin: {
+				x: rect.left + rect.width / 2,
+				y: rect.top + rect.height / 2
+			},
+			onCovered: () => onEnter?.(event)
+		}).finally(() => {
+			closingRef.current = false;
+			setClosingBusy(false);
+		});
+	};
 
 	return (
 		<ButtonBase
-			onClick={open ? onEnter : undefined}
+			onClick={open ? handleClick : undefined}
 			type={type}
 			disabled={!open}
-			aria-busy={state === 'entering'}
+			aria-busy={shownState === 'entering'}
 			title={title ?? label}
 			data-testid={testId}
 			data-cy={testingAttribute}
-			data-cy-state={state}
+			data-cy-state={shownState}
 			sx={{
 				'position': 'relative',
 				'width': '100%',
@@ -145,7 +197,7 @@ export const HandoverGateButton = ({
 						'left': 0,
 						'top': 0,
 						'bottom': 0,
-						'width': `${progress ?? GATE_PROGRESS[state]}%`,
+						'width': `${progress ?? GATE_PROGRESS[shownState]}%`,
 						'bgcolor': 'rgba(255, 255, 255, 0.16)',
 						'transition':
 							'width 600ms cubic-bezier(0.4, 0, 0.2, 1)',
