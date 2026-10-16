@@ -346,6 +346,17 @@ export class MatrixRoomHistoryKeyTransfer {
 						reason,
 						receivedAt: Date.now()
 					};
+					// One waiting request per requesting device: a newer one replaces
+					// the older, so a single device cannot fill the list.
+					for (const [id, other] of this.pendingApprovals) {
+						if (
+							other.roomId === pending.roomId &&
+							other.requesterUserId === pending.requesterUserId &&
+							other.requesterDeviceId ===
+								pending.requesterDeviceId
+						)
+							this.pendingApprovals.delete(id);
+					}
 					this.pendingApprovals.set(pending.requestId, pending);
 					window.dispatchEvent(
 						new CustomEvent(MATRIX_HISTORY_REQUEST_PENDING_EVENT, {

@@ -657,13 +657,13 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			expect(service.getPendingApprovals()[0].reason).toHaveLength(500);
 		});
 
-		it('keeps at most 20 requests waiting', async () => {
+		it('keeps one waiting request per requesting device, the newest', async () => {
 			const { harness, service } = setup();
-			for (let i = 0; i < 21; i++) {
+			for (const id of ['first', 'second']) {
 				harness.emitToDevice(
 					event('org.oriso.room_history_key_request', PEER, {
 						room_id: ROOM_ID,
-						request_id: `flood-${i}`,
+						request_id: id,
 						requester_user_id: PEER,
 						requester_device_id: 'ASKER1',
 						reason: 'hello'
@@ -673,10 +673,12 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			await vi.waitFor(() =>
 				expect(
 					harness.crypto.getDeviceVerificationStatus
-				).toHaveBeenCalledTimes(21)
+				).toHaveBeenCalledTimes(2)
 			);
 			await new Promise((resolve) => setTimeout(resolve, 20));
-			expect(service.getPendingApprovals()).toHaveLength(20);
+			expect(
+				service.getPendingApprovals().map((r) => r.requestId)
+			).toEqual(['second']);
 		});
 
 		it('sends only that rooms keys to only that device after approval', async () => {
