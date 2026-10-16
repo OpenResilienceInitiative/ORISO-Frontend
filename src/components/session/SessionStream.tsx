@@ -1371,6 +1371,22 @@ export const SessionStream = ({
 		}
 	};
 
+	/**
+	 * Replaces the pending consent card with a server-confirmed outcome. A
+	 * still-pending status keeps the decision controls and the notification
+	 * unread; any other status ends the request for the asker.
+	 */
+	const settleCaseHandoverConsent = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus
+	) => {
+		setConfirmedConsent({ notification, status });
+		if (isPendingCaseHandoverStatus(status.status)) return;
+		notificationsContext?.markNotificationAsRead(notification.id);
+		setResolvedCaseHandoverNotificationId(notification.id);
+		notificationsContext?.refreshNotificationFeed();
+	};
+
 	const handleCaseHandoverConsentDecision = (approved: boolean) => {
 		if (
 			!pendingCaseHandoverConsent ||
@@ -1379,37 +1395,42 @@ export const SessionStream = ({
 			setCaseHandoverConsentError(translate('caseHandover.error.failed'));
 			return;
 		}
+		const notification = pendingCaseHandoverConsent;
+		const requestId = pendingCaseHandoverRequestId;
+		const sessionId = activeSession.item.id;
 		setCaseHandoverConsentSubmitting(true);
 		setCaseHandoverConsentError('');
-		apiDecideCaseHandoverClientConsent(
-			activeSession.item.id,
-			pendingCaseHandoverRequestId,
-			approved
-		)
+		apiDecideCaseHandoverClientConsent(sessionId, requestId, approved)
 			.then((confirmedStatus) => {
 				if (
-					confirmedStatus?.status &&
-					confirmedStatus.sessionId === activeSession.item.id &&
-					confirmedStatus.requestId === pendingCaseHandoverRequestId
+					!confirmedStatus?.status ||
+					confirmedStatus.sessionId !== sessionId ||
+					confirmedStatus.requestId !== requestId
 				) {
-					setConfirmedConsent({
-						notification: pendingCaseHandoverConsent,
-						status: confirmedStatus
-					});
-				} else {
 					throw new Error(
 						'Consent response does not match the request'
 					);
 				}
-				if (isPendingCaseHandoverStatus(confirmedStatus.status)) return;
-				notificationsContext?.markNotificationAsRead(
-					pendingCaseHandoverConsent.id
-				);
-				setResolvedCaseHandoverNotificationId(
-					pendingCaseHandoverConsent.id
-				);
-				notificationsContext?.refreshNotificationFeed();
+				settleCaseHandoverConsent(notification, confirmedStatus);
 			})
+			// The decision can already be applied on the server (e.g. the
+			// takeover closed the request, or the response named another
+			// request). Never leave the stale approve/decline card behind with a
+			// "could not be sent" error: ask the server for the current status
+			// and only report a failure while the request is really still open
+			// (ORISO-Frontend#1705).
+			.catch(() =>
+				apiGetCaseHandoverStatus(sessionId).then((currentStatus) => {
+					if (
+						!currentStatus?.status ||
+						currentStatus.sessionId !== sessionId ||
+						isPendingCaseHandoverStatus(currentStatus.status)
+					) {
+						throw new Error('Consent request is still open');
+					}
+					settleCaseHandoverConsent(notification, currentStatus);
+				})
+			)
 			.catch(() => {
 				setCaseHandoverConsentError(
 					translate('caseHandover.error.failed')

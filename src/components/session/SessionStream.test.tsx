@@ -516,6 +516,7 @@ describe('SessionStream Matrix room lifecycle', () => {
 		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
 			new Error('Server failed')
 		);
+		mocks.getCaseHandoverStatus.mockResolvedValue(pendingHandoverStatus());
 		renderSessionStream({
 			isGroup: false,
 			notificationFeed: [
@@ -534,6 +535,88 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
 			true
 		);
+	});
+
+	it('replaces the approve/decline card with the current status when the decision was already applied (#1705)', async () => {
+		// The takeover already closed the request, so the decision call is
+		// refused — the server state, not the refusal, is what the asker sees.
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+			new Error('Bad request')
+		);
+		mocks.getCaseHandoverStatus.mockResolvedValue({
+			...grantedHandoverStatus(),
+			requestId: 11
+		});
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'caseHandover.consent.approve'
+			})
+		);
+
+		expect((await screen.findByRole('status')).textContent).toBe(
+			'caseHandover.consent.info.granted'
+		);
+		expect(
+			screen.queryByRole('button', {
+				name: 'caseHandover.consent.approve'
+			})
+		).toBeNull();
+		expect(
+			screen.queryByRole('button', {
+				name: 'caseHandover.consent.decline'
+			})
+		).toBeNull();
+		expect(screen.queryByRole('alert')).toBeNull();
+	});
+
+	it('settles from the current status when the decision response names another request (#1705)', async () => {
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockResolvedValueOnce({
+			sessionId: 1,
+			requestId: 12,
+			status: 'GRANTED',
+			canViewContent: true,
+			clientConsentRequired: false
+		});
+		mocks.getCaseHandoverStatus.mockResolvedValue({
+			...grantedHandoverStatus(),
+			requestId: 11
+		});
+		renderSessionStream({
+			isGroup: false,
+			notificationFeed: [
+				{
+					id: '1481',
+					eventType: 'case.handover.consent.requested',
+					sourceSessionId: '1',
+					actionPath:
+						'/sessions/user/view/session/1?caseHandoverRequestId=11'
+				}
+			]
+		});
+
+		fireEvent.click(
+			await screen.findByRole('button', {
+				name: 'caseHandover.consent.approve'
+			})
+		);
+
+		expect((await screen.findByRole('status')).textContent).toBe(
+			'caseHandover.consent.info.granted'
+		);
+		expect(screen.queryByRole('alert')).toBeNull();
 	});
 
 	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {
