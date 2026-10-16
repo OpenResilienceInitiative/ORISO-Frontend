@@ -1,4 +1,5 @@
 import * as React from 'react';
+import i18n from 'i18next';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Route, Routes } from 'react-router-dom';
@@ -112,6 +113,17 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 	);
 };
 
+/** Legacy overlays portal into a body-level `#overlay`, as in app.html. */
+const BodyOverlayHost = () => {
+	React.useEffect(() => {
+		const host = document.createElement('div');
+		host.id = 'overlay';
+		document.body.appendChild(host);
+		return () => host.remove();
+	}, []);
+	return null;
+};
+
 const WiredChatInfo = ({
 	layout,
 	inviteToken,
@@ -153,7 +165,7 @@ const WiredChatInfo = ({
 								<ModalProvider>
 									<p>Chat</p>
 									<GroupChatInfo dialog />
-									<div id="overlay" />
+									<BodyOverlayHost />
 								</ModalProvider>
 							) : (
 								<GroupChatInfo />
@@ -302,10 +314,14 @@ const closesWithTheCrossButton: Story['play'] = async () => {
 	// Wait out the dialog's fade-in.
 	await waitFor(() =>
 		expect(
-			within(dialog).getByRole('heading', { name: 'Chat-Info' })
+			within(dialog).getByRole('heading', {
+				name: i18n.t('groupChat.info.headline')
+			})
 		).toBeVisible()
 	);
-	const close = within(dialog).getByRole('button', { name: 'Schließen' });
+	const close = within(dialog).getByRole('button', {
+		name: i18n.t('app.close')
+	});
 	await expect(close).toBeVisible();
 	await userEvent.click(close);
 	await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
@@ -333,7 +349,9 @@ export const Dialog1920: Story = {
 		);
 		await waitFor(() =>
 			expect(
-				within(dialog).getByRole('button', { name: 'Schließen' })
+				within(dialog).getByRole('button', {
+					name: i18n.t('app.close')
+				})
 			).toBeVisible()
 		);
 		await userEvent.keyboard('{Escape}');
@@ -366,17 +384,21 @@ export const DialogQrCode: Story = {
 		await userEvent.click(
 			await within(dialog).findByRole(
 				'button',
-				{ name: /QR-Code anzeigen/ },
+				{ name: i18n.t('qrCode.link.text') },
 				{ timeout: 5000 }
 			)
 		);
-		await page.findByAltText('QR-Code');
-		await waitFor(() => expect(page.getByAltText('QR-Code')).toBeVisible());
+		await page.findByAltText(i18n.t('qrCode.overlay.image.alt'));
+		await waitFor(() =>
+			expect(
+				page.getByAltText(i18n.t('qrCode.overlay.image.alt'))
+			).toBeVisible()
+		);
 		await waitFor(() =>
 			expect(page.queryByTestId('group-chat-info-dialog')).toBeNull()
 		);
 		// The legacy overlay's ✕ is an SVG with a label, not a button.
-		await userEvent.click(page.getByLabelText('Schließen'));
+		await userEvent.click(page.getByLabelText(i18n.t('app.close')));
 		await waitFor(() =>
 			expect(page.getByTestId('group-chat-info-dialog')).toBeVisible()
 		);
