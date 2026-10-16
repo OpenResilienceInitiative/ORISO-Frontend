@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
+import { apiGetUserData } from '../../../api/apiGetUserData';
+import { UserDataContext } from '../../../globalState/context/UserDataContext';
 import {
 	DepartmentConsentState,
 	resolveEntryRoomConsent
@@ -22,6 +24,7 @@ import { useConsentSentences } from '../../waitingRoom/useConsentSentences';
  */
 export const useGroupConsent = (agencyId?: number | null) => {
 	const { i18n } = useTranslation();
+	const userDataContext = useContext(UserDataContext);
 	const departmentState = useGroupDepartment(agencyId);
 	const department =
 		departmentState.status === 'ready' ? departmentState.department : null;
@@ -86,14 +89,30 @@ export const useGroupConsent = (agencyId?: number | null) => {
 		locale: i18n?.language || 'de'
 	});
 
-	/** Records the agreement on the account, as the live chat records it. */
+	/**
+	 * Records the agreement on the account, as the live chat records it. The
+	 * chat asks again while the account in memory shows none, so it is marked
+	 * there at once and reloaded behind; the reload never holds the person
+	 * back.
+	 */
 	const record = useCallback(
 		() =>
 			apiPatchUserData({
 				dataPrivacyConfirmation: true,
 				termsAndConditionsConfirmation: true
+			}).then(() => {
+				if (!userDataContext?.userData) return;
+				const now = new Date().toISOString();
+				userDataContext.setUserData({
+					...userDataContext.userData,
+					dataPrivacyConfirmation: now,
+					termsAndConditionsConfirmation: now
+				});
+				apiGetUserData()
+					.then((fresh) => userDataContext.setUserData(fresh))
+					.catch(() => undefined);
 			}),
-		[]
+		[userDataContext]
 	);
 
 	return { ...consent, department, record };

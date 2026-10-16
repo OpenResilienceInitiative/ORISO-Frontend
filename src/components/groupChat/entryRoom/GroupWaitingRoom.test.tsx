@@ -16,6 +16,11 @@ vi.mock('../../../api/apiPatchUserData', () => ({
 	apiPatchUserData: (...args: unknown[]) =>
 		(apiPatchUserData as (...a: unknown[]) => Promise<void>)(...args)
 }));
+const freshUserData = { dataPrivacyConfirmation: '2026-10-16T12:00:00Z' };
+const apiGetUserData = vi.fn(() => Promise.resolve(freshUserData));
+vi.mock('../../../api/apiGetUserData', () => ({
+	apiGetUserData: () => apiGetUserData()
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 vi.mock('../../stageLayout/StageLayout', () => ({
@@ -39,6 +44,9 @@ vi.mock('react-i18next', () => ({
 	})
 }));
 
+const { UserDataContext } = await import(
+	'../../../globalState/context/UserDataContext'
+);
 const { GroupWaitingRoom, entryRoomClockHeight } = await import(
 	'./GroupWaitingRoom'
 );
@@ -66,6 +74,7 @@ describe('GroupWaitingRoom', () => {
 	afterEach(() => {
 		cleanup();
 		apiPatchUserData.mockClear();
+		apiGetUserData.mockClear();
 	});
 	it('names topic and agency in the stage header', () => {
 		renderRoom(false);
@@ -117,6 +126,52 @@ describe('GroupWaitingRoom', () => {
 			dataPrivacyConfirmation: true,
 			termsAndConditionsConfirmation: true
 		});
+	});
+
+	/* The chat's own consent dialog asks when the account shows no agreement.
+	   The account in memory must learn about the one just given, or the
+	   person is asked a second time right after entering. */
+	it('marks the agreement on the account before letting the person in', async () => {
+		const setUserData = vi.fn();
+		const onJoin = vi.fn();
+		render(
+			<UserDataContext.Provider
+				value={
+					{
+						userData: { userName: 'eule' },
+						setUserData
+					} as never
+				}
+			>
+				<GroupWaitingRoom
+					topicName="Trauerbegleitung"
+					agencyName="Caritas Berlin"
+					plannedStart={new Date(NOW + 3 * 24 * 3600e3)}
+					durationMinutes={90}
+					eventId={15}
+					rules={[]}
+					active
+					onJoin={onJoin}
+					nowMs={NOW}
+				/>
+			</UserDataContext.Provider>
+		);
+		const join = () => screen.getByTestId('group-entry-join');
+		fireEvent.click(join());
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(setUserData.mock.calls[0][0]).toMatchObject({
+			userName: 'eule',
+			dataPrivacyConfirmation: expect.any(String)
+		});
+		expect(setUserData.mock.invocationCallOrder[0]).toBeLessThan(
+			onJoin.mock.invocationCallOrder[0]
+		);
+		// Then the real account, behind.
+		await waitFor(() =>
+			expect(setUserData).toHaveBeenLastCalledWith(freshUserData)
+		);
 	});
 
 	it('stays outside when the agreement cannot be saved', async () => {
