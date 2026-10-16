@@ -30,7 +30,7 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 	onApprove,
 	onDecline
 }) => {
-	const { t } = useTranslation();
+	const { t, i18n } = useTranslation();
 	return (
 		<section
 			className="historyRequestCard"
@@ -45,7 +45,9 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 						user: requesterUserId,
 						device: requesterDeviceId ?? '',
 						time: receivedAt
-							? new Date(receivedAt).toLocaleString()
+							? new Date(receivedAt).toLocaleString(
+									i18n?.language
+								)
 							: ''
 					})}
 				</p>

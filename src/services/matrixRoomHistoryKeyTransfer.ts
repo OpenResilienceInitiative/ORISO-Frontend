@@ -155,14 +155,18 @@ export class MatrixRoomHistoryKeyTransfer {
 				request.requestId
 			);
 			// A failed send keeps the request, so the person can try again.
-			if (sent && this.pendingApprovals.delete(requestId))
+			if (sent && this.pendingApprovals.get(requestId) === request) {
+				this.pendingApprovals.delete(requestId);
 				this.announceResolved(request, 'approved');
+			}
 			return sent;
 		} catch (error) {
 			emitDiagnostic('approval-failed');
 			return false;
 		} finally {
-			this.approvalsInFlight.delete(requestId);
+			// A replaced client has its own in-flight set.
+			if (this.client === client)
+				this.approvalsInFlight.delete(requestId);
 		}
 	}
 
