@@ -234,7 +234,9 @@ export const JoinGroupChatView = ({
 		apiPutGroupChat(activeSession.item.id, groupChatApiCall)
 			.then(() => reloadActiveSession())
 			.catch((error) => {
-				const notice = getCounsellingDpaNotification(error, translate);
+				const notice = getCounsellingDpaNotification(error, translate, {
+					groupJoin: groupChatApiCall === GROUP_CHAT_API.JOIN
+				});
 				if (notice && notifications) {
 					notifications.addNotification(notice);
 					return;

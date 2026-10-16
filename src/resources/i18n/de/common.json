@@ -5414,6 +5414,7 @@
 			"ready": "Die Wiederherstellung mit Ihrem Passwort ist eingerichtet. Ein gespeicherter Ersatzschlüssel bleibt ebenfalls gültig.",
 			"needs-password": "Die Wiederherstellung mit Ihrem Passwort wurde in dieser Sitzung noch nicht bestätigt. Melden Sie sich erneut an oder richten Sie sie mit Ihrem vorhandenen Ersatzschlüssel ein.",
 			"needs-recovery-key": "Ihr bisheriger Verlauf benötigt auf diesem Gerät Ihren Ersatzschlüssel.",
+			"needs-sign-in": "Ihr bisheriger Verlauf öffnet sich auf diesem Gerät, sobald Sie sich erneut mit Ihrem Passwort anmelden.",
 			"retryable-failure": "Die Wiederherstellung mit Ihrem Passwort konnte nicht eingerichtet werden. Sie können Ihre Anfrage trotzdem schreiben und die Einrichtung in den Sicherheitseinstellungen erneut prüfen.",
 			"settings": "Sicherheitseinstellungen",
 			"reauthenticate": "Abmelden und erneut anmelden",
@@ -5897,6 +5898,10 @@
 			"restricted": {
 				"title": "Neue Beratung derzeit gesperrt",
 				"text": "Die Beratungsorganisation muss die aktuelle Auftragsverarbeitungsvereinbarung bestätigen. Bitte wenden Sie sich an Ihre Beratungsstelle. Bereits begonnene Beratungen laufen weiter."
+			},
+			"restrictedGroupJoin": {
+				"title": "Beitritt zur Gruppe derzeit nicht möglich",
+				"text": "Der Beitritt zu dieser Gruppe ist derzeit nicht möglich, weil die Beratungsorganisation die aktuelle Auftragsverarbeitungsvereinbarung (AVV) noch bestätigen muss. Bitte wenden Sie sich an Ihre Beratungsstelle."
 			},
 			"unavailable": {
 				"title": "Beratung derzeit nicht prüfbar",
