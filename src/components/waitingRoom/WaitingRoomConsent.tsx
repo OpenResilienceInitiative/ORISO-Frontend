@@ -105,6 +105,8 @@ export interface WaitingRoomConsentPanelProps {
 	missingText: string;
 	/** Ties the checkbox to its error; unique per page. */
 	errorId: string;
+	/** An error of its own, e.g. the agreement could not be saved. */
+	error?: string;
 	disabled?: boolean;
 }
 
@@ -118,6 +120,7 @@ export const WaitingRoomConsentPanel = ({
 	onDecline,
 	missingText,
 	errorId,
+	error,
 	disabled = false
 }: WaitingRoomConsentPanelProps) => (
 	<ConsentCompletionPanel
@@ -150,6 +153,6 @@ export const WaitingRoomConsentPanel = ({
 		onChange={consent.toggle}
 		label={consent.label}
 		errorId={errorId}
-		error={consent.missing ? missingText : undefined}
+		error={error ?? (consent.missing ? missingText : undefined)}
 	/>
 );

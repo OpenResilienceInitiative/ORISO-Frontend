@@ -13,7 +13,11 @@ import { registrationMd3 } from '../../registration/registrationDesign/registrat
 import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { GroupLegalMenu } from './GroupLegalMenu';
-import { useGroupDepartment } from '../consent/useGroupDepartment';
+import { useGroupConsent } from '../consent/useGroupConsent';
+import {
+	useWaitingRoomConsent,
+	WaitingRoomConsentPanel
+} from '../../waitingRoom/WaitingRoomConsent';
 
 export interface GroupWaitingRoomProps {
 	/** The group's topic, shown small above the name. */
@@ -83,9 +87,28 @@ export const GroupWaitingRoom = ({
 		null
 	);
 	const clockHeight = useClockHeight();
-	const departmentState = useGroupDepartment(agencyId);
-	const legalDepartment =
-		departmentState.status === 'ready' ? departmentState.department : null;
+	/* Gate 2 of ADR-022 is asked here, on "Beitreten", like the live chat
+	   asks when the counsellor is there (Frank, 2026-10-16). */
+	const groupConsent = useGroupConsent(agencyId);
+	const legalDepartment = groupConsent.department;
+	const consent = useWaitingRoomConsent({
+		consentHtml: groupConsent.html,
+		department: legalDepartment
+	});
+	const [asking, setAsking] = useState(false);
+	const [saving, setSaving] = useState(false);
+	const [saveFailed, setSaveFailed] = useState(false);
+	const joinAfterConsent = () =>
+		consent.guard(() => {
+			if (!groupConsent.readable || saving) return;
+			setSaving(true);
+			setSaveFailed(false);
+			groupConsent
+				.record()
+				.then(() => onJoin())
+				.catch(() => setSaveFailed(true))
+				.finally(() => setSaving(false));
+		});
 	const phone = useMediaQuery('(max-width:599px)');
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
@@ -140,7 +163,7 @@ export const GroupWaitingRoom = ({
 		setCalendarAnchor(event.currentTarget);
 	const joinAction = {
 		label: joinLabel,
-		onClick: onJoin,
+		onClick: () => setAsking(true),
 		disabled: !active || joinBusy,
 		testId: 'group-entry-join'
 	};
@@ -445,10 +468,56 @@ export const GroupWaitingRoom = ({
 					    4.9.: „Beitreten ist vor dem Termin sichtbar, aber
 					    gesperrt"). The phone keeps both by shortening the
 					    calendar label, not by dropping a button. */}
-					<RegistrationFooter
-						secondary={calendarAction}
-						primary={joinAction}
-					/>
+					{asking && active ? (
+						<RegistrationFooter
+							key="consent"
+							animateIn
+							consent={
+								<WaitingRoomConsentPanel
+									consent={consent}
+									heading={t(
+										'groupChat.consent.headline',
+										'Bevor Sie schreiben'
+									)}
+									subtitle={t(
+										'groupChat.consent.description',
+										'Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.'
+									)}
+									declineLabel={t(
+										'groupChat.consent.reject',
+										'Ablehnen'
+									)}
+									onDecline={() => setAsking(false)}
+									missingText={t(
+										'groupChat.consent.rejected',
+										'Ohne Ihre Zustimmung können Sie in dieser Gruppe nicht schreiben. Sie können jederzeit später zustimmen.'
+									)}
+									error={
+										saveFailed
+											? t(
+													'groupChat.consent.saveFailed',
+													'Ihre Zustimmung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.'
+												)
+											: undefined
+									}
+									errorId="groupWaitingConsentError"
+									disabled={saving || joinBusy}
+								/>
+							}
+							primary={{
+								...joinAction,
+								onClick: joinAfterConsent,
+								disabled:
+									joinBusy || saving || !groupConsent.readable
+							}}
+						/>
+					) : (
+						<RegistrationFooter
+							key="gate"
+							secondary={calendarAction}
+							primary={joinAction}
+						/>
+					)}
 					{plannedStart && (
 						<GroupChatCalendarPopover
 							id={menuId}

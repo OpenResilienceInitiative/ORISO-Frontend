@@ -11,6 +11,11 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('lottie-web', () => ({ default: {} }));
+const apiPatchUserData = vi.fn(() => Promise.resolve());
+vi.mock('../../../api/apiPatchUserData', () => ({
+	apiPatchUserData: (...args: unknown[]) =>
+		(apiPatchUserData as (...a: unknown[]) => Promise<void>)(...args)
+}));
 vi.mock('lottie-react', () => ({ default: () => null }));
 vi.mock('../../stage/stage', () => ({ Stage: () => null }));
 vi.mock('../../stageLayout/StageLayout', () => ({
@@ -58,7 +63,10 @@ const renderRoom = (active: boolean, onJoin = vi.fn()) => {
 };
 
 describe('GroupWaitingRoom', () => {
-	afterEach(cleanup);
+	afterEach(() => {
+		cleanup();
+		apiPatchUserData.mockClear();
+	});
 	it('names topic and agency in the stage header', () => {
 		renderRoom(false);
 		const header = screen.getByTestId('header-start');
@@ -83,12 +91,44 @@ describe('GroupWaitingRoom', () => {
 		expect(onJoin).not.toHaveBeenCalled();
 	});
 
-	it('lets the person in once the group is open', () => {
+	/* Frank, 2026-10-16: like the live chat, "Beitreten" first slides the
+	   consent into the bar; only a ticked box lets the person in, and the
+	   agreement is recorded on the account on the way (ADR-022 gate 2). */
+	it('asks for consent on "Beitreten" and lets the person in once agreed', async () => {
 		const { onJoin } = renderRoom(true);
-		const join = screen.getByTestId('group-entry-join');
-		expect((join as HTMLButtonElement).disabled).toBe(false);
-		fireEvent.click(join);
-		expect(onJoin).toHaveBeenCalledTimes(1);
+		const join = () => screen.getByTestId('group-entry-join');
+		expect((join() as HTMLButtonElement).disabled).toBe(false);
+		fireEvent.click(join());
+		expect(onJoin).not.toHaveBeenCalled();
+		expect(
+			document.querySelector('[data-cy="consent-completion"]')
+		).not.toBeNull();
+
+		// Without the tick: no way in, the reason is shown.
+		fireEvent.click(join());
+		expect(onJoin).not.toHaveBeenCalled();
+		expect(apiPatchUserData).not.toHaveBeenCalled();
+		expect(screen.getByRole('alert')).toBeTruthy();
+
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(join());
+		await waitFor(() => expect(onJoin).toHaveBeenCalledTimes(1));
+		expect(apiPatchUserData).toHaveBeenCalledWith({
+			dataPrivacyConfirmation: true,
+			termsAndConditionsConfirmation: true
+		});
+	});
+
+	it('stays outside when the agreement cannot be saved', async () => {
+		apiPatchUserData.mockImplementationOnce(() =>
+			Promise.reject(new Error('down'))
+		);
+		const { onJoin } = renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		fireEvent.click(screen.getByRole('checkbox'));
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+		expect(onJoin).not.toHaveBeenCalled();
 	});
 
 	it('puts the explainer in the middle and the clock back on return', async () => {
