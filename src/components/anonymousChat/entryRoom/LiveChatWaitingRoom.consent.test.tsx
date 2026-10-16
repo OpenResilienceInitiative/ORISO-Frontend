@@ -93,6 +93,13 @@ describe('LiveChatWaitingRoom — the consent gate (#1341)', () => {
 		expect(screen.queryByRole('alert')).toBeNull();
 	});
 
+	it('has the person arrive on the message field of the chat', () => {
+		renderAccepted();
+		expect(startButton().getAttribute('data-cy-closing')).toBe(
+			'messageField'
+		);
+	});
+
 	it('starts the chat once the box is ticked', () => {
 		const { onAccept } = renderAccepted();
 

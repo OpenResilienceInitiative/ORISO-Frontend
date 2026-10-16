@@ -77,6 +77,42 @@ describe('HandoverGateButton closing animation', () => {
 		await act(async () => timeline.finish());
 	});
 
+	it('says in the markup where the room has it arrive, so every room can be held to it', () => {
+		const { rerender } = render(
+			<HandoverGateButton state="ready" closing="call" />
+		);
+		expect(gate().getAttribute('data-cy-closing')).toBe('call');
+		rerender(<HandoverGateButton state="ready" />);
+		expect(gate().hasAttribute('data-cy-closing')).toBe(false);
+	});
+
+	it('opens the circle at the centre of the button that was pressed', async () => {
+		const timeline = controlledPlay();
+		render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={vi.fn()}
+			/>
+		);
+		vi.spyOn(gate(), 'getBoundingClientRect').mockReturnValue({
+			left: 100,
+			top: 500,
+			width: 300,
+			height: 60,
+			right: 400,
+			bottom: 560,
+			x: 100,
+			y: 500,
+			toJSON: () => ({})
+		});
+
+		fireEvent.click(gate());
+		expect(play.mock.calls[0][0].origin).toEqual({ x: 250, y: 530 });
+
+		await act(async () => timeline.finish());
+	});
+
 	it('answers the press at once: the button reads as entering and cannot be pressed twice', async () => {
 		const timeline = controlledPlay();
 		render(

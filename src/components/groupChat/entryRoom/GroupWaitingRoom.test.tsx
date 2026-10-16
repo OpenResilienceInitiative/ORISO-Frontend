@@ -83,6 +83,15 @@ describe('GroupWaitingRoom', () => {
 		expect(onJoin).not.toHaveBeenCalled();
 	});
 
+	it('has the person arrive on the message field of the group chat', () => {
+		renderRoom(true);
+		expect(
+			screen
+				.getByTestId('group-entry-join')
+				.getAttribute('data-cy-closing')
+		).toBe('messageField');
+	});
+
 	it('lets the person in once the group is open', () => {
 		const { onJoin } = renderRoom(true);
 		const join = screen.getByTestId('group-entry-join');

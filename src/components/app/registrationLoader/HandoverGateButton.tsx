@@ -83,7 +83,6 @@ export const HandoverGateButton = ({
 	const { t } = useTranslation();
 	const { play } = useClosingAnimation();
 	const [closingBusy, setClosingBusy] = React.useState(false);
-	const closingRef = React.useRef(false);
 	const shownState: HandoverGateState = closingBusy ? 'entering' : state;
 	const open = GATE_IS_OPEN[shownState] && !disabled;
 	const statusLabel = status ?? t(GATE_STATUS_KEY[shownState]);
@@ -99,10 +98,6 @@ export const HandoverGateButton = ({
 			onEnter?.(event);
 			return;
 		}
-		if (closingRef.current) {
-			return;
-		}
-		closingRef.current = true;
 		setClosingBusy(true);
 		const rect = event.currentTarget.getBoundingClientRect();
 		void play({
@@ -113,7 +108,6 @@ export const HandoverGateButton = ({
 			},
 			onCovered: () => onEnter?.(event)
 		}).finally(() => {
-			closingRef.current = false;
 			setClosingBusy(false);
 		});
 	};
@@ -128,6 +122,7 @@ export const HandoverGateButton = ({
 			data-testid={testId}
 			data-cy={testingAttribute}
 			data-cy-state={shownState}
+			data-cy-closing={closing}
 			sx={{
 				'position': 'relative',
 				'width': '100%',
