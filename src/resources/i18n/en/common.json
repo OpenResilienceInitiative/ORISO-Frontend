@@ -4864,6 +4864,7 @@
 			"responseTime": "Reply within 2 working days",
 			"back": "Back to previous page",
 			"later": "Come back later",
+			"laterNotice": "Nobody is live right now. As soon as someone is, the chat continues here.",
 			"title": "Live chat is currently closed",
 			"topicLabel": "Requested topic: {{topic}}",
 			"weekdays": {

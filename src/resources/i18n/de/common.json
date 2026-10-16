@@ -4956,6 +4956,7 @@
 			"responseTime": "Antwort innerhalb von 2 Werktagen",
 			"back": "Zurück zur vorherigen Seite",
 			"later": "Später wiederkommen",
+			"laterNotice": "Im Moment ist niemand live. Sobald jemand da ist, geht es hier weiter.",
 			"title": "Live-Chat ist zurzeit leider geschlossen",
 			"topicLabel": "Angefragtes Thema: {{topic}}",
 			"weekdays": {

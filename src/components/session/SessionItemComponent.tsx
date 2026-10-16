@@ -200,6 +200,7 @@ import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
 import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
 import {
+	createLatestResponseGuard,
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from '../anonymousChat/entryRoom/liveChatAvailability';
@@ -541,6 +542,20 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 			consecutiveUnavailablePolls
 		) &&
 		!liveChatClosedDismissed;
+	/**
+	 * "Come back later" only dismisses the dialog; the asker stays in the
+	 * queue, so say — without blocking anything — that nobody is live right
+	 * now. Gone as soon as somebody is (the dismissal resets then).
+	 */
+	const showNobodyLiveNote =
+		isInAnonymousWaitingQueuePhase &&
+		!consultantAccepted &&
+		!enquiryClosed &&
+		isNobodyLiveConfirmed(
+			numAvailableConsultants,
+			consecutiveUnavailablePolls
+		) &&
+		liveChatClosedDismissed;
 	const robotIncomingUsername = useMemo(() => {
 		const resolvedCandidates = [
 			contact?.displayName,
@@ -1216,11 +1231,15 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		let cancelled = false;
 		const sessionId = activeSession.item.id;
 		const hasMatrixRoom = Boolean(activeSession.item?.matrixRoomId);
+		/* Polls overlap (30 s per request against a 4 s interval); an older
+		   answer arriving late must not be counted (#1270). */
+		const latestResponse = createLatestResponseGuard();
 
 		const refresh = () => {
+			const request = latestResponse.begin();
 			apiGetAnonymousEnquiryDetails(sessionId)
 				.then((details) => {
-					if (cancelled) return;
+					if (cancelled || !latestResponse.accept(request)) return;
 					/* DONE/IN_ARCHIVE: the enquiry was finished server-side.
 					   Consultants can never see or accept it — stop polling
 					   and show the closed notice instead of queue position
@@ -3606,6 +3625,16 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					!enquiryClosed &&
 					!consultantAccepted && (
 						<div className="session__pseudonymActionBarSlot">
+							{showNobodyLiveNote && (
+								<div
+									className="session__nobodyLiveNote"
+									role="status"
+								>
+									{translate(
+										'anonymousChat.noAvailability.laterNotice'
+									)}
+								</div>
+							)}
 							<WaitingQueueActionBar
 								queuePosition={queuePeopleAhead}
 								onOpenCalmCompanion={handleOpenCalmCompanion}

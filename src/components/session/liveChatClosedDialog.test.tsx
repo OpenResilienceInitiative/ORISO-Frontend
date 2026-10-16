@@ -315,6 +315,37 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		expect(dialog()).not.toBeNull();
 	});
 
+	/* `fetchData` allows 30 s per request against a 4 s interval, so polls overlap
+	   and may complete out of order. The dialog cannot be waved away any more, so
+	   an old answer arriving late must not count towards opening it. */
+	it('ignores a slow, older poll that answers after a newer one', async () => {
+		let answerSlowPoll: (value: never) => void = () => {};
+		vi.mocked(apiGetAnonymousEnquiryDetails)
+			.mockResolvedValueOnce(poll(0)) // t=0   first look: nobody
+			.mockImplementationOnce(
+				() =>
+					new Promise((resolve) => {
+						answerSlowPoll = resolve as (value: never) => void;
+					}) // t=4s  slow, still in flight
+			)
+			.mockResolvedValueOnce(poll(1)) // t=8s  somebody is live
+			.mockResolvedValue(poll(0)); // t=12s nobody again
+		renderSession(1);
+		await tick(0);
+		await tick(4000);
+		await tick(4000);
+
+		/* The 4 s poll finally answers "nobody" — older than the "somebody"
+		   that already arrived. */
+		await act(async () => {
+			answerSlowPoll(poll(0));
+		});
+		await tick(4000);
+
+		/* In real order the zeros were 0, 0, 1, 0: one zero in a row. */
+		expect(dialog()).toBeNull();
+	});
+
 	it('stays open on a click beside it and on Esc', async () => {
 		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue(poll(0));
 		renderSession(1);
@@ -353,6 +384,53 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		await tick(1000);
 
 		expect(dialog()).toBeNull();
+	});
+
+	/* Dismissing must not leave the asker in a queue that looks normal. */
+	it('says that nobody is live, without blocking, after "come back later"', async () => {
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue(poll(0));
+		renderSession(1);
+		await tick(4000);
+		expect(
+			screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)
+		).toBeNull();
+
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: `${NO_AVAILABILITY}.later`
+				})
+			);
+		});
+		await tick(1000);
+
+		expect(dialog()).toBeNull();
+		const notice = screen.getByText(`${NO_AVAILABILITY}.laterNotice`);
+		expect(notice.closest('[role="status"]')).not.toBeNull();
+	});
+
+	it('drops that notice when somebody is live again', async () => {
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue(poll(0));
+		renderSession(1);
+		await tick(4000);
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: `${NO_AVAILABILITY}.later`
+				})
+			);
+		});
+		expect(
+			screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)
+		).not.toBeNull();
+
+		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue(poll(1));
+		await tick(4000);
+		await tick(1000);
+
+		expect(
+			screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)
+		).toBeNull();
 	});
 
 	it('closes by itself when somebody is live again', async () => {

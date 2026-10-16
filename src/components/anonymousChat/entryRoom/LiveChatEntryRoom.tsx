@@ -41,6 +41,7 @@ import {
 } from './entryRoomIdentity';
 import {
 	CLOSED_CONFIRMATION_POLLS,
+	createLatestResponseGuard,
 	isNobodyLiveConfirmed,
 	nextUnavailablePollCount
 } from './liveChatAvailability';
@@ -437,7 +438,7 @@ const LiveChatEntryRoomContent = ({
 			} else {
 				failures = 0;
 				setAvailabilityUnknown(false);
-				zeros = next > 0 ? 0 : zeros + 1;
+				zeros = nextUnavailablePollCount(zeros, next);
 				setAvailable(next);
 				setConsecutiveUnavailablePolls(zeros);
 			}
@@ -468,15 +469,13 @@ const LiveChatEntryRoomContent = ({
 		if (stage !== 'waiting' || accepted || sessionId === null)
 			return undefined;
 		let stop = false;
-		let latestPoll = 0;
-		let latestAppliedPoll = 0;
+		const latestResponse = createLatestResponseGuard();
 		const refresh = () => {
-			const poll = ++latestPoll;
+			const request = latestResponse.begin();
 			return apiGetAnonymousEnquiryDetails(sessionId)
 				.then((d) => {
 					// A slow response must not overwrite a newer poll's room state.
-					if (stop || poll < latestAppliedPoll) return;
-					latestAppliedPoll = poll;
+					if (stop || !latestResponse.accept(request)) return;
 					if (typeof d?.peopleAhead === 'number')
 						setAhead(d.peopleAhead);
 					const nextAvailable =

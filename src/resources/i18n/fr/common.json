@@ -4934,6 +4934,7 @@
 			"responseTime": "Réponse sous 2 jours ouvrables",
 			"back": "Retour à la page précédente",
 			"later": "Revenir plus tard",
+			"laterNotice": "Personne n'est en ligne pour le moment. Dès que quelqu'un le sera, le chat continuera ici.",
 			"title": "Le Live-Chat est malheureusement fermé pour le moment",
 			"topicLabel": "Thème demandé : {{topic}}",
 			"weekdays": {

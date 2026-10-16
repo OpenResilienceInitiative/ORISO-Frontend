@@ -19,3 +19,23 @@ export const isNobodyLiveConfirmed = (
 	consecutiveUnavailablePolls: number
 ): boolean =>
 	available === 0 && consecutiveUnavailablePolls >= CLOSED_CONFIRMATION_POLLS;
+
+/**
+ * Polls overlap (a request may take far longer than the interval), so an
+ * older answer can arrive after a newer one. `begin()` numbers a request;
+ * `accept(n)` is true only while no newer answer has been applied, and marks
+ * `n` as the latest applied. A stale answer must not be counted, or the
+ * confirmed-zero rule is fed in the wrong order.
+ */
+export const createLatestResponseGuard = () => {
+	let issued = 0;
+	let applied = 0;
+	return {
+		begin: (): number => ++issued,
+		accept: (request: number): boolean => {
+			if (request < applied) return false;
+			applied = request;
+			return true;
+		}
+	};
+};
