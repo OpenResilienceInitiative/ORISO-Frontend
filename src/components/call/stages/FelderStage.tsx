@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import { AnimalAvatar, liftFor } from '../../pseudonym/AnimalAvatar';
 import { NamePill } from '../atoms/NamePill';
 import { type AtmosphereName, Atmosphere } from '../atmosphere/Atmosphere';
 import { splitCells } from '../engine/layout';
@@ -35,7 +35,13 @@ const Field: React.FC<{
 	<div
 		data-testid="field"
 		className={styles.field}
-		style={{ background: participant.avatar.bg }}
+		// The lift goes on the TILE. The avatar inside is the same colour as
+		// the tile and invisible by design; giving it the shadow drew a pale
+		// disc behind every animal.
+		style={{
+			background: participant.avatar.bg,
+			boxShadow: liftFor(Math.min(width, height))
+		}}
 	>
 		<AnimalAvatar
 			avatar={participant.avatar}

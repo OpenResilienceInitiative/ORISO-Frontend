@@ -118,6 +118,7 @@ export const HainStage: React.FC<HainStageProps> = ({
 						avatar={participants[i].avatar}
 						size={spot.size}
 						outline={false}
+						shadow
 						radius={spot.blob}
 						tilt={Number(spot.tilt)}
 					/>

@@ -112,6 +112,57 @@ describe('an organic shape for the call arrangements', () => {
 		);
 	});
 
+	/*
+	 * The lift.
+	 *
+	 * `outline` used to mean two things at once — the 2px grey ring AND the
+	 * soft shadow — so the call arrangements, which must not have a ring
+	 * (the Hain packs shapes until they abut, and a ring there reads as a
+	 * seam), lost the shadow with it. Flat shapes on a flat backdrop, and
+	 * the design had them lifting off it.
+	 *
+	 * They are two props now. `shadow` still defaults to `outline`, so every
+	 * screen that was asking for both keeps getting both.
+	 */
+	it('lifts off the backdrop without wearing a ring', () => {
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} outline={false} shadow />
+		);
+		const outer = container.firstChild as HTMLElement;
+		expect(outer.style.boxShadow).not.toBe('none');
+		expect(outer.style.boxShadow).not.toBe('');
+		// No ring: the shapes abut, and a border would be the seam.
+		expect(outer.style.border).toBe('0px');
+	});
+
+	it('still ties the shadow to the outline when nothing says otherwise', () => {
+		// Backwards compatible on purpose: every existing caller passes only
+		// `outline`, and none of them should change.
+		const withRing = render(
+			<AnimalAvatar avatar={avatar()} size={100} />
+		);
+		expect(
+			(withRing.container.firstChild as HTMLElement).style.boxShadow
+		).not.toBe('none');
+		cleanup();
+
+		const without = render(
+			<AnimalAvatar avatar={avatar()} size={100} outline={false} />
+		);
+		expect(
+			(without.container.firstChild as HTMLElement).style.boxShadow
+		).toBe('none');
+	});
+
+	it('can be asked for a ring with no shadow', () => {
+		const { container } = render(
+			<AnimalAvatar avatar={avatar()} size={100} shadow={false} />
+		);
+		const outer = container.firstChild as HTMLElement;
+		expect(outer.style.boxShadow).toBe('none');
+		expect(outer.style.border).not.toBe('0px');
+	});
+
 	it('tilts without tilting the artwork out of its box', () => {
 		const { container } = render(
 			<AnimalAvatar avatar={avatar()} size={100} tilt={-7.4} />

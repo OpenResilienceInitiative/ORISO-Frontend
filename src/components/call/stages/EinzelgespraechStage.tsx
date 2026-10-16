@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { AnimalAvatar } from '../../pseudonym/AnimalAvatar';
+import { AnimalAvatar, liftFor } from '../../pseudonym/AnimalAvatar';
 import { NamePill } from '../atoms/NamePill';
 import { type AtmosphereName, Atmosphere } from '../atmosphere/Atmosphere';
 import { type CallParticipant } from './HainStage';
@@ -86,7 +86,14 @@ export const EinzelgespraechStage: React.FC<EinzelgespraechStageProps> = ({
 
 			<div
 				className={styles.circle}
-				style={{ inlineSize: circle, blockSize: circle }}
+				// One lift for the whole circle. Per half it would trace the
+				// seam, which is the one line in this view that must read as
+				// a boundary inside a body rather than an edge.
+				style={{
+					inlineSize: circle,
+					blockSize: circle,
+					boxShadow: liftFor(circle)
+				}}
 			>
 				{/* The quiet side fills the whole circle; the speaking side is
 				clipped on top of it. One curve, so the two can never part. */}
