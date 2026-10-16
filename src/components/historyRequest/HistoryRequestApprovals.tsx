@@ -18,6 +18,9 @@ export const HistoryRequestApprovals: React.FC<{ roomId?: string | null }> = ({
 				<HistoryRequestCard
 					key={request.requestId}
 					reason={request.reason}
+					requesterUserId={request.requesterUserId}
+					requesterDeviceId={request.requesterDeviceId}
+					receivedAt={request.receivedAt}
 					busy={busyId === request.requestId}
 					failed={failedId === request.requestId}
 					onDecline={() => decline(request.requestId)}

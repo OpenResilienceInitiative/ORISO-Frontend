@@ -13,6 +13,7 @@ const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
 const REQUEST_THROTTLE_MS = 30_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
+const MAX_PENDING_APPROVALS = 20;
 const MAX_REASON_LENGTH = 500;
 
 export const MATRIX_HISTORY_KEYS_IMPORTED_EVENT =
@@ -333,7 +334,10 @@ export class MatrixRoomHistoryKeyTransfer {
 				// wrote why and a human on this side approves. Without a reason
 				// nothing is kept and nothing is sent, as before.
 				const reason = normalizeReason(content.reason);
-				if (reason) {
+				if (
+					reason &&
+					this.pendingApprovals.size < MAX_PENDING_APPROVALS
+				) {
 					const pending: PendingHistoryRequest = {
 						requestId: content.request_id,
 						roomId: content.room_id,

@@ -24,6 +24,21 @@ describe('HistoryRequestCard', () => {
 		expect(document.querySelector('b')).toBeNull();
 	});
 
+	it('shows who asks from which device', () => {
+		render(
+			<HistoryRequestCard
+				reason="x"
+				requesterUserId="@asker:example.org"
+				requesterDeviceId="ASKER1"
+				receivedAt={0}
+				onApprove={vi.fn()}
+				onDecline={vi.fn()}
+			/>
+		);
+
+		expect(screen.getByText('historyRequest.card.origin')).toBeTruthy();
+	});
+
 	it('is a named region with the two decisions', () => {
 		render(
 			<HistoryRequestCard

@@ -5,6 +5,10 @@ import './HistoryRequestCard.styles.scss';
 export interface HistoryRequestCardProps {
 	/** What the person wrote about the conversation. */
 	reason: string;
+	/** Who asks, from which device, and when: shown so the counsellor can check. */
+	requesterUserId?: string;
+	requesterDeviceId?: string;
+	receivedAt?: number;
 	busy?: boolean;
 	failed?: boolean;
 	onApprove: () => void;
@@ -18,6 +22,9 @@ export interface HistoryRequestCardProps {
  */
 export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 	reason,
+	requesterUserId,
+	requesterDeviceId,
+	receivedAt,
 	busy = false,
 	failed = false,
 	onApprove,
@@ -35,6 +42,17 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 			<p className="historyRequestCard__intro">
 				{t('historyRequest.card.intro')}
 			</p>
+			{requesterUserId && (
+				<p className="historyRequestCard__origin">
+					{t('historyRequest.card.origin', {
+						user: requesterUserId,
+						device: requesterDeviceId ?? '',
+						time: receivedAt
+							? new Date(receivedAt).toLocaleString()
+							: ''
+					})}
+				</p>
+			)}
 			<blockquote className="historyRequestCard__reason">
 				{reason}
 			</blockquote>

@@ -550,6 +550,7 @@
 			"intro": "Die Person in diesem Gespräch hat sich auf einem neuen Gerät angemeldet und kann die früheren Nachrichten nicht lesen. Die Person hat geschrieben:",
 			"approve": "Gespräch freigeben",
 			"decline": "Ablehnen",
+			"origin": "Angefragt von {{user}} auf einem neuen Gerät ({{device}}), {{time}}. Das Gerät ist noch nicht verifiziert – geben Sie nur frei, wenn Sie diese Anfrage erwarten.",
 			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuchen Sie es noch einmal."
 		}
 	},
