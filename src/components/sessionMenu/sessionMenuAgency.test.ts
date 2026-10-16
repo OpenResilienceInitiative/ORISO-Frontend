@@ -8,7 +8,7 @@ const session = (overrides: Record<string, unknown>) =>
 	({ item: {}, ...overrides }) as Parameters<typeof getSessionMenuAgency>[0];
 
 describe('getSessionMenuAgency', () => {
-	it('uses the session agency when there is one', () => {
+	it("prefers a group's hosting agency over the session agency", () => {
 		expect(
 			getSessionMenuAgency(
 				session({
@@ -17,10 +17,10 @@ describe('getSessionMenuAgency', () => {
 					item: { assignedAgencies: [groupAgency] }
 				})
 			)
-		).toBe(sessionAgency);
+		).toBe(groupAgency);
 	});
 
-	it("falls back to a group's first assigned agency", () => {
+	it("uses a group's first assigned agency", () => {
 		expect(
 			getSessionMenuAgency(
 				session({
@@ -31,22 +31,33 @@ describe('getSessionMenuAgency', () => {
 		).toBe(groupAgency);
 	});
 
-	it('names no agency for a group without assigned agencies', () => {
-		expect(
-			getSessionMenuAgency(
-				session({ isGroup: true, item: { assignedAgencies: [] } })
-			)
-		).toBeUndefined();
-	});
-
-	it('ignores assignedAgencies outside groups', () => {
+	it('falls back to the session agency for a group without assigned agencies', () => {
 		expect(
 			getSessionMenuAgency(
 				session({
+					agency: sessionAgency,
+					isGroup: true,
+					item: { assignedAgencies: [] }
+				})
+			)
+		).toBe(sessionAgency);
+	});
+
+	it('names no agency when neither is known', () => {
+		expect(
+			getSessionMenuAgency(session({ isGroup: true, item: {} }))
+		).toBeUndefined();
+	});
+
+	it('uses the session agency outside groups', () => {
+		expect(
+			getSessionMenuAgency(
+				session({
+					agency: sessionAgency,
 					isGroup: false,
 					item: { assignedAgencies: [groupAgency] }
 				})
 			)
-		).toBeUndefined();
+		).toBe(sessionAgency);
 	});
 });

@@ -893,6 +893,7 @@
 		},
 		"loadError": {
 			"consultants": "Les collègues n'ont pas pu être chargés.",
+			"info": "Les informations du chat n'ont pas pu être chargées.",
 			"retry": "Réessayer",
 			"topics": "Les sujets n'ont pas pu être chargés."
 		},

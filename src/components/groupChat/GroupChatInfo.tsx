@@ -43,6 +43,7 @@ import './groupChatInfo.styles';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { BanUserOverlay } from '../banUser/BanUser';
 import { M3Dialog } from '../m3Dialog/M3Dialog';
+import { LoadingIndicator } from '../loadingIndicator/LoadingIndicator';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useSession } from '../../hooks/useSession';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -104,29 +105,30 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		activeSession?.item?.assignedAgencies?.[0]?.id,
 		activeSession?.item?.inviteToken
 	);
-	const [banCheck, setBanCheck] = useState<'pending' | 'clear' | 'banned'>(
-		isAsker ? 'pending' : 'clear'
-	);
+	const [banCheck, setBanCheck] = useState<
+		'pending' | 'clear' | 'banned' | 'failed'
+	>(isAsker ? 'pending' : 'clear');
+	const [banCheckAttempt, setBanCheckAttempt] = useState(0);
 	useEffect(() => {
 		if (!isAsker || !chatId) return;
 		let cancelled = false;
+		setBanCheck('pending');
 		apiGetGroupChatInfo(chatId)
-			.then((response) =>
-				(response.bannedUsers ?? []).map(decodeUsername)
-			)
-			// As in SessionView: no list means no ban.
-			.catch(() => [] as string[])
-			.then((banned) => {
-				if (!cancelled) {
-					setBanCheck(
-						banned.includes(userData.userName) ? 'banned' : 'clear'
-					);
-				}
+			.then((response) => {
+				if (cancelled) return;
+				const banned = (response.bannedUsers ?? []).map(decodeUsername);
+				setBanCheck(
+					banned.includes(userData.userName) ? 'banned' : 'clear'
+				);
+			})
+			// Unknown ban state: keep the Chat-Info closed.
+			.catch(() => {
+				if (!cancelled) setBanCheck('failed');
 			});
 		return () => {
 			cancelled = true;
 		};
-	}, [isAsker, chatId, userData.userName]);
+	}, [isAsker, chatId, userData.userName, banCheckAttempt]);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
 	const getSessionListTab = () =>
@@ -226,7 +228,6 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	if (redirectToSessionsList) {
 		return <Navigate to={listPath + getSessionListTab()} replace />;
 	}
-	if (banCheck === 'pending') return null;
 	if (banCheck === 'banned') {
 		// The chat route shows the existing banned view.
 		return (
@@ -409,76 +410,101 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 					</>
 				}
 			>
-				<GroupChatInfoContent
-					scheduleOnly={scheduleOnly}
-					embedded={dialog}
-					onBanned={setBannedOverlayName}
-					onShowQr={() => setQrOpen(true)}
-					topic={topic}
-					scheduleSummary={scheduleSummary}
-					statusLabel={translate(
-						activeSession.item.active
-							? 'groupChat.info.status.active'
-							: 'groupChat.info.status.planned'
-					)}
-					active={!!activeSession.item.active}
-					calendarAction={
-						calendarStart ? (
-							<GroupChatCalendarMenu
-								start={calendarStart}
-								durationMinutes={activeSession.item.duration}
-								eventId={activeSession.item.id}
-							/>
-						) : undefined
-					}
-					primaryAction={
-						canModerateGroupChat(activeSession, userData) &&
-						activeSession.item.active &&
-						activeSession.item.subscribed ? (
+				{/* Advice seekers: nothing of the Chat-Info before the ban check. */}
+				{banCheck !== 'clear' ? (
+					banCheck === 'pending' ? (
+						<LoadingIndicator />
+					) : (
+						<div role="alert" className="groupChatInfo__loadError">
+							<p>{translate('groupChat.loadError.info')}</p>
 							<MuiButton
 								variant="outlined"
-								onClick={handleStopGroupChatButton}
+								onClick={() => setBanCheckAttempt((n) => n + 1)}
 								sx={{
 									borderRadius: '20px',
-									textTransform: 'none',
-									borderColor: 'var(--m3-outline)',
-									color: 'var(--m3-error)'
+									textTransform: 'none'
 								}}
 							>
-								{stopChatButtonSet.label}
+								{translate('groupChat.loadError.retry')}
 							</MuiButton>
-						) : undefined
-					}
-					isCurrentUserModerator={isCurrentUserModerator}
-					showInviteActions={showInviteActions}
-					inviteLink={inviteLink}
-					teamRolesSlot={
-						isCurrentUserModerator &&
-						activeSession.item.participants?.length &&
-						userData?.userId ? (
-							<GroupChatRoleManager
-								seriesId={activeSession.item.id}
-								currentUserId={userData.userId}
-								participants={activeSession.item.participants}
-								hideHeadline
-							/>
-						) : undefined
-					}
-					settings={m3Settings}
-					onEdit={
-						isGroupChatOwner(activeSession, userData) &&
-						!activeSession.item.active
-							? () =>
-									navigate(editPath, {
-										state: {
-											isEditMode: true,
-											prevIsInfoPage: true
-										}
-									})
-							: undefined
-					}
-					onBack={dialog ? undefined : () => navigate(chatPath)}
-				/>
+						</div>
+					)
+				) : (
+					<GroupChatInfoContent
+						scheduleOnly={scheduleOnly}
+						embedded={dialog}
+						onBanned={setBannedOverlayName}
+						onShowQr={() => setQrOpen(true)}
+						topic={topic}
+						scheduleSummary={scheduleSummary}
+						statusLabel={translate(
+							activeSession.item.active
+								? 'groupChat.info.status.active'
+								: 'groupChat.info.status.planned'
+						)}
+						active={!!activeSession.item.active}
+						calendarAction={
+							calendarStart ? (
+								<GroupChatCalendarMenu
+									start={calendarStart}
+									durationMinutes={
+										activeSession.item.duration
+									}
+									eventId={activeSession.item.id}
+								/>
+							) : undefined
+						}
+						primaryAction={
+							canModerateGroupChat(activeSession, userData) &&
+							activeSession.item.active &&
+							activeSession.item.subscribed ? (
+								<MuiButton
+									variant="outlined"
+									onClick={handleStopGroupChatButton}
+									sx={{
+										borderRadius: '20px',
+										textTransform: 'none',
+										borderColor: 'var(--m3-outline)',
+										color: 'var(--m3-error)'
+									}}
+								>
+									{stopChatButtonSet.label}
+								</MuiButton>
+							) : undefined
+						}
+						isCurrentUserModerator={isCurrentUserModerator}
+						showInviteActions={showInviteActions}
+						inviteLink={inviteLink}
+						teamRolesSlot={
+							isCurrentUserModerator &&
+							activeSession.item.participants?.length &&
+							userData?.userId ? (
+								<GroupChatRoleManager
+									seriesId={activeSession.item.id}
+									currentUserId={userData.userId}
+									participants={
+										activeSession.item.participants
+									}
+									hideHeadline
+								/>
+							) : undefined
+						}
+						settings={m3Settings}
+						onEdit={
+							isGroupChatOwner(activeSession, userData) &&
+							!activeSession.item.active
+								? () =>
+										navigate(editPath, {
+											state: {
+												isEditMode: true,
+												prevIsInfoPage: true
+											}
+										})
+								: undefined
+						}
+						onBack={dialog ? undefined : () => navigate(chatPath)}
+					/>
+				)}
 			</GroupChatInfoFrame>
 		</ActiveSessionProvider>
 	);

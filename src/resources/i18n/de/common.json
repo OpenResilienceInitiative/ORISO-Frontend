@@ -956,6 +956,7 @@
 		},
 		"loadError": {
 			"consultants": "Die Kolleg:innen konnten nicht geladen werden.",
+			"info": "Die Chat-Info konnte nicht geladen werden.",
 			"retry": "Erneut versuchen",
 			"topics": "Die Themen konnten nicht geladen werden."
 		},

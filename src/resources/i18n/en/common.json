@@ -944,6 +944,7 @@
 		},
 		"loadError": {
 			"consultants": "The colleagues could not be loaded.",
+			"info": "The chat info could not be loaded.",
 			"retry": "Try again",
 			"topics": "The topics could not be loaded."
 		},
