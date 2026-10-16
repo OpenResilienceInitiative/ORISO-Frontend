@@ -85,6 +85,31 @@ export const NeedsPassword: Story = {
 	}
 };
 
+/* #1741: password recovery is set up, but this load has no password. */
+export const NeedsSignIn: Story = {
+	beforeEach: () => {
+		setRecoveryRuntimeStatus(USER_ID, 'needs-sign-in');
+	},
+	play: async () => {
+		const page = within(document.body);
+		const snackbar = await page.findByTestId('key-backup-recovery-action');
+		await waitFor(() => expect(snackbar).toBeVisible());
+		await expect(snackbar).toHaveTextContent('Passwort');
+		await expect(snackbar).not.toHaveTextContent('Ersatzschlüssel');
+		await expect(
+			page.getByTestId('key-backup-recovery-sign-in')
+		).toHaveTextContent('erneut anmelden');
+		await expect(
+			page.queryByTestId('key-backup-recovery-open')
+		).not.toBeInTheDocument();
+	}
+};
+
+export const NeedsSignInMobile: Story = {
+	...NeedsSignIn,
+	globals: { viewport: { value: 'phone390' } }
+};
+
 export const DismissHidesIt: Story = {
 	play: async () => {
 		const page = within(document.body);

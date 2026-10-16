@@ -888,9 +888,19 @@ const preview: Preview = {
 					styles: { width: '1280px', height: '800px' },
 					type: 'desktop'
 				},
+				desktop1366: {
+					name: 'Desktop 1366 (common laptop)',
+					styles: { width: '1366px', height: '768px' },
+					type: 'desktop'
+				},
 				desktop1440: {
 					name: 'Desktop 1440',
 					styles: { width: '1440px', height: '900px' },
+					type: 'desktop'
+				},
+				desktop1920: {
+					name: 'Desktop 1920 (full HD)',
+					styles: { width: '1920px', height: '1080px' },
 					type: 'desktop'
 				}
 			}

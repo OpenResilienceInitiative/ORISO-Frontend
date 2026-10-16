@@ -193,7 +193,9 @@ const ClientGroupEntryRoom = () => {
 				);
 			})
 			.catch((error) => {
-				const notice = getCounsellingDpaNotification(error, t);
+				const notice = getCounsellingDpaNotification(error, t, {
+					groupJoin: true
+				});
 				if (notice && notifications)
 					notifications.addNotification(notice);
 				else setJoinFailed(true);
