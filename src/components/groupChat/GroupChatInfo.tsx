@@ -201,6 +201,14 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 		settings.groupChat?.info?.showCreationDate &&
 		activeSession?.item?.createdAt;
 
+	// Not joined yet: date, start and agency as in the waiting room, no members.
+	const scheduleOnly =
+		!hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) &&
+		!activeSession.item.subscribed;
+	// As in the waiting room (#1499): no topic before the privacy consent.
+	const hideTopic =
+		scheduleOnly && !String(userData?.dataPrivacyConfirmation ?? '').trim();
+
 	const isCurrentUserModerator =
 		canModerateGroupChat(activeSession, userData) ||
 		isUserModerator({
@@ -264,8 +272,9 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const editPath = `${listPath}/${activeSession.item.matrixRoomId}/${
 		activeSession.item.id
 	}/editGroupChat${getSessionListTab()}`;
-	const topic =
-		typeof activeSession.item.topic === 'string'
+	const topic = hideTopic
+		? ''
+		: typeof activeSession.item.topic === 'string'
 			? activeSession.item.topic
 			: activeSession.item.topic?.name || '';
 
@@ -301,11 +310,13 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 					}
 				]
 			: []),
-		...preparedSettings.map((item, index) => ({
-			key: settingKeys[index],
-			label: item.label,
-			value: item.value
-		}))
+		...preparedSettings
+			.map((item, index) => ({
+				key: settingKeys[index],
+				label: item.label,
+				value: item.value
+			}))
+			.filter((item) => !(hideTopic && item.key === 'topic'))
 	];
 	const scheduleSummary = [
 		preparedSettings[1]?.value,
@@ -344,7 +355,8 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 					</>
 				}
 			>
-				<GroupChatInfoM3Connected
+				<GroupChatInfoContent
+					scheduleOnly={scheduleOnly}
 					embedded={dialog}
 					onBanned={setBannedOverlayName}
 					onShowQr={() => setQrOpen(true)}
@@ -466,6 +478,30 @@ const GroupChatInfoFrame = ({
 		</>
 	);
 };
+
+type GroupChatInfoContentProps = React.ComponentProps<
+	typeof GroupChatInfoM3Connected
+> & { scheduleOnly: boolean };
+
+const GroupChatInfoContent = ({
+	scheduleOnly,
+	isCurrentUserModerator,
+	showInviteActions,
+	onBanned,
+	onShowQr,
+	...props
+}: GroupChatInfoContentProps) =>
+	scheduleOnly ? (
+		<GroupChatInfoM3 {...props} participants={[]} hideParticipants />
+	) : (
+		<GroupChatInfoM3Connected
+			{...props}
+			isCurrentUserModerator={isCurrentUserModerator}
+			showInviteActions={showInviteActions}
+			onBanned={onBanned}
+			onShowQr={onShowQr}
+		/>
+	);
 
 /**
  * The M3 Chat-Info with the parts that need the active-session context:

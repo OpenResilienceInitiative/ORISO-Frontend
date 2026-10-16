@@ -1161,9 +1161,9 @@ const SessionMenuFlyoutGroup = ({
 						/>
 					</div>
 				)}
+			{/* Askers who have not joined get the schedule-only Chat-Info. */}
 			{(hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData) ||
-				(activeSession.item.subscribed &&
-					!bannedUsers?.includes(userData.userName))) && (
+				!bannedUsers?.includes(userData.userName)) && (
 				<Link
 					to={groupChatInfoLink}
 					onClick={onOpenInfo}

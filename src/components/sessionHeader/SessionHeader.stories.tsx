@@ -213,10 +213,12 @@ const buildSingleSession = (
 
 const buildGroupSession = ({
 	active = true,
-	assignedAgencies = []
+	assignedAgencies = [],
+	subscribed = true
 }: {
 	active?: boolean;
 	assignedAgencies?: { id: number; name: string }[];
+	subscribed?: boolean;
 } = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
 		{
@@ -246,7 +248,7 @@ const buildGroupSession = ({
 				repetitive: false,
 				startDate: '2026-03-18',
 				startTime: '10:00',
-				subscribed: true,
+				subscribed,
 				topic: 'Team Austausch',
 				createdAt: '2026-03-18T06:15:00.000Z'
 			} as unknown as GroupChatItemInterface
@@ -463,7 +465,8 @@ const renderGroupHeader = (
 		members?: MockMember[];
 	},
 	hideTopic = false,
-	userData = storyUserData
+	userData = storyUserData,
+	bannedUsers: string[] = []
 ) => (
 	<StoryProviders
 		session={preset.session}
@@ -475,7 +478,7 @@ const renderGroupHeader = (
 			<GroupChatHeader
 				hasUserInitiatedStopOrLeaveRequest={noopRef}
 				isJoinGroupChatView={false}
-				bannedUsers={[]}
+				bannedUsers={bannedUsers}
 				hideTopic={hideTopic}
 			/>
 		</LegalLinksProvider>
@@ -1180,8 +1183,12 @@ const storyAskerData = {
 	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
 	userRoles: ['USER']
 };
-const groupMenuPreset = (active = true) => ({
-	session: buildGroupSession({ active, assignedAgencies: groupMenuAgency }),
+const groupMenuPreset = (active = true, subscribed = true) => ({
+	session: buildGroupSession({
+		active,
+		assignedAgencies: groupMenuAgency,
+		subscribed
+	}),
 	members: makeMembers(4)
 });
 const desktop1366Globals = { viewport: { value: 'desktop1366' } };
@@ -1304,4 +1311,65 @@ export const GroupMenuCounsellor375: Story = {
 			menu.getByRole('link', { name: /Chat-Einstellungen/ })
 		).toBeVisible();
 	}
+};
+
+/** Not joined yet: the schedule entry is offered; the dialog leaves out the members. */
+const expectScheduleEntryForGuest: Story['play'] = async ({
+	canvasElement
+}) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expectSharedEntries(menu);
+	await expect(menu.queryByText('Chat beenden')).toBeNull();
+	await expect(menu.queryByText('Chat verlassen')).toBeNull();
+	await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+};
+
+export const GroupMenuAskerNotJoined1366: Story = {
+	name: 'Group menu · advice seeker, not joined yet (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+export const GroupMenuAskerNotJoined390: Story = {
+	name: 'Group menu · advice seeker, not joined yet (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(false, false), false, storyAskerData),
+	play: expectScheduleEntryForGuest
+};
+
+/** A banned advice seeker keeps agency and legal texts but gets no Chat-Info. */
+const expectNoChatInfoWhenBanned: Story['play'] = async ({ canvasElement }) => {
+	const { menu } = await openGroupMenu(canvasElement);
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(
+		menu.queryByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeNull();
+};
+
+export const GroupMenuAskerBanned1366: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (1366)',
+	globals: desktop1366Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
+};
+
+export const GroupMenuAskerBanned390: Story = {
+	name: 'Group menu · banned advice seeker, no Chat-Info (390)',
+	globals: phone390Globals,
+	render: () =>
+		renderGroupHeader(groupMenuPreset(), false, storyAskerData, [
+			storyAskerData.userName
+		]),
+	play: expectNoChatInfoWhenBanned
 };

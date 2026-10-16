@@ -128,17 +128,21 @@ const WiredChatInfo = ({
 	layout,
 	inviteToken,
 	asAsker = false,
-	dialog = false
+	dialog = false,
+	joined = true
 }: {
 	layout: 'desktop' | 'mobile';
 	inviteToken?: string | null;
 	asAsker?: boolean;
 	dialog?: boolean;
+	/** False: the viewer has not joined the group yet. */
+	joined?: boolean;
 }) => {
-	const listItem = React.useMemo(
-		() => buildListItem(inviteToken),
-		[inviteToken]
-	);
+	const listItem = React.useMemo(() => {
+		const item = buildListItem(inviteToken);
+		(item.chat as any).subscribed = joined;
+		return item;
+	}, [inviteToken, joined]);
 	useBackendMocks(listItem);
 	return (
 		<TenantContext.Provider
@@ -403,4 +407,100 @@ export const DialogQrCode: Story = {
 			expect(page.getByTestId('group-chat-info-dialog')).toBeVisible()
 		);
 	}
+};
+
+/** Opens on top and waits until the dialog has faded in. */
+const findOpenDialog = async () => {
+	const page = within(document.body);
+	const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+	await waitFor(() =>
+		expect(
+			within(dialog).getByRole('heading', {
+				name: i18n.t('groupChat.info.headline')
+			})
+		).toBeVisible()
+	);
+	return within(dialog);
+};
+
+/** Not joined yet (#1760): date, start, duration, repetition and agency; no topic before consent, no members, no invite ways. */
+const showsScheduleOnly: Story['play'] = async () => {
+	const dialog = await findOpenDialog();
+	for (const key of [
+		'groupChat.info.settings.startDate',
+		'groupChat.info.settings.startTime',
+		'groupChat.info.settings.duration',
+		'groupChat.info.settings.repetition.label',
+		'groupChat.info.settings.agency'
+	]) {
+		await expect(dialog.getByText(i18n.t(key))).toBeVisible();
+	}
+	await expect(dialog.getByText('Beratungsstelle Mitte')).toBeVisible();
+	// No privacy consent on record in this fixture: no topic, as in the waiting room.
+	await expect(
+		dialog.queryByText(i18n.t('groupChat.info.settings.topic'))
+	).toBeNull();
+	await expect(
+		dialog.queryByText(i18n.t('groupChat.info.subscribers.headline'))
+	).toBeNull();
+	for (const member of MEMBERS) {
+		await expect(dialog.queryByText(member.name)).toBeNull();
+	}
+	await expect(
+		dialog.queryByRole('button', { name: i18n.t('qrCode.link.text') })
+	).toBeNull();
+	await expect(
+		dialog.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+	).toBeNull();
+	await expect(
+		dialog.queryByRole('button', { name: /Bearbeiten/ })
+	).toBeNull();
+};
+
+export const DialogAskerNotJoined1366: Story = {
+	name: 'Dialog · advice seeker not joined: schedule only (1366)',
+	globals: desktop1366Globals,
+	render: () => (
+		<WiredChatInfo layout="desktop" dialog asAsker joined={false} />
+	),
+	play: showsScheduleOnly
+};
+
+export const DialogAskerNotJoined390: Story = {
+	name: 'Dialog · advice seeker not joined: schedule only (390)',
+	globals: phone390Globals,
+	render: () => (
+		<WiredChatInfo layout="mobile" dialog asAsker joined={false} />
+	),
+	play: showsScheduleOnly
+};
+
+/** A member sees the schedule and the member list, still no invite ways. */
+const showsFullInfoForMember: Story['play'] = async () => {
+	const dialog = await findOpenDialog();
+	await dialog.findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+	await expect(
+		dialog.getByText(i18n.t('groupChat.info.subscribers.headline'))
+	).toBeVisible();
+	await expect(
+		dialog.getByText(i18n.t('groupChat.info.settings.startDate'))
+	).toBeVisible();
+	await expect(dialog.getByText('Beratungsstelle Mitte')).toBeVisible();
+	await expect(
+		dialog.queryByRole('button', { name: /Einladungs-Link kopieren/ })
+	).toBeNull();
+};
+
+export const DialogAskerJoined1366: Story = {
+	name: 'Dialog · advice seeker joined: full info (1366)',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog asAsker />,
+	play: showsFullInfoForMember
+};
+
+export const DialogAskerJoined390: Story = {
+	name: 'Dialog · advice seeker joined: full info (390)',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog asAsker />,
+	play: showsFullInfoForMember
 };
