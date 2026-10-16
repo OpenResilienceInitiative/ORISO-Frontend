@@ -544,6 +544,15 @@
 			"headline": "Sie haben den Chat erfolgreich gelöscht."
 		}
 	},
+	"historyRequest": {
+		"card": {
+			"title": "Anfrage, dieses Gespräch wieder lesen zu können",
+			"intro": "Die Person in diesem Gespräch hat sich auf einem neuen Gerät angemeldet und kann die früheren Nachrichten nicht lesen. Die Person hat geschrieben:",
+			"approve": "Gespräch freigeben",
+			"decline": "Ablehnen",
+			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuchen Sie es noch einmal."
+		}
+	},
 	"e2ee": {
 		"attachment": {
 			"decryption_error": "Fehler beim entschlüsseln",

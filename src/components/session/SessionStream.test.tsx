@@ -144,7 +144,8 @@ vi.mock(
 		return {
 			...actual,
 			matrixRoomHistoryKeyTransfer: {
-				requestKeys: mocks.requestHistoryKeys
+				requestKeys: mocks.requestHistoryKeys,
+				getPendingApprovals: () => []
 			}
 		};
 	}

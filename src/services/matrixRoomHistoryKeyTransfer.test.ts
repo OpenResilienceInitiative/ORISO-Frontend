@@ -4,6 +4,8 @@ import { ClientEvent } from 'matrix-js-sdk';
 import {
 	MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT,
 	MATRIX_HISTORY_KEYS_IMPORTED_EVENT,
+	MATRIX_HISTORY_REQUEST_PENDING_EVENT,
+	MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
 	MatrixRoomHistoryKeyTransfer,
 	isUndecryptedRoomEvent
 } from './matrixRoomHistoryKeyTransfer';
@@ -575,5 +577,182 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		await Promise.resolve();
 
 		expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+	});
+
+	describe('approval of a request from an unverified device', () => {
+		const unverifiedRequest = (reason?: unknown) =>
+			event('org.oriso.room_history_key_request', PEER, {
+				room_id: ROOM_ID,
+				request_id: 'reset-request',
+				requester_user_id: PEER,
+				requester_device_id: 'ASKER1',
+				...(reason === undefined ? {} : { reason })
+			});
+		const setup = () => {
+			const harness = buildHarness();
+			harness.crypto.getDeviceVerificationStatus.mockResolvedValue({
+				isVerified: () => false
+			});
+			applyDeviceIsolationMode(harness.client as any, true);
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+			return { harness, service };
+		};
+
+		it('keeps a request that carries a reason waiting instead of dropping it', async () => {
+			const { harness, service } = setup();
+			const pending = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_REQUEST_PENDING_EVENT,
+				pending
+			);
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() => expect(pending).toHaveBeenCalled());
+			window.removeEventListener(
+				MATRIX_HISTORY_REQUEST_PENDING_EVENT,
+				pending
+			);
+
+			expect(service.getPendingApprovals(ROOM_ID)).toEqual([
+				expect.objectContaining({
+					requestId: 'reset-request',
+					requesterUserId: PEER,
+					requesterDeviceId: 'ASKER1',
+					reason: 'It was about my school'
+				})
+			]);
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
+		it('still drops an unverified request without a reason', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest());
+			await vi.waitFor(() =>
+				expect(
+					harness.crypto.getDeviceVerificationStatus
+				).toHaveBeenCalled()
+			);
+
+			expect(service.getPendingApprovals()).toEqual([]);
+			expect(harness.crypto.exportRoomKeys).not.toHaveBeenCalled();
+		});
+
+		it('ignores a blank reason and caps a long one at 500 characters', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('   '));
+			await vi.waitFor(() =>
+				expect(
+					harness.crypto.getDeviceVerificationStatus
+				).toHaveBeenCalledTimes(1)
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
+
+			harness.emitToDevice(unverifiedRequest('x'.repeat(900)));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			expect(service.getPendingApprovals()[0].reason).toHaveLength(500);
+		});
+
+		it('sends only that rooms keys to only that device after approval', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				true
+			);
+
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(
+				1
+			);
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+				'org.oriso.room_history_key_bundle',
+				[{ userId: PEER, deviceId: 'ASKER1' }],
+				{
+					room_id: ROOM_ID,
+					request_id: 'reset-request',
+					keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
+				}
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
+		});
+
+		it('sends nothing after a decline and announces that it is resolved', async () => {
+			const { harness, service } = setup();
+			const resolved = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+				resolved
+			);
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+
+			service.declineRequest('reset-request');
+			window.removeEventListener(
+				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+				resolved
+			);
+
+			expect(service.getPendingApprovals()).toEqual([]);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+			expect(resolved).toHaveBeenCalledTimes(1);
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+		});
+
+		it('refuses to send after the requester has left the room', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.memberships.set(PEER, member(PEER, 'leave'));
+
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+			expect(
+				harness.client.encryptAndSendToDevice
+			).not.toHaveBeenCalled();
+		});
+
+		it('forgets waiting requests when the client is detached', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+
+			service.detach();
+
+			expect(service.getPendingApprovals()).toEqual([]);
+		});
+
+		it('sends the reason along when the person asks for the history', async () => {
+			const harness = buildHarness();
+			const service = new MatrixRoomHistoryKeyTransfer();
+			service.initialize(harness.client as any);
+
+			await service.requestKeys(ROOM_ID, {
+				reason: '  It was about my school  '
+			});
+
+			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
+				'org.oriso.room_history_key_request',
+				[{ userId: PEER, deviceId: 'ASKER1' }],
+				expect.objectContaining({ reason: 'It was about my school' })
+			);
+		});
 	});
 });

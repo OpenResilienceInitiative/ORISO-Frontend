@@ -13,6 +13,7 @@ const KEY_REQUEST_EVENT = 'org.oriso.room_history_key_request';
 const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
 const REQUEST_THROTTLE_MS = 30_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
+const MAX_REASON_LENGTH = 500;
 
 export const MATRIX_HISTORY_KEYS_IMPORTED_EVENT =
 	'oriso:matrix-history-keys-imported';
@@ -21,6 +22,25 @@ export const MATRIX_HISTORY_KEYS_REQUESTED_EVENT =
 export const MATRIX_HISTORY_KEYS_SENT_EVENT = 'oriso:matrix-history-keys-sent';
 export const MATRIX_HISTORY_KEYS_DIAGNOSTIC_EVENT =
 	'oriso:matrix-history-keys-diagnostic';
+/** A request from an unverified device now waits for a person to approve it. */
+export const MATRIX_HISTORY_REQUEST_PENDING_EVENT =
+	'oriso:matrix-history-request-pending';
+/** A waiting request was approved, declined or dropped. */
+export const MATRIX_HISTORY_REQUEST_RESOLVED_EVENT =
+	'oriso:matrix-history-request-resolved';
+
+export type PendingHistoryRequest = {
+	requestId: string;
+	roomId: string;
+	requesterUserId: string;
+	requesterDeviceId: string;
+	/** What the person wrote about the conversation, at most 500 characters. */
+	reason: string;
+	receivedAt: number;
+};
+
+const normalizeReason = (value: unknown): string =>
+	typeof value === 'string' ? value.trim().slice(0, MAX_REASON_LENGTH) : '';
 
 const emitDiagnostic = (stage: string, detail: Record<string, unknown> = {}) =>
 	window.dispatchEvent(
@@ -34,6 +54,7 @@ type KeyRequest = {
 	request_id: string;
 	requester_user_id: string;
 	requester_device_id: string;
+	reason?: string;
 };
 
 type KeyBundle = {
@@ -58,6 +79,10 @@ export class MatrixRoomHistoryKeyTransfer {
 	private readonly lastRequestAt = new Map<string, number>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
+	private readonly pendingApprovals = new Map<
+		string,
+		PendingHistoryRequest
+	>();
 
 	public initialize(client: MatrixClient): void {
 		if (this.client === client) return;
@@ -78,9 +103,68 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.onReceivedToDeviceMessage
 		);
 		this.client = null;
+		this.pendingApprovals.clear();
 	}
 
-	public async requestKeys(roomId: string): Promise<boolean> {
+	/** Requests from unverified devices that wait for a person's decision. */
+	public getPendingApprovals(roomId?: string): PendingHistoryRequest[] {
+		return Array.from(this.pendingApprovals.values()).filter(
+			(request) => !roomId || request.roomId === roomId
+		);
+	}
+
+	/**
+	 * A person has read the reason and agrees: send that one room's keys to
+	 * that one device. The device stays unverified; the approval is the check.
+	 */
+	public async approveRequest(requestId: string): Promise<boolean> {
+		const request = this.pendingApprovals.get(requestId);
+		const client = this.client;
+		if (!request || !client) return false;
+		this.pendingApprovals.delete(requestId);
+		const room = client.getRoom(request.roomId);
+		await (room as any)?.loadMembersIfNeeded?.();
+		if (room?.getMember(request.requesterUserId)?.membership !== 'join') {
+			emitDiagnostic('approval-membership-rejected');
+			this.announceResolved(request, 'dropped');
+			return false;
+		}
+		const sent = await this.sendBundle(
+			request.roomId,
+			request.requesterUserId,
+			request.requesterDeviceId,
+			request.requestId
+		);
+		this.announceResolved(request, sent ? 'approved' : 'dropped');
+		return sent;
+	}
+
+	public declineRequest(requestId: string): void {
+		const request = this.pendingApprovals.get(requestId);
+		if (!request) return;
+		this.pendingApprovals.delete(requestId);
+		this.announceResolved(request, 'declined');
+	}
+
+	private announceResolved(
+		request: PendingHistoryRequest,
+		outcome: 'approved' | 'declined' | 'dropped'
+	): void {
+		window.dispatchEvent(
+			new CustomEvent(MATRIX_HISTORY_REQUEST_RESOLVED_EVENT, {
+				detail: {
+					roomId: request.roomId,
+					requestId: request.requestId,
+					outcome
+				}
+			})
+		);
+	}
+
+	public async requestKeys(
+		roomId: string,
+		options: { reason?: string } = {}
+	): Promise<boolean> {
 		const client = this.client;
 		const crypto = client?.getCrypto();
 		const userId = client?.getUserId();
@@ -131,11 +215,13 @@ export class MatrixRoomHistoryKeyTransfer {
 				? globalThis.crypto.randomUUID()
 				: `${deviceId}-${now}`;
 		this.lastRequestAt.set(roomId, now);
+		const reason = normalizeReason(options.reason);
 		const requestContent = {
 			room_id: roomId,
 			request_id: requestId,
 			requester_user_id: userId,
-			requester_device_id: deviceId
+			requester_device_id: deviceId,
+			...(reason ? { reason } : {})
 		};
 		const deliveryResults = await Promise.allSettled(
 			targets.map((target) =>
@@ -242,7 +328,32 @@ export class MatrixRoomHistoryKeyTransfer {
 				content.requester_device_id
 			);
 			if (!verification?.isVerified()) {
-				emitDiagnostic('requester-device-unverified');
+				// A device that logged in without keys (for example after a
+				// password reset) may still get them, but only when the person
+				// wrote why and a human on this side approves. Without a reason
+				// nothing is kept and nothing is sent, as before.
+				const reason = normalizeReason(content.reason);
+				if (reason) {
+					const pending: PendingHistoryRequest = {
+						requestId: content.request_id,
+						roomId: content.room_id,
+						requesterUserId: content.requester_user_id,
+						requesterDeviceId: content.requester_device_id,
+						reason,
+						receivedAt: Date.now()
+					};
+					this.pendingApprovals.set(pending.requestId, pending);
+					window.dispatchEvent(
+						new CustomEvent(MATRIX_HISTORY_REQUEST_PENDING_EVENT, {
+							detail: {
+								roomId: pending.roomId,
+								requestId: pending.requestId
+							}
+						})
+					);
+				} else {
+					emitDiagnostic('requester-device-unverified');
+				}
 				return;
 			}
 		}
@@ -258,35 +369,45 @@ export class MatrixRoomHistoryKeyTransfer {
 		}
 		this.lastHandledRequestAt.set(handledRequestKey, now);
 
+		await this.sendBundle(
+			content.room_id,
+			content.requester_user_id,
+			content.requester_device_id,
+			content.request_id
+		);
+	}
+
+	/** Exports the keys of exactly one room and sends them to exactly one device. */
+	private async sendBundle(
+		roomId: string,
+		userId: string,
+		deviceId: string,
+		requestId: string
+	): Promise<boolean> {
+		const client = this.client;
+		const crypto = client?.getCrypto();
+		if (!client || !crypto) return false;
 		const keys = (await crypto.exportRoomKeys()).filter(
-			(key) => key.room_id === content.room_id
+			(key) => key.room_id === roomId
 		);
 		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
 			emitDiagnostic('request-key-count-rejected', {
 				keyCount: keys.length
 			});
-			return;
+			return false;
 		}
 
 		await client.encryptAndSendToDevice(
 			KEY_BUNDLE_EVENT,
-			[
-				{
-					userId: content.requester_user_id,
-					deviceId: content.requester_device_id
-				}
-			],
-			{
-				room_id: content.room_id,
-				request_id: content.request_id,
-				keys
-			}
+			[{ userId, deviceId }],
+			{ room_id: roomId, request_id: requestId, keys }
 		);
 		window.dispatchEvent(
 			new CustomEvent(MATRIX_HISTORY_KEYS_SENT_EVENT, {
-				detail: { roomId: content.room_id, keyCount: keys.length }
+				detail: { roomId, keyCount: keys.length }
 			})
 		);
+		return true;
 	}
 
 	private async handleKeyBundle(event: MatrixEvent): Promise<void> {
