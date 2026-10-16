@@ -136,11 +136,11 @@ export const RegistrationHandover = ({
 					display: 'flex',
 					flexDirection: 'column',
 					width: '100%',
-					/* The white column beside the red stage is 60vw — 864 px at
-					   1440 — so the module keeps 720 and lets the cards scroll
-					   (Frank, 2026-09-07: "roter Bereich, Modul darf nie so
-					   breit sein"). */
-					maxWidth: { xs: '100%', sm: 720 },
+					/* Fills the white column beside the stage, like the live-chat
+					   waiting room, so every room shows the same full cards on a
+					   desktop (Frank, 2026-10-15/16: proportions from the live
+					   chat). It never exceeds its column. */
+					maxWidth: '100%',
 					mx: 'auto',
 					px: { xs: 2.5, sm: 5 },
 					pt: { xs: 3, sm: 4 },

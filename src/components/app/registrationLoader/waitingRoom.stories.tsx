@@ -10,8 +10,7 @@ import {
 	desktop1440Globals,
 	phone390Globals
 } from '../../message/messageStoryShell';
-import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
-import { RegistrationHandover } from './RegistrationHandover';
+import { PostRegistrationHandover } from './PostRegistrationHandover';
 import {
 	HANDOVER_MILESTONES,
 	markHandoverMilestone,
@@ -23,8 +22,9 @@ import { expectWaitingRoomLayout } from './waitingRoomLayoutContract';
 /**
  * The one waiting room between "Registrieren" and the message field (#1219).
  *
- * Every story renders the real `WaitingRoomFrame` — the frame both the
- * registration and the app mount — so what you see here is what stands on
+ * Every story renders the real `PostRegistrationHandover` — the component
+ * the app mounts after the document load, in the same `WaitingRoomFrame` the
+ * registration side uses — so what you see here is what stands on
  * both sides of the document load. Each story checks the layout contract
  * (`waitingRoomLayoutContract.ts`): stage beside the column, the shared bar at
  * the bottom edge, the button across the bar.
@@ -64,12 +64,10 @@ const Milestones = ({
 
 const Waiting = ({ finished }: { finished: number }) => (
 	<Milestones finished={finished}>
-		<WaitingRoomFrame>
-			<RegistrationHandover
-				ready={finished >= HANDOVER_MILESTONES.length}
-				onEnter={() => undefined}
-			/>
-		</WaitingRoomFrame>
+		<PostRegistrationHandover
+			ready={finished >= HANDOVER_MILESTONES.length}
+			onEnter={() => undefined}
+		/>
 	</Milestones>
 );
 
@@ -125,7 +123,7 @@ export const Ready: StoryObj = {
 	globals: desktop1440Globals,
 	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
 	play: async ({ canvasElement, canvas }) => {
-		await expectWaitingRoomLayout(canvasElement);
+		await expectWaitingRoomLayout(canvasElement, { cards: true });
 		await expectFill(canvasElement, 100);
 		await expect(
 			await canvas.findByRole('button', { name: /Anfrage schreiben/i })
@@ -155,14 +153,12 @@ const GroupJoin = () => {
 	const copy = useGroupJoinHandoverCopy();
 	return (
 		<Milestones finished={3}>
-			<WaitingRoomFrame>
-				<RegistrationHandover
-					ready={false}
-					forcedState="preparing"
-					onEnter={() => undefined}
-					copy={copy}
-				/>
-			</WaitingRoomFrame>
+			<PostRegistrationHandover
+				ready={false}
+				forcedState="preparing"
+				onEnter={() => undefined}
+				copy={copy}
+			/>
 		</Milestones>
 	);
 };
@@ -201,12 +197,10 @@ const Run = () => {
 	}, []);
 	return (
 		<>
-			<WaitingRoomFrame>
-				<RegistrationHandover
-					ready={progress >= 100}
-					onEnter={() => undefined}
-				/>
-			</WaitingRoomFrame>
+			<PostRegistrationHandover
+				ready={progress >= 100}
+				onEnter={() => undefined}
+			/>
 			<Typography
 				sx={{
 					position: 'fixed',
@@ -231,5 +225,20 @@ export const WholeRun: StoryObj = {
 	render: () => <Run />,
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+/* A Träger with its own brand colour (#1735): the stage dots and glow follow
+   the primary colour instead of a fixed red. */
+export const ReadyBluePrimary: StoryObj = {
+	name: '4 — Alles geladen, blaue Trägerfarbe',
+	globals: desktop1440Globals,
+	render: () => <Waiting finished={HANDOVER_MILESTONES.length} />,
+	parameters: { orisoSeed: '#1D4ED8' },
+	play: async ({ canvasElement }) => {
+		await expectWaitingRoomLayout(canvasElement, {
+			cards: true,
+			stageNotRed: true
+		});
 	}
 };

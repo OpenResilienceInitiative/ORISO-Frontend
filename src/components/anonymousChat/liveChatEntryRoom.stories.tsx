@@ -301,10 +301,11 @@ export const StepAccessMobile: StoryObj = {
 	)
 };
 export const StepWaiting: StoryObj = {
-	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
 	parameters: full(
 		'Eine Seite, drei Stellen ändern sich. Die Punkte sind die Schlange, der Knopf der Ladebalken (drehende Uhr statt Pfeil), die drei Karten das Karussell der Registrierung mit Franks Bildern. In der App: Poll auf `/service/conversations/anonymous/{id}` alle 4 s.'
 	)

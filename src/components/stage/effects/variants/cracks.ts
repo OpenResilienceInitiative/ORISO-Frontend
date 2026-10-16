@@ -1,6 +1,7 @@
 import { trackStagePointer } from '../pointer';
 import { StageEffectContext, StageEffect } from '../types';
 import crackMask from '../../../../resources/img/stage/cracks-mask.webp';
+import { createStageTint } from '../../stageTint';
 
 /**
  * The crack network is tinted in code, not in the asset.
@@ -10,7 +11,6 @@ import crackMask from '../../../../resources/img/stage/cracks-mask.webp';
  * WebP costs 47 kB, and the tint becomes a token, so a tenant with a different
  * primary colour no longer gets Caritas rosé baked into its login screen.
  */
-const CRACK_TINT = 'rgb(255, 236, 230)';
 
 /** Radius of the cursor light cone that reveals the base network. */
 const CONE_RADIUS = 210;
@@ -59,6 +59,7 @@ export const createCracksEffect = ({
 	ctx.scale(dpr, dpr);
 
 	const tracker = trackStagePointer(host);
+	const crackTint = createStageTint(host)(255, 236, 230);
 	const image = new Image();
 	let ready = false;
 	image.decoding = 'async';
@@ -87,10 +88,7 @@ export const createCracksEffect = ({
 	//
 	// The asset is a luminance mask, so it is drawn first and then used to
 	// keep only the matching part of a flat tint fill.
-	const drawTexture = (
-		target: CanvasRenderingContext2D,
-		branch: boolean
-	) => {
+	const drawTexture = (target: CanvasRenderingContext2D, branch: boolean) => {
 		const scale =
 			Math.max(width / image.width, height / image.height) *
 			(branch ? 1.42 : 1);
@@ -114,7 +112,7 @@ export const createCracksEffect = ({
 		// transparent. (Shipping the alpha as a greyscale image instead made
 		// the whole rectangle opaque, and the tint covered the entire stage.)
 		target.globalCompositeOperation = 'source-in';
-		target.fillStyle = CRACK_TINT;
+		target.fillStyle = crackTint;
 		target.fillRect(0, 0, width, height);
 		target.globalCompositeOperation = 'source-over';
 	};

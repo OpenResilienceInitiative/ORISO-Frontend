@@ -21,8 +21,7 @@ import {
 } from '../../globalState';
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
-import { RegistrationHandover } from './registrationLoader/RegistrationHandover';
-import { WaitingRoomFrame } from '../waitingRoom/WaitingRoomFrame';
+import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
 import {
 	markHandoverMilestone,
 	resetHandoverProgress
@@ -371,13 +370,11 @@ export const AuthenticatedApp = ({
 		/* The same frame and the same fill `Registration` showed before the
 		   document load, so the person sees one waiting room (#1219). */
 		return (
-			<WaitingRoomFrame>
-				<RegistrationHandover
-					ready={appReady}
-					onEnter={handlePostRegLoaderFinish}
-					copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
-				/>
-			</WaitingRoomFrame>
+			<PostRegistrationHandover
+				ready={appReady}
+				onEnter={handlePostRegLoaderFinish}
+				copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
+			/>
 		);
 	}
 
