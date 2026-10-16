@@ -50,10 +50,11 @@ const AssignmentRetry = ({ retry }: { retry: () => Promise<void> }) => {
  * group in her own session view (#1499).
  *
  * A hook of its own so the conditions are testable without mounting the authenticated app.
+ * Returns whether the link has been acted on (always true without one).
  */
 export const usePendingGroupChatJoin = (
 	userData: Partial<UserDataInterface> | undefined
-): void => {
+): boolean => {
 	const { joinGroupChat, tenantReady } = useJoinGroupChat();
 	const navigate = useNavigate();
 	const { t } = useTranslation();
@@ -75,6 +76,12 @@ export const usePendingGroupChatJoin = (
 	const mounted = useRef(false);
 	const inFlight = useRef<typeof scope | null>(null);
 	const noticeId = useRef<string | number>(undefined);
+	/* Whether the link has been acted on: assigned and in the entry room,
+	   refused, or a notice shown. The waiting room after "Registrieren"
+	   holds its gate until then (#1219). */
+	const [settled, setSettled] = useState(
+		() => !new URLSearchParams(window.location.search).get('gcid')
+	);
 	useEffect(() => {
 		mounted.current = true;
 		return () => {
@@ -113,6 +120,7 @@ export const usePendingGroupChatJoin = (
 			const entryRoom = groupEntryRoomPath(invite?.seriesId ?? gcid);
 			try {
 				const assigned = await joinGroupChat(gcid);
+				if (isCurrent()) setSettled(true);
 				if (assigned && isCurrent()) {
 					if (noticeId.current)
 						notificationsRef.current?.removeNotification(
@@ -124,6 +132,7 @@ export const usePendingGroupChatJoin = (
 				}
 			} catch (error) {
 				if (!isCurrent()) return;
+				setSettled(true);
 				const notice = getCounsellingDpaNotification(error, t);
 				if (notice && notificationsRef.current) {
 					noticeId.current = `group-assignment:${notice.id}`;
@@ -195,8 +204,11 @@ export const usePendingGroupChatJoin = (
 				}
 				navigate(consultantGroupChatPath(seriesId), { replace: true });
 			}
+			setSettled(true);
 			return;
 		}
 		void assign(gcid, scope);
 	}, [pendingGroupChatId, tenantReady, navigate, userData, assign, scope]);
+
+	return settled;
 };
