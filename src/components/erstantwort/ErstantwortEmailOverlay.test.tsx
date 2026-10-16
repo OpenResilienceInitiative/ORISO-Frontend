@@ -63,7 +63,10 @@ vi.mock('../../resources/img/icons/envelope.svg', () => ({
    calls above, otherwise the real SVG module loads first. */
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.unstubAllGlobals();
+});
 beforeEach(() => {
 	apiPutEmail.mockReset();
 	apiPutEmail.mockResolvedValue(undefined);
@@ -118,7 +121,6 @@ describe('ErstantwortEmailOverlay', () => {
 			expect(screen.getByText('Anmeldename kopiert.')).toBeTruthy()
 		);
 		expect(writeText).toHaveBeenCalledWith('hugo.simpson');
-		vi.unstubAllGlobals();
 	});
 
 	it('does not claim a copy when the clipboard write is rejected', async () => {
@@ -140,7 +142,6 @@ describe('ErstantwortEmailOverlay', () => {
 			).toBeTruthy()
 		);
 		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
-		vi.unstubAllGlobals();
 	});
 
 	it('keeps saving disabled until the address is a valid one', () => {
