@@ -11,10 +11,16 @@ import {
 	NotificationChoiceCard
 } from './NotificationChoiceCard';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
-import { NotificationBrowserDialog } from './NotificationBrowserDialog';
+import {
+	DEFAULT_FIRST_TONE,
+	NotificationBrowserDialog
+} from './NotificationBrowserDialog';
 import { notificationSettingsStore } from '../../utils/notificationSettings/store';
 import { AREA_KINDS } from '../../utils/notificationSettings/notificationConfig';
-import type { SoundId } from '../../utils/notificationSettings/model';
+import {
+	NOTIFICATION_TONE_IDS,
+	type SoundId
+} from '../../utils/notificationSettings/model';
 
 /** Shared account/device setup, used by first enquiry and optional chat shortcuts.
  * Choice is derived from live account settings; a click is never completion.
@@ -161,6 +167,16 @@ export const NotificationSetup = ({
 		} else void finish(choice);
 	};
 
+	/** The tone the account already uses for new conversation messages. */
+	const storedTone = (): SoundId | undefined => {
+		const sound =
+			notificationSettingsStore.getState().settings.notificationConfig
+				.conversations?.standard?.sound;
+		return sound && [...NOTIFICATION_TONE_IDS, 'none'].includes(sound)
+			? sound
+			: undefined;
+	};
+
 	/** Keep the chosen tone for the conversation and request areas. */
 	const rememberTone = (tone: SoundId) => {
 		const { notificationConfig } =
@@ -178,7 +194,8 @@ export const NotificationSetup = ({
 	};
 
 	const confirmBrowser = (tone: SoundId) => {
-		rememberTone(tone);
+		// Only a tone the person actually changed replaces their settings.
+		if (tone !== (storedTone() ?? DEFAULT_FIRST_TONE)) rememberTone(tone);
 		// No await before the permission request: it needs this click.
 		void finish('BROWSER').finally(() => setBrowserDialogOpen(false));
 	};
@@ -244,6 +261,7 @@ export const NotificationSetup = ({
 					emailJustSaved={awaitingBrowser}
 					blocked={browserBlocked}
 					busy={busy}
+					initialTone={storedTone() ?? DEFAULT_FIRST_TONE}
 					onClose={() => setBrowserDialogOpen(false)}
 					onConfirm={confirmBrowser}
 				/>

@@ -387,7 +387,9 @@ it('moves the tone with the arrow keys and keeps one tab stop', async () => {
 	expect(radios.filter((r) => r.tabIndex === 0)).toHaveLength(1);
 	fireEvent.keyDown(radios[selected], { key: 'ArrowRight' });
 	await waitFor(() =>
-		expect(radios[selected + 1].getAttribute('aria-checked')).toBe('true')
+		expect(
+			radios[(selected + 1) % radios.length].getAttribute('aria-checked')
+		).toBe('true')
 	);
 	expect(radios[selected].getAttribute('aria-checked')).toBe('false');
 });
@@ -418,6 +420,27 @@ it('remembers the chosen tone for requests and conversations and plays a preview
 	expect(notificationConfig.requests.new.sound).toBe('ton-5');
 	expect(notificationConfig.conversations.standard.sound).toBe('ton-5');
 	expect(notificationConfig.timeCritical.call.sound).toBe('ring');
+});
+it('keeps the tones the account already has when the picker is not touched', async () => {
+	setup();
+	const before = JSON.stringify(
+		notificationSettingsStore.getState().settings.notificationConfig
+	);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	await screen.findByRole('radiogroup');
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
+	await waitFor(() => expect(request).toHaveBeenCalled());
+	expect(
+		JSON.stringify(
+			notificationSettingsStore.getState().settings.notificationConfig
+		)
+	).toBe(before);
 });
 it('confirms the saved address and names the one remaining browser step for both channels', async () => {
 	setup();
