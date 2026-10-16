@@ -42,6 +42,7 @@ import { decodeUsername } from '../../utils/encryptionHelpers';
 import './groupChatInfo.styles';
 import { getCurrentMatrixUserId } from '../../utils/matrixSession';
 import { BanUserOverlay } from '../banUser/BanUser';
+import { M3Dialog } from '../m3Dialog/M3Dialog';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useSession } from '../../hooks/useSession';
 import { useSearchParam } from '../../hooks/useSearchParams';
@@ -87,6 +88,9 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const [redirectToSessionsList, setRedirectToSessionsList] = useState(false);
 	const [isRequestInProgress, setIsRequestInProgress] = useState(false);
 	const [isV2GroupChat, setIsV2GroupChat] = useState<boolean>(false);
+	const [bannedOverlayName, setBannedOverlayName] = useState<string | null>(
+		null
+	);
 
 	const { session: activeSession, ready } = useSession(groupIdFromParam);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
@@ -315,8 +319,29 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 			{/* #1499: the Chat-Info lives in the white chat card like the
 			    chat itself, drawn by the M3 surface Frank approved in
 			    Storybook (`Chat info/Group`). */}
-			<div className="session groupChatInfo__card">
+			<GroupChatInfoFrame
+				dialog={dialog}
+				hidden={overlayActive || bannedOverlayName !== null}
+				onClose={() => navigate(chatPath)}
+				overlays={
+					<>
+						{overlayActive ? (
+							<Overlay
+								item={overlayItem}
+								handleOverlay={handleOverlayAction}
+							/>
+						) : null}
+						<BanUserOverlay
+							overlayActive={bannedOverlayName !== null}
+							userName={bannedOverlayName ?? ''}
+							handleOverlay={() => setBannedOverlayName(null)}
+						/>
+					</>
+				}
+			>
 				<GroupChatInfoM3Connected
+					embedded={dialog}
+					onBanned={setBannedOverlayName}
 					topic={topic}
 					scheduleSummary={scheduleSummary}
 					statusLabel={translate(
@@ -383,16 +408,56 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 									})
 							: undefined
 					}
-					onBack={() => navigate(chatPath)}
+					onBack={dialog ? undefined : () => navigate(chatPath)}
 				/>
-				{overlayActive ? (
-					<Overlay
-						item={overlayItem}
-						handleOverlay={handleOverlayAction}
-					/>
-				) : null}
-			</div>
+			</GroupChatInfoFrame>
 		</ActiveSessionProvider>
+	);
+};
+
+/**
+ * The dialog route opens on top as the standard M3 dialog; the inline route
+ * keeps the white chat card.
+ */
+const GroupChatInfoFrame = ({
+	dialog,
+	hidden,
+	onClose,
+	overlays,
+	children
+}: {
+	dialog: boolean;
+	hidden: boolean;
+	onClose: () => void;
+	overlays: React.ReactNode;
+	children: React.ReactNode;
+}) => {
+	const { t: translate } = useTranslation();
+	const { fromL } = useResponsive();
+	if (!dialog) {
+		return (
+			<div className="session groupChatInfo__card">
+				{children}
+				{overlays}
+			</div>
+		);
+	}
+	return (
+		<>
+			{/* The legacy overlays sit below MUI dialogs: step aside meanwhile. */}
+			<M3Dialog
+				open={!hidden}
+				title={translate('groupChat.info.headline')}
+				closeLabel={translate('app.close')}
+				onClose={onClose}
+				width={760}
+				fullScreen={!fromL}
+				data-testid="group-chat-info-dialog"
+			>
+				{children}
+			</M3Dialog>
+			{overlays}
+		</>
 	);
 };
 
@@ -403,6 +468,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 const GroupChatInfoM3Connected = ({
 	isCurrentUserModerator,
 	showInviteActions,
+	onBanned,
 	...props
 }: Omit<
 	GroupChatInfoM3Props,
@@ -415,6 +481,7 @@ const GroupChatInfoM3Connected = ({
 > & {
 	isCurrentUserModerator: boolean;
 	showInviteActions: boolean;
+	onBanned: (name: string) => void;
 }) => {
 	const { t: translate } = useTranslation();
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -426,9 +493,6 @@ const GroupChatInfoM3Connected = ({
 		anchor: HTMLElement;
 		participant: GroupChatInfoParticipant;
 	} | null>(null);
-	const [bannedOverlayName, setBannedOverlayName] = useState<string | null>(
-		null
-	);
 	const [qrOpen, setQrOpen] = useState(false);
 	const { url, copyRegistrationLink } = useGroupChatInviteLink(
 		activeSession.item.id,
@@ -479,7 +543,7 @@ const GroupChatInfoM3Connected = ({
 				...current,
 				participant.username ?? participant.name
 			]);
-			setBannedOverlayName(participant.username ?? participant.name);
+			onBanned(participant.username ?? participant.name);
 		});
 	};
 
@@ -522,11 +586,6 @@ const GroupChatInfoM3Connected = ({
 					onOpenChange={setQrOpen}
 				/>
 			)}
-			<BanUserOverlay
-				overlayActive={bannedOverlayName !== null}
-				userName={bannedOverlayName ?? ''}
-				handleOverlay={() => setBannedOverlayName(null)}
-			/>
 		</>
 	);
 };

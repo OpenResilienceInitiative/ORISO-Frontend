@@ -118,6 +118,8 @@ export interface GroupChatInfoM3Props {
 	onEdit?: () => void;
 	onBack?: () => void;
 	backLabel?: string;
+	/** Inside a dialog: the dialog owns title, close and scrolling. */
+	embedded?: boolean;
 }
 
 const SETTING_ICONS: Record<GroupChatInfoSettingKey, React.ElementType> = {
@@ -239,7 +241,8 @@ export const GroupChatInfoM3 = ({
 	settings,
 	onEdit,
 	onBack,
-	backLabel
+	backLabel,
+	embedded = false
 }: GroupChatInfoM3Props) => {
 	const { t: translate } = useTranslation();
 	const baseId = useId().replace(/:/g, '');
@@ -260,8 +263,10 @@ export const GroupChatInfoM3 = ({
 				flexDirection: 'column',
 				flex: 1,
 				minHeight: 0,
-				height: '100%',
-				bgcolor: 'var(--m3-surface-container-lowest)',
+				height: embedded ? 'auto' : '100%',
+				bgcolor: embedded
+					? 'transparent'
+					: 'var(--m3-surface-container-lowest)',
 				color: onSurface,
 				containerType: 'inline-size'
 			}}
@@ -269,7 +274,7 @@ export const GroupChatInfoM3 = ({
 			{/* M3 small top app bar */}
 			<Box
 				sx={{
-					display: 'flex',
+					display: embedded ? 'none' : 'flex',
 					alignItems: 'center',
 					gap: 0.5,
 					minHeight: 64,
@@ -299,13 +304,17 @@ export const GroupChatInfoM3 = ({
 			</Box>
 
 			<Box
-				sx={{
-					flex: 1,
-					minHeight: 0,
-					overflowY: 'auto',
-					px: { xs: 2, lg: 3 },
-					py: 3
-				}}
+				sx={
+					embedded
+						? { pt: 1 }
+						: {
+								flex: 1,
+								minHeight: 0,
+								overflowY: 'auto',
+								px: { xs: 2, lg: 3 },
+								py: 3
+							}
+				}
 			>
 				<Box sx={{ maxWidth: 960, mx: 'auto' }}>
 					{/* Hero: who this room is and when it meets */}

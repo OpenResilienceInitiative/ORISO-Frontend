@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { expect, userEvent, waitFor } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Route, Routes } from 'react-router-dom';
 import { TenantContext } from '../../globalState';
 import type { ListItemInterface } from '../../globalState/interfaces';
@@ -16,6 +16,7 @@ import {
 } from './groupChatStageStoryShell';
 import {
 	desktop1440Globals,
+	phone375Globals,
 	phone390Globals
 } from '../message/messageStoryShell';
 
@@ -113,11 +114,13 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 const WiredChatInfo = ({
 	layout,
 	inviteToken,
-	asAsker = false
+	asAsker = false,
+	dialog = false
 }: {
 	layout: 'desktop' | 'mobile';
 	inviteToken?: string | null;
 	asAsker?: boolean;
+	dialog?: boolean;
 }) => {
 	const listItem = React.useMemo(
 		() => buildListItem(inviteToken),
@@ -144,7 +147,16 @@ const WiredChatInfo = ({
 				<Routes>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
-						element={<GroupChatInfo />}
+						element={
+							dialog ? (
+								<>
+									<p>Chat</p>
+									<GroupChatInfo dialog />
+								</>
+							) : (
+								<GroupChatInfo />
+							)
+						}
 					/>
 					<Route
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/editGroupChat"
@@ -275,4 +287,68 @@ export const WiredAsAsker: Story = {
 			})
 		).toBeNull();
 	}
+};
+
+const desktop1366Globals = { viewport: { value: 'desktop1366' } };
+const desktop1920Globals = { viewport: { value: 'desktop1920' } };
+
+/** The header's "Information & settings" opens on top (#1760); ✕ returns to the chat. */
+const closesWithTheCrossButton: Story['play'] = async () => {
+	const page = within(document.body);
+	const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+	await within(dialog).findByText('ruhiges Yak Kim', {}, { timeout: 5000 });
+	// Wait out the dialog's fade-in.
+	await waitFor(() =>
+		expect(
+			within(dialog).getByRole('heading', { name: 'Chat-Info' })
+		).toBeVisible()
+	);
+	const close = within(dialog).getByRole('button', { name: 'Schließen' });
+	await expect(close).toBeVisible();
+	await userEvent.click(close);
+	await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
+	await expect(page.getByText('Chat')).toBeVisible();
+};
+
+export const Dialog1366: Story = {
+	name: 'Dialog · 1366 opens on top, ✕ closes',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: closesWithTheCrossButton
+};
+
+export const Dialog1920: Story = {
+	name: 'Dialog · 1920 Escape closes',
+	globals: desktop1920Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: async () => {
+		const page = within(document.body);
+		const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+		await within(dialog).findByText(
+			'ruhiges Yak Kim',
+			{},
+			{ timeout: 5000 }
+		);
+		await waitFor(() =>
+			expect(
+				within(dialog).getByRole('button', { name: 'Schließen' })
+			).toBeVisible()
+		);
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
+	}
+};
+
+export const Dialog390: Story = {
+	name: 'Dialog · 390 full screen, ✕ closes',
+	globals: phone390Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog />,
+	play: closesWithTheCrossButton
+};
+
+export const Dialog375: Story = {
+	name: 'Dialog · 375 full screen, ✕ closes',
+	globals: phone375Globals,
+	render: () => <WiredChatInfo layout="mobile" dialog />,
+	play: closesWithTheCrossButton
 };
