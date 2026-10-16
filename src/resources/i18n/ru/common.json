@@ -3697,6 +3697,7 @@
 			"organisationFallback": "вашего консультационного центра"
 		},
 		"systemMessage": {
+			"dismiss": "Скрыть сообщение",
 			"badge": "Системное уведомление",
 			"selectedReason": "Выбранная причина: {{reason}}",
 			"explanation": "Пояснение: {{explanation}}",

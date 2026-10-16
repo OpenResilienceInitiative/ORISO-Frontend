@@ -9,6 +9,7 @@ import { isPendingCaseHandoverStatus } from '../../api/apiCaseHandover';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
+import { IconButton } from '@mui/material';
 import { ReactComponent as CaseAcceptedIcon } from '../../resources/img/icons/case-handover/case-accepted.svg';
 import { ReactComponent as StackVerticalIcon } from '../../resources/img/icons/stack-vertical.svg';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
@@ -162,6 +163,13 @@ interface CaseHandoverSystemMessageCardProps {
 	timestamp?: string;
 	/** Opens the message action menu; the kebab is decorative without it. */
 	onOpenMenu?: () => void;
+	/**
+	 * Shows a close control and makes Escape close the message. Hiding the
+	 * message is the caller's job; the card only reports that it was asked to.
+	 * `viaKeyboard` is true for Escape and for a keyboard-activated button, so
+	 * the caller can hand focus on without raising a phone keyboard after a tap.
+	 */
+	onDismiss?: (viaKeyboard: boolean) => void;
 }
 
 /**
@@ -176,14 +184,31 @@ export const CaseHandoverSystemMessageCard = ({
 	reasonLabel,
 	explanation,
 	timestamp,
-	onOpenMenu
+	onOpenMenu,
+	onDismiss
 }: CaseHandoverSystemMessageCardProps) => {
 	const { t: translate } = useTranslation();
 
 	return (
+		// Escape is a shortcut for the visible close button, not a second way
+		// to reach it, so the wrapper itself stays out of the tab order.
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div
 			className="messageItem messageItem--caseHandoverNotice"
 			data-cy="case-handover-system-message"
+			onKeyDown={
+				onDismiss
+					? (event) => {
+							if (
+								event.key === 'Escape' &&
+								!event.defaultPrevented
+							) {
+								event.stopPropagation();
+								onDismiss(true);
+							}
+						}
+					: undefined
+			}
 		>
 			<div className="messageItem__messageWrap messageItem__messageWrap--left">
 				<div className="messageItem__sideColumn messageItem__sideColumn--left">
@@ -227,6 +252,27 @@ export const CaseHandoverSystemMessageCard = ({
 								</div>
 							)}
 						</div>
+						{onDismiss && (
+							<IconButton
+								aria-label={translate(
+									'caseHandover.systemMessage.dismiss'
+								)}
+								onClick={(event) =>
+									onDismiss(event.detail === 0)
+								}
+								data-cy="case-handover-system-message-dismiss"
+								sx={{
+									'ml': 'auto',
+									'flexShrink': 0,
+									'width': 44,
+									'height': 44,
+									'color': 'var(--m3-on-surface-variant)',
+									'& svg': { width: 20, height: 20 }
+								}}
+							>
+								<CloseIcon aria-hidden focusable="false" />
+							</IconButton>
+						)}
 					</div>
 					<div className="messageItem__message messageItem__message--systemNotification">
 						<CaseHandoverSystemMessageBody
@@ -288,6 +334,11 @@ interface CaseHandoverConsentCardProps {
 	 * default. Either way the switch must follow the click, never snap back.
 	 */
 	consentGranted?: boolean;
+	/**
+	 * Close control for the message (ORISO-Frontend#1700). Dismissing is not a
+	 * decision: it never calls `onApprove` / `onDecline`.
+	 */
+	onDismiss?: (viaKeyboard: boolean) => void;
 }
 
 /** Client-side continuation for a handover request that requires explicit consent. */
@@ -301,7 +352,8 @@ export const CaseHandoverConsentCard = ({
 	consentGranted,
 	status,
 	auditOutcome,
-	onSetupNotifications
+	onSetupNotifications,
+	onDismiss
 }: CaseHandoverConsentCardProps) => {
 	const { t: translate } = useTranslation();
 	const isOptOut = mode === 'OPT_OUT';
@@ -354,6 +406,7 @@ export const CaseHandoverConsentCard = ({
 				title={assistant.name}
 				subtitle={translate('caseHandover.consent.senderRole')}
 				timestamp={timestamp}
+				onDismiss={onDismiss}
 			>
 				<div className="caseHandoverMessage__intro">
 					<p className="caseHandoverMessage__introTitle">

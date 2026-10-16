@@ -3694,6 +3694,7 @@
 			"organisationFallback": "votre service de consultation"
 		},
 		"systemMessage": {
+			"dismiss": "Masquer le message",
 			"badge": "Notification du système",
 			"selectedReason": "Motif choisi : {{reason}}",
 			"explanation": "Explication : {{explanation}}",

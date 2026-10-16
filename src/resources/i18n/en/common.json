@@ -3660,6 +3660,7 @@
 			"organisationFallback": "your counselling centre"
 		},
 		"systemMessage": {
+			"dismiss": "Dismiss message",
 			"badge": "System notification",
 			"selectedReason": "Selected reason: {{reason}}",
 			"explanation": "Explanation: {{explanation}}",

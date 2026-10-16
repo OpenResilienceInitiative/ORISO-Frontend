@@ -3694,6 +3694,7 @@
 			"organisationFallback": "danışma merkeziniz"
 		},
 		"systemMessage": {
+			"dismiss": "Mesajı gizle",
 			"badge": "Sistem bildirimi",
 			"selectedReason": "Seçilen neden: {{reason}}",
 			"explanation": "Açıklama: {{explanation}}",

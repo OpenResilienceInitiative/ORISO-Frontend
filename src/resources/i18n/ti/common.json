@@ -3694,6 +3694,7 @@
 			"organisationFallback": "ማእከል ምኽርኹም"
 		},
 		"systemMessage": {
+			"dismiss": "መልእኽቲ ሕባእ",
 			"badge": "መፍለጢ ሲስተም",
 			"selectedReason": "ዝተመርጸ ምኽንያት፦ {{reason}}",
 			"explanation": "መብርሂ፦ {{explanation}}",

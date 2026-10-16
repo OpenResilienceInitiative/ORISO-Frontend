@@ -3714,6 +3714,7 @@
 			"organisationFallback": "Ihrer Beratungsstelle"
 		},
 		"systemMessage": {
+			"dismiss": "Nachricht ausblenden",
 			"badge": "System-Benachrichtigung",
 			"selectedReason": "Ausgewählter Grund: {{reason}}",
 			"explanation": "Erläuterung: {{explanation}}",
