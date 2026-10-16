@@ -29,7 +29,7 @@ export interface VideoCheckProps {
  * The picture of the video call entry: a mirrored preview, the person's own
  * level meter and name on it, mic and camera switches at its foot (Teams'
  * pre-join as reference; Frank, 2026-10-15). Device pills and the speaker
- * test stand beside it in `CallEntryRoom`.
+ * test stand under it in `CallEntryRoom`.
  */
 export const VideoCheck = ({
 	name,
@@ -55,11 +55,19 @@ export const VideoCheck = ({
 					aspectRatio: '16 / 9',
 					borderRadius: '20px',
 					overflow: 'hidden',
-					bgcolor: '#1f1f22',
-					/* Stand-in light when there is no stream: reads as "a
-					   camera picture goes here" without faking a person. */
-					backgroundImage:
-						'radial-gradient(120% 90% at 30% 20%, #4a4a52 0%, #26262b 55%, #1a1a1d 100%)'
+					...(cameraOn
+						? {
+								bgcolor: '#1f1f22',
+								/* Stand-in light when there is no stream: reads as
+								   "a camera picture goes here" without faking a person. */
+								backgroundImage:
+									'radial-gradient(120% 90% at 30% 20%, #4a4a52 0%, #26262b 55%, #1a1a1d 100%)'
+							}
+						: {
+								/* Camera off: the whole tile becomes the animal's
+								   colour, as Element Call fills a tile without video. */
+								bgcolor: avatar.bg
+							})
 				}}
 			>
 				{cameraOn && stream && (
@@ -112,15 +120,16 @@ export const VideoCheck = ({
 						<Box aria-hidden data-testid="video-avatar">
 							<AnimalAvatar
 								avatar={avatar}
-								size={phone ? 52 : 80}
+								size={phone ? 64 : 88}
+								outline={false}
 							/>
 						</Box>
 						<Typography
 							sx={{
 								display: { xs: 'none', sm: 'block' },
 								fontSize: 14,
-								color: '#fff',
-								opacity: 0.85
+								fontWeight: 500,
+								color: avatar.iconColor
 							}}
 						>
 							{copy.cameraOff}
@@ -167,6 +176,21 @@ export const VideoCheck = ({
 						{name || '…'}
 					</Typography>
 				</Box>
+				{!cameraOn && (
+					/* Keeps the white switches legible on a light colour. */
+					<Box
+						aria-hidden
+						sx={{
+							position: 'absolute',
+							left: 0,
+							right: 0,
+							bottom: 0,
+							height: 76,
+							background:
+								'linear-gradient(to top, rgba(0,0,0,.38), rgba(0,0,0,0))'
+						}}
+					/>
+				)}
 				<Box
 					sx={{
 						position: 'absolute',

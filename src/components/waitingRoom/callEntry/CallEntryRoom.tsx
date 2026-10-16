@@ -184,28 +184,39 @@ export const CallEntryRoom = ({
 						}
 					}}
 				>
-					<Box>
+					{/* Identity first: a guest confirms who they are before
+					    anything else (Frank, 2026-10-16). First on the phone and
+					    for screen readers; the right column on a desktop. */}
+					<Box
+						data-testid="call-entry-identity-column"
+						sx={{ gridColumn: { lg: 2 }, gridRow: { lg: 1 } }}
+					>
+						<CallEntryIdentity
+							modality={modality}
+							identity={identity}
+							onIdentityChange={setIdentity}
+							username={username}
+							onUsernameChange={setUsername}
+							password={password}
+							onPasswordChange={setPassword}
+						/>
+					</Box>
+					{/* Picture or voice, then the devices right under it. */}
+					<Box
+						data-testid="call-entry-media-column"
+						sx={{ gridColumn: { lg: 1 }, gridRow: { lg: 1 } }}
+					>
 						{modality === 'video' ? (
-							<>
-								<VideoCheck
-									name={username}
-									avatar={identity.avatar}
-									stream={stream}
-									cameraOn={cameraOn}
-									micOn={micOn}
-									micLevel={micLevel}
-									onToggleCamera={() =>
-										setCameraOn(!cameraOn)
-									}
-									onToggleMic={() => setMicOn(!micOn)}
-								/>
-								<SpeakerTest
-									compact
-									state={speakerTest}
-									onChange={setSpeakerTest}
-									playTone={playTone}
-								/>
-							</>
+							<VideoCheck
+								name={username}
+								avatar={identity.avatar}
+								stream={stream}
+								cameraOn={cameraOn}
+								micOn={micOn}
+								micLevel={micLevel}
+								onToggleCamera={() => setCameraOn(!cameraOn)}
+								onToggleMic={() => setMicOn(!micOn)}
+							/>
 						) : (
 							<VoiceCheck
 								name={username}
@@ -219,18 +230,7 @@ export const CallEntryRoom = ({
 								playTone={playTone}
 							/>
 						)}
-					</Box>
-					<Box>
-						<CallEntryIdentity
-							modality={modality}
-							identity={identity}
-							onIdentityChange={setIdentity}
-							username={username}
-							onUsernameChange={setUsername}
-							password={password}
-							onPasswordChange={setPassword}
-						/>
-						<Box sx={{ mt: 3, display: 'grid', gap: 1 }}>
+						<Box sx={{ mt: 2, display: 'grid', gap: 1 }}>
 							{pickerKinds.map((kind) => (
 								<DevicePicker
 									key={kind}
@@ -242,6 +242,14 @@ export const CallEntryRoom = ({
 								/>
 							))}
 						</Box>
+						{modality === 'video' && (
+							<SpeakerTest
+								compact
+								state={speakerTest}
+								onChange={setSpeakerTest}
+								playTone={playTone}
+							/>
+						)}
 						{modality === 'audio' && (
 							<Box
 								sx={{
