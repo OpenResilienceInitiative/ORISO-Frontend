@@ -205,7 +205,9 @@ const Room = ({
 					) : (
 						<PostRegistrationHandover
 							ready
-							closing={focal}
+							// The registration room names no destination of its own:
+							// the chat is where it arrives. Only a call has to say so.
+							closing={focal === 'call' ? 'call' : undefined}
 							onEnter={() => setArrived(true)}
 						/>
 					)}

@@ -41,6 +41,7 @@ interface LayerSnapshot {
 
 interface ClosingSnapshot {
 	phase: string;
+	rootPointerEvents: string;
 	variant: string;
 	at: number;
 	running: number;
@@ -124,6 +125,7 @@ const snapshotOf = (
 	const focalEl = doc.querySelector(FOCAL[focal]);
 	return {
 		phase: root.dataset.closingPhase ?? '',
+		rootPointerEvents: win.getComputedStyle(root).pointerEvents,
 		variant: root.dataset.closingAnimation ?? '',
 		at: performance.now(),
 		running: root
@@ -143,8 +145,16 @@ const snapshotOf = (
 	};
 };
 
+/** Where each layer's left edge stood on one frame, in the order the layers sit in the page. */
+interface SweepSample {
+	phase: string;
+	lefts: number[];
+}
+
 export interface ClosingRecording {
 	snapshots: ClosingSnapshot[];
+	/** One entry per frame while the animation is on the page. */
+	samples: SweepSample[];
 	/** Set once the animation's root has left the page. */
 	removedAt: number | null;
 	stop: () => void;
@@ -153,17 +163,39 @@ export interface ClosingRecording {
 /**
  * Starts watching the page for a closing animation. Snapshots are taken the
  * moment the root appears and every time its phase changes, which is when the
- * geometry that matters (covered, revealed) is standing still.
+ * geometry that matters (covered, revealed) is standing still. Between those,
+ * every frame is sampled, which is how a layer that trails another is seen.
  */
 export const recordClosing = (
 	doc: Document,
 	focal: ContractFocal
 ): ClosingRecording => {
+	const win = doc.defaultView!;
+	let frame = 0;
 	const recording: ClosingRecording = {
 		snapshots: [],
+		samples: [],
 		removedAt: null,
-		stop: () => observer.disconnect()
+		stop: () => {
+			observer.disconnect();
+			win.cancelAnimationFrame(frame);
+		}
 	};
+	const sample = () => {
+		const root = doc.querySelector<HTMLElement>(ROOT);
+		if (root) {
+			recording.samples.push({
+				phase: root.dataset.closingPhase ?? '',
+				lefts: [
+					...root.querySelectorAll<HTMLElement>(
+						'[data-closing-layer]'
+					)
+				].map((layer) => layer.getBoundingClientRect().left)
+			});
+		}
+		frame = win.requestAnimationFrame(sample);
+	};
+	frame = win.requestAnimationFrame(sample);
 	const take = (root: HTMLElement) =>
 		recording.snapshots.push(snapshotOf(doc, root, focal));
 	const observer = new MutationObserver((records) => {
@@ -303,8 +335,9 @@ export const verifyClosingAnimation = async (
 		const covered = phaseOf(recording, 'covered');
 		expect(covers(covered, covered.viewport)).toBe(true);
 
-		// It never swallows a click: every layer lets pointers through.
+		// It never swallows a click: the root and every layer let pointers through.
 		for (const snapshot of recording.snapshots) {
+			expect(snapshot.rootPointerEvents).toBe('none');
 			for (const layer of snapshot.layers) {
 				expect(layer.pointerEvents).toBe('none');
 			}
@@ -314,6 +347,35 @@ export const verifyClosingAnimation = async (
 		const revealing = phaseOf(recording, 'reveal');
 		expect(revealing.running).toBeGreaterThan(0);
 		const ended = phaseOf(recording, 'revealed');
+
+		// Each half is long enough to be seen, not a flicker with a long pause.
+		expect(
+			covered.at - started.at,
+			'the cover takes long enough to see'
+		).toBeGreaterThanOrEqual(200);
+		expect(
+			ended.at - revealing.at,
+			'the reveal takes long enough to see'
+		).toBeGreaterThanOrEqual(300);
+
+		if (options.variant === 'slideReveal') {
+			// The red swipes away as one piece, and a second red layer behind it
+			// travels along a beat later: two edges, one trailing the other.
+			const sweep = recording.samples.filter(
+				(s) => s.phase === 'reveal' && s.lefts.length === 2
+			);
+			expect(sweep.length, 'the sweep was watched').toBeGreaterThan(3);
+			// The layer behind sits first in the page.
+			const lead = sweep.map((s) => s.lefts[1] - s.lefts[0]);
+			expect(
+				Math.max(...lead),
+				'the second layer trails the first'
+			).toBeGreaterThanOrEqual(8);
+			expect(
+				Math.min(...lead),
+				'and never leads it'
+			).toBeGreaterThanOrEqual(-1);
+		}
 		if (swaps) {
 			expect(
 				ended.focal,

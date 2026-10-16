@@ -47,12 +47,15 @@ const withTenant = (theming?: Record<string, unknown>) =>
 		);
 	};
 
-const pressed = async (theming?: Record<string, unknown>) => {
+const pressed = async (
+	theming?: Record<string, unknown>,
+	focal: 'messageField' | 'call' = 'messageField'
+) => {
 	const { result } = renderHook(() => useClosingAnimation(), {
 		wrapper: withTenant(theming)
 	});
 	await result.current.play({
-		focal: 'messageField',
+		focal,
 		onCovered: () => undefined
 	});
 	return playClosingAnimation.mock.calls.at(-1)?.[0] as unknown as {
@@ -92,7 +95,10 @@ describe('useClosingAnimation', () => {
 
 	it("hands the room's focal point on untouched", async () => {
 		screenIs({ desktop: true, reducedMotion: false });
-		expect((await pressed(theming)).focal).toBe('messageField');
+		expect((await pressed(theming, 'call')).focal).toBe('call');
+		expect((await pressed(theming, 'messageField')).focal).toBe(
+			'messageField'
+		);
 	});
 
 	it('tells the engine to skip when the person asked for less motion', async () => {
