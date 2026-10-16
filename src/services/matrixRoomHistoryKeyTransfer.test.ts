@@ -751,6 +751,52 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			).not.toHaveBeenCalled();
 		});
 
+		it('keeps the request after a failed send so it can be tried again', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.client.encryptAndSendToDevice.mockRejectedValueOnce(
+				new Error('offline')
+			);
+
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				false
+			);
+			expect(service.getPendingApprovals()).toHaveLength(1);
+
+			await expect(service.approveRequest('reset-request')).resolves.toBe(
+				true
+			);
+			expect(service.getPendingApprovals()).toEqual([]);
+		});
+
+		it('does not let another device take over a waiting request id', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			harness.emitToDevice(
+				event('org.oriso.room_history_key_request', PEER, {
+					room_id: ROOM_ID,
+					request_id: 'reset-request',
+					requester_user_id: PEER,
+					requester_device_id: 'OTHER',
+					reason: 'take over'
+				})
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+
+			expect(service.getPendingApprovals()).toEqual([
+				expect.objectContaining({
+					requesterDeviceId: 'ASKER1',
+					reason: 'It was about my school'
+				})
+			]);
+		});
+
 		it('forgets waiting requests when the client is detached', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));
@@ -758,9 +804,19 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				expect(service.getPendingApprovals()).toHaveLength(1)
 			);
 
+			const resolved = vi.fn();
+			window.addEventListener(
+				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+				resolved
+			);
 			service.detach();
+			window.removeEventListener(
+				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
+				resolved
+			);
 
 			expect(service.getPendingApprovals()).toEqual([]);
+			expect(resolved).toHaveBeenCalledTimes(1);
 		});
 
 		it('sends the reason along when the person asks for the history', async () => {

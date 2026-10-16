@@ -321,9 +321,13 @@ export const SessionStream = ({
 	);
 	const isMatrixSession = resolvedChatSession.isMatrixSession;
 	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	const hasHistoryRequests =
 		useHistoryRequests(resolvedChatSession.matrixRoomId).requests.length >
-			0 && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+			0 && isConsultant;
 	const recoveryStatus = useRecoveryRuntimeStatus(
 		matrixClientService?.getClient()?.getUserId() ?? ''
 	);
@@ -1514,10 +1518,7 @@ export const SessionStream = ({
 									roomId={resolvedChatSession.matrixRoomId}
 								/>
 							)}
-						{hasUserAuthority(
-							AUTHORITIES.CONSULTANT_DEFAULT,
-							userData
-						) && (
+						{isConsultant && (
 							<HistoryRequestApprovals
 								roomId={resolvedChatSession.matrixRoomId}
 							/>

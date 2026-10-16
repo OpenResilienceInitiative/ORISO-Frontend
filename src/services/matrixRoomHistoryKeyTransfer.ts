@@ -80,6 +80,7 @@ export class MatrixRoomHistoryKeyTransfer {
 	private readonly lastRequestAt = new Map<string, number>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
+	private readonly approvalsInFlight = new Set<string>();
 	private readonly pendingApprovals = new Map<
 		string,
 		PendingHistoryRequest
@@ -104,7 +105,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			this.onReceivedToDeviceMessage
 		);
 		this.client = null;
+		// Tell open cards that these requests are gone, so none stays on screen.
+		const dropped = Array.from(this.pendingApprovals.values());
 		this.pendingApprovals.clear();
+		this.approvalsInFlight.clear();
+		dropped.forEach((request) => this.announceResolved(request, 'dropped'));
 	}
 
 	/** Requests from unverified devices that wait for a person's decision. */
@@ -121,23 +126,36 @@ export class MatrixRoomHistoryKeyTransfer {
 	public async approveRequest(requestId: string): Promise<boolean> {
 		const request = this.pendingApprovals.get(requestId);
 		const client = this.client;
-		if (!request || !client) return false;
-		this.pendingApprovals.delete(requestId);
-		const room = client.getRoom(request.roomId);
-		await (room as any)?.loadMembersIfNeeded?.();
-		if (room?.getMember(request.requesterUserId)?.membership !== 'join') {
-			emitDiagnostic('approval-membership-rejected');
-			this.announceResolved(request, 'dropped');
+		if (!request || !client || this.approvalsInFlight.has(requestId))
 			return false;
+		this.approvalsInFlight.add(requestId);
+		try {
+			const room = client.getRoom(request.roomId);
+			await (room as any)?.loadMembersIfNeeded?.();
+			if (
+				room?.getMember(request.requesterUserId)?.membership !== 'join'
+			) {
+				emitDiagnostic('approval-membership-rejected');
+				this.pendingApprovals.delete(requestId);
+				this.announceResolved(request, 'dropped');
+				return false;
+			}
+			const sent = await this.sendBundle(
+				request.roomId,
+				request.requesterUserId,
+				request.requesterDeviceId,
+				request.requestId
+			);
+			// A failed send keeps the request, so the person can try again.
+			if (sent && this.pendingApprovals.delete(requestId))
+				this.announceResolved(request, 'approved');
+			return sent;
+		} catch (error) {
+			emitDiagnostic('approval-failed');
+			return false;
+		} finally {
+			this.approvalsInFlight.delete(requestId);
 		}
-		const sent = await this.sendBundle(
-			request.roomId,
-			request.requesterUserId,
-			request.requesterDeviceId,
-			request.requestId
-		);
-		this.announceResolved(request, sent ? 'approved' : 'dropped');
-		return sent;
 	}
 
 	public declineRequest(requestId: string): void {
@@ -334,10 +352,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				// wrote why and a human on this side approves. Without a reason
 				// nothing is kept and nothing is sent, as before.
 				const reason = normalizeReason(content.reason);
-				if (
-					reason &&
-					this.pendingApprovals.size < MAX_PENDING_APPROVALS
-				) {
+				if (reason) {
 					const pending: PendingHistoryRequest = {
 						requestId: content.request_id,
 						roomId: content.room_id,
@@ -346,6 +361,17 @@ export class MatrixRoomHistoryKeyTransfer {
 						reason,
 						receivedAt: Date.now()
 					};
+					const sameId = this.pendingApprovals.get(pending.requestId);
+					if (
+						sameId &&
+						(sameId.requesterUserId !== pending.requesterUserId ||
+							sameId.requesterDeviceId !==
+								pending.requesterDeviceId)
+					) {
+						// Another device must not overwrite this request.
+						emitDiagnostic('request-id-collision');
+						return;
+					}
 					// One waiting request per requesting device: a newer one replaces
 					// the older, so a single device cannot fill the list.
 					for (const [id, other] of this.pendingApprovals) {
@@ -356,6 +382,10 @@ export class MatrixRoomHistoryKeyTransfer {
 								pending.requesterDeviceId
 						)
 							this.pendingApprovals.delete(id);
+					}
+					if (this.pendingApprovals.size >= MAX_PENDING_APPROVALS) {
+						emitDiagnostic('approval-queue-full');
+						return;
 					}
 					this.pendingApprovals.set(pending.requestId, pending);
 					window.dispatchEvent(

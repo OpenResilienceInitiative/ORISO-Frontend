@@ -549,6 +549,31 @@
 			"headline": "Vous avez supprimé le chat avec succès."
 		}
 	},
+	"historyRequest": {
+		"card": {
+			"title": "Demande de relire cette conversation",
+			"intro": "La personne de cette conversation s'est connectée sur un nouvel appareil et ne peut pas lire les messages précédents. Elle a écrit :",
+			"approve": "Débloquer la conversation",
+			"decline": "Refuser",
+			"failed": "Les clés n'ont pas pu être envoyées. Veuillez réessayer.",
+			"origin": "Demandé par {{user}} sur un nouvel appareil ({{device}}), {{time}}. Cet appareil n'est pas encore vérifié : ne débloquez que si vous attendez cette demande."
+		},
+		"ask": {
+			"title": "Les anciens messages ne sont pas lisibles ici",
+			"intro": "Vous vous êtes connecté·e sur un nouvel appareil, vos anciens messages de cette conversation sont donc verrouillés. Vous pouvez demander à votre conseiller de les débloquer.",
+			"button": "Demander les anciens messages",
+			"waiting": "Demande envoyée. Votre conseiller doit la confirmer ; les messages apparaîtront ensuite ici.",
+			"done": "Vos anciens messages sont de nouveau lisibles.",
+			"failed": "La demande n'a pas pu être envoyée. Veuillez réessayer.",
+			"dialog": {
+				"title": "Demander les anciens messages",
+				"description": "Votre conseiller verra ce que vous écrivez et décidera de débloquer ou non cette conversation.",
+				"label": "De quoi parlait cette conversation ?",
+				"cancel": "Annuler",
+				"send": "Envoyer la demande"
+			}
+		}
+	},
 	"e2ee": {
 		"attachment": {
 			"decryption_error": "Erreur lors du décryptage",
