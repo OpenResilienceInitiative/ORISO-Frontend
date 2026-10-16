@@ -15,6 +15,9 @@ const meta = {
 	parameters: { layout: 'padded' },
 	args: {
 		reason: 'It was about my exam anxiety and the plan we made in March.',
+		requesterUserId: '@asker:example.org',
+		requesterDeviceId: 'KXQ7PLM2',
+		receivedAt: Date.UTC(2026, 9, 16, 9, 30),
 		onApprove: fn(),
 		onDecline: fn()
 	}

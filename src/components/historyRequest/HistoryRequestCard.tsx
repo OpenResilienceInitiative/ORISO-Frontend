@@ -39,9 +39,6 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 			<h3 className="historyRequestCard__title">
 				{t('historyRequest.card.title')}
 			</h3>
-			<p className="historyRequestCard__intro">
-				{t('historyRequest.card.intro')}
-			</p>
 			{requesterUserId && (
 				<p className="historyRequestCard__origin">
 					{t('historyRequest.card.origin', {
@@ -53,6 +50,9 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 					})}
 				</p>
 			)}
+			<p className="historyRequestCard__intro">
+				{t('historyRequest.card.intro')}
+			</p>
 			<blockquote className="historyRequestCard__reason">
 				{reason}
 			</blockquote>

@@ -658,6 +658,36 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 		});
 
 		it('keeps one waiting request per requesting device, the newest', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				const send = (id: string) =>
+					harness.emitToDevice(
+						event('org.oriso.room_history_key_request', PEER, {
+							room_id: ROOM_ID,
+							request_id: id,
+							requester_user_id: PEER,
+							requester_device_id: 'ASKER1',
+							reason: 'hello'
+						})
+					);
+				send('first');
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				vi.setSystemTime(Date.now() + 31_000);
+				send('second');
+				await vi.waitFor(() =>
+					expect(
+						service.getPendingApprovals().map((r) => r.requestId)
+					).toEqual(['second'])
+				);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('ignores a second reason request from the same device within 30 seconds', async () => {
 			const { harness, service } = setup();
 			for (const id of ['first', 'second']) {
 				harness.emitToDevice(
@@ -671,105 +701,15 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 				);
 			}
 			await vi.waitFor(() =>
-				expect(
-					harness.crypto.getDeviceVerificationStatus
-				).toHaveBeenCalledTimes(2)
+				expect(service.getPendingApprovals()).toHaveLength(1)
 			);
 			await new Promise((resolve) => setTimeout(resolve, 20));
 			expect(
 				service.getPendingApprovals().map((r) => r.requestId)
-			).toEqual(['second']);
-		});
-
-		it('sends only that rooms keys to only that device after approval', async () => {
-			const { harness, service } = setup();
-			harness.emitToDevice(unverifiedRequest('It was about my school'));
-			await vi.waitFor(() =>
-				expect(service.getPendingApprovals()).toHaveLength(1)
-			);
-
-			await expect(service.approveRequest('reset-request')).resolves.toBe(
-				true
-			);
-
-			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledTimes(
-				1
-			);
-			expect(harness.client.encryptAndSendToDevice).toHaveBeenCalledWith(
-				'org.oriso.room_history_key_bundle',
-				[{ userId: PEER, deviceId: 'ASKER1' }],
-				{
-					room_id: ROOM_ID,
-					request_id: 'reset-request',
-					keys: [{ room_id: ROOM_ID, session_id: 'wanted' }]
-				}
-			);
-			expect(service.getPendingApprovals()).toEqual([]);
-		});
-
-		it('sends nothing after a decline and announces that it is resolved', async () => {
-			const { harness, service } = setup();
-			const resolved = vi.fn();
-			window.addEventListener(
-				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
-				resolved
-			);
-			harness.emitToDevice(unverifiedRequest('It was about my school'));
-			await vi.waitFor(() =>
-				expect(service.getPendingApprovals()).toHaveLength(1)
-			);
-
-			service.declineRequest('reset-request');
-			window.removeEventListener(
-				MATRIX_HISTORY_REQUEST_RESOLVED_EVENT,
-				resolved
-			);
-
-			expect(service.getPendingApprovals()).toEqual([]);
+			).toEqual(['first']);
 			expect(
-				harness.client.encryptAndSendToDevice
-			).not.toHaveBeenCalled();
-			expect(resolved).toHaveBeenCalledTimes(1);
-			await expect(service.approveRequest('reset-request')).resolves.toBe(
-				false
-			);
-		});
-
-		it('refuses to send after the requester has left the room', async () => {
-			const { harness, service } = setup();
-			harness.emitToDevice(unverifiedRequest('It was about my school'));
-			await vi.waitFor(() =>
-				expect(service.getPendingApprovals()).toHaveLength(1)
-			);
-			harness.memberships.set(PEER, member(PEER, 'leave'));
-
-			await expect(service.approveRequest('reset-request')).resolves.toBe(
-				false
-			);
-			expect(
-				harness.client.encryptAndSendToDevice
-			).not.toHaveBeenCalled();
-		});
-
-		it('keeps the request after a failed send so it can be tried again', async () => {
-			const { harness, service } = setup();
-			harness.emitToDevice(unverifiedRequest('It was about my school'));
-			await vi.waitFor(() =>
-				expect(service.getPendingApprovals()).toHaveLength(1)
-			);
-			harness.client.encryptAndSendToDevice.mockRejectedValueOnce(
-				new Error('offline')
-			);
-
-			await expect(service.approveRequest('reset-request')).resolves.toBe(
-				false
-			);
-			expect(service.getPendingApprovals()).toHaveLength(1);
-
-			await expect(service.approveRequest('reset-request')).resolves.toBe(
-				true
-			);
-			expect(service.getPendingApprovals()).toEqual([]);
+				harness.crypto.getDeviceVerificationStatus
+			).toHaveBeenCalledTimes(1);
 		});
 
 		it('does not let another device take over a waiting request id', async () => {

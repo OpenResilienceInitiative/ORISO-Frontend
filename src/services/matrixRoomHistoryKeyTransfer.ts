@@ -82,6 +82,7 @@ export class MatrixRoomHistoryKeyTransfer {
 	private readonly lastRequestAt = new Map<string, number>();
 	private readonly lastHandledRequestAt = new Map<string, number>();
 	private readonly pendingRooms = new Set<string>();
+	private readonly lastReasonRequestAt = new Map<string, number>();
 	private readonly approvalsInFlight = new Set<string>();
 	private readonly pendingApprovals = new Map<
 		string,
@@ -111,6 +112,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		const dropped = Array.from(this.pendingApprovals.values());
 		this.pendingApprovals.clear();
 		this.approvalsInFlight.clear();
+		this.lastReasonRequestAt.clear();
 		dropped.forEach((request) => this.announceResolved(request, 'dropped'));
 	}
 
@@ -340,6 +342,21 @@ export class MatrixRoomHistoryKeyTransfer {
 				roomFound: Boolean(room)
 			});
 			return;
+		}
+
+		// A request that carries a reason waits for a person, so a device may
+		// send one only every 30 seconds; this runs before any lookup.
+		if (normalizeReason(content.reason)) {
+			const reasonKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
+			const at = Date.now();
+			if (
+				at - (this.lastReasonRequestAt.get(reasonKey) || 0) <
+				REQUEST_THROTTLE_MS
+			) {
+				emitDiagnostic('request-handler-throttled');
+				return;
+			}
+			this.lastReasonRequestAt.set(reasonKey, at);
 		}
 
 		// The requester may have logged in only seconds ago. Refresh its device
