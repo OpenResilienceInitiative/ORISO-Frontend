@@ -43,4 +43,6 @@ Claim first: gh issue edit <child-number> --repo <owner>/<repo> --add-assignee <
 Resolve: record the decision outcome on the child; close only when the project's human/closure gates permit it. Then append a gist and child link to the map's Decisions-so-far section, preserving the rest of its live body.
 ```
 
+Assignment and assignee readback are metadata, not an exclusive lock. Before claim or work, one named map coordinator must serialize ticket allocation and record the single executing session for each ticket. This also applies when parallel sessions share the same driving-human login. If exclusive allocation cannot be established, wait or keep the proposal as a draft; do not start duplicate work.
+
 If native relationships or dependency access are unavailable, report the missing capability before publishing; do not silently replace them with checklist links or another tracker.
