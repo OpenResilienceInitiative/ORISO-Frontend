@@ -4716,6 +4716,7 @@
 				"headline": "Voice recording is unavailable",
 				"message": "Please allow microphone access and try again."
 			},
+			"discard": "Discard voice message",
 			"preview": "Voice message"
 		}
 	},

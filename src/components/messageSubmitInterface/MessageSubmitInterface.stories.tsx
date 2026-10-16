@@ -936,3 +936,190 @@ export const RepeatedMaximiseToggle: Story = {
 		await expect(toggle()).toBeTruthy();
 	}
 };
+
+/**
+ * #1142 — voice note: record, stop, review, then discard or send.
+ *
+ * Storybook has no microphone, so a minimal `MediaRecorder` and
+ * `getUserMedia` stand in for the browser's. The composer itself is the real
+ * production component; only the capture device is faked. The fake is removed
+ * again when the story ends so it cannot leak into the next story.
+ */
+class FakeMediaRecorder {
+	static isTypeSupported = () => true;
+	state: 'inactive' | 'recording' = 'inactive';
+	mimeType = 'audio/webm';
+	ondataavailable: ((event: { data: Blob }) => void) | null = null;
+	onstop: (() => void) | null = null;
+	onerror: (() => void) | null = null;
+	start() {
+		this.state = 'recording';
+	}
+	stop() {
+		this.state = 'inactive';
+		this.ondataavailable?.({
+			data: new Blob(['recorded audio'], { type: this.mimeType })
+		});
+		this.onstop?.();
+	}
+}
+
+const installFakeMicrophone = () => {
+	const realRecorder = window.MediaRecorder;
+	const mediaDevices = navigator.mediaDevices;
+	const realGetUserMedia = mediaDevices?.getUserMedia;
+	(window as any).MediaRecorder = FakeMediaRecorder;
+	if (mediaDevices) {
+		mediaDevices.getUserMedia = (async () => ({
+			getTracks: () => [{ stop: () => {} }]
+		})) as any;
+	}
+	return () => {
+		(window as any).MediaRecorder = realRecorder;
+		if (mediaDevices && realGetUserMedia) {
+			mediaDevices.getUserMedia = realGetUserMedia;
+		}
+	};
+};
+
+const voiceMicButton = (canvas: ReturnType<typeof within>) =>
+	canvas.getByRole('button', { name: /Sprachaufnahme|Voice recording/ });
+
+async function startVoiceNote(canvasElement: HTMLElement) {
+	const canvas = within(canvasElement);
+	const mic = await waitFor(() => voiceMicButton(canvas));
+	await userEvent.click(mic);
+	await canvas.findByRole('button', { name: /^(Stopp|Stop)$/ });
+	return canvas;
+}
+
+async function recordVoiceNote(canvasElement: HTMLElement) {
+	const canvas = await startVoiceNote(canvasElement);
+	await userEvent.click(
+		canvas.getByRole('button', { name: /^(Stopp|Stop)$/ })
+	);
+	await canvas.findByRole('button', {
+		name: /Sprachnachricht verwerfen|Discard voice message/
+	});
+	return canvas;
+}
+
+export const VoiceNoteIdle: Story = {
+	name: 'Voice note — idle (nothing recording)',
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const mic = await waitFor(() => voiceMicButton(canvas));
+		expect(mic.getAttribute('aria-pressed')).not.toBe('true');
+		expect(
+			canvas.queryByRole('button', { name: /^(Stopp|Stop)$/ })
+		).toBeNull();
+	}
+};
+
+export const VoiceNoteRecording: Story = {
+	name: 'Voice note — recording (Cancel, Stop; Send disabled)',
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await startVoiceNote(canvasElement);
+		expect(
+			canvas.getByRole('button', { name: /Abbrechen|Cancel/ })
+		).toBeTruthy();
+		expect(
+			(
+				canvas.getByRole('button', {
+					name: /Nachricht senden|Send message/
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+	}
+};
+
+export const VoiceNoteReview: Story = {
+	name: 'Voice note — review after Stop (Play, Discard, Send)',
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await recordVoiceNote(canvasElement);
+		// Stop must not have sent anything: the review is still on screen and
+		// Send is an explicit, enabled choice next to Play and Discard.
+		expect(
+			canvas.getByRole('button', {
+				name: /Sprachnachricht abspielen|Play voice message/
+			})
+		).toBeTruthy();
+		expect(
+			(
+				canvas.getByRole('button', {
+					name: /Nachricht senden|Send message/
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(false);
+		// Discard is a real button, reachable with the keyboard.
+		const discard = canvas.getByRole('button', {
+			name: /Sprachnachricht verwerfen|Discard voice message/
+		});
+		discard.focus();
+		expect(document.activeElement).toBe(discard);
+	}
+};
+
+export const VoiceNoteReviewDiscard: Story = {
+	name: 'Voice note — Discard returns to idle, re-record possible',
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await recordVoiceNote(canvasElement);
+		await userEvent.click(
+			canvas.getByRole('button', {
+				name: /Sprachnachricht verwerfen|Discard voice message/
+			})
+		);
+		await waitFor(() =>
+			expect(
+				canvas.queryByRole('button', {
+					name: /Sprachnachricht verwerfen|Discard voice message/
+				})
+			).toBeNull()
+		);
+		expect(
+			(
+				canvas.getByRole('button', {
+					name: /Nachricht senden|Send message/
+				}) as HTMLButtonElement
+			).disabled
+		).toBe(true);
+		await startVoiceNote(canvasElement);
+	}
+};
+
+export const VoiceNoteReviewMobile: Story = {
+	name: 'Voice note — review at 390 px',
+	globals: phone390Globals,
+	beforeEach: installFakeMicrophone,
+	render: () => <ComposerShell />,
+	play: async ({ canvasElement }) => {
+		const canvas = await recordVoiceNote(canvasElement);
+		const review = canvasElement.querySelector<HTMLElement>(
+			'.textarea__attachmentModeCard--voice'
+		);
+		const editor =
+			canvasElement.querySelector<HTMLElement>('.textarea__input');
+		expect(review).toBeTruthy();
+		expect(editor).toBeTruthy();
+		// The whole review (player and Discard) sits inside the composer at
+		// 390 px — nothing is clipped at the top or pushed past the sides.
+		const reviewRect = review!.getBoundingClientRect();
+		const editorRect = editor!.getBoundingClientRect();
+		expect(reviewRect.top).toBeGreaterThanOrEqual(editorRect.top);
+		expect(reviewRect.bottom).toBeLessThanOrEqual(editorRect.bottom);
+		expect(reviewRect.left).toBeGreaterThanOrEqual(editorRect.left);
+		expect(reviewRect.right).toBeLessThanOrEqual(editorRect.right);
+		expect(
+			canvas.getByRole('button', {
+				name: /Sprachnachricht verwerfen|Discard voice message/
+			})
+		).toBeTruthy();
+	}
+};

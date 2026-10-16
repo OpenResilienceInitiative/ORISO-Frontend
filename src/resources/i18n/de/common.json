@@ -4768,6 +4768,7 @@
 				"headline": "Sprachaufnahme nicht verfügbar",
 				"message": "Bitte Mikrofonzugriff erlauben und erneut versuchen."
 			},
+			"discard": "Sprachnachricht verwerfen",
 			"preview": "Sprachnachricht"
 		}
 	},

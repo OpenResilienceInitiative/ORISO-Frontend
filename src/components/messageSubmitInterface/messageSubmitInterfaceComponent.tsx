@@ -92,7 +92,6 @@ import {
 	AUTHORITIES,
 	getContact,
 	hasUserAuthority,
-	E2EEContext,
 	SessionTypeContext,
 	useTenant,
 	UserDataContext,
@@ -124,7 +123,6 @@ import {
 	resolveComposerMessageSnapshot,
 	shouldPreserveComposerAfterRetry
 } from './composerMessageSnapshot';
-import { ReactComponent as AudioOnIcon } from '../../resources/img/icons/audio-on.svg';
 import { ReactComponent as RemoveIcon } from '../../resources/img/icons/x.svg';
 import { ReactComponent as CalendarMonthIcon } from '../../resources/img/icons/calendar-month-navigation.svg';
 import './emojiPicker.styles';
@@ -521,13 +519,18 @@ export const MessageSubmitInterfaceComponent = ({
 	const voiceRecordingDurationRef = useRef(0);
 	const voiceRecordingStartedAtRef = useRef<number | null>(null);
 	const voiceDiscardAfterStopRef = useRef(false);
-	const voiceSendAfterStopRef = useRef(false);
+	// #1142: a recording is only ever sent from the review. It remembers the
+	// feedback intent of the action that started the recording, so changing
+	// the composer while the take is under review cannot reclassify it.
+	const recordedVoiceRef = useRef<{
+		file: File;
+		feedbackMailIntent: boolean;
+	} | null>(null);
 
 	const { userData } = useContext(UserDataContext);
 	const { activeSession, reloadActiveSession } =
 		useContext(ActiveSessionContext);
 	const { type, path: listPath } = useContext(SessionTypeContext);
-	const { isE2eeEnabled } = useContext(E2EEContext);
 	const { matrixClientService } = useMatrixClient();
 	const resolvedChatSession = useMemo(
 		() => chatTransportService.resolveSession(activeSession),
@@ -993,6 +996,7 @@ export const MessageSubmitInterfaceComponent = ({
 		setAttachmentSelected(null);
 		setAttachmentUpload(null);
 		setVoiceAttachmentDurationSec(0);
+		recordedVoiceRef.current = null;
 		if (voicePreviewUrl) {
 			URL.revokeObjectURL(voicePreviewUrl);
 		}
@@ -1010,7 +1014,6 @@ export const MessageSubmitInterfaceComponent = ({
 		voiceRecordingDurationRef.current = 0;
 		voiceRecordingStartedAtRef.current = null;
 		voiceDiscardAfterStopRef.current = false;
-		voiceSendAfterStopRef.current = false;
 		if (mediaRecorderRef.current) {
 			mediaRecorderRef.current = null;
 		}
@@ -1030,9 +1033,8 @@ export const MessageSubmitInterfaceComponent = ({
 	);
 
 	const stopVoiceRecording = useCallback(
-		(options?: { discard?: boolean; sendAfterStop?: boolean }) => {
+		(options?: { discard?: boolean }) => {
 			voiceDiscardAfterStopRef.current = !!options?.discard;
-			voiceSendAfterStopRef.current = !!options?.sendAfterStop;
 			const recorder = mediaRecorderRef.current;
 			if (recorder && recorder.state !== 'inactive') {
 				recorder.stop();
@@ -1826,12 +1828,18 @@ export const MessageSubmitInterfaceComponent = ({
 				? retryContext.transportMessage
 				: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
-			const sentFeedbackMailIntent = resolveFeedbackMailIntent({
-				explicitFeedbackComposer: feedbackMailIntent,
-				supervisorFeedbackAction: !!isSupervisor,
-				teamDiscussion,
-				retry: retryContext
-			});
+			const recordedVoice = recordedVoiceRef.current;
+			const sentFeedbackMailIntent =
+				!retryContext &&
+				attachment &&
+				recordedVoice?.file === attachment
+					? recordedVoice.feedbackMailIntent
+					: resolveFeedbackMailIntent({
+							explicitFeedbackComposer: feedbackMailIntent,
+							supervisorFeedbackAction: !!isSupervisor,
+							teamDiscussion,
+							retry: retryContext
+						});
 			const prefixParts: string[] = [];
 			// Relations foundation (#435): thread membership travels as the
 			// MSC3440 m.thread relation on the event (see chatTransportService),
@@ -1983,7 +1991,9 @@ export const MessageSubmitInterfaceComponent = ({
 			return null;
 		}
 		if (isVoiceRecording) {
-			stopVoiceRecording({ sendAfterStop: true });
+			// #1142: submitting mid-recording only ends the take. The note
+			// goes out from the review, never straight from the recorder.
+			stopVoiceRecording();
 			return null;
 		}
 		if (
@@ -3178,9 +3188,7 @@ export const MessageSubmitInterfaceComponent = ({
 			};
 			recorder.onstop = () => {
 				const discardAfterStop = voiceDiscardAfterStopRef.current;
-				const sendAfterStop = voiceSendAfterStopRef.current;
 				voiceDiscardAfterStopRef.current = false;
-				voiceSendAfterStopRef.current = false;
 				if (discardAfterStop) {
 					cleanupVoiceRecorder();
 					return;
@@ -3212,29 +3220,16 @@ export const MessageSubmitInterfaceComponent = ({
 							lastModified: Date.now()
 						}
 					);
-					if (sendAfterStop) {
-						setIsRequestInProgress(true);
-						sendMessage(
-							'',
-							voiceFile,
-							isE2eeEnabled,
-							!!isSupervisor,
-							undefined,
-							undefined,
-							false,
-							undefined,
-							undefined,
-							undefined,
-							recordedFeedbackMailIntent
-						);
-					} else {
-						if (voicePreviewUrl) {
-							URL.revokeObjectURL(voicePreviewUrl);
-						}
-						setVoicePreviewUrl(URL.createObjectURL(blob));
-						setVoiceAttachmentDurationSec(elapsedSec);
-						displayAttachmentToUpload(voiceFile);
+					if (voicePreviewUrl) {
+						URL.revokeObjectURL(voicePreviewUrl);
 					}
+					recordedVoiceRef.current = {
+						file: voiceFile,
+						feedbackMailIntent: recordedFeedbackMailIntent
+					};
+					setVoicePreviewUrl(URL.createObjectURL(blob));
+					setVoiceAttachmentDurationSec(elapsedSec);
+					displayAttachmentToUpload(voiceFile);
 				}
 				cleanupVoiceRecorder();
 			};
@@ -3272,8 +3267,6 @@ export const MessageSubmitInterfaceComponent = ({
 		displayAttachmentToUpload,
 		cleanupVoiceRecorder,
 		stopVoiceRecording,
-		sendMessage,
-		isE2eeEnabled,
 		isSupervisor,
 		feedbackMailIntent,
 		teamDiscussion,
@@ -4513,7 +4506,55 @@ export const MessageSubmitInterfaceComponent = ({
 									}
 								}}
 							>
-								{attachmentSelected ? (
+								{attachmentSelected &&
+								isVoiceAttachmentSelected ? (
+									<div className="textarea__attachmentMode textarea__attachmentMode--voice">
+										<div
+											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"
+											role="group"
+											aria-label={translate(
+												'voice.recording.preview'
+											)}
+										>
+											<div className="textarea__attachmentModeInfo">
+												{voicePreviewUrl && (
+													// #996: the same player the
+													// sent message uses, so what
+													// you check before sending
+													// looks like what the other
+													// side gets.
+													<VoicePlayer
+														src={voicePreviewUrl}
+														durationSec={
+															voiceAttachmentDurationSec ||
+															null
+														}
+														size="sm"
+														showMeta={false}
+													/>
+												)}
+											</div>
+											<button
+												type="button"
+												className="textarea__voicePreview__discard"
+												onClick={
+													handleAttachmentRemoval
+												}
+												title={translate(
+													'voice.recording.discard'
+												)}
+												aria-label={translate(
+													'voice.recording.discard'
+												)}
+											>
+												<RemoveIcon
+													aria-hidden="true"
+													focusable="false"
+												/>
+											</button>
+										</div>
+									</div>
+								) : attachmentSelected ? (
 									<div className="textarea__attachmentMode">
 										<div className="textarea__attachmentModeCard">
 											{attachmentPreviewUrl ? (
@@ -4780,62 +4821,13 @@ export const MessageSubmitInterfaceComponent = ({
 												type="button"
 												className="textarea__voiceActionButton textarea__voiceActionButton--stop"
 												onClick={() =>
-													stopVoiceRecording({
-														sendAfterStop: true
-													})
+													stopVoiceRecording()
 												}
 											>
 												{translate('app.stop')}
 											</button>
 										</span>
 									</span>
-								) : attachmentSelected &&
-								  isVoiceAttachmentSelected ? (
-									<div className="textarea__attachmentWrapper">
-										<div className="textarea__voicePreview">
-											<span className="textarea__voicePreview__meta">
-												<AudioOnIcon />
-												<span>
-													{translate(
-														'voice.recording.preview'
-													)}
-												</span>
-												<span className="textarea__voicePreview__duration">
-													{formatRecordingDuration(
-														voiceAttachmentDurationSec
-													)}
-												</span>
-											</span>
-											{voicePreviewUrl && (
-												// #996: the same player the
-												// sent message uses, so what
-												// you check before sending
-												// looks like what the other
-												// side gets.
-												<VoicePlayer
-													src={voicePreviewUrl}
-													durationSec={
-														voiceAttachmentDurationSec ||
-														null
-													}
-													size="sm"
-												/>
-											)}
-											<span className="textarea__attachmentSelected__remove">
-												<RemoveIcon
-													onClick={
-														handleAttachmentRemoval
-													}
-													title={translate(
-														'app.remove'
-													)}
-													aria-label={translate(
-														'app.remove'
-													)}
-												/>
-											</span>
-										</div>
-									</div>
 								) : null)}
 						</span>
 						<div className="textarea__buttons">

@@ -184,6 +184,10 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mocks.clearDraft.mockResolvedValue(undefined);
 	vi.stubGlobal('MediaRecorder', Recorder);
+	Object.assign(URL, {
+		createObjectURL: vi.fn(() => 'blob:voice-preview'),
+		revokeObjectURL: vi.fn()
+	});
 	Object.defineProperty(navigator, 'mediaDevices', {
 		configurable: true,
 		value: {
@@ -198,31 +202,18 @@ afterEach(() => {
 	vi.unstubAllGlobals();
 });
 
-async function recordAndSend() {
-	fireEvent.click(
-		screen.getByRole('button', {
-			name: 'message.submit.toolbar.voiceRecording.label'
-		})
-	);
-	await waitFor(() =>
-		expect(
-			screen
-				.getByRole('button', {
-					name: 'message.submit.toolbar.voiceRecording.label'
-				})
-				.getAttribute('aria-pressed')
-		).toBe('true')
-	);
-	expect(Recorder.current.state).toBe('recording');
-	await act(async () =>
-		fireEvent.submit(
-			screen
-				.getByRole('button', {
-					name: 'enquiry.write.input.button.title'
-				})
-				.closest('form')!
-		)
-	);
+// #1142: Stop opens the review; the note only goes out on an explicit Send.
+async function recordReviewAndSend() {
+	await startRecording();
+	await stopRecording();
+	expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	await act(async () => {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'enquiry.write.input.button.title'
+			})
+		);
+	});
 	await waitFor(() =>
 		expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
 	);
@@ -232,12 +223,12 @@ async function recordAndSend() {
 	).toMatchObject({ type: 'audio/webm' });
 }
 
-describe('recorded feedback stop-and-send', () => {
+describe('recorded feedback review-and-send', () => {
 	it('keeps the owner feedback intent on the actual recorded attachment send', async () => {
 		render(
 			<Composer feedbackMailIntent targetRoomId="!feedback:example.org" />
 		);
-		await recordAndSend();
+		await recordReviewAndSend();
 		expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledWith(
 			'!feedback:example.org',
 			expect.any(File),
@@ -251,7 +242,7 @@ describe('recorded feedback stop-and-send', () => {
 		render(
 			<Composer isSupervisor supervisionRoomId="!feedback:example.org" />
 		);
-		await recordAndSend();
+		await recordReviewAndSend();
 		expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledWith(
 			'!feedback:example.org',
 			expect.any(File),
@@ -263,7 +254,7 @@ describe('recorded feedback stop-and-send', () => {
 	});
 	it('keeps ordinary voice notes out of the feedback classifier', async () => {
 		render(<Composer />);
-		await recordAndSend();
+		await recordReviewAndSend();
 		expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledWith(
 			'!case:example.org',
 			expect.any(File),
@@ -281,7 +272,7 @@ describe('recorded feedback stop-and-send', () => {
 				targetRoomId="!team:example.org"
 			/>
 		);
-		await recordAndSend();
+		await recordReviewAndSend();
 		expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledWith(
 			'!team:example.org',
 			expect.any(File),
@@ -296,7 +287,7 @@ describe('recorded feedback stop-and-send', () => {
 		view.rerender(
 			<Composer feedbackMailIntent targetRoomId="!feedback:example.org" />
 		);
-		await recordAndSend();
+		await recordReviewAndSend();
 		expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledWith(
 			'!feedback:example.org',
 			expect.any(File),
@@ -307,22 +298,16 @@ describe('recorded feedback stop-and-send', () => {
 		const view = render(
 			<Composer feedbackMailIntent targetRoomId="!feedback:example.org" />
 		);
-		fireEvent.click(
-			screen.getByRole('button', {
-				name: 'message.submit.toolbar.voiceRecording.label'
-			})
-		);
-		await waitFor(() => expect(Recorder.current.state).toBe('recording'));
+		await startRecording();
 		view.rerender(<Composer targetRoomId="!feedback:example.org" />);
-		await act(async () =>
-			fireEvent.submit(
-				screen
-					.getByRole('button', {
-						name: 'enquiry.write.input.button.title'
-					})
-					.closest('form')!
-			)
-		);
+		await stopRecording();
+		await act(async () => {
+			fireEvent.click(
+				screen.getByRole('button', {
+					name: 'enquiry.write.input.button.title'
+				})
+			);
+		});
 		await waitFor(() =>
 			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
 		);
@@ -365,6 +350,106 @@ describe('recorded feedback stop-and-send', () => {
 	);
 });
 
+const MIC = { name: 'message.submit.toolbar.voiceRecording.label' };
+const SEND = { name: 'enquiry.write.input.button.title' };
+
+async function startRecording() {
+	fireEvent.click(screen.getByRole('button', MIC));
+	await waitFor(() => expect(Recorder.current?.state).toBe('recording'));
+}
+
+async function stopRecording() {
+	await act(async () => {
+		fireEvent.click(screen.getByRole('button', { name: 'app.stop' }));
+	});
+}
+
+describe('voice note review before sending (#1142)', () => {
+	beforeEach(() => {
+		Recorder.current = undefined as unknown as Recorder;
+	});
+
+	it('does not send when the recording is stopped, it opens a review with playback, discard and send', async () => {
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+		expect(trackStop).toHaveBeenCalledOnce();
+		expect(
+			screen.getByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+		expect(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		).toBeTruthy();
+		expect(
+			(screen.getByRole('button', SEND) as HTMLButtonElement).disabled
+		).toBe(false);
+	});
+
+	it('sends the reviewed recording only when send is pressed', async () => {
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+		expect(
+			vi.mocked(apiSendMatrixAttachmentMessage).mock.calls[0][1]
+		).toMatchObject({ type: 'audio/webm' });
+	});
+
+	it('discards the reviewed recording without sending and allows a new recording', async () => {
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		);
+
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+		expect(
+			screen.queryByRole('button', { name: 'voicePlayer.play' })
+		).toBeNull();
+		expect(
+			(screen.getByRole('button', SEND) as HTMLButtonElement).disabled
+		).toBe(true);
+		await startRecording();
+		expect(Recorder.current.state).toBe('recording');
+	});
+
+	it('stops into the review instead of sending when the form is submitted mid-recording', async () => {
+		render(<Composer />);
+		await startRecording();
+		await act(async () =>
+			fireEvent.submit(screen.getByRole('button', SEND).closest('form')!)
+		);
+
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+		expect(
+			await screen.findByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+	});
+
+	it('cancel while recording drops the take without sending or opening a review', async () => {
+		render(<Composer />);
+		await startRecording();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', { name: 'app.cancel' }));
+		});
+
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+		expect(
+			screen.queryByRole('button', { name: 'voicePlayer.play' })
+		).toBeNull();
+	});
+});
+
 it('keeps voice-only draft loading disabled until the outgoing clear settles', async () => {
 	let settleClear: () => void;
 	mocks.clearDraft.mockImplementation(
@@ -374,7 +459,7 @@ it('keeps voice-only draft loading disabled until the outgoing clear settles', a
 			})
 	);
 	render(<Composer />);
-	await recordAndSend();
+	await recordReviewAndSend();
 	await waitFor(() => expect(mocks.clearDraft).toHaveBeenCalledOnce());
 	expect(mocks.draftEnabled.mock.calls.at(-1)?.[0]).toBe(false);
 	await act(async () => {
