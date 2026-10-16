@@ -102,6 +102,15 @@ beforeEach(() => {
 		}
 	};
 	patch.mockResolvedValue(undefined);
+	// jsdom has no media playback; previews must not throw in any test.
+	vi.stubGlobal(
+		'Audio',
+		class {
+			volume = 1;
+			constructor(public src: string) {}
+			play = vi.fn().mockResolvedValue(undefined);
+		}
+	);
 	vi.stubGlobal('Notification', {
 		permission: 'default',
 		requestPermission: request
