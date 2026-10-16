@@ -1,18 +1,15 @@
 import * as React from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useTranslation } from 'react-i18next';
-import {
-	registrationMd3,
-	registrationMotion
-} from '../../registration/registrationDesign/registrationDesign';
+import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
 import { HandoverCarousel, HandoverStep } from './HandoverCarousel';
 import { HandoverGateButton } from './HandoverGateButton';
-import { HandoverGateState } from './handoverGate';
+import { GATE_STATUS_KEY, HandoverGateState } from './handoverGate';
 import { useHandoverProgress } from './handoverProgress';
-import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
+import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
+import { WaitingRoomTemplate } from '../../waitingRoom/WaitingRoomTemplate';
 
 /** After this the gate opens regardless, labelled honestly as "taking longer". */
 const SLOW_AFTER_MS = 20000;
@@ -106,227 +103,71 @@ export const RegistrationHandover = ({
 		onEnter();
 	}, [onEnter]);
 
+	/* Laid out by the live-chat room's template (Frank, 2026-10-16: "die
+	   Elemente sind ja vom Content her alle richtig, aber ich will den
+	   Live-Chat"). The badge becomes the room's kicker, as "Live-Chat" is
+	   there; the headline still turns from "Fast geschafft." into
+	   "Geschafft." the moment the way on is free (Frank, 2026-09-01). */
+	const headline =
+		copy?.headline ??
+		(handoverDone
+			? t('registration.handover.headline')
+			: t('registration.handover.headlineAlmost'));
+
 	return (
-		<Box
-			data-cy="registration-handover"
-			data-cy-progress={fill ?? 100}
-			sx={{
-				/* Fill the column and stay in flow so the StageLayout keeps its
-				   height. `minWidth: 0` is load-bearing: a flex item defaults to
-				   `min-width: auto`, and the carousel's three 250px cards would
-				   force this box to ~814px in a 390px column. */
-				position: 'relative',
-				flex: 1,
-				minHeight: 0,
-				minWidth: 0,
-				width: '100%',
-				display: 'flex',
-				flexDirection: 'column',
-				bgcolor: registrationMd3.surface,
-				color: registrationMd3.onSurface,
-				/* Taller than the screen on a phone (the hero bar pushes it
-				   down): let it scroll like the registration steps do. */
-				overflow: 'visible'
-			}}
+		<EntryRoomShell
+			kicker={copy?.badge ?? t('registration.handover.badge')}
+			statusLine={copy?.status?.[state] ?? t(GATE_STATUS_KEY[state])}
 		>
+			{/* `contents`: the template's parts stay children of the room's
+			    column; this box only carries the test hooks. */}
 			<Box
-				sx={{
-					flex: 1,
-					minHeight: 0,
-					display: 'flex',
-					flexDirection: 'column',
-					width: '100%',
-					/* Fills the white column beside the stage, like the live-chat
-					   waiting room, so every room shows the same full cards on a
-					   desktop (Frank, 2026-10-15/16: proportions from the live
-					   chat). It never exceeds its column. */
-					maxWidth: '100%',
-					mx: 'auto',
-					px: { xs: 2.5, sm: 5 },
-					pt: { xs: 3, sm: 4 },
-					pb: 0
-				}}
+				data-cy="registration-handover"
+				data-cy-progress={fill ?? 100}
+				sx={{ display: 'contents' }}
 			>
-				<Box sx={{ flex: 'none' }}>
-					<Box
-						component="span"
-						data-cy="handover-badge"
-						sx={{
-							display: 'inline-flex',
-							alignItems: 'center',
-							gap: 1,
-							height: 30,
-							pl: 0.5,
-							pr: 1.5,
-							mb: 1.25,
-							borderRadius: '15px',
-							bgcolor: registrationMd3.surfaceContainer
-						}}
-					>
+				<WaitingRoomTemplate
+					headline={headline}
+					status={copy?.subline ?? t('registration.handover.subline')}
+					aside={
 						<Box
-							component="span"
-							aria-hidden
 							sx={{
-								'width': 22,
-								'height': 22,
-								'borderRadius': '50%',
-								'bgcolor': registrationMd3.primary,
-								'color': registrationMd3.onPrimary,
-								'display': 'flex',
-								'alignItems': 'center',
-								'justifyContent': 'center',
-								'& svg': { fontSize: 14 }
+								display: 'flex',
+								alignItems: 'flex-start',
+								gap: 1.25,
+								fontSize: { xs: 12, sm: 13 },
+								lineHeight: { xs: '17px', sm: '18px' },
+								color: registrationMd3.onSurfaceVariant
 							}}
 						>
-							<CheckRoundedIcon />
+							<LockOutlinedIcon
+								aria-hidden
+								sx={{ fontSize: 18, flexShrink: 0, mt: '1px' }}
+							/>
+							<Typography
+								component="span"
+								sx={{ fontSize: 'inherit' }}
+							>
+								{copy?.encryption ??
+									t('registration.handover.encryption')}
+							</Typography>
 						</Box>
-						<Typography
-							component="span"
-							sx={{
-								fontSize: 12,
-								fontWeight: 600,
-								letterSpacing: '0.6px',
-								textTransform: 'uppercase',
-								color: registrationMd3.primary
-							}}
-						>
-							{copy?.badge ?? t('registration.handover.badge')}
-						</Typography>
-					</Box>
-					{/* Frank, 2026-09-01: "wir sollten aus dem 'Geschafft, so
-					    geht es weiter' ein 'Fast geschafft' machen, das können
-					    wir auch ein bisschen animieren und dann wenn 'Anfrage
-					    schreiben' fertig ist, dann geht das 'Fast' eben da auch
-					    weg und es ist geschafft."
-
-					    Two headlines share one grid cell so the line never
-					    jumps: while the app is still loading the "Fast" one is
-					    up, and the moment the way on is free it hands over to
-					    "Geschafft." Crossfading whole lines rather than
-					    collapsing the word keeps German capitalisation right
-					    ("Fast geschafft." → "Geschafft.", not "geschafft.").
-					    A caller that hands in its own headline (the live chat
-					    does) gets that one, unanimated. */}
-					<Box
-						sx={{
-							display: 'grid',
-							gridTemplateAreas: '"headline"',
-							alignItems: 'start'
-						}}
-					>
-						{[false, true].map((done) => {
-							const own = copy?.headline;
-							const text = own
-								? own
-								: done
-									? t('registration.handover.headline')
-									: t('registration.handover.headlineAlmost');
-							const shown = own ? done : done === handoverDone;
-							if (own && !done) {
-								return null;
-							}
-							return (
-								<Typography
-									key={String(done)}
-									/* The visible line is the heading,
-									   whichever of the two it is: with the
-									   `h1` pinned to "Geschafft." the page had
-									   no heading at all while it waited. */
-									component={shown ? 'h1' : 'span'}
-									aria-hidden={!shown}
-									sx={{
-										// Same reason as the button labels:
-										// Typography does not inherit the
-										// surface colour.
-										'color': 'inherit',
-										'gridArea': 'headline',
-										'fontSize': { xs: 30, sm: 34 },
-										'lineHeight': {
-											xs: '36px',
-											sm: '41px'
-										},
-										'fontWeight': 700,
-										'opacity': shown ? 1 : 0,
-										'transform': shown
-											? 'translateY(0)'
-											: 'translateY(-6px)',
-										'transition': `opacity ${registrationMotion.standard} ${registrationMotion.easeOut}, transform ${registrationMotion.standard} ${registrationMotion.easeOut}`,
-										'pointerEvents': 'none',
-										'@media (prefers-reduced-motion: reduce)':
-											{
-												transition: 'none',
-												transform: 'none'
-											}
-									}}
-								>
-									{text}
-								</Typography>
-							);
-						})}
-					</Box>
-					<Typography
-						sx={{
-							mt: 0.75,
-							fontSize: { xs: 15, sm: 16 },
-							lineHeight: { xs: '21px', sm: '22px' },
-							color: registrationMd3.onSurfaceVariant
-						}}
-					>
-						{copy?.subline ?? t('registration.handover.subline')}
-					</Typography>
-				</Box>
-
-				<Box
-					sx={{
-						flex: 1,
-						minHeight: 0,
-						display: 'flex',
-						flexDirection: 'column',
-						pt: { xs: 2.25, sm: 2.5 }
-					}}
+					}
+					gate={
+						<Box sx={{ flex: '1 1 0', minWidth: 0 }}>
+							<HandoverGateButton
+								state={state}
+								onEnter={handleEnter}
+								label={copy?.cta}
+								status={copy?.status?.[state]}
+								progress={fill}
+							/>
+						</Box>
+					}
 				>
 					<HandoverCarousel steps={copy?.steps} />
-				</Box>
-
-				<Box
-					sx={{
-						flex: 'none',
-						display: 'flex',
-						alignItems: 'flex-start',
-						justifyContent: { xs: 'flex-start', sm: 'center' },
-						gap: 1.25,
-						py: { xs: 1.5, sm: 2 },
-						fontSize: { xs: 12, sm: 13 },
-						lineHeight: { xs: '17px', sm: '18px' },
-						color: registrationMd3.onSurfaceVariant,
-						textAlign: { xs: 'left', sm: 'center' }
-					}}
-				>
-					<LockOutlinedIcon
-						aria-hidden
-						sx={{ fontSize: 18, flexShrink: 0, mt: '1px' }}
-					/>
-					<Typography component="span" sx={{ fontSize: 'inherit' }}>
-						{copy?.encryption ??
-							t('registration.handover.encryption')}
-					</Typography>
-				</Box>
+				</WaitingRoomTemplate>
 			</Box>
-
-			{/* The same bar every registration-shaped screen uses, so the
-			    button does not move by a pixel between "Registrieren" and
-			    here. It reserves its own measured height in the flow. */}
-			<RegistrationFooter>
-				<Box sx={{ flex: '1 1 0', minWidth: 0 }}>
-					<HandoverGateButton
-						state={state}
-						onEnter={handleEnter}
-						label={copy?.cta}
-						status={copy?.status?.[state]}
-						progress={fill}
-					/>
-				</Box>
-			</RegistrationFooter>
-		</Box>
+		</EntryRoomShell>
 	);
 };

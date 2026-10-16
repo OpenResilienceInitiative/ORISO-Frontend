@@ -7,10 +7,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { generatePseudonym } from '../../utils/pseudonymGenerator';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../globalState';
-import {
-	LegalLinksContext,
-	TProvidedLegalLink
-} from '../../globalState/provider/LegalLinksProvider';
+import { LegalLinksContext } from '../../globalState/provider/LegalLinksProvider';
 import { Stage } from '../stage/stage';
 import { EntryRoomShell } from './entryRoom/EntryRoomShell';
 import { LiveChatAccess } from './entryRoom/LiveChatAccess';
@@ -27,6 +24,7 @@ import {
 	tablet834Globals
 } from '../message/messageStoryShell';
 import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
+import { storyLegalLinks as legalLinks } from '../waitingRoom/storyLegalLinks';
 
 /**
  * The **live chat** entry room — the real views (`entryRoom/`), which the
@@ -48,18 +46,6 @@ const meta: Meta = {
 };
 export default meta;
 
-const legalLinks: TProvidedLegalLink[] = [
-	{
-		label: 'login.legal.infoText.dataprotection',
-		registration: true,
-		getUrl: () => 'https://oriso.example/datenschutz'
-	} as TProvidedLegalLink,
-	{
-		label: 'login.legal.infoText.impressum',
-		registration: true,
-		getUrl: () => 'https://oriso.example/impressum'
-	} as TProvidedLegalLink
-];
 /* The same sentence the room builds, read from the catalogue instead of a
    German literal — a story opened in English has to read English, because
    this is the text the guest consents to. */

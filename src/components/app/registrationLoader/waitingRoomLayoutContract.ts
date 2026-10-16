@@ -142,7 +142,13 @@ const checkFrame = (canvasElement: HTMLElement): string | null => {
 			...doc.querySelectorAll<HTMLElement>(
 				'.stage__legalLinks, .stageLayout__legalLinks'
 			)
-		].filter((row) => row.getClientRects().length > 0);
+		].filter(
+			(row) =>
+				row.getClientRects().length > 0 &&
+				// An empty row has a box but shows nothing (no legal links in
+				// context); it does not count as shown.
+				row.querySelector('a, button') !== null
+		);
 		if (shownLegalRows.length !== 1) {
 			return `legal links are shown ${shownLegalRows.length} times, expected once`;
 		}

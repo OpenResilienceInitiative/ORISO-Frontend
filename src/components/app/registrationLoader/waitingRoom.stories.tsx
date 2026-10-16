@@ -5,6 +5,8 @@ import { Box, Typography } from '@mui/material';
 import { expect, waitFor } from 'storybook/test';
 import { Stage } from '../../stage/stage';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
+import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
+import { storyLegalLinks } from '../../waitingRoom/storyLegalLinks';
 import { useGroupJoinHandoverCopy } from '../../groupChat/groupJoinHandoverCopy';
 import {
 	desktop1440Globals,
@@ -35,10 +37,12 @@ const meta: Meta = {
 	decorators: [
 		(Story) => (
 			<GlobalComponentContext.Provider value={{ Stage }}>
-				{/* `#storybook-root` is not full height; the app root is. */}
-				<Box sx={{ minHeight: '100vh' }}>
-					<Story />
-				</Box>
+				<LegalLinksContext.Provider value={storyLegalLinks}>
+					{/* `#storybook-root` is not full height; the app root is. */}
+					<Box sx={{ minHeight: '100vh' }}>
+						<Story />
+					</Box>
+				</LegalLinksContext.Provider>
 			</GlobalComponentContext.Provider>
 		)
 	]

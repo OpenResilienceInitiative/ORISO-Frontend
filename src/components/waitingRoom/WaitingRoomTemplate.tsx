@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { Box, Typography } from '@mui/material';
 import { RegistrationFooter } from '../registrationFooter/RegistrationFooter';
-import { registrationMd3 } from '../registration/registrationDesign/registrationDesign';
+import {
+	registrationMd3,
+	registrationMotion
+} from '../registration/registrationDesign/registrationDesign';
 
 export interface WaitingRoomTemplateProps {
-	/** Above the headline, e.g. the registration's "Registriert" chip. */
-	eyebrow?: React.ReactNode;
 	headline: string;
 	/** What is happening right now; announced to screen readers. */
 	status: React.ReactNode;
@@ -44,7 +45,6 @@ export interface WaitingRoomTemplateProps {
  * stands in the middle is the room's own business: cards or a clock.
  */
 export const WaitingRoomTemplate = ({
-	eyebrow,
 	headline,
 	status,
 	statusLeading,
@@ -57,14 +57,25 @@ export const WaitingRoomTemplate = ({
 }: WaitingRoomTemplateProps) => (
 	<>
 		<Box data-cy="waiting-room-template" sx={{ mb: 3 }}>
-			{eyebrow}
+			{/* Mounted anew when the words change, so a new headline
+			    ("Fast geschafft." → "Geschafft.") fades in instead of
+			    jumping. */}
 			<Typography
+				key={headline}
 				component="h1"
 				sx={{
-					fontSize: { xs: 30, sm: 34 },
-					lineHeight: { xs: '36px', sm: '41px' },
-					fontWeight: 700,
-					color: registrationMd3.onSurface
+					'fontSize': { xs: 30, sm: 34 },
+					'lineHeight': { xs: '36px', sm: '41px' },
+					'fontWeight': 700,
+					'color': registrationMd3.onSurface,
+					'animation': `waitingRoomHeadline ${registrationMotion.standard} ${registrationMotion.easeOut} both`,
+					'@keyframes waitingRoomHeadline': {
+						from: { opacity: 0, transform: 'translateY(-6px)' },
+						to: { opacity: 1, transform: 'none' }
+					},
+					'@media (prefers-reduced-motion: reduce)': {
+						animation: 'none'
+					}
 				}}
 			>
 				{headline}

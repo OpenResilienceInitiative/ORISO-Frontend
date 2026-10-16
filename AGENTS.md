@@ -38,6 +38,12 @@ three parts. Do not write a fourth.
 - **Frame:** `WaitingRoomFrame` (`src/components/waitingRoom/`). No
   hand-written `StageLayout` and no direct `Stage` import in a waiting room.
 - **Bar:** `RegistrationFooter`. No own fixed bar, no own spacer.
+- **Layout:** `WaitingRoomTemplate` (`src/components/waitingRoom/`), taken
+  from the live-chat room: headline, status line, the middle (cards, or a
+  waiting component such as the self-help countdown), a quiet row, the bar.
+  Consent slides into the bar via `WaitingRoomConsentPanel` (waving hand,
+  checkbox bound to the words, decline X). Proportions come from the live
+  chat; do not re-lay a room by hand.
 - **Button:** `HandoverGateButton`. Its fill shows real progress only — for
   the registration handover that is `handoverProgress` milestones. Never a
   timer, never a fixed value.

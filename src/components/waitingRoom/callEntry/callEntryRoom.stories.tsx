@@ -6,10 +6,7 @@ import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../../stage/stage';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../../globalState';
-import {
-	LegalLinksContext,
-	TProvidedLegalLink
-} from '../../../globalState/provider/LegalLinksProvider';
+import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import {
 	desktop1440Globals,
 	phone390Globals
@@ -19,6 +16,7 @@ import { CallEntryRoom, CallEntryRoomProps } from './CallEntryRoom';
 import { CallDevices } from './callEntryTypes';
 import type { Pseudonym } from '../../../utils/pseudonymGenerator';
 import { useLiveCallDevices } from './useLiveCallDevices';
+import { storyLegalLinks as legalLinks } from '../storyLegalLinks';
 
 /**
  * **Call entry** — the waiting room before a video or phone call
@@ -33,18 +31,6 @@ import { useLiveCallDevices } from './useLiveCallDevices';
  * Device names and microphone levels are fixtures. "Live devices" asks the
  * browser for the real ones.
  */
-const legalLinks: TProvidedLegalLink[] = [
-	{
-		label: 'login.legal.infoText.dataprotection',
-		registration: true,
-		getUrl: () => 'https://oriso.example/datenschutz'
-	} as TProvidedLegalLink,
-	{
-		label: 'login.legal.infoText.impressum',
-		registration: true,
-		getUrl: () => 'https://oriso.example/impressum'
-	} as TProvidedLegalLink
-];
 
 const meta: Meta<typeof CallEntryRoom> = {
 	title: 'Entry flows/Call entry/Device check',
