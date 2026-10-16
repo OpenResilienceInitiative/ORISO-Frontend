@@ -2599,7 +2599,8 @@
 			},
 			"steps": {
 				"wait": {
-					"title": "Du wartest, bis jemand frei ist"
+					"title": "Du wartest, bis jemand frei ist",
+					"textNobodyLive": "Sobald eine Beraterin online ist, geht es für dich los."
 				},
 				"consent": {
 					"title": "Dann stimmst du einmal zu",
