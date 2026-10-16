@@ -91,6 +91,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const [bannedOverlayName, setBannedOverlayName] = useState<string | null>(
 		null
 	);
+	const [qrOpen, setQrOpen] = useState(false);
 
 	const { session: activeSession, ready } = useSession(groupIdFromParam);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
@@ -321,7 +322,7 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 			    Storybook (`Chat info/Group`). */}
 			<GroupChatInfoFrame
 				dialog={dialog}
-				hidden={overlayActive || bannedOverlayName !== null}
+				hidden={overlayActive || bannedOverlayName !== null || qrOpen}
 				onClose={() => navigate(chatPath)}
 				overlays={
 					<>
@@ -336,12 +337,17 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 							userName={bannedOverlayName ?? ''}
 							handleOverlay={() => setBannedOverlayName(null)}
 						/>
+						<GroupChatQrOverlay
+							open={qrOpen}
+							onOpenChange={setQrOpen}
+						/>
 					</>
 				}
 			>
 				<GroupChatInfoM3Connected
 					embedded={dialog}
 					onBanned={setBannedOverlayName}
+					onShowQr={() => setQrOpen(true)}
 					topic={topic}
 					scheduleSummary={scheduleSummary}
 					statusLabel={translate(
@@ -469,6 +475,7 @@ const GroupChatInfoM3Connected = ({
 	isCurrentUserModerator,
 	showInviteActions,
 	onBanned,
+	onShowQr,
 	...props
 }: Omit<
 	GroupChatInfoM3Props,
@@ -482,6 +489,7 @@ const GroupChatInfoM3Connected = ({
 	isCurrentUserModerator: boolean;
 	showInviteActions: boolean;
 	onBanned: (name: string) => void;
+	onShowQr: () => void;
 }) => {
 	const { t: translate } = useTranslation();
 	const { activeSession } = useContext(ActiveSessionContext);
@@ -493,7 +501,6 @@ const GroupChatInfoM3Connected = ({
 		anchor: HTMLElement;
 		participant: GroupChatInfoParticipant;
 	} | null>(null);
-	const [qrOpen, setQrOpen] = useState(false);
 	const { url, copyRegistrationLink } = useGroupChatInviteLink(
 		activeSession.item.id,
 		activeSession.item.assignedAgencies?.[0]?.id,
@@ -559,9 +566,7 @@ const GroupChatInfoM3Connected = ({
 				onParticipantMenu={(participant, anchor) =>
 					setMenu({ participant, anchor })
 				}
-				onShowQrCode={
-					showInviteActions ? () => setQrOpen(true) : undefined
-				}
+				onShowQrCode={showInviteActions ? onShowQr : undefined}
 				onCopyInviteLink={
 					showInviteActions ? copyRegistrationLink : undefined
 				}
@@ -576,16 +581,36 @@ const GroupChatInfoM3Connected = ({
 					{translate('banUser.ban.trigger')}
 				</MenuItem>
 			</Menu>
-			{showInviteActions && url && (
-				<GenerateQrCode
-					url={url}
-					headline={translate('groupChat.qrCode.headline')}
-					text={translate('groupChat.qrCode.text')}
-					filename={`group-chat-${activeSession.item.id}`}
-					open={qrOpen}
-					onOpenChange={setQrOpen}
-				/>
-			)}
 		</>
+	);
+};
+
+/** The QR code is a legacy overlay, so it lives outside the dialog. */
+const GroupChatQrOverlay = ({
+	open,
+	onOpenChange
+}: {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+}) => {
+	const { t: translate } = useTranslation();
+	const { activeSession } = useContext(ActiveSessionContext);
+	const { url } = useGroupChatInviteLink(
+		activeSession.item.id,
+		activeSession.item.assignedAgencies?.[0]?.id,
+		activeSession.item.inviteToken
+	);
+	if (!url) {
+		return null;
+	}
+	return (
+		<GenerateQrCode
+			url={url}
+			headline={translate('groupChat.qrCode.headline')}
+			text={translate('groupChat.qrCode.text')}
+			filename={`group-chat-${activeSession.item.id}`}
+			open={open}
+			onOpenChange={onOpenChange}
+		/>
 	);
 };

@@ -3,6 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { Route, Routes } from 'react-router-dom';
 import { TenantContext } from '../../globalState';
+import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import type { ListItemInterface } from '../../globalState/interfaces';
 import { chatTransportService } from '../../services/chatTransportService';
 import { GroupChatInfo } from './GroupChatInfo';
@@ -149,10 +150,11 @@ const WiredChatInfo = ({
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
 						element={
 							dialog ? (
-								<>
+								<ModalProvider>
 									<p>Chat</p>
 									<GroupChatInfo dialog />
-								</>
+									<div id="overlay" />
+								</ModalProvider>
 							) : (
 								<GroupChatInfo />
 							)
@@ -351,4 +353,32 @@ export const Dialog375: Story = {
 	globals: phone375Globals,
 	render: () => <WiredChatInfo layout="mobile" dialog />,
 	play: closesWithTheCrossButton
+};
+
+/** The QR code is a legacy overlay: the dialog steps aside and comes back. */
+export const DialogQrCode: Story = {
+	name: 'Dialog · QR code shows above, dialog returns',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog />,
+	play: async () => {
+		const page = within(document.body);
+		const dialog = await page.findByRole('dialog', {}, { timeout: 5000 });
+		await userEvent.click(
+			await within(dialog).findByRole(
+				'button',
+				{ name: /QR-Code anzeigen/ },
+				{ timeout: 5000 }
+			)
+		);
+		await page.findByAltText('QR-Code');
+		await waitFor(() => expect(page.getByAltText('QR-Code')).toBeVisible());
+		await waitFor(() =>
+			expect(page.queryByTestId('group-chat-info-dialog')).toBeNull()
+		);
+		// The legacy overlay's ✕ is an SVG with a label, not a button.
+		await userEvent.click(page.getByLabelText('Schließen'));
+		await waitFor(() =>
+			expect(page.getByTestId('group-chat-info-dialog')).toBeVisible()
+		);
+	}
 };
