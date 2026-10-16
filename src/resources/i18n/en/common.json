@@ -533,6 +533,21 @@
 		}
 	},
 	"historyRequest": {
+		"ask": {
+			"title": "Earlier messages are not readable here",
+			"intro": "You signed in on a new device, so your earlier messages in this conversation are locked. You can ask your counsellor to unlock them.",
+			"button": "Ask to read earlier messages",
+			"waiting": "Request sent. Your counsellor has to approve it; the messages appear here afterwards.",
+			"done": "Your earlier messages are readable again.",
+			"failed": "The request could not be sent. Please try again.",
+			"dialog": {
+				"title": "Ask to read earlier messages",
+				"description": "Your counsellor will see what you write and decides whether to unlock this conversation for you.",
+				"label": "What was in this conversation?",
+				"cancel": "Cancel",
+				"send": "Send request"
+			}
+		},
 		"card": {
 			"title": "Request to read this conversation again",
 			"intro": "The person in this conversation signed in on a new device and cannot read the earlier messages. They wrote:",

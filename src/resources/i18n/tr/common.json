@@ -557,6 +557,21 @@
 			"decline": "Reddet",
 			"failed": "Anahtarlar gönderilemedi. Lütfen tekrar deneyin.",
 			"origin": "{{user}} yeni bir cihazdan ({{device}}), {{time}} istedi. Bu cihaz henüz doğrulanmadı: yalnızca bu isteği bekliyorsanız açın."
+		},
+		"ask": {
+			"title": "Önceki mesajlar burada okunamıyor",
+			"intro": "Yeni bir cihazdan giriş yaptınız, bu yüzden bu görüşmedeki önceki mesajlarınız kilitli. Danışmanınızdan bunları açmasını isteyebilirsiniz.",
+			"button": "Önceki mesajları iste",
+			"waiting": "İstek gönderildi. Danışmanınızın onaylaması gerekiyor; ardından mesajlar burada görünür.",
+			"done": "Önceki mesajlarınız yeniden okunabilir.",
+			"failed": "İstek gönderilemedi. Lütfen tekrar deneyin.",
+			"dialog": {
+				"title": "Önceki mesajları iste",
+				"description": "Danışmanınız yazdıklarınızı görür ve bu görüşmeyi açıp açmayacağına karar verir.",
+				"label": "Bu görüşmede ne vardı?",
+				"cancel": "İptal",
+				"send": "İsteği gönder"
+			}
 		}
 	},
 	"e2ee": {

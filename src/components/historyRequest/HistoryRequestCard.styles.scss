@@ -70,3 +70,8 @@
 .historyRequestCard__approve {
 	color: var(--m3-primary, inherit);
 }
+
+.historyAsk__failed {
+	margin: 8px 0 0;
+	color: var(--m3-error, inherit);
+}

@@ -151,6 +151,15 @@
 		}
 	},
 	"historyRequest": {
+		"ask": {
+			"intro": "Du hast dich auf einem neuen Gerät angemeldet, deshalb sind deine früheren Nachrichten in diesem Gespräch gesperrt. Du kannst deine Beratung bitten, sie freizugeben.",
+			"waiting": "Anfrage gesendet. Deine Beratung muss sie bestätigen; danach erscheinen die Nachrichten hier.",
+			"done": "Deine früheren Nachrichten sind wieder lesbar.",
+			"failed": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"dialog": {
+				"description": "Deine Beratung sieht, was du schreibst, und entscheidet, ob dieses Gespräch für dich freigegeben wird."
+			}
+		},
 		"card": {
 			"origin": "Angefragt von {{user}} auf einem neuen Gerät ({{device}}), {{time}}. Das Gerät ist noch nicht verifiziert – gib nur frei, wenn du diese Anfrage erwartest.",
 			"failed": "Die Schlüssel konnten nicht gesendet werden. Bitte versuche es noch einmal."

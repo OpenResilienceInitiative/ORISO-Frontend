@@ -81,6 +81,8 @@ import { formatToHHMM } from '../../utils/dateHelpers';
 import { usePracticeSupervisorsRevision } from '../../practice';
 import { isPracticeRoomId } from '../../practice/practiceIds';
 import { useCaseHandoverStatusRefresh } from './useCaseHandoverStatusRefresh';
+import { HistoryAskCard } from '../historyRequest/HistoryAskCard';
+import { useRecoveryRuntimeStatus } from '../../services/recoveryReminderState';
 import { HistoryRequestApprovals } from '../historyRequest/HistoryRequestApprovals';
 import { useHistoryRequests } from '../historyRequest/useHistoryRequests';
 
@@ -326,6 +328,9 @@ export const SessionStream = ({
 	const hasHistoryRequests =
 		useHistoryRequests(resolvedChatSession.matrixRoomId).requests.length >
 			0 && isConsultant;
+	const recoveryStatus = useRecoveryRuntimeStatus(
+		matrixClientService?.getClient()?.getUserId() ?? ''
+	);
 	const clearMatrixTypingTimeout = useCallback(() => {
 		if (matrixTypingTimeoutRef.current) {
 			window.clearTimeout(matrixTypingTimeoutRef.current);
@@ -1505,6 +1510,12 @@ export const SessionStream = ({
 									onDecline={() =>
 										handleCaseHandoverConsentDecision(false)
 									}
+								/>
+							)}
+						{recoveryStatus === 'needs-recovery-key' &&
+							!!resolvedChatSession.matrixRoomId && (
+								<HistoryAskCard
+									roomId={resolvedChatSession.matrixRoomId}
 								/>
 							)}
 						{isConsultant && (
