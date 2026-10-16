@@ -5280,7 +5280,18 @@
 			"browser": "Geben Sie mir hier ein Signal",
 			"browserHint": "Ohne Adresse — funktioniert aber nur auf diesem Gerät.",
 			"enableBrowser": "Browser aktivieren",
+			"dialog": {
+				"title": "Browser-Benachrichtigungen einschalten",
+				"description": "Wählen Sie den Ton, den Sie hören werden, und erlauben Sie dann Benachrichtigungen in Ihrem Browser.",
+				"stayInBrowser": "Das funktioniert, solange ORISO in diesem Browser auf diesem Gerät geöffnet bleibt.",
+				"toneLabel": "Benachrichtigungston",
+				"tone": "Ton {{number}}",
+				"noTone": "Kein Ton"
+			},
 			"browserDenied": "Browser-Benachrichtigungen sind nicht aktiviert. Bitte prüfen Sie die Berechtigung in Ihrem Browser.",
+			"optionActive": "Aktiv",
+			"browserBlockedHelp": "Browser-Benachrichtigungen sind für diese Seite blockiert. Klicken Sie in der Adressleiste auf das Schloss-Symbol, öffnen Sie die Website-Einstellungen, stellen Sie Benachrichtigungen auf Zulassen oder wählen Sie Zurücksetzen, und versuchen Sie es dann erneut.",
+			"emailSavedNext": "Ihre E-Mail-Adresse ist gespeichert. Ein Schritt fehlt noch: Erlauben Sie Benachrichtigungen in Ihrem Browser.",
 			"saveFailed": "Die Einstellung konnte nicht bestätigt werden. Bitte versuchen Sie es erneut.",
 			"active": "Aktiviert: {{channel}}",
 			"bothSetup": "Beides einrichten",
@@ -5324,6 +5335,8 @@
 			"headline": "Benachrichtigung per E-Mail",
 			"body": "Sie können freiwillig eine E-Mail-Adresse hinterlegen. Dann erhalten Sie eine Nachricht, sobald eine Antwort da ist. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"action": "E-Mail-Adresse angeben",
+			"dialogTitle": "Zugang sichern",
+			"dialogDescription": "Hinterlegen Sie eine E-Mail-Adresse, damit Sie Ihr Passwort später zurücksetzen können und von Antworten erfahren. Der Inhalt der Beratung steht nie in dieser E-Mail.",
 			"saveFailed": "Speichern hat nicht geklappt. Bitte versuchen Sie es noch einmal.",
 			"notAllowed": "Für dieses Konto ist das Hinterlegen einer E-Mail-Adresse nicht freigegeben. Bitte kontaktieren Sie unseren Support."
 		},

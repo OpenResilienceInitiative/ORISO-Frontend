@@ -102,6 +102,15 @@ beforeEach(() => {
 		}
 	};
 	patch.mockResolvedValue(undefined);
+	// jsdom has no media playback; previews must not throw in any test.
+	vi.stubGlobal(
+		'Audio',
+		class {
+			volume = 1;
+			constructor(public src: string) {}
+			play = vi.fn().mockResolvedValue(undefined);
+		}
+	);
 	vi.stubGlobal('Notification', {
 		permission: 'default',
 		requestPermission: request
@@ -159,6 +168,11 @@ it('does not present declined browser permission as activated', async () => {
 	fireEvent.click(
 		screen.getByRole('button', { name: /notificationChoice.browser / })
 	);
+	fireEvent.click(
+		await screen.findByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
 	await screen.findByRole('alert');
 	expect(screen.queryByRole('status')).toBeNull();
 	expect(localStorage.getItem('BROWSER_NOTIFICATIONS')).toBeNull();
@@ -213,7 +227,10 @@ it('saving a new address enables email before offering the browser step', async 
 	expect(screen.queryByRole('textbox')).toBeNull();
 	expect(
 		screen
-			.getByRole('button', { name: /notificationChoice.email / })
+			.getByRole('button', {
+				name: /notificationChoice.email /,
+				hidden: true
+			})
 			.getAttribute('aria-pressed')
 	).toBe('true');
 	expect(request).not.toHaveBeenCalled();
@@ -319,4 +336,192 @@ it('does not confirm consent email or continue BOTH when consent subscription wa
 			name: 'erstantwort.notificationChoice.enableBrowser'
 		})
 	).toBeNull();
+});
+
+it('explains a blocked browser permission up front, without asking the browser again', () => {
+	Object.defineProperty(Notification, 'permission', {
+		value: 'denied',
+		configurable: true
+	});
+	setup();
+	expect(
+		screen.getByText('erstantwort.notificationChoice.browserBlockedHelp')
+	).toBeTruthy();
+	expect(request).not.toHaveBeenCalled();
+});
+it('swaps the generic denial for the unblock instructions when the browser stays blocked', async () => {
+	Object.defineProperty(Notification, 'permission', {
+		value: 'denied',
+		configurable: true
+	});
+	request.mockResolvedValue('denied');
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	// A blocked site cannot be asked again: the dialog only gives the way out.
+	const alert = await screen.findByRole('alert');
+	expect(alert.textContent).toBe(
+		'erstantwort.notificationChoice.browserBlockedHelp'
+	);
+	expect(request).not.toHaveBeenCalled();
+	expect(
+		(
+			screen.getByRole('button', {
+				name: 'erstantwort.notificationChoice.enableBrowser'
+			}) as HTMLButtonElement
+		).disabled
+	).toBe(true);
+});
+it('opens the tone dialog for browser-only and asks the browser only on its button', async () => {
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	await screen.findByRole('radiogroup');
+	expect(request).not.toHaveBeenCalled();
+	expect(
+		screen.getByText('erstantwort.notificationChoice.dialog.stayInBrowser')
+	).toBeTruthy();
+});
+it('moves the tone with the arrow keys and keeps one tab stop', async () => {
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	const radios = await screen.findAllByRole('radio');
+	const selected = radios.findIndex(
+		(radio) => radio.getAttribute('aria-checked') === 'true'
+	);
+	expect(radios.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+	fireEvent.keyDown(radios[selected], { key: 'ArrowRight' });
+	await waitFor(() =>
+		expect(
+			radios[(selected + 1) % radios.length].getAttribute('aria-checked')
+		).toBe('true')
+	);
+	expect(radios[selected].getAttribute('aria-checked')).toBe('false');
+});
+it('remembers the chosen tone for requests and conversations and plays a preview', async () => {
+	const play = vi.fn().mockResolvedValue(undefined);
+	vi.stubGlobal(
+		'Audio',
+		class {
+			volume = 1;
+			constructor(public src: string) {}
+			play = play;
+		}
+	);
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	fireEvent.click(await screen.findByTestId('notificationTone-ton-5'));
+	expect(play).toHaveBeenCalledTimes(1);
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
+	await waitFor(() => expect(request).toHaveBeenCalled());
+	const { notificationConfig } =
+		notificationSettingsStore.getState().settings;
+	expect(notificationConfig.requests.new.sound).toBe('ton-5');
+	expect(notificationConfig.conversations.standard.sound).toBe('ton-5');
+	expect(notificationConfig.timeCritical.call.sound).toBe('ring');
+});
+it('keeps the old tones when the browser permission is denied', async () => {
+	request.mockImplementation(async () => {
+		Object.defineProperty(Notification, 'permission', {
+			value: 'denied',
+			configurable: true
+		});
+		return 'denied';
+	});
+	setup();
+	const before = JSON.stringify(
+		notificationSettingsStore.getState().settings.notificationConfig
+	);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	fireEvent.click(await screen.findByTestId('notificationTone-ton-5'));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
+	await waitFor(() => expect(request).toHaveBeenCalled());
+	await waitFor(() => expect(screen.queryByRole('radiogroup')).toBeNull());
+	expect(
+		JSON.stringify(
+			notificationSettingsStore.getState().settings.notificationConfig
+		)
+	).toBe(before);
+});
+it('keeps the old tones when saving the browser opt-in fails', async () => {
+	setup();
+	const before = JSON.stringify(
+		notificationSettingsStore.getState().settings.notificationConfig
+	);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	fireEvent.click(await screen.findByTestId('notificationTone-ton-5'));
+	const spy = vi
+		.spyOn(Storage.prototype, 'setItem')
+		.mockImplementation(() => {
+			throw new Error('quota');
+		});
+	try {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'erstantwort.notificationChoice.enableBrowser'
+			})
+		);
+		await waitFor(() => expect(request).toHaveBeenCalled());
+		await waitFor(() =>
+			expect(screen.queryByRole('radiogroup')).toBeNull()
+		);
+	} finally {
+		spy.mockRestore();
+	}
+	expect(
+		JSON.stringify(
+			notificationSettingsStore.getState().settings.notificationConfig
+		)
+	).toBe(before);
+});
+it('keeps the tones the account already has when the picker is not touched', async () => {
+	setup();
+	const before = JSON.stringify(
+		notificationSettingsStore.getState().settings.notificationConfig
+	);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	await screen.findByRole('radiogroup');
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
+	await waitFor(() => expect(request).toHaveBeenCalled());
+	expect(
+		JSON.stringify(
+			notificationSettingsStore.getState().settings.notificationConfig
+		)
+	).toBe(before);
+});
+it('confirms the saved address and names the one remaining browser step for both channels', async () => {
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.both/ })
+	);
+	await screen.findByRole('button', {
+		name: 'erstantwort.notificationChoice.enableBrowser'
+	});
+	expect(
+		screen.getByText('erstantwort.notificationChoice.emailSavedNext')
+	).toBeTruthy();
 });

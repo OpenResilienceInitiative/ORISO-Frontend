@@ -5,7 +5,8 @@ import {
 	cleanup,
 	fireEvent,
 	render,
-	screen
+	screen,
+	waitFor
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -20,6 +21,11 @@ vi.mock('react-i18next', () => ({
 			'furtherSteps.email.overlay.button1.label': 'Speichern',
 			'furtherSteps.email.overlay.button2.label': 'Schließen',
 			'furtherSteps.email.overlay.headline': 'E-Mail-Adresse angeben',
+			'erstantwort.emailNotification.dialogTitle': 'Zugang sichern',
+			'erstantwort.saveCredentials.copy': 'Kopieren',
+			'erstantwort.saveCredentials.copied': 'Anmeldename kopiert.',
+			'erstantwort.saveCredentials.copyFailed':
+				'Kopieren hat nicht geklappt.',
 			'furtherSteps.email.success.overlay.headline':
 				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.',
 			'erstantwort.emailNotification.saveFailed':
@@ -47,47 +53,20 @@ vi.mock('../../api', () => ({
 	X_REASON: { EMAIL_NOT_AVAILABLE: 'EMAIL_NOT_AVAILABLE' }
 }));
 
-/* The platform Overlay portals into a modal root and installs a focus trap.
-   Neither is what this test is about — it is about the form wiring: validation,
-   submit, and how each failure reaches the person. Stub the chrome, keep the
-   buttonSet contract (label / disabled / function) that the real one honours. */
-vi.mock('../overlay/Overlay', () => ({
-	OVERLAY_FUNCTIONS: { CLOSE: 'CLOSE' },
-	Overlay: ({ item, handleOverlay }: any) => (
-		<div>
-			<h2>{item.headline}</h2>
-			{item.copy && <p>{item.copy}</p>}
-			{item.nestedComponent}
-			{item.buttonSet?.map((button: any) => (
-				<button
-					key={button.label}
-					disabled={button.disabled}
-					onClick={() => handleOverlay(button.function)}
-				>
-					{button.label}
-				</button>
-			))}
-		</div>
-	)
-}));
-
 /* `vi.mock` factories are hoisted above every const in the module, so the
    factory has to be inlined rather than referenced by name. */
 vi.mock('../../resources/img/icons/envelope.svg', () => ({
 	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
 }));
-vi.mock('../../resources/img/illustrations/envelope-check.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
-vi.mock('../../resources/img/illustrations/check.svg', () => ({
-	ReactComponent: (props: React.SVGProps<SVGSVGElement>) => <svg {...props} />
-}));
 
 /* eslint-disable-next-line import/first -- must be imported after the vi.mock
-   calls above, otherwise the real Overlay and SVG modules load first. */
+   calls above, otherwise the real SVG module loads first. */
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.unstubAllGlobals();
+});
 beforeEach(() => {
 	apiPutEmail.mockReset();
 	apiPutEmail.mockResolvedValue(undefined);
@@ -99,6 +78,72 @@ const type = (value: string) =>
 const saveButton = () => screen.getByRole('button', { name: 'Speichern' });
 
 describe('ErstantwortEmailOverlay', () => {
+	it('is the house M3 dialog, named by its headline, with the field inside it', () => {
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		const dialog = screen.getByRole('dialog', {
+			name: 'Zugang sichern'
+		});
+		expect(dialog.querySelector('input[type="email"]')).not.toBeNull();
+	});
+
+	it('saves when Enter is pressed in the field', async () => {
+		const onSaved = vi.fn();
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={onSaved} />);
+		type('a@b.de');
+		fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
+
+		await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+		expect(apiPutEmail).toHaveBeenCalledWith('a@b.de');
+	});
+
+	it('shows no login-name block without a login name', () => {
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
+
+		expect(screen.queryByRole('button', { name: 'Kopieren' })).toBeNull();
+	});
+
+	it('shows the login name read-only and confirms a copy only after it succeeded', async () => {
+		const writeText = vi.fn().mockResolvedValue(undefined);
+		vi.stubGlobal('navigator', { clipboard: { writeText } });
+		render(
+			<ErstantwortEmailOverlay
+				onClose={vi.fn()}
+				onSaved={vi.fn()}
+				userName="hugo.simpson"
+			/>
+		);
+
+		const field = screen.getByDisplayValue('hugo.simpson');
+		expect(field.hasAttribute('readonly')).toBe(true);
+		fireEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
+		await waitFor(() =>
+			expect(screen.getByText('Anmeldename kopiert.')).toBeTruthy()
+		);
+		expect(writeText).toHaveBeenCalledWith('hugo.simpson');
+	});
+
+	it('does not claim a copy when the clipboard write is rejected', async () => {
+		vi.stubGlobal('navigator', {
+			clipboard: { writeText: vi.fn().mockRejectedValue(new Error('no')) }
+		});
+		render(
+			<ErstantwortEmailOverlay
+				onClose={vi.fn()}
+				onSaved={vi.fn()}
+				userName="hugo.simpson"
+			/>
+		);
+
+		fireEvent.click(screen.getByRole('button', { name: 'Kopieren' }));
+		await waitFor(() =>
+			expect(
+				screen.getByText('Kopieren hat nicht geklappt.')
+			).toBeTruthy()
+		);
+		expect(screen.queryByText('Anmeldename kopiert.')).toBeNull();
+	});
+
 	it('keeps saving disabled until the address is a valid one', () => {
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 
@@ -122,11 +167,6 @@ describe('ErstantwortEmailOverlay', () => {
 
 		expect(apiPutEmail).toHaveBeenCalledWith('jemand@example.test');
 		expect(onSaved).toHaveBeenCalled();
-		expect(
-			screen.getByText(
-				'Ihre E-Mail-Adresse wurde erfolgreich gespeichert.'
-			)
-		).toBeTruthy();
 	});
 
 	it('surfaces an already-registered address instead of failing silently', async () => {

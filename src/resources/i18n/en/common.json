@@ -5205,7 +5205,18 @@
 			"browser": "Give me a signal here",
 			"browserHint": "No address needed — but it only works on this device.",
 			"enableBrowser": "Enable browser notifications",
+			"dialog": {
+				"title": "Turn on browser notifications",
+				"description": "Pick the sound you will hear, then allow notifications in your browser.",
+				"stayInBrowser": "This works as long as ORISO stays open in this browser on this device.",
+				"toneLabel": "Notification sound",
+				"tone": "Sound {{number}}",
+				"noTone": "No sound"
+			},
 			"browserDenied": "Browser notifications are not enabled. Please check your browser permission.",
+			"optionActive": "Active",
+			"browserBlockedHelp": "Browser notifications are blocked for this site. Click the lock icon in the address bar, open the site settings, set Notifications to Allow or choose Reset, then try again.",
+			"emailSavedNext": "Your email address is saved. One step left: allow notifications in your browser.",
 			"saveFailed": "The setting could not be confirmed. Please try again.",
 			"active": "Enabled: {{channel}}",
 			"bothSetup": "Set up both",
@@ -5249,6 +5260,8 @@
 			"headline": "Notification by e-mail",
 			"body": "You may leave an e-mail address, entirely voluntarily. We will then let you know as soon as a reply is there. The content of the counselling never appears in that e-mail.",
 			"action": "Add an e-mail address",
+			"dialogTitle": "Secure your access",
+			"dialogDescription": "Leave an e-mail address so you can reset your password later and hear when a reply is there. The content of the counselling never appears in that e-mail.",
 			"saveFailed": "Saving failed. Please try again.",
 			"notAllowed": "This account is not allowed to store an e-mail address. Please contact our support."
 		},
