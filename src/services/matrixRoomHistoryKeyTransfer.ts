@@ -138,6 +138,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		try {
 			const room = client.getRoom(request.roomId);
 			await (room as any)?.loadMembersIfNeeded?.();
+			if (this.client !== client) return false;
 			if (
 				room?.getMember(request.requesterUserId)?.membership !== 'join'
 			) {
@@ -147,6 +148,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				return false;
 			}
 			const sent = await this.sendBundle(
+				client,
 				request.roomId,
 				request.requesterUserId,
 				request.requesterDeviceId,
@@ -344,10 +346,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			return;
 		}
 
+		if (this.client !== client) return;
 		// A request that carries a reason waits for a person, so a device may
 		// send one only every 30 seconds; this runs before any lookup.
 		if (normalizeReason(content.reason)) {
-			const reasonKey = `${content.room_id}:${content.requester_user_id}:${content.requester_device_id}`;
+			const reasonKey = `${content.room_id}:${sender}`;
 			const at = Date.now();
 			if (
 				at - (this.lastReasonRequestAt.get(reasonKey) || 0) <
@@ -355,6 +358,11 @@ export class MatrixRoomHistoryKeyTransfer {
 			) {
 				emitDiagnostic('request-handler-throttled');
 				return;
+			}
+			if (this.lastReasonRequestAt.size >= 500) {
+				for (const [key, time] of this.lastReasonRequestAt)
+					if (at - time >= REQUEST_THROTTLE_MS)
+						this.lastReasonRequestAt.delete(key);
 			}
 			this.lastReasonRequestAt.set(reasonKey, at);
 		}
@@ -385,7 +393,7 @@ export class MatrixRoomHistoryKeyTransfer {
 				// wrote why and a human on this side approves. Without a reason
 				// nothing is kept and nothing is sent, as before.
 				const reason = normalizeReason(content.reason);
-				if (reason) {
+				if (reason && this.client === client) {
 					const pending: PendingHistoryRequest = {
 						requestId: content.request_id,
 						roomId: content.room_id,
@@ -455,6 +463,7 @@ export class MatrixRoomHistoryKeyTransfer {
 		this.lastHandledRequestAt.set(handledRequestKey, now);
 
 		await this.sendBundle(
+			client,
 			content.room_id,
 			content.requester_user_id,
 			content.requester_device_id,
@@ -464,17 +473,20 @@ export class MatrixRoomHistoryKeyTransfer {
 
 	/** Exports the keys of exactly one room and sends them to exactly one device. */
 	private async sendBundle(
+		client: MatrixClient,
 		roomId: string,
 		userId: string,
 		deviceId: string,
 		requestId: string
 	): Promise<boolean> {
-		const client = this.client;
-		const crypto = client?.getCrypto();
-		if (!client || !crypto) return false;
+		const crypto = client.getCrypto();
+		// The request was checked against this client; a replaced client
+		// (another account) must never send keys for it.
+		if (!crypto || this.client !== client) return false;
 		const keys = (await crypto.exportRoomKeys()).filter(
 			(key) => key.room_id === roomId
 		);
+		if (this.client !== client) return false;
 		if (keys.length === 0 || keys.length > MAX_KEY_BUNDLE_COUNT) {
 			emitDiagnostic('request-key-count-rejected', {
 				keyCount: keys.length
