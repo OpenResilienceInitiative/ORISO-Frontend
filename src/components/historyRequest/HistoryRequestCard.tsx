@@ -2,6 +2,14 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import './HistoryRequestCard.styles.scss';
 
+/** i18next ids such as de@informal are not valid BCP-47 tags. */
+const localeFor = (language?: string): string | undefined => {
+	const tag = language?.split('@')[0];
+	return tag && Intl.DateTimeFormat.supportedLocalesOf(tag).length
+		? tag
+		: undefined;
+};
+
 export interface HistoryRequestCardProps {
 	/** What the person wrote about the conversation. */
 	reason: string;
@@ -46,7 +54,7 @@ export const HistoryRequestCard: React.FC<HistoryRequestCardProps> = ({
 						device: requesterDeviceId ?? '',
 						time: receivedAt
 							? new Date(receivedAt).toLocaleString(
-									i18n?.language
+									localeFor(i18n?.language)
 								)
 							: ''
 					})}

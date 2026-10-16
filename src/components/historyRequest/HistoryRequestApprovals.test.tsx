@@ -118,6 +118,26 @@ describe('HistoryRequestApprovals', () => {
 		expect(screen.getByText('about school')).toBeTruthy();
 	});
 
+	it('keeps the failure of one card when another is released', async () => {
+		pending.list = [request('one'), request('two', '!a:m', 'second text')];
+		service.approveRequest.mockResolvedValue(false);
+		render(<HistoryRequestApprovals roomId="!a:m" />);
+		const approve = () =>
+			screen.getAllByRole('button', {
+				name: 'historyRequest.card.approve'
+			});
+
+		fireEvent.click(approve()[0]);
+		await waitFor(() =>
+			expect(screen.getAllByRole('alert')).toHaveLength(1)
+		);
+		fireEvent.click(approve()[1]);
+
+		await waitFor(() =>
+			expect(screen.getAllByRole('alert')).toHaveLength(2)
+		);
+	});
+
 	it('declines through the service without sending anything', () => {
 		pending.list = [request('one')];
 		render(<HistoryRequestApprovals roomId="!a:m" />);
