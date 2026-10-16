@@ -267,6 +267,10 @@ const failures = [
 	[502, 'DPA_POLICY_UNAVAILABLE', 'de', 'Beratung derzeit nicht prüfbar']
 ] as const;
 
+/** Joining a group is not a counselling: the refusal title says so (403 only). */
+const groupJoinTitle = (status: number, title: string) =>
+	status === 403 ? 'Joining this group is currently not possible' : title;
+
 describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 	it.each(['success', 'tenant change'] as const)(
 		'keeps one assignment notice when the reason changes, then clears it on %s',
@@ -310,7 +314,7 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			const refused = await screen.findByRole('alert');
 			expect(
 				within(refused).getByText(
-					'New counselling is currently restricted'
+					'Joining this group is currently not possible'
 				)
 			).toBeTruthy();
 			await user.click(
@@ -323,7 +327,9 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			);
 			expect(screen.getAllByRole('alert')).toHaveLength(1);
 			expect(
-				screen.queryByText('New counselling is currently restricted')
+				screen.queryByText(
+					'Joining this group is currently not possible'
+				)
 			).toBeNull();
 			if (outcome === 'success') {
 				await user.click(
@@ -472,7 +478,11 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			const actor = userEvent.setup();
 			await actor.click(submit);
 			const notice = await screen.findByRole('alert');
-			expect(within(notice).getByText(title)).toBeTruthy();
+			expect(
+				within(notice).getByText(
+					command === 'join' ? groupJoinTitle(status, title) : title
+				)
+			).toBeTruthy();
 			expect(
 				screen.getByLabelText('Successful session reloads').textContent
 			).toBe('0');
@@ -557,7 +567,9 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			const user = userEvent.setup();
 			await user.click(join);
 			const notice = await screen.findByRole('alert');
-			expect(within(notice).getByText(title)).toBeTruthy();
+			expect(
+				within(notice).getByText(groupJoinTitle(status, title))
+			).toBeTruthy();
 			await waitFor(() =>
 				expect((join as HTMLButtonElement).disabled).toBe(false)
 			);
@@ -603,7 +615,9 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			);
 			renderWithProviders(<PendingAssignment />);
 			const notice = await screen.findByRole('alert');
-			expect(within(notice).getByText(title)).toBeTruthy();
+			expect(
+				within(notice).getByText(groupJoinTitle(status, title))
+			).toBeTruthy();
 			expect(screen.getByLabelText('Current route').textContent).toBe(
 				'/sessions/user/view'
 			);

@@ -5908,6 +5908,10 @@
 				"title": "Les nouvelles consultations sont actuellement suspendues",
 				"text": "L’organisme de conseil doit confirmer l’accord actuel de traitement des données. Contactez votre centre de conseil. Les consultations déjà commencées peuvent continuer."
 			},
+			"restrictedGroupJoin": {
+				"title": "Impossible de rejoindre ce groupe pour le moment",
+				"text": "Il n’est pas possible de rejoindre ce groupe pour le moment, car l’organisme de conseil doit encore confirmer l’accord actuel de traitement des données. Contactez votre centre de conseil."
+			},
 			"unavailable": {
 				"title": "La disponibilité des consultations ne peut pas être vérifiée",
 				"text": "Le statut de confirmation de l’accord n’a pas pu être vérifié. Réessayez. Vos saisies sont conservées.",
