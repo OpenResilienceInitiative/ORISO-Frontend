@@ -1265,6 +1265,7 @@
 		"sourcePath": "src/resources/img/icons/arrow-right.svg",
 		"exportNames": ["ArrowRightIcon"],
 		"usageFiles": [
+			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/legalContent/LegalAnchorChips.tsx",
 			"src/components/mobile/linkMenu/LinkMenu.tsx",
@@ -1922,6 +1923,7 @@
 		"usageFiles": [
 			"src/components/animatedIllustration/AnimatedIllustration.tsx",
 			"src/components/banUser/BanUser.tsx",
+			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/conversationCreate/internal/PersonSelectMenu.tsx",
 			"src/components/erstantwort/ErstantwortEmailOverlay.tsx",
@@ -2698,6 +2700,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:groups:base",
+		"family": "groups",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "groups.svg",
+		"sourcePath": "src/resources/img/icons/groups.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
 		"id": "ui-icon:hacker:base",
 		"family": "hacker",
 		"state": "base",
@@ -2719,6 +2734,19 @@
 		"size": null,
 		"fileName": "heart.svg",
 		"sourcePath": "src/resources/img/icons/heart.svg",
+		"exportNames": [],
+		"usageFiles": [],
+		"usage": "catalogued-only"
+	},
+	{
+		"id": "ui-icon:home-video-call:base",
+		"family": "home-video-call",
+		"state": "base",
+		"role": "default",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "home-video-call.svg",
+		"sourcePath": "src/resources/img/icons/home-video-call.svg",
 		"exportNames": [],
 		"usageFiles": [],
 		"usage": "catalogued-only"
@@ -3051,6 +3079,7 @@
 		"sourcePath": "src/resources/img/icons/lock.svg",
 		"exportNames": ["LockIcon"],
 		"usageFiles": [
+			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/datepicker/datepicker.styles.scss",
 			"src/components/login/Login.tsx",
 			"src/components/passwordResetRequest/SetNewPassword.tsx",
@@ -3520,6 +3549,7 @@
 			"src/components/notificationsCenter/eventDescriptors/icons.tsx",
 			"src/components/profile/ConsultantInformation.tsx",
 			"src/components/profile/ConsultantPrivateData.tsx",
+			"src/components/profile/DisplayNameSettings.tsx",
 			"src/components/serviceExplanation/ServiceExplanation.tsx",
 			"src/components/sessionsListItem/sessionsListItemHelpers.ts",
 			"src/components/twoFactorAuth/TwoFactorAuth.tsx",
@@ -4116,6 +4146,7 @@
 		"sourcePath": "src/resources/img/icons/stack-vertical.svg",
 		"exportNames": ["MenuVerticalIcon"],
 		"usageFiles": [
+			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/caseHandover/CaseHandoverClientCards.tsx",
 			"src/components/chatMenuDropdown/CompactActionMenu.tsx",
 			"src/components/chatStage/PanelCallActions.tsx",
@@ -4417,6 +4448,7 @@
 		"sourcePath": "src/resources/img/icons/trash.svg",
 		"exportNames": ["TrashIcon"],
 		"usageFiles": [
+			"src/components/call/notes/Gespraechsnotizen.tsx",
 			"src/components/editableData/EditableData.tsx",
 			"src/components/sessionMenu/SessionMenu.tsx",
 			"src/components/sessionsListItem/SessionListItemMenu.tsx",

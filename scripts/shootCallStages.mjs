@@ -48,7 +48,11 @@ const STORIES = [
 	['call-notizen--leer', 'Notizen-leer', 520],
 	['call-notizen--rail', 'Notizen-rail', 520],
 	['call-notizen--beschrieben', 'Notizen-beschrieben', 520],
-	['call-notizen--neben-der-buehne', 'Notizen-neben-der-Buehne', 1280]
+	['call-notizen--neben-der-buehne', 'Notizen-neben-der-Buehne', 1280],
+	['call-ansichtswechsler--dunkel', 'Wechsler-dunkel', 520],
+	['call-ansichtswechsler--hell', 'Wechsler-hell', 520],
+	['call-ansichtswechsler--alle-drei', 'Wechsler-alle', 520],
+	['call-ansichtswechsler--ueber-der-buehne', 'Wechsler-Buehne', 820]
 ];
 
 /** The two-person circle has halves rather than participants or fields. */
@@ -83,6 +87,14 @@ const FIELD_STORIES = new Set([
 	'Felder-20',
 	'Felder-Atmosphaere',
 	'Felder-Handy'
+]);
+
+/** The view switcher. Only the last of them has a stage behind it. */
+const SWITCHER_STORIES = new Set([
+	'Wechsler-dunkel',
+	'Wechsler-hell',
+	'Wechsler-alle',
+	'Wechsler-Buehne'
 ]);
 
 /** The notes panel. Only the last of them has a stage next to it. */
@@ -147,6 +159,14 @@ for (const [id, name, width] of STORIES) {
 					3
 			);
 		if (name === 'Notizen-neben-der-Buehne')
+			await page.waitForFunction(
+				() =>
+					document.querySelectorAll('[data-testid="participant"] svg')
+						.length > 0
+			);
+	} else if (SWITCHER_STORIES.has(name)) {
+		await page.waitForSelector('[data-testid="view-switcher"]');
+		if (name === 'Wechsler-Buehne')
 			await page.waitForFunction(
 				() =>
 					document.querySelectorAll('[data-testid="participant"] svg')
@@ -239,6 +259,99 @@ for (const [id, name, width] of STORIES) {
 			offscreen
 		};
 	});
+
+	/*
+	 * Ticket 05 gives the switcher's geometry to the pixel:
+	 *
+	 *   "44 px rail, radius 22, 36 px round buttons. Inactive: icon only.
+	 *    Active: icon + label, padding: 0 14px 0 11px, Inter 500 13/18,
+	 *    letter-spacing .2px. Fill rgb(251,244,211) on dark stages, #a5000a
+	 *    with white ink on light ones."
+	 *
+	 * Those numbers ARE the design. jsdom loads no CSS and would agree with
+	 * any stylesheet at all, so they are read off computed style here.
+	 */
+	if (SWITCHER_STORIES.has(name)) {
+		const rail = await page.evaluate(() => {
+			const group = document.querySelector(
+				'[data-testid="view-switcher"]'
+			);
+			const views = [...group.querySelectorAll('[role="radio"]')];
+			const on = views.find(
+				(v) => v.getAttribute('aria-checked') === 'true'
+			);
+			const off = views.find(
+				(v) => v.getAttribute('aria-checked') !== 'true'
+			);
+			const cs = getComputedStyle(group);
+			const onCs = getComputedStyle(on);
+			const offCs = getComputedStyle(off);
+			const r = (el) => el.getBoundingClientRect();
+			return {
+				tone: group.dataset.tone,
+				railHeight: Math.round(r(group).height),
+				railRadius: cs.borderTopLeftRadius,
+				offSize: `${Math.round(r(off).width)}x${Math.round(r(off).height)}`,
+				onPadding: onCs.padding,
+				onWeight: onCs.fontWeight,
+				onFont: `${onCs.fontSize}/${onCs.lineHeight}`,
+				onTracking: onCs.letterSpacing,
+				railFill: cs.backgroundColor,
+				onFill: onCs.backgroundColor,
+				onInk: onCs.color,
+				offFill: offCs.backgroundColor,
+				// The icon-only entries must carry no visible word, or the
+				// rail grows with every view the room offers.
+				offText: off.textContent.trim()
+			};
+		});
+
+		const expected = {
+			railHeight: 44,
+			railRadius: '22px',
+			offSize: '36x36',
+			onPadding: '0px 14px 0px 11px',
+			onWeight: '500',
+			onFont: '13px/18px',
+			onTracking: '0.2px',
+			offText: ''
+		};
+		for (const [key, want] of Object.entries(expected))
+			if (rail[key] !== want)
+				failures.push(
+					`${name}: ${key} ist ${JSON.stringify(rail[key])}, soll ${JSON.stringify(want)} sein`
+				);
+
+		// The light rail is the handoff's own, verbatim; the dark one mirrors
+		// it at the same alpha over the handoff's near-black. Pinned here so
+		// the derivation cannot drift unnoticed.
+		const wantRail =
+			rail.tone === 'light'
+				? 'rgba(255, 255, 255, 0.72)'
+				: 'rgba(45, 44, 40, 0.72)';
+		if (rail.railFill !== wantRail)
+			failures.push(
+				`${name}: Schienenfüllung ${rail.railFill}, soll ${wantRail} sein (${rail.tone})`
+			);
+
+		// The two fills from the ticket, each on the tone it belongs to.
+		const wantFill =
+			rail.tone === 'light' ? 'rgb(165, 0, 10)' : 'rgb(251, 244, 211)';
+		const wantInk =
+			rail.tone === 'light' ? 'rgb(255, 255, 255)' : 'rgb(45, 44, 40)';
+		if (rail.onFill !== wantFill)
+			failures.push(
+				`${name}: aktive Füllung ${rail.onFill}, soll ${wantFill} sein (${rail.tone})`
+			);
+		if (rail.onInk !== wantInk)
+			failures.push(
+				`${name}: aktive Schriftfarbe ${rail.onInk}, soll ${wantInk} sein (${rail.tone})`
+			);
+
+		process.stdout.write(
+			`${name.padEnd(22)} Schiene ${rail.railHeight}px r${rail.railRadius} ${rail.railFill} | inaktiv ${rail.offSize} | aktiv ${rail.onPadding} ${rail.onFont} ${rail.onTracking} | Füllung ${rail.onFill}\n`
+		);
+	}
 
 	/*
 	 * Ticket 06: "The panel never covers the stage on a 1280 px screen; the

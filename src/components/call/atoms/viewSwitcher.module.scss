@@ -1,0 +1,133 @@
+/*
+The view switcher, ticket 05, which gives the geometry exactly:
+
+  "44 px rail, radius 22, 36 px round buttons. Inactive: icon only. Active:
+   icon + label, padding: 0 14px 0 11px, Inter 500 13/18, letter-spacing .2px.
+   Fill rgb(251,244,211) on dark stages, #a5000a with white ink on light ones."
+
+Those numbers are the design and are not ours to round off. The asymmetric
+14/11 padding is not a slip either: the icon sits on the left and needs less
+room beside it than the word does on the right.
+*/
+.rail {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	block-size: 44px;
+	padding-inline: 4px;
+	border-radius: 22px;
+}
+
+.view {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	flex: none;
+	block-size: 36px;
+	inline-size: 36px;
+	padding: 0;
+	border: 0;
+	border-radius: 18px;
+	background: transparent;
+	cursor: pointer;
+
+	/* Inter 500 13/18, .2px — the handoff's values for the active label. */
+	font-family: Inter, system-ui, sans-serif;
+	font-weight: 500;
+	font-size: 13px;
+	line-height: 18px;
+	letter-spacing: 0.2px;
+	white-space: nowrap;
+
+	/* Only the width changes between states, so it is the only thing that
+	moves when the view changes. */
+	transition:
+		inline-size 0.24s cubic-bezier(0.2, 0, 0, 1),
+		background-color 0.24s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The active entry grows a word and loses its round shape. */
+.view[aria-checked='true'] {
+	inline-size: auto;
+	padding: 0 14px 0 11px;
+	border-radius: 18px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.view {
+		transition: none;
+	}
+}
+
+.icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+
+	svg {
+		display: block;
+		inline-size: 20px;
+		block-size: 20px;
+	}
+}
+
+/*
+The two tones.
+
+A rail on a living backdrop cannot be one set of colours. On the dark
+stages the active fill is the handoff's warm paper, rgb(251,244,211), with
+near-black ink; on the light ones it is the ORISO red with white ink.
+
+The light rail is the handoff's, verbatim. The dark one is DERIVED, and it is
+worth saying how, because the handoff does not give it.
+
+Two attempts failed in the browser before this one. A translucent black read
+as a smudge on a night atmosphere. Removing the fill altogether — which the
+prototype's colour model implies, since inactive entries are transparent with
+warm-paper ink — put the icon-only entries straight onto the participants'
+shapes, and warm paper on the Hain's yellow is not readable. Both were found
+in a screenshot, not in a test.
+
+So the dark rail mirrors the light one: the same .72 alpha and the same
+hairline, over the handoff's near-black rgb(45,44,40) instead of white. That
+is a derivation from the design's own vocabulary rather than a new colour,
+but it IS a derivation and design should confirm it.
+*/
+.rail[data-tone='dark'] {
+	background: rgba(45, 44, 40, 0.72);
+	box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+	backdrop-filter: blur(6px);
+}
+
+.rail[data-tone='dark'] .view {
+	color: rgb(251, 244, 211);
+}
+
+.rail[data-tone='dark'] .view[aria-checked='true'] {
+	background: rgb(251, 244, 211);
+	color: rgb(45, 44, 40);
+}
+
+.rail[data-tone='light'] {
+	background: rgba(255, 255, 255, 0.72);
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.07);
+}
+
+.rail[data-tone='light'] .view {
+	color: var(--m3-secondary, #4c555f);
+}
+
+.rail[data-tone='light'] .view[aria-checked='true'] {
+	background: #a5000a;
+	color: #fff;
+}
+
+.view:focus-visible {
+	outline: 2px solid currentcolor;
+	outline-offset: 2px;
+}
+
+.label {
+	display: inline-block;
+}
