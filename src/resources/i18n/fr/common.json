@@ -2072,7 +2072,7 @@
 			"soundWithTone": "Fenêtre avec son",
 			"soundSilent": "Fenêtre sans son",
 			"soundSilentDescription": "Seulement la fenêtre, sans son",
-			"emailColumn": "E-mail",
+			"emailColumn": "Courriel",
 			"emailKind": "E-mail : {{kind}}",
 			"emailMenu": "Choisir l’e-mail : {{kind}}",
 			"emailUnavailable": "non disponible",
