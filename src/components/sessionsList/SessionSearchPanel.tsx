@@ -82,6 +82,10 @@ export interface SessionSearchPanelLabels {
 	tabCentre: string;
 	tabArchiveOnly: string;
 	emptyPeople: string;
+	/** Shown while the eligible colleagues are loading (FE#1152). */
+	peopleLoading?: string;
+	/** Shown when the eligible colleagues could not be loaded (FE#1152). */
+	peopleLoadError?: string;
 	emptyTypes: string;
 	emptyTopics: string;
 	agencyGroup?: string;
@@ -99,6 +103,10 @@ interface SessionSearchPanelProps {
 	archiveOnly: boolean;
 	onArchiveOnlyChange: (archiveOnly: boolean) => void;
 	people: SessionSearchPersonOption[];
+	/** Loading state of the eligible colleagues; omitted outside a handover. */
+	peopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
+	/** Why a colleague may be missing (FE#1152); omitted outside a handover. */
+	peopleHint?: string;
 	selectedPersonIds: string[];
 	onPersonToggle: (id: string) => void;
 	types: SessionSearchTypeOption[];
@@ -217,6 +225,8 @@ export const SessionSearchPanel = ({
 	archiveOnly,
 	onArchiveOnlyChange,
 	people,
+	peopleStatus = 'idle',
+	peopleHint,
 	selectedPersonIds,
 	onPersonToggle,
 	types,
@@ -401,9 +411,30 @@ export const SessionSearchPanel = ({
 						</div>
 					) : (
 						<div className="sessionsListToolbar__searchEmpty">
-							{labels.emptyPeople}
+							{peopleStatus === 'loading' && labels.peopleLoading
+								? labels.peopleLoading
+								: labels.emptyPeople}
 						</div>
 					))}
+				{activeTab === 'people' && peopleStatus === 'error' && (
+					<div
+						className="sessionsListToolbar__searchNotice sessionsListToolbar__searchNotice--error"
+						role="alert"
+						data-testid="session-search-people-error"
+					>
+						{labels.peopleLoadError}
+					</div>
+				)}
+				{activeTab === 'people' &&
+					peopleStatus !== 'error' &&
+					peopleHint && (
+						<div
+							className="sessionsListToolbar__searchNotice"
+							data-testid="session-search-people-hint"
+						>
+							{peopleHint}
+						</div>
+					)}
 				{activeTab === 'type' &&
 					(types.length > 0 ? (
 						<div role="radiogroup" aria-label={labels.tabType}>

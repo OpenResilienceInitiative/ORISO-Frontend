@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiGetCaseHandoverCandidates } from '../../api';
-import { apiGetAgencyConsultantList } from '../../api/apiGetAgencyConsultantList';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
 import {
 	buildSearchPeopleResults,
 	lookupTermsOf,
 	personKeysOfSession,
-	roleOfSearchWord,
-	SessionSearchAgencyConsultant,
 	SessionSearchPeopleLabels,
 	SessionSearchPersonResult,
 	SessionToolbarPair
@@ -18,6 +15,7 @@ const CANDIDATE_PAGE_SIZE = 50;
 /** Upper bound for one person's lookup (20 x 50 cases). */
 const CANDIDATE_MAX_PAGES = 20;
 const SEARCH_DEBOUNCE_MS = 250;
+const NO_CASES: ListItemInterface[] = [];
 
 const listItemIdOf = (item: ListItemInterface) =>
 	item.session?.id !== undefined
@@ -72,19 +70,28 @@ interface CaseHandoverSearchOptions {
 	archived: boolean;
 	/** Batch mode keeps what was found, so selected cases never vanish. */
 	keepFound: boolean;
-	agencies?: { id: number; name?: string }[];
+	/** The search menu is open: the eligible colleagues are loaded for it. */
+	searchOpen: boolean;
 }
 
+/** Loading state of the eligible colleagues (FE#1152). */
+export type EligibleColleaguesStatus = 'idle' | 'loading' | 'ready' | 'error';
+
 /**
- * Case-handover search (FE#1725): text candidates, counsellors found by role
- * word, picked people and the cases pinned while they stay picked.
+ * Case-handover search (FE#1725, FE#1152): text candidates, the eligible
+ * colleagues, picked people and the cases pinned while they stay picked.
+ *
+ * The eligible colleagues are the counsellors of the cases the signed-in
+ * counsellor may take over (UserService answers a blank query with all of
+ * them). They are loaded once when the search menu opens and are the only
+ * colleagues the menu offers, also for role words.
  */
 export const useCaseHandoverSearch = ({
 	enabled,
 	query,
 	archived,
 	keepFound,
-	agencies
+	searchOpen
 }: CaseHandoverSearchOptions) => {
 	const [textCandidates, setTextCandidates] = useState<ListItemInterface[]>(
 		[]
@@ -96,10 +103,16 @@ export const useCaseHandoverSearch = ({
 	const [pickedPeople, setPickedPeople] = useState<
 		SessionSearchPersonResult[]
 	>([]);
-	/** Counsellors of my agencies, loaded on the first role-word search. */
-	const [agencyConsultants, setAgencyConsultants] = useState<
-		SessionSearchAgencyConsultant[] | null
-	>(null);
+	/** Cases I may take over; only their counsellors are listed (FE#1152). */
+	const [eligible, setEligible] = useState<{
+		archived: boolean;
+		cases: ListItemInterface[];
+		status: EligibleColleaguesStatus;
+	} | null>(null);
+	// What was loaded for the other archive tab does not count.
+	const eligibleNow = eligible?.archived === archived ? eligible : null;
+	const eligibleCases = eligibleNow?.cases ?? NO_CASES;
+	const eligibleStatus = eligibleNow?.status ?? 'idle';
 
 	useEffect(() => {
 		const trimmed = query.trim();
@@ -136,34 +149,31 @@ export const useCaseHandoverSearch = ({
 		};
 	}, [archived, enabled, keepFound, query]);
 
-	// Role words list the counsellors of my agencies (FE#1725 US6).
-	const namesConsultantRole = roleOfSearchWord(query) === 'consultant';
 	useEffect(() => {
-		if (!namesConsultantRole || !enabled || agencyConsultants !== null) {
+		if (!enabled) {
+			setEligible(null);
 			return;
 		}
+		if (!searchOpen) return;
 		let cancelled = false;
-		Promise.all(
-			(agencies ?? []).map((agency) =>
-				apiGetAgencyConsultantList(String(agency.id))
-					.catch(() => [])
-					.then((consultants) =>
-						(Array.isArray(consultants) ? consultants : []).map(
-							(consultant) => ({
-								...consultant,
-								agencyId: agency.id,
-								agencyName: agency.name
-							})
-						)
-					)
-			)
-		).then((lists) => {
-			if (!cancelled) setAgencyConsultants(lists.flat());
-		});
+		setEligible((prev) =>
+			prev?.archived === archived && prev.status !== 'error'
+				? prev
+				: { archived, cases: [], status: 'loading' }
+		);
+		fetchAllCandidates('', archived)
+			.then((cases) => {
+				if (!cancelled)
+					setEligible({ archived, cases, status: 'ready' });
+			})
+			.catch(() => {
+				if (!cancelled)
+					setEligible({ archived, cases: [], status: 'error' });
+			});
 		return () => {
 			cancelled = true;
 		};
-	}, [agencies, agencyConsultants, enabled, namesConsultantRole]);
+	}, [archived, enabled, searchOpen]);
 
 	/**
 	 * Picking keeps the text (US3) and loads all of each new person's cases,
@@ -192,8 +202,8 @@ export const useCaseHandoverSearch = ({
 				ids.forEach((id) => {
 					next[id] =
 						prev[id] ??
-						textCandidates.filter((item) =>
-							personKeysOfSession(item).includes(id)
+						mergeListItems(textCandidates, eligibleCases).filter(
+							(item) => personKeysOfSession(item).includes(id)
 						);
 				});
 				return next;
@@ -229,7 +239,7 @@ export const useCaseHandoverSearch = ({
 					.catch(() => undefined);
 			});
 		},
-		[archived, enabled, pickedPeople, textCandidates]
+		[archived, eligibleCases, enabled, pickedPeople, textCandidates]
 	);
 
 	const reset = useCallback(() => {
@@ -244,8 +254,8 @@ export const useCaseHandoverSearch = ({
 
 	return {
 		candidateSessions,
-		agencyConsultants:
-			namesConsultantRole && agencyConsultants ? agencyConsultants : [],
+		eligibleCases,
+		eligibleStatus,
 		selectedPersonIds: useMemo(
 			() => pickedPeople.map((person) => person.id),
 			[pickedPeople]
@@ -258,24 +268,24 @@ export const useCaseHandoverSearch = ({
 
 /**
  * People, not case rows (FE#1725 US1): one row per role + user + agency,
- * plus the counsellors of my agencies once a role word was typed.
+ * plus the eligible colleagues (FE#1152).
  */
 export const useSearchPeopleResults = (
 	pairs: SessionToolbarPair[],
 	labels: SessionSearchPeopleLabels,
 	currentUser: { id: string; name?: string },
-	agencyConsultants: SessionSearchAgencyConsultant[]
+	eligibleCases: ListItemInterface[]
 ) =>
 	useMemo(
 		() =>
 			buildSearchPeopleResults(pairs, labels, {
 				currentUser,
-				agencyConsultants
+				eligibleCases
 			}),
 		// Labels and user are primitives in practice; key on their values.
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
-			agencyConsultants,
+			eligibleCases,
 			pairs,
 			labels.asker,
 			labels.consultant,

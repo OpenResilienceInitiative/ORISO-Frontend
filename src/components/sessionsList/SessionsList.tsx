@@ -278,6 +278,8 @@ export const SessionsList = ({
 		Promise.resolve()
 	);
 	const [sessionToolbarSearch, setSessionToolbarSearch] = useState('');
+	const [sessionToolbarSearchOpen, setSessionToolbarSearchOpen] =
+		useState(false);
 	const [sessionToolbarSelectedTopic, setSessionToolbarSelectedTopic] =
 		useState<string | null>(null);
 	const [sessionToolbarSelectedAgency, setSessionToolbarSelectedAgency] =
@@ -1224,7 +1226,7 @@ export const SessionsList = ({
 		query: sessionToolbarSearch,
 		archived: sessionListTab === SESSION_LIST_TAB_ARCHIVE,
 		keepFound: caseHandoverBatchMode,
-		agencies: userData?.agencies
+		searchOpen: sessionToolbarSearchOpen
 	});
 	const sessionToolbarSelectedPeople = caseHandoverSearch.selectedPersonIds;
 	const loadUserDrafts = useCallback(async () => {
@@ -1591,7 +1593,7 @@ export const SessionsList = ({
 					.join(' ') ||
 				userData?.userName
 		},
-		caseHandoverSearch.agencyConsultants
+		caseHandoverSearch.eligibleCases
 	);
 	const listSearchQuery = textAxisQuery(
 		sessionToolbarSearch,
@@ -2334,6 +2336,15 @@ export const SessionsList = ({
 					searchValue={sessionToolbarSearch}
 					onSearchChange={setSessionToolbarSearch}
 					searchPeopleResults={toolbarSearchPeopleResults}
+					searchPeopleStatus={caseHandoverSearch.eligibleStatus}
+					searchPeopleHint={
+						showConsultantToolbarActions
+							? translate(
+									'sessionList.toolbar.search.handoverPeopleHint'
+								)
+							: undefined
+					}
+					onSearchOpenChange={setSessionToolbarSearchOpen}
 					selectedPersonIds={sessionToolbarSelectedPeople}
 					onSelectedPersonIdsChange={handleSelectedPeopleChange}
 					onSearchReset={resetToolbarSearch}

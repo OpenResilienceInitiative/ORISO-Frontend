@@ -59,17 +59,6 @@ export type SessionToolbarPair = {
 	extended: ExtendedSessionInterface;
 };
 
-/** A counsellor from the agency-consultant endpoint (role-word search). */
-export interface SessionSearchAgencyConsultant {
-	consultantId: string;
-	username?: string;
-	displayName?: string;
-	firstName?: string;
-	lastName?: string;
-	agencyId: number;
-	agencyName?: string;
-}
-
 /** Session id as the list knows it; ties people back to sessions. */
 export const sessionSearchKeyOf = (
 	raw: ListItemInterface,
@@ -369,14 +358,24 @@ export const lookupTermsOf = (person: NamedPerson): string[] =>
 const subtitleOf = (roleLabel: string, agencyName: string | undefined) =>
 	[roleLabel, agencyName].filter(Boolean).join(' | ');
 
+/** Postcode and topic of a case; they make its people findable by them. */
+const sessionPartsOf = (
+	raw: ListItemInterface,
+	extended?: Pick<ExtendedSessionInterface, 'item'>
+) => [postcodeOf(raw), topicNameOf(raw, extended)].filter(Boolean).join(' ');
+
 export function buildSearchPeopleResults(
 	pairs: SessionToolbarPair[],
 	labels: SessionSearchPeopleLabels,
 	options: {
 		/** Names the signed-in counsellor, whose own rows carry no name. */
 		currentUser?: { id: string; name?: string };
-		/** Counsellors from the agency-consultant endpoint (role words). */
-		agencyConsultants?: SessionSearchAgencyConsultant[];
+		/**
+		 * Cases the signed-in counsellor may take over (blank candidates
+		 * query, FE#1152). Only their counsellors become rows, never the
+		 * clients, and only these colleagues are offered without a session.
+		 */
+		eligibleCases?: ListItemInterface[];
 	} = {}
 ): SessionSearchPersonResult[] {
 	const byKey = new Map<
@@ -402,9 +401,14 @@ export function buildSearchPeopleResults(
 		return entry;
 	};
 
-	/** One row per counsellor + agency, from a session or the agency list. */
+	/** One row per counsellor + agency, from a session or an eligible case. */
 	const upsertConsultant = (
-		consultant: Omit<SessionSearchAgencyConsultant, 'agencyId'> & {
+		consultant: {
+			consultantId: string;
+			username?: string;
+			displayName?: string;
+			firstName?: string;
+			lastName?: string;
 			internalName?: string | null;
 			avatar?: AvatarIdentity;
 		},
@@ -444,15 +448,39 @@ export function buildSearchPeopleResults(
 		entry.subtitle = subtitleOf(labels.consultant, entry.agencyName);
 	};
 
+	/** The counsellor of a case, as a row of her own. */
+	const upsertSessionConsultant = (
+		raw: ListItemInterface,
+		agencyId: number | undefined,
+		agencyName: string | undefined,
+		sessionKey: string | undefined,
+		sessionParts: string
+	) => {
+		const consultant = raw.consultant as ConsultantLike | undefined;
+		if (!consultant) return;
+		upsertConsultant(
+			{
+				...consultant,
+				consultantId: consultantIdOf(consultant) || UNKNOWN_AVATAR_SEED,
+				avatar: {
+					avatarKind: consultant.avatarKind,
+					avatarId: consultant.avatarId
+				}
+			},
+			agencyId,
+			agencyName,
+			sessionKey,
+			sessionParts
+		);
+	};
+
 	pairs.forEach(({ raw, extended }) => {
 		const sessionKey = sessionSearchKeyOf(raw, extended);
 		if (!sessionKey) {
 			return;
 		}
 		const { agencyId, agencyName } = agencyOf(raw);
-		const sessionParts = [postcodeOf(raw), topicNameOf(raw, extended)]
-			.filter(Boolean)
-			.join(' ');
+		const sessionParts = sessionPartsOf(raw, extended);
 
 		// A role the session does not carry produces no row at all; a person
 		// who is present but nameless keeps a row under the "unknown" label.
@@ -482,29 +510,25 @@ export function buildSearchPeopleResults(
 				sessionParts
 			);
 		}
-		const consultant = raw.consultant as ConsultantLike | undefined;
-		if (consultant) {
-			upsertConsultant(
-				{
-					...consultant,
-					consultantId:
-						consultantIdOf(consultant) || UNKNOWN_AVATAR_SEED,
-					avatar: {
-						avatarKind: consultant.avatarKind,
-						avatarId: consultant.avatarId
-					}
-				},
-				agencyId,
-				agencyName,
-				sessionKey,
-				sessionParts
-			);
-		}
+		upsertSessionConsultant(
+			raw,
+			agencyId,
+			agencyName,
+			sessionKey,
+			sessionParts
+		);
 	});
 
-	(options.agencyConsultants ?? []).forEach((consultant) =>
-		upsertConsultant(consultant, consultant.agencyId, consultant.agencyName)
-	);
+	(options.eligibleCases ?? []).forEach((raw) => {
+		const { agencyId, agencyName } = agencyOf(raw);
+		upsertSessionConsultant(
+			raw,
+			agencyId,
+			agencyName,
+			undefined,
+			sessionPartsOf(raw)
+		);
+	});
 
 	return Array.from(byKey.values()).map(({ parts, ...person }) => ({
 		...person,

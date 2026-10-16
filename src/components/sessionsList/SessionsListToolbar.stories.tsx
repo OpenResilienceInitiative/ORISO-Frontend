@@ -38,6 +38,8 @@ type ToolbarDemoProps = {
 	createGroupChatActive?: boolean;
 	initialSearch?: string;
 	initialSelectedPersonIds?: string[];
+	/** Case handover: the hint why a colleague may be missing (FE#1152). */
+	showHandoverHint?: boolean;
 };
 
 const searchPeopleResultsBase: SessionSearchPersonResult[] = [
@@ -94,7 +96,8 @@ function SessionsListToolbarPlayground({
 	archiveTabActive = false,
 	createGroupChatActive = false,
 	initialSearch = '',
-	initialSelectedPersonIds = []
+	initialSelectedPersonIds = [],
+	showHandoverHint = false
 }: ToolbarDemoProps) {
 	const { t } = useTranslation();
 	const [search, setSearch] = useState(initialSearch);
@@ -123,6 +126,12 @@ function SessionsListToolbarPlayground({
 				selectedAgencyId={selectedAgencyId}
 				onSelectedAgencyIdChange={setSelectedAgencyId}
 				searchPeopleResults={searchPeopleResults}
+				searchPeopleStatus="ready"
+				searchPeopleHint={
+					showHandoverHint
+						? t('sessionList.toolbar.search.handoverPeopleHint')
+						: undefined
+				}
 				selectedPersonIds={selectedPersonIds}
 				onSelectedPersonIdsChange={setSelectedPersonIds}
 				onSearchReset={() => {
@@ -251,6 +260,33 @@ export const SearchPanelOpen: Story = {
 	play: async ({ canvasElement }) => {
 		const canvas = within(canvasElement);
 		await userEvent.click(canvas.getByRole('searchbox'));
+	}
+};
+
+/** FE#1152 — opening the search lists people and says why a colleague may be missing. */
+export const SearchOpensWithHandoverHint: Story = {
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const searchbox = canvas.getByRole('searchbox');
+		await userEvent.click(searchbox);
+		await expect(searchbox).toHaveValue('');
+		await expect(
+			await canvas.findByTestId('session-search-people-hint')
+		).toBeVisible();
+	}
+};
+
+export const SearchOpensWithHandoverHintMobile390: Story = {
+	name: 'Search opens with handover hint, phone 390',
+	globals: phone390Globals,
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await userEvent.click(canvas.getByRole('searchbox'));
+		await expect(
+			await canvas.findByTestId('session-search-people-hint')
+		).toBeVisible();
 	}
 };
 

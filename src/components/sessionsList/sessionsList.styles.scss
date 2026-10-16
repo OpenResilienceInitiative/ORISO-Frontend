@@ -1568,6 +1568,24 @@ $caseHandoverBodyText: var(--m3-on-surface, #30343a);
 		line-height: 20px;
 		color: #444748;
 	}
+
+	/* FE#1152: why a colleague may be missing, or why none could be loaded. */
+	&__searchNotice {
+		padding: 12px 16px;
+		font-size: 12px;
+		line-height: 16px;
+		color: #444748;
+		border-top: 1px solid #d8d6d6;
+
+		/* Stays in view when the list is long and the menu scrolls. */
+		position: sticky;
+		bottom: 0;
+		background: $sessionShellSurface;
+
+		&--error {
+			color: var(--m3-error, #ba1a1a);
+		}
+	}
 }
 
 @keyframes sessionsListToolbarChipActivate {

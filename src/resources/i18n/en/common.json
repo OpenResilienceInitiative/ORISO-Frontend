@@ -4110,6 +4110,9 @@
 				"clear": "Clear search",
 				"removeSelectedPerson": "Remove {{name}}",
 				"emptyPeople": "No matching people found.",
+				"peopleLoading": "Loading colleagues …",
+				"peopleLoadError": "The colleagues could not be loaded. Please try again later.",
+				"handoverPeopleHint": "Only colleagues whose cases you can take over via “Request access” are shown here. This depends on your department and topics.",
 				"emptyTypes": "No chat types available.",
 				"emptyTopics": "No topics found for your counseling centers.",
 				"tabs": {

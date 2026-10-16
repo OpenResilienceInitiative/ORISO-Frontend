@@ -15,6 +15,9 @@ import {
 	CASE_HANDOVER_SEARCH_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
+import { phone390Globals } from '../message/messageStoryShell';
+import de from '../../resources/i18n/de/common.json';
+import en from '../../resources/i18n/en/common.json';
 import './sessionsList.styles.scss';
 
 const shell: React.CSSProperties = {
@@ -32,6 +35,8 @@ const labelsEn: SessionSearchPanelLabels = {
 	tabCentre: 'Counseling center',
 	tabArchiveOnly: 'Archive only',
 	emptyPeople: 'No matching people found.',
+	peopleLoading: en.sessionList.toolbar.search.peopleLoading,
+	peopleLoadError: en.sessionList.toolbar.search.peopleLoadError,
 	emptyTypes: 'No chat types available.',
 	emptyTopics: 'No topics found for your counseling centers.',
 	agencyGroup: 'Counseling center',
@@ -46,6 +51,8 @@ const labelsDe: SessionSearchPanelLabels = {
 	tabCentre: 'Beratungsstelle',
 	tabArchiveOnly: 'Nur Archiv',
 	emptyPeople: 'Keine passenden Personen gefunden.',
+	peopleLoading: de.sessionList.toolbar.search.peopleLoading,
+	peopleLoadError: de.sessionList.toolbar.search.peopleLoadError,
 	emptyTypes: 'Keine Chat-Typen verfügbar.',
 	emptyTopics: 'Keine Themen für deine Beratungsstellen gefunden.',
 	agencyGroup: 'Beratungsstelle',
@@ -127,6 +134,8 @@ type PlaygroundProps = {
 	types?: SessionSearchTypeOption[];
 	agencies?: SessionSearchAgencyOption[];
 	initialSelectedAgencyId?: string | null;
+	peopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
+	peopleHint?: string;
 };
 
 function SessionSearchPanelPlayground({
@@ -139,7 +148,9 @@ function SessionSearchPanelPlayground({
 	topics: topicOptions = topics,
 	types: typeOptions = types,
 	agencies: agencyOptions = agencies,
-	initialSelectedAgencyId = null
+	initialSelectedAgencyId = null,
+	peopleStatus,
+	peopleHint
 }: PlaygroundProps) {
 	const [tab, setTab] = useState<SessionSearchTab>(initialTab);
 	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
@@ -164,6 +175,8 @@ function SessionSearchPanelPlayground({
 					archiveOnly={archiveOnly}
 					onArchiveOnlyChange={setArchiveOnly}
 					people={peopleOptions}
+					peopleStatus={peopleStatus}
+					peopleHint={peopleHint}
 					selectedPersonIds={selectedPersonIds}
 					onPersonToggle={(id) =>
 						setSelectedPersonIds((prev) =>
@@ -366,5 +379,165 @@ export const PeopleMultiSelect: Story = {
 		await userEvent.click(hans);
 		await expect(ingrid).toHaveAttribute('aria-checked', 'true');
 		await expect(hans).toHaveAttribute('aria-checked', 'true');
+	}
+};
+
+/**
+ * FE#1152 — the case-handover picker. It lists only the colleagues whose
+ * cases the signed-in counsellor may take over ("Zugriff anfragen"), as soon
+ * as the search opens and before anything is typed, plus a short hint why a
+ * colleague may be missing. Never a client.
+ */
+const eligibleColleagues = people.filter(
+	(person) => person.role === 'consultant'
+);
+const hintDe = de.sessionList.toolbar.search.handoverPeopleHint;
+const hintEn = en.sessionList.toolbar.search.handoverPeopleHint;
+
+const expectEligibleColleaguesOnly = async (
+	canvasElement: HTMLElement,
+	hint: string
+) => {
+	const canvas = within(canvasElement);
+	await canvas.findAllByRole('checkbox', { name: /Ingrid K\./ });
+	await expect(canvas.getAllByRole('checkbox')).toHaveLength(
+		eligibleColleagues.length
+	);
+	await expect(canvas.queryByText(/iene_lou_7575/)).toBeNull();
+	await expect(
+		canvas.getByTestId('session-search-people-hint')
+	).toHaveTextContent(hint);
+};
+
+export const HandoverEligibleColleaguesNoTyping: Story = {
+	name: 'Handover — no typing, eligible colleagues listed (DE)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, hintDe)
+};
+
+export const HandoverEligibleColleaguesNoTypingEnglish: Story = {
+	name: 'Handover — no typing, eligible colleagues listed (EN)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			labels={labelsEn}
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={hintEn}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, hintEn)
+};
+
+export const HandoverEligibleColleagues390: Story = {
+	name: 'Handover — eligible colleagues, phone 390 (DE)',
+	globals: phone390Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, hintDe)
+};
+
+const expectNobodyEligibleHint = async (
+	canvasElement: HTMLElement,
+	empty: string,
+	hint: string
+) => {
+	const canvas = within(canvasElement);
+	await expect(await canvas.findByText(empty)).toBeVisible();
+	await expect(canvas.queryAllByRole('checkbox')).toHaveLength(0);
+	await expect(
+		canvas.getByTestId('session-search-people-hint')
+	).toHaveTextContent(hint);
+};
+
+export const HandoverNobodyEligibleHint: Story = {
+	name: 'Handover — nobody eligible, hint (DE)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={[]}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectNobodyEligibleHint(canvasElement, labelsDe.emptyPeople, hintDe)
+};
+
+export const HandoverNobodyEligibleHintEnglish: Story = {
+	name: 'Handover — nobody eligible, hint (EN)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			labels={labelsEn}
+			people={[]}
+			peopleStatus="ready"
+			peopleHint={hintEn}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectNobodyEligibleHint(canvasElement, labelsEn.emptyPeople, hintEn)
+};
+
+export const HandoverNobodyEligibleHint390: Story = {
+	name: 'Handover — nobody eligible, hint, phone 390 (DE)',
+	globals: phone390Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={[]}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectNobodyEligibleHint(canvasElement, labelsDe.emptyPeople, hintDe)
+};
+
+export const HandoverColleaguesLoading: Story = {
+	name: 'Handover — colleagues loading (EN)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			labels={labelsEn}
+			people={[]}
+			peopleStatus="loading"
+			peopleHint={hintEn}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(
+			await within(canvasElement).findByText(labelsEn.peopleLoading!)
+		).toBeVisible();
+	}
+};
+
+/** The load failure is said out loud; it replaces the hint, never a silent empty list. */
+export const HandoverColleaguesLoadError: Story = {
+	name: 'Handover — colleagues could not be loaded (DE)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={[]}
+			peopleStatus="error"
+			peopleHint={hintDe}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(await canvas.findByRole('alert')).toHaveTextContent(
+			labelsDe.peopleLoadError!
+		);
+		await expect(
+			canvas.queryByTestId('session-search-people-hint')
+		).toBeNull();
 	}
 };

@@ -571,24 +571,9 @@ describe('case-handover search — people (FE#1725)', () => {
 		).toBeTruthy();
 	});
 
-	it.each([
-		'Berater:in',
-		'Beraterin',
-		'beratende Person',
-		'counsellor',
-		'counselor'
-	])(
-		'lists the counsellors of my counselling centre for the role word "%s"',
+	it.each(['Beraterin', 'beratende Person', 'counselor'])(
+		'lists the eligible colleagues for the role word "%s" and not the own clients',
 		async (word) => {
-			http.getAgencyConsultants.mockResolvedValue([
-				{
-					consultantId: 'lisa-id',
-					username: 'lisa',
-					displayName: 'Lisa S.',
-					firstName: 'Lisa',
-					lastName: 'Simpson'
-				}
-			]);
 			await ready(renderList());
 
 			type(word);
@@ -596,19 +581,11 @@ describe('case-handover search — people (FE#1725)', () => {
 			await waitFor(() =>
 				expect(personRowsNamed('Lisa S.')).toHaveLength(1)
 			);
-			expect(http.getAgencyConsultants).toHaveBeenCalledWith('9');
 			expect(personRowsNamed('Own client')).toHaveLength(0);
 		}
 	);
 
 	it('loads the cases of a colleague found by role word once she is picked', async () => {
-		http.getAgencyConsultants.mockResolvedValue([
-			{
-				consultantId: 'lisa-id',
-				username: 'lisa',
-				displayName: 'Lisa S.'
-			}
-		]);
 		const view = await ready(renderList());
 
 		type('Berater:in');
@@ -622,6 +599,133 @@ describe('case-handover search — people (FE#1725)', () => {
 	});
 });
 
+describe('case-handover search — eligible colleagues only (FE#1152)', () => {
+	const openSearch = () => fireEvent.focus(searchbox());
+
+	it('lists the eligible colleagues as soon as the search opens, without typing', async () => {
+		const view = await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		expect(personRowsNamed('Marge S.')).toHaveLength(1);
+		expect(personRowsNamed('Lisa S.')).toHaveLength(1);
+		expect(http.getCandidates).toHaveBeenCalledWith(
+			expect.objectContaining({ query: '' })
+		);
+		// Only the people: their cases do not flood the list.
+		expect(listText(view)).toContain('Own client');
+		expect(listText(view)).not.toContain('Client eleven');
+		// Never a colleague's clients.
+		expect(personRowsNamed('Client eleven')).toHaveLength(0);
+	});
+
+	it('loads the eligible colleagues once per opening, not on every keystroke', async () => {
+		await ready(renderList());
+
+		openSearch();
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		const blankLoads = () =>
+			http.getCandidates.mock.calls.filter(
+				([params]) => params.query === ''
+			).length;
+		const before = blankLoads();
+		type('lis');
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		fireEvent.change(searchbox(), { target: { value: '' } });
+		await new Promise((resolve) => setTimeout(resolve, 300));
+
+		expect(before).toBe(1);
+		expect(blankLoads()).toBe(1);
+	});
+
+	it.each(['Berater:in', 'counsellor'])(
+		'offers only eligible colleagues for the role word "%s", never the whole centre',
+		async (word) => {
+			http.getAgencyConsultants.mockResolvedValue([
+				{
+					consultantId: 'lisa-id',
+					username: 'lisa',
+					displayName: 'Lisa S.'
+				},
+				{
+					consultantId: 'ned-id',
+					username: 'ned',
+					displayName: 'Ned F.'
+				}
+			]);
+			await ready(renderList());
+
+			type(word);
+
+			await waitFor(() =>
+				expect(personRowsNamed('Lisa S.')).toHaveLength(1)
+			);
+			expect(personRowsNamed('Patty B.')).toHaveLength(2);
+			expect(personRowsNamed('Ned F.')).toHaveLength(0);
+			expect(http.getAgencyConsultants).not.toHaveBeenCalled();
+		}
+	);
+
+	it('says why nobody is listed when no colleague is eligible', async () => {
+		http.getCandidates.mockResolvedValue({ sessions: [], total: 0 });
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() =>
+			expect(
+				screen.getByText(
+					'sessionList.toolbar.search.handoverPeopleHint'
+				)
+			).toBeTruthy()
+		);
+		expect(personRowsNamed('Patty B.')).toHaveLength(0);
+		expect(
+			screen.queryByText('sessionList.toolbar.search.peopleLoadError')
+		).toBeNull();
+	});
+
+	it('keeps the reason visible next to the eligible colleagues', async () => {
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		expect(
+			screen.getByText('sessionList.toolbar.search.handoverPeopleHint')
+		).toBeTruthy();
+	});
+
+	it('says so when the eligible colleagues could not be loaded', async () => {
+		http.getCandidates.mockRejectedValue(new Error('500'));
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('sessionList.toolbar.search.peopleLoadError')
+			).toBeTruthy()
+		);
+	});
+
+	it('picks an eligible colleague without typing and lists her cases', async () => {
+		const view = await ready(renderList());
+
+		openSearch();
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		fireEvent.click(personRowsNamed('Lisa S.')[0]);
+
+		await waitFor(() =>
+			expect(listText(view)).toContain('Client thirtyone')
+		);
+		expect(listText(view)).not.toContain('Client eleven');
+	});
+});
+
 describe('case-handover search — counselling centre and topics (FE#1725)', () => {
 	it('offers the centres of the people found as a single choice and narrows topics to it', async () => {
 		const view = await ready(renderList());
@@ -630,6 +734,8 @@ describe('case-handover search — counselling centre and topics (FE#1725)', () 
 		await waitFor(() =>
 			expect(personRowsNamed('Patty B.')).toHaveLength(2)
 		);
+		// Her colleagues are listed before the text search has answered.
+		await waitFor(() => expect(listText(view)).toContain('Client eleven'));
 		fireEvent.click(screen.getByRole('tab', { name: /tabs\.centre/ }));
 
 		const centres = screen.getByRole('radiogroup', {
@@ -778,6 +884,7 @@ describe('case-handover search — closing and resetting (FE#1725)', () => {
 		await waitFor(() =>
 			expect(personRowsNamed('Patty B.')).toHaveLength(2)
 		);
+		await waitFor(() => expect(listItems(view).length).toBeGreaterThan(0));
 		fireEvent.mouseDown(listItems(view)[0]);
 		expect(
 			screen.getByTestId('session-search-results-scroll')

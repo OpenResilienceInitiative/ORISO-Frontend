@@ -70,6 +70,15 @@ interface SessionsListToolbarProps {
 	searchValue: string;
 	onSearchChange: (value: string) => void;
 	searchPeopleResults?: SessionSearchPersonOption[];
+	/**
+	 * Case handover: loading state of the eligible colleagues behind
+	 * `searchPeopleResults` and the hint why a colleague may be missing
+	 * (FE#1152). Both are omitted where no colleagues are offered.
+	 */
+	searchPeopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
+	searchPeopleHint?: string;
+	/** Told whenever the search menu opens or closes. */
+	onSearchOpenChange?: (open: boolean) => void;
 	selectedPersonIds?: string[];
 	onSelectedPersonIdsChange?: (ids: string[]) => void;
 	/**
@@ -317,6 +326,9 @@ export const SessionsListToolbar = ({
 	searchValue,
 	onSearchChange,
 	searchPeopleResults = [],
+	searchPeopleStatus = 'idle',
+	searchPeopleHint,
+	onSearchOpenChange,
 	selectedPersonIds = [],
 	onSelectedPersonIdsChange,
 	searchAgencyResults = [],
@@ -481,6 +493,9 @@ export const SessionsListToolbar = ({
 		setIsSearchViewOpen(false);
 	}, [canConfirmSearch, onSearchConfirm]);
 	const showSearchDropdown = isSearchViewOpen;
+	React.useEffect(() => {
+		onSearchOpenChange?.(showSearchDropdown);
+	}, [onSearchOpenChange, showSearchDropdown]);
 	const reopenSearchIfActive = React.useCallback(() => {
 		setIsSearchViewOpen(true);
 	}, []);
@@ -775,6 +790,12 @@ export const SessionsListToolbar = ({
 							emptyPeople: translate(
 								'sessionList.toolbar.search.emptyPeople'
 							),
+							peopleLoading: translate(
+								'sessionList.toolbar.search.peopleLoading'
+							),
+							peopleLoadError: translate(
+								'sessionList.toolbar.search.peopleLoadError'
+							),
 							emptyTypes: translate(
 								'sessionList.toolbar.search.emptyTypes'
 							),
@@ -801,6 +822,8 @@ export const SessionsListToolbar = ({
 							onSearchArchiveOnlyChange?.(next)
 						}
 						people={filteredPeople}
+						peopleStatus={searchPeopleStatus}
+						peopleHint={searchPeopleHint}
 						selectedPersonIds={selectedPersonIds}
 						onPersonToggle={(personId) => {
 							// The typed text stays (FE#1725 US3).

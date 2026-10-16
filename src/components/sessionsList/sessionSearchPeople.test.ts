@@ -209,16 +209,18 @@ describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () 
 
 	it('never shows an encoded username, using the internal name instead', () => {
 		const [person] = buildSearchPeopleResults([], labels, {
-			agencyConsultants: [
+			eligibleCases: [
 				{
-					consultantId: 'c-9',
-					username: encoded,
-					displayName: encoded,
-					firstName: 'agency',
-					lastName: 'admin1',
-					agencyId: 2,
-					agencyName: 'Lichtenberg'
-				}
+					agency: { id: 2, name: 'Lichtenberg' },
+					consultant: {
+						consultantId: 'c-9',
+						username: encoded,
+						displayName: encoded,
+						firstName: 'agency',
+						lastName: 'admin1'
+					},
+					session: { id: 3, agencyId: 2 }
+				} as unknown as ListItemInterface
 			]
 		});
 
@@ -228,8 +230,11 @@ describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () 
 
 	it('shows the decoded username when no other name exists', () => {
 		const [person] = buildSearchPeopleResults([], labels, {
-			agencyConsultants: [
-				{ consultantId: 'c-9', username: encoded, agencyId: 2 }
+			eligibleCases: [
+				{
+					consultant: { consultantId: 'c-9', username: encoded },
+					session: { id: 3, agencyId: 2 }
+				} as unknown as ListItemInterface
 			]
 		});
 
@@ -252,5 +257,46 @@ describe('buildSearchPeopleResults — readable counsellor names (FE#1725)', () 
 		);
 
 		expect(consultant?.name).toBe('Patty Bouvier');
+	});
+});
+
+describe('buildSearchPeopleResults — eligible colleagues (FE#1152)', () => {
+	const eligibleCase = (clientName: string, sessionId: number) =>
+		({
+			...sessionWithBoth(),
+			user: { username: clientName },
+			session: { id: sessionId, agencyId: 77, postcode: '30232' }
+		}) as unknown as ListItemInterface;
+
+	it('lists only the counsellor of an eligible case, once, never its client', () => {
+		const people = buildSearchPeopleResults([], labels, {
+			eligibleCases: [
+				eligibleCase('client_a', 1),
+				eligibleCase('client_b', 2)
+			]
+		});
+
+		expect(people.map((entry) => entry.id)).toEqual(['consultant:c-1:77']);
+		expect(people[0].searchText).not.toContain('client_a');
+	});
+
+	it('finds the colleague by the postcode of her eligible cases', () => {
+		const [person] = buildSearchPeopleResults([], labels, {
+			eligibleCases: [eligibleCase('client_a', 1)]
+		});
+
+		expect(filterSearchPeople([person], '30232')).toEqual([person]);
+	});
+
+	it('merges the colleague with the same person from the own list', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			labels,
+			{ eligibleCases: [eligibleCase('client_a', 1)] }
+		);
+
+		expect(
+			people.filter((entry) => entry.id === 'consultant:c-1:77')
+		).toHaveLength(1);
 	});
 });
