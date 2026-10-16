@@ -97,4 +97,21 @@ describe('resolveFocalPoint', () => {
 		expect(point.x).toBe(window.innerWidth / 2);
 		expect(point.y).toBeCloseTo(window.innerHeight * 0.82);
 	});
+
+	it('stops looking the moment it is told the animation is over', async () => {
+		let over = false;
+		const frames = vi.spyOn(window, 'requestAnimationFrame');
+		const pending = resolveFocalPoint(document, 'messageField', () => over);
+		await vi.advanceTimersByTimeAsync(60);
+		const framesBefore = frames.mock.calls.length;
+		expect(framesBefore, 'it was looking').toBeGreaterThan(0);
+
+		over = true;
+		await vi.advanceTimersByTimeAsync(300);
+		await pending;
+		expect(
+			frames.mock.calls.length,
+			'no frame is asked for once it is over'
+		).toBe(framesBefore);
+	});
 });

@@ -130,9 +130,7 @@ const snapshotOf = (
 		at: performance.now(),
 		running: root
 			.getAnimations({ subtree: true })
-			.filter(
-				(a) => a.playState === 'running' || a.playState === 'pending'
-			).length,
+			.filter((a) => a.playState === 'running' || a.pending).length,
 		layers,
 		viewport: {
 			left: 0,

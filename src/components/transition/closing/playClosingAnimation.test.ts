@@ -19,6 +19,22 @@ const installAnimate = (finish: 'at once' | 'never') => {
 		animate;
 	return animate;
 };
+/** Every animation stays open until the test lets them all finish. */
+const installLateAnimate = () => {
+	const finishers: Array<() => void> = [];
+	const animate = vi.fn(() => ({
+		finished: new Promise<void>((resolve) => {
+			finishers.push(resolve);
+		})
+	}));
+	(Element.prototype as unknown as { animate: unknown }).animate = animate;
+	(document.documentElement as unknown as { animate: unknown }).animate =
+		animate;
+	return {
+		animate,
+		finishAll: () => finishers.splice(0).forEach((finish) => finish())
+	};
+};
 const removeAnimate = () => {
 	delete (Element.prototype as unknown as { animate?: unknown }).animate;
 	delete (document.documentElement as unknown as { animate?: unknown })
@@ -49,6 +65,7 @@ describe('playClosingAnimation', () => {
 		});
 	});
 	afterEach(() => {
+		vi.restoreAllMocks();
 		vi.useRealTimers();
 		removeAnimate();
 		document.body.innerHTML = '';
@@ -155,5 +172,240 @@ describe('playClosingAnimation', () => {
 			'nothing covers the page after the cap'
 		).toBeNull();
 		expect(onCovered).toHaveBeenCalledTimes(1);
+	});
+
+	/**
+	 * A swap that is not instant (the live-chat room saves its consent and then
+	 * replaces the whole page) keeps the screen covered until it is done.
+	 */
+	describe('when the room needs time to swap', () => {
+		const held = () => {
+			let release: () => void = () => undefined;
+			let fail: (reason: Error) => void = () => undefined;
+			const onCovered = vi.fn(
+				() =>
+					new Promise<void>((resolve, reject) => {
+						release = resolve;
+						fail = reject;
+					})
+			);
+			return {
+				onCovered,
+				release: () => release(),
+				fail: (reason: Error) => fail(reason)
+			};
+		};
+
+		it('keeps the screen covered until the room has finished, then opens', async () => {
+			installAnimate('at once');
+			focalOnPage();
+			const swap = held();
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+
+			await vi.advanceTimersByTimeAsync(1000);
+			expect(
+				document
+					.querySelector(ROOT)
+					?.getAttribute('data-closing-phase'),
+				'still covered while the room swaps'
+			).toBe('covered');
+
+			swap.release();
+			await vi.advanceTimersByTimeAsync(200);
+			const result = await pending;
+			expect(result.played).toBe(true);
+			expect(document.querySelector(ROOT)).toBeNull();
+		});
+
+		it('waits for the room also when nothing can be animated', async () => {
+			const swap = held();
+			let settled = false;
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				reducedMotion: true,
+				onCovered: swap.onCovered
+			}).then((result) => {
+				settled = true;
+				return result;
+			});
+
+			await vi.advanceTimersByTimeAsync(500);
+			expect(settled, 'not over before the room is').toBe(false);
+			swap.release();
+			expect((await pending).played).toBe(false);
+		});
+
+		it('never leaves the page covered when the room never finishes (the page is being replaced)', async () => {
+			installAnimate('at once');
+			const onCovered = vi.fn(() => new Promise<void>(() => undefined));
+			const pending = playClosingAnimation({
+				variant: 'slideReveal',
+				focal: 'messageField',
+				onCovered
+			});
+
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs - 50
+			);
+			expect(document.querySelector(ROOT)).not.toBeNull();
+			await vi.advanceTimersByTimeAsync(100);
+			expect((await pending).played).toBe(true);
+			expect(document.querySelector(ROOT)).toBeNull();
+			expect(onCovered).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not open onto layers that are gone when the room finishes after the cap', async () => {
+			const animate = installAnimate('at once');
+			focalOnPage();
+			const swap = held();
+			const pending = playClosingAnimation({
+				variant: 'circleZoom',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 50
+			);
+			await pending;
+			const playedAtCap = animate.mock.calls.length;
+
+			swap.release();
+			await vi.advanceTimersByTimeAsync(3000);
+
+			expect(animate.mock.calls.length).toBe(playedAtCap);
+			expect(document.querySelector(ROOT)).toBeNull();
+		});
+
+		it('does not carry on when the cover finishes only after the cap, but the room is swapped once', async () => {
+			const late = installLateAnimate();
+			focalOnPage();
+			const onCovered = vi.fn();
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered
+			});
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 50
+			);
+			await pending;
+			expect(onCovered, 'the cap swaps the room').toHaveBeenCalledTimes(
+				1
+			);
+			const playedAtCap = late.animate.mock.calls.length;
+
+			late.finishAll();
+			await vi.advanceTimersByTimeAsync(3000);
+
+			expect(late.animate.mock.calls.length).toBe(playedAtCap);
+			expect(onCovered).toHaveBeenCalledTimes(1);
+		});
+
+		it('does not open onto layers that are gone when the tab was hidden while it looked for the destination', async () => {
+			const animate = installAnimate('at once');
+			const waiting: FrameRequestCallback[] = [];
+			vi.spyOn(window, 'requestAnimationFrame').mockImplementation(
+				(callback) => waiting.push(callback)
+			);
+			const pending = playClosingAnimation({
+				variant: 'circleZoom',
+				focal: 'messageField',
+				onCovered: () => undefined
+			});
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs + 50
+			);
+			await pending;
+			expect(waiting.length, 'it was still looking').toBeGreaterThan(0);
+			const playedAtCap = animate.mock.calls.length;
+
+			// The tab comes back and the frames that were waiting run.
+			waiting.splice(0).forEach((frame) => frame(0));
+			await vi.advanceTimersByTimeAsync(3000);
+
+			expect(animate.mock.calls.length).toBe(playedAtCap);
+		});
+
+		it('stops looking for the destination once the cap has removed the layers', async () => {
+			installAnimate('at once');
+			const swap = held();
+			const frames = vi.spyOn(window, 'requestAnimationFrame');
+			const pending = playClosingAnimation({
+				variant: 'curtain',
+				focal: 'messageField',
+				onCovered: swap.onCovered
+			});
+			// The room takes long, so the cap falls into the wait for the destination.
+			await vi.advanceTimersByTimeAsync(3000);
+			swap.release();
+			await vi.advanceTimersByTimeAsync(400);
+			expect(frames.mock.calls.length, 'it was looking').toBeGreaterThan(
+				0
+			);
+
+			await vi.advanceTimersByTimeAsync(
+				transitionMotion.closing.capMs - 3400 + 50
+			);
+			await pending;
+			const framesAtCap = frames.mock.calls.length;
+			await vi.advanceTimersByTimeAsync(1500);
+
+			expect(frames.mock.calls.length).toBe(framesAtCap);
+		});
+
+		it('leaves no unhandled rejection when the swap the cap forced fails', async () => {
+			installLateAnimate();
+			const unhandled: unknown[] = [];
+			const hear = (reason: unknown) => unhandled.push(reason);
+			process.on('unhandledRejection', hear);
+			try {
+				const pending = playClosingAnimation({
+					variant: 'curtain',
+					focal: 'messageField',
+					onCovered: () => Promise.reject(new Error('too late'))
+				});
+				await vi.advanceTimersByTimeAsync(
+					transitionMotion.closing.capMs + 50
+				);
+				await pending;
+				await new Promise<void>((resolve) => setImmediate(resolve));
+				expect(unhandled).toEqual([]);
+			} finally {
+				process.off('unhandledRejection', hear);
+			}
+		});
+
+		it.each([
+			['with the animation', false],
+			['without it', true]
+		])(
+			'passes on a swap that fails and leaves nothing behind (%s)',
+			async (_name, reducedMotion) => {
+				installAnimate('at once');
+				const swap = held();
+				const outcome = playClosingAnimation({
+					variant: 'curtain',
+					focal: 'messageField',
+					reducedMotion,
+					onCovered: swap.onCovered
+				}).then(
+					() => null,
+					(error: Error) => error
+				);
+				await vi.advanceTimersByTimeAsync(500);
+				swap.fail(new Error('the room could not swap'));
+				await vi.advanceTimersByTimeAsync(50);
+
+				expect((await outcome)?.message).toBe(
+					'the room could not swap'
+				);
+				expect(document.querySelector(ROOT)).toBeNull();
+			}
+		);
 	});
 });

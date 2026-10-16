@@ -40,7 +40,11 @@ export interface LiveChatWaitingRoomProps {
 	 * platform's (ADR-022: no Beratungsstelle is assigned yet).
 	 */
 	department?: { agencyId: number; topicId: number } | null;
-	onAccept: () => void;
+	/**
+	 * Start the chat. A promise it returns keeps the closing animation's cover
+	 * on until the page is replaced (or the start failed).
+	 */
+	onAccept: () => void | Promise<unknown>;
 	/** The way out: finish the enquiry and delete the access. */
 	onLeave: () => Promise<void> | void;
 	/** Written alternative — the registration. */

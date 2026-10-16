@@ -14,7 +14,14 @@ import {
 
 export interface HandoverGateButtonProps {
 	state: HandoverGateState;
-	onEnter?: React.MouseEventHandler<HTMLButtonElement>;
+	/**
+	 * What entering does. With `closing`, it runs once the screen is covered,
+	 * and a promise it returns keeps the screen covered until it settles (the
+	 * live-chat room saves its consent, then replaces the whole page).
+	 */
+	onEnter?: (
+		event: React.MouseEvent<HTMLButtonElement>
+	) => void | Promise<unknown>;
 	/** Registration completion stays owned by its containing form. */
 	type?: 'button' | 'submit';
 	disabled?: boolean;
@@ -52,6 +59,7 @@ export interface HandoverGateButtonProps {
 	 * Asked before anything starts; `false` keeps the person where they are, no
 	 * animation, no `onEnter`. The live-chat room refuses here when consent is
 	 * missing, so the curtain never closes on a screen that then says "no".
+	 * Asked again, as the room is by then, when the screen is covered.
 	 */
 	beforeEnter?: () => boolean;
 }
@@ -83,6 +91,12 @@ export const HandoverGateButton = ({
 	const { t } = useTranslation();
 	const { play } = useClosingAnimation();
 	const [closingBusy, setClosingBusy] = React.useState(false);
+	/* The screen takes a moment to cover, and the overlay lets every pointer
+	   through: what the room says then counts, not what it said at the press. */
+	const room = React.useRef({ beforeEnter, onEnter });
+	React.useEffect(() => {
+		room.current = { beforeEnter, onEnter };
+	}, [beforeEnter, onEnter]);
 	const shownState: HandoverGateState = closingBusy ? 'entering' : state;
 	const open = GATE_IS_OPEN[shownState] && !disabled;
 	const statusLabel = status ?? t(GATE_STATUS_KEY[shownState]);
@@ -106,10 +120,19 @@ export const HandoverGateButton = ({
 				x: rect.left + rect.width / 2,
 				y: rect.top + rect.height / 2
 			},
-			onCovered: () => onEnter?.(event)
-		}).finally(() => {
-			setClosingBusy(false);
-		});
+			onCovered: () => {
+				const { beforeEnter: stillAgrees, onEnter: enter } =
+					room.current;
+				if (stillAgrees && !stillAgrees()) {
+					return;
+				}
+				return enter?.(event);
+			}
+		})
+			.catch((error) => console.error('Closing animation failed', error))
+			.finally(() => {
+				setClosingBusy(false);
+			});
 	};
 
 	return (

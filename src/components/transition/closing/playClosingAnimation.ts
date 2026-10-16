@@ -12,8 +12,11 @@ export interface PlayClosingAnimationOptions {
 	/**
 	 * The screen is covered: swap the room for its destination here, and only
 	 * here. It runs exactly once, also when the animation cannot play at all.
+	 * A swap that takes time (the live-chat room saves its consent and then
+	 * replaces the whole page) returns a promise: the screen stays covered until
+	 * it settles, but never longer than `closing.capMs`.
 	 */
-	onCovered: () => void;
+	onCovered: () => void | Promise<unknown>;
 	/** The person asked for less motion: the room is swapped at once. */
 	reducedMotion?: boolean;
 	/** Where the press happened; the circle opens from here. */
@@ -398,15 +401,20 @@ export const playClosingAnimation = async (
 	const win = doc.defaultView;
 
 	let swapped = false;
+	let swapping: Promise<unknown> = Promise.resolve();
 	const swap = () => {
 		if (!swapped) {
 			swapped = true;
-			options.onCovered();
+			swapping = Promise.resolve(options.onCovered());
+			// Whoever waits for the swap hears of a failure. One nobody waits
+			// for any more (the cap won) must not become an unhandled rejection.
+			swapping.catch(() => undefined);
 		}
+		return swapping;
 	};
 
 	if (options.reducedMotion || !win || !canAnimate(doc)) {
-		swap();
+		await swap();
 		return { played: false };
 	}
 
@@ -435,12 +443,15 @@ export const playClosingAnimation = async (
 		origin: options.origin ?? { x: width / 2, y: height * 0.82 }
 	});
 
+	let over = false;
 	const sequence = async () => {
 		doc.body.appendChild(root);
 		await settle(plan.cover());
 		setPhase('covered');
-		swap();
-		const focal = await resolveFocalPoint(doc, options.focal);
+		await swap();
+		const focal = await resolveFocalPoint(doc, options.focal, () => over);
+		// The cap won while it waited: nobody is looking at these layers.
+		if (over) return;
 		setPhase('reveal');
 		await settle(plan.reveal(focal));
 		setPhase('revealed');
@@ -458,8 +469,9 @@ export const playClosingAnimation = async (
 		await Promise.race([sequence(), cap]);
 	} finally {
 		win.clearTimeout(capTimer);
-		swap();
+		over = true;
 		root.remove();
+		swap();
 	}
 	return { played: true };
 };

@@ -21,9 +21,9 @@ const gate = () =>
 
 /** A play that stays open until the test lets the screen "cover" and "finish". */
 const controlledPlay = () => {
-	let covered: () => void = () => undefined;
+	let covered: () => unknown = () => undefined;
 	let finish: () => void = () => undefined;
-	play.mockImplementation(({ onCovered }: { onCovered: () => void }) => {
+	play.mockImplementation(({ onCovered }: { onCovered: () => unknown }) => {
 		covered = onCovered;
 		return new Promise<{ played: boolean }>((resolve) => {
 			finish = () => resolve({ played: true });
@@ -182,6 +182,130 @@ describe('HandoverGateButton closing animation', () => {
 		fireEvent.click(gate());
 		expect(play).toHaveBeenCalledTimes(1);
 		await act(async () => timeline.finish());
+	});
+
+	/**
+	 * The overlay lets every pointer through, so for the 340 ms the screen takes
+	 * to cover, the room can still change under the person's hand: an unticked
+	 * consent box must not be walked past.
+	 */
+	it('asks the room once more when the screen is covered, and stays put if it says no now', async () => {
+		const timeline = controlledPlay();
+		const onEnter = vi.fn();
+		let agreed = true;
+		render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={onEnter}
+				beforeEnter={() => agreed}
+			/>
+		);
+
+		fireEvent.click(gate());
+		expect(play).toHaveBeenCalledTimes(1);
+		agreed = false;
+		await act(async () => timeline.cover());
+		expect(
+			onEnter,
+			'the person took the consent back'
+		).not.toHaveBeenCalled();
+
+		await act(async () => timeline.finish());
+		expect(gate().getAttribute('data-cy-state')).toBe('ready');
+	});
+
+	it('asks the room as it is now, not as it was at the press', async () => {
+		const timeline = controlledPlay();
+		const onEnter = vi.fn();
+		const { rerender } = render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={onEnter}
+				beforeEnter={() => true}
+			/>
+		);
+		fireEvent.click(gate());
+
+		rerender(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={onEnter}
+				beforeEnter={() => false}
+			/>
+		);
+		await act(async () => timeline.cover());
+		expect(onEnter).not.toHaveBeenCalled();
+		await act(async () => timeline.finish());
+	});
+
+	it('enters through the room as it is now, not through the one that was pressed', async () => {
+		const timeline = controlledPlay();
+		const pressedOnEnter = vi.fn();
+		const currentOnEnter = vi.fn();
+		const { rerender } = render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={pressedOnEnter}
+			/>
+		);
+		fireEvent.click(gate());
+		rerender(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={currentOnEnter}
+			/>
+		);
+		await act(async () => timeline.cover());
+
+		expect(currentOnEnter).toHaveBeenCalledTimes(1);
+		expect(pressedOnEnter).not.toHaveBeenCalled();
+		await act(async () => timeline.finish());
+	});
+
+	it("hands the room's own wait to the animation, so the screen stays covered until it is done", async () => {
+		const timeline = controlledPlay();
+		const waiting = new Promise<void>(() => undefined);
+		render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={() => waiting}
+			/>
+		);
+		fireEvent.click(gate());
+
+		expect(timeline.cover()).toBe(waiting);
+		await act(async () => timeline.finish());
+	});
+
+	it('reports an animation that failed and gives the button back', async () => {
+		const failure = new Error('the swap failed');
+		play.mockImplementation(() => Promise.reject(failure));
+		const report = vi
+			.spyOn(console, 'error')
+			.mockImplementation(() => undefined);
+		render(
+			<HandoverGateButton
+				state="ready"
+				closing="messageField"
+				onEnter={vi.fn()}
+			/>
+		);
+
+		fireEvent.click(gate());
+		await act(async () => undefined);
+
+		expect(report).toHaveBeenCalledWith(
+			'Closing animation failed',
+			failure
+		);
+		expect(gate().getAttribute('data-cy-state')).toBe('ready');
+		report.mockRestore();
 	});
 
 	it('does nothing while the gate is still shut', () => {
