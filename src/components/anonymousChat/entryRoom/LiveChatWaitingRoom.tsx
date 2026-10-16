@@ -27,6 +27,12 @@ export interface LiveChatWaitingRoomProps {
 	ahead: number | null;
 	/** A counsellor has taken the conversation. */
 	accepted: boolean;
+	/**
+	 * Nobody is live right now (confirmed by the entry room) and the person
+	 * chose to wait. The room says so and that it keeps watching, instead of
+	 * promising that it starts soon (#1270). Ignored once `accepted`.
+	 */
+	nobodyLive?: boolean;
 	/** Who took it — shown once known, otherwise omitted. */
 	counsellorLine?: string;
 	/**
@@ -110,6 +116,7 @@ const TurningClock = () => (
 export const LiveChatWaitingRoom = ({
 	ahead,
 	accepted,
+	nobodyLive = false,
 	counsellorLine,
 	consentHtml,
 	department,
@@ -174,11 +181,16 @@ export const LiveChatWaitingRoom = ({
 	const companionOpen = companion && !accepted;
 	const total = Math.max(5, ahead ?? 0);
 
+	const showNobodyLive = nobodyLive && !accepted;
 	const cards: HandoverStep[] = CARD_KEYS.map((key) => ({
 		key: `live-${key}`,
 		artwork: liveChatArtwork[key],
 		titleKey: `liveChat.entry.steps.${key}.title`,
-		textKey: `liveChat.entry.steps.${key}.text`,
+		/* "…in anderen Gesprächen" would contradict the notice above. */
+		textKey:
+			key === 'wait' && showNobodyLive
+				? 'liveChat.entry.steps.wait.textNobodyLive'
+				: `liveChat.entry.steps.${key}.text`,
 		titleFallback: {
 			wait: 'Sie warten, bis jemand frei ist',
 			consent: 'Dann stimmen Sie einmal zu',
@@ -193,8 +205,12 @@ export const LiveChatWaitingRoom = ({
 		}[key]
 	}));
 
-	const aheadLine =
-		ahead === null
+	const aheadLine = showNobodyLive
+		? tr(
+				'nobodyLive',
+				'Wir behalten das im Blick und verbinden Sie, sobald jemand verfügbar ist.'
+			)
+		: ahead === null
 			? tr('aheadUnknown', 'Wir suchen eine freie Beraterin für Sie.')
 			: ahead === 0
 				? tr('aheadNone', 'Sie sind die Nächste.')
@@ -216,7 +232,12 @@ export const LiveChatWaitingRoom = ({
 						color: registrationMd3.onSurface
 					}}
 				>
-					{tr('headline', 'Gleich geht es los.')}
+					{showNobodyLive
+						? tr(
+								'nobodyLiveHeadline',
+								'Gerade ist keine Beraterin live.'
+							)
+						: tr('headline', 'Gleich geht es los.')}
 				</Typography>
 				<Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
 					{!accepted && ahead !== null && (

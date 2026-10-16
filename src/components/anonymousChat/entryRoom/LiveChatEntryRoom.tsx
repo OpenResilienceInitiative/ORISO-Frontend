@@ -39,6 +39,11 @@ import {
 	readConfirmedEntryName,
 	rememberConfirmedEntryName
 } from './entryRoomIdentity';
+import {
+	CLOSED_CONFIRMATION_POLLS,
+	isNobodyLiveConfirmed,
+	nextUnavailablePollCount
+} from './liveChatAvailability';
 
 export interface LiveChatEntryRoomProps {
 	/** The anonymous session this browser already has for the link. Tokens are set. */
@@ -62,8 +67,8 @@ export interface LiveChatEntryRoomProps {
 const POLL_MS = 4000;
 /* The details endpoint deliberately maps a transient availability lookup
    failure to zero. One sample is therefore not enough to call the room
-   closed; a second consecutive poll confirms that nobody is live. */
-const CLOSED_CONFIRMATION_POLLS = 2;
+   closed; a second consecutive poll confirms that nobody is live
+   (`CLOSED_CONFIRMATION_POLLS`, shared with the legacy session dialog). */
 /* Before a name the loader is on screen anyway, so the confirming second look
    comes after a second rather than a full poll: closed has to feel immediate. */
 const CLOSED_CONFIRMATION_MS = 1000;
@@ -480,7 +485,7 @@ const LiveChatEntryRoomContent = ({
 							: null;
 					setAvailable(nextAvailable);
 					setConsecutiveUnavailablePolls((previous) =>
-						nextAvailable === 0 ? previous + 1 : 0
+						nextUnavailablePollCount(previous, nextAvailable)
 					);
 					/* The department coordinate is bound at registration, so it
 					   arrives on the very first poll — the sentence is fetched
@@ -599,15 +604,22 @@ const LiveChatEntryRoomContent = ({
 
 	const goToMail = useCallback(() => navigate('/registration'), [navigate]);
 
-	const nobodyLive =
-		available === 0 &&
-		consecutiveUnavailablePolls >= CLOSED_CONFIRMATION_POLLS;
+	const nobodyLive = isNobodyLiveConfirmed(
+		available,
+		consecutiveUnavailablePolls
+	);
 	const closed =
 		nobodyLive &&
 		!closedDismissed &&
 		(sessionId === null
 			? stage !== 'waiting' && !busy
 			: stage === 'waiting' && !accepted);
+	/* "Ich warte" with a session dismisses the closed page, but the room that is
+	   left must not pretend a counsellor is about to answer (#1270). Driven by
+	   the same confirmed signal as `closed`, so it clears itself the moment the
+	   poll sees somebody live again. */
+	const waitingNobodyLive =
+		nobodyLive && stage === 'waiting' && sessionId !== null && !accepted;
 	const statusLine = closed
 		? tr('status.closed', 'Gerade geschlossen')
 		: stage === 'checking'
@@ -621,10 +633,12 @@ const LiveChatEntryRoomContent = ({
 							'status.accepted',
 							'Eine Beraterin hat Ihr Gespräch angenommen'
 						)
-					: tr(
-							'status.waiting',
-							'Warteraum — freie Beraterin wird gesucht'
-						);
+					: waitingNobodyLive
+						? tr('status.nobodyLive', 'Gerade ist niemand live')
+						: tr(
+								'status.waiting',
+								'Warteraum — freie Beraterin wird gesucht'
+							);
 
 	return (
 		<EntryRoomShell
@@ -683,6 +697,7 @@ const LiveChatEntryRoomContent = ({
 				{stage === 'waiting' && !closed && (
 					<LiveChatWaitingRoom
 						ahead={ahead}
+						nobodyLive={waitingNobodyLive}
 						/* Held only while the department lookup is still in flight —
 					   a poll that reports the coordinate and IN_PROGRESS together
 					   would otherwise show "no policy" for a centre that has one,

@@ -2581,6 +2581,7 @@
 			},
 			"waiting": {
 				"aheadUnknown": "Wir suchen eine freie Beraterin für dich.",
+				"nobodyLive": "Wir behalten das im Blick und verbinden dich, sobald jemand verfügbar ist.",
 				"aheadNone": "Du bist als Nächstes dran.",
 				"aheadOne": "Eine Person vor dir",
 				"aheadMany": "{{count}} Personen vor dir",

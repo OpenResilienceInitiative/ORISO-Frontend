@@ -199,6 +199,10 @@ import { PseudonymActionBar } from '../pseudonym/PseudonymActionBar';
 import { PrivacyMessageCard } from '../pseudonym/PrivacyMessageCard';
 import { WaitingQueueActionBar } from '../pseudonym/WaitingQueueActionBar';
 import { LeaveQueueDialog } from '../pseudonym/LeaveQueueDialog';
+import {
+	isNobodyLiveConfirmed,
+	nextUnavailablePollCount
+} from '../anonymousChat/entryRoom/liveChatAvailability';
 import { performLeaveQueueDelete } from '../pseudonym/leaveQueueDelete';
 import { ConsultantAcceptedActionBar } from '../pseudonym/ConsultantAcceptedActionBar';
 import { BreathingCompanionHost } from '../pseudonym/breathingCompanion/BreathingCompanionHost';
@@ -388,6 +392,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		number | null
 	>(null);
 	/**
+	 * Consecutive answered zeros of that poll. The endpoint reports its own
+	 * failed availability lookup as zero, so the dialog needs the same
+	 * confirmation the entry room uses (`isNobodyLiveConfirmed`, #1270).
+	 */
+	const [consecutiveUnavailablePolls, setConsecutiveUnavailablePolls] =
+		useState(0);
+	/**
 	 * Set when the asker manually dismisses the no-availability modal while
 	 * the count is still 0, so the poll doesn't immediately reopen it. Reset
 	 * automatically as soon as a consultant becomes available again.
@@ -525,7 +536,10 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 		isInAnonymousWaitingQueuePhase &&
 		!consultantAccepted &&
 		!enquiryClosed &&
-		numAvailableConsultants === 0 &&
+		isNobodyLiveConfirmed(
+			numAvailableConsultants,
+			consecutiveUnavailablePolls
+		) &&
 		!liveChatClosedDismissed;
 	const robotIncomingUsername = useMemo(() => {
 		const resolvedCandidates = [
@@ -1222,10 +1236,13 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 					if (typeof details?.peopleAhead === 'number') {
 						setQueuePeopleAhead(details.peopleAhead);
 					}
-					setNumAvailableConsultants(
+					const polledAvailable =
 						typeof details?.numAvailableConsultants === 'number'
 							? details.numAvailableConsultants
-							: null
+							: null;
+					setNumAvailableConsultants(polledAvailable);
+					setConsecutiveUnavailablePolls((previous) =>
+						nextUnavailablePollCount(previous, polledAvailable)
 					);
 					/* Only IN_PROGRESS means a consultant is handling this
 					   enquiry. DONE/IN_ARCHIVE must NOT flip the bar — a
@@ -3783,7 +3800,9 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			<Dialog
 				open={liveChatClosedModalOpen}
-				onClose={() => setLiveChatClosedDismissed(true)}
+				/* No `onClose`: a click beside the dialog or Esc must not walk
+				   the asker past "nobody is live" (#1270). Only its own buttons
+				   ("back", "come back later") and availability returning close it. */
 				fullWidth
 				maxWidth={false}
 				PaperProps={{
