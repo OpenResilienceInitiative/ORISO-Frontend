@@ -56,8 +56,16 @@ const {
 vi.mock('lottie-react', () => ({ default: () => null }));
 
 vi.mock('../../components/stageLayout/StageLayout', () => ({
-	StageLayout: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="stage-layout">{children}</div>
+	StageLayout: ({
+		children,
+		showLoginLink
+	}: {
+		children: React.ReactNode;
+		showLoginLink?: boolean;
+	}) => (
+		<div data-testid="stage-layout" data-show-login={String(showLoginLink)}>
+			{children}
+		</div>
 	)
 }));
 
@@ -359,5 +367,84 @@ describe('registration — a submit that is already in flight', () => {
 
 		await waitFor(() => expect(form()).toBeTruthy());
 		expect(handover()).toBeNull();
+	});
+});
+
+const header = () =>
+	document.querySelector('[data-cy="registration-header"]') as HTMLElement;
+const headerFold = () =>
+	header()?.querySelector('.MuiCollapse-root') as HTMLElement | null;
+
+/**
+ * ORISO-Frontend#1736 (Frank, 2026-10-15: the stepper moves on when the account
+ * is created, nothing jumps). The header is one element before and after the
+ * submit: it shows the finished state, folds away after a beat, and comes back
+ * when the submit fails.
+ */
+describe('registration — the header while the account is created', () => {
+	it('is the same element before and after the submit, with every step done', async () => {
+		renderAccountStep();
+		const before = header();
+		expect(before).toBeTruthy();
+		expect(
+			document
+				.querySelector('[data-testid="stage-layout"]')
+				?.getAttribute('data-show-login')
+		).toBe('true');
+		expect(
+			before.querySelector('[aria-current="step"]'),
+			'a step is active while the person fills the form'
+		).not.toBeNull();
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		expect(header(), 'the header was not swapped for a new one').toBe(
+			before
+		);
+		expect(
+			header().querySelector('[aria-current="step"]'),
+			'no step is active any more'
+		).toBeNull();
+		expect(
+			header().querySelectorAll(
+				'[data-cy="step-connector"][data-done="true"]'
+			).length
+		).toBe(availableSteps.length - 1);
+		expect(
+			document
+				.querySelector('[data-testid="stage-layout"]')
+				?.getAttribute('data-show-login'),
+			'the login button is told to leave once the account is being created'
+		).toBe('false');
+	});
+
+	it('folds away a beat after the submit and unfolds when it fails', async () => {
+		renderAccountStep();
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		expect(
+			headerFold()?.classList.contains('MuiCollapse-hidden'),
+			'the finished stepper is shown first, not folded at once'
+		).toBe(false);
+		await waitFor(
+			() =>
+				expect(
+					headerFold()?.classList.contains('MuiCollapse-hidden')
+				).toBe(true),
+			{ timeout: 4000 }
+		);
+
+		await act(async () => {
+			settle.reject?.(new Error('username already taken'));
+			await Promise.resolve();
+		});
+		await waitFor(() => expect(form()).toBeTruthy());
+		await waitFor(() =>
+			expect(headerFold()?.classList.contains('MuiCollapse-hidden')).toBe(
+				false
+			)
+		);
 	});
 });

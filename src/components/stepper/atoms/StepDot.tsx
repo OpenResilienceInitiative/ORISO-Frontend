@@ -63,13 +63,17 @@ export const StepDot = React.forwardRef<HTMLDivElement, StepDotProps>(
 							? `0 0 0 5px ${stepperColors.selectedLayer}`
 							: 'none',
 					'transition': `background-color ${stepperMotion.standard} ease, color ${stepperMotion.standard} ease, border-color ${stepperMotion.standard} ease, box-shadow ${stepperMotion.standard} ease`,
+					// The next dot lights up when the line before it has arrived.
+					'transitionDelay':
+						state === 'active' ? stepperMotion.travel : '0ms',
 					'& svg': {
 						fontSize: `${ICON_SIZE[size]}px`,
 						width: ICON_SIZE[size],
 						height: ICON_SIZE[size]
 					},
 					'@media (prefers-reduced-motion: reduce)': {
-						transition: 'none'
+						transition: 'none',
+						transitionDelay: '0ms'
 					}
 				}}
 			>

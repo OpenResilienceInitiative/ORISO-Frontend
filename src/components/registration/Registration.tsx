@@ -21,6 +21,8 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import { SlideIn } from '../transition/SlideIn';
+import { StepTransition } from '../transition/StepTransition';
 import useIsFirstVisit from '../../utils/useIsFirstVisit';
 import {
 	RegistrationContext,
@@ -130,6 +132,9 @@ const forgetRegistrationDraft = () => {
 	}
 };
 
+/** How long the stepper shows the finished state before the header folds away. */
+const HEADER_FOLD_AFTER_MS = 900;
+
 export const Registration = () => {
 	const { t } = useTranslation(['common', 'consultingTypes', 'agencies']);
 	const settings = useAppConfig();
@@ -188,6 +193,21 @@ export const Registration = () => {
 		isRegistrationSubmitting,
 		isRegistrationSubmitting
 	);
+	/* The stepper shows the finished state first (`completed`), then the band
+	   folds away. Coming back to the form (a failed submit) unfolds it again at
+	   once. */
+	const [headerFolded, setHeaderFolded] = useState(false);
+	useEffect(() => {
+		if (!isRegistering) {
+			setHeaderFolded(false);
+			return undefined;
+		}
+		const timer = window.setTimeout(
+			() => setHeaderFolded(true),
+			HEADER_FOLD_AFTER_MS
+		);
+		return () => window.clearTimeout(timer);
+	}, [isRegistering]);
 	// Set by the topic step while mounted; the header shows the search only then.
 	const [topicSearch, setTopicSearch] =
 		useState<RegistrationTopicSearchApi | null>(null);
@@ -852,7 +872,7 @@ export const Registration = () => {
 			<StageLayout
 				className="stageLayout--registration"
 				showLegalLinks={true}
-				showLoginLink={true}
+				showLoginLink={!isRegistering}
 				stage={<Stage hasAnimation={isFirstVisit} />}
 				showRegistrationInfoDrawer={true}
 				mobileHero="bar"
@@ -884,6 +904,32 @@ export const Registration = () => {
 							maxWidth: '100%'
 						}}
 					>
+						{/* The header sits above both views, so it is the same element
+						   when the account is created: its stepper travels to the
+						   finished state and the band folds away while the handover
+						   slides in below it, instead of the form (header and all)
+						   being swapped for a new screen. */}
+						{activeStep && (
+							<>
+								<PreselectionBox hasDrawer={false} />
+								<RegistrationHeader
+									currentStepName={step}
+									visibleStepNames={availableSteps.map(
+										({ name }) => name
+									)}
+									clickableStepNames={
+										isRegistering
+											? []
+											: clickableStepperStepNames
+									}
+									onStepClick={onStepperClick}
+									chips={headerChips}
+									fullBleed
+									completed={isRegistering}
+									collapsed={headerFolded}
+								/>
+							</>
+						)}
 						{isRegistering ? (
 							/* The account is being created and auto-login is running.
 						   That wait used to show nothing but a disabled button,
@@ -903,17 +949,22 @@ export const Registration = () => {
 						   in `onRegisterClick` resets `isRegistering`, which
 						   takes this branch away and puts the form back with its
 						   error notification. */
-							<RegistrationHandover
-								ready={false}
-								forcedState="preparing"
-								variant="inline"
-								onEnter={() => undefined}
-								copy={
-									joinsTheGroup
-										? groupJoinHandoverCopy
-										: undefined
-								}
-							/>
+							<SlideIn
+								data-cy="registration-handover-arrival"
+								from={{ xs: 'below', lg: 'right' }}
+							>
+								<RegistrationHandover
+									ready={false}
+									forcedState="preparing"
+									variant="inline"
+									onEnter={() => undefined}
+									copy={
+										joinsTheGroup
+											? groupJoinHandoverCopy
+											: undefined
+									}
+								/>
+							</SlideIn>
 						) : activeStep ? (
 							<>
 								<Helmet>
@@ -959,22 +1010,6 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<PreselectionBox
-												hasDrawer={false}
-											/>
-											<RegistrationHeader
-												currentStepName={step}
-												visibleStepNames={availableSteps.map(
-													({ name }) => name
-												)}
-												clickableStepNames={
-													clickableStepperStepNames
-												}
-												onStepClick={onStepperClick}
-												chips={headerChips}
-												fullBleed
-											/>
-
 											<Box
 												sx={{
 													'flex': 1,
@@ -1001,21 +1036,30 @@ export const Registration = () => {
 													const StepComponent =
 														activeStep.component;
 													return (
-														<StepComponent
-															key={`${activeStep.name}-${clearSelectionVersion}`}
-															onChange={
-																setStepData
+														<StepTransition
+															viewKey={
+																activeStep.name
 															}
-															onNextClick={
-																onNextClick
+															order={
+																currStepIndex
 															}
-															nextStepUrl={
-																nextStepUrl
-															}
-															temporary={
-																temporaryJoin
-															}
-														/>
+														>
+															<StepComponent
+																key={`${activeStep.name}-${clearSelectionVersion}`}
+																onChange={
+																	setStepData
+																}
+																onNextClick={
+																	onNextClick
+																}
+																nextStepUrl={
+																	nextStepUrl
+																}
+																temporary={
+																	temporaryJoin
+																}
+															/>
+														</StepTransition>
 													);
 												})()}
 											</Box>
