@@ -189,6 +189,31 @@ describe('WP-06 Slice 6a — notification settings store', () => {
 		);
 	});
 
+	it('never lets an older settings write finish after a newer one', async () => {
+		const client = makeMockClient();
+		notificationSettingsStore.attachClient(client as any);
+		client.setAccountData.mockClear();
+		const finishers: Array<() => void> = [];
+		client.setAccountData.mockImplementation(
+			(_type: string, _content: any) =>
+				new Promise<void>((resolve) => finishers.push(resolve))
+		);
+
+		notificationSettingsStore.updateSettings({ globalMute: true });
+		notificationSettingsStore.updateSettings({ globalMute: false });
+		// Only one write runs at a time.
+		expect(client.setAccountData).toHaveBeenCalledTimes(1);
+		finishers[0]();
+		await vi.waitFor(() =>
+			expect(client.setAccountData).toHaveBeenCalledTimes(2)
+		);
+		expect(client.setAccountData).toHaveBeenLastCalledWith(
+			NOTIFICATION_SETTINGS_EVENT_TYPE,
+			expect.objectContaining({ globalMute: false })
+		);
+		finishers[1]();
+	});
+
 	it('device silence writes ONLY the device-scoped event type', () => {
 		const client = makeMockClient('DEVICE_B');
 		notificationSettingsStore.attachClient(client as any);
