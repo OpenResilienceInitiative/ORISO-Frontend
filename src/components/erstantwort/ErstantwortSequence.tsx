@@ -8,6 +8,7 @@ import { CarimatMessageContainer } from '../carimat/CarimatMessageContainer';
 import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
 import { TypingDots } from '../pseudonym/BotMessageAnimation';
 import { ErstantwortActionKind } from './erstantwortPayload';
+import { bausteinById } from './erstantwortCatalogue';
 import { ResolvedBaustein } from './erstantwortResolve';
 import '../pseudonym/PseudonymCard.styles.scss';
 import './ErstantwortSequence.styles.scss';
@@ -217,10 +218,9 @@ const CombinedMessage = ({
 									<span className="erstantwort__faqLabel">
 										{item.headline ??
 											t(
-												`erstantwort.faq.${item.id}`,
-												item.id === 'modalityNote'
-													? 'Wie läuft die Beratung ab?'
-													: 'Was passiert mit meinen Daten?'
+												bausteinById(item.id)
+													?.headlineKey ??
+													`erstantwort.faq.${item.id}`
 											)}
 									</span>
 									<ExpandMoreRoundedIcon

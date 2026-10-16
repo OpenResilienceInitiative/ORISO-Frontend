@@ -276,6 +276,25 @@ describe('ErstantwortSequence', () => {
 			expect(rows?.[rows.length - 1]).toBe(row);
 		});
 
+		it('never labels a question without a headline as the data-protection question', () => {
+			render(
+				<ErstantwortSequence
+					skipAnimation
+					bausteine={[
+						{ id: 'greeting', body: 'Hallo.' },
+						{ id: 'emergencyNumbers', body: 'Rufen Sie 112.' }
+					]}
+				/>
+			);
+
+			expect(
+				screen.queryByText('Was passiert mit meinen Daten?')
+			).toBeNull();
+			expect(
+				screen.getByText('erstantwort.emergencyNumbers.headline')
+			).toBeTruthy();
+		});
+
 		it('takes every question from the delivered wording, not from the code', () => {
 			render(
 				<ErstantwortSequence
