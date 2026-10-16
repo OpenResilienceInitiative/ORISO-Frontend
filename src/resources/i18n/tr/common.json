@@ -549,6 +549,16 @@
 			"headline": "Sohbeti başarıyla sildiniz."
 		}
 	},
+	"historyRequest": {
+		"card": {
+			"title": "Bu görüşmeyi yeniden okuma isteği",
+			"intro": "Bu görüşmedeki kişi yeni bir cihazdan giriş yaptı ve önceki mesajları okuyamıyor. Şunu yazdı:",
+			"approve": "Görüşmeyi aç",
+			"decline": "Reddet",
+			"failed": "Anahtarlar gönderilemedi. Lütfen tekrar deneyin.",
+			"origin": "{{user}} yeni bir cihazdan ({{device}}), {{time}} istedi. Bu cihaz henüz doğrulanmadı: yalnızca bu isteği bekliyorsanız açın."
+		}
+	},
 	"e2ee": {
 		"attachment": {
 			"decryption_error": "Şifre çözme sırasında hata",
