@@ -94,6 +94,33 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 	const [qrOpen, setQrOpen] = useState(false);
 
 	const { session: activeSession, ready } = useSession(groupIdFromParam);
+
+	// Banned advice seekers get no Chat-Info, not even by URL.
+	const isAsker = !hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+	const chatId = activeSession?.item?.id;
+	const [banCheck, setBanCheck] = useState<'pending' | 'clear' | 'banned'>(
+		isAsker ? 'pending' : 'clear'
+	);
+	useEffect(() => {
+		if (!isAsker || !chatId) return;
+		let cancelled = false;
+		apiGetGroupChatInfo(chatId)
+			.then((response) =>
+				(response.bannedUsers ?? []).map(decodeUsername)
+			)
+			// As in SessionView: no list means no ban.
+			.catch(() => [] as string[])
+			.then((banned) => {
+				if (!cancelled) {
+					setBanCheck(
+						banned.includes(userData.userName) ? 'banned' : 'clear'
+					);
+				}
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, [isAsker, chatId, userData.userName]);
 	const sessionListTab = useSearchParam<SESSION_LIST_TAB>('sessionListTab');
 
 	const getSessionListTab = () =>
@@ -192,6 +219,16 @@ export const GroupChatInfo = ({ dialog = false }: { dialog?: boolean }) => {
 
 	if (redirectToSessionsList) {
 		return <Navigate to={listPath + getSessionListTab()} replace />;
+	}
+	if (banCheck === 'pending') return null;
+	if (banCheck === 'banned') {
+		// The chat route shows the existing banned view.
+		return (
+			<Navigate
+				to={`${listPath}/${activeSession.item.matrixRoomId}/${activeSession.item.id}${getSessionListTab()}`}
+				replace
+			/>
+		);
 	}
 	const calendarStart = getGroupChatPlannedStart(activeSession.item);
 	const showCreator =

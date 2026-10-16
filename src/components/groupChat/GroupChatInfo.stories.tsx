@@ -67,7 +67,10 @@ const MEMBERS = [
  * Installs the mocks during render, before any child effect asks for data,
  * and restores fetch and the Matrix service when the story unmounts.
  */
-const useBackendMocks = (listItem: ListItemInterface) => {
+const useBackendMocks = (
+	listItem: ListItemInterface,
+	bannedUsers: string[] = []
+) => {
 	const installed = React.useRef<(() => void) | null>(null);
 	if (!installed.current) {
 		const originalFetch = globalThis.fetch;
@@ -90,10 +93,13 @@ const useBackendMocks = (listItem: ListItemInterface) => {
 				});
 			}
 			if (url.includes('/service/users/chat/')) {
-				return new Response(JSON.stringify({ active: false }), {
-					status: 200,
-					headers: { 'Content-Type': 'application/json' }
-				});
+				return new Response(
+					JSON.stringify({ active: false, bannedUsers }),
+					{
+						status: 200,
+						headers: { 'Content-Type': 'application/json' }
+					}
+				);
 			}
 			return originalFetch(input, init);
 		};
@@ -129,7 +135,8 @@ const WiredChatInfo = ({
 	inviteToken,
 	asAsker = false,
 	dialog = false,
-	joined = true
+	joined = true,
+	banned = false
 }: {
 	layout: 'desktop' | 'mobile';
 	inviteToken?: string | null;
@@ -137,13 +144,15 @@ const WiredChatInfo = ({
 	dialog?: boolean;
 	/** False: the viewer has not joined the group yet. */
 	joined?: boolean;
+	/** True: the viewer is on the group's ban list. */
+	banned?: boolean;
 }) => {
 	const listItem = React.useMemo(() => {
 		const item = buildListItem(inviteToken);
 		(item.chat as any).subscribed = joined;
 		return item;
 	}, [inviteToken, joined]);
-	useBackendMocks(listItem);
+	useBackendMocks(listItem, banned ? [groupStageAsker.userName] : []);
 	return (
 		<TenantContext.Provider
 			value={
@@ -180,7 +189,10 @@ const WiredChatInfo = ({
 						path="/sessions/consultant/sessionView/:groupId/:sessionId/editGroupChat"
 						element={<p>Einstellungen für den Gesprächskreis</p>}
 					/>
-					<Route path="*" element={<p>Chat</p>} />
+					<Route
+						path="*"
+						element={<p data-testid="chat-route">Chat</p>}
+					/>
 				</Routes>
 			</GroupChatStage>
 		</TenantContext.Provider>
@@ -503,4 +515,21 @@ export const DialogAskerJoined390: Story = {
 	globals: phone390Globals,
 	render: () => <WiredChatInfo layout="mobile" dialog asAsker />,
 	play: showsFullInfoForMember
+};
+
+/** A banned advice seeker who opens the Chat-Info URL lands back in the chat. */
+export const DialogAskerBannedByUrl: Story = {
+	name: 'Dialog · banned advice seeker by URL: back to the chat',
+	globals: desktop1366Globals,
+	render: () => <WiredChatInfo layout="desktop" dialog asAsker banned />,
+	play: async ({ canvas }) => {
+		// The redirect leaves the Chat-Info route for the chat route.
+		await canvas.findByTestId('chat-route', {}, { timeout: 5000 });
+		await expect(within(document.body).queryByRole('dialog')).toBeNull();
+		await expect(
+			within(document.body).queryByText(
+				i18n.t('groupChat.info.settings.startDate')
+			)
+		).toBeNull();
+	}
 };
