@@ -75,16 +75,18 @@ export const NotificationSetup = ({
 		};
 	}, [isEmailEnabled, isBrowserEnabled, tenant?.id, userData?.userId]);
 
-	const finish = async (choice: NotificationChoice) => {
+	/** Resolves true only when the browser opt-in really completed. */
+	const finish = async (choice: NotificationChoice): Promise<boolean> => {
 		if (
 			(choice !== 'BROWSER' && !isEmailEnabled) ||
 			(choice !== 'EMAIL' && !browserSupported)
 		)
-			return;
+			return false;
 		const operation = continuation.current;
 		const current = () => continuation.current === operation;
 		setBusy(true);
 		setError(null);
+		let completed = false;
 		try {
 			if (choice !== 'BROWSER' && (!emailActive || !consentEmailActive)) {
 				await apiPatchUserData({
@@ -98,9 +100,9 @@ export const NotificationSetup = ({
 						}
 					}
 				});
-				if (!current()) return;
+				if (!current()) return false;
 				const saved = await reloadUserData();
-				if (!current()) return;
+				if (!current()) return false;
 				if (
 					!saved?.email ||
 					!saved?.emailNotifications?.emailNotificationsEnabled ||
@@ -119,12 +121,13 @@ export const NotificationSetup = ({
 				// OS prompts need a fresh user gesture after the async email save.
 				setAwaitingBrowser(true);
 				setBrowserDialogOpen(true);
-				return;
+				return false;
 			}
 			if (choice !== 'EMAIL' && !browserActive) {
 				await optInToBrowserNotifications();
-				if (!current()) return;
+				if (!current()) return false;
 				setAwaitingBrowser(false);
+				completed = Notification.permission === 'granted';
 				if (Notification.permission !== 'granted') {
 					// A blocked site never shows the permission prompt again;
 					// the person has to lift the block in the address bar.
@@ -138,7 +141,7 @@ export const NotificationSetup = ({
 				}
 			}
 		} catch {
-			if (!current()) return;
+			if (!current()) return false;
 			setError(t('erstantwort.notificationChoice.saveFailed'));
 		} finally {
 			if (current()) {
@@ -146,6 +149,7 @@ export const NotificationSetup = ({
 				setBusy(false);
 			}
 		}
+		return completed;
 	};
 
 	const choose = (choice: NotificationChoice) => {
@@ -197,9 +201,9 @@ export const NotificationSetup = ({
 		// No await before the permission request: it needs this click.
 		const operation = continuation.current;
 		void finish('BROWSER')
-			.then(() => {
+			.then((completed) => {
 				// Another account or tenant may be active by now.
-				if (continuation.current !== operation) return;
+				if (!completed || continuation.current !== operation) return;
 				// A tone is kept only when the browser said yes, and only a
 				// tone the person actually changed replaces their settings.
 				if (

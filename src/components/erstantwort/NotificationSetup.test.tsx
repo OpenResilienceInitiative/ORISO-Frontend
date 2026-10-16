@@ -450,6 +450,39 @@ it('keeps the old tones when the browser permission is denied', async () => {
 		)
 	).toBe(before);
 });
+it('keeps the old tones when saving the browser opt-in fails', async () => {
+	setup();
+	const before = JSON.stringify(
+		notificationSettingsStore.getState().settings.notificationConfig
+	);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	fireEvent.click(await screen.findByTestId('notificationTone-ton-5'));
+	const spy = vi
+		.spyOn(Storage.prototype, 'setItem')
+		.mockImplementation(() => {
+			throw new Error('quota');
+		});
+	try {
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'erstantwort.notificationChoice.enableBrowser'
+			})
+		);
+		await waitFor(() => expect(request).toHaveBeenCalled());
+		await waitFor(() =>
+			expect(screen.queryByRole('radiogroup')).toBeNull()
+		);
+	} finally {
+		spy.mockRestore();
+	}
+	expect(
+		JSON.stringify(
+			notificationSettingsStore.getState().settings.notificationConfig
+		)
+	).toBe(before);
+});
 it('keeps the tones the account already has when the picker is not touched', async () => {
 	setup();
 	const before = JSON.stringify(
