@@ -5,7 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HistoryRequestCard } from './HistoryRequestCard';
 
 vi.mock('react-i18next', () => ({
-	useTranslation: () => ({ t: (key: string) => key })
+	useTranslation: () => ({
+		t: (key: string) => key,
+		i18n: { language: 'de@informal' }
+	})
 }));
 
 afterEach(cleanup);

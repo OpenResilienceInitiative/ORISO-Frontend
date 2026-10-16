@@ -9,7 +9,14 @@ export const HistoryRequestApprovals: React.FC<{ roomId?: string | null }> = ({
 }) => {
 	const { requests, approve, decline } = useHistoryRequests(roomId);
 	const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set());
-	const [failedId, setFailedId] = useState<string | null>(null);
+	const [failedIds, setFailedIds] = useState<ReadonlySet<string>>(new Set());
+	const mark = (id: string, on: boolean) =>
+		setFailedIds((ids) => {
+			const next = new Set(ids);
+			if (on) next.add(id);
+			else next.delete(id);
+			return next;
+		});
 
 	if (requests.length === 0) return null;
 	return (
@@ -22,18 +29,18 @@ export const HistoryRequestApprovals: React.FC<{ roomId?: string | null }> = ({
 					requesterDeviceId={request.requesterDeviceId}
 					receivedAt={request.receivedAt}
 					busy={busyIds.has(request.requestId)}
-					failed={failedId === request.requestId}
+					failed={failedIds.has(request.requestId)}
 					onDecline={() => decline(request.requestId)}
 					onApprove={() => {
 						setBusyIds((ids) =>
 							new Set(ids).add(request.requestId)
 						);
-						setFailedId(null);
+						mark(request.requestId, false);
 						void approve(request.requestId)
 							.then((sent) => {
-								if (!sent) setFailedId(request.requestId);
+								if (!sent) mark(request.requestId, true);
 							})
-							.catch(() => setFailedId(request.requestId))
+							.catch(() => mark(request.requestId, true))
 							.finally(() =>
 								setBusyIds((ids) => {
 									const next = new Set(ids);
