@@ -194,10 +194,18 @@ export const NotificationSetup = ({
 	};
 
 	const confirmBrowser = (tone: SoundId) => {
-		// Only a tone the person actually changed replaces their settings.
-		if (tone !== (storedTone() ?? DEFAULT_FIRST_TONE)) rememberTone(tone);
 		// No await before the permission request: it needs this click.
-		void finish('BROWSER').finally(() => setBrowserDialogOpen(false));
+		void finish('BROWSER')
+			.then(() => {
+				// A tone is kept only when the browser said yes, and only a
+				// tone the person actually changed replaces their settings.
+				if (
+					Notification.permission === 'granted' &&
+					tone !== (storedTone() ?? DEFAULT_FIRST_TONE)
+				)
+					rememberTone(tone);
+			})
+			.finally(() => setBrowserDialogOpen(false));
 	};
 
 	if (!isEmailEnabled && !isBrowserEnabled) return null;

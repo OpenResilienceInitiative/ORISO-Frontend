@@ -421,6 +421,35 @@ it('remembers the chosen tone for requests and conversations and plays a preview
 	expect(notificationConfig.conversations.standard.sound).toBe('ton-5');
 	expect(notificationConfig.timeCritical.call.sound).toBe('ring');
 });
+it('keeps the old tones when the browser permission is denied', async () => {
+	request.mockImplementation(async () => {
+		Object.defineProperty(Notification, 'permission', {
+			value: 'denied',
+			configurable: true
+		});
+		return 'denied';
+	});
+	setup();
+	const before = JSON.stringify(
+		notificationSettingsStore.getState().settings.notificationConfig
+	);
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	fireEvent.click(await screen.findByTestId('notificationTone-ton-5'));
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationChoice.enableBrowser'
+		})
+	);
+	await waitFor(() => expect(request).toHaveBeenCalled());
+	await waitFor(() => expect(screen.queryByRole('radiogroup')).toBeNull());
+	expect(
+		JSON.stringify(
+			notificationSettingsStore.getState().settings.notificationConfig
+		)
+	).toBe(before);
+});
 it('keeps the tones the account already has when the picker is not touched', async () => {
 	setup();
 	const before = JSON.stringify(
