@@ -25,6 +25,8 @@ const mocks = vi.hoisted(() => ({
 	draftEnabled: vi.fn(),
 	encryptRoom: vi.fn().mockResolvedValue(undefined),
 	translate: (key: string) => key,
+	composerClear: vi.fn(),
+	typeDraft: (_text: string) => {},
 	matrixService: { getClient: () => null }
 }));
 vi.mock('react-i18next', () => ({
@@ -86,15 +88,26 @@ vi.mock('./useDraftMessage', () => ({
 vi.mock('./TipTapComposer', async () => {
 	const react = await import('react');
 	return {
-		TipTapComposer: react.forwardRef((_props, ref) => {
+		TipTapComposer: react.forwardRef((props: any, ref) => {
+			const valueRef = react.useRef('');
+			valueRef.current = props.value ?? '';
+			mocks.typeDraft = props.onChange;
 			react.useImperativeHandle(ref, () => ({
-				getHTML: () => '',
-				clear: () => {},
+				getHTML: () => valueRef.current,
+				clear: () => mocks.composerClear(),
 				runAction: () => {},
 				isActionActive: () => false,
 				setInsertionMarker: () => {}
 			}));
-			return <div contentEditable suppressContentEditableWarning />;
+			return (
+				<div
+					contentEditable
+					suppressContentEditableWarning
+					data-testid="composer-draft"
+				>
+					{props.value}
+				</div>
+			);
 		})
 	};
 });
@@ -103,7 +116,8 @@ class Recorder {
 	static current: Recorder;
 	static isTypeSupported = () => true;
 	state = 'inactive';
-	mimeType = 'audio/webm';
+	static nextMimeType = 'audio/webm';
+	mimeType = Recorder.nextMimeType;
 	ondataavailable: ((event: { data: Blob }) => void) | null = null;
 	onstop: (() => void) | null = null;
 	onerror: (() => void) | null = null;
@@ -139,9 +153,11 @@ const session = {
 };
 function Composer({
 	sessionId,
+	role = 'counsellor',
 	...props
 }: Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>> & {
 	sessionId?: number;
+	role?: 'counsellor' | 'asker';
 }) {
 	const activeSession = sessionId
 		? { ...session, item: { ...session.item, id: sessionId } }
@@ -160,8 +176,11 @@ function Composer({
 					value={
 						{
 							userData: {
-								userId: 'counsellor',
-								grantedAuthorities: ['CONSULTANT'],
+								userId: role,
+								grantedAuthorities:
+									role === 'asker'
+										? ['ASKER']
+										: ['CONSULTANT'],
 								agencies: []
 							}
 						} as any
@@ -188,6 +207,7 @@ function Composer({
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	Recorder.nextMimeType = 'audio/webm';
 	mocks.clearDraft.mockResolvedValue(undefined);
 	vi.stubGlobal('MediaRecorder', Recorder);
 	Object.assign(URL, {
@@ -494,6 +514,109 @@ describe('voice note review before sending (#1142)', () => {
 		expect(
 			screen.queryByRole('group', { name: 'voice.recording.preview' })
 		).toBeNull();
+	});
+
+	it('keeps a typed draft in the composer when the review opens, and after discard', async () => {
+		render(<Composer />);
+		act(() => mocks.typeDraft('Please call me back tomorrow'));
+		await startRecording();
+		await stopRecording();
+
+		expect(mocks.composerClear).not.toHaveBeenCalled();
+		fireEvent.click(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		);
+		expect(mocks.composerClear).not.toHaveBeenCalled();
+		expect(screen.getByTestId('composer-draft').textContent).toBe(
+			'Please call me back tomorrow'
+		);
+	});
+
+	it('sends only the voice note and leaves the typed draft in the composer', async () => {
+		render(<Composer />);
+		act(() => mocks.typeDraft('Please call me back tomorrow'));
+		await startRecording();
+		await stopRecording();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+		expect(apiSendMessage).not.toHaveBeenCalled();
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('button', { name: 'voicePlayer.play' })
+			).toBeNull()
+		);
+		expect(mocks.composerClear).not.toHaveBeenCalled();
+		expect(screen.getByTestId('composer-draft').textContent).toBe(
+			'Please call me back tomorrow'
+		);
+	});
+
+	it('lets an advice seeker record, review and send a voice note', async () => {
+		render(<Composer role="asker" />);
+		await startRecording();
+		await stopRecording();
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+		expect(
+			screen.getByRole('button', { name: 'voicePlayer.play' })
+		).toBeTruthy();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+		expect(
+			vi.mocked(apiSendMatrixAttachmentMessage).mock.calls[0][1]
+		).toMatchObject({ type: 'audio/webm' });
+	});
+
+	it('ends the 180 s auto-stop in the review without sending', async () => {
+		vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+		try {
+			render(<Composer />);
+			fireEvent.click(screen.getByRole('button', MIC));
+			await act(async () => {});
+			expect(Recorder.current.state).toBe('recording');
+
+			await act(async () => {
+				vi.advanceTimersByTime(180_000);
+			});
+
+			expect(Recorder.current.state).toBe('inactive');
+			expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+			expect(
+				screen.getByRole('button', { name: 'voicePlayer.play' })
+			).toBeTruthy();
+			expect(
+				screen.getByRole('button', { name: 'voice.recording.discard' })
+			).toBeTruthy();
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('names an audio/mp4 take (iOS Safari) .m4a so it stays a recognisable voice note', async () => {
+		Recorder.nextMimeType = 'audio/mp4';
+		render(<Composer />);
+		await startRecording();
+		await stopRecording();
+		await act(async () => {
+			fireEvent.click(screen.getByRole('button', SEND));
+		});
+
+		await waitFor(() =>
+			expect(apiSendMatrixAttachmentMessage).toHaveBeenCalledOnce()
+		);
+		const sent = vi.mocked(apiSendMatrixAttachmentMessage).mock
+			.calls[0][1] as File;
+		expect(sent.type).toBe('audio/mp4');
+		expect(sent.name).toMatch(/^voice-message-\d+-s\d+-ms\d+\.m4a$/);
 	});
 
 	it('cancel while recording drops the take without sending or opening a review', async () => {

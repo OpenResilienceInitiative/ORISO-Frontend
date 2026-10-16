@@ -1763,7 +1763,7 @@ export const MessageSubmitInterfaceComponent = ({
 			} else {
 				// Matrix file upload already sent the message
 				onSendButton && onSendButton();
-				handleMessageSendSuccess();
+				handleMessageSendSuccess(preserveComposerOnSuccess);
 				cleanupAttachment();
 			}
 		},
@@ -1821,14 +1821,24 @@ export const MessageSubmitInterfaceComponent = ({
 			const composerMessageBeforeSend = getTypedMarkdownMessage();
 			const currentTypedMessage =
 				messageOverride ?? composerMessageBeforeSend;
-			const preserveComposerOnSuccess = Boolean(
-				retryOfId &&
-					messageOverride !== undefined &&
-					shouldPreserveComposerAfterRetry(
-						composerMessageBeforeSend,
-						messageOverride
-					)
+			// #1142: a reviewed voice note goes out on its own. Text typed
+			// next to it stays in the composer, it is neither sent with the
+			// recording nor cleared by it.
+			const recordedVoice = recordedVoiceRef.current;
+			const isRecordedVoiceSend = Boolean(
+				!retryOfId && attachment && recordedVoice?.file === attachment
 			);
+			const preserveComposerOnSuccess =
+				(isRecordedVoiceSend &&
+					hasMessageContent(currentTypedMessage)) ||
+				Boolean(
+					retryOfId &&
+						messageOverride !== undefined &&
+						shouldPreserveComposerAfterRetry(
+							composerMessageBeforeSend,
+							messageOverride
+						)
+				);
 			if (
 				getPlainTextFromComposerValue(currentTypedMessage).length >
 				INPUT_MAX_LENGTH
@@ -1844,13 +1854,12 @@ export const MessageSubmitInterfaceComponent = ({
 
 			let message = retryContext
 				? retryContext.transportMessage
-				: composerHtmlToTransportMarkup(currentTypedMessage);
+				: isRecordedVoiceSend
+					? ''
+					: composerHtmlToTransportMarkup(currentTypedMessage);
 			let isAside = retryContext?.isAside || false;
-			const recordedVoice = recordedVoiceRef.current;
 			const sentFeedbackMailIntent =
-				!retryContext &&
-				attachment &&
-				recordedVoice?.file === attachment
+				isRecordedVoiceSend && recordedVoice
 					? recordedVoice.feedbackMailIntent
 					: resolveFeedbackMailIntent({
 							explicitFeedbackComposer: feedbackMailIntent,
@@ -2110,14 +2119,20 @@ export const MessageSubmitInterfaceComponent = ({
 		attachmentInput.click();
 	}, []);
 
-	const displayAttachmentToUpload = useCallback((attachment: File) => {
-		setAttachmentSelected(attachment);
-		setActiveInfo('');
-		// Clear any existing text in the input when attachment is selected
-		setEditorState(EditorState.createEmpty());
-		setComposerText('');
-		composerRef.current?.clear();
-	}, []);
+	const displayAttachmentToUpload = useCallback(
+		(attachment: File, options?: { keepDraft?: boolean }) => {
+			setAttachmentSelected(attachment);
+			setActiveInfo('');
+			if (options?.keepDraft) {
+				return;
+			}
+			// Clear any existing text in the input when attachment is selected
+			setEditorState(EditorState.createEmpty());
+			setComposerText('');
+			composerRef.current?.clear();
+		},
+		[]
+	);
 
 	const handleLargeAttachments = useCallback(() => {
 		removeSelectedAttachment();
@@ -3229,7 +3244,13 @@ export const MessageSubmitInterfaceComponent = ({
 						1,
 						Math.round(elapsedMs / 1000)
 					);
-					const extension = mimeType.includes('ogg') ? 'ogg' : 'webm';
+					// iOS Safari records audio/mp4; name it to match so the
+					// receiving side still recognises it as a voice note.
+					const extension = mimeType.includes('ogg')
+						? 'ogg'
+						: mimeType.includes('mp4')
+							? 'm4a'
+							: 'webm';
 					const voiceFile = new File(
 						[blob],
 						`voice-message-${Date.now()}-s${elapsedSec}-ms${elapsedMs}.${extension}`,
@@ -3247,7 +3268,8 @@ export const MessageSubmitInterfaceComponent = ({
 					};
 					setVoicePreviewUrl(URL.createObjectURL(blob));
 					setVoiceAttachmentDurationSec(elapsedSec);
-					displayAttachmentToUpload(voiceFile);
+					// #1142: a recording never consumes what the user typed.
+					displayAttachmentToUpload(voiceFile, { keepDraft: true });
 				}
 				cleanupVoiceRecorder();
 			};
