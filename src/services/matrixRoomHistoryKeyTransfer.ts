@@ -14,6 +14,8 @@ const KEY_BUNDLE_EVENT = 'org.oriso.room_history_key_bundle';
 const REQUEST_THROTTLE_MS = 30_000;
 const MAX_KEY_BUNDLE_COUNT = 5_000;
 const MAX_PENDING_APPROVALS = 20;
+const MAX_PENDING_PER_ROOM = 5;
+const PENDING_APPROVAL_TTL_MS = 24 * 60 * 60 * 1000;
 const MAX_REASON_LENGTH = 500;
 
 export const MATRIX_HISTORY_KEYS_IMPORTED_EVENT =
@@ -114,6 +116,7 @@ export class MatrixRoomHistoryKeyTransfer {
 
 	/** Requests from unverified devices that wait for a person's decision. */
 	public getPendingApprovals(roomId?: string): PendingHistoryRequest[] {
+		this.expirePendingApprovals();
 		return Array.from(this.pendingApprovals.values()).filter(
 			(request) => !roomId || request.roomId === roomId
 		);
@@ -163,6 +166,17 @@ export class MatrixRoomHistoryKeyTransfer {
 		if (!request) return;
 		this.pendingApprovals.delete(requestId);
 		this.announceResolved(request, 'declined');
+	}
+
+	/** Requests nobody decided on for a day are dropped, so the queue cannot stay full. */
+	private expirePendingApprovals(): void {
+		const limit = Date.now() - PENDING_APPROVAL_TTL_MS;
+		for (const [id, request] of this.pendingApprovals) {
+			if (request.receivedAt < limit && !this.approvalsInFlight.has(id)) {
+				this.pendingApprovals.delete(id);
+				this.announceResolved(request, 'dropped');
+			}
+		}
 	}
 
 	private announceResolved(
@@ -383,7 +397,14 @@ export class MatrixRoomHistoryKeyTransfer {
 						)
 							this.pendingApprovals.delete(id);
 					}
-					if (this.pendingApprovals.size >= MAX_PENDING_APPROVALS) {
+					this.expirePendingApprovals();
+					const inRoom = Array.from(
+						this.pendingApprovals.values()
+					).filter((other) => other.roomId === pending.roomId).length;
+					if (
+						this.pendingApprovals.size >= MAX_PENDING_APPROVALS ||
+						inRoom >= MAX_PENDING_PER_ROOM
+					) {
 						emitDiagnostic('approval-queue-full');
 						return;
 					}

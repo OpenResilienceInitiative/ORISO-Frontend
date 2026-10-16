@@ -797,6 +797,23 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			]);
 		});
 
+		it('drops requests nobody decided on after a day', async () => {
+			vi.useFakeTimers({ toFake: ['Date'] });
+			try {
+				const { harness, service } = setup();
+				harness.emitToDevice(
+					unverifiedRequest('It was about my school')
+				);
+				await vi.waitFor(() =>
+					expect(service.getPendingApprovals()).toHaveLength(1)
+				);
+				vi.setSystemTime(Date.now() + 25 * 60 * 60 * 1000);
+				expect(service.getPendingApprovals()).toEqual([]);
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
 		it('forgets waiting requests when the client is detached', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));
