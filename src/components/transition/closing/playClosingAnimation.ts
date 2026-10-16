@@ -92,141 +92,157 @@ const px = (value: number) => `${value}px`;
 
 /**
  * Curtain: two halves close over the right-hand surface and open again. The
- * stage beside the surface is red already, so the strips that stand in for it
- * only fade in; when the curtain opens they step aside.
+ * stage beside the surface is red already, so the pieces that stand in for it
+ * only fade in. Every piece belongs to the left or the right half, and a half
+ * travels as one: when the curtain opens the whole screen parts at the middle
+ * of the surface and nothing is left behind.
  */
 const curtain = (frame: Frame): Plan => {
 	const { doc, width, height } = frame;
-	const column = doc.querySelector('.stageLayout__content');
-	const box = column?.getBoundingClientRect();
-	const left = Math.max(0, box?.left ?? 0);
-	const top = Math.max(0, box?.top ?? 0);
-	const right = Math.min(width, box?.right ?? width);
-	const bottom = Math.min(height, box?.bottom ?? height);
-	const surfaceOk = right - left > 40 && bottom - top > 40;
-	const surface = surfaceOk
-		? { left, top, right, bottom }
-		: { left: 0, top: 0, right: width, bottom: height };
+	const box = doc
+		.querySelector('.stageLayout__content')
+		?.getBoundingClientRect();
+	const measured = box
+		? {
+				left: Math.max(0, Math.round(box.left)),
+				top: Math.max(0, Math.round(box.top)),
+				right: Math.min(width, Math.round(box.right)),
+				bottom: Math.min(height, Math.round(box.bottom))
+			}
+		: undefined;
+	const surface =
+		measured &&
+		measured.right - measured.left > 40 &&
+		measured.bottom - measured.top > 40
+			? measured
+			: { left: 0, top: 0, right: width, bottom: height };
+	const centre = Math.round((surface.left + surface.right) / 2);
 
-	const strips = [
-		{
-			name: 'stage-left',
-			rect: [0, 0, surface.left, height],
-			out: 'translateX(-100%)'
-		},
-		{
-			name: 'stage-right',
-			rect: [surface.right, 0, width - surface.right, height],
-			out: 'translateX(100%)'
-		},
-		{
-			name: 'stage-top',
-			rect: [surface.left, 0, surface.right - surface.left, surface.top],
-			out: 'translateY(-100%)'
-		},
-		{
-			name: 'stage-bottom',
-			rect: [
-				surface.left,
-				surface.bottom,
-				surface.right - surface.left,
-				height - surface.bottom
-			],
-			out: 'translateY(100%)'
-		}
-	]
-		.filter(({ rect }) => rect[2] > 0.5 && rect[3] > 0.5)
-		.map(({ name, rect, out }) => ({
-			out,
-			element: layer(frame, name, {
-				left: px(rect[0]),
-				top: px(rect[1]),
-				width: px(rect[2]),
-				height: px(rect[3]),
-				background: primary
-			})
-		}));
+	const half = (side: 'left' | 'right') => {
+		const x0 = side === 'left' ? 0 : centre;
+		// One pixel of overlap into the other half, so no seam shows where they meet.
+		const x1 = side === 'left' ? centre + 1 : width;
+		const element = doc.createElement('div');
+		Object.assign(element.style, {
+			position: 'absolute',
+			pointerEvents: 'none',
+			willChange: 'transform',
+			left: px(x0),
+			top: '0',
+			width: px(x1 - x0),
+			height: px(height)
+		});
+		frame.root.appendChild(element);
+		const own = (left: number, right: number) => [
+			Math.max(left, x0),
+			Math.min(right, x1)
+		];
+		const rect = (
+			name: string,
+			[l, r]: number[],
+			top: number,
+			bottom: number
+		) =>
+			r - l > 0.5 && bottom - top > 0.5
+				? layer(
+						frame,
+						name,
+						{
+							left: px(l - x0),
+							top: px(top),
+							width: px(r - l),
+							height: px(bottom - top),
+							background: primary
+						},
+						'rect',
+						element
+					)
+				: undefined;
+		const strips = [
+			// Each piece runs one pixel under the next, so no seam shows while a half moves.
+			rect(`stage-${side}`, own(0, surface.left + 1), 0, height),
+			rect(`stage-${side}-end`, own(surface.right - 1, width), 0, height),
+			rect(
+				`top-${side}`,
+				own(surface.left, surface.right),
+				0,
+				surface.top + 1
+			),
+			rect(
+				`bottom-${side}`,
+				own(surface.left, surface.right),
+				surface.bottom - 1,
+				height
+			)
+		].filter((strip): strip is HTMLDivElement => Boolean(strip));
 
-	const surfaceWidth = surface.right - surface.left;
-	// A frame that only clips: it paints nothing, so it is not a layer.
-	const clip = frame.doc.createElement('div');
-	Object.assign(clip.style, {
-		position: 'absolute',
-		pointerEvents: 'none',
-		left: px(surface.left),
-		top: px(surface.top),
-		width: px(surfaceWidth),
-		height: px(surface.bottom - surface.top),
-		overflow: 'hidden'
-	});
-	frame.root.appendChild(clip);
-	const half = Math.ceil(surfaceWidth / 2) + 1;
-	const panel = (side: 'left' | 'right') =>
-		layer(
+		// A frame that only clips: it paints nothing, so it is not a layer.
+		const [l, r] = own(surface.left, surface.right);
+		const clip = doc.createElement('div');
+		Object.assign(clip.style, {
+			position: 'absolute',
+			pointerEvents: 'none',
+			left: px(l - x0),
+			top: px(surface.top),
+			width: px(r - l),
+			height: px(surface.bottom - surface.top),
+			overflow: 'hidden'
+		});
+		element.appendChild(clip);
+		const panel = layer(
 			frame,
 			`curtain-${side}`,
 			{
-				[side]: '0',
+				left: '0',
 				top: '0',
-				width: px(half),
+				width: '100%',
 				height: '100%',
 				background: primary,
 				// The edge that meets in the middle is a shade deeper, so two
 				// halves read as cloth and not as one flat sheet.
-				boxShadow: `inset ${side === 'left' ? '-' : ''}10px 0 0 ${primaryDark}`
+				boxShadow: `inset ${side === 'left' ? '-' : ''}8px 0 0 ${primaryDark}`
 			},
 			'rect',
 			clip
 		);
-	const leftPanel = panel('left');
-	const rightPanel = panel('right');
-	const away = { left: 'translateX(-101%)', right: 'translateX(101%)' };
+		return { element, strips, panel, away: side === 'left' ? -1 : 1 };
+	};
+
+	const halves = [half('left'), half('right')];
 
 	return {
-		cover: () => [
-			...strips.map(({ element }) =>
+		cover: () =>
+			halves.flatMap(({ strips, panel, away }) => [
+				...strips.map((strip) =>
+					run(
+						strip,
+						[{ opacity: 0 }, { opacity: 1 }],
+						closing.coverMs * 0.6,
+						transitionMotion.easeIn
+					)
+				),
 				run(
-					element,
-					[{ opacity: 0 }, { opacity: 1 }],
-					closing.coverMs * 0.6,
+					panel,
+					[
+						{ transform: `translateX(${away * 101}%)` },
+						{ transform: 'none' }
+					],
+					closing.coverMs,
 					transitionMotion.easeIn
 				)
-			),
-			run(
-				leftPanel,
-				[{ transform: away.left }, { transform: 'none' }],
-				closing.coverMs,
-				transitionMotion.easeIn
-			),
-			run(
-				rightPanel,
-				[{ transform: away.right }, { transform: 'none' }],
-				closing.coverMs,
-				transitionMotion.easeIn
-			)
-		],
-		reveal: () => [
-			...strips.map(({ element, out }) =>
+			]),
+		reveal: () =>
+			halves.map(({ element, away }) =>
 				run(
 					element,
-					[{ transform: 'none' }, { transform: out }],
+					[
+						{ transform: 'none' },
+						{ transform: `translateX(${away * 100}%)` }
+					],
 					closing.revealMs,
 					transitionMotion.easeOut
 				)
-			),
-			run(
-				leftPanel,
-				[{ transform: 'none' }, { transform: away.left }],
-				closing.revealMs,
-				transitionMotion.easeOut
-			),
-			run(
-				rightPanel,
-				[{ transform: 'none' }, { transform: away.right }],
-				closing.revealMs,
-				transitionMotion.easeOut
 			)
-		]
 	};
 };
 
@@ -288,7 +304,7 @@ const circleZoom = (frame: Frame): Plan => {
 					}
 				],
 				closing.revealMs,
-				transitionMotion.easeIn
+				transitionMotion.easeInOut
 			),
 			run(
 				deep,

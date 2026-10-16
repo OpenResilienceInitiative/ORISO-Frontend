@@ -257,6 +257,51 @@ const closingStory = (
 	};
 };
 
+/* Press the button yourself. These carry no assertions; the stories below do. */
+const tryStory = (
+	variant: ClosingVariant,
+	width: keyof typeof WIDTH,
+	name: string
+): Story => ({
+	name,
+	globals: WIDTH[width].globals,
+	render: () => (
+		<Room
+			variant={variant}
+			desktop={WIDTH[width].desktop}
+			focal="messageField"
+			swaps
+		/>
+	)
+});
+
+export const TryCurtain = tryStory('curtain', 'desktop', 'Try it — curtain');
+export const TryCircleZoom = tryStory(
+	'circleZoom',
+	'desktop',
+	'Try it — circle zoom'
+);
+export const TrySlideReveal = tryStory(
+	'slideReveal',
+	'desktop',
+	'Try it — slide reveal'
+);
+export const TryCurtainPhone = tryStory(
+	'curtain',
+	'phone',
+	'Try it — curtain, phone'
+);
+export const TryCircleZoomPhone = tryStory(
+	'circleZoom',
+	'phone',
+	'Try it — circle zoom, phone'
+);
+export const TrySlideRevealPhone = tryStory(
+	'slideReveal',
+	'phone',
+	'Try it — slide reveal, phone'
+);
+
 export const CurtainDesktop = closingStory('curtain', 'desktop', {
 	name: 'Curtain — desktop'
 });

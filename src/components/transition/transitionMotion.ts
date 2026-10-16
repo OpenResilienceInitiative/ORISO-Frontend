@@ -8,6 +8,8 @@ export const transitionMotion = {
 	easeIn: 'cubic-bezier(0.05, 0.7, 0.1, 1)',
 	/** M3 emphasized accelerate: leaves slowly, then gets out of the way. */
 	easeOut: 'cubic-bezier(0.3, 0, 0.8, 0.15)',
+	/** M3 standard: eases off at both ends, for a shape that travels and stops. */
+	easeInOut: 'cubic-bezier(0.4, 0, 0.2, 1)',
 	/** A whole view moving in next to the stage. */
 	viewMs: 420,
 	/** A step moving inside the column it already sits in. */
