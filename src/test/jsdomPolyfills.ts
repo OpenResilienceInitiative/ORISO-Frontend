@@ -105,3 +105,25 @@ if (typeof document !== 'undefined') {
 		}
 	}
 }
+
+/**
+ * jsdom ships no `ResizeObserver`, and application code is entitled to expect
+ * one — `pond.js` (the verbatim-ported call backdrop) observes itself in
+ * `connectedCallback`, where a missing global surfaces as an *unhandled*
+ * error during React's commit phase rather than as a failed assertion.
+ *
+ * The stub observes nothing, which is the honest behaviour for a DOM with no
+ * layout: there are no size changes to report. Code that needs a real
+ * callback stubs its own, as `FilterChipRow.test.tsx` does.
+ */
+if (typeof document !== 'undefined' && typeof ResizeObserver === 'undefined') {
+	Object.defineProperty(globalThis, 'ResizeObserver', {
+		configurable: true,
+		writable: true,
+		value: class {
+			observe(): void {}
+			unobserve(): void {}
+			disconnect(): void {}
+		}
+	});
+}

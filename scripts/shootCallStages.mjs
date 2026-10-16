@@ -8,12 +8,14 @@
  * has happened here, and every one was found in a picture.
  *
  *   npm run storybook           # in another shell
- *   node scripts/shootCallStages.mjs [outDir]
+ *   node scripts/shootCallStages.mjs [outDir]   # default: _shots/call
  */
 import { chromium } from 'playwright';
 import { mkdir } from 'node:fs/promises';
 
-const OUT = process.argv[2] ?? 'screenshots/call';
+/* `_shots/` is the repo's gitignored evidence scratch dir (AGENTS.md: the
+   evidence lives on the pull request, not in git). */
+const OUT = process.argv[2] ?? '_shots/call';
 const STORIES = [
 	['call-stages-hain--ruhig', 'Hain-9-ruhig', 900],
 	['call-stages-hain--jemand-spricht', 'Hain-9-spricht', 900],
@@ -42,7 +44,11 @@ const STORIES = [
 	['call-stages-einzelgespräch--beraterin-spricht', 'Einzel-beraterin', 700],
 	['call-stages-einzelgespräch--mit-status', 'Einzel-status', 700],
 	['call-stages-einzelgespräch--mit-atmosphaere', 'Einzel-atmosphaere', 700],
-	['call-stages-einzelgespräch--auf-dem-handy', 'Einzel-handy', 400]
+	['call-stages-einzelgespräch--auf-dem-handy', 'Einzel-handy', 400],
+	['call-notizen--leer', 'Notizen-leer', 520],
+	['call-notizen--rail', 'Notizen-rail', 520],
+	['call-notizen--beschrieben', 'Notizen-beschrieben', 520],
+	['call-notizen--neben-der-buehne', 'Notizen-neben-der-Buehne', 1280]
 ];
 
 /** The two-person circle has halves rather than participants or fields. */
@@ -77,6 +83,14 @@ const FIELD_STORIES = new Set([
 	'Felder-20',
 	'Felder-Atmosphaere',
 	'Felder-Handy'
+]);
+
+/** The notes panel. Only the last of them has a stage next to it. */
+const NOTES_STORIES = new Set([
+	'Notizen-leer',
+	'Notizen-rail',
+	'Notizen-beschrieben',
+	'Notizen-neben-der-Buehne'
 ]);
 
 await mkdir(OUT, { recursive: true });
@@ -122,6 +136,22 @@ for (const [id, name, width] of STORIES) {
 				document.querySelectorAll('[data-testid="participant"] svg')
 					.length > 0
 		);
+	} else if (NOTES_STORIES.has(name)) {
+		await page.waitForSelector('[data-testid="gespraechsnotizen"]');
+		// The written-in story types its notes through the real controls in a
+		// play function, so the pad is empty for a moment after mount.
+		if (name === 'Notizen-beschrieben')
+			await page.waitForFunction(
+				() =>
+					document.querySelectorAll('[data-testid="note"]').length ===
+					3
+			);
+		if (name === 'Notizen-neben-der-Buehne')
+			await page.waitForFunction(
+				() =>
+					document.querySelectorAll('[data-testid="participant"] svg')
+						.length > 0
+			);
 	} else {
 		await page.waitForSelector('oriso-pond');
 	}
@@ -209,6 +239,101 @@ for (const [id, name, width] of STORIES) {
 			offscreen
 		};
 	});
+
+	/*
+	 * Ticket 06: "The panel never covers the stage on a 1280 px screen; the
+	 * stage reflows." That is a statement about geometry, so it is measured
+	 * as geometry — two rectangles that must not intersect. jsdom has no
+	 * layout and would have agreed with any CSS at all.
+	 */
+	if (name === 'Notizen-neben-der-Buehne') {
+		const dock = await page.evaluate(() => {
+			const panel = document.querySelector(
+				'[data-testid="gespraechsnotizen"]'
+			);
+			// The stage AREA, not the Hain inside it: the area is the space a
+			// docked panel can take away, and so it is what "the stage
+			// reflows" is about. The Hain is square and takes the smaller of
+			// that area's two dimensions.
+			const stage = document.querySelector('[data-testid="stage-area"]');
+			if (!panel || !stage) return { missing: true };
+			const p = panel.getBoundingClientRect();
+			const s = stage.getBoundingClientRect();
+			const overlap =
+				Math.max(
+					0,
+					Math.min(p.right, s.right) - Math.max(p.left, s.left)
+				) *
+				Math.max(
+					0,
+					Math.min(p.bottom, s.bottom) - Math.max(p.top, s.top)
+				);
+			return {
+				overlap: Math.round(overlap),
+				panel: Math.round(p.width),
+				stage: Math.round(s.width),
+				// A panel that floats over the stage would have to be taken
+				// out of the flow to do it, so the computed value is part of
+				// the claim and not only the resulting rectangle.
+				position: getComputedStyle(panel).position
+			};
+		});
+		if (dock.missing) {
+			failures.push(`${name}: Panel oder Bühne nicht gefunden`);
+		} else {
+			process.stdout.write(
+				`${'Notizen-Dock'.padEnd(22)} Fläche ${dock.stage}px | Panel ${dock.panel}px | Überlappung ${dock.overlap}px² | position: ${dock.position}\n`
+			);
+			if (dock.overlap > 0)
+				failures.push(
+					`${name}: Panel verdeckt die Bühne (${dock.overlap}px²)`
+				);
+			if (dock.position !== 'static')
+				failures.push(
+					`${name}: Panel ist aus dem Fluss genommen (position: ${dock.position})`
+				);
+
+			// "...the stage reflows." The other half of the sentence, and the
+			// half a static panel does not prove on its own: collapse the
+			// panel to its rail and the stage area must actually take the
+			// freed width, not sit at whatever size it was given.
+			await page.click('[aria-label="Notizen einklappen"]');
+			await page
+				.waitForFunction(
+					(before) => {
+						const area = document.querySelector(
+							'[data-testid="stage-area"]'
+						);
+						return (
+							!!area &&
+							area.getBoundingClientRect().width > before + 1
+						);
+					},
+					dock.stage,
+					{ timeout: 4000 }
+				)
+				.catch(() => {
+					failures.push(
+						`${name}: Bühnenfläche wächst nicht, wenn das Panel einklappt (blieb bei ${dock.stage}px)`
+					);
+				});
+			const grown = await page.evaluate(() => {
+				const px = (sel) =>
+					Math.round(
+						document.querySelector(sel).getBoundingClientRect()
+							.width
+					);
+				return {
+					area: px('[data-testid="stage-area"]'),
+					hain: px('[data-testid="hain-stage"]')
+				};
+			});
+			process.stdout.write(
+				`${'Notizen-Dock-Rail'.padEnd(22)} Fläche ${dock.stage}px → ${grown.area}px | Hain ${grown.hain}px (quadratisch, hier höhenbegrenzt)\n`
+			);
+			await page.screenshot({ path: `${OUT}/${name}-eingeklappt.png` });
+		}
+	}
 
 	process.stdout.write(
 		`${name.padEnd(22)} ${report.count} Pillen | verdeckt ${report.covered.length} | ragt über ${report.overhanging.length} | gekürzt ${report.truncated.length} | weggescrollt ${report.offscreen}${report.truncated.length ? ' · ' + report.truncated.join(' · ') : ''}\n`

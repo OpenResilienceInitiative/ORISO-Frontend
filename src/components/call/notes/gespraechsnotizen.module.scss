@@ -1,0 +1,273 @@
+/*
+The Gesprächsnotizen panel, ticket 06.
+
+Docked, not floating. The acceptance criterion is explicit — "the panel never
+covers the stage on a 1280 px screen; the stage reflows" — so the panel is a
+flex item with a fixed width and the stage beside it takes the rest. Nothing
+here is positioned or layered; a panel that cannot float cannot cover.
+*/
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	flex: none;
+	inline-size: 320px;
+	padding: 14px;
+	border-radius: 16px;
+	background: #fff;
+	color: var(--m3-secondary, #4c555f);
+	font-size: 14px;
+	line-height: 20px;
+
+	/* Collapsing is a width change and nothing else, which is why it can be
+	animated at all. */
+	transition: inline-size 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The rail. 44px matches the view-switcher rail from the handoff, so the two
+docked edges of the call line up. */
+.panel[data-collapsed='true'] {
+	inline-size: 44px;
+	padding: 8px;
+	align-items: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.panel {
+		transition: none;
+	}
+}
+
+.header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.title {
+	flex: 1;
+	margin: 0;
+	font-size: 15px;
+	font-weight: 600;
+	line-height: 22px;
+	letter-spacing: 0.1px;
+}
+
+.collapseButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	inline-size: 28px;
+	block-size: 28px;
+	padding: 0;
+	border: 0;
+	border-radius: 14px;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container, #f0edee);
+	}
+}
+
+.collapseIcon {
+	inline-size: 18px;
+	block-size: 18px;
+	transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* One glyph, turned, rather than a second asset for the other direction. */
+.panel[data-collapsed='true'] .collapseIcon {
+	transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.collapseIcon {
+		transition: none;
+	}
+}
+
+/* The lock line. Quiet, because it is a reassurance and not a warning — it
+says the notes are private, which is the normal state of affairs here. */
+.privacy {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	margin: 0;
+	font-size: 12px;
+	line-height: 17px;
+	color: color-mix(in srgb, var(--m3-secondary, #4c555f) 72%, transparent);
+}
+
+.lock {
+	flex: none;
+	inline-size: 14px;
+	block-size: 14px;
+	margin-block-start: 1px;
+}
+
+.form {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 8px;
+	align-items: center;
+}
+
+.text {
+	min-inline-size: 0;
+	padding: 8px 12px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c7);
+	border-radius: 10px;
+	background: #fff;
+	color: inherit;
+	font: inherit;
+
+	&:focus-visible {
+		outline: 2px solid var(--m3-primary, #a5000a);
+		outline-offset: 1px;
+	}
+}
+
+/* Full width under the field: Enter submits, so the button is the discoverable
+second route rather than the only one. */
+.add {
+	grid-column: 1 / -1;
+	padding: 8px 14px;
+	border: 0;
+	border-radius: 10px;
+	background: var(--m3-primary-fixed, #ffdad5);
+	color: var(--m3-primary-container, #cc1e1c);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 18px;
+	cursor: pointer;
+
+	&:hover {
+		background: color-mix(
+			in srgb,
+			var(--m3-primary-fixed, #ffdad5) 82%,
+			#000
+		);
+	}
+}
+
+.empty {
+	margin: 0;
+	color: color-mix(in srgb, var(--m3-secondary, #4c555f) 62%, transparent);
+	font-size: 13px;
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+
+	/* The pad is the only thing in the panel that grows, so it is the only
+	thing that scrolls. */
+	overflow-y: auto;
+	overscroll-behavior: contain;
+}
+
+.note {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 2px 8px;
+	padding: 8px 10px;
+	border-radius: 10px;
+	background: var(--m3-surface-container, #f0edee);
+}
+
+/*
+The type, as a word.
+
+"Quiet type colours" — so the colour is carried by the word itself at 12px
+and never by a dot. Three hues far enough apart to be told apart, dark enough
+to pass contrast on the container behind them, and none of them the alarm red
+the call controls use.
+*/
+.noteType {
+	grid-column: 1;
+	font-size: 11px;
+	font-weight: 600;
+	line-height: 15px;
+	letter-spacing: 0.4px;
+	text-transform: uppercase;
+}
+
+.note[data-type='frage'] .noteType {
+	color: #3c5a8a;
+}
+
+.note[data-type='anmerkung'] .noteType {
+	color: #4c555f;
+}
+
+.note[data-type='aufgabe'] .noteType {
+	color: #6a4a12;
+}
+
+.noteText {
+	grid-column: 1;
+
+	/* A note is prose a counsellor typed; it wraps and keeps its breaks. */
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+.remove {
+	grid-area: 1 / 2 / 3 / 3;
+	align-self: start;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	inline-size: 26px;
+	block-size: 26px;
+	padding: 0;
+	border: 0;
+	border-radius: 13px;
+	background: transparent;
+	color: inherit;
+	cursor: pointer;
+
+	&:hover {
+		background: #fff;
+	}
+
+	svg {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+}
+
+/* The only export. It sits apart from the list so it never reads as an
+action on the last note. */
+.copy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 8px 14px;
+	border: 1px solid var(--m3-outline-variant, #c4c7c7);
+	border-radius: 10px;
+	background: #fff;
+	color: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 18px;
+	cursor: pointer;
+
+	&:hover {
+		background: var(--m3-surface-container, #f0edee);
+	}
+}
+
+.copyIcon {
+	inline-size: 15px;
+	block-size: 15px;
+}

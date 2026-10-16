@@ -1,7 +1,25 @@
 import * as React from 'react';
 
-// Imported for its side effect: the file registers <oriso-pond>.
-import './pond.js';
+/*
+ * `pond.js` registers <oriso-pond> at module load, and registering a custom
+ * element means `class ... extends HTMLElement` — which throws outright in a
+ * DOM-less environment. A static side-effect import therefore broke every
+ * node-environment test that transitively imported a stage, with a
+ * ReferenceError thrown before a single assertion ran.
+ *
+ * The port must stay verbatim, so the guard goes here instead: the import is
+ * dynamic and happens from an effect, which only runs where there is a
+ * document. The element upgrades a tick after mount; until then the tag is an
+ * unknown element with the right attributes on it, which is exactly what it
+ * is during the upgrade anyway.
+ */
+let registered = false;
+
+const registerPond = (): void => {
+	if (registered || typeof HTMLElement === 'undefined') return;
+	registered = true;
+	void import('./pond.js');
+};
 
 /**
  * The presets the ported `pond.js` actually defines.
@@ -63,6 +81,10 @@ export const Atmosphere: React.FC<AtmosphereProps> = ({
 	// attribute — assigning it throws. Going through setAttribute is also
 	// what triggers `attributeChangedCallback`, which is how the element
 	// swaps preset without restarting its clock.
+	React.useEffect(() => {
+		registerPond();
+	}, []);
+
 	React.useEffect(() => {
 		ref.current?.setAttribute('palette', palette);
 	}, [palette]);
