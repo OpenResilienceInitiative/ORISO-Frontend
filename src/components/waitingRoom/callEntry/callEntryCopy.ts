@@ -55,6 +55,14 @@ export const callEntryCopy = {
 		video: 'Videogespräch beitreten',
 		audio: 'Telefongespräch beitreten'
 	},
+	consent: {
+		heading: 'Gleich sind Sie verbunden.',
+		subtitle:
+			'Bitte stimmen Sie noch zu, dann treten Sie dem Gespräch bei.',
+		decline: 'Nicht zustimmen',
+		missing:
+			'Bitte stimmen Sie erst zu — ohne Ihre Zustimmung kann das Gespräch nicht beginnen.'
+	},
 	missing: 'Noch offen: ',
 	missingName: 'User-ID',
 	missingPassword: 'Passwort',

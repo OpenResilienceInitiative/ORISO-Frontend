@@ -1,9 +1,5 @@
-import * as React from 'react';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { renderToString } from 'react-dom/server';
+import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import LegalLinks from '../../legalLinks/LegalLinks';
-import { LegalLinksContext } from '../../../globalState/provider/LegalLinksProvider';
 import { apiGetConsentText } from '../../../api/apiGetConsentText';
 import { apiPatchUserData } from '../../../api/apiPatchUserData';
 import {
@@ -11,11 +7,7 @@ import {
 	resolveEntryRoomConsent
 } from '../../anonymousChat/entryRoom/entryRoomConsent';
 import { useGroupDepartment } from './useGroupDepartment';
-
-const PLATFORM_SENTENCE =
-	'Ich habe die {{legal_links}} zur Kenntnis genommen. Für Authentifizierung und Navigation verwendet diese Webseite Cookies. Damit erkläre ich mich einverstanden.';
-const MISSING_POLICY_SENTENCE =
-	'Für diese Beratungsstelle ist derzeit keine eigene Datenschutzerklärung hinterlegt. Wenn Sie fortfahren, nutzen Sie das Angebot auf eigenes Risiko. Mit dem Aktivieren des Kontrollkästchens stimmen Sie den {{legal_links}} dieser Website zu. Diese Website verwendet Cookies.';
+import { useConsentSentences } from '../../waitingRoom/useConsentSentences';
 
 /**
  * Gate 2 of ADR-022 for a self-help group (#1499): which sentence the client
@@ -29,8 +21,7 @@ const MISSING_POLICY_SENTENCE =
  * none, the platform sentence when the group's department cannot be told.
  */
 export const useGroupConsent = (agencyId?: number | null) => {
-	const { t, i18n } = useTranslation();
-	const legalLinks = useContext(LegalLinksContext);
+	const { i18n } = useTranslation();
 	const departmentState = useGroupDepartment(agencyId);
 	const department =
 		departmentState.status === 'ready' ? departmentState.department : null;
@@ -83,32 +74,14 @@ export const useGroupConsent = (agencyId?: number | null) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [departmentKey]);
 
-	const legalLinksHtml = useMemo(
-		() =>
-			renderToString(
-				<LegalLinks
-					legalLinks={legalLinks}
-					filter={(link) => link.registration}
-					params={{ aid: agencyId ?? null }}
-					delimiter={', '}
-				/>
-			),
-		[legalLinks, agencyId]
-	);
+	const { legalLinksHtml, platformHtml, missingPolicyHtml } =
+		useConsentSentences(agencyId);
 
 	const consent = resolveEntryRoomConsent({
 		hasDepartment: departmentState.status === 'loading' || !!department,
 		department: departmentConsent,
-		platformHtml: t('anonymousConsent.label.text', {
-			defaultValue: PLATFORM_SENTENCE,
-			interpolation: { escapeValue: false },
-			legal_links: legalLinksHtml
-		}),
-		missingPolicyHtml: t('anonymousConsent.label.missingPolicy', {
-			defaultValue: MISSING_POLICY_SENTENCE,
-			interpolation: { escapeValue: false },
-			legal_links: legalLinksHtml
-		}),
+		platformHtml,
+		missingPolicyHtml,
 		legalLinksHtml,
 		locale: i18n?.language || 'de'
 	});

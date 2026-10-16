@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
-import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { Stage } from '../../stage/stage';
 import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
 import { AgencySpecificContext } from '../../../globalState';
@@ -310,6 +310,103 @@ export const AudioPhone: Story = {
 	args: { ...ready, modality: 'audio', initialSpeakerTest: 'asking' },
 	play: async ({ canvasElement }) => {
 		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+/* ---------- Consent on "Beitreten" ---------- */
+
+/* Frank, 2026-10-16: the live chat's consent in every waiting room; for a
+   call on by default, opened and ticked when joining. */
+const consentPanel = (canvasElement: HTMLElement) =>
+	canvasElement.ownerDocument.querySelector<HTMLElement>(
+		'[data-cy="consent-completion"]'
+	);
+
+export const VideoJoinAsksConsent: Story = {
+	name: 'Video · "Beitreten" asks for consent',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', onJoin: fn() },
+	play: async ({ args, canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		expect(consentPanel(canvasElement)).toBeNull();
+
+		await userEvent.click(gate(canvasElement));
+		await waitFor(() => expect(consentPanel(canvasElement)).not.toBeNull());
+		await expectWaitingRoomLayout(canvasElement);
+		expect(args.onJoin).not.toHaveBeenCalled();
+
+		// Without the tick the gate explains instead of joining.
+		await userEvent.click(gate(canvasElement));
+		await expect(
+			await body.findByText(/ohne Ihre Zustimmung/)
+		).toBeInTheDocument();
+		expect(args.onJoin).not.toHaveBeenCalled();
+
+		await userEvent.click(body.getByRole('checkbox'));
+		await userEvent.click(gate(canvasElement));
+		expect(args.onJoin).toHaveBeenCalledTimes(1);
+	}
+};
+
+export const VideoConsentDeclined: Story = {
+	name: 'Video · the round X closes the consent',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		initialConsentOpen: true,
+		onJoin: fn()
+	},
+	play: async ({ args, canvasElement }) => {
+		const body = within(canvasElement.ownerDocument.body);
+		await userEvent.click(
+			body.getByRole('button', { name: 'Nicht zustimmen' })
+		);
+		await waitFor(() => expect(consentPanel(canvasElement)).toBeNull());
+		expect(args.onJoin).not.toHaveBeenCalled();
+		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+export const AudioConsentPhone: Story = {
+	name: 'Audio · phone, consent open',
+	globals: phone390Globals,
+	args: { ...ready, modality: 'audio', initialConsentOpen: true },
+	play: async ({ canvasElement }) => {
+		expect(consentPanel(canvasElement)).not.toBeNull();
+		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+export const VideoConsentNoAgencyPolicy: Story = {
+	name: 'Video · counselling centre without its own policy',
+	globals: desktop1440Globals,
+	args: {
+		...ready,
+		modality: 'video',
+		initialConsentOpen: true,
+		consent: {
+			html: 'Für diese Beratungsstelle ist derzeit keine eigene Datenschutzerklärung hinterlegt. Wenn Sie fortfahren, nutzen Sie das Angebot auf eigenes Risiko. Mit dem Aktivieren des Kontrollkästchens stimmen Sie den Datenschutzhinweisen und Nutzungsbedingungen dieser Website zu. Diese Website verwendet Cookies.'
+		}
+	},
+	play: async ({ canvasElement }) => {
+		await expect(
+			await within(canvasElement.ownerDocument.body).findByText(
+				/keine eigene Datenschutzerklärung/
+			)
+		).toBeInTheDocument();
+		await expectWaitingRoomLayout(canvasElement);
+	}
+};
+
+export const VideoConsentOff: Story = {
+	name: 'Video · consent switched off',
+	globals: desktop1440Globals,
+	args: { ...ready, modality: 'video', consent: false, onJoin: fn() },
+	play: async ({ args, canvasElement }) => {
+		await userEvent.click(gate(canvasElement));
+		expect(consentPanel(canvasElement)).toBeNull();
+		expect(args.onJoin).toHaveBeenCalledTimes(1);
 	}
 };
 
