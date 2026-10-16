@@ -294,6 +294,11 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		expect(
 			screen.getByText(`${NO_AVAILABILITY}.title`, { exact: false })
 		).toBeTruthy();
+		/* It cannot be waved away any more, so a screen reader must at least
+		   hear what it is. */
+		expect(
+			screen.getByRole('dialog', { name: `${NO_AVAILABILITY}.title` })
+		).toBeTruthy();
 	});
 
 	it('does not let a failed poll between two zeros stand in for the second look', async () => {

@@ -3800,6 +3800,8 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 
 			<Dialog
 				open={liveChatClosedModalOpen}
+				aria-labelledby="live-chat-closed-title"
+				aria-describedby="live-chat-closed-subtitle"
 				/* No `onClose`: a click beside the dialog or Esc must not walk
 				   the asker past "nobody is live" (#1270). Only its own buttons
 				   ("back", "come back later") and availability returning close it. */
@@ -3840,6 +3842,7 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 							}}
 						/>
 						<MuiTypography
+							id="live-chat-closed-title"
 							variant="h4"
 							sx={{ fontWeight: 700, lineHeight: 1.2 }}
 						>
@@ -3847,7 +3850,11 @@ export const SessionItemComponent = (props: SessionItemProps) => {
 						</MuiTypography>
 					</MuiBox>
 
-					<MuiTypography variant="body1" sx={{ mb: '16px' }}>
+					<MuiTypography
+						id="live-chat-closed-subtitle"
+						variant="body1"
+						sx={{ mb: '16px' }}
+					>
 						{translate('anonymousChat.noAvailability.subtitle')}
 					</MuiTypography>
 
