@@ -560,9 +560,9 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 			// The room's own button: while the group loads, the bar already
 			// shows a waiting one of the same name.
 			const joinButton = () => screen.getByTestId('group-entry-join');
-			expect((await screen.findByTestId('group-entry-join')).textContent).toContain(
-				i18n.t('groupChat.entry.join')
-			);
+			expect(
+				(await screen.findByTestId('group-entry-join')).textContent
+			).toContain(i18n.t('groupChat.entry.join'));
 			const user = userEvent.setup();
 			// "Beitreten" asks for consent first (Frank, 2026-10-16).
 			await user.click(joinButton());
