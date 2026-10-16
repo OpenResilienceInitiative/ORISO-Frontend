@@ -4751,6 +4751,7 @@
 				"headline": "Sesli kayıt kullanılamıyor",
 				"message": "Lütfen mikrofon erişimine izin verip tekrar deneyin."
 			},
+			"discard": "Sesli mesajı sil",
 			"preview": "Sesli mesaj"
 		}
 	},

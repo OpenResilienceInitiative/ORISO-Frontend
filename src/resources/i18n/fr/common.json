@@ -4751,6 +4751,7 @@
 				"headline": "Enregistrement vocal non disponible",
 				"message": "Veuillez autoriser l'accès au microphone et réessayer."
 			},
+			"discard": "Supprimer le message vocal",
 			"preview": "Message vocal"
 		}
 	},

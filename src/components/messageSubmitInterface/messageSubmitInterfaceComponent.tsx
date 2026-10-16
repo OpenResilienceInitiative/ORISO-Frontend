@@ -1045,6 +1045,24 @@ export const MessageSubmitInterfaceComponent = ({
 		[cleanupVoiceRecorder]
 	);
 
+	// #1142: a take belongs to the chat it was made in. If the composer is
+	// reused for another session or side channel while a take is recording
+	// or under review, drop it instead of letting Send deliver it there.
+	const voiceDestinationKey = `${activeSession.item.id}|${targetRoomId ?? ''}`;
+	const voiceDestinationRef = useRef(voiceDestinationKey);
+	useEffect(() => {
+		if (voiceDestinationRef.current === voiceDestinationKey) {
+			return;
+		}
+		voiceDestinationRef.current = voiceDestinationKey;
+		if (mediaRecorderRef.current) {
+			stopVoiceRecording({ discard: true });
+		}
+		if (recordedVoiceRef.current) {
+			cleanupAttachment();
+		}
+	}, [voiceDestinationKey, stopVoiceRecording, cleanupAttachment]);
+
 	const scrollEditorToBottom = useCallback(() => {
 		const textInput: any = textareaInputRef.current;
 		if (!textInput) return;
@@ -4507,7 +4525,8 @@ export const MessageSubmitInterfaceComponent = ({
 								}}
 							>
 								{attachmentSelected &&
-								isVoiceAttachmentSelected ? (
+								isVoiceAttachmentSelected &&
+								voicePreviewUrl ? (
 									<div className="textarea__attachmentMode textarea__attachmentMode--voice">
 										<div
 											className="textarea__attachmentModeCard textarea__attachmentModeCard--voice"

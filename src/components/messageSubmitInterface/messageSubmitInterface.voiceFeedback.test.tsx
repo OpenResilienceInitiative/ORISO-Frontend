@@ -137,15 +137,21 @@ const session = {
 	consultant: {},
 	user: { username: 'client', sessionData: {} }
 };
-function Composer(
-	props: Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>>
-) {
+function Composer({
+	sessionId,
+	...props
+}: Partial<React.ComponentProps<typeof MessageSubmitInterfaceComponent>> & {
+	sessionId?: number;
+}) {
+	const activeSession = sessionId
+		? { ...session, item: { ...session.item, id: sessionId } }
+		: session;
 	return (
 		<MemoryRouter>
 			<ActiveSessionContext.Provider
 				value={
 					{
-						activeSession: session,
+						activeSession,
 						reloadActiveSession: mocks.draftChange
 					} as any
 				}
@@ -434,6 +440,60 @@ describe('voice note review before sending (#1142)', () => {
 		expect(
 			await screen.findByRole('button', { name: 'voicePlayer.play' })
 		).toBeTruthy();
+	});
+
+	it('drops a reviewed take when the composer is reused for another chat', async () => {
+		const view = render(<Composer sessionId={360} />);
+		await startRecording();
+		await stopRecording();
+		expect(
+			screen.getByRole('button', { name: 'voice.recording.discard' })
+		).toBeTruthy();
+
+		view.rerender(<Composer sessionId={361} />);
+
+		await waitFor(() =>
+			expect(
+				screen.queryByRole('button', { name: 'voicePlayer.play' })
+			).toBeNull()
+		);
+		expect(
+			(screen.getByRole('button', SEND) as HTMLButtonElement).disabled
+		).toBe(true);
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('drops a running take when the composer is reused for another chat', async () => {
+		const view = render(<Composer sessionId={360} />);
+		await startRecording();
+
+		view.rerender(<Composer sessionId={361} />);
+		await waitFor(() => expect(trackStop).toHaveBeenCalled());
+
+		expect(
+			screen.queryByRole('button', { name: 'voicePlayer.play' })
+		).toBeNull();
+		expect(apiSendMatrixAttachmentMessage).not.toHaveBeenCalled();
+	});
+
+	it('keeps the filename card for a chosen audio file instead of the recording review', async () => {
+		const { container } = render(<Composer />);
+		const input = container.querySelector(
+			'input[type="file"]'
+		) as HTMLInputElement;
+		const file = new File(['mp3'], 'interview.mp3', { type: 'audio/mpeg' });
+		Object.defineProperty(input, 'files', {
+			configurable: true,
+			value: [file]
+		});
+		await act(async () => {
+			fireEvent.change(input);
+		});
+
+		expect(await screen.findByText('interview.mp3')).toBeTruthy();
+		expect(
+			screen.queryByRole('group', { name: 'voice.recording.preview' })
+		).toBeNull();
 	});
 
 	it('cancel while recording drops the take without sending or opening a review', async () => {
