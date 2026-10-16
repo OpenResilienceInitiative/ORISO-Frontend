@@ -5,6 +5,7 @@ import { NamePill } from '../atoms/NamePill';
 import { type AtmosphereName, Atmosphere } from '../atmosphere/Atmosphere';
 import { type Avatar } from '../../../utils/pseudonymGenerator';
 import { packShapes } from '../engine/layout';
+import { HALO_LIFT_PX, haloFor } from './halo';
 
 /**
  * One participant, as the call knows them.
@@ -51,6 +52,21 @@ export const SPEAKING_WEIGHT = 1.6;
  * silhouette are doing the identifying anyway.
  */
 export const NAME_BOTTOM_SHARE = 0.07;
+/**
+ * The layer the speaking shape rises onto, and the one every name capsule
+ * sits above.
+ *
+ * Two numbers rather than one, because they are in tension: the handoff
+ * wants the speaker in front of the others, and the capsules must stay
+ * readable over all of it. A capsule on the same layer as the risen shape
+ * disappears behind its neighbour.
+ */
+export const SPEAKING_LAYER = 3;
+export const NAME_LAYER = 4;
+
+/** The speaker rises rather than snapping. */
+export const SPEAKING_EASING = '0.32s cubic-bezier(0.2, 0, 0, 1)';
+
 export const NAME_MIN_SHAPE = 84;
 
 /**
@@ -111,14 +127,31 @@ export const HainStage: React.FC<HainStageProps> = ({
 						left: spot.x,
 						top: spot.y,
 						width: spot.size,
-						height: spot.size
+						height: spot.size,
+						// Risen out of the field, and in front of the
+						// others. Only the speaker gets a z-index: giving
+						// every slot one would make each a stacking context
+						// and trap its name capsule inside it, which is the
+						// bug the capsule's own z-index exists to prevent.
+						...(participants[i].speaking
+							? {
+									transform: `translateY(-${HALO_LIFT_PX}px)`,
+									zIndex: SPEAKING_LAYER
+								}
+							: {}),
+						transition: `transform ${SPEAKING_EASING}`
 					}}
 				>
 					<AnimalAvatar
 						avatar={participants[i].avatar}
 						size={spot.size}
 						outline={false}
-						shadow
+						// The handoff gives the Hain its two shadow stacks
+						// outright, so the scaled lift does not apply here.
+						shadow={haloFor(
+							participants[i].avatar.bg,
+							Boolean(participants[i].speaking)
+						)}
 						radius={spot.blob}
 						tilt={Number(spot.tilt)}
 					/>
@@ -133,7 +166,9 @@ export const HainStage: React.FC<HainStageProps> = ({
 								// siblings with no z-index, so a later one
 								// paints over an earlier one's name — measured
 								// in Chromium: one name per nine-person room.
-								zIndex: 1,
+								// Above the risen speaker too, which sits on
+								// SPEAKING_LAYER.
+								zIndex: NAME_LAYER,
 								display: 'flex',
 								justifyContent: 'center',
 								pointerEvents: 'none'

@@ -4,6 +4,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { liftFor } from '../../pseudonym/AnimalAvatar';
+import { QUIET_SHADOW } from './halo';
 import { HainStage, type CallParticipant } from './HainStage';
 import { FelderStage } from './FelderStage';
 import { EinzelgespraechStage } from './EinzelgespraechStage';
@@ -13,6 +14,13 @@ import { EinzelgespraechStage } from './EinzelgespraechStage';
  *
  * The shapes sit on a flat surface and the design has them lifting off it.
  * One soft shadow, `AVATAR_LIFT`, and one definition of it.
+ *
+ * Two shadow vocabularies, and the split is not arbitrary. The Hain is the
+ * one arrangement the handoff states values for in BOTH states — quiet
+ * `0 2px 6px`, speaking a halo in the person's own colour — so the Hain uses
+ * those and derives nothing. The Felder tile and the Einzelgespräch circle
+ * have no stated value, so they use `liftFor`, which scales a judged
+ * 104px shadow up to the prototype's largest geometry.
  *
  * The part worth a test is WHERE it goes, because that differs per
  * arrangement and the first attempt got two of three wrong. In the Hain the
@@ -75,13 +83,21 @@ describe('the lift', () => {
 	});
 
 	it('Hain: the shape is the avatar, so the avatar carries it', () => {
+		// And it carries the handoff's OWN value rather than the scaled
+		// lift: the Hain is the one arrangement the design states both
+		// states for, quiet and speaking, so nothing here is derived. See
+		// `speaking.test.tsx` for the other state.
 		render(<HainStage participants={ROOM} box={600} />);
 		const shapes = screen.getAllByTestId('participant');
 		expect(shapes).toHaveLength(3);
-		// Every participant lifts, and nothing else does.
-		expect(lifted()).toHaveLength(3);
-		for (const shape of shapes)
-			expect(shape.querySelector(`[style*="box-shadow"]`)).not.toBeNull();
+		for (const shape of shapes) {
+			const drawn = shape.querySelector<HTMLElement>(
+				'[style*="box-shadow"]'
+			);
+			expect(drawn?.style.boxShadow).toBe(QUIET_SHADOW);
+		}
+		// Nothing in the Hain uses the scaled lift.
+		expect(lifted()).toHaveLength(0);
 	});
 
 	it('Felder: the tile carries it, and the avatar inside does not', () => {

@@ -27,8 +27,13 @@ interface AnimalAvatarProps {
 	 * abut and a ring there reads as a seam — but they do want the lift, and
 	 * one flag could not say so. Defaults to `outline`, so every caller that
 	 * asked for both still gets both.
+	 *
+	 * A string instead of `true` replaces the lift outright. The Hain needs
+	 * that: the handoff gives it two explicit shadow stacks, one quiet and
+	 * one for the speaker's halo in their own colour, and the halo has to
+	 * follow the blob's radius and its tilt — which only this element has.
 	 */
-	shadow?: boolean;
+	shadow?: boolean | string;
 	/**
 	 * A CSS `border-radius` from a call arrangement, e.g. the eight-value blob
 	 * `ownShape` derives from a participant's name. Omitted everywhere else, so
@@ -41,6 +46,17 @@ interface AnimalAvatarProps {
 	radius?: string;
 	/** Degrees the form leans by. The artwork is counter-rotated upright. */
 	tilt?: number;
+	/**
+	 * Whether the avatar paints its own coloured plate behind the artwork.
+	 *
+	 * Everywhere in ORISO that plate IS the avatar, so it defaults on. The
+	 * Einzelgespräch is the exception: the circle's half already carries
+	 * that exact colour, making the plate an invisible duplicate — and it
+	 * only stays invisible while both are fully opaque. Dim the quiet side
+	 * and the duplicate composites darker than its surroundings, leaving a
+	 * grey ring behind the animal.
+	 */
+	filled?: boolean;
 }
 
 /**
@@ -85,11 +101,14 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 	outline = true,
 	shadow,
 	radius,
-	tilt
+	tilt,
+	filled = true
 }) => {
 	const [avatarHtml, setAvatarHtml] = useState<string | null>(null);
 	const borderWidth = outline ? 2 : 0;
 	const lifted = shadow ?? outline;
+	const boxShadow =
+		typeof lifted === 'string' ? lifted : lifted ? liftFor(size) : 'none';
 	// A small floor only. The old 8px floor above 60px dates from SVGs with
 	// built-in margins; now it would clamp the per-icon overrides at 64px
 	// (LiveChatAccess, mobile AskerInfo) to the same padding as the default.
@@ -133,14 +152,17 @@ export const AnimalAvatar: React.FC<AnimalAvatarProps> = ({
 				borderRadius: radius ?? size / 2,
 				transform:
 					tilt === undefined ? undefined : `rotate(${tilt}deg)`,
-				background: avatar.bg,
+				background: filled ? avatar.bg : 'transparent',
 				width: size,
 				height: size,
 				boxSizing: 'border-box',
 				border: outline ? `${borderWidth}px solid #c4c7c8` : 0,
 				// Scaled by the avatar's own size: at 104px and below this is
 				// exactly the judged value, so nothing in the app moves.
-				boxShadow: lifted ? liftFor(size) : 'none',
+				// Scaled by the avatar's own size unless a caller hands over
+				// an exact stack: at 104px and below the scaled value is
+				// byte-for-byte the judged one, so nothing in the app moves.
+				boxShadow,
 				overflow: 'hidden',
 				flexShrink: 0
 			}}

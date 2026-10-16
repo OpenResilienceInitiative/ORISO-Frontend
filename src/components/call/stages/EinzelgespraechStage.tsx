@@ -19,6 +19,15 @@ export interface EinzelgespraechStageProps {
 	atmosphere?: AtmosphereName;
 }
 
+/**
+ * How far the quiet side steps back while the other one talks.
+ *
+ * The handoff's own value. Not a disabled state — 70% is still clearly
+ * present, which matters in a counselling call where the quiet person has
+ * not left the room.
+ */
+export const QUIET_DIM = 0.7;
+
 const whoIsSpeaking = (
 	participants: readonly [CallParticipant, CallParticipant]
 ): Speaking => {
@@ -81,6 +90,20 @@ export const EinzelgespraechStage: React.FC<EinzelgespraechStageProps> = ({
 							d={`M0,0 L${share},0 Q${tip},0.5 ${share},1 L0,1 Z`}
 						/>
 					</clipPath>
+					{/* The same seam, from the other side. The whole box
+					minus the first half, by even-odd — so the rim light on
+					the second side bows exactly where the seam does instead
+					of being cut down the middle. */}
+					<clipPath
+						id={`${seamId}-rest`}
+						clipPathUnits="objectBoundingBox"
+						clipRule="evenodd"
+					>
+						<path
+							clipRule="evenodd"
+							d={`M0,0 L1,0 L1,1 L0,1 Z M0,0 L${share},0 Q${tip},0.5 ${share},1 L0,1 Z`}
+						/>
+					</clipPath>
 				</defs>
 			</svg>
 
@@ -101,7 +124,10 @@ export const EinzelgespraechStage: React.FC<EinzelgespraechStageProps> = ({
 					data-testid="half"
 					data-side="second"
 					className={styles.half}
-					style={{ background: participants[1].avatar.bg }}
+					style={{
+						background: participants[1].avatar.bg,
+						...(speaking === 'first' ? { opacity: QUIET_DIM } : {})
+					}}
 				/>
 				<div
 					data-testid="half"
@@ -110,7 +136,8 @@ export const EinzelgespraechStage: React.FC<EinzelgespraechStageProps> = ({
 					style={{
 						background: participants[0].avatar.bg,
 						clipPath: `url(#${seamId})`,
-						transition: `clip-path ${SEAM_EASING}`
+						transition: `clip-path ${SEAM_EASING}`,
+						...(speaking === 'second' ? { opacity: QUIET_DIM } : {})
 					}}
 				/>
 
@@ -126,18 +153,63 @@ export const EinzelgespraechStage: React.FC<EinzelgespraechStageProps> = ({
 								className={styles.animal}
 								style={{
 									insetInlineStart: `${centre * 100}%`,
-									transition: `inset-inline-start ${SEAM_EASING}`
+									transition: `inset-inline-start ${SEAM_EASING}`,
+									// The animal steps back with its own
+									// side. In the handoff it is a child of
+									// the half and dims with it; here they
+									// are siblings, so it has to be said
+									// twice.
+									...((i === 0 && speaking === 'second') ||
+									(i === 1 && speaking === 'first')
+										? { opacity: QUIET_DIM }
+										: {})
 								}}
 							>
 								<AnimalAvatar
 									avatar={p.avatar}
 									size={Math.round(size * 0.22)}
 									outline={false}
+									// The half already carries this colour.
+									filled={false}
 								/>
 							</span>
 						</React.Fragment>
 					);
 				})}
+
+				{/* The body.
+				    Two radial gradients and two inset shadows, verbatim from
+				    the handoff: a highlight from the upper left, a wash from
+				    the lower right. It lies OVER the animals because the
+				    shading is of the whole sphere including what is painted
+				    on it — underneath them it would only tint the background
+				    and the circle would stay a disc. */}
+				<span
+					className={styles.sphere}
+					data-testid="sphere"
+					style={{ pointerEvents: 'none' }}
+				/>
+
+				{/* The voice.
+				    A rim light in ORISO red on whoever is speaking, clipped
+				    by the seam so it bows where the seam bows rather than
+				    being cut down the middle. In the prototype this
+				    alternates on a nine-second demo timer; here it follows
+				    the microphone. */}
+				{(speaking === 'first' || speaking === 'second') && (
+					<span
+						className={styles.rim}
+						data-testid="rim"
+						data-side={speaking}
+						style={{
+							clipPath: `url(#${
+								speaking === 'first' ? seamId : `${seamId}-rest`
+							})`,
+							transition: `clip-path ${SEAM_EASING}`,
+							pointerEvents: 'none'
+						}}
+					/>
+				)}
 			</div>
 
 			{/* Outside the circle's overflow, deliberately. Inside it, a name
