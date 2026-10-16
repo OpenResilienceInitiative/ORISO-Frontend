@@ -1,4 +1,3 @@
-import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
 import { ErstantwortEmailOverlay } from './ErstantwortEmailOverlay';

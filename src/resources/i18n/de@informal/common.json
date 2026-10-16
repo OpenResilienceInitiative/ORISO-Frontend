@@ -2323,10 +2323,12 @@
 			"email": "Schreib mir eine E-Mail",
 			"emailHint": "Was du hier besprichst, steht nie in dieser E-Mail.",
 			"browser": "Gib mir hier ein Signal",
+			"browserHint": "Ohne Adresse – funktioniert aber nur auf diesem Gerät.",
+			"enableBrowser": "Browser aktivieren",
 			"dialog": {
 				"title": "Browser-Benachrichtigungen einschalten",
 				"description": "Wähle den Ton, den du hören wirst, und erlaube dann Benachrichtigungen in deinem Browser.",
-				"stayInBrowser": "Das funktioniert, solange du an diesem Computer in diesem Browser bleibst – auch wenn dieser Tab geschlossen ist.",
+				"stayInBrowser": "Das funktioniert, solange du auf diesem Gerät in diesem Browser bleibst – auch wenn dieser Tab geschlossen ist.",
 				"toneLabel": "Benachrichtigungston",
 				"tone": "Ton {{number}}",
 				"noTone": "Kein Ton"

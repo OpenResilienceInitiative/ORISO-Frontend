@@ -52,6 +52,24 @@ export const NotificationBrowserDialog: React.FC<
 		previewNotificationSound(id, DEFAULT_VOLUME);
 	};
 
+	const move = (event: React.KeyboardEvent, index: number) => {
+		const step =
+			event.key === 'ArrowRight' || event.key === 'ArrowDown'
+				? 1
+				: event.key === 'ArrowLeft' || event.key === 'ArrowUp'
+					? -1
+					: 0;
+		if (!step) return;
+		event.preventDefault();
+		const next = (index + step + options.length) % options.length;
+		pick(options[next]);
+		(
+			event.currentTarget.parentElement?.children[next] as
+				| HTMLElement
+				| undefined
+		)?.focus();
+	};
+
 	return (
 		<M3Dialog
 			open
@@ -103,6 +121,8 @@ export const NotificationBrowserDialog: React.FC<
 								type="button"
 								role="radio"
 								aria-checked={tone === id}
+								tabIndex={tone === id ? 0 : -1}
+								onKeyDown={(event) => move(event, index)}
 								data-testid={`notificationTone-${id}`}
 								className="notificationBrowserDialog__tone"
 								onClick={() => pick(id)}

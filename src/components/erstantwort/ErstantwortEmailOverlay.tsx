@@ -84,7 +84,6 @@ export const ErstantwortEmailOverlay: React.FC<
 			.catch((error: unknown) => {
 				if (!active.current) return;
 				setIsSaving(false);
-				setIsInvalid(true);
 
 				if (error instanceof Error) {
 					if (error.message === FETCH_ERRORS.FORBIDDEN) {
@@ -161,6 +160,12 @@ export const ErstantwortEmailOverlay: React.FC<
 				label={t('furtherSteps.email.overlay.input.label')}
 				value={email}
 				onChange={handleChange}
+				onKeyDown={(event) => {
+					if (event.key === 'Enter') {
+						event.preventDefault();
+						save();
+					}
+				}}
 				error={Boolean(errorText) || isInvalid}
 				helperText={
 					errorText ??

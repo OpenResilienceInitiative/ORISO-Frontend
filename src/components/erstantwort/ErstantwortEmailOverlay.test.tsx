@@ -84,6 +84,16 @@ describe('ErstantwortEmailOverlay', () => {
 		expect(dialog.querySelector('input[type="email"]')).not.toBeNull();
 	});
 
+	it('saves when Enter is pressed in the field', async () => {
+		const onSaved = vi.fn();
+		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={onSaved} />);
+		type('a@b.de');
+		fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' });
+
+		await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1));
+		expect(apiPutEmail).toHaveBeenCalledWith('a@b.de');
+	});
+
 	it('shows no login-name block without a login name', () => {
 		render(<ErstantwortEmailOverlay onClose={vi.fn()} onSaved={vi.fn()} />);
 

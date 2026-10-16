@@ -375,6 +375,22 @@ it('opens the tone dialog for browser-only and asks the browser only on its butt
 		screen.getByText('erstantwort.notificationChoice.dialog.stayInBrowser')
 	).toBeTruthy();
 });
+it('moves the tone with the arrow keys and keeps one tab stop', async () => {
+	setup();
+	fireEvent.click(
+		screen.getByRole('button', { name: /notificationChoice.browser / })
+	);
+	const radios = await screen.findAllByRole('radio');
+	const selected = radios.findIndex(
+		(radio) => radio.getAttribute('aria-checked') === 'true'
+	);
+	expect(radios.filter((r) => r.tabIndex === 0)).toHaveLength(1);
+	fireEvent.keyDown(radios[selected], { key: 'ArrowRight' });
+	await waitFor(() =>
+		expect(radios[selected + 1].getAttribute('aria-checked')).toBe('true')
+	);
+	expect(radios[selected].getAttribute('aria-checked')).toBe('false');
+});
 it('remembers the chosen tone for requests and conversations and plays a preview', async () => {
 	const play = vi.fn().mockResolvedValue(undefined);
 	vi.stubGlobal(

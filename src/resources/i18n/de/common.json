@@ -5283,7 +5283,7 @@
 			"dialog": {
 				"title": "Browser-Benachrichtigungen einschalten",
 				"description": "Wählen Sie den Ton, den Sie hören werden, und erlauben Sie dann Benachrichtigungen in Ihrem Browser.",
-				"stayInBrowser": "Das funktioniert, solange Sie an diesem Computer in diesem Browser bleiben – auch wenn dieser Tab geschlossen ist.",
+				"stayInBrowser": "Das funktioniert, solange Sie auf diesem Gerät in diesem Browser bleiben – auch wenn dieser Tab geschlossen ist.",
 				"toneLabel": "Benachrichtigungston",
 				"tone": "Ton {{number}}",
 				"noTone": "Kein Ton"
