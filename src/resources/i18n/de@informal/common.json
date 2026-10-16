@@ -151,6 +151,21 @@
 		}
 	},
 	"historyRequest": {
+		"ask": {
+			"title": "Frühere Nachrichten sind hier nicht lesbar",
+			"intro": "Du hast dich auf einem neuen Gerät angemeldet, deshalb sind deine früheren Nachrichten in diesem Gespräch gesperrt. Du kannst deine Beratung bitten, sie freizugeben.",
+			"button": "Frühere Nachrichten anfragen",
+			"waiting": "Anfrage gesendet. Deine Beratung muss sie bestätigen; danach erscheinen die Nachrichten hier.",
+			"done": "Deine früheren Nachrichten sind wieder lesbar.",
+			"failed": "Die Anfrage konnte nicht gesendet werden. Bitte versuche es erneut.",
+			"dialog": {
+				"title": "Frühere Nachrichten anfragen",
+				"description": "Deine Beratung sieht, was du schreibst, und entscheidet, ob dieses Gespräch für dich freigegeben wird.",
+				"label": "Worum ging es in diesem Gespräch?",
+				"cancel": "Abbrechen",
+				"send": "Anfrage senden"
+			}
+		},
 		"card": {
 			"title": "Anfrage, dieses Gespräch wieder lesen zu können",
 			"intro": "Die Person in diesem Gespräch hat sich auf einem neuen Gerät angemeldet und kann die früheren Nachrichten nicht lesen. Die Person hat geschrieben:",
