@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { verifyWaitingRoomContract } from '../../../.storybook/waitingRoomContractPlay';
 import { verifyConsentOpening } from '../../../.storybook/consentCompletionStoryPlay';
 import { renderToString } from 'react-dom/server';
 import { useTranslation } from 'react-i18next';
@@ -303,6 +304,9 @@ export const StepWaiting: StoryObj = {
 	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, { stage: true });
+	},
 	parameters: full(
 		'Eine Seite, drei Stellen ändern sich. Die Punkte sind die Schlange, der Knopf der Ladebalken (drehende Uhr statt Pfeil), die drei Karten das Karussell der Registrierung mit Franks Bildern. In der App: Poll auf `/service/conversations/anonymous/{id}` alle 4 s.'
 	)

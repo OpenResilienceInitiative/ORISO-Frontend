@@ -1,3 +1,4 @@
+import { verifyWaitingRoomContract } from '../../../.storybook/waitingRoomContractPlay';
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
@@ -122,6 +123,9 @@ export const InfoGalleryDesktop: StoryObj = {
 	name: '1 — Info-Galerie, Desktop',
 	globals: desktop1440Globals,
 	render: () => <Screen />,
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement);
+	},
 	parameters: {
 		docs: {
 			description: {

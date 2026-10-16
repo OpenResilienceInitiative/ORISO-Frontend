@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
@@ -9,6 +10,9 @@ import { ZipcodeInput } from './zipcodeInput/ZipcodeInput';
 import { TopicSelection } from './topicSelection/TopicSelection';
 import { WhyLocalDisclosure } from './zipcodeInput/WhyLocalDisclosure';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import { verifyWaitingRoomContract } from '../../../.storybook/waitingRoomContractPlay';
+import { PostRegistrationHandover } from '../app/registrationLoader/PostRegistrationHandover';
+import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
 import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { HandoverGateState } from '../app/registrationLoader/handoverGate';
 import { registrationMd3 } from './registrationDesign/registrationDesign';
@@ -499,5 +503,68 @@ export const HandoverInStageReady: StoryObj = {
 				story: 'Alles geladen: der Knopf heißt „Anfrage schreiben" und ist klickbar. Die Bühne steht unverändert daneben — derselbe Rahmen wie im Formular davor.'
 			}
 		}
+	}
+};
+
+/* The real component `AuthenticatedApp` mounts after the hard reload that
+   follows sign-up — not a hand-built copy. Same split layout as the form
+   before it and the live-chat entry room, so nothing jumps. */
+const PostRegistrationInStage = ({ ready }: { ready: boolean }) => (
+	<Box sx={{ minHeight: '100vh' }}>
+		<AgencySpecificContext.Provider
+			value={{ specificAgency: null, setSpecificAgency: () => undefined }}
+		>
+			<GlobalComponentContext.Provider value={{ Stage }}>
+				<PostRegistrationHandover
+					ready={ready}
+					forcedState={ready ? undefined : 'preparing'}
+					onEnter={() => undefined}
+				/>
+			</GlobalComponentContext.Provider>
+		</AgencySpecificContext.Provider>
+	</Box>
+);
+
+export const PostRegistrationPreparing: StoryObj = {
+	name: '8f — Nach dem Reload, echte Komponente (lädt)',
+	render: () => <PostRegistrationInStage ready={false} />,
+	parameters: { layout: 'fullscreen' },
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, { stage: true });
+		const gate = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy-state="preparing"]'
+		);
+		// Shut until the app behind it is loaded.
+		expect(gate?.disabled).toBe(true);
+	}
+};
+
+export const PostRegistrationReady: StoryObj = {
+	name: '8f — Nach dem Reload, echte Komponente (bereit)',
+	render: () => <PostRegistrationInStage ready />,
+	parameters: { layout: 'fullscreen' },
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, {
+			stage: true,
+			gate: () =>
+				canvasElement.querySelector<HTMLElement>(
+					'[data-cy-state="ready"]'
+				)
+		});
+	}
+};
+
+/* The same waiting room with a blue primary colour (a Träger's own brand).
+   The stage dots and glow used to be drawn in a fixed red; the contract now
+   fails if any stage effect pixel is red-dominant. */
+export const PostRegistrationBluePrimary: StoryObj = {
+	name: '8f — Nach dem Reload, blaues Primary',
+	render: () => <PostRegistrationInStage ready />,
+	parameters: { layout: 'fullscreen', orisoSeed: '#1D4ED8' },
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, {
+			stage: true,
+			notRed: true
+		});
 	}
 };
