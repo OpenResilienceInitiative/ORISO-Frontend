@@ -319,9 +319,13 @@ export const SessionStream = ({
 	);
 	const isMatrixSession = resolvedChatSession.isMatrixSession;
 	const matrixRoomId = resolvedChatSession.matrixRoomId || '';
+	const isConsultant = hasUserAuthority(
+		AUTHORITIES.CONSULTANT_DEFAULT,
+		userData
+	);
 	const hasHistoryRequests =
 		useHistoryRequests(resolvedChatSession.matrixRoomId).requests.length >
-			0 && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData);
+			0 && isConsultant;
 	const clearMatrixTypingTimeout = useCallback(() => {
 		if (matrixTypingTimeoutRef.current) {
 			window.clearTimeout(matrixTypingTimeoutRef.current);
@@ -1503,10 +1507,7 @@ export const SessionStream = ({
 									}
 								/>
 							)}
-						{hasUserAuthority(
-							AUTHORITIES.CONSULTANT_DEFAULT,
-							userData
-						) && (
+						{isConsultant && (
 							<HistoryRequestApprovals
 								roomId={resolvedChatSession.matrixRoomId}
 							/>
