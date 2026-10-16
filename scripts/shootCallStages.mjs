@@ -52,7 +52,12 @@ const STORIES = [
 	['call-ansichtswechsler--dunkel', 'Wechsler-dunkel', 520],
 	['call-ansichtswechsler--hell', 'Wechsler-hell', 520],
 	['call-ansichtswechsler--alle-drei', 'Wechsler-alle', 520],
-	['call-ansichtswechsler--ueber-der-buehne', 'Wechsler-Buehne', 820]
+	['call-ansichtswechsler--ueber-der-buehne', 'Wechsler-Buehne', 820],
+	['call-bühnenfläche--mit-atmosphaere', 'Flaeche-Atmosphaere', 1280],
+	['call-bühnenfläche--dunkle-atmosphaere', 'Flaeche-dunkel', 1280],
+	['call-bühnenfläche--zentrumsbild-statt-preset', 'Flaeche-Bild', 1280],
+	['call-bühnenfläche--dunkles-zentrumsbild', 'Flaeche-Bild-schwarz', 1280],
+	['call-bühnenfläche--nur-scrim', 'Flaeche-nur-Scrim', 1280]
 ];
 
 /** The two-person circle has halves rather than participants or fields. */
@@ -87,6 +92,22 @@ const FIELD_STORIES = new Set([
 	'Felder-20',
 	'Felder-Atmosphaere',
 	'Felder-Handy'
+]);
+
+/**
+ * Measured but NOT gated: the scrim carrying the header alone is a
+ * diagnostic, not a configuration the product ships. Its number is printed
+ * so the header band's contribution stays visible.
+ */
+const DIAGNOSTIC_SURFACES = new Set(['Flaeche-nur-Scrim']);
+
+/** The stage surface, where the scrim's legibility claim is measured. */
+const SURFACE_STORIES = new Set([
+	'Flaeche-Atmosphaere',
+	'Flaeche-dunkel',
+	'Flaeche-Bild',
+	'Flaeche-Bild-schwarz',
+	'Flaeche-nur-Scrim'
 ]);
 
 /** The view switcher. Only the last of them has a stage behind it. */
@@ -164,6 +185,9 @@ for (const [id, name, width] of STORIES) {
 					document.querySelectorAll('[data-testid="participant"] svg')
 						.length > 0
 			);
+	} else if (SURFACE_STORIES.has(name)) {
+		await page.waitForSelector('[data-testid="stage-backdrop"]');
+		await page.waitForSelector('[data-testid="stage-header-title"]');
 	} else if (SWITCHER_STORIES.has(name)) {
 		await page.waitForSelector('[data-testid="view-switcher"]');
 		if (name === 'Wechsler-Buehne')
@@ -259,6 +283,122 @@ for (const [id, name, width] of STORIES) {
 			offscreen
 		};
 	});
+
+	/*
+	 * Ticket 05: "the scrim keeps header text legible."
+	 *
+	 * That is a contrast claim about real composited pixels — a translucent
+	 * gradient over a pond over a base colour — and nothing short of a
+	 * screenshot can settle it. So the header text is hidden, what is
+	 * actually behind it is photographed, and the WCAG ratio is computed
+	 * against the ink the text is really drawn in.
+	 *
+	 * The browser decodes its own screenshot: the PNG goes back into the
+	 * page as a data URL and onto a canvas. That keeps the probe free of a
+	 * Node image library it would otherwise need.
+	 */
+	if (SURFACE_STORIES.has(name)) {
+		for (const id of ['stage-header-title', 'stage-header-sub']) {
+			const target = await page.evaluate((testid) => {
+				const el = document.querySelector(`[data-testid="${testid}"]`);
+				if (!el) return null;
+				const b = el.getBoundingClientRect();
+				return {
+					ink: getComputedStyle(el).color,
+					box: {
+						x: Math.round(b.x),
+						y: Math.round(b.y),
+						width: Math.round(b.width),
+						height: Math.round(b.height)
+					}
+				};
+			}, id);
+			if (!target) {
+				failures.push(`${name}: ${id} nicht gefunden`);
+				continue;
+			}
+
+			// Hidden, not removed: the layout behind it must not shift, or
+			// the photograph is of somewhere else.
+			await page.evaluate((testid) => {
+				document.querySelector(
+					`[data-testid="${testid}"]`
+				).style.visibility = 'hidden';
+			}, id);
+			const shot = (await page.screenshot({ clip: target.box })).toString(
+				'base64'
+			);
+			await page.evaluate((testid) => {
+				document.querySelector(
+					`[data-testid="${testid}"]`
+				).style.visibility = '';
+			}, id);
+
+			const ratio = await page.evaluate(
+				async ({ png, ink }) => {
+					const image = new Image();
+					image.src = `data:image/png;base64,${png}`;
+					await image.decode();
+					const canvas = document.createElement('canvas');
+					canvas.width = image.naturalWidth;
+					canvas.height = image.naturalHeight;
+					const cx = canvas.getContext('2d');
+					cx.drawImage(image, 0, 0);
+					const { data } = cx.getImageData(
+						0,
+						0,
+						canvas.width,
+						canvas.height
+					);
+
+					// WCAG relative luminance.
+					const channel = (v) => {
+						const c = v / 255;
+						return c <= 0.03928
+							? c / 12.92
+							: ((c + 0.055) / 1.055) ** 2.4;
+					};
+					const luminance = (r, g, b) =>
+						0.2126 * channel(r) +
+						0.7152 * channel(g) +
+						0.0722 * channel(b);
+
+					const [ir, ig, ib] = ink.match(/\d+/g).map(Number);
+					const inkL = luminance(ir, ig, ib);
+
+					// The worst pixel in the band, not the average: text is
+					// unreadable where the contrast is lowest, and an
+					// average hides exactly that.
+					let worst = Infinity;
+					for (let i = 0; i < data.length; i += 4) {
+						const bg = luminance(data[i], data[i + 1], data[i + 2]);
+						const [hi, lo] = bg > inkL ? [bg, inkL] : [inkL, bg];
+						const c = (hi + 0.05) / (lo + 0.05);
+						if (c < worst) worst = c;
+					}
+					return Math.round(worst * 100) / 100;
+				},
+				{ png: shot, ink: target.ink }
+			);
+
+			// 4.5:1, the WCAG AA threshold for text this size — the title is
+			// 20px/500, which is below the large-text exemption.
+			const diagnostic = DIAGNOSTIC_SURFACES.has(name);
+			const verdict =
+				ratio >= 4.5
+					? 'ok'
+					: diagnostic
+						? 'zu wenig (Diagnose)'
+						: 'ZU WENIG';
+			process.stdout.write(
+				`${name.padEnd(22)} ${id.replace('stage-header-', '')} auf ${target.ink} — schlechtester Kontrast ${ratio}:1 ${verdict}\n`
+			);
+			if (ratio < 4.5 && !diagnostic)
+				failures.push(
+					`${name}: ${id} erreicht nur ${ratio}:1, AA verlangt 4.5:1`
+				);
+		}
+	}
 
 	/*
 	 * Ticket 05 gives the switcher's geometry to the pixel:

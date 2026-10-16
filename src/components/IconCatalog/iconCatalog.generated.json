@@ -2814,6 +2814,19 @@
 		"usage": "app-used"
 	},
 	{
+		"id": "ui-icon:image:filled",
+		"family": "image",
+		"state": "filled",
+		"role": "selected",
+		"kind": "ui-icon",
+		"size": null,
+		"fileName": "image-filled.svg",
+		"sourcePath": "src/resources/img/icons/image-filled.svg",
+		"exportNames": [],
+		"usageFiles": ["src/components/call/stage/AtmosphereControl.tsx"],
+		"usage": "app-used"
+	},
+	{
 		"id": "ui-icon:imprint:base",
 		"family": "imprint",
 		"state": "base",
