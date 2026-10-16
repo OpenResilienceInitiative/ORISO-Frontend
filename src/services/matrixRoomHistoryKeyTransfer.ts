@@ -127,6 +127,7 @@ export class MatrixRoomHistoryKeyTransfer {
 	 * that one device. The device stays unverified; the approval is the check.
 	 */
 	public async approveRequest(requestId: string): Promise<boolean> {
+		this.expirePendingApprovals();
 		const request = this.pendingApprovals.get(requestId);
 		const client = this.client;
 		if (!request || !client || this.approvalsInFlight.has(requestId))
@@ -163,7 +164,8 @@ export class MatrixRoomHistoryKeyTransfer {
 
 	public declineRequest(requestId: string): void {
 		const request = this.pendingApprovals.get(requestId);
-		if (!request) return;
+		// A release that is already sending cannot be taken back.
+		if (!request || this.approvalsInFlight.has(requestId)) return;
 		this.pendingApprovals.delete(requestId);
 		this.announceResolved(request, 'declined');
 	}
