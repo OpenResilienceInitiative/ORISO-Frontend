@@ -391,9 +391,7 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		vi.mocked(apiGetAnonymousEnquiryDetails).mockResolvedValue(poll(0));
 		renderSession(1);
 		await tick(4000);
-		expect(
-			screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)
-		).toBeNull();
+		expect(screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)).toBeNull();
 
 		await act(async () => {
 			fireEvent.click(
@@ -428,9 +426,7 @@ describe('SessionItemComponent — the "live chat is closed" dialog (#1270)', ()
 		await tick(4000);
 		await tick(1000);
 
-		expect(
-			screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)
-		).toBeNull();
+		expect(screen.queryByText(`${NO_AVAILABILITY}.laterNotice`)).toBeNull();
 	});
 
 	it('closes by itself when somebody is live again', async () => {
