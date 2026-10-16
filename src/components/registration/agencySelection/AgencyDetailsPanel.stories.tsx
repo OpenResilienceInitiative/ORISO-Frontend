@@ -1,7 +1,11 @@
 import * as React from 'react';
 import { Meta, StoryObj } from '@storybook/react-vite';
+import { expect, waitFor, within } from 'storybook/test';
 import { AgencyDetailsPanel } from './AgencyDetailsPanel';
-import { RegistrationContext } from '../../../globalState';
+import { AppConfigContext, RegistrationContext } from '../../../globalState';
+import { LanguagesContext } from '../../../globalState/provider/LanguagesProvider';
+import { useAppConfig } from '../../../hooks/useAppConfig';
+import { phone390Globals } from '../../message/messageStoryShell';
 import {
 	AgencyDataInterface,
 	TopicsDataInterface
@@ -122,4 +126,97 @@ export const EmptyState: Story = {
 			}
 		}
 	}
+};
+
+const FIXED_LANGUAGES = { fixed: ['de'], spoken: [] as string[] };
+
+/**
+ * Single-domain multitenancy resolves the tenant from the `agencyId` request
+ * header, so the languages request must carry it. The mocked endpoint answers
+ * with the counsellors' languages only when that header is present; without it
+ * the story shows the fixed language alone, as the bug in #1434 did.
+ */
+const mockConsultantLanguagesEndpoint = () => {
+	const originalFetch = globalThis.fetch;
+	globalThis.fetch = async (input, init) => {
+		const request = input instanceof Request ? input : null;
+		const url = request
+			? request.url
+			: typeof input === 'string'
+				? input
+				: input.toString();
+		if (url.includes('/consultants/languages')) {
+			// fetchData() passes a Request object, so the headers live on it.
+			const agencyHeader = new Headers(
+				request?.headers ?? init?.headers
+			).get('agencyId');
+			return new Response(
+				JSON.stringify({
+					languages: agencyHeader ? ['en', 'fr', 'ru'] : []
+				}),
+				{
+					status: 200,
+					headers: { 'Content-Type': 'application/json' }
+				}
+			);
+		}
+		return originalFetch(input, init);
+	};
+	return () => {
+		globalThis.fetch = originalFetch;
+	};
+};
+
+const SingleDomainTenant = ({ children }: { children: React.ReactNode }) => {
+	const config = useAppConfig();
+	return (
+		<AppConfigContext.Provider
+			value={{ ...config, multitenancyWithSingleDomainEnabled: true }}
+		>
+			<LanguagesContext.Provider value={FIXED_LANGUAGES}>
+				{children}
+			</LanguagesContext.Provider>
+		</AppConfigContext.Provider>
+	);
+};
+
+const withSingleDomainLanguages = (StoryComponent: React.ComponentType) => (
+	<SingleDomainTenant>
+		<StoryComponent />
+	</SingleDomainTenant>
+);
+
+const fourLanguagesPlay =
+	(expected: string) =>
+	async ({ canvasElement }: { canvasElement: HTMLElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() => expect(canvas.getByText(expected)).toBeVisible());
+	};
+
+export const FourLanguagesDE: Story = {
+	args: {
+		agency: agencyWithBackendFields,
+		open: true
+	},
+	decorators: [withSingleDomainLanguages],
+	beforeEach: mockConsultantLanguagesEndpoint,
+	globals: { ...phone390Globals, locale: 'de' },
+	play: fourLanguagesPlay(
+		'Deutsch (DE) | Englisch (EN) | Französisch (FR) | Russisch (RU)'
+	),
+	parameters: {
+		docs: {
+			description: {
+				story: 'Single-domain multitenancy on: the languages request carries the `agencyId` header, so every counsellor language is listed (4 languages, 390px, DE). ORISO-Frontend#1434.'
+			}
+		}
+	}
+};
+
+export const FourLanguagesEN: Story = {
+	...FourLanguagesDE,
+	globals: { ...phone390Globals, locale: 'en' },
+	play: fourLanguagesPlay(
+		'English (EN) | French (FR) | German (DE) | Russian (RU)'
+	)
 };
