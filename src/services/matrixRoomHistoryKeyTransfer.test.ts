@@ -843,6 +843,35 @@ describe('MatrixRoomHistoryKeyTransfer', () => {
 			).not.toHaveBeenCalled();
 		});
 
+		it('does not let a request id from another room overwrite a waiting one', async () => {
+			const { harness, service } = setup();
+			harness.emitToDevice(unverifiedRequest('It was about my school'));
+			await vi.waitFor(() =>
+				expect(service.getPendingApprovals()).toHaveLength(1)
+			);
+			const original = harness.client.getRoom.getMockImplementation();
+			harness.client.getRoom.mockImplementation(() =>
+				original?.(ROOM_ID)
+			);
+			harness.emitToDevice(
+				event('org.oriso.room_history_key_request', PEER, {
+					room_id: '!other:matrix',
+					request_id: 'reset-request',
+					requester_user_id: PEER,
+					requester_device_id: 'ASKER1',
+					reason: 'other room'
+				})
+			);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+
+			expect(service.getPendingApprovals()).toEqual([
+				expect.objectContaining({
+					roomId: ROOM_ID,
+					reason: 'It was about my school'
+				})
+			]);
+		});
+
 		it('forgets waiting requests when the client is detached', async () => {
 			const { harness, service } = setup();
 			harness.emitToDevice(unverifiedRequest('It was about my school'));
