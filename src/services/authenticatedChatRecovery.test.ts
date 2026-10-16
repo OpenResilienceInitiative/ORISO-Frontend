@@ -455,6 +455,34 @@ describe('no password in hand on a device without the backup key (#1741)', () =>
 		);
 	});
 
+	it('hands the password back when another tab holds the setup lease', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		vi.stubGlobal('navigator', {
+			locks: { request: vi.fn(async (_name, _options, run) => run(null)) }
+		});
+		recover.mockResolvedValue({ kind: 'not-enrolled' });
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet()
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'busy'
+		);
+		expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBe(
+			'synthetic-password'
+		);
+	});
+
 	it('never hands the password back after the run was cancelled, for example by a logout', async () => {
 		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
 			await import('./loginRecoveryHandoff');
