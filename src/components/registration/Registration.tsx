@@ -911,7 +911,9 @@ export const Registration = () => {
 						   being swapped for a new screen. */}
 						{activeStep && (
 							<>
-								<PreselectionBox hasDrawer={false} />
+								{!isRegistering && (
+									<PreselectionBox hasDrawer={false} />
+								)}
 								<RegistrationHeader
 									currentStepName={step}
 									visibleStepNames={availableSteps.map(

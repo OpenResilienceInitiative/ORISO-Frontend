@@ -39,6 +39,11 @@ export const StepTransition = ({
 			from: order < shown.order ? 'left' : 'right',
 			first: false
 		});
+	} else if (shown.order !== order) {
+		// Steps were inserted before this one: it is the same step in a new
+		// position, so it must not replay, but the next move is measured from
+		// where it now stands.
+		setShown({ ...shown, order });
 	}
 
 	return (

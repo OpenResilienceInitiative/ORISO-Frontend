@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { act, cleanup, render, screen } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	render,
+	renderHook,
+	screen
+} from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SlideOutPresence } from './SlideOutPresence';
 import { StepTransition } from './StepTransition';
 import { transitionMotion } from './transitionMotion';
+import { useReducedMotion } from './useReducedMotion';
 
 const preferReducedMotion = (reduce: boolean) => {
 	window.matchMedia = ((query: string) => ({
@@ -24,7 +31,6 @@ const step = (viewKey: string, order: number) => (
 		<p>{viewKey}</p>
 	</StepTransition>
 );
-
 
 /**
  * ORISO-Frontend#1736. Registration steps and the login button move through
@@ -46,6 +52,20 @@ describe('StepTransition', () => {
 		expect(direction()).toBe('right');
 
 		rerender(step('topic-selection', 0));
+		expect(direction()).toBe('left');
+	});
+
+	it('measures the next move from where the step stands now when steps are inserted before it', () => {
+		const { rerender } = render(step('topic-selection', 0));
+		rerender(step('account-data', 1));
+		// A step appears in front of "account-data": same step, later position.
+		rerender(step('account-data', 2));
+		expect(direction(), 'the step itself does not replay').toBe('right');
+
+		// The step that now sits at position 1 is *before* it, so it comes
+		// back in from the left — not from the right it would take if the old
+		// position (1) were still remembered.
+		rerender(step('zipcode', 1));
 		expect(direction()).toBe('left');
 	});
 
@@ -124,6 +144,19 @@ describe('SlideOutPresence', () => {
 		expect(screen.queryByText('Einloggen')).toBeNull();
 	});
 
+	it('cannot be reached by keyboard or assistive tech while it slides out', () => {
+		const { rerender } = render(link(true));
+		const wrapper = () =>
+			screen.getByText('Einloggen').parentElement as HTMLElement;
+		expect(wrapper().hasAttribute('inert')).toBe(false);
+
+		rerender(link(false));
+		expect(wrapper().hasAttribute('inert')).toBe(true);
+
+		rerender(link(true));
+		expect(wrapper().hasAttribute('inert')).toBe(false);
+	});
+
 	it('is back and clickable when it applies again before the exit ends', () => {
 		const { rerender } = render(link(true));
 		rerender(link(false));
@@ -149,5 +182,24 @@ describe('SlideOutPresence', () => {
 		});
 
 		expect(screen.queryByText('Einloggen')).toBeNull();
+	});
+});
+
+describe('useReducedMotion', () => {
+	afterEach(cleanup);
+
+	it('already knows about the preference on the very first render', () => {
+		preferReducedMotion(true);
+		const seen: boolean[] = [];
+		renderHook(() => {
+			const reduced = useReducedMotion();
+			seen.push(reduced);
+			return reduced;
+		});
+
+		expect(
+			seen[0],
+			'the first render is not a guess of "no preference"'
+		).toBe(true);
 	});
 });

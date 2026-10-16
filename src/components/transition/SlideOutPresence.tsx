@@ -39,6 +39,7 @@ export const SlideOutPresence = ({
 			className={className}
 			data-presence={leaving ? 'leaving' : 'present'}
 			aria-hidden={leaving || undefined}
+			inert={leaving || undefined}
 			sx={[
 				leaving && {
 					'pointerEvents': 'none',

@@ -107,7 +107,12 @@ export const IconStepper = ({
 				return (
 					<React.Fragment key={name}>
 						<Box
-							ref={state === 'active' ? activeRef : undefined}
+							ref={
+								state === 'active' ||
+								(completed && index === steps.length - 1)
+									? activeRef
+									: undefined
+							}
 							aria-current={
 								state === 'active' ? 'step' : undefined
 							}
