@@ -121,7 +121,7 @@ $setup-disabled-text: #5f6368;
 
 	&__progressStep--done .twoFactorSetupDialog__progressMarker {
 		border-color: var(--m3-primary, #a5000a);
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	&__header {
@@ -139,7 +139,7 @@ $setup-disabled-text: #5f6368;
 		flex-shrink: 0;
 		border-radius: 16px;
 		background: var(--m3-selected-layer, #f6dfe0);
-		color: var(--m3-primary, #a5000a);
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	}
 
 	&__headerText {
@@ -234,7 +234,7 @@ $setup-disabled-text: #5f6368;
 		}
 
 		&--done path {
-			fill: var(--m3-primary, #a5000a);
+			fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 
 		&--active {
@@ -261,7 +261,7 @@ $setup-disabled-text: #5f6368;
 		text-align: center;
 
 		&--active {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 
@@ -306,7 +306,10 @@ $setup-disabled-text: #5f6368;
 		&--outline {
 			border-color: var(--m3-primary, #a5000a) !important;
 			background-color: transparent !important;
-			color: var(--m3-primary, #a5000a) !important;
+			color: var(
+				--oriso-primary-text,
+				var(--m3-primary, #a5000a)
+			) !important;
 		}
 	}
 
@@ -450,7 +453,7 @@ $setup-disabled-text: #5f6368;
 
 	&__textButton {
 		padding: 0 !important;
-		color: var(--m3-primary, #a5000a) !important;
+		color: var(--oriso-primary-text, var(--m3-primary, #a5000a)) !important;
 		text-transform: none !important;
 	}
 

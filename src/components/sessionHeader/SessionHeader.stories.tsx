@@ -2,6 +2,10 @@ import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import {
+	effectiveBackground,
+	wcagContrast
+} from '../../utils/theme/wcagContrast';
+import {
 	ActiveSessionContext,
 	AUTHORITIES,
 	buildExtendedSession,
@@ -444,15 +448,19 @@ const StoryProviders = ({
 
 const noopRef = { current: false };
 
-const renderGroupHeader = (preset: {
-	session: ExtendedSessionInterface;
-	members?: MockMember[];
-}) => (
+const renderGroupHeader = (
+	preset: {
+		session: ExtendedSessionInterface;
+		members?: MockMember[];
+	},
+	hideTopic = false
+) => (
 	<StoryProviders session={preset.session} members={preset.members}>
 		<GroupChatHeader
 			hasUserInitiatedStopOrLeaveRequest={noopRef}
 			isJoinGroupChatView={false}
 			bannedUsers={[]}
+			hideTopic={hideTopic}
 		/>
 	</StoryProviders>
 );
@@ -689,6 +697,36 @@ export const GroupChatLarge: Story = {
 };
 
 /**
+ * Group chat while the privacy gate is open (#1499, Frank's decision): the
+ * group's topic is left out of the header, not dimmed, until the client has
+ * agreed. The avatars stay.
+ */
+export const GroupChatBeforeConsentHidesTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), true),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				canvasElement.querySelector('.sessionInfo__memberStack')
+			).toBeTruthy();
+		});
+		expect(canvasElement.querySelector('h3')).toBeNull();
+		expect(within(canvasElement).queryByText('Team Austausch')).toBeNull();
+	}
+};
+
+/** After consent the header shows the group's topic as it always did. */
+export const GroupChatAfterConsentShowsTopic: Story = {
+	render: () => renderGroupHeader(mockGroupSessionSmall(), false),
+	play: async ({ canvasElement }) => {
+		await waitFor(() => {
+			expect(
+				within(canvasElement).getByText('Team Austausch')
+			).toBeVisible();
+		});
+	}
+};
+
+/**
  * Active 1-on-1 conversation (nearby / vicinity, AGENCY_COUNSELLING).
  * Expected (Figma): house icon + add button + the contact's avatar (animal,
  * FE#1193 Job 4) — no Matrix members yet, so the stack falls back to the contact.
@@ -707,6 +745,45 @@ export const ActiveConversation: Story = {
 			expect(canvasElement.textContent).not.toContain('•••');
 		});
 	}
+};
+
+/* The topic tag under the title is small text on a tinted fill: it must reach
+   4.5:1 for every Träger, also a light one (#1499, Träger 2 = #b4ddee). */
+const expectLegibleTopicTag = async (canvasElement: HTMLElement) => {
+	await waitFor(() =>
+		expect(
+			canvasElement.querySelectorAll('.sessionInfo__metaInfo__content')
+				.length
+		).toBeGreaterThan(0)
+	);
+	// The topic is the shared <TopicTag> (global --oriso-topic-tag-* tokens).
+	await expect(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		).length
+	).toBeGreaterThan(0);
+	for (const tag of Array.from(
+		canvasElement.querySelectorAll(
+			'.sessionInfo__metaInfo__content.topicTag'
+		)
+	)) {
+		await expect(
+			wcagContrast(getComputedStyle(tag).color, effectiveBackground(tag))
+		).toBeGreaterThanOrEqual(4.5);
+	}
+};
+
+export const TopicTagLegible: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1',
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
+};
+
+export const TopicTagLegibleLightBrandColour: Story = {
+	name: 'Active conversation — topic tag reaches 4.5:1 with a light Träger colour',
+	parameters: { orisoSeed: '#b4ddee' },
+	render: () => renderSessionHeader(mockActiveConversation()),
+	play: async ({ canvasElement }) => expectLegibleTopicTag(canvasElement)
 };
 
 /**

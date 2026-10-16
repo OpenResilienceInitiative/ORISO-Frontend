@@ -8,6 +8,7 @@ export type JoinRequestViewState =
 	| 'idle'
 	| 'sending'
 	| 'pending'
+	| 'admitting'
 	| 'cancelling'
 	| 'admitted'
 	| 'declined'
@@ -52,6 +53,7 @@ const headlineKey: Record<JoinRequestViewState | 'none', string> = {
 	error: 'groupChat.notMember.headline',
 	linkInvalid: 'groupChat.notMember.headline',
 	pending: 'groupChat.notMember.pendingHeadline',
+	admitting: 'groupChat.notMember.admittingHeadline',
 	cancelling: 'groupChat.notMember.pendingHeadline',
 	admitted: 'groupChat.notMember.admittedHeadline',
 	declined: 'groupChat.notMember.declinedHeadline'
@@ -64,6 +66,7 @@ const bodyKey: Record<JoinRequestViewState | 'none', string> = {
 	error: 'groupChat.notMember.knockBody',
 	linkInvalid: 'groupChat.notMember.body',
 	pending: 'groupChat.notMember.pendingBody',
+	admitting: 'groupChat.notMember.admittingBody',
 	cancelling: 'groupChat.notMember.pendingBody',
 	admitted: 'groupChat.notMember.admittedBody',
 	declined: 'groupChat.notMember.declinedBody'
@@ -126,7 +129,10 @@ export const GroupChatNotMember = ({
 				)}
 				variant="no-conversations"
 			>
-				<Typography sx={bodySx}>
+				<Typography
+					sx={bodySx}
+					role={state === 'admitting' ? 'status' : undefined}
+				>
 					{translate(
 						onRetry
 							? 'groupChat.accessUnavailable.body'

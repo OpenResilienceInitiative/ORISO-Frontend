@@ -24,11 +24,14 @@
 		font-size: 14px;
 		text-align: left;
 		text-decoration: underline;
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		cursor: pointer;
 
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 		}
 
 		&:focus-visible {

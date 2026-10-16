@@ -418,3 +418,117 @@ describe('automatic recovery runs with token refresh held (#1504)', () => {
 		expect(status).not.toHaveBeenCalled();
 	});
 });
+
+describe('no password in hand on a device without the backup key (#1741)', () => {
+	it('asks an account with password recovery to sign in again, not for a recovery key', async () => {
+		status.mockResolvedValue({ ...healthy, keyStorageOutOfSync: true });
+		evidence.mockResolvedValue(true);
+		await initializeChatRecovery(
+			client(),
+			{ mode: 'LOGIN_PASSWORD', revision: 2 },
+			null
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'needs-sign-in'
+		);
+	});
+
+	it('hands the password back when the unlock did not finish, so the next load can retry', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		recover.mockResolvedValue({ kind: 'retryable-failure' });
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet()
+		);
+		expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBe(
+			'synthetic-password'
+		);
+	});
+
+	it('hands the password back when another tab holds the setup lease', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		vi.stubGlobal('navigator', {
+			locks: { request: vi.fn(async (_name, _options, run) => run(null)) }
+		});
+		recover.mockResolvedValue({ kind: 'not-enrolled' });
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet()
+		);
+		expect(runtimeStatus).toHaveBeenLastCalledWith(
+			'@synthetic:test',
+			'busy'
+		);
+		expect(await consumeLoginRecoveryPassword('@synthetic:test')).toBe(
+			'synthetic-password'
+		);
+	});
+
+	it('never hands the password back after the run was cancelled, for example by a logout', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		await stageLoginRecoveryPassword(
+			'@synthetic:test',
+			'synthetic-password'
+		);
+		let cancelled = false;
+		recover.mockImplementation(async () => {
+			cancelled = true;
+			return { kind: 'retryable-failure' };
+		});
+		await startAuthenticatedChatRecovery(
+			client(),
+			{
+				chatRecoveryMode: 'LOGIN_PASSWORD',
+				chatRecoveryPolicyRevision: 2
+			},
+			new WeakSet(),
+			() => cancelled
+		);
+		expect(
+			await consumeLoginRecoveryPassword('@synthetic:test')
+		).toBeNull();
+	});
+
+	it('does not keep the password once the unlock has worked or was rejected', async () => {
+		const { stageLoginRecoveryPassword, consumeLoginRecoveryPassword } =
+			await import('./loginRecoveryHandoff');
+		for (const kind of ['ready', 'needs-recovery-key']) {
+			await stageLoginRecoveryPassword(
+				'@synthetic:test',
+				'synthetic-password'
+			);
+			recover.mockResolvedValue({ kind });
+			await startAuthenticatedChatRecovery(
+				client(),
+				{
+					chatRecoveryMode: 'LOGIN_PASSWORD',
+					chatRecoveryPolicyRevision: 2
+				},
+				new WeakSet()
+			);
+			expect(
+				await consumeLoginRecoveryPassword('@synthetic:test')
+			).toBeNull();
+		}
+	});
+});

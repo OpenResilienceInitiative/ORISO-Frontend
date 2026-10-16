@@ -8,6 +8,9 @@
 // WP-06 Activity Timeline — shared list-item selection tokens + mixins (Slice 0b)
 @import './listItemSelection';
 
+// Global topic tag colour tokens + mixins
+@import './topicTag';
+
 // Room-header call controls — one size for the chat header AND the side room
 @import './headerCallButtons';
 

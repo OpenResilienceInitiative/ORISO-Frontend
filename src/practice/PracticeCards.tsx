@@ -97,11 +97,17 @@ export const PracticeCards = ({
 		return null;
 	}
 
-	const statusFor = (tour: TourDefinition): TourStatus =>
-		progress.find(
+	const statusFor = (tour: TourDefinition): TourStatus => {
+		const savedStatus = progress.find(
 			(item) =>
 				item.tourId === tour.id && item.tourVersion === tour.version
-		)?.status ?? 'not_started';
+		)?.status;
+		// The case and its messages are memory-only. A saved step cannot
+		// resume that world after reload, so never promise resumable progress.
+		return savedStatus === 'in_progress'
+			? 'not_started'
+			: (savedStatus ?? 'not_started');
+	};
 
 	return (
 		<div

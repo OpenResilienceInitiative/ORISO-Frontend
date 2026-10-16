@@ -252,3 +252,55 @@ it('suppresses an unstarted recommendation if the allowed email channel is confi
 	view.rerender(<StandingAccessSettings sessionId={1} />);
 	expect(screen.queryByText('Notification setup')).toBeNull();
 });
+
+it('disables the compact action while its current preference load is pending', () => {
+	get.mockImplementationOnce(() => new Promise(() => {}));
+	render(<StandingAccessSettings sessionId={1} compact />);
+	const action = screen.getByRole('button', {
+		name: 'caseHandover.consent.info.more'
+	});
+	fireEvent.click(action);
+	expect(action.matches(':disabled')).toBe(true);
+});
+it('ignores an old closed load after reopening and confirming a newer preference', async () => {
+	let finishOld!: (value: ReturnType<typeof preference>) => void;
+	get.mockImplementationOnce(
+		() =>
+			new Promise((resolve) => {
+				finishOld = resolve;
+			})
+	)
+		.mockResolvedValueOnce(preference())
+		.mockResolvedValueOnce(preference(true))
+		.mockResolvedValueOnce(preference(true));
+	render(<StandingAccessSettings sessionId={1} compact />);
+	const openCompact = () =>
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'caseHandover.consent.info.more'
+			})
+		);
+	openCompact();
+	fireEvent.click(screen.getAllByRole('button', { name: 'app.close' })[0]);
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+	openCompact();
+	fireEvent.click(await screen.findByRole('switch'));
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+	expect(put).toHaveBeenCalledWith(1, true);
+	openCompact();
+	expect((await screen.findByRole('switch')).matches(':checked')).toBe(true);
+	await act(async () => finishOld(preference()));
+	expect(screen.getByRole('switch').matches(':checked')).toBe(true);
+});
+
+it('returns focus to the exact compact opener after a loading dialog closes', async () => {
+	get.mockImplementationOnce(() => new Promise(() => {}));
+	render(<StandingAccessSettings sessionId={1} compact />);
+	const opener = screen.getByRole('button', {
+		name: 'caseHandover.consent.info.more'
+	});
+	fireEvent.click(opener);
+	fireEvent.click(screen.getAllByRole('button', { name: 'app.close' })[0]);
+	await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+	expect(document.activeElement).toBe(opener);
+});

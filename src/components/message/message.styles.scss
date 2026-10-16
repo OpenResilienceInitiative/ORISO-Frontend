@@ -56,7 +56,7 @@ $message-avatar-overlap: -19px;
 		text-decoration: underline;
 
 		&:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			transition: unset;
 		}
 	}
@@ -76,7 +76,7 @@ $message-avatar-overlap: -19px;
 
 		.messageItem__message a,
 		.messageItem__message a:hover {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 		}
 
 		.messageItem__divider {
@@ -139,14 +139,33 @@ $message-avatar-overlap: -19px;
 	 * an agency to name, so every other message keeps its one-line header.
 	 * See OpenResilienceInitiative/ORISO-Frontend#895.
 	 */
+	// Name above centre. The header is a flex row, so without this block the
+	// two sat side by side and squeezed the name into three lines.
+	&__nameBlock {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		min-width: 0;
+	}
+
+	// Figma 783:19926 (Beratungsstelle row): 16px house-heart icon, 2px gap,
+	// Inter Medium 12/12 in #646d78, under the semibold name.
 	&__usernameSubtitle {
+		display: flex;
+		align-items: center;
+		gap: 2px;
 		padding-left: 20px;
 		margin-top: 2px;
 		font-size: 12px;
+		font-weight: 500;
 		line-height: 14px;
-		color: var(--m3-secondary, #4c555f);
+		color: var(--m3-secondary-container, #646d78);
 		text-align: left;
 		overflow-wrap: anywhere;
+	}
+
+	&__usernameSubtitleIcon {
+		flex-shrink: 0;
 	}
 
 	&__header {
@@ -245,13 +264,6 @@ $message-avatar-overlap: -19px;
 			justify-content: center !important;
 			border-radius: 50% !important;
 		}
-	}
-
-	// Keep the60px layout slot while exposing the animal circle without a rim.
-	// Bot chrome and focus/status indicators retain their existing treatment.
-	&__avatar:not(.messageItem__avatar--bot) {
-		border: 0;
-		background: transparent;
 	}
 
 	/*
@@ -761,7 +773,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--lastRead {
-			color: var(--m3-primary, $primary);
+			color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 			&::before,
 			&::after {
@@ -1021,7 +1033,7 @@ $message-avatar-overlap: -19px;
 			// (zugestellt), double check (gelesen) and the failure cross.
 			&--sent svg path,
 			&--read svg path {
-				fill: var(--m3-primary, #a5000a);
+				fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 			}
 
 			// Not delivered: red cross, a touch larger to match the denser
@@ -1030,7 +1042,7 @@ $message-avatar-overlap: -19px;
 				height: 14px;
 
 				path {
-					fill: var(--m3-primary, #a5000a);
+					fill: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 				}
 			}
 		}
@@ -1051,7 +1063,7 @@ $message-avatar-overlap: -19px;
 
 			a,
 			a:hover {
-				color: var(--m3-primary, $primary);
+				color: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			blockquote {
@@ -1138,6 +1150,7 @@ $message-avatar-overlap: -19px;
 		align-items: center;
 		gap: 2px;
 		font-size: 12px;
+		font-weight: 500;
 		line-height: 12px;
 		color: var(--m3-secondary-container, #646d78);
 		min-width: 0;
@@ -1146,14 +1159,10 @@ $message-avatar-overlap: -19px;
 		text-align: right;
 	}
 
+	// Figma 783:19835: the house-heart icon follows the centre text, 16px.
 	&__senderInfoMetaIcon {
-		width: 12px;
-		height: 12px;
 		display: inline-block;
-
-		path {
-			fill: var(--m3-secondary-container, #646d78);
-		}
+		flex-shrink: 0;
 	}
 
 	&__feedbackTag {
@@ -1257,7 +1266,7 @@ $message-avatar-overlap: -19px;
 
 		&:hover {
 			background: var(--m3-primary-fixed, #ffdad5);
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 
 		&:focus-visible {
@@ -1314,7 +1323,7 @@ $message-avatar-overlap: -19px;
 			}
 
 			&:hover path {
-				fill: var(--m3-primary, $primary);
+				fill: var(--oriso-primary-text, var(--m3-primary, $primary));
 			}
 
 			&.success {
@@ -1552,10 +1561,13 @@ $message-avatar-overlap: -19px;
 
 	// Color for outgoing messages on the light pink bubble.
 	&--myMessage {
-		color: var(--m3-primary, $primary);
+		color: var(--oriso-primary-text, var(--m3-primary, $primary));
 
 		&:hover {
-			color: var(--m3-primary-hover, $hover-primary);
+			color: var(
+				--oriso-primary-text-hover,
+				var(--m3-primary-hover, $hover-primary)
+			);
 			text-decoration: none;
 		}
 
@@ -1664,7 +1676,7 @@ $message-avatar-overlap: -19px;
 		}
 
 		&--mine .messageItem__reactionPillCount {
-			color: var(--m3-primary, #a5000a);
+			color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 		}
 	}
 }
@@ -1738,7 +1750,7 @@ $message-avatar-overlap: -19px;
 	border: 0;
 	border-radius: 18px;
 	background: transparent;
-	color: var(--m3-primary, #a5000a);
+	color: var(--oriso-primary-text, var(--m3-primary, #a5000a));
 	font: inherit;
 	font-weight: 600;
 	cursor: pointer;
