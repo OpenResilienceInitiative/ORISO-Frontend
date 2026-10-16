@@ -415,6 +415,12 @@ export const SessionMenu = (props: SessionMenuProps) => {
 	//list item icons only shown on outside
 
 	const hasMatrixRoom = !!activeSession.item.matrixRoomId;
+	// A group names its hosting agency only in `assignedAgencies`.
+	const menuAgency =
+		activeSession.agency ??
+		(activeSession.isGroup
+			? activeSession.item.assignedAgencies?.[0]
+			: undefined);
 	const baseUrl = hasMatrixRoom
 		? `${listPath}/:groupId/:id/:subRoute?/:extraPath?${getSessionListTab()}`
 		: `${listPath}/session/:id/:subRoute?/:extraPath?${getSessionListTab()}`;
@@ -614,9 +620,13 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							)}
 						>
 							<ChatMenuDropdownHeader
-								subtitle={translate(
-									'groupChat.info.settings.subtitle'
-								)}
+								subtitle={
+									activeSession.isGroup && menuAgency?.name
+										? `${translate('groupChat.info.settings.agency')}: ${menuAgency.name}`
+										: translate(
+												'groupChat.info.settings.subtitle'
+											)
+								}
 								title={translate(
 									'groupChat.info.settings.headline'
 								)}
@@ -1025,7 +1035,7 @@ export const SessionMenu = (props: SessionMenuProps) => {
 							<div className="legalInformationLinks--menu">
 								<LegalLinks
 									legalLinks={legalLinks}
-									params={{ aid: activeSession?.agency?.id }}
+									params={{ aid: menuAgency?.id }}
 								>
 									{(label, url, rawLabel) => {
 										const kind = getLegalLinkKind(

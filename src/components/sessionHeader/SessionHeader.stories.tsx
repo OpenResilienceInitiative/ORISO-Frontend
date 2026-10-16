@@ -36,9 +36,12 @@ import {
 import { SESSION_LIST_TYPES } from '../session/sessionHelpers';
 import { SessionHeaderComponent } from './SessionHeaderComponent';
 import { GroupChatHeader } from './GroupChatHeader';
+import { LegalLinksProvider } from '../../globalState/provider/LegalLinksProvider';
+import { config } from '../../resources/scripts/config';
 import { buildStageMatrixClientService } from '../chatStage/__storybook__/ChatStageProviders';
 import {
 	desktop1440Globals,
+	phone375Globals,
 	phone390Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
@@ -208,7 +211,13 @@ const buildSingleSession = (
 		''
 	);
 
-const buildGroupSession = (): ExtendedSessionInterface =>
+const buildGroupSession = ({
+	active = true,
+	assignedAgencies = []
+}: {
+	active?: boolean;
+	assignedAgencies?: { id: number; name: string }[];
+} = {}): ExtendedSessionInterface =>
 	buildExtendedSession(
 		{
 			consultant: {
@@ -221,8 +230,8 @@ const buildGroupSession = (): ExtendedSessionInterface =>
 			},
 			language: 'de',
 			chat: {
-				active: true,
-				assignedAgencies: [],
+				active,
+				assignedAgencies,
 				attachment: null,
 				consultingType: 1,
 				duration: 60,
@@ -453,15 +462,23 @@ const renderGroupHeader = (
 		session: ExtendedSessionInterface;
 		members?: MockMember[];
 	},
-	hideTopic = false
+	hideTopic = false,
+	userData = storyUserData
 ) => (
-	<StoryProviders session={preset.session} members={preset.members}>
-		<GroupChatHeader
-			hasUserInitiatedStopOrLeaveRequest={noopRef}
-			isJoinGroupChatView={false}
-			bannedUsers={[]}
-			hideTopic={hideTopic}
-		/>
+	<StoryProviders
+		session={preset.session}
+		members={preset.members}
+		userData={userData}
+	>
+		{/* The app's own legal links; Storybook's global provider has none. */}
+		<LegalLinksProvider legalLinks={config.legalLinks}>
+			<GroupChatHeader
+				hasUserInitiatedStopOrLeaveRequest={noopRef}
+				isJoinGroupChatView={false}
+				bannedUsers={[]}
+				hideTopic={hideTopic}
+			/>
+		</LegalLinksProvider>
 	</StoryProviders>
 );
 
@@ -1147,5 +1164,144 @@ export const RequestStageAccepted: Story = {
 		await expect(
 			canvasElement.querySelector('.consultantSearchLoader--animated')
 		).toBeNull();
+	}
+};
+
+/* ------------------------------------------------------------------ *
+ * Group header ⋮ menu (#1760): one menu for every role, no text button
+ * ------------------------------------------------------------------ */
+
+const groupMenuAgency = [{ id: 101, name: 'Beratungsstelle Mitte' }];
+const storyAskerData = {
+	...storyUserData,
+	userId: 'asker-group-1',
+	userName: 'ruhiges-yak-kim',
+	displayName: 'ruhiges Yak Kim',
+	grantedAuthorities: [AUTHORITIES.ASKER_DEFAULT],
+	userRoles: ['USER']
+};
+const groupMenuPreset = (active = true) => ({
+	session: buildGroupSession({ active, assignedAgencies: groupMenuAgency }),
+	members: makeMembers(4)
+});
+const desktop1366Globals = { viewport: { value: 'desktop1366' } };
+const desktop1920Globals = { viewport: { value: 'desktop1920' } };
+
+/** Opens the visible ⋮ trigger and returns the menu panel. */
+const openGroupMenu = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	await expect(
+		canvas.queryByRole('link', { name: 'Informationen & Einstellungen' })
+	).toBeNull();
+	const trigger = canvas
+		.getAllByRole('button', { name: 'Weitere Funktionen' })
+		.find((button) => button.getClientRects().length > 0);
+	await expect(trigger).toBeDefined();
+	await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	trigger!.focus();
+	await userEvent.keyboard('{Enter}');
+	await waitFor(() =>
+		expect(trigger).toHaveAttribute('aria-expanded', 'true')
+	);
+	const menu = document.getElementById('flyout')!;
+	await waitFor(() => expect(menu).toBeVisible());
+	return { menu: within(menu), trigger: trigger! };
+};
+
+const expectSharedEntries = async (menu: ReturnType<typeof within>) => {
+	await expect(
+		menu.getByText('Beratungsstelle: Beratungsstelle Mitte')
+	).toBeVisible();
+	await expect(
+		menu.getByRole('link', { name: /Informationen & Einstellungen/ })
+	).toBeVisible();
+	await expect(
+		menu.getByRole('button', { name: /Datenschutzerklärung/ })
+	).toBeVisible();
+	await expect(menu.getByRole('button', { name: /Impressum/ })).toBeVisible();
+};
+
+export const GroupMenuClosed1366: Story = {
+	name: 'Group menu · closed, no text button (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await expect(
+			canvas.queryByRole('link', {
+				name: 'Informationen & Einstellungen'
+			})
+		).toBeNull();
+		const trigger = canvas
+			.getAllByRole('button', { name: 'Weitere Funktionen' })
+			.find((button) => button.getClientRects().length > 0);
+		await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+	}
+};
+
+export const GroupMenuCounsellor1366: Story = {
+	name: 'Group menu · counsellor, running (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset()),
+	play: async ({ canvasElement }) => {
+		const { menu, trigger } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.getByText('Chat beenden')).toBeVisible();
+		await userEvent.keyboard('{Escape}');
+		await waitFor(() =>
+			expect(trigger).toHaveAttribute('aria-expanded', 'false')
+		);
+	}
+};
+
+/** Before the start the owner also edits the settings; "end chat" is not offered. */
+export const GroupMenuCounsellorWaitingRoom1920: Story = {
+	name: 'Group menu · counsellor, waiting room (1920)',
+	globals: desktop1920Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+/** An advice seeker gets agency, Chat-Info and legal texts, no moderator actions. */
+export const GroupMenuAsker1366: Story = {
+	name: 'Group menu · advice seeker (1366)',
+	globals: desktop1366Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+		await expect(menu.queryByText('Chat-Einstellungen')).toBeNull();
+	}
+};
+
+export const GroupMenuAsker390: Story = {
+	name: 'Group menu · advice seeker (390)',
+	globals: phone390Globals,
+	render: () => renderGroupHeader(groupMenuPreset(), false, storyAskerData),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(menu.queryByText('Chat beenden')).toBeNull();
+	}
+};
+
+export const GroupMenuCounsellor375: Story = {
+	name: 'Group menu · counsellor, waiting room (375)',
+	globals: phone375Globals,
+	render: () => renderGroupHeader(groupMenuPreset(false)),
+	play: async ({ canvasElement }) => {
+		const { menu } = await openGroupMenu(canvasElement);
+		await expectSharedEntries(menu);
+		await expect(
+			menu.getByRole('link', { name: /Chat-Einstellungen/ })
+		).toBeVisible();
 	}
 };
