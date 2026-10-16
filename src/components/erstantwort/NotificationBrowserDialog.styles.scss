@@ -23,7 +23,11 @@
 
 	&[aria-checked='true'] {
 		border-color: var(--m3-primary, currentColor);
-		background: color-mix(in srgb, var(--m3-primary) 12%, transparent);
+		background: color-mix(
+			in srgb,
+			var(--m3-primary, currentColor) 12%,
+			transparent
+		);
 		font-weight: 600;
 	}
 
