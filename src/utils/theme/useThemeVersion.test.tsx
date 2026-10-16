@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { THEME_APPLIED_EVENT } from './applyTenantTheme';
 import { useThemeVersion } from './useThemeVersion';
 
@@ -24,12 +24,18 @@ describe('useThemeVersion', () => {
 	});
 
 	it('stops listening once the component is gone', () => {
-		const { result, unmount } = renderHook(() => useThemeVersion());
-		const before = result.current;
+		const added = vi.spyOn(window, 'addEventListener');
+		const removed = vi.spyOn(window, 'removeEventListener');
+		const { unmount } = renderHook(() => useThemeVersion());
+		const listener = added.mock.calls.find(
+			([type]) => type === THEME_APPLIED_EVENT
+		)?.[1];
+		expect(listener).toBeDefined();
+
 		unmount();
 
-		window.dispatchEvent(new Event(THEME_APPLIED_EVENT));
-
-		expect(result.current).toBe(before);
+		expect(removed).toHaveBeenCalledWith(THEME_APPLIED_EVENT, listener);
+		added.mockRestore();
+		removed.mockRestore();
 	});
 });

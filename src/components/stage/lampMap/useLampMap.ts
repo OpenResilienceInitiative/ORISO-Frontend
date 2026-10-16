@@ -129,6 +129,10 @@ export const useLampMap = ({
 	const themeVersion = useThemeVersion();
 
 	useEffect(() => {
+		// A restart (a new palette) tears the painted map down; until the
+		// replacement has painted there is nothing to call ready.
+		setIsReady(false);
+
 		const container = containerRef.current;
 		const canvas = canvasRef.current;
 		if (!enabled || !container || !canvas) {
