@@ -60,7 +60,7 @@ export const ToneSelected: Story = {
 				name: /Enable browser|Browser aktivieren/i
 			})
 		);
-		await expect(args.onConfirm).toHaveBeenCalledWith('ton-5');
+		await expect(args.onConfirm).toHaveBeenCalledWith('ton-5', true);
 	}
 };
 

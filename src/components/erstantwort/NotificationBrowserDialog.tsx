@@ -23,7 +23,7 @@ export interface NotificationBrowserDialogProps {
 	initialTone?: SoundId;
 	onClose: () => void;
 	/** Called inside the click, so the browser still sees a user gesture. */
-	onConfirm: (tone: SoundId) => void;
+	onConfirm: (tone: SoundId, changed: boolean) => void;
 }
 
 /**
@@ -45,10 +45,12 @@ export const NotificationBrowserDialog: React.FC<
 }) => {
 	const { t } = useTranslation();
 	const [tone, setTone] = useState<SoundId>(initialTone);
+	const [touched, setTouched] = useState(false);
 	const options: SoundId[] = [...NOTIFICATION_TONE_IDS, 'none'];
 
 	const pick = (id: SoundId) => {
 		setTone(id);
+		setTouched(true);
 		previewNotificationSound(id, DEFAULT_VOLUME);
 	};
 
@@ -91,7 +93,7 @@ export const NotificationBrowserDialog: React.FC<
 				},
 				{
 					label: t('erstantwort.notificationChoice.enableBrowser'),
-					onClick: () => onConfirm(tone),
+					onClick: () => onConfirm(tone, touched),
 					disabled: busy || blocked,
 					primary: true
 				}

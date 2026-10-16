@@ -193,7 +193,7 @@ export const NotificationSetup = ({
 		});
 	};
 
-	const confirmBrowser = (tone: SoundId) => {
+	const confirmBrowser = (tone: SoundId, changed: boolean) => {
 		// No await before the permission request: it needs this click.
 		const operation = continuation.current;
 		void finish('BROWSER')
@@ -204,7 +204,8 @@ export const NotificationSetup = ({
 				// tone the person actually changed replaces their settings.
 				if (
 					Notification.permission === 'granted' &&
-					tone !== (storedTone() ?? DEFAULT_FIRST_TONE)
+					changed &&
+					tone !== storedTone()
 				)
 					rememberTone(tone);
 			})

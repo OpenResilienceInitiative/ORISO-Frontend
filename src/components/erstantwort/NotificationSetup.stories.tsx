@@ -103,7 +103,7 @@ export const BrowserOnlyOpensToneDialog: Story = {
 		const body = within(document.body);
 		await waitFor(() => expect(body.getByRole('radiogroup')).toBeTruthy());
 		await expect(
-			body.getByText(/even when this tab is closed|Tab geschlossen/i)
+			body.getByText(/ORISO stays open|ORISO in diesem Browser/i)
 		).toBeTruthy();
 	}
 };

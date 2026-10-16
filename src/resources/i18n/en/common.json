@@ -5208,7 +5208,7 @@
 			"dialog": {
 				"title": "Turn on browser notifications",
 				"description": "Pick the sound you will hear, then allow notifications in your browser.",
-				"stayInBrowser": "This works as long as you stay in this browser on this device – even when this tab is closed.",
+				"stayInBrowser": "This works as long as ORISO stays open in this browser on this device.",
 				"toneLabel": "Notification sound",
 				"tone": "Sound {{number}}",
 				"noTone": "No sound"
