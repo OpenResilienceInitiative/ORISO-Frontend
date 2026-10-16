@@ -8,6 +8,7 @@ import { ModalProvider } from '../../globalState/provider/ModalProvider';
 import type { ListItemInterface } from '../../globalState/interfaces';
 import { chatTransportService } from '../../services/chatTransportService';
 import { GroupChatInfo } from './GroupChatInfo';
+import { GroupChatHeader } from '../sessionHeader/GroupChatHeader';
 import {
 	buildGroupStageListItem,
 	GROUP_STAGE_CHAT_ID,
@@ -544,5 +545,89 @@ export const DialogAskerBannedByUrl: Story = {
 				i18n.t('groupChat.info.settings.startDate')
 			)
 		).toBeNull();
+	}
+};
+
+const CHAT_PATH = `/sessions/consultant/sessionView/${GROUP_STAGE_ROOM_ID}/${GROUP_STAGE_CHAT_ID}`;
+const noStopRequest = { current: false };
+
+/** The real header ⋮ menu above the chat, with the Chat-Info dialog route. */
+const WiredChatWithMenu = () => {
+	const listItem = React.useMemo(() => buildListItem(), []);
+	useBackendMocks(listItem);
+	return (
+		<TenantContext.Provider
+			value={
+				{
+					tenant: {
+						id: 1,
+						settings: { featureGroupChatV2Enabled: true }
+					},
+					setTenant: () => undefined
+				} as any
+			}
+		>
+			<GroupChatStage listItem={listItem} layout="desktop">
+				<ModalProvider>
+					<GroupChatHeader
+						hasUserInitiatedStopOrLeaveRequest={noStopRequest}
+						isJoinGroupChatView={false}
+						bannedUsers={[]}
+					/>
+					<Routes>
+						<Route
+							path="/sessions/consultant/sessionView/:groupId/:sessionId/groupChatInfo"
+							element={<GroupChatInfo dialog />}
+						/>
+						<Route
+							path="*"
+							element={<p data-testid="chat-route">Chat</p>}
+						/>
+					</Routes>
+					<BodyOverlayHost />
+				</ModalProvider>
+			</GroupChatStage>
+		</TenantContext.Provider>
+	);
+};
+
+/** Opened from the real ⋮ entry: focus moves into the dialog and back to ⋮. */
+export const DialogFocusFromMenu: Story = {
+	name: 'Dialog · opened from the ⋮ menu, focus returns to ⋮',
+	globals: desktop1366Globals,
+	parameters: { router: { initialPath: CHAT_PATH } },
+	render: () => <WiredChatWithMenu />,
+	play: async ({ canvasElement }) => {
+		const page = within(document.body);
+		await within(canvasElement).findByTestId(
+			'chat-route',
+			{},
+			{ timeout: 5000 }
+		);
+		const trigger = within(canvasElement)
+			.getAllByRole('button', { name: 'Weitere Funktionen' })
+			.find((button) => button.getClientRects().length > 0)!;
+		trigger.focus();
+		await userEvent.keyboard('{Enter}');
+		const menu = within(document.getElementById('flyout')!);
+		const entry = await menu.findByRole('link', {
+			name: /Informationen & Einstellungen/
+		});
+		entry.focus();
+		await userEvent.keyboard('{Enter}');
+		const dialog = await findOpenDialog();
+		const surface = page.getByTestId('group-chat-info-dialog');
+		// MUI focuses the modal container; the next Tab lands on the sheet.
+		const modal = surface.closest<HTMLElement>('.MuiDialog-root')!;
+		await waitFor(() =>
+			expect(modal.contains(document.activeElement)).toBe(true)
+		);
+		await userEvent.tab();
+		await expect(surface.contains(document.activeElement)).toBe(true);
+		await userEvent.click(
+			dialog.getByRole('button', { name: i18n.t('app.close') })
+		);
+		await waitFor(() => expect(page.queryByRole('dialog')).toBeNull());
+		await waitFor(() => expect(document.activeElement).toBe(trigger));
 	}
 };
