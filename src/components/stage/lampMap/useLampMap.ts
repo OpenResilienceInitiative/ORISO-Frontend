@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CarrierId } from './carrierPresence';
 import type { LampMapHandle } from './lampMapEffect';
+import { useThemeVersion } from '../../../utils/theme/useThemeVersion';
 
 /**
  * The login screen is the first thing anyone sees, so nothing about the stage
@@ -125,6 +126,7 @@ export const useLampMap = ({
 	const handleRef = useRef<LampMapHandle | null>(null);
 	const pendingCarrierRef = useRef<CarrierId | null>(null);
 	const [isReady, setIsReady] = useState(false);
+	const themeVersion = useThemeVersion();
 
 	useEffect(() => {
 		const container = containerRef.current;
@@ -204,7 +206,7 @@ export const useLampMap = ({
 			handleRef.current?.destroy();
 			handleRef.current = null;
 		};
-	}, [containerRef, enabled]);
+	}, [containerRef, enabled, themeVersion]);
 
 	const setCarrier = useCallback((carrier: CarrierId | null) => {
 		pendingCarrierRef.current = carrier;

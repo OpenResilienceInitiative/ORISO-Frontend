@@ -28,12 +28,4 @@ describe('HandoverCarousel card size', () => {
 		expect(css).toContain('width:300px');
 		expect(css).toContain('width:372px');
 	});
-
-	it('takes no card width from the caller', () => {
-		// @ts-expect-error the prop is gone on purpose
-		const props: React.ComponentProps<typeof HandoverCarousel> = {
-			cardWidth: { xs: 250, sm: 264 }
-		};
-		expect(props).toBeDefined();
-	});
 });

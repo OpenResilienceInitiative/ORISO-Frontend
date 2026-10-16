@@ -106,7 +106,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 			'rostock',
 			'erfurt',
 			'magdeburg'
-		]
+		],
 	},
 	// 700+ locations, 29 diocesan offices — nationwide, noticeably thinner.
 	malteser: {
@@ -127,7 +127,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 			'freiburg',
 			'magdeburg',
 			'passau'
-		]
+		],
 	},
 	// ~1400 self-help groups in 27 diocesan associations, strongest in the west.
 	kreuzbund: {
@@ -152,7 +152,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 			'erfurt',
 			'hannover',
 			'muenchen'
-		]
+		],
 	},
 	// ~130–150 local associations, head office Dortmund.
 	skf: {
@@ -176,7 +176,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 			'augsburg',
 			'freiburg',
 			'berlin'
-		]
+		],
 	},
 	// ~120 associations from eleven dioceses, Rhineland / Westphalia focus.
 	skm: {
@@ -198,7 +198,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 			'mainz',
 			'muenchen',
 			'hannover'
-		]
+		],
 	},
 	// Active in more than 70 cities.
 	via: {
@@ -232,7 +232,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 			'frankfurt',
 			'muenchen',
 			'stuttgart'
-		]
+		],
 	},
 	// Specialist migration counselling at a handful of locations only.
 	raphael: {
@@ -240,7 +240,7 @@ export const CARRIER_COVERAGE: Record<string, CarrierCoverage> = {
 		strongholds: ['hamburg', 'berlin', 'frankfurt', 'muenchen', 'koeln'],
 		strongholdRadius: 0.03,
 		strongholdShare: 0.95,
-		seeds: ['hamburg', 'berlin', 'frankfurt', 'muenchen', 'koeln']
+		seeds: ['hamburg', 'berlin', 'frankfurt', 'muenchen', 'koeln'],
 	}
 };
 

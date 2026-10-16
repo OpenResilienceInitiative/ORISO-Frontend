@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import * as React from 'react';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -31,46 +31,56 @@ const { GlobalComponentContext } = await import(
 	'../../../globalState/provider/GlobalComponentContext'
 );
 
-const renderHandover = (ready: boolean) =>
+const renderHandover = (ready: boolean, onEnter = () => undefined) =>
 	render(
 		<MemoryRouter>
 			<GlobalComponentContext.Provider
 				value={{ Stage: () => <div data-testid="brand-stage" /> }}
 			>
-				<PostRegistrationHandover
-					ready={ready}
-					onEnter={() => undefined}
-				/>
+				<PostRegistrationHandover ready={ready} onEnter={onEnter} />
 			</GlobalComponentContext.Provider>
 		</MemoryRouter>
 	);
 
+const gate = () =>
+	document.querySelector<HTMLButtonElement>(
+		'[data-cy="handover-gate-button"]'
+	)!;
+
 /**
  * Frank, 2026-10-15: after registering, the handover painted over the red
  * brand stage and the legal links — the same screen the registration form
- * and the live-chat entry room keep inside the split layout.
+ * and the live-chat entry room keep. Where the stage sits is the Storybook
+ * contract's job; this proves what the person can do on the screen.
  */
 describe('PostRegistrationHandover', () => {
 	afterEach(cleanup);
 
-	it('keeps the brand stage next to the handover while the app prepares', () => {
+	it('shows the brand stage together with the handover', () => {
 		renderHandover(false);
 
-		const handover = screen
-			.getByTestId('brand-stage')
-			.closest('.stageLayout');
-		expect(handover).not.toBeNull();
+		expect(screen.getByTestId('brand-stage')).toBeDefined();
 		expect(
-			handover?.querySelector('[data-cy="registration-handover"]')
+			document.querySelector('[data-cy="registration-handover"]')
 		).not.toBeNull();
 	});
 
-	it('does not cover the viewport with a fixed overlay', () => {
-		renderHandover(true);
+	it('keeps the gate shut while the app prepares', () => {
+		const onEnter = vi.fn();
+		renderHandover(false, onEnter);
 
-		const node = document.querySelector(
-			'[data-cy="registration-handover"]'
-		) as HTMLElement;
-		expect(getComputedStyle(node).position).not.toBe('fixed');
+		expect(gate().disabled).toBe(true);
+		fireEvent.click(gate());
+		expect(onEnter).not.toHaveBeenCalled();
+	});
+
+	it('lets the person in once, however often they click', () => {
+		const onEnter = vi.fn();
+		renderHandover(true, onEnter);
+
+		expect(gate().disabled).toBe(false);
+		fireEvent.click(gate());
+		fireEvent.click(gate());
+		expect(onEnter).toHaveBeenCalledTimes(1);
 	});
 });

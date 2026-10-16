@@ -37,6 +37,16 @@ describe('createStageTint', () => {
 		expect(lb).toBeGreaterThan(lr);
 	});
 
+	it('gives the exact blue for a hue that wraps below zero', () => {
+		const tint = createStageTint(hostWithPrimary('#1d4ed8'));
+		// (255,180,168) sits near hue 9; the blue shift is about -133 degrees.
+		const [r, g, b] = channels(tint(255, 180, 168, 1));
+		// Same lightness and saturation as the salmon, hue now in the blues.
+		expect(b).toBeGreaterThan(g);
+		expect(g).toBeGreaterThan(r);
+		expect(b).toBe(255);
+	});
+
 	it('keeps the alpha it was given', () => {
 		const tint = createStageTint(hostWithPrimary('#1d4ed8'));
 		expect(tint(255, 255, 255, 0.09)).toContain(',0.09)');

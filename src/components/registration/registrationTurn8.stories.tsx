@@ -1,5 +1,6 @@
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { expect } from 'storybook/test';
 import { Box, Typography } from '@mui/material';
 import PlaceRoundedIcon from '@mui/icons-material/PlaceRounded';
 import { RegistrationHeader } from './registrationHeader/RegistrationHeader';
@@ -527,7 +528,15 @@ const PostRegistrationInStage = ({ ready }: { ready: boolean }) => (
 export const PostRegistrationPreparing: StoryObj = {
 	name: '8f — Nach dem Reload, echte Komponente (lädt)',
 	render: () => <PostRegistrationInStage ready={false} />,
-	parameters: { layout: 'fullscreen' }
+	parameters: { layout: 'fullscreen' },
+	play: async ({ canvasElement }) => {
+		await verifyWaitingRoomContract(canvasElement, { stage: true });
+		const gate = canvasElement.querySelector<HTMLButtonElement>(
+			'[data-cy-state="preparing"]'
+		);
+		// Shut until the app behind it is loaded.
+		expect(gate?.disabled).toBe(true);
+	}
 };
 
 export const PostRegistrationReady: StoryObj = {

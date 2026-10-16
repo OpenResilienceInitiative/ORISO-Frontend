@@ -1,8 +1,11 @@
 import { expect, waitFor } from 'storybook/test';
 
-/** MUI `sm` and the app's stage breakpoint; the waiting-room module owns both. */
+/**
+ * The carousel's card widths, the theme's `sm` (520 px, see `theme.breakpoints`)
+ * and the app's stage breakpoint; the waiting-room module owns all three.
+ */
 const CARD_WIDTH = { xs: 300, sm: 372 };
-const SM_UP = '(min-width: 600px)';
+const SM_UP = '(min-width: 520px)';
 const STAGE_UP = '(min-width: 1200px)';
 
 const pixelsOf = (canvas: HTMLCanvasElement) =>
@@ -75,12 +78,29 @@ export const verifyWaitingRoomContract = async (
 	}
 
 	if (options.stage) {
+		const handover = canvasElement.querySelector<HTMLElement>(
+			'[data-cy="registration-handover"]'
+		);
+		if (handover) {
+			// The handover used to be a fixed overlay that hid the stage.
+			expect(win.getComputedStyle(handover).position).not.toBe('fixed');
+		}
 		if (win.matchMedia(STAGE_UP).matches) {
 			const stage = canvasElement.querySelector<HTMLElement>(
 				'.stageLayout__stage'
 			);
 			expect(stage).not.toBeNull();
-			expect(stage!.getBoundingClientRect().width).toBeGreaterThan(300);
+			const rect = stage!.getBoundingClientRect();
+			expect(rect.width).toBeGreaterThan(300);
+			// Nothing may sit on top of the stage: the topmost element at its
+			// visible centre belongs to the stage.
+			const top = Math.max(rect.top, 0);
+			const bottom = Math.min(rect.bottom, win.innerHeight);
+			const hit = canvasElement.ownerDocument.elementFromPoint(
+				rect.left + rect.width / 2,
+				(top + bottom) / 2
+			);
+			expect(hit && stage!.contains(hit)).toBe(true);
 		} else {
 			expect(
 				canvasElement.querySelector('.stageMobileHero')

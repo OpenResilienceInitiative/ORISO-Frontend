@@ -57,10 +57,11 @@ const toHsl = ([r, g, b]: Rgb): [number, number, number] => {
 };
 
 const fromHsl = (h: number, s: number, l: number): Rgb => {
+	const hue = ((h % 360) + 360) % 360;
 	const c = (1 - Math.abs(2 * l - 1)) * s;
-	const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+	const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
 	const m = l - c / 2;
-	const sector = Math.floor((((h % 360) + 360) % 360) / 60);
+	const sector = Math.floor(hue / 60);
 	const [r, g, b] = [
 		[c, x, 0],
 		[x, c, 0],
