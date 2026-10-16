@@ -22,6 +22,12 @@ import {
 import { apiGetConsultingTypes } from '../../api';
 import { Loading } from './Loading';
 import { PostRegistrationHandover } from './registrationLoader/PostRegistrationHandover';
+import {
+	markHandoverMilestone,
+	resetHandoverProgress
+} from './registrationLoader/handoverProgress';
+import { loadEntryScreens } from './appChunks';
+import { useGroupJoinHandoverCopy } from '../groupChat/groupJoinHandoverCopy';
 import { POST_REGISTRATION_LOADER_KEY } from '../registration/autoLogin';
 import {
 	handleTokenRefresh,
@@ -112,21 +118,25 @@ export const AuthenticatedApp = ({
 		setLoading(false);
 	}, [setMatrixClientService]);
 	const [userDataRequested, setUserDataRequested] = useState<boolean>(false);
-	// Freshly-registered askers get a welcome loading animation bridging the
-	// bootstrap below (one-shot flag set just before the post-registration redirect).
+	// Freshly-registered askers keep the waiting room they saw before the
+	// document load, while the bootstrap below runs (one-shot flag set just
+	// before the post-registration redirect).
 	const [showPostRegLoader, setShowPostRegLoader] = useState<boolean>(() => {
 		const flagged =
 			sessionStorage.getItem(POST_REGISTRATION_LOADER_KEY) === 'true';
 		if (flagged) {
 			sessionStorage.removeItem(POST_REGISTRATION_LOADER_KEY);
 		}
-		/* Someone who registered through a group link is not about to
-		   write an enquiry — the group's entry room is their handover. */
-		const cameForAGroup = Boolean(
-			new URLSearchParams(window.location.search).get('gcid')
-		);
-		return flagged && !cameForAGroup;
+		return flagged;
 	});
+	/* Someone who registered through a group link sees the group's words in
+	   the same waiting room, and its button opens the group's entry room
+	   instead of an enquiry. It used to get no waiting room at all here —
+	   a spinner page, then the group (#1219). */
+	const [postRegForGroup] = useState(() =>
+		Boolean(new URLSearchParams(window.location.search).get('gcid'))
+	);
+	const groupJoinHandoverCopy = useGroupJoinHandoverCopy();
 
 	useEffect(() => {
 		// CRITICAL: Clear ALL old notifications on app mount (prevents phantom call notifications!)
@@ -148,6 +158,15 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		if (!userDataRequested) {
 			setUserDataRequested(true);
+			/* Only for the waiting room: the click on its button must land in
+			   a screen that is already loaded, so "ready" waits for these too.
+			   Started now, in parallel with everything below. */
+			const entryScreens = showPostRegLoader
+				? loadEntryScreens(postRegForGroup).then(
+						() => markHandoverMilestone('screens'),
+						() => markHandoverMilestone('screens')
+					)
+				: Promise.resolve();
 
 			handleTokenRefresh(false)
 				.then(() => {
@@ -172,6 +191,7 @@ export const AuthenticatedApp = ({
 							if (userProfileData.preferredLanguage) {
 								setLocale(userProfileData.preferredLanguage);
 							}
+							markHandoverMilestone('profile');
 							return userProfileData;
 						})
 						.then(async (userProfileData) => {
@@ -211,6 +231,7 @@ export const AuthenticatedApp = ({
 											setMatrixClientService(
 												matrixClientService
 											);
+											markHandoverMilestone('chat');
 											(window as any).callContext =
 												callContext;
 
@@ -249,6 +270,7 @@ export const AuthenticatedApp = ({
 											matrixLiveEventBridge.initialize(
 												matrixClient
 											);
+											markHandoverMilestone('liveEvents');
 										}
 									})(),
 									15_000,
@@ -263,6 +285,11 @@ export const AuthenticatedApp = ({
 								);
 							}
 
+							/* Without chat (no homeserver, or a failed bootstrap)
+							   these steps are over, not pending. */
+							markHandoverMilestone('chat');
+							markHandoverMilestone('liveEvents');
+							await entryScreens;
 							setAppReady(true);
 						})
 						.catch((error) => {
@@ -332,6 +359,7 @@ export const AuthenticatedApp = ({
 	useEffect(() => {
 		if (handoverEntered && appReady) {
 			setShowPostRegLoader(false);
+			resetHandoverProgress();
 		}
 	}, [handoverEntered, appReady]);
 
@@ -339,10 +367,13 @@ export const AuthenticatedApp = ({
 	// driven by appReady (the real "everything loaded" signal). Falls through to the
 	// usual branches on error (loading=false, appReady=false → redirect to login).
 	if (showPostRegLoader && (loading || appReady)) {
+		/* The same frame and the same fill `Registration` showed before the
+		   document load, so the person sees one waiting room (#1219). */
 		return (
 			<PostRegistrationHandover
 				ready={appReady}
 				onEnter={handlePostRegLoaderFinish}
+				copy={postRegForGroup ? groupJoinHandoverCopy : undefined}
 			/>
 		);
 	}

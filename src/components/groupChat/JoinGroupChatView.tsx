@@ -20,7 +20,8 @@ import {
 	GROUP_CHAT_API
 } from '../../api';
 import { Overlay, OVERLAY_FUNCTIONS, OverlayItem } from '../overlay/Overlay';
-import { Button, BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { BUTTON_TYPES, ButtonItem } from '../button/Button';
+import { HandoverGateButton } from '../app/registrationLoader/HandoverGateButton';
 import { logout } from '../logout/logout';
 import { Navigate } from 'react-router-dom';
 import { ReactComponent as WarningIcon } from '../../resources/img/icons/i.svg';
@@ -370,10 +371,27 @@ export const JoinGroupChatView = ({
 						</div>
 					)}
 					<div className="joinChat__actionsMain">
-						<Button
-							item={buttonItem}
-							buttonHandle={handleButtonClick}
-							disabled={isButtonDisabled}
+						{/* The same gate as every waiting room (#1219): brand
+						    colour while it waits instead of a greyed-out
+						    button, and a sweep while the join request runs. */}
+						<HandoverGateButton
+							state={
+								isRequestInProgress
+									? 'entering'
+									: isButtonDisabled
+										? 'preparing'
+										: 'ready'
+							}
+							progress={
+								isButtonDisabled && !isRequestInProgress
+									? 0
+									: undefined
+							}
+							indeterminate={isRequestInProgress}
+							label={buttonItem.label}
+							status=""
+							onEnter={handleButtonClick}
+							testingAttribute="group-join-button"
 						/>
 					</div>
 					{showCountdown && plannedStart && (

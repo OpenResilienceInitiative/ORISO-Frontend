@@ -10,8 +10,7 @@ import { WaitingAreaRules } from '../WaitingAreaRules';
 import { GroupChatCalendarPopover } from '../GroupChatCalendarMenu';
 import { GroupInfoGallery } from './GroupInfoGallery';
 import { registrationMd3 } from '../../registration/registrationDesign/registrationDesign';
-import { StageLayout } from '../../stageLayout/StageLayout';
-import { Stage } from '../../stage/stage';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { translateWithFallback } from '../../../utils/translationFallback';
 import { GroupLegalMenu } from './GroupLegalMenu';
 import { useGroupDepartment } from '../consent/useGroupDepartment';
@@ -177,14 +176,9 @@ export const GroupWaitingRoom = ({
 			}}
 			data-cy="group-entry-room"
 		>
-			<StageLayout
-				className="stageLayout--registration"
-				showLegalLinks={true}
+			<WaitingRoomFrame
 				legalDepartment={legalDepartment}
 				showLoginLink={showLoginLink}
-				showRegistrationLink={false}
-				stage={<Stage hasAnimation={false} />}
-				mobileHero="bar"
 				headerStart={groupHeading}
 				/* The desktop stage prints the legal links; the phone bar
 				   gets them as a menu, like every chat room (#1499). */
@@ -466,7 +460,7 @@ export const GroupWaitingRoom = ({
 						/>
 					)}
 				</Box>
-			</StageLayout>
+			</WaitingRoomFrame>
 		</Box>
 	);
 };

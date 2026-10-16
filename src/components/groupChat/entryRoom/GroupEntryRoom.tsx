@@ -4,6 +4,7 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { Loading } from '../../app/Loading';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import { useTranslation } from 'react-i18next';
 import {
 	apiGetAskerSessionList,
@@ -75,18 +76,27 @@ export const GroupEntryRoom = () => {
 	return <ClientGroupEntryRoom />;
 };
 
+/* The frame stands while the group loads, so the waiting room after
+   "Registrieren" turns into the group's room by its column alone — no
+   full-page spinner in between (#1219). */
 const EntryRoomLoading = () => (
-	<Box
-		sx={{
-			minHeight: '100vh',
-			display: 'flex',
-			alignItems: 'center',
-			justifyContent: 'center'
-		}}
-		data-cy="group-entry-loading"
-	>
-		<Loading layout="page" />
-	</Box>
+	<WaitingRoomFrame>
+		<Box
+			sx={{
+				flex: 1,
+				minHeight: {
+					xs: 'calc(100vh - 96px)',
+					lg: 'calc(100vh - 128px)'
+				},
+				display: 'flex',
+				alignItems: 'center',
+				justifyContent: 'center'
+			}}
+			data-cy="group-entry-loading"
+		>
+			<Loading />
+		</Box>
+	</WaitingRoomFrame>
 );
 
 const ClientGroupEntryRoom = () => {

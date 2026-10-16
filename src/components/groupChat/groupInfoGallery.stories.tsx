@@ -1,4 +1,4 @@
-import { verifyWaitingRoomContract } from '../../../.storybook/waitingRoomContractPlay';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 import * as React from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Box } from '@mui/material';
@@ -124,7 +124,11 @@ export const InfoGalleryDesktop: StoryObj = {
 	globals: desktop1440Globals,
 	render: () => <Screen />,
 	play: async ({ canvasElement }) => {
-		await verifyWaitingRoomContract(canvasElement);
+		// A part on its own, not a whole room: only the card size applies.
+		await expectWaitingRoomLayout(canvasElement, {
+			frame: false,
+			cards: true
+		});
 	},
 	parameters: {
 		docs: {
