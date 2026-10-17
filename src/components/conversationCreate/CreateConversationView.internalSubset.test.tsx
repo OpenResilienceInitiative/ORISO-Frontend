@@ -321,6 +321,52 @@ describe('Interna picker with the recipient scope (#1772)', () => {
 		expect(screen.queryByRole('alert')).toBeNull();
 	});
 
+	it('drops the refusal of one centre when another centre is chosen', async () => {
+		tenantState.tenant = tenantWithScope();
+		vi.mocked(fetchAgencyConsultantList).mockImplementation(
+			(agencyId: string) =>
+				Promise.resolve(
+					agencyId === '5'
+						? [sameCentre]
+						: [colleague('c-six', 'Cem', [6])]
+				)
+		);
+		vi.mocked(apiCreateInternalSubsetChat).mockRejectedValue(
+			new InternalSubsetChatError(
+				INTERNAL_SUBSET_REASON.RECIPIENT_OUT_OF_SCOPE,
+				403
+			)
+		);
+		renderView([
+			{ id: 5, name: 'Agency Five' },
+			{ id: 6, name: 'Agency Six' }
+		]);
+
+		fireEvent.mouseDown((await screen.findAllByRole('combobox'))[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency Five' })
+		);
+		const menu = await openPersonMenu();
+		fireEvent.click(await within(menu).findByText('Anna Test'));
+		fireEvent.change(
+			screen.getByLabelText('groupChat.internal.nameLabel'),
+			{ target: { value: 'Fallbesprechung' } }
+		);
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'groupChat.internal.createLabel'
+			})
+		);
+		await screen.findByRole('alert');
+
+		fireEvent.mouseDown(screen.getAllByRole('combobox')[0]);
+		fireEvent.click(
+			await screen.findByRole('option', { name: 'Agency Six' })
+		);
+
+		await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+	});
+
 	it('never lets a late answer for the previous centre replace the list of the current one', async () => {
 		tenantState.tenant = tenantWithScope();
 		let answerFirstCentre: (list: Consultant[]) => void = () => undefined;

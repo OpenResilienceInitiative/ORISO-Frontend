@@ -510,10 +510,12 @@ const CreateConversationFlow = ({
 
 	// Switching agency must drop the previously picked colleagues: they belong
 	// to the old agency and would otherwise leak across agencies into the new
-	// internal chat (the consultant list reloads for the new agency).
+	// internal chat (the consultant list reloads for the new agency). A refusal
+	// belongs to the previous centre's request and goes with it.
 	const handleInternalAgencyChange = (value: string) => {
 		setSelectedAgency(parseInt(value));
 		setInternalDraft((draft) => ({ ...draft, selectedIds: [] }));
+		clearError();
 	};
 
 	const openCircleSettings = () => {
