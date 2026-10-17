@@ -23,107 +23,147 @@ type MatrixListener = (...args: unknown[]) => void;
 
 /** Storybook-only Matrix boundary exercised by the real widget host hook. */
 export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
-	const listeners = new Map<string, Set<MatrixListener>>();
-	const membership = mode === 'connecting' ? 'invite' : 'join';
-	const room = {
-		getMyMembership: () => membership,
-		getLiveTimeline: () => ({
-			getState: () => ({ getStateEvents: () => [] })
-		}),
-		/*
-		 * The identity record is only sent into an ENCRYPTED room — see
-		 * `publishCallIdentity`. A fake boundary that forgot to say so would
-		 * make the host's refusal look like the host being broken.
-		 */
-		hasEncryptionStateEvent: () => true,
-		// Who is already here, so the re-announce for a newcomer can tell the
-		// difference between an arrival and everything else.
-		getMembersWithMembership: (which: string) =>
-			which === 'join'
-				? [{ userId: FAKE_CURRENT_USER_ID, membership: 'join' }]
-				: []
-	};
 	/*
-	 * The MatrixRTC session, which is what "in the call" actually means.
+	 * One client, built on demand.
 	 *
-	 * Room membership is not: the widget host never leaves the Matrix room, so
-	 * somebody who closes the call surface and reopens it stays a joined room
-	 * member the whole time while only their RTC membership comes and goes.
-	 * The harness has to be able to say that, or a test cannot tell a rejoin
-	 * from nothing happening.
+	 * A token refresh replaces the client inside the real
+	 * `MatrixClientService` and calls `removeAllListeners()` on the old one,
+	 * while the service object itself stays put. `replaceClient()` below is
+	 * that, so a test can ask whether the host re-attaches — the listeners,
+	 * the RTC session and `sendEvent` all belong to one client here, exactly
+	 * as they do in the real thing.
 	 */
-	const rtcListeners = new Map<string, Set<MatrixListener>>();
-	const callMemberships: { sender: string }[] = [
-		{ sender: FAKE_CURRENT_USER_ID }
-	];
-	const rtcSession = {
-		memberships: callMemberships,
-		on: (eventName: string, listener: MatrixListener) => {
-			const set = rtcListeners.get(eventName) ?? new Set();
-			set.add(listener);
-			rtcListeners.set(eventName, set);
-		},
-		off: (eventName: string, listener: MatrixListener) => {
-			rtcListeners.get(eventName)?.delete(listener);
-		}
-	};
-	const on = (eventName: string, listener: MatrixListener) => {
-		const eventListeners = listeners.get(eventName) ?? new Set();
-		eventListeners.add(listener);
-		listeners.set(eventName, eventListeners);
-	};
-	const off = (eventName: string, listener: MatrixListener) => {
-		listeners.get(eventName)?.delete(listener);
-	};
-	const client = {
-		getUserId: () => FAKE_CURRENT_USER_ID,
-		getDeviceId: () => FAKE_DEVICE_ID,
+	const makeClient = () => {
+		const listeners = new Map<string, Set<MatrixListener>>();
+		const membership = mode === 'connecting' ? 'invite' : 'join';
+		const room = {
+			getMyMembership: () => membership,
+			getLiveTimeline: () => ({
+				getState: () => ({ getStateEvents: () => [] })
+			}),
+			/*
+			 * The identity record is only sent into an ENCRYPTED room — see
+			 * `publishCallIdentity`. A fake boundary that forgot to say so would
+			 * make the host's refusal look like the host being broken.
+			 */
+			hasEncryptionStateEvent: () => true,
+			// Who is already here, so the re-announce for a newcomer can tell the
+			// difference between an arrival and everything else.
+			getMembersWithMembership: (which: string) =>
+				which === 'join'
+					? [{ userId: FAKE_CURRENT_USER_ID, membership: 'join' }]
+					: []
+		};
 		/*
-		 * The host announces its own ORISO identity into the call room before
-		 * the widget opens, so the fake boundary has to answer for it.
+		 * The MatrixRTC session, which is what "in the call" actually means.
 		 *
-		 * `sendEvent`, not `sendStateEvent`: it is a timeline event precisely
-		 * so the room's encryption covers it. `sendStateEvent` is kept here
-		 * only so a test can assert it is never used for this again.
+		 * Room membership is not: the widget host never leaves the Matrix room, so
+		 * somebody who closes the call surface and reopens it stays a joined room
+		 * member the whole time while only their RTC membership comes and goes.
+		 * The harness has to be able to say that, or a test cannot tell a rejoin
+		 * from nothing happening.
 		 */
-		sendEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
-		sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
-		getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
-		matrixRTC: { getRoomSession: () => rtcSession },
-		getRoom: (roomId: string) =>
-			roomId === FAKE_ELEMENT_CALL_ROOM_ID ? room : null,
-		joinRoom: () =>
-			mode === 'connecting'
-				? new Promise<never>(() => {
-						/* keep the real host in its connecting state */
-					})
-				: Promise.resolve(room),
-		on,
-		off,
-		removeListener: off
-	} as unknown as MatrixClient;
+		const rtcListeners = new Map<string, Set<MatrixListener>>();
+		const callMemberships: { sender: string }[] = [
+			{ sender: FAKE_CURRENT_USER_ID }
+		];
+		const rtcSession = {
+			memberships: callMemberships,
+			on: (eventName: string, listener: MatrixListener) => {
+				const set = rtcListeners.get(eventName) ?? new Set();
+				set.add(listener);
+				rtcListeners.set(eventName, set);
+			},
+			off: (eventName: string, listener: MatrixListener) => {
+				rtcListeners.get(eventName)?.delete(listener);
+			}
+		};
+		const on = (eventName: string, listener: MatrixListener) => {
+			const eventListeners = listeners.get(eventName) ?? new Set();
+			eventListeners.add(listener);
+			listeners.set(eventName, eventListeners);
+		};
+		const off = (eventName: string, listener: MatrixListener) => {
+			listeners.get(eventName)?.delete(listener);
+		};
+		const client = {
+			getUserId: () => FAKE_CURRENT_USER_ID,
+			getDeviceId: () => FAKE_DEVICE_ID,
+			/*
+			 * The host announces its own ORISO identity into the call room before
+			 * the widget opens, so the fake boundary has to answer for it.
+			 *
+			 * `sendEvent`, not `sendStateEvent`: it is a timeline event precisely
+			 * so the room's encryption covers it. `sendStateEvent` is kept here
+			 * only so a test can assert it is never used for this again.
+			 */
+			sendEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
+			sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
+			getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
+			matrixRTC: { getRoomSession: () => rtcSession },
+			getRoom: (roomId: string) =>
+				roomId === FAKE_ELEMENT_CALL_ROOM_ID ? room : null,
+			joinRoom: () =>
+				mode === 'connecting'
+					? new Promise<never>(() => {
+							/* keep the real host in its connecting state */
+						})
+					: Promise.resolve(room),
+			on,
+			off,
+			removeListener: off
+		} as unknown as MatrixClient;
+		return {
+			client,
+			listenerCount: () =>
+				Array.from(listeners.values()).reduce(
+					(count, eventListeners) => count + eventListeners.size,
+					0
+				),
+			emit: (eventName: string, ...args: unknown[]) =>
+				listeners
+					.get(eventName)
+					?.forEach((listener) => listener(...args)),
+			setCallMemberships: (senders: string[]) => {
+				callMemberships.length = 0;
+				senders.forEach((sender) => callMemberships.push({ sender }));
+				rtcListeners
+					.get('memberships_changed')
+					?.forEach((listener) => listener());
+			}
+		};
+	};
+
+	let current = makeClient();
+	const clientChangeListeners = new Set<
+		(next: MatrixClient | null) => void
+	>();
 	return {
-		getClient: () => client,
-		getHarnessListenerCount: () =>
-			Array.from(listeners.values()).reduce(
-				(count, eventListeners) => count + eventListeners.size,
-				0
-			),
+		getClient: () => current.client,
+		onClientChange: (listener: (next: MatrixClient | null) => void) => {
+			clientChangeListeners.add(listener);
+			return () => clientChangeListeners.delete(listener);
+		},
+		getHarnessListenerCount: () => current.listenerCount(),
 		/** Fire a Matrix client event at whatever the host subscribed. */
 		emitHarnessEvent: (eventName: string, ...args: unknown[]) =>
-			listeners.get(eventName)?.forEach((listener) => listener(...args)),
+			current.emit(eventName, ...args),
 		/** Replace who is in the CALL and tell whoever is listening. */
-		setCallMemberships: (senders: string[]) => {
-			callMemberships.length = 0;
-			senders.forEach((sender) => callMemberships.push({ sender }));
-			rtcListeners
-				.get('memberships_changed')
-				?.forEach((listener) => listener());
+		setCallMemberships: (senders: string[]) =>
+			current.setCallMemberships(senders),
+		/** A token refresh: a new client, the same service. */
+		replaceClient: () => {
+			current = makeClient();
+			clientChangeListeners.forEach((listener) =>
+				listener(current.client)
+			);
+			return current.client;
 		}
 	} as unknown as MatrixClientService & {
 		getHarnessListenerCount(): number;
 		emitHarnessEvent(eventName: string, ...args: unknown[]): void;
 		setCallMemberships(senders: string[]): void;
+		replaceClient(): MatrixClient;
 	};
 };
 

@@ -539,6 +539,52 @@ describe('what the host adds around the call', () => {
 		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(3));
 	});
 
+	it('keeps announcing through the client a token refresh put in place', async () => {
+		/*
+		 * A token refresh swaps the client inside `MatrixClientService` and
+		 * takes the old client's listeners with it — but the service object,
+		 * which is what the context holds and what the identity effect
+		 * depends on, is the same object before and after. So the effect sat
+		 * on a dead MatrixRTC listener until some unrelated render happened,
+		 * and nobody arriving after the refresh was re-announced to: they saw
+		 * this person as initials for the rest of the call.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const harness = service as unknown as {
+			setCallMemberships(senders: string[]): void;
+			replaceClient(): { sendEvent: ReturnType<typeof vi.fn> };
+		};
+		const before = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() => expect(before.sendEvent).toHaveBeenCalledTimes(1));
+
+		const after = harness.replaceClient();
+
+		/*
+		 * The replacement says it again by itself. Waiting for an arrival to
+		 * prompt it would leave anybody who arrived between the old client
+		 * going away and the new one being listened to looking at initials
+		 * for the rest of the call, and nothing else closes that window.
+		 */
+		await waitFor(() => expect(after.sendEvent).toHaveBeenCalledTimes(1));
+
+		// And the listeners moved with it: an arrival is still an arrival.
+		harness.setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
+		await waitFor(() => expect(after.sendEvent).toHaveBeenCalledTimes(2));
+
+		// The dead client was not asked to send anything more.
+		expect(before.sendEvent).toHaveBeenCalledTimes(1);
+	});
+
 	it('says nothing when there is no user data to say it from', async () => {
 		const service = makeFakeMatrixClientService('active');
 		const client = service.getClient() as unknown as {

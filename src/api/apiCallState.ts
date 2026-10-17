@@ -12,11 +12,28 @@ const timestamp = (value: unknown): value is number =>
 export async function apiCallState(
 	call: CallLifecycleMessage
 ): Promise<CallLifecycleMessage | null> {
-	const value: unknown = await fetchData({
-		url: `${endpoints.matrixCallState}?${new URLSearchParams({ sourceRoomId: call.roomRef, callId: call.callId })}`,
-		method: FETCH_METHODS.GET,
-		responseHandling: [FETCH_ERRORS.CATCH_ALL]
-	});
+	let value: unknown;
+	try {
+		value = await fetchData({
+			url: `${endpoints.matrixCallState}?${new URLSearchParams({ sourceRoomId: call.roomRef, callId: call.callId })}`,
+			method: FETCH_METHODS.GET,
+			responseHandling: [FETCH_ERRORS.NO_MATCH, FETCH_ERRORS.CATCH_ALL]
+		});
+	} catch (error) {
+		/*
+		 * A 404 is an ANSWER: the server has no such call, and asking again
+		 * will not change that. Everything else — a 5xx, a lost connection —
+		 * is the question going unasked, and the callers tell the two apart:
+		 * a `null` settles the card, a throw keeps the durable one and tries
+		 * again. Without the split, a card the server had never heard of
+		 * (one whose record was pruned, or one somebody forged) polled this
+		 * endpoint every fifteen seconds for as long as it was on screen.
+		 */
+		if (error instanceof Error && error.message === FETCH_ERRORS.NO_MATCH) {
+			return null;
+		}
+		throw error;
+	}
 	if (!value || typeof value !== 'object') return null;
 	const data = value as Record<string, unknown>;
 	if (

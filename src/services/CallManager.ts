@@ -373,10 +373,8 @@ class CallManager {
 			// than re-using the session room. This matches the "direct" usage of
 			// a standalone Element Call deployment, where each call lives in its
 			// own Matrix room with appropriate power levels.
-			elementCallRoomId = await this.createElementCallRoom(
-				roomId,
-				callId
-			);
+			const created = await this.createElementCallRoom(roomId, callId);
+			elementCallRoomId = created.roomId;
 			// Room creation may finish after cancellation or a different call.
 			// Only the request that still owns startup can publish its invite.
 			if (!this.stillOwnsStart(start)) {
@@ -397,7 +395,10 @@ class CallManager {
 				 * the newer call that superseded this one, so both are
 				 * swallowed.
 				 */
-				void this.discardElementCallRoom(elementCallRoomId);
+				void this.discardElementCallRoom(
+					created.roomId,
+					created.createdBy
+				);
 				return;
 			}
 
@@ -525,11 +526,19 @@ class CallManager {
 	 *
 	 * Only for a room that was never published in an invitation: leaving a
 	 * room somebody may have been invited into would tear down their call.
+	 *
+	 * The CREATING client is passed in rather than resolved from the
+	 * registry. One of the two callers runs precisely because the account
+	 * changed while `createRoom` was in flight, and by then the registry
+	 * holds the replacement account — which is not joined to this room, so
+	 * its `leave` and `forget` do nothing and the orphan stays on the
+	 * account that made it.
 	 */
-	private async discardElementCallRoom(roomId: string): Promise<void> {
-		if (!roomId) return;
-		const client = getMatrixClientService()?.getClient?.();
-		if (!client) return;
+	private async discardElementCallRoom(
+		roomId: string,
+		client: MatrixClient | undefined
+	): Promise<void> {
+		if (!roomId || !client) return;
 		try {
 			await client.leave(roomId);
 		} catch {
@@ -550,7 +559,7 @@ class CallManager {
 	private async createElementCallRoom(
 		sourceRoomId: string,
 		callId: string
-	): Promise<string> {
+	): Promise<{ roomId: string; createdBy: MatrixClient }> {
 		const matrixClientService = getMatrixClientService();
 		const client = matrixClientService?.getClient?.();
 
@@ -737,11 +746,11 @@ class CallManager {
 			}
 			await client.invite(result.room_id, membershipReaderUserId);
 		} catch (err) {
-			await this.discardElementCallRoom(result.room_id);
+			await this.discardElementCallRoom(result.room_id, client);
 			throw err;
 		}
 
-		return result.room_id;
+		return { roomId: result.room_id, createdBy: client };
 	}
 
 	/**

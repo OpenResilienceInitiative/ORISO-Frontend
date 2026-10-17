@@ -376,4 +376,49 @@ describe('outgoing call startup ownership', () => {
 		);
 		expect(callManager.getCurrentCall()).toBeNull();
 	});
+
+	it('discards the superseded room through the account that created it', async () => {
+		/*
+		 * The cleanup above runs precisely BECAUSE the account changed, so
+		 * resolving the client from the registry hands it the replacement —
+		 * which is not joined to the room the previous account made. Its
+		 * `leave` and `forget` then do nothing the server will act on, and
+		 * the orphan stays on the account that created it, carrying the
+		 * call/source binding.
+		 *
+		 * The test above cannot see this: both accounts share one pair of
+		 * mocks there, so either client calling `leave` satisfies it.
+		 */
+		let finishCreate!: (response: { room_id: string }) => void;
+		createRoom.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finishCreate = resolve;
+				})
+		);
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(finishCreate).toBeTypeOf('function'));
+
+		const otherLeave = vi.fn().mockResolvedValue(undefined);
+		const otherForget = vi.fn().mockResolvedValue(undefined);
+		setMatrixClientServiceRef({
+			getClient: () => ({
+				createRoom,
+				sendEvent,
+				sendMessage: vi.fn().mockResolvedValue({ event_id: '$root' }),
+				invite,
+				leave: otherLeave,
+				forget: otherForget,
+				getUserId: () => '@someone-else:oriso.example',
+				getDeviceId: () => 'OTHER',
+				getRoom: () => null
+			})
+		} as never);
+		finishCreate({ room_id: ROOM });
+
+		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(forget).toHaveBeenCalledWith(ROOM);
+		expect(otherLeave).not.toHaveBeenCalled();
+		expect(otherForget).not.toHaveBeenCalled();
+	});
 });

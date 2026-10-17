@@ -15,7 +15,7 @@ vi.mock('../services/matrixClientRegistry', () => ({
 vi.mock('./fetchData', () => ({
 	fetchData: (args: unknown) => fetchDataMock(args),
 	FETCH_METHODS: { GET: 'GET' },
-	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL' }
+	FETCH_ERRORS: { CATCH_ALL: 'CATCH_ALL', NO_MATCH: 'NO_MATCH' }
 }));
 
 const original: CallLifecycleMessage = {
@@ -187,4 +187,23 @@ it('accepts a server-confirmed missed state over a provisional ended room card',
 		participants: [],
 		durationSeconds: undefined
 	});
+});
+
+it('treats "no such call" as an answer and everything else as a failed question', async () => {
+	/*
+	 * Both used to come back the same way — the request rejected, the caller
+	 * caught it, kept the durable card and asked again in fifteen seconds,
+	 * for as long as the card was on screen. A 404 is the server saying it
+	 * has no record; asking again will not change that.
+	 */
+	fetchDataMock.mockRejectedValueOnce(new Error('NO_MATCH'));
+	await expect(apiCallState(original)).resolves.toBeNull();
+
+	fetchDataMock.mockRejectedValueOnce(new Error('CATCH_ALL'));
+	await expect(apiCallState(original)).rejects.toThrow('CATCH_ALL');
+
+	// And the 404 has to be asked for, or `fetchData` folds it into CATCH_ALL.
+	expect(fetchDataMock.mock.calls[0][0].responseHandling).toContain(
+		'NO_MATCH'
+	);
 });

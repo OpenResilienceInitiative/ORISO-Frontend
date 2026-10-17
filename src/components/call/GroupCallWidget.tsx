@@ -72,6 +72,23 @@ export const GroupCallWidget: React.FC = () => {
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
 	const [isDismissed, setIsDismissed] = useState(false);
+	/*
+	 * Bumped whenever the service swaps its client out.
+	 *
+	 * A token refresh replaces the client inside `MatrixClientService` and
+	 * takes the old client's listeners with it, but the service object — which
+	 * is what the context holds and what the identity effect below depends on
+	 * — stays the same. Without this the effect kept a dead MatrixRTC listener
+	 * until some unrelated render happened, so nobody arriving after the
+	 * refresh was re-announced to and they saw this person as initials.
+	 */
+	const [clientGeneration, setClientGeneration] = useState(0);
+	useEffect(() => {
+		const unsubscribe = matrixClientService?.onClientChange?.(() =>
+			setClientGeneration((generation) => generation + 1)
+		);
+		return (): void => unsubscribe?.();
+	}, [matrixClientService]);
 
 	const closeCallSurface = useCallback(() => {
 		// Release camera and microphone while the iframe is still in the
@@ -146,12 +163,25 @@ export const GroupCallWidget: React.FC = () => {
 	 * the effect re-running for a changed profile.
 	 */
 	const lastSessionUrl = useRef<string | null>(null);
+	/*
+	 * The client generation this effect last ran for.
+	 *
+	 * A swap re-runs the effect, which re-attaches the listeners — but an
+	 * arrival in the gap between the old client going away and the new one
+	 * being listened to is seen by nobody, and the newcomer would spend the
+	 * rest of the call looking at initials. So the run that follows a swap
+	 * announces again whether or not it saw an arrival: one event per token
+	 * refresh, against a window nothing else closes.
+	 */
+	const lastGeneration = useRef(clientGeneration);
 
 	useEffect(() => {
 		// Recorded before the guard, so that closing the surface — which sets
 		// the URL to null without this effect having anything to do — is seen.
 		const previousUrl = lastSessionUrl.current;
 		lastSessionUrl.current = widget.url;
+		const clientChanged = lastGeneration.current !== clientGeneration;
+		lastGeneration.current = clientGeneration;
 
 		const client = matrixClientService?.getClient();
 		if (!client || !callRoomId || !widget.url || !userData) return;
@@ -195,7 +225,7 @@ export const GroupCallWidget: React.FC = () => {
 		 * resend identical content as a duplicate.
 		 */
 		void publishCallIdentity(identityClient, callRoomId, source, {
-			force: previousUrl !== widget.url
+			force: previousUrl !== widget.url || clientChanged
 		});
 
 		/*
@@ -260,6 +290,7 @@ export const GroupCallWidget: React.FC = () => {
 		};
 	}, [
 		matrixClientService,
+		clientGeneration,
 		callRoomId,
 		widget.url,
 		ownAvatarUserId,

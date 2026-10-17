@@ -381,3 +381,17 @@ included; delivery is two pull requests under one epic.
 6. A **tenant setting for the backdrop**. The preset reaches the fork on
    the URL, but there is nothing to put there yet, so every call gets the
    handoff's default.
+7. **Should a lifecycle card the backend will not confirm be shown at
+   all?** The join path already treats `/service/matrix/calls/state` as
+   authoritative — a card the endpoint does not confirm cannot be joined —
+   so a forged _running_ card leads nowhere. A forged _terminal_ card is a
+   different matter: it stays in the counselling timeline, and today it is
+   rendered like any other. Suppressing it would also delete a legitimate
+   card whose record the backend never wrote or has since pruned, which for
+   a counselling history is the worse failure, and nothing in this
+   repository can say which case is which: whether a record exists for
+   every real call, and for how long, is UserService's contract and this
+   epic's "runtime dependency we cannot verify here" (see
+   `01-pr-assessment.md`). The client-side half is in place — a 404 is now
+   told apart from a lost connection — so once that contract is known, the
+   change is one branch in `useCallTimelineState`.

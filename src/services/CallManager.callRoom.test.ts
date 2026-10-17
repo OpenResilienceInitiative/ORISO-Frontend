@@ -34,15 +34,23 @@ const installClient = (client: Record<string, unknown>): void => {
 	} as never);
 };
 
-const createCallRoom = (sourceRoomId = SESSION_ROOM): Promise<string> =>
+const createCallRoom = async (sourceRoomId = SESSION_ROOM): Promise<string> =>
+	/*
+	 * The method hands back the client it created the room with, so that the
+	 * cleanup path can leave and forget through THAT account rather than
+	 * through whatever the registry holds by then. These tests are about the
+	 * room, so they take the id and drop the rest.
+	 */
 	(
-		callManager as unknown as {
-			createElementCallRoom: (
-				roomId: string,
-				callId: string
-			) => Promise<string>;
-		}
-	).createElementCallRoom(sourceRoomId, 'test-call');
+		await (
+			callManager as unknown as {
+				createElementCallRoom: (
+					roomId: string,
+					callId: string
+				) => Promise<{ roomId: string }>;
+			}
+		).createElementCallRoom(sourceRoomId, 'test-call')
+	).roomId;
 
 describe('createElementCallRoom', () => {
 	beforeEach(() => {
