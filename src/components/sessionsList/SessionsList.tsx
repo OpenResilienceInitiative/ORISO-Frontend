@@ -74,6 +74,7 @@ import {
 	DisplayFilterKindChip
 } from './SessionsListToolbar';
 import {
+	countUnreadSupervisedSessions,
 	draftMatchesSession,
 	isAnonymousAskerSession,
 	normalizeSessionToolbarChip,
@@ -2120,11 +2121,15 @@ export const SessionsList = ({
 					);
 		const counts: Partial<Record<SessionToolbarChipFilter, number>> = {
 			unread: countUnreadSessions(unreadSource.map((p) => p.raw)),
-			drafts: visibleUserDrafts.length
+			drafts: visibleUserDrafts.length,
+			supervision: countUnreadSupervisedSessions(
+				unreadSource,
+				userData?.userId
+			)
 		};
 		Object.entries(unreadByKind).forEach(([kind, count]) => {
 			const chip = SESSION_KIND_CHIP[kind];
-			if (chip) {
+			if (chip && chip !== 'supervision') {
 				counts[chip] = (counts[chip] ?? 0) + count;
 			}
 		});
@@ -2143,6 +2148,7 @@ export const SessionsList = ({
 		sessionToolbarPairs,
 		type,
 		unreadByKind,
+		userData?.userId,
 		visibleUserDrafts.length,
 		unreadVersion
 	]);
