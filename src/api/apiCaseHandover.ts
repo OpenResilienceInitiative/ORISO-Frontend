@@ -253,8 +253,9 @@ export const apiDecideCaseHandoverClientConsent = async (
 			FETCH_SUCCESS.CONTENT,
 			FETCH_ERRORS.BAD_REQUEST,
 			FETCH_ERRORS.FORBIDDEN,
-			// 409: the case owner changed after the request was created.
-			FETCH_ERRORS.CONFLICT
+			// 409 is rejected with the response: its X-Reason says whether the
+			// case owner changed (CASE_OWNER_CHANGED) or it was a plain conflict.
+			FETCH_ERRORS.CONFLICT_WITH_RESPONSE
 		]
 	});
 

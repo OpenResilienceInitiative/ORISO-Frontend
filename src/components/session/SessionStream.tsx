@@ -27,7 +27,8 @@ import {
 	apiDecideCaseHandoverClientConsent,
 	apiGetSessionSupervisors,
 	CaseHandoverStatus,
-	FETCH_ERRORS
+	FETCH_ERRORS,
+	X_REASON
 } from '../../api';
 import { apiPostError, ERROR_LEVEL_WARN } from '../../api/apiPostError';
 import {
@@ -1472,12 +1473,17 @@ export const SessionStream = ({
 			// The decision can be refused or already applied on the server. Never
 			// leave the stale approve/decline card behind with a "could not be
 			// sent" error (ORISO-Frontend#1705):
-			// - 409: the case owner changed after the request was created, so it
-			//   can no longer be decided and is settled for the asker;
+			// - 409 with X-Reason CASE_OWNER_CHANGED: the case owner changed after
+			//   the request was created, so it can no longer be decided and is
+			//   settled for the asker (any other 409, e.g. a lock conflict, says
+			//   nothing about the request);
 			// - anything else: read this request's own status and only report a
 			//   failure while it is really still open.
-			.catch((error: Error) => {
-				if (error?.message === FETCH_ERRORS.CONFLICT) {
+			.catch((error: Error | Response) => {
+				if (
+					(error as Response)?.headers?.get(FETCH_ERRORS.X_REASON) ===
+					X_REASON.CASE_OWNER_CHANGED
+				) {
 					settleCaseHandoverConsent(notification, {
 						sessionId,
 						requestId,
