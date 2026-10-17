@@ -1,33 +1,26 @@
 import * as React from 'react';
-import { useContext } from 'react';
-import { StageLayout } from '../../stageLayout/StageLayout';
-import { GlobalComponentContext } from '../../../globalState/provider/GlobalComponentContext';
+import { useState } from 'react';
+import { readHandoverDepartment } from './handoverDepartment';
+import { WaitingRoomFrame } from '../../waitingRoom/WaitingRoomFrame';
 import {
 	RegistrationHandover,
 	RegistrationHandoverProps
 } from './RegistrationHandover';
 
 /**
- * The handover after registering, inside the same split layout the
- * registration form and the entry rooms use. The red stage, partner logos and
- * legal links stay put, so the hard reload after sign-up no longer swaps the
- * whole page for a full-screen overlay (Frank, 2026-10-15). The stage does not
- * replay its intro: the person has already watched it on the form.
+ * The handover after the document load that follows registering, in the one
+ * waiting-room frame the registration side and the entry rooms use. The red
+ * stage, partner logos and legal links stay put, so the reload no longer swaps
+ * the page (#1219, #1735; Frank, 2026-10-15). The stage does not replay its
+ * intro: the person has already watched it on the form.
  */
-export const PostRegistrationHandover = (
-	props: Omit<RegistrationHandoverProps, 'variant'>
-) => {
-	const { Stage } = useContext(GlobalComponentContext);
+export const PostRegistrationHandover = (props: RegistrationHandoverProps) => {
+	/* The department `Registration` remembered before the load, so the legal
+	   links open the same documents on both sides. */
+	const [legalDepartment] = useState(readHandoverDepartment);
 	return (
-		<StageLayout
-			className="stageLayout--registration"
-			showLegalLinks={true}
-			showLoginLink={false}
-			showRegistrationLink={false}
-			stage={<Stage hasAnimation={false} isReady={true} />}
-			mobileHero="bar"
-		>
-			<RegistrationHandover {...props} variant="inline" />
-		</StageLayout>
+		<WaitingRoomFrame legalDepartment={legalDepartment}>
+			<RegistrationHandover {...props} />
+		</WaitingRoomFrame>
 	);
 };

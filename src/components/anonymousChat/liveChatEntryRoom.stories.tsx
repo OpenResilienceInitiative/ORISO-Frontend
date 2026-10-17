@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { verifyWaitingRoomContract } from '../../../.storybook/waitingRoomContractPlay';
 import { verifyConsentOpening } from '../../../.storybook/consentCompletionStoryPlay';
 import { renderToString } from 'react-dom/server';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +26,7 @@ import {
 	phone375Globals,
 	tablet834Globals
 } from '../message/messageStoryShell';
+import { expectWaitingRoomLayout } from '../app/registrationLoader/waitingRoomLayoutContract';
 
 /**
  * The **live chat** entry room — the real views (`entryRoom/`), which the
@@ -304,14 +304,14 @@ export const StepWaiting: StoryObj = {
 	globals: desktop1440Globals,
 	name: 'B — Warteraum: wartet',
 	render: () => <Waiting />,
-	play: async ({ canvasElement }) => {
-		await verifyWaitingRoomContract(canvasElement, { stage: true });
-	},
+	play: async ({ canvasElement }) =>
+		expectWaitingRoomLayout(canvasElement, { cards: true }),
 	parameters: full(
 		'Eine Seite, drei Stellen ändern sich. Die Punkte sind die Schlange, der Knopf der Ladebalken (drehende Uhr statt Pfeil), die drei Karten das Karussell der Registrierung mit Franks Bildern. In der App: Poll auf `/service/conversations/anonymous/{id}` alle 4 s.'
 	)
 };
 export const StepWaitingMobile: StoryObj = {
+	play: async ({ canvasElement }) => expectWaitingRoomLayout(canvasElement),
 	name: 'B — Warteraum, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting />,
@@ -365,7 +365,10 @@ export const StepAccepted: StoryObj = {
 	name: 'B — Warteraum: Beraterin ist da',
 	globals: desktop1440Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: full(
 		'Status `IN_PROGRESS`: die Zeile wird rot, die Datenschutz-Karte des Tenants slidet von unten herein. Der Datenschutz ist eine echte Checkbox: „Gespräch beginnen" ohne Haken startet nichts, sondern zeigt den Fehler (#1341). Das runde X führt in den Verlassen-Dialog, der jetzt „Sind Sie sicher, dass Sie abbrechen wollen und schließen?" fragt. In der App: `apiPatchUserData({dataPrivacyConfirmation, termsAndConditionsConfirmation})`, die drei sessionStorage-Marken, Übergabe in die Session.'
 	)
@@ -431,14 +434,20 @@ export const StepAcceptedMobile: StoryObj = {
 	name: 'B — Beraterin ist da, mobil',
 	globals: phone375Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: { layout: 'fullscreen' }
 };
 export const StepAcceptedTablet: StoryObj = {
 	name: 'B — Beraterin ist da, Tablet',
 	globals: tablet834Globals,
 	render: () => <Waiting accepted />,
-	play: verifyAcceptedLayout,
+	play: async (context) => {
+		await verifyAcceptedLayout(context);
+		await expectWaitingRoomLayout(context.canvasElement);
+	},
 	parameters: { layout: 'fullscreen' }
 };
 export const StepClosed: StoryObj = {

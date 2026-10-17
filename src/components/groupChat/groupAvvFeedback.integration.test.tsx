@@ -472,8 +472,14 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 				'/sessions/user/view',
 				user
 			);
+			// The seeker joins from the shared waiting room ("Beitreten",
+			// #1219); the moderator starts from her own view.
 			const submit = await screen.findByRole('button', {
-				name: i18n.t(`groupChat.join.button.label.${command}`)
+				name: i18n.t(
+					active
+						? 'groupChat.entry.join'
+						: 'groupChat.join.button.label.start'
+				)
 			});
 			const actor = userEvent.setup();
 			await actor.click(submit);
@@ -561,9 +567,10 @@ describe('group AVV feedback at the real provider and HTTP boundaries', () => {
 				</ReaderProviders>,
 				'/groups/19/entry'
 			);
-			const join = await screen.findByRole('button', {
-				name: i18n.t('groupChat.entry.join')
-			});
+			// The room's own button: while the group loads, the bar already
+			// shows a waiting one of the same name.
+			const join = await screen.findByTestId('group-entry-join');
+			expect(join.textContent).toContain(i18n.t('groupChat.entry.join'));
 			const user = userEvent.setup();
 			await user.click(join);
 			const notice = await screen.findByRole('alert');
