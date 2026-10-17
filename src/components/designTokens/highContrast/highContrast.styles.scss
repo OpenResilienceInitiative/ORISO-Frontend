@@ -1,0 +1,282 @@
+// Storybook-only layout for the high-contrast candidate comparison (#1134).
+// The product colours come from the --m3-* tokens set inline on
+// .hcSpecimen; the few literals below are the comparison page's own frame.
+
+.hcSpecimen {
+	--hc-gap: 12px;
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--hc-gap);
+	min-width: 0;
+	padding: 12px;
+	border-radius: 12px;
+	background: var(--m3-surface, #fcf9f9);
+	color: var(--m3-on-surface, #1b1b1c);
+	font-family: var(--font-family-sans-serif, 'Inter Variable', sans-serif);
+
+	&__label {
+		margin: 4px 0 0;
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--m3-on-surface-variant, #444748);
+	}
+
+	&__chat {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 0;
+		overflow: hidden;
+	}
+
+	&__buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+
+		.button__item {
+			min-width: 0;
+			padding: 0 16px;
+		}
+	}
+
+	&__focusRow {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding: 6px 6px 10px;
+		font-size: 12px;
+	}
+
+	&__ring {
+		align-self: flex-start;
+		padding: 6px 10px;
+		border-radius: 8px;
+		outline-offset: 4px;
+
+		&--token {
+			outline: 2px solid var(--m3-primary-outline, #930008);
+		}
+
+		&--button {
+			outline: 2px solid #199fff;
+		}
+	}
+
+	&__list {
+		padding: 4px 8px;
+		background: var(--m3-surface-container-high, #eae7e8);
+		border-radius: 8px;
+	}
+
+	&__inputs {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		padding-top: 6px;
+	}
+}
+
+.hcCompare {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	padding: 16px;
+	font-family: 'Inter Variable', system-ui, sans-serif;
+	color: #1b1b1c;
+	background: #ffffff;
+
+	&__intro {
+		max-width: 80ch;
+		margin: 0;
+		font-size: 14px;
+		line-height: 1.5;
+	}
+
+	&__tenant {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+
+	&__tenantHeading {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin: 0;
+		font-size: 20px;
+		font-weight: 600;
+	}
+
+	&__swatch {
+		width: 28px;
+		height: 28px;
+		border-radius: 50%;
+		border: 2px solid #1b1b1c;
+	}
+
+	&__columns {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		gap: 16px;
+		align-items: start;
+
+		@media (width >= 700px) {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		@media (width >= 1200px) {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+		}
+	}
+
+	&__column {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 0;
+		border: 1px solid #c4c7c5;
+		border-radius: 14px;
+		padding: 8px;
+	}
+
+	&__columnHeader {
+		padding: 4px 6px 0;
+	}
+
+	&__columnName {
+		margin: 0;
+		font-size: 16px;
+		font-weight: 700;
+	}
+
+	&__columnSummary {
+		margin: 4px 0 0;
+		font-size: 12px;
+		line-height: 1.45;
+		color: #444748;
+	}
+
+	&__worst {
+		margin: 6px 0 0;
+		font-size: 12px;
+		font-weight: 600;
+	}
+
+	&__tableWrap {
+		overflow-x: auto;
+		border: 1px solid #c4c7c5;
+		border-radius: 8px;
+	}
+
+	&__table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 12px;
+		font-variant-numeric: tabular-nums;
+
+		th,
+		td {
+			padding: 6px 8px;
+			border-bottom: 1px solid #e0e3e1;
+			text-align: left;
+			vertical-align: top;
+		}
+
+		thead th {
+			background: #f1f3f1;
+			font-weight: 700;
+		}
+
+		tbody tr:last-child td {
+			border-bottom: none;
+		}
+	}
+
+	&__group td {
+		background: #f6f8f6;
+		font-weight: 700;
+	}
+
+	&__pairLabel {
+		min-width: 170px;
+	}
+
+	&__pairNote {
+		display: block;
+		margin-top: 2px;
+		font-size: 11px;
+		color: #444748;
+		white-space: normal;
+	}
+
+	&__ratio {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		white-space: nowrap;
+	}
+
+	// Foreground colour as a bar on the background colour. No glyphs, so the
+	// deliberately low pairs in the table do not trip the contrast checker.
+	&__pairSwatch {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 28px;
+		height: 18px;
+		border: 1px solid #747878;
+		border-radius: 4px;
+
+		span {
+			width: 14px;
+			height: 6px;
+			border-radius: 2px;
+		}
+	}
+
+	&__chip {
+		display: inline-block;
+		min-width: 38px;
+		padding: 1px 6px;
+		border-radius: 8px;
+		font-size: 11px;
+		font-weight: 700;
+		text-align: center;
+		border: 1px solid transparent;
+
+		&--AAA,
+		&--pass {
+			background: #d7f0dc;
+			color: #0a3d17;
+			border-color: #0a3d17;
+		}
+
+		&--AA {
+			background: #fff1c2;
+			color: #4a3600;
+			border-color: #4a3600;
+		}
+
+		&--fail {
+			background: #ffdad6;
+			color: #5c0000;
+			border-color: #5c0000;
+		}
+	}
+
+	&__exempt {
+		opacity: 0.85;
+		font-style: italic;
+	}
+
+	&__legend {
+		margin: 0;
+		font-size: 12px;
+		line-height: 1.5;
+		color: #444748;
+	}
+}
