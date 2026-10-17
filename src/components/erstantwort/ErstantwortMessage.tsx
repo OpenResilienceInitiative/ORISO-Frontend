@@ -85,6 +85,11 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 	const offerNotificationSetup =
 		(emailAllowed || channels.browserAllowed) &&
 		(notificationSetupStarted || !hasReachableChannel);
+	// A persisted message keeps its place in the history after a channel is
+	// reachable: the slot then starts as the one-line summary with "ändern"
+	// instead of vanishing. No invitation is offered again (offerNotificationSetup
+	// still decides that); a tenant without any channel has nothing to show.
+	const showSetupSlot = emailAllowed || channels.browserAllowed;
 	const [isEmailOverlayOpen, setIsEmailOverlayOpen] = useState(false);
 
 	const state: ErstantwortLiveState = useMemo(
@@ -203,9 +208,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 				slots={{
 					enquiryReceived: <EnquiryReceivedIllustration />,
 					emailNotification:
-						persistedInvitation &&
-						!hasChoice &&
-						offerNotificationSetup ? (
+						persistedInvitation && !hasChoice && showSetupSlot ? (
 							<NotificationSetupCollapse
 								messageId={messageId}
 								isEmailEnabled={emailAllowed}
@@ -215,7 +218,7 @@ export const ErstantwortMessage: React.FC<ErstantwortMessageProps> = ({
 								}
 							/>
 						) : undefined,
-					notificationChoice: offerNotificationSetup ? (
+					notificationChoice: showSetupSlot ? (
 						<NotificationSetupCollapse
 							messageId={messageId}
 							isEmailEnabled={emailAllowed}

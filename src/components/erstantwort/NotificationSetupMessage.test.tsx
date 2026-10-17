@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import {
+	act,
 	cleanup,
 	fireEvent,
 	render,
@@ -359,6 +360,33 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		);
 	});
 
+	it('keeps a failed save reachable when the X was pressed while it was running', async () => {
+		let fail!: (error: Error) => void;
+		patch.mockImplementation(
+			() =>
+				new Promise((_resolve, reject) => {
+					fail = reject;
+				})
+		);
+		mount(noChannel);
+		fireEvent.click(screen.getByRole('button', { name: EMAIL_CHOICE }));
+		fireEvent.click(screen.getByRole('button', { name: DISMISS }));
+		// Hidden, but not torn down: the failure arrives anyway.
+		await act(async () => fail(new Error('boom')));
+		expect(
+			screen.getByText(
+				'erstantwort.notificationSummary.label|erstantwort.notificationSummary.none'
+			)
+		).toBeTruthy();
+
+		fireEvent.click(screen.getByRole('button', { name: CHANGE }));
+
+		expect((await screen.findByRole('alert')).textContent).toContain(
+			'erstantwort.notificationChoice.saveFailed'
+		);
+		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
+	});
+
 	it('keeps the status region mounted, so the collapse is announced', () => {
 		const view = mount(noChannel);
 		const region = view.container.querySelector(
@@ -412,5 +440,129 @@ describe('notification setup message collapses to one line (ORISO-Frontend#1700)
 		fireEvent.click(screen.getByRole('button', { name: CHANGE }));
 
 		expect(document.activeElement).toBe(document.body);
+	});
+});
+
+describe('what counts as "set up" (ORISO-Frontend#1767 review)', () => {
+	const regularEmailOnly = {
+		...noChannel,
+		emailNotifications: {
+			emailNotificationsEnabled: true,
+			settings: {
+				newChatMessageNotificationEnabled: true,
+				reassignmentNotificationEnabled: false
+			}
+		}
+	} as UserDataInterface;
+	const browserOn = (silenced: boolean) => {
+		vi.stubGlobal('Notification', {
+			permission: 'granted',
+			requestPermission: request
+		});
+		localStorage.setItem(
+			'BROWSER_NOTIFICATIONS',
+			JSON.stringify({ enabled: true })
+		);
+		if (silenced) notificationSettingsStore.setDeviceSilenced(true);
+	};
+
+	it('collapses for a browser that is on and not silenced', () => {
+		browserOn(false);
+		mount(noChannel);
+		expect(
+			screen.getByText(
+				'erstantwort.notificationSummary.label|erstantwort.notificationSummary.browser'
+			)
+		).toBeTruthy();
+	});
+
+	it('stays in full for a browser that is on but silenced, with its warning', () => {
+		browserOn(true);
+		mount(noChannel);
+		expect(screen.getByRole('button', { name: EMAIL_CHOICE })).toBeTruthy();
+		expect(screen.queryByText(new RegExp(SUMMARY))).toBeNull();
+		expect(
+			screen.getByText('erstantwort.notificationChoice.browserSilenced')
+		).toBeTruthy();
+	});
+
+	it('collapses to the e-mail summary once a silenced browser is joined by a working e-mail channel', () => {
+		browserOn(true);
+		mount(emailOn);
+		expect(
+			screen.getByText(
+				'erstantwort.notificationSummary.label|erstantwort.notificationSummary.email'
+			)
+		).toBeTruthy();
+	});
+
+	describe('requireConsentEmail (the consent-email suggestion)', () => {
+		it('stays in full while only regular message e-mails are on', () => {
+			mount(regularEmailOnly, { requireConsentEmail: true });
+			expect(
+				screen.getByRole('button', { name: EMAIL_CHOICE })
+			).toBeTruthy();
+			expect(screen.queryByText(new RegExp(SUMMARY))).toBeNull();
+		});
+
+		it('stays in full while only a browser channel is on', () => {
+			browserOn(false);
+			mount(noChannel, { requireConsentEmail: true });
+			expect(
+				screen.getByRole('button', { name: EMAIL_CHOICE })
+			).toBeTruthy();
+			expect(screen.queryByText(new RegExp(SUMMARY))).toBeNull();
+		});
+
+		it('collapses when the consent e-mail is on', () => {
+			mount(emailOn, { requireConsentEmail: true });
+			expect(
+				screen.getByText(
+					'erstantwort.notificationSummary.label|erstantwort.notificationSummary.email'
+				)
+			).toBeTruthy();
+		});
+
+		it('collapses after the person turns the consent e-mail on from the full card', async () => {
+			saved = emailOn;
+			mount(regularEmailOnly, { requireConsentEmail: true });
+
+			fireEvent.click(screen.getByRole('button', { name: EMAIL_CHOICE }));
+
+			expect(
+				await screen.findByText(
+					'erstantwort.notificationSummary.label|erstantwort.notificationSummary.email'
+				)
+			).toBeTruthy();
+			expect(
+				screen.queryByRole('button', { name: EMAIL_CHOICE })
+			).toBeNull();
+		});
+
+		it('waits for the browser step of "both" before it collapses', async () => {
+			saved = emailOn;
+			mount(regularEmailOnly, { requireConsentEmail: true });
+
+			fireEvent.click(screen.getByRole('button', { name: BOTH_CHOICE }));
+			const enable = await screen.findByRole('button', {
+				name: ENABLE_BROWSER
+			});
+			// The consent e-mail is on already, the browser step is still open.
+			expect(screen.queryByRole('button', { name: CHANGE })).toBeNull();
+
+			fireEvent.click(enable);
+
+			expect(
+				await screen.findByText(
+					'erstantwort.notificationSummary.label|erstantwort.notificationSummary.both'
+				)
+			).toBeTruthy();
+		});
+
+		it('still closes with the X', () => {
+			mount(regularEmailOnly, { requireConsentEmail: true });
+			fireEvent.click(screen.getByRole('button', { name: DISMISS }));
+			expect(screen.getByRole('button', { name: CHANGE })).toBeTruthy();
+		});
 	});
 });

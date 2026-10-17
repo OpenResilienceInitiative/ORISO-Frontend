@@ -26,12 +26,18 @@ const Fixture = ({
 	email = false,
 	browser = false,
 	messageId = '$story-message',
-	startOpen = false
+	startOpen = false,
+	silenced = false,
+	requireConsentEmail = false
 }: {
 	email?: boolean;
 	browser?: boolean;
 	messageId?: string;
 	startOpen?: boolean;
+	/** The device is on but message notifications are muted. */
+	silenced?: boolean;
+	/** The consent-email suggestion of the Einsichtnahme settings. */
+	requireConsentEmail?: boolean;
 }) => {
 	const [ready, setReady] = React.useState(false);
 	const [reloadKey, setReloadKey] = React.useState(0);
@@ -57,6 +63,7 @@ const Fixture = ({
 			.filter((key) => key.startsWith(COLLAPSE_KEY_PREFIX))
 			.forEach((key) => localStorage.removeItem(key));
 		notificationSettingsStore.resetForTests();
+		if (silenced) notificationSettingsStore.setDeviceSilenced(true);
 		if (browser) {
 			localStorage.setItem(
 				'BROWSER_NOTIFICATIONS',
@@ -95,7 +102,7 @@ const Fixture = ({
 			else localStorage.setItem('BROWSER_NOTIFICATIONS', originalBrowser);
 			notificationSettingsStore.resetForTests();
 		};
-	}, [browser]);
+	}, [browser, silenced]);
 	if (!ready) return null;
 	return (
 		<UserDataContext.Provider
@@ -135,6 +142,7 @@ const Fixture = ({
 							key={reloadKey}
 							messageId={messageId}
 							startOpen={startOpen}
+							requireConsentEmail={requireConsentEmail}
 							copy={
 								<p>
 									Wir können Sie benachrichtigen, wenn eine
@@ -390,5 +398,42 @@ export const OpenedOnPurposeWithChannelEn: Story = {
 			).toBeVisible()
 		);
 		expect(canvas.queryByText(/Notifications: email on/)).toBeNull();
+	}
+};
+
+export const SilencedBrowserStaysOpenDesktopEn: Story = {
+	name: 'Browser on but silenced — stays in full, with its warning (EN)',
+	args: { browser: true, silenced: true },
+	globals: { ...desktop1440Globals, ...EN },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		await waitFor(() =>
+			expect(
+				canvas.getByRole('button', { name: 'Hide setup' })
+			).toBeVisible()
+		);
+		expect(canvas.queryByText(/Notifications: /)).toBeNull();
+		expect(canvas.getByText(/silenced/)).toBeVisible();
+	}
+};
+
+export const ConsentSuggestionBrowserOnlyPhoneDe: Story = {
+	tags: ['device-regression'],
+	name: 'Consent e-mail suggestion — only the browser is on — stays in full — phone 390 (DE)',
+	args: { browser: true, requireConsentEmail: true },
+	globals: { ...phone390Globals, ...DE },
+	play: async ({ canvasElement }) => {
+		const canvas = within(canvasElement);
+		const close = await canvas.findByRole('button', {
+			name: 'Einrichtung ausblenden'
+		});
+		await waitFor(() => expect(close).toBeVisible());
+		expect(canvas.queryByText(/Benachrichtigung: /)).toBeNull();
+		expect(
+			canvas.getByRole('button', {
+				name: /Schreiben Sie mir eine E-Mail/
+			})
+		).toBeVisible();
+		expect(close.getBoundingClientRect().right).toBeLessThanOrEqual(390);
 	}
 };

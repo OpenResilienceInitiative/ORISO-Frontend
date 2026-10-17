@@ -232,3 +232,78 @@ it('shows the setup in full again after "ändern", also after a reload', () => {
 		screen.getByRole('button', { name: /notificationChoice.email / })
 	).toBeTruthy();
 });
+
+const firstResponse = (...ids: string[]) =>
+	SYSTEM_NOTIFICATION_PREFIX +
+	JSON.stringify({
+		type: 'FIRST_RESPONSE',
+		version: 1,
+		bausteine: ids.map((id) =>
+			id === 'emailNotification'
+				? {
+						id,
+						body: 'You can add an email address.',
+						action: { kind: 'ADD_EMAIL', label: 'Add email' }
+					}
+				: { id, headline: `Headline ${id}`, body: `Body ${id}` }
+		)
+	});
+
+it('keeps the one-line summary and "change" on the persisted invitation once a channel is reachable (ORISO-Frontend#1767 review)', () => {
+	setup(
+		true,
+		'AGENCY_COUNSELLING',
+		true,
+		firstResponse('whoReadsAlong', 'emailNotification'),
+		'$first-answer'
+	);
+	expect(screen.getByText('You can add an email address.')).toBeTruthy();
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+	// Still no automatic invitation: the choices stay hidden behind "change".
+	expect(
+		screen.queryByRole('button', { name: /notificationChoice.email / })
+	).toBeNull();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	);
+	expect(
+		screen.getByRole('button', { name: /notificationChoice.email / })
+	).toBeTruthy();
+});
+
+it('keeps the one-line summary and "change" on a persisted channel choice once a channel is reachable (ORISO-Frontend#1767 review)', () => {
+	setup(
+		true,
+		'AGENCY_COUNSELLING',
+		true,
+		firstResponse('whoReadsAlong', 'notificationChoice'),
+		'$first-answer'
+	);
+	expect(screen.getByText('Body notificationChoice')).toBeTruthy();
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeTruthy();
+});
+
+it('shows no summary on a persisted message when the tenant offers no channel at all', () => {
+	setup(
+		false,
+		'AGENCY_COUNSELLING',
+		false,
+		firstResponse('whoReadsAlong', 'notificationChoice'),
+		'$first-answer'
+	);
+	expect(
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeNull();
+});

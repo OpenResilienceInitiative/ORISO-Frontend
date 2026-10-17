@@ -26,6 +26,12 @@ interface NotificationSetupCollapseProps {
 	 * button): show it in full even if a channel is already active.
 	 */
 	startOpen?: boolean;
+	/**
+	 * The suggestion is specifically the consent e-mail (re-assignment
+	 * notices): only that e-mail completes it. Regular message e-mails or a
+	 * browser channel alone leave the suggestion in full, as before.
+	 */
+	requireConsentEmail?: boolean;
 	isEmailEnabled?: boolean;
 	isBrowserEnabled?: boolean;
 	/** Short copy above the choices; shown with them, gone when collapsed. */
@@ -56,6 +62,7 @@ type ActiveChannels = 'none' | 'email' | 'browser' | 'both';
 export const NotificationSetupCollapse = ({
 	messageId,
 	startOpen = false,
+	requireConsentEmail = false,
 	isEmailEnabled = true,
 	isBrowserEnabled = true,
 	copy,
@@ -64,8 +71,15 @@ export const NotificationSetupCollapse = ({
 	const { t } = useTranslation();
 	const { userData } = useContext(UserDataContext);
 	const accountId = userData?.userId;
-	const { emailActive, browserActive, browserSilenced } =
-		useNotificationChannels(isEmailEnabled, isBrowserEnabled);
+	const {
+		emailActive: messageEmailActive,
+		consentEmailActive,
+		browserActive,
+		browserSilenced
+	} = useNotificationChannels(isEmailEnabled, isBrowserEnabled);
+	const emailActive = requireConsentEmail
+		? consentEmailActive
+		: messageEmailActive;
 	// A silenced browser does not reach anyone: the setup stays in full.
 	const browserReachable = browserActive && !browserSilenced;
 	const active: ActiveChannels =
@@ -101,8 +115,10 @@ export const NotificationSetupCollapse = ({
 		setBothPending(false);
 	}, [accountId, messageId]);
 
-	const collapsed =
-		!opened && (dismissed || (active !== 'none' && !bothPending));
+	// What ends the card's job: any reachable channel, or for the consent
+	// suggestion the consent e-mail itself.
+	const done = requireConsentEmail ? emailActive : active !== 'none';
+	const collapsed = !opened && (dismissed || (done && !bothPending));
 
 	const noteFocus = (toSummary: boolean) => {
 		const focusInside = !!root.current?.contains(document.activeElement);
@@ -120,15 +136,11 @@ export const NotificationSetupCollapse = ({
 		// that was merely opened while a channel was already active stays open.
 		// The end of "set up both" counts as that choice, even though the
 		// channel changed one step earlier while the message was still waiting.
-		if (
-			opened &&
-			active !== 'none' &&
-			(bothDone || (changed && !bothPending))
-		) {
+		if (opened && done && (bothDone || (changed && !bothPending))) {
 			noteFocus(true);
 			setOpened(false);
 		}
-	}, [active, bothPending, opened]);
+	}, [active, done, bothPending, opened]);
 
 	useEffect(() => {
 		if (collapsed && focusChangeNext.current) {

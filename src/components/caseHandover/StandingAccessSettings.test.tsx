@@ -242,37 +242,91 @@ it('preserves a started channel setup after email readback becomes active so BOT
 		browserActive: false
 	});
 	view.rerender(<StandingAccessSettings sessionId={1} />);
-	expect(
-		screen.getByRole('button', { name: 'Notification setup' })
-	).toBeTruthy();
+	// The e-mail is on, so the card is a one-line summary now; the setup stays
+	// mounted (hidden) so a BOTH flow can go on (waiting for its browser step
+	// is covered with the real setup in NotificationSetupMessage.test).
+	expect(screen.getByText('Notification setup')).toBeTruthy();
 });
-it('draws the e-mail suggestion as a one-line summary when another channel already reaches the person', async () => {
+it('keeps the e-mail suggestion in full while only another channel reaches the person (ORISO-Frontend#1767 review)', async () => {
 	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
 		preference(true)
 	);
-	// Default mock: browser channel active, consent e-mail not.
-	const view = render(
-		<StandingAccessSettings sessionId={1} messageId="$accepted-1" />
-	);
+	// Default mock: browser channel active, consent e-mail not. The suggestion
+	// is about the consent e-mail, so the browser alone does not finish it.
+	render(<StandingAccessSettings sessionId={1} />);
 	open();
 	fireEvent.click(await screen.findByRole('switch'));
 
 	expect(
-		await screen.findByRole('button', {
-			name: 'erstantwort.notificationSummary.changeLabel'
-		})
+		await screen.findByRole('button', { name: 'Notification setup' })
 	).toBeTruthy();
 	expect(
-		screen.queryByRole('button', { name: 'Notification setup' })
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
 	).toBeNull();
+});
+it('keeps the e-mail suggestion in full while regular message e-mails are on but consent e-mails are not', async () => {
+	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
+		preference(true)
+	);
+	channels.mockReturnValue({
+		emailActive: true,
+		consentEmailActive: false,
+		browserActive: false
+	});
+	render(<StandingAccessSettings sessionId={1} />);
+	open();
+	fireEvent.click(await screen.findByRole('switch'));
+
+	expect(
+		await screen.findByRole('button', { name: 'Notification setup' })
+	).toBeTruthy();
+	expect(
+		screen.queryByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
+	).toBeNull();
+});
+it('draws the e-mail suggestion as a one-line summary once the consent e-mail is on, and can be closed', async () => {
+	get.mockResolvedValueOnce(preference()).mockResolvedValueOnce(
+		preference(true)
+	);
+	channels.mockReturnValue({
+		emailActive: false,
+		consentEmailActive: false,
+		browserActive: false
+	});
+	const view = render(<StandingAccessSettings sessionId={1} />);
+	open();
+	fireEvent.click(await screen.findByRole('switch'));
+	fireEvent.click(
+		await screen.findByRole('button', { name: 'Notification setup' })
+	);
+	channels.mockReturnValue({
+		emailActive: true,
+		consentEmailActive: true,
+		browserActive: false
+	});
+	view.rerender(<StandingAccessSettings sessionId={1} />);
 
 	fireEvent.click(
-		screen.getByRole('button', {
+		await screen.findByRole('button', {
 			name: 'erstantwort.notificationSummary.changeLabel'
 		})
 	);
 	expect(
 		screen.getByRole('button', { name: 'Notification setup' })
+	).toBeTruthy();
+	fireEvent.click(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.dismiss'
+		})
+	);
+	expect(
+		screen.getByRole('button', {
+			name: 'erstantwort.notificationSummary.changeLabel'
+		})
 	).toBeTruthy();
 	view.unmount();
 });

@@ -252,6 +252,7 @@ export const StandingAccessSettings = ({
 				policy.emailAllowed &&
 				(setupStarted || !consentEmailActive) && (
 					<NotificationSetupMessage
+						requireConsentEmail
 						onStart={() => setSetupStarted(true)}
 						isEmailEnabled={policy.emailAllowed}
 						isBrowserEnabled={policy.browserAllowed}
