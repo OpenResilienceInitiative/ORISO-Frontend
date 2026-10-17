@@ -118,6 +118,59 @@ describe('useCallTimelineState', () => {
 		expect(loadState).toHaveBeenCalledTimes(1);
 	});
 
+	it('discards a response built from a revision the timeline has left behind', async () => {
+		/*
+		 * `apiCallState` answers by spreading the revision it was asked
+		 * about, because the server sends authoritative timings and state but
+		 * not always the names. So if a membership edit lands while the read
+		 * is in flight, the answer carries the OLD attendance — and a
+		 * terminal answer would stop the retries that could ever correct it,
+		 * leaving the card permanently showing fewer attendees than the
+		 * timeline already knows about.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const joined = runningCall({
+			participants: [{ userId: '@late:example', displayName: 'Late' }]
+		});
+		let release: (value: CallLifecycleMessage) => void = () => undefined;
+		const loadState = vi
+			.fn()
+			.mockImplementationOnce(
+				() =>
+					new Promise<CallLifecycleMessage>((resolve) => {
+						release = resolve;
+					})
+			)
+			.mockResolvedValue({
+				...joined,
+				state: 'ended',
+				durationSeconds: 42
+			});
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+
+		// Somebody joins while the first read is still out.
+		rerender({ call: joined });
+		await act(async () => {
+			release({ ...initial, state: 'ended', durationSeconds: 42 });
+		});
+
+		// That answer described the call before they joined, so it is not kept
+		// and the card is not treated as finished.
+		expect(result.current.participants).toEqual(joined.participants);
+
+		// The retry asks about what the card says now, and that answer stands.
+		await act(async () => {
+			await vi.advanceTimersByTimeAsync(20000);
+		});
+		expect(loadState).toHaveBeenCalledTimes(2);
+		expect(result.current.state).toBe('ended');
+		expect(result.current.participants).toEqual(joined.participants);
+	});
+
 	it('retries wrong-identity and disallowed-state responses before accepting completion', async () => {
 		vi.useFakeTimers();
 		const initial = runningCall({ state: 'missed' });

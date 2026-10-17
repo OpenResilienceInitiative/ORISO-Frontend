@@ -6,6 +6,45 @@ import {
 
 const REFRESH_DELAY_MS = 15000;
 
+const sameAttendance = (
+	a: CallLifecycleMessage['participants'] | undefined,
+	b: CallLifecycleMessage['participants'] | undefined
+): boolean => {
+	if (a === b) return true;
+	if (!a || !b || a.length !== b.length) return false;
+	return a.every(
+		(person, index) =>
+			person.userId === b[index].userId &&
+			person.displayName === b[index].displayName
+	);
+};
+
+/**
+ * Whether two revisions of the same card say the same thing about who is there.
+ *
+ * `apiCallState` builds its answer by spreading the revision it was ASKED
+ * about, because the server sends authoritative timings and state but not
+ * always the names. So a response is only safe to store while the timeline
+ * still agrees with the revision that was asked about: if a membership edit
+ * landed while the request was in flight, the response carries the old
+ * attendance and presence, and a terminal answer would stop the retries that
+ * could ever correct it.
+ *
+ * Compared by VALUE, not by object identity. The session rebuilds every
+ * message object on each fetch, so identity changes constantly without
+ * anything having happened — comparing it would make every card re-read on
+ * every incoming chat message, which is the storm the `callKey` above exists
+ * to prevent.
+ */
+const sameTimelineRevision = (
+	a: CallLifecycleMessage,
+	b: CallLifecycleMessage
+): boolean =>
+	a.state === b.state &&
+	a.actorUserId === b.actorUserId &&
+	sameAttendance(a.participants, b.participants) &&
+	sameAttendance(a.present, b.present);
+
 type LoadCallState = (
 	call: CallLifecycleMessage
 ) => Promise<CallLifecycleMessage | null>;
@@ -75,7 +114,12 @@ export function useCallTimelineState(
 			try {
 				const value = await loadState(current);
 				if (!active) return;
-				if (!value) {
+				if (!sameTimelineRevision(latest.current, current)) {
+					// The timeline moved on while this was in flight, so the
+					// answer describes attendance that is already out of date.
+					// Leave `settled` false and ask again about what the card
+					// says now.
+				} else if (!value) {
 					/*
 					 * Nothing on the server to reconcile with: a card written
 					 * before the backend held a record, one whose record is

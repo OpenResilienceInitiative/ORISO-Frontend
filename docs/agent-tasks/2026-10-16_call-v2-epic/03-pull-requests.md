@@ -140,6 +140,14 @@ spotlight all keep working.
 5. Confirm the room **state** of the call room holds no
    `org.oriso.call.identity`. Identity travels in the encrypted timeline
    precisely because Matrix does not encrypt state.
+6. **On a phone, two things no test here can see.** Open a call in portrait
+   and confirm the view rail is on screen at all — it was hidden below
+   660px, and jsdom applies no media queries, so only a browser shows this.
+   Then in the grove at four or more people, click a form close to where it
+   overlaps a neighbour: the click must reach the form you aimed at. The
+   tiles are square and packed until they abut, so the fix is a CSS
+   `pointer-events` rule, and CSS hit-testing is not something jsdom or the
+   screenshot harness can exercise.
 
 ### Not in this branch, deliberately
 

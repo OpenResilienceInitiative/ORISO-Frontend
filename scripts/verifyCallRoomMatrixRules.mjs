@@ -38,8 +38,23 @@
  *      could read earlier timeline events, nobody would need to repeat
  *      themselves.
  *
- * Usage: start a Synapse with open registration, then
+ * Usage. A throwaway Synapse is enough; this is exactly how it was run here,
+ * on a container with no Docker:
+ *
+ *   python3 -m venv /tmp/syn && /tmp/syn/bin/pip install matrix-synapse
+ *   mkdir /tmp/synhome && cd /tmp/synhome
+ *   /tmp/syn/bin/python -m synapse.app.homeserver --server-name oriso.test \
+ *     --config-path homeserver.yaml --generate-config --report-stats=no \
+ *     --data-directory .
+ *   # then in homeserver.yaml: enable_registration: true,
+ *   # enable_registration_without_verification: true, and drop `::1` from
+ *   # listeners[0].bind_addresses if the host has no IPv6.
+ *   /tmp/syn/bin/python -m synapse.app.homeserver --config-path homeserver.yaml
+ *
  *   HS=http://127.0.0.1:8008 node scripts/verifyCallRoomMatrixRules.mjs
+ *
+ * The script waits out Synapse's rate limiter, so the default configuration
+ * needs no loosening beyond registration.
  *
  * No LiveKit, no ORISO backend and no browser: these are plain client-server
  * API calls, which is all the three rules involve.

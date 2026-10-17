@@ -564,3 +564,50 @@ nobody logs in through Keycloak. What now has evidence is the Matrix layer
 underneath the call — the room, its power levels, its history rules and the
 transport the identity rides on. The reviewer plans still carry every step that
 needs two accounts and a deployed fork.
+
+## 12. The fourth review round, and the phone rail that was not there
+
+Six findings, all six real. One of them was mine from the round before, and it
+is the one worth leading with.
+
+### The rail was hidden on exactly the phones it was added for
+
+`@media (max-width: 660px) { .layout { display: none !important } }` — and the
+new `ViewSwitcher` had been given `className={styles.layout}`. So on a portrait
+phone the whole view rail was gone. One advice seeker and one counsellor on a
+phone is the most common call this platform has, and they could not leave
+whatever arrangement was stored. In the same change that routed phone window
+modes through the ORISO arrangements, the only control for them was hidden.
+
+**Nothing in this repository could see it.** jsdom applies no media queries and
+stubs CSS-module class names, so `InCallView.oriso.test.tsx` renders the rail
+and finds it present. The browser harness cannot see it either: it mounts
+`ViewSwitcher` on its own rather than inside `InCallView`'s footer. The CSS rule
+and the component were each correct; only their meeting was wrong.
+
+The rail now has its own class and its own row when the footer reflows — a row
+rather than a slice of the buttons', because below 660px the footer's areas
+become `". buttons buttons buttons ."` with no `layout` column at all, and at
+390px the call buttons already fill two thirds of that row. Upstream's toggle
+stays hidden there, which is right: a two-way grid/spotlight switch is not worth
+the width, while the handoff draws every arrangement at phone size.
+
+And it has a test at the only level where the mistake is visible:
+`InCallView.orisoRail.test.ts` reads the stylesheet. Reading CSS text is not how
+one would normally test a component; it is there because this bug lives between
+a rule and a class name. All three of its assertions fail against the previous
+stylesheet — including one that exists only to stop the check passing by having
+nothing to look at, which is the state the bug was in.
+
+### The other five
+
+| Finding | Verdict |
+| --- | --- |
+| Identities are not re-read after decryption | Half right, fixed anyway. In the embedded build the host decrypts *before* feeding the widget, so the clear type is what arrives — but that is an invariant of the other repository, and the standalone build with the flag has its own client where the sequence is exactly as reported. `useOrisoIdentities` now also listens for `MatrixEventEvent.Decrypted`, as `ReactionsReader` does. |
+| Grove tiles intercept each other's pointer events | Right. The grove has no `clip-path` to put on the root — its shape is a border radius on the face — and `--hover-space-margin: 0` means forms are packed until they abut, overlapping by up to ~12%. The root is no longer a hit target and its children are, so the pointer lands on the form; handlers stay on the root because events still bubble. The Einzelgespräch keeps its clip, which already was not hit-testable. |
+| The spotlight's form is an ellipse | Right, and mine. `.face` fills its tile, which the grove wants; with no shape the radius falls back to `50%`, so a 300×200 spotlight drew a 300×200 oval with the camera stretched into it. Fixed in `OrisoFace` rather than in `SpotlightTile`: "a form with no shape is a circle" is the invariant. |
+| `move` closes over a stale `offer` | Right, and taken further. `offer` arrived as a fresh array literal each render, so `views` changed identity every render and the `useCallback` was memoising over something it could not see change — adding `offer` to the list would have made the memo a no-op while still looking like one. Both ends are memoised now and the `eslint-disable` is gone rather than extended. |
+| A superseded timeline revision can be stored | Right. `apiCallState` answers by spreading the revision it was asked about, so a membership edit landing mid-request leaves the answer carrying the old attendance — and a terminal answer then stops the retries that could correct it. Now compared **by value**, not by object identity: identity changes on every message fetch, and comparing it would have restored the request storm `callKey` exists to prevent. |
+
+Every one of the five has a test that was confirmed to fail against the code as
+it stood before the fix.
