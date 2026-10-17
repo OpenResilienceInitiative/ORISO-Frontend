@@ -622,6 +622,58 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 		expect(personRowsNamed('Client eleven')).toHaveLength(0);
 	});
 
+	it('shows nobody but the eligible colleagues on open: no own clients, not the signed-in counsellor', async () => {
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		expect(personRows()).toHaveLength(4);
+		expect(personRowsNamed('Own client')).toHaveLength(0);
+		expect(personRowsNamed('Herb')).toHaveLength(0);
+	});
+
+	it('offers own clients and the signed-in counsellor once text is typed', async () => {
+		await ready(renderList());
+
+		type('own');
+		await waitFor(() =>
+			expect(personRowsNamed('Own client')).toHaveLength(1)
+		);
+		expect(personRowsNamed('Lisa S.')).toHaveLength(0);
+
+		fireEvent.change(searchbox(), { target: { value: 'herb' } });
+		await waitFor(() => expect(personRowsNamed('Herb')).toHaveLength(1));
+		expect(personRowsNamed('Own client')).toHaveLength(0);
+	});
+
+	it('says that the colleagues are loading while nobody is listed yet', async () => {
+		let finish: (value: { sessions: any[]; total: number }) => void = () =>
+			undefined;
+		http.getCandidates.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finish = resolve;
+				})
+		);
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() =>
+			expect(
+				screen.getByText('sessionList.toolbar.search.peopleLoading')
+			).toBeTruthy()
+		);
+		expect(personRows()).toHaveLength(0);
+
+		finish({ sessions: lisaCases, total: 0 });
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		expect(
+			screen.queryByText('sessionList.toolbar.search.peopleLoading')
+		).toBeNull();
+	});
+
 	it('loads the eligible colleagues once per opening, not on every keystroke', async () => {
 		await ready(renderList());
 
@@ -639,6 +691,34 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 
 		expect(before).toBe(1);
 		expect(blankLoads()).toBe(1);
+	});
+
+	it('loads the eligible colleagues again on the next opening, once', async () => {
+		const view = await ready(renderList());
+		const blankLoads = () =>
+			http.getCandidates.mock.calls.filter(
+				([params]) => params.query === ''
+			).length;
+
+		openSearch();
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		expect(blankLoads()).toBe(1);
+
+		fireEvent.mouseDown(
+			view.container.querySelector('.sessionsList__scrollContainer')!
+		);
+		expect(
+			screen.queryByTestId('session-search-results-scroll')
+		).toBeNull();
+		expect(blankLoads()).toBe(1);
+
+		openSearch();
+		await waitFor(() => expect(blankLoads()).toBe(2));
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		type('lis');
+		fireEvent.change(searchbox(), { target: { value: '' } });
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		expect(blankLoads()).toBe(2);
 	});
 
 	it.each(['Berater:in', 'counsellor'])(
@@ -682,7 +762,10 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 				)
 			).toBeTruthy()
 		);
-		expect(personRowsNamed('Patty B.')).toHaveLength(0);
+		expect(personRows()).toHaveLength(0);
+		expect(
+			screen.getByText('sessionList.toolbar.search.emptyPeople')
+		).toBeTruthy();
 		expect(
 			screen.queryByText('sessionList.toolbar.search.peopleLoadError')
 		).toBeNull();
@@ -723,6 +806,48 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 			expect(listText(view)).toContain('Client thirtyone')
 		);
 		expect(listText(view)).not.toContain('Client eleven');
+		expect(listText(view)).not.toContain('Own client');
+	});
+
+	it('notes that more cases exist when the load stops at its limit', async () => {
+		const bulk = Array.from({ length: 1000 }, (_, index) =>
+			makeCase(
+				1000 + index,
+				`Bulk client ${index}`,
+				lisa as any,
+				SPRINGFIELD,
+				50001
+			)
+		);
+		http.getCandidates.mockImplementation(
+			async ({ offset = 0, count = 15 }) => ({
+				sessions: bulk.slice(offset, offset + count),
+				total: 0
+			})
+		);
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() =>
+			expect(
+				screen.getByTestId('session-search-people-capped')
+			).toBeTruthy()
+		);
+		expect(http.getCandidates).toHaveBeenCalledTimes(20);
+		expect(
+			screen.getByText('sessionList.toolbar.search.handoverPeopleCapped')
+		).toBeTruthy();
+		expect(personRowsNamed('Lisa S.')).toHaveLength(1);
+	});
+
+	it('does not note a limit when all cases were loaded', async () => {
+		await ready(renderList());
+
+		openSearch();
+
+		await waitFor(() => expect(personRowsNamed('Lisa S.')).toHaveLength(1));
+		expect(screen.queryByTestId('session-search-people-capped')).toBeNull();
 	});
 });
 

@@ -77,6 +77,13 @@ interface SessionsListToolbarProps {
 	 */
 	searchPeopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
 	searchPeopleHint?: string;
+	/** Says that the eligible colleagues were loaded only up to a limit. */
+	searchPeopleCappedNote?: string;
+	/**
+	 * Case handover: a blank search lists only the eligible colleagues; own
+	 * clients and the signed-in counsellor need a search text (FE#1152).
+	 */
+	searchPeopleEligibleOnlyWhenBlank?: boolean;
 	/** Told whenever the search menu opens or closes. */
 	onSearchOpenChange?: (open: boolean) => void;
 	selectedPersonIds?: string[];
@@ -328,6 +335,8 @@ export const SessionsListToolbar = ({
 	searchPeopleResults = [],
 	searchPeopleStatus = 'idle',
 	searchPeopleHint,
+	searchPeopleCappedNote,
+	searchPeopleEligibleOnlyWhenBlank = false,
 	onSearchOpenChange,
 	selectedPersonIds = [],
 	onSelectedPersonIdsChange,
@@ -393,8 +402,11 @@ export const SessionsListToolbar = ({
 	 * counselling centre narrow them. Paging lives in the panel.
 	 */
 	const foundPeople = React.useMemo(
-		() => filterSearchPeople(searchPeopleResults, searchValue),
-		[searchPeopleResults, searchValue]
+		() =>
+			filterSearchPeople(searchPeopleResults, searchValue, {
+				eligibleOnlyWhenBlank: searchPeopleEligibleOnlyWhenBlank
+			}),
+		[searchPeopleEligibleOnlyWhenBlank, searchPeopleResults, searchValue]
 	);
 	const filteredPeople = React.useMemo(
 		() =>
@@ -824,6 +836,7 @@ export const SessionsListToolbar = ({
 						people={filteredPeople}
 						peopleStatus={searchPeopleStatus}
 						peopleHint={searchPeopleHint}
+						peopleCappedNote={searchPeopleCappedNote}
 						selectedPersonIds={selectedPersonIds}
 						onPersonToggle={(personId) => {
 							// The typed text stays (FE#1725 US3).

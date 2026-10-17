@@ -11,7 +11,11 @@ import {
 } from './sessionToolbarFilters';
 import { buildExtendedSession } from '../../globalState/helpers/stateHelpers';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone390Globals,
+	tablet820Globals
+} from '../message/messageStoryShell';
 import {
 	APP_ORISO_CHAT_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
@@ -125,7 +129,15 @@ function SessionsListToolbarPlayground({
 				]}
 				selectedAgencyId={selectedAgencyId}
 				onSelectedAgencyIdChange={setSelectedAgencyId}
-				searchPeopleResults={searchPeopleResults}
+				searchPeopleResults={
+					showHandoverHint
+						? searchPeopleResults.map((person) => ({
+								...person,
+								eligible: person.role === 'consultant'
+							}))
+						: searchPeopleResults
+				}
+				searchPeopleEligibleOnlyWhenBlank={showHandoverHint}
 				searchPeopleStatus="ready"
 				searchPeopleHint={
 					showHandoverHint
@@ -263,31 +275,53 @@ export const SearchPanelOpen: Story = {
 	}
 };
 
-/** FE#1152 — opening the search lists people and says why a colleague may be missing. */
+/**
+ * FE#1152 — opening the search lists only the eligible colleagues, no
+ * clients, and says why a colleague may be missing. Typing brings the
+ * other people back.
+ */
+const expectHandoverHintOnOpen = async (canvasElement: HTMLElement) => {
+	const canvas = within(canvasElement);
+	const searchbox = canvas.getByRole('searchbox');
+	await userEvent.click(searchbox);
+	await expect(searchbox).toHaveValue('');
+	await expect(
+		await canvas.findByTestId('session-search-people-hint')
+	).toBeVisible();
+	await expect(
+		await canvas.findByRole('checkbox', { name: /Träger Admins Caritas/ })
+	).toBeVisible();
+	await expect(canvas.getAllByRole('checkbox')).toHaveLength(1);
+	await userEvent.type(searchbox, 'Alpaka');
+	await expect(
+		await canvas.findByRole('checkbox', { name: /Sanftes Alpaka Kala/ })
+	).toBeVisible();
+};
+
 export const SearchOpensWithHandoverHint: Story = {
 	render: () => <SessionsListToolbarPlayground showHandoverHint />,
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		const searchbox = canvas.getByRole('searchbox');
-		await userEvent.click(searchbox);
-		await expect(searchbox).toHaveValue('');
-		await expect(
-			await canvas.findByTestId('session-search-people-hint')
-		).toBeVisible();
-	}
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
 };
 
 export const SearchOpensWithHandoverHintMobile390: Story = {
 	name: 'Search opens with handover hint, phone 390',
 	globals: phone390Globals,
 	render: () => <SessionsListToolbarPlayground showHandoverHint />,
-	play: async ({ canvasElement }) => {
-		const canvas = within(canvasElement);
-		await userEvent.click(canvas.getByRole('searchbox'));
-		await expect(
-			await canvas.findByTestId('session-search-people-hint')
-		).toBeVisible();
-	}
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
+};
+
+export const SearchOpensWithHandoverHintTablet820: Story = {
+	name: 'Search opens with handover hint, tablet 820',
+	globals: tablet820Globals,
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
+};
+
+export const SearchOpensWithHandoverHintDesktop1440: Story = {
+	name: 'Search opens with handover hint, desktop 1440',
+	globals: desktop1440Globals,
+	render: () => <SessionsListToolbarPlayground showHandoverHint />,
+	play: ({ canvasElement }) => expectHandoverHintOnOpen(canvasElement)
 };
 
 /** FE#1725 — picking a person keeps the typed text and the panel open. */

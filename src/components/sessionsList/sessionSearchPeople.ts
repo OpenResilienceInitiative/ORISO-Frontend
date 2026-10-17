@@ -52,6 +52,11 @@ export interface SessionSearchPersonResult {
 	sessionKeys: string[];
 	/** Lower-case haystack: names, role, agency, postcodes, topics. */
 	searchText: string;
+	/**
+	 * A colleague whose cases the signed-in counsellor may take over
+	 * (FE#1152). Only these are listed while the search text is blank.
+	 */
+	eligible?: boolean;
 }
 
 export type SessionToolbarPair = {
@@ -274,7 +279,9 @@ export const sessionMatchesSearchText = (
 };
 
 /**
- * Narrows the People panel. A role word lists everyone with that role; any
+ * Narrows the People panel. A blank query lists everyone, or with
+ * `eligibleOnlyWhenBlank` only the eligible colleagues. A role word lists
+ * everyone with that role; any
  * other text matches names, role, agency, and the person's postcodes/topics.
  * Selection state never removes rows (JOB7).
  */
@@ -284,10 +291,23 @@ export function filterSearchPeople<
 		subtitle: string;
 		role?: SessionSearchPersonRole;
 		searchText?: string;
+		eligible?: boolean;
 	}
->(people: T[], query: string): T[] {
+>(
+	people: T[],
+	query: string,
+	options: {
+		/**
+		 * A blank query lists only the eligible colleagues (FE#1152); own
+		 * clients and the signed-in counsellor need a search text.
+		 */
+		eligibleOnlyWhenBlank?: boolean;
+	} = {}
+): T[] {
 	if (!query.trim()) {
-		return people;
+		return options.eligibleOnlyWhenBlank
+			? people.filter((entry) => entry.eligible)
+			: people;
 	}
 	const role = roleOfSearchWord(query);
 	if (role) {
@@ -373,7 +393,8 @@ export function buildSearchPeopleResults(
 		/**
 		 * Cases the signed-in counsellor may take over (blank candidates
 		 * query, FE#1152). Only their counsellors become rows, never the
-		 * clients, and only these colleagues are offered without a session.
+		 * clients; these rows are marked `eligible`, and only they are
+		 * listed while the search text is blank.
 		 */
 		eligibleCases?: ListItemInterface[];
 	} = {}
@@ -415,7 +436,8 @@ export function buildSearchPeopleResults(
 		agencyId: number | undefined,
 		agencyName: string | undefined,
 		sessionKey?: string,
-		sessionParts?: string
+		sessionParts?: string,
+		eligible = false
 	) => {
 		const key = personKey('consultant', consultant.consultantId, agencyId);
 		const isMe =
@@ -442,6 +464,8 @@ export function buildSearchPeopleResults(
 			sessionKey,
 			sessionParts
 		);
+		// The signed-in counsellor is never a colleague to take over from.
+		if (eligible && !isMe) entry.eligible = true;
 		entry.internalName ||=
 			readable(internalNameOf(consultant)) || undefined;
 		entry.agencyName ||= agencyName;
@@ -454,7 +478,8 @@ export function buildSearchPeopleResults(
 		agencyId: number | undefined,
 		agencyName: string | undefined,
 		sessionKey: string | undefined,
-		sessionParts: string
+		sessionParts: string,
+		eligible = false
 	) => {
 		const consultant = raw.consultant as ConsultantLike | undefined;
 		if (!consultant) return;
@@ -470,7 +495,8 @@ export function buildSearchPeopleResults(
 			agencyId,
 			agencyName,
 			sessionKey,
-			sessionParts
+			sessionParts,
+			eligible
 		);
 	};
 
@@ -526,7 +552,8 @@ export function buildSearchPeopleResults(
 			agencyId,
 			agencyName,
 			undefined,
-			sessionPartsOf(raw)
+			sessionPartsOf(raw),
+			true
 		);
 	});
 

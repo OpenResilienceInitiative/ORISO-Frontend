@@ -4138,7 +4138,8 @@
 				"emptyPeople": "Eşleşen kişi bulunamadı.",
 				"peopleLoading": "Meslektaşlar yükleniyor …",
 				"peopleLoadError": "Meslektaşlar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
-				"handoverPeopleHint": "Burada yalnızca davalarını «Erişim talep et» ile devralabileceğiniz meslektaşlar gösterilir. Bu, bölümünüze ve konularınıza bağlıdır.",
+				"handoverPeopleHint": "Burada yalnızca vakalarını «Erişim talep et» ile devralabileceğiniz meslektaşlar gösterilir. Bu, bölümünüze ve konularınıza bağlıdır.",
+				"handoverPeopleCapped": "Yüklenebilenden daha fazla vaka var – lütfen aramayı daraltın.",
 				"emptyTypes": "Kullanılabilir sohbet türü yok.",
 				"emptyTopics": "Danışma merkezleriniz için konu bulunamadı.",
 				"tabs": {

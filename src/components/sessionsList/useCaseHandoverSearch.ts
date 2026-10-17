@@ -41,7 +41,11 @@ export const mergeListItems = (...lists: ListItemInterface[][]) => {
 	return merged;
 };
 
-/** Every candidate page for one query (FE#1725 US2: all of her cases). */
+/**
+ * Every candidate page for one query (FE#1725 US2: all of her cases).
+ * `capped` is set when the page limit stopped the load while more cases
+ * may exist.
+ */
 const fetchAllCandidates = async (query: string, archived: boolean) => {
 	const found: ListItemInterface[] = [];
 	for (let page = 0; page < CANDIDATE_MAX_PAGES; page++) {
@@ -57,10 +61,10 @@ const fetchAllCandidates = async (query: string, archived: boolean) => {
 			sessions.length < CANDIDATE_PAGE_SIZE ||
 			(reachedTotal && found.length >= total)
 		) {
-			break;
+			return { cases: found, capped: false };
 		}
 	}
-	return found;
+	return { cases: found, capped: true };
 };
 
 interface CaseHandoverSearchOptions {
@@ -107,12 +111,15 @@ export const useCaseHandoverSearch = ({
 	const [eligible, setEligible] = useState<{
 		archived: boolean;
 		cases: ListItemInterface[];
+		/** The page limit stopped the load; more cases may exist. */
+		capped: boolean;
 		status: EligibleColleaguesStatus;
 	} | null>(null);
 	// What was loaded for the other archive tab does not count.
 	const eligibleNow = eligible?.archived === archived ? eligible : null;
 	const eligibleCases = eligibleNow?.cases ?? NO_CASES;
 	const eligibleStatus = eligibleNow?.status ?? 'idle';
+	const eligibleCapped = eligibleNow?.capped ?? false;
 
 	useEffect(() => {
 		const trimmed = query.trim();
@@ -159,16 +166,21 @@ export const useCaseHandoverSearch = ({
 		setEligible((prev) =>
 			prev?.archived === archived && prev.status !== 'error'
 				? prev
-				: { archived, cases: [], status: 'loading' }
+				: { archived, cases: [], capped: false, status: 'loading' }
 		);
 		fetchAllCandidates('', archived)
-			.then((cases) => {
+			.then(({ cases, capped }) => {
 				if (!cancelled)
-					setEligible({ archived, cases, status: 'ready' });
+					setEligible({ archived, cases, capped, status: 'ready' });
 			})
 			.catch(() => {
 				if (!cancelled)
-					setEligible({ archived, cases: [], status: 'error' });
+					setEligible({
+						archived,
+						cases: [],
+						capped: false,
+						status: 'error'
+					});
 			});
 		return () => {
 			cancelled = true;
@@ -213,8 +225,9 @@ export const useCaseHandoverSearch = ({
 				const person = known.get(id);
 				if (!person) return;
 				Promise.all(
-					lookupTermsOf(person).map((term) =>
-						fetchAllCandidates(term, archived)
+					lookupTermsOf(person).map(
+						async (term) =>
+							(await fetchAllCandidates(term, archived)).cases
 					)
 				)
 					.then((lists) =>
@@ -256,6 +269,7 @@ export const useCaseHandoverSearch = ({
 		candidateSessions,
 		eligibleCases,
 		eligibleStatus,
+		eligibleCapped,
 		selectedPersonIds: useMemo(
 			() => pickedPeople.map((person) => person.id),
 			[pickedPeople]

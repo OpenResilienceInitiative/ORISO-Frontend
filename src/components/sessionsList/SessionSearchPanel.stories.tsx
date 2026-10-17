@@ -15,7 +15,11 @@ import {
 	CASE_HANDOVER_SEARCH_FIGMA_URL,
 	ORISO_M3_FIGMA_URL
 } from '../storybookDesignLinks';
-import { phone390Globals } from '../message/messageStoryShell';
+import {
+	desktop1440Globals,
+	phone390Globals,
+	tablet820Globals
+} from '../message/messageStoryShell';
 import de from '../../resources/i18n/de/common.json';
 import en from '../../resources/i18n/en/common.json';
 import './sessionsList.styles.scss';
@@ -136,6 +140,7 @@ type PlaygroundProps = {
 	initialSelectedAgencyId?: string | null;
 	peopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
 	peopleHint?: string;
+	peopleCappedNote?: string;
 };
 
 function SessionSearchPanelPlayground({
@@ -150,7 +155,8 @@ function SessionSearchPanelPlayground({
 	agencies: agencyOptions = agencies,
 	initialSelectedAgencyId = null,
 	peopleStatus,
-	peopleHint
+	peopleHint,
+	peopleCappedNote
 }: PlaygroundProps) {
 	const [tab, setTab] = useState<SessionSearchTab>(initialTab);
 	const [selectedPersonIds, setSelectedPersonIds] = useState<string[]>(
@@ -177,6 +183,7 @@ function SessionSearchPanelPlayground({
 					people={peopleOptions}
 					peopleStatus={peopleStatus}
 					peopleHint={peopleHint}
+					peopleCappedNote={peopleCappedNote}
 					selectedPersonIds={selectedPersonIds}
 					onPersonToggle={(id) =>
 						setSelectedPersonIds((prev) =>
@@ -450,6 +457,34 @@ export const HandoverEligibleColleagues390: Story = {
 		expectEligibleColleaguesOnly(canvasElement, hintDe)
 };
 
+export const HandoverEligibleColleagues820: Story = {
+	name: 'Handover — eligible colleagues, tablet 820 (DE)',
+	globals: tablet820Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, hintDe)
+};
+
+export const HandoverEligibleColleagues1440: Story = {
+	name: 'Handover — eligible colleagues, desktop 1440 (DE)',
+	globals: desktop1440Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectEligibleColleaguesOnly(canvasElement, hintDe)
+};
+
 const expectNobodyEligibleHint = async (
 	canvasElement: HTMLElement,
 	empty: string,
@@ -502,6 +537,57 @@ export const HandoverNobodyEligibleHint390: Story = {
 	),
 	play: ({ canvasElement }) =>
 		expectNobodyEligibleHint(canvasElement, labelsDe.emptyPeople, hintDe)
+};
+
+export const HandoverNobodyEligibleHint820: Story = {
+	name: 'Handover — nobody eligible, hint, tablet 820 (DE)',
+	globals: tablet820Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={[]}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectNobodyEligibleHint(canvasElement, labelsDe.emptyPeople, hintDe)
+};
+
+export const HandoverNobodyEligibleHint1440: Story = {
+	name: 'Handover — nobody eligible, hint, desktop 1440 (DE)',
+	globals: desktop1440Globals,
+	render: () => (
+		<SessionSearchPanelPlayground
+			people={[]}
+			peopleStatus="ready"
+			peopleHint={hintDe}
+		/>
+	),
+	play: ({ canvasElement }) =>
+		expectNobodyEligibleHint(canvasElement, labelsDe.emptyPeople, hintDe)
+};
+
+/** The load stopped at its limit: the list may be incomplete, and says so. */
+export const HandoverColleaguesCapped: Story = {
+	name: 'Handover — more cases exist, refine the search (EN)',
+	render: () => (
+		<SessionSearchPanelPlayground
+			labels={labelsEn}
+			people={eligibleColleagues}
+			peopleStatus="ready"
+			peopleHint={hintEn}
+			peopleCappedNote={
+				en.sessionList.toolbar.search.handoverPeopleCapped
+			}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expect(
+			await within(canvasElement).findByTestId(
+				'session-search-people-capped'
+			)
+		).toHaveTextContent(en.sessionList.toolbar.search.handoverPeopleCapped);
+	}
 };
 
 export const HandoverColleaguesLoading: Story = {

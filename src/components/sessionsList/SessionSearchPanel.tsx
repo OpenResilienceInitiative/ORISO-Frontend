@@ -52,6 +52,8 @@ export interface SessionSearchPersonOption {
 	avatar?: AvatarIdentity;
 	/** Lower-case haystack for the shared text match. */
 	searchText?: string;
+	/** A colleague whose cases may be taken over (FE#1152). */
+	eligible?: boolean;
 }
 
 /** A counselling centre the signed-in counsellor belongs to (#1195 JOB1). */
@@ -107,6 +109,8 @@ interface SessionSearchPanelProps {
 	peopleStatus?: 'idle' | 'loading' | 'ready' | 'error';
 	/** Why a colleague may be missing (FE#1152); omitted outside a handover. */
 	peopleHint?: string;
+	/** The eligible colleagues were loaded only up to a limit (FE#1152). */
+	peopleCappedNote?: string;
 	selectedPersonIds: string[];
 	onPersonToggle: (id: string) => void;
 	types: SessionSearchTypeOption[];
@@ -227,6 +231,7 @@ export const SessionSearchPanel = ({
 	people,
 	peopleStatus = 'idle',
 	peopleHint,
+	peopleCappedNote,
 	selectedPersonIds,
 	onPersonToggle,
 	types,
@@ -425,6 +430,16 @@ export const SessionSearchPanel = ({
 						{labels.peopleLoadError}
 					</div>
 				)}
+				{activeTab === 'people' &&
+					peopleStatus === 'ready' &&
+					peopleCappedNote && (
+						<div
+							className="sessionsListToolbar__searchNotice"
+							data-testid="session-search-people-capped"
+						>
+							{peopleCappedNote}
+						</div>
+					)}
 				{activeTab === 'people' &&
 					peopleStatus !== 'error' &&
 					peopleHint && (

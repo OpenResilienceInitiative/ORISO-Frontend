@@ -189,6 +189,17 @@ describe('filterSearchPeople — query narrowing', () => {
 		expect(filterSearchPeople(roster, '')).toHaveLength(2);
 	});
 
+	it('lists only the eligible colleagues for a blank query when asked to, all of them once text is typed (FE#1152)', () => {
+		const eligible = { ...roster[1], eligible: true };
+		const people = [roster[0], eligible];
+		const only = { eligibleOnlyWhenBlank: true };
+
+		expect(filterSearchPeople(people, '', only)).toEqual([eligible]);
+		expect(filterSearchPeople(people, '   ', only)).toEqual([eligible]);
+		expect(filterSearchPeople(people, 'iene', only)).toEqual([roster[0]]);
+		expect(filterSearchPeople([roster[0]], '', only)).toEqual([]);
+	});
+
 	it('narrows to matches when a query is typed', () => {
 		expect(filterSearchPeople(roster, 'ingrid')).toEqual([roster[1]]);
 	});
@@ -286,6 +297,51 @@ describe('buildSearchPeopleResults — eligible colleagues (FE#1152)', () => {
 		});
 
 		expect(filterSearchPeople([person], '30232')).toEqual([person]);
+	});
+
+	it('marks the colleagues of eligible cases, not the own list nor the signed-in counsellor', () => {
+		const own = sessionWithBoth();
+		const mine = {
+			...sessionWithBoth(),
+			consultant: { consultantId: 'me-1', username: 'me' }
+		} as unknown as ListItemInterface;
+		const people = buildSearchPeopleResults(
+			[
+				{ raw: own, extended: {} as any },
+				{ raw: mine, extended: {} as any }
+			],
+			labels,
+			{
+				currentUser: { id: 'me-1', name: 'Me' },
+				eligibleCases: [
+					{
+						...eligibleCase('client_a', 1),
+						consultant: {
+							consultantId: 'c-2',
+							username: 'lisa',
+							displayName: 'Lisa S.'
+						}
+					} as unknown as ListItemInterface,
+					mine
+				]
+			}
+		);
+
+		expect(
+			people.filter((entry) => entry.eligible).map((entry) => entry.id)
+		).toEqual(['consultant:c-2:77']);
+	});
+
+	it('keeps a colleague eligible when she is also in the own list', () => {
+		const people = buildSearchPeopleResults(
+			[{ raw: sessionWithBoth(), extended: {} as any }],
+			labels,
+			{ eligibleCases: [eligibleCase('client_a', 1)] }
+		);
+
+		expect(
+			people.find((entry) => entry.id === 'consultant:c-1:77')?.eligible
+		).toBe(true);
 	});
 
 	it('merges the colleague with the same person from the own list', () => {

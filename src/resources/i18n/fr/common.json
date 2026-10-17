@@ -4138,7 +4138,8 @@
 				"emptyPeople": "Aucune personne correspondante trouvée.",
 				"peopleLoading": "Chargement des collègues …",
 				"peopleLoadError": "Impossible de charger les collègues. Veuillez réessayer plus tard.",
-				"handoverPeopleHint": "Seuls les collègues dont vous pouvez reprendre les dossiers via « Demander l'accès » apparaissent ici. Cela dépend de votre service et de vos thèmes.",
+				"handoverPeopleHint": "Seuls les collègues dont vous pouvez reprendre les dossiers via « Demander l'accès » apparaissent ici. Cela dépend de votre département et de vos thèmes.",
+				"handoverPeopleCapped": "Il existe plus de dossiers que ceux chargés – veuillez affiner la recherche.",
 				"emptyTypes": "Aucun type de chat disponible.",
 				"emptyTopics": "Aucun sujet trouvé pour vos services de consultation.",
 				"tabs": {

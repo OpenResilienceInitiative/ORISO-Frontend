@@ -2344,6 +2344,17 @@ export const SessionsList = ({
 								)
 							: undefined
 					}
+					searchPeopleCappedNote={
+						showConsultantToolbarActions &&
+						caseHandoverSearch.eligibleCapped
+							? translate(
+									'sessionList.toolbar.search.handoverPeopleCapped'
+								)
+							: undefined
+					}
+					searchPeopleEligibleOnlyWhenBlank={
+						showConsultantToolbarActions
+					}
 					onSearchOpenChange={setSessionToolbarSearchOpen}
 					selectedPersonIds={sessionToolbarSelectedPeople}
 					onSelectedPersonIdsChange={handleSelectedPeopleChange}
