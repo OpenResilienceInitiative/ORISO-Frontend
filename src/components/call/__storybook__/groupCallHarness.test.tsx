@@ -17,10 +17,12 @@ import { I18nextProvider, initReactI18next } from 'react-i18next';
 import englishCatalogue from '../../../resources/i18n/en/common.json';
 
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
+import { UserDataContext } from '../../../globalState';
 import { callManager } from '../../../services/CallManager';
 import { GroupCallWidget } from '../GroupCallWidget';
 import {
 	FAKE_CALL_ID,
+	FAKE_CURRENT_USER_ID,
 	FAKE_ELEMENT_CALL_ROOM_ID,
 	FAKE_SIGNAL_ROOM_ID,
 	GroupCallStoryHarness,
@@ -236,5 +238,129 @@ describe('GroupCallWidget Storybook harness', () => {
 
 		view.unmount();
 		expect(callManager.getCurrentCall()).toBeNull();
+	});
+});
+
+describe('what the host adds around the call', () => {
+	beforeEach(() => {
+		resetCallManager();
+		widgetApiMocks.instances.length = 0;
+	});
+	afterEach(() => {
+		resetCallManager();
+		cleanup();
+	});
+
+	const withUser = (
+		userData: Record<string, unknown> | null,
+		matrixClientService: unknown
+	) =>
+		render(
+			<I18nextProvider i18n={testI18n}>
+				<UserDataContext.Provider
+					value={
+						userData === null
+							? null
+							: ({
+									userData,
+									setUserData: () => {},
+									reloadUserData: () => {}
+								} as never)
+					}
+				>
+					<MatrixClientContext.Provider
+						value={
+							{
+								matrixClientService,
+								setMatrixClientService: () => {}
+							} as never
+						}
+					>
+						<GroupCallWidget />
+					</MatrixClientContext.Provider>
+				</UserDataContext.Provider>
+			</I18nextProvider>
+		);
+
+	const activeCall = () => {
+		seedIncomingElementCall();
+		callManager.answerCall();
+	};
+
+	it('gives a counsellor the private notepad beside the stage', async () => {
+		const service = makeFakeMatrixClientService('active');
+		activeCall();
+		const view = withUser(
+			{
+				userId: '@berater:matrix.storybook.test',
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			},
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+		expect(
+			view.container.querySelector('.element-call-notes')
+		).toBeTruthy();
+	});
+
+	it('never offers the notepad to an advice seeker', async () => {
+		// The panel is a counsellor's scratchpad. Offering it to a seeker
+		// would suggest the centre keeps notes on them, in a product whose
+		// whole promise is that it does not.
+		const service = makeFakeMatrixClientService('active');
+		activeCall();
+		const view = withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+		expect(view.container.querySelector('.element-call-notes')).toBeFalsy();
+	});
+
+	it('publishes the own identity into the call room before the call opens', async () => {
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendStateEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		await waitFor(() =>
+			expect(client.sendStateEvent).toHaveBeenCalledWith(
+				FAKE_ELEMENT_CALL_ROOM_ID,
+				'org.oriso.call.identity',
+				expect.objectContaining({ kind: 'animal' }),
+				FAKE_CURRENT_USER_ID
+			)
+		);
+	});
+
+	it('says nothing when there is no user data to say it from', async () => {
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendStateEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(null, service);
+		await waitFor(() =>
+			expect(widgetApiMocks.instances.length).toBeGreaterThan(0)
+		);
+		expect(client.sendStateEvent).not.toHaveBeenCalled();
 	});
 });

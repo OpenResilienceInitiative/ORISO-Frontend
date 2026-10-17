@@ -106,7 +106,13 @@ class CallLifecycleTracker {
 					);
 					tracked.message = {
 						...tracked.message,
-						participants: [...participants.values()]
+						// Who was ever here, and who is here now. The first is
+						// a union that never shrinks, which is what an ended
+						// card should show; the second is replaced outright,
+						// so somebody who leaves disappears from it. Folding
+						// them together loses one of the two answers.
+						participants: [...participants.values()],
+						present: current
 					};
 					this.publish(tracked);
 				} else if (tracked.message.startedAt) {
@@ -133,6 +139,10 @@ class CallLifecycleTracker {
 		tracked.message = {
 			...tracked.message,
 			state: tracked.message.startedAt ? 'ended' : 'missed',
+			// Nobody is in a call that has ended. Leaving the last live list
+			// behind would make the card say otherwise for as long as it is
+			// on screen.
+			present: [],
 			endedAt,
 			durationSeconds: tracked.message.startedAt
 				? Math.max(

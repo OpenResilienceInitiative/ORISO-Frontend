@@ -1921,7 +1921,10 @@
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
 		"callLifecycle": {
-			"type": { "audio": "Sesli arama", "video": "Görüntülü arama" },
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
 			"state": {
 				"running": "Devam ediyor",
 				"ended": "Sona erdi",
@@ -1932,7 +1935,10 @@
 				"ended": "Arama {{start}} saatinde başladı.",
 				"missed": "Arama yanıtlanmadı."
 			},
-			"participants": { "current": "Aramada", "attended": "Katıldı" }
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			}
 		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
@@ -5840,6 +5846,25 @@
 			"callFailed": "Çağrı başarısız: {{message}}",
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		},
+		"notes": {
+			"title": "Görüşme notları",
+			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
+			"type": "Not türü",
+			"text": "Not",
+			"add": "Not ekle",
+			"remove": "Notu kaldır",
+			"copy": "Tümünü kopyala",
+			"copied": "Kopyalandı",
+			"empty": "Henüz bir not yok.",
+			"collapse": "Notları daralt",
+			"expand": "Notları genişlet",
+			"open": "Görüşme notları",
+			"types": {
+				"frage": "Soru",
+				"anmerkung": "Açıklama",
+				"aufgabe": "Görev"
+			}
 		}
 	},
 	"form": {

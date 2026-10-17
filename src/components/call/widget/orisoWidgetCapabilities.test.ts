@@ -136,3 +136,26 @@ describe('MSC4039 media', () => {
 		expect(allowed('org.matrix.msc4039.get_media_config')).toBe(false);
 	});
 });
+
+describe('the ORISO identity record', () => {
+	it('lets the widget read who everybody is', () => {
+		expect(
+			allowed(
+				'org.matrix.msc2762.receive.state_event:org.oriso.call.identity'
+			)
+		).toBe(true);
+	});
+
+	it('does not let the widget write one, not even its own', () => {
+		// The whole rule is that the call is told identities and never decides
+		// one. A widget that could write this state event could write it under
+		// another person's key, which is guessing on their behalf.
+		for (const stateKey of ['', '@a:hs', '#@a:hs']) {
+			expect(
+				allowed(
+					`org.matrix.msc2762.send.state_event:org.oriso.call.identity${stateKey}`
+				)
+			).toBe(false);
+		}
+	});
+});

@@ -35,6 +35,9 @@ export const CallTimelineMessage = ({
 			setJoining(false);
 		}
 	};
+	// Live presence only means anything while the call is running.
+	const live = call.state === 'running' ? call.present : undefined;
+	const shown = live ?? call.participants;
 	const label = t(`videoCall.timeline.${call.callType}.${call.state}`);
 	const callLabel = t(`message.callLifecycle.type.${call.callType}`);
 	const statusLabel = t(`message.callLifecycle.state.${call.state}`);
@@ -73,11 +76,27 @@ export const CallTimelineMessage = ({
 					? undefined
 					: t('videoCall.timeline.duration', { duration })
 			}
-			participants={call.participants.map((participant) => ({
+			/*
+			 * While the call runs, the card answers "who is in there"; once it
+			 * has ended, "who was". Two questions, two lists, and the
+			 * difference is the whole point of the card for somebody deciding
+			 * whether to join: an attendance roll that never shrinks shows
+			 * people who left ten minutes ago as if they were waiting.
+			 *
+			 * `present` is absent on a card written before it existed. Falling
+			 * back to the attendance list keeps those cards readable; for a
+			 * running call that is the old, cumulative behaviour, which is
+			 * better than an empty room.
+			 */
+			participants={shown.map((participant) => ({
 				...participant,
 				username: participant.displayName
 			}))}
-			participantsLabel={t('message.callLifecycle.participants.attended')}
+			participantsLabel={t(
+				`message.callLifecycle.participants.${
+					live === undefined ? 'attended' : 'current'
+				}`
+			)}
 			actionLabel={t('videoCall.timeline.join')}
 			actionDisabled={joining}
 			actionStatusLabel={

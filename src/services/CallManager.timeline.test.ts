@@ -370,15 +370,27 @@ describe('call manager durable timeline', () => {
 		callManager.leaveCall();
 		session.memberships = [{ sender: '@receiver:example' }];
 		session.emit(MatrixRTCSessionEvent.MembershipsChanged);
-		await new Promise((resolve) => setTimeout(resolve, 0));
-		expect(sendMessage).toHaveBeenCalledTimes(2);
-		expect(
-			parseCallLifecycleMessage(sendMessage.mock.calls[1][1])?.state
-		).toBe('running');
+		// The local user leaving IS an update now, because the card says who
+		// is in the call and that answer just changed. Before live presence
+		// the payload was identical and the writer deduped it away — which is
+		// exactly the behaviour that left somebody who had gone listed as
+		// still being there.
+		await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(3));
+		const afterLeave = parseCallLifecycleMessage(
+			sendMessage.mock.calls[2][1]
+		);
+		expect(afterLeave?.state).toBe('running');
+		expect(afterLeave?.present?.map(({ userId }) => userId)).toEqual([
+			'@receiver:example'
+		]);
+		expect(afterLeave?.participants.map(({ userId }) => userId)).toEqual([
+			'@caller:example',
+			'@receiver:example'
+		]);
 		session.memberships = [];
 		session.emit(MatrixRTCSessionEvent.MembershipsChanged);
-		await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(3));
-		const ended = parseCallLifecycleMessage(sendMessage.mock.calls[2][1]);
+		await vi.waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(4));
+		const ended = parseCallLifecycleMessage(sendMessage.mock.calls[3][1]);
 		expect(ended).toMatchObject({
 			state: 'ended',
 			durationSeconds: expect.any(Number)

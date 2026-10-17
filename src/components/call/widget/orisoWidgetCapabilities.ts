@@ -22,7 +22,13 @@ export const ALLOWED_RECEIVE_STATE_EVENT_TYPES: ReadonlySet<string> = new Set([
 	'm.room.create',
 	'm.room.name',
 	'm.room.member',
-	'm.room.encryption'
+	'm.room.encryption',
+	// Read-only, deliberately. Each client publishes its OWN identity — the
+	// animal, the circle colour and the ink it already carries in the chat —
+	// and the call reads what it was given rather than deriving a substitute.
+	// It is absent from the send set: a widget that could write these could
+	// write somebody else's, and the whole rule is that it does not decide.
+	'org.oriso.call.identity'
 ]);
 
 export const ALLOWED_TO_DEVICE_EVENT_TYPES: ReadonlySet<string> = new Set([

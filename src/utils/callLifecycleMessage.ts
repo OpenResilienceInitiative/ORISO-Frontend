@@ -17,7 +17,26 @@ export interface CallLifecycleMessage {
 	callRoomId: string;
 	state: 'running' | 'ended' | 'missed';
 	callType: 'audio' | 'video';
+	/**
+	 * Everybody who was in this call at some point. Cumulative: nobody is
+	 * ever removed, which is what makes it the right thing for an ended
+	 * card to show and the wrong thing for a running one.
+	 */
 	participants: CallLifecycleParticipant[];
+	/**
+	 * Who is in the call RIGHT NOW. Replaced on every membership change, so
+	 * somebody who leaves disappears from it.
+	 *
+	 * This is the field "ich sehe, dass die anderen drin sind" needs, and it
+	 * is deliberately separate from `participants` rather than a correction
+	 * to it. Both are true and they answer different questions: an ended
+	 * card wants the history, a running one wants the room. Collapsing them
+	 * into one list loses whichever answer the other state needed.
+	 *
+	 * Optional, because a card written before this existed does not carry it,
+	 * and because an ended call has no present.
+	 */
+	present?: CallLifecycleParticipant[];
 	invitedAt?: string;
 	startedAt?: string;
 	endedAt?: string;
@@ -53,23 +72,33 @@ export function parseCallLifecycleMessage(
 		return null;
 	const payload = content['org.oriso.call'];
 	if (!isRecord(payload)) return null;
-	const { call_id, room_ref, call_room_id, state, call_type, participants } =
-		payload;
+	const {
+		call_id,
+		room_ref,
+		call_room_id,
+		state,
+		call_type,
+		participants,
+		present
+	} = payload;
 	if (!isString(call_id) || !isString(room_ref) || !isString(call_room_id))
 		return null;
 	if (state !== 'running' && state !== 'ended' && state !== 'missed')
 		return null;
 	if (call_type !== 'audio' && call_type !== 'video') return null;
-	if (
-		!Array.isArray(participants) ||
-		participants.some(
+	const isParticipantList = (value: unknown) =>
+		Array.isArray(value) &&
+		value.every(
 			(participant) =>
-				!isRecord(participant) ||
-				!isString(participant.userId) ||
-				!isString(participant.displayName)
-		)
-	)
-		return null;
+				isRecord(participant) &&
+				isString(participant.userId) &&
+				isString(participant.displayName)
+		);
+	if (!isParticipantList(participants)) return null;
+	// Absent is fine — a card written before `present` existed, or an ended
+	// call. Present but malformed is not: it would reach a card as a list of
+	// people who are not there.
+	if (present !== undefined && !isParticipantList(present)) return null;
 	if (
 		![payload.invited_at, payload.started_at, payload.ended_at].every(
 			validTimestamp
@@ -90,10 +119,22 @@ export function parseCallLifecycleMessage(
 		callRoomId: call_room_id,
 		state,
 		callType: call_type,
-		participants: participants.map((participant) => ({
-			userId: participant.userId,
-			displayName: participant.displayName
-		})),
+		participants: (participants as CallLifecycleParticipant[]).map(
+			(participant) => ({
+				userId: participant.userId,
+				displayName: participant.displayName
+			})
+		),
+		...(present === undefined
+			? {}
+			: {
+					present: (present as CallLifecycleParticipant[]).map(
+						(participant) => ({
+							userId: participant.userId,
+							displayName: participant.displayName
+						})
+					)
+				}),
 		invitedAt: payload.invited_at as string | undefined,
 		startedAt: payload.started_at as string | undefined,
 		endedAt: payload.ended_at as string | undefined,
@@ -115,6 +156,7 @@ export function buildCallLifecycleContent(
 			state: message.state,
 			call_type: message.callType,
 			participants: message.participants,
+			present: message.present,
 			invited_at: message.invitedAt,
 			started_at: message.startedAt,
 			ended_at: message.endedAt,

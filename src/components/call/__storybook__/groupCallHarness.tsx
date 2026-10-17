@@ -3,6 +3,7 @@
  * Do not import from production app code.
  */
 import * as React from 'react';
+import { vi } from 'vitest';
 import type { MatrixClient } from 'matrix-js-sdk';
 import { MatrixClientContext } from '../../../globalState/context/MatrixClientContext';
 import { callManager } from '../../../services/CallManager';
@@ -41,6 +42,9 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 	const client = {
 		getUserId: () => FAKE_CURRENT_USER_ID,
 		getDeviceId: () => FAKE_DEVICE_ID,
+		// The host publishes its own ORISO identity into the call room before
+		// the widget opens, so the fake boundary has to answer for it.
+		sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
 		getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
 		getRoom: (roomId: string) =>
 			roomId === FAKE_ELEMENT_CALL_ROOM_ID ? room : null,

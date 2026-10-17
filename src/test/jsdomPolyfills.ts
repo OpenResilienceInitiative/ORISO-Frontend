@@ -127,3 +127,92 @@ if (typeof document !== 'undefined' && typeof ResizeObserver === 'undefined') {
 		}
 	});
 }
+
+/**
+ * jsdom has no 2D canvas: the optional `canvas` package is not installed, so
+ * `getContext('2d')` returns `null`. Any code that then reaches for a drawing
+ * method throws — and because the throw happens inside a custom element's
+ * `connectedCallback` or inside Lottie's module body, it surfaces as an
+ * *unhandled* error that collapses the whole test file rather than as a
+ * failed assertion.
+ *
+ * Two real cases in this repository, both of which did exactly that:
+ *   - `pond.js`, the verbatim-ported call backdrop, calls `setTransform` from
+ *     its own `resize()` on connect;
+ *   - `lottie-web` sets `fillStyle` while loading, which took down the whole
+ *     group-call harness test.
+ *
+ * The stub records nothing and draws nothing, which is the honest behaviour
+ * for a DOM with no pixels. A test that needs to inspect what was drawn has
+ * to run in the browser project, where there is a real canvas — and that is
+ * where this repository already measures contrast and geometry.
+ */
+if (typeof HTMLCanvasElement !== 'undefined') {
+	const stub2d = (): CanvasRenderingContext2D => {
+		const noop = (): void => {};
+		const context: Record<string, unknown> = {
+			canvas: null,
+			// Filled below; these two return values rather than undefined
+			// because callers use them.
+			createLinearGradient: () => ({ addColorStop: noop }),
+			createRadialGradient: () => ({ addColorStop: noop }),
+			createPattern: () => null,
+			getImageData: () => ({
+				data: new Uint8ClampedArray(4),
+				width: 1,
+				height: 1
+			}),
+			measureText: () => ({ width: 0 }),
+			getTransform: () => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 }),
+			getLineDash: () => [],
+			isPointInPath: () => false,
+			isPointInStroke: () => false
+		};
+		for (const name of [
+			'arc',
+			'arcTo',
+			'beginPath',
+			'bezierCurveTo',
+			'clearRect',
+			'clip',
+			'closePath',
+			'drawImage',
+			'ellipse',
+			'fill',
+			'fillRect',
+			'fillText',
+			'lineTo',
+			'moveTo',
+			'putImageData',
+			'quadraticCurveTo',
+			'rect',
+			'resetTransform',
+			'restore',
+			'rotate',
+			'save',
+			'scale',
+			'setLineDash',
+			'setTransform',
+			'stroke',
+			'strokeRect',
+			'strokeText',
+			'transform',
+			'translate'
+		])
+			context[name] = noop;
+		return context as unknown as CanvasRenderingContext2D;
+	};
+
+	const original = HTMLCanvasElement.prototype.getContext;
+	HTMLCanvasElement.prototype.getContext = function getContext(
+		this: HTMLCanvasElement,
+		...args: Parameters<HTMLCanvasElement['getContext']>
+	) {
+		const real = original?.apply(this, args) ?? null;
+		if (real !== null) return real;
+		const context = args[0] === '2d' ? stub2d() : null;
+		if (context !== null)
+			Object.defineProperty(context, 'canvas', { value: this });
+		return context;
+	} as HTMLCanvasElement['getContext'];
+}

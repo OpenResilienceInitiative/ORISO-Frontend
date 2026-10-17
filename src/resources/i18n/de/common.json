@@ -1942,7 +1942,10 @@
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
 		"callLifecycle": {
-			"type": { "audio": "Audioanruf", "video": "Videoanruf" },
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
 			"state": {
 				"running": "Läuft",
 				"ended": "Beendet",
@@ -5833,6 +5836,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "Gesprächsnotizen",
+			"privacy": "Privat. Nur für Sie und nur für die Dauer des Gesprächs.",
+			"type": "Art der Notiz",
+			"text": "Notiz",
+			"add": "Notiz hinzufügen",
+			"remove": "Notiz entfernen",
+			"copy": "Alles kopieren",
+			"copied": "Kopiert",
+			"empty": "Noch nichts notiert.",
+			"collapse": "Notizen einklappen",
+			"expand": "Notizen ausklappen",
+			"open": "Gesprächsnotizen",
+			"types": {
+				"frage": "Frage",
+				"anmerkung": "Anmerkung",
+				"aufgabe": "Aufgabe"
+			}
 		}
 	},
 	"form": {

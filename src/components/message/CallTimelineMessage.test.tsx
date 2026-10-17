@@ -183,3 +183,94 @@ it('does not describe an invitation timestamp as the call start', () => {
 		2
 	);
 });
+
+it('says who is in the call now, not who has ever been', () => {
+	// The whole reason `present` exists. Sam joined, said something and left;
+	// an attendance roll would still offer them as company.
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'running',
+		participants: [
+			{ userId: '@alex:example', displayName: 'Alex Test' },
+			{ userId: '@sam:example', displayName: 'Sam Test' }
+		],
+		present: [{ userId: '@alex:example', displayName: 'Alex Test' }]
+	};
+	render(<CallTimelineMessage call={call} onJoin={async () => 'joined'} />);
+
+	// The label is rendered as "<label> · <count>", so the group's own
+	// accessible name is the stable thing to read.
+	expect(
+		screen.getByRole('group', {
+			name: 'message.callLifecycle.participants.current'
+		})
+	).toBeTruthy();
+	expect(screen.queryByLabelText('Sam Test')).toBeNull();
+	expect(screen.getByLabelText('Alex Test')).toBeTruthy();
+});
+
+it('shows an empty room as empty rather than as everyone who passed through', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'running-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'running',
+		participants: [{ userId: '@sam:example', displayName: 'Sam Test' }],
+		present: []
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.queryByLabelText('Sam Test')).toBeNull();
+});
+
+it('falls back to attendance on a card written before presence existed', () => {
+	// Cards already in rooms carry no `present`. They must stay readable, and
+	// for them the old cumulative list is the only answer there is.
+	const call: CallLifecycleMessage = {
+		callId: 'old-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'audio',
+		state: 'running',
+		participants: [{ userId: '@sam:example', displayName: 'Sam Test' }]
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(screen.getByLabelText('Sam Test')).toBeTruthy();
+	expect(
+		screen.getByRole('group', {
+			name: 'message.callLifecycle.participants.attended'
+		})
+	).toBeTruthy();
+});
+
+it('shows attendance once the call has ended, presence being meaningless then', () => {
+	const call: CallLifecycleMessage = {
+		callId: 'ended-call',
+		roomRef: '!source:example',
+		callRoomId: '!media:example',
+		callType: 'video',
+		state: 'ended',
+		startedAt: new Date('2026-10-16T10:00:00Z').toISOString(),
+		endedAt: new Date('2026-10-16T10:05:00Z').toISOString(),
+		durationSeconds: 300,
+		participants: [
+			{ userId: '@alex:example', displayName: 'Alex Test' },
+			{ userId: '@sam:example', displayName: 'Sam Test' }
+		],
+		present: []
+	};
+	render(<CallTimelineMessage call={call} />);
+
+	expect(
+		screen.getByRole('group', {
+			name: 'message.callLifecycle.participants.attended'
+		})
+	).toBeTruthy();
+	expect(screen.getByLabelText('Alex Test')).toBeTruthy();
+	expect(screen.getByLabelText('Sam Test')).toBeTruthy();
+});

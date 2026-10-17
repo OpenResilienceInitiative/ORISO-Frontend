@@ -4,7 +4,14 @@
  * https://github.com/element-hq/element-call
  */
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, {
+	useCallback,
+	useContext,
+	useEffect,
+	useMemo,
+	useState,
+	useRef
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { callManager, CallData } from '../../services/CallManager';
 import { useElementCallWidget } from './widget/useElementCallWidget';
@@ -18,6 +25,17 @@ import {
 	type Size
 } from '../../utils/videoTileSizing';
 import { releaseWindowMediaStream } from '../../utils/callMediaStreamCleanup';
+import {
+	AUTHORITIES,
+	hasUserAuthority,
+	UserDataContext
+} from '../../globalState';
+import { useOwnAvatarUserId } from '../../hooks/useOwnAvatarUserId';
+import {
+	type IdentityClient,
+	publishCallIdentity
+} from './publishCallIdentity';
+import { Gespraechsnotizen } from './notes/Gespraechsnotizen';
 import './GroupCallWidget.scss';
 
 const GROUP_DEFAULT_WIDTH = 520;
@@ -28,6 +46,10 @@ const GROUP_MIN = { width: 280, height: 180 };
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
+	// `null` until a provider is above us; the widget renders in places that
+	// do not guarantee one.
+	const userData = useContext(UserDataContext)?.userData;
+	const ownAvatarUserId = useOwnAvatarUserId();
 	const [callData, setCallData] = useState<CallData | null>(null);
 	const [callState, setCallState] = useState<string | null>(null);
 	const [elementCallUrl, setElementCallUrl] = useState<string>('');
@@ -71,6 +93,76 @@ export const GroupCallWidget: React.FC = () => {
 			isVideo: callData?.isVideo ?? true,
 			onClose: closeCallSurface
 		}
+	);
+
+	/*
+	 * Tell the call who we are, before it opens.
+	 *
+	 * The iframe cannot work this out: the animal is a stored choice from the
+	 * userservice, an advice seeker's colours come from the anonymous-name
+	 * engine, and a counsellor's from the tenant's brand pair. None of that is
+	 * visible inside the widget, and deriving a substitute there is the one
+	 * thing the design forbids. So each client publishes its own identity into
+	 * the call room and the fork reads what it is given.
+	 *
+	 * Own identity only. A client that wrote somebody else's would be guessing
+	 * on their behalf, and the state key is the user id, so it cannot.
+	 */
+	useEffect(() => {
+		const client = matrixClientService?.getClient();
+		if (!client || !callRoomId || !shouldPrepareWidget || !userData) return;
+		void publishCallIdentity(
+			client as unknown as IdentityClient,
+			callRoomId,
+			{
+				userId: ownAvatarUserId,
+				userData,
+				isConsultant: hasUserAuthority(
+					AUTHORITIES.CONSULTANT_DEFAULT,
+					userData
+				)
+			}
+		);
+	}, [
+		matrixClientService,
+		callRoomId,
+		shouldPrepareWidget,
+		ownAvatarUserId,
+		userData
+	]);
+
+	/*
+	 * Only a counsellor gets the notepad.
+	 *
+	 * Ticket 06 is a counsellor's scratchpad — "not a shared agenda, not a
+	 * transcript, not minutes". Offering it to an advice seeker would suggest
+	 * the counselling centre keeps notes on them, in a product whose whole
+	 * promise is that it does not.
+	 */
+	const isConsultantUser = Boolean(
+		userData && hasUserAuthority(AUTHORITIES.CONSULTANT_DEFAULT, userData)
+	);
+
+	const notesLabels = useMemo(
+		() => ({
+			title: t('calls.notes.title'),
+			privacy: t('calls.notes.privacy'),
+			type: t('calls.notes.type'),
+			text: t('calls.notes.text'),
+			add: t('calls.notes.add'),
+			remove: t('calls.notes.remove'),
+			copy: t('calls.notes.copy'),
+			copied: t('calls.notes.copied'),
+			empty: t('calls.notes.empty'),
+			collapse: t('calls.notes.collapse'),
+			expand: t('calls.notes.expand'),
+			types: {
+				frage: t('calls.notes.types.frage'),
+				anmerkung: t('calls.notes.types.anmerkung'),
+				aufgabe: t('calls.notes.types.aufgabe')
+			}
+		}),
+		[t]
 	);
 
 	// Dragging / resize state
@@ -525,6 +617,31 @@ export const GroupCallWidget: React.FC = () => {
 									? '⤡'
 									: '⤢'}
 						</button>
+						{/*
+						 * The private notepad lives HERE, in the host, and
+						 * not inside the call.
+						 *
+						 * "Private is the feature." Its test proves that
+						 * nothing it holds reaches fetch, XHR, either
+						 * storage or sendBeacon — and that proof only means
+						 * something where there is no second boundary to
+						 * cross. Inside the iframe the same claim would have
+						 * to be re-made against the widget transport as
+						 * well, and the panel would have to carry copies of
+						 * five ORISO icons and the composer's menu with it.
+						 *
+						 * The handoff puts it beside the stage, which is
+						 * exactly where this is: a flex sibling of the call
+						 * surface, so the stage reflows to the remaining
+						 * width rather than being covered.
+						 */}
+						{isConsultantUser && (
+							<Gespraechsnotizen
+								className="element-call-notes"
+								defaultCollapsed
+								labels={notesLabels}
+							/>
+						)}
 						<iframe
 							ref={setIframeNode}
 							src={elementCallUrl}

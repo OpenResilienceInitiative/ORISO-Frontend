@@ -74,3 +74,120 @@ describe('terminal call timeline persistence', () => {
 		expect(replacementSend).not.toHaveBeenCalled();
 	});
 });
+
+describe('live presence', () => {
+	let sequence = 0;
+	let call: CallData;
+	let sendMessage: ReturnType<typeof vi.fn>;
+	let emit: () => void;
+
+	/** A room session whose memberships we can change between emissions. */
+	const session = { memberships: [] as { sender: string }[] };
+
+	beforeEach(() => {
+		call = {
+			callId: `presence-call-${++sequence}`,
+			roomId: '!media:example',
+			signalRoomId: '!source:example',
+			isVideo: true,
+			isIncoming: false,
+			isGroup: true,
+			usesElementCall: true,
+			state: 'connecting'
+		};
+		session.memberships = [];
+		sendMessage = vi.fn().mockResolvedValue({ event_id: '$root' });
+		let refresh: (() => void) | undefined;
+		const room = {
+			getMember: (userId: string) => ({ name: `Name of ${userId}` })
+		};
+		const client = {
+			sendMessage,
+			getRoom: () => room,
+			matrixRTC: {
+				getRoomSession: () => ({
+					...session,
+					get memberships() {
+						return session.memberships;
+					},
+					on: (_event: string, handler: () => void) => {
+						refresh = handler;
+					},
+					off: vi.fn()
+				})
+			},
+			on: vi.fn(),
+			off: vi.fn()
+		};
+		emit = () => refresh?.();
+		setMatrixClientServiceRef({ getClient: () => client } as never);
+		vi.spyOn(console, 'warn').mockImplementation(() => {});
+	});
+
+	afterEach(() => {
+		setMatrixClientServiceRef(null);
+		vi.restoreAllMocks();
+	});
+
+	const lastPayload = () =>
+		sendMessage.mock.calls.at(-1)?.[1]['org.oriso.call'];
+
+	/*
+	 * The writer publishes asynchronously and the tracker does not await it,
+	 * so a membership change is not on the wire by the time `emit` returns.
+	 * Two turns: one for the writer's own await, one for the send.
+	 */
+	const settled = async (): Promise<void> => {
+		await Promise.resolve();
+		await Promise.resolve();
+		await Promise.resolve();
+	};
+
+	it('publishes who is in the call as they arrive', async () => {
+		session.memberships = [{ sender: '@alex:example' }];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		expect(lastPayload().present).toEqual([
+			{ userId: '@alex:example', displayName: 'Name of @alex:example' }
+		]);
+	});
+
+	it('removes somebody who leaves, while keeping them in attendance', async () => {
+		// This is the behaviour neither prior pull request had: the
+		// attendance list is a union that never shrinks, so on its own it
+		// says Sam is still there long after Sam has gone.
+		session.memberships = [
+			{ sender: '@alex:example' },
+			{ sender: '@sam:example' }
+		];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		expect(lastPayload().present).toHaveLength(2);
+
+		session.memberships = [{ sender: '@alex:example' }];
+		emit();
+		await settled();
+		expect(lastPayload().present).toEqual([
+			{ userId: '@alex:example', displayName: 'Name of @alex:example' }
+		]);
+		expect(
+			lastPayload().participants.map(
+				(participant: { userId: string }) => participant.userId
+			)
+		).toEqual(['@alex:example', '@sam:example']);
+	});
+
+	it('leaves nobody present once the call has ended', async () => {
+		session.memberships = [{ sender: '@alex:example' }];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		callLifecycleTracker.finish(call.callId);
+		await settled();
+		expect(lastPayload().state).toBe('ended');
+		expect(lastPayload().present).toEqual([]);
+		expect(lastPayload().participants).toHaveLength(1);
+	});
+});

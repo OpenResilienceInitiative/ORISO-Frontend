@@ -1921,7 +1921,10 @@
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
 		"callLifecycle": {
-			"type": { "audio": "Appel audio", "video": "Appel vidéo" },
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			},
 			"state": {
 				"running": "En cours",
 				"ended": "Terminé",
@@ -5843,6 +5846,25 @@
 			"callFailed": "L'appel a échoué : {{message}}",
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		},
+		"notes": {
+			"title": "Notes d’entretien",
+			"privacy": "Privé. Seulement pour vous, et seulement pendant l’entretien.",
+			"type": "Type de note",
+			"text": "Note",
+			"add": "Ajouter une note",
+			"remove": "Supprimer la note",
+			"copy": "Tout copier",
+			"copied": "Copié",
+			"empty": "Rien de noté pour l’instant.",
+			"collapse": "Replier les notes",
+			"expand": "Déplier les notes",
+			"open": "Notes d’entretien",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remarque",
+				"aufgabe": "Tâche"
+			}
 		}
 	},
 	"form": {

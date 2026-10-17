@@ -523,3 +523,31 @@
 		width: 90vw;
 	}
 }
+
+/*
+ * The notepad, docked beside the stage.
+ *
+ * A flex sibling rather than a layer: at 1280px the stage reflows to the
+ * remaining width instead of being covered, which is what the handoff draws.
+ * Collapsed it is a 44px rail, so the cost of having it available is small.
+ */
+.element-call-container {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+}
+
+.element-call-notes {
+	flex: 0 0 auto;
+	order: 2;
+	max-block-size: 100%;
+	overflow: hidden;
+}
+
+/* Below the handoff's breakpoint the stage needs the whole width, so the
+   notepad steps out of the row entirely rather than squeezing it. */
+@media (width <= 1279px) {
+	.element-call-notes {
+		display: none;
+	}
+}
