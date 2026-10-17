@@ -16,8 +16,9 @@ export interface UsernameAvailability {
 /**
  * Whether a User-ID is still free — the backend is the real uniqueness gate.
  * Shared by the registration and the call entry (#1386), so both open their
- * gate on the same answer. The result belongs to the User-ID it was asked
- * for: a newer entry is never "checked" by an older answer.
+ * gate on the same answer. Every change drops the last answer, in the
+ * same render: a newer entry, or an old one typed again, is never "checked"
+ * by an answer that may be stale by now.
  */
 export const useUsernameAvailability = (
 	username: string,
@@ -30,6 +31,11 @@ export const useUsernameAvailability = (
 		available: boolean;
 		failed: boolean;
 	} | null>(null);
+	const [asked, setAsked] = useState({ username, enabled });
+	if (asked.username !== username || asked.enabled !== enabled) {
+		setAsked({ username, enabled });
+		setResult(null);
+	}
 
 	useEffect(() => {
 		if (!enabled) return;

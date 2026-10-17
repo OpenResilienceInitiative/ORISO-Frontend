@@ -45,6 +45,23 @@ describe('useUsernameAvailability', () => {
 		expect(check).toHaveBeenLastCalledWith('eule_mika_2');
 	});
 
+	it('asks again for a User-ID that was changed and then restored', async () => {
+		const check = vi.fn(() => Promise.resolve(true));
+		const { result, rerender } = renderHook(
+			({ name }) => useUsernameAvailability(name, true, check),
+			{ initialProps: { name: 'eule_mika' } }
+		);
+		await settle();
+		expect(result.current.checked).toBe(true);
+		rerender({ name: 'eule_mika_2' });
+		rerender({ name: 'eule_mika' });
+		// The old answer may be stale by now: not checked until asked again.
+		expect(result.current.checked).toBe(false);
+		await settle();
+		expect(result.current.checked).toBe(true);
+		expect(check).toHaveBeenCalledTimes(2);
+	});
+
 	it('marks a failed check as unknown, not as taken', async () => {
 		const check = vi.fn(() => Promise.reject(new Error('503')));
 		const { result } = renderHook(() =>
