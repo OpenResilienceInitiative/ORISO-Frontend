@@ -442,8 +442,12 @@ export const SessionsListToolbar = ({
 			byId.set(agency.id, agency);
 		});
 		[...foundPeople, ...searchPeopleResults].forEach((person) => {
-			if (person.agencyId !== undefined && person.agencyId !== null) {
-				labels.set(String(person.agencyId), person.agencyName || '');
+			if (
+				person.agencyId !== undefined &&
+				person.agencyId !== null &&
+				person.agencyName
+			) {
+				labels.set(String(person.agencyId), person.agencyName);
 			}
 		});
 		foundPeople.forEach((person) => {

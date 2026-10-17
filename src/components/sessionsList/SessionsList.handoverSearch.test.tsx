@@ -915,6 +915,71 @@ describe('case-handover search — eligible colleagues only (FE#1152)', () => {
 	});
 });
 
+describe('case-handover search — archive scope and closing (FE#1725)', () => {
+	it('reloads the picked colleague\'s cases for "Archive only" instead of keeping the active ones', async () => {
+		const archivedCase = {
+			...makeCase(15, 'Archived fifteen', patty, SPRINGFIELD, 10005),
+			session: {
+				...makeCase(15, 'Archived fifteen', patty, SPRINGFIELD, 10005)
+					.session,
+				status: 4
+			}
+		} as ListItemInterface;
+		http.getCandidates.mockImplementation(async ({ query, archived }) => ({
+			sessions: archived
+				? [archivedCase].filter((item) =>
+						[
+							item.consultant?.displayName,
+							item.consultant?.username
+						]
+							.join(' ')
+							.toLowerCase()
+							.includes(query.toLowerCase())
+					)
+				: serverCandidates(query),
+			total: 0
+		}));
+		const view = await ready(renderList());
+
+		type('patty');
+		await waitFor(() =>
+			expect(personRowsNamed('Patty B.')).toHaveLength(2)
+		);
+		fireEvent.click(personRowsNamed('Patty B.')[0]);
+		await waitFor(() => expect(listText(view)).toContain('Client eleven'));
+		fireEvent.change(searchbox(), { target: { value: '' } });
+		fireEvent.click(
+			screen.getByRole('button', { name: /tabs\.archiveOnly/ })
+		);
+
+		await waitFor(() =>
+			expect(listText(view)).toContain('Archived fifteen')
+		);
+		expect(listText(view)).not.toContain('Client eleven');
+	});
+
+	it('stops loading the eligible colleagues when the search closes', async () => {
+		const signals: AbortSignal[] = [];
+		http.getCandidates.mockImplementation(
+			({ query, signal }) =>
+				new Promise(() => {
+					if (query === '' && signal) signals.push(signal);
+				})
+		);
+		await ready(renderList());
+
+		fireEvent.focus(searchbox());
+		await waitFor(() => expect(signals).toHaveLength(1));
+		fireEvent.click(
+			screen.getByRole('button', {
+				name: 'sessionList.toolbar.search.close'
+			})
+		);
+
+		await waitFor(() => expect(signals[0].aborted).toBe(true));
+	});
+});
+
 describe('case-handover search — counselling centre and topics (FE#1725)', () => {
 	it('offers the centres of the people found as a single choice and narrows topics to it', async () => {
 		const view = await ready(renderList());

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { apiGetCaseHandoverCandidates } from '../../api';
 import { FETCH_ERRORS } from '../../api/fetchData';
 import type { ListItemInterface } from '../../globalState/interfaces/SessionsDataInterface';
@@ -46,14 +46,19 @@ export const mergeListItems = (...lists: ListItemInterface[][]) => {
  * `capped` is set when the page limit stopped the load while more cases
  * may exist.
  */
-const fetchAllCandidates = async (query: string, archived: boolean) => {
+const fetchAllCandidates = async (
+	query: string,
+	archived: boolean,
+	signal?: AbortSignal
+) => {
 	const found: ListItemInterface[] = [];
 	for (let page = 0; page < CANDIDATE_MAX_PAGES; page++) {
 		const { sessions = [], total } = await apiGetCaseHandoverCandidates({
 			query,
 			offset: page * CANDIDATE_PAGE_SIZE,
 			count: CANDIDATE_PAGE_SIZE,
-			archived
+			archived,
+			signal
 		});
 		found.push(...sessions);
 		const reachedTotal = typeof total === 'number' && total > 0;
@@ -65,6 +70,23 @@ const fetchAllCandidates = async (query: string, archived: boolean) => {
 		}
 	}
 	return { cases: found, capped: true };
+};
+
+/** All cases of one person in one archive scope, by her lookup terms. */
+const fetchPersonCases = async (
+	person: SessionSearchPersonResult,
+	archived: boolean,
+	signal?: AbortSignal
+) => {
+	const lists = await Promise.all(
+		lookupTermsOf(person).map(
+			async (term) =>
+				(await fetchAllCandidates(term, archived, signal)).cases
+		)
+	);
+	return lists
+		.flat()
+		.filter((item) => personKeysOfSession(item).includes(person.id));
 };
 
 interface CaseHandoverSearchOptions {
@@ -163,12 +185,13 @@ export const useCaseHandoverSearch = ({
 		}
 		if (!searchOpen) return;
 		let cancelled = false;
+		const controller = new AbortController();
 		setEligible((prev) =>
 			prev?.archived === archived && prev.status !== 'error'
 				? prev
 				: { archived, cases: [], capped: false, status: 'loading' }
 		);
-		fetchAllCandidates('', archived)
+		fetchAllCandidates('', archived, controller.signal)
 			.then(({ cases, capped }) => {
 				if (!cancelled)
 					setEligible({ archived, cases, capped, status: 'ready' });
@@ -184,8 +207,42 @@ export const useCaseHandoverSearch = ({
 			});
 		return () => {
 			cancelled = true;
+			controller.abort();
 		};
 	}, [archived, enabled, searchOpen]);
+
+	/** Adds a person's cases to her pin while she stays picked. */
+	const pinCases = useCallback(
+		(id: string, cases: ListItemInterface[]) =>
+			setPinned((prev) =>
+				Object.prototype.hasOwnProperty.call(prev, id)
+					? { ...prev, [id]: mergeListItems(prev[id], cases) }
+					: prev
+			),
+		[]
+	);
+
+	/**
+	 * "Archive only" changes the scope: the picked people stay picked, but
+	 * their cases are reloaded for it instead of carrying the old ones over.
+	 */
+	const pickedRef = useRef(pickedPeople);
+	pickedRef.current = pickedPeople;
+	const scopeRef = useRef(archived);
+	useEffect(() => {
+		if (scopeRef.current === archived) return;
+		scopeRef.current = archived;
+		const people = pickedRef.current;
+		setPinned(Object.fromEntries(people.map((person) => [person.id, []])));
+		if (!enabled || people.length === 0) return;
+		const controller = new AbortController();
+		people.forEach((person) =>
+			fetchPersonCases(person, archived, controller.signal)
+				.then((cases) => pinCases(person.id, cases))
+				.catch(() => undefined)
+		);
+		return () => controller.abort();
+	}, [archived, enabled, pinCases]);
 
 	/**
 	 * Picking keeps the text (US3) and loads all of each new person's cases,
@@ -224,35 +281,19 @@ export const useCaseHandoverSearch = ({
 			added.forEach((id) => {
 				const person = known.get(id);
 				if (!person) return;
-				Promise.all(
-					lookupTermsOf(person).map(
-						async (term) =>
-							(await fetchAllCandidates(term, archived)).cases
-					)
-				)
-					.then((lists) =>
-						setPinned((prev) =>
-							Object.prototype.hasOwnProperty.call(prev, id)
-								? {
-										...prev,
-										[id]: mergeListItems(
-											prev[id],
-											lists
-												.flat()
-												.filter((item) =>
-													personKeysOfSession(
-														item
-													).includes(id)
-												)
-										)
-									}
-								: prev
-						)
-					)
+				fetchPersonCases(person, archived)
+					.then((cases) => pinCases(id, cases))
 					.catch(() => undefined);
 			});
 		},
-		[archived, eligibleCases, enabled, pickedPeople, textCandidates]
+		[
+			archived,
+			eligibleCases,
+			enabled,
+			pickedPeople,
+			pinCases,
+			textCandidates
+		]
 	);
 
 	const reset = useCallback(() => {

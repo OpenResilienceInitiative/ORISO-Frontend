@@ -1528,9 +1528,9 @@ export const SessionsList = ({
 			}
 		}
 	};
+	const { candidateSessions } = caseHandoverSearch;
 	const finalSessionsList = React.useMemo(() => {
 		const baseSessions = (sessions || []).filter(filterSessions);
-		const { candidateSessions } = caseHandoverSearch;
 		if (candidateSessions.length === 0) {
 			return baseSessions;
 		}
@@ -1549,7 +1549,7 @@ export const SessionsList = ({
 			});
 
 		return [...candidates, ...baseSessions];
-	}, [caseHandoverSearch, filterSessions, sessions]);
+	}, [candidateSessions, filterSessions, sessions]);
 	const sessionToolbarPairs = React.useMemo(
 		() =>
 			finalSessionsList.map((raw) => ({

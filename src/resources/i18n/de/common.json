@@ -4162,9 +4162,9 @@
 				"removeSelectedPerson": "{{name}} entfernen",
 				"emptyPeople": "Keine passenden Personen gefunden.",
 				"peopleLoading": "Kolleg:innen werden geladen …",
-				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuche es später erneut.",
-				"handoverPeopleHint": "Hier siehst du nur Kolleg:innen, deren Fälle du über „Zugriff anfragen“ übernehmen kannst. Das hängt von deiner Abteilung und deinen Themen ab.",
-				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenze die Suche ein.",
+				"peopleLoadError": "Die Kolleg:innen konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
+				"handoverPeopleHint": "Hier sehen Sie nur Kolleg:innen, deren Fälle Sie über „Zugriff anfragen“ übernehmen können. Das hängt von Ihrer Abteilung und Ihren Themen ab.",
+				"handoverPeopleCapped": "Es gibt mehr Fälle, als geladen werden konnten – bitte grenzen Sie die Suche ein.",
 				"emptyTypes": "Keine Chat-Typen verfügbar.",
 				"emptyTopics": "Keine Themen für deine Beratungsstellen gefunden.",
 				"tabs": {
