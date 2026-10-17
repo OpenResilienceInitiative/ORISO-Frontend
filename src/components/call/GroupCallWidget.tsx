@@ -139,7 +139,20 @@ export const GroupCallWidget: React.FC = () => {
 	 * for the membership — an event sent to a room this client has not joined
 	 * yet is refused, and the first version of this raced it.
 	 */
+	/*
+	 * The widget URL this effect saw last time, `null` included.
+	 *
+	 * A ref rather than state: it must not cause a render, and it must survive
+	 * the effect re-running for a changed profile.
+	 */
+	const lastSessionUrl = useRef<string | null>(null);
+
 	useEffect(() => {
+		// Recorded before the guard, so that closing the surface — which sets
+		// the URL to null without this effect having anything to do — is seen.
+		const previousUrl = lastSessionUrl.current;
+		lastSessionUrl.current = widget.url;
+
 		const client = matrixClientService?.getClient();
 		if (!client || !callRoomId || !widget.url || !userData) return;
 		const identityClient = client as unknown as IdentityClient;
@@ -151,7 +164,39 @@ export const GroupCallWidget: React.FC = () => {
 				userData
 			)
 		};
-		void publishCallIdentity(identityClient, callRoomId, source);
+
+		/*
+		 * A new surface for the same call says it again.
+		 *
+		 * Leaving does not change `callRoomId` — `leaveCall` keeps the room
+		 * and only sets the state to `left` — so the room-keyed cleanup below
+		 * does NOT fire when somebody closes the call surface and opens it
+		 * again, and `lastSent` then made this publish a no-op. Everyone who
+		 * was already in the call still holds the returner's first event, so
+		 * the gap is invisible to them; anybody who joined while the returner
+		 * was away does not, because `history_visibility` is `joined` and they
+		 * cannot read it from the room's history. The re-announce does not
+		 * cover it either: an arrival makes the OTHERS resend their own
+		 * identities, not the returner's. The newcomer went on seeing the
+		 * returner as initials.
+		 *
+		 * The session boundary is the URL going through `null`, NOT the URL
+		 * changing. That was the first version of this and it was wrong:
+		 * `useElementCallWidget` keeps its instance nonce in a ref, and the
+		 * component stays mounted across a leave, so a reopened surface gets a
+		 * byte-identical URL. What does happen is `A -> null -> A`, since
+		 * `shouldPrepareWidget` is false while the state is `left`. So the
+		 * previous value is compared including `null`, and the test for this
+		 * drives the real sequence rather than remounting — a remount runs the
+		 * cleanup and clears `lastSent`, which would have passed either way.
+		 *
+		 * A changed profile keeps the URL and stays unforced, which is what
+		 * the comment on the cleanup below is about: forcing there would
+		 * resend identical content as a duplicate.
+		 */
+		void publishCallIdentity(identityClient, callRoomId, source, {
+			force: previousUrl !== widget.url
+		});
 
 		/*
 		 * Who is in the CALL, which is not who is in the room.

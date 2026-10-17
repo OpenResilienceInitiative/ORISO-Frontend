@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	waitFor
+} from '@testing-library/react';
 import {
 	afterEach,
 	beforeAll,
@@ -418,6 +424,57 @@ describe('what the host adds around the call', () => {
 		);
 		// And never as room state again.
 		expect(client.sendStateEvent).not.toHaveBeenCalled();
+	});
+
+	it('says it again when the same call is reopened', async () => {
+		/*
+		 * The gap the re-announce does NOT cover.
+		 *
+		 * Leaving a group call keeps the room: `leaveCall` sets the state to
+		 * `left` and holds on to `currentCall`, so `callRoomId` never changes
+		 * and the room-keyed `forgetPublishedIdentity` cleanup does not fire.
+		 * `lastSent` therefore still held this client's identity when the
+		 * surface was opened again, and the publish was a no-op.
+		 *
+		 * Everybody who was already in the call still has the first event, so
+		 * the gap is invisible to them. Somebody who joined while this client
+		 * was away does not: `history_visibility` is `joined`, so they cannot
+		 * read it from the room's history, and an arrival makes the OTHERS
+		 * resend their own identities rather than this one. They would go on
+		 * seeing the returner as initials.
+		 *
+		 * Note this cannot be shown by unmounting and rendering again — the
+		 * unmount runs the cleanup and clears `lastSent`, so that version
+		 * passes against the unfixed code. The component stays mounted here
+		 * and only the widget session changes, which is the real case.
+		 */
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn>;
+		};
+		activeCall();
+		withUser(
+			{
+				userId: '@suchende:matrix.storybook.test',
+				grantedAuthorities: []
+			},
+			service
+		);
+		const announcements = (): number =>
+			client.sendEvent.mock.calls.filter(
+				(call: unknown[]) => call[1] === 'org.oriso.call.identity'
+			).length;
+		await waitFor(() => expect(announcements()).toBe(1));
+
+		// Close the surface, then open it again. Same call, same room.
+		await act(async () => {
+			callManager.leaveCall();
+		});
+		await act(async () => {
+			callManager.answerCall();
+		});
+
+		await waitFor(() => expect(announcements()).toBe(2));
 	});
 
 	it('says it again when somebody joins the CALL, including on a rejoin', async () => {

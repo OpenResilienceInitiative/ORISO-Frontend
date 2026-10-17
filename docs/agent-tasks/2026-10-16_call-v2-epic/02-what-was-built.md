@@ -927,7 +927,63 @@ Two details worth keeping:
 The lift follows the form too, since it interpolates on size: it is judged
 against the side actually drawn, not against the tile.
 
-## 20. Where both branches stand, and what is still unverified
+## 20. The twelfth round: two ways an identity goes missing
+
+Both findings are about the same thing from opposite sides — an identity that is
+**out of view** being treated as an identity that has been **withdrawn**.
+
+### The live timeline is a window, not the room
+
+`useOrisoIdentities` rebuilt its map from `getLiveTimeline().getEvents()`. A
+limited sync throws that window away and hands over a fresh chunk, which need
+not contain identity events that are still perfectly valid in the room's
+history — and a long call pushes them out of the window anyway. So everybody who
+had not published recently lost their animal, and a roomful of forms turned back
+into stand-in letters until each client happened to announce itself again.
+
+My own comment on the `TimelineReset` listener had the reasoning **backwards**:
+it called that case "identities that are no longer in it". They are no longer in
+the *window*. Nobody withdrew anything.
+
+`readIdentities(room, known)` now reads the new chunk **on top of** what is
+known rather than instead of it. The removal that stays is the one that is
+somebody's own doing: a newest record that is unreadable — the redaction case —
+and it is now an explicit `delete` rather than a skipped assignment, because
+with the known identities seeded, skipping would have left the withdrawn record
+standing and reintroduced the bug §15 fixed. Two tests, and they are different
+in kind: the reset test fails against the old reader, and the
+withdrawal-after-reset test guards the *fix* from undoing the earlier one.
+
+### Reopening the same call was a no-op
+
+`leaveCall` keeps the room — it only sets the state to `left` — so `callRoomId`
+never changes, the room-keyed `forgetPublishedIdentity` cleanup does not fire,
+and `lastSent` made the publish on reopening a no-op.
+
+Everybody already in the call still holds the returner's first event, so the gap
+is invisible to them. Somebody who joined while the returner was away does not:
+`history_visibility` is `joined`, so they cannot read it from the room's
+history, and the re-announce does not help — an arrival makes the *others*
+resend their own identities, not the returner's. The newcomer went on seeing the
+returner as initials.
+
+The publish is forced on a new widget session now. Getting the signal right took
+two attempts, and the first one is worth recording: I took a changed
+`widget.url` to mean a new session, and it does not — `useElementCallWidget`
+keeps its instance nonce in a `useRef` and the component stays mounted across a
+leave, so a reopened surface gets a **byte-identical** URL. What actually
+happens is `A -> null -> A`, because `shouldPrepareWidget` is false while the
+state is `left`. So the comparison is against the previous value *including
+null*, recorded before the effect's guard.
+
+The test for it drives that real sequence rather than remounting, and that
+matters: a remount runs the cleanup, which clears `lastSent`, so a
+remount-based test passes against the unfixed code. It is the same vacuous-test
+trap as the earlier rounds, caught this time before it was written down as
+evidence — and the first version of the fix was caught by the test failing,
+not by my reading it.
+
+## 21. Where both branches stand, and what is still unverified
 
 **Gates, on the pushed heads.**
 
