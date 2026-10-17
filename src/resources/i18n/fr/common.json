@@ -3711,7 +3711,7 @@
 		},
 		"standingPreference": {
 			"label": "Toujours demander avant un accès supplémentaire",
-			"description": "S’applique aux futures demandes dans cette conversation. Les demandes en cours et les accès déjà accordés restent inchangés.",
+			"description": "S’applique uniquement aux futures demandes dans cette conversation au sein de votre service de conseil. Les demandes en cours et les accès déjà accordés restent inchangés.",
 			"baselineDescription": "Si cette option est désactivée, les paramètres de votre service de conseil s’appliquent. Tout consentement requis par ce service reste nécessaire.",
 			"saving": "Enregistrement …",
 			"saved": "Paramètre enregistré.",

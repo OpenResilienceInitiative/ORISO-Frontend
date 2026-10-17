@@ -1,7 +1,7 @@
 import {
-	CarimatRobotIcon,
-	useAssistantIdentity
-} from '../carimat/AssistantIdentity';
+	CarimatMessageFrame,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TypewriterText, TypingReveal } from './BotMessageAnimation';
@@ -34,7 +34,6 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 	onDone
 }) => {
 	const { t } = useTranslation();
-	const { name } = useAssistantIdentity();
 	/* Keep the card's trailing edge visible at all times while the
 	   typewriter is running. A ResizeObserver on the root element fires
 	   every time the bubble grows a line (newlines / wraps during typing)
@@ -73,51 +72,29 @@ export const PrivacyMessageCard: React.FC<PrivacyMessageCardProps> = ({
 	const message = t('anonymousChat.pseudonym.privacyMessage');
 
 	return (
-		<div
+		<CarimatMessageFrame
 			ref={rootRef}
-			className="messageItem pseudonymCard privacyMessageCard"
+			className="pseudonymCard privacyMessageCard"
+			subtitle={t('anonymousChat.pseudonym.carimatPrivacySubtitle')}
 		>
-			<div className="messageItem__messageWrap pseudonymCard__wrap">
-				<div className="pseudonymCard__avatarCol">
-					<div className="pseudonymCard__avatarFrame">
-						<div className="pseudonymCard__avatarIcon">
-							<CarimatRobotIcon />
-						</div>
-					</div>
-				</div>
-
-				<div className="pseudonymCard__contentCol">
-					<div className="pseudonymCard__header">
-						<span className="pseudonymCard__headerName">
-							{name}
-						</span>
-						<span className="pseudonymCard__headerSubtitle">
-							{t(
-								'anonymousChat.pseudonym.carimatPrivacySubtitle'
-							)}
-						</span>
-					</div>
-
-					{/* Pre-typing pause feels more "human" — the typing dots
-					    linger a little and the first character only appears
-					    after a deliberate beat (see `startDelayMs` below). */}
-					<TypingReveal typingMs={skipTyping ? 0 : 700}>
-						<div className="pseudonymCard__bubble privacyMessageCard__bubble">
-							<p className="pseudonymCard__bubbleText privacyMessageCard__bubbleText">
-								{skipTyping ? (
-									message
-								) : (
-									<TypewriterText
-										text={message}
-										startDelayMs={220}
-										onDone={handleTypingDone}
-									/>
-								)}
-							</p>
-						</div>
-					</TypingReveal>
-				</div>
-			</div>
-		</div>
+			<TypingReveal
+				typingMs={skipTyping ? 0 : 700}
+				bubbleClassName="carimatMessageFrame__bubble"
+			>
+				<CarimatMessageBubble className="privacyMessageCard__bubble">
+					<p className="pseudonymCard__bubbleText privacyMessageCard__bubbleText">
+						{skipTyping ? (
+							message
+						) : (
+							<TypewriterText
+								text={message}
+								startDelayMs={220}
+								onDone={handleTypingDone}
+							/>
+						)}
+					</p>
+				</CarimatMessageBubble>
+			</TypingReveal>
+		</CarimatMessageFrame>
 	);
 };

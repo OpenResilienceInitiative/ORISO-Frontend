@@ -1453,6 +1453,7 @@ export const SessionStream = ({
 						displayedConsent.actionPath
 					) !== null && (
 						<CaseHandoverConversation
+							sessionId={activeSession.item.id}
 							conversationType={notificationConversationType(
 								activeSession
 							)}

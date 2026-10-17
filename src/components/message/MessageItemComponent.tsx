@@ -106,7 +106,13 @@ import { AggregatedReaction } from '../../utils/messageRelations';
 import { ReactComponent as DeliverySentIcon } from '../../resources/img/icons/delivery-sent.svg';
 import { ReactComponent as DeliveryReadIcon } from '../../resources/img/icons/delivery-read.svg';
 import { ReactComponent as DeliveryFailedIcon } from '../../resources/img/icons/delivery-failed.svg';
-import { CarimatRobotIcon } from '../pseudonym/PrivacyMessageCard';
+import {
+	CarimatAvatar,
+	CarimatHeader,
+	CarimatMessageBubble
+} from '../carimat/CarimatMessageFrame';
+import { ReactComponent as HandoverTopicIcon } from '../../resources/img/icons/case-handover/case-handover.svg';
+import { ReactComponent as AcceptanceTopicIcon } from '../../resources/img/icons/case-handover/case-accepted.svg';
 import { MessageDateDivider } from './MessageDateDivider';
 import AddReactionOutlinedIcon from '@mui/icons-material/AddReactionOutlined';
 import { EmojiPickerPopup } from '../messageSubmitInterface/inputField/EmojiPickerPopup';
@@ -1978,6 +1984,30 @@ export const MessageItemComponent = ({
 		</div>
 	);
 
+	const MessageBubble = isSystemNotification ? CarimatMessageBubble : 'div';
+
+	const assistantBubbleProps: React.ComponentProps<
+		typeof CarimatMessageBubble
+	> = isSystemNotification
+		? {
+				variant: 'notice',
+				topic: isCaseHandoverGrantedEvent
+					? translate(
+							persistedHandoverGrant?.accessType === 'CO_ACCESS'
+								? 'caseHandover.consent.info.noticeTitle'
+								: 'caseHandover.systemMessage.tookOverTitle'
+						)
+					: isInquiryAcceptedEvent
+						? translate('caseHandover.accepted.title')
+						: systemNotificationTitle,
+				topicIcon: isCaseHandoverGrantedEvent ? (
+					<HandoverTopicIcon />
+				) : isInquiryAcceptedEvent ? (
+					<AcceptanceTopicIcon />
+				) : undefined
+			}
+		: {};
+
 	const messageContent = (): React.ReactElement => {
 		switch (true) {
 			case isMasterKeyLostMessage:
@@ -2059,40 +2089,17 @@ export const MessageItemComponent = ({
 						{!isMyMessage && (
 							<div className="messageItem__header">
 								{isSystemNotification ? (
-									/*
-									 * Title above, quiet qualifier below — the same
-									 * two-line header `MessageSendFailed` uses, per
-									 * Figma App.Oriso 8607-28488. Reusing its classes
-									 * on purpose: one system-notice presentation, not
-									 * two that drift apart. Case handover used to opt
-									 * out of this and render its own bordered card in
-									 * the bubble instead (ORISO-Frontend#491).
-									 */
-									<div className="messageItem__sendFailedHeaderText messageItem__systemNotificationHeaderText">
-										<div className="messageItem__sendFailedTitle">
-											{isCaseHandoverGrantedEvent
-												? translate(
-														persistedHandoverGrant?.accessType ===
-															'CO_ACCESS'
-															? 'caseHandover.consent.info.noticeTitle'
-															: 'caseHandover.systemMessage.tookOverTitle'
-													)
-												: isInquiryAcceptedEvent
-													? translate(
-															'caseHandover.accepted.title'
-														)
-													: systemNotificationTitle}
-										</div>
-										<div className="messageItem__sendFailedSubtitle">
-											{isCaseHandoverGrantedEvent
+									<CarimatHeader
+										subtitle={
+											isCaseHandoverGrantedEvent
 												? translate(
 														'caseHandover.systemMessage.noActionNeeded'
 													)
 												: translate(
 														'message.systemNotification'
-													)}
-										</div>
-									</div>
+													)
+										}
+									/>
 								) : (
 									<MessageDisplayName
 										isMyMessage={isMyMessage}
@@ -2149,7 +2156,8 @@ export const MessageItemComponent = ({
 								)}
 							</div>
 						)}
-						<div
+						<MessageBubble
+							{...assistantBubbleProps}
 							className={`${
 								isMyMessage
 									? 'messageItem__message messageItem__message--myMessage'
@@ -2500,7 +2508,7 @@ export const MessageItemComponent = ({
 							 * like every other bubble in the stream.
 							 */}
 							{timeRailInBubble}
-						</div>
+						</MessageBubble>
 						{showVisibleAudience && !isMyMessage && (
 							<div className="messageItem__visibleOnly">
 								<span className="messageItem__visibleOnlyLabel">
@@ -2684,8 +2692,8 @@ export const MessageItemComponent = ({
 
 	const withGrantNotifications = (message: React.ReactNode) => (
 		<>
-			{isPersistedGrantForAsker || isAcceptedNoticeForAsker ? (
-				<CarimatMessageContainer className="caseHandoverInlineConsent caseHandoverPersistedGrant">
+			{isSystemNotification ? (
+				<CarimatMessageContainer className="carimatPersistedEvent">
 					{message}
 				</CarimatMessageContainer>
 			) : (
@@ -2722,7 +2730,7 @@ export const MessageItemComponent = ({
 			// Anchor for `?at=<eventId>` (channelRoute.ts): the card scrolls
 			// this bubble into view after the history has loaded.
 			data-message-id={_id}
-			className={`messageItem ${
+			className={`messageItem ${isSystemNotification ? 'carimatMessageFrame' : ''} ${
 				isMyMessage ? 'messageItem--right' : ''
 			} ${isFullWidthMessage ? 'messageItem--full' : ''} ${
 				alias?.messageType &&
@@ -2732,7 +2740,7 @@ export const MessageItemComponent = ({
 			{getMessageDate()}
 			<div
 				className={`
-				messageItem__messageWrap
+				messageItem__messageWrap ${isSystemNotification ? 'carimatMessageFrame__row' : ''}
 				${isMyMessage ? 'messageItem__messageWrap--right' : 'messageItem__messageWrap--left'}
 				${
 					isE2EEActivatedMessage
@@ -2807,24 +2815,8 @@ export const MessageItemComponent = ({
 				{!alias?.messageType &&
 					!isMyMessage &&
 					isSystemNotification && (
-						/*
-						 * Figma App.Oriso 8498-32373: a system notice uses the same
-						 * side column as any incoming message — the ringed 60px
-						 * avatar frame with the Carimat robot inside, and the kebab
-						 * beneath it. The previous 32px pink puck sat outside that
-						 * column, so system messages never lined up with the stream
-						 * around them. See ORISO-Frontend#491.
-						 */
-						<div className="messageItem__sideColumn messageItem__sideColumn--left">
-							<div className="messageItem__sideColumnGroup messageItem__sideColumnGroup--left">
-								<div className="messageItem__avatar messageItem__avatar--bot">
-									<span
-										className="messageItem__botAvatarIcon"
-										aria-hidden
-									>
-										<CarimatRobotIcon />
-									</span>
-								</div>
+						<CarimatAvatar
+							menu={
 								<button
 									type="button"
 									className="messageItem__kebabButton messageItem__kebabButton--left"
@@ -2839,8 +2831,8 @@ export const MessageItemComponent = ({
 										<StackVerticalIcon className="messageItem__kebabIconDefault" />
 									)}
 								</button>
-							</div>
-						</div>
+							}
+						/>
 					)}
 				{!alias?.messageType &&
 					isMyMessage &&
@@ -2923,7 +2915,12 @@ export const MessageItemComponent = ({
 						</div>
 					)}
 
-				<div className="messageItem__content">
+				<div
+					className={clsx(
+						'messageItem__content',
+						isSystemNotification && 'carimatMessageFrame__content'
+					)}
+				>
 					{messageContent()}
 					{isMyMessage && formattedName && !alias?.messageType && (
 						<div className="messageItem__senderInfo">
