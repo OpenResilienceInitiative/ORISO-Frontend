@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Box, Typography } from '@mui/material';
 import HeadphonesRoundedIcon from '@mui/icons-material/HeadphonesRounded';
@@ -149,6 +149,15 @@ export const CallEntryRoom = ({
 	useEffect(() => {
 		if (micOn && micLevel > HEARD_LEVEL) setMicHeard(true);
 	}, [micLevel, micOn]);
+
+	// The stream that was heard is gone (the microphone was unplugged) or
+	// replaced: the next one has not been heard yet.
+	const heardStream = useRef(stream);
+	useEffect(() => {
+		const previous = heardStream.current;
+		heardStream.current = stream;
+		if (previous && previous !== stream) setMicHeard(false);
+	}, [stream]);
 
 	useEffect(() => {
 		onDeviceStateChange?.({ micOn, cameraOn, selection });

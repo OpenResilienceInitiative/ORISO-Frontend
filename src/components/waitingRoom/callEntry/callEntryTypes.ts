@@ -31,6 +31,7 @@ export interface CallDeviceControls {
 export type CallEntryBlocker =
 	| 'permissionDenied'
 	| 'noDevice'
+	| 'deviceBusy'
 	| 'notOpenYet'
 	| 'callEnded'
 	| 'linkInvalid';

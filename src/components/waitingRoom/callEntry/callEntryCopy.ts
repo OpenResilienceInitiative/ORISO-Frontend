@@ -87,6 +87,15 @@ export const callEntryCopy = {
 			steps: [],
 			action: 'Erneut prüfen'
 		},
+		deviceBusy: {
+			title: 'Ihr Mikrofon ist gerade belegt',
+			body: 'Ein anderes Programm nutzt es vielleicht schon, zum Beispiel ein anderes Gespräch.',
+			steps: [
+				'Beenden Sie das andere Gespräch oder schließen Sie das Programm.',
+				'Klicken Sie dann auf „Erneut prüfen“.'
+			],
+			action: 'Erneut prüfen'
+		},
 		notOpenYet: {
 			title: 'Der Raum öffnet um 14:00 Uhr',
 			body: 'Sie können die Seite offen lassen. Wir lassen Sie herein, sobald es so weit ist.',

@@ -16,6 +16,7 @@ import { CallEntryBlocker } from './callEntryTypes';
 const ICONS: Record<CallEntryBlocker, React.ReactNode> = {
 	permissionDenied: <MicOffRoundedIcon />,
 	noDevice: <HeadsetMicOutlinedIcon />,
+	deviceBusy: <MicOffRoundedIcon />,
 	notOpenYet: <EventOutlinedIcon />,
 	callEnded: <CallEndRoundedIcon />,
 	linkInvalid: <LinkOffRoundedIcon />
