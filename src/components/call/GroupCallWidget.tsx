@@ -69,6 +69,15 @@ const NOTES_SIDE_BY_SIDE_MIN_WIDTH = NOTES_PANEL_WIDTH + GROUP_MIN.width;
  */
 const HANGUP_HANDSHAKE_MS = 1500;
 
+/*
+ * How long to keep trying to say who we are after a client is replaced.
+ *
+ * The same ladder the lifecycle card uses, for the same window: a refreshed
+ * client is announced before its crypto is up and before its first sync has
+ * the room's encryption state, and both make an identity publication refuse.
+ */
+const IDENTITY_RETRY_DELAYS_MS = [1000, 2000, 4000] as const;
+
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
 	const { matrixClientService } = useMatrixClient();
@@ -232,9 +241,38 @@ export const GroupCallWidget: React.FC = () => {
 		 * the comment on the cleanup below is about: forcing there would
 		 * resend identical content as a duplicate.
 		 */
-		void publishCallIdentity(identityClient, callRoomId, source, {
-			force: previousUrl !== widget.url || clientChanged
-		});
+		/*
+		 * And it is tried again until it gets through.
+		 *
+		 * `publishCallIdentity` answers `null` for both of the things a
+		 * replacement client is briefly guilty of: a room whose encryption
+		 * state the first sync has not loaded, and a send that cannot be
+		 * encrypted because `initRustCrypto()` has not finished. Both are
+		 * right as refusals — the privacy guard is the point — and both used
+		 * to end there, because `onClientChange` fires BEFORE either is
+		 * ready and nothing else re-runs this. Somebody arriving in that gap
+		 * saw this person as initials for the rest of the call.
+		 *
+		 * So a refusal is retried on the same bounded ladder the lifecycle
+		 * card uses, and the effect's cleanup cancels it — a closed surface
+		 * or another refresh must not leave a timer announcing into a call
+		 * that has moved on.
+		 */
+		let cancelled = false;
+		const announce = async (attempt: number): Promise<void> => {
+			const sent = await publishCallIdentity(
+				identityClient,
+				callRoomId,
+				source,
+				{ force: previousUrl !== widget.url || clientChanged }
+			);
+			if (sent !== null || cancelled) return;
+			const delay = IDENTITY_RETRY_DELAYS_MS[attempt];
+			if (delay === undefined) return;
+			await new Promise((resolve) => setTimeout(resolve, delay));
+			if (!cancelled) await announce(attempt + 1);
+		};
+		void announce(0);
 
 		/*
 		 * Who is in the CALL, which is not who is in the room.
@@ -308,6 +346,7 @@ export const GroupCallWidget: React.FC = () => {
 		session?.on?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
 		client.on?.(RoomStateEvent.Members, refresh as never);
 		return (): void => {
+			cancelled = true;
 			session?.off?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
 			client.off?.(RoomStateEvent.Members, refresh as never);
 		};

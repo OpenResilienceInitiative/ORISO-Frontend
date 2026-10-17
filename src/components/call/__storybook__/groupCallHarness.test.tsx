@@ -26,6 +26,8 @@ import { MatrixClientContext } from '../../../globalState/context/MatrixClientCo
 import { UserDataContext } from '../../../globalState';
 import { callManager } from '../../../services/CallManager';
 import { GroupCallWidget } from '../GroupCallWidget';
+import { CALL_IDENTITY_EVENT_TYPE } from '../callIdentity';
+import { forgetPublishedIdentity } from '../publishCallIdentity';
 import {
 	FAKE_CALL_ID,
 	FAKE_CURRENT_USER_ID,
@@ -494,6 +496,51 @@ describe('what the host adds around the call', () => {
 			view.container.querySelector('.element-call-notes')
 		).toBeTruthy();
 	});
+
+	it('keeps announcing who it is until the send can be encrypted', async () => {
+		/*
+		 * A replacement client is announced BEFORE `initRustCrypto()` has
+		 * finished, so the identity send can fail to encrypt —
+		 * `publishCallIdentity` turns that into `null`, rightly, because the
+		 * record must not leave the room unencrypted. The refusal used to end
+		 * there: nothing re-ran the publication, so somebody arriving in that
+		 * gap saw this person as initials for the rest of the call.
+		 *
+		 * The first two sends fail here, exactly as a pre-crypto client's do.
+		 */
+		forgetPublishedIdentity();
+		const service = makeFakeMatrixClientService('active');
+		const client = service.getClient() as unknown as {
+			sendEvent: ReturnType<typeof vi.fn> & {
+				mock: { calls: unknown[][] };
+			};
+		};
+		client.sendEvent
+			.mockRejectedValueOnce(new Error('crypto is not ready yet'))
+			.mockRejectedValueOnce(new Error('crypto is not ready yet'));
+		activeCall();
+
+		const identitySends = (): number =>
+			client.sendEvent.mock.calls.filter(
+				(call) => call[1] === CALL_IDENTITY_EVENT_TYPE
+			).length;
+
+		const view = withUser(
+			{ userId: '@berater:matrix.storybook.test' },
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+		await waitFor(() => expect(identitySends()).toBe(1));
+
+		// The ladder keeps going until one of them gets through.
+		await waitFor(() => expect(identitySends()).toBeGreaterThan(2), {
+			timeout: 8000
+		});
+	}, 20000);
 
 	const counsellorWithStage = async (
 		innerWidth: number,
