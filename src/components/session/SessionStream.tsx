@@ -23,6 +23,7 @@ import {
 import {
 	apiGetAgencyConsultantList,
 	apiGetCaseHandoverStatus,
+	apiGetCaseHandoverRequestStatus,
 	apiDecideCaseHandoverClientConsent,
 	apiGetSessionSupervisors,
 	CaseHandoverStatus,
@@ -1349,6 +1350,77 @@ export const SessionStream = ({
 	const caseHandoverTopic = useTopic(caseHandoverTopicId);
 	const caseHandoverTopicLabel = caseHandoverTopic?.name;
 
+	/**
+	 * Replaces the pending consent card with a server-confirmed outcome. A
+	 * still-pending status keeps the decision controls and the notification
+	 * unread; any other status ends the request for the asker, and marking its
+	 * notification read keeps the card from resurfacing on the next reload.
+	 */
+	const settleCaseHandoverConsent = (
+		notification: NotificationFeedItem,
+		status: CaseHandoverStatus
+	) => {
+		setConfirmedConsent({ notification, status });
+		if (isPendingCaseHandoverStatus(status.status)) return;
+		notificationsContext?.markNotificationAsRead(notification.id);
+		setResolvedCaseHandoverNotificationId(notification.id);
+		notificationsContext?.refreshNotificationFeed();
+	};
+
+	/**
+	 * The server state of exactly this consent request, read through the
+	 * per-request endpoint an advice seeker is allowed to call (the session-level
+	 * status is consultant-only and answers 403). A status that names another
+	 * session or request is no answer for this card.
+	 */
+	const readCaseHandoverRequestStatus = (
+		sessionId: number,
+		requestId: number
+	) =>
+		apiGetCaseHandoverRequestStatus(sessionId, requestId).then((status) => {
+			if (
+				!status?.status ||
+				status.sessionId !== sessionId ||
+				status.requestId !== requestId
+			) {
+				throw new Error('Status does not belong to this request');
+			}
+			return status;
+		});
+
+	// A card whose request was closed elsewhere (takeover, decline on another
+	// device, expiry) stays visible until its unread notification is answered.
+	// Ask the server once per card on load so it settles without a click.
+	useEffect(() => {
+		const sessionId = activeSession.item?.id;
+		if (
+			!pendingCaseHandoverConsent ||
+			pendingCaseHandoverRequestId === null ||
+			sessionId === undefined
+		) {
+			return;
+		}
+		const notification = pendingCaseHandoverConsent;
+		let cancelled = false;
+		readCaseHandoverRequestStatus(sessionId, pendingCaseHandoverRequestId)
+			.then((status) => {
+				if (!cancelled && !isPendingCaseHandoverStatus(status.status)) {
+					settleCaseHandoverConsent(notification, status);
+				}
+			})
+			// Not readable or offline: the card keeps its controls, a later
+			// decision reports the real outcome.
+			.catch(() => undefined);
+		return () => {
+			cancelled = true;
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [
+		activeSession.item?.id,
+		pendingCaseHandoverConsent?.id,
+		pendingCaseHandoverRequestId
+	]);
+
 	if (caseHandoverCurtainNeeded && caseHandoverStatusLoading) {
 		return <Loading />;
 	}
@@ -1369,22 +1441,6 @@ export const SessionStream = ({
 		} else if (buttonFunction === OVERLAY_FUNCTIONS.LOGOUT) {
 			logout();
 		}
-	};
-
-	/**
-	 * Replaces the pending consent card with a server-confirmed outcome. A
-	 * still-pending status keeps the decision controls and the notification
-	 * unread; any other status ends the request for the asker.
-	 */
-	const settleCaseHandoverConsent = (
-		notification: NotificationFeedItem,
-		status: CaseHandoverStatus
-	) => {
-		setConfirmedConsent({ notification, status });
-		if (isPendingCaseHandoverStatus(status.status)) return;
-		notificationsContext?.markNotificationAsRead(notification.id);
-		setResolvedCaseHandoverNotificationId(notification.id);
-		notificationsContext?.refreshNotificationFeed();
 	};
 
 	const handleCaseHandoverConsentDecision = (approved: boolean) => {
@@ -1413,24 +1469,33 @@ export const SessionStream = ({
 				}
 				settleCaseHandoverConsent(notification, confirmedStatus);
 			})
-			// The decision can already be applied on the server (e.g. the
-			// takeover closed the request, or the response named another
-			// request). Never leave the stale approve/decline card behind with a
-			// "could not be sent" error: ask the server for the current status
-			// and only report a failure while the request is really still open
-			// (ORISO-Frontend#1705).
-			.catch(() =>
-				apiGetCaseHandoverStatus(sessionId).then((currentStatus) => {
-					if (
-						!currentStatus?.status ||
-						currentStatus.sessionId !== sessionId ||
-						isPendingCaseHandoverStatus(currentStatus.status)
-					) {
-						throw new Error('Consent request is still open');
+			// The decision can be refused or already applied on the server. Never
+			// leave the stale approve/decline card behind with a "could not be
+			// sent" error (ORISO-Frontend#1705):
+			// - 409: the case owner changed after the request was created, so it
+			//   can no longer be decided and is settled for the asker;
+			// - anything else: read this request's own status and only report a
+			//   failure while it is really still open.
+			.catch((error: Error) => {
+				if (error?.message === FETCH_ERRORS.CONFLICT) {
+					settleCaseHandoverConsent(notification, {
+						sessionId,
+						requestId,
+						status: 'OWNER_CHANGED',
+						canViewContent: false,
+						clientConsentRequired: true
+					});
+					return;
+				}
+				return readCaseHandoverRequestStatus(sessionId, requestId).then(
+					(currentStatus) => {
+						if (isPendingCaseHandoverStatus(currentStatus.status)) {
+							throw new Error('Consent request is still open');
+						}
+						settleCaseHandoverConsent(notification, currentStatus);
 					}
-					settleCaseHandoverConsent(notification, currentStatus);
-				})
-			)
+				);
+			})
 			.catch(() => {
 				setCaseHandoverConsentError(
 					translate('caseHandover.error.failed')

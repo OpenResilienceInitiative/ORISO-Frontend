@@ -4,6 +4,7 @@ import {
 	apiCreateCaseHandoverOffer,
 	apiDecideCaseHandoverClientConsent,
 	apiDecideCaseHandoverRecipient,
+	apiGetCaseHandoverRequestStatus,
 	apiRequestCaseHandoverAccess,
 	apiRequestCaseHandoverBatchAccess,
 	CaseHandoverStatus
@@ -120,6 +121,44 @@ describe('case handover JSON responses through real fetchData', () => {
 			await expect(mutation.call()).rejects.toThrow('FORBIDDEN');
 		});
 	}
+	it('client consent decision names a 409 "owner changed" instead of a catch-all (#1705)', async () => {
+		vi.stubGlobal(
+			'fetch',
+			vi.fn().mockResolvedValue(new Response(null, { status: 409 }))
+		);
+		await expect(
+			apiDecideCaseHandoverClientConsent(41, 501, true)
+		).rejects.toThrow('CONFLICT');
+	});
+	it('reads one request through the per-request path an advice seeker may call (#1705)', async () => {
+		const fetchMock = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(JSON.stringify(granted), { status: 200 })
+			);
+		vi.stubGlobal('fetch', fetchMock);
+		await expect(apiGetCaseHandoverRequestStatus(41, 501)).resolves.toEqual(
+			granted
+		);
+		expect((fetchMock.mock.calls[0][0] as TestRequest).url).toBe(
+			'https://api.test/service/users/sessions/41/case-handover/501'
+		);
+	});
+	it.each([
+		[403, 'FORBIDDEN'],
+		[404, 'NO_MATCH']
+	])(
+		'a refused per-request read (%s) rejects as %s',
+		async (status, name) => {
+			vi.stubGlobal(
+				'fetch',
+				vi.fn().mockResolvedValue(new Response(null, { status }))
+			);
+			await expect(
+				apiGetCaseHandoverRequestStatus(41, 501)
+			).rejects.toThrow(name);
+		}
+	);
 	it('returns parsed per-case results for a batch', async () => {
 		const results = [
 			{

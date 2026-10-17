@@ -53,6 +53,9 @@ const mocks = vi.hoisted(() => {
 				auditOutcome: 'ACCESS_GRANTED'
 			})
 		),
+		getCaseHandoverRequestStatus: vi.fn(),
+		markNotificationAsRead: vi.fn(),
+		refreshNotificationFeed: vi.fn(),
 		resolveSession: vi.fn(() => ({
 			isMatrixSession: true,
 			matrixRoomId: ROOM_ID,
@@ -94,6 +97,7 @@ vi.mock('../../api', () => ({
 	apiGetAgencyConsultantList: vi.fn(() => Promise.resolve([])),
 	apiGetSessionSupervisors: mocks.getSessionSupervisors,
 	apiGetCaseHandoverStatus: mocks.getCaseHandoverStatus,
+	apiGetCaseHandoverRequestStatus: mocks.getCaseHandoverRequestStatus,
 	apiDecideCaseHandoverClientConsent: vi.fn(() =>
 		Promise.resolve({
 			sessionId: 1,
@@ -103,7 +107,12 @@ vi.mock('../../api', () => ({
 			clientConsentRequired: true
 		})
 	),
-	FETCH_ERRORS: { ABORT: 'ABORT' }
+	FETCH_ERRORS: {
+		ABORT: 'ABORT',
+		CONFLICT: 'CONFLICT',
+		FORBIDDEN: 'FORBIDDEN',
+		NO_MATCH: 'NO_MATCH'
+	}
 }));
 
 vi.mock('../../services/chatTransportService', () => ({
@@ -274,8 +283,8 @@ const sessionStreamElement = ({
 			value={
 				{
 					notificationFeed,
-					markNotificationAsRead: vi.fn(),
-					refreshNotificationFeed: vi.fn()
+					markNotificationAsRead: mocks.markNotificationAsRead,
+					refreshNotificationFeed: mocks.refreshNotificationFeed
 				} as any
 			}
 		>
@@ -386,6 +395,11 @@ describe('SessionStream Matrix room lifecycle', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mocks.getCaseHandoverStatus.mockReset();
+		// Without a server answer the mount-time check leaves the card as it is.
+		mocks.getCaseHandoverRequestStatus.mockReset();
+		mocks.getCaseHandoverRequestStatus.mockRejectedValue(
+			new Error('NO_MATCH')
+		);
 		mocks.lifecycleListeners.length = 0;
 		mocks.timelineListeners.length = 0;
 		mocks.clientChangeListeners.length = 0;
@@ -512,63 +526,35 @@ describe('SessionStream Matrix room lifecycle', () => {
 		expect(screen.queryByRole('switch')).toBeNull();
 	});
 
-	it('keeps the real request available when saving fails', async () => {
-		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
-			new Error('Server failed')
-		);
-		mocks.getCaseHandoverStatus.mockResolvedValue(pendingHandoverStatus());
-		renderSessionStream({
-			isGroup: false,
-			notificationFeed: [
-				{
-					id: '1481',
-					eventType: 'case.handover.consent.requested',
-					sourceSessionId: '1',
-					actionPath:
-						'/sessions/user/view/session/1?caseHandoverRequestId=11',
-					params: { clientConsent: 'OPT_OUT' }
-				}
-			]
-		});
-		fireEvent.click(await screen.findByRole('switch'));
-		expect(await screen.findByRole('alert')).toBeTruthy();
-		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
-			true
-		);
+	const consentNotification = (extra: Record<string, unknown> = {}) => ({
+		id: '1481',
+		eventType: 'case.handover.consent.requested',
+		sourceSessionId: '1',
+		actionPath: '/sessions/user/view/session/1?caseHandoverRequestId=11',
+		...extra
 	});
-
-	it('replaces the approve/decline card with the current status when the decision was already applied (#1705)', async () => {
-		// The takeover already closed the request, so the decision call is
-		// refused — the server state, not the refusal, is what the asker sees.
-		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
-			new Error('Bad request')
-		);
-		mocks.getCaseHandoverStatus.mockResolvedValue({
-			...grantedHandoverStatus(),
-			requestId: 11
-		});
-		renderSessionStream({
-			isGroup: false,
-			notificationFeed: [
-				{
-					id: '1481',
-					eventType: 'case.handover.consent.requested',
-					sourceSessionId: '1',
-					actionPath:
-						'/sessions/user/view/session/1?caseHandoverRequestId=11'
-				}
-			]
-		});
-
+	const requestStatus = (overrides: Record<string, unknown> = {}) => ({
+		sessionId: 1,
+		requestId: 11,
+		canViewContent: false,
+		clientConsentRequired: true,
+		...overrides
+	});
+	// Open when the card loads, closed by the time the asker's decision fails.
+	const closedAfterTheDecision = (closed: Record<string, unknown>) =>
+		mocks.getCaseHandoverRequestStatus
+			.mockResolvedValueOnce(
+				requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
+			)
+			.mockResolvedValue(requestStatus(closed));
+	const clickApprove = async () =>
 		fireEvent.click(
 			await screen.findByRole('button', {
 				name: 'caseHandover.consent.approve'
 			})
 		);
-
-		expect((await screen.findByRole('status')).textContent).toBe(
-			'caseHandover.consent.info.granted'
-		);
+	const expectCardSettled = async (text: string) => {
+		expect((await screen.findByRole('status')).textContent).toBe(text);
 		expect(
 			screen.queryByRole('button', {
 				name: 'caseHandover.consent.approve'
@@ -580,43 +566,225 @@ describe('SessionStream Matrix room lifecycle', () => {
 			})
 		).toBeNull();
 		expect(screen.queryByRole('alert')).toBeNull();
-	});
+	};
 
-	it('settles from the current status when the decision response names another request (#1705)', async () => {
-		vi.mocked(apiDecideCaseHandoverClientConsent).mockResolvedValueOnce({
-			sessionId: 1,
-			requestId: 12,
-			status: 'GRANTED',
-			canViewContent: true,
-			clientConsentRequired: false
-		});
-		mocks.getCaseHandoverStatus.mockResolvedValue({
-			...grantedHandoverStatus(),
-			requestId: 11
-		});
+	it('keeps the real request available when saving fails', async () => {
+		vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+			new Error('Server failed')
+		);
+		mocks.getCaseHandoverRequestStatus.mockResolvedValue(
+			requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
+		);
 		renderSessionStream({
 			isGroup: false,
 			notificationFeed: [
-				{
-					id: '1481',
-					eventType: 'case.handover.consent.requested',
-					sourceSessionId: '1',
-					actionPath:
-						'/sessions/user/view/session/1?caseHandoverRequestId=11'
-				}
+				consentNotification({ params: { clientConsent: 'OPT_OUT' } })
 			]
 		});
+		fireEvent.click(await screen.findByRole('switch'));
+		expect(await screen.findByRole('alert')).toBeTruthy();
+		expect((screen.getByRole('switch') as HTMLInputElement).checked).toBe(
+			true
+		);
+	});
 
-		fireEvent.click(
-			await screen.findByRole('button', {
-				name: 'caseHandover.consent.approve'
-			})
+	describe('stale consent card after a failed decision (#1705)', () => {
+		it('settles on the request own final status, read through the asker-allowed per-request endpoint', async () => {
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+				new Error('CATCH_ALL')
+			);
+			closedAfterTheDecision({ status: 'GRANTED', canViewContent: true });
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await clickApprove();
+
+			await expectCardSettled('caseHandover.consent.info.granted');
+			expect(mocks.getCaseHandoverRequestStatus).toHaveBeenCalledWith(
+				1,
+				11
+			);
+			// The session-level read is consultant-only and answers 403 to an
+			// advice seeker, so it must never be the reconcile path.
+			expect(mocks.getCaseHandoverStatus).not.toHaveBeenCalled();
+			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
+		});
+
+		it('settles on the own status of this request when the decision response names another request', async () => {
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockResolvedValueOnce(
+				{
+					sessionId: 1,
+					requestId: 12,
+					status: 'GRANTED',
+					canViewContent: true,
+					clientConsentRequired: false
+				}
+			);
+			closedAfterTheDecision({ status: 'CLIENT_CONSENT_DECLINED' });
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await clickApprove();
+
+			await expectCardSettled('caseHandover.consent.info.closed');
+			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
+		});
+
+		it('ignores a status that belongs to another request and keeps the controls and the error', async () => {
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+				new Error('CATCH_ALL')
+			);
+			mocks.getCaseHandoverRequestStatus.mockResolvedValue(
+				requestStatus({ requestId: 12, status: 'GRANTED' })
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await clickApprove();
+
+			expect(await screen.findByRole('alert')).toBeTruthy();
+			expect(
+				screen.getByRole('button', {
+					name: 'caseHandover.consent.approve'
+				})
+			).toBeTruthy();
+			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+		});
+
+		it.each(['FORBIDDEN', 'NO_MATCH'])(
+			'keeps the controls and the error when the status read is refused (%s)',
+			async (refusal) => {
+				vi.mocked(
+					apiDecideCaseHandoverClientConsent
+				).mockRejectedValueOnce(new Error('CATCH_ALL'));
+				mocks.getCaseHandoverRequestStatus.mockRejectedValue(
+					new Error(refusal)
+				);
+				renderSessionStream({
+					isGroup: false,
+					notificationFeed: [consentNotification()]
+				});
+
+				await clickApprove();
+
+				expect(await screen.findByRole('alert')).toBeTruthy();
+				expect(
+					screen.getByRole('button', {
+						name: 'caseHandover.consent.approve'
+					})
+				).toBeTruthy();
+				expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+			}
 		);
 
-		expect((await screen.findByRole('status')).textContent).toBe(
-			'caseHandover.consent.info.granted'
-		);
-		expect(screen.queryByRole('alert')).toBeNull();
+		it('keeps the controls and the error while the request is really still open', async () => {
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+				new Error('CATCH_ALL')
+			);
+			mocks.getCaseHandoverRequestStatus.mockResolvedValue(
+				requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await clickApprove();
+
+			expect(await screen.findByRole('alert')).toBeTruthy();
+			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+		});
+
+		it('treats a 409 "owner changed" as settled without another read and marks the notification read', async () => {
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+				new Error('CONFLICT')
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await clickApprove();
+
+			await expectCardSettled('caseHandover.consent.info.closed');
+			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
+			expect(mocks.refreshNotificationFeed).toHaveBeenCalled();
+		});
+
+		it('stays gone after a reload once the owner-changed card was settled', async () => {
+			const feed: any[] = [consentNotification()];
+			mocks.markNotificationAsRead.mockImplementation((id: string) => {
+				feed.forEach((item) => {
+					if (item.id === id) item.readAt = '2026-10-17T10:00:00Z';
+				});
+			});
+			vi.mocked(apiDecideCaseHandoverClientConsent).mockRejectedValueOnce(
+				new Error('CONFLICT')
+			);
+			const first = renderSessionStream({
+				isGroup: false,
+				notificationFeed: feed
+			});
+			await clickApprove();
+			await expectCardSettled('caseHandover.consent.info.closed');
+			first.unmount();
+
+			renderSessionStream({ isGroup: false, notificationFeed: feed });
+
+			await screen.findByTestId('session-item');
+			expect(
+				screen.queryByTestId('case-handover-inline-consent')
+			).toBeNull();
+			expect(
+				screen.queryByRole('button', {
+					name: 'caseHandover.consent.approve'
+				})
+			).toBeNull();
+		});
+
+		it('settles an unread card on load when the request is already closed', async () => {
+			mocks.getCaseHandoverRequestStatus.mockResolvedValue(
+				requestStatus({ status: 'CLIENT_CONSENT_DECLINED' })
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await expectCardSettled('caseHandover.consent.info.closed');
+			expect(mocks.getCaseHandoverRequestStatus).toHaveBeenCalledWith(
+				1,
+				11
+			);
+			expect(mocks.markNotificationAsRead).toHaveBeenCalledWith('1481');
+			expect(apiDecideCaseHandoverClientConsent).not.toHaveBeenCalled();
+		});
+
+		it('keeps the decision controls on load while the request is still open', async () => {
+			mocks.getCaseHandoverRequestStatus.mockResolvedValue(
+				requestStatus({ status: 'PENDING_CLIENT_CONSENT' })
+			);
+			renderSessionStream({
+				isGroup: false,
+				notificationFeed: [consentNotification()]
+			});
+
+			await waitFor(() =>
+				expect(mocks.getCaseHandoverRequestStatus).toHaveBeenCalled()
+			);
+			expect(
+				screen.getByRole('button', {
+					name: 'caseHandover.consent.approve'
+				})
+			).toBeTruthy();
+			expect(mocks.markNotificationAsRead).not.toHaveBeenCalled();
+		});
 	});
 
 	it('does not inject a standalone team-access message into an ordinary counselling session', async () => {
