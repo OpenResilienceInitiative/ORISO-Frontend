@@ -100,7 +100,7 @@ export const STORY_LABELS: DisplayFilterDialogLabels = {
 	emailColumn: 'E-Mail',
 	emailKind: (kind) => `E-Mail: ${kind}`,
 	emailMenu: (kind) => `E-Mail wählen: ${kind}`,
-	emailUnavailable: 'nicht verfügbar',
+	channelUnavailable: 'nicht verfügbar',
 	emailUnavailableReason: 'Für diese Art gibt es noch keine E-Mail'
 };
 

@@ -26,9 +26,11 @@ export const EmailToggle = ({
 	const onChange = useCallback(
 		async (checked: boolean) => {
 			setInternalChecked(checked);
-			if (!(await save({ kind: 'path', name }, checked))) {
-				setInternalChecked(!checked);
-			}
+			const { saved, stored } = await save(
+				{ kind: 'path', name },
+				checked
+			);
+			if (!saved) setInternalChecked(stored);
 		},
 		[name, save]
 	);

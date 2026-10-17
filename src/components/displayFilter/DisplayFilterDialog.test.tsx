@@ -515,7 +515,7 @@ describe('DisplayFilterDialog Browser column gate (Codex review on #1752)', () =
 			})
 		).toBeNull();
 		const row = screen.getByRole('row', { name: /Nachrichten/ });
-		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(
 			within(row)
 				.getByTitle('Pop-ups sind aus')

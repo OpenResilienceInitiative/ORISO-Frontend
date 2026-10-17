@@ -2076,7 +2076,7 @@
 			"emailColumn": "Эл. почта",
 			"emailKind": "Эл. почта: {{kind}}",
 			"emailMenu": "Выбрать e-mail: {{kind}}",
-			"emailUnavailable": "недоступно",
+			"channelUnavailable": "недоступно",
 			"emailUnavailableReason": "Для этого типа пока нет e-mail",
 			"emailMasterOff": "Уведомления по эл. почте отключены в вашем профиле",
 			"browserOff": "Всплывающие уведомления отключены в вашем профиле",

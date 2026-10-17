@@ -2075,7 +2075,7 @@
 			"emailColumn": "ኢመይል",
 			"emailKind": "ኢመይል፦ {{kind}}",
 			"emailMenu": "ኢመይል ምረጽ፦ {{kind}}",
-			"emailUnavailable": "ኣይርከብን",
+			"channelUnavailable": "ኣይርከብን",
 			"emailUnavailableReason": "ነዚ ዓይነት እዚ ገና ኢመይል የለን",
 			"emailMasterOff": "ናይ ኢመይል መፍለጢታት ኣብ ፕሮፋይልኩም ተዓጽዮም ኣለዉ",
 			"browserOff": "ብቕልጡፍ ዝወጹ መፍለጢታት ኣብ ፕሮፋይልኩም ተዓጽዮም ኣለዉ",

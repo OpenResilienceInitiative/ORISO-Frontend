@@ -2072,7 +2072,7 @@
 			"emailColumn": "E-mail",
 			"emailKind": "E-mail: {{kind}}",
 			"emailMenu": "Choose e-mail: {{kind}}",
-			"emailUnavailable": "not available",
+			"channelUnavailable": "not available",
 			"emailUnavailableReason": "There is no e-mail for this kind yet",
 			"emailMasterOff": "E-mail notifications are switched off in your profile",
 			"browserOff": "Pop-ups are switched off in your profile",

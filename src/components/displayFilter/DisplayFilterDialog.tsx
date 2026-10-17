@@ -93,7 +93,7 @@ export interface DisplayFilterDialogLabels {
 	emailColumn: string;
 	emailKind: (kindLabel: string) => string;
 	emailMenu: (kindLabel: string) => string;
-	emailUnavailable: string;
+	channelUnavailable: string;
 	emailUnavailableReason: string;
 }
 

@@ -60,8 +60,11 @@ export const useDisplayFilterEmailColumn = (
 				pending[key] ?? readEmailSetting(userData, entry.source);
 			if (next === previous) return;
 			setPending((current) => ({ ...current, [key]: next }));
-			if (!(await save(entry.source, next))) {
-				setPending((current) => ({ ...current, [key]: previous }));
+			const { saved, stored } = await save(entry.source, next);
+			if (!saved) {
+				// The last confirmed value, not `previous`: with two queued
+				// writes, `previous` is the first one's optimistic value.
+				setPending((current) => ({ ...current, [key]: stored }));
 			}
 		},
 		[pending, role, save, section, userData]

@@ -120,8 +120,8 @@ export const useDisplayFilterLabels = (
 					t('notifications.displayFilter.emailKind', { kind }),
 				emailMenu: (kind: string) =>
 					t('notifications.displayFilter.emailMenu', { kind }),
-				emailUnavailable: t(
-					'notifications.displayFilter.emailUnavailable'
+				channelUnavailable: t(
+					'notifications.displayFilter.channelUnavailable'
 				),
 				emailUnavailableReason: t(
 					'notifications.displayFilter.emailUnavailableReason'

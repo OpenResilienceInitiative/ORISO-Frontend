@@ -202,7 +202,7 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 	it('shows "nicht verfügbar" without a focus stop where no e-mail setting exists, and says why', () => {
 		render(withUser(<ConnectedDialog />));
 		const row = screen.getByRole('row', { name: /Live-Chat/ });
-		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(row.textContent).toContain(STORY_LABELS.emailUnavailableReason);
 		expect(
 			screen.queryByRole('button', { name: 'E-Mail: Live-Chat' })
@@ -235,7 +235,7 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 			screen.queryByRole('button', { name: 'E-Mail: Mail-Beratung' })
 		).toBeNull();
 		const row = screen.getByRole('row', { name: /Mail-Beratung/ });
-		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(
 			row
 				.querySelector('.displayFilterDialog__unavailable')
@@ -250,7 +250,7 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 			).toBeNull();
 		}
 		const row = screen.getByRole('row', { name: /Mail-Beratung/ });
-		expect(row.textContent).toContain(STORY_LABELS.emailUnavailable);
+		expect(row.textContent).toContain(STORY_LABELS.channelUnavailable);
 		expect(
 			row
 				.querySelector('.displayFilterDialog__unavailable')
@@ -279,6 +279,35 @@ describe('display-filter E-Mail column (FE#1377 redesign)', () => {
 		);
 		fireEvent.click(screen.getByRole('menuitemradio', { name: 'Aus' }));
 		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledOnce());
+		await waitFor(() => expect(picker.textContent).toContain('An'));
+	});
+	it('shows the stored value after two queued changes to one picker both fail', async () => {
+		const rejects: Array<() => void> = [];
+		vi.mocked(apiPatchUserData).mockImplementation(
+			() =>
+				new Promise((_, reject) => {
+					rejects.push(() => reject(new Error('offline')));
+				})
+		);
+		render(withUser(<ConnectedDialog />));
+		const picker = screen.getByRole('button', { name: 'E-Mail: Termine' });
+		const choose = (option: 'An' | 'Aus') => {
+			fireEvent.click(
+				screen.getByRole('button', { name: 'E-Mail wählen: Termine' })
+			);
+			fireEvent.click(
+				screen.getByRole('menuitemradio', { name: option })
+			);
+		};
+		// Stored: An. Off, then back on, before the first write answers.
+		choose('Aus');
+		choose('An');
+		await waitFor(() => expect(rejects).toHaveLength(1));
+		rejects.shift()?.();
+		await waitFor(() => expect(rejects).toHaveLength(1));
+		rejects.shift()?.();
+		await waitFor(() => expect(apiPatchUserData).toHaveBeenCalledTimes(2));
+		await new Promise((resolve) => setTimeout(resolve, 0));
 		await waitFor(() => expect(picker.textContent).toContain('An'));
 	});
 });

@@ -60,7 +60,7 @@ describe('useSaveEmailSetting', () => {
 			wrapper
 		});
 
-		let saves: Promise<boolean>[] = [];
+		let saves: Promise<{ saved: boolean }>[] = [];
 		await act(async () => {
 			saves = [
 				appointment.result.current(
@@ -86,7 +86,10 @@ describe('useSaveEmailSetting', () => {
 			}
 		});
 
-		expect(await Promise.all(saves)).toEqual([true, true]);
+		expect((await Promise.all(saves)).map((r) => r.saved)).toEqual([
+			true,
+			true
+		]);
 		expect(stored.settings).toEqual({
 			appointmentNotificationEnabled: false,
 			feedbackNotificationEnabled: false
@@ -111,14 +114,14 @@ describe('useSaveEmailSetting', () => {
 			// Later reloads succeed (and drain the shared queue state).
 			.mockResolvedValue(undefined);
 		const save = renderSave(reload);
-		let first: boolean | undefined;
+		let first: { saved: boolean } | undefined;
 		await act(async () => {
 			first = await save(
 				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
 				false
 			);
 		});
-		expect(first).toBe(true);
+		expect(first?.saved).toBe(true);
 		// userData is still the old snapshot: the next PATCH must keep the change.
 		await act(async () => {
 			await save(
@@ -194,14 +197,14 @@ describe('useSaveEmailSetting', () => {
 				.mockRejectedValueOnce(new Error('offline'))
 				.mockResolvedValue(undefined)
 		);
-		let result: boolean | undefined;
+		let result: { saved: boolean; stored: boolean } | undefined;
 		await act(async () => {
 			result = await save(
 				{ kind: 'settings', field: 'appointmentNotificationEnabled' },
 				false
 			);
 		});
-		expect(result).toBe(false);
+		expect(result).toEqual({ saved: false, stored: true });
 		// Drain the shared queue state for later tests.
 		vi.mocked(apiPatchUserData).mockResolvedValue(undefined);
 		await act(async () => {

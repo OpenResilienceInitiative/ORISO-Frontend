@@ -2096,7 +2096,7 @@
 			"emailColumn": "E-Mail",
 			"emailKind": "E-Mail: {{kind}}",
 			"emailMenu": "E-Mail wählen: {{kind}}",
-			"emailUnavailable": "nicht verfügbar",
+			"channelUnavailable": "nicht verfügbar",
 			"emailUnavailableReason": "Für diese Art gibt es noch keine E-Mail",
 			"emailMasterOff": "E-Mail-Benachrichtigungen sind in Ihrem Profil ausgeschaltet",
 			"browserOff": "Pop-ups sind in Ihrem Profil ausgeschaltet",

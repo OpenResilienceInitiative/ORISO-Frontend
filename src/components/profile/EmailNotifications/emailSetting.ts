@@ -75,10 +75,17 @@ let queuedWrites = 0;
 let latestStored: Partial<UserDataInterface> | null = null;
 let seenUserData: unknown;
 
+/** `saved`: the PATCH went through. `stored`: the setting's last confirmed value. */
+export interface EmailSettingSaveResult {
+	saved: boolean;
+	stored: boolean;
+}
+
 /**
  * The one write path for e-mail preferences: the profile's switches and the
- * display filter's E-Mail column both call it. Resolves `false` after a
- * failed save (error toast shown) so the caller can put its control back.
+ * display filter's E-Mail column both call it. After a failed save (error
+ * toast shown) the caller puts its control back to `stored` — never to
+ * `!next`, which is wrong once two writes to one setting were queued.
  */
 export const useSaveEmailSetting = () => {
 	const { t } = useTranslation();
@@ -91,15 +98,19 @@ export const useSaveEmailSetting = () => {
 		if (queuedWrites === 0) latestStored = null;
 	}, [userData]);
 	return useCallback(
-		(source: EmailSettingSource, next: boolean): Promise<boolean> => {
+		(
+			source: EmailSettingSource,
+			next: boolean
+		): Promise<EmailSettingSaveResult> => {
 			queuedWrites += 1;
 			const write = writeQueue.then(async () => {
 				const base = latestStored ?? userData;
 				const patch = emailSettingPatch(base, source, next);
+				let saved = false;
 				try {
 					await apiPatchUserData(patch);
 					latestStored = { ...base, ...patch };
-					return true;
+					saved = true;
 				} catch {
 					addNotification?.({
 						title: t('profile.notifications.toggleError.title'),
@@ -109,22 +120,22 @@ export const useSaveEmailSetting = () => {
 						notificationType: 'error'
 					});
 					latestStored = base ?? null;
-					return false;
-				} finally {
-					// Always re-read: what is stored is what the switch must show.
-					// A failed reload keeps the save's result and the last
-					// known stored state: the context may now be stale.
-					let reloaded = false;
-					try {
-						const fresh = await reloadUserData?.();
-						if (fresh) latestStored = fresh;
-						reloaded = true;
-					} catch {
-						// Keep latestStored: the next write builds on it.
-					}
-					queuedWrites -= 1;
-					if (queuedWrites === 0 && reloaded) latestStored = null;
 				}
+				// Always re-read: what is stored is what the switch must show.
+				// A failed reload keeps the save's result and the last known
+				// stored state: the context may now be stale.
+				let reloaded = false;
+				try {
+					const fresh = await reloadUserData?.();
+					if (fresh) latestStored = fresh;
+					reloaded = true;
+				} catch {
+					// Keep latestStored: the next write builds on it.
+				}
+				const stored = readEmailSetting(latestStored, source);
+				queuedWrites -= 1;
+				if (queuedWrites === 0 && reloaded) latestStored = null;
+				return { saved, stored };
 			});
 			writeQueue = write.catch(() => undefined);
 			return write;

@@ -62,8 +62,9 @@ export interface DisplayFilterKindTableLabels {
 	emailColumn: string;
 	emailKind: (kindLabel: string) => string;
 	emailMenu: (kindLabel: string) => string;
-	emailUnavailable: string;
 	emailUnavailableReason: string;
+	/** "nicht verfügbar" — the unavailable cell of the Browser and E-Mail columns. */
+	channelUnavailable: string;
 }
 
 /**
@@ -450,10 +451,10 @@ export const DisplayFilterKindTable = ({
 												data-cy={`${dataCyPrefix}-sound-${kind.id}-unavailable`}
 											>
 												<span aria-hidden="true">
-													{labels.emailUnavailable}
+													{labels.channelUnavailable}
 												</span>
 												<span className="sr-only">
-													{`${labels.emailUnavailable}. ${browserUnavailableReason}`}
+													{`${labels.channelUnavailable}. ${browserUnavailableReason}`}
 												</span>
 											</span>
 										) : (
@@ -557,10 +558,10 @@ export const DisplayFilterKindTable = ({
 												data-cy={`${dataCyPrefix}-email-${kind.id}-unavailable`}
 											>
 												<span aria-hidden="true">
-													{labels.emailUnavailable}
+													{labels.channelUnavailable}
 												</span>
 												<span className="sr-only">
-													{`${labels.emailUnavailable}. ${email?.unavailableReason ?? labels.emailUnavailableReason}`}
+													{`${labels.channelUnavailable}. ${email?.unavailableReason ?? labels.emailUnavailableReason}`}
 												</span>
 											</span>
 										)}
