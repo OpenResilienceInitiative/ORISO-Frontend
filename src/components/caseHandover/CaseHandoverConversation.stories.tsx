@@ -351,11 +351,15 @@ const shortcut: Story['play'] = async ({ canvasElement, globals }) => {
 	await userEvent.click(
 		await choice.findByRole('button', { name: 'Browser aktivieren' })
 	);
+	// Both steps are done: the opened setup folds into its one-line summary.
 	await waitFor(() =>
 		expect(
-			choice.getByRole('button', { name: /Beides einrichten/ })
-		).toHaveAttribute('aria-pressed', 'true')
+			choice.getByText('Benachrichtigung: E-Mail und Signal aktiv')
+		).toBeVisible()
 	);
+	expect(
+		choice.queryByRole('button', { name: /Beides einrichten/ })
+	).toBeNull();
 	await userEvent.click(
 		canvas.getByRole('button', { name: 'Fixture: reload conversation' })
 	);

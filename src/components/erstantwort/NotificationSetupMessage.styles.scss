@@ -1,0 +1,22 @@
+.notificationSetupMessage__summary {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--m3-on-surface-variant, #444748);
+}
+
+.notificationSetupMessage__head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+}
+
+.notificationSetupMessage__copy {
+	flex: 1;
+	min-width: 0;
+
+	> :first-child {
+		margin-top: 0;
+	}
+}

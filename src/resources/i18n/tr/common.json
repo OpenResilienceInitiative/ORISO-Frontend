@@ -5255,6 +5255,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Bildirim: {{state}}",
+			"change": "değiştir",
+			"changeLabel": "Bildirimi değiştir",
+			"dismiss": "Kurulumu gizle",
+			"none": "kurulmadı",
+			"email": "e-posta açık",
+			"browser": "bu cihazda sinyal açık",
+			"both": "e-posta ve sinyal açık"
+		},
 		"subtitle": "İlk adımlarınız",
 		"greeting": {
 			"body": "Bize ulaştığınız için teşekkür ederiz. Mesajınız bize ulaştı."

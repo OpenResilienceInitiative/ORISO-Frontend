@@ -5219,6 +5219,16 @@
 			"channelEmail": "Email",
 			"channelBrowser": "Browser on this device"
 		},
+		"notificationSummary": {
+			"label": "Notifications: {{state}}",
+			"change": "change",
+			"changeLabel": "Change notifications",
+			"dismiss": "Hide setup",
+			"none": "not set up",
+			"email": "email on",
+			"browser": "signal active on this device",
+			"both": "email and signal on"
+		},
 		"subtitle": "Your first steps",
 		"greeting": {
 			"body": "Thank you for getting in touch. Your message has reached us."

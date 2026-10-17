@@ -5255,6 +5255,16 @@
 		}
 	},
 	"erstantwort": {
+		"notificationSummary": {
+			"label": "Notification : {{state}}",
+			"change": "modifier",
+			"changeLabel": "Modifier la notification",
+			"dismiss": "Masquer la configuration",
+			"none": "non configurée",
+			"email": "e-mail activé",
+			"browser": "signal sur cet appareil activé",
+			"both": "e-mail et signal activés"
+		},
 		"subtitle": "Vos premières étapes",
 		"greeting": {
 			"body": "Merci d'avoir pris contact. Votre message nous est bien parvenu."

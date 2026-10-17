@@ -20,10 +20,9 @@ import { StandingAccessPreference } from './StandingAccessPreference';
 import { useTenant } from '../../globalState/provider/TenantProvider';
 import { notificationChannelPolicy } from '../erstantwort/notificationChannelPolicy';
 import { useNotificationChannels } from '../erstantwort/useNotificationChannels';
-import { NotificationSetup } from '../erstantwort/NotificationSetup';
+import { NotificationSetupMessage } from '../erstantwort/NotificationSetupMessage';
 import { Button, BUTTON_TYPES } from '../button/Button';
 import { CaseHandoverInfoDialog } from './CaseHandoverClientCards';
-import { ErstantwortSequence } from '../erstantwort/ErstantwortSequence';
 
 /** Manual per-conversation setting. This never decides a pending request. */
 export const StandingAccessSettings = ({
@@ -252,31 +251,18 @@ export const StandingAccessSettings = ({
 			{recommendation &&
 				policy.emailAllowed &&
 				(setupStarted || !consentEmailActive) && (
-					<ErstantwortSequence
-						skipAnimation
-						bausteine={[
-							{
-								id: 'standingConsentNotifications',
-								body: '',
-								headline: ''
-							}
-						]}
-						slots={{
-							standingConsentNotifications: (
-								<>
-									<p>
-										{t(
-											'caseHandover.consent.info.notificationsCopy'
-										)}
-									</p>
-									<NotificationSetup
-										onStart={() => setSetupStarted(true)}
-										isEmailEnabled={policy.emailAllowed}
-										isBrowserEnabled={policy.browserAllowed}
-									/>
-								</>
-							)
-						}}
+					<NotificationSetupMessage
+						requireConsentEmail
+						onStart={() => setSetupStarted(true)}
+						isEmailEnabled={policy.emailAllowed}
+						isBrowserEnabled={policy.browserAllowed}
+						copy={
+							<p>
+								{t(
+									'caseHandover.consent.info.notificationsCopy'
+								)}
+							</p>
+						}
 					/>
 				)}
 		</>
