@@ -656,6 +656,55 @@ export const GroupCallWidget: React.FC = () => {
 		};
 	};
 
+	/*
+	 * How far one arrow key moves a handle, in px.
+	 *
+	 * Enough to be worth a keypress and small enough to aim with; `Shift`
+	 * takes bigger strides, as it does in every other resizable thing.
+	 */
+	const RESIZE_STEP = 16;
+	const RESIZE_STEP_FAST = 64;
+
+	/*
+	 * The same resize, from the keyboard.
+	 *
+	 * These handles were `role="separator"` with an `aria-label` and nothing
+	 * but `onPointerDown`: they announced a control that a keyboard could not
+	 * reach or operate, which on this surface also means no way to make room
+	 * for the Gesprächsnotizen panel without a mouse.
+	 *
+	 * It goes through `resizeStageFromPointer` exactly as the pointer does,
+	 * with the arrow key standing in for the movement — so the edge
+	 * semantics, the aspect ratio and the bounds cannot drift between the two
+	 * ways of doing the same thing. A `w` handle growing leftwards is that
+	 * function's business, not this one's.
+	 */
+	const handleResizeKeyDown = (e: React.KeyboardEvent, edge: ResizeEdge) => {
+		if (isMobileView || isFullscreen || isMobileCompact) return;
+		const step = e.shiftKey ? RESIZE_STEP_FAST : RESIZE_STEP;
+		const move: Record<string, { dx: number; dy: number }> = {
+			ArrowLeft: { dx: -step, dy: 0 },
+			ArrowRight: { dx: step, dy: 0 },
+			ArrowUp: { dx: 0, dy: -step },
+			ArrowDown: { dx: 0, dy: step }
+		};
+		const delta = move[e.key];
+		if (!delta) return;
+		e.preventDefault();
+		e.stopPropagation();
+		const next = resizeStageFromPointer({
+			edge,
+			startSize: stageSize,
+			startPosition: position,
+			dx: delta.dx,
+			dy: delta.dy,
+			aspectRatio: stageSize.width / stageSize.height || GROUP_ASPECT,
+			bounds: getGroupBounds()
+		});
+		setStageSize(next.size);
+		setPosition(next.position);
+	};
+
 	const handlePointerMove = (e: PointerEvent) => {
 		if (isResizing && resizeStartRef.current) {
 			const start = resizeStartRef.current;
@@ -897,8 +946,35 @@ export const GroupCallWidget: React.FC = () => {
 									aria-label={t('calls.resizeAria', {
 										edge
 									})}
+									/*
+									 * Focusable, and it reports where it is.
+									 * A separator that can be moved is a
+									 * widget, so it needs a tab stop and a
+									 * value — without `aria-valuenow` a
+									 * screen reader announces a control with
+									 * no position in its range.
+									 */
+									tabIndex={0}
+									aria-valuenow={Math.round(
+										edge === 'n' || edge === 's'
+											? stageSize.height
+											: stageSize.width
+									)}
+									aria-valuemin={Math.round(
+										edge === 'n' || edge === 's'
+											? getGroupBounds().minHeight
+											: getGroupBounds().minWidth
+									)}
+									aria-valuemax={Math.round(
+										edge === 'n' || edge === 's'
+											? getGroupBounds().maxHeight
+											: getGroupBounds().maxWidth
+									)}
 									onPointerDown={(e) =>
 										handleResizePointerDown(e, edge)
+									}
+									onKeyDown={(e) =>
+										handleResizeKeyDown(e, edge)
 									}
 								/>
 							))}

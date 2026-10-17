@@ -264,6 +264,80 @@ describe('GroupCallWidget Storybook harness', () => {
 		}
 	});
 
+	it('resizes the stage from the keyboard, not only from a pointer', async () => {
+		/*
+		 * These handles were `role="separator"` with an `aria-label` and
+		 * nothing but `onPointerDown`: they announced a control a keyboard
+		 * could neither reach nor operate. On this surface that also means no
+		 * way to make room for the Gesprächsnotizen panel without a mouse,
+		 * since the panel moves beside the stage only past a width.
+		 */
+		const matrixClientService = makeFakeMatrixClientService('active');
+		seedIncomingElementCall();
+		callManager.answerCall();
+
+		const view = renderTranslated(
+			<MatrixClientContext.Provider
+				value={{
+					matrixClientService,
+					setMatrixClientService: () => {}
+				}}
+			>
+				<GroupCallWidget />
+			</MatrixClientContext.Provider>
+		);
+		await waitFor(() => {
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy();
+		});
+
+		const handle = view.container.querySelector(
+			'.call-resize-handle--e'
+		) as HTMLElement | null;
+		expect(handle).toBeTruthy();
+		// Reachable at all, and it says where it sits in its range.
+		expect(handle!.getAttribute('tabindex')).toBe('0');
+		const before = Number(handle!.getAttribute('aria-valuenow'));
+		expect(before).toBeGreaterThan(0);
+		expect(
+			Number(handle!.getAttribute('aria-valuemin'))
+		).toBeLessThanOrEqual(before);
+
+		handle!.focus();
+		expect(document.activeElement).toBe(handle);
+
+		const widthNow = (): number =>
+			Number(
+				view.container
+					.querySelector('.call-resize-handle--e')!
+					.getAttribute('aria-valuenow')
+			);
+
+		// Inwards first: the stage opens at the width the window allows, so
+		// `ArrowRight` is correctly clamped and would prove nothing.
+		fireEvent.keyDown(handle!, { key: 'ArrowLeft' });
+		await waitFor(() => expect(widthNow()).toBeLessThan(before));
+		const narrowed = widthNow();
+
+		// And back out again, so this is a resize rather than a one-way trip.
+		fireEvent.keyDown(
+			view.container.querySelector('.call-resize-handle--e')!,
+			{ key: 'ArrowRight' }
+		);
+		await waitFor(() => expect(widthNow()).toBeGreaterThan(narrowed));
+
+		// Shift takes bigger strides than a bare arrow.
+		const fromHere = widthNow();
+		fireEvent.keyDown(
+			view.container.querySelector('.call-resize-handle--e')!,
+			{ key: 'ArrowLeft', shiftKey: true }
+		);
+		await waitFor(() =>
+			expect(fromHere - widthNow()).toBeGreaterThan(before - narrowed)
+		);
+	});
+
 	it('moves all subscriptions to a fresh client and cleans up on unmount', async () => {
 		const firstService = makeFakeMatrixClientService('active');
 		const nextService = makeFakeMatrixClientService('connecting');
