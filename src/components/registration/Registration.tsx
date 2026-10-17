@@ -763,8 +763,13 @@ export const Registration = () => {
 					   A client-side transition can leave the submitted form
 					   painted while the app URL already shows. The welcome
 					   animation survives via POST_REGISTRATION_LOADER_KEY. */
+					/* A link the registration did not accept (another agency)
+					   joins no group afterwards either: no `gcid` for the app,
+					   so assignment and copy agree. */
 					redirectToApp(
-						getPostRegistrationGroupChatId(location.search),
+						groupJoin
+							? getPostRegistrationGroupChatId(location.search)
+							: undefined,
 						{ sessionId }
 					);
 				})

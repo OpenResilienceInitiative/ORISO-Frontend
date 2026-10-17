@@ -160,7 +160,7 @@
 		width: 100%;
 
 		@include breakpoint($fromLarge) {
-			width: 22rem;
+			width: min(100%, 22rem);
 		}
 	}
 
