@@ -1923,6 +1923,27 @@
 		"visibleOnlyTo": "yalnızca şunlar görebilir:",
 		"showLess": "Daha az göster",
 		"showMore": "Daha fazla göster",
+		"callLifecycle": {
+			"type": {
+				"audio": "Sesli arama",
+				"video": "Görüntülü arama"
+			},
+			"state": {
+				"running": "Devam ediyor",
+				"ended": "Sona erdi",
+				"missed": "Cevapsız"
+			},
+			"description": {
+				"running": "Arama {{start}} saatinden beri devam ediyor.",
+				"ended": "Arama {{start}} saatinde başladı.",
+				"missed": "Arama yanıtlanmadı."
+			},
+			"participants": {
+				"current": "Aramada",
+				"attended": "Katıldı"
+			},
+			"startedBy": "{{name}} tarafından arandı."
+		},
 		"systemNotification": "Sistem bildirimi",
 		"systemNotificationTitle": "Sistem bildirimi",
 		"userLeftChat": "Kullanıcı sohbetten ayrıldı",
@@ -4700,6 +4721,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Aramaya katıl",
+			"joinFailed": "Şu anda katılınamıyor. Diğer etkin aramanızı sonlandırıp tekrar deneyin.",
+			"video": {
+				"running": "Görüntülü arama sürüyor",
+				"ended": "Görüntülü arama sona erdi",
+				"missed": "Cevapsız görüntülü arama"
+			},
+			"audio": {
+				"running": "Sesli arama sürüyor",
+				"ended": "Sesli arama sona erdi",
+				"missed": "Cevapsız sesli arama"
+			},
+			"duration": "Süre: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Görüntülü aramayı kabul et",
 			"answerVideoCall": "Görüntülü aramayı kabul et",
@@ -5814,6 +5850,25 @@
 			"callFailed": "Çağrı başarısız: {{message}}",
 			"startFailed": "Çağrı başlatılamadı: {{message}}",
 			"elementUrlMissing": "Element adresi ayarlı değil. Element arayüzü açılamıyor."
+		},
+		"notes": {
+			"title": "Görüşme notları",
+			"privacy": "Özel. Yalnızca size ait ve yalnızca görüşme sürdüğü kadar.",
+			"type": "Not türü",
+			"text": "Not",
+			"add": "Not ekle",
+			"remove": "Notu kaldır",
+			"copy": "Tümünü kopyala",
+			"copied": "Kopyalandı",
+			"empty": "Henüz bir not yok.",
+			"collapse": "Notları daralt",
+			"expand": "Notları genişlet",
+			"open": "Görüşme notları",
+			"types": {
+				"frage": "Soru",
+				"anmerkung": "Açıklama",
+				"aufgabe": "Görev"
+			}
 		}
 	},
 	"form": {

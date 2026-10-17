@@ -1,0 +1,84 @@
+/*
+Einzelgespräch: a single circle split along a soft seam.
+
+Both names stay visible at all times, as the ticket requires — the quiet
+person has not left the conversation.
+*/
+.stage {
+	position: relative;
+	display: grid;
+	place-items: center;
+	overflow: hidden;
+}
+
+/* Sized in px by the component. A percentage here resolved against a grid
+row that is itself sized by its content, so the height collapsed and the
+circle came out a flat ellipse. */
+.circle {
+	position: relative;
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+.half {
+	position: absolute;
+	inset: 0;
+}
+
+.animal {
+	position: absolute;
+	inset-block-start: 50%;
+	translate: -50% -50%;
+}
+
+/* Positioned against the STAGE, not the circle: inside the circle's
+overflow a name near the rim was sliced off by the clip. */
+.label {
+	position: absolute;
+	translate: -50% 0;
+	z-index: 2;
+}
+
+/*
+The body of the circle, verbatim from the handoff.
+
+A white highlight from the upper left and a dark wash from the lower right,
+plus two inset shadows that round the top and the bottom edge. This is what
+turns a two-colour disc into something with a form — without it the circle
+reads as a pie chart, which is exactly what it must not read as.
+*/
+.sphere {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	background:
+		radial-gradient(
+			78% 78% at 33% 24%,
+			rgba(255, 255, 255, 0.5),
+			rgba(255, 255, 255, 0.14) 38%,
+			rgba(255, 255, 255, 0) 62%
+		),
+		radial-gradient(
+			88% 88% at 70% 86%,
+			rgba(28, 24, 18, 0.3),
+			rgba(28, 24, 18, 0.08) 44%,
+			rgba(28, 24, 18, 0) 70%
+		);
+	box-shadow:
+		inset 0 -14px 26px -12px rgba(28, 24, 18, 0.4),
+		inset 0 12px 22px -14px rgba(255, 255, 255, 0.6);
+}
+
+/*
+The rim light on whoever is speaking. The handoff's values, in the carrier's
+red — a tight inner ring and a wide inward glow, both clipped to the
+speaking side.
+*/
+.rim {
+	position: absolute;
+	inset: 0;
+	border-radius: 50%;
+	box-shadow:
+		inset 0 0 0 3px rgba(165, 0, 10, 0.44),
+		inset 0 0 44px 10px rgba(165, 0, 10, 0.32);
+}

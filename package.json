@@ -292,6 +292,9 @@
 					"strict": "off"
 				}
 			}
+		],
+		"ignorePatterns": [
+			"src/components/call/atmosphere/pond.js"
 		]
 	},
 	"browserslist": {

@@ -1,0 +1,81 @@
+/*
+The one name-pill specification from the design handoff, which says of it:
+"the single answer to how do we label a person. There is exactly one spec,
+used on every screen and in every state."
+
+Placement differs per arrangement — Hain at 7% of the shape's height, Felder
+bottom-left, Kacheln full width — but that belongs to the arrangement. The
+capsule itself never changes, which is why it lives here and not in a stage.
+*/
+.namePill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	block-size: 26px;
+	padding-inline: 10px;
+	border-radius: 13px;
+
+	/* The handoff's 132px as the default. An arrangement that knows how much
+	room the shape has may raise it — see --name-pill-max below. */
+	max-inline-size: var(--name-pill-max, 132px);
+
+	/* --m3-secondary is #4c555f, which is the handoff's value exactly. */
+	background: color-mix(
+		in srgb,
+		var(--m3-secondary, #4c555f) 92%,
+		transparent
+	);
+	backdrop-filter: blur(4px);
+	color: #fff;
+
+	font-weight: 500;
+	font-size: 12px;
+	line-height: 26px;
+	letter-spacing: 0.3px;
+	white-space: nowrap;
+}
+
+/* Speaking loses the transparency — the only difference, so the capsule
+carries it rather than a second element. */
+.namePill[data-speaking='true'] {
+	background: var(--m3-secondary, #4c555f);
+}
+
+.name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.glyph {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	flex: none;
+}
+
+.glyph svg {
+	display: block;
+	inline-size: 15px;
+	block-size: 15px;
+}
+
+/* The raised hand is the one thing in the capsule that is not white. */
+.hand {
+	color: #ffb4aa;
+}
+
+.duration {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+}
+
+.srOnly {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}

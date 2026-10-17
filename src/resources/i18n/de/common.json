@@ -1944,6 +1944,27 @@
 		"visibleOnlyTo": "nur sichtbar für:",
 		"showLess": "Weniger anzeigen",
 		"showMore": "Mehr anzeigen",
+		"callLifecycle": {
+			"type": {
+				"audio": "Audioanruf",
+				"video": "Videoanruf"
+			},
+			"state": {
+				"running": "Läuft",
+				"ended": "Beendet",
+				"missed": "Verpasst"
+			},
+			"description": {
+				"running": "Der Anruf läuft seit {{start}}.",
+				"ended": "Der Anruf begann um {{start}}.",
+				"missed": "Der Anruf wurde nicht angenommen."
+			},
+			"participants": {
+				"current": "Im Anruf",
+				"attended": "Teilgenommen"
+			},
+			"startedBy": "Angerufen von {{name}}."
+		},
 		"systemNotification": "Systembenachrichtigung",
 		"systemNotificationTitle": "Systembenachrichtigung",
 		"userLeftChat": "Benutzer hat den Chat verlassen",
@@ -4717,6 +4738,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Beitreten",
+			"joinFailed": "Der Beitritt ist gerade nicht möglich. Beenden Sie gegebenenfalls Ihren anderen Anruf und versuchen Sie es erneut.",
+			"video": {
+				"running": "Videoanruf läuft",
+				"ended": "Videoanruf beendet",
+				"missed": "Verpasster Videoanruf"
+			},
+			"audio": {
+				"running": "Audioanruf läuft",
+				"ended": "Audioanruf beendet",
+				"missed": "Verpasster Audioanruf"
+			},
+			"duration": "Dauer: {{duration}}"
+		},
 		"button": {
 			"answerCall": "Video-Call annehmen",
 			"answerVideoCall": "Video-Call annehmen",
@@ -5804,6 +5840,25 @@
 			"callFailed": "Anruf fehlgeschlagen: {{message}}",
 			"startFailed": "Anruf konnte nicht gestartet werden: {{message}}",
 			"elementUrlMissing": "Die Element-Adresse ist nicht gesetzt. Die Element-Oberfläche kann nicht geöffnet werden."
+		},
+		"notes": {
+			"title": "Gesprächsnotizen",
+			"privacy": "Privat. Nur für Sie und nur für die Dauer des Gesprächs.",
+			"type": "Art der Notiz",
+			"text": "Notiz",
+			"add": "Notiz hinzufügen",
+			"remove": "Notiz entfernen",
+			"copy": "Alles kopieren",
+			"copied": "Kopiert",
+			"empty": "Noch nichts notiert.",
+			"collapse": "Notizen einklappen",
+			"expand": "Notizen ausklappen",
+			"open": "Gesprächsnotizen",
+			"types": {
+				"frage": "Frage",
+				"anmerkung": "Anmerkung",
+				"aufgabe": "Aufgabe"
+			}
 		}
 	},
 	"form": {

@@ -1923,6 +1923,27 @@
 		"visibleOnlyTo": "visible uniquement pour :",
 		"showLess": "Afficher moins",
 		"showMore": "Voir plus",
+		"callLifecycle": {
+			"type": {
+				"audio": "Appel audio",
+				"video": "Appel vidéo"
+			},
+			"state": {
+				"running": "En cours",
+				"ended": "Terminé",
+				"missed": "Manqué"
+			},
+			"description": {
+				"running": "L’appel est en cours depuis {{start}}.",
+				"ended": "L’appel a commencé à {{start}}.",
+				"missed": "L’appel n’a pas reçu de réponse."
+			},
+			"participants": {
+				"current": "Dans l’appel",
+				"attended": "A participé"
+			},
+			"startedBy": "Appel lancé par {{name}}."
+		},
 		"systemNotification": "Notification du système",
 		"systemNotificationTitle": "Notification du système",
 		"userLeftChat": "L'utilisateur a quitté le chat",
@@ -4700,6 +4721,21 @@
 		}
 	},
 	"videoCall": {
+		"timeline": {
+			"join": "Rejoindre l’appel",
+			"joinFailed": "Impossible de rejoindre l’appel pour le moment. Terminez tout autre appel actif et réessayez.",
+			"video": {
+				"running": "Appel vidéo en cours",
+				"ended": "Appel vidéo terminé",
+				"missed": "Appel vidéo manqué"
+			},
+			"audio": {
+				"running": "Appel audio en cours",
+				"ended": "Appel audio terminé",
+				"missed": "Appel audio manqué"
+			},
+			"duration": "Durée : {{duration}}"
+		},
 		"button": {
 			"answerCall": "Accepter un appel vidéo",
 			"answerVideoCall": "Accepter un appel vidéo",
@@ -5814,6 +5850,25 @@
 			"callFailed": "L'appel a échoué : {{message}}",
 			"startFailed": "Impossible de démarrer l'appel : {{message}}",
 			"elementUrlMissing": "L'adresse Element n'est pas définie. L'interface Element ne peut pas s'ouvrir."
+		},
+		"notes": {
+			"title": "Notes d’entretien",
+			"privacy": "Privé. Seulement pour vous, et seulement pendant l’entretien.",
+			"type": "Type de note",
+			"text": "Note",
+			"add": "Ajouter une note",
+			"remove": "Supprimer la note",
+			"copy": "Tout copier",
+			"copied": "Copié",
+			"empty": "Rien de noté pour l’instant.",
+			"collapse": "Replier les notes",
+			"expand": "Déplier les notes",
+			"open": "Notes d’entretien",
+			"types": {
+				"frage": "Question",
+				"anmerkung": "Remarque",
+				"aufgabe": "Tâche"
+			}
 		}
 	},
 	"form": {
