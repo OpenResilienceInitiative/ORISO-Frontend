@@ -14,6 +14,7 @@ import React, {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RoomStateEvent } from 'matrix-js-sdk';
+import { MatrixRTCSessionEvent } from 'matrix-js-sdk/lib/matrixrtc/MatrixRTCSession';
 import { callManager, CallData } from '../../services/CallManager';
 import { useElementCallWidget } from './widget/useElementCallWidget';
 import { useMatrixClient } from '../../globalState/context/MatrixClientContext';
@@ -45,6 +46,20 @@ const GROUP_DEFAULT_WIDTH = 520;
 const GROUP_DEFAULT_HEIGHT = 320;
 const GROUP_ASPECT = GROUP_DEFAULT_WIDTH / GROUP_DEFAULT_HEIGHT;
 const GROUP_MIN = { width: 280, height: 180 };
+
+/*
+ * The expanded notepad's width, from `gespraechsnotizen.module.scss`, and the
+ * narrowest stage that can seat it beside the call.
+ *
+ * The stage is a floating window, not the page: its width is `stageSize`,
+ * which autofit scales to the screen and the counsellor then drags with the
+ * resize handles. So "is there room for both" is a question about the stage
+ * and cannot be answered by a viewport media query — a 1920px screen can hold
+ * a 300px-wide stage. Below this the panel lays over the stage instead; the
+ * stylesheet reads `data-narrow-stage` for it.
+ */
+const NOTES_PANEL_WIDTH = 320;
+const NOTES_SIDE_BY_SIDE_MIN_WIDTH = NOTES_PANEL_WIDTH + GROUP_MIN.width;
 
 export const GroupCallWidget: React.FC = () => {
 	const { t } = useTranslation();
@@ -139,35 +154,64 @@ export const GroupCallWidget: React.FC = () => {
 		void publishCallIdentity(identityClient, callRoomId, source);
 
 		/*
-		 * Whoever is already here heard the publish above live. Seeding the
-		 * set with them is what stops this from re-announcing to the room on
-		 * every membership change that is not an arrival — a leave, a profile
-		 * edit, or our own join echoing back.
+		 * Who is in the CALL, which is not who is in the room.
+		 *
+		 * `useElementCallWidget` never leaves the Matrix room, so somebody who
+		 * closes the call surface and opens it again stays a joined room
+		 * member throughout — only their MatrixRTC membership
+		 * (`org.matrix.msc3401.call.member`) goes away and comes back. A
+		 * listener on room membership therefore never fired for them, nobody
+		 * re-announced, and the returning participant sat looking at initials
+		 * where the animals had been.
+		 *
+		 * So the set is the RTC session's senders, and an arrival is somebody
+		 * entering it who was not in it a moment ago — which makes a rejoin an
+		 * arrival, as it should be. Seeding it before subscribing is what
+		 * stops the people already here from being re-announced to: they heard
+		 * the publish above live.
+		 *
+		 * Room membership stays as the fallback for a client with no
+		 * `matrixRTC` (an older SDK, or a test double), because losing the
+		 * re-announce silently is the failure mode this whole mechanism exists
+		 * to avoid.
 		 */
-		const announced = new Set<string>(
-			(
-				client
-					.getRoom?.(callRoomId)
-					?.getMembersWithMembership?.('join') ?? []
-			)
-				.map((member: { userId: string }) => member.userId)
-				.concat(client.getUserId?.() ?? [])
-		);
-		const onMember = (
-			_event: unknown,
-			_state: unknown,
-			member: { roomId?: string; userId?: string; membership?: string }
-		): void => {
-			if (member?.roomId !== callRoomId) return;
-			if (member.membership !== 'join') return;
-			const userId = member.userId;
-			if (!userId || announced.has(userId)) return;
-			announced.add(userId);
-			void republishCallIdentity(identityClient, callRoomId, source);
+		const room = client.getRoom?.(callRoomId);
+		const session =
+			room && client.matrixRTC?.getRoomSession
+				? client.matrixRTC.getRoomSession(room)
+				: undefined;
+		const ownUserId = client.getUserId?.() ?? undefined;
+		const inTheCall = (): Set<string> =>
+			new Set<string>(
+				(session
+					? session.memberships.map(
+							(membership: { sender?: string | null }) =>
+								membership.sender ?? undefined
+						)
+					: (room?.getMembersWithMembership?.('join') ?? []).map(
+							(member: { userId: string }) => member.userId
+						)
+				).filter(
+					(userId): userId is string => typeof userId === 'string'
+				)
+			);
+
+		let present = inTheCall();
+		const refresh = (): void => {
+			const now = inTheCall();
+			const arrived = [...now].some(
+				(userId) => userId !== ownUserId && !present.has(userId)
+			);
+			present = now;
+			if (arrived)
+				void republishCallIdentity(identityClient, callRoomId, source);
 		};
-		client.on?.(RoomStateEvent.Members, onMember as never);
+
+		session?.on?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+		client.on?.(RoomStateEvent.Members, refresh as never);
 		return (): void => {
-			client.off?.(RoomStateEvent.Members, onMember as never);
+			session?.off?.(MatrixRTCSessionEvent.MembershipsChanged, refresh);
+			client.off?.(RoomStateEvent.Members, refresh as never);
 		};
 	}, [
 		matrixClientService,
@@ -614,6 +658,13 @@ export const GroupCallWidget: React.FC = () => {
 					<div
 						className="element-call-container"
 						ref={containerRef}
+						data-narrow-stage={
+							!isMobileView &&
+							!isFullscreen &&
+							stageSize.width < NOTES_SIDE_BY_SIDE_MIN_WIDTH
+								? 'true'
+								: undefined
+						}
 						style={
 							isMobileView || isFullscreen
 								? undefined

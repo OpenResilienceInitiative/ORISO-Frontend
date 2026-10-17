@@ -64,29 +64,39 @@ export function useCallTimelineState(
 	const hasAcceptedTerminal = Boolean(
 		sameCardAsStored && stored && stored.value.state !== 'running'
 	);
-	const call =
-		stored &&
+	/*
+	 * Which of the two answers the card shows.
+	 *
+	 * Three rules, in order, and each of them is a bug that was fixed:
+	 *
+	 *  1. While the timeline still says what it said when the stored answer
+	 *     was accepted, the stored answer stands. Compared by VALUE over the
+	 *     whole revision. Object identity was the first version and is not
+	 *     stable — the session rebuilds every message on each fetch, so an
+	 *     accepted value was thrown away on the next incoming chat message.
+	 *     Comparing only `state` was the second, and is too little: a
+	 *     membership edit leaves both revisions `running` while attendance
+	 *     changes, and attendance-only edits do not change `callKey` either,
+	 *     so the card showed departed or missing attendees until the next
+	 *     poll with the live revision already in its props.
+	 *
+	 *  2. Once the timeline has moved on and is itself terminal, the timeline
+	 *     wins. An accepted `ended` answer used to win for good, and
+	 *     `hasAcceptedTerminal` stops the reads that might have corrected it —
+	 *     so a membership edit arriving after it froze the attendee list until
+	 *     the card unmounted.
+	 *
+	 *  3. A still-running timeline never reopens a terminal answer. That is
+	 *     the rule the original "a terminal answer always wins" was really
+	 *     protecting, and it is the only part of it that was right.
+	 */
+	const storedStands =
+		stored !== null &&
 		sameCardAsStored &&
-		// A terminal answer always wins. Otherwise the stored value only
-		// stands while the card it was loaded for still says the same thing:
-		// once the timeline itself has moved on, the timeline is newer.
-		//
-		// This used to compare the prop by OBJECT IDENTITY, which is not
-		// stable. The session rebuilds every message on each fetch, so an
-		// accepted running value was thrown away on the next incoming chat
-		// message and the card snapped back to the durable copy.
-		//
-		// Then it compared only `state`, which is too little: a membership
-		// edit leaves both revisions `running` while `participants` and
-		// `present` change, so an accepted running answer kept winning and
-		// the card showed departed or missing attendees until the next
-		// fifteen-second poll — with the live revision already in its props.
-		// Attendance-only edits do not change `callKey` either, so nothing
-		// re-read it sooner. The whole revision is compared now.
-		(stored.value.state !== 'running' ||
-			sameTimelineRevision(stored.original, initialCall))
-			? stored.value
-			: initialCall;
+		(sameTimelineRevision(stored.original, initialCall) ||
+			(stored.value.state !== 'running' &&
+				initialCall.state === 'running'));
+	const call = storedStands && stored ? stored.value : initialCall;
 
 	/*
 	 * What to ask about, without making the asking depend on it.

@@ -118,6 +118,61 @@ describe('useCallTimelineState', () => {
 		expect(loadState).toHaveBeenCalledTimes(1);
 	});
 
+	it('takes a newer terminal revision over an accepted terminal answer', async () => {
+		/*
+		 * `hasAcceptedTerminal` stops the reads, so an accepted `ended`
+		 * answer used to win for good — a membership edit arriving after it
+		 * froze the attendee list until the card unmounted. The timeline's own
+		 * terminal revision is newer and is the authority on who was there.
+		 */
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn().mockResolvedValue({
+			...initial,
+			state: 'ended',
+			durationSeconds: 42
+		});
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(result.current.state).toBe('ended');
+		expect(result.current.participants).toEqual([]);
+
+		const fuller = runningCall({
+			state: 'ended',
+			durationSeconds: 42,
+			participants: [{ userId: '@late:example', displayName: 'Late' }]
+		});
+		rerender({ call: fuller });
+		expect(result.current.participants).toEqual(fuller.participants);
+	});
+
+	it('still refuses to reopen a terminal answer from a running timeline', async () => {
+		// The one thing "a terminal answer always wins" was right about.
+		vi.useFakeTimers();
+		const initial = runningCall();
+		const loadState = vi.fn().mockResolvedValue({
+			...initial,
+			state: 'ended',
+			durationSeconds: 42
+		});
+		const { result, rerender } = renderHook(
+			({ call }) => useCallTimelineState(call, loadState),
+			{ initialProps: { call: initial } }
+		);
+		await act(async () => {});
+		expect(result.current.state).toBe('ended');
+
+		rerender({
+			call: runningCall({
+				present: [{ userId: '@late:example', displayName: 'Late' }]
+			})
+		});
+		expect(result.current.state).toBe('ended');
+	});
+
 	it('prefers a newer running revision over an accepted running answer', async () => {
 		/*
 		 * A membership edit leaves both revisions `running`, so comparing

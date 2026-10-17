@@ -64,10 +64,30 @@ export interface IdentityClient {
  */
 const lastSent = new Map<string, CallIdentity>();
 
+/**
+ * What is in flight for each room, so two publishes do not both send it.
+ *
+ * `lastSent` is only written once the send resolves, which leaves a window:
+ * the effect that publishes depends on `userData` and `ownAvatarUserId`, and
+ * both can settle shortly after mount, so a second call for the same room can
+ * start while the first is still out. A duplicate is only noise — the reader
+ * keys by sender and the newest wins — but it is noise in an encrypted room
+ * that somebody pays to store.
+ */
+const inFlight = new Map<
+	string,
+	{ identity: CallIdentity; promise: Promise<CallIdentity | null> }
+>();
+
 /** Forget a room's record, so the next publish writes again. */
 export function forgetPublishedIdentity(roomId?: string): void {
-	if (roomId === undefined) lastSent.clear();
-	else lastSent.delete(roomId);
+	if (roomId === undefined) {
+		lastSent.clear();
+		inFlight.clear();
+	} else {
+		lastSent.delete(roomId);
+		inFlight.delete(roomId);
+	}
 }
 
 export interface PublishOptions {
@@ -155,25 +175,38 @@ export async function publishCallIdentity(
 			)
 	});
 
-	if (
-		options.force !== true &&
-		sameCallIdentity(lastSent.get(roomId) ?? null, identity)
-	)
-		return identity;
-
-	try {
-		await client.sendEvent(
-			roomId,
-			CALL_IDENTITY_EVENT_TYPE,
-			identity as unknown as Record<string, unknown>
-		);
-		lastSent.set(roomId, identity);
-		return identity;
-	} catch {
-		// The fork shows initials when nobody told it anything, which is the
-		// right outcome here: we tried to say and could not.
-		return null;
+	if (options.force !== true) {
+		if (sameCallIdentity(lastSent.get(roomId) ?? null, identity))
+			return identity;
+		// Already on its way, and the same thing. Wait for that one rather
+		// than putting a second copy in the room.
+		const pending = inFlight.get(roomId);
+		if (pending && sameCallIdentity(pending.identity, identity))
+			return pending.promise;
 	}
+
+	const send = async (): Promise<CallIdentity | null> => {
+		try {
+			await client.sendEvent(
+				roomId,
+				CALL_IDENTITY_EVENT_TYPE,
+				identity as unknown as Record<string, unknown>
+			);
+			lastSent.set(roomId, identity);
+			return identity;
+		} catch {
+			// The fork shows initials when nobody told it anything, which is
+			// the right outcome here: we tried to say and could not.
+			return null;
+		}
+	};
+
+	const promise = send();
+	inFlight.set(roomId, { identity, promise });
+	void promise.finally(() => {
+		if (inFlight.get(roomId)?.promise === promise) inFlight.delete(roomId);
+	});
+	return promise;
 }
 
 /**

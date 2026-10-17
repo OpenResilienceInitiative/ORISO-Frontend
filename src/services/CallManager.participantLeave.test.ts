@@ -71,6 +71,17 @@ describe('Element Call participant leave', () => {
 
 		callManager.leaveCall();
 
+		/*
+		 * This end of the chain only: that LEAVING reaches the tracker with
+		 * this call's id. What `finishIfUnattended` then does is pinned in
+		 * `callLifecycleTracker.test.ts`, which registers a tracked call and
+		 * asserts the written state — `missed` when nobody ever joined, and
+		 * still `running` when somebody had. Driving the tracker from here
+		 * would mean duplicating its client double for no answer the pair does
+		 * not already give, and the bug this test exists for was on this side:
+		 * `finishIfUnattended` sat on `endCall`, which the leave path never
+		 * reaches.
+		 */
 		expect(finishIfUnattended).toHaveBeenCalledWith('group-call');
 		finishIfUnattended.mockRestore();
 	});

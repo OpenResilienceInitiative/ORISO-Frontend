@@ -777,3 +777,152 @@ It collects the newest content per sender first and reads only that: the newest
 thing a person said about themselves wins, including when it is nothing.
 
 Each of the four has a test confirmed to fail against the code as it stood.
+
+## 16. The eighth round: the re-announce was watching the wrong thing
+
+Four findings, all four real. The first one matters most.
+
+**Re-announcing watched room membership, and "in the call" is not "in the
+room."** `useElementCallWidget` never leaves the Matrix room, so somebody who
+closes the call surface and opens it again stays a joined room member the whole
+time — only their `org.matrix.msc3401.call.member` membership goes away and
+comes back. A listener on room membership never fired for them, nobody
+re-announced, and the returning participant sat looking at initials where the
+animals had been.
+
+The set is the MatrixRTC session's senders now, recomputed on
+`MembershipsChanged`, and an arrival is somebody entering it who was not in it a
+moment ago — which makes a rejoin an arrival. Room membership stays as the
+fallback for a client without `matrixRTC`, because losing the re-announce
+silently is the failure this mechanism exists to prevent. The harness grew an
+RTC session the test can drive, which is what makes the case checkable: our own
+churn is not an arrival, somebody else joining is, staying is not, and leaving
+and coming back is.
+
+**A terminal answer froze the attendee list.** Once stored,
+`hasAcceptedTerminal` stopped the reads and the stored value won for good — so
+a membership edit arriving afterwards never reached the card. The selection is
+now three ordered rules, each of which is a bug that was fixed: the stored
+answer stands while the timeline agrees (by value, over the whole revision); a
+newer *terminal* timeline revision wins; and a still-running timeline never
+reopens a terminal answer — the only part of "a terminal answer always wins"
+that was right.
+
+**Overlapping publishes could duplicate.** `lastSent` is written when the send
+resolves, so a second publish starting while the first is out would send again.
+An in-flight promise per room is reused for an identical non-forced publish; a
+*forced* one still sends, because that is the re-announce for a newcomer.
+
+**And a test that asserted a call rather than an outcome.** Here the chain was
+already closed by two tests — `callLifecycleTracker.test.ts` pins what
+`finishIfUnattended` writes, this one pins that leaving reaches it — so the
+reasoning is now a comment in the test rather than a duplicated client double.
+That is the same two-ended argument the reviewer accepted earlier for
+`SessionStream.test.tsx`.
+
+## 17. And the ninth round: the other half of the circle
+
+One finding, and it is the symmetric half of the circle fix in §12. That fix
+centred the **face** in a square of the tile's smaller side and left the chrome
+layer inset by 8% of the whole rectangle — so in an 800×450 spotlight the circle
+begins at x=175 while the name capsule began near x=64, and the label floated
+off the form it names.
+
+The chrome is inset to the same square now, computed in `MediaView` beside the
+face's own size so the two cannot drift apart, under a `data-oriso-circle`
+marker so the grove and the fields — whose chrome should stay at 8% of their own
+tile — are untouched.
+
+The fix needed one thing the finding did not mention: the extended style object
+was only applied when there was a clip path or a focus shift, so for the circle
+case the new variables were computed and then dropped on the floor. The first
+version of the test caught it, which is the only reason it was noticed.
+
+### What nine rounds of this actually taught
+
+Three rounds in a row ended with a fix of mine needing a follow-up on the other
+side of the same geometry. The conclusion is not about any of those rules; it is
+that the visual harness mounts `OrisoFace` rather than `MediaView`, so **none of
+the tile's chrome is visible to any check in this repository** — not to jsdom,
+which has no layout, and not to the plates, which never render it. Every one of
+those defects was found by somebody reading the CSS against the DOM.
+
+Two stylesheet tests now assert the invariants that can be stated as text, and
+the reviewer plans ask for a 1:1 and a spotlight on a real screen, which is the
+only place the rest of it can be seen.
+
+## 18. The tenth round: the notepad was measuring the wrong box
+
+One finding on the host, and it is the same class of mistake as §17 — a rule
+written against the page when the thing it governs is a window inside the page.
+
+Opening the Gesprächsnotizen panel makes it a 320px flex sibling of the call
+iframe, and the only thing deciding whether to do that instead of laying it over
+the stage was a **viewport** media query at 1280px. But the group call is a
+floating window: its width is `stageSize`, which autofit scales to the screen
+and which the counsellor then drags with the resize handles down to 280px. So a
+1920px screen can hold a 300px-wide stage, the media query takes the
+side-by-side branch, and the iframe is squeezed to a sliver — or the panel
+overflows a shell with `overflow: hidden` and is clipped, which is the case
+where the notepad stops being usable rather than merely cramped.
+
+`GroupCallWidget` now publishes `data-narrow-stage` when the stage is narrower
+than the panel plus the 280px minimum the resizer allows for the call, and the
+overlay declarations moved into a `notes-over-stage` mixin that both triggers
+share. The media query stays, because it is the right measure for the two shells
+the stylesheet sizes itself: full screen and the mobile view both leave `style`
+off the shell, so the component does not know its width there and cannot publish
+the marker at all.
+
+Both halves are tested, and the split matters:
+
+  * The harness test asserts the marker — and was confirmed to fail without it.
+  * A stylesheet test asserts the rule, because the marker alone does nothing
+    and jsdom can see neither. It also pins that the collapsed rail is never
+    moved and never hidden: `display: none` at a breakpoint was the original
+    bug, and it left the consultant's only notepad with nothing to open.
+
+That is now the third defect in this epic whose whole mechanism lived in CSS
+this repository does not execute, and all three were found by a reviewer reading
+the stylesheet. The countermeasure is the one above: when a fix is a rule rather
+than a value, assert the rule as text.
+
+## 19. The eleventh round: the halo had nowhere to go
+
+One finding on the fork, and it is the third in a row about a box clipping
+something it contains.
+
+The speaking halo is three **outer** box shadows — a ring in the person's own
+colour, a wide glow in the same colour, and a deeper drop that puts the form in
+front of the others. Together they paint about 32px outside the form. The
+spotlight's form had been sized to the full shorter side of its tile, so it
+touched the tile's edges, and `SpotlightTile`'s `.contents` carries
+`contain: strict` together with `overflow-y: hidden`. The halo was cut along
+both short edges of a landscape spotlight and along all four of a square one —
+most of what speaking looks like, on the one layout where there is nothing else
+to tell you who is talking.
+
+Relaxing the containment would not have fixed it. The `overflow-y: hidden` is
+there for the spotlight's horizontal scroll-snap and clips whatever the
+containment says, and `Grid` carries `contain: strict` as well.
+
+So the form reserves the room instead. `shapelessFaceSide(width, height)` is the
+shorter side less that room on each side, capped at 8% a side so a small tile
+gives away at most a sixth of its form — past that the halo would be eating the
+thing it is meant to light up, and a clipped halo is the lesser loss there.
+
+Two details worth keeping:
+
+  * **The room is computed from the halo's own numbers.** The three layers'
+    geometry is named now rather than written into the template literal, and
+    `HALO_ROOM_PX` is derived from those names. A test reads the reach back out
+    of the string `haloFor` returns and asserts the constant covers it, so
+    widening the glow cannot quietly outgrow the room again.
+  * **One function, because two places need the number.** The face is sized to
+    it and the chrome layer is inset to it. Computed twice they drift, and the
+    drift is a name capsule floating off the form it names — which is the
+    §17/§18 defect over again. The old `Math.min(targetWidth, targetHeight)`
+    appeared in both files; now neither file has it.
+
+The lift follows the form too, since it interpolates on size: it is judged
+against the side actually drawn, not against the tile.

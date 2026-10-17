@@ -43,6 +43,30 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 				? [{ userId: FAKE_CURRENT_USER_ID, membership: 'join' }]
 				: []
 	};
+	/*
+	 * The MatrixRTC session, which is what "in the call" actually means.
+	 *
+	 * Room membership is not: the widget host never leaves the Matrix room, so
+	 * somebody who closes the call surface and reopens it stays a joined room
+	 * member the whole time while only their RTC membership comes and goes.
+	 * The harness has to be able to say that, or a test cannot tell a rejoin
+	 * from nothing happening.
+	 */
+	const rtcListeners = new Map<string, Set<MatrixListener>>();
+	const callMemberships: { sender: string }[] = [
+		{ sender: FAKE_CURRENT_USER_ID }
+	];
+	const rtcSession = {
+		memberships: callMemberships,
+		on: (eventName: string, listener: MatrixListener) => {
+			const set = rtcListeners.get(eventName) ?? new Set();
+			set.add(listener);
+			rtcListeners.set(eventName, set);
+		},
+		off: (eventName: string, listener: MatrixListener) => {
+			rtcListeners.get(eventName)?.delete(listener);
+		}
+	};
 	const on = (eventName: string, listener: MatrixListener) => {
 		const eventListeners = listeners.get(eventName) ?? new Set();
 		eventListeners.add(listener);
@@ -65,6 +89,7 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 		sendEvent: vi.fn().mockResolvedValue({ event_id: '$identity' }),
 		sendStateEvent: vi.fn().mockResolvedValue({ event_id: '$state' }),
 		getHomeserverUrl: () => STORYBOOK_MATRIX_HS,
+		matrixRTC: { getRoomSession: () => rtcSession },
 		getRoom: (roomId: string) =>
 			roomId === FAKE_ELEMENT_CALL_ROOM_ID ? room : null,
 		joinRoom: () =>
@@ -86,10 +111,19 @@ export const makeFakeMatrixClientService = (mode: GroupCallStoryMode) => {
 			),
 		/** Fire a Matrix client event at whatever the host subscribed. */
 		emitHarnessEvent: (eventName: string, ...args: unknown[]) =>
-			listeners.get(eventName)?.forEach((listener) => listener(...args))
+			listeners.get(eventName)?.forEach((listener) => listener(...args)),
+		/** Replace who is in the CALL and tell whoever is listening. */
+		setCallMemberships: (senders: string[]) => {
+			callMemberships.length = 0;
+			senders.forEach((sender) => callMemberships.push({ sender }));
+			rtcListeners
+				.get('memberships_changed')
+				?.forEach((listener) => listener());
+		}
 	} as unknown as MatrixClientService & {
 		getHarnessListenerCount(): number;
 		emitHarnessEvent(eventName: string, ...args: unknown[]): void;
+		setCallMemberships(senders: string[]): void;
 	};
 };
 

@@ -238,6 +238,62 @@ describe('publishing it', () => {
 		expect(client.sendEvent).toHaveBeenCalledTimes(1);
 	});
 
+	it('does not send twice when two publishes overlap', async () => {
+		/*
+		 * `lastSent` is only written once the send resolves, which leaves a
+		 * window: the effect that publishes depends on `userData` and
+		 * `ownAvatarUserId`, and both can settle shortly after mount, so a
+		 * second call for the same room can start while the first is still
+		 * out. A duplicate is only noise — the reader keys by sender and the
+		 * newest wins — but it is noise in an encrypted room somebody pays to
+		 * store.
+		 */
+		const client = makeClient();
+		let release: (value: { event_id: string }) => void = () => undefined;
+		client.sendEvent.mockImplementationOnce(
+			() =>
+				new Promise<{ event_id: string }>((resolve) => {
+					release = resolve;
+				})
+		);
+		const source = { userData: {}, isConsultant: false, brand: BRAND };
+		const first = publishCallIdentity(
+			client,
+			ROOM,
+			source,
+			inAnEncryptedRoom
+		);
+		const second = publishCallIdentity(
+			client,
+			ROOM,
+			source,
+			inAnEncryptedRoom
+		);
+		expect(client.sendEvent).toHaveBeenCalledTimes(1);
+		release({ event_id: '$one' });
+		// The second call is the first one's answer, not a second send.
+		expect(await second).toEqual(await first);
+		expect(client.sendEvent).toHaveBeenCalledTimes(1);
+	});
+
+	it('still re-announces for a newcomer while a publish is in flight', async () => {
+		// The dedupe must not swallow the forced resend: a newcomer needs the
+		// event itself, and the one in flight was sent before they arrived.
+		const client = makeClient();
+		let release: (value: { event_id: string }) => void = () => undefined;
+		client.sendEvent.mockImplementationOnce(
+			() =>
+				new Promise<{ event_id: string }>((resolve) => {
+					release = resolve;
+				})
+		);
+		const source = { userData: {}, isConsultant: false, brand: BRAND };
+		void publishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		void republishCallIdentity(client, ROOM, source, inAnEncryptedRoom);
+		expect(client.sendEvent).toHaveBeenCalledTimes(2);
+		release({ event_id: '$one' });
+	});
+
 	it('says it again when the person changed their motif', async () => {
 		const client = makeClient();
 		await publishCallIdentity(

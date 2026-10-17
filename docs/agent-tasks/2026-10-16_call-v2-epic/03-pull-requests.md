@@ -34,8 +34,8 @@ Branches, ready and pushed-pending:
 
 The two are useless apart: the host publishes the identity the fork reads,
 and the fork draws the design the host embeds. They should land together,
-fork first — the host's new state event is inert until something reads it,
-while the fork without the host shows initials.
+fork first — the host's identity announcement is inert until something reads
+it, while the fork without the host shows initials.
 
 ---
 
@@ -148,6 +148,12 @@ spotlight all keep working.
    tiles are square and packed until they abut, so the fix is a CSS
    `pointer-events` rule, and CSS hit-testing is not something jsdom or the
    screenshot harness can exercise.
+7. **The speaking halo in the spotlight.** Switch to `Gespräch` with two
+   people, and speak. The halo — a ring and a wide glow in the speaker's own
+   colour — must be whole all the way round the form, not cut flat along the
+   top and bottom. `SpotlightTile` clips (`contain: strict` with
+   `overflow-y: hidden`), so the form reserves room for it; whether the room is
+   enough is a thing to look at, since nothing here paints a shadow.
 
 ### Not in this branch, deliberately
 
@@ -274,9 +280,20 @@ pond.js noise this suite has been carrying.
    animals, not initials — everybody already in the call re-announces for a
    newcomer, which is what replaces a state event's "always current".
 
+10. **The notepad against a small stage, which needs no second account.**
+    As a counsellor, start a call on a desktop viewport, drag the stage's
+    corner handle down to roughly 400px wide, and open the Gesprächsnotizen
+    rail. The panel must lay **over** the stage; the call must not be squeezed
+    to a sliver and the panel must not be clipped at the shell's edge. Then
+    autofit the stage back to full size and open it again: there it must dock
+    **beside** the call, as the handoff draws it. Both behaviours are CSS, and
+    this repository executes none of its CSS — jsdom applies no stylesheet and
+    the screenshot harness never renders the host shell.
+
 The last five steps need two accounts and a deployed fork; none of them can be
 reached from this container, and #780 should not be called covered until
-somebody has run them and written down what happened.
+somebody has run them and written down what happened. Step 10 needs only one
+account and a browser.
 
 ### Not in this branch, deliberately
 
@@ -309,8 +326,9 @@ one we have.
 - `oriso-frontend` — the consolidation, live presence, and the identity
   the call is told.
 
-Land the fork first: the host's new state event is inert until something
-reads it, while the fork without the host shows initials.
+Land the fork first: the host's identity announcement is inert until
+something reads it, while the fork without the host shows initials. (It is a
+timeline event now, not room state — see §15 of `02-what-was-built.md`.)
 
 **Supersedes:** #1361 (closed; core superseded by #1395, remainder listed
 as open questions below).

@@ -547,19 +547,44 @@
 	overflow: hidden;
 }
 
-/* Below the handoff's breakpoint the stage needs the whole width — but the
-   notepad is the consultant's ONLY notepad, and `display: none` here took it
-   away outright on any laptop at 1280 or less, with nothing to open. It keeps
-   its 44px rail instead, and opening it lays it over the stage rather than
-   squeezing it: on a narrow screen there is no width to give away, and a
-   counsellor reading their own notes is not watching the stage at that
-   moment anyway. */
+/* Opening the notepad lays it OVER the stage rather than squeezing it, where
+   there is no width to give away. Collapsed it is always the 44px rail: the
+   earlier `display: none` took the consultant's only notepad away outright on
+   any laptop at 1280 or less, with nothing left to open.
+
+   On a narrow screen that is the right trade on its own — a counsellor
+   reading their own notes is not watching the stage at that moment. */
+@mixin notes-over-stage {
+	position: absolute;
+	inset-block: 0;
+	inset-inline-end: 0;
+	z-index: 2;
+	max-inline-size: 100%;
+}
+
+/* Two triggers, because two different boxes decide it.
+
+   Full screen and the mobile view size the shell from the viewport, so there
+   the media query measures the right thing — and it is the only measure
+   available, since the component leaves `style` off in both and the width is
+   the stylesheet's own.
+
+   The floating desktop stage is not the viewport. Its width is `stageSize`,
+   which autofit scales to the screen and the counsellor then drags with the
+   resize handles, down to 280px. So a 1920px screen could hold a 300px-wide
+   stage while the media query happily seated a 320px panel inside it: the
+   iframe was squeezed to a sliver, or the panel overflowed and was clipped by
+   the shell's `overflow: hidden`, which is the one case where the notepad
+   became unusable rather than merely cramped. `GroupCallWidget` publishes
+   that measurement as `data-narrow-stage`, because the component is the only
+   place that knows it. */
 @media (width <= 1279px) {
 	.element-call-notes:not([data-collapsed='true']) {
-		position: absolute;
-		inset-block: 0;
-		inset-inline-end: 0;
-		z-index: 2;
-		max-inline-size: 100%;
+		@include notes-over-stage;
 	}
+}
+
+.element-call-container[data-narrow-stage='true']
+	.element-call-notes:not([data-collapsed='true']) {
+	@include notes-over-stage;
 }

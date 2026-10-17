@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 
 import React from 'react';
-import { RoomStateEvent } from 'matrix-js-sdk';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import {
 	afterEach,
@@ -308,6 +307,63 @@ describe('what the host adds around the call', () => {
 		).toBeTruthy();
 	});
 
+	const counsellorWithStage = async (
+		innerWidth: number,
+		innerHeight: number
+	) => {
+		const was = {
+			width: window.innerWidth,
+			height: window.innerHeight
+		};
+		window.innerWidth = innerWidth;
+		window.innerHeight = innerHeight;
+		const service = makeFakeMatrixClientService('active');
+		activeCall();
+		const view = withUser(
+			{
+				userId: '@berater:matrix.storybook.test',
+				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+			},
+			service
+		);
+		await waitFor(() =>
+			expect(
+				view.container.querySelector('.element-call-iframe')
+			).toBeTruthy()
+		);
+		window.innerWidth = was.width;
+		window.innerHeight = was.height;
+		return view.container.querySelector('.element-call-container');
+	};
+
+	it('marks a stage too narrow to seat the notepad beside the call', async () => {
+		/*
+		 * The stage is a floating window, not the page.
+		 *
+		 * Opening the notepad made it a 320px flex sibling of the iframe, and
+		 * the only thing that decided whether to do that instead of laying it
+		 * over the stage was a VIEWPORT media query at 1280px. The stage's own
+		 * width is `stageSize` — autofit scales it to the screen and the
+		 * resize handles take it down to 280px — so a wide screen with a small
+		 * stage took the side-by-side branch and squeezed the call to a sliver,
+		 * or overflowed the panel out of a shell that clips.
+		 *
+		 * 700x300 is a desktop viewport (the mobile view starts at 640) whose
+		 * autofit stage is 436px wide: too narrow for 320 + the 280px minimum
+		 * the resizer allows for the call.
+		 */
+		const container = await counsellorWithStage(700, 300);
+		expect(container?.getAttribute('data-narrow-stage')).toBe('true');
+	});
+
+	it('leaves a stage with room for both alone', async () => {
+		// The other half of the test above: the marker has to be a
+		// measurement and not simply always on, or it would move the panel
+		// over the stage on every screen and undo the dock the handoff draws.
+		const container = await counsellorWithStage(1600, 900);
+		expect(container?.getAttribute('data-narrow-stage')).toBeNull();
+	});
+
 	it('never offers the notepad to an advice seeker', async () => {
 		// The panel is a counsellor's scratchpad. Offering it to a seeker
 		// would suggest the centre keeps notes on them, in a product whose
@@ -364,22 +420,30 @@ describe('what the host adds around the call', () => {
 		expect(client.sendStateEvent).not.toHaveBeenCalled();
 	});
 
-	it('says it again when somebody new joins, and not otherwise', async () => {
+	it('says it again when somebody joins the CALL, including on a rejoin', async () => {
 		/*
-		 * What replaces a state event's "always current".
+		 * What replaces a state event's "always current", and the signal it
+		 * has to listen to.
 		 *
 		 * Room state is there for whoever reads it next; a timeline event
-		 * reaches whoever was listening at the time. The widget is fed live
-		 * events and the call room's history is closed to non-members, so a
-		 * newcomer is handed nothing — everybody already in the call
-		 * re-announces instead.
+		 * reaches whoever was listening at the time, and the call room's
+		 * history is closed to non-members — so a newcomer is handed nothing
+		 * and everybody already in the call re-announces instead.
+		 *
+		 * The signal is the MatrixRTC session, not room membership. The widget
+		 * host never leaves the Matrix room, so somebody who closes the call
+		 * surface and reopens it stays a joined room member throughout and
+		 * only their RTC membership goes away and comes back. Watching room
+		 * membership never fired for them, nobody re-announced, and the
+		 * returning participant sat looking at initials where the animals had
+		 * been.
 		 */
 		const service = makeFakeMatrixClientService('active');
-		const emit = (
+		const setCallMemberships = (
 			service as unknown as {
-				emitHarnessEvent(name: string, ...args: unknown[]): void;
+				setCallMemberships(senders: string[]): void;
 			}
-		).emitHarnessEvent;
+		).setCallMemberships;
 		const client = service.getClient() as unknown as {
 			sendEvent: ReturnType<typeof vi.fn>;
 		};
@@ -393,36 +457,23 @@ describe('what the host adds around the call', () => {
 		);
 		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(1));
 
-		const member = (userId: string, membership: string) => [
-			{},
-			{},
-			{ roomId: FAKE_ELEMENT_CALL_ROOM_ID, userId, membership }
-		];
-
-		// Somebody leaving is not an arrival.
-		emit(RoomStateEvent.Members, ...member('@gone:x.test', 'leave'));
-		// Nor is our own join echoing back.
-		emit(RoomStateEvent.Members, ...member(FAKE_CURRENT_USER_ID, 'join'));
-		// Nor is a membership event in another room.
-		emit(
-			RoomStateEvent.Members,
-			{},
-			{},
-			{
-				roomId: '!elsewhere:x.test',
-				userId: '@other:x.test',
-				membership: 'join'
-			}
-		);
+		// Our own membership churning is not an arrival.
+		setCallMemberships([]);
+		setCallMemberships([FAKE_CURRENT_USER_ID]);
 		expect(client.sendEvent).toHaveBeenCalledTimes(1);
 
-		// An arrival is.
-		emit(RoomStateEvent.Members, ...member('@newcomer:x.test', 'join'));
+		// Somebody else joining is.
+		setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
 		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(2));
 
-		// And it is said once per newcomer, not once per event about them.
-		emit(RoomStateEvent.Members, ...member('@newcomer:x.test', 'join'));
+		// Staying is not.
+		setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
 		expect(client.sendEvent).toHaveBeenCalledTimes(2);
+
+		// And leaving and coming back IS, which room membership could not see.
+		setCallMemberships([FAKE_CURRENT_USER_ID]);
+		setCallMemberships([FAKE_CURRENT_USER_ID, '@newcomer:x.test']);
+		await waitFor(() => expect(client.sendEvent).toHaveBeenCalledTimes(3));
 	});
 
 	it('says nothing when there is no user data to say it from', async () => {
