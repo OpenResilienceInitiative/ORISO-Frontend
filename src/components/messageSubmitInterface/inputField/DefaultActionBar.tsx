@@ -48,6 +48,11 @@ export interface DefaultActionBarProps {
 	onOpenTools: () => void;
 	/** Mic is hidden entirely when voice messages are disabled for this chat. */
 	showMic: boolean;
+	/**
+	 * Why the mic cannot be used right now (e.g. while editing a message).
+	 * The mic then stays visible, greyed out and focusable, and explains itself.
+	 */
+	micUnavailableReason?: string;
 	isRecording: boolean;
 	onMicClick: () => void;
 	isEmojiOpen: boolean;
@@ -76,6 +81,7 @@ export const DefaultActionBar = ({
 	unreadCount = 0,
 	onOpenTools,
 	showMic,
+	micUnavailableReason,
 	isRecording,
 	onMicClick,
 	isEmojiOpen,
@@ -140,6 +146,7 @@ export const DefaultActionBar = ({
 					title={translate(
 						'message.submit.toolbar.voiceRecording.tooltip'
 					)}
+					unavailableReason={micUnavailableReason}
 					onClick={onMicClick}
 					selected={isRecording}
 				>

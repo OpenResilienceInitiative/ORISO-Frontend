@@ -575,10 +575,27 @@ const expectEditBannerMatchesFigma = async (canvasElement: HTMLElement) => {
 	expect(banner.textContent).not.toMatch(/\[\[/);
 
 	// #1142: an edit replaces text; a voice note can never be sent as one.
-	expect(
-		within(canvasElement).queryByRole('button', {
+	// The microphone stays visible, greyed out and focusable, and says why.
+	const mic = await waitFor(() =>
+		within(canvasElement).getByRole('button', {
 			name: /Sprachaufnahme|Voice recording/
 		})
+	);
+	const reason =
+		/Sprachnachrichten sind beim Bearbeiten nicht möglich|Voice messages are not available while editing a message/;
+	expect(mic.getAttribute('aria-disabled')).toBe('true');
+	expect(mic.getAttribute('title') ?? '').toMatch(reason);
+	expect(
+		document.getElementById(mic.getAttribute('aria-describedby') ?? '')
+			?.textContent ?? ''
+	).toMatch(reason);
+	expect(Number(getComputedStyle(mic).opacity)).toBeLessThan(0.5);
+	mic.focus();
+	expect(document.activeElement).toBe(mic);
+	await userEvent.click(mic);
+	// Clicking records nothing: no recording bar with Stop appears.
+	expect(
+		within(canvasElement).queryByRole('button', { name: /Stopp|Stop/ })
 	).toBeNull();
 };
 
@@ -606,6 +623,28 @@ export const EditingMessage: Story = {
  * naming a built-in preset like `mobile1` silently leaves the story at desktop
  * width — and this story's whole point is the mobile breakpoint.
  */
+export const EditingMessageEnglish: Story = {
+	name: 'Editing (m.replace preview) — English, voice note unavailable',
+	globals: { locale: 'en' },
+	render: () => (
+		<ComposerShell
+			editingMessage={{
+				eventId: '$orig:matrix.example.org',
+				text: EDITING_LONG_TEXT
+			}}
+			onCancelEdit={() => {}}
+		/>
+	),
+	play: async ({ canvasElement }) => {
+		await expectEditBannerMatchesFigma(canvasElement);
+		await expect(
+			within(canvasElement).getByRole('button', {
+				name: 'Voice recording'
+			})
+		).toBeTruthy();
+	}
+};
+
 export const EditingMessageMobile: Story = {
 	name: 'Editing (m.replace preview) — mobile',
 	globals: phone390Globals,

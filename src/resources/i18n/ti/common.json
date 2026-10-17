@@ -1854,7 +1854,8 @@
 				"mention": "ሰብ ጥቐስ",
 				"voiceRecording": {
 					"label": "ናይ ድምጺ ቅዳሕ",
-					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ"
+					"tooltip": "ናይ ድምጺ መልእኽቲ ቅዳሕ",
+					"disabledWhileEditing": "መልእኽቲ ኣብ እትኣርመሉ እዋን ናይ ድምጺ መልእኽቲ ክጥቀመሉ ኣይከኣልን"
 				},
 				"imageUrlPrompt": "Bild-URL",
 				"urlPrompt": "URL"

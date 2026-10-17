@@ -1875,7 +1875,8 @@
 				"mention": "Person erwähnen",
 				"voiceRecording": {
 					"label": "Sprachaufnahme",
-					"tooltip": "Sprachnachricht aufnehmen"
+					"tooltip": "Sprachnachricht aufnehmen",
+					"disabledWhileEditing": "Sprachnachrichten sind beim Bearbeiten nicht möglich"
 				},
 				"imageUrlPrompt": "Bild-URL",
 				"urlPrompt": "URL"

@@ -718,12 +718,40 @@ describe('voice note review before sending (#1142)', () => {
 		expect(apiSendMessage).not.toHaveBeenCalled();
 	});
 
-	it('offers no microphone while a message is being edited', () => {
+	it('shows the microphone disabled with a reason while a message is being edited, and a click records nothing', async () => {
 		render(
 			<Composer editingMessage={{ eventId: '$e1', text: 'old text' }} />
 		);
 
-		expect(screen.queryByRole('button', MIC)).toBeNull();
+		const mic = screen.getByRole('button', MIC);
+		const reason =
+			'message.submit.toolbar.voiceRecording.disabledWhileEditing';
+		expect(mic.getAttribute('aria-disabled')).toBe('true');
+		// Still focusable (aria-disabled, not `disabled`) so keyboard and
+		// screen-reader users reach the explanation.
+		expect((mic as HTMLButtonElement).disabled).toBe(false);
+		expect(mic.getAttribute('title')).toBe(reason);
+		expect(
+			document.getElementById(
+				mic.getAttribute('aria-describedby') ?? 'missing'
+			)?.textContent
+		).toBe(reason);
+
+		Recorder.current = undefined as unknown as Recorder;
+		await act(async () => {
+			fireEvent.click(mic);
+		});
+		expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+		expect(Recorder.current).toBeUndefined();
+		expect(screen.queryByRole('button', { name: 'app.stop' })).toBeNull();
+	});
+
+	it('keeps the microphone enabled and unexplained when no message is being edited', () => {
+		render(<Composer />);
+
+		const mic = screen.getByRole('button', MIC);
+		expect(mic.getAttribute('aria-disabled')).toBeNull();
+		expect(mic.getAttribute('aria-describedby')).toBeNull();
 	});
 
 	it('drops a running take when a message edit starts', async () => {

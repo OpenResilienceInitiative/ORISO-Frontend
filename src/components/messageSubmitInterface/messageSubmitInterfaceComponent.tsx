@@ -2360,10 +2360,7 @@ export const MessageSubmitInterfaceComponent = ({
 		featureVoiceMessagesGroupChatsEnabled = true,
 		featureVoiceMessagesSupervisionChatsEnabled = true
 	} = tenant?.settings || {};
-	// A voice note is never sent as an edit: no microphone while editing.
-	const isVoiceMessageEnabledForCurrentChat =
-		!editingMessage &&
-		!editingMessageId &&
+	const isVoiceMessageAllowedForChatType =
 		featureVoiceMessagesEnabled !== false &&
 		(currentChatType === 'anonymous'
 			? featureVoiceMessagesAnonymousChatsEnabled !== false
@@ -2372,6 +2369,11 @@ export const MessageSubmitInterfaceComponent = ({
 				: currentChatType === 'supervision'
 					? featureVoiceMessagesSupervisionChatsEnabled !== false
 					: featureVoiceMessagesOneOnOneChatsEnabled !== false);
+	// A voice note is never sent as an edit (m.replace has no attachment
+	// path): the microphone stays visible but unavailable while editing.
+	const isEditingAnyMessage = Boolean(editingMessage || editingMessageId);
+	const isVoiceMessageEnabledForCurrentChat =
+		!isEditingAnyMessage && isVoiceMessageAllowedForChatType;
 
 	const getMatrixRoomId = useCallback(
 		() => resolvedChatSession.matrixRoomId || null,
@@ -4728,7 +4730,14 @@ export const MessageSubmitInterfaceComponent = ({
 														}
 														showMic={
 															hasUploadFunctionality &&
-															isVoiceMessageEnabledForCurrentChat
+															isVoiceMessageAllowedForChatType
+														}
+														micUnavailableReason={
+															isEditingAnyMessage
+																? translate(
+																		'message.submit.toolbar.voiceRecording.disabledWhileEditing'
+																	)
+																: undefined
 														}
 														isRecording={
 															isVoiceRecording

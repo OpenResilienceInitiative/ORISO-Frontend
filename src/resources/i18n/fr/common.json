@@ -1854,7 +1854,8 @@
 				"mention": "Mentionner une personne",
 				"voiceRecording": {
 					"label": "Enregistrement vocal",
-					"tooltip": "Enregistrer un message vocal"
+					"tooltip": "Enregistrer un message vocal",
+					"disabledWhileEditing": "Les messages vocaux ne sont pas disponibles pendant la modification d'un message"
 				},
 				"imageUrlPrompt": "URL de l'image",
 				"urlPrompt": "URL"

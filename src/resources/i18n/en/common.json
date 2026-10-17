@@ -1860,7 +1860,8 @@
 				"mention": "Mention someone",
 				"voiceRecording": {
 					"label": "Voice recording",
-					"tooltip": "Record voice message"
+					"tooltip": "Record voice message",
+					"disabledWhileEditing": "Voice messages are not available while editing a message"
 				},
 				"imageUrlPrompt": "Image URL",
 				"urlPrompt": "URL"
