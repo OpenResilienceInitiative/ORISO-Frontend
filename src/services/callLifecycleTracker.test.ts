@@ -76,6 +76,7 @@ describe('terminal call timeline persistence', () => {
 });
 
 describe('live presence', () => {
+	const ACTOR = '@counsellor:example';
 	let sequence = 0;
 	let call: CallData;
 	let sendMessage: ReturnType<typeof vi.fn>;
@@ -103,6 +104,9 @@ describe('live presence', () => {
 		};
 		const client = {
 			sendMessage,
+			// Whoever starts the call. The tracker records it as the actor,
+			// and "answered" is defined against it.
+			getUserId: () => ACTOR,
 			getRoom: () => room,
 			matrixRTC: {
 				getRoomSession: () => ({
@@ -188,6 +192,61 @@ describe('live presence', () => {
 		await settled();
 		expect(lastPayload().state).toBe('ended');
 		expect(lastPayload().present).toEqual([]);
+		expect(lastPayload().participants).toHaveLength(1);
+	});
+
+	it('does not call a ringing phone an answered call', async () => {
+		/*
+		 * The caller's own MatrixRTC membership appears as soon as its iframe
+		 * opens, so any membership at all used to count as "started". An
+		 * unanswered call the caller then hung up was written as `ended`,
+		 * with the ringing time as its duration — which is exactly the
+		 * distinction `missed` exists to make.
+		 */
+		session.memberships = [{ sender: ACTOR }];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		expect(lastPayload().state).toBe('running');
+		expect(lastPayload().started_at).toBeUndefined();
+		// The caller is still shown as waiting in there.
+		expect(lastPayload().present).toEqual([
+			{ userId: ACTOR, displayName: `Name of ${ACTOR}` }
+		]);
+
+		callLifecycleTracker.finishIfUnattended(call.callId);
+		await settled();
+		expect(lastPayload().state).toBe('missed');
+		expect(lastPayload().duration_seconds).toBeUndefined();
+	});
+
+	it('starts the call when somebody else arrives', async () => {
+		session.memberships = [{ sender: ACTOR }];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		expect(lastPayload().started_at).toBeUndefined();
+
+		session.memberships = [{ sender: ACTOR }, { sender: '@alex:example' }];
+		emit();
+		await settled();
+		expect(lastPayload().started_at).toBeDefined();
+	});
+
+	it('counts one person on two devices once', async () => {
+		// MatrixRTC publishes a membership per device, so the card showed two
+		// avatars, an attendee count one too high, and two React children
+		// under the same key.
+		session.memberships = [
+			{ sender: '@alex:example' },
+			{ sender: '@alex:example' }
+		];
+		await callLifecycleTracker.begin(call);
+		emit();
+		await settled();
+		expect(lastPayload().present).toEqual([
+			{ userId: '@alex:example', displayName: 'Name of @alex:example' }
+		]);
 		expect(lastPayload().participants).toHaveLength(1);
 	});
 

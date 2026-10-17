@@ -27,4 +27,4 @@ e8613f176c3df6f547095fd406df3d89f38298fccb36ff2fbd86433ecc901378  lint
 
 ## Fresh Dev checks — 2026-10-06
 
-Target: `9ec1b655c6973d26d7fbc0bc5a319fe26793a9c6`, Node22.12.0. Focused harness and adjacent widget suites pass:4 files,66 tests. Project TypeScript, focused ESLint and source Prettier checks pass. The September full-suite results above are historical; current-head CI remains a separate gate. Storybook play/browser and real-media acceptance are still unchecked.
+Target: `9ec1b655c6973d26d7fbc0bc5a319fe26793a9c6`, Node 22.12.0. Focused harness and adjacent widget suites pass: 4 files, 66 tests. Project TypeScript, focused ESLint and source Prettier checks pass. The September full-suite results above are historical; current-head CI remains a separate gate. Storybook play-function checks, browser checks and real-media acceptance are still unchecked.

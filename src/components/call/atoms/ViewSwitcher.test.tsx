@@ -129,10 +129,44 @@ describe('ViewSwitcher', () => {
 		const user = userEvent.setup();
 		screen.getByRole('radio', { name: 'Kreis' }).focus();
 
+		// Down is the same axis as right inside a radio group, which is what
+		// the ARIA pattern asks for; `active` is fixed here, so both presses
+		// report the neighbour of `kreis`. The walk through all three, with
+		// the selection actually advancing, is the stateful test below.
 		await user.keyboard('{ArrowRight}');
 		expect(onChange).toHaveBeenLastCalledWith('kacheln');
 		await user.keyboard('{ArrowDown}');
 		expect(onChange).toHaveBeenLastCalledWith('kacheln');
+	});
+
+	it('walks the whole rail, selection and focus together', async () => {
+		/*
+		 * A stateful wrapper, because the stateless ones above cannot show
+		 * the selection ADVANCING: with `active` pinned, every press reports
+		 * the same neighbour. This is the rail as a keyboard user meets it.
+		 */
+		const Stateful = () => {
+			const [active, setActive] = React.useState('kreis');
+			return (
+				<ViewSwitcher
+					views={VIEWS}
+					active={active}
+					onChange={setActive}
+					label="Ansicht"
+				/>
+			);
+		};
+		render(<Stateful />);
+		const user = userEvent.setup();
+		screen.getByRole('radio', { name: 'Kreis' }).focus();
+
+		for (const name of ['Kacheln', 'Spotlight', 'Kreis']) {
+			await user.keyboard('{ArrowRight}');
+			const radio = screen.getByRole('radio', { name });
+			expect(radio.getAttribute('aria-checked')).toBe('true');
+			expect(radio.getAttribute('tabindex')).toBe('0');
+			expect(document.activeElement).toBe(radio);
+		}
 	});
 
 	it('takes focus with it', async () => {

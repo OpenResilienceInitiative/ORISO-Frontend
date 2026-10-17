@@ -192,8 +192,10 @@ pond.js noise this suite has been carrying.
 
 **Verified: local only.**
 
-- `npm run test:unit`: 12964 pass, 0 fail.
+- `npm run test:unit`: 12985 pass, 8 skipped, 0 fail.
 - `npm run lint:scripts`, `npm run lint:style`, `npm run build`: clean.
+- `node scripts/shootCallStages.mjs`: 38 plates, every geometry and
+  contrast check holding.
 - The paired contract test in `oriso-elementcall` pins the same fixtures
   from the other side.
 
@@ -205,10 +207,29 @@ pond.js noise this suite has been carrying.
    should disappear from it within one membership change.
 3. End the call. The card should switch to the attendance list and show
    everybody who was ever there.
-4. With the fork branch deployed: check that each person's animal and
+4. **Durable, not just live.** Reload the page with the ended card on
+   screen: it must come back with the same state, duration and attendance,
+   because it is a room message rather than browser state. Then open the
+   same conversation as somebody who was **not** in the call — a
+   supervisor with access, or the other account — and check the card reads
+   the same there. This is the whole point of #780, and the part that a
+   single-browser session cannot show.
+5. **A missed call.** Start a call and hang up before the other side
+   answers. The card must read **missed**, with no duration — not "ended"
+   with the ringing time, which is what it used to do. Leave an unanswered
+   group call the same way: it must not sit at "running" with a Join button
+   that answers `unavailable`.
+6. With the fork branch deployed: check that each person's animal and
    circle colour in the call match the chat beside it, and that a
    counsellor with a chosen motif shows the motif on the tenant's brand
-   colour rather than an animal.
+   colour rather than an animal. Check this for a participant who did
+   **not** create the call room — that is the case the power-level grant in
+   `createElementCallRoom` exists for, and the case that was silently
+   falling back to initials.
+
+Steps 4, 5 and 6 need two accounts and a deployed fork; none of them can be
+reached from this container, and #780 should not be called covered until
+somebody has run them and written down what happened.
 
 ### Not in this branch, deliberately
 

@@ -86,20 +86,49 @@ class CallLifecycleTracker {
 					this.calls.delete(call.callId);
 					return;
 				}
-				const current = session.memberships.flatMap((membership) =>
-					membership.sender
-						? [
-								{
-									userId: membership.sender,
-									displayName:
-										room.getMember(membership.sender)
-											?.name || membership.sender
-								}
-							]
-						: []
-				);
+				/*
+				 * One person, one entry — however many devices they are on.
+				 *
+				 * MatrixRTC publishes a membership per device, so somebody
+				 * who joins from a phone and a laptop appeared on the card
+				 * twice: two avatars, an attendee count one too high, and two
+				 * React children under the same key.
+				 */
+				const seen = new Set<string>();
+				const current = session.memberships.flatMap((membership) => {
+					const userId = membership.sender;
+					if (!userId || seen.has(userId)) return [];
+					seen.add(userId);
+					return [
+						{
+							userId,
+							displayName: room.getMember(userId)?.name || userId
+						}
+					];
+				});
 				if (current.length > 0) {
-					tracked.message.startedAt ??= new Date().toISOString();
+					/*
+					 * Answered means somebody ELSE arrived.
+					 *
+					 * The caller's own membership appears as soon as its
+					 * iframe opens, so this used to set `startedAt` before
+					 * the callee had done anything — and an unanswered call
+					 * the caller then hung up was written as `ended`, with
+					 * the ringing time as its duration. That is exactly the
+					 * distinction `missed` exists to make.
+					 *
+					 * With no actor recorded (an older card, or a client that
+					 * could not name itself) any membership counts, which is
+					 * the behaviour this replaces.
+					 */
+					const actor = tracked.message.actorUserId;
+					const answered =
+						actor === undefined ||
+						current.some(
+							(participant) => participant.userId !== actor
+						);
+					if (answered)
+						tracked.message.startedAt ??= new Date().toISOString();
 					const participants = new Map(
 						tracked.message.participants.map((participant) => [
 							participant.userId,
