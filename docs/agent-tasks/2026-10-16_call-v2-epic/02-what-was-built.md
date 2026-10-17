@@ -1,0 +1,198 @@
+# Call v2 — what was built, and what was deliberately not
+
+Written after the work, against what the plan said. Where the plan was
+wrong, this says so rather than quietly agreeing with itself.
+
+---
+
+## The three decisions, as they turned out
+
+**1. The design components move into the fork.** Mostly. The arrangements,
+the form, the engine, the palette, the backdrop and the view switcher are
+in `oriso-elementcall` now. The **notepad is not**, and that is a change of
+plan with a reason: its whole feature is that nothing it holds ever leaves
+the device, and its test proves that against fetch, XHR, both storages and
+`sendBeacon`. Inside the iframe the same claim would have to be re-made
+against the widget transport, and the panel would have to carry copies of
+five ORISO icons and the composer's menu with it. It is docked beside the
+call surface in the host, which is where the handoff draws it.
+
+**2. The new design replaces everything, video included.** Built, and
+measured rather than assumed — see §4.
+
+**3. Two pull requests under one epic.** Prepared; see `03-pull-requests.md`.
+
+---
+
+## 1. What the plan got wrong
+
+### The identity transport does not fit in the MatrixRTC membership
+
+The plan recommended option A: each client publishes its identity in its
+`org.matrix.msc3401.call.member` state event. That is not implementable
+without patching matrix-js-sdk. `MembershipManager.makeMyMembership` is
+`protected` and builds its content from a fixed object literal, and
+`joinRoomSession` constructs the manager internally — there is no
+`joinConfig` hook for an extra field.
+
+**What was built instead:** a dedicated room state event,
+`org.oriso.call.identity`, state key the user id, written by each person's
+own client in ORISO and read by the fork. It costs one small state event
+per person per room — written once, not once per call — and it needs no
+new capability class: the widget contract already allows reading room
+state, and the event is added to `receiveState` and deliberately **not** to
+`sendState`. A widget that could write this could write somebody else's,
+and the whole rule is that the call does not decide who anybody is.
+
+### The join path is already fixed, and the remaining defect is unreachable
+
+`useJoinVideoCall` really does open `/videoanruf/<room>/<type>` in a new
+tab, landing on the legacy `MatrixCallView`, which starts a new call. But
+its only caller renders the button behind `isVideoActive`, and **no
+production code passes that prop** — only stories do. The button never
+appears.
+
+The live path is #1395's `CallTimelineMessage`, which joins in place
+through `callManager.joinExistingCall`: it confirms the call against the
+backend, joins the media room, checks that the MatrixRTC session actually
+has memberships, and only then opens the widget. That is the correct
+behaviour and it already existed. No third join path was built.
+
+---
+
+## 2. What the plan got right, and what came of it
+
+### Live presence was the missing piece, and it was a small change
+
+Both prior pull requests built attendance as a union that is only ever
+added to. The lifecycle message now carries `present` beside
+`participants`: replaced on every membership change, emptied when the call
+ends. A running card answers "who is in there", an ended one "who was".
+
+One consequence worth stating: a membership change is now a real update
+where the identical payload used to be deduped away, so a call sends one
+more timeline edit per join and per leave. That is the feature working, and
+it moved a count in `CallManager.timeline.test.ts` from two to three.
+
+### The fork's speaking indicator was dead twice over, and is now gone
+
+`src/index.css` targeted global `.tile.speaking`; the tile emits hashed CSS
+module names, so the selector could never match, and upstream's rule
+carries `!important` where ORISO's did not. A speaking tile rendered
+upstream's black gradient ring — "the system marked her red", which the
+handoff rejects by name. In the ORISO tile both `speaking` and `handRaised`
+classes are now suppressed outright and the indicator is the person's own
+colour blooming, from `haloFor`.
+
+---
+
+## 3. The seam, and why there is only one
+
+`MediaView` is shared by every tile in every layout. With an ORISO identity
+it renders a form in the person's colour carrying their own animal, and the
+camera cropped into that same form; without one it renders upstream's
+rectangle, unchanged. One component serves both, so the lobby, the
+standalone build and every existing test keep working and there is no
+second call UI to drift.
+
+The layouts place invisible slots; `Grid` measures them and springs the
+real tiles into position, so the motion, the dragging and the spotlight all
+keep working. `Grid` itself is untouched.
+
+Two things are carried on channels that are worth knowing about:
+
+- **The form** reaches the tile through a subscription store, not React
+  state. State deadlocks: `useUpdateLayout` bumps a generation on every
+  render of a layout, `Grid` re-renders on that, and a context change
+  re-renders the layout straight through `Grid`'s `memo`. React stopped the
+  first version with "Maximum update depth exceeded".
+- **The identities** are read with `useState` plus an equality check rather
+  than `useRoomState`, because that hook's `getSnapshot` must return a
+  stable value and this mapping builds a Map. Same class of failure.
+
+The view choice is deliberately **not** folded into `GridMode`. That setting
+answers whether one thing is big, and auto-switches to spotlight on a screen
+share or a phone in landscape; widening it to three values makes that rule
+ambiguous across six working files. Kreis and Kacheln are both grid mode
+with a different arrangement.
+
+---
+
+## 4. Video in an organic shape: measured
+
+Six live frames, same stage, six seconds each, software rasterisation
+(the pessimistic case for compositing a clip path):
+
+| arrangement                                                 | median  | p95     | worst   |
+| ----------------------------------------------------------- | ------- | ------- | ------- |
+| plain squares (control)                                     | 16.7 ms | 33.4 ms | 50.1 ms |
+| grove blob (radius + lean + counter-rotation + cover scale) | 16.7 ms | 33.4 ms | 50.1 ms |
+| Einzelgespräch clip path                                    | 16.7 ms | 33.4 ms | 33.5 ms |
+
+Shaping a live frame costs nothing measurable. Reproducible:
+`scripts/measureVideoInShape.mjs` in the fork. The caveat is real: the
+streams are canvas captures, so this bounds **compositing** and not decode,
+and a real call adds decode on top equally in all three arrangements.
+
+---
+
+## 5. What the pictures found that no test did
+
+The visual harness (`harness/orisoStage.tsx` plus
+`scripts/shootOrisoStage.mjs`) shoots ten plates in Chromium and then
+measures them. On its first run it found three defects, none of which any
+test saw:
+
+1. **The artwork loader rejected every real ORISO animal.** It checked
+   `startsWith("<svg")`; the files begin `<?xml version="1.0"?>`. The unit
+   test agreed with the bug, because its fixture also began `<svg`.
+2. **Both halves of the Einzelgespräch sized their animal off the whole
+   circle**, so one was clipped at the seam and the other ran off the rim.
+3. **The sphere shading was on everything**, which made the rectangular
+   fields read as glossy plastic buttons. It belongs to bodies — the grove's
+   blobs and the circle — not to surfaces.
+
+A fourth was found by the cross-repository contract test on its first run:
+the fork re-derived initials it had been given, turning a counsellor's "SP"
+into "S". Neither repository's own suite could have seen it.
+
+---
+
+## 6. Deliberately not built
+
+Each of these is a decision for the product owner, not an omission.
+
+- **The `scheduled` state** from #1361, and the calendar action and
+  notification-centre entries behind it. There is **no producer** on either
+  side — no frontend code and no backend endpoint emits it — so the UI
+  would be dead code by construction.
+- **The call notification emails** from #1361. `dev` already carries 126
+  `anruf-*` templates with different content; which set ships is a product
+  decision, not a merge.
+- **`actor_user_id` and `participant_count`** in the payload. Cheap to add,
+  but they need a place on the card and seven translations for something the
+  handoff does not ask for.
+- **The legacy 1:1 pair** (`FloatingCallWidget` and `MatrixCallView`). Still
+  mounted in `app.tsx` and on `/videoanruf`. The plan makes removing them
+  conditional on the new path working end to end, which cannot be verified
+  without a running backend. The two files nothing imported at all
+  (`.OLD.tsx`, `.PROFESSIONAL.tsx`, 1022 lines) are gone.
+- **A tenant setting for the backdrop.** The preset reaches the fork on the
+  URL and falls back to the handoff's default, but ORISO has no setting to
+  put there yet, so every call currently gets `fluss`.
+
+---
+
+## 7. Open questions, unchanged from the plan
+
+1. Does Call v2 want the **scheduled** state at all?
+2. Do the **call notification emails** belong in this epic?
+3. The handoff's own **"Kacheln" icon draws a house**. The fork uses
+   Compound's grid icon; the handoff's three are not inherited the way the
+   animals are, because they are chrome rather than identity.
+4. **Hain overlap at 2, 3, 5 and 6 people** — the packer is the prototype's
+   own and the shapes genuinely abut, which is the design. Worth a look at
+   the screenshots before it ships.
+5. **Middle truncation for phones**: five names still truncate on
+   `Hain-Handy`.
+6. The **0.11 AA margin** on the 12px subtitle.
