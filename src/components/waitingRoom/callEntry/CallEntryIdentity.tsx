@@ -27,6 +27,7 @@ import genAvatarIcon from '../../../resources/img/registration-md3/icons/gen-ava
 import genDiceIcon from '../../../resources/img/registration-md3/icons/gen-dice.svg';
 import { callEntryCopy as copy } from './callEntryCopy';
 import { CallModality } from './callEntryTypes';
+import type { UsernameFeedback } from '../../registration/accountData/usernameFeedback';
 
 export interface CallEntryIdentityProps {
 	modality: CallModality;
@@ -36,6 +37,9 @@ export interface CallEntryIdentityProps {
 	onUsernameChange: (username: string) => void;
 	password: string;
 	onPasswordChange: (password: string) => void;
+	/** The registration's own User-ID feedback (length, taken, retry). */
+	usernameFeedback?: UsernameFeedback;
+	onUsernameBlur?: () => void;
 }
 
 /**
@@ -52,7 +56,9 @@ export const CallEntryIdentity = ({
 	username,
 	onUsernameChange,
 	password,
-	onPasswordChange
+	onPasswordChange,
+	usernameFeedback,
+	onUsernameBlur
 }: CallEntryIdentityProps) => {
 	const { t, i18n } = useTranslation();
 	const locale = i18n.resolvedLanguage ?? 'de';
@@ -140,7 +146,12 @@ export const CallEntryIdentity = ({
 					)
 				}
 				label={t('registration.account.username.label')}
-				helperText={t('registration.account.username.info')}
+				helperText={t(
+					usernameFeedback?.helperTextKey ??
+						'registration.account.username.info'
+				)}
+				error={usernameFeedback?.hasError}
+				onBlur={onUsernameBlur}
 				fullWidth
 				autoComplete="username"
 				InputProps={{

@@ -7,6 +7,8 @@ import { EntryRoomShell } from '../../anonymousChat/entryRoom/EntryRoomShell';
 import { RegistrationFooter } from '../../registrationFooter/RegistrationFooter';
 import { HandoverGateButton } from '../../app/registrationLoader/HandoverGateButton';
 import { allPasswordCriteriaPass } from '../../registration/accountData/passwordRules';
+import { useUsernameAvailability } from '../../registration/accountData/useUsernameAvailability';
+import { getUsernameFeedback } from '../../registration/accountData/usernameFeedback';
 import { REGISTRATION_DATA_VALIDATION } from '../../registration/registrationDataValidation';
 import {
 	registrationMd3,
@@ -64,6 +66,8 @@ export interface CallEntryRoomProps {
 	onJoin?: () => void;
 	onBlockerAction?: () => void;
 	playTone?: (sinkId?: string) => Promise<void>;
+	/** Default: the backend, as in the registration. Stories pass a fake. */
+	checkUsername?: (username: string) => Promise<boolean>;
 }
 
 /**
@@ -97,7 +101,8 @@ export const CallEntryRoom = ({
 	joining = false,
 	onJoin,
 	onBlockerAction,
-	playTone
+	playTone,
+	checkUsername
 }: CallEntryRoomProps) => {
 	const { i18n } = useTranslation();
 	const [identity, setIdentity] = useState<Pseudonym>(
@@ -138,11 +143,30 @@ export const CallEntryRoom = ({
 		if (kind === 'speaker') setSpeakerTest('idle');
 	};
 
+	// The registration's own rule and its backend check, so the gate never
+	// opens on a User-ID the account creation would reject.
+	const usernameValid =
+		REGISTRATION_DATA_VALIDATION.username.validation(username);
+	const availability = useUsernameAvailability(
+		username,
+		usernameValid,
+		checkUsername
+	);
+	const [usernameBlurred, setUsernameBlurred] = useState(false);
+	const usernameFeedback = getUsernameFeedback({
+		wasBlurred: usernameBlurred,
+		isLongEnough: usernameValid,
+		isAvailable: availability.isAvailable,
+		availabilityChecked: availability.checked,
+		availabilityCheckFailed: availability.failed
+	});
+
 	const conditions = [
 		{
-			// The registration's own rule, so the gate never opens on a
-			// User-ID the account creation would reject.
-			done: REGISTRATION_DATA_VALIDATION.username.validation(username),
+			done:
+				usernameValid &&
+				availability.checked &&
+				availability.isAvailable,
 			missing: copy.missingName
 		},
 		{
@@ -227,6 +251,8 @@ export const CallEntryRoom = ({
 							onUsernameChange={setUsername}
 							password={password}
 							onPasswordChange={setPassword}
+							usernameFeedback={usernameFeedback}
+							onUsernameBlur={() => setUsernameBlurred(true)}
 						/>
 					</Box>
 					{/* Picture or voice, then the devices right under it. */}
