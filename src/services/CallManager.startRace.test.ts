@@ -10,6 +10,8 @@ describe('outgoing call startup ownership', () => {
 	const createRoom = vi.fn();
 	const sendEvent = vi.fn();
 	const invite = vi.fn();
+	const leave = vi.fn();
+	const forget = vi.fn();
 
 	beforeEach(() => {
 		callManager.endCall(false);
@@ -20,11 +22,15 @@ describe('outgoing call startup ownership', () => {
 		);
 		invite.mockResolvedValue(undefined);
 		sendEvent.mockResolvedValue({ event_id: '$invite' });
+		leave.mockResolvedValue(undefined);
+		forget.mockResolvedValue(undefined);
 		const client = {
 			createRoom,
 			sendEvent,
 			sendMessage: vi.fn().mockResolvedValue({ event_id: '$call-root' }),
 			invite,
+			leave,
+			forget,
 			getUserId: () => '@caller:oriso.example',
 			getDeviceId: () => 'CALLER',
 			getRoom: () => null
@@ -217,5 +223,81 @@ describe('outgoing call startup ownership', () => {
 		await Promise.resolve();
 		expect(callManager.getCurrentCall()?.callId).toBe('new-call');
 		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
+	it('takes its room with it when a start is superseded', async () => {
+		/*
+		 * The ownership check runs only AFTER the room exists.
+		 *
+		 * By the time a superseded start returns, `createElementCallRoom` has
+		 * created a dedicated room and invited the membership-reader account
+		 * into it, with the call/source binding written in. Returning without
+		 * cleanup left one behind for every superseded start: a persistent
+		 * room naming a counselling session, never joined, never found again.
+		 * A cancellation during creation is enough to make one.
+		 */
+		let finishCreate!: (response: { room_id: string }) => void;
+		createRoom.mockImplementation(
+			() =>
+				new Promise((resolve) => {
+					finishCreate = resolve;
+				})
+		);
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() => expect(finishCreate).toBeTypeOf('function'));
+
+		// Cancelled while the room was still being created.
+		callManager.endCall(false);
+		finishCreate({ room_id: ROOM });
+
+		await vi.waitFor(() => expect(leave).toHaveBeenCalledWith(ROOM));
+		expect(forget).toHaveBeenCalledWith(ROOM);
+		// And no invitation was published for it.
+		expect(sendEvent).not.toHaveBeenCalledWith(
+			SOURCE,
+			'org.oriso.call.invite',
+			expect.anything()
+		);
+	});
+
+	it('starts a fresh call when retrying one nobody answered', async () => {
+		/*
+		 * Retrying an unanswered group call used to be a dead end.
+		 *
+		 * `leaveCall` writes an unattended group call as `missed` and drops its
+		 * tracker. The reuse branch in `startCall` then matched on the retained
+		 * `left` call and returned early — so the reopened surface carried a
+		 * TERMINAL card, had no tracker, and published no new invitation. Once
+		 * the original invite expired nothing could bring anybody in: a call
+		 * surface that could never ring.
+		 *
+		 * Reuse is for the call others are still in. This one has nobody in it.
+		 */
+		createRoom.mockResolvedValue({ room_id: ROOM });
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() =>
+			expect(callManager.getCurrentCall()?.callId).toBeTypeOf('string')
+		);
+		const first = callManager.getCurrentCall()?.callId;
+
+		// Closed before anybody joined.
+		callManager.leaveCall();
+		expect(callManager.getCurrentCall()?.state).toBe('left');
+
+		createRoom.mockClear();
+		sendEvent.mockClear();
+		callManager.startCall(SOURCE, true, true);
+		await vi.waitFor(() =>
+			expect(callManager.getCurrentCall()?.callId).not.toBe(first)
+		);
+		// A new room and a new invitation, not the terminal call reopened.
+		await vi.waitFor(() => expect(createRoom).toHaveBeenCalled());
+		await vi.waitFor(() =>
+			expect(sendEvent).toHaveBeenCalledWith(
+				SOURCE,
+				'org.oriso.call.invite',
+				expect.anything()
+			)
+		);
 	});
 });

@@ -1014,7 +1014,74 @@ Two tests. The replacement-client one fails against the old binding
 written). The different-account one passes either way and is there to keep the
 fix from writing a card as the wrong person.
 
-## 21. Where both branches stand, and what is still unverified
+## 21. The thirteenth round: two of mine, and one of them an hour old
+
+Six findings. Two were defects **my own fixes in this review introduced**,
+which is the part worth recording.
+
+### The carry-over leaked across rooms
+
+§20's fix seeds a room's read with what is already known, because absence from
+the live timeline is not withdrawal. That is right *within one room* — and
+`RoomPage` is a wildcard route, so SPA navigation can replace `room` without
+remounting the hook. Somebody present in both rooms kept the animal they had in
+the room just left, indefinitely, precisely because absence is no longer
+treated as withdrawal. The fix for one bug created another an hour later.
+
+`useOrisoIdentities` tracks which room the map in state describes and starts
+from nothing when that changes. The carry-over flag is a *parameter* of the
+update rather than a captured mutable: written inside the state updater, an
+updater React may call twice would seed the second call from the room just
+left.
+
+The test is from the other side — same person, two rooms, two motifs, then a
+third room that says nothing about them. It is the third assertion that catches
+it: the leak only shows where the new room has nothing of its own to overwrite
+with.
+
+### Retrying an unanswered call was a dead end
+
+`leaveCall` writes an unattended group call as `missed` and drops its tracker —
+§13's fix. `startCall`'s reuse branch, which **predates this epic**, then
+matched the retained `left` call and returned early. So the reopened surface
+carried a terminal card, had no tracker, and published no new invitation; once
+the original invite expired nothing could bring anybody in. A counsellor
+retrying an unanswered call got a surface that could never ring.
+
+The reuse branch exists for the call others are still in, where creating a
+second dedicated room would strand them. It now also requires
+`callLifecycleTracker.isTracking(callId)` — is the card still open — so a
+finalised call falls through to a fresh start. The branch is old; the
+interaction is ours.
+
+### And four more
+
+* **Orphan call rooms.** The startup-ownership check runs only *after*
+  `createElementCallRoom` has created the room and invited the membership-reader
+  account, so every superseded start left a persistent room naming a counselling
+  session, never joined and never found again. It is left and forgotten now,
+  best effort, and only on the path where no invitation was ever published.
+* **The identity capability now follows the opt-in.** A plain Element Web
+  embedding of this fork renders upstream's rectangles, so it has no use for
+  identity records; it asked for them anyway. Nothing would be delivered in
+  practice, since only the ORISO host publishes them — but that is an argument
+  about what happens to be in the room, not about what the iframe may see. The
+  parameter is required rather than defaulted, and the compiler duly found the
+  one call site.
+* **A test helper leaked its viewport** when `waitFor` rejected. Restored in a
+  `finally`.
+* **Step 11 of the reviewer plan said "one account"** and then asked somebody
+  else to join. Split: the lifecycle half needs one, the attendance half two.
+
+And one finding **declined**, with reasons on the thread: suppressing ORISO
+identity in picture-in-picture. The invariant cited there is about arrangements,
+not identity; it would partly undo the earlier spotlight fix, since PiP renders
+through the same `SpotlightTile`; and for an anonymous advice seeker the form is
+their only representation, so the fallback is the stand-in the design replaced.
+The geometry was measured at every PiP size rather than assumed, and a test
+records the decision so it can be overturned in one place.
+
+## 22. Where both branches stand, and what is still unverified
 
 **Gates, on the pushed heads.**
 

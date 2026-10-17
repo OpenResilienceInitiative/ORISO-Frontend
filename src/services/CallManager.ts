@@ -219,7 +219,25 @@ class CallManager {
 			this.currentCall.state === 'left' &&
 			forceIsGroup === true &&
 			(this.currentCall.signalRoomId || this.currentCall.roomId) ===
-				roomId
+				roomId &&
+			/*
+			 * ...and the card is still open.
+			 *
+			 * Reuse exists for the call OTHERS are still in: creating another
+			 * dedicated room would strand them. It must not apply to a call
+			 * nobody ever joined, because `leaveCall` has already written that
+			 * one as `missed` and dropped its tracker — reusing the id then
+			 * reopened a call with a TERMINAL card, no tracker and no fresh
+			 * invitation, and once the original invite expired nothing could
+			 * bring anybody in. A counsellor retrying an unanswered call got a
+			 * surface that could never ring.
+			 *
+			 * This is the other half of moving `finishIfUnattended` onto the
+			 * leave path: before that the card stayed `running`, so reuse
+			 * happened to work. The reuse branch predates this epic; the
+			 * interaction is new, and therefore ours.
+			 */
+			callLifecycleTracker.isTracking(this.currentCall.callId)
 		) {
 			// Reopen the existing MatrixRTC room. Creating another dedicated room
 			// here would strand the participants who stayed in the active call.
@@ -318,7 +336,27 @@ class CallManager {
 			);
 			// Room creation may finish after cancellation or a different call.
 			// Only the request that still owns startup can publish its invite.
-			if (this.pendingStart !== start) return;
+			if (this.pendingStart !== start) {
+				/*
+				 * ...and it takes its room with it.
+				 *
+				 * The room exists by now, with the membership-reader account
+				 * invited and the call/source binding written into it.
+				 * Returning without cleaning up left one behind for every
+				 * superseded start — a persistent room naming a counselling
+				 * session, never joined by anybody, never found again. A
+				 * second start in another room, or a cancellation during
+				 * creation, is enough to make one.
+				 *
+				 * Best effort: leave so the room is not ours any more, then
+				 * forget it so it leaves this account's room list. Neither can
+				 * be waited on by anything, and a failure here must not break
+				 * the newer call that superseded this one, so both are
+				 * swallowed.
+				 */
+				void this.discardElementCallRoom(elementCallRoomId);
+				return;
+			}
 
 			this.currentCall = {
 				callId,
@@ -397,6 +435,28 @@ class CallManager {
 	 * mirrors Element Call's own `createRoom` behaviour closely enough for our
 	 * use-case (notably the power levels for `org.matrix.msc3401.call.member`).
 	 */
+	/**
+	 * Drop a dedicated call room this client created and then did not use.
+	 *
+	 * Only for a room that was never published in an invitation: leaving a
+	 * room somebody may have been invited into would tear down their call.
+	 */
+	private async discardElementCallRoom(roomId: string): Promise<void> {
+		if (!roomId) return;
+		const client = getMatrixClientService()?.getClient?.();
+		if (!client) return;
+		try {
+			await client.leave(roomId);
+		} catch {
+			// The room may never have been joined, or the server may be gone.
+		}
+		try {
+			await client.forget(roomId);
+		} catch {
+			// Forgetting is tidiness, not correctness.
+		}
+	}
+
 	private async createElementCallRoom(
 		sourceRoomId: string,
 		callId: string

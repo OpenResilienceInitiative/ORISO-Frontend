@@ -323,23 +323,29 @@ describe('what the host adds around the call', () => {
 		};
 		window.innerWidth = innerWidth;
 		window.innerHeight = innerHeight;
-		const service = makeFakeMatrixClientService('active');
-		activeCall();
-		const view = withUser(
-			{
-				userId: '@berater:matrix.storybook.test',
-				grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
-			},
-			service
-		);
-		await waitFor(() =>
-			expect(
-				view.container.querySelector('.element-call-iframe')
-			).toBeTruthy()
-		);
-		window.innerWidth = was.width;
-		window.innerHeight = was.height;
-		return view.container.querySelector('.element-call-container');
+		try {
+			const service = makeFakeMatrixClientService('active');
+			activeCall();
+			const view = withUser(
+				{
+					userId: '@berater:matrix.storybook.test',
+					grantedAuthorities: ['AUTHORIZATION_CONSULTANT_DEFAULT']
+				},
+				service
+			);
+			await waitFor(() =>
+				expect(
+					view.container.querySelector('.element-call-iframe')
+				).toBeTruthy()
+			);
+			return view.container.querySelector('.element-call-container');
+		} finally {
+			// Restored even when `waitFor` rejects: the enclosing cleanup does
+			// not touch the viewport, so a failure here would leak these
+			// dimensions into every later render in this file.
+			window.innerWidth = was.width;
+			window.innerHeight = was.height;
+		}
 	};
 
 	it('marks a stage too narrow to seat the notepad beside the call', async () => {
