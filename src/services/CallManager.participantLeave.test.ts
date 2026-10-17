@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { callManager } from './CallManager';
 import { setMatrixClientServiceRef } from './matrixClientRegistry';
+import { callLifecycleTracker } from './callLifecycleTracker';
 
 const CALL_ROOM = '!call:oriso.example';
 const SIGNAL_ROOM = '!group:oriso.example';
@@ -44,6 +45,34 @@ describe('Element Call participant leave', () => {
 		);
 		expect(callManager.hasActiveCall()).toBe(false);
 		expect(sendEvent).not.toHaveBeenCalled();
+	});
+
+	it('closes the card for a group call nobody joined, on the path that is actually used', () => {
+		/*
+		 * `GroupCallWidget.closeCallSurface` calls `leaveCall`, and the group
+		 * branch of it returns before `endCall` is ever reached — so the
+		 * unattended-call fix sitting in `endCall` did nothing for the case it
+		 * was written for. The card stayed "running" for good, with a Join
+		 * button that could only answer `unavailable`.
+		 */
+		const finishIfUnattended = vi.spyOn(
+			callLifecycleTracker,
+			'finishIfUnattended'
+		);
+		callManager.receiveCall(
+			CALL_ROOM,
+			false,
+			'group-call',
+			'@patty:oriso.example',
+			true,
+			SIGNAL_ROOM,
+			true
+		);
+
+		callManager.leaveCall();
+
+		expect(finishIfUnattended).toHaveBeenCalledWith('group-call');
+		finishIfUnattended.mockRestore();
 	});
 
 	it('rejoins that same group-call room instead of creating a new call', () => {

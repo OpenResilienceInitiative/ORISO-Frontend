@@ -884,6 +884,19 @@ class CallManager {
 	 */
 	public leaveCall(): void {
 		if (this.currentCall?.usesElementCall && this.currentCall.isGroup) {
+			/*
+			 * This — not `endCall` — is the group leave path.
+			 *
+			 * `GroupCallWidget.closeCallSurface` calls `leaveCall`, and this
+			 * branch returns before `endCall` is ever reached, so the
+			 * unattended-call fix sitting there did nothing for the case it
+			 * was written for: a group call nobody joined, left by the person
+			 * who started it, kept a "running" card for good with a Join
+			 * button that could only answer `unavailable`. A call somebody IS
+			 * in is untouched, because it belongs to the room rather than to
+			 * whoever invited everybody.
+			 */
+			callLifecycleTracker.finishIfUnattended(this.currentCall.callId);
 			this.currentCall = { ...this.currentCall, state: 'left' };
 			releaseAllCallWarmupStreams();
 			this.notifyListeners();
