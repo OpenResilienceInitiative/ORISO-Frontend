@@ -38,7 +38,11 @@ export interface GroupWaitingRoomProps {
 	rules: string[];
 	/** The moderator has opened the chat — joining is possible now. */
 	active: boolean;
-	onJoin: () => void;
+	/**
+	 * Join the group. The promise it returns keeps the closing animation's
+	 * cover on until the request has settled and the chat has opened.
+	 */
+	onJoin: () => void | Promise<unknown>;
 	joinBusy?: boolean;
 	/** The group's next dates, soonest first — shown behind "Mehr erfahren". */
 	upcomingDates?: Date[];
@@ -113,21 +117,20 @@ export const GroupWaitingRoom = ({
 	// `saving` only disables the button after the next render; two quick
 	// presses before it would record and join twice.
 	const inFlight = useRef(false);
-	const joinAfterConsent = () =>
-		consent.guard(() => {
-			if (!groupConsent.readable || inFlight.current) return;
-			inFlight.current = true;
-			setSaving(true);
-			setSaveFailed(false);
-			groupConsent
-				.record()
-				.then(() => onJoin())
-				.catch(() => setSaveFailed(true))
-				.finally(() => {
-					inFlight.current = false;
-					setSaving(false);
-				});
-		});
+	const joinAfterConsent = () => {
+		if (!groupConsent.readable || inFlight.current) return undefined;
+		inFlight.current = true;
+		setSaving(true);
+		setSaveFailed(false);
+		return groupConsent
+			.record()
+			.then(() => onJoin())
+			.catch(() => setSaveFailed(true))
+			.finally(() => {
+				inFlight.current = false;
+				setSaving(false);
+			});
+	};
 	const phone = useMediaQuery('(max-width:599px)');
 	const menuId = `${useId().replace(/:/g, '')}-entry-calendar`;
 
@@ -439,6 +442,11 @@ export const GroupWaitingRoom = ({
 				primary={{
 					...joinAction,
 					onClick: joinAfterConsent,
+					/* Consent is asked before the closing animation starts, so
+					   the screen never closes on a "no"; joining ends in the
+					   group chat's message field. */
+					beforeEnter: consent.check,
+					closing: 'messageField' as const,
 					disabled:
 						joinBusy ||
 						saving ||

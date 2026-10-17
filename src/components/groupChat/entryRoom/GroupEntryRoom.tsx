@@ -199,7 +199,9 @@ const ClientGroupEntryRoom = () => {
 		}
 		setJoinBusy(true);
 		setJoinFailed(false);
-		apiPutGroupChat(item.id, GROUP_CHAT_API.JOIN)
+		// Returned so the closing animation keeps the screen covered until the
+		// request has settled and the chat has opened.
+		return apiPutGroupChat(item.id, GROUP_CHAT_API.JOIN)
 			.then(() => {
 				navigate(
 					getSessionNavigationPath({

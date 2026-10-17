@@ -18,6 +18,7 @@ import {
 	TenantContext
 } from '../../globalState';
 import { GlobalComponentContext } from '../../globalState/provider/GlobalComponentContext';
+import { UrlParamsContext } from '../../globalState/provider/UrlParamsProvider';
 import { clearRegistrationSubmitting } from './registrationSubmission';
 import { readAccountCreatedLogin } from './accountCreatedLogin';
 
@@ -56,8 +57,16 @@ const {
 vi.mock('lottie-react', () => ({ default: () => null }));
 
 vi.mock('../../components/stageLayout/StageLayout', () => ({
-	StageLayout: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="stage-layout">{children}</div>
+	StageLayout: ({
+		children,
+		showLoginLink
+	}: {
+		children: React.ReactNode;
+		showLoginLink?: boolean;
+	}) => (
+		<div data-testid="stage-layout" data-show-login={String(showLoginLink)}>
+			{children}
+		</div>
 	)
 }));
 
@@ -124,8 +133,8 @@ const registrationData = {
 	password: 'Sicher!Genug-2026'
 };
 
-const renderAccountStep = () =>
-	render(
+const renderAccountStep = (urlParams?: Record<string, unknown>) => {
+	const screen = (
 		<AppConfigContext.Provider value={{} as any}>
 			<GlobalComponentContext.Provider
 				value={{ Stage: () => <div /> } as any}
@@ -166,6 +175,16 @@ const renderAccountStep = () =>
 			</GlobalComponentContext.Provider>
 		</AppConfigContext.Provider>
 	);
+	return render(
+		urlParams ? (
+			<UrlParamsContext.Provider value={urlParams as any}>
+				{screen}
+			</UrlParamsContext.Provider>
+		) : (
+			screen
+		)
+	);
+};
 
 const registerButton = () =>
 	document.querySelector('[data-cy="button-register"]') as HTMLElement;
@@ -359,5 +378,49 @@ describe('registration — a submit that is already in flight', () => {
 
 		await waitFor(() => expect(form()).toBeTruthy());
 		expect(handover()).toBeNull();
+	});
+});
+
+describe('registration — the preselected topic while the account is created', () => {
+	const preselected = () => document.querySelector('[data-cy="preselected"]');
+
+	it('is shown with the form and gone once the handover takes over', async () => {
+		renderAccountStep({ topic: { id: 1, name: 'Schulden' } });
+		expect(preselected(), 'shown while the person fills the form').not.toBe(
+			null
+		);
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		expect(
+			preselected(),
+			'the handover is not interrupted by the topic box'
+		).toBeNull();
+	});
+});
+
+describe('registration — the login button while the account is created', () => {
+	const stageLayouts = () =>
+		Array.from(document.querySelectorAll('[data-testid="stage-layout"]'));
+
+	/* The handover brings its own frame, so the form's page is replaced, not
+	   left standing with the button sliding out (Codex on #1766). */
+	it('stays with the form and goes with the page when the handover takes over', async () => {
+		renderAccountStep();
+		await waitFor(() => expect(form()).toBeTruthy());
+		expect(
+			stageLayouts().map((l) => l.getAttribute('data-show-login'))
+		).toEqual(['true']);
+
+		fireEvent.click(registerButton());
+		await waitFor(() => expect(handover()).toBeTruthy());
+
+		const layouts = stageLayouts();
+		expect(layouts, 'one page: the handover’s').toHaveLength(1);
+		expect(layouts[0].contains(handover())).toBe(true);
+		expect(layouts[0].contains(form()), 'the form’s page is gone').toBe(
+			false
+		);
 	});
 });

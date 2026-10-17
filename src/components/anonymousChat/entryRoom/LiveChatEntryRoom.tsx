@@ -578,6 +578,11 @@ const LiveChatEntryRoomContent = ({
 			mark('inquiry-consent');
 			mark('waiting-dismissed');
 			window.location.href = buildInviteSessionAppUrl(sessionId);
+			/* The page is being replaced: the closing animation keeps its
+			   cover on until it is, instead of opening onto this room again,
+			   and hands it to the next document as the page goes
+			   (closingHandover), which reveals onto the message field. */
+			return new Promise<void>(() => undefined);
 		} catch {
 			if (!cancelled.current) setBusy(false);
 		}
@@ -694,9 +699,7 @@ const LiveChatEntryRoomContent = ({
 						department={department}
 						busy={busy}
 						leaveFailed={leaveFailed}
-						onAccept={() => {
-							void handleAccept();
-						}}
+						onAccept={() => handleAccept()}
 						onLeave={handleLeave}
 						onMailCounselling={goToMail}
 					/>

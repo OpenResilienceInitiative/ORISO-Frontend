@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { Helmet } from 'react-helmet';
 import { StageLayout } from '../../components/stageLayout/StageLayout';
 import { RegistrationHandover } from '../app/registrationLoader/RegistrationHandover';
+import { StepTransition } from '../transition/StepTransition';
 import {
 	HandoverDepartment,
 	rememberHandoverDepartment,
@@ -940,6 +941,23 @@ export const Registration = () => {
 							maxWidth: '100%'
 						}}
 					>
+						{activeStep && (
+							<>
+								<PreselectionBox hasDrawer={false} />
+								<RegistrationHeader
+									currentStepName={step}
+									visibleStepNames={availableSteps.map(
+										({ name }) => name
+									)}
+									clickableStepNames={
+										clickableStepperStepNames
+									}
+									onStepClick={onStepperClick}
+									chips={headerChips}
+									fullBleed
+								/>
+							</>
+						)}
 						{activeStep ? (
 							<>
 								<Helmet>
@@ -985,22 +1003,6 @@ export const Registration = () => {
 												}
 											}}
 										>
-											<PreselectionBox
-												hasDrawer={false}
-											/>
-											<RegistrationHeader
-												currentStepName={step}
-												visibleStepNames={availableSteps.map(
-													({ name }) => name
-												)}
-												clickableStepNames={
-													clickableStepperStepNames
-												}
-												onStepClick={onStepperClick}
-												chips={headerChips}
-												fullBleed
-											/>
-
 											<Box
 												sx={{
 													'flex': 1,
@@ -1027,21 +1029,30 @@ export const Registration = () => {
 													const StepComponent =
 														activeStep.component;
 													return (
-														<StepComponent
-															key={`${activeStep.name}-${clearSelectionVersion}`}
-															onChange={
-																setStepData
+														<StepTransition
+															viewKey={
+																activeStep.name
 															}
-															onNextClick={
-																onNextClick
+															order={
+																currStepIndex
 															}
-															nextStepUrl={
-																nextStepUrl
-															}
-															temporary={
-																temporaryJoin
-															}
-														/>
+														>
+															<StepComponent
+																key={`${activeStep.name}-${clearSelectionVersion}`}
+																onChange={
+																	setStepData
+																}
+																onNextClick={
+																	onNextClick
+																}
+																nextStepUrl={
+																	nextStepUrl
+																}
+																temporary={
+																	temporaryJoin
+																}
+															/>
+														</StepTransition>
 													);
 												})()}
 											</Box>

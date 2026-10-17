@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Box, ButtonBase } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
@@ -38,7 +38,11 @@ export interface LiveChatWaitingRoomProps {
 	 * platform's (ADR-022: no Beratungsstelle is assigned yet).
 	 */
 	department?: { agencyId: number; topicId: number } | null;
-	onAccept: () => void;
+	/**
+	 * Start the chat. A promise it returns keeps the closing animation's cover
+	 * on until the page is replaced (or the start failed).
+	 */
+	onAccept: () => void | Promise<unknown>;
 	/** The way out: finish the enquiry and delete the access. */
 	onLeave: () => Promise<void> | void;
 	/** Written alternative — the registration. */
@@ -133,6 +137,10 @@ export const LiveChatWaitingRoom = ({
 	const [leaving, setLeaving] = useState(false);
 	const [companion, setCompanion] = useState(companionStart);
 	const consent = useWaitingRoomConsent({ consentHtml, department });
+	/* The one way in: the gate button asks for consent, plays the closing
+	   animation and then starts the chat. The dialog's "start chat" presses
+	   this very button, so it cannot walk around either. */
+	const gateRef = useRef<HTMLButtonElement>(null);
 	const handleStart = () => consent.guard(onAccept);
 	/* The contract: when counselling starts, unmount. Accepted wins over
 	   whatever the person was doing — the breathing companion included. */
@@ -265,7 +273,12 @@ export const LiveChatWaitingRoom = ({
 							<Box sx={{ flex: 1, minWidth: 0 }}>
 								<HandoverGateButton
 									state={busy ? 'entering' : 'ready'}
-									onEnter={handleStart}
+									buttonRef={gateRef}
+									/* Consent is asked before the closing animation
+									   starts, so the screen never closes on a "no". */
+									beforeEnter={consent.check}
+									onEnter={() => onAccept()}
+									closing="messageField"
 									label={tr('start', 'Gespräch beginnen')}
 									status={tr(
 										'startStatus',
@@ -334,7 +347,11 @@ export const LiveChatWaitingRoom = ({
 					   from inside the dialog is still starting, and consent
 					   that can be walked around is not a consent gate. */
 					setLeaving(false);
-					handleStart();
+					if (gateRef.current) {
+						gateRef.current.click();
+					} else {
+						handleStart();
+					}
 				}}
 				onDeleteAccess={() => {
 					void onLeave();

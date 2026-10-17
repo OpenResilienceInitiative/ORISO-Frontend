@@ -1,5 +1,10 @@
 import type { TraegerDpo } from '../../utils/traegerDpo';
 
+export type ClosingAnimationContractValue =
+	| 'CURTAIN'
+	| 'CIRCLE_ZOOM'
+	| 'SLIDE_REVEAL';
+
 export interface TenantDataInterface {
 	id: number | null;
 	name: string;
@@ -25,6 +30,15 @@ export interface TenantDataInterface {
 		 * older backends simply do not send it.
 		 */
 		loginEffect?: 'NONE' | 'LINES' | 'CONNECTED_DOTS' | 'CRACKS' | null;
+		/**
+		 * Which closing animation plays when a person leaves a waiting room, one
+		 * choice for desktop (1200 px and up) and one for mobile
+		 * (ORISO-Frontend#1737). Absent or `null` means never chosen and plays
+		 * the platform default. Additive TenantService fields — older backends
+		 * simply do not send them.
+		 */
+		closingAnimationDesktop?: ClosingAnimationContractValue | null;
+		closingAnimationMobile?: ClosingAnimationContractValue | null;
 	};
 	content: {
 		impressum: string;
