@@ -74,18 +74,27 @@ let writeQueue: Promise<unknown> = Promise.resolve();
 let queuedWrites = 0;
 let latestStored: Partial<UserDataInterface> | null = null;
 let seenUserData: unknown;
+// Per setting: the number of its newest write, across every caller.
+const newestWrite = new Map<string, number>();
 
-/** `saved`: the PATCH went through. `stored`: the setting's last confirmed value. */
+/**
+ * `saved`: the PATCH went through. `stored`: the setting's last confirmed
+ * value. `revertTo`: where the control must go back to; set only when this
+ * write failed and no newer write to the same setting was made since, so an
+ * older failure never undoes a newer choice.
+ */
 export interface EmailSettingSaveResult {
 	saved: boolean;
 	stored: boolean;
+	revertTo?: boolean;
 }
 
 /**
  * The one write path for e-mail preferences: the profile's switches and the
  * display filter's E-Mail column both call it. After a failed save (error
- * toast shown) the caller puts its control back to `stored` — never to
- * `!next`, which is wrong once two writes to one setting were queued.
+ * toast shown) the caller puts its control back to `revertTo` when set —
+ * never to `!next`, which is wrong once two writes to one setting were
+ * queued, and never after a newer write to the same setting.
  */
 export const useSaveEmailSetting = () => {
 	const { t } = useTranslation();
@@ -103,6 +112,9 @@ export const useSaveEmailSetting = () => {
 			next: boolean
 		): Promise<EmailSettingSaveResult> => {
 			queuedWrites += 1;
+			const key = emailSettingKey(source);
+			const number = (newestWrite.get(key) ?? 0) + 1;
+			newestWrite.set(key, number);
 			const write = writeQueue.then(async () => {
 				const base = latestStored ?? userData;
 				const patch = emailSettingPatch(base, source, next);
@@ -135,7 +147,10 @@ export const useSaveEmailSetting = () => {
 				const stored = readEmailSetting(latestStored, source);
 				queuedWrites -= 1;
 				if (queuedWrites === 0 && reloaded) latestStored = null;
-				return { saved, stored };
+				const newest = newestWrite.get(key) === number;
+				return saved || !newest
+					? { saved, stored }
+					: { saved, stored, revertTo: stored };
 			});
 			writeQueue = write.catch(() => undefined);
 			return write;

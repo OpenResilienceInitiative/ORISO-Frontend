@@ -88,15 +88,13 @@ const EmailTypeToggle = ({
 	const onChange = useCallback(
 		async (next: boolean) => {
 			setChecked(next);
-			const { saved, stored } = await save(
+			const { revertTo } = await save(
 				{ kind: 'emailToggle', type },
 				next
 			);
-			if (!saved) {
-				// Put the switch back to what is stored: leaving it in the new
-				// position would tell the user a lie about what is stored.
-				setChecked(stored);
-			}
+			// Put the switch back to what is stored: leaving it in the new
+			// position would tell the user a lie about what is stored.
+			if (revertTo !== undefined) setChecked(revertTo);
 		},
 		[save, type]
 	);

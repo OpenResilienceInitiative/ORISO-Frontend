@@ -2,7 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { useAppConfig } from '../../hooks/useAppConfig';
 import { useNotificationSettings } from '../../hooks/useNotificationSettings';
 import type { DisplayFilterSection } from '../../utils/displayFilter/model';
-import { isBrowserNotificationTypeEnabled } from '../../utils/notificationHelpers';
+import {
+	hasPermissions,
+	isBrowserNotificationTypeEnabled,
+	isSupported
+} from '../../utils/notificationHelpers';
 import { usesNewNotifications } from '../../utils/newNotificationsToggle';
 import { BROWSER_SECTIONS, browserPopupsOff } from './browserAvailability';
 
@@ -23,10 +27,12 @@ export const useDisplayFilterBrowserUnavailable = (
 };
 
 /**
- * A notice, not a lock: while delivery's own gate (`isSuppressed`: do not
- * disturb, account mute, this device silenced) holds pop-ups back, the
- * cells stay editable. That state is often temporary, and the column edits
- * durable preferences.
+ * A notice, not a lock: while this browser cannot show pop-ups (no
+ * Notification API, permission denied) or delivery's own gate
+ * (`isSuppressed`: do not disturb, account mute, this device silenced)
+ * holds them back, the cells stay editable. The column edits preferences
+ * synced to every device; this device's state is often temporary.
+ * `default` adds nothing: the app asks on the first gesture.
  */
 export const useDisplayFilterBrowserMuted = (
 	section: DisplayFilterSection
@@ -34,7 +40,12 @@ export const useDisplayFilterBrowserMuted = (
 	const { t } = useTranslation();
 	const { isSuppressed } = useNotificationSettings();
 	const family = BROWSER_SECTIONS[section]?.family;
-	return family && isSuppressed(family)
+	if (!family) return undefined;
+	if (!isSupported())
+		return t('erstantwort.notificationChoice.browserUnsupported');
+	if (hasPermissions('denied'))
+		return t('erstantwort.notificationChoice.browserDenied');
+	return isSuppressed(family)
 		? t('erstantwort.notificationChoice.browserSilenced')
 		: undefined;
 };
