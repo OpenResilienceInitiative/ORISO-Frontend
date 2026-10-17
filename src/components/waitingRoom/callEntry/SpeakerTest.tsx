@@ -99,8 +99,10 @@ export const SpeakerTest = ({
 	// Each tone is one attempt; a newer one, another speaker or leaving
 	// makes an older tone's end meaningless.
 	const attempt = useRef(0);
-	const toneEnded = useRef(false);
+	// Where the keyboard goes once the control it was on disappears.
+	const focusNext = useRef<'yes' | 'play' | null>(null);
 	const yes = useRef<HTMLButtonElement>(null);
+	const playButton = useRef<HTMLButtonElement>(null);
 	useEffect(() => {
 		attempt.current += 1;
 	}, [sinkId]);
@@ -110,10 +112,14 @@ export const SpeakerTest = ({
 		},
 		[]
 	);
-	// The play button disappears with the question; the keyboard follows.
 	useEffect(() => {
-		if (state === 'asking' && toneEnded.current) yes.current?.focus();
-		toneEnded.current = false;
+		if (state === 'asking' && focusNext.current === 'yes') {
+			yes.current?.focus();
+		}
+		if (state === 'notHeard' && focusNext.current === 'play') {
+			playButton.current?.focus();
+		}
+		focusNext.current = null;
 	}, [state]);
 
 	const play = () => {
@@ -122,13 +128,15 @@ export const SpeakerTest = ({
 		void playTone(sinkId).then(
 			() => {
 				if (mine !== attempt.current) return;
-				toneEnded.current = true;
+				focusNext.current = 'yes';
 				onChange('asking');
 			},
 			// The chosen speaker cannot be reached: say so, like a tone
 			// nobody heard ("wählen Sie oben ein anderes Gerät").
 			() => {
-				if (mine === attempt.current) onChange('notHeard');
+				if (mine !== attempt.current) return;
+				focusNext.current = 'play';
+				onChange('notHeard');
 			}
 		);
 	};
@@ -169,7 +177,10 @@ export const SpeakerTest = ({
 				<Button
 					size="small"
 					variant="outlined"
-					onClick={() => onChange('notHeard')}
+					onClick={() => {
+						focusNext.current = 'play';
+						onChange('notHeard');
+					}}
 				>
 					{copy.speakerNo}
 				</Button>
@@ -205,6 +216,7 @@ export const SpeakerTest = ({
 					size="small"
 					variant="outlined"
 					startIcon={<PlayArrowRoundedIcon />}
+					ref={playButton}
 					disabled={state === 'playing'}
 					onClick={play}
 					data-testid="speaker-test"

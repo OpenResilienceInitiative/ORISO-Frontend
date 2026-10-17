@@ -409,6 +409,22 @@ export const NoDevice: Story = {
 	}
 };
 
+export const DeviceBusy: Story = {
+	name: 'Blocked · microphone busy',
+	globals: desktop1440Globals,
+	args: { ...base, modality: 'video', micLevel: 0, blocker: 'deviceBusy' },
+	play: async ({ canvasElement, canvas }) => {
+		await expectWaitingRoomLayout(canvasElement);
+		// Busy is not a permission: no hint to unlock the browser.
+		const notice = within(canvas.getByTestId('call-notice'));
+		await expect(
+			notice.getByText('Ihr Mikrofon ist gerade belegt')
+		).toBeVisible();
+		expect(notice.queryByText(/Schloss/)).toBeNull();
+		await expectRetryNotProgress(canvasElement);
+	}
+};
+
 export const NotOpenYet: Story = {
 	name: 'Blocked · room not open yet',
 	globals: desktop1440Globals,
@@ -571,6 +587,57 @@ export const LiveVideoNoWebcam: Story = {
 		await expect(
 			canvas.getByRole('button', { name: 'Kamera', pressed: false })
 		).toBeVisible();
+	}
+};
+
+/** Hands out silent microphones and remembers them, to unplug one. */
+const unpluggable = () => {
+	const given: MediaStream[] = [];
+	const media = scriptedDevices(() => {
+		const stream = silentMicrophone();
+		given.push(stream);
+		return Promise.resolve(stream);
+	});
+	return { media, given };
+};
+
+let unplugTarget: ReturnType<typeof unpluggable> | null = null;
+
+const LiveUnplug = (props: CallEntryRoomProps) => {
+	const [devices] = useState(unpluggable);
+	unplugTarget = devices;
+	return <Live {...props} mediaDevices={devices.media} />;
+};
+
+export const LiveMicrophoneUnplugged: Story = {
+	name: 'Live hook · heard microphone unplugged (scripted devices)',
+	globals: desktop1440Globals,
+	args: {
+		...base,
+		modality: 'audio',
+		micLevel: 0,
+		initialPassword: 'Sonnenblume-2026!',
+		initialMicHeard: true
+	},
+	render: (args) => <LiveUnplug {...args} />,
+	play: async ({ canvasElement }) => {
+		await waitFor(() => expect(unplugTarget!.given).toHaveLength(1));
+		await waitFor(() =>
+			expect(gate(canvasElement).getAttribute('data-cy-state')).toBe(
+				'ready'
+			)
+		);
+		// What the browser fires when the device goes away.
+		unplugTarget!.given[0]
+			.getAudioTracks()[0]
+			.dispatchEvent(new Event('ended'));
+		// Asked again; the new microphone has not been heard yet.
+		await waitFor(() => expect(unplugTarget!.given).toHaveLength(2));
+		await waitFor(() =>
+			expect(gate(canvasElement).getAttribute('data-cy-state')).toBe(
+				'preparing'
+			)
+		);
 	}
 };
 

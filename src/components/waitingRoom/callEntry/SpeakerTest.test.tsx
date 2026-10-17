@@ -116,6 +116,16 @@ describe('SpeakerTest', () => {
 		expect(document.activeElement?.textContent).toBe('Ja');
 	});
 
+	it('moves the keyboard to "Testton abspielen" after "Nein"', async () => {
+		render(<Room playTone={() => Promise.resolve()} />);
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('speaker-test'));
+		});
+		fireEvent.click(screen.getByRole('button', { name: 'Nein' }));
+		expect(row().getAttribute('data-state')).toBe('notHeard');
+		expect(document.activeElement).toBe(screen.getByTestId('speaker-test'));
+	});
+
 	it('tells the person when the chosen speaker cannot play the tone', async () => {
 		render(
 			<Room

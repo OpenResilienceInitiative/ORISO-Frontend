@@ -58,6 +58,23 @@ const isMissing = (error: unknown) => {
 	return name === 'NotFoundError' || name === 'OverconstrainedError';
 };
 
+/** Another program holds the device, or the hardware failed to start. */
+const isBusy = (error: unknown) => {
+	const name = (error as DOMException)?.name;
+	return (
+		name === 'NotReadableError' ||
+		name === 'AbortError' ||
+		name === 'TrackStartError'
+	);
+};
+
+const blockerFor = (error: unknown): CallEntryBlocker =>
+	isMissing(error)
+		? 'noDevice'
+		: isBusy(error)
+			? 'deviceBusy'
+			: 'permissionDenied';
+
 const constraintFor = (deviceId?: string): MediaTrackConstraints | true =>
 	deviceId ? { deviceId: { exact: deviceId } } : true;
 
@@ -156,7 +173,7 @@ export const useLiveCallDevices = (
 				if (cancelled) return;
 				setState((s) => ({
 					...s,
-					blocker: isMissing(error) ? 'noDevice' : 'permissionDenied'
+					blocker: blockerFor(error)
 				}));
 				return;
 			}
@@ -178,6 +195,17 @@ export const useLiveCallDevices = (
 			context.createMediaStreamSource(stream).connect(analyser);
 			const samples = new Uint8Array(analyser.fftSize);
 			const live = stream;
+			// An unplugged microphone ends its track and the meter falls
+			// silent. Ask again: another microphone or the blocker, never a
+			// gate that stays open on a dead one.
+			live.getAudioTracks().forEach((track) =>
+				track.addEventListener('ended', () => {
+					if (cancelled) return;
+					cancelAnimationFrame(frame);
+					setState((s) => ({ ...s, stream: null, micLevel: 0 }));
+					setAttempt((count) => count + 1);
+				})
+			);
 			const tick = () => {
 				analyser.getByteTimeDomainData(samples);
 				let peak = 0;

@@ -10,13 +10,27 @@ import { LiveCallControls, useLiveCallDevices } from './useLiveCallDevices';
  * unmount mid-way must leave nothing running.
  */
 
-type FakeTrack = { kind: string; enabled: boolean; stop: () => void };
+type FakeTrack = {
+	kind: string;
+	enabled: boolean;
+	stop: () => void;
+	addEventListener: (type: string, listener: () => void) => void;
+	/** Fires what the browser fires when the device is unplugged. */
+	end: () => void;
+};
 
-const track = (kind: string): FakeTrack => ({
-	kind,
-	enabled: true,
-	stop: vi.fn()
-});
+const track = (kind: string): FakeTrack => {
+	const listeners: (() => void)[] = [];
+	return {
+		kind,
+		enabled: true,
+		stop: vi.fn(),
+		addEventListener: (type, listener) => {
+			if (type === 'ended') listeners.push(listener);
+		},
+		end: () => listeners.forEach((listener) => listener())
+	};
+};
 
 const fakeStream = (kinds: string[]) => {
 	const tracks = kinds.map(track);
@@ -144,6 +158,30 @@ describe('useLiveCallDevices', () => {
 			expect(result.current.blocker).toBe('permissionDenied')
 		);
 		expect(media.getUserMedia).toHaveBeenCalledTimes(1);
+	});
+
+	it('says the microphone is busy when another program holds it', async () => {
+		const media = devicesFor(() =>
+			Promise.reject(domError('NotReadableError'))
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('audio', on, media)
+		);
+		await waitFor(() => expect(result.current.blocker).toBe('deviceBusy'));
+	});
+
+	it('asks again when the microphone in use is unplugged', async () => {
+		const first = fakeStream(['audio']);
+		const second = fakeStream(['audio']);
+		const streams = [first, second];
+		const media = devicesFor(() => Promise.resolve(streams.shift()!));
+		const { result } = renderHook(() =>
+			useLiveCallDevices('audio', on, media)
+		);
+		await waitFor(() => expect(result.current.stream).toBe(first));
+		act(() => first.tracks[0].end());
+		await waitFor(() => expect(result.current.stream).toBe(second));
+		expect(media.getUserMedia).toHaveBeenCalledTimes(2);
 	});
 
 	it('asks again on retry and clears the blocker once it works', async () => {
