@@ -84,7 +84,7 @@ export interface CallEntryRoomProps {
 	initialConsentOpen?: boolean;
 	onJoin?: () => void;
 	onBlockerAction?: () => void;
-	playTone?: () => Promise<void>;
+	playTone?: (sinkId?: string) => Promise<void>;
 }
 
 /**
@@ -208,6 +208,8 @@ export const CallEntryRoom = ({
 						<HandoverGateButton
 							state={waiting ? 'queued' : 'ready'}
 							indeterminate={waiting}
+							// A retry is not progress: the check has not run.
+							progress={waiting ? undefined : 0}
 							onEnter={onBlockerAction}
 							label={text.action}
 							status=""
@@ -273,6 +275,7 @@ export const CallEntryRoom = ({
 								avatar={identity.avatar}
 								stream={stream}
 								cameraOn={cameraOn && cameraAvailable}
+								cameraAvailable={cameraAvailable}
 								micOn={micOn}
 								micLevel={micLevel}
 								onToggleCamera={() => setCameraOn(!cameraOn)}
@@ -288,6 +291,7 @@ export const CallEntryRoom = ({
 								onToggleMic={() => setMicOn(!micOn)}
 								speakerTest={speakerTest}
 								onSpeakerTest={setSpeakerTest}
+								sinkId={selection.speaker}
 								playTone={playTone}
 							/>
 						)}
@@ -308,6 +312,7 @@ export const CallEntryRoom = ({
 								compact
 								state={speakerTest}
 								onChange={setSpeakerTest}
+								sinkId={selection.speaker}
 								playTone={playTone}
 							/>
 						)}
