@@ -12,9 +12,11 @@ export interface WaitingRoomLayoutOptions {
 	/**
 	 * The room stands in `WaitingRoomFrame` with the shared bar. `false` only
 	 * for a part shown on its own (the group's info gallery); cards are still
-	 * checked.
+	 * checked. `'card'` for the same room inside the app's chat card (the
+	 * self-help group opened from the session list, #1219; approved by the
+	 * product owner 2026-10-16): no stage, the bar is the card's last row.
 	 */
-	frame?: boolean;
+	frame?: boolean | 'card';
 	/** The room must show the card carousel (otherwise: if shown, right size). */
 	cards?: boolean;
 	/**
@@ -92,6 +94,61 @@ const checkStageColour = (canvasElement: HTMLElement): string | null => {
 	return red ? `${red} stage pixels are red on a non-red brand` : null;
 };
 
+const checkGate = (doc: Document, footer: HTMLElement): string | null => {
+	const bar = footer.getBoundingClientRect();
+	const gate = footer.querySelector<HTMLElement>(
+		'[data-cy-state], button[type="submit"]'
+	);
+	if (!gate) return 'no gate button inside the bar';
+	// Paddings and at most one round exit (56px) beside it.
+	const button = gate.getBoundingClientRect();
+	if (button.width < bar.width - 140) {
+		return `gate button is ${button.width}px in a ${bar.width}px bar`;
+	}
+	if (!gate.hasAttribute('disabled') && !reachable(doc, gate)) {
+		return 'something covers the gate button';
+	}
+	return null;
+};
+
+/**
+ * The room in the app's chat card: the shared bar is the card's last row —
+ * as wide as the card, at its bottom edge, in the flow (not fixed to the
+ * window, where it would cover the session list) — and no second stage
+ * stands inside the app shell. Only the column above the bar may scroll.
+ */
+const checkCardFrame = (canvasElement: HTMLElement): string | null => {
+	const doc = canvasElement.ownerDocument;
+	const footer = canvasElement.querySelector<HTMLElement>(
+		'[data-cy="registration-footer"]'
+	);
+	if (!footer) return 'the shared RegistrationFooter bar is missing';
+	const card = footer.closest<HTMLElement>('.session');
+	if (!card) return 'the bar does not stand in a chat card';
+	if (getComputedStyle(footer).position === 'fixed') {
+		return 'the bar is fixed to the window, not part of the card';
+	}
+	const bar = footer.getBoundingClientRect();
+	const box = card.getBoundingClientRect();
+	const border = card.offsetWidth - card.clientWidth;
+	if (Math.abs(bar.width - card.clientWidth) > 2) {
+		return `bar is ${bar.width}px wide in a ${card.clientWidth}px card`;
+	}
+	if (bar.left < box.left - 1 || bar.right > box.right + 1) {
+		return 'bar reaches outside the card';
+	}
+	if (Math.abs(box.bottom - border / 2 - bar.bottom) > 3) {
+		return `bar ends ${box.bottom - bar.bottom}px above the card's bottom`;
+	}
+	if (card.scrollHeight > card.clientHeight + 1) {
+		return 'the card scrolls as a whole';
+	}
+	if (card.querySelector('.stageLayout, .stage')) {
+		return 'a stage stands inside the chat card';
+	}
+	return checkGate(doc, footer);
+};
+
 const checkFrame = (canvasElement: HTMLElement): string | null => {
 	const doc = canvasElement.ownerDocument;
 	const viewport = doc.defaultView!.innerWidth;
@@ -118,18 +175,8 @@ const checkFrame = (canvasElement: HTMLElement): string | null => {
 	if (getComputedStyle(footer).position !== 'fixed') {
 		return 'bar is not fixed to the bottom edge';
 	}
-	const gate = footer.querySelector<HTMLElement>(
-		'[data-cy-state], button[type="submit"]'
-	);
-	if (!gate) return 'no gate button inside the bar';
-	// Paddings and at most one round exit (56px) beside it.
-	const button = gate.getBoundingClientRect();
-	if (button.width < bar.width - 140) {
-		return `gate button is ${button.width}px in a ${bar.width}px bar`;
-	}
-	if (!gate.hasAttribute('disabled') && !reachable(doc, gate)) {
-		return 'something covers the gate button';
-	}
+	const gateProblem = checkGate(doc, footer);
+	if (gateProblem) return gateProblem;
 	if (viewport >= STAGE_SPLIT_PX) {
 		const stage = doc.querySelector<HTMLElement>('.stage');
 		if (!stage) return 'the red stage is missing beside the column';
@@ -154,7 +201,11 @@ const check = (
 	canvasElement: HTMLElement,
 	options: WaitingRoomLayoutOptions
 ): string | null =>
-	(options.frame === false ? null : checkFrame(canvasElement)) ??
+	(options.frame === false
+		? null
+		: options.frame === 'card'
+			? checkCardFrame(canvasElement)
+			: checkFrame(canvasElement)) ??
 	checkCards(canvasElement, options) ??
 	(options.stageNotRed ? checkStageColour(canvasElement) : null);
 
