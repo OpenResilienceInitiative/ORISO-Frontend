@@ -15,13 +15,19 @@ export interface LiveCallDevices {
 	stream: MediaStream | null;
 	micLevel: number;
 	blocker?: CallEntryBlocker;
-	/** No webcam: the check runs with the microphone, the camera stays off. */
+	/**
+	 * No usable webcam (none, denied or busy): the check runs with the
+	 * microphone, the camera stays off.
+	 */
 	cameraMissing: boolean;
 	/** Ask the browser again ("Erneut prüfen"). */
 	retry: () => void;
 }
 
 type LiveState = Omit<LiveCallDevices, 'retry'>;
+
+/** The meter's resolution; smaller changes do not re-render. */
+const LEVEL_STEP = 0.02;
 
 const EMPTY: CallDevices = { camera: [], microphone: [], speaker: [] };
 
@@ -110,10 +116,11 @@ export const useLiveCallDevices = (
 					cameraMissing: false
 				};
 			} catch (error) {
-				if (!isMissing(error)) throw error;
 				// The chosen camera may be unplugged: any camera first.
-				if (camId) return acquire(micId, undefined);
-				// No webcam must not stop a person who can be heard.
+				if (camId && isMissing(error)) return acquire(micId, undefined);
+				// The camera is optional: no webcam, a denied or busy camera
+				// must not stop a person who can be heard. The microphone's
+				// own answer decides the blocker.
 				return {
 					stream: await mediaDevices!.getUserMedia({
 						audio,
@@ -179,7 +186,15 @@ export const useLiveCallDevices = (
 				}
 				// Speech peaks sit around 0.1–0.4; stretch so a voice fills the meter.
 				const micLevel = Math.min(1, peak * 2.5);
-				setState({ devices, stream: live, micLevel, cameraMissing });
+				// A render per frame starves slow machines; only a visible
+				// change of the meter is worth one.
+				setState((s) =>
+					s.stream === live &&
+					s.devices === devices &&
+					Math.abs(s.micLevel - micLevel) < LEVEL_STEP
+						? s
+						: { devices, stream: live, micLevel, cameraMissing }
+				);
 				frame = requestAnimationFrame(tick);
 			};
 			tick();

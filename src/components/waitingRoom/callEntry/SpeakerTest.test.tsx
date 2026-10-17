@@ -12,16 +12,19 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playTestTone, SpeakerTest, SpeakerTestState } from './SpeakerTest';
 
 /* Just enough Web Audio to record the order of calls. */
-const fakeContext = (calls: string[], withSink: boolean) =>
+const fakeContext = (calls: string[], sink: 'ok' | 'fails' | 'none') =>
 	class {
 		currentTime = 0;
 		destination = {};
-		setSinkId = withSink
-			? (id: string) => {
-					calls.push(`sink:${id}`);
-					return Promise.resolve();
-				}
-			: undefined;
+		setSinkId =
+			sink === 'none'
+				? undefined
+				: (id: string) => {
+						calls.push(`sink:${id}`);
+						return sink === 'ok'
+							? Promise.resolve()
+							: Promise.reject(new Error('NotFoundError'));
+					};
 		createGain() {
 			calls.push('gain');
 			const param = {
@@ -39,6 +42,7 @@ const fakeContext = (calls: string[], withSink: boolean) =>
 			};
 		}
 		close() {
+			calls.push('close');
 			return Promise.resolve();
 		}
 	};
@@ -52,21 +56,28 @@ describe('playTestTone', () => {
 	it('routes the tone to the chosen speaker before it plays', async () => {
 		vi.useFakeTimers();
 		const calls: string[] = [];
-		vi.stubGlobal('AudioContext', fakeContext(calls, true));
+		vi.stubGlobal('AudioContext', fakeContext(calls, 'ok'));
 		const done = playTestTone('usb-headset');
 		await vi.runAllTimersAsync();
 		await done;
-		expect(calls).toEqual(['sink:usb-headset', 'gain']);
+		expect(calls).toEqual(['sink:usb-headset', 'gain', 'close']);
 	});
 
 	it('plays through the default output where the browser cannot choose', async () => {
 		vi.useFakeTimers();
 		const calls: string[] = [];
-		vi.stubGlobal('AudioContext', fakeContext(calls, false));
+		vi.stubGlobal('AudioContext', fakeContext(calls, 'none'));
 		const done = playTestTone('usb-headset');
 		await vi.runAllTimersAsync();
 		await done;
-		expect(calls).toEqual(['gain']);
+		expect(calls).toEqual(['gain', 'close']);
+	});
+
+	it('plays nothing elsewhere when the chosen speaker cannot be reached', async () => {
+		const calls: string[] = [];
+		vi.stubGlobal('AudioContext', fakeContext(calls, 'fails'));
+		await expect(playTestTone('unplugged')).rejects.toThrow();
+		expect(calls).toEqual(['sink:unplugged', 'close']);
 	});
 });
 
@@ -103,6 +114,19 @@ describe('SpeakerTest', () => {
 		});
 		expect(row().getAttribute('data-state')).toBe('asking');
 		expect(document.activeElement?.textContent).toBe('Ja');
+	});
+
+	it('tells the person when the chosen speaker cannot play the tone', async () => {
+		render(
+			<Room
+				sinkId="unplugged"
+				playTone={() => Promise.reject(new Error('NotFoundError'))}
+			/>
+		);
+		await act(async () => {
+			fireEvent.click(screen.getByTestId('speaker-test'));
+		});
+		expect(row().getAttribute('data-state')).toBe('notHeard');
 	});
 
 	it('ignores the end of a tone played through a speaker no longer chosen', async () => {
