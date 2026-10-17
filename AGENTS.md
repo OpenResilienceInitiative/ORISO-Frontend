@@ -19,7 +19,7 @@
 ## Context First
 
 - Treat `dev` as the normal integration branch for ORISO feature PRs unless the task says otherwise.
-- Before non-trivial changes, skim `.understand-anything/README.md`, `.understand-anything/ARCHITECTURE.md`, and `.understand-anything/knowledge-graph.json` for fast repo context.
+- Before non-trivial changes, skim `.understand-anything/README.md` and `.understand-anything/ARCHITECTURE.md` for fast repo context. The generated graph is not committed: browse it at https://understand.oriso.org/ or fetch it as described in the README's Knowledge Graph section, and compare `gitCommitHash` in its `meta.json` with `origin/dev` before relying on it.
 - Use `CONTEXT.md` for Activity Timeline and notification vocabulary; avoid inventing parallel terms.
 
 ## Frontend Rules
