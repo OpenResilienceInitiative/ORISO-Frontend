@@ -21,7 +21,7 @@ export interface DeviceToggleProps {
 	testId?: string;
 	/** No such device: the switch cannot turn anything on. */
 	disabled?: boolean;
-	/** The tooltip while disabled, e.g. "Keine Kamera gefunden". */
+	/** The tooltip while disabled, e.g. "Kamera nicht verfügbar". */
 	labelDisabled?: string;
 }
 

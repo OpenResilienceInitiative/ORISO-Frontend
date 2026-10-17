@@ -95,6 +95,34 @@ describe('useLiveCallDevices', () => {
 		});
 	});
 
+	it('goes on with the microphone when only the camera is denied', async () => {
+		const audioOnly = fakeStream(['audio']);
+		const media = devicesFor((constraints) =>
+			constraints.video
+				? Promise.reject(domError('NotAllowedError'))
+				: Promise.resolve(audioOnly)
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		await waitFor(() => expect(result.current.stream).toBe(audioOnly));
+		expect(result.current.blocker).toBeUndefined();
+		expect(result.current.cameraMissing).toBe(true);
+	});
+
+	it('blocks as denied when the microphone is denied too', async () => {
+		const media = devicesFor(() =>
+			Promise.reject(domError('NotAllowedError'))
+		);
+		const { result } = renderHook(() =>
+			useLiveCallDevices('video', on, media)
+		);
+		await waitFor(() =>
+			expect(result.current.blocker).toBe('permissionDenied')
+		);
+		expect(media.getUserMedia).toHaveBeenCalledTimes(2);
+	});
+
 	it('blocks with "no device" only when there is no microphone either', async () => {
 		const media = devicesFor(() =>
 			Promise.reject(domError('NotFoundError'))

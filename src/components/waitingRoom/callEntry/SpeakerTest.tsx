@@ -44,12 +44,14 @@ type SinkAudioContext = AudioContext & {
 
 /**
  * A short two-note chime through the chosen speaker (`setSinkId`), or the
- * default output where the browser cannot choose. Safari has no speaker
+ * default output where the browser cannot choose. Rejects, silently, when
+ * the chosen speaker cannot be reached: a tone from another output would
+ * make the answer about the wrong device. Safari has no speaker
  * choice at all (#1383), which is why the question afterwards matters more
  * than the picker.
  */
 export const playTestTone = (sinkId?: string): Promise<void> =>
-	new Promise((resolve) => {
+	new Promise((resolve, reject) => {
 		const Ctx =
 			globalThis.AudioContext ??
 			(
@@ -63,10 +65,14 @@ export const playTestTone = (sinkId?: string): Promise<void> =>
 		}
 		const ctx: SinkAudioContext = new Ctx();
 		const routed =
-			sinkId && ctx.setSinkId
-				? ctx.setSinkId(sinkId).catch(() => undefined)
-				: Promise.resolve();
-		void routed.then(() => chime(ctx, resolve));
+			sinkId && ctx.setSinkId ? ctx.setSinkId(sinkId) : Promise.resolve();
+		routed.then(
+			() => chime(ctx, resolve),
+			(error: unknown) => {
+				void ctx.close();
+				reject(error);
+			}
+		);
 	});
 
 export interface SpeakerTestProps {
@@ -113,11 +119,18 @@ export const SpeakerTest = ({
 	const play = () => {
 		const mine = ++attempt.current;
 		onChange('playing');
-		void playTone(sinkId).then(() => {
-			if (mine !== attempt.current) return;
-			toneEnded.current = true;
-			onChange('asking');
-		});
+		void playTone(sinkId).then(
+			() => {
+				if (mine !== attempt.current) return;
+				toneEnded.current = true;
+				onChange('asking');
+			},
+			// The chosen speaker cannot be reached: say so, like a tone
+			// nobody heard ("wählen Sie oben ein anderes Gerät").
+			() => {
+				if (mine === attempt.current) onChange('notHeard');
+			}
+		);
 	};
 	const textSx = {
 		fontSize: 14,
