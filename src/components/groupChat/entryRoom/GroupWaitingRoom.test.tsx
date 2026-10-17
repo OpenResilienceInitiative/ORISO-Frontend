@@ -42,7 +42,16 @@ vi.mock('../../stageLayout/StageLayout', () => ({
 }));
 vi.mock('react-i18next', () => ({
 	useTranslation: () => ({
-		t: (_key: string, fallback?: string) => fallback ?? _key,
+		t: (
+			_key: string,
+			fallback?: string | { defaultValue?: string; agency?: string }
+		) =>
+			typeof fallback === 'object'
+				? (fallback.defaultValue ?? _key).replace(
+						'{{agency}}',
+						fallback.agency ?? ''
+					)
+				: (fallback ?? _key),
 		i18n: { language: 'de', resolvedLanguage: 'de' }
 	})
 }));
@@ -101,6 +110,16 @@ describe('GroupWaitingRoom', () => {
 		expect((join as HTMLButtonElement).disabled).toBe(true);
 		fireEvent.click(join);
 		expect(onJoin).not.toHaveBeenCalled();
+	});
+
+	/* Frank, 2026-10-17: the sheet says whom the person joins. */
+	it('names the counselling centre in the consent sheet', () => {
+		renderRoom(true);
+		fireEvent.click(screen.getByTestId('group-entry-join'));
+		const sheet = document.querySelector('[data-cy="consent-completion"]');
+		expect(sheet?.textContent).toContain(
+			'Diese Gruppe wird von Caritas Berlin geleitet.'
+		);
 	});
 
 	/* Frank, 2026-10-16: like the live chat, "Beitreten" first slides the

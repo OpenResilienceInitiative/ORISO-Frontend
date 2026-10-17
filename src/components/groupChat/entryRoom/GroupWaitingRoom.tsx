@@ -398,10 +398,19 @@ export const GroupWaitingRoom = ({
 							'groupChat.consent.headline',
 							'Bevor Sie schreiben'
 						)}
-						subtitle={t(
-							'groupChat.consent.description',
-							'Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.'
-						)}
+						/* Says whom the person joins (Frank, 2026-10-17). */
+						subtitle={
+							agencyName
+								? t('groupChat.consent.descriptionNamed', {
+										agency: agencyName,
+										defaultValue:
+											'Diese Gruppe wird von {{agency}} geleitet. Bitte stimmen Sie der Datenschutzerklärung dieser Beratungsstelle zu, bevor Sie in der Gruppe schreiben.'
+									})
+								: t(
+										'groupChat.consent.description',
+										'Diese Gruppe wird von einer Beratungsstelle geleitet. Bitte stimmen Sie ihrer Datenschutzerklärung zu, bevor Sie in der Gruppe schreiben.'
+									)
+						}
 						declineLabel={t('groupChat.consent.reject', 'Ablehnen')}
 						onDecline={() => setAsking(false)}
 						missingText={t(
