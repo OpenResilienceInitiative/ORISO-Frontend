@@ -1,23 +1,6 @@
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 
 describe('Session list Figma regression', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
-	beforeEach(() => {
-		mockWebSocket();
-	});
-
 	it('renders registered Mail sessions with postcode and stable menu interactions', () => {
 		cy.consultantSession(
 			{

@@ -3,11 +3,6 @@ import {
 	getLocalStorageItem,
 	getTokenExpiryFromLocalStorage
 } from '../../src/components/sessionCookie/accessSessionLocalStorage';
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 
 const waitForTokenProcessing = () => {
 	// TODO: don't arbitrarily wait for token to be processed, find some
@@ -18,19 +13,10 @@ const waitForTokenProcessing = () => {
 
 describe('Keycloak Tokens', () => {
 	let authTokenJson;
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
 	beforeEach(() => {
 		cy.fixture('auth.token.json').then((fixture) => {
 			authTokenJson = fixture;
 		});
-		mockWebSocket();
 	});
 
 	it('should get and store tokens and expiry time on login', () => {

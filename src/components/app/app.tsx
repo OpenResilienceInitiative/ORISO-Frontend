@@ -10,7 +10,7 @@ import {
 import { StageProps } from '../stage/stage';
 import '../../resources/styles/styles';
 import { ContextProvider } from '../../globalState/state';
-import { WebsocketHandler } from './WebsocketHandler';
+import { MatrixRealtimeHandler } from './MatrixRealtimeHandler';
 import ErrorBoundary from './ErrorBoundary';
 import { LanguagesProvider } from '../../globalState/provider/LanguagesProvider';
 import { TenantThemingLoader } from './TenantThemingLoader';
@@ -153,7 +153,7 @@ const RouterWrapper = ({ extraRoutes }: RouterWrapperProps) => {
 				<CallProvider>
 					<MatrixClientProvider>
 						<TenantThemingLoader />
-						{startWebsocket && <WebsocketHandler />}
+						{startWebsocket && <MatrixRealtimeHandler />}
 						<Suspense fallback={<Loading />}>
 							<Routes>
 								{settings.urls.landingpage !== '/' && (

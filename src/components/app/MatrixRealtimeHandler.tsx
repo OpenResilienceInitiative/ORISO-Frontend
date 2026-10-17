@@ -4,7 +4,7 @@ import { messageEventEmitter } from '../../services/messageEventEmitter';
 import { bindFeedUpdateSignal } from '../../services/feedUpdateSignalBridge';
 
 /** Matrix refresh metadata only; the persisted feed owns announcements. */
-export const WebsocketHandler = () => {
+export const MatrixRealtimeHandler = () => {
 	const [incomingRefreshPending, setIncomingRefreshPending] = useState(false);
 	useEffect(() => {
 		const onDirectMessage = (event: {

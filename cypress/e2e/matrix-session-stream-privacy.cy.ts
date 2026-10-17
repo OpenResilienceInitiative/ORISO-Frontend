@@ -1,23 +1,9 @@
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 import { formatMatrixTimelineEvent } from '../../src/utils/matrixTimelineEventFormatter';
 
 describe('Matrix session stream privacy', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
 	beforeEach(() => {
 		cy.mockApi();
-		mockWebSocket();
 	});
 
 	it('does not hydrate opened Matrix sessions through the REST message proxy', () => {

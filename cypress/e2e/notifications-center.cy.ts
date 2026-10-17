@@ -1,22 +1,8 @@
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 
 describe('Notifications center', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
 	beforeEach(() => {
 		cy.mockApi();
-		mockWebSocket();
 	});
 
 	it('does not fetch or render raw Matrix message bodies for notification previews', () => {

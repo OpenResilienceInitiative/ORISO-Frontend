@@ -1,24 +1,7 @@
 import { endpoints } from '../../src/resources/scripts/endpoints';
-import {
-	closeWebSocketServer,
-	mockWebSocket,
-	startWebSocketServer
-} from '../support/websocket';
 import { USER_CONSULTANT } from '../support/commands/mockApi';
 
 describe('profile', () => {
-	before(() => {
-		startWebSocketServer();
-	});
-
-	after(() => {
-		closeWebSocketServer();
-	});
-
-	beforeEach(() => {
-		mockWebSocket();
-	});
-
 	describe('consultant absence', () => {
 		beforeEach(() => {
 			cy.fastLogin({
